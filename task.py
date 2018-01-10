@@ -1,4 +1,6 @@
 
+EVALUATIONTABLE = {}
+
 class RegressionTask():
     def __init__(self, name, request, examples):
         self.request = request
@@ -6,9 +8,13 @@ class RegressionTask():
         self.examples = examples
     def __str__(self): return self.name
     def check(self,e):
-        e = e.evaluate([])
+        f = e.evaluate([])
         for x,y in self.examples:
-            if e(x) != y: return False
+            if (x,e) in EVALUATIONTABLE: p = EVALUATIONTABLE[(x,e)]
+            else:
+                p = f(x)
+                EVALUATIONTABLE[(x,e)] = p
+            if p != y: return False
         return True
     def logLikelihood(self,e):
         if self.check(e): return 0.0

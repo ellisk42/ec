@@ -17,7 +17,7 @@ k0 = Primitive("0",tint,0)
 
 
 
-g0 = Grammar.fromPrimitives([addition, multiplication, k0,k1])
+g0 = Grammar.uniform([addition, multiplication, k0,k1])
 
             
 
@@ -30,8 +30,8 @@ tasks = [ RegressionTask("%dx^2 + %dx + %d"%(a,b,c),
 
 frontiers = enumerateFrontiers(g0, 10**3, tasks)
 frontiers = [ frontier.keepTopK(1) for frontier in frontiers ]
-for f in proposeFragmentsFromFrontiers(frontiers,1):
-    print f
+
+FragmentGrammar.induceFromFrontiers(g0, frontiers)
 
 numberOfHitTasks = 0
 for frontier in frontiers:
@@ -42,3 +42,5 @@ for frontier in frontiers:
         print "HIT",frontier.task.name,"with",frontier.bestPosterior().program
         numberOfHitTasks += 1
 print "Hit %d/%d tasks"%(numberOfHitTasks,len(tasks))
+
+

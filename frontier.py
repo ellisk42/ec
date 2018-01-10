@@ -11,6 +11,8 @@ class Frontier(object):
     def __init__(self, frontier, task = None):
         self.entries = frontier
         self.task = task
+
+    def __iter__(self): return iter(self.entries)
         
     def removeZeroLikelihood(self):
         self.entries = [ e for e in self.entries if e.logLikelihood != float('-inf') ]

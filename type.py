@@ -4,9 +4,11 @@
 class UnificationFailure(Exception): pass
 class Occurs(UnificationFailure): pass
 
+class Type(object):
+    def __str__(self): return self.show(True)
+    def __repr__(self): return str(self)
 
-
-class TypeConstructor(object):
+class TypeConstructor(Type):
     def __init__(self, name, arguments):
         self.name = name
         self.arguments = arguments
@@ -19,10 +21,15 @@ class TypeConstructor(object):
     def __ne__(self,other):
         return not (self == other)
 
-    def __str__(self):
-        return "%s(%s)"%(self.name, ", ".join(map(str,self.arguments)))
-    def __repr__(self): return str(self)
-
+    def show(self, isReturn):
+        if self.name == ARROW:
+            if isReturn: return "%s %s %s"%(self.arguments[0].show(False), ARROW, self.arguments[1].show(True))
+            else: return "(%s %s %s)"%(self.arguments[0].show(False), ARROW, self.arguments[1].show(True))
+        elif self.arguments == []:
+            return self.name
+        else:
+            return "%s(%s)"%(self.name, ", ".join( x.show(True) for x in self.arguments))
+        
     def isArrow(self): return self.name == ARROW
 
     def functionArguments(self):
@@ -55,7 +62,7 @@ class TypeConstructor(object):
         return TypeConstructor(self.name, [ x.canonical(bindings) for x in self.arguments ])
 
 
-class TypeVariable(object):
+class TypeVariable(Type):
     def __init__(self,j):
         assert isinstance(j,int)
         self.v = j
@@ -63,7 +70,10 @@ class TypeVariable(object):
         return isinstance(other,TypeVariable) and self.v == other.v
     def __ne__(self,other): return not (self.v == other.v)
     def __hash__(self): return self.v
-    def __str__(self): return "t%d"%self.v
+    def show(self,_): return "t%d"%self.v
+
+    def returns(self): return self
+    def isArrow(self): return False
 
     def apply(self, context):
         for v,t in context.substitution:
@@ -86,6 +96,8 @@ class TypeVariable(object):
         new = TypeVariable(len(bindings))
         bindings[self.v] = new
         return new
+
+    
             
 
 class Context(object):
