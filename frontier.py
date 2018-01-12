@@ -19,14 +19,28 @@ class Frontier(object):
         return self
 
     def keepTopK(self,k):
-        self.entries.sort(key = lambda e: e.logPrior + e.logLikelihood,reverse = True)
+        self.entries.sort(key = lambda e: (e.logPrior + e.logLikelihood, str(e.program)), reverse = True)
         self.entries = self.entries[:k]
         return self
 
+    @property
     def bestPosterior(self):
-        return max(self.entries,key = lambda e: e.logPrior + e.logLikelihood)
+        return max(self.entries,key = lambda e: (e.logPrior + e.logLikelihood, str(e.program)))
 
+    @property
     def empty(self): return self.entries == []
+
+    def summarize(self):
+        if self.empty: return "MISS " + self.task.name
+        return "HIT %s w/ %s ; log prior = %f"%(self.task.name, self.bestPosterior.program, self.bestPosterior.logPrior)
+
+    @staticmethod
+    def describe(frontiers):
+        numberOfHits = sum(not f.empty for f in frontiers)
+        averageLikelihood = sum(f.bestPosterior.logPrior for f in frontiers if not f.empty) / numberOfHits
+        return "\n".join([ f.summarize() for f in frontiers ] + \
+                         [ "Hits %d/%d tasks"%(numberOfHits,len(frontiers))] + \
+                         [ "Average log prior %f"%averageLikelihood ])
 
         
         

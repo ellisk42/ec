@@ -48,7 +48,7 @@ def iterativeDeepeningEnumeration(g, request, frontierSize,
     while len(frontier) < frontierSize:
         frontier = [ (l,p) for l,_,p in enumeration(g, Context.EMPTY, [], request, budget) ]
         budget += budgetIncrement
-    print "Enumerated up to %f nats"%(budget - budgetIncrement)
+    #print "Enumerated up to %f nats"%(budget - budgetIncrement)
     return frontier
 
 def enumeration(g, context, environment, request, budget):

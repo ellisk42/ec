@@ -28,6 +28,6 @@ tasks = [ RegressionTask("%dx^2 + %dx + %d"%(a,b,c),
 
 if __name__ == "__main__":
     explorationCompression([addition, multiplication, k0,k1], tasks,
-                           frontierSize = 10**4,
-                           iterations = 5,
-                           pseudoCounts = 10.0)
+                           **commandlineArguments(frontierSize = 10**4,
+                                                  iterations = 5,
+                                                  pseudoCounts = 10.0))

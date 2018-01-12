@@ -130,9 +130,14 @@ Context.EMPTY = Context(0,[])
 
     
 tint = TypeConstructor("int",[])
+tbool = TypeConstructor("tbool",[])
+tstring = TypeConstructor("string",[])
+def tlist(t): return TypeConstructor("list",[t])
 t0 = TypeVariable(0)
 t1 = TypeVariable(1)
 t2 = TypeVariable(2)
 
 ARROW = "->"
-def arrow(l,r): return TypeConstructor(ARROW,[l,r])
+def arrow(*arguments):
+    if len(arguments) == 1: return arguments[0]
+    return TypeConstructor(ARROW,[arguments[0],arrow(*arguments[1:])])

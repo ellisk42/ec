@@ -332,12 +332,12 @@ class FragmentGrammar(object):
                 
     @staticmethod
     def induceFromFrontiers(g0, frontiers, pseudoCounts = 1.0, aic = 1.0, structurePenalty = 0.001, a = 0):
-        frontiers = [frontier for frontier in frontiers if not frontier.empty() ]
-        print "Initial likelihoods:"
-        for frontier in frontiers:
-            p = frontier.entries[0].program
-            print p,FragmentGrammar.fromGrammar(g0).closedLogLikelihood(frontier.task.request,
-                                                                        p)
+        frontiers = [frontier for frontier in frontiers if not frontier.empty ]
+        # print "Initial likelihoods:"
+        # for frontier in frontiers:
+        #     p = frontier.entries[0].program
+        #     print p,FragmentGrammar.fromGrammar(g0).closedLogLikelihood(frontier.task.request,
+        #                                                                 p)
         
         fragments = proposeFragmentsFromFrontiers(frontiers,a)
 

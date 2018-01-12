@@ -14,7 +14,7 @@ def explorationCompression(primitives, tasks,
                            iterations = None,
                            frontierSize = None,
                            topK = 1,
-                           pseudoCounts = 1.0, aic = 1.0, structurePenalty = 0.001, a = 0):
+                           pseudoCounts = 1.0, aic = 1.0, structurePenalty = 0.001, arity = 0):
     if frontierSize == None:
         print "Please specify a frontier size: explorationCompression(..., frontierSize = ...)"
         assert False
@@ -29,28 +29,53 @@ def explorationCompression(primitives, tasks,
                                  grammar, frontierSize, tasks)
         frontiers = [ frontier.keepTopK(1) for frontier in frontiers ]
 
+        print "Enumeration results:"
+        print Frontier.describe(frontiers)
+
         recognizer = RecognitionModel(len(tasks[0].features), grammar)
         recognizer.train(frontiers)
-        bottomFrontiers = [ f.keepTopK(1) for f in recognizer.enumerateFrontiers(frontierSize, tasks)
-                            if not f.empty() ]
-        print "Bottom-up enumeration hits %d tasks"%(len(bottomFrontiers))
-        print "Of these it has an average log likelihood of", sum(f.bestPosterior().logPrior for f in bottomFrontiers )/len(bottomFrontiers)
-
-        numberOfHitTasks = 0
-        for frontier in frontiers:
-            if frontier.empty():
-                #print "MISS",frontier.task.name
-                pass
-            else:
-                print "HIT",frontier.task.name,"with",frontier.bestPosterior().program,frontier.bestPosterior().logPrior
-                numberOfHitTasks += 1
-        print "Hit %d/%d tasks"%(numberOfHitTasks,len(tasks))
-        print "Of these it has an average log likelihood of",sum(f.bestPosterior().logPrior for f in frontiers if not f.empty() )/numberOfHitTasks
+        bottomFrontiers = recognizer.enumerateFrontiers(frontierSize, tasks)
+        print "Bottom-up enumeration results:"
+        print Frontier.describe(frontiers)
 
         grammar = callCompiled(FragmentGrammar.induceFromFrontiers,
                                grammar, frontiers,
-                           pseudoCounts = pseudoCounts, aic = aic, structurePenalty = structurePenalty, a = 0).\
-                           toGrammar()
+                               pseudoCounts = pseudoCounts,
+                               aic = aic,
+                               structurePenalty = structurePenalty,
+                               a = arity).\
+                               toGrammar()
         print grammar
 
         
+def commandlineArguments(_ = None,
+                         iterations = None,
+                         frontierSize = None,
+                         topK = 1,
+                         pseudoCounts = 1.0, aic = 1.0, structurePenalty = 0.001, a = 0):
+    import argparse
+    parser = argparse.ArgumentParser(description = "")
+    parser.add_argument('-i',"--iterations",
+                        default = iterations,
+                        type = int)
+    parser.add_argument("-f","--frontierSize",
+                        default = frontierSize,
+                        type = int)
+    parser.add_argument('-k',"--topK",
+                        default = topK,
+                        type = int)
+    parser.add_argument("-p","--pseudoCounts",
+                        default = pseudoCounts,
+                        type = float)
+    parser.add_argument("-b","--aic",
+                        default = aic,
+                        type = float)
+    parser.add_argument("-l", "--structurePenalty",
+                        default = structurePenalty,
+                        type = float)
+    parser.add_argument("-a", "--arity",
+                        default = a,
+                        type = int)
+    return vars(parser.parse_args())
+    
+    
