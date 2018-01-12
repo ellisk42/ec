@@ -1,11 +1,7 @@
 
+from utilities import *
 
-def g():
-    yield 1
-    yield 2
+if __name__ == "__main__":
+    callCompiled(lse,1,1.)
 
-def f():
-    yield 3
-    return g()
 
-print list(f())

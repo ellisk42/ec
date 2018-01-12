@@ -5,21 +5,34 @@ from program import *
 from grammar import *
 
 def enumerateFrontiers(g, frontierSize, tasks):
+    '''g: Either a Grammar, or a map from task to grammar'''
     from time import time
-    requests = { t.request for t in tasks }
+    
     frontiers = {}
+    
     start = time()
-    for request in requests:
-        frontiers[request] = iterativeDeepeningEnumeration(g, request, frontierSize)
-        
-    totalNumberOfPrograms = sum(len(f) for f in frontiers.values())
-    print "Enumerated %d frontiers with %d total programs in time %fsec"%(len(frontiers),totalNumberOfPrograms,time() - start)
+    if isinstance(g,Grammar):
+        for request in { t.request for t in tasks }:
+            frontiers[request] = iterativeDeepeningEnumeration(g, request, frontierSize)
+        totalNumberOfPrograms = sum(len(f) for f in frontiers.values())
+        totalNumberOfFrontiers = len(frontiers)
+
+        frontiers = {t: frontiers[t.request] for t in tasks }
+    else:
+        frontiers = {t: iterativeDeepeningEnumeration(g[t], t.request, frontierSize)
+                     for t in tasks }
+        totalNumberOfPrograms = sum(len(f) for f in frontiers.values())
+        totalNumberOfFrontiers = len(frontiers)
+    
+    print "Enumerated %d frontiers with %d total programs in time %fsec"%\
+        (totalNumberOfFrontiers,totalNumberOfPrograms,time() - start)
+    
     start = time()
     frontiers = [
         Frontier([ FrontierEntry(program,
                                  logPrior = logPrior,
                                  logLikelihood = task.logLikelihood(program))
-                   for logPrior,program in frontiers[task.request] ],
+                   for logPrior,program in frontiers[task] ],
                  task = task).\
         removeZeroLikelihood()
         for task in tasks ]

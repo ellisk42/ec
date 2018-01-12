@@ -1,12 +1,17 @@
+from utilities import *
 
 EVALUATIONTABLE = {}
 
 class RegressionTask():
-    def __init__(self, name, request, examples):
+    def __init__(self, name, request, examples, features = None):
+        self.features = features
         self.request = request
         self.name = name
         self.examples = examples
     def __str__(self): return self.name
+    def __eq__(self,o): return self.name == o.name
+    def __ne__(self,o): return not (self == o)
+    def __hash__(self): return hash(self.name)
     def check(self,e):
         f = e.evaluate([])
         for x,y in self.examples:
@@ -18,4 +23,4 @@ class RegressionTask():
         return True
     def logLikelihood(self,e):
         if self.check(e): return 0.0
-        else: return float('-inf')
+        else: return NEGATIVEINFINITY

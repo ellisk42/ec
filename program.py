@@ -19,8 +19,12 @@ class Application(Program):
     def __init__(self,f,x):
         self.f = f
         self.x = x
+        self.hashCode = None
     def __eq__(self,other): return isinstance(other,Application) and self.f == other.f and self.x == other.x
-    def __hash__(self): return hash(self.f) + 7*hash(self.x)
+    def __hash__(self):
+        if self.hashCode == None:
+            self.hashCode = hash((hash(self.f), hash(self.x)))
+        return self.hashCode
     def show(self, isFunction):
         if isFunction: return "%s %s"%(self.f.show(True), self.x.show(False))
         else: return "(%s %s)"%(self.f.show(True), self.x.show(False))
@@ -68,7 +72,7 @@ class Index(Program):
         self.i = i
     def show(self,isFunction): return "$%d"%self.i
     def __eq__(self,o): return isinstance(o,Index) and o.i == self.i
-    def __hash__(self): return hash(self.i)
+    def __hash__(self): return self.i
     def evaluate(self,environment):
         return environment[self.i]
     def inferType(self,context,environment,freeVariables):
@@ -124,8 +128,11 @@ class Index(Program):
 class Abstraction(Program):
     def __init__(self,body):
         self.body = body
+        self.hashCode = None
     def __eq__(self,o): return isinstance(o,Abstraction) and o.body == self.body
-    def __hash__(self): return 1 + hash(self.body)
+    def __hash__(self):
+        if self.hashCode == None: self.hashCode = hash((hash(self.body),))
+        return self.hashCode
     def show(self,isFunction):
         return "(lambda %s)"%(self.body.show(False))
     def evaluate(self,environment):
@@ -177,9 +184,12 @@ class Invented(Program):
     def __init__(self, body):
         self.body = body
         self.tp = self.body.infer()
+        self.hashCode = None
     def show(self,isFunction): return "#%s"%(self.body.show(False))
     def __eq__(self,o): return isinstance(o,Invented) and o.body == self.body
-    def __hash__(self): return hash(self.body) - 1
+    def __hash__(self):
+        if self.hashCode == None: self.hashCode = hash((0,hash(self.body)))
+        return self.hashCode
     def evaluate(self,e): return self.body.evaluate([])
     def inferType(self,context,environment,freeVariables):
         return self.tp.instantiate(context)

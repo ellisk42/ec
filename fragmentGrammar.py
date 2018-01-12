@@ -29,6 +29,33 @@ class FragmentVariable(Program):
 
 FragmentVariable.single = FragmentVariable()
 
+def defragment(expression):
+    if isinstance(expression, (Primitive,Invented)): return expression
+    
+    numberOfAbstractions = [0]
+    mapping = {}
+    def f(e,d):
+        if isinstance(e,FragmentVariable):
+            numberOfAbstractions[0] += 1
+            return Index(numberOfAbstractions[0] + d - 1)
+        if isinstance(e,(Primitive,Invented)): return e
+        if isinstance(e,Application):
+            return Application(f(e.f,d), f(e.x,d))
+        if isinstance(e,Abstraction): return Abstraction(f(e.body),d + 1)
+        if isinstance(e,Index):
+            if e.i < d: return e
+            i = e.i - d
+            if i in mapping: return Index(d + mapping[i])
+            mapping[i] = numberOfAbstractions[0]
+            numberOfAbstractions[0] += 1
+            return Index(numberOfAbstractions[0] - 1 + d)
+        assert False
+    expression = f(expression,0)
+    for _ in range(numberOfAbstractions[0]):
+        expression = Abstraction(expression)
+    return Invented(expression)
+            
+
 def proposeFragmentsFromProgram(p,arity):
 
     def fragment(expression,a):
@@ -97,7 +124,53 @@ def proposeFragmentsFromFrontiers(frontiers,a):
             if f in frontierFragments: frequencies[f] += 1
     return [ fragment for fragment,frequency in frequencies.iteritems() if frequency >= 2 ]
 
-class FragmentGrammar():
+class Uses(object):
+    def __init__(self, possibleVariables = 0., actualVariables = 0.,
+                 possibleUses = {}, actualUses = {}):
+        self.actualVariables = actualVariables
+        self.possibleVariables = possibleVariables
+        self.possibleUses = possibleUses
+        self.actualUses = actualUses
+
+    def __str__(self):
+        return "Uses(actualVariables = %f, possibleVariables = %f, actualUses = %s, possibleUses = %s)"%\
+            (self.actualVariables, self.possibleVariables, self.actualUses, self.possibleUses)
+    def __repr__(self): return str(self)
+
+    def __mul__(self,a):
+        return Uses(a*self.possibleVariables,
+                    a*self.actualVariables,
+                    {p: a*u for p,u in self.possibleUses.iteritems() },
+                    {p: a*u for p,u in self.actualUses.iteritems() })
+    def __rmul__(self,a):
+        return self*a
+    def __radd__(self,o):
+        if o == 0: return self
+        return self + o
+    def __add__(self,o):
+        if o == 0: return self
+        def merge(x,y):
+            z = x.copy()
+            for k,v in y.iteritems():
+                z[k] = v + x.get(k,0.)
+            return z
+        return Uses(self.possibleVariables + o.possibleVariables,
+                    self.actualVariables + o.actualVariables,
+                    merge(self.possibleUses,o.possibleUses),
+                    merge(self.actualUses,o.actualUses))
+    def __iadd__(self,o):
+        self.possibleVariables += o.possibleVariables
+        self.actualVariables += o.actualVariables
+        for k,v in o.possibleUses:
+            self.possibleUses[k] = self.possibleUses.get(k,0.) + v
+        for k,v in o.actualUses:
+            self.actualUses[k] = self.actualUses.get(k,0.) + v
+        return self
+    
+Uses.empty = Uses()
+        
+
+class FragmentGrammar(object):
     def __init__(self, logVariable, productions):
         self.logVariable = logVariable
         self.productions = productions
@@ -123,20 +196,20 @@ class FragmentGrammar():
                                    Index(j)))
             except UnificationFailure: continue
         
-        z = math.log(sum(math.exp(candidate[0]) for candidate in candidates))
+        z = lse([candidate[0] for candidate in candidates])
         return [(l - z, k, c, p) for l,k,c,p in candidates ]
 
     def closedLogLikelihood(self, request, expression):
         #print "About to correctly the likelihood of",expression
-        _,l = self.logLikelihood(Context.EMPTY, [], request, expression)
+        _,l,_ = self.logLikelihood(Context.EMPTY, [], request, expression)
         #print "Got likelihood",l
         return l
 
     def logLikelihood(self, context, environment, request, expression):
-        '''returns (context, log likelihood)'''
+        '''returns (context, log likelihood, uses)'''
         #print "REQUEST",request,"EXPRESSION",expression
         if request.isArrow():
-            if not isinstance(expression,Abstraction): return (context,NEGATIVEINFINITY)
+            if not isinstance(expression,Abstraction): return (context,NEGATIVEINFINITY,Uses.empty)
             return self.logLikelihood(context,
                                       [request.arguments[0]] + environment,
                                       request.arguments[1],
@@ -150,6 +223,8 @@ class FragmentGrammar():
         # Consider each way of breaking the expression up into a
         # function and arguments
         totalLikelihood = NEGATIVEINFINITY
+        weightedUses = []
+        
         for f,xs in expression.applicationParses():
             for candidateLikelihood, newContext, tp, production in candidates:
                 variableBindings = {}
@@ -177,6 +252,13 @@ class FragmentGrammar():
                     except MatchFailure: continue
 
                 thisLikelihood = candidateLikelihood
+                theseUses = Uses(possibleVariables = float(int(any(isinstance(candidate,Index)
+                                                                   for _,_,_,candidate in candidates ))),
+                                 actualVariables = float(int(isinstance(production,Index))),
+                                 possibleUses = {candidate: 1.
+                                                 for _,_,_,candidate in candidates
+                                                 if not isinstance(candidate,Index)},
+                                 actualUses = {} if isinstance(production,Index) else {production: 1.})
 
                 # print "tp",tp
                 # print "tp.functionArguments",tp.functionArguments()
@@ -187,42 +269,81 @@ class FragmentGrammar():
                 # Accumulate likelihood from free variables and holes and arguments
                 for freeType,freeExpression in variableBindings.values() + holes + zip(argumentTypes, xs):
                     freeType = freeType.apply(newContext)
-                    newContext, expressionLikelihood = \
+                    newContext, expressionLikelihood, newUses = \
                             self.logLikelihood(newContext, environment, freeType, freeExpression)
+                    if expressionLikelihood is NEGATIVEINFINITY:
+                        thisLikelihood = NEGATIVEINFINITY
+                        break
+                    
                     thisLikelihood += expressionLikelihood
-                    if thisLikelihood == NEGATIVEINFINITY: break
+                    theseUses = theseUses + newUses
 
-                if thisLikelihood == NEGATIVEINFINITY: continue
+                if thisLikelihood is NEGATIVEINFINITY: continue
 
+                weightedUses.append((thisLikelihood,theseUses))
                 totalLikelihood = lse(totalLikelihood, thisLikelihood)
 
                 # Any of these new context objects should be equally good
                 context = newContext
 
-        return context, totalLikelihood
+        if totalLikelihood is NEGATIVEINFINITY: return context, totalLikelihood, Uses.empty
+        assert weightedUses != []
+
+        allUses = Uses.empty
+        for w,u in weightedUses:
+            allUses = allUses + (u*exp(w - totalLikelihood))
+
+        return context, totalLikelihood, allUses
+
+    def insideOutside(self, frontiers, pseudoCounts):
+        likelihoods = [ [ (l + entry.logLikelihood, u) 
+                          for entry in frontier
+                          for _,l,u in [self.logLikelihood(Context.EMPTY, [], frontier.task.request, entry.program)] ]
+                        for frontier in frontiers ]
+        zs = [ lse([ l for l,_ in ls ])
+               for ls in likelihoods ]
+        uses = sum([ math.exp(l - z)*u
+                     for z,frontier in zip(zs,likelihoods)
+                     for l,u in frontier ])
+        return FragmentGrammar(log(uses.actualVariables + pseudoCounts) - \
+                               log(uses.possibleVariables + pseudoCounts),
+                               [ (log(uses.actualUses.get(p,0.) + pseudoCounts) - \
+                                  log(uses.possibleUses.get(p,0.) + pseudoCounts),
+                                  t,p)
+                                 for _,t,p in self.productions ])
+
+    def jointFrontiersLikelihood(self, frontiers):
+        return sum( lse([ entry.logLikelihood + self.closedLogLikelihood(frontier.task.request, entry.program)
+                          for entry in frontier ])
+                    for frontier in frontiers )
 
     def __len__(self): return len(self.productions)
 
     @staticmethod
     def fromGrammar(g):
         return FragmentGrammar(g.logVariable, g.productions)
+    def toGrammar(self):
+        return Grammar(self.logVariable, [(l,q.infer(),q)
+                                          for l,t,p in self.productions
+                                          for q in [defragment(p)] ])
     @staticmethod
     def uniform(productions):
         return FragmentGrammar(0., [(0., p.infer(),p) for p in productions ])
                 
     @staticmethod
-    def induceFromFrontiers(g0, frontiers, pseudoCounts = 1.0, aic = 1.0, structurePenalty = 0.5, a = 1):
+    def induceFromFrontiers(g0, frontiers, pseudoCounts = 1.0, aic = 1.0, structurePenalty = 0.001, a = 0):
         frontiers = [frontier for frontier in frontiers if not frontier.empty() ]
+        print "Initial likelihoods:"
+        for frontier in frontiers:
+            p = frontier.entries[0].program
+            print p,FragmentGrammar.fromGrammar(g0).closedLogLikelihood(frontier.task.request,
+                                                                        p)
+        
         fragments = proposeFragmentsFromFrontiers(frontiers,a)
 
-        for f in fragments: print f
-
         def grammarScore(productions):
-            g = FragmentGrammar.uniform(productions)
-            likelihood = sum( lse([ entry.logLikelihood + \
-                                    g.closedLogLikelihood(frontier.task.request, entry.program)
-                                    for entry in frontier ])
-                              for frontier in frontiers )
+            g = FragmentGrammar.uniform(productions).insideOutside(frontiers, pseudoCounts)
+            likelihood = g.jointFrontiersLikelihood(frontiers)
             structure = sum(p.size() for p in productions)
             return likelihood - aic*len(g) - structurePenalty*structure
 
@@ -243,9 +364,12 @@ class FragmentGrammar():
                 bestScore = newScore
                 bestProductions = newProductions
                 print "Updated grammar to: (score = %f)"%newScore
-                print FragmentGrammar.uniform(bestProductions)
+                print FragmentGrammar.uniform(bestProductions).insideOutside(frontiers,pseudoCounts)
                 print
             else: break
         
-        
+        finalGrammar = FragmentGrammar.uniform(bestProductions).insideOutside(frontiers,pseudoCounts)
+        print "Final grammar:"
+        print finalGrammar
+        return finalGrammar
         
