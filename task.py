@@ -1,4 +1,5 @@
 from utilities import *
+from differentiation import *
 
 import signal
 
@@ -50,6 +51,12 @@ class DifferentiableTask(RegressionTask):
         super(DifferentiableTask,self).__init__(name, request, examples, features, cache = cache)
 
     def logLikelihood(self,e):
+        e, parameters = e.replacePlaceholders()
+        f = e.evaluate([])
+        loss = - sum( (Placeholder.maybe(f(x)) - y).square() for x,y in self.examples )
+        l,parameters = loss.gradientDescent(parameters, 0.01, steps = 50)
+
+        
         
 
 

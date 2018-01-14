@@ -60,6 +60,7 @@ class DN(object):
         return l
 
     def log(self): return Logarithm(self)
+    def square(self): return self*self
     def exp(self): return Exponentiation(self)
     def __add__(self,o): return Addition(self, Placeholder.maybe(o))
     def __radd__(self,o): return Addition(self, Placeholder.maybe(o))
@@ -71,10 +72,14 @@ class DN(object):
     def __div__(self,o): return Division(self,Placeholder.maybe(o))
     def __rdiv__(self,o): return Division(Placeholder.maybe(o),self)
     
-    
-        
-    
+    def gradientDescent(self, parameters, _ = None, lr, steps = 10**3, update = None):
+        for j in range(steps):
+            l = self.updateNetwork()
+            if (not (update is None)) and j%update == 0:
+                print "LOSS:",l
 
+            for p in parameters:
+                p.data -= lr*p.derivative
         
 
 class Placeholder(DN):
@@ -183,15 +188,6 @@ if __name__ == "__main__":
     loss = -z
     print loss
 
-    lr = 0.001
-    for j in range(10000):
-        l = loss.updateNetwork()
-        if j%1000 == 0:
-            print "LOSS:",l
-            print "\t".join("parameter %f"%(v.data) for v in [x,y] )
-
-        x.data -= lr*x.differentiate()
-        y.data -= lr*y.differentiate()
-        
-
     
+    lr = 0.001
+    loss.gradientDescent([x,y],steps = 10000, update = 1000)

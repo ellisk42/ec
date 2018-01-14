@@ -66,6 +66,11 @@ class Application(Program):
         for child in self.x.walk(surroundingAbstractions): yield child
 
     def size(self): return self.f.size() + self.x.size()
+
+    def replacePlaceholders(self):
+        f,p = self.f.replacePlaceholders()
+        x,q = self.x.replacePlaceholders()
+        return Application(f,x), p + q
             
 
 class Index(Program):
@@ -123,6 +128,8 @@ class Index(Program):
     def walk(self,surroundingAbstractions = 0): yield surroundingAbstractions,self
 
     def size(self): return 1
+
+    def replacePlaceholders(self): return self,[]
             
         
 
@@ -158,6 +165,10 @@ class Abstraction(Program):
         for child in self.body.walk(surroundingAbstractions + 1): yield child
 
     def size(self): return self.body.size()
+
+    def replacePlaceholders(self):
+        b,p = self.body.replacePlaceholders()
+        return Abstraction(b),p
 
 class Primitive(Program):
     GLOBALS = {}
@@ -197,6 +208,13 @@ class Primitive(Program):
                 assert False
         else:
             if not (self.name in Primitive.GLOBALS): Primitive.GLOBALS[self.name] = self
+
+    def replacePlaceholders(self):
+        if self.name == "REAL":
+            placeholder = Placeholder()
+            return Primitive(self.name, self.tp, placeholder), [placeholder]
+        return self, []
+        
             
 
 class Invented(Program):
@@ -220,3 +238,5 @@ class Invented(Program):
     def walk(self,surroundingAbstractions = 0): yield surroundingAbstractions,self
 
     def size(self): return 1
+    def replacePlaceholders(self):
+        return self.body.replacePlaceholders()
