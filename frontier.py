@@ -19,6 +19,7 @@ class Frontier(object):
         return self
 
     def keepTopK(self,k):
+        if k <= 0: return self
         self.entries.sort(key = lambda e: (e.logPrior + e.logLikelihood, str(e.program)), reverse = True)
         self.entries = self.entries[:k]
         return self

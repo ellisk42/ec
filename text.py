@@ -41,6 +41,7 @@ if __name__ == "__main__":
     print "Generated",len(tasks),"tasks"
 
     explorationCompression(primitives, tasks,
-                           frontierSize = 10**4,
-                           iterations = 3,
-                           pseudoCounts = 10.0)
+                           **commandlineArguments(
+                               frontierSize = 10**4,
+                               iterations = 3,
+                               pseudoCounts = 10.0))

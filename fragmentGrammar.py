@@ -369,7 +369,6 @@ class FragmentGrammar(object):
             else: break
         
         finalGrammar = FragmentGrammar.uniform(bestProductions).insideOutside(frontiers,pseudoCounts)
-        print "Final grammar:"
-        print finalGrammar
+
         return finalGrammar
         

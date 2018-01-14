@@ -14,7 +14,8 @@ def explorationCompression(primitives, tasks,
                            iterations = None,
                            frontierSize = None,
                            topK = 1,
-                           pseudoCounts = 1.0, aic = 1.0, structurePenalty = 0.001, arity = 0):
+                           pseudoCounts = 1.0, aic = 1.0, structurePenalty = 0.001, arity = 0,
+                           CPUs = 1):
     if frontierSize == None:
         print "Please specify a frontier size: explorationCompression(..., frontierSize = ...)"
         assert False
@@ -26,17 +27,19 @@ def explorationCompression(primitives, tasks,
 
     for j in range(iterations):
         frontiers = callCompiled(enumerateFrontiers,
-                                 grammar, frontierSize, tasks)
-        frontiers = [ frontier.keepTopK(1) for frontier in frontiers ]
-
+                                 grammar, frontierSize, tasks,
+                                 topK = topK,
+                                 CPUs = CPUs)
+        
         print "Enumeration results:"
         print Frontier.describe(frontiers)
 
-        recognizer = RecognitionModel(len(tasks[0].features), grammar)
-        recognizer.train(frontiers)
-        bottomFrontiers = recognizer.enumerateFrontiers(frontierSize, tasks)
-        print "Bottom-up enumeration results:"
-        print Frontier.describe(frontiers)
+        if False:
+            recognizer = RecognitionModel(len(tasks[0].features), grammar)
+            recognizer.train(frontiers)
+            bottomFrontiers = recognizer.enumerateFrontiers(frontierSize, tasks)
+            print "Bottom-up enumeration results:"
+            print Frontier.describe(frontiers)
 
         grammar = callCompiled(FragmentGrammar.induceFromFrontiers,
                                grammar, frontiers,
@@ -45,6 +48,7 @@ def explorationCompression(primitives, tasks,
                                structurePenalty = structurePenalty,
                                a = arity).\
                                toGrammar()
+        print "Final grammar:"
         print grammar
 
         
@@ -52,6 +56,7 @@ def commandlineArguments(_ = None,
                          iterations = None,
                          frontierSize = None,
                          topK = 1,
+                         CPUs = 1,
                          pseudoCounts = 1.0, aic = 1.0, structurePenalty = 0.001, a = 0):
     import argparse
     parser = argparse.ArgumentParser(description = "")
@@ -75,6 +80,9 @@ def commandlineArguments(_ = None,
                         type = float)
     parser.add_argument("-a", "--arity",
                         default = a,
+                        type = int)
+    parser.add_argument("-c", "--CPUs",
+                        default = CPUs,
                         type = int)
     return vars(parser.parse_args())
     

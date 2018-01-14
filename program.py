@@ -1,4 +1,5 @@
 from type import *
+from utilities import *
 
 from time import time
 import math
@@ -179,6 +180,24 @@ class Primitive(Program):
     def walk(self,surroundingAbstractions = 0): yield surroundingAbstractions,self
 
     def size(self): return 1
+
+    # Don't try pickling the value - in general it could be a function type
+    def __getstate__(self):
+        d = dict(self.__dict__)
+        if not usingDill(): del d['value']
+        return d
+    def __setstate__(self,d):
+        self.__dict__.update(d)
+        if not usingDill():
+            if self.name in Primitive.GLOBALS:
+                self.value = Primitive.GLOBALS[self.name].value
+            else:
+                self.value = None
+                print "WARNING: %s unpickled, but could not find value"%self.name
+                assert False
+        else:
+            if not (self.name in Primitive.GLOBALS): Primitive.GLOBALS[self.name] = self
+            
 
 class Invented(Program):
     def __init__(self, body):

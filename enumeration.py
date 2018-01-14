@@ -1,10 +1,11 @@
+from utilities import *
 from frontier import *
 from task import *
 from type import *
 from program import *
 from grammar import *
 
-def enumerateFrontiers(g, frontierSize, tasks):
+def enumerateFrontiers(g, frontierSize, tasks, CPUs = 1, topK = 0):
     '''g: Either a Grammar, or a map from task to grammar'''
     from time import time
     
@@ -19,8 +20,9 @@ def enumerateFrontiers(g, frontierSize, tasks):
 
         frontiers = {t: frontiers[t.request] for t in tasks }
     else:
-        frontiers = {t: iterativeDeepeningEnumeration(g[t], t.request, frontierSize)
-                     for t in tasks }
+        frontiers = dict(parallelMap(CPUs,
+                                     lambda t: (t, iterativeDeepeningEnumeration(g[t], t.request, frontierSize)),
+                                     tasks))
         totalNumberOfPrograms = sum(len(f) for f in frontiers.values())
         totalNumberOfFrontiers = len(frontiers)
     
@@ -28,14 +30,13 @@ def enumerateFrontiers(g, frontierSize, tasks):
         (totalNumberOfFrontiers,totalNumberOfPrograms,time() - start)
     
     start = time()
-    frontiers = [
-        Frontier([ FrontierEntry(program,
-                                 logPrior = logPrior,
-                                 logLikelihood = task.logLikelihood(program))
-                   for logPrior,program in frontiers[task] ],
-                 task = task).\
-        removeZeroLikelihood()
-        for task in tasks ]
+    frontiers = parallelMap(CPUs, lambda task: \
+                            Frontier([ FrontierEntry(program,
+                                                     logPrior = logPrior,
+                                                     logLikelihood = task.logLikelihood(program))
+                                       for logPrior,program in frontiers[task] ],
+                                     task = task).removeZeroLikelihood().keepTopK(topK),
+                            tasks)
     
     dt = time() - start
     print "Scored frontiers in time %fsec (%f/program)"%(dt,dt/totalNumberOfPrograms)

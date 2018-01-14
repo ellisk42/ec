@@ -17,11 +17,12 @@ k0 = Primitive("0",tint,0)
 
 
 
-MAXIMUMCOEFFICIENT = 5
+MAXIMUMCOEFFICIENT = 10
 tasks = [ RegressionTask("%dx^2 + %dx + %d"%(a,b,c),
                          arrow(tint,tint),
                          [(x,a*x*x + b*x + c) for x in range(6) ],
-                         features = [float(a*x*x + b*x + c) for x in range(6) ])
+                         features = [float(a*x*x + b*x + c) for x in range(6) ],
+                         cache = True)
           for a in range(MAXIMUMCOEFFICIENT)
           for b in range(MAXIMUMCOEFFICIENT)
           for c in range(MAXIMUMCOEFFICIENT) ]

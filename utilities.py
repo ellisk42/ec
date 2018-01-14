@@ -4,6 +4,34 @@ import os
 import math
 import cPickle as pickle
 
+PARALLELMAPDATA = None
+def parallelMap(numberOfCPUs, f, *xs):
+    global PARALLELMAPDATA
+
+    if numberOfCPUs == 1: return map(f,*xs)
+
+    for x in xs: assert len(x) == len(xs[0])
+    assert PARALLELMAPDATA is None
+    PARALLELMAPDATA = (f,xs)
+    
+    #from pathos.multiprocessing import ProcessingPool as Pool
+    from multiprocessing import Pool
+    
+    ys = Pool(numberOfCPUs).map(parallelMapCallBack, range(len(xs[0])))
+
+    PARALLELMAPDATA = None
+    return ys
+    
+def parallelMapCallBack(j):
+    global PARALLELMAPDATA
+    (f,xs) = PARALLELMAPDATA
+    try:
+        return f(*[ x[j] for x in xs ])
+    except Exception as e:
+        print "Exception in worker during lightweight parallel map:\n%s"%(traceback.format_exc())
+        raise e
+
+
 def log(x):
     t = type(x)
     if t == int or t == float:
@@ -50,7 +78,14 @@ def torchSoftMax(x,y = None):
     return (x - log_softmax(x))[0]
 
 NEGATIVEINFINITY = float('-inf')
+POSITIVEINFINITY = float('inf')
 
+USINGDILL = False
+def usingDill(new = None):
+    global USINGDILL
+    old = USINGDILL
+    if not (new is None): USINGDILL = new
+    return old
 def callCompiled(f, *arguments, **keywordArguments):
     modulePath = f.__module__
 
@@ -70,12 +105,16 @@ def callCompiled(f, *arguments, **keywordArguments):
         # Parent
         os.close(ra)
         os.close(wr)
+        
+        usingDill(True)
         serialized = dill.dumps({"arguments": arguments,
                                    "keywordArguments": keywordArguments,
                                    "function": f,
                                    "functionName": f.__name__,
                                    #"openModules": openModules,
                                    "module": modulePath})
+        usingDill(False)
+        
         w = os.fdopen(wa,'wb')
         w.write(serialized)
         w.close()
@@ -91,3 +130,5 @@ def callCompiled(f, *arguments, **keywordArguments):
         return returnValue
         
         
+
+    
