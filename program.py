@@ -1,3 +1,4 @@
+from differentiation import Placeholder
 from type import *
 from utilities import *
 
@@ -211,7 +212,7 @@ class Primitive(Program):
 
     def replacePlaceholders(self):
         if self.name == "REAL":
-            placeholder = Placeholder()
+            placeholder = Placeholder.named("REAL_", 0.)
             return Primitive(self.name, self.tp, placeholder), [placeholder]
         return self, []
         

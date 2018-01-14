@@ -33,7 +33,8 @@ class Frontier(object):
 
     def summarize(self):
         if self.empty: return "MISS " + self.task.name
-        return "HIT %s w/ %s ; log prior = %f"%(self.task.name, self.bestPosterior.program, self.bestPosterior.logPrior)
+        best = self.bestPosterior
+        return "HIT %s w/ %s ; log prior = %f ; log likelihood = %f"%(self.task.name, best.program, best.logPrior, best.logLikelihood)
 
     @staticmethod
     def describe(frontiers):

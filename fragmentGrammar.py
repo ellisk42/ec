@@ -316,6 +316,10 @@ class FragmentGrammar(object):
         return sum( lse([ entry.logLikelihood + self.closedLogLikelihood(frontier.task.request, entry.program)
                           for entry in frontier ])
                     for frontier in frontiers )
+    def jointFrontiersMDL(self, frontiers):
+        return sum( max([ entry.logLikelihood + self.closedLogLikelihood(frontier.task.request, entry.program)
+                          for entry in frontier ])
+                    for frontier in frontiers )
 
     def __len__(self): return len(self.productions)
 
@@ -331,19 +335,15 @@ class FragmentGrammar(object):
         return FragmentGrammar(0., [(0., p.infer(),p) for p in productions ])
                 
     @staticmethod
-    def induceFromFrontiers(g0, frontiers, pseudoCounts = 1.0, aic = 1.0, structurePenalty = 0.001, a = 0):
+    def induceFromFrontiers(g0, frontiers, _ = None,
+                            pseudoCounts = 1.0, aic = 1.0, structurePenalty = 0.001, a = 0, CPUs = 1):
         frontiers = [frontier for frontier in frontiers if not frontier.empty ]
-        # print "Initial likelihoods:"
-        # for frontier in frontiers:
-        #     p = frontier.entries[0].program
-        #     print p,FragmentGrammar.fromGrammar(g0).closedLogLikelihood(frontier.task.request,
-        #                                                                 p)
-        
+
         fragments = proposeFragmentsFromFrontiers(frontiers,a)
 
         def grammarScore(productions):
             g = FragmentGrammar.uniform(productions).insideOutside(frontiers, pseudoCounts)
-            likelihood = g.jointFrontiersLikelihood(frontiers)
+            likelihood = g.jointFrontiersMDL(frontiers)
             structure = sum(p.size() for p in productions)
             return likelihood - aic*len(g) - structurePenalty*structure
 
@@ -353,13 +353,12 @@ class FragmentGrammar(object):
         while True:
             newScore = None
             newProductions = None
+
+            scoredFragments = parallelMap(CPUs, lambda f: (grammarScore(bestProductions + [f]),\
+                                                           bestProductions + [f]),
+                                          [ f for f in fragments if not f in bestProductions ])
+            (newScore, newProductions) = max(scoredFragments)
             
-            for f in fragments:
-                if f in bestProductions: continue
-                thisScore = grammarScore(bestProductions + [f])
-                if newScore == None or thisScore > newScore:
-                    newScore = thisScore
-                    newProductions = bestProductions + [f]
             if newScore > bestScore:
                 bestScore = newScore
                 bestProductions = newProductions

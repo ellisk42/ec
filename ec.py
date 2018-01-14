@@ -46,7 +46,8 @@ def explorationCompression(primitives, tasks,
                                pseudoCounts = pseudoCounts,
                                aic = aic,
                                structurePenalty = structurePenalty,
-                               a = arity).\
+                               a = arity,
+                               CPUs = CPUs).\
                                toGrammar()
         print "Final grammar:"
         print grammar

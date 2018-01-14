@@ -47,14 +47,34 @@ class RegressionTask(object):
         else: return NEGATIVEINFINITY
 
 class DifferentiableTask(RegressionTask):
-    def __init__(self, name, request, examples, features = None):
-        super(DifferentiableTask,self).__init__(name, request, examples, features, cache = cache)
+    def __init__(self, name, request, examples, _ = None,
+                 features = None, BIC = 1., loss = None, likelihoodThreshold = None):
+        self.likelihoodThreshold = likelihoodThreshold
+        assert loss != None
+        self.loss = loss
+        
+        super(DifferentiableTask,self).__init__(name, request, examples, features, cache = False)
+        self.BIC = BIC
 
     def logLikelihood(self,e):
         e, parameters = e.replacePlaceholders()
         f = e.evaluate([])
-        loss = - sum( (Placeholder.maybe(f(x)) - y).square() for x,y in self.examples )
-        l,parameters = loss.gradientDescent(parameters, 0.01, steps = 50)
+        
+        loss = sum( self.loss(Placeholder.maybe(f(Placeholder.named("X_",float(x)))),
+                              Placeholder.named("Y_",float(y)))
+                    for x,y in self.examples )
+
+        l = loss.resilientBackPropagation(parameters, lr = 0.5, steps = 100)
+            
+        # BIC penalty
+        penalty = self.BIC*len(parameters)*math.log(len(self.examples))
+
+        if self.likelihoodThreshold != None:
+            if l > -self.likelihoodThreshold: return NEGATIVEINFINITY
+            else: return 0.
+        else:
+            return -l - penalty
+        
 
         
         

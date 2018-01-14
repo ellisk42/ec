@@ -1,3 +1,4 @@
+import traceback
 import dill
 import sys
 import os
@@ -79,6 +80,10 @@ def torchSoftMax(x,y = None):
 
 NEGATIVEINFINITY = float('-inf')
 POSITIVEINFINITY = float('inf')
+
+def invalid(x):
+    return math.isinf(x) or math.isnan(x)
+def valid(x): return not invalid(x)
 
 USINGDILL = False
 def usingDill(new = None):
