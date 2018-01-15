@@ -30,13 +30,19 @@ def enumerateFrontiers(g, frontierSize, tasks, CPUs = 1):
         (totalNumberOfFrontiers,totalNumberOfPrograms,time() - start)
     
     start = time()
-    frontiers = parallelMap(CPUs, lambda task: \
-                            Frontier([ FrontierEntry(program,
-                                                     logPrior = logPrior,
-                                                     logLikelihood = task.logLikelihood(program))
-                                       for logPrior,program in frontiers[task] ],
-                                     task = task).removeZeroLikelihood(),
-                            tasks)
+    programLikelihoods = parallelMap(CPUs, lambda task: \
+                                     { j: logLikelihood
+                                         for j, (_, program) in enumerate(frontiers[task])
+                                         for logLikelihood in [task.logLikelihood(program)]
+                                         if valid(logLikelihood) },
+                                     tasks)
+                                     
+    frontiers = [ Frontier([ FrontierEntry(program,
+                                           logPrior = logPrior,
+                                           logLikelihood = programLikelihood.get(j,NEGATIVEINFINITY))
+                             for j, (logPrior,program) in enumerate(frontiers[task]) ],
+                           task = task).removeZeroLikelihood()
+                  for programLikelihood,task in zip(programLikelihoods, tasks) ]
     
     dt = time() - start
     print "Scored frontiers in time %fsec (%f/program)"%(dt,dt/totalNumberOfPrograms)
