@@ -357,6 +357,7 @@ class FragmentGrammar(object):
             scoredFragments = parallelMap(CPUs, lambda f: (grammarScore(bestProductions + [f]),\
                                                            bestProductions + [f]),
                                           [ f for f in fragments if not f in bestProductions ])
+            if scoredFragments == []: break
             (newScore, newProductions) = max(scoredFragments)
             
             if newScore > bestScore:

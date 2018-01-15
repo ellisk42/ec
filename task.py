@@ -10,6 +10,10 @@ EVALUATIONTABLE = {}
 
 class RegressionTask(object):
     def __init__(self, name, request, examples, features = None, cache = True):
+        '''request: the type of this task
+        examples: list of tuples of (input, output). input should be a tuple, with one entry for each argument
+        cache: should program evaluations be cached?
+        features: list of floats.'''
         self.cache = cache
         self.features = features
         self.request = request
@@ -19,6 +23,9 @@ class RegressionTask(object):
     def __eq__(self,o): return self.name == o.name
     def __ne__(self,o): return not (self == o)
     def __hash__(self): return hash(self.name)
+    def predict(self, f, x):
+        for a in x: f = f(a)
+        return f
     def check(self,e,timeout = None):
         if not (timeout is None):
             def timeoutCallBack(_1,_2): raise EvaluationTimeout()
@@ -31,7 +38,7 @@ class RegressionTask(object):
             for x,y in self.examples:
                 if self.cache and (x,e) in EVALUATIONTABLE: p = EVALUATIONTABLE[(x,e)]
                 else:
-                    try: p = f(x)                    
+                    try: p = self.predict(f,x)
                     except: p = None
                     if self.cache: EVALUATIONTABLE[(x,e)] = p
                 if p != y:
@@ -55,12 +62,14 @@ class DifferentiableTask(RegressionTask):
         
         super(DifferentiableTask,self).__init__(name, request, examples, features, cache = False)
         self.BIC = BIC
+    
 
     def logLikelihood(self,e):
         e, parameters = e.replacePlaceholders()
         f = e.evaluate([])
         
-        loss = sum( self.loss(Placeholder.maybe(f(Placeholder.named("X_",float(x)))),
+        loss = sum( self.loss(Placeholder.maybe(self.predict(f, [ Placeholder.named("X_",float(a))
+                                                                  for a in x ])),
                               Placeholder.named("Y_",float(y)))
                     for x,y in self.examples )
 

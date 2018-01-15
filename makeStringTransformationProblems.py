@@ -29,19 +29,20 @@ singleWordOperations = {"lowercase": lambda x: x.lower(),
 
 def makeTasks():
     singleWordProblems = [RegressionTask(n, arrow(tstring,tstring),
-                                         [(x,f(x)) for _ in range(5) for x in [randomWord()] ])
+                                         [((x,),f(x)) for _ in range(5) for x in [randomWord()] ])
                           for n,f in singleWordOperations.iteritems() ]
     mapSingleProblems = [RegressionTask("Apply %s delimited by '%s' to input delimited by '%s'"%(n,d1,d2),
                                         arrow(tstring,tstring),
-                                 [(x,d2.join(map(f,x.split(d1))))
+                                 [((x,),d2.join(map(f,x.split(d1))))
                                   for _ in range(5)
                                   for x in [randomWords(d1)] ])
                          for n,f in singleWordOperations.iteritems()
                          for d1 in delimiters
-                         for d2 in delimiters ]
+                         for d2 in delimiters
+                         if d1 != d2]
     mapDoubleProblems = [RegressionTask("Apply %s.%s delimited by '%s' to input delimited by '%s'"%(n1,n2,d1,d2),
                                         arrow(tstring,tstring),
-                                 [(x,d2.join(map(f2,map(f1,x.split(d1)))))
+                                 [((x,),d2.join(map(f2,map(f1,x.split(d1)))))
                                   for _ in range(5)
                                   for x in [randomWords(d1)] ])
                          for n1,f1 in singleWordOperations.iteritems()
@@ -51,7 +52,7 @@ def makeTasks():
                          for d2 in delimiters ]
     extractDelimited1 = [RegressionTask("Extract string delimited by '%s','%s'"%(d1,d2),
                                         arrow(tstring,tstring),
-                                        [(x,y)
+                                        [((x,),y)
                                  for _ in range(5)
                                  for y in [randomWord()]
                                  for x in [randomWord() + d1 + y + d2 + randomWord()]])
@@ -59,7 +60,7 @@ def makeTasks():
                         for d2 in delimiters]
     extractDelimited2 = [RegressionTask("Extract string delimited by '%s' (inclusive),'%s'"%(d1,d2),
                                         arrow(tstring,tstring),
-                                [(x,y)
+                                [((x,),y)
                                  for _ in range(5)
                                  for y in [d1 + randomWord() + d2]
                                  for x in [randomWord() + y + randomWord()]])
@@ -67,7 +68,7 @@ def makeTasks():
                         for d2 in delimiters]
     extractDelimited3 = [RegressionTask("Extract string delimited by '%s' (inclusive),'%s' (inclusive)"%(d1,d2),
                                         arrow(tstring,tstring),
-                                [(x,y)
+                                [((x,),y)
                                  for _ in range(5)
                                  for y in [d1 + randomWord()]
                                  for x in [randomWord() + y + d2 + randomWord()]])
@@ -75,7 +76,7 @@ def makeTasks():
                         for d2 in delimiters] 
     applyDelimited = [RegressionTask("Apply %s to string delimited by '%s','%s'"%(n,d1,d2),
                                      arrow(tstring,tstring),
-                                [(x,f(y))
+                                [((x,),f(y))
                                  for _ in range(5)
                                  for y in [randomWord()]
                                  for x in [randomWord() + d1 + y + d2 + randomWord()]])

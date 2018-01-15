@@ -24,14 +24,14 @@ MAXIMUMCOEFFICIENT = 9
 NUMBEROFEXAMPLES = 5
 tasks = [ DifferentiableTask("%dx^2 + %dx + %d"%(a,b,c),
                              arrow(tint,tint),
-                             [(x,a*x*x + b*x + c) for x in range(NUMBEROFEXAMPLES+1) ],
+                             [((x,),a*x*x + b*x + c) for x in range(NUMBEROFEXAMPLES+1) ],
                              features = [float(a*x*x + b*x + c) for x in range(NUMBEROFEXAMPLES+1) ],
                              loss = lambda prediction, target: (prediction - target).square(),
                              likelihoodThreshold = -0.5) \
           if DIFFERENTIABLE else \
           RegressionTask("%dx^2 + %dx + %d"%(a,b,c),
                          arrow(tint,tint),
-                         [(x,a*x*x + b*x + c) for x in range(NUMBEROFEXAMPLES+1) ],
+                         [((x,), a*x*x + b*x + c) for x in range(NUMBEROFEXAMPLES+1) ],
                          features = [float(a*x*x + b*x + c) for x in range(NUMBEROFEXAMPLES+1) ],
                          cache = True)
           for a in range(MAXIMUMCOEFFICIENT+1)

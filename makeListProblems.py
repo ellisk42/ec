@@ -42,7 +42,8 @@ def problem(description, examples):
     elif isinstance(y,int): outputType = tint
     else: assert False
 
-    t = RegressionTask(description, arrow(inputType,outputType), examples,
+    t = RegressionTask(description, arrow(inputType,outputType),
+                       [((x,),y) for x,y in examples ],
                        features = examples,
                        cache = False)
     global_problems.append(t)
