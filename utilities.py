@@ -1,3 +1,4 @@
+import time
 import traceback
 import dill
 import sys
@@ -15,7 +16,6 @@ def parallelMap(numberOfCPUs, f, *xs):
     assert PARALLELMAPDATA is None
     PARALLELMAPDATA = (f,xs)
     
-    #from pathos.multiprocessing import ProcessingPool as Pool
     from multiprocessing import Pool
     
     ys = Pool(numberOfCPUs).map(parallelMapCallBack, range(len(xs[0])))
@@ -125,7 +125,13 @@ def callCompiled(f, *arguments, **keywordArguments):
         w.close()
 
         r = os.fdopen(rr,'rb')
-        (success,returnValue) = dill.loads(r.read())
+
+        start = time.time()
+        content = r.read()
+        print "Read content from pypy in",time.time() - start
+        start = time.time()
+        (success,returnValue) = dill.loads(content)
+        print "Loaded content from pypy  in",time.time() - start
 
         if not success:
             print "Exception thrown in pypy process:"

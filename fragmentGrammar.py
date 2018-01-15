@@ -351,6 +351,8 @@ class FragmentGrammar(object):
     def induceFromFrontiers(g0, frontiers, _ = None,
                             topK = 1, pseudoCounts = 1.0, aic = 1.0, structurePenalty = 0.001, a = 0, CPUs = 1):
         frontiers = [frontier for frontier in frontiers if not frontier.empty ]
+        print "Inducing a grammar from",len(frontiers),"frontiers"
+        
         bestGrammar = FragmentGrammar.fromGrammar(g0)
         
         # "restricted frontiers" only contain the top K according to the best grammar

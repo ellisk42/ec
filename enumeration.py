@@ -30,6 +30,9 @@ def enumerateFrontiers(g, frontierSize, tasks, CPUs = 1):
         (totalNumberOfFrontiers,totalNumberOfPrograms,time() - start)
     
     start = time()
+    # We split up the likelihood calculation and the frontier construction
+    # This is so we do not have to serialize and deserialize a bunch of programs
+    # programLikelihoods: [ {indexInfrontiers[task]: likelihood} (for each task)]
     programLikelihoods = parallelMap(CPUs, lambda task: \
                                      { j: logLikelihood
                                          for j, (_, program) in enumerate(frontiers[task])
