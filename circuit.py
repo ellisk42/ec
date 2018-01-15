@@ -13,15 +13,16 @@ class Circuit(RegressionTask):
         self.operations = []
         while not self.isConnected():
             self.operations = []
-            name = []
             while len(self.operations) < numberOfGates:
                 gate = random.choice(['OR','AND','NOT'])
                 x1 = random.choice(range(-numberOfInputs, len(self.operations)))
                 x2 = random.choice(range(-numberOfInputs, len(self.operations)))
-                self.operations.append((gate,x1,x2))
-                if gate != 'NOT': name.append("%s(%d,%d)"%(gate,x1,x2))
-                else: name.append("%s(%d)"%(gate,x1))
-        name = " ; ".join(name)
+                if gate != 'NOT':
+                    self.operations.append((gate,x1,x2))
+                else:
+                    self.operations.append((gate,x1))
+            self.name = " ; ".join("%s(%s)"%(o[0],",".join(map(str,o[1:])))
+                                   for o in self.operations )
 
         xs = list(itertools.product(*[ [False,True] for _ in range(numberOfInputs) ]))
         
@@ -32,14 +33,15 @@ class Circuit(RegressionTask):
         self.signature = tuple(ys)
 
         request = arrow(*[tbool for _ in range(numberOfInputs + 1) ])        
-        super(Circuit, self).__init__(name, request, examples, cache = True)
+        super(Circuit, self).__init__(self.name, request, examples, cache = True)
 
     def evaluate(self,x):
         x = list(reversed(x))
         outputs = []
-        for o,x1,x2 in self.operations:
-            v1 = (outputs + x)[x1]
-            v2 = (outputs + x)[x2]
+        for z in self.operations:
+            o = z[0]
+            v1 = (outputs + x)[z[1]]
+            v2 = (outputs + x)[z[-1]]
             if o == 'AND':
                 outputs.append(v1 and v2)
             elif o == 'OR':
@@ -51,9 +53,17 @@ class Circuit(RegressionTask):
         return outputs[-1]
 
     def isConnected(self):
+        def used(o):
+            arguments = { j for j in o[1:] if j >= 0 }
+            return arguments | { k for j in arguments for k in used(self.operations[j]) }
+        
         if self.operations == []: return False
-        usedIndices = { j for o in self.operations for j in o[1:] }
-        return len(usedIndices) == self.numberOfInputs + len(self.operations) - 1
+        usedIndices = used(self.operations[-1])
+        if len(usedIndices) == len(self.operations) - 1:
+            print self.name
+            print usedIndices
+            print 
+        return len(usedIndices) == len(self.operations) - 1
                 
 primitives = [Primitive("nand",arrow(tbool,tbool,tbool),
                         lambda x: lambda y: not (x and y))]
@@ -62,10 +72,7 @@ if __name__ == "__main__":
     tasks = []
     while len(tasks) < 1000:
         inputs = random.choice([1,2,3])
-        if inputs == 3: # 3 inputs cannot all be used up with 1 gate
-            gates = random.choice([2,3,4,5])
-        else:
-            gates = random.choice([1,2,3,4,5])
+        gates = random.choice([1,2,3,4,5])
         tasks.append(Circuit(numberOfInputs = inputs,
                              numberOfGates = gates))
     print "Sampled %d tasks with %d unique functions"%(len(tasks),
