@@ -5,7 +5,7 @@ from type import *
 from program import *
 from grammar import *
 
-def enumerateFrontiers(g, frontierSize, tasks, CPUs = 1, topK = 0):
+def enumerateFrontiers(g, frontierSize, tasks, CPUs = 1):
     '''g: Either a Grammar, or a map from task to grammar'''
     from time import time
     
@@ -35,7 +35,7 @@ def enumerateFrontiers(g, frontierSize, tasks, CPUs = 1, topK = 0):
                                                      logPrior = logPrior,
                                                      logLikelihood = task.logLikelihood(program))
                                        for logPrior,program in frontiers[task] ],
-                                     task = task).removeZeroLikelihood().keepTopK(topK),
+                                     task = task).removeZeroLikelihood(),
                             tasks)
     
     dt = time() - start

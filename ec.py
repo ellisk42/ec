@@ -28,7 +28,6 @@ def explorationCompression(primitives, tasks,
     for j in range(iterations):
         frontiers = callCompiled(enumerateFrontiers,
                                  grammar, frontierSize, tasks,
-                                 topK = topK,
                                  CPUs = CPUs)
         
         print "Enumeration results:"
@@ -43,6 +42,7 @@ def explorationCompression(primitives, tasks,
 
         grammar = callCompiled(FragmentGrammar.induceFromFrontiers,
                                grammar, frontiers,
+                               topK = topK,
                                pseudoCounts = pseudoCounts,
                                aic = aic,
                                structurePenalty = structurePenalty,
@@ -62,28 +62,36 @@ def commandlineArguments(_ = None,
     import argparse
     parser = argparse.ArgumentParser(description = "")
     parser.add_argument('-i',"--iterations",
+                        help = 'default %d'%iterations,
                         default = iterations,
                         type = int)
     parser.add_argument("-f","--frontierSize",
                         default = frontierSize,
+                        help = 'default %d'%frontierSize,
                         type = int)
     parser.add_argument('-k',"--topK",
                         default = topK,
+                        help = 'default %d'%topK,
                         type = int)
     parser.add_argument("-p","--pseudoCounts",
                         default = pseudoCounts,
+                        help = 'default %f'%pseudoCounts,
                         type = float)
     parser.add_argument("-b","--aic",
                         default = aic,
+                        help = 'default %f'%aic,
                         type = float)
     parser.add_argument("-l", "--structurePenalty",
                         default = structurePenalty,
+                        help = 'default %f'%structurePenalty,
                         type = float)
     parser.add_argument("-a", "--arity",
                         default = a,
+                        help = 'default %d'%a,
                         type = int)
     parser.add_argument("-c", "--CPUs",
                         default = CPUs,
+                        help = 'default %d'%CPUs,
                         type = int)
     return vars(parser.parse_args())
     

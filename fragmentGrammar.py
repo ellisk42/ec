@@ -330,45 +330,62 @@ class FragmentGrammar(object):
         return Grammar(self.logVariable, [(l,q.infer(),q)
                                           for l,t,p in self.productions
                                           for q in [defragment(p)] ])
+
+    @property
+    def primitives(self): return [ p for _,_,p in self.productions ]
+
     @staticmethod
     def uniform(productions):
         return FragmentGrammar(0., [(0., p.infer(),p) for p in productions ])
+    def makeUniform(self):
+        return FragmentGrammar(0., [(0., p.infer(),p) for _,_,p in self.productions ])
+
+    def rescoreFrontier(self, frontier):
+        return Frontier([ FrontierEntry(e.program,
+                                        logPrior = self.closedLogLikelihood(frontier.task.request, e.program),
+                                        logLikelihood = e.logLikelihood)
+                          for e in frontier ],
+                        frontier.task)
                 
     @staticmethod
     def induceFromFrontiers(g0, frontiers, _ = None,
-                            pseudoCounts = 1.0, aic = 1.0, structurePenalty = 0.001, a = 0, CPUs = 1):
+                            topK = 1, pseudoCounts = 1.0, aic = 1.0, structurePenalty = 0.001, a = 0, CPUs = 1):
         frontiers = [frontier for frontier in frontiers if not frontier.empty ]
+        bestGrammar = FragmentGrammar.fromGrammar(g0)
+        
+        # "restricted frontiers" only contain the top K according to the best grammar
+        def restrictFrontiers():
+            return [ bestGrammar.rescoreFrontier(f).topK(topK) for f in frontiers ]
+        restrictedFrontiers = restrictFrontiers()
 
-        fragments = proposeFragmentsFromFrontiers(frontiers,a)
+        def grammarScore(g):
+            g = g.makeUniform().insideOutside(restrictedFrontiers, pseudoCounts)
+            likelihood = g.jointFrontiersMDL(restrictedFrontiers)
+            structure = sum(p.size() for p in g.primitives)
+            score = likelihood - aic*len(g) - structurePenalty*structure, g
+            return score
 
-        def grammarScore(productions):
-            g = FragmentGrammar.uniform(productions).insideOutside(frontiers, pseudoCounts)
-            likelihood = g.jointFrontiersMDL(frontiers)
-            structure = sum(p.size() for p in productions)
-            return likelihood - aic*len(g) - structurePenalty*structure
-
-        bestProductions = [p for _,_,p in g0.productions ]
-        bestScore = grammarScore(bestProductions)
+        bestScore, _ = grammarScore(bestGrammar)
 
         while True:
-            newScore = None
-            newProductions = None
+            restrictedFrontiers = restrictFrontiers()
+            fragments = proposeFragmentsFromFrontiers(restrictedFrontiers, a)
+            
+            candidateGrammars = [ FragmentGrammar.uniform(bestGrammar.primitives + [fragment])
+                                  for fragment in fragments
+                                  if not fragment in bestGrammar.primitives ]
+            if candidateGrammars == []: break
 
-            scoredFragments = parallelMap(CPUs, lambda f: (grammarScore(bestProductions + [f]),\
-                                                           bestProductions + [f]),
-                                          [ f for f in fragments if not f in bestProductions ])
-            if scoredFragments == []: break
-            (newScore, newProductions) = max(scoredFragments)
+            scoredFragments = parallelMap(CPUs, grammarScore, candidateGrammars)
+            (newScore, newGrammar) = max(scoredFragments)
             
             if newScore > bestScore:
-                bestScore = newScore
-                bestProductions = newProductions
+                bestScore, bestGrammar = newScore, newGrammar                
                 print "Updated grammar to: (score = %f)"%newScore
-                print FragmentGrammar.uniform(bestProductions).insideOutside(frontiers,pseudoCounts)
+                print newGrammar
                 print
             else: break
-        
-        finalGrammar = FragmentGrammar.uniform(bestProductions).insideOutside(frontiers,pseudoCounts)
 
-        return finalGrammar
+        # Reestimate the parameters using the entire frontiers
+        return bestGrammar.makeUniform().insideOutside(frontiers, pseudoCounts)
         
