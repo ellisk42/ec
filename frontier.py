@@ -47,4 +47,5 @@ class Frontier(object):
                          [ "Average description length of a program solving a task: %f nats"%(-averageLikelihood) ])
 
         
-        
+    def refreshPrimitives(self):
+        for e in self: e.program.refreshPrimitives()

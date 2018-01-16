@@ -29,6 +29,7 @@ def explorationCompression(primitives, tasks,
         frontiers = callCompiled(enumerateFrontiers,
                                  grammar, frontierSize, tasks,
                                  CPUs = CPUs)
+        #for f in frontiers: f.refreshPrimitives()
         
         print "Enumeration results:"
         print Frontier.describe(frontiers)
@@ -40,8 +41,9 @@ def explorationCompression(primitives, tasks,
             print "Bottom-up enumeration results:"
             print Frontier.describe(frontiers)
 
-        grammar = callCompiled(FragmentGrammar.induceFromFrontiers,
-                               grammar, frontiers,
+        grammar = callCompiled(induceFragmentGrammarFromFrontiers,
+                               grammar,
+                               frontiers,
                                topK = topK,
                                pseudoCounts = pseudoCounts,
                                aic = aic,

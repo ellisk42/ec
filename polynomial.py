@@ -1,16 +1,5 @@
 from ec import *
-
-addition = Primitive("+",
-                     arrow(tint,arrow(tint,tint)),
-                     lambda x: lambda y: x + y)
-multiplication = Primitive("*",
-                           arrow(tint,arrow(tint,tint)),
-                           lambda x: lambda y: x * y)
-square = Primitive("square",
-                   arrow(tint,tint),
-                   lambda x: x*x)
-k1 = Primitive("1",tint,1)
-k0 = Primitive("0",tint,0)
+from arithmeticPrimitives import *
 
 polynomialPrimitives = [addition, multiplication,k0,k1]
 
@@ -28,6 +17,9 @@ tasks = [
 ]
 
 if __name__ == "__main__":
+    # import cPickle as pickle
+    # print pickle.dumps(addition)
+    # assert False
     explorationCompression(polynomialPrimitives, tasks,
                            **commandlineArguments(frontierSize = 10**4,
                                                   iterations = 5,

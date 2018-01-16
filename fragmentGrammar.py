@@ -391,3 +391,5 @@ class FragmentGrammar(object):
         # Reestimate the parameters using the entire frontiers
         return bestGrammar.makeUniform().insideOutside(frontiers, pseudoCounts)
         
+def induceFragmentGrammarFromFrontiers(*arguments, **keywordArguments):
+    return FragmentGrammar.induceFromFrontiers(*arguments, **keywordArguments)

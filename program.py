@@ -72,6 +72,11 @@ class Application(Program):
         f,p = self.f.replacePlaceholders()
         x,q = self.x.replacePlaceholders()
         return Application(f,x), p + q
+
+    def refreshPrimitives(self):
+        self.f.refreshPrimitives()
+        self.x.refreshPrimitives()
+        
             
 
 class Index(Program):
@@ -131,6 +136,8 @@ class Index(Program):
     def size(self): return 1
 
     def replacePlaceholders(self): return self,[]
+
+    def refreshPrimitives(self): pass
             
         
 
@@ -171,6 +178,8 @@ class Abstraction(Program):
         b,p = self.body.replacePlaceholders()
         return Abstraction(b),p
 
+    def refreshPrimitives(self): self.body.refreshPrimitives()
+
 class Primitive(Program):
     GLOBALS = {}
     def __init__(self, name, ty, value):
@@ -193,22 +202,24 @@ class Primitive(Program):
 
     def size(self): return 1
 
+    def refreshPrimitives(self): self.value = Primitive.GLOBALS.get(self.name,self).value
+
     # Don't try pickling the value - in general it could be a function type
-    def __getstate__(self):
-        d = dict(self.__dict__)
-        if not usingDill(): del d['value']
-        return d
-    def __setstate__(self,d):
-        self.__dict__.update(d)
-        if not usingDill():
-            if self.name in Primitive.GLOBALS:
-                self.value = Primitive.GLOBALS[self.name].value
-            else:
-                self.value = None
-                print "WARNING: %s unpickled, but could not find value"%self.name
-                assert False
-        else:
-            if not (self.name in Primitive.GLOBALS): Primitive.GLOBALS[self.name] = self
+    # def __getstate__(self):
+    #     d = dict(self.__dict__)
+    #     if not usingDill(): del d['value']
+    #     return d
+    # def __setstate__(self,d):
+    #     self.__dict__.update(d)
+    #     if not usingDill():
+    #         if self.name in Primitive.GLOBALS:
+    #             self.value = Primitive.GLOBALS[self.name].value
+    #         else:
+    #             self.value = None
+    #             print "WARNING: %s unpickled, but could not find value"%self.name
+    #             assert False
+    #     else:
+    #         if not (self.name in Primitive.GLOBALS): Primitive.GLOBALS[self.name] = self
 
     def replacePlaceholders(self):
         if self.name == "REAL":
@@ -241,3 +252,4 @@ class Invented(Program):
     def size(self): return 1
     def replacePlaceholders(self):
         return self.body.replacePlaceholders()
+    def refreshPrimitives(self): self.body.refreshPrimitives()

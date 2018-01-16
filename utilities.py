@@ -1,6 +1,6 @@
 import time
 import traceback
-import dill
+#import dill
 import sys
 import os
 import math
@@ -85,12 +85,12 @@ def invalid(x):
     return math.isinf(x) or math.isnan(x)
 def valid(x): return not invalid(x)
 
-USINGDILL = False
-def usingDill(new = None):
-    global USINGDILL
-    old = USINGDILL
-    if not (new is None): USINGDILL = new
-    return old
+# USINGDILL = False
+# def usingDill(new = None):
+#     global USINGDILL
+#     old = USINGDILL
+#     if not (new is None): USINGDILL = new
+#     return old
 def callCompiled(f, *arguments, **keywordArguments):
     modulePath = f.__module__
 
@@ -111,16 +111,16 @@ def callCompiled(f, *arguments, **keywordArguments):
         os.close(ra)
         os.close(wr)
         
-        usingDill(True)
+        #usingDill(True)
         start = time.time()
-        serialized = dill.dumps({"arguments": arguments,
+        serialized = pickle.dumps({"arguments": arguments,
                                    "keywordArguments": keywordArguments,
                                    "function": f,
                                    "functionName": f.__name__,
                                    #"openModules": openModules,
                                    "module": modulePath})
         print "Serialized in time",time.time() - start
-        usingDill(False)
+        #usingDill(False)
         
         w = os.fdopen(wa,'wb')
         start = time.time()
@@ -132,7 +132,7 @@ def callCompiled(f, *arguments, **keywordArguments):
 
         content = r.read()
         start = time.time()
-        (success,returnValue) = dill.loads(content)
+        (success,returnValue) = pickle.loads(content)
         print "Loaded content from pypy  in",time.time() - start
 
         if not success:

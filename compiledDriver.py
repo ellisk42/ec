@@ -1,11 +1,11 @@
 import time
 import traceback
-import dill
+import cPickle as pickle #import dill
 import os
 import subprocess
 import sys
 
-from utilities import usingDill
+#from utilities import usingDill
 
 if __name__ == "__main__":
     sys.setrecursionlimit(1000)
@@ -14,9 +14,9 @@ if __name__ == "__main__":
     r = os.fdopen(int(ra),'rb')
 
     start = time.time()
-    usingDill(True)
-    message = dill.loads(r.read())
-    usingDill(False)
+    #usingDill(True)
+    message = pickle.loads(r.read())
+    #usingDill(False)
     print "Compiled driver unpacked the message in time",time.time() - start
     
     #module = __import__(message["module"])
@@ -29,7 +29,7 @@ if __name__ == "__main__":
     except:
         returnValue = (False,traceback.format_exc())
     start = time.time()
-    returnValue = dill.dumps(returnValue)
+    returnValue = pickle.dumps(returnValue)
     print "Packed return value in time",time.time() - start
     w = os.fdopen(int(wr),'wb')
     start = time.time()
