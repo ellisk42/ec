@@ -35,4 +35,4 @@ if __name__ == "__main__":
     start = time.time()
     w.write(returnValue)
     w.close()
-    print "Sent pact return value in time",time.time() - start
+    print "Sent return value in time",time.time() - start

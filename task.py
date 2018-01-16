@@ -55,10 +55,8 @@ class RegressionTask(object):
 
 class DifferentiableTask(RegressionTask):
     def __init__(self, name, request, examples, _ = None,
-                 features = None, BIC = 1., loss = None, likelihoodThreshold = None):
+                 features = None, BIC = 1., likelihoodThreshold = None):
         self.likelihoodThreshold = likelihoodThreshold
-        assert loss != None
-        self.loss = loss
         
         super(DifferentiableTask,self).__init__(name, request, examples, features, cache = False)
         self.BIC = BIC

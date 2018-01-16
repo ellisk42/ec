@@ -11,3 +11,4 @@ multiplication = Primitive("*",
                            _multiplication)
 k1 = Primitive("1",tint,1)
 k0 = Primitive("0",tint,0)
+real = Primitive("REAL",tint,None)
