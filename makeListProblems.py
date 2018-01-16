@@ -7,7 +7,7 @@ import random
 from random import choice
 from collections import OrderedDict, Counter
 from itertools import takewhile,dropwhile
-import numpy as np
+
 
 PRIMES = [2,3,5,7,11,13,17,19,23,29] # all the primes I want to write down right now
 SQUARES = [x*x for x in range(10)]
@@ -134,16 +134,16 @@ def f_remove_Nth_largest(num_progs, num_ex=10):
             e = random.randint(1, 9)
             if e % 10 == 1:
                 problem('Remove %d' % e + 'st largest number from an array',
-                        [(x, filter(lambda j : j != np.partition(x, -1*e)[-1*e], x)) for x in random_lists(num_ex, e)])
+                        [(x, filter(lambda j : j != sorted(x,reverse = True)[e-1], x)) for x in random_lists(num_ex, e)])
             elif e % 10 == 2:
                 problem('Remove %d' % e + 'nd largest number from an array',
-                        [(x, filter(lambda j : j != np.partition(x, -1*e)[-1*e], x)) for x in random_lists(num_ex, e)])
+                        [(x, filter(lambda j : j != sorted(x,reverse = True)[e-1], x)) for x in random_lists(num_ex, e)])
             elif e % 10 == 3:
                 problem('Remove %d' % e + 'rd largest number from an array',
-                        [(x, filter(lambda j : j != np.partition(x, -1*e)[-1*e], x)) for x in random_lists(num_ex, e)])
+                        [(x, filter(lambda j : j != sorted(x,reverse = True)[e-1], x)) for x in random_lists(num_ex, e)])
             else:
                 problem('Remove %d' % e + 'th largest number from an array',
-                        [(x, filter(lambda j : j != np.partition(x, -1*e)[-1*e], x)) for x in random_lists(num_ex, e)])
+                        [(x, filter(lambda j : j != sorted(x,reverse = True)[e-1], x)) for x in random_lists(num_ex, e)])
             tot += 1
         except:
             pass
@@ -178,16 +178,16 @@ def f_return_Nth_largest(num_progs, num_ex=10):
             e = random.randint(1, 9)
             if e % 10 == 1:
                 problem('Return %d' % e + 'st largest number from an array',
-                        [(x, [np.sort(x)[-1*e]]) for x in random_lists(num_ex, e)])
+                        [(x, [sorted(x)[-1*e]]) for x in random_lists(num_ex, e)])
             elif e % 10 == 2:
                 problem('Return %d' % e + 'nd largest number from an array',
-                        [(x, [np.sort(x)[-1*e]]) for x in random_lists(num_ex, e)])
+                        [(x, [sorted(x)[-1*e]]) for x in random_lists(num_ex, e)])
             elif e % 10 == 3:
                 problem('Return %d' % e + 'rd largest number from an array',
-                        [(x, [np.sort(x)[-1*e]]) for x in random_lists(num_ex, e)])
+                        [(x, [sorted(x)[-1*e]]) for x in random_lists(num_ex, e)])
             else:
                 problem('Return %d' % e + 'th largest number from an array',
-                        [(x, [np.sort(x)[-1*e]]) for x in random_lists(num_ex, e)])
+                        [(x, [sorted(x)[-1*e]]) for x in random_lists(num_ex, e)])
 
             tot += 1
         except:
@@ -288,7 +288,7 @@ def f_sum_array(num_progs, num_ex=10):
 def f_prod_array(num_progs, num_ex=10):
     for i in range(num_progs):
         problem('Return the product of the elements in the array',
-                [(x, [np.prod(x)]) for x in random_lists(num_ex)])
+                [(x, reduce(lambda a,b:a*b, x, 1)) for x in random_lists(num_ex)])
 
 # Return the length of a list
 def f_length_array(num_progs, num_ex=10):

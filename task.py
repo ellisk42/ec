@@ -85,7 +85,5 @@ class DifferentiableTask(RegressionTask):
             return -l - penalty
         
 
-        
-        
-
-
+class DifferentiableSSETask(DifferentiableTask):
+    def loss(self, prediction, target): return (prediction - target).square()

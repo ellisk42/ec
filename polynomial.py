@@ -17,9 +17,6 @@ tasks = [
 ]
 
 if __name__ == "__main__":
-    # import cPickle as pickle
-    # print pickle.dumps(addition)
-    # assert False
     explorationCompression(polynomialPrimitives, tasks,
                            **commandlineArguments(frontierSize = 10**4,
                                                   iterations = 5,
