@@ -8,6 +8,15 @@ from enumeration import *
 from grammar import *
 from fragmentGrammar import *
 
+class ECResult():
+    def __init__(self, _ = None,
+                 learningCurve = [],
+                 grammars = [],
+                 taskSolutions = {}):
+        self.learningCurve = learningCurve
+        self.grammars = grammars
+        self.taskSolutions = taskSolutions
+        
 
 def explorationCompression(primitives, tasks,
                            _ = None,
@@ -25,14 +34,19 @@ def explorationCompression(primitives, tasks,
 
     grammar = Grammar.uniform(primitives)
 
+    grammarHistory = [grammar]
+    learningCurve = []
+
     for j in range(iterations):
         frontiers = callCompiled(enumerateFrontiers,
                                  grammar, frontierSize, tasks,
                                  CPUs = CPUs)
-        #for f in frontiers: f.refreshPrimitives()
         
         print "Enumeration results:"
         print Frontier.describe(frontiers)
+
+        # number of hit tasks
+        learningCurve.append(sum(not f.empty for f in frontiers))
 
         if False:
             recognizer = RecognitionModel(len(tasks[0].features), grammar)
@@ -51,8 +65,14 @@ def explorationCompression(primitives, tasks,
                                a = arity,
                                CPUs = CPUs).\
                                toGrammar()
+        grammarHistory.append(grammar)
         print "Final grammar:"
         print grammar
+
+    return ECResult(learningCurve = learningCurve,
+                    grammars = grammarHistory,
+                    taskSolutions = {f.task: f.bestPosterior
+                                     for f in frontiers if not f.empty })
 
         
 def commandlineArguments(_ = None,
