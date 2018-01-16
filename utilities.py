@@ -112,23 +112,25 @@ def callCompiled(f, *arguments, **keywordArguments):
         os.close(wr)
         
         usingDill(True)
+        start = time.time()
         serialized = dill.dumps({"arguments": arguments,
                                    "keywordArguments": keywordArguments,
                                    "function": f,
                                    "functionName": f.__name__,
                                    #"openModules": openModules,
                                    "module": modulePath})
+        print "Serialized in time",time.time() - start
         usingDill(False)
         
         w = os.fdopen(wa,'wb')
+        start = time.time()
         w.write(serialized)
+        print "Wrote serialized message in time",time.time() - start
         w.close()
 
         r = os.fdopen(rr,'rb')
 
-        start = time.time()
         content = r.read()
-        print "Read content from pypy in",time.time() - start
         start = time.time()
         (success,returnValue) = dill.loads(content)
         print "Loaded content from pypy  in",time.time() - start

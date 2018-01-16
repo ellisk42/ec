@@ -1,3 +1,4 @@
+import time
 import traceback
 import dill
 import os
@@ -11,10 +12,12 @@ if __name__ == "__main__":
     
     [ra,wr] = sys.argv[1:]
     r = os.fdopen(int(ra),'rb')
-    
+
+    start = time.time()
     usingDill(True)
     message = dill.loads(r.read())
     usingDill(False)
+    print "Compiled driver unpacked the message in time",time.time() - start
     
     #module = __import__(message["module"])
     #module.__dict__[message["functionName"]]
@@ -25,6 +28,11 @@ if __name__ == "__main__":
         returnValue = (True,returnValue)
     except:
         returnValue = (False,traceback.format_exc())
+    start = time.time()
+    returnValue = dill.dumps(returnValue)
+    print "Packed return value in time",time.time() - start
     w = os.fdopen(int(wr),'wb')
-    w.write(dill.dumps(returnValue))
+    start = time.time()
+    w.write(returnValue)
     w.close()
+    print "Sent pact return value in time",time.time() - start
