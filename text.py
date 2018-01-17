@@ -1,5 +1,5 @@
 from ec import *
-from makeStringTransformationProblems import makeTasks
+from makeStringTransformationProblems import makeTasks, delimiters
 from textPrimitives import primitives
 
 def stringFeatures(s):
