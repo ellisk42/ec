@@ -24,6 +24,7 @@ if __name__ == "__main__":
     print "Generated",len(tasks),"tasks"
 
     explorationCompression(primitives, tasks,
+                           outputPrefix = "experimentOutputs/text",
                            **commandlineArguments(
                                frontierSize = 10**4,
                                iterations = 3,

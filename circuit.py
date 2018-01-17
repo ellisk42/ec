@@ -77,6 +77,7 @@ if __name__ == "__main__":
     print "Sampled %d tasks with %d unique functions"%(len(tasks),
                                                        len({t.signature for t in tasks }))
     explorationCompression(primitives, [ task.task() for task in tasks ],
+                           outputPrefix = "experimentOutputs/circuit",
                            **commandlineArguments(frontierSize = 10**3,
                                                   iterations = 5,
                                                   pseudoCounts = 5.))

@@ -17,6 +17,7 @@ tasks = [ DifferentiableTask("%dx^2 + %dx + %d"%(a,b,c),
 
 if __name__ == "__main__":
     explorationCompression(polynomialPrimitives, tasks,
+                           outputPrefix = "experimentOutputs/continuousPolynomial",
                            **commandlineArguments(frontierSize = 10**2,
                                                   iterations = 5,
                                                   pseudoCounts = 10.0))

@@ -8,6 +8,7 @@ if __name__ == "__main__":
     print "Got",len(tasks),"list tasks"
 
     explorationCompression(primitives, tasks,
+                           outputPrefix = "experimentOutputs/list",
                            **commandlineArguments(frontierSize = 10**4,
                                                   iterations = 5,
                                                   pseudoCounts = 10.0))
