@@ -14,34 +14,35 @@ def numberOfFreeVariables(expression):
             n = max(n, child.i - surroundingAbstractions + 1)
     return n
 
+   
 def canonicalFragment(expression):
     '''
     Puts a fragment into a canonical form:
     1. removes all FragmentVariable's
     2. renames all free variables based on depth first traversal
     '''
-    if isinstance(expression, (Primitive,Invented)): return expression
+    return expression.visit(CanonicalVisitor(),0)
+class CanonicalVisitor(object):
+    def __init__(self):
+        self.numberOfAbstractions = 0
+        self.mapping = {}
+    def fragmentVariable(self,e, d):
+        self.numberOfAbstractions += 1
+        return Index(self.numberOfAbstractions + d - 1)
+    def primitive(self,e,d): return e
+    def invented(self,e,d): return e
+    def application(self,e,d):
+        return Application(e.f.visit(self,d), e.x.visit(self,d))
+    def abstraction(self,e,d):
+        return Abstraction(e.body.visit(self,d + 1))
+    def index(self,e,d):
+        if e.i < d: return e
+        i = e.i - d
+        if i in self.mapping: return Index(d + self.mapping[i])
+        self.mapping[i] = self.numberOfAbstractions
+        self.numberOfAbstractions += 1
+        return Index(self.numberOfAbstractions - 1 + d)
     
-    numberOfAbstractions = [0]
-    mapping = {}
-    def f(e,d):
-        if isinstance(e,FragmentVariable):
-            numberOfAbstractions[0] += 1
-            return Index(numberOfAbstractions[0] + d - 1)
-        if isinstance(e,(Primitive,Invented)): return e
-        if isinstance(e,Application):
-            return Application(f(e.f,d), f(e.x,d))
-        if isinstance(e,Abstraction): return Abstraction(f(e.body),d + 1)
-        if isinstance(e,Index):
-            if e.i < d: return e
-            i = e.i - d
-            if i in mapping: return Index(d + mapping[i])
-            mapping[i] = numberOfAbstractions[0]
-            numberOfAbstractions[0] += 1
-            return Index(numberOfAbstractions[0] - 1 + d)
-        assert False
-    return f(expression,0)
-
 def defragment(expression):
     '''Converts a fragment into an invented primitive'''
     if isinstance(expression, (Primitive,Invented)): return expression
