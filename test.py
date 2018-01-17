@@ -1,15 +1,12 @@
-
-def f():
-    x = []
-    def g():
-        print "x = ",x
-    g()
-    x = 9
-    g()
-    for j in range(5):
-        x = j
-        g()
+from utilities import *
 
 
+from time import sleep
 
-f()
+
+def f(_):
+    sleep(2)
+
+parallelMap(4,f,[None]*4)
+print "Done with parallel map now I'm going to sleep for ten seconds"
+sleep(10)

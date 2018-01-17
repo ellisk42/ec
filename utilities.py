@@ -17,7 +17,9 @@ def parallelMap(numberOfCPUs, f, *xs):
     
     from multiprocessing import Pool
     
-    ys = Pool(numberOfCPUs).map(parallelMapCallBack, range(len(xs[0])))
+    workers = Pool(numberOfCPUs)
+    ys = workers.map(parallelMapCallBack, range(len(xs[0])))
+    workers.terminate()
 
     PARALLELMAPDATA = None
     return ys

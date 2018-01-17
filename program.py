@@ -268,3 +268,17 @@ class FragmentVariable(Program):
     def size(self): return 1
 
 FragmentVariable.single = FragmentVariable()
+
+class ShareVisitor(object):
+    def __init__(self): self.table = {}
+    def retrieve(self,e):
+        if e in self.table: return self.table[e]
+        self.table[e] = e
+        return e
+    def invented(self,e): return self.retrieve(Invented(e.body.visit(self)))
+    def primitive(self,e): return self.retrieve(e)
+    def index(self,e): return self.retrieve(e)
+    def application(self,e): return self.retrieve(Application(e.f.visit(self),e.x.visit(self)))
+    def abstraction(self,e): return self.retrieve(Abstraction(e.body.visit(self)))
+    def execute(self,e): return e.visit(self)
+        
