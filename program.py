@@ -5,7 +5,6 @@ from time import time
 import math
 
 
-class MatchFailure(Exception): pass
 class ShiftFailure(Exception): pass
 
 
@@ -21,6 +20,14 @@ class Program(object):
             if isinstance(child, FragmentVariable): return False
             if isinstance(child, Index) and child.i >= surroundingAbstractions: return False
         return True
+    @property
+    def numberOfFreeVariables(expression):
+        n = 0
+        for surroundingAbstractions, child in expression.walk():
+            # Free variable
+            if isinstance(child, Index) and child.i >= surroundingAbstractions:
+                n = max(n, child.i - surroundingAbstractions + 1)
+        return n
 
 class Application(Program):
     def __init__(self,f,x):
@@ -56,19 +63,6 @@ class Application(Program):
     def substitute(self, old, new):
         if self == old: return new
         return Application(self.f.substitute(old, new), self.x.substitute(old, new))
-
-    def match(self, context, expression, holes, variableBindings, environment = []):
-        '''returns (context, tp of fragment). mutates variableBindings & holes'''
-        if not isinstance(expression,Application): raise MatchFailure()
-        
-        context,ft = self.f.match(context, expression.f, holes, variableBindings, environment)
-        context,xt = self.x.match(context, expression.x, holes, variableBindings, environment)
-        
-        context,returnType = context.makeVariable()
-        try: context = context.unify(ft,arrow(xt,returnType))
-        except UnificationFailure: raise MatchFailure()
-        
-        return (context, returnType.apply(context))
 
     def walk(self,surroundingAbstractions = 0):
         yield surroundingAbstractions,self
@@ -109,40 +103,10 @@ class Index(Program):
         if old == self: return new
         else: return self
 
-    def match(self, context, expression, holes, variableBindings, environment = []):
-        # This is a bound variable
-        surroundingAbstractions = len(environment)
-        if self.i < surroundingAbstractions:
-            if expression == self:
-                return (context, environment[self.i].apply(context))
-            else: raise MatchFailure()
-        
-        # This is a free variable
-        i = self.i - surroundingAbstractions
-        # The value is going to be lifted out of the fragment. Make
-        # sure that it doesn't refer to anything bound by a lambda in
-        # the fragment.
-        try:
-            value = expression.shift(-surroundingAbstractions)
-        except ShiftFailure: raise MatchFailure()
-
-        # Added to the bindings
-        if i in variableBindings:
-            (tp,binding) = variableBindings[i]
-            if binding != expression: raise MatchFailure()
-        else:
-            context,tp = context.makeVariable()
-            variableBindings[i] = (tp,expression)
-        return context,tp
-
     def walk(self,surroundingAbstractions = 0): yield surroundingAbstractions,self
 
     def size(self): return 1
 
-
-    
-            
-        
 
 class Abstraction(Program):
     def __init__(self,body):
@@ -169,14 +133,7 @@ class Abstraction(Program):
         old = old.shift(1)
         new = new.shift(1)
         return Abstraction(self.body.substitute(old, new))
-    def match(self, context, expression, holes, variableBindings, environment = []):
-        if not isinstance(expression, Abstraction): raise MatchFailure()
-
-        context,argumentType = context.makeVariable()
-        context,returnType = self.body.match(context, expression.body, holes, variableBindings, [argumentType] + environment)
-
-        return context, arrow(argumentType,returnType)
-
+    
     def walk(self,surroundingAbstractions = 0):
         yield surroundingAbstractions,self
         for child in self.body.walk(surroundingAbstractions + 1): yield child
@@ -203,9 +160,6 @@ class Primitive(Program):
     def substitute(self, old, new):
         if self == old: return new
         else: return self
-    def match(self, context, expression, holes, variableBindings, environment = []):
-        if self != expression: raise MatchFailure()
-        return self.tp.instantiate(context)
 
     def walk(self,surroundingAbstractions = 0): yield surroundingAbstractions,self
 
@@ -230,9 +184,6 @@ class Invented(Program):
     def substitute(self, old, new):
         if self == old: return new
         else: return self
-    def match(self, context, expression, holes, variableBindings, environment = []):
-        if self != expression: raise MatchFailure()
-        return self.tp.instantiate(context)
 
     def walk(self,surroundingAbstractions = 0): yield surroundingAbstractions,self
 

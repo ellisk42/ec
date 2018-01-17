@@ -6,15 +6,74 @@ from program import *
 
 import time
 
-def numberOfFreeVariables(expression):
-    n = 0
-    for surroundingAbstractions, child in expression.walk():
-        # Free variable
-        if isinstance(child, Index) and child.i >= surroundingAbstractions:
-            n = max(n, child.i - surroundingAbstractions + 1)
-    return n
+class MatchFailure(Exception): pass
+class Matcher(object):
+    def __init__(self, context):
+        self.context = context
+        self.variableBindings = {}
 
-   
+    @staticmethod
+    def match(context, fragment, expression):
+        m = Matcher(context)
+        tp = fragment.visit(m, expression, [])
+        return m.context, tp, m.variableBindings        
+    
+    def application(self, fragment, expression, environment):
+        '''returns tp of fragment.'''
+        if not isinstance(expression,Application): raise MatchFailure()
+        
+        ft = fragment.f.visit(self, expression.f, environment)
+        xt = fragment.x.visit(self, expression.x, environment)
+        
+        self.context, returnType = self.context.makeVariable()
+        try: self.context = self.context.unify(ft,arrow(xt,returnType))
+        except UnificationFailure: raise MatchFailure()
+        
+        return returnType.apply(self.context)
+    def index(self, fragment, expression, environment):
+        # This is a bound variable
+        surroundingAbstractions = len(environment)
+        if fragment.i < surroundingAbstractions:
+            if expression == fragment:
+                return environment[fragment.i].apply(self.context)
+            else: raise MatchFailure()
+        
+        # This is a free variable
+        i = fragment.i - surroundingAbstractions
+        # The value is going to be lifted out of the fragment. Make
+        # sure that it doesn't refer to anything bound by a lambda in
+        # the fragment.
+        try: expression = expression.shift(-surroundingAbstractions)
+        except ShiftFailure: raise MatchFailure()
+
+        # Added to the bindings
+        if i in self.variableBindings:
+            (tp,binding) = self.variableBindings[i]
+            if binding != expression: raise MatchFailure()
+        else:
+            self.context, tp = self.context.makeVariable()
+            self.variableBindings[i] = (tp,expression)
+        return tp
+    def abstraction(self, fragment, expression, environment):
+        if not isinstance(expression, Abstraction): raise MatchFailure()
+
+        self.context,argumentType = self.context.makeVariable()
+        returnType = fragment.body.visit(self, expression.body, [argumentType] + environment)
+
+        return arrow(argumentType,returnType)
+    def primitive(self, fragment, expression, environment):
+        if fragment != expression: raise MatchFailure()
+        self.context,tp = fragment.tp.instantiate(self.context)
+        return tp
+    def invented(self, fragment, expression, environment):
+        if fragment != expression: raise MatchFailure()
+        self.context,tp = fragment.tp.instantiate(self.context)
+        return tp
+    def fragmentVariable(self, fragment, expression, environment):
+        raise Exception('Deprecated: matching against fragment variables. Convert fragment to ccanonical form to get rid of frogman variables.')
+    
+
+
 def canonicalFragment(expression):
     '''
     Puts a fragment into a canonical form:
@@ -49,7 +108,7 @@ def defragment(expression):
 
     expression = canonicalFragment(expression)
     
-    for _ in range(numberOfFreeVariables(expression)):
+    for _ in range(expression.numberOfFreeVariables):
         expression = Abstraction(expression)
     
     return Invented(expression)
@@ -57,7 +116,7 @@ def defragment(expression):
 def proposeFragmentsFromFragment(f):
     '''Abstracts out repeated structure within a single fragment'''
     yield f
-    freeVariables = numberOfFreeVariables(f)
+    freeVariables = f.numberOfFreeVariables
     closedSubtrees = [ subtree for _,subtree in f.walk()
                        if subtree != f and not isinstance(subtree, Index) and subtree.closed ]
     for subtree in set(closedSubtrees):
@@ -240,14 +299,13 @@ class FragmentGrammar(object):
         for f,xs in expression.applicationParses():
             for candidateLikelihood, newContext, tp, production in candidates:
                 variableBindings = {}
-                holes = []
                 # This is a variable in the environment
                 if isinstance(production, Index):
                     if production != f: continue
                 else:
                     try:
                         # print "Trying to match %s w/ %s"%(production, f)
-                        newContext, fragmentType = production.match(newContext, f, holes, variableBindings)
+                        newContext, fragmentType, variableBindings = Matcher.match(newContext, production, f)
                         # This is necessary because the types of the variable
                         # bindings and holes need to match up w/ request
                         # print "Fragment type",fragmentType
@@ -279,7 +337,7 @@ class FragmentGrammar(object):
                 assert len(xs) == len(argumentTypes)
 
                 # Accumulate likelihood from free variables and holes and arguments
-                for freeType,freeExpression in variableBindings.values() + holes + zip(argumentTypes, xs):
+                for freeType,freeExpression in variableBindings.values() + zip(argumentTypes, xs):
                     freeType = freeType.apply(newContext)
                     newContext, expressionLikelihood, newUses = \
                             self.logLikelihood(newContext, environment, freeType, freeExpression)
