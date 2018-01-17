@@ -2,11 +2,24 @@ from ec import *
 from makeStringTransformationProblems import makeTasks
 from textPrimitives import primitives
 
+def stringFeatures(s):
+    return [len(s)] + [sum(x == d for x in s ) for d in delimiters ] + [sum(x.upper() == x for x in s )]
+def problemFeatures(task):
+    inputFeatures = []
+    outputFeatures = []
+    for x,y in task.examples:
+        inputFeatures.append(stringFeatures(x))
+        outputFeatures.append(stringFeatures(y))
+    n = float(len(task.examples))
+    inputFeatures = map(lambda *a: sum(a)/n, *inputFeatures)
+    outputFeatures = map(lambda *a: sum(a)/n, *outputFeatures)
+    return inputFeatures + outputFeatures
+
 
 if __name__ == "__main__":
     tasks = makeTasks()
     for t in tasks:
-        t.features = [1]
+        t.features = problemFeatures(t)
         t.cache = False
     print "Generated",len(tasks),"tasks"
 

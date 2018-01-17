@@ -1,9 +1,10 @@
 from ec import *
+from circuitPrimitives import primitives
 
 import itertools
 import random
 
-class Circuit(RegressionTask):
+class Circuit(object):
     def __init__(self, _ = None, numberOfInputs = None, numberOfGates = None):
         assert numberOfInputs != None
         assert numberOfGates != None
@@ -27,13 +28,14 @@ class Circuit(RegressionTask):
         xs = list(itertools.product(*[ [False,True] for _ in range(numberOfInputs) ]))
         
         ys = [ self.evaluate(x) for x in xs ]
-        examples = zip(xs,ys)
+        self.examples = zip(xs,ys)
 
         # the signature is invariant to the construction of the circuit and only depends on its semantics
         self.signature = tuple(ys)
 
-        request = arrow(*[tbool for _ in range(numberOfInputs + 1) ])        
-        super(Circuit, self).__init__(self.name, request, examples, cache = True)
+    def task(self):
+        request = arrow(*[tbool for _ in range(self.numberOfInputs + 1) ])        
+        return RegressionTask(self.name, request, self.examples, cache = True)
 
     def evaluate(self,x):
         x = list(reversed(x))
@@ -65,9 +67,6 @@ class Circuit(RegressionTask):
             print 
         return len(usedIndices) == len(self.operations) - 1
                 
-primitives = [Primitive("nand",arrow(tbool,tbool,tbool),
-                        lambda x: lambda y: not (x and y))]
-
 if __name__ == "__main__":
     tasks = []
     while len(tasks) < 1000:
@@ -77,7 +76,7 @@ if __name__ == "__main__":
                              numberOfGates = gates))
     print "Sampled %d tasks with %d unique functions"%(len(tasks),
                                                        len({t.signature for t in tasks }))
-    explorationCompression(primitives, tasks,
+    explorationCompression(primitives, [ task.task() for task in tasks ],
                            **commandlineArguments(frontierSize = 10**3,
                                                   iterations = 5,
                                                   pseudoCounts = 5.))

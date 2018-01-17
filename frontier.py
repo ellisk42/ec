@@ -8,7 +8,7 @@ class FrontierEntry(object):
 
 
 class Frontier(object):
-    def __init__(self, frontier, task = None):
+    def __init__(self, frontier, task):
         self.entries = frontier
         self.task = task
 
@@ -49,3 +49,25 @@ class Frontier(object):
         
     def refreshPrimitives(self):
         for e in self: e.program.refreshPrimitives()
+
+    def combine(self, other, tolerance = 0.0001):
+        '''Takes the union of the programs in each of the frontiers'''
+        assert self.task == other.task
+        
+        x = {e.program: e for e in self }
+        y = {e.program: e for e in other }
+        programs = set(x.keys()) | set(y.keys())
+        union = []
+        for p in programs:
+            if p in x:
+                e1 = x[p]
+                if p in y:
+                    e2 = y[p]
+                    assert abs(e1.logPrior - e2.logPrior) < tolerance
+                    assert abs(e1.logLikelihood - e2.logLikelihood) < tolerance
+            else:
+                e1 = y[p]
+            union.append(e1)
+
+        return Frontier(union, self.task)
+            

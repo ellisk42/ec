@@ -29,7 +29,20 @@ class FragmentVariable(Program):
 
 FragmentVariable.single = FragmentVariable()
 
-def defragment(expression):
+def numberOfFreeVariables(expression):
+    n = 0
+    for surroundingAbstractions, child in expression.walk():
+        # Free variable
+        if isinstance(child, Index) and child.i >= surroundingAbstractions:
+            n = max(n, child.i - surroundingAbstractions + 1)
+    return n
+
+def canonicalFragment(expression):
+    '''
+    Puts a fragment into a canonical form:
+    1. removes all FragmentVariable's
+    2. renames all free variables based on depth first traversal
+    '''
     if isinstance(expression, (Primitive,Invented)): return expression
     
     numberOfAbstractions = [0]
@@ -50,10 +63,22 @@ def defragment(expression):
             numberOfAbstractions[0] += 1
             return Index(numberOfAbstractions[0] - 1 + d)
         assert False
-    expression = f(expression,0)
-    for _ in range(numberOfAbstractions[0]):
+    return f(expression,0)
+
+def defragment(expression):
+    '''Converts a fragment into an invented primitive'''
+    if isinstance(expression, (Primitive,Invented)): return expression
+
+    expression = canonicalFragment(expression)
+    
+    for _ in range(numberOfFreeVariables(expression)):
         expression = Abstraction(expression)
+    
     return Invented(expression)
+
+def proposeFragmentsFromFragment(f):
+    '''Abstracts out repeated structure within a single fragment'''
+    pass
             
 
 def proposeFragmentsFromProgram(p,arity):
@@ -109,7 +134,7 @@ def proposeFragmentsFromProgram(p,arity):
 
         return numberOfPrimitives + 0.5 * (numberOfHoles + numberOfVariables) > 1.5            
 
-    return { f for b in range(arity + 1) for f in fragments(p,b) if nontrivial(f) }
+    return { canonicalFragment(f) for b in range(arity + 1) for f in fragments(p,b) if nontrivial(f) }
 
 def proposeFragmentsFromFrontiers(frontiers,a):
     fragmentsFromEachFrontier = [ { f

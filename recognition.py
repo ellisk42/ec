@@ -40,8 +40,11 @@ class RecognitionModel(nn.Module):
                       for entry in frontier ])
         return l
 
-    def train(self, frontiers, _ = None, steps = 10**3, lr = 0.001):
-        frontiers = [ frontier for frontier in frontiers if not frontier.empty ]
+    def train(self, frontiers, _ = None, steps = 10**3, lr = 0.001, topK = 1):
+        # Torch sometimes segfaults in multithreaded mode...
+        torch.set_num_threads(1)
+        
+        frontiers = [ frontier.topK(topK) for frontier in frontiers if not frontier.empty ]
         optimizer = torch.optim.Adam(self.parameters(), lr=lr)
         for i in range(steps):
             self.zero_grad()
@@ -53,6 +56,9 @@ class RecognitionModel(nn.Module):
 
     def enumerateFrontiers(self, frontierSize, tasks):
         from time import time
+
+        # Torch sometimes segfaults in multithreaded mode...
+        torch.set_num_threads(1)
 
         start = time()
         features = self.extractFeatures(tasks)

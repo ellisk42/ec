@@ -55,13 +55,14 @@ class RegressionTask(object):
 
 class DifferentiableTask(RegressionTask):
     def __init__(self, name, request, examples, _ = None,
-                 features = None, BIC = 1., likelihoodThreshold = None):
+                 features = None, BIC = 1., loss = None, likelihoodThreshold = None):
+        assert loss is not None
+        self.loss = loss
+        self.BIC = BIC
         self.likelihoodThreshold = likelihoodThreshold
         
         super(DifferentiableTask,self).__init__(name, request, examples, features, cache = False)
-        self.BIC = BIC
-    
-
+        
     def logLikelihood(self,e):
         e, parameters = e.replacePlaceholders()
         f = e.evaluate([])
@@ -78,10 +79,9 @@ class DifferentiableTask(RegressionTask):
 
         if self.likelihoodThreshold != None:
             if l > -self.likelihoodThreshold: return NEGATIVEINFINITY
-            else: return 0.
+            else: return -penalty
         else:
             return -l - penalty
         
-
-class DifferentiableSSETask(DifferentiableTask):
-    def loss(self, prediction, target): return (prediction - target).square()
+def squaredErrorLoss(prediction, target):
+    return (prediction - target).square()

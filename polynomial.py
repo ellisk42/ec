@@ -18,6 +18,7 @@ tasks = [
 
 if __name__ == "__main__":
     explorationCompression(polynomialPrimitives, tasks,
+                           outputPrefix = "experimentOutputs/polynomial",
                            **commandlineArguments(frontierSize = 10**4,
                                                   iterations = 5,
                                                   pseudoCounts = 10.0))

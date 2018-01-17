@@ -22,9 +22,11 @@ def explorationCompression(primitives, tasks,
                            _ = None,
                            iterations = None,
                            frontierSize = None,
+                           useRecognitionModel = True,
                            topK = 1,
                            pseudoCounts = 1.0, aic = 1.0, structurePenalty = 0.001, arity = 0,
-                           CPUs = 1):
+                           CPUs = 1,
+                           outputPrefix = None):
     if frontierSize == None:
         print "Please specify a frontier size: explorationCompression(..., frontierSize = ...)"
         assert False
@@ -32,6 +34,11 @@ def explorationCompression(primitives, tasks,
         print "Please specify a iteration count: explorationCompression(..., iterations = ...)"
         assert False
 
+    # We save the parameters that were passed into EC
+    # This is for the purpose of exporting the results of the experiment
+    parameters = {k: v for k,v in locals().iteritems()
+                  if not k in ['tasks','primitives','_','CPUs','outputPrefix'] }
+    
     grammar = Grammar.uniform(primitives)
 
     grammarHistory = [grammar]
@@ -45,15 +52,27 @@ def explorationCompression(primitives, tasks,
         print "Enumeration results:"
         print Frontier.describe(frontiers)
 
+        if useRecognitionModel:
+            # Make sure that the features all have the same dimensionality
+            assert all( len(t.features) == len(tasks[0].features) for t in tasks )
+
+            # Train and then use a recognition model
+            recognizer = RecognitionModel(len(tasks[0].features), grammar)
+            recognizer.train(frontiers, topK = topK)
+            bottomupFrontiers = recognizer.enumerateFrontiers(frontierSize, tasks)
+            print "Bottom-up enumeration results:"
+            print Frontier.describe(bottomupFrontiers)
+
+            # Rescore the frontiers according to the generative model and then combine w/ original frontiers
+            generativeModel = FragmentGrammar.fromGrammar(grammar)
+            bottomupFrontiers = [ generativeModel.rescoreFrontier(f) for f in bottomupFrontiers ]
+
+            frontiers = [ f.combine(b) for f,b in zip(frontiers, bottomupFrontiers) ]
+            
+
         # number of hit tasks
         learningCurve.append(sum(not f.empty for f in frontiers))
 
-        if False:
-            recognizer = RecognitionModel(len(tasks[0].features), grammar)
-            recognizer.train(frontiers)
-            bottomFrontiers = recognizer.enumerateFrontiers(frontierSize, tasks)
-            print "Bottom-up enumeration results:"
-            print Frontier.describe(frontiers)
 
         grammar = callCompiled(induceFragmentGrammarFromFrontiers,
                                grammar,
@@ -69,10 +88,19 @@ def explorationCompression(primitives, tasks,
         print "Final grammar:"
         print grammar
 
-    return ECResult(learningCurve = learningCurve,
-                    grammars = grammarHistory,
-                    taskSolutions = {f.task: f.bestPosterior
+    returnValue = ECResult(learningCurve = learningCurve,
+                           grammars = grammarHistory,
+                           taskSolutions = {f.task: f.bestPosterior
                                      for f in frontiers if not f.empty })
+
+    if outputPrefix is not None:
+        path = outputPrefix + "_" + \
+               "_".join(k + "=" + str(parameters[k]) for k in sorted(parameters.keys()) ) + ".pickle"
+        with open(path, 'wb') as handle:
+            pickle.dump((parameters,returnValue), handle)
+        print "Exported experiment result to",path
+
+    return returnValue
 
         
 def commandlineArguments(_ = None,
@@ -80,6 +108,7 @@ def commandlineArguments(_ = None,
                          frontierSize = None,
                          topK = 1,
                          CPUs = 1,
+                         useRecognitionModel = True,
                          pseudoCounts = 1.0, aic = 1.0, structurePenalty = 0.001, a = 0):
     import argparse
     parser = argparse.ArgumentParser(description = "")
@@ -115,6 +144,15 @@ def commandlineArguments(_ = None,
                         default = CPUs,
                         help = 'default %d'%CPUs,
                         type = int)
+    parser.add_argument("-r", "--recognition",
+                        dest = 'useRecognitionModel',
+                        action = 'store_true',
+                        help = "Enable bottom-up neural recognition model. Default: %s"%useRecognitionModel)
+    parser.add_argument("-g", "--no-recognition",
+                        dest = 'useRecognitionModel',
+                        action = 'store_false',
+                        help = "Disable bottom-up neural recognition model. Default: %s"%(not useRecognitionModel))
+    parser.set_defaults(useRecognitionModel = useRecognitionModel)
     return vars(parser.parse_args())
     
     
