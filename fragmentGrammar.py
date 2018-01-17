@@ -4,6 +4,8 @@ from frontier import *
 from grammar import *
 from program import *
 
+import time
+
 class FragmentVariable(Program):
     def __init__(self): pass
     def show(self,isFunction): return "??"
@@ -415,6 +417,9 @@ class FragmentGrammar(object):
 
         # Reestimate the parameters using the entire frontiers
         return bestGrammar.makeUniform().insideOutside(frontiers, pseudoCounts)
-        
+
 def induceFragmentGrammarFromFrontiers(*arguments, **keywordArguments):
-    return FragmentGrammar.induceFromFrontiers(*arguments, **keywordArguments)
+    startTime = time.time()
+    g = FragmentGrammar.induceFromFrontiers(*arguments, **keywordArguments)
+    print "Grammar induction took time",time.time() - startTime,"seconds"
+
