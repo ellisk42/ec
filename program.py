@@ -16,6 +16,12 @@ class Program(object):
     def __str__(self): return self.show(False)
     def infer(self): return self.inferType(Context.EMPTY,[],{})[1].canonical()
     def applicationParses(self): yield self,[]
+    @property
+    def closed(self):
+        for surroundingAbstractions, child in self.walk():
+            if isinstance(child, FragmentVariable): return False
+            if isinstance(child, Index) and child.i >= surroundingAbstractions: return False
+        return True
 
 class Application(Program):
     def __init__(self,f,x):
@@ -47,6 +53,9 @@ class Application(Program):
     def shift(self, offset, depth = 0):
         return Application(self.f.shift(offset, depth),
                            self.x.shift(offset, depth))
+    def substitute(self, old, new):
+        if self == old: return new
+        return Application(self.f.substitute(old, new), self.x.substitute(old, new))
 
     def match(self, context, expression, holes, variableBindings, environment = []):
         '''returns (context, tp of fragment). mutates variableBindings & holes'''
@@ -73,9 +82,7 @@ class Application(Program):
         x,q = self.x.replacePlaceholders()
         return Application(f,x), p + q
 
-    def refreshPrimitives(self):
-        self.f.refreshPrimitives()
-        self.x.refreshPrimitives()
+    
         
             
 
@@ -104,6 +111,9 @@ class Index(Program):
             i = self.i + offset
             if i < 0: raise ShiftFailure()
             return Index(i)
+    def substitute(self, old, new):
+        if old == self: return new
+        else: return self
 
     def match(self, context, expression, holes, variableBindings, environment = []):
         # This is a bound variable
@@ -137,7 +147,7 @@ class Index(Program):
 
     def replacePlaceholders(self): return self,[]
 
-    def refreshPrimitives(self): pass
+    
             
         
 
@@ -160,6 +170,11 @@ class Abstraction(Program):
     
     def shift(self,offset, depth = 0):
         return Abstraction(self.body.shift(offset, depth + 1))
+    def substitute(self, old, new):
+        if self == old: return new
+        old = old.shift(1)
+        new = new.shift(1)
+        return Abstraction(self.body.substitute(old, new))
     def match(self, context, expression, holes, variableBindings, environment = []):
         if not isinstance(expression, Abstraction): raise MatchFailure()
 
@@ -178,7 +193,7 @@ class Abstraction(Program):
         b,p = self.body.replacePlaceholders()
         return Abstraction(b),p
 
-    def refreshPrimitives(self): self.body.refreshPrimitives()
+    
 
 class Primitive(Program):
     GLOBALS = {}
@@ -194,6 +209,9 @@ class Primitive(Program):
     def inferType(self,context,environment,freeVariables):
         return self.tp.instantiate(context)
     def shift(self,offset, depth = 0): return self
+    def substitute(self, old, new):
+        if self == old: return new
+        else: return self
     def match(self, context, expression, holes, variableBindings, environment = []):
         if self != expression: raise MatchFailure()
         return self.tp.instantiate(context)
@@ -201,25 +219,6 @@ class Primitive(Program):
     def walk(self,surroundingAbstractions = 0): yield surroundingAbstractions,self
 
     def size(self): return 1
-
-    def refreshPrimitives(self): self.value = Primitive.GLOBALS.get(self.name,self).value
-
-    # Don't try pickling the value - in general it could be a function type
-    # def __getstate__(self):
-    #     d = dict(self.__dict__)
-    #     if not usingDill(): del d['value']
-    #     return d
-    # def __setstate__(self,d):
-    #     self.__dict__.update(d)
-    #     if not usingDill():
-    #         if self.name in Primitive.GLOBALS:
-    #             self.value = Primitive.GLOBALS[self.name].value
-    #         else:
-    #             self.value = None
-    #             print "WARNING: %s unpickled, but could not find value"%self.name
-    #             assert False
-    #     else:
-    #         if not (self.name in Primitive.GLOBALS): Primitive.GLOBALS[self.name] = self
 
     def replacePlaceholders(self):
         if self.name == "REAL":
@@ -243,6 +242,9 @@ class Invented(Program):
     def inferType(self,context,environment,freeVariables):
         return self.tp.instantiate(context)
     def shift(self,offset, depth = 0): return self
+    def substitute(self, old, new):
+        if self == old: return new
+        else: return self
     def match(self, context, expression, holes, variableBindings, environment = []):
         if self != expression: raise MatchFailure()
         return self.tp.instantiate(context)
@@ -252,4 +254,32 @@ class Invented(Program):
     def size(self): return 1
     def replacePlaceholders(self):
         return self.body.replacePlaceholders()
-    def refreshPrimitives(self): self.body.refreshPrimitives()
+    
+
+class FragmentVariable(Program):
+    def __init__(self): pass
+    def show(self,isFunction): return "??"
+    def __eq__(self,o): return isinstance(o,FragmentVariable)
+    def __hash__(self): return 42
+    def evaluate(self, e):
+        raise Exception('Attempt to evaluate fragment variable')
+    def inferType(self,context, environment, freeVariables):
+        return context.makeVariable()
+    def shift(self,offset,depth = 0):
+        raise Exception('Attempt to shift fragment variable')
+    def substitute(self, old, new):
+        if self == old: return new
+        else: return self
+    def match(self, context, expression, holes, variableBindings, environment = []):
+        surroundingAbstractions = len(environment)
+        try:
+            context, variable = context.makeVariable()
+            holes.append((variable, expression.shift(-surroundingAbstractions)))
+            return context, variable
+        except ShiftFailure: raise MatchFailure()
+
+    def walk(self, surroundingAbstractions = 0): yield surroundingAbstractions,self
+
+    def size(self): return 1
+
+FragmentVariable.single = FragmentVariable()

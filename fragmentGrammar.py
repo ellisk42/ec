@@ -6,31 +6,6 @@ from program import *
 
 import time
 
-class FragmentVariable(Program):
-    def __init__(self): pass
-    def show(self,isFunction): return "??"
-    def __eq__(self,o): return isinstance(o,FragmentVariable)
-    def __hash__(self): return 42
-    def evaluate(self, e):
-        raise Exception('Attempt to evaluate fragment variable')
-    def inferType(self,context, environment, freeVariables):
-        return context.makeVariable()
-    def shift(self,offset,depth = 0):
-        raise Exception('Attempt to shift fragment variable')
-    def match(self, context, expression, holes, variableBindings, environment = []):
-        surroundingAbstractions = len(environment)
-        try:
-            context, variable = context.makeVariable()
-            holes.append((variable, expression.shift(-surroundingAbstractions)))
-            return context, variable
-        except ShiftFailure: raise MatchFailure()
-
-    def walk(self, surroundingAbstractions = 0): yield surroundingAbstractions,self
-
-    def size(self): return 1
-
-FragmentVariable.single = FragmentVariable()
-
 def numberOfFreeVariables(expression):
     n = 0
     for surroundingAbstractions, child in expression.walk():
@@ -80,8 +55,16 @@ def defragment(expression):
 
 def proposeFragmentsFromFragment(f):
     '''Abstracts out repeated structure within a single fragment'''
-    pass
-            
+    yield f
+    freeVariables = numberOfFreeVariables(f)
+    closedSubtrees = [ subtree for _,subtree in f.walk()
+                       if subtree != f and not isinstance(subtree, Index) and subtree.closed ]
+    for subtree in set(closedSubtrees):
+        frequency = sum(t == subtree for t in closedSubtrees )
+        if frequency < 2: continue
+        fp = canonicalFragment(f.substitute(subtree, Index(freeVariables)))
+        print "Fragment from fragment:",f,"\t",fp
+        yield fp
 
 def proposeFragmentsFromProgram(p,arity):
 
@@ -139,9 +122,10 @@ def proposeFragmentsFromProgram(p,arity):
     return { canonicalFragment(f) for b in range(arity + 1) for f in fragments(p,b) if nontrivial(f) }
 
 def proposeFragmentsFromFrontiers(frontiers,a):
-    fragmentsFromEachFrontier = [ { f
+    fragmentsFromEachFrontier = [ { fp
                                     for entry in frontier.entries
-                                    for f in proposeFragmentsFromProgram(entry.program,a) }
+                                    for f in proposeFragmentsFromProgram(entry.program,a)
+                                    for fp in proposeFragmentsFromFragment(f) }
                                   for frontier in frontiers ]
     allFragments = { f for frontierFragments in fragmentsFromEachFrontier for f in frontierFragments }
     frequencies = {}
@@ -422,4 +406,5 @@ def induceFragmentGrammarFromFrontiers(*arguments, **keywordArguments):
     startTime = time.time()
     g = FragmentGrammar.induceFromFrontiers(*arguments, **keywordArguments)
     print "Grammar induction took time",time.time() - startTime,"seconds"
+    return g
 

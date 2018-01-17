@@ -1,6 +1,5 @@
 import time
 import traceback
-#import dill
 import sys
 import os
 import math
@@ -85,12 +84,6 @@ def invalid(x):
     return math.isinf(x) or math.isnan(x)
 def valid(x): return not invalid(x)
 
-# USINGDILL = False
-# def usingDill(new = None):
-#     global USINGDILL
-#     old = USINGDILL
-#     if not (new is None): USINGDILL = new
-#     return old
 def callCompiled(f, *arguments, **keywordArguments):
     modulePath = f.__module__
 
@@ -111,7 +104,6 @@ def callCompiled(f, *arguments, **keywordArguments):
         os.close(ra)
         os.close(wr)
         
-        #usingDill(True)
         start = time.time()
         serialized = pickle.dumps({"arguments": arguments,
                                    "keywordArguments": keywordArguments,
@@ -120,7 +112,6 @@ def callCompiled(f, *arguments, **keywordArguments):
                                    #"openModules": openModules,
                                    "module": modulePath})
         print "Serialized in time",time.time() - start
-        #usingDill(False)
         
         w = os.fdopen(wa,'wb')
         start = time.time()
@@ -143,5 +134,6 @@ def callCompiled(f, *arguments, **keywordArguments):
         return returnValue
         
         
-
-    
+def flushEverything():
+    sys.stdout.flush()
+    sys.stdin.flush()

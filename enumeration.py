@@ -49,6 +49,7 @@ def enumerateFrontiers(g, frontierSize, tasks, CPUs = 1):
     
     dt = time() - start
     print "Scored frontiers in time %fsec (%f/program)"%(dt,dt/totalNumberOfPrograms)
+    flushEverything()
 
     return frontiers
 

@@ -47,9 +47,6 @@ class Frontier(object):
                          [ "Average description length of a program solving a task: %f nats"%(-averageLikelihood) ])
 
         
-    def refreshPrimitives(self):
-        for e in self: e.program.refreshPrimitives()
-
     def combine(self, other, tolerance = 0.0001):
         '''Takes the union of the programs in each of the frontiers'''
         assert self.task == other.task
