@@ -51,6 +51,7 @@ def explorationCompression(primitives, tasks,
         
         print "Enumeration results:"
         print Frontier.describe(frontiers)
+        flushEverything()
 
         if useRecognitionModel:
             # Make sure that the features all have the same dimensionality

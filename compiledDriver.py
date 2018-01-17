@@ -1,11 +1,13 @@
 import time
 import traceback
-import cPickle as pickle #import dill
+import cPickle as pickle
 import os
 import subprocess
 import sys
 
-#from utilities import usingDill
+def flushEverything():
+    sys.stdout.flush()
+    sys.stdin.flush()
 
 if __name__ == "__main__":
     sys.setrecursionlimit(1000)
@@ -36,3 +38,5 @@ if __name__ == "__main__":
     w.write(returnValue)
     w.close()
     print "Sent return value in time",time.time() - start
+    flushEverything()
+    

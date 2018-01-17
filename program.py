@@ -1,4 +1,3 @@
-from differentiation import Placeholder
 from type import *
 from utilities import *
 
@@ -33,6 +32,7 @@ class Application(Program):
         if self.hashCode == None:
             self.hashCode = hash((hash(self.f), hash(self.x)))
         return self.hashCode
+    def visit(self, visitor, *arguments, **keywords): return visitor.application(self, *arguments, **keywords)
     def show(self, isFunction):
         if isFunction: return "%s %s"%(self.f.show(True), self.x.show(False))
         else: return "(%s %s)"%(self.f.show(True), self.x.show(False))
@@ -77,13 +77,6 @@ class Application(Program):
 
     def size(self): return self.f.size() + self.x.size()
 
-    def replacePlaceholders(self):
-        f,p = self.f.replacePlaceholders()
-        x,q = self.x.replacePlaceholders()
-        return Application(f,x), p + q
-
-    
-        
             
 
 class Index(Program):
@@ -92,6 +85,7 @@ class Index(Program):
     def show(self,isFunction): return "$%d"%self.i
     def __eq__(self,o): return isinstance(o,Index) and o.i == self.i
     def __hash__(self): return self.i
+    def visit(self, visitor, *arguments, **keywords): return visitor.index(self, *arguments, **keywords)
     def evaluate(self,environment):
         return environment[self.i]
     def inferType(self,context,environment,freeVariables):
@@ -145,7 +139,6 @@ class Index(Program):
 
     def size(self): return 1
 
-    def replacePlaceholders(self): return self,[]
 
     
             
@@ -159,6 +152,7 @@ class Abstraction(Program):
     def __hash__(self):
         if self.hashCode == None: self.hashCode = hash((hash(self.body),))
         return self.hashCode
+    def visit(self, visitor, *arguments, **keywords): return visitor.abstraction(self, *arguments, **keywords)
     def show(self,isFunction):
         return "(lambda %s)"%(self.body.show(False))
     def evaluate(self,environment):
@@ -189,11 +183,7 @@ class Abstraction(Program):
 
     def size(self): return self.body.size()
 
-    def replacePlaceholders(self):
-        b,p = self.body.replacePlaceholders()
-        return Abstraction(b),p
-
-    
+        
 
 class Primitive(Program):
     GLOBALS = {}
@@ -201,9 +191,10 @@ class Primitive(Program):
         self.tp = ty
         self.name = name
         self.value = value
-        Primitive.GLOBALS[name] = self
+        if name not in Primitive.GLOBALS: Primitive.GLOBALS[name] = self
     def __eq__(self,o): return isinstance(o,Primitive) and o.name == self.name
     def __hash__(self): return hash(self.name)
+    def visit(self, visitor, *arguments, **keywords): return visitor.primitive(self, *arguments, **keywords)
     def show(self,isFunction): return self.name
     def evaluate(self,environment): return self.value
     def inferType(self,context,environment,freeVariables):
@@ -220,13 +211,6 @@ class Primitive(Program):
 
     def size(self): return 1
 
-    def replacePlaceholders(self):
-        if self.name == "REAL":
-            placeholder = Placeholder.named("REAL_", 0.)
-            return Primitive(self.name, self.tp, placeholder), [placeholder]
-        return self, []
-        
-            
 
 class Invented(Program):
     def __init__(self, body):
@@ -234,6 +218,7 @@ class Invented(Program):
         self.tp = self.body.infer()
         self.hashCode = None
     def show(self,isFunction): return "#%s"%(self.body.show(False))
+    def visit(self, visitor, *arguments, **keywords): return visitor.invented(self, *arguments, **keywords)
     def __eq__(self,o): return isinstance(o,Invented) and o.body == self.body
     def __hash__(self):
         if self.hashCode == None: self.hashCode = hash((0,hash(self.body)))
@@ -252,8 +237,6 @@ class Invented(Program):
     def walk(self,surroundingAbstractions = 0): yield surroundingAbstractions,self
 
     def size(self): return 1
-    def replacePlaceholders(self):
-        return self.body.replacePlaceholders()
     
 
 class FragmentVariable(Program):
@@ -261,6 +244,8 @@ class FragmentVariable(Program):
     def show(self,isFunction): return "??"
     def __eq__(self,o): return isinstance(o,FragmentVariable)
     def __hash__(self): return 42
+    def visit(self, visitor, *arguments, **keywords):
+        return visitor.fragmentVariable(self, *arguments, **keywords)
     def evaluate(self, e):
         raise Exception('Attempt to evaluate fragment variable')
     def inferType(self,context, environment, freeVariables):

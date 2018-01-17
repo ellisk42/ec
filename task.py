@@ -1,3 +1,4 @@
+from program import *
 from utilities import *
 from differentiation import *
 
@@ -64,7 +65,7 @@ class DifferentiableTask(RegressionTask):
         super(DifferentiableTask,self).__init__(name, request, examples, features, cache = False)
         
     def logLikelihood(self,e):
-        e, parameters = e.replacePlaceholders()
+        e, parameters = PlaceholderVisitor.execute(e)
         f = e.evaluate([])
         
         loss = sum( self.loss(Placeholder.maybe(self.predict(f, [ Placeholder.named("X_",float(a))
@@ -85,3 +86,23 @@ class DifferentiableTask(RegressionTask):
         
 def squaredErrorLoss(prediction, target):
     return (prediction - target).square()
+
+class PlaceholderVisitor(object):
+    def __init__(self): self.parameters = []
+    def primitive(self, e):
+        if e.name == 'REAL':
+            placeholder = Placeholder.named("REAL_", 0.)
+            self.parameters.append(placeholder)
+            return Primitive(e.name, e.tp, placeholder)
+        return e
+    def invented(self,e): return e.body.visit(self)
+    def abstraction(self,e): return Abstraction(e.body.visit(self))
+    def application(self,e):
+        return Application(e.f.visit(self),e.x.visit(self))
+    def index(self,e): return e
+
+    @staticmethod
+    def execute(e):
+        v = PlaceholderVisitor()
+        e = e.visit(v)
+        return e, v.parameters
