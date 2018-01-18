@@ -147,3 +147,17 @@ ARROW = "->"
 def arrow(*arguments):
     if len(arguments) == 1: return arguments[0]
     return TypeConstructor(ARROW,[arguments[0],arrow(*arguments[1:])])
+
+
+def guess_type(x):
+    """
+    Return a TypeConstructor corresponding to x's python type.
+    Raises an exception if the type cannot be guessed.
+    """
+    types = {
+        bool: tbool,
+        int: tint,
+        list: tlist(tint),
+        str: tstring,
+    }
+    return types[type(x)]

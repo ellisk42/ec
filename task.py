@@ -21,6 +21,9 @@ class RegressionTask(object):
         self.name = name
         self.examples = examples
     def __str__(self): return self.name
+    def __repr__(self):
+        return "RegressionTask(name={self.name}, request={self.request}, examples={self.examples}"\
+            .format(self=self)
     def __eq__(self,o): return self.name == o.name
     def __ne__(self,o): return not (self == o)
     def __hash__(self): return hash(self.name)

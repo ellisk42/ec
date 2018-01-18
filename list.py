@@ -1,11 +1,11 @@
 from ec import *
-from makeListProblems import makeTasks
+from json_tasks import load_json_tasks_from_file
 from listPrimitives import primitives
 
 
 if __name__ == "__main__":
-    tasks = makeTasks()
-    print "Got",len(tasks),"list tasks"
+    tasks = load_json_tasks_from_file("data/list_tasks.json")
+    print "Got {0} list tasks".format(len(tasks))
 
     explorationCompression(primitives, tasks,
                            outputPrefix = "experimentOutputs/list",
