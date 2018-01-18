@@ -4,6 +4,9 @@ from circuitPrimitives import primitives
 import itertools
 import random
 
+MAXIMUMINPUTS = 3
+MAXIMUMGATES = 5
+
 class Circuit(object):
     def __init__(self, _ = None, numberOfInputs = None, numberOfGates = None):
         assert numberOfInputs != None
@@ -34,8 +37,11 @@ class Circuit(object):
         self.signature = tuple(ys)
 
     def task(self):
-        request = arrow(*[tbool for _ in range(self.numberOfInputs + 1) ])        
-        return RegressionTask(self.name, request, self.examples, cache = True)
+        request = arrow(*[tbool for _ in range(self.numberOfInputs + 1) ])
+        features = [ float(int(y)) for _,y in self.examples ]
+        maximumFeatures = 2**MAXIMUMINPUTS
+        features = features + [-1.]*(maximumFeatures - len(features))
+        return RegressionTask(self.name, request, self.examples, features = features, cache = True)
 
     def evaluate(self,x):
         x = list(reversed(x))
@@ -70,8 +76,8 @@ class Circuit(object):
 if __name__ == "__main__":
     tasks = []
     while len(tasks) < 1000:
-        inputs = random.choice([1,2,3])
-        gates = random.choice([1,2,3,4,5])
+        inputs = random.choice(range(1,MAXIMUMINPUTS + 1))
+        gates = random.choice(range(1,MAXIMUMGATES + 1))
         tasks.append(Circuit(numberOfInputs = inputs,
                              numberOfGates = gates))
     print "Sampled %d tasks with %d unique functions"%(len(tasks),
