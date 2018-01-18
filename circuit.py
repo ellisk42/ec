@@ -26,7 +26,8 @@ class Circuit(object):
                     self.operations.append((gate,x1,x2))
                 else:
                     self.operations.append((gate,x1))
-            self.name = " ; ".join("%s(%s)"%(o[0],",".join(map(str,o[1:])))
+            self.name = "%d inputs ; "%self.numberOfInputs + \
+                        " ; ".join("%s(%s)"%(o[0],",".join(map(str,o[1:])))
                                    for o in self.operations )
 
         xs = list(itertools.product(*[ [False,True] for _ in range(numberOfInputs) ]))
@@ -68,10 +69,6 @@ class Circuit(object):
         
         if self.operations == []: return False
         usedIndices = used(self.operations[-1])
-        if len(usedIndices) == len(self.operations) - 1:
-            eprint(self.name)
-            eprint(usedIndices)
-            eprint()
         return len(usedIndices) == len(self.operations) - 1
                 
 if __name__ == "__main__":

@@ -29,5 +29,5 @@ if __name__ == "__main__":
                            **commandlineArguments(
                                frontierSize = 10**4,
                                iterations = 3,
-                               a = 1,
+                               a = 2,
                                pseudoCounts = 10.0))

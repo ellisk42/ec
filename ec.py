@@ -91,7 +91,7 @@ def explorationCompression(primitives, tasks,
                                CPUs = CPUs).\
                                toGrammar()
         grammarHistory.append(grammar)
-        eprint("Final grammar:")
+        eprint("Grammar after iteration %d:"%(j+1))
         eprint(grammar)
 
     returnValue = ECResult(learningCurve = learningCurve,
