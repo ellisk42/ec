@@ -25,6 +25,7 @@ def explorationCompression(primitives, tasks,
                            frontierSize = None,
                            useRecognitionModel = True,
                            topK = 1,
+                           maximumFrontier = None,
                            pseudoCounts = 1.0, aic = 1.0, structurePenalty = 0.001, arity = 0,
                            CPUs = 1,
                            outputPrefix = None):
@@ -52,6 +53,7 @@ def explorationCompression(primitives, tasks,
     for j in range(iterations):
         frontiers = callCompiled(enumerateFrontiers,
                                  grammar, frontierSize, tasks,
+                                 maximumFrontier = maximumFrontier,
                                  CPUs = CPUs)
         
         eprint("Enumeration results:")
@@ -111,6 +113,7 @@ def commandlineArguments(_ = None,
                          topK = 1,
                          CPUs = 1,
                          useRecognitionModel = True,
+                         maximumFrontier = None,
                          pseudoCounts = 1.0, aic = 1.0, structurePenalty = 0.001, a = 0):
     import argparse
     parser = argparse.ArgumentParser(description = "")
@@ -145,6 +148,9 @@ def commandlineArguments(_ = None,
     parser.add_argument("-c", "--CPUs",
                         default = CPUs,
                         help = 'default %d'%CPUs,
+                        type = int)
+    parser.ad._argument("-m","--maximumFrontier",
+                        help = "Even though we enumerate --frontierSize programs, we might want to only keep around the very best for performance reasons. This is a cut off on the maximum size of the frontier that is kept around. default %s"%maximumFrontier,
                         type = int)
     parser.add_argument("-r", "--recognition",
                         dest = 'useRecognitionModel',
