@@ -1,5 +1,6 @@
 from program import *
 
+def _multiplication(x): return lambda y: x*y
 def _addition(x): return lambda y: x + y
 def _subtraction(x): return lambda y: x - y
 def _reverse(x): return list(reversed(x))
@@ -17,6 +18,7 @@ def _index(j): return lambda l: l[j]
 primitives = [
     Primitive("index",arrow(tint,tlist(tint),tint),_index),
     Primitive("+",arrow(tint,tint),_addition),
+    Primitive("*",arrow(tint,tint),_multiplication),
     Primitive("-",arrow(tint,tint),_subtraction),
     Primitive("sort",arrow(tlist(tint),tlist(tint)),sorted),
     Primitive("reverse",arrow(tlist(tint),tlist(tint)),_reverse),
