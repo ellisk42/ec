@@ -45,6 +45,7 @@ def parallelMapCallBack(j):
 def log(x):
     t = type(x)
     if t == int or t == float:
+        if t == 0: return NEGATIVEINFINITY
         return math.log(x)
     return x.log()
 def exp(x):

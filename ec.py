@@ -11,16 +11,16 @@ from fragmentGrammar import *
 
 class ECResult():
     def __init__(self, _ = None,
-                 learningCurve = [],
-                 grammars = [],
-                 taskSolutions = {},
-                 averageDescriptionLength = [],
+                 learningCurve = None,
+                 grammars = None,
+                 taskSolutions = None,
+                 averageDescriptionLength = None,
                  parameters = None):
-        self.averageDescriptionLength = averageDescriptionLength
+        self.averageDescriptionLength = averageDescriptionLength or []
         self.parameters = parameters
-        self.learningCurve = learningCurve
-        self.grammars = grammars
-        self.taskSolutions = taskSolutions
+        self.learningCurve = learningCurve or []
+        self.grammars = grammars or []
+        self.taskSolutions = taskSolutions or {}
         
 
 def explorationCompression(primitives, tasks,
@@ -51,9 +51,8 @@ def explorationCompression(primitives, tasks,
     
     grammar = Grammar.uniform(primitives)
 
-    grammarHistory = [grammar]
-    learningCurve = []
-    averageDescriptionLength = []
+    result = ECResult(parameters = parameters,
+                      grammars = [grammar])
 
     for j in range(iterations):
         frontiers = callCompiled(enumerateFrontiers,
@@ -77,18 +76,40 @@ def explorationCompression(primitives, tasks,
             bottomupFrontiers = [ generativeModel.rescoreFrontier(f) for f in bottomupFrontiers ]
             
             bottomupHits = sum(not f.empty for f in frontiers)
-            averageDescriptionLength.append(sum(f.bestPosterior.logPosterior for f in bottomupFrontiers
+            result.averageDescriptionLength.append(-sum(f.bestPosterior.logPosterior for f in bottomupFrontiers
                                                 if not f.empty) / bottomupHits)
 
             frontiers = [ f.combine(b) for f,b in zip(frontiers, bottomupFrontiers) ]
         else:
-            averageDescriptionLength.append(sum(f.bestPosterior.logPosterior for f in frontiers if not f.empty)/\
-                                            sum(not f.empty for f in frontiers))
+            result.averageDescriptionLength.append(-sum(f.bestPosterior.logPosterior for f in frontiers if not f.empty)/\
+                                                   sum(not f.empty for f in frontiers))
+
+        # Record the new solutions
+        result.taskSolutions = { f.task: f.topK(1) if not f.empty \
+                                 else result.taskSolutions.get(f.task, None) 
+                                 for f in frontiers }
+
+        # The compression procedure is _NOT_ guaranteed to give a
+        # grammar that hits all the tasks that were hit in the
+        # previous iteration
+
+        # This is by design - the grammar is supposed to _generalize_
+        # based on what it has seen, and so it will necessarily
+        # sometimes put less probability mass on programs that it has
+        # seen. If you put pseudocounts = 0, THEN you will get a
+        # non-decreasing number of hit tasks.
+
+        # So, if we missed a task that was previously hit, then we
+        # should go back and add back in that solution
+        if False:
+            for i,f in enumerate(frontiers):
+                if not f.empty: continue
+                if result.taskSolutions[f.task] is None: continue
+                frontiers[i] = result.taskSolutions[f.task]
             
 
         # number of hit tasks
-        learningCurve.append(sum(not f.empty for f in frontiers))
-
+        result.learningCurve.append(sum(not f.empty for f in frontiers))
 
         grammar = callCompiled(induceFragmentGrammarFromFrontiers,
                                grammar,
@@ -100,25 +121,18 @@ def explorationCompression(primitives, tasks,
                                a = arity,
                                CPUs = CPUs).\
                                toGrammar()
-        grammarHistory.append(grammar)
+        result.grammars.append(grammar)
         eprint("Grammar after iteration %d:"%(j+1))
         eprint(grammar)
-
-    returnValue = ECResult(learningCurve = learningCurve,
-                           grammars = grammarHistory,
-                           parameters = parameters,
-                           averageDescriptionLength = averageDescriptionLength,
-                           taskSolutions = {f.task: f.bestPosterior
-                                     for f in frontiers if not f.empty })
 
     if outputPrefix is not None:
         path = outputPrefix + "_" + \
                "_".join(k + "=" + str(parameters[k]) for k in sorted(parameters.keys()) ) + ".pickle"
         with open(path, 'wb') as handle:
-            pickle.dump(returnValue, handle)
+            pickle.dump(result, handle)
         eprint("Exported experiment result to",path)
 
-    return returnValue
+    return result
 
         
 def commandlineArguments(_ = None,

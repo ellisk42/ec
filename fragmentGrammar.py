@@ -432,6 +432,10 @@ class FragmentGrammar(object):
         eprint("Inducing a grammar from",len(frontiers),"frontiers")
         
         bestGrammar = FragmentGrammar.fromGrammar(g0)
+
+        initialLogPrior = [  [ bestGrammar.closedLogLikelihood(f.task.request, e.program) for e in f ]
+                             for f in frontiers ]
+            
         
         # "restricted frontiers" only contain the top K according to the best grammar
         def restrictFrontiers():
@@ -465,8 +469,21 @@ class FragmentGrammar(object):
                 eprint("New primitive of type %s\t%s (score = %f)"%(newType,newPrimitive,newScore))
             else: break
 
-        # Reestimate the parameters using the entire frontiers
-        return bestGrammar.makeUniform().insideOutside(frontiers, pseudoCounts)
+        if False:
+            # Reestimate the parameters using the entire frontiers
+            bestGrammar = bestGrammar.makeUniform().insideOutside(frontiers, pseudoCounts)
+        elif True:
+            # Reestimate the parameters using the best programs
+            restrictedFrontiers = restrictFrontiers()
+            bestGrammar = bestGrammar.makeUniform().insideOutside(restrictedFrontiers, pseudoCounts)
+        else:
+            # Use parameters that were found during search
+            pass
+            
+
+        eprint("Old joint = %f\tNew joint = %f\n"%(FragmentGrammar.fromGrammar(g0).jointFrontiersMDL(frontiers),
+                                                   bestGrammar.jointFrontiersMDL(frontiers)))
+        return bestGrammar
 
 def induceFragmentGrammarFromFrontiers(*arguments, **keywordArguments):
     startTime = time.time()

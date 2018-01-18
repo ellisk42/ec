@@ -3,26 +3,28 @@ from ec import *
 import matplotlib.pyplot as plot
 from matplotlib.ticker import MaxNLocator
 
-def plotECResult(result, hitColor = 'r', descriptionLengthColor = 'b'):
-    with open(result,'rb') as handle: result = pickle.load(handle)
+def plotECResult(results, colors = 'rgbky'):
+    for j,result in enumerate(results):
+        with open(result,'rb') as handle: results[j] = pickle.load(handle)
 
     f,a1 = plot.subplots()
-    a1.plot(range(1,len(result.learningCurve) + 1),
-            result.learningCurve,
-            hitColor + '-')
-    a1.set_xlabel('Iteration')
-    a1.xaxis.set_major_locator(MaxNLocator(integer = True))
-
-    a1.set_ylabel('# Hit Tasks', color = hitColor)
-    a1.tick_params('y',colors = hitColor)
-
     a2 = a1.twinx()
-    a2.plot(range(1,len(result.averageDescriptionLength) + 1),
-            result.averageDescriptionLength,
-            descriptionLengthColor + '-')
+    for color, result in zip(colors, results):
+        a1.plot(range(1,len(result.learningCurve) + 1),
+                [ 100. * x / len(result.taskSolutions)
+                  for x in result.learningCurve],
+                color + '-')
+        a1.set_xlabel('Iteration')
+        a1.xaxis.set_major_locator(MaxNLocator(integer = True))
 
-    a2.set_ylabel('Average description length', color = descriptionLengthColor)
-    a2.tick_params('y',colors = descriptionLengthColor)
+        a1.set_ylabel('% Hit Tasks')
+
+        a2.plot(range(1,len(result.averageDescriptionLength) + 1),
+                result.averageDescriptionLength,
+                color + '--')
+
+        a2.set_ylabel('Average description length (nats)')
+
 
 
     f.tight_layout()
@@ -31,4 +33,4 @@ def plotECResult(result, hitColor = 'r', descriptionLengthColor = 'b'):
 
 if __name__ == "__main__":
     import sys
-    plotECResult(sys.argv[1])
+    plotECResult(sys.argv[1:])
