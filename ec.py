@@ -125,12 +125,13 @@ def explorationCompression(primitives, tasks,
         eprint("Grammar after iteration %d:"%(j+1))
         eprint(grammar)
 
-    if outputPrefix is not None:
-        path = outputPrefix + "_" + \
-               "_".join(k + "=" + str(parameters[k]) for k in sorted(parameters.keys()) ) + ".pickle"
-        with open(path, 'wb') as handle:
-            pickle.dump(result, handle)
-        eprint("Exported experiment result to",path)
+        if outputPrefix is not None:
+            parameters['iterations'] = j + 1
+            path = outputPrefix + "_" + \
+                   "_".join(k + "=" + str(parameters[k]) for k in sorted(parameters.keys()) ) + ".pickle"
+            with open(path, 'wb') as handle:
+                pickle.dump(result, handle)
+            eprint("Exported experiment result to",path)
 
     return result
 

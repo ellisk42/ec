@@ -83,7 +83,7 @@ if __name__ == "__main__":
     explorationCompression(primitives, [ task.task() for task in tasks ],
                            outputPrefix = "experimentOutputs/circuit",
                            **commandlineArguments(frontierSize = 10**3,
-                                                  iterations = 5,
+                                                  iterations = 10,
                                                   pseudoCounts = 5.))
     
     

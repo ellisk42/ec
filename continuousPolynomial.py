@@ -19,5 +19,5 @@ if __name__ == "__main__":
     explorationCompression(polynomialPrimitives, tasks,
                            outputPrefix = "experimentOutputs/continuousPolynomial",
                            **commandlineArguments(frontierSize = 10**2,
-                                                  iterations = 5,
+                                                  iterations = 10,
                                                   pseudoCounts = 10.0))

@@ -28,6 +28,6 @@ if __name__ == "__main__":
                            outputPrefix = "experimentOutputs/text",
                            **commandlineArguments(
                                frontierSize = 10**4,
-                               iterations = 3,
+                               iterations = 10,
                                a = 2,
                                pseudoCounts = 10.0))
