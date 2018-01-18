@@ -1,6 +1,7 @@
 from ec import *
 
 import matplotlib.pyplot as plot
+from matplotlib.ticker import MaxNLocator
 
 def plotECResult(result, hitColor = 'r', descriptionLengthColor = 'b'):
     with open(result,'rb') as handle: result = pickle.load(handle)
@@ -10,6 +11,7 @@ def plotECResult(result, hitColor = 'r', descriptionLengthColor = 'b'):
             result.learningCurve,
             hitColor + '-')
     a1.set_xlabel('Iteration')
+    a1.xaxis.set_major_locator(MaxNLocator(integer = True))
 
     a1.set_ylabel('# Hit Tasks', color = hitColor)
     a1.tick_params('y',colors = hitColor)
@@ -28,4 +30,5 @@ def plotECResult(result, hitColor = 'r', descriptionLengthColor = 'b'):
 
 
 if __name__ == "__main__":
-    plotECResult("experimentOutputs/polynomial_aic=1.0_arity=0_frontierSize=500_iterations=5_maximumFrontier=None_pseudoCounts=10.0_structurePenalty=0.001_topK=1_useRecognitionModel=False.pickle")
+    import sys
+    plotECResult(sys.argv[1])
