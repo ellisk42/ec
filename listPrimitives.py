@@ -13,8 +13,9 @@ def _eq(x): return lambda y: x == y
 def _mod(x): return lambda y: x%y
 def _not(x): return not x
 def _gt(x): return lambda y: x > y
-
+def _index(j): return lambda l: l[j]
 primitives = [
+    Primitive("index",arrow(tint,tlist(tint),tint),_index),
     Primitive("+",arrow(tint,tint),_addition),
     Primitive("-",arrow(tint,tint),_subtraction),
     Primitive("sort",arrow(tlist(tint),tlist(tint)),sorted),
