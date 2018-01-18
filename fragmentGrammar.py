@@ -13,24 +13,24 @@ class Matcher(object):
         self.variableBindings = {}
 
     @staticmethod
-    def match(context, fragment, expression):
+    def match(context, fragment, expression, numberOfArguments):
         m = Matcher(context)
-        tp = fragment.visit(m, expression, [])
+        tp = fragment.visit(m, expression, [], numberOfArguments)
         return m.context, tp, m.variableBindings        
     
-    def application(self, fragment, expression, environment):
+    def application(self, fragment, expression, environment, numberOfArguments):
         '''returns tp of fragment.'''
         if not isinstance(expression,Application): raise MatchFailure()
         
-        ft = fragment.f.visit(self, expression.f, environment)
-        xt = fragment.x.visit(self, expression.x, environment)
+        ft = fragment.f.visit(self, expression.f, environment, numberOfArguments + 1)
+        xt = fragment.x.visit(self, expression.x, environment, 0)
         
         self.context, returnType = self.context.makeVariable()
         try: self.context = self.context.unify(ft,arrow(xt,returnType))
         except UnificationFailure: raise MatchFailure()
         
         return returnType.apply(self.context)
-    def index(self, fragment, expression, environment):
+    def index(self, fragment, expression, environment, numberOfArguments):
         # This is a bound variable
         surroundingAbstractions = len(environment)
         if fragment.i < surroundingAbstractions:
@@ -46,6 +46,13 @@ class Matcher(object):
         try: expression = expression.shift(-surroundingAbstractions)
         except ShiftFailure: raise MatchFailure()
 
+        # Wrap it in the appropriate number of lambda expressions & applications
+        # This is because everything has to be in eta-longform
+        if numberOfArguments > 0:
+            expression = expression.shift(numberOfArguments)
+            for j in range(numberOfArguments): expression = Application(expression, Index(j))
+            for _ in range(numberOfArguments): expression = Abstraction(expression)
+
         # Added to the bindings
         if i in self.variableBindings:
             (tp,binding) = self.variableBindings[i]
@@ -54,23 +61,23 @@ class Matcher(object):
             self.context, tp = self.context.makeVariable()
             self.variableBindings[i] = (tp,expression)
         return tp
-    def abstraction(self, fragment, expression, environment):
+    def abstraction(self, fragment, expression, environment, numberOfArguments):
         if not isinstance(expression, Abstraction): raise MatchFailure()
 
         self.context,argumentType = self.context.makeVariable()
-        returnType = fragment.body.visit(self, expression.body, [argumentType] + environment)
+        returnType = fragment.body.visit(self, expression.body, [argumentType] + environment, 0)
 
         return arrow(argumentType,returnType)
-    def primitive(self, fragment, expression, environment):
+    def primitive(self, fragment, expression, environment, numberOfArguments):
         if fragment != expression: raise MatchFailure()
         self.context,tp = fragment.tp.instantiate(self.context)
         return tp
-    def invented(self, fragment, expression, environment):
+    def invented(self, fragment, expression, environment, numberOfArguments):
         if fragment != expression: raise MatchFailure()
         self.context,tp = fragment.tp.instantiate(self.context)
         return tp
-    def fragmentVariable(self, fragment, expression, environment):
-        raise Exception('Deprecated: matching against fragment variables. Convert fragment to ccanonical form to get rid of frogman variables.')
+    def fragmentVariable(self, fragment, expression, environment, numberOfArguments):
+        raise Exception('Deprecated: matching against fragment variables. Convert fragment to canonical form to get rid of fragment variables.')
     
 
 
@@ -305,7 +312,8 @@ class FragmentGrammar(object):
                 else:
                     try:
                         # print "Trying to match %s w/ %s"%(production, f)
-                        newContext, fragmentType, variableBindings = Matcher.match(newContext, production, f)
+                        newContext, fragmentType, variableBindings = \
+                                            Matcher.match(newContext, production, f, len(xs))
                         # This is necessary because the types of the variable
                         # bindings and holes need to match up w/ request
                         # print "Fragment type",fragmentType
@@ -467,3 +475,5 @@ def induceFragmentGrammarFromFrontiers(*arguments, **keywordArguments):
     print "Grammar induction took time",time.time() - startTime,"seconds"
     return g
 
+
+    

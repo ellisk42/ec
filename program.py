@@ -6,7 +6,7 @@ import math
 
 
 class ShiftFailure(Exception): pass
-
+class ParseFailure(Exception): pass
 
 class Program(object):
     def __repr__(self): return str(self)
@@ -28,6 +28,19 @@ class Program(object):
             if isinstance(child, Index) and child.i >= surroundingAbstractions:
                 n = max(n, child.i - surroundingAbstractions + 1)
         return n
+
+    @staticmethod
+    def parse(s):
+        e,s = Program._parse(s.strip())
+        if s != "": raise ParseFailure()
+        return e
+    @staticmethod
+    def _parse(s):
+        while len(s) > 0 and s[0].isspace(): s = s[1:]
+        for p in [Application, Abstraction, Index, Invented, FragmentVariable, Primitive]:
+            try: return p._parse(s)
+            except ParseFailure: continue
+        raise ParseFailure()
 
 class Application(Program):
     def __init__(self,f,x):
@@ -71,6 +84,25 @@ class Application(Program):
 
     def size(self): return self.f.size() + self.x.size()
 
+    @staticmethod
+    def _parse(s):
+        while len(s) > 0 and s[0].isspace(): s = s[1:]
+        if s == "" or s[0] != '(': raise ParseFailure()
+        s = s[1:]
+
+        xs = []
+        while True:
+            x,s = Program._parse(s)
+            xs.append(x)
+            while len(s) > 0 and s[0].isspace(): s = s[1:]
+            if s == "": raise ParseFailure()
+            if s[0] == ")":
+                s = s[1:]
+                break
+        e = xs[0]
+        for x in xs[1:]: e = Application(e,x)
+        return e,s
+
             
 
 class Index(Program):
@@ -107,6 +139,19 @@ class Index(Program):
 
     def size(self): return 1
 
+    @staticmethod
+    def _parse(s):
+        while len(s) > 0 and s[0].isspace(): s = s[1:]
+        if s == "" or s[0] != '$': raise ParseFailure()
+        s = s[1:]
+        n = ""
+        while s != "" and s[0].isdigit():
+            n += s[0]
+            s = s[1:]
+        if n == "": raise ParseFailure()
+        return Index(int(n)),s
+        
+
 
 class Abstraction(Program):
     def __init__(self,body):
@@ -140,6 +185,22 @@ class Abstraction(Program):
 
     def size(self): return self.body.size()
 
+    @staticmethod
+    def _parse(s):
+        if s.startswith('(\\'):
+            s = s[2:]
+        elif s.startswith('(lambda'):
+            s = s[len('(lambda'):]
+        else: raise ParseFailure()
+        while len(s) > 0 and s[0].isspace(): s = s[1:]
+
+        b,s = Program._parse(s)
+        while len(s) > 0 and s[0].isspace(): s = s[1:]
+        if s == "" or s[0] != ')': raise ParseFailure()
+        s = s[1:]
+        return Abstraction(b),s
+
+
         
 
 class Primitive(Program):
@@ -165,6 +226,18 @@ class Primitive(Program):
 
     def size(self): return 1
 
+    @staticmethod
+    def _parse(s):
+        while len(s) > 0 and s[0].isspace(): s = s[1:]
+        name = ""
+        while s != "" and not s[0].isspace() and s[0] not in '()':
+            name += s[0]
+            s = s[1:]
+        if name in Primitive.GLOBALS:
+            return Primitive.GLOBALS[name],s
+        raise ParseFailure()
+
+
 
 class Invented(Program):
     def __init__(self, body):
@@ -188,6 +261,14 @@ class Invented(Program):
     def walk(self,surroundingAbstractions = 0): yield surroundingAbstractions,self
 
     def size(self): return 1
+
+    @staticmethod
+    def _parse(s):
+        while len(s) > 0 and s[0].isspace(): s = s[1:]
+        if not s.startswith('#'): raise ParseFailure()
+        s = s[1:]
+        b,s = Program._parse(s)
+        return Invented(b),s
     
 
 class FragmentVariable(Program):
@@ -217,6 +298,13 @@ class FragmentVariable(Program):
     def walk(self, surroundingAbstractions = 0): yield surroundingAbstractions,self
 
     def size(self): return 1
+
+    @staticmethod
+    def _parse(s):
+        while len(s) > 0 and s[0].isspace(): s = s[1:]
+        if s.startswith('??'): return FragmentVariable.single, s[2:]
+        if s.startswith('?'): return FragmentVariable.single, s[1:]
+        raise ParseFailure()
 
 FragmentVariable.single = FragmentVariable()
 

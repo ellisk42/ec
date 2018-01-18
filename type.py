@@ -126,6 +126,12 @@ class Context(object):
             k = k.unify(x,y)
         return k
 
+    def __str__(self):
+        return "Context(next = %d, {%s})"%(self.nextVariable,
+                                           ", ".join("t%d ||> %s"%(k,v.apply(self))
+                                                     for k,v in self.substitution ))
+    def __repr__(self): return str(self)
+
 Context.EMPTY = Context(0,[])
 
     
