@@ -7,7 +7,7 @@ def _append(x): return lambda y: x + y
 def _single(x): return [x]
 def _slice(x): return lambda y: lambda l: l[x:y]
 def _map(f): return lambda l: map(f,l)
-def _reduce(f): return lambda x0: lambda l: reduce(f,l,x0)
+def _reduce(f): return lambda x0: lambda l: reduce(lambda a,b: f(a)(b),l,x0)
 def _filter(f): return lambda l: filter(f,l)
 def _eq(x): return lambda y: x == y
 def _mod(x): return lambda y: x%y
