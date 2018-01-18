@@ -59,6 +59,9 @@ def iterativeDeepeningEnumeration(g, request, frontierSize,
         frontier = [ (l,p) for l,_,p in enumeration(g, Context.EMPTY, [], request, budget) ]
         budget += budgetIncrement
     #eprint("Enumerated up to %f nats"%(budget - budgetIncrement))
+    # This will trim the frontier to be exactly frontierSize
+    # Not sure whether we want to do this
+    #return sorted(frontier, key = lambda (l,p): l, reverse = True)[:frontierSize]
     return frontier
 
 def enumeration(g, context, environment, request, budget):

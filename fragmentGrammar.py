@@ -460,10 +460,9 @@ class FragmentGrammar(object):
             (newScore, newGrammar) = max(scoredFragments)
             
             if newScore > bestScore:
-                bestScore, bestGrammar = newScore, newGrammar                
-                eprint("Updated grammar to: (score = %f)"%newScore)
-                eprint(newGrammar)
-                eprint()
+                bestScore, bestGrammar = newScore, newGrammar
+                _,newType,newPrimitive = bestGrammar.productions[-1]
+                eprint("New primitive of type %s\t%s (score = %f)"%(newType,newPrimitive,newScore))
             else: break
 
         # Reestimate the parameters using the entire frontiers

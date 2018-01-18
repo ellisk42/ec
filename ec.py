@@ -14,7 +14,9 @@ class ECResult():
                  learningCurve = [],
                  grammars = [],
                  taskSolutions = {},
+                 averageDescriptionLength = [],
                  parameters = None):
+        self.averageDescriptionLength = averageDescriptionLength
         self.parameters = parameters
         self.learningCurve = learningCurve
         self.grammars = grammars
@@ -51,6 +53,7 @@ def explorationCompression(primitives, tasks,
 
     grammarHistory = [grammar]
     learningCurve = []
+    averageDescriptionLength = []
 
     for j in range(iterations):
         frontiers = callCompiled(enumerateFrontiers,
@@ -72,8 +75,15 @@ def explorationCompression(primitives, tasks,
             # Rescore the frontiers according to the generative model and then combine w/ original frontiers
             generativeModel = FragmentGrammar.fromGrammar(grammar)
             bottomupFrontiers = [ generativeModel.rescoreFrontier(f) for f in bottomupFrontiers ]
+            
+            bottomupHits = sum(not f.empty for f in frontiers)
+            averageDescriptionLength.append(sum(f.bestPosterior.logPosterior for f in bottomupFrontiers
+                                                if not f.empty) / bottomupHits)
 
             frontiers = [ f.combine(b) for f,b in zip(frontiers, bottomupFrontiers) ]
+        else:
+            averageDescriptionLength.append(sum(f.bestPosterior.logPosterior for f in frontiers if not f.empty)/\
+                                            sum(not f.empty for f in frontiers))
             
 
         # number of hit tasks
@@ -97,6 +107,7 @@ def explorationCompression(primitives, tasks,
     returnValue = ECResult(learningCurve = learningCurve,
                            grammars = grammarHistory,
                            parameters = parameters,
+                           averageDescriptionLength = averageDescriptionLength,
                            taskSolutions = {f.task: f.bestPosterior
                                      for f in frontiers if not f.empty })
 
