@@ -130,7 +130,7 @@ def proposeFragmentsFromFragment(f):
         frequency = sum(t == subtree for t in closedSubtrees )
         if frequency < 2: continue
         fp = canonicalFragment(f.substitute(subtree, Index(freeVariables)))
-        #print "Fragment from fragment:",f,"\t",fp
+        #eprint("Fragment from fragment:",f,"\t",fp)
         yield fp
 
 def proposeFragmentsFromProgram(p,arity):
@@ -182,7 +182,7 @@ def proposeFragmentsFromProgram(p,arity):
             if isinstance(child,(Primitive,Invented)): numberOfPrimitives += 1
             if isinstance(child,FragmentVariable): numberOfHoles += 1
             if isinstance(child,Index) and child.i >= surroundingAbstractions: numberOfVariables += 1
-        #print "Fragment %s has %d calls and %d variables and %d primitives"%(f,numberOfHoles,numberOfVariables,numberOfPrimitives)
+        #eprint("Fragment %s has %d calls and %d variables and %d primitives"%(f,numberOfHoles,numberOfVariables,numberOfPrimitives))
 
         return numberOfPrimitives + 0.5 * (numberOfHoles + numberOfVariables) > 1.5            
 
@@ -253,6 +253,8 @@ class FragmentGrammar(object):
         self.logVariable = logVariable
         self.productions = productions
 
+    def __repr__(self):
+        return "FragmentGrammar(logVariable={self.logVariable}, productions={self.productions}".format(self=self)
     def __str__(self):
         return "\n".join(["%f\tt0\t$_"%self.logVariable] + [ "%f\t%s\t%s"%(l,t,p) for l,t,p in self.productions ])
 
@@ -278,14 +280,14 @@ class FragmentGrammar(object):
         return [(l - z, k, c, p) for l,k,c,p in candidates ]
 
     def closedLogLikelihood(self, request, expression):
-        #print "About to correctly the likelihood of",expression
+        #eprint("About to correctly the likelihood of",expression)
         _,l,_ = self.logLikelihood(Context.EMPTY, [], request, expression)
-        #print "Got likelihood",l
+        #eprint("Got likelihood",l)
         return l
 
     def logLikelihood(self, context, environment, request, expression):
         '''returns (context, log likelihood, uses)'''
-        #print "REQUEST",request,"EXPRESSION",expression
+        #eprint("REQUEST",request,"EXPRESSION",expression)
         if request.isArrow():
             if not isinstance(expression,Abstraction): return (context,NEGATIVEINFINITY,Uses.empty)
             return self.logLikelihood(context,
@@ -311,19 +313,19 @@ class FragmentGrammar(object):
                     if production != f: continue
                 else:
                     try:
-                        # print "Trying to match %s w/ %s"%(production, f)
+                        # eprint("Trying to match %s w/ %s"%(production, f))
                         newContext, fragmentType, variableBindings = \
                                             Matcher.match(newContext, production, f, len(xs))
                         # This is necessary because the types of the variable
                         # bindings and holes need to match up w/ request
-                        # print "Fragment type",fragmentType
+                        # eprint("Fragment type",fragmentType)
                         fragmentTypeTemplate = request
                         for _ in xs:
                             newContext, newVariable = newContext.makeVariable()
                             fragmentTypeTemplate = arrow(newVariable, fragmentTypeTemplate)
                         newContext = newContext.unify(fragmentType, fragmentTypeTemplate)
-                        # print "Fragment type after unification w/ template",fragmentType.apply(newContext)
-                        # print "H = ",[(t.apply(newContext),h) for t,h in holes ],\
+                        # eprint("Fragment type after unification w/ template",fragmentType.apply(newContext))
+                        # eprint("H = ",[(t.apply(newContext),h) for t,h in holes ],\)
                         #     "V = ",{i: (t.apply(newContext),v) for i,(t,v) in variableBindings.iteritems() }
                         # update the unified type
                         tp = fragmentType.apply(newContext)
@@ -338,9 +340,9 @@ class FragmentGrammar(object):
                                                  if not isinstance(candidate,Index)},
                                  actualUses = {} if isinstance(production,Index) else {production: 1.})
 
-                # print "tp",tp
-                # print "tp.functionArguments",tp.functionArguments()
-                # print "xs = ",xs
+                # eprint("tp",tp)
+                # eprint("tp.functionArguments",tp.functionArguments())
+                # eprint("xs = ",xs)
                 argumentTypes = tp.functionArguments()
                 assert len(xs) == len(argumentTypes)
 
@@ -429,7 +431,7 @@ class FragmentGrammar(object):
     def induceFromFrontiers(g0, frontiers, _ = None,
                             topK = 1, pseudoCounts = 1.0, aic = 1.0, structurePenalty = 0.001, a = 0, CPUs = 1):
         frontiers = [frontier for frontier in frontiers if not frontier.empty ]
-        print "Inducing a grammar from",len(frontiers),"frontiers"
+        eprint("Inducing a grammar from",len(frontiers),"frontiers")
         
         bestGrammar = FragmentGrammar.fromGrammar(g0)
         
@@ -461,9 +463,9 @@ class FragmentGrammar(object):
             
             if newScore > bestScore:
                 bestScore, bestGrammar = newScore, newGrammar                
-                print "Updated grammar to: (score = %f)"%newScore
-                print newGrammar
-                print
+                eprint("Updated grammar to: (score = %f)"%newScore)
+                eprint(newGrammar)
+                eprint()
             else: break
 
         # Reestimate the parameters using the entire frontiers
@@ -472,7 +474,7 @@ class FragmentGrammar(object):
 def induceFragmentGrammarFromFrontiers(*arguments, **keywordArguments):
     startTime = time.time()
     g = FragmentGrammar.induceFromFrontiers(*arguments, **keywordArguments)
-    print "Grammar induction took time",time.time() - startTime,"seconds"
+    eprint("Grammar induction took time",time.time() - startTime,"seconds")
     return g
 
 

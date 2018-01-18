@@ -1,4 +1,4 @@
-from utilities import *
+from utilities import eprint
 from frontier import *
 from task import *
 from type import *
@@ -26,8 +26,8 @@ def enumerateFrontiers(g, frontierSize, tasks, CPUs = 1):
         totalNumberOfPrograms = sum(len(f) for f in frontiers.values())
         totalNumberOfFrontiers = len(frontiers)
     
-    print "Enumerated %d frontiers with %d total programs in time %fsec"%\
-        (totalNumberOfFrontiers,totalNumberOfPrograms,time() - start)
+    eprint("Enumerated %d frontiers with %d total programs in time %fsec"%\
+           (totalNumberOfFrontiers,totalNumberOfPrograms,time() - start))
     
     start = time()
     # We split up the likelihood calculation and the frontier construction
@@ -48,8 +48,7 @@ def enumerateFrontiers(g, frontierSize, tasks, CPUs = 1):
                   for programLikelihood,task in zip(programLikelihoods, tasks) ]
     
     dt = time() - start
-    print "Scored frontiers in time %fsec (%f/program)"%(dt,dt/totalNumberOfPrograms)
-    flushEverything()
+    eprint("Scored frontiers in time %fsec (%f/program)"%(dt,dt/totalNumberOfPrograms))
 
     return frontiers
 
@@ -59,7 +58,7 @@ def iterativeDeepeningEnumeration(g, request, frontierSize,
     while len(frontier) < frontierSize:
         frontier = [ (l,p) for l,_,p in enumeration(g, Context.EMPTY, [], request, budget) ]
         budget += budgetIncrement
-    #print "Enumerated up to %f nats"%(budget - budgetIncrement)
+    #eprint("Enumerated up to %f nats"%(budget - budgetIncrement))
     return frontier
 
 def enumeration(g, context, environment, request, budget):

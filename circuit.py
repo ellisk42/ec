@@ -1,4 +1,5 @@
 from ec import *
+from utilities import eprint
 from circuitPrimitives import primitives
 
 import itertools
@@ -68,9 +69,9 @@ class Circuit(object):
         if self.operations == []: return False
         usedIndices = used(self.operations[-1])
         if len(usedIndices) == len(self.operations) - 1:
-            print self.name
-            print usedIndices
-            print 
+            eprint(self.name)
+            eprint(usedIndices)
+            eprint()
         return len(usedIndices) == len(self.operations) - 1
                 
 if __name__ == "__main__":
@@ -80,8 +81,8 @@ if __name__ == "__main__":
         gates = random.choice(range(1,MAXIMUMGATES + 1))
         tasks.append(Circuit(numberOfInputs = inputs,
                              numberOfGates = gates))
-    print "Sampled %d tasks with %d unique functions"%(len(tasks),
-                                                       len({t.signature for t in tasks }))
+    eprint("Sampled %d tasks with %d unique functions"%(len(tasks),
+                                                       len({t.signature for t in tasks })))
     explorationCompression(primitives, [ task.task() for task in tasks ],
                            outputPrefix = "experimentOutputs/circuit",
                            **commandlineArguments(frontierSize = 10**3,

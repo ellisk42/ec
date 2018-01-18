@@ -5,6 +5,8 @@ class FrontierEntry(object):
         self.program = program
         self.logPrior = logPrior
         self.logLikelihood = logLikelihood
+    def __repr__(self):
+        return "FrontierEntry(program={self.program}, logPrior={self.logPrior}, logLikelihood={self.logLikelihood}".format(self=self)
 
 
 class Frontier(object):
@@ -12,6 +14,7 @@ class Frontier(object):
         self.entries = frontier
         self.task = task
 
+    def __repr__(self): return "Frontier(entries={self.entries}, task={self.task})".format(self=self)
     def __iter__(self): return iter(self.entries)
     def __len__(self): return len(self.entries)
         

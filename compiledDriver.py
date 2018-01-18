@@ -1,42 +1,31 @@
+import sys
 import time
 import traceback
 import cPickle as pickle
-import os
-import subprocess
-import sys
 
-def flushEverything():
-    sys.stdout.flush()
-    sys.stdin.flush()
+from utilities import eprint
+
 
 if __name__ == "__main__":
     sys.setrecursionlimit(1000)
-    
-    [ra,wr] = sys.argv[1:]
-    r = os.fdopen(int(ra),'rb')
 
     start = time.time()
-    #usingDill(True)
-    message = pickle.loads(r.read())
-    #usingDill(False)
-    print "Compiled driver unpacked the message in time",time.time() - start
-    
-    #module = __import__(message["module"])
-    #module.__dict__[message["functionName"]]
-    function = message["function"]
+    request = pickle.load(sys.stdin)
+    eprint("Compiled driver unpacked the message in time", time.time() - start)
+
+    response = (False, None)
     try:
-        returnValue = function(*message["arguments"],
-                               **message["keywordArguments"])
-        returnValue = (True,returnValue)
-    except:
-        returnValue = (False,traceback.format_exc())
-    start = time.time()
-    returnValue = pickle.dumps(returnValue)
-    print "Packed return value in time",time.time() - start
-    w = os.fdopen(int(wr),'wb')
-    start = time.time()
-    w.write(returnValue)
-    w.close()
-    print "Sent return value in time",time.time() - start
-    flushEverything()
-    
+        start = time.time()
+        f = request["function"]
+        result = f(*request["arguments"],
+                   **request["keywordArguments"])
+        response = (True, result)
+        eprint("Compiled driver executed response in time", time.time() - start)
+    except Exception as e:
+        eprint("Exception thrown in pypy process for %s:" % f.__name__)
+        sys.stderr.write(traceback.format_exc())
+        sys.stderr.flush()
+    finally:
+        start = time.time()
+        pickle.dump(response, sys.stdout)
+        eprint("Packed and sent return value in time", time.time() - start)

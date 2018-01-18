@@ -1,4 +1,5 @@
 from ec import *
+from utilities import eprint
 from makeStringTransformationProblems import makeTasks, delimiters
 from textPrimitives import primitives
 
@@ -21,7 +22,7 @@ if __name__ == "__main__":
     for t in tasks:
         t.features = problemFeatures(t)
         t.cache = False
-    print "Generated",len(tasks),"tasks"
+    eprint("Generated",len(tasks),"tasks")
 
     explorationCompression(primitives, tasks,
                            outputPrefix = "experimentOutputs/text",

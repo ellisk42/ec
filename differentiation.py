@@ -48,18 +48,18 @@ class DN(object):
             inputs = [ a.recalculate() for a in self.arguments ]
             self.data = self.forward(*inputs)
             # if invalid(self.data):
-            #     print "I am invalid",repr(self)
-            #     print "Here are my inputs",inputs
+            #     eprint("I am invalid",repr(self))
+            #     eprint("Here are my inputs",inputs)
             #     self.zeroEverything()
-            #     print "Here I am after being zeroed",repr(self)
+            #     eprint("Here I am after being zeroed",repr(self))
             #     raise Exception('invalid loss')
             #assert valid(self.data)
             partials = self.backward(*inputs)
             for d,a in zip(partials,self.arguments):
                 # if invalid(d):
-                #     print "I have an invalid derivative",self
-                #     print "Inputs",inputs
-                #     print "partials",partials
+                #     eprint("I have an invalid derivative",self)
+                #     eprint("Inputs",inputs)
+                #     eprint("partials",partials)
                 #     raise Exception('invalid derivative')
                 a.descendents.append((self,d))
         return self.data
@@ -95,12 +95,12 @@ class DN(object):
         for j in range(steps):
             l = self.updateNetwork()
             if (not (update is None)) and j%update == 0:
-                print "LOSS:",l
+                eprint("LOSS:",l)
                 for p in parameters:
-                    print p,'\t',p.derivative
-                    print
+                    eprint(p,'\t',p.derivative)
+                    eprint()
             if invalid(l):
-                print "Invalid loss detected",l
+                eprint("Invalid loss detected",l)
                 if update == None:
                     for p in parameters: p.data = 0
                     self.gradientDescent(parameters, lr = lr, steps = steps, update = 1)
@@ -116,12 +116,12 @@ class DN(object):
         for j in range(steps):
             l = self.updateNetwork()
             if (not (update is None)) and j%update == 0:
-                print "LOSS:",l
+                eprint("LOSS:",l)
                 for p in parameters:
-                    print p,'\t',p.derivative
-                    print
+                    eprint(p,'\t',p.derivative)
+                    eprint()
             if invalid(l):
-                print "Invalid loss detected",l
+                eprint("Invalid loss detected",l)
                 if update == None:
                     for p in parameters: p.data = 0
                     self.gradientDescent(parameters, lr = lr, steps = steps, update = 1)
@@ -257,21 +257,21 @@ if __name__ == "__main__":
     y = Placeholder(2.,"y")
     z = x - LSE([x,y])
     z.updateNetwork()
-    print "dL/dx = %f\tdL/dy = %f"%(x.derivative,y.derivative)
+    eprint("dL/dx = %f\tdL/dy = %f"%(x.derivative,y.derivative))
 
     x.data = 2.
     y.data = 10.
     z.updateNetwork()
-    print "dL/dx = %f\tdL/dy = %f"%(x.differentiate(),y.differentiate())
+    eprint("dL/dx = %f\tdL/dy = %f"%(x.differentiate(),y.differentiate()))
 
     x.data = 2.
     y.data = 2.
     z.updateNetwork()
-    print "z = ",z.data,z
-    print "dL/dx = %f\tdL/dy = %f"%(x.differentiate(),y.differentiate())
+    eprint("z = ",z.data,z)
+    eprint("dL/dx = %f\tdL/dy = %f"%(x.differentiate(),y.differentiate()))
 
     loss = -z
-    print loss
+    eprint(loss)
 
     
     lr = 0.001

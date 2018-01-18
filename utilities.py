@@ -1,9 +1,17 @@
+from __future__ import print_function
+
 import time
 import traceback
 import sys
 import os
+import subprocess
 import math
 import cPickle as pickle
+
+
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
+
 
 PARALLELMAPDATA = None
 def parallelMap(numberOfCPUs, f, *xs):
@@ -30,7 +38,7 @@ def parallelMapCallBack(j):
     try:
         return f(*[ x[j] for x in xs ])
     except Exception as e:
-        print "Exception in worker during lightweight parallel map:\n%s"%(traceback.format_exc())
+        eprint("Exception in worker during lightweight parallel map:\n%s"%(traceback.format_exc()))
         raise e
 
 
@@ -86,56 +94,23 @@ def invalid(x):
     return math.isinf(x) or math.isnan(x)
 def valid(x): return not invalid(x)
 
+
 def callCompiled(f, *arguments, **keywordArguments):
-    modulePath = f.__module__
+    p = subprocess.Popen(['pypy', 'compiledDriver.py'],
+                         stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+    request = {
+        "function": f,
+        "arguments": arguments,
+        "keywordArguments": keywordArguments,
+    }
+    start = time.time()
+    pickle.dump(request, p.stdin)
+    eprint("Wrote serialized message in time", time.time() - start)
 
-    ra,wa = os.pipe()
-    rr,wr = os.pipe()
-    p = os.fork()
-    
-    if p == 0:
-        # Child
-        os.close(wa)
-        os.close(rr)
+    (success, result) = pickle.load(p.stdout)
+    eprint("Total pypy return time", time.time() - start)
 
-        pypy = '/usr/bin/pypy'
-        os.execl(pypy,
-                 pypy,'compiledDriver.py',str(ra),str(wr))
-    else:
-        # Parent
-        os.close(ra)
-        os.close(wr)
-        
-        start = time.time()
-        serialized = pickle.dumps({"arguments": arguments,
-                                   "keywordArguments": keywordArguments,
-                                   "function": f,
-                                   "functionName": f.__name__,
-                                   #"openModules": openModules,
-                                   "module": modulePath})
-        print "Serialized in time",time.time() - start
-        
-        w = os.fdopen(wa,'wb')
-        start = time.time()
-        w.write(serialized)
-        print "Wrote serialized message in time",time.time() - start
-        w.close()
+    if not success:
+        os.exit(1)
 
-        r = os.fdopen(rr,'rb')
-
-        content = r.read()
-        start = time.time()
-        (success,returnValue) = pickle.loads(content)
-        print "Loaded content from pypy  in",time.time() - start
-
-        if not success:
-            print "Exception thrown in pypy process:"
-            print returnValue
-            assert False
-
-        return returnValue
-        
-        
-def flushEverything():
-    sys.stdout.flush()
-    sys.stdin.flush()
+    return result

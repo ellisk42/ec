@@ -1,6 +1,7 @@
 from enumeration import *
 from fragmentGrammar import *
 from grammar import *
+from utilities import eprint
 
 import torch
 import torch.nn as nn
@@ -50,7 +51,7 @@ class RecognitionModel(nn.Module):
             self.zero_grad()
             l = -self.logLikelihood(frontiers)/len(frontiers)
             if i%50 == 0:
-                print "Epoch",i,"Loss",l.data[0]
+                eprint("Epoch",i,"Loss",l.data[0])
             l.backward()
             optimizer.step()
 
@@ -67,7 +68,7 @@ class RecognitionModel(nn.Module):
                                   [ (productions.data[j][k],t,p)
                                     for k,(_,t,p) in enumerate(self.grammar.productions) ])
                     for j,task in enumerate(tasks) }
-        print "Evaluated recognition model in %f seconds"%(time() - start)
+        eprint("Evaluated recognition model in %f seconds"%(time() - start))
 
         return callCompiled(enumerateFrontiers,
                             grammars, frontierSize, tasks)

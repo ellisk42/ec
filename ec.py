@@ -1,4 +1,5 @@
 
+from utilities import eprint
 from recognition import *
 from frontier import *
 from program import *
@@ -28,11 +29,15 @@ def explorationCompression(primitives, tasks,
                            CPUs = 1,
                            outputPrefix = None):
     if frontierSize == None:
-        print "Please specify a frontier size: explorationCompression(..., frontierSize = ...)"
+        eprint("Please specify a frontier size: explorationCompression(..., frontierSize = ...)")
         assert False
     if iterations == None:
-        print "Please specify a iteration count: explorationCompression(..., iterations = ...)"
+        eprint("Please specify a iteration count: explorationCompression(..., iterations = ...)")
         assert False
+    if useRecognitionModel and not all( len(t.features) == len(tasks[0].features) for t in tasks ):
+        eprint("Warning: Recognition model needs features to all have the same dimensionality. Ignoring recognition model.")
+        useRecognitionModel = False
+
 
     # We save the parameters that were passed into EC
     # This is for the purpose of exporting the results of the experiment
@@ -49,20 +54,16 @@ def explorationCompression(primitives, tasks,
                                  grammar, frontierSize, tasks,
                                  CPUs = CPUs)
         
-        print "Enumeration results:"
-        print Frontier.describe(frontiers)
-        flushEverything()
+        eprint("Enumeration results:")
+        eprint(Frontier.describe(frontiers))
 
         if useRecognitionModel:
-            # Make sure that the features all have the same dimensionality
-            assert all( len(t.features) == len(tasks[0].features) for t in tasks )
-
             # Train and then use a recognition model
             recognizer = RecognitionModel(len(tasks[0].features), grammar)
             recognizer.train(frontiers, topK = topK)
             bottomupFrontiers = recognizer.enumerateFrontiers(frontierSize, tasks)
-            print "Bottom-up enumeration results:"
-            print Frontier.describe(bottomupFrontiers)
+            eprint("Bottom-up enumeration results:")
+            eprint(Frontier.describe(bottomupFrontiers))
 
             # Rescore the frontiers according to the generative model and then combine w/ original frontiers
             generativeModel = FragmentGrammar.fromGrammar(grammar)
@@ -86,8 +87,8 @@ def explorationCompression(primitives, tasks,
                                CPUs = CPUs).\
                                toGrammar()
         grammarHistory.append(grammar)
-        print "Final grammar:"
-        print grammar
+        eprint("Final grammar:")
+        eprint(grammar)
 
     returnValue = ECResult(learningCurve = learningCurve,
                            grammars = grammarHistory,
@@ -99,7 +100,7 @@ def explorationCompression(primitives, tasks,
                "_".join(k + "=" + str(parameters[k]) for k in sorted(parameters.keys()) ) + ".pickle"
         with open(path, 'wb') as handle:
             pickle.dump((parameters,returnValue), handle)
-        print "Exported experiment result to",path
+        eprint("Exported experiment result to",path)
 
     return returnValue
 
