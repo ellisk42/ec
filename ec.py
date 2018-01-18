@@ -13,7 +13,9 @@ class ECResult():
     def __init__(self, _ = None,
                  learningCurve = [],
                  grammars = [],
-                 taskSolutions = {}):
+                 taskSolutions = {},
+                 parameters = None):
+        self.parameters = parameters
         self.learningCurve = learningCurve
         self.grammars = grammars
         self.taskSolutions = taskSolutions
@@ -94,6 +96,7 @@ def explorationCompression(primitives, tasks,
 
     returnValue = ECResult(learningCurve = learningCurve,
                            grammars = grammarHistory,
+                           parameters = parameters,
                            taskSolutions = {f.task: f.bestPosterior
                                      for f in frontiers if not f.empty })
 
@@ -101,7 +104,7 @@ def explorationCompression(primitives, tasks,
         path = outputPrefix + "_" + \
                "_".join(k + "=" + str(parameters[k]) for k in sorted(parameters.keys()) ) + ".pickle"
         with open(path, 'wb') as handle:
-            pickle.dump((parameters,returnValue), handle)
+            pickle.dump(returnValue, handle)
         eprint("Exported experiment result to",path)
 
     return returnValue
@@ -149,7 +152,7 @@ def commandlineArguments(_ = None,
                         default = CPUs,
                         help = 'default %d'%CPUs,
                         type = int)
-    parser.ad._argument("-m","--maximumFrontier",
+    parser.add_argument("-m","--maximumFrontier",
                         help = "Even though we enumerate --frontierSize programs, we might want to only keep around the very best for performance reasons. This is a cut off on the maximum size of the frontier that is kept around. default %s"%maximumFrontier,
                         type = int)
     parser.add_argument("-r", "--recognition",

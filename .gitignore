@@ -10,3 +10,4 @@
 *.py~
 *.pyc
 __pycache__
+experimentOutputs
