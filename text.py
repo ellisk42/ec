@@ -1,6 +1,6 @@
 from ec import *
 from utilities import eprint
-from makeStringTransformationProblems import makeTasks, delimiters
+from makeTextTasks import makeTasks, delimiters
 from textPrimitives import primitives
 
 def stringFeatures(s):
@@ -29,4 +29,5 @@ if __name__ == "__main__":
                            **commandlineArguments(
                                frontierSize = 10**4,
                                iterations = 3,
+                               a = 1,
                                pseudoCounts = 10.0))

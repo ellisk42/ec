@@ -50,6 +50,38 @@ def makeTasks():
                          if ("character" in n1) != ("character" in n2) and n1 < n2
                          for d1 in delimiters
                          for d2 in delimiters ]
+    extractPrefix1 = [RegressionTask("Extract prefix up to '%s' (exclusive)"%d,
+                                     arrow(tstring,tstring),
+                                     [((x,),y)
+                                      for _ in range(5)
+                                      for y in [randomWord()]
+                                      for x in [y + d + randomWord()]
+                                     ])
+                      for d in delimiters ]
+    extractPrefix2 = [RegressionTask("Extract prefix up to '%s' (inclusive)"%d,
+                                     arrow(tstring,tstring),
+                                     [((x,),y)
+                                      for _ in range(5)
+                                      for y in [randomWord() + d]
+                                      for x in [y + d + randomWord()]
+                                     ])
+                      for d in delimiters ]
+    extractSuffix1 = [RegressionTask("Extract suffix up to '%s' (exclusive)"%d,
+                                     arrow(tstring,tstring),
+                                     [((x,),y)
+                                      for _ in range(5)
+                                      for y in [randomWord()]
+                                      for x in [randomWord() + d + y]
+                                     ])
+                      for d in delimiters ]
+    extractSuffix2 = [RegressionTask("Extract suffix up to '%s' (inclusive)"%d,
+                                     arrow(tstring,tstring),
+                                     [((x,),y)
+                                      for _ in range(5)
+                                      for y in [randomWord() + d]
+                                      for x in [randomWord() + d + y]
+                                     ])
+                      for d in delimiters ]
     extractDelimited1 = [RegressionTask("Extract string delimited by '%s','%s'"%(d1,d2),
                                         arrow(tstring,tstring),
                                         [((x,),y)
@@ -84,6 +116,6 @@ def makeTasks():
                         for d1 in delimiters
                         for d2 in delimiters]
 
-    return singleWordProblems + mapSingleProblems + mapDoubleProblems + extractDelimited1 + extractDelimited2 + applyDelimited
+    return singleWordProblems + extractPrefix1 + extractPrefix2 + extractSuffix1 + extractSuffix2 + mapSingleProblems + mapDoubleProblems + extractDelimited1 + extractDelimited2 + applyDelimited
 
 

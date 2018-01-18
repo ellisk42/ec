@@ -280,9 +280,7 @@ class FragmentGrammar(object):
         return [(l - z, k, c, p) for l,k,c,p in candidates ]
 
     def closedLogLikelihood(self, request, expression):
-        #eprint("About to correctly the likelihood of",expression)
         _,l,_ = self.logLikelihood(Context.EMPTY, [], request, expression)
-        #eprint("Got likelihood",l)
         return l
 
     def logLikelihood(self, context, environment, request, expression):

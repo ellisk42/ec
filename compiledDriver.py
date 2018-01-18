@@ -7,7 +7,7 @@ from utilities import eprint
 
 
 if __name__ == "__main__":
-    sys.setrecursionlimit(1000)
+    sys.setrecursionlimit(10000)
 
     start = time.time()
     request = pickle.load(sys.stdin)

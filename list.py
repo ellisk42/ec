@@ -11,7 +11,7 @@ if __name__ == "__main__":
     explorationCompression(primitives, tasks,
                            outputPrefix = "experimentOutputs/list",
                            **commandlineArguments(frontierSize = 10**4,
-                                                  arity = 1,
+                                                  a = 1,
                                                   iterations = 5,
                                                   pseudoCounts = 10.0))
 

@@ -16,6 +16,7 @@ def _join(delimiter): return lambda ss: delimiter.join(ss)
 
 primitives = [
     Primitive("0",tint,0),
+    Primitive("len",arrow(tstring,tint),len),
     Primitive("incr",arrow(tint,tint),_increment),
     Primitive("decr",arrow(tint,tint),_decrement),
     Primitive("emptyString",tstring,""),
