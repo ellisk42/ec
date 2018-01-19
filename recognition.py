@@ -12,6 +12,12 @@ import torchvision.transforms as T
 
 import numpy as np
 
+def variable(x, volatile=False):
+    if isinstance(x,list): x = np.array(x)
+    if isinstance(x,(np.ndarray,np.generic)): x = torch.from_numpy(x)
+    #if GPU: x = x.cuda()
+    return Variable(x, volatile=volatile)
+
 class RecognitionModel(nn.Module):
     def __init__(self, featureDimensionality, grammar):
         super(RecognitionModel, self).__init__()
@@ -72,3 +78,75 @@ class RecognitionModel(nn.Module):
 
         return callCompiled(enumerateFrontiers,
                             grammars, frontierSize, tasks)
+
+class TreeDecoder(nn.Module):
+    def __init__(self, grammar, hiddenUnits = 10):
+        super(TreeDecoder, self).__init__()
+
+        self.ancestral = nn.LSTM(input_size = hiddenUnits, hidden_size = hiddenUnits, num_layers = 1,
+                                 batch_first = True)
+        self.fraternal = nn.LSTM(input_size = hiddenUnits, hidden_size = hiddenUnits, num_layers = 1,
+                                 batch_first = True)
+        
+        self.grammar = grammar
+
+        # self.embedding : list of N indices (BxW) -> (B,W,EMBEDDINGSIZE)
+        self.embedding = nn.Embedding(len(grammar.productions) + 1, hiddenUnits)
+
+        self.primitiveToIndex = {p: j + 1
+                                 for j,(_,_,p) in enumerate(grammar.productions) }
+
+        self.tokenPrediction = nn.Linear(hiddenUnits, len(grammar.productions) + 1)
+
+        self.uf = nn.Linear(hiddenUnits, hiddenUnits)
+        self.ua = nn.Linear(hiddenUnits, hiddenUnits)
+
+    def embed(self, primitive):
+        if isinstance(primitive,Index): j = 0
+        else: j = self.primitiveToIndex[primitive]
+        j = variable([j]).unsqueeze(0)
+        return self.embedding(j)
+
+    def updateAncestralState(self, ancestralSymbol, previous = None):
+        ancestor = self.embed(ancestralSymbol)
+        return self.ancestral(ancestor, previous)
+
+    def updateSiblingState(self, siblingSymbol, previous = None):
+        sibling = self.embed(siblingSymbol)
+        return self.fraternal(sibling, previous)
+
+    def predictPrimitive(self, ancestralOutput, siblingOutput):
+        ancestralOutput, siblingOutput = ancestralOutput.squeeze(0), siblingOutput.squeeze(0)
+        a = self.ua(ancestralOutput)
+        s = self.uf(siblingOutput)
+        return F.log_softmax(self.tokenPrediction(F.tanh(a + s)))
+
+    def logLikelihood(self, context, environment, request, expression):
+        request = request.apply(context)
+        
+        if request.isArrow():
+            if not isinstance(expression,Abstraction):
+                raise Exception('expected abstraction')
+            return self.logLikelihood(context,
+                                      [request.arguments[0]] + environment,
+                                      request.arguments[1],
+                                      expression.body)
+        
+    
+
+if __name__ == "__main__":
+    from arithmeticPrimitives import *
+    g = Grammar.uniform([addition, multiplication, k0, k1])
+    m = TreeDecoder(g, hiddenUnits = 9)
+    print m.embed(addition)
+    print 
+    print m.updateAncestralState(k0)
+    print 
+    print m.updateAncestralState(k1)[0].squeeze(0)
+    print
+    print m.predictPrimitive(m.updateAncestralState(k0)[0],
+                             m.updateSiblingState(k1)[0])
+        
+
+        
+        
