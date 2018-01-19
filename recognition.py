@@ -21,17 +21,32 @@ def variable(x, volatile=False):
     return Variable(x, volatile=volatile)
 
 class RecognitionModel(nn.Module):
-    def __init__(self, featureDimensionality, grammar):
+    def __init__(self, featureDimensionality, grammar, hidden = [5], activation = "relu"):
         super(RecognitionModel, self).__init__()
         self.grammar = grammar
 
-        H = 5
-        self.l1 = nn.Linear(featureDimensionality, H)
-        self.logVariable = nn.Linear(H,1)
-        self.logProductions = nn.Linear(H, len(self.grammar))
+        self.hiddenLayers = []
+        inputDimensionality = featureDimensionality
+        for h in hidden:
+            self.hiddenLayers.append(nn.Linear(inputDimensionality, h))
+            inputDimensionality = h
+
+        if activation == "sigmoid":
+            self.activation = F.sigmoid
+        elif activation == "relu":
+            self.activation = lambda x: x.clamp(min = 0)
+        elif activation == "tanh":
+            self.activation = F.tanh
+        else:
+            raise Exception('Unknown activation function '+str(activation))
+
+        self.logVariable = nn.Linear(inputDimensionality,1)
+        self.logProductions = nn.Linear(inputDimensionality, len(self.grammar))
     
     def forward(self, features):
-        h = F.sigmoid(self.l1(features))
+        for layer in self.hiddenLayers:
+            features = self.activation(layer(features))
+        h = features
         return self.logVariable(h),\
             self.logProductions(h)
 
@@ -165,6 +180,7 @@ class TreeDecoder(nn.Module):
         
         candidates = self.buildCandidates(context, environment, request)
         distribution = self.predictPrimitive(states[0], states[1])
+        
         
         
 

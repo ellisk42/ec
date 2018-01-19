@@ -26,6 +26,25 @@ singleWordOperations = {"lowercase": lambda x: x.lower(),
                         "drop first character": lambda x: x[1:],
                         "last character": lambda x: x[-1],
                         "last two characters": lambda x: x[-2:]}
+compatibleCompositions = {(case, character)
+                          for case in ["lowercase","uppercase"]
+                          for character in ["first character","first 2 characters",
+                                            "drop first character","last character",
+                                            "last two characters"] } | \
+ {("capitalize", character)
+  for character in ["first 2 characters","last two characters"]} | \
+ {("first character", "drop first character"),
+  ("first character", "last two characters"),
+  ("first 2 characters", "drop first character"),
+  ("drop first character", "first 2 characters"),
+  ("drop first character","drop first character")
+  }
+for x,y in compatibleCompositions:
+    assert x in singleWordOperations
+    assert y in singleWordOperations
+
+
+
 
 def makeTasks():
     NUMBEROFEXAMPLES = 4
@@ -40,7 +59,8 @@ def makeTasks():
              [(x,f1(f2(x))) for _ in range(NUMBEROFEXAMPLES) for x in [randomWord()] ])
      for n1,f1 in singleWordOperations.iteritems()
      for n2,f2 in singleWordOperations.iteritems()
-     if ("character" in n1) != ("character" in n2) and n1 < n2]
+     if (n1,n2) in compatibleCompositions
+    ]
     [problem("Replace delimiter '%s' w/ '%s'"%(d1,d2),
              [(x,x.replace(d1,d2))
               for x in [randomWords(d1)] ])
@@ -65,7 +85,7 @@ def makeTasks():
               for x in [randomWords(d1)] ])
      for n1,f1 in singleWordOperations.iteritems()
      for n2,f2 in singleWordOperations.iteritems()
-     if ("character" in n1) != ("character" in n2) and n1 < n2
+     if (n1,n2) in compatibleCompositions
      for d1 in delimiters
      for d2 in delimiters ]
     [problem("Extract prefix up to '%s' (exclusive)"%d,
