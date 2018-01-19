@@ -1,4 +1,5 @@
 from program import *
+from makeTextTasks import delimiters
 
 def _increment(x): return x + 1
 def _decrement(x): return x - 1
@@ -24,12 +25,6 @@ primitives = [
     Primitive("uppercase",arrow(tstring,tstring), _upper),
     Primitive("capitalize",arrow(tstring,tstring), _capitalize),
     Primitive("++",arrow(tstring,tstring,tstring), _append),
-    Primitive("','", tstring, ","),
-    Primitive("' '", tstring, " "),
-    Primitive("'<'", tstring, "<"),
-    Primitive("'>'", tstring, ">"),
-    Primitive("'.'", tstring, "."),
-    Primitive("'@'", tstring, "@"),
     Primitive("slice", arrow(tint,tint,tstring,tstring),_slice),
     Primitive("nth", arrow(tint, tlist(tstring), tstring),_index),
     Primitive("map", arrow(arrow(tstring,tstring), tlist(tstring), tlist(tstring)),_map),
@@ -37,4 +32,4 @@ primitives = [
     #Primitive("replace", arrow(tstring, tstring, tstring, tstring),_replace),
     Primitive("split", arrow(tstring, tstring, tlist(tstring)),_split),
     Primitive("join", arrow(tstring, tlist(tstring), tstring),_join)
-]
+] + [ Primitive("'%s'"%d, tstring, d) for d in delimiters ]

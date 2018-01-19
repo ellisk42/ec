@@ -6,7 +6,7 @@ import random
 
 
 
-delimiters = ['@','.','<','>',',',' ']
+delimiters = [' ','@'] #['@','.','<','>',',',' ']
 
 def randomDelimiter():
     return random.choice(delimiters)
@@ -148,3 +148,11 @@ def makeTasks():
     return problems
 
 
+if __name__ == "__main__":
+    tasks = makeTasks()
+    for t in tasks:
+        print t.name
+        for x,y in t.examples:
+            print x[0],'\t',y
+        print
+    print len(tasks),"tasks"
