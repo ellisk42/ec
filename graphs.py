@@ -58,5 +58,6 @@ def plotECResult(results, colors = 'rgbky', label = None, title = None):
 if __name__ == "__main__":
     import sys
     plotECResult(sys.argv[1:],
-                 title = "no neural network",
-                 label = lambda p: "%s %s"%(p.domain, p.frontierSize))
+                 title = "DSL learning curves",
+                 label = lambda p: "%s %s%s"%(p.domain, p.frontierSize,
+                                              " (neural)" if p.useRecognitionModel else ""))
