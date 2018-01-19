@@ -41,5 +41,5 @@ primitives = [
     Primitive("not",arrow(tbool,tbool), _not),
     Primitive("gt?",arrow(tint,tint,tbool), _gt)    ,
     Primitive("is-prime",arrow(tint,tbool),_isPrime),
-    Permitted("is-square",arrow(tint,tbool),_isSquare),
+    Primitive("is-square",arrow(tint,tbool),_isSquare),
 ] + [ Primitive(str(j),tint,j) for j in range(10) ]

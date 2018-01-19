@@ -42,14 +42,15 @@ def plotECResult(results, colors = 'rgbky', label = None, title = None):
                 result.averageDescriptionLength,
                 color + '--')
 
-    a1.set_ylim(ymin = 0, ymax = 100)
+    a1.set_ylim(ymin = 0, ymax = 110)
+    a1.set_yticks(range(0,110,10))
     a2.set_ylim(ymin = 0)
     
     if title is not None:
         plot.title(title)
 
     if label is not None:
-        a1.legend()
+        a1.legend(loc = 'south east')
         
     f.tight_layout()
     plot.show()
@@ -59,5 +60,5 @@ if __name__ == "__main__":
     import sys
     plotECResult(sys.argv[1:],
                  title = "DSL learning curves",
-                 label = lambda p: "%s %s%s"%(p.domain, p.frontierSize,
+                 label = lambda p: "%s, frontier size %s%s"%(p.domain, p.frontierSize,
                                               " (neural)" if p.useRecognitionModel else ""))
