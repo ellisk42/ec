@@ -41,6 +41,16 @@ def makeTasks():
      for n1,f1 in singleWordOperations.iteritems()
      for n2,f2 in singleWordOperations.iteritems()
      if ("character" in n1) != ("character" in n2) and n1 < n2]
+    [problem("Replace delimiter '%s' w/ '%s'"%(d1,d2),
+             [(x,x.replace(d1,d2))
+              for x in [randomWords(d1)] ])
+     for d1 in delimiters
+     for d2 in delimiters
+     if d1 != d2]
+    [problem("Delete delimiter '%s'"%d,
+                 [(x,x.replace(d,""))
+              for x in [randomWords(d)] ])
+     for d in delimiters]
     [problem("Apply %s delimited by '%s' to input delimited by '%s'"%(n,d1,d2),
              [(x, d2.join(map(f,x.split(d1))))
               for _ in range(NUMBEROFEXAMPLES)
