@@ -21,7 +21,6 @@ if __name__ == "__main__":
     tasks = makeTasks()
     for t in tasks:
         t.features = problemFeatures(t)
-        t.cache = False
     eprint("Generated",len(tasks),"tasks")
 
     explorationCompression(primitives, tasks,

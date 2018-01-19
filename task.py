@@ -10,7 +10,7 @@ EVALUATIONTABLE = {}
 
 
 class RegressionTask(object):
-    def __init__(self, name, request, examples, features = None, cache = True):
+    def __init__(self, name, request, examples, features = None, cache = False):
         '''request: the type of this task
         examples: list of tuples of (input, output). input should be a tuple, with one entry for each argument
         cache: should program evaluations be cached?
@@ -31,7 +31,7 @@ class RegressionTask(object):
         for a in x: f = f(a)
         return f
     def check(self,e,timeout = None):
-        if not (timeout is None):
+        if timeout is not None:
             def timeoutCallBack(_1,_2): raise EvaluationTimeout()
             signal.signal(signal.SIGALRM, timeoutCallBack)
             signal.setitimer(signal.ITIMER_PROF, timeout)
@@ -46,10 +46,10 @@ class RegressionTask(object):
                     except: p = None
                     if self.cache: EVALUATIONTABLE[(x,e)] = p
                 if p != y:
-                    if not (timeout is None): signal.setitimer(signal.ITIMER_PROF, 0)
+                    if timeout is not None: signal.setitimer(signal.ITIMER_PROF, 0)
                     return False
 
-            if not (timeout is None): signal.setitimer(signal.ITIMER_PROF, 0)
+            if timeout is not None: signal.setitimer(signal.ITIMER_PROF, 0)
             return True
         except EvaluationTimeout: return False
         
