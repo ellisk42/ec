@@ -3,6 +3,8 @@ from fragmentGrammar import *
 from grammar import *
 from utilities import eprint
 
+import gc
+
 import torch
 import torch.nn as nn
 import torch.optim as optimization
@@ -47,13 +49,13 @@ class RecognitionModel(nn.Module):
                       for entry in frontier ])
         return l
 
-    def train(self, frontiers, _ = None, steps = 10**3, lr = 0.001, topK = 1):
+    def train(self, frontiers, _ = None, steps = 500, lr = 0.001, topK = 1):
         # Torch sometimes segfaults in multithreaded mode...
         torch.set_num_threads(1)
         
         frontiers = [ frontier.topK(topK) for frontier in frontiers if not frontier.empty ]
         optimizer = torch.optim.Adam(self.parameters(), lr=lr)
-        for i in range(steps):
+        for i in range(1,steps + 1):
             self.zero_grad()
             l = -self.logLikelihood(frontiers)/len(frontiers)
             if i%50 == 0:
