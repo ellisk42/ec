@@ -1,17 +1,24 @@
-from ec import *
+from ec import explorationCompression, commandlineArguments
 from utilities import eprint
-from json_tasks import load_json_tasks_from_file
 from listPrimitives import primitives
-
+import cPickle as pickle
 
 if __name__ == "__main__":
-    tasks = load_json_tasks_from_file("data/list_tasks.json", use_test = True)
-    eprint("Got {0} list tasks".format(len(tasks)))
+    try:
+        with open("data/list_tasks.pkl") as f:
+            tasks = pickle.load(f)
+    except Exception as e:
+        from makeListTasks import main
+        main()
+        with open("data/list_tasks.pkl") as f:
+            tasks = pickle.load(f)
+
+    eprint("Got {} list tasks".format(len(tasks)))
 
     explorationCompression(primitives, tasks,
-                           outputPrefix = "experimentOutputs/list",
-                           **commandlineArguments(frontierSize = 10**4,
-                                                  a = 1,
-                                                  iterations = 10,
-                                                  pseudoCounts = 10.0))
+                           outputPrefix="experimentOutputs/list",
+                           **commandlineArguments(frontierSize=10**4,
+                                                  a=1,
+                                                  iterations=10,
+                                                  pseudoCounts=10.0))
 
