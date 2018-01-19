@@ -464,9 +464,10 @@ class FragmentGrammar(object):
             (newScore, newGrammar) = max(scoredFragments)
             
             if newScore > bestScore:
+                dS = newScore - bestScore
                 bestScore, bestGrammar = newScore, newGrammar
                 _,newType,newPrimitive = bestGrammar.productions[-1]
-                eprint("New primitive of type %s\t%s (score = %f)"%(newType,newPrimitive,newScore))
+                eprint("New primitive of type %s\t%s (score = %f; dScore = %f)"%(newType,newPrimitive,newScore,dS))
             else: break
 
         if False:
