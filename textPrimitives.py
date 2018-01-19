@@ -34,7 +34,7 @@ primitives = [
     Primitive("nth", arrow(tint, tlist(tstring), tstring),_index),
     Primitive("map", arrow(arrow(tstring,tstring), tlist(tstring), tlist(tstring)),_map),
     Primitive("find", arrow(tstring, tstring, tint),_find),
-    Primitive("replace", arrow(tstring, tstring, tstring, tstring),_replace),
+    #Primitive("replace", arrow(tstring, tstring, tstring, tstring),_replace),
     Primitive("split", arrow(tstring, tstring, tlist(tstring)),_split),
     Primitive("join", arrow(tstring, tlist(tstring), tstring),_join)
 ]
