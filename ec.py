@@ -26,6 +26,7 @@ class ECResult():
 def explorationCompression(primitives, tasks,
                            _ = None,
                            iterations = None,
+                           resume = None,
                            frontierSize = None,
                            useRecognitionModel = True,
                            topK = 1,
@@ -47,14 +48,25 @@ def explorationCompression(primitives, tasks,
     # We save the parameters that were passed into EC
     # This is for the purpose of exporting the results of the experiment
     parameters = {k: v for k,v in locals().iteritems()
-                  if not k in ['tasks','primitives','_','CPUs','outputPrefix'] }
-    
-    grammar = Grammar.uniform(primitives)
+                  if not k in ['tasks','primitives','_','CPUs','outputPrefix','resume'] }
+    # Uses `parameters` to construct the checkpoint path
+    def checkpointPath(iteration):
+        parameters["iterations"] = iteration
+        return outputPrefix + "_" + \
+            "_".join(k + "=" + str(parameters[k]) for k in sorted(parameters.keys()) ) + ".pickle"
 
-    result = ECResult(parameters = parameters,
-                      grammars = [grammar])
+    # Restore checkpoint
+    if resume is not None:
+        path = checkpointPath(resume)
+        with open(path, 'rb') as handle: result = pickle.load(handle)
+        eprint("Loaded checkpoint from",path)
+        grammar = result.grammars[-1]
+    else: # Start from scratch
+        grammar = Grammar.uniform(primitives)
+        result = ECResult(parameters = parameters,
+                          grammars = [grammar])
 
-    for j in range(iterations):
+    for j in range(resume or 0, iterations):
         frontiers = callCompiled(enumerateFrontiers,
                                  grammar, frontierSize, tasks,
                                  maximumFrontier = maximumFrontier,
@@ -126,12 +138,10 @@ def explorationCompression(primitives, tasks,
         eprint(grammar)
 
         if outputPrefix is not None:
-            parameters['iterations'] = j + 1
-            path = outputPrefix + "_" + \
-                   "_".join(k + "=" + str(parameters[k]) for k in sorted(parameters.keys()) ) + ".pickle"
+            path = checkpointPath(j + 1)
             with open(path, 'wb') as handle:
                 pickle.dump(result, handle)
-            eprint("Exported experiment result to",path)
+            eprint("Exported checkpoint to",path)
 
     return result
 
@@ -146,6 +156,10 @@ def commandlineArguments(_ = None,
                          pseudoCounts = 1.0, aic = 1.0, structurePenalty = 0.001, a = 0):
     import argparse
     parser = argparse.ArgumentParser(description = "")
+    parser.add_argument("--resume",
+                        help = 'Resumes EC algorithm from checkpoint',
+                        default = None,
+                        type = int)
     parser.add_argument('-i',"--iterations",
                         help = 'default %d'%iterations,
                         default = iterations,
