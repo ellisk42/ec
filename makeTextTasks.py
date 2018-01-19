@@ -31,6 +31,11 @@ def makeTasks():
     singleWordProblems = [RegressionTask(n, arrow(tstring,tstring),
                                          [((x,),f(x)) for _ in range(5) for x in [randomWord()] ])
                           for n,f in singleWordOperations.iteritems() ]
+    doubleWordProblems = [RegressionTask(n1 + "." + n2, arrow(tstring,tstring),
+                                         [((x,),f1(f2(x))) for _ in range(5) for x in [randomWord()] ])
+                          for n1,f1 in singleWordOperations.iteritems()
+                          for n2,f2 in singleWordOperations.iteritems()
+                          if ("character" in n1) != ("character" in n2) and n1 < n2]
     mapSingleProblems = [RegressionTask("Apply %s delimited by '%s' to input delimited by '%s'"%(n,d1,d2),
                                         arrow(tstring,tstring),
                                  [((x,),d2.join(map(f,x.split(d1))))
@@ -116,6 +121,6 @@ def makeTasks():
                         for d1 in delimiters
                         for d2 in delimiters]
 
-    return singleWordProblems + extractPrefix1 + extractPrefix2 + extractSuffix1 + extractSuffix2 + mapSingleProblems + mapDoubleProblems + extractDelimited1 + extractDelimited2 + applyDelimited
+    return singleWordProblems + doubleWordProblems + extractPrefix1 + extractPrefix2 + extractSuffix1 + extractSuffix2 + mapSingleProblems + mapDoubleProblems + extractDelimited1 + extractDelimited2 + applyDelimited
 
 
