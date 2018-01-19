@@ -58,6 +58,7 @@ class RecognitionModel(nn.Module):
             l = -self.logLikelihood(frontiers)/len(frontiers)
             if i%50 == 0:
                 eprint("Epoch",i,"Loss",l.data[0])
+                gc.collect()
             l.backward()
             optimizer.step()
 
@@ -121,7 +122,26 @@ class TreeDecoder(nn.Module):
         s = self.uf(siblingOutput)
         return F.log_softmax(self.tokenPrediction(F.tanh(a + s)))
 
-    def logLikelihood(self, context, environment, request, expression):
+    def buildCandidates(self, context, environment, request):
+        candidates = []
+        for _,t,p in self.grammar.productions:
+            try:
+                newContext, t = t.instantiate(context)
+                newContext = newContext.unify(t.returns(), request)
+                candidates.append((newContext,
+                                   t.apply(newContext),
+                                   p))
+            except UnificationFailure: continue
+        for j,t in enumerate(environment):
+            try:
+                newContext = context.unify(t.returns(), request)
+                candidates.append((newContext,
+                                   t.apply(newContext),
+                                   Index(j)))
+            except UnificationFailure: continue
+        return candidates
+
+    def logLikelihood(self, context, environment, request, expression, states = (None,None), parentSymbol = None):
         request = request.apply(context)
         
         if request.isArrow():
@@ -130,7 +150,23 @@ class TreeDecoder(nn.Module):
             return self.logLikelihood(context,
                                       [request.arguments[0]] + environment,
                                       request.arguments[1],
-                                      expression.body)
+                                      expression.body,
+                                      states,
+                                      parentSymbol)
+
+        def applicationParse(e):
+            if isinstance(e,Application):
+                f,xs = applicationParse(e.f)
+                return f,xs + [e]
+            else: return e,[]
+        f,xs = applicationParse(expression)
+        
+        candidates = self.buildCandidates(context, environment, request)
+        distribution = self.predictPrimitive(states[0], states[1])
+        
+        
+
+        
         
     
 

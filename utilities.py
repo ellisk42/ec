@@ -83,10 +83,10 @@ def torchSoftMax(x,y = None):
     if y is None:
         if isinstance(x,list):
             x = torch.cat(x)
-        return (x - log_softmax(x))[0]
+        return (x - log_softmax(x, dim = 0))[0]
     x = torch.cat((x,y))
     # this is so stupid
-    return (x - log_softmax(x))[0]
+    return (x - log_softmax(x, dim = 0))[0]
 
 NEGATIVEINFINITY = float('-inf')
 POSITIVEINFINITY = float('inf')
