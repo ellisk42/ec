@@ -42,7 +42,7 @@ def plotECResult(results, colors = 'rgbky', label = None, title = None):
                 result.averageDescriptionLength,
                 color + '--')
 
-    a1.set_ylim(ymin = 0)
+    a1.set_ylim(ymin = 0, ymax = 100)
     a2.set_ylim(ymin = 0)
     
     if title is not None:
