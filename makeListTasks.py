@@ -51,7 +51,7 @@ def make_list_tasks(n_examples=10):
                     k = params["k"]
                     inps = []
                     for _ in xrange(n_examples):
-                        r = randint(0, abs(k) - 1)
+                        r = randint(abs(k) + 1, 17)
                         inp = routine.gen(len=r, **params)[0]
                         inps.append(inp)
                 else:

@@ -21,6 +21,10 @@ class ECResult():
         self.learningCurve = learningCurve or []
         self.grammars = grammars or []
         self.taskSolutions = taskSolutions or {}
+
+    def __repr__(self):
+        attrs = ["{}={}".format(k, v) for k, v in self.__dict__.items()]
+        return "ECResult({})".format(", ".join(attrs))
         
 
 def explorationCompression(primitives, tasks,
