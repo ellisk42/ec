@@ -80,7 +80,7 @@ def makeTasks():
      for d2 in delimiters
      if d1 != d2]
     [problem("Apply %s.%s delimited by '%s' to input delimited by '%s'"%(n1,n2,d1,d2),
-             [(x,d2.join(map(f2,map(f1,x.split(d1)))))
+             [(x,d2.join(map(f1,map(f2,x.split(d1)))))
               for _ in range(NUMBEROFEXAMPLES)
               for x in [randomWords(d1)] ])
      for n1,f1 in singleWordOperations.iteritems()
