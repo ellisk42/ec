@@ -50,7 +50,7 @@ def plotECResult(results, colors = 'rgbky', label = None, title = None):
         plot.title(title)
 
     if label is not None:
-        a1.legend(loc = 'south east')
+        a1.legend(loc = 'best')
         
     f.tight_layout()
     plot.show()
