@@ -452,8 +452,6 @@ class FragmentGrammar(object):
 
         bestScore, _ = grammarScore(bestGrammar)
 
-        fragmentsThatDecreasedScore = set()
-
         while True:
             restrictedFrontiers = restrictFrontiers()
             fragments = [ fragment for fragment in proposeFragmentsFromFrontiers(restrictedFrontiers, a)
@@ -465,12 +463,6 @@ class FragmentGrammar(object):
 
             scoredFragments = parallelMap(CPUs, grammarScore, candidateGrammars)
             (newScore, newGrammar) = max(scoredFragments)
-
-            for (score,_),f in zip(scoredFragments,fragments):
-                if score < bestScore:
-                    fragmentsThatDecreasedScore.add(f)
-                elif f in fragmentsThatDecreasedScore:
-                    eprint("A fragment that once decreased the score now increases the score")
                     
             if newScore > bestScore:
                 dS = newScore - bestScore
