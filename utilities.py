@@ -62,8 +62,7 @@ def lse(x,y = None):
         # If these are just numbers...
         t = type(x[0])
         if t == int or t == float:
-            for z in x:
-                if largest == None or z > largest: largest = z
+            largest = max(*x)
             return largest + math.log(sum(math.exp(z - largest) for z in x))
         # Must be torch
         return torchSoftMax(x)
