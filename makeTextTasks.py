@@ -6,7 +6,7 @@ import random
 
 
 
-delimiters = [' ','@'] #['@','.','<','>',',',' ']
+delimiters = ['@','.',',',' '] #'<','>',
 
 def randomDelimiter():
     return random.choice(delimiters)
