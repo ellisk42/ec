@@ -23,10 +23,10 @@ if __name__ == "__main__":
         t.features = problemFeatures(t)
     eprint("Generated",len(tasks),"tasks")
 
-    e = Program.parse("(lambda (join '@' (map (lambda emptyString) (split ',' $0))))")
-    print e
-    print e.evaluate([])("test,this,here")
-    assert False
+    # e = Program.parse("(lambda (join '@' (map (lambda emptyString) (split ',' $0))))")
+    # print e
+    # print e.evaluate([])("test,this,here")
+    # assert False
 
     explorationCompression(primitives, tasks,
                            outputPrefix = "experimentOutputs/text",

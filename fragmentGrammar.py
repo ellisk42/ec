@@ -439,7 +439,8 @@ class FragmentGrammar(object):
         
         # "restricted frontiers" only contain the top K according to the best grammar
         def restrictFrontiers():
-            return [ bestGrammar.rescoreFrontier(f).topK(topK) for f in frontiers ]
+            return parallelMap(CPUs, lambda f: bestGrammar.rescoreFrontier(f).topK(topK),
+                               frontiers)
         restrictedFrontiers = restrictFrontiers()
 
         def grammarScore(g):
@@ -451,18 +452,26 @@ class FragmentGrammar(object):
 
         bestScore, _ = grammarScore(bestGrammar)
 
+        fragmentsThatDecreasedScore = set()
+
         while True:
             restrictedFrontiers = restrictFrontiers()
-            fragments = proposeFragmentsFromFrontiers(restrictedFrontiers, a)
-            
+            fragments = [ fragment for fragment in proposeFragmentsFromFrontiers(restrictedFrontiers, a)
+                          if not fragment in bestGrammar.primitives ]
+                
             candidateGrammars = [ FragmentGrammar.uniform(bestGrammar.primitives + [fragment])
-                                  for fragment in fragments
-                                  if not fragment in bestGrammar.primitives ]
+                                  for fragment in fragments ]
             if candidateGrammars == []: break
 
             scoredFragments = parallelMap(CPUs, grammarScore, candidateGrammars)
             (newScore, newGrammar) = max(scoredFragments)
-            
+
+            for (score,_),f in zip(scoredFragments,fragments):
+                if score < bestScore:
+                    fragmentsThatDecreasedScore.add(f)
+                elif f in fragmentsThatDecreasedScore:
+                    eprint("A fragment that once decreased the score now increases the score")
+                    
             if newScore > bestScore:
                 dS = newScore - bestScore
                 bestScore, bestGrammar = newScore, newGrammar
