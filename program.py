@@ -18,14 +18,14 @@ class Program(object):
     def closed(self):
         for surroundingAbstractions, child in self.walk():
             if isinstance(child, FragmentVariable): return False
-            if isinstance(child, Index) and child.i >= surroundingAbstractions: return False
+            if isinstance(child, Index) and child.free(surroundingAbstractions): return False
         return True
     @property
     def numberOfFreeVariables(expression):
         n = 0
         for surroundingAbstractions, child in expression.walk():
             # Free variable
-            if isinstance(child, Index) and child.i >= surroundingAbstractions:
+            if isinstance(child, Index) and child.free(surroundingAbstractions):
                 n = max(n, child.i - surroundingAbstractions + 1)
         return n
 
@@ -43,6 +43,7 @@ class Program(object):
         raise ParseFailure()
 
 class Application(Program):
+    '''Function application'''
     def __init__(self,f,x):
         self.f = f
         self.x = x
@@ -106,6 +107,10 @@ class Application(Program):
             
 
 class Index(Program):
+    '''
+    deBruijn index: https://en.wikipedia.org/wiki/De_Bruijn_index
+    These indices encode variables.
+    '''
     def __init__(self,i):
         self.i = i
     def show(self,isFunction): return "$%d"%self.i
@@ -115,7 +120,7 @@ class Index(Program):
     def evaluate(self,environment):
         return environment[self.i]
     def inferType(self,context,environment,freeVariables):
-        if self.i < len(environment):
+        if self.bound(len(environment)):
             return (context, environment[self.i].apply(context))
         else:
             i = self.i - len(environment)
@@ -126,7 +131,7 @@ class Index(Program):
 
     def shift(self,offset, depth = 0):
         # bound variable
-        if self.i < depth: return self
+        if self.bound(depth): return self
         else: # free variable
             i = self.i + offset
             if i < 0: raise ShiftFailure()
@@ -138,6 +143,13 @@ class Index(Program):
     def walk(self,surroundingAbstractions = 0): yield surroundingAbstractions,self
 
     def size(self): return 1
+
+    def free(self, surroundingAbstractions):
+        '''Is this index a free variable, given that it has surroundingAbstractions lambda's around it?'''
+        return self.i >= surroundingAbstractions
+    def bound(self, surroundingAbstractions):
+        '''Is this index a bound variable, given that it has surroundingAbstractions lambda's around it?'''
+        return self.i < surroundingAbstractions
 
     @staticmethod
     def _parse(s):
@@ -154,6 +166,7 @@ class Index(Program):
 
 
 class Abstraction(Program):
+    '''Lambda abstraction. Creates a new function.'''
     def __init__(self,body):
         self.body = body
         self.hashCode = None
@@ -240,6 +253,7 @@ class Primitive(Program):
 
 
 class Invented(Program):
+    '''New invented primitives'''
     def __init__(self, body):
         self.body = body
         self.tp = self.body.infer()

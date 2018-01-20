@@ -33,7 +33,7 @@ class Matcher(object):
     def index(self, fragment, expression, environment, numberOfArguments):
         # This is a bound variable
         surroundingAbstractions = len(environment)
-        if fragment.i < surroundingAbstractions:
+        if fragment.bound(surroundingAbstractions):
             if expression == fragment:
                 return environment[fragment.i].apply(self.context)
             else: raise MatchFailure()
@@ -102,13 +102,24 @@ class CanonicalVisitor(object):
     def abstraction(self,e,d):
         return Abstraction(e.body.visit(self,d + 1))
     def index(self,e,d):
-        if e.i < d: return e
+        if e.bound(d): return e
         i = e.i - d
         if i in self.mapping: return Index(d + self.mapping[i])
         self.mapping[i] = self.numberOfAbstractions
         self.numberOfAbstractions += 1
         return Index(self.numberOfAbstractions - 1 + d)
-    
+
+def fragmentSize(f, variableCost = 0.3):
+    freeVariables = 0
+    leaves = 0
+    for surroundingAbstractions,e in f.walk():
+        if isinstance(e,(Primitive,Invented)): leaves += 1
+        if isinstance(e,Index):
+            if surroundingAbstractions > e.i: leaves += 1
+            else: freeVariables += 1
+        assert not isinstance(e,FragmentVariable)
+    return leaves + variableCost*freeVariables
+        
 def defragment(expression):
     '''Converts a fragment into an invented primitive'''
     if isinstance(expression, (Primitive,Invented)): return expression
@@ -181,7 +192,7 @@ def proposeFragmentsFromProgram(p,arity):
         for surroundingAbstractions,child in f.walk():
             if isinstance(child,(Primitive,Invented)): numberOfPrimitives += 1
             if isinstance(child,FragmentVariable): numberOfHoles += 1
-            if isinstance(child,Index) and child.i >= surroundingAbstractions: numberOfVariables += 1
+            if isinstance(child,Index) and child.free(surroundingAbstractions): numberOfVariables += 1
         #eprint("Fragment %s has %d calls and %d variables and %d primitives"%(f,numberOfHoles,numberOfVariables,numberOfPrimitives))
 
         return numberOfPrimitives + 0.5 * (numberOfHoles + numberOfVariables) > 1.5            
@@ -446,7 +457,7 @@ class FragmentGrammar(object):
         def grammarScore(g):
             g = g.makeUniform().insideOutside(restrictedFrontiers, pseudoCounts)
             likelihood = g.jointFrontiersMDL(restrictedFrontiers)
-            structure = sum(p.size() for p in g.primitives)
+            structure = sum(fragmentSize(p) for p in g.primitives)
             score = likelihood - aic*len(g) - structurePenalty*structure, g
             return score
 
