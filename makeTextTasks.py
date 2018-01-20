@@ -21,19 +21,23 @@ def randomWords(d):
 singleWordOperations = {"lowercase": lambda x: x.lower(),
                         "uppercase": lambda x: x.upper(),
                         "capitalize": lambda x: x.capitalize(),
+                        "double": lambda x: x + x,
                         "first character": lambda x: x[0],
                         "first 2 characters": lambda x: x[:2],
                         "drop first character": lambda x: x[1:],
                         "last character": lambda x: x[-1],
                         "last two characters": lambda x: x[-2:]}
 compatibleCompositions = {(case, character)
-                          for case in ["lowercase","uppercase"]
+                          for case in ["lowercase","uppercase","double"]
                           for character in ["first character","first 2 characters",
                                             "drop first character","last character",
                                             "last two characters"] } | \
  {("capitalize", character)
-  for character in ["first 2 characters","last two characters"]} | \
- {("first character", "drop first character"),
+  for character in ["first 2 characters","last two characters","double"]} | \
+ {(character,"double")
+  for character in ["drop first character","capitalize"] } | \
+ {("double","capitalize"),
+  ("first character", "drop first character"),
   ("first character", "last two characters"),
   ("first 2 characters", "drop first character"),
   ("drop first character", "first 2 characters"),
