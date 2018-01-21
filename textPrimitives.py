@@ -14,13 +14,14 @@ def _find(pattern): return lambda s: s.index(pattern)
 def _replace(original): return lambda replacement: lambda target: target.replace(original, replacement)
 def _split(delimiter): return lambda s: s.split(delimiter)
 def _join(delimiter): return lambda ss: delimiter.join(ss)
+def _identity(x): return x
 
 primitives = [
     Primitive("0",tint,0),
     Primitive("len",arrow(tstring,tint),len),
     Primitive("incr",arrow(tint,tint),_increment),
     Primitive("decr",arrow(tint,tint),_decrement),
-    Primitive("emptyString",tstring,""),
+    Primitive("empty",tcharacter,""),
     Primitive("lowercase",arrow(tstring,tstring), _lower),
     Primitive("uppercase",arrow(tstring,tstring), _upper),
     Primitive("capitalize",arrow(tstring,tstring), _capitalize),
@@ -28,8 +29,9 @@ primitives = [
     Primitive("slice", arrow(tint,tint,tstring,tstring),_slice),
     Primitive("nth", arrow(tint, tlist(tstring), tstring),_index),
     Primitive("map", arrow(arrow(tstring,tstring), tlist(tstring), tlist(tstring)),_map),
-    Primitive("find", arrow(tstring, tstring, tint),_find),
+    Primitive("find", arrow(tcharacter, tstring, tint),_find),
     #Primitive("replace", arrow(tstring, tstring, tstring, tstring),_replace),
-    Primitive("split", arrow(tstring, tstring, tlist(tstring)),_split),
-    Primitive("join", arrow(tstring, tlist(tstring), tstring),_join)
-] + [ Primitive("'%s'"%d, tstring, d) for d in delimiters ]
+    Primitive("split", arrow(tcharacter, tstring, tlist(tstring)),_split),
+    Primitive("join", arrow(tcharacter, tlist(tstring), tstring),_join),
+    Primitive("chr->str", arrow(tcharacter, tstring), _identity),
+] + [ Primitive("'%s'"%d, tcharacter, d) for d in delimiters ]

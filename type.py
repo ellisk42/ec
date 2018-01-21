@@ -145,8 +145,9 @@ Context.EMPTY = Context(0,[])
 
     
 tint = TypeConstructor("int",[])
-tbool = TypeConstructor("tbool",[])
+tbool = TypeConstructor("bool",[])
 tstring = TypeConstructor("string",[])
+tcharacter = TypeConstructor("char",[])
 def tlist(t): return TypeConstructor("list",[t])
 t0 = TypeVariable(0)
 t1 = TypeVariable(1)

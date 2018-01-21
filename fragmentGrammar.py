@@ -17,7 +17,11 @@ class FragmentGrammar(object):
     def __repr__(self):
         return "FragmentGrammar(logVariable={self.logVariable}, productions={self.productions}".format(self=self)
     def __str__(self):
-        return "\n".join(["%f\tt0\t$_"%self.logVariable] + [ "%f\t%s\t%s"%(l,t,p) for l,t,p in self.productions ])
+        def productionKey((l,t,p)):
+            return not isinstance(p,Primitive), -l
+        return "\n".join(["%f\tt0\t$_"%self.logVariable] + \
+                         [ "%f\t%s\t%s"%(l,t,p) for l,t,p in sorted(self.productions, key = productionKey) ])
+                                                                    
 
     def buildCandidates(self, context, environment, request):
         candidates = []
