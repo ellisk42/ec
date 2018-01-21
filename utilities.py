@@ -62,8 +62,7 @@ def lse(x,y = None):
         # If these are just numbers...
         t = type(x[0])
         if t == int or t == float:
-            for z in x:
-                if largest == None or z > largest: largest = z
+            largest = max(*x)
             return largest + math.log(sum(math.exp(z - largest) for z in x))
         # Must be torch
         return torchSoftMax(x)
@@ -97,10 +96,14 @@ def valid(x): return not invalid(x)
 
 
 def callCompiled(f, *arguments, **keywordArguments):
-    profile = "profiles/text"
-
+    # profile is a keyword argument for callCompiled, _not_ whatever
+    # compiled function is being called
+    profile = keywordArguments.get('profile',None)
+    if profile in keywordArguments: del keywordArguments['profile']
+    
     if profile is None: pythonArguments = []
     else: pythonArguments = ['-m','vmprof','-o',profile]
+    
     p = subprocess.Popen(['pypy'] + pythonArguments + ['compiledDriver.py'],
                          stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     request = {

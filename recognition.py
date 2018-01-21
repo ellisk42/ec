@@ -64,7 +64,7 @@ class RecognitionModel(nn.Module):
                       for entry in frontier ])
         return l
 
-    def train(self, frontiers, _ = None, steps = 500, lr = 0.001, topK = 1):
+    def train(self, frontiers, _=None, steps=500, lr=0.001, topK=1, CPUs=1):
         # Torch sometimes segfaults in multithreaded mode...
         torch.set_num_threads(1)
         
@@ -79,7 +79,7 @@ class RecognitionModel(nn.Module):
             l.backward()
             optimizer.step()
 
-    def enumerateFrontiers(self, frontierSize, tasks):
+    def enumerateFrontiers(self, frontierSize, tasks, CPUs=1):
         from time import time
 
         # Torch sometimes segfaults in multithreaded mode...
