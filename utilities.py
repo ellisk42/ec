@@ -113,12 +113,12 @@ def callCompiled(f, *arguments, **keywordArguments):
     }
     start = time.time()
     pickle.dump(request, p.stdin)
-    eprint("Wrote serialized message in time", time.time() - start)
+    eprint("Wrote serialized message for {} in time {}".format(f.__name__, time.time() - start))
 
     (success, result) = pickle.load(p.stdout)
     eprint("Total pypy return time", time.time() - start)
 
     if not success:
-        os.exit(1)
+        sys.exit(1)
 
     return result

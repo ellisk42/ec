@@ -67,7 +67,7 @@ def iterativeDeepeningEnumeration(g, request, frontierSize, budget=2.0, budgetIn
 def enumeration(g, context, environment, request, budget):
     if budget <= 0:
         return
-    if request.name == ARROW:
+    if request.isArrow():
         v = request.arguments[0]
         for l, newContext, b in enumeration(g, context, [v] + environment,
                                             request.arguments[1], budget):
