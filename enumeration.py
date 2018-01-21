@@ -14,7 +14,7 @@ def enumerateFrontiers(g, frontierSize, tasks, CPUs=1, maximumFrontier=None):
 
     start = time()
     if isinstance(g, Grammar):
-        for request in (t.request for t in tasks):
+        for request in { t.request for t in tasks }:
             frontier = iterativeDeepeningEnumeration(g, request, frontierSize)
             frontiers[request] = frontier
         totalNumberOfPrograms = sum(len(f) for f in frontiers.values())
