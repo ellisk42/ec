@@ -97,7 +97,11 @@ def valid(x): return not invalid(x)
 
 
 def callCompiled(f, *arguments, **keywordArguments):
-    p = subprocess.Popen(['pypy', 'compiledDriver.py'],
+    profile = "profiles/text"
+
+    if profile is None: pythonArguments = []
+    else: pythonArguments = ['-m','vmprof','-o',profile]
+    p = subprocess.Popen(['pypy'] + pythonArguments + ['compiledDriver.py'],
                          stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     request = {
         "function": f,

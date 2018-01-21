@@ -212,9 +212,15 @@ class FragmentGrammar(object):
         fragments = [ fragment for fragment in proposeFragmentsFromFrontiers(restrictedFrontiers, a)
                       if not fragment in grammar.primitives ]
 
-        # Add all the fragments to the grammar
-        grammar = FragmentGrammar.uniform(grammar.primitives + fragments)
+        def priorCounts(p):
+            epsilon = 0.1
+            return log(1./(1. - exp(-fragmentSize(p))))/log(epsilon)
 
+        # Add all the fragments to the grammar
+        grammar = FragmentGrammar(log(priorCounts(Index(0))),
+                                  [ (log(priorCounts(p)), p.infer(), p)
+                                    for p in grammar.primitives + fragments ])
+        # uses = grammar.expectedUses(frontiers,
         uses = Uses(possibleVariables = pseudoCounts,
                     actualVariables = pseudoCounts,
                     possibleUses = {p: pseudoCounts for p in grammar.primitives },

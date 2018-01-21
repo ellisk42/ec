@@ -12,6 +12,7 @@ class TypeConstructor(Type):
     def __init__(self, name, arguments):
         self.name = name
         self.arguments = arguments
+        self.isPolymorphic = any(a.isPolymorphic for a in arguments )
 
     def __eq__(self,other):
         return isinstance(other,TypeConstructor) and \
@@ -44,12 +45,16 @@ class TypeConstructor(Type):
         else: return self
 
     def apply(self,context):
+        if not self.isPolymorphic: return self
         return TypeConstructor(self.name,
                                [ x.apply(context) for x in self.arguments ])
 
-    def occurs(self,v): return any(x.occurs(v) for x in self.arguments )
+    def occurs(self,v):
+        if not self.isPolymorphic: return False
+        return any(x.occurs(v) for x in self.arguments )
 
     def instantiate(self, context, bindings = None):
+        if not self.isPolymorphic: return context, self
         if bindings == None: bindings = {}
         newArguments = []
         for x in self.arguments:
@@ -58,6 +63,7 @@ class TypeConstructor(Type):
         return (context, TypeConstructor(self.name, newArguments))
 
     def canonical(self,bindings = None):
+        if not self.isPolymorphic: return self
         if bindings == None: bindings = {}
         return TypeConstructor(self.name, [ x.canonical(bindings) for x in self.arguments ])
 
@@ -66,6 +72,7 @@ class TypeVariable(Type):
     def __init__(self,j):
         assert isinstance(j,int)
         self.v = j
+        self.isPolymorphic = True
     def __eq__(self,other):
         return isinstance(other,TypeVariable) and self.v == other.v
     def __ne__(self,other): return not (self.v == other.v)
