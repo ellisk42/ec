@@ -159,8 +159,7 @@ class FragmentGrammar(object):
         def f(actual, possible): return digamma(actual) - digamma(possible)
         return FragmentGrammar(f(uses.actualVariables, uses.possibleVariables),
                                [ (f(uses.actualUses[p], uses.possibleUses[p]), t, p)
-                                 for _,t,p in self.productions ]), \
-                                    uses
+                                 for _,t,p in self.productions ]).normalize()
 
     def jointFrontiersLikelihood(self, frontiers):
         return sum( lse([ entry.logLikelihood + self.closedLogLikelihood(frontier.task.request, entry.program)
@@ -187,6 +186,10 @@ class FragmentGrammar(object):
     @staticmethod
     def uniform(productions):
         return FragmentGrammar(0., [(0., p.infer(),p) for p in productions ])
+    def normalize(self):
+        z = lse([ l for l,t,p in self.productions ] + [self.logVariable])
+        return FragmentGrammar(self.logVariable - z,
+                               [ (l - z,t,p) for l,t,p in self.productions ])
     def makeUniform(self):
         return FragmentGrammar(0., [(0., p.infer(),p) for _,_,p in self.productions ])
 
@@ -213,21 +216,24 @@ class FragmentGrammar(object):
                       if not fragment in grammar.primitives ]
 
         def priorCounts(p):
+            size = fragmentSize(p) + 1.
             epsilon = 0.1
-            return log(1./(1. - exp(-fragmentSize(p))))/log(epsilon)
+            pc = log(1./(1. - exp(-size)))/log(1./epsilon)
+            return pc
 
         # Add all the fragments to the grammar
         grammar = FragmentGrammar(log(priorCounts(Index(0))),
                                   [ (log(priorCounts(p)), p.infer(), p)
                                     for p in grammar.primitives + fragments ])
-        # uses = grammar.expectedUses(frontiers,
-        uses = Uses(possibleVariables = pseudoCounts,
-                    actualVariables = pseudoCounts,
-                    possibleUses = {p: pseudoCounts for p in grammar.primitives },
-                    actualUses = {p: pseudoCounts for p in grammar.primitives })
+        # prior
+        uses0 = Uses(actualVariables = priorCounts(Index(0)),
+                     possibleVariables = 1.,
+                     actualUses = {p: priorCounts(p) for p in grammar.primitives },
+                     possibleUses = {p: 1. for p in grammar.primitives })
+        
         for i in range(2):
             eprint("VB iteration",i)
-            grammar, uses = grammar.variationalUpdate(restrictedFrontiers, uses)
+            grammar = grammar.variationalUpdate(restrictedFrontiers, uses0)
             restrictedFrontiers = restrictFrontiers()
             grammar.productions.sort(key = lambda (l,_,__): -l)
             eprint(grammar)
@@ -305,7 +311,7 @@ def induceFragmentGrammarFromFrontiers(*arguments, **keywordArguments):
     startTime = time.time()
     g = FragmentGrammar.induceFromFrontiers(*arguments, **keywordArguments)
     # Experimental variational inference does not seem to work well...
-    # g = FragmentGrammar.induceVariational(*arguments, **keywordArguments)
+    #g = FragmentGrammar.induceVariational(*arguments, **keywordArguments)
     eprint("Grammar induction took time",time.time() - startTime,"seconds")
     return g
 
