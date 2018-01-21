@@ -15,7 +15,8 @@ def enumerateFrontiers(g, frontierSize, tasks, CPUs=1, maximumFrontier=None):
     start = time()
     if isinstance(g, Grammar):
         for request in { t.request for t in tasks }:
-            frontier = iterativeDeepeningEnumeration(g, request, frontierSize)
+            frontier = iterativeDeepeningEnumeration(g, request, frontierSize,
+                                                     showDescriptionLength = True)
             frontiers[request] = frontier
         totalNumberOfPrograms = sum(len(f) for f in frontiers.values())
         totalNumberOfFrontiers = len(frontiers)
@@ -51,12 +52,12 @@ def enumerateFrontiers(g, frontierSize, tasks, CPUs=1, maximumFrontier=None):
     return frontiers
 
 
-def iterativeDeepeningEnumeration(g, request, frontierSize, budget=2.0, budgetIncrement=1.0):
+def iterativeDeepeningEnumeration(g, request, frontierSize, budget=2.0, budgetIncrement=1.0, showDescriptionLength = False):
     frontier = []
     while len(frontier) < frontierSize:
         frontier = [(l, p) for l, _, p in enumeration(g, Context.EMPTY, [], request, budget)]
         budget += budgetIncrement
-    #eprint("Enumerated up to %f nats"%(budget - budgetIncrement))
+    if showDescriptionLength: eprint("Enumerated up to %f nats"%(budget - budgetIncrement))
     # This will trim the frontier to be exactly frontierSize
     # Not sure whether we want to do this
     #return sorted(frontier, key=lambda (l, p): l, reverse=True)[:frontierSize]
