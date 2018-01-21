@@ -8,6 +8,7 @@ from task import *
 from enumeration import *
 from grammar import *
 from fragmentGrammar import *
+import torch
 
 
 class ECResult():
@@ -39,6 +40,7 @@ def explorationCompression(primitives, tasks,
                            pseudoCounts=1.0, aic=1.0,
                            structurePenalty=0.001, arity=0,
                            CPUs=1,
+                           cuda=False,
                            outputPrefix=None):
     if frontierSize is None:
         eprint("Please specify a frontier size:",
@@ -59,10 +61,10 @@ def explorationCompression(primitives, tasks,
                   if k not in ["tasks", "primitives", "_", "CPUs", "outputPrefix", "resume"]}
 
     # Uses `parameters` to construct the checkpoint path
-    def checkpointPath(iteration):
+    def checkpointPath(iteration, extra=""):
         parameters["iterations"] = iteration
         kvs = ["{}={}".format(k, parameters[k]) for k in sorted(parameters.keys())]
-        return "{}_{}.pickle".format(outputPrefix, "_".join(kvs))
+        return "{}_{}{}.pickle".format(outputPrefix, "_".join(kvs), extra)
 
     # Restore checkpoint
     if resume is not None:
@@ -84,7 +86,7 @@ def explorationCompression(primitives, tasks,
 
         if useRecognitionModel:
             # Train and then use a recognition model
-            recognizer = RecognitionModel(len(tasks[0].features), grammar)
+            recognizer = RecognitionModel(len(tasks[0].features), grammar, cuda=cuda)
             recognizer.train(frontiers, topK=topK)
             bottomupFrontiers = recognizer.enumerateFrontiers(frontierSize, tasks, CPUs=CPUs)
             eprint("Bottom-up enumeration results:")
@@ -162,7 +164,10 @@ def commandlineArguments(_=None,
                          useRecognitionModel=True,
                          maximumFrontier=None,
                          pseudoCounts=1.0, aic=1.0,
+                         cuda=None,
                          structurePenalty=0.001, a=0):
+    if cuda is None:
+        cuda = torch.cuda.is_available()
     import argparse
     parser = argparse.ArgumentParser(description="")
     parser.add_argument("--resume",
@@ -201,6 +206,11 @@ def commandlineArguments(_=None,
                         default=CPUs,
                         help="default: %d" % CPUs,
                         type=int)
+    parser.add_argument("--no-cuda",
+                        action="store_false",
+                        dest="cuda",
+                        help="""cuda will be used if available (which it %s),
+                        unless this is set""" % ("IS" if cuda else "ISN'T"))
     parser.add_argument("-m", "--maximumFrontier",
                         help="""Even though we enumerate --frontierSize
                         programs, we might want to only keep around the very

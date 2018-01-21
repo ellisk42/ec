@@ -21,14 +21,24 @@ def variable(x, volatile=False):
     return Variable(x, volatile=volatile)
 
 class RecognitionModel(nn.Module):
-    def __init__(self, featureDimensionality, grammar, hidden = [5], activation = "relu"):
+    def __init__(self, featureDimensionality, grammar, hidden = [5], activation = "relu", cuda=False):
         super(RecognitionModel, self).__init__()
         self.grammar = grammar
+        self.use_cuda = cuda
+        if cuda:
+            self.cuda()
+        else:
+            # Torch sometimes segfaults in multithreaded mode...
+            torch.set_num_threads(1)
+
 
         self.hiddenLayers = []
         inputDimensionality = featureDimensionality
         for h in hidden:
-            self.hiddenLayers.append(nn.Linear(inputDimensionality, h))
+            layer = nn.Linear(inputDimensionality, h)
+            if cuda:
+                layer = layer.cuda()
+            self.hiddenLayers.append(layer)
             inputDimensionality = h
 
         if activation == "sigmoid":
@@ -42,16 +52,21 @@ class RecognitionModel(nn.Module):
 
         self.logVariable = nn.Linear(inputDimensionality,1)
         self.logProductions = nn.Linear(inputDimensionality, len(self.grammar))
-    
+        if cuda:
+            self.logVariable = self.logVariable.cuda()
+            self.logProductions = self.logProductions.cuda()
+
     def forward(self, features):
         for layer in self.hiddenLayers:
             features = self.activation(layer(features))
         h = features
-        return self.logVariable(h),\
-            self.logProductions(h)
+        return self.logVariable(h), self.logProductions(h)
 
     def extractFeatures(self, tasks):
-        return Variable(torch.from_numpy(np.array([ task.features for task in tasks ])).float())
+        fs = torch.from_numpy(np.array([ task.features for task in tasks ])).float()
+        if self.use_cuda:
+            fs = fs.cuda()
+        return Variable(fs)
     
     def logLikelihood(self, frontiers):
         features = self.extractFeatures([ frontier.task for frontier in frontiers ])
@@ -65,9 +80,6 @@ class RecognitionModel(nn.Module):
         return l
 
     def train(self, frontiers, _=None, steps=500, lr=0.001, topK=1, CPUs=1):
-        # Torch sometimes segfaults in multithreaded mode...
-        torch.set_num_threads(1)
-        
         frontiers = [ frontier.topK(topK) for frontier in frontiers if not frontier.empty ]
         optimizer = torch.optim.Adam(self.parameters(), lr=lr)
         for i in range(1,steps + 1):
@@ -81,9 +93,6 @@ class RecognitionModel(nn.Module):
 
     def enumerateFrontiers(self, frontierSize, tasks, CPUs=1):
         from time import time
-
-        # Torch sometimes segfaults in multithreaded mode...
-        torch.set_num_threads(1)
 
         start = time()
         features = self.extractFeatures(tasks)
