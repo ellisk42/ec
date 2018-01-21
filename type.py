@@ -120,6 +120,8 @@ class Context(object):
         t1 = t1.apply(self)
         t2 = t2.apply(self)
         if t1 == t2: return self
+        # t1&t2 are not equal
+        if not t1.isPolymorphic and not t2.isPolymorphic: raise UnificationFailure()
 
         if isinstance(t1,TypeVariable):
             if t2.occurs(t1.v): raise Occurs()
