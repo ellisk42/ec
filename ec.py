@@ -58,7 +58,7 @@ def explorationCompression(grammar, tasks,
     # We save the parameters that were passed into EC
     # This is for the purpose of exporting the results of the experiment
     parameters = {k: v for k, v in locals().iteritems()
-                  if k not in ["tasks", "grammar", "_", "CPUs", "outputPrefix", "resume"]}
+                  if k not in ["tasks", "grammar", "cuda", "_", "CPUs", "outputPrefix", "resume"]}
 
     # Uses `parameters` to construct the checkpoint path
     def checkpointPath(iteration, extra=""):
