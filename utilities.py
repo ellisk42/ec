@@ -13,7 +13,12 @@ def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
 
 
+NEGATIVEINFINITY = float('-inf')
+POSITIVEINFINITY = float('inf')
+
 PARALLELMAPDATA = None
+
+
 def parallelMap(numberOfCPUs, f, *xs):
     global PARALLELMAPDATA
 
@@ -22,19 +27,20 @@ def parallelMap(numberOfCPUs, f, *xs):
     for x in xs: assert len(x) == len(xs[0])
     assert PARALLELMAPDATA is None
     PARALLELMAPDATA = (f,xs)
-    
+
     from multiprocessing import Pool
-    
+
     workers = Pool(numberOfCPUs)
     ys = workers.map(parallelMapCallBack, range(len(xs[0])))
     workers.terminate()
 
     PARALLELMAPDATA = None
     return ys
-    
+
+
 def parallelMapCallBack(j):
     global PARALLELMAPDATA
-    (f,xs) = PARALLELMAPDATA
+    f, xs = PARALLELMAPDATA
     try:
         return f(*[ x[j] for x in xs ])
     except Exception as e:
@@ -48,11 +54,14 @@ def log(x):
         if t == 0: return NEGATIVEINFINITY
         return math.log(x)
     return x.log()
+
+
 def exp(x):
     t = type(x)
     if t == int or t == float:
         return math.exp(x)
     return x.exp()
+
 
 def lse(x,y = None):
     if y is None:
@@ -87,24 +96,21 @@ def torchSoftMax(x,y = None):
     # this is so stupid
     return (x - log_softmax(x, dim = 0))[0]
 
-NEGATIVEINFINITY = float('-inf')
-POSITIVEINFINITY = float('inf')
 
 def invalid(x):
     return math.isinf(x) or math.isnan(x)
+
+
 def valid(x): return not invalid(x)
 
 
 def callCompiled(f, *arguments, **keywordArguments):
-    # profile is a keyword argument for callCompiled, _not_ whatever
-    # compiled function is being called
-    profile = keywordArguments.get('profile',None)
-    if profile in keywordArguments: del keywordArguments['profile']
-    
-    if profile is None: pythonArguments = []
-    else: pythonArguments = ['-m','vmprof','-o',profile]
-    
-    p = subprocess.Popen(['pypy'] + pythonArguments + ['compiledDriver.py'],
+    pypyArgs = []
+    profile = keywordArguments.pop('profile', None)
+    if profile:
+        pypyArgs = ['-m', 'vmprof', '-o', profile]
+
+    p = subprocess.Popen(['pypy'] + pypyArgs + ['compiledDriver.py'],
                          stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     request = {
         "function": f,
@@ -115,7 +121,7 @@ def callCompiled(f, *arguments, **keywordArguments):
     pickle.dump(request, p.stdin)
     eprint("Wrote serialized message for {} in time {}".format(f.__name__, time.time() - start))
 
-    (success, result) = pickle.load(p.stdout)
+    success, result = pickle.load(p.stdout)
     eprint("Total pypy return time", time.time() - start)
 
     if not success:
