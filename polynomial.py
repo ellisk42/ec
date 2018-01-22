@@ -1,7 +1,11 @@
-from ec import *
-from arithmeticPrimitives import *
+from ec import explorationCompression, commandlineArguments
+from grammar import Grammar
+from arithmeticPrimitives import addition, multiplication, k0, k1
+from type import tint, arrow
+from task import RegressionTask
 
-polynomialPrimitives = [addition, multiplication,k0,k1]
+
+primitives = [addition, multiplication, k0, k1]
 
 MAXIMUMCOEFFICIENT = 9
 NUMBEROFEXAMPLES = 5
@@ -17,7 +21,8 @@ tasks = [
 ]
 
 if __name__ == "__main__":
-    explorationCompression(polynomialPrimitives, tasks,
+    baseGrammar = Grammar.uniform(primitives)
+    explorationCompression(baseGrammar, tasks,
                            outputPrefix = "experimentOutputs/polynomial",
                            **commandlineArguments(frontierSize = 10**4,
                                                   iterations = 10,

@@ -29,7 +29,7 @@ class ECResult():
         return "ECResult({})".format(", ".join(attrs))
 
 
-def explorationCompression(primitives, tasks,
+def explorationCompression(grammar, tasks,
                            _=None,
                            iterations=None,
                            resume=None,
@@ -58,7 +58,7 @@ def explorationCompression(primitives, tasks,
     # We save the parameters that were passed into EC
     # This is for the purpose of exporting the results of the experiment
     parameters = {k: v for k, v in locals().iteritems()
-                  if k not in ["tasks", "primitives", "_", "CPUs", "outputPrefix", "resume"]}
+                  if k not in ["tasks", "grammar", "_", "CPUs", "outputPrefix", "resume"]}
 
     # Uses `parameters` to construct the checkpoint path
     def checkpointPath(iteration, extra=""):
@@ -74,7 +74,6 @@ def explorationCompression(primitives, tasks,
         eprint("Loaded checkpoint from", path)
         grammar = result.grammars[-1]
     else:  # Start from scratch
-        grammar = Grammar.uniform(primitives)
         result = ECResult(parameters=parameters, grammars=[grammar])
 
     for j in range(resume or 0, iterations):

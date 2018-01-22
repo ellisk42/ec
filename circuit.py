@@ -1,6 +1,9 @@
-from ec import *
+from ec import explorationCompression, commandlineArguments
+from grammar import Grammar
 from utilities import eprint
 from circuitPrimitives import primitives
+from task import RegressionTask
+from type import arrow, tbool
 
 import itertools
 import random
@@ -80,7 +83,9 @@ if __name__ == "__main__":
                              numberOfGates = gates))
     eprint("Sampled %d tasks with %d unique functions"%(len(tasks),
                                                        len({t.signature for t in tasks })))
-    explorationCompression(primitives, [ task.task() for task in tasks ],
+
+    baseGrammar = Grammar.uniform(primitives)
+    explorationCompression(baseGrammar, [ task.task() for task in tasks ],
                            outputPrefix = "experimentOutputs/circuit",
                            **commandlineArguments(frontierSize = 10**3,
                                                   iterations = 10,

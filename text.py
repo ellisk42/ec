@@ -1,4 +1,5 @@
-from ec import *
+from ec import explorationCompression, commandlineArguments
+from grammar import Grammar
 from utilities import eprint
 from makeTextTasks import makeTasks, delimiters
 from textPrimitives import primitives
@@ -28,7 +29,8 @@ if __name__ == "__main__":
     # print e.evaluate([])("test,this,here")
     # assert False
 
-    explorationCompression(primitives, tasks,
+    baseGrammar = Grammar.uniform(primitives)
+    explorationCompression(baseGrammar, tasks,
                            outputPrefix = "experimentOutputs/text",
                            **commandlineArguments(
                                frontierSize = 10**4,

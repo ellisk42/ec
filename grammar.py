@@ -7,6 +7,11 @@ class Grammar(object):
         self.productions = productions
 
     @staticmethod
+    def fromProductions(productions, logVariable=0.0):
+        """Make a grammar from primitives and their relative logpriors."""
+        return Grammar(logVariable, [(l, p.infer(), p) for l, p in productions])
+
+    @staticmethod
     def uniform(primitives):
         return Grammar(0.0, [(0.0,p.infer(),p) for p in primitives ])
 
@@ -21,6 +26,10 @@ class Grammar(object):
                 l += "\teval = %s"%(p.evaluate([]))
             lines.append(l)
         return "\n".join(lines)
+
+    @property
+    def primitives(self):
+        return [p for _, _, p in self.productions]
 
 class Uses(object):
     '''Tracks uses of different grammar productions'''

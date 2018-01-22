@@ -1,6 +1,7 @@
 from ec import explorationCompression, commandlineArguments
+from grammar import Grammar
 from utilities import eprint
-from listPrimitives import primitives
+from listPrimitives import baseGrammar
 import cPickle as pickle
 
 if __name__ == "__main__":
@@ -15,10 +16,9 @@ if __name__ == "__main__":
 
     eprint("Got {} list tasks".format(len(tasks)))
 
-    explorationCompression(primitives, tasks,
+    explorationCompression(baseGrammar, tasks,
                            outputPrefix="experimentOutputs/list",
                            **commandlineArguments(frontierSize=10**4,
                                                   a=1,
                                                   iterations=10,
                                                   pseudoCounts=10.0))
-
