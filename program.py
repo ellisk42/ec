@@ -32,7 +32,7 @@ class Program(object):
     @staticmethod
     def parse(s):
         e,s = Program._parse(s.strip())
-        if s != "": raise ParseFailure()
+        if s != "": raise ParseFailure(s)
         return e
     @staticmethod
     def _parse(s):
@@ -40,7 +40,7 @@ class Program(object):
         for p in [Application, Abstraction, Index, Invented, FragmentVariable, Primitive]:
             try: return p._parse(s)
             except ParseFailure: continue
-        raise ParseFailure()
+        raise ParseFailure(s)
 
 class Application(Program):
     '''Function application'''
@@ -88,7 +88,7 @@ class Application(Program):
     @staticmethod
     def _parse(s):
         while len(s) > 0 and s[0].isspace(): s = s[1:]
-        if s == "" or s[0] != '(': raise ParseFailure()
+        if s == "" or s[0] != '(': raise ParseFailure(s)
         s = s[1:]
 
         xs = []
@@ -96,7 +96,7 @@ class Application(Program):
             x,s = Program._parse(s)
             xs.append(x)
             while len(s) > 0 and s[0].isspace(): s = s[1:]
-            if s == "": raise ParseFailure()
+            if s == "": raise ParseFailure(s)
             if s[0] == ")":
                 s = s[1:]
                 break
@@ -154,13 +154,13 @@ class Index(Program):
     @staticmethod
     def _parse(s):
         while len(s) > 0 and s[0].isspace(): s = s[1:]
-        if s == "" or s[0] != '$': raise ParseFailure()
+        if s == "" or s[0] != '$': raise ParseFailure(s)
         s = s[1:]
         n = ""
         while s != "" and s[0].isdigit():
             n += s[0]
             s = s[1:]
-        if n == "": raise ParseFailure()
+        if n == "": raise ParseFailure(s)
         return Index(int(n)),s
         
 
@@ -204,12 +204,12 @@ class Abstraction(Program):
             s = s[2:]
         elif s.startswith('(lambda'):
             s = s[len('(lambda'):]
-        else: raise ParseFailure()
+        else: raise ParseFailure(s)
         while len(s) > 0 and s[0].isspace(): s = s[1:]
 
         b,s = Program._parse(s)
         while len(s) > 0 and s[0].isspace(): s = s[1:]
-        if s == "" or s[0] != ')': raise ParseFailure()
+        if s == "" or s[0] != ')': raise ParseFailure(s)
         s = s[1:]
         return Abstraction(b),s
 
@@ -248,7 +248,7 @@ class Primitive(Program):
             s = s[1:]
         if name in Primitive.GLOBALS:
             return Primitive.GLOBALS[name],s
-        raise ParseFailure()
+        raise ParseFailure(s)
 
 
 
@@ -279,7 +279,7 @@ class Invented(Program):
     @staticmethod
     def _parse(s):
         while len(s) > 0 and s[0].isspace(): s = s[1:]
-        if not s.startswith('#'): raise ParseFailure()
+        if not s.startswith('#'): raise ParseFailure(s)
         s = s[1:]
         b,s = Program._parse(s)
         return Invented(b),s
@@ -318,7 +318,7 @@ class FragmentVariable(Program):
         while len(s) > 0 and s[0].isspace(): s = s[1:]
         if s.startswith('??'): return FragmentVariable.single, s[2:]
         if s.startswith('?'): return FragmentVariable.single, s[1:]
-        raise ParseFailure()
+        raise ParseFailure(s)
 
 FragmentVariable.single = FragmentVariable()
 
