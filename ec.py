@@ -60,6 +60,12 @@ def explorationCompression(grammar, tasks,
     parameters = {k: v for k, v in locals().iteritems()
                   if k not in ["tasks", "grammar", "cuda", "_", "CPUs", "outputPrefix", "resume"]}
 
+    eprint("Running EC with parameters:")
+    for k,v in parameters.iteritems():
+        eprint("\t", k, " = ", v)
+    eprint()
+        
+
     # Uses `parameters` to construct the checkpoint path
     def checkpointPath(iteration, extra=""):
         parameters["iterations"] = iteration
