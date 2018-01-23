@@ -272,12 +272,12 @@ class FragmentGrammar(object):
             g = g.makeUniform().insideOutside(restrictedFrontiers, pseudoCounts)
             likelihood = g.jointFrontiersMDL(restrictedFrontiers)
             structure = sum(fragmentSize(p) for p in g.primitives)
-            score = likelihood - aic*len(g) - structurePenalty*structure, g
+            score = likelihood - aic*len(g) - structurePenalty*structure
 
             if "join" in newFragment and "split" in newFragment and "map" in newFragment:
                 eprint("Interesting new fragment %s obtains likelihood %f, aic %f, structure penalty %f, score %f"%\
                        (newFragment, likelihood, aic*len(g), structurePenalty*structure, score))
-            return score
+            return score, g
 
         bestScore, _ = grammarScore(bestGrammar)
 
