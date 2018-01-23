@@ -93,7 +93,8 @@ class RecognitionModel(nn.Module):
             l.backward()
             optimizer.step()
 
-    def enumerateFrontiers(self, frontierSize, tasks, CPUs=1):
+    def enumerateFrontiers(self, frontierSize, tasks,
+                           CPUs=1, maximumFrontier=None):
         from time import time
 
         start = time()
@@ -106,7 +107,8 @@ class RecognitionModel(nn.Module):
         eprint("Evaluated recognition model in %f seconds"%(time() - start))
 
         return callCompiled(enumerateFrontiers,
-                            grammars, frontierSize, tasks)
+                            grammars, frontierSize, tasks,
+                            CPUs = CPUs, maximumFrontier = maximumFrontier)
 
 class TreeDecoder(nn.Module):
     def __init__(self, grammar, hiddenUnits = 10):
