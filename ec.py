@@ -248,5 +248,6 @@ def commandlineArguments(_=None,
                         induced grammar for neural recognition model.
                         Default: %s""" % KLRegularize,
                         type=float)
-    parser.set_defaults(useRecognitionModel=useRecognitionModel)
+    parser.set_defaults(useRecognitionModel=useRecognitionModel,
+                        cuda = cuda)
     return vars(parser.parse_args())
