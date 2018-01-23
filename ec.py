@@ -36,6 +36,7 @@ def explorationCompression(grammar, tasks,
                            frontierSize=None,
                            useRecognitionModel=True,
                            activation='relu',
+                           KLRegularize=True,
                            topK=1,
                            maximumFrontier=None,
                            pseudoCounts=1.0, aic=1.0,
@@ -93,7 +94,7 @@ def explorationCompression(grammar, tasks,
         if useRecognitionModel:
             # Train and then use a recognition model
             recognizer = RecognitionModel(len(tasks[0].features), grammar, activation=activation, cuda=cuda)
-            recognizer.train(frontiers, topK=topK)
+            recognizer.train(frontiers, KLRegularize=KLRegularize, topK=topK)
             bottomupFrontiers = recognizer.enumerateFrontiers(frontierSize, tasks, CPUs=CPUs)
             eprint("Bottom-up enumeration results:")
             eprint(Frontier.describe(bottomupFrontiers))
