@@ -70,22 +70,22 @@ class DifferentiableTask(RegressionTask):
     def logLikelihood(self,e):
         e, parameters = PlaceholderVisitor.execute(e)
         f = e.evaluate([])
-        
+
         loss = sum( self.loss(Placeholder.maybe(self.predict(f, [ Placeholder.named("X_",float(a))
                                                                   for a in x ])),
                               Placeholder.named("Y_",float(y)))
                     for x,y in self.examples )
-
-        l = loss.resilientBackPropagation(parameters, lr = 0.5, steps = 100)
+        loss = loss.resilientBackPropagation(parameters, lr = 0.5,
+                                             steps = 100 if parameters else 1)
             
         # BIC penalty
         penalty = self.BIC*len(parameters)*math.log(len(self.examples))
 
         if self.likelihoodThreshold != None:
-            if l > -self.likelihoodThreshold: return NEGATIVEINFINITY
+            if loss > -self.likelihoodThreshold: return NEGATIVEINFINITY
             else: return -penalty
         else:
-            return -l - penalty
+            return -loss - penalty
         
 def squaredErrorLoss(prediction, target):
     return (prediction - target).square()

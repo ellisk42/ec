@@ -14,10 +14,12 @@ def enumerateFrontiers(g, frontierSize, tasks, CPUs=1, maximumFrontier=None):
 
     start = time()
     if isinstance(g, Grammar):
-        for request in { t.request for t in tasks }:
-            frontier = iterativeDeepeningEnumeration(g, request, frontierSize,
-                                                     showDescriptionLength = True)
-            frontiers[request] = frontier
+        uniqueRequests = list({ t.request for t in tasks })
+        frontiers = dict(parallelMap(
+            CPUs,
+            lambda request: (request, iterativeDeepeningEnumeration(g, request, frontierSize,
+                                                                    showDescriptionLength = True)),
+            uniqueRequests))
         totalNumberOfPrograms = sum(len(f) for f in frontiers.values())
         totalNumberOfFrontiers = len(frontiers)
 
