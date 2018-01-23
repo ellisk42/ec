@@ -68,7 +68,7 @@ class RecognitionModel(nn.Module):
             fs = fs.cuda()
         return Variable(fs)
     
-    def logLikelihood(self, frontiers):
+    def logLikelihood(self, frontiers, KLRegularize):
         features = self.extractFeatures([ frontier.task for frontier in frontiers ])
         variables, productions = self(features)
         l = 0
@@ -77,14 +77,16 @@ class RecognitionModel(nn.Module):
             g = FragmentGrammar(v, [(p[k],t,program) for k,(_,t,program) in enumerate(self.grammar.productions) ])
             l += lse([g.closedLogLikelihood(frontier.task.request, entry.program)
                       for entry in frontier ])
+            if KLRegularize:
+                l += KLRegularize * Grammar.TorchKL(v, p, self.grammar)
         return l
 
-    def train(self, frontiers, _=None, steps=500, lr=0.001, topK=1, CPUs=1):
+    def train(self, frontiers, _=None, KLRegularize=0.1, steps=500, lr=0.001, topK=1, CPUs=1):
         frontiers = [ frontier.topK(topK) for frontier in frontiers if not frontier.empty ]
         optimizer = torch.optim.Adam(self.parameters(), lr=lr)
         for i in range(1,steps + 1):
             self.zero_grad()
-            l = -self.logLikelihood(frontiers)/len(frontiers)
+            l = -self.logLikelihood(frontiers, KLRegularize)/len(frontiers)
             if i%50 == 0:
                 eprint("Epoch",i,"Loss",l.data[0])
                 gc.collect()

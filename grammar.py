@@ -31,6 +31,32 @@ class Grammar(object):
     def primitives(self):
         return [p for _, _, p in self.productions]
 
+    def KL(this, that):
+        assert len(this.productions) == len(that.productions) # and they should correspond
+        this_z = lse([l for l, _, _ in this.productions]+[this.logVariable])
+        that_z = lse([l for l, _, _ in that.productions]+[that.logVariable])
+
+        this_l, that_l = this.logVariable, that.logVariable
+        kl = exp(this_l - this_z) * (this_l - this_z - that_l + that_z)
+        for i, (this_l, _, _) in enumerate(this.productions):
+             that_l = that.productions[i]
+             kl += exp(this_l - this_z) * (this_l - this_z - that_l + that_z)
+        return kl
+
+    @staticmethod
+    def TorchKL(this_logVariable, this_productions, that):
+        assert len(this_productions) == len(that.productions) # and they should correspond
+        this_z = lse([lse(this_productions), this_logVariable])
+        that_z = lse([l for l, _, _ in that.productions]+[that.logVariable])
+
+        this_l, that_l = this_logVariable, that.logVariable
+        kl = exp(this_l - this_z) * (this_l - this_z - that_l + that_z)
+        for i, this_l in enumerate(this_productions):
+             that_l, _, _ = that.productions[i]
+             kl += exp(this_l - this_z) * (this_l - this_z - that_l + that_z)
+        return kl
+
+
 class Uses(object):
     '''Tracks uses of different grammar productions'''
     def __init__(self, possibleVariables = 0., actualVariables = 0.,
