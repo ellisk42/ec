@@ -1,5 +1,4 @@
 from ec import explorationCompression, commandlineArguments
-from grammar import Grammar
 from utilities import eprint
 from listPrimitives import baseGrammar
 import cPickle as pickle

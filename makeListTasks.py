@@ -120,7 +120,7 @@ def make_list_tasks(n_examples=10):
                         if type(v) == int and abs(v) > 9]
                 for k in bigs:  # reduce big constants
                     params[k] = randint(1, 9)
-                if routine.id == "rotate-k" and params["k"] != 0:
+                if False:
                     # rotate-k is hard if list is smaller than k
                     k = params["k"]
                     inps = []
