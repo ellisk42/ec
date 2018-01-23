@@ -24,14 +24,14 @@ class Frontier(object):
 
     def topK(self,k):
         if k <= 0: return self
-        return Frontier(sorted(self.entries,
-                               key = lambda e: (e.logPosterior, str(e.program)),
-                               reverse = True)[:k],
-                        self.task)
+        newEntries = sorted(self.entries,
+                            key = lambda e: (-e.logPosterior, str(e.program)))
+        return Frontier(newEntries[:k], self.task)
 
     @property
     def bestPosterior(self):
-        return max(self.entries,key = lambda e: (e.logPosterior, str(e.program)))
+        return min(self.entries,
+                   key = lambda e: (-e.logPosterior, str(e.program)))
 
     @property
     def empty(self): return self.entries == []

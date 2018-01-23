@@ -268,7 +268,7 @@ class FragmentGrammar(object):
         restrictedFrontiers = restrictFrontiers()
 
         def grammarScore(g):
-            newFragment = str(g.primitive[-1])
+            newFragment = str(g.primitives[-1])
             g = g.makeUniform().insideOutside(restrictedFrontiers, pseudoCounts)
             likelihood = g.jointFrontiersMDL(restrictedFrontiers)
             structure = sum(fragmentSize(p) for p in g.primitives)
