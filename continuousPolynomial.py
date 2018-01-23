@@ -1,7 +1,7 @@
 from ec import explorationCompression, commandlineArguments
 from grammar import Grammar
 from arithmeticPrimitives import addition, multiplication, real
-from task import DifferentiableTask, squaredErrorLoss
+from task import DifferentiableTask, squaredErrorLoss, RegressionTask
 from type import tint, arrow
 
 primitives = [addition, multiplication, real]
@@ -20,6 +20,8 @@ tasks = [ DifferentiableTask("%dx^2 + %dx + %d"%(a,b,c),
 
 if __name__ == "__main__":
     baseGrammar = Grammar.uniform(primitives)
+    RegressionTask.standardizeFeatures(tasks)
+    
     explorationCompression(baseGrammar, tasks,
                            outputPrefix = "experimentOutputs/continuousPolynomial",
                            **commandlineArguments(frontierSize = 10**2,

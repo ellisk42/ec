@@ -1,4 +1,4 @@
-from ec import explorationCompression, commandlineArguments
+from ec import explorationCompression, commandlineArguments, RegressionTask
 from grammar import Grammar
 from utilities import eprint
 from makeTextTasks import makeTasks, delimiters
@@ -9,7 +9,7 @@ def stringFeatures(s):
 def problemFeatures(task):
     inputFeatures = []
     outputFeatures = []
-    for x,y in task.examples:
+    for (x,),y in task.examples:
         inputFeatures.append(stringFeatures(x))
         outputFeatures.append(stringFeatures(y))
     n = float(len(task.examples))
@@ -24,10 +24,7 @@ if __name__ == "__main__":
         t.features = problemFeatures(t)
     eprint("Generated",len(tasks),"tasks")
 
-    # e = Program.parse("(lambda (join '@' (map (lambda emptyString) (split ',' $0))))")
-    # print e
-    # print e.evaluate([])("test,this,here")
-    # assert False
+    RegressionTask.standardizeFeatures(tasks)
 
     baseGrammar = Grammar.uniform(primitives)
     explorationCompression(baseGrammar, tasks,

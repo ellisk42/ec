@@ -57,6 +57,24 @@ class RegressionTask(object):
         if self.check(e): return 0.0
         else: return NEGATIVEINFINITY
 
+    @staticmethod
+    def standardizeFeatures(tasks):
+        """
+        Mutates the features of the tasks so that they have mean zero and standard deviation 1
+        """
+        dimension = len(tasks[0].features)
+        averages = [ sum(t.features[j] for t in tasks)/float(len(tasks))
+                     for j in range(dimension) ]
+        variances = [ sum( (t.features[j] - averages[j])**2 for t in tasks )/float(len(tasks))
+                      for j in range(dimension) ]
+        for t in tasks:
+            for j in range(dimension):
+                t.features[j] -= averages[j]
+                if variances[j] > 0:
+                    t.features[j] /= variances[j]**0.5
+                else:
+                    eprint("WARNING: Feature %d is always %f"%(j+1, averages[j]))
+
 class DifferentiableTask(RegressionTask):
     def __init__(self, name, request, examples, _ = None,
                  features = None, BIC = 1., loss = None, likelihoodThreshold = None):
