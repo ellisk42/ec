@@ -36,6 +36,7 @@ def explorationCompression(grammar, tasks,
                            frontierSize=None,
                            useRecognitionModel=True,
                            activation='relu',
+                           KLRegularize=True,
                            topK=1,
                            maximumFrontier=None,
                            pseudoCounts=1.0, aic=1.0,
@@ -93,7 +94,7 @@ def explorationCompression(grammar, tasks,
         if useRecognitionModel:
             # Train and then use a recognition model
             recognizer = RecognitionModel(len(tasks[0].features), grammar, activation=activation, cuda=cuda)
-            recognizer.train(frontiers, topK=topK)
+            recognizer.train(frontiers, KLRegularize=KLRegularize, topK=topK)
             bottomupFrontiers = recognizer.enumerateFrontiers(frontierSize, tasks, CPUs=CPUs)
             eprint("Bottom-up enumeration results:")
             eprint(Frontier.describe(bottomupFrontiers))
@@ -169,10 +170,11 @@ def commandlineArguments(_=None,
                          CPUs=1,
                          useRecognitionModel=True,
                          activation='relu',
+                         cuda=None,
                          maximumFrontier=None,
                          pseudoCounts=1.0, aic=1.0,
-                         cuda=None,
-                         structurePenalty=0.001, a=0):
+                         structurePenalty=0.001, a=0,
+                         KLRegularize=0.1):
     if cuda is None:
         cuda = torch.cuda.is_available()
     import argparse
@@ -240,5 +242,11 @@ def commandlineArguments(_=None,
                         default=activation,
                         help="""Activation function for neural recognition model.
                         Default: %s""" % activation)
+    parser.add_argument("--kl-factor", metavar="FACTOR",
+                        dest="KLRegularize",
+                        help="""Regularization factor for KL divergence against
+                        induced grammar for neural recognition model.
+                        Default: %s""" % KLRegularize,
+                        type=float)
     parser.set_defaults(useRecognitionModel=useRecognitionModel)
     return vars(parser.parse_args())
