@@ -21,7 +21,7 @@ def variable(x, volatile=False):
     return Variable(x, volatile=volatile)
 
 class RecognitionModel(nn.Module):
-    def __init__(self, featureDimensionality, grammar, hidden = [5], activation = "relu", cuda=False):
+    def __init__(self, featureDimensionality, grammar, hidden=[5], activation="relu", cuda=False):
         super(RecognitionModel, self).__init__()
         self.grammar = grammar
         self.use_cuda = cuda

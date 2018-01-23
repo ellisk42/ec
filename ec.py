@@ -35,6 +35,7 @@ def explorationCompression(grammar, tasks,
                            resume=None,
                            frontierSize=None,
                            useRecognitionModel=True,
+                           activation='relu',
                            topK=1,
                            maximumFrontier=None,
                            pseudoCounts=1.0, aic=1.0,
@@ -91,7 +92,7 @@ def explorationCompression(grammar, tasks,
 
         if useRecognitionModel:
             # Train and then use a recognition model
-            recognizer = RecognitionModel(len(tasks[0].features), grammar, cuda=cuda)
+            recognizer = RecognitionModel(len(tasks[0].features), grammar, activation=activation, cuda=cuda)
             recognizer.train(frontiers, topK=topK)
             bottomupFrontiers = recognizer.enumerateFrontiers(frontierSize, tasks, CPUs=CPUs)
             eprint("Bottom-up enumeration results:")
@@ -167,6 +168,7 @@ def commandlineArguments(_=None,
                          topK=1,
                          CPUs=1,
                          useRecognitionModel=True,
+                         activation='relu',
                          maximumFrontier=None,
                          pseudoCounts=1.0, aic=1.0,
                          cuda=None,
@@ -233,5 +235,10 @@ def commandlineArguments(_=None,
                         action="store_false",
                         help="""Disable bottom-up neural recognition model.
                         Default: %s""" % (not useRecognitionModel))
+    parser.add_argument("--activation",
+                        choices=["relu", "sigmoid", "tanh"],
+                        default=activation,
+                        help="""Activation function for neural recognition model.
+                        Default: %s""" % activation)
     parser.set_defaults(useRecognitionModel=useRecognitionModel)
     return vars(parser.parse_args())
