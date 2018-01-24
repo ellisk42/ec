@@ -77,6 +77,7 @@ def enumeration(g, context, environment, request, budget):
 
     else:
         candidates = []
+        variableCandidates = []
         for l, t, p in g.productions:
             try:
                 newContext, t = t.instantiate(context)
@@ -87,10 +88,17 @@ def enumeration(g, context, environment, request, budget):
         for j, t in enumerate(environment):
             try:
                 newContext = context.unify(t.returns(), request)
-                candidates.append((g.logVariable, newContext,
-                                   t.apply(newContext), Index(j)))
+                variableCandidates.append((newContext,
+                                           t.apply(newContext), Index(j)))
             except UnificationFailure:
                 continue
+        # Normalize the distribution over variables
+        if variableCandidates:
+            z = math.log(len(variableCandidates))
+            variableCandidates = [ (g.logVariable - z,
+                                    newContext, newType, index)
+                                   for newContext, newType, index in variableCandidates ]
+            candidates += variableCandidates
 
         z = lse([candidate[0] for candidate in candidates])
 

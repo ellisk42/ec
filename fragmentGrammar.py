@@ -25,6 +25,7 @@ class FragmentGrammar(object):
 
     def buildCandidates(self, context, environment, request):
         candidates = []
+        variableCandidates = []
         for l,t,p in self.productions:
             try:
                 newContext, t = t.instantiate(context)
@@ -36,10 +37,16 @@ class FragmentGrammar(object):
         for j,t in enumerate(environment):
             try:
                 newContext = context.unify(t.returns(), request)
-                candidates.append((self.logVariable,newContext,
-                                   t.apply(newContext),
-                                   Index(j)))
+                variableCandidates.append((newContext,
+                                           t.apply(newContext),
+                                           Index(j)))
             except UnificationFailure: continue
+        if variableCandidates:
+            z = math.log(len(variableCandidates))
+            variableCandidates = [ (self.logVariable - z,
+                                    newContext, newType, index)
+                                   for newContext, newType, index in variableCandidates ]
+            candidates += variableCandidates
         
         z = lse([candidate[0] for candidate in candidates])
         return [(l - z, k, c, p) for l,k,c,p in candidates ]
