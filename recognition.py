@@ -88,14 +88,15 @@ class RecognitionModel(nn.Module):
                                                                                     KLRegularize))
         
         optimizer = torch.optim.Adam(self.parameters(), lr=lr)
-        for i in range(1,steps + 1):
-            self.zero_grad()
-            l = -self.posteriorKL(frontiers, KLRegularize)/len(frontiers)
-            if i%50 == 0:
-                eprint("Epoch",i,"Loss",l.data[0])
-                gc.collect()
-            l.backward()
-            optimizer.step()
+        with timing("Trained recognition model"):
+            for i in range(1,steps + 1):
+                self.zero_grad()
+                l = -self.posteriorKL(frontiers, KLRegularize)/len(frontiers)
+                if i%50 == 0:
+                    eprint("Epoch",i,"Loss",l.data[0])
+                    gc.collect()
+                l.backward()
+                optimizer.step()
 
     def enumerateFrontiers(self, frontierSize, tasks,
                            CPUs=1, maximumFrontier=None):

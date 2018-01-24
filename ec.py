@@ -180,7 +180,7 @@ def commandlineArguments(_=None,
                          maximumFrontier=None,
                          pseudoCounts=1.0, aic=1.0,
                          structurePenalty=0.001, a=0,
-                         KLRegularize=0.1):
+                         KLRegularize=None):
     if cuda is None:
         cuda = torch.cuda.is_available()
     import argparse
