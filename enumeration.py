@@ -5,6 +5,7 @@ from type import *
 from program import *
 from grammar import *
 
+import gc
 
 def enumerateFrontiers(g, frontierSize, tasks, CPUs=1, maximumFrontier=None):
     '''g: Either a Grammar, or a map from task to grammar.'''
@@ -35,6 +36,16 @@ def enumerateFrontiers(g, frontierSize, tasks, CPUs=1, maximumFrontier=None):
     eprint("Enumerated %d frontiers with %d total programs in time %fsec" %
            (totalNumberOfFrontiers, totalNumberOfPrograms, time() - start))
 
+    # In general these programs have considerable overlap, reusing
+    # many subtrees. This code will force identical trees to only be
+    # represented by a single object on the heap.
+    share = ShareVisitor()
+    frontiers = {t: [ (l, share.execute(p)) for l,p in f ]
+                 for t,f in frontiers.iteritems() }
+    share = None # collect it
+    gc.collect()
+    
+
     start = time()
     # We split up the likelihood calculation and the frontier construction
     # This is so we do not have to serialize and deserialize a bunch of programs
@@ -45,7 +56,6 @@ def enumerateFrontiers(g, frontierSize, tasks, CPUs=1, maximumFrontier=None):
                                       for logLikelihood in [task.logLikelihood(program)]
                                       if valid(logLikelihood)},
                                      tasks)
-    eprint("Got likelihoods in time ",time() - start)
 
     frontiers = constructFrontiers(frontiers, programLikelihoods, tasks, maximumFrontier)
 
@@ -56,6 +66,7 @@ def enumerateFrontiers(g, frontierSize, tasks, CPUs=1, maximumFrontier=None):
 
 
 def iterativeDeepeningEnumeration(g, request, frontierSize, budget=2.0, budgetIncrement=1.0, showDescriptionLength = False):
+    """Returns a list of (log likelihood, program)"""
     frontier = []
     while len(frontier) < frontierSize:
         frontier = [(l, p) for l, _, p in enumeration(g, Context.EMPTY, [], request, budget)]
