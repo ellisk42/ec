@@ -5,7 +5,6 @@ from frontier import *
 from grammar import *
 from program import *
 
-import time
 from digamma import *
 from itertools import izip
         
@@ -323,9 +322,8 @@ class FragmentGrammar(object):
         return bestGrammar
 
 def induceFragmentGrammarFromFrontiers(*arguments, **keywordArguments):
-    startTime = time.time()
-    g = FragmentGrammar.induceFromFrontiers(*arguments, **keywordArguments)
-    # Experimental variational inference does not seem to work well...
-    #g = FragmentGrammar.induceVariational(*arguments, **keywordArguments)
-    eprint("Grammar induction took time",time.time() - startTime,"seconds")
+    with timing("Induced a grammar"):
+        g = FragmentGrammar.induceFromFrontiers(*arguments, **keywordArguments)
+        # Experimental variational inference does not seem to work well...
+        #g = FragmentGrammar.induceVariational(*arguments, **keywordArguments)
     return g

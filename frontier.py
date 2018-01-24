@@ -1,3 +1,4 @@
+from utilities import *
 
 class FrontierEntry(object):
     def __init__(self, program, _ = None, logPrior = None, logLikelihood = None, logPosterior = None):
@@ -17,6 +18,15 @@ class Frontier(object):
     def __repr__(self): return "Frontier(entries={self.entries}, task={self.task})".format(self=self)
     def __iter__(self): return iter(self.entries)
     def __len__(self): return len(self.entries)
+
+    def normalize(self):
+        z = lse([ e.logPrior + e.logLikelihood for e in self ])
+        return Frontier([ FrontierEntry(program = e.program,
+                                        logPrior = e.logPrior,
+                                        logLikelihood = e.logLikelihood,
+                                        logPosterior = e.logPrior + e.logLikelihood - z)
+                          for e in self ],
+                        self.task)
         
     def removeZeroLikelihood(self):
         self.entries = [ e for e in self.entries if e.logLikelihood != float('-inf') ]

@@ -68,25 +68,29 @@ class RecognitionModel(nn.Module):
             fs = fs.cuda()
         return Variable(fs)
     
-    def logLikelihood(self, frontiers, KLRegularize):
+    def posteriorKL(self, frontiers, KLRegularize):
         features = self.extractFeatures([ frontier.task for frontier in frontiers ])
         variables, productions = self(features)
         l = 0
         for j,frontier in enumerate(frontiers):
             v,p = variables[j],productions[j]
-            g = FragmentGrammar(v, [(p[k],t,program) for k,(_,t,program) in enumerate(self.grammar.productions) ])
-            l += lse([g.closedLogLikelihood(frontier.task.request, entry.program)
-                      for entry in frontier ])
+            g = Grammar(v, [(p[k],t,program) for k,(_,t,program) in enumerate(self.grammar.productions) ])
+            for entry in frontier:
+                l += math.exp(entry.logPosterior) * g.closedLogLikelihood(frontier.task.request, entry.program)
+                      
             if KLRegularize:
                 l += KLRegularize * Grammar.TorchKL(v, p, self.grammar)
         return l
 
     def train(self, frontiers, _=None, KLRegularize=0.1, steps=500, lr=0.001, topK=1, CPUs=1):
-        frontiers = [ frontier.topK(topK) for frontier in frontiers if not frontier.empty ]
+        frontiers = [ frontier.topK(topK).normalize() for frontier in frontiers if not frontier.empty ]
+        eprint("Training a recognition model from %d frontiers. KLRegularize = %f"%(len(frontiers),
+                                                                                    KLRegularize))
+        
         optimizer = torch.optim.Adam(self.parameters(), lr=lr)
         for i in range(1,steps + 1):
             self.zero_grad()
-            l = -self.logLikelihood(frontiers, KLRegularize)/len(frontiers)
+            l = -self.posteriorKL(frontiers, KLRegularize)/len(frontiers)
             if i%50 == 0:
                 eprint("Epoch",i,"Loss",l.data[0])
                 gc.collect()
@@ -95,124 +99,115 @@ class RecognitionModel(nn.Module):
 
     def enumerateFrontiers(self, frontierSize, tasks,
                            CPUs=1, maximumFrontier=None):
-        from time import time
-
-        start = time()
-        features = self.extractFeatures(tasks)
-        variables, productions = self(features)
-        grammars = {task: Grammar(variables.data[j][0],
-                                  [ (productions.data[j][k],t,p)
-                                    for k,(_,t,p) in enumerate(self.grammar.productions) ])
-                    for j,task in enumerate(tasks) }
-        eprint("Evaluated recognition model in %f seconds"%(time() - start))
+        with timing("Evaluated recognition model"):
+            features = self.extractFeatures(tasks)
+            variables, productions = self(features)
+            grammars = {task: Grammar(variables.data[j][0],
+                                      [ (productions.data[j][k],t,p)
+                                        for k,(_,t,p) in enumerate(self.grammar.productions) ])
+                        for j,task in enumerate(tasks) }
 
         return callCompiled(enumerateFrontiers,
                             grammars, frontierSize, tasks,
                             CPUs = CPUs, maximumFrontier = maximumFrontier)
 
-class TreeDecoder(nn.Module):
-    def __init__(self, grammar, hiddenUnits = 10):
-        super(TreeDecoder, self).__init__()
+# class TreeDecoder(nn.Module):
+#     def __init__(self, grammar, hiddenUnits = 10):
+#         super(TreeDecoder, self).__init__()
 
-        self.ancestral = nn.LSTM(input_size = hiddenUnits, hidden_size = hiddenUnits, num_layers = 1,
-                                 batch_first = True)
-        self.fraternal = nn.LSTM(input_size = hiddenUnits, hidden_size = hiddenUnits, num_layers = 1,
-                                 batch_first = True)
+#         self.ancestral = nn.LSTM(input_size = hiddenUnits, hidden_size = hiddenUnits, num_layers = 1,
+#                                  batch_first = True)
+#         self.fraternal = nn.LSTM(input_size = hiddenUnits, hidden_size = hiddenUnits, num_layers = 1,
+#                                  batch_first = True)
         
-        self.grammar = grammar
+#         self.grammar = grammar
 
-        # self.embedding : list of N indices (BxW) -> (B,W,EMBEDDINGSIZE)
-        self.embedding = nn.Embedding(len(grammar.productions) + 1, hiddenUnits)
+#         # self.embedding : list of N indices (BxW) -> (B,W,EMBEDDINGSIZE)
+#         self.embedding = nn.Embedding(len(grammar.productions) + 1, hiddenUnits)
 
-        self.primitiveToIndex = {p: j + 1
-                                 for j,(_,_,p) in enumerate(grammar.productions) }
+#         self.primitiveToIndex = {p: j + 1
+#                                  for j,(_,_,p) in enumerate(grammar.productions) }
 
-        self.tokenPrediction = nn.Linear(hiddenUnits, len(grammar.productions) + 1)
+#         self.tokenPrediction = nn.Linear(hiddenUnits, len(grammar.productions) + 1)
 
-        self.uf = nn.Linear(hiddenUnits, hiddenUnits)
-        self.ua = nn.Linear(hiddenUnits, hiddenUnits)
+#         self.uf = nn.Linear(hiddenUnits, hiddenUnits)
+#         self.ua = nn.Linear(hiddenUnits, hiddenUnits)
 
-    def embed(self, primitive):
-        if isinstance(primitive,Index): j = 0
-        else: j = self.primitiveToIndex[primitive]
-        j = variable([j]).unsqueeze(0)
-        return self.embedding(j)
+#     def embed(self, primitive):
+#         if isinstance(primitive,Index): j = 0
+#         else: j = self.primitiveToIndex[primitive]
+#         j = variable([j]).unsqueeze(0)
+#         return self.embedding(j)
 
-    def updateAncestralState(self, ancestralSymbol, previous = None):
-        ancestor = self.embed(ancestralSymbol)
-        return self.ancestral(ancestor, previous)
+#     def updateAncestralState(self, ancestralSymbol, previous = None):
+#         ancestor = self.embed(ancestralSymbol)
+#         return self.ancestral(ancestor, previous)
 
-    def updateSiblingState(self, siblingSymbol, previous = None):
-        sibling = self.embed(siblingSymbol)
-        return self.fraternal(sibling, previous)
+#     def updateSiblingState(self, siblingSymbol, previous = None):
+#         sibling = self.embed(siblingSymbol)
+#         return self.fraternal(sibling, previous)
 
-    def predictPrimitive(self, ancestralOutput, siblingOutput):
-        ancestralOutput, siblingOutput = ancestralOutput.squeeze(0), siblingOutput.squeeze(0)
-        a = self.ua(ancestralOutput)
-        s = self.uf(siblingOutput)
-        return F.log_softmax(self.tokenPrediction(F.tanh(a + s)))
+#     def predictPrimitive(self, ancestralOutput, siblingOutput):
+#         ancestralOutput, siblingOutput = ancestralOutput.squeeze(0), siblingOutput.squeeze(0)
+#         a = self.ua(ancestralOutput)
+#         s = self.uf(siblingOutput)
+#         return F.log_softmax(self.tokenPrediction(F.tanh(a + s)))
 
-    def buildCandidates(self, context, environment, request):
-        candidates = []
-        for _,t,p in self.grammar.productions:
-            try:
-                newContext, t = t.instantiate(context)
-                newContext = newContext.unify(t.returns(), request)
-                candidates.append((newContext,
-                                   t.apply(newContext),
-                                   p))
-            except UnificationFailure: continue
-        for j,t in enumerate(environment):
-            try:
-                newContext = context.unify(t.returns(), request)
-                candidates.append((newContext,
-                                   t.apply(newContext),
-                                   Index(j)))
-            except UnificationFailure: continue
-        return candidates
+#     def buildCandidates(self, context, environment, request):
+#         candidates = []
+#         for _,t,p in self.grammar.productions:
+#             try:
+#                 newContext, t = t.instantiate(context)
+#                 newContext = newContext.unify(t.returns(), request)
+#                 candidates.append((newContext,
+#                                    t.apply(newContext),
+#                                    p))
+#             except UnificationFailure: continue
+#         for j,t in enumerate(environment):
+#             try:
+#                 newContext = context.unify(t.returns(), request)
+#                 candidates.append((newContext,
+#                                    t.apply(newContext),
+#                                    Index(j)))
+#             except UnificationFailure: continue
+#         return candidates
 
-    def logLikelihood(self, context, environment, request, expression, states = (None,None), parentSymbol = None):
-        request = request.apply(context)
+#     def logLikelihood(self, context, environment, request, expression, states = (None,None), parentSymbol = None):
+#         request = request.apply(context)
         
-        if request.isArrow():
-            if not isinstance(expression,Abstraction):
-                raise Exception('expected abstraction')
-            return self.logLikelihood(context,
-                                      [request.arguments[0]] + environment,
-                                      request.arguments[1],
-                                      expression.body,
-                                      states,
-                                      parentSymbol)
+#         if request.isArrow():
+#             if not isinstance(expression,Abstraction):
+#                 raise Exception('expected abstraction')
+#             return self.logLikelihood(context,
+#                                       [request.arguments[0]] + environment,
+#                                       request.arguments[1],
+#                                       expression.body,
+#                                       states,
+#                                       parentSymbol)
 
-        def applicationParse(e):
-            if isinstance(e,Application):
-                f,xs = applicationParse(e.f)
-                return f,xs + [e]
-            else: return e,[]
-        f,xs = applicationParse(expression)
+#         def applicationParse(e):
+#             if isinstance(e,Application):
+#                 f,xs = applicationParse(e.f)
+#                 return f,xs + [e]
+#             else: return e,[]
+#         f,xs = applicationParse(expression)
         
-        candidates = self.buildCandidates(context, environment, request)
-        distribution = self.predictPrimitive(states[0], states[1])
-        
-        
-        
-
-        
-        
+#         candidates = self.buildCandidates(context, environment, request)
+#         distribution = self.predictPrimitive(states[0], states[1])        
     
 
-if __name__ == "__main__":
-    from arithmeticPrimitives import *
-    g = Grammar.uniform([addition, multiplication, k0, k1])
-    m = TreeDecoder(g, hiddenUnits = 9)
-    print m.embed(addition)
-    print 
-    print m.updateAncestralState(k0)
-    print 
-    print m.updateAncestralState(k1)[0].squeeze(0)
-    print
-    print m.predictPrimitive(m.updateAncestralState(k0)[0],
-                             m.updateSiblingState(k1)[0])
+# if __name__ == "__main__":
+#     from arithmeticPrimitives import *
+#     g = Grammar.uniform([addition, multiplication, k0, k1])
+#     m = TreeDecoder(g, hiddenUnits = 9)
+#     print m.embed(addition)
+#     print 
+#     print m.updateAncestralState(k0)
+#     print 
+#     print m.updateAncestralState(k1)[0].squeeze(0)
+#     print
+#     print m.predictPrimitive(m.updateAncestralState(k0)[0],
+#                              m.updateSiblingState(k1)[0])
         
 
         
