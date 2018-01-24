@@ -1,5 +1,7 @@
 from collections import defaultdict
 from itertools import izip
+
+from frontier import *
 from program import *
 from type import *
 
@@ -102,6 +104,14 @@ class Grammar(object):
     def closedLogLikelihood(self, request, expression):
         summary = self.closedLikelihoodSummary(request, expression)
         return summary.logLikelihood(self)
+
+    def rescoreFrontier(self, frontier):
+        return Frontier([ FrontierEntry(e.program,
+                                        logPrior = self.closedLogLikelihood(frontier.task.request, e.program),
+                                        logLikelihood = e.logLikelihood)
+                          for e in frontier ],
+                        frontier.task)
+        
 
 class LikelihoodSummary(object):
     '''Summarizes the terms that will be used in a likelihood calculation'''

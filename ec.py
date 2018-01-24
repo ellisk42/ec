@@ -82,7 +82,8 @@ def explorationCompression(grammar, tasks,
         eprint("Loaded checkpoint from", path)
         grammar = result.grammars[-1]
     else:  # Start from scratch
-        result = ECResult(parameters=parameters, grammars=[grammar])
+        result = ECResult(parameters=parameters, grammars=[grammar],
+                          taskSolutions = { t: Frontier([], task = t) for t in tasks })
 
     for j in range(resume or 0, iterations):
         frontiers = callCompiled(enumerateFrontiers, grammar, frontierSize, tasks,
@@ -91,18 +92,23 @@ def explorationCompression(grammar, tasks,
         eprint("Enumeration results:")
         eprint(Frontier.describe(frontiers))
 
-        if useRecognitionModel:
-            # Train and then use a recognition model
+        if useRecognitionModel: # Train and then use a recognition model            
             recognizer = RecognitionModel(len(tasks[0].features), grammar, activation=activation, cuda=cuda)
-            recognizer.train(frontiers, KLRegularize=KLRegularize, topK=topK)
+
+            # We want to train the recognition model on _every_ task that we have found a solution to
+            # `frontiers` only contains solutions from the most recent generative model
+            trainingFrontiers = [ f if not f.empty \
+                                  else grammar.rescoreFrontier(result.taskSolutions[f.task])
+                                  for f in frontiers ]
+            
+            recognizer.train(trainingFrontiers, KLRegularize=KLRegularize, topK=topK)
             bottomupFrontiers = recognizer.enumerateFrontiers(frontierSize, tasks, CPUs=CPUs)
             eprint("Bottom-up enumeration results:")
             eprint(Frontier.describe(bottomupFrontiers))
 
             # Rescore the frontiers according to the generative model
             # and then combine w/ original frontiers
-            generativeModel = FragmentGrammar.fromGrammar(grammar)
-            bottomupFrontiers = [generativeModel.rescoreFrontier(f) for f in bottomupFrontiers]
+            bottomupFrontiers = [ grammar.rescoreFrontier(f) for f in bottomupFrontiers ]
 
             bottomupHits = sum(not f.empty for f in frontiers)
             result.averageDescriptionLength.append(
@@ -116,7 +122,7 @@ def explorationCompression(grammar, tasks,
                 / sum(not f.empty for f in frontiers))
 
         # Record the new solutions
-        result.taskSolutions = {f.task: f.topK(1) if not f.empty
+        result.taskSolutions = {f.task: f.topK(topK) if not f.empty
                                 else result.taskSolutions.get(f.task, None)
                                 for f in frontiers}
 
