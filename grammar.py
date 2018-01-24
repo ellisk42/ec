@@ -38,18 +38,6 @@ class Grammar(object):
     def primitives(self):
         return [p for _, _, p in self.productions]
 
-    @staticmethod
-    def TorchKL(this_logVariable, this_productions, that):
-        assert len(this_productions) == len(that.productions) # and they should correspond
-        this_z = lse([lse(this_productions), this_logVariable])
-        that_z = lse([l for l, _, _ in that.productions]+[that.logVariable])
-
-        this_l, that_l = this_logVariable, that.logVariable
-        kl = exp(this_l - this_z) * (this_l - this_z - that_l + that_z)
-        kl += sum(exp(this_l - this_z) * (this_l - this_z - that_l + that_z)
-                  for this_l, (that_l, _, _) in izip(this_productions, that.productions))
-        return kl
-
     def likelihoodSummary(self, context, environment, request, expression):
         if request.isArrow():
             if not isinstance(expression,Abstraction): return context,None

@@ -71,16 +71,33 @@ class RecognitionModel(nn.Module):
     def posteriorKL(self, frontiers, KLRegularize):
         features = self.extractFeatures([ frontier.task for frontier in frontiers ])
         variables, productions = self(features)
-        l = 0
+        kl = 0
         for j,frontier in enumerate(frontiers):
             v,p = variables[j],productions[j]
             g = Grammar(v, [(p[k],t,program) for k,(_,t,program) in enumerate(self.grammar.productions) ])
             for entry in frontier:
-                l += math.exp(entry.logPosterior) * g.closedLogLikelihood(frontier.task.request, entry.program)
+                kl -= math.exp(entry.logPosterior) * g.closedLogLikelihood(frontier.task.request, entry.program)
                       
             if KLRegularize:
-                l += KLRegularize * Grammar.TorchKL(v, p, self.grammar)
-        return l
+                P = [self.grammar.logVariable] + [ l for l,_1,_2 in self.grammar.productions ]
+                P = Variable(torch.from_numpy(np.array(P)), requires_grad = False).float()
+                Q = torch.cat((variables[0], productions[0]))
+                # Normalized distributions
+                P = F.log_softmax(P,dim = 0)
+                Q = F.log_softmax(Q,dim = 0)
+                if True: # regularize KL(P||Q)
+                    # This will force Q to spread its mass everywhere that P does
+                    pass
+                else: # regularize KL(Q||P)
+                    # This will force q to hug one of the modes of p
+                    P,Q = Q,P
+                # torch built in F.kl_div won't let you regularize D(P||Q)
+                # it cannot differentiate with respect to the target distribution
+                # If torch was less ridiculous, you could just do this:
+                # D = F.kl_div(P,Q)
+                D = (P.exp() * (P - Q)).sum()
+                kl += KLRegularize * D
+        return kl
 
     def train(self, frontiers, _=None, KLRegularize=0.1, steps=500, lr=0.001, topK=1, CPUs=1):
         frontiers = [ frontier.topK(topK).normalize() for frontier in frontiers if not frontier.empty ]
@@ -93,10 +110,10 @@ class RecognitionModel(nn.Module):
                 losses = []
                 for batch in batches(frontiers):
                     self.zero_grad()
-                    l = -self.posteriorKL(batch, KLRegularize)/len(batch)
-                    l.backward()
+                    loss = self.posteriorKL(batch, KLRegularize)/len(batch)
+                    loss.backward()
                     optimizer.step()
-                    losses.append(l.data[0])
+                    losses.append(loss.data[0])
                 if i%50 == 0:
                     eprint("Epoch",i,"Loss",sum(losses)/len(losses))
                     gc.collect()
