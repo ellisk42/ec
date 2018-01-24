@@ -84,19 +84,23 @@ class RecognitionModel(nn.Module):
 
     def train(self, frontiers, _=None, KLRegularize=0.1, steps=500, lr=0.001, topK=1, CPUs=1):
         frontiers = [ frontier.topK(topK).normalize() for frontier in frontiers if not frontier.empty ]
-        eprint("Training a recognition model from %d frontiers. KLRegularize = %f"%(len(frontiers),
+        eprint("Training a recognition model from %d frontiers. KLRegularize = %s"%(len(frontiers),
                                                                                     KLRegularize))
         
         optimizer = torch.optim.Adam(self.parameters(), lr=lr)
         with timing("Trained recognition model"):
             for i in range(1,steps + 1):
-                self.zero_grad()
-                l = -self.posteriorKL(frontiers, KLRegularize)/len(frontiers)
+                losses = []
+                for batch in batches(frontiers):
+                    self.zero_grad()
+                    l = -self.posteriorKL(batch, KLRegularize)/len(batch)
+                    l.backward()
+                    optimizer.step()
+                    losses.append(l.data[0])
                 if i%50 == 0:
-                    eprint("Epoch",i,"Loss",l.data[0])
+                    eprint("Epoch",i,"Loss",sum(losses)/len(losses))
                     gc.collect()
-                l.backward()
-                optimizer.step()
+                
 
     def enumerateFrontiers(self, frontierSize, tasks,
                            CPUs=1, maximumFrontier=None):

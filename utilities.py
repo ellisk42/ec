@@ -140,3 +140,14 @@ class timing(object):
     def __exit__(self, type, value, traceback):
         eprint("%s in %.1f seconds"%(self.message,
                                      time.time() - self.start))
+
+def batches(data, size = 1):
+    import random
+    # Randomly permute the data
+    data = list(data)
+    random.shuffle(data)
+
+    start = 0
+    while start < len(data):
+        yield data[start:size+start]
+        start += size
