@@ -39,12 +39,13 @@ def enumerateFrontiers(g, frontierSize, tasks, CPUs=1, maximumFrontier=None):
     # In general these programs have considerable overlap, reusing
     # many subtrees. This code will force identical trees to only be
     # represented by a single object on the heap.
-    share = ShareVisitor()
-    frontiers = {t: [ (l, share.execute(p)) for l,p in f ]
-                 for t,f in frontiers.iteritems() }
-    share = None # collect it
-    gc.collect()
-    
+    if isinstance(g, dict):
+        with timing("Coalesced trees"):
+            share = ShareVisitor()
+            frontiers = {t: [ (l, share.execute(p)) for l,p in f ]
+                         for t,f in frontiers.iteritems() }
+            share = None # collect it
+            gc.collect()
 
     start = time()
     # We split up the likelihood calculation and the frontier construction

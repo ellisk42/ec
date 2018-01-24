@@ -128,3 +128,15 @@ def callCompiled(f, *arguments, **keywordArguments):
         sys.exit(1)
 
     return result
+
+class timing(object):
+    def __init__(self,message):
+        self.message = message
+        
+    def __enter__(self):
+        self.start = time.time()
+        return self
+
+    def __exit__(self, type, value, traceback):
+        eprint("%s in %.1f seconds"%(self.message,
+                                     time.time() - self.start))

@@ -323,15 +323,45 @@ class FragmentVariable(Program):
 FragmentVariable.single = FragmentVariable()
 
 class ShareVisitor(object):
-    def __init__(self): self.table = {}
-    def retrieve(self,e):
-        if e in self.table: return self.table[e]
-        self.table[e] = e
+    def __init__(self):
+        self.primitiveTable = {}
+        self.inventedTable = {}
+        self.indexTable = {}
+        self.applicationTable = {}
+        self.abstractionTable = {}
+        
+    def invented(self,e):
+        body = e.body.visit(self)
+        i = id(body)
+        if i in self.inventedTable: return self.inventedTable[i]
+        new = Invented(body)
+        self.inventedTable[i] = new
+        return new
+    def primitive(self,e):
+        if e.name in self.primitiveTable: return self.primitiveTable[e.name]
+        self.primitiveTable[e.name] = e
         return e
-    def invented(self,e): return self.retrieve(Invented(e.body.visit(self)))
-    def primitive(self,e): return self.retrieve(e)
-    def index(self,e): return self.retrieve(e)
-    def application(self,e): return self.retrieve(Application(e.f.visit(self),e.x.visit(self)))
-    def abstraction(self,e): return self.retrieve(Abstraction(e.body.visit(self)))
-    def execute(self,e): return e.visit(self)
+    def index(self,e):
+        if e.i in self.indexTable: return self.indexTable[e.i]
+        self.indexTable[e.i] = e
+        return e
+    def application(self,e):
+        f = e.f.visit(self)
+        x = e.x.visit(self)
+        fi = id(f)
+        xi = id(x)
+        i = (fi,xi)
+        if i in self.applicationTable: return self.applicationTable[i]
+        new = Application(f,x)
+        self.applicationTable[i] = new
+        return new        
+    def abstraction(self,e):
+        body = e.body.visit(self)
+        i = id(body)
+        if i in self.abstractionTable: return self.abstractionTable[i]
+        new = Abstraction(body)
+        self.abstractionTable[i] = new
+        return new
+    def execute(self,e):
+        return e.visit(self)
         
