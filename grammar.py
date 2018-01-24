@@ -8,6 +8,9 @@ class Grammar(object):
         self.logVariable = logVariable
         self.productions = productions
 
+        self.expression2likelihood = dict( (p,l) for l,_,p in productions)
+        self.expression2likelihood[Index(0)] = self.logVariable
+
     @staticmethod
     def fromProductions(productions, logVariable=0.0):
         """Make a grammar from primitives and their relative logpriors."""
@@ -45,7 +48,96 @@ class Grammar(object):
                   for this_l, (that_l, _, _) in izip(this_productions, that.productions))
         return kl
 
+    def likelihoodSummary(self, context, environment, request, expression):
+        if request.isArrow():
+            if not isinstance(expression,Abstraction): return context,None
+            return self.likelihoodSummary(context,
+                                          [request.arguments[0]] + environment,
+                                          request.arguments[1],
+                                          expression.body)
+        # Build the candidates
+        candidates = {}
+        variableCandidates = {}
+        for l,t,p in self.productions:
+            try:
+                newContext, t = t.instantiate(context)
+                newContext = newContext.unify(t.returns(), request)
+                candidates[p] = (newContext, t.apply(newContext))
+            except UnificationFailure: continue
+        for j,t in enumerate(environment):
+            try:
+                newContext = context.unify(t.returns(), request)
+                variableCandidates[Index(j)] = (newContext, t.apply(newContext))
+            except UnificationFailure: continue
 
+        # A list of everything that would have been possible to use here
+        possibles = candidates.keys()
+        if variableCandidates: possibles += [Index(0)]
+
+        f,xs = expression.applicationParse()
+
+        if f not in candidates and f not in variableCandidates: return context,None
+
+        thisSummary = LikelihoodSummary()
+        thisSummary.record(f, possibles,
+                           constant = -math.log(len(variableCandidates)) \
+                           if isinstance(f,Index) else 0)
+
+        context, tp = dict(variableCandidates, **candidates)[f]
+        argumentTypes = tp.functionArguments()
+        assert len(xs) == len(argumentTypes)
+
+        for argumentType, argument in zip(argumentTypes, xs):
+            argumentType = argumentType.apply(context)
+            context, newSummary = self.likelihoodSummary(context, environment, argumentType, argument)
+            if newSummary is None: return context, None
+            thisSummary.join(newSummary)
+
+        return context, thisSummary
+
+    def closedLikelihoodSummary(self, request, expression):
+        context, summary = self.likelihoodSummary(Context.EMPTY, [], request, expression)
+        return summary
+
+    def closedLogLikelihood(self, request, expression):
+        summary = self.closedLikelihoodSummary(request, expression)
+        return summary.logLikelihood(self)
+
+class LikelihoodSummary(object):
+    '''Summarizes the terms that will be used in a likelihood calculation'''
+    def __init__(self):
+        self.uses = {}
+        self.normalizers = {}
+        self.constant = 0.
+    def __str__(self):
+        return """LikelihoodSummary(constant = %f, 
+uses = {%s},
+normalizers = {%s})"""%(self.constant,
+                        ", ".join("%s: %d"%(k,v) for k,v in self.uses.iteritems() ),
+                        ", ".join("%s: %d"%(k,v) for k,v in self.normalizers.iteritems() ))
+    def record(self, actual, possibles, constant = 0.):
+        # Variables are all normalized to be $0
+        if isinstance(actual, Index): actual = Index(0)
+
+        # Make it something that we can hash
+        possibles = frozenset(sorted(possibles))
+        
+        self.constant += constant
+        self.uses[actual] = self.uses.get(actual,0) + 1
+        self.normalizers[possibles]  = self.normalizers.get(possibles,0) + 1
+    def join(self, other):
+        self.constant += other.constant
+        for k,v in other.uses.iteritems(): self.uses[k] = self.uses.get(k,0) + v
+        for k,v in other.normalizers.iteritems(): self.normalizers[k] = self.normalizers.get(k,0) + v
+    def logLikelihood(self, grammar):
+        return self.constant + \
+            sum(count * grammar.expression2likelihood[p] for p, count in self.uses.iteritems() ) - \
+            sum(count * lse([grammar.expression2likelihood[p] for p in ps ])
+                for ps, count in self.normalizers.iteritems() )
+            
+            
+
+        
 class Uses(object):
     '''Tracks uses of different grammar productions'''
     def __init__(self, possibleVariables = 0., actualVariables = 0.,

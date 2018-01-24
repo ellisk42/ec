@@ -1,4 +1,4 @@
-from ec import explorationCompression, commandlineArguments
+from ec import commandlineArguments, explorationCompression
 from grammar import Grammar
 from arithmeticPrimitives import addition, multiplication, k0, k1
 from type import tint, arrow

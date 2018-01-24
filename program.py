@@ -14,6 +14,7 @@ class Program(object):
     def __str__(self): return self.show(False)
     def infer(self): return self.inferType(Context.EMPTY,[],{})[1].canonical()
     def applicationParses(self): yield self,[]
+    def applicationParse(self): return self,[]
     @property
     def closed(self):
         for surroundingAbstractions, child in self.walk():
@@ -70,6 +71,9 @@ class Application(Program):
         yield self,[]
         for f,xs in self.f.applicationParses():
             yield f,xs + [self.x]
+    def applicationParse(self):
+        f,xs = self.f.applicationParse()
+        return f,xs + [self.x]
 
     def shift(self, offset, depth = 0):
         return Application(self.f.shift(offset, depth),

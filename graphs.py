@@ -7,6 +7,10 @@ class Bunch(object):
     def __init__(self,d):
         self.__dict__.update(d)
 
+relu = 'relu'
+tanh = 'tanh'
+sigmoid = 'sigmoid'
+
 def parseResultsPath(p):
     p = p[:p.rfind('.')]
     domain = p[p.index('/')+1 : p.index('_')]

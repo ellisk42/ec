@@ -56,7 +56,6 @@ class FragmentGrammar(object):
 
     def logLikelihood(self, context, environment, request, expression):
         '''returns (context, log likelihood, uses)'''
-        #eprint("REQUEST",request,"EXPRESSION",expression)
         if request.isArrow():
             if not isinstance(expression,Abstraction): return (context,NEGATIVEINFINITY,Uses.empty)
             return self.logLikelihood(context,
