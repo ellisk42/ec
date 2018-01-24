@@ -45,6 +45,7 @@ def enumerateFrontiers(g, frontierSize, tasks, CPUs=1, maximumFrontier=None):
                                       for logLikelihood in [task.logLikelihood(program)]
                                       if valid(logLikelihood)},
                                      tasks)
+    eprint("Got likelihoods in time ",time() - start)
 
     frontiers = constructFrontiers(frontiers, programLikelihoods, tasks, maximumFrontier)
 
