@@ -7,6 +7,7 @@ from program import *
 
 import time
 from digamma import *
+from itertools import izip
         
 
 class FragmentGrammar(object):
@@ -43,13 +44,11 @@ class FragmentGrammar(object):
             except UnificationFailure: continue
         if variableCandidates:
             z = math.log(len(variableCandidates))
-            variableCandidates = [ (self.logVariable - z,
-                                    newContext, newType, index)
-                                   for newContext, newType, index in variableCandidates ]
-            candidates += variableCandidates
-        
+            for newContext, newType, index in variableCandidates:
+                candidates.append((self.logVariable - z, newContext, newType, index))
+
         z = lse([candidate[0] for candidate in candidates])
-        return [(l - z, k, c, p) for l,k,c,p in candidates ]
+        return [(l - z, c, t, p) for l, c, t, p in candidates]
 
     def closedLogLikelihood(self, request, expression):
         _,l,_ = self.logLikelihood(Context.EMPTY, [], request, expression)
@@ -74,6 +73,11 @@ class FragmentGrammar(object):
         # function and arguments
         totalLikelihood = NEGATIVEINFINITY
         weightedUses = []
+
+        possibleVariables = float(int(any(isinstance(candidate,Index)
+                                          for _,_,_,candidate in candidates )))
+        possibleUses = {candidate: 1. for _,_,_,candidate in candidates
+                                      if not isinstance(candidate,Index)}
         
         for f,xs in expression.applicationParses():
             for candidateLikelihood, newContext, tp, production in candidates:
@@ -102,13 +106,16 @@ class FragmentGrammar(object):
                     except MatchFailure: continue
 
                 thisLikelihood = candidateLikelihood
-                theseUses = Uses(possibleVariables = float(int(any(isinstance(candidate,Index)
-                                                                   for _,_,_,candidate in candidates ))),
-                                 actualVariables = float(int(isinstance(production,Index))),
-                                 possibleUses = {candidate: 1.
-                                                 for _,_,_,candidate in candidates
-                                                 if not isinstance(candidate,Index)},
-                                 actualUses = {} if isinstance(production,Index) else {production: 1.})
+                if isinstance(production, Index):
+                    theseUses = Uses(possibleVariables=possibleVariables,
+                                     actualVariables=1.,
+                                     possibleUses=possibleUses.copy(),
+                                     actualUses={})
+                else:
+                    theseUses = Uses(possibleVariables=possibleVariables,
+                                     actualVariables=0.,
+                                     possibleUses=possibleUses.copy(),
+                                     actualUses={production: 1.})
 
                 # eprint("tp",tp)
                 # eprint("tp.functionArguments",tp.functionArguments())
@@ -126,7 +133,7 @@ class FragmentGrammar(object):
                         break
                     
                     thisLikelihood += expressionLikelihood
-                    theseUses = theseUses + newUses
+                    theseUses += newUses
 
                 if thisLikelihood is NEGATIVEINFINITY: continue
 
@@ -139,22 +146,19 @@ class FragmentGrammar(object):
         if totalLikelihood is NEGATIVEINFINITY: return context, totalLikelihood, Uses.empty
         assert weightedUses != []
 
-        allUses = Uses.empty
-        for w,u in weightedUses:
-            allUses = allUses + (u*exp(w - totalLikelihood))
+        allUses = Uses.join(totalLikelihood, *weightedUses)
 
         return context, totalLikelihood, allUses
 
     def expectedUses(self, frontiers):
-        likelihoods = [ [ (l + entry.logLikelihood, u) 
-                          for entry in frontier
-                          for _,l,u in [self.logLikelihood(Context.EMPTY, [], frontier.task.request, entry.program)] ]
-                        for frontier in frontiers ]
-        zs = [ lse([ l for l,_ in ls ])
-               for ls in likelihoods ]
-        return sum([ math.exp(l - z)*u
-                     for z,frontier in zip(zs,likelihoods)
-                     for l,u in frontier ])
+        likelihoods = ([ (l + entry.logLikelihood, u)
+                         for entry in frontier
+                         for _,l,u in [self.logLikelihood(Context.EMPTY, [], frontier.task.request, entry.program)] ]
+                       for frontier in frontiers)
+        zs = (lse([ l for l,_ in ls ]) for ls in likelihoods)
+        return sum(math.exp(l - z)*u
+                   for z,frontier in izip(zs,likelihoods)
+                   for l,u in frontier)
 
     def insideOutside(self, frontiers, pseudoCounts):
         uses = self.expectedUses(frontiers)
@@ -177,8 +181,8 @@ class FragmentGrammar(object):
                           for entry in frontier ])
                     for frontier in frontiers )
     def jointFrontiersMDL(self, frontiers):
-        return sum( max([ entry.logLikelihood + self.closedLogLikelihood(frontier.task.request, entry.program)
-                          for entry in frontier ])
+        return sum( max( entry.logLikelihood + self.closedLogLikelihood(frontier.task.request, entry.program)
+                          for entry in frontier )
                     for frontier in frontiers )
 
     def __len__(self): return len(self.productions)
@@ -326,6 +330,3 @@ def induceFragmentGrammarFromFrontiers(*arguments, **keywordArguments):
     #g = FragmentGrammar.induceVariational(*arguments, **keywordArguments)
     eprint("Grammar induction took time",time.time() - startTime,"seconds")
     return g
-
-
-    

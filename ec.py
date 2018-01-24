@@ -249,5 +249,6 @@ def commandlineArguments(_=None,
                         Default: %s""" % KLRegularize,
                         type=float)
     parser.set_defaults(useRecognitionModel=useRecognitionModel,
-                        cuda = cuda)
+                        KLRegularize=KLRegularize,
+                        cuda=cuda)
     return vars(parser.parse_args())

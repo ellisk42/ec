@@ -1,3 +1,5 @@
+from collections import defaultdict
+from itertools import izip
 from program import *
 from type import *
 
@@ -31,18 +33,6 @@ class Grammar(object):
     def primitives(self):
         return [p for _, _, p in self.productions]
 
-    def KL(this, that):
-        assert len(this.productions) == len(that.productions) # and they should correspond
-        this_z = lse([l for l, _, _ in this.productions]+[this.logVariable])
-        that_z = lse([l for l, _, _ in that.productions]+[that.logVariable])
-
-        this_l, that_l = this.logVariable, that.logVariable
-        kl = exp(this_l - this_z) * (this_l - this_z - that_l + that_z)
-        for i, (this_l, _, _) in enumerate(this.productions):
-             that_l = that.productions[i]
-             kl += exp(this_l - this_z) * (this_l - this_z - that_l + that_z)
-        return kl
-
     @staticmethod
     def TorchKL(this_logVariable, this_productions, that):
         assert len(this_productions) == len(that.productions) # and they should correspond
@@ -51,9 +41,8 @@ class Grammar(object):
 
         this_l, that_l = this_logVariable, that.logVariable
         kl = exp(this_l - this_z) * (this_l - this_z - that_l + that_z)
-        for i, this_l in enumerate(this_productions):
-             that_l, _, _ = that.productions[i]
-             kl += exp(this_l - this_z) * (this_l - this_z - that_l + that_z)
+        kl += sum(exp(this_l - this_z) * (this_l - this_z - that_l + that_z)
+                  for this_l, (that_l, _, _) in izip(this_productions, that.productions))
         return kl
 
 
@@ -76,6 +65,14 @@ class Uses(object):
                     a*self.actualVariables,
                     {p: a*u for p,u in self.possibleUses.iteritems() },
                     {p: a*u for p,u in self.actualUses.iteritems() })
+    def __imul__(self,a):
+        self.possibleVariables *= a
+        self.actualVariables *= a
+        for p in self.possibleUses:
+            self.possibleUses[p] *= a
+        for p in self.actualUses:
+            self.actualUses[p] *= a
+        return self
     def __rmul__(self,a):
         return self*a
     def __radd__(self,o):
@@ -95,10 +92,28 @@ class Uses(object):
     def __iadd__(self,o):
         self.possibleVariables += o.possibleVariables
         self.actualVariables += o.actualVariables
-        for k,v in o.possibleUses:
-            self.possibleUses[k] = self.possibleUses.get(k,0.) + v
-        for k,v in o.actualUses:
-            self.actualUses[k] = self.actualUses.get(k,0.) + v
+        for k, v in o.possibleUses.iteritems():
+            self.possibleUses[k] = self.possibleUses.get(k, 0.) + v
+        for k, v in o.actualUses.iteritems():
+            self.actualUses[k] = self.actualUses.get(k, 0.) + v
         return self
+
+    @staticmethod
+    def join(z, *weightedUses):
+        """Consumes weightedUses"""
+        if not weightedUses: Uses.empty
+        for w, u in weightedUses:
+            u *= exp(w - z)
+        total = Uses()
+        total.possibleVariables = sum(u.possibleVariables for _, u in weightedUses)
+        total.actualVariables = sum(u.actualVariables for _, u in weightedUses)
+        total.possibleUses = defaultdict(float)
+        total.actualUses = defaultdict(float)
+        for _, u in weightedUses:
+            for k, v in u.possibleUses.iteritems():
+                total.possibleUses[k] += v
+            for k, v in u.actualUses.iteritems():
+                total.actualUses[k] += v
+        return total
     
 Uses.empty = Uses()
