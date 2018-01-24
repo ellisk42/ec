@@ -106,14 +106,15 @@ def explorationCompression(grammar, tasks,
             eprint("Bottom-up enumeration results:")
             eprint(Frontier.describe(bottomupFrontiers))
 
+            result.averageDescriptionLength.append(
+                -sum(f.bestPosterior.logPosterior for f in bottomupFrontiers if not f.empty)
+                / bottomupHits)
+
             # Rescore the frontiers according to the generative model
             # and then combine w/ original frontiers
             bottomupFrontiers = [ grammar.rescoreFrontier(f) for f in bottomupFrontiers ]
 
             bottomupHits = sum(not f.empty for f in frontiers)
-            result.averageDescriptionLength.append(
-                -sum(f.bestPosterior.logPosterior for f in bottomupFrontiers if not f.empty)
-                / bottomupHits)
 
             frontiers = [f.combine(b) for f, b in zip(frontiers, bottomupFrontiers)]
         else:

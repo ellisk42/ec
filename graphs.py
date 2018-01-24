@@ -47,6 +47,7 @@ def plotECResult(results, colors = 'rgbky', label = None, title = None):
                 color + '--')
 
     a1.set_ylim(ymin = 0, ymax = 110)
+    a1.yaxis.grid()
     a1.set_yticks(range(0,110,10))
     a2.set_ylim(ymin = 0)
     
