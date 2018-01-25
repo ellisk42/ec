@@ -37,9 +37,9 @@ def _isSquare(n):
 
 baseGrammar = Grammar.fromProductions([
     (-1.0, Primitive("index", arrow(tint, tlist(tint), tint), _index)),
-    (-1.0, Primitive("+", arrow(tint, tint), _addition)),
+    (-1.0, Primitive("+", arrow(tint, tint, tint), _addition)),
     (-1.0, Primitive("negate", arrow(tint, tint), _negate)),
-    (-1.0, Primitive("*", arrow(tint, tint), _multiplication)),
+    (-1.0, Primitive("*", arrow(tint, tint, tint), _multiplication)),
     (-1.0, Primitive("mod", arrow(tint, tint, tint), _mod)),
     (-1.0, Primitive("sort", arrow(tlist(tint), tlist(tint)), sorted)),
     (-1.0, Primitive("reverse", arrow(tlist(tint), tlist(tint)), _reverse)),
