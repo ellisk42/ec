@@ -54,11 +54,11 @@ baseGrammar = Grammar.fromProductions([
     ( 0.0, Primitive("all", arrow(arrow(tint, tbool), tlist(tint), tbool), _all)),
     (-1.0, Primitive("eq?", arrow(tint, tint, tbool), _eq)),
     ( 0.0, Primitive("not", arrow(tbool, tbool), _not)),
-    (-1.0, Primitive("gt?", arrow(tint, tint, tbool), _gt)),
+    (-3.0, Primitive("gt?", arrow(tint, tint, tbool), _gt)),
     ( 0.0, Primitive("find", arrow(tint, tlist(tint), tint), _find)),
     ( 0.0, Primitive("replace", arrow(tint, tlist(tint), tlist(tint), tlist(tint)), _replace)),
     (-4.0, Primitive("is-prime", arrow(tint, tbool), _isPrime)),
     (-4.0, Primitive("is-square", arrow(tint, tbool), _isSquare)),
-] + [ (0.0, Primitive(str(j), tint, j)) for j in range(-2, 10) ])
+] + [ (-0.2, Primitive(str(j), tint, j)) for j in range(-2, 10) ])
 
 primitives = baseGrammar.primitives

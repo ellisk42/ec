@@ -17,7 +17,11 @@ if __name__ == "__main__":
 
     explorationCompression(baseGrammar, tasks,
                            outputPrefix="experimentOutputs/list",
-                           **commandlineArguments(frontierSize=10**4,
-                                                  a=1,
+                           **commandlineArguments(frontierSize=20000,
+                                                  maximumFrontier=1500,
+                                                  activation='sigmoid',
+                                                  a=2,
+                                                  topK=2,
+                                                  CPUs=4,
                                                   iterations=10,
                                                   pseudoCounts=10.0))

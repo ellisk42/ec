@@ -60,7 +60,7 @@ class Frontier(object):
                          [ "Average description length of a program solving a task: %f nats"%(-averageLikelihood) ])
 
         
-    def combine(self, other, tolerance = 0.0001):
+    def combine(self, other, tolerance = 0.001):
         '''Takes the union of the programs in each of the frontiers'''
         assert self.task == other.task
         
