@@ -106,7 +106,7 @@ def explorationCompression(grammar, tasks,
             eprint("Bottom-up enumeration results:")
             eprint(Frontier.describe(bottomupFrontiers))
 
-            bottomupHits = sum(not f.empty for f in frontiers)
+            bottomupHits = sum(not f.empty for f in bottomupFrontiers)
             result.averageDescriptionLength.append(
                 -sum(f.bestPosterior.logPosterior for f in bottomupFrontiers if not f.empty)
                 / bottomupHits)
