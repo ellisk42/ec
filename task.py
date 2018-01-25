@@ -2,6 +2,7 @@ from program import *
 from utilities import *
 from differentiation import *
 
+import random
 import signal
 
 class EvaluationTimeout(Exception): pass
@@ -89,24 +90,25 @@ class DifferentiableTask(RegressionTask):
         e, parameters = PlaceholderVisitor.execute(e)
         f = e.evaluate([])
 
-        loss = sum( self.loss(Placeholder.maybe(self.predict(f, [ Placeholder.named("X_",float(a))
-                                                                  for a in x ])),
-                              Placeholder.named("Y_",float(y)))
-                    for x,y in self.examples )
-        loss = loss.resilientBackPropagation(parameters, lr = 0.5,
-                                             steps = 100 if parameters else 1)
+        loss = sum( self.loss(self.predict(f, map(float,x)), float(y))
+                    for x,y in self.examples ) / float(len(self.examples))
+        if parameters:
+            loss = loss.resilientBackPropagation(parameters, lr = 0.05, steps = 50)
             
         # BIC penalty
         penalty = self.BIC*len(parameters)*math.log(len(self.examples))
 
-        if self.likelihoodThreshold != None:
+        if self.likelihoodThreshold is not None:
             if loss > -self.likelihoodThreshold: return NEGATIVEINFINITY
             else: return -penalty
         else:
             return -loss - penalty
         
 def squaredErrorLoss(prediction, target):
-    return (prediction - target).square()
+    d = prediction - target
+    return d*d
+def l1loss(prediction, target):
+    return abs(prediction - target)
 
 class PlaceholderVisitor(object):
     def __init__(self): self.parameters = []

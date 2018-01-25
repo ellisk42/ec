@@ -1,18 +1,20 @@
-from ec import explorationCompression, commandlineArguments
+from ec import explorationCompression, commandlineArguments, Program
 from grammar import Grammar
 from arithmeticPrimitives import addition, multiplication, real
-from task import DifferentiableTask, squaredErrorLoss, RegressionTask
+from task import DifferentiableTask, squaredErrorLoss, l1loss, RegressionTask
 from type import tint, arrow
 
 primitives = [addition, multiplication, real]
 
 MAXIMUMCOEFFICIENT = 9
-NUMBEROFEXAMPLES = 5
+NUMBEROFEXAMPLES = 3
+EXAMPLES = range(-(NUMBEROFEXAMPLES/2),
+                 (NUMBEROFEXAMPLES - NUMBEROFEXAMPLES/2))
 tasks = [ DifferentiableTask("%dx^2 + %dx + %d"%(a,b,c),
                              arrow(tint,tint),
-                             [((x,),a*x*x + b*x + c) for x in range(NUMBEROFEXAMPLES+1) ],
+                             [((x,),a*x*x + b*x + c) for x in EXAMPLES ],
                              loss = squaredErrorLoss,
-                             features = [float(a*x*x + b*x + c) for x in range(NUMBEROFEXAMPLES+1) ],
+                             features = [float(a*x*x + b*x + c) for x in EXAMPLES ],
                              likelihoodThreshold = -0.5)
           for a in range(MAXIMUMCOEFFICIENT+1)
           for b in range(MAXIMUMCOEFFICIENT+1)

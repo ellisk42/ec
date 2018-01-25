@@ -43,6 +43,9 @@ class DN(object):
         
         for x in self.arguments: x.zeroEverything()
 
+    def lightweightRecalculate(self):
+        return self.forward(*[a.lightweightRecalculate() for a in self.arguments ])
+
     def recalculate(self):
         if self.data is None:
             inputs = [ a.recalculate() for a in self.arguments ]
@@ -90,15 +93,27 @@ class DN(object):
     def __neg__(self): return Negation(self)
     def __div__(self,o): return Division(self,Placeholder.maybe(o))
     def __rdiv__(self,o): return Division(Placeholder.maybe(o),self)
+
+    def numericallyVerifyGradients(self, parameters):
+        calculatedGradients = [p.derivative for p in parameters]
+        e = 0.00001
+        for j,p in enumerate(parameters):
+            p.data -= e
+            y1 = self.lightweightRecalculate()
+            p.data += 2*e
+            y2 = self.lightweightRecalculate()
+            p.data -= e
+            d = (y2 - y1)/(2*e)
+            if abs(calculatedGradients[j] - d) > 0.1:
+                eprint("Bad gradient: expected %f, got %f"%(d,calculatedGradients[j]))
     
     def gradientDescent(self, parameters, _ = None, lr = 0.001, steps = 10**3, update = None):
         for j in range(steps):
             l = self.updateNetwork()
-            if (not (update is None)) and j%update == 0:
+            if update is not None and j%update == 0:
                 eprint("LOSS:",l)
                 for p in parameters:
-                    eprint(p,'\t',p.derivative)
-                    eprint()
+                    eprint(p.data,'\t',p.derivative)
             if invalid(l):
                 eprint("Invalid loss detected",l)
                 if update == None:
@@ -115,11 +130,11 @@ class DN(object):
         lr = [lr]*len(parameters)
         for j in range(steps):
             l = self.updateNetwork()
-            if (not (update is None)) and j%update == 0:
+
+            if update is not None and j%update == 0:
                 eprint("LOSS:",l)
                 for p in parameters:
-                    eprint(p,'\t',p.derivative)
-                    eprint()
+                    eprint(p.data,'\t',p.derivative)
             if invalid(l):
                 eprint("Invalid loss detected",l)
                 if update == None:
