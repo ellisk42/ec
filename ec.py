@@ -8,6 +8,9 @@ from task import *
 from enumeration import *
 from grammar import *
 from fragmentGrammar import *
+
+import os
+
 import torch
 
 
@@ -62,7 +65,7 @@ def explorationCompression(grammar, tasks,
     parameters = {k: v for k, v in locals().iteritems()
                   if k not in ["tasks", "grammar", "cuda", "_", "CPUs", "outputPrefix", "resume"]}
 
-    eprint("Running EC with parameters:")
+    eprint("Running EC on %s with parameters:"%(os.uname()[1]))
     for k,v in parameters.iteritems():
         eprint("\t", k, " = ", v)
     eprint()
