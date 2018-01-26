@@ -50,8 +50,15 @@ class FragmentGrammar(object):
         return [(l - z, c, t, p) for l, c, t, p in candidates]
 
     def closedLogLikelihood(self, request, expression):
-        _,l,_ = self.logLikelihood(Context.EMPTY, [], request, expression)
-        return l
+        try:
+            _,l,_ = self.logLikelihood(Context.EMPTY, [], request, expression)
+            return l
+        except GrammarException:
+            output = "grammarException.pickle"
+            eprint("FATAL: Exception during likelihood calculation. This is due to a bug. See %s to reproduce the failure."%output)
+            with open(output, 'wb') as handle:
+                pickle.dump((self, request, expression), handle)
+            assert False
 
     def logLikelihood(self, context, environment, request, expression):
         '''returns (context, log likelihood, uses)'''
@@ -119,7 +126,7 @@ class FragmentGrammar(object):
                 # eprint("tp.functionArguments",tp.functionArguments())
                 # eprint("xs = ",xs)
                 argumentTypes = tp.functionArguments()
-                assert len(xs) == len(argumentTypes)
+                if len(xs) != len(argumentTypes): raise GrammarFailure('len(xs) != len(argumentTypes)')
 
                 # Accumulate likelihood from free variables and holes and arguments
                 for freeType,freeExpression in variableBindings.values() + zip(argumentTypes, xs):
