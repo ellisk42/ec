@@ -92,7 +92,7 @@ class DifferentiableTask(RegressionTask):
 
         loss = sum( self.loss(self.predict(f, map(float,x)), float(y))
                     for x,y in self.examples ) / float(len(self.examples))
-        if parameters:
+        if isinstance(parameters, DN):
             loss = loss.resilientBackPropagation(parameters, lr = 0.05, steps = 50)
             
         # BIC penalty
