@@ -8,8 +8,8 @@ from type import arrow, tbool
 import itertools
 import random
 
-MAXIMUMINPUTS = 3
-MAXIMUMGATES = 5
+MAXIMUMINPUTS = 4
+MAXIMUMGATES = 7
 
 class Circuit(object):
     def __init__(self, _ = None, numberOfInputs = None, numberOfGates = None):
@@ -40,6 +40,9 @@ class Circuit(object):
 
         # the signature is invariant to the construction of the circuit and only depends on its semantics
         self.signature = tuple(ys)
+
+    def __eq__(self,o): return self.name == o.name
+    def __ne__(self,o): return not (self == o)
 
     def task(self):
         request = arrow(*[tbool for _ in range(self.numberOfInputs + 1) ])
@@ -76,11 +79,13 @@ class Circuit(object):
                 
 if __name__ == "__main__":
     tasks = []
-    while len(tasks) < 1000:
+    while len(tasks) < 100:
         inputs = random.choice(range(1,MAXIMUMINPUTS + 1))
         gates = random.choice(range(1,MAXIMUMGATES + 1))
-        tasks.append(Circuit(numberOfInputs = inputs,
-                             numberOfGates = gates))
+        newTask = Circuit(numberOfInputs = inputs,
+                          numberOfGates = gates)
+        if all( o.signature != newTask.signature for o in tasks ): # not newTask in tasks:
+            tasks.append(newTask)
     eprint("Sampled %d tasks with %d unique functions"%(len(tasks),
                                                        len({t.signature for t in tasks })))
 

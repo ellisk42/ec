@@ -95,6 +95,8 @@ def explorationCompression(grammar, tasks,
         eprint("Enumeration results:")
         eprint(Frontier.describe(frontiers))
 
+        tasksHitTopDown = {f.task for f in frontiers if not f.empty}
+
         if useRecognitionModel: # Train and then use a recognition model            
             recognizer = RecognitionModel(len(tasks[0].features), grammar, activation=activation, cuda=cuda)
 
@@ -108,6 +110,9 @@ def explorationCompression(grammar, tasks,
             bottomupFrontiers = recognizer.enumerateFrontiers(frontierSize, tasks, CPUs=CPUs)
             eprint("Bottom-up enumeration results:")
             eprint(Frontier.describe(bottomupFrontiers))
+
+            tasksHitBottomUp = {f.task for f in bottomupFrontiers if not f.empty}
+            showHitMatrix(tasksHitTopDown, tasksHitBottomUp, tasks)
 
             bottomupHits = sum(not f.empty for f in bottomupFrontiers)
             result.averageDescriptionLength.append(
@@ -123,6 +128,8 @@ def explorationCompression(grammar, tasks,
             result.averageDescriptionLength.append(
                 -sum(f.bestPosterior.logPosterior for f in frontiers if not f.empty)
                 / sum(not f.empty for f in frontiers))
+
+        
 
         # Record the new solutions
         result.taskSolutions = {f.task: f.topK(topK) if not f.empty
@@ -171,6 +178,17 @@ def explorationCompression(grammar, tasks,
 
     return result
 
+def showHitMatrix(bottom, top, tasks):
+    tasks = set(tasks)
+    total = bottom|top
+    eprint(len(total), "total hit tasks")
+    eprint("{: <13s}{: ^13s}{: ^13s}".format("","bottom miss","bottom hit"))
+    eprint("{: <13s}{: ^13d}{: ^13d}".format("top miss",
+                                             len(total - tasks),
+                                             len(bottom & (tasks - top))))
+    eprint("{: <13s}{: ^13d}{: ^13d}".format("top hit",
+                                             len(top & (tasks - bottom)),
+                                             len(total)))
 
 def commandlineArguments(_=None,
                          iterations=None,
