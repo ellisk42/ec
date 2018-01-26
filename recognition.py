@@ -10,7 +10,6 @@ import torch.nn as nn
 import torch.optim as optimization
 import torch.nn.functional as F
 from torch.autograd import Variable
-import torchvision.transforms as T
 
 import numpy as np
 
