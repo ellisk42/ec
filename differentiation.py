@@ -123,7 +123,7 @@ class DN(object):
                     
             for p in parameters:
                 p.data -= lr*p.derivative
-        return l
+        return self.data
 
     def resilientBackPropagation(self, parameters, _ = None, lr = 0.1, steps = 10**3, update = None):
         previousSign = [None]*len(parameters)
@@ -153,7 +153,7 @@ class DN(object):
                     else: lr[i]*=0.5
             previousSign = newSigns
 
-        return l
+        return self.data
     
         
 
