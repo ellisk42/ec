@@ -7,7 +7,6 @@ from utilities import eprint
 from random import randint
 
 import listroutines as lr
-lr.api = "http://localhost:8017"
 
 
 def hashable(v):
