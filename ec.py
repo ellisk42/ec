@@ -71,6 +71,8 @@ def explorationCompression(grammar, tasks,
     # This is for the purpose of exporting the results of the experiment
     parameters = {k: v for k, v in locals().iteritems()
                   if k not in ["tasks", "grammar", "cuda", "_", "CPUs", "outputPrefix", "resume", "featureExtractor"]}
+    if not useRecognitionModel:
+        for k in ["KLRegularize","activation","helmholtzRatio"]: del parameters[k]
 
     eprint("Running EC on %s with parameters:"%(os.uname()[1]))
     for k,v in parameters.iteritems():
