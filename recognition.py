@@ -108,6 +108,9 @@ class RecognitionModel(nn.Module):
         requests = [ frontier.task.request for frontier in frontiers ]
         frontiers = [ frontier.topK(topK).normalize() for frontier in frontiers if not frontier.empty ]
 
+        # Not sure why this ever happens
+        if helmholtzRatio is None: helmholtzRatio = 0.
+
         # This is the number of samples from Helmholtz style training
         if helmholtzRatio < 1.:
             helmholtzSamples = int(helmholtzRatio*len(frontiers)/(1. - helmholtzRatio))

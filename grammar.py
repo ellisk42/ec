@@ -47,7 +47,7 @@ class Grammar(object):
                         returnTable = False,
                         # Should we return probabilities vs log probabilities?
                         returnProbabilities = False):
-        """Your all-in-one stop for building data structures representing the primitives with a certain type
+        """Primitives that are candidates for being used given a requested type
         If returnTable is false (default): returns [((log)likelihood, tp, primitive, context)]
         if returntable is true: returns {primitive: ((log)likelihood, tp, context)}"""
         if returnProbabilities: assert normalize
