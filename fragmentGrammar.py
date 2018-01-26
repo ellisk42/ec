@@ -53,7 +53,7 @@ class FragmentGrammar(object):
         try:
             _,l,_ = self.logLikelihood(Context.EMPTY, [], request, expression)
             return l
-        except GrammarException:
+        except GrammarFailure:
             output = "grammarException.pickle"
             eprint("FATAL: Exception during likelihood calculation. This is due to a bug. See %s to reproduce the failure."%output)
             with open(output, 'wb') as handle:
@@ -64,7 +64,7 @@ class FragmentGrammar(object):
         try:
             _,l,u = self.logLikelihood(Context.EMPTY, [], request, expression)
             return l,u
-        except GrammarException:
+        except GrammarFailure:
             output = "grammarException.pickle"
             eprint("FATAL: Exception during likelihood calculation. This is due to a bug. See %s to reproduce the failure."%output)
             with open(output, 'wb') as handle:
@@ -133,11 +133,9 @@ class FragmentGrammar(object):
                                      possibleUses=possibleUses.copy(),
                                      actualUses={production: 1.})
 
-                # eprint("tp",tp)
-                # eprint("tp.functionArguments",tp.functionArguments())
-                # eprint("xs = ",xs)
                 argumentTypes = tp.functionArguments()
-                if len(xs) != len(argumentTypes): raise GrammarFailure('len(xs) != len(argumentTypes)')
+                if len(xs) != len(argumentTypes):
+                    raise GrammarFailure('len(xs) != len(argumentTypes): tp={}, xs={}'.format(tp, xs))
 
                 # Accumulate likelihood from free variables and holes and arguments
                 for freeType,freeExpression in variableBindings.values() + zip(argumentTypes, xs):
