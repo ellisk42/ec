@@ -5,6 +5,8 @@ from frontier import *
 from program import *
 from type import *
 
+class GrammarFailure(Exception): pass
+
 class Grammar(object):
     def __init__(self, logVariable, productions):
         self.logVariable = logVariable
@@ -38,6 +40,71 @@ class Grammar(object):
     def primitives(self):
         return [p for _, _, p in self.productions]
 
+    def buildCandidates(self, request, context, environment,
+                        # Should the log probabilities be normalized?
+                        normalize = True,
+                        # Should be returned a table mapping primitives to their candidate entry?
+                        returnTable = False,
+                        # Should we return probabilities vs log probabilities?
+                        returnProbabilities = False):
+        """Your all-in-one stop for building data structures representing the primitives with a certain type
+        If returnTable is false (default): returns [((log)likelihood, tp, primitive, context)]
+        if returntable is true: returns {primitive: ((log)likelihood, tp, context)}"""
+        if returnProbabilities: assert normalize
+        
+        candidates = []
+        variableCandidates = []
+        for l,t,p in self.productions:
+            try:
+                newContext, t = t.instantiate(context)
+                newContext = newContext.unify(t.returns(), request)
+                candidates.append((l,t.apply(newContext),p,newContext))
+            except UnificationFailure: continue
+        for j,t in enumerate(environment):
+            try:
+                newContext = context.unify(t.returns(), request)
+                variableCandidates.append((t.apply(newContext), Index(j), newContext))
+            except UnificationFailure: continue
+
+        candidates = [ (self.logVariable - log(len(variableCandidates)), t, p, k)
+                       for t,p,k in variableCandidates ] + candidates
+        if normalize:
+            z = lse([ l for l,t,p,k in candidates ])
+            if returnProbabilities:
+                candidates = [ (exp(l - z), t, p, k) for l,t,p,k in candidates ]
+            else: candidates = [ (l - z, t, p, k) for l,t,p,k in candidates ]
+
+
+        if returnTable:
+            return {p: (l,t,k) for l,t,p,k in candidates }
+        else:
+            return candidates
+
+    def sample(self, request):
+        _,e = self._sample(request, Context.EMPTY, [])
+        return e
+    def _sample(self, request, context, environment):
+        if request.isArrow():
+            return self._sample(request.arguments[1],
+                               context,
+                               [request.arguments[0]] + environment)
+        candidates = self.buildCandidates(requests, context, environment,
+                                          normalize = True,
+                                          returnProbabilities = True)
+        newType, chosenPrimitive, context = sampleDistribution(candidates)
+
+        # Sample the arguments
+        xs = newType.functionArguments()
+        returnValue = chosenPrimitive
+
+        for x in xs:
+            x = x.apply(context)
+            context, x = self._sample(x, context, environment)
+            returnValue = Application(returnValue, x)
+
+        return context, returnValue        
+        
+
     def likelihoodSummary(self, context, environment, request, expression):
         if request.isArrow():
             if not isinstance(expression,Abstraction): return context,None
@@ -46,34 +113,24 @@ class Grammar(object):
                                           request.arguments[1],
                                           expression.body)
         # Build the candidates
-        candidates = {}
-        variableCandidates = {}
-        for l,t,p in self.productions:
-            try:
-                newContext, t = t.instantiate(context)
-                newContext = newContext.unify(t.returns(), request)
-                candidates[p] = (newContext, t.apply(newContext))
-            except UnificationFailure: continue
-        for j,t in enumerate(environment):
-            try:
-                newContext = context.unify(t.returns(), request)
-                variableCandidates[Index(j)] = (newContext, t.apply(newContext))
-            except UnificationFailure: continue
-
+        candidates = self.buildCandidates(request, context, environment,
+                                          normalize = False,
+                                          returnTable = True)
+        
         # A list of everything that would have been possible to use here
-        possibles = candidates.keys()
-        if variableCandidates: possibles += [Index(0)]
+        possibles = [ p for p in candidates.keys() if not p.isIndex ]
+        numberOfVariables = sum(p.isIndex for p in candidates.keys())
+        if numberOfVariables > 0: possibles += [Index(0)]
 
         f,xs = expression.applicationParse()
 
-        if f not in candidates and f not in variableCandidates: return context,None
+        if f not in candidates: return context,None
 
         thisSummary = LikelihoodSummary()
         thisSummary.record(f, possibles,
-                           constant = -math.log(len(variableCandidates)) \
-                           if isinstance(f,Index) else 0)
+                           constant = -math.log(numberOfVariables) if f.isIndex else 0)
 
-        context, tp = dict(variableCandidates, **candidates)[f]
+        _, context, tp = candidates[f]
         argumentTypes = tp.functionArguments()
         assert len(xs) == len(argumentTypes)
 

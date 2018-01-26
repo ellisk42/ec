@@ -90,34 +90,10 @@ def enumeration(g, context, environment, request, budget):
             yield l, newContext, Abstraction(b)
 
     else:
-        candidates = []
-        variableCandidates = []
-        for l, t, p in g.productions:
-            try:
-                newContext, t = t.instantiate(context)
-                newContext = newContext.unify(t.returns(), request)
-                candidates.append((l, newContext, t.apply(newContext), p))
-            except UnificationFailure:
-                continue
-        for j, t in enumerate(environment):
-            try:
-                newContext = context.unify(t.returns(), request)
-                variableCandidates.append((newContext,
-                                           t.apply(newContext), Index(j)))
-            except UnificationFailure:
-                continue
-        # Normalize the distribution over variables
-        if variableCandidates:
-            z = math.log(len(variableCandidates))
-            variableCandidates = [ (g.logVariable - z,
-                                    newContext, newType, index)
-                                   for newContext, newType, index in variableCandidates ]
-            candidates += variableCandidates
-
-        z = lse([candidate[0] for candidate in candidates])
-
-        for l, newContext, t, p in candidates:
-            l -= z
+        candidates = g.buildCandidates(request, context, environment,
+                                       normalize = True)
+        
+        for l, t, p, newContext in candidates:
             xs = t.functionArguments()
             for result in enumerateApplication(g, newContext, environment, p, l, xs, budget + l):
                 yield result
