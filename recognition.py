@@ -99,16 +99,40 @@ class RecognitionModel(nn.Module):
                 kl += KLRegularize * D
         return kl
 
-    def train(self, frontiers, _=None, KLRegularize=0.1, steps=500, lr=0.001, topK=1, CPUs=1):
+    def train(self, frontiers, _=None, KLRegularize=0.1, steps=500, lr=0.001, topK=1, CPUs=1,
+              helmholtzRatio = 0.,
+              featureExtractor = None):
+        """
+        helmholtzRatio: What fraction of the training data should be forward samples from the generative model?
+        """
+        requests = [ frontier.task.request for frontier in frontiers ]
         frontiers = [ frontier.topK(topK).normalize() for frontier in frontiers if not frontier.empty ]
-        eprint("Training a recognition model from %d frontiers. KLRegularize = %s"%(len(frontiers),
-                                                                                    KLRegularize))
+
+        # This is the number of samples from Helmholtz style training
+        if helmholtzRatio < 1.:
+            helmholtzSamples = int(helmholtzRatio*len(frontiers)/(1. - helmholtzRatio))
+        else:
+            helmholtzSamples = len(frontiers)
+            
+        if helmholtzSamples > 0:
+            assert featureExtractor is not None
+            self.featureExtractor = featureExtractor
+        
+        eprint("Training a recognition model from %d frontiers & %d Helmholtz samples. KLRegularize = %s"%(len(frontiers),
+                                                                                                           helmholtzSamples,
+                                                                                                           KLRegularize))
+        
         
         optimizer = torch.optim.Adam(self.parameters(), lr=lr)
         with timing("Trained recognition model"):
             for i in range(1,steps + 1):
                 losses = []
-                for batch in batches(frontiers):
+                
+                # Sample from the forward model ala Helmholtz
+                forwardSamples = [ self.sampleHelmholtzFrontier(requests)
+                                   for _ in range(helmholtzSamples) ]
+                
+                for batch in batches(forwardSamples + frontiers*int(helmholtzRatio < 1.)):
                     self.zero_grad()
                     loss = self.posteriorKL(batch, KLRegularize)/len(batch)
                     loss.backward()
@@ -117,6 +141,19 @@ class RecognitionModel(nn.Module):
                 if i%50 == 0:
                     eprint("Epoch",i,"Loss",sum(losses)/len(losses))
                     gc.collect()
+
+    def sampleHelmholtzFrontier(self, requests):
+        request = random.choice(requests)
+        program = self.grammar.sample(request)
+        
+        # Make a dummy task object for the frontier to point to
+        task = RegressionTask(None, request, None, features = self.featureExtractor(program, request))
+        
+        # return a frontier that has just this program
+        return Frontier([FrontierEntry(program = program,
+                                       logPosterior = 0.)],
+                        task = task)
+
                 
 
     def enumerateFrontiers(self, frontierSize, tasks,
@@ -133,104 +170,3 @@ class RecognitionModel(nn.Module):
                             grammars, frontierSize, tasks,
                             CPUs = CPUs, maximumFrontier = maximumFrontier)
 
-# class TreeDecoder(nn.Module):
-#     def __init__(self, grammar, hiddenUnits = 10):
-#         super(TreeDecoder, self).__init__()
-
-#         self.ancestral = nn.LSTM(input_size = hiddenUnits, hidden_size = hiddenUnits, num_layers = 1,
-#                                  batch_first = True)
-#         self.fraternal = nn.LSTM(input_size = hiddenUnits, hidden_size = hiddenUnits, num_layers = 1,
-#                                  batch_first = True)
-        
-#         self.grammar = grammar
-
-#         # self.embedding : list of N indices (BxW) -> (B,W,EMBEDDINGSIZE)
-#         self.embedding = nn.Embedding(len(grammar.productions) + 1, hiddenUnits)
-
-#         self.primitiveToIndex = {p: j + 1
-#                                  for j,(_,_,p) in enumerate(grammar.productions) }
-
-#         self.tokenPrediction = nn.Linear(hiddenUnits, len(grammar.productions) + 1)
-
-#         self.uf = nn.Linear(hiddenUnits, hiddenUnits)
-#         self.ua = nn.Linear(hiddenUnits, hiddenUnits)
-
-#     def embed(self, primitive):
-#         if isinstance(primitive,Index): j = 0
-#         else: j = self.primitiveToIndex[primitive]
-#         j = variable([j]).unsqueeze(0)
-#         return self.embedding(j)
-
-#     def updateAncestralState(self, ancestralSymbol, previous = None):
-#         ancestor = self.embed(ancestralSymbol)
-#         return self.ancestral(ancestor, previous)
-
-#     def updateSiblingState(self, siblingSymbol, previous = None):
-#         sibling = self.embed(siblingSymbol)
-#         return self.fraternal(sibling, previous)
-
-#     def predictPrimitive(self, ancestralOutput, siblingOutput):
-#         ancestralOutput, siblingOutput = ancestralOutput.squeeze(0), siblingOutput.squeeze(0)
-#         a = self.ua(ancestralOutput)
-#         s = self.uf(siblingOutput)
-#         return F.log_softmax(self.tokenPrediction(F.tanh(a + s)))
-
-#     def buildCandidates(self, context, environment, request):
-#         candidates = []
-#         for _,t,p in self.grammar.productions:
-#             try:
-#                 newContext, t = t.instantiate(context)
-#                 newContext = newContext.unify(t.returns(), request)
-#                 candidates.append((newContext,
-#                                    t.apply(newContext),
-#                                    p))
-#             except UnificationFailure: continue
-#         for j,t in enumerate(environment):
-#             try:
-#                 newContext = context.unify(t.returns(), request)
-#                 candidates.append((newContext,
-#                                    t.apply(newContext),
-#                                    Index(j)))
-#             except UnificationFailure: continue
-#         return candidates
-
-#     def logLikelihood(self, context, environment, request, expression, states = (None,None), parentSymbol = None):
-#         request = request.apply(context)
-        
-#         if request.isArrow():
-#             if not isinstance(expression,Abstraction):
-#                 raise Exception('expected abstraction')
-#             return self.logLikelihood(context,
-#                                       [request.arguments[0]] + environment,
-#                                       request.arguments[1],
-#                                       expression.body,
-#                                       states,
-#                                       parentSymbol)
-
-#         def applicationParse(e):
-#             if isinstance(e,Application):
-#                 f,xs = applicationParse(e.f)
-#                 return f,xs + [e]
-#             else: return e,[]
-#         f,xs = applicationParse(expression)
-        
-#         candidates = self.buildCandidates(context, environment, request)
-#         distribution = self.predictPrimitive(states[0], states[1])        
-    
-
-# if __name__ == "__main__":
-#     from arithmeticPrimitives import *
-#     g = Grammar.uniform([addition, multiplication, k0, k1])
-#     m = TreeDecoder(g, hiddenUnits = 9)
-#     print m.embed(addition)
-#     print 
-#     print m.updateAncestralState(k0)
-#     print 
-#     print m.updateAncestralState(k1)[0].squeeze(0)
-#     print
-#     print m.predictPrimitive(m.updateAncestralState(k0)[0],
-#                              m.updateSiblingState(k1)[0])
-        
-
-        
-        

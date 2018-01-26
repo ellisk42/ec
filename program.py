@@ -30,6 +30,9 @@ class Program(object):
                 n = max(n, child.i - surroundingAbstractions + 1)
         return n
 
+    @property
+    def isIndex(self): return False
+
     @staticmethod
     def parse(s):
         e,s = Program._parse(s.strip())
@@ -154,6 +157,9 @@ class Index(Program):
     def bound(self, surroundingAbstractions):
         '''Is this index a bound variable, given that it has surroundingAbstractions lambda's around it?'''
         return self.i < surroundingAbstractions
+
+    @property
+    def isIndex(self): return True
 
     @staticmethod
     def _parse(s):

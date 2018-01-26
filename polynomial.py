@@ -3,7 +3,7 @@ from grammar import Grammar
 from arithmeticPrimitives import addition, multiplication, k0, k1
 from type import tint, arrow
 from task import RegressionTask
-
+from utilities import eprint
 
 primitives = [addition, multiplication, k0, k1]
 
@@ -20,10 +20,15 @@ tasks = [
           for c in range(MAXIMUMCOEFFICIENT+1)
 ]
 
+def featureExtractor(program, tp):
+    e = program.evaluate([])
+    return [e(x) for x in range(NUMBEROFEXAMPLES+1)]
+
 if __name__ == "__main__":
     baseGrammar = Grammar.uniform(primitives)
     explorationCompression(baseGrammar, tasks,
                            outputPrefix = "experimentOutputs/polynomial",
                            **commandlineArguments(frontierSize = 10**4,
-                                                  iterations = 10,
+                                                  iterations = 5,
+                                                  featureExtractor = featureExtractor,
                                                   pseudoCounts = 10.0))

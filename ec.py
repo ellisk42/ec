@@ -38,6 +38,8 @@ def explorationCompression(grammar, tasks,
                            resume=None,
                            frontierSize=None,
                            useRecognitionModel=True,
+                           helmholtzRatio = 0.,
+                           featureExtractor = None,
                            activation='relu',
                            KLRegularize=0.1,
                            topK=1,
@@ -59,11 +61,16 @@ def explorationCompression(grammar, tasks,
         eprint("Warning: Recognition model needs features to all have the same dimensionality.",
                "Ignoring recognition model.")
         useRecognitionModel = False
+    if helmholtzRatio > 0. and featureExtractor is None:
+        eprint("Warning: Using Helmholtz-machine style training requires a feature extractor.",
+               "The feature extractor should take a program and a type and return a list of floats.",
+               "Setting Helmholtz ratio to 0.")
+        helmholtzRatio = 0.        
 
     # We save the parameters that were passed into EC
     # This is for the purpose of exporting the results of the experiment
     parameters = {k: v for k, v in locals().iteritems()
-                  if k not in ["tasks", "grammar", "cuda", "_", "CPUs", "outputPrefix", "resume"]}
+                  if k not in ["tasks", "grammar", "cuda", "_", "CPUs", "outputPrefix", "resume", "featureExtractor"]}
 
     eprint("Running EC on %s with parameters:"%(os.uname()[1]))
     for k,v in parameters.iteritems():
@@ -111,7 +118,8 @@ def explorationCompression(grammar, tasks,
                                   else grammar.rescoreFrontier(result.taskSolutions[f.task])
                                   for f in frontiers ]
             
-            recognizer.train(trainingFrontiers, KLRegularize=KLRegularize, topK=topK)
+            recognizer.train(trainingFrontiers, KLRegularize=KLRegularize, topK=topK,
+                             featureExtractor = featureExtractor, helmholtzRatio = helmholtzRatio)
             bottomupFrontiers = recognizer.enumerateFrontiers(frontierSize, tasks, CPUs=CPUs)
             eprint("Bottom-up enumeration results:")
             eprint(Frontier.describe(bottomupFrontiers))
@@ -210,6 +218,8 @@ def commandlineArguments(_=None,
                          CPUs=1,
                          useRecognitionModel=True,
                          activation='relu',
+                         helmholtzRatio = 0.,
+                         featureExtractor = None,
                          cuda=None,
                          maximumFrontier=None,
                          pseudoCounts=1.0, aic=1.0,
@@ -267,7 +277,7 @@ def commandlineArguments(_=None,
                         maximum size of the frontier that is kept around.
                         Default: %s""" % maximumFrontier,
                         type=int)
-    parser.add_argument("-r", "--recognition",
+    parser.add_argument("--recognition",
                         dest="useRecognitionModel",
                         action="store_true",
                         help="""Enable bottom-up neural recognition model.
@@ -288,7 +298,14 @@ def commandlineArguments(_=None,
                         induced grammar for neural recognition model.
                         Default: %s""" % KLRegularize,
                         type=float)
+    parser.add_argument("-r","--Helmholtz",
+                        dest="helmholtzRatio",
+                        help="""When training recognition models, what fraction of the training data should be samples from the generative model? Default %f""" % helmholtzRatio,
+                        type=float)
     parser.set_defaults(useRecognitionModel=useRecognitionModel,
                         KLRegularize=KLRegularize,
+                        featureExtractor = featureExtractor,
                         cuda=cuda)
-    return vars(parser.parse_args())
+    v = vars(parser.parse_args())
+    #v.featureExtractor = featureExtractor
+    return v

@@ -66,14 +66,12 @@ class Grammar(object):
                 variableCandidates.append((t.apply(newContext), Index(j), newContext))
             except UnificationFailure: continue
 
-        candidates = [ (self.logVariable - log(len(variableCandidates)), t, p, k)
-                       for t,p,k in variableCandidates ] + candidates
+        candidates += [ (self.logVariable - log(len(variableCandidates)), t, p, k)
+                        for t,p,k in variableCandidates ]
         if normalize:
             z = lse([ l for l,t,p,k in candidates ])
-            if returnProbabilities:
-                candidates = [ (exp(l - z), t, p, k) for l,t,p,k in candidates ]
+            if returnProbabilities: candidates = [ (exp(l - z), t, p, k) for l,t,p,k in candidates ]
             else: candidates = [ (l - z, t, p, k) for l,t,p,k in candidates ]
-
 
         if returnTable:
             return {p: (l,t,k) for l,t,p,k in candidates }
@@ -85,10 +83,12 @@ class Grammar(object):
         return e
     def _sample(self, request, context, environment):
         if request.isArrow():
-            return self._sample(request.arguments[1],
-                               context,
-                               [request.arguments[0]] + environment)
-        candidates = self.buildCandidates(requests, context, environment,
+            context, expression = self._sample(request.arguments[1],
+                                               context,
+                                               [request.arguments[0]] + environment)
+            return context, Abstraction(expression)
+        
+        candidates = self.buildCandidates(request, context, environment,
                                           normalize = True,
                                           returnProbabilities = True)
         newType, chosenPrimitive, context = sampleDistribution(candidates)
@@ -130,7 +130,7 @@ class Grammar(object):
         thisSummary.record(f, possibles,
                            constant = -math.log(numberOfVariables) if f.isIndex else 0)
 
-        _, context, tp = candidates[f]
+        _, tp, context = candidates[f]
         argumentTypes = tp.functionArguments()
         assert len(xs) == len(argumentTypes)
 
