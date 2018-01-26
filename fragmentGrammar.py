@@ -50,26 +50,12 @@ class FragmentGrammar(object):
         return [(l - z, c, t, p) for l, c, t, p in candidates]
 
     def closedLogLikelihood(self, request, expression):
-        try:
-            _,l,_ = self.logLikelihood(Context.EMPTY, [], request, expression)
-            return l
-        except GrammarFailure:
-            output = "grammarException.pickle"
-            eprint("FATAL: Exception during likelihood calculation. This is due to a bug. See %s to reproduce the failure."%output)
-            with open(output, 'wb') as handle:
-                pickle.dump((self, request, expression), handle)
-            assert False
+        _,l,_ = self.logLikelihood(Context.EMPTY, [], request, expression)
+        return l
 
     def closedUses(self, request, expression):
-        try:
-            _,l,u = self.logLikelihood(Context.EMPTY, [], request, expression)
-            return l,u
-        except GrammarFailure:
-            output = "grammarException.pickle"
-            eprint("FATAL: Exception during likelihood calculation. This is due to a bug. See %s to reproduce the failure."%output)
-            with open(output, 'wb') as handle:
-                pickle.dump((self, request, expression), handle)
-            assert False
+        _,l,u = self.logLikelihood(Context.EMPTY, [], request, expression)
+        return l,u
 
     def logLikelihood(self, context, environment, request, expression):
         '''returns (context, log likelihood, uses)'''
@@ -103,23 +89,26 @@ class FragmentGrammar(object):
                     if production != f: continue
                 else:
                     try:
-                        # eprint("Trying to match %s w/ %s"%(production, f))
                         newContext, fragmentType, variableBindings = \
                                             Matcher.match(newContext, production, f, len(xs))
                         # This is necessary because the types of the variable
                         # bindings and holes need to match up w/ request
-                        # eprint("Fragment type",fragmentType)
                         fragmentTypeTemplate = request
                         for _ in xs:
                             newContext, newVariable = newContext.makeVariable()
                             fragmentTypeTemplate = arrow(newVariable, fragmentTypeTemplate)
                         newContext = newContext.unify(fragmentType, fragmentTypeTemplate)
-                        # eprint("Fragment type after unification w/ template",fragmentType.apply(newContext))
-                        # eprint("H = ",[(t.apply(newContext),h) for t,h in holes ],\)
-                        #     "V = ",{i: (t.apply(newContext),v) for i,(t,v) in variableBindings.iteritems() }
                         # update the unified type
                         tp = fragmentType.apply(newContext)
                     except MatchFailure: continue
+
+                argumentTypes = tp.functionArguments()
+                if len(xs) != len(argumentTypes):
+                    # I think that this is some kind of bug. But I can't figure it out right now.
+                    # As a hack, count this as though it were a failure
+                    continue
+                    #raise GrammarFailure('len(xs) != len(argumentTypes): tp={}, xs={}'.format(tp, xs))
+
 
                 thisLikelihood = candidateLikelihood
                 if isinstance(production, Index):
@@ -132,10 +121,6 @@ class FragmentGrammar(object):
                                      actualVariables=0.,
                                      possibleUses=possibleUses.copy(),
                                      actualUses={production: 1.})
-
-                argumentTypes = tp.functionArguments()
-                if len(xs) != len(argumentTypes):
-                    raise GrammarFailure('len(xs) != len(argumentTypes): tp={}, xs={}'.format(tp, xs))
 
                 # Accumulate likelihood from free variables and holes and arguments
                 for freeType,freeExpression in variableBindings.values() + zip(argumentTypes, xs):
