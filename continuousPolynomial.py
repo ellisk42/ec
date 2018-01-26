@@ -3,6 +3,7 @@ from grammar import Grammar
 from arithmeticPrimitives import addition, multiplication, real
 from task import DifferentiableTask, squaredErrorLoss, l1loss, RegressionTask
 from type import tint, arrow
+from utilities import *
 
 primitives = [addition, multiplication, real]
 
@@ -15,7 +16,7 @@ tasks = [ DifferentiableTask("%dx^2 + %dx + %d"%(a,b,c),
                              [((x,),a*x*x + b*x + c) for x in EXAMPLES ],
                              loss = squaredErrorLoss,
                              features = [float(a*x*x + b*x + c) for x in EXAMPLES ],
-                             likelihoodThreshold = -0.5)
+                             likelihoodThreshold = -0.1)
           for a in range(MAXIMUMCOEFFICIENT+1)
           for b in range(MAXIMUMCOEFFICIENT+1)
           for c in range(MAXIMUMCOEFFICIENT+1) ]
@@ -27,5 +28,5 @@ if __name__ == "__main__":
     explorationCompression(baseGrammar, tasks,
                            outputPrefix = "experimentOutputs/continuousPolynomial",
                            **commandlineArguments(frontierSize = 10**2,
-                                                  iterations = 10,
+                                                  iterations = 5,
                                                   pseudoCounts = 10.0))
