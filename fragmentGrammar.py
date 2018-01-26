@@ -60,6 +60,17 @@ class FragmentGrammar(object):
                 pickle.dump((self, request, expression), handle)
             assert False
 
+    def closedUses(self, request, expression):
+        try:
+            _,l,u = self.logLikelihood(Context.EMPTY, [], request, expression)
+            return l,u
+        except GrammarException:
+            output = "grammarException.pickle"
+            eprint("FATAL: Exception during likelihood calculation. This is due to a bug. See %s to reproduce the failure."%output)
+            with open(output, 'wb') as handle:
+                pickle.dump((self, request, expression), handle)
+            assert False
+
     def logLikelihood(self, context, environment, request, expression):
         '''returns (context, log likelihood, uses)'''
         if request.isArrow():
@@ -156,10 +167,10 @@ class FragmentGrammar(object):
         return context, totalLikelihood, allUses
 
     def expectedUses(self, frontiers):
-        likelihoods = ([ (l + entry.logLikelihood, u)
+        likelihoods = [ [ (l + entry.logLikelihood, u)
                          for entry in frontier
-                         for _,l,u in [self.logLikelihood(Context.EMPTY, [], frontier.task.request, entry.program)] ]
-                       for frontier in frontiers)
+                         for l,u in [self.closedUses(frontier.task.request, entry.program)] ]
+                        for frontier in frontiers ]
         zs = (lse([ l for l,_ in ls ]) for ls in likelihoods)
         return sum(math.exp(l - z)*u
                    for z,frontier in izip(zs,likelihoods)
