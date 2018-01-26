@@ -79,7 +79,7 @@ class Circuit(object):
                 
 if __name__ == "__main__":
     tasks = []
-    while len(tasks) < 100:
+    while len(tasks) < 500:
         inputs = random.choice(range(1,MAXIMUMINPUTS + 1))
         gates = random.choice(range(1,MAXIMUMGATES + 1))
         newTask = Circuit(numberOfInputs = inputs,
