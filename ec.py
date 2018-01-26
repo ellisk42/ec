@@ -96,6 +96,11 @@ def explorationCompression(grammar, tasks,
         eprint(Frontier.describe(frontiers))
 
         tasksHitTopDown = {f.task for f in frontiers if not f.empty}
+        if j == 0: # the first iteration is special: it corresponds to the base grammar
+            result.learningCurve.append(sum(not f.empty for f in frontiers))
+            result.averageDescriptionLength.append(
+                -sum(f.bestPosterior.logPosterior for f in frontiers if not f.empty)
+                / sum(not f.empty for f in frontiers))
 
         if useRecognitionModel: # Train and then use a recognition model            
             recognizer = RecognitionModel(len(tasks[0].features), grammar, activation=activation, cuda=cuda)
@@ -115,16 +120,17 @@ def explorationCompression(grammar, tasks,
             showHitMatrix(tasksHitTopDown, tasksHitBottomUp, tasks)
 
             bottomupHits = sum(not f.empty for f in bottomupFrontiers)
-            result.averageDescriptionLength.append(
-                -sum(f.bestPosterior.logPosterior for f in bottomupFrontiers if not f.empty)
-                / bottomupHits)
+            if j > 0:
+                result.averageDescriptionLength.append(
+                    -sum(f.bestPosterior.logPosterior for f in bottomupFrontiers if not f.empty)
+                    / bottomupHits)
 
             # Rescore the frontiers according to the generative model
             # and then combine w/ original frontiers
             bottomupFrontiers = [ grammar.rescoreFrontier(f) for f in bottomupFrontiers ]
 
             frontiers = [f.combine(b) for f, b in zip(frontiers, bottomupFrontiers)]
-        else:
+        elif j > 0:
             result.averageDescriptionLength.append(
                 -sum(f.bestPosterior.logPosterior for f in frontiers if not f.empty)
                 / sum(not f.empty for f in frontiers))
@@ -155,7 +161,10 @@ def explorationCompression(grammar, tasks,
                 frontiers[i] = result.taskSolutions[f.task]
 
         # number of hit tasks
-        result.learningCurve.append(sum(not f.empty for f in frontiers))
+        if j > 0:
+            # The first iteration is special: what we record is the
+            # performance of the base grammar without any learning
+            result.learningCurve.append(sum(not f.empty for f in frontiers))
 
         grammar = callCompiled(induceFragmentGrammarFromFrontiers,
                                grammar,
@@ -178,7 +187,7 @@ def explorationCompression(grammar, tasks,
 
     return result
 
-def showHitMatrix(bottom, top, tasks):
+def showHitMatrix(top, bottom, tasks):
     tasks = set(tasks)
     
     total = bottom|top
