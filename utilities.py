@@ -151,3 +151,10 @@ def batches(data, size = 1):
     while start < len(data):
         yield data[start:size+start]
         start += size
+
+def sampleDistribution(d):
+    import numpy as np
+    xs = [x for x,p in d ]
+    z = float(sum(p for x,p in d))
+    ps = [p/z for x,p in d ]
+    return np.random.choice(xs,p = ps)
