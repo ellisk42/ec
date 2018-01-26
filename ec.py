@@ -180,15 +180,19 @@ def explorationCompression(grammar, tasks,
 
 def showHitMatrix(bottom, top, tasks):
     tasks = set(tasks)
+    
     total = bottom|top
-    eprint(len(total), "total hit tasks")
+    eprint(len(total),"/",len(tasks),"total hit tasks")
+    bottomMiss = tasks - bottom
+    topMiss = tasks - bottom
+    
     eprint("{: <13s}{: ^13s}{: ^13s}".format("","bottom miss","bottom hit"))
     eprint("{: <13s}{: ^13d}{: ^13d}".format("top miss",
-                                             len(total - tasks),
-                                             len(bottom & (tasks - top))))
+                                             len(bottomMiss & topMiss),
+                                             len(bottom & topMiss)))
     eprint("{: <13s}{: ^13d}{: ^13d}".format("top hit",
-                                             len(top & (tasks - bottom)),
-                                             len(total)))
+                                             len(top & bottomMiss),
+                                             len(top & bottom)))
 
 def commandlineArguments(_=None,
                          iterations=None,
