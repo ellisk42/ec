@@ -73,9 +73,10 @@ def iterativeDeepeningEnumeration(g, request, frontierSize, budget=2.0, budgetIn
         frontier = [(l, p) for l, _, p in enumeration(g, Context.EMPTY, [], request, budget)]
         budget += budgetIncrement
     if showDescriptionLength: eprint("Enumerated up to %f nats"%(budget - budgetIncrement))
-    # This will trim the frontier to be exactly frontierSize
-    # Not sure whether we want to do this
-    #return sorted(frontier, key=lambda (l, p): l, reverse=True)[:frontierSize]
+    # This will trim the frontier to be exactly frontierSize We do
+    # this for small frontier sizes; the idea is that if the frontier
+    # is small then you probably want exactly that many programs
+    if frontierSize <= 2000: return sorted(frontier, key=lambda (l, p): l, reverse=True)[:frontierSize]
     return frontier
 
 
