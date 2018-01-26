@@ -81,6 +81,7 @@ class TypeVariable(Type):
 
     def returns(self): return self
     def isArrow(self): return False
+    def functionArguments(self): return []
 
     def apply(self, context):
         for v,t in context.substitution:

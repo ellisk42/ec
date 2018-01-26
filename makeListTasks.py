@@ -1,3 +1,5 @@
+from __future__ import division
+
 from type import guess_type, arrow
 from task import RegressionTask
 from utilities import eprint
@@ -5,6 +7,7 @@ from utilities import eprint
 from random import randint
 
 import listroutines as lr
+lr.api = "http://localhost:8017"
 
 
 def hashable(v):
@@ -34,8 +37,8 @@ def list_features(examples):
     # total difference between means of input and output
     # total difference between variances of input and output
     # output type (-1=bool, 0=int, 1=list)
-    # outputs if integers, else -1s
-    # outputs if bools (-1/1), else 0s
+    #DISABLED outputs if integers, else -1s
+    #DISABLED outputs if bools (-1/1), else 0s
     if ot == list:
         omean = [mean(o) for (i,), o in examples]
         ovar = [sum((v - omean[idx])**2
@@ -52,8 +55,8 @@ def list_features(examples):
         features.append(sum(om - im for im, om in zip(imean, omean)))
         features.append(sum(ov - iv for iv, ov in zip(ivar, ovar)))
         features.append(1)
-        features += [-1 for _ in examples]
-        features += [0 for _ in examples]
+        # features += [-1 for _ in examples]
+        # features += [0 for _ in examples]
     elif ot == bool:
         outs = [o for (i,), o in examples]
 
@@ -65,8 +68,8 @@ def list_features(examples):
         features.append(sum(imean))
         features.append(sum(ivar))
         features.append(-1)
-        features += [-1 for _ in examples]
-        features += [1 if o else -1 for o in outs]
+        # features += [-1 for _ in examples]
+        # features += [1 if o else -1 for o in outs]
     else:  # int
         cntr = lambda l, o: 0 if not l else len(set(l).difference(set(o))) / len(l)
         cnt_not_in_output = [cntr(i, [o]) for (i,), o in examples]
@@ -80,8 +83,8 @@ def list_features(examples):
         features.append(sum(o - im for im, o in zip(imean, outs)))
         features.append(sum(ivar))
         features.append(0)
-        features += outs
-        features += [0 for _ in examples]
+        # features += outs
+        # features += [0 for _ in examples]
 
     return features
 
@@ -139,7 +142,11 @@ def make_list_tasks(n_examples=10):
                 inps = inps[:n_examples]
             elif len(inps) < n_examples:
                 inps += routine.gen(count=(n_examples - len(inps)))
-            examples = [((inp,), routine.eval(inp)) for inp in inps]
+            if isinstance(inps[0], int):
+                # store number inputs as list of one number
+                examples = [(([inp],), routine.eval(inp)) for inp in inps]
+            else:
+                examples = [((inp,), routine.eval(inp)) for inp in inps]
 
             yield make_list_task(routine, examples)
 
