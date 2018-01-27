@@ -9,6 +9,7 @@ class Matcher(object):
 
     @staticmethod
     def match(context, fragment, expression, numberOfArguments):
+        if not mightMatch(fragment, expression): raise MatchFailure()
         m = Matcher(context)
         tp = fragment.visit(m, expression, [], numberOfArguments)
         return m.context, tp, m.variableBindings        
@@ -73,8 +74,16 @@ class Matcher(object):
         return tp
     def fragmentVariable(self, fragment, expression, environment, numberOfArguments):
         raise Exception('Deprecated: matching against fragment variables. Convert fragment to canonical form to get rid of fragment variables.')
-    
 
+def mightMatch(f,e,d = 0):
+    if f.isIndex:
+        if f.bound(d): return f == e
+        return True
+    if f.isPrimitive or f.isInvented: return f == e
+    if f.isAbstraction: return e.isAbstraction and mightMatch(f.body, e.body, d + 1)
+    if f.isApplication:
+        return e.isApplication and mightMatch(f.f,e.f,d) and mightMatch(f.x,e.x,d)
+    assert False    
 
 def canonicalFragment(expression):
     '''

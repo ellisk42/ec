@@ -32,6 +32,14 @@ class Program(object):
 
     @property
     def isIndex(self): return False
+    @property
+    def isApplication(self): return False
+    @property
+    def isAbstraction(self): return False
+    @property
+    def isPrimitive(self): return False
+    @property
+    def isInvented(self): return False
 
     @staticmethod
     def parse(s):
@@ -52,6 +60,8 @@ class Application(Program):
         self.f = f
         self.x = x
         self.hashCode = None
+    @property
+    def isApplication(self): return True
     def __eq__(self,other): return isinstance(other,Application) and self.f == other.f and self.x == other.x
     def __hash__(self):
         if self.hashCode == None:
@@ -180,6 +190,8 @@ class Abstraction(Program):
     def __init__(self,body):
         self.body = body
         self.hashCode = None
+    @property
+    def isAbstraction(self): return True
     def __eq__(self,o): return isinstance(o,Abstraction) and o.body == self.body
     def __hash__(self):
         if self.hashCode == None: self.hashCode = hash((hash(self.body),))
@@ -233,6 +245,8 @@ class Primitive(Program):
         self.name = name
         self.value = value
         if name not in Primitive.GLOBALS: Primitive.GLOBALS[name] = self
+    @property
+    def isPrimitive(self): return True
     def __eq__(self,o): return isinstance(o,Primitive) and o.name == self.name
     def __hash__(self): return hash(self.name)
     def visit(self, visitor, *arguments, **keywords): return visitor.primitive(self, *arguments, **keywords)
@@ -268,6 +282,8 @@ class Invented(Program):
         self.body = body
         self.tp = self.body.infer()
         self.hashCode = None
+    @property
+    def isInvented(self): return True
     def show(self,isFunction): return "#%s"%(self.body.show(False))
     def visit(self, visitor, *arguments, **keywords): return visitor.invented(self, *arguments, **keywords)
     def __eq__(self,o): return isinstance(o,Invented) and o.body == self.body

@@ -121,7 +121,10 @@ def explorationCompression(grammar, tasks,
                                   for f in frontiers ]
             
             recognizer.train(trainingFrontiers, KLRegularize=KLRegularize, topK=topK,
-                             featureExtractor = featureExtractor, helmholtzRatio = helmholtzRatio)
+                             featureExtractor = featureExtractor,
+                             # Disable Helmholtz on the first iteration
+                             # Otherwise we just draw from the base grammar which is a terrible distribution
+                             helmholtzRatio = helmholtzRatio*int(i > 0))
             bottomupFrontiers = recognizer.enumerateFrontiers(frontierSize, tasks, CPUs=CPUs)
             eprint("Bottom-up enumeration results:")
             eprint(Frontier.describe(bottomupFrontiers))
@@ -184,7 +187,8 @@ def explorationCompression(grammar, tasks,
                                aic=aic,
                                structurePenalty=structurePenalty,
                                a=arity,
-                               CPUs=CPUs).toGrammar()
+                               CPUs=CPUs,
+                               profile = "profiles/grammarInduction").toGrammar()
         result.grammars.append(grammar)
         eprint("Grammar after iteration %d:" % (j + 1))
         eprint(grammar)
