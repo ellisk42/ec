@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import random
 import time
 import traceback
 import sys
@@ -24,18 +25,25 @@ def parallelMap(numberOfCPUs, f, *xs):
 
     if numberOfCPUs == 1: return map(f,*xs)
 
-    for x in xs: assert len(x) == len(xs[0])
+    n = len(xs[0])
+    for x in xs: assert len(x) == n
+    
     assert PARALLELMAPDATA is None
     PARALLELMAPDATA = (f,xs)
 
     from multiprocessing import Pool
 
+    # Randomize the order in case easier ones come earlier or later
+    permutation = range(n)
+    random.shuffle(permutation)
+    inversePermutation = dict(zip(permutation, range(n)))
+
     workers = Pool(numberOfCPUs)
-    ys = workers.map(parallelMapCallBack, range(len(xs[0])))
+    ys = workers.map(parallelMapCallBack, permutation)
     workers.terminate()
 
     PARALLELMAPDATA = None
-    return ys
+    return [ ys[inversePermutation[j]] for j in range(n) ]
 
 
 def parallelMapCallBack(j):
