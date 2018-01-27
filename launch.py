@@ -76,6 +76,9 @@ shutdown -h now
     fd.close()
     name = fd.name
 
+    print "SCRIPT:"
+    print script
+
     # Copy over the script
     print "Copying script over to",address
     os.system("scp -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem %s ubuntu@%s:~/script.sh" % (name, address))
