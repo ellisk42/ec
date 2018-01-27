@@ -203,7 +203,7 @@ def showHitMatrix(top, bottom, tasks):
     total = bottom|top
     eprint(len(total),"/",len(tasks),"total hit tasks")
     bottomMiss = tasks - bottom
-    topMiss = tasks - bottom
+    topMiss = tasks - top
     
     eprint("{: <13s}{: ^13s}{: ^13s}".format("","bottom miss","bottom hit"))
     eprint("{: <13s}{: ^13d}{: ^13d}".format("top miss",
