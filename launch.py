@@ -30,7 +30,7 @@ def launch(size = "t2.micro", name = ""):
     return instance, address
 
 
-def sendCommand(address, script, upload =None):
+def sendCommand(address, script, upload =None,shutdown = False):
     import tempfile
     preamble = """#!/bin/bash
 cd ~/ec
@@ -38,13 +38,39 @@ git pull
 git apply patch
 mkdir jobs
 """
-#     if upload:
-#         preamble = preamble + """
-# sudo apt install -y sshpass
-# echo '%s' > ~/ec/password
-# """
+    if upload:
+        # This is probably a terribly insecure idea...
+        # But I'm not sure what the right way of doing it is
+        # I'm just going to copy over the local SSH identity
+        # Assuming that this is an authorized key at the upload site this will work
+        # Of course it also means that if anyone were to pull the keys off of AWS,
+        # they would then have access to every machine that you have access to
+        UPLOADFREQUENCY = 60*3 # every 3 minutes
+        uploadCommand = "rsync  -e 'ssh  -o StrictHostKeyChecking=no' -avz jobs experimentOutputs %s"%upload
+        preamble += """
+mv ~/id_rsa.pub ~/.ssh
+mv ~/id_rsa ~/.ssh
+chmod 600 ~/.ssh/id_rsa
+chmod 600 ~/.ssh/id_rsa.pub
+
+bash -c "while sleep %d; do %s; done;"&
+UPLOADPID=$!
+"""%(UPLOADFREQUENCY, uploadCommand)
     
     script = preamble + script
+
+    if upload:
+        script += """
+kill -9 $UPLOADPID
+%s
+"""%(uploadCommand)
+    if shutdown:
+        script += """
+shutdown -h now
+"""
+
+    print script
+    
     fd = tempfile.NamedTemporaryFile(mode = 'w',delete = False,dir = "/tmp")
     fd.write(script)
     fd.close()
@@ -56,6 +82,12 @@ mkdir jobs
 
     # delete local copy
     os.system("rm %s"%name)
+
+    # Send keys
+    if upload:
+        print "Uploading your ssh identity"
+        os.system("scp -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem ~/.ssh/id_rsa ubuntu@%s:~/id_rsa"%address)
+        os.system("scp -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem ~/.ssh/id_rsa.pub ubuntu@%s:~/id_rsa.pub"%address)
 
     # Send git patch
     print "Sending git patch over to",address
@@ -75,14 +107,9 @@ def launchExperiment(name, command, upload = None, shutdown = True, size = "t2.m
 %s > jobs/%s 2>&1
 """%(command, name)
     
-    if shutdown:
-        script += """
-sudo shutdown -h now
-"""
-
     instance, address = launch(size, name = name)
     time.sleep(60)
-    sendCommand(address, script, upload = upload)
+    sendCommand(address, script, upload = upload, shutdown = shutdown)
 
 if __name__ == "__main__":
     import argparse
