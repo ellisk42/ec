@@ -85,7 +85,7 @@ class FragmentGrammar(object):
             for candidateLikelihood, newContext, tp, production in candidates:
                 variableBindings = {}
                 # This is a variable in the environment
-                if isinstance(production, Index):
+                if production.isIndex:
                     if production != f: continue
                 else:
                     try:

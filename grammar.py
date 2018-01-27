@@ -249,6 +249,7 @@ class Uses(object):
     def join(z, *weightedUses):
         """Consumes weightedUses"""
         if not weightedUses: Uses.empty
+        if len(weightedUses) == 1: return weightedUses[0][0]
         for w, u in weightedUses:
             u *= exp(w - z)
         total = Uses()
