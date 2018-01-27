@@ -125,7 +125,8 @@ def explorationCompression(grammar, tasks,
                              # Disable Helmholtz on the first iteration
                              # Otherwise we just draw from the base grammar which is a terrible distribution
                              helmholtzRatio = helmholtzRatio and helmholtzRatio*int(j > 0))
-            bottomupFrontiers = recognizer.enumerateFrontiers(frontierSize, tasks, CPUs=CPUs)
+            bottomupFrontiers = recognizer.enumerateFrontiers(frontierSize, tasks, CPUs=CPUs,
+                                                              maximumFrontier = maximumFrontier)
             eprint("Bottom-up enumeration results:")
             eprint(Frontier.describe(bottomupFrontiers))
 
@@ -250,7 +251,7 @@ def commandlineArguments(_=None,
                         type=int)
     parser.add_argument("-k", "--topK",
                         default=topK,
-                        help="default: %d" % topK,
+                        help="When training generative and discriminative models, we train them to fit the top K programs. Ideally we would train them to fit the entire frontier, but this is often intractable. default: %d" % topK,
                         type=int)
     parser.add_argument("-p", "--pseudoCounts",
                         default=pseudoCounts,
