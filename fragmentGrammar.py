@@ -169,11 +169,18 @@ class FragmentGrammar(object):
                                  for _,t,p in self.productions ])
 
     def variationalUpdate(self, frontiers, uses):
-        uses = self.expectedUses(frontiers) + uses
-        def f(actual, possible): return digamma(actual) - digamma(possible)
+        realUses = self.expectedUses(frontiers)
+        uses = realUses + uses
+        def f(actual, possible):
+            if possible == 0:
+                assert actual == 0
+                return 0.
+            return digamma(actual) - digamma(possible)
         return FragmentGrammar(f(uses.actualVariables, uses.possibleVariables),
                                [ (f(uses.actualUses[p], uses.possibleUses[p]), t, p)
-                                 for _,t,p in self.productions ]).normalize()
+                                 for _,t,p in self.productions
+                                 if realUses.actualUses.get(p,0) > 1 or isinstance(p,(Primitive,Invented))]).\
+                                    normalize()
 
     def jointFrontiersLikelihood(self, frontiers):
         return sum( lse([ entry.logLikelihood + self.closedLogLikelihood(frontier.task.request, entry.program)
@@ -241,14 +248,15 @@ class FragmentGrammar(object):
                                     for p in grammar.primitives + fragments ])
         # prior
         uses0 = Uses(actualVariables = priorCounts(Index(0)),
-                     possibleVariables = 1.,
+                     possibleVariables = 0,
                      actualUses = {p: priorCounts(p) for p in grammar.primitives },
-                     possibleUses = {p: 1. for p in grammar.primitives })
+                     possibleUses = {p: 0 for p in grammar.primitives })
         
-        for i in range(2):
+        for i in range(5):
             eprint("VB iteration",i)
-            grammar = grammar.variationalUpdate(restrictedFrontiers, uses0)
+            grammar = grammar.variationalUpdate(restrictedFrontiers, uses0).normalize()
             restrictedFrontiers = restrictFrontiers()
+
             grammar.productions.sort(key = lambda (l,_,__): -l)
             eprint(grammar)
 

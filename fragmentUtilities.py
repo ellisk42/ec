@@ -76,13 +76,14 @@ class Matcher(object):
         raise Exception('Deprecated: matching against fragment variables. Convert fragment to canonical form to get rid of fragment variables.')
 
 def mightMatch(f,e,d = 0):
+    '''Checks whether fragment f might be able to match against expression e'''
     if f.isIndex:
         if f.bound(d): return f == e
         return True
     if f.isPrimitive or f.isInvented: return f == e
     if f.isAbstraction: return e.isAbstraction and mightMatch(f.body, e.body, d + 1)
     if f.isApplication:
-        return e.isApplication and mightMatch(f.f,e.f,d) and mightMatch(f.x,e.x,d)
+        return e.isApplication and mightMatch(f.x,e.x,d) and mightMatch(f.f,e.f,d)
     assert False    
 
 def canonicalFragment(expression):
