@@ -7,45 +7,44 @@ from grammar import *
 
 import gc
 
-def enumerateFrontiers(g, frontierSize, tasks, CPUs=1, maximumFrontier=None):
+def enumerateFrontiers(g, frontierSize, tasks, CPUs=1, maximumFrontier=None, verbose=True):
     '''g: Either a Grammar, or a map from task to grammar.'''
     from time import time
 
-    frontiers = {}
+    if isinstance(g, dict):
+        return parallelMap(CPUs,            
+                           lambda (task, grammar): enumerateFrontiers(grammar, frontierSize, [task],
+                                                                      CPUs=1, verbose=False,
+                                                                      maximumFrontier=maximumFrontier)[0],
+                           list(g.iteritems()))
 
     start = time()
-    if isinstance(g, Grammar):
-        uniqueRequests = list({ t.request for t in tasks })
-        frontiers = dict(parallelMap(
-            CPUs,
-            lambda request: (request, iterativeDeepeningEnumeration(g, request, frontierSize,
-                                                                    showDescriptionLength = True)),
-            uniqueRequests))
-        totalNumberOfPrograms = sum(len(f) for f in frontiers.values())
-        totalNumberOfFrontiers = len(frontiers)
+    uniqueRequests = list({ t.request for t in tasks })
+    frontiers = dict(parallelMap(
+        CPUs,
+        lambda request: (request, iterativeDeepeningEnumeration(g, request, frontierSize,
+                                                                showDescriptionLength = True)),
+        uniqueRequests))
+    totalNumberOfPrograms = sum(len(f) for f in frontiers.values())
+    totalNumberOfFrontiers = len(frontiers)
 
-        frontiers = {t: frontiers[t.request] for t in tasks}
-    else:
-        frontiers = dict(parallelMap(
-            CPUs,
-            lambda t: (t, iterativeDeepeningEnumeration(g[t], t.request, frontierSize)),
-            tasks))
-        totalNumberOfPrograms = sum(len(f) for f in frontiers.values())
-        totalNumberOfFrontiers = len(frontiers)
+    frontiers = {t: frontiers[t.request] for t in tasks}
 
-    eprint("Enumerated %d frontiers with %d total programs in time %fsec" %
-           (totalNumberOfFrontiers, totalNumberOfPrograms, time() - start))
+    if verbose:
+        eprint("Enumerated %d frontiers with %d total programs in time %fsec" %
+               (totalNumberOfFrontiers, totalNumberOfPrograms, time() - start))
 
-    # In general these programs have considerable overlap, reusing
-    # many subtrees. This code will force identical trees to only be
-    # represented by a single object on the heap.
-    if isinstance(g, dict):
-        with timing("Coalesced trees"):
-            share = ShareVisitor()
-            frontiers = {t: [ (l, share.execute(p)) for l,p in f ]
-                         for t,f in frontiers.iteritems() }
-            share = None # collect it
-            gc.collect()
+    # I think that this is no longer needed...
+    # # In general these programs have considerable overlap, reusing
+    # # many subtrees. This code will force identical trees to only be
+    # # represented by a single object on the heap.
+    # if isinstance(g, dict):
+    #     with timing("Coalesced trees"):
+    #         share = ShareVisitor()
+    #         frontiers = {t: [ (l, share.execute(p)) for l,p in f ]
+    #                      for t,f in frontiers.iteritems() }
+    #         share = None # collect it
+    #         gc.collect()
 
     start = time()
     # We split up the likelihood calculation and the frontier construction
@@ -61,7 +60,8 @@ def enumerateFrontiers(g, frontierSize, tasks, CPUs=1, maximumFrontier=None):
     frontiers = constructFrontiers(frontiers, programLikelihoods, tasks, maximumFrontier)
 
     dt = time() - start
-    eprint("Scored frontiers in time %fsec (%f/program)" % (dt, dt / totalNumberOfPrograms))
+    if verbose:
+        eprint("Scored frontiers in time %fsec (%f/program)" % (dt, dt / totalNumberOfPrograms))
 
     return frontiers
 
