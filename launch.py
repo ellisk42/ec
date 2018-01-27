@@ -1,3 +1,4 @@
+from datetime import datetime
 import time
 import subprocess
 import os
@@ -32,7 +33,7 @@ def launch(size = "t2.micro", name = ""):
     return instance, address
 
 
-def sendCommand(address, script, upload =None,shutdown = False):
+def sendCommand(address, script, job_id, upload, tar, shutdown):
     import tempfile
     preamble = """#!/bin/bash
 cd ~/ec
@@ -48,14 +49,21 @@ mkdir jobs
         # Of course it also means that if anyone were to pull the keys off of AWS,
         # they would then have access to every machine that you have access to
         UPLOADFREQUENCY = 60*3 # every 3 minutes
-        uploadCommand = "rsync  -e 'ssh  -o StrictHostKeyChecking=no' -avz jobs experimentOutputs %s"%upload
+        if tar:
+            uploadCommand = """\
+tar czf {id}.tar.gz jobs experimentOutputs patch && \
+scp -o StrictHostKeyChecking=no \
+{id}.tar.gz {upload}""".format(id=job_id, upload=upload)
+        else:
+            uploadCommand = """\
+rsync  -e 'ssh  -o StrictHostKeyChecking=no' -avz \
+jobs experimentOutputs {}""".format(upload)
         preamble += """
-mv ~/id_rsa.pub ~/.ssh
-mv ~/id_rsa ~/.ssh
 chmod 600 ~/.ssh/id_rsa
 chmod 600 ~/.ssh/id_rsa.pub
-
-bash -c "while sleep %d; do %s; done;"&
+bash -c "while sleep %d
+do %s
+done" &
 UPLOADPID=$!
 """%(UPLOADFREQUENCY, uploadCommand)
     
@@ -81,7 +89,9 @@ shutdown -h now
 
     # Copy over the script
     print "Copying script over to",address
-    os.system("scp -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem %s ubuntu@%s:~/script.sh" % (name, address))
+    os.system("""
+        scp -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem \
+            %s ubuntu@%s:~/script.sh""" % (name, address))
 
     # delete local copy
     os.system("rm %s"%name)
@@ -89,55 +99,71 @@ shutdown -h now
     # Send keys
     if upload:
         print "Uploading your ssh identity"
-        os.system("scp -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem ~/.ssh/id_rsa ubuntu@%s:~/id_rsa"%address)
-        os.system("scp -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem ~/.ssh/id_rsa.pub ubuntu@%s:~/id_rsa.pub"%address)
+        os.system("""
+            scp -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem \
+                ~/.ssh/id_rsa ~/.ssh/id_rsa.pub \
+                ubuntu@%s:.ssh/"""%address)
 
     # Send git patch
     print "Sending git patch over to",address
-    os.system("git diff origin/master | ssh -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem ubuntu@%s 'cat > ~/ec/patch'"%address)
+    os.system("git diff --stat")
+    os.system("""
+        (echo "Base-Ref: $(git rev-parse HEAD)" ; echo ; git diff origin/master) | \
+        ssh -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem \
+            ubuntu@{} 'cat > ~/ec/patch'
+        """.format(address))
 
     # Execute the script
     # For some reason you need to pipe the output to /dev/null in order to get it to detach
-    os.system("ssh -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem ubuntu@%s 'bash ./script.sh > /dev/null 2>&1 &'" % (address))
+    os.system("""
+        ssh -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem \
+            ubuntu@{} 'bash ./script.sh > /dev/null 2>&1 &'
+        """.format(address))
     print "Executing script on remote host."
 
-def launchExperiment(name, command, upload = None, shutdown = True, size = "t2.micro"):
+
+def launchExperiment(name, command, upload=None, tar=False, shutdown=True, size="t2.micro"):
+    job_id = "{}_{}_{}".format(name, user(), datetime.now().strftime("%FT%T"))
     if upload is None:
         if shutdown:
             print "You didn't specify an upload host, and also specify that the machine should shut down afterwards. These options are incompatible because this would mean that you couldn't get the experiment outputs."
             assert False
     script = """
 %s > jobs/%s 2>&1
-"""%(command, name)
+"""%(command, job_id)
     
-    instance, address = launch(size, name = name)
+    instance, address = launch(size, name=name)
     time.sleep(60)
-    sendCommand(address, script, upload = upload, shutdown = shutdown)
+    sendCommand(address, script, job_id, upload, tar, shutdown)
+
 
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="")
     parser.add_argument('-u',"--upload",
-                        default = \
-                        "ellisk@openmind7.mit.edu:/om2/user/ellisk/ec" if user() == "ellisk" else \
-                        # LUCAS: You can put your own machine here
-                        # Assuming your laptop can SSH into your machine without a password
-                        None)
+                        default={
+                            "ellisk": "ellisk@openmind7.mit.edu:/om2/user/ellisk/ec",
+                            "lucasem": "lucasem@rig.lucasem.com:repo/ec",
+                        }.get(user(), None))
     parser.add_argument('-z',"--size",
-                        default = "t2.micro")
+                        default="t2.micro")
     parser.add_argument('-k',"--shutdown",
-                        default = False,
-                        action = "store_true")
+                        default=False,
+                        action="store_true")
+    parser.add_argument('-t',"--tar",
+                        default=False,
+                        help="if uploading, this sends a single tarball with relevant outputs.",
+                        action="store_true")
     parser.add_argument("name")
     parser.add_argument("command")
     arguments = parser.parse_args()
 
-    
     launchExperiment(arguments.name,
                      arguments.command,
-                     shutdown = arguments.shutdown,
-                     size = arguments.size,
-                     upload = arguments.upload)
+                     shutdown=arguments.shutdown,
+                     size=arguments.size,
+                     upload=arguments.upload,
+                     tar=arguments.tar)
 
 """
 BILLING: https://console.aws.amazon.com/billing/home?#/
