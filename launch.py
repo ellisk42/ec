@@ -52,7 +52,7 @@ mkdir jobs
 
     # Send git patch
     print "Sending git patch over to",address
-    os.system("git diff origin/master | ssh -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem 'cat > ~/ec/patch'" % (name, address))
+    os.system("git diff origin/master | ssh -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem ubuntu@%s 'cat > ~/ec/patch'"%address)
 
     # Execute the script
     # For some reason you need to pipe the output to /dev/null in order to get it to detach
@@ -73,7 +73,6 @@ def launchExperiment(name, command, upload = None, shutdown = True, size = "t2.m
 sudo shutdown -h now
 """
 
-    print script
     instance, address = launch(size, name = name)
     time.sleep(60)
     sendCommand(address, script)
