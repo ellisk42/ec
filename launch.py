@@ -30,14 +30,21 @@ def launch(size = "t2.micro", name = ""):
     return instance, address
 
 
-def sendCommand(address, script):
+def sendCommand(address, script, upload =None):
     import tempfile
-    script = """#!/bin/bash
+    preamble = """#!/bin/bash
 cd ~/ec
 git pull
 git apply patch
 mkdir jobs
-""" + script
+"""
+#     if upload:
+#         preamble = preamble + """
+# sudo apt install -y sshpass
+# echo '%s' > ~/ec/password
+# """
+    
+    script = preamble + script
     fd = tempfile.NamedTemporaryFile(mode = 'w',delete = False,dir = "/tmp")
     fd.write(script)
     fd.close()
@@ -75,11 +82,13 @@ sudo shutdown -h now
 
     instance, address = launch(size, name = name)
     time.sleep(60)
-    sendCommand(address, script)
+    sendCommand(address, script, upload = upload)
 
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="")
+    parser.add_argument('-u',"--upload",
+                        default = None)
     parser.add_argument('-z',"--size",
                         default = "t2.micro")
     parser.add_argument('-k',"--shutdown",
@@ -92,7 +101,8 @@ if __name__ == "__main__":
     launchExperiment(arguments.name,
                      arguments.command,
                      shutdown = arguments.shutdown,
-                     size = arguments.size)
+                     size = arguments.size,
+                     upload = arguments.upload)
 
 """
 BILLING: https://console.aws.amazon.com/billing/home?#/
