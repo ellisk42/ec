@@ -124,7 +124,7 @@ def explorationCompression(grammar, tasks,
                              featureExtractor = featureExtractor,
                              # Disable Helmholtz on the first iteration
                              # Otherwise we just draw from the base grammar which is a terrible distribution
-                             helmholtzRatio = helmholtzRatio*int(j > 0))
+                             helmholtzRatio = helmholtzRatio and helmholtzRatio*int(j > 0))
             bottomupFrontiers = recognizer.enumerateFrontiers(frontierSize, tasks, CPUs=CPUs)
             eprint("Bottom-up enumeration results:")
             eprint(Frontier.describe(bottomupFrontiers))
