@@ -4,6 +4,9 @@ import os
 import json
 import sys
 
+def user():
+    import getpass
+    return getpass.getuser()
 
 def launch(size = "t2.micro", name = ""):
     # aws ec2 run-instances --image-id ami-835f6ae6 --instance-type "t2.micro" --key-name testing --associate-public-ip-address
@@ -16,9 +19,8 @@ def launch(size = "t2.micro", name = ""):
     instance = o[u"Instances"][0][u"InstanceId"]
     print "Launched instance", instance
 
-    import getpass
-    user = getpass.getuser()
-    name = user + name
+    
+    name = user() + name
     print "Naming instance",name
     os.system("aws ec2 create-tags --resources %s --tags Key=Name,Value=%s"%(instance,
                                                                              name))
@@ -69,8 +71,6 @@ kill -9 $UPLOADPID
 shutdown -h now
 """
 
-    print script
-    
     fd = tempfile.NamedTemporaryFile(mode = 'w',delete = False,dir = "/tmp")
     fd.write(script)
     fd.close()
@@ -115,7 +115,11 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="")
     parser.add_argument('-u',"--upload",
-                        default = None)
+                        default = \
+                        "ellisk@openmind7.mit.edu:/om2/user/ellisk/ec" if user() == "ellisk" else \
+                        # LUCAS: You can put your own machine here
+                        # Assuming your laptop can SSH into your machine without a password
+                        None)
     parser.add_argument('-z',"--size",
                         default = "t2.micro")
     parser.add_argument('-k',"--shutdown",
@@ -124,6 +128,7 @@ if __name__ == "__main__":
     parser.add_argument("name")
     parser.add_argument("command")
     arguments = parser.parse_args()
+
     
     launchExperiment(arguments.name,
                      arguments.command,
