@@ -31,6 +31,7 @@ def sendCommand(address, script):
     script = """#!/bin/bash
 cd ~/ec
 git pull
+git apply patch
 mkdir jobs
 """ + script
     fd = tempfile.NamedTemporaryFile(mode = 'w',delete = False,dir = "/tmp")
@@ -44,7 +45,11 @@ mkdir jobs
 
     # delete local copy
     os.system("rm %s"%name)
-    
+
+    # Send git patch
+    print "Sending git patch over to",address
+    os.system("git diff origin/master | ssh -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem 'cat > ~/ec/patch'" % (name, address))
+
     # Execute the script
     # For some reason you need to pipe the output to /dev/null in order to get it to detach
     os.system("ssh -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem ubuntu@%s 'bash ./script.sh > /dev/null 2>&1 &'" % (address))
