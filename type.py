@@ -144,6 +144,16 @@ class Context(object):
 
 Context.EMPTY = Context(0,[])
 
+def canonicalTypes(ts):
+    bindings = {}
+    return [ t.canonical(bindings) for t in ts ]
+def instantiateTypes(context, ts):
+    bindings = {}
+    newTypes = []
+    for t in ts:
+        context, t = t.instantiate(context, bindings)
+        newTypes.append(t)
+    return context, newTypes
     
 tint = TypeConstructor("int",[])
 tbool = TypeConstructor("bool",[])

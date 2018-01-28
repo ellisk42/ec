@@ -64,16 +64,31 @@ class FragmentGrammar(object):
     def logLikelihood(self, context, environment, request, expression):
         '''returns (context, log likelihood, uses)'''
 
-        # We can cash likelihood calculations whenever they don't involve type inference
-        # This is because they are guaranteed to not modify the context
-        # If we can figure out how to also cash polymorphic likelihood calculations,
-        # then grammar induction will be much much faster
-        canCache = not request.isPolymorphic and all(not v.isPolymorphic for v in environment)
+        # We can cash likelihood calculations faster whenever they don't involve type inference
+        # This is because they are guaranteed to not modify the context, 
+        polymorphic = request.isPolymorphic or any(v.isPolymorphic for v in environment)
+        # For some reason polymorphic caching slows it down
+        shouldDoCaching = not polymorphic
 
-        if canCache:
-            cacheKey = (request, tuple(environment), expression)
+        # Caching
+        if shouldDoCaching:
+            if polymorphic:
+                inTypes = canonicalTypes([request.apply(context)] + [ v.apply(context) for v in environment])
+            else:
+                inTypes = canonicalTypes([request] + environment)
+            cacheKey = (tuple(inTypes), expression)
             if cacheKey in self.likelihoodCache:
-                l,u = self.likelihoodCache[cacheKey]
+                outTypes, l, u = self.likelihoodCache[cacheKey]
+                context, instantiatedTypes = instantiateTypes(context, outTypes)
+                outRequest = instantiatedTypes[0]
+                outEnvironment = instantiatedTypes[1:]
+                # eprint("request:", request.apply(context), "environment:",
+                #        [ v.apply(context) for v in environment ])
+                # eprint("will be unified with: out request:",outRequest,"out environment",outEnvironment)
+                if polymorphic:
+                    context = context.unify(request, outRequest)
+                    for v,vp in zip(environment, outEnvironment):
+                        context = context.unify(v, vp)                
                 return context,l,u            
         
         if request.isArrow():
@@ -164,7 +179,11 @@ class FragmentGrammar(object):
 
         allUses = Uses.join(totalLikelihood, *weightedUses)
 
-        if canCache: self.likelihoodCache[cacheKey] = (totalLikelihood, allUses)
+        # memoize result
+        if shouldDoCaching:
+            outTypes = [ request.apply(context) ] + [ v.apply(context) for v in environment ]
+            outTypes = canonicalTypes(outTypes)
+            self.likelihoodCache[cacheKey] = (outTypes, totalLikelihood, allUses)
 
         return context, totalLikelihood, allUses
 
