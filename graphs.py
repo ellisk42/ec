@@ -13,7 +13,7 @@ sigmoid = 'sigmoid'
 
 def parseResultsPath(p):
     p = p[:p.rfind('.')]
-    domain = p[p.index('/')+1 : p.index('_')]
+    domain = p[p.rindex('/')+1 : p.index('_')]
     parameters = { k: eval(v)
                    for binding in p.split('_')[1:]
                    for [k,v] in [binding.split('=')] }
