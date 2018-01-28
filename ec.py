@@ -189,7 +189,7 @@ def explorationCompression(grammar, tasks,
                                structurePenalty=structurePenalty,
                                a=arity,
                                CPUs=CPUs
-                               #,profile = "profiles/grammarInduction"
+                               # ,profile = "profiles/grammarInduction"
         ).toGrammar()
         result.grammars.append(grammar)
         eprint("Grammar after iteration %d:" % (j + 1))

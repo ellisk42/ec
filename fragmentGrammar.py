@@ -13,6 +13,10 @@ class FragmentGrammar(object):
     def __init__(self, logVariable, productions):
         self.logVariable = logVariable
         self.productions = productions
+        self.likelihoodCache = {}
+
+    def clearCache(self):
+        self.likelihoodCache = {}
 
     def __repr__(self):
         return "FragmentGrammar(logVariable={self.logVariable}, productions={self.productions}".format(self=self)
@@ -59,6 +63,19 @@ class FragmentGrammar(object):
 
     def logLikelihood(self, context, environment, request, expression):
         '''returns (context, log likelihood, uses)'''
+
+        # We can cash likelihood calculations whenever they don't involve type inference
+        # This is because they are guaranteed to not modify the context
+        # If we can figure out how to also cash polymorphic likelihood calculations,
+        # then grammar induction will be much much faster
+        canCache = not request.isPolymorphic and all(not v.isPolymorphic for v in environment)
+
+        if canCache:
+            cacheKey = (request, tuple(environment), expression)
+            if cacheKey in self.likelihoodCache:
+                l,u = self.likelihoodCache[cacheKey]
+                return context,l,u            
+        
         if request.isArrow():
             if not isinstance(expression,Abstraction): return (context,NEGATIVEINFINITY,Uses.empty)
             return self.logLikelihood(context,
@@ -146,6 +163,8 @@ class FragmentGrammar(object):
         assert weightedUses != []
 
         allUses = Uses.join(totalLikelihood, *weightedUses)
+
+        if canCache: self.likelihoodCache[cacheKey] = (totalLikelihood, allUses)
 
         return context, totalLikelihood, allUses
 
@@ -291,6 +310,8 @@ class FragmentGrammar(object):
             structure = sum(fragmentSize(p) for p in g.primitives)
             score = likelihood - aic*len(g) - structurePenalty*structure
 
+            g.clearCache()
+
             return score, g
 
         bestScore, _ = grammarScore(bestGrammar)
@@ -299,6 +320,7 @@ class FragmentGrammar(object):
             restrictedFrontiers = restrictFrontiers()
             fragments = [ fragment for fragment in proposeFragmentsFromFrontiers(restrictedFrontiers, a)
                           if not fragment in bestGrammar.primitives ]
+            eprint("Proposed %d fragments."%len(fragments))
                 
             candidateGrammars = [ FragmentGrammar.uniform(bestGrammar.primitives + [fragment])
                                   for fragment in fragments ]
@@ -328,6 +350,7 @@ class FragmentGrammar(object):
 
         eprint("Old joint = %f\tNew joint = %f\n"%(FragmentGrammar.fromGrammar(g0).jointFrontiersMDL(frontiers),
                                                    bestGrammar.jointFrontiersMDL(frontiers)))
+        bestGrammar.clearCache()
         return bestGrammar
 
 def induceFragmentGrammarFromFrontiers(*arguments, **keywordArguments):

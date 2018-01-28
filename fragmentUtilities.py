@@ -146,7 +146,6 @@ def proposeFragmentsFromFragment(f):
         frequency = sum(t == subtree for t in closedSubtrees )
         if frequency < 2: continue
         fp = canonicalFragment(f.substitute(subtree, Index(freeVariables)))
-        #eprint("Fragment from fragment:",f,"\t",fp)
         yield fp
 
 def proposeFragmentsFromProgram(p,arity):
