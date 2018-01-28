@@ -12,18 +12,22 @@ def enumerateFrontiers(g, frontierSize, tasks, CPUs=1, maximumFrontier=None, ver
     from time import time
 
     if isinstance(g, dict):
-        return parallelMap(CPUs,            
-                           lambda (task, grammar): enumerateFrontiers(grammar, frontierSize, [task],
-                                                                      CPUs=1, verbose=False,
-                                                                      maximumFrontier=maximumFrontier)[0],
-                           list(g.iteritems()))
+        start = time()
+        f = parallelMap(CPUs,            
+                        lambda (task, grammar): enumerateFrontiers(grammar, frontierSize, [task],
+                                                                   CPUs=1, verbose=False,
+                                                                   maximumFrontier=maximumFrontier)[0],
+                        list(g.iteritems()))
+        if verbose:
+            eprint("Enumerated %d frontiers in time %f"%(len(g), time() - start))
+        return f
 
     start = time()
     uniqueRequests = list({ t.request for t in tasks })
     frontiers = dict(parallelMap(
         CPUs,
         lambda request: (request, iterativeDeepeningEnumeration(g, request, frontierSize,
-                                                                showDescriptionLength = True)),
+                                                                showDescriptionLength = verbose)),
         uniqueRequests))
     totalNumberOfPrograms = sum(len(f) for f in frontiers.values())
     totalNumberOfFrontiers = len(frontiers)

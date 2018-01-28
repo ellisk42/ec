@@ -8,16 +8,21 @@ from type import arrow, tbool
 import itertools
 import random
 
-# Identical distribution original EC
-inputDistribution = [(1,1),
-                     (2,2),
-                     (3,4),
-                     (4,4)]
-MAXIMUMINPUTS = max(inputDistribution)[0]
+inputDistribution = [#(1,1),
+#                     (2,2),
+                     (4,3),
+                     (4,4),
+    (4,5)]
+MAXIMUMINPUTS = max(i for p,i in inputDistribution)
 gateDistribution = [(1,1),
-                    (2,2),
-                    (3,3),
-                    (4,2)]
+                    (3,2),
+                    (4,3),
+                    (4,4),
+                    (5,5),
+                    (6,5)]
+operationDistribution = [(1,'NOT'),
+                         (2,'AND'),
+                         (2,'OR')]
 
 class Circuit(object):
     def __init__(self, _ = None, numberOfInputs = None, numberOfGates = None):
@@ -30,7 +35,7 @@ class Circuit(object):
         while not self.isConnected():
             self.operations = []
             while len(self.operations) < numberOfGates:
-                gate = random.choice(['OR','AND','NOT'])
+                gate = sampleDistribution(operationDistribution)
                 x1 = random.choice(range(-numberOfInputs, len(self.operations)))
                 x2 = random.choice(range(-numberOfInputs, len(self.operations)))
                 if gate != 'NOT':
@@ -87,20 +92,26 @@ class Circuit(object):
                 
 if __name__ == "__main__":
     tasks = []
-    while len(tasks) < 1000:
+    while len(tasks) < 500:
         inputs = sampleDistribution(inputDistribution)
         gates = sampleDistribution(gateDistribution)
         newTask = Circuit(numberOfInputs = inputs,
                           numberOfGates = gates)
-        tasks.append(newTask)
+        if newTask not in tasks:
+            tasks.append(newTask)
     eprint("Sampled %d tasks with %d unique functions"%(len(tasks),
                                                        len({t.signature for t in tasks })))
 
     baseGrammar = Grammar.uniform(primitives)
     explorationCompression(baseGrammar, [ task.task() for task in tasks ],
                            outputPrefix = "experimentOutputs/circuit",
-                           **commandlineArguments(frontierSize = 10**3,
-                                                  iterations = 5,
-                                                  pseudoCounts = 5.))
+                           **commandlineArguments(frontierSize = 500,
+                                                  iterations = 1,
+                                                  aic = 4.,
+                                                  topK = 2,
+                                                  maximumFrontier = 100,
+                                                  a = 1,
+                                                  activation = "tanh",
+                                                  pseudoCounts = 10.))
     
     
