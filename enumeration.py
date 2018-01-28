@@ -17,7 +17,7 @@ def enumerateFrontiers(g, frontierSize, tasks, CPUs=1, maximumFrontier=None, ver
                         lambda (task, grammar): enumerateFrontiers(grammar, frontierSize, [task],
                                                                    CPUs=1, verbose=False,
                                                                    maximumFrontier=maximumFrontier)[0],
-                        list(g.iteritems()))
+                        map(lambda t: (t, g[t]), tasks))
         if verbose:
             eprint("Enumerated %d frontiers in time %f"%(len(g), time() - start))
         return f
