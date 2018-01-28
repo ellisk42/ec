@@ -162,9 +162,9 @@ class FragmentGrammar(object):
     def insideOutside(self, frontiers, pseudoCounts):
         uses = self.expectedUses(frontiers)
         return FragmentGrammar(log(uses.actualVariables + pseudoCounts) - \
-                               log(uses.possibleVariables + pseudoCounts),
+                               log(uses.possibleVariables),
                                [ (log(uses.actualUses.get(p,0.) + pseudoCounts) - \
-                                  log(uses.possibleUses.get(p,0.) + pseudoCounts),
+                                  log(uses.possibleUses.get(p,0.)),
                                   t,p)
                                  for _,t,p in self.productions ])
 
