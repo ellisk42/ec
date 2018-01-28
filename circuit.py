@@ -106,7 +106,7 @@ if __name__ == "__main__":
     explorationCompression(baseGrammar, [ task.task() for task in tasks ],
                            outputPrefix = "experimentOutputs/circuit",
                            **commandlineArguments(frontierSize = 500,
-                                                  iterations = 1,
+                                                  iterations = 10,
                                                   aic = 4.,
                                                   topK = 2,
                                                   maximumFrontier = 100,
