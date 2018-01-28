@@ -76,7 +76,7 @@ kill -9 $UPLOADPID
 """%(uploadCommand)
     if shutdown:
         script += """
-shutdown -h now
+sudo shutdown -h now
 """
 
     fd = tempfile.NamedTemporaryFile(mode = 'w',delete = False,dir = "/tmp")
