@@ -202,7 +202,8 @@ class FragmentGrammar(object):
         return FragmentGrammar(log(uses.actualVariables + pseudoCounts) - \
                                log(uses.possibleVariables),
                                [ (log(uses.actualUses.get(p,0.) + pseudoCounts) - \
-                                  log(uses.possibleUses.get(p,0.)),
+                                  # If it is not in actual/possible uses then set it to 0
+                                  log(uses.possibleUses.get(p,pseudoCounts)),
                                   t,p)
                                  for _,t,p in self.productions ])
 
