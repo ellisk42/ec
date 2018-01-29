@@ -133,7 +133,7 @@ if __name__ == "__main__":
                                                   featureExtractor = featureExtractor,
                                                   topK = 2,
                                                   maximumFrontier = 100,
-                                                  a = 1,
+                                                  a = 2,
                                                   activation = "tanh",
                                                   pseudoCounts = 10.))
     

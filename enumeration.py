@@ -84,13 +84,14 @@ def iterativeDeepeningEnumeration(g, request, frontierSize, budget=2.0, budgetIn
     return frontier
 
 
-def enumeration(g, context, environment, request, budget):
-    if budget <= 0:
+def enumeration(g, context, environment, request, budget, maximumDepth = 20):
+    if budget <= 0 or maximumDepth == 1:
         return
     if request.isArrow():
         v = request.arguments[0]
         for l, newContext, b in enumeration(g, context, [v] + environment,
-                                            request.arguments[1], budget):
+                                            request.arguments[1], budget,
+                                            maximumDepth = maximumDepth):
             yield l, newContext, Abstraction(b)
 
     else:
@@ -99,22 +100,26 @@ def enumeration(g, context, environment, request, budget):
         
         for l, t, p, newContext in candidates:
             xs = t.functionArguments()
-            for result in enumerateApplication(g, newContext, environment, p, l, xs, budget + l):
+            for result in enumerateApplication(g, newContext, environment, p, l, xs, budget + l,
+                                               maximumDepth = maximumDepth - 1):
                 yield result
 
 
 def enumerateApplication(g, context, environment,
-                         function, functionLikelihood, argumentRequests, budget):
+                         function, functionLikelihood, argumentRequests, budget,
+                         maximumDepth = 20):
     if argumentRequests == []:
         yield functionLikelihood, context, function
     else:
         argRequest = argumentRequests[0].apply(context)
         laterRequests = argumentRequests[1:]
-        for argL, newContext, arg in enumeration(g, context, environment, argRequest, budget):
+        for argL, newContext, arg in enumeration(g, context, environment, argRequest, budget,
+                                                 maximumDepth = maximumDepth):
             newFunction = Application(function, arg)
             for result in enumerateApplication(g, newContext, environment, newFunction,
                                                functionLikelihood + argL,
-                                               laterRequests, budget + argL):
+                                               laterRequests, budget + argL,
+                                               maximumDepth = maximumDepth):
                 yield result
 
 
