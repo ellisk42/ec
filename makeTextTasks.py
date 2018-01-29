@@ -6,7 +6,7 @@ import random
 
 
 
-delimiters = ['@','.',',',' '] #'<','>',
+delimiters = ['@','.',',',' ','<','>']
 
 def randomDelimiter():
     return random.choice(delimiters)
@@ -21,7 +21,7 @@ def randomWords(d):
 singleWordOperations = {"lowercase": lambda x: x.lower(),
                         "uppercase": lambda x: x.upper(),
                         "capitalize": lambda x: x.capitalize(),
-                        "double": lambda x: x + x,
+                        #"double": lambda x: x + x,
                         "first character": lambda x: x[0],
                         "first 2 characters": lambda x: x[:2],
                         "drop first character": lambda x: x[1:],
@@ -43,9 +43,9 @@ compatibleCompositions = {(case, character)
   ("drop first character", "first 2 characters"),
   ("drop first character","drop first character")
   }
-for x,y in compatibleCompositions:
-    assert x in singleWordOperations
-    assert y in singleWordOperations
+# for x,y in compatibleCompositions:
+#     assert x in singleWordOperations
+#     assert y in singleWordOperations
 
 
 
@@ -83,15 +83,15 @@ def makeTasks():
      for d1 in delimiters
      for d2 in delimiters
      if d1 != d2]
-    [problem("Apply %s.%s delimited by '%s' to input delimited by '%s'"%(n1,n2,d1,d2),
-             [(x,d2.join(map(f1,map(f2,x.split(d1)))))
-              for _ in range(NUMBEROFEXAMPLES)
-              for x in [randomWords(d1)] ])
-     for n1,f1 in singleWordOperations.iteritems()
-     for n2,f2 in singleWordOperations.iteritems()
-     if (n1,n2) in compatibleCompositions
-     for d1 in delimiters
-     for d2 in delimiters ]
+    # [problem("Apply %s.%s delimited by '%s' to input delimited by '%s'"%(n1,n2,d1,d2),
+    #          [(x,d2.join(map(f1,map(f2,x.split(d1)))))
+    #           for _ in range(NUMBEROFEXAMPLES)
+    #           for x in [randomWords(d1)] ])
+    #  for n1,f1 in singleWordOperations.iteritems()
+    #  for n2,f2 in singleWordOperations.iteritems()
+    #  if (n1,n2) in compatibleCompositions
+    #  for d1 in delimiters
+    #  for d2 in delimiters ]
     [problem("Extract prefix up to '%s' (exclusive)"%d,
                                      [(x,y)
                                       for _ in range(NUMBEROFEXAMPLES)
