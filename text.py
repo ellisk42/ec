@@ -60,6 +60,6 @@ if __name__ == "__main__":
                            **commandlineArguments(
                                frontierSize = 10**4,
                                iterations = 10,
-                               a = 2,
+                               a = 3,
                                featureExtractor = featureExtractor,
                                pseudoCounts = 10.0))

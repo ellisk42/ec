@@ -330,6 +330,8 @@ class FragmentGrammar(object):
             structure = sum(fragmentSize(p) for p in g.primitives)
             score = likelihood - aic*len(g) - structurePenalty*structure
 
+            #eprint("score",g.productions[-1][2], likelihood, structure)
+
             g.clearCache()
 
             return score, g
