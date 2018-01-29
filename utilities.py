@@ -39,7 +39,8 @@ def parallelMap(numberOfCPUs, f, *xs):
     inversePermutation = dict(zip(permutation, range(n)))
 
     workers = Pool(numberOfCPUs)
-    ys = workers.map(parallelMapCallBack, permutation)
+    chunk = max(1,int(n/(numberOfCPUs*2)))
+    ys = workers.map(parallelMapCallBack, permutation)#, chunksize = chunk)
     workers.terminate()
 
     PARALLELMAPDATA = None
@@ -190,5 +191,9 @@ def testTrainSplit(x, trainingFraction, seed = 0):
     train = [t for j,t in enumerate(x) if j in training ]
     test = [t for j,t in enumerate(x) if j not in training ]
     return test, train
+
+def numberOfCPUs():
+    import multiprocessing
+    return multiprocessing.cpu_count()
     
     
