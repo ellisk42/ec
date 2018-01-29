@@ -145,16 +145,20 @@ class RecognitionModel(nn.Module):
                     gc.collect()
 
     def sampleHelmholtzFrontier(self, requests):
-        request = random.choice(requests)
-        program = self.grammar.sample(request)
-        
-        # Make a dummy task object for the frontier to point to
-        task = RegressionTask(None, request, None, features = self.featureExtractor(program, request))
-        
-        # return a frontier that has just this program
-        return Frontier([FrontierEntry(program = program,
-                                       logPosterior = 0.)],
-                        task = task)
+        while True:
+            request = random.choice(requests)
+            program = self.grammar.sample(request)
+            features = self.featureExtractor(program, request)
+            # Feature extractor failure
+            if features is None: continue
+
+            # Make a dummy task object for the frontier to point to
+            task = RegressionTask(None, request, None, features = features)
+
+            # return a frontier that has just this program
+            return Frontier([FrontierEntry(program = program,
+                                           logPosterior = 0.)],
+                            task = task)
 
                 
 

@@ -59,10 +59,13 @@ class Circuit(object):
 
     def task(self):
         request = arrow(*[tbool for _ in range(self.numberOfInputs + 1) ])
-        features = [ float(int(y)) for _,y in self.examples ]
-        maximumFeatures = 2**MAXIMUMINPUTS
-        features = features + [-1.]*(maximumFeatures - len(features))
+        features = Circuit.extractFeatures(list(self.signature))
         return RegressionTask(self.name, request, self.examples, features = features, cache = True)
+    @staticmethod
+    def extractFeatures(ys):
+        features = [ float(int(y)) for y in ys ]
+        maximumFeatures = 2**MAXIMUMINPUTS
+        return features + [-1.]*(maximumFeatures - len(features))
 
     def evaluate(self,x):
         x = list(reversed(x))
@@ -89,6 +92,21 @@ class Circuit(object):
         if self.operations == []: return False
         usedIndices = used(self.operations[-1])
         return len(usedIndices) == len(self.operations) - 1
+
+
+def makeFeatureExtractor((averages, deviations)):
+    def featureExtractor(program, t):
+        numberOfInputs = len(t.functionArguments())
+        xs = list(itertools.product(*[ [False,True] for _ in range(numberOfInputs) ]))
+        f = program.evaluate([])
+        ys = []
+        for x in xs:
+            y = f
+            for x_ in x:
+                y = y(x_)
+            ys.append(y)
+        return RegressionTask.standardizeFeatures(averages, deviations, Circuit.extractFeatures(ys))
+    return featureExtractor
                 
 if __name__ == "__main__":
     tasks = []
@@ -101,13 +119,18 @@ if __name__ == "__main__":
             tasks.append(newTask)
     eprint("Sampled %d tasks with %d unique functions"%(len(tasks),
                                                        len({t.signature for t in tasks })))
+    tasks = [t.task() for t in tasks ]
+
+    statistics = RegressionTask.standardizeTasks(tasks)
+    featureExtractor = makeFeatureExtractor(statistics)
 
     baseGrammar = Grammar.uniform(primitives)
-    explorationCompression(baseGrammar, [ task.task() for task in tasks ],
+    explorationCompression(baseGrammar, tasks,
                            outputPrefix = "experimentOutputs/circuit",
                            **commandlineArguments(frontierSize = 500,
                                                   iterations = 10,
                                                   aic = 4.,
+                                                  featureExtractor = featureExtractor,
                                                   topK = 2,
                                                   maximumFrontier = 100,
                                                   a = 1,

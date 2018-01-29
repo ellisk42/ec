@@ -6,6 +6,7 @@ from program import *
 from type import *
 
 class GrammarFailure(Exception): pass
+class NoCandidates(Exception): pass
 
 class Grammar(object):
     def __init__(self, logVariable, productions):
@@ -46,7 +47,9 @@ class Grammar(object):
                         # Should be returned a table mapping primitives to their candidate entry?
                         returnTable = False,
                         # Should we return probabilities vs log probabilities?
-                        returnProbabilities = False):
+                        returnProbabilities = False,
+                        # Must be a leaf (have no arguments)?
+                        mustBeLeaf = False):
         """Primitives that are candidates for being used given a requested type
         If returnTable is false (default): returns [((log)likelihood, tp, primitive, context)]
         if returntable is true: returns {primitive: ((log)likelihood, tp, context)}"""
@@ -58,16 +61,22 @@ class Grammar(object):
             try:
                 newContext, t = t.instantiate(context)
                 newContext = newContext.unify(t.returns(), request)
-                candidates.append((l,t.apply(newContext),p,newContext))
+                t = t.apply(newContext)
+                if mustBeLeaf and t.isArrow(): continue
+                candidates.append((l,t,p,newContext))
             except UnificationFailure: continue
         for j,t in enumerate(environment):
             try:
                 newContext = context.unify(t.returns(), request)
-                variableCandidates.append((t.apply(newContext), Index(j), newContext))
+                t = t.apply(newContext)
+                if mustBeLeaf and t.isArrow(): continue
+                variableCandidates.append((t, Index(j), newContext))
             except UnificationFailure: continue
 
         candidates += [ (self.logVariable - log(len(variableCandidates)), t, p, k)
                         for t,p,k in variableCandidates ]
+        if candidates == []: raise NoCandidates()
+        
         if normalize:
             z = lse([ l for l,t,p,k in candidates ])
             if returnProbabilities: candidates = [ (exp(l - z), t, p, k) for l,t,p,k in candidates ]
@@ -78,19 +87,27 @@ class Grammar(object):
         else:
             return candidates
 
-    def sample(self, request):
-        _,e = self._sample(request, Context.EMPTY, [])
-        return e
-    def _sample(self, request, context, environment):
+    def sample(self, request, maximumDepth = 3):
+        while True:
+            try:
+                _,e = self._sample(request, Context.EMPTY, [], maximumDepth = maximumDepth)
+                return e
+            except NoCandidates: continue
+    def _sample(self, request, context, environment, maximumDepth):
         if request.isArrow():
             context, expression = self._sample(request.arguments[1],
                                                context,
-                                               [request.arguments[0]] + environment)
+                                               [request.arguments[0]] + environment,
+                                               maximumDepth)
             return context, Abstraction(expression)
-        
+
         candidates = self.buildCandidates(request, context, environment,
                                           normalize = True,
-                                          returnProbabilities = True)
+                                          returnProbabilities = True,
+                                          # Force it to terminate in a
+                                          # leaf; a primitive with no
+                                          # function arguments
+                                          mustBeLeaf = maximumDepth <= 1)
         newType, chosenPrimitive, context = sampleDistribution(candidates)
 
         # Sample the arguments
@@ -99,7 +116,7 @@ class Grammar(object):
 
         for x in xs:
             x = x.apply(context)
-            context, x = self._sample(x, context, environment)
+            context, x = self._sample(x, context, environment, maximumDepth - 1)
             returnValue = Application(returnValue, x)
 
         return context, returnValue        
