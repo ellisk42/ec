@@ -20,18 +20,18 @@ def parseResultsPath(p):
     parameters['domain'] = domain
     return Bunch(parameters)
 
-def plotECResult(results, colors = 'rgbky', label = None, title = None):
+def plotECResult(results, colors = 'rgbky', label = None, title = None, export = None):
     parameters = []
     for j,result in enumerate(results):
         parameters.append(parseResultsPath(result))
         with open(result,'rb') as handle: results[j] = pickle.load(handle)
 
-    f,a1 = plot.subplots(figsize = (4,3))
+    f,a1 = plot.subplots(figsize = (5,4))
     a1.set_xlabel('Iteration')
     a1.xaxis.set_major_locator(MaxNLocator(integer = True))
     a1.set_ylabel('% Hit Tasks (solid)')
     a2 = a1.twinx()
-    a2.set_ylabel('Avg description length in nats (dashed)')
+    a2.set_ylabel('Avg log likelihood (dashed)')
 
 
     for j, (color, result) in enumerate(zip(colors, results)):
@@ -43,13 +43,13 @@ def plotECResult(results, colors = 'rgbky', label = None, title = None):
             l.set_label(label(parameters[j]))
 
         a2.plot(range(1,len(result.averageDescriptionLength) + 1),
-                result.averageDescriptionLength,
+                [ -l for l in result.averageDescriptionLength],
                 color + '--')
 
     a1.set_ylim(ymin = 0, ymax = 110)
     a1.yaxis.grid()
     a1.set_yticks(range(0,110,10))
-    a2.set_ylim(ymin = 0)
+    #a2.set_ylim(ymax = 0)
     
     if title is not None:
         plot.title(title)
@@ -58,12 +58,28 @@ def plotECResult(results, colors = 'rgbky', label = None, title = None):
         a1.legend(loc = 'lower right', fontsize = 9)
         
     f.tight_layout()
-    plot.show()
+    if export:
+        plot.savefig(export)
+        os.system('convert -trim %s %s'%(export, export))
+        os.system('feh %s'%export)
+    else: plot.show()
 
 
 if __name__ == "__main__":
     import sys
-    plotECResult(sys.argv[1:],
-                 title = "DSL learning curves",
-                 label = lambda p: "%s, frontier size %s%s"%(p.domain, p.frontierSize,
-                                              " (neural)" if p.useRecognitionModel else ""))
+    def label(p):
+        l = "%s, frontier size %s"%(p.domain, p.frontierSize)
+        if p.useRecognitionModel:
+            if hasattr(p,'helmholtzRatio') and p.helmholtzRatio > 0:
+                l += " (neural Helmholtz)"
+            else:
+                l += " (neural)"
+        return l
+    arguments = sys.argv[1:]
+    export = [ a for a in arguments if a.endswith('.png') ]
+    export = export[0] if export else None
+    title = [ a for a in arguments if not any(a.endswith(s) for s in ['.png','.pickle'])  ]
+    plotECResult([ a for a in arguments if a.endswith('.pickle') ],
+                 export = export,
+                 title = title[0] if title else "DSL learning curves",
+                 label = label)
