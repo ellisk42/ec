@@ -26,7 +26,7 @@ def plotECResult(results, colors = 'rgbky', label = None, title = None):
         parameters.append(parseResultsPath(result))
         with open(result,'rb') as handle: results[j] = pickle.load(handle)
 
-    f,a1 = plot.subplots()
+    f,a1 = plot.subplots(figsize = (4,3))
     a1.set_xlabel('Iteration')
     a1.xaxis.set_major_locator(MaxNLocator(integer = True))
     a1.set_ylabel('% Hit Tasks (solid)')
@@ -55,7 +55,7 @@ def plotECResult(results, colors = 'rgbky', label = None, title = None):
         plot.title(title)
 
     if label is not None:
-        a1.legend(loc = 'best')
+        a1.legend(loc = 'lower right', fontsize = 9)
         
     f.tight_layout()
     plot.show()

@@ -1,6 +1,6 @@
 from ec import explorationCompression, commandlineArguments, RegressionTask
 from grammar import Grammar
-from utilities import eprint
+from utilities import eprint, testTrainSplit
 from makeTextTasks import makeTasks, delimiters
 from textPrimitives import primitives
 
@@ -24,10 +24,12 @@ if __name__ == "__main__":
         t.features = problemFeatures(t)
     eprint("Generated",len(tasks),"tasks")
 
-    RegressionTask.standardizeFeatures(tasks)
+    test, train = testTrainSplit(tasks, 0.5)
+
+    RegressionTask.standardizeFeatures(train)
 
     baseGrammar = Grammar.uniform(primitives)
-    explorationCompression(baseGrammar, tasks,
+    explorationCompression(baseGrammar, train,
                            outputPrefix = "experimentOutputs/text",
                            **commandlineArguments(
                                frontierSize = 10**4,

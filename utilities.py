@@ -179,3 +179,16 @@ def sampleDistribution(d):
             else: return t[1:]
         u += p
     assert False
+
+def testTrainSplit(x, trainingFraction, seed = 0):
+    import random
+    random.seed(seed)
+    training = range(len(x))
+    random.shuffle(training)
+    training = set(training[:int(len(x)*trainingFraction)])
+
+    train = [t for j,t in enumerate(x) if j in training ]
+    test = [t for j,t in enumerate(x) if j not in training ]
+    return test, train
+    
+    
