@@ -117,13 +117,14 @@ class CanonicalVisitor(object):
 def fragmentSize(f, variableCost = 0.3):
     freeVariables = 0
     leaves = 0
+    boundVariables = 0
     for surroundingAbstractions,e in f.walk():
         if isinstance(e,(Primitive,Invented)): leaves += 1
         if isinstance(e,Index):
-            if surroundingAbstractions > e.i: leaves += 1
+            if e.bound(surroundingAbstractions): boundVariables += 1
             else: freeVariables += 1
         assert not isinstance(e,FragmentVariable)
-    return leaves + variableCost*freeVariables
+    return leaves + variableCost*boundVariables
         
 def defragment(expression):
     '''Converts a fragment into an invented primitive'''
