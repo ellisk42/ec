@@ -32,6 +32,6 @@ primitives = [
     Primitive("find", arrow(tcharacter, tstring, tint),_find),
     #Primitive("replace", arrow(tstring, tstring, tstring, tstring),_replace),
     Primitive("split", arrow(tcharacter, tstring, tlist(tstring)),_split),
-    Primitive("join", arrow(tcharacter, tlist(tstring), tstring),_join),
+    Primitive("join", arrow(tstring, tlist(tstring), tstring),_join),
     Primitive("chr->str", arrow(tcharacter, tstring), _identity),
 ] + [ Primitive("'%s'"%d, tcharacter, d) for d in delimiters ]

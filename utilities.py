@@ -40,7 +40,7 @@ def parallelMap(numberOfCPUs, f, *xs):
 
     workers = Pool(numberOfCPUs)
     chunk = max(1,int(n/(numberOfCPUs*2)))
-    ys = workers.map(parallelMapCallBack, permutation)#, chunksize = chunk)
+    ys = workers.map(parallelMapCallBack, permutation, chunksize = chunk)
     workers.terminate()
 
     PARALLELMAPDATA = None
