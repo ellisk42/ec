@@ -49,7 +49,7 @@ if __name__ == "__main__":
         t.features = problemFeatures(t.examples)
     eprint("Generated",len(tasks),"tasks")
 
-    test, train = testTrainSplit(tasks, 0.5)
+    test, train = testTrainSplit(tasks, 0.8)
     
     statistics = RegressionTask.standardizeTasks(train)
     featureExtractor = makeFeatureExtractor(statistics, tasks)
