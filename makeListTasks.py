@@ -30,6 +30,12 @@ def hashable(v):
 
 
 def list_features(examples):
+    if type(examples[0][0][0]) == int:
+        # obtain features for number inputs as list of numbers
+        examples = [(([i],), o) for (i,), o in examples]
+    elif type(examples[0][0][0]) != list:
+        return []
+
     # assume all tasks have the same number of examples
     # and all inputs are lists
     features = []
@@ -115,13 +121,7 @@ def make_list_task(name, examples, **params):
         return
 
     program_type = arrow(input_type, output_type)
-    if type(i) == list:
-        features = list_features(examples)
-    elif type(i) == int:
-        # obtain features for number inputs as list of numbers
-        features = list_features([(([i],), o) for (i,), o in examples])
-    else:
-        features = []
+    features = list_features(examples)
     cache = hashable(i) and hashable(o)
 
     if params:
@@ -138,7 +138,7 @@ def make_list_task(name, examples, **params):
     yield RegressionTask(name, program_type, examples, features=features, cache=cache)
 
 
-def make_list_tasks(n_examples=10):
+def make_list_tasks(n_examples):
     for routine in lr.find(count=100):  # all routines
         if routine.id in EXCLUDES:
             continue
@@ -174,12 +174,13 @@ def make_list_tasks(n_examples=10):
             for t in make_list_task(routine.id, examples):
                 yield t
 
+N_EXAMPLES=15
 
 def main():
     import sys
     import cPickle as pickle
 
-    n_examples = 10
+    n_examples = N_EXAMPLES
     if len(sys.argv) > 1:
         n_examples = int(sys.argv[1])
 
