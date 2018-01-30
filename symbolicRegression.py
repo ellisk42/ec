@@ -14,17 +14,19 @@ EXAMPLES = range(-(NUMBEROFEXAMPLES/2),
                  (NUMBEROFEXAMPLES - NUMBEROFEXAMPLES/2))
 COEFFICIENTS = range(-(MAXIMUMCOEFFICIENT/2),
                      (MAXIMUMCOEFFICIENT - MAXIMUMCOEFFICIENT/2))
+print COEFFICIENTS
+print EXAMPLES
 tasks = [ DifferentiableTask("%dx^4 + %dx^3 + %dx^2 + %dx + %d"%(a,b,c,d,e),
                              arrow(tint,tint),
                              [((x,),a*x*x*x*x + b*x*x*x + c*x*x + d*x + e) for x in EXAMPLES ],
                              loss = squaredErrorLoss,
                              features = [float(a*x*x*x*x + b*x*x*x + c*x*x + d*x + e) for x in EXAMPLES ],
                              likelihoodThreshold = -0.1)
-          for a in range(MAXIMUMCOEFFICIENT+1)
-          for b in range(MAXIMUMCOEFFICIENT+1)
-          for c in range(MAXIMUMCOEFFICIENT+1)
-          for d in range(MAXIMUMCOEFFICIENT+1)
-          for e in range(MAXIMUMCOEFFICIENT+1)]
+          for a in COEFFICIENTS
+          for b in COEFFICIENTS
+          for c in COEFFICIENTS
+          for d in COEFFICIENTS
+          for e in COEFFICIENTS]
 
 def makeFeatureExtractor((averages, deviations)):
     def featureExtractor(program, tp):
@@ -39,7 +41,7 @@ def makeFeatureExtractor((averages, deviations)):
 class RandomParameterization(object):
     def primitive(self, e):
         if e.name == 'REAL':
-            v = random.choice(range(MAXIMUMCOEFFICIENT+1))
+            v = random.choice(COEFFICIENTS)
             return Primitive(str(v), e.tp, v)
         return e
     def invented(self,e): return e.body.visit(self)
@@ -54,6 +56,7 @@ if __name__ == "__main__":
     statistics = RegressionTask.standardizeTasks(tasks)
     featureExtractor = makeFeatureExtractor(statistics)
 
+    
     explorationCompression(baseGrammar, tasks,
                            outputPrefix = "experimentOutputs/regression",
                            **commandlineArguments(frontierSize = 10**2,
