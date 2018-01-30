@@ -74,7 +74,7 @@ def explorationCompression(grammar, tasks,
     if not useRecognitionModel:
         for k in ["KLRegularize","activation","helmholtzRatio"]: del parameters[k]
 
-    eprint("Running EC on %s with parameters:"%(os.uname()[1]))
+    eprint("Running EC on %s with %d CPUs and parameters:"%(os.uname()[1], CPUs))
     for k,v in parameters.iteritems():
         eprint("\t", k, " = ", v)
     eprint()
@@ -119,7 +119,7 @@ def explorationCompression(grammar, tasks,
             trainingFrontiers = [ f if not f.empty \
                                   else grammar.rescoreFrontier(result.taskSolutions[f.task])
                                   for f in frontiers ]
-            
+
             recognizer.train(trainingFrontiers, KLRegularize=KLRegularize, topK=topK,
                              featureExtractor = featureExtractor,
                              # Disable Helmholtz on the first iteration
@@ -312,7 +312,8 @@ def commandlineArguments(_=None,
                         type=float)
     parser.set_defaults(useRecognitionModel=useRecognitionModel,
                         KLRegularize=KLRegularize,
-                        featureExtractor = featureExtractor,
+                        featureExtractor=featureExtractor,
+                        maximumFrontier=maximumFrontier,
                         cuda=cuda)
     v = vars(parser.parse_args())
     #v.featureExtractor = featureExtractor

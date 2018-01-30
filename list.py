@@ -1,5 +1,5 @@
 from ec import explorationCompression, commandlineArguments
-from utilities import eprint
+from utilities import eprint, numberOfCPUs
 from listPrimitives import primitives
 from grammar import Grammar
 
@@ -20,10 +20,11 @@ if __name__ == "__main__":
     baseGrammar = Grammar.uniform(primitives)
     explorationCompression(baseGrammar, tasks,
                            outputPrefix="experimentOutputs/list",
-                           **commandlineArguments(frontierSize=20000,
+                           **commandlineArguments(frontierSize=15000,
                                                   activation='sigmoid',
                                                   a=2,
+                                                  maximumFrontier=2,
                                                   topK=2,
-                                                  CPUs=4,
+                                                  CPUs=numberOfCPUs(),
                                                   iterations=10,
                                                   pseudoCounts=10.0))

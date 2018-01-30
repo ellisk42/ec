@@ -5,6 +5,7 @@ from time import time
 import math
 
 
+class InferenceFailure(Exception): pass
 class ShiftFailure(Exception): pass
 class ParseFailure(Exception): pass
 
@@ -12,7 +13,11 @@ class Program(object):
     def __repr__(self): return str(self)
     def __ne__(self,o): return not (self == o)
     def __str__(self): return self.show(False)
-    def infer(self): return self.inferType(Context.EMPTY,[],{})[1].canonical()
+    def infer(self):
+        try:
+            return self.inferType(Context.EMPTY,[],{})[1].canonical()
+        except UnificationFailure as e:
+            raise InferenceFailure(self, e)
     def applicationParses(self): yield self,[]
     def applicationParse(self): return self,[]
     @property

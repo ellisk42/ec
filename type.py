@@ -122,7 +122,7 @@ class Context(object):
         t2 = t2.apply(self)
         if t1 == t2: return self
         # t1&t2 are not equal
-        if not t1.isPolymorphic and not t2.isPolymorphic: raise UnificationFailure()
+        if not t1.isPolymorphic and not t2.isPolymorphic: raise UnificationFailure(t1, t2)
 
         if isinstance(t1,TypeVariable):
             if t2.occurs(t1.v): raise Occurs()
@@ -130,7 +130,7 @@ class Context(object):
         if isinstance(t2,TypeVariable):
             if t1.occurs(t2.v): raise Occurs()
             return self.extend(t2.v,t1)
-        if t1.name != t2.name: raise UnificationFailure()
+        if t1.name != t2.name: raise UnificationFailure(t1, t2)
         k = self
         for x,y in zip(t2.arguments,t1.arguments):
             k = k.unify(x,y)
@@ -170,15 +170,15 @@ def arrow(*arguments):
     return TypeConstructor(ARROW,[arguments[0],arrow(*arguments[1:])])
 
 
-def guess_type(x):
+def guess_type(xs):
     """
     Return a TypeConstructor corresponding to x's python type.
     Raises an exception if the type cannot be guessed.
     """
-    types = {
-        bool: tbool,
-        int: tint,
-        list: tlist(tint),
-        str: tstring,
-    }
-    return types[type(x)]
+    if all(isinstance(x, bool) for x in xs): return tbool
+    elif all(isinstance(x, int) for x in xs): return tint
+    elif all(isinstance(x, str) for x in xs): return tstr
+    elif all(isinstance(x, list) for x in xs):
+        return tlist(guess_type([y for ys in xs for y in ys]))
+    else:
+        raise ValueError("cannot guess type from {}".format(xs))
