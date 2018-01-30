@@ -197,3 +197,7 @@ def numberOfCPUs():
     return multiprocessing.cpu_count()
     
     
+def loadPickle(f):
+    with open(f,'rb') as handle:
+        d = pickle.load(handle)
+    return d
