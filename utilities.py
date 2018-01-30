@@ -14,6 +14,15 @@ def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
 
 
+def hashable(v):
+    """Determine whether `v` can be hashed."""
+    try:
+        hash(v)
+    except TypeError:
+        return False
+    return True
+
+
 NEGATIVEINFINITY = float('-inf')
 POSITIVEINFINITY = float('inf')
 

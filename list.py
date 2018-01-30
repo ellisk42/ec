@@ -52,6 +52,9 @@ def list_clis(parser):
     parser.add_argument("--dataset", type=str,
         default="data/list_tasks.pkl",
         help="location of pickled list function dataset")
+    parser.add_argument("--maxTasks", type=int,
+        default=1000,
+        help="truncate tasks to fit within this boundary")
 
 if __name__ == "__main__":
     args = commandlineArguments(frontierSize=15000, activation='sigmoid',
@@ -60,9 +63,16 @@ if __name__ == "__main__":
         CPUs=numberOfCPUs(),
         extras=list_clis)
 
+    maxTasks = args["maxTasks"]
     tasks = retrieveTasks(args["dataset"])
     eprint("Got {} list tasks".format(len(tasks)))
+    if len(tasks) > maxTasks:
+        eprint("Unwilling to handle more than {} tasks, truncating..".format(maxTasks))
+        random.shuffle(tasks)
+        del tasks[maxTasks:]
+
     del args["dataset"]
+    del args["maxTasks"]
 
     statistics = RegressionTask.standardizeTasks(tasks)
     args["featureExtractor"] = makeFeatureExtractor(statistics)

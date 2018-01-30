@@ -20,21 +20,17 @@ EXCLUDES = {
 }
 
 
-def hashable(v):
-    """Determine whether `v` can be hashed."""
-    try:
-        hash(v)
-    except TypeError:
-        return False
-    return True
-
-
 def list_features(examples):
-    if type(examples[0][0][0]) == int:
+    if any(isinstance(i, int) for (i,), _ in examples):
         # obtain features for number inputs as list of numbers
         examples = [(([i],), o) for (i,), o in examples]
-    elif type(examples[0][0][0]) != list:
+    elif any(not isinstance(i, list) for (i,), _ in examples):
+        # can't handle non-lists
         return []
+    elif any(isinstance(x, list) for (xs,), _ in examples for x in xs):
+        # nested lists are hard to extract features for, so we'll
+        # obtain features as if flattened
+        examples = [(([x for xs in ys for x in xs],), o) for (ys,), o in examples]
 
     # assume all tasks have the same number of examples
     # and all inputs are lists
@@ -106,7 +102,6 @@ def list_features(examples):
 
 
 def make_list_task(name, examples, **params):
-    i, o = examples[0][0][0], examples[0][1]
     input_type = guess_type([i for (i,), _ in examples])
     output_type = guess_type([o for _, o in examples])
 
@@ -122,7 +117,7 @@ def make_list_task(name, examples, **params):
 
     program_type = arrow(input_type, output_type)
     features = list_features(examples)
-    cache = hashable(i) and hashable(o)
+    cache = all(hashable(x) for x in examples)
 
     if params:
         eq_params = ["{}={}".format(k, v) for k, v in params.items()]
