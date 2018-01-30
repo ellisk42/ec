@@ -8,8 +8,8 @@ from type import *
 from listPrimitives import primitives
 from makeListTasks import list_features, N_EXAMPLES
 
-def retrieveTasks():
-    with open("data/list_tasks.pkl") as f:
+def retrieveTasks(filename):
+    with open(filename) as f:
         return pickle.load(f)
 
 
@@ -48,22 +48,24 @@ def makeFeatureExtractor((averages, deviations)):
     return featureExtractor
 
 
+def list_clis(parser):
+    parser.add_argument("--dataset", type=str,
+        default="data/list_tasks.pkl",
+        help="location of pickled list function dataset")
+
 if __name__ == "__main__":
-    tasks = retrieveTasks()
+    args = commandlineArguments(frontierSize=15000, activation='sigmoid',
+        a=2, maximumFrontier=2, topK=2,
+        iterations=10, pseudoCounts=10.0,
+        CPUs=numberOfCPUs(),
+        extras=list_clis)
+
+    tasks = retrieveTasks(args["dataset"])
     eprint("Got {} list tasks".format(len(tasks)))
+    del args["dataset"]
 
     statistics = RegressionTask.standardizeTasks(tasks)
-    featureExtractor = makeFeatureExtractor(statistics)
+    args["featureExtractor"] = makeFeatureExtractor(statistics)
 
     baseGrammar = Grammar.uniform(primitives)
-    explorationCompression(baseGrammar, tasks,
-                           outputPrefix="experimentOutputs/list",
-                           **commandlineArguments(frontierSize=15000,
-                                                  activation='sigmoid',
-                                                  a=2,
-                                                  maximumFrontier=2,
-                                                  topK=2,
-                                                  CPUs=numberOfCPUs(),
-                                                  featureExtractor=featureExtractor,
-                                                  iterations=10,
-                                                  pseudoCounts=10.0))
+    explorationCompression(baseGrammar, tasks, outputPrefix="experimentOutputs/list", **args)

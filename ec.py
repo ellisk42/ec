@@ -232,7 +232,8 @@ def commandlineArguments(_=None,
                          maximumFrontier=None,
                          pseudoCounts=1.0, aic=1.0,
                          structurePenalty=0.001, a=0,
-                         KLRegularize=None):
+                         KLRegularize=None,
+                         extras=None):
     if cuda is None:
         cuda = torch.cuda.is_available()
     import argparse
@@ -315,6 +316,8 @@ def commandlineArguments(_=None,
                         featureExtractor=featureExtractor,
                         maximumFrontier=maximumFrontier,
                         cuda=cuda)
+    if extras is not None:
+        extras(parser)
     v = vars(parser.parse_args())
     #v.featureExtractor = featureExtractor
     return v
