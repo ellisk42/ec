@@ -124,6 +124,7 @@ sudo shutdown -h now
 
 def launchExperiment(name, command, upload=None, tar=False, shutdown=True, size="t2.micro"):
     job_id = "{}_{}_{}".format(name, user(), datetime.now().strftime("%FT%T"))
+    job_id = job_id.replace(":", ".")
     if upload is None:
         if shutdown:
             print "You didn't specify an upload host, and also specify that the machine should shut down afterwards. These options are incompatible because this would mean that you couldn't get the experiment outputs."
