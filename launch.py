@@ -108,7 +108,7 @@ sudo shutdown -h now
     print "Sending git patch over to",address
     os.system("git diff --stat")
     os.system("""
-        (echo "Base-Ref: $(git rev-parse HEAD)" ; echo ; git diff origin/master) | \
+        (echo "Base-Ref: $(git rev-parse origin/master)" ; echo ; git diff origin/master) | \
         ssh -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem \
             ubuntu@{} 'cat > ~/ec/patch'
         """.format(address))
