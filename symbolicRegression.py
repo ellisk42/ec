@@ -14,8 +14,6 @@ EXAMPLES = range(-(NUMBEROFEXAMPLES/2),
                  (NUMBEROFEXAMPLES - NUMBEROFEXAMPLES/2))
 COEFFICIENTS = range(-(MAXIMUMCOEFFICIENT/2),
                      (MAXIMUMCOEFFICIENT - MAXIMUMCOEFFICIENT/2))
-print COEFFICIENTS
-print EXAMPLES
 tasks = [ DifferentiableTask("%dx^4 + %dx^3 + %dx^2 + %dx + %d"%(a,b,c,d,e),
                              arrow(tint,tint),
                              [((x,),a*x*x*x*x + b*x*x*x + c*x*x + d*x + e) for x in EXAMPLES ],
@@ -61,5 +59,6 @@ if __name__ == "__main__":
                            outputPrefix = "experimentOutputs/regression",
                            **commandlineArguments(frontierSize = 10**2,
                                                   iterations = 5,
+                                                  CPUs = numberOfCPUs(),
                                                   featureExtractor = featureExtractor,
                                                   pseudoCounts = 10.0))
