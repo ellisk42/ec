@@ -216,4 +216,5 @@ def proposeFragmentsFromFrontiers(frontiers,a):
         frequencies[f] = 0
         for frontierFragments in fragmentsFromEachFrontier:
             if f in frontierFragments: frequencies[f] += 1
-    return [ fragment for fragment,frequency in frequencies.iteritems() if frequency >= 2 ]
+    return [ fragment for fragment,frequency in frequencies.iteritems()
+             if frequency >= 2 and fragment.wellTyped() ]

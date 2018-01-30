@@ -18,6 +18,12 @@ class Program(object):
             return self.inferType(Context.EMPTY,[],{})[1].canonical()
         except UnificationFailure as e:
             raise InferenceFailure(self, e)
+    def wellTyped(self):
+        try:
+            self.infer()
+            return True
+        except InferenceFailure:
+            return False
     def applicationParses(self): yield self,[]
     def applicationParse(self): return self,[]
     @property
@@ -146,7 +152,8 @@ class Index(Program):
             return (context, environment[self.i].apply(context))
         else:
             i = self.i - len(environment)
-            if i in freeVariables: return (context, freeVariables[i].apply(context))
+            if i in freeVariables:
+                return (context, freeVariables[i].apply(context))
             context, variable = context.makeVariable()
             freeVariables[i] = variable
             return (context, variable)

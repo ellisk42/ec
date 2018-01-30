@@ -95,3 +95,8 @@ primitives = [ Primitive(str(j), tint, j) for j in range(10) ] + [
     # Program.parse("(lambda (lambda (filter (lambda (eq? ($2 $0) 0)) $0)))"),
     # Program.parse("(lambda (lambda (filter (lambda (not (eq? ($2 $0) 0))) $0)))"),
 ]
+
+if __name__ == "__main__":
+    e = Program.parse("($0 (lambda (gt? $0 $2)) ($0 (lambda $0) $2))")
+    print e
+    print e.infer()
