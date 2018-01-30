@@ -10,8 +10,9 @@ primitives = [addition, multiplication, real]
 
 MAXIMUMCOEFFICIENT = 5
 NUMBEROFEXAMPLES = 5
-EXAMPLES = range(-(NUMBEROFEXAMPLES/2),
-                 (NUMBEROFEXAMPLES - NUMBEROFEXAMPLES/2))
+EXAMPLERANGE = 1.
+EXAMPLES = [ -EXAMPLERANGE + j*(2*EXAMPLERANGE/(NUMBEROFEXAMPLES-1))
+             for j in range(NUMBEROFEXAMPLES) ]
 COEFFICIENTS = range(-(MAXIMUMCOEFFICIENT/2),
                      (MAXIMUMCOEFFICIENT - MAXIMUMCOEFFICIENT/2))
 tasks = [ DifferentiableTask("%dx^4 + %dx^3 + %dx^2 + %dx + %d"%(a,b,c,d,e),
