@@ -61,9 +61,7 @@ jobs experimentOutputs {}""".format(upload)
         preamble += """
 chmod 600 ~/.ssh/id_rsa
 chmod 600 ~/.ssh/id_rsa.pub
-bash -c "while sleep %d
-do %s
-done" &
+bash -c "while sleep %d; do %s; done" &
 UPLOADPID=$!
 """%(UPLOADFREQUENCY, uploadCommand)
     
