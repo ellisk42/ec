@@ -54,7 +54,7 @@ def makeTasks():
     NUMBEROFEXAMPLES = 4
     problems = []
     def problem(n, examples):
-        problems.append(RegressionTask(n, arrow(tstring,tstring),
+        problems.append(RegressionTask(n, arrow(tstr,tstr),
                                        [((x,),y) for x,y in examples ]))
     
     [problem(n, [(x,f(x)) for _ in range(NUMBEROFEXAMPLES) for x in [randomWord()] ])
@@ -82,7 +82,16 @@ def makeTasks():
      for n,f in singleWordOperations.iteritems()
      for d1 in delimiters
      for d2 in delimiters
-     if d1 != d2]
+     if d1 != d2 and \
+     n not in ['lowercase','uppercase']]
+    [problem("Apply %s to input delimited by '%s'"%(n,d),
+             [(x, "".join(map(f,x.split(d))))
+              for _ in range(NUMBEROFEXAMPLES)
+              for x in [randomWords(d)] ])
+     for n,f in singleWordOperations.iteritems()
+     for d in delimiters
+     if n not in ['lowercase','uppercase']
+     ]
     [problem("Extract prefix up to '%s' (exclusive)"%d,
                                      [(x,y)
                                       for _ in range(NUMBEROFEXAMPLES)

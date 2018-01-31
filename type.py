@@ -157,7 +157,7 @@ def instantiateTypes(context, ts):
     
 tint = TypeConstructor("int",[])
 tbool = TypeConstructor("bool",[])
-tstring = TypeConstructor("string",[])
+tstr = TypeConstructor("string",[])
 tcharacter = TypeConstructor("char",[])
 def tlist(t): return TypeConstructor("list",[t])
 t0 = TypeVariable(0)
