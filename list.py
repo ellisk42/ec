@@ -68,6 +68,7 @@ if __name__ == "__main__":
     eprint("Got {} list tasks".format(len(tasks)))
     if len(tasks) > maxTasks:
         eprint("Unwilling to handle more than {} tasks, truncating..".format(maxTasks))
+        random.seed(42)
         random.shuffle(tasks)
         del tasks[maxTasks:]
 
