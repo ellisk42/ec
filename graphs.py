@@ -41,7 +41,7 @@ def PCAembedding(e):
                  [ v[1] for v in vectors ])
     for p,v in e.iteritems():
         plot.annotate(prettyProgram(p), v)
-    
+
 def plotECResult(results, colors = 'rgbky', label = None, title = None, export = None):
     parameters = []
     for j,result in enumerate(results):
@@ -72,26 +72,27 @@ def plotECResult(results, colors = 'rgbky', label = None, title = None, export =
     a1.yaxis.grid()
     a1.set_yticks(range(0,110,10))
     #a2.set_ylim(ymax = 0)
-    
+
     if title is not None:
         plot.title(title)
 
     if label is not None:
         a1.legend(loc = 'lower right', fontsize = 9)
-        
+
     f.tight_layout()
     if export:
         plot.savefig(export)
-        os.system('convert -trim %s %s'%(export, export))
+        if export.endswith('.png'):
+            os.system('convert -trim %s %s'%(export, export))
         os.system('feh %s'%export)
     else: plot.show()
 
     for result in results:
-        if result.embedding is not None:
+        if 'embedding' in result.__dict__ and embedding is not None:
             plot.figure()
             PCAembedding(result.embedding)
             if export:
-                export = export[:-len(".png")] + "_embedding.png"
+                export = export[:-4] + "_embedding" + export[-4:]
                 plot.savefig(export)
             else: plot.show()
 
@@ -107,9 +108,9 @@ if __name__ == "__main__":
                 l += " (neural)"
         return l
     arguments = sys.argv[1:]
-    export = [ a for a in arguments if a.endswith('.png') ]
+    export = [ a for a in arguments if a.endswith('.png') or a.endswith('.eps') ]
     export = export[0] if export else None
-    title = [ a for a in arguments if not any(a.endswith(s) for s in ['.png','.pickle'])  ]
+    title = [ a for a in arguments if not any(a.endswith(s) for s in {'.eps', '.png', '.pickle'})  ]
     plotECResult([ a for a in arguments if a.endswith('.pickle') ],
                  export = export,
                  title = title[0] if title else "DSL learning curves",
