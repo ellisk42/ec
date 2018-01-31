@@ -29,6 +29,9 @@ def enumerateFrontiers(g, frontierSize, tasks, CPUs=1, maximumFrontier=None, ver
         lambda request: (request, iterativeDeepeningEnumeration(g, request, frontierSize,
                                                                 showDescriptionLength = verbose)),
         uniqueRequests))
+    # for _,f in frontiers.iteritems():
+    #     for _,e in f: eprint(e)
+    # for t in tasks: eprint(t)
     totalNumberOfPrograms = sum(len(f) for f in frontiers.values())
     totalNumberOfFrontiers = len(frontiers)
 

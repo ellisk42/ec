@@ -13,8 +13,9 @@ NUMBEROFEXAMPLES = 5
 EXAMPLERANGE = 2.
 EXAMPLES = [ -EXAMPLERANGE + j*(2*EXAMPLERANGE/(NUMBEROFEXAMPLES-1))
              for j in range(NUMBEROFEXAMPLES) ]
-COEFFICIENTS = range(-(MAXIMUMCOEFFICIENT/2),
-                     (MAXIMUMCOEFFICIENT - MAXIMUMCOEFFICIENT/2))
+COEFFICIENTS = [ c for c in range(-(MAXIMUMCOEFFICIENT/2),
+                                   (MAXIMUMCOEFFICIENT - MAXIMUMCOEFFICIENT/2))
+                 if c != 1 ]
 def sign(n): return ['+','-'][int(n < 0)]
 tasks = [ DifferentiableTask("%s%dx^4 %s %dx^3 %s %dx^2 %s %dx %s %d"%(" " if a >= 0 else "",a,
                                                                        sign(b),abs(b),
@@ -67,6 +68,8 @@ if __name__ == "__main__":
         (* $0 (+ REAL
         (* $0 (+ REAL 
         (* $0 REAL)))))))))""")
+        e = Program.parse("""(lambda (+ REAL
+        (* $0 REAL)))""")
         eprint(e)
         from fragmentGrammar import *
         f = FragmentGrammar.uniform(baseGrammar.primitives + [Program.parse("(+ REAL $0)")])
@@ -86,5 +89,7 @@ if __name__ == "__main__":
                                                   iterations = 10,
                                                   CPUs = numberOfCPUs(),
                                                   structurePenalty = 5.,
+                                                  maximumFrontier = 1000,
+                                                  topK = 2,
                                                   featureExtractor = featureExtractor,
                                                   pseudoCounts = 10.0))
