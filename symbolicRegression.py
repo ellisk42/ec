@@ -10,7 +10,7 @@ primitives = [addition, multiplication, real]
 
 MAXIMUMCOEFFICIENT = 5
 NUMBEROFEXAMPLES = 5
-EXAMPLERANGE = 1.
+EXAMPLERANGE = 2.
 EXAMPLES = [ -EXAMPLERANGE + j*(2*EXAMPLERANGE/(NUMBEROFEXAMPLES-1))
              for j in range(NUMBEROFEXAMPLES) ]
 COEFFICIENTS = range(-(MAXIMUMCOEFFICIENT/2),
@@ -54,12 +54,14 @@ if __name__ == "__main__":
     baseGrammar = Grammar.uniform(primitives)
     statistics = RegressionTask.standardizeTasks(tasks)
     featureExtractor = makeFeatureExtractor(statistics)
-
     
-    explorationCompression(baseGrammar, tasks,
+    test, train = testTrainSplit(tasks, 500/float(len(tasks)))
+    
+    explorationCompression(baseGrammar, train,
                            outputPrefix = "experimentOutputs/regression",
                            **commandlineArguments(frontierSize = 10**2,
-                                                  iterations = 5,
+                                                  iterations = 10,
                                                   CPUs = numberOfCPUs(),
+                                                  structurePenalty = 5.,
                                                   featureExtractor = featureExtractor,
                                                   pseudoCounts = 10.0))

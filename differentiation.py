@@ -2,6 +2,8 @@ import math
 import random
 from utilities import *
 
+class InvalidLoss(Exception): pass
+
 class DN(object):
     '''differentiable node: parent object of every differentiable operation'''
     def __init__(self, arguments):
@@ -115,11 +117,7 @@ class DN(object):
                 for p in parameters:
                     eprint(p.data,'\t',p.derivative)
             if invalid(l):
-                eprint("Invalid loss detected",l)
-                if update == None:
-                    for p in parameters: p.data = 0
-                    self.gradientDescent(parameters, lr = lr, steps = steps, update = 1)
-                raise Exception('invalid loss')
+                raise InvalidLoss()
                     
             for p in parameters:
                 p.data -= lr*p.derivative
