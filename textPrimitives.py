@@ -15,6 +15,7 @@ def _replace(original): return lambda replacement: lambda target: target.replace
 def _split(delimiter): return lambda s: s.split(delimiter)
 def _join(delimiter): return lambda ss: delimiter.join(ss)
 def _identity(x): return x
+#def _reverse(x): return x[::-1]
 
 primitives = [
     Primitive("0",tint,0),

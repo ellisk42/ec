@@ -21,7 +21,7 @@ def randomWords(d):
 singleWordOperations = {"lowercase": lambda x: x.lower(),
                         "uppercase": lambda x: x.upper(),
                         "capitalize": lambda x: x.capitalize(),
-                        #"double": lambda x: x + x,
+                        "double": lambda x: x + x,
                         "first character": lambda x: x[0],
                         "first 2 characters": lambda x: x[:2],
                         "drop first character": lambda x: x[1:],
