@@ -3,6 +3,7 @@ from grammar import Grammar
 from utilities import eprint, testTrainSplit, numberOfCPUs
 from makeTextTasks import makeTasks, delimiters
 from textPrimitives import primitives
+from program import *
 
 import random
 
@@ -50,18 +51,19 @@ if __name__ == "__main__":
     eprint("Generated",len(tasks),"tasks")
 
     test, train = testTrainSplit(tasks, 0.8)
-    
+
     statistics = RegressionTask.standardizeTasks(train)
     featureExtractor = makeFeatureExtractor(statistics, tasks)
 
     baseGrammar = Grammar.uniform(primitives)
+
     explorationCompression(baseGrammar, train,
                            outputPrefix = "experimentOutputs/text",
                            **commandlineArguments(
                                frontierSize = 10**4,
                                iterations = 10,
                                a = 3,
-                               activation = "tanh",
+                               activation = "relu",
                                CPUs = numberOfCPUs(),
                                featureExtractor = featureExtractor,
                                pseudoCounts = 10.0))

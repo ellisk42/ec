@@ -21,7 +21,7 @@ primitives = [
     Primitive("len",arrow(tstring,tint),len),
     Primitive("incr",arrow(tint,tint),_increment),
     Primitive("decr",arrow(tint,tint),_decrement),
-    Primitive("empty",tcharacter,""),
+    Primitive("empty",tstring,""),
     Primitive("caseLower",arrow(tstring,tstring), _lower),
     Primitive("caseUpper",arrow(tstring,tstring), _upper),
     Primitive("caseCapitalize",arrow(tstring,tstring), _capitalize),
