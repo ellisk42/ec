@@ -57,9 +57,9 @@ def list_clis(parser):
         help="truncate tasks to fit within this boundary")
 
 if __name__ == "__main__":
-    args = commandlineArguments(frontierSize=15000, activation='sigmoid',
-        a=2, maximumFrontier=2, topK=2,
-        iterations=10, pseudoCounts=10.0,
+    args = commandlineArguments(
+        frontierSize=10000, activation='sigmoid', iterations=10,
+        a=3, topK=3, pseudoCounts=10.0,
         CPUs=numberOfCPUs(),
         extras=list_clis)
 

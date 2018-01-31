@@ -11,3 +11,4 @@
 *.pyc
 __pycache__
 experimentOutputs
+jobs

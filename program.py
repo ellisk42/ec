@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from type import *
 from utilities import *
 
@@ -403,3 +405,59 @@ class ShareVisitor(object):
     def execute(self,e):
         return e.visit(self)
         
+class PrettyVisitor(object):
+    def __init__(self):
+        self.numberOfVariables = 0
+        self.freeVariables = {}
+
+        self.variableNames = ["x","y","z","u","v","w"]
+        self.variableNames += [chr(ord('a') + j)
+                               for j in range(20) ]
+        self.toplevel = True
+    def makeVariable(self):
+        v = self.variableNames[self.numberOfVariables]
+        self.numberOfVariables += 1
+        return v
+    def invented(self,e,environment,isFunction,isAbstraction):
+        s = e.body.visit(self,[],isFunction,isAbstraction)
+        return s
+    def primitive(self,e,environment,isVariable,isAbstraction): return e.name
+    def index(self,e,environment,isVariable,isAbstraction):
+        if e.i < len(environment):
+            return environment[e.i]
+        else:
+            i = e.i - len(environment)
+            if i in self.freeVariables:
+                return self.freeVariables[i]
+            else:
+                v = self.makeVariable()
+                self.freeVariables[i] = v
+                return v
+            
+    def application(self,e,environment,isFunction,isAbstraction):
+        self.toplevel = False
+        s = u"%s %s"%(e.f.visit(self,environment,True,False),
+                      e.x.visit(self,environment,False,False))
+        if isFunction: return s
+        else: return u"(" + s + u")"
+    def abstraction(self,e,environment,isFunction,isAbstraction):
+        toplevel = self.toplevel
+        self.toplevel = False
+        # Invent a new variable
+        v = self.makeVariable()
+        
+        body = e.body.visit(self,
+                            [v]+environment,
+                            False,
+                            True)
+        if not e.body.isAbstraction:
+            body = u"." + body
+        body = v + body
+        if not isAbstraction:
+            body = u"λ" + body
+        if not toplevel:
+            body = u"(%s)"%body
+        return body
+
+def prettyProgram(e):
+    return e.visit(PrettyVisitor(),[],True,False)

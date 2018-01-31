@@ -1,5 +1,7 @@
 from ec import *
 
+import numpy as np
+
 import matplotlib.pyplot as plot
 from matplotlib.ticker import MaxNLocator
 
@@ -20,6 +22,26 @@ def parseResultsPath(p):
     parameters['domain'] = domain
     return Bunch(parameters)
 
+def PCAembedding(e):
+    primitives = e.keys()
+    matrix = np.array([ e[p] for p in primitives ])
+    N,D = matrix.shape
+
+    from sklearn.decomposition import PCA
+    from sklearn.preprocessing import scale
+
+    matrix = scale(matrix)
+    solver = PCA(n_components = 2)
+    matrix = solver.fit_transform(matrix)
+
+    e = dict({p: matrix[j,:]
+              for j,p in enumerate(primitives) })
+    vectors = e.values()
+    plot.scatter([ v[0] for v in vectors ],
+                 [ v[1] for v in vectors ])
+    for p,v in e.iteritems():
+        plot.annotate(prettyProgram(p), v)
+    
 def plotECResult(results, colors = 'rgbky', label = None, title = None, export = None):
     parameters = []
     for j,result in enumerate(results):
@@ -63,6 +85,15 @@ def plotECResult(results, colors = 'rgbky', label = None, title = None, export =
         os.system('convert -trim %s %s'%(export, export))
         os.system('feh %s'%export)
     else: plot.show()
+
+    for result in results:
+        if result.embedding is not None:
+            plot.figure()
+            PCAembedding(result.embedding)
+            if export:
+                export = export[:-len(".png")] + "_embedding.png"
+                plot.savefig(export)
+            else: plot.show()
 
 
 if __name__ == "__main__":

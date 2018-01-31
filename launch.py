@@ -36,7 +36,9 @@ def launch(size = "t2.micro", name = ""):
 def sendCommand(address, script, job_id, upload, tar, shutdown):
     import tempfile
     preamble = """#!/bin/bash
+sudo pip install https://lists.lucasem.com/listroutines-1.0.0-py2.py3-none-any.whl
 cd ~/ec
+rm experimentOutputs/*
 git pull
 git apply patch
 mkdir jobs
