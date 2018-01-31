@@ -88,7 +88,7 @@ def plotECResult(results, colors = 'rgbky', label = None, title = None, export =
     else: plot.show()
 
     for result in results:
-        if 'embedding' in result.__dict__ and embedding is not None:
+        if 'embedding' in result.__dict__ and result.embedding is not None:
             plot.figure()
             PCAembedding(result.embedding)
             if export:
