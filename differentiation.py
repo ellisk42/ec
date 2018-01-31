@@ -116,8 +116,7 @@ class DN(object):
                 eprint("LOSS:",l)
                 for p in parameters:
                     eprint(p.data,'\t',p.derivative)
-            if invalid(l):
-                raise InvalidLoss()
+            if invalid(l): raise InvalidLoss()
                     
             for p in parameters:
                 p.data -= lr*p.derivative
@@ -133,12 +132,7 @@ class DN(object):
                 eprint("LOSS:",l)
                 for p in parameters:
                     eprint(p.data,'\t',p.derivative)
-            if invalid(l):
-                eprint("Invalid loss detected",l)
-                if update == None:
-                    for p in parameters: p.data = 0
-                    self.gradientDescent(parameters, lr = lr, steps = steps, update = 1)
-                raise Exception('invalid loss')
+            if invalid(l): raise InvalidLoss()
 
             newSigns = [ p.derivative > 0 for p in parameters ]
             for i,p in enumerate(parameters):
