@@ -130,8 +130,7 @@ class DN(object):
 
             if update is not None and j%update == 0:
                 eprint("LOSS:",l)
-                for p in parameters:
-                    eprint(p.data,'\t',p.derivative)
+                eprint("\t".join(str(p.derivative) for p in parameters))
             if invalid(l): raise InvalidLoss()
 
             newSigns = [ p.derivative > 0 for p in parameters ]
@@ -257,8 +256,7 @@ class LSE(DN):
         zm = sum( math.exp(x - m) for x in xs )
         return [ math.exp(x - m)/zm for x in xs ]
 
-        
-        
+
 if __name__ == "__main__":
     x = Placeholder(10.,"x")
     y = Placeholder(2.,"y")

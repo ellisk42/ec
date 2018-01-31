@@ -104,7 +104,8 @@ class DifferentiableTask(RegressionTask):
                     for x,y in self.examples ) / float(len(self.examples))
         if isinstance(loss, DN):
             try:
-                loss = loss.resilientBackPropagation(parameters, lr = 0.05, steps = 50)
+                loss = loss.resilientBackPropagation(parameters, lr = 0.05, steps = 500,
+                                                     update = None)
             except InvalidLoss:
                 loss = POSITIVEINFINITY
             

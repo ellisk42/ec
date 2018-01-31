@@ -8,19 +8,24 @@ from program import *
 
 primitives = [addition, multiplication, real]
 
-MAXIMUMCOEFFICIENT = 5
+MAXIMUMCOEFFICIENT = 7
 NUMBEROFEXAMPLES = 5
 EXAMPLERANGE = 2.
 EXAMPLES = [ -EXAMPLERANGE + j*(2*EXAMPLERANGE/(NUMBEROFEXAMPLES-1))
              for j in range(NUMBEROFEXAMPLES) ]
 COEFFICIENTS = range(-(MAXIMUMCOEFFICIENT/2),
                      (MAXIMUMCOEFFICIENT - MAXIMUMCOEFFICIENT/2))
-tasks = [ DifferentiableTask("%dx^4 + %dx^3 + %dx^2 + %dx + %d"%(a,b,c,d,e),
+def sign(n): return ['+','-'][int(n < 0)]
+tasks = [ DifferentiableTask("%s%dx^4 %s %dx^3 %s %dx^2 %s %dx %s %d"%(" " if a >= 0 else "",a,
+                                                                       sign(b),abs(b),
+                                                                       sign(c),abs(c),
+                                                                       sign(d),abs(d),
+                                                                       sign(e),abs(e)),
                              arrow(tint,tint),
                              [((x,),a*x*x*x*x + b*x*x*x + c*x*x + d*x + e) for x in EXAMPLES ],
                              loss = squaredErrorLoss,
                              features = [float(a*x*x*x*x + b*x*x*x + c*x*x + d*x + e) for x in EXAMPLES ],
-                             likelihoodThreshold = -0.1)
+                             likelihoodThreshold = -0.3)
           for a in COEFFICIENTS
           for b in COEFFICIENTS
           for c in COEFFICIENTS
@@ -33,7 +38,6 @@ def makeFeatureExtractor((averages, deviations)):
         f = e.evaluate([])
         outputs = [float(f(x)) for x in EXAMPLES]
         features = RegressionTask.standardizeFeatures(averages, deviations, outputs)
-        # eprint("program %s instantiates to %s; has outputs %s ; features %s"%(program, e, outputs, features))
         return features
     return featureExtractor
 
@@ -56,6 +60,25 @@ if __name__ == "__main__":
     featureExtractor = makeFeatureExtractor(statistics)
     
     test, train = testTrainSplit(tasks, 500/float(len(tasks)))
+
+    # e = Program.parse("""(lambda (+ REAL
+    # (* $0 (+ REAL
+    # (* $0 (+ REAL
+    # (* $0 (+ REAL 
+    # (* $0 REAL)))))))))""")
+    # eprint(e)
+    # from fragmentGrammar import *
+    # f = FragmentGrammar.uniform(baseGrammar.primitives + [Program.parse("(+ REAL $0)")])
+    
+    # eprint(f.closedLogLikelihood(arrow(tint,tint),e))
+    # random.shuffle(tasks)
+    # biggest = POSITIVEINFINITY
+    # for t in train:
+    #     l = t.logLikelihood(e)
+    #     eprint(t, l)
+    #     biggest = min(biggest,l)
+    # eprint(biggest)
+    # assert False
     
     explorationCompression(baseGrammar, train,
                            outputPrefix = "experimentOutputs/regression",
