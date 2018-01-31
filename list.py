@@ -36,7 +36,7 @@ def makeFeatureExtractor((averages, deviations)):
         elif isIntFunction(tp):
             sample = lambda: random.randint(0, 20)
         else: return None
-        for _ in xrange(2000):
+        for _ in xrange(N_EXAMPLES*5):
             x = sample()
             try:
                 y = e(x)
