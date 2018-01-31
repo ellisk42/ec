@@ -8,7 +8,7 @@ from program import *
 
 primitives = [addition, multiplication, real]
 
-MAXIMUMCOEFFICIENT = 7
+MAXIMUMCOEFFICIENT = 9
 NUMBEROFEXAMPLES = 5
 EXAMPLERANGE = 2.
 EXAMPLES = [ -EXAMPLERANGE + j*(2*EXAMPLERANGE/(NUMBEROFEXAMPLES-1))
@@ -25,7 +25,7 @@ tasks = [ DifferentiableTask("%s%dx^4 %s %dx^3 %s %dx^2 %s %dx %s %d"%(" " if a 
                              [((x,),a*x*x*x*x + b*x*x*x + c*x*x + d*x + e) for x in EXAMPLES ],
                              loss = squaredErrorLoss,
                              features = [float(a*x*x*x*x + b*x*x*x + c*x*x + d*x + e) for x in EXAMPLES ],
-                             likelihoodThreshold = -0.3)
+                             likelihoodThreshold = -0.5)
           for a in COEFFICIENTS
           for b in COEFFICIENTS
           for c in COEFFICIENTS
@@ -60,25 +60,25 @@ if __name__ == "__main__":
     featureExtractor = makeFeatureExtractor(statistics)
     
     test, train = testTrainSplit(tasks, 500/float(len(tasks)))
-
-    # e = Program.parse("""(lambda (+ REAL
-    # (* $0 (+ REAL
-    # (* $0 (+ REAL
-    # (* $0 (+ REAL 
-    # (* $0 REAL)))))))))""")
-    # eprint(e)
-    # from fragmentGrammar import *
-    # f = FragmentGrammar.uniform(baseGrammar.primitives + [Program.parse("(+ REAL $0)")])
     
-    # eprint(f.closedLogLikelihood(arrow(tint,tint),e))
-    # random.shuffle(tasks)
-    # biggest = POSITIVEINFINITY
-    # for t in train:
-    #     l = t.logLikelihood(e)
-    #     eprint(t, l)
-    #     biggest = min(biggest,l)
-    # eprint(biggest)
-    # assert False
+    if False:
+        e = Program.parse("""(lambda (+ REAL
+        (* $0 (+ REAL
+        (* $0 (+ REAL
+        (* $0 (+ REAL 
+        (* $0 REAL)))))))))""")
+        eprint(e)
+        from fragmentGrammar import *
+        f = FragmentGrammar.uniform(baseGrammar.primitives + [Program.parse("(+ REAL $0)")])
+
+        eprint(f.closedLogLikelihood(arrow(tint,tint),e))
+        biggest = POSITIVEINFINITY
+        for t in train:
+            l = t.logLikelihood(e)
+            eprint(t, l)
+            biggest = min(biggest,l)
+        eprint(biggest)
+        assert False
     
     explorationCompression(baseGrammar, train,
                            outputPrefix = "experimentOutputs/regression",
