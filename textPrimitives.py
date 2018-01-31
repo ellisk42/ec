@@ -16,6 +16,7 @@ def _split(delimiter): return lambda s: s.split(delimiter)
 def _join(delimiter): return lambda ss: delimiter.join(ss)
 def _identity(x): return x
 #def _reverse(x): return x[::-1]
+def _strip(x): return x.strip()
 
 primitives = [
     Primitive("0",tint,0),
@@ -32,6 +33,7 @@ primitives = [
     Primitive("map", arrow(arrow(tstr,tstr), tlist(tstr), tlist(tstr)),_map),
     #Primitive("find", arrow(tcharacter, tstr, tint),_find),
     #Primitive("replace", arrow(tstr, tstr, tstr, tstr),_replace),
+    Primitive("strip", arrow(tstr,tstr),_strip),
     Primitive("split", arrow(tcharacter, tstr, tlist(tstr)),_split),
     Primitive("join", arrow(tstr, tlist(tstr), tstr),_join),
     Primitive("chr->str", arrow(tcharacter, tstr), _identity),

@@ -15,6 +15,25 @@ def randomCharacter():
     return chr(ord(random.choice(['a','A'])) + random.choice(range(26)))
 def randomWord():
     return "".join([randomCharacter() for _ in range(random.choice(range(3,6))) ])
+def randomWhiteWord():
+    # Word with white space interspersed
+    w = "".join([randomCharacter() for _ in range(random.choice(range(4,7))) ])
+
+    # Put up to 2 random spaces into the word
+    numberOfSpaces = random.choice(range(3))
+    for _ in range(numberOfSpaces):
+        j = random.choice(range(1,len(w)))
+        w = w[:j] + " " + w[j:]
+
+    # Put up to 2 spaces onto the start and end
+    while True:
+        starting = random.choice(range(0,3))
+        ending = random.choice(range(0,3))
+        if starting > 0 or ending > 0:
+            return " "*starting + w + " "*ending
+def randomWhiteWords(d):
+    assert d != " "
+    return d.join(randomWhiteWord() for _ in range(random.choice(range(2,5))) )
 def randomWords(d):
     return d.join([randomWord() for _ in range(random.choice(range(2,5))) ])
 
@@ -22,6 +41,7 @@ singleWordOperations = {"lowercase": lambda x: x.lower(),
                         "uppercase": lambda x: x.upper(),
                         "capitalize": lambda x: x.capitalize(),
                         "double": lambda x: x + x,
+                        #"strip": lambda x: x.strip(),
                         "first character": lambda x: x[0],
                         "first 2 characters": lambda x: x[:2],
                         "drop first character": lambda x: x[1:],
@@ -59,6 +79,13 @@ def makeTasks():
     
     [problem(n, [(x,f(x)) for _ in range(NUMBEROFEXAMPLES) for x in [randomWord()] ])
      for n,f in singleWordOperations.iteritems() ]
+    problem("strip", [(x, x.strip())
+                      for _ in range(NUMBEROFEXAMPLES)
+                      for x in [randomWhiteWord()] ])
+    for n,f in singleWordOperations.iteritems():
+        problem(n+".strip", [(x,f(x.strip()))
+                             for _ in range(NUMBEROFEXAMPLES)
+                             for x in [randomWhiteWord()] ])
     [problem(n1 + "." + n2, 
              [(x,f1(f2(x))) for _ in range(NUMBEROFEXAMPLES) for x in [randomWord()] ])
      for n1,f1 in singleWordOperations.iteritems()
@@ -84,6 +111,13 @@ def makeTasks():
      for d2 in delimiters
      if d1 != d2 and \
      n not in ['lowercase','uppercase']]
+    for d1 in delimiters:
+        if d1 == ' ': continue
+        for d2 in delimiters:
+            problem("Apply strip delimited by '%s' to input delimited by '%s'"%(d1,d2),
+                    [(x,d2.join(map(lambda z: z.strip(),x.split(d1))))
+                     for _ in range(NUMBEROFEXAMPLES)
+                     for x in [randomWhiteWords(d1)] ])
     [problem("Apply %s to input delimited by '%s'"%(n,d),
              [(x, "".join(map(f,x.split(d))))
               for _ in range(NUMBEROFEXAMPLES)
@@ -149,6 +183,14 @@ def makeTasks():
                       for n,f in singleWordOperations.iteritems()
                         for d1 in delimiters
                         for d2 in delimiters]
+    for d1 in delimiters:
+        for d2 in delimiters:
+            if d1 == ' ' or d2 == ' ': continue
+            problem("Apply strip to string delimited by '%s','%s'"%(d1,d2),
+                    [(x, y.strip())
+                     for _ in range(NUMBEROFEXAMPLES)
+                     for y in [randomWhiteWord()]
+                     for x in [randomWord() + d1 + y + d2 + randomWord()] ])
     return problems
 
 
