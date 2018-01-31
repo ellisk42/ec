@@ -20,7 +20,9 @@ class ECResult():
                  grammars=None,
                  taskSolutions=None,
                  averageDescriptionLength=None,
-                 parameters=None):
+                 parameters=None,
+                 embedding=None):
+        self.embedding = embedding
         self.averageDescriptionLength = averageDescriptionLength or []
         self.parameters = parameters
         self.learningCurve = learningCurve or []
@@ -95,7 +97,8 @@ def explorationCompression(grammar, tasks,
         grammar = result.grammars[-1]
     else:  # Start from scratch
         result = ECResult(parameters=parameters, grammars=[grammar],
-                          taskSolutions = { t: Frontier([], task = t) for t in tasks })
+                          taskSolutions = { t: Frontier([], task = t) for t in tasks },
+                          embedding = None)
 
     for j in range(resume or 0, iterations):
         frontiers = callCompiled(enumerateFrontiers, grammar, frontierSize, tasks,
@@ -144,6 +147,9 @@ def explorationCompression(grammar, tasks,
             bottomupFrontiers = [ grammar.rescoreFrontier(f) for f in bottomupFrontiers ]
 
             frontiers = [f.combine(b) for f, b in zip(frontiers, bottomupFrontiers)]
+
+            # For visualization we save an embedding vector for each of the learned primitives
+            result.embedding = recognizer.getEmbedding()
         elif j > 0:
             result.averageDescriptionLength.append(
                 -sum(f.bestPosterior.logPosterior for f in frontiers if not f.empty)
