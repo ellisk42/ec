@@ -17,16 +17,17 @@ COEFFICIENTS = [ c for c in range(-(MAXIMUMCOEFFICIENT/2),
                                    (MAXIMUMCOEFFICIENT - MAXIMUMCOEFFICIENT/2))
                  if c != 1 ]
 def sign(n): return ['+','-'][int(n < 0)]
-tasks = [ DifferentiableTask("%s%dx^4 %s %dx^3 %s %dx^2 %s %dx %s %d"%(" " if a >= 0 else "",a,
-                                                                       sign(b),abs(b),
-                                                                       sign(c),abs(c),
-                                                                       sign(d),abs(d),
-                                                                       sign(e),abs(e)),
-                             arrow(tint,tint),
-                             [((x,),a*x*x*x*x + b*x*x*x + c*x*x + d*x + e) for x in EXAMPLES ],
-                             loss = squaredErrorLoss,
-                             features = [float(a*x*x*x*x + b*x*x*x + c*x*x + d*x + e) for x in EXAMPLES ],
-                             likelihoodThreshold = -0.5)
+tasks = [ ((a,b,c,d,e),
+           DifferentiableTask("%s%dx^4 %s %dx^3 %s %dx^2 %s %dx %s %d"%(" " if a >= 0 else "",a,
+                                                                        sign(b),abs(b),
+                                                                        sign(c),abs(c),
+                                                                        sign(d),abs(d),
+                                                                        sign(e),abs(e)),
+                              arrow(tint,tint),
+                              [((x,),a*x*x*x*x + b*x*x*x + c*x*x + d*x + e) for x in EXAMPLES ],
+                              loss = squaredErrorLoss,
+                              features = [float(a*x*x*x*x + b*x*x*x + c*x*x + d*x + e) for x in EXAMPLES ],
+                              likelihoodThreshold = -0.5))
           for a in COEFFICIENTS
           for b in COEFFICIENTS
           for c in COEFFICIENTS
@@ -56,11 +57,27 @@ class RandomParameterization(object):
 RandomParameterization.single = RandomParameterization()
     
 if __name__ == "__main__":
+    # Split the tasks up by the order of the polynomial
+    polynomials = {}
+    for coefficients, task in tasks:
+        o = max([len(coefficients) - j - 1
+                 for j,c in enumerate(coefficients) if c != 0] + [0])
+        polynomials[o] = polynomials.get(o,[])
+        polynomials[o].append(task)
+
+    # Sample a training set
+    random.seed(0)
+    for p in polynomials.values(): random.shuffle(p)
+    tasks = polynomials[1][:56] + \
+            polynomials[2][:44] + \
+            polynomials[3][:100] + \
+            polynomials[4][:100]
+    
     baseGrammar = Grammar.uniform(primitives)
     statistics = RegressionTask.standardizeTasks(tasks)
     featureExtractor = makeFeatureExtractor(statistics)
     
-    test, train = testTrainSplit(tasks, 500/float(len(tasks)))
+    train = tasks
     
     if False:
         e = Program.parse("""(lambda (+ REAL
@@ -68,8 +85,6 @@ if __name__ == "__main__":
         (* $0 (+ REAL
         (* $0 (+ REAL 
         (* $0 REAL)))))))))""")
-        e = Program.parse("""(lambda (+ REAL
-        (* $0 REAL)))""")
         eprint(e)
         from fragmentGrammar import *
         f = FragmentGrammar.uniform(baseGrammar.primitives + [Program.parse("(+ REAL $0)")])
