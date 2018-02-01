@@ -266,8 +266,8 @@ class RecurrentFeatureExtractor(nn.Module):
             
                 
 if __name__ == "__main__":
-    m = RecurrentFeatureExtractor(lexicon = [1,2,3], discrete = True, numberOfInputs = 2,
-                                  bidirectional = True)
-    print m.forward([([[1,2,1],
-                       [1,2,1,2,2]],
-                      [1])])
+    m = RecurrentFeatureExtractor(lexicon = [1,2,3], discrete = False, numberOfInputs = 5,
+                                  bidirectional = False)
+    print m.forward([([[1.9],
+                       [1.]],
+                      [1.2])])
