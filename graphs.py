@@ -22,7 +22,7 @@ def parseResultsPath(p):
     parameters['domain'] = domain
     return Bunch(parameters)
 
-def PCAembedding(e):
+def PCAembedding(e,g):
     primitives = e.keys()
     matrix = np.array([ e[p] for p in primitives ])
     N,D = matrix.shape
@@ -39,8 +39,15 @@ def PCAembedding(e):
     vectors = e.values()
     plot.scatter([ v[0] for v in vectors ],
                  [ v[1] for v in vectors ])
+    best = [ p
+             for l,t,p in sorted(g.productions, reverse = True)
+             if p.isInvented or p.isPrimitive ][:10]
     for p,v in e.iteritems():
-        plot.annotate(prettyProgram(p), v)
+        if p in best:
+            eprint(p)
+            plot.annotate(prettyProgram(p),
+                          (v[0] + random.random(),
+                           v[1] + random.random()))
 
 def plotECResult(results, colors = 'rgbky', label = None, title = None, export = None):
     parameters = []
@@ -90,7 +97,7 @@ def plotECResult(results, colors = 'rgbky', label = None, title = None, export =
     for result in results:
         if 'embedding' in result.__dict__ and result.embedding is not None:
             plot.figure()
-            PCAembedding(result.embedding)
+            PCAembedding(result.embedding, result.grammars[-1])
             if export:
                 export = export[:-4] + "_embedding" + export[-4:]
                 plot.savefig(export)
