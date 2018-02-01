@@ -68,5 +68,5 @@ if __name__ == "__main__":
                                a = 3,
                                activation = "relu",
                                CPUs = numberOfCPUs(),
-                               featureExtractor = FeatureExtractor,
+                               featureExtractor = LearnedFeatureExtractor,
                                pseudoCounts = 10.0))

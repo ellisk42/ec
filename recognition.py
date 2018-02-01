@@ -236,7 +236,7 @@ class RecurrentFeatureExtractor(nn.Module):
         return self.outputLayer(exampleEncodings).clamp(min = 0)
 
     def featuresOfTask(self, t): return self(t.examples)
-    def featuresOfProgram(self, p, t):
+    def featuresOfProgram(self, p, tp):
         candidateInputs = list(self.requestToInputs[tp])
         # Loop over the inputs in a random order and pick the first one that doesn't generate an exception
         random.shuffle(candidateInputs)

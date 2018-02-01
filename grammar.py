@@ -173,6 +173,16 @@ class Grammar(object):
                                         logLikelihood = e.logLikelihood)
                           for e in frontier ],
                         frontier.task)
+
+    def smartlyInitialize(self, expectedSize):
+        frequencies = {}
+        for _,t,p in self.productions:
+            a = len(t.functionArguments())
+            frequencies[a] = frequencies.get(a,0) + 1
+        return Grammar(-log(frequencies[0]),
+                       [(-log(frequencies[len(t.functionArguments())]) - len(t.functionArguments())*expectedSize,
+                         t,p) for l,t,p in self.productions ])
+            
         
 
 class LikelihoodSummary(object):
