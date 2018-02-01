@@ -43,6 +43,7 @@ def explorationCompression(grammar, tasks,
                            iterations=None,
                            resume=None,
                            frontierSize=None,
+                           expandFrontier=None,
                            useRecognitionModel=True,
                            helmholtzRatio=0.,
                            featureExtractor = None,
@@ -115,6 +116,14 @@ def explorationCompression(grammar, tasks,
                           embedding = None)
 
     for j in range(resume or 0, iterations):
+        if j >= 2 and expandFrontier and result.learningCurve[-2] == result.learningCurve[-1]:
+            oldFrontierSize = frontierSize
+            if expandFrontier <= 10:
+                frontierSize = int(frontierSize * expandFrontier)
+            else:
+                frontierSize = int(frontierSize + expandFrontier)
+            eprint("Expanding frontier from {} to {} because of no progress".format(
+                oldFrontierSize, frontierSize))
         frontiers = callCompiled(enumerateFrontiers, grammar, frontierSize, tasks,
                                  maximumFrontier=maximumFrontier, CPUs=CPUs)
 
@@ -271,6 +280,10 @@ def commandlineArguments(_=None,
                         default=frontierSize,
                         help="default: %d" % frontierSize,
                         type=int)
+    parser.add_argument("-F", "--expandFrontier", metavar="FACTOR-OR-AMOUNT",
+                        default=None,
+                        help="if an iteration passes where no new tasks have been solved, the frontier is expanded. If the given value is less than 10, it is scaled (e.g. 1.5), otherwise it is grown (e.g. 2000).",
+                        type=float)
     parser.add_argument("-k", "--topK",
                         default=topK,
                         help="When training generative and discriminative models, we train them to fit the top K programs. Ideally we would train them to fit the entire frontier, but this is often intractable. default: %d" % topK,
