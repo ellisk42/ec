@@ -7,28 +7,29 @@ from task import RegressionTask
 from type import *
 from listPrimitives import primitives
 from makeListTasks import list_features, N_EXAMPLES
+from recognition import HandCodedFeatureExtractor
 
 def retrieveTasks(filename):
     with open(filename) as f:
         return pickle.load(f)
 
+def isListFunction(tp):
+    try:
+        Context().unify(tp, arrow(tlist(tint), t0))
+        return True
+    except UnificationFailure:
+        return False
 
-def makeFeatureExtractor((averages, deviations)):
-    def isListFunction(tp):
-        try:
-            Context().unify(tp, arrow(tlist(tint), t0))
-            return True
-        except UnificationFailure:
-            return False
+def isIntFunction(tp):
+    try:
+        Context().unify(tp, arrow(tint, t0))
+        return True
+    except UnificationFailure:
+        return False
 
-    def isIntFunction(tp):
-        try:
-            Context().unify(tp, arrow(tint, t0))
-            return True
-        except UnificationFailure:
-            return False
 
-    def featureExtractor(program, tp):
+class FeatureExtractor(HandCodedFeatureExtractor):
+    def _featuresOfProgram(self, program, tp):
         e = program.evaluate([])
         examples = []
         if isListFunction(tp):
@@ -44,8 +45,7 @@ def makeFeatureExtractor((averages, deviations)):
             except: continue
             if len(examples) >= N_EXAMPLES: break
         else: return None
-        return RegressionTask.standardizeFeatures(averages, deviations, list_features(examples))
-    return featureExtractor
+        return list_features(examples)
 
 
 def list_clis(parser):
@@ -75,8 +75,7 @@ if __name__ == "__main__":
     del args["dataset"]
     del args["maxTasks"]
 
-    statistics = RegressionTask.standardizeTasks(tasks)
-    args["featureExtractor"] = makeFeatureExtractor(statistics)
+    args["featureExtractor"] = FeatureExtractor
 
     baseGrammar = Grammar.uniform(primitives)
     explorationCompression(baseGrammar, tasks, outputPrefix="experimentOutputs/list", **args)

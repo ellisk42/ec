@@ -91,7 +91,7 @@ class RecognitionModel(nn.Module):
                                 for k,(_,t,program) in enumerate(self.grammar.productions) ])
         return - g.closedLogLikelihood(tp, sample)
 
-    def train(self, frontiers, _=None, steps=10, lr=0.001, topK=1, CPUs=1,
+    def train(self, frontiers, _=None, steps=500, lr=0.001, topK=1, CPUs=1,
               helmholtzRatio = 0.):
         """
         helmholtzRatio: What fraction of the training data should be forward samples from the generative model?
