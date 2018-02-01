@@ -62,6 +62,7 @@ if __name__ == "__main__":
                            **commandlineArguments(
                                frontierSize = 10**4,
                                iterations = 10,
+                               helmholtzRatio = 0.5,
                                structurePenalty = 5.,
                                a = 3,
                                activation = "relu",
