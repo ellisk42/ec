@@ -63,6 +63,8 @@ if __name__ == "__main__":
                                frontierSize = 10**4,
                                iterations = 10,
                                helmholtzRatio = 0.5,
+                               topK = 2,
+                               maximumFrontier = 1000,
                                structurePenalty = 5.,
                                a = 3,
                                activation = "relu",
