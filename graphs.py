@@ -8,6 +8,10 @@ from matplotlib.ticker import MaxNLocator
 class Bunch(object):
     def __init__(self,d):
         self.__dict__.update(d)
+    def __setitem__(self, key, item):
+        self.__dict__[key] = item
+    def __getitem__(self, key):
+        return self.__dict__[key]
 
 relu = 'relu'
 tanh = 'tanh'
@@ -16,8 +20,11 @@ sigmoid = 'sigmoid'
 def parseResultsPath(p):
     p = p[:p.rfind('.')]
     domain = p[p.rindex('/')+1 : p.index('_')]
+    rest = p.split('_')[1:]
+    if rest[-1] == "baselines":
+        rest.pop()
     parameters = { k: eval(v)
-                   for binding in p.split('_')[1:]
+                   for binding in rest
                    for [k,v] in [binding.split('=')] }
     parameters['domain'] = domain
     return Bunch(parameters)
@@ -49,11 +56,22 @@ def PCAembedding(e,g):
                           (v[0] + random.random(),
                            v[1] + random.random()))
 
-def plotECResult(results, colors = 'rgbky', label = None, title = None, export = None):
+def plotECResult(resultPaths, colors='rgbycm', label=None, title=None, export=None):
+    results = []
     parameters = []
-    for j,result in enumerate(results):
-        parameters.append(parseResultsPath(result))
-        with open(result,'rb') as handle: results[j] = pickle.load(handle)
+    for j,path in enumerate(resultPaths):
+        with open(path,'rb') as handle:
+            result = pickle.load(handle)
+            if hasattr(result, "baselines") and result.baselines:
+                for name, res in result.baselines.iteritems():
+                    results.append(res)
+                    p = parseResultsPath(path)
+                    p["baseline"] = name.replace("_", " ")
+                    parameters.append(p)
+            else:
+                results.append(result)
+                p = parseResultsPath(path)
+                parameters.append(p)
 
     f,a1 = plot.subplots(figsize = (5,4))
     a1.set_xlabel('Iteration')
@@ -62,14 +80,16 @@ def plotECResult(results, colors = 'rgbky', label = None, title = None, export =
     a2 = a1.twinx()
     a2.set_ylabel('Avg log likelihood (dashed)')
 
+    n_iters = max(len(result.learningCurve) for result in results)
 
-    for j, (color, result) in enumerate(zip(colors, results)):
-        l, = a1.plot(range(1,len(result.learningCurve) + 1),
-                    [ 100. * x / len(result.taskSolutions)
-                      for x in result.learningCurve],
-                    color + '-')
+    for color, result, p in zip(colors, results, parameters):
+        if hasattr(p, "baseline"):
+            ys = [ 100. * result.learningCurve[-1] / len(result.taskSolutions) ]*n_iters
+        else:
+            ys = [ 100. * x / len(result.taskSolutions) for x in result.learningCurve]
+        l, = a1.plot(range(1, len(ys) + 1), ys, color + '-')
         if label is not None:
-            l.set_label(label(parameters[j]))
+            l.set_label(label(p))
 
         a2.plot(range(1,len(result.averageDescriptionLength) + 1),
                 [ -l for l in result.averageDescriptionLength],
@@ -95,7 +115,7 @@ def plotECResult(results, colors = 'rgbky', label = None, title = None, export =
     else: plot.show()
 
     for result in results:
-        if 'embedding' in result.__dict__ and result.embedding is not None:
+        if hasattr(result, 'embedding') and result.embedding is not None:
             plot.figure()
             PCAembedding(result.embedding, result.grammars[-1])
             if export:
@@ -107,7 +127,11 @@ def plotECResult(results, colors = 'rgbky', label = None, title = None, export =
 if __name__ == "__main__":
     import sys
     def label(p):
-        l = "%s, frontier size %s"%(p.domain, p.frontierSize)
+        l = p.domain
+        if hasattr(p, 'baseline'):
+            l += " (baseline %s)"%p.baseline
+            return l
+        l += ", frontier size %s"%p.frontierSize
         if p.useRecognitionModel:
             if hasattr(p,'helmholtzRatio') and p.helmholtzRatio > 0:
                 l += " (neural Helmholtz)"
