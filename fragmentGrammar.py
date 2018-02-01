@@ -314,49 +314,45 @@ class FragmentGrammar(object):
         
         bestGrammar = FragmentGrammar.fromGrammar(g0)
 
-        initialLogPrior = [  [ bestGrammar.closedLogLikelihood(f.task.request, e.program) for e in f ]
-                             for f in frontiers ]
-            
-        
         # "restricted frontiers" only contain the top K according to the best grammar
         def restrictFrontiers():
             return parallelMap(CPUs, lambda f: bestGrammar.rescoreFrontier(f).topK(topK),
                                frontiers)
-        restrictedFrontiers = restrictFrontiers()
+        restrictedFrontiers = []
 
         def grammarScore(g):
             g = g.makeUniform().insideOutside(restrictedFrontiers, pseudoCounts)
             likelihood = g.jointFrontiersMDL(restrictedFrontiers)
             structure = sum(fragmentSize(p) for p in g.primitives)
             score = likelihood - aic*len(g) - structurePenalty*structure
-
-            #eprint("score",g.productions[-1][2], likelihood, structure)
-
             g.clearCache()
-
             return score, g
 
-        bestScore, _ = grammarScore(bestGrammar)
 
-        while True:
+        if aic != POSITIVEINFINITY:
             restrictedFrontiers = restrictFrontiers()
-            fragments = [ fragment for fragment in proposeFragmentsFromFrontiers(restrictedFrontiers, a)
-                          if not fragment in bestGrammar.primitives ]
-            eprint("Proposed %d fragments."%len(fragments))
-                
-            candidateGrammars = [ FragmentGrammar.uniform(bestGrammar.primitives + [fragment])
-                                  for fragment in fragments ]
-            if candidateGrammars == []: break
+            bestScore, _ = grammarScore(bestGrammar)
+            while True:
+                restrictedFrontiers = restrictFrontiers()
+                fragments = [ fragment for fragment in proposeFragmentsFromFrontiers(restrictedFrontiers, a)
+                              if not fragment in bestGrammar.primitives ]
+                eprint("Proposed %d fragments."%len(fragments))
 
-            scoredFragments = parallelMap(CPUs, grammarScore, candidateGrammars)
-            (newScore, newGrammar) = max(scoredFragments)
-                    
-            if newScore > bestScore:
-                dS = newScore - bestScore
-                bestScore, bestGrammar = newScore, newGrammar
-                _,newType,newPrimitive = bestGrammar.productions[-1]
-                eprint("New primitive of type %s\t%s (score = %f; dScore = %f)"%(newType,newPrimitive,newScore,dS))
-            else: break
+                candidateGrammars = [ FragmentGrammar.uniform(bestGrammar.primitives + [fragment])
+                                      for fragment in fragments ]
+                if candidateGrammars == []: break
+
+                scoredFragments = parallelMap(CPUs, grammarScore, candidateGrammars)
+                (newScore, newGrammar) = max(scoredFragments)
+
+                if newScore > bestScore:
+                    dS = newScore - bestScore
+                    bestScore, bestGrammar = newScore, newGrammar
+                    _,newType,newPrimitive = bestGrammar.productions[-1]
+                    eprint("New primitive of type %s\t%s (score = %f; dScore = %f)"%(newType,newPrimitive,newScore,dS))
+                else: break
+        else:
+            eprint("Skipping fragment proposals")
 
         if False:
             # Reestimate the parameters using the entire frontiers

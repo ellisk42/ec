@@ -8,6 +8,7 @@ from task import *
 from enumeration import *
 from grammar import *
 from fragmentGrammar import *
+import baselines
 
 import os
 
@@ -21,13 +22,16 @@ class ECResult():
                  taskSolutions=None,
                  averageDescriptionLength=None,
                  parameters=None,
-                 embedding=None):
+                 embedding=None,
+                 baselines=None):
         self.embedding = embedding
         self.averageDescriptionLength = averageDescriptionLength or []
         self.parameters = parameters
         self.learningCurve = learningCurve or []
         self.grammars = grammars or []
         self.taskSolutions = taskSolutions or {}
+        # baselines is a dictionary of name -> ECResult
+        self.baselines = baselines or {}
 
     def __repr__(self):
         attrs = ["{}={}".format(k, v) for k, v in self.__dict__.items()]
@@ -40,7 +44,7 @@ def explorationCompression(grammar, tasks,
                            resume=None,
                            frontierSize=None,
                            useRecognitionModel=True,
-                           helmholtzRatio = 0.,
+                           helmholtzRatio=0.,
                            featureExtractor = None,
                            activation='relu',
                            KLRegularize=0.1,
@@ -50,6 +54,8 @@ def explorationCompression(grammar, tasks,
                            structurePenalty=0.001, arity=0,
                            CPUs=1,
                            cuda=False,
+                           message="",
+                           onlyBaselines=False,
                            outputPrefix=None):
     if frontierSize is None:
         eprint("Please specify a frontier size:",
@@ -66,21 +72,35 @@ def explorationCompression(grammar, tasks,
     # We save the parameters that were passed into EC
     # This is for the purpose of exporting the results of the experiment
     parameters = {k: v for k, v in locals().iteritems()
-                  if k not in ["tasks", "grammar", "cuda", "_", "CPUs", "outputPrefix", "resume", "featureExtractor"]}
+                  if k not in {"tasks", "grammar", "cuda", "_",
+                               "message", "CPUs", "outputPrefix",
+                               "resume", "featureExtractor"}}
     if not useRecognitionModel:
         for k in ["KLRegularize","activation","helmholtzRatio"]: del parameters[k]
-
-    eprint("Running EC on %s with %d CPUs and parameters:"%(os.uname()[1], CPUs))
-    for k,v in parameters.iteritems():
-        eprint("\t", k, " = ", v)
-    eprint()
-        
 
     # Uses `parameters` to construct the checkpoint path
     def checkpointPath(iteration, extra=""):
         parameters["iterations"] = iteration
         kvs = ["{}={}".format(k, parameters[k]) for k in sorted(parameters.keys())]
         return "{}_{}{}.pickle".format(outputPrefix, "_".join(kvs), extra)
+
+    if onlyBaselines:
+        result = ECResult()
+        result.baselines = baselines.all(grammar, tasks,
+            CPUs=CPUs, cuda=cuda, featureExtractor=featureExtractor,
+            **parameters)
+        if outputPrefix is not None:
+            path = checkpointPath(0, extra="_baselines")
+            with open(path, "wb") as f:
+                pickle.dump(result, f)
+            eprint("Exported checkpoint to", path)
+        return result
+
+    if message: message = " ("+message+")"
+    eprint("Running EC%s on %s with %d CPUs and parameters:"%(message, os.uname()[1], CPUs))
+    for k,v in parameters.iteritems():
+        eprint("\t", k, " = ", v)
+    eprint()
 
     # Restore checkpoint
     if resume is not None:
@@ -233,6 +253,7 @@ def commandlineArguments(_=None,
                          pseudoCounts=1.0, aic=1.0,
                          structurePenalty=0.001, a=0,
                          KLRegularize=None,
+                         onlyBaselines=False,
                          extras=None):
     if cuda is None:
         cuda = torch.cuda.is_available()
@@ -311,6 +332,8 @@ def commandlineArguments(_=None,
                         dest="helmholtzRatio",
                         help="""When training recognition models, what fraction of the training data should be samples from the generative model? Default %f""" % helmholtzRatio,
                         type=float)
+    parser.add_argument("-B", "--baselines", dest="onlyBaselines", action="store_true",
+                        help="only compute baselines")
     parser.set_defaults(useRecognitionModel=useRecognitionModel,
                         KLRegularize=KLRegularize,
                         featureExtractor=featureExtractor,
