@@ -185,3 +185,89 @@ class RecognitionModel(nn.Module):
                             grammars, frontierSize, tasks,
                             CPUs = CPUs, maximumFrontier = maximumFrontier)
 
+class RecurrentFeatureExtractor(nn.Module):
+    def __init__(self,
+                 # number of inputs per example
+                 numberOfInputs = 1,
+                 # what are the symbols that can occur in the inputs and outputs
+                 lexicon = None,
+                 # are the predictions discrete or continuous
+                 discrete = True,
+                 # how many hidden units
+                 H = 32,
+                 # dimensionality of the output
+                 O = 32,
+                 # Should the recurrent units be bidirectional?
+                 bidirectional = False):
+        super(RecurrentFeatureExtractor, self).__init__()
+
+        if discrete:
+            assert lexicon
+            self.encoder = nn.Embedding(len(lexicon), H)
+
+        self.H = H
+        self.bidirectional = bidirectional
+
+        layers = 1
+
+        self.inputModels = [ nn.GRU(H, H, layers, bidirectional = bidirectional)
+                             for _ in range(numberOfInputs) ]
+        for j,i in enumerate(self.inputModels):
+            setattr(self, "inputModel_%d"%j, i)
+        self.outputModel = nn.GRU(H, H, layers, bidirectional = bidirectional)
+
+        self.outputLayer = nn.Linear(H,O)
+
+        self.discrete = discrete
+        if discrete:
+            self.lexicon = lexicon
+            self.symbolToIndex = {symbol: index for index, symbol in enumerate(lexicon) }
+
+    def observationEmbedding(self, x):
+        if self.discrete: x = [ self.symbolToIndex[s] for s in x ]
+        else: x = x*self.H
+        x = variable(x)
+        if self.discrete: x = self.encoder(x)
+        else: x = x.float()
+        return x
+
+    def readInput(self, inputIndex, x):
+        model = self.inputModels[inputIndex]
+        x = self.observationEmbedding(x)
+        # x: (size of input)x(size of encoding)
+        output, hidden = model(x.unsqueeze(1))
+        return hidden
+        
+    def readOutput(self, y, hiddenStates):
+        y = self.observationEmbedding(y)
+        output, hidden = self.outputModel(y.unsqueeze(1),hiddenStates)
+        if self.bidirectional:
+            hidden,_ = hidden.max(dim = 0)
+        return hidden            
+
+    def forward(self, examples):
+        exampleEncodings = []
+        for xs,y in examples:
+            # Run the recurrent cells once for each input
+            xs = sum( self.readInput(j,x) for j,x in enumerate(xs) )
+            if self.bidirectional:
+                # Maxpool so we get information from both forward and
+                # backward passes initializing the output encoder
+                xs,_ = xs.max(dim = 0)
+                # Now duplicated so it has the same shape as before
+                xs = torch.stack([xs,xs])
+            exampleEncodings.append(self.readOutput(y,xs))
+
+        exampleEncodings = torch.stack(exampleEncodings)
+        exampleEncodings,_ = exampleEncodings.max(dim = 0)
+        return exampleEncodings
+        
+        
+            
+                
+if __name__ == "__main__":
+    m = RecurrentFeatureExtractor(lexicon = [1,2,3], discrete = True, numberOfInputs = 2,
+                                  bidirectional = True)
+    print m.forward([([[1,2,1],
+                       [1,2,1,2,2]],
+                      [1])])

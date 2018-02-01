@@ -10,16 +10,19 @@ import random
 
 inputDistribution = [#(1,1),
 #                     (2,2),
-                     (4,3),
-                     (4,4),
-    (4,5)]
+#                     (4,3),
+#                     (4,4),
+    (4,5),
+    (4,6),
+    (4,7)]
 MAXIMUMINPUTS = max(i for p,i in inputDistribution)
 gateDistribution = [(1,1),
                     (3,2),
-                    (4,3),
-                    (4,4),
-                    (5,5),
-                    (6,5)]
+#                    (4,3),
+                    #(4,4),
+                    #(5,5),
+                    #(6,5),
+]
 operationDistribution = [(1,'NOT'),
                          (2,'AND'),
                          (2,'OR')]
@@ -110,7 +113,7 @@ def makeFeatureExtractor((averages, deviations)):
                 
 if __name__ == "__main__":
     tasks = []
-    while len(tasks) < 500:
+    while len(tasks) < 1000:
         inputs = sampleDistribution(inputDistribution)
         gates = sampleDistribution(gateDistribution)
         newTask = Circuit(numberOfInputs = inputs,
