@@ -210,3 +210,5 @@ def loadPickle(f):
     with open(f,'rb') as handle:
         d = pickle.load(handle)
     return d
+
+def fst(l): return l[0]

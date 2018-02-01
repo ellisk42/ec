@@ -26,6 +26,10 @@ class Program(object):
             return True
         except InferenceFailure:
             return False
+    def runWithArguments(self, xs):
+        f = self.evaluate([])
+        for x in xs: f = f(x)
+        return f
     def applicationParses(self): yield self,[]
     def applicationParse(self): return self,[]
     @property

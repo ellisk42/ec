@@ -58,16 +58,10 @@ def explorationCompression(grammar, tasks,
     if iterations is None:
         eprint("Please specify a iteration count: explorationCompression(..., iterations = ...)")
         assert False
-    if useRecognitionModel and \
-            not all(len(t.features) == len(tasks[0].features) for t in tasks):
-        eprint("Warning: Recognition model needs features to all have the same dimensionality.",
+    if useRecognitionModel and featureExtractor is None:
+        eprint("Warning: Recognition model needs feature extractor.",
                "Ignoring recognition model.")
         useRecognitionModel = False
-    if helmholtzRatio > 0. and featureExtractor is None:
-        eprint("Warning: Using Helmholtz-machine style training requires a feature extractor.",
-               "The feature extractor should take a program and a type and return a list of floats.",
-               "Setting Helmholtz ratio to 0.")
-        helmholtzRatio = 0.        
 
     # We save the parameters that were passed into EC
     # This is for the purpose of exporting the results of the experiment
@@ -114,8 +108,9 @@ def explorationCompression(grammar, tasks,
                 -sum(f.bestPosterior.logPosterior for f in frontiers if not f.empty)
                 / sum(not f.empty for f in frontiers))
 
-        if useRecognitionModel: # Train and then use a recognition model            
-            recognizer = RecognitionModel(len(tasks[0].features), grammar, activation=activation, cuda=cuda)
+        if useRecognitionModel: # Train and then use a recognition model
+            featureExtractorObject = featureExtractor(tasks)
+            recognizer = RecognitionModel(featureExtractorObject, grammar, activation=activation, cuda=cuda)
 
             # We want to train the recognition model on _every_ task that we have found a solution to
             # `frontiers` only contains solutions from the most recent generative model
@@ -123,8 +118,7 @@ def explorationCompression(grammar, tasks,
                                   else grammar.rescoreFrontier(result.taskSolutions[f.task])
                                   for f in frontiers ]
 
-            recognizer.train(trainingFrontiers, KLRegularize=KLRegularize, topK=topK,
-                             featureExtractor = featureExtractor,
+            recognizer.train(trainingFrontiers, topK=topK,
                              # Disable Helmholtz on the first iteration
                              # Otherwise we just draw from the base grammar which is a terrible distribution
                              helmholtzRatio = helmholtzRatio and helmholtzRatio*int(j > 0))
@@ -325,5 +319,4 @@ def commandlineArguments(_=None,
     if extras is not None:
         extras(parser)
     v = vars(parser.parse_args())
-    #v.featureExtractor = featureExtractor
     return v

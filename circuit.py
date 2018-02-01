@@ -4,17 +4,20 @@ from utilities import eprint, sampleDistribution
 from circuitPrimitives import primitives
 from task import RegressionTask
 from type import arrow, tbool
+from recognition import *
 
 import itertools
 import random
 
-inputDistribution = [#(1,1),
-#                     (2,2),
+inputDistribution = [(1,1),
+                     (2,2),
+                     (3,3),
 #                     (4,3),
 #                     (4,4),
-    (4,5),
-    (4,6),
-    (4,7)]
+#    (4,5),
+#    (4,6),
+#    (4,7)
+                     ]
 MAXIMUMINPUTS = max(i for p,i in inputDistribution)
 gateDistribution = [(1,1),
                     (2,2),
@@ -98,19 +101,51 @@ class Circuit(object):
         return len(usedIndices) == len(self.operations) - 1
 
 
-def makeFeatureExtractor((averages, deviations)):
-    def featureExtractor(program, t):
+class FeatureExtractor(HandCodedFeatureExtractor):
+    def _featuresOfProgram(program, t):
         numberOfInputs = len(t.functionArguments())
         xs = list(itertools.product(*[ [False,True] for _ in range(numberOfInputs) ]))
         f = program.evaluate([])
-        ys = []
-        for x in xs:
-            y = f
-            for x_ in x:
-                y = y(x_)
-            ys.append(y)
-        return RegressionTask.standardizeFeatures(averages, deviations, Circuit.extractFeatures(ys))
-    return featureExtractor
+        ys = [ program.runWithArguments(x) for x in xs ]
+        return Circuit.extractFeatures(ys)
+        
+
+# class CircuitFeatureExtractor(RecurrentFeatureExtractor):
+#     def __init__(self, allOfTheTasks):
+#         super(CircuitFeatureExtractor, self).__init__(lexicon = [True,False],
+#                                                       numberOfInputs = 2**MAXIMUMINPUTS,
+#                                                       allOfTheTasks = allOfTheTasks,
+#                                                       # The inputs and outputs are super simple so we just use 2 units
+#                                                       H = 2,
+#                                                       O = 2,
+#                                                       # LUCAS: You probably want bidirectional = True
+#                                                       bidirectional = False)
+
+#     def featuresOfTask(self, task):
+#         examples = [ RecognitionExample(inputs = [[x] for x in xs ],
+#                                         output = [y])
+#                      for xs,y in task.examples ]
+#         return self(examples)
+#     def featuresOfProgram(self, program, t):
+#         inputsAndOutputs = self.runOnRandomInputs(program, t)
+#         # Could not find any input which gave valid results
+#         # For the circuit domain this can never happen.
+#         # For your domain it might, in which case you should return None
+#         if inputsAndOutputs is None: assert False
+#         xss, ys = inputsAndOutputs
+        
+#         # Use the inputs from the randomly selected task
+#         examples = [ RecognitionExample(inputs = tuple([x] for x in xs),
+#                                         output = [program.runWithArguments(xs)])
+#                      for xs,y in zip(xss,ys) ]
+#         return self(examples)
+
+class FeatureExtractor(HandCodedFeatureExtractor):
+    def _featuresOfProgram(program, tp):
+        e = program.visit(RandomParameterization.single)
+        f = e.evaluate([])
+        return [float(f(x)) for x in EXAMPLES]
+        
                 
 if __name__ == "__main__":
     tasks = []
@@ -125,9 +160,6 @@ if __name__ == "__main__":
                                                        len({t.signature for t in tasks })))
     tasks = [t.task() for t in tasks ]
 
-    statistics = RegressionTask.standardizeTasks(tasks)
-    featureExtractor = makeFeatureExtractor(statistics)
-
     baseGrammar = Grammar.uniform(primitives)
     explorationCompression(baseGrammar, tasks,
                            outputPrefix = "experimentOutputs/circuit",
@@ -135,7 +167,7 @@ if __name__ == "__main__":
                                                   iterations = 10,
                                                   aic = 1.,
                                                   structurePenalty = 0.1,
-                                                  featureExtractor = featureExtractor,
+                                                  featureExtractor = FeatureExtractor,
                                                   topK = 2,
                                                   maximumFrontier = 100,
                                                   a = 2,

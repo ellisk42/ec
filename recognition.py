@@ -20,7 +20,7 @@ def variable(x, volatile=False):
     return Variable(x, volatile=volatile)
 
 class RecognitionModel(nn.Module):
-    def __init__(self, featureDimensionality, grammar, hidden=[5], activation="relu", cuda=False):
+    def __init__(self, featureExtractor, grammar, hidden=[5], activation="relu", cuda=False):
         super(RecognitionModel, self).__init__()
         self.grammar = grammar
         self.use_cuda = cuda
@@ -30,9 +30,15 @@ class RecognitionModel(nn.Module):
             # Torch sometimes segfaults in multithreaded mode...
             torch.set_num_threads(1)
 
-
+        self.featureExtractor = featureExtractor
+        # Sanity check - make sure that all of the parameters of the
+        # feature extractor were added to our parameters as well
+        if hasattr(featureExtractor, 'parameters'):
+            for parameter in featureExtractor.parameters():
+                assert any(myParameter is parameter for myParameter in self.parameters())
+        
         self.hiddenLayers = []
-        inputDimensionality = featureDimensionality
+        inputDimensionality = featureExtractor.outputDimensionality
         for h in hidden:
             layer = nn.Linear(inputDimensionality, h)
             if cuda:
@@ -70,46 +76,23 @@ class RecognitionModel(nn.Module):
         h = features
         return self.logVariable(h), self.logProductions(h)
 
-    def extractFeatures(self, tasks):
-        fs = torch.from_numpy(np.array([ task.features for task in tasks ])).float()
-        if self.use_cuda:
-            fs = fs.cuda()
-        return Variable(fs)
-    
-    def posteriorKL(self, frontiers, KLRegularize):
-        features = self.extractFeatures([ frontier.task for frontier in frontiers ])
+    def frontierKL(self, frontier):
+        features = self.featureExtractor.featuresOfTask(frontier.task)
         variables, productions = self(features)
-        kl = 0
-        for j,frontier in enumerate(frontiers):
-            v,p = variables[j],productions[j]
-            g = Grammar(v, [(p[k],t,program) for k,(_,t,program) in enumerate(self.grammar.productions) ])
-            for entry in frontier:
-                kl -= math.exp(entry.logPosterior) * g.closedLogLikelihood(frontier.task.request, entry.program)
-                      
-            if KLRegularize:
-                P = [self.grammar.logVariable] + [ l for l,_1,_2 in self.grammar.productions ]
-                P = Variable(torch.from_numpy(np.array(P)), requires_grad = False).float()
-                Q = torch.cat((variables[0], productions[0]))
-                # Normalized distributions
-                P = F.log_softmax(P,dim = 0)
-                Q = F.log_softmax(Q,dim = 0)
-                if True: # regularize KL(P||Q)
-                    # This will force Q to spread its mass everywhere that P does
-                    pass
-                else: # regularize KL(Q||P)
-                    # This will force q to hug one of the modes of p
-                    P,Q = Q,P
-                # torch built in F.kl_div won't let you regularize D(P||Q)
-                # it cannot differentiate with respect to the target distribution
-                # If torch was less ridiculous, you could just do this:
-                # D = F.kl_div(P,Q)
-                D = (P.exp() * (P - Q)).sum()
-                kl += KLRegularize * D
+        g = Grammar(variables, [(productions[k],t,program)
+                                for k,(_,t,program) in enumerate(self.grammar.productions) ])
+        kl = 0.
+        for entry in frontier:
+            kl -= math.exp(entry.logPosterior) * g.closedLogLikelihood(frontier.task.request, entry.program)
         return kl
+    def HelmholtzKL(self, features, sample, tp):
+        variables, productions = self(features)
+        g = Grammar(variables, [(productions[k],t,program)
+                                for k,(_,t,program) in enumerate(self.grammar.productions) ])
+        return - g.closedLogLikelihood(tp, sample)
 
-    def train(self, frontiers, _=None, KLRegularize=0.1, steps=500, lr=0.001, topK=1, CPUs=1,
-              helmholtzRatio = 0.,
-              featureExtractor = None):
+    def train(self, frontiers, _=None, steps=10, lr=0.001, topK=1, CPUs=1,
+              helmholtzRatio = 0.):
         """
         helmholtzRatio: What fraction of the training data should be forward samples from the generative model?
         """
@@ -119,34 +102,29 @@ class RecognitionModel(nn.Module):
         # Not sure why this ever happens
         if helmholtzRatio is None: helmholtzRatio = 0.
 
-        # This is the number of samples from Helmholtz style training
-        if helmholtzRatio < 1.:
-            helmholtzSamples = int(helmholtzRatio*len(frontiers)/(1. - helmholtzRatio))
-        else:
-            helmholtzSamples = len(frontiers)
-            
-        if helmholtzSamples > 0:
-            assert featureExtractor is not None
-            # If the feature extractor is a nn.Module than this will add its parameters to us
-            self.featureExtractor = featureExtractor
-        
-        eprint("Training a recognition model from %d frontiers & %d Helmholtz samples. KLRegularize = %s"%(len(frontiers),
-                                                                                                           helmholtzSamples,
-                                                                                                           KLRegularize))
-        
+        eprint("Training a recognition model from %d frontiers, %d%% Helmholtz."%(len(frontiers),
+                                                                                int(helmholtzRatio*100)))
         
         optimizer = torch.optim.Adam(self.parameters(), lr=lr)
         with timing("Trained recognition model"):
             for i in range(1,steps + 1):
                 losses = []
                 
-                # Sample from the forward model ala Helmholtz
-                forwardSamples = [ self.sampleHelmholtzFrontier(requests)
-                                   for _ in range(helmholtzSamples) ]
-                
-                for batch in batches(forwardSamples + frontiers*int(helmholtzRatio < 1.)):
+                #for batch in batches(frontiers):
+                for frontier in frontiers:
                     self.zero_grad()
-                    loss = self.posteriorKL(batch, KLRegularize)/len(batch)
+
+                    # Randomly decide whether to sample from the generative model
+                    doingHelmholtz = random.random() < helmholtzRatio
+                    if doingHelmholtz:
+                        attempt = self.sampleHelmholtz(requests)
+                        if attempt is not None:
+                            program, request, features = attempt
+                            loss = self.HelmholtzKL(features, program, request)
+                        else: doingHelmholtz = False
+                    if not doingHelmholtz:
+                        loss = self.frontierKL(frontier)
+                    
                     loss.backward()
                     optimizer.step()
                     losses.append(loss.data[0])
@@ -154,46 +132,34 @@ class RecognitionModel(nn.Module):
                     eprint("Epoch",i,"Loss",sum(losses)/len(losses))
                     gc.collect()
 
-    def sampleHelmholtzFrontier(self, requests):
-        while True:
-            request = random.choice(requests)
-            program = self.grammar.sample(request)
-            features = self.featureExtractor(program, request)
-            # Feature extractor failure
-            if features is None: continue
-
-            # Make a dummy task object for the frontier to point to
-            task = RegressionTask(None, request, None, features = features)
-
-            # return a frontier that has just this program
-            return Frontier([FrontierEntry(program = program,
-                                           logPosterior = 0.)],
-                            task = task)
-
-                
+    def sampleHelmholtz(self, requests):
+           request = random.choice(requests)
+           program = self.grammar.sample(request)
+           features = self.featureExtractor.featuresOfProgram(program, request)
+           # Feature extractor failure
+           if features is None: return None
+           else: return program, request, features
 
     def enumerateFrontiers(self, frontierSize, tasks,
                            CPUs=1, maximumFrontier=None):
         with timing("Evaluated recognition model"):
-            features = self.extractFeatures(tasks)
-            variables, productions = self(features)
-            grammars = {task: Grammar(variables.data[j][0],
-                                      [ (productions.data[j][k],t,p)
-                                        for k,(_,t,p) in enumerate(self.grammar.productions) ])
-                        for j,task in enumerate(tasks) }
-
+            grammars = {}
+            for task in tasks:
+                features = self.featureExtractor.featuresOfTask(task)
+                variables, productions = self(features)
+                grammars[task] = Grammar(variables.data[0],
+                                         [ (productions.data[k],t,p)
+                                           for k,(_,t,p) in enumerate(self.grammar.productions) ])
+        
         return callCompiled(enumerateFrontiers,
                             grammars, frontierSize, tasks,
                             CPUs = CPUs, maximumFrontier = maximumFrontier)
 
 class RecurrentFeatureExtractor(nn.Module):
-    def __init__(self,
-                 # maximum number of inputs per example
-                 numberOfInputs = 1,
+    def __init__(self, _ = None,
+                 tasks = None,
                  # what are the symbols that can occur in the inputs and outputs
                  lexicon = None,
-                 # are the predictions discrete or continuous
-                 discrete = True,
                  # how many hidden units
                  H = 32,
                  # dimensionality of the output
@@ -202,42 +168,45 @@ class RecurrentFeatureExtractor(nn.Module):
                  bidirectional = False):
         super(RecurrentFeatureExtractor, self).__init__()
 
-        if discrete:
-            assert lexicon
-            self.encoder = nn.Embedding(len(lexicon), H)
+        assert tasks is not None, "You must provide a list of all of the tasks, both those that have been hit and those that have not been hit. Input examples are sampled from these tasks."
+
+        # maps from a requesting type to all of the inputs that we ever saw that request
+        self.requestToInputs = {tp: [ map(fst, t.examples) for t in tasks if t.request == tp ]
+                                for tp in {t.request for t in tasks } }
+
+        assert lexicon
+        lexicon += ["STARTING","ENDING"]
+        self.encoder = nn.Embedding(len(lexicon), H)
 
         self.H = H
+        self.O = O
         self.bidirectional = bidirectional
 
         layers = 1
 
-        self.inputModels = [ nn.GRU(H, H, layers, bidirectional = bidirectional)
-                             for _ in range(numberOfInputs) ]
-        # IMPORTANT! Do this or else torch will not see the input models
-        for j,i in enumerate(self.inputModels):
-            setattr(self, "inputModel_%d"%j, i)
+        self.inputModel = nn.GRU(H, H, layers, bidirectional = bidirectional)
         self.outputModel = nn.GRU(H, H, layers, bidirectional = bidirectional)
 
         self.outputLayer = nn.Linear(H,O)
 
-        self.discrete = discrete
-        if discrete:
-            self.lexicon = lexicon
-            self.symbolToIndex = {symbol: index for index, symbol in enumerate(lexicon) }
+        self.lexicon = lexicon
+        self.symbolToIndex = {symbol: index for index, symbol in enumerate(lexicon) }
+        self.startingIndex = self.symbolToIndex["STARTING"]
+        self.endingIndex = self.symbolToIndex["ENDING"]
+
+    @property
+    def outputDimensionality(self): return self.O
 
     def observationEmbedding(self, x):
-        if self.discrete: x = [ self.symbolToIndex[s] for s in x ]
-        else: x = x*self.H
+        x = [self.startingIndex] + [ self.symbolToIndex[s] for s in x ] + [self.endingIndex]
         x = variable(x)
-        if self.discrete: x = self.encoder(x)
-        else: x = x.float().unsqueeze(0)
+        x = self.encoder(x)
         return x
 
-    def readInput(self, inputIndex, x):
-        model = self.inputModels[inputIndex]
+    def readInput(self, x):
         x = self.observationEmbedding(x)
         # x: (size of input)x(size of encoding)
-        output, hidden = model(x.unsqueeze(1))
+        output, hidden = self.inputModel(x.unsqueeze(1))
         return hidden
         
     def readOutput(self, y, hiddenStates):
@@ -251,27 +220,46 @@ class RecurrentFeatureExtractor(nn.Module):
 
     def forward(self, examples):
         exampleEncodings = []
-        for xs,y in examples:
+        for (x,),y in examples:
             # Run the recurrent cells once for each input
-            xs = sum( self.readInput(j,x) for j,x in enumerate(xs) )
+            x = self.readInput(x)
             if self.bidirectional:
                 # Maxpool so we get information from both forward and
                 # backward passes initializing the output encoder
-                xs,_ = xs.max(dim = 0)
+                x,_ = x.max(dim = 0)
                 # Now duplicated so it has the same shape as before
-                xs = torch.stack([xs,xs])
-            exampleEncodings.append(self.readOutput(y,xs))
+                x = torch.stack([x,x])
+            exampleEncodings.append(self.readOutput(y,x))
 
         exampleEncodings = torch.stack(exampleEncodings)
         exampleEncodings,_ = exampleEncodings.max(dim = 0)
         return self.outputLayer(exampleEncodings).clamp(min = 0)
+
+    def featuresOfTask(self, t): return self(t.examples)
+    def featuresOfProgram(self, p, t):
+        candidateInputs = list(self.requestToInputs[tp])
+        # Loop over the inputs in a random order and pick the first one that doesn't generate an exception
+        random.shuffle(candidateInputs)
+        for xss in candidateInputs:
+            try:
+                ys = [ program.runWithArguments(xs) for xs in xss ] 
+            except: continue
+            return self(zip(xss,ys))
+        return None
         
         
-            
+
+class HandCodedFeatureExtractor(object):
+    def __init__(self, tasks):
+        self.averages, self.deviations = RegressionTask.featureMeanAndStandardDeviation(tasks)
+        self.outputDimensionality = len(self.averages)
+        self.tasks = tasks
+    def featuresOfTask(self, t):
+        return variable([ (f - self.averages[j])/self.deviations[j] for j,f in enumerate(t.features) ]).float()
+    def featuresOfProgram(self, p, t):
+        features = self._featuresOfProgram(p,t)
+        if features is None: return None
+        return variable([ (f - self.averages[j])/self.deviations[j] for j,f in enumerate(features) ]).float()
+    
                 
-if __name__ == "__main__":
-    m = RecurrentFeatureExtractor(lexicon = [1,2,3], discrete = True, numberOfInputs = 5,
-                                  bidirectional = True)
-    print m.forward([([[3],
-                       [2]],
-                      [1])])
+

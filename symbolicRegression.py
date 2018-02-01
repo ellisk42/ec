@@ -5,6 +5,7 @@ from task import DifferentiableTask, squaredErrorLoss, l1loss, RegressionTask
 from type import tint, arrow
 from utilities import *
 from program import *
+from recognition import *
 
 primitives = [addition, multiplication, real]
 
@@ -34,14 +35,11 @@ tasks = [ ((a,b,c,d,e),
           for d in COEFFICIENTS
           for e in COEFFICIENTS]
 
-def makeFeatureExtractor((averages, deviations)):
-    def featureExtractor(program, tp):
+class FeatureExtractor(HandCodedFeatureExtractor):
+    def _featuresOfProgram(self, program, tp):
         e = program.visit(RandomParameterization.single)
         f = e.evaluate([])
-        outputs = [float(f(x)) for x in EXAMPLES]
-        features = RegressionTask.standardizeFeatures(averages, deviations, outputs)
-        return features
-    return featureExtractor
+        return [float(f(x)) for x in EXAMPLES]
 
 class RandomParameterization(object):
     def primitive(self, e):
@@ -74,9 +72,6 @@ if __name__ == "__main__":
             polynomials[4][:100]
     
     baseGrammar = Grammar.uniform(primitives)
-    statistics = RegressionTask.standardizeTasks(tasks)
-    featureExtractor = makeFeatureExtractor(statistics)
-    
     train = tasks
     
     if False:
@@ -106,5 +101,5 @@ if __name__ == "__main__":
                                                   structurePenalty = 5.,
                                                   maximumFrontier = 1000,
                                                   topK = 2,
-                                                  featureExtractor = featureExtractor,
+                                                  featureExtractor = FeatureExtractor,
                                                   pseudoCounts = 10.0))

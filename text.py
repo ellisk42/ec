@@ -4,7 +4,7 @@ from utilities import eprint, testTrainSplit, numberOfCPUs
 from makeTextTasks import makeTasks, delimiters
 from textPrimitives import primitives
 from program import *
-from recognitionModel import *
+from recognition import *
 
 import random
 
@@ -21,60 +21,30 @@ def problemFeatures(examples):
     outputFeatures = map(lambda *a: sum(a)/n, *outputFeatures)
     return inputFeatures + outputFeatures
 
-def makeFeatureExtractor((averages, deviations), tasks):
-    # Try to make inputs that kind of look like the training inputs
-    numberOfInputs = sum(len(t.examples) for t in tasks )/len(tasks)
-    inputs = [ x for t in tasks for x,_ in t.examples ]
-    def featureExtractor(program, tp):
-        e = program.evaluate([])
-        examples = []
-        shuffledInputs = list(inputs)
-        random.shuffle(shuffledInputs)
-        for x in shuffledInputs:
+class FeatureExtractor(HandCodedFeatureExtractor):
+    def _featuresOfProgram(self, program, tp):
+        inputs = [ map(fst, t.examples) for t in self.tasks ]
+        random.shuffle(inputs)
+        ys = None
+        for xs in inputs:
             try:
-                y = e(x[0])
-                examples.append((x,y))
+                ys = [ program.runWithArguments(x) for x in xs ]
+                eprint(program, xs, ys)
+                break
             except: continue
-            if len(examples) >= numberOfInputs:
-                # eprint("program",program)
-                # for (x,),y in examples:
-                #     eprint(x,"\t",y)
-                # eprint()
-                return RegressionTask.standardizeFeatures(averages, deviations, problemFeatures(examples))
-        #eprint("Could only make %d examples for %s"%(len(examples), program))
-        return None
-    return featureExtractor
+            
+        if ys is None: return None
+        return problemFeatures(zip(xs,ys))
 
-class FeatureExtractor(RecurrentFeatureExtractor):
-    def __init__(self, inputs, numberOfExamples):
-        self.numberOfExamples = numberOfExamples
-        self.inputs = inputs
-        lexicon = set([
-            for t in tasks
-            for (x,),y in t.examples
-            for c in x + y ] + ["START","ENDING"])
-        super(FeatureExtractor, self).__init__(lexicon, bidirectional = True)
-
-    def taskFeatures(self, task):
-        examples = [ ([x],y)
-                     for (x,),y in task.examples ]
-        return self.forward(examples)
-
-    def programFeatures(self, program, t):
-        assert t == arrow(tstr,tstr)
-        random.shuffle(self.inputs)
-
-        e = program.evaluate([])
-        examples = []
-        for x in self.inputs:
-            try:
-                y = e(x)
-                examples.append(([x],y))
-            except: continue
-            if len(examples) >= self.numberOfExamples:
-                return self(examples)
-        
-    
+class LearnedFeatureExtractor(RecurrentFeatureExtractor):
+    def __init__(self, tasks):
+        lexicon = set([ c
+                        for t in tasks
+                        for (x,),y in t.examples
+                        for c in x + y ])
+        super(LearnedFeatureExtractor, self).__init__(lexicon = list(lexicon),
+                                                      tasks = tasks,
+                                                      bidirectional = True)
 
 if __name__ == "__main__":
     tasks = makeTasks()
@@ -83,9 +53,6 @@ if __name__ == "__main__":
     eprint("Generated",len(tasks),"tasks")
 
     test, train = testTrainSplit(tasks, 1.)
-
-    statistics = RegressionTask.standardizeTasks(train)
-    featureExtractor = makeFeatureExtractor(statistics, tasks)
 
     baseGrammar = Grammar.uniform(primitives)
 
@@ -101,5 +68,5 @@ if __name__ == "__main__":
                                a = 3,
                                activation = "relu",
                                CPUs = numberOfCPUs(),
-                               featureExtractor = featureExtractor,
+                               featureExtractor = FeatureExtractor,
                                pseudoCounts = 10.0))
