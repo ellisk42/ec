@@ -127,6 +127,7 @@ class RecognitionModel(nn.Module):
             
         if helmholtzSamples > 0:
             assert featureExtractor is not None
+            # If the feature extractor is a nn.Module than this will add its parameters to us
             self.featureExtractor = featureExtractor
         
         eprint("Training a recognition model from %d frontiers & %d Helmholtz samples. KLRegularize = %s"%(len(frontiers),
@@ -187,7 +188,7 @@ class RecognitionModel(nn.Module):
 
 class RecurrentFeatureExtractor(nn.Module):
     def __init__(self,
-                 # number of inputs per example
+                 # maximum number of inputs per example
                  numberOfInputs = 1,
                  # what are the symbols that can occur in the inputs and outputs
                  lexicon = None,
@@ -212,6 +213,7 @@ class RecurrentFeatureExtractor(nn.Module):
 
         self.inputModels = [ nn.GRU(H, H, layers, bidirectional = bidirectional)
                              for _ in range(numberOfInputs) ]
+        # IMPORTANT! Do this or else torch will not see the input models
         for j,i in enumerate(self.inputModels):
             setattr(self, "inputModel_%d"%j, i)
         self.outputModel = nn.GRU(H, H, layers, bidirectional = bidirectional)
@@ -228,7 +230,7 @@ class RecurrentFeatureExtractor(nn.Module):
         else: x = x*self.H
         x = variable(x)
         if self.discrete: x = self.encoder(x)
-        else: x = x.float()
+        else: x = x.float().unsqueeze(0)
         return x
 
     def readInput(self, inputIndex, x):
@@ -243,6 +245,8 @@ class RecurrentFeatureExtractor(nn.Module):
         output, hidden = self.outputModel(y.unsqueeze(1),hiddenStates)
         if self.bidirectional:
             hidden,_ = hidden.max(dim = 0)
+        else: hidden = hidden.squeeze(0)
+        hidden = hidden.squeeze(0)
         return hidden            
 
     def forward(self, examples):
@@ -260,14 +264,14 @@ class RecurrentFeatureExtractor(nn.Module):
 
         exampleEncodings = torch.stack(exampleEncodings)
         exampleEncodings,_ = exampleEncodings.max(dim = 0)
-        return exampleEncodings
+        return self.outputLayer(exampleEncodings).clamp(min = 0)
         
         
             
                 
 if __name__ == "__main__":
-    m = RecurrentFeatureExtractor(lexicon = [1,2,3], discrete = False, numberOfInputs = 5,
-                                  bidirectional = False)
-    print m.forward([([[1.9],
-                       [1.]],
-                      [1.2])])
+    m = RecurrentFeatureExtractor(lexicon = [1,2,3], discrete = True, numberOfInputs = 5,
+                                  bidirectional = True)
+    print m.forward([([[3],
+                       [2]],
+                      [1])])

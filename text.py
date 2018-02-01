@@ -4,6 +4,7 @@ from utilities import eprint, testTrainSplit, numberOfCPUs
 from makeTextTasks import makeTasks, delimiters
 from textPrimitives import primitives
 from program import *
+from recognitionModel import *
 
 import random
 
@@ -43,6 +44,37 @@ def makeFeatureExtractor((averages, deviations), tasks):
         #eprint("Could only make %d examples for %s"%(len(examples), program))
         return None
     return featureExtractor
+
+class FeatureExtractor(RecurrentFeatureExtractor):
+    def __init__(self, inputs, numberOfExamples):
+        self.numberOfExamples = numberOfExamples
+        self.inputs = inputs
+        lexicon = set([
+            for t in tasks
+            for (x,),y in t.examples
+            for c in x + y ] + ["START","ENDING"])
+        super(FeatureExtractor, self).__init__(lexicon, bidirectional = True)
+
+    def taskFeatures(self, task):
+        examples = [ ([x],y)
+                     for (x,),y in task.examples ]
+        return self.forward(examples)
+
+    def programFeatures(self, program, t):
+        assert t == arrow(tstr,tstr)
+        random.shuffle(self.inputs)
+
+        e = program.evaluate([])
+        examples = []
+        for x in self.inputs:
+            try:
+                y = e(x)
+                examples.append(([x],y))
+            except: continue
+            if len(examples) >= self.numberOfExamples:
+                return self(examples)
+        
+    
 
 if __name__ == "__main__":
     tasks = makeTasks()

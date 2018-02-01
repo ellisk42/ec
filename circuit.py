@@ -17,7 +17,8 @@ inputDistribution = [#(1,1),
     (4,7)]
 MAXIMUMINPUTS = max(i for p,i in inputDistribution)
 gateDistribution = [(1,1),
-                    (3,2),
+                    (2,2),
+                    (3,3),
 #                    (4,3),
                     #(4,4),
                     #(5,5),
@@ -132,12 +133,13 @@ if __name__ == "__main__":
                            outputPrefix = "experimentOutputs/circuit",
                            **commandlineArguments(frontierSize = 500,
                                                   iterations = 10,
-                                                  aic = 4.,
+                                                  aic = 1.,
+                                                  structurePenalty = 0.1,
                                                   featureExtractor = featureExtractor,
                                                   topK = 2,
                                                   maximumFrontier = 100,
                                                   a = 2,
                                                   activation = "tanh",
-                                                  pseudoCounts = 10.))
+                                                  pseudoCounts = 5.))
     
     
