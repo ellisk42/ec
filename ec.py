@@ -81,8 +81,17 @@ def explorationCompression(grammar, tasks,
     # Uses `parameters` to construct the checkpoint path
     def checkpointPath(iteration, extra=""):
         parameters["iterations"] = iteration
-        kvs = ["{}={}".format(k, parameters[k]) for k in sorted(parameters.keys())]
-        kvs += ["featureExtractor=%s"%(featureExtractor.__name__)]
+        abbreviate = {"frontierSize": "fs",
+                      "iterations": "it",
+                      "maximumFrontier": "MF",
+                      "onlyBaselines": "baseline",
+                      "pseudoCounts": "pc",
+                      "structurePenalty": "L",
+                      "helmholtzRatio": "HR",
+                      "topK": "K",
+                      "useRecognitionModel": "rec"}
+        kvs = ["{}={}".format(abbreviate.get(k,k), parameters[k]) for k in sorted(parameters.keys())]
+        kvs += ["feat=%s"%(featureExtractor.__name__)]
         return "{}_{}{}.pickle".format(outputPrefix, "_".join(kvs), extra)
 
     if onlyBaselines:
