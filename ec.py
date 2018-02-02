@@ -50,7 +50,7 @@ class ECResult():
                       "useRecognitionModel": "rec"}
 
     @staticmethod
-    def abbreviate(parameter): return ECResult.get(parameter, parameter)
+    def abbreviate(parameter): return ECResult.abbreviations.get(parameter, parameter)
     @staticmethod
     def parameterOfAbbreviation(abbreviation):
         return ECResult.abbreviationToParameter.get(abbreviation, abbreviation)
