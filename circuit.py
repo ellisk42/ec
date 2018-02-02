@@ -9,11 +9,11 @@ from recognition import *
 import itertools
 import random
 
-inputDistribution = [(1,1),
-                     (2,2),
+inputDistribution = [#(1,1),
+                     #(2,2),
                      (3,3),
-#                     (4,3),
-#                     (4,4),
+                     (4,4),
+                     (4,5),
 #    (4,5),
 #    (4,6),
 #    (4,7)
@@ -22,8 +22,7 @@ MAXIMUMINPUTS = max(i for p,i in inputDistribution)
 gateDistribution = [(1,1),
                     (2,2),
                     (3,3),
-#                    (4,3),
-                    #(4,4),
+                    (4,4),
                     #(5,5),
                     #(6,5),
 ]
@@ -140,25 +139,30 @@ class FeatureExtractor(HandCodedFeatureExtractor):
 #                      for xs,y in zip(xss,ys) ]
 #         return self(examples)
 
-class FeatureExtractor(HandCodedFeatureExtractor):
-    def _featuresOfProgram(program, tp):
-        e = program.visit(RandomParameterization.single)
-        f = e.evaluate([])
-        return [float(f(x)) for x in EXAMPLES]
+class DeepFeatureExtractor(MLPFeatureExtractor):
+    def __init__(self, tasks):
+        super(DeepFeatureExtractor, self).__init__(tasks, H = 16)
+    def _featuresOfProgram(self, program, tp):
+        numberOfInputs = len(tp.functionArguments())
+        xs = list(itertools.product(*[ [False,True] for _ in range(numberOfInputs) ]))
+        ys = [ program.runWithArguments(x) for x in xs ]
+        return Circuit.extractFeatures(ys)
         
                 
 if __name__ == "__main__":
-    tasks = []
-    while len(tasks) < 1000:
+    circuits = []
+    import random
+    random.seed(0)
+    while len(circuits) < 500:
         inputs = sampleDistribution(inputDistribution)
         gates = sampleDistribution(gateDistribution)
         newTask = Circuit(numberOfInputs = inputs,
                           numberOfGates = gates)
-        if newTask not in tasks:
-            tasks.append(newTask)
-    eprint("Sampled %d tasks with %d unique functions"%(len(tasks),
-                                                       len({t.signature for t in tasks })))
-    tasks = [t.task() for t in tasks ]
+        if newTask not in circuits:
+            circuits.append(newTask)
+    eprint("Sampled %d circuits with %d unique functions"%(len(circuits),
+                                                       len({t.signature for t in circuits })))
+    tasks = [t.task() for t in circuits ]
 
     baseGrammar = Grammar.uniform(primitives)
     explorationCompression(baseGrammar, tasks,
@@ -167,11 +171,11 @@ if __name__ == "__main__":
                                                   iterations = 10,
                                                   aic = 1.,
                                                   structurePenalty = 0.1,
-                                                  featureExtractor = FeatureExtractor,
+                                                  featureExtractor = DeepFeatureExtractor,
                                                   topK = 2,
                                                   maximumFrontier = 100,
                                                   a = 2,
-                                                  activation = "tanh",
+                                                  activation = "relu",
                                                   pseudoCounts = 5.))
     
     

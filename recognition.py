@@ -92,7 +92,7 @@ class RecognitionModel(nn.Module):
                                 for k,(_,t,program) in enumerate(self.grammar.productions) ])
         return - g.closedLogLikelihood(tp, sample)
 
-    def train(self, frontiers, _=None, steps=100, lr=0.001, topK=1, CPUs=1,
+    def train(self, frontiers, _=None, steps=250, lr=0.001, topK=1, CPUs=1,
               helmholtzRatio = 0.):
         """
         helmholtzRatio: What fraction of the training data should be forward samples from the generative model?
@@ -113,8 +113,9 @@ class RecognitionModel(nn.Module):
             for i in range(1,steps + 1):
                 losses = []
                 
-                #for batch in batches(frontiers):
-                for frontier in frontiers:
+                permutedFrontiers = list(frontiers)
+                random.shuffle(permutedFrontiers)
+                for frontier in permutedFrontiers:
                     self.zero_grad()
 
                     # Randomly decide whether to sample from the generative model
@@ -270,6 +271,25 @@ class RecurrentFeatureExtractor(nn.Module):
             return self(zip(xss,ys))
         return None
         
+class MLPFeatureExtractor(nn.Module):
+    def __init__(self, tasks, H = 16):
+        super(MLPFeatureExtractor, self).__init__()
+
+        self.averages, self.deviations = RegressionTask.featureMeanAndStandardDeviation(tasks)
+        self.tasks = tasks
+
+        self.outputDimensionality = H
+        self.hidden = nn.Linear(len(self.averages), H)
+
+    def featuresOfTask(self, t):
+        f = variable([ (f - self.averages[j])/self.deviations[j] for j,f in enumerate(t.features) ]).float()
+        return self.hidden(f).clamp(min = 0)
+    def featuresOfProgram(self, p, t):
+        features = self._featuresOfProgram(p,t)
+        if features is None: return None
+        f = variable([ (f - self.averages[j])/self.deviations[j] for j,f in enumerate(features) ]).float()
+        return self.hidden(f).clamp(min = 0)
+    
         
 
 class HandCodedFeatureExtractor(object):
