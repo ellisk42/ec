@@ -53,6 +53,14 @@ class RandomParameterization(object):
         return Application(e.f.visit(self),e.x.visit(self))
     def index(self,e): return e
 RandomParameterization.single = RandomParameterization()
+
+class DeepFeatureExtractor(MLPFeatureExtractor):
+    def __init__(self, tasks):
+        super(DeepFeatureExtractor, self).__init__(tasks, H = 16)
+    def _featuresOfProgram(self, program, tp):
+        e = program.visit(RandomParameterization.single)
+        f = e.evaluate([])
+        return [float(f(x)) for x in EXAMPLES]
     
 if __name__ == "__main__":
     # Split the tasks up by the order of the polynomial
@@ -68,8 +76,8 @@ if __name__ == "__main__":
     for p in polynomials.values(): random.shuffle(p)
     tasks = polynomials[1][:56] + \
             polynomials[2][:44] + \
-            polynomials[3][:100] + \
-            polynomials[4][:100]
+            polynomials[3][:50] + \
+            polynomials[4][:50]
     
     baseGrammar = Grammar.uniform(primitives)
     train = tasks
@@ -99,7 +107,8 @@ if __name__ == "__main__":
                                                   iterations = 10,
                                                   CPUs = numberOfCPUs(),
                                                   structurePenalty = 5.,
+                                                  helmholtzRatio = 0.5,
                                                   maximumFrontier = 1000,
                                                   topK = 2,
-                                                  featureExtractor = FeatureExtractor,
+                                                  featureExtractor = DeepFeatureExtractor,
                                                   pseudoCounts = 10.0))
