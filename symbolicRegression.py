@@ -108,6 +108,7 @@ if __name__ == "__main__":
                                                   CPUs = numberOfCPUs(),
                                                   structurePenalty = 5.,
                                                   helmholtzRatio = 0.5,
+                                                  a = 1,#arity
                                                   maximumFrontier = 1000,
                                                   topK = 2,
                                                   featureExtractor = DeepFeatureExtractor,
