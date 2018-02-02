@@ -136,7 +136,7 @@ def explorationCompression(grammar, tasks,
                           embedding = None)
 
     for j in range(resume or 0, iterations):
-        if j >= 2 and expandFrontier and result.learningCurve[-2] == result.learningCurve[-1]:
+        if j >= 2 and expandFrontier and result.learningCurve[-1] <= result.learningCurve[-2]:
             oldFrontierSize = frontierSize
             if expandFrontier <= 10:
                 frontierSize = int(frontierSize * expandFrontier)
@@ -144,6 +144,7 @@ def explorationCompression(grammar, tasks,
                 frontierSize = int(frontierSize + expandFrontier)
             eprint("Expanding frontier from {} to {} because of no progress".format(
                 oldFrontierSize, frontierSize))
+
         frontiers = callCompiled(enumerateFrontiers, grammar, frontierSize, tasks,
                                  maximumFrontier=maximumFrontier, CPUs=CPUs)
 
