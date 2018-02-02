@@ -14,6 +14,7 @@ inputDistribution = [#(1,1),
                      (3,3),
                      (4,4),
                      (4,5),
+    (4,6),
 #    (4,5),
 #    (4,6),
 #    (4,7)
@@ -22,13 +23,27 @@ MAXIMUMINPUTS = max(i for p,i in inputDistribution)
 gateDistribution = [(1,1),
                     (2,2),
                     (3,3),
-                    (4,4),
+#                    (4,4),
                     #(5,5),
                     #(6,5),
 ]
 operationDistribution = [(1,'NOT'),
                          (2,'AND'),
-                         (2,'OR')]
+                         (2,'OR'),
+                         (2,'m2'),
+                         (2,'m4')]
+
+INPUTSPERGATE = {'NOT': 1,
+                 'AND': 2,
+                 'OR': 2,
+                 'm2': 3,
+                 'm4': 6}
+GATEFUN = {'NOT': lambda x: not x,
+           'AND': lambda x,y: x and y ,
+           'OR': lambda x,y: x or y,
+           'm2': lambda x,y,c: [x,y][int(c)],
+           'm4': lambda a,b,c,d,x,y: [ [a,b][int(x)], [c,d][int(x)] ][int(y)]}
+
 
 class Circuit(object):
     def __init__(self, _ = None, numberOfInputs = None, numberOfGates = None):
@@ -41,13 +56,18 @@ class Circuit(object):
         while not self.isConnected():
             self.operations = []
             while len(self.operations) < numberOfGates:
+                validInputs = range(-numberOfInputs, len(self.operations))
                 gate = sampleDistribution(operationDistribution)
-                x1 = random.choice(range(-numberOfInputs, len(self.operations)))
-                x2 = random.choice(range(-numberOfInputs, len(self.operations)))
-                if gate != 'NOT':
-                    self.operations.append((gate,x1,x2))
+                if 'm' in gate:
+                    if self.numberOfInputs < INPUTSPERGATE[gate]: continue
+                    arguments = list(np.random.choice(validInputs,
+                                                      size = INPUTSPERGATE[gate],
+                                                      replace = False))
                 else:
-                    self.operations.append((gate,x1))
+                    arguments = list(np.random.choice(validInputs,
+                                                      size = INPUTSPERGATE[gate],
+                                                      replace = True))
+                self.operations.append(tuple([gate] + arguments))
             self.name = "%d inputs ; "%self.numberOfInputs + \
                         " ; ".join("%s(%s)"%(o[0],",".join(map(str,o[1:])))
                                    for o in self.operations )
@@ -77,17 +97,9 @@ class Circuit(object):
         x = list(reversed(x))
         outputs = []
         for z in self.operations:
-            o = z[0]
-            v1 = (outputs + x)[z[1]]
-            v2 = (outputs + x)[z[-1]]
-            if o == 'AND':
-                outputs.append(v1 and v2)
-            elif o == 'OR':
-                outputs.append(v1 or v2)
-            elif o == 'NOT':
-                outputs.append(not v1)
-            else:
-                assert False
+            f = GATEFUN[z[0]]
+            arguments = [ (outputs + x)[a] for a in z[1:] ]
+            outputs.append(f(*arguments))
         return outputs[-1]
 
     def isConnected(self):
