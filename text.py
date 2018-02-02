@@ -43,6 +43,7 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
                         for (x,),y in t.examples
                         for c in x + y ])
         super(LearnedFeatureExtractor, self).__init__(lexicon = list(lexicon),
+                                                      H = 16,
                                                       tasks = tasks,
                                                       bidirectional = True)
 
@@ -55,7 +56,6 @@ if __name__ == "__main__":
     test, train = testTrainSplit(tasks, 1.)
 
     baseGrammar = Grammar.uniform(primitives)
-
     explorationCompression(baseGrammar, train,
                            outputPrefix = "experimentOutputs/text",
                            **commandlineArguments(

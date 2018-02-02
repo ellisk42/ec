@@ -10,6 +10,7 @@ import torch.nn as nn
 import torch.optim as optimization
 import torch.nn.functional as F
 from torch.autograd import Variable
+from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 
 import numpy as np
 
@@ -20,7 +21,7 @@ def variable(x, volatile=False):
     return Variable(x, volatile=volatile)
 
 class RecognitionModel(nn.Module):
-    def __init__(self, featureExtractor, grammar, hidden=[5], activation="relu", cuda=False):
+    def __init__(self, featureExtractor, grammar, hidden=[16], activation="relu", cuda=False):
         super(RecognitionModel, self).__init__()
         self.grammar = grammar
         self.use_cuda = cuda
@@ -91,7 +92,7 @@ class RecognitionModel(nn.Module):
                                 for k,(_,t,program) in enumerate(self.grammar.productions) ])
         return - g.closedLogLikelihood(tp, sample)
 
-    def train(self, frontiers, _=None, steps=500, lr=0.001, topK=1, CPUs=1,
+    def train(self, frontiers, _=None, steps=100, lr=0.001, topK=1, CPUs=1,
               helmholtzRatio = 0.):
         """
         helmholtzRatio: What fraction of the training data should be forward samples from the generative model?
@@ -102,8 +103,10 @@ class RecognitionModel(nn.Module):
         # Not sure why this ever happens
         if helmholtzRatio is None: helmholtzRatio = 0.
 
-        eprint("Training a recognition model from %d frontiers, %d%% Helmholtz."%(len(frontiers),
-                                                                                int(helmholtzRatio*100)))
+        eprint("Training a recognition model from %d frontiers, %d%% Helmholtz, feature extractor %s."%(
+            len(frontiers),
+            int(helmholtzRatio*100),
+            self.featureExtractor.__class__.__name__))
         
         optimizer = torch.optim.Adam(self.parameters(), lr=lr)
         with timing("Trained recognition model"):
@@ -163,7 +166,7 @@ class RecurrentFeatureExtractor(nn.Module):
                  # how many hidden units
                  H = 32,
                  # dimensionality of the output
-                 O = 32,
+                 #O = 32,
                  # Should the recurrent units be bidirectional?
                  bidirectional = False):
         super(RecurrentFeatureExtractor, self).__init__()
@@ -175,27 +178,30 @@ class RecurrentFeatureExtractor(nn.Module):
                                 for tp in {t.request for t in tasks } }
 
         assert lexicon
-        lexicon += ["STARTING","ENDING"]
+        lexicon += ["STARTING","ENDING","MIDDLE"]
         self.encoder = nn.Embedding(len(lexicon), H)
 
         self.H = H
-        self.O = O
+        #self.O = O
         self.bidirectional = bidirectional
 
         layers = 1
 
-        self.inputModel = nn.GRU(H, H, layers, bidirectional = bidirectional)
-        self.outputModel = nn.GRU(H, H, layers, bidirectional = bidirectional)
+        # self.inputModel = nn.GRU(H, H, layers, bidirectional = bidirectional)
+        # self.outputModel = nn.GRU(H, H, layers, bidirectional = bidirectional)
 
-        self.outputLayer = nn.Linear(H,O)
+        self.model = nn.GRU(H, H, layers, bidirectional = bidirectional)
+
+        #self.outputLayer = nn.Linear(H,O)
 
         self.lexicon = lexicon
         self.symbolToIndex = {symbol: index for index, symbol in enumerate(lexicon) }
         self.startingIndex = self.symbolToIndex["STARTING"]
         self.endingIndex = self.symbolToIndex["ENDING"]
+        self.middleIndex = self.symbolToIndex["MIDDLE"]
 
     @property
-    def outputDimensionality(self): return self.O
+    def outputDimensionality(self): return self.H
 
     def observationEmbedding(self, x):
         x = [self.startingIndex] + [ self.symbolToIndex[s] for s in x ] + [self.endingIndex]
@@ -203,37 +209,54 @@ class RecurrentFeatureExtractor(nn.Module):
         x = self.encoder(x)
         return x
 
-    def readInput(self, x):
-        x = self.observationEmbedding(x)
-        # x: (size of input)x(size of encoding)
-        output, hidden = self.inputModel(x.unsqueeze(1))
-        return hidden
+    def packExamples(self, examples):
+        """IMPORTANT! xs must be sorted in decreasing order of size because pytorch is stupid"""
+        sizes = [ len(x) + len(y) + 3 for (x,),y in examples ]
+        maximumSize = max(sizes)
+        xs = [ [self.startingIndex] + \
+               [ self.symbolToIndex[s] for s in x ] + \
+               [self.middleIndex] + \
+               [ self.symbolToIndex[s] for s in y ] + \
+               [self.endingIndex]*(maximumSize - len(y) - len(x) + 1 - 3)
+               for ((x,),y) in examples ]
+
+        x = variable(xs)
+        x = self.encoder(x)
+        # x: (batch size, maximum length, E)
+        x = x.permute(1,0,2)
+        # x: TxBxE
+        x = pack_padded_sequence(x, sizes)
+        return x, sizes
+
+    # def readInput(self, x):
+    #     x = self.observationEmbedding(x)
+    #     # x: (size of input)x(size of encoding)
+    #     output, hidden = self.inputModel(x.unsqueeze(1))
+    #     return hidden
         
-    def readOutput(self, y, hiddenStates):
-        y = self.observationEmbedding(y)
-        output, hidden = self.outputModel(y.unsqueeze(1),hiddenStates)
-        if self.bidirectional:
-            hidden,_ = hidden.max(dim = 0)
-        else: hidden = hidden.squeeze(0)
-        hidden = hidden.squeeze(0)
-        return hidden            
+    # def readOutput(self, y, hiddenStates):
+    #     y = self.observationEmbedding(y)
+    #     output, hidden = self.outputModel(y.unsqueeze(1),hiddenStates)
+    #     if self.bidirectional:
+    #         hidden,_ = hidden.max(dim = 0)
+    #     else: hidden = hidden.squeeze(0)
+    #     hidden = hidden.squeeze(0)
+    #     return hidden            
 
+    def examplesEncoding(self, examples):
+        examples = sorted(examples, key = lambda ((x,),y): len(x) + len(y), reverse = True)
+        x,sizes = self.packExamples(examples)
+        outputs, hidden = self.model(x)
+        #outputs, sizes = pad_packed_sequence(outputs)
+        # I don't know whether to return the final output or the final hidden activations...
+        return hidden[0,:,:] + hidden[1,:,:]
+        
     def forward(self, examples):
-        exampleEncodings = []
-        for (x,),y in examples:
-            # Run the recurrent cells once for each input
-            x = self.readInput(x)
-            if self.bidirectional:
-                # Maxpool so we get information from both forward and
-                # backward passes initializing the output encoder
-                x,_ = x.max(dim = 0)
-                # Now duplicated so it has the same shape as before
-                x = torch.stack([x,x])
-            exampleEncodings.append(self.readOutput(y,x))
-
-        exampleEncodings = torch.stack(exampleEncodings)
-        exampleEncodings,_ = exampleEncodings.max(dim = 0)
-        return self.outputLayer(exampleEncodings).clamp(min = 0)
+        e = self.examplesEncoding(examples)
+        # max pool
+        e,_ = e.max(dim = 0)
+        return e
+        #return self.outputLayer(e).clamp(min = 0)
 
     def featuresOfTask(self, t): return self(t.examples)
     def featuresOfProgram(self, p, tp):
