@@ -60,7 +60,7 @@ class Frontier(object):
                          [ "Average description length of a program solving a task: %f nats"%(-averageLikelihood) ])
 
         
-    def combine(self, other, tolerance = 0.001):
+    def combine(self, other, tolerance = 0.01):
         '''Takes the union of the programs in each of the frontiers'''
         assert self.task == other.task
         
@@ -73,7 +73,8 @@ class Frontier(object):
                 e1 = x[p]
                 if p in y:
                     e2 = y[p]
-                    assert abs(e1.logPrior - e2.logPrior) < tolerance
+                    assert abs(e1.logPrior - e2.logPrior) < tolerance, \
+                        "Log priors differed during frontier combining: %f vs %f"%(e1.logPrior, e2.logPrior)
                     assert abs(e1.logLikelihood - e2.logLikelihood) < tolerance
             else:
                 e1 = y[p]

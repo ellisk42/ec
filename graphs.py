@@ -127,11 +127,12 @@ def plotECResult(resultPaths, colors='rgbycm', label=None, title=None, export=No
 if __name__ == "__main__":
     import sys
     def label(p):
-        l = p.domain
+        #l = p.domain
+        l = ""
         if hasattr(p, 'baseline'):
             l += " (baseline %s)"%p.baseline
             return l
-        l += ", frontier size %s"%p.frontierSize
+        l += "frontier size %s"%p.frontierSize
         if p.useRecognitionModel:
             if hasattr(p,'helmholtzRatio') and p.helmholtzRatio > 0:
                 l += " (neural Helmholtz)"
