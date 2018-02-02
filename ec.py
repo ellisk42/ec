@@ -346,6 +346,7 @@ def commandlineArguments(_=None,
     parser.add_argument("-r","--Helmholtz",
                         dest="helmholtzRatio",
                         help="""When training recognition models, what fraction of the training data should be samples from the generative model? Default %f""" % helmholtzRatio,
+                        default = helmholtzRatio,
                         type=float)
     parser.add_argument("-B", "--baselines", dest="onlyBaselines", action="store_true",
                         help="only compute baselines")
