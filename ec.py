@@ -48,7 +48,6 @@ def explorationCompression(grammar, tasks,
                            helmholtzRatio=0.,
                            featureExtractor = None,
                            activation='relu',
-                           KLRegularize=0.1,
                            topK=1,
                            maximumFrontier=None,
                            pseudoCounts=1.0, aic=1.0,
@@ -77,7 +76,7 @@ def explorationCompression(grammar, tasks,
                                "message", "CPUs", "outputPrefix",
                                "resume", "featureExtractor"}}
     if not useRecognitionModel:
-        for k in ["KLRegularize","activation","helmholtzRatio"]: del parameters[k]
+        for k in ["activation","helmholtzRatio"]: del parameters[k]
 
     # Uses `parameters` to construct the checkpoint path
     def checkpointPath(iteration, extra=""):
@@ -262,7 +261,6 @@ def commandlineArguments(_=None,
                          maximumFrontier=None,
                          pseudoCounts=1.0, aic=1.0,
                          structurePenalty=0.001, a=0,
-                         KLRegularize=None,
                          onlyBaselines=False,
                          extras=None):
     if cuda is None:
@@ -336,12 +334,6 @@ def commandlineArguments(_=None,
                         default=activation,
                         help="""Activation function for neural recognition model.
                         Default: %s""" % activation)
-    parser.add_argument("--kl-factor", metavar="FACTOR",
-                        dest="KLRegularize",
-                        help="""Regularization factor for KL divergence against
-                        induced grammar for neural recognition model.
-                        Default: %s""" % KLRegularize,
-                        type=float)
     parser.add_argument("-r","--Helmholtz",
                         dest="helmholtzRatio",
                         help="""When training recognition models, what fraction of the training data should be samples from the generative model? Default %f""" % helmholtzRatio,
@@ -349,7 +341,6 @@ def commandlineArguments(_=None,
     parser.add_argument("-B", "--baselines", dest="onlyBaselines", action="store_true",
                         help="only compute baselines")
     parser.set_defaults(useRecognitionModel=useRecognitionModel,
-                        KLRegularize=KLRegularize,
                         featureExtractor=featureExtractor,
                         maximumFrontier=maximumFrontier,
                         cuda=cuda)

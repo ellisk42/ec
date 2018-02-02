@@ -149,6 +149,30 @@ def proposeFragmentsFromFragment(f):
         fp = canonicalFragment(f.substitute(subtree, Index(freeVariables)))
         yield fp
 
+def nontrivial(f):
+    if not isinstance(f, Application): return False
+    # Curry
+    if isinstance(f.x,FragmentVariable): return False
+    if isinstance(f.x, Index):
+        # Make sure that the index is used somewhere else
+        usedElsewhere = False
+        for surroundingAbstractions,child in f.f.walk():
+            if isinstance(child, Index) and child.i - surroundingAbstractions == f.x.i:
+                usedElsewhere = True
+                break
+        if not usedElsewhere: return False
+
+    numberOfHoles = 0
+    numberOfVariables = 0
+    numberOfPrimitives = 0
+    for surroundingAbstractions,child in f.walk():
+        if isinstance(child,(Primitive,Invented)): numberOfPrimitives += 1
+        if isinstance(child,FragmentVariable): numberOfHoles += 1
+        if isinstance(child,Index) and child.free(surroundingAbstractions): numberOfVariables += 1
+    #eprint("Fragment %s has %d calls and %d variables and %d primitives"%(f,numberOfHoles,numberOfVariables,numberOfPrimitives))
+
+    return numberOfPrimitives + 0.5 * (numberOfHoles + numberOfVariables) > 1.5 and numberOfPrimitives >= 1
+
 def proposeFragmentsFromProgram(p,arity):
 
     def fragment(expression,a):
@@ -178,30 +202,6 @@ def proposeFragmentsFromProgram(p,arity):
         else:
             assert isinstance(expression, (Invented,Primitive,Index))
 
-    def nontrivial(f):
-        if not isinstance(f, Application): return False
-        # Curry
-        if isinstance(f.x,FragmentVariable): return False
-        if isinstance(f.x, Index):
-            # Make sure that the index is used somewhere else
-            usedElsewhere = False
-            for surroundingAbstractions,child in f.f.walk():
-                if isinstance(child, Index) and child.i - surroundingAbstractions == f.x.i:
-                    usedElsewhere = True
-                    break
-            if not usedElsewhere: return False
-
-        numberOfHoles = 0
-        numberOfVariables = 0
-        numberOfPrimitives = 0
-        for surroundingAbstractions,child in f.walk():
-            if isinstance(child,(Primitive,Invented)): numberOfPrimitives += 1
-            if isinstance(child,FragmentVariable): numberOfHoles += 1
-            if isinstance(child,Index) and child.free(surroundingAbstractions): numberOfVariables += 1
-        #eprint("Fragment %s has %d calls and %d variables and %d primitives"%(f,numberOfHoles,numberOfVariables,numberOfPrimitives))
-
-        return numberOfPrimitives + 0.5 * (numberOfHoles + numberOfVariables) > 1.5 and numberOfPrimitives >= 1
-
     return { canonicalFragment(f) for b in range(arity + 1) for f in fragments(p,b) if nontrivial(f) }
 
 def proposeFragmentsFromFrontiers(frontiers,a):
@@ -217,4 +217,4 @@ def proposeFragmentsFromFrontiers(frontiers,a):
         for frontierFragments in fragmentsFromEachFrontier:
             if f in frontierFragments: frequencies[f] += 1
     return [ fragment for fragment,frequency in frequencies.iteritems()
-             if frequency >= 2 and fragment.wellTyped() ]
+             if frequency >= 2 and fragment.wellTyped() and nontrivial(fragment) ]
