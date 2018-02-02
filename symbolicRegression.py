@@ -10,7 +10,7 @@ from recognition import *
 primitives = [addition, multiplication, real]
 
 MAXIMUMCOEFFICIENT = 9
-NUMBEROFEXAMPLES = 5
+NUMBEROFEXAMPLES = 10
 EXAMPLERANGE = 2.
 EXAMPLES = [ -EXAMPLERANGE + j*(2*EXAMPLERANGE/(NUMBEROFEXAMPLES-1))
              for j in range(NUMBEROFEXAMPLES) ]
@@ -28,7 +28,7 @@ tasks = [ ((a,b,c,d,e),
                               [((x,),a*x*x*x*x + b*x*x*x + c*x*x + d*x + e) for x in EXAMPLES ],
                               loss = squaredErrorLoss,
                               features = [float(a*x*x*x*x + b*x*x*x + c*x*x + d*x + e) for x in EXAMPLES ],
-                              likelihoodThreshold = -0.5))
+                              likelihoodThreshold = -0.05))
           for a in COEFFICIENTS
           for b in COEFFICIENTS
           for c in COEFFICIENTS
