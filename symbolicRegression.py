@@ -106,7 +106,7 @@ if __name__ == "__main__":
                            **commandlineArguments(frontierSize = 10**2,
                                                   iterations = 10,
                                                   CPUs = numberOfCPUs(),
-                                                  structurePenalty = 5.,
+                                                  structurePenalty = 1.,
                                                   helmholtzRatio = 0.5,
                                                   a = 1,#arity
                                                   maximumFrontier = 1000,
