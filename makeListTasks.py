@@ -2,9 +2,10 @@ from __future__ import division
 
 from type import *
 from task import RegressionTask
-from utilities import eprint
+from utilities import eprint, hashable
 
 from random import randint
+from itertools import product, izip, imap
 
 import listroutines as lr
 
@@ -14,91 +15,11 @@ EXCLUDES = {
     "dedup",
     "intersperse-k",
     "pow-base-k",
+    "prime",
     "replace-all-k-with-n",
     "replace-index-k-with-n",
     "uniq",
 }
-
-
-def list_features(examples):
-    if any(isinstance(i, int) for (i,), _ in examples):
-        # obtain features for number inputs as list of numbers
-        examples = [(([i],), o) for (i,), o in examples]
-    elif any(not isinstance(i, list) for (i,), _ in examples):
-        # can't handle non-lists
-        return []
-    elif any(isinstance(x, list) for (xs,), _ in examples for x in xs):
-        # nested lists are hard to extract features for, so we'll
-        # obtain features as if flattened
-        examples = [(([x for xs in ys for x in xs],), o) for (ys,), o in examples]
-
-    # assume all tasks have the same number of examples
-    # and all inputs are lists
-    features = []
-    ot = type(examples[0][1])
-    mean = lambda l: 0 if not l else sum(l)/len(l)
-    imean = [mean(i) for (i,), o in examples]
-    ivar = [sum((v - imean[idx])**2
-                for v in examples[idx][0][0])
-            for idx in xrange(len(examples))]
-
-    #DISABLED length of each input and output
-    # total difference between length of input and output
-    #DISABLED normalized count of numbers in input but not in output
-    # total normalized count of numbers in input but not in output
-    # total difference between means of input and output
-    # total difference between variances of input and output
-    # output type (-1=bool, 0=int, 1=list)
-    #DISABLED outputs if integers, else -1s
-    #DISABLED outputs if bools (-1/1), else 0s
-    if ot == list:  # lists of ints or bools
-        omean = [mean(o) for (i,), o in examples]
-        ovar = [sum((v - omean[idx])**2
-                    for v in examples[idx][1])
-                for idx in xrange(len(examples))]
-        cntr = lambda l, o: 0 if not l else len(set(l).difference(set(o))) / len(l)
-        cnt_not_in_output = [cntr(i, o) for (i,), o in examples]
-
-        #features += [len(i) for (i,), o in examples]
-        #features += [len(o) for (i,), o in examples]
-        features.append(sum(len(i) - len(o) for (i,), o in examples))
-        #features += cnt_not_int_output
-        features.append(sum(cnt_not_in_output))
-        features.append(sum(om - im for im, om in zip(imean, omean)))
-        features.append(sum(ov - iv for iv, ov in zip(ivar, ovar)))
-        features.append(1)
-        # features += [-1 for _ in examples]
-        # features += [0 for _ in examples]
-    elif ot == bool:
-        outs = [o for (i,), o in examples]
-
-        #features += [len(i) for (i,), o in examples]
-        #features += [-1 for _ in examples]
-        features.append(sum(len(i) for (i,), o in examples))
-        #features += [0 for _ in examples]
-        features.append(0)
-        features.append(sum(imean))
-        features.append(sum(ivar))
-        features.append(-1)
-        # features += [-1 for _ in examples]
-        # features += [1 if o else -1 for o in outs]
-    else:  # int
-        cntr = lambda l, o: 0 if not l else len(set(l).difference(set(o))) / len(l)
-        cnt_not_in_output = [cntr(i, [o]) for (i,), o in examples]
-        outs = [o for (i,), o in examples]
-
-        #features += [len(i) for (i,), o in examples]
-        #features += [1 for (i,), o in examples]
-        features.append(sum(len(i) for (i,), o in examples))
-        #features += cnt_not_int_output
-        features.append(sum(cnt_not_in_output))
-        features.append(sum(o - im for im, o in zip(imean, outs)))
-        features.append(sum(ivar))
-        features.append(0)
-        # features += outs
-        # features += [0 for _ in examples]
-
-    return features
 
 
 def make_list_task(name, examples, **params):
@@ -116,7 +37,6 @@ def make_list_task(name, examples, **params):
         return
 
     program_type = arrow(input_type, output_type)
-    features = list_features(examples)
     cache = all(hashable(x) for x in examples)
 
     if params:
@@ -130,7 +50,7 @@ def make_list_task(name, examples, **params):
             ext = "{}, and {}".format(ext, eq_params[-1])
         name += " with " + ext
 
-    yield RegressionTask(name, program_type, examples, features=features, cache=cache)
+    yield RegressionTask(name, program_type, examples, cache=cache)
 
 
 def make_list_tasks(n_examples):
@@ -138,27 +58,28 @@ def make_list_tasks(n_examples):
         if routine.id in EXCLUDES:
             continue
         if routine.is_parametric():
-            for params in routine.example_params():
-                bigs = [k for k, v in params.items()
-                        if type(v) == int and abs(v) > 9]
-                for k in bigs:  # reduce big constants
-                    params[k] = randint(1, 9)
-                if routine.id == "rotate-k":
-                    # rotate-k is hard if list is smaller than k
-                    k = params["k"]
-                    if k < 1:
-                        continue
-                    inps = []
-                    for _ in xrange(n_examples):
-                        r = randint(abs(k) + 1, 17)
-                        inp = routine.gen(len=r, **params)[0]
-                        inps.append(inp)
-                else:
-                    inps = routine.gen(count=n_examples, **params)
-                examples = [((inp,), routine.eval(inp, **params))
-                            for inp in inps]
-                for t in make_list_task(routine.id, examples, **params):
-                    yield t
+            keys = routine.example_params()[0].keys()
+            for params in imap(lambda values: dict(izip(keys, values)),
+                               product(xrange(6), repeat=len(keys))):
+                try:
+                    if routine.id == "rotate-k":
+                        # rotate-k is hard if list is smaller than k
+                        k = params["k"]
+                        if k < 1:
+                            continue
+                        inps = []
+                        for _ in xrange(n_examples):
+                            r = randint(abs(k) + 1, 17)
+                            inp = routine.gen(len=r, **params)[0]
+                            inps.append(inp)
+                    else:
+                        inps = routine.gen(count=n_examples, **params)
+                    examples = [((inp,), routine.eval(inp, **params))
+                                for inp in inps]
+                    for t in make_list_task(routine.id, examples, **params):
+                        yield t
+                except lr.APIError:  # invalid params
+                    continue
         else:
             inps = routine.examples()
             if len(inps) > n_examples:
@@ -169,13 +90,11 @@ def make_list_tasks(n_examples):
             for t in make_list_task(routine.id, examples):
                 yield t
 
-N_EXAMPLES=15
-
 def main():
     import sys
     import cPickle as pickle
 
-    n_examples = N_EXAMPLES
+    n_examples = 15
     if len(sys.argv) > 1:
         n_examples = int(sys.argv[1])
 

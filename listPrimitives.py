@@ -44,7 +44,7 @@ def _find(x):
     return _inner
 
 
-primitives = [ Primitive(str(j), tint, j) for j in range(10) ] + [
+primitives = [ Primitive(str(j), tint, j) for j in xrange(6) ] + [
     Primitive("empty", tlist(t0), []),
     Primitive("singleton", arrow(t0, tlist(t0)), _single),
     Primitive("range", arrow(tint, tlist(tint)), range),
