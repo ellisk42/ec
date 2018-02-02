@@ -171,6 +171,7 @@ if __name__ == "__main__":
                                                   iterations = 10,
                                                   aic = 1.,
                                                   structurePenalty = 0.1,
+                                                  CPUs = numberOfCPUs(),
                                                   featureExtractor = DeepFeatureExtractor,
                                                   topK = 2,
                                                   maximumFrontier = 100,
