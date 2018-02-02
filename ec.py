@@ -83,6 +83,7 @@ def explorationCompression(grammar, tasks,
     def checkpointPath(iteration, extra=""):
         parameters["iterations"] = iteration
         kvs = ["{}={}".format(k, parameters[k]) for k in sorted(parameters.keys())]
+        kvs += ["featureExtractor=%s"%(featureExtractor.__name__)]
         return "{}_{}{}.pickle".format(outputPrefix, "_".join(kvs), extra)
 
     if onlyBaselines:
