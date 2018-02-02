@@ -16,6 +16,8 @@ class Bunch(object):
 relu = 'relu'
 tanh = 'tanh'
 sigmoid = 'sigmoid'
+DeepFeatureExtractor = 'DeepFeatureExtractor'
+LearnedFeatureExtractor = 'LearnedFeatureExtractor'
 
 def parseResultsPath(p):
     p = p[:p.rfind('.')]
@@ -23,7 +25,7 @@ def parseResultsPath(p):
     rest = p.split('_')[1:]
     if rest[-1] == "baselines":
         rest.pop()
-    parameters = { k: eval(v)
+    parameters = { ECResult.parameterOfAbbreviation(k): eval(v)
                    for binding in rest
                    for [k,v] in [binding.split('=')] }
     parameters['domain'] = domain
@@ -83,7 +85,7 @@ def plotECResult(resultPaths, colors='rgbycm', label=None, title=None, export=No
     n_iters = max(len(result.learningCurve) for result in results)
 
     for color, result, p in zip(colors, results, parameters):
-        if hasattr(p, "baseline"):
+        if hasattr(p, "baseline") and p.baseline:
             ys = [ 100. * result.learningCurve[-1] / len(result.taskSolutions) ]*n_iters
         else:
             ys = [ 100. * x / len(result.taskSolutions) for x in result.learningCurve]
@@ -121,6 +123,7 @@ def plotECResult(resultPaths, colors='rgbycm', label=None, title=None, export=No
             if export:
                 export = export[:-4] + "_embedding" + export[-4:]
                 plot.savefig(export)
+                os.system("feh %s"%(export))
             else: plot.show()
 
 
@@ -129,7 +132,7 @@ if __name__ == "__main__":
     def label(p):
         #l = p.domain
         l = ""
-        if hasattr(p, 'baseline'):
+        if hasattr(p, 'baseline') and p.baseline:
             l += " (baseline %s)"%p.baseline
             return l
         l += "frontier size %s"%p.frontierSize

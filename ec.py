@@ -37,6 +37,26 @@ class ECResult():
         attrs = ["{}={}".format(k, v) for k, v in self.__dict__.items()]
         return "ECResult({})".format(", ".join(attrs))
 
+    # Linux does not like files that have more than 256 characters
+    # So when exporting the results we abbreviate the parameters
+    abbreviations = {"frontierSize": "fs",
+                      "iterations": "it",
+                      "maximumFrontier": "MF",
+                      "onlyBaselines": "baseline",
+                      "pseudoCounts": "pc",
+                      "structurePenalty": "L",
+                      "helmholtzRatio": "HR",
+                      "topK": "K",
+                      "useRecognitionModel": "rec"}
+
+    @staticmethod
+    def abbreviate(parameter): return ECResult.get(parameter, parameter)
+    @staticmethod
+    def parameterOfAbbreviation(abbreviation):
+        return ECResult.abbreviationToParameter.get(abbreviation, abbreviation)
+
+ECResult.abbreviationToParameter = {v:k for k,v in ECResult.abbreviations.iteritems() }
+
 
 def explorationCompression(grammar, tasks,
                            _=None,
@@ -81,16 +101,7 @@ def explorationCompression(grammar, tasks,
     # Uses `parameters` to construct the checkpoint path
     def checkpointPath(iteration, extra=""):
         parameters["iterations"] = iteration
-        abbreviate = {"frontierSize": "fs",
-                      "iterations": "it",
-                      "maximumFrontier": "MF",
-                      "onlyBaselines": "baseline",
-                      "pseudoCounts": "pc",
-                      "structurePenalty": "L",
-                      "helmholtzRatio": "HR",
-                      "topK": "K",
-                      "useRecognitionModel": "rec"}
-        kvs = ["{}={}".format(abbreviate.get(k,k), parameters[k]) for k in sorted(parameters.keys())]
+        kvs = ["{}={}".format(ECResult.abbreviate(k), parameters[k]) for k in sorted(parameters.keys())]
         kvs += ["feat=%s"%(featureExtractor.__name__)]
         return "{}_{}{}.pickle".format(outputPrefix, "_".join(kvs), extra)
 
