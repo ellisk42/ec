@@ -160,16 +160,18 @@ class RecognitionModel(nn.Module):
                             CPUs = CPUs, maximumFrontier = maximumFrontier)
 
 class RecurrentFeatureExtractor(nn.Module):
-    def __init__(self, _ = None,
-                 tasks = None,
+    def __init__(self, _=None,
+                 tasks=None,
                  # what are the symbols that can occur in the inputs and outputs
-                 lexicon = None,
+                 lexicon=None,
                  # how many hidden units
-                 H = 32,
+                 H=32,
                  # dimensionality of the output
-                 #O = 32,
+                 #O=32,
                  # Should the recurrent units be bidirectional?
-                 bidirectional = False):
+                 bidirectional=False,
+                 # modify examples before forward (e.g. to turn them into iterables)
+                 appropriate=lambda _:None):
         super(RecurrentFeatureExtractor, self).__init__()
 
         assert tasks is not None, "You must provide a list of all of the tasks, both those that have been hit and those that have not been hit. Input examples are sampled from these tasks."
@@ -185,6 +187,7 @@ class RecurrentFeatureExtractor(nn.Module):
         self.H = H
         #self.O = O
         self.bidirectional = bidirectional
+        self.appropriate = appropriate
 
         layers = 1
 
@@ -253,6 +256,7 @@ class RecurrentFeatureExtractor(nn.Module):
         return hidden[0,:,:] + hidden[1,:,:]
         
     def forward(self, examples):
+        self.appropriate(examples)
         e = self.examplesEncoding(examples)
         # max pool
         e,_ = e.max(dim = 0)

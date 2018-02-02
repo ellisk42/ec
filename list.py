@@ -1,17 +1,99 @@
 import cPickle as pickle
 import random
 from ec import explorationCompression, commandlineArguments
-from utilities import eprint, numberOfCPUs
+from utilities import eprint, numberOfCPUs, flatten
 from grammar import Grammar
 from task import RegressionTask
-from type import *
+from type import Context, arrow, tlist, tint, t0
 from listPrimitives import primitives
-from makeListTasks import list_features, N_EXAMPLES
-from recognition import HandCodedFeatureExtractor
+from recognition import HandCodedFeatureExtractor, RecurrentFeatureExtractor
+
 
 def retrieveTasks(filename):
     with open(filename) as f:
         return pickle.load(f)
+
+
+def list_features(examples):
+    if any(isinstance(i, int) for (i,), _ in examples):
+        # obtain features for number inputs as list of numbers
+        examples = [(([i],), o) for (i,), o in examples]
+    elif any(not isinstance(i, list) for (i,), _ in examples):
+        # can't handle non-lists
+        return []
+    elif any(isinstance(x, list) for (xs,), _ in examples for x in xs):
+        # nested lists are hard to extract features for, so we'll
+        # obtain features as if flattened
+        examples = [(([x for xs in ys for x in xs],), o) for (ys,), o in examples]
+
+    # assume all tasks have the same number of examples
+    # and all inputs are lists
+    features = []
+    ot = type(examples[0][1])
+    mean = lambda l: 0 if not l else sum(l)/len(l)
+    imean = [mean(i) for (i,), o in examples]
+    ivar = [sum((v - imean[idx])**2
+                for v in examples[idx][0][0])
+            for idx in xrange(len(examples))]
+
+    #DISABLED length of each input and output
+    # total difference between length of input and output
+    #DISABLED normalized count of numbers in input but not in output
+    # total normalized count of numbers in input but not in output
+    # total difference between means of input and output
+    # total difference between variances of input and output
+    # output type (-1=bool, 0=int, 1=list)
+    #DISABLED outputs if integers, else -1s
+    #DISABLED outputs if bools (-1/1), else 0s
+    if ot == list:  # lists of ints or bools
+        omean = [mean(o) for (i,), o in examples]
+        ovar = [sum((v - omean[idx])**2
+                    for v in examples[idx][1])
+                for idx in xrange(len(examples))]
+        cntr = lambda l, o: 0 if not l else len(set(l).difference(set(o))) / len(l)
+        cnt_not_in_output = [cntr(i, o) for (i,), o in examples]
+
+        #features += [len(i) for (i,), o in examples]
+        #features += [len(o) for (i,), o in examples]
+        features.append(sum(len(i) - len(o) for (i,), o in examples))
+        #features += cnt_not_int_output
+        features.append(sum(cnt_not_in_output))
+        features.append(sum(om - im for im, om in zip(imean, omean)))
+        features.append(sum(ov - iv for iv, ov in zip(ivar, ovar)))
+        features.append(1)
+        # features += [-1 for _ in examples]
+        # features += [0 for _ in examples]
+    elif ot == bool:
+        outs = [o for (i,), o in examples]
+
+        #features += [len(i) for (i,), o in examples]
+        #features += [-1 for _ in examples]
+        features.append(sum(len(i) for (i,), o in examples))
+        #features += [0 for _ in examples]
+        features.append(0)
+        features.append(sum(imean))
+        features.append(sum(ivar))
+        features.append(-1)
+        # features += [-1 for _ in examples]
+        # features += [1 if o else -1 for o in outs]
+    else:  # int
+        cntr = lambda l, o: 0 if not l else len(set(l).difference(set(o))) / len(l)
+        cnt_not_in_output = [cntr(i, [o]) for (i,), o in examples]
+        outs = [o for (i,), o in examples]
+
+        #features += [len(i) for (i,), o in examples]
+        #features += [1 for (i,), o in examples]
+        features.append(sum(len(i) for (i,), o in examples))
+        #features += cnt_not_int_output
+        features.append(sum(cnt_not_in_output))
+        features.append(sum(o - im for im, o in zip(imean, outs)))
+        features.append(sum(ivar))
+        features.append(0)
+        # features += outs
+        # features += [0 for _ in examples]
+
+    return features
+
 
 def isListFunction(tp):
     try:
@@ -19,6 +101,7 @@ def isListFunction(tp):
         return True
     except UnificationFailure:
         return False
+
 
 def isIntFunction(tp):
     try:
@@ -29,6 +112,7 @@ def isIntFunction(tp):
 
 
 class FeatureExtractor(HandCodedFeatureExtractor):
+    N_EXAMPLES = 15
     def _featuresOfProgram(self, program, tp):
         e = program.evaluate([])
         examples = []
@@ -37,15 +121,34 @@ class FeatureExtractor(HandCodedFeatureExtractor):
         elif isIntFunction(tp):
             sample = lambda: random.randint(0, 20)
         else: return None
-        for _ in xrange(N_EXAMPLES*5):
+        for _ in xrange(self.N_EXAMPLES*5):
             x = sample()
             try:
                 y = e(x)
                 examples.append(((x,), y))
             except: continue
-            if len(examples) >= N_EXAMPLES: break
+            if len(examples) >= self.N_EXAMPLES: break
         else: return None
         return list_features(examples)
+
+
+class LearnedFeatureExtractor(RecurrentFeatureExtractor):
+    def __init__(self, tasks):
+        # examples must be list -> list
+        def appropriate(examples):
+            for i, ((x,), y) in enumerate(examples):
+                if not isinstance(x, list) or not isinstance(y, list):
+                    if not isinstance(x, list):
+                        x = [x]
+                    if not isinstance(y, list):
+                        y = [y]
+                    examples[i] = ((x,), y)
+        lexicon = set(flatten(t.examples for t in tasks))
+        super(LearnedFeatureExtractor, self).__init__(lexicon=list(lexicon),
+                                                      tasks=tasks,
+                                                      H=16,
+                                                      bidirectional=True,
+                                                      appropriate=appropriate)
 
 
 def list_clis(parser):
@@ -56,6 +159,7 @@ def list_clis(parser):
         default=1000,
         help="truncate tasks to fit within this boundary")
 
+
 if __name__ == "__main__":
     args = commandlineArguments(
         frontierSize=15000, activation='sigmoid', iterations=10,
@@ -63,19 +167,22 @@ if __name__ == "__main__":
         CPUs=numberOfCPUs(),
         extras=list_clis)
 
-    maxTasks = args["maxTasks"]
-    tasks = retrieveTasks(args["dataset"])
-    eprint("Got {} list tasks".format(len(tasks)))
+    maxTasks = args.pop("maxTasks")
+    tasks = retrieveTasks(args.pop("dataset"))
     if len(tasks) > maxTasks:
-        eprint("Unwilling to handle more than {} tasks, truncating..".format(maxTasks))
+        eprint("Unwilling to handle {} tasks, truncating..".format(len(tasks)))
         random.seed(42)
         random.shuffle(tasks)
         del tasks[maxTasks:]
+    eprint("Got {} list tasks".format(len(tasks)))
 
-    del args["dataset"]
-    del args["maxTasks"]
+    for task in tasks:
+        task.features = list_features(task.examples)
 
-    args["featureExtractor"] = FeatureExtractor
+    args.update({
+        "featureExtractor": LearnedFeatureExtractor,
+        "outputPrefix": "experimentOutputs/list",
+    })
 
     baseGrammar = Grammar.uniform(primitives)
-    explorationCompression(baseGrammar, tasks, outputPrefix="experimentOutputs/list", **args)
+    explorationCompression(baseGrammar, tasks, **args)

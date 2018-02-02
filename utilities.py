@@ -8,6 +8,7 @@ import os
 import subprocess
 import math
 import cPickle as pickle
+from itertools import chain, imap
 
 
 def eprint(*args, **kwargs):
@@ -21,6 +22,15 @@ def hashable(v):
     except TypeError:
         return False
     return True
+
+
+def flatten(x):
+    """Recursively unroll iterables"""
+    try:
+        for e in chain(*imap(flatten, x)):
+            yield e
+    except TypeError: # not iterable
+        yield x
 
 
 NEGATIVEINFINITY = float('-inf')
