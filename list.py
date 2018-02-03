@@ -182,6 +182,9 @@ def list_clis(parser):
         help="truncate tasks to fit within this boundary")
     parser.add_argument("--base", action="store_true",
         help="use foundational primitives")
+    parser.add_argument("--extractor", type=str,
+        choices=["hand", "deep", "learned"],
+        default="hand")
 
 
 if __name__ == "__main__":
@@ -208,8 +211,14 @@ if __name__ == "__main__":
 
     prims = basePrimitives if args.pop("base") else primitives
 
+    extractor = {
+        "hand": FeatureExtractor,
+        "deep": DeepFeatureExtractor,
+        "learned": LearnedFeatureExtractor,
+    }[args.pop("extractor")]
+
     args.update({
-        "featureExtractor": FeatureExtractor,
+        "featureExtractor": extractor,
         "outputPrefix": "experimentOutputs/list",
     })
 
