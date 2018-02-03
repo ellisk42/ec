@@ -44,54 +44,80 @@ def _find(x):
     return _inner
 
 
-primitives = [ Primitive(str(j), tint, j) for j in xrange(6) ] + [
-    Primitive("empty", tlist(t0), []),
-    Primitive("singleton", arrow(t0, tlist(t0)), _single),
-    Primitive("range", arrow(tint, tlist(tint)), range),
-    Primitive("++", arrow(tlist(t0), tlist(t0), tlist(t0)), _append),
-    Primitive("map", arrow(arrow(t0, t1), tlist(t0), tlist(t1)), _map),
-    # Primitive("mapi", arrow(arrow(tint, t0, t1), tlist(t0), tlist(t1)), _mapi),
-    Primitive("reduce", arrow(arrow(t1, t0, t1), t1, tlist(t0), t1), _reduce),
-    # Primitive("reducei", arrow(arrow(t1, tint, t0, t1), t1, tlist(t0), t1), _reducei),
+def primitives():
+    return [ Primitive(str(j), tint, j) for j in xrange(6) ] + [
+        Primitive("empty", tlist(t0), []),
+        Primitive("singleton", arrow(t0, tlist(t0)), _single),
+        Primitive("range", arrow(tint, tlist(tint)), range),
+        Primitive("++", arrow(tlist(t0), tlist(t0), tlist(t0)), _append),
+        Primitive("map", arrow(arrow(t0, t1), tlist(t0), tlist(t1)), _map),
+        # Primitive("mapi", arrow(arrow(tint, t0, t1), tlist(t0), tlist(t1)), _mapi),
+        Primitive("reduce", arrow(arrow(t1, t0, t1), t1, tlist(t0), t1), _reduce),
+        # Primitive("reducei", arrow(arrow(t1, tint, t0, t1), t1, tlist(t0), t1), _reducei),
 
-    Primitive("true", tbool, True),
-    Primitive("not", arrow(tbool, tbool), _not),
-    Primitive("and", arrow(tbool, tbool, tbool), _and),
-    Primitive("or", arrow(tbool, tbool, tbool), _or),
-    # Primitive("if", arrow(tbool, t0, t0, t0), _if),
+        Primitive("true", tbool, True),
+        Primitive("not", arrow(tbool, tbool), _not),
+        Primitive("and", arrow(tbool, tbool, tbool), _and),
+        Primitive("or", arrow(tbool, tbool, tbool), _or),
+        # Primitive("if", arrow(tbool, t0, t0, t0), _if),
 
-    Primitive("sort", arrow(tlist(tint), tlist(tint)), sorted),
-    Primitive("+", arrow(tint, tint, tint), _addition),
-    Primitive("*", arrow(tint, tint, tint), _multiplication),
-    Primitive("negate", arrow(tint, tint), _negate),
-    Primitive("mod", arrow(tint, tint, tint), _mod),
-    Primitive("eq?", arrow(tint, tint, tbool), _eq),
-    Primitive("gt?", arrow(tint, tint, tbool), _gt),
-    Primitive("is-prime", arrow(tint, tbool), _isPrime),
-    Primitive("is-square", arrow(tint, tbool), _isSquare),
+        Primitive("sort", arrow(tlist(tint), tlist(tint)), sorted),
+        Primitive("+", arrow(tint, tint, tint), _addition),
+        Primitive("*", arrow(tint, tint, tint), _multiplication),
+        Primitive("negate", arrow(tint, tint), _negate),
+        Primitive("mod", arrow(tint, tint, tint), _mod),
+        Primitive("eq?", arrow(tint, tint, tbool), _eq),
+        Primitive("gt?", arrow(tint, tint, tbool), _gt),
+        Primitive("is-prime", arrow(tint, tbool), _isPrime),
+        Primitive("is-square", arrow(tint, tbool), _isSquare),
 
-    # these are achievable with above primitives, but unlikely
-    #Primitive("flatten", arrow(tlist(tlist(t0)), tlist(t0)), _flatten),
-    ## (lambda (reduce (lambda (lambda (++ $1 $0))) empty $0))
-    Primitive("sum", arrow(tlist(tint), tint), sum),
-    # (lambda (lambda (reduce (lambda (lambda (+ $0 $1))) 0 $0)))
-    Primitive("reverse", arrow(tlist(t0), tlist(t0)), _reverse),
-    # (lambda (reduce (lambda (lambda (++ (singleton $0) $1))) empty $0))
-    Primitive("all", arrow(arrow(t0, tbool), tlist(t0), tbool), _all),
-    # (lambda (lambda (reduce (lambda (lambda (and $0 $1))) true (map $1 $0))))
-    Primitive("any", arrow(arrow(t0, tbool), tlist(t0), tbool), _any),
-    # (lambda (lambda (reduce (lambda (lambda (or $0 $1))) true (map $1 $0))))
-    Primitive("index", arrow(tint, tlist(t0), t0), _index),
-    # (lambda (lambda (reducei (lambda (lambda (lambda (if (eq? $1 $4) $0 0)))) 0 $0)))
-    Primitive("filter", arrow(arrow(t0, tbool), tlist(t0), tlist(t0)), _filter),
-    # (lambda (lambda (reduce (lambda (lambda (++ $1 (if ($3 $0) (singleton $0) empty)))) empty $0)))
-    #Primitive("replace", arrow(arrow(tint, t0, tbool), tlist(t0), tlist(t0), tlist(t0)), _replace),
-    ## (FLATTEN (lambda (lambda (lambda (mapi (lambda (lambda (if ($4 $1 $0) $3 (singleton $1)))) $0)))))
-    Primitive("slice", arrow(tint, tint, tlist(t0), tlist(t0)), _slice),
-    # (lambda (lambda (lambda (reducei (lambda (lambda (lambda (++ $2 (if (and (or (gt? $1 $5) (eq? $1 $5)) (not (or (gt? $4 $1) (eq? $1 $4)))) (singleton $0) empty))))) empty $0))))
+        # these are achievable with above primitives, but unlikely
+        #Primitive("flatten", arrow(tlist(tlist(t0)), tlist(t0)), _flatten),
+        ## (lambda (reduce (lambda (lambda (++ $1 $0))) empty $0))
+        Primitive("sum", arrow(tlist(tint), tint), sum),
+        # (lambda (lambda (reduce (lambda (lambda (+ $0 $1))) 0 $0)))
+        Primitive("reverse", arrow(tlist(t0), tlist(t0)), _reverse),
+        # (lambda (reduce (lambda (lambda (++ (singleton $0) $1))) empty $0))
+        Primitive("all", arrow(arrow(t0, tbool), tlist(t0), tbool), _all),
+        # (lambda (lambda (reduce (lambda (lambda (and $0 $1))) true (map $1 $0))))
+        Primitive("any", arrow(arrow(t0, tbool), tlist(t0), tbool), _any),
+        # (lambda (lambda (reduce (lambda (lambda (or $0 $1))) true (map $1 $0))))
+        Primitive("index", arrow(tint, tlist(t0), t0), _index),
+        # (lambda (lambda (reducei (lambda (lambda (lambda (if (eq? $1 $4) $0 0)))) 0 $0)))
+        Primitive("filter", arrow(arrow(t0, tbool), tlist(t0), tlist(t0)), _filter),
+        # (lambda (lambda (reduce (lambda (lambda (++ $1 (if ($3 $0) (singleton $0) empty)))) empty $0)))
+        #Primitive("replace", arrow(arrow(tint, t0, tbool), tlist(t0), tlist(t0), tlist(t0)), _replace),
+        ## (FLATTEN (lambda (lambda (lambda (mapi (lambda (lambda (if ($4 $1 $0) $3 (singleton $1)))) $0)))))
+        Primitive("slice", arrow(tint, tint, tlist(t0), tlist(t0)), _slice),
+        # (lambda (lambda (lambda (reducei (lambda (lambda (lambda (++ $2 (if (and (or (gt? $1 $5) (eq? $1 $5)) (not (or (gt? $4 $1) (eq? $1 $4)))) (singleton $0) empty))))) empty $0))))
+    ]
 
 
-    # Program.parse("(lambda (not (eq? $0 0)))")
-    # Program.parse("(lambda (lambda (filter (lambda (eq? ($2 $0) 0)) $0)))"),
-    # Program.parse("(lambda (lambda (filter (lambda (not (eq? ($2 $0) 0))) $0)))"),
-]
+def basePrimitives():
+    "These are really powerful but hard to learn to use."
+    return [ Primitive(str(j), tint, j) for j in xrange(6) ] + [
+        Primitive("empty", tlist(t0), []),
+        Primitive("singleton", arrow(t0, tlist(t0)), _single),
+        Primitive("range", arrow(tint, tlist(tint)), range),
+        Primitive("++", arrow(tlist(t0), tlist(t0), tlist(t0)), _append),
+        Primitive("map", arrow(arrow(t0, t1), tlist(t0), tlist(t1)), _map),
+        Primitive("mapi", arrow(arrow(tint, t0, t1), tlist(t0), tlist(t1)), _mapi),
+        Primitive("reduce", arrow(arrow(t1, t0, t1), t1, tlist(t0), t1), _reduce),
+        Primitive("reducei", arrow(arrow(t1, tint, t0, t1), t1, tlist(t0), t1), _reducei),
+
+        Primitive("true", tbool, True),
+        Primitive("not", arrow(tbool, tbool), _not),
+        Primitive("and", arrow(tbool, tbool, tbool), _and),
+        Primitive("or", arrow(tbool, tbool, tbool), _or),
+        Primitive("if", arrow(tbool, t0, t0, t0), _if),
+
+        Primitive("sort", arrow(tlist(tint), tlist(tint)), sorted),
+        Primitive("+", arrow(tint, tint, tint), _addition),
+        Primitive("*", arrow(tint, tint, tint), _multiplication),
+        Primitive("negate", arrow(tint, tint), _negate),
+        Primitive("mod", arrow(tint, tint, tint), _mod),
+        Primitive("eq?", arrow(tint, tint, tbool), _eq),
+        Primitive("gt?", arrow(tint, tint, tbool), _gt),
+        Primitive("is-prime", arrow(tint, tbool), _isPrime),
+        Primitive("is-square", arrow(tint, tbool), _isSquare),
+    ]

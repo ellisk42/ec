@@ -5,7 +5,7 @@ from utilities import eprint, numberOfCPUs, flatten
 from grammar import Grammar
 from task import RegressionTask
 from type import Context, arrow, tlist, tint, t0
-from listPrimitives import primitives
+from listPrimitives import basePrimitives, primitives
 from recognition import HandCodedFeatureExtractor, RecurrentFeatureExtractor
 
 
@@ -158,6 +158,8 @@ def list_clis(parser):
     parser.add_argument("--maxTasks", type=int,
         default=1000,
         help="truncate tasks to fit within this boundary")
+    parser.add_argument("--base", action="store_true",
+        help="use foundational primitives")
 
 
 if __name__ == "__main__":
@@ -167,22 +169,26 @@ if __name__ == "__main__":
         CPUs=numberOfCPUs(),
         extras=list_clis)
 
-    maxTasks = args.pop("maxTasks")
     tasks = retrieveTasks(args.pop("dataset"))
+
+    maxTasks = args.pop("maxTasks")
     if len(tasks) > maxTasks:
         eprint("Unwilling to handle {} tasks, truncating..".format(len(tasks)))
         random.seed(42)
         random.shuffle(tasks)
         del tasks[maxTasks:]
+
     eprint("Got {} list tasks".format(len(tasks)))
 
     for task in tasks:
         task.features = list_features(task.examples)
+
+    prims = basePrimitives if args.pop("base") else primitives
 
     args.update({
         "featureExtractor": LearnedFeatureExtractor,
         "outputPrefix": "experimentOutputs/list",
     })
 
-    baseGrammar = Grammar.uniform(primitives)
+    baseGrammar = Grammar.uniform(prims())
     explorationCompression(baseGrammar, tasks, **args)
