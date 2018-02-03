@@ -133,8 +133,9 @@ class FeatureExtractor(HandCodedFeatureExtractor):
 
 class DeepFeatureExtractor(MLPFeatureExtractor):
     N_EXAMPLES = 15
+    H = 16
     def __init__(self, tasks):
-        super(DeepFeatureExtractor, self).__init__(tasks, H=16)
+        super(DeepFeatureExtractor, self).__init__(tasks, H=self.H)
     def _featuresOfProgram(self, program, tp):
         e = program.evaluate([])
         examples = []
@@ -155,6 +156,7 @@ class DeepFeatureExtractor(MLPFeatureExtractor):
 
 
 class LearnedFeatureExtractor(RecurrentFeatureExtractor):
+    H = 16
     def __init__(self, tasks):
         def tokenize(examples):
             for i, ((x,), y) in enumerate(examples):
@@ -170,12 +172,12 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
         lexicon = set(flatten(t.examples for t in tasks)).union({"LIST_START", "LIST_END"})
         super(LearnedFeatureExtractor, self).__init__(lexicon=list(lexicon),
                                                       tasks=tasks,
-                                                      H=16,
+                                                      H=self.H,
                                                       bidirectional=True,
                                                       tokenize=tokenize)
 
 
-def list_clis(parser):
+def list_options(parser):
     parser.add_argument("--dataset", type=str,
         default="data/list_tasks.pkl",
         help="location of pickled list function dataset")
@@ -187,6 +189,9 @@ def list_clis(parser):
     parser.add_argument("--extractor", type=str,
         choices=["hand", "deep", "learned"],
         default="hand")
+    parser.add_argument("-H", "--hidden", type=int,
+        default=16,
+        help="number of hidden units")
 
 
 if __name__ == "__main__":
@@ -194,7 +199,7 @@ if __name__ == "__main__":
         frontierSize=10000, activation='sigmoid', iterations=10,
         a=3, maximumFrontier=10, topK=3, pseudoCounts=10.0,
         CPUs=numberOfCPUs(),
-        extras=list_clis)
+        extras=list_options)
 
     tasks = retrieveTasks(args.pop("dataset"))
 
@@ -218,6 +223,7 @@ if __name__ == "__main__":
         "deep": DeepFeatureExtractor,
         "learned": LearnedFeatureExtractor,
     }[args.pop("extractor")]
+    extractor.H = args.pop("hidden")
 
     args.update({
         "featureExtractor": extractor,
