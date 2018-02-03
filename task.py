@@ -41,11 +41,11 @@ class RegressionTask(object):
             f = e.evaluate([])
             
             for x,y in self.examples:
-                if self.cache and (x,e) in EVALUATIONTABLE: p = EVALUATIONTABLE[(x,e)]
+                if self.cache and (tuple(x),e) in EVALUATIONTABLE: p = EVALUATIONTABLE[(tuple(x),e)]
                 else:
                     try: p = self.predict(f,x)
                     except: p = None
-                    if self.cache: EVALUATIONTABLE[(x,e)] = p
+                    if self.cache: EVALUATIONTABLE[(tuple(x),e)] = p
                 if p != y:
                     if timeout is not None: signal.setitimer(signal.ITIMER_PROF, 0)
                     return False
