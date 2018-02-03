@@ -65,6 +65,7 @@ def explorationCompression(grammar, tasks,
                            frontierSize=None,
                            expandFrontier=None,
                            useRecognitionModel=True,
+                           steps=250,
                            helmholtzRatio=0.,
                            featureExtractor = None,
                            activation='relu',
@@ -96,7 +97,7 @@ def explorationCompression(grammar, tasks,
                                "message", "CPUs", "outputPrefix",
                                "resume", "featureExtractor"}}
     if not useRecognitionModel:
-        for k in ["activation","helmholtzRatio"]: del parameters[k]
+        for k in {"activation","helmholtzRatio","steps"}: del parameters[k]
 
     # Uses `parameters` to construct the checkpoint path
     def checkpointPath(iteration, extra=""):
@@ -168,7 +169,7 @@ def explorationCompression(grammar, tasks,
                                   else grammar.rescoreFrontier(result.taskSolutions[f.task])
                                   for f in frontiers ]
 
-            recognizer.train(trainingFrontiers, topK=topK,
+            recognizer.train(trainingFrontiers, topK=topK, steps=steps,
                              # Disable Helmholtz on the first iteration
                              # Otherwise we just draw from the base grammar which is a terrible distribution
                              helmholtzRatio = helmholtzRatio and helmholtzRatio*int(j > 0))
@@ -199,7 +200,6 @@ def explorationCompression(grammar, tasks,
                 -sum(f.bestPosterior.logPosterior for f in frontiers if not f.empty)
                 / sum(not f.empty for f in frontiers))
 
-        
 
         # Record the new solutions
         result.taskSolutions = {f.task: f.topK(topK) if not f.empty
@@ -275,6 +275,7 @@ def commandlineArguments(_=None,
                          topK=1,
                          CPUs=1,
                          useRecognitionModel=True,
+                         steps=250,
                          activation='relu',
                          helmholtzRatio = 0.,
                          featureExtractor = None,
@@ -350,6 +351,10 @@ def commandlineArguments(_=None,
                         action="store_false",
                         help="""Disable bottom-up neural recognition model.
                         Default: %s""" % (not useRecognitionModel))
+    parser.add_argument("--steps", type=int,
+                        default=steps,
+                        help="""Trainings steps for neural recognition model.
+                        Default: %s""" % steps)
     parser.add_argument("--activation",
                         choices=["relu", "sigmoid", "tanh"],
                         default=activation,
