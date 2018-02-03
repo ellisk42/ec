@@ -199,11 +199,10 @@ class FragmentGrammar(object):
 
     def insideOutside(self, frontiers, pseudoCounts):
         uses = self.expectedUses(frontiers)
-        return FragmentGrammar(log(uses.actualVariables + pseudoCounts) - \
-                               log(uses.possibleVariables),
-                               [ (log(uses.actualUses.get(p,0.) + pseudoCounts) - \
-                                  # If it is not in actual/possible uses then set it to 0
-                                  log(uses.possibleUses.get(p,pseudoCounts)),
+        return FragmentGrammar(log(uses.actualVariables + pseudoCounts)
+                               - log(uses.possibleVariables),
+                               [ (log(uses.actualUses.get(p,0.) + pseudoCounts)
+                                  - log(uses.possibleUses.get(p,pseudoCounts)),
                                   t,p)
                                  for _,t,p in self.productions ])
 
@@ -218,8 +217,9 @@ class FragmentGrammar(object):
         return FragmentGrammar(f(uses.actualVariables, uses.possibleVariables),
                                [ (f(uses.actualUses[p], uses.possibleUses[p]), t, p)
                                  for _,t,p in self.productions
-                                 if realUses.actualUses.get(p,0) > 1 or isinstance(p,(Primitive,Invented))]).\
-                                    normalize()
+                                 if realUses.actualUses.get(p,0) > 1 or
+                                    isinstance(p,(Primitive,Invented))
+                               ]).normalize()
 
     def jointFrontiersLikelihood(self, frontiers):
         return sum( lse([ entry.logLikelihood + self.closedLogLikelihood(frontier.task.request, entry.program)
@@ -291,7 +291,7 @@ class FragmentGrammar(object):
                      actualUses = {p: priorCounts(p) for p in grammar.primitives },
                      possibleUses = {p: 0 for p in grammar.primitives })
         
-        for i in range(5):
+        for i in xrange(5):
             eprint("VB iteration",i)
             grammar = grammar.variationalUpdate(restrictedFrontiers, uses0).normalize()
             restrictedFrontiers = restrictFrontiers()
@@ -329,7 +329,7 @@ class FragmentGrammar(object):
             return score, g
 
 
-        if aic != POSITIVEINFINITY:
+        if aic is not POSITIVEINFINITY:
             restrictedFrontiers = restrictFrontiers()
             bestScore, _ = grammarScore(bestGrammar)
             while True:
@@ -340,17 +340,18 @@ class FragmentGrammar(object):
 
                 candidateGrammars = [ FragmentGrammar.uniform(bestGrammar.primitives + [fragment])
                                       for fragment in fragments ]
-                if candidateGrammars == []: break
+                if not candidateGrammars:
+                    break
 
                 scoredFragments = parallelMap(CPUs, grammarScore, candidateGrammars)
-                (newScore, newGrammar) = max(scoredFragments)
+                newScore, newGrammar = max(scoredFragments)
 
-                if newScore > bestScore:
-                    dS = newScore - bestScore
-                    bestScore, bestGrammar = newScore, newGrammar
-                    _,newType,newPrimitive = bestGrammar.productions[-1]
-                    eprint("New primitive of type %s\t%s (score = %f; dScore = %f)"%(newType,newPrimitive,newScore,dS))
-                else: break
+                if newScore <= bestScore:
+                    break
+                dS = newScore - bestScore
+                bestScore, bestGrammar = newScore, newGrammar
+                _,newType,newPrimitive = bestGrammar.productions[-1]
+                eprint("New primitive of type %s\t%s (score = %f; dScore = %f)"%(newType,newPrimitive,newScore,dS))
         else:
             eprint("Skipping fragment proposals")
 
