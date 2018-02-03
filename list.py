@@ -156,21 +156,23 @@ class DeepFeatureExtractor(MLPFeatureExtractor):
 
 class LearnedFeatureExtractor(RecurrentFeatureExtractor):
     def __init__(self, tasks):
-        # examples must be list -> list
-        def appropriate(examples):
+        def tokenize(examples):
             for i, ((x,), y) in enumerate(examples):
-                if not isinstance(x, list) or not isinstance(y, list):
-                    if not isinstance(x, list):
-                        x = [x]
-                    if not isinstance(y, list):
-                        y = [y]
-                    examples[i] = ((x,), y)
-        lexicon = set(flatten(t.examples for t in tasks))
+                if isinstance(x, list):
+                    x = ["LIST_START"]+x+["LIST_END"]
+                else:
+                    x = [x]
+                if isinstance(y, list):
+                    y = ["LIST_START"]+y+["LIST_END"]
+                else:
+                    y = [y]
+                examples[i] = ((x,), y)
+        lexicon = set(flatten(t.examples for t in tasks)).union({"LIST_START", "LIST_END"})
         super(LearnedFeatureExtractor, self).__init__(lexicon=list(lexicon),
                                                       tasks=tasks,
                                                       H=16,
                                                       bidirectional=True,
-                                                      appropriate=appropriate)
+                                                      tokenize=tokenize)
 
 
 def list_clis(parser):
