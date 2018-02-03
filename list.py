@@ -6,7 +6,7 @@ from grammar import Grammar
 from task import RegressionTask
 from type import Context, arrow, tlist, tint, t0
 from listPrimitives import basePrimitives, primitives
-from recognition import HandCodedFeatureExtractor, RecurrentFeatureExtractor
+from recognition import HandCodedFeatureExtractor, MLPFeatureExtractor, RecurrentFeatureExtractor
 
 
 def retrieveTasks(filename):
@@ -131,6 +131,28 @@ class FeatureExtractor(HandCodedFeatureExtractor):
         else: return None
         return list_features(examples)
 
+class DeepFeatureExtractor(MLPFeatureExtractor):
+    N_EXAMPLES = 15
+    def __init__(self, tasks):
+        super(DeepFeatureExtractor, self).__init__(tasks, H=16)
+    def _featuresOfProgram(self, program, tp):
+        e = program.evaluate([])
+        examples = []
+        if isListFunction(tp):
+            sample = lambda: random.sample(xrange(30), random.randint(0, 8))
+        elif isIntFunction(tp):
+            sample = lambda: random.randint(0, 20)
+        else: return None
+        for _ in xrange(self.N_EXAMPLES*5):
+            x = sample()
+            try:
+                y = e(x)
+                examples.append(((x,), y))
+            except: continue
+            if len(examples) >= self.N_EXAMPLES: break
+        else: return None
+        return list_features(examples)
+
 
 class LearnedFeatureExtractor(RecurrentFeatureExtractor):
     def __init__(self, tasks):
@@ -164,8 +186,8 @@ def list_clis(parser):
 
 if __name__ == "__main__":
     args = commandlineArguments(
-        frontierSize=15000, activation='sigmoid', iterations=10,
-        a=3, topK=3, pseudoCounts=10.0,
+        frontierSize=10000, activation='sigmoid', iterations=10,
+        a=3, maximumFrontier=10, topK=3, pseudoCounts=10.0,
         CPUs=numberOfCPUs(),
         extras=list_clis)
 
@@ -187,7 +209,7 @@ if __name__ == "__main__":
     prims = basePrimitives if args.pop("base") else primitives
 
     args.update({
-        "featureExtractor": LearnedFeatureExtractor,
+        "featureExtractor": FeatureExtractor,
         "outputPrefix": "experimentOutputs/list",
     })
 
