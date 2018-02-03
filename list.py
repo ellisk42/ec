@@ -182,6 +182,7 @@ if __name__ == "__main__":
 
     for task in tasks:
         task.features = list_features(task.examples)
+        task.cache = False
 
     prims = basePrimitives if args.pop("base") else primitives
 
