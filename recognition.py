@@ -14,10 +14,10 @@ from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 
 import numpy as np
 
-def variable(x, volatile=False):
+def variable(x, volatile=False, cuda=False):
     if isinstance(x,list): x = np.array(x)
     if isinstance(x,(np.ndarray,np.generic)): x = torch.from_numpy(x)
-    #if GPU: x = x.cuda()
+    if cuda: x = x.cuda()
     return Variable(x, volatile=volatile)
 
 class RecognitionModel(nn.Module):
@@ -162,6 +162,7 @@ class RecognitionModel(nn.Module):
 class RecurrentFeatureExtractor(nn.Module):
     def __init__(self, _=None,
                  tasks=None,
+                 cuda=False,
                  # what are the symbols that can occur in the inputs and outputs
                  lexicon=None,
                  # how many hidden units
@@ -182,7 +183,10 @@ class RecurrentFeatureExtractor(nn.Module):
 
         assert lexicon
         lexicon += ["STARTING","ENDING","MIDDLE"]
-        self.encoder = nn.Embedding(len(lexicon), H)
+        encoder = nn.Embedding(len(lexicon), H)
+        if cuda:
+            encoder = encoder.cuda()
+        self.encoder = encoder
 
         self.H = H
         #self.O = O
@@ -194,10 +198,14 @@ class RecurrentFeatureExtractor(nn.Module):
         # self.inputModel = nn.GRU(H, H, layers, bidirectional = bidirectional)
         # self.outputModel = nn.GRU(H, H, layers, bidirectional = bidirectional)
 
-        self.model = nn.GRU(H, H, layers, bidirectional = bidirectional)
+        model = nn.GRU(H, H, layers, bidirectional = bidirectional)
+        if cuda:
+            model = model.cuda()
+        self.model = model
 
         #self.outputLayer = nn.Linear(H,O)
 
+        self.usecuda = cuda
         self.lexicon = lexicon
         self.symbolToIndex = {symbol: index for index, symbol in enumerate(lexicon) }
         self.startingIndex = self.symbolToIndex["STARTING"]
@@ -209,7 +217,7 @@ class RecurrentFeatureExtractor(nn.Module):
 
     def observationEmbedding(self, x):
         x = [self.startingIndex] + [ self.symbolToIndex[s] for s in x ] + [self.endingIndex]
-        x = variable(x)
+        x = variable(x, cuda=self.usecuda)
         x = self.encoder(x)
         return x
 
@@ -224,7 +232,7 @@ class RecurrentFeatureExtractor(nn.Module):
                [self.endingIndex]*(maximumSize - len(y) - len(x) + 1 - 3)
                for ((x,),y) in examples ]
 
-        x = variable(xs)
+        x = variable(xs, cuda=self.usecuda)
         x = self.encoder(x)
         # x: (batch size, maximum length, E)
         x = x.permute(1,0,2)
@@ -276,22 +284,26 @@ class RecurrentFeatureExtractor(nn.Module):
         return None
         
 class MLPFeatureExtractor(nn.Module):
-    def __init__(self, tasks, H = 16):
+    def __init__(self, tasks, cuda=False, H=16):
         super(MLPFeatureExtractor, self).__init__()
 
         self.averages, self.deviations = RegressionTask.featureMeanAndStandardDeviation(tasks)
         self.tasks = tasks
+        self.usecuda = cuda
 
         self.outputDimensionality = H
-        self.hidden = nn.Linear(len(self.averages), H)
+        hidden = nn.Linear(len(self.averages), H)
+        if cuda:
+            hidden = hidden.cuda()
+        self.hidden = hidden
 
     def featuresOfTask(self, t):
-        f = variable([ (f - self.averages[j])/self.deviations[j] for j,f in enumerate(t.features) ]).float()
+        f = variable([ (f - self.averages[j])/self.deviations[j] for j,f in enumerate(t.features) ], cuda=self.usecuda).float()
         return self.hidden(f).clamp(min = 0)
     def featuresOfProgram(self, p, t):
         features = self._featuresOfProgram(p,t)
         if features is None: return None
-        f = variable([ (f - self.averages[j])/self.deviations[j] for j,f in enumerate(features) ]).float()
+        f = variable([ (f - self.averages[j])/self.deviations[j] for j,f in enumerate(features) ], cuda=self.usecuda).float()
         return self.hidden(f).clamp(min = 0)
     
         
@@ -302,11 +314,11 @@ class HandCodedFeatureExtractor(object):
         self.outputDimensionality = len(self.averages)
         self.tasks = tasks
     def featuresOfTask(self, t):
-        return variable([ (f - self.averages[j])/self.deviations[j] for j,f in enumerate(t.features) ]).float()
+        return variable([ (f - self.averages[j])/self.deviations[j] for j,f in enumerate(t.features) ], cuda=self.usecuda).float()
     def featuresOfProgram(self, p, t):
         features = self._featuresOfProgram(p,t)
         if features is None: return None
-        return variable([ (f - self.averages[j])/self.deviations[j] for j,f in enumerate(features) ]).float()
+        return variable([ (f - self.averages[j])/self.deviations[j] for j,f in enumerate(features) ], cuda=self.usecuda).float()
     
                 
 

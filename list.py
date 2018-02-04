@@ -134,8 +134,9 @@ class FeatureExtractor(HandCodedFeatureExtractor):
 class DeepFeatureExtractor(MLPFeatureExtractor):
     N_EXAMPLES = 15
     H = 16
+    USE_CUDA = False
     def __init__(self, tasks):
-        super(DeepFeatureExtractor, self).__init__(tasks, H=self.H)
+        super(DeepFeatureExtractor, self).__init__(tasks, cuda=self.USE_CUDA, H=self.H)
     def _featuresOfProgram(self, program, tp):
         e = program.evaluate([])
         examples = []
@@ -157,6 +158,7 @@ class DeepFeatureExtractor(MLPFeatureExtractor):
 
 class LearnedFeatureExtractor(RecurrentFeatureExtractor):
     H = 16
+    USE_CUDA = False
     def __init__(self, tasks):
         def tokenize(examples):
             for i, ((x,), y) in enumerate(examples):
@@ -172,6 +174,7 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
         lexicon = set(flatten(t.examples for t in tasks)).union({"LIST_START", "LIST_END"})
         super(LearnedFeatureExtractor, self).__init__(lexicon=list(lexicon),
                                                       tasks=tasks,
+                                                      cuda=self.USE_CUDA,
                                                       H=self.H,
                                                       bidirectional=True,
                                                       tokenize=tokenize)
@@ -224,6 +227,7 @@ if __name__ == "__main__":
         "learned": LearnedFeatureExtractor,
     }[args.pop("extractor")]
     extractor.H = args.pop("hidden")
+    extractor.USE_CUDA = args["cuda"]
 
     args.update({
         "featureExtractor": extractor,
