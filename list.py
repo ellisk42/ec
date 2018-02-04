@@ -161,6 +161,7 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
     USE_CUDA = False
     def __init__(self, tasks):
         def tokenize(examples):
+            tokenized = [None]*len(examples)
             for i, ((x,), y) in enumerate(examples):
                 if isinstance(x, list):
                     x = ["LIST_START"]+x+["LIST_END"]
@@ -170,8 +171,9 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
                     y = ["LIST_START"]+y+["LIST_END"]
                 else:
                     y = [y]
-                examples[i] = ((x,), y)
-        lexicon = set(flatten(t.examples for t in tasks)).union({"LIST_START", "LIST_END"})
+                tokenized[i] = ((x,), y)
+            return tokenized
+        lexicon = set(flatten((t.examples for t in tasks), abort=lambda x:isinstance(x, str))).union({"LIST_START", "LIST_END"})
         super(LearnedFeatureExtractor, self).__init__(lexicon=list(lexicon),
                                                       tasks=tasks,
                                                       cuda=self.USE_CUDA,

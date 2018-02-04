@@ -173,8 +173,8 @@ class RecurrentFeatureExtractor(nn.Module):
                  #O=32,
                  # Should the recurrent units be bidirectional?
                  bidirectional=False,
-                 # modify examples in-place before forward (e.g. to turn them into iterables of lexicon)
-                 tokenize=lambda _:None):
+                 # modify examples before forward (to turn them into iterables of lexicon)
+                 tokenize=lambda x:x):
         super(RecurrentFeatureExtractor, self).__init__()
 
         assert tasks is not None, "You must provide a list of all of the tasks, both those that have been hit and those that have not been hit. Input examples are sampled from these tasks."
@@ -266,8 +266,8 @@ class RecurrentFeatureExtractor(nn.Module):
         return hidden[0,:,:] + hidden[1,:,:]
         
     def forward(self, examples):
-        self.tokenize(examples)
-        e = self.examplesEncoding(examples)
+        tokenized = self.tokenize(examples)
+        e = self.examplesEncoding(tokenized)
         # max pool
         e,_ = e.max(dim = 0)
         return e

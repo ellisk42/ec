@@ -24,12 +24,15 @@ def hashable(v):
     return True
 
 
-def flatten(x):
-    """Recursively unroll iterables"""
+def flatten(x, abort=lambda x:False):
+    """Recursively unroll iterables."""
+    if abort(x):
+        yield x
+        return
     try:
-        for e in chain(*imap(flatten, x)):
+        for e in chain(*(flatten(i, abort) for i in x)):
             yield e
-    except TypeError: # not iterable
+    except TypeError:  # not iterable
         yield x
 
 
