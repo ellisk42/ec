@@ -4,7 +4,7 @@ from ec import explorationCompression, commandlineArguments
 from utilities import eprint, numberOfCPUs, flatten
 from grammar import Grammar
 from task import RegressionTask
-from type import Context, arrow, tlist, tint, t0
+from type import Context, arrow, tlist, tint, t0, UnificationFailure
 from listPrimitives import basePrimitives, primitives
 from recognition import HandCodedFeatureExtractor, MLPFeatureExtractor, RecurrentFeatureExtractor
 
