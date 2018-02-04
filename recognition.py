@@ -66,8 +66,10 @@ class RecognitionModel(nn.Module):
         # Calculates the embedding 's of the primitives based on the last weight layer
         w = self.logProductions._parameters['weight']
         # w: len(self.grammar) x E
+        if self.use_cuda:
+            w = w.cpu()
         e = dict({p: w[j,:].data.numpy() for j,(t,l,p) in enumerate(self.grammar.productions) })
-        e[Index(0)] = self.logVariable._parameters['weight'][0,:].data.numpy()
+        e[Index(0)] = w[0,:].data.numpy()
         return e
         
 
@@ -205,7 +207,7 @@ class RecurrentFeatureExtractor(nn.Module):
 
         #self.outputLayer = nn.Linear(H,O)
 
-        self.usecuda = cuda
+        self.use_cuda = cuda
         self.lexicon = lexicon
         self.symbolToIndex = {symbol: index for index, symbol in enumerate(lexicon) }
         self.startingIndex = self.symbolToIndex["STARTING"]
@@ -217,7 +219,7 @@ class RecurrentFeatureExtractor(nn.Module):
 
     def observationEmbedding(self, x):
         x = [self.startingIndex] + [ self.symbolToIndex[s] for s in x ] + [self.endingIndex]
-        x = variable(x, cuda=self.usecuda)
+        x = variable(x, cuda=self.use_cuda)
         x = self.encoder(x)
         return x
 
@@ -232,7 +234,7 @@ class RecurrentFeatureExtractor(nn.Module):
                [self.endingIndex]*(maximumSize - len(y) - len(x) + 1 - 3)
                for ((x,),y) in examples ]
 
-        x = variable(xs, cuda=self.usecuda)
+        x = variable(xs, cuda=self.use_cuda)
         x = self.encoder(x)
         # x: (batch size, maximum length, E)
         x = x.permute(1,0,2)
@@ -289,7 +291,7 @@ class MLPFeatureExtractor(nn.Module):
 
         self.averages, self.deviations = RegressionTask.featureMeanAndStandardDeviation(tasks)
         self.tasks = tasks
-        self.usecuda = cuda
+        self.use_cuda = cuda
 
         self.outputDimensionality = H
         hidden = nn.Linear(len(self.averages), H)
@@ -298,27 +300,28 @@ class MLPFeatureExtractor(nn.Module):
         self.hidden = hidden
 
     def featuresOfTask(self, t):
-        f = variable([ (f - self.averages[j])/self.deviations[j] for j,f in enumerate(t.features) ], cuda=self.usecuda).float()
+        f = variable([ (f - self.averages[j])/self.deviations[j] for j,f in enumerate(t.features) ], cuda=self.use_cuda).float()
         return self.hidden(f).clamp(min = 0)
     def featuresOfProgram(self, p, t):
         features = self._featuresOfProgram(p,t)
         if features is None: return None
-        f = variable([ (f - self.averages[j])/self.deviations[j] for j,f in enumerate(features) ], cuda=self.usecuda).float()
+        f = variable([ (f - self.averages[j])/self.deviations[j] for j,f in enumerate(features) ], cuda=self.use_cuda).float()
         return self.hidden(f).clamp(min = 0)
     
         
 
 class HandCodedFeatureExtractor(object):
-    def __init__(self, tasks):
+    def __init__(self, tasks, cuda=False):
         self.averages, self.deviations = RegressionTask.featureMeanAndStandardDeviation(tasks)
         self.outputDimensionality = len(self.averages)
+        self.cuda = cuda
         self.tasks = tasks
     def featuresOfTask(self, t):
-        return variable([ (f - self.averages[j])/self.deviations[j] for j,f in enumerate(t.features) ], cuda=self.usecuda).float()
+        return variable([ (f - self.averages[j])/self.deviations[j] for j,f in enumerate(t.features) ], cuda=self.cuda).float()
     def featuresOfProgram(self, p, t):
         features = self._featuresOfProgram(p,t)
         if features is None: return None
-        return variable([ (f - self.averages[j])/self.deviations[j] for j,f in enumerate(features) ], cuda=self.usecuda).float()
+        return variable([ (f - self.averages[j])/self.deviations[j] for j,f in enumerate(features) ], cuda=self.cuda).float()
     
                 
 
