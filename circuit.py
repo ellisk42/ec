@@ -66,7 +66,7 @@ class Circuit(object):
                 else:
                     arguments = list(np.random.choice(validInputs,
                                                       size = INPUTSPERGATE[gate],
-                                                      replace = True))
+                                                      replace = False))
                 self.operations.append(tuple([gate] + arguments))
             self.name = "%d inputs ; "%self.numberOfInputs + \
                         " ; ".join("%s(%s)"%(o[0],",".join(map(str,o[1:])))
