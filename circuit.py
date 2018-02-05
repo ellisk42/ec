@@ -9,6 +9,7 @@ from recognition import *
 import itertools
 import random
 
+NUMBEROFTASKS = 10**3
 inputDistribution = [#(1,1),
                      #(2,2),
                      (3,3),
@@ -22,7 +23,7 @@ inputDistribution = [#(1,1),
 MAXIMUMINPUTS = max(i for p,i in inputDistribution)
 gateDistribution = [(1,1),
                     (2,2),
-                    (3,3),
+                    (2,3),
 #                    (4,4),
                     #(5,5),
                     #(6,5),
@@ -134,7 +135,7 @@ if __name__ == "__main__":
     circuits = []
     import random
     random.seed(0)
-    while len(circuits) < 500:
+    while len(circuits) < NUMBEROFTASKS:
         inputs = sampleDistribution(inputDistribution)
         gates = sampleDistribution(gateDistribution)
         newTask = Circuit(numberOfInputs = inputs,
@@ -148,7 +149,7 @@ if __name__ == "__main__":
     baseGrammar = Grammar.uniform(primitives)
     explorationCompression(baseGrammar, tasks,
                            outputPrefix = "experimentOutputs/circuit",
-                           **commandlineArguments(frontierSize = 500,
+                           **commandlineArguments(frontierSize = 1000,
                                                   iterations = 10,
                                                   aic = 1.,
                                                   structurePenalty = 0.1,
