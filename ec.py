@@ -12,6 +12,10 @@ import baselines
 
 import os
 
+# We pick all the recognition models and these might have lambdas
+# inside of them
+import dill
+
 import torch
 
 
@@ -22,9 +26,9 @@ class ECResult():
                  taskSolutions=None,
                  averageDescriptionLength=None,
                  parameters=None,
-                 embedding=None,
+                 recognitionModel=None,
                  baselines=None):
-        self.embedding = embedding
+        self.recognitionModel = recognitionModel
         self.averageDescriptionLength = averageDescriptionLength or []
         self.parameters = parameters
         self.learningCurve = learningCurve or []
@@ -114,7 +118,7 @@ def explorationCompression(grammar, tasks,
         if outputPrefix is not None:
             path = checkpointPath(0, extra="_baselines")
             with open(path, "wb") as f:
-                pickle.dump(result, f)
+                dill.dump(result, f)
             eprint("Exported checkpoint to", path)
         return result
 
@@ -128,13 +132,13 @@ def explorationCompression(grammar, tasks,
     if resume is not None:
         path = checkpointPath(resume)
         with open(path, "rb") as handle:
-            result = pickle.load(handle)
+            result = dill.load(handle)
         eprint("Loaded checkpoint from", path)
         grammar = result.grammars[-1]
     else:  # Start from scratch
         result = ECResult(parameters=parameters, grammars=[grammar],
                           taskSolutions = { t: Frontier([], task = t) for t in tasks },
-                          embedding = None)
+                          recognitionModel = None)
 
     for j in range(resume or 0, iterations):
         if j >= 2 and expandFrontier and result.learningCurve[-1] <= result.learningCurve[-2]:
@@ -193,8 +197,8 @@ def explorationCompression(grammar, tasks,
 
             frontiers = [f.combine(b) for f, b in zip(frontiers, bottomupFrontiers)]
 
-            # For visualization we save an embedding vector for each of the learned primitives
-            result.embedding = recognizer.getEmbedding()
+            # For visualization we save the recognition model
+            result.recognitionModel = recognizer
         elif j > 0:
             result.averageDescriptionLength.append(
                 -sum(f.bestPosterior.logPosterior for f in frontiers if not f.empty)
@@ -248,7 +252,7 @@ def explorationCompression(grammar, tasks,
         if outputPrefix is not None:
             path = checkpointPath(j + 1)
             with open(path, "wb") as handle:
-                pickle.dump(result, handle)
+                dill.dump(result, handle)
             eprint("Exported checkpoint to", path)
 
     return result

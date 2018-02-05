@@ -1,5 +1,6 @@
 from ec import *
 
+import dill
 import numpy as np
 
 import matplotlib.pyplot as plot
@@ -31,7 +32,10 @@ def parseResultsPath(p):
     parameters['domain'] = domain
     return Bunch(parameters)
 
-def PCAembedding(e,g):
+def PCAembedding(e, label = lambda l: l):
+    """e: a map from object to vector
+    label: a function from object to how it should be labeled
+    """
     primitives = e.keys()
     matrix = np.array([ e[p] for p in primitives ])
     N,D = matrix.shape
@@ -48,22 +52,19 @@ def PCAembedding(e,g):
     vectors = e.values()
     plot.scatter([ v[0] for v in vectors ],
                  [ v[1] for v in vectors ])
-    best = [ p
-             for l,t,p in sorted(g.productions, reverse = True)
-             if p.isInvented or p.isPrimitive ][:10]
     for p,v in e.iteritems():
-        if p in best:
-            eprint(p)
-            plot.annotate(prettyProgram(p),
-                          (v[0] + random.random(),
-                           v[1] + random.random()))
+        l = label(p)
+        if not isinstance(l,(str,unicode)): l = str(l)
+        plot.annotate(l,
+                      (v[0] + random.random(),
+                       v[1] + random.random()))
 
 def plotECResult(resultPaths, colors='rgbycm', label=None, title=None, export=None):
     results = []
     parameters = []
     for j,path in enumerate(resultPaths):
         with open(path,'rb') as handle:
-            result = pickle.load(handle)
+            result = dill.load(handle)
             if hasattr(result, "baselines") and result.baselines:
                 for name, res in result.baselines.iteritems():
                     results.append(res)
@@ -117,11 +118,19 @@ def plotECResult(resultPaths, colors='rgbycm', label=None, title=None, export=No
     else: plot.show()
 
     for result in results:
-        if hasattr(result, 'embedding') and result.embedding is not None:
+        if hasattr(result, 'recognitionModel') and result.recognitionModel is not None:
             plot.figure()
-            PCAembedding(result.embedding, result.grammars[-1])
+            PCAembedding(result.recognitionModel.productionEmbedding(), label = prettyProgram)
             if export:
-                export = export[:-4] + "_embedding" + export[-4:]
+                export = export[:-4] + "_DSLembedding" + export[-4:]
+                plot.savefig(export)
+                os.system("feh %s"%(export))
+            else: plot.show()
+            plot.figure()
+            tasks = result.taskSolutions.keys()
+            PCAembedding(result.recognitionModel.taskEmbeddings(tasks))
+            if export:
+                export = export[:-4] + "_task_embedding" + export[-4:]
                 plot.savefig(export)
                 os.system("feh %s"%(export))
             else: plot.show()

@@ -62,7 +62,7 @@ class RecognitionModel(nn.Module):
             self.logVariable = self.logVariable.cuda()
             self.logProductions = self.logProductions.cuda()
 
-    def getEmbedding(self):
+    def productionEmbedding(self):
         # Calculates the embedding 's of the primitives based on the last weight layer
         w = self.logProductions._parameters['weight']
         # w: len(self.grammar) x E
@@ -71,8 +71,11 @@ class RecognitionModel(nn.Module):
         e = dict({p: w[j,:].data.numpy() for j,(t,l,p) in enumerate(self.grammar.productions) })
         e[Index(0)] = w[0,:].data.numpy()
         return e
-        
 
+    def taskEmbeddings(self, tasks):
+        return {task: self.featureExtractor.featuresOfTask(task).data.numpy()
+                for task in tasks }
+        
     def forward(self, features):
         for layer in self.hiddenLayers:
             features = self.activation(layer(features))
