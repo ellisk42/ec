@@ -224,4 +224,6 @@ def loadPickle(f):
         d = pickle.load(handle)
     return d
 
-def fst(l): return l[0]
+def fst(l):
+    for v in l:
+        return v

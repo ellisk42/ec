@@ -1,5 +1,6 @@
 import cPickle as pickle
 import random
+from itertools import chain
 from ec import explorationCompression, commandlineArguments
 from utilities import eprint, numberOfCPUs, flatten
 from grammar import Grammar
@@ -160,9 +161,9 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
     H = 16
     USE_CUDA = False
     def __init__(self, tasks):
-        def tokenize(examples):
-            tokenized = [None]*len(examples)
-            for i, ((x,), y) in enumerate(examples):
+        def tokenize(examples, lexicon):
+            tokenized = []
+            for (x,), y in examples:
                 if isinstance(x, list):
                     x = ["LIST_START"]+x+["LIST_END"]
                 else:
@@ -171,7 +172,11 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
                     y = ["LIST_START"]+y+["LIST_END"]
                 else:
                     y = [y]
-                tokenized[i] = ((x,), y)
+                if all(e in lexicon for e in chain(x, y)):
+                    tokenized.append(((x,), y))
+                else:
+                    eprint("could not tokenize {} because {} not in lexicon".format(
+                        example, fst(e for e in chain(x, y) if e not in lexicon)))
             return tokenized
         lexicon = set(flatten((t.examples for t in tasks), abort=lambda x:isinstance(x, str))).union({"LIST_START", "LIST_END"})
         super(LearnedFeatureExtractor, self).__init__(lexicon=list(lexicon),
