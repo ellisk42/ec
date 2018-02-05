@@ -23,7 +23,7 @@ inputDistribution = [#(1,1),
 MAXIMUMINPUTS = max(i for p,i in inputDistribution)
 gateDistribution = [(1,1),
                     (2,2),
-                    (2,3),
+#                    (2,3),
 #                    (4,4),
                     #(5,5),
                     #(6,5),
@@ -31,7 +31,7 @@ gateDistribution = [(1,1),
 operationDistribution = [(1,'NOT'),
                          (2,'AND'),
                          (2,'OR'),
-                         (2,'m2'),
+                         (3,'m2'),
                          (2,'m4')]
 
 INPUTSPERGATE = {'NOT': 1,
