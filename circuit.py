@@ -119,37 +119,6 @@ class FeatureExtractor(HandCodedFeatureExtractor):
         f = program.evaluate([])
         ys = [ program.runWithArguments(x) for x in xs ]
         return Circuit.extractFeatures(ys)
-        
-
-# class CircuitFeatureExtractor(RecurrentFeatureExtractor):
-#     def __init__(self, allOfTheTasks):
-#         super(CircuitFeatureExtractor, self).__init__(lexicon = [True,False],
-#                                                       numberOfInputs = 2**MAXIMUMINPUTS,
-#                                                       allOfTheTasks = allOfTheTasks,
-#                                                       # The inputs and outputs are super simple so we just use 2 units
-#                                                       H = 2,
-#                                                       O = 2,
-#                                                       # LUCAS: You probably want bidirectional = True
-#                                                       bidirectional = False)
-
-#     def featuresOfTask(self, task):
-#         examples = [ RecognitionExample(inputs = [[x] for x in xs ],
-#                                         output = [y])
-#                      for xs,y in task.examples ]
-#         return self(examples)
-#     def featuresOfProgram(self, program, t):
-#         inputsAndOutputs = self.runOnRandomInputs(program, t)
-#         # Could not find any input which gave valid results
-#         # For the circuit domain this can never happen.
-#         # For your domain it might, in which case you should return None
-#         if inputsAndOutputs is None: assert False
-#         xss, ys = inputsAndOutputs
-        
-#         # Use the inputs from the randomly selected task
-#         examples = [ RecognitionExample(inputs = tuple([x] for x in xs),
-#                                         output = [program.runWithArguments(xs)])
-#                      for xs,y in zip(xss,ys) ]
-#         return self(examples)
 
 class DeepFeatureExtractor(MLPFeatureExtractor):
     def __init__(self, tasks):
