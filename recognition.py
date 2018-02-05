@@ -280,7 +280,7 @@ class RecurrentFeatureExtractor(nn.Module):
         random.shuffle(candidateInputs)
         for xss in candidateInputs:
             try:
-                ys = [ program.runWithArguments(xs) for xs in xss ] 
+                ys = [ p.runWithArguments(xs) for xs in xss ]
             except: continue
             return self(zip(xss,ys))
         return None
