@@ -176,7 +176,7 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
                     tokenized.append(((x,), y))
                 else:
                     eprint("could not tokenize {} because {} not in lexicon".format(
-                        example, fst(e for e in chain(x, y) if e not in lexicon)))
+                        ((x,), y), fst(e for e in chain(x, y) if e not in lexicon)))
             return tokenized
         lexicon = set(flatten((t.examples for t in tasks), abort=lambda x:isinstance(x, str))).union({"LIST_START", "LIST_END"})
         super(LearnedFeatureExtractor, self).__init__(lexicon=list(lexicon),
