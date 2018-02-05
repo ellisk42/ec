@@ -137,3 +137,15 @@ def constructFrontiers(frontiers, programLikelihoods, tasks, maxFrontier):
         frontier = Frontier(entries, task=task).removeZeroLikelihood()
         newFrontiers.append(frontier.topK(maxFrontier))
     return newFrontiers
+
+def solveSingleTask(grammar, task, maximumBudget = 15):
+    alreadyTried = set([])
+    for budget in range(2, maximumBudget):
+        for _,p in enumeration(grammar, Context.EMPTY, [], task.request, budget):
+            if p in alreadyTried: continue
+            l = task.logLikelihood(p)
+            if valid(l): return p
+            alreadyTried.add(p)
+
+    return None
+            
