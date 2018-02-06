@@ -88,7 +88,8 @@ class DifferentiableTask(RegressionTask):
         
         super(DifferentiableTask,self).__init__(name, request, examples, features, cache = False)
         
-    def logLikelihood(self,e):
+    def logLikelihood(self,e,timeout = None):
+        assert timeout == None, "timeout not implemented for differentiable tasks, but not for any good reason."
         e, parameters = PlaceholderVisitor.execute(e)
         f = e.evaluate([])
 
