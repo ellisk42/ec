@@ -64,6 +64,7 @@ ECResult.abbreviationToParameter = {v:k for k,v in ECResult.abbreviations.iterit
 
 def explorationCompression(grammar, tasks,
                            _=None,
+                           benchmark=None,
                            iterations=None,
                            resume=None,
                            frontierSize=None,
@@ -93,13 +94,17 @@ def explorationCompression(grammar, tasks,
         eprint("Warning: Recognition model needs feature extractor.",
                "Ignoring recognition model.")
         useRecognitionModel = False
+    if benchmark is not None and resume is None:
+        eprint("You cannot benchmark in less you are loading a checkpoint, aborting.")
+        assert False
 
     # We save the parameters that were passed into EC
     # This is for the purpose of exporting the results of the experiment
     parameters = {k: v for k, v in locals().iteritems()
                   if k not in {"tasks", "grammar", "cuda", "_",
                                "message", "CPUs", "outputPrefix",
-                               "resume", "featureExtractor"}}
+                               "resume", "featureExtractor",
+                               "benchmark"}}
     if not useRecognitionModel:
         for k in {"activation","helmholtzRatio","steps"}: del parameters[k]
 
@@ -139,6 +144,11 @@ def explorationCompression(grammar, tasks,
         result = ECResult(parameters=parameters, grammars=[grammar],
                           taskSolutions = { t: Frontier([], task = t) for t in tasks },
                           recognitionModel = None)
+
+    if benchmark is not None:
+        assert resume is not None
+        benchmarkSynthesisTimes(result, tasks, timeout = benchmark, CPUs = CPUs)
+        return 
 
     for j in range(resume or 0, iterations):
         if j >= 2 and expandFrontier and result.learningCurve[-1] <= result.learningCurve[-2]:
@@ -345,6 +355,10 @@ def commandlineArguments(_=None,
                         maximum size of the frontier that is kept around.
                         Default: %s""" % maximumFrontier,
                         type=int)
+    parser.add_argument("--benchmark",
+                        help = """Benchmark synthesis times with a timeout of this many seconds. You must use the --resume option. EC will not run but instead we were just benchmarked the synthesis times of a learned model""",
+                        type=float,
+                        default = None)
     parser.add_argument("--recognition",
                         dest="useRecognitionModel",
                         action="store_true",

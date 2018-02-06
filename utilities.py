@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import signal
 import random
 import time
 import traceback
@@ -134,12 +135,15 @@ def invalid(x):
 
 def valid(x): return not invalid(x)
 
+class CompiledTimeout(Exception): pass
 
 def callCompiled(f, *arguments, **keywordArguments):
     pypyArgs = []
     profile = keywordArguments.pop('profile', None)
     if profile:
         pypyArgs = ['-m', 'vmprof', '-o', profile]
+
+    timeout = keywordArguments.pop('compiledTimeout', None)
 
     p = subprocess.Popen(['pypy'] + pypyArgs + ['compiledDriver.py'],
                          stdin=subprocess.PIPE, stdout=subprocess.PIPE)
@@ -152,7 +156,21 @@ def callCompiled(f, *arguments, **keywordArguments):
     pickle.dump(request, p.stdin)
     eprint("Wrote serialized message for {} in time {}".format(f.__name__, time.time() - start))
 
-    success, result = pickle.load(p.stdout)
+    if timeout is None:
+        success, result = pickle.load(p.stdout)
+    else:
+        eprint("Running with timeout",timeout)
+        def timeoutCallBack(_1,_2): raise CompiledTimeout()
+        signal.signal(signal.SIGALRM, timeoutCallBack)
+        signal.alarm(int(math.ceil(timeout)))
+        try:
+            success, result = pickle.load(p.stdout)
+            signal.alarm(0)
+        except CompiledTimeout:
+            # Kill the process
+            p.kill()
+            raise CompiledTimeout()
+
     eprint("Total pypy return time", time.time() - start)
 
     if not success:

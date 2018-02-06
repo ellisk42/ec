@@ -139,13 +139,49 @@ def constructFrontiers(frontiers, programLikelihoods, tasks, maxFrontier):
     return newFrontiers
 
 def solveSingleTask(grammar, task, maximumBudget = 15):
-    alreadyTried = set([])
     for budget in range(2, maximumBudget):
-        for _,p in enumeration(grammar, Context.EMPTY, [], task.request, budget):
-            if p in alreadyTried: continue
+        for _,_,p in enumeration(grammar, Context.EMPTY, [], task.request, budget):
             l = task.logLikelihood(p)
             if valid(l): return p
-            alreadyTried.add(p)
-
     return None
-            
+
+def benchmarkSynthesisTimes(result, tasks, _ = None, timeout = None, CPUs = None):
+    times = parallelMap(CPUs, lambda task: benchmarkSynthesisTime(result, task, timeout), tasks)
+    timeouts = sum(t == None for t in times)
+    successes = sum(t != None for t in times)
+    average = sum(t for t in times if t != None)/float(successes)
+    deviation = (sum( (t - average)**2 for t in times if t != None )/float(successes))**0.5
+    standardError = deviation/(float(successes)**0.5)
+    eprint("BENCHMARK:")
+    eprint("Solves %d/%d = %d%%"%(successes, len(tasks), int(100.*successes/len(tasks))))
+    eprint("Synthesis time %f +/- %f sec"%(average, standardError))
+
+def benchmarkSynthesisTime(result, task, timeout):
+    grammar = result.grammars[-1]
+    
+    from time import time
+    import signal
+    
+    startTime = time()
+    if hasattr(result, 'recognitionModel') and result.recognitionModel is not None:
+        # Because grammar induction is the last step of EC, the
+        # recognition model is actually trained for the second to last
+        # grammar
+        grammar = result.grammars[-2]        
+        features = result.recognitionModel.featureExtractor.featuresOfTask(task)
+        variables, productions = result.recognitionModel(features)
+        grammar = Grammar(variables.data[0],
+                          [ (productions.data[k],t,p)
+                            for k,(_,t,p) in enumerate(grammar.productions) ])
+
+    try:
+        elapsed = time() - startTime
+        solution = callCompiled(solveSingleTask,
+                                grammar, task, maximumBudget = 99999,
+                                compiledTimeout = timeout - elapsed)
+        dt = time() - startTime
+        eprint("Solved",task,"w/",solution,"in time",dt)
+        return dt
+    except CompiledTimeout:
+        eprint("Failed to solve",task,"in time",timeout)
+        return None

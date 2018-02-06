@@ -29,7 +29,8 @@ class RecognitionModel(nn.Module):
             self.cuda()
         else:
             # Torch sometimes segfaults in multithreaded mode...
-            torch.set_num_threads(1)
+            pass
+            # torch.set_num_threads(1)
 
         self.featureExtractor = featureExtractor
         # Sanity check - make sure that all of the parameters of the

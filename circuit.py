@@ -9,7 +9,7 @@ from recognition import *
 import itertools
 import random
 
-NUMBEROFTASKS = 10**3 / 2
+NUMBEROFTASKS = 10**3 / 4
 inputDistribution = [#(1,1),
                      #(2,2),
                      (3,3),
