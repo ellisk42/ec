@@ -78,7 +78,7 @@ def explorationCompression(grammar, tasks,
                            maximumFrontier=None,
                            pseudoCounts=1.0, aic=1.0,
                            structurePenalty=0.001, arity=0,
-                           evaluationTimeout=0.01, # seconds
+                           evaluationTimeout=0.05, # seconds
                            CPUs=1,
                            cuda=False,
                            message="",

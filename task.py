@@ -34,8 +34,8 @@ class RegressionTask(object):
     def check(self, e, timeout=None):
         if timeout is not None:
             def timeoutCallBack(_1,_2): raise EvaluationTimeout()
-            signal.signal(signal.SIGALRM, timeoutCallBack)
-            signal.setitimer(signal.ITIMER_REAL, timeout)
+            signal.signal(signal.SIGVTALRM, timeoutCallBack)
+            signal.setitimer(signal.ITIMER_VIRTUAL, timeout)
             
         try:
             f = e.evaluate([])
@@ -47,10 +47,14 @@ class RegressionTask(object):
                     except: p = None
                     if self.cache: EVALUATIONTABLE[(x,e)] = p
                 if p != y:
-                    if timeout is not None: signal.setitimer(signal.ITIMER_REAL, 0)
+                    if timeout is not None:
+                        signal.signal(signal.SIGVTALRM, lambda *_:None)
+                        signal.setitimer(signal.ITIMER_VIRTUAL, 0)
                     return False
 
-            if timeout is not None: signal.setitimer(signal.ITIMER_REAL, 0)
+            if timeout is not None:
+                signal.signal(signal.SIGVTALRM, lambda *_:None)
+                signal.setitimer(signal.ITIMER_VIRTUAL, 0)
             return True
         except EvaluationTimeout:
             eprint("Timed out while evaluating", e)
