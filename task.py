@@ -47,10 +47,10 @@ class RegressionTask(object):
                     except: p = None
                     if self.cache: EVALUATIONTABLE[(x,e)] = p
                 if p != y:
-                    if timeout is not None: signal.setitimer(signal.ITIMER_PROF, 0)
+                    if timeout is not None: signal.setitimer(signal.ITIMER_REAL, 0)
                     return False
 
-            if timeout is not None: signal.setitimer(signal.ITIMER_PROF, 0)
+            if timeout is not None: signal.setitimer(signal.ITIMER_REAL, 0)
             return True
         except EvaluationTimeout:
             eprint("Timed out while evaluating", e)
