@@ -169,7 +169,7 @@ def nontrivial(f):
         if isinstance(child,Index) and child.free(surroundingAbstractions): numberOfVariables += 1
     #eprint("Fragment %s has %d calls and %d variables and %d primitives"%(f,numberOfHoles,numberOfVariables,numberOfPrimitives))
 
-    return numberOfPrimitives + 0.5 * (numberOfHoles + numberOfVariables) > 1.5 and numberOfPrimitives >= 1
+    return numberOfPrimitives + 0.5 * (numberOfHoles + numberOfVariables) > 1.5 and numberOfPrimitives >= 2
 
 def proposeFragmentsFromProgram(p,arity):
 

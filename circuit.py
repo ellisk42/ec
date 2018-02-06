@@ -45,7 +45,6 @@ GATEFUN = {'NOT': lambda x: not x,
            'm2': lambda x,y,c: [x,y][int(c)],
            'm4': lambda a,b,c,d,x,y: [ [a,b][int(x)], [c,d][int(x)] ][int(y)]}
 
-
 class Circuit(object):
     def __init__(self, _ = None, numberOfInputs = None, numberOfGates = None):
         assert numberOfInputs != None
@@ -158,6 +157,7 @@ if __name__ == "__main__":
                                                   featureExtractor = DeepFeatureExtractor,
                                                   topK = 2,
                                                   maximumFrontier = 100,
+                                                  helmholtzRatio = 0.5,
                                                   a = 2,
                                                   activation = "relu",
                                                   pseudoCounts = 5.))

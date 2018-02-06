@@ -79,7 +79,7 @@ def plotECResult(resultPaths, colors='rgbycm', label=None, title=None, export=No
     f,a1 = plot.subplots(figsize = (5,4))
     a1.set_xlabel('Iteration')
     a1.xaxis.set_major_locator(MaxNLocator(integer = True))
-    a1.set_ylabel('% Hit Tasks (solid)')
+    a1.set_ylabel('% Tasks Solved (solid)')
     a2 = a1.twinx()
     a2.set_ylabel('Avg log likelihood (dashed)')
 
