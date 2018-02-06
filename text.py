@@ -53,7 +53,7 @@ if __name__ == "__main__":
         t.features = problemFeatures(t.examples)
     eprint("Generated",len(tasks),"tasks")
 
-    test, train = testTrainSplit(tasks, 1.)
+    test, train = testTrainSplit(tasks, 0.75)
 
     baseGrammar = Grammar.uniform(primitives)
     explorationCompression(baseGrammar, train,
