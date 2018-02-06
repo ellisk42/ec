@@ -81,6 +81,11 @@ if __name__ == "__main__":
     
     baseGrammar = Grammar.uniform(primitives)
     train = tasks
+
+    test = polynomials[1][56:(56+56)] + \
+           polynomials[2][44:(44+44)] + \
+           polynomials[3][50:(50+50)] + \
+           polynomials[4][50:(50+50)]
     
     if False:
         e = Program.parse("""(lambda (+ REAL
@@ -104,6 +109,7 @@ if __name__ == "__main__":
     explorationCompression(baseGrammar, train,
                            outputPrefix = "experimentOutputs/regression",
                            evaluationTimeout = None,
+                           testingTasks = test,
                            **commandlineArguments(frontierSize = 10**2,
                                                   iterations = 10,
                                                   CPUs = numberOfCPUs(),

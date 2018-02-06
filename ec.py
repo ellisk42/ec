@@ -64,6 +64,7 @@ ECResult.abbreviationToParameter = {v:k for k,v in ECResult.abbreviations.iterit
 
 def explorationCompression(grammar, tasks,
                            _=None,
+                           testingTasks = [],
                            benchmark=None,
                            iterations=None,
                            resume=None,
@@ -147,8 +148,9 @@ def explorationCompression(grammar, tasks,
                           recognitionModel = None)
 
     if benchmark is not None:
-        assert resume is not None
-        benchmarkSynthesisTimes(result, tasks, timeout = benchmark, CPUs = CPUs)
+        assert resume is not None, "Benchmarking requires resuming from checkpoint that you are benchmarking."
+        assert testingTasks != [], "Benchmarking requires held out test tasks"
+        benchmarkSynthesisTimes(result, testingTasks, timeout = benchmark, CPUs = CPUs)
         return 
 
     for j in range(resume or 0, iterations):
@@ -176,7 +178,8 @@ def explorationCompression(grammar, tasks,
                 / sum(not f.empty for f in frontiers))
 
         if useRecognitionModel: # Train and then use a recognition model
-            featureExtractorObject = featureExtractor(tasks)
+            # Ensures that testing tasks have their elements in the lexicon
+            featureExtractorObject = featureExtractor(tasks + testingTasks)
             recognizer = RecognitionModel(featureExtractorObject, grammar, activation=activation, cuda=cuda)
 
             # We want to train the recognition model on _every_ task that we have found a solution to

@@ -134,7 +134,7 @@ if __name__ == "__main__":
     circuits = []
     import random
     random.seed(0)
-    while len(circuits) < NUMBEROFTASKS:
+    while len(circuits) < NUMBEROFTASKS*2:
         inputs = sampleDistribution(inputDistribution)
         gates = sampleDistribution(gateDistribution)
         newTask = Circuit(numberOfInputs = inputs,
@@ -143,10 +143,12 @@ if __name__ == "__main__":
             circuits.append(newTask)
     eprint("Sampled %d circuits with %d unique functions"%(len(circuits),
                                                        len({t.signature for t in circuits })))
-    tasks = [t.task() for t in circuits ]
+    tasks = [t.task() for t in circuits[:NUMBEROFTASKS] ]
+    testing = [t.task() for t in circuits[NUMBEROFTASKS:] ]
 
     baseGrammar = Grammar.uniform(primitives)
     explorationCompression(baseGrammar, tasks,
+                           testingTasks = testing,
                            outputPrefix = "experimentOutputs/circuit",
                            evaluationTimeout = None,
                            **commandlineArguments(frontierSize = 1000,

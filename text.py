@@ -57,6 +57,7 @@ if __name__ == "__main__":
 
     baseGrammar = Grammar.uniform(primitives)
     explorationCompression(baseGrammar, train,
+                           testingTasks = test,
                            outputPrefix = "experimentOutputs/text",
                            evaluationTimeout = None,
                            **commandlineArguments(
