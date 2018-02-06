@@ -151,6 +151,10 @@ def solveSingleTask(grammar, task, maximumBudget = 15):
     return None
 
 def benchmarkSynthesisTimes(result, tasks, _ = None, timeout = None, CPUs = None):
+    if result.parameters['useRecognitionModel']:
+        assert hasattr(result, 'recognitionModel') and result.recognitionModel is not None, \
+            "Checkpoint was trained using a recognition model but it does not have a saved recognition model."
+
     times = parallelMap(CPUs, lambda task: benchmarkSynthesisTime(result, task, timeout), tasks)
     timeouts = sum(t == None for t in times)
     successes = sum(t != None for t in times)
@@ -168,7 +172,7 @@ def benchmarkSynthesisTime(result, task, timeout):
     import signal
     
     startTime = time()
-    if hasattr(result, 'recognitionModel') and result.recognitionModel is not None:
+    if result.parameters['useRecognitionModel']:
         # Because grammar induction is the last step of EC, the
         # recognition model is actually trained for the second to last
         # grammar
