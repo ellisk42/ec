@@ -123,7 +123,7 @@ sudo shutdown -h now
     print "Executing script on remote host."
 
 
-def launchExperiment(name, command, upload=None, tar=False, shutdown=True, size="t2.micro"):
+def launchExperiment(name, command, tail=False, upload=None, tar=False, shutdown=True, size="t2.micro"):
     job_id = "{}_{}_{}".format(name, user(), datetime.now().strftime("%FT%T"))
     job_id = job_id.replace(":", ".")
     if upload is None:
@@ -137,6 +137,15 @@ def launchExperiment(name, command, upload=None, tar=False, shutdown=True, size=
     instance, address = launch(size, name=name)
     time.sleep(60)
     sendCommand(address, script, job_id, upload, tar, shutdown)
+    if tail:
+        os.system("""
+            ssh -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem \
+                ubuntu@{0} ' \
+                    mkdir -p ec/jobs && \
+                    touch ec/jobs/{1} && \
+                    tail -f -n+0 ec/jobs/{1} \
+                '
+            """.format(address, job_id))
 
 
 if __name__ == "__main__":
@@ -149,6 +158,10 @@ if __name__ == "__main__":
                         }.get(user(), None))
     parser.add_argument('-z',"--size",
                         default="t2.micro")
+    parser.add_argument("--tail",
+                        default=False,
+                        help="attach to the machine and tail ec's output.",
+                        action="store_true")
     parser.add_argument('-k',"--shutdown",
                         default=False,
                         action="store_true")
@@ -163,6 +176,7 @@ if __name__ == "__main__":
     launchExperiment(arguments.name,
                      arguments.command,
                      shutdown=arguments.shutdown,
+                     tail=arguments.tail,
                      size=arguments.size,
                      upload=arguments.upload,
                      tar=arguments.tar)
