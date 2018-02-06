@@ -149,6 +149,7 @@ if __name__ == "__main__":
     baseGrammar = Grammar.uniform(primitives)
     explorationCompression(baseGrammar, tasks,
                            outputPrefix = "experimentOutputs/circuit",
+                           evaluationTimeout = None,
                            **commandlineArguments(frontierSize = 1000,
                                                   iterations = 10,
                                                   aic = 1.,

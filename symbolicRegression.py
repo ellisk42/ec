@@ -103,6 +103,7 @@ if __name__ == "__main__":
     
     explorationCompression(baseGrammar, train,
                            outputPrefix = "experimentOutputs/regression",
+                           evaluationTimeout = None,
                            **commandlineArguments(frontierSize = 10**2,
                                                   iterations = 10,
                                                   CPUs = numberOfCPUs(),
