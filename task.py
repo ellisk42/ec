@@ -35,7 +35,7 @@ class RegressionTask(object):
         if timeout is not None:
             def timeoutCallBack(_1,_2): raise EvaluationTimeout()
             signal.signal(signal.SIGALRM, timeoutCallBack)
-            signal.setitimer(signal.ITIMER_PROF, timeout)
+            signal.setitimer(signal.ITIMER_REAL, timeout)
             
         try:
             f = e.evaluate([])
