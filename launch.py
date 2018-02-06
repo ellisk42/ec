@@ -25,6 +25,13 @@ def launch(size = "t2.micro", name = ""):
     print "Naming instance",name
     os.system("aws ec2 create-tags --resources %s --tags Key=Name,Value=%s"%(instance,
                                                                              name))
+    os.system("""
+        aws ec2 modify-instance-attribute \
+            --instance-id %s \
+            --block-device-mappings '[
+                {"DeviceName":"/dev/sda1","Ebs":{"DeleteOnTermination":true}}
+            ]'
+        """ % instance)
     
     o = json.loads(subprocess.check_output(["aws","ec2","describe-instances",
                                             "--instance-ids",instance]))
