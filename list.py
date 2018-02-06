@@ -2,7 +2,7 @@ import cPickle as pickle
 import random
 from itertools import chain
 from ec import explorationCompression, commandlineArguments
-from utilities import eprint, numberOfCPUs, flatten
+from utilities import eprint, numberOfCPUs, flatten, fst
 from grammar import Grammar
 from task import RegressionTask
 from type import Context, arrow, tlist, tint, t0, UnificationFailure
@@ -198,7 +198,7 @@ def list_options(parser):
         help="use foundational primitives")
     parser.add_argument("--extractor", type=str,
         choices=["hand", "deep", "learned"],
-        default="hand")
+        default="learned")
     parser.add_argument("-H", "--hidden", type=int,
         default=16,
         help="number of hidden units")
@@ -208,7 +208,7 @@ if __name__ == "__main__":
     args = commandlineArguments(
         frontierSize=10000, activation='sigmoid', iterations=10,
         a=3, maximumFrontier=10, topK=2, pseudoCounts=10.0,
-        helmholtzRatio=0.5,
+        helmholtzRatio=0.5, structurePenalty=1.,
         CPUs=numberOfCPUs(),
         extras=list_options)
 
