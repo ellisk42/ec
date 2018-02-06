@@ -9,7 +9,7 @@ from recognition import *
 import itertools
 import random
 
-NUMBEROFTASKS = 10**3
+NUMBEROFTASKS = 10**3 / 2
 inputDistribution = [#(1,1),
                      #(2,2),
                      (3,3),
@@ -31,7 +31,7 @@ gateDistribution = [(1,1),
 operationDistribution = [(1,'NOT'),
                          (2,'AND'),
                          (2,'OR'),
-                         (3,'m2'),
+                         (4,'m2'),
                          (2,'m4')]
 
 INPUTSPERGATE = {'NOT': 1,
