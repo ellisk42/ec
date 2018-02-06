@@ -272,6 +272,8 @@ class RecurrentFeatureExtractor(nn.Module):
         
     def forward(self, examples):
         tokenized = self.tokenize(examples, self.lexicon)
+        if not tokenized:
+            return None
         e = self.examplesEncoding(tokenized)
         # max pool
         e,_ = e.max(dim = 0)
