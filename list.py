@@ -207,7 +207,8 @@ def list_options(parser):
 if __name__ == "__main__":
     args = commandlineArguments(
         frontierSize=10000, activation='sigmoid', iterations=10,
-        a=3, maximumFrontier=10, topK=3, pseudoCounts=10.0,
+        a=3, maximumFrontier=10, topK=2, pseudoCounts=10.0,
+        helmholtzRatio=0.5,
         CPUs=numberOfCPUs(),
         extras=list_options)
 
