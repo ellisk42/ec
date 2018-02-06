@@ -7,7 +7,10 @@ from grammar import *
 
 import gc
 
-def enumerateFrontiers(g, frontierSize, tasks, CPUs=1, maximumFrontier=None, verbose=True):
+def enumerateFrontiers(g, frontierSize, tasks, CPUs=1,
+                       maximumFrontier=None,
+                       verbose=True,
+                       evaluationTimeout=None):
     '''g: Either a Grammar, or a map from task to grammar.'''
     from time import time
 
@@ -60,7 +63,9 @@ def enumerateFrontiers(g, frontierSize, tasks, CPUs=1, maximumFrontier=None, ver
     programLikelihoods = parallelMap(CPUs, lambda task:
                                      {j: logLikelihood
                                       for j, (_, program) in enumerate(frontiers[task])
-                                      for logLikelihood in [task.logLikelihood(program)]
+                                      for logLikelihood in [
+                                          task.logLikelihood(program, timeout=evaluationTimeout)
+                                      ]
                                       if valid(logLikelihood)},
                                      tasks)
 

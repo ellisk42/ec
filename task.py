@@ -31,7 +31,7 @@ class RegressionTask(object):
     def predict(self, f, x):
         for a in x: f = f(a)
         return f
-    def check(self,e,timeout = None):
+    def check(self, e, timeout=None):
         if timeout is not None:
             def timeoutCallBack(_1,_2): raise EvaluationTimeout()
             signal.signal(signal.SIGALRM, timeoutCallBack)
@@ -52,10 +52,12 @@ class RegressionTask(object):
 
             if timeout is not None: signal.setitimer(signal.ITIMER_PROF, 0)
             return True
-        except EvaluationTimeout: return False
+        except EvaluationTimeout:
+            eprint("Timed out while evaluating", e)
+            return False
         
-    def logLikelihood(self,e):
-        if self.check(e): return 0.0
+    def logLikelihood(self,e, timeout=None):
+        if self.check(e, timeout): return 0.0
         else: return NEGATIVEINFINITY
 
     @staticmethod

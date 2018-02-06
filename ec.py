@@ -78,6 +78,7 @@ def explorationCompression(grammar, tasks,
                            maximumFrontier=None,
                            pseudoCounts=1.0, aic=1.0,
                            structurePenalty=0.001, arity=0,
+                           evaluationTimeout=0.01, # seconds
                            CPUs=1,
                            cuda=False,
                            message="",
@@ -161,7 +162,8 @@ def explorationCompression(grammar, tasks,
                 oldFrontierSize, frontierSize))
 
         frontiers = callCompiled(enumerateFrontiers, grammar, frontierSize, tasks,
-                                 maximumFrontier=maximumFrontier, CPUs=CPUs)
+                                 maximumFrontier=maximumFrontier, CPUs=CPUs,
+                                 evaluationTimeout=evaluationTimeout)
 
         eprint("Enumeration results:")
         eprint(Frontier.describe(frontiers))
@@ -188,7 +190,8 @@ def explorationCompression(grammar, tasks,
                              # Otherwise we just draw from the base grammar which is a terrible distribution
                              helmholtzRatio = helmholtzRatio and helmholtzRatio*int(j > 0))
             bottomupFrontiers = recognizer.enumerateFrontiers(frontierSize, tasks, CPUs=CPUs,
-                                                              maximumFrontier = maximumFrontier)
+                                                              maximumFrontier=maximumFrontier,
+                                                              evaluationTimeout=evaluationTimeout)
             eprint("Bottom-up enumeration results:")
             eprint(Frontier.describe(bottomupFrontiers))
 

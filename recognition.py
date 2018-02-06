@@ -151,7 +151,7 @@ class RecognitionModel(nn.Module):
            else: return program, request, features
 
     def enumerateFrontiers(self, frontierSize, tasks,
-                           CPUs=1, maximumFrontier=None):
+                           CPUs=1, maximumFrontier=None, evaluationTimeout=None):
         with timing("Evaluated recognition model"):
             grammars = {}
             for task in tasks:
@@ -160,10 +160,11 @@ class RecognitionModel(nn.Module):
                 grammars[task] = Grammar(variables.data[0],
                                          [ (productions.data[k],t,p)
                                            for k,(_,t,p) in enumerate(self.grammar.productions) ])
-        
+
         return callCompiled(enumerateFrontiers,
                             grammars, frontierSize, tasks,
-                            CPUs = CPUs, maximumFrontier = maximumFrontier)
+                            CPUs=CPUs, maximumFrontier=maximumFrontier,
+                            evaluationTimeout=evaluationTimeout)
 
 class RecurrentFeatureExtractor(nn.Module):
     def __init__(self, _=None,
