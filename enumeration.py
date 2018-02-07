@@ -147,6 +147,7 @@ def solveSingleTask(grammar, task, maximumBudget = 15):
     if isinstance(task, DifferentiableTask):
         rememberOld = True
         history = set([])
+    else: rememberOld = False
     for budget in range(2, maximumBudget):
         for _,_,p in enumeration(grammar, Context.EMPTY, [], task.request, budget):
             if rememberOld:
