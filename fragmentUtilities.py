@@ -1,5 +1,6 @@
 from type import *
 from program import *
+from frontier import *
 
 from collections import Counter
 
@@ -138,6 +139,48 @@ def defragment(expression):
         expression = Abstraction(expression)
 
     return Invented(expression)
+
+class RewriteFragments(object):
+    def __init__(self, fragment):
+        self.fragment = fragment
+        self.concrete = defragment(fragment)
+
+    def tryRewrite(self, e, numberOfArguments):
+        try:
+            context, t, bindings = Matcher.match(Context.EMPTY, self.fragment, e, numberOfArguments)
+        except MatchFailure: return None
+        
+        assert frozenset(bindings.keys()) == frozenset(range(len(bindings))),\
+            "Perhaps the fragment is not in canonical form?"
+        e = self.concrete
+        for j in range(len(bindings)-1, -1, -1):
+            _,b = bindings[j]
+            e = Application(e, b)
+        return e
+            
+    def application(self, e, numberOfArguments):
+        e = Application(e.f.visit(self, numberOfArguments+1),
+                        e.x.visit(self, 0))
+        return self.tryRewrite(e, numberOfArguments) or e
+    def index(self, e, numberOfArguments): return e
+    def invented(self, e, numberOfArguments): return e
+    def primitive(self, e, numberOfArguments): return e
+    def abstraction(self, e, numberOfArguments):
+        e = Abstraction(e.body.visit(self, 0))
+        return self.tryRewrite(e, numberOfArguments) or e
+
+    def rewrite(self,e): return e.visit(self,0)
+
+    @staticmethod
+    def rewriteFrontier(frontier, fragment):
+        worker = RewriteFragments(fragment)
+        return Frontier([ FrontierEntry(program = worker.rewrite(e.program),
+                                        logLikelihood = e.logLikelihood,
+                                        logPrior = e.logPrior,
+                                        logPosterior = e.logPosterior)
+                          for e in frontier ],
+                        task = frontier.task)
+        
 
 def proposeFragmentsFromFragment(f):
     '''Abstracts out repeated structure within a single fragment'''

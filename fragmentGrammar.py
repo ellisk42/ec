@@ -350,8 +350,16 @@ class FragmentGrammar(object):
                     break
                 dS = newScore - bestScore
                 bestScore, bestGrammar = newScore, newGrammar
-                _,newType,newPrimitive = bestGrammar.productions[-1]
+                newPrimitiveLikelihood,newType,newPrimitive = bestGrammar.productions[-1]
                 eprint("New primitive of type %s\t%s (score = %f; dScore = %f)"%(newType,newPrimitive,newScore,dS))
+                # Rewrite the frontiers in terms of the new fragment
+                concretePrimitive = defragment(newPrimitive)
+                bestGrammar.productions[-1] = (newPrimitiveLikelihood,
+                                               concretePrimitive.tp,
+                                               concretePrimitive)
+                frontiers = parallelMap(CPUs,
+                                        lambda frontier: RewriteFragments.rewriteFrontier(frontier, newPrimitive),
+                                        frontiers)
         else:
             eprint("Skipping fragment proposals")
 
