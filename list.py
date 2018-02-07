@@ -176,6 +176,8 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
                 if True:  # force successful tokenization
                     x = [e if e in lexicon else "?" for e in x]
                     y = [e if e in lexicon else "?" for e in y]
+                    if len(x) > 25 or len(y) > 25:
+                        continue
                     tokenized.append(((x,), y))
                 else:
                     if all(e in lexicon for e in chain(x, y)):
