@@ -40,7 +40,7 @@ def launch(size = "t2.micro", name = ""):
     return instance, address
 
 
-def sendCommand(address, script, job_id, upload, tar, shutdown):
+def sendCommand(address, script, job_id, upload, resume, tar, shutdown):
     import tempfile
     preamble = """#!/bin/bash
 sudo pip install https://lists.lucasem.com/listroutines-1.0.0-py2.py3-none-any.whl
@@ -48,9 +48,16 @@ pip install dill
 cd ~/ec
 rm experimentOutputs/*
 git pull
-git apply patch
-mkdir jobs
 """
+    if resume:
+        print "Sending tar file"
+        os.system("""
+            scp -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem \
+                %s ubuntu@%s:ec/""" % (resume, address))
+        preamble += "tar xf {}\n".format(os.path.basename(resume))
+    else:
+        preamble += "git apply patch ; mkdir jobs\n"
+
     if upload:
         # This is probably a terribly insecure idea...
         # But I'm not sure what the right way of doing it is
@@ -130,20 +137,27 @@ sudo shutdown -h now
     print "Executing script on remote host."
 
 
-def launchExperiment(name, command, tail=False, upload=None, tar=False, shutdown=True, size="t2.micro"):
+def launchExperiment(name, command, tail=False, resume="", upload=None, tar=False, shutdown=True, size="t2.micro"):
     job_id = "{}_{}_{}".format(name, user(), datetime.now().strftime("%FT%T"))
     job_id = job_id.replace(":", ".")
-    if upload is None:
-        if shutdown:
-            print "You didn't specify an upload host, and also specify that the machine should shut down afterwards. These options are incompatible because this would mean that you couldn't get the experiment outputs."
-            assert False
+    if upload is None and shutdown:
+        print "You didn't specify an upload host, and also specify that the machine should shut down afterwards. These options are incompatible because this would mean that you couldn't get the experiment outputs."
+        sys.exit(1)
+
+    if resume and "resume" not in command:
+        print "You said to resume, but didn't give --resume to your python command. I am assuming this is a mistake."
+        sys.exit(1)
+    if resume and not resume.endswith(".tar.gz"):
+        print "Invalid tarball for resume."
+        sys.exit(1)
+
     script = """
 %s > jobs/%s 2>&1
 """%(command, job_id)
-    
+
     instance, address = launch(size, name=name)
     time.sleep(60)
-    sendCommand(address, script, job_id, upload, tar, shutdown)
+    sendCommand(address, script, job_id, upload, resume, tar, shutdown)
     if tail:
         os.system("""
             ssh -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem \
@@ -169,6 +183,8 @@ if __name__ == "__main__":
                         default=False,
                         help="attach to the machine and tail ec's output.",
                         action="store_true")
+    parser.add_argument("--resume", metavar="TAR", type=str,
+                        help="send tarball to resume checkpoint.")
     parser.add_argument('-k',"--shutdown",
                         default=False,
                         action="store_true")
@@ -184,6 +200,7 @@ if __name__ == "__main__":
                      arguments.command,
                      shutdown=arguments.shutdown,
                      tail=arguments.tail,
+                     resume=arguments.resume,
                      size=arguments.size,
                      upload=arguments.upload,
                      tar=arguments.tar)
