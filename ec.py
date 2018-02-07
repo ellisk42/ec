@@ -149,8 +149,13 @@ def explorationCompression(grammar, tasks,
 
     if benchmark is not None:
         assert resume is not None, "Benchmarking requires resuming from checkpoint that you are benchmarking."
-        assert testingTasks != [], "Benchmarking requires held out test tasks"
-        benchmarkSynthesisTimes(result, testingTasks, timeout = benchmark, CPUs = CPUs)
+        if benchmark > 0:
+            assert testingTasks != [], "Benchmarking requires held out test tasks"
+            benchmarkTasks = testingTasks
+        else:
+            benchmarkTasks = tasks
+            benchmark = -benchmark
+        benchmarkSynthesisTimes(result, benchmarkTasks, timeout = benchmark, CPUs = CPUs)
         return 
 
     for j in range(resume or 0, iterations):

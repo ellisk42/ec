@@ -144,8 +144,14 @@ def constructFrontiers(frontiers, programLikelihoods, tasks, maxFrontier):
     return newFrontiers
 
 def solveSingleTask(grammar, task, maximumBudget = 15):
+    if isinstance(task, DifferentiableTask):
+        rememberOld = True
+        history = set([])
     for budget in range(2, maximumBudget):
         for _,_,p in enumeration(grammar, Context.EMPTY, [], task.request, budget):
+            if rememberOld:
+                if p in history: continue
+                history.add(p)
             l = task.logLikelihood(p)
             if valid(l): return p
     return None
