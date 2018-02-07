@@ -7,7 +7,8 @@ from program import *
 
 from digamma import *
 from itertools import izip
-        
+import gc
+
 
 class FragmentGrammar(object):
     def __init__(self, logVariable, productions):
@@ -326,6 +327,7 @@ class FragmentGrammar(object):
             structure = sum(fragmentSize(p) for p in g.primitives)
             score = likelihood - aic*len(g) - structurePenalty*structure
             g.clearCache()
+            gc.collect()
             return score, g
 
 
@@ -353,13 +355,14 @@ class FragmentGrammar(object):
                 newPrimitiveLikelihood,newType,newPrimitive = bestGrammar.productions[-1]
                 eprint("New primitive of type %s\t%s (score = %f; dScore = %f)"%(newType,newPrimitive,newScore,dS))
                 # Rewrite the frontiers in terms of the new fragment
-                concretePrimitive = defragment(newPrimitive)
-                bestGrammar.productions[-1] = (newPrimitiveLikelihood,
-                                               concretePrimitive.tp,
-                                               concretePrimitive)
-                frontiers = parallelMap(CPUs,
-                                        lambda frontier: RewriteFragments.rewriteFrontier(frontier, newPrimitive),
-                                        frontiers)
+                if False:
+                    concretePrimitive = defragment(newPrimitive)
+                    bestGrammar.productions[-1] = (newPrimitiveLikelihood,
+                                                   concretePrimitive.tp,
+                                                   concretePrimitive)
+                    frontiers = parallelMap(CPUs,
+                                            lambda frontier: RewriteFragments.rewriteFrontier(frontier, newPrimitive),
+                                            frontiers)
         else:
             eprint("Skipping fragment proposals")
 
