@@ -202,6 +202,7 @@ def benchmarkSynthesisTime(result, task, timeout):
                                 grammar, task, maximumBudget = 99999,
                                 compiledTimeout = timeout - elapsed)
         dt = time() - startTime
+        if dt > timeout: raise CompiledTimeout()
         l,p = solution
         eprint("Solved",task,"w/",p,"(log likelihood of task given program:",l,").","in time",dt)
         return dt,l

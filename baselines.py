@@ -48,6 +48,7 @@ def enumeration(*args, **kwargs):
 
         "useRecognitionModel": False,
         "iterations": 1,
+        "aic": float("inf"),
         # We will be evaluating the baselines using benchmarking on the testing set
         # So we should just use whatever frontier size will be used for benchmarking
         #"frontierSize": 200000,
