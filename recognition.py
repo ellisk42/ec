@@ -222,6 +222,10 @@ class RecurrentFeatureExtractor(nn.Module):
     @property
     def outputDimensionality(self): return self.H
 
+    def symbolEmbeddings(self):
+        return {s: self.encoder(variable([self.symbolToIndex[s]])).squeeze(0).data.numpy()
+                for s in self.lexicon if not (s in ["STARTING","ENDING","MIDDLE"]) }
+
     def observationEmbedding(self, x):
         x = [self.startingIndex] + [ self.symbolToIndex[s] for s in x ] + [self.endingIndex]
         x = variable(x, cuda=self.use_cuda)

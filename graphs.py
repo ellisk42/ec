@@ -32,7 +32,7 @@ def parseResultsPath(p):
     parameters['domain'] = domain
     return Bunch(parameters)
 
-def PCAembedding(e, label = lambda l: l):
+def PCAembedding(e, label = lambda l: l, color = lambda ll: 'b'):
     """e: a map from object to vector
     label: a function from object to how it should be labeled
     """
@@ -49,10 +49,12 @@ def PCAembedding(e, label = lambda l: l):
 
     e = dict({p: matrix[j,:]
               for j,p in enumerate(primitives) })
-    vectors = e.values()
-    plot.scatter([ v[0] for v in vectors ],
-                 [ v[1] for v in vectors ])
-    for p,v in e.iteritems():
+    primitiveVectors = list(e.iteritems())
+    
+    plot.scatter([ v[0] for _,v in primitiveVectors ],
+                 [ v[1] for _,v in primitiveVectors ],
+                 c = [ color(p) for p,_ in primitiveVectors ])
+    for p,v in primitiveVectors:
         l = label(p)
         if not isinstance(l,(str,unicode)): l = str(l)
         plot.annotate(l,
@@ -79,9 +81,9 @@ def plotECResult(resultPaths, colors='rgbycm', label=None, title=None, export=No
     f,a1 = plot.subplots(figsize = (5,2.5))
     a1.set_xlabel('Iteration')
     a1.xaxis.set_major_locator(MaxNLocator(integer = True))
-    a1.set_ylabel('% Tasks Solved (solid)')
+    a1.set_ylabel('% Tasks Solved (solid)', fontsize = 11)
     a2 = a1.twinx()
-    a2.set_ylabel('Avg log likelihood (dashed)')
+    a2.set_ylabel('Avg log likelihood (dashed)', fontsize = 11)
 
     n_iters = max(len(result.learningCurve) for result in results)
 
@@ -100,8 +102,10 @@ def plotECResult(resultPaths, colors='rgbycm', label=None, title=None, export=No
 
     a1.set_ylim(ymin = 0, ymax = 110)
     a1.yaxis.grid()
-    a1.set_yticks(range(0,110,10))
-    #a2.set_ylim(ymax = 0)
+    a1.set_yticks(range(0,110,20))
+
+    starting, ending = a2.get_ylim()#a2.set_ylim(ymax = 0)
+    a2.yaxis.set_ticks(np.arange(starting, ending, (ending - starting)/5.))
 
     if title is not None:
         plot.title(title)
@@ -134,6 +138,18 @@ def plotECResult(resultPaths, colors='rgbycm', label=None, title=None, export=No
                 plot.savefig(export)
                 os.system("feh %s"%(export))
             else: plot.show()
+
+            if isinstance(result.recognitionModel.featureExtractor, RecurrentFeatureExtractor):
+                plot.figure()
+                colormap = {}
+                for j in range(26): colormap[chr(ord('a') + j)] = 'b'
+                for j in range(26): colormap[chr(ord('g') + j)] = 'g'
+                for j in [" ",",",">","<"]: colormap[j] = 'r'
+                
+                PCAembedding(result.recognitionModel.featureExtractor.symbolEmbeddings(),
+                             label = lambda _: "",
+                             color = lambda thing: colormap.get(thing,'k'))
+                plot.show()
 
 
 if __name__ == "__main__":
