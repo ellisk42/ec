@@ -2,7 +2,7 @@ import cPickle as pickle
 import random
 from itertools import chain
 from ec import explorationCompression, commandlineArguments
-from utilities import eprint, numberOfCPUs, flatten, fst
+from utilities import eprint, numberOfCPUs, flatten, fst, testTrainSplit
 from grammar import Grammar
 from task import RegressionTask
 from type import Context, arrow, tlist, tint, t0, UnificationFailure
@@ -132,6 +132,7 @@ class FeatureExtractor(HandCodedFeatureExtractor):
         else: return None
         return list_features(examples)
 
+
 class DeepFeatureExtractor(MLPFeatureExtractor):
     N_EXAMPLES = 15
     H = 16
@@ -172,19 +173,38 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
                     y = ["LIST_START"]+y+["LIST_END"]
                 else:
                     y = [y]
-                if all(e in lexicon for e in chain(x, y)):
+                if True:  # force successful tokenization
+                    x = [e if e in lexicon else "?" for e in x]
+                    y = [e if e in lexicon else "?" for e in y]
                     tokenized.append(((x,), y))
                 else:
-                    eprint("could not tokenize {} because {} not in lexicon".format(
-                        ((x,), y), fst(e for e in chain(x, y) if e not in lexicon)))
+                    if all(e in lexicon for e in chain(x, y)):
+                        tokenized.append(((x,), y))
+                    else:
+                        eprint("could not tokenize {} because {} not in lexicon".format(
+                            ((x,), y), fst(e for e in chain(x, y) if e not in lexicon)))
             return tokenized
-        lexicon = set(flatten((t.examples for t in tasks), abort=lambda x:isinstance(x, str))).union({"LIST_START", "LIST_END"})
+        lexicon = set(flatten((t.examples for t in tasks), abort=lambda x:isinstance(x, str))).union({"LIST_START", "LIST_END", "?"})
         super(LearnedFeatureExtractor, self).__init__(lexicon=list(lexicon),
                                                       tasks=tasks,
                                                       cuda=self.USE_CUDA,
                                                       H=self.H,
                                                       bidirectional=True,
                                                       tokenize=tokenize)
+
+
+def train_necessary(task):
+    if t.name in {"head", "is-primes", "len", "pop", "repeat-many", "tail"}:
+        return True
+    if any(t.name.startwith(x) for x in {
+            "add-k", "append-k", "bool-identify-geq-k", "count-k", "drop-k",
+            "empty", "evens", "has-k", "index-k", "is-mod-k", "kth-largest",
+            "kth-smallest", "modulo-k", "mult-k", "remove-index-k",
+            "remove-mod-k", "repeat-k", "replace-all-with-index-k", "rotate-k",
+            "slice-k-n", "take-k",
+        }):
+        return "some"
+    return False
 
 
 def list_options(parser):
@@ -199,6 +219,9 @@ def list_options(parser):
     parser.add_argument("--extractor", type=str,
         choices=["hand", "deep", "learned"],
         default="learned")
+    parser.add_argument("--split", metavar="TRAIN_RATIO",
+        type=float,
+        help="split test/train")
     parser.add_argument("-H", "--hidden", type=int,
         default=16,
         help="number of hidden units")
@@ -227,6 +250,25 @@ if __name__ == "__main__":
         task.features = list_features(task.examples)
         task.cache = False
 
+    split = args.pop("split")
+    if split:
+        train = []
+        for t in tasks:
+            necessary = train_necessary(t)
+            if not necessary:
+                continue
+            if necessary == "some":
+                # TODO
+                train.append(t)
+            else:
+                train.append(t)
+        tasks = [t for t in tasks if t not in train]
+        test, more_train = testTrainSplit(tasks, split)
+        train.extend(more_train)
+    else:
+        train = tasks
+        test = []
+
     prims = basePrimitives if args.pop("base") else primitives
 
     extractor = {
@@ -243,4 +285,4 @@ if __name__ == "__main__":
     })
 
     baseGrammar = Grammar.uniform(prims())
-    explorationCompression(baseGrammar, tasks, **args)
+    explorationCompression(baseGrammar, train, testingTasks=test, **args)
