@@ -70,6 +70,7 @@ def explorationCompression(grammar, tasks,
                            resume=None,
                            frontierSize=None,
                            expandFrontier=None,
+                           resumeFrontierSize=None,
                            useRecognitionModel=True,
                            steps=250,
                            helmholtzRatio=0.,
@@ -105,8 +106,9 @@ def explorationCompression(grammar, tasks,
     parameters = {k: v for k, v in locals().iteritems()
                   if k not in {"tasks", "grammar", "cuda", "_",
                                "message", "CPUs", "outputPrefix",
-                               "resume", "featureExtractor",
-                               "benchmark", "testingTasks"}}
+                               "resume", "resumeFrontierSize",
+                               "featureExtractor", "benchmark",
+                               "testingTasks"}}
     if not useRecognitionModel:
         for k in {"activation","helmholtzRatio","steps"}: del parameters[k]
 
@@ -142,6 +144,9 @@ def explorationCompression(grammar, tasks,
             result = dill.load(handle)
         eprint("Loaded checkpoint from", path)
         grammar = result.grammars[-1] if result.grammars else grammar
+        if resumeFrontierSize:
+            frontierSize = resumeFrontierSize
+            eprint("Set frontier size to", frontierSize)
     else:  # Start from scratch
         result = ECResult(parameters=parameters, grammars=[grammar],
                           taskSolutions = { t: Frontier([], task = t) for t in tasks },
@@ -339,6 +344,8 @@ def commandlineArguments(_=None,
                         default=None,
                         help="if an iteration passes where no new tasks have been solved, the frontier is expanded. If the given value is less than 10, it is scaled (e.g. 1.5), otherwise it is grown (e.g. 2000).",
                         type=float)
+    parser.add_argument("--resumeFrontierSize", type=int,
+                        help="when resuming a checkpoint which expanded the frontier, use this option to set the appropriate frontier size for the next iteration.")
     parser.add_argument("-k", "--topK",
                         default=topK,
                         help="When training generative and discriminative models, we train them to fit the top K programs. Ideally we would train them to fit the entire frontier, but this is often intractable. default: %d" % topK,
