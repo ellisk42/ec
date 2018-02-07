@@ -154,7 +154,7 @@ def solveSingleTask(grammar, task, maximumBudget = 15):
                 if p in history: continue
                 history.add(p)
             l = task.logLikelihood(p)
-            if valid(l): return p
+            if valid(l): return l,p
     return None
 
 def benchmarkSynthesisTimes(result, tasks, _ = None, timeout = None, CPUs = None):
@@ -166,13 +166,17 @@ def benchmarkSynthesisTimes(result, tasks, _ = None, timeout = None, CPUs = None
     timeouts = sum(t == None for t in times)
     successes = sum(t != None for t in times)
     if successes > 0:
-        average = sum(t for t in times if t != None)/float(successes)
-        deviation = (sum( (t - average)**2 for t in times if t != None )/float(successes))**0.5
+        average = sum(t[0] for t in times if t != None)/float(successes)
+        deviation = (sum( (t[0] - average)**2 for t in times if t != None )/float(successes))**0.5
         standardError = deviation/(float(successes)**0.5)
     eprint("BENCHMARK:")
     eprint("Solves %d/%d = %d%%"%(successes, len(tasks), int(100.*successes/len(tasks))))
     if successes > 0:
         eprint("Synthesis time %f +/- %f sec"%(average, standardError))
+        average = sum(t[1] for t in times if t != None)/float(successes)
+        deviation = (sum( (t[1] - average)**2 for t in times if t != None )/float(successes))**0.5
+        standardError = deviation/(float(successes)**0.5)
+        eprint("Expected log P[t|p] =",average,"+/-",standardError)
 
 def benchmarkSynthesisTime(result, task, timeout):
     grammar = result.grammars[-1]
@@ -198,8 +202,9 @@ def benchmarkSynthesisTime(result, task, timeout):
                                 grammar, task, maximumBudget = 99999,
                                 compiledTimeout = timeout - elapsed)
         dt = time() - startTime
-        eprint("Solved",task,"w/",solution,"in time",dt)
-        return dt
+        l,p = solution
+        eprint("Solved",task,"w/",p,"(log likelihood of task given program:",l,").","in time",dt)
+        return dt,l
     except CompiledTimeout:
         eprint("Failed to solve",task,"in time",timeout)
         return None
