@@ -76,7 +76,7 @@ def plotECResult(resultPaths, colors='rgbycm', label=None, title=None, export=No
                 p = parseResultsPath(path)
                 parameters.append(p)
 
-    f,a1 = plot.subplots(figsize = (5,4))
+    f,a1 = plot.subplots(figsize = (5,2.5))
     a1.set_xlabel('Iteration')
     a1.xaxis.set_major_locator(MaxNLocator(integer = True))
     a1.set_ylabel('% Tasks Solved (solid)')
@@ -147,9 +147,10 @@ if __name__ == "__main__":
         l += "frontier size %s"%p.frontierSize
         if p.useRecognitionModel:
             if hasattr(p,'helmholtzRatio') and p.helmholtzRatio > 0:
-                l += " (neural Helmholtz)"
+                l += " (DreamCoder)"
             else:
-                l += " (neural)"
+                l += " (AE)"
+        else: l += " (no NN)"
         return l
     arguments = sys.argv[1:]
     export = [ a for a in arguments if a.endswith('.png') or a.endswith('.eps') ]

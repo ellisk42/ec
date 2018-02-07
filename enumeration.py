@@ -165,12 +165,14 @@ def benchmarkSynthesisTimes(result, tasks, _ = None, timeout = None, CPUs = None
     times = parallelMap(CPUs, lambda task: benchmarkSynthesisTime(result, task, timeout), tasks)
     timeouts = sum(t == None for t in times)
     successes = sum(t != None for t in times)
-    average = sum(t for t in times if t != None)/float(successes)
-    deviation = (sum( (t - average)**2 for t in times if t != None )/float(successes))**0.5
-    standardError = deviation/(float(successes)**0.5)
+    if successes > 0:
+        average = sum(t for t in times if t != None)/float(successes)
+        deviation = (sum( (t - average)**2 for t in times if t != None )/float(successes))**0.5
+        standardError = deviation/(float(successes)**0.5)
     eprint("BENCHMARK:")
     eprint("Solves %d/%d = %d%%"%(successes, len(tasks), int(100.*successes/len(tasks))))
-    eprint("Synthesis time %f +/- %f sec"%(average, standardError))
+    if successes > 0:
+        eprint("Synthesis time %f +/- %f sec"%(average, standardError))
 
 def benchmarkSynthesisTime(result, task, timeout):
     grammar = result.grammars[-1]
