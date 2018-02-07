@@ -155,7 +155,13 @@ def explorationCompression(grammar, tasks,
         else:
             benchmarkTasks = tasks
             benchmark = -benchmark
-        benchmarkSynthesisTimes(result, benchmarkTasks, timeout = benchmark, CPUs = CPUs)
+        if len(result.baselines) == 0: results = {"our algorithm": result}
+        else: results = result.baselines
+        for name, result in results.iteritems():
+            eprint("Starting benchmark:",name)            
+            benchmarkSynthesisTimes(result, benchmarkTasks, timeout = benchmark, CPUs = CPUs)
+            eprint("Completed benchmark.")
+            eprint()
         return 
 
     for j in range(resume or 0, iterations):
