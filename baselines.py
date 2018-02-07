@@ -16,9 +16,11 @@ def robustfill(*args, **kwargs):
         "outputPrefix": None,
 
         "useRecognitionModel": True,
-        "iterations": kwargs["iterations"], # XXX: should we change this?
+        # Trained a recognition model on a ton of iterations on only samples from an unlearned generative model
+        "iterations": 1,
+        "steps": 1000,
         "helmholtzRatio": 1.0,
-        "pseudoCounts": 0,
+        "pseudoCounts": 1.,
         "aic": float("inf"),
     })
     return ec.explorationCompression(*args, **kwargs)

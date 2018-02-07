@@ -117,7 +117,7 @@ def explorationCompression(grammar, tasks,
         kvs += ["feat=%s"%(featureExtractor.__name__)]
         return "{}_{}{}.pickle".format(outputPrefix, "_".join(kvs), extra)
 
-    if onlyBaselines:
+    if onlyBaselines and not benchmark:
         result = ECResult()
         result.baselines = baselines.all(grammar, tasks,
             CPUs=CPUs, cuda=cuda, featureExtractor=featureExtractor,
@@ -137,11 +137,11 @@ def explorationCompression(grammar, tasks,
 
     # Restore checkpoint
     if resume is not None:
-        path = checkpointPath(resume)
+        path = checkpointPath(resume, extra = "_baselines" if onlyBaselines else "")
         with open(path, "rb") as handle:
             result = dill.load(handle)
         eprint("Loaded checkpoint from", path)
-        grammar = result.grammars[-1]
+        grammar = result.grammars[-1] if result.grammars else grammar
     else:  # Start from scratch
         result = ECResult(parameters=parameters, grammars=[grammar],
                           taskSolutions = { t: Frontier([], task = t) for t in tasks },
