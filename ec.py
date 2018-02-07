@@ -199,10 +199,13 @@ def explorationCompression(grammar, tasks,
                                   else grammar.rescoreFrontier(result.taskSolutions[f.task])
                                   for f in frontiers ]
 
+            thisRatio = helmholtzRatio
+            # Disable Helmholtz on the first iteration
+            # Otherwise we just draw from the base grammar which is a terrible distribution
+            if helmholtzRatio < 1. and j == 0: thisRatio = 0.
+
             recognizer.train(trainingFrontiers, topK=topK, steps=steps,
-                             # Disable Helmholtz on the first iteration
-                             # Otherwise we just draw from the base grammar which is a terrible distribution
-                             helmholtzRatio = helmholtzRatio and helmholtzRatio*int(j > 0))
+                             helmholtzRatio = thisRatio)
             bottomupFrontiers = recognizer.enumerateFrontiers(frontierSize, tasks, CPUs=CPUs,
                                                               maximumFrontier=maximumFrontier,
                                                               evaluationTimeout=evaluationTimeout)
