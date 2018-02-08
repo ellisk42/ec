@@ -103,20 +103,23 @@ def plotECResult(resultPaths, colors='rgbycm', label=None, title=None, export=No
                            reverse = 2)
     frontierToStyle = {size: style for size, style in zip(frontierSizes,["-","--","-."]) }
 
-    f,a1 = plot.subplots(figsize = (5,2.5))
-    a1.set_xlabel('Iteration')
+    f,a1 = plot.subplots(figsize = (5,5))
+    a1.set_xlabel('Iteration', fontsize = 22)
     a1.xaxis.set_major_locator(MaxNLocator(integer = True))
+
     if showLogLikelihood:
-        a1.set_ylabel('% Tasks Solved (solid)', fontsize = 11)
+        a1.set_ylabel('% Tasks Solved (solid)', fontsize = 18)
     else:
-        a1.set_ylabel('% Tasks Solved', fontsize = 11)
+        a1.set_ylabel('% Tasks Solved', fontsize = 22)
 
     if showLogLikelihood:
         a2 = a1.twinx()
-        a2.set_ylabel('Avg log likelihood (dashed)', fontsize = 11)
+        a2.set_ylabel('Avg log likelihood (dashed)', fontsize = 22)
 
     n_iters = max(len(result.learningCurve) for result in results)
     if iterations and n_iters > iterations: n_iters = iterations
+
+    plot.xticks(range(1, n_iters+1), fontsize = 20)
 
     recognitionToColor = {False: "r", True: "b"}
 
@@ -138,24 +141,25 @@ def plotECResult(resultPaths, colors='rgbycm', label=None, title=None, export=No
     a1.set_ylim(ymin = 0, ymax = 110)
     a1.yaxis.grid()
     a1.set_yticks(range(0,110,20))
+    plot.yticks(range(0,110,20),fontsize = 20)
 
     if showLogLikelihood:
         starting, ending = a2.get_ylim()#a2.set_ylim(ymax = 0)
         a2.yaxis.set_ticks(np.arange(starting, ending, (ending - starting)/5.))
 
     if title is not None:
-        plot.title(title)
+        plot.title(title, fontsize = 26)
 
     #if label is not None:
     legends = []
-    legends.append(a1.legend(loc = 'lower right', fontsize = 10,
+    legends.append(a1.legend(loc = 'lower right', fontsize = 14,
               #bbox_to_anchor=(1, 0.5),
               handles = [mlines.Line2D([],[],color = 'black',ls = frontierToStyle[frontierSize],
                                        label = str(frontierSize))
                          for frontierSize in frontierSizes ]))
     if False:
         # FIXME: figure out how to have two separate legends
-        plot.gca().add_artist(plot.legend(loc = 'lower left', fontsize = 10,
+        plot.gca().add_artist(plot.legend(loc = 'lower left', fontsize = 20,
                                   handles = [mlines.Line2D([],[],color = recognitionToColor[True],ls = '-',
                                                            label = "DreamCoder"),
                                              mlines.Line2D([],[],color = recognitionToColor[False],ls = '-',
