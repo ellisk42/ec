@@ -154,7 +154,7 @@ if __name__ == "__main__":
                            **commandlineArguments(frontierSize = 1000,
                                                   iterations = 10,
                                                   aic = 1.,
-                                                  structurePenalty = 0.1,
+                                                  structurePenalty = 1,
                                                   CPUs = numberOfCPUs(),
                                                   featureExtractor = DeepFeatureExtractor,
                                                   topK = 2,
