@@ -77,7 +77,9 @@ def PCAembedding(e, label = lambda l: l, color = lambda ll: 'b'):
                       (v[0] + random.random(),
                        v[1] + random.random()))
 
-def plotECResult(resultPaths, colors='rgbycm', label=None, title=None, export=None, showLogLikelihood = False):
+def plotECResult(resultPaths, colors='rgbycm', label=None, title=None, export=None,
+                 showLogLikelihood = False,
+                 iterations = None):
     results = []
     parameters = []
     for j,path in enumerate(resultPaths):
@@ -97,25 +99,29 @@ def plotECResult(resultPaths, colors='rgbycm', label=None, title=None, export=No
     f,a1 = plot.subplots(figsize = (5,2.5))
     a1.set_xlabel('Iteration')
     a1.xaxis.set_major_locator(MaxNLocator(integer = True))
-    a1.set_ylabel('% Tasks Solved (solid)', fontsize = 11)
+    if showLogLikelihood:
+        a1.set_ylabel('% Tasks Solved (solid)', fontsize = 11)
+    else:
+        a1.set_ylabel('% Tasks Solved', fontsize = 11)
 
     if showLogLikelihood:
         a2 = a1.twinx()
         a2.set_ylabel('Avg log likelihood (dashed)', fontsize = 11)
 
     n_iters = max(len(result.learningCurve) for result in results)
+    if iterations and n_iters > iterations: n_iters = iterations
 
     for color, result, p in zip(colors, results, parameters):
         if hasattr(p, "baseline") and p.baseline:
             ys = [ 100. * result.learningCurve[-1] / len(result.taskSolutions) ]*n_iters
         else:
-            ys = [ 100. * x / len(result.taskSolutions) for x in result.learningCurve]
+            ys = [ 100. * x / len(result.taskSolutions) for x in result.learningCurve[:iterations]]
         l, = a1.plot(range(1, len(ys) + 1), ys, color + '-')
         if label is not None:
             l.set_label(label(p))
         if showLogLikelihood:
-            a2.plot(range(1,len(result.averageDescriptionLength) + 1),
-                    [ -l for l in result.averageDescriptionLength],
+            a2.plot(range(1,len(result.averageDescriptionLength[:iterations]) + 1),
+                    [ -l for l in result.averageDescriptionLength[:iterations]],
                     color + '--')
             
     a1.set_ylim(ymin = 0, ymax = 110)
@@ -130,7 +136,7 @@ def plotECResult(resultPaths, colors='rgbycm', label=None, title=None, export=No
         plot.title(title)
 
     if label is not None:
-        a1.legend(loc = 'lower right', fontsize = 9)
+        a1.legend(loc = 'lower right', fontsize = 10)
 
     f.tight_layout()
     if export:
@@ -172,28 +178,37 @@ def plotECResult(resultPaths, colors='rgbycm', label=None, title=None, export=No
                              color = lambda thing: colormap.get(thing,'k'))
                 plot.show()
 
-
+def tryIntegerParse(s):
+    try: return int(s)
+    except: return None
+    
 if __name__ == "__main__":
     import sys
     def label(p):
         #l = p.domain
         l = ""
         if hasattr(p, 'baseline') and p.baseline:
-            l += " (baseline %s)"%p.baseline
+            l += "baseline %s"%p.baseline
             return l
-        l += "frontier size %s"%p.frontierSize
         if p.useRecognitionModel:
             if hasattr(p,'helmholtzRatio') and p.helmholtzRatio > 0:
-                l += " (DreamCoder)"
+                l += "DreamCoder"
             else:
-                l += " (AE)"
-        else: l += " (no NN)"
+                l += "AE"
+        else: l += "no NN"
+        l += " (frontier size %s)"%p.frontierSize
         return l
     arguments = sys.argv[1:]
     export = [ a for a in arguments if a.endswith('.png') or a.endswith('.eps') ]
     export = export[0] if export else None
     title = [ a for a in arguments if not any(a.endswith(s) for s in {'.eps', '.png', '.pickle'})  ]
+
+    # pass in an integer on the command line to  number of plotted iterations
+    iterations = [ tryIntegerParse(a) for a in arguments if tryIntegerParse(a) ]
+    iterations = None if iterations == [] else iterations[0]
+    
     plotECResult([ a for a in arguments if a.endswith('.pickle') ],
                  export = export,
                  title = title[0] if title else "DSL learning curves",
-                 label = label)
+                 label = label,
+                 iterations = iterations)
