@@ -32,7 +32,7 @@ operationDistribution = [(1,'NOT'),
                          (2,'AND'),
                          (2,'OR'),
                          (4,'m2'),
-                         (2,'m4')]
+                         (0,'m4')]
 
 INPUTSPERGATE = {'NOT': 1,
                  'AND': 2,
