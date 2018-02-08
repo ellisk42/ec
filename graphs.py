@@ -77,7 +77,7 @@ def PCAembedding(e, label = lambda l: l, color = lambda ll: 'b'):
                       (v[0] + random.random(),
                        v[1] + random.random()))
 
-def plotECResult(resultPaths, colors='rgbycm', label=None, title=None, export=None):
+def plotECResult(resultPaths, colors='rgbycm', label=None, title=None, export=None, showLogLikelihood = False):
     results = []
     parameters = []
     for j,path in enumerate(resultPaths):
@@ -98,8 +98,10 @@ def plotECResult(resultPaths, colors='rgbycm', label=None, title=None, export=No
     a1.set_xlabel('Iteration')
     a1.xaxis.set_major_locator(MaxNLocator(integer = True))
     a1.set_ylabel('% Tasks Solved (solid)', fontsize = 11)
-    a2 = a1.twinx()
-    a2.set_ylabel('Avg log likelihood (dashed)', fontsize = 11)
+
+    if showLogLikelihood:
+        a2 = a1.twinx()
+        a2.set_ylabel('Avg log likelihood (dashed)', fontsize = 11)
 
     n_iters = max(len(result.learningCurve) for result in results)
 
@@ -111,17 +113,18 @@ def plotECResult(resultPaths, colors='rgbycm', label=None, title=None, export=No
         l, = a1.plot(range(1, len(ys) + 1), ys, color + '-')
         if label is not None:
             l.set_label(label(p))
-
-        a2.plot(range(1,len(result.averageDescriptionLength) + 1),
-                [ -l for l in result.averageDescriptionLength],
-                color + '--')
-
+        if showLogLikelihood:
+            a2.plot(range(1,len(result.averageDescriptionLength) + 1),
+                    [ -l for l in result.averageDescriptionLength],
+                    color + '--')
+            
     a1.set_ylim(ymin = 0, ymax = 110)
     a1.yaxis.grid()
     a1.set_yticks(range(0,110,20))
 
-    starting, ending = a2.get_ylim()#a2.set_ylim(ymax = 0)
-    a2.yaxis.set_ticks(np.arange(starting, ending, (ending - starting)/5.))
+    if showLogLikelihood:
+        starting, ending = a2.get_ylim()#a2.set_ylim(ymax = 0)
+        a2.yaxis.set_ticks(np.arange(starting, ending, (ending - starting)/5.))
 
     if title is not None:
         plot.title(title)
