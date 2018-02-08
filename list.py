@@ -1,5 +1,6 @@
 import cPickle as pickle
 import random
+from collections import defaultdict
 from itertools import chain
 from ec import explorationCompression, commandlineArguments
 from utilities import eprint, numberOfCPUs, flatten, fst, testTrainSplit
@@ -198,7 +199,7 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
 def train_necessary(task):
     if t.name in {"head", "is-primes", "len", "pop", "repeat-many", "tail"}:
         return True
-    if any(t.name.startwith(x) for x in {
+    if any(t.name.startswith(x) for x in {
             "add-k", "append-k", "bool-identify-geq-k", "count-k", "drop-k",
             "empty", "evens", "has-k", "index-k", "is-mod-k", "kth-largest",
             "kth-smallest", "modulo-k", "mult-k", "remove-index-k",
@@ -254,19 +255,27 @@ if __name__ == "__main__":
 
     split = args.pop("split")
     if split:
+        random.seed(42)
         train = []
+        train_some = defaultdict(list)
         for t in tasks:
             necessary = train_necessary(t)
             if not necessary:
                 continue
             if necessary == "some":
-                # TODO
-                train.append(t)
+                train_some[t.name.split()[0]].append(t)
             else:
                 train.append(t)
+        for k in sorted(train_some):
+            ts = train_some[k]
+            random.shuffle(ts)
+            train.append(ts.pop())
+
         tasks = [t for t in tasks if t not in train]
         test, more_train = testTrainSplit(tasks, split)
         train.extend(more_train)
+
+        eprint("Alotted {} tasks for training and {} for testing".format(len(train), len(test)))
     else:
         train = tasks
         test = []
