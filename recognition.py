@@ -124,19 +124,24 @@ class RecognitionModel(nn.Module):
                     random.shuffle(permutedFrontiers)
                 else: permutedFrontiers = [None]
                 for frontier in permutedFrontiers:
-                    self.zero_grad()
-
                     # Randomly decide whether to sample from the generative model
                     doingHelmholtz = random.random() < helmholtzRatio
                     if doingHelmholtz:
                         attempt = self.sampleHelmholtz(requests)
                         if attempt is not None:
                             program, request, features = attempt
+                            self.zero_grad()
                             loss = self.HelmholtzKL(features, program, request)
                         else: doingHelmholtz = False
-                    if not doingHelmholtz and helmholtzRatio < 1.:
-                        loss = self.frontierKL(frontier)
-                    
+                    if not doingHelmholtz:
+                        if helmholtzRatio < 1.:
+                            self.zero_grad()
+                            loss = self.frontierKL(frontier)
+                        else:
+                            # Refuse to train on the frontiers
+                            continue
+                        
+                            
                     loss.backward()
                     optimizer.step()
                     losses.append(loss.data[0])
