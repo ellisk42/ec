@@ -5,6 +5,8 @@ import numpy as np
 
 import matplotlib.pyplot as plot
 from matplotlib.ticker import MaxNLocator
+import matplotlib.lines as mlines
+
 
 class Bunch(object):
     def __init__(self,d):
@@ -96,6 +98,11 @@ def plotECResult(resultPaths, colors='rgbycm', label=None, title=None, export=No
                 p = parseResultsPath(path)
                 parameters.append(p)
 
+    # Collect together the frontier sizes, which determine the style of the line drawn
+    frontierSizes = sorted(set( r.frontierSize for r in parameters ),
+                           reverse = 2)
+    frontierToStyle = {size: style for size, style in zip(frontierSizes,["-","--","-."]) }
+
     f,a1 = plot.subplots(figsize = (5,2.5))
     a1.set_xlabel('Iteration')
     a1.xaxis.set_major_locator(MaxNLocator(integer = True))
@@ -111,14 +118,18 @@ def plotECResult(resultPaths, colors='rgbycm', label=None, title=None, export=No
     n_iters = max(len(result.learningCurve) for result in results)
     if iterations and n_iters > iterations: n_iters = iterations
 
-    for color, result, p in zip(colors, results, parameters):
+    recognitionToColor = {False: "r", True: "b"}
+
+    for result, p in zip(results, parameters):
         if hasattr(p, "baseline") and p.baseline:
             ys = [ 100. * result.learningCurve[-1] / len(result.taskSolutions) ]*n_iters
         else:
             ys = [ 100. * x / len(result.taskSolutions) for x in result.learningCurve[:iterations]]
-        l, = a1.plot(range(1, len(ys) + 1), ys, color + '-')
-        if label is not None:
-            l.set_label(label(p))
+        color = recognitionToColor[p.useRecognitionModel]
+        l, = a1.plot(range(1, len(ys) + 1), ys, color + frontierToStyle[p.frontierSize])
+        # if label is not None:
+        #     l.set_label(label(p))
+        
         if showLogLikelihood:
             a2.plot(range(1,len(result.averageDescriptionLength[:iterations]) + 1),
                     [ -l for l in result.averageDescriptionLength[:iterations]],
@@ -135,16 +146,29 @@ def plotECResult(resultPaths, colors='rgbycm', label=None, title=None, export=No
     if title is not None:
         plot.title(title)
 
-    if label is not None:
-        a1.legend(loc = 'lower right', fontsize = 10)
+    #if label is not None:
+    legends = []
+    legends.append(a1.legend(loc = 'lower right', fontsize = 10,
+              #bbox_to_anchor=(1, 0.5),
+              handles = [mlines.Line2D([],[],color = 'black',ls = frontierToStyle[frontierSize],
+                                       label = str(frontierSize))
+                         for frontierSize in frontierSizes ]))
+    if False:
+        # FIXME: figure out how to have two separate legends
+        plot.gca().add_artist(plot.legend(loc = 'lower left', fontsize = 10,
+                                  handles = [mlines.Line2D([],[],color = recognitionToColor[True],ls = '-',
+                                                           label = "DreamCoder"),
+                                             mlines.Line2D([],[],color = recognitionToColor[False],ls = '-',
+                                                           label = "No NN")]))
 
     f.tight_layout()
     if export:
-        plot.savefig(export)
+        plot.savefig(export)#, additional_artists=legends)
         if export.endswith('.png'):
             os.system('convert -trim %s %s'%(export, export))
         os.system('feh %s'%export)
     else: plot.show()
+    assert False
 
     for result in results:
         if hasattr(result, 'recognitionModel') and result.recognitionModel is not None:
