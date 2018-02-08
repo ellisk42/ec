@@ -108,7 +108,7 @@ def explorationCompression(grammar, tasks,
                                "message", "CPUs", "outputPrefix",
                                "resume", "resumeFrontierSize",
                                "featureExtractor", "benchmark",
-                               "testingTasks"}}
+                               "evaluationTimeout", "testingTasks"}}
     if not useRecognitionModel:
         for k in {"activation","helmholtzRatio","steps"}: del parameters[k]
 
