@@ -23,7 +23,7 @@ inputDistribution = [#(1,1),
 MAXIMUMINPUTS = max(i for p,i in inputDistribution)
 gateDistribution = [(1,1),
                     (2,2),
-#                    (2,3),
+                    (2,3),
 #                    (4,4),
                     #(5,5),
                     #(6,5),

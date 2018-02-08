@@ -32,6 +32,22 @@ def parseResultsPath(p):
     parameters['domain'] = domain
     return Bunch(parameters)
 
+def taskColor(task):
+    n = task.name
+
+    numberOfZeros = sum(c == "0" for c in n )
+    if numberOfZeros == 0: return "r"
+    if numberOfZeros == 1: return "y"
+    if numberOfZeros == 2: return "y"
+    if numberOfZeros == 3: return "y"
+    if numberOfZeros == 4: return "y"
+    assert False
+    
+    if "0x^4" not in n: return "r"
+    if "0x^3" not in n: return "r"
+    if "0x^2" not in n: return "g"
+    return "g"
+
 def PCAembedding(e, label = lambda l: l, color = lambda ll: 'b'):
     """e: a map from object to vector
     label: a function from object to how it should be labeled
@@ -132,7 +148,9 @@ def plotECResult(resultPaths, colors='rgbycm', label=None, title=None, export=No
             else: plot.show()
             plot.figure()
             tasks = result.taskSolutions.keys()
-            PCAembedding(result.recognitionModel.taskEmbeddings(tasks))
+            PCAembedding(result.recognitionModel.taskEmbeddings(tasks),
+                         label = lambda _: "",
+                         color = taskColor) 
             if export:
                 export = export[:-4] + "_task_embedding" + export[-4:]
                 plot.savefig(export)
