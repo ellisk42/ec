@@ -119,8 +119,10 @@ class RecognitionModel(nn.Module):
             for i in range(1,steps + 1):
                 losses = []
                 
-                permutedFrontiers = list(frontiers)
-                random.shuffle(permutedFrontiers)
+                if helmholtzRatio < 1.:
+                    permutedFrontiers = list(frontiers)
+                    random.shuffle(permutedFrontiers)
+                else: permutedFrontiers = [None]
                 for frontier in permutedFrontiers:
                     self.zero_grad()
 
@@ -132,7 +134,7 @@ class RecognitionModel(nn.Module):
                             program, request, features = attempt
                             loss = self.HelmholtzKL(features, program, request)
                         else: doingHelmholtz = False
-                    if not doingHelmholtz:
+                    if not doingHelmholtz and helmholtzRatio < 1.:
                         loss = self.frontierKL(frontier)
                     
                     loss.backward()

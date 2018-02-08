@@ -18,7 +18,7 @@ def robustfill(*args, **kwargs):
         "useRecognitionModel": True,
         # Trained a recognition model on a ton of iterations on only samples from an unlearned generative model
         "iterations": 1,
-        "steps": 1000,
+        "steps": 100000,
         "helmholtzRatio": 1.0,
         "pseudoCounts": 1.,
         "aic": float("inf"),
