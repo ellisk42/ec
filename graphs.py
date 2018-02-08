@@ -172,7 +172,6 @@ def plotECResult(resultPaths, colors='rgbycm', label=None, title=None, export=No
             os.system('convert -trim %s %s'%(export, export))
         os.system('feh %s'%export)
     else: plot.show()
-    assert False
 
     for result in results:
         if hasattr(result, 'recognitionModel') and result.recognitionModel is not None:
@@ -186,7 +185,7 @@ def plotECResult(resultPaths, colors='rgbycm', label=None, title=None, export=No
             plot.figure()
             tasks = result.taskSolutions.keys()
             PCAembedding(result.recognitionModel.taskEmbeddings(tasks),
-                         label = lambda _: "",
+                         label = lambda thing: thing,
                          color = taskColor) 
             if export:
                 export = export[:-4] + "_task_embedding" + export[-4:]
@@ -202,7 +201,7 @@ def plotECResult(resultPaths, colors='rgbycm', label=None, title=None, export=No
                 for j in [" ",",",">","<"]: colormap[j] = 'r'
                 
                 PCAembedding(result.recognitionModel.featureExtractor.symbolEmbeddings(),
-                             label = lambda _: "",
+                             label = lambda thing: thing,
                              color = lambda thing: colormap.get(thing,'k'))
                 plot.show()
 
