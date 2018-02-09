@@ -119,7 +119,7 @@ def plotECResult(resultPaths, colors='rgbycm', label=None, title=None, export=No
     n_iters = max(len(result.learningCurve) for result in results)
     if iterations and n_iters > iterations: n_iters = iterations
 
-    plot.xticks(range(1, n_iters+1), fontsize = 20)
+    plot.xticks(range(0, n_iters), fontsize = 20)
 
     recognitionToColor = {False: "r", True: "b"}
 
@@ -129,7 +129,7 @@ def plotECResult(resultPaths, colors='rgbycm', label=None, title=None, export=No
         else:
             ys = [ 100. * x / len(result.taskSolutions) for x in result.learningCurve[:iterations]]
         color = recognitionToColor[p.useRecognitionModel]
-        l, = a1.plot(range(1, len(ys) + 1), ys, color + frontierToStyle[p.frontierSize])
+        l, = a1.plot(range(0, len(ys)), ys, color + frontierToStyle[p.frontierSize])
         # if label is not None:
         #     l.set_label(label(p))
         
@@ -172,6 +172,7 @@ def plotECResult(resultPaths, colors='rgbycm', label=None, title=None, export=No
             os.system('convert -trim %s %s'%(export, export))
         os.system('feh %s'%export)
     else: plot.show()
+    assert False
 
     for result in results:
         if hasattr(result, 'recognitionModel') and result.recognitionModel is not None:

@@ -198,7 +198,12 @@ if __name__ == "__main__":
     tasks = makeTasks()
     for t in tasks:
         print t.name
-        for x,y in t.examples:
-            print x[0],'\t',y
+        print """\\begin{tabular}{ll}
+        \\toprule Input&Output\\\\\\midrule
+%s
+\\\\\\bottomrule
+\\end{tabular}"""%(" \\\\\n ".join( x[0] + " & " + y for x,y in t.examples ))
+        # for x,y in t.examples:
+        #     print x[0],'\t',y
         print
     print len(tasks),"tasks"
