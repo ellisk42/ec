@@ -9,7 +9,7 @@ from task import RegressionTask
 from type import Context, arrow, tlist, tint, t0, UnificationFailure
 from listPrimitives import basePrimitives, primitives
 from recognition import HandCodedFeatureExtractor, MLPFeatureExtractor, RecurrentFeatureExtractor
-
+from enumeration import enumerateForTask
 
 def retrieveTasks(filename):
     with open(filename) as f:
@@ -296,4 +296,11 @@ if __name__ == "__main__":
     })
 
     baseGrammar = Grammar.uniform(prims())
+    for t in train:
+        eprint(t.name)
+        if t.name == "sum":
+            break
+        
+    enumerateForTask(baseGrammar, t, timeout = 100)
+    assert False
     explorationCompression(baseGrammar, train, testingTasks=test, **args)

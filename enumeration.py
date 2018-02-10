@@ -79,21 +79,48 @@ def enumerateFrontiers(g, frontierSize, tasks, CPUs=1,
 
 class EnumerationTimeout(Exception): pass
 
-def enumerateForTask(g, task, timeout = 5, budget=2.0, budgetIncrement=1.0, maximumFrontier = 10**4):
+def enumerateForTask(g, task, timeout = 5, budgetIncrement=1.0, maximumFrontier = 10**4):
+    from time import time
     def timeoutCallBack(_1,_2): raise EnumerationTimeout()
     signal.signal(signal.SIGALRM, timeoutCallBack)
     signal.alarm(timeout)
     
     frontier = {}
+    starting = time()
+    previousBudget = 0.
+    budget = previousBudget + budgetIncrement
     try:
+        totalNumberOfPrograms = 0
         while len(frontier) < maximumFrontier:
-            for prior,_,p in enumeration(g, Context.EMPTY, [], task.request, budget):
+            numberOfPrograms = 0
+            for prior,_,p in enumeration(g, Context.EMPTY, [], task.request, 
+                                         maximumDepth = 99,
+                                         upperBound = budget,
+                                         lowerBound = previousBudget):
                 if len(frontier) >= maximumFrontier: break
+                #eprint(p, -prior)
+                descriptionLength = -prior
+                # Shouldn't see it on this iteration
+                if descriptionLength > budget: assert False
+                # Should already have seen it
+                if descriptionLength <= previousBudget:
+                    assert False, \
+                        "Enumerated program %s with MDL %f. But the lower bound was %f, and the upper bound was %f."%(p,descriptionLength,previousBudget,budget)
+
+                numberOfPrograms += 1
+                
                 likelihood = task.logLikelihood(p)
                 if valid(likelihood):
-                    eprint("Hit",task.name,"with the program",p)
+                    eprint("Hit",task.name,"with the program",p,"which has prior",prior,"after",time() - starting,"seconds")
                     frontier[p] = (prior, likelihood)
+            eprint("Enumerated %d programs of satisfying:"%(numberOfPrograms),
+                   "%d < MDL <= %d."%(int(previousBudget),int(budget)))
+            
+            previousBudget = budget
             budget += budgetIncrement
+            totalNumberOfPrograms += numberOfPrograms
+            eprint("\tTotal elapsed time: %d seconds. Total number of programs evaluated: %d."% \
+                   (time() - starting, totalNumberOfPrograms))
     except EnumerationTimeout: pass
     signal.alarm(0)        
 
@@ -117,13 +144,16 @@ def iterativeDeepeningEnumeration(g, request, frontierSize, budget=2.0, budgetIn
     return frontier
 
 
-def enumeration(g, context, environment, request, budget, maximumDepth = 20):
-    if budget <= 0 or maximumDepth == 1:
-        return
+def enumeration(g, context, environment, request, upperBound, maximumDepth = 20, lowerBound = 0.):
+    '''Enumerates all programs whose MDL satisfies: lowerBound < MDL <= upperBound'''
+    if upperBound <= 0 or maximumDepth == 1: return 
+
     if request.isArrow():
         v = request.arguments[0]
         for l, newContext, b in enumeration(g, context, [v] + environment,
-                                            request.arguments[1], budget,
+                                            request.arguments[1],
+                                            upperBound = upperBound,
+                                            lowerBound = lowerBound,
                                             maximumDepth = maximumDepth):
             yield l, newContext, Abstraction(b)
 
@@ -132,28 +162,49 @@ def enumeration(g, context, environment, request, budget, maximumDepth = 20):
                                        normalize = True)
         
         for l, t, p, newContext in candidates:
+            mdl = -l
+            if not (mdl <= upperBound): continue
+            
             xs = t.functionArguments()
-            for result in enumerateApplication(g, newContext, environment, p, l, xs, budget + l,
-                                               maximumDepth = maximumDepth - 1):
-                yield result
+            # eprint("Enumerating arguments for function",p,"which has been requesting types",xs)
+            for aL,aK,application in\
+                enumerateApplication(g, newContext, environment, p, xs,
+                                     upperBound = upperBound + l,
+                                     lowerBound = lowerBound + l,
+                                     maximumDepth = maximumDepth - 1):
+                yield aL+l, aK, application
 
 
 def enumerateApplication(g, context, environment,
-                         function, functionLikelihood, argumentRequests, budget,
+                         function, argumentRequests,
+                         # Upper bound on the description length of all of the arguments
+                         upperBound,
+                         # Lower bound on the description length of all of the arguments
+                         lowerBound = 0.,
                          maximumDepth = 20):
+    if upperBound <= 0 or maximumDepth == 1: return 
+
     if argumentRequests == []:
-        yield functionLikelihood, context, function
+        # eprint("Enumerating application of %s with no arguments."%(function))
+        # eprint("\tL",lowerBound)
+        # eprint("\tU",upperBound)
+        if lowerBound < 0. and 0. <= upperBound:
+            yield 0., context, function
+        else: return 
     else:
         argRequest = argumentRequests[0].apply(context)
         laterRequests = argumentRequests[1:]
-        for argL, newContext, arg in enumeration(g, context, environment, argRequest, budget,
+        for argL, newContext, arg in enumeration(g, context, environment, argRequest,
+                                                 upperBound = upperBound,
+                                                 lowerBound = 0.,
                                                  maximumDepth = maximumDepth):
             newFunction = Application(function, arg)
-            for result in enumerateApplication(g, newContext, environment, newFunction,
-                                               functionLikelihood + argL,
-                                               laterRequests, budget + argL,
-                                               maximumDepth = maximumDepth):
-                yield result
+            for resultL, resultK, result in enumerateApplication(g, newContext, environment, newFunction,
+                                                                 laterRequests,
+                                                                 upperBound = upperBound + argL,
+                                                                 lowerBound = lowerBound + argL,
+                                                                 maximumDepth = maximumDepth):
+                yield resultL + argL, resultK, result
 
 
 def constructFrontiers(frontiers, programLikelihoods, tasks, maxFrontier):

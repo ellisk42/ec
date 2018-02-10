@@ -55,7 +55,15 @@ if __name__ == "__main__":
 
     test, train = testTrainSplit(tasks, 0.75)
 
+    target = "Apply double delimited by '<' to input delimited by '>'"
+    tasks = {t.name: t for t in tasks }
     baseGrammar = Grammar.uniform(primitives)
+    callCompiled(enumerateForTask,
+                 baseGrammar, tasks[target],
+                 maximumFrontier = 2,
+                 timeout = 10000)
+    assert False
+
     explorationCompression(baseGrammar, train,
                            testingTasks = test,
                            outputPrefix = "experimentOutputs/text",
