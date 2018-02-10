@@ -77,6 +77,31 @@ def enumerateFrontiers(g, frontierSize, tasks, CPUs=1,
 
     return frontiers
 
+class EnumerationTimeout(Exception): pass
+
+def enumerateForTask(g, task, timeout = 5, budget=2.0, budgetIncrement=1.0, maximumFrontier = 10**4):
+    def timeoutCallBack(_1,_2): raise EnumerationTimeout()
+    signal.signal(signal.SIGALRM, timeoutCallBack)
+    signal.alarm(timeout)
+    
+    frontier = {}
+    try:
+        while len(frontier) < maximumFrontier:
+            for prior,_,p in enumeration(g, Context.EMPTY, [], task.request, budget):
+                if len(frontier) >= maximumFrontier: break
+                likelihood = task.logLikelihood(p)
+                if valid(likelihood):
+                    eprint("Hit",task.name,"with the program",p)
+                    frontier[p] = (prior, likelihood)
+            budget += budgetIncrement
+    except EnumerationTimeout: pass
+    signal.alarm(0)        
+
+    return Frontier([FrontierEntry(program = p,
+                                   logLikelihood = likelihood,
+                                   logPrior = prior)
+                     for p,(likelihood, prior) in frontier.iteritems() ],
+                    task = task)
 
 def iterativeDeepeningEnumeration(g, request, frontierSize, budget=2.0, budgetIncrement=1.0, showDescriptionLength = False):
     """Returns a list of (log likelihood, program)"""
