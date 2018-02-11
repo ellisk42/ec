@@ -56,8 +56,11 @@ if __name__ == "__main__":
     test, train = testTrainSplit(tasks, 0.75)
 
     target = "Apply double delimited by '<' to input delimited by '>'"
+    program = Program.parse("(lambda (join (chr->str '<') (map (lambda (++ $0 $0)) (split '<' $0))))")
+    eprint(program)
     tasks = {t.name: t for t in tasks }
     baseGrammar = Grammar.uniform(primitives)
+    eprint(baseGrammar.closedLogLikelihood(tasks[target].request, program))
     callCompiled(enumerateForTask,
                  baseGrammar, tasks[target],
                  maximumFrontier = 2,

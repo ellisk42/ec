@@ -7,83 +7,48 @@ from grammar import *
 
 import gc
 
-def enumerateFrontiers(g, frontierSize, tasks, CPUs=1,
+def enumerateFrontiers(g, tasks, _=None,
+                       frontierSize=None,
+                       enumerationTimeout=None,
+                       CPUs=1,
                        maximumFrontier=None,
                        verbose=True,
                        evaluationTimeout=None):
     '''g: Either a Grammar, or a map from task to grammar.'''
     from time import time
 
-    if isinstance(g, dict):
-        start = time()
-        f = parallelMap(CPUs,            
-                        lambda (task, grammar): enumerateFrontiers(grammar, frontierSize, [task],
-                                                                   CPUs=1, verbose=False,
-                                                                   maximumFrontier=maximumFrontier)[0],
-                        map(lambda t: (t, g[t]), tasks))
-        if verbose:
-            eprint("Enumerated %d frontiers in time %f"%(len(g), time() - start))
-        return f
-
+    if not isinstance(g, dict): g = {t: g for t in tasks }
+    
     start = time()
-    uniqueRequests = list({ t.request for t in tasks })
-    frontiers = dict(parallelMap(
-        CPUs,
-        lambda request: (request, iterativeDeepeningEnumeration(g, request, frontierSize,
-                                                                showDescriptionLength = verbose)),
-        uniqueRequests))
-    # for _,f in frontiers.iteritems():
-    #     for _,e in f: eprint(e)
-    # for t in tasks: eprint(t)
-    totalNumberOfPrograms = sum(len(f) for f in frontiers.values())
-    totalNumberOfFrontiers = len(frontiers)
-
-    frontiers = {t: frontiers[t.request] for t in tasks}
-
+    frontiers = parallelMap(CPUs,            
+                            lambda (task, grammar): enumerateForTask(grammar, task,
+                                                                     frontierSize=frontierSize,
+                                                                     timeout=enumerationTimeout,
+                                                                     evaluationTimeout = evaluationTimeout,
+                                                                     verbose=False,
+                                                                     maximumFrontier=maximumFrontier),
+                            map(lambda t: (t, g[t]), tasks))
     if verbose:
-        eprint("Enumerated %d frontiers with %d total programs in time %fsec" %
-               (totalNumberOfFrontiers, totalNumberOfPrograms, time() - start))
-
-    # I think that this is no longer needed...
-    # # In general these programs have considerable overlap, reusing
-    # # many subtrees. This code will force identical trees to only be
-    # # represented by a single object on the heap.
-    # if isinstance(g, dict):
-    #     with timing("Coalesced trees"):
-    #         share = ShareVisitor()
-    #         frontiers = {t: [ (l, share.execute(p)) for l,p in f ]
-    #                      for t,f in frontiers.iteritems() }
-    #         share = None # collect it
-    #         gc.collect()
-
-    start = time()
-    # We split up the likelihood calculation and the frontier construction
-    # This is so we do not have to serialize and deserialize a bunch of programs
-    # programLikelihoods: [ {indexInfrontiers[task]: likelihood} (for each task)]
-    programLikelihoods = parallelMap(CPUs, lambda task:
-                                     {j: logLikelihood
-                                      for j, (_, program) in enumerate(frontiers[task])
-                                      for logLikelihood in [
-                                          task.logLikelihood(program, timeout=evaluationTimeout)
-                                      ]
-                                      if valid(logLikelihood)},
-                                     tasks)
-
-    frontiers = constructFrontiers(frontiers, programLikelihoods, tasks, maximumFrontier)
-
-    dt = time() - start
-    if verbose:
-        eprint("Scored frontiers in time %fsec (%f/program)" % (dt, dt / totalNumberOfPrograms))
-
-    return frontiers
+        eprint("Enumerated %d frontiers in time %f"%(len(g), time() - start))
+    return f
 
 class EnumerationTimeout(Exception): pass
 
-def enumerateForTask(g, task, timeout = 5, budgetIncrement=1.0, maximumFrontier = 10**4):
+def enumerateForTask(g, task, _ = None,
+                     verbose=False,
+                     timeout=None,
+                     evaluationTimeout=None,
+                     frontierSize=None,
+                     budgetIncrement=1.0, maximumFrontier = 10**2):
+    verbose = True
+    assert (timeout is not None) or (frontierSize is not None), \
+        "enumerateForTask: You must provide either a timeout or a frontier size."
+    
     from time import time
     def timeoutCallBack(_1,_2): raise EnumerationTimeout()
-    signal.signal(signal.SIGALRM, timeoutCallBack)
-    signal.alarm(timeout)
+    if timeout is not None:
+        signal.signal(signal.SIGALRM, timeoutCallBack)
+        signal.alarm(timeout)
     
     frontier = {}
     starting = time()
@@ -97,38 +62,40 @@ def enumerateForTask(g, task, timeout = 5, budgetIncrement=1.0, maximumFrontier 
                                          maximumDepth = 99,
                                          upperBound = budget,
                                          lowerBound = previousBudget):
-                if len(frontier) >= maximumFrontier: break
-                #eprint(p, -prior)
                 descriptionLength = -prior
                 # Shouldn't see it on this iteration
-                if descriptionLength > budget: assert False
+                assert descriptionLength <= budget
                 # Should already have seen it
-                if descriptionLength <= previousBudget:
-                    assert False, \
-                        "Enumerated program %s with MDL %f. But the lower bound was %f, and the upper bound was %f."%(p,descriptionLength,previousBudget,budget)
+                assert descriptionLength > previousBudget
 
                 numberOfPrograms += 1
                 
-                likelihood = task.logLikelihood(p)
-                if valid(likelihood):
+                likelihood = task.logLikelihood(p, timeout=evaluationTimeout)
+                if verbose and valid(likelihood):
                     eprint("Hit",task.name,"with the program",p,"which has prior",prior,"after",time() - starting,"seconds")
                     frontier[p] = (prior, likelihood)
-            eprint("Enumerated %d programs of satisfying:"%(numberOfPrograms),
-                   "%d < MDL <= %d."%(int(previousBudget),int(budget)))
+            if verbose:
+                eprint("Enumerated %d programs of satisfying:"%(numberOfPrograms),
+                       "%d < MDL <= %d."%(int(previousBudget),int(budget)))
             
             previousBudget = budget
             budget += budgetIncrement
             totalNumberOfPrograms += numberOfPrograms
-            eprint("\tTotal elapsed time: %d seconds. Total number of programs evaluated: %d."% \
-                   (time() - starting, totalNumberOfPrograms))
+            if verbose:
+                eprint("\tTotal elapsed time: %d seconds. Total number of programs evaluated: %d."% \
+                       (time() - starting, totalNumberOfPrograms))
+            if frontierSize is not None and totalNumberOfPrograms > frontierSize: break
     except EnumerationTimeout: pass
-    signal.alarm(0)        
+    if timeout is not None:
+        signal.alarm(0) 
 
-    return Frontier([FrontierEntry(program = p,
-                                   logLikelihood = likelihood,
-                                   logPrior = prior)
-                     for p,(likelihood, prior) in frontier.iteritems() ],
-                    task = task)
+    frontier = Frontier([FrontierEntry(program = p,
+                                       logLikelihood = likelihood,
+                                       logPrior = prior)
+                         for p,(likelihood, prior) in frontier.iteritems() ],
+                        task = task)
+    frontier = frontier.topK(maximumFrontier)
+    return frontier
 
 def iterativeDeepeningEnumeration(g, request, frontierSize, budget=2.0, budgetIncrement=1.0, showDescriptionLength = False):
     """Returns a list of (log likelihood, program)"""
@@ -207,18 +174,6 @@ def enumerateApplication(g, context, environment,
                 yield resultL + argL, resultK, result
 
 
-def constructFrontiers(frontiers, programLikelihoods, tasks, maxFrontier):
-    newFrontiers = []
-    for programLikelihood, task in zip(programLikelihoods, tasks):
-        entries = []
-        for j, (logPrior, program) in enumerate(frontiers[task]):
-            ll = programLikelihood.get(j, NEGATIVEINFINITY)
-            entry = FrontierEntry(program, logPrior=logPrior, logLikelihood=ll)
-            entries.append(entry)
-        frontier = Frontier(entries, task=task).removeZeroLikelihood()
-        newFrontiers.append(frontier.topK(maxFrontier))
-    return newFrontiers
-
 def solveSingleTask(grammar, task, maximumBudget = 15):
     if isinstance(task, DifferentiableTask):
         rememberOld = True
@@ -272,16 +227,15 @@ def benchmarkSynthesisTime(result, task, timeout):
                           [ (productions.data[k],t,p)
                             for k,(_,t,p) in enumerate(grammar.productions) ])
 
-    try:
-        elapsed = time() - startTime
-        solution = callCompiled(solveSingleTask,
-                                grammar, task, maximumBudget = 99999,
-                                compiledTimeout = timeout - elapsed)
-        dt = time() - startTime
-        if dt > timeout: raise CompiledTimeout()
-        l,p = solution
-        eprint("Solved",task,"w/",p,"(log likelihood of task given program:",l,").","in time",dt)
-        return dt,l
-    except CompiledTimeout:
-        eprint("Failed to solve",task,"in time",timeout)
-        return None
+    elapsed = time() - startTime
+    frontier = callCompiled(enumerateForTask,
+                            grammar, task,
+                            maximumFrontier = 1,
+                            timeout = timeout - elapsed)
+    dt = time() - startTime
+    if dt > timeout or len(frontier) == 0: return None
+    l = solution.entries[0].logLikelihood
+    p = solution.entries[0].program
+    eprint("Solved",task,"w/",p,"(log likelihood of task given program:",l,").","in time",dt)
+    return dt,l
+    

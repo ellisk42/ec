@@ -44,14 +44,15 @@ class ECResult():
     # Linux does not like files that have more than 256 characters
     # So when exporting the results we abbreviate the parameters
     abbreviations = {"frontierSize": "fs",
-                      "iterations": "it",
-                      "maximumFrontier": "MF",
-                      "onlyBaselines": "baseline",
-                      "pseudoCounts": "pc",
-                      "structurePenalty": "L",
-                      "helmholtzRatio": "HR",
-                      "topK": "K",
-                      "useRecognitionModel": "rec"}
+                     "iterations": "it",
+                     "maximumFrontier": "MF",
+                     "onlyBaselines": "baseline",
+                     "pseudoCounts": "pc",
+                     "structurePenalty": "L",
+                     "helmholtzRatio": "HR",
+                     "topK": "K",
+                     "enumerationTimeout": "ET",
+                     "useRecognitionModel": "rec"}
 
     @staticmethod
     def abbreviate(parameter): return ECResult.abbreviations.get(parameter, parameter)
@@ -69,6 +70,7 @@ def explorationCompression(grammar, tasks,
                            iterations=None,
                            resume=None,
                            frontierSize=None,
+                           enumerationTimeout=None,
                            expandFrontier=None,
                            resumeFrontierSize=None,
                            useRecognitionModel=True,
@@ -86,9 +88,9 @@ def explorationCompression(grammar, tasks,
                            message="",
                            onlyBaselines=False,
                            outputPrefix=None):
-    if frontierSize is None:
-        eprint("Please specify a frontier size:",
-               "explorationCompression(..., frontierSize = ...)")
+    if frontierSize is None and enumerationTimeout is None:
+        eprint("Please specify a frontier size and/or an enumeration timeout:",
+               "explorationCompression(..., enumerationTimeout = ..., frontierSize = ...)")
         assert False
     if iterations is None:
         eprint("Please specify a iteration count: explorationCompression(..., iterations = ...)")
@@ -98,7 +100,7 @@ def explorationCompression(grammar, tasks,
                "Ignoring recognition model.")
         useRecognitionModel = False
     if benchmark is not None and resume is None:
-        eprint("You cannot benchmark in less you are loading a checkpoint, aborting.")
+        eprint("You cannot benchmark unless you are loading a checkpoint, aborting.")
         assert False
 
     # We save the parameters that were passed into EC
@@ -108,7 +110,8 @@ def explorationCompression(grammar, tasks,
                                "message", "CPUs", "outputPrefix",
                                "resume", "resumeFrontierSize",
                                "featureExtractor", "benchmark",
-                               "evaluationTimeout", "testingTasks"}}
+                               "evaluationTimeout", "testingTasks"} \
+                  and v is not None}
     if not useRecognitionModel:
         for k in {"activation","helmholtzRatio","steps"}: del parameters[k]
 
@@ -179,8 +182,11 @@ def explorationCompression(grammar, tasks,
             eprint("Expanding frontier from {} to {} because of no progress".format(
                 oldFrontierSize, frontierSize))
 
-        frontiers = callCompiled(enumerateFrontiers, grammar, frontierSize, tasks,
-                                 maximumFrontier=maximumFrontier, CPUs=CPUs,
+        frontiers = callCompiled(enumerateFrontiers, grammar, tasks,
+                                 frontierSize=frontierSize,
+                                 maximumFrontier=maximumFrontier,
+                                 enumerationTimeout=enumerationTimeout,
+                                 CPUs=CPUs,
                                  evaluationTimeout=evaluationTimeout)
 
         eprint("Enumeration results:")
@@ -257,11 +263,10 @@ def explorationCompression(grammar, tasks,
 
         # So, if we missed a task that was previously hit, then we
         # should go back and add back in that solution
-        if False:
-            for i, f in enumerate(frontiers):
-                if not f.empty or result.taskSolutions[f.task] is None:
-                    continue
-                frontiers[i] = result.taskSolutions[f.task]
+        for i, f in enumerate(frontiers):
+            if not f.empty or result.taskSolutions[f.task] is None:
+                continue
+            frontiers[i] = result.taskSolutions[f.task]
 
         # number of hit tasks
         if j > 0:
@@ -311,6 +316,7 @@ def showHitMatrix(top, bottom, tasks):
 def commandlineArguments(_=None,
                          iterations=None,
                          frontierSize=None,
+                         enumerationTimeout=None,
                          topK=1,
                          CPUs=1,
                          useRecognitionModel=True,
@@ -338,7 +344,11 @@ def commandlineArguments(_=None,
                         type=int)
     parser.add_argument("-f", "--frontierSize",
                         default=frontierSize,
-                        help="default: %d" % frontierSize,
+                        help="default: %s" % frontierSize,
+                        type=int)
+    parser.add_argument("-t", "--enumerationTimeout",
+                        default=enumerationTimeout,
+                        help="default: %s" % enumerationTimeout,
                         type=int)
     parser.add_argument("-F", "--expandFrontier", metavar="FACTOR-OR-AMOUNT",
                         default=None,

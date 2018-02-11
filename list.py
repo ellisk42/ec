@@ -232,7 +232,7 @@ def list_options(parser):
 
 if __name__ == "__main__":
     args = commandlineArguments(
-        frontierSize=10000, activation='sigmoid', iterations=10,
+        frontierSize=None, activation='sigmoid', iterations=10,
         a=3, maximumFrontier=10, topK=2, pseudoCounts=10.0,
         helmholtzRatio=0.5, structurePenalty=1.,
         CPUs=numberOfCPUs(),
@@ -296,11 +296,4 @@ if __name__ == "__main__":
     })
 
     baseGrammar = Grammar.uniform(prims())
-    for t in train:
-        eprint(t.name)
-        if t.name == "sum":
-            break
-        
-    enumerateForTask(baseGrammar, t, timeout = 100)
-    assert False
     explorationCompression(baseGrammar, train, testingTasks=test, **args)
