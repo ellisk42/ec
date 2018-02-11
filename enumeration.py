@@ -51,7 +51,7 @@ def enumerateForTask(g, task, _ = None,
         signal.signal(signal.SIGALRM, timeoutCallBack)
         signal.alarm(timeout)
     
-    frontier = {}
+    frontier = []
     starting = time()
     previousBudget = 0.
     budget = previousBudget + budgetIncrement
@@ -74,7 +74,9 @@ def enumerateForTask(g, task, _ = None,
                 likelihood = task.logLikelihood(p, timeout=evaluationTimeout)
                 if verbose and valid(likelihood):
                     eprint("Hit",task.name,"with the program",p,"which has prior",prior,"after",time() - starting,"seconds")
-                    frontier[p] = (prior, likelihood)
+                    frontier.append(FrontierEntry(program = p,
+                                                  logPrior = prior,
+                                                  logLikelihood = likelihood))
 
                 # I have no idea why this is necessary, but sometimes
                 # the alarm seems to not be raised
@@ -95,14 +97,15 @@ def enumerateForTask(g, task, _ = None,
             eprint("Timeout triggered after",time() - starting,"seconds for task",task)
         pass
     if timeout is not None:
-        signal.alarm(0) 
+        signal.alarm(0)
 
-    frontier = Frontier([FrontierEntry(program = p,
-                                       logLikelihood = likelihood,
-                                       logPrior = prior)
-                         for p,(likelihood, prior) in frontier.iteritems() ],
-                        task = task)
-    frontier = frontier.topK(maximumFrontier)
+
+
+    frontier = Frontier(frontier,
+                        task = task).topK(maximumFrontier)
+
+    eprint(frontier.summarize())
+    
     return frontier
 
 def enumeration(g, context, environment, request, upperBound, maximumDepth = 20, lowerBound = 0.):
