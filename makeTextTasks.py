@@ -74,7 +74,7 @@ def makeTasks():
     NUMBEROFEXAMPLES = 4
     problems = []
     def problem(n, examples):
-        problems.append(RegressionTask(n, arrow(tstr,tstr),
+        problems.append(Task(n, arrow(tstr,tstr),
                                        [((x,),y) for x,y in examples ]))
     
     [problem(n, [(x,f(x)) for _ in range(NUMBEROFEXAMPLES) for x in [randomWord()] ])

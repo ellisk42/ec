@@ -2,7 +2,7 @@ from ec import commandlineArguments, explorationCompression
 from grammar import Grammar
 from arithmeticPrimitives import addition, multiplication, k0, k1
 from type import tint, arrow
-from task import RegressionTask
+from task import Task
 from utilities import eprint
 
 primitives = [addition, multiplication, k0, k1]
@@ -10,7 +10,7 @@ primitives = [addition, multiplication, k0, k1]
 MAXIMUMCOEFFICIENT = 9
 NUMBEROFEXAMPLES = 5
 tasks = [
-    RegressionTask("%dx^2 + %dx + %d"%(a,b,c),
+    Task("%dx^2 + %dx + %d"%(a,b,c),
                    arrow(tint,tint),
                    [((x,), a*x*x + b*x + c) for x in range(NUMBEROFEXAMPLES+1) ],
                    features = [float(a*x*x + b*x + c) for x in range(NUMBEROFEXAMPLES+1) ],

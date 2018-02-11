@@ -4,7 +4,7 @@ import cPickle as pickle
 
 from utilities import eprint, hashable
 from makeListTasks import list_features
-from task import RegressionTask
+from task import Task
 from type import guess_type, arrow
 
 def extractTasks(dataset):
@@ -19,7 +19,7 @@ def extractTasks(dataset):
         program_type = arrow(input_type, output_type)
         features = list_features(examples)
         cache = all(hashable(x) for x in examples)
-        yield RegressionTask(name, program_type, examples, features=features, cache=cache)
+        yield Task(name, program_type, examples, features=features, cache=cache)
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:

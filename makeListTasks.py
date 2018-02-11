@@ -1,7 +1,7 @@
 from __future__ import division
 
 from type import *
-from task import RegressionTask
+from task import Task
 from utilities import eprint, hashable
 
 from random import randint
@@ -50,7 +50,7 @@ def make_list_task(name, examples, **params):
             ext = "{}, and {}".format(ext, eq_params[-1])
         name += " with " + ext
 
-    yield RegressionTask(name, program_type, examples, cache=cache)
+    yield Task(name, program_type, examples, cache=cache)
 
 
 def make_list_tasks(n_examples):

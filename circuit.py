@@ -2,7 +2,7 @@ from ec import explorationCompression, commandlineArguments
 from grammar import Grammar
 from utilities import eprint, sampleDistribution
 from circuitPrimitives import primitives
-from task import RegressionTask
+from task import Task
 from type import arrow, tbool
 from recognition import *
 
@@ -86,7 +86,7 @@ class Circuit(object):
     def task(self):
         request = arrow(*[tbool for _ in range(self.numberOfInputs + 1) ])
         features = Circuit.extractFeatures(list(self.signature))
-        return RegressionTask(self.name, request, self.examples, features = features, cache = True)
+        return Task(self.name, request, self.examples, features = features, cache = True)
     @staticmethod
     def extractFeatures(ys):
         features = [ float(int(y)) for y in ys ]

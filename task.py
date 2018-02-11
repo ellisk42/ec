@@ -10,7 +10,7 @@ class EvaluationTimeout(Exception): pass
 EVALUATIONTABLE = {}
 
 
-class RegressionTask(object):
+class Task(object):
     def __init__(self, name, request, examples, features = None, cache = False):
         '''request: the type of this task
         examples: list of tuples of (input, output). input should be a tuple, with one entry for each argument
@@ -23,7 +23,7 @@ class RegressionTask(object):
         self.examples = examples
     def __str__(self): return self.name
     def __repr__(self):
-        return "RegressionTask(name={self.name}, request={self.request}, examples={self.examples}"\
+        return "Task(name={self.name}, request={self.request}, examples={self.examples}"\
             .format(self=self)
     def __eq__(self,o): return self.name == o.name
     def __ne__(self,o): return not (self == o)
@@ -78,7 +78,7 @@ class RegressionTask(object):
         return averages, standardDeviations
         
 
-class DifferentiableTask(RegressionTask):
+class DifferentiableTask(Task):
     def __init__(self, name, request, examples, _ = None,
                  features = None, BIC = 1., loss = None, likelihoodThreshold = None):
         assert loss is not None

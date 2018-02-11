@@ -309,7 +309,7 @@ class MLPFeatureExtractor(nn.Module):
     def __init__(self, tasks, cuda=False, H=16):
         super(MLPFeatureExtractor, self).__init__()
 
-        self.averages, self.deviations = RegressionTask.featureMeanAndStandardDeviation(tasks)
+        self.averages, self.deviations = Task.featureMeanAndStandardDeviation(tasks)
         self.tasks = tasks
         self.use_cuda = cuda
 
@@ -332,7 +332,7 @@ class MLPFeatureExtractor(nn.Module):
 
 class HandCodedFeatureExtractor(object):
     def __init__(self, tasks, cuda=False):
-        self.averages, self.deviations = RegressionTask.featureMeanAndStandardDeviation(tasks)
+        self.averages, self.deviations = Task.featureMeanAndStandardDeviation(tasks)
         self.outputDimensionality = len(self.averages)
         self.cuda = cuda
         self.tasks = tasks

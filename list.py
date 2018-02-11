@@ -5,7 +5,7 @@ from itertools import chain
 from ec import explorationCompression, commandlineArguments
 from utilities import eprint, numberOfCPUs, flatten, fst, testTrainSplit
 from grammar import Grammar
-from task import RegressionTask
+from task import Task
 from type import Context, arrow, tlist, tint, t0, UnificationFailure
 from listPrimitives import basePrimitives, primitives
 from recognition import HandCodedFeatureExtractor, MLPFeatureExtractor, RecurrentFeatureExtractor

@@ -1,7 +1,7 @@
 from ec import explorationCompression, commandlineArguments, Program
 from grammar import Grammar
 from arithmeticPrimitives import addition, multiplication, real
-from task import DifferentiableTask, squaredErrorLoss, l1loss, RegressionTask
+from task import DifferentiableTask, squaredErrorLoss, l1loss, Task
 from type import tint, arrow
 from utilities import *
 from program import *
@@ -27,7 +27,7 @@ def makeFeatureExtractor((averages, deviations)):
         e = program.visit(RandomParameterization.single)
         f = e.evaluate([])
         outputs = [float(f(x)) for x in EXAMPLES]
-        features = RegressionTask.standardizeFeatures(averages, deviations, outputs)
+        features = Task.standardizeFeatures(averages, deviations, outputs)
         # eprint("program %s instantiates to %s; has outputs %s ; features %s"%(program, e, outputs, features))
         return features
     return featureExtractor
@@ -47,7 +47,7 @@ RandomParameterization.single = RandomParameterization()
     
 if __name__ == "__main__":
     baseGrammar = Grammar.uniform(primitives)
-    statistics = RegressionTask.standardizeTasks(tasks)
+    statistics = Task.standardizeTasks(tasks)
     featureExtractor = makeFeatureExtractor(statistics)
     
     explorationCompression(baseGrammar, tasks,
