@@ -72,7 +72,7 @@ def enumerateForTask(g, task, _ = None,
                 numberOfPrograms += 1
                 
                 likelihood = task.logLikelihood(p, timeout=evaluationTimeout)
-                if verbose and valid(likelihood):
+                if valid(likelihood):
                     eprint("Hit",task.name,"with the program",p,"which has prior",prior,"after",time() - starting,"seconds")
                     frontier.append(FrontierEntry(program = p,
                                                   logPrior = prior,
