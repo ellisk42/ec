@@ -97,20 +97,6 @@ def enumerateForTask(g, task, _ = None,
     frontier = frontier.topK(maximumFrontier)
     return frontier
 
-def iterativeDeepeningEnumeration(g, request, frontierSize, budget=2.0, budgetIncrement=1.0, showDescriptionLength = False):
-    """Returns a list of (log likelihood, program)"""
-    frontier = []
-    while len(frontier) < frontierSize:
-        frontier = [(l, p) for l, _, p in enumeration(g, Context.EMPTY, [], request, budget)]
-        budget += budgetIncrement
-    if showDescriptionLength: eprint("Enumerated up to %f nats"%(budget - budgetIncrement))
-    # This will trim the frontier to be exactly frontierSize We do
-    # this for small frontier sizes; the idea is that if the frontier
-    # is small then you probably want exactly that many programs
-    if frontierSize <= 2000: return sorted(frontier, key=lambda (l, p): l, reverse=True)[:frontierSize]
-    return frontier
-
-
 def enumeration(g, context, environment, request, upperBound, maximumDepth = 20, lowerBound = 0.):
     '''Enumerates all programs whose MDL satisfies: lowerBound < MDL <= upperBound'''
     if upperBound <= 0 or maximumDepth == 1: return 
