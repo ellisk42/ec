@@ -27,10 +27,11 @@ def enumerateFrontiers(g, tasks, _=None,
                                                                      evaluationTimeout = evaluationTimeout,
                                                                      verbose=False,
                                                                      maximumFrontier=maximumFrontier),
-                            map(lambda t: (t, g[t]), tasks))
+                            map(lambda t: (t, g[t]), tasks),
+                            chunk = 1)
     if verbose:
         eprint("Enumerated %d frontiers in time %f"%(len(g), time() - start))
-    return f
+    return frontiers
 
 class EnumerationTimeout(Exception): pass
 
@@ -40,13 +41,13 @@ def enumerateForTask(g, task, _ = None,
                      evaluationTimeout=None,
                      frontierSize=None,
                      budgetIncrement=1.0, maximumFrontier = 10**2):
-    verbose = True
     assert (timeout is not None) or (frontierSize is not None), \
         "enumerateForTask: You must provide either a timeout or a frontier size."
-    
+
     from time import time
     def timeoutCallBack(_1,_2): raise EnumerationTimeout()
     if timeout is not None:
+        if verbose: eprint("Alarming timeout for",timeout,"for task",task)
         signal.signal(signal.SIGALRM, timeoutCallBack)
         signal.alarm(timeout)
     
@@ -74,6 +75,10 @@ def enumerateForTask(g, task, _ = None,
                 if verbose and valid(likelihood):
                     eprint("Hit",task.name,"with the program",p,"which has prior",prior,"after",time() - starting,"seconds")
                     frontier[p] = (prior, likelihood)
+
+                # I have no idea why this is necessary, but sometimes
+                # the alarm seems to not be raised
+                if timeout is not None and time() - starting > timeout: raise EnumerationTimeout
             if verbose:
                 eprint("Enumerated %d programs of satisfying:"%(numberOfPrograms),
                        "%d < MDL <= %d."%(int(previousBudget),int(budget)))
@@ -82,10 +87,13 @@ def enumerateForTask(g, task, _ = None,
             budget += budgetIncrement
             totalNumberOfPrograms += numberOfPrograms
             if verbose:
-                eprint("\tTotal elapsed time: %d seconds. Total number of programs evaluated: %d."% \
-                       (time() - starting, totalNumberOfPrograms))
+                eprint("\tTotal elapsed time: %d seconds. Total number of programs evaluated: %d. Task: %s."% \
+                       (time() - starting, totalNumberOfPrograms, task))
             if frontierSize is not None and totalNumberOfPrograms > frontierSize: break
-    except EnumerationTimeout: pass
+    except EnumerationTimeout:
+        if verbose:
+            eprint("Timeout triggered after",time() - starting,"seconds for task",task)
+        pass
     if timeout is not None:
         signal.alarm(0) 
 

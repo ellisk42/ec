@@ -43,7 +43,7 @@ POSITIVEINFINITY = float('inf')
 PARALLELMAPDATA = None
 
 
-def parallelMap(numberOfCPUs, f, *xs):
+def parallelMap(numberOfCPUs, f, *xs, **keywordArguments):
     global PARALLELMAPDATA
 
     if numberOfCPUs == 1: return map(f,*xs)
@@ -62,7 +62,7 @@ def parallelMap(numberOfCPUs, f, *xs):
     inversePermutation = dict(zip(permutation, range(n)))
 
     workers = Pool(numberOfCPUs)
-    chunk = max(1,int(n/(numberOfCPUs*2)))
+    chunk = keywordArguments.get('chunk', max(1,int(n/(numberOfCPUs*2))))
     ys = workers.map(parallelMapCallBack, permutation, chunksize = chunk)
     workers.terminate()
 
