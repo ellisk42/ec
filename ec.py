@@ -205,7 +205,8 @@ def explorationCompression(grammar, tasks,
             eprint(Frontier.describe(bottomupFrontiers))
 
             result.averageDescriptionLength.append(mean( -f.marginalLikelihood()
-                                                         for f in bottomupFrontiers ))
+                                                         for f in bottomupFrontiers
+                                                         if not f.empty ))
 
             tasksHitBottomUp = {f.task for f in bottomupFrontiers if not f.empty}
             showHitMatrix(tasksHitTopDown, tasksHitBottomUp, tasks)
@@ -215,7 +216,8 @@ def explorationCompression(grammar, tasks,
             frontiers = [f.combine(b) for f, b in zip(frontiers, bottomupFrontiers)]
         else:
             result.averageDescriptionLength.append(mean( -f.marginalLikelihood()
-                                                         for f in frontiers ))
+                                                         for f in frontiers
+                                                         if not f.empty ))
 
         # Incorporate frontiers from anything that was not hit
         frontiers = [ f if not f.empty else results.taskSolutions.get(f.task, Frontier.makeEmpty(f.task))
