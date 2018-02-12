@@ -226,7 +226,7 @@ def explorationCompression(grammar, tasks,
         result.taskSolutions = {f.task: f.topK(topK) if not f.empty
                                 else result.taskSolutions.get(f.task, None)
                                 for f in frontiers}
-        result.learningCurve += [sum(not f.empty for f in result.taskSolutions)]
+        result.learningCurve += [sum(f is not None and not f.empty for f in result.taskSolutions.keys() )]
         
         # Sleep-G
         fgrammar, frontiers = callCompiled(induceFragmentGrammarFromFrontiers,
