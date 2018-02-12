@@ -222,8 +222,8 @@ def sampleDistribution(d):
     assert False
 
 def testTrainSplit(x, trainingFraction, seed = 0):
-    needToTrain = {d for d in x if hasattr(d, 'mustTrain') and d.mustTrain }
-    mightTrain = list(set(x) - needToTrain)
+    needToTrain = {j for j,d in enumerate(x) if hasattr(d, 'mustTrain') and d.mustTrain }
+    mightTrain = [ j for j in range(len(x)) if j not in needToTrain ]
     
     import random
     random.seed(seed)
