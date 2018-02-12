@@ -204,7 +204,7 @@ def explorationCompression(grammar, tasks,
             eprint("Recognition model enumeration results:")
             eprint(Frontier.describe(bottomupFrontiers))
 
-            result.averageDescriptionLength.append(mean( -f.logLikelihood - f.logPrior
+            result.averageDescriptionLength.append(mean( -f.marginalLikelihood()
                                                          for f in bottomupFrontiers ))
 
             tasksHitBottomUp = {f.task for f in bottomupFrontiers if not f.empty}
@@ -214,7 +214,7 @@ def explorationCompression(grammar, tasks,
             bottomupFrontiers = [ grammar.rescoreFrontier(f) for f in bottomupFrontiers ]
             frontiers = [f.combine(b) for f, b in zip(frontiers, bottomupFrontiers)]
         else:
-            result.averageDescriptionLength.append(mean( -f.logLikelihood - f.logPrior
+            result.averageDescriptionLength.append(mean( -f.marginalLikelihood()
                                                          for f in frontiers ))
 
         # Incorporate frontiers from anything that was not hit

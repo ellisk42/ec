@@ -19,8 +19,11 @@ class Frontier(object):
     def __iter__(self): return iter(self.entries)
     def __len__(self): return len(self.entries)
 
+    def marginalLikelihood(self):
+        return lse([ e.logPrior + e.logLikelihood for e in self ])
+
     def normalize(self):
-        z = lse([ e.logPrior + e.logLikelihood for e in self ])
+        z = self.marginalLikelihood()
         return Frontier([ FrontierEntry(program = e.program,
                                         logPrior = e.logPrior,
                                         logLikelihood = e.logLikelihood,

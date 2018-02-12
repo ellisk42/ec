@@ -100,8 +100,6 @@ def enumerateForTask(g, task, _ = None,
         if verbose:
             eprint("Timeout triggered after",time() - starting,"seconds for task",task)
     signal.alarm(0)
-    
-
 
     frontier = Frontier(frontier,
                         task = task).topK(maximumFrontier)
