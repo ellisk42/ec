@@ -42,13 +42,13 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
                         for t in tasks
                         for (x,),y in t.examples
                         for xp in [x if isinstance(x,str) else "".join(x)]
-                        for yp in [y if isinstance(yp,str) else "".join(tf.p)] 
+                        for yp in [y if isinstance(y,str) else "".join(y)] 
                         for c in xp+yp ] + ["LIST","LISTDELIMITER"])
         super(LearnedFeatureExtractor, self).__init__(lexicon = list(lexicon),
                                                       H = 16,
                                                       tasks = tasks,
                                                       bidirectional = True,
-                                                      tokenize = lambda ex: \
+                                                      tokenize = lambda ex,_: \
                                                       ex if isinstance(ex,str) else \
                                                       ["LIST"] + \
                                                       [ [c for c in s ] + ["LISTDELIMITER"]
