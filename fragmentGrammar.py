@@ -310,6 +310,7 @@ class FragmentGrammar(object):
     @staticmethod
     def induceFromFrontiers(g0, frontiers, _ = None,
                             topK = 1, pseudoCounts = 1.0, aic = 1.0, structurePenalty = 0.001, a = 0, CPUs = 1):
+        originalFrontiers = frontiers
         frontiers = [frontier for frontier in frontiers if not frontier.empty ]
         eprint("Inducing a grammar from",len(frontiers),"frontiers")
         
@@ -355,14 +356,13 @@ class FragmentGrammar(object):
                 newPrimitiveLikelihood,newType,newPrimitive = bestGrammar.productions[-1]
                 eprint("New primitive of type %s\t%s (score = %f; dScore = %f)"%(newType,newPrimitive,newScore,dS))
                 # Rewrite the frontiers in terms of the new fragment
-                if False:
-                    concretePrimitive = defragment(newPrimitive)
-                    bestGrammar.productions[-1] = (newPrimitiveLikelihood,
-                                                   concretePrimitive.tp,
-                                                   concretePrimitive)
-                    frontiers = parallelMap(CPUs,
-                                            lambda frontier: RewriteFragments.rewriteFrontier(frontier, newPrimitive),
-                                            frontiers)
+                concretePrimitive = defragment(newPrimitive)
+                bestGrammar.productions[-1] = (newPrimitiveLikelihood,
+                                               concretePrimitive.tp,
+                                               concretePrimitive)
+                frontiers = parallelMap(CPUs,
+                                        lambda frontier: RewriteFragments.rewriteFrontier(frontier, newPrimitive),
+                                        frontiers)
         else:
             eprint("Skipping fragment proposals")
 
@@ -381,11 +381,17 @@ class FragmentGrammar(object):
         eprint("Old joint = %f\tNew joint = %f\n"%(FragmentGrammar.fromGrammar(g0).jointFrontiersMDL(frontiers),
                                                    bestGrammar.jointFrontiersMDL(frontiers)))
         bestGrammar.clearCache()
-        return bestGrammar
+
+        # Return all of the frontiers, which have now been rewritten to use the new fragments
+        frontiers = {f.task: f for f in frontiers }
+        frontiers = [ frontiers.get(f.task, f)
+                      for f in originalFrontiers ]
+        
+        return bestGrammar, frontiers
 
 def induceFragmentGrammarFromFrontiers(*arguments, **keywordArguments):
     with timing("Induced a grammar"):
-        g = FragmentGrammar.induceFromFrontiers(*arguments, **keywordArguments)
+        g, newFrontiers = FragmentGrammar.induceFromFrontiers(*arguments, **keywordArguments)
         # Experimental variational inference does not seem to work well...
         #g = FragmentGrammar.induceVariational(*arguments, **keywordArguments)
-    return g
+    return g, newFrontiers

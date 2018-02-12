@@ -72,7 +72,7 @@ if __name__ == "__main__":
                            outputPrefix = "experimentOutputs/text",
                            evaluationTimeout = None,
                            **commandlineArguments(
-                               frontierSize = 10**4,
+#                               frontierSize = 10**4,
                                steps = 100,
                                iterations = 10,
                                helmholtzRatio = 0.5,

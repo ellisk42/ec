@@ -245,3 +245,12 @@ def loadPickle(f):
 def fst(l):
     for v in l:
         return v
+def mean(l):
+    n = 0
+    t = None
+    for x in l:
+        if t is None: t = x
+        else: t = t + x
+        n += 1
+    return t/float(n)
+        

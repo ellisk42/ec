@@ -189,105 +189,68 @@ def explorationCompression(grammar, tasks,
                                  CPUs=CPUs,
                                  evaluationTimeout=evaluationTimeout)
 
-        eprint("Enumeration results:")
+        eprint("Generative model enumeration results:")
         eprint(Frontier.describe(frontiers))
 
         tasksHitTopDown = {f.task for f in frontiers if not f.empty}
-        if j == 0: # the first iteration is special: it corresponds to the base grammar
-            result.learningCurve.append(sum(not f.empty for f in frontiers))
-            result.averageDescriptionLength.append(
-                -sum(f.bestPosterior.logPosterior for f in frontiers if not f.empty)
-                / sum(not f.empty for f in frontiers))
 
-        if useRecognitionModel: # Train and then use a recognition model
-            # Ensures that testing tasks have their elements in the lexicon
-            featureExtractorObject = featureExtractor(tasks + testingTasks)
-            recognizer = RecognitionModel(featureExtractorObject, grammar, activation=activation, cuda=cuda)
-
-            # We want to train the recognition model on _every_ task that we have found a solution to
-            # `frontiers` only contains solutions from the most recent generative model
-            trainingFrontiers = [ f if not f.empty \
-                                  else grammar.rescoreFrontier(result.taskSolutions[f.task])
-                                  for f in frontiers ]
-
-            thisRatio = helmholtzRatio
-            # Disable Helmholtz on the first iteration
-            # Otherwise we just draw from the base grammar which is a terrible distribution
-            if helmholtzRatio < 1. and j == 0: thisRatio = 0.
-
-            recognizer.train(trainingFrontiers, topK=topK, steps=steps,
-                             helmholtzRatio = thisRatio)
-            bottomupFrontiers = recognizer.enumerateFrontiers(frontierSize, tasks, CPUs=CPUs,
+        # Enumerate from recognition model
+        if j > 0 and useRecognitionModel:
+            bottomupFrontiers = recognizer.enumerateFrontiers(tasks, CPUs=CPUs,
                                                               maximumFrontier=maximumFrontier,
+                                                              frontierSize=frontierSize,
+                                                              enumerationTimeout=enumerationTimeout,
                                                               evaluationTimeout=evaluationTimeout)
-            eprint("Bottom-up enumeration results:")
+            eprint("Recognition model enumeration results:")
             eprint(Frontier.describe(bottomupFrontiers))
+
+            result.averageDescriptionLength.append(mean( -f.logLikelihood - f.logPrior
+                                                         for f in bottomupFrontiers ))
 
             tasksHitBottomUp = {f.task for f in bottomupFrontiers if not f.empty}
             showHitMatrix(tasksHitTopDown, tasksHitBottomUp, tasks)
-
-            bottomupHits = sum(not f.empty for f in bottomupFrontiers)
-            if j > 0:
-                result.averageDescriptionLength.append(
-                    -sum(f.bestPosterior.logPosterior for f in bottomupFrontiers if not f.empty)
-                    / bottomupHits)
-
             # Rescore the frontiers according to the generative model
             # and then combine w/ original frontiers
             bottomupFrontiers = [ grammar.rescoreFrontier(f) for f in bottomupFrontiers ]
-
             frontiers = [f.combine(b) for f, b in zip(frontiers, bottomupFrontiers)]
+        else:
+            result.averageDescriptionLength.append(mean( -f.logLikelihood - f.logPrior
+                                                         for f in frontiers ))
 
-            # For visualization we save the recognition model
-            result.recognitionModel = recognizer
-        elif j > 0:
-            result.averageDescriptionLength.append(
-                -sum(f.bestPosterior.logPosterior for f in frontiers if not f.empty)
-                / sum(not f.empty for f in frontiers))
-
-
+        # Incorporate frontiers from anything that was not hit
+        frontiers = [ f if not f.empty else results.taskSolutions.get(f.task, Frontier.makeEmpty(f.task))
+                      for f in frontiers ]
         # Record the new solutions
         result.taskSolutions = {f.task: f.topK(topK) if not f.empty
                                 else result.taskSolutions.get(f.task, None)
                                 for f in frontiers}
-
-        # The compression procedure is _NOT_ guaranteed to give a
-        # grammar that hits all the tasks that were hit in the
-        # previous iteration
-
-        # This is by design - the grammar is supposed to _generalize_
-        # based on what it has seen, and so it will necessarily
-        # sometimes put less probability mass on programs that it has
-        # seen. If you put pseudocounts = 0, THEN you will get a
-        # non-decreasing number of hit tasks.
-
-        # So, if we missed a task that was previously hit, then we
-        # should go back and add back in that solution
-        for i, f in enumerate(frontiers):
-            if not f.empty or result.taskSolutions[f.task] is None:
-                continue
-            frontiers[i] = result.taskSolutions[f.task]
-
-        # number of hit tasks
-        if j > 0:
-            # The first iteration is special: what we record is the
-            # performance of the base grammar without any learning
-            result.learningCurve.append(sum(not f.empty for f in frontiers))
-
-        grammar = callCompiled(induceFragmentGrammarFromFrontiers,
-                               grammar,
-                               frontiers,
-                               topK=topK,
-                               pseudoCounts=pseudoCounts,
-                               aic=aic,
-                               structurePenalty=structurePenalty,
-                               a=arity,
-                               CPUs=CPUs
-                               #,profile = "profiles/smartGrammarInduction"
-        ).toGrammar()
+        result.learningCurve += [sum(not f.empty for f in result.taskSolutions)]
+        
+        # Sleep-G
+        fgrammar, frontiers = callCompiled(induceFragmentGrammarFromFrontiers,
+                                           grammar,
+                                           frontiers,
+                                           topK=topK,
+                                           pseudoCounts=pseudoCounts,
+                                           aic=aic,
+                                           structurePenalty=structurePenalty,
+                                           a=arity,
+                                           CPUs=CPUs)
+        grammar = fgrammar.toGrammar()
         result.grammars.append(grammar)
         eprint("Grammar after iteration %d:" % (j + 1))
         eprint(grammar)
+
+        # Sleep-R
+        if useRecognitionModel: # Train a recognition model
+            # Ensures that testing tasks have their elements in the lexicon
+            featureExtractorObject = featureExtractor(tasks + testingTasks)
+            recognizer = RecognitionModel(featureExtractorObject, grammar, activation=activation, cuda=cuda)
+
+            recognizer.train(frontiers, topK=topK, steps=steps,
+                             helmholtzRatio = helmholtzRatio)
+            result.recognitionModel = recognizer
+
 
         if outputPrefix is not None:
             path = checkpointPath(j + 1)

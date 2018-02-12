@@ -46,6 +46,10 @@ class Frontier(object):
     @property
     def empty(self): return self.entries == []
 
+    @staticmethod
+    def makeEmpty(task):
+        return Frontier([], task = task)
+
     def summarize(self):
         if self.empty: return "MISS " + self.task.name
         best = self.bestPosterior

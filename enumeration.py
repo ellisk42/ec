@@ -43,7 +43,7 @@ def enumerateForTask(g, task, _ = None,
                      budgetIncrement=1.0, maximumFrontier = 10**2):
     assert (timeout is not None) or (frontierSize is not None), \
         "enumerateForTask: You must provide either a timeout or a frontier size."
-
+    
     from time import time
     def timeoutCallBack(_1,_2): raise EnumerationTimeout()
     if timeout is not None:
@@ -72,14 +72,16 @@ def enumerateForTask(g, task, _ = None,
                 numberOfPrograms += 1
                 
                 likelihood = task.logLikelihood(p, timeout=evaluationTimeout)
-                if verbose and valid(likelihood):
-                    eprint("Hit",task.name,"with the program",p,"which has prior",prior,"after",time() - starting,"seconds")
+                if valid(likelihood):
+                    if verbose:
+                        eprint("Hit",task.name,"with the program",p,"which has prior",prior,"after",time() - starting,"seconds")
                     frontier.append(FrontierEntry(program = p,
                                                   logPrior = prior,
                                                   logLikelihood = likelihood))
 
-                # I have no idea why this is necessary, but sometimes
-                # the alarm seems to not be raised
+                # If the alarm is triggered during evaluation,
+                # it will be caught by the catchall exception handler
+                # And so we have to time ourselves out
                 if timeout is not None and time() - starting > timeout: raise EnumerationTimeout
             if verbose:
                 eprint("Enumerated %d programs of satisfying:"%(numberOfPrograms),
@@ -103,7 +105,6 @@ def enumerateForTask(g, task, _ = None,
 
     frontier = Frontier(frontier,
                         task = task).topK(maximumFrontier)
-
     eprint(frontier.summarize())
     
     return frontier
