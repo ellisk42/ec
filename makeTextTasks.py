@@ -6,7 +6,7 @@ import random
 
 
 
-delimiters = ['.',',',' ','<','>']
+delimiters = ['.',',',' ','<','>','/','@','-','|']
 
 def randomDelimiter():
     return random.choice(delimiters)
@@ -74,8 +74,28 @@ def makeTasks():
     NUMBEROFEXAMPLES = 4
     problems = []
     def problem(n, examples):
-        problems.append(Task(n, arrow(tstr,tstr),
+        inputType = guess_type([ x for x,y in examples ])
+        outputType = guess_type([ y for x,y in examples])
+        problems.append(Task(n, arrow(inputType, outputType),
                                        [((x,),y) for x,y in examples ]))
+
+    for n,f in singleWordOperations.iteritems():
+        problem("Map "+n,
+                [ (x, map(f,x))
+                  for _ in range(NUMBEROFEXAMPLES)
+                  for x in [[randomWord() for _ in range(random.choice(range(1,5)))]]
+                ])
+        for d in delimiters:
+            problem("Map "+n+"after splitting on "+d,
+                [ (x, map(f,x.split(d)))
+                  for _ in range(NUMBEROFEXAMPLES)
+                  for x in [randomWords(d)]
+                ])
+            problem("Map "+n+" and then join with "+d,
+                [ (x, d.join(map(f,x)))
+                  for _ in range(NUMBEROFEXAMPLES)
+                  for x in [[randomWord() for _ in range(random.choice(range(1,5)))]]
+                ])
     
     [problem(n, [(x,f(x)) for _ in range(NUMBEROFEXAMPLES) for x in [randomWord()] ])
      for n,f in singleWordOperations.iteritems() ]
@@ -198,12 +218,15 @@ if __name__ == "__main__":
     tasks = makeTasks()
     for t in tasks:
         print t.name
-        print """\\begin{tabular}{ll}
-        \\toprule Input&Output\\\\\\midrule
-%s
-\\\\\\bottomrule
-\\end{tabular}"""%(" \\\\\n ".join( x[0] + " & " + y for x,y in t.examples ))
-        # for x,y in t.examples:
-        #     print x[0],'\t',y
+        print t.request
+        if False:
+            print """\\begin{tabular}{ll}
+            \\toprule Input&Output\\\\\\midrule
+    %s
+    \\\\\\bottomrule
+    \\end{tabular}"""%(" \\\\\n ".join( x[0] + " & " + y for x,y in t.examples ))
+        else:
+            for x,y in t.examples:
+                print x[0],'\t',y
         print
     print len(tasks),"tasks"

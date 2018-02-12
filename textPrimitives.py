@@ -26,7 +26,7 @@ primitives = [
     Primitive("empty",tstr,""),
     Primitive("caseLower",arrow(tstr,tstr), _lower),
     Primitive("caseUpper",arrow(tstr,tstr), _upper),
-    Primitive("caseCapitalize",arrow(tstr,tstr), _capitalize),
+    #Primitive("caseCapitalize",arrow(tstr,tstr), _capitalize),
     Primitive("++",arrow(tstr,tstr,tstr), _append),
     Primitive("slice", arrow(tint,tint,tstr,tstr),_slice),
     Primitive("nth", arrow(tint, tlist(tstr), tstr),_index),

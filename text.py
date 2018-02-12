@@ -41,11 +41,19 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
         lexicon = set([ c
                         for t in tasks
                         for (x,),y in t.examples
-                        for c in x + y ])
+                        for xp in [x if isinstance(x,str) else "".join(x)]
+                        for yp in [y if isinstance(yp,str) else "".join(tf.p)] 
+                        for c in xp+yp ] + ["LIST","LISTDELIMITER"])
         super(LearnedFeatureExtractor, self).__init__(lexicon = list(lexicon),
                                                       H = 16,
                                                       tasks = tasks,
-                                                      bidirectional = True)
+                                                      bidirectional = True,
+                                                      tokenize = lambda ex: \
+                                                      ex if isinstance(ex,str) else \
+                                                      ["LIST"] + \
+                                                      [ [c for c in s ] + ["LISTDELIMITER"]
+                                                        for s in ex ])
+
 
 if __name__ == "__main__":
     tasks = makeTasks()
@@ -53,7 +61,7 @@ if __name__ == "__main__":
         t.features = problemFeatures(t.examples)
     eprint("Generated",len(tasks),"tasks")
 
-    test, train = testTrainSplit(tasks, 0.75)
+    test, train = testTrainSplit(tasks, 0.2)
 
     # target = "Apply double delimited by '<' to input delimited by '>'"
     # program = Program.parse("(lambda (join (chr->str '<') (map (lambda (++ $0 $0)) (split '<' $0))))")
