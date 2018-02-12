@@ -315,6 +315,7 @@ class FragmentGrammar(object):
         eprint("Inducing a grammar from",len(frontiers),"frontiers")
         
         bestGrammar = FragmentGrammar.fromGrammar(g0)
+        oldJoint = bestGrammar.jointFrontiersMDL(frontiers)
 
         # "restricted frontiers" only contain the top K according to the best grammar
         def restrictFrontiers():
@@ -378,7 +379,7 @@ class FragmentGrammar(object):
             pass
             
 
-        eprint("Old joint = %f\tNew joint = %f\n"%(FragmentGrammar.fromGrammar(g0).jointFrontiersMDL(frontiers),
+        eprint("Old joint = %f\tNew joint = %f\n"%(oldJoint,
                                                    bestGrammar.jointFrontiersMDL(frontiers)))
         bestGrammar.clearCache()
 
