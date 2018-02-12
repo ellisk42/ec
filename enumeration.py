@@ -82,7 +82,9 @@ def enumerateForTask(g, task, _ = None,
                 # If the alarm is triggered during evaluation,
                 # it will be caught by the catchall exception handler
                 # And so we have to time ourselves out
-                if timeout is not None and time() - starting > timeout: raise EnumerationTimeout
+                if timeout is not None and time() - starting > timeout:
+                    signal.alarm(0)
+                    raise EnumerationTimeout
             if verbose:
                 eprint("Enumerated %d programs of satisfying:"%(numberOfPrograms),
                        "%d < MDL <= %d."%(int(previousBudget),int(budget)))
@@ -97,10 +99,8 @@ def enumerateForTask(g, task, _ = None,
     except EnumerationTimeout:
         if verbose:
             eprint("Timeout triggered after",time() - starting,"seconds for task",task)
-        pass
-    if timeout is not None:
-        signal.alarm(0)
-
+    signal.alarm(0)
+    
 
 
     frontier = Frontier(frontier,
