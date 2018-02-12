@@ -220,7 +220,7 @@ def explorationCompression(grammar, tasks,
                                                          if not f.empty ))
 
         # Incorporate frontiers from anything that was not hit
-        frontiers = [ f if not f.empty else results.taskSolutions.get(f.task, Frontier.makeEmpty(f.task))
+        frontiers = [ f if not f.empty else result.taskSolutions.get(f.task, Frontier.makeEmpty(f.task))
                       for f in frontiers ]
         # Record the new solutions
         result.taskSolutions = {f.task: f.topK(topK) if not f.empty
