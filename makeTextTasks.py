@@ -73,18 +73,20 @@ compatibleCompositions = {(case, character)
 def makeTasks():
     NUMBEROFEXAMPLES = 4
     problems = []
-    def problem(n, examples):
+    def problem(n, examples, needToTrain = False):
         inputType = guess_type([ x for x,y in examples ])
         outputType = guess_type([ y for x,y in examples])
-        problems.append(Task(n, arrow(inputType, outputType),
-                                       [((x,),y) for x,y in examples ]))
+        task = Task(n, arrow(inputType, outputType),
+                    [((x,),y) for x,y in examples ])
+        if needToTrain: task.mustTrain = True
+        problems.append(task)
 
     for n,f in singleWordOperations.iteritems():
         problem("Map "+n,
                 [ (x, map(f,x))
                   for _ in range(NUMBEROFEXAMPLES)
                   for x in [[randomWord() for _ in range(random.choice(range(1,5)))]]
-                ])
+                ], needToTrain = True)
         for d in delimiters:
             problem("Map "+n+"after splitting on "+d,
                 [ (x, map(f,x.split(d)))
@@ -97,7 +99,7 @@ def makeTasks():
                   for x in [[randomWord() for _ in range(random.choice(range(1,5)))]]
                 ])
     
-    [problem(n, [(x,f(x)) for _ in range(NUMBEROFEXAMPLES) for x in [randomWord()] ])
+    [problem(n, [(x,f(x)) for _ in range(NUMBEROFEXAMPLES) for x in [randomWord()] ], needToTrain = True)
      for n,f in singleWordOperations.iteritems() ]
     problem("strip", [(x, x.strip())
                       for _ in range(NUMBEROFEXAMPLES)
@@ -107,7 +109,8 @@ def makeTasks():
                              for _ in range(NUMBEROFEXAMPLES)
                              for x in [randomWhiteWord()] ])
     [problem(n1 + "." + n2, 
-             [(x,f1(f2(x))) for _ in range(NUMBEROFEXAMPLES) for x in [randomWord()] ])
+             [(x,f1(f2(x))) for _ in range(NUMBEROFEXAMPLES) for x in [randomWord()] ],
+             needToTrain = True)
      for n1,f1 in singleWordOperations.iteritems()
      for n2,f2 in singleWordOperations.iteritems()
      if (n1,n2) in compatibleCompositions
