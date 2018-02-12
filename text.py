@@ -44,15 +44,20 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
                         for xp in [x if isinstance(x,str) else "".join(x)]
                         for yp in [y if isinstance(y,str) else "".join(y)] 
                         for c in xp+yp ] + ["LIST","LISTDELIMITER"])
+        def serialize(x):
+            if isinstance(x,str): return x
+            assert isinstance(x,list)
+            return ["LIST"] + [ [c for c in s ] + ["LISTDELIMITER"] for s in x ]
+            
+        def tokenize(examples, _):
+            return [ ((serialize(x),), serialize(y))
+                     for (x,),y in examples]            
+                
         super(LearnedFeatureExtractor, self).__init__(lexicon = list(lexicon),
                                                       H = 16,
                                                       tasks = tasks,
                                                       bidirectional = True,
-                                                      tokenize = lambda ex,_: \
-                                                      ex if isinstance(ex,str) else \
-                                                      ["LIST"] + \
-                                                      [ [c for c in s ] + ["LISTDELIMITER"]
-                                                        for s in ex ])
+                                                      tokenize = tokenize)
 
 
 if __name__ == "__main__":
