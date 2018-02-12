@@ -47,7 +47,11 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
         def serialize(x):
             if isinstance(x,str): return x
             assert isinstance(x,list)
-            return ["LIST"] + [ [c for c in s ] + ["LISTDELIMITER"] for s in x ]
+            serialization = ["LIST"]
+            for s in x:
+                serialization.append("LISTDELIMITER")
+                serialization += [c for c in s ]
+            return serialization
             
         def tokenize(examples, _):
             return [ ((serialize(x),), serialize(y))
