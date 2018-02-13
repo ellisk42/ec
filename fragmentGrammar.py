@@ -230,7 +230,7 @@ class FragmentGrammar(object):
         return sum( parallelMap(CPUs, \
                                 lambda frontier: max( entry.logLikelihood + self.closedLogLikelihood(frontier.task.request, entry.program)
                                                       for entry in frontier ),
-                                frontiers )
+                                frontiers ) )
 
     def __len__(self): return len(self.productions)
 
