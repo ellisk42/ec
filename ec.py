@@ -220,11 +220,12 @@ def explorationCompression(grammar, tasks,
                                                          if not f.empty ))
 
         # Incorporate frontiers from anything that was not hit
-        frontiers = [ f if not f.empty else result.taskSolutions.get(f.task, Frontier.makeEmpty(f.task))
+        frontiers = [ f if not f.empty
+                      else grammar.rescoreFrontier(result.taskSolutions.get(f.task, Frontier.makeEmpty(f.task)))
                       for f in frontiers ]
+        frontiers = [ f.topK(maximumFrontier) for f in frontiers ]
         # Record the new solutions
-        result.taskSolutions = {f.task: f.topK(topK) if not f.empty
-                                else result.taskSolutions.get(f.task, None)
+        result.taskSolutions = {f.task: f.topK(topK)
                                 for f in frontiers}
         result.learningCurve += [sum(f is not None and not f.empty for f in result.taskSolutions.values() )]
         

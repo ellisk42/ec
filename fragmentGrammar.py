@@ -226,10 +226,11 @@ class FragmentGrammar(object):
         return sum( lse([ entry.logLikelihood + self.closedLogLikelihood(frontier.task.request, entry.program)
                           for entry in frontier ])
                     for frontier in frontiers )
-    def jointFrontiersMDL(self, frontiers):
-        return sum( max( entry.logLikelihood + self.closedLogLikelihood(frontier.task.request, entry.program)
-                          for entry in frontier )
-                    for frontier in frontiers )
+    def jointFrontiersMDL(self, frontiers, CPUs = 1):
+        return sum( parallelMap(CPUs, \
+                                lambda frontier: max( entry.logLikelihood + self.closedLogLikelihood(frontier.task.request, entry.program)
+                                                      for entry in frontier ),
+                                frontiers )
 
     def __len__(self): return len(self.productions)
 
@@ -315,7 +316,7 @@ class FragmentGrammar(object):
         eprint("Inducing a grammar from",len(frontiers),"frontiers")
         
         bestGrammar = FragmentGrammar.fromGrammar(g0)
-        oldJoint = bestGrammar.jointFrontiersMDL(frontiers)
+        oldJoint = bestGrammar.jointFrontiersMDL(frontiers, CPUs = CPUs)
 
         # "restricted frontiers" only contain the top K according to the best grammar
         def restrictFrontiers():
@@ -380,7 +381,7 @@ class FragmentGrammar(object):
             
 
         eprint("Old joint = %f\tNew joint = %f\n"%(oldJoint,
-                                                   bestGrammar.jointFrontiersMDL(frontiers)))
+                                                   bestGrammar.jointFrontiersMDL(frontiers,CPUs = CPUs)))
         bestGrammar.clearCache()
 
         # Return all of the frontiers, which have now been rewritten to use the new fragments
