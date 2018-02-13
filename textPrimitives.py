@@ -20,21 +20,22 @@ def _strip(x): return x.strip()
 
 primitives = [
     Primitive("0",tint,0),
-    Primitive("len",arrow(tstr,tint),len),
-    Primitive("incr",arrow(tint,tint),_increment),
-    Primitive("decr",arrow(tint,tint),_decrement),
-    Primitive("empty",tstr,""),
+    #Primitive("len",arrow(tstr,tint),len),
+    Primitive("+1",arrow(tint,tint),_increment),
+    Primitive("-1",arrow(tint,tint),_decrement),
+    Primitive("emptyString",tstr,""),
     Primitive("caseLower",arrow(tstr,tstr), _lower),
     Primitive("caseUpper",arrow(tstr,tstr), _upper),
     #Primitive("caseCapitalize",arrow(tstr,tstr), _capitalize),
-    Primitive("++",arrow(tstr,tstr,tstr), _append),
-    Primitive("slice", arrow(tint,tint,tstr,tstr),_slice),
+    Primitive("concatenate",arrow(tstr,tstr,tstr), _append),
+    Primitive("slice-string", arrow(tint,tint,tstr,tstr),_slice),
     Primitive("nth", arrow(tint, tlist(tstr), tstr),_index),
-    Primitive("map", arrow(arrow(tstr,tstr), tlist(tstr), tlist(tstr)),_map),
+    Primitive("map-string", arrow(arrow(tstr,tstr), tlist(tstr), tlist(tstr)),_map),
     #Primitive("find", arrow(tcharacter, tstr, tint),_find),
     #Primitive("replace", arrow(tstr, tstr, tstr, tstr),_replace),
     Primitive("strip", arrow(tstr,tstr),_strip),
     Primitive("split", arrow(tcharacter, tstr, tlist(tstr)),_split),
     Primitive("join", arrow(tstr, tlist(tstr), tstr),_join),
-    Primitive("chr->str", arrow(tcharacter, tstr), _identity),
-] + [ Primitive("'%s'"%d, tcharacter, d) for d in delimiters ]
+    Primitive("chr2str", arrow(tcharacter, tstr), _identity),
+] + [ Primitive("'%s'"%d, tcharacter, d) for d in delimiters if d != ' '] + \
+[ Primitive("SPACE", tcharacter, ' ')]

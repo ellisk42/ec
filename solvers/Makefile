@@ -1,0 +1,34 @@
+c = corebuild -pkg yojson -pkg re2
+
+type:
+	$(c) type.native; cp type.native test
+solver:
+	$(c) solver.native; cp solver.native ../solver
+utilities:
+	$(c) utils.native; cp utils.native test
+timeout:
+	$(c) timeout.native; cp timeout.native test
+differentiation:
+	$(c) differentiation.native; cp differentiation.native test
+sfg:
+	$(c) sfg.native; cp sfg.native test
+text:
+	$(c) string_transformation.native; cp string_transformation.native test
+combinator:
+	$(c) combinator.native; cp combinator.native test
+program:
+	$(c) program.native; cp program.native test
+enumeration:
+	$(c) enumeration.native; cp enumeration.native test
+compression:
+	$(c) compression.native; cp compression.native test
+task:
+	$(c) task.native; cp task.native test
+list:
+	$(c) list_synthesizer.native; cp list_synthesizer.native test
+polynomial:
+	$(c) polynomial.native; cp polynomial.native test
+clean:
+	rm -rf _build test *.native solver
+run:
+	time ./test

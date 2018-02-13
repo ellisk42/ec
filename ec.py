@@ -182,12 +182,12 @@ def explorationCompression(grammar, tasks,
             eprint("Expanding frontier from {} to {} because of no progress".format(
                 oldFrontierSize, frontierSize))
 
-        frontiers = callCompiled(enumerateFrontiers, grammar, tasks,
-                                 frontierSize=frontierSize,
-                                 maximumFrontier=maximumFrontier,
-                                 enumerationTimeout=enumerationTimeout,
-                                 CPUs=CPUs,
-                                 evaluationTimeout=evaluationTimeout)
+        frontiers = enumerateFrontiers(grammar, tasks,
+                                       frontierSize=frontierSize,
+                                       maximumFrontier=maximumFrontier,
+                                       enumerationTimeout=enumerationTimeout,
+                                       CPUs=CPUs,
+                                       evaluationTimeout=evaluationTimeout)
 
         eprint("Generative model enumeration results:")
         eprint(Frontier.describe(frontiers))

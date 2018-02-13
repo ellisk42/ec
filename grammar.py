@@ -1,5 +1,6 @@
 from collections import defaultdict
 from itertools import izip
+import json
 
 from frontier import *
 from program import *
@@ -165,6 +166,9 @@ class Grammar(object):
 
     def closedLogLikelihood(self, request, expression):
         summary = self.closedLikelihoodSummary(request, expression)
+        if summary is None:
+            eprint("FATAL: program does not have a likelihood summary.",expression,"r = ",request,"\n",self)
+            assert False
         return summary.logLikelihood(self)
 
     def rescoreFrontier(self, frontier):

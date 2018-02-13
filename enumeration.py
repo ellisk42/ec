@@ -20,12 +20,13 @@ def enumerateFrontiers(g, tasks, _=None,
     if not isinstance(g, dict): g = {t: g for t in tasks }
     
     start = time()
-    frontiers = parallelMap(CPUs,            
-                            lambda (task, grammar): enumerateForTask(grammar, task,
-                                                                     frontierSize=frontierSize,
+    frontiers = parallelMap(CPUs,
+                            # enumerateForTask
+                            lambda (task, grammar): solveForTask(grammar, task,
+                                                         #            frontierSize=frontierSize,
                                                                      timeout=enumerationTimeout,
                                                                      evaluationTimeout = evaluationTimeout,
-                                                                     verbose=False,
+                                                                     #verbose=False,
                                                                      maximumFrontier=maximumFrontier),
                             map(lambda t: (t, g[t]), tasks),
                             chunk = 1)
@@ -35,6 +36,36 @@ def enumerateFrontiers(g, tasks, _=None,
 
 class EnumerationTimeout(Exception): pass
 
+def solveForTask(g, task, _ = None, timeout = None, evaluationTimeout = None,
+                 maximumFrontier = 10, verbose = True):
+    import json
+    message = {"DSL": {"logVariable": g.logVariable,
+                       "productions": [ {"expression": str(p), "logProbability": l}
+                                            for l,_,p in g.productions ]},
+               "examples": [{"input": x, "output": y} for (x,),y in task.examples ],
+               "programTimeout": evaluationTimeout,
+               "solverTimeout": timeout,
+               "maximumFrontier": maximumFrontier,
+               "name": task.name}
+    message = json.dumps(message)
+    #eprint("message",message)
+    p = subprocess.Popen(['./solver'],
+                         stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+    response, error = p.communicate(message)
+    #eprint("response",response)
+    #eprint("error",error)
+    response = json.loads(response)
+    #eprint("primitive global keys",Primitive.GLOBALS.keys())
+
+    frontier = Frontier([FrontierEntry(program = Program.parse(e["program"]),
+                                       logLikelihood = e["logLikelihood"],
+                                       logPrior = e["logPrior"])
+                         for e in response ],
+                        task = task)
+    if verbose: eprint(frontier.summarize())
+    return frontier
+    
+
 def enumerateForTask(g, task, _ = None,
                      verbose=False,
                      timeout=None,
@@ -43,6 +74,7 @@ def enumerateForTask(g, task, _ = None,
                      budgetIncrement=1.0, maximumFrontier = 10**2):
     assert (timeout is not None) or (frontierSize is not None), \
         "enumerateForTask: You must provide either a timeout or a frontier size."
+    verbose = True
     
     from time import time
     def timeoutCallBack(_1,_2): raise EnumerationTimeout()

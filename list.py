@@ -297,6 +297,10 @@ if __name__ == "__main__":
 
     baseGrammar = Grammar.uniform(prims())
     # from program import *
+    # p = Program.parse("(lambda (reducei (lambda (lambda (lambda $3))) $0 $0))")
+    # eprint(p)
+    # assert False
+    # from program import *
     # p = Program.parse("(lambda (lambda (if (is-square $0) (++ (singleton $0) $1) $1)))")
     # eprint(p)
     # eprint(baseGrammar.closedLogLikelihood(arrow(tlist(tint),tint,tlist(tint)), p))

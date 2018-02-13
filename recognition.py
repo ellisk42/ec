@@ -169,11 +169,10 @@ class RecognitionModel(nn.Module):
                                          [ (productions.data[k],t,p)
                                            for k,(_,t,p) in enumerate(self.grammar.productions) ])
 
-        return callCompiled(enumerateFrontiers,
-                            grammars, tasks,
-                            frontierSize = frontierSize, enumerationTimeout=enumerationTimeout, 
-                            CPUs=CPUs, maximumFrontier=maximumFrontier,
-                            evaluationTimeout=evaluationTimeout)
+        return enumerateFrontiers(grammars, tasks,
+                                  frontierSize = frontierSize, enumerationTimeout=enumerationTimeout, 
+                                  CPUs=CPUs, maximumFrontier=maximumFrontier,
+                                  evaluationTimeout=evaluationTimeout)
 
 class RecurrentFeatureExtractor(nn.Module):
     def __init__(self, _=None,

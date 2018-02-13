@@ -1,9 +1,7 @@
 from task import *
 from type import *
 
-
 import random
-
 
 
 delimiters = ['.',',',' ','<','>','/','@','-','|']
