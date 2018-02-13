@@ -23,12 +23,12 @@ let supervised_task ?timeout:(timeout = 0.001) ?features:(features = []) name ty
         (*        flush_everything(); *)
         let rec loop = function
           | [] -> true
-          | (x,y) :: e ->
+          | (xs,y) :: e ->
             (* let xp : int list = magical y in *)
             (* xp |> List.iter ~f:(fun xpp -> Printf.printf "%d;" xpp);Printf.printf "\n"; *)
             (* flush_everything(); *)
             try
-              match run_for_interval timeout (fun () -> Some((evaluate [] p) x = y)) with
+              match run_for_interval timeout (fun () -> Some(run_with_arguments p xs = y)) with
               | Some(true) -> loop e
               | _ -> false
             with | UnknownPrimitive(n) -> raise (Failure ("Unknown primitive: "^n))

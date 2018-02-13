@@ -1,0 +1,8 @@
+S .
+B _build
+PKG core
+PKG async
+PKG core_extended
+PKG glpk
+PKG yojson
+EXT nonrec

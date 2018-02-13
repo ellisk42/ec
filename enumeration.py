@@ -42,7 +42,7 @@ def solveForTask(g, task, _ = None, timeout = None, evaluationTimeout = None,
     message = {"DSL": {"logVariable": g.logVariable,
                        "productions": [ {"expression": str(p), "logProbability": l}
                                             for l,_,p in g.productions ]},
-               "examples": [{"input": x, "output": y} for (x,),y in task.examples ],
+               "examples": [{"inputs": xs, "output": y} for xs,y in task.examples ],
                "programTimeout": evaluationTimeout,
                "solverTimeout": timeout,
                "maximumFrontier": maximumFrontier,

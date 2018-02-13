@@ -82,6 +82,13 @@ let rec evaluate (environment: 'b list) (p:program) : 'a =
   | Primitive(_,_,v) -> magical (!v)
   | Invented(_,i) -> evaluate [] i
 
+let run_with_arguments (p : program) (arguments : 'a list) =
+  let rec loop l xs =
+    match xs with
+    | [] -> magical l
+    | x :: xs -> loop (magical (l x)) xs
+  in loop (evaluate [] p) arguments
+
 let rec remove_abstractions (n : int) (q : program) : program =
   match (n,q) with
   | (0,q) -> q
@@ -203,6 +210,7 @@ let primitive_filter = primitive "filter" ((tint @> tboolean) @> (tlist tint) @>
 let primitive_equal = primitive "eq?" (tint @> tint @> tboolean) ( = );;
 let primitive_not = primitive "not" (tboolean @> tboolean) (not);;
 let primitive_and = primitive "and" (tboolean @> tboolean @> tboolean) (fun x y -> x && y);;
+let primitive_nand = primitive "nand" (tboolean @> tboolean @> tboolean) (fun x y -> not (x && y));;
 let primitive_or = primitive "or" (tboolean @> tboolean @> tboolean) (fun x y -> x || y);;
 let primitive_greater_than = primitive "gt?" (tint @> tint @> tboolean) (fun (x: int) (y: int) -> x > y);;
 
@@ -331,3 +339,7 @@ let performance_test_case() =
 (*   f [1;2]; *)
 (*   List.foldi [1;3;2;]  ~init:[]  ~f:(fun x y z -> 0--z) |> List.iter ~f:(fun a -> *)
 (*       Printf.printf "%d\n" a) *)
+
+(* let () = *)
+(*   let e = parse_program "(lambda (lambda (- $1 $0)))" |> get_some in *)
+(*   Printf.printf "%d\n" (run_with_arguments e [1;9]) *)

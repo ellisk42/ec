@@ -60,12 +60,14 @@ let load_problem channel =
     with _ -> raise (Failure "could not unpack")
   in
 
-  let inputType = e |> List.map ~f:(fun ex -> ex |> member "input") |> guess_type in
+  let inputTypes = e |> List.map ~f:(fun ex -> ex |> member "inputs" |> to_list) |>
+                   List.transpose |> safe_get_some "Not all examples have the same number of inputs." |> 
+                   List.map ~f:guess_type in
   let outputType = e |> List.map ~f:(fun ex -> ex |> member "output") |> guess_type in
-  let task_type = inputType @> outputType in
+  let task_type = List.fold_right ~f:(fun l r -> l @> r) ~init:outputType inputTypes in
   (* Printf.printf "Got task of type %s" (string_of_type task_type); *)
   (* print_newline (); *)
-  let examples = e |> List.map ~f:(fun ex -> (ex |> member "input" |> unpack,
+  let examples = e |> List.map ~f:(fun ex -> (ex |> member "inputs" |> to_list |> List.map ~f:unpack,
                                               ex |> member "output" |> unpack))
   in
 
