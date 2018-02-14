@@ -32,12 +32,15 @@ def enumerateFrontiers(g, tasks, _=None,
                             chunk = 1)
     if verbose:
         eprint("Enumerated %d frontiers in time %f"%(len(g), time() - start))
-    return frontiers
+
+    times = [t for f,t in frontiers if t is not None]
+    frontiers = [f for f,t in frontiers ]
+    return frontiers, times
 
 class EnumerationTimeout(Exception): pass
 
 def solveForTask(g, task, _ = None, timeout = None, evaluationTimeout = None,
-                 maximumFrontier = 10, verbose = True):
+                 maximumFrontier = 10, verbose = False):
     import json
     message = {"DSL": {"logVariable": g.logVariable,
                        "productions": [ {"expression": str(p), "logProbability": l}
@@ -63,7 +66,11 @@ def solveForTask(g, task, _ = None, timeout = None, evaluationTimeout = None,
                          for e in response ],
                         task = task)
     if verbose: eprint(frontier.summarize())
-    return frontier
+
+    if frontier.empty: searchTime = None
+    else: searchTime = min(e["time"] for e in response)
+
+    return frontier, searchTime
     
 
 def enumerateForTask(g, task, _ = None,

@@ -27,7 +27,9 @@ class ECResult():
                  averageDescriptionLength=None,
                  parameters=None,
                  recognitionModel=None,
+                 searchTimes=None,
                  baselines=None):
+        self.searchTimes = searchTimes or []
         self.recognitionModel = recognitionModel
         self.averageDescriptionLength = averageDescriptionLength or []
         self.parameters = parameters
@@ -182,12 +184,12 @@ def explorationCompression(grammar, tasks,
             eprint("Expanding frontier from {} to {} because of no progress".format(
                 oldFrontierSize, frontierSize))
 
-        frontiers = enumerateFrontiers(grammar, tasks,
-                                       frontierSize=frontierSize,
-                                       maximumFrontier=maximumFrontier,
-                                       enumerationTimeout=enumerationTimeout,
-                                       CPUs=CPUs,
-                                       evaluationTimeout=evaluationTimeout)
+        frontiers, times = enumerateFrontiers(grammar, tasks,
+                                              frontierSize=frontierSize,
+                                              maximumFrontier=maximumFrontier,
+                                              enumerationTimeout=enumerationTimeout,
+                                              CPUs=CPUs,
+                                              evaluationTimeout=evaluationTimeout)
 
         eprint("Generative model enumeration results:")
         eprint(Frontier.describe(frontiers))
@@ -196,11 +198,11 @@ def explorationCompression(grammar, tasks,
 
         # Enumerate from recognition model
         if j > 0 and useRecognitionModel:
-            bottomupFrontiers = recognizer.enumerateFrontiers(tasks, CPUs=CPUs,
-                                                              maximumFrontier=maximumFrontier,
-                                                              frontierSize=frontierSize,
-                                                              enumerationTimeout=enumerationTimeout,
-                                                              evaluationTimeout=evaluationTimeout)
+            bottomupFrontiers, times = recognizer.enumerateFrontiers(tasks, CPUs=CPUs,
+                                                                     maximumFrontier=maximumFrontier,
+                                                                     frontierSize=frontierSize,
+                                                                     enumerationTimeout=enumerationTimeout,
+                                                                     evaluationTimeout=evaluationTimeout)
             eprint("Recognition model enumeration results:")
             eprint(Frontier.describe(bottomupFrontiers))
 
@@ -218,6 +220,9 @@ def explorationCompression(grammar, tasks,
             result.averageDescriptionLength.append(mean( -f.marginalLikelihood()
                                                          for f in frontiers
                                                          if not f.empty ))
+        result.searchTimes.append(times)
+
+        eprint("Average search time: ",mean(times),"sec.\tstandard deviation",standardDeviation(times))
 
         # Incorporate frontiers from anything that was not hit
         frontiers = [ f if not f.empty

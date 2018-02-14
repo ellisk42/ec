@@ -256,4 +256,7 @@ def mean(l):
         else: t = t + x
         n += 1
     return t/float(n)
-        
+def variance(l):
+    m = mean(l)
+    return sum( (x - m)**2 for x in l )/len(l)
+def standardDeviation(l): return variance(l)**0.5
