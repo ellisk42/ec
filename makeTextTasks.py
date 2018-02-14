@@ -41,10 +41,11 @@ singleWordOperations = {"lowercase": lambda x: x.lower(),
                         "double": lambda x: x + x,
                         #"strip": lambda x: x.strip(),
                         "first character": lambda x: x[0],
-                        "first 2 characters": lambda x: x[:2],
+                        #"first 2 characters": lambda x: x[:2],
                         "drop first character": lambda x: x[1:],
-                        "last character": lambda x: x[-1],
-                        "last two characters": lambda x: x[-2:]}
+                        #"last character": lambda x: x[-1],
+                        #"last two characters": lambda x: x[-2:]}
+                        }
 compatibleCompositions = {(case, character)
                           for case in ["lowercase","uppercase","double"]
                           for character in ["first character","first 2 characters",
