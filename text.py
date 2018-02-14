@@ -70,7 +70,8 @@ if __name__ == "__main__":
         t.features = problemFeatures(t.examples)
     eprint("Generated",len(tasks),"tasks")
 
-    test, train = testTrainSplit(tasks, 0.2)
+    test, train = testTrainSplit(tasks, 0.3)
+    eprint("Split tasks into %d/%d test/train"%(len(test),len(train)))
 
     # target = "Apply double delimited by '<' to input delimited by '>'"
     # program = Program.parse("(lambda (join (chr->str '<') (map (lambda (++ $0 $0)) (split '<' $0))))")

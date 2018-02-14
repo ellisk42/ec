@@ -79,6 +79,22 @@ def makeTasks():
                     [((x,),y) for x,y in examples ])
         if needToTrain: task.mustTrain = True
         problems.append(task)
+    problem("Map strip",
+                [ (x, map(lambda z: z.strip(), x))
+                  for _ in range(NUMBEROFEXAMPLES)
+                  for x in [[randomWhiteWord() for _ in range(random.choice(range(1,5)))]]
+                ], needToTrain = True)
+    for d in delimiters:
+        problem("Map "+"strip"+"after splitting on "+d,
+            [ (x, map(lambda z: z.strip(),x.split(d)))
+              for _ in range(NUMBEROFEXAMPLES)
+              for x in [randomWords(d)]
+            ])
+        problem("Map "+"strip"+" and then join with "+d,
+            [ (x, d.join(map(lambda z: z.strip(),x)))
+              for _ in range(NUMBEROFEXAMPLES)
+              for x in [[randomWord() for _ in range(random.choice(range(1,5)))]]
+            ])
 
     for n,f in singleWordOperations.iteritems():
         problem("Map "+n,
