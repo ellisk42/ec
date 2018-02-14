@@ -330,7 +330,9 @@ class FragmentGrammar(object):
             structure = sum(fragmentSize(p) for p in g.primitives)
             score = likelihood - aic*len(g) - structurePenalty*structure
             g.clearCache()
-            gc.collect()
+            if invalid(score):
+                # FIXME: This should never occur but it does anyway
+                score = float('-inf')
             return score, g
 
 
@@ -348,7 +350,15 @@ class FragmentGrammar(object):
                 if not candidateGrammars:
                     break
 
-                scoredFragments = parallelMap(CPUs, grammarScore, candidateGrammars)
+                scoredFragments = parallelMap(CPUs, grammarScore, candidateGrammars,
+                                              # maxTasks: Maximum number of jobs allocated to a process
+                                              # This means that after evaluating 200 grammars,
+                                              # we killed the process, freeing up its memory.
+                                              # In exchange we pay the cost of spawning a new process.
+                                              # We should play with this number,
+                                              # figuring out how big we can make it without
+                                              # running out of memory.
+                                              maxTasks = 200)
                 newScore, newGrammar = max(scoredFragments)
 
                 if newScore <= bestScore:
