@@ -5,7 +5,6 @@ from frontier import *
 from grammar import *
 from program import *
 
-from digamma import *
 from itertools import izip
 import gc
 
@@ -207,21 +206,6 @@ class FragmentGrammar(object):
                                   t,p)
                                  for _,t,p in self.productions ])
 
-    def variationalUpdate(self, frontiers, uses):
-        realUses = self.expectedUses(frontiers)
-        uses = realUses + uses
-        def f(actual, possible):
-            if possible == 0:
-                assert actual == 0
-                return 0.
-            return digamma(actual) - digamma(possible)
-        return FragmentGrammar(f(uses.actualVariables, uses.possibleVariables),
-                               [ (f(uses.actualUses[p], uses.possibleUses[p]), t, p)
-                                 for _,t,p in self.productions
-                                 if realUses.actualUses.get(p,0) > 1 or
-                                    isinstance(p,(Primitive,Invented))
-                               ]).normalize()
-
     def jointFrontiersLikelihood(self, frontiers):
         return sum( lse([ entry.logLikelihood + self.closedLogLikelihood(frontier.task.request, entry.program)
                           for entry in frontier ])
@@ -262,52 +246,6 @@ class FragmentGrammar(object):
                           for e in frontier ],
                         frontier.task)
 
-    @staticmethod
-    def induceVariational(g0, frontiers, _ = None,
-                          topK = 1, pseudoCounts = 1.0, aic = 1.0, structurePenalty = 0.001, a = 0, CPUs = 1):
-        grammar = FragmentGrammar.fromGrammar(g0)
-        frontiers = [frontier for frontier in frontiers if not frontier.empty ]
-        eprint("Inducing a grammar from",len(frontiers),"frontiers using variational inference")
-
-        # "restricted frontiers" only contain the top K according to the best grammar
-        def restrictFrontiers():
-            return parallelMap(CPUs, lambda f: grammar.rescoreFrontier(f).topK(topK),
-                               frontiers)
-        restrictedFrontiers = restrictFrontiers()
-        fragments = [ fragment for fragment in proposeFragmentsFromFrontiers(restrictedFrontiers, a)
-                      if not fragment in grammar.primitives ]
-
-        def priorCounts(p):
-            size = fragmentSize(p) + 1.
-            epsilon = 0.1
-            pc = log(1./(1. - exp(-size)))/log(1./epsilon)
-            return pc
-
-        # Add all the fragments to the grammar
-        grammar = FragmentGrammar(log(priorCounts(Index(0))),
-                                  [ (log(priorCounts(p)), p.infer(), p)
-                                    for p in grammar.primitives + fragments ])
-        # prior
-        uses0 = Uses(actualVariables = priorCounts(Index(0)),
-                     possibleVariables = 0,
-                     actualUses = {p: priorCounts(p) for p in grammar.primitives },
-                     possibleUses = {p: 0 for p in grammar.primitives })
-        
-        for i in xrange(5):
-            eprint("VB iteration",i)
-            grammar = grammar.variationalUpdate(restrictedFrontiers, uses0).normalize()
-            restrictedFrontiers = restrictFrontiers()
-
-            grammar.productions.sort(key = lambda (l,_,__): -l)
-            eprint(grammar)
-
-        uses = grammar.expectedUses(frontiers)
-        retainedPrimitives = [ p for p in grammar.primitives
-                               if uses.actualUses[p] > 2 or isinstance(p,(Primitive,Invented)) ]
-        grammar = FragmentGrammar.uniform(retainedPrimitives).insideOutside(frontiers, pseudoCounts)
-        return grammar
-
-                
     @staticmethod
     def induceFromFrontiers(g0, frontiers, _ = None,
                             topK = 1, pseudoCounts = 1.0, aic = 1.0, structurePenalty = 0.001, a = 0, CPUs = 1):
@@ -404,6 +342,4 @@ class FragmentGrammar(object):
 def induceFragmentGrammarFromFrontiers(*arguments, **keywordArguments):
     with timing("Induced a grammar"):
         g, newFrontiers = FragmentGrammar.induceFromFrontiers(*arguments, **keywordArguments)
-        # Experimental variational inference does not seem to work well...
-        #g = FragmentGrammar.induceVariational(*arguments, **keywordArguments)
     return g, newFrontiers
