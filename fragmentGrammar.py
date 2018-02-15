@@ -55,6 +55,11 @@ class FragmentGrammar(object):
 
     def closedLogLikelihood(self, request, expression):
         _,l,_ = self.logLikelihood(Context.EMPTY, [], request, expression)
+        if invalid(l):
+            eprint("FATAL: Invalid log likelihood. expression:",expression,"tp:",request)
+            with open('likelihoodFailure.p','wb') as handle:
+                pickle.dump((self,request, expression),handle)
+            assert False
         return l
 
     def closedUses(self, request, expression):
@@ -254,7 +259,7 @@ class FragmentGrammar(object):
         eprint("Inducing a grammar from",len(frontiers),"frontiers")
         
         bestGrammar = FragmentGrammar.fromGrammar(g0)
-        oldJoint = bestGrammar.jointFrontiersMDL(frontiers, CPUs = CPUs)
+        oldJoint = bestGrammar.jointFrontiersMDL(frontiers, CPUs = 1)
 
         # "restricted frontiers" only contain the top K according to the best grammar
         def restrictFrontiers():
