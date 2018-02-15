@@ -1,5 +1,6 @@
 open Core.Std
 
+open TikZ
 open Utils
 open Type
 open Program
@@ -31,6 +32,11 @@ let load_problem channel =
 
   let guess_type elements =
     let rec guess context x =
+      try
+        let xs = x |> to_list in
+        let l = List.hd xs |> get_some |> to_string in
+        if l = "TRACESET" then ttrace else raise (Failure "Not a trace set")
+      with _ -> 
       try ignore(x |> to_int); tint with _ ->
       try ignore(x |> to_bool); tboolean with _ ->
       try ignore(x |> to_string); tstring with _ ->
@@ -52,6 +58,21 @@ let load_problem channel =
   in
     
   let rec unpack x =
+    try
+      let xs = x |> to_list in
+      let l = List.hd xs |> get_some |> to_string in
+      if l = "TRACESET" then
+        List.tl xs |> get_some |>
+        List.map ~f:(fun command ->
+            let command = command |> to_list in
+            match command with
+            | [c;x;y;] when "circle" = (to_string c) -> Circle(Vector(x |> to_int, y |> to_int))
+            | [c;x1;y1;x2;y2;] when "rectangle" = (to_string c) ->
+              Rectangle(Vector(x1 |> to_int, y1 |> to_int),
+                        Vector(x2 |> to_int, y2 |> to_int))
+            | _ -> raise (Failure "Trouble parsing trace set")) |> magical
+      else raise (Failure "Not a trace set")
+    with _ -> 
     try magical (x |> to_int) with _ ->
     try magical (x |> to_bool) with _ ->
     try magical (x |> to_string) with _ ->
@@ -84,10 +105,17 @@ let load_problem channel =
     with _ -> 0.1
   in
 
-  (supervised_task ~timeout:timeout (j |> member "name" |> to_string) task_type examples,
-   g,
-   j |> member "solverTimeout" |> to_int,
-   j |> member "maximumFrontier" |> to_int)
+  let solver_timeout = j |> member "solverTimeout" |> to_int in
+  let maximum_frontier = j |> member "maximumFrontier" |> to_int in
+
+  if return_of_type task_type = ttrace then begin 
+    Printf.printf "%s\n" (examples |> List.hd |> get_some |> snd |> magical |> string_of_trace);
+    assert false
+   end else 
+    (supervised_task ~timeout:timeout (j |> member "name" |> to_string) task_type examples,
+     g,
+     solver_timeout,
+     maximum_frontier)
 
 let export_frontier solutions : string =
   let open Yojson.Basic.Util in

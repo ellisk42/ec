@@ -142,7 +142,14 @@ class Grammar(object):
 
         f,xs = expression.applicationParse()
 
-        if f not in candidates: return context,None
+        if f not in candidates:
+            eprint(f,"Not in candidates")
+            # eprint("Candidates is",candidates)
+            eprint("request is",request)
+            eprint("xs",xs)
+            eprint("environment",environment)
+            assert False
+            return context,None
 
         thisSummary = LikelihoodSummary()
         thisSummary.record(f, possibles,

@@ -154,12 +154,14 @@ def instantiateTypes(context, ts):
         context, t = t.instantiate(context, bindings)
         newTypes.append(t)
     return context, newTypes
-    
-tint = TypeConstructor("int",[])
-tbool = TypeConstructor("bool",[])
-tstr = TypeConstructor("string",[])
-tcharacter = TypeConstructor("char",[])
+
+def baseType(n): return TypeConstructor(n,[])
+tint = baseType("int")
+tbool = baseType("bool")
+tstr = baseType("string")
+tcharacter = baseType("char")
 def tlist(t): return TypeConstructor("list",[t])
+def tmaybe(t): return TypeConstructor("maybe",[t])
 t0 = TypeVariable(0)
 t1 = TypeVariable(1)
 t2 = TypeVariable(2)
