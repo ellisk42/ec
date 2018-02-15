@@ -61,12 +61,12 @@ def parallelMap(numberOfCPUs, f, *xs, **keywordArguments):
     random.shuffle(permutation)
     inversePermutation = dict(zip(permutation, range(n)))
 
-    workers = Pool(numberOfCPUs)
-    chunk = keywordArguments.get('chunk', max(1,int(n/(numberOfCPUs*2))))
     maxTasks = keywordArguments.get('maxTasks', None)
+    workers = Pool(numberOfCPUs, maxtasksperchild = maxTasks)
+    chunk = keywordArguments.get('chunk', max(1,int(n/(numberOfCPUs*2))))
     ys = workers.map(parallelMapCallBack, permutation,
-                     chunksize = chunk,
-                     maxtasksperchild = maxTasks)
+                     chunksize = chunk)
+    
     workers.terminate()
 
     PARALLELMAPDATA = None
