@@ -19,7 +19,7 @@ def _slice(x): return lambda y: lambda l: l[x:y]
 def _map(f): return lambda l: map(f, l)
 def _mapi(f): return lambda l: map(lambda (i,x): f(i)(x), enumerate(l))
 def _reduce(f): return lambda x0: lambda l: reduce(lambda a, x: f(a)(x), l, x0)
-def _reducei(f): return lambda x0: lambda l: reduce(lambda a, (i,x): f(a)(i)(x), enumerate(l), x0)
+def _reducei(f): return lambda x0: lambda l: reduce(lambda a, (i,x): f(i)(a)(x), enumerate(l), x0)
 def _eq(x): return lambda y: x == y
 def _mod(x): return lambda y: x%y
 def _not(x): return not x
@@ -53,7 +53,7 @@ def primitives():
         # Primitive("map", arrow(arrow(t0, t1), tlist(t0), tlist(t1)), _map),
         Primitive("mapi", arrow(arrow(tint, t0, t1), tlist(t0), tlist(t1)), _mapi),
         # Primitive("reduce", arrow(arrow(t1, t0, t1), t1, tlist(t0), t1), _reduce),
-        Primitive("reducei", arrow(arrow(t1, tint, t0, t1), t1, tlist(t0), t1), _reducei),
+        Primitive("reducei", arrow(arrow(tint, t1, t0, t1), t1, tlist(t0), t1), _reducei),
 
         Primitive("true", tbool, True),
         Primitive("not", arrow(tbool, tbool), _not),
