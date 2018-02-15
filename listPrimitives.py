@@ -14,6 +14,7 @@ def _multiplication(x): return lambda y: x*y
 def _negate(x): return -x
 def _reverse(x): return list(reversed(x))
 def _append(x): return lambda y: x + y
+def _cons(x): return lambda y: [x] + y
 def _single(x): return [x]
 def _slice(x): return lambda y: lambda l: l[x:y]
 def _map(f): return lambda l: map(f, l)
@@ -97,16 +98,17 @@ def basePrimitives():
     "These are really powerful but hard to learn to use."
     return [ Primitive(str(j), tint, j) for j in xrange(6) ] + [
         Primitive("empty", tlist(t0), []),
-        Primitive("singleton", arrow(t0, tlist(t0)), _single),
+        #Primitive("singleton", arrow(t0, tlist(t0)), _single),
+        Primitive("cons", arrow(t0, tlist(t0), tlist(t0)), _cons),
         Primitive("range", arrow(tint, tlist(tint)), range),
         Primitive("++", arrow(tlist(t0), tlist(t0), tlist(t0)), _append),
         Primitive("mapi", arrow(arrow(tint, t0, t1), tlist(t0), tlist(t1)), _mapi),
         Primitive("reducei", arrow(arrow(t1, tint, t0, t1), t1, tlist(t0), t1), _reducei),
 
         Primitive("true", tbool, True),
-        Primitive("not", arrow(tbool, tbool), _not),
-        Primitive("and", arrow(tbool, tbool, tbool), _and),
-        Primitive("or", arrow(tbool, tbool, tbool), _or),
+        # Primitive("not", arrow(tbool, tbool), _not),
+        # Primitive("and", arrow(tbool, tbool, tbool), _and),
+        # Primitive("or", arrow(tbool, tbool, tbool), _or),
         Primitive("if", arrow(tbool, t0, t0, t0), _if),
 
         Primitive("sort", arrow(tlist(tint), tlist(tint)), sorted),
