@@ -367,3 +367,6 @@ let slice s e l =
   (*  we might want to make this always be safe *)
   List.slice l s e;;
 
+let random_choice l =
+  Random.int (List.length l) |> 
+  List.nth_exn l

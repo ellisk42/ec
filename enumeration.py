@@ -54,10 +54,12 @@ def solveForTask(g, task, _ = None, timeout = None, evaluationTimeout = None,
     p = subprocess.Popen(['./solver'],
                          stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     response, error = p.communicate(message)
-    #eprint("response",response)
-    #eprint("error",error)
     response = json.loads(response)
-    #eprint("primitive global keys",Primitive.GLOBALS.keys())
+
+    # Remove all entries that do not type correctly
+    # This can occur because the solver tries to infer the type
+    # Sometimes it infers a type that is too general
+    response = [r for r in response if Program.parse(r["program"]).canHaveType(task.request) ]
 
     frontier = Frontier([FrontierEntry(program = Program.parse(e["program"]),
                                        logLikelihood = e["logLikelihood"],

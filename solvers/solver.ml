@@ -31,7 +31,8 @@ let load_problem channel =
   let e = j |> member "examples" |> to_list in
 
   let guess_type elements =
-    let rec guess context x =
+    let context = ref empty_context in
+    let rec guess x =
       try
         let xs = x |> to_list in
         let l = List.hd xs |> get_some |> to_string in
@@ -45,13 +46,12 @@ let load_problem channel =
         let (t,k) = makeTID !context in
         context := k;
         l |> List.iter ~f:(fun y ->
-            let yt = guess context y in
+            let yt = guess y in
             context := unify !context yt t);
         tlist (chaseType !context t |> fst)          
       with _ -> raise (Failure "Could not guess type")
     in
-    let context = ref empty_context in
-    let ts = elements |> List.map ~f:(guess context) in
+    let ts = elements |> List.map ~f:guess in
     let t0 = List.hd_exn ts in
     ts |> List.iter ~f:(fun t -> context := (unify (!context) t0 t));
     chaseType !context t0 |> fst
@@ -107,17 +107,20 @@ let load_problem channel =
 
   let solver_timeout = j |> member "solverTimeout" |> to_int in
   let maximum_frontier = j |> member "maximumFrontier" |> to_int in
+  let name = j |> member "name" |> to_string in
 
-  if return_of_type task_type = ttrace then begin 
-    Printf.printf "%s\n" (examples |> List.hd |> get_some |> snd |> magical |> string_of_trace);
-    assert false
-   end else 
-    (supervised_task ~timeout:timeout (j |> member "name" |> to_string) task_type examples,
-     g,
-     solver_timeout,
-     maximum_frontier)
+  let t = if return_of_type task_type = ttrace then begin
+      assert (List.length examples = 1);
+      latex_task name (examples |> List.hd |> get_some |> snd |> magical)    
+    end else
+      supervised_task ~timeout:timeout name task_type examples
+  in
+  (t,g,solver_timeout,maximum_frontier)
 
-let export_frontier solutions : string =
+let export_frontier task solutions : string =
+  (* solutions |> List.iter ~f:(fun (p,_,_,_) -> *)
+  (*     Printf.eprintf "EXPORT: %s: %s. PROGRAM: %s\n" *)
+  (*       (task.name) (task.task_type |> string_of_type) (string_of_program p)); *)
   let open Yojson.Basic.Util in
   let open Yojson.Basic in
   let serialization : Yojson.Basic.json = 
@@ -133,7 +136,7 @@ let main () =
 
   let solutions = enumerate_for_task ~verbose:false ~maximumFrontier:maximumFrontier ~timeout:solverTimeout g t in
 
-  print_string (export_frontier solutions)
+  print_string (export_frontier t solutions)
 ;;
 
   

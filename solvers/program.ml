@@ -25,6 +25,10 @@ let program_children = function
   | Apply(m,n) -> [m;n]
   | _ -> []
 
+let rec application_function = function
+  | Apply(f,x) -> application_function f
+  | e -> e
+
 let rec program_size p =
   1 + (List.map ~f:program_size (program_children p) |> sum)
 

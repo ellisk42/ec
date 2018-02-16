@@ -15,6 +15,13 @@ class Program(object):
     def __repr__(self): return str(self)
     def __ne__(self,o): return not (self == o)
     def __str__(self): return self.show(False)
+    def canHaveType(self, t):
+        try:
+            context, actualType = self.inferType(Context.EMPTY,[],{})
+            context, t = t.instantiate(context)
+            context.unify(t, actualType)
+            return True
+        except UnificationFailure as e: return False
     def infer(self):
         try:
             return self.inferType(Context.EMPTY,[],{})[1].canonical()
