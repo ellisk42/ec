@@ -114,8 +114,13 @@ def makeTasks():
                   for x in [[randomWord() for _ in range(random.choice(range(1,5)))]]
                 ])
     
-    [problem(n, [(x,f(x)) for _ in range(NUMBEROFEXAMPLES) for x in [randomWord()] ], needToTrain = True)
-     for n,f in singleWordOperations.iteritems() ]
+    for n,f in singleWordOperations.iteritems():
+        importantOperations = {"double","capitalize"}
+        for j in range(3 if n in importantOperations else 1):
+            if j > 0:
+                n = n + "(%s)"%('I'*j)
+            problem(n, [(x,f(x)) for _ in range(NUMBEROFEXAMPLES) for x in [randomWord()] ], needToTrain = True)
+     
     problem("strip", [(x, x.strip())
                       for _ in range(NUMBEROFEXAMPLES)
                       for x in [randomWhiteWord()] ])
