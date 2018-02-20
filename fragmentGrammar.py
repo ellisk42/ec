@@ -295,13 +295,13 @@ class FragmentGrammar(object):
 
                 scoredFragments = parallelMap(CPUs, grammarScore, candidateGrammars,
                                               # maxTasks: Maximum number of jobs allocated to a process
-                                              # This means that after evaluating 200 grammars,
+                                              # This means that after evaluating this many grammars,
                                               # we killed the process, freeing up its memory.
                                               # In exchange we pay the cost of spawning a new process.
                                               # We should play with this number,
                                               # figuring out how big we can make it without
                                               # running out of memory.
-                                              maxTasks = 200)
+                                              maxTasks = 100)
                 newScore, newGrammar = max(scoredFragments)
 
                 if newScore <= bestScore:

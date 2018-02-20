@@ -116,7 +116,7 @@ def makeTasks():
     
     for n,f in singleWordOperations.iteritems():
         importantOperations = {"double","capitalize"}
-        for j in range(3 if n in importantOperations else 1):
+        for j in range(5 if n in importantOperations else 1):
             np = n
             if j > 0:
                 np = n + " (%s)"%('I'*j)
