@@ -49,6 +49,14 @@ let rec show_program (is_function : bool) = function
 
 let string_of_program = show_program false
 
+let rec program_equal p1 p2 = match (p1,p2) with
+  | (Primitive(_,n1,_),Primitive(_,n2,_)) -> n1 = n2
+  | (Abstraction(a),Abstraction(b)) -> program_equal a b
+  | (Invented(_,a),Invented(_,b)) -> program_equal a b
+  | (Index(a),Index(b)) -> a = b
+  | (Apply(a,b), Apply(x,y)) -> program_equal a x && program_equal b y
+  | _ -> false
+
 let rec infer_program_type context environment = function
   | Index(j) ->
     let (t,context) = List.nth_exn environment j |> chaseType context in (context,t)

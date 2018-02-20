@@ -2,6 +2,8 @@ c = corebuild -pkg yojson -pkg re2
 
 type:
 	$(c) type.native; cp type.native test
+TikZ:
+	$(c) TikZ.native; cp TikZ.native test
 solver:
 	$(c) solver.native; cp solver.native ../solver
 utilities:

@@ -17,6 +17,10 @@ type command =
   | Rectangle of vector*vector
   | Line of vector*vector
 
+let canonical_command_list l =
+  List.dedup l |> List.sort ~cmp:(fun c1 c2 ->
+    if c1 > c2 then 1 else if c1 = c2 then 0 else -1)
+
 type cid = C|R|L
 
 let string_of_command = function
@@ -36,7 +40,10 @@ let tcoordinate = make_ground "coordinate";;
 
 let primitive_circle = primitive "circle"
     (tcoordinate @> ttrace)
-    (fun v -> [Circle(v)]);;
+    (fun v -> [Circle(v)])
+let primitive_rectangle = primitive "rectangle"
+    (tcoordinate @> tcoordinate @> ttrace)
+    (fun v1 v2 -> [Rectangle(v1,v2)]);;
 let primitive_linear = primitive "linear"
     (tcoefficient @> tintercept @> tvariable @>
      tcoefficient @> tintercept @> tvariable @>
@@ -48,7 +55,7 @@ let primitive_loop = primitive "loop"
        let body = (0--(n-1)) |> List.map ~f:body |> List.concat in
        let boundary = match boundary with
          | None -> []
-         | Some(b) -> (0--(n-1)) |> List.map ~f:b |> List.concat 
+         | Some(b) -> (0--(n-2)) |> List.map ~f:b |> List.concat 
        in
        boundary@body);;
 let primitive_just = primitive "just"
@@ -62,6 +69,16 @@ let primitive_union = primitive "trace-union" (ttrace @> ttrace @> ttrace) (@);;
 let primitive_coefficient_placeholder = primitive "COEFFICIENT" tcoefficient None;;
 let primitive_intercept_placeholder = primitive "INTERCEPT" tintercept None;;
 let primitive_coordinate_placeholder = primitive "COORDINATE" tcoordinate None;;
+
+let latex_primitives = [primitive_circle;primitive_rectangle;
+                        primitive_linear;
+                        primitive_loop;
+                        primitive_nothing;
+                        primitive_union;
+                        primitive_coefficient_placeholder;
+                        primitive_intercept_placeholder;
+                        primitive_coordinate_placeholder;
+                       primitive3;primitive4;]
 
 type guess = {
   mutable positions: vector list;
@@ -93,6 +110,8 @@ let score_latex output =
     | (Circle(Vector(x1,y1)), Circle(Vector(x2,y2))) -> begin
         g.circles.x_slope <- (x1 - x2) :: g.circles.x_slope;
         g.circles.x_slope <- (x2 - x1) :: g.circles.x_slope;
+        g.circles.y_slope <- (y1 - y2) :: g.circles.y_slope;
+        g.circles.y_slope <- (y2 - y1) :: g.circles.y_slope;
       end
     | (Rectangle(Vector(x1,y1),Vector(x2,y2)),Rectangle(Vector(a1,b1),Vector(a2,b2))) -> begin 
         g.rectangles.x_slope <- (x1 - a1) :: g.rectangles.x_slope;
@@ -126,9 +145,15 @@ let score_latex output =
 
   output |> List.iter ~f:single_guesses;
   output |> List.iteri ~f:(fun j c ->
-      List.drop output j |> List.iter ~f:(fun c2 -> pair_guesses c c2));
+      List.drop output (j+1) |> List.iter ~f:(fun c2 -> pair_guesses c c2));
 
   (* Now we have calculated the guesses. *)
+  g.circles.x_intercept |> List.iter ~f:(fun z -> Printf.eprintf "cxi: %d\t" z);
+  g.circles.y_intercept |> List.iter ~f:(Printf.eprintf "cyi: %d\t");
+  g.circles.x_slope |> List.iter ~f:(Printf.eprintf "cxm: %d\t");
+  g.circles.y_slope |> List.iter ~f:(Printf.eprintf "cym: %d\t");
+  Printf.eprintf "\n\n";
+  
   let rec random_instantiation ~x ~i expression = match expression with
     | Primitive(t,"COORDINATE",_) ->
       Primitive(t,"COORDINATE",magical @@ ref (random_choice @@ match i with
@@ -152,15 +177,37 @@ let score_latex output =
         |(R,true) -> g.rectangles.x_slope
         |(R,false) -> g.rectangles.y_slope))
     | Apply(f,x) ->
-      Apply(random_instantiation ~x:(random_choice [true;false]) ~i:(random_choice [C;R]) f,
-            random_instantiation ~x:(random_choice [true;false]) ~i:(random_choice [C;R]) x)
-    | Invented(_,b) -> random_instantiation ~x:(random_choice [true;false]) ~i:(random_choice [C;R]) b
+      Apply(random_instantiation ~x:(random_choice [true;false]) ~i:(random_choice [C;]) f,
+            random_instantiation ~x:(random_choice [true;false]) ~i:(random_choice [C;]) x)
+    | Invented(_,b) -> random_instantiation ~x:(random_choice [true;false]) ~i:(random_choice [C]) b
     | Abstraction(b) ->
-      Abstraction(random_instantiation ~x:(random_choice [true;false]) ~i:(random_choice [C;R]) b)
+      Abstraction(random_instantiation ~x:(random_choice [true;false]) ~i:(random_choice [C]) b)
     | anything_else -> anything_else
   in
 
-  fun program -> log 0.
+  let rec likelihood_penalty = function
+    | Apply(f,x) -> likelihood_penalty f +. likelihood_penalty x
+    | Abstraction(b) -> likelihood_penalty b
+    | Invented(_,b) -> likelihood_penalty b
+    | Primitive(_,"COORDINATE",_) -> -2.
+    | Primitive(_,"INTERCEPT",_) -> -1.
+    | Primitive(_,"COEFFICIENT",_) -> -1.
+    | _ -> 0.
+  in
+
+  let output = canonical_command_list output in
+
+  fun program -> begin      
+      if List.exists (0--100) ~f:(fun _ ->
+          let p = random_instantiation ~x:false ~i:C program in
+          let v : command list = evaluate [] p |> magical |> canonical_command_list in
+          v = output)
+      then begin Printf.eprintf "PROGRAM: %s\n" (string_of_program program);
+        10.*. likelihood_penalty program
+      end else log 0.
+    end        
+        
+        
   
 
 
@@ -171,3 +218,12 @@ let latex_task name output =
    log_likelihood = score_latex output}
   
   
+let () =
+  let p = parse_program "(loop 3 nothing (lambda (circle (linear COEFFICIENT INTERCEPT $0 COEFFICIENT INTERCEPT $0))))" |> get_some in
+  Printf.printf "%s\n" (string_of_program p);
+  let t = infer_program_type empty_context [] p |> snd in
+  let g = primitive_grammar latex_primitives in
+  Printf.printf "%s\n" (string_of_type t);
+  Printf.printf "likelihood %f\n" @@ score_latex [Circle(Vector(1,2));Circle(Vector(1,4));Circle(Vector(1,6))] p;
+  Printf.printf "log prior %f\n" @@ likelihood_under_grammar g t p;
+  ()

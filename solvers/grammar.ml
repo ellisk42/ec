@@ -78,7 +78,7 @@ let likelihood_under_grammar g request expression =
       match walk_application_tree p with
       | [] -> raise (Failure "walking the application tree")
       | f::xs ->
-        match List.find candidates ~f:(fun (candidate,_,_,_) -> candidate = f) with
+        match List.find candidates ~f:(fun (candidate,_,_,_) -> program_equal candidate f) with
         | None -> raise (Failure ("could not find function in grammar: "^(string_of_program p)))
         | Some(_, f_t, newContext, functionLikelihood) ->
           let (f_t, newContext) = chaseType newContext f_t in
