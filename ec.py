@@ -67,6 +67,7 @@ ECResult.abbreviationToParameter = {v:k for k,v in ECResult.abbreviations.iterit
 
 def explorationCompression(grammar, tasks,
                            _=None,
+                           solver="ocaml",
                            testingTasks = [],
                            benchmark=None,
                            iterations=None,
@@ -108,7 +109,7 @@ def explorationCompression(grammar, tasks,
     # We save the parameters that were passed into EC
     # This is for the purpose of exporting the results of the experiment
     parameters = {k: v for k, v in locals().iteritems()
-                  if k not in {"tasks", "grammar", "cuda", "_",
+                  if k not in {"tasks", "grammar", "cuda", "_", "solver",
                                "message", "CPUs", "outputPrefix",
                                "resume", "resumeFrontierSize",
                                "featureExtractor", "benchmark",
@@ -121,7 +122,8 @@ def explorationCompression(grammar, tasks,
     def checkpointPath(iteration, extra=""):
         parameters["iterations"] = iteration
         kvs = ["{}={}".format(ECResult.abbreviate(k), parameters[k]) for k in sorted(parameters.keys())]
-        kvs += ["feat=%s"%(featureExtractor.__name__)]
+        if useRecognitionModel:
+            kvs += ["feat=%s"%(featureExtractor.__name__)]
         return "{}_{}{}.pickle".format(outputPrefix, "_".join(kvs), extra)
 
     if onlyBaselines and not benchmark:
@@ -185,6 +187,7 @@ def explorationCompression(grammar, tasks,
                 oldFrontierSize, frontierSize))
 
         frontiers, times = enumerateFrontiers(grammar, tasks,
+                                              solver=solver,
                                               frontierSize=frontierSize,
                                               maximumFrontier=maximumFrontier,
                                               enumerationTimeout=enumerationTimeout,

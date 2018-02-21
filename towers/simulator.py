@@ -31,9 +31,10 @@ def simulateTower(plan, perturbations):
     world, gnd = make_initial_world()
     boxes = run_plan(world, plan)
     if boxes == None:
-        print "FAIL"
-        import sys
-        sys.exit(0)
+        return None
+        # print "FAIL"
+        # import sys
+        # sys.exit(0)
    
     # Save the locations of each of the blocks
     saved = []

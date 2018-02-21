@@ -33,8 +33,8 @@ class Grammar(object):
         lines = ["%f\tt0\t$_"%self.logVariable]
         for l,t,p in sorted(self.productions, key = productionKey):
             l = "%f\t%s\t%s"%(l,t,p)
-            if not t.isArrow() and isinstance(p,Invented):
-                l += "\teval = %s"%(p.evaluate([]))
+            # if not t.isArrow() and isinstance(p,Invented):
+            #     l += "\teval = %s"%(p.evaluate([]))
             lines.append(l)
         return "\n".join(lines)
 

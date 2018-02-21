@@ -8,6 +8,7 @@ from grammar import *
 import gc
 
 def enumerateFrontiers(g, tasks, _=None,
+                       solver=None,
                        frontierSize=None,
                        enumerationTimeout=None,
                        CPUs=1,
@@ -17,17 +18,21 @@ def enumerateFrontiers(g, tasks, _=None,
     '''g: Either a Grammar, or a map from task to grammar.'''
     from time import time
 
+    solvers = {"ocaml": solveForTask,
+               "pypy": enumerateForTask_pypy,
+               "python": enumerateForTask}
+    assert solver in solvers, \
+        "You must specify a valid solver. options are ocaml, pypy, or python."
+    solver = solvers[solver]
+
     if not isinstance(g, dict): g = {t: g for t in tasks }
     
     start = time()
     frontiers = parallelMap(CPUs,
-                            # enumerateForTask
-                            lambda (task, grammar): solveForTask(grammar, task,
-                                                         #            frontierSize=frontierSize,
-                                                                     timeout=enumerationTimeout,
-                                                                     evaluationTimeout = evaluationTimeout,
-                                                                     #verbose=False,
-                                                                     maximumFrontier=maximumFrontier),
+                            lambda (task, grammar): solver(grammar, task,
+                                                           timeout=enumerationTimeout,
+                                                           evaluationTimeout = evaluationTimeout,
+                                                           maximumFrontier=maximumFrontier),
                             map(lambda t: (t, g[t]), tasks),
                             chunk = 1)
     if verbose:
@@ -74,6 +79,9 @@ def solveForTask(g, task, _ = None, timeout = None, evaluationTimeout = None,
     return frontier, searchTime
     
 
+def enumerateForTask_pypy(*arguments, **keywords):
+    return callCompiled(enumerateForTask, *arguments, **keywords)
+
 def enumerateForTask(g, task, _ = None,
                      verbose=False,
                      timeout=None,
@@ -82,7 +90,6 @@ def enumerateForTask(g, task, _ = None,
                      budgetIncrement=1.0, maximumFrontier = 10**2):
     assert (timeout is not None) or (frontierSize is not None), \
         "enumerateForTask: You must provide either a timeout or a frontier size."
-    verbose = True
     
     from time import time
     def timeoutCallBack(_1,_2): raise EnumerationTimeout()
@@ -90,7 +97,8 @@ def enumerateForTask(g, task, _ = None,
         if verbose: eprint("Alarming timeout for",timeout,"for task",task)
         signal.signal(signal.SIGALRM, timeoutCallBack)
         signal.alarm(timeout)
-    
+
+    timeUntilFirstSolution = None
     frontier = []
     starting = time()
     previousBudget = 0.
@@ -115,6 +123,7 @@ def enumerateForTask(g, task, _ = None,
                 if valid(likelihood):
                     if verbose:
                         eprint("Hit",task.name,"with the program",p,"which has prior",prior,"after",time() - starting,"seconds")
+                    if frontier == []: timeUntilFirstSolution = time() - starting                        
                     frontier.append(FrontierEntry(program = p,
                                                   logPrior = prior,
                                                   logLikelihood = likelihood))
@@ -143,9 +152,8 @@ def enumerateForTask(g, task, _ = None,
 
     frontier = Frontier(frontier,
                         task = task).topK(maximumFrontier)
-    eprint(frontier.summarize())
     
-    return frontier
+    return frontier, timeUntilFirstSolution
 
 def enumeration(g, context, environment, request, upperBound, maximumDepth = 20, lowerBound = 0.):
     '''Enumerates all programs whose MDL satisfies: lowerBound < MDL <= upperBound'''
