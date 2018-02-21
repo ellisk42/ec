@@ -91,7 +91,7 @@ if __name__ == "__main__":
                            evaluationTimeout = None,
                            **commandlineArguments(
 #                               frontierSize = 10**4,
-                               steps = 100,
+                               steps = 500,
                                iterations = 10,
                                helmholtzRatio = 0.5,
                                topK = 2,
