@@ -132,7 +132,7 @@ let primitive (name : string) (t : tp) x =
 
 let primitive_empty_string = primitive "emptyString" tstring "";;
 let primitive_uppercase = primitive "caseUpper" (tstring @> tstring) String.uppercase;;
-let primitive_uppercase = primitive "strip" (tstring @> tstring) String.strip;;
+let primitive_uppercase = primitive "strip" (tstring @> tstring) (fun s -> String.strip s);;
 let primitive_lowercase = primitive "caseLower" (tstring @> tstring) String.lowercase;;
 let primitive_capitalize = primitive "caseCapitalize" (tstring @> tstring) String.capitalize;;
 let primitive_concatenate = primitive "concatenate" (tstring @> tstring @> tstring) ( ^ );;

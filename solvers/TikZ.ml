@@ -218,12 +218,12 @@ let latex_task name output =
    log_likelihood = score_latex output}
   
   
-let () =
-  let p = parse_program "(loop 3 nothing (lambda (circle (linear COEFFICIENT INTERCEPT $0 COEFFICIENT INTERCEPT $0))))" |> get_some in
-  Printf.printf "%s\n" (string_of_program p);
-  let t = infer_program_type empty_context [] p |> snd in
-  let g = primitive_grammar latex_primitives in
-  Printf.printf "%s\n" (string_of_type t);
-  Printf.printf "likelihood %f\n" @@ score_latex [Circle(Vector(1,2));Circle(Vector(1,4));Circle(Vector(1,6))] p;
-  Printf.printf "log prior %f\n" @@ likelihood_under_grammar g t p;
-  ()
+(* let () = *)
+(*   let p = parse_program "(loop 3 nothing (lambda (circle (linear COEFFICIENT INTERCEPT $0 COEFFICIENT INTERCEPT $0))))" |> get_some in *)
+(*   Printf.printf "%s\n" (string_of_program p); *)
+(*   let t = infer_program_type empty_context [] p |> snd in *)
+(*   let g = primitive_grammar latex_primitives in *)
+(*   Printf.printf "%s\n" (string_of_type t); *)
+(*   Printf.printf "likelihood %f\n" @@ score_latex [Circle(Vector(1,2));Circle(Vector(1,4));Circle(Vector(1,6))] p; *)
+(*   Printf.printf "log prior %f\n" @@ likelihood_under_grammar g t p; *)
+(*   () *)
