@@ -101,11 +101,11 @@ def basePrimitives():
         #Primitive("singleton", arrow(t0, tlist(t0)), _single),
         Primitive("cons", arrow(t0, tlist(t0), tlist(t0)), _cons),
         Primitive("range", arrow(tint, tlist(tint)), range),
-        Primitive("++", arrow(tlist(t0), tlist(t0), tlist(t0)), _append),
+        #Primitive("++", arrow(tlist(t0), tlist(t0), tlist(t0)), _append),
         Primitive("mapi", arrow(arrow(tint, t0, t1), tlist(t0), tlist(t1)), _mapi),
         Primitive("reducei", arrow(arrow(tint, t1, t0, t1), t1, tlist(t0), t1), _reducei),
 
-        Primitive("true", tbool, True),
+        #Primitive("true", tbool, True),
         # Primitive("not", arrow(tbool, tbool), _not),
         # Primitive("and", arrow(tbool, tbool, tbool), _and),
         # Primitive("or", arrow(tbool, tbool, tbool), _or),
