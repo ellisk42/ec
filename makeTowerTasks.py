@@ -4,41 +4,52 @@ import math
 
 
 class TowerTask(Task):
-    def __init__(self, name, _ = None, perturbations = [],
+    RESULTCASH = {}
+    def __init__(self, name, _ = None, perturbation = 0,
                  minimumHeight = None, minimumLength = None, maximumLength = None):
         super(TowerTask, self).__init__(name, tlist(tpair(tint,tbool)), [])
 
-        self.perturbations = perturbations
+        self.perturbation = perturbation
         self.minimumHeight = minimumHeight
         self.minimumLength = minimumLength
         self.maximumLength = maximumLength
 
     def logLikelihood(self, e, timeout = None):
-        from towers.simulator import simulateTower, towerLength
+        from towers.tower_common import TowerWorld
         
         tower = e.evaluate([])
 
-        l = towerLength(tower)
-        if self.minimumLength is not None and l < self.minimumLength: return NEGATIVEINFINITY
-        if self.maximumLength is not None and l > self.maximumLength: return NEGATIVEINFINITY
+        key = (tuple(tower), self.perturbation)
+        if key in TowerTask.RESULTCASH: height, stabilities = TowerTask.RESULTCASH[key]
+        else:
+            w = TowerWorld()
+            height, stabilities = w.sampleStability(tower, self.perturbation, N = 30)
+            TowerTask.RESULTCASH[key] = (height, stabilities)
 
-        result = simulateTower(tower, self.perturbations)
-        if result is None: return NEGATIVEINFINITY
+        if height < self.minimumHeight: return NEGATIVEINFINITY
+        successProbability = float(sum(stabilities))/len(stabilities)
+        if successProbability < 0.5: return NEGATIVEINFINITY
 
-        if any( s <= 0.1 for s in result.stability ): return NEGATIVEINFINITY
-        if result.height < self.minimumHeight: return NEGATIVEINFINITY
+        return 20.0*math.log(successProbability)
 
-        return sum( math.log(s/100.) for s in result.stability )
+    def animateSolution(self, e):
+        import os
+
+        tower = e.evaluate([])
+
+        os.system("python towers/visualize.py '%s' %f"%(tower, self.perturbation))
+        
         
 def makeTasks():
     return [ TowerTask("P: %f; H: %f; max W: %s; min W: %s"%(p,h, minimum, maximum),
-                       perturbations = [p],
+                       perturbation = p,
                        minimumHeight = h,
                        minimumLength = minimum,
                        maximumLength = maximum)
-             for p in [0.,1.,2.]
-             for h in range(0,9,3)
-             for minimum in [None] + range(1,2)
-             for maximum in [None] + range(3,4) ]
+             for p in [3,4]
+             for h in [4,6,8]
+             for minimum in [None] #+ range(1,2)
+             for maximum in [None] #+ range(3,4)
+    ]
 
 

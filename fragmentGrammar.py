@@ -285,7 +285,8 @@ class FragmentGrammar(object):
             while True:
                 restrictedFrontiers = restrictFrontiers()
                 fragments = [ fragment for fragment in proposeFragmentsFromFrontiers(restrictedFrontiers, a)
-                              if not fragment in bestGrammar.primitives ]
+                              if not fragment in bestGrammar.primitives \
+                              and defragment(fragment) not in bestGrammar.primitives ]
                 eprint("Proposed %d fragments."%len(fragments))
 
                 candidateGrammars = [ FragmentGrammar.uniform(bestGrammar.primitives + [fragment])
