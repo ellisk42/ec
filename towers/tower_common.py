@@ -1,7 +1,7 @@
 import Box2D  # The main library
 # Box2D.b2 maps Box2D.b2Vec2 to vec2 (and so on)
 
-from Box2D.b2 import (world, polygonShape, circleShape, staticBody, dynamicBody)
+from Box2D.b2 import (world, polygonShape, circleShape, staticBody, dynamicBody, AABB)
 
 import random
 import math
@@ -12,7 +12,7 @@ class TowerWorld(object):
         self.ground_body = self.world.CreateStaticBody(
             position=(0, 0),
             shapes=polygonShape(box=(50, 1)),
-            userData = (255, 255, 255, 255)
+            userData = {"color": (255, 255, 255, 255) }
         )
 
         self.blocks = []
@@ -20,47 +20,54 @@ class TowerWorld(object):
         self.H = 3.
         self.W = 0.5
         self.dt = 1./60
-        self.locationNoise = 0.13
+        self.locationNoise = 0.0
+
+    def lowestLegalHeight(self, x, dx, dy):
+        lowest = dy + 0.5 # the floor
+
+        x1 = x - dx
+        x2 = x + dx
+
+        for b in self.blocks:
+            # Fuck you box2d
+            assert len(b.fixtures) == 1
+            xs = [ (b.transform * v)[0]
+                   for v in b.fixtures[0].shape.vertices ]
+            ys = [ (b.transform * v)[1]
+                   for v in b.fixtures[0].shape.vertices ]
+            x1_ = min(xs)
+            x2_ = max(xs)
+            y1_ = min(ys)
+            y2_ = max(ys)
+
+            if x1_ > x2 or x1 > x2_: continue
+
+            lowest = max(lowest, y2_ + dy)
+
+        return lowest
+
+            
 
     def placeBlock(self, x, orientation):
         x += 11
 
         x += random.random()*self.locationNoise - self.locationNoise/2
         
-        if orientation: # horizontal
-            safetyMargin = self.W/2
-        else: #vertical
-            safetyMargin = self.H/2
-
         dx = self.H if orientation else self.W
         dx = dx/2
-        #print "About to place a block at X = ",x,"dx = ",dx
-        minimumX = x - dx
-        maximumX = x + dx
-        conflicts = []
-        for b in self.blocks:
-            xs = [ (b.transform * v)[0] for v in b.fixtures[0].shape.vertices ]
-            #print "existing block has",xs
-            
-            if any( xp >= minimumX and xp <= maximumX for xp in xs ):
-                #print "CONFLICT"
-                conflicts += [ (b.transform * v)[1] for v in b.fixtures[0].shape.vertices ]
-            #print 
+        dy = self.W if orientation else self.H
+        dy = dy/2
 
-        y = max(conflicts + [0.5]) + safetyMargin + 0.1
-        #print "Decided to place the block at Y = ",y
-        #print "safety margin",safetyMargin
+        safetyMargin = 0.1
+        y = self.lowestLegalHeight(x, dx, dy) + safetyMargin
         
         body = self.world.CreateDynamicBody(position=(x, y),
-                                            angle=0 if not orientation else math.pi/2,
-                                            userData = tuple(random.random()*128+127 for _ in range(4) ))
-        box = body.CreatePolygonFixture(box=(self.W/2, self.H/2), density=1, friction=0.3)
+                                            angle=0,
+                                            userData = {"color":
+                                                        tuple(random.random()*128+127 for _ in range(4) ),
+                                                        "p0": (x,y)})
+        box = body.CreatePolygonFixture(box=(dx, dy), density=1, friction=0.9)
         self.blocks.append(body)
-
-        # print "Done placing block."
-        # print
-        # print
-        # print 
 
     def step(self, dt):
         self.world.Step(dt, 10, 10)
@@ -92,7 +99,7 @@ class TowerWorld(object):
                           True)
 
     def stepUntilStable(self):
-        for _ in range(10): self.step(self.dt)
+        for _ in range(50): self.step(self.dt)
         for _ in range(100000):
             self.step(self.dt)
             if self.unmoving(): break
@@ -106,6 +113,16 @@ class TowerWorld(object):
             newHeight = self.height()
             if newHeight < initialHeight - 0.1: badPlan = True
             initialHeight = newHeight
+
+        for b in self.blocks:
+            p = (b.worldCenter[0], b.worldCenter[1])
+            p0 = b.userData["p0"]
+            d = (p[0] - p0[0],
+                 p[1] - p0[1])
+            r = d[0]**2 + d[1]**2
+            if r > 1.:
+                badPlan = True
+                break
         return not badPlan
     
     def clearWorld(self):

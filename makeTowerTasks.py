@@ -5,11 +5,14 @@ import math
 
 class TowerTask(Task):
     RESULTCASH = {}
-    def __init__(self, name, _ = None, perturbation = 0,
+    def __init__(self, _ = None, perturbation = 0,
+                 maximumBlocks = 100,
                  minimumHeight = None, minimumLength = None, maximumLength = None):
+        name = "P: %f; H: %f; B: %d"%(perturbation, minimumHeight, maximumBlocks)
         super(TowerTask, self).__init__(name, tlist(tpair(tint,tbool)), [])
 
         self.perturbation = perturbation
+        self.maximumBlocks = maximumBlocks
         self.minimumHeight = minimumHeight
         self.minimumLength = minimumLength
         self.maximumLength = maximumLength
@@ -18,6 +21,7 @@ class TowerTask(Task):
         from towers.tower_common import TowerWorld
         
         tower = e.evaluate([])
+        if len(tower) > self.maximumBlocks: return NEGATIVEINFINITY
 
         key = (tuple(tower), self.perturbation)
         if key in TowerTask.RESULTCASH: height, stabilities = TowerTask.RESULTCASH[key]
@@ -28,7 +32,7 @@ class TowerTask(Task):
 
         if height < self.minimumHeight: return NEGATIVEINFINITY
         successProbability = float(sum(stabilities))/len(stabilities)
-        if successProbability < 0.5: return NEGATIVEINFINITY
+        if successProbability < 0.3: return NEGATIVEINFINITY
 
         return 20.0*math.log(successProbability)
 
@@ -38,10 +42,11 @@ class TowerTask(Task):
         tower = e.evaluate([])
 
         os.system("python towers/visualize.py '%s' %f"%(tower, self.perturbation))
+
         
         
 def makeTasks():
-    return [ TowerTask("P: %f; H: %f; max W: %s; min W: %s"%(p,h, minimum, maximum),
+    return [ TowerTask(maximumBlocks = 9,
                        perturbation = p,
                        minimumHeight = h,
                        minimumLength = minimum,

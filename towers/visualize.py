@@ -31,7 +31,7 @@ originalPlan = plan
 def my_draw_polygon(polygon, body, fixture):
     vertices = [(body.transform * v) * PPM for v in polygon.vertices]
     vertices = [(v[0], SCREEN_HEIGHT - v[1]) for v in vertices]
-    pygame.draw.polygon(screen, body.userData, vertices)
+    pygame.draw.polygon(screen, body.userData["color"], vertices)
 polygonShape.draw = my_draw_polygon
 
 height, successes = TowerWorld().sampleStability(plan, perturbation, N = 100)
