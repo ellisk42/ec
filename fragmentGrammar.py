@@ -74,6 +74,8 @@ class FragmentGrammar(object):
         polymorphic = request.isPolymorphic or any(v.isPolymorphic for v in environment)
         # For some reason polymorphic caching slows it down
         shouldDoCaching = not polymorphic
+        # disable it to use less memory
+        shouldDoCaching = False
 
         # Caching
         if shouldDoCaching:
