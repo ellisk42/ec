@@ -301,4 +301,9 @@ if __name__ == "__main__":
     # eprint(p)
     # eprint(baseGrammar.closedLogLikelihood(arrow(tlist(tint),tbool), p))
     # assert False
+    difficult = ["evens","drop-k with k=4","take-k with k=4","index-k with k=5"]
+    train = [ t for t in train if t.name in difficult]
+    for t in train:
+        print t
+    
     explorationCompression(baseGrammar, train, testingTasks=test, **args)
