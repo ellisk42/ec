@@ -33,6 +33,7 @@ if __name__ == "__main__":
                                         CPUs = numberOfCPUs(),
                                         helmholtzRatio = 0.5,
                                         iterations = 5,
+                                        a = 3,
                                         pseudoCounts = 20,
                                         topK = 10,
                                         maximumFrontier = 10**4))

@@ -103,6 +103,16 @@ class TowerWorld(object):
         for _ in range(100000):
             self.step(self.dt)
             if self.unmoving(): break
+
+    def blocksSignificantlyMoved(self, threshold):
+        for b in self.blocks:
+            p = (b.worldCenter[0], b.worldCenter[1])
+            p0 = b.userData["p0"]
+            d = (p[0] - p0[0],
+                 p[1] - p0[1])
+            r = d[0]**2 + d[1]**2
+            if r > threshold: return True
+        return False
         
     def executePlan(self, plan):
         initialHeight = float('-inf')
@@ -114,13 +124,7 @@ class TowerWorld(object):
             if newHeight < initialHeight - 0.1: badPlan = True
             initialHeight = newHeight
 
-        for b in self.blocks:
-            p = (b.worldCenter[0], b.worldCenter[1])
-            p0 = b.userData["p0"]
-            d = (p[0] - p0[0],
-                 p[1] - p0[1])
-            r = d[0]**2 + d[1]**2
-            if r > 1.:
+            if self.blocksSignificantlyMoved(1):
                 badPlan = True
                 break
         return not badPlan
@@ -140,7 +144,8 @@ class TowerWorld(object):
                 hs.append(initialHeight)
                 self.impartImpulses(perturbation)
                 self.stepUntilStable()
-                wasStable.append(self.height() > initialHeight - 0.1)
+                wasStable.append((not self.blocksSignificantlyMoved(1)) \
+                                 and (self.height() > initialHeight - 0.1))
             else:
                 hs.append(0.)
                 wasStable.append(False)
