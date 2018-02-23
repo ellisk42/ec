@@ -295,8 +295,8 @@ class FragmentGrammar(object):
                     break
 
                 scoredFragments = parallelMap(CPUs, grammarScore, candidateGrammars,
-                                              # Each process handles 50 grammars at a time, a "job"
-                                              chunk = 50,
+                                              # Each process handles up to 50 grammars at a time, a "job"
+                                              chunk = max(1,min(len(candidateGrammars)/CPUs, 50)),
                                               # maxTasks: Maximum number of jobs allocated to a process
                                               # This means that after evaluating this*chunk many grammars,
                                               # we killed the process, freeing up its memory.
