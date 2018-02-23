@@ -60,7 +60,7 @@ def makeTasks():
                        minimumHeight = h)
              for m in [5,10] 
              for p in [2,3,4]
-             for h in [4,6,8]
+             for h in [4,6,8,10]
     ]
 
 
