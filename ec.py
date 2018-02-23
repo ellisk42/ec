@@ -11,6 +11,7 @@ from fragmentGrammar import *
 import baselines
 
 import os
+import datetime
 
 # We pick all the recognition models and these might have lambdas
 # inside of them
@@ -139,7 +140,8 @@ def explorationCompression(grammar, tasks,
         return result
 
     if message: message = " ("+message+")"
-    eprint("Running EC%s on %s with %d CPUs and parameters:"%(message, os.uname()[1], CPUs))
+    eprint("Running EC%s on %s @ %s with %d CPUs and parameters:"%(message, os.uname()[1],
+                                                                   datetime.datetime.now(), CPUs))
     for k,v in parameters.iteritems():
         eprint("\t", k, " = ", v)
     eprint()
