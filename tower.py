@@ -12,12 +12,13 @@ class TowerFeatureExtractor(HandCodedFeatureExtractor):
         p = p.evaluate([])
         maximumBlocks = len(p)
 
-        perturbation = random.choice(TowerTask.POSSIBLEPERTURBATIONS)
-        height, successProbability = TowerTask.evaluateTower(p, perturbation)
+        # Find the largest perturbation that this power can withstand
+        for perturbation in sorted(set(TowerTask.POSSIBLEPERTURBATIONS), reverse = True):
+            height, successProbability = TowerTask.evaluateTower(p, perturbation)
+            if successProbability > TowerTask.STABILITYTHRESHOLD:         
+                return [perturbation, maximumBlocks, height]
 
-        if successProbability < TowerTask.STABILITYTHRESHOLD: return None
-        
-        return [perturbation, maximumBlocks, height]
+        return None
 
 
 if __name__ == "__main__":

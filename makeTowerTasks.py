@@ -6,7 +6,7 @@ import math
 class TowerTask(Task):
     RESULTCASH = {}
     POSSIBLEPERTURBATIONS = []
-    STABILITYTHRESHOLD = 0.3
+    STABILITYTHRESHOLD = 0.5
     
     def __init__(self, _ = None, perturbation = 0,
                  maximumBlocks = 100,
@@ -59,7 +59,7 @@ def makeTasks():
                        perturbation = p,
                        minimumHeight = h)
              for m in [5,10] 
-             for p in [3,4]
+             for p in [2,3,4]
              for h in [4,6,8]
     ]
 
