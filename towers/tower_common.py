@@ -17,8 +17,12 @@ class TowerWorld(object):
 
         self.blocks = []
 
-        self.H = 3.
-        self.W = 0.5
+        self.blockSize = {True: (1.9,0.5),
+                          False: (0.5,3.)}
+        self.blockOffset = {True: 0.5,
+                            False: 0.}
+        # self.H = 3.
+        # self.W = 0.5
         self.dt = 1./60
         self.locationNoise = 0.0
 
@@ -53,9 +57,9 @@ class TowerWorld(object):
 
         x += random.random()*self.locationNoise - self.locationNoise/2
         
-        dx = self.H if orientation else self.W
+        dx,dy = self.blockSize[orientation]
+        x += self.blockOffset[orientation]
         dx = dx/2
-        dy = self.W if orientation else self.H
         dy = dy/2
 
         safetyMargin = 0.1

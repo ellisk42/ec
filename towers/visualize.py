@@ -39,16 +39,13 @@ print "This tower has height %f and succeeds %d/100 of the time"%(height, int(su
 
 # --- main game loop ---
 
+state = "BUILDING"
+timer = None
 running = True
-nextResetTime = None
 while running:
-    # Check the event queue
     for event in pygame.event.get():
         if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
-            # The user closed the window or pressed escape
             running = False
-        if event.type == KEYDOWN:
-            world.impartImpulses(perturbation)
 
     screen.fill((0, 0, 0, 0))
     # Draw the world
@@ -59,16 +56,23 @@ while running:
     # Make Box2D simulate the physics of our world for one step.
     world.step(TIME_STEP)
 
-    if world.unmoving() and plan != []:
-        world.placeBlock(*plan[0])
-        plan = plan[1:]
-        if plan == []:
-            nextResetTime = time() + 5
-
-    if nextResetTime is not None and time() > nextResetTime:
-        plan = originalPlan
-        nextResetTime = None
-        world.clearWorld()
+    if state == "BUILDING":
+        if world.unmoving():
+            if plan != []:
+                world.placeBlock(*plan[0])
+                plan = plan[1:]
+                timer = time() + 2
+            elif time() > timer:
+                state = "DESTROYING"
+    elif state == "DESTROYING":
+        world.impartImpulses(perturbation)
+        state = "SPECTATING"
+        timer = time() + 2
+    elif state == "SPECTATING":
+        if world.unmoving() and time() > timer:
+            plan = originalPlan
+            world.clearWorld()
+            state = "BUILDING"
 
     # Flip the screen and try to keep at the target FPS
     pygame.display.flip()
