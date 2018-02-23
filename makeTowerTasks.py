@@ -5,36 +5,45 @@ import math
 
 class TowerTask(Task):
     RESULTCASH = {}
+    POSSIBLEPERTURBATIONS = []
+    STABILITYTHRESHOLD = 0.3
+    
     def __init__(self, _ = None, perturbation = 0,
                  maximumBlocks = 100,
-                 minimumHeight = None, minimumLength = None, maximumLength = None):
+                 minimumHeight = None):
         name = "P: %f; H: %f; B: %d"%(perturbation, minimumHeight, maximumBlocks)
-        super(TowerTask, self).__init__(name, tlist(tpair(tint,tbool)), [])
+        features = [perturbation, float(maximumBlocks), float(minimumHeight)]
+        super(TowerTask, self).__init__(name, tlist(tpair(tint,tbool)), [],
+                                        features = features)
 
         self.perturbation = perturbation
         self.maximumBlocks = maximumBlocks
         self.minimumHeight = minimumHeight
-        self.minimumLength = minimumLength
-        self.maximumLength = maximumLength
 
-    def logLikelihood(self, e, timeout = None):
+        TowerTask.POSSIBLEPERTURBATIONS.append(perturbation)
+
+    @staticmethod
+    def evaluateTower(tower, perturbation):
         from towers.tower_common import TowerWorld
         
-        tower = e.evaluate([])
-        if len(tower) > self.maximumBlocks: return NEGATIVEINFINITY
-
-        key = (tuple(tower), self.perturbation)
+        key = (tuple(tower), perturbation)
         if key in TowerTask.RESULTCASH: height, stabilities = TowerTask.RESULTCASH[key]
         else:
             w = TowerWorld()
-            height, stabilities = w.sampleStability(tower, self.perturbation, N = 30)
+            height, stabilities = w.sampleStability(tower, perturbation, N = 30)
             TowerTask.RESULTCASH[key] = (height, stabilities)
+        return height, stabilities
 
+    def logLikelihood(self, e, timeout = None):
+        tower = e.evaluate([])
+        if len(tower) > self.maximumBlocks: return NEGATIVEINFINITY
+
+        height, successProbability = TowerTask.evaluateTower(tower, self.perturbation)
+        
         if height < self.minimumHeight: return NEGATIVEINFINITY
-        successProbability = float(sum(stabilities))/len(stabilities)
-        if successProbability < 0.3: return NEGATIVEINFINITY
+        if successProbability < TowerTask.STABILITYTHRESHOLD: return NEGATIVEINFINITY
 
-        return 20.0*math.log(successProbability)
+        return 50.0*math.log(successProbability)
 
     def animateSolution(self, e):
         import os
@@ -46,15 +55,12 @@ class TowerTask(Task):
         
         
 def makeTasks():
-    return [ TowerTask(maximumBlocks = 9,
+    return [ TowerTask(maximumBlocks = m,
                        perturbation = p,
-                       minimumHeight = h,
-                       minimumLength = minimum,
-                       maximumLength = maximum)
+                       minimumHeight = h)
+             for m in [5,10] 
              for p in [3,4]
              for h in [4,6,8]
-             for minimum in [None] #+ range(1,2)
-             for maximum in [None] #+ range(3,4)
     ]
 
 

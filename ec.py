@@ -204,6 +204,7 @@ def explorationCompression(grammar, tasks,
         # Enumerate from recognition model
         if j > 0 and useRecognitionModel:
             bottomupFrontiers, times = recognizer.enumerateFrontiers(tasks, CPUs=CPUs,
+                                                                     solver=solver,
                                                                      maximumFrontier=maximumFrontier,
                                                                      frontierSize=frontierSize,
                                                                      enumerationTimeout=enumerationTimeout,

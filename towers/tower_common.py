@@ -148,7 +148,7 @@ class TowerWorld(object):
             # reset the world
             self.clearWorld()
         h = sum(hs)/N
-        return h, wasStable
+        return h, sum(wasStable)/float(len(wasStable))
     
             
 

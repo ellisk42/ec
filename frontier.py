@@ -70,6 +70,8 @@ class Frontier(object):
     def combine(self, other, tolerance = 0.01):
         '''Takes the union of the programs in each of the frontiers'''
         assert self.task == other.task
+
+        foundDifference = False
         
         x = {e.program: e for e in self }
         y = {e.program: e for e in other }
@@ -82,10 +84,18 @@ class Frontier(object):
                     e2 = y[p]
                     assert abs(e1.logPrior - e2.logPrior) < tolerance, \
                         "Log priors differed during frontier combining: %f vs %f"%(e1.logPrior, e2.logPrior)
-                    assert abs(e1.logLikelihood - e2.logLikelihood) < tolerance
+                    if abs(e1.logLikelihood - e2.logLikelihood) > tolerance:
+                        foundDifference = True
+                        e1 = FrontierEntry(program = e1.program,
+                                           logLikelihood = (e1.logLikelihood + e2.logLikelihood)/2,
+                                           logPrior = e1.logPrior)
             else:
                 e1 = y[p]
             union.append(e1)
+
+        if foundDifference:
+            eprint("WARNING: Log likelihoods differed for the same program on the task %s.\n"%(self.task.name),
+                   "\tThis is acceptable only if the likelihood model is stochastic. Took the geometric mean of the likelihoods.")
 
         return Frontier(union, self.task)
             

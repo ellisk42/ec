@@ -158,6 +158,7 @@ class RecognitionModel(nn.Module):
            else: return program, request, features
 
     def enumerateFrontiers(self, tasks,
+                           solver=None,
                            frontierSize=None, enumerationTimeout=None, 
                            CPUs=1, maximumFrontier=None, evaluationTimeout=None):
         with timing("Evaluated recognition model"):
@@ -170,6 +171,7 @@ class RecognitionModel(nn.Module):
                                            for k,(_,t,p) in enumerate(self.grammar.productions) ])
 
         return enumerateFrontiers(grammars, tasks,
+                                  solver=solver,
                                   frontierSize = frontierSize, enumerationTimeout=enumerationTimeout, 
                                   CPUs=CPUs, maximumFrontier=maximumFrontier,
                                   evaluationTimeout=evaluationTimeout)
