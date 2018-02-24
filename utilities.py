@@ -61,9 +61,12 @@ def parallelMap(numberOfCPUs, f, *xs, **keywordArguments):
     random.shuffle(permutation)
     inversePermutation = dict(zip(permutation, range(n)))
 
+    # Batch size of jobs as they are sent to processes
+    chunk = keywordArguments.get('chunk', max(1,int(n/(numberOfCPUs*2))))
+    
     maxTasks = keywordArguments.get('maxTasks', None)
     workers = Pool(numberOfCPUs, maxtasksperchild = maxTasks)
-    chunk = keywordArguments.get('chunk', max(1,int(n/(numberOfCPUs*2))))
+
     ys = workers.map(parallelMapCallBack, permutation,
                      chunksize = chunk)
     
@@ -263,3 +266,17 @@ def variance(l):
     m = mean(l)
     return sum( (x - m)**2 for x in l )/len(l)
 def standardDeviation(l): return variance(l)**0.5
+
+if __name__ == "__main__":
+    inputs = range(10**3)
+    
+    def f(x): return (os.getpid(), x)
+    ys = parallelMap(4, f, inputs,
+                     chunk = 1,
+                     maxTasks = 100)
+    jobs = {p: [ x for pp,x in ys if p == pp ]
+            for p,_ in ys}
+    
+    for j in sorted(jobs.keys()):
+        eprint(j,"was allocated",jobs[j],"total",len(jobs[j]))
+    eprint("In total,",len(jobs),"processes were used")
