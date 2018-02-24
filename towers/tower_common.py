@@ -17,7 +17,7 @@ class TowerWorld(object):
 
         self.blocks = []
 
-        self.blockSize = {True: (1.98,0.6),
+        self.blockSize = {True: (1.98,0.3),
                           False: (0.6,1.98)}
         self.blockOffset = {True: 0.5,
                             False: 0.}

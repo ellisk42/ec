@@ -58,9 +58,9 @@ def makeTasks():
     return [ TowerTask(maximumBlocks = m,
                        perturbation = p,
                        minimumHeight = h)
-             for m in [7,15] 
+             for m in [4,10] 
              for p in [2,2.5,3]
-             for h in [3,4,5,6]
+             for h in [5,6,7]
     ]
 
 
