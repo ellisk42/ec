@@ -164,28 +164,27 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
     USE_CUDA = False
     def __init__(self, tasks):
         def tokenize(examples, lexicon):
+            def sanitize(l): return [ z if z in lexicon else "?" for z in l ]
+            
             tokenized = []
-            for (x,), y in examples:
-                if isinstance(x, list):
-                    x = ["LIST_START"]+x+["LIST_END"]
-                else:
-                    x = [x]
+            for xs, y in examples:
                 if isinstance(y, list):
                     y = ["LIST_START"]+y+["LIST_END"]
                 else:
                     y = [y]
-                if True:  # force successful tokenization
-                    x = [e if e in lexicon else "?" for e in x]
-                    y = [e if e in lexicon else "?" for e in y]
-                    if len(x) > 25 or len(y) > 25:
-                        continue
-                    tokenized.append(((x,), y))
-                else:
-                    if all(e in lexicon for e in chain(x, y)):
-                        tokenized.append(((x,), y))
+                y = sanitize(y)
+
+                serializedInputs = []
+                for xi,x in enumerate(xs):
+                    if isinstance(x, list):
+                        x = ["LIST_START"]+x+["LIST_END"]
                     else:
-                        eprint("could not tokenize {} because {} not in lexicon".format(
-                            ((x,), y), fst(e for e in chain(x, y) if e not in lexicon)))
+                        x = [x]
+                    x = sanitize(x)
+                    serializedInputs.append(x)
+
+                tokenized.append((tuple(serializedInputs),y))
+            
             return tokenized
         lexicon = set(flatten((t.examples for t in tasks), abort=lambda x:isinstance(x, str))).union({"LIST_START", "LIST_END", "?"})
         super(LearnedFeatureExtractor, self).__init__(lexicon=list(lexicon),
@@ -297,13 +296,20 @@ if __name__ == "__main__":
 
     baseGrammar = Grammar.uniform(prims())
     # from program import *
-    # p = Program.parse("(lambda (reducei (lambda (lambda (lambda (and (is-prime $0) $1)))) true $0))")
+    # f = "#(lambda (lambda (lambda (if $0 (cons $1 $2) $2))))"
+    # Program.parse(f)
+    # p = Program.parse("(lambda (reducei (lambda (lambda (lambda (if (is-prime $0) (cons $0 $1) $1)))) empty $0))")
     # eprint(p)
+    # eprint(p.evaluate([])([1,2,4,2,7,3,5,1]))
     # eprint(baseGrammar.closedLogLikelihood(arrow(tlist(tint),tbool), p))
     # assert False
-    difficult = ["evens","drop-k with k=4","take-k with k=4","index-k with k=5"]
-    train = [ t for t in train if t.name in difficult]
-    for t in train:
-        print t
+    # difficult = ["reverse","evens","drop-k with k=4","take-k with k=4"]#,"index-k with k=5"]
+    # train = [ t for t in train if t.name in difficult]
+    from makeListTasks import make_list_bootstrap_tasks
+    train += make_list_bootstrap_tasks(10)
+    # for t in train:
+    #     print t
+    #     for xs,y in t.examples:
+    #         print "f(%s) = %s"%(xs,y)
     
     explorationCompression(baseGrammar, train, testingTasks=test, **args)

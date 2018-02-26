@@ -90,6 +90,35 @@ def make_list_tasks(n_examples):
             for t in make_list_task(routine.id, examples):
                 yield t
 
+
+def make_list_bootstrap_tasks(numberOfExamples):
+    def randomSuffix():
+        return [ randint(0,9) for _ in range(randint(1,4)) ]
+    filterBootstrap = []
+
+    for name, f in [("square", lambda x: (int(x**0.5)**2 == x)),
+                    ("prime", lambda x: x in {2,3,5,7}),
+                    ("is even", lambda x: x%2 == 0),
+                    ("is odd", lambda x: x%2 == 1),
+                    ("is < 5", lambda x: x < 5),
+                    ("is < 3", lambda x: x < 3),
+                    ("is < 4", lambda x: x < 4),
+                    ("is > 5", lambda x: x > 5),
+                    ("is > 3", lambda x: x > 3),
+                    ("is > 4", lambda x: x > 4),
+                    ("is 2", lambda x: x == 2),
+                    ("is 5", lambda x: x == 5),
+                    ("is 3", lambda x: x == 3),]:
+        t = Task("Prepend if %s"%name,
+                 arrow(tint,tlist(tint),tlist(tint)),
+                 [ ((x,s), [x]+s if f(x) else s)
+                   for x in range(10)
+                   for s in [randomSuffix()]
+                 ])
+        filterBootstrap.append(t)
+
+    return filterBootstrap
+        
 def main():
     import sys
     import cPickle as pickle

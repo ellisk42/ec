@@ -59,8 +59,8 @@ def makeTasks():
                        perturbation = p,
                        minimumHeight = h)
              for m in [4,10] 
-             for p in [2,2.5,3]
-             for h in [5,6,7]
+             for p in [1.5,2,2.5]
+             for h in [4,5,6,7]
     ]
 
 

@@ -17,9 +17,11 @@ class TowerWorld(object):
 
         self.blocks = []
 
-        self.blockSize = {True: (1.98,0.3),
-                          False: (0.6,1.98)}
-        self.blockOffset = {True: 0.5,
+        w = 2.5
+        h = 0.4
+        self.blockSize = {True: (w,h),
+                          False: (h,w)}
+        self.blockOffset = {True: 0.0,
                             False: 0.}
         # self.H = 3.
         # self.W = 0.5
@@ -148,7 +150,7 @@ class TowerWorld(object):
                 hs.append(initialHeight)
                 self.impartImpulses(perturbation)
                 self.stepUntilStable()
-                wasStable.append((not self.blocksSignificantlyMoved(1)) \
+                wasStable.append(True #(not self.blocksSignificantlyMoved(1)) \
                                  and (self.height() > initialHeight - 0.1))
             else:
                 hs.append(0.)

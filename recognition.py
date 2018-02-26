@@ -199,7 +199,13 @@ class RecurrentFeatureExtractor(nn.Module):
                                 for tp in {t.request for t in tasks } }
 
         assert lexicon
-        lexicon += ["STARTING","ENDING","MIDDLE"]
+        self.specialSymbols = [
+            "STARTING", # start of entire sequence
+            "ENDING", # ending of entire sequence
+            "STARTOFOUTPUT", # begins the start of the output
+            "ENDOFINPUT" # delimits the ending of an input - we might have multiple inputs
+        ]
+        lexicon += self.specialSymbols
         encoder = nn.Embedding(len(lexicon), H)
         if cuda:
             encoder = encoder.cuda()
@@ -227,33 +233,42 @@ class RecurrentFeatureExtractor(nn.Module):
         self.symbolToIndex = {symbol: index for index, symbol in enumerate(lexicon) }
         self.startingIndex = self.symbolToIndex["STARTING"]
         self.endingIndex = self.symbolToIndex["ENDING"]
-        self.middleIndex = self.symbolToIndex["MIDDLE"]
+        self.startOfOutputIndex = self.symbolToIndex["STARTOFOUTPUT"]
+        self.endOfInputIndex = self.symbolToIndex["ENDOFINPUT"]
 
     @property
     def outputDimensionality(self): return self.H
 
     def symbolEmbeddings(self):
         return {s: self.encoder(variable([self.symbolToIndex[s]])).squeeze(0).data.numpy()
-                for s in self.lexicon if not (s in ["STARTING","ENDING","MIDDLE"]) }
-
-    def observationEmbedding(self, x):
-        x = [self.startingIndex] + [ self.symbolToIndex[s] for s in x ] + [self.endingIndex]
-        x = variable(x, cuda=self.use_cuda)
-        x = self.encoder(x)
-        return x
+                for s in self.lexicon if not (s in self.specialSymbols) }
 
     def packExamples(self, examples):
         """IMPORTANT! xs must be sorted in decreasing order of size because pytorch is stupid"""
-        sizes = [ len(x) + len(y) + 3 for (x,),y in examples ]
-        maximumSize = max(sizes)
-        xs = [ [self.startingIndex] + \
-               [ self.symbolToIndex[s] for s in x ] + \
-               [self.middleIndex] + \
-               [ self.symbolToIndex[s] for s in y ] + \
-               [self.endingIndex]*(maximumSize - len(y) - len(x) + 1 - 3)
-               for ((x,),y) in examples ]
+        es = []
+        sizes = []
+        for xs,y in examples:
+            e = [self.startingIndex]
+            for x in xs:
+                for s in x:
+                    e.append(self.symbolToIndex[s])
+                e.append(self.endOfInputIndex)
+            e.append(self.startOfOutputIndex)
+            for s in y:
+                e.append(self.symbolToIndex[s])
+            e.append(self.endingIndex)
+            if es != []:
+                assert len(e) <= len(es[-1]), \
+                    "Examples must be sorted in decreasing order of their tokenized size. This should be transparently handled in recognition.py, so if this assertion fails it isn't your fault as a user of EC but instead is a bug inside of EC."
+            es.append(e)
+            sizes.append(len(e))
 
-        x = variable(xs, cuda=self.use_cuda)
+        m = max(sizes)
+        # padding
+        for j,e in enumerate(es):
+            es[j] += [self.endingIndex]*(m - len(e))
+
+        x = variable(es, cuda=self.use_cuda)
         x = self.encoder(x)
         # x: (batch size, maximum length, E)
         x = x.permute(1,0,2)
@@ -261,23 +276,8 @@ class RecurrentFeatureExtractor(nn.Module):
         x = pack_padded_sequence(x, sizes)
         return x, sizes
 
-    # def readInput(self, x):
-    #     x = self.observationEmbedding(x)
-    #     # x: (size of input)x(size of encoding)
-    #     output, hidden = self.inputModel(x.unsqueeze(1))
-    #     return hidden
-        
-    # def readOutput(self, y, hiddenStates):
-    #     y = self.observationEmbedding(y)
-    #     output, hidden = self.outputModel(y.unsqueeze(1),hiddenStates)
-    #     if self.bidirectional:
-    #         hidden,_ = hidden.max(dim = 0)
-    #     else: hidden = hidden.squeeze(0)
-    #     hidden = hidden.squeeze(0)
-    #     return hidden            
-
     def examplesEncoding(self, examples):
-        examples = sorted(examples, key = lambda ((x,),y): len(x) + len(y), reverse = True)
+        examples = sorted(examples, key = lambda (xs,y): sum(len(z)+1 for z in xs) + len(y), reverse = True)
         x,sizes = self.packExamples(examples)
         outputs, hidden = self.model(x)
         #outputs, sizes = pad_packed_sequence(outputs)
