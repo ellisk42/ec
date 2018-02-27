@@ -113,6 +113,11 @@ class RecognitionModel(nn.Module):
             len(frontiers),
             int(helmholtzRatio*100),
             self.featureExtractor.__class__.__name__))
+
+        # The number of Helmholtz samples that we generate at once
+        # Should only affect performance and shouldn't affect anything else
+        HELMHOLTZBATCH = 5000
+        helmholtzSamples = []
         
         optimizer = torch.optim.Adam(self.parameters(), lr=lr)
         with timing("Trained recognition model"):
@@ -127,7 +132,9 @@ class RecognitionModel(nn.Module):
                     # Randomly decide whether to sample from the generative model
                     doingHelmholtz = random.random() < helmholtzRatio
                     if doingHelmholtz:
-                        attempt = self.sampleHelmholtz(requests)
+                        if helmholtzSamples = []:
+                            helmholtzSamples = self.sampleManyHelmholtz(requests, HELMHOLTZBATCH)
+                        attempt = helmholtzSamples.pop()
                         if attempt is not None:
                             program, request, features = attempt
                             self.zero_grad()
@@ -150,12 +157,17 @@ class RecognitionModel(nn.Module):
                     gc.collect()
 
     def sampleHelmholtz(self, requests):
-           request = random.choice(requests)
-           program = self.grammar.sample(request)
-           features = self.featureExtractor.featuresOfProgram(program, request)
-           # Feature extractor failure
-           if features is None: return None
-           else: return program, request, features
+       request = random.choice(requests)
+       program = self.grammar.sample(request)
+       features = self.featureExtractor.featuresOfProgram(program, request)
+       # Feature extractor failure
+       if features is None: return None
+       else: return program, request, features
+
+    def sampleManyHelmholtz(self, requests, N):
+        return parallelMap(numberOfCPUs(),
+                           lambda _: self.sampleHelmholtz(requests),
+                           range(N))
 
     def enumerateFrontiers(self, tasks,
                            solver=None,
