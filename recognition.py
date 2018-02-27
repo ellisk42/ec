@@ -132,7 +132,7 @@ class RecognitionModel(nn.Module):
                     # Randomly decide whether to sample from the generative model
                     doingHelmholtz = random.random() < helmholtzRatio
                     if doingHelmholtz:
-                        if helmholtzSamples = []:
+                        if helmholtzSamples == []:
                             helmholtzSamples = self.sampleManyHelmholtz(requests, HELMHOLTZBATCH)
                         attempt = helmholtzSamples.pop()
                         if attempt is not None:
