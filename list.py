@@ -308,8 +308,7 @@ if __name__ == "__main__":
     from makeListTasks import make_list_bootstrap_tasks
     train += make_list_bootstrap_tasks(10)
     # for t in train:
-    #     print t
-    #     for xs,y in t.examples:
-    #         print "f(%s) = %s"%(xs,y)
+    #     print t.describe()
+    # assert False
     
     explorationCompression(baseGrammar, train, testingTasks=test, **args)

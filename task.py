@@ -28,6 +28,12 @@ class Task(object):
     def __eq__(self,o): return self.name == o.name
     def __ne__(self,o): return not (self == o)
     def __hash__(self): return hash(self.name)
+    def describe(self):
+        description = ["%s : %s"%(self.name, self.request)]
+        for xs,y in self.examples:
+            if len(xs) == 1: description.append("f(%s) = %s"%(xs[0],y))
+            else: description.append("f%s = %s"%(xs,y))
+        return "\n".join(description)
     def predict(self, f, x):
         for a in x: f = f(a)
         return f

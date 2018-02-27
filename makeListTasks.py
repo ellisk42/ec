@@ -117,7 +117,31 @@ def make_list_bootstrap_tasks(numberOfExamples):
                  ])
         filterBootstrap.append(t)
 
-    return filterBootstrap
+    reverseBootstrap = []
+    reverseBootstrap.append(Task("reverse",
+                                 arrow(tlist(tint),tlist(tint)),
+                                 [ ((x,), list(reversed(x)))
+                                   for _ in range(10) 
+                                   for x in [randomSuffix()] ]))
+    reverseBootstrap.append(Task("sort backwards",
+                                 arrow(tlist(tint),tlist(tint)),
+                                 [ ((x,), list(reversed(sorted(x))))
+                                   for _ in range(10) 
+                                   for x in [randomSuffix()] ]))
+
+    indexBootstrap = []
+    from random import choice
+    for j in range(6):
+        t = Task("If i = %d then x else y"%j,
+                 arrow(tint,tint,tint,tint),
+                 [ ((i,x,a), x if i == j else a)
+                    for i in range(6)
+                    for x in [ randint(0,9) ]
+                    for a in [ choice(list(set(range(10)) - {x})) ]
+                 ])
+        indexBootstrap.append(t)
+
+    return filterBootstrap + reverseBootstrap + indexBootstrap
         
 def main():
     import sys
