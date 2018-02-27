@@ -59,7 +59,15 @@ def solveForTask(g, task, _ = None, timeout = None, evaluationTimeout = None,
     p = subprocess.Popen(['./solver'],
                          stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     response, error = p.communicate(message)
-    response = json.loads(response)
+    try:
+        response = json.loads(response)
+    except:
+        eprint("FATAL: Could not load response from ocaml solver.")
+        eprint("response:")
+        eprint(response)
+        eprint("error:")
+        eprint(error)
+        assert False
 
     # Remove all entries that do not type correctly
     # This can occur because the solver tries to infer the type
