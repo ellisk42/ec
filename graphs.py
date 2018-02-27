@@ -80,7 +80,7 @@ def PCAembedding(e, label = lambda l: l, color = lambda ll: 'b'):
                        v[1] + random.random()))
 
 def plotECResult(resultPaths, colors='rgbycm', label=None, title=None, export=None,
-                 showLogLikelihood = False,
+                 showSolveTime = False,
                  iterations = None):
     results = []
     parameters = []
@@ -98,23 +98,23 @@ def plotECResult(resultPaths, colors='rgbycm', label=None, title=None, export=No
                 p = parseResultsPath(path)
                 parameters.append(p)
 
-    # Collect together the frontier sizes, which determine the style of the line drawn
-    frontierSizes = sorted(set( r.frontierSize for r in parameters ),
+    # Collect together the timeouts, which determine the style of the line drawn
+    timeouts = sorted(set( r.enumerationTimeout for r in parameters ),
                            reverse = 2)
-    frontierToStyle = {size: style for size, style in zip(frontierSizes,["-","--","-."]) }
+    timeoutToStyle = {size: style for size, style in zip(timeouts,["-","--","-."]) }
 
     f,a1 = plot.subplots(figsize = (5,5))
     a1.set_xlabel('Iteration', fontsize = 22)
     a1.xaxis.set_major_locator(MaxNLocator(integer = True))
 
-    if showLogLikelihood:
-        a1.set_ylabel('% Tasks Solved (solid)', fontsize = 18)
+    if showSolveTime:
+        a1.set_ylabel('% Tasks Solved (solid)', fontsize = 22)
     else:
         a1.set_ylabel('% Tasks Solved', fontsize = 22)
 
-    if showLogLikelihood:
+    if showSolveTime:
         a2 = a1.twinx()
-        a2.set_ylabel('Avg log likelihood (dashed)', fontsize = 22)
+        a2.set_ylabel('Avg solve time (dashed)', fontsize = 22)
 
     n_iters = max(len(result.learningCurve) for result in results)
     if iterations and n_iters > iterations: n_iters = iterations
@@ -129,13 +129,13 @@ def plotECResult(resultPaths, colors='rgbycm', label=None, title=None, export=No
         else:
             ys = [ 100. * x / len(result.taskSolutions) for x in result.learningCurve[:iterations]]
         color = recognitionToColor[p.useRecognitionModel]
-        l, = a1.plot(range(0, len(ys)), ys, color + frontierToStyle[p.frontierSize])
+        l, = a1.plot(range(0, len(ys)), ys, color + timeoutToStyle[p.enumerationTimeout])
         # if label is not None:
         #     l.set_label(label(p))
         
-        if showLogLikelihood:
-            a2.plot(range(1,len(result.averageDescriptionLength[:iterations]) + 1),
-                    [ -l for l in result.averageDescriptionLength[:iterations]],
+        if showSolveTime:
+            a2.plot(range(1,len(result.searchTimes[:iterations]) + 1),
+                    [ sum(ts)/float(len(ts)) for ts in result.searchTimes[:iterations]],
                     color + '--')
             
     a1.set_ylim(ymin = 0, ymax = 110)
@@ -143,8 +143,9 @@ def plotECResult(resultPaths, colors='rgbycm', label=None, title=None, export=No
     a1.set_yticks(range(0,110,20))
     plot.yticks(range(0,110,20),fontsize = 20)
 
-    if showLogLikelihood:
-        starting, ending = a2.get_ylim()#a2.set_ylim(ymax = 0)
+    if showSolveTime:
+        a2.set_ylim(ymin = 0)
+        starting, ending = a2.get_ylim()
         a2.yaxis.set_ticks(np.arange(starting, ending, (ending - starting)/5.))
 
     if title is not None:
@@ -154,9 +155,9 @@ def plotECResult(resultPaths, colors='rgbycm', label=None, title=None, export=No
     legends = []
     legends.append(a1.legend(loc = 'lower right', fontsize = 14,
               #bbox_to_anchor=(1, 0.5),
-              handles = [mlines.Line2D([],[],color = 'black',ls = frontierToStyle[frontierSize],
-                                       label = str(frontierSize))
-                         for frontierSize in frontierSizes ]))
+              handles = [mlines.Line2D([],[],color = 'black',ls = timeoutToStyle[timeout],
+                                       label = str(timeout))
+                         for timeout in timeouts ]))
     if False:
         # FIXME: figure out how to have two separate legends
         plot.gca().add_artist(plot.legend(loc = 'lower left', fontsize = 20,
@@ -224,7 +225,10 @@ if __name__ == "__main__":
             else:
                 l += "AE"
         else: l += "no NN"
-        l += " (frontier size %s)"%p.frontierSize
+        if hasattr(p,"frontierSize"):
+            l += " (frontier size %s)"%p.frontierSize
+        else:
+            l += " (timeout %ss)"%p.enumerationTimeout
         return l
     arguments = sys.argv[1:]
     export = [ a for a in arguments if a.endswith('.png') or a.endswith('.eps') ]
@@ -239,4 +243,5 @@ if __name__ == "__main__":
                  export = export,
                  title = title[0] if title else "DSL learning curves",
                  label = label,
+                 showSolveTime = True,
                  iterations = iterations)
