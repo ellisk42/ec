@@ -134,7 +134,7 @@ def plotECResult(resultPaths, colors='rgbycm', label=None, title=None, export=No
         #     l.set_label(label(p))
         
         if showSolveTime:
-            a2.plot(range(1,len(result.searchTimes[:iterations]) + 1),
+            a2.plot(range(len(result.searchTimes[:iterations])),
                     [ sum(ts)/float(len(ts)) for ts in result.searchTimes[:iterations]],
                     color + '--')
             
