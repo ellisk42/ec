@@ -262,6 +262,7 @@ def explorationCompression(grammar, tasks,
             recognizer = RecognitionModel(featureExtractorObject, grammar, activation=activation, cuda=cuda)
 
             recognizer.train(frontiers, topK=topK, steps=steps,
+                             CPUs = CPUs,
                              helmholtzRatio = helmholtzRatio)
             result.recognitionModel = recognizer
 

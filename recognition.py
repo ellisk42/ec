@@ -133,7 +133,7 @@ class RecognitionModel(nn.Module):
                     doingHelmholtz = random.random() < helmholtzRatio
                     if doingHelmholtz:
                         if helmholtzSamples == []:
-                            helmholtzSamples = self.sampleManyHelmholtz(requests, HELMHOLTZBATCH)
+                            helmholtzSamples = self.sampleManyHelmholtz(requests, HELMHOLTZBATCH, CPUs)
                         attempt = helmholtzSamples.pop()
                         if attempt is not None:
                             program, request, features = attempt
@@ -164,8 +164,8 @@ class RecognitionModel(nn.Module):
        if features is None: return None
        else: return program, request, features
 
-    def sampleManyHelmholtz(self, requests, N):
-        return parallelMap(numberOfCPUs(),
+    def sampleManyHelmholtz(self, requests, N, CPUs):
+        return parallelMap(CPUs,
                            lambda _: self.sampleHelmholtz(requests),
                            range(N))
 
