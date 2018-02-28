@@ -34,6 +34,7 @@ class TowerFeatureExtractor(HandCodedFeatureExtractor):
 
 def evaluateArches(ts):
     arches = [
+        "(do unit (do unit unit))",
         "(do (left tallVertical) (do (right tallVertical) wideHorizontal))",
         "(do (left tallVertical) (do (right tallVertical) horizontalBrick))",
         "(do (left tallVertical) (do (right tallVertical) tallVertical))",
@@ -63,7 +64,7 @@ def evaluateArches(ts):
 if __name__ == "__main__":
     g0 = Grammar.uniform(primitives)
     tasks = makeTasks()
-    # evaluateArches(tasks)
+    evaluateArches(tasks)
 
     result = explorationCompression(g0, tasks,
                                     outputPrefix = "experimentOutputs/tower",

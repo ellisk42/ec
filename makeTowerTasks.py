@@ -61,7 +61,7 @@ def makeTasks():
     return [ TowerTask(maximumMass = m,
                        perturbation = p,
                        minimumHeight = h)
-             for m in [6,14]
+             for m in [10,20,30]
              for p in [5, 10, 15]
              for h in [4,5,6,7]
     ]

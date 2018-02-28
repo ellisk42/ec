@@ -70,7 +70,9 @@ class TowerWorld(object):
                                             userData = {"color":
                                                         tuple(random.random()*128+127 for _ in range(4) ),
                                                         "p0": (x,y)})
-        box = body.CreatePolygonFixture(box=(dx, dy), density=1, friction=1)
+        box = body.CreatePolygonFixture(box=(dx, dy),
+                                        density=1,
+                                        friction=1)
         self.blocks.append(body)
 
     def step(self, dt):
