@@ -54,13 +54,11 @@ class TowerWorld(object):
 
             
 
-    def placeBlock(self, x, orientation):
+    def placeBlock(self, x, dx, dy):
         x += 11
 
         x += random.random()*self.locationNoise - self.locationNoise/2
         
-        dx,dy = self.blockSize[orientation]
-        x += self.blockOffset[orientation]
         dx = dx/2
         dy = dy/2
 
@@ -72,7 +70,7 @@ class TowerWorld(object):
                                             userData = {"color":
                                                         tuple(random.random()*128+127 for _ in range(4) ),
                                                         "p0": (x,y)})
-        box = body.CreatePolygonFixture(box=(dx, dy), density=1, friction=0.9)
+        box = body.CreatePolygonFixture(box=(dx, dy), density=1, friction=1)
         self.blocks.append(body)
 
     def step(self, dt):

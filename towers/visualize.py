@@ -35,7 +35,8 @@ def my_draw_polygon(polygon, body, fixture):
 polygonShape.draw = my_draw_polygon
 
 height, successes = TowerWorld().sampleStability(plan, perturbation, N = 100)
-print "This tower has height %f and succeeds %d/100 of the time"%(height, int(successes*100))
+mass = sum(w*h for _,w,h in plan)
+print "This tower has height %f, mass %f, and succeeds %d/100 of the time with a perturbation of %f"%(height, mass, int(successes*100),perturbation)
 
 # --- main game loop ---
 

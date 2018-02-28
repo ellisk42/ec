@@ -1,3 +1,5 @@
+from towerPrimitives import ttower
+
 from task import *
 
 import math
@@ -9,15 +11,15 @@ class TowerTask(Task):
     STABILITYTHRESHOLD = 0.5
     
     def __init__(self, _ = None, perturbation = 0,
-                 maximumBlocks = 100,
+                 maximumMass = 100,
                  minimumHeight = None):
-        name = "P: %f; H: %f; B: %d"%(perturbation, minimumHeight, maximumBlocks)
-        features = [perturbation, float(maximumBlocks), float(minimumHeight)]
-        super(TowerTask, self).__init__(name, tlist(tpair(tint,tbool)), [],
+        name = "P: %f; H: %f; M: %d"%(perturbation, minimumHeight, maximumMass)
+        features = [perturbation, float(maximumMass), float(minimumHeight)]
+        super(TowerTask, self).__init__(name, ttower, [],
                                         features = features)
 
         self.perturbation = perturbation
-        self.maximumBlocks = maximumBlocks
+        self.maximumMass = maximumMass
         self.minimumHeight = minimumHeight
 
         TowerTask.POSSIBLEPERTURBATIONS.append(perturbation)
@@ -36,7 +38,8 @@ class TowerTask(Task):
 
     def logLikelihood(self, e, timeout = None):
         tower = e.evaluate([])
-        if len(tower) > self.maximumBlocks: return NEGATIVEINFINITY
+        mass = sum(w*h for _,w,h in tower)
+        if mass > self.maximumMass: return NEGATIVEINFINITY
 
         height, successProbability = TowerTask.evaluateTower(tower, self.perturbation)
         
@@ -55,11 +58,11 @@ class TowerTask(Task):
         
         
 def makeTasks():
-    return [ TowerTask(maximumBlocks = m,
+    return [ TowerTask(maximumMass = m,
                        perturbation = p,
                        minimumHeight = h)
-             for m in [4,10] 
-             for p in [1.5,2,2.5]
+             for m in [6,14]
+             for p in [5, 10, 15]
              for h in [4,5,6,7]
     ]
 

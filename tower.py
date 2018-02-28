@@ -22,29 +22,30 @@ class TowerFeatureExtractor(HandCodedFeatureExtractor):
 
 def evaluateArches(ts):
     arches = [
-        [(0,False),(1,False),(0,True)],
-        [(0,False),(1,False),(0,True),
-         (2,False),(3,False),(2,True)],
-        [(0,False),(1,False),(0,True),
-         (2,False),(3,False),(2,True),
-         (1,True)]
-        [(-1,False),(0,False),(1,False),(0,True),(0,True)],
-        [(0,True),(-1,False),(0,False),(1,False),(0,True)]        
+        "(do (left tallVertical) (do (right tallVertical) wideHorizontal))",
+        "(do (left tallVertical) (do (right tallVertical) horizontalBrick))",
+        "(do (left tallVertical) (do (right tallVertical) tallVertical))",
+        "(do tallVertical tallVertical)",
+        "(do tallVertical horizontalBrick)",
+        "(do tallVertical (do tallVertical tallVertical))"
     ]
 
     for a in arches:
         print "Evaluating arch:"
         print a
         print
+        a = Program.parse(a).evaluate([])
+        os.system("python towers/visualize.py '%s' %f"%(a, 10))
 
         for t in ts:
-            if t.maximumBlocks < 10: continue
-            
             print t,
             print t.logLikelihood(Primitive(str(a),None,a)),t.logLikelihood(Primitive(str(a*2),None,a*2)),
             print
         print
-        print 
+        print
+
+    import sys
+    sys.exit()
             
 
 if __name__ == "__main__":
@@ -65,7 +66,6 @@ if __name__ == "__main__":
                                         pseudoCounts = 10,
                                         topK = 10,
                                         maximumFrontier = 10**4))
-
     for t,frontier in result.taskSolutions.iteritems():
         if not frontier.empty:
             t.animateSolution(frontier.bestPosterior.program)

@@ -267,6 +267,13 @@ def variance(l):
     return sum( (x - m)**2 for x in l )/len(l)
 def standardDeviation(l): return variance(l)**0.5
 
+def userName():
+    import getpass
+    return getpass.getuser()
+def hostname():
+    import socket
+    return socket.gethostname()
+
 if __name__ == "__main__":
     inputs = range(10**3)
     
@@ -280,3 +287,4 @@ if __name__ == "__main__":
     for j in sorted(jobs.keys()):
         eprint(j,"was allocated",jobs[j],"total",len(jobs[j]))
     eprint("In total,",len(jobs),"processes were used")
+
