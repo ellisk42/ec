@@ -7,7 +7,7 @@ import math
 
 class TowerTask(Task):
     RESULTCASH = {}
-    POSSIBLEPERTURBATIONS = []
+    tasks = []
     STABILITYTHRESHOLD = 0.5
     
     def __init__(self, _ = None, perturbation = 0,
@@ -22,7 +22,7 @@ class TowerTask(Task):
         self.maximumMass = maximumMass
         self.minimumHeight = minimumHeight
 
-        TowerTask.POSSIBLEPERTURBATIONS.append(perturbation)
+        TowerTask.tasks.append(self)
 
     @staticmethod
     def evaluateTower(tower, perturbation):
