@@ -8,15 +8,15 @@ import random
 
 class TowerFeatureExtractor(HandCodedFeatureExtractor):
     def _featuresOfProgram(self, p, _):
-        # [perturbation, blocks, height]
+        # [perturbation, mass, height]
         p = p.evaluate([])
-        maximumBlocks = len(p)
+        mass = sum(w*h for _,w,h in p)
 
         # Find the largest perturbation that this power can withstand
         for perturbation in sorted(set(TowerTask.POSSIBLEPERTURBATIONS), reverse = True):
             height, successProbability = TowerTask.evaluateTower(p, perturbation)
             if successProbability > TowerTask.STABILITYTHRESHOLD:         
-                return [perturbation, maximumBlocks, height]
+                return [perturbation, mass, height]
 
         return None
 
