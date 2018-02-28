@@ -141,7 +141,49 @@ def make_list_bootstrap_tasks(numberOfExamples):
                  ])
         indexBootstrap.append(t)
 
-    return filterBootstrap + reverseBootstrap + indexBootstrap
+    booleanBootstrap = []
+    for name, f in [("and", lambda x,y: x and y),
+                    ("or", lambda x,y: x or y)]:
+        booleanBootstrap.append(
+            Task(name, arrow(tbool,tbool,tbool),
+                 [ ((a,b),f(a,b))
+                   for a in [True,False]
+                   for b in [True,False] ]))
+    booleanBootstrap.append(
+        Task("not", arrow(tbool,tbool),
+             [ ((False,),True),
+               ((True,),False)]))
+    booleanBootstrap.append(
+        Task("True", tbool, [ ((),True) ]))
+    booleanBootstrap.append(
+        Task("False", tbool, [ ((),False) ]))
+
+    comparisonBootstrap = []
+    for name, f in [("less than", lambda x,y: x < y),
+                    ("not equal", lambda x,y: x != y),
+                    ("greater than or equal to", lambda x,y: x >= y),
+                    ("less than or equal to", lambda x,y: x <= y)]:
+        comparisonBootstrap.append(
+            Task(name, arrow(tint,tint,tbool),
+                 [ ((x,y), f(x,y))
+                   for x in range(4)
+                   for y in range(4) ]))
+
+    appendBootstrap = []
+    appendBootstrap.append(
+        Task("Singleton", arrow(tint,tlist(tint))
+             [ ((a,),[a])
+               for _ in range(5)
+               for a in [randint(0,9)] ]))
+    appendBootstrap.append(
+        Task("append", arrow(tlist(tint),tlist(tint),tlist(tint))
+             [ ((a,b),a+b)
+               for _ in range(5)
+               for a in [randomSuffix()]
+               for b in [randomSuffix()]]))
+
+    return filterBootstrap + reverseBootstrap + indexBootstrap + booleanBootstrap + comparisonBootstrap + \
+        appendBootstrap
         
 def main():
     import sys
