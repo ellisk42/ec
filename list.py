@@ -3,7 +3,7 @@ import random
 from collections import defaultdict
 from itertools import chain
 from ec import explorationCompression, commandlineArguments
-from utilities import eprint, numberOfCPUs, flatten, fst, testTrainSplit
+from utilities import eprint, numberOfCPUs, flatten, fst, testTrainSplit, POSITIVEINFINITY
 from grammar import Grammar
 from task import Task
 from type import Context, arrow, tlist, tint, t0, UnificationFailure
@@ -173,6 +173,7 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
                 else:
                     y = [y]
                 y = sanitize(y)
+                if len(y) > self.maximumLength: return None
 
                 serializedInputs = []
                 for xi,x in enumerate(xs):
@@ -181,12 +182,22 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
                     else:
                         x = [x]
                     x = sanitize(x)
+                    if len(x) > self.maximumLength: return None
                     serializedInputs.append(x)
 
                 tokenized.append((tuple(serializedInputs),y))
             
             return tokenized
+
         lexicon = set(flatten((t.examples for t in tasks), abort=lambda x:isinstance(x, str))).union({"LIST_START", "LIST_END", "?"})
+
+        # Calculate the maximum length
+        self.maximumLength = POSITIVEINFINITY
+        self.maximumLength = max( len(l)
+                                  for t in tasks
+                                  for xs,y in tokenize(t.examples, lexicon)
+                                  for l in [y] + [ x for x in xs ] )
+        
         super(LearnedFeatureExtractor, self).__init__(lexicon=list(lexicon),
                                                       tasks=tasks,
                                                       cuda=self.USE_CUDA,
