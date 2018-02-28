@@ -64,7 +64,7 @@ def evaluateArches(ts):
 if __name__ == "__main__":
     g0 = Grammar.uniform(primitives)
     tasks = makeTasks()
-    evaluateArches(tasks)
+    # evaluateArches(tasks)
 
     result = explorationCompression(g0, tasks,
                                     outputPrefix = "experimentOutputs/tower",
