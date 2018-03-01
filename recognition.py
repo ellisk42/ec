@@ -38,6 +38,7 @@ class DRNN(nn.Module):
         self.parentPrediction = nn.Linear(hidden, hidden, bias = False)
         self.prediction = nn.Linear(hidden, len(grammar) + 1, bias = False)
 
+        # todo: do I include the cell state?
         self.defaultSibling = variable(torch.Tensor(hidden).float()).view(1,1,-1)
         # self.defaultSibling2 = variable(torch.Tensor(hidden).float()).view(1,1,-1)
         # self.defaultSibling = (self.defaultSibling1, self.defaultSibling2)
@@ -64,7 +65,9 @@ class DRNN(nn.Module):
         
         r = self.prediction(predictive).view(-1)
         if alternatives is not None:
-            mask = variable([ float(int(p in alternatives))
+            haveVariables = any(a.isIndex for a in alternatives)
+            mask = variable([ float(int((p in alternatives) or \
+                                        (p.isIndex and haveVariables)))
                               for p in self.index2production ]).float().log()
             r += mask
         return F.log_softmax(r)
@@ -86,6 +89,7 @@ class DRNN(nn.Module):
     def programLoss(self, request, program, _ = None,
                     parent = None, sibling = None,
                     context = None, environment = []):
+        """Returns context, root, loss"""
         if context is None: context = Context.EMPTY
 
         if request.isArrow():
@@ -121,26 +125,28 @@ class DRNN(nn.Module):
         
         for argumentType, argument in zip(argumentTypes, xs):
             argumentType = argumentType.apply(context)
-            context, aL = self.programLoss(argumentType, argument,
-                                           context = context, environment = environment,
-                                           parent = parent, sibling = sibling)
+            context, aroot, aL = self.programLoss(argumentType, argument,
+                                                  context = context, environment = environment,
+                                                  parent = parent, sibling = sibling)
             L += aL
-            childSymbol,_ = argument.applicationParse()
-            sibling = self.updateSibling(sibling, childSymbol)
+            sibling = self.updateSibling(sibling, aroot)
 
-        return context, L
+        return (context,
+                Index(0) if f.isIndex else f, 
+                L)
 
     def sample(self, request, _ = None,
                parent = None, sibling = None,
                context = None, environment = []):
+        """Returns context , root , expression"""
         if context is None: context = Context.EMPTY
 
         if request.isArrow():
-            context, expression = self.sample(request.arguments[1],
-                                              context = context,
-                                              parent = parent, sibling = sibling,
-                                              environment = [request.arguments[0]] + environment)
-            return context, Abstraction(expression)
+            context, root, expression = self.sample(request.arguments[1],
+                                                    context = context,
+                                                    parent = parent, sibling = sibling,
+                                                    environment = [request.arguments[0]] + environment)
+            return context, root, Abstraction(expression)
             
         candidates = self.grammar.buildCandidates(request, context, environment,
                                                   normalize = False,
@@ -151,10 +157,11 @@ class DRNN(nn.Module):
         prediction = self.predictionFromHidden(parent, sibling,
                                                alternatives = alternatives).exp()
         f = self.index2production[torch.multinomial(prediction, 1).data[0]]
+        root = f
         if f.isIndex:
             # Sample one of the variables uniformly
-            # FIXME: indices are not handled correctly, in multiple places!
-            pass
+            assert f == Index(0)
+            f = random.choice([ a for a in alternatives if a.isIndex ])
 
         _,tp,context = candidates[f]
 
@@ -168,14 +175,13 @@ class DRNN(nn.Module):
 
         for argumentType in argumentTypes:
             argumentType = argumentType.apply(context)
-            context, a = self.sample(argumentType,
-                                     context = context, environment = environment,
-                                     parent = parent, sibling = sibling)
+            context, childSymbol, a = self.sample(argumentType,
+                                                  context = context, environment = environment,
+                                                  parent = parent, sibling = sibling)
             f = Application(f, a)
-            childSymbol,_ = a.applicationParse()
             sibling = self.updateSibling(sibling, childSymbol)
 
-        return context, f
+        return context, root, f
         
         
         
@@ -539,12 +545,12 @@ if __name__ == "__main__":
         m.zero_grad()
         l = None
         for p in observations:
-            _,_l = m.programLoss(request, p)
+            _1,_2,_l = m.programLoss(request, p)
             if l is None: l = _l
             else: l += _l
         if j > 0 and j%150 == 0:
             print l.data[0]/len(observations)
-            print m.sample(request)[1]
+            print m.sample(request)[2]
         l.backward()
         optimizer.step()
 
