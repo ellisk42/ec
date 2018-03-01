@@ -34,9 +34,9 @@ def my_draw_polygon(polygon, body, fixture):
     pygame.draw.polygon(screen, body.userData["color"], vertices)
 polygonShape.draw = my_draw_polygon
 
-height, successes = TowerWorld().sampleStability(plan, perturbation, N = 100)
+result = TowerWorld().sampleStability(plan, perturbation, N = 100)
 mass = sum(w*h for _,w,h in plan)
-print "This tower has height %f, mass %f, and succeeds %d/100 of the time with a perturbation of %f"%(height, mass, int(successes*100),perturbation)
+print "This tower has height %f, mass %f, area %f, len %f, and succeeds %d/100 of the time with a perturbation of %f"%(result.height, mass, result.area, result.length, int(result.stability*100),perturbation)
 
 # --- main game loop ---
 

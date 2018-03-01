@@ -8,7 +8,7 @@ import random
 
 class TowerFeatureExtractor(HandCodedFeatureExtractor):
     def _featuresOfProgram(self, p, _):
-        # [perturbation, mass, height]
+        # [perturbation, mass, height, length, area]
         p = p.evaluate([])
         mass = sum(w*h for _,w,h in p)
 
@@ -16,18 +16,28 @@ class TowerFeatureExtractor(HandCodedFeatureExtractor):
         if len(masses) == 0: return None
         mass = random.choice(list(masses))
 
-        heights = { t.minimumHeight for t in TowerTask.tasks }        
+        heights = { t.minimumHeight for t in TowerTask.tasks }
+        lengths = { t.minimumLength for t in TowerTask.tasks }
+        areas = { t.minimumArea for t in TowerTask.tasks }
 
         # Find the largest perturbation that this power can withstand
         perturbations = sorted({ t.perturbation for t in TowerTask.tasks }, reverse = True)        
         for perturbation in perturbations:
-            height, successProbability = TowerTask.evaluateTower(p, perturbation)
-            possibleHeightThresholds = { h for h in heights if height >= h }
-            if len(possibleHeightThresholds) > 0:
-                if successProbability > TowerTask.STABILITYTHRESHOLD:
+            result = TowerTask.evaluateTower(p, perturbation)
+            
+            possibleHeightThresholds = { h for h in heights if result.height >= h }
+            possibleLengthThresholds = { l for l in lengths if result.length >= l }
+            possibleAreaThresholds = { a for a in areas if result.area >= a }
+            
+            if len(possibleHeightThresholds) > 0 and \
+               len(possibleLengthThresholds) > 0 and \
+               len(possibleAreaThresholds) > 0:
+                if result.stability > TowerTask.STABILITYTHRESHOLD:
                     return [perturbation,
                             mass,
-                            random.choice(list(possibleHeightThresholds))]
+                            random.choice(list(possibleHeightThresholds)),
+                            random.choice(list(possibleLengthThresholds)),
+                            random.choice(list(possibleAreaThresholds))]
             else: return None
 
         return None
@@ -64,9 +74,12 @@ def evaluateArches(ts):
 if __name__ == "__main__":
     g0 = Grammar.uniform(primitives)
     tasks = makeTasks()
-    # evaluateArches(tasks)
+    test, train = testTrainSplit(tasks, 0.7)
+    eprint("Split %d/%d test/train"%(len(test),len(train)))
+    #evaluateArches(tasks)
 
-    result = explorationCompression(g0, tasks,
+    result = explorationCompression(g0, train,
+                                    testingTasks = test,
                                     outputPrefix = "experimentOutputs/tower",
                                     solver = "python",
                                     **commandlineArguments(

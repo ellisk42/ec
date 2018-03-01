@@ -6,6 +6,14 @@ from Box2D.b2 import (world, polygonShape, circleShape, staticBody, dynamicBody,
 import random
 import math
 
+class Bunch(object):
+    def __init__(self,d):
+        self.__dict__.update(d)
+    def __setitem__(self, key, item):
+        self.__dict__[key] = item
+    def __getitem__(self, key):
+        return self.__dict__[key]
+
 class TowerWorld(object):
     def __init__(self):
         self.world = world(gravity=(0, -10), doSleep=True)
@@ -17,24 +25,20 @@ class TowerWorld(object):
 
         self.blocks = []
 
-        w = 2.5
-        h = 0.4
-        self.blockSize = {True: (w,h),
-                          False: (h,w)}
-        self.blockOffset = {True: 0.0,
-                            False: 0.}
         # self.H = 3.
         # self.W = 0.5
         self.dt = 1./60
         self.locationNoise = 0.0
 
+        self.xOffset = 11
+
     def lowestLegalHeight(self, x, dx, dy):
-        lowest = dy + 0.5 # the floor
+        lowest = float('-inf')
 
         x1 = x - dx
         x2 = x + dx
 
-        for b in self.blocks:
+        for b in self.blocks + [self.ground_body]:
             # Fuck you box2d
             assert len(b.fixtures) == 1
             xs = [ (b.transform * v)[0]
@@ -55,7 +59,7 @@ class TowerWorld(object):
             
 
     def placeBlock(self, x, dx, dy):
-        x += 11
+        x += self.xOffset
 
         x += random.random()*self.locationNoise - self.locationNoise/2
         
@@ -69,7 +73,8 @@ class TowerWorld(object):
                                             angle=0,
                                             userData = {"color":
                                                         tuple(random.random()*128+127 for _ in range(4) ),
-                                                        "p0": (x,y)})
+                                                        "p0": (x,y),
+                                                        "dimensions": (dx*2,dy*2)})
         box = body.CreatePolygonFixture(box=(dx, dy),
                                         density=1,
                                         friction=1)
@@ -94,6 +99,46 @@ class TowerWorld(object):
                for b in self.blocks
                for v in b.fixtures[0].shape.vertices ]
         return max(xs) - min(xs)
+
+    def enclosedArea(self):
+        from scipy.ndimage.morphology import binary_fill_holes
+        import numpy as np
+        
+        
+        resolution = 0.25
+        def rounding(z): return int(z/resolution + 0.5)
+
+        h = rounding(self.height()) + 4
+        w = rounding(self.length()) + 6
+        x0 = min( b.userData["p0"][0] for b in self.blocks )
+
+        picture = np.zeros((w,h)).astype(int)
+        
+        for b in self.blocks:
+            x,y = b.userData["p0"]
+            dx,dy = b.userData["dimensions"]
+
+            y -= 1 # lower down to the floor
+            x -= x0
+
+            dx = rounding(dx/2)
+            dy = rounding(dy/2)
+            x = rounding(x) + 1
+            y = rounding(y) + 1
+
+            for _dx in range(-dx,dx):
+                for _dy in range(-dy,dy):
+                    picture[x + _dx, y + _dy] = 1
+
+        # Draw the floor
+        picture[:,0] = 1
+            
+        flooded = binary_fill_holes(picture).astype(int)
+        return resolution*resolution*((flooded - picture) == 1).sum()
+        
+
+            
+            
 
     def impartImpulses(self, p):
         for b in self.blocks:
@@ -143,15 +188,23 @@ class TowerWorld(object):
     def sampleStability(self, plan, perturbation, N = 5):
         hs = []
         wasStable = []
+        area = 0
+        haveArea = False
+        length = 0
         for _ in range(N):
             planSucceeds = self.executePlan(plan)
             if planSucceeds:
+                
+                if not haveArea:
+                    area = self.enclosedArea()
+                    length = self.length()
+                    haveArea = True
+                    
                 initialHeight = self.height()
                 hs.append(initialHeight)
                 self.impartImpulses(perturbation)
                 self.stepUntilStable()
-                wasStable.append(True #(not self.blocksSignificantlyMoved(1)) \
-                                 and (self.height() > initialHeight - 0.1))
+                wasStable.append(self.height() > initialHeight - 0.1)
             else:
                 hs.append(0.)
                 wasStable.append(False)
@@ -159,7 +212,10 @@ class TowerWorld(object):
             # reset the world
             self.clearWorld()
         h = sum(hs)/N
-        return h, sum(wasStable)/float(len(wasStable))
+        return Bunch({"height": h,
+                      "stability": sum(wasStable)/float(len(wasStable)),
+                      "area": area,
+                      "length": length})
     
             
 
