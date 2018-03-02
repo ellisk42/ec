@@ -21,8 +21,14 @@ def variable(x, volatile=False, cuda=False):
     return Variable(x, volatile=volatile)
 
 class DRNN(nn.Module):
-    def __init__(self, grammar, hidden=16, cuda=False):
+    def __init__(self, grammar, featureExtractor, hidden=16, cuda=False):
         super(DRNN, self).__init__()
+
+        self.featureExtractor = featureExtractor
+        # Converts the output of the feature extractor into the
+        # initial hidden state of the parent rnn
+        self.featureExtractor2parentH = nn.Linear(featureExtractor.outputDimensionality, hidden)
+        self.featureExtractor2parentC = nn.Linear(featureExtractor.outputDimensionality, hidden)
         
         self.grammar = grammar
         self.production2index = {p: j+1 for j,(_,_,p) in enumerate(grammar.productions) }
@@ -72,6 +78,11 @@ class DRNN(nn.Module):
             r += mask
         return F.log_softmax(r)
 
+    def initialParent(self, task):
+        features = self.featureExtractor.featuresOfTask(task)
+        return (self.featureExtractor2parentH(features).view(1,1,-1),
+                self.featureExtractor2parentC(features).view(1,1,-1))
+    
     def updateParent(self, parent, symbol):
         embedding = self.embedProduction(symbol)
         _, h = self.parent(embedding.view(1,1,-1), parent)
@@ -86,7 +97,14 @@ class DRNN(nn.Module):
         return F.nll_loss(prediction.view(1,-1),
                           self.indexProduction(target))
 
-    def programLoss(self, request, program, _ = None,
+    def programLoss(self, program, task):
+        request = task.request
+        parent = self.initialParent(task)
+        context, root, loss = self._programLoss(request, program,
+                                                parent = parent)
+        return loss
+
+    def _programLoss(self, request, program, _ = None,
                     parent = None, sibling = None,
                     context = None, environment = []):
         """Returns context, root, loss"""
@@ -94,7 +112,7 @@ class DRNN(nn.Module):
 
         if request.isArrow():
             assert isinstance(program,Abstraction)
-            return self.programLoss(request.arguments[1],
+            return self._programLoss(request.arguments[1],
                                     program.body,
                                     context = context,
                                     environment = [request.arguments[0]] + environment,
@@ -125,7 +143,7 @@ class DRNN(nn.Module):
         
         for argumentType, argument in zip(argumentTypes, xs):
             argumentType = argumentType.apply(context)
-            context, aroot, aL = self.programLoss(argumentType, argument,
+            context, aroot, aL = self._programLoss(argumentType, argument,
                                                   context = context, environment = environment,
                                                   parent = parent, sibling = sibling)
             L += aL
@@ -135,14 +153,19 @@ class DRNN(nn.Module):
                 Index(0) if f.isIndex else f, 
                 L)
 
-    def sample(self, request, _ = None,
+    def sample(self, task):
+        context, root, p = self._sample(task.request,
+                                        parent = self.initialParent(task))
+        return p
+
+    def _sample(self, request, _ = None,
                parent = None, sibling = None,
                context = None, environment = []):
         """Returns context , root , expression"""
         if context is None: context = Context.EMPTY
 
         if request.isArrow():
-            context, root, expression = self.sample(request.arguments[1],
+            context, root, expression = self._sample(request.arguments[1],
                                                     context = context,
                                                     parent = parent, sibling = sibling,
                                                     environment = [request.arguments[0]] + environment)
@@ -159,7 +182,7 @@ class DRNN(nn.Module):
         f = self.index2production[torch.multinomial(prediction, 1).data[0]]
         root = f
         if f.isIndex:
-            # Sample one of the variables uniformly
+            # _Sample one of the variables uniformly
             assert f == Index(0)
             f = random.choice([ a for a in alternatives if a.isIndex ])
 
@@ -175,14 +198,17 @@ class DRNN(nn.Module):
 
         for argumentType in argumentTypes:
             argumentType = argumentType.apply(context)
-            context, childSymbol, a = self.sample(argumentType,
+            context, childSymbol, a = self._sample(argumentType,
                                                   context = context, environment = environment,
                                                   parent = parent, sibling = sibling)
             f = Application(f, a)
             sibling = self.updateSibling(sibling, childSymbol)
 
         return context, root, f
-        
+
+    def enumeration(self, task, upperBound, lowerBound):
+        p0 = self.initialParent(parent)
+                
         
         
         
@@ -523,34 +549,39 @@ class HandCodedFeatureExtractor(object):
         return variable([ (f - self.averages[j])/self.deviations[j] for j,f in enumerate(features) ], cuda=self.cuda).float()
     
                 
-
 if __name__ == "__main__":
     from arithmeticPrimitives import *
     g = Grammar.uniform([addition, multiplication, real, k0, k1])
-
-    m = DRNN(g, hidden = 16)
-    m.float()
 
     observations = [ #"(* 0 REAL)",
         "(lambda (* $0 REAL))",
                     "(lambda (+ REAL (* $0 REAL)))"
     ]
+    request = arrow(tint,tint)
+    tasks = [Task(p,request,[],features = [j])
+             for j,p in enumerate(observations) ]
+    fe = HandCodedFeatureExtractor(tasks)
     observations = map(Program.parse, observations)
+
+    m = DRNN(g, fe, hidden = 8)
+    m.float()
+
 
     optimizer = torch.optim.Adam(m.parameters(), lr=0.0001)
 
-    request = arrow(tint,tint)
+
 
     for j in range(100000):
         m.zero_grad()
         l = None
-        for p in observations:
-            _1,_2,_l = m.programLoss(request, p)
+        for t,p in zip(observations,tasks):
+            _l = m.programLoss(t, p)
             if l is None: l = _l
             else: l += _l
         if j > 0 and j%150 == 0:
             print l.data[0]/len(observations)
-            print m.sample(request)[2]
+            for t in tasks:
+                print m.sample(t)
         l.backward()
         optimizer.step()
 
