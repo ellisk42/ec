@@ -69,16 +69,22 @@ class TowerTask(Task):
         
         
 def makeTasks():
+    STRONGPERTURBATION = 12
+    MILDPERTURBATION = 8
+    MASSES = [10,20,30]
+    HEIGHT = [4,5,6,7]
     return [ TowerTask(maximumMass = float(m),
                        minimumArea = float(a),
                        perturbation = float(p),
                        minimumLength = float(l),
                        minimumHeight = float(h))
-             for m in [10,20,30]
+             for m in MASSES
              for a in [1, 2.9, 5.8]
              for l in [0, 5]
-             for p in [10, 15]
-             for h in [4,5,6,7]
+             for p in [MILDPERTURBATION, STRONGPERTURBATION]
+             for h in HEIGHT
+             if not ((p == STRONGPERTURBATION and m == min(MASSES)) or \
+                     (p == STRONGPERTURBATION and h == max(HEIGHT)))
     ]
 
 
