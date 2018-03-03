@@ -14,6 +14,8 @@ from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 
 import numpy as np
 
+from heapq import *
+        
 def variable(x, volatile=False, cuda=False):
     if isinstance(x,list): x = np.array(x)
     if isinstance(x,(np.ndarray,np.generic)): x = torch.from_numpy(x)
@@ -202,7 +204,6 @@ class DRNN(nn.Module):
         return context, root, f
 
     def enumeration(self, task, upperBound, lowerBound):
-        from heapq import *
         pq = []
 
         def choices(xs):
