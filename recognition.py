@@ -46,13 +46,8 @@ class DRNN(nn.Module):
 
         # todo: do I include the cell state?
         self.defaultSibling = variable(torch.Tensor(hidden).float()).view(1,1,-1)
-        # self.defaultSibling2 = variable(torch.Tensor(hidden).float()).view(1,1,-1)
-        # self.defaultSibling = (self.defaultSibling1, self.defaultSibling2)
 
         self.defaultParent = variable(torch.Tensor(hidden).float()).view(1,1,-1)
-        # self.defaultParent2 = variable(torch.Tensor(hidden).float()).view(1,1,-1)
-        # self.defaultParent = (self.defaultParent1, self.defaultParent2)
-
         
     def embedProduction(self,p):
         if p.isIndex: p = Index(0)
@@ -207,7 +202,60 @@ class DRNN(nn.Module):
         return context, root, f
 
     def enumeration(self, task, upperBound, lowerBound):
+        from heapq import *
+        pq = []
+
+        def choices(xs):
+            for x in xs: heappush(pq, x)
+
+        def g(request, _ = None,
+              parent = None, sibling = None,
+              context = None, environment = [],
+              k = None):
+            """
+            k is a continuation. 
+            k: Expects to be called with MDL, context, root, expression.
+            """
+            
+            assert k is not None
+            if context is None: context = Context.EMPTY
+
+            if request.isArrow():
+                g(request.arguments[1],
+                  context = context,
+                  parent = parent, sibling = sibling,
+                  environment = [request.arguments[0]] + environment,
+                  k = lambda MDL, newContext, root, p: k(MDL, newContext, root, Abstraction(expression)))
+                return
+            
+            candidates = self.grammar.buildCandidates(request, context, environment,
+                                                      normalize = False,
+                                                      returnProbabilities = False,
+                                                      returnTable = True)
+            
+            alternatives = candidates.keys()
+            prediction = self.predictionFromHidden(parent, sibling,
+                                                   alternatives = alternatives)
+            numberOfVariables = sum( alternative.isIndex
+                                     for alternative in alternatives )
+            # update the candidates so that they reflect what the
+            # neural network thinks
+            for a,(_,tp,newContext) in alternatives.iteritems():
+                MDL = -prediction[self.production2index[Index(0) if a.isIndex else a]]
+                if a.isIndex: MDL += math.log(numberOfVariables)
+                alternatives[a] = (MDL,tp,newContext)
+
+            #choices(map(makeChoices, ))
+
+                
+            
+
+            
+            
+        
         p0 = self.initialParent(parent)
+
+        pq = []
                 
         
         
