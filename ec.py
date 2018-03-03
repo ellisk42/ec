@@ -153,6 +153,7 @@ def explorationCompression(grammar, tasks,
             result = dill.load(handle)
         eprint("Loaded checkpoint from", path)
         grammar = result.grammars[-1] if result.grammars else grammar
+        recognizer = result.recognitionModel
         if resumeFrontierSize:
             frontierSize = resumeFrontierSize
             eprint("Set frontier size to", frontierSize)
