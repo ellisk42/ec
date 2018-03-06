@@ -56,6 +56,8 @@ class TowerTask(Task):
         mass = sum(w*h for _,w,h in tower)
         if mass > self.maximumMass: return NEGATIVEINFINITY
 
+        tower = centerTower(tower)
+
         result = TowerTask.evaluateTower(tower, self.perturbation)
         
         if result.height < self.minimumHeight: return NEGATIVEINFINITY
@@ -68,11 +70,23 @@ class TowerTask(Task):
     def animateSolution(self, e):
         import os
 
-        tower = e.evaluate([])
+        if isinstance(e, Program):
+            tower = e.evaluate([])
+        else:
+            assert isinstance(e, list)
+            tower = e
 
         os.system("python towers/visualize.py '%s' %f"%(tower, self.perturbation))
 
-        
+    def drawSolution(self,tower):
+        from towers.tower_common import TowerWorld
+        return TowerWorld().draw(tower)
+
+def centerTower(t):
+    x1 = max(x for x,_,_ in t )
+    x0 = min(x for x,_,_ in t )
+    c = float(x1 + x0)/2.
+    return [ (x - c, w, h) for x,w,h in t ]
         
 def makeTasks():
     STRONGPERTURBATION = 12

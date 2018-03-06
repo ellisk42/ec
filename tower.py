@@ -92,6 +92,21 @@ if __name__ == "__main__":
                                         pseudoCounts = 10,
                                         topK = 10,
                                         maximumFrontier = 10**4))
+    towers = set([])
+    renders = []
+    import matplotlib.pyplot as plot
+    
     for t,frontier in result.taskSolutions.iteritems():
         if not frontier.empty:
-            t.animateSolution(frontier.bestPosterior.program)
+            tower = centerTower(frontier.bestPosterior.program.evaluate([]))
+            if not (str(tower) in towers):
+                #t.animateSolution(tower)
+                a = t.drawSolution(tower)
+                renders.append(a)
+                # plot.imshow(a)
+                # plot.show()
+                # break
+                towers.add(str(tower))
+    renders = np.concatenate(renders,axis = 1)
+    from PIL import Image
+    Image.fromarray(renders).convert('RGB').save('uniqueTowers.png')

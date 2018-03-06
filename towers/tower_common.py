@@ -20,7 +20,7 @@ class TowerWorld(object):
         self.ground_body = self.world.CreateStaticBody(
             position=(0, 0),
             shapes=polygonShape(box=(50, 1)),
-            userData = {"color": (255, 255, 255, 255) }
+            userData = {"color": (255, 255, 255) }
         )
 
         self.blocks = []
@@ -72,7 +72,7 @@ class TowerWorld(object):
         body = self.world.CreateDynamicBody(position=(x, y),
                                             angle=0,
                                             userData = {"color":
-                                                        tuple(random.random()*128+127 for _ in range(4) ),
+                                                        tuple(random.random()*128+127 for _ in range(3) ),
                                                         "p0": (x,y),
                                                         "dimensions": (dx*2,dy*2)})
         box = body.CreatePolygonFixture(box=(dx, dy),
@@ -184,6 +184,36 @@ class TowerWorld(object):
         for b in self.blocks:
             self.world.DestroyBody(b)
         self.blocks = []
+
+    def draw(self, plan):
+        import cairo
+        import numpy as np
+        
+        self.executePlan(plan)
+
+        ppm = 12. # pixels per meter
+        W = 256
+        H = 256
+        surface = cairo.ImageSurface(cairo.FORMAT_RGB24,W,H)
+        context = cairo.Context(surface)
+
+        for b in [self.ground_body] + self.blocks:
+            xs = [ (b.transform * v)[0] * ppm
+                   for v in b.fixtures[0].shape.vertices ]
+            ys = [ (b.transform * v)[1] * ppm
+                   for v in b.fixtures[0].shape.vertices ]
+            context.set_line_width(1)
+            context.move_to(xs[0],ys[0])
+            color = [c/255. for c in b.userData["color"] ]
+            context.set_source_rgb(*color)
+            context.move_to(xs[-1],ys[-1])
+            for x,y in zip(xs,ys):
+                context.line_to(x,y)
+            context.fill()
+
+        a = np.frombuffer(surface.get_data(), np.uint8)
+        a.shape = (W,H,4)
+        return np.flip(a[:,:,:3], 0)
 
     def sampleStability(self, plan, perturbation, N = 5):
         hs = []
