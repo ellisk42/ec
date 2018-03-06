@@ -100,6 +100,42 @@ class TowerWorld(object):
                for v in b.fixtures[0].shape.vertices ]
         return max(xs) - min(xs)
 
+    def supportedLength(self, height):
+        intervals = set([])
+        for b in self.blocks:
+            ys = [ (b.transform * v)[1]
+                   for v in b.fixtures[0].shape.vertices ]
+            if all( y < height for y in ys ): continue
+            xs = [ (b.transform * v)[0]
+                   for v in b.fixtures[0].shape.vertices ]
+            x2 = max(xs)
+            x1 = min(xs)
+            intervals.add((x1,x2))
+
+        def overlap((small1,large1),(small2,large2)):
+            if large1 < small2: return False
+            if large2 < small1: return False
+            return True
+
+        merged = True
+        while merged:
+            merged = False
+            for j,i1 in enumerate(intervals):
+                for k,i2 in enumerate(intervals):
+                    if k > j and merged == False:
+                        if overlap(i1,i2):
+                            merged = (j,k)
+            if merged:
+                j,k = merged
+                s1,l1 = intervals[j]
+                s2,l2 = intervals[k]
+                s = min(s1,s2)
+                l = max(l1,l2)
+                intervals[j] = (s,l)
+                del intervals[k]
+        return sum( l - s for s,l in intervals )
+        
+
     def enclosedArea(self):
         from scipy.ndimage.morphology import binary_fill_holes
         import numpy as np
@@ -224,13 +260,13 @@ class TowerWorld(object):
         for _ in range(N):
             planSucceeds = self.executePlan(plan)
             if planSucceeds:
+                initialHeight = self.height()
                 
                 if not haveArea:
                     area = self.enclosedArea()
-                    length = self.length()
+                    length = self.supportedLength(initialHeight - 0.5)
                     haveArea = True
                     
-                initialHeight = self.height()
                 hs.append(initialHeight)
                 self.impartImpulses(perturbation)
                 self.stepUntilStable()

@@ -45,7 +45,9 @@ class TowerFeatureExtractor(HandCodedFeatureExtractor):
 def evaluateArches(ts):
     arches = [
         # "(do unit (do unit unit))",
-        "(do 1x4 (do (left 1x4) 4x1))",
+#        "(do 1x4 (do (left 1x4) 4x1))",
+#        "(do (right 1x4) (do (left (left 1x4)) 4x1))",
+        "(do (do (right 1x4) (do (left (left 1x4)) 4x1)) (right (right (right (right (do (right 1x4) (do (left (left 1x4)) 4x1)))))))",
 #        "(do (left tallVertical) (do (right tallVertical) wideHorizontal))",
 #        "(do (left tallVertical) (do (right tallVertical) horizontalBrick))",
         # "(do (left tallVertical) (do (right tallVertical) tallVertical))",
@@ -77,7 +79,7 @@ if __name__ == "__main__":
     tasks = makeTasks()
     test, train = testTrainSplit(tasks, 100./len(tasks))
     eprint("Split %d/%d test/train"%(len(test),len(train)))
-    #evaluateArches(train)
+    evaluateArches(train)
 
     result = explorationCompression(g0, train,
                                     testingTasks = test,
