@@ -101,7 +101,7 @@ class TowerWorld(object):
         return max(xs) - min(xs)
 
     def supportedLength(self, height):
-        intervals = set([])
+        intervals = []
         for b in self.blocks:
             ys = [ (b.transform * v)[1]
                    for v in b.fixtures[0].shape.vertices ]
@@ -110,7 +110,7 @@ class TowerWorld(object):
                    for v in b.fixtures[0].shape.vertices ]
             x2 = max(xs)
             x1 = min(xs)
-            intervals.add((x1,x2))
+            intervals.append((x1,x2))
 
         def overlap((small1,large1),(small2,large2)):
             if large1 < small2: return False
