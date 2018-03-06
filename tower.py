@@ -90,7 +90,7 @@ def exportTowers(towers):
 if __name__ == "__main__":
     g0 = Grammar.uniform(primitives)
     tasks = makeTasks()
-    test, train = testTrainSplit(tasks, 50./len(tasks))
+    test, train = testTrainSplit(tasks, 100./len(tasks))
     eprint("Split %d/%d test/train"%(len(test),len(train)))
     # evaluateArches(train)
 
