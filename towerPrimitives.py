@@ -15,16 +15,23 @@ def _right(x): return map(lambda b: tuple([b[0] + 1] + list(b[1:])), x)
 ttower = baseType("tower")
 
 # name, dimensions
-blocks = {"unit": (1.,1.),
-          "horizontalBrick": (2.,1.),
-          "verticalBrick": (1.,2.),
-          "wideHorizontal": (4.,1.),
-          "tallVertical": (1.,4.)}
+blocks = {"1x1": (1.,1.),
+          "2x1": (2.,1.),
+          "1x2": (1.,2.),
+          "4x1": (4.,1.),
+          "1x4": (1.,4.)}
 epsilon = 0.05
+
+# Ensures axis aligned blocks
+def xOffset(w,h):
+    assert w == int(w)
+    w = int(w)
+    if w%2 == 1: return 0.5
+    return 0.
 
 primitives = [
               Primitive("do", arrow(ttower,ttower,ttower), _concatenate),
               Primitive("left", arrow(ttower,ttower), _left),
               Primitive("right", arrow(ttower,ttower), _right),
-] + [ Primitive(name, ttower, [(0., w - epsilon, h - epsilon)])
+] + [ Primitive(name, ttower, [(xOffset(w,h), w - epsilon, h - epsilon)])
       for name, (w,h) in blocks.iteritems() ]
