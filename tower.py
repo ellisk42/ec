@@ -72,44 +72,46 @@ def evaluateArches(ts):
 
     import sys
     sys.exit()
-            
+
+def exportTowers(towers):
+    from PIL import Image
+    from towers.tower_common import TowerWorld
+
+    m = max(len(t) for t in towers)
+    towers = [ [ TowerWorld().drawSolution(t) for t in ts ]
+               for ts in towers ]
+    w,h = towers[0][0].shape
+    towers = [ np.concatenate(ts + [np.zeros((w,h))]*(m - len(ts)), axis = 1)
+               for ts in towers ]
+    towers = np.concatenate(towers, axis = 0)
+    Image.fromarray(renders).convert('RGB').save('uniqueTowers.png')    
+    
 
 if __name__ == "__main__":
     g0 = Grammar.uniform(primitives)
     tasks = makeTasks()
-    test, train = testTrainSplit(tasks, 100./len(tasks))
+    test, train = testTrainSplit(tasks, 10./len(tasks))
     eprint("Split %d/%d test/train"%(len(test),len(train)))
-    evaluateArches(train)
+    # evaluateArches(train)
 
-    result = explorationCompression(g0, train,
-                                    testingTasks = test,
-                                    outputPrefix = "experimentOutputs/tower",
-                                    solver = "python",
-                                    **commandlineArguments(
-                                        featureExtractor = TowerFeatureExtractor,
-                                        CPUs = numberOfCPUs(),
-                                        helmholtzRatio = 0.5,
-                                        iterations = 5,
-                                        a = 3,
-                                        structurePenalty = 1,
-                                        pseudoCounts = 10,
-                                        topK = 10,
-                                        maximumFrontier = 10**4))
-    towers = set([])
-    renders = []
-    import matplotlib.pyplot as plot
-    
-    for t,frontier in result.taskSolutions.iteritems():
-        if not frontier.empty:
-            tower = centerTower(frontier.bestPosterior.program.evaluate([]))
-            if not (str(tower) in towers):
-                #t.animateSolution(tower)
-                a = t.drawSolution(tower)
-                renders.append(a)
-                # plot.imshow(a)
-                # plot.show()
-                # break
-                towers.add(str(tower))
-    renders = np.concatenate(renders,axis = 1)
-    from PIL import Image
-    Image.fromarray(renders).convert('RGB').save('uniqueTowers.png')
+    generator = ecIterator(g0, train,
+                           testingTasks = test,
+                           outputPrefix = "experimentOutputs/tower",
+                           solver = "python",
+                           **commandlineArguments(
+                               featureExtractor = TowerFeatureExtractor,
+                               CPUs = numberOfCPUs(),
+                               helmholtzRatio = 0.5,
+                               iterations = 5,
+                               a = 3,
+                               structurePenalty = 1,
+                               pseudoCounts = 10,
+                               topK = 10,
+                               maximumFrontier = 10**4))
+    # list of list of towers, one for each iteration
+    towers = []
+    for result in generator:
+        newTowers = { tuple(centerTower(frontier.bestPosterior.program.evaluate([])))
+                      for frontier in result.taskSolutions.values() if not frontier.empty }
+        towers.append(sorted(list(newTowers)))
+        exportTowers(towers)

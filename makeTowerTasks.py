@@ -41,12 +41,12 @@ class TowerTask(Task):
         if key in TowerTask.RESULTCASH: result = TowerTask.RESULTCASH[key]
         else:
             w = TowerWorld()
-            try:
-                result = w.sampleStability(tower, perturbation, N = 30)
-            except Exception as exception:
-                eprint(exception)
-                eprint(perturbation, tower)
-                raise exception                
+            # try:
+            result = w.sampleStability(tower, perturbation, N = 30)
+            # except Exception as exception:
+            #     eprint("exception",exception)
+            #     eprint(perturbation, tower)
+            #     raise exception                
             
             TowerTask.RESULTCASH[key] = result
         return result

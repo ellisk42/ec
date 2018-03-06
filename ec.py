@@ -65,33 +65,37 @@ class ECResult():
 
 ECResult.abbreviationToParameter = {v:k for k,v in ECResult.abbreviations.iteritems() }
 
+def explorationCompression(*arguments, **keywords):
+    for r in ecIterator(*arguments, **keywords): pass
+    return r
+        
 
-def explorationCompression(grammar, tasks,
-                           _=None,
-                           solver="ocaml",
-                           testingTasks = [],
-                           benchmark=None,
-                           iterations=None,
-                           resume=None,
-                           frontierSize=None,
-                           enumerationTimeout=None,
-                           expandFrontier=None,
-                           resumeFrontierSize=None,
-                           useRecognitionModel=True,
-                           steps=250,
-                           helmholtzRatio=0.,
-                           featureExtractor = None,
-                           activation='relu',
-                           topK=1,
-                           maximumFrontier=None,
-                           pseudoCounts=1.0, aic=1.0,
-                           structurePenalty=0.001, arity=0,
-                           evaluationTimeout=0.05, # seconds
-                           CPUs=1,
-                           cuda=False,
-                           message="",
-                           onlyBaselines=False,
-                           outputPrefix=None):
+def ecIterator(grammar, tasks,
+               _=None,
+               solver="ocaml",
+               testingTasks = [],
+               benchmark=None,
+               iterations=None,
+               resume=None,
+               frontierSize=None,
+               enumerationTimeout=None,
+               expandFrontier=None,
+               resumeFrontierSize=None,
+               useRecognitionModel=True,
+               steps=250,
+               helmholtzRatio=0.,
+               featureExtractor = None,
+               activation='relu',
+               topK=1,
+               maximumFrontier=None,
+               pseudoCounts=1.0, aic=1.0,
+               structurePenalty=0.001, arity=0,
+               evaluationTimeout=0.05, # seconds
+               CPUs=1,
+               cuda=False,
+               message="",
+               onlyBaselines=False,
+               outputPrefix=None):
     if frontierSize is None and enumerationTimeout is None:
         eprint("Please specify a frontier size and/or an enumeration timeout:",
                "explorationCompression(..., enumerationTimeout = ..., frontierSize = ...)")
@@ -137,7 +141,8 @@ def explorationCompression(grammar, tasks,
             with open(path, "wb") as f:
                 dill.dump(result, f)
             eprint("Exported checkpoint to", path)
-        return result
+        yield result
+        return 
 
     if message: message = " ("+message+")"
     eprint("Running EC%s on %s @ %s with %d CPUs and parameters:"%(message, os.uname()[1],
@@ -177,6 +182,7 @@ def explorationCompression(grammar, tasks,
             benchmarkSynthesisTimes(result, benchmarkTasks, timeout = benchmark, CPUs = CPUs)
             eprint("Completed benchmark.")
             eprint()
+        yield None
         return 
 
     for j in range(resume or 0, iterations):
@@ -274,7 +280,10 @@ def explorationCompression(grammar, tasks,
                 dill.dump(result, handle)
             eprint("Exported checkpoint to", path)
 
-    return result
+        
+        yield result
+
+
 
 def showHitMatrix(top, bottom, tasks):
     tasks = set(tasks)
