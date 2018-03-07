@@ -316,7 +316,9 @@ if __name__ == "__main__":
     # assert False
     # difficult = ["reverse","evens","drop-k with k=4","take-k with k=4"]#,"index-k with k=5"]
     # train = [ t for t in train if t.name in difficult]
-    from makeListTasks import make_list_bootstrap_tasks
+    from makeListTasks import make_list_bootstrap_tasks, bonusListProblems
+    # for t in make_list_bootstrap_tasks(10):
+    #     print t.describe()
     train += make_list_bootstrap_tasks(10)
     # for t in train:
     #     print t.describe()

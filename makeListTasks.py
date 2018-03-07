@@ -171,12 +171,12 @@ def make_list_bootstrap_tasks(numberOfExamples):
 
     appendBootstrap = []
     appendBootstrap.append(
-        Task("Singleton", arrow(tint,tlist(tint))
+        Task("Singleton", arrow(tint,tlist(tint)),
              [ ((a,),[a])
                for _ in range(5)
                for a in [randint(0,9)] ]))
     appendBootstrap.append(
-        Task("append", arrow(tlist(tint),tlist(tint),tlist(tint))
+        Task("append", arrow(tlist(tint),tlist(tint),tlist(tint)),
              [ ((a,b),a+b)
                for _ in range(5)
                for a in [randomSuffix()]
@@ -185,7 +185,34 @@ def make_list_bootstrap_tasks(numberOfExamples):
     return filterBootstrap + reverseBootstrap + indexBootstrap + booleanBootstrap + comparisonBootstrap + \
         appendBootstrap
 
-# def nestedListProblems():
+def bonusListProblems():
+    # Taken from https://www.ijcai.org/Proceedings/75/Papers/037.pdf
+    # These problems might be a lot easier if we do not use numbers
+    def randomList(lb = None, ub = None):
+        if lb is None: lb = 2
+        if ub is None: ub = 5
+        return [ randint(0,5) for _ in range(randint(lb,ub)) ]
+    
+    bonus = [
+        Task(
+            "pair reverse", arrow(tlist(tint),tlist(tint)),
+             [ ((x,), [ x[j + (1 if j%2 == 0 else -1)]
+                        for j in range(len(x)) ])
+               for _ in range(5)
+               for x in [randomList(10,10)] ]
+        ),
+        Task(
+            "duplicate each element", arrow(tlist(tint),tlist(tint)),
+            [ ((x,), [ a for z in x for a in [z]*2 ])
+              for _ in range(5)
+              for x in [randomList(4,6)] ]
+        ),
+        Task(
+            "reverse duplicate each element", arrow(tlist(tint),tlist(tint)),
+            [ ((x,), [ a for z in reversed(x) for a in [z]*2 ])]
+        ),
+        ]
+    return bonus        
     
         
 def main():
