@@ -80,7 +80,8 @@ def exportTowers(towers):
     m = max(len(t) for t in towers)
     towers = [ [ TowerWorld().draw(t) for t in ts ]
                for ts in towers ]
-    w,h = towers[0][0].shape
+    
+    w,h,channels = towers[0][0].shape
     towers = [ np.concatenate(ts + [np.zeros((w,h))]*(m - len(ts)), axis = 1)
                for ts in towers ]
     towers = np.concatenate(towers, axis = 0)
