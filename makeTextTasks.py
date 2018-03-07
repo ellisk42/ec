@@ -239,18 +239,27 @@ def makeTasks():
 
 
 if __name__ == "__main__":
+    import sys
+
     tasks = makeTasks()
-    for t in tasks:
-        print t.name
-        print t.request
-        if False:
-            print """\\begin{tabular}{ll}
-            \\toprule Input&Output\\\\\\midrule
-    %s
-    \\\\\\bottomrule
-    \\end{tabular}"""%(" \\\\\n ".join( x[0] + " & " + y for x,y in t.examples ))
-        else:
-            for x,y in t.examples:
-                print x[0],'\t',y
-        print
-    print len(tasks),"tasks"
+    if len(sys.argv) > 1 and "json" in sys.argv[1]:
+        import json
+        tasks = makeTasks()
+        obj = [t.as_json_dict() for t in tasks]
+        json.dump(obj, sys.stdout)
+    else:
+        as_tex = len(sys.argv) > 1 and "tex" in sys.argv[1]
+        for t in tasks:
+            print t.name
+            print t.request
+            if as_tex:
+                print """\\begin{tabular}{ll}
+                \\toprule Input&Output\\\\\\midrule
+        %s
+        \\\\\\bottomrule
+        \\end{tabular}"""%(" \\\\\n ".join( x[0] + " & " + y for x,y in t.examples ))
+            else:
+                for x,y in t.examples:
+                    print x[0],'\t',y
+            print
+        print len(tasks),"tasks"
