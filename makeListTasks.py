@@ -4,7 +4,7 @@ from type import *
 from task import Task
 from utilities import eprint, hashable
 
-from random import randint
+from random import randint, random, seed
 from itertools import product, izip, imap
 
 import listroutines as lr
@@ -92,8 +92,12 @@ def make_list_tasks(n_examples):
 
 
 def make_list_bootstrap_tasks(numberOfExamples):
+    seed(42)
+    
     def randomSuffix():
         return [ randint(0,9) for _ in range(randint(1,4)) ]
+    def randomList():
+        return [ randint(0,9) for _ in range(randint(5,10)) ]
     filterBootstrap = []
 
     for name, f in [("square", lambda x: (int(x**0.5)**2 == x)),
@@ -114,6 +118,13 @@ def make_list_bootstrap_tasks(numberOfExamples):
                  [ ((x,s), [x]+s if f(x) else s)
                    for x in range(10)
                    for s in [randomSuffix()]
+                 ])
+        filterBootstrap.append(t)
+        t = Task("reverse filter %s"%name,
+                 arrow(tlist(tint),tlist(tint)),
+                 [ ((l,),filter(f,reversed(l)))
+                   for _ in range(5)
+                   for l in [randomList()] 
                  ])
         filterBootstrap.append(t)
 
@@ -182,8 +193,29 @@ def make_list_bootstrap_tasks(numberOfExamples):
                for a in [randomSuffix()]
                for b in [randomSuffix()]]))
 
+    mapBootstrap = [
+        Task("cons %s w/ suffix"%n, arrow(tint,tlist(tint),tlist(tint)),
+             [ ((x,suffix), [f(x)] + suffix)
+               for x in range(10)
+               for suffix in [randomSuffix()] ])
+        for n,f in [("square",lambda a: a*a),
+                    ("negation",lambda a: -a),
+                    ("double",lambda a: a+a),
+                    ("increment",lambda a: 1+a)]
+        ] + \
+        [
+        Task("cons %s w/ suffix"%n, arrow(tint,tlist(tbool),tlist(tbool)),
+             [ ((x,suffix), [f(x)] + suffix)
+               for x in range(10)
+               for suffix in [[ random() > 0.5 for _ in range(4) ]] ])
+        for n,f in [("is_square",lambda a: a == int(a**0.5)**2),
+                    ("is_prime",lambda a: a in {2,3,5,7}),
+                    ("is 2",lambda a: a == 2),
+                    ("is > 5",lambda a: a > 5)]
+        ]
+
     return filterBootstrap + reverseBootstrap + indexBootstrap + booleanBootstrap + comparisonBootstrap + \
-        appendBootstrap
+        appendBootstrap + mapBootstrap
 
 def bonusListProblems():
     # Taken from https://www.ijcai.org/Proceedings/75/Papers/037.pdf

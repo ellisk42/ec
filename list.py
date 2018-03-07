@@ -320,7 +320,8 @@ if __name__ == "__main__":
     # for t in make_list_bootstrap_tasks(10):
     #     print t.describe()
     train += make_list_bootstrap_tasks(10)
-    # for t in train:
+    eprint("Total number of training tasks:",len(train))
+    # for t in make_list_bootstrap_tasks(10):
     #     print t.describe()
     # assert False
     
