@@ -7,8 +7,6 @@ from utilities import eprint, hashable
 from random import randint, random, seed
 from itertools import product, izip, imap
 
-import listroutines as lr
-
 # Excluded routines either impossible or astronomically improbable
 # I'm cutting these off at ~20 nats in learned grammars.
 EXCLUDES = {
@@ -54,6 +52,8 @@ def make_list_task(name, examples, **params):
 
 
 def make_list_tasks(n_examples):
+    import listroutines as lr
+    
     for routine in lr.find(count=100):  # all routines
         if routine.id in EXCLUDES:
             continue
