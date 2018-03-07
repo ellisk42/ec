@@ -85,7 +85,7 @@ def exportTowers(towers):
     towers = [ np.concatenate(ts + [np.zeros((w,h))]*(m - len(ts)), axis = 1)
                for ts in towers ]
     towers = np.concatenate(towers, axis = 0)
-    Image.fromarray(renders).convert('RGB').save('uniqueTowers.png')    
+    Image.fromarray(towers).convert('RGB').save('uniqueTowers.png')    
     
 
 if __name__ == "__main__":
