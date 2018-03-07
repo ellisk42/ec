@@ -73,6 +73,9 @@ if __name__ == "__main__":
     test, train = testTrainSplit(tasks, 0.2)
     eprint("Split tasks into %d/%d test/train"%(len(test),len(train)))
 
+    train = [t for t in tasks if t.name == "Replace delimiter '|' w/ '-'" ]
+    
+
     # target = "Apply double delimited by '<' to input delimited by '>'"
     # program = Program.parse("(lambda (join (chr->str '<') (map (lambda (++ $0 $0)) (split '<' $0))))")
     # eprint(program)

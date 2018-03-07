@@ -78,7 +78,7 @@ def exportTowers(towers):
     from towers.tower_common import TowerWorld
 
     m = max(len(t) for t in towers)
-    towers = [ [ TowerWorld().drawSolution(t) for t in ts ]
+    towers = [ [ TowerWorld().draw(t) for t in ts ]
                for ts in towers ]
     w,h = towers[0][0].shape
     towers = [ np.concatenate(ts + [np.zeros((w,h))]*(m - len(ts)), axis = 1)
