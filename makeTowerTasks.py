@@ -60,11 +60,18 @@ class TowerTask(Task):
 
         result = TowerTask.evaluateTower(tower, self.perturbation)
         
-        if result.height < self.minimumHeight: return NEGATIVEINFINITY
-        if result.stability < TowerTask.STABILITYTHRESHOLD: return NEGATIVEINFINITY
-        if result.length < self.minimumLength: return NEGATIVEINFINITY
-        if result.area < self.minimumArea: return NEGATIVEINFINITY
-
+        if result.height < self.minimumHeight:
+            #eprint("height",result.height)
+            return NEGATIVEINFINITY
+        if result.stability < TowerTask.STABILITYTHRESHOLD:
+            #eprint("stability")
+            return NEGATIVEINFINITY
+        if result.length < self.minimumLength:
+            #eprint("len()", result.length)
+            return NEGATIVEINFINITY
+        if result.area < self.minimumArea:
+            #eprint("area")
+            return NEGATIVEINFINITY
         return 50.0*math.log(result.stability)
 
     def animateSolution(self, e):
@@ -92,7 +99,7 @@ def makeTasks():
     STRONGPERTURBATION = 12
     MILDPERTURBATION = 8
     MASSES = [10,20,30]
-    HEIGHT = [4,5,6,7]
+    HEIGHT = [3,5,6]
     return [ TowerTask(maximumMass = float(m),
                        minimumArea = float(a),
                        perturbation = float(p),
