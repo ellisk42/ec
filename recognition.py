@@ -206,10 +206,10 @@ class DRNN(nn.Module):
     def enumeration(self, task, upperBound, lowerBound):
         pq = []
 
-        def choices(xs):
-            for x in xs: heappush(pq, x)
+        def choices(parentCost, xs):
+            for c,x in xs: heappush(pq, (parentCost+c,x))
 
-        def g(request, _ = None,
+        def g(parentCost, request, _ = None,
               parent = None, sibling = None,
               context = None, environment = [],
               k = None):
@@ -222,40 +222,49 @@ class DRNN(nn.Module):
             if context is None: context = Context.EMPTY
 
             if request.isArrow():
-                g(request.arguments[1],
+                g(parentCost, request.arguments[1],
                   context = context,
                   parent = parent, sibling = sibling,
                   environment = [request.arguments[0]] + environment,
                   k = lambda MDL, newContext, root, p: k(MDL, newContext, root, Abstraction(expression)))
-                return
-            
-            candidates = self.grammar.buildCandidates(request, context, environment,
-                                                      normalize = False,
-                                                      returnProbabilities = False,
-                                                      returnTable = True)
-            
-            alternatives = candidates.keys()
-            prediction = self.predictionFromHidden(parent, sibling,
-                                                   alternatives = alternatives)
-            numberOfVariables = sum( alternative.isIndex
-                                     for alternative in alternatives )
-            # update the candidates so that they reflect what the
-            # neural network thinks
-            for a,(_,tp,newContext) in alternatives.iteritems():
-                MDL = -prediction[self.production2index[Index(0) if a.isIndex else a]]
-                if a.isIndex: MDL += math.log(numberOfVariables)
-                alternatives[a] = (MDL,tp,newContext)
+            else:            
+                candidates = self.grammar.buildCandidates(request, context, environment,
+                                                          normalize = False,
+                                                          returnProbabilities = False,
+                                                          returnTable = True)
 
-            #choices(map(makeChoices, ))
+                alternatives = candidates.keys()
+                prediction = self.predictionFromHidden(parent, sibling,
+                                                       alternatives = alternatives)
+                numberOfVariables = sum( alternative.isIndex
+                                         for alternative in alternatives )
+                # update the candidates so that they reflect what the
+                # neural network thinks
+                for a,(_,tp,newContext) in alternatives.iteritems():
+                    MDL = -prediction[self.production2index[Index(0) if a.isIndex else a]]
+                    if a.isIndex: MDL += math.log(numberOfVariables)
+                    alternatives[a] = (MDL,tp,newContext)
 
+                choices(parentCost,
+                        [ (MDL, lambda: ga(parentCost+MDL, f, tp.functionArguments(),
+                                           root = Index(0) if f.isIndex else f,
+                                           context = newContext, environment = environment,
+                        ))
+                          for f,(MDL,tp,newContext) in alternatives.iteritems() ])
+
+        def ga(costSoFar, f, argumentTypes, _ = None,
+               root = None,
+               context = None, environment = None, 
+               k = None):
+            assert k is not None
+
+            if argumentTypes == []:
+                k(costSoFar, newContext, root, f)
+            else:
+                t1 = argumentTypes[0].apply(context)
+                g()
                 
-            
-
-            
-            
-        
         p0 = self.initialParent(parent)
-
         pq = []
                 
         

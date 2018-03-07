@@ -105,6 +105,15 @@ if __name__ == "__main__":
             biggest = min(biggest,l)
         eprint(biggest)
         assert False
+
+    if False:
+        with timing("best first enumeration"): baseGrammar.bestFirstEnumeration(arrow(tint,tint))
+        with timing("depth first search"):
+            print len(list(enumeration(baseGrammar, Context.EMPTY, [], arrow(tint,tint),
+                                       maximumDepth = 99,
+                                       upperBound = 13,
+                                       lowerBound = 0)))
+        assert False
     
     explorationCompression(baseGrammar, train,
                            outputPrefix = "experimentOutputs/regression",

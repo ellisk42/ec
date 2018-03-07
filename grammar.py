@@ -169,6 +169,71 @@ class Grammar(object):
 
         return context, thisSummary
 
+    def bestFirstEnumeration(self, request):
+        from heapq import heappush, heappop
+        
+        pq = []
+
+        def choices(parentCost, xs):
+            for c,x in xs: heappush(pq, (parentCost+c,x))
+
+        def g(parentCost, request, _ = None,
+              context = None, environment = [],
+              k = None):
+            """
+            k is a continuation. 
+            k: Expects to be called with MDL, context, expression.
+            """
+            
+            assert k is not None
+            if context is None: context = Context.EMPTY
+
+            if request.isArrow():
+                g(parentCost, request.arguments[1],
+                  context = context,
+                  environment = [request.arguments[0]] + environment,
+                  k = lambda MDL, newContext, p: k(MDL, newContext, Abstraction(p)))
+            else:            
+                candidates = self.buildCandidates(request, context, environment,
+                                                  normalize = True,
+                                                  returnProbabilities = False,
+                                                  returnTable = True)
+                choices(parentCost,
+                        map(lambda (f,(ll,tp,newContext)): \
+                            (-ll,
+                             lambda: ga(parentCost-ll, f, tp.functionArguments(),
+                                        context = newContext, environment = environment,
+                                        k = k)),
+                            candidates.iteritems()))
+        def ga(costSoFar, f, argumentTypes, _ = None,
+               context = None, environment = None,
+               k = None):
+            if argumentTypes == []:
+                k(costSoFar, context, f)
+            else:
+                t1 = argumentTypes[0].apply(context)
+                g(costSoFar, t1, context = context, environment = environment,
+                  k = lambda newCost, newContext, argument: \
+                  ga(newCost, Application(f,argument), argumentTypes[1:],
+                     context = newContext, environment = environment,
+                     k = k))
+
+        def receiveResult(MDL, _, expression):
+            heappush(pq, (MDL, expression))
+
+
+        g(0., request, context = Context.EMPTY, environment = [], k = receiveResult)
+        frontier = []
+        while len(frontier) < 10**3:
+            MDL, action = heappop(pq)
+            if isinstance(action, Program):
+                expression = action
+                frontier.append(expression)
+                #eprint("Enumerated program",expression,-MDL,self.closedLogLikelihood(request, expression))
+            else:
+                action()
+
+
     def closedLikelihoodSummary(self, request, expression):
         context, summary = self.likelihoodSummary(Context.EMPTY, [], request, expression)
         return summary
