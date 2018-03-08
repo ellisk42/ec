@@ -203,70 +203,101 @@ class DRNN(nn.Module):
 
         return context, root, f
 
-    def enumeration(self, task, upperBound, lowerBound):
-        pq = []
+    def enumeration(self, task, interval = 1.):
+        request = task.request
+        parent = self.initialParent(task)
+        
+        lowerBound = 0.
+        while True:
+            for ll,_,_,e in self._enumeration(request,
+                                              lowerBound = lowerBound, upperBound = lowerBound + interval,
+                                              parent = parent, sibling = None,
+                                              context = Context.EMPTY, environment = []):
+                yield ll,e
+            lowerBound += interval
 
-        def choices(parentCost, xs):
-            for c,x in xs: heappush(pq, (parentCost+c,x))
+    def _enumeration(self, request, _ = None,
+                     upperBound = None, lowerBound = None,
+                     context = None, environment = None,
+                     parent = None, sibling = None):
+        """Generates log likelihood, context, root, expression"""
+        if upperBound <= 0: return
 
-        def g(parentCost, request, _ = None,
-              parent = None, sibling = None,
-              context = None, environment = [],
-              k = None):
-            """
-            k is a continuation. 
-            k: Expects to be called with MDL, context, root, expression.
-            """
-            
-            assert k is not None
-            if context is None: context = Context.EMPTY
+        if request.isArrow():
+            v = request.arguments[0]
+            for l, newContext, r, b in self._enumeration(request.arguments[1],
+                                                         context = context, environment = [v] + environment,
+                                                         upperBound = upperBound,
+                                                         lowerBound = lowerBound,
+                                                         parent = parent, sibling = sibling):
+                yield l, newContext, r, Abstraction(b)
+            return
+        
+        candidates = self.grammar.buildCandidates(request, context, environment,
+                                                  normalize = False,
+                                                  returnProbabilities = False,
+                                                  returnTable = True)
 
-            if request.isArrow():
-                g(parentCost, request.arguments[1],
-                  context = context,
-                  parent = parent, sibling = sibling,
-                  environment = [request.arguments[0]] + environment,
-                  k = lambda MDL, newContext, root, p: k(MDL, newContext, root, Abstraction(expression)))
-            else:            
-                candidates = self.grammar.buildCandidates(request, context, environment,
-                                                          normalize = False,
-                                                          returnProbabilities = False,
-                                                          returnTable = True)
-
-                alternatives = candidates.keys()
-                prediction = self.predictionFromHidden(parent, sibling,
-                                                       alternatives = alternatives)
-                numberOfVariables = sum( alternative.isIndex
-                                         for alternative in alternatives )
-                # update the candidates so that they reflect what the
-                # neural network thinks
-                for a,(_,tp,newContext) in alternatives.iteritems():
-                    MDL = -prediction[self.production2index[Index(0) if a.isIndex else a]]
-                    if a.isIndex: MDL += math.log(numberOfVariables)
-                    alternatives[a] = (MDL,tp,newContext)
-
-                choices(parentCost,
-                        [ (MDL, lambda: ga(parentCost+MDL, f, tp.functionArguments(),
-                                           root = Index(0) if f.isIndex else f,
-                                           context = newContext, environment = environment,
-                        ))
-                          for f,(MDL,tp,newContext) in alternatives.iteritems() ])
-
-        def ga(costSoFar, f, argumentTypes, _ = None,
-               root = None,
-               context = None, environment = None, 
-               k = None):
-            assert k is not None
-
-            if argumentTypes == []:
-                k(costSoFar, newContext, root, f)
+        alternatives = candidates.keys()
+        numberOfVariables = sum(a.isIndex for a in alternatives)
+        prediction = self.predictionFromHidden(parent, sibling,
+                                               alternatives = alternatives).data
+        prediction = dict(zip(self.index2production, prediction))
+        # Update the candidates so that they now record what the
+        # neural network thinks their likelihood should be
+        for a in alternatives:
+            if a.isIndex:
+                ll = prediction[Index(0)] - math.log(numberOfVariables)
             else:
-                t1 = argumentTypes[0].apply(context)
-                g()
-                
-        p0 = self.initialParent(parent)
-        pq = []
-                
+                ll = prediction[a]
+            _,tp,newContext = candidates[a]
+            candidates[a] = (ll,tp,newContext)
+
+        for f,(ll,tp,newContext) in candidates.iteritems():
+            mdl = -ll
+            if not (mdl <= upperBound): continue
+
+            argumentTypes = tp.functionArguments()
+            if argumentTypes != []: newParent = self.updateParent(parent, f)
+            else: newParent = parent
+            
+            root = Index(0) if f.isIndex else f
+
+            for aL, aK, application in \
+                self._enumerateApplication(f, argumentTypes,
+                                           context = newContext, environment = environment,
+                                           upperBound = upperBound + ll,
+                                           lowerBound = lowerBound + ll,
+                                           parent = newParent, sibling = None):
+                yield aL + ll, aK, root, application
+
+    def _enumerateApplication(self, f, xs, _ = None,
+                              upperBound = None, lowerBound = None,
+                              context = None, environment = None,
+                              parent = None, sibling = None):
+        if upperBound <= 0: return
+        if xs == []:
+            if lowerBound < 0. and 0. <= upperBound:
+                yield 0., context, f
+            return
+        request = xs[0].apply(context)
+        laterRequests = xs[1:]
+        for aL, newContext, argumentRoot, argument in \
+            self._enumeration(request,
+                              context = context, environment = environment,
+                              upperBound = upperBound, lowerBound = 0.,
+                              parent = parent, sibling = sibling):
+            newFunction = Application(f, argument)
+            if laterRequests != []:
+                newSibling = self.updateSibling(sibling, argumentRoot)
+            else:
+                newSibling = None
+            for resultL, resultK, result in \
+                self._enumerateApplication(newFunction, laterRequests,
+                                           context = newContext, environment = environment,
+                                           upperBound = upperBound + aL, lowerBound = lowerBound + aL,
+                                           parent = parent, sibling = newSibling):
+                yield resultL + aL, resultK, result        
         
         
         
@@ -275,12 +306,7 @@ class RecognitionModel(nn.Module):
         super(RecognitionModel, self).__init__()
         self.grammar = grammar
         self.use_cuda = cuda
-        if cuda:
-            self.cuda()
-        else:
-            # Torch sometimes segfaults in multithreaded mode...
-            pass
-            # torch.set_num_threads(1)
+        if cuda: self.cuda()            
 
         self.featureExtractor = featureExtractor
         # Sanity check - make sure that all of the parameters of the
@@ -627,7 +653,12 @@ if __name__ == "__main__":
 
     optimizer = torch.optim.Adam(m.parameters(), lr=0.0001)
 
-
+    def take(n,g):
+        r = []
+        for x in g:
+            r.append(x)
+            if len(r) >= n: break
+        return r
 
     for j in range(100000):
         m.zero_grad()
@@ -639,7 +670,13 @@ if __name__ == "__main__":
         if j > 0 and j%150 == 0:
             print l.data[0]/len(observations)
             for t in tasks:
+                print t
                 print m.sample(t)
+                print "enumeration:"
+                for ll,e in sorted(take(5,m.enumeration(t)),reverse = True):
+                    gt = m.programLoss(e,t).data[0]
+                    print ll,gt,"\t",e
+                print 
         l.backward()
         optimizer.step()
 
