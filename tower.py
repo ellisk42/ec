@@ -45,8 +45,8 @@ class TowerFeatureExtractor(HandCodedFeatureExtractor):
 def evaluateArches(ts):
     arches = [
         # "(do unit (do unit unit))",
-#        "(do 1x4 (do (left 1x4) 4x1))",
-#        "(do (right 1x4) (do (left (left 1x4)) 4x1))",
+       "(do 1x4 (do (left 1x4) 4x1))",
+       "(do (right 1x4) (do (left (left 1x4)) 4x1))",
         "(do (do (right 1x4) (do (left (left 1x4)) 4x1)) (right (right (right (right (do (right 1x4) (do (left (left 1x4)) 4x1)))))))",
 #        "(do (left tallVertical) (do (right tallVertical) wideHorizontal))",
 #        "(do (left tallVertical) (do (right tallVertical) horizontalBrick))",
@@ -55,13 +55,15 @@ def evaluateArches(ts):
         # "(do tallVertical horizontalBrick)",
         # "(do tallVertical (do tallVertical tallVertical))"
     ]
+    towers = []
 
     for a in arches:
         print "Evaluating arch:"
         print a
         print
         a = Program.parse(a).evaluate([])
-        os.system("python towers/visualize.py '%s' %f"%(a, 8))
+        towers.append(tuple(centerTower(a)))
+        #os.system("python towers/visualize.py '%s' %f"%(a, 8))
 
         for t in ts:
             print t,
@@ -70,10 +72,11 @@ def evaluateArches(ts):
         print
         print
 
+    exportTowers([towers[:1],towers[:2],towers], "arches.png")
     import sys
     sys.exit()
 
-def exportTowers(towers):
+def exportTowers(towers, name):
     from PIL import Image
     from towers.tower_common import TowerWorld
 
@@ -81,11 +84,12 @@ def exportTowers(towers):
     towers = [ [ TowerWorld().draw(t) for t in ts ]
                for ts in towers ]
     
-    w,h,channels = towers[0][0].shape
-    towers = [ np.concatenate(ts + [np.zeros((w,h))]*(m - len(ts)), axis = 1)
+    size = towers[0][0].shape
+    tp = towers[0][0].dtype
+    towers = [ np.concatenate(ts + [np.zeros(size, dtype = tp)]*(m - len(ts)), axis = 1)
                for ts in towers ]
     towers = np.concatenate(towers, axis = 0)
-    Image.fromarray(towers).convert('RGB').save('uniqueTowers.png')    
+    Image.fromarray(towers).convert('RGB').save(name)
     
 
 if __name__ == "__main__":
@@ -115,4 +119,4 @@ if __name__ == "__main__":
         newTowers = { tuple(centerTower(frontier.bestPosterior.program.evaluate([])))
                       for frontier in result.taskSolutions.values() if not frontier.empty }
         towers.append(sorted(list(newTowers)))
-        exportTowers(towers)
+        exportTowers(towers, 'uniqueTowers.png')
