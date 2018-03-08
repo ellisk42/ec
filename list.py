@@ -257,6 +257,12 @@ if __name__ == "__main__":
         random.shuffle(tasks)
         del tasks[maxTasks:]
 
+    # Remove degenerate tasks: either the identity or a constant
+    tasks = [ t for t in tasks
+              if any( xs[0] != y for xs, y in t.examples )]
+    tasks = [ t for t in tasks
+              if not all( t.examples[0][1] == y for xs, y in t.examples )]
+
     eprint("Got {} list tasks".format(len(tasks)))
 
     for task in tasks:
@@ -324,5 +330,6 @@ if __name__ == "__main__":
     # for t in make_list_bootstrap_tasks(10):
     #     print t.describe()
     # assert False
+    
     
     explorationCompression(baseGrammar, train, testingTasks=test, **args)
