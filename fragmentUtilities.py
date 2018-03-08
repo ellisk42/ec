@@ -217,6 +217,8 @@ def nontrivial(f):
 def proposeFragmentsFromProgram(p,arity):
 
     def fragment(expression,a):
+        """Generates fragments that unify with expression"""
+        
         if a == 1:
             yield FragmentVariable.single
         if a == 0:
@@ -224,7 +226,9 @@ def proposeFragmentsFromProgram(p,arity):
             return
 
         if isinstance(expression, Abstraction):
-            for b in fragment(expression.body,a): yield Abstraction(b)
+            # Symmetry breaking: (lambda x. f(x)) defragments to be the same as f(x)
+            #for b in fragment(expression.body,a): yield Abstraction(b)
+            pass
         elif isinstance(expression, Application):
             for fa in xrange(a + 1):
                 for f in fragment(expression.f,fa):
@@ -234,10 +238,15 @@ def proposeFragmentsFromProgram(p,arity):
             assert isinstance(expression, (Invented,Primitive,Index))
 
     def fragments(expression,a):
+        """Generates fragments that unify with subexpressions of expression"""
+        
         for f in fragment(expression,a): yield f
         if isinstance(expression, Application):
-            for f in fragments(expression.f,a): yield f
-            for f in fragments(expression.x,a): yield f
+            # Pretend that it is not curried
+            function,arguments = expression.applicationParse()
+            for f in fragments(function,a): yield f
+            for argument in arguments:
+                for f in fragments(argument,a): yield f
         elif isinstance(expression, Abstraction):
             for f in fragments(expression.body,a): yield f
         else:
