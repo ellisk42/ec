@@ -104,15 +104,16 @@ def make_list_bootstrap_tasks(numberOfExamples):
                     ("prime", lambda x: x in {2,3,5,7}),
                     ("is even", lambda x: x%2 == 0),
                     ("is odd", lambda x: x%2 == 1),
-                    ("is < 5", lambda x: x < 5),
-                    ("is < 3", lambda x: x < 3),
-                    ("is < 4", lambda x: x < 4),
-                    ("is > 5", lambda x: x > 5),
-                    ("is > 3", lambda x: x > 3),
-                    ("is > 4", lambda x: x > 4),
-                    ("is 2", lambda x: x == 2),
-                    ("is 5", lambda x: x == 5),
-                    ("is 3", lambda x: x == 3),]:
+                    # ("is < 5", lambda x: x < 5),
+                    # ("is < 3", lambda x: x < 3),
+                    # ("is < 4", lambda x: x < 4),
+                    # ("is > 5", lambda x: x > 5),
+                    # ("is > 3", lambda x: x > 3),
+                    # ("is > 4", lambda x: x > 4),
+                    # ("is 2", lambda x: x == 2),
+                    # ("is 5", lambda x: x == 5),
+                    # ("is 3", lambda x: x == 3)
+                    ]:
         t = Task("Prepend if %s"%name,
                  arrow(tint,tlist(tint),tlist(tint)),
                  [ ((x,s), [x]+s if f(x) else s)
@@ -127,6 +128,20 @@ def make_list_bootstrap_tasks(numberOfExamples):
                    for l in [randomList()] 
                  ])
         filterBootstrap.append(t)
+
+    for name, f in [("false", lambda x: not x)]:
+        filterBootstrap += [
+            Task("Prepend if %s"%name,
+                 arrow(tbool,tlist(tbool),tlist(tbool)),
+                 [((x,s), [x]+s if f(x) else s)
+                  for x in [True,False]
+                  for s in [[random() > 0.5 for _ in range(5) ]] ]),
+            Task("reverse filter %s"%name,
+                 arrow(tlist(tbool),tlist(tbool)),
+                 [ ((x,), filter(f,x))
+                   for _ in range(5)
+                   for x in [[random() > 0.5 for _ in range(5) ]] ])
+            ]
 
     reverseBootstrap = []
     reverseBootstrap.append(Task("reverse",
@@ -198,22 +213,48 @@ def make_list_bootstrap_tasks(numberOfExamples):
              [ ((x,suffix), [f(x)] + suffix)
                for x in range(10)
                for suffix in [randomSuffix()] ])
-        for n,f in [("square",lambda a: a*a),
+        for n,f in [# ("square",lambda a: a*a),
                     ("negation",lambda a: -a),
-                    ("double",lambda a: a+a),
-                    ("increment",lambda a: 1+a)]
-        ] + \
-        [
+                    # ("double",lambda a: a+a),
+                    # ("increment",lambda a: 1+a)
+        ]
+    ] + \
+    [
         Task("cons %s w/ suffix"%n, arrow(tint,tlist(tbool),tlist(tbool)),
              [ ((x,suffix), [f(x)] + suffix)
                for x in range(10)
                for suffix in [[ random() > 0.5 for _ in range(4) ]] ])
         for n,f in [("is_square",lambda a: a == int(a**0.5)**2),
-                    ("is_prime",lambda a: a in {2,3,5,7}),
-                    ("is 2",lambda a: a == 2),
-                    ("is > 5",lambda a: a > 5)]
-        ]
-
+                    ("is_prime",lambda a: a in {2,3,5,7})]
+    ] + \
+    [
+        Task("cons %s w/ suffix"%n, arrow(tbool,tlist(tbool),tlist(tbool)),
+             [ ((x,suffix), [f(x)] + suffix)
+               for x in [True,False]
+               for suffix in [[ random() > 0.5 for _ in range(4) ]] ])
+        for n,f in [("not",lambda a: not a)]
+    ] + \
+    [
+        Task("reverse map not", arrow(tlist(tbool),tlist(tbool)),
+             [ ((l,), map(lambda a: not a, reversed(l)))
+               for _ in range(5) 
+               for l in [[ random() > 0.5 for _ in range(4) ]] ])
+    ] + \
+    [
+        Task("reverse map negation", arrow(tlist(tint),tlist(tint)),
+             [ ((l,), map(lambda a: -a, reversed(l)))
+               for _ in range(5) 
+               for l in [[ randint(0,5) for _ in range(4) ]] ])
+    ] + \
+    [
+        Task("reverse map %s"%n, arrow(tlist(tint),tlist(tbool)),
+             [ ((l,), map(f,reversed(l)))
+               for _ in range(5) 
+               for l in [[ randint(0,9) for _ in range(4) ]] ])
+        for n,f in [("is_square",lambda a: a == int(a**0.5)**2),
+                    ("is_prime",lambda a: a in {2,3,5,7})]
+    ]
+    
     return filterBootstrap + reverseBootstrap + indexBootstrap + booleanBootstrap + comparisonBootstrap + \
         appendBootstrap + mapBootstrap
 
