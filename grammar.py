@@ -159,7 +159,9 @@ class Grammar(object):
 
         _, tp, context = candidates[f]
         argumentTypes = tp.functionArguments()
-        assert len(xs) == len(argumentTypes)
+        if len(xs) != len(argumentTypes):
+            # This should absolutely never occur
+            raise GrammarFailure((context, environment, request, expression))            
 
         for argumentType, argument in zip(argumentTypes, xs):
             argumentType = argumentType.apply(context)
@@ -235,7 +237,15 @@ class Grammar(object):
 
 
     def closedLikelihoodSummary(self, request, expression):
-        context, summary = self.likelihoodSummary(Context.EMPTY, [], request, expression)
+        try:
+            context, summary = self.likelihoodSummary(Context.EMPTY, [], request, expression)
+        except GrammarFailure as e:
+            failureExport = 'grammarFailure.pickle'
+            eprint("PANIC: Grammar failure, exporting to ",failureExport)
+            with open(failureExport,'wb') as handle:
+                pickle.dump((e,self,request,expression))
+            assert False
+            
         return summary
 
     def closedLogLikelihood(self, request, expression):
