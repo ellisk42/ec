@@ -103,6 +103,9 @@ class TowerWorld(object):
     def supportedLength(self, height):
         intervals = []
         for b in self.blocks:
+            a = b.fixtures[0].body.angle
+            if abs(a) > 0.1: continue
+            
             ys = [ (b.transform * v)[1]
                    for v in b.fixtures[0].shape.vertices ]
             if all( y < height for y in ys ): continue
@@ -153,6 +156,9 @@ class TowerWorld(object):
         for b in self.blocks:
             x,y = b.userData["p0"]
             dx,dy = b.userData["dimensions"]
+
+            a = b.fixtures[0].body.angle
+            if abs(a) > 0.1: continue
 
             y -= 1 # lower down to the floor
             x -= x0
