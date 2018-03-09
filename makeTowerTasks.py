@@ -98,8 +98,8 @@ def centerTower(t):
 def makeTasks():
     STRONGPERTURBATION = 12
     MILDPERTURBATION = 8
-    MASSES = [10,20,30]
-    HEIGHT = [3,5,6]
+    MASSES = [20,30,40]
+    HEIGHT = [3,5,7]
     return [ TowerTask(maximumMass = float(m),
                        minimumArea = float(a),
                        perturbation = float(p),
@@ -107,7 +107,7 @@ def makeTasks():
                        minimumHeight = float(h))
              for m in MASSES
              for a in [1, 2.9, 5.8]
-             for l in [0, 5]
+             for l in [0, 2.5, 5, 7.5]
              for p in [MILDPERTURBATION, STRONGPERTURBATION]
              for h in HEIGHT
              if not ((p == STRONGPERTURBATION and m == min(MASSES)) or \

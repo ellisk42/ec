@@ -21,6 +21,7 @@ tanh = 'tanh'
 sigmoid = 'sigmoid'
 DeepFeatureExtractor = 'DeepFeatureExtractor'
 LearnedFeatureExtractor = 'LearnedFeatureExtractor'
+TowerFeatureExtractor = 'TowerFeatureExtractor'
 
 def parseResultsPath(p):
     p = p[:p.rfind('.')]

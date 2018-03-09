@@ -44,16 +44,10 @@ class TowerFeatureExtractor(HandCodedFeatureExtractor):
 
 def evaluateArches(ts):
     arches = [
-        # "(do unit (do unit unit))",
+        "(do (do (left 1x3) (do (right 1x3) 3x1)) (right (right (right (do (left 1x3) (do (right 1x3) 3x1))))))",
        "(do 1x4 (do (left 1x4) 4x1))",
        "(do (right 1x4) (do (left (left 1x4)) 4x1))",
         "(do (do (right 1x4) (do (left (left 1x4)) 4x1)) (right (right (right (right (do (right 1x4) (do (left (left 1x4)) 4x1)))))))",
-#        "(do (left tallVertical) (do (right tallVertical) wideHorizontal))",
-#        "(do (left tallVertical) (do (right tallVertical) horizontalBrick))",
-        # "(do (left tallVertical) (do (right tallVertical) tallVertical))",
-        # "(do tallVertical tallVertical)",
-        # "(do tallVertical horizontalBrick)",
-        # "(do tallVertical (do tallVertical tallVertical))"
     ]
     towers = []
 
@@ -63,7 +57,7 @@ def evaluateArches(ts):
         print
         a = Program.parse(a).evaluate([])
         towers.append(tuple(centerTower(a)))
-        #os.system("python towers/visualize.py '%s' %f"%(a, 8))
+        os.system("python towers/visualize.py '%s' %f"%(a, 8))
 
         for t in ts:
             print t,
