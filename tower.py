@@ -113,4 +113,4 @@ if __name__ == "__main__":
         newTowers = { tuple(centerTower(frontier.bestPosterior.program.evaluate([])))
                       for frontier in result.taskSolutions.values() if not frontier.empty }
         towers.append(sorted(list(newTowers)))
-        exportTowers(towers, 'uniqueTowers.png')
+        exportTowers(towers, 'experimentOutputs/uniqueTowers.png')
