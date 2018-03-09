@@ -274,6 +274,10 @@ def hostname():
     import socket
     return socket.gethostname()
 
+def flushEverything():
+    sys.stdout.flush()
+    sys.stderr.flush()    
+
 if __name__ == "__main__":
     inputs = range(10**3)
     

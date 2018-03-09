@@ -432,18 +432,28 @@ class RecognitionModel(nn.Module):
                     eprint("Epoch",i,"Loss",sum(losses)/len(losses))
                     gc.collect()
 
-    def sampleHelmholtz(self, requests):
+    def sampleHelmholtz(self, requests, statusUpdate = None):
        request = random.choice(requests)
-       program = self.grammar.sample(request)
+       program = self.grammar.sample(request, maximumDepth = 6)
        features = self.featureExtractor.featuresOfProgram(program, request)
+       if statusUpdate is not None:
+           eprint(statusUpdate, end = '')
+           flushEverything()
        # Feature extractor failure
        if features is None: return None
        else: return program, request, features
 
     def sampleManyHelmholtz(self, requests, N, CPUs):
-        return parallelMap(CPUs,
-                           lambda _: self.sampleHelmholtz(requests),
-                           range(N))
+        eprint("Sampling %d programs from the prior on %d CPUs..."%(N,CPUs))
+        flushEverything()
+        frequency = N/50
+        samples = parallelMap(CPUs,
+                              lambda n: self.sampleHelmholtz(requests,
+                                                             statusUpdate = '.' if n%frequency == 0 else None),
+                              range(N))
+        eprint()
+        flushEverything()
+        return samples
 
     def enumerateFrontiers(self, tasks,
                            solver=None,
