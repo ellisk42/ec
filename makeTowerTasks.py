@@ -44,8 +44,9 @@ class TowerTask(Task):
         if key in TowerTask.RESULTCASH: result = TowerTask.RESULTCASH[key]
         else:
             w = TowerWorld()
-            # try:
-            result = w.sampleStability(tower, perturbation, N = 30)
+            try: result = w.sampleStability(tower, perturbation, N = 30)
+            except: result = None
+            
             # except Exception as exception:
             #     eprint("exception",exception)
             #     eprint(perturbation, tower)
@@ -62,6 +63,7 @@ class TowerTask(Task):
         tower = centerTower(tower)
 
         result = TowerTask.evaluateTower(tower, self.perturbation)
+        if result is None: return NEGATIVEINFINITY
         
         if result.height < self.minimumHeight:
             return NEGATIVEINFINITY

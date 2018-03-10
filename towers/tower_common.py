@@ -240,10 +240,7 @@ class TowerWorld(object):
         j2,f2 = simulateWalker(np.flip(originalPicture, 0))
         j = max(j1,j2)
         f = max(f1,f2)
-        print j,f
-        return j,f
-        
-            
+        return j,f            
 
     def impartImpulses(self, p):
         for b in self.blocks:
