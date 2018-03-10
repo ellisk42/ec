@@ -243,7 +243,7 @@ class Grammar(object):
             failureExport = 'grammarFailure.pickle'
             eprint("PANIC: Grammar failure, exporting to ",failureExport)
             with open(failureExport,'wb') as handle:
-                pickle.dump((e,self,request,expression))
+                pickle.dump((e,self,request,expression), handle)
             assert False
             
         return summary

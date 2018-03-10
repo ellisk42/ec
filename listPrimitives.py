@@ -15,6 +15,9 @@ def _negate(x): return -x
 def _reverse(x): return list(reversed(x))
 def _append(x): return lambda y: x + y
 def _cons(x): return lambda y: [x] + y
+def _car(x): return x[0]
+def _cdr(x): return x[1:]
+def _isEmpty(x): return x == []
 def _single(x): return [x]
 def _slice(x): return lambda y: lambda l: l[x:y]
 def _map(f): return lambda l: map(f, l)
@@ -43,6 +46,32 @@ def _find(x):
         except ValueError:
             return -1
     return _inner
+
+class RecursionDepthExceeded(Exception): pass
+def _fix(body):
+    def inner(argument):
+        recursion_limit = [20]
+
+        def fix(x):
+            def r(z):
+                recursion_limit[0] -= 1
+                if recursion_limit[0] <= 0:
+                    raise RecursionDepthExceeded()
+                else: return fix(z)
+                
+            return body(r)(x)
+        return fix(argument)
+
+    return inner
+
+primitiveRecursion = Primitive("fix",
+                               #(((t0 @> t1) @> (t0 @> t1)) @> (t0 @> t1))
+                               arrow(arrow(arrow(t0,t1), t0,t1),
+                                     t0, t1),
+                               _fix)
+
+def _match(l):
+    return lambda b: lambda f: b if l == [] else f(l[0])(l[1:])
 
 
 def primitives():
@@ -121,3 +150,36 @@ def basePrimitives():
         Primitive("is-prime", arrow(tint, tbool), _isPrime),
         Primitive("is-square", arrow(tint, tbool), _isSquare),
     ]
+
+def McCarthyPrimitives():
+    "These are ~ primitives provided by 1959 wisp as introduced by McCarthy"
+    return [
+        Primitive("empty", tlist(t0), []),
+        Primitive("cons", arrow(t0, tlist(t0), tlist(t0)), _cons),
+        Primitive("car", arrow(tlist(t0), t0), _car),
+        Primitive("cdr", arrow(tlist(t0), tlist(t0)), _cdr),
+        Primitive("empty?", arrow(tlist(t0), tbool), _isEmpty),
+        primitiveRecursion,
+        Primitive("if", arrow(tbool, t0, t0, t0), _if),
+        # Primitive("match", arrow(tlist(t0),
+        #                          t1,
+        #                          arrow(t0, tlist(t0), t1),
+        #                          t1), _match),
+
+        Primitive("+", arrow(tint, tint, tint), _addition)
+        ] + [ Primitive(str(j), tint, j) for j in xrange(2) ]
+
+if __name__ == "__main__":
+    g = Grammar.uniform(McCarthyPrimitives())
+    p = Program.parse("(lambda (fix (lambda (lambda (if (empty? $0) $0 (cons (+ 1 (car $0)) ($1 (cdr $0)))))) $0))")
+    print p.evaluate([])(range(4))
+    print g.closedLogLikelihood(arrow(tlist(tint),tlist(tint)),p)
+    
+    p = Program.parse("""(lambda (fix (lambda (lambda (match $0 empty (lambda (lambda (cons $1 ($3 $0))))))) $0))""")
+    print p.evaluate([])(range(4))
+    print g.closedLogLikelihood(arrow(tlist(tint),tlist(tint)),p)
+    
+    p = Program.parse("""(lambda (fix (lambda (lambda (match $0 0 (lambda (lambda (+ $1 ($3 $0))))))) $0))""")
+    print p.evaluate([])(range(4))
+    print g.closedLogLikelihood(arrow(tlist(tint),tint),p)
+    

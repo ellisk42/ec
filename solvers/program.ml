@@ -88,11 +88,31 @@ let lookup_primitive n =
   
 let rec evaluate (environment: 'b list) (p:program) : 'a =
   match p with
+  | Apply(Apply(Apply(Primitive(_,"if",_),branch),yes),no) ->
+    if magical (evaluate environment branch) then evaluate environment yes else evaluate environment no
   | Abstraction(b) -> magical @@ fun argument -> evaluate (argument::environment) b
   | Index(j) -> magical @@ List.nth_exn environment j
   | Apply(f,x) -> (magical @@ evaluate environment f) (magical @@ evaluate environment x)
   | Primitive(_,_,v) -> magical (!v)
   | Invented(_,i) -> evaluate [] i
+
+let rec analyze_evaluation (p:program) : 'b list -> 'a =
+  match p with
+  | Abstraction(b) ->
+    let body = analyze_evaluation b in
+    fun environment -> magical (fun x -> body (x::environment))
+  | Index(j) ->
+    fun environment -> List.nth_exn environment j |> magical
+  | Apply(f,x) ->
+    let analyzed_function = analyze_evaluation f
+    and analyzed_argument = analyze_evaluation x
+    in
+    fun environment -> magical ((analyzed_function environment) (magical (analyzed_argument environment)))
+  | Primitive(_,_,v) ->
+    fun _ -> magical (!v)
+  | Invented(_,i) ->
+    let analyzed_body = analyze_evaluation i in
+    fun _ -> analyzed_body []
 
 let run_with_arguments (p : program) (arguments : 'a list) =
   let rec loop l xs =
@@ -202,6 +222,11 @@ let primitive_is_prime = primitive "is-prime" (tint @> tboolean)
 
 
 let primitive_cons = primitive "cons" (t0 @> tlist t0 @> tlist t0) (fun x xs -> x :: xs);;
+let primitive_car = primitive "car" (tlist t0 @> t0) (fun xs -> List.hd_exn xs);;
+let primitive_cdr = primitive "cdr" (tlist t0 @> tlist t0) (fun xs -> List.tl_exn xs);;
+let primitive_is_empty = primitive "empty?" (tlist t0 @> tboolean)
+    (function | [] -> true
+              | _ -> false);;
 
       
 let primitive_empty = primitive "empty" (tlist t0) [];;
@@ -225,6 +250,26 @@ let primitive_and = primitive "and" (tboolean @> tboolean @> tboolean) (fun x y 
 let primitive_nand = primitive "nand" (tboolean @> tboolean @> tboolean) (fun x y -> not (x && y));;
 let primitive_or = primitive "or" (tboolean @> tboolean @> tboolean) (fun x y -> x || y);;
 let primitive_greater_than = primitive "gt?" (tint @> tint @> tboolean) (fun (x: int) (y: int) -> x > y);;
+
+exception RecursionDepthExceeded of unit
+    
+let fixed_combinator body argument =
+  let recursion_limit = ref 20 in
+
+  let rec fix x = 
+    let r z =
+      decr recursion_limit;
+      if !recursion_limit > 0 then  
+        fix z
+      else raise (RecursionDepthExceeded())
+    in body r x
+  in
+
+  fix argument
+
+
+let primitive_recursion = primitive "fix" (((t0 @> t1) @> (t0 @> t1)) @> (t0 @> t1))
+    fixed_combinator;;
 
 
 let program_parser : program parsing = 
@@ -332,16 +377,41 @@ let parsing_test_cases() =
 (* program_test_cases();; *)
              
 let performance_test_case() =
-  let e = parse_program "((lambda (+ $0 $0)) k1)" |> get_some in
+  let e = parse_program "(lambda (map (lambda (+ $0 $0)) $0))" |> get_some in
   time_it "evaluate program many times" (fun () -> 
       (0--5000000) |> List.iter ~f:(fun j ->
           if j = 5000000 then
-            Printf.printf "%d\n" (evaluate [] e)
+            Printf.printf "%d\n" (evaluate [] e [2;1;9;3;] |> List.hd_exn)
           else 
-            ignore(evaluate [] e)));;
+            ignore(evaluate [] e [2;1;9;3;])));
+  let c = analyze_evaluation e in
+  time_it "evaluate analyzed program many times" (fun () -> 
+      (0--5000000) |> List.iter ~f:(fun j ->
+          if j = 5000000 then
+            Printf.printf "%d\n" (c [] [2;1;9;3;] |> List.hd_exn)
+          else 
+            ignore(c [] [2;1;9;3;])))
+;;
 
 
 (* performance_test_case();; *)
+
+
+let recursion_test_case() =
+  let f = fixed_combinator (fun r l ->
+      match l with
+      | [] -> []
+      | x::xs -> x*2 :: r xs) in
+  f (0--18) |> List.map ~f:Int.to_string |> join ~separator:" " |> Printf.printf "%s\n";
+  f (0--10) |> List.map ~f:Int.to_string |> join ~separator:" " |> Printf.printf "%s\n";
+  f (0--2) |> List.map ~f:Int.to_string |> join ~separator:" " |> Printf.printf "%s\n";
+  let e = parse_program "(lambda (fix (lambda (lambda (if (empty? $0) $0 (cons (* 2 (car $0)) ($1 (cdr $0)))))) $0))" |> get_some in
+  Printf.printf "%s\n" (string_of_program e);
+  evaluate [] e [1;2;3;4;] |> List.map ~f:Int.to_string |> join ~separator:" " |> Printf.printf "%s\n";;
+
+
+(* recursion_test_case();; *)
+
 
 
 (* let () = *)

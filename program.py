@@ -84,6 +84,15 @@ class Application(Program):
         self.f = f
         self.x = x
         self.hashCode = None
+        self.isConditional = f.isApplication and \
+                             f.f.isApplication and \
+                             f.f.f.isPrimitive and \
+                             f.f.f.name == "if"
+        if self.isConditional:
+            self.falseBranch = x
+            self.trueBranch = f.x
+            self.branch = f.f.x
+            
     @property
     def isApplication(self): return True
     def __eq__(self,other): return isinstance(other,Application) and self.f == other.f and self.x == other.x
@@ -96,7 +105,13 @@ class Application(Program):
         if isFunction: return "%s %s"%(self.f.show(True), self.x.show(False))
         else: return "(%s %s)"%(self.f.show(True), self.x.show(False))
     def evaluate(self,environment):
-        return self.f.evaluate(environment)(self.x.evaluate(environment))
+        if self.isConditional:
+            if self.branch.evaluate(environment):
+                return self.trueBranch.evaluate(environment)
+            else:
+                return self.falseBranch.evaluate(environment)
+        else:
+            return self.f.evaluate(environment)(self.x.evaluate(environment))
     def inferType(self,context,environment,freeVariables):
         (context,ft) = self.f.inferType(context,environment,freeVariables)
         (context,xt) = self.x.inferType(context,environment,freeVariables)

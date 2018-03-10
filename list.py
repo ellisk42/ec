@@ -7,7 +7,7 @@ from utilities import eprint, numberOfCPUs, flatten, fst, testTrainSplit, POSITI
 from grammar import Grammar
 from task import Task
 from type import Context, arrow, tlist, tint, t0, UnificationFailure
-from listPrimitives import basePrimitives, primitives
+from listPrimitives import basePrimitives, primitives, McCarthyPrimitives
 from recognition import HandCodedFeatureExtractor, MLPFeatureExtractor, RecurrentFeatureExtractor
 from enumeration import enumerateForTask
 
@@ -229,6 +229,8 @@ def list_options(parser):
         help="truncate tasks to fit within this boundary")
     parser.add_argument("--base", action="store_true",
         help="use foundational primitives")
+    parser.add_argument("--McCarthy", action="store_true",
+        help="use 1959 McCarthy Lisp primitives")
     parser.add_argument("--extractor", type=str,
         choices=["hand", "deep", "learned"],
         default="learned")
@@ -296,7 +298,7 @@ if __name__ == "__main__":
         train = tasks
         test = []
 
-    prims = basePrimitives if args.pop("base") else primitives
+    prims = basePrimitives if args.pop("base") else (McCarthyPrimitives if args.pop("McCarthy") else primitives)
 
     extractor = {
         "hand": FeatureExtractor,
