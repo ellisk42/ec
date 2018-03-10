@@ -23,7 +23,7 @@ from tower_common import *
 # Create the world
 world = TowerWorld()
 
-plan = eval(sys.argv[1]) #[(10,False),(11,False),(12,False),(11,True)]
+plan = eval(sys.argv[1])
 perturbation = float(sys.argv[2])
 
 originalPlan = plan
@@ -34,9 +34,10 @@ def my_draw_polygon(polygon, body, fixture):
     pygame.draw.polygon(screen, body.userData["color"], vertices)
 polygonShape.draw = my_draw_polygon
 
+
 result = TowerWorld().sampleStability(plan, perturbation, N = 100)
 mass = sum(w*h for _,w,h in plan)
-print "This tower has height %f, mass %f, area %f, len %f, and succeeds %d/100 of the time with a perturbation of %f"%(result.height, mass, result.area, result.length, int(result.stability*100),perturbation)
+print "This tower has height %f, mass %f, area %s, len %s, staircase %s, and succeeds %d/100 of the time with a perturbation of %f"%(result.height, mass, result.area, result.length, result.staircase, int(result.stability*100),perturbation)
 
 # --- main game loop ---
 

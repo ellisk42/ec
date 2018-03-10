@@ -11,20 +11,23 @@ class TowerTask(Task):
     STABILITYTHRESHOLD = 0.5
     
     def __init__(self, _ = None, perturbation = 0,
+                 maximumStaircase = 100,
                  maximumMass = 100,
                  minimumLength = 0,
                  minimumArea = 0,
                  minimumHeight = None):
-        name = "; ".join("%s: %s"%(k,v) for k,v in locals() .iteritems()
+        name = "; ".join("%s: %s"%(k,v) for k,v in locals().iteritems()
                          if not k in {"_","self"} )
         features = [perturbation,
                     float(maximumMass),
                     float(minimumHeight),
                     float(minimumLength),
-                    float(minimumArea)]
+                    float(minimumArea),
+                    float(maximumStaircase)]
         super(TowerTask, self).__init__(name, ttower, [],
                                         features = features)
 
+        self.maximumStaircase = maximumStaircase
         self.perturbation = perturbation
         self.minimumLength = minimumLength
         self.maximumMass = maximumMass
@@ -61,7 +64,8 @@ class TowerTask(Task):
         result = TowerTask.evaluateTower(tower, self.perturbation)
         
         if result.height < self.minimumHeight:
-            #eprint("height",result.height)
+            return NEGATIVEINFINITY
+        if result.staircase > self.maximumStaircase:
             return NEGATIVEINFINITY
         if result.stability < TowerTask.STABILITYTHRESHOLD:
             #eprint("stability")
@@ -100,13 +104,16 @@ def makeTasks():
     MILDPERTURBATION = 8
     MASSES = [20,30,40]
     HEIGHT = [3,5,7]
+    STAIRCASE = [10.5, 2.5]
     return [ TowerTask(maximumMass = float(m),
+                       maximumStaircase = float(s),
                        minimumArea = float(a),
                        perturbation = float(p),
                        minimumLength = float(l),
                        minimumHeight = float(h))
              for m in MASSES
              for a in [1, 2.9, 5.8]
+             for s in STAIRCASE 
              for l in [0, 2.5, 5, 7.5]
              for p in [MILDPERTURBATION, STRONGPERTURBATION]
              for h in HEIGHT

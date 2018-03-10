@@ -24,6 +24,7 @@ class TowerWorld(object):
         )
 
         self.blocks = []
+        self.latestPlan = []
 
         # self.H = 3.
         # self.W = 0.5
@@ -137,19 +138,16 @@ class TowerWorld(object):
                 intervals[j] = (s,l)
                 del intervals[k]
         return sum( l - s for s,l in intervals )
-        
 
-    def enclosedArea(self):
+    def calculateMask(self, resolution = 0.25):
         from scipy.ndimage.morphology import binary_fill_holes
         import numpy as np
         
-        
-        resolution = 0.25
         def rounding(z): return int(z/resolution + 0.5)
 
         h = rounding(self.height()) + 4
         w = rounding(self.length()) + 6
-        x0 = min( b.userData["p0"][0] for b in self.blocks )
+        x0 = min( b.userData["p0"][0] - b.userData["dimensions"][0]/2. for b in self.blocks )
 
         picture = np.zeros((w,h)).astype(int)
         
@@ -163,8 +161,8 @@ class TowerWorld(object):
             y -= 1 # lower down to the floor
             x -= x0
 
-            dx = rounding(dx/2)
-            dy = rounding(dy/2)
+            dx = rounding(dx/2.)
+            dy = rounding(dy/2.)
             x = rounding(x) + 1
             y = rounding(y) + 1
 
@@ -174,12 +172,77 @@ class TowerWorld(object):
 
         # Draw the floor
         picture[:,0] = 1
-            
+
+        return picture
+
+    def enclosedArea(self):
+        from scipy.ndimage.morphology import binary_fill_holes
+        import numpy as np
+
+        resolution = 0.25
+
+        picture = self.calculateMask(resolution = resolution) 
         flooded = binary_fill_holes(picture).astype(int)
         return resolution*resolution*((flooded - picture) == 1).sum()
-        
 
-            
+    def staircase(self):
+        import numpy as np
+        
+        resolution = 0.25
+        originalPicture = self.calculateMask(resolution = resolution)
+
+        def simulateWalker(picture):
+            w,h = picture.shape
+
+            # Our simulated staircase Walker
+            x = 0
+            y = 1
+
+            # Biggest jump / fall sustained
+            biggestJump = 0
+            biggestFall = 0
+
+            while True:
+                if x+1 >= w: break
+
+                # falling
+                fallSize = 0
+                while picture[x,y - 1] == 0:
+                    fallSize += 1
+                    y -= 1
+                biggestFall = max(fallSize, biggestFall)
+
+                # Now that we have fallen, see if we can walk forward
+                if picture[x+1,y] == 0:
+                    x += 1
+                    if x >= w: break
+
+                # jumping
+                else:
+                    jumpSize = 0
+                    while picture[x+1,y] == 1:
+                        y += 1
+                        jumpSize += 1
+                        if picture[x,y] == 1:
+                            # Hit our head on a block
+                            biggestJump = float('inf')
+                            biggestFall = float('inf')
+                            return biggestJump, biggestFall
+                        
+                        assert y < h,\
+                            "Walker hit the ceiling - should be impossible. Plan: %s"%self.originalPlan
+                    biggestJump = max(jumpSize, biggestJump)
+                    x += 1
+
+            return biggestJump*resolution, biggestFall*resolution
+
+        j1,f1 = simulateWalker(originalPicture)
+        j2,f2 = simulateWalker(np.flip(originalPicture, 0))
+        j = max(j1,j2)
+        f = max(f1,f2)
+        print j,f
+        return j,f
+        
             
 
     def impartImpulses(self, p):
@@ -208,6 +271,8 @@ class TowerWorld(object):
         return False
         
     def executePlan(self, plan):
+        self.latestPlan = plan
+        
         initialHeight = float('-inf')
         badPlan = False
         for p in plan:
@@ -263,6 +328,7 @@ class TowerWorld(object):
         area = 0
         haveArea = False
         length = 0
+        biggestJump, biggestFall = None, None
         for _ in range(N):
             planSucceeds = self.executePlan(plan)
             if planSucceeds:
@@ -271,6 +337,7 @@ class TowerWorld(object):
                 if not haveArea:
                     area = self.enclosedArea()
                     length = self.supportedLength(initialHeight - 0.5)
+                    biggestJump, biggestFall = self.staircase()
                     haveArea = True
                     
                 hs.append(initialHeight)
@@ -287,7 +354,8 @@ class TowerWorld(object):
         return Bunch({"height": h,
                       "stability": sum(wasStable)/float(len(wasStable)),
                       "area": area,
-                      "length": length})
+                      "length": length,
+                      "staircase": max(biggestFall, biggestJump)})
     
             
 

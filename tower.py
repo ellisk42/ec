@@ -19,6 +19,7 @@ class TowerFeatureExtractor(HandCodedFeatureExtractor):
         heights = { t.minimumHeight for t in TowerTask.tasks }
         lengths = { t.minimumLength for t in TowerTask.tasks }
         areas = { t.minimumArea for t in TowerTask.tasks }
+        staircases = { t.maximumStaircase for t in TowerTask.tasks }
 
         # Find the largest perturbation that this power can withstand
         perturbations = sorted({ t.perturbation for t in TowerTask.tasks }, reverse = True)        
@@ -28,16 +29,19 @@ class TowerFeatureExtractor(HandCodedFeatureExtractor):
             possibleHeightThresholds = { h for h in heights if result.height >= h }
             possibleLengthThresholds = { l for l in lengths if result.length >= l }
             possibleAreaThresholds = { a for a in areas if result.area >= a }
+            possibleStaircases = { s for s in staircases if result.staircase <= s }
             
             if len(possibleHeightThresholds) > 0 and \
                len(possibleLengthThresholds) > 0 and \
+               len(possibleStaircases) > 0 and \
                len(possibleAreaThresholds) > 0:
                 if result.stability > TowerTask.STABILITYTHRESHOLD:
                     return [perturbation,
                             mass,
                             random.choice(list(possibleHeightThresholds)),
                             random.choice(list(possibleLengthThresholds)),
-                            random.choice(list(possibleAreaThresholds))]
+                            random.choice(list(possibleAreaThresholds)),
+                            random.choice(list(possibleStaircases))]
             else: return None
 
         return None
