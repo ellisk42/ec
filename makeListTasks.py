@@ -158,7 +158,7 @@ def make_list_bootstrap_tasks(numberOfExamples):
 
     indexBootstrap = []
     from random import choice
-    for j in range(6):
+    for j in range(2):
         t = Task("If i = %d then x else y"%j,
                  arrow(tint,tint,tint,tint),
                  [ ((i,x,a), x if i == j else a)
@@ -167,6 +167,7 @@ def make_list_bootstrap_tasks(numberOfExamples):
                     for a in [ choice(list(set(range(10)) - {x})) ]
                  ])
         indexBootstrap.append(t)
+    return indexBootstrap
 
     booleanBootstrap = []
     for name, f in [("and", lambda x,y: x and y),
@@ -282,11 +283,43 @@ def make_list_bootstrap_tasks(numberOfExamples):
               for l in [[random() > 0.5 for _ in range(randint(0,4)) ]] ])
         ]
 
-    # matchBootstrap = [
-    #     Task("and ")
+    matchBootstrap = [
+        Task("match & %s w/ default %s"%(n,default),
+             arrow(tlist(tbool), tbool),
+             [((l,), default if l == [] else f(l[0],l[1:]))
+              for l in [[],
+                        [True],
+                        [False],
+                        [True,False],
+                        [True,True],
+                        [False,False],
+                        [False,True]] ])
+        for default in [True,False]
+        for n,f in [("and not empty", lambda x,xs: x and len(xs) != 0),
+                    ("or not empty", lambda x,xs: x or len(xs) != 0),
+                    ("and empty", lambda x,xs: x and len(xs) == 0),
+                    ("or empty", lambda x,xs: x or len(xs) == 0)]
+        ] + \
+        [
+            Task("match & %s w/ default %s"%(n,default),
+                 arrow(tlist(tint), tint),
+                 [((l,), default if l == [] else f(l[0],l[1:]))
+              for l in [[],
+                        [True],
+                        [False],
+                        [True,False],
+                        [True,True],
+                        [False,False],
+                        [False,True]] ])
+        for default in [0,1]
+        for n,f in [("and not empty", lambda x,xs: x and len(xs) != 0),
+                    ("or not empty", lambda x,xs: x or len(xs) != 0),
+                    ("and empty", lambda x,xs: x and len(xs) == 0),
+                    ("or empty", lambda x,xs: x or len(xs) == 0)]
+        ]
     
     return filterBootstrap + reverseBootstrap + indexBootstrap + booleanBootstrap + comparisonBootstrap + \
-        appendBootstrap + mapBootstrap + rangeBootstrap + foldBootstrap
+        appendBootstrap + mapBootstrap + rangeBootstrap + foldBootstrap + matchBootstrap
 
 def bonusListProblems():
     # Taken from https://www.ijcai.org/Proceedings/75/Papers/037.pdf

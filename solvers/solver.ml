@@ -102,7 +102,16 @@ let load_problem channel =
 
   let timeout = try
       j |> member "programTimeout" |> to_float
-    with _ -> 0.1
+    with _ -> begin 
+        let defaultTimeout = 0.1 in
+        Printf.eprintf "\t(ocaml) WARNING: programTimeout not set. Defaulting to %f.\n" defaultTimeout;
+        defaultTimeout
+      end
+  in
+
+  let verbose = try
+      j |> member "verbose" |> to_bool
+    with _ -> false
   in
 
   let solver_timeout = j |> member "solverTimeout" |> to_int in
@@ -115,9 +124,9 @@ let load_problem channel =
     end else
       supervised_task ~timeout:timeout name task_type examples
   in
-  (t,g,solver_timeout,maximum_frontier)
+  (t,g,solver_timeout,maximum_frontier,verbose)
 
-let export_frontier task solutions : string =
+let export_frontier solutions : string =
   (* solutions |> List.iter ~f:(fun (p,_,_,_) -> *)
   (*     Printf.eprintf "EXPORT: %s: %s. PROGRAM: %s\n" *)
   (*       (task.name) (task.task_type |> string_of_type) (string_of_program p)); *)
@@ -132,11 +141,11 @@ let export_frontier task solutions : string =
   in pretty_to_string serialization
 
 let main () =
-  let (t,g,solverTimeout,maximumFrontier) = load_problem stdin in
+  let (t,g,solverTimeout,maximumFrontier,verbose) = load_problem stdin in
 
-  let solutions = enumerate_for_task ~verbose:false ~maximumFrontier:maximumFrontier ~timeout:solverTimeout g t in
+  let solutions = enumerate_for_task ~verbose:verbose ~maximumFrontier:maximumFrontier ~timeout:solverTimeout g t in
 
-  print_string (export_frontier t solutions)
+  export_frontier solutions |> print_string
 ;;
 
   

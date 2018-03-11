@@ -98,6 +98,13 @@ let rec evaluate (environment: 'b list) (p:program) : 'a =
 
 let rec analyze_evaluation (p:program) : 'b list -> 'a =
   match p with
+  | Apply(Apply(Apply(Primitive(_,"if",_),branch),yes),no) ->
+    let branch = analyze_evaluation branch
+    and yes = analyze_evaluation yes
+    and no = analyze_evaluation no
+    in
+    fun environment -> 
+      if magical (branch environment) then yes environment else no environment
   | Abstraction(b) ->
     let body = analyze_evaluation b in
     fun environment -> magical (fun x -> body (x::environment))
@@ -120,6 +127,13 @@ let run_with_arguments (p : program) (arguments : 'a list) =
     | [] -> magical l
     | x :: xs -> loop (magical (l x)) xs
   in loop (evaluate [] p) arguments
+
+let run_analyzed_with_arguments (p : 'b list -> 'c) (arguments : 'a list) =
+  let rec loop l xs =
+    match xs with
+    | [] -> magical l
+    | x :: xs -> loop (magical (l x)) xs
+  in loop (p []) arguments
 
 let rec remove_abstractions (n : int) (q : program) : program =
   match (n,q) with
@@ -377,20 +391,22 @@ let parsing_test_cases() =
 (* program_test_cases();; *)
              
 let performance_test_case() =
-  let e = parse_program "(lambda (map (lambda (+ $0 $0)) $0))" |> get_some in
+  let e = parse_program "(lambda (fix (lambda (lambda (if (empty? $0) $0 (cons (* 2 (car $0)) ($1 (cdr $0)))))) $0))" |> get_some in
+  let xs = [2;1;9;3;] in
+  let n = 10000000 in
   time_it "evaluate program many times" (fun () -> 
-      (0--5000000) |> List.iter ~f:(fun j ->
-          if j = 5000000 then
-            Printf.printf "%d\n" (evaluate [] e [2;1;9;3;] |> List.hd_exn)
+      (0--n) |> List.iter ~f:(fun j ->
+          if j = n then
+            Printf.printf "%s\n" (evaluate [] e xs |> List.map ~f:Int.to_string |> join ~separator:" ")
           else 
-            ignore(evaluate [] e [2;1;9;3;])));
-  let c = analyze_evaluation e in
+            ignore(evaluate [] e xs)));
+  let c = analyze_evaluation e [] in
   time_it "evaluate analyzed program many times" (fun () -> 
-      (0--5000000) |> List.iter ~f:(fun j ->
-          if j = 5000000 then
-            Printf.printf "%d\n" (c [] [2;1;9;3;] |> List.hd_exn)
+      (0--n) |> List.iter ~f:(fun j ->
+          if j = n then
+            Printf.printf "%s\n" (c xs |> List.map ~f:Int.to_string |> join ~separator:" ")
           else 
-            ignore(c [] [2;1;9;3;])))
+            ignore(c xs)))
 ;;
 
 

@@ -28,6 +28,12 @@ let rec return_of_type t =
   | TCon("->",[_;q]) -> return_of_type q 
   | _ -> t
 
+(* arguments_of_type (t1 @> t2 @> ... @> T) = [t1;t2;...] *)
+let rec arguments_of_type t =
+  match t with
+  | TCon("->",[p;q]) -> p :: arguments_of_type q
+  | _ -> []
+
 let right_of_arrow t =
   match t with
   | TCon("->",[_;p]) -> p
@@ -79,39 +85,20 @@ let occursCheck = true
 
 exception UnificationFailure
 
-let rec unify context t1 t2 : tContext = 
-  let (t1_, context_) = chaseType context t1 in
-  let (t2_, context__) = chaseType context_ t2 in
-  unify_ context__ t1_ t2_
-and unify_ context t1 t2 : tContext = 
+let rec might_unify t1 t2 = 
   match (t1, t2) with
-  | (TID(i), TID(j)) when i = j -> context
-  | (TID(i), _) ->
-    if occursCheck && occurs i t2
-    then raise UnificationFailure
-    else bindTID i t2 context
-  | (_,TID(i)) ->
-    if occursCheck && occurs i t1
-    then raise UnificationFailure
-    else bindTID i t1 context
-  | (TCon(k1,as1),TCon(k2,as2)) when k1 = k2 -> 
-    List.fold2_exn ~init:context as1 as2 ~f:unify
-  | _ -> raise UnificationFailure
-
+  | (TCon(k1,as1), TCon(k2,as2)) when k1 = k2 -> 
+    List.for_all2_exn as1 as2 might_unify
+  | (TID(_),_) -> true
+  | (_,TID(_)) -> true
+  | _ -> false
 
 type fast_type = 
   | FCon of string * fast_type list
   | FID of (fast_type option) ref
 
 let can_unify (t1 : tp) (t2 : tp) : bool =
-  let rec same_structure t1 t2 =
-    match (t1, t2) with
-    | (TCon(k1,as1), TCon(k2,as2)) when k1 = k2 -> 
-      List.for_all2_exn as1 as2 same_structure
-    | (TID(_),_) -> true
-    | (_,TID(_)) -> true
-    | _ -> false
-  in if not (same_structure t1 t2) then false else
+  if not (might_unify t1 t2) then false else
     let rec make_fast_type dictionary t = 
       match t with
       | TID(i) -> 
@@ -148,7 +135,31 @@ let can_unify (t1 : tp) (t2 : tp) : bool =
 	fast_unify x y && 
         List.for_all2_exn xs ys (fun a b -> fast_unify (fast_chase a) (fast_chase b))
       | _ -> raise (Failure "constructors of different arity")
-    in fast_unify (make_fast_type (ref []) t1) (make_fast_type (ref []) t2)
+    in
+    let dictionary = ref [] in
+    let t1 = make_fast_type dictionary t1 in
+    let t2 = make_fast_type dictionary t2 in
+    fast_unify t1 t2
+
+
+let rec unify context t1 t2 : tContext =
+  let (t1_, context_) = chaseType context t1 in
+  let (t2_, context__) = chaseType context_ t2 in
+  unify_ context__ t1_ t2_
+and unify_ context t1 t2 : tContext = 
+  match (t1, t2) with
+  | (TID(i), TID(j)) when i = j -> context
+  | (TID(i), _) ->
+    if occursCheck && occurs i t2
+    then raise UnificationFailure
+    else bindTID i t2 context
+  | (_,TID(i)) ->
+    if occursCheck && occurs i t1
+    then raise UnificationFailure
+    else bindTID i t1 context
+  | (TCon(k1,as1),TCon(k2,as2)) when k1 = k2 -> 
+    List.fold2_exn ~init:context as1 as2 ~f:unify
+  | _ -> raise UnificationFailure
 
 let instantiate_type (n,m) t = 
   let substitution = ref [] in
@@ -241,6 +252,14 @@ let tlist t = TCon("list",[t]);;
 let tstring = TCon("string",[]);;
 
 let test_type () = 
+  print_string (string_of_bool (can_unify (t1 @> t1) (t0 @> (tint @> t0))));
+  let (t0,k) = makeTID empty_context in
+  let (t1,k) = makeTID k in
+  let (t2,k) = makeTID k in
+  let a = t1 in
+  let b = tlist t2 in
+  Printf.printf "%s\t%s\n" (string_of_type a) (string_of_type b);
+  ignore(unify k a b);
   print_string (string_of_bool (can_unify (t1 @> t1) (t0 @> (tint @> t0))))
   (* print_string (string_of_type @@ t1 @> (t2 @> t2) @> tint);
   print_string (string_of_bool (can_unify (t1 @> t1) (make_arrow t1 t1)));

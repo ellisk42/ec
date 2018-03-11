@@ -13,6 +13,7 @@ type frontier = {
 let rec enumerate_programs (g: grammar) (context: tContext) (request: tp) (environment: tp list)
     (lower_bound: float) (upper_bound: float)
     (callBack: program -> tContext -> float -> unit) : unit =
+  (* INVARIANT: request always has the current context applied to it already *)
   if upper_bound <= 0.0 then () else
     match request with
     | TCon("->",[argument_type;return_type]) ->
@@ -24,45 +25,23 @@ let rec enumerate_programs (g: grammar) (context: tContext) (request: tp) (envir
       unifying_expressions g environment request context |> 
       List.iter ~f:(fun (candidate, candidate_type, context, ll) ->
           let mdl = 0.-.ll in
-          if mdl > upper_bound then () else 
-            enumerate_applications g context candidate_type candidate environment
+          if mdl > upper_bound then () else
+            let argument_types = arguments_of_type candidate_type in
+            enumerate_applications g context argument_types candidate environment
               (lower_bound+.ll) (upper_bound+.ll)
               (fun p k al -> callBack p k (ll+.al)))
 and
-  enumerate_applications (g: grammar) (context: tContext) (f_type: tp) (f: program) (environment: tp list) (lower_bound: float) (upper_bound: float) (callBack: program -> tContext -> float -> unit): unit =
+  enumerate_applications (g: grammar) (context: tContext) (argument_types: tp list) (f: program) (environment: tp list) (lower_bound: float) (upper_bound: float) (callBack: program -> tContext -> float -> unit): unit =
   (* returns the log likelihood of the arguments! not the log likelihood of the application! *)
   if upper_bound <= 0. then () else 
-    match arguments_and_return_of_type f_type with
-    | ([], _) -> (* not a function so we don't need any applications *)
+    match argument_types with
+    | [] -> (* not a function so we don't need any applications *)
       if lower_bound < 0. && 0. <= upper_bound then callBack f context 0.0 else ()
-    | (first_argument::_, _) ->
+    | first_argument::later_arguments ->
+      let (first_argument, context) = chaseType context first_argument in
       enumerate_programs g context first_argument environment 0. upper_bound
         (fun a k ll ->
            let a = Apply(f,a) in
-           let (applicationType,k) = chaseType k (right_of_arrow f_type) in
-           enumerate_applications g k applicationType a environment (lower_bound+.ll) (upper_bound+.ll)
+           enumerate_applications g k later_arguments a environment (lower_bound+.ll) (upper_bound+.ll)
              (fun a k a_ll -> callBack a k (a_ll+.ll)))
-
-(* let iterative_deepening_enumeration (g:grammar) (request:tp) (size:int) : frontier = *)
-(*   let startTime = Time.now () in *)
-(*   let rec deepen bound = *)
-(*     let accumulator = ref [] in *)
-(*     let _ = *)
-(*       enumerate_programs g empty_context request [] bound *)
-(*         (fun p _ ll -> accumulator := (p,ll) :: !accumulator) *)
-(*     in *)
-(*     let possibleSolutions = !accumulator in *)
-(*     if List.length possibleSolutions<size then deepen (bound +. 1.0) *)
-(*     else begin *)
-(*       Printf.printf "Enumerated up to bound %f nats\n" bound; *)
-(*       possibleSolutions *)
-(*     end *)
-(*   in *)
-(*   let result = deepen 1.0 in *)
-(*   Printf.printf "Enumerated %d programs of type %s in time %s\n" *)
-(*     (List.length result) *)
-(*     (string_of_type request) *)
-(*     (Time.diff (Time.now ()) startTime |> Core.Span.to_string); *)
-(*   {programs = result; request = request;} *)
-
 

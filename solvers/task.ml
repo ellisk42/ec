@@ -19,16 +19,12 @@ let supervised_task ?timeout:(timeout = 0.001) ?features:(features = []) name ty
     task_features = features;
     task_type = ty;
     log_likelihood = (fun p ->
-        (* Printf.printf "About evaluate the log likelihood of program : %s =  %s\n" (string_of_type ty) (string_of_program p); *)
-        (*        flush_everything(); *)
+        let p = analyze_evaluation p in
         let rec loop = function
           | [] -> true
           | (xs,y) :: e ->
-            (* let xp : int list = magical y in *)
-            (* xp |> List.iter ~f:(fun xpp -> Printf.printf "%d;" xpp);Printf.printf "\n"; *)
-            (* flush_everything(); *)
             try
-              match run_for_interval timeout (fun () -> Some(run_with_arguments p xs = y)) with
+              match run_for_interval timeout (fun () -> run_analyzed_with_arguments p xs = y) with
               | Some(true) -> loop e
               | _ -> false
             with | UnknownPrimitive(n) -> raise (Failure ("Unknown primitive: "^n))
@@ -60,7 +56,6 @@ exception EnumerationTimeout;;
 let enumerate_for_task (g: grammar) ?verbose:(verbose = true)
     ~timeout:timeout ?maximumFrontier:(maximumFrontier = 10) (t: task)
   =
-  let open Timeout in
   
   let hits = ref [] in
   let budgetIncrement = 1. in
@@ -87,17 +82,18 @@ let enumerate_for_task (g: grammar) ?verbose:(verbose = true)
              if is_valid logLikelihood then begin 
                hits := (p,logPrior,logLikelihood,df) :: !hits;
                if verbose then  
-                 Printf.printf "HIT %s w/ %s\n" (t.name) (string_of_program p)
+                 Printf.eprintf "\t(ocaml) HIT %s w/ %s\n" (t.name) (string_of_program p)
                else ()
              end else  ());
       if verbose then
-        Printf.printf "Enumerated %d programs satisfying %f < MDL <= %f\n"
-          (!recent_count) (!lower_bound) (!lower_bound+.budgetIncrement)
+        Printf.eprintf "\t(ocaml) For %s : %s, enumerated %d programs satisfying %f < MDL <= %f\n"
+          (t.name) (t.task_type |> string_of_type) (!recent_count) (!lower_bound) (!lower_bound+.budgetIncrement)
       else ();
       lower_bound := budgetIncrement+. (!lower_bound);
       total_count := !total_count + !recent_count;
       if verbose then begin 
-        Printf.printf "\tTotal time: %s. Total number of programs: %d.\n"
+        Printf.eprintf "\t(ocaml) For %s: Total time: %s. Total number of programs: %d.\n"
+          (t.name)
           (Time.diff (Time.now ()) startTime |> Core.Span.to_string)
           (!total_count);
         flush_everything();

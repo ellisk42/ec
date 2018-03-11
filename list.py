@@ -311,6 +311,7 @@ if __name__ == "__main__":
     args.update({
         "featureExtractor": extractor,
         "outputPrefix": "experimentOutputs/list",
+        "evaluationTimeout": 0.0005
     })
 
     baseGrammar = Grammar.uniform(prims())

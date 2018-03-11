@@ -149,6 +149,7 @@ def ecIterator(grammar, tasks,
                                                                    datetime.datetime.now(), CPUs))
     for k,v in parameters.iteritems():
         eprint("\t", k, " = ", v)
+    eprint("\t", "evaluationTimeout", " = ", evaluationTimeout)
     eprint()
 
     # Restore checkpoint

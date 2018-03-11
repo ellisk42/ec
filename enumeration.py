@@ -50,12 +50,15 @@ def solveForTask(g, task, _ = None, timeout = None, evaluationTimeout = None,
     message = {"DSL": {"logVariable": g.logVariable,
                        "productions": [ {"expression": str(p), "logProbability": l}
                                             for l,_,p in g.productions ]},
-               "examples": [{"inputs": xs, "output": y} for xs,y in task.examples ],
+               "examples": [{"inputs": list(xs), "output": y} for xs,y in task.examples ],
                "programTimeout": evaluationTimeout,
                "solverTimeout": timeout,
                "maximumFrontier": maximumFrontier,
-               "name": task.name}
+               "name": task.name,
+               "verbose": True}#verbose}
     message = json.dumps(message)
+    with open('message','w') as handle: handle.write(message)
+    eprint(message)
     p = subprocess.Popen(['./solver'],
                          stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     response, error = p.communicate(message)

@@ -165,6 +165,9 @@ def McCarthyPrimitives():
         #                          t1,
         #                          arrow(t0, tlist(t0), t1),
         #                          t1), _match),
+        Primitive("eq?", arrow(tint, tint, tbool), _eq),
+        Primitive("gt?", arrow(tint, tint, tbool), _gt),
+
 
         Primitive("+", arrow(tint, tint, tint), _addition),
         Primitive("negate", arrow(tint, tint), _negate),
