@@ -59,20 +59,20 @@ let rec program_equal p1 p2 = match (p1,p2) with
 
 let rec infer_program_type context environment = function
   | Index(j) ->
-    let (t,context) = List.nth_exn environment j |> chaseType context in (context,t)
+    let t = List.nth_exn environment j |> applyContext context in (context,t)
   | Primitive(t,_,_) -> let (t,context) = instantiate_type context t in (context,t)
   | Invented(t,_) -> let (t,context) = instantiate_type context t in (context,t)
   | Abstraction(b) ->
     let (xt,context) = makeTID context in
     let (context,rt) = infer_program_type context (xt::environment) b in
-    let (ft,context) = chaseType context (xt @> rt) in
+    let ft = applyContext context (xt @> rt) in
     (context,ft)
   | Apply(f,x) ->
     let (rt,context) = makeTID context in
     let (context, xt) = infer_program_type context environment x in
     let (context, ft) = infer_program_type context environment f in
     let context = unify context ft (xt @> rt) in
-    let (rt, context) = chaseType context rt in
+    let rt = applyContext context rt in
     (context, rt)
 
 exception UnknownPrimitive of string
@@ -347,7 +347,7 @@ let parse_program s = run_parser program_parser s
 
 let test_program_inference program desired_type =
   let (context,t) = infer_program_type empty_context [] program in
-  let (t,_) = chaseType context t in
+  let t = applyContext context t in
   let t = canonical_type t in
   Printf.printf "%s : %s\n" (string_of_program program) (string_of_type t);
   assert (t = (canonical_type desired_type))
@@ -428,7 +428,19 @@ let recursion_test_case() =
 
 (* recursion_test_case();; *)
 
+(* let timeout_test_cases() = *)
+(*   let list_of_numbers = [ *)
+(*     "(lambda (fix (lambda (lambda (if (empty? $0) $0 (cons (\* 2 (car $0)) ($1 (cdr $0)))))) $0))"; *)
 
+(*   ] in *)
+
+(*   let list_of_numbers = list_of_numbers |> List.map ~f:(analyze_evaluation%get_some%parse_program) in *)
+
+(*   let xs = [(0--10);(0--10);(0--10)] in *)
+
+(*   time_it "evaluated all of the programs" (fun () -> *)
+      
+  
 
 (* let () = *)
 (*   let e = parse_program "(lambda (reducei (lambda (lambda (lambda (range $0)))) empty $0))" |> get_some in *)

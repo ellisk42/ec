@@ -37,12 +37,12 @@ let unifying_expressions g environment request context : (program*tp*tContext*fl
   let variable_candidates =
     environment |> List.mapi ~f:(fun j t -> (Index(j),t,g.logVariable)) |>
     List.filter_map ~f:(fun (p,t,ll) ->
-        let return = chaseType context t |> fst |> return_of_type in
+        let return = applyContext context t |> return_of_type in
         if might_unify return request
         then
           try
             let context = unify context return request in
-            let (t,context) = chaseType context t in
+            let t = applyContext context t in
             Some((p,t,context,ll))
           with UnificationFailure -> None (* begin *)
             (*   Printf.eprintf "inconsistent variable unification. %s\t%s\n" *)
@@ -63,7 +63,7 @@ let unifying_expressions g environment request context : (program*tp*tContext*fl
           then None
           else
             let context = unify context return_type request in
-            let (t,context) = chaseType context t in
+            let t = applyContext context t in
             Some(p, t, context, ll)
         with UnificationFailure -> None (* begin *)
        (*      let (t,context) = instantiate_type context t in *)
@@ -80,36 +80,36 @@ let unifying_expressions g environment request context : (program*tp*tContext*fl
   List.map ~f:(fun (p,t,k,ll) -> (p,t,k,ll-.z)) candidates
 
 
-let likelihood_under_grammar g request expression =
-  let rec walk_application_tree tree =
-    match tree with
-    | Apply(f,x) -> walk_application_tree f @ [x]
-    | _ -> [tree]
-  in
+(* let likelihood_under_grammar g request expression = *)
+(*   let rec walk_application_tree tree = *)
+(*     match tree with *)
+(*     | Apply(f,x) -> walk_application_tree f @ [x] *)
+(*     | _ -> [tree] *)
+(*   in *)
   
-  let rec likelihood (r : tp) (environment: tp list) (context: tContext) (p: program) : (float*tContext) =
-    match r with
-    (* a function - must start out with a sequence of lambdas *)
-    | TCon("->",[argument;return_type]) -> 
-      let newEnvironment = argument :: environment in
-      let body = remove_abstractions 1 p in
-      likelihood return_type newEnvironment context body
-    | _ -> (* not a function - must be an application instead of a lambda *)
-      let candidates = unifying_expressions g environment r context in
-      match walk_application_tree p with
-      | [] -> raise (Failure "walking the application tree")
-      | f::xs ->
-        match List.find candidates ~f:(fun (candidate,_,_,_) -> program_equal candidate f) with
-        | None -> raise (Failure ("could not find function in grammar: "^(string_of_program p)))
-        | Some(_, f_t, newContext, functionLikelihood) ->
-          let (f_t, newContext) = chaseType newContext f_t in
-          let (argument_types, _) = arguments_and_return_of_type f_t in
-          List.fold_right (List.zip_exn xs argument_types)
-            ~init:(functionLikelihood,newContext)
-            ~f:(fun (x,x_t) (ll,ctx) ->
-                let (x_ll,ctx) = likelihood x_t environment ctx x in
-                (ll+.x_ll,ctx))
-  in
+(*   let rec likelihood (r : tp) (environment: tp list) (context: tContext) (p: program) : (float*tContext) = *)
+(*     match r with *)
+(*     (\* a function - must start out with a sequence of lambdas *\) *)
+(*     | TCon("->",[argument;return_type]) ->  *)
+(*       let newEnvironment = argument :: environment in *)
+(*       let body = remove_abstractions 1 p in *)
+(*       likelihood return_type newEnvironment context body *)
+(*     | _ -> (\* not a function - must be an application instead of a lambda *\) *)
+(*       let candidates = unifying_expressions g environment r context in *)
+(*       match walk_application_tree p with *)
+(*       | [] -> raise (Failure "walking the application tree") *)
+(*       | f::xs -> *)
+(*         match List.find candidates ~f:(fun (candidate,_,_,_) -> program_equal candidate f) with *)
+(*         | None -> raise (Failure ("could not find function in grammar: "^(string_of_program p))) *)
+(*         | Some(_, f_t, newContext, functionLikelihood) -> *)
+(*           let (f_t, newContext) = applyContext newContext f_t in *)
+(*           let (argument_types, _) = arguments_and_return_of_type f_t in *)
+(*           List.fold_right (List.zip_exn xs argument_types) *)
+(*             ~init:(functionLikelihood,newContext) *)
+(*             ~f:(fun (x,x_t) (ll,ctx) -> *)
+(*                 let (x_ll,ctx) = likelihood x_t environment ctx x in *)
+(*                 (ll+.x_ll,ctx)) *)
+(*   in *)
   
-  likelihood request [] empty_context expression |> fst
+(*   likelihood request [] empty_context expression |> fst *)
 

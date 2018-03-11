@@ -38,7 +38,7 @@ and
     | [] -> (* not a function so we don't need any applications *)
       if lower_bound < 0. && 0. <= upper_bound then callBack f context 0.0 else ()
     | first_argument::later_arguments ->
-      let (first_argument, context) = chaseType context first_argument in
+      let first_argument = applyContext context first_argument in
       enumerate_programs g context first_argument environment 0. upper_bound
         (fun a k ll ->
            let a = Apply(f,a) in

@@ -48,13 +48,13 @@ let load_problem channel =
         l |> List.iter ~f:(fun y ->
             let yt = guess y in
             context := unify !context yt t);
-        tlist (chaseType !context t |> fst)          
+        tlist (applyContext !context t) 
       with _ -> raise (Failure "Could not guess type")
     in
     let ts = elements |> List.map ~f:guess in
     let t0 = List.hd_exn ts in
     ts |> List.iter ~f:(fun t -> context := (unify (!context) t0 t));
-    chaseType !context t0 |> fst
+    applyContext !context t0
   in
     
   let rec unpack x =
