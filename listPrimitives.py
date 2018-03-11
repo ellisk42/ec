@@ -152,7 +152,7 @@ def basePrimitives():
     ]
 
 def McCarthyPrimitives():
-    "These are ~ primitives provided by 1959 wisp as introduced by McCarthy"
+    "These are ~ primitives provided by 1959 lisp as introduced by McCarthy"
     return [
         Primitive("empty", tlist(t0), []),
         Primitive("cons", arrow(t0, tlist(t0), tlist(t0)), _cons),
@@ -166,7 +166,8 @@ def McCarthyPrimitives():
         #                          arrow(t0, tlist(t0), t1),
         #                          t1), _match),
 
-        Primitive("+", arrow(tint, tint, tint), _addition)
+        Primitive("+", arrow(tint, tint, tint), _addition),
+        Primitive("negate", arrow(tint, tint), _negate),
         ] + [ Primitive(str(j), tint, j) for j in xrange(2) ]
 
 if __name__ == "__main__":

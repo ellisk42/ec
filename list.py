@@ -314,23 +314,12 @@ if __name__ == "__main__":
     })
 
     baseGrammar = Grammar.uniform(prims())
-    # from program import *
-    # f = "#(lambda (lambda (lambda (if $0 (cons $1 $2) $2))))"
-    # Program.parse(f)
-    # p = Program.parse("(lambda (reducei (lambda (lambda (lambda (if (is-prime $0) (cons $0 $1) $1)))) empty $0))")
-    # eprint(p)
-    # eprint(p.evaluate([])([1,2,4,2,7,3,5,1]))
-    # eprint(baseGrammar.closedLogLikelihood(arrow(tlist(tint),tbool), p))
-    # assert False
-    # difficult = ["reverse","evens","drop-k with k=4","take-k with k=4"]#,"index-k with k=5"]
-    # train = [ t for t in train if t.name in difficult]
     from makeListTasks import make_list_bootstrap_tasks, bonusListProblems
-    # for t in make_list_bootstrap_tasks(10):
-    #     print t.describe()
-    train += make_list_bootstrap_tasks(10)
+    train = make_list_bootstrap_tasks(10)
     eprint("Total number of training tasks:",len(train))
-    # for t in make_list_bootstrap_tasks(10):
-    #     print t.describe()
+    for t in make_list_bootstrap_tasks(10):
+        print t.describe()
+        print 
     # assert False
     
     

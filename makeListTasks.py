@@ -100,8 +100,8 @@ def make_list_bootstrap_tasks(numberOfExamples):
         return [ randint(0,9) for _ in range(randint(5,10)) ]
     filterBootstrap = []
 
-    for name, f in [("square", lambda x: (int(x**0.5)**2 == x)),
-                    ("prime", lambda x: x in {2,3,5,7}),
+    for name, f in [# ("square", lambda x: (int(x**0.5)**2 == x)),
+                    # ("prime", lambda x: x in {2,3,5,7}),
                     ("is even", lambda x: x%2 == 0),
                     ("is odd", lambda x: x%2 == 1),
                     # ("is < 5", lambda x: x < 5),
@@ -110,7 +110,8 @@ def make_list_bootstrap_tasks(numberOfExamples):
                     # ("is > 5", lambda x: x > 5),
                     # ("is > 3", lambda x: x > 3),
                     # ("is > 4", lambda x: x > 4),
-                    # ("is 2", lambda x: x == 2),
+                    ("is 1", lambda x: x == 1),
+            ("is < 1", lambda x: 1 > x),
                     # ("is 5", lambda x: x == 5),
                     # ("is 3", lambda x: x == 3)
                     ]:
@@ -149,11 +150,11 @@ def make_list_bootstrap_tasks(numberOfExamples):
                                  [ ((x,), list(reversed(x)))
                                    for _ in range(10) 
                                    for x in [randomSuffix()] ]))
-    reverseBootstrap.append(Task("sort backwards",
-                                 arrow(tlist(tint),tlist(tint)),
-                                 [ ((x,), list(reversed(sorted(x))))
-                                   for _ in range(10) 
-                                   for x in [randomSuffix()] ]))
+    # reverseBootstrap.append(Task("sort backwards",
+    #                              arrow(tlist(tint),tlist(tint)),
+    #                              [ ((x,), list(reversed(sorted(x))))
+    #                                for _ in range(10) 
+    #                                for x in [randomSuffix()] ]))
 
     indexBootstrap = []
     from random import choice
@@ -220,43 +221,72 @@ def make_list_bootstrap_tasks(numberOfExamples):
         ]
     ] + \
     [
-        Task("cons %s w/ suffix"%n, arrow(tint,tlist(tbool),tlist(tbool)),
-             [ ((x,suffix), [f(x)] + suffix)
-               for x in range(10)
-               for suffix in [[ random() > 0.5 for _ in range(4) ]] ])
-        for n,f in [("is_square",lambda a: a == int(a**0.5)**2),
-                    ("is_prime",lambda a: a in {2,3,5,7})]
-    ] + \
-    [
         Task("cons %s w/ suffix"%n, arrow(tbool,tlist(tbool),tlist(tbool)),
              [ ((x,suffix), [f(x)] + suffix)
+               for _ in range(2) 
                for x in [True,False]
                for suffix in [[ random() > 0.5 for _ in range(4) ]] ])
         for n,f in [("not",lambda a: not a)]
     ] + \
     [
-        Task("reverse map not", arrow(tlist(tbool),tlist(tbool)),
-             [ ((l,), map(lambda a: not a, reversed(l)))
+        Task("map not", arrow(tlist(tbool),tlist(tbool)),
+             [ ((l,), map(lambda a: not a, l))
                for _ in range(5) 
                for l in [[ random() > 0.5 for _ in range(4) ]] ])
     ] + \
     [
-        Task("reverse map negation", arrow(tlist(tint),tlist(tint)),
-             [ ((l,), map(lambda a: -a, reversed(l)))
+        Task("map negation", arrow(tlist(tint),tlist(tint)),
+             [ ((l,), map(lambda a: -a, l))
                for _ in range(5) 
                for l in [[ randint(0,5) for _ in range(4) ]] ])
-    ] + \
-    [
-        Task("reverse map %s"%n, arrow(tlist(tint),tlist(tbool)),
-             [ ((l,), map(f,reversed(l)))
-               for _ in range(5) 
-               for l in [[ randint(0,9) for _ in range(4) ]] ])
-        for n,f in [("is_square",lambda a: a == int(a**0.5)**2),
-                    ("is_prime",lambda a: a in {2,3,5,7})]
     ]
+    # [
+    #     Task("reverse map %s"%n, arrow(tlist(tint),tlist(tbool)),
+    #          [ ((l,), map(f,reversed(l)))
+    #            for _ in range(5) 
+    #            for l in [[ randint(0,9) for _ in range(4) ]] ])
+    #     for n,f in [("is_square",lambda a: a == int(a**0.5)**2),
+    #                 ("is_prime",lambda a: a in {2,3,5,7})]
+    # ]
+
+    rangeBootstrap = [
+        Task("range", arrow(tint,tlist(tint)),
+             [((n,), range(n))
+              for n in range(4) ])
+        ]
+
+    foldBootstrap = [
+        Task("sum", arrow(tlist(tint),tint),
+             [((l,), sum(l))
+              for _ in range(4)
+              for l in [randomSuffix()] ]),
+        Task("all", arrow(tlist(tbool),tbool),
+             [((l,), all(l))
+              for l in [[True,True,False],
+                        [],
+                        [True],
+                        [False],
+                        [True,True,True],
+                        [False,True,True]] ]),
+        Task("any", arrow(tlist(tbool),tbool),
+             [((l,), any(l))
+              for l in [[False,False,False],
+                        [],
+                        [True],
+                        [False],
+                        [True,True,True],
+                        [False,True,False]] ]),
+        Task("length", arrow(tlist(tbool),tint),
+             [((l,), len(l))
+              for _ in range(5)
+              for l in [[random() > 0.5 for _ in range(randint(0,4)) ]] ])
+        ]
+
+    # matchBootstrap = [
+    #     Task("and ")
     
     return filterBootstrap + reverseBootstrap + indexBootstrap + booleanBootstrap + comparisonBootstrap + \
-        appendBootstrap + mapBootstrap
+        appendBootstrap + mapBootstrap + rangeBootstrap + foldBootstrap
 
 def bonusListProblems():
     # Taken from https://www.ijcai.org/Proceedings/75/Papers/037.pdf
