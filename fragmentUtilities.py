@@ -242,11 +242,16 @@ def proposeFragmentsFromProgram(p,arity):
         
         for f in fragment(expression,a): yield f
         if isinstance(expression, Application):
-            # Pretend that it is not curried
-            function,arguments = expression.applicationParse()
-            for f in fragments(function,a): yield f
-            for argument in arguments:
-                for f in fragments(argument,a): yield f
+            curry = True
+            if curry:
+                for f in fragments(expression.f, a): yield f
+                for f in fragments(expression.x, a): yield f
+            else:
+                # Pretend that it is not curried
+                function,arguments = expression.applicationParse()
+                for f in fragments(function,a): yield f
+                for argument in arguments:
+                    for f in fragments(argument,a): yield f
         elif isinstance(expression, Abstraction):
             for f in fragments(expression.body,a): yield f
         else:
