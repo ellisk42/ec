@@ -171,7 +171,7 @@ def McCarthyPrimitives():
 
         Primitive("+", arrow(tint, tint, tint), _addition),
         Primitive("negate", arrow(tint, tint), _negate),
-        ] + [ Primitive(str(j), tint, j) for j in xrange(2) ]
+        ] + [ Primitive(str(j), tint, j) for j in xrange(6) ]
 
 if __name__ == "__main__":
     g = Grammar.uniform(McCarthyPrimitives())

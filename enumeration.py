@@ -55,10 +55,10 @@ def solveForTask(g, task, _ = None, timeout = None, evaluationTimeout = None,
                "solverTimeout": timeout,
                "maximumFrontier": maximumFrontier,
                "name": task.name,
-               "verbose": True}#verbose}
+               "verbose": verbose}
     message = json.dumps(message)
-    with open('message','w') as handle: handle.write(message)
-    eprint(message)
+    # with open('message','w') as handle: handle.write(message)
+    # eprint(message)
     p = subprocess.Popen(['./solver'],
                          stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     response, error = p.communicate(message)
