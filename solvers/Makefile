@@ -6,6 +6,8 @@ TikZ:
 	$(c) TikZ.native; cp TikZ.native test
 solver:
 	$(c) solver.native; cp solver.native ../solver
+profile:
+	$(c) solver.p.native; cp solver.p.native ../solver
 utilities:
 	$(c) utils.native; cp utils.native test
 timeout:

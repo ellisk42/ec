@@ -31,7 +31,7 @@ let string_of_command = function
 let string_of_trace (t : command list) =
   join ~separator:"; " (t |> List.map ~f:string_of_command)
 
-let tmaybe t = TCon("maybe",[t]);;
+let tmaybe t = kind "maybe" [t];;
 let ttrace = make_ground "trace";;
 let tvariable = make_ground "loopVariable";;
 let tintercept = make_ground "intercept";;

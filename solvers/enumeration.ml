@@ -16,7 +16,7 @@ let rec enumerate_programs (g: grammar) (context: tContext) (request: tp) (envir
   (* INVARIANT: request always has the current context applied to it already *)
   if upper_bound <= 0.0 then () else
     match request with
-    | TCon("->",[argument_type;return_type]) ->
+    | TCon("->",[argument_type;return_type],_) ->
       let newEnvironment = argument_type :: environment in
       enumerate_programs g context return_type newEnvironment lower_bound upper_bound
       (fun body newContext ll -> callBack (Abstraction(body)) newContext ll)
