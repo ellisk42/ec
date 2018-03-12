@@ -273,6 +273,8 @@ def userName():
 def hostname():
     import socket
     return socket.gethostname()
+def getPID():
+    return os.getpid()
 
 def flushEverything():
     sys.stdout.flush()

@@ -8,6 +8,7 @@ from program import *
 from itertools import izip
 import gc
 
+import time
 
 class FragmentGrammar(object):
     def __init__(self, logVariable, productions):
@@ -56,8 +57,9 @@ class FragmentGrammar(object):
     def closedLogLikelihood(self, request, expression):
         _,l,_ = self.logLikelihood(Context.EMPTY, [], request, expression)
         if invalid(l):
-            eprint("FATAL: Invalid log likelihood. expression:",expression,"tp:",request)
-            with open('likelihoodFailure.p','wb') as handle:
+            f = 'failures/likelihoodFailure%s.pickle'%(time.time() + getPID())
+            eprint("PANIC: Invalid log likelihood. expression:",expression,"tp:",request,"Exported to:",f)
+            with open(f,'wb') as handle:
                 pickle.dump((self,request, expression),handle)
             assert False
         return l

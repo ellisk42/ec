@@ -5,6 +5,9 @@ import json
 from frontier import *
 from program import *
 from type import *
+from utilities import *
+
+import time
 
 class GrammarFailure(Exception): pass
 class NoCandidates(Exception): pass
@@ -240,7 +243,7 @@ class Grammar(object):
         try:
             context, summary = self.likelihoodSummary(Context.EMPTY, [], request, expression)
         except GrammarFailure as e:
-            failureExport = 'grammarFailure.pickle'
+            failureExport = 'failures/grammarFailure%s.pickle'%(time.time() + getPID())
             eprint("PANIC: Grammar failure, exporting to ",failureExport)
             with open(failureExport,'wb') as handle:
                 pickle.dump((e,self,request,expression), handle)
