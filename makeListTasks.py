@@ -125,6 +125,15 @@ def make_list_bootstrap_tasks(numberOfExamples):
              [((x,y), x+y)
               for _ in range(10)
               for [x,y] in [[randomList(),randomList()]] ]),
+
+        Task("take", arrow(tint, tlist(tbool), tlist(tbool)),
+             [((n,l), l[:n])
+              for n in range(10)
+              for l in [[random() > 0.5 for _ in range(randint(n,n + 5)) ]] ]),
+        Task("drop", arrow(tint, tlist(tbool), tlist(tbool)),
+             [((n,l), l[n:])
+              for n in range(10)
+              for l in [[random() > 0.5 for _ in range(randint(n,n + 5)) ]] ]),
     ]
 
     filterBootstrap = []

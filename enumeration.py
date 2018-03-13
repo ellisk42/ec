@@ -54,12 +54,12 @@ def solveForTask_ocaml(g, task, _ = None, timeout = None, evaluationTimeout = No
 
     startTime = time()
     
-    CPUs = 4
+    CPUs = 10
 
     workers = {}
 
     lowerBound = 0.
-    budgetIncrement = 1.
+    budgetIncrement = 0.3
 
     frontier = Frontier([], task)
     q = Queue()
@@ -121,7 +121,7 @@ def _solveForTask_ocaml(myID, q, g, task, lb, ub, bi,
                "verbose": True}#verbose}
     message = json.dumps(message)
     # with open('message','w') as handle: handle.write(message)
-    eprint(message)
+    # eprint(message)
     p = subprocess.Popen(['./solver'],
                          stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     response, error = p.communicate(message)

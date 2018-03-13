@@ -10,6 +10,7 @@ def _if(c): return lambda t: lambda f: t if c else f
 def _and(x): return lambda y: x and y
 def _or(x): return lambda y: x or y
 def _addition(x): return lambda y: x + y
+def _subtraction(x): return lambda y: x - y
 def _multiplication(x): return lambda y: x*y
 def _negate(x): return -x
 def _reverse(x): return list(reversed(x))
@@ -185,6 +186,7 @@ def McCarthyPrimitives():
         Primitive("gt?", arrow(tint, tint, tbool), _gt),
         
         Primitive("+", arrow(tint, tint, tint), _addition),
+        Primitive("-", arrow(tint, tint, tint), _subtraction),
         Primitive("*", arrow(tint, tint, tint), _multiplication),
         # Primitive("negate", arrow(tint, tint), _negate),
         ] + [ Primitive(str(j), tint, j) for j in xrange(2) ]
