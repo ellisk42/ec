@@ -65,6 +65,8 @@ let enumerate_for_task (g: grammar) ?verbose:(verbose = true)
 
   let total_count = ref 0 in
 
+  let programs_explored = ref 0 in
+
   let startTime = Time.now () in
 
   try
@@ -73,6 +75,7 @@ let enumerate_for_task (g: grammar) ?verbose:(verbose = true)
       enumerate_programs g empty_context (t.task_type) []
         (!lower_bound) (!lower_bound +. budgetIncrement)
         (fun p _ logPrior ->
+           incr programs_explored;
            let df = Time.diff (Time.now ()) startTime |> Time.Span.to_sec in
            if df > (Float.of_int timeout) then raise EnumerationTimeout else 
              let mdl = 0.-.logPrior in
@@ -101,8 +104,8 @@ let enumerate_for_task (g: grammar) ?verbose:(verbose = true)
         flush_everything();
       end else ()
     done;
-    !hits
-  with EnumerationTimeout -> !hits
+    (!hits, !programs_explored)
+  with EnumerationTimeout -> (!hits, !programs_explored)
 
 
   

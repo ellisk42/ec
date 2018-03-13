@@ -1,0 +1,10 @@
+(jbuild_version 1)
+
+(executable
+ ((name solver)
+  (modes (native))
+  (ocamlopt_flags (:standard -O3 -unboxed-types -nodynlink))
+  (libraries (core yojson))
+  (preprocess (pps (ppx_jane)))
+ ))
+

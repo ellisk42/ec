@@ -100,6 +100,9 @@ def make_list_bootstrap_tasks(numberOfExamples):
         return [ randint(minimum,9) for _ in range(randint(4,7)) ]
 
     return [
+        Task("Singleton", arrow(tint,tlist(tint)),
+             [((n,),n)
+              for n in range(10) ]),
         Task("length", arrow(tlist(tbool),tint),
              [((l,), len(l))
               for _ in range(10)

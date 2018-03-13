@@ -143,18 +143,19 @@ let load_problem channel =
    lowerBound,upperBound,budgetIncrement,
    solver_timeout,maximum_frontier,verbose)
 
-let export_frontier solutions : string =
+let export_frontier program_count solutions : string =
   (* solutions |> List.iter ~f:(fun (p,_,_,_) -> *)
   (*     Printf.eprintf "EXPORT: %s: %s. PROGRAM: %s\n" *)
   (*       (task.name) (task.task_type |> string_of_type) (string_of_program p)); *)
   let open Yojson.Basic.Util in
   let open Yojson.Basic in
-  let serialization : Yojson.Basic.json = 
-  `List(solutions |> List.map ~f:(fun (p,lp,ll,t) ->
-        `Assoc([("program", `String(string_of_program p));
-                ("time", `Float(t));
-                ("logLikelihood", `Float(ll));
-                ("logPrior", `Float(lp))])))
+  let serialization : Yojson.Basic.json =
+    `Assoc([("programCount", `Int(program_count));
+            ("solutions", `List(solutions |> List.map ~f:(fun (p,lp,ll,t) ->
+                 `Assoc([("program", `String(string_of_program p));
+                         ("time", `Float(t));
+                         ("logLikelihood", `Float(ll));
+                         ("logPrior", `Float(lp))]))))])
   in pretty_to_string serialization
 
 let main () =
@@ -163,12 +164,12 @@ let main () =
        maximumFrontier,verbose) =
     load_problem stdin in
 
-  let solutions =
+  let (solutions, program_count) =
     enumerate_for_task ~lowerBound:lowerBound ~upperBound:upperBound ~budgetIncrement:budgetIncrement
       ~verbose:verbose ~maximumFrontier:maximumFrontier ~timeout:solverTimeout g t
   in
 
-  export_frontier solutions |> print_string
+  export_frontier program_count solutions |> print_string
 ;;
 
   

@@ -59,7 +59,7 @@ def solveForTask_ocaml(g, task, _ = None, timeout = None, evaluationTimeout = No
     workers = {}
 
     lowerBound = 0.
-    budgetIncrement = 0.3
+    budgetIncrement = 1.
 
     frontier = Frontier([], task)
     q = Queue()
@@ -67,6 +67,7 @@ def solveForTask_ocaml(g, task, _ = None, timeout = None, evaluationTimeout = No
     nextID = 0
 
     bestSearchTime = None
+    totalExplored = 0
 
     while True:
         while len(workers) < CPUs:
@@ -85,18 +86,25 @@ def solveForTask_ocaml(g, task, _ = None, timeout = None, evaluationTimeout = No
             nextID += 1
             lowerBound += budgetIncrement
 
-        ID, newFrontier, searchTime = q.get()
-        initialTime, process = workers[ID]
+        if len(workers) > 0:
+            # eprint("(python) Blocking on thread queue, have %d in the thread queue..."%len(workers))
+            ID, newFrontier, searchTime, explored = q.get()
+            # eprint("(python) The following worker finished:",ID)
+            initialTime, process = workers[ID]
 
-        if searchTime is not None:
-            totalTime = initialTime + searchTime
-            eprint("(python) Got first solution after %s seconds"%totalTime)
-            if bestSearchTime is None: bestSearchTime = totalTime
-            else: bestSearchTime = min(totalTime, bestSearchTime)
-        frontier = frontier.combine(newFrontier)
+            totalExplored += explored
+            if totalExplored > 0:
+                eprint("(python) Explored %d programs in %s sec. %d programs/sec."%
+                       (totalExplored, int(time() - startTime), int(float(totalExplored)/(time() - startTime))))
 
-        #process.kill()
-        del workers[ID]
+            if searchTime is not None:
+                totalTime = initialTime + searchTime
+                eprint("(python) Got first solution after %s seconds"%totalTime)
+                if bestSearchTime is None: bestSearchTime = totalTime
+                else: bestSearchTime = min(totalTime, bestSearchTime)
+            frontier = frontier.combine(newFrontier)
+
+            del workers[ID]
 
         if thisTimeout < 1 and len(workers) == 0 and q.empty(): break
 
@@ -135,22 +143,24 @@ def _solveForTask_ocaml(myID, q, g, task, lb, ub, bi,
         eprint(error)
         assert False
 
+    pc = response[u"programCount"]
     # Remove all entries that do not type correctly
     # This can occur because the solver tries to infer the type
     # Sometimes it infers a type that is too general
-    response = [r for r in response if Program.parse(r["program"]).canHaveType(task.request) ]
-
+    response = [r for r in response[u"solutions"] if Program.parse(r["program"]).canHaveType(task.request) ]
+    
     frontier = Frontier([FrontierEntry(program = Program.parse(e["program"]),
                                        logLikelihood = e["logLikelihood"],
                                        logPrior = e["logPrior"])
                          for e in response ],
                         task = task)
-    #if verbose: eprint(frontier.summarize())
 
     if frontier.empty: searchTime = None
     else: searchTime = min(e["time"] for e in response)
 
-    q.put((myID, frontier, searchTime))
+    # eprint("(thread %d) Adding resulted thread queue"%myID)
+    q.put((myID, frontier, searchTime, pc))
+    # eprint("(thread %d) Returning.\n"%(myID))
     
 
 def enumerateForTask_pypy(*arguments, **keywords):
