@@ -54,19 +54,21 @@ let score_programs_for_task (f:frontier) (t:task) : frontier =
 
 exception EnumerationTimeout;;
 let enumerate_for_task (g: grammar) ?verbose:(verbose = true)
+    ?budgetIncrement:(budgetIncrement = 1.)
+    ?lowerBound:(lowerBound = 0.)
+    ?upperBound:(upperBound = 99.)
     ~timeout:timeout ?maximumFrontier:(maximumFrontier = 10) (t: task)
   =
   
   let hits = ref [] in
-  let budgetIncrement = 1. in
-  let lower_bound = ref 0. in
+  let lower_bound = ref lowerBound in
 
   let total_count = ref 0 in
 
   let startTime = Time.now () in
 
   try
-    while List.length (!hits) < maximumFrontier do
+    while List.length (!hits) < maximumFrontier && !lower_bound +. budgetIncrement <= upperBound do
       let recent_count = ref 0 in
       enumerate_programs g empty_context (t.task_type) []
         (!lower_bound) (!lower_bound +. budgetIncrement)

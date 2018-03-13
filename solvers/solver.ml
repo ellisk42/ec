@@ -118,13 +118,30 @@ let load_problem channel =
   let maximum_frontier = j |> member "maximumFrontier" |> to_int in
   let name = j |> member "name" |> to_string in
 
+  let lowerBound =
+    try j |> member "lowerBound" |> to_float
+    with _ -> 0.
+  in
+
+  let upperBound =
+    try j |> member "upperBound" |> to_float
+    with _ -> 99.
+  in
+
+  let budgetIncrement =
+    try j |> member "budgetIncrement" |> to_float
+    with _ -> 1.
+  in
+  
   let t = if return_of_type task_type = ttrace then begin
       assert (List.length examples = 1);
       latex_task name (examples |> List.hd |> get_some |> snd |> magical)    
     end else
       supervised_task ~timeout:timeout name task_type examples
   in
-  (t,g,solver_timeout,maximum_frontier,verbose)
+  (t,g,
+   lowerBound,upperBound,budgetIncrement,
+   solver_timeout,maximum_frontier,verbose)
 
 let export_frontier solutions : string =
   (* solutions |> List.iter ~f:(fun (p,_,_,_) -> *)
@@ -141,9 +158,15 @@ let export_frontier solutions : string =
   in pretty_to_string serialization
 
 let main () =
-  let (t,g,solverTimeout,maximumFrontier,verbose) = load_problem stdin in
+  let (t,g,
+       lowerBound,upperBound,budgetIncrement,solverTimeout,
+       maximumFrontier,verbose) =
+    load_problem stdin in
 
-  let solutions = enumerate_for_task ~verbose:verbose ~maximumFrontier:maximumFrontier ~timeout:solverTimeout g t in
+  let solutions =
+    enumerate_for_task ~lowerBound:lowerBound ~upperBound:upperBound ~budgetIncrement:budgetIncrement
+      ~verbose:verbose ~maximumFrontier:maximumFrontier ~timeout:solverTimeout g t
+  in
 
   export_frontier solutions |> print_string
 ;;

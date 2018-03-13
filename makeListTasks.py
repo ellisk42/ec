@@ -96,14 +96,35 @@ def make_list_bootstrap_tasks(numberOfExamples):
     
     def randomSuffix():
         return [ randint(0,9) for _ in range(randint(1,4)) ]
-    def randomList():
-        return [ randint(0,9) for _ in range(randint(5,10)) ]
+    def randomList(minimum = 0):
+        return [ randint(minimum,9) for _ in range(randint(4,7)) ]
 
     return [
         Task("length", arrow(tlist(tbool),tint),
              [((l,), len(l))
               for _ in range(10)
-              for l in [[random() > 0.5 for _ in range(randint(0,10)) ]] ])
+              for l in [[random() > 0.5 for _ in range(randint(0,10)) ]] ]),
+
+        Task("range", arrow(tint,tlist(tint)),
+             [((n,), range(n))
+              for n in range(10) ]),
+        Task("reverse range", arrow(tint,tlist(tint)),
+             [((n,), list(reversed(range(n))))
+              for n in range(10) ]),
+
+        Task("sum", arrow(tlist(tint),tint),
+             [((l,), sum(l))
+              for _ in range(10)
+              for l in [randomList()] ]),
+        Task("product", arrow(tlist(tint),tint),
+             [((l,), reduce(lambda x,y: x*y, l))
+              for _ in range(10)
+              for l in [randomList(minimum = 1)[:5]] ]),
+
+        Task("append", arrow(tlist(tint),tlist(tint),tlist(tint)),
+             [((x,y), x+y)
+              for _ in range(10)
+              for [x,y] in [[randomList(),randomList()]] ]),
     ]
 
     filterBootstrap = []

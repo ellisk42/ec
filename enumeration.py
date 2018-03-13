@@ -18,7 +18,7 @@ def enumerateFrontiers(g, tasks, _=None,
     '''g: Either a Grammar, or a map from task to grammar.'''
     from time import time
 
-    solvers = {"ocaml": solveForTask,
+    solvers = {"ocaml": solveForTask_ocaml,
                "pypy": enumerateForTask_pypy,
                "python": enumerateForTask}
     assert solver in solvers, \
@@ -44,8 +44,68 @@ def enumerateFrontiers(g, tasks, _=None,
 
 class EnumerationTimeout(Exception): pass
 
-def solveForTask(g, task, _ = None, timeout = None, evaluationTimeout = None,
-                 maximumFrontier = 10, verbose = False):
+def solveForTask_ocaml(g, task, _ = None, timeout = None, evaluationTimeout = None,
+                       maximumFrontier = 10):
+    from time import time
+    # from multiprocessing import Process, Queue
+    from threading import Thread
+    from Queue import Queue
+
+
+    startTime = time()
+    
+    CPUs = 4
+
+    workers = {}
+
+    lowerBound = 0.
+    budgetIncrement = 1.
+
+    frontier = Frontier([], task)
+    q = Queue()
+
+    nextID = 0
+
+    bestSearchTime = None
+
+    while True:
+        while len(workers) < CPUs:
+            elapsedTime = time() - startTime
+            thisTimeout = int(timeout - elapsedTime + 0.5)
+            if thisTimeout < 1: break
+            
+            eprint("Launching worker with timeout",thisTimeout)
+            p = Thread(target = _solveForTask_ocaml,
+                       args = (nextID, q,
+                               g, task, lowerBound, lowerBound+budgetIncrement, budgetIncrement,
+                               thisTimeout, evaluationTimeout,
+                               maximumFrontier - len(frontier)))
+            p.start()
+            workers[nextID] = (elapsedTime, p)
+            nextID += 1
+            lowerBound += budgetIncrement
+
+        ID, newFrontier, searchTime = q.get()
+        initialTime, process = workers[ID]
+
+        if searchTime is not None:
+            totalTime = initialTime + searchTime
+            eprint("(python) Got first solution after %s seconds"%totalTime)
+            if bestSearchTime is None: bestSearchTime = totalTime
+            else: bestSearchTime = min(totalTime, bestSearchTime)
+        frontier = frontier.combine(newFrontier)
+
+        #process.kill()
+        del workers[ID]
+
+        if thisTimeout < 1 and len(workers) == 0 and q.empty(): break
+
+    return frontier, bestSearchTime
+        
+    
+
+def _solveForTask_ocaml(myID, q, g, task, lb, ub, bi,
+                        timeout, evaluationTimeout, maximumFrontier):
     import json
     message = {"DSL": {"logVariable": g.logVariable,
                        "productions": [ {"expression": str(p), "logProbability": l}
@@ -55,10 +115,13 @@ def solveForTask(g, task, _ = None, timeout = None, evaluationTimeout = None,
                "solverTimeout": timeout,
                "maximumFrontier": maximumFrontier,
                "name": task.name,
+               "lowerBound": lb,
+               "upperBound": ub,
+               "budgetIncrement": bi,
                "verbose": True}#verbose}
     message = json.dumps(message)
     # with open('message','w') as handle: handle.write(message)
-    # eprint(message)
+    eprint(message)
     p = subprocess.Popen(['./solver'],
                          stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     response, error = p.communicate(message)
@@ -82,12 +145,12 @@ def solveForTask(g, task, _ = None, timeout = None, evaluationTimeout = None,
                                        logPrior = e["logPrior"])
                          for e in response ],
                         task = task)
-    if verbose: eprint(frontier.summarize())
+    #if verbose: eprint(frontier.summarize())
 
     if frontier.empty: searchTime = None
     else: searchTime = min(e["time"] for e in response)
 
-    return frontier, searchTime
+    q.put((myID, frontier, searchTime))
     
 
 def enumerateForTask_pypy(*arguments, **keywords):

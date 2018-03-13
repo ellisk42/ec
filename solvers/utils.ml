@@ -218,6 +218,92 @@ let pmap ?processes:(processes=4) ?bsize:(bsize=0) f input output =
   done;
   output
 
+exception WorkersTermination;;
+
+let work_pool ?processes:(processes=1)
+    (jobs : 'a list)
+    worker continuation = 
+  (* Uncompleted jobs *)
+  let jobs = ref jobs in
+  (* Currently active workers *)
+  let streams = ref [] in
+
+  try
+    while List.length (!jobs) > 0 || List.length !streams > 0 do
+      (* Spawn processes *)
+      while List.length !streams < processes do
+        let rd, wt = Unix.pipe () in
+        match Unix.fork () with
+        | `In_the_child -> begin
+            (* Child *)
+            Unix.close rd;
+            let chan = Unix.out_channel_of_descr wt in
+            worker (List.hd_exn !jobs) (fun result ->
+                Marshal.to_channel chan result [Marshal.Closures];
+                flush chan;
+                match result with
+                | `Finished -> begin
+                    Out_channel.close chan;
+                    flush_everything ();
+                    exit 0                  
+                  end
+                | `Result(_) -> flush chan)
+	  end
+        | `In_the_parent(pid) -> begin
+	    (* Parent *)
+	    Unix.close wt;
+     streams := (rd,pid)::!streams;
+     jobs := List.tl_exn !jobs;     
+	  end
+      done;
+      (* Receive input from processes *)
+      let recvs = Unix.select ~read:(List.map !streams ~f:fst)
+          ~write:[] ~except:[] ~timeout:`Never () in
+      let to_remove = 
+        recvs.read |> List.filter_map ~f:(fun descr ->
+            let chan = Unix.in_channel_of_descr descr in
+            let pid = List.Assoc.find_exn !streams descr
+            and response =
+              try Some(Marshal.from_channel chan)
+              with End_of_file -> Some(`Finished)
+            in
+            match response with
+            | None -> None
+            | Some(`Finished) -> begin 
+                ignore (Unix.waitpid pid);
+                In_channel.close chan;
+                Some(pid)
+              end
+            | Some(`Result(r)) ->
+              match continuation r with
+              | `Terminate -> raise WorkersTermination
+              | `Continue -> None)
+      in
+      streams := List.filter ~f:(fun (_,pid) -> not (List.mem to_remove pid)) !streams;
+    done
+  with WorkersTermination ->
+    !streams |> List.iter ~f:(fun (descriptor,pid) ->
+        let chan = Unix.in_channel_of_descr descriptor in
+        In_channel.close chan;
+        ignore(Signal.send Signal.kill (`Pid(pid))))
+
+(* fuck this shit *)
+let test_work_pool () =
+  work_pool [1;2;3;4;5;6;7;]
+    (fun j return ->
+       (* Unix.sleep 1; *)
+       return (`Result(j));
+              (* Unix.sleep 1; *)
+       return (`Result(-j));
+       return (`Finished))
+    (fun r ->
+       Printf.printf "Received %d\n" r;
+       flush_everything();
+       `Continue)
+;;
+
+  
+
 
 let number_of_cores = ref 1;; (* number of CPUs *)
 let counted_CPUs = ref false;; (* have we counted the number of CPUs? *)
