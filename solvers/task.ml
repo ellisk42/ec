@@ -1,4 +1,4 @@
-open Core.Std
+open Core
 
 open Timeout
 open Utils
@@ -96,7 +96,7 @@ let enumerate_for_task (g: grammar) ?verbose:(verbose = true)
       if verbose then begin 
         Printf.eprintf "\t(ocaml) For %s: Total time: %s. Total number of programs: %d.\n"
           (t.name)
-          (Time.diff (Time.now ()) startTime |> Core.Span.to_string)
+          (Time.diff (Time.now ()) startTime |> Time.Span.to_string)
           (!total_count);
         flush_everything();
       end else ()

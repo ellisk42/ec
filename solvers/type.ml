@@ -1,4 +1,4 @@
-open Core.Std
+open Core
 
 
 type tp = 
@@ -95,7 +95,7 @@ let rec applyContext k t =
   match t with
   | TCon(c,xs,_) -> kind c (xs |> List.map ~f:(applyContext k))
   | TID(j) ->
-    match List.Assoc.find (snd k) j with
+    match List.Assoc.find ~equal:(fun a b -> a = b) (snd k) j with
     | None -> TID(j)
     | Some(tp) -> applyContext k tp
 
@@ -145,7 +145,7 @@ let instantiate_type (n,m) t =
   let rec instantiate j =
     if not (is_polymorphic j) then j else 
     match j with
-    | TID(i) -> (try TID(List.Assoc.find_exn !substitution i)
+    | TID(i) -> (try TID(List.Assoc.find_exn ~equal:(fun a b -> a = b) !substitution i)
 		 with Not_found -> 
                    substitution := (i,!next)::!substitution; next := (1+ !next); TID(!next-1)
 		)
@@ -163,7 +163,7 @@ let canonical_type t =
   let substitution = ref [] in
   let rec canon q = 
     match q with
-    | TID(i) -> (try TID(List.Assoc.find_exn !substitution i)
+    | TID(i) -> (try TID(List.Assoc.find_exn ~equal:(=) !substitution i)
 		 with Not_found ->
                    substitution := (i,!next)::!substitution; next := (1+ !next); TID(!next-1))
     | TCon(k,a,_) -> kind k (List.map ~f:canon a)

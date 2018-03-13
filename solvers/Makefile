@@ -1,11 +1,11 @@
-c = corebuild -pkg yojson -pkg re2
+c = corebuild -pkg yojson -pkg re2 -tag unsafe -tag "optimize(3)"
 
 type:
 	$(c) type.native; cp type.native test
 TikZ:
 	$(c) TikZ.native; cp TikZ.native test
 solver:
-	$(c) solver.native; cp solver.native ../solver
+	$(c)  solver.native; cp solver.native ../solver
 profile:
 	$(c) solver.p.native; cp solver.p.native ../solver
 utilities:

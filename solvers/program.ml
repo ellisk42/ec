@@ -1,4 +1,4 @@
-open Core.Std
+open Core
 
 open Parser
 open Utils
@@ -317,8 +317,9 @@ let is_recursion_primitive = function
 
 
 let program_parser : program parsing = 
-  let token = token_parser (fun c -> Char.is_alphanum c || List.mem ['_';'-';'?';'/';'.';'*';'\'';'+';',';
-                                                                    '>';'<';'@';'|';] c) in
+  let token = token_parser (fun c -> Char.is_alphanum c || List.mem ~equal:( = )
+                                       ['_';'-';'?';'/';'.';'*';'\'';'+';',';
+                                        '>';'<';'@';'|';] c) in
   let whitespace = token_parser ~can_be_empty:true Char.is_whitespace in
   let number = token_parser Char.is_digit in
   let primitive = token %% (fun name ->
