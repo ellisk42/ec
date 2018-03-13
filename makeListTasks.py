@@ -101,7 +101,7 @@ def make_list_bootstrap_tasks(numberOfExamples):
 
     return [
         Task("Singleton", arrow(tint,tlist(tint)),
-             [((n,),n)
+             [((n,),[n])
               for n in range(10) ]),
         Task("length", arrow(tlist(tbool),tint),
              [((l,), len(l))
