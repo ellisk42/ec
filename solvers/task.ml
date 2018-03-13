@@ -72,9 +72,9 @@ let enumerate_for_task (g: grammar) ?verbose:(verbose = true)
   try
     while List.length (!hits) < maximumFrontier && !lower_bound +. budgetIncrement <= upperBound do
       let recent_count = ref 0 in
-      enumerate_programs g empty_context (t.task_type) []
+      enumerate_programs g (t.task_type)
         (!lower_bound) (!lower_bound +. budgetIncrement)
-        (fun p _ logPrior ->
+        (fun p logPrior ->
            incr programs_explored;
            let df = Time.diff (Time.now ()) startTime |> Time.Span.to_sec in
            if df > (Float.of_int timeout) then raise EnumerationTimeout else 

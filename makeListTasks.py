@@ -119,10 +119,10 @@ def make_list_bootstrap_tasks(numberOfExamples):
              [((l,), sum(l))
               for _ in range(10)
               for l in [randomList()] ]),
-        Task("product", arrow(tlist(tint),tint),
-             [((l,), reduce(lambda x,y: x*y, l))
+        Task("difference", arrow(tlist(tint),tint),
+             [((l,), reduce(lambda x,y: y-x, reversed(l), 0))
               for _ in range(10)
-              for l in [randomList(minimum = 1)[:5]] ]),
+              for l in [randomList(minimum = 1)[:7]] ]),
 
         Task("append", arrow(tlist(tint),tlist(tint),tlist(tint)),
              [((x,y), x+y)

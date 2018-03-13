@@ -176,18 +176,18 @@ def McCarthyPrimitives():
         Primitive("cdr", arrow(tlist(t0), tlist(t0)), _cdr),
         Primitive("empty?", arrow(tlist(t0), tbool), _isEmpty),
         primitiveRecursion1,
-        #primitiveRecursion2,
+        primitiveRecursion2,
         Primitive("if", arrow(tbool, t0, t0, t0), _if),
         # Primitive("match", arrow(tlist(t0),
         #                          t1,
         #                          arrow(t0, tlist(t0), t1),
         #                          t1), _match),
         Primitive("eq?", arrow(tint, tint, tbool), _eq),
-        Primitive("gt?", arrow(tint, tint, tbool), _gt),
+        #Primitive("gt?", arrow(tint, tint, tbool), _gt),
         
         Primitive("+", arrow(tint, tint, tint), _addition),
         Primitive("-", arrow(tint, tint, tint), _subtraction),
-        Primitive("*", arrow(tint, tint, tint), _multiplication),
+        # Primitive("*", arrow(tint, tint, tint), _multiplication),
         # Primitive("negate", arrow(tint, tint), _negate),
         ] + [ Primitive(str(j), tint, j) for j in xrange(2) ]
 
@@ -196,13 +196,20 @@ if __name__ == "__main__":
     p = Program.parse("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) 0 (+ 1 ($1 (cdr $0))))))))")
     print p.evaluate([])(range(17))
     print g.closedLogLikelihood(arrow(tlist(tbool),tint),p)
-    assert False
-    p = Program.parse("(lambda (fix (lambda (lambda (if (empty? $0) $0 (cons (+ 1 (car $0)) ($1 (cdr $0)))))) $0))")
+
+    p = Program.parse("(lambda (lambda (if (empty? $0) 0 (+ 1 ($1 (cdr $0))))))")
+    print g.closedLogLikelihood(arrow(arrow(tlist(tbool),tint),arrow(tlist(tbool),tint)),p)
+
+    p = Program.parse("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) 0 (+ (car $0) ($1 (cdr $0))))))))")
     
     print p.evaluate([])(range(4))
-    print g.closedLogLikelihood(arrow(tlist(tint),tlist(tint)),p)
+    print g.closedLogLikelihood(arrow(tlist(tint),tint),p)
+
+    p = Program.parse("(lambda (lambda (if (empty? $0) 0 (+ (car $0) ($1 (cdr $0))))))")
+    print g.closedLogLikelihood(arrow(arrow(tlist(tint),tint),tlist(tint),tint),p)
+    assert False
     
-    p = Program.parse("""(lambda (fix (lambda (lambda (match $0 empty (lambda (lambda (cons $1 ($3 $0))))))) $0))""")
+    
     print p.evaluate([])(range(4))
     print g.closedLogLikelihood(arrow(tlist(tint),tlist(tint)),p)
     
