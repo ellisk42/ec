@@ -267,7 +267,7 @@ let primitive_greater_than = primitive "gt?" (tint @> tint @> tboolean) (fun (x:
 
 exception RecursionDepthExceeded of unit
     
-let fixed_combinator body argument =
+let fixed_combinator argument body =
   let recursion_limit = ref 20 in
 
   let rec fix x = 
@@ -281,9 +281,39 @@ let fixed_combinator body argument =
 
   fix argument
 
+let fixed_combinator2 argument1 argument2 body =
+  let recursion_limit = ref 20 in
 
-let primitive_recursion = primitive "fix" (((t0 @> t1) @> (t0 @> t1)) @> (t0 @> t1))
+  let rec fix x y = 
+    let r a b =
+      decr recursion_limit;
+      if !recursion_limit > 0 then  
+        fix a b
+      else raise (RecursionDepthExceeded())
+    in body r x y
+  in
+
+  fix argument1 argument2
+
+
+let primitive_recursion = primitive "fix1" (t0 @> ((t0 @> t1) @> (t0 @> t1)) @> t1)
     fixed_combinator;;
+let primitive_recursion2 = primitive "fix2" (t0 @> t1 @> ((t0 @> t1 @> t2) @> (t0 @> t1 @> t2)) @> t2)
+    fixed_combinator2;;
+    (* (fun body x1 x2 -> *)
+    (*    (\* uncurry *\) *)
+    (*    let body f (a,b) = body f a b in *)
+    (*    fixed_combinator body (x1,x2));; *)
+
+
+let is_recursion_of_arity a = function
+  | Primitive(_,n,_) -> ("fix"^(Int.to_string a)) = n
+  | _ -> false
+
+let is_recursion_primitive = function
+  | Primitive(_,"fix1",_) -> true
+  | Primitive(_,"fix2",_) -> true
+  | _ -> false
 
 
 let program_parser : program parsing = 
@@ -414,17 +444,20 @@ let performance_test_case() =
 
 
 let recursion_test_case() =
-  let f = fixed_combinator (fun r l ->
+  let f zs = fixed_combinator zs (fun r l ->
       match l with
       | [] -> []
       | x::xs -> x*2 :: r xs) in
   f (0--18) |> List.map ~f:Int.to_string |> join ~separator:" " |> Printf.printf "%s\n";
   f (0--10) |> List.map ~f:Int.to_string |> join ~separator:" " |> Printf.printf "%s\n";
   f (0--2) |> List.map ~f:Int.to_string |> join ~separator:" " |> Printf.printf "%s\n";
-  let e = parse_program "(lambda (fix (lambda (lambda (if (empty? $0) $0 (cons (* 2 (car $0)) ($1 (cdr $0)))))) $0))" |> get_some in
+  let e = parse_program "(lambda (fix1 (lambda (lambda (if (empty? $0) $0 (cons (* 2 (car $0)) ($1 (cdr $0)))))) $0))" |> get_some in
   Printf.printf "%s\n" (string_of_program e);
-  evaluate [] e [1;2;3;4;] |> List.map ~f:Int.to_string |> join ~separator:" " |> Printf.printf "%s\n";;
+  evaluate [] e [1;2;3;4;] |> List.map ~f:Int.to_string |> join ~separator:" " |> Printf.printf "%s\n";
 
+  let e = parse_program "(lambda (lambda (fix2 (lambda (lambda (lambda (if (empty? $1) $0 (cons (car $1) ($2 (cdr $1) $0)))))) $0 $1)))" |> get_some in
+  infer_program_type empty_context [] e |> snd |> string_of_type |> Printf.printf "%s\n";
+  evaluate [] e (0--4) [9;42;1] |> List.map ~f:Int.to_string |> join ~separator:" " |> Printf.printf "%s\n";;
 
 (* recursion_test_case();; *)
 

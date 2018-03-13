@@ -55,7 +55,7 @@ def solveForTask(g, task, _ = None, timeout = None, evaluationTimeout = None,
                "solverTimeout": timeout,
                "maximumFrontier": maximumFrontier,
                "name": task.name,
-               "verbose": verbose}
+               "verbose": True}#verbose}
     message = json.dumps(message)
     # with open('message','w') as handle: handle.write(message)
     # eprint(message)

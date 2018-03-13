@@ -1,6 +1,6 @@
 from program import Primitive, Program
 from grammar import Grammar
-from type import tlist, tint, tbool, arrow, t0, t1
+from type import tlist, tint, tbool, arrow, t0, t1, t2
 
 import math
 
@@ -48,8 +48,8 @@ def _find(x):
     return _inner
 
 class RecursionDepthExceeded(Exception): pass
-def _fix(body):
-    def inner(argument):
+def _fix(argument):
+    def inner(body):
         recursion_limit = [20]
 
         def fix(x):
@@ -64,10 +64,25 @@ def _fix(body):
 
     return inner
 
-primitiveRecursion = Primitive("fix",
-                               #(((t0 @> t1) @> (t0 @> t1)) @> (t0 @> t1))
-                               arrow(arrow(arrow(t0,t1), t0,t1),
-                                     t0, t1),
+def _fix2(argument1):
+    def inner(argument2):
+        def inner_(body):
+            assert False, "recursive functions with two arguments not yet implemented for no good reason"
+
+        return inner_
+
+    return inner
+
+primitiveRecursion1 = Primitive("fix1",
+                               arrow(t0,
+                                     arrow(arrow(t0,t1), t0,t1),
+                                     t1),
+                               _fix)
+
+primitiveRecursion2 = Primitive("fix2",
+                               arrow(t0, t1,
+                                     arrow(arrow(t0,t1,t2), t0,t1,t2),
+                                     t2),
                                _fix)
 
 def _match(l):
@@ -159,7 +174,8 @@ def McCarthyPrimitives():
         Primitive("car", arrow(tlist(t0), t0), _car),
         Primitive("cdr", arrow(tlist(t0), tlist(t0)), _cdr),
         Primitive("empty?", arrow(tlist(t0), tbool), _isEmpty),
-        primitiveRecursion,
+        primitiveRecursion1,
+        #primitiveRecursion2,
         Primitive("if", arrow(tbool, t0, t0, t0), _if),
         # Primitive("match", arrow(tlist(t0),
         #                          t1,
@@ -170,12 +186,17 @@ def McCarthyPrimitives():
 
 
         Primitive("+", arrow(tint, tint, tint), _addition),
-        Primitive("negate", arrow(tint, tint), _negate),
-        ] + [ Primitive(str(j), tint, j) for j in xrange(6) ]
+        # Primitive("negate", arrow(tint, tint), _negate),
+        ] + [ Primitive(str(j), tint, j) for j in xrange(2) ]
 
 if __name__ == "__main__":
     g = Grammar.uniform(McCarthyPrimitives())
+    p = Program.parse("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) 0 (+ 1 ($1 (cdr $0))))))))")
+    print p.evaluate([])(range(17))
+    print g.closedLogLikelihood(arrow(tlist(tbool),tint),p)
+    assert False
     p = Program.parse("(lambda (fix (lambda (lambda (if (empty? $0) $0 (cons (+ 1 (car $0)) ($1 (cdr $0)))))) $0))")
+    
     print p.evaluate([])(range(4))
     print g.closedLogLikelihood(arrow(tlist(tint),tlist(tint)),p)
     

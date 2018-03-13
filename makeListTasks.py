@@ -98,6 +98,14 @@ def make_list_bootstrap_tasks(numberOfExamples):
         return [ randint(0,9) for _ in range(randint(1,4)) ]
     def randomList():
         return [ randint(0,9) for _ in range(randint(5,10)) ]
+
+    return [
+        Task("length", arrow(tlist(tbool),tint),
+             [((l,), len(l))
+              for _ in range(10)
+              for l in [[random() > 0.5 for _ in range(randint(0,10)) ]] ])
+    ]
+
     filterBootstrap = []
 
     for name, f in [# ("square", lambda x: (int(x**0.5)**2 == x)),

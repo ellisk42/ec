@@ -113,3 +113,5 @@ let unifying_expressions g environment request context : (program*tp*tContext*fl
   
 (*   likelihood request [] empty_context expression |> fst *)
 
+let grammar_has_recursion a g =
+  g.library |> List.exists ~f:(fun (p,_,_) -> is_recursion_of_arity a p)
