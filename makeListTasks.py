@@ -137,7 +137,7 @@ def make_list_bootstrap_tasks(numberOfExamples):
              [((n,l), l[n:])
               for n in range(10)
               for l in [[random() > 0.5 for _ in range(randint(n,n + 5)) ]] ]),
-    ][:1]
+    ][:2]
 
     filterBootstrap = []
 

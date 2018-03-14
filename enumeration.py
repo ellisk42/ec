@@ -26,11 +26,17 @@ def enumerateFrontiers(g, tasks, _=None,
     solver = solvers[solver]
 
     if not isinstance(g, dict): g = {t: g for t in tasks }
+
+    CPUsPerTask = 1 if len(tasks) > CPUs else CPUs/len(tasks)
+    eprint("Allocating %d CPUs for each task"%CPUsPerTask)
+    if CPUsPerTask > 1 and solver is not solveForTask_ocaml:
+        eprint("(warning) Using more than one CPU for single task is currently only supported by ocaml.")
     
     start = time()
     frontiers = parallelMap(CPUs,
                             lambda (task, grammar): solver(grammar, task,
                                                            timeout=enumerationTimeout,
+                                                           CPUs=CPUsPerTask,
                                                            evaluationTimeout = evaluationTimeout,
                                                            maximumFrontier=maximumFrontier),
                             map(lambda t: (t, g[t]), tasks),
@@ -45,6 +51,7 @@ def enumerateFrontiers(g, tasks, _=None,
 class EnumerationTimeout(Exception): pass
 
 def solveForTask_ocaml(g, task, _ = None, timeout = None, evaluationTimeout = None,
+                       CPUs = 1,
                        maximumFrontier = 10):
     from time import time
     # from multiprocessing import Process, Queue
@@ -54,8 +61,6 @@ def solveForTask_ocaml(g, task, _ = None, timeout = None, evaluationTimeout = No
 
     startTime = time()
     
-    CPUs = 10
-
     workers = {}
 
     lowerBound = 0.
