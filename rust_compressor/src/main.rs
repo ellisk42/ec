@@ -1,5 +1,6 @@
 extern crate polytype;
 extern crate programinduction;
+extern crate rayon;
 extern crate serde;
 extern crate serde_json;
 #[macro_use]
@@ -9,6 +10,7 @@ use std::f64;
 use std::io;
 use polytype::Type;
 use programinduction::{lambda, ECFrontier, Task};
+use rayon::prelude::*;
 
 #[derive(Deserialize)]
 struct ExternalCompressionInput {
@@ -74,7 +76,7 @@ struct CompressionInput {
 impl From<ExternalCompressionInput> for CompressionInput {
     fn from(eci: ExternalCompressionInput) -> Self {
         let primitives = eci.primitives
-            .into_iter()
+            .into_par_iter()
             .map(|p| {
                 (
                     p.name,
@@ -90,7 +92,7 @@ impl From<ExternalCompressionInput> for CompressionInput {
             variable_logprob,
         };
         let invented = eci.inventions
-            .into_iter()
+            .into_par_iter()
             .map(|inv| {
                 let expr = dsl.parse(&inv.expression).expect("invalid invention");
                 let tp = dsl.infer(&expr).expect("invalid invention type");
@@ -106,7 +108,7 @@ impl From<ExternalCompressionInput> for CompressionInput {
             arity: eci.params.arity,
         };
         let (tasks, frontiers) = eci.frontiers
-            .into_iter()
+            .into_par_iter()
             .map(|f| {
                 let tp = Type::parse(&f.task_tp).expect("invalid task type");
                 let task = Task {
@@ -137,7 +139,7 @@ impl From<CompressionInput> for ExternalCompressionOutput {
     fn from(ci: CompressionInput) -> Self {
         let primitives = ci.dsl
             .primitives
-            .iter()
+            .par_iter()
             .map(|&(ref name, ref tp, logp)| Primitive {
                 name: name.clone(),
                 tp: format!("{}", tp),
@@ -147,14 +149,14 @@ impl From<CompressionInput> for ExternalCompressionOutput {
         let variable_logprob = ci.dsl.variable_logprob;
         let inventions = ci.dsl
             .invented
-            .iter()
+            .par_iter()
             .map(|&(ref expr, _, logp)| Invention {
                 expression: ci.dsl.display(expr),
                 logp,
             })
             .collect();
         let frontiers = ci.tasks
-            .iter()
+            .par_iter()
             .zip(&ci.frontiers)
             .map(|(t, f)| {
                 let solutions = f.iter()
