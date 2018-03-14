@@ -1,0 +1,911 @@
+{
+  "primitives": [
+    {"name": "nand", "tp": "bool -> bool -> bool", "logp": -0.3677247801253172}
+  ],
+  "inventions": [],
+  "variable_logprob": 0.07410797215372167,
+  "params": {
+    "pseudocounts": 5,
+    "topk": 2,
+    "structure_penalty": 1,
+    "aic": 1,
+    "arity": 2
+  },
+  "frontiers": [
+    {
+      "task_tp": "bool -> bool",
+      "solutions": [{
+        "expression": "(lambda (nand $0 (nand $0 $0)))",
+        "logprior": -4,
+        "loglikelihood": 0
+      }]
+    }, {
+      "task_tp": "bool → bool → bool",
+      "solutions": [{
+        "expression": "(λ (λ $1))",
+        "logprior": -1.3862943611198906,
+        "loglikelihood": 0.0
+      }]
+    }, {
+      "task_tp": "bool → bool → bool",
+      "solutions": [{
+        "expression": "(λ (λ $0))",
+        "logprior": -1.3862943611198906,
+        "loglikelihood": 0.0
+      }]
+    }, {
+      "task_tp": "bool → bool → bool",
+      "solutions": [{
+        "expression": "(λ (λ $0))",
+        "logprior": -1.3862943611198906,
+        "loglikelihood": 0.0
+      }]
+    }, {
+      "task_tp": "bool → bool → bool",
+      "solutions": [{
+        "expression": "(λ (λ (nand (nand $0 $0) $1)))",
+        "logprior": -5.545177444479562,
+        "loglikelihood": 0.0
+      }]
+    }, {
+      "task_tp": "bool → bool → bool",
+      "solutions": [{
+        "expression": "(λ (λ (nand (nand $0 $0) (nand $1 $1))))",
+        "logprior": -7.6246189861593989,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand $1 $1) (nand $0 $0))))",
+        "logprior": -7.6246189861593989,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand (nand $0 $0) $1) (nand $0 $0))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand (nand $0 $1) $0) (nand $1 $1))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand (nand $0 $1) $1) (nand $0 $0))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand (nand $1 $0) $0) (nand $1 $1))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand (nand $1 $0) $1) (nand $0 $0))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand (nand $1 $1) $0) (nand $1 $1))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand $0 (nand $0 $1)) (nand $1 $1))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand $0 (nand $1 $0)) (nand $1 $1))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }]
+    }, {
+      "task_tp": "bool → bool",
+      "solutions": [{
+        "expression": "(λ $0)",
+        "logprior": -0.6931471805599453,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (nand (nand $0 $0) (nand $0 $0)))",
+        "logprior": -4.852030263919617,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (nand (nand (nand $0 $0) $0) (nand $0 $0)))",
+        "logprior": -6.238324625039508,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (nand (nand $0 (nand $0 $0)) (nand $0 $0)))",
+        "logprior": -6.238324625039508,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (nand (nand $0 $0) (nand (nand $0 $0) $0)))",
+        "logprior": -6.238324625039508,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (nand (nand $0 $0) (nand $0 (nand $0 $0))))",
+        "logprior": -6.238324625039508,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (nand (nand (nand (nand $0 $0) $0) $0) (nand $0 $0)))",
+        "logprior": -7.624618986159398,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (nand (nand (nand $0 (nand $0 $0)) $0) (nand $0 $0)))",
+        "logprior": -7.624618986159398,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (nand (nand $0 (nand (nand $0 $0) $0)) (nand $0 $0)))",
+        "logprior": -7.624618986159398,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (nand (nand $0 (nand $0 (nand $0 $0))) (nand $0 $0)))",
+        "logprior": -7.624618986159398,
+        "loglikelihood": 0.0
+      }]
+    }, {
+      "task_tp": "bool → bool → bool → bool",
+      "solutions": [{
+        "expression": "(λ (λ (λ (nand (nand $0 $0) (nand $1 $2)))))",
+        "logprior": -9.246479418592056,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (λ (nand (nand $0 $0) (nand $2 $1)))))",
+        "logprior": -9.246479418592056,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (λ (nand (nand $1 $2) (nand $0 $0)))))",
+        "logprior": -9.246479418592056,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (λ (nand (nand $2 $1) (nand $0 $0)))))",
+        "logprior": -9.246479418592056,
+        "loglikelihood": 0.0
+      }]
+    }, {
+      "task_tp": "bool → bool → bool",
+      "solutions": [{
+        "expression": "(λ (λ $0))",
+        "logprior": -1.3862943611198906,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand $0 $0) (nand $0 $0))))",
+        "logprior": -7.6246189861593989,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand $0 $0) (nand $0 $1))))",
+        "logprior": -7.6246189861593989,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand $0 $0) (nand $1 $0))))",
+        "logprior": -7.6246189861593989,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand $0 $1) (nand $0 $0))))",
+        "logprior": -7.6246189861593989,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand $1 $0) (nand $0 $0))))",
+        "logprior": -7.6246189861593989,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand (nand $0 $0) $0) (nand $0 $0))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand (nand $0 $1) $0) (nand $0 $0))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand (nand $0 $1) $0) (nand $0 $1))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand (nand $0 $1) $0) (nand $1 $0))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }]
+    }, {
+      "task_tp": "bool → bool → bool → bool",
+      "solutions": [{
+        "expression": "(λ (λ (λ (nand (nand $0 $0) (nand $1 $2)))))",
+        "logprior": -9.246479418592056,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (λ (nand (nand $0 $0) (nand $2 $1)))))",
+        "logprior": -9.246479418592056,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (λ (nand (nand $1 $2) (nand $0 $0)))))",
+        "logprior": -9.246479418592056,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (λ (nand (nand $2 $1) (nand $0 $0)))))",
+        "logprior": -9.246479418592056,
+        "loglikelihood": 0.0
+      }]
+    }, {
+      "task_tp": "bool → bool → bool → bool",
+      "solutions": [{
+        "expression": "(λ (λ (λ (nand (nand $0 $2) (nand $1 $2)))))",
+        "logprior": -9.246479418592056,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (λ (nand (nand $0 $2) (nand $2 $1)))))",
+        "logprior": -9.246479418592056,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (λ (nand (nand $1 $2) (nand $0 $2)))))",
+        "logprior": -9.246479418592056,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (λ (nand (nand $1 $2) (nand $2 $0)))))",
+        "logprior": -9.246479418592056,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (λ (nand (nand $2 $0) (nand $1 $2)))))",
+        "logprior": -9.246479418592056,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (λ (nand (nand $2 $0) (nand $2 $1)))))",
+        "logprior": -9.246479418592056,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (λ (nand (nand $2 $1) (nand $0 $2)))))",
+        "logprior": -9.246479418592056,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (λ (nand (nand $2 $1) (nand $2 $0)))))",
+        "logprior": -9.246479418592056,
+        "loglikelihood": 0.0
+      }]
+    }, {
+      "task_tp": "bool → bool → bool → bool",
+      "solutions": [{
+        "expression": "(λ (λ (λ (nand (nand $1 $1) (nand $2 $2)))))",
+        "logprior": -9.246479418592056,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (λ (nand (nand $2 $2) (nand $1 $1)))))",
+        "logprior": -9.246479418592056,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (λ (nand (nand (nand $0 $1) $2) (nand $1 $1)))))",
+        "logprior": -11.731386068380056,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (λ (nand (nand (nand $0 $2) $1) (nand $2 $2)))))",
+        "logprior": -11.731386068380056,
+        "loglikelihood": 0.0
+      }]
+    }, {
+      "task_tp": "bool → bool → bool",
+      "solutions": [{
+        "expression": "(λ (λ (nand (nand $0 $0) (nand $1 $1))))",
+        "logprior": -7.6246189861593989,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand $1 $1) (nand $0 $0))))",
+        "logprior": -7.6246189861593989,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand (nand $0 $0) $1) (nand $0 $0))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand (nand $0 $1) $0) (nand $1 $1))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand (nand $0 $1) $1) (nand $0 $0))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand (nand $1 $0) $0) (nand $1 $1))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand (nand $1 $0) $1) (nand $0 $0))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand (nand $1 $1) $0) (nand $1 $1))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand $0 (nand $0 $1)) (nand $1 $1))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand $0 (nand $1 $0)) (nand $1 $1))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }]
+    }, {
+      "task_tp": "bool → bool → bool",
+      "solutions": [{
+        "expression": "(λ (λ (nand (nand $0 $1) (nand $0 $1))))",
+        "logprior": -7.6246189861593989,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand $0 $1) (nand $1 $0))))",
+        "logprior": -7.6246189861593989,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand $1 $0) (nand $0 $1))))",
+        "logprior": -7.6246189861593989,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand $1 $0) (nand $1 $0))))",
+        "logprior": -7.6246189861593989,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand (nand $0 $0) $0) (nand $0 $1))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand (nand $0 $0) $0) (nand $1 $0))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand (nand $1 $1) $1) (nand $0 $1))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand (nand $1 $1) $1) (nand $1 $0))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand $0 (nand $0 $0)) (nand $0 $1))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand $0 (nand $0 $0)) (nand $1 $0))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }]
+    }, {
+      "task_tp": "bool → bool",
+      "solutions": [{
+        "expression": "(λ (nand $0 $0))",
+        "logprior": -2.0794415416798359,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (nand (nand (nand $0 $0) $0) $0))",
+        "logprior": -4.852030263919617,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (nand (nand $0 (nand $0 $0)) $0))",
+        "logprior": -4.852030263919617,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (nand $0 (nand (nand $0 $0) $0)))",
+        "logprior": -4.852030263919617,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (nand $0 (nand $0 (nand $0 $0))))",
+        "logprior": -4.852030263919617,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (nand (nand (nand $0 $0) (nand $0 $0)) $0))",
+        "logprior": -6.238324625039508,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (nand $0 (nand (nand $0 $0) (nand $0 $0))))",
+        "logprior": -6.238324625039508,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (nand (nand (nand (nand (nand $0 $0) $0) $0) $0) $0))",
+        "logprior": -7.6246189861593989,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (nand (nand (nand (nand $0 (nand $0 $0)) $0) $0) $0))",
+        "logprior": -7.6246189861593989,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (nand (nand (nand (nand $0 $0) $0) (nand $0 $0)) $0))",
+        "logprior": -7.6246189861593989,
+        "loglikelihood": 0.0
+      }]
+    }, {
+      "task_tp": "bool → bool → bool → bool",
+      "solutions": [{
+        "expression": "(λ (λ (λ (nand (nand $0 $0) (nand $2 $2)))))",
+        "logprior": -9.246479418592056,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (λ (nand (nand $2 $2) (nand $0 $0)))))",
+        "logprior": -9.246479418592056,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (λ (nand (nand (nand $0 $0) $2) (nand $0 $0)))))",
+        "logprior": -11.731386068380056,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (λ (nand (nand (nand $0 $1) $2) (nand $0 $0)))))",
+        "logprior": -11.731386068380056,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (λ (nand (nand (nand $0 $2) $0) (nand $2 $2)))))",
+        "logprior": -11.731386068380056,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (λ (nand (nand (nand $0 $2) $2) (nand $0 $0)))))",
+        "logprior": -11.731386068380056,
+        "loglikelihood": 0.0
+      }]
+    }, {
+      "task_tp": "bool → bool → bool → bool",
+      "solutions": [{
+        "expression": "(λ (λ (λ (nand (nand (nand $0 $0) $2) (nand $1 $2)))))",
+        "logprior": -11.731386068380056,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (λ (nand (nand (nand $0 $0) $2) (nand $2 $1)))))",
+        "logprior": -11.731386068380056,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (λ (nand (nand (nand $0 $2) $2) (nand $1 $2)))))",
+        "logprior": -11.731386068380056,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (λ (nand (nand (nand $0 $2) $2) (nand $2 $1)))))",
+        "logprior": -11.731386068380056,
+        "loglikelihood": 0.0
+      }]
+    }, {
+      "task_tp": "bool → bool → bool → bool → bool",
+      "solutions": [{
+        "expression": "(λ (λ (λ (λ (nand (nand $0 $1) (nand $1 $2))))))",
+        "logprior": -10.39720770839918,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (λ (λ (nand (nand $0 $1) (nand $2 $1))))))",
+        "logprior": -10.39720770839918,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (λ (λ (nand (nand $1 $0) (nand $1 $2))))))",
+        "logprior": -10.39720770839918,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (λ (λ (nand (nand $1 $0) (nand $2 $1))))))",
+        "logprior": -10.39720770839918,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (λ (λ (nand (nand $1 $2) (nand $0 $1))))))",
+        "logprior": -10.39720770839918,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (λ (λ (nand (nand $1 $2) (nand $1 $0))))))",
+        "logprior": -10.39720770839918,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (λ (λ (nand (nand $2 $1) (nand $0 $1))))))",
+        "logprior": -10.39720770839918,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (λ (λ (nand (nand $2 $1) (nand $1 $0))))))",
+        "logprior": -10.39720770839918,
+        "loglikelihood": 0.0
+      }]
+    }, {
+      "task_tp": "bool → bool → bool → bool",
+      "solutions": [{
+        "expression": "(λ (λ (λ (nand (nand $0 $1) (nand $0 $2)))))",
+        "logprior": -9.246479418592056,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (λ (nand (nand $0 $1) (nand $2 $0)))))",
+        "logprior": -9.246479418592056,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (λ (nand (nand $0 $2) (nand $0 $1)))))",
+        "logprior": -9.246479418592056,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (λ (nand (nand $0 $2) (nand $1 $0)))))",
+        "logprior": -9.246479418592056,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (λ (nand (nand $1 $0) (nand $0 $2)))))",
+        "logprior": -9.246479418592056,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (λ (nand (nand $1 $0) (nand $2 $0)))))",
+        "logprior": -9.246479418592056,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (λ (nand (nand $2 $0) (nand $0 $1)))))",
+        "logprior": -9.246479418592056,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (λ (nand (nand $2 $0) (nand $1 $0)))))",
+        "logprior": -9.246479418592056,
+        "loglikelihood": 0.0
+      }]
+    }, {
+      "task_tp": "bool → bool → bool",
+      "solutions": [{
+        "expression": "(λ (λ (nand (nand $0 $1) (nand $0 $1))))",
+        "logprior": -7.6246189861593989,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand $0 $1) (nand $1 $0))))",
+        "logprior": -7.6246189861593989,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand $1 $0) (nand $0 $1))))",
+        "logprior": -7.6246189861593989,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand $1 $0) (nand $1 $0))))",
+        "logprior": -7.6246189861593989,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand (nand $0 $0) $0) (nand $0 $1))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand (nand $0 $0) $0) (nand $1 $0))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand (nand $1 $1) $1) (nand $0 $1))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand (nand $1 $1) $1) (nand $1 $0))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand $0 (nand $0 $0)) (nand $0 $1))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand $0 (nand $0 $0)) (nand $1 $0))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }]
+    }, {
+      "task_tp": "bool → bool",
+      "solutions": [{
+        "expression": "(λ $0)",
+        "logprior": -0.6931471805599453,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (nand (nand $0 $0) (nand $0 $0)))",
+        "logprior": -4.852030263919617,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (nand (nand (nand $0 $0) $0) (nand $0 $0)))",
+        "logprior": -6.238324625039508,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (nand (nand $0 (nand $0 $0)) (nand $0 $0)))",
+        "logprior": -6.238324625039508,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (nand (nand $0 $0) (nand (nand $0 $0) $0)))",
+        "logprior": -6.238324625039508,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (nand (nand $0 $0) (nand $0 (nand $0 $0))))",
+        "logprior": -6.238324625039508,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (nand (nand (nand (nand $0 $0) $0) $0) (nand $0 $0)))",
+        "logprior": -7.624618986159398,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (nand (nand (nand $0 (nand $0 $0)) $0) (nand $0 $0)))",
+        "logprior": -7.624618986159398,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (nand (nand $0 (nand (nand $0 $0) $0)) (nand $0 $0)))",
+        "logprior": -7.624618986159398,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (nand (nand $0 (nand $0 (nand $0 $0))) (nand $0 $0)))",
+        "logprior": -7.624618986159398,
+        "loglikelihood": 0.0
+      }]
+    }, {
+      "task_tp": "bool → bool → bool",
+      "solutions": [{
+        "expression": "(λ (λ (nand (nand $0 $0) (nand $1 $1))))",
+        "logprior": -7.6246189861593989,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand $1 $1) (nand $0 $0))))",
+        "logprior": -7.6246189861593989,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand (nand $0 $0) $1) (nand $0 $0))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand (nand $0 $1) $0) (nand $1 $1))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand (nand $0 $1) $1) (nand $0 $0))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand (nand $1 $0) $0) (nand $1 $1))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand (nand $1 $0) $1) (nand $0 $0))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand (nand $1 $1) $0) (nand $1 $1))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand $0 (nand $0 $1)) (nand $1 $1))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand $0 (nand $1 $0)) (nand $1 $1))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }]
+    }, {
+      "task_tp": "bool → bool",
+      "solutions": [{
+        "expression": "(λ (nand (nand (nand $0 $0) $0) (nand (nand $0 $0) $0)))",
+        "logprior": -7.6246189861593989,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (nand (nand (nand $0 $0) $0) (nand $0 (nand $0 $0))))",
+        "logprior": -7.6246189861593989,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (nand (nand $0 (nand $0 $0)) (nand (nand $0 $0) $0)))",
+        "logprior": -7.6246189861593989,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (nand (nand $0 (nand $0 $0)) (nand $0 (nand $0 $0))))",
+        "logprior": -7.6246189861593989,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (nand (nand (nand (nand (nand $0 $0) $0) $0) $0) (nand (nand $0 $0) $0)))",
+        "logprior": -10.39720770839918,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (nand (nand (nand (nand (nand $0 $0) $0) $0) $0) (nand $0 (nand $0 $0))))",
+        "logprior": -10.39720770839918,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (nand (nand (nand (nand $0 (nand $0 $0)) $0) $0) (nand (nand $0 $0) $0)))",
+        "logprior": -10.39720770839918,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (nand (nand (nand (nand $0 (nand $0 $0)) $0) $0) (nand $0 (nand $0 $0))))",
+        "logprior": -10.39720770839918,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (nand (nand (nand $0 (nand (nand $0 $0) $0)) $0) (nand (nand $0 $0) $0)))",
+        "logprior": -10.39720770839918,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (nand (nand (nand $0 (nand (nand $0 $0) $0)) $0) (nand $0 (nand $0 $0))))",
+        "logprior": -10.39720770839918,
+        "loglikelihood": 0.0
+      }]
+    }, {
+      "task_tp": "bool → bool → bool → bool → bool",
+      "solutions": [{
+        "expression": "(λ (λ (λ (λ (nand (nand $0 $1) (nand $3 $3))))))",
+        "logprior": -10.39720770839918,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (λ (λ (nand (nand $1 $0) (nand $3 $3))))))",
+        "logprior": -10.39720770839918,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (λ (λ (nand (nand $3 $3) (nand $0 $1))))))",
+        "logprior": -10.39720770839918,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (λ (λ (nand (nand $3 $3) (nand $1 $0))))))",
+        "logprior": -10.39720770839918,
+        "loglikelihood": 0.0
+      }]
+    }, {
+      "task_tp": "bool → bool → bool → bool",
+      "solutions": [{
+        "expression": "(λ (λ (λ (nand (nand (nand $0 $0) $2) (nand $1 $1)))))",
+        "logprior": -11.731386068380056,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (λ (nand (nand (nand $0 $2) $2) (nand $1 $1)))))",
+        "logprior": -11.731386068380056,
+        "loglikelihood": 0.0
+      }]
+    }, {
+      "task_tp": "bool → bool → bool",
+      "solutions": [{
+        "expression": "(λ (λ (nand (nand $0 $0) (nand $1 $1))))",
+        "logprior": -7.6246189861593989,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand $1 $1) (nand $0 $0))))",
+        "logprior": -7.6246189861593989,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand (nand $0 $0) $1) (nand $0 $0))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand (nand $0 $1) $0) (nand $1 $1))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand (nand $0 $1) $1) (nand $0 $0))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand (nand $1 $0) $0) (nand $1 $1))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand (nand $1 $0) $1) (nand $0 $0))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand (nand $1 $1) $0) (nand $1 $1))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand $0 (nand $0 $1)) (nand $1 $1))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand $0 (nand $1 $0)) (nand $1 $1))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }]
+    }, {
+      "task_tp": "bool → bool",
+      "solutions": [{
+        "expression": "(λ (nand (nand $0 $0) $0))",
+        "logprior": -3.4657359027997267,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (nand $0 (nand $0 $0)))",
+        "logprior": -3.4657359027997267,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (nand (nand (nand (nand $0 $0) $0) $0) $0))",
+        "logprior": -6.238324625039508,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (nand (nand (nand $0 (nand $0 $0)) $0) $0))",
+        "logprior": -6.238324625039508,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (nand (nand $0 (nand (nand $0 $0) $0)) $0))",
+        "logprior": -6.238324625039508,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (nand (nand $0 (nand $0 (nand $0 $0))) $0))",
+        "logprior": -6.238324625039508,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (nand $0 (nand (nand (nand $0 $0) $0) $0)))",
+        "logprior": -6.238324625039508,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (nand $0 (nand (nand $0 (nand $0 $0)) $0)))",
+        "logprior": -6.238324625039508,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (nand $0 (nand $0 (nand (nand $0 $0) $0))))",
+        "logprior": -6.238324625039508,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (nand $0 (nand $0 (nand $0 (nand $0 $0)))))",
+        "logprior": -6.238324625039508,
+        "loglikelihood": 0.0
+      }]
+    }, {
+      "task_tp": "bool → bool → bool → bool",
+      "solutions": [{
+        "expression": "(λ (λ (λ (nand (nand (nand $0 $0) $2) (nand $1 $2)))))",
+        "logprior": -11.731386068380056,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (λ (nand (nand (nand $0 $0) $2) (nand $2 $1)))))",
+        "logprior": -11.731386068380056,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (λ (nand (nand (nand $0 $2) $2) (nand $1 $2)))))",
+        "logprior": -11.731386068380056,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (λ (nand (nand (nand $0 $2) $2) (nand $2 $1)))))",
+        "logprior": -11.731386068380056,
+        "loglikelihood": 0.0
+      }]
+    }, {
+      "task_tp": "bool → bool → bool",
+      "solutions": [{
+        "expression": "(λ (λ (nand (nand $0 $1) (nand $0 $1))))",
+        "logprior": -7.6246189861593989,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand $0 $1) (nand $1 $0))))",
+        "logprior": -7.6246189861593989,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand $1 $0) (nand $0 $1))))",
+        "logprior": -7.6246189861593989,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand $1 $0) (nand $1 $0))))",
+        "logprior": -7.6246189861593989,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand (nand $0 $0) $0) (nand $0 $1))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand (nand $0 $0) $0) (nand $1 $0))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand (nand $1 $1) $1) (nand $0 $1))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand (nand $1 $1) $1) (nand $1 $0))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand $0 (nand $0 $0)) (nand $0 $1))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand $0 (nand $0 $0)) (nand $1 $0))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }]
+    }, {
+      "task_tp": "bool → bool → bool",
+      "solutions": [{
+        "expression": "(λ (λ $1))",
+        "logprior": -1.3862943611198906,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand $0 $1) (nand $1 $1))))",
+        "logprior": -7.6246189861593989,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand $1 $0) (nand $1 $1))))",
+        "logprior": -7.6246189861593989,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand $1 $1) (nand $0 $1))))",
+        "logprior": -7.6246189861593989,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand $1 $1) (nand $1 $0))))",
+        "logprior": -7.6246189861593989,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand $1 $1) (nand $1 $1))))",
+        "logprior": -7.6246189861593989,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand (nand $0 $0) $0) (nand $1 $1))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand (nand $0 $0) $1) (nand $0 $1))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand (nand $0 $0) $1) (nand $1 $0))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }, {
+        "expression": "(λ (λ (nand (nand (nand $0 $0) $1) (nand $1 $1))))",
+        "logprior": -9.704060527839234,
+        "loglikelihood": 0.0
+      }]
+    }
+  ]
+}
