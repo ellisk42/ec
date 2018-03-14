@@ -254,7 +254,7 @@ class Grammar(object):
     def closedLogLikelihood(self, request, expression):
         summary = self.closedLikelihoodSummary(request, expression)
         if summary is None:
-            eprint("FATAL: program does not have a likelihood summary.",expression,"r = ",request,"\n",self)
+            eprint("FATAL: program [ %s ] does not have a likelihood summary."%expression,"r = ",request,"\n",self)
             assert False
         return summary.logLikelihood(self)
 

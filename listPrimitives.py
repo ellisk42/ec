@@ -206,7 +206,14 @@ if __name__ == "__main__":
     print g.closedLogLikelihood(arrow(tlist(tint),tint),p)
 
     p = Program.parse("(lambda (lambda (if (empty? $0) 0 (+ (car $0) ($1 (cdr $0))))))")
+    print p
     print g.closedLogLikelihood(arrow(arrow(tlist(tint),tint),tlist(tint),tint),p)
+
+    print "take"
+    p = Program.parse("(lambda (lambda (lambda (if (eq? $1 0) empty (cons (car $0) ($2 (- $1 1) (cdr $0)))))))")
+    print p
+    print g.closedLogLikelihood(arrow(arrow(tint,tlist(tint),tlist(tint)),tint,tlist(tint),tlist(tint)),
+                                p)
     assert False
     
     

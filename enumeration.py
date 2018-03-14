@@ -70,21 +70,23 @@ def solveForTask_ocaml(g, task, _ = None, timeout = None, evaluationTimeout = No
     totalExplored = 0
 
     while True:
-        while len(workers) < CPUs:
-            elapsedTime = time() - startTime
-            thisTimeout = int(timeout - elapsedTime + 0.5)
-            if thisTimeout < 1: break
-            
-            eprint("Launching worker with timeout",thisTimeout)
-            p = Thread(target = _solveForTask_ocaml,
-                       args = (nextID, q,
-                               g, task, lowerBound, lowerBound+budgetIncrement, budgetIncrement,
-                               thisTimeout, evaluationTimeout,
-                               maximumFrontier - len(frontier)))
-            p.start()
-            workers[nextID] = (elapsedTime, p)
-            nextID += 1
-            lowerBound += budgetIncrement
+        elapsedTime = time() - startTime
+        thisTimeout = int(timeout - elapsedTime + 0.5)
+        programsToFind = maximumFrontier - len(frontier)
+
+        finished = thisTimeout < 1 or programsToFind <= 0
+        if not finished:
+            while len(workers) < CPUs:
+                eprint("Launching worker with timeout",thisTimeout)
+                p = Thread(target = _solveForTask_ocaml,
+                           args = (nextID, q,
+                                   g, task, lowerBound, lowerBound+budgetIncrement, budgetIncrement,
+                                   thisTimeout, evaluationTimeout,
+                                   programsToFind))
+                p.start()
+                workers[nextID] = (elapsedTime, p)
+                nextID += 1
+                lowerBound += budgetIncrement
 
         if len(workers) > 0:
             # eprint("(python) Blocking on thread queue, have %d in the thread queue..."%len(workers))
@@ -106,7 +108,7 @@ def solveForTask_ocaml(g, task, _ = None, timeout = None, evaluationTimeout = No
 
             del workers[ID]
 
-        if thisTimeout < 1 and len(workers) == 0 and q.empty(): break
+        if finished and len(workers) == 0 and q.empty(): break
 
     return frontier, bestSearchTime
         
@@ -149,10 +151,11 @@ def _solveForTask_ocaml(myID, q, g, task, lb, ub, bi,
     # Sometimes it infers a type that is too general
     response = [r for r in response[u"solutions"] if Program.parse(r["program"]).canHaveType(task.request) ]
     
-    frontier = Frontier([FrontierEntry(program = Program.parse(e["program"]),
+    frontier = Frontier([FrontierEntry(program = p,
                                        logLikelihood = e["logLikelihood"],
-                                       logPrior = e["logPrior"])
-                         for e in response ],
+                                       logPrior = g.closedLogLikelihood(task.request, p))
+                         for e in response
+                         for p in [Program.parse(e["program"])] ],
                         task = task)
 
     if frontier.empty: searchTime = None
