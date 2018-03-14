@@ -4,7 +4,6 @@
  ((name solver)
   (modes (native))
   (ocamlopt_flags (:standard -O3 -unboxed-types -nodynlink))
-  (libraries (core yojson))
+  (libraries (core re2 yojson vg vg.cairo))
   (preprocess (pps (ppx_jane)))
  ))
-

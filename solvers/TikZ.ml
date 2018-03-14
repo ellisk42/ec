@@ -58,10 +58,6 @@ let primitive_loop = primitive "loop"
          | Some(b) -> (0--(n-2)) |> List.map ~f:b |> List.concat 
        in
        boundary@body);;
-let primitive_just = primitive "just"
-    (t0 @> tmaybe t0)
-    (fun x -> Some(x));;
-let primitive_nothing = primitive "nothing" (tmaybe t0) None;;
 let primitive_union = primitive "trace-union" (ttrace @> ttrace @> ttrace) (@);;
 
 

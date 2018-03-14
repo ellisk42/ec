@@ -265,6 +265,52 @@ let primitive_nand = primitive "nand" (tboolean @> tboolean @> tboolean) (fun x 
 let primitive_or = primitive "or" (tboolean @> tboolean @> tboolean) (fun x y -> x || y);;
 let primitive_greater_than = primitive "gt?" (tint @> tint @> tboolean) (fun (x: int) (y: int) -> x > y);;
 
+
+let primitive_run   = primitive
+                        "run"
+                        (tprogram @> tcanvas)
+                        Plumbing.run
+
+let primitive_just     = primitive "just"
+                          (t0 @> tmaybe t0)
+                          (fun x -> Some(x))
+
+let primitive_nothing= primitive "nothing" (tmaybe t0) None
+
+let primitive_nop    = primitive "nop"  tprogram Plumbing.nop
+let primitive_embed  = primitive
+                        "embed"
+                        (tprogram @> tprogram)
+                        Plumbing.embed
+let primitive_concat = primitive
+                        "concat"
+                        (tprogram @> tprogram @> tprogram)
+                        Plumbing.concat
+let primitive_turn   = primitive
+                        "turn"
+                        (tmaybe tvar @> tprogram)
+                        Plumbing.turn
+let primitive_repeat = primitive
+                        "repeat"
+                        (tmaybe tvar @> tprogram @> tprogram)
+                        Plumbing.repeat
+let primitive_integrate= primitive
+                        "integrate"
+                        (tmaybe tvar @> tmaybe tboolean @>
+                         tmaybe tvar @> tmaybe tvar  @>
+                         tmaybe tvar @> tmaybe tvar  @>
+                         tprogram)
+                        Plumbing.integrate
+
+let var_unit         = primitive "var_unit" tvar Plumbing.var_unit
+let var_double       = primitive "var_double" (tvar @> tvar) Plumbing.var_double
+let var_half         = primitive "var_half" (tvar @> tvar) Plumbing.var_half
+let var_next         = primitive "var_next" (tvar @> tvar) Plumbing.var_next
+let var_prev         = primitive "var_prev" (tvar @> tvar) Plumbing.var_prev
+let var_opposite     = primitive "var_opposite" (tvar @> tvar) Plumbing.var_opposite
+(*let var_name         = primitive "var_name" (tstring @> tvar) Plumbing.var_name*)
+
+
 exception RecursionDepthExceeded of unit
     
 let fixed_combinator argument body =
@@ -459,31 +505,3 @@ let recursion_test_case() =
   let e = parse_program "(lambda (lambda (fix2 (lambda (lambda (lambda (if (empty? $1) $0 (cons (car $1) ($2 (cdr $1) $0)))))) $0 $1)))" |> get_some in
   infer_program_type empty_context [] e |> snd |> string_of_type |> Printf.printf "%s\n";
   evaluate [] e (0--4) [9;42;1] |> List.map ~f:Int.to_string |> join ~separator:" " |> Printf.printf "%s\n";;
-
-(* recursion_test_case();; *)
-
-(* let timeout_test_cases() = *)
-(*   let list_of_numbers = [ *)
-(*     "(lambda (fix (lambda (lambda (if (empty? $0) $0 (cons (\* 2 (car $0)) ($1 (cdr $0)))))) $0))"; *)
-
-(*   ] in *)
-
-(*   let list_of_numbers = list_of_numbers |> List.map ~f:(analyze_evaluation%get_some%parse_program) in *)
-
-(*   let xs = [(0--10);(0--10);(0--10)] in *)
-
-(*   time_it "evaluated all of the programs" (fun () -> *)
-      
-  
-
-(* let () = *)
-(*   let e = parse_program "(lambda (reducei (lambda (lambda (lambda (range $0)))) empty $0))" |> get_some in *)
-(*   Printf.printf "tp = %s\n" (string_of_type @@ snd @@ infer_program_type empty_context [] e); *)
-(*   let f = evaluate [] e in *)
-(*   f [1;2]; *)
-(*   List.foldi [1;3;2;]  ~init:[]  ~f:(fun x y z -> 0--z) |> List.iter ~f:(fun a -> *)
-(*       Printf.printf "%d\n" a) *)
-
-(* let () = *)
-(*   let e = parse_program "(lambda (lambda (- $1 $0)))" |> get_some in *)
-(*   Printf.printf "%d\n" (run_with_arguments e [1;9]) *)
