@@ -47,7 +47,7 @@ def makeTasks():
 
     for _, _, files in os.walk(rootdir):
         for f in files:
-            if f.endswith("dash.png"):
+            if f.endswith(".png"):
                 problem("Generate '" + f + "'",
                         [([], fileToArray(rootdir + '/' + f))],
                         needToTrain=True)
