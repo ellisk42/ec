@@ -226,21 +226,8 @@ let t3 = TID(3);;
 let t4 = TID(4);;
 let tlist t = kind "list" [t];;
 let tstring = make_ground "string";;
+let tvar               = make_ground "var"
+let tprogram           = make_ground "program"
+let tmaybe t           = kind "maybe" [t]
+let tcanvas            = tlist tint
 
-
-(* let test_type () =  *)
-(*   print_string (string_of_bool (can_unify (t1 @> t1) (t0 @> (tint @> t0)))); *)
-(*   let (t0,k) = makeTID empty_context in *)
-(*   let (t1,k) = makeTID k in *)
-(*   let (t2,k) = makeTID k in *)
-(*   let a = t1 in *)
-(*   let b = tlist t2 in *)
-(*   Printf.printf "%s\t%s\n" (string_of_type a) (string_of_type b); *)
-(*   ignore(unify k a b); *)
-(*   print_string (string_of_bool (can_unify (t1 @> t1) (t0 @> (tint @> t0)))) *)
-(*   (\* print_string (string_of_type @@ t1 @> (t2 @> t2) @> tint); *)
-(*   print_string (string_of_bool (can_unify (t1 @> t1) (make_arrow t1 t1))); *)
-(*   print_string (string_of_bool (can_unify (make_arrow t1 t1) (make_arrow (make_arrow t1 t2) t3))); *)
-(*   print_string (string_of_bool (not (can_unify (make_arrow t1 t1) (make_arrow (make_arrow t1 t2) (make_ground "int"))))); *\) *)
-(* ;; *)
-(* (\* test_type ();; *\) *)
