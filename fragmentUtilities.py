@@ -216,7 +216,7 @@ def nontrivial(f):
 
 def proposeFragmentsFromProgram(p,arity):
 
-    def fragment(expression,a):
+    def fragment(expression,a, toplevel = True):
         """Generates fragments that unify with expression"""
         
         if a == 1:
@@ -227,12 +227,12 @@ def proposeFragmentsFromProgram(p,arity):
 
         if isinstance(expression, Abstraction):
             # Symmetry breaking: (lambda x. f(x)) defragments to be the same as f(x)
-            #for b in fragment(expression.body,a): yield Abstraction(b)
-            pass
+            if not toplevel:
+                for b in fragment(expression.body,a,toplevel = False): yield Abstraction(b)
         elif isinstance(expression, Application):
             for fa in xrange(a + 1):
-                for f in fragment(expression.f,fa):
-                    for x in fragment(expression.x,a - fa):
+                for f in fragment(expression.f,fa,toplevel = False):
+                    for x in fragment(expression.x,a - fa,toplevel = False):
                         yield Application(f,x)
         else:
             assert isinstance(expression, (Invented,Primitive,Index))
@@ -267,5 +267,5 @@ def proposeFragmentsFromFrontiers(frontiers, a):
                                   for frontier in frontiers ]
     allFragments = Counter(f for frontierFragments in fragmentsFromEachFrontier
                            for f in frontierFragments)
-    return [ fragment for fragment, frequency in allFragments.iteritems()
+    return [ fragment for fragment, frequency in allFragments.iteritems() 
              if frequency >= 2 and fragment.wellTyped() and nontrivial(fragment) ]

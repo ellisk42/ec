@@ -324,6 +324,25 @@ if __name__ == "__main__":
         print t.describe()
         print 
     # assert False
+    if False:
+        from program import *
+        from frontier import *
+        from fragmentUtilities import *
+        from fragmentGrammar import *
+        p1 = Program.parse("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) 0 (+ (car $0) ($1 (cdr $0))))))))")
+        p2 = Program.parse("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) 1 (- (car $0) ($1 (cdr $0))))))))")
+
+        fs = [Frontier([FrontierEntry(program = p,
+                                     logLikelihood = 0.,
+                                     logPrior = 0.)],
+                      task = Task(str(j), p.infer(), []))
+              for j,p in enumerate([p1,p2]) ]
+        for f in proposeFragmentsFromFrontiers(fs, 2):
+            print f
+        print induceFragmentGrammarFromFrontiers(baseGrammar, fs,
+                                                 a = 3)[1]
+        assert False
+        
     
     
     explorationCompression(baseGrammar, train, testingTasks=test, **args)
