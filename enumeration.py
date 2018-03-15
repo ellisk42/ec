@@ -144,6 +144,9 @@ def multithreadedEnumeration(g, tasks, _=None,
         if finished and len(workers) == 0 and q.empty(): break
 
     eprint("Completed multithreaded enumeration for",len(tasks),"tasks in",int(time() - startTime),"s")
+    pps = float(totalExplored)/(time() - startTime)
+    eprint("program evaluations per second:",int(pps))
+    eprint("program evaluations per CPU second:",int(pps/CPUs))
 
     return [frontiers[t] for t in tasks], [bestSearchTime[t] for t in tasks if bestSearchTime[t] is not None ]
 
