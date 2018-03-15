@@ -13,7 +13,7 @@ def enumerateFrontiers(g, tasks, _=None,
                        enumerationTimeout=None,
                        CPUs=1,
                        maximumFrontier=None,
-                       verbose=True,
+                       verbose=False,
                        evaluationTimeout=None):
     '''g: Either a Grammar, or a map from task to grammar.'''
     from time import time
@@ -133,7 +133,7 @@ def _solveForTask_ocaml(myID, q, g, task, lb, ub, bi,
                "lowerBound": lb,
                "upperBound": ub,
                "budgetIncrement": bi,
-               "verbose": True}#verbose}
+               "verbose": False}#verbose}
     message = json.dumps(message)
     # with open('message','w') as handle: handle.write(message)
     # eprint(message)

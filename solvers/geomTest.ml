@@ -1,0 +1,41 @@
+open Plotter
+open Renderer
+open Interpreter
+open Printf
+open Images
+
+(*let prog = (Plumbing.concat Plumbing.integrate*)
+              (*(Plumbing.concat (Plumbing.turn None) Plumbing.integrate))*)
+(*let prog2 = Plumbing.repeat (Plumbing.repeat prog)*)
+let line   = Integrate(None,None,(None,None,None,None))
+let angle  = Concat(line,Concat(Turn(None),line))
+let square = Repeat(None,Repeat(None,Concat(line,Turn(None))))
+let circle = Integrate(None,None,(None,None, Some(Unit),None))
+let dashes = Repeat(None,Repeat(None,Concat(line,
+Integrate(None,Some(false),(None,None,None,None)))))
+
+let npp s l =
+  let rec aux h s l = match l with
+   | []     -> ()
+   | x :: r ->
+       if (x = 0) then print_char '0' else print_char '1' ;
+       aux (h+1) s r
+  in aux 1 s l
+let pp s l =
+  let rec aux h s l = match l with
+   | []     -> ()
+   | x :: r ->
+       if (x = 0) then print_char '.' else print_char '#' ;
+       if (h mod s) = 0 then begin
+         print_newline () ;
+         aux 1 s r
+       end else aux (h+1) s r
+  in aux 1 s l
+
+let () =
+  let (path,box) = interpret dashes in
+  let l = Plumbing.run dashes in
+  pp 16 l ;
+  npp 16 l ;
+  output_canvas_png (path,box) 16 "toto.png"
+

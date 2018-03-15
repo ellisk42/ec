@@ -36,3 +36,13 @@ clean:
 	rm -rf _build test *.native solver
 run:
 	time ./test
+
+enum:
+	ocamlbuild -use-menhir -tag thread -use-ocamlfind \
+	    -package camlimages \
+	    -package camlimages.png \
+	    -package gg \
+	    -package vg \
+	    -package vg.cairo \
+	    -package vg.svg   \
+	    geomGenerate.native
