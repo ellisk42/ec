@@ -114,6 +114,11 @@ def make_list_bootstrap_tasks(numberOfExamples):
               for _ in range(5)
               for l in [randomList()] ]),
 
+        Task("reverse", arrow(tlist(tint),tlist(tint)),
+             [((l,),list(reversed(l)))
+              for _ in range(5)
+              for l in [randomList()] ]),
+
         
         Task("Singleton", arrow(tint,tlist(tint)),
              [((n,),[n])
