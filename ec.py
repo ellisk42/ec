@@ -196,7 +196,7 @@ def ecIterator(grammar, tasks,
             eprint("Expanding frontier from {} to {} because of no progress".format(
                 oldFrontierSize, frontierSize))
 
-        frontiers, times = enumerateFrontiers(grammar, tasks,
+        frontiers, times = multithreadedEnumeration(grammar, tasks,
                                               solver=solver,
                                               frontierSize=frontierSize,
                                               maximumFrontier=maximumFrontier,
