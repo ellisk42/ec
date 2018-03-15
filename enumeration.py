@@ -50,6 +50,109 @@ def enumerateFrontiers(g, tasks, _=None,
 
 class EnumerationTimeout(Exception): pass
 
+def multithreadedEnumeration(g, tasks, _=None,
+                             solver=None,
+                             frontierSize=None,
+                             enumerationTimeout=None,
+                             CPUs=1,
+                             maximumFrontier=None,
+                             verbose=True,
+                             evaluationTimeout=None):
+    '''g: Either a Grammar, or a map from task to grammar.'''
+    from time import time
+    from threading import Thread
+    from Queue import Queue
+
+    assert frontierSize is None, "deprecated: frontierSize"
+
+    solvers = {"ocaml": solveForTask_ocaml,
+               "pypy": enumerateForTask_pypy,
+               "python": enumerateForTask}
+    assert solver in solvers, \
+        "You must specify a valid solver. options are ocaml, pypy, or python."
+    solver = solvers[solver]
+
+    if not isinstance(g, dict): g = {t: g for t in tasks }
+    task2grammar = g
+
+    frontiers = {t: Frontier([], task = t) for t in task2grammar }
+    activeTasks = set(task2grammar.keys())
+    lowerBounds = {t: 0. for t in task2grammar}
+    bestSearchTime = {t: None for t in task2grammar}
+    # For each task we keep track of how long we have been working on it
+    stopwatches = {t: Stopwatch() for t in tasks }
+    totalExplored = 0
+    nextID = 0
+    # map from ID to task
+    workers = {}
+    
+    def budgetIncrement(lb): return 1.
+
+    startTime = time()
+
+    q = Queue()
+
+    while True:
+        activeTasks = {t for t in activeTasks
+                       if len(frontiers[t]) < maximumFrontier \
+                       and enumerationTimeout - stopwatches[t].elapsed >= 1 }
+
+        #finished = thisTimeout < 1 or len(activeTasks) == 0
+        finished = len(activeTasks) == 0
+
+        if not finished:
+            while len(workers) < CPUs:
+                # Sort the tasks by lower bound. Prioritize lower
+                # lower bounds to explore shorter programs first
+                for t in sorted(activeTasks, key = lambda t: lowerBounds[t])[:CPUs]:
+                    thisTimeout = enumerationTimeout - stopwatches[t].elapsed
+                    if not stopwatches[t].running: stopwatches[t].start()
+                    eprint("Launching [%s] w/ lb = %f, timeout = %f"%(t,lowerBounds[t],thisTimeout))
+                    bi = budgetIncrement(lowerBounds[t])
+                    p = Thread(target = _solveForTask_ocaml,
+                               args = (nextID, q,
+                                       stopwatches[t].elapsed,
+                                       task2grammar[t], t,
+                                       lowerBounds[t], lowerBounds[t] + bi, bi,
+                                       thisTimeout, evaluationTimeout,
+                                       maximumFrontier - len(frontiers[t])))
+                    p.start()
+                    lowerBounds[t] += bi
+                    workers[nextID] = t
+                    nextID += 1
+                    
+        if len(workers) > 0:
+            ID, newFrontier, searchTime, explored = q.get()
+            task = workers[ID]
+
+            totalExplored += explored
+            if totalExplored > 0:
+                eprint("(python) Explored %d programs in %s sec. %d programs/sec."%
+                       (totalExplored, int(time() - startTime), int(float(totalExplored)/(time() - startTime))))
+
+            if searchTime is not None:
+                eprint("(python) Got first solution to %s after %s wall clock seconds"%(task,int(searchTime+0.5)))
+                if bestSearchTime[task] is None: bestSearchTime[task] = searchTime
+                else: bestSearchTime[task] = min(searchTime, bestSearchTime[task])
+            frontiers[task] = frontiers[task].combine(newFrontier)
+
+            # Remove the finished worker and stop it stopwatch if the
+            # task is no longer being worked on
+            del workers[ID]
+            if not any( task == _task for _task in workers.values() ):
+                stopwatches[task].stop()
+
+        if finished and len(workers) == 0 and q.empty(): break
+
+    eprint("Completed multithreaded enumeration for",len(tasks),"tasks in",int(time() - startTime),"s")
+
+    return [frontiers[t] for t in tasks], [bestSearchTime[t] for t in tasks if bestSearchTime[t] is not None ]
+
+                    
+            
+
+    
+
 def solveForTask_ocaml(g, task, _ = None, timeout = None, evaluationTimeout = None,
                        CPUs = 1,
                        maximumFrontier = 10):
@@ -124,7 +227,7 @@ def solveForTask_ocaml(g, task, _ = None, timeout = None, evaluationTimeout = No
         
     
 
-def _solveForTask_ocaml(myID, q, g, task, lb, ub, bi,
+def _solveForTask_ocaml(myID, q, elapsedTime, g, task, lb, ub, bi,
                         timeout, evaluationTimeout, maximumFrontier):
     import json
     message = {"DSL": {"logVariable": g.logVariable,
@@ -132,7 +235,7 @@ def _solveForTask_ocaml(myID, q, g, task, lb, ub, bi,
                                             for l,_,p in g.productions ]},
                "examples": [{"inputs": list(xs), "output": y} for xs,y in task.examples ],
                "programTimeout": evaluationTimeout,
-               "solverTimeout": timeout,
+               "solverTimeout": int(timeout + 0.5),
                "maximumFrontier": maximumFrontier,
                "name": task.name,
                "lowerBound": lb,
@@ -170,7 +273,7 @@ def _solveForTask_ocaml(myID, q, g, task, lb, ub, bi,
                         task = task)
 
     if frontier.empty: searchTime = None
-    else: searchTime = min(e["time"] for e in response)
+    else: searchTime = min(e["time"] for e in response) + elapsedTime
 
     # eprint("(thread %d) Adding resulted thread queue"%myID)
     q.put((myID, frontier, searchTime, pc))

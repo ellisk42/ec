@@ -272,6 +272,36 @@ def median(l):
     if len(l)%2 == 1: return l[len(l)/2]
     return 0.5*(l[len(l)/2] + l[len(l)/2 - 1])
 
+class Stopwatch():
+    def __init__(self):
+        self._elapsed = 0.
+        self.running = False
+        self._latestStart = None
+        
+    def start(self):
+        if self.running:
+            eprint("(stopwatch: attempted to start an already running stopwatch. Silently ignoring.)")
+            return
+        self.running = True
+        self._latestStart = time.time()
+
+    def stop(self):
+        if not self.running:
+            eprint("(stopwatch: attempted to stop a stopwatch that is not running. Silently ignoring.)")
+            return
+        self.running = False
+        self._elapsed += time.time() - self._latestStart
+        self._latestStart = None
+
+    @property
+    def elapsed(self):
+        e = self._elapsed
+        if self.running:
+            e = e + time.time() - self._latestStart
+        return e
+        
+        
+
 def userName():
     import getpass
     return getpass.getuser()
@@ -286,16 +316,18 @@ def flushEverything():
     sys.stderr.flush()    
 
 if __name__ == "__main__":
-    inputs = range(10**3)
-    
-    def f(x): return (os.getpid(), x)
-    ys = parallelMap(4, f, inputs,
-                     chunk = 1,
-                     maxTasks = 100)
-    jobs = {p: [ x for pp,x in ys if p == pp ]
-            for p,_ in ys}
-    
-    for j in sorted(jobs.keys()):
-        eprint(j,"was allocated",jobs[j],"total",len(jobs[j]))
-    eprint("In total,",len(jobs),"processes were used")
-
+    s = Stopwatch()
+    s.start()
+    time.sleep(2)
+    eprint(s.elapsed)
+    s.stop()
+    time.sleep(2)
+    eprint(s.elapsed)
+    s.start()
+    time.sleep(1)
+    eprint(s.elapsed)
+    time.sleep(1)
+    eprint(s.elapsed)
+    s.stop()
+    time.sleep(1)
+    eprint(s.elapsed)
