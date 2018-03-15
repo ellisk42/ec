@@ -100,6 +100,28 @@ def make_list_bootstrap_tasks(numberOfExamples):
         return [ randint(minimum,9) for _ in range(randint(4,7)) ]
 
     return [
+        Task("increment", arrow(tint,tint),
+             [((n,),n+1) for n in range(5) ]),
+        Task("decrement", arrow(tint,tint),
+             [((n,),n-1) for n in range(5) ]),
+        Task("zero?", arrow(tint,tbool),
+             [((n,), n == 0) for n in range(5) ]),
+
+        Task("map increment", arrow(tlist(tint),tlist(tint)),
+             [((l,),map(lambda n: n+1,l))
+              for _ in range(5)
+              for l in [randomList()] ]),
+        Task("map decrement", arrow(tlist(tint),tlist(tint)),
+             [((l,),map(lambda n: n-1,l))
+              for _ in range(5)
+              for l in [randomList()] ]),
+
+        Task("reverse", arrow(tlist(tint),tlist(tint)),
+             [((l,),list(reversed(l)))
+              for _ in range(5)
+              for l in [randomList()] ]),
+
+        
         Task("Singleton", arrow(tint,tlist(tint)),
              [((n,),[n])
               for n in range(10) ]),
