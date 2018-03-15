@@ -257,6 +257,7 @@ def ecIterator(grammar, tasks,
                                            aic=aic,
                                            structurePenalty=structurePenalty,
                                            a=arity,
+                                           backend = "pypy",
                                            CPUs=CPUs)
         grammar = fgrammar.toGrammar()
         result.grammars.append(grammar)
