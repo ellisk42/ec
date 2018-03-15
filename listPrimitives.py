@@ -193,6 +193,18 @@ def McCarthyPrimitives():
 
 if __name__ == "__main__":
     g = Grammar.uniform(McCarthyPrimitives())
+
+    print "multiply"
+    p = Program.parse("(lambda (lambda (lambda (if (eq? $0 0) 0 (+ $1 ($2 $1 (- $0 1)))))))")
+    print g.closedLogLikelihood(arrow(arrow(tint,tint,tint),tint,tint,tint), p)
+    print 
+
+    print "prepend zeros"
+    p = Program.parse("(lambda (lambda (lambda (if (eq? $1 0) $0 (cons 0 ($2 (- $1 1) $0))))))")
+    print g.closedLogLikelihood(arrow(arrow(tint,tlist(tint),tlist(tint)),tint,tlist(tint),tlist(tint)), p)
+    print
+    assert False
+
     p = Program.parse("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) 0 (+ 1 ($1 (cdr $0))))))))")
     print p.evaluate([])(range(17))
     print g.closedLogLikelihood(arrow(tlist(tbool),tint),p)

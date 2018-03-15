@@ -21,6 +21,9 @@ class Task(object):
         self.request = request
         self.name = name
         self.examples = examples
+        assert all( len(xs) == len(examples[0][0])
+                    for xs,_ in examples ), \
+                        "(for task %s) FATAL: Number of arguments varies."%name
     def __str__(self): return self.name
     def __repr__(self):
         return "Task(name={self.name}, request={self.request}, examples={self.examples}"\

@@ -266,6 +266,11 @@ def variance(l):
     m = mean(l)
     return sum( (x - m)**2 for x in l )/len(l)
 def standardDeviation(l): return variance(l)**0.5
+def median(l):
+    if len(l) <= 0: return None
+    l = sorted(l)
+    if len(l)%2 == 1: return l[len(l)/2]
+    return 0.5*(l[len(l)/2] + l[len(l)/2 - 1])
 
 def userName():
     import getpass

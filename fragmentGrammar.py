@@ -357,5 +357,55 @@ class FragmentGrammar(object):
 
 def induceFragmentGrammarFromFrontiers(*arguments, **keywordArguments):
     with timing("Induced a grammar"):
-        g, newFrontiers = FragmentGrammar.induceFromFrontiers(*arguments, **keywordArguments)
+        backend = keywordArguments.pop("backend","pypy")
+        if backend == "pypy":
+            g, newFrontiers = FragmentGrammar.induceFromFrontiers(*arguments, **keywordArguments)
+        elif backend == "rust":
+            g, newFrontiers = rusticFragmentGrammar(*arguments, **keywordArguments)
+        else: assert False, ""
     return g, newFrontiers
+
+def rusticFragmentGrammar(g0, frontiers, _ = None,
+                          topK = 1, pseudoCounts = 1.0, aic = 1.0, structurePenalty = 0.001, a = 0, CPUs = 1):
+    import json
+    import subprocess
+
+    message = {}
+    message["params"] = {"structure_penalty": structurePenalty,
+                         "pseudocounts": int(pseudoCounts+0.5),
+                         "topk": topK,
+                         "aic": aic,
+                         "arity": a}
+                         
+
+    message["primitives"] = \
+       [{"name": p.name, "tp": str(t), "logp": l}
+        for l,t,p in g0.productions if p.isPrimitive ]
+    message["variable_logprob"] = g0.logVariable
+    message["inventions"] = \
+       [{"expression": str(p.body), "logp": l}
+        for l,t,p in g0.productions if p.isInvented]
+    message["frontiers"] = [{"task_tp": str(f.task.request),
+                             "solutions": [{"expression": str(e.program),
+                                            "logprior": e.logPrior,
+                                            "loglikelihood": e.logLikelihood}
+                                           for e in f ]}
+                             for f in frontiers ]
+    message = json.dumps(message)
+    eprint(message)
+    p = subprocess.Popen(['./rust_compressor/rust_compressor'],
+                         stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+    response, error = p.communicate(message)
+    try:
+        response = json.loads(response)
+    except:
+        eprint("FATAL: Could not load response from rust compressor.")
+        eprint("response:")
+        eprint(response)
+        eprint("error:")
+        eprint(error)
+        assert False
+
+    #[ (Invented(Program.parse(i["expression"]))for i in response["inventions"] ]
+    assert False
+
