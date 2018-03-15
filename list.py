@@ -313,7 +313,8 @@ if __name__ == "__main__":
         "outputPrefix": "experimentOutputs/list",
         "evaluationTimeout": 0.0005,
         "topK": 10,
-        "maximumFrontier": 10
+        "maximumFrontier": 10,
+        "solver": "ocaml"
     })
 
     baseGrammar = Grammar.uniform(prims())

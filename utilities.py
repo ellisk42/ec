@@ -141,6 +141,27 @@ def invalid(x):
 
 def valid(x): return not invalid(x)
 
+def forkCallBack(x):
+    [f,a,k] = x
+    try:
+        return f(*a,**k)
+    except Exception as e:
+        eprint("Exception in worker during forking:\n%s"%(traceback.format_exc()))
+        raise e
+
+def callFork(f, *arguments, **kw):
+    """Forks a new process to execute the call. Blocks until the call completes."""
+    global FORKPARAMETERS
+    
+    from multiprocessing import Pool
+    
+    workers = Pool(1)
+    ys = workers.map(forkCallBack,[[f,arguments,kw]])
+    workers.terminate()
+    assert len(ys) == 1
+    return ys[0]
+    
+
 class CompiledTimeout(Exception): pass
 
 def callCompiled(f, *arguments, **keywordArguments):
