@@ -208,7 +208,7 @@ def make_list_bootstrap_tasks(numberOfExamples):
                           for _ in range(4) ]] ]),
         Task("remove 0s",
              arrow(tlist(tint), tlist(tint)),
-             [((xs), filter(lambda x: x != 0, xs))
+             [((xs,), filter(lambda x: x != 0, xs))
               for _ in range(10)
               for xs in [[ randint(0,3) for _ in range(5) ]] ]),
 
