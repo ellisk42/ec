@@ -252,17 +252,10 @@ def ecIterator(grammar, tasks,
         result.learningCurve += [sum(f is not None and not f.empty for f in result.taskSolutions.values() )]
         
         # Sleep-G
-        fgrammar, frontiers = callCompiled(induceFragmentGrammarFromFrontiers,
-                                           grammar,
-                                           frontiers,
-                                           topK=topK,
-                                           pseudoCounts=pseudoCounts,
-                                           aic=aic,
-                                           structurePenalty=structurePenalty,
-                                           a=arity,
-                                           backend = "pypy",
-                                           CPUs=CPUs)
-        grammar = fgrammar.toGrammar()
+        grammar, frontiers = induceGrammar(grammar, frontiers,
+                                           topK=topK, pseudoCounts=pseudoCounts, a=arity,
+                                           aic=aic, structurePenalty=structurePenalty,
+                                           backend="rust", CPUs=CPUs)
         result.grammars.append(grammar)
         eprint("Grammar after iteration %d:" % (j + 1))
         eprint(grammar)

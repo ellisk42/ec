@@ -266,6 +266,8 @@ class Abstraction(Program):
             s = s[2:]
         elif s.startswith('(lambda'):
             s = s[len('(lambda'):]
+        elif s.startswith(u'(\u03bb'):
+            s = s[len(u'(\u03bb'):]
         else: raise ParseFailure(s)
         while len(s) > 0 and s[0].isspace(): s = s[1:]
 
