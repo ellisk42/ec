@@ -121,8 +121,8 @@ def make_list_bootstrap_tasks(numberOfExamples):
              [((l,),map(lambda n: n-1,l))
               for _ in range(5)
               for l in [randomList()] ]),
-        Task("map negation", arrow(tlist(tint),tlist(tint)),
-             [((l,),map(lambda n: -n,l))
+        Task("map double", arrow(tlist(tint),tlist(tint)),
+             [((l,),map(lambda n: 2*n,l))
               for _ in range(5)
               for l in [randomList()] ]),
 
