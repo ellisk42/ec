@@ -98,6 +98,11 @@ def solveForTask_ocaml(g, task, _ = None, timeout = None, evaluationTimeout = No
             ID, newFrontier, searchTime, explored = q.get()
             # eprint("(python) The following worker finished:",ID)
             initialTime, process = workers[ID]
+            if isinstance(newFrontier, Exception):
+                exc, isFatal = newFrontier, searchTime
+                if isFatal: raise exc
+                del workers[ID]
+                continue
 
             totalExplored += explored
             if totalExplored > 0:
@@ -137,18 +142,19 @@ def _solveForTask_ocaml(myID, q, g, task, lb, ub, bi,
     message = json.dumps(message)
     # with open('message','w') as handle: handle.write(message)
     # eprint(message)
-    p = subprocess.Popen(['./solver'],
-                         stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-    response, error = p.communicate(message)
     try:
-        response = json.loads(response)
-    except:
-        eprint("FATAL: Could not load response from ocaml solver.")
-        eprint("response:")
-        eprint(response)
-        eprint("error:")
-        eprint(error)
-        assert False
+        p = subprocess.Popen(['./solver'],
+                             stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        try:
+            response, error = p.communicate(message)
+            response = json.loads(response)
+        except Exception as exc:
+            exc = ValueError("Could not load response from ocaml solver: ", exc)
+            q.put((myID, exc, None, None))
+            raise exc
+    except OSError as exc:
+        q.put((myID, exc, True, None))
+        raise exc
 
     pc = response[u"programCount"]
     # Remove all entries that do not type correctly
