@@ -29,7 +29,7 @@ let save p c name cost =
   output_canvas_png c 16 fname
 
 let () =
-  let sup = 500 in
+  let sup = 200 in
   let generated = Hashtbl.create (sup / 10) in
   let i = ref 0 in
   while !i < sup do
