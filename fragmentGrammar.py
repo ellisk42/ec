@@ -263,6 +263,11 @@ class FragmentGrammar(object):
         bestGrammar = FragmentGrammar.fromGrammar(g0)
         oldJoint = bestGrammar.jointFrontiersMDL(frontiers, CPUs = 1)
 
+        # Performance heuristic: once we have at least 50 frontiers,
+        # we rewrite the programs in terms of the new primitives as we
+        # go along. This helps the scalability of grammar induction
+        rewriteNewPrimitives = len(frontiers) > 50
+
         # "restricted frontiers" only contain the top K according to the best grammar
         def restrictFrontiers():
             return parallelMap(CPUs, lambda f: bestGrammar.rescoreFrontier(f).topK(topK),
@@ -316,13 +321,14 @@ class FragmentGrammar(object):
                 newPrimitiveLikelihood,newType,newPrimitive = bestGrammar.productions[-1]
                 eprint("New primitive of type %s\t%s (score = %f; dScore = %f)"%(newType,newPrimitive,newScore,dS))
                 # Rewrite the frontiers in terms of the new fragment
-                concretePrimitive = defragment(newPrimitive)
-                bestGrammar.productions[-1] = (newPrimitiveLikelihood,
-                                               concretePrimitive.tp,
-                                               concretePrimitive)
-                frontiers = parallelMap(CPUs,
-                                        lambda frontier: RewriteFragments.rewriteFrontier(frontier, newPrimitive),
-                                        frontiers)
+                if rewriteNewPrimitives:
+                    concretePrimitive = defragment(newPrimitive)
+                    bestGrammar.productions[-1] = (newPrimitiveLikelihood,
+                                                   concretePrimitive.tp,
+                                                   concretePrimitive)
+                    frontiers = parallelMap(CPUs,
+                                            lambda frontier: RewriteFragments.rewriteFrontier(frontier, newPrimitive),
+                                            frontiers)
         else:
             eprint("Skipping fragment proposals")
 
