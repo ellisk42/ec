@@ -159,6 +159,10 @@ def make_list_bootstrap_tasks(numberOfExamples):
              [((n,k), [n]*k)
               for k in range(5) 
               for n in [randint(0,9)] ]),
+        Task("repeat bool", arrow(tint,tlist(tint)),
+             [((n,k), [n]*k)
+              for k in range(5) 
+              for n in [random() > 0.5] ]),
 
         Task("sum", arrow(tlist(tint),tint),
              [((l,), sum(l))
@@ -178,14 +182,35 @@ def make_list_bootstrap_tasks(numberOfExamples):
               for _ in range(10)
               for [x,y] in [[randomBooleanList(),randomBooleanList()]] ]),
 
-        Task("take", arrow(tint, tlist(tbool), tlist(tbool)),
+        Task("take bool", arrow(tint, tlist(tbool), tlist(tbool)),
              [((n,l), l[:n])
               for n in range(10)
               for l in [[random() > 0.5 for _ in range(randint(n,n + 5)) ]] ]),
-        Task("drop", arrow(tint, tlist(tbool), tlist(tbool)),
+        Task("drop bool", arrow(tint, tlist(tbool), tlist(tbool)),
              [((n,l), l[n:])
               for n in range(10)
               for l in [[random() > 0.5 for _ in range(randint(n,n + 5)) ]] ]),
+
+        Task("take int", arrow(tint, tlist(tint), tlist(tint)),
+             [((n,l), l[:n])
+              for n in range(10)
+              for l in [[random() > 0.5 for _ in range(randint(n,n + 5)) ]] ]),
+        Task("drop int", arrow(tint, tlist(tint), tlist(tint)),
+             [((n,l), l[n:])
+              for n in range(10)
+              for l in [[ randint(0,9) for _ in range(randint(n,n+5)) ]] ]),
+
+        Task("remove empty lists",
+             arrow(tlist(tlist(tbool)), tlist(tlist(tbool))),
+             [((ls,), filter(lambda l: len(l) > 0, ls))
+              for _ in range(10)
+              for ls in [[[ random() > 0.5 for _ in range(randint(0,3)) ]
+                          for _ in range(4) ]] ]),
+        Task("remove 0s",
+             arrow(tlist(tint), tlist(tint)),
+             [((xs), filter(lambda x: x != 0, xs))
+              for _ in range(10)
+              for xs in [[ randint(0,3) for _ in range(5) ]] ]),
     ]
 
     filterBootstrap = []

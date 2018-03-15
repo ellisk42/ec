@@ -236,7 +236,10 @@ def ecIterator(grammar, tasks,
                                                          if not f.empty ))
         result.searchTimes.append(times)
 
-        eprint("Average search time: ",mean(times),"sec.\tstandard deviation",standardDeviation(times))
+        eprint("Average search time: ",int(mean(times)+0.5),
+               "sec.\tmedian:",int(median(times)+0.5),
+               "\tmax:",int(max(times)+0.5),
+               "\tstandard deviation",int(standardDeviation(times)+0.5))
 
         # Incorporate frontiers from anything that was not hit
         frontiers = [ f if not f.empty
