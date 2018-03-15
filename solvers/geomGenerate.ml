@@ -11,9 +11,9 @@ let _ = Random.self_init ()
 let gen_name () =
   string_of_int (Random.int 1048576)  (* This is 2 ** 20 *)
 
-let base = "./generated/"
+let base = "./generated"
 
-let save p c name cost =
+let save ?image:(image=false) p c name cost =
   let s = pp_shapeprogram p in
   let oc =
     open_out
@@ -25,11 +25,15 @@ let save p c name cost =
   Printf.fprintf oc_w "%d\n" cost ;
   close_out oc ;
   close_out oc_w ;
-  let fname = Printf.sprintf "%s/%s.png" base name in
-  output_canvas_png c 16 fname
+  if image then begin
+    let fname = Printf.sprintf "%s/%s.png" base name in
+    output_canvas_png c 16 fname ;
+    let fname = Printf.sprintf "%s/%s_HIGH.png" base name in
+    output_canvas_png c 64 fname
+  end
 
 let () =
-  let sup = 200 in
+  let sup = 5000 in
   let generated = Hashtbl.create (sup / 10) in
   let i = ref 0 in
   while !i < sup do
@@ -50,7 +54,7 @@ let () =
         let name = gen_name () in
         Hashtbl.add generated l (cost,name) ;
         i := !i + 1 ;
-        save p c name cost
+        save ~image:(true) p c name cost
       end
     end with MalformedProgram(s) -> ()
   done

@@ -7,7 +7,7 @@ open Renderer
 
 type var =    Name of string
             | Unit
-            | Indefinite
+            (*| Indefinite*)
             | Double of var | Half of var
             | Next of var | Prev of var
             | Opposite of var
@@ -38,7 +38,7 @@ exception MalformedProgram of string
 
 let rec my_print_var v = match v with
     | Name s -> s
-    | Indefinite -> "indefinite"
+    (*| Indefinite -> "indefinite"*)
     | Unit -> "unit"
     | Double v' -> "Double(" ^ (my_print_var v') ^ ")"
     | Half v' -> "Half(" ^ (my_print_var v') ^ ")"
@@ -123,7 +123,7 @@ let pp_shapeprogram shapeprogram =
 let valuesCostVar : var -> int =
     fun v -> match v with
     | Unit -> 1
-    | Indefinite -> 1
+    (*| Indefinite -> 1*)
     | Name _ -> 1
     | Double v' ->  1
     | Half v' ->  1
@@ -135,7 +135,7 @@ let valuesCostVar : var -> int =
 let costVar : var option -> int =
     let rec helper v = match v with
         | Unit -> valuesCostVar Unit
-        | Indefinite -> valuesCostVar Indefinite
+        (*| Indefinite -> valuesCostVar Indefinite*)
         | Name s -> valuesCostVar (Name s)
         | Double v' ->  (valuesCostVar (Double v')) + helper v'
         | Half v' ->  (valuesCostVar (Half v')) + helper v'
@@ -180,7 +180,7 @@ let rec costProgram : shapeprogram -> int =
 let evaluateVar v htbl_var =
     let rec evaluateVar_helper v htbl_var = match v with
     | Unit -> 1.
-    | Indefinite -> 10. +. (float_of_int (Random.int 5))
+    (*| Indefinite -> 10. +. (float_of_int (Random.int 5))*)
     | Double v' -> 2.*.(evaluateVar_helper v' htbl_var)
     | Half v' -> (evaluateVar_helper v' htbl_var) /. 2.
     | Prev v' -> (evaluateVar_helper v' htbl_var) -. 1.

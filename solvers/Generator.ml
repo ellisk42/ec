@@ -8,7 +8,7 @@ let dummy_program = Turn(None)
 let valuesCostVar v =
     let default = (1. /. (float_of_int (Interpreter.valuesCostVar v))) in
     match v with
-     | Indefinite -> 0.1 *. default
+     (*| Indefinite -> 0.1 *. default*)
      | _ -> default
 
 let valuesCostProgram p =
@@ -48,7 +48,7 @@ let cumsum_op var =
 
 let total_var_unit = 0.
     +. (valuesCostVar Unit)
-    +. (valuesCostVar Indefinite)
+    (*+. (valuesCostVar Indefinite)*)
     +. (valuesCostVar (Name ""))
 
 let cumsum_unit_htbl = Hashtbl.create 101
@@ -56,8 +56,8 @@ let cumsum_unit_htbl = Hashtbl.create 101
 let cumsum_unit var =
     let rec helper var = match var with
     | Unit -> valuesCostVar Unit
-    | Indefinite -> helper Unit +. (valuesCostVar Indefinite)
-    | Name _ -> helper Indefinite +. (valuesCostVar (Name ""))
+    (*| Indefinite -> helper Unit +. (valuesCostVar Indefinite)*)
+    | Name _ -> helper Unit +. (valuesCostVar (Name ""))
     | _ -> raise (InternalGenerationError("in cumsum_unit"))
     in if Hashtbl.mem cumsum_unit_htbl var
     then Hashtbl.find cumsum_unit_htbl var
@@ -107,7 +107,7 @@ let rec get_random_var : string list -> var = fun var_list ->
     if Random.bool () then
         match Random.float total_var_unit with
         | n when n < cumsum_unit Unit -> Unit
-        | n when n < cumsum_unit Indefinite -> Indefinite
+        (*| n when n < cumsum_unit Indefinite -> Indefinite*)
         | n when n < cumsum_unit (Name "") ->
             begin
                 match var_list with 

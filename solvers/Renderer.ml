@@ -18,8 +18,9 @@ let output_canvas_png : ?smart:bool ->
     let warn w = Vgr.pp_warning Format.err_formatter w in
     let oc = open_out fname in
     let r = Vgr.create ~warn (Vgr_cairo.stored_target fmt) (`Channel oc) in
-    ignore (Vgr.render r (`Image (size, view, image)));
-    ignore (Vgr.render r `End)
+    ignore (Vgr.render r (`Image (size, view, image))) ;
+    ignore (Vgr.render r `End) ;
+    close_out oc
 
 let canvas_to_1Darray : ?smart:bool ->
                         canvas -> int -> int list =
