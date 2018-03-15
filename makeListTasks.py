@@ -104,6 +104,8 @@ def make_list_bootstrap_tasks(numberOfExamples):
              [((n,),n+1) for n in range(5) ]),
         Task("decrement", arrow(tint,tint),
              [((n,),n-1) for n in range(5) ]),
+        Task("zero?", arrow(tint,tbool),
+             [((n,), n == 0) for n in range(5) ]),
 
         Task("map increment", arrow(tlist(tint),tlist(tint)),
              [((l,),map(lambda n: n+1,l))
