@@ -27,7 +27,7 @@ def enumerateFrontiers(g, tasks, _=None,
 
     if not isinstance(g, dict): g = {t: g for t in tasks }
 
-    CPUsPerTask = 1 if len(tasks) > CPUs else CPUs/len(tasks)
+    CPUsPerTask = 1 if len(tasks) > CPUs else int(float(CPUs)/len(tasks) + 0.5)
     eprint("Allocating %d CPUs for each task"%CPUsPerTask)
     if CPUsPerTask > 1 and solver is not solveForTask_ocaml:
         eprint("(warning) Using more than one CPU for single task is currently only supported by ocaml.")
