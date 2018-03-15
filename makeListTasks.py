@@ -211,6 +211,12 @@ def make_list_bootstrap_tasks(numberOfExamples):
              [((xs), filter(lambda x: x != 0, xs))
               for _ in range(10)
               for xs in [[ randint(0,3) for _ in range(5) ]] ]),
+
+        Task("prepend N 0s",
+             arrow(tint,tlist(tint),tlist(tint)),
+             [((n,l),[0]*n+l)
+              for n in range(10)
+              for l in [randomList()] ]),
     ]
 
     filterBootstrap = []
