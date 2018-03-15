@@ -37,7 +37,7 @@ clean:
 run:
 	time ./test
 
-enum:
+generate:
 	ocamlbuild -use-menhir -tag thread -use-ocamlfind \
 	    -package camlimages \
 	    -package camlimages.png \
@@ -46,3 +46,13 @@ enum:
 	    -package vg.cairo \
 	    -package vg.svg   \
 	    geomGenerate.native
+
+test:
+	ocamlbuild -use-menhir -tag thread -use-ocamlfind \
+	    -package camlimages \
+	    -package camlimages.png \
+	    -package gg \
+	    -package vg \
+	    -package vg.cairo \
+	    -package vg.svg   \
+	    geomTest.native

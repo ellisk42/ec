@@ -269,7 +269,7 @@ let interpret : shapeprogram -> canvas = fun shapeprogram ->
                      +. (if noise then (normal_random () *. 0.) else 0.);
                 curr_state.angularSpeed <-
                     curr_state.angularSpeed
-                    +. (curr_state.angularAccel /. 12500.) ;
+                    +. (curr_state.angularAccel /. 15.) ;
             done
         | Define (name,v) -> Hashtbl.add htbl_var name v
         | Nop -> ()

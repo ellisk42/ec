@@ -13,6 +13,7 @@ let square = Repeat(None,Repeat(None,Concat(line,Turn(None))))
 let circle = Integrate(None,None,(None,None, Some(Unit),None))
 let dashes = Repeat(None,Repeat(None,Concat(line,
 Integrate(None,Some(false),(None,None,None,None)))))
+let spiral = Integrate(None,None,(None,None,None,Some(Unit)))
 
 let npp s l =
   let rec aux h s l = match l with
@@ -33,8 +34,8 @@ let pp s l =
   in aux 1 s l
 
 let () =
-  let (path,box) = interpret dashes in
-  let l = Plumbing.run dashes in
+  let (path,box) = interpret spiral in
+  let l = Plumbing.run spiral in
   pp 16 l ;
   npp 16 l ;
   output_canvas_png (path,box) 16 "toto.png"
