@@ -340,8 +340,7 @@ if __name__ == "__main__":
               for j,p in enumerate([p1,p2]) ]
         for f in proposeFragmentsFromFrontiers(fs, 2):
             print f
-        print induceFragmentGrammarFromFrontiers(baseGrammar, fs,
-                                                 a = 3)[1]
+        print induceGrammar(baseGrammar, fs, a = 3)[1]
         assert False
         
     

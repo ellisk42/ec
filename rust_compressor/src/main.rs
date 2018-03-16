@@ -193,6 +193,10 @@ fn main() {
 
     let mut ci = CompressionInput::from(eci);
     let (dsl, frontiers) = ci.dsl.compress(&ci.params, &ci.tasks, ci.frontiers);
+    for i in ci.dsl.invented.len()..dsl.invented.len() {
+        let &(ref expr, _, _) = &dsl.invented[i];
+        eprintln!("invented {}", dsl.display(expr));
+    }
     ci.dsl = dsl;
     ci.frontiers = frontiers;
     let eci = ExternalCompressionOutput::from(ci);
@@ -200,6 +204,6 @@ fn main() {
     {
         let stdout = io::stdout();
         let handle = stdout.lock();
-        serde_json::to_writer_pretty(handle, &eci).expect("failed to write result");
+        serde_json::to_writer(handle, &eci).expect("failed to write result");
     }
 }

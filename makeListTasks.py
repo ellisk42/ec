@@ -98,6 +98,8 @@ def make_list_bootstrap_tasks(numberOfExamples):
         return [ randint(0,9) for _ in range(randint(1,4)) ]
     def randomList(minimum = 0):
         return [ randint(minimum,9) for _ in range(randint(4,7)) ]
+    def randomListOfLists():
+        return [ randomSuffix() for _ in range(randint(2,4)) ]
     def randomBooleanList():
         return [ random() > 0.5 for _ in range(randint(4,7)) ]
 
@@ -113,18 +115,18 @@ def make_list_bootstrap_tasks(numberOfExamples):
               for x in range(3)
               for y in range(4) ]),
 
-        Task("map increment", arrow(tlist(tint),tlist(tint)),
-             [((l,),map(lambda n: n+1,l))
-              for _ in range(5)
-              for l in [randomList()] ]),
         Task("map decrement", arrow(tlist(tint),tlist(tint)),
              [((l,),map(lambda n: n-1,l))
               for _ in range(5)
               for l in [randomList()] ]),
-        Task("map negation", arrow(tlist(tint),tlist(tint)),
-             [((l,),map(lambda n: -n,l))
+        Task("map cdr", arrow(tlist(tlist(tint)),tlist(tlist(tint))),
+             [((l,),map(lambda n: n[1:],l))
               for _ in range(5)
-              for l in [randomList()] ]),
+              for l in [randomListOfLists()] ]),
+        Task("map car", arrow(tlist(tlist(tint)),tlist(tint)),
+             [((l,),map(lambda n: n[0],l))
+              for _ in range(5)
+              for l in [randomListOfLists()] ]),
 
         Task("reverse int", arrow(tlist(tint),tlist(tint)),
              [((l,),list(reversed(l)))

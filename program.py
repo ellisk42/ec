@@ -134,6 +134,13 @@ class Application(Program):
         if self == old: return new
         return Application(self.f.substitute(old, new), self.x.substitute(old, new))
 
+    def walkUncurried(self, d = 0):
+        yield d,self
+        f,xs = self.applicationParse()
+        for k in f.walkUncurried(d): yield k
+        for x in xs:
+            for k in x.walkUncurried(d): yield k
+
     def walk(self,surroundingAbstractions = 0):
         yield surroundingAbstractions,self
         for child in self.f.walk(surroundingAbstractions): yield child
@@ -198,6 +205,7 @@ class Index(Program):
         else: return self
 
     def walk(self,surroundingAbstractions = 0): yield surroundingAbstractions,self
+    def walkUncurried(self,d = 0): yield d,self
 
     def size(self): return 1
 
@@ -257,6 +265,9 @@ class Abstraction(Program):
     def walk(self,surroundingAbstractions = 0):
         yield surroundingAbstractions,self
         for child in self.body.walk(surroundingAbstractions + 1): yield child
+    def walkUncurried(self,d = 0):
+        yield d,self
+        for k in self.body.walkUncurried(d+1): yield k
 
     def size(self): return self.body.size()
 
@@ -266,6 +277,8 @@ class Abstraction(Program):
             s = s[2:]
         elif s.startswith('(lambda'):
             s = s[len('(lambda'):]
+        elif s.startswith(u'(\u03bb'):
+            s = s[len(u'(\u03bb'):]
         else: raise ParseFailure(s)
         while len(s) > 0 and s[0].isspace(): s = s[1:]
 
@@ -300,6 +313,7 @@ class Primitive(Program):
         else: return self
 
     def walk(self,surroundingAbstractions = 0): yield surroundingAbstractions,self
+    def walkUncurried(self,d = 0): yield d,self
 
     def size(self): return 1
 
@@ -339,6 +353,7 @@ class Invented(Program):
         else: return self
 
     def walk(self,surroundingAbstractions = 0): yield surroundingAbstractions,self
+    def walkUncurried(self,d = 0): yield d,self
 
     def size(self): return 1
 
@@ -376,6 +391,7 @@ class FragmentVariable(Program):
         except ShiftFailure: raise MatchFailure()
 
     def walk(self, surroundingAbstractions = 0): yield surroundingAbstractions,self
+    def walkUncurried(self,d = 0): yield d,self
 
     def size(self): return 1
 

@@ -214,6 +214,31 @@ def nontrivial(f):
 
     return numberOfPrimitives + 0.5 * (numberOfHoles + numberOfVariables) > 1.5 and numberOfPrimitives >= 1
 
+def violatesLaziness(fragment):
+    """
+    conditionals are lazy on the second and third arguments. this
+    invariant must be maintained by learned fragments.
+    """
+    for surroundingAbstractions, child in fragment.walkUncurried():
+        if not child.isApplication: continue
+        f,xs = child.applicationParse()
+        if not (f.isPrimitive and f.name == "if"): continue
+        
+        # curried conditionals always violate laziness
+        if len(xs) != 3: return True
+
+        # yes/no branches
+        y = xs[1]
+        n = xs[2]
+
+        return \
+            any( yc.isIndex and yc.i >= yd
+                 for yd,yc in y.walk(surroundingAbstractions) ) or \
+            any( nc.isIndex and nc.i >= nd
+                 for nd,nc in n.walk(surroundingAbstractions) )
+
+    return False
+
 def proposeFragmentsFromProgram(p,arity):
 
     def fragment(expression,a, toplevel = True):
@@ -263,7 +288,8 @@ def proposeFragmentsFromFrontiers(frontiers, a):
     fragmentsFromEachFrontier = [ { fp
                                     for entry in frontier.entries
                                     for f in proposeFragmentsFromProgram(entry.program,a)
-                                    for fp in proposeFragmentsFromFragment(f) }
+                                    for fp in proposeFragmentsFromFragment(f)
+                                    if not violatesLaziness(fp)}
                                   for frontier in frontiers ]
     allFragments = Counter(f for frontierFragments in fragmentsFromEachFrontier
                            for f in frontierFragments)

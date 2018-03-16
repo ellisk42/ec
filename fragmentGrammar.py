@@ -353,59 +353,68 @@ class FragmentGrammar(object):
         frontiers = [ frontiers.get(f.task, f)
                       for f in originalFrontiers ]
         
-        return bestGrammar, frontiers
+        return bestGrammar.toGrammar(), frontiers
 
-def induceFragmentGrammarFromFrontiers(*arguments, **keywordArguments):
+def induceGrammar(*args, **kwargs):
     with timing("Induced a grammar"):
-        backend = keywordArguments.pop("backend","pypy")
+        backend = kwargs.pop("backend","pypy")
         if backend == "pypy":
-            g, newFrontiers = FragmentGrammar.induceFromFrontiers(*arguments, **keywordArguments)
+            g, newFrontiers = callCompiled(pypyInduce, *args, **kwargs)
         elif backend == "rust":
-            g, newFrontiers = rusticFragmentGrammar(*arguments, **keywordArguments)
+            g, newFrontiers = rustInduce(*args, **kwargs)
         else: assert False, ""
     return g, newFrontiers
 
-def rusticFragmentGrammar(g0, frontiers, _ = None,
-                          topK = 1, pseudoCounts = 1.0, aic = 1.0, structurePenalty = 0.001, a = 0, CPUs = 1):
+
+def pypyInduce(*args, **kwargs):
+    return FragmentGrammar.induceFromFrontiers(*args, **kwargs)
+
+def rustInduce(g0, frontiers, _=None,
+               topK=1, pseudoCounts=1.0, aic=1.0,
+               structurePenalty=0.001, a=0, CPUs=1):
     import json
+    import os
     import subprocess
 
-    message = {}
-    message["params"] = {"structure_penalty": structurePenalty,
-                         "pseudocounts": int(pseudoCounts+0.5),
-                         "topk": topK,
-                         "aic": aic,
-                         "arity": a}
-                         
+    message = {
+        "params": {
+            "structure_penalty": structurePenalty,
+            "pseudocounts": int(pseudoCounts+0.5),
+            "topk": topK,
+            "aic": aic,
+            "arity": a,
+        },
+        "primitives": [{"name": p.name, "tp": str(t), "logp": l}
+                       for l,t,p in g0.productions if p.isPrimitive ],
+        "inventions": [{"expression": str(p.body), "logp": l}
+                       for l,t,p in g0.productions if p.isInvented],
+        "variable_logprob": g0.logVariable,
+        "frontiers": [{
+            "task_tp": str(f.task.request),
+            "solutions": [{
+                "expression": str(e.program),
+                "logprior": e.logPrior,
+                "loglikelihood": e.logLikelihood,
+            } for e in f ],
+        } for f in frontiers ],
+    }
 
-    message["primitives"] = \
-       [{"name": p.name, "tp": str(t), "logp": l}
-        for l,t,p in g0.productions if p.isPrimitive ]
-    message["variable_logprob"] = g0.logVariable
-    message["inventions"] = \
-       [{"expression": str(p.body), "logp": l}
-        for l,t,p in g0.productions if p.isInvented]
-    message["frontiers"] = [{"task_tp": str(f.task.request),
-                             "solutions": [{"expression": str(e.program),
-                                            "logprior": e.logPrior,
-                                            "loglikelihood": e.logLikelihood}
-                                           for e in f ]}
-                             for f in frontiers ]
-    message = json.dumps(message)
-    eprint(message)
+    eprint("running rust compressor")
     p = subprocess.Popen(['./rust_compressor/rust_compressor'],
                          stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-    response, error = p.communicate(message)
-    try:
-        response = json.loads(response)
-    except:
-        eprint("FATAL: Could not load response from rust compressor.")
-        eprint("response:")
-        eprint(response)
-        eprint("error:")
-        eprint(error)
-        assert False
+    json.dump(message, p.stdin)
+    p.stdin.close()
+    resp = json.load(p.stdout)
+    if p.returncode is not None:
+        raise ValueError("rust compressor failed")
 
-    #[ (Invented(Program.parse(i["expression"]))for i in response["inventions"] ]
-    assert False
-
+    productions = [(x["logp"], p) for p, x in
+                   zip((p for (_, _, p) in g0.productions if p.isPrimitive), resp["primitives"])] + \
+                  [(i["logp"], Invented(Program.parse(i["expression"])))
+                   for i in resp["inventions"] ]
+    g = Grammar.fromProductions(productions, resp["variable_logprob"])
+    newFrontiers = [Frontier(
+        [FrontierEntry(Program.parse(s["expression"]), logPrior=s["logprior"], logLikelihood=s["loglikelihood"])
+         for s in r["solutions"]],
+        f.task) for f, r in zip(frontiers, resp["frontiers"])]
+    return g, newFrontiers
