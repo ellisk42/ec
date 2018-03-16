@@ -164,7 +164,9 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
     USE_CUDA = False
     def __init__(self, tasks):
         def tokenize(examples, lexicon):
-            def sanitize(l): return [ z if z in lexicon else "?" for z in l ]
+            def sanitize(l): return [ z if z in lexicon else "?"
+                                      for z_ in l
+                                      for z in (z_ if isinstance(z_, list) else [z_]) ]
             
             tokenized = []
             for xs, y in examples:
@@ -314,7 +316,8 @@ if __name__ == "__main__":
         "evaluationTimeout": 0.0005,
         "topK": 10,
         "maximumFrontier": 10,
-        "solver": "python"
+        "solver": "ocaml",
+        "compressor": "pypy"
     })
 
     baseGrammar = Grammar.uniform(prims())
