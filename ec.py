@@ -335,7 +335,7 @@ def commandlineArguments(_=None,
                         type=int)
     parser.add_argument("-t", "--enumerationTimeout",
                         default=enumerationTimeout,
-                        help="default: %s" % enumerationTimeout,
+                        help="In seconds. default: %s" % enumerationTimeout,
                         type=int)
     parser.add_argument("-F", "--expandFrontier", metavar="FACTOR-OR-AMOUNT",
                         default=None,
