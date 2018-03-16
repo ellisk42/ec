@@ -11,6 +11,8 @@ opam update                 # Seriously, do that one
 opam switch 4.06.1+flambda  # caml.inria.fr/pub/docs/manual-ocaml/flambda.html
 eval `opam config env`      # *sight*
 opam install ppx_jane core re2 yojson vg cairo2
+# Additionally to build other (mainly testing) stuff you need
+opam install camlimages menhir
 ```
 
 Now try to run `make` in the root folder, it *should* print many lines, some warnings but no error, and you *should* get a binary "solver" in the current folder.
