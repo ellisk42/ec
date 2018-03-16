@@ -155,7 +155,6 @@ def multithreadedEnumeration(g, tasks, _=None,
             message = Bunch(q.get())
             ID = message.ID
             if message.result == "fork":
-                eprint("Got the message that worker",ID," forked child",message.child)
                 workerChildren[ID] = workerChildren.get(ID,[])
                 workerChildren[ID].append(message.child)
             elif message.result == "failure":
@@ -263,7 +262,6 @@ def solveForTask_ocaml(_ = None,
                              stdin=subprocess.PIPE, stdout=subprocess.PIPE)
         if q is not None:
             assert ID is not None
-            eprint("Sauber ID",ID, "has child",p.pid)
             q.put({"result": "fork",
                    "child": p.pid,
                    "ID": ID})
