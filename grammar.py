@@ -273,8 +273,65 @@ class Grammar(object):
         return Grammar(-log(frequencies[0]),
                        [(-log(frequencies[len(t.functionArguments())]) - len(t.functionArguments())*expectedSize,
                          t,p) for l,t,p in self.productions ])
-            
-        
+
+    def enumeration(self, context, environment, request, upperBound, maximumDepth = 20, lowerBound = 0.):
+        '''Enumerates all programs whose MDL satisfies: lowerBound < MDL <= upperBound'''
+        if upperBound <= 0 or maximumDepth == 1: return 
+
+        if request.isArrow():
+            v = request.arguments[0]
+            for l, newContext, b in self.enumeration(context, [v] + environment,
+                                                     request.arguments[1],
+                                                     upperBound = upperBound,
+                                                     lowerBound = lowerBound,
+                                                     maximumDepth = maximumDepth):
+                yield l, newContext, Abstraction(b)
+
+        else:
+            candidates = self.buildCandidates(request, context, environment,
+                                              normalize = True)
+
+            for l, t, p, newContext in candidates:
+                mdl = -l
+                if not (mdl <= upperBound): continue
+
+                xs = t.functionArguments()
+                for aL,aK,application in\
+                    self.enumerateApplication(newContext, environment, p, xs,
+                                              upperBound = upperBound + l,
+                                              lowerBound = lowerBound + l,
+                                              maximumDepth = maximumDepth - 1):
+                    yield aL+l, aK, application
+
+    def enumerateApplication(self, context, environment,
+                             function, argumentRequests,
+                             # Upper bound on the description length of all of the arguments
+                             upperBound,
+                             # Lower bound on the description length of all of the arguments
+                             lowerBound = 0.,
+                             maximumDepth = 20):
+        if upperBound <= 0 or maximumDepth == 1: return 
+
+        if argumentRequests == []:
+            if lowerBound < 0. and 0. <= upperBound:
+                yield 0., context, function
+            else: return 
+        else:
+            argRequest = argumentRequests[0].apply(context)
+            laterRequests = argumentRequests[1:]
+            for argL, newContext, arg in self.enumeration(context, environment, argRequest,
+                                                          upperBound = upperBound,
+                                                          lowerBound = 0.,
+                                                          maximumDepth = maximumDepth):
+                newFunction = Application(function, arg)
+                for resultL, resultK, result in self.enumerateApplication(newContext, environment, newFunction,
+                                                                          laterRequests,
+                                                                          upperBound = upperBound + argL,
+                                                                          lowerBound = lowerBound + argL,
+                                                                          maximumDepth = maximumDepth):
+                    yield resultL + argL, resultK, result
+
+
 
 class LikelihoodSummary(object):
     '''Summarizes the terms that will be used in a likelihood calculation'''

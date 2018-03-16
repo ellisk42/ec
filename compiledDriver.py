@@ -11,7 +11,9 @@ if __name__ == "__main__":
 
     start = time.time()
     request = pickle.load(sys.stdin)
-    eprint("Compiled driver unpacked the message in time", time.time() - start)
+    dt = time.time() - start
+    if dt > 1:
+        eprint("(compiled driver warning: SLOW) Compiled driver unpacked the message in time", dt)
 
     response = (False, None)
     try:
@@ -20,7 +22,6 @@ if __name__ == "__main__":
         result = f(*request["arguments"],
                    **request["keywordArguments"])
         response = (True, result)
-        eprint("Compiled driver executed response in time", time.time() - start)
     except Exception as e:
         eprint("Exception thrown in pypy process for %s:" % f.__name__)
         sys.stderr.write(traceback.format_exc())
@@ -28,4 +29,6 @@ if __name__ == "__main__":
     finally:
         start = time.time()
         pickle.dump(response, sys.stdout)
-        eprint("Packed and sent return value in time", time.time() - start)
+        dt = time.time() - start
+        if dt > 1:
+            eprint("(compiled driver warning: SLOW) Compiled driver packed the message in time", dt)

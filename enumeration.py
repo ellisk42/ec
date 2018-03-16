@@ -359,10 +359,10 @@ def enumerateForTask(g, task, _ = None,
         totalNumberOfPrograms = 0
         while len(frontier) < maximumFrontier:
             numberOfPrograms = 0
-            for prior,_,p in enumeration(g, Context.EMPTY, [], task.request, 
-                                         maximumDepth = 99,
-                                         upperBound = budget,
-                                         lowerBound = previousBudget):
+            for prior,_,p in g.enumeration(Context.EMPTY, [], task.request, 
+                                           maximumDepth = 99,
+                                           upperBound = budget,
+                                           lowerBound = previousBudget):
                 descriptionLength = -prior
                 # Shouldn't see it on this iteration
                 assert descriptionLength <= budget
@@ -403,76 +403,13 @@ def enumerateForTask(g, task, _ = None,
     
     return frontier, timeUntilFirstSolution, numberOfPrograms
 
-def enumeration(g, context, environment, request, upperBound, maximumDepth = 20, lowerBound = 0.):
-    '''Enumerates all programs whose MDL satisfies: lowerBound < MDL <= upperBound'''
-    if upperBound <= 0 or maximumDepth == 1: return 
-
-    if request.isArrow():
-        v = request.arguments[0]
-        for l, newContext, b in enumeration(g, context, [v] + environment,
-                                            request.arguments[1],
-                                            upperBound = upperBound,
-                                            lowerBound = lowerBound,
-                                            maximumDepth = maximumDepth):
-            yield l, newContext, Abstraction(b)
-
-    else:
-        candidates = g.buildCandidates(request, context, environment,
-                                       normalize = True)
-        
-        for l, t, p, newContext in candidates:
-            mdl = -l
-            if not (mdl <= upperBound): continue
-            
-            xs = t.functionArguments()
-            # eprint("Enumerating arguments for function",p,"which has been requesting types",xs)
-            for aL,aK,application in\
-                enumerateApplication(g, newContext, environment, p, xs,
-                                     upperBound = upperBound + l,
-                                     lowerBound = lowerBound + l,
-                                     maximumDepth = maximumDepth - 1):
-                yield aL+l, aK, application
-
-
-def enumerateApplication(g, context, environment,
-                         function, argumentRequests,
-                         # Upper bound on the description length of all of the arguments
-                         upperBound,
-                         # Lower bound on the description length of all of the arguments
-                         lowerBound = 0.,
-                         maximumDepth = 20):
-    if upperBound <= 0 or maximumDepth == 1: return 
-
-    if argumentRequests == []:
-        # eprint("Enumerating application of %s with no arguments."%(function))
-        # eprint("\tL",lowerBound)
-        # eprint("\tU",upperBound)
-        if lowerBound < 0. and 0. <= upperBound:
-            yield 0., context, function
-        else: return 
-    else:
-        argRequest = argumentRequests[0].apply(context)
-        laterRequests = argumentRequests[1:]
-        for argL, newContext, arg in enumeration(g, context, environment, argRequest,
-                                                 upperBound = upperBound,
-                                                 lowerBound = 0.,
-                                                 maximumDepth = maximumDepth):
-            newFunction = Application(function, arg)
-            for resultL, resultK, result in enumerateApplication(g, newContext, environment, newFunction,
-                                                                 laterRequests,
-                                                                 upperBound = upperBound + argL,
-                                                                 lowerBound = lowerBound + argL,
-                                                                 maximumDepth = maximumDepth):
-                yield resultL + argL, resultK, result
-
-
 def solveSingleTask(grammar, task, maximumBudget = 15):
     if isinstance(task, DifferentiableTask):
         rememberOld = True
         history = set([])
     else: rememberOld = False
     for budget in range(2, maximumBudget):
-        for _,_,p in enumeration(grammar, Context.EMPTY, [], task.request, budget):
+        for _,_,p in grammar.enumeration(Context.EMPTY, [], task.request, budget):
             if rememberOld:
                 if p in history: continue
                 history.add(p)
