@@ -1,0 +1,13 @@
+Embed {
+    Repeat(Double(Double(unit))) {
+        Embed {
+            Turn ;
+            Integrate
+        } ;
+        Integrate(t=Divide(unit,Next(Double(unit))),pen=off)
+    }
+} ;
+Repeat(Double(Double(unit))) {
+    Integrate() ;
+    Turn()
+}

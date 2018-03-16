@@ -1,0 +1,2 @@
+Integrate(t=Double(Double(unit)), speed=Prev(unit), accel=unit,
+angularSpeed=Half(unit))

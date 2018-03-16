@@ -1,0 +1,10 @@
+Repeat(Double(Double(unit))) {
+    Embed {
+        Integrate
+    } ;
+    Turn
+} ;
+Repeat {
+    Integrate(angularSpeed=unit) ;
+    Turn(angle=Double(unit))
+}

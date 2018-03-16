@@ -1,0 +1,9 @@
+Repeat(Double(Double(unit))) {
+    Repeat(Double(Double(unit))) {
+        Integrate(t=Half(unit), pen=off) ;
+        Embed {
+            Integrate(angularSpeed=unit)
+        }
+    } ;
+    Integrate(t=Half(Half(unit)), pen=off, angularSpeed=unit)
+}

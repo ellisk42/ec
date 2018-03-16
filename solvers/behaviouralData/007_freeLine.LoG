@@ -1,0 +1,8 @@
+Integrate(t=Half(unit), speed=Prev(unit), accel=unit, angularSpeed=Half(unit)) ;
+Integrate(t=Half(unit), angularAccel=unit) ;
+Integrate(t=Half(unit), accel=unit, angularSpeed=Opposite(unit)) ;
+Integrate(t=Half(unit), angularAccel=Double(unit));
+Integrate(t=Half(unit), accel=unit, angularSpeed=Opposite(unit)) ;
+Integrate(t=Half(unit), angularSpeed=Double(Opposite(unit))) ;
+Integrate(t=Half(unit), accel=unit, angularSpeed=Opposite(unit)) ;
+Integrate(t=Half(unit), angularAccel=unit)
