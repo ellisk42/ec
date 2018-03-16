@@ -183,9 +183,9 @@ def multithreadedEnumeration(g, tasks, _=None,
                     # Forcibly terminate the workers
                     # FIXME in theory this creates a race condition wrt q
                     # We could end up trying to terminate the process that is busy writing to q
-                    for pid in { pid
+                    for pid in [ pid
                                  for i,t in workers.iteritems() if t == task
-                                 for pid in workerChildren[i] }:
+                                 for pid in workerChildren[i] ]:
                         os.system("kill -9 %s"%pid)                        
                         eprint("Forcibly terminated process that was related to task",task)
                     uselessIDs = { i for i,t in workers.iteritems() if t == task }
@@ -215,7 +215,6 @@ def wrapInThread(f):
     Returns a function that is designed to be run in a thread/threadlike process.
     Result will be either put into the q
     """
-
     
     def _f(*a,**k):
         q = k["q"]
