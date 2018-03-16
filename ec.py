@@ -73,7 +73,7 @@ def explorationCompression(*arguments, **keywords):
 def ecIterator(grammar, tasks,
                _=None,
                solver="ocaml",
-               backend="pypy",
+               compressor="rust",
                testingTasks = [],
                benchmark=None,
                iterations=None,
@@ -119,7 +119,7 @@ def ecIterator(grammar, tasks,
                                "message", "CPUs", "outputPrefix",
                                "resume", "resumeFrontierSize",
                                "featureExtractor", "benchmark",
-                               "evaluationTimeout", "testingTasks"} \
+                               "evaluationTimeout", "testingTasks", "compressor"} \
                   and v is not None}
     if not useRecognitionModel:
         for k in {"activation","helmholtzRatio","steps"}: del parameters[k]
@@ -256,7 +256,7 @@ def ecIterator(grammar, tasks,
         grammar, frontiers = induceGrammar(grammar, frontiers,
                                            topK=topK, pseudoCounts=pseudoCounts, a=arity,
                                            aic=aic, structurePenalty=structurePenalty,
-                                           backend=backend, CPUs=CPUs)
+                                           backend=compressor, CPUs=CPUs)
         result.grammars.append(grammar)
         eprint("Grammar after iteration %d:" % (j + 1))
         eprint(grammar)

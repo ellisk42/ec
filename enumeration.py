@@ -165,78 +165,6 @@ def multithreadedEnumeration(g, tasks, _=None,
 
     
 
-# def solveForTask_ocaml(g, task, _ = None, timeout = None, evaluationTimeout = None,
-#                        CPUs = 1,
-#                        maximumFrontier = 10):
-#     from time import time
-#     # from multiprocessing import Process, Queue
-#     from threading import Thread
-#     from Queue import Queue
-
-
-#     startTime = time()
-    
-#     workers = {}
-
-#     lowerBound = 0.
-#     budgetIncrement = 1.
-
-#     frontier = Frontier([], task)
-#     q = Queue()
-
-#     nextID = 0
-
-#     bestSearchTime = None
-#     totalExplored = 0
-
-#     while True:
-#         elapsedTime = time() - startTime
-#         thisTimeout = int(timeout - elapsedTime + 0.5)
-#         programsToFind = maximumFrontier - len(frontier)
-
-#         finished = thisTimeout < 1 or programsToFind <= 0
-#         if not finished:
-#             while len(workers) < CPUs:
-#                 eprint("Launching worker with timeout",thisTimeout)
-#                 p = Thread(target = _solveForTask_ocaml,
-#                            args = (nextID, q,
-#                                    g, task, lowerBound, lowerBound+budgetIncrement, budgetIncrement,
-#                                    thisTimeout, evaluationTimeout,
-#                                    programsToFind))
-#                 p.start()
-#                 workers[nextID] = (elapsedTime, p)
-#                 nextID += 1
-#                 lowerBound += budgetIncrement
-
-#         if len(workers) > 0:
-#             # eprint("(python) Blocking on thread queue, have %d in the thread queue..."%len(workers))
-#             ID, newFrontier, searchTime, explored = q.get()
-#             # eprint("(python) The following worker finished:",ID)
-#             initialTime, process = workers[ID]
-#             if isinstance(newFrontier, Exception):
-#                 exc, isFatal = newFrontier, searchTime
-#                 if isFatal: raise exc
-#                 del workers[ID]
-#                 continue
-
-#             totalExplored += explored
-#             if totalExplored > 0:
-#                 eprint("(python) Explored %d programs in %s sec. %d programs/sec."%
-#                        (totalExplored, int(time() - startTime), int(float(totalExplored)/(time() - startTime))))
-
-#             if searchTime is not None:
-#                 totalTime = initialTime + searchTime
-#                 eprint("(python) Got first solution after %s seconds"%totalTime)
-#                 if bestSearchTime is None: bestSearchTime = totalTime
-#                 else: bestSearchTime = min(totalTime, bestSearchTime)
-#             frontier = frontier.combine(newFrontier)
-
-#             del workers[ID]
-
-#         if finished and len(workers) == 0 and q.empty(): break
-
-#     return frontier, bestSearchTime
-        
 def wrapInThread(f, _ = None, ID = None, q = None):
     """
     Returns a function that is designed to be run in a thread. Result
@@ -267,16 +195,14 @@ def solveForTask_ocaml(_ = None,
                                             for l,_,p in g.productions ]},
                "examples": [{"inputs": list(xs), "output": y} for xs,y in task.examples ],
                "programTimeout": evaluationTimeout,
-               "solverTimeout": int(timeout + 0.5),
+               "solverTimeout": max(int(timeout + 0.5), 1),
                "maximumFrontier": maximumFrontier,
                "name": task.name,
                "lowerBound": lowerBound,
                "upperBound": upperBound,
                "budgetIncrement": budgetIncrement,
-               "verbose": True}#verbose}
+               "verbose": False}
     message = json.dumps(message)
-    # with open('message','w') as handle: handle.write(message)
-    # eprint(message)
     try:
         p = subprocess.Popen(['./solver'],
                              stdin=subprocess.PIPE, stdout=subprocess.PIPE)
