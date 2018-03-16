@@ -8,7 +8,7 @@ import os
 import sys
 import random
 
-rootdir = "./dataGeom/"
+rootdir = "./data/geom/"
 
 
 
