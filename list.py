@@ -314,8 +314,8 @@ if __name__ == "__main__":
         "featureExtractor": extractor,
         "outputPrefix": "experimentOutputs/list",
         "evaluationTimeout": 0.0005,
-        "topK": 10,
-        "maximumFrontier": 10,
+        "topK": 5,
+        "maximumFrontier": 5,
         "solver": "ocaml",
         "compressor": "pypy"
     })

@@ -15,6 +15,13 @@ from itertools import chain, imap
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
 
+class Bunch(object):
+    def __init__(self,d):
+        self.__dict__.update(d)
+    def __setitem__(self, key, item):
+        self.__dict__[key] = item
+    def __getitem__(self, key):
+        return self.__dict__[key]
 
 def hashable(v):
     """Determine whether `v` can be hashed."""
@@ -160,6 +167,28 @@ def callFork(f, *arguments, **kw):
     workers.terminate()
     assert len(ys) == 1
     return ys[0]
+
+
+PARALLELPROCESSDATA = None
+def launchParallelProcess(f, *a, **k):
+    global PARALLELPROCESSDATA
+
+    PARALLELPROCESSDATA = [f,a,k]
+
+    from multiprocessing import Process
+    p = Process(target = _launchParallelProcess, args = tuple([]))
+    p.start()
+    PARALLELPROCESSDATA = None
+    return p
+def _launchParallelProcess():
+    global PARALLELPROCESSDATA
+    [f,a,k] = PARALLELPROCESSDATA
+    try:
+        f(*a,**k)
+    except Exception as e:
+        eprint("Exception in worker during forking:\n%s"%(traceback.format_exc()))
+        raise e
+    
     
 
 class CompiledTimeout(Exception): pass
@@ -170,10 +199,16 @@ def callCompiled(f, *arguments, **keywordArguments):
     if profile:
         pypyArgs = ['-m', 'vmprof', '-o', profile]
 
+    PIDCallBack = keywordArguments.pop("PIDCallBack",None)
+
     timeout = keywordArguments.pop('compiledTimeout', None)
 
     p = subprocess.Popen(['pypy'] + pypyArgs + ['compiledDriver.py'],
                          stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+    
+    if PIDCallBack is not None:
+        PIDCallBack(p.pid)
+    
     request = {
         "function": f,
         "arguments": arguments,
