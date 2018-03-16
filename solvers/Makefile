@@ -37,6 +37,17 @@ clean:
 run:
 	time ./test
 
+draw:
+	ocamlbuild -use-menhir -tag thread -use-ocamlfind \
+	    -package camlimages \
+	    -package camlimages.png \
+	    -package gg \
+	    -package vg \
+	    -package vg.cairo \
+	    -package vg.svg   \
+	    geomDrawFile.native
+	mv geomDrawFile.native ./behaviouralData/geomDrawFile
+
 generate:
 	ocamlbuild -use-menhir -tag thread -use-ocamlfind \
 	    -package camlimages \
