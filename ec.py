@@ -73,6 +73,7 @@ def explorationCompression(*arguments, **keywords):
 def ecIterator(grammar, tasks,
                _=None,
                solver="ocaml",
+               backend="pypy",
                testingTasks = [],
                benchmark=None,
                iterations=None,
@@ -255,7 +256,7 @@ def ecIterator(grammar, tasks,
         grammar, frontiers = induceGrammar(grammar, frontiers,
                                            topK=topK, pseudoCounts=pseudoCounts, a=arity,
                                            aic=aic, structurePenalty=structurePenalty,
-                                           backend="rust", CPUs=CPUs)
+                                           backend=backend, CPUs=CPUs)
         result.grammars.append(grammar)
         eprint("Grammar after iteration %d:" % (j + 1))
         eprint(grammar)
