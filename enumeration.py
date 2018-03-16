@@ -179,13 +179,13 @@ def multithreadedEnumeration(g, tasks, _=None,
                 # Remove the finished worker
                 del workers[ID]
 
-                if len(frontiers[task]) >= maximumFrontier:
+                if len(frontiers[task]) >= maximumFrontier and False:
                     # Forcibly terminate the workers
                     # FIXME in theory this creates a race condition wrt q
                     # We could end up trying to terminate the process that is busy writing to q
                     for pid in [ pid
                                  for i,t in workers.iteritems() if t == task
-                                 for pid in workerChildren[i] ]:
+                                 for pid in workerChildren.get(i,[]) ]:
                         os.system("kill -9 %s"%pid)                        
                         eprint("Forcibly terminated process that was related to task",task)
                     uselessIDs = { i for i,t in workers.iteritems() if t == task }
