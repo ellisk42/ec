@@ -325,8 +325,8 @@ if __name__ == "__main__":
     train = make_list_bootstrap_tasks(10)
     eprint("Total number of training tasks:",len(train))
     for t in make_list_bootstrap_tasks(10):
-        print t.describe()
-        print 
+        eprint(t.describe())
+        eprint()
     # assert False
     if False:
         from program import *
