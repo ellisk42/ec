@@ -75,6 +75,10 @@ def multithreadedEnumeration(g, tasks, _=None,
     if not isinstance(g, dict): g = {t: g for t in tasks }
     task2grammar = g
 
+    allowMultipleThreadsPerTask = CPUs > len(tasks)
+    if allowMultipleThreadsPerTask:
+        eprint("EXPERIMENTAL: Multiple threads will be working on a single task simultaneously.")
+
     frontiers = {t: Frontier([], task = t) for t in task2grammar }
     activeTasks = set(task2grammar.keys())
     lowerBounds = {t: 0. for t in task2grammar}
@@ -124,7 +128,7 @@ def multithreadedEnumeration(g, tasks, _=None,
                     lowerBounds[t] += bi
                     workers[nextID] = t
                     nextID += 1
-                    
+
         if len(workers) > 0:
             ID, newFrontier, searchTime, explored = q.get()
             task = workers[ID]
