@@ -1,0 +1,5 @@
+varAngularSpeed = Double(unit);
+Repeat(Double(Double(Double(Double(unit))))) {
+     varAngularSpeed = Next(varAngularSpeed) ;
+      Integrate(t=unit, angularSpeed=Divide(unit,varAngularSpeed))
+}

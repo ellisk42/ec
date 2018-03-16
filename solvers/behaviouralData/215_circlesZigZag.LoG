@@ -1,0 +1,14 @@
+alpha = unit ;
+Repeat(Double(Double(unit))) {
+    Turn(angle=alpha) ;
+    Embed {
+        Integrate(t=Half(Half(unit)), pen=off, angularSpeed=Double(unit)) ;
+        Integrate(angularSpeed=unit)
+    } ;
+    Integrate(pen=off) ;
+    alpha = Opposite(alpha)
+} ;
+Embed {
+    Integrate(t=Half(Half(unit)), pen=off, angularSpeed=Double(unit)) ;
+    Integrate(angularSpeed=unit)
+}

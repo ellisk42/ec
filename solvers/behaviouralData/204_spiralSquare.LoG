@@ -1,0 +1,7 @@
+Turn(angle=Opposite(unit)) ;
+dist = Half(Half(Half(unit))) ;
+Repeat(Double(Double(Double(unit)))) {
+   dist = Half(Half(Half(Next(Double(Double(Double(dist))))))) ;
+   Integrate(t=dist) ;
+   Turn
+}

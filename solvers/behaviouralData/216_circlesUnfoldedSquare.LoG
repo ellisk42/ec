@@ -1,0 +1,27 @@
+Embed {
+    Integrate(t=Half(Half(unit)), pen=off, angularSpeed=Double(unit)) ;
+    Integrate(angularSpeed=unit)
+} ;
+Integrate(pen=off) ;
+Turn(angle=Next(Half(unit))) ;
+Embed {
+    Integrate(t=Half(Half(unit)), pen=off, angularSpeed=Double(unit)) ;
+    Integrate(angularSpeed=unit)
+} ;
+Integrate(pen=off) ;
+Turn(angle=Opposite(Half(unit))) ;
+Embed {
+    Integrate(t=Half(Half(unit)), pen=off, angularSpeed=Double(unit)) ;
+    Integrate(angularSpeed=unit)
+} ;
+Integrate(pen=off) ;
+Turn ;
+Embed {
+    Integrate(t=Half(Half(unit)), pen=off, angularSpeed=Double(unit)) ;
+    Integrate(angularSpeed=unit)
+} ;
+Integrate(pen=off) ;
+Embed {
+    Integrate(t=Half(Half(unit)), pen=off, angularSpeed=Double(unit)) ;
+    Integrate(angularSpeed=unit)
+}

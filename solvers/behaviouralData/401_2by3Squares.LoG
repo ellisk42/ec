@@ -1,0 +1,16 @@
+Repeat(Next(Double(unit))) {
+    Embed {
+        Repeat {
+            Embed {
+                Repeat(Double(Double(unit))) {
+                    Integrate(t=Half(unit)) ;
+                    Turn
+                }
+            } ;
+            Integrate(pen=off)
+        }
+    } ;
+    Turn ;
+    Integrate(pen=off);
+    Turn(angle=Opposite(unit))
+}

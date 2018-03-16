@@ -1,0 +1,9 @@
+Integrate ;
+Integrate(pen=off, angularSpeed=Half(unit)) ;
+Turn(angle=Prev(Half(unit))) ;
+Integrate ;
+Integrate(pen=off, angularAccel=Half(unit)) ;
+Integrate ;
+Integrate(pen=off, angularSpeed=Half(unit)) ;
+Turn(angle=Half(unit)) ;
+Integrate
