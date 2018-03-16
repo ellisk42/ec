@@ -104,7 +104,7 @@ def multithreadedEnumeration(g, tasks, _=None,
     while True:
         activeTasks = {t for t in activeTasks
                        if len(frontiers[t]) < maximumFrontier \
-                       and enumerationTimeout - stopwatches[t].elapsed >= 1 }
+                       and stopwatches[t].elapsed <= enumerationTimeout }
 
         finished = len(activeTasks) == 0
 
