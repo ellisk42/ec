@@ -22,7 +22,7 @@ class GeomFeatureCNN(nn.Module):
         self.use_cuda = cuda
 
         self.outputDimensionality = H
-        hidden = nn.Linear(16*16, H) # TODO Do not hardcode 16
+        hidden = nn.Linear(16*16, H) # TODO Do not hardcode 16*16
         if cuda:
             hidden = hidden.cuda()
         else:
@@ -37,10 +37,6 @@ class GeomFeatureCNN(nn.Module):
 
     def featuresOfProgram(self, p, t):
         return None
-        # features = self._featuresOfProgram(p,t)
-        # if features is None: return None
-        # f = variable([ (f - self.averages[j])/self.deviations[j] for j,f in enumerate(features) ], cuda=self.use_cuda).float()
-        # return self.hidden(f).clamp(min = 0)
 
 if __name__ == "__main__":
     tasks = makeTasks()
@@ -54,13 +50,14 @@ if __name__ == "__main__":
     explorationCompression(baseGrammar, train,
                            testingTasks=test,
                            outputPrefix="experimentOutputs/geom",
+                           backend="rust",
                            evaluationTimeout=0.01,
                            **commandlineArguments(
                                steps=5,
                                iterations=5,
-                               useRecognitionModel=True,
+                               useRecognitionModel=False,
                                helmholtzRatio=0.,
-                               featureExtractor=GeomFeatureCNN,
+                               # featureExtractor=GeomFeatureCNN,
                                topK=2,
                                maximumFrontier=250,
                                CPUs=numberOfCPUs(),
