@@ -50,7 +50,7 @@ if __name__ == "__main__":
     explorationCompression(baseGrammar, train,
                            testingTasks=test,
                            outputPrefix="experimentOutputs/geom",
-                           backend="rust",
+                           compressor="pypy",
                            evaluationTimeout=0.01,
                            **commandlineArguments(
                                steps=5,
