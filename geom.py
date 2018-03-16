@@ -22,11 +22,7 @@ class GeomFeatureCNN(nn.Module):
         self.use_cuda = cuda
 
         self.outputDimensionality = H
-<<<<<<< HEAD
         hidden = nn.Linear(len(tasks[0].examples[0][1]), H)
-=======
-        hidden = nn.Linear(16*16, H) # TODO Do not hardcode 16*16
->>>>>>> ef9cb3463e6eabc21ec96f9ca2329626f3bba2a7
         if cuda:
             hidden = hidden.cuda()
         else:
@@ -57,7 +53,6 @@ if __name__ == "__main__":
                            compressor="pypy",
                            evaluationTimeout=0.01,
                            **commandlineArguments(
-<<<<<<< HEAD
                                steps=1,
                                iterations=10,
                                useRecognitionModel=True,
@@ -65,14 +60,5 @@ if __name__ == "__main__":
                                featureExtractor=GeomFeatureCNN,
                                topK=2,
                                maximumFrontier=5,
-=======
-                               steps=5,
-                               iterations=5,
-                               useRecognitionModel=False,
-                               helmholtzRatio=0.,
-                               # featureExtractor=GeomFeatureCNN,
-                               topK=2,
-                               maximumFrontier=250,
->>>>>>> ef9cb3463e6eabc21ec96f9ca2329626f3bba2a7
                                CPUs=numberOfCPUs(),
                                pseudoCounts=10.0))
