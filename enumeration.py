@@ -285,7 +285,7 @@ def solveForTask_ocaml(_ = None,
     
     frontier = Frontier([FrontierEntry(program = p,
                                        logLikelihood = e["logLikelihood"],
-                                       logPrior = g.closedLogLikelihood(task.request, p))
+                                       logPrior = g.logLikelihood(task.request, p))
                          for e in response
                          for p in [Program.parse(e["program"])] ],
                         task = task)

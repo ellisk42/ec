@@ -366,13 +366,13 @@ class RecognitionModel(nn.Module):
                                 for k,(_,t,program) in enumerate(self.grammar.productions) ])
         kl = 0.
         for entry in frontier:
-            kl -= math.exp(entry.logPosterior) * g.closedLogLikelihood(frontier.task.request, entry.program)
+            kl -= math.exp(entry.logPosterior) * g.logLikelihood(frontier.task.request, entry.program)
         return kl
     def HelmholtzKL(self, features, sample, tp):
         variables, productions = self(features)
         g = Grammar(variables, [(productions[k],t,program)
                                 for k,(_,t,program) in enumerate(self.grammar.productions) ])
-        return - g.closedLogLikelihood(tp, sample)
+        return - g.logLikelihood(tp, sample)
 
     def train(self, frontiers, _=None, steps=250, lr=0.001, topK=1, CPUs=1,
               helmholtzRatio = 0.):

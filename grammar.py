@@ -251,7 +251,7 @@ class Grammar(object):
             
         return summary
 
-    def closedLogLikelihood(self, request, expression):
+    def logLikelihood(self, request, expression):
         summary = self.closedLikelihoodSummary(request, expression)
         if summary is None:
             eprint("FATAL: program [ %s ] does not have a likelihood summary."%expression,"r = ",request,"\n",self)
@@ -260,7 +260,7 @@ class Grammar(object):
 
     def rescoreFrontier(self, frontier):
         return Frontier([ FrontierEntry(e.program,
-                                        logPrior = self.closedLogLikelihood(frontier.task.request, e.program),
+                                        logPrior = self.logLikelihood(frontier.task.request, e.program),
                                         logLikelihood = e.logLikelihood)
                           for e in frontier ],
                         frontier.task)
