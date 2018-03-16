@@ -48,7 +48,7 @@ import gc
 #     frontiers = [f for f,t in frontiers ]
 #     return frontiers, times
 
-class EnumerationTimeout(Exception): pass
+
 
 def multithreadedEnumeration(g, tasks, _=None,
                              solver=None,
@@ -117,8 +117,9 @@ def multithreadedEnumeration(g, tasks, _=None,
                     if not stopwatches[t].running: stopwatches[t].start()
                     eprint("Launching [%s] w/ lb = %f, timeout = %f"%(t,lowerBounds[t],thisTimeout))
                     bi = budgetIncrement(lowerBounds[t])
-                    p = Thread(target = solver, args = [],
-                               kwargs = {"ID": nextID, "q": q, "elapsedTime": stopwatches[t].elapsed,
+                    p = Thread(target = wrapInThread(solver, ID = nextID, q = q),
+                               args = [],
+                               kwargs = {"elapsedTime": stopwatches[t].elapsed,
                                          "g": task2grammar[t], "task": t,
                                          "lowerBound": lowerBounds[t], "upperBound": lowerBounds[t] + bi,
                                          "budgetIncrement": bi, "timeout": thisTimeout,
@@ -236,10 +237,25 @@ def multithreadedEnumeration(g, tasks, _=None,
 
 #     return frontier, bestSearchTime
         
-    
+def wrapInThread(f, _ = None, ID = None, q = None):
+    """
+    Returns a function that is designed to be run in a thread. Result
+    will be put inside the queue q, prefixed with ID
+    """
+    assert q is not None
+    assert ID is not None
+    def _f(*a,**k):
+        try:
+            r = f(*a,**k)
+        except Exception as e:
+            q.put((ID, e))
+            raise e
+        if isinstance(r, (tuple,list)): r = tuple([ID] + list(r))
+        else: r = (ID, r)
+        q.put(r)
+    return _f        
 
 def solveForTask_ocaml(_ = None,
-                       ID = None, q = None,
                        elapsedTime = 0.,
                        g = None, task = None,
                        lowerBound = None, upperBound = None, budgetIncrement = None,
@@ -269,10 +285,8 @@ def solveForTask_ocaml(_ = None,
             response = json.loads(response)
         except Exception as exc:
             exc = ValueError("Could not load response from ocaml solver: ", exc)
-            q.put((ID, exc, None, None))
             raise exc
     except OSError as exc:
-        q.put((ID, exc, True, None))
         raise exc
 
     pc = response[u"programCount"]
@@ -291,24 +305,21 @@ def solveForTask_ocaml(_ = None,
     if frontier.empty: searchTime = None
     else: searchTime = min(e["time"] for e in response) + elapsedTime
 
-    q.put((ID, frontier, searchTime, pc))
+    return frontier, searchTime, pc
 
 def solveForTask_pypy(_ = None,
-                      ID = None, q = None,
                       elapsedTime = 0.,
                       g = None, task = None,
                       lowerBound = None, upperBound = None, budgetIncrement = None,
                       timeout = None,
                       evaluationTimeout = None, maximumFrontier = None):
-    """Executes inside of the thread; puts its results into the queue q"""
-    frontier, T, pc = callCompiled(enumerateForTask,
-                                   g,task,
-                                   timeout = timeout,
-                                   evaluationTimeout = evaluationTimeout,
-                                   maximumFrontier = maximumFrontier,
-                                   budgetIncrement = budgetIncrement,
-                                   lowerBound = lowerBound, upperBound = upperBound)
-    q.put((ID, frontier, T, pc))
+    return callCompiled(enumerateForTask,
+                        g,task,
+                        timeout = timeout,
+                        evaluationTimeout = evaluationTimeout,
+                        maximumFrontier = maximumFrontier,
+                        budgetIncrement = budgetIncrement,
+                        lowerBound = lowerBound, upperBound = upperBound)
 
 def solveForTask_python(_ = None,
                         ID = None, q = None,
@@ -317,19 +328,15 @@ def solveForTask_python(_ = None,
                         lowerBound = None, upperBound = None, budgetIncrement = None,
                         timeout = None,
                         evaluationTimeout = None, maximumFrontier = None):
-    """Executes inside of the thread; puts its results into the queue q"""
-    frontier, T, pc = callFork(enumerateForTask,
-                               g,task,
-                               timeout = timeout,
-                               evaluationTimeout = evaluationTimeout,
-                               maximumFrontier = maximumFrontier,
-                               budgetIncrement = budgetIncrement,
-                               lowerBound = lowerBound, upperBound = upperBound)
-    q.put((ID, frontier, T, pc))
+    return callFork(enumerateForTask,
+                    g,task,
+                    timeout = timeout,
+                    evaluationTimeout = evaluationTimeout,
+                    maximumFrontier = maximumFrontier,
+                    budgetIncrement = budgetIncrement,
+                    lowerBound = lowerBound, upperBound = upperBound)
 
-def enumerateForTask_pypy(*arguments, **keywords):
-    return callCompiled(enumerateForTask, *arguments, **keywords)
-
+class EnumerationTimeout(Exception): pass
 def enumerateForTask(g, task, _ = None,
                      verbose=False,
                      timeout=None,
@@ -342,11 +349,6 @@ def enumerateForTask(g, task, _ = None,
         "enumerateForTask: You must provide either a timeout or a frontier size."
     
     from time import time
-    def timeoutCallBack(_1,_2): raise EnumerationTimeout()
-    if timeout is not None:
-        if verbose: eprint("Alarming timeout for",timeout,"for task",task)
-        signal.signal(signal.SIGALRM, timeoutCallBack)
-        signal.alarm(int(timeout+0.5))
 
     timeUntilFirstSolution = None
     frontier = []
@@ -357,10 +359,10 @@ def enumerateForTask(g, task, _ = None,
         totalNumberOfPrograms = 0
         while len(frontier) < maximumFrontier:
             numberOfPrograms = 0
-            for prior,_,p in enumeration(g, Context.EMPTY, [], task.request, 
-                                         maximumDepth = 99,
-                                         upperBound = budget,
-                                         lowerBound = previousBudget):
+            for prior,_,p in g.enumeration(Context.EMPTY, [], task.request, 
+                                           maximumDepth = 99,
+                                           upperBound = budget,
+                                           lowerBound = previousBudget):
                 descriptionLength = -prior
                 # Shouldn't see it on this iteration
                 assert descriptionLength <= budget
@@ -368,6 +370,7 @@ def enumerateForTask(g, task, _ = None,
                 assert descriptionLength > previousBudget
 
                 numberOfPrograms += 1
+                totalNumberOfPrograms += 1
                 
                 likelihood = task.logLikelihood(p, timeout=evaluationTimeout)
                 if valid(likelihood):
@@ -378,11 +381,7 @@ def enumerateForTask(g, task, _ = None,
                                                   logPrior = prior,
                                                   logLikelihood = likelihood))
 
-                # If the alarm is triggered during evaluation,
-                # it will be caught by the catchall exception handler
-                # And so we have to time ourselves out
                 if timeout is not None and time() - starting > timeout:
-                    signal.alarm(0)
                     raise EnumerationTimeout
             if verbose:
                 eprint("Enumerated %d programs of satisfying:"%(numberOfPrograms),
@@ -390,7 +389,6 @@ def enumerateForTask(g, task, _ = None,
             
             previousBudget = budget
             budget += budgetIncrement
-            totalNumberOfPrograms += numberOfPrograms
             if verbose:
                 eprint("\tTotal elapsed time: %d seconds. Total number of programs evaluated: %d. Task: %s."% \
                        (time() - starting, totalNumberOfPrograms, task))
@@ -399,75 +397,11 @@ def enumerateForTask(g, task, _ = None,
     except EnumerationTimeout:
         if verbose:
             eprint("Timeout triggered after",time() - starting,"seconds for task",task)
-    signal.alarm(0)
 
     frontier = Frontier(frontier,
                         task = task).topK(maximumFrontier)
     
     return frontier, timeUntilFirstSolution, numberOfPrograms
-
-def enumeration(g, context, environment, request, upperBound, maximumDepth = 20, lowerBound = 0.):
-    '''Enumerates all programs whose MDL satisfies: lowerBound < MDL <= upperBound'''
-    if upperBound <= 0 or maximumDepth == 1: return 
-
-    if request.isArrow():
-        v = request.arguments[0]
-        for l, newContext, b in enumeration(g, context, [v] + environment,
-                                            request.arguments[1],
-                                            upperBound = upperBound,
-                                            lowerBound = lowerBound,
-                                            maximumDepth = maximumDepth):
-            yield l, newContext, Abstraction(b)
-
-    else:
-        candidates = g.buildCandidates(request, context, environment,
-                                       normalize = True)
-        
-        for l, t, p, newContext in candidates:
-            mdl = -l
-            if not (mdl <= upperBound): continue
-            
-            xs = t.functionArguments()
-            # eprint("Enumerating arguments for function",p,"which has been requesting types",xs)
-            for aL,aK,application in\
-                enumerateApplication(g, newContext, environment, p, xs,
-                                     upperBound = upperBound + l,
-                                     lowerBound = lowerBound + l,
-                                     maximumDepth = maximumDepth - 1):
-                yield aL+l, aK, application
-
-
-def enumerateApplication(g, context, environment,
-                         function, argumentRequests,
-                         # Upper bound on the description length of all of the arguments
-                         upperBound,
-                         # Lower bound on the description length of all of the arguments
-                         lowerBound = 0.,
-                         maximumDepth = 20):
-    if upperBound <= 0 or maximumDepth == 1: return 
-
-    if argumentRequests == []:
-        # eprint("Enumerating application of %s with no arguments."%(function))
-        # eprint("\tL",lowerBound)
-        # eprint("\tU",upperBound)
-        if lowerBound < 0. and 0. <= upperBound:
-            yield 0., context, function
-        else: return 
-    else:
-        argRequest = argumentRequests[0].apply(context)
-        laterRequests = argumentRequests[1:]
-        for argL, newContext, arg in enumeration(g, context, environment, argRequest,
-                                                 upperBound = upperBound,
-                                                 lowerBound = 0.,
-                                                 maximumDepth = maximumDepth):
-            newFunction = Application(function, arg)
-            for resultL, resultK, result in enumerateApplication(g, newContext, environment, newFunction,
-                                                                 laterRequests,
-                                                                 upperBound = upperBound + argL,
-                                                                 lowerBound = lowerBound + argL,
-                                                                 maximumDepth = maximumDepth):
-                yield resultL + argL, resultK, result
-
 
 def solveSingleTask(grammar, task, maximumBudget = 15):
     if isinstance(task, DifferentiableTask):
@@ -475,7 +409,7 @@ def solveSingleTask(grammar, task, maximumBudget = 15):
         history = set([])
     else: rememberOld = False
     for budget in range(2, maximumBudget):
-        for _,_,p in enumeration(grammar, Context.EMPTY, [], task.request, budget):
+        for _,_,p in grammar.enumeration(Context.EMPTY, [], task.request, budget):
             if rememberOld:
                 if p in history: continue
                 history.add(p)

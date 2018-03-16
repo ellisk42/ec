@@ -314,7 +314,7 @@ if __name__ == "__main__":
         "evaluationTimeout": 0.0005,
         "topK": 10,
         "maximumFrontier": 10,
-        "solver": "ocaml"
+        "solver": "python"
     })
 
     baseGrammar = Grammar.uniform(prims())

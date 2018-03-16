@@ -181,7 +181,9 @@ def callCompiled(f, *arguments, **keywordArguments):
     }
     start = time.time()
     pickle.dump(request, p.stdin)
-    eprint("Wrote serialized message for {} in time {}".format(f.__name__, time.time() - start))
+    dt = time.time() - start
+    if dt > 1:
+        eprint("(Python side of compiled driver: SLOW) Wrote serialized message for {} in time {}".format(f.__name__, dt))
 
     if timeout is None:
         success, result = pickle.load(p.stdout)
@@ -197,8 +199,6 @@ def callCompiled(f, *arguments, **keywordArguments):
             # Kill the process
             p.kill()
             raise CompiledTimeout()
-
-    eprint("Total pypy return time", time.time() - start)
 
     if not success:
         sys.exit(1)
