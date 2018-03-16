@@ -87,10 +87,11 @@ def multithreadedEnumeration(g, tasks, _=None,
     workers = {}
     
     def budgetIncrement(lb):
-        if lb < 21.:
-            return 1.
-        else:
-            return 0.5
+        return 1.
+        # if lb < 21.:
+        #     return 1.
+        # else:
+        #     return 0.5
 
     startTime = time()
 
