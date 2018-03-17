@@ -81,7 +81,7 @@ if __name__ == "__main__":
     # eprint(program)
     # tasks = {t.name: t for t in tasks }
     baseGrammar = Grammar.uniform(primitives)
-    # eprint(baseGrammar.closedLogLikelihood(tasks[target].request, program))
+    # eprint(baseGrammar.logLikelihood(tasks[target].request, program))
     # callCompiled(enumerateForTask,
     #              baseGrammar, tasks[target],
     #              maximumFrontier = 2,

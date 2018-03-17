@@ -288,8 +288,8 @@ def proposeFragmentsFromFrontiers(frontiers, a):
     fragmentsFromEachFrontier = [ { fp
                                     for entry in frontier.entries
                                     for f in proposeFragmentsFromProgram(entry.program,a)
-                                    for fp in proposeFragmentsFromFragment(f)
-                                    if not violatesLaziness(fp)}
+                                    for fp in proposeFragmentsFromFragment(f) }
+                                    #if not violatesLaziness(fp)}
                                   for frontier in frontiers ]
     allFragments = Counter(f for frontierFragments in fragmentsFromEachFrontier
                            for f in frontierFragments)

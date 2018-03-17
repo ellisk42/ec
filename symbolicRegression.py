@@ -97,7 +97,7 @@ if __name__ == "__main__":
         from fragmentGrammar import *
         f = FragmentGrammar.uniform(baseGrammar.primitives + [Program.parse("(+ REAL $0)")])
 
-        eprint(f.closedLogLikelihood(arrow(tint,tint),e))
+        eprint(f.logLikelihood(arrow(tint,tint),e))
         biggest = POSITIVEINFINITY
         for t in train:
             l = t.logLikelihood(e)

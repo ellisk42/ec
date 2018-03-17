@@ -247,6 +247,14 @@ def ecIterator(grammar, tasks,
                       else grammar.rescoreFrontier(result.taskSolutions.get(f.task, Frontier.makeEmpty(f.task)))
                       for f in frontiers ]
         frontiers = [ f.topK(maximumFrontier) for f in frontiers ]
+
+        if maximumFrontier <= 10:
+            eprint("Because maximumFrontier is small (<=10), I am going to show you the full contents of all the frontiers:")
+            for f in frontiers:
+                eprint(f.task)
+                for e in f:
+                    eprint(e.program)
+                eprint()
         # Record the new solutions
         result.taskSolutions = {f.task: f.topK(topK)
                                 for f in frontiers}

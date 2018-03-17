@@ -54,8 +54,8 @@ class FragmentGrammar(object):
         z = lse([candidate[0] for candidate in candidates])
         return [(l - z, c, t, p) for l, c, t, p in candidates]
 
-    def closedLogLikelihood(self, request, expression):
-        _,l,_ = self.logLikelihood(Context.EMPTY, [], request, expression)
+    def logLikelihood(self, request, expression):
+        _,l,_ = self._logLikelihood(Context.EMPTY, [], request, expression)
         if invalid(l):
             f = 'failures/likelihoodFailure%s.pickle'%(time.time() + getPID())
             eprint("PANIC: Invalid log likelihood. expression:",expression,"tp:",request,"Exported to:",f)
@@ -65,10 +65,10 @@ class FragmentGrammar(object):
         return l
 
     def closedUses(self, request, expression):
-        _,l,u = self.logLikelihood(Context.EMPTY, [], request, expression)
+        _,l,u = self._logLikelihood(Context.EMPTY, [], request, expression)
         return l,u
 
-    def logLikelihood(self, context, environment, request, expression):
+    def _logLikelihood(self, context, environment, request, expression):
         '''returns (context, log likelihood, uses)'''
 
         # We can cash likelihood calculations faster whenever they don't involve type inference
@@ -100,7 +100,7 @@ class FragmentGrammar(object):
         
         if request.isArrow():
             if not isinstance(expression,Abstraction): return (context,NEGATIVEINFINITY,Uses.empty)
-            return self.logLikelihood(context,
+            return self._logLikelihood(context,
                                       [request.arguments[0]] + environment,
                                       request.arguments[1],
                                       expression.body)
@@ -165,7 +165,7 @@ class FragmentGrammar(object):
                 for freeType,freeExpression in variableBindings.values() + zip(argumentTypes, xs):
                     freeType = freeType.apply(newContext)
                     newContext, expressionLikelihood, newUses = \
-                            self.logLikelihood(newContext, environment, freeType, freeExpression)
+                            self._logLikelihood(newContext, environment, freeType, freeExpression)
                     if expressionLikelihood is NEGATIVEINFINITY:
                         thisLikelihood = NEGATIVEINFINITY
                         break
@@ -214,12 +214,12 @@ class FragmentGrammar(object):
                                  for _,t,p in self.productions ])
 
     def jointFrontiersLikelihood(self, frontiers):
-        return sum( lse([ entry.logLikelihood + self.closedLogLikelihood(frontier.task.request, entry.program)
+        return sum( lse([ entry.logLikelihood + self.logLikelihood(frontier.task.request, entry.program)
                           for entry in frontier ])
                     for frontier in frontiers )
     def jointFrontiersMDL(self, frontiers, CPUs = 1):
         return sum( parallelMap(CPUs, \
-                                lambda frontier: max( entry.logLikelihood + self.closedLogLikelihood(frontier.task.request, entry.program)
+                                lambda frontier: max( entry.logLikelihood + self.logLikelihood(frontier.task.request, entry.program)
                                                       for entry in frontier ),
                                 frontiers ) )
 
@@ -248,7 +248,7 @@ class FragmentGrammar(object):
 
     def rescoreFrontier(self, frontier):
         return Frontier([ FrontierEntry(e.program,
-                                        logPrior = self.closedLogLikelihood(frontier.task.request, e.program),
+                                        logPrior = self.logLikelihood(frontier.task.request, e.program),
                                         logLikelihood = e.logLikelihood)
                           for e in frontier ],
                         frontier.task)

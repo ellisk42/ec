@@ -196,43 +196,43 @@ if __name__ == "__main__":
 
     print "multiply"
     p = Program.parse("(lambda (lambda (lambda (if (eq? $0 0) 0 (+ $1 ($2 $1 (- $0 1)))))))")
-    print g.closedLogLikelihood(arrow(arrow(tint,tint,tint),tint,tint,tint), p)
+    print g.logLikelihood(arrow(arrow(tint,tint,tint),tint,tint,tint), p)
     print 
 
     print "prepend zeros"
     p = Program.parse("(lambda (lambda (lambda (if (eq? $1 0) $0 (cons 0 ($2 (- $1 1) $0))))))")
-    print g.closedLogLikelihood(arrow(arrow(tint,tlist(tint),tlist(tint)),tint,tlist(tint),tlist(tint)), p)
+    print g.logLikelihood(arrow(arrow(tint,tlist(tint),tlist(tint)),tint,tlist(tint),tlist(tint)), p)
     print
     assert False
 
     p = Program.parse("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) 0 (+ 1 ($1 (cdr $0))))))))")
     print p.evaluate([])(range(17))
-    print g.closedLogLikelihood(arrow(tlist(tbool),tint),p)
+    print g.logLikelihood(arrow(tlist(tbool),tint),p)
 
     p = Program.parse("(lambda (lambda (if (empty? $0) 0 (+ 1 ($1 (cdr $0))))))")
-    print g.closedLogLikelihood(arrow(arrow(tlist(tbool),tint),arrow(tlist(tbool),tint)),p)
+    print g.logLikelihood(arrow(arrow(tlist(tbool),tint),arrow(tlist(tbool),tint)),p)
 
     p = Program.parse("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) 0 (+ (car $0) ($1 (cdr $0))))))))")
     
     print p.evaluate([])(range(4))
-    print g.closedLogLikelihood(arrow(tlist(tint),tint),p)
+    print g.logLikelihood(arrow(tlist(tint),tint),p)
 
     p = Program.parse("(lambda (lambda (if (empty? $0) 0 (+ (car $0) ($1 (cdr $0))))))")
     print p
-    print g.closedLogLikelihood(arrow(arrow(tlist(tint),tint),tlist(tint),tint),p)
+    print g.logLikelihood(arrow(arrow(tlist(tint),tint),tlist(tint),tint),p)
 
     print "take"
     p = Program.parse("(lambda (lambda (lambda (if (eq? $1 0) empty (cons (car $0) ($2 (- $1 1) (cdr $0)))))))")
     print p
-    print g.closedLogLikelihood(arrow(arrow(tint,tlist(tint),tlist(tint)),tint,tlist(tint),tlist(tint)),
+    print g.logLikelihood(arrow(arrow(tint,tlist(tint),tlist(tint)),tint,tlist(tint),tlist(tint)),
                                 p)
     assert False
     
     
     print p.evaluate([])(range(4))
-    print g.closedLogLikelihood(arrow(tlist(tint),tlist(tint)),p)
+    print g.logLikelihood(arrow(tlist(tint),tlist(tint)),p)
     
     p = Program.parse("""(lambda (fix (lambda (lambda (match $0 0 (lambda (lambda (+ $1 ($3 $0))))))) $0))""")
     print p.evaluate([])(range(4))
-    print g.closedLogLikelihood(arrow(tlist(tint),tint),p)
+    print g.logLikelihood(arrow(tlist(tint),tint),p)
     

@@ -77,10 +77,6 @@ def multithreadedEnumeration(g, tasks, _=None,
     if not isinstance(g, dict): g = {t: g for t in tasks }
     task2grammar = g
 
-    allowMultipleThreadsPerTask = CPUs > len(tasks)
-    if allowMultipleThreadsPerTask:
-        eprint("EXPERIMENTAL: Multiple processes will be working on a single task simultaneously.")
-
     frontiers = {t: Frontier([], task = t) for t in task2grammar }
 
     # Tasks which have not yet been solved
@@ -101,10 +97,6 @@ def multithreadedEnumeration(g, tasks, _=None,
     # Each worker is assigned a unique ID number
     nextID = 0
 
-    # If we kill a worker we also need to kill all of the processes at its spawned
-    # Maps from ID to list of PIDs
-    workerChildren = {}
-    
     # map from ID to task
     workers = {}
     
@@ -131,7 +123,7 @@ def multithreadedEnumeration(g, tasks, _=None,
             while len(workers) < CPUs:
                 # Sort the tasks by lower bound. Prioritize lower
                 # lower bounds to explore shorter programs first
-                for t in sorted(activeTasks, key = lambda t: lowerBounds[t])[:CPUs]:
+                for t in sorted(activeTasks, key = lambda t: lowerBounds[t])[:CPUs-len(workers)]:
                     thisTimeout = enumerationTimeout - stopwatches[t].elapsed
                     if not stopwatches[t].running: stopwatches[t].start()
                     eprint("Launching [%s] w/ lb = %f, timeout = %f"%(t,lowerBounds[t],thisTimeout))
@@ -155,9 +147,7 @@ def multithreadedEnumeration(g, tasks, _=None,
             message = Bunch(q.get())
             ID = message.ID
             if message.result == "fork":
-                eprint("Got the message that worker",ID," forked child",message.child)
-                workerChildren[ID] = workerChildren.get(ID,[])
-                workerChildren[ID].append(message.child)
+                assert False, "Forking message is deprecated"
             elif message.result == "failure":
                 eprint("PANIC! Exception in child worker:", message.exception)
                 assert False
@@ -171,26 +161,15 @@ def multithreadedEnumeration(g, tasks, _=None,
                            (totalExplored, int(time() - startTime), int(float(totalExplored)/(time() - startTime))))
 
                 if searchTime is not None:
-                    eprint("(python) Got first solution to %s after %s wall clock seconds"%(task,int(searchTime+0.5)))
-                    if bestSearchTime[task] is None: bestSearchTime[task] = searchTime
+                    if bestSearchTime[task] is None:
+                        eprint("(python) Got first solution to %s after %s wall clock seconds"%(task,int(searchTime+0.5)))
+                        bestSearchTime[task] = searchTime
                     else: bestSearchTime[task] = min(searchTime, bestSearchTime[task])
                 frontiers[task] = frontiers[task].combine(frontier)
 
                 # Remove the finished worker
                 del workers[ID]
 
-                if len(frontiers[task]) >= maximumFrontier:
-                    # Forcibly terminate the workers
-                    # FIXME in theory this creates a race condition wrt q
-                    # We could end up trying to terminate the process that is busy writing to q
-                    for pid in { pid
-                                 for i,t in workers.iteritems() if t == task
-                                 for pid in workerChildren[i] }:
-                        os.system("kill -9 %s"%pid)                        
-                        eprint("Forcibly terminated process that was related to task",task)
-                    uselessIDs = { i for i,t in workers.iteritems() if t == task }
-                    for i in uselessIDs: del workers[i]
-                        
                 # stop it stopwatch if the task is no longer being
                 # worked on
                 if not any( task == _task for _task in workers.values() ):
@@ -215,17 +194,11 @@ def wrapInThread(f):
     Returns a function that is designed to be run in a thread/threadlike process.
     Result will be either put into the q
     """
-
     
     def _f(*a,**k):
-        q = k["q"]
-        ID = k["ID"]
-        assert q is not None
-        assert ID is not None
-
-        q.put({"result": "fork",
-               "child": getPID(),
-               "ID": ID})
+        q = k.pop("q")
+        ID = k.pop("ID")
+        
         try:
             r = f(*a,**k)
             q.put({"result": "success",
@@ -239,7 +212,6 @@ def wrapInThread(f):
     return _f        
 
 def solveForTask_ocaml(_ = None,
-                       q = None, ID = None,
                        elapsedTime = 0.,
                        g = None, task = None,
                        lowerBound = None, upperBound = None, budgetIncrement = None,
@@ -262,12 +234,6 @@ def solveForTask_ocaml(_ = None,
     try:
         p = subprocess.Popen(['./solver'],
                              stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-        if q is not None:
-            assert ID is not None
-            eprint("Sauber ID",ID, "has child",p.pid)
-            q.put({"result": "fork",
-                   "child": p.pid,
-                   "ID": ID})
         try:
             response, error = p.communicate(message)
             response = json.loads(response)
@@ -285,7 +251,7 @@ def solveForTask_ocaml(_ = None,
     
     frontier = Frontier([FrontierEntry(program = p,
                                        logLikelihood = e["logLikelihood"],
-                                       logPrior = g.closedLogLikelihood(task.request, p))
+                                       logPrior = g.logLikelihood(task.request, p))
                          for e in response
                          for p in [Program.parse(e["program"])] ],
                         task = task)
@@ -296,7 +262,6 @@ def solveForTask_ocaml(_ = None,
     return frontier, searchTime, pc
 
 def solveForTask_pypy(_ = None,
-                      q = None, ID = None,
                       elapsedTime = 0.,
                       g = None, task = None,
                       lowerBound = None, upperBound = None, budgetIncrement = None,
@@ -309,13 +274,9 @@ def solveForTask_pypy(_ = None,
                         maximumFrontier = maximumFrontier,
                         budgetIncrement = budgetIncrement,
                         lowerBound = lowerBound,
-                        upperBound = upperBound,
-                        PIDCallBack = lambda PID: q.put({"result": "fork",
-                                                         "child": PID,
-                                                         "ID": ID}))
+                        upperBound = upperBound)
 
 def solveForTask_python(_ = None,
-                        ID = None, q = None,
                         elapsedTime = 0.,
                         g = None, task = None,
                         lowerBound = None, upperBound = None, budgetIncrement = None,
