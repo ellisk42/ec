@@ -104,121 +104,121 @@ def make_list_bootstrap_tasks(numberOfExamples):
         return [ random() > 0.5 for _ in range(randint(4,7)) ]
 
     return [
-        # Task("increment", arrow(tint,tint),
-        #      [((n,),n+1) for n in range(5) ]),
-        # Task("decrement", arrow(tint,tint),
-        #      [((n,),n-1) for n in range(5) ]),
-        # Task("zero?", arrow(tint,tbool),
-        #      [((n,), n == 0) for n in range(5) ]),
-        # Task("multiply", arrow(tint,tint,tint),
-        #      [((x,y),x*y)
-        #       for x in range(3)
-        #       for y in range(4) ]),
+        Task("increment", arrow(tint,tint),
+             [((n,),n+1) for n in range(5) ]),
+        Task("decrement", arrow(tint,tint),
+             [((n,),n-1) for n in range(5) ]),
+        Task("zero?", arrow(tint,tbool),
+             [((n,), n == 0) for n in range(5) ]),
+        Task("multiply", arrow(tint,tint,tint),
+             [((x,y),x*y)
+              for x in range(3)
+              for y in range(4) ]),
 
-        # Task("map empty", arrow(tlist(tlist(tint)),tlist(tbool)),
-        #      [((l,),map(lambda n: len(n) == 0,l))
-        #       for _ in range(10)
-        #       for l in [[ [ randint(0,9) for _ in range(randint(0,3)) ] for _ in range(randint(0,3)) ]] ]),
-        # Task("map cdr", arrow(tlist(tlist(tint)),tlist(tlist(tint))),
-        #      [((l,),map(lambda n: n[1:],l))
-        #       for _ in range(5)
-        #       for l in [randomListOfLists()] ]),
-        # Task("map car", arrow(tlist(tlist(tint)),tlist(tint)),
-        #      [((l,),map(lambda n: n[0],l))
-        #       for _ in range(5)
-        #       for l in [randomListOfLists()] ]),
+        Task("map empty", arrow(tlist(tlist(tint)),tlist(tbool)),
+             [((l,),map(lambda n: len(n) == 0,l))
+              for _ in range(10)
+              for l in [[ [ randint(0,9) for _ in range(randint(0,3)) ] for _ in range(randint(0,3)) ]] ]),
+        Task("map cdr", arrow(tlist(tlist(tint)),tlist(tlist(tint))),
+             [((l,),map(lambda n: n[1:],l))
+              for _ in range(5)
+              for l in [randomListOfLists()] ]),
+        Task("map car", arrow(tlist(tlist(tint)),tlist(tint)),
+             [((l,),map(lambda n: n[0],l))
+              for _ in range(5)
+              for l in [randomListOfLists()] ]),
 
-        # Task("reverse int", arrow(tlist(tint),tlist(tint)),
-        #      [((l,),list(reversed(l)))
-        #       for _ in range(5)
-        #       for l in [randomList()] ]),
-        # Task("reverse bool", arrow(tlist(tbool),tlist(tbool)),
-        #      [((l,),list(reversed(l)))
-        #       for _ in range(5)
-        #       for l in [[random() > 0.5 for _ in range(randint(0,10)) ]] ]),
+        Task("reverse int", arrow(tlist(tint),tlist(tint)),
+             [((l,),list(reversed(l)))
+              for _ in range(5)
+              for l in [randomList()] ]),
+        Task("reverse bool", arrow(tlist(tbool),tlist(tbool)),
+             [((l,),list(reversed(l)))
+              for _ in range(5)
+              for l in [[random() > 0.5 for _ in range(randint(0,10)) ]] ]),
 
         
-        # Task("singleton", arrow(tint,tlist(tint)),
-        #      [((n,),[n])
-        #       for n in range(10) ]),
+        Task("singleton", arrow(tint,tlist(tint)),
+             [((n,),[n])
+              for n in range(10) ]),
         Task("length bool", arrow(tlist(tbool),tint),
              [((l,), len(l))
               for _ in range(10)
               for l in [[random() > 0.5 for _ in range(randint(0,10)) ]] ]),
-        # Task("length int", arrow(tlist(tint),tint),
-        #      [((l,), len(l))
-        #       for _ in range(10)
-        #       for l in [randomList()] ]),
+        Task("length int", arrow(tlist(tint),tint),
+             [((l,), len(l))
+              for _ in range(10)
+              for l in [randomList()] ]),
 
-        # Task("range", arrow(tint,tlist(tint)),
-        #      [((n,), range(1,1+n))
-        #       for n in range(10) ]),
-        # Task("reverse range", arrow(tint,tlist(tint)),
-        #      [((n,), list(reversed(range(1,1+n))))
-        #       for n in range(10) ]),
+        Task("range", arrow(tint,tlist(tint)),
+             [((n,), range(1,1+n))
+              for n in range(10) ]),
+        Task("reverse range", arrow(tint,tlist(tint)),
+             [((n,), list(reversed(range(1,1+n))))
+              for n in range(10) ]),
 
-        # Task("repeat int", arrow(tint,tlist(tint)),
-        #      [((n,k), [n]*k)
-        #       for k in range(5) 
-        #       for n in [randint(0,9)] ]),
-        # Task("repeat bool", arrow(tint,tlist(tint)),
-        #      [((n,k), [n]*k)
-        #       for k in range(5) 
-        #       for n in [random() > 0.5] ]),
+        Task("repeat int", arrow(tint,tlist(tint)),
+             [((n,k), [n]*k)
+              for k in range(5) 
+              for n in [randint(0,9)] ]),
+        Task("repeat bool", arrow(tint,tlist(tint)),
+             [((n,k), [n]*k)
+              for k in range(5) 
+              for n in [random() > 0.5] ]),
 
-        # Task("sum", arrow(tlist(tint),tint),
-        #      [((l,), sum(l))
-        #       for _ in range(10)
-        #       for l in [randomList()] ]),
-        # Task("difference", arrow(tlist(tint),tint),
-        #      [((l,), reduce(lambda x,y: y-x, reversed(l), 1))
-        #       for _ in range(10)
-        #       for l in [randomList(minimum = 1)[:7]] ]),
+        Task("sum", arrow(tlist(tint),tint),
+             [((l,), sum(l))
+              for _ in range(10)
+              for l in [randomList()] ]),
+        Task("difference", arrow(tlist(tint),tint),
+             [((l,), reduce(lambda x,y: y-x, reversed(l), 1))
+              for _ in range(10)
+              for l in [randomList(minimum = 1)[:7]] ]),
 
-        # Task("append int", arrow(tlist(tint),tlist(tint),tlist(tint)),
-        #      [((x,y), x+y)
-        #       for _ in range(10)
-        #       for [x,y] in [[randomList(),randomList()]] ]),
-        # Task("append bool", arrow(tlist(tbool),tlist(tbool),tlist(tbool)),
-        #      [((x,y), x+y)
-        #       for _ in range(10)
-        #       for [x,y] in [[randomBooleanList(),randomBooleanList()]] ]),
+        Task("append int", arrow(tlist(tint),tlist(tint),tlist(tint)),
+             [((x,y), x+y)
+              for _ in range(10)
+              for [x,y] in [[randomList(),randomList()]] ]),
+        Task("append bool", arrow(tlist(tbool),tlist(tbool),tlist(tbool)),
+             [((x,y), x+y)
+              for _ in range(10)
+              for [x,y] in [[randomBooleanList(),randomBooleanList()]] ]),
 
-        # Task("take bool", arrow(tint, tlist(tbool), tlist(tbool)),
-        #      [((n,l), l[:n])
-        #       for n in range(10)
-        #       for l in [[random() > 0.5 for _ in range(randint(n,n + 5)) ]] ]),
-        # Task("drop bool", arrow(tint, tlist(tbool), tlist(tbool)),
-        #      [((n,l), l[n:])
-        #       for n in range(10)
-        #       for l in [[random() > 0.5 for _ in range(randint(n,n + 5)) ]] ]),
+        Task("take bool", arrow(tint, tlist(tbool), tlist(tbool)),
+             [((n,l), l[:n])
+              for n in range(10)
+              for l in [[random() > 0.5 for _ in range(randint(n,n + 5)) ]] ]),
+        Task("drop bool", arrow(tint, tlist(tbool), tlist(tbool)),
+             [((n,l), l[n:])
+              for n in range(10)
+              for l in [[random() > 0.5 for _ in range(randint(n,n + 5)) ]] ]),
 
-        # Task("take int", arrow(tint, tlist(tint), tlist(tint)),
-        #      [((n,l), l[:n])
-        #       for n in range(10)
-        #       for l in [[random() > 0.5 for _ in range(randint(n,n + 5)) ]] ]),
-        # Task("drop int", arrow(tint, tlist(tint), tlist(tint)),
-        #      [((n,l), l[n:])
-        #       for n in range(10)
-        #       for l in [[ randint(0,9) for _ in range(randint(n,n+5)) ]] ]),
+        Task("take int", arrow(tint, tlist(tint), tlist(tint)),
+             [((n,l), l[:n])
+              for n in range(10)
+              for l in [[random() > 0.5 for _ in range(randint(n,n + 5)) ]] ]),
+        Task("drop int", arrow(tint, tlist(tint), tlist(tint)),
+             [((n,l), l[n:])
+              for n in range(10)
+              for l in [[ randint(0,9) for _ in range(randint(n,n+5)) ]] ]),
 
-        # Task("remove empty lists",
-        #      arrow(tlist(tlist(tbool)), tlist(tlist(tbool))),
-        #      [((ls,), filter(lambda l: len(l) > 0, ls))
-        #       for _ in range(10)
-        #       for ls in [[[ random() > 0.5 for _ in range(randint(0,3)) ]
-        #                   for _ in range(4) ]] ]),
-        # Task("remove 0s",
-        #      arrow(tlist(tint), tlist(tint)),
-        #      [((xs,), filter(lambda x: x != 0, xs))
-        #       for _ in range(10)
-        #       for xs in [[ randint(0,3) for _ in range(5) ]] ]),
+        Task("remove empty lists",
+             arrow(tlist(tlist(tbool)), tlist(tlist(tbool))),
+             [((ls,), filter(lambda l: len(l) > 0, ls))
+              for _ in range(10)
+              for ls in [[[ random() > 0.5 for _ in range(randint(0,3)) ]
+                          for _ in range(4) ]] ]),
+        Task("remove 0s",
+             arrow(tlist(tint), tlist(tint)),
+             [((xs,), filter(lambda x: x != 0, xs))
+              for _ in range(10)
+              for xs in [[ randint(0,3) for _ in range(5) ]] ]),
 
-        # Task("prepend N 0s",
-        #      arrow(tint,tlist(tint),tlist(tint)),
-        #      [((n,l),[0]*n+l)
-        #       for n in range(10)
-        #       for l in [randomList()] ]),
+        Task("prepend N 0s",
+             arrow(tint,tlist(tint),tlist(tint)),
+             [((n,l),[0]*n+l)
+              for n in range(10)
+              for l in [randomList()] ]),
     ]
 
 def bonusListProblems():

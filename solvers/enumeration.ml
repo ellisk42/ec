@@ -19,6 +19,8 @@ let violates_symmetry f a =
     | ("-","0") -> true
     | ("empty?","cons") -> true
     | ("empty?","empty") -> true
+    | ("zero?","0") -> true
+    | ("zero?","1") -> true
     | _ -> false
 
 
