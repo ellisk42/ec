@@ -11,10 +11,11 @@ type frontier = {
 }
 
 let violates_symmetry f a = 
-  if (not (is_primitive f)) || (not (is_primitive a)) then false else
+  if (not (is_base_primitive f)) || (not (is_base_primitive a)) then false else
     match (primitive_name f, primitive_name a) with
     | ("car","cons") -> true
     | ("cdr","cons") -> true
+    | ("cdr","empty") -> true
     | ("+","0") -> true
     | ("-","0") -> true
     | ("empty?","cons") -> true
