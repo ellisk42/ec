@@ -161,8 +161,9 @@ def multithreadedEnumeration(g, tasks, _=None,
                            (totalExplored, int(time() - startTime), int(float(totalExplored)/(time() - startTime))))
 
                 if searchTime is not None:
-                    eprint("(python) Got first solution to %s after %s wall clock seconds"%(task,int(searchTime+0.5)))
-                    if bestSearchTime[task] is None: bestSearchTime[task] = searchTime
+                    if bestSearchTime[task] is None:
+                        eprint("(python) Got first solution to %s after %s wall clock seconds"%(task,int(searchTime+0.5)))
+                        bestSearchTime[task] = searchTime
                     else: bestSearchTime[task] = min(searchTime, bestSearchTime[task])
                 frontiers[task] = frontiers[task].combine(frontier)
 
