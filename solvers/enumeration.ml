@@ -10,30 +10,23 @@ type frontier = {
   request: tp
 }
 
-(* type recursionEnumeration =
- *   | UnspecifiedRecursion
- *   | NoRecursion
- *   | Recursion of int *)
+let violates_symmetry f a = 
+  if (not (is_primitive f)) || (not (is_primitive a)) then false else
+    match (primitive_name f, primitive_name a) with
+    | ("car","cons") -> true
+    | ("cdr","cons") -> true
+    | ("+","0") -> true
+    | ("-","0") -> true
+    | ("empty?","cons") -> true
+    | ("empty?","empty") -> true
+    | _ -> false
 
 
 let rec enumerate_programs' (g: grammar) (context: tContext) (request: tp) (environment: tp list)
     (lower_bound: float) (upper_bound: float)
     ?maximumDepth:(maximumDepth = 9999)
-    (* ?recursion:(recursion = UnspecifiedRecursion) *)
     (callBack: program -> tContext -> float -> unit) : unit =
 
-  (* Figure out whether we are allowed to recurse *)
-  (* let recursion = match recursion with
-   *   | UnspecifiedRecursion ->
-   *     if grammar_has_recursion (arguments_of_type request |> List.length) g
-   *     then begin
-   *       (\* Printf.printf "setting recursion to %d\n" (arguments_of_type request |> List.length); *\)
-   *       Recursion(arguments_of_type request |> List.length)
-   *     end
-   *     else NoRecursion
-   *   | _ -> recursion
-   * in *)
-  
   (* INVARIANT: request always has the current context applied to it already *)
   if maximumDepth < 1 || upper_bound <= 0.0 then () else
     match request with
@@ -46,36 +39,23 @@ let rec enumerate_programs' (g: grammar) (context: tContext) (request: tp) (envi
 
     | _ -> (* not trying to enumerate functions *)
       let candidates = unifying_expressions g environment request context in
-      (* let candidates =
-       *   match recursion with
-       *   | NoRecursion -> candidates |> List.filter ~f:(fun (p,_,_,_) -> not (is_recursion_primitive p))
-       *   | Recursion(a) -> begin
-       *       let filtered_candidates = 
-       *         candidates |>
-       *         List.filter ~f:(fun (p,_,_,_) -> not (is_recursion_primitive p) || (is_recursion_of_arity a p))
-       *       in
-       *       (\* Printf.printf "Possibly recursive candidates: %s\n" *\)
-       *       (\*   (filtered_candidates |> List.map ~f:(fun (p,_,_,_) -> string_of_program p) |> join ~separator:" "); *\)
-       *       filtered_candidates
-       *     end
-       *   | UnspecifiedRecursion -> assert false
-       * in *)
       candidates |> 
       List.iter ~f:(fun (candidate, candidate_type, context, ll) ->
           let mdl = 0.-.ll in
           if mdl > upper_bound then () else
             let argument_types = arguments_of_type candidate_type in
-            enumerate_applications (* ~isRecursion:(is_recursion_primitive candidate) *)
+            enumerate_applications
               ~maximumDepth:(maximumDepth - 1)
               g context environment
               argument_types candidate 
               (lower_bound+.ll) (upper_bound+.ll)
               (fun p k al -> callBack p k (ll+.al)))
 and
-  enumerate_applications (* ?isRecursion:(isRecursion = false) *)
+  enumerate_applications
     ?maximumDepth:(maximumDepth = 9999)
     (g: grammar) (context: tContext)  (environment: tp list)
     (argument_types: tp list) (f: program)
+    ?originalFunction:(originalFunction=f)
     (lower_bound: float) (upper_bound: float)
     (callBack: program -> tContext -> float -> unit) : unit =
   (* returns the log likelihood of the arguments! not the log likelihood of the application! *)
@@ -89,18 +69,10 @@ and
         g context first_argument environment
         0. upper_bound
         (fun a k ll ->
-           (* if isRecursion then *)
-           (*   Printf.printf "enumerate_applications: is recursion. Target argument: %s\n" *)
-           (*     (Index(List.length later_arguments - 1) |> string_of_program) *)
-           (* else () *)
-           (* ; *)
-           (* Symmetry breaking w/ recursion *)
-           (* if isRecursion && (not (program_equal a (Index(List.length later_arguments - 1)))) then () else *) 
+           if violates_symmetry originalFunction a then () else 
              let a = Apply(f,a) in
-             (* let recursionArgument = isRecursion && List.length later_arguments > 1 in *)
              enumerate_applications
                ~maximumDepth:(maximumDepth)
-               (* ~isRecursion:recursionArgument *)
                g k environment
                later_arguments a
                (lower_bound+.ll) (upper_bound+.ll)

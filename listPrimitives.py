@@ -197,6 +197,11 @@ if __name__ == "__main__":
     print "multiply"
     p = Program.parse("(lambda (lambda (lambda (if (eq? $0 0) 0 (+ $1 ($2 $1 (- $0 1)))))))")
     print g.logLikelihood(arrow(arrow(tint,tint,tint),tint,tint,tint), p)
+    print
+
+    print "take until 0"
+    p = Program.parse("(lambda (lambda (if (eq? $1 0) empty (cons $1 $0))))")
+    print g.logLikelihood(arrow(tint,tlist(tint),tlist(tint)), p)
     print 
 
     print "prepend zeros"

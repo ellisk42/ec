@@ -20,6 +20,8 @@ let is_primitive = function
   |Invented(_,_) -> true
   |_ -> false
 
+let primitive_name = function | Primitive(_,n,_) -> n
+
 let program_children = function
   | Abstraction(b) -> [b]
   | Apply(m,n) -> [m;n]
