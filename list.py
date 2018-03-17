@@ -328,7 +328,7 @@ if __name__ == "__main__":
         eprint(t.describe())
         eprint()
     # assert False
-    if False:
+    if True:
         from program import *
         from frontier import *
         from fragmentUtilities import *
