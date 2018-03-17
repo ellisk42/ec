@@ -123,7 +123,7 @@ def multithreadedEnumeration(g, tasks, _=None,
             while len(workers) < CPUs:
                 # Sort the tasks by lower bound. Prioritize lower
                 # lower bounds to explore shorter programs first
-                for t in sorted(activeTasks, key = lambda t: lowerBounds[t])[:CPUs]:
+                for t in sorted(activeTasks, key = lambda t: lowerBounds[t])[:CPUs-len(workers)]:
                     thisTimeout = enumerationTimeout - stopwatches[t].elapsed
                     if not stopwatches[t].running: stopwatches[t].start()
                     eprint("Launching [%s] w/ lb = %f, timeout = %f"%(t,lowerBounds[t],thisTimeout))
