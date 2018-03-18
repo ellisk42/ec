@@ -81,6 +81,9 @@ let rec infer_program_type context environment = function
     let rt = applyContext context rt in
     (context, rt)
 
+let closed_inference = snd % infer_program_type empty_context [];;
+
+
 exception UnknownPrimitive of string
 
 let every_primitive : (program String.Table.t) = String.Table.create();;
