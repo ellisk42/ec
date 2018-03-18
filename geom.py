@@ -53,8 +53,8 @@ if __name__ == "__main__":
                            compressor="pypy",
                            evaluationTimeout=0.01,
                            **commandlineArguments(
-                               steps=1,
-                               iterations=10,
+                               steps=5,
+                               iterations=2,
                                useRecognitionModel=True,
                                helmholtzRatio=0.5,
                                featureExtractor=GeomFeatureCNN,

@@ -20,6 +20,12 @@ let is_primitive = function
   |Invented(_,_) -> true
   |_ -> false
 
+let is_base_primitive = function
+  |Primitive(_,_,_) -> true
+  |_ -> false
+
+let primitive_name = function | Primitive(_,n,_) -> n
+
 let program_children = function
   | Abstraction(b) -> [b]
   | Apply(m,n) -> [m;n]
@@ -74,6 +80,9 @@ let rec infer_program_type context environment = function
     let context = unify context ft (xt @> rt) in
     let rt = applyContext context rt in
     (context, rt)
+
+let closed_inference = snd % infer_program_type empty_context [];;
+
 
 exception UnknownPrimitive of string
 
@@ -135,6 +144,46 @@ let run_analyzed_with_arguments (p : 'b list -> 'c) (arguments : 'a list) =
     | x :: xs -> loop (magical (l x)) xs
   in loop (p []) arguments
 
+let rec lazy_evaluate (environment: ('b Lazy.t) list) (p:program) : 'a Lazy.t =
+  (* invariant: always return thunks *)
+  match p with
+  (* Notice that we do not need to special case conditionals. In lazy
+     evaluation conditionals are function just like any other. *)
+  | Abstraction(b) -> lazy (magical @@ fun argument -> Lazy.force (lazy_evaluate (argument::environment) b))
+  | Index(j) -> magical @@ List.nth_exn environment j
+  | Apply(f,x) ->
+    lazy ((Lazy.force @@ magical @@ lazy_evaluate environment f) (magical @@ lazy_evaluate environment x))
+  | Primitive(_,_,v) -> lazy (magical (!v))
+  | Invented(_,i) -> lazy_evaluate [] i
+
+let rec analyze_lazy_evaluation (p:program) : (('b Lazy.t) list) -> 'a Lazy.t =
+  match p with
+  (* Notice that we do not need to special case conditionals. In lazy
+     evaluation conditionals are function just like any other. *)
+  | Abstraction(b) ->
+    let body = analyze_lazy_evaluation b in
+    fun environment -> 
+    lazy (magical @@ fun argument -> Lazy.force (body (argument::environment)))
+  | Index(j) ->
+    fun environment -> magical @@ List.nth_exn environment j
+  | Apply(f,x) ->
+    let analyzed_function = analyze_lazy_evaluation f
+    and analyzed_argument = analyze_lazy_evaluation x
+    in
+    fun environment -> 
+    lazy ((Lazy.force @@ magical @@ analyzed_function environment) (magical @@ analyzed_argument environment))
+  | Primitive(_,_,v) -> fun _ -> lazy (magical (!v))
+  | Invented(_,i) ->
+    let analyzed_body = analyze_lazy_evaluation i in
+    fun _ -> analyzed_body []
+
+let run_lazy_analyzed_with_arguments p arguments =
+  let rec go l xs =
+    match xs with
+    | [] -> l |> magical
+    | x :: xs -> go (lazy x |> magical l) xs
+  in go (p [] |> Lazy.force) arguments
+
 let rec remove_abstractions (n : int) (q : program) : program =
   match (n,q) with
   | (0,q) -> q
@@ -158,7 +207,25 @@ let rec shift_free_variables ?height:(height = 0) shift p = match p with
   | Abstraction(b) -> Abstraction(shift_free_variables ~height:(height+1) shift b)
 
 (* PRIMITIVES *)
-let primitive (name : string) (t : tp) x =
+let primitive ?manualLaziness:(manualLaziness = false)
+    (name : string) (t : tp) x =
+  let number_of_arguments = arguments_of_type t |> List.length in
+  (* Force the arguments *)
+  let x = if manualLaziness then x else magical @@ 
+      match number_of_arguments with
+      | 0 -> magical x
+      | 1 -> fun a -> (magical x) (Lazy.force a)
+      | 2 -> fun a -> fun b -> (magical x) (Lazy.force a) (Lazy.force b)
+      | 3 -> fun a -> fun b -> fun c -> (magical x) (Lazy.force a) (Lazy.force b) (Lazy.force c)
+      | 4 -> fun a -> fun b -> fun c -> fun d -> (magical x) (Lazy.force a) (Lazy.force b) (Lazy.force c) (Lazy.force d)
+      | 5 -> fun a -> fun b -> fun c -> fun d -> fun e -> (magical x) (Lazy.force a) (Lazy.force b) (Lazy.force c) (Lazy.force d) (Lazy.force e)
+      | 6 -> fun a -> fun b -> fun c -> fun d -> fun e -> fun f -> (magical x) (Lazy.force a) (Lazy.force b) (Lazy.force c) (Lazy.force d) (Lazy.force e) (Lazy.force f)
+      | 7 -> fun a -> fun b -> fun c -> fun d -> fun e -> fun f -> fun g -> (magical x) (Lazy.force a) (Lazy.force b) (Lazy.force c) (Lazy.force d) (Lazy.force e) (Lazy.force f) (Lazy.force g)
+      | 8 -> fun a -> fun b -> fun c -> fun d -> fun e -> fun f -> fun g -> fun h -> (magical x) (Lazy.force a) (Lazy.force b) (Lazy.force c) (Lazy.force d) (Lazy.force e) (Lazy.force f) (Lazy.force g) (Lazy.force h)
+      | _ ->
+        raise (Failure (Printf.sprintf "Primitive %s can not be lazy because it has %d arguments. Change `primitive` in program.ml if you want to enable laziness for %s.\n"
+                          name number_of_arguments name))
+  in
   let p = Primitive(t,name, ref (magical x)) in
   assert (not (Hashtbl.mem every_primitive name));
   ignore(Hashtbl.add every_primitive name p);
@@ -210,7 +277,7 @@ let primitive6 = primitive "6" tint 6;;
 let primitive7 = primitive "7" tint 7;;
 let primitive8 = primitive "8" tint 8;;
 let primitive9 = primitive "9" tint 9;;
-let primitive_addition = primitive "+" (tint @> tint @> tint) (+);;
+let primitive_addition = primitive "+" (tint @> tint @> tint) (fun x y -> x + y);;
 let primitive_increment = primitive "+1" (tint @> tint) (fun x -> 1+x);;
 let primitive_decrement = primitive "-1" (tint @> tint) (fun x -> x - 1);;
 let primitive_subtraction = primitive "-" (tint @> tint @> tint) (-);;
@@ -224,7 +291,8 @@ let primitive_true = primitive "true" tboolean true;;
 let primitive_false = primitive "false" tboolean false;;
 
 let primitive_if = primitive "if" (tboolean @> t0 @> t0 @> t0)
-    (fun p x y -> if p then x else y);;
+    ~manualLaziness:true
+    (fun p x y -> if Lazy.force p then Lazy.force x else Lazy.force y);;
 
 let primitive_is_square = primitive "is-square" (tint @> tboolean)
     (fun x ->
@@ -264,7 +332,6 @@ let primitive_and = primitive "and" (tboolean @> tboolean @> tboolean) (fun x y 
 let primitive_nand = primitive "nand" (tboolean @> tboolean @> tboolean) (fun x y -> not (x && y));;
 let primitive_or = primitive "or" (tboolean @> tboolean @> tboolean) (fun x y -> x || y);;
 let primitive_greater_than = primitive "gt?" (tint @> tint @> tboolean) (fun (x: int) (y: int) -> x > y);;
-
 
 let primitive_run   = primitive
                         "run"
@@ -311,45 +378,51 @@ let var_opposite     = primitive "var_opposite" (tvar @> tvar) Plumbing.var_oppo
 (*let var_name         = primitive "var_name" (tstring @> tvar) Plumbing.var_name*)
 
 
-exception RecursionDepthExceeded of unit
-    
-let fixed_combinator argument body =
-  let recursion_limit = ref 20 in
+let default_recursion_limit = 20;;
 
-  let rec fix x = 
+exception RecursionDepthExceeded of int
+    
+let fixed_combinator argument body = 
+  (* strict with respect to body but lazy with respect argument *)
+  (* body expects to be passed 2 thunks *)
+  let body = Lazy.force body in
+  let recursion_limit = ref default_recursion_limit in
+
+  let rec fix x =
+    (* r is just a wrapper over fix that counts the number of
+       recursions *)
     let r z =
       decr recursion_limit;
-      if !recursion_limit > 0 then  
-        fix z
-      else raise (RecursionDepthExceeded())
-    in body r x
+      if !recursion_limit > 0 then fix z
+      else raise (RecursionDepthExceeded(default_recursion_limit))
+    in
+    body (lazy r) x
   in
 
   fix argument
 
 let fixed_combinator2 argument1 argument2 body =
-  let recursion_limit = ref 20 in
+  let body = Lazy.force body in
+  let recursion_limit = ref default_recursion_limit in
 
   let rec fix x y = 
     let r a b =
       decr recursion_limit;
       if !recursion_limit > 0 then  
         fix a b
-      else raise (RecursionDepthExceeded())
-    in body r x y
+      else raise (RecursionDepthExceeded(default_recursion_limit))
+    in body (lazy r) x y
   in
 
-  fix argument1 argument2
+  fix argument1 argument2 (* (lazy argument1) (lazy argument2) *)
 
 
-let primitive_recursion = primitive "fix1" (t0 @> ((t0 @> t1) @> (t0 @> t1)) @> t1)
+let primitive_recursion =
+  primitive ~manualLaziness:true "fix1" (t0 @> ((t0 @> t1) @> (t0 @> t1)) @> t1)
     fixed_combinator;;
-let primitive_recursion2 = primitive "fix2" (t0 @> t1 @> ((t0 @> t1 @> t2) @> (t0 @> t1 @> t2)) @> t2)
+let primitive_recursion2 =
+  primitive ~manualLaziness:true "fix2" (t0 @> t1 @> ((t0 @> t1 @> t2) @> (t0 @> t1 @> t2)) @> t2)
     fixed_combinator2;;
-    (* (fun body x1 x2 -> *)
-    (*    (\* uncurry *\) *)
-    (*    let body f (a,b) = body f a b in *)
-    (*    fixed_combinator body (x1,x2));; *)
 
 
 let is_recursion_of_arity a = function
@@ -362,7 +435,7 @@ let is_recursion_primitive = function
   | _ -> false
 
 
-let program_parser : program parsing = 
+let program_parser : program parsing =
   let token = token_parser (fun c -> Char.is_alphanum c || List.mem ~equal:( = )
                                        ['_';'-';'?';'/';'.';'*';'\'';'+';',';
                                         '>';'<';'@';'|';] c) in
@@ -396,11 +469,19 @@ let program_parser : program parsing =
             return_parse (Invented(t,p))))
 
   and abstraction() =
+    let rec nabstractions n b =
+      if n = 0 then b else nabstractions (n-1) (Abstraction(b))
+    in
     constant_parser "(lambda"%%(fun _ ->
         whitespace%%(fun _ ->
             program_parser()%%(fun b ->
                 constant_parser ")"%%(fun _ ->
-                    return_parse (Abstraction(b))))))
+                    return_parse (Abstraction(b)))))
+        <|>
+        number%%(fun n -> whitespace%%(fun _ ->
+            program_parser()%%(fun b ->
+                constant_parser ")"%%(fun _ ->
+                  return_parse (nabstractions (Int.of_string n) b))))))
                            
   and application_sequence (maybe_function : program option) : program parsing =
     whitespace%%(fun _ ->
@@ -490,18 +571,89 @@ let performance_test_case() =
 (* performance_test_case();; *)
 
 
-let recursion_test_case() =
-  let f zs = fixed_combinator zs (fun r l ->
-      match l with
-      | [] -> []
-      | x::xs -> x*2 :: r xs) in
-  f (0--18) |> List.map ~f:Int.to_string |> join ~separator:" " |> Printf.printf "%s\n";
-  f (0--10) |> List.map ~f:Int.to_string |> join ~separator:" " |> Printf.printf "%s\n";
-  f (0--2) |> List.map ~f:Int.to_string |> join ~separator:" " |> Printf.printf "%s\n";
-  let e = parse_program "(lambda (fix1 (lambda (lambda (if (empty? $0) $0 (cons (* 2 (car $0)) ($1 (cdr $0)))))) $0))" |> get_some in
-  Printf.printf "%s\n" (string_of_program e);
-  evaluate [] e [1;2;3;4;] |> List.map ~f:Int.to_string |> join ~separator:" " |> Printf.printf "%s\n";
+(* let recursion_test_case() =
+ *   let f zs = fixed_combinator zs (fun r l ->
+ *       match l with
+ *       | [] -> []
+ *       | x::xs -> x*2 :: r xs) in
+ *   f (0--18) |> List.map ~f:Int.to_string |> join ~separator:" " |> Printf.printf "%s\n";
+ *   f (0--10) |> List.map ~f:Int.to_string |> join ~separator:" " |> Printf.printf "%s\n";
+ *   f (0--2) |> List.map ~f:Int.to_string |> join ~separator:" " |> Printf.printf "%s\n";
+ *   let e = parse_program "(lambda (fix1 (lambda (lambda (if (empty? $0) $0 (cons (\* 2 (car $0)) ($1 (cdr $0)))))) $0))" |> get_some in
+ *   Printf.printf "%s\n" (string_of_program e);
+ *   evaluate [] e [1;2;3;4;] |> List.map ~f:Int.to_string |> join ~separator:" " |> Printf.printf "%s\n";
+ * 
+ *   let e = parse_program "(lambda (lambda (fix2 (lambda (lambda (lambda (if (empty? $1) $0 (cons (car $1) ($2 (cdr $1) $0)))))) $0 $1)))" |> get_some in
+ *   infer_program_type empty_context [] e |> snd |> string_of_type |> Printf.printf "%s\n";
+ *   evaluate [] e (0--4) [9;42;1] |> List.map ~f:Int.to_string |> join ~separator:" " |> Printf.printf "%s\n" *)
 
-  let e = parse_program "(lambda (lambda (fix2 (lambda (lambda (lambda (if (empty? $1) $0 (cons (car $1) ($2 (cdr $1) $0)))))) $0 $1)))" |> get_some in
-  infer_program_type empty_context [] e |> snd |> string_of_type |> Printf.printf "%s\n";
-  evaluate [] e (0--4) [9;42;1] |> List.map ~f:Int.to_string |> join ~separator:" " |> Printf.printf "%s\n";;
+(* recursion_test_case();; *)
+
+(* let timeout_test_cases() = *)
+(*   let list_of_numbers = [ *)
+(*     "(lambda (fix (lambda (lambda (if (empty? $0) $0 (cons (\* 2 (car $0)) ($1 (cdr $0)))))) $0))"; *)
+
+(*   ] in *)
+
+(*   let list_of_numbers = list_of_numbers |> List.map ~f:(analyze_evaluation%get_some%parse_program) in *)
+
+(*   let xs = [(0--10);(0--10);(0--10)] in *)
+
+(*   time_it "evaluated all of the programs" (fun () -> *)
+      
+  
+
+(* let () = *)
+(*   let e = parse_program "(lambda (reducei (lambda (lambda (lambda (range $0)))) empty $0))" |> get_some in *)
+(*   Printf.printf "tp = %s\n" (string_of_type @@ snd @@ infer_program_type empty_context [] e); *)
+(*   let f = evaluate [] e in *)
+(*   f [1;2]; *)
+(*   List.foldi [1;3;2;]  ~init:[]  ~f:(fun x y z -> 0--z) |> List.iter ~f:(fun a -> *)
+(*       Printf.printf "%d\n" a) *)
+
+(* let () = *)
+(*   let e = parse_program "(lambda (lambda (- $1 $0)))" |> get_some in *)
+(*   Printf.printf "%d\n" (run_with_arguments e [1;9]) *)
+let test_lazy_evaluation() =
+  let ps = ["1";"0";"(+ 1 1)";
+            "(lambda (+ $0 2))"; "(+ 5)";
+            "-"; "(lambda2 (- $0 $1))";
+            "((lambda 1) (car empty))";
+            "((lambda $0) 9)";
+            "((lambda ($0 ($0 ($0 1)))) (lambda (+ $0 $0)))";
+            "((lambda (lambda (if (eq? $0 0) $1 (+ $1 $1)))) 5 1)";
+            "((lambda2 (if (eq? $0 0) $1 (+ $1 $1))) 5 0)";
+            "(car (cdr (cons 1 (cons 2 (cons 3 empty)))))";
+            "(cdr (cons 1 (cons 2 (cons 3 empty))))";
+            "(map (+ 1) (cons 1 (cons 2 (cons 3 empty))))";
+            "(map +1 (cons 1 (cons 2 (cons 3 empty))))";
+            "(map (lambda (+ $0 $0)) (cons 1 (cons 2 (cons 3 empty))))";
+            "(fold_right (lambda2 (+ $0 $1)) 0 (cons 1 (cons 2 (cons 3 empty))))";
+            "(fix1 (cons 1 (cons 2 (cons 3 empty))) (lambda2 (if (empty? $0) 0 (+ 1 ($1 (cdr $0))))))";
+            "(fix1 (cons 1 (cons 2 (cons 3 empty))) (lambda2 (if (empty? $0) 0 (+ (car $0) ($1 (cdr $0))))))";
+           "(fix2 5 7 (lambda (lambda (lambda (if (eq? $0 0) 0 (+ $1 ($2 $1 (- $0 1))))))))"] in
+  ps |> List.iter ~f:(fun p ->
+      Printf.printf "About to evaluate the following program lazily: %s\n" p;
+      flush_everything();
+      let p = parse_program p |> get_some in
+      let t = infer_program_type empty_context [] p |> snd in
+      let a = analyze_lazy_evaluation p in
+      let arguments = match List.length (arguments_of_type t) with
+        | 0 -> []
+        | 1 -> [42]
+        | 2 -> [0;1]
+      in
+      Printf.printf "\t(arguments: %s)\n"
+        (arguments |> List.map ~f:Int.to_string |> join ~separator:"; ");
+      flush_everything();
+      let v = run_lazy_analyzed_with_arguments a arguments in
+      begin 
+        match string_of_type (return_of_type t) with
+        | "int" -> 
+          Printf.printf "value = %d\n" (v |> magical)
+        | "list<int>" ->
+          Printf.printf "value = %s\n" (v |> magical |> List.map ~f:Int.to_string |> join ~separator:",")
+      end
+      ;
+      flush_everything()
+    );;

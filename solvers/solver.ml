@@ -172,5 +172,20 @@ let main () =
   export_frontier program_count solutions |> print_string
 ;;
 
+(* let test_filter() =
+ *   let p = parse_program "(lambda (#(lambda (lambda (lambda (fix1 $0 (lambda (lambda (if (empty? $0) $3 ($4 (car $0) ($1 (cdr $0)))))))))) (lambda (lambda (if (empty? $1) $0 (cons $1 $0)))) empty $0))" |> get_some in
+ *   let t = closed_inference p in
+ *   Printf.printf "%s : %s\n" (string_of_program p) (string_of_type t);
+ *   flush_everything();
+ *   let a = analyze_lazy_evaluation p in
+ *   let o : int list list = run_lazy_analyzed_with_arguments a [[[];[1;2;];[];[4;];[1;2;9]]] in
+ *   o |> 
+ *   List.map ~f:(join ~separator:";" % List.map ~f:Int.to_string) |> join ~separator:" || " |>
+ *   Printf.printf "%s\n";
+ *   flush_everything()
+ * ;; *)
+
+
   
 main();;
+(* test_filter();; *)

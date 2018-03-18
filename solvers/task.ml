@@ -19,12 +19,12 @@ let supervised_task ?timeout:(timeout = 0.001) ?features:(features = []) name ty
     task_features = features;
     task_type = ty;
     log_likelihood = (fun p ->
-        let p = analyze_evaluation p in
+        let p = analyze_lazy_evaluation p in
         let rec loop = function
           | [] -> true
           | (xs,y) :: e ->
             try
-              match run_for_interval timeout (fun () -> run_analyzed_with_arguments p xs = y) with
+              match run_for_interval timeout (fun () -> run_lazy_analyzed_with_arguments p xs = y) with
               | Some(true) -> loop e
               | _ -> false
             with | UnknownPrimitive(n) -> raise (Failure ("Unknown primitive: "^n))
