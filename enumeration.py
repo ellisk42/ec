@@ -230,6 +230,11 @@ def solveForTask_ocaml(_ = None,
                "upperBound": upperBound,
                "budgetIncrement": budgetIncrement,
                "verbose": False}
+    if hasattr(task, 'BIC'):
+        message["parameterPenalty"] = task.BIC*math.log(len(task.examples))
+    if hasattr(task, 'likelihoodThreshold') and task.likelihoodThreshold is not None:
+        message["lossThreshold"] = -task.likelihoodThreshold
+    
     message = json.dumps(message)
     try:
         p = subprocess.Popen(['./solver'],
@@ -238,7 +243,7 @@ def solveForTask_ocaml(_ = None,
             response, error = p.communicate(message)
             response = json.loads(response)
         except Exception as exc:
-            exc = ValueError("Could not load response from ocaml solver: ", exc)
+            exc = ValueError("Could not load response from ocaml solver: ", (response, error, exc))
             raise exc
     except OSError as exc:
         raise exc

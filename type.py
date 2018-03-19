@@ -157,6 +157,7 @@ def instantiateTypes(context, ts):
 
 def baseType(n): return TypeConstructor(n,[])
 tint = baseType("int")
+treal = baseType("real")
 tbool = baseType("bool")
 tstr = baseType("string")
 tcharacter = baseType("char")

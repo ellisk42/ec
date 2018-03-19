@@ -6,17 +6,15 @@ open Type
 open Program
 open Enumeration
 open Grammar
-
+open Differentiation
 
 type task =
   { name: string; task_type: tp;
     log_likelihood: program -> float;
-    task_features: float list;
   }
 
-let supervised_task ?timeout:(timeout = 0.001) ?features:(features = []) name ty examples =
+let supervised_task ?timeout:(timeout = 0.001) name ty examples =
   { name = name;
-    task_features = features;
     task_type = ty;
     log_likelihood = (fun p ->
         let p = analyze_lazy_evaluation p in
@@ -35,6 +33,56 @@ let supervised_task ?timeout:(timeout = 0.001) ?features:(features = []) name ty
         else log 0.0)
   }
 
+let differentiable_task ?parameterPenalty:(parameterPenalty=0.) ?lossThreshold:(lossThreshold=None)
+    ?timeout:(timeout = 0.001) name ty examples =
+  (* Process the examples and wrap them inside of placeholders *)
+  let (argument_types, return_type) = arguments_and_return_of_type ty in
+  let examples = examples |> List.map ~f:(fun (xs,y) ->
+      (List.map2_exn argument_types xs ~f:placeholder_data,
+      placeholder_data return_type y))
+  in
+  let loss = polymorphic_sse return_type
+  in
+  { name = name;
+    task_type = ty;
+    log_likelihood = (fun expression ->
+        let (p,parameters) = replace_placeholders expression in
+        (*         Printf.eprintf "%s has d=%d\n" (string_of_program expression) (List.length parameters); *)
+        let p = analyze_lazy_evaluation p in
+        (* Returns loss *)
+        let rec loop : 'a list -> Differentiation.variable option = function
+          | [] -> Some(~$ 0.)
+          | (xs,y) :: e ->
+            try
+              match run_for_interval timeout (fun () -> run_lazy_analyzed_with_arguments p xs) with
+              | None -> None
+              | Some(prediction) ->
+                match loop e with
+                | None -> None
+                | Some(later_loss) ->
+                  try Some(loss y prediction +& later_loss)
+                  with DifferentiableBadShape -> None
+            with | UnknownPrimitive(n) -> raise (Failure ("Unknown primitive: "^n))
+                 | _ -> None
+        in
+        match loop examples with
+        | None -> log 0.0
+        | Some(l) ->
+          let n = List.length examples |> Int.to_float in
+          let d = List.length parameters |> Int.to_float in
+          let l = l *& (~$ (1. /. n)) in
+          let l = run_optimizer (rprop ~lr:0.1 ~decay:0.5 ~grow:1.2)
+              ~update:0
+              ~iterations:(if List.length parameters = 0 then 0 else 100)
+              parameters l
+          in
+          (* Printf.eprintf "%s has l=%f\n" (string_of_program expression) l;
+           * flush_everything(); *)
+          match lossThreshold with
+          | None -> 0. -. d*.parameterPenalty -. n *. l
+          | Some(t) ->
+            if l < t then 0. -. d*.parameterPenalty else log 0.)
+  }
 
 
 let keep_best_programs_in_frontier (k : int) (f : frontier) : frontier =
