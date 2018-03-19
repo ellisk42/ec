@@ -1,5 +1,6 @@
 open Core
 
+open Differentiation
 open TikZ
 open Utils
 open Type
@@ -37,8 +38,9 @@ let load_problem channel =
         let xs = x |> to_list in
         let l = List.hd xs |> get_some |> to_string in
         if l = "TRACESET" then ttrace else raise (Failure "Not a trace set")
-      with _ -> 
+      with _ ->
       try ignore(x |> to_int); tint with _ ->
+      try ignore(x |> to_float); treal with _ -> 
       try ignore(x |> to_bool); tboolean with _ ->
       try ignore(x |> to_string); tstring with _ ->
       try
@@ -74,6 +76,7 @@ let load_problem channel =
       else raise (Failure "Not a trace set")
     with _ -> 
     try magical (x |> to_int) with _ ->
+    try magical (x |> to_float) with _ ->
     try magical (x |> to_bool) with _ ->
     try magical (x |> to_string) with _ ->
     try
@@ -92,13 +95,9 @@ let load_problem channel =
                                               ex |> member "output" |> unpack))
   in
 
-  (* examples |> List.iter ~f:(fun (x,y) -> *)
-  (*     Printf.printf "EXAMPLE\n"; *)
-  (*     assert( task_type = (tlist tint @> tlist tint)); *)
-  (*     let x : int list = magical y in *)
-  (*     x |> List.iter ~f:(fun x -> Printf.printf "X\t%d\n" x)); *)
-  (* assert false; *)
-        
+  let differentiable =
+    productions |> List.exists ~f:(fun (e,_,_) -> is_base_primitive e && "REAL" = primitive_name e)
+  in
 
   let timeout = try
       j |> member "programTimeout" |> to_float
@@ -118,6 +117,15 @@ let load_problem channel =
   let maximum_frontier = j |> member "maximumFrontier" |> to_int in
   let name = j |> member "name" |> to_string in
 
+  let parameterPenalty =
+    try j |> member "parameterPenalty" |> to_float
+    with _ -> 0.
+  in
+  let lossThreshold =
+    try Some(j |> member "lossThreshold" |> to_float)
+    with _ -> None
+  in
+  
   let lowerBound =
     try j |> member "lowerBound" |> to_float
     with _ -> 0.
@@ -137,7 +145,10 @@ let load_problem channel =
       assert (List.length examples = 1);
       latex_task name (examples |> List.hd |> get_some |> snd |> magical)    
     end else
-      supervised_task ~timeout:timeout name task_type examples
+      (if differentiable
+       then differentiable_task ~parameterPenalty:parameterPenalty ~lossThreshold:lossThreshold
+       else supervised_task)
+        ~timeout:timeout name task_type examples
   in
   (t,g,
    lowerBound,upperBound,budgetIncrement,
@@ -188,4 +199,6 @@ let main () =
 
   
 main();;
+
+
 (* test_filter();; *)

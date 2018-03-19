@@ -10,18 +10,18 @@ type frontier = {
   request: tp
 }
 
-let violates_symmetry f a = 
+let violates_symmetry f a n = 
   if (not (is_base_primitive f)) || (not (is_base_primitive a)) then false else
-    match (primitive_name f, primitive_name a) with
-    | ("car","cons") -> true
-    | ("cdr","cons") -> true
-    | ("cdr","empty") -> true
-    | ("+","0") -> true
-    | ("-","0") -> true
-    | ("empty?","cons") -> true
-    | ("empty?","empty") -> true
-    | ("zero?","0") -> true
-    | ("zero?","1") -> true
+    match (n, primitive_name f, primitive_name a) with
+    | (0,"car","cons") -> true
+    | (0,"cdr","cons") -> true
+    | (0,"cdr","empty") -> true
+    | (_,"+","0") -> true
+    | (1,"-","0") -> true
+    | (0,"empty?","cons") -> true
+    | (0,"empty?","empty") -> true
+    | (0,"zero?","0") -> true
+    | (0,"zero?","1") -> true
     | _ -> false
 
 
@@ -59,6 +59,7 @@ and
     (g: grammar) (context: tContext)  (environment: tp list)
     (argument_types: tp list) (f: program)
     ?originalFunction:(originalFunction=f)
+    ?argumentIndex:(argumentIndex=0)
     (lower_bound: float) (upper_bound: float)
     (callBack: program -> tContext -> float -> unit) : unit =
   (* returns the log likelihood of the arguments! not the log likelihood of the application! *)
@@ -72,10 +73,12 @@ and
         g context first_argument environment
         0. upper_bound
         (fun a k ll ->
-           if violates_symmetry originalFunction a then () else 
+           if violates_symmetry originalFunction a argumentIndex then () else 
              let a = Apply(f,a) in
              enumerate_applications
-               ~maximumDepth:(maximumDepth)
+               ~originalFunction:originalFunction
+               ~argumentIndex:(argumentIndex+1)
+               ~maximumDepth:maximumDepth
                g k environment
                later_arguments a
                (lower_bound+.ll) (upper_bound+.ll)

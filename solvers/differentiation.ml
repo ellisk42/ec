@@ -1,5 +1,7 @@
-open Core.Std
+open Core
 
+open Type
+open Program
 open Utils
     
 type variable = {mutable gradient : float option;
@@ -88,13 +90,20 @@ let (-&) =
   make_binary_variable (-.) (fun _ _ -> [1.;-1.]) 
 
 let ( *& ) =
-  make_binary_variable ( *. ) (fun a b -> [b;a]) 
+  make_binary_variable ( *. ) (fun a b -> [b;a])
+
+let power =
+  make_binary_variable ( ** ) (fun a b -> [b*.(a**(b-.1.));
+                                          (a**b) *. (log a)])
 
 let logarithm =
   make_unitary_variable log (fun a -> [1./.a])
 
 let exponential =
   make_unitary_variable exp (fun a -> [exp a])
+
+let square =
+  make_unitary_variable (fun a -> a*.a) (fun a -> [2.*.a])
 
 let log_soft_max xs =
   make_variable (fun vs -> 
@@ -153,21 +162,20 @@ let update_network loss =
 
 let rec gradient_descent ?update:(update = 1000)
     ?iterations:(iterations = 10000) ?lr:(lr = 0.001) loss parameters =
-  if iterations = 0 then parameters else begin 
+  if iterations = 0 then update_network loss else begin 
     let l = update_network loss in
-    if iterations mod update = 0 then begin 
-      Printf.printf "LOSS: %f\n" l;
-      parameters |> List.iter ~f:(fun p -> Printf.printf "parameter %f\t" (p.data |> get_some));
-      Printf.printf "\n";
+    if update > 0 && iterations mod update = 0 then begin 
+      Printf.eprintf "LOSS: %f\n" l;
+      parameters |> List.iter ~f:(fun p -> Printf.eprintf "parameter %f\t" (p.data |> get_some));
+      Printf.eprintf "\n";
     end else ();
     let gradient = parameters |> List.map ~f:differentiate in
     List.iter2_exn parameters gradient ~f:(fun x dx ->
         let v = x.data |> get_some in
         update_variable x (v -. dx*.lr));
-    gradient_descent ~iterations:(iterations - 1) ~lr:lr loss parameters
-  end  
-  
-  
+    gradient_descent ~update:update ~iterations:(iterations - 1) ~lr:lr loss parameters
+  end
+
 
 let test_differentiation () =
   let x = ~$ 10.0 in
@@ -197,4 +205,64 @@ let test_differentiation () =
 
 ;;
 
-test_differentiation();;
+(* Integration with programs *)
+let differentiable_zero = primitive "0." treal (~$ 0.);;
+let differentiable_one = primitive "1." treal (~$ 1.);;
+let differentiable_add = primitive "+." (treal @> treal @> treal) (+&);;
+let differentiable_subtract = primitive "-." (treal @> treal @> treal) (-&);;
+let differentiable_multiply = primitive "*." (treal @> treal @> treal) ( *&);;
+let differentiable_power = primitive "power" (treal @> treal @> treal) (power);;
+let differentiable_placeholder = primitive "REAL" treal ();;
+
+let replace_placeholders program =
+  let placeholders = ref [] in
+  let rec r = function
+    | Index(j) -> Index(j)
+    | Abstraction(b) -> Abstraction(r b)
+    | Apply(f,x) -> Apply(r f, r x)
+    | Invented(t,b) -> Invented(t,r b)
+    | Primitive(t,"REAL",_) -> begin
+        let v = random_variable() in
+        (* update_variable v 0.; *)
+        placeholders := v :: !placeholders;
+        Primitive(t,"REAL", ref v |> magical)
+      end
+    | p -> p
+  in
+  let program = r program in
+  (program, !placeholders)
+
+let rec placeholder_data t x =
+  match t with
+  | TCon("real",_,_) -> magical (~$ (magical x))
+  | TCon("list",[tp],_) ->
+    magical x |> List.map ~f:(placeholder_data tp) |> magical
+  | _ -> raise (Failure ("placeholder_data: bad type "^(string_of_type t)))
+
+
+exception DifferentiableBadShape
+
+let rec polymorphic_sse = function
+  | TCon("real",_,_) -> magical (fun p y -> square (p -& y))
+  | TCon("list",[tp],_) ->
+    let e = polymorphic_sse tp in
+    magical (fun p y ->
+        try
+          List.fold2_exn p y ~init:(~$0.) ~f:(fun a _p _y -> a +& (e _p _y))
+        with _ -> raise DifferentiableBadShape)
+  | t -> raise (Failure ("placeholder_data: bad type "^(string_of_type t)))
+  
+
+
+let test_program_differentiation() =
+  let p = parse_program "(lambda REAL)" |> get_some in
+  let (p, parameters) = replace_placeholders p in
+  let p = analyze_lazy_evaluation p in
+
+  let g = run_lazy_analyzed_with_arguments p [~$ 0.] in
+
+  Printf.printf "%f" (update_network g);;
+
+  
+
+(* test_differentiation();; *)

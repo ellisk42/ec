@@ -213,7 +213,6 @@ let score_latex output =
 
 let latex_task name output =
   {name = name;
-   task_features = [];
    task_type = ttrace;
    log_likelihood = score_latex output}
   
