@@ -42,7 +42,10 @@ let load_problem channel =
       try ignore(x |> to_int); tint with _ ->
       try ignore(x |> to_float); treal with _ -> 
       try ignore(x |> to_bool); tboolean with _ ->
-      try ignore(x |> to_string); tstring with _ ->
+      try
+        let v = x |> to_string in
+        if String.length v = 1 then tcharacter else tstring
+      with _ ->
       try
         let l = x |> to_list in
         let (t,k) = makeTID !context in
@@ -78,7 +81,10 @@ let load_problem channel =
     try magical (x |> to_int) with _ ->
     try magical (x |> to_float) with _ ->
     try magical (x |> to_bool) with _ ->
-    try magical (x |> to_string) with _ ->
+    try
+      let v = x |> to_string in
+      if String.length v = 1 then magical v.[0] else magical v
+    with _ ->
     try
       x |> to_list |> List.map ~f:unpack |> magical
     with _ -> raise (Failure "could not unpack")
