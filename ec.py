@@ -72,6 +72,7 @@ def explorationCompression(*arguments, **keywords):
 
 def ecIterator(grammar, tasks,
                _=None,
+               bootstrap=None,
                solver="ocaml",
                compressor="rust",
                testingTasks = [],
@@ -117,7 +118,7 @@ def ecIterator(grammar, tasks,
     parameters = {k: v for k, v in locals().iteritems()
                   if k not in {"tasks", "grammar", "cuda", "_", "solver",
                                "message", "CPUs", "outputPrefix",
-                               "resume", "resumeFrontierSize",
+                               "resume", "resumeFrontierSize", "bootstrap",
                                "featureExtractor", "benchmark",
                                "evaluationTimeout", "testingTasks", "compressor"} \
                   and v is not None}
@@ -130,6 +131,8 @@ def ecIterator(grammar, tasks,
         kvs = ["{}={}".format(ECResult.abbreviate(k), parameters[k]) for k in sorted(parameters.keys())]
         if useRecognitionModel:
             kvs += ["feat=%s"%(featureExtractor.__name__)]
+        if bootstrap:
+            kvs += ["bstrap=True"]
         return "{}_{}{}.pickle".format(outputPrefix, "_".join(kvs), extra)
 
     if onlyBaselines and not benchmark:
@@ -165,6 +168,20 @@ def ecIterator(grammar, tasks,
             frontierSize = resumeFrontierSize
             eprint("Set frontier size to", frontierSize)
     else:  # Start from scratch
+        if bootstrap is not None:
+            with open(bootstrap, "rb") as handle: strapping = dill.load(handle).grammars[-1]
+            eprint("Bootstrapping from",bootstrap)
+            eprint("Bootstrap primitives:")
+            for p in strapping.primitives:
+                eprint(p)
+                RegisterPrimitives.register(p)
+            eprint()
+            grammar = Grammar.uniform(list({p for p in grammar.primitives + strapping.primitives
+                                            if not str(p).startswith("fix")}))
+            if compressor == "rust":
+                eprint("Rust compressor is currently not compatible with bootstrapping.",
+                       "Falling back on pypy compressor.")
+                compressor = "pypy"
         result = ECResult(parameters=parameters, grammars=[grammar],
                           taskSolutions = { t: Frontier([], task = t) for t in tasks },
                           recognitionModel = None)
@@ -417,6 +434,10 @@ def commandlineArguments(_=None,
                         type=float)
     parser.add_argument("-B", "--baselines", dest="onlyBaselines", action="store_true",
                         help="only compute baselines")
+    parser.add_argument("--bootstrap",
+                        help="Start the learner out with a pretrained DSL. This argument should be a path to a checkpoint file.",
+                        default=None,
+                        type=str)
     parser.set_defaults(useRecognitionModel=useRecognitionModel,
                         featureExtractor=featureExtractor,
                         maximumFrontier=maximumFrontier,

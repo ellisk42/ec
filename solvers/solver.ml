@@ -127,6 +127,10 @@ let load_problem channel =
     try j |> member "parameterPenalty" |> to_float
     with _ -> 0.
   in
+  let maxParameters =
+    try j |> member "maxParameters" |> to_int
+    with _ -> 99
+  in
   let lossThreshold =
     try Some(j |> member "lossThreshold" |> to_float)
     with _ -> None
@@ -152,7 +156,8 @@ let load_problem channel =
       latex_task name (examples |> List.hd |> get_some |> snd |> magical)    
     end else
       (if differentiable
-       then differentiable_task ~parameterPenalty:parameterPenalty ~lossThreshold:lossThreshold
+       then differentiable_task ~parameterPenalty:parameterPenalty
+           ~lossThreshold:lossThreshold ~maxParameters:maxParameters
        else supervised_task)
         ~timeout:timeout name task_type examples
   in

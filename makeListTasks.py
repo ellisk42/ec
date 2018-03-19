@@ -128,6 +128,17 @@ def make_list_bootstrap_tasks(numberOfExamples):
               for _ in range(5)
               for l in [randomListOfLists()] ]),
 
+        Task("zip plus", arrow(tlist(tint),tlist(tint),tlist(tint)),
+             [((l1,l2),map(lambda x,y: x+y,l1,l2))
+              for _ in range(5)
+              for l1 in [randomList()]
+              for l2 in [[ randint(0,9) for _ in range(len(l1)) ]]]),
+        Task("zip minus", arrow(tlist(tint),tlist(tint),tlist(tint)),
+             [((l1,l2),map(lambda x,y: x-y,l1,l2))
+              for _ in range(5)
+              for l1 in [randomList()]
+              for l2 in [[ randint(0,9) for _ in range(len(l1)) ]]]),
+
         Task("reverse int", arrow(tlist(tint),tlist(tint)),
              [((l,),list(reversed(l)))
               for _ in range(5)

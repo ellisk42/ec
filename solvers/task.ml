@@ -33,7 +33,10 @@ let supervised_task ?timeout:(timeout = 0.001) name ty examples =
         else log 0.0)
   }
 
-let differentiable_task ?parameterPenalty:(parameterPenalty=0.) ?lossThreshold:(lossThreshold=None)
+let differentiable_task
+    ?parameterPenalty:(parameterPenalty=0.)
+    ?lossThreshold:(lossThreshold=None)
+    ?maxParameters:(maxParameters=100)
     ?timeout:(timeout = 0.001) name ty examples =
   (* Process the examples and wrap them inside of placeholders *)
   let (argument_types, return_type) = arguments_and_return_of_type ty in
@@ -47,6 +50,7 @@ let differentiable_task ?parameterPenalty:(parameterPenalty=0.) ?lossThreshold:(
     task_type = ty;
     log_likelihood = (fun expression ->
         let (p,parameters) = replace_placeholders expression in
+        if List.length parameters > maxParameters then log 0. else 
         (*         Printf.eprintf "%s has d=%d\n" (string_of_program expression) (List.length parameters); *)
         let p = analyze_lazy_evaluation p in
         (* Returns loss *)

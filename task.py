@@ -96,8 +96,9 @@ class Task(object):
 
 class DifferentiableTask(Task):
     def __init__(self, name, request, examples, _ = None,
-                 features = None, BIC = 1., loss = None, likelihoodThreshold = None):
+                 features = None, BIC = 1., loss = None, likelihoodThreshold = None, maxParameters=None):
         assert loss is not None
+        self.maxParameters = maxParameters
         self.loss = loss
         self.BIC = BIC
         self.likelihoodThreshold = likelihoodThreshold
@@ -107,6 +108,8 @@ class DifferentiableTask(Task):
     def logLikelihood(self,e,timeout = None):
         assert timeout == None, "timeout not implemented for differentiable tasks, but not for any good reason."
         e, parameters = PlaceholderVisitor.execute(e)
+        if self.maxParameters is not None and len(parameters) > self.maxParameters:
+            return NEGATIVEINFINITY
         f = e.evaluate([])
 
         loss = sum( self.loss(self.predict(f, map(float,x)), float(y))
