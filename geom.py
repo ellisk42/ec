@@ -14,24 +14,28 @@ class GeomFeatureCNN(nn.Module):
     def __init__(self, tasks, cuda=False, H=16):
         super(GeomFeatureCNN, self).__init__()
 
-        self.tasks = tasks
-        self.use_cuda = cuda
+        size = 16  # Compute this maybe?
+
+        self.conv = nn.Conv1d(size, H, H)
+        self.relu = nn.ReLU()
+        self.out = nn.Sequential(self.conv, self.relu)
 
         self.outputDimensionality = H
-        hidden = nn.Linear(len(tasks[0].examples[0][1]), H)
-        if cuda:
-            hidden = hidden.cuda()
-        else:
-            hidden = hidden.float()
-        self.hidden = hidden
+        self.hidden = self.conv
 
     def featuresOfTask(self, t):  # Take a task and returns [features]
+        x = 16  # Should not hardocode these.
+        y = 16
         onlyTask = t.examples[0][1]
         floatOnlyTask = map(float, onlyTask)
-        variabled = variable(floatOnlyTask).float()
-        return self.hidden(variabled).clamp(min=0)
+        reshaped = [[floatOnlyTask[i:i+x]
+                    for i in range(0, len(floatOnlyTask), y)]]
+        variabled = variable(reshaped).float()
+        x = self.out(variabled)
+        x = x.view(16)
+        return x.clamp(min=0)
 
-    def featuresOfProgram(self, p, t):
+    def featuresOfProgram(self, p, t):  # Won't do for geom
         return None
 
 
@@ -51,11 +55,11 @@ if __name__ == "__main__":
                            evaluationTimeout=0.01,
                            **commandlineArguments(
                                steps=5,
-                               iterations=2,
+                               iterations=5,
                                useRecognitionModel=True,
-                               helmholtzRatio=0.5,
+                               helmholtzRatio=0.0,
                                featureExtractor=GeomFeatureCNN,
                                topK=2,
-                               maximumFrontier=5,
+                               maximumFrontier=200,
                                CPUs=numberOfCPUs(),
                                pseudoCounts=10.0))
