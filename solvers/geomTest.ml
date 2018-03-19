@@ -7,6 +7,7 @@ open Images
 (*let prog = (Plumbing.concat Plumbing.integrate*)
               (*(Plumbing.concat (Plumbing.turn None) Plumbing.integrate))*)
 (*let prog2 = Plumbing.repeat (Plumbing.repeat prog)*)
+let empty  = Turn(None)
 let line   = Integrate(None,None,(None,None,None,None))
 let angle  = Concat(line,Concat(Turn(None),line))
 let square = Repeat(None,Repeat(None,Concat(line,Turn(None))))
@@ -34,9 +35,11 @@ let pp s l =
   in aux 1 s l
 
 let () =
-  let (path,box) = interpret spiral in
-  let l = Plumbing.run spiral in
+  let choice = circle in
+  let (path,box) = interpret choice in
+  let l = Plumbing.run choice in
   pp 16 l ;
   npp 16 l ;
+  print_newline () ;
   output_canvas_png (path,box) 16 "toto.png"
 

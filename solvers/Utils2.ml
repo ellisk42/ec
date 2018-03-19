@@ -50,7 +50,7 @@ let get_infos ?smart:(smart=true) d_from_origin box canvas =
     let dim = max (Gg.P2.x s) (Gg.P2.y s) in
     let offsetx = (dim -. Gg.P2.x s) /. 2. in
     let offsety = (dim -. Gg.P2.y s) /. 2. in
-    let margin = 0.0001 in
+    let margin = 0.0 in
     let view =
       if smart then
         (Gg.Box2.v
