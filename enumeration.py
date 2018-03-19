@@ -237,6 +237,8 @@ def solveForTask_ocaml(_ = None,
         message["parameterPenalty"] = task.BIC*math.log(len(task.examples))
     if hasattr(task, 'likelihoodThreshold') and task.likelihoodThreshold is not None:
         message["lossThreshold"] = -task.likelihoodThreshold
+    if hasattr(task, 'maxParameters') and task.maxParameters is not None:
+        message["maxParameters"] = task.maxParameters
     
     message = json.dumps(message)
     try:

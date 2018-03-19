@@ -66,6 +66,7 @@ def makeTask(name, request, law,
     return DifferentiableTask(name, genericType(request), e,
                               BIC = 10.,
                               likelihoodThreshold=-0.1,
+                              maxParameters=100,
                               loss = squaredErrorLoss)
         
 def norm(v):
