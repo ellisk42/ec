@@ -227,8 +227,16 @@ def ecIterator(grammar, tasks,
 
         tasksHitTopDown = {f.task for f in frontiers if not f.empty}
 
-        # Enumerate from recognition model
-        if j > 0 and useRecognitionModel:
+        # Train + use recognition model
+        if useRecognitionModel:
+            featureExtractorObject = featureExtractor(tasks)
+            recognizer = RecognitionModel(featureExtractorObject, grammar, activation=activation, cuda=cuda)
+
+            recognizer.train(frontiers, topK=topK, steps=steps,
+                             CPUs = CPUs,
+                             helmholtzRatio=helmholtzRatio if j > 0 else 0.)
+            result.recognitionModel = recognizer
+
             bottomupFrontiers, times = recognizer.enumerateFrontiers(tasks, CPUs=CPUs,
                                                                      solver=solver,
                                                                      maximumFrontier=maximumFrontier,
@@ -285,18 +293,6 @@ def ecIterator(grammar, tasks,
         result.grammars.append(grammar)
         eprint("Grammar after iteration %d:" % (j + 1))
         eprint(grammar)
-
-        # Sleep-R
-        if useRecognitionModel: # Train a recognition model
-            # Ensures that testing tasks have their elements in the lexicon
-            featureExtractorObject = featureExtractor(tasks + testingTasks)
-            recognizer = RecognitionModel(featureExtractorObject, grammar, activation=activation, cuda=cuda)
-
-            recognizer.train(frontiers, topK=topK, steps=steps,
-                             CPUs = CPUs,
-                             helmholtzRatio = helmholtzRatio)
-            result.recognitionModel = recognizer
-
 
         if outputPrefix is not None:
             path = checkpointPath(j + 1)
