@@ -93,6 +93,12 @@ def make_list_tasks(n_examples):
 
 def make_list_bootstrap_tasks(numberOfExamples):
     seed(42)
+
+    def suffixes(l):
+        if l == []:
+            return []
+        else:
+            return [l[1:]] + suffixes(l[1:])
     
     def randomSuffix():
         return [ randint(0,9) for _ in range(randint(1,4)) ]
@@ -128,16 +134,16 @@ def make_list_bootstrap_tasks(numberOfExamples):
               for _ in range(5)
               for l in [randomListOfLists()] ]),
 
-        Task("zip plus", arrow(tlist(tint),tlist(tint),tlist(tint)),
-             [((l1,l2),map(lambda x,y: x+y,l1,l2))
-              for _ in range(5)
-              for l1 in [randomList()]
-              for l2 in [[ randint(0,9) for _ in range(len(l1)) ]]]),
-        Task("zip minus", arrow(tlist(tint),tlist(tint),tlist(tint)),
-             [((l1,l2),map(lambda x,y: x-y,l1,l2))
-              for _ in range(5)
-              for l1 in [randomList()]
-              for l2 in [[ randint(0,9) for _ in range(len(l1)) ]]]),
+        # Task("zip plus", arrow(tlist(tint),tlist(tint),tlist(tint)),
+        #      [((l1,l2),map(lambda x,y: x+y,l1,l2))
+        #       for _ in range(5)
+        #       for l1 in [randomList()]
+        #       for l2 in [[ randint(0,9) for _ in range(len(l1)) ]]]),
+        # Task("zip minus", arrow(tlist(tint),tlist(tint),tlist(tint)),
+        #      [((l1,l2),map(lambda x,y: x-y,l1,l2))
+        #       for _ in range(5)
+        #       for l1 in [randomList()]
+        #       for l2 in [[ randint(0,9) for _ in range(len(l1)) ]]]),
 
         Task("reverse int", arrow(tlist(tint),tlist(tint)),
              [((l,),list(reversed(l)))
@@ -161,12 +167,17 @@ def make_list_bootstrap_tasks(numberOfExamples):
               for _ in range(10)
               for l in [randomList()] ]),
 
-        Task("range", arrow(tint,tlist(tint)),
-             [((n,), range(1,1+n))
+        # Task("range", arrow(tint,tlist(tint)),
+        #      [((n,), range(1,1+n))
+        #       for n in range(10) ]),
+        Task("countdown", arrow(tint,tlist(tint)),
+             [((n,), range(n+1,1,-1))
               for n in range(10) ]),
-        Task("reverse range", arrow(tint,tlist(tint)),
-             [((n,), list(reversed(range(1,1+n))))
-              for n in range(10) ]),
+        
+        Task("suffixes", arrow(tlist(tint),tlist(tlist(tint))),
+             [((l,), suffixes(l))
+              for _ in xrange(10)
+              for l in [randomList()] ]),
 
         Task("repeat int", arrow(tint,tlist(tint)),
              [((n,k), [n]*k)
