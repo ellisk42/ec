@@ -64,7 +64,7 @@ def makeTask(name, request, law,
             assert False, "could not make type generic: %s"%t
 
     return DifferentiableTask(name, genericType(request), e,
-                              BIC = 0.,
+                              BIC = 10.,
                               likelihoodThreshold=-0.1,
                               loss = squaredErrorLoss)
         
@@ -86,8 +86,23 @@ tasks = [
              arrow(tpositive,tpositive,tpositive),
              lambda r,i: r*i,
              N = 20,
-             S = 5)
-    ]
+             S = 5),
+    makeTask("power/current/voltage relation",
+             arrow(tpositive,tpositive,tpositive),
+             lambda i,v: v*i,
+             N = 20,
+             S = 5),
+    makeTask("gravitational potential energy",
+             arrow(tpositive,treal,treal),
+             lambda m,h: 9.8*m*h,
+             N = 20,
+             S = 5),
+    makeTask("time/frequency relation",
+             arrow(tpositive,tpositive),
+             lambda t: 1./t,
+             N = 20,
+             S = 5),
+]
 
 if __name__ == "__main__":
     baseGrammar = Grammar.uniform([real, f0, f1,
