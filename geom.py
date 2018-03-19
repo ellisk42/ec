@@ -4,14 +4,10 @@ from utilities import eprint, testTrainSplit, numberOfCPUs
 from makeGeomTasks import makeTasks
 from geomPrimitives import primitives
 
-import torch
 import torch.nn as nn
-import torch.optim as optimization
-import torch.nn.functional as F
-from torch.autograd import Variable
-from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 
 from recognition import variable
+
 
 # : Task -> feature list
 class GeomFeatureCNN(nn.Module):
@@ -29,14 +25,15 @@ class GeomFeatureCNN(nn.Module):
             hidden = hidden.float()
         self.hidden = hidden
 
-    def featuresOfTask(self, t): # Take a task and returns [features]
+    def featuresOfTask(self, t):  # Take a task and returns [features]
         onlyTask = t.examples[0][1]
-        floatOnlyTask = map(float,onlyTask)
+        floatOnlyTask = map(float, onlyTask)
         variabled = variable(floatOnlyTask).float()
-        return self.hidden(variabled).clamp(min = 0)
+        return self.hidden(variabled).clamp(min=0)
 
     def featuresOfProgram(self, p, t):
         return None
+
 
 if __name__ == "__main__":
     tasks = makeTasks()
