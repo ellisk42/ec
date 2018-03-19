@@ -6,6 +6,7 @@ from program import *
 from grammar import *
 
 import gc
+import traceback
 
 # def enumerateFrontiers(g, tasks, _=None,
 #                        solver=None,
@@ -150,6 +151,7 @@ def multithreadedEnumeration(g, tasks, _=None,
                 assert False, "Forking message is deprecated"
             elif message.result == "failure":
                 eprint("PANIC! Exception in child worker:", message.exception)
+                eprint(message.stacktrace)
                 assert False
             elif message.result == "success":
                 frontier, searchTime, explored = message.value
@@ -207,6 +209,7 @@ def wrapInThread(f):
         except Exception as e:
             q.put({"result": "failure",
                    "exception": e,
+                   "stacktrace": traceback.format_exc(),
                    "ID": ID})
             return 
     return _f        

@@ -446,6 +446,20 @@ class ShareVisitor(object):
         return new
     def execute(self,e):
         return e.visit(self)
+
+class RegisterPrimitives(object):
+    def invented(self,e): e.body.visit(self)        
+    def primitive(self,e):
+        if e.name not in Primitive.GLOBALS:
+            Primitive(e.name, e.tp, e.value)
+    def index(self,e): pass
+    def application(self,e):
+        e.f.visit(self)
+        e.x.visit(self)   
+    def abstraction(self,e): e.body.visit(self)        
+    @staticmethod
+    def register(e): e.visit(RegisterPrimitives())
+        
         
 class PrettyVisitor(object):
     def __init__(self):

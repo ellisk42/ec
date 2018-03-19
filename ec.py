@@ -174,8 +174,14 @@ def ecIterator(grammar, tasks,
             eprint("Bootstrap primitives:")
             for p in strapping.primitives:
                 eprint(p)
+                RegisterPrimitives.register(p)
             eprint()
-            grammar = Grammar.uniform(list(set(grammar.primitives + strapping.primitives)))
+            grammar = Grammar.uniform(list({p for p in grammar.primitives + strapping.primitives
+                                            if not str(p).startswith("fix")}))
+            if compressor == "rust":
+                eprint("Rust compressor is currently not compatible with bootstrapping.",
+                       "Falling back on pypy compressor.")
+                compressor = "pypy"
         result = ECResult(parameters=parameters, grammars=[grammar],
                           taskSolutions = { t: Frontier([], task = t) for t in tasks },
                           recognitionModel = None)
