@@ -71,10 +71,10 @@ let differentiable_task ?parameterPenalty:(parameterPenalty=0.) ?lossThreshold:(
           let n = List.length examples |> Int.to_float in
           let d = List.length parameters |> Int.to_float in
           let l = l *& (~$ (1. /. n)) in
-          let l = gradient_descent
+          let l = run_optimizer (rprop ~lr:0.1 ~decay:0.5 ~grow:1.2)
               ~update:0
-              ~iterations:(if List.length parameters = 0 then 1 else 10000)
-              l parameters
+              ~iterations:(if List.length parameters = 0 then 0 else 100)
+              parameters l
           in
           (* Printf.eprintf "%s has l=%f\n" (string_of_program expression) l;
            * flush_everything(); *)

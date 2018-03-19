@@ -160,22 +160,60 @@ let update_network loss =
   backward loss;
   l
 
-let rec gradient_descent ?update:(update = 1000)
-    ?iterations:(iterations = 10000) ?lr:(lr = 0.001) loss parameters =
-  if iterations = 0 then update_network loss else begin 
-    let l = update_network loss in
+let rec run_optimizer opt ?update:(update = 1000)
+    ?iterations:(iterations = 10000) parameters loss =
+  let l = update_network loss in
+  if iterations = 0 then l else begin
+
     if update > 0 && iterations mod update = 0 then begin 
       Printf.eprintf "LOSS: %f\n" l;
       parameters |> List.iter ~f:(fun p -> Printf.eprintf "parameter %f\t" (p.data |> get_some));
       Printf.eprintf "\n";
     end else ();
-    let gradient = parameters |> List.map ~f:differentiate in
-    List.iter2_exn parameters gradient ~f:(fun x dx ->
+
+    parameters |> List.map ~f:differentiate |> opt |> 
+    List.iter2_exn parameters ~f:(fun x dx ->
         let v = x.data |> get_some in
-        update_variable x (v -. dx*.lr));
-    gradient_descent ~update:update ~iterations:(iterations - 1) ~lr:lr loss parameters
+        update_variable x (v +. dx));
+    run_optimizer opt ~update:update ~iterations:(iterations - 1) parameters loss
   end
 
+let gradient_descent ?lr:(lr = 0.001) =
+  List.map ~f:(fun dx -> ~-. (lr*.dx))
+
+let rprop ?lr:(lr=0.1) ?decay:(decay=0.5) ?grow:(grow=1.2) = 
+  let first_iteration = ref true in
+  let previous_signs = ref [] in
+  let individual_rates = ref [] in
+
+  fun dxs ->
+    let new_signs = dxs |> List.map ~f:(fun dx -> dx > 0.) in
+    if !first_iteration then begin
+      first_iteration := false;
+      (* First iteration: ignore the previous signs, which have not yet been recorded *)
+      let updates = dxs |> List.map ~f:(fun dx -> ~-. dx*.lr) in
+
+      previous_signs := new_signs;
+      individual_rates := dxs |> List.map ~f:(fun _ -> lr);
+
+      updates      
+    end else begin 
+      individual_rates := List.map3_exn !individual_rates !previous_signs new_signs
+          ~f:(fun individual_rate previous_sign new_sign ->
+              if previous_sign = new_sign
+              then individual_rate*.grow
+              else individual_rate*.decay);
+      
+      let updates = List.map2_exn !individual_rates dxs
+          ~f:(fun individual_rate dx ->
+              if dx > 0.
+              then ~-. individual_rate
+              else if dx < 0. then individual_rate else 0.)
+      in
+      previous_signs := new_signs;
+      updates
+    end
+    
 
 let test_differentiation () =
   let x = ~$ 10.0 in
@@ -201,7 +239,7 @@ let test_differentiation () =
   Printf.printf "dL/dx = %f\tdL/dy = %f\n" (differentiate x) (differentiate y);
 
   let l = ((~$ 0.) -& z) in
-  ignore(gradient_descent l [x;y])
+  ignore(run_optimizer (gradient_descent ~lr:0.001) [x;y] l)
 
 ;;
 
