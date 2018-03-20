@@ -409,7 +409,10 @@ class RecognitionModel(nn.Module):
                     doingHelmholtz = random.random() < helmholtzRatio
                     if doingHelmholtz:
                         if helmholtzSamples == []:
-                            helmholtzSamples = self.sampleManyHelmholtz(requests, HELMHOLTZBATCH, CPUs)
+                            helmholtzSamples = \
+                            self.sampleManyHelmholtz(requests,
+                                                     HELMHOLTZBATCH,
+                                                     1) # TODO THIS IS A HACK
                         attempt = helmholtzSamples.pop()
                         if attempt is not None:
                             program, request, features = attempt
