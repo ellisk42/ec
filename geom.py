@@ -1,7 +1,7 @@
 from ec import explorationCompression, commandlineArguments
 from grammar import Grammar
 from utilities import eprint, testTrainSplit, numberOfCPUs
-from makeGeomTasks import makeTasks
+from makeGeomTasks import makeTasks, pretty_print
 from geomPrimitives import primitives, tcanvas
 
 import torch
@@ -53,13 +53,17 @@ class GeomFeatureCNN(nn.Module):
         if t == tcanvas:
             try:
                 shape = subprocess.check_output(['./geomDrawLambdaString',
-                                                 str(p)])
+                                                 p.evaluate([])])
             except OSError as exc:
                 raise exc
         else:
             assert(False)
-        shape = map(float, shape[:-1])
-        return self(shape)
+        try:
+            shape = map(float, shape[:-1])
+            return self(shape)
+        except ValueError:
+            return None
+
 
 
 if __name__ == "__main__":
@@ -77,7 +81,7 @@ if __name__ == "__main__":
                            compressor="pypy",
                            evaluationTimeout=0.01,
                            **commandlineArguments(
-                               steps=1000,
+                               steps=100,
                                iterations=10,
                                useRecognitionModel=True,
                                helmholtzRatio=0.5,

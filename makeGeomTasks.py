@@ -16,17 +16,26 @@ def fileToArray(fname):
     return flatten
 
 
-def pretty_print(y):  # Assumption, y is 1 bit depth png, 64*64
-    print "_"*132
-    for j in range(64):
-        sys.stdout.write("|")
-        for i in range(64):
-            if y[j*64 + (i % 64)] == 1:
-                sys.stdout.write("  ")
+def pretty_print(y):
+    size = 16
+    print ""
+    sys.stdout.write("┍")
+    sys.stdout.write("━"*(16*2))
+    sys.stdout.write("┑")
+    print ""
+    for j in range(size):
+        sys.stdout.write("│")
+        for i in range(size):
+            if int(y[j*size + (i % size)]) == 0:
+                sys.stdout.write("░░")
             else:
                 sys.stdout.write("██")
-        print "|"
-    print "_"*132
+        sys.stdout.write("│")
+        print ""
+    sys.stdout.write("┕")
+    sys.stdout.write("━"*(16*2))
+    sys.stdout.write("┙")
+    print ""
 
 
 def makeTasks():
