@@ -11,18 +11,20 @@ type frontier = {
 }
 
 let violates_symmetry f a n = 
-  if (not (is_base_primitive f)) || (not (is_base_primitive a)) then false else
-    match (n, primitive_name f, primitive_name a) with
-    | (0,"car","cons") -> true
-    | (0,"cdr","cons") -> true
-    | (0,"cdr","empty") -> true
-    | (_,"+","0") -> true
-    | (1,"-","0") -> true
-    | (0,"empty?","cons") -> true
-    | (0,"empty?","empty") -> true
-    | (0,"zero?","0") -> true
-    | (0,"zero?","1") -> true
-    | _ -> false
+  if not (is_base_primitive f) then false else
+    let a = application_function a in
+    if not (is_base_primitive a) then false else 
+      match (n, primitive_name f, primitive_name a) with
+      | (0,"car","cons") -> true
+      | (0,"cdr","cons") -> true
+      | (0,"cdr","empty") -> true
+      | (_,"+","0") -> true
+      | (1,"-","0") -> true
+      | (0,"empty?","cons") -> true
+      | (0,"empty?","empty") -> true
+      | (0,"zero?","0") -> true
+      | (0,"zero?","1") -> true
+      | _ -> false
 
 
 let rec enumerate_programs' (g: grammar) (context: tContext) (request: tp) (environment: tp list)
