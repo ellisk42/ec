@@ -184,6 +184,28 @@ let instantiated_type universal_type requested_type =
     Some(canonical_type (applyContext c universal_type))
   with _ -> None
 
+(* let compile_unifier t =
+ *   let t = canonical_type t in
+ *   let (xs,r) = arguments_and_return_of_type t in
+ *   let free_variables = next_type_variable  in
+ *   
+ * 
+ *   fun (target, context) ->
+ *     if not (might_unify target r) then raise UnificationFailure else
+ *       let bindings = Array.make free_variables None in
+ * 
+ *       let rec u k template original =
+ *         match (template, original) with
+ *         | (TID(templateVariable), v) -> begin
+ *             match bindings.(templateVariable) with
+ *             | Some(bound) -> unify k bound v
+ *             | None -> begin
+ *                 bindings.(templateVariable) <- v;
+ *                 context
+ *               end
+ *           end
+ *         | () *)
+
 let application_type f x = 
   let (f,c1) = instantiate_type empty_context f in
   let (x,c2) = instantiate_type c1 x in

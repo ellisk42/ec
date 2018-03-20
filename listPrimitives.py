@@ -65,14 +65,10 @@ def _fix(argument):
 
     return inner
 
-def _fix2(argument1):
-    def inner(argument2):
-        def inner_(body):
-            assert False, "recursive functions with two arguments not yet implemented for no good reason"
-
-        return inner_
-
-    return inner
+def curry(f): return lambda x: lambda y: f((x,y)) 
+def _fix2(a1):
+    return lambda a2: lambda body: \
+        _fix((a1,a2))(lambda r: lambda (n,l): body(curry(r))(n)(l))
 
 primitiveRecursion1 = Primitive("fix1",
                                arrow(t0,
@@ -84,7 +80,7 @@ primitiveRecursion2 = Primitive("fix2",
                                arrow(t0, t1,
                                      arrow(arrow(t0,t1,t2), t0,t1,t2),
                                      t2),
-                               _fix)
+                                _fix2)
 
 def _match(l):
     return lambda b: lambda f: b if l == [] else f(l[0])(l[1:])
