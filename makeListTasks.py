@@ -133,10 +133,11 @@ def make_list_bootstrap_tasks(numberOfExamples):
              [((l,),map(lambda n: n-1, l))
               for _ in range(10)
               for l in [randomList()] ]),
-        Task("map cdr", arrow(tlist(tlist(tint)),tlist(tlist(tint))),
-             [((l,),map(lambda n: n[1:],l))
-              for _ in range(5)
-              for l in [randomListOfLists()] ]),
+        # Task("map cdr", arrow(tlist(tlist(tint)),tlist(tlist(tint))),
+        #      [((l,),map(lambda n: n[1:],l))
+        #       for _ in range(5)
+        #       for l in [randomListOfLists()] ])
+        
         Task("map car", arrow(tlist(tlist(tint)),tlist(tint)),
              [((l,),map(lambda n: n[0],l))
               for _ in range(5)
