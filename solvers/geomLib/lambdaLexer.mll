@@ -9,6 +9,7 @@ let white = [' ' '\t']+
 rule read =
   parse
   | white          { read lexbuf }
+  | '#'            { read lexbuf } (* Completely ignore this symbol [1] *)
   | '('            { LP          }
   | ')'            { RP          }
   | "run"          { RUN         }
@@ -28,4 +29,8 @@ rule read =
   | "true"         { TRUE        }
   | "false"        { FALSE       }
   | eof            { EOF         }
-  (*| iden as i  { VAR i }*)
+
+(*
+ * [1]: It means "EC invented this as a "new" instuction of cost 1" but the new
+ * instruction is under this symbol so at execute time we just ingore this.
+ *)
