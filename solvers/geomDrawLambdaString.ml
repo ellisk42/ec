@@ -4,11 +4,10 @@ open Lexing
 
 exception MalformedProgram of string
 
-let rec npp l = match l with
- | []     -> ()
- | x :: r ->
-     if (x = 0) then print_char '0' else print_char '1' ;
-     npp r
+let npp data =
+  for i = 0 to (Bigarray.Array1.dim data) - 1 do
+    print_int (data.{i})
+  done
 
 let print_pos lexbuf = 
   let pos = lexbuf.lex_curr_p in

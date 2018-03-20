@@ -22,8 +22,7 @@ let output_canvas_png : ?smart:bool ->
     ignore (Vgr.render r `End) ;
     close_out oc
 
-let canvas_to_1Darray : ?smart:bool ->
-                        canvas -> int -> int list =
+let canvas_to_1Darray =
     fun ?smart:(smart=true) (canvas, box) desired ->
     let (view,size,image) = Utils2.get_infos ~smart d_from_origin box canvas in
     let res = (float_of_int desired) /. (Gg.Size2.h size) in
@@ -40,8 +39,4 @@ let canvas_to_1Darray : ?smart:bool ->
     ignore (Vgr.render r `End) ;
     Cairo.Surface.flush surface ;
     Cairo.Surface.finish surface ;
-    let l = ref [] in
-    for i = (Bigarray.Array1.dim data - 1) downto 0 do
-      l := (Bigarray.Array1.get data i)::!l ; (* IF SPEED NEEDED CHANGE THIS *)
-    done ;
-    !l
+    data

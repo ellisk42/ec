@@ -335,7 +335,9 @@ let primitive_greater_than = primitive "gt?" (tint @> tint @> tboolean) (fun (x:
 let primitive_run   = primitive
                         "run"
                         (tprogram @> tcanvas)
-                        GeomLib.Plumbing.run
+                        (fun x ->
+                          GeomLib.Plumbing.relist
+                            (GeomLib.Plumbing.run x))
 
 let primitive_just     = primitive "just"
                           (t0 @> tmaybe t0)
