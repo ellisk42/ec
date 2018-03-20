@@ -1,8 +1,8 @@
+open GeomLib
 open Plotter
 open Renderer
 open Interpreter
 open Printf
-open GeomLexer
 open Lexing
 
 exception MalformedProgram of string
@@ -16,7 +16,7 @@ let print_pos lexbuf =
 
 let parse_with_error lexbuf =
   try GeomParser.program GeomLexer.read lexbuf with
-  | SyntaxError msg ->
+  | GeomLexer.SyntaxError msg ->
       let pos_string = print_pos lexbuf in
       raise (MalformedProgram
                 (sprintf "Error at position %s, %s" pos_string msg))
