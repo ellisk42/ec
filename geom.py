@@ -23,18 +23,18 @@ class GeomFeatureCNN(nn.Module):
             nn.MaxPool2d(kernel_size=(2, 2), stride=2),
             nn.ReLU()
         )
+
         self.net2 = nn.Sequential(
             nn.Linear(256, 120),
-            nn.Linear(120, H)
+            nn.Linear(120, 84),
+            nn.Linear(84, H)
         )
 
         self.outputDimensionality = H
-        self.out = nn.Sequential(self.net1)
 
-    def featuresOfTask(self, t):  # Take a task and returns [features]
+    def forward(self, v):
         x, y = 16, 16  # Should not hardocode these.
-        onlyTask = t.examples[0][1]
-        floatOnlyTask = map(float, onlyTask)
+        floatOnlyTask = map(float, v)
         reshaped = [floatOnlyTask[i:i+x]
                     for i in range(0, len(floatOnlyTask), y)]
         variabled = variable(reshaped).float()
@@ -44,6 +44,9 @@ class GeomFeatureCNN(nn.Module):
         output = output.view(256)
         output = self.net2(output)
         return output
+
+    def featuresOfTask(self, t):  # Take a task and returns [features]
+        return self(t.examples[0][1])
 
     def featuresOfProgram(self, p, t):  # Won't fix for geom
         shape = ""
@@ -55,8 +58,8 @@ class GeomFeatureCNN(nn.Module):
                 raise exc
         else:
             assert(False)
-# Now I need to do something, anything with shape...
-        return None
+        shape = map(float, shape[:-1])
+        return self(shape)
 
 
 if __name__ == "__main__":
@@ -72,14 +75,14 @@ if __name__ == "__main__":
                            testingTasks=test,
                            outputPrefix="experimentOutputs/geom",
                            compressor="pypy",
-                           evaluationTimeout=0.1,
+                           evaluationTimeout=0.01,
                            **commandlineArguments(
-                               steps=10,
-                               iterations=2,
+                               steps=1000,
+                               iterations=10,
                                useRecognitionModel=True,
-                               helmholtzRatio=1.,
+                               helmholtzRatio=0.5,
                                featureExtractor=GeomFeatureCNN,
                                topK=2,
-                               maximumFrontier=10,
+                               maximumFrontier=500,
                                CPUs=numberOfCPUs(),
                                pseudoCounts=10.0))
