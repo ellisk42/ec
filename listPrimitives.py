@@ -200,6 +200,13 @@ if __name__ == "__main__":
     print g.logLikelihood(arrow(tint,tlist(tint),tlist(tint)), p)
     print 
 
+    print "countdown"
+    p = Program.parse("(lambda (lambda (if (eq? $0 0) empty (cons (+ $0 1) ($1 (- $0 1))))))")
+    print g.logLikelihood(arrow(arrow(tint,tlist(tint)), arrow(tint,tlist(tint))), p)
+    print _fix(9)(p.evaluate([]))
+    
+    print 
+
     print "prepend zeros"
     p = Program.parse("(lambda (lambda (lambda (if (eq? $1 0) $0 (cons 0 ($2 (- $1 1) $0))))))")
     print g.logLikelihood(arrow(arrow(tint,tlist(tint),tlist(tint)),tint,tlist(tint),tlist(tint)), p)
