@@ -1,0 +1,16 @@
+Repeat {
+  Embed {
+    Repeat {
+      Repeat {
+        Repeat {
+          Integrate ;
+          Turn
+        }
+      } ;
+      Integrate(t=Double(unit),pen=off)
+    }
+  } ;
+  Turn ;
+  Integrate(t=Double(unit),pen=off) ;
+  Turn(angle=Opposite(unit))
+}
