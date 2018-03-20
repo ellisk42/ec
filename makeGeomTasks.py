@@ -1,15 +1,12 @@
 # coding: utf8
 
 from task import Task
-from type import *
 from geomPrimitives import tcanvas
 import png
 import os
 import sys
-import random
 
 rootdir = "./data/geom/"
-
 
 
 def fileToArray(fname):
@@ -36,7 +33,6 @@ def makeTasks():
     problems = []
 
     def problem(n, examples, needToTrain=False):
-        inputType = tuple([])
         outputType = tcanvas
         task = Task(n,
                     outputType,
@@ -48,7 +44,7 @@ def makeTasks():
     for _, _, files in os.walk(rootdir):
         for f in files:
             if f.endswith(".png"):
-                problem("Generate '" + f + "'",
+                problem(f,
                         [([], fileToArray(rootdir + '/' + f))],
                         needToTrain=True)
 
