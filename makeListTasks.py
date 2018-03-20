@@ -121,14 +121,23 @@ def make_list_bootstrap_tasks(numberOfExamples):
               for x in range(3)
               for y in range(4) ]),
 
-        Task("map empty", arrow(tlist(tlist(tint)),tlist(tbool)),
-             [((l,),map(lambda n: len(n) == 0,l))
+        Task("map zero?", arrow(tlist(tint),tlist(tbool)),
+             [((l,),map(lambda n: n == 0,l))
               for _ in range(10)
-              for l in [[ [ randint(0,9) for _ in range(randint(0,3)) ] for _ in range(randint(0,3)) ]] ]),
-        Task("map cdr", arrow(tlist(tlist(tint)),tlist(tlist(tint))),
-             [((l,),map(lambda n: n[1:],l))
-              for _ in range(5)
-              for l in [randomListOfLists()] ]),
+              for l in [[ randint(0,2) for _ in range(randint(4,7)) ]] ]),
+        Task("map increment", arrow(tlist(tint),tlist(tint)),
+             [((l,),map(lambda n: n+1, l))
+              for _ in range(10)
+              for l in [randomList()] ]),
+        Task("map decrement", arrow(tlist(tint),tlist(tint)),
+             [((l,),map(lambda n: n-1, l))
+              for _ in range(10)
+              for l in [randomList()] ]),
+        # Task("map cdr", arrow(tlist(tlist(tint)),tlist(tlist(tint))),
+        #      [((l,),map(lambda n: n[1:],l))
+        #       for _ in range(5)
+        #       for l in [randomListOfLists()] ])
+        
         Task("map car", arrow(tlist(tlist(tint)),tlist(tint)),
              [((l,),map(lambda n: n[0],l))
               for _ in range(5)
