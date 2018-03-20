@@ -37,6 +37,16 @@ clean:
 run:
 	time ./test
 
+runcli:
+	ocamlbuild -use-menhir -tag thread -use-ocamlfind \
+	    -package camlimages \
+	    -package camlimages.png \
+	    -package gg \
+	    -package vg \
+	    -package vg.cairo \
+	    -package vg.svg   \
+	    geomDrawLambdaString.native
+
 draw:
 	ocamlbuild -use-menhir -tag thread -use-ocamlfind \
 	    -package camlimages \

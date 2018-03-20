@@ -42,6 +42,6 @@ let canvas_to_1Darray : ?smart:bool ->
     Cairo.Surface.finish surface ;
     let l = ref [] in
     for i = (Bigarray.Array1.dim data - 1) downto 0 do
-      l := (Bigarray.Array1.get data i)::!l ;
+      l := (Bigarray.Array1.get data i)::!l ; (* IF SPEED NEEDED CHANGE THIS *)
     done ;
     !l

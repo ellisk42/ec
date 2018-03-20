@@ -2,9 +2,10 @@ from ec import explorationCompression, commandlineArguments
 from grammar import Grammar
 from utilities import eprint, testTrainSplit, numberOfCPUs
 from makeGeomTasks import makeTasks
-from geomPrimitives import primitives
+from geomPrimitives import primitives, tcanvas
 
 import torch
+import subprocess
 import torch.nn as nn
 
 from recognition import variable
@@ -45,6 +46,16 @@ class GeomFeatureCNN(nn.Module):
         return output
 
     def featuresOfProgram(self, p, t):  # Won't fix for geom
+        shape = ""
+        if t == tcanvas:
+            try:
+                shape = subprocess.check_output(['./geomDrawLambdaString',
+                                                 str(p)])
+            except OSError as exc:
+                raise exc
+        else:
+            assert(False)
+# Now I need to do something, anything with shape...
         return None
 
 
@@ -63,12 +74,12 @@ if __name__ == "__main__":
                            compressor="pypy",
                            evaluationTimeout=0.1,
                            **commandlineArguments(
-                               steps=1000,
-                               iterations=10,
-                               useRecognitionModel=False,
-                               helmholtzRatio=0.0,
+                               steps=10,
+                               iterations=2,
+                               useRecognitionModel=True,
+                               helmholtzRatio=1.,
                                featureExtractor=GeomFeatureCNN,
                                topK=2,
-                               maximumFrontier=1000,
+                               maximumFrontier=10,
                                CPUs=numberOfCPUs(),
                                pseudoCounts=10.0))
