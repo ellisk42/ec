@@ -4,7 +4,7 @@
   exception SyntaxError of string
 }
 
-let white = [' ' '\t']+
+let white = [' ' '\t' '\n' '\r']+
 
 rule read =
   parse
