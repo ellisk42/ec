@@ -1,5 +1,4 @@
 open Core
-
 open Parser
 open Utils
 open Type
@@ -336,7 +335,7 @@ let primitive_greater_than = primitive "gt?" (tint @> tint @> tboolean) (fun (x:
 let primitive_run   = primitive
                         "run"
                         (tprogram @> tcanvas)
-                        Plumbing.run
+                        GeomLib.Plumbing.run
 
 let primitive_just     = primitive "just"
                           (t0 @> tmaybe t0)
@@ -344,38 +343,38 @@ let primitive_just     = primitive "just"
 
 let primitive_nothing= primitive "nothing" (tmaybe t0) None
 
-let primitive_nop    = primitive "nop"  tprogram Plumbing.nop
+let primitive_nop    = primitive "nop"  tprogram GeomLib.Plumbing.nop
 let primitive_embed  = primitive
                         "embed"
                         (tprogram @> tprogram)
-                        Plumbing.embed
+                        GeomLib.Plumbing.embed
 let primitive_concat = primitive
                         "concat"
                         (tprogram @> tprogram @> tprogram)
-                        Plumbing.concat
+                        GeomLib.Plumbing.concat
 let primitive_turn   = primitive
                         "turn"
                         (tmaybe tvar @> tprogram)
-                        Plumbing.turn
+                        GeomLib.Plumbing.turn
 let primitive_repeat = primitive
                         "repeat"
                         (tmaybe tvar @> tprogram @> tprogram)
-                        Plumbing.repeat
+                        GeomLib.Plumbing.repeat
 let primitive_integrate= primitive
                         "integrate"
                         (tmaybe tvar @> tmaybe tboolean @>
                          tmaybe tvar @> tmaybe tvar  @>
                          tmaybe tvar @> tmaybe tvar  @>
                          tprogram)
-                        Plumbing.integrate
+                        GeomLib.Plumbing.integrate
 
-let var_unit         = primitive "var_unit" tvar Plumbing.var_unit
-let var_double       = primitive "var_double" (tvar @> tvar) Plumbing.var_double
-let var_half         = primitive "var_half" (tvar @> tvar) Plumbing.var_half
-let var_next         = primitive "var_next" (tvar @> tvar) Plumbing.var_next
-let var_prev         = primitive "var_prev" (tvar @> tvar) Plumbing.var_prev
-let var_opposite     = primitive "var_opposite" (tvar @> tvar) Plumbing.var_opposite
-(*let var_name         = primitive "var_name" (tstring @> tvar) Plumbing.var_name*)
+let var_unit         = primitive "var_unit" tvar GeomLib.Plumbing.var_unit
+let var_double       = primitive "var_double" (tvar @> tvar) GeomLib.Plumbing.var_double
+let var_half         = primitive "var_half" (tvar @> tvar) GeomLib.Plumbing.var_half
+let var_next         = primitive "var_next" (tvar @> tvar) GeomLib.Plumbing.var_next
+let var_prev         = primitive "var_prev" (tvar @> tvar) GeomLib.Plumbing.var_prev
+let var_opposite     = primitive "var_opposite" (tvar @> tvar) GeomLib.Plumbing.var_opposite
+(*let var_name         = primitive "var_name" (tstring @> tvar) GeomLib.Plumbing.var_name*)
 
 
 let default_recursion_limit = 20;;

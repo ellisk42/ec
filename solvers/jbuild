@@ -1,9 +1,9 @@
 (jbuild_version 1)
 
-(executable
- ((name solver)
+(executables
+ ((names (solver geomDrawLambdaString))
   (modes (native))
   (ocamlopt_flags (:standard -O3 -unboxed-types -nodynlink))
-  (libraries (core re2 yojson vg vg.cairo))
+  (libraries (core re2 yojson geomLib))
   (preprocess (pps (ppx_jane)))
  ))

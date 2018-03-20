@@ -1,5 +1,5 @@
+open GeomLib
 open Interpreter
-open LambdaLexer
 open Lexing
 
 exception MalformedProgram of string
@@ -17,7 +17,7 @@ let print_pos lexbuf =
 
 let parse_with_error lexbuf =
   try LambdaParser.program LambdaLexer.read lexbuf with
-  | SyntaxError msg ->
+  | LambdaLexer.SyntaxError msg ->
       let pos_string = print_pos lexbuf in
       raise (MalformedProgram
                 (Printf.sprintf "Error at position %s, %s" pos_string msg))

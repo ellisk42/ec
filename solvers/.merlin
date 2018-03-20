@@ -39,6 +39,7 @@ B /home/artymort/.opam/4.06.1+flambda/lib/variantslib
 B /home/artymort/.opam/4.06.1+flambda/lib/vg
 B /home/artymort/.opam/4.06.1+flambda/lib/yojson
 B _build/default/.solver.eobjs
+B _build/default/geomLib/.geomLib.objs
 FLG -ppx '/volatile/home/ms251184/Documents/NeedsAccess/2017-2018/Tenenbaum/cleanEc/ec/solvers/_build/default/.ppx/ppx_jane/ppx.exe --as-ppx'
 FLG -w -40
 S .
@@ -82,3 +83,4 @@ S /home/artymort/.opam/4.06.1+flambda/lib/uchar
 S /home/artymort/.opam/4.06.1+flambda/lib/variantslib
 S /home/artymort/.opam/4.06.1+flambda/lib/vg
 S /home/artymort/.opam/4.06.1+flambda/lib/yojson
+S geomLib

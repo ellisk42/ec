@@ -1,0 +1,10 @@
+(jbuild_version 1)
+
+(ocamllex (lambdaLexer))
+
+(menhir
+ ((modules (lambdaParser))))
+
+(library
+  ((name geomLib)
+   (libraries (vg vg.cairo))))
