@@ -206,13 +206,13 @@ def ecIterator(grammar, tasks,
 
     for j in range(resume or 0, iterations):
         if j >= 2 and expandFrontier and result.learningCurve[-1] <= result.learningCurve[-2]:
-            oldFrontierSize = frontierSize
+            oldEnumerationTimeout = enumerationTimeout
             if expandFrontier <= 10:
-                frontierSize = int(frontierSize * expandFrontier)
+                enumerationTimeout = int(enumerationTimeout * expandFrontier)
             else:
-                frontierSize = int(frontierSize + expandFrontier)
-            eprint("Expanding frontier from {} to {} because of no progress".format(
-                oldFrontierSize, frontierSize))
+                enumerationTimeout = int(enumerationTimeout + expandFrontier)
+            eprint("Expanding enumeration timeout from {} to {} because of no progress".format(
+                oldEnumerationTimeout, enumerationTimeout))
 
         frontiers, times = multithreadedEnumeration(grammar, tasks,
                                               solver=solver,
