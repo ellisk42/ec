@@ -120,10 +120,15 @@ def make_list_bootstrap_tasks(numberOfExamples):
              [((n,),n-2) for n in range(5) ]),
         Task("zero?", arrow(tint,tbool),
              [((n,), n == 0) for n in range(5) ]),
-        Task("multiply", arrow(tint,tint,tint),
-             [((x,y),x*y)
-              for x in range(3)
-              for y in range(4) ]),
+        Task("zero car?", arrow(tlist(tint),tbool),
+             [(([h] + l,), h == 0)
+              for _ in range(5)
+              for h in [0,randint(1,9)]
+              for l in [randomList()] ]),
+        # Task("multiply", arrow(tint,tint,tint),
+        #      [((x,y),x*y)
+        #       for x in range(3)
+        #       for y in range(4) ]),
 
         Task("map zero?", arrow(tlist(tint),tlist(tbool)),
              [((l,),map(lambda n: n == 0,l))
