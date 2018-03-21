@@ -1,12 +1,20 @@
 from towerPrimitives import ttower
-
+from utilities import *
 from task import *
 
 import math
 
 
+
+TOWERCACHING = None
+def initializeTowerCaching():
+    global TOWERCACHING
+    from multiprocessing import Manager
+    m = Manager()
+    TOWERCACHING = m.dict()
+    
+
 class TowerTask(Task):
-    RESULTCASH = {}
     tasks = []
     STABILITYTHRESHOLD = 0.5
     
@@ -38,10 +46,11 @@ class TowerTask(Task):
 
     @staticmethod
     def evaluateTower(tower, perturbation):
+        global TOWERCACHING
         from towers.tower_common import TowerWorld
         
         key = (tuple(tower), perturbation)
-        if key in TowerTask.RESULTCASH: result = TowerTask.RESULTCASH[key]
+        if key in TOWERCACHING: result = TOWERCACHING[key]
         else:
             w = TowerWorld()
             try: result = w.sampleStability(tower, perturbation, N = 30)
@@ -52,8 +61,8 @@ class TowerTask(Task):
             #     eprint(perturbation, tower)
             #     raise exception                
             
-            TowerTask.RESULTCASH[key] = result
-        return result
+            TOWERCACHING[key] = result
+        return Bunch(result) if result is not None else result
 
     def logLikelihood(self, e, timeout = None):
         tower = e.evaluate([])
