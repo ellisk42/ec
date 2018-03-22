@@ -116,16 +116,29 @@ def make_list_bootstrap_tasks(numberOfExamples):
              [((n,),n-1) for n in range(5) ]),
         Task("increment twice", arrow(tint,tint),
              [((n,),n+2) for n in range(5) ]),
+        Task("increment car", arrow(tlist(tint),tint),
+             [((l,),l[0] + 1)
+              for l in [randomList()] ]),
         # Task("increment 3x", arrow(tint,tint),
         #      [((n,),n+3) for n in range(5) ]),
         Task("decrement twice", arrow(tint,tint),
              [((n,),n-2) for n in range(5) ]),
+        Task("decrement car", arrow(tlist(tint),tint),
+             [((l,),l[0] - 1)
+              for l in [randomList()] ]),
         # Task("decrement 3x", arrow(tint,tint),
         #      [((n,),n-3) for n in range(5) ]),
         Task("zero?", arrow(tint,tbool),
              [((n,), n == 0) for n in range(5) ]),
         Task("zero car?", arrow(tlist(tint),tbool),
              [(([h] + l,), h == 0)
+              for _ in range(5)
+              for h in [0,randint(1,9)]
+              for l in [randomList()] ]),
+        Task("not zero?", arrow(tint,tbool),
+             [((n,), n != 0) for n in range(5) ]),
+        Task("not zero car?", arrow(tlist(tint),tbool),
+             [(([h] + l,), h != 0)
               for _ in range(5)
               for h in [0,randint(1,9)]
               for l in [randomList()] ]),
@@ -252,6 +265,11 @@ def make_list_bootstrap_tasks(numberOfExamples):
               for _ in range(10)
               for ls in [[[ random() > 0.5 for _ in range(randint(0,3)) ]
                           for _ in range(4) ]] ]),
+        Task("remove non 0s",
+             arrow(tlist(tint), tlist(tint)),
+             [((xs,), filter(lambda x: x == 0, xs))
+              for _ in range(10)
+              for xs in [[ randint(0,3) for _ in range(5) ]] ]),
         Task("remove 0s",
              arrow(tlist(tint), tlist(tint)),
              [((xs,), filter(lambda x: x != 0, xs))
