@@ -27,14 +27,14 @@ let relist data = (* SLOWWWWW *)
   done ;
   !l
 
-let nop                  = Nop
-let concat p1 p2         = Concat(p1,p2)
-let embed p              = Embed(p)
-let turn x               = Turn(x)
-let repeat v p           = Repeat(v,p)
+let nop                   = Nop
+let concat p1 p2          = Concat(p1,p2)
+let embed p               = Embed(p)
+let turn x                = Turn(x)
+let repeat v p            = Repeat(v,p)
 let run ?size:(size=32) p = canvas_to_tlist size (interpret p)
 
-let integrate v1 v2 v3 v4 v5 v6 = Integrate(v1,v2,(v3,v4,v5,v6))
+let integrate v1 v2 v3 v4 = Integrate(v1,v2,(None,v3,v4,None))
 
 let var_unit       = Unit
 let var_half     v = Half(v)

@@ -15,6 +15,7 @@ let circle = Integrate(None,None,(None,None, Some(Unit),None))
 let dashes = Repeat(None,Repeat(None,Concat(line,
 Integrate(None,Some(false),(None,None,None,None)))))
 let spiral = Integrate(None,None,(None,None,None,Some(Unit)))
+(*let spiral = Integrate(None,None,(None,Some(Unit),Some(Unit), None))*)
 
 
 let pp l data =
@@ -29,7 +30,7 @@ let npp data =
   done
 
 let () =
-  let choice = circle in
+  let choice = spiral in
   let (path,box) = interpret choice in
   let l = Plumbing.run choice in
   print_canvas (path,box) ;

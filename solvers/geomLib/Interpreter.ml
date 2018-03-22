@@ -272,8 +272,8 @@ let interpret : shapeprogram -> canvas = fun shapeprogram ->
                   curr_state.speed +.
                   (curr_state.accel /. (f *. steps)) ;
                 curr_state.angularSpeed <-
-                    curr_state.angularSpeed (*BUGGY*)
-                    +. (curr_state.angularAccel /. 15.) ;
+                    curr_state.angularSpeed (* KINDA BROKEN *)
+                    +. (2. *. curr_state.angularAccel /. (f *. steps)) ;
             done
         | Define (name,v) -> Hashtbl.add htbl_var name v
         | Nop -> ()

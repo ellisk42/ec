@@ -103,7 +103,7 @@ if __name__ == "__main__":
                            **commandlineArguments(
                                steps=500,
                                iterations=10,
-                               useRecognitionModel=True,
+                               useRecognitionModel=False,
                                helmholtzRatio=0.0,
                                featureExtractor=GeomFeatureCNN,
                                topK=2,
