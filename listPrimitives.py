@@ -26,6 +26,9 @@ def _mapi(f): return lambda l: map(lambda (i,x): f(i)(x), enumerate(l))
 def _reduce(f): return lambda x0: lambda l: reduce(lambda a, x: f(a)(x), l, x0)
 def _reducei(f): return lambda x0: lambda l: reduce(lambda a, (i,x): f(i)(a)(x), enumerate(l), x0)
 def _eq(x): return lambda y: x == y
+def _eq0(x): return x == 0
+def _a1(x): return x + 1
+def _d1(x): return x - 1
 def _mod(x): return lambda y: x%y
 def _not(x): return not x
 def _gt(x): return lambda y: x > y
@@ -47,6 +50,10 @@ def _find(x):
         except ValueError:
             return -1
     return _inner
+def _unfold(p): return lambda f: lambda n: lambda x: __unfold(p,f,n,x)
+def __unfold(p,f,n,x):
+    if p(x): return []
+    return [f(x)] + __unfold(p,f,n,n(x))
 
 class RecursionDepthExceeded(Exception): pass
 def _fix(argument):
@@ -177,9 +184,15 @@ def McCarthyPrimitives():
         Primitive("eq?", arrow(tint, tint, tbool), _eq),
 
         # The hope is that it learns these quickly
-        # Primitive("eq0", arrow(tint, tbool), None),
-        # Primitive("+1", arrow(tint, tint), None),
-        # Primitive("-1", arrow(tint, tint), None),
+        # Primitive("eq0", arrow(tint, tbool), _eq0),
+        # Primitive("+1", arrow(tint, tint), _a1),
+        # Primitive("-1", arrow(tint, tint), _d1),
+        # Primitive("unfold", arrow(arrow(t0,tbool),
+        #                           arrow(t0,t1),
+        #                           arrow(t0,t0),
+        #                           t0,
+        #                           tlist(t1)),
+        #           _unfold),
         
         Primitive("+", arrow(tint, tint, tint), _addition),
         Primitive("-", arrow(tint, tint, tint), _subtraction),
@@ -187,6 +200,20 @@ def McCarthyPrimitives():
 
 if __name__ == "__main__":
     g = Grammar.uniform(McCarthyPrimitives())
+
+    p = Program.parse("(lambda (lambda (unfold (lambda (eq0 $0)) (lambda $2) (lambda (-1 $0)) $0)))")
+    print p
+    print g.logLikelihood(arrow(tint,tint,tlist(tint)), p)
+    print p.evaluate([])(7)(4)
+    assert False
+
+    print "??"
+    p = Program.parse("#(lambda (#(lambda (lambda (lambda (fix1 $0 (lambda (lambda (if (empty? $0) $3 ($4 (car $0) ($1 (cdr $0)))))))))) (lambda $1) 1))")
+    for j in xrange(10):
+        l = range(j)
+        print l,p.evaluate([])(lambda x: x*2)(l)
+        print
+    print 
 
     print "multiply"
     p = Program.parse("(lambda (lambda (lambda (if (eq? $0 0) 0 (+ $1 ($2 $1 (- $0 1)))))))")
