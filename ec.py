@@ -214,13 +214,24 @@ def ecIterator(grammar, tasks,
             eprint("Expanding enumeration timeout from {} to {} because of no progress".format(
                 oldEnumerationTimeout, enumerationTimeout))
 
-        frontiers, times = multithreadedEnumeration(grammar, tasks,
-                                              solver=solver,
-                                              frontierSize=frontierSize,
-                                              maximumFrontier=maximumFrontier,
-                                              enumerationTimeout=enumerationTimeout,
-                                              CPUs=CPUs,
-                                              evaluationTimeout=evaluationTimeout)
+        timeout = enumerationTimeout
+        while True:
+            frontiers, times = multithreadedEnumeration(grammar, tasks,
+                                                        solver=solver,
+                                                        frontierSize=frontierSize,
+                                                        maximumFrontier=maximumFrontier,
+                                                        enumerationTimeout=timeout,
+                                                        CPUs=CPUs,
+                                                        evaluationTimeout=evaluationTimeout)
+            if not expandFrontier: break
+            if j == 0: break
+            if useRecognitionModel: break
+            if sum(not f.empty for f in frontiers) <= result.learningCurve[-1]:
+                eprint("Expanding enumeration timeout from %i to %i because of no progress"%(
+                    timeout, timeout*expandFrontier))
+                timeout = timeout*expandFrontier
+            else: break
+            
 
         eprint("Generative model enumeration results:")
         eprint(Frontier.describe(frontiers))
@@ -293,6 +304,10 @@ def ecIterator(grammar, tasks,
         result.grammars.append(grammar)
         eprint("Grammar after iteration %d:" % (j + 1))
         eprint(grammar)
+        # TODO: This would be useful debugging output
+        # eprint("Expected uses of each grammar production after iteration %d:" % (j + 1))
+        # FragmentGrammar.fromGrammar(grammar).expectedUses
+        # eprint(grammar.)
 
         if outputPrefix is not None:
             path = checkpointPath(j + 1)
