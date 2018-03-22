@@ -45,10 +45,9 @@ let rec enumerate_programs' (g: grammar) (context: tContext) (request: tp) (envi
     | _ -> (* not trying to enumerate functions *)
       let candidates = unifying_expressions g environment request context in
       candidates |> 
-      List.iter ~f:(fun (candidate, candidate_type, context, ll) ->
+      List.iter ~f:(fun (candidate, argument_types, context, ll) ->
           let mdl = 0.-.ll in
           if mdl > upper_bound then () else
-            let argument_types = arguments_of_type candidate_type in
             enumerate_applications
               ~maximumDepth:(maximumDepth - 1)
               g context environment
@@ -70,7 +69,7 @@ and
     | [] -> (* not a function so we don't need any applications *)
       if lower_bound < 0. && 0. <= upper_bound then callBack f context 0.0 else ()
     | first_argument::later_arguments ->
-      let first_argument = applyContext context first_argument in
+      let (context,first_argument) = applyContext context first_argument in
       enumerate_programs' ~maximumDepth:maximumDepth (* ~recursion:NoRecursion *)
         g context first_argument environment
         0. upper_bound
@@ -87,7 +86,7 @@ and
                (fun a k a_ll -> callBack a k (a_ll+.ll)))
 
 let enumerate_programs g request lb ub k =
-  let may_be_recursive = g.library |> List.exists ~f:(fun (p,_,_) -> is_recursion_primitive p) in
+  let may_be_recursive = g.library |> List.exists ~f:(fun (p,_,_,_) -> is_recursion_primitive p) in
   let number_of_arguments = arguments_of_type request |> List.length in
   let definitely_recursive = grammar_has_recursion number_of_arguments g in
 
@@ -95,9 +94,9 @@ let enumerate_programs g request lb ub k =
   let g' = {logVariable = g.logVariable;
             library =
               g.library |>
-              List.filter ~f:(fun (p,_,_) -> not (is_recursion_primitive p)) |>
+              List.filter ~f:(fun (p,_,_,_) -> not (is_recursion_primitive p)) |>
               (* sort library by number of arguments so that it will tend to explore shorter things first *)
-              List.sort ~cmp:(fun (_,a,_) (_,b,_) -> List.length (arguments_of_type a) - List.length (arguments_of_type b)) } in
+              List.sort ~cmp:(fun (_,a,_,_) (_,b,_,_) -> List.length (arguments_of_type a) - List.length (arguments_of_type b)) } in
 
   let request' =
     if definitely_recursive then request @> request else request

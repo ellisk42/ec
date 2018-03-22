@@ -130,7 +130,9 @@ class Grammar(object):
 
     def likelihoodSummary(self, context, environment, request, expression):
         if request.isArrow():
-            if not isinstance(expression,Abstraction): return context,None
+            if not isinstance(expression,Abstraction):
+                eprint("Request is an arrow but I got",expression)
+                return context,None
             return self.likelihoodSummary(context,
                                           [request.arguments[0]] + environment,
                                           request.arguments[1],
@@ -163,6 +165,12 @@ class Grammar(object):
         _, tp, context = candidates[f]
         argumentTypes = tp.functionArguments()
         if len(xs) != len(argumentTypes):
+            eprint("PANIC: not enough arguments for the type")
+            eprint("request",request)
+            eprint("tp",tp)
+            eprint("expression",expression)
+            eprint("xs",xs)
+            eprint("argumentTypes",argumentTypes)
             # This should absolutely never occur
             raise GrammarFailure((context, environment, request, expression))            
 

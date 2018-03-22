@@ -63,23 +63,21 @@ let rec program_equal p1 p2 = match (p1,p2) with
   | (Apply(a,b), Apply(x,y)) -> program_equal a x && program_equal b y
   | _ -> false
 
-let rec infer_program_type context environment = function
+let rec infer_program_type context environment p : tContext*tp = match p with
   | Index(j) ->
-    let t = List.nth_exn environment j |> applyContext context in (context,t)
-  | Primitive(t,_,_) -> let (t,context) = instantiate_type context t in (context,t)
-  | Invented(t,_) -> let (t,context) = instantiate_type context t in (context,t)
+    applyContext context (List.nth_exn environment j)
+  | Primitive(t,_,_) -> instantiate_type context t
+  | Invented(t,_) -> instantiate_type context t
   | Abstraction(b) ->
     let (xt,context) = makeTID context in
     let (context,rt) = infer_program_type context (xt::environment) b in
-    let ft = applyContext context (xt @> rt) in
-    (context,ft)
+    applyContext context (xt @> rt)
   | Apply(f,x) ->
     let (rt,context) = makeTID context in
     let (context, xt) = infer_program_type context environment x in
     let (context, ft) = infer_program_type context environment f in
     let context = unify context ft (xt @> rt) in
-    let rt = applyContext context rt in
-    (context, rt)
+    applyContext context rt
 
 let closed_inference = snd % infer_program_type empty_context [];;
 
@@ -327,11 +325,17 @@ let primitive_a2 = primitive "++" ((tlist t0) @> (tlist t0) @> (tlist t0)) (@);;
 let primitive_reducei = primitive "reducei" ((tint @> t1 @> t0 @> t1) @> t1 @> (tlist t0) @> t1) (fun f x0 l -> List.foldi ~f:f ~init:x0 l);;
 let primitive_filter = primitive "filter" ((tint @> tboolean) @> (tlist tint) @> (tlist tint)) (fun f l -> List.filter ~f:f l);;
 let primitive_equal = primitive "eq?" (tint @> tint @> tboolean) (fun (a : int) (b : int) -> a = b);;
+let primitive_equal0 = primitive "eq0" (tint @> tboolean) (fun (a : int) -> a = 0);;
 let primitive_not = primitive "not" (tboolean @> tboolean) (not);;
 let primitive_and = primitive "and" (tboolean @> tboolean @> tboolean) (fun x y -> x && y);;
 let primitive_nand = primitive "nand" (tboolean @> tboolean @> tboolean) (fun x y -> not (x && y));;
 let primitive_or = primitive "or" (tboolean @> tboolean @> tboolean) (fun x y -> x || y);;
 let primitive_greater_than = primitive "gt?" (tint @> tint @> tboolean) (fun (x: int) (y: int) -> x > y);;
+
+let rec unfold p h n x =
+  if p x then [] else h x :: unfold p h n (n x)
+
+let primitive_unfold = primitive "unfold" ((t0 @> tboolean) @> (t0 @> t1) @> (t0 @> t0) @> t0 @> tlist t1) unfold;;
 
 let default_recursion_limit = 20;;
 
@@ -458,22 +462,22 @@ let program_parser : program parsing =
 
 let parse_program s = run_parser program_parser s
 
-let test_program_inference program desired_type =
-  let (context,t) = infer_program_type empty_context [] program in
-  let t = applyContext context t in
-  let t = canonical_type t in
-  Printf.printf "%s : %s\n" (string_of_program program) (string_of_type t);
-  assert (t = (canonical_type desired_type))
-
-let program_test_cases() =
-  test_program_inference (Abstraction(Index(0))) (t0 @> t0);
-  test_program_inference (Abstraction(Abstraction(Apply(Index(0),Index(1))))) (t0 @> (t0 @> t1) @> t1);
-  test_program_inference (Abstraction(Abstraction(Index(1)))) (t0 @> t1 @> t0);
-  test_program_inference (Abstraction(Abstraction(Index(0)))) (t0 @> t1 @> t1);
-  let v : int = evaluate [] (Apply(primitive_increment, primitive0)) in
-  Printf.printf "%d\n" v;
-  
-;;
+(* let test_program_inference program desired_type =
+ *   let (context,t) = infer_program_type empty_context [] program in
+ *   let t = applyContext context t in
+ *   let t = canonical_type t in
+ *   Printf.printf "%s : %s\n" (string_of_program program) (string_of_type t);
+ *   assert (t = (canonical_type desired_type))
+ * 
+ * let program_test_cases() =
+ *   test_program_inference (Abstraction(Index(0))) (t0 @> t0);
+ *   test_program_inference (Abstraction(Abstraction(Apply(Index(0),Index(1))))) (t0 @> (t0 @> t1) @> t1);
+ *   test_program_inference (Abstraction(Abstraction(Index(1)))) (t0 @> t1 @> t0);
+ *   test_program_inference (Abstraction(Abstraction(Index(0)))) (t0 @> t1 @> t1);
+ *   let v : int = evaluate [] (Apply(primitive_increment, primitive0)) in
+ *   Printf.printf "%d\n" v;
+ *   
+ * ;; *)
 
 let parsing_test_case s =
   Printf.printf "Parsing the string %s\n" s;

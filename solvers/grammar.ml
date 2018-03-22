@@ -3,76 +3,65 @@ open Core
 open Utils
 open Type
 open Program
-
+open FastType
 
 
 type grammar = {
   logVariable: float;
-  library: (program*tp*float) list;
+  library: (program*tp*float*(tContext -> tp -> tContext*(tp list))) list;
 }
 
 let primitive_grammar primitives =
   {library = List.map primitives ~f:(fun p -> match p with
-       |Primitive(t,_,_) -> (p,t, 0.0 -. (log (float_of_int (List.length primitives))))
+       |Primitive(t,_,_) -> (p,t, 0.0 -. (log (float_of_int (List.length primitives))),
+                            compile_unifier t)
        |_ -> raise (Failure "primitive_grammar: not primitive"));
    logVariable = log 0.5
   }
 
 let grammar_primitives g =
   {logVariable = g.logVariable;
-   library = g.library |> List.filter ~f:(fun (p,_,_) -> is_primitive p)}
+   library = g.library |> List.filter ~f:(fun (p,_,_,_) -> is_primitive p)}
 
 let string_of_grammar g =
   string_of_float g.logVariable ^ "\n" ^
-  join ~separator:"\n" (g.library |> List.map ~f:(fun (p,t,l) -> Float.to_string l^"\t"^(string_of_type t)^"\t"^(string_of_program p)))
+  join ~separator:"\n" (g.library |> List.map ~f:(fun (p,t,l,_) -> Float.to_string l^"\t"^(string_of_type t)^"\t"^(string_of_program p)))
 
-let unifying_expressions g environment request context : (program*tp*tContext*float) list =
+let unifying_expressions g environment request context : (program*tp list*tContext*float) list =
   (* given a grammar environment requested type and typing context,
      what are all of the possible leaves that we might use?
      These could be productions in the grammar or they could be variables. 
      Yields a sequence of:
-     (leaf, instantiatedTypeOfLeaf, context with leaf type unified with requested type, normalized log likelihood)
+     (leaf, argument types, context with leaf return type unified with requested type, normalized log likelihood)
   *)
 
   let variable_candidates =
     environment |> List.mapi ~f:(fun j t -> (Index(j),t,g.logVariable)) |>
     List.filter_map ~f:(fun (p,t,ll) ->
-        let return = applyContext context t |> return_of_type in
+        let (context, t) = applyContext context t in
+        let return = return_of_type t in
         if might_unify return request
         then
           try
             let context = unify context return request in
-            let t = applyContext context t in
-            Some((p,t,context,ll))
-          with UnificationFailure -> None (* begin *)
-            (*   Printf.eprintf "inconsistent variable unification. %s\t%s\n" *)
-            (*    (string_of_type return) (string_of_type request); *)
-            (*   assert false *)
-            (* end *)
+            let (context,t) = applyContext context t in            
+            Some((p,arguments_of_type t,context,ll))
+          with UnificationFailure -> None
         else None)
   in
   let nv = List.length variable_candidates |> Float.of_int |> log in
   let variable_candidates = variable_candidates |> List.map ~f:(fun (p,t,k,ll) -> (p,t,k,ll-.nv)) in
 
   let grammar_candidates = 
-    g.library |> List.filter_map ~f:(fun (p,t,ll) ->
+    g.library |> List.filter_map ~f:(fun (p,t,ll,u) ->
         try
-          let (t,context) = instantiate_type context t in
           let return_type = return_of_type t in
           if not (might_unify return_type request)
           then None
           else
-            let context = unify context return_type request in
-            let t = applyContext context t in
-            Some(p, t, context, ll)
-        with UnificationFailure -> None (* begin *)
-       (*      let (t,context) = instantiate_type context t in *)
-       (*      let return_type = return_of_type t in *)
-       (*      (\* Should be handled by can_unify guard *\) *)
-       (*      Printf.eprintf "Unification bug: %b %s\t%s\t%s\n" *)
-       (*        (can_unify return_type request) (string_of_program p) (string_of_type request) (string_of_type return_type); *)
-       (*      assert false *)
-       (* end *))
+            let (context,arguments) = u context request in
+            Some(p, arguments, context, ll)
+        with UnificationFailure -> None)
   in
 
   let candidates = variable_candidates@grammar_candidates in
@@ -114,4 +103,4 @@ let unifying_expressions g environment request context : (program*tp*tContext*fl
 (*   likelihood request [] empty_context expression |> fst *)
 
 let grammar_has_recursion a g =
-  g.library |> List.exists ~f:(fun (p,_,_) -> is_recursion_of_arity a p)
+  g.library |> List.exists ~f:(fun (p,_,_,_) -> is_recursion_of_arity a p)
