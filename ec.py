@@ -1,5 +1,6 @@
 
 from utilities import eprint
+from likelihoodModel import *
 from recognition import *
 from frontier import *
 from program import *
@@ -75,6 +76,7 @@ def ecIterator(grammar, tasks,
                bootstrap=None,
                solver="ocaml",
                compressor="rust",
+               likelihoodModel="all-or-nothing",
                testingTasks = [],
                benchmark=None,
                iterations=None,
@@ -206,22 +208,41 @@ def ecIterator(grammar, tasks,
 
     for j in range(resume or 0, iterations):
         if j >= 2 and expandFrontier and result.learningCurve[-1] <= result.learningCurve[-2]:
-            oldFrontierSize = frontierSize
+            oldEnumerationTimeout = enumerationTimeout
             if expandFrontier <= 10:
-                frontierSize = int(frontierSize * expandFrontier)
+                enumerationTimeout = int(enumerationTimeout * expandFrontier)
             else:
-                frontierSize = int(frontierSize + expandFrontier)
-            eprint("Expanding frontier from {} to {} because of no progress".format(
-                oldFrontierSize, frontierSize))
+                enumerationTimeout = int(enumerationTimeout + expandFrontier)
+            eprint("Expanding enumeration timeout from {} to {} because of no progress".format(
+                oldEnumerationTimeout, enumerationTimeout))
 
-        frontiers, times = multithreadedEnumeration(grammar, tasks,
-                                              solver=solver,
-                                              frontierSize=frontierSize,
-                                              maximumFrontier=maximumFrontier,
-                                              enumerationTimeout=enumerationTimeout,
-                                              CPUs=CPUs,
-                                              evaluationTimeout=evaluationTimeout)
+        likelihoodModel = {
+            "all-or-nothing":        lambda: AllOrNothingLikelihoodModel(
+                                                 timeout=evaluationTimeout),
+            "feature-discriminator": lambda: FeatureDiscriminatorLikelihoodModel(
+                                                 tasks, featureExtractor(tasks)),
+            "euclidean":             lambda: EuclideanLikelihoodModel(
+                                                 featureExtractor(tasks)),
+        }[likelihoodModel]()
 
+        timeout = enumerationTimeout
+        while True:
+            frontiers, times = multithreadedEnumeration(grammar, tasks, likelihoodModel,
+                                                        solver=solver,
+                                                        frontierSize=frontierSize,
+                                                        maximumFrontier=maximumFrontier,
+                                                        enumerationTimeout=timeout,
+                                                        CPUs=CPUs,
+                                                        evaluationTimeout=evaluationTimeout)
+            if not expandFrontier: break
+            if j == 0: break
+            if useRecognitionModel: break
+            if sum(not f.empty for f in frontiers) <= result.learningCurve[-1]:
+                eprint("Expanding enumeration timeout from %i to %i because of no progress"%(
+                    timeout, timeout*expandFrontier))
+                timeout = timeout*expandFrontier
+            else: break
+            
         eprint("Generative model enumeration results:")
         eprint(Frontier.describe(frontiers))
 
@@ -237,7 +258,8 @@ def ecIterator(grammar, tasks,
                              helmholtzRatio=helmholtzRatio if j > 0 else 0.)
             result.recognitionModel = recognizer
 
-            bottomupFrontiers, times = recognizer.enumerateFrontiers(tasks, CPUs=CPUs,
+            bottomupFrontiers, times = recognizer.enumerateFrontiers(tasks, likelihoodModel,
+                                                                     CPUs=CPUs,
                                                                      solver=solver,
                                                                      maximumFrontier=maximumFrontier,
                                                                      frontierSize=frontierSize,
@@ -293,6 +315,10 @@ def ecIterator(grammar, tasks,
         result.grammars.append(grammar)
         eprint("Grammar after iteration %d:" % (j + 1))
         eprint(grammar)
+        # TODO: This would be useful debugging output
+        # eprint("Expected uses of each grammar production after iteration %d:" % (j + 1))
+        # FragmentGrammar.fromGrammar(grammar).expectedUses
+        # eprint(grammar.)
 
         if outputPrefix is not None:
             path = checkpointPath(j + 1)

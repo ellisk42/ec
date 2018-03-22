@@ -51,7 +51,7 @@ import traceback
 
 
 
-def multithreadedEnumeration(g, tasks, _=None,
+def multithreadedEnumeration(g, tasks, likelihoodModel, _=None,
                              solver=None,
                              frontierSize=None,
                              enumerationTimeout=None,
@@ -138,6 +138,7 @@ def multithreadedEnumeration(g, tasks, _=None,
                                           upperBound = lowerBounds[t] + bi,
                                           budgetIncrement = bi,
                                           timeout = thisTimeout,
+                                          likelihoodModel = likelihoodModel,
                                           evaluationTimeout = evaluationTimeout,
                                           maximumFrontier = maximumFrontier - len(frontiers[t]))
                     lowerBounds[t] += bi
@@ -219,6 +220,7 @@ def solveForTask_ocaml(_ = None,
                        g = None, task = None,
                        lowerBound = None, upperBound = None, budgetIncrement = None,
                        timeout = None,
+                       likelihoodModel = None, # FIXME: unused
                        evaluationTimeout = None, maximumFrontier = None):
     import json
     message = {"DSL": {"logVariable": g.logVariable,
@@ -276,9 +278,10 @@ def solveForTask_pypy(_ = None,
                       g = None, task = None,
                       lowerBound = None, upperBound = None, budgetIncrement = None,
                       timeout = None,
+                      likelihoodModel = None,
                       evaluationTimeout = None, maximumFrontier = None):
     return callCompiled(enumerateForTask,
-                        g,task,
+                        g,task,likelihoodModel,
                         timeout = timeout,
                         evaluationTimeout = evaluationTimeout,
                         maximumFrontier = maximumFrontier,
@@ -291,8 +294,9 @@ def solveForTask_python(_ = None,
                         g = None, task = None,
                         lowerBound = None, upperBound = None, budgetIncrement = None,
                         timeout = None,
+                        likelihoodModel = None,
                         evaluationTimeout = None, maximumFrontier = None):
-    return enumerateForTask(g,task,
+    return enumerateForTask(g,task,likelihoodModel,
                             timeout = timeout,
                             evaluationTimeout = evaluationTimeout,
                             maximumFrontier = maximumFrontier,
@@ -300,7 +304,7 @@ def solveForTask_python(_ = None,
                             lowerBound = lowerBound, upperBound = upperBound)
 
 class EnumerationTimeout(Exception): pass
-def enumerateForTask(g, task, _ = None,
+def enumerateForTask(g, task, likelihoodModel, _ = None,
                      verbose=False,
                      timeout=None,
                      evaluationTimeout=None,
@@ -335,8 +339,8 @@ def enumerateForTask(g, task, _ = None,
                 numberOfPrograms += 1
                 totalNumberOfPrograms += 1
                 
-                likelihood = task.logLikelihood(p, timeout=evaluationTimeout)
-                if valid(likelihood):
+                success, likelihood = likelihoodModel.score(p, task)
+                if success:
                     if verbose:
                         eprint("Hit",task.name,"with the program",p,"which has prior",prior,"after",time() - starting,"seconds")
                     if frontier == []: timeUntilFirstSolution = time() - starting                        
@@ -404,6 +408,7 @@ def benchmarkSynthesisTimes(result, tasks, _ = None, timeout = None, CPUs = None
 def benchmarkSynthesisTime(result, task, timeout):
     grammar = result.grammars[-1]
     
+    from likelihoodModel import AllOrNothingLikelihoodModel
     from time import time
     import signal
     
@@ -421,7 +426,7 @@ def benchmarkSynthesisTime(result, task, timeout):
 
     elapsed = time() - startTime
     frontier = callCompiled(enumerateForTask,
-                            grammar, task,
+                            grammar, task, AllOrNothingLikelihoodModel,
                             maximumFrontier = 1,
                             timeout = timeout - elapsed)
     dt = time() - startTime

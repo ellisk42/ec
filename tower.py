@@ -91,6 +91,8 @@ def exportTowers(towers, name):
     
 
 if __name__ == "__main__":
+    initializeTowerCaching()
+    
     g0 = Grammar.uniform(primitives)
     tasks = makeTasks()
     test, train = testTrainSplit(tasks, 100./len(tasks))

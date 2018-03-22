@@ -174,17 +174,15 @@ def McCarthyPrimitives():
         primitiveRecursion1,
         primitiveRecursion2,
         Primitive("if", arrow(tbool, t0, t0, t0), _if),
-        # Primitive("match", arrow(tlist(t0),
-        #                          t1,
-        #                          arrow(t0, tlist(t0), t1),
-        #                          t1), _match),
         Primitive("eq?", arrow(tint, tint, tbool), _eq),
-        #Primitive("gt?", arrow(tint, tint, tbool), _gt),
+
+        # The hope is that it learns these quickly
+        # Primitive("eq0", arrow(tint, tbool), None),
+        # Primitive("+1", arrow(tint, tint), None),
+        # Primitive("-1", arrow(tint, tint), None),
         
         Primitive("+", arrow(tint, tint, tint), _addition),
         Primitive("-", arrow(tint, tint, tint), _subtraction),
-        # Primitive("*", arrow(tint, tint, tint), _multiplication),
-        # Primitive("negate", arrow(tint, tint), _negate),
         ] + [ Primitive(str(j), tint, j) for j in xrange(2) ]
 
 if __name__ == "__main__":
@@ -200,10 +198,14 @@ if __name__ == "__main__":
     print g.logLikelihood(arrow(tint,tlist(tint),tlist(tint)), p)
     print 
 
-    print "countdown"
+    print "countdown primitive"
     p = Program.parse("(lambda (lambda (if (eq? $0 0) empty (cons (+ $0 1) ($1 (- $0 1))))))")
     print g.logLikelihood(arrow(arrow(tint,tlist(tint)), arrow(tint,tlist(tint))), p)
     print _fix(9)(p.evaluate([]))
+    print "countdown w/ better primitives"
+    p = Program.parse("(lambda (lambda (if (eq0 $0) empty (cons (+1 $0) ($1 (-1 $0))))))")
+    print g.logLikelihood(arrow(arrow(tint,tlist(tint)), arrow(tint,tlist(tint))), p)
+
     
     print 
 

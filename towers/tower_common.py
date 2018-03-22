@@ -6,14 +6,6 @@ from Box2D.b2 import (world, polygonShape, circleShape, staticBody, dynamicBody,
 import random
 import math
 
-class Bunch(object):
-    def __init__(self,d):
-        self.__dict__.update(d)
-    def __setitem__(self, key, item):
-        self.__dict__[key] = item
-    def __getitem__(self, key):
-        return self.__dict__[key]
-
 class TowerWorld(object):
     def __init__(self):
         self.world = world(gravity=(0, -10), doSleep=True)
@@ -348,11 +340,11 @@ class TowerWorld(object):
             # reset the world
             self.clearWorld()
         h = sum(hs)/N
-        return Bunch({"height": h,
-                      "stability": sum(wasStable)/float(len(wasStable)),
-                      "area": area,
-                      "length": length,
-                      "staircase": max(biggestFall, biggestJump)})
+        return {"height": h,
+                "stability": sum(wasStable)/float(len(wasStable)),
+                "area": area,
+                "length": length,
+                "staircase": max(biggestFall, biggestJump)}
     
             
 

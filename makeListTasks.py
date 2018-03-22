@@ -114,12 +114,25 @@ def make_list_bootstrap_tasks(numberOfExamples):
              [((n,),n+1) for n in range(5) ]),
         Task("decrement", arrow(tint,tint),
              [((n,),n-1) for n in range(5) ]),
+        Task("increment twice", arrow(tint,tint),
+             [((n,),n+2) for n in range(5) ]),
+        # Task("increment 3x", arrow(tint,tint),
+        #      [((n,),n+3) for n in range(5) ]),
+        Task("decrement twice", arrow(tint,tint),
+             [((n,),n-2) for n in range(5) ]),
+        # Task("decrement 3x", arrow(tint,tint),
+        #      [((n,),n-3) for n in range(5) ]),
         Task("zero?", arrow(tint,tbool),
              [((n,), n == 0) for n in range(5) ]),
-        Task("multiply", arrow(tint,tint,tint),
-             [((x,y),x*y)
-              for x in range(3)
-              for y in range(4) ]),
+        Task("zero car?", arrow(tlist(tint),tbool),
+             [(([h] + l,), h == 0)
+              for _ in range(5)
+              for h in [0,randint(1,9)]
+              for l in [randomList()] ]),
+        # # Task("multiply", arrow(tint,tint,tint),
+        # #      [((x,y),x*y)
+        # #       for x in range(3)
+        # #       for y in range(4) ]),
 
         Task("map zero?", arrow(tlist(tint),tlist(tbool)),
              [((l,),map(lambda n: n == 0,l))
@@ -133,26 +146,26 @@ def make_list_bootstrap_tasks(numberOfExamples):
              [((l,),map(lambda n: n-1, l))
               for _ in range(10)
               for l in [randomList()] ]),
-        # Task("map cdr", arrow(tlist(tlist(tint)),tlist(tlist(tint))),
-        #      [((l,),map(lambda n: n[1:],l))
-        #       for _ in range(5)
-        #       for l in [randomListOfLists()] ])
+        # # Task("map cdr", arrow(tlist(tlist(tint)),tlist(tlist(tint))),
+        # #      [((l,),map(lambda n: n[1:],l))
+        # #       for _ in range(5)
+        # #       for l in [randomListOfLists()] ])
         
-        Task("map car", arrow(tlist(tlist(tint)),tlist(tint)),
-             [((l,),map(lambda n: n[0],l))
-              for _ in range(5)
-              for l in [randomListOfLists()] ]),
+        # # Task("map car", arrow(tlist(tlist(tint)),tlist(tint)),
+        # #      [((l,),map(lambda n: n[0],l))
+        # #       for _ in range(5)
+        # #       for l in [randomListOfLists()] ]),
 
-        # Task("zip plus", arrow(tlist(tint),tlist(tint),tlist(tint)),
-        #      [((l1,l2),map(lambda x,y: x+y,l1,l2))
-        #       for _ in range(5)
-        #       for l1 in [randomList()]
-        #       for l2 in [[ randint(0,9) for _ in range(len(l1)) ]]]),
-        # Task("zip minus", arrow(tlist(tint),tlist(tint),tlist(tint)),
-        #      [((l1,l2),map(lambda x,y: x-y,l1,l2))
-        #       for _ in range(5)
-        #       for l1 in [randomList()]
-        #       for l2 in [[ randint(0,9) for _ in range(len(l1)) ]]]),
+        # # Task("zip plus", arrow(tlist(tint),tlist(tint),tlist(tint)),
+        # #      [((l1,l2),map(lambda x,y: x+y,l1,l2))
+        # #       for _ in range(5)
+        # #       for l1 in [randomList()]
+        # #       for l2 in [[ randint(0,9) for _ in range(len(l1)) ]]]),
+        # # Task("zip minus", arrow(tlist(tint),tlist(tint),tlist(tint)),
+        # #      [((l1,l2),map(lambda x,y: x-y,l1,l2))
+        # #       for _ in range(5)
+        # #       for l1 in [randomList()]
+        # #       for l2 in [[ randint(0,9) for _ in range(len(l1)) ]]]),
 
         Task("reverse int", arrow(tlist(tint),tlist(tint)),
              [((l,),list(reversed(l)))
