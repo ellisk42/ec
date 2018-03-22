@@ -1,5 +1,6 @@
 
 from utilities import eprint
+from likelihoodModel import *
 from recognition import *
 from frontier import *
 from program import *
@@ -75,6 +76,7 @@ def ecIterator(grammar, tasks,
                bootstrap=None,
                solver="ocaml",
                compressor="rust",
+               likelihoodModel="all-or-nothing",
                testingTasks = [],
                benchmark=None,
                iterations=None,
@@ -214,9 +216,18 @@ def ecIterator(grammar, tasks,
             eprint("Expanding enumeration timeout from {} to {} because of no progress".format(
                 oldEnumerationTimeout, enumerationTimeout))
 
+        likelihoodModel = {
+            "all-or-nothing":        lambda: AllOrNothingLikelihoodModel(
+                                                 timeout=evaluationTimeout),
+            "feature-discriminator": lambda: FeatureDiscriminatorLikelihoodModel(
+                                                 tasks, featureExtractor(tasks)),
+            "euclidean":             lambda: EuclideanLikelihoodModel(
+                                                 featureExtractor(tasks)),
+        }[likelihoodModel]()
+
         timeout = enumerationTimeout
         while True:
-            frontiers, times = multithreadedEnumeration(grammar, tasks,
+            frontiers, times = multithreadedEnumeration(grammar, tasks, likelihoodModel,
                                                         solver=solver,
                                                         frontierSize=frontierSize,
                                                         maximumFrontier=maximumFrontier,
@@ -232,7 +243,6 @@ def ecIterator(grammar, tasks,
                 timeout = timeout*expandFrontier
             else: break
             
-
         eprint("Generative model enumeration results:")
         eprint(Frontier.describe(frontiers))
 
@@ -248,7 +258,8 @@ def ecIterator(grammar, tasks,
                              helmholtzRatio=helmholtzRatio if j > 0 else 0.)
             result.recognitionModel = recognizer
 
-            bottomupFrontiers, times = recognizer.enumerateFrontiers(tasks, CPUs=CPUs,
+            bottomupFrontiers, times = recognizer.enumerateFrontiers(tasks, likelihoodModel,
+                                                                     CPUs=CPUs,
                                                                      solver=solver,
                                                                      maximumFrontier=maximumFrontier,
                                                                      frontierSize=frontierSize,
