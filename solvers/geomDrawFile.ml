@@ -45,7 +45,7 @@ let _ =
           let canvas = interpret program in
           let pngFName = ((Filename.chop_suffix Sys.argv.(1) ".LoG")^"_l.png")
           and pngFNameh= ((Filename.chop_suffix Sys.argv.(1) ".LoG")^"_h.png") in
-          output_canvas_png canvas 16 pngFName ;
+          output_canvas_png canvas 32 pngFName ;
           output_canvas_png canvas 64 pngFNameh
       | None -> ())
     with MalformedProgram(error_message) ->

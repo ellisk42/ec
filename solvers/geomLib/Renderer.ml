@@ -5,12 +5,10 @@ open Cairo
 
 type canvas = Plotter.canvas
 
-let d_from_origin = 100.
-
 let output_canvas_png : ?smart:bool ->
                         canvas -> int -> string -> unit =
-    fun ?smart:(smart=true) (canvas, box) desired fname ->
-    let (view,size,image) = Utils2.get_infos ~smart d_from_origin box canvas in
+    fun ?smart:(smart=false) (canvas, box) desired fname ->
+    let (view,size,image) = Utils2.get_infos smart d_from_origin box canvas in
     let res = (float_of_int desired) /. (Gg.Size2.h size) in
     let rel = 1000. *. res in (* Sorry, for some reason the unit changes here
                                  from mm to m...! *)
@@ -23,8 +21,8 @@ let output_canvas_png : ?smart:bool ->
     close_out oc
 
 let canvas_to_1Darray =
-    fun ?smart:(smart=true) (canvas, box) desired ->
-    let (view,size,image) = Utils2.get_infos ~smart d_from_origin box canvas in
+    fun ?smart:(smart=false) (canvas, box) desired ->
+    let (view,size,image) = Utils2.get_infos smart d_from_origin box canvas in
     let res = (float_of_int desired) /. (Gg.Size2.h size) in
     let w,h = desired,desired in
     let stride = Cairo.Image.(stride_for_width A8 w) in

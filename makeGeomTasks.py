@@ -4,7 +4,6 @@ from task import Task
 from geomPrimitives import tcanvas
 import png
 import os
-import sys
 
 rootdir = "./data/geom/"
 
@@ -16,26 +15,31 @@ def fileToArray(fname):
     return flatten
 
 
-def pretty_print(y):
-    size = 16
-    print ""
-    sys.stdout.write("┍")
-    sys.stdout.write("━"*(16*2))
-    sys.stdout.write("┑")
-    print ""
+def pretty_string(shape, size):
+    out = ""
+    nl = "\n"
+    out += "╭"
+    out += "─"*(size*2)
+    out += "╮"
+    out += nl
     for j in range(size):
-        sys.stdout.write("│")
+        out += "│"
         for i in range(size):
-            if int(y[j*size + (i % size)]) == 0:
-                sys.stdout.write("░░")
+            if int(shape[j*size + (i % size)]) == 0:
+                out += "░░"
             else:
-                sys.stdout.write("██")
-        sys.stdout.write("│")
-        print ""
-    sys.stdout.write("┕")
-    sys.stdout.write("━"*(16*2))
-    sys.stdout.write("┙")
-    print ""
+                out += "██"
+        out += "│"
+        out += nl
+    out += "╰"
+    out += "─"*(size*2)
+    out += "╯"
+    out += nl
+    return out
+
+
+def pretty_print(shape, size):
+    print (pretty_string(shape, size))
 
 
 def makeTasks():
@@ -65,6 +69,6 @@ if __name__ == "__main__":
     for t in tasks:
         print t.name
         print t.request
-        x, y = t.examples[4]
-        pretty_print(y)
+        x, y = t.examples[0]
+        pretty_print(y, 32)
         print

@@ -35,7 +35,7 @@ let pp_view s = Printf.printf "(%f,%f)\n" (Gg.Box2.w s) (Gg.Box2.h s)
 let pp_size s = Printf.printf "(%f,%f)\n" (Size2.w s)   (Size2.h s)
 let pp_p2 s   = Printf.printf "(%f,%f)\n" (V2.x s)   (V2.y s)
 
-let get_infos ?smart:(smart=true) d_from_origin box canvas =
+let get_infos smart d_from_origin box canvas =
     let d2 = 2. *. d_from_origin in
     let view_crop =
         try (Gg.Box2.inter
@@ -60,7 +60,10 @@ let get_infos ?smart:(smart=true) d_from_origin box canvas =
         (Gg.P2.v (dim +. (2. *. margin)) (dim +. (2. *. margin))))
       else (Gg.Box2.v (Gg.P2.v 0. 0.) (Gg.Size2.v d2 d2)) in
     let size = Gg.Size2.v d2 d2 in
-    let area = `O { P.o with P.width = 0.0001 } in
+    let area =
+      if smart then `O { P.o with P.width = 1. /. dim }
+               else `O { P.o with P.width = 0.065 }
+    in
     let black = I.const Color.black in
     let image = I.cut ~area canvas black in
     (view,size,image)

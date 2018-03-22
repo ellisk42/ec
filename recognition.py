@@ -434,6 +434,11 @@ class RecognitionModel(nn.Module):
                 if i%50 == 0 and losses:
                     eprint("Epoch",i,"Loss",sum(losses)/len(losses))
                     gc.collect()
+            try:
+                if doingHelmholtz:
+                    self.featureExtractor.finish()
+            except AttributeError:
+                ()
 
     def sampleHelmholtz(self, requests, statusUpdate = None):
        request = random.choice(requests)

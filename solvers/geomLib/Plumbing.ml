@@ -1,9 +1,7 @@
 open Interpreter
 open Renderer
 
-let size = 16
-
-let bigarrayWith0s () =
+let bigarrayWith0s size =
   let data = Bigarray.(Array1.create int8_unsigned c_layout size) in
   Bigarray.Array1.fill data 0 ;
   data
@@ -14,13 +12,13 @@ let threshold data =
   done ;
   data
 
-let canvas_to_tlist canvas =
+let canvas_to_tlist size canvas =
   try begin
     canvas_to_1Darray canvas size |>
     threshold
   end
   with Invalid_argument _ ->
-    bigarrayWith0s ()
+    bigarrayWith0s size
 
 let relist data = (* SLOWWWWW *)
   let l = ref [] in
@@ -29,13 +27,12 @@ let relist data = (* SLOWWWWW *)
   done ;
   !l
 
-
-let nop            = Nop
-let concat p1 p2   = Concat(p1,p2)
-let embed p        = Embed(p)
-let turn x         = Turn(x)
-let repeat v p     = Repeat(v,p)
-let run p          = canvas_to_tlist (interpret p)
+let nop                  = Nop
+let concat p1 p2         = Concat(p1,p2)
+let embed p              = Embed(p)
+let turn x               = Turn(x)
+let repeat v p           = Repeat(v,p)
+let run ?size:(size=32) p = canvas_to_tlist size (interpret p)
 
 let integrate v1 v2 v3 v4 v5 v6 = Integrate(v1,v2,(v3,v4,v5,v6))
 

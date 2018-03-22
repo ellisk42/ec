@@ -1,8 +1,8 @@
+open GeomLib
 open Plotter
 open Renderer
 open Interpreter
 open Printf
-open Images
 
 (*let prog = (Plumbing.concat Plumbing.integrate*)
               (*(Plumbing.concat (Plumbing.turn None) Plumbing.integrate))*)
@@ -16,30 +16,25 @@ let dashes = Repeat(None,Repeat(None,Concat(line,
 Integrate(None,Some(false),(None,None,None,None)))))
 let spiral = Integrate(None,None,(None,None,None,Some(Unit)))
 
-let npp s l =
-  let rec aux h s l = match l with
-   | []     -> ()
-   | x :: r ->
-       if (x = 0) then print_char '0' else print_char '1' ;
-       aux (h+1) s r
-  in aux 1 s l
-let pp s l =
-  let rec aux h s l = match l with
-   | []     -> ()
-   | x :: r ->
-       if (x = 0) then print_char '.' else print_char '#' ;
-       if (h mod s) = 0 then begin
-         print_newline () ;
-         aux 1 s r
-       end else aux (h+1) s r
-  in aux 1 s l
+
+let pp l data =
+  for i = 0 to (Bigarray.Array1.dim data) - 1 do
+    if (i mod l) == 0 then print_newline () ;
+    print_int (data.{i})
+  done
+
+let npp data =
+  for i = 0 to (Bigarray.Array1.dim data) - 1 do
+    print_int (data.{i})
+  done
 
 let () =
   let choice = circle in
   let (path,box) = interpret choice in
   let l = Plumbing.run choice in
-  pp 16 l ;
-  npp 16 l ;
+  print_canvas (path,box) ;
+  pp 32 l ;
+  npp l ;
   print_newline () ;
-  output_canvas_png (path,box) 16 "toto.png"
+  output_canvas_png (path,box) 512 "toto.png"
 

@@ -3,7 +3,7 @@ open Gg
 
 type canvas = P.t * Gg.Box2.t
 
-let d_from_origin = 100.
+let d_from_origin = 10.
 
 let new_canvas () = (P.sub (Gg.P2.v d_from_origin d_from_origin) P.empty,
                      Gg.Box2.empty)

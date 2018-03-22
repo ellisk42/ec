@@ -1,11 +1,19 @@
 all:
 	cd solvers && \
-	  jbuilder clean && \
-	  jbuilder build --verbose solver.exe && \
-	  jbuilder build --verbose geomDrawLambdaString.exe && \
+	  jbuilder build solver.exe && \
+	  jbuilder build geomDrawLambdaString.exe && \
+	  jbuilder build geomDrawFile.exe && \
 	  cp _build/default/solver.exe ../solver && \
 	  cp _build/default/geomDrawLambdaString.exe \
-	    ../geomDrawLambdaString
+	    ../geomDrawLambdaString && \
+	  cp _build/default/geomDrawFile.exe \
+	    ./behaviouralData/geomDrawFile
+
+drawFile:
+	cd solvers && \
+	  jbuilder build geomDrawFile.exe && \
+	  cp _build/default/geomDrawFile.exe \
+	    ./behaviouralData/geomDrawFile
 
 clean:
 	cd solvers && jbuilder clean

@@ -37,11 +37,14 @@ let _ =
     (match read_program program_string with
       | Some (program) ->
           (try
-            let l = Plumbing.run program in
-            (npp l ; print_newline ())
+            let c = interpret program in
+            let l1 = Plumbing.canvas_to_tlist 32 c in
+            let l2 = Plumbing.canvas_to_tlist 64 c in
+            (npp l1 ; print_newline () ;
+             npp l2 ; print_newline ())
           with _ ->
-            (print_string (String.make (16*16) '0') ;
-            print_newline ())
+            (print_string (String.make (32*32) '0') ; print_newline () ;
+             print_string (String.make (64*64) '0') ; print_newline ())
             )
       | None -> ())
     with MalformedProgram(error_message) ->
