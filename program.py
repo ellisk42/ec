@@ -27,6 +27,28 @@ class Program(object):
             return self.inferType(Context.EMPTY,[],{})[1].canonical()
         except UnificationFailure as e:
             raise InferenceFailure(self, e)
+    def uncurry(self):
+        t = self.infer()
+        a = len(t.functionArguments())
+        e = self
+        existingAbstractions = 0
+        while e.isAbstraction:
+            e = e.body
+            existingAbstractions += 1
+        newAbstractions = a - existingAbstractions
+        assert newAbstractions >= 0
+
+        # e is the body stripped of abstractions
+
+        for n in reversed(xrange(newAbstractions)):
+            e = Application(e, Index(n+existingAbstractions))
+        for _ in xrange(a): e = Abstraction(e)
+
+        eprint("Curry",self,e)
+        eprint(self.infer())
+        eprint(e.infer())
+        assert self.infer() == e.infer()
+        return e
     def wellTyped(self):
         try:
             self.infer()

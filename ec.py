@@ -315,10 +315,14 @@ def ecIterator(grammar, tasks,
         result.grammars.append(grammar)
         eprint("Grammar after iteration %d:" % (j + 1))
         eprint(grammar)
-        # TODO: This would be useful debugging output
-        # eprint("Expected uses of each grammar production after iteration %d:" % (j + 1))
-        # FragmentGrammar.fromGrammar(grammar).expectedUses
-        # eprint(grammar.)
+        eprint("Expected uses of each grammar production after iteration %d:" % (j + 1))
+        productionUses = FragmentGrammar.fromGrammar(grammar).\
+                         expectedUses([f for f in frontiers if not f.empty ]).actualUses
+        productionUses = {p: productionUses.get(p,0.) for p in grammar.primitives }
+        for p in sorted(productionUses.keys(),key = lambda p: -productionUses[p]):
+            eprint("<uses>=%.2f\t%s"%(productionUses[p], p))
+        eprint()
+        
 
         if outputPrefix is not None:
             path = checkpointPath(j + 1)

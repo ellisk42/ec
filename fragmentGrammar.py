@@ -332,7 +332,17 @@ class FragmentGrammar(object):
                                             lambda frontier: RewriteFragments.rewriteFrontier(frontier, newPrimitive),
                                             frontiers)
                     eprint("\t(<uses> in rewritten frontiers: %f)"%
-                           (bestGrammar.expectedUses(frontiers).actualUses[newPrimitive]))
+                           (bestGrammar.expectedUses(frontiers).actualUses[concretePrimitive]))
+                    if False:
+                        frontiers.append(Frontier([FrontierEntry(logLikelihood=0.,
+                                                                 logPrior=0.,
+                                                                  program=concretePrimitive.body.uncurry())],
+                                                   task=Task(str(concretePrimitive),
+                                                             concretePrimitive.tp.negateVariables(),
+                                                             []
+                                                   )))
+                        eprint("dummy frontier")
+                        eprint(frontiers[-1])
         else:
             eprint("Skipping fragment proposals")
 
@@ -422,3 +432,18 @@ def rustInduce(g0, frontiers, _=None,
          for s in r["solutions"]],
         f.task) for f, r in zip(frontiers, resp["frontiers"])]
     return g, newFrontiers
+
+if __name__ == "__main__":
+    from listPrimitives import *
+    from frontier import *
+    from task import *
+    g = Grammar.uniform(McCarthyPrimitives())
+    ps = [Program.parse("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) 0 (+ ($1 (cdr $0)) 1))))))"),
+          Program.parse("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) empty (cons (eq? 0 (car $0)) ($1 (cdr $0))))))))"),
+          Program.parse("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) empty (cons (empty? (car $0)) ($1 (cdr $0))))))))")]
+    frontiers = [Frontier([FrontierEntry(logLikelihood=0.,
+                                         logPrior=-1.,
+                                         program=p)],
+                          task=Task(str(p),p.infer(),[(([],),1)]))
+                 for p in ps ]
+    FragmentGrammar.induceFromFrontiers(g,frontiers,a=2,CPUs=4)

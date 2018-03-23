@@ -53,6 +53,9 @@ class TypeConstructor(Type):
         if not self.isPolymorphic: return False
         return any(x.occurs(v) for x in self.arguments )
 
+    def negateVariables(self):
+        return TypeConstructor(self.name, [a.negateVariables() for a in self.arguments ])
+
     def instantiate(self, context, bindings = None):
         if not self.isPolymorphic: return context, self
         if bindings == None: bindings = {}
@@ -104,6 +107,9 @@ class TypeVariable(Type):
         new = TypeVariable(len(bindings))
         bindings[self.v] = new
         return new
+
+    def negateVariables(self):
+        return TypeVariable(-1 - self.v)
 
     
             

@@ -273,6 +273,18 @@ class Grammar(object):
                           for e in frontier ],
                         frontier.task)
 
+    def productionUses(self, frontiers):
+        """Returns the expected number of times that each production was used. {production: expectedUses}"""
+        frontiers = [ self.rescoreFrontier(f).normalize() for f in frontiers if not f.empty ]
+        uses = {p: 0. for p in self.primitives }
+        for f in frontiers:
+            for e in f:
+                summary = self.closedLikelihoodSummary(f.task.request,
+                                                       e.program)
+                for p,u in summary.uses:
+                    uses[p] += u*math.exp(e.logPosterior)
+        return uses        
+
     def smartlyInitialize(self, expectedSize):
         frequencies = {}
         for _,t,p in self.productions:
