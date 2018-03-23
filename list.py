@@ -301,6 +301,7 @@ if __name__ == "__main__":
         test = []
 
     prims = basePrimitives if args.pop("base") else (McCarthyPrimitives if args.pop("McCarthy") else primitives)
+    prims = McCarthyPrimitives # TODO: make this actually be an option
 
     extractor = {
         "hand": FeatureExtractor,
