@@ -184,10 +184,10 @@ def make_list_bootstrap_tasks(numberOfExamples):
              [((l,),list(reversed(l)))
               for _ in range(5)
               for l in [randomList()] ]),
-        # Task("reverse bool", arrow(tlist(tbool),tlist(tbool)),
-        #      [((l,),list(reversed(l)))
-        #       for _ in range(5)
-        #       for l in [[random() > 0.5 for _ in range(randint(0,10)) ]] ]),
+        Task("reverse bool", arrow(tlist(tbool),tlist(tbool)),
+             [((l,),list(reversed(l)))
+              for _ in range(5)
+              for l in [[random() > 0.5 for _ in range(randint(0,10)) ]] ]),
 
         
         Task("singleton", arrow(tint,tlist(tint)),
@@ -236,19 +236,19 @@ def make_list_bootstrap_tasks(numberOfExamples):
              [((x,y), x+y)
               for _ in range(10)
               for [x,y] in [[randomList(),randomList()]] ]),
-        # Task("append bool", arrow(tlist(tbool),tlist(tbool),tlist(tbool)),
-        #      [((x,y), x+y)
-        #       for _ in range(10)
-        #       for [x,y] in [[randomBooleanList(),randomBooleanList()]] ]),
+        Task("append bool", arrow(tlist(tbool),tlist(tbool),tlist(tbool)),
+             [((x,y), x+y)
+              for _ in range(10)
+              for [x,y] in [[randomBooleanList(),randomBooleanList()]] ]),
 
-        # Task("take bool", arrow(tint, tlist(tbool), tlist(tbool)),
-        #      [((n,l), l[:n])
-        #       for n in range(10)
-        #       for l in [[random() > 0.5 for _ in range(randint(n,n + 5)) ]] ]),
-        # Task("drop bool", arrow(tint, tlist(tbool), tlist(tbool)),
-        #      [((n,l), l[n:])
-        #       for n in range(10)
-        #       for l in [[random() > 0.5 for _ in range(randint(n,n + 5)) ]] ]),
+        Task("take bool", arrow(tint, tlist(tbool), tlist(tbool)),
+             [((n,l), l[:n])
+              for n in range(10)
+              for l in [[random() > 0.5 for _ in range(randint(n,n + 5)) ]] ]),
+        Task("drop bool", arrow(tint, tlist(tbool), tlist(tbool)),
+             [((n,l), l[n:])
+              for n in range(10)
+              for l in [[random() > 0.5 for _ in range(randint(n,n + 5)) ]] ]),
 
         Task("take int", arrow(tint, tlist(tint), tlist(tint)),
              [((n,l), l[:n])
