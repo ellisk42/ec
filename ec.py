@@ -206,6 +206,15 @@ def ecIterator(grammar, tasks,
         yield None
         return 
 
+    likelihoodModel = {
+        "all-or-nothing":        lambda: AllOrNothingLikelihoodModel(
+                                             timeout=evaluationTimeout),
+        "feature-discriminator": lambda: FeatureDiscriminatorLikelihoodModel(
+                                             tasks, featureExtractor(tasks)),
+        "euclidean":             lambda: EuclideanLikelihoodModel(
+                                             featureExtractor(tasks)),
+    }[likelihoodModel]()
+
     for j in range(resume or 0, iterations):
         if j >= 2 and expandFrontier and result.learningCurve[-1] <= result.learningCurve[-2]:
             oldEnumerationTimeout = enumerationTimeout
@@ -215,15 +224,6 @@ def ecIterator(grammar, tasks,
                 enumerationTimeout = int(enumerationTimeout + expandFrontier)
             eprint("Expanding enumeration timeout from {} to {} because of no progress".format(
                 oldEnumerationTimeout, enumerationTimeout))
-
-        likelihoodModel = {
-            "all-or-nothing":        lambda: AllOrNothingLikelihoodModel(
-                                                 timeout=evaluationTimeout),
-            "feature-discriminator": lambda: FeatureDiscriminatorLikelihoodModel(
-                                                 tasks, featureExtractor(tasks)),
-            "euclidean":             lambda: EuclideanLikelihoodModel(
-                                                 featureExtractor(tasks)),
-        }[likelihoodModel]()
 
         timeout = enumerationTimeout
         while True:
