@@ -218,7 +218,7 @@ def make_list_bootstrap_tasks(numberOfExamples):
              [((n,k), [n]*k)
               for k in range(5) 
               for n in [randint(0,9)] ]),
-        Task("repeat bool", arrow(tint,tlist(tint)),
+        Task("repeat bool", arrow(tbool,tlist(tint)),
              [((n,k), [n]*k)
               for k in range(5) 
               for n in [random() > 0.5] ]),
