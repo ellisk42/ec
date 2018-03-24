@@ -201,10 +201,9 @@ def McCarthyPrimitives():
 if __name__ == "__main__":
     g = Grammar.uniform(McCarthyPrimitives())
 
-    p = Program.parse("(lambda (lambda (unfold (lambda (eq0 $0)) (lambda $2) (lambda (-1 $0)) $0)))")
-    print p
-    print g.logLikelihood(arrow(tint,tint,tlist(tint)), p)
-    print p.evaluate([])(7)(4)
+    p = Program.parse("(lambda (lambda (lambda (if (empty? $0) empty (cons (+ (car $0) (car $1)) ($2 (cdr $0) (cdr $1)))))))")
+    t = arrow(tlist(tint),tlist(tint),tlist(tint))
+    print g.logLikelihood(arrow(t,t), p)
     assert False
 
     print "??"

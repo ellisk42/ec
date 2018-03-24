@@ -208,9 +208,16 @@ let main () =
  *   flush_everything()
  * ;; *)
 
+(* let test_zipping() =
+ *   let p = parse_program "(lambda2 (fix2 $0 $1 (lambda3 (if (empty? $0) empty (cons (+ (car $0) (car $1)) ($2 (cdr $0) (cdr $1)))))))" |> get_some in
+ *   let a = analyze_lazy_evaluation p in
+ *   let o : int list = run_lazy_analyzed_with_arguments a [[1;2;3;];[-1;3;0;]] in
+ *   Printf.printf "%s\n"
+ *     (o |> List.map ~f:Int.to_string |> join ~separator:" ");; *)
 
   
 main();;
+(* test_zipping();; *)
 
 
 (* test_filter();; *)

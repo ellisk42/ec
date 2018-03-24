@@ -226,7 +226,7 @@ def list_options(parser):
     parser.add_argument("--dataset", type=str,
         default="data/list_tasks.pkl",
         help="location of pickled list function dataset")
-    parser.add_argument("--Lucas", type=bool,
+    parser.add_argument("--Lucas",
                         default=False,
                         action="store_true",
                         help="solve Lucas's list problems")
