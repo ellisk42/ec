@@ -229,12 +229,13 @@ let primitive ?manualLaziness:(manualLaziness = false)
   ignore(Hashtbl.add every_primitive name p);
   p
 
-let primitive_empty_string = primitive "emptyString" tstring "";;
-let primitive_uppercase = primitive "caseUpper" (tstring @> tstring) String.uppercase;;
-let primitive_uppercase = primitive "strip" (tstring @> tstring) (fun s -> String.strip s);;
-let primitive_lowercase = primitive "caseLower" (tstring @> tstring) String.lowercase;;
-let primitive_capitalize = primitive "caseCapitalize" (tstring @> tstring) String.capitalize;;
-let primitive_concatenate = primitive "concatenate" (tstring @> tstring @> tstring) ( ^ );;
+(* let primitive_empty_string = primitive "emptyString" tstring "";; *)
+let primitive_uppercase = primitive "caseUpper" (tcharacter @> tcharacter) Char.uppercase;;
+(* let primitive_uppercase = primitive "strip" (tstring @> tstring) (fun s -> String.strip s);; *)
+let primitive_lowercase = primitive "caseLower" (tcharacter @> tcharacter) Char.lowercase;;
+let primitive_character_equal = primitive "char-eq?" (tcharacter @> tcharacter @> tboolean) Char.equal;;
+(* let primitive_capitalize = primitive "caseCapitalize" (tstring @> tstring) String.capitalize;;
+ * let primitive_concatenate = primitive "concatenate" (tstring @> tstring @> tstring) ( ^ );; *)
 let primitive_constant_strings = [primitive "','" tcharacter ',';
                                   primitive "'.'" tcharacter '.';
                                   primitive "'@'" tcharacter '@';
@@ -245,22 +246,22 @@ let primitive_constant_strings = [primitive "','" tcharacter ',';
                                   primitive "'|'" tcharacter '|';
                                   primitive "'-'" tcharacter '-';
                                  ];;
-let primitive_slice_string = primitive "slice-string" (tint @> tint @> tstring @> tstring)
-    (fun i j s ->
-       let i = i + (if i < 0 then String.length s else 0) in
-       let j = j + (if j < 0 then 1 + String.length s else 0) in
-       String.sub s ~pos:i ~len:(j - i));;
-let primitive_nth_string = primitive "nth" (tint @> tlist tstring @> tstring)
-    (fun n words ->
-       let n = n + (if n < 0 then List.length words else 0) in
-       List.nth_exn words n);;
-let primitive_map_string = primitive "map-string" ((tstring @> tstring) @> tlist tstring @> tlist tstring)
-    (fun f l -> List.map ~f:f l);;
-let primitive_string_split = primitive "split" (tcharacter @> tstring @> tlist tstring)
-    (fun d x -> String.split ~on:d x);;
-let primitive_string_join = primitive "join" (tstring @> tlist tstring @> tstring)
-    (fun d xs -> join ~separator:d xs);;
-let primitive_character_to_string = primitive "chr2str" (tcharacter @> tstring) (String.of_char);;
+(* let primitive_slice_string = primitive "slice-string" (tint @> tint @> tstring @> tstring)
+ *     (fun i j s ->
+ *        let i = i + (if i < 0 then String.length s else 0) in
+ *        let j = j + (if j < 0 then 1 + String.length s else 0) in
+ *        String.sub s ~pos:i ~len:(j - i));;
+ * let primitive_nth_string = primitive "nth" (tint @> tlist tstring @> tstring)
+ *     (fun n words ->
+ *        let n = n + (if n < 0 then List.length words else 0) in
+ *        List.nth_exn words n);;
+ * let primitive_map_string = primitive "map-string" ((tstring @> tstring) @> tlist tstring @> tlist tstring)
+ *     (fun f l -> List.map ~f:f l);;
+ * let primitive_string_split = primitive "split" (tcharacter @> tstring @> tlist tstring)
+ *     (fun d x -> String.split ~on:d x);;
+ * let primitive_string_join = primitive "join" (tstring @> tlist tstring @> tstring)
+ *     (fun d xs -> join ~separator:d xs);;
+ * let primitive_character_to_string = primitive "chr2str" (tcharacter @> tstring) (String.of_char);; *)
 
 
 

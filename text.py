@@ -8,34 +8,6 @@ from recognition import *
 
 import random
 
-def stringFeatures(s):
-    return [len(s)] + [sum(x == d for x in s ) for d in delimiters ] + [sum(x.upper() == x for x in s )]
-def problemFeatures(examples):
-    inputFeatures = []
-    outputFeatures = []
-    for (x,),y in examples:
-        inputFeatures.append(stringFeatures(x))
-        outputFeatures.append(stringFeatures(y))
-    n = float(len(examples))
-    inputFeatures = map(lambda *a: sum(a)/n, *inputFeatures)
-    outputFeatures = map(lambda *a: sum(a)/n, *outputFeatures)
-    return inputFeatures + outputFeatures
-
-class FeatureExtractor(HandCodedFeatureExtractor):
-    def _featuresOfProgram(self, program, tp):
-        inputs = [ map(fst, t.examples) for t in self.tasks ]
-        random.shuffle(inputs)
-        ys = None
-        for xs in inputs:
-            try:
-                ys = [ program.runWithArguments(x) for x in xs ]
-                eprint(program, xs, ys)
-                break
-            except: continue
-            
-        if ys is None: return None
-        return problemFeatures(zip(xs,ys))
-
 class LearnedFeatureExtractor(RecurrentFeatureExtractor):
     def __init__(self, tasks):
         lexicon = set([ c
@@ -66,15 +38,10 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
 
 if __name__ == "__main__":
     tasks = makeTasks()
-    for t in tasks:
-        t.features = problemFeatures(t.examples)
     eprint("Generated",len(tasks),"tasks")
 
-    test, train = testTrainSplit(tasks, 0.2)
+    test, train = testTrainSplit(tasks, 0.02)
     eprint("Split tasks into %d/%d test/train"%(len(test),len(train)))
-
-    train = [t for t in tasks if t.name == "Replace delimiter '|' w/ '-'" ]
-    
 
     # target = "Apply double delimited by '<' to input delimited by '>'"
     # program = Program.parse("(lambda (join (chr->str '<') (map (lambda (++ $0 $0)) (split '<' $0))))")
@@ -91,14 +58,14 @@ if __name__ == "__main__":
     explorationCompression(baseGrammar, train,
                            testingTasks = test,
                            outputPrefix = "experimentOutputs/text",
-                           evaluationTimeout = None,
+                           evaluationTimeout = 0.0005,
                            **commandlineArguments(
 #                               frontierSize = 10**4,
                                steps = 500,
                                iterations = 10,
                                helmholtzRatio = 0.5,
                                topK = 2,
-                               maximumFrontier = 100,
+                               maximumFrontier = 2,
                                structurePenalty = 10.,
                                a = 3,
                                activation = "relu",
