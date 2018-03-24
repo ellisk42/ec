@@ -31,7 +31,7 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
                    for c in x + y }
                 
         super(LearnedFeatureExtractor, self).__init__(lexicon = list(lexicon),
-                                                      H = 16,
+                                                      H = 64,
                                                       tasks = tasks,
                                                       bidirectional = True,
                                                       tokenize = tokenize)

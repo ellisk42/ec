@@ -23,7 +23,7 @@ def variable(x, volatile=False, cuda=False):
     return Variable(x, volatile=volatile)
 
 class DRNN(nn.Module):
-    def __init__(self, grammar, featureExtractor, hidden=16, cuda=False):
+    def __init__(self, grammar, featureExtractor, hidden=64, cuda=False):
         super(DRNN, self).__init__()
 
         self.featureExtractor = featureExtractor
@@ -302,7 +302,7 @@ class DRNN(nn.Module):
         
         
 class RecognitionModel(nn.Module):
-    def __init__(self, featureExtractor, grammar, hidden=[16], activation="relu", cuda=False):
+    def __init__(self, featureExtractor, grammar, hidden=[64], activation="relu", cuda=False):
         super(RecognitionModel, self).__init__()
         self.grammar = grammar
         self.use_cuda = cuda
