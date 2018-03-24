@@ -180,6 +180,12 @@ def arrow(*arguments):
     if len(arguments) == 1: return arguments[0]
     return TypeConstructor(ARROW,[arguments[0],arrow(*arguments[1:])])
 
+def inferArg(tp, tcaller):
+    ctx, tp = tp.instantiate(Context.EMPTY)
+    ctx, tcaller = tcaller.instantiate(ctx)
+    ctx, targ = ctx.makeVariable()
+    ctx = ctx.unify(tcaller, arrow(targ, tp))
+    return targ.apply(ctx)
 
 def guess_type(xs):
     """
