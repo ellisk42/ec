@@ -162,35 +162,34 @@ class DeepFeatureExtractor(MLPFeatureExtractor):
 class LearnedFeatureExtractor(RecurrentFeatureExtractor):
     H = 16
     USE_CUDA = False
-    def __init__(self, tasks):
-        def tokenize(examples, lexicon):
-            def sanitize(l): return [ z if z in lexicon else "?"
-                                      for z_ in l
-                                      for z in (z_ if isinstance(z_, list) else [z_]) ]
-            
-            tokenized = []
-            for xs, y in examples:
-                if isinstance(y, list):
-                    y = ["LIST_START"]+y+["LIST_END"]
+    def tokenize(examples, lexicon):
+        def sanitize(l): return [ z if z in lexicon else "?"
+                                  for z_ in l
+                                  for z in (z_ if isinstance(z_, list) else [z_]) ]
+
+        tokenized = []
+        for xs, y in examples:
+            if isinstance(y, list):
+                y = ["LIST_START"]+y+["LIST_END"]
+            else:
+                y = [y]
+            y = sanitize(y)
+            if len(y) > self.maximumLength: return None
+
+            serializedInputs = []
+            for xi,x in enumerate(xs):
+                if isinstance(x, list):
+                    x = ["LIST_START"]+x+["LIST_END"]
                 else:
-                    y = [y]
-                y = sanitize(y)
-                if len(y) > self.maximumLength: return None
+                    x = [x]
+                x = sanitize(x)
+                if len(x) > self.maximumLength: return None
+                serializedInputs.append(x)
 
-                serializedInputs = []
-                for xi,x in enumerate(xs):
-                    if isinstance(x, list):
-                        x = ["LIST_START"]+x+["LIST_END"]
-                    else:
-                        x = [x]
-                    x = sanitize(x)
-                    if len(x) > self.maximumLength: return None
-                    serializedInputs.append(x)
+            tokenized.append((tuple(serializedInputs),y))
 
-                tokenized.append((tuple(serializedInputs),y))
-            
-            return tokenized
-
+        return tokenized
+    def __init__(self, tasks):
         lexicon = set(flatten((t.examples for t in tasks), abort=lambda x:isinstance(x, str))).union({"LIST_START", "LIST_END", "?"})
 
         # Calculate the maximum length
@@ -204,9 +203,7 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
                                                       tasks=tasks,
                                                       cuda=self.USE_CUDA,
                                                       H=self.H,
-                                                      bidirectional=True,
-                                                      tokenize=tokenize)
-
+                                                      bidirectional=True)
 
 def train_necessary(task):
     if t.name in {"head", "is-primes", "len", "pop", "repeat-many", "tail"}:

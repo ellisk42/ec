@@ -9,22 +9,22 @@ from recognition import *
 import random
 
 class LearnedFeatureExtractor(RecurrentFeatureExtractor):
-    def __init__(self, tasks):
-        def serialize(x):
-            if isinstance(x,str): return [x]
-            assert isinstance(x,list)
-            if isinstance(x[0],str): return x
-            assert isinstance(x[0],list)
-            serialization = ["LIST"]
-            for s in x:
-                serialization.append("LISTDELIMITER")
-                serialization += serialize(s)
-            return serialization
-            
-        def tokenize(examples, _):
-            return [ ((serialize(x),), serialize(y))
-                     for (x,),y in examples]
+    def serialize(x):
+        if isinstance(x,str): return [x]
+        assert isinstance(x,list)
+        if isinstance(x[0],str): return x
+        assert isinstance(x[0],list)
+        serialization = ["LIST"]
+        for s in x:
+            serialization.append("LISTDELIMITER")
+            serialization += serialize(s)
+        return serialization
 
+    def tokenize(examples, _):
+        return [ ((serialize(x),), serialize(y))
+                 for (x,),y in examples]
+
+    def __init__(self, tasks):
         lexicon = {c
                    for t in tasks
                    for (x,),y in tokenize(t.examples, None)
@@ -33,8 +33,7 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
         super(LearnedFeatureExtractor, self).__init__(lexicon = list(lexicon),
                                                       H = 64,
                                                       tasks = tasks,
-                                                      bidirectional = True,
-                                                      tokenize = tokenize)
+                                                      bidirectional = True)
 
 
 if __name__ == "__main__":
