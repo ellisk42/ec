@@ -118,6 +118,7 @@ def make_list_bootstrap_tasks(numberOfExamples):
              [((n,),n+2) for n in range(5) ]),
         Task("increment car", arrow(tlist(tint),tint),
              [((l,),l[0] + 1)
+              for _ in range(10)
               for l in [randomList()] ]),
         # Task("increment 3x", arrow(tint,tint),
         #      [((n,),n+3) for n in range(5) ]),
@@ -125,6 +126,7 @@ def make_list_bootstrap_tasks(numberOfExamples):
              [((n,),n-2) for n in range(5) ]),
         Task("decrement car", arrow(tlist(tint),tint),
              [((l,),l[0] - 1)
+              for _ in range(10)
               for l in [randomList()] ]),
         # Task("decrement 3x", arrow(tint,tint),
         #      [((n,),n-3) for n in range(5) ]),
