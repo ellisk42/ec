@@ -10,24 +10,25 @@ import random
 
 class LearnedFeatureExtractor(RecurrentFeatureExtractor):
     def __init__(self, tasks):
-        lexicon = set([ c
-                        for t in tasks
-                        for (x,),y in t.examples
-                        for xp in [x if isinstance(x,str) else "".join(x)]
-                        for yp in [y if isinstance(y,str) else "".join(y)] 
-                        for c in xp+yp ] + ["LIST","LISTDELIMITER"])
         def serialize(x):
-            if isinstance(x,str): return x
+            if isinstance(x,str): return [x]
             assert isinstance(x,list)
+            if isinstance(x[0],str): return x
+            assert isinstance(x[0],list)
             serialization = ["LIST"]
             for s in x:
                 serialization.append("LISTDELIMITER")
-                serialization += [c for c in s ]
+                serialization += serialize(s)
             return serialization
             
         def tokenize(examples, _):
             return [ ((serialize(x),), serialize(y))
-                     for (x,),y in examples]            
+                     for (x,),y in examples]
+
+        lexicon = {c
+                   for t in tasks
+                   for (x,),y in tokenize(t.examples, None)
+                   for c in x + y }
                 
         super(LearnedFeatureExtractor, self).__init__(lexicon = list(lexicon),
                                                       H = 16,
@@ -40,27 +41,16 @@ if __name__ == "__main__":
     tasks = makeTasks()
     eprint("Generated",len(tasks),"tasks")
 
-    test, train = testTrainSplit(tasks, 0.02)
+    test, train = testTrainSplit(tasks, 0.2)
     eprint("Split tasks into %d/%d test/train"%(len(test),len(train)))
 
-    # target = "Apply double delimited by '<' to input delimited by '>'"
-    # program = Program.parse("(lambda (join (chr->str '<') (map (lambda (++ $0 $0)) (split '<' $0))))")
-    # eprint(program)
-    # tasks = {t.name: t for t in tasks }
     baseGrammar = Grammar.uniform(primitives)
-    # eprint(baseGrammar.logLikelihood(tasks[target].request, program))
-    # callCompiled(enumerateForTask,
-    #              baseGrammar, tasks[target],
-    #              maximumFrontier = 2,
-    #              timeout = 10000)
-    # assert False
-
+    
     explorationCompression(baseGrammar, train,
                            testingTasks = test,
                            outputPrefix = "experimentOutputs/text",
                            evaluationTimeout = 0.0005,
                            **commandlineArguments(
-#                               frontierSize = 10**4,
                                steps = 500,
                                iterations = 10,
                                helmholtzRatio = 0.5,

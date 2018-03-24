@@ -233,10 +233,10 @@ def list_options(parser):
     parser.add_argument("--maxTasks", type=int,
         default=1000,
         help="truncate tasks to fit within this boundary")
-    parser.add_argument("--base", action="store_true",
-        help="use foundational primitives")
-    parser.add_argument("--McCarthy", action="store_true",
-        help="use 1959 McCarthy Lisp primitives")
+    parser.add_argument("--primitives",
+                        default="McCarthy",
+                        help="Which primitive set to use",
+                        choices=["McCarthy","base","rich"])
     parser.add_argument("--extractor", type=str,
         choices=["hand", "deep", "learned"],
         default="learned")
@@ -304,7 +304,9 @@ if __name__ == "__main__":
         train = tasks
         test = []
 
-    prims = basePrimitives if args.pop("base") else (McCarthyPrimitives if args.pop("McCarthy") else primitives)
+    prims = {"base": basePrimitives,
+             "McCarthy": McCarthyPrimitives,
+             "rich": primitives}[args.pop("primitives")]
     
     extractor = {
         "hand": FeatureExtractor,

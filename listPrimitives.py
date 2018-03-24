@@ -143,31 +143,21 @@ def primitives():
 
 
 def basePrimitives():
-    "These are really powerful but hard to learn to use."
     return [ Primitive(str(j), tint, j) for j in xrange(6) ] + [
-        Primitive("empty", tlist(t0), []),
-        #Primitive("singleton", arrow(t0, tlist(t0)), _single),
-        Primitive("cons", arrow(t0, tlist(t0), tlist(t0)), _cons),
-        Primitive("range", arrow(tint, tlist(tint)), range),
-        #Primitive("++", arrow(tlist(t0), tlist(t0), tlist(t0)), _append),
-        # Primitive("mapi", arrow(arrow(tint, t0, t1), tlist(t0), tlist(t1)), _mapi),
-        Primitive("reducei", arrow(arrow(tint, t1, t0, t1), t1, tlist(t0), t1), _reducei),
-
-        #Primitive("true", tbool, True),
-        # Primitive("not", arrow(tbool, tbool), _not),
-        # Primitive("and", arrow(tbool, tbool, tbool), _and),
-        # Primitive("or", arrow(tbool, tbool, tbool), _or),
-        Primitive("if", arrow(tbool, t0, t0, t0), _if),
-
-        Primitive("sort", arrow(tlist(tint), tlist(tint)), sorted),
-        Primitive("+", arrow(tint, tint, tint), _addition),
         Primitive("*", arrow(tint, tint, tint), _multiplication),
-        Primitive("negate", arrow(tint, tint), _negate),
-        Primitive("mod", arrow(tint, tint, tint), _mod),
-        Primitive("eq?", arrow(tint, tint, tbool), _eq),
         Primitive("gt?", arrow(tint, tint, tbool), _gt),
         Primitive("is-prime", arrow(tint, tbool), _isPrime),
         Primitive("is-square", arrow(tint, tbool), _isSquare),
+        # McCarthy
+        Primitive("empty", tlist(t0), []),
+        Primitive("cons", arrow(t0, tlist(t0), tlist(t0)), _cons),
+        Primitive("car", arrow(tlist(t0), t0), _car),
+        Primitive("cdr", arrow(tlist(t0), tlist(t0)), _cdr),
+        Primitive("empty?", arrow(tlist(t0), tbool), _isEmpty),
+        Primitive("if", arrow(tbool, t0, t0, t0), _if),
+        Primitive("eq?", arrow(tint, tint, tbool), _eq),
+        Primitive("+", arrow(tint, tint, tint), _addition),
+        Primitive("-", arrow(tint, tint, tint), _subtraction)
     ]
 
 def McCarthyPrimitives():
@@ -182,18 +172,6 @@ def McCarthyPrimitives():
         primitiveRecursion2,
         Primitive("if", arrow(tbool, t0, t0, t0), _if),
         Primitive("eq?", arrow(tint, tint, tbool), _eq),
-
-        # The hope is that it learns these quickly
-        # Primitive("eq0", arrow(tint, tbool), _eq0),
-        # Primitive("+1", arrow(tint, tint), _a1),
-        # Primitive("-1", arrow(tint, tint), _d1),
-        # Primitive("unfold", arrow(arrow(t0,tbool),
-        #                           arrow(t0,t1),
-        #                           arrow(t0,t0),
-        #                           t0,
-        #                           tlist(t1)),
-        #           _unfold),
-        
         Primitive("+", arrow(tint, tint, tint), _addition),
         Primitive("-", arrow(tint, tint, tint), _subtraction),
         ] + [ Primitive(str(j), tint, j) for j in xrange(2) ]
