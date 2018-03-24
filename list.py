@@ -226,6 +226,10 @@ def list_options(parser):
     parser.add_argument("--dataset", type=str,
         default="data/list_tasks.pkl",
         help="location of pickled list function dataset")
+    parser.add_argument("--Lucas", type=bool,
+                        default=False,
+                        action="store_true",
+                        help="solve Lucas's list problems")
     parser.add_argument("--maxTasks", type=int,
         default=1000,
         help="truncate tasks to fit within this boundary")
@@ -301,8 +305,7 @@ if __name__ == "__main__":
         test = []
 
     prims = basePrimitives if args.pop("base") else (McCarthyPrimitives if args.pop("McCarthy") else primitives)
-    prims = McCarthyPrimitives # TODO: make this actually be an option
-
+    
     extractor = {
         "hand": FeatureExtractor,
         "deep": DeepFeatureExtractor,
@@ -323,30 +326,10 @@ if __name__ == "__main__":
 
     baseGrammar = Grammar.uniform(prims())
     from makeListTasks import make_list_bootstrap_tasks, bonusListProblems
-    train = make_list_bootstrap_tasks(10)
+    if not args.pop("Lucas"): train = make_list_bootstrap_tasks(10)
     eprint("Total number of training tasks:",len(train))
     for t in make_list_bootstrap_tasks(10):
         eprint(t.describe())
         eprint()
-    # assert False
-    if False:
-        from program import *
-        from frontier import *
-        from fragmentUtilities import *
-        from fragmentGrammar import *
-        p1 = Program.parse("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) 0 (+ (car $0) ($1 (cdr $0))))))))")
-        p2 = Program.parse("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) 1 (- (car $0) ($1 (cdr $0))))))))")
-
-        fs = [Frontier([FrontierEntry(program = p,
-                                     logLikelihood = 0.,
-                                     logPrior = 0.)],
-                      task = Task(str(j), p.infer(), []))
-              for j,p in enumerate([p1,p2]) ]
-        for f in proposeFragmentsFromFrontiers(fs, 2):
-            print f
-        print induceGrammar(baseGrammar, fs, a = 3)[1]
-        assert False
-        
-    
     
     explorationCompression(baseGrammar, train, testingTasks=test, **args)
