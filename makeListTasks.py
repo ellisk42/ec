@@ -193,10 +193,10 @@ def make_list_bootstrap_tasks(numberOfExamples):
         Task("singleton", arrow(tint,tlist(tint)),
              [((n,),[n])
               for n in range(10) ]),
-        # Task("length bool", arrow(tlist(tbool),tint),
-        #      [((l,), len(l))
-        #       for _ in range(10)
-        #       for l in [[random() > 0.5 for _ in range(randint(0,10)) ]] ]),
+        Task("length bool", arrow(tlist(tbool),tint),
+             [((l,), len(l))
+              for _ in range(10)
+              for l in [[random() > 0.5 for _ in range(randint(0,10)) ]] ]),
         Task("length int", arrow(tlist(tint),tint),
              [((l,), len(l))
               for _ in range(10)
