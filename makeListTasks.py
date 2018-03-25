@@ -235,7 +235,7 @@ def make_list_bootstrap_tasks(numberOfExamples):
              [((l,), sum(l))
               for _ in range(10)
               for l in [randomList()] ]),
-        Task("all", arrow(tlist(tbool),tbool),
+        Task("any", arrow(tlist(tbool),tbool),
              [((l,), reduce(lambda x,y: x and y, l, True))
               for sz in range(10)
               for l in [[random() > 0.2 for _ in range(sz) ]] ]),
@@ -243,11 +243,11 @@ def make_list_bootstrap_tasks(numberOfExamples):
              [((a,b),a or b)
               for a in [True,False]
               for b in [True,False] ]),
-        # Task("either empty?", arrow(tlist(tint),tlist(tint),tboolean),
-        #      [((a,b),a == [] or b == [])
-        #       for _ in xrange(10) 
-        #       for a in [randomBooleanList() if random() > 0.5 else []]
-        #       for b in [randomBooleanList() if random() > 0.5 else []] ]),
+        Task("either empty?", arrow(tlist(tint),tlist(tint),tboolean),
+             [((a,b),a == [] or b == [])
+              for _ in xrange(10) 
+              for a in [randomList() if random() > 0.5 else []]
+              for b in [randomList() if random() > 0.5 else []] ]),
 
         # Task("append int", arrow(tlist(tint),tlist(tint),tlist(tint)),
         #      [((x,y), x+y)
