@@ -30,7 +30,6 @@ class Matcher(object):
 
         return returnType.apply(self.context)
     def index(self, fragment, expression, environment, numberOfArguments):
-        print "Matching index. F=",fragment,"E=",expression
         # This is a bound variable
         surroundingAbstractions = len(environment)
         if fragment.bound(surroundingAbstractions):
