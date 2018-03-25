@@ -108,9 +108,18 @@ tasks = [
     makeTask("Tp=2pi(l/g)^1/2",
              arrow(tpositive,tpositive,tpositive),
              lambda m,k: 2*pi*(m/k)**0.5),
-    makeTask("Newtonian gravitation",
+    makeTask("Newtonian gravitation (vector)",
              arrow(tpositive, tpositive, tvector, tvector),
              lambda m1,m2,r: scaleVector(-0.1 * m1 * m2 / (norm(r)**2), r)),
+    makeTask("Coulomb's law (vector)",
+             arrow(tpositive, tpositive, tvector, tvector),
+             lambda m1,m2,r: scaleVector(-0.1 * m1 * m2 / (norm(r)**2), r)),
+    makeTask("Newtonian gravitation (scalar)",
+             arrow(tpositive, tpositive, tvector, treal),
+             lambda m1,m2,r: -0.1 * m1 * m2 / (norm(r)**2)),
+    makeTask("Coulomb's law (scalar)",
+             arrow(tpositive, tpositive, tvector, treal),
+             lambda m1,m2,r: -0.1 * m1 * m2 / (norm(r)**2)),
     makeTask("Hook's law",
              arrow(tpositive,tpositive),
              lambda x: -2.*x*x,
@@ -171,6 +180,8 @@ tasks = [
 if __name__ == "__main__":
     baseGrammar = Grammar.uniform([real, f0, f1, fpi,
                                    real_power, real_subtraction, real_addition, real_multiplication])
+
+    eprint("Got %d equation discovery tasks..."%len(tasks))
     
     explorationCompression(baseGrammar, tasks,
                            outputPrefix = "experimentOutputs/scientificLaws",
