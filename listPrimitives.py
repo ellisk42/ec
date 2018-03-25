@@ -177,11 +177,27 @@ def McCarthyPrimitives():
         ] + [ Primitive(str(j), tint, j) for j in xrange(2) ]
 
 if __name__ == "__main__":
+    import pickle
     g = Grammar.uniform(McCarthyPrimitives())
+    with open("/home/ellisk/om/ec/experimentOutputs/list_aic=1.0_arity=3_ET=1800_expandFrontier=2.0_it=4_likelihoodModel=all-or-nothing_MF=5_baseline=False_pc=10.0_L=1.0_K=5_rec=False.pickle", "rb") as handle:
+        b = pickle.load(handle).grammars[-1]
+    print b
 
     p = Program.parse("(lambda (lambda (lambda (if (empty? $0) empty (cons (+ (car $0) (car $1)) ($2 (cdr $0) (cdr $1)))))))")
     t = arrow(tlist(tint),tlist(tint),tlist(tint))
     print g.logLikelihood(arrow(t,t), p)
+    print b.logLikelihood(arrow(t,t), p)
+    p = Program.parse("""(lambda (lambda (lambda
+ (forloop
+    (lambda (+ (car (drop $1 $0)) (car (drop $2 $0))))
+    (length $1)))))
+    """.replace("unfold", "#(lambda (lambda (lambda (lambda (fix1 $0 (lambda (lambda (#(lambda (lambda (lambda (if $0 empty (cons $1 $2))))) ($1 ($3 $0)) ($4 $0) ($5 $0)))))))))").\
+                      replace("length", "#(lambda (fix1 $0 (lambda (lambda (if (empty? $0) 0 (+ ($1 (cdr $0)) 1))))))").\
+                      replace("forloop", "(#(lambda (lambda (lambda (lambda (fix1 $0 (lambda (lambda (#(lambda (lambda (lambda (if $0 empty (cons $1 $2))))) ($1 ($3 $0)) ($4 $0) ($5 $0))))))))) (lambda (#(eq? 0) $0)) $0 (lambda (#(lambda (- $0 1)) $0)))").\
+                      replace("inc","#(lambda (+ $0 1))").\
+                      replace("drop","#(lambda (lambda (fix2 $0 $1 (lambda (lambda (lambda (if (#(eq? 0) $1) $0 (cdr ($2 (- $1 1) $0)))))))))"))
+    print p
+    print b.logLikelihood(arrow(t,t),p)
     assert False
 
     print "??"
