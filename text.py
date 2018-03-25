@@ -9,7 +9,7 @@ from recognition import *
 import random
 
 class LearnedFeatureExtractor(RecurrentFeatureExtractor):
-    def serialize(x):
+    def serialize(self, x):
         if isinstance(x,str): return [x]
         assert isinstance(x,list)
         if isinstance(x[0],str): return x
@@ -17,17 +17,17 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
         serialization = ["LIST"]
         for s in x:
             serialization.append("LISTDELIMITER")
-            serialization += serialize(s)
+            serialization += self.serialize(s)
         return serialization
 
-    def tokenize(examples, _):
-        return [ ((serialize(x),), serialize(y))
+    def tokenize(self, examples):
+        return [ ((self.serialize(x),), self.serialize(y))
                  for (x,),y in examples]
 
     def __init__(self, tasks):
         lexicon = {c
                    for t in tasks
-                   for (x,),y in tokenize(t.examples, None)
+                   for (x,),y in self.tokenize(t.examples, None)
                    for c in x + y }
                 
         super(LearnedFeatureExtractor, self).__init__(lexicon = list(lexicon),

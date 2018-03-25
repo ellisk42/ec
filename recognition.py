@@ -528,7 +528,7 @@ class RecurrentFeatureExtractor(nn.Module):
 
     # modify examples before forward (to turn them into iterables of lexicon)
     # you should override this if needed
-    def tokenize(x,l): return x
+    def tokenize(self,x): return x
 
     def symbolEmbeddings(self):
         return {s: self.encoder(variable([self.symbolToIndex[s]])).squeeze(0).data.numpy()

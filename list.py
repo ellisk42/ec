@@ -162,7 +162,7 @@ class DeepFeatureExtractor(MLPFeatureExtractor):
 class LearnedFeatureExtractor(RecurrentFeatureExtractor):
     H = 16
     USE_CUDA = False
-    def tokenize(examples, lexicon):
+    def tokenize(self,examples):
         def sanitize(l): return [ z if z in lexicon else "?"
                                   for z_ in l
                                   for z in (z_ if isinstance(z_, list) else [z_]) ]
