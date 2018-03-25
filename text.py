@@ -27,7 +27,7 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
     def __init__(self, tasks):
         lexicon = {c
                    for t in tasks
-                   for (x,),y in self.tokenize(t.examples, None)
+                   for (x,),y in self.tokenize(t.examples)
                    for c in x + y }
                 
         super(LearnedFeatureExtractor, self).__init__(lexicon = list(lexicon),
