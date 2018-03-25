@@ -264,10 +264,12 @@ class FragmentGrammar(object):
         # Every invented ("library") primitive has its source code
         # exposed, allowing us to reach inside of invented primitives
         # and continue to rewrite them/extract useful subexpressions
-        libraryFrontiers = []
+        libraryFrontiers = [ Frontier.dummy(p.body)
+                             for p in g0.primitives
+                             if p.isInvented ]
         
         bestGrammar = FragmentGrammar.fromGrammar(g0)
-        oldJoint = bestGrammar.jointFrontiersMDL(frontiers, CPUs = 1)
+        oldJoint = bestGrammar.jointFrontiersMDL(frontiers+libraryFrontiers, CPUs = 1)
 
         # "restricted frontiers" only contain the top K according to the best grammar
         def restrictFrontiers():
@@ -276,10 +278,10 @@ class FragmentGrammar(object):
         restrictedFrontiers = []
 
         def grammarScore(g):
-            g = g.makeUniform().insideOutside(restrictedFrontiers, pseudoCounts)
+            g = g.makeUniform().insideOutside(restrictedFrontiers+libraryFrontiers, pseudoCounts)
             likelihood = g.jointFrontiersMDL(restrictedFrontiers)
-            structure = sum(fragmentSize(p) for p in g.primitives)
-            score = likelihood - aic*len(g) - structurePenalty*structure
+            structure = g.jointFrontiersMDL(libraryFrontiers)
+            score = likelihood - aic*len(g) + structurePenalty*structure
             g.clearCache()
             if invalid(score):
                 # FIXME: This should never occur but it does anyway
@@ -291,9 +293,13 @@ class FragmentGrammar(object):
             restrictedFrontiers = restrictFrontiers()
             bestScore, _ = grammarScore(bestGrammar)
             while True:
+                eprint("Library frontiers:")
+                for lf in libraryFrontiers:
+                    eprint(lf.entries[0].program)
+                eprint()
                 restrictedFrontiers = restrictFrontiers()
                 fragments = [ f
-                              for f in proposeFragmentsFromFrontiers(restrictedFrontiers, a)
+                              for f in proposeFragmentsFromFrontiers(restrictedFrontiers+libraryFrontiers, a)
                               if not f in bestGrammar.primitives \
                               and defragment(f) not in bestGrammar.primitives ]
                 eprint("Proposed %d fragments."%len(fragments))
@@ -333,6 +339,9 @@ class FragmentGrammar(object):
                 frontiers = parallelMap(CPUs,
                                         lambda frontier: RewriteFragments.rewriteFrontier(frontier, newPrimitive),
                                         frontiers)
+                libraryFrontiers = parallelMap(CPUs,
+                                               lambda lf: RewriteFragments.rewriteFrontier(lf, newPrimitive),
+                                               libraryFrontiers)
                 eprint("\t(<uses> in rewritten frontiers: %f)"%
                        (bestGrammar.expectedUses(frontiers).actualUses[concretePrimitive]))
                 libraryFrontiers.append(Frontier.dummy(program=concretePrimitive.body.uncurry()))
@@ -435,9 +444,6 @@ if __name__ == "__main__":
     ps = [Program.parse("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) 0 (+ ($1 (cdr $0)) 1))))))"),
           Program.parse("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) empty (cons (eq? 0 (car $0)) ($1 (cdr $0))))))))"),
           Program.parse("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) empty (cons (empty? (car $0)) ($1 (cdr $0))))))))")]
-    frontiers = [Frontier([FrontierEntry(logLikelihood=0.,
-                                         logPrior=-1.,
-                                         program=p)],
-                          task=Task(str(p),p.infer(),[(([],),1)]))
+    frontiers = [Frontier.dummy(p)
                  for p in ps ]
-    FragmentGrammar.induceFromFrontiers(g,frontiers,a=2,CPUs=4)
+    FragmentGrammar.induceFromFrontiers(g,frontiers,a=2,CPUs=4,pseudoCounts=0.1)
