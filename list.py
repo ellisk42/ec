@@ -196,7 +196,7 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
         self.maximumLength = POSITIVEINFINITY
         self.maximumLength = max( len(l)
                                   for t in tasks
-                                  for xs,y in tokenize(t.examples, lexicon)
+                                  for xs,y in self.tokenize(t.examples)
                                   for l in [y] + [ x for x in xs ] )
         
         super(LearnedFeatureExtractor, self).__init__(lexicon=list(lexicon),

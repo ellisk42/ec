@@ -109,6 +109,21 @@ def make_list_bootstrap_tasks(numberOfExamples):
     def randomBooleanList():
         return [ random() > 0.5 for _ in range(randint(4,7)) ]
 
+    if False:
+        return [        Task("all", arrow(tlist(tbool),tbool),
+             [((l,), reduce(lambda x,y: x and y, l, True))
+              for sz in range(10)
+              for l in [[random() > 0.2 for _ in range(sz) ]] ]),
+        Task("or", arrow(tboolean,tboolean,tboolean),
+             [((a,b),a or b)
+              for a in [True,False]
+              for b in [True,False] ]),
+        Task("or car", arrow(tlist(tboolean),tlist(tboolean),tboolean),
+             [((a,b),a[0] or b[0])
+              for _ in xrange(10) 
+              for a in [randomBooleanList()]
+              for b in [randomBooleanList()] ]),]
+
     return [
         Task("increment", arrow(tint,tint),
              [((n,),n+1) for n in range(5) ]),
@@ -220,10 +235,19 @@ def make_list_bootstrap_tasks(numberOfExamples):
              [((l,), sum(l))
               for _ in range(10)
               for l in [randomList()] ]),
-        Task("difference", arrow(tlist(tint),tint),
-             [((l,), reduce(lambda x,y: y-x, reversed(l), 1))
-              for _ in range(10)
-              for l in [randomList(minimum = 1)[:7]] ]),
+        Task("all", arrow(tlist(tbool),tbool),
+             [((l,), reduce(lambda x,y: x and y, l, True))
+              for sz in range(10)
+              for l in [[random() > 0.2 for _ in range(sz) ]] ]),
+        Task("or", arrow(tboolean,tboolean,tboolean),
+             [((a,b),a or b)
+              for a in [True,False]
+              for b in [True,False] ]),
+        # Task("either empty?", arrow(tlist(tint),tlist(tint),tboolean),
+        #      [((a,b),a == [] or b == [])
+        #       for _ in xrange(10) 
+        #       for a in [randomBooleanList() if random() > 0.5 else []]
+        #       for b in [randomBooleanList() if random() > 0.5 else []] ]),
 
         # Task("append int", arrow(tlist(tint),tlist(tint),tlist(tint)),
         #      [((x,y), x+y)
