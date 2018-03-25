@@ -320,6 +320,13 @@ def ecIterator(grammar, tasks,
         for p in sorted(productionUses.keys(),key = lambda p: -productionUses[p]):
             eprint("<uses>=%.2f\t%s"%(productionUses[p], p))
         eprint()
+        if maximumFrontier <= 10:
+            eprint("Because maximumFrontier is small (<=10), I am going to show you the full contents of all the rewritten frontiers:")
+            for f in frontiers:
+                eprint(f.task)
+                for e in f:
+                    eprint(e.program)
+                eprint()
         
 
         if outputPrefix is not None:

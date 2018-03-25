@@ -251,9 +251,10 @@ def proposeFragmentsFromProgram(p,arity):
             return
 
         if isinstance(expression, Abstraction):
-            # Symmetry breaking: (lambda x. f(x)) defragments to be the same as f(x)
+            # Symmetry breaking: (\x \y \z ... f(x,y,z,...)) defragments to be the same as f(x,y,z,...)
             if not toplevel:
-                for b in fragment(expression.body,a,toplevel = False): yield Abstraction(b)
+                for b in fragment(expression.body,a,toplevel = False):
+                    yield Abstraction(b)
         elif isinstance(expression, Application):
             for fa in xrange(a + 1):
                 for f in fragment(expression.f,fa,toplevel = False):
@@ -295,3 +296,9 @@ def proposeFragmentsFromFrontiers(frontiers, a):
                            for f in frontierFragments)
     return [ fragment for fragment, frequency in allFragments.iteritems() 
              if frequency >= 2 and fragment.wellTyped() and nontrivial(fragment) ]
+
+if __name__ == "__main__":
+    from arithmeticPrimitives import *
+    p = Program.parse("(lambda (lambda (+ $1 $0)))")
+    for f in proposeFragmentsFromProgram(p,3):
+        print f
