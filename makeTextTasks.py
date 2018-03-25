@@ -246,6 +246,15 @@ if __name__ == "__main__":
     import sys
 
     tasks = makeTasks()
+    # def maximumLength(x):
+    #     if isinstance(x,list):
+    #         return max([len(x)] + map(maximumLength,x))
+    #     return 1
+        
+    # print max(maximumLength(z) for t in tasks
+    #     for (x,),y in t.examples
+    #     for z in [x,y] )
+        
     if len(sys.argv) > 1 and "json" in sys.argv[1]:
         import json
         tasks = makeTasks()

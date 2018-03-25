@@ -338,15 +338,15 @@ let rec unfold p h n x =
 
 let primitive_unfold = primitive "unfold" ((t0 @> tboolean) @> (t0 @> t1) @> (t0 @> t0) @> t0 @> tlist t1) unfold;;
 
-let default_recursion_limit = 20;;
-
-exception RecursionDepthExceeded of int
+let default_recursion_limit = ref 50;;
+let set_recursion_limit l = default_recursion_limit := l;;
+exception RecursionDepthExceeded of int;;
     
 let fixed_combinator argument body = 
   (* strict with respect to body but lazy with respect argument *)
   (* body expects to be passed 2 thunks *)
   let body = Lazy.force body in
-  let recursion_limit = ref default_recursion_limit in
+  let recursion_limit = ref !default_recursion_limit in
 
   let rec fix x =
     (* r is just a wrapper over fix that counts the number of
@@ -354,7 +354,7 @@ let fixed_combinator argument body =
     let r z =
       decr recursion_limit;
       if !recursion_limit > 0 then fix z
-      else raise (RecursionDepthExceeded(default_recursion_limit))
+      else raise (RecursionDepthExceeded(!default_recursion_limit))
     in
     body (lazy r) x
   in
@@ -363,14 +363,14 @@ let fixed_combinator argument body =
 
 let fixed_combinator2 argument1 argument2 body =
   let body = Lazy.force body in
-  let recursion_limit = ref default_recursion_limit in
+  let recursion_limit = ref !default_recursion_limit in
 
   let rec fix x y = 
     let r a b =
       decr recursion_limit;
       if !recursion_limit > 0 then  
         fix a b
-      else raise (RecursionDepthExceeded(default_recursion_limit))
+      else raise (RecursionDepthExceeded(!default_recursion_limit))
     in body (lazy r) x y
   in
 
