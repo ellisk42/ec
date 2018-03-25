@@ -1,5 +1,6 @@
 from utilities import *
 
+from task import *
 from fragmentUtilities import *
 from frontier import *
 from grammar import *
@@ -259,14 +260,14 @@ class FragmentGrammar(object):
         originalFrontiers = frontiers
         frontiers = [frontier for frontier in frontiers if not frontier.empty ]
         eprint("Inducing a grammar from",len(frontiers),"frontiers")
+
+        # Every invented ("library") primitive has its source code
+        # exposed, allowing us to reach inside of invented primitives
+        # and continue to rewrite them/extract useful subexpressions
+        libraryFrontiers = []
         
         bestGrammar = FragmentGrammar.fromGrammar(g0)
         oldJoint = bestGrammar.jointFrontiersMDL(frontiers, CPUs = 1)
-
-        # Performance heuristic: once we have at least 50 frontiers,
-        # we rewrite the programs in terms of the new primitives as we
-        # go along. This helps the scalability of grammar induction
-        rewriteNewPrimitives = len(frontiers) > 50
 
         # "restricted frontiers" only contain the top K according to the best grammar
         def restrictFrontiers():
@@ -291,9 +292,10 @@ class FragmentGrammar(object):
             bestScore, _ = grammarScore(bestGrammar)
             while True:
                 restrictedFrontiers = restrictFrontiers()
-                fragments = [ fragment for fragment in proposeFragmentsFromFrontiers(restrictedFrontiers, a)
-                              if not fragment in bestGrammar.primitives \
-                              and defragment(fragment) not in bestGrammar.primitives ]
+                fragments = [ f
+                              for f in proposeFragmentsFromFrontiers(restrictedFrontiers, a)
+                              if not f in bestGrammar.primitives \
+                              and defragment(f) not in bestGrammar.primitives ]
                 eprint("Proposed %d fragments."%len(fragments))
 
                 candidateGrammars = [ FragmentGrammar.uniform(bestGrammar.primitives + [fragment])
@@ -322,27 +324,18 @@ class FragmentGrammar(object):
                 expectedUses = bestGrammar.expectedUses(restrictedFrontiers).actualUses[newPrimitive]
                 eprint("New primitive of type %s\t%s\t\n(score = %f; dScore = %f; <uses> = %f)"%
                        (newType,newPrimitive,newScore,dS,expectedUses))
+                
                 # Rewrite the frontiers in terms of the new fragment
-                if rewriteNewPrimitives:
-                    concretePrimitive = defragment(newPrimitive)
-                    bestGrammar.productions[-1] = (newPrimitiveLikelihood,
-                                                   concretePrimitive.tp,
-                                                   concretePrimitive)
-                    frontiers = parallelMap(CPUs,
-                                            lambda frontier: RewriteFragments.rewriteFrontier(frontier, newPrimitive),
-                                            frontiers)
-                    eprint("\t(<uses> in rewritten frontiers: %f)"%
-                           (bestGrammar.expectedUses(frontiers).actualUses[concretePrimitive]))
-                    if False:
-                        frontiers.append(Frontier([FrontierEntry(logLikelihood=0.,
-                                                                 logPrior=0.,
-                                                                  program=concretePrimitive.body.uncurry())],
-                                                   task=Task(str(concretePrimitive),
-                                                             concretePrimitive.tp.negateVariables(),
-                                                             []
-                                                   )))
-                        eprint("dummy frontier")
-                        eprint(frontiers[-1])
+                concretePrimitive = defragment(newPrimitive)
+                bestGrammar.productions[-1] = (newPrimitiveLikelihood,
+                                               concretePrimitive.tp,
+                                               concretePrimitive)
+                frontiers = parallelMap(CPUs,
+                                        lambda frontier: RewriteFragments.rewriteFrontier(frontier, newPrimitive),
+                                        frontiers)
+                eprint("\t(<uses> in rewritten frontiers: %f)"%
+                       (bestGrammar.expectedUses(frontiers).actualUses[concretePrimitive]))
+                libraryFrontiers.append(Frontier.dummy(program=concretePrimitive.body.uncurry()))
         else:
             eprint("Skipping fragment proposals")
 
@@ -438,6 +431,7 @@ if __name__ == "__main__":
     from frontier import *
     from task import *
     g = Grammar.uniform(McCarthyPrimitives())
+    p = Program.parse("(lambda if)").uncurry()
     ps = [Program.parse("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) 0 (+ ($1 (cdr $0)) 1))))))"),
           Program.parse("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) empty (cons (eq? 0 (car $0)) ($1 (cdr $0))))))))"),
           Program.parse("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) empty (cons (empty? (car $0)) ($1 (cdr $0))))))))")]

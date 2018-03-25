@@ -38,16 +38,19 @@ class Program(object):
         newAbstractions = a - existingAbstractions
         assert newAbstractions >= 0
 
-        # e is the body stripped of abstractions
+        # e is the body stripped of abstractions. we are going to pile
+        # some more lambdas at the front, so free variables in e
+        # (which were bound to the stripped abstractions) need to be
+        # shifted by the number of abstractions that we will be adding
+        e = e.shift(newAbstractions)
 
         for n in reversed(xrange(newAbstractions)):
-            e = Application(e, Index(n+existingAbstractions))
+            e = Application(e, Index(n))
         for _ in xrange(a): e = Abstraction(e)
 
-        eprint("Curry",self,e)
-        eprint(self.infer())
-        eprint(e.infer())
-        assert self.infer() == e.infer()
+        assert self.infer() == e.infer(), \
+            "FATAL: uncurry has a bug. %s : %s, but uncurried to %s : %s"%(self,self.infer(),
+                                                                           e,e.infer())
         return e
     def wellTyped(self):
         try:
@@ -601,3 +604,4 @@ class PrettyVisitor(object):
 
 def prettyProgram(e):
     return e.visit(PrettyVisitor(),[],True,False)
+
