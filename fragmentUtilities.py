@@ -30,6 +30,7 @@ class Matcher(object):
 
         return returnType.apply(self.context)
     def index(self, fragment, expression, environment, numberOfArguments):
+        print "Matching index. F=",fragment,"E=",expression
         # This is a bound variable
         surroundingAbstractions = len(environment)
         if fragment.bound(surroundingAbstractions):
@@ -39,9 +40,14 @@ class Matcher(object):
 
         # This is a free variable
         i = fragment.i - surroundingAbstractions
-        # The value is going to be lifted out of the fragment. Make
-        # sure that it doesn't refer to anything bound by a lambda in
-        # the fragment.
+
+        # Make sure that it doesn't refer to anything bound by a
+        # lambda in the fragment. Otherwise it cannot be safely lifted
+        # out of the fragment and preserve semantics
+        for fv in expression.freeVariables():
+            if fv < len(environment): raise MatchFailure()
+        
+        # The value is going to be lifted out of the fragment        
         try: expression = expression.shift(-surroundingAbstractions)
         except ShiftFailure: raise MatchFailure()
 
@@ -299,6 +305,18 @@ def proposeFragmentsFromFrontiers(frontiers, a):
 
 if __name__ == "__main__":
     from arithmeticPrimitives import *
-    p = Program.parse("(lambda (lambda (+ $1 $0)))")
-    for f in proposeFragmentsFromProgram(p,3):
-        print f
+    from listPrimitives import *
+    McCarthyPrimitives()
+    f = Program.parse("(lambda $1)")
+    p = Program.parse("(lambda (lambda (- $2 $0)))")
+    print p
+    print f
+    _,t,b = Matcher.match(Context.EMPTY, f, p, 2)
+    pp = RewriteFragments(f).rewrite(Abstraction(p))
+    p = Abstraction(p)
+    for a in xrange(3):
+        for b in xrange(3):
+            for c in xrange(3):
+                print pp.evaluate([])(a)(b)(c) == p.evaluate([])(a)(b)(c)
+    print t
+    print b

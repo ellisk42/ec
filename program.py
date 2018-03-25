@@ -79,6 +79,11 @@ class Program(object):
                 n = max(n, child.i - surroundingAbstractions + 1)
         return n
 
+    def freeVariables(self):
+        for surroundingAbstractions, child in self.walk():
+            if child.isIndex and child.i >= surroundingAbstractions:
+                yield child.i - surroundingAbstractions
+
     @property
     def isIndex(self): return False
     @property
