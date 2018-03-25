@@ -576,7 +576,7 @@ class RecurrentFeatureExtractor(nn.Module):
         return hidden[0,:,:] + hidden[1,:,:]
         
     def forward(self, examples):
-        tokenized = self.tokenize(examples, self.lexicon)
+        tokenized = self.tokenize(examples)
         if not tokenized:
             return None
         e = self.examplesEncoding(tokenized)
