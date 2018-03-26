@@ -300,7 +300,7 @@ class DRNN(nn.Module):
                 yield resultL + aL, resultK, result        
         
         
-        
+def _relu(x): return x.clamp(min=0)
 class RecognitionModel(nn.Module):
     def __init__(self, featureExtractor, grammar, hidden=[64], activation="relu", cuda=False):
         super(RecognitionModel, self).__init__()
@@ -327,7 +327,7 @@ class RecognitionModel(nn.Module):
         if activation == "sigmoid":
             self.activation = F.sigmoid
         elif activation == "relu":
-            self.activation = lambda x: x.clamp(min = 0)
+            self.activation = _relu
         elif activation == "tanh":
             self.activation = F.tanh
         else:

@@ -163,7 +163,7 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
     H = 16
     USE_CUDA = False
     def tokenize(self,examples):
-        def sanitize(l): return [ z if z in lexicon else "?"
+        def sanitize(l): return [ z if z in self.lexicon else "?"
                                   for z_ in l
                                   for z in (z_ if isinstance(z_, list) else [z_]) ]
 
@@ -190,7 +190,7 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
 
         return tokenized
     def __init__(self, tasks):
-        lexicon = set(flatten((t.examples for t in tasks), abort=lambda x:isinstance(x, str))).union({"LIST_START", "LIST_END", "?"})
+        self.lexicon = set(flatten((t.examples for t in tasks), abort=lambda x:isinstance(x, str))).union({"LIST_START", "LIST_END", "?"})
 
         # Calculate the maximum length
         self.maximumLength = POSITIVEINFINITY
@@ -199,7 +199,7 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
                                   for xs,y in self.tokenize(t.examples)
                                   for l in [y] + [ x for x in xs ] )
         
-        super(LearnedFeatureExtractor, self).__init__(lexicon=list(lexicon),
+        super(LearnedFeatureExtractor, self).__init__(lexicon=list(self.lexicon),
                                                       tasks=tasks,
                                                       cuda=self.USE_CUDA,
                                                       H=self.H,
