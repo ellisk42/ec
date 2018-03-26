@@ -62,23 +62,21 @@ let rec program_equal p1 p2 = match (p1,p2) with
   | (Apply(a,b), Apply(x,y)) -> program_equal a x && program_equal b y
   | _ -> false
 
-let rec infer_program_type context environment = function
+let rec infer_program_type context environment p : tContext*tp = match p with
   | Index(j) ->
-    let t = List.nth_exn environment j |> applyContext context in (context,t)
-  | Primitive(t,_,_) -> let (t,context) = instantiate_type context t in (context,t)
-  | Invented(t,_) -> let (t,context) = instantiate_type context t in (context,t)
+    applyContext context (List.nth_exn environment j)
+  | Primitive(t,_,_) -> instantiate_type context t
+  | Invented(t,_) -> instantiate_type context t
   | Abstraction(b) ->
     let (xt,context) = makeTID context in
     let (context,rt) = infer_program_type context (xt::environment) b in
-    let ft = applyContext context (xt @> rt) in
-    (context,ft)
+    applyContext context (xt @> rt)
   | Apply(f,x) ->
     let (rt,context) = makeTID context in
     let (context, xt) = infer_program_type context environment x in
     let (context, ft) = infer_program_type context environment f in
     let context = unify context ft (xt @> rt) in
-    let rt = applyContext context rt in
-    (context, rt)
+    applyContext context rt
 
 let closed_inference = snd % infer_program_type empty_context [];;
 
@@ -230,12 +228,13 @@ let primitive ?manualLaziness:(manualLaziness = false)
   ignore(Hashtbl.add every_primitive name p);
   p
 
-let primitive_empty_string = primitive "emptyString" tstring "";;
-let primitive_uppercase = primitive "caseUpper" (tstring @> tstring) String.uppercase;;
-let primitive_uppercase = primitive "strip" (tstring @> tstring) (fun s -> String.strip s);;
-let primitive_lowercase = primitive "caseLower" (tstring @> tstring) String.lowercase;;
-let primitive_capitalize = primitive "caseCapitalize" (tstring @> tstring) String.capitalize;;
-let primitive_concatenate = primitive "concatenate" (tstring @> tstring @> tstring) ( ^ );;
+(* let primitive_empty_string = primitive "emptyString" tstring "";; *)
+let primitive_uppercase = primitive "caseUpper" (tcharacter @> tcharacter) Char.uppercase;;
+(* let primitive_uppercase = primitive "strip" (tstring @> tstring) (fun s -> String.strip s);; *)
+let primitive_lowercase = primitive "caseLower" (tcharacter @> tcharacter) Char.lowercase;;
+let primitive_character_equal = primitive "char-eq?" (tcharacter @> tcharacter @> tboolean) Char.equal;;
+(* let primitive_capitalize = primitive "caseCapitalize" (tstring @> tstring) String.capitalize;;
+ * let primitive_concatenate = primitive "concatenate" (tstring @> tstring @> tstring) ( ^ );; *)
 let primitive_constant_strings = [primitive "','" tcharacter ',';
                                   primitive "'.'" tcharacter '.';
                                   primitive "'@'" tcharacter '@';
@@ -246,22 +245,22 @@ let primitive_constant_strings = [primitive "','" tcharacter ',';
                                   primitive "'|'" tcharacter '|';
                                   primitive "'-'" tcharacter '-';
                                  ];;
-let primitive_slice_string = primitive "slice-string" (tint @> tint @> tstring @> tstring)
-    (fun i j s ->
-       let i = i + (if i < 0 then String.length s else 0) in
-       let j = j + (if j < 0 then 1 + String.length s else 0) in
-       String.sub s ~pos:i ~len:(j - i));;
-let primitive_nth_string = primitive "nth" (tint @> tlist tstring @> tstring)
-    (fun n words ->
-       let n = n + (if n < 0 then List.length words else 0) in
-       List.nth_exn words n);;
-let primitive_map_string = primitive "map-string" ((tstring @> tstring) @> tlist tstring @> tlist tstring)
-    (fun f l -> List.map ~f:f l);;
-let primitive_string_split = primitive "split" (tcharacter @> tstring @> tlist tstring)
-    (fun d x -> String.split ~on:d x);;
-let primitive_string_join = primitive "join" (tstring @> tlist tstring @> tstring)
-    (fun d xs -> join ~separator:d xs);;
-let primitive_character_to_string = primitive "chr2str" (tcharacter @> tstring) (String.of_char);;
+(* let primitive_slice_string = primitive "slice-string" (tint @> tint @> tstring @> tstring)
+ *     (fun i j s ->
+ *        let i = i + (if i < 0 then String.length s else 0) in
+ *        let j = j + (if j < 0 then 1 + String.length s else 0) in
+ *        String.sub s ~pos:i ~len:(j - i));;
+ * let primitive_nth_string = primitive "nth" (tint @> tlist tstring @> tstring)
+ *     (fun n words ->
+ *        let n = n + (if n < 0 then List.length words else 0) in
+ *        List.nth_exn words n);;
+ * let primitive_map_string = primitive "map-string" ((tstring @> tstring) @> tlist tstring @> tlist tstring)
+ *     (fun f l -> List.map ~f:f l);;
+ * let primitive_string_split = primitive "split" (tcharacter @> tstring @> tlist tstring)
+ *     (fun d x -> String.split ~on:d x);;
+ * let primitive_string_join = primitive "join" (tstring @> tlist tstring @> tstring)
+ *     (fun d xs -> join ~separator:d xs);;
+ * let primitive_character_to_string = primitive "chr2str" (tcharacter @> tstring) (String.of_char);; *)
 
 
 
@@ -326,6 +325,7 @@ let primitive_a2 = primitive "++" ((tlist t0) @> (tlist t0) @> (tlist t0)) (@);;
 let primitive_reducei = primitive "reducei" ((tint @> t1 @> t0 @> t1) @> t1 @> (tlist t0) @> t1) (fun f x0 l -> List.foldi ~f:f ~init:x0 l);;
 let primitive_filter = primitive "filter" ((tint @> tboolean) @> (tlist tint) @> (tlist tint)) (fun f l -> List.filter ~f:f l);;
 let primitive_equal = primitive "eq?" (tint @> tint @> tboolean) (fun (a : int) (b : int) -> a = b);;
+let primitive_equal0 = primitive "eq0" (tint @> tboolean) (fun (a : int) -> a = 0);;
 let primitive_not = primitive "not" (tboolean @> tboolean) (not);;
 let primitive_and = primitive "and" (tboolean @> tboolean @> tboolean) (fun x y -> x && y);;
 let primitive_nand = primitive "nand" (tboolean @> tboolean @> tboolean) (fun x y -> not (x && y));;
@@ -381,13 +381,20 @@ let var_opposite     = primitive "var_opposite" (tvar @> tvar) GeomLib.Plumbing.
 
 let default_recursion_limit = 20;;
 
-exception RecursionDepthExceeded of int
+let rec unfold p h n x =
+  if p x then [] else h x :: unfold p h n (n x)
+
+let primitive_unfold = primitive "unfold" ((t0 @> tboolean) @> (t0 @> t1) @> (t0 @> t0) @> t0 @> tlist t1) unfold;;
+
+let default_recursion_limit = ref 50;;
+let set_recursion_limit l = default_recursion_limit := l;;
+exception RecursionDepthExceeded of int;;
     
 let fixed_combinator argument body = 
   (* strict with respect to body but lazy with respect argument *)
   (* body expects to be passed 2 thunks *)
   let body = Lazy.force body in
-  let recursion_limit = ref default_recursion_limit in
+  let recursion_limit = ref !default_recursion_limit in
 
   let rec fix x =
     (* r is just a wrapper over fix that counts the number of
@@ -395,7 +402,7 @@ let fixed_combinator argument body =
     let r z =
       decr recursion_limit;
       if !recursion_limit > 0 then fix z
-      else raise (RecursionDepthExceeded(default_recursion_limit))
+      else raise (RecursionDepthExceeded(!default_recursion_limit))
     in
     body (lazy r) x
   in
@@ -404,14 +411,14 @@ let fixed_combinator argument body =
 
 let fixed_combinator2 argument1 argument2 body =
   let body = Lazy.force body in
-  let recursion_limit = ref default_recursion_limit in
+  let recursion_limit = ref !default_recursion_limit in
 
   let rec fix x y = 
     let r a b =
       decr recursion_limit;
       if !recursion_limit > 0 then  
         fix a b
-      else raise (RecursionDepthExceeded(default_recursion_limit))
+      else raise (RecursionDepthExceeded(!default_recursion_limit))
     in body (lazy r) x y
   in
 
@@ -504,22 +511,22 @@ let program_parser : program parsing =
 
 let parse_program s = run_parser program_parser s
 
-let test_program_inference program desired_type =
-  let (context,t) = infer_program_type empty_context [] program in
-  let t = applyContext context t in
-  let t = canonical_type t in
-  Printf.printf "%s : %s\n" (string_of_program program) (string_of_type t);
-  assert (t = (canonical_type desired_type))
-
-let program_test_cases() =
-  test_program_inference (Abstraction(Index(0))) (t0 @> t0);
-  test_program_inference (Abstraction(Abstraction(Apply(Index(0),Index(1))))) (t0 @> (t0 @> t1) @> t1);
-  test_program_inference (Abstraction(Abstraction(Index(1)))) (t0 @> t1 @> t0);
-  test_program_inference (Abstraction(Abstraction(Index(0)))) (t0 @> t1 @> t1);
-  let v : int = evaluate [] (Apply(primitive_increment, primitive0)) in
-  Printf.printf "%d\n" v;
-  
-;;
+(* let test_program_inference program desired_type =
+ *   let (context,t) = infer_program_type empty_context [] program in
+ *   let t = applyContext context t in
+ *   let t = canonical_type t in
+ *   Printf.printf "%s : %s\n" (string_of_program program) (string_of_type t);
+ *   assert (t = (canonical_type desired_type))
+ * 
+ * let program_test_cases() =
+ *   test_program_inference (Abstraction(Index(0))) (t0 @> t0);
+ *   test_program_inference (Abstraction(Abstraction(Apply(Index(0),Index(1))))) (t0 @> (t0 @> t1) @> t1);
+ *   test_program_inference (Abstraction(Abstraction(Index(1)))) (t0 @> t1 @> t0);
+ *   test_program_inference (Abstraction(Abstraction(Index(0)))) (t0 @> t1 @> t1);
+ *   let v : int = evaluate [] (Apply(primitive_increment, primitive0)) in
+ *   Printf.printf "%d\n" v;
+ *   
+ * ;; *)
 
 let parsing_test_case s =
   Printf.printf "Parsing the string %s\n" s;

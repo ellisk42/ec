@@ -128,13 +128,17 @@ class Grammar(object):
         return context, returnValue        
         
 
-    def likelihoodSummary(self, context, environment, request, expression):
+    def likelihoodSummary(self, context, environment, request, expression, silent=False):
         if request.isArrow():
-            if not isinstance(expression,Abstraction): return context,None
+            if not isinstance(expression,Abstraction):
+                if not silent:
+                    eprint("Request is an arrow but I got",expression)
+                return context,None
             return self.likelihoodSummary(context,
                                           [request.arguments[0]] + environment,
                                           request.arguments[1],
-                                          expression.body)
+                                          expression.body,
+                                          silent=silent)
         # Build the candidates
         candidates = self.buildCandidates(request, context, environment,
                                           normalize = False,
@@ -148,12 +152,13 @@ class Grammar(object):
         f,xs = expression.applicationParse()
 
         if f not in candidates:
-            eprint(f,"Not in candidates")
-            # eprint("Candidates is",candidates)
-            eprint("request is",request)
-            eprint("xs",xs)
-            eprint("environment",environment)
-            assert False
+            if not silent:
+                eprint(f,"Not in candidates")
+                # eprint("Candidates is",candidates)
+                eprint("request is",request)
+                eprint("xs",xs)
+                eprint("environment",environment)
+                assert False
             return context,None
 
         thisSummary = LikelihoodSummary()
@@ -163,12 +168,19 @@ class Grammar(object):
         _, tp, context = candidates[f]
         argumentTypes = tp.functionArguments()
         if len(xs) != len(argumentTypes):
+            eprint("PANIC: not enough arguments for the type")
+            eprint("request",request)
+            eprint("tp",tp)
+            eprint("expression",expression)
+            eprint("xs",xs)
+            eprint("argumentTypes",argumentTypes)
             # This should absolutely never occur
             raise GrammarFailure((context, environment, request, expression))            
 
         for argumentType, argument in zip(argumentTypes, xs):
             argumentType = argumentType.apply(context)
-            context, newSummary = self.likelihoodSummary(context, environment, argumentType, argument)
+            context, newSummary = self.likelihoodSummary(context, environment, argumentType,
+                                                         argument, silent=silent)
             if newSummary is None: return context, None
             thisSummary.join(newSummary)
 
@@ -239,9 +251,10 @@ class Grammar(object):
                 action()
 
 
-    def closedLikelihoodSummary(self, request, expression):
+    def closedLikelihoodSummary(self, request, expression, silent=False):
         try:
-            context, summary = self.likelihoodSummary(Context.EMPTY, [], request, expression)
+            context, summary = self.likelihoodSummary(Context.EMPTY, [], request,
+                                                      expression, silent=silent)
         except GrammarFailure as e:
             failureExport = 'failures/grammarFailure%s.pickle'%(time.time() + getPID())
             eprint("PANIC: Grammar failure, exporting to ",failureExport)
@@ -264,6 +277,18 @@ class Grammar(object):
                                         logLikelihood = e.logLikelihood)
                           for e in frontier ],
                         frontier.task)
+
+    def productionUses(self, frontiers):
+        """Returns the expected number of times that each production was used. {production: expectedUses}"""
+        frontiers = [ self.rescoreFrontier(f).normalize() for f in frontiers if not f.empty ]
+        uses = {p: 0. for p in self.primitives }
+        for f in frontiers:
+            for e in f:
+                summary = self.closedLikelihoodSummary(f.task.request,
+                                                       e.program)
+                for p,u in summary.uses:
+                    uses[p] += u*math.exp(e.logPosterior)
+        return uses        
 
     def smartlyInitialize(self, expectedSize):
         frequencies = {}
@@ -331,6 +356,16 @@ class Grammar(object):
                                                                           maximumDepth = maximumDepth):
                     yield resultL + argL, resultK, result
 
+    def enumerateNearby(self, request, expr, distance=3.0):
+        """Enumerate programs with local mutations in subtrees with small description length"""
+        if distance <= 0:
+            yield expr
+        else:
+            def mutations(tp, loss):
+                for _, _, expr in self.enumeration(Context.EMPTY, [], tp, distance-loss):
+                    yield expr
+            for expr in Mutator(self, mutations).execute(expr, request):
+                yield expr
 
 
 class LikelihoodSummary(object):

@@ -62,21 +62,25 @@ compatibleCompositions = {(case, character)
   ("drop first character", "first 2 characters"),
   ("drop first character","drop first character")
   }
-# for x,y in compatibleCompositions:
-#     assert x in singleWordOperations
-#     assert y in singleWordOperations
-
-
-
 
 def makeTasks():
     NUMBEROFEXAMPLES = 4
     problems = []
+    def toList(s): return [c for c in s]
+    # Converts strings into a list of characters depending on the type
+    def preprocess(x,t):
+        if t == tstr: return toList(x)
+        if t.name == "list":
+            return [preprocess(z, t.arguments[0]) for z in x]
+        return x
+        
     def problem(n, examples, needToTrain = False):
         inputType = guess_type([ x for x,y in examples ])
         outputType = guess_type([ y for x,y in examples])
         task = Task(n, arrow(inputType, outputType),
-                    [((x,),y) for x,y in examples ])
+                    [((preprocess(x,inputType),),
+                      preprocess(y,outputType))
+                     for x,y in examples ])
         if needToTrain: task.mustTrain = True
         problems.append(task)
     problem("Map strip",
@@ -116,7 +120,7 @@ def makeTasks():
     
     for n,f in singleWordOperations.iteritems():
         importantOperations = {"double","capitalize","first character","drop first character"}
-        for j in range(10 if n in importantOperations else 1):
+        for j in range(2 if n in importantOperations else 1):
             np = n
             if j > 0:
                 np = n + " (%s)"%('I'*j)
@@ -242,6 +246,15 @@ if __name__ == "__main__":
     import sys
 
     tasks = makeTasks()
+    # def maximumLength(x):
+    #     if isinstance(x,list):
+    #         return max([len(x)] + map(maximumLength,x))
+    #     return 1
+        
+    # print max(maximumLength(z) for t in tasks
+    #     for (x,),y in t.examples
+    #     for z in [x,y] )
+        
     if len(sys.argv) > 1 and "json" in sys.argv[1]:
         import json
         tasks = makeTasks()

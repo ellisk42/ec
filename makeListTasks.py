@@ -109,6 +109,21 @@ def make_list_bootstrap_tasks(numberOfExamples):
     def randomBooleanList():
         return [ random() > 0.5 for _ in range(randint(4,7)) ]
 
+    if False:
+        return [        Task("all", arrow(tlist(tbool),tbool),
+             [((l,), reduce(lambda x,y: x and y, l, True))
+              for sz in range(10)
+              for l in [[random() > 0.2 for _ in range(sz) ]] ]),
+        Task("or", arrow(tboolean,tboolean,tboolean),
+             [((a,b),a or b)
+              for a in [True,False]
+              for b in [True,False] ]),
+        Task("or car", arrow(tlist(tboolean),tlist(tboolean),tboolean),
+             [((a,b),a[0] or b[0])
+              for _ in xrange(10) 
+              for a in [randomBooleanList()]
+              for b in [randomBooleanList()] ]),]
+
     return [
         Task("increment", arrow(tint,tint),
              [((n,),n+1) for n in range(5) ]),
@@ -118,6 +133,7 @@ def make_list_bootstrap_tasks(numberOfExamples):
              [((n,),n+2) for n in range(5) ]),
         Task("increment car", arrow(tlist(tint),tint),
              [((l,),l[0] + 1)
+              for _ in range(10)
               for l in [randomList()] ]),
         # Task("increment 3x", arrow(tint,tint),
         #      [((n,),n+3) for n in range(5) ]),
@@ -125,6 +141,7 @@ def make_list_bootstrap_tasks(numberOfExamples):
              [((n,),n-2) for n in range(5) ]),
         Task("decrement car", arrow(tlist(tint),tint),
              [((l,),l[0] - 1)
+              for _ in range(10)
               for l in [randomList()] ]),
         # Task("decrement 3x", arrow(tint,tint),
         #      [((n,),n-3) for n in range(5) ]),
@@ -159,35 +176,26 @@ def make_list_bootstrap_tasks(numberOfExamples):
              [((l,),map(lambda n: n-1, l))
               for _ in range(10)
               for l in [randomList()] ]),
-        # # Task("map cdr", arrow(tlist(tlist(tint)),tlist(tlist(tint))),
-        # #      [((l,),map(lambda n: n[1:],l))
-        # #       for _ in range(5)
-        # #       for l in [randomListOfLists()] ])
-        
-        # # Task("map car", arrow(tlist(tlist(tint)),tlist(tint)),
-        # #      [((l,),map(lambda n: n[0],l))
-        # #       for _ in range(5)
-        # #       for l in [randomListOfLists()] ]),
 
-        # # Task("zip plus", arrow(tlist(tint),tlist(tint),tlist(tint)),
-        # #      [((l1,l2),map(lambda x,y: x+y,l1,l2))
-        # #       for _ in range(5)
-        # #       for l1 in [randomList()]
-        # #       for l2 in [[ randint(0,9) for _ in range(len(l1)) ]]]),
-        # # Task("zip minus", arrow(tlist(tint),tlist(tint),tlist(tint)),
-        # #      [((l1,l2),map(lambda x,y: x-y,l1,l2))
-        # #       for _ in range(5)
-        # #       for l1 in [randomList()]
-        # #       for l2 in [[ randint(0,9) for _ in range(len(l1)) ]]]),
+        Task("zip plus", arrow(tlist(tint),tlist(tint),tlist(tint)),
+             [((l1,l2),map(lambda x,y: x+y,l1,l2))
+              for _ in range(5)
+              for l1 in [randomList()]
+              for l2 in [[ randint(0,9) for _ in range(len(l1)) ]]]),
+        Task("zip minus", arrow(tlist(tint),tlist(tint),tlist(tint)),
+             [((l1,l2),map(lambda x,y: x-y,l1,l2))
+              for _ in range(5)
+              for l1 in [randomList()]
+              for l2 in [[ randint(0,9) for _ in range(len(l1)) ]]]),
 
-        Task("reverse int", arrow(tlist(tint),tlist(tint)),
-             [((l,),list(reversed(l)))
-              for _ in range(5)
-              for l in [randomList()] ]),
-        Task("reverse bool", arrow(tlist(tbool),tlist(tbool)),
-             [((l,),list(reversed(l)))
-              for _ in range(5)
-              for l in [[random() > 0.5 for _ in range(randint(0,10)) ]] ]),
+        # Task("reverse int", arrow(tlist(tint),tlist(tint)),
+        #      [((l,),list(reversed(l)))
+        #       for _ in range(5)
+        #       for l in [randomList()] ]),
+        # Task("reverse bool", arrow(tlist(tbool),tlist(tbool)),
+        #      [((l,),list(reversed(l)))
+        #       for _ in range(5)
+        #       for l in [[random() > 0.5 for _ in range(randint(0,10)) ]] ]),
 
         
         Task("singleton", arrow(tint,tlist(tint)),
@@ -214,32 +222,41 @@ def make_list_bootstrap_tasks(numberOfExamples):
               for _ in xrange(10)
               for l in [randomList()] ]),
 
-        Task("repeat int", arrow(tint,tlist(tint)),
-             [((n,k), [n]*k)
-              for k in range(5) 
-              for n in [randint(0,9)] ]),
-        Task("repeat bool", arrow(tint,tlist(tint)),
-             [((n,k), [n]*k)
-              for k in range(5) 
-              for n in [random() > 0.5] ]),
+        # Task("repeat int", arrow(tint,tint,tlist(tint)),
+        #      [((n,k), [n]*k)
+        #       for k in range(5) 
+        #       for n in [randint(0,9)] ]),
+        # Task("repeat bool", arrow(tint,tint,tlist(tint)),
+        #      [((n,k), [n]*k)
+        #       for k in range(5) 
+        #       for n in [random() > 0.5] ]),
 
         Task("sum", arrow(tlist(tint),tint),
              [((l,), sum(l))
               for _ in range(10)
               for l in [randomList()] ]),
-        Task("difference", arrow(tlist(tint),tint),
-             [((l,), reduce(lambda x,y: y-x, reversed(l), 1))
-              for _ in range(10)
-              for l in [randomList(minimum = 1)[:7]] ]),
+        Task("any", arrow(tlist(tbool),tbool),
+             [((l,), reduce(lambda x,y: x and y, l, True))
+              for sz in range(10)
+              for l in [[random() > 0.2 for _ in range(sz) ]] ]),
+        Task("or", arrow(tboolean,tboolean,tboolean),
+             [((a,b),a or b)
+              for a in [True,False]
+              for b in [True,False] ]),
+        Task("either empty?", arrow(tlist(tint),tlist(tint),tboolean),
+             [((a,b),a == [] or b == [])
+              for _ in xrange(10) 
+              for a in [randomList() if random() > 0.5 else []]
+              for b in [randomList() if random() > 0.5 else []] ]),
 
-        Task("append int", arrow(tlist(tint),tlist(tint),tlist(tint)),
-             [((x,y), x+y)
-              for _ in range(10)
-              for [x,y] in [[randomList(),randomList()]] ]),
-        Task("append bool", arrow(tlist(tbool),tlist(tbool),tlist(tbool)),
-             [((x,y), x+y)
-              for _ in range(10)
-              for [x,y] in [[randomBooleanList(),randomBooleanList()]] ]),
+        # Task("append int", arrow(tlist(tint),tlist(tint),tlist(tint)),
+        #      [((x,y), x+y)
+        #       for _ in range(10)
+        #       for [x,y] in [[randomList(),randomList()]] ]),
+        # Task("append bool", arrow(tlist(tbool),tlist(tbool),tlist(tbool)),
+        #      [((x,y), x+y)
+        #       for _ in range(10)
+        #       for [x,y] in [[randomBooleanList(),randomBooleanList()]] ]),
 
         Task("take bool", arrow(tint, tlist(tbool), tlist(tbool)),
              [((n,l), l[:n])
@@ -276,11 +293,6 @@ def make_list_bootstrap_tasks(numberOfExamples):
               for _ in range(10)
               for xs in [[ randint(0,3) for _ in range(5) ]] ]),
 
-        # Task("prepend N 0s",
-        #      arrow(tint,tlist(tint),tlist(tint)),
-        #      [((n,l),[0]*n+l)
-        #       for n in range(10)
-        #       for l in [randomList()] ]),
     ]
 
 def bonusListProblems():

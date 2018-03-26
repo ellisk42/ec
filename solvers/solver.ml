@@ -9,7 +9,8 @@ open Enumeration
 open Task
 open Grammar
 open Task
-
+open FastType
+    
 let load_problem channel =
   let open Yojson.Basic.Util in
   let j = Yojson.Basic.from_channel channel in
@@ -24,7 +25,7 @@ let load_problem channel =
         with UnificationFailure -> raise (Failure ("Could not type "^source))
       in      
       let logProbability = p |> member "logProbability" |> to_float in
-      (e,t,logProbability))                        
+      (e,t,logProbability,compile_unifier t))                        
   in
   (* Successfully parsed the grammar *)
   let g = {logVariable = logVariable; library = productions;} in
@@ -53,13 +54,13 @@ let load_problem channel =
         l |> List.iter ~f:(fun y ->
             let yt = guess y in
             context := unify !context yt t);
-        tlist (applyContext !context t) 
+        tlist (applyContext !context t |> snd) 
       with _ -> raise (Failure "Could not guess type")
     in
     let ts = elements |> List.map ~f:guess in
     let t0 = List.hd_exn ts in
     ts |> List.iter ~f:(fun t -> context := (unify (!context) t0 t));
-    applyContext !context t0
+    applyContext !context t0 |> snd
   in
     
   let rec unpack x =
@@ -102,7 +103,7 @@ let load_problem channel =
   in
 
   let differentiable =
-    productions |> List.exists ~f:(fun (e,_,_) -> is_base_primitive e && "REAL" = primitive_name e)
+    productions |> List.exists ~f:(fun (e,_,_,_) -> is_base_primitive e && "REAL" = primitive_name e)
   in
 
   let timeout = try
@@ -207,9 +208,16 @@ let main () =
  *   flush_everything()
  * ;; *)
 
+(* let test_zipping() =
+ *   let p = parse_program "(lambda2 (fix2 $0 $1 (lambda3 (if (empty? $0) empty (cons (+ (car $0) (car $1)) ($2 (cdr $0) (cdr $1)))))))" |> get_some in
+ *   let a = analyze_lazy_evaluation p in
+ *   let o : int list = run_lazy_analyzed_with_arguments a [[1;2;3;];[-1;3;0;]] in
+ *   Printf.printf "%s\n"
+ *     (o |> List.map ~f:Int.to_string |> join ~separator:" ");; *)
 
   
 main();;
+(* test_zipping();; *)
 
 
 (* test_filter();; *)

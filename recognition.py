@@ -23,7 +23,7 @@ def variable(x, volatile=False, cuda=False):
     return Variable(x, volatile=volatile)
 
 class DRNN(nn.Module):
-    def __init__(self, grammar, featureExtractor, hidden=16, cuda=False):
+    def __init__(self, grammar, featureExtractor, hidden=64, cuda=False):
         super(DRNN, self).__init__()
 
         self.featureExtractor = featureExtractor
@@ -302,7 +302,7 @@ class DRNN(nn.Module):
         
         
 class RecognitionModel(nn.Module):
-    def __init__(self, featureExtractor, grammar, hidden=[16], activation="relu", cuda=False):
+    def __init__(self, featureExtractor, grammar, hidden=[64], activation="relu", cuda=False):
         super(RecognitionModel, self).__init__()
         self.grammar = grammar
         self.use_cuda = cuda
@@ -490,12 +490,8 @@ class RecurrentFeatureExtractor(nn.Module):
                  lexicon=None,
                  # how many hidden units
                  H=32,
-                 # dimensionality of the output
-                 #O=32,
                  # Should the recurrent units be bidirectional?
-                 bidirectional=False,
-                 # modify examples before forward (to turn them into iterables of lexicon)
-                 tokenize=lambda x,l:x):
+                 bidirectional=False):
         super(RecurrentFeatureExtractor, self).__init__()
 
         assert tasks is not None, "You must provide a list of all of the tasks, both those that have been hit and those that have not been hit. Input examples are sampled from these tasks."
@@ -518,21 +514,14 @@ class RecurrentFeatureExtractor(nn.Module):
         self.encoder = encoder
 
         self.H = H
-        #self.O = O
         self.bidirectional = bidirectional
-        self.tokenize = tokenize
 
         layers = 1
-
-        # self.inputModel = nn.GRU(H, H, layers, bidirectional = bidirectional)
-        # self.outputModel = nn.GRU(H, H, layers, bidirectional = bidirectional)
 
         model = nn.GRU(H, H, layers, bidirectional = bidirectional)
         if cuda:
             model = model.cuda()
         self.model = model
-
-        #self.outputLayer = nn.Linear(H,O)
 
         self.use_cuda = cuda
         self.lexicon = lexicon
@@ -544,6 +533,10 @@ class RecurrentFeatureExtractor(nn.Module):
 
     @property
     def outputDimensionality(self): return self.H
+
+    # modify examples before forward (to turn them into iterables of lexicon)
+    # you should override this if needed
+    def tokenize(self,x): return x
 
     def symbolEmbeddings(self):
         return {s: self.encoder(variable([self.symbolToIndex[s]])).squeeze(0).data.numpy()
@@ -591,7 +584,7 @@ class RecurrentFeatureExtractor(nn.Module):
         return hidden[0,:,:] + hidden[1,:,:]
         
     def forward(self, examples):
-        tokenized = self.tokenize(examples, self.lexicon)
+        tokenized = self.tokenize(examples)
         if not tokenized:
             return None
         e = self.examplesEncoding(tokenized)

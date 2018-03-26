@@ -21,9 +21,13 @@ class Task(object):
         self.request = request
         self.name = name
         self.examples = examples
-        assert all( len(xs) == len(examples[0][0])
-                    for xs,_ in examples ), \
-                        "(for task %s) FATAL: Number of arguments varies."%name
+        if len(self.examples) > 0:
+            assert all( len(xs) == len(examples[0][0])
+                        for xs,_ in examples ), \
+                            "(for task %s) FATAL: Number of arguments varies."%name
+            assert len(examples[0][0]) == len(request.functionArguments()), \
+                "(for task %s) FATAL: Number of arguments in the examples does not agree with the number of arguments according to the type %s."%(name, len(request.functionArguments()))
+        
     def __str__(self): return self.name
     def __repr__(self):
         return "Task(name={self.name}, request={self.request}, examples={self.examples}"\

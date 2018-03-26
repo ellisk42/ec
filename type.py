@@ -53,6 +53,9 @@ class TypeConstructor(Type):
         if not self.isPolymorphic: return False
         return any(x.occurs(v) for x in self.arguments )
 
+    def negateVariables(self):
+        return TypeConstructor(self.name, [a.negateVariables() for a in self.arguments ])
+
     def instantiate(self, context, bindings = None):
         if not self.isPolymorphic: return context, self
         if bindings == None: bindings = {}
@@ -104,6 +107,9 @@ class TypeVariable(Type):
         new = TypeVariable(len(bindings))
         bindings[self.v] = new
         return new
+
+    def negateVariables(self):
+        return TypeVariable(-1 - self.v)
 
     
             
@@ -159,11 +165,12 @@ def baseType(n): return TypeConstructor(n,[])
 tint = baseType("int")
 treal = baseType("real")
 tbool = baseType("bool")
-tstr = baseType("string")
+tboolean = tbool # alias
 tcharacter = baseType("char")
 def tlist(t): return TypeConstructor("list",[t])
 def tpair(a,b): return TypeConstructor("pair",[a,b])
 def tmaybe(t): return TypeConstructor("maybe",[t])
+tstr = tlist(tcharacter)
 t0 = TypeVariable(0)
 t1 = TypeVariable(1)
 t2 = TypeVariable(2)
@@ -173,6 +180,12 @@ def arrow(*arguments):
     if len(arguments) == 1: return arguments[0]
     return TypeConstructor(ARROW,[arguments[0],arrow(*arguments[1:])])
 
+def inferArg(tp, tcaller):
+    ctx, tp = tp.instantiate(Context.EMPTY)
+    ctx, tcaller = tcaller.instantiate(ctx)
+    ctx, targ = ctx.makeVariable()
+    ctx = ctx.unify(tcaller, arrow(targ, tp))
+    return targ.apply(ctx)
 
 def guess_type(xs):
     """

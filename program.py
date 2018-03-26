@@ -27,6 +27,31 @@ class Program(object):
             return self.inferType(Context.EMPTY,[],{})[1].canonical()
         except UnificationFailure as e:
             raise InferenceFailure(self, e)
+    def uncurry(self):
+        t = self.infer()
+        a = len(t.functionArguments())
+        e = self
+        existingAbstractions = 0
+        while e.isAbstraction:
+            e = e.body
+            existingAbstractions += 1
+        newAbstractions = a - existingAbstractions
+        assert newAbstractions >= 0
+
+        # e is the body stripped of abstractions. we are going to pile
+        # some more lambdas at the front, so free variables in e
+        # (which were bound to the stripped abstractions) need to be
+        # shifted by the number of abstractions that we will be adding
+        e = e.shift(newAbstractions)
+
+        for n in reversed(xrange(newAbstractions)):
+            e = Application(e, Index(n))
+        for _ in xrange(a): e = Abstraction(e)
+
+        assert self.infer() == e.infer(), \
+            "FATAL: uncurry has a bug. %s : %s, but uncurried to %s : %s"%(self,self.infer(),
+                                                                           e,e.infer())
+        return e
     def wellTyped(self):
         try:
             self.infer()
@@ -53,6 +78,11 @@ class Program(object):
             if isinstance(child, Index) and child.free(surroundingAbstractions):
                 n = max(n, child.i - surroundingAbstractions + 1)
         return n
+
+    def freeVariables(self):
+        for surroundingAbstractions, child in self.walk():
+            if child.isIndex and child.i >= surroundingAbstractions:
+                yield child.i - surroundingAbstractions
 
     @property
     def isIndex(self): return False
@@ -447,6 +477,68 @@ class ShareVisitor(object):
     def execute(self,e):
         return e.visit(self)
 
+class Mutator:
+    """Perform local mutations to an expr"""
+    def __init__(self, grammar, fn):
+        """Fn yields expressions from a type and loss."""
+        self.fn = fn
+        self.grammar = grammar
+        self.history = []
+    def enclose(self, expr):
+        for h in self.history[::-1]:
+            expr = h(expr)
+        return expr
+    def invented(self,e,tp):
+        for expr in self.fn(tp, -self.grammar.expression2likelihood[e]):
+            yield self.enclose(expr)
+    def primitive(self,e,tp):
+        for expr in self.fn(tp, -self.grammar.expression2likelihood[e]):
+            yield self.enclose(expr)
+    def index(self,e,tp):
+        for expr in self.fn(tp, -self.grammar.logVariable):
+            yield self.enclose(expr)
+    def application(self,e,tp):
+        self.history.append(lambda expr: Application(expr, e.x))
+        f_tp = arrow(e.x.infer(), tp)
+        for inner in e.f.visit(self,f_tp):
+            yield inner
+        self.history[-1] = lambda expr: Application(e.f, expr)
+        x_tp = inferArg(tp, e.f.infer())
+        for inner in e.x.visit(self,x_tp):
+            yield inner
+        self.history.pop()
+        for expr in self.fn(tp, -self.logLikelihood(tp, e)):
+            yield self.enclose(expr)
+    def abstraction(self,e,tp):
+        self.history.append(lambda expr: Abstraction(expr))
+        for inner in e.body.visit(self,tp.arguments[1]):
+            yield inner
+        self.history.pop()
+        # we don't try turning the abstraction into something else, because
+        # that other thing will just be an abstraction
+    def execute(self,e,tp):
+        for expr in e.visit(self, tp):
+            yield expr
+    def logLikelihood(self, tp, e):
+        summary = None
+        try:
+            summary = self.grammar.closedLikelihoodSummary(tp, e, silent=True)
+        except AssertionError:
+            pass
+        if summary is not None:
+            return summary.logLikelihood(self.grammar)
+        else:
+            depth, tmpTp = 0, tp
+            while tmpTp.isArrow() and not isinstance(e, Abstraction):
+                depth, tmpTp = depth + 1, tmpTp.arguments[1]
+            old = e
+            for _ in range(depth):
+                e = Abstraction(Application(e, Index(0)))
+            if e == old:
+                return NEGATIVEINFINITY
+            else:
+                return self.logLikelihood(tp, e)
+
 class RegisterPrimitives(object):
     def invented(self,e): e.body.visit(self)        
     def primitive(self,e):
@@ -517,3 +609,4 @@ class PrettyVisitor(object):
 
 def prettyProgram(e):
     return e.visit(PrettyVisitor(),[],True,False)
+

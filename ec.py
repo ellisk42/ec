@@ -14,9 +14,7 @@ import baselines
 import os
 import datetime
 
-# We pick all the recognition models and these might have lambdas
-# inside of them
-import dill
+import cPickle as pickle
 
 import torch
 
@@ -145,7 +143,7 @@ def ecIterator(grammar, tasks,
         if outputPrefix is not None:
             path = checkpointPath(0, extra="_baselines")
             with open(path, "wb") as f:
-                dill.dump(result, f)
+                pickle.dump(result, f)
             eprint("Exported checkpoint to", path)
         yield result
         return 
@@ -162,7 +160,7 @@ def ecIterator(grammar, tasks,
     if resume is not None:
         path = checkpointPath(resume, extra = "_baselines" if onlyBaselines else "")
         with open(path, "rb") as handle:
-            result = dill.load(handle)
+            result = pickle.load(handle)
         eprint("Loaded checkpoint from", path)
         grammar = result.grammars[-1] if result.grammars else grammar
         recognizer = result.recognitionModel
@@ -171,7 +169,7 @@ def ecIterator(grammar, tasks,
             eprint("Set frontier size to", frontierSize)
     else:  # Start from scratch
         if bootstrap is not None:
-            with open(bootstrap, "rb") as handle: strapping = dill.load(handle).grammars[-1]
+            with open(bootstrap, "rb") as handle: strapping = pickle.load(handle).grammars[-1]
             eprint("Bootstrapping from",bootstrap)
             eprint("Bootstrap primitives:")
             for p in strapping.primitives:
@@ -315,15 +313,26 @@ def ecIterator(grammar, tasks,
         result.grammars.append(grammar)
         eprint("Grammar after iteration %d:" % (j + 1))
         eprint(grammar)
-        # TODO: This would be useful debugging output
-        # eprint("Expected uses of each grammar production after iteration %d:" % (j + 1))
-        # FragmentGrammar.fromGrammar(grammar).expectedUses
-        # eprint(grammar.)
+        eprint("Expected uses of each grammar production after iteration %d:" % (j + 1))
+        productionUses = FragmentGrammar.fromGrammar(grammar).\
+                         expectedUses([f for f in frontiers if not f.empty ]).actualUses
+        productionUses = {p: productionUses.get(p,0.) for p in grammar.primitives }
+        for p in sorted(productionUses.keys(),key = lambda p: -productionUses[p]):
+            eprint("<uses>=%.2f\t%s"%(productionUses[p], p))
+        eprint()
+        if maximumFrontier <= 10:
+            eprint("Because maximumFrontier is small (<=10), I am going to show you the full contents of all the rewritten frontiers:")
+            for f in frontiers:
+                eprint(f.task)
+                for e in f:
+                    eprint(e.program)
+                eprint()
+        
 
         if outputPrefix is not None:
             path = checkpointPath(j + 1)
             with open(path, "wb") as handle:
-                dill.dump(result, handle)
+                pickle.dump(result, handle)
             eprint("Exported checkpoint to", path)
 
         

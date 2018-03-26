@@ -1,4 +1,5 @@
 from utilities import *
+from task import Task
 
 class FrontierEntry(object):
     def __init__(self, program, _ = None, logPrior = None, logLikelihood = None, logPosterior = None):
@@ -18,6 +19,21 @@ class Frontier(object):
     def __repr__(self): return "Frontier(entries={self.entries}, task={self.task})".format(self=self)
     def __iter__(self): return iter(self.entries)
     def __len__(self): return len(self.entries)
+
+    DUMMYFRONTIERCOUNTER=0
+    @staticmethod
+    def dummy(program, logLikelihood=0., logPrior=0.):
+        """Creates a dummy frontier containing just this program"""
+
+        t = Task("<dummy %d: %s>"%(Frontier.DUMMYFRONTIERCOUNTER, str(program)),
+                 program.infer().negateVariables(),
+                 [])
+        f = Frontier([FrontierEntry(program=program,
+                                    logLikelihood=logLikelihood,
+                                    logPrior=logPrior)],
+                     task=t)
+        Frontier.DUMMYFRONTIERCOUNTER += 1
+        return f
 
     def marginalLikelihood(self):
         return lse([ e.logPrior + e.logLikelihood for e in self ])

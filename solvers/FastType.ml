@@ -90,31 +90,36 @@ let compile_unifier t =
   in
 
   fun context request ->
-    let (next_type_variable, substitution) = fu return_type request context in
-    let next_type_variable = ref next_type_variable in
-    let arguments = List.map argument_types ~f:(make_slow next_type_variable) in
-    let context = (!next_type_variable, substitution) in
+    let context = fu return_type request context in
+    let next_type_variable = fst context in
+    let next_type_variable' = ref next_type_variable in
+    let arguments = List.map argument_types ~f:(make_slow next_type_variable') in
+    let context = makeTIDs (!next_type_variable' - next_type_variable) context in
 
     Array.iter mapping ~f:(fun r -> r := None);
 
     (context, arguments)
      
 
-let _ =
+let test_fast() =
   let library_types = [t1 @> t0 @> tlist t0 @> tlist t0] in
   let requesting_types = [tlist tint; tlist t1; t2] in
 
   library_types |> List.iter ~f:(fun library_type -> 
       let u = compile_unifier library_type in
       requesting_types |> List.iter ~f:(fun request -> 
-          let k = (next_type_variable request, []) in
+          let k = makeTIDs (next_type_variable request) empty_context in
 
           let (k,arguments) = u k request in
           Printf.printf "library type: %s\trequesting type: %s\t\n"
             (string_of_type library_type) (string_of_type request);
           Printf.printf "arguments:\t%s\n"
-            (arguments |> List.map ~f:(applyContext k) |> List.map ~f:string_of_type |> join ~separator:"\t");
+            (arguments |> List.map ~f:(snd%applyContext k) |> List.map ~f:string_of_type |> join ~separator:"\t");
           Printf.printf "unified request:\t%s\n"
-            ([request] |> List.map ~f:(applyContext k) |> List.map ~f:string_of_type |> join ~separator:"\t")
+            ([request] |> List.map ~f:(snd%applyContext k) |> List.map ~f:string_of_type |> join ~separator:"\t");
+          Printf.printf "\n"
         ))
 
+;;
+
+(* test_fast();; *)

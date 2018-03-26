@@ -162,51 +162,48 @@ class DeepFeatureExtractor(MLPFeatureExtractor):
 class LearnedFeatureExtractor(RecurrentFeatureExtractor):
     H = 16
     USE_CUDA = False
-    def __init__(self, tasks):
-        def tokenize(examples, lexicon):
-            def sanitize(l): return [ z if z in lexicon else "?"
-                                      for z_ in l
-                                      for z in (z_ if isinstance(z_, list) else [z_]) ]
-            
-            tokenized = []
-            for xs, y in examples:
-                if isinstance(y, list):
-                    y = ["LIST_START"]+y+["LIST_END"]
+    def tokenize(self,examples):
+        def sanitize(l): return [ z if z in lexicon else "?"
+                                  for z_ in l
+                                  for z in (z_ if isinstance(z_, list) else [z_]) ]
+
+        tokenized = []
+        for xs, y in examples:
+            if isinstance(y, list):
+                y = ["LIST_START"]+y+["LIST_END"]
+            else:
+                y = [y]
+            y = sanitize(y)
+            if len(y) > self.maximumLength: return None
+
+            serializedInputs = []
+            for xi,x in enumerate(xs):
+                if isinstance(x, list):
+                    x = ["LIST_START"]+x+["LIST_END"]
                 else:
-                    y = [y]
-                y = sanitize(y)
-                if len(y) > self.maximumLength: return None
+                    x = [x]
+                x = sanitize(x)
+                if len(x) > self.maximumLength: return None
+                serializedInputs.append(x)
 
-                serializedInputs = []
-                for xi,x in enumerate(xs):
-                    if isinstance(x, list):
-                        x = ["LIST_START"]+x+["LIST_END"]
-                    else:
-                        x = [x]
-                    x = sanitize(x)
-                    if len(x) > self.maximumLength: return None
-                    serializedInputs.append(x)
+            tokenized.append((tuple(serializedInputs),y))
 
-                tokenized.append((tuple(serializedInputs),y))
-            
-            return tokenized
-
+        return tokenized
+    def __init__(self, tasks):
         lexicon = set(flatten((t.examples for t in tasks), abort=lambda x:isinstance(x, str))).union({"LIST_START", "LIST_END", "?"})
 
         # Calculate the maximum length
         self.maximumLength = POSITIVEINFINITY
         self.maximumLength = max( len(l)
                                   for t in tasks
-                                  for xs,y in tokenize(t.examples, lexicon)
+                                  for xs,y in self.tokenize(t.examples)
                                   for l in [y] + [ x for x in xs ] )
         
         super(LearnedFeatureExtractor, self).__init__(lexicon=list(lexicon),
                                                       tasks=tasks,
                                                       cuda=self.USE_CUDA,
                                                       H=self.H,
-                                                      bidirectional=True,
-                                                      tokenize=tokenize)
-
+                                                      bidirectional=True)
 
 def train_necessary(task):
     if t.name in {"head", "is-primes", "len", "pop", "repeat-many", "tail"}:
@@ -226,13 +223,17 @@ def list_options(parser):
     parser.add_argument("--dataset", type=str,
         default="data/list_tasks.pkl",
         help="location of pickled list function dataset")
+    parser.add_argument("--Lucas",
+                        default=False,
+                        action="store_true",
+                        help="solve Lucas's list problems")
     parser.add_argument("--maxTasks", type=int,
         default=1000,
         help="truncate tasks to fit within this boundary")
-    parser.add_argument("--base", action="store_true",
-        help="use foundational primitives")
-    parser.add_argument("--McCarthy", action="store_true",
-        help="use 1959 McCarthy Lisp primitives")
+    parser.add_argument("--primitives",
+                        default="McCarthy",
+                        help="Which primitive set to use",
+                        choices=["McCarthy","base","rich"])
     parser.add_argument("--extractor", type=str,
         choices=["hand", "deep", "learned"],
         default="learned")
@@ -300,9 +301,10 @@ if __name__ == "__main__":
         train = tasks
         test = []
 
-    prims = basePrimitives if args.pop("base") else (McCarthyPrimitives if args.pop("McCarthy") else primitives)
-    prims = McCarthyPrimitives # TODO: make this actually be an option
-
+    prims = {"base": basePrimitives,
+             "McCarthy": McCarthyPrimitives,
+             "rich": primitives}[args.pop("primitives")]
+    
     extractor = {
         "hand": FeatureExtractor,
         "deep": DeepFeatureExtractor,
@@ -323,30 +325,10 @@ if __name__ == "__main__":
 
     baseGrammar = Grammar.uniform(prims())
     from makeListTasks import make_list_bootstrap_tasks, bonusListProblems
-    train = make_list_bootstrap_tasks(10)
+    if not args.pop("Lucas"): train = make_list_bootstrap_tasks(10)
     eprint("Total number of training tasks:",len(train))
     for t in make_list_bootstrap_tasks(10):
         eprint(t.describe())
         eprint()
-    # assert False
-    if False:
-        from program import *
-        from frontier import *
-        from fragmentUtilities import *
-        from fragmentGrammar import *
-        p1 = Program.parse("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) 0 (+ (car $0) ($1 (cdr $0))))))))")
-        p2 = Program.parse("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) 1 (- (car $0) ($1 (cdr $0))))))))")
-
-        fs = [Frontier([FrontierEntry(program = p,
-                                     logLikelihood = 0.,
-                                     logPrior = 0.)],
-                      task = Task(str(j), p.infer(), []))
-              for j,p in enumerate([p1,p2]) ]
-        for f in proposeFragmentsFromFrontiers(fs, 2):
-            print f
-        print induceGrammar(baseGrammar, fs, a = 3)[1]
-        assert False
-        
-    
     
     explorationCompression(baseGrammar, train, testingTasks=test, **args)

@@ -246,6 +246,7 @@ let test_differentiation () =
 (* Integration with programs *)
 let differentiable_zero = primitive "0." treal (~$ 0.);;
 let differentiable_one = primitive "1." treal (~$ 1.);;
+let differentiable_pi = primitive "pi" treal (~$ 3.14);;
 let differentiable_add = primitive "+." (treal @> treal @> treal) (+&);;
 let differentiable_subtract = primitive "-." (treal @> treal @> treal) (-&);;
 let differentiable_multiply = primitive "*." (treal @> treal @> treal) ( *&);;
