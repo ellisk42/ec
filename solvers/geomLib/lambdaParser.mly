@@ -37,17 +37,17 @@ var:
   | LP ; v = var ; RP
       { v }
   | V_U
-      { Interpreter.Unit }
+      { Plumbing.var_unit }
   | V_N ; v = var
-      { Interpreter.Next (v) }
+      { Plumbing.var_next v }
   | V_P ; v = var
-      { Interpreter.Prev (v) }
+      { Plumbing.var_prev v }
   | V_D ; v = var
-      { Interpreter.Double (v) }
+      { Plumbing.var_double v }
   | V_H ; v = var
-      { Interpreter.Half (v) }
+      { Plumbing.var_half v }
   | V_O ; v = var
-      { Interpreter.Opposite (v) }
+      { Plumbing.var_opposite v }
 
 someb:
   | LP ; b = someb ; RP
@@ -63,18 +63,18 @@ expr:
   | LP ; e = expr ; RP
       { e }
   | CONCAT ; e1 = expr ; e2 = expr
-      { Interpreter.Concat (e1, e2) }
+      { Plumbing.concat e1 e2 }
   | EMBED ; e = expr
-      { Interpreter.Embed (e) }
+      { Plumbing.embed e }
   | TURN ; s = somev
-      { Interpreter.Turn (s) }
+      { Plumbing.turn s }
   | REPEAT ; s = somev ; e = expr
-      { Interpreter.Repeat (s, e) }
+      { Plumbing.repeat s e }
   | INTEGRATE ;
     v1 = somev ;
     b  = someb ;
     v2 = somev ;
     v3 = somev ;
-    v4 = somev ;
-    v5 = somev ;
-      { Interpreter.Integrate (v1,b,(v2,v3,v4,v5)) }
+    (*v4 = somev ;*)
+    (*v5 = somev ;*)
+      { Plumbing.integrate v1 b v2 v3 }

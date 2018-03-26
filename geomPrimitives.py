@@ -1,4 +1,4 @@
-from program import *
+from program import Primitive, Program
 from type import arrow, baseType, tmaybe, t0
 
 tprogram = baseType("program")
@@ -31,15 +31,11 @@ def _integrate(v1):
     return lambda v2: \
            lambda v3: \
            lambda v4: \
-           lambda v5: \
-           lambda v6: \
            "(integrate" + \
            " " + v1 + \
            " " + v2 + \
            " " + v3 + \
            " " + v4 + \
-           " " + v5 + \
-           " " + v6 + \
            ")"
 def _repeat(v):
     return lambda p: "(repeat " + v + " " + p + ")"
@@ -50,16 +46,16 @@ def _concat(p1):
 primitives = [
     # VAR
     Primitive("var_unit", tvar, "var_unit"),
-    Primitive("var_double", arrow(tvar,tvar), _var_double),
-    Primitive("var_half", arrow(tvar,tvar), _var_half),
+    Primitive("var_double", arrow(tvar, tvar), _var_double),
+    Primitive("var_half", arrow(tvar, tvar), _var_half),
     Primitive("var_next", arrow(tvar, tvar), _var_next),
     Primitive("var_prev", arrow(tvar, tvar), _var_prev),
     Primitive("var_opposite", arrow(tvar, tvar), _var_opposite),
 
     # PROGRAMS
     Primitive("embed",
-        arrow(tprogram,tprogram),
-        _embed),
+              arrow(tprogram, tprogram),
+              _embed),
     Primitive("integrate",
               arrow(tmaybe(tvar),
                     tmaybe(tbool),
@@ -68,22 +64,23 @@ primitives = [
                     # tmaybe(tvar),
                     tmaybe(tvar),
                     tprogram), _integrate),
-    Primitive("turn", arrow(tmaybe(tvar),tprogram), _turn),
-    Primitive("repeat", arrow(tmaybe(tvar),tprogram,tprogram), _repeat),
-    Primitive("concat", arrow(tprogram,tprogram,tprogram), _concat),
+    Primitive("turn", arrow(tmaybe(tvar), tprogram), _turn),
+    Primitive("repeat", arrow(tmaybe(tvar), tprogram, tprogram), _repeat),
+    Primitive("concat", arrow(tprogram, tprogram, tprogram), _concat),
 
     # RUN
-    Primitive("run", arrow(tprogram,tcanvas), _run),
+    Primitive("run", arrow(tprogram, tcanvas), _run),
 
     # tbool
     Primitive("true",  tbool, "true"),
     Primitive("false", tbool, "false"),
 
     # maybe
-    Primitive("just", arrow(t0,tmaybe(t0)), _just),
+    Primitive("just", arrow(t0, tmaybe(t0)), _just),
     Primitive("nothing", tmaybe(t0), "nothing")
 ]
 
 if __name__ == "__main__":
-    x = Program.parse("(run (#(concat #(integrate nothing nothing nothing nothing nothing nothing)) #(repeat nothing #(repeat nothing (concat (integrate nothing nothing nothing nothing nothing nothing) (turn nothing))))))")
+    x = Program.parse("(#(concat (integrate nothing nothing nothing nothing)) (turn nothing))")
+    # x = Program.parse("(integrate nothing nothing nothing nothing)")
     print(x.evaluate([]))
