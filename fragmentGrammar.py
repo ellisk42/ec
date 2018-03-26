@@ -58,7 +58,7 @@ class FragmentGrammar(object):
     def logLikelihood(self, request, expression):
         _,l,_ = self._logLikelihood(Context.EMPTY, [], request, expression)
         if invalid(l):
-            f = 'failures/likelihoodFailure%s.pickle'%(time.time() + getPID())
+            f = 'failures/likelihoodFailure%s.pickle'%(time() + getPID())
             eprint("PANIC: Invalid log likelihood. expression:",expression,"tp:",request,"Exported to:",f)
             with open(f,'wb') as handle:
                 pickle.dump((self,request, expression),handle)
@@ -100,7 +100,8 @@ class FragmentGrammar(object):
                 return context,l,u            
         
         if request.isArrow():
-            if not isinstance(expression,Abstraction): return (context,NEGATIVEINFINITY,Uses.empty)
+            if not isinstance(expression,Abstraction):
+                return (context,NEGATIVEINFINITY,Uses.empty)
             return self._logLikelihood(context,
                                       [request.arguments[0]] + environment,
                                       request.arguments[1],
@@ -182,7 +183,8 @@ class FragmentGrammar(object):
                 # Any of these new context objects should be equally good
                 context = newContext
 
-        if totalLikelihood is NEGATIVEINFINITY: return context, totalLikelihood, Uses.empty
+        if totalLikelihood is NEGATIVEINFINITY:
+            return context, totalLikelihood, Uses.empty
         assert weightedUses != []
 
         allUses = Uses.join(totalLikelihood, *weightedUses)
@@ -421,14 +423,30 @@ def rustInduce(g0, frontiers, _=None,
     return g, newFrontiers
 
 if __name__ == "__main__":
+    from arithmeticPrimitives import *
     from listPrimitives import *
-    from frontier import *
-    from task import *
-    g = Grammar.uniform(McCarthyPrimitives())
-    p = Program.parse("(lambda if)").uncurry()
-    ps = [Program.parse("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) 0 (+ ($1 (cdr $0)) 1))))))"),
-          Program.parse("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) empty (cons (eq? 0 (car $0)) ($1 (cdr $0))))))))"),
-          Program.parse("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) empty (cons (empty? (car $0)) ($1 (cdr $0))))))))")]
-    frontiers = [Frontier.dummy(p)
-                 for p in ps ]
-    FragmentGrammar.induceFromFrontiers(g,frontiers,a=2,CPUs=4,pseudoCounts=0.1)
+    McCarthyPrimitives()
+    f = Program.parse("(fix1 $0 (lambda (lambda (if (empty? $0) $3 ($4 ($5 $0) ($1 (cdr $0)))))))")
+    p = Program.parse("(fix1 $0 (lambda (lambda (if (empty? $0) empty (cons (cdr $0) ($1 (cdr $0)))))))")
+    print p
+    print f
+    request = arrow(tlist(tint),tlist(tlist(tint)))
+    _,t,b = Matcher.match(Context.EMPTY, f, p, 2)
+    print "With fragment likelihood",\
+        FragmentGrammar.uniform([f] + McCarthyPrimitives()).logLikelihood(request, Abstraction(p))
+    print "without fragment likelihood",\
+        FragmentGrammar.uniform(McCarthyPrimitives()).logLikelihood(request, Abstraction(p))
+    pp = RewriteFragments(f).rewrite(Abstraction(p))
+    print pp
+    print pp.infer()
+
+    g = FragmentGrammar.fromGrammar(Grammar.uniform([defragment(f)] + McCarthyPrimitives()))
+    print g
+    g.logLikelihood(request,pp)
+    # p = Abstraction(p)
+    # for a in xrange(3):
+    #     for b in xrange(3):
+    #         for c in xrange(3):
+    #             print pp.evaluate([])(a)(b)(c) == p.evaluate([])(a)(b)(c)
+    print t
+    print b
