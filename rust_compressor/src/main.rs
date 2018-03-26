@@ -91,15 +91,11 @@ impl From<ExternalCompressionInput> for CompressionInput {
             invented: vec![],
             variable_logprob,
         };
-        let invented = eci.inventions
-            .into_par_iter()
-            .map(|inv| {
-                let expr = dsl.parse(&inv.expression).expect("invalid invention");
-                let tp = dsl.infer(&expr).expect("invalid invention type");
-                (expr, tp, inv.logp)
-            })
-            .collect();
-        dsl.invented = invented;
+        for inv in eci.inventions {
+            let expr = dsl.parse(&inv.expression).expect("invalid invention");
+            let tp = dsl.infer(&expr).expect("invalid invention type");
+            dsl.invented.push((expr, tp, inv.logp))
+        }
         let params = lambda::CompressionParams {
             pseudocounts: eci.params.pseudocounts,
             topk: eci.params.topk,
