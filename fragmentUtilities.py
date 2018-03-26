@@ -54,7 +54,7 @@ class Matcher(object):
         # This is because everything has to be in eta-longform
         if numberOfArguments > 0:
             expression = expression.shift(numberOfArguments)
-            for j in xrange(numberOfArguments): expression = Application(expression, Index(j))
+            for j in reversed(xrange(numberOfArguments)): expression = Application(expression, Index(j))
             for _ in xrange(numberOfArguments): expression = Abstraction(expression)
 
         # Added to the bindings
@@ -302,20 +302,4 @@ def proposeFragmentsFromFrontiers(frontiers, a):
     return [ fragment for fragment, frequency in allFragments.iteritems() 
              if frequency >= 2 and fragment.wellTyped() and nontrivial(fragment) ]
 
-if __name__ == "__main__":
-    from arithmeticPrimitives import *
-    from listPrimitives import *
-    McCarthyPrimitives()
-    f = Program.parse("(lambda $1)")
-    p = Program.parse("(lambda (lambda (- $2 $0)))")
-    print p
-    print f
-    _,t,b = Matcher.match(Context.EMPTY, f, p, 2)
-    pp = RewriteFragments(f).rewrite(Abstraction(p))
-    p = Abstraction(p)
-    for a in xrange(3):
-        for b in xrange(3):
-            for c in xrange(3):
-                print pp.evaluate([])(a)(b)(c) == p.evaluate([])(a)(b)(c)
-    print t
-    print b
+
