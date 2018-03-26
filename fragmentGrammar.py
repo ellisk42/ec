@@ -77,7 +77,6 @@ class FragmentGrammar(object):
         polymorphic = request.isPolymorphic or any(v.isPolymorphic for v in environment)
         # For some reason polymorphic caching slows it down
         shouldDoCaching = not polymorphic
-        shouldDoCaching = False
 
         # Caching
         if shouldDoCaching:
@@ -185,9 +184,6 @@ class FragmentGrammar(object):
                 context = newContext
 
         if totalLikelihood is NEGATIVEINFINITY:
-            print "total likelihood is negative infinity"
-            print request, expression
-            print environment
             return context, totalLikelihood, Uses.empty
         assert weightedUses != []
 
