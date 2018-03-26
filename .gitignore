@@ -13,3 +13,4 @@ __pycache__
 _build
 experimentOutputs
 jobs
+solvers/behaviouralData/*.png

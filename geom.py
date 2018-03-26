@@ -47,8 +47,9 @@ class GeomFeatureCNN(nn.Module):
         variabled = torch.unsqueeze(variabled, 0)
         output = self.net1(variabled)
         output = output.view(-1, 2304)
-        output = self.net2(output)
-        return output.clamp(min=0)
+        output = self.net2(output).clamp(min=0)
+        output = torch.squeeze(output)
+        return output
 
     def featuresOfTask(self, t):  # Take a task and returns [features]
         return self(t.examples[0][1])
@@ -101,12 +102,12 @@ if __name__ == "__main__":
                            compressor="pypy",
                            evaluationTimeout=0.01,
                            **commandlineArguments(
-                               steps=500,
+                               steps=200,
                                iterations=10,
-                               useRecognitionModel=False,
+                               useRecognitionModel=True,
                                helmholtzRatio=0.0,
                                featureExtractor=GeomFeatureCNN,
                                topK=2,
-                               maximumFrontier=50,
+                               maximumFrontier=500,
                                CPUs=numberOfCPUs(),
                                pseudoCounts=10.0))

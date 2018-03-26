@@ -10,6 +10,7 @@ from enumeration import *
 from grammar import *
 from fragmentGrammar import *
 import baselines
+import dill
 
 import os
 import datetime
@@ -332,7 +333,11 @@ def ecIterator(grammar, tasks,
         if outputPrefix is not None:
             path = checkpointPath(j + 1)
             with open(path, "wb") as handle:
-                pickle.dump(result, handle)
+                try:
+                    dill.dump(result, handle)
+                except TypeError as e:
+                    eprint(result)
+                    assert(False)
             eprint("Exported checkpoint to", path)
 
         
