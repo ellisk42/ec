@@ -21,11 +21,14 @@ let violates_symmetry f a n =
       | (0,"cdr","empty") -> true
       | (_,"+","0") -> true
       | (0,"+","+") -> true
-      | (1,"-","0") -> true
+      | (0,"*","*") -> true
+      | (1,"*","0") -> true
+      | (1,"*","1") -> true
       | (0,"empty?","cons") -> true
       | (0,"empty?","empty") -> true
       | (0,"zero?","0") -> true
       | (0,"zero?","1") -> true
+      | (0,"zero?","-1") -> true
       | _ -> false
 
 

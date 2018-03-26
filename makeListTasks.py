@@ -235,19 +235,23 @@ def make_list_bootstrap_tasks(numberOfExamples):
              [((l,), sum(l))
               for _ in range(10)
               for l in [randomList()] ]),
-        Task("any", arrow(tlist(tbool),tbool),
-             [((l,), reduce(lambda x,y: x and y, l, True))
-              for sz in range(10)
-              for l in [[random() > 0.2 for _ in range(sz) ]] ]),
-        Task("or", arrow(tboolean,tboolean,tboolean),
-             [((a,b),a or b)
-              for a in [True,False]
-              for b in [True,False] ]),
-        Task("either empty?", arrow(tlist(tint),tlist(tint),tboolean),
-             [((a,b),a == [] or b == [])
-              for _ in xrange(10) 
-              for a in [randomList() if random() > 0.5 else []]
-              for b in [randomList() if random() > 0.5 else []] ]),
+        Task("product", arrow(tlist(tint),tint),
+             [((l,), reduce(lambda x,y: x*y, l, 1))
+              for _ in range(10)
+              for l in [randomList()[:4]] ]),
+        # Task("any", arrow(tlist(tbool),tbool),
+        #      [((l,), reduce(lambda x,y: x and y, l, True))
+        #       for sz in range(10)
+        #       for l in [[random() > 0.2 for _ in range(sz) ]] ]),
+        # Task("or", arrow(tboolean,tboolean,tboolean),
+        #      [((a,b),a or b)
+        #       for a in [True,False]
+        #       for b in [True,False] ]),
+        # Task("either empty?", arrow(tlist(tint),tlist(tint),tboolean),
+        #      [((a,b),a == [] or b == [])
+        #       for _ in xrange(10) 
+        #       for a in [randomList() if random() > 0.5 else []]
+        #       for b in [randomList() if random() > 0.5 else []] ]),
 
         # Task("append int", arrow(tlist(tint),tlist(tint),tlist(tint)),
         #      [((x,y), x+y)
