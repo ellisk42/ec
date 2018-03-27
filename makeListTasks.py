@@ -169,12 +169,12 @@ def make_list_bootstrap_tasks(numberOfExamples):
         #      [((l,),map(lambda n: -1*n,l))
         #       for _ in range(10)
         #       for l in [[ randint(-9,9) for _ in range(randint(4,7)) ]] ]),
-        Task("map zero?", arrow(tlist(tint),tlist(tboolean)),
-             [((l,),map(lambda n: 0 == n,l))
+        Task("map eq 1?", arrow(tlist(tint),tlist(tboolean)),
+             [((l,),map(lambda n: 1 == n,l))
               for _ in range(10)
               for l in [[ randint(0,3) for _ in range(randint(4,7)) ]] ]),
-        Task("map increment", arrow(tlist(tint),tlist(tint)),
-             [((l,),map(lambda n: n+1, l))
+        Task("map double", arrow(tlist(tint),tlist(tint)),
+             [((l,),map(lambda n: n*2, l))
               for _ in range(10)
               for l in [randomList()] ]),
         Task("map decrement", arrow(tlist(tint),tlist(tint)),
@@ -227,14 +227,14 @@ def make_list_bootstrap_tasks(numberOfExamples):
               for _ in xrange(10)
               for l in [randomList()] ]),
 
-        Task("repeat int", arrow(tint,tint,tlist(tint)),
-             [((n,k), [n]*k)
-              for k in range(5) 
-              for n in [randint(0,9)] ]),
-        Task("repeat bool", arrow(tint,tint,tlist(tint)),
-             [((n,k), [n]*k)
-              for k in range(5) 
-              for n in [flip()] ]),
+        # Task("repeat int", arrow(tint,tint,tlist(tint)),
+        #      [((n,k), [n]*k)
+        #       for k in range(5) 
+        #       for n in [randint(0,9)] ]),
+        # Task("repeat bool", arrow(tint,tint,tlist(tint)),
+        #      [((n,k), [n]*k)
+        #       for k in range(5) 
+        #       for n in [flip()] ]),
 
         Task("sum", arrow(tlist(tint),tint),
              [((l,), sum(l))
