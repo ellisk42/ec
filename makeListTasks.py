@@ -210,9 +210,9 @@ def make_list_bootstrap_tasks(numberOfExamples):
               for _ in range(10)
               for l in [randomList()] ]),
 
-        # Task("range", arrow(tint,tlist(tint)),
-        #      [((n,), range(1,1+n))
-        #       for n in range(10) ]),
+        Task("range", arrow(tint,tlist(tint)),
+             [((n,), range(n,0,-1))
+              for n in range(10) ]),
         Task("countdown", arrow(tint,tlist(tint)),
              [((n,), range(n+1,1,-1))
               for n in range(10) ]),
