@@ -164,10 +164,10 @@ def make_list_bootstrap_tasks(numberOfExamples):
         # #       for x in range(3)
         # #       for y in range(4) ]),
 
-        Task("map negate", arrow(tlist(tint),tlist(tint)),
-             [((l,),map(lambda n: -1*n,l))
-              for _ in range(10)
-              for l in [[ randint(-9,9) for _ in range(randint(4,7)) ]] ]),
+        # Task("map negate", arrow(tlist(tint),tlist(tint)),
+        #      [((l,),map(lambda n: -1*n,l))
+        #       for _ in range(10)
+        #       for l in [[ randint(-9,9) for _ in range(randint(4,7)) ]] ]),
         Task("map increment", arrow(tlist(tint),tlist(tint)),
              [((l,),map(lambda n: n+1, l))
               for _ in range(10)
@@ -182,8 +182,8 @@ def make_list_bootstrap_tasks(numberOfExamples):
               for _ in range(5)
               for l1 in [randomList()]
               for l2 in [[ randint(0,9) for _ in range(len(l1)) ]]]),
-        Task("zip multiply", arrow(tlist(tint),tlist(tint),tlist(tint)),
-             [((l1,l2),map(lambda x,y: x*y,l1,l2))
+        Task("zip minus", arrow(tlist(tint),tlist(tint),tlist(tint)),
+             [((l1,l2),map(lambda x,y: x-y,l1,l2))
               for _ in range(5)
               for l1 in [randomList()]
               for l2 in [[ randint(0,9) for _ in range(len(l1)) ]]]),
@@ -235,8 +235,8 @@ def make_list_bootstrap_tasks(numberOfExamples):
              [((l,), sum(l))
               for _ in range(10)
               for l in [randomList()] ]),
-        Task("product", arrow(tlist(tint),tint),
-             [((l,), reduce(lambda x,y: x*y, l, 1))
+        Task("difference", arrow(tlist(tint),tint),
+             [((l,), reduce(lambda x,y: y-x, reversed(l), 1))
               for _ in range(10)
               for l in [randomList()[:4]] ]),
         # Task("any", arrow(tlist(tbool),tbool),

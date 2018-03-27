@@ -173,8 +173,8 @@ def McCarthyPrimitives():
         Primitive("if", arrow(tbool, t0, t0, t0), _if),
         Primitive("eq?", arrow(tint, tint, tbool), _eq),
         Primitive("+", arrow(tint, tint, tint), _addition),
-        Primitive("*", arrow(tint, tint, tint), _subtraction),
-        ] + [ Primitive(str(j), tint, j) for j in xrange(-1,2) ]
+        Primitive("-", arrow(tint, tint, tint), _subtraction),
+        ] + [ Primitive(str(j), tint, j) for j in xrange(2) ]
 
 if __name__ == "__main__":
     import pickle
