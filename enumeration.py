@@ -8,49 +8,6 @@ from grammar import *
 import gc
 import traceback
 
-# def enumerateFrontiers(g, tasks, _=None,
-#                        solver=None,
-#                        frontierSize=None,
-#                        enumerationTimeout=None,
-#                        CPUs=1,
-#                        maximumFrontier=None,
-#                        verbose=True,
-#                        evaluationTimeout=None):
-#     '''g: Either a Grammar, or a map from task to grammar.'''
-#     from time import time
-
-#     solvers = {"ocaml": solveForTask_ocaml,
-#                "pypy": enumerateForTask_pypy,
-#                "python": enumerateForTask}
-#     assert solver in solvers, \
-#         "You must specify a valid solver. options are ocaml, pypy, or python."
-#     solver = solvers[solver]
-
-#     if not isinstance(g, dict): g = {t: g for t in tasks }
-
-#     CPUsPerTask = 1 if len(tasks) > CPUs else int(float(CPUs)/len(tasks) + 0.5)
-#     eprint("Allocating %d CPUs for each task"%CPUsPerTask)
-#     if CPUsPerTask > 1 and solver is not solveForTask_ocaml:
-#         eprint("(warning) Using more than one CPU for single task is currently only supported by ocaml.")
-    
-#     start = time()
-#     frontiers = parallelMap(CPUs,
-#                             lambda (task, grammar): solver(grammar, task,
-#                                                            timeout=enumerationTimeout,
-#                                                            CPUs=CPUsPerTask,
-#                                                            evaluationTimeout = evaluationTimeout,
-#                                                            maximumFrontier=maximumFrontier),
-#                             map(lambda t: (t, g[t]), tasks),
-#                             chunk = 1)
-#     if verbose:
-#         eprint("Enumerated %d frontiers in time %f"%(len(g), time() - start))
-
-#     times = [t for f,t in frontiers if t is not None]
-#     frontiers = [f for f,t in frontiers ]
-#     return frontiers, times
-
-
-
 def multithreadedEnumeration(g, tasks, likelihoodModel, _=None,
                              solver=None,
                              frontierSize=None,
@@ -100,6 +57,9 @@ def multithreadedEnumeration(g, tasks, likelihoodModel, _=None,
 
     # map from ID to task
     workers = {}
+
+    def numberOfHits(f):
+        return sum( e.logLikelihood == 0. for e in f)
     
     def budgetIncrement(lb):
         return 1.
@@ -140,7 +100,7 @@ def multithreadedEnumeration(g, tasks, likelihoodModel, _=None,
                                           timeout = thisTimeout,
                                           likelihoodModel = likelihoodModel,
                                           evaluationTimeout = evaluationTimeout,
-                                          maximumFrontier = maximumFrontier - len(frontiers[t]))
+                                          maximumFrontier = maximumFrontier - numberOfHits(frontiers[t]))
                     lowerBounds[t] += bi
                     workers[nextID] = t
                     nextID += 1
