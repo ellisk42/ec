@@ -5,9 +5,10 @@ open Lexing
 exception MalformedProgram of string
 
 let npp data =
-  for i = 0 to (Bigarray.Array1.dim data) - 1 do
-    print_int (data.{i})
-  done
+  for i = 0 to (Bigarray.Array1.dim data) - 2 do
+    print_int (data.{i}) ; print_char ',' ;
+  done ;
+  print_int (data.{((Bigarray.Array1.dim data) - 1)})
 
 let print_pos lexbuf = 
   let pos = lexbuf.lex_curr_p in

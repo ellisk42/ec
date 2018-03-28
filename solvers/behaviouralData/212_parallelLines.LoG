@@ -3,5 +3,5 @@ Repeat(Double(Double(unit))) {
         Turn ;
         Integrate
     } ;
-    Integrate(t=Divide(unit,Next(Double(unit))),pen=off)
+    Integrate(t=Half(unit),pen=off)
 }

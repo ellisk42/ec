@@ -6,16 +6,9 @@ let bigarrayWith0s size =
   Bigarray.Array1.fill data 0 ;
   data
 
-let threshold data =
-  for i = 0 to (Bigarray.Array1.dim data) - 1 do
-    data.{i} <- (if data.{i} = 0 then 0 else 1)
-  done ;
-  data
-
 let canvas_to_tlist size canvas =
   try begin
-    canvas_to_1Darray canvas size |>
-    threshold
+    canvas_to_1Darray canvas size
   end
   with Invalid_argument _ ->
     bigarrayWith0s size

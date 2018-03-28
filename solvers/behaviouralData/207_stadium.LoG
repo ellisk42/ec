@@ -1,4 +1,4 @@
 Repeat {
     Integrate ;
-    Integrate(t=Half(unit), angularSpeed=unit)
+    Integrate(angularSpeed=Half(unit))
 }

@@ -1,6 +1,6 @@
 alpha = unit ;
 Repeat(Double(Double(unit))) {
     Turn(angle=alpha) ;
-    Integrate() ;
+    Integrate ;
     alpha = Opposite(alpha)
 }

@@ -59,8 +59,8 @@ class GeomFeatureCNN(nn.Module):
             try:
                 output = subprocess.check_output(['./geomDrawLambdaString',
                                                  p.evaluate([])]).split("\n")
-                shape = output[0]
-                bigShape = map(float, output[1])
+                shape = output[0].split(',')
+                bigShape = map(float, output[1].split(','))
             except OSError as exc:
                 raise exc
         else:

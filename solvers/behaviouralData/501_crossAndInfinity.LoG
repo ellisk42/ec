@@ -1,8 +1,10 @@
-Repeat(Double(Double(unit))) {
+Repeat {
+  Repeat {
     Embed {
         Integrate
     } ;
     Turn
+  }
 } ;
 Repeat {
     Integrate(angularSpeed=unit) ;

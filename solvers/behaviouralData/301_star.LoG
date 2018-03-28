@@ -1,6 +1,10 @@
-Repeat(Double(Double(Double(unit)))) {
-    Embed {
-        Integrate()
-    } ;
-    Turn(angle=Half(unit))
+Repeat{
+  Repeat{
+    Repeat {
+      Embed {
+          Integrate
+      } ;
+      Turn(angle=Half(unit))
+    }
+  }
 }

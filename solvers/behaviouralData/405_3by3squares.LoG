@@ -3,14 +3,14 @@ Repeat(Next(Double(unit))) {
         Repeat(Next(Double(unit))) {
             Embed {
                 Repeat(Double(Double(unit))) {
-                    Integrate(t=Half(unit)) ;
+                    Integrate ;
                     Turn
                 }
             } ;
-            Integrate(pen=off)
+            Integrate(t=Half(unit),pen=off)
         }
     } ;
     Turn ;
-    Integrate(pen=off);
+    Integrate(t=Half(unit),pen=off);
     Turn(angle=Opposite(unit))
 }

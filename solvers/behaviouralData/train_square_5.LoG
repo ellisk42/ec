@@ -7,10 +7,10 @@ Repeat {
           Turn
         }
       } ;
-      Integrate(t=Double(unit),pen=off)
+      Integrate(t=Half(unit),pen=off)
     }
   } ;
   Turn ;
-  Integrate(t=Double(unit),pen=off) ;
+  Integrate(t=unit,pen=off) ;
   Turn(angle=Opposite(unit))
 }

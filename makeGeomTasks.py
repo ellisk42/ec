@@ -10,7 +10,7 @@ rootdir = "./data/geom/"
 
 def fileToArray(fname):
     r = png.Reader(filename=fname)
-    array = [[(1 - (1 - (y > 0))) for y in x[3::4]] for x in r.read()[2]]
+    array = [[y for y in x[3::4]] for x in r.read()[2]]
     flatten = [item for sublist in array for item in sublist]
     return flatten
 

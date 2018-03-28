@@ -1,1 +1,1 @@
-Integrate(t=Double(Double(unit)), angularSpeed=Half(Half(unit)))
+Integrate(angularSpeed=unit)

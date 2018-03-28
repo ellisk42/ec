@@ -50,8 +50,9 @@ let rec my_print_var v = match v with
 
 let (++) pr1 pr2 = Concat(pr1, pr2)
 
-let scale = d_from_origin /. 1.5
+let scale = d_from_origin /. 2.
 let steps = 20.
+let isteps = int_of_float steps
 let ratio = scale /. steps
 
 let replace_stroke curr future =
@@ -252,28 +253,28 @@ let interpret : shapeprogram -> canvas = fun shapeprogram ->
             curr_state.angularSpeed <- angularSpeed ;
             curr_state.angularAccel <- angularAccel ;
             let pen = match pen with | None -> true | Some b -> b in
-            for i = 1 to (int_of_float steps) do
+            for i = 1 to (int_of_float (f *. steps)) do
                 let futur_x =
                   curr_state.x
                   +. (curr_state.speed *. cos(curr_state.face))
-                     *. ratio *. f
+                     *. ratio
                 and futur_y =
                   curr_state.y
                   +. (curr_state.speed *. sin(curr_state.face))
-                     *. ratio *. f in
+                     *. ratio in
                 if pen then lineto futur_x futur_y
                        else moveto futur_x futur_y ;
                 curr_state.x <- futur_x ;
                 curr_state.y <- futur_y ;
                 curr_state.face <-
                   curr_state.face +.
-                  (pi2 *. curr_state.angularSpeed) /. (f *. steps) ;
+                  (pi2 *. curr_state.angularSpeed) /. (steps) ;
                 curr_state.speed <-
                   curr_state.speed +.
-                  (curr_state.accel /. (f *. steps)) ;
+                  (curr_state.accel /. (steps)) ;
                 curr_state.angularSpeed <-
                     curr_state.angularSpeed (* KINDA BROKEN *)
-                    +. (2. *. curr_state.angularAccel /. (f *. steps)) ;
+                    +. (2. *. curr_state.angularAccel /. (steps)) ;
             done
         | Define (name,v) -> Hashtbl.add htbl_var name v
         | Nop -> ()
