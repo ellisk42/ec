@@ -168,6 +168,12 @@ def McCarthyPrimitives():
         Primitive("car", arrow(tlist(t0), t0), _car),
         Primitive("cdr", arrow(tlist(t0), tlist(t0)), _cdr),
         Primitive("empty?", arrow(tlist(t0), tbool), _isEmpty),
+        #Primitive("unfold", arrow(t0, arrow(t0,t1), arrow(t0,t0), arrow(t0,tbool), tlist(t1)), _isEmpty),
+        #Primitive("1+", arrow(tint,tint),None),
+        # Primitive("range", arrow(tint, tlist(tint)), range),
+        # Primitive("map", arrow(arrow(t0, t1), tlist(t0), tlist(t1)), _map),
+        # Primitive("index", arrow(tint,tlist(t0),t0),None),
+        # Primitive("length", arrow(tlist(t0),tint),None),
         primitiveRecursion1,
         primitiveRecursion2,
         Primitive("if", arrow(tbool, t0, t0, t0), _if),
@@ -187,17 +193,22 @@ if __name__ == "__main__":
     t = arrow(tlist(tint),tlist(tint),tlist(tint))
     print g.logLikelihood(arrow(t,t), p)
     print b.logLikelihood(arrow(t,t), p)
-    p = Program.parse("""(lambda (lambda (lambda
- (forloop
-    (lambda (+ (car (drop $1 $0)) (car (drop $2 $0))))
-    (length $1)))))
-    """.replace("unfold", "#(lambda (lambda (lambda (lambda (fix1 $0 (lambda (lambda (#(lambda (lambda (lambda (if $0 empty (cons $1 $2))))) ($1 ($3 $0)) ($4 $0) ($5 $0)))))))))").\
-                      replace("length", "#(lambda (fix1 $0 (lambda (lambda (if (empty? $0) 0 (+ ($1 (cdr $0)) 1))))))").\
-                      replace("forloop", "(#(lambda (lambda (lambda (lambda (fix1 $0 (lambda (lambda (#(lambda (lambda (lambda (if $0 empty (cons $1 $2))))) ($1 ($3 $0)) ($4 $0) ($5 $0))))))))) (lambda (#(eq? 0) $0)) $0 (lambda (#(lambda (- $0 1)) $0)))").\
-                      replace("inc","#(lambda (+ $0 1))").\
-                      replace("drop","#(lambda (lambda (fix2 $0 $1 (lambda (lambda (lambda (if (#(eq? 0) $1) $0 (cdr ($2 (- $1 1) $0)))))))))"))
+    
+    # p = Program.parse("""(lambda (lambda
+    # (unfold 0
+    # (lambda (+ (index $0 $2) (index $0 $1)))
+    # (lambda (1+ $0))
+    # (lambda (eq? $0 (length $1))))))
+    # """)
+    p = Program.parse("""(lambda (lambda 
+    (map (lambda (+ (index $0 $2) (index $0 $1))) (range (length $0))  )))""")
+                      # .replace("unfold", "#(lambda (lambda (lambda (lambda (fix1 $0 (lambda (lambda (#(lambda (lambda (lambda (if $0 empty (cons $1 $2))))) ($1 ($3 $0)) ($4 $0) ($5 $0)))))))))").\
+                      # replace("length", "#(lambda (fix1 $0 (lambda (lambda (if (empty? $0) 0 (+ ($1 (cdr $0)) 1))))))").\
+                      # replace("forloop", "(#(lambda (lambda (lambda (lambda (fix1 $0 (lambda (lambda (#(lambda (lambda (lambda (if $0 empty (cons $1 $2))))) ($1 ($3 $0)) ($4 $0) ($5 $0))))))))) (lambda (#(eq? 0) $0)) $0 (lambda (#(lambda (- $0 1)) $0)))").\
+                      # replace("inc","#(lambda (+ $0 1))").\
+                      # replace("drop","#(lambda (lambda (fix2 $0 $1 (lambda (lambda (lambda (if (#(eq? 0) $1) $0 (cdr ($2 (- $1 1) $0)))))))))"))
     print p
-    print b.logLikelihood(arrow(t,t),p)
+    print g.logLikelihood(t,p)
     assert False
 
     print "??"
