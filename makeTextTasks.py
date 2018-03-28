@@ -242,6 +242,61 @@ def makeTasks():
     return problems
 
 
+def loadPBETasks(directory="PBE_Strings_Track"):
+    """
+    Processes sygus benchmarks into task objects
+    For these benchmarks, all of the constant strings are given to us.
+    In a sense this is cheating (nb: the production release of flashfill does something equivalent to this "cheating")
+    Returns (tasksWithoutCheating, tasksWithCheating)
+    """
+    import os
+    from sexpdata import loads, Symbol
+
+    def findStrings(s):
+        if isinstance(s,list):
+            return [y
+                for x in s
+                for y in findStrings(x) ]
+        if isinstance(s,str):
+            return [s]
+        return []
+    
+    tasks = []
+    cheatingTasks = []
+    for f in os.listdir(directory):
+        if not f.endswith('.sl'): continue
+        with open(directory + "/" + f,"r") as handle: message = "(%s)"%(handle.read())
+        expression = loads(message)
+
+        constants = []
+        name = f
+        examples = []
+        for e in expression:
+            if len(e) == 0: continue
+            if e[0] == Symbol('constraint'):
+                e = e[1]
+                assert e[0] == Symbol('=')
+                inputs = e[1]
+                assert inputs[0] == Symbol('f')
+                inputs = inputs[1:]
+                output = e[2]
+                examples.append((inputs, output))
+            elif e[0] == Symbol('synth-fun'):
+                assert e[1] == Symbol('f')
+                constants += findStrings(e)
+
+        task = Task(name, arrow(*[tstr]*(len(examples[0][0])+1)),
+                    [(tuple(xs),y)
+                     for xs,y in examples ])
+        cheat = Task(name + "_cheating", arrow(*[tstr]*(len(examples[0][0])+1+len(constants))),
+                     [(tuple(constants + xs),y)
+                     for xs,y in examples ])
+        tasks.append(task)
+        cheatingTasks.append(cheat)
+
+    return tasks, cheatingTasks
+    
+
 if __name__ == "__main__":
     import sys
 
