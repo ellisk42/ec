@@ -72,19 +72,20 @@ class GeomFeatureCNN(nn.Module):
             return None
 
     def finish(self):
-        mean = [log(float(sum(col))/len(col)) for col in zip(*self.mean)]
-        mi = min(mean)
-        ma = max(mean)
-        mean = [(x - mi + (1/255)) / (ma - mi) for x in mean]
-        img = [(int(x*254), int(x*254), int(x*254)) for x in mean]
-        img = [img[i:i+64] for i in range(0, 64*64, 64)]
-        img = [tuple([e for t in x for e in t]) for x in img]
-        fname = 'dream-'+(str(int(time.time())))+'.png'
-        f = open(fname, 'wb')
-        w = png.Writer(64, 64)
-        w.write(f, img)
-        f.close()
-        self.mean = []
+        if len(self.mean) > 0:
+            mean = [log(1+float(sum(col))/len(col)) for col in zip(*self.mean)]
+            mi = min(mean)
+            ma = max(mean)
+            mean = [(x - mi + (1/255)) / (ma - mi) for x in mean]
+            img = [(int(x*254), int(x*254), int(x*254)) for x in mean]
+            img = [img[i:i+64] for i in range(0, 64*64, 64)]
+            img = [tuple([e for t in x for e in t]) for x in img]
+            fname = 'dream-'+(str(int(time.time())))+'.png'
+            f = open(fname, 'wb')
+            w = png.Writer(64, 64)
+            w.write(f, img)
+            f.close()
+            self.mean = []
 
 
 if __name__ == "__main__":
@@ -99,13 +100,15 @@ if __name__ == "__main__":
     explorationCompression(baseGrammar, train,
                            testingTasks=test,
                            outputPrefix="experimentOutputs/geom",
-                           compressor="pypy",
+                           compressor="rust",
                            evaluationTimeout=0.01,
                            **commandlineArguments(
-                               steps=200,
+                               steps=500,
+                               a=1,
                                iterations=10,
                                useRecognitionModel=True,
-                               helmholtzRatio=0.0,
+                               helmholtzRatio=0.5,
+                               helmholtzBatch=500,
                                featureExtractor=GeomFeatureCNN,
                                topK=2,
                                maximumFrontier=500,

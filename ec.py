@@ -87,6 +87,7 @@ def ecIterator(grammar, tasks,
                useRecognitionModel=True,
                steps=250,
                helmholtzRatio=0.,
+               helmholtzBatch=5000,
                featureExtractor = None,
                activation='relu',
                topK=1,
@@ -253,7 +254,8 @@ def ecIterator(grammar, tasks,
             recognizer = RecognitionModel(featureExtractorObject, grammar, activation=activation, cuda=cuda)
 
             recognizer.train(frontiers, topK=topK, steps=steps,
-                             CPUs = CPUs,
+                             CPUs=CPUs,
+                             helmholtzBatch=helmholtzBatch,
                              helmholtzRatio=helmholtzRatio if j > 0 else 0.)
             result.recognitionModel = recognizer
 
@@ -370,7 +372,8 @@ def commandlineArguments(_=None,
                          useRecognitionModel=True,
                          steps=250,
                          activation='relu',
-                         helmholtzRatio = 0.,
+                         helmholtzRatio=0.,
+                         helmholtzBatch=5000,
                          featureExtractor = None,
                          cuda=None,
                          maximumFrontier=None,
@@ -467,6 +470,11 @@ def commandlineArguments(_=None,
                         dest="helmholtzRatio",
                         help="""When training recognition models, what fraction of the training data should be samples from the generative model? Default %f""" % helmholtzRatio,
                         default = helmholtzRatio,
+                        type=float)
+    parser.add_argument("--helmholtzBatch",
+                        dest="helmholtzBatch",
+                        help="""When training recognition models, size of the Helmholtz batch? Default %f""" % helmholtzBatch,
+                        default=helmholtzBatch,
                         type=float)
     parser.add_argument("-B", "--baselines", dest="onlyBaselines", action="store_true",
                         help="only compute baselines")

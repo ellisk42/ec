@@ -1,26 +1,29 @@
 from enumeration import *
 from fragmentGrammar import *
 from grammar import *
+from heapq import *
 from utilities import eprint
 
 import gc
 
 import torch
 import torch.nn as nn
-import torch.optim as optimization
 import torch.nn.functional as F
 from torch.autograd import Variable
-from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
+from torch.nn.utils.rnn import pack_padded_sequence
 
 import numpy as np
 
-from heapq import *
-        
+
 def variable(x, volatile=False, cuda=False):
-    if isinstance(x,list): x = np.array(x)
-    if isinstance(x,(np.ndarray,np.generic)): x = torch.from_numpy(x)
-    if cuda: x = x.cuda()
+    if isinstance(x, list):
+        x = np.array(x)
+    if isinstance(x, (np.ndarray, np.generic)):
+        x = torch.from_numpy(x)
+    if cuda:
+        x = x.cuda()
     return Variable(x, volatile=volatile)
+
 
 class DRNN(nn.Module):
     def __init__(self, grammar, featureExtractor, hidden=64, cuda=False):
@@ -29,11 +32,14 @@ class DRNN(nn.Module):
         self.featureExtractor = featureExtractor
         # Converts the output of the feature extractor into the
         # initial hidden state of the parent rnn
-        self.featureExtractor2parentH = nn.Linear(featureExtractor.outputDimensionality, hidden)
-        self.featureExtractor2parentC = nn.Linear(featureExtractor.outputDimensionality, hidden)
-        
+        self.featureExtractor2parentH = \
+            nn.Linear(featureExtractor.outputDimensionality, hidden)
+        self.featureExtractor2parentC = \
+            nn.Linear(featureExtractor.outputDimensionality, hidden)
+
         self.grammar = grammar
-        self.production2index = {p: j+1 for j,(_,_,p) in enumerate(grammar.productions) }
+        self.production2index = \
+            {p: j+1 for j, (_, _, p) in enumerate(grammar.productions)}
         self.production2index[Index(0)] = 0
         self.index2production = [Index(0)] + [ p for _,_,p in grammar.productions ]
 
@@ -50,7 +56,7 @@ class DRNN(nn.Module):
         self.defaultSibling = variable(torch.Tensor(hidden).float()).view(1,1,-1)
 
         self.defaultParent = variable(torch.Tensor(hidden).float()).view(1,1,-1)
-        
+
     def embedProduction(self,p):
         if p.isIndex: p = Index(0)
         return self.encoder(variable([self.production2index[p]]))
@@ -58,14 +64,14 @@ class DRNN(nn.Module):
     def indexProduction(self,p):
         if p.isIndex: p = Index(0)
         return variable([self.production2index[p]])
-        
+
     def predictionFromHidden(self, parent, sibling, alternatives = None):
         """Takes the parent and sibling hidden vectors, optionally with a set of alternatives; returns logits"""
         parent = parent[0] if parent else self.defaultParent
         sibling = sibling[0] if sibling else self.defaultSibling
 
         predictive = F.tanh(self.parentPrediction(parent) + self.siblingPrediction(sibling))
-        
+
         r = self.prediction(predictive).view(-1)
         if alternatives is not None:
             haveVariables = any(a.isIndex for a in alternatives)
@@ -79,7 +85,7 @@ class DRNN(nn.Module):
         features = self.featureExtractor.featuresOfTask(task)
         return (self.featureExtractor2parentH(features).view(1,1,-1),
                 self.featureExtractor2parentC(features).view(1,1,-1))
-    
+
     def updateParent(self, parent, symbol):
         embedding = self.embedProduction(symbol)
         _, h = self.parent(embedding.view(1,1,-1), parent)
@@ -135,9 +141,9 @@ class DRNN(nn.Module):
         # Update ancestral rnn, which will be passed to the children
         if xs != []:
             parent = self.updateParent(parent, f)
-            
+
         sibling = None
-        
+
         for argumentType, argument in zip(argumentTypes, xs):
             argumentType = argumentType.apply(context)
             context, aroot, aL = self._programLoss(argumentType, argument,
@@ -147,7 +153,7 @@ class DRNN(nn.Module):
             sibling = self.updateSibling(sibling, aroot)
 
         return (context,
-                Index(0) if f.isIndex else f, 
+                Index(0) if f.isIndex else f,
                 L)
 
     def sample(self, task):
@@ -167,7 +173,7 @@ class DRNN(nn.Module):
                                                     parent = parent, sibling = sibling,
                                                     environment = [request.arguments[0]] + environment)
             return context, root, Abstraction(expression)
-            
+
         candidates = self.grammar.buildCandidates(request, context, environment,
                                                   normalize = False,
                                                   returnProbabilities = False,
@@ -190,7 +196,7 @@ class DRNN(nn.Module):
         # Update ancestral rnn, which will be passed to the children
         if argumentTypes != []:
             parent = self.updateParent(parent, f)
-            
+
         sibling = None
 
         for argumentType in argumentTypes:
@@ -206,7 +212,7 @@ class DRNN(nn.Module):
     def enumeration(self, task, interval = 1.):
         request = task.request
         parent = self.initialParent(task)
-        
+
         lowerBound = 0.
         while True:
             for ll,_,_,e in self._enumeration(request,
@@ -232,7 +238,7 @@ class DRNN(nn.Module):
                                                          parent = parent, sibling = sibling):
                 yield l, newContext, r, Abstraction(b)
             return
-        
+
         candidates = self.grammar.buildCandidates(request, context, environment,
                                                   normalize = False,
                                                   returnProbabilities = False,
@@ -260,7 +266,7 @@ class DRNN(nn.Module):
             argumentTypes = tp.functionArguments()
             if argumentTypes != []: newParent = self.updateParent(parent, f)
             else: newParent = parent
-            
+
             root = Index(0) if f.isIndex else f
 
             for aL, aK, application in \
@@ -297,16 +303,18 @@ class DRNN(nn.Module):
                                            context = newContext, environment = environment,
                                            upperBound = upperBound + aL, lowerBound = lowerBound + aL,
                                            parent = parent, sibling = newSibling):
-                yield resultL + aL, resultK, result        
-        
-        
+                yield resultL + aL, resultK, result
+
+
 def _relu(x): return x.clamp(min=0)
+
+
 class RecognitionModel(nn.Module):
     def __init__(self, featureExtractor, grammar, hidden=[64], activation="relu", cuda=False):
         super(RecognitionModel, self).__init__()
         self.grammar = grammar
         self.use_cuda = cuda
-        if cuda: self.cuda()            
+        if cuda: self.cuda()
 
         self.featureExtractor = featureExtractor
         # Sanity check - make sure that all of the parameters of the
@@ -314,7 +322,7 @@ class RecognitionModel(nn.Module):
         if hasattr(featureExtractor, 'parameters'):
             for parameter in featureExtractor.parameters():
                 assert any(myParameter is parameter for myParameter in self.parameters())
-        
+
         self.hiddenLayers = []
         inputDimensionality = featureExtractor.outputDimensionality
         for h in hidden:
@@ -352,7 +360,7 @@ class RecognitionModel(nn.Module):
     def taskEmbeddings(self, tasks):
         return {task: self.featureExtractor.featuresOfTask(task).data.numpy()
                 for task in tasks }
-        
+
     def forward(self, features):
         for layer in self.hiddenLayers:
             features = self.activation(layer(features))
@@ -375,7 +383,7 @@ class RecognitionModel(nn.Module):
         return - g.logLikelihood(tp, sample)
 
     def train(self, frontiers, _=None, steps=250, lr=0.001, topK=1, CPUs=1,
-              helmholtzRatio = 0.):
+              helmholtzRatio=0., helmholtzBatch=5000):
         """
         helmholtzRatio: What fraction of the training data should be forward samples from the generative model?
         """
@@ -383,7 +391,8 @@ class RecognitionModel(nn.Module):
         frontiers = [ frontier.topK(topK).normalize() for frontier in frontiers if not frontier.empty ]
 
         # Not sure why this ever happens
-        if helmholtzRatio is None: helmholtzRatio = 0.
+        if helmholtzRatio is None:
+            helmholtzRatio = 0.
 
         eprint("Training a recognition model from %d frontiers, %d%% Helmholtz, feature extractor %s."%(
             len(frontiers),
@@ -392,18 +401,20 @@ class RecognitionModel(nn.Module):
 
         # The number of Helmholtz samples that we generate at once
         # Should only affect performance and shouldn't affect anything else
-        HELMHOLTZBATCH = 5000
+        HELMHOLTZBATCH = helmholtzBatch
         helmholtzSamples = []
-        
+
         optimizer = torch.optim.Adam(self.parameters(), lr=lr)
+
         with timing("Trained recognition model"):
             for i in range(1,steps + 1):
                 losses = []
-                
+
                 if helmholtzRatio < 1.:
                     permutedFrontiers = list(frontiers)
                     random.shuffle(permutedFrontiers)
-                else: permutedFrontiers = [None]
+                else:
+                    permutedFrontiers = [None]
                 for frontier in permutedFrontiers:
                     # Randomly decide whether to sample from the generative model
                     doingHelmholtz = random.random() < helmholtzRatio
@@ -426,19 +437,14 @@ class RecognitionModel(nn.Module):
                         else:
                             # Refuse to train on the frontiers
                             continue
-                        
-                            
+
                     loss.backward()
                     optimizer.step()
                     losses.append(loss.data[0])
                 if i%50 == 0 and losses:
                     eprint("Epoch",i,"Loss",sum(losses)/len(losses))
                     gc.collect()
-            try:
-                if doingHelmholtz:
-                    self.featureExtractor.finish()
-            except AttributeError:
-                ()
+
 
     def sampleHelmholtz(self, requests, statusUpdate = None):
        request = random.choice(requests)
@@ -461,11 +467,17 @@ class RecognitionModel(nn.Module):
                               range(N))
         eprint()
         flushEverything()
+        try:
+            self.featureExtractor.finish()
+        except AttributeError:
+            ()
+        eprint()
+        flushEverything()
         return samples
 
     def enumerateFrontiers(self, tasks, likelihoodModel,
                            solver=None,
-                           frontierSize=None, enumerationTimeout=None, 
+                           frontierSize=None, enumerationTimeout=None,
                            CPUs=1, maximumFrontier=None, evaluationTimeout=None):
         with timing("Evaluated recognition model"):
             grammars = {}
@@ -478,7 +490,7 @@ class RecognitionModel(nn.Module):
 
         return multithreadedEnumeration(grammars, tasks, likelihoodModel,
                                         solver=solver,
-                                        frontierSize = frontierSize, enumerationTimeout=enumerationTimeout, 
+                                        frontierSize = frontierSize, enumerationTimeout=enumerationTimeout,
                                         CPUs=CPUs, maximumFrontier=maximumFrontier,
                                         evaluationTimeout=evaluationTimeout)
 
@@ -582,7 +594,7 @@ class RecurrentFeatureExtractor(nn.Module):
         #outputs, sizes = pad_packed_sequence(outputs)
         # I don't know whether to return the final output or the final hidden activations...
         return hidden[0,:,:] + hidden[1,:,:]
-        
+
     def forward(self, examples):
         tokenized = self.tokenize(examples)
         if not tokenized:
@@ -604,7 +616,7 @@ class RecurrentFeatureExtractor(nn.Module):
             except: continue
             return self(zip(xss,ys))
         return None
-        
+
 class MLPFeatureExtractor(nn.Module):
     def __init__(self, tasks, cuda=False, H=16):
         super(MLPFeatureExtractor, self).__init__()
@@ -627,8 +639,8 @@ class MLPFeatureExtractor(nn.Module):
         if features is None: return None
         f = variable([ (f - self.averages[j])/self.deviations[j] for j,f in enumerate(features) ], cuda=self.use_cuda).float()
         return self.hidden(f).clamp(min = 0)
-    
-        
+
+
 
 class HandCodedFeatureExtractor(object):
     def __init__(self, tasks, cuda=False):
@@ -642,8 +654,8 @@ class HandCodedFeatureExtractor(object):
         features = self._featuresOfProgram(p,t)
         if features is None: return None
         return variable([ (f - self.averages[j])/self.deviations[j] for j,f in enumerate(features) ], cuda=self.cuda).float()
-    
-                
+
+
 if __name__ == "__main__":
     from arithmeticPrimitives import *
     g = Grammar.uniform([addition, multiplication, real, k0, k1])
@@ -687,8 +699,8 @@ if __name__ == "__main__":
                 for ll,e in sorted(take(5,m.enumeration(t)),reverse = True):
                     gt = m.programLoss(e,t).data[0]
                     print ll,gt,"\t",e
-                print 
+                print
         l.backward()
         optimizer.step()
 
-    
+
