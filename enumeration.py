@@ -119,8 +119,11 @@ def multithreadedEnumeration(g, tasks, likelihoodModel, _=None,
 
                 totalExplored += explored
                 if totalExplored > 0:
-                    eprint("(python) Explored %d programs in %s sec. %d programs/sec."%
-                           (totalExplored, int(time() - startTime), int(float(totalExplored)/(time() - startTime))))
+                    eprint("(python) Explored %d programs in %s sec. %d programs/sec. CPU load: %s."%
+                           (totalExplored,
+                            int(time() - startTime),
+                            int(float(totalExplored)/(time() - startTime)),
+                            CPULoad()))
 
                 if searchTime is not None:
                     if bestSearchTime[task] is None:

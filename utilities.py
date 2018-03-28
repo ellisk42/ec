@@ -366,6 +366,11 @@ def hostname():
     return socket.gethostname()
 def getPID():
     return os.getpid()
+def CPULoad():
+    try:
+        import psutil
+    except: return "unknown - install psutil"
+    return psutil.cpu_percent()
 
 def flushEverything():
     sys.stdout.flush()
