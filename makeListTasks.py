@@ -172,14 +172,21 @@ def make_list_bootstrap_tasks(numberOfExamples):
              [((l,), suffixes(l))
               for _ in xrange(10)
               for l in [randomList()] ]),
-            Task("sum", arrow(tlist(tint),tint),
-                 [((l,), sum(l))
+        Task("range", arrow(tint,tlist(tint)),
+             [((n,), range(n))
+              for n in range(10) ]),
+            Task("range len", arrow(tlist(tint),tlist(tint)),
+             [((l,), range(len(l)))
               for _ in range(10)
               for l in [randomList()] ]),
-            Task("difference", arrow(tlist(tint),tint),
-                 [((l,), reduce(lambda x,y: y-x, reversed(l), 1))
-              for _ in range(10)
-              for l in [randomList()[:4]] ]),
+            # Task("sum", arrow(tlist(tint),tint),
+            #      [((l,), sum(l))
+            #   for _ in range(10)
+            #   for l in [randomList()] ]),
+            # Task("difference", arrow(tlist(tint),tint),
+            #      [((l,), reduce(lambda x,y: y-x, reversed(l), 1))
+            #   for _ in range(10)
+            #   for l in [randomList()[:4]] ]),
             Task("index int", arrow(tint, tlist(tint), tint),
                  [((n,l), l[n])
               for n in range(10)
