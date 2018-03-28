@@ -292,6 +292,8 @@ def loadPBETasks(directory="PBE_Strings_Track"):
                      [(tuple(constants + xs),y)
                      for xs,y in examples ])
         tasks.append(task)
+        print name
+        print "\n".join(map(str,examples[:3]))
         cheatingTasks.append(cheat)
 
     return tasks, cheatingTasks
@@ -299,6 +301,8 @@ def loadPBETasks(directory="PBE_Strings_Track"):
 
 if __name__ == "__main__":
     import sys
+    loadPBETasks()
+    assert False
 
     tasks = makeTasks()
     # def maximumLength(x):

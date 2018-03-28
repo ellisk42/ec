@@ -125,7 +125,74 @@ def make_list_bootstrap_tasks(numberOfExamples):
               for a in [randomBooleanList()]
               for b in [randomBooleanList()] ]),]
 
+    # Has as its goal the bootstrapping of fold, unfold, zip
+    if True:
+        return [
+            Task("increment", arrow(tint,tint),
+                 [((n,),n+1) for n in range(5) ]),
+            Task("decrement", arrow(tint,tint),
+                 [((n,),n-1) for n in range(5) ]),
+            Task("increment twice", arrow(tint,tint),
+                 [((n,),n+2) for n in range(5) ]),
+            Task("increment car", arrow(tlist(tint),tint),
+                 [((l,),l[0] + 1)
+              for _ in range(10)
+              for l in [randomList()] ]),
+            # Task("increment 3x", arrow(tint,tint),
+            #      [((n,),n+3) for n in range(5) ]),
+        Task("decrement twice", arrow(tint,tint),
+             [((n,),n-2) for n in range(5) ]),
+            Task("decrement car", arrow(tlist(tint),tint),
+                 [((l,),l[0] - 1)
+              for _ in range(10)
+              for l in [randomList()] ]),
+            # Task("decrement 3x", arrow(tint,tint),
+            #      [((n,),n-3) for n in range(5) ]),
+        Task("zero?", arrow(tint,tbool),
+             [((n,), n == 0) for n in range(5) ]),
+            Task("zero car?", arrow(tlist(tint),tbool),
+                 [(([h] + l,), h == 0)
+              for _ in range(5)
+              for h in [0,randint(1,9)]
+              for l in [randomList()] ]),
+
+        Task("length bool", arrow(tlist(tbool),tint),
+             [((l,), len(l))
+              for _ in range(10)
+              for l in [[flip() for _ in range(randint(0,10)) ]] ]),
+            Task("length int", arrow(tlist(tint),tint),
+                 [((l,), len(l))
+              for _ in range(10)
+              for l in [randomList()] ]),
+            Task("countdown", arrow(tint,tlist(tint)),
+                 [((n,), range(n+1,1,-1))
+              for n in range(10) ]),
+            
+        Task("suffixes", arrow(tlist(tint),tlist(tlist(tint))),
+             [((l,), suffixes(l))
+              for _ in xrange(10)
+              for l in [randomList()] ]),
+            Task("sum", arrow(tlist(tint),tint),
+                 [((l,), sum(l))
+              for _ in range(10)
+              for l in [randomList()] ]),
+            Task("difference", arrow(tlist(tint),tint),
+                 [((l,), reduce(lambda x,y: y-x, reversed(l), 1))
+              for _ in range(10)
+              for l in [randomList()[:4]] ]),
+            Task("index int", arrow(tint, tlist(tint), tint),
+                 [((n,l), l[n])
+              for n in range(10)
+              for l in [[randint(0,9) for _ in range(randint(n+1,n + 5)) ]]]),
+            Task("index bool", arrow(tint, tlist(tbool), tbool),
+                 [((n,l), l[n])
+              for n in range(10)
+              for l in [[flip() for _ in range(randint(n+1,n + 5)) ]]])
+        ]
+            
+
     return [
+        
         Task("increment", arrow(tint,tint),
              [((n,),n+1) for n in range(5) ]),
         Task("decrement", arrow(tint,tint),
