@@ -226,8 +226,8 @@ def make_list_bootstrap_tasks(numberOfExamples):
              [((l,),map(lambda n: n*2, l))
               for _ in range(10)
               for l in [randomList()] ]),
-        Task("map decrement", arrow(tlist(tint),tlist(tint)),
-             [((l,),map(lambda n: n-1, l))
+        Task("map increment", arrow(tlist(tint),tlist(tint)),
+             [((l,),map(lambda n: n+1, l))
               for _ in range(10)
               for l in [randomList()] ]),
         Task("map negation", arrow(tlist(tint),tlist(tint)),
