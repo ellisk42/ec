@@ -8,7 +8,7 @@ extern crate serde_derive;
 
 use std::f64;
 use std::io;
-use polytype::Type;
+use polytype::{Context, Type};
 use programinduction::{lambda, ECFrontier, Task};
 use rayon::prelude::*;
 
@@ -80,7 +80,9 @@ impl From<ExternalCompressionInput> for CompressionInput {
             .map(|p| {
                 (
                     p.name,
-                    Type::parse(&p.tp).expect("invalid primitive type"),
+                    Type::parse(&p.tp)
+                        .expect("invalid primitive type")
+                        .generalize(&Context::default()),
                     p.logp,
                 )
             })
@@ -106,7 +108,9 @@ impl From<ExternalCompressionInput> for CompressionInput {
         let (tasks, frontiers) = eci.frontiers
             .into_par_iter()
             .map(|f| {
-                let tp = Type::parse(&f.task_tp).expect("invalid task type");
+                let tp = Type::parse(&f.task_tp)
+                    .expect("invalid task type")
+                    .generalize(&Context::default());
                 let task = Task {
                     oracle: Box::new(noop_oracle),
                     observation: (),
