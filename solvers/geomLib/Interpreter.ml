@@ -50,7 +50,7 @@ let rec my_print_var v = match v with
 
 let (++) pr1 pr2 = Concat(pr1, pr2)
 
-let scale = d_from_origin /. 2.
+let scale = d_from_origin /. 2.5
 let steps = 20.
 let isteps = int_of_float steps
 let ratio = scale /. steps
