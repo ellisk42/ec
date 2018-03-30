@@ -225,23 +225,36 @@ def ecIterator(grammar, tasks,
             eprint("Expanding enumeration timeout from {} to {} because of no progress".format(
                 oldEnumerationTimeout, enumerationTimeout))
 
-        timeout = enumerationTimeout
-        while True:
-            frontiers, times = multithreadedEnumeration(grammar, tasks, likelihoodModel,
-                                                        solver=solver,
-                                                        frontierSize=frontierSize,
-                                                        maximumFrontier=maximumFrontier,
-                                                        enumerationTimeout=timeout,
-                                                        CPUs=CPUs,
-                                                        evaluationTimeout=evaluationTimeout)
-            if not expandFrontier: break
-            if j == 0: break
-            if useRecognitionModel: break
-            if sum(not f.empty for f in frontiers) <= result.learningCurve[-1]:
-                eprint("Expanding enumeration timeout from %i to %i because of no progress"%(
-                    timeout, timeout*expandFrontier))
+        frontiers, times = multithreadedEnumeration(grammar, tasks, likelihoodModel,
+                                                    solver=solver,
+                                                    frontierSize=frontierSize,
+                                                    maximumFrontier=maximumFrontier,
+                                                    enumerationTimeout=enumerationTimeout,
+                                                    CPUs=CPUs,
+                                                    evaluationTimeout=evaluationTimeout)
+        if expandFrontier and j > 0 and (not useRecognitionModel) and \
+           sum(not f.empty for f in frontiers) <= result.learningCurve[-1]:
+            timeout = enumerationTimeout
+            unsolvedTasks = [ f.task for f in frontiers if f.empty ]
+            while True:
+                eprint("Expanding enumeration timeout from %i to %i because of no progress. Focusing exclusively on %d unsolved tasks."%(
+                    timeout, timeout*expandFrontier, len(unsolvedTasks)))
                 timeout = timeout*expandFrontier
-            else: break
+                unsolvedFrontiers, unsolvedTimes = \
+                                multithreadedEnumeration(grammar, unsolvedTasks, likelihoodModel,
+                                                         solver=solver,
+                                                         frontierSize=frontierSize,
+                                                         maximumFrontier=maximumFrontier,
+                                                         enumerationTimeout=timeout,
+                                                         CPUs=CPUs,
+                                                         evaluationTimeout=evaluationTimeout)
+                if any( not f.empty for f in unsolvedFrontiers ):
+                    times += unsolvedTimes
+                    unsolvedFrontiers = {f.task: f for f in unsolvedFrontiers }
+                    frontiers = [ f if not f.empty else unsolvedFrontiers[f.task]
+                                  for f in frontiers ]
+                    break
+            
             
         eprint("Generative model enumeration results:")
         eprint(Frontier.describe(frontiers))
