@@ -5,9 +5,11 @@
 %token TURN
 %token REPEAT
 %token NOTHING
+%token DEFINE
 %token JUST
 %token INTEGRATE
 %token CONCAT
+%token NAME
 %token V_U
 %token V_N
 %token V_P
@@ -38,6 +40,8 @@ var:
       { v }
   | V_U
       { Plumbing.var_unit }
+  | NAME
+      { Plumbing.var_name }
   | V_N ; v = var
       { Plumbing.var_next v }
   | V_P ; v = var
@@ -64,12 +68,14 @@ expr:
       { e }
   | CONCAT ; e1 = expr ; e2 = expr
       { Plumbing.concat e1 e2 }
+  | DEFINE ; v = var ;
+      { Plumbing.define v }
   | EMBED ; e = expr
       { Plumbing.embed e }
   | TURN ; s = somev
       { Plumbing.turn s }
-  | REPEAT ; s = somev ; e = expr
-      { Plumbing.repeat s e }
+  | REPEAT ; e = expr
+      { Plumbing.repeat e }
   | INTEGRATE ;
     v1 = somev ;
     b  = someb ;

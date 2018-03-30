@@ -25,6 +25,8 @@ def _turn(p):
     return "(turn " + p + ")"
 def _run(p):
     return "(run " + p + ")"
+def _define(v):
+    return "(define " + v + ")"
 def _just(v):
     return "(just " + v + ")"
 def _integrate(v1):
@@ -37,8 +39,8 @@ def _integrate(v1):
            " " + v3 + \
            " " + v4 + \
            ")"
-def _repeat(v):
-    return lambda p: "(repeat " + v + " " + p + ")"
+def _repeat(p):
+    return "(repeat " + p + ")"
 def _concat(p1):
     return lambda p2: "(concat " + p1 + " " + p2 + ")"
 
@@ -51,11 +53,11 @@ primitives = [
     Primitive("var_next", arrow(tvar, tvar), _var_next),
     Primitive("var_prev", arrow(tvar, tvar), _var_prev),
     Primitive("var_opposite", arrow(tvar, tvar), _var_opposite),
+    Primitive("var_name", tvar, "var_name"),
 
     # PROGRAMS
-    Primitive("embed",
-              arrow(tprogram, tprogram),
-              _embed),
+    Primitive("embed", arrow(tprogram, tprogram), _embed),
+    Primitive("define", arrow(tvar, tprogram), _define),
     Primitive("integrate",
               arrow(tmaybe(tvar),
                     tmaybe(tbool),
@@ -65,14 +67,14 @@ primitives = [
                     tmaybe(tvar),
                     tprogram), _integrate),
     Primitive("turn", arrow(tmaybe(tvar), tprogram), _turn),
-    Primitive("repeat", arrow(tmaybe(tvar), tprogram, tprogram), _repeat),
+    Primitive("repeat", arrow(tprogram, tprogram), _repeat),
     Primitive("concat", arrow(tprogram, tprogram, tprogram), _concat),
 
     # RUN
     Primitive("run", arrow(tprogram, tcanvas), _run),
 
     # tbool
-    Primitive("true",  tbool, "true"),
+    # Primitive("true",  tbool, "true"),
     Primitive("false", tbool, "false"),
 
     # maybe

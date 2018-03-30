@@ -17,10 +17,12 @@ rule read =
   | "turn"         { TURN        }
   | "repeat"       { REPEAT      }
   | "nothing"      { NOTHING     }
+  | "define"       { DEFINE      }
   | "just"         { JUST        }
   | "integrate"    { INTEGRATE   }
   | "concat"       { CONCAT      }
   | "var_unit"     { V_U         }
+  | "var_name"     { NAME        }
   | "var_next"     { V_N         }
   | "var_prev"     { V_P         }
   | "var_half"     { V_H         }

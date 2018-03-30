@@ -359,9 +359,13 @@ let primitive_turn   = primitive
                         "turn"
                         (tmaybe tvar @> tprogram)
                         GeomLib.Plumbing.turn
+let primitive_define = primitive
+                        "define"
+                        (tvar @> tprogram)
+                        GeomLib.Plumbing.define
 let primitive_repeat = primitive
                         "repeat"
-                        (tmaybe tvar @> tprogram @> tprogram)
+                        (tprogram @> tprogram)
                         GeomLib.Plumbing.repeat
 let primitive_integrate= primitive
                         "integrate"
@@ -377,7 +381,7 @@ let var_half         = primitive "var_half" (tvar @> tvar) GeomLib.Plumbing.var_
 let var_next         = primitive "var_next" (tvar @> tvar) GeomLib.Plumbing.var_next
 let var_prev         = primitive "var_prev" (tvar @> tvar) GeomLib.Plumbing.var_prev
 let var_opposite     = primitive "var_opposite" (tvar @> tvar) GeomLib.Plumbing.var_opposite
-(*let var_name         = primitive "var_name" (tstring @> tvar) GeomLib.Plumbing.var_name*)
+let var_name         = primitive "var_name" tvar GeomLib.Plumbing.var_name
 
 
 let default_recursion_limit = 20;;

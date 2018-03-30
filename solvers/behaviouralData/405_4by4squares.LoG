@@ -1,6 +1,6 @@
-Repeat(Next(Double(unit))) {
+Repeat(Double(Double(unit))) {
     Embed {
-        Repeat(Next(Double(unit))) {
+        Repeat(Double(Double(unit))) {
             Embed {
                 Repeat(Double(Double(unit))) {
                     Integrate ;
