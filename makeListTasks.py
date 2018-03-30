@@ -274,26 +274,22 @@ def make_list_bootstrap_tasks(numberOfExamples):
               for xs in [[ randint(0,3) for _ in range(5) ]] ]),
     ]
 
-
-    # Let's learn zip!
-    if True:
-        return lengthBootstrap + operationBootstrap + unfoldBootstrap + arrayBootstrap + foldBootstrap + mapBootstrap + zipBootstrap
-
-    
-    # Has as its goal the bootstrapping of fold, unfold, zip
-    if True:
-        return [
-            
-            # Task("sum", arrow(tlist(tint),tint),
-            #      [((l,), sum(l))
-            #   for _ in range(10)
-            #   for l in [randomList()] ]),
-            # Task("difference", arrow(tlist(tint),tint),
-            #      [((l,), reduce(lambda x,y: y-x, reversed(l), 1))
-            #   for _ in range(10)
-            #   for l in [randomList()[:4]] ]),
+    # Learning mapi
+    mapIndexBootstrap = [
+        Task("Add index", arrow(tlist(tint),tlist(tint)),
+             [((l,), map(lambda (i,j): i+j, enumerate(l)))
+              for _ in range(10)
+              for l in [randomList()] ]),
+        Task("Subtract index", arrow(tlist(tint),tlist(tint)),
+             [((l,), map(lambda (i,j): j-i, enumerate(l)))
+              for _ in range(10)
+              for l in [randomList()] ])
         ]
-            
+
+
+    # Let's learn everything!
+    if True:
+        return lengthBootstrap + operationBootstrap + unfoldBootstrap + arrayBootstrap + foldBootstrap + mapBootstrap + zipBootstrap + mapIndexBootstrap + filterBootstrap            
 
     return [
         

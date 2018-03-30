@@ -62,10 +62,13 @@ def multithreadedEnumeration(g, tasks, likelihoodModel, _=None,
         return sum( e.logLikelihood == 0. for e in f)
     
     def budgetIncrement(lb):
+        # Very heuristic - not sure what to do here
         if lb < 24.:
             return 1.
-        else:
+        elif lb < 27.:
             return 0.5
+        else:
+            return 0.25
 
     startTime = time()
 
