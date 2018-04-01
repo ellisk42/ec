@@ -32,6 +32,12 @@ let violates_symmetry f a n =
       | (0,"zero?","-1") -> true
       | _ -> false
 
+(* For now this is disabled and is not used *)
+let violates_commutative f x y =
+    match f with
+    | "eq?" | "+" -> compare_program x y > 0
+    | _ -> false
+      
 
 let rec enumerate_programs' (g: grammar) (context: tContext) (request: tp) (environment: tp list)
     (lower_bound: float) (upper_bound: float)
@@ -73,7 +79,14 @@ and
   if maximumDepth < 1 || upper_bound <= 0. then () else 
     match argument_types with
     | [] -> (* not a function so we don't need any applications *)
-      if lower_bound < 0. && 0. <= upper_bound then callBack f context 0.0 else ()
+      begin 
+        if lower_bound < 0. && 0. <= upper_bound then
+          (* match f with
+           * | Apply(Apply(Primitive(_,function_name,_),first_argument),second_argument)
+           *   when violates_commutative function_name first_argument second_argument -> ()
+           * | _ -> *) callBack f context 0.0
+        else ()
+      end
     | first_argument::later_arguments ->
       let (context,first_argument) = applyContext context first_argument in
       enumerate_programs' ~maximumDepth:maximumDepth (* ~recursion:NoRecursion *)

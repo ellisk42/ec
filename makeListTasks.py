@@ -150,6 +150,18 @@ def make_list_bootstrap_tasks(numberOfExamples):
               for _ in range(5)
               for h in [0,randint(1,9)]
               for l in [randomList()] ]),
+        Task("increment car", arrow(tlist(tint),tint),
+             [((l,),l[0] + 1)
+              for _ in range(10)
+              for l in [randomList()] ]),
+        Task("increment twice", arrow(tint,tint),
+             [((n,),n+2) for n in range(5) ]),
+        Task("decrement twice", arrow(tint,tint),
+             [((n,),n-2) for n in range(5) ]),
+        Task("decrement car", arrow(tlist(tint),tint),
+             [((l,),l[0] - 1)
+              for _ in range(10)
+              for l in [randomList()] ]),
     ]
 
     # Encourages learning of unfolding operations
@@ -285,7 +297,6 @@ def make_list_bootstrap_tasks(numberOfExamples):
               for _ in range(10)
               for l in [randomList()] ])
         ]
-
 
     # Let's learn everything!
     if True:

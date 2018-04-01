@@ -24,6 +24,7 @@ let is_base_primitive = function
   |_ -> false
 
 let primitive_name = function | Primitive(_,n,_) -> n
+                              | _ -> raise (Failure "primitive_name: not a primitive")
 
 let program_children = function
   | Abstraction(b) -> [b]
@@ -61,6 +62,23 @@ let rec program_equal p1 p2 = match (p1,p2) with
   | (Index(a),Index(b)) -> a = b
   | (Apply(a,b), Apply(x,y)) -> program_equal a x && program_equal b y
   | _ -> false
+
+let rec compare_program p1 p2 = match (p1,p2) with
+  (* Negative if p1 is smaller; 0 if they are equal; positive if p1 is bigger *)
+  (* intuitively calculates (p1 - p2) *)
+  | (Index(i),Index(j)) -> i - j
+  | (Index(_),_) -> -1
+  | (Abstraction(b1),Abstraction(b2)) -> compare_program b1 b2
+  | (Abstraction(_),_) -> -1
+  | (Apply(p,q),Apply(m,n)) ->
+    let c = compare_program p m in
+    if c = 0 then compare_program q n else c
+  | (Apply(_,_),_) -> -1
+  | (Primitive(_,n1,_),Primitive(_,n2,_)) -> String.compare n1 n2
+  | (Primitive(_,_,_),_) -> -1
+  | (Invented(_,b1),Invented(_,b2)) -> compare_program b1 b2
+  | (Invented(_,_),_) -> -1
+                                               
 
 let rec infer_program_type context environment p : tContext*tp = match p with
   | Index(j) ->

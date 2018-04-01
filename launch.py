@@ -12,7 +12,8 @@ def user():
 def launch(size = "t2.micro", name = ""):
     # aws ec2 run-instances --image-id ami-835f6ae6 --instance-type "t2.micro" --key-name testing --associate-public-ip-address
     o = json.loads(subprocess.check_output(["aws","ec2","run-instances",
-                                            "--image-id","ami-835f6ae6",
+                                            "--image-id",#"ami-835f6ae6",
+                                            "ami-d6ae9fb3",
                                             "--instance-type",size,
                                             "--security-groups","publicssh",
                                             "--instance-initiated-shutdown-behavior","terminate",
@@ -45,6 +46,7 @@ def sendCommand(address, script, job_id, upload, resume, tar, shutdown):
     preamble = """#!/bin/bash
 sudo pip install https://lists.lucasem.com/listroutines-1.0.0-py2.py3-none-any.whl
 pip install dill
+sudo apt-get install -y libcairo-ocaml
 cd ~/ec
 rm experimentOutputs/*
 git pull
