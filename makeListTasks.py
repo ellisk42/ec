@@ -91,7 +91,7 @@ def make_list_tasks(n_examples):
                 yield t
 
 
-def make_list_bootstrap_tasks(numberOfExamples):
+def make_list_bootstrap_tasks():
     seed(42)
 
     def suffixes(l):
@@ -238,10 +238,10 @@ def make_list_bootstrap_tasks(numberOfExamples):
              [((l,),map(lambda n: n*2, l))
               for _ in range(10)
               for l in [randomList()] ]),
-        Task("map increment", arrow(tlist(tint),tlist(tint)),
-             [((l,),map(lambda n: n+1, l))
-              for _ in range(10)
-              for l in [randomList()] ]),
+        # Task("map increment", arrow(tlist(tint),tlist(tint)),
+        #      [((l,),map(lambda n: n+1, l))
+        #       for _ in range(10)
+        #       for l in [randomList()] ]),
         Task("map negation", arrow(tlist(tint),tlist(tint)),
              [((l,),map(lambda n: 0-n, l))
               for _ in range(10)
@@ -274,11 +274,11 @@ def make_list_bootstrap_tasks(numberOfExamples):
               for _ in range(10)
               for ls in [[[ flip() for _ in range(randint(0,3)) ]
                           for _ in range(4) ]] ]),
-        Task("remove non 0s",
-             arrow(tlist(tint), tlist(tint)),
-             [((xs,), filter(lambda x: x == 0, xs))
-              for _ in range(10)
-              for xs in [[ randint(0,3) for _ in range(5) ]] ]),
+        # Task("remove non 0s",
+        #      arrow(tlist(tint), tlist(tint)),
+        #      [((xs,), filter(lambda x: x == 0, xs))
+        #       for _ in range(10)
+        #       for xs in [[ randint(0,3) for _ in range(5) ]] ]),
         Task("remove 0s",
              arrow(tlist(tint), tlist(tint)),
              [((xs,), filter(lambda x: x != 0, xs))
@@ -292,10 +292,10 @@ def make_list_bootstrap_tasks(numberOfExamples):
              [((l,), map(lambda (i,j): i+j, enumerate(l)))
               for _ in range(10)
               for l in [randomList()] ]),
-        Task("Subtract index", arrow(tlist(tint),tlist(tint)),
-             [((l,), map(lambda (i,j): j-i, enumerate(l)))
+        Task("cons index", arrow(tlist(tlist(tint)),tlist(tlist(tint))),
+             [((l,), map(lambda (i,j): [i]+j, enumerate(l)))
               for _ in range(10)
-              for l in [randomList()] ])
+              for l in [randomListOfLists()] ])
         ]
 
     # Let's learn everything!
@@ -478,7 +478,7 @@ def bonusListProblems():
     return bonus        
     
         
-def main():
+def exportTasks():
     import sys
     import cPickle as pickle
 
@@ -496,4 +496,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    for t in make_list_bootstrap_tasks():
+        print t.describe()
+        print 
+    # exportTasks()
