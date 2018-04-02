@@ -328,7 +328,7 @@ class FragmentGrammar(object):
                                                concretePrimitive.tp,
                                                concretePrimitive)
                 frontiers = parallelMap(CPUs,
-                                        lambda frontier: RewriteFragments.rewriteFrontier(frontier, newPrimitive),
+                                        lambda frontier: bestGrammar.rescoreFrontier(RewriteFragments.rewriteFrontier(frontier, newPrimitive)),
                                         frontiers)
                 eprint("\t(<uses> in rewritten frontiers: %f)"%
                        (bestGrammar.expectedUses(frontiers).actualUses[concretePrimitive]))
