@@ -327,7 +327,7 @@ if __name__ == "__main__":
     from makeListTasks import make_list_bootstrap_tasks, bonusListProblems
     if not args.pop("Lucas"): train = make_list_bootstrap_tasks()
     eprint("Total number of training tasks:",len(train))
-    for t in make_list_bootstrap_tasks(10):
+    for t in make_list_bootstrap_tasks():
         eprint(t.describe())
         eprint()
     
