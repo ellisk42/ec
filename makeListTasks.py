@@ -246,10 +246,16 @@ def make_list_bootstrap_tasks():
              [((l,),map(lambda n: 0-n, l))
               for _ in range(10)
               for l in [randomList()] ]),
-        Task("map eq 0?", arrow(tlist(tint),tlist(tboolean)),
-             [((l,),map(lambda n: 0 == n,l))
+        Task("map empty?", arrow(tlist(tlist(tint)),tlist(tboolean)),
+             [((l,),map(lambda n: n == [],l))
               for _ in range(10)
-              for l in [[ randint(0,3) for _ in range(randint(4,7)) ]] ])
+              for l in [[ [] if flip() else randomList() for _ in range(randint(1,5)) ]] ]),
+        
+        # Task("map eq 0?", arrow(tlist(tint),tlist(tboolean)),
+        #      [((l,),map(lambda n: 0 == n,l))
+        #       for _ in range(10)
+        #       for l in [[ randint(0,3) for _ in range(randint(4,7)) ]] ])
+        
     ]
 
     # Learning to zip lists together
