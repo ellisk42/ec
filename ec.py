@@ -312,6 +312,7 @@ def ecIterator(grammar, tasks,
         if maximumFrontier <= 10:
             eprint("Because maximumFrontier is small (<=10), I am going to show you the full contents of all the frontiers:")
             for f in frontiers:
+                if f.empty: continue
                 eprint(f.task)
                 for e in f.normalize():
                     eprint("%.02f\t%s"%(e.logPosterior, e.program))
@@ -339,6 +340,7 @@ def ecIterator(grammar, tasks,
         if maximumFrontier <= 10:
             eprint("Because maximumFrontier is small (<=10), I am going to show you the full contents of all the rewritten frontiers:")
             for f in frontiers:
+                if f.empty: continue
                 eprint(f.task)
                 for e in f.normalize():
                     eprint("%.02f\t%s"%(e.logPosterior, e.program))
