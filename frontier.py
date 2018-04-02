@@ -40,11 +40,13 @@ class Frontier(object):
 
     def normalize(self):
         z = self.marginalLikelihood()
-        return Frontier([ FrontierEntry(program = e.program,
-                                        logPrior = e.logPrior,
-                                        logLikelihood = e.logLikelihood,
-                                        logPosterior = e.logPrior + e.logLikelihood - z)
-                          for e in self ],
+        newEntries = [ FrontierEntry(program = e.program,
+                                     logPrior = e.logPrior,
+                                     logLikelihood = e.logLikelihood,
+                                     logPosterior = e.logPrior + e.logLikelihood - z)
+                          for e in self ]
+        newEntries.sort(key = lambda e: e.logPosterior, reverse=True)
+        return Frontier(newEntries,
                         self.task)
         
     def removeZeroLikelihood(self):

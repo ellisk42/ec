@@ -313,8 +313,8 @@ def ecIterator(grammar, tasks,
             eprint("Because maximumFrontier is small (<=10), I am going to show you the full contents of all the frontiers:")
             for f in frontiers:
                 eprint(f.task)
-                for e in f:
-                    eprint(e.program)
+                for e in f.normalize():
+                    eprint("%.02f\t%s"%(e.logPosterior, e.program))
                 eprint()
         # Record the new solutions
         result.taskSolutions = {f.task: f.topK(topK)
@@ -340,8 +340,8 @@ def ecIterator(grammar, tasks,
             eprint("Because maximumFrontier is small (<=10), I am going to show you the full contents of all the rewritten frontiers:")
             for f in frontiers:
                 eprint(f.task)
-                for e in f:
-                    eprint(e.program)
+                for e in f.normalize():
+                    eprint("%.02f\t%s"%(e.logPosterior, e.program))
                 eprint()
         
 
