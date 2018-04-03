@@ -290,7 +290,7 @@ class FragmentGrammar(object):
             while True:
                 restrictedFrontiers = restrictFrontiers()
                 fragments = [ f
-                              for f in proposeFragmentsFromFrontiers(restrictedFrontiers, a)
+                              for f in proposeFragmentsFromFrontiers(restrictedFrontiers, a, CPUs=CPUs)
                               if not f in bestGrammar.primitives \
                               and defragment(f) not in bestGrammar.primitives ]
                 eprint("Proposed %d fragments."%len(fragments))
