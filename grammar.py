@@ -334,8 +334,11 @@ class Grammar(object):
                              upperBound,
                              # Lower bound on the description length of all of the arguments
                              lowerBound = 0.,
-                             maximumDepth = 20):
-        if upperBound <= 0 or maximumDepth == 1: return 
+                             maximumDepth = 20,
+                             originalFunction=None,
+                             argumentIndex=0):
+        if upperBound <= 0 or maximumDepth == 1: return
+        if originalFunction is None: originalFunction = function
 
         if argumentRequests == []:
             if lowerBound < 0. and 0. <= upperBound:
@@ -348,12 +351,16 @@ class Grammar(object):
                                                           upperBound = upperBound,
                                                           lowerBound = 0.,
                                                           maximumDepth = maximumDepth):
+                if violatesSymmetry(originalFunction, arg, argumentIndex): continue
+                
                 newFunction = Application(function, arg)
                 for resultL, resultK, result in self.enumerateApplication(newContext, environment, newFunction,
                                                                           laterRequests,
                                                                           upperBound = upperBound + argL,
                                                                           lowerBound = lowerBound + argL,
-                                                                          maximumDepth = maximumDepth):
+                                                                          maximumDepth = maximumDepth,
+                                                                          originalFunction=originalFunction,
+                                                                          argumentIndex=argumentIndex+1):
                     yield resultL + argL, resultK, result
 
     def enumerateNearby(self, request, expr, distance=3.0):
@@ -475,3 +482,18 @@ class Uses(object):
         return total
     
 Uses.empty = Uses()
+
+def violatesSymmetry(f,x,argumentIndex):
+    if not f.isPrimitive: return False
+    while x.isApplication: x = x.f
+    if not x.isPrimitive: return False
+    f = f.name
+    x = x.name
+    if f == "car": return x == "cons" or x == "empty"
+    if f == "cdr": return x == "cons" or x == "empty"
+    if f == "+": return x == "0" or (argumentIndex == 1 and x == "+")
+    if f == "-": return argumentIndex == 1 and x == "0"
+    if f == "empty?": return x == "cons" or x == "empty"
+    if f == "zero?": return x == "0" or x == "1"
+    return False
+        

@@ -65,7 +65,19 @@ class TowerTask(Task):
         return Bunch(result) if result is not None else result
 
     def logLikelihood(self, e, timeout = None):
-        tower = e.evaluate([])
+        if timeout is not None:
+            def timeoutCallBack(_1,_2): raise EvaluationTimeout()
+            signal.signal(signal.SIGVTALRM, timeoutCallBack)
+            signal.setitimer(signal.ITIMER_VIRTUAL, timeout)
+            
+        try:
+            tower = e.evaluate([])
+            if timeout is not None:
+                signal.signal(signal.SIGVTALRM, lambda *_:None)
+                signal.setitimer(signal.ITIMER_VIRTUAL, 0)
+        except: return NEGATIVEINFINITY
+
+        
         mass = sum(w*h for _,w,h in tower)
         if mass > self.maximumMass: return NEGATIVEINFINITY
 
