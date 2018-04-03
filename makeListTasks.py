@@ -240,26 +240,26 @@ def make_list_bootstrap_tasks():
              [((x,y), x+y)
               for _ in range(10)
               for [x,y] in [[randomBooleanList(),randomBooleanList()]] ]),
-        Task("append constant 0", arrow(tlist(tint),tlist(tint)),
-             [((l,),l + [0])
-              for _ in range(10)
-              for l in [randomList()] ]),
+        # Task("append constant 0", arrow(tlist(tint),tlist(tint)),
+        #      [((l,),l + [0])
+        #       for _ in range(10)
+        #       for l in [randomList()] ]),
     ]
 
     # learning to map
     mapBootstrap = [
-        Task("map double", arrow(tlist(tint),tlist(tint)),
-             [((l,),map(lambda n: n*2, l))
-              for _ in range(10)
-              for l in [randomList()] ]),
+        # Task("map double", arrow(tlist(tint),tlist(tint)),
+        #      [((l,),map(lambda n: n*2, l))
+        #       for _ in range(10)
+        #       for l in [randomList()] ]),
         # Task("map increment", arrow(tlist(tint),tlist(tint)),
         #      [((l,),map(lambda n: n+1, l))
         #       for _ in range(10)
         #       for l in [randomList()] ]),
-        Task("map negation", arrow(tlist(tint),tlist(tint)),
-             [((l,),map(lambda n: 0-n, l))
-              for _ in range(10)
-              for l in [randomList()] ]),
+        # Task("map negation", arrow(tlist(tint),tlist(tint)),
+        #      [((l,),map(lambda n: 0-n, l))
+        #       for _ in range(10)
+        #       for l in [randomList()] ]),
         Task("map car", arrow(tlist(tlist(tint)),tlist(tint)),
              [((l,),map(lambda n: n[0],l))
               for _ in range(10)
