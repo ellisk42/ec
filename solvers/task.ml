@@ -111,8 +111,12 @@ let enumerate_for_task (g: grammar) ?verbose:(verbose = true)
     ?upperBound:(upperBound = 99.)
     ~timeout:timeout ?maximumFrontier:(maximumFrontier = 10) (t: task)
   =
-  
-  let hits = ref [] in
+
+  (* Store the hits in a priority queue *)
+  (* We will only ever maintain maximumFrontier best solutions *)
+  let hits = Heap.create ~cmp:(fun (_,lp1,ll1,_) (_,lp2,ll2,_) ->
+      let c = (lp1+.ll1) -. (lp2+.ll2) in
+      if c < 0. then -1 else if c > 0. then 1 else 0) () in
   let lower_bound = ref lowerBound in
 
   let total_count = ref 0 in
@@ -122,7 +126,7 @@ let enumerate_for_task (g: grammar) ?verbose:(verbose = true)
   let startTime = Time.now () in
 
   try
-    while List.length (!hits) < maximumFrontier && !lower_bound +. budgetIncrement <= upperBound do
+    while Heap.length hits < maximumFrontier && !lower_bound +. budgetIncrement <= upperBound do
       let recent_count = ref 0 in
       enumerate_programs g (t.task_type)
         (!lower_bound) (!lower_bound +. budgetIncrement)
@@ -137,7 +141,10 @@ let enumerate_for_task (g: grammar) ?verbose:(verbose = true)
              incr recent_count;
              let logLikelihood = t.log_likelihood p in
              if is_valid logLikelihood then begin 
-               hits := (p,logPrior,logLikelihood,df) :: !hits;
+               Heap.add hits (p,logPrior,logLikelihood,df);
+               if Heap.length hits > maximumFrontier then
+                 Heap.remove_top hits
+               else ();
                if verbose then  
                  Printf.eprintf "\t(ocaml) HIT %s w/ %s\n" (t.name) (string_of_program p)
                else ()
@@ -156,8 +163,8 @@ let enumerate_for_task (g: grammar) ?verbose:(verbose = true)
         flush_everything();
       end else ()
     done;
-    (!hits, !programs_explored)
-  with EnumerationTimeout -> (!hits, !programs_explored)
+    (Heap.to_list hits, !programs_explored)
+  with EnumerationTimeout -> (Heap.to_list hits, !programs_explored)
 
 
   

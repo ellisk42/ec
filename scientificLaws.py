@@ -147,7 +147,7 @@ tasks = [
              S = 5),
     makeTask("Plank relation",
              arrow(tpositive,tpositive),
-             lambda p: 0.02/p,
+             lambda p: 4.7/p,
              N = 20,
              S = 5),
     makeTask("capacitance from charge and voltage",
