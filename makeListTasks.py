@@ -239,7 +239,11 @@ def make_list_bootstrap_tasks():
         Task("append bool", arrow(tlist(tbool),tlist(tbool),tlist(tbool)),
              [((x,y), x+y)
               for _ in range(10)
-              for [x,y] in [[randomBooleanList(),randomBooleanList()]] ])
+              for [x,y] in [[randomBooleanList(),randomBooleanList()]] ]),
+        Task("append constant 0", arrow(tlist(tint),tlist(tint)),
+             [((l,),l + [0])
+              for _ in range(10)
+              for l in [randomList()] ]),
     ]
 
     # learning to map
