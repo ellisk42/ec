@@ -107,6 +107,8 @@ def make_list_bootstrap_tasks():
         return [ randint(minimum,9) for _ in range(randint(4,7)) ]
     def randomListOfLists():
         return [ randomSuffix() for _ in range(randint(2,4)) ]
+    def randomListOfLists_bool():
+        return [randomBooleanList() for _ in range(randint(4,7)) ]
     def randomBooleanList():
         return [ flip() for _ in range(randint(4,7)) ]
 
@@ -246,6 +248,14 @@ def make_list_bootstrap_tasks():
              [((l,),map(lambda n: 0-n, l))
               for _ in range(10)
               for l in [randomList()] ]),
+        Task("map car", arrow(tlist(tlist(tint)),tlist(tint)),
+             [((l,),map(lambda n: n[0],l))
+              for _ in range(10)
+              for l in [randomListOfLists()]]),
+        Task("map cdr", arrow(tlist(tlist(tbool)),tlist(tlist(tbool))),
+             [((l,),map(lambda n: n[1:],l))
+              for _ in range(10)
+              for l in [randomListOfLists_bool()]]),
         Task("map empty?", arrow(tlist(tlist(tint)),tlist(tboolean)),
              [((l,),map(lambda n: n == [],l))
               for _ in range(10)
