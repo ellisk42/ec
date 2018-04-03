@@ -50,7 +50,6 @@ def makeTasks():
         task = Task(n,
                     outputType,
                     [((), y) for _, y in examples])
-        # if needToTrain: task.mustTrain = True         WAT?!
         task.mustTrain = needToTrain
         problems.append(task)
 
@@ -70,5 +69,5 @@ if __name__ == "__main__":
         print t.name
         print t.request
         x, y = t.examples[0]
-        pretty_print(y, 32)
+        pretty_print(y, 64)
         print

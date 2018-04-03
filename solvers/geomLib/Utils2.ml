@@ -61,8 +61,10 @@ let get_infos smart d_from_origin box canvas =
       else (Gg.Box2.v (Gg.P2.v 0. 0.) (Gg.Size2.v d2 d2)) in
     let size = Gg.Size2.v d2 d2 in
     let area =
-      if smart then `O { P.o with P.width = 1. /. dim }
-               else `O { P.o with P.width = 0.065 }
+      `O { P.o with
+            P.width = if smart then (1. /. dim) else 0.01 ;
+            (*P.cap = `Round ; Makes subpath render weird...! *)
+            P.join = `Round }
     in
     let black = I.const Color.black in
     let image = I.cut ~area canvas black in

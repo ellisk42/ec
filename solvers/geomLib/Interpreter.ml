@@ -50,7 +50,7 @@ let rec my_print_var v = match v with
 
 let (++) pr1 pr2 = Concat(pr1, pr2)
 
-let scale = d_from_origin /. 2.5
+let scale = d_from_origin /. 4.5
 let steps = 20.
 let isteps = int_of_float steps
 let ratio = scale /. steps
@@ -200,7 +200,7 @@ let evaluateVar v htbl_var =
             let v = evaluateVar_helper value htbl_var in
             Hashtbl.add htbl_var s value ;
             v
-        else raise (MalformedProgram(s ^ " unknown in evaluateVar"))
+        else evaluateVar_helper Unit htbl_var
     in match evaluateVar_helper v htbl_var with
     | n when n = nan -> raise (MalformedProgram("Some var was NaN"))
     | f -> f

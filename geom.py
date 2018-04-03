@@ -28,7 +28,7 @@ class GeomFeatureCNN(nn.Module):
         )
 
         self.net2 = nn.Sequential(
-            nn.Linear(2304, 120),
+            nn.Linear(12544, 120),  # Hardocde the first one I guess :/
             nn.Linear(120, 84),
             nn.Linear(84, H)
         )
@@ -38,7 +38,7 @@ class GeomFeatureCNN(nn.Module):
         self.outputDimensionality = H
 
     def forward(self, v):
-        x, y = 32, 32  # Should not hardocode these.
+        x, y = 64, 64  # Should not hardocode these.
         floatOnlyTask = map(float, v)
         reshaped = [floatOnlyTask[i:i+x]
                     for i in range(0, len(floatOnlyTask), y)]
@@ -46,7 +46,8 @@ class GeomFeatureCNN(nn.Module):
         variabled = torch.unsqueeze(variabled, 0)
         variabled = torch.unsqueeze(variabled, 0)
         output = self.net1(variabled)
-        output = output.view(-1, 2304)
+        s1, s2, s3, s4 = output.size()
+        output = output.view(-1, s1*s2*s3*s4)
         output = self.net2(output).clamp(min=0)
         output = torch.squeeze(output)
         return output
@@ -59,8 +60,9 @@ class GeomFeatureCNN(nn.Module):
             try:
                 output = subprocess.check_output(['./geomDrawLambdaString',
                                                  p.evaluate([])]).split("\n")
-                shape = output[0].split(',')
-                bigShape = map(float, output[1].split(','))
+                shape = map(float, output[0].split(','))
+                # bigShape = map(float, output[1].split(','))
+                bigShape = shape
             except OSError as exc:
                 raise exc
         else:
@@ -80,7 +82,7 @@ class GeomFeatureCNN(nn.Module):
             img = [(int(x*254), int(x*254), int(x*254)) for x in mean]
             img = [img[i:i+64] for i in range(0, 64*64, 64)]
             img = [tuple([e for t in x for e in t]) for x in img]
-            fname = 'dream-'+(str(int(time.time())))+'.png'
+            fname = 'dream_low_calc/dream-'+(str(int(time.time())))+'.png'
             f = open(fname, 'wb')
             w = png.Writer(64, 64)
             w.write(f, img)
@@ -103,14 +105,14 @@ if __name__ == "__main__":
                            compressor="rust",
                            evaluationTimeout=0.01,
                            **commandlineArguments(
-                               steps=500,
+                               steps=200,
                                a=1,
-                               iterations=10,
+                               iterations=100,
                                useRecognitionModel=True,
                                helmholtzRatio=0.5,
-                               helmholtzBatch=500,
+                               helmholtzBatch=200,
                                featureExtractor=GeomFeatureCNN,
                                topK=2,
-                               maximumFrontier=500,
+                               maximumFrontier=1000,
                                CPUs=numberOfCPUs(),
                                pseudoCounts=10.0))

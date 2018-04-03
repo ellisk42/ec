@@ -44,13 +44,10 @@ let _ =
       | Some (program) ->
           (try
             let c = interpret program in
-            let l1 = Plumbing.canvas_to_tlist 32 c in
-            let l2 = Plumbing.canvas_to_tlist 64 c in
-            (npp l1 ; print_newline () ;
-             npp l2 ; print_newline ())
+            let l = Plumbing.canvas_to_tlist 64 c in
+             (npp l ; print_newline ())
           with Interpreter.MalformedProgram _ ->
-            (npp empty32 ; print_newline () ;
-             npp empty64 ; print_newline ())
+             (npp empty64 ; print_newline ())
             )
       | None -> ())
     with MalformedProgram(error_message) ->
