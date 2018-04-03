@@ -75,7 +75,12 @@ class TowerTask(Task):
             if timeout is not None:
                 signal.signal(signal.SIGVTALRM, lambda *_:None)
                 signal.setitimer(signal.ITIMER_VIRTUAL, 0)
-        except: return NEGATIVEINFINITY
+        except EvaluationTimeout: return NEGATIVEINFINITY
+        except:
+            if timeout is not None:
+                signal.signal(signal.SIGVTALRM, lambda *_:None)
+                signal.setitimer(signal.ITIMER_VIRTUAL, 0)
+            return NEGATIVEINFINITY
 
         
         mass = sum(w*h for _,w,h in tower)
