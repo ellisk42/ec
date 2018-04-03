@@ -169,6 +169,8 @@ def ecIterator(grammar, tasks,
         if resumeFrontierSize:
             frontierSize = resumeFrontierSize
             eprint("Set frontier size to", frontierSize)
+        if bootstrap is not None: # Make sure that we register bootstrapped primitives
+            for p in grammar.primitives: RegisterPrimitives.register(p)
     else:  # Start from scratch
         if bootstrap is not None:
             with open(bootstrap, "rb") as handle: strapping = pickle.load(handle).grammars[-1]
