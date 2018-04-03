@@ -164,6 +164,14 @@ def make_list_bootstrap_tasks():
              [((l,),l[0] - 1)
               for _ in range(10)
               for l in [randomList()] ]),
+        Task("or", arrow(tbool,tbool,tbool),
+             [((a,b),a or b)
+              for a in [True,False]
+              for b in [True,False] ]),
+        Task("and", arrow(tbool,tbool,tbool),
+             [((a,b),a and b)
+              for a in [True,False]
+              for b in [True,False] ]),
     ]
 
     # Encourages learning of unfolding operations
@@ -272,14 +280,19 @@ def make_list_bootstrap_tasks():
     zipBootstrap = [
         Task("zip plus", arrow(tlist(tint),tlist(tint),tlist(tint)),
              [((l1,l2),map(lambda x,y: x+y,l1,l2))
-              for _ in range(5)
+              for _ in range(10)
               for l1 in [randomList()]
               for l2 in [[ randint(0,9) for _ in range(len(l1)) ]]]),
         Task("zip minus", arrow(tlist(tint),tlist(tint),tlist(tint)),
              [((l1,l2),map(lambda x,y: x-y,l1,l2))
-              for _ in range(5)
+              for _ in range(10)
               for l1 in [randomList()]
               for l2 in [[ randint(0,9) for _ in range(len(l1)) ]]]),
+        Task("zip cons", arrow(tlist(tint),tlist(tlist(tint)),tlist(tlist(tint))),
+             [((l1,l2),map(lambda x,y: [x]+y,l1,l2))
+              for _ in range(10)
+              for l1 in [randomList()]
+              for l2 in [[ randomList() for _ in range(len(l1)) ]]]),
     ]
 
     # Learning to filter
