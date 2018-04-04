@@ -56,14 +56,14 @@ primitives = [
     Primitive("var_name", tvar, "var_name"),
 
     # PROGRAMS
+    # Primitive("nop", tprogram, "nop"),
+    # Primitive("nop2", tprogram, "nop2"),
     Primitive("embed", arrow(tprogram, tprogram), _embed),
     Primitive("define", arrow(tvar, tprogram), _define),
     Primitive("integrate",
               arrow(tmaybe(tvar),
                     tbool,
                     tmaybe(tvar),
-                    # tmaybe(tvar),
-                    # tmaybe(tvar),
                     tmaybe(tvar),
                     tprogram), _integrate),
     Primitive("turn", arrow(tmaybe(tvar), tprogram), _turn),

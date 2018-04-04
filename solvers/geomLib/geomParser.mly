@@ -6,6 +6,7 @@
 %token END_ARGS
 %token COLON
 %left COLON
+%token NOP
 %token INTEGRATE
 %token REPEAT
 %token EMBED
@@ -106,5 +107,6 @@ value:
     | EMBED ; BEGIN_BLOCK ; p = value ; END_BLOCK {Interpreter.Embed p}
     | p1 = value ; COLON ; p2 = value {Interpreter.Concat (p1,p2)}
     | s = VAR ; EQUALS ; e = expr {Interpreter.Define (s,e)}
+    | NOP { Interpreter.Nop }
     | r = repeat { r }
     | i = integrate { i }

@@ -40,6 +40,7 @@ rule read =
   | "Opposite"   { OPPOSITE }
   | "unit"   { UNIT }
   (*| "indefinite"   { INDEFINITE }*)
+  | "Nop"    { NOP }
   | "Turn"   { TURN }
   | "Repeat"   { REPEAT }
   | "Integrate"   { INTEGRATE }

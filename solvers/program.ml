@@ -365,6 +365,7 @@ let primitive_just     = primitive "just"
 let primitive_nothing= primitive "nothing" (tmaybe t0) None
 
 let primitive_nop    = primitive "nop"  tprogram GeomLib.Plumbing.nop
+let primitive_nop2   = primitive "nop2" tprogram GeomLib.Plumbing.nop
 let primitive_embed  = primitive
                         "embed"
                         (tprogram @> tprogram)
