@@ -135,8 +135,8 @@ let enumerate_for_task (g: grammar) ?verbose:(verbose = true)
            let df = Time.diff (Time.now ()) startTime |> Time.Span.to_sec in
            if df > (Float.of_int timeout) then raise EnumerationTimeout else 
              let mdl = 0.-.logPrior in
-             assert( !lower_bound < mdl);
-             assert( mdl <= budgetIncrement+.(!lower_bound));
+             assert( !lower_bound <= mdl);
+             assert( mdl < budgetIncrement+.(!lower_bound));
 
              incr recent_count;
              let logLikelihood = t.log_likelihood p in

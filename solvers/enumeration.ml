@@ -43,9 +43,9 @@ let rec enumerate_programs' (g: grammar) (context: tContext) (request: tp) (envi
     (lower_bound: float) (upper_bound: float)
     ?maximumDepth:(maximumDepth = 9999)
     (callBack: program -> tContext -> float -> unit) : unit =
-
+  (* Enumerates programs satisfying: lowerBound <= MDL < upperBound *)
   (* INVARIANT: request always has the current context applied to it already *)
-  if maximumDepth < 1 || upper_bound <= 0.0 then () else
+  if maximumDepth < 1 || upper_bound < 0.0 then () else
     match request with
     | TCon("->",[argument_type;return_type],_) ->
       let newEnvironment = argument_type :: environment in
@@ -59,7 +59,7 @@ let rec enumerate_programs' (g: grammar) (context: tContext) (request: tp) (envi
       candidates |> 
       List.iter ~f:(fun (candidate, argument_types, context, ll) ->
           let mdl = 0.-.ll in
-          if mdl > upper_bound then () else
+          if mdl >= upper_bound then () else
             enumerate_applications
               ~maximumDepth:(maximumDepth - 1)
               g context environment
@@ -75,12 +75,13 @@ and
     ?argumentIndex:(argumentIndex=0)
     (lower_bound: float) (upper_bound: float)
     (callBack: program -> tContext -> float -> unit) : unit =
+  (* Enumerates application chains satisfying: lowerBound <= MDL < upperBound *)
   (* returns the log likelihood of the arguments! not the log likelihood of the application! *)
-  if maximumDepth < 1 || upper_bound <= 0. then () else 
+  if maximumDepth < 1 || upper_bound < 0.0 then () else 
     match argument_types with
     | [] -> (* not a function so we don't need any applications *)
       begin 
-        if lower_bound < 0. && 0. <= upper_bound then
+        if lower_bound <= 0. && 0. < upper_bound then
           (* match f with
            * | Apply(Apply(Primitive(_,function_name,_),first_argument),second_argument)
            *   when violates_commutative function_name first_argument second_argument -> ()
@@ -105,7 +106,6 @@ and
                (fun a k a_ll -> callBack a k (a_ll+.ll)))
 
 let enumerate_programs g request lb ub k =
-  let may_be_recursive = g.library |> List.exists ~f:(fun (p,_,_,_) -> is_recursion_primitive p) in
   let number_of_arguments = arguments_of_type request |> List.length in
   let definitely_recursive = grammar_has_recursion number_of_arguments g in
 
