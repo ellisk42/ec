@@ -152,6 +152,11 @@ def make_list_bootstrap_tasks():
               for _ in range(5)
               for h in [0,randint(1,9)]
               for l in [randomList()] ]),
+        Task("zero cadr?", arrow(tlist(tint),tbool),
+             [(([l[0],h] + l[1:],), h == 0)
+              for _ in range(5)
+              for h in [0,randint(1,9)]
+              for l in [randomList()] ]),
         Task("increment car", arrow(tlist(tint),tint),
              [((l,),l[0] + 1)
               for _ in range(10)
@@ -172,9 +177,12 @@ def make_list_bootstrap_tasks():
              [((a,b),a and b)
               for a in [True,False]
               for b in [True,False] ]),
+        Task("singleton", arrow(tint,tlist(tint)),
+             [((n,),[n])
+              for n in range(10) ]),
     ]
 
-    # Encourages learning of unfolding operations
+    # Encourages learning of unfolding
     unfoldBootstrap = [
         Task("countdown", arrow(tint,tlist(tint)),
              [((n,), range(n+1,1,-1))
@@ -264,10 +272,10 @@ def make_list_bootstrap_tasks():
              [((l,),map(lambda n: n[0],l))
               for _ in range(10)
               for l in [randomListOfLists()]]),
-        Task("map cdr", arrow(tlist(tlist(tbool)),tlist(tlist(tbool))),
-             [((l,),map(lambda n: n[1:],l))
-              for _ in range(10)
-              for l in [randomListOfLists_bool()]]),
+        # Task("map cdr", arrow(tlist(tlist(tbool)),tlist(tlist(tbool))),
+        #      [((l,),map(lambda n: n[1:],l))
+        #       for _ in range(10)
+        #       for l in [randomListOfLists_bool()]]),
         Task("map empty?", arrow(tlist(tlist(tint)),tlist(tboolean)),
              [((l,),map(lambda n: n == [],l))
               for _ in range(10)
