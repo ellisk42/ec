@@ -333,6 +333,10 @@ def make_list_bootstrap_tasks():
              [((l,), map(lambda (i,j): i+j, enumerate(l)))
               for _ in range(10)
               for l in [randomList()] ]),
+        Task("subtract index", arrow(tlist(tint),tlist(tint)),
+             [((l,), map(lambda (i,j): i-j, enumerate(l)))
+              for _ in range(10)
+              for l in [randomList()] ]),
         Task("cons index", arrow(tlist(tlist(tint)),tlist(tlist(tint))),
              [((l,), map(lambda (i,j): [i]+j, enumerate(l)))
               for _ in range(10)
