@@ -61,8 +61,7 @@ class GeomFeatureCNN(nn.Module):
                 output = subprocess.check_output(['./geomDrawLambdaString',
                                                  p.evaluate([])]).split("\n")
                 shape = map(float, output[0].split(','))
-                # bigShape = map(float, output[1].split(','))
-                bigShape = shape
+                bigShape = map(float, output[1].split(','))
             except OSError as exc:
                 raise exc
         else:
@@ -80,11 +79,11 @@ class GeomFeatureCNN(nn.Module):
             ma = max(mean)
             mean = [(x - mi + (1/255)) / (ma - mi) for x in mean]
             img = [(int(x*254), int(x*254), int(x*254)) for x in mean]
-            img = [img[i:i+64] for i in range(0, 64*64, 64)]
+            img = [img[i:i+256] for i in range(0, 256*256, 256)]
             img = [tuple([e for t in x for e in t]) for x in img]
             fname = 'dream_low_calc/dream-'+(str(int(time.time())))+'.png'
             f = open(fname, 'wb')
-            w = png.Writer(64, 64)
+            w = png.Writer(256, 256)
             w.write(f, img)
             f.close()
             self.mean = []
@@ -105,9 +104,9 @@ if __name__ == "__main__":
                            compressor="rust",
                            evaluationTimeout=0.01,
                            **commandlineArguments(
-                               steps=200,
+                               steps=50,
                                a=1,
-                               iterations=100,
+                               iterations=10,
                                useRecognitionModel=True,
                                helmholtzRatio=0.5,
                                helmholtzBatch=200,
