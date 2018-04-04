@@ -33,7 +33,8 @@ class GeomFeatureCNN(nn.Module):
             nn.Linear(84, H)
         )
 
-        self.mean = []
+        self.mean = [0]*(256*256)
+        self.count = 0
 
         self.outputDimensionality = H
 
@@ -67,14 +68,15 @@ class GeomFeatureCNN(nn.Module):
         else:
             assert(False)
         try:
-            self.mean += [bigShape]
+            self.mean = [x+y for x, y in zip(self.mean, bigShape)]
+            self.count += 1
             return self(shape)
         except ValueError:
             return None
 
     def finish(self):
-        if len(self.mean) > 0:
-            mean = [log(1+float(sum(col))/len(col)) for col in zip(*self.mean)]
+        if self.count > 0:
+            mean = [log(1+float(x/self.count)) for x in self.mean]
             mi = min(mean)
             ma = max(mean)
             mean = [(x - mi + (1/255)) / (ma - mi) for x in mean]
@@ -86,7 +88,9 @@ class GeomFeatureCNN(nn.Module):
             w = png.Writer(256, 256)
             w.write(f, img)
             f.close()
+            del self.mean[:]
             self.mean = []
+            self.count = 0
 
 
 if __name__ == "__main__":
@@ -95,6 +99,7 @@ if __name__ == "__main__":
 
     test, train = testTrainSplit(tasks, 0.5)
     eprint("Split tasks into %d/%d test/train" % (len(test), len(train)))
+
 
     baseGrammar = Grammar.uniform(primitives)
 
@@ -109,9 +114,9 @@ if __name__ == "__main__":
                                iterations=10,
                                useRecognitionModel=True,
                                helmholtzRatio=0.5,
-                               helmholtzBatch=200,
+                               helmholtzBatch=100,
                                featureExtractor=GeomFeatureCNN,
                                topK=2,
-                               maximumFrontier=1000,
+                               maximumFrontier=100,
                                CPUs=numberOfCPUs(),
                                pseudoCounts=10.0))
