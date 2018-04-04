@@ -387,7 +387,7 @@ let primitive_repeat = primitive
                         GeomLib.Plumbing.repeat
 let primitive_integrate= primitive
                         "integrate"
-                        (tmaybe tvar @> tmaybe tboolean @>
+                        (tmaybe tvar @> tboolean @>
                          (*tmaybe tvar @> tmaybe tvar  @>*)
                          tmaybe tvar @> tmaybe tvar  @>
                          tprogram)

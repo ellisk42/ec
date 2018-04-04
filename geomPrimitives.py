@@ -60,7 +60,7 @@ primitives = [
     Primitive("define", arrow(tvar, tprogram), _define),
     Primitive("integrate",
               arrow(tmaybe(tvar),
-                    tmaybe(tbool),
+                    tbool,
                     tmaybe(tvar),
                     # tmaybe(tvar),
                     # tmaybe(tvar),
@@ -74,7 +74,7 @@ primitives = [
     Primitive("run", arrow(tprogram, tcanvas), _run),
 
     # tbool
-    # Primitive("true",  tbool, "true"),
+    Primitive("true",  tbool, "true"),
     Primitive("false", tbool, "false"),
 
     # maybe

@@ -8,6 +8,8 @@ let empty32 =
   Bigarray.(Array1.create int8_unsigned c_layout (32*32))
 let empty64 =
   Bigarray.(Array1.create int8_unsigned c_layout (64*64))
+let empty256 =
+  Bigarray.(Array1.create int8_unsigned c_layout (256*256))
 
 let npp data =
   for i = 0 to (Bigarray.Array1.dim data) - 2 do
@@ -43,11 +45,14 @@ let _ =
     (match read_program program_string with
       | Some (program) ->
           (try
-            let c = interpret program in
-            let l = Plumbing.canvas_to_tlist 64 c in
-             (npp l ; print_newline ())
+            let c  = interpret program              in
+            let l  = Plumbing.canvas_to_tlist 64 c  in
+            let l' = Plumbing.canvas_to_tlist 256 c in
+            (npp l ; print_newline () ;
+             npp l' ; print_newline ())
           with Interpreter.MalformedProgram _ ->
-             (npp empty64 ; print_newline ())
+            (npp empty64  ; print_newline () ;
+             npp empty256 ; print_newline () )
             )
       | None -> ())
     with MalformedProgram(error_message) ->

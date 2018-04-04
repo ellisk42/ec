@@ -56,12 +56,12 @@ var:
 someb:
   | LP ; b = someb ; RP
       { b }
-  | NOTHING
-      { None }
-  | JUST ; TRUE
-      { Some(true) }
-  | JUST ; FALSE
-      { Some(false) }
+  (*| NOTHING*)
+      (*{ None }*)
+  | TRUE
+      { true }
+  | FALSE
+      { false }
 
 expr:
   | LP ; e = expr ; RP
