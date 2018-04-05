@@ -137,11 +137,11 @@ def make_list_bootstrap_tasks():
               for _ in range(5)
               for h in [0,randint(1,9)]
               for l in [randomList()] ]),
-        # Task("negative 1?", arrow(tint,tbool),
-        #      [(([l[0],h] + l[1:],), h == 0)
-        #       for _ in range(5)
-        #       for h in [0,randint(1,9)]
-        #       for l in [randomList()] ]),
+        Task("second argument zero?", arrow(tint,tint,tbool),
+             [((a,b),b == 0)
+              for _ in range(5)
+              for b in [0,randint(1,9)]
+              for a in  [randint(1,9)]]),
         Task("increment car", arrow(tlist(tint),tint),
              [((l,),l[0] + 1)
               for _ in range(10)
