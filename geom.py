@@ -20,15 +20,16 @@ class GeomFeatureCNN(nn.Module):
         super(GeomFeatureCNN, self).__init__()
 
         self.net1 = nn.Sequential(
-            nn.Conv2d(1, 6, kernel_size=(5, 5)),
+            nn.Conv2d(1, 6, kernel_size=(10, 10), stride=2),
             nn.ReLU(),
-            nn.Conv2d(6, 16, kernel_size=(5, 5)),
             nn.MaxPool2d(kernel_size=(2, 2), stride=2),
-            nn.ReLU()
+            nn.Conv2d(6, 16, kernel_size=(5, 5)),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=(2, 2), stride=2),
         )
 
         self.net2 = nn.Sequential(
-            nn.Linear(12544, 120),  # Hardocde the first one I guess :/
+            nn.Linear(16*5*5, 120),  # Hardocde the first one I guess :/
             nn.Linear(120, 84),
             nn.Linear(84, H)
         )
@@ -47,8 +48,7 @@ class GeomFeatureCNN(nn.Module):
         variabled = torch.unsqueeze(variabled, 0)
         variabled = torch.unsqueeze(variabled, 0)
         output = self.net1(variabled)
-        s1, s2, s3, s4 = output.size()
-        output = output.view(-1, s1*s2*s3*s4)
+        output = output.view(-1, 16*5*5)
         output = self.net2(output).clamp(min=0)
         output = torch.squeeze(output)
         return output
