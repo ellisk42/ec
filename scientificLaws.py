@@ -47,7 +47,7 @@ def makeTask(name, request, law,
              # Number of examples
              N = 20,
              # Vector dimensionality
-             D = 2,
+             D = 3,
              # Maximum absolute value of a random number
              S = 5):
     e = makeTrainingData(request, law,
@@ -73,8 +73,23 @@ def norm(v):
     return sum(x*x for x in v)**0.5
 def scaleVector(a,v):
     return [a*x for x in v]
+def innerProduct(a,b):
+    return sum(x*y for x,y in zip(a,b) )
+def crossProduct(a,b):
+    (a1,a2,a3) = tuple(a)
+    (b1,b2,b3) = tuple(b)
+    return [a2*b3 - a3*b2,
+            a3*b1 - a1*b3,
+            a1*b2 - a2*b1]
 pi = 3.14 # I think this is close enough to pi
+# Data taken from: https://secure-media.collegeboard.org/digitalServices/pdf/ap/ap-physics-1-equations-table.pdf
 tasks = [
+    makeTask("work = F.d",
+             arrow(tvector, tvector, treal),
+             lambda f,d: innerProduct(f,d)),
+    makeTask("tau = rxF",
+             arrow(tvector,tvector,tvector),
+             crossProduct),
     makeTask("v(t)",
              arrow(treal, treal, treal, treal),
              lambda v0,a,t: v0 + a*t),
