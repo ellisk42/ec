@@ -272,8 +272,6 @@ class FragmentGrammar(object):
                                frontiers)
         restrictedFrontiers = []
 
-        rewriteFrontiers = len(frontiers) > 20 # optimization hack
-
         def grammarScore(g):
             g = g.makeUniform().insideOutside(restrictedFrontiers, pseudoCounts)
             likelihood = g.jointFrontiersMDL(restrictedFrontiers)
@@ -325,15 +323,13 @@ class FragmentGrammar(object):
                        (newType,newPrimitive,newScore,dS,expectedUses))
                 
                 # Rewrite the frontiers in terms of the new fragment
-                if rewriteFrontiers:
-                    concretePrimitive = defragment(newPrimitive)
-                    bestGrammar.productions[-1] = (newPrimitiveLikelihood,
-                                                   concretePrimitive.tp,
-                                                   concretePrimitive)
-                    frontiers = parallelMap(CPUs,
-                                            lambda frontier: bestGrammar.rescoreFrontier(RewriteFragments.rewriteFrontier(frontier, newPrimitive)),
-                                            frontiers)
-                else: concretePrimitive = newPrimitive
+                concretePrimitive = defragment(newPrimitive)
+                bestGrammar.productions[-1] = (newPrimitiveLikelihood,
+                                               concretePrimitive.tp,
+                                               concretePrimitive)
+                frontiers = parallelMap(CPUs,
+                                        lambda frontier: bestGrammar.rescoreFrontier(RewriteFragments.rewriteFrontier(frontier, newPrimitive)),
+                                        frontiers)
                 eprint("\t(<uses> in rewritten frontiers: %f)"%
                        (bestGrammar.expectedUses(frontiers).actualUses[concretePrimitive]))
         else:

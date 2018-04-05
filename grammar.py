@@ -47,6 +47,10 @@ class Grammar(object):
     def primitives(self):
         return [p for _, _, p in self.productions]
 
+    def removeProductions(self,ps):
+        return Grammar(self.logVariable,
+                       [(l,t,p) for (l,t,p) in self.productions if not p in ps ])
+
     def buildCandidates(self, request, context, environment,
                         # Should the log probabilities be normalized?
                         normalize = True,
