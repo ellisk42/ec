@@ -349,14 +349,26 @@ class FragmentGrammar(object):
 
         eprint("Old joint = %f\tNew joint = %f\n"%(oldJoint,
                                                    bestGrammar.jointFrontiersMDL(frontiers,CPUs = CPUs)))
-        bestGrammar.clearCache()
-
         # Return all of the frontiers, which have now been rewritten to use the new fragments
         frontiers = {f.task: f for f in frontiers }
         frontiers = [ frontiers.get(f.task, f)
                       for f in originalFrontiers ]
+
+        productionUses = bestGrammar.expectedUses([f for f in frontiers if not f.empty ]).actualUses
+        productionUses = {p: productionUses.get(p,0.) for p in bestGrammar.primitives }
+
+        bestGrammar.clearCache()
         
-        return bestGrammar.toGrammar(), frontiers
+        grammar = bestGrammar.toGrammar()
+
+        if any( productionUses.get(p,0) < 1. for p in grammar.primitives if p.isInvented ):
+            uselessProductions = [ p for p in grammar.primitives
+                                   if p.isInvented and productionUses.get(p,0) < 1. ]
+            eprint("The following invented primitives are no longer needed, removing them...")
+            eprint("\t" + "\t\n".join(map(str,uselessProductions)))
+            grammar = grammar.removeProductions(uselessProductions)
+        
+        return grammar, frontiers
 
 def induceGrammar(*args, **kwargs):
     with timing("Induced a grammar"):

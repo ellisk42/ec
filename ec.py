@@ -347,12 +347,6 @@ def ecIterator(grammar, tasks,
                 for e in f.normalize():
                     eprint("%.02f\t%s"%(e.logPosterior, e.program))
                 eprint()
-        if any( productionUses.get(p,0) < 1. for p in grammar.primitives if p.isInvented ):
-            uselessProductions = [ p for p in grammar.primitives
-                                   if p.isInvented and productionUses.get(p,0) < 1. ]
-            eprint("The following invented primitives are no longer needed, removing them...")
-            eprint("\t" + "\t\n".join(map(str,uselessProductions)))
-            grammar = grammar.removeProductions(uselessProductions)        
 
         if outputPrefix is not None:
             path = checkpointPath(j + 1)
