@@ -279,6 +279,11 @@ def make_list_bootstrap_tasks():
               for _ in range(10)
               for l1 in [randomList()]
               for l2 in [[ randint(0,9) for _ in range(len(l1)) ]]]),
+        Task("zip eq?", arrow(tlist(tint),tlist(tint),tlist(tbool)),
+             [((l1,l2),map(lambda x,y: x == y,l1,l2))
+              for _ in range(10)
+              for l1 in [[ randint(0,3) for _ in range(randint(4,7)) ]]
+              for l2 in [[ randint(0,3) for _ in range(len(l1)) ]]]),
         Task("zip minus", arrow(tlist(tint),tlist(tint),tlist(tint)),
              [((l1,l2),map(lambda x,y: x-y,l1,l2))
               for _ in range(10)
