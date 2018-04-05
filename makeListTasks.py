@@ -112,21 +112,6 @@ def make_list_bootstrap_tasks():
     def randomBooleanList():
         return [ flip() for _ in range(randint(4,7)) ]
 
-    if False:
-        return [        Task("all", arrow(tlist(tbool),tbool),
-             [((l,), reduce(lambda x,y: x and y, l, True))
-              for sz in range(10)
-              for l in [[random() > 0.2 for _ in range(sz) ]] ]),
-        Task("or", arrow(tboolean,tboolean,tboolean),
-             [((a,b),a or b)
-              for a in [True,False]
-              for b in [True,False] ]),
-        Task("or car", arrow(tlist(tboolean),tlist(tboolean),tboolean),
-             [((a,b),a[0] or b[0])
-              for _ in xrange(10) 
-              for a in [randomBooleanList()]
-              for b in [randomBooleanList()] ]),]
-
     # Reliably learned in under a minute; always triggers learning of length primitive
     lengthBootstrap = [
         Task("length bool", arrow(tlist(tbool),tint),
@@ -142,29 +127,29 @@ def make_list_bootstrap_tasks():
     # Encourages learning of simple nonrecursive operations that are useful in recursive functions
     operationBootstrap = [
         Task("increment", arrow(tint,tint),
-             [((n,),n+1) for n in range(5) ]),
+             [((n,),n+1) for n in range(10) ]),
         Task("decrement", arrow(tint,tint),
-             [((n,),n-1) for n in range(5) ]),
+             [((n,),n-1) for n in range(10) ]),
         Task("zero?", arrow(tint,tbool),
-             [((n,), n == 0) for n in range(5) ]),
+             [((n,), n == 0) for n in range(10) ]),
         Task("zero car?", arrow(tlist(tint),tbool),
              [(([h] + l,), h == 0)
               for _ in range(5)
               for h in [0,randint(1,9)]
               for l in [randomList()] ]),
-        Task("zero cadr?", arrow(tlist(tint),tbool),
-             [(([l[0],h] + l[1:],), h == 0)
-              for _ in range(5)
-              for h in [0,randint(1,9)]
-              for l in [randomList()] ]),
+        # Task("negative 1?", arrow(tint,tbool),
+        #      [(([l[0],h] + l[1:],), h == 0)
+        #       for _ in range(5)
+        #       for h in [0,randint(1,9)]
+        #       for l in [randomList()] ]),
         Task("increment car", arrow(tlist(tint),tint),
              [((l,),l[0] + 1)
               for _ in range(10)
               for l in [randomList()] ]),
         Task("increment twice", arrow(tint,tint),
-             [((n,),n+2) for n in range(5) ]),
+             [((n,),n+2) for n in range(10) ]),
         Task("decrement twice", arrow(tint,tint),
-             [((n,),n-2) for n in range(5) ]),
+             [((n,),n-2) for n in range(10) ]),
         Task("decrement car", arrow(tlist(tint),tint),
              [((l,),l[0] - 1)
               for _ in range(10)
@@ -329,10 +314,10 @@ def make_list_bootstrap_tasks():
 
     # Learning mapi
     mapIndexBootstrap = [
-        Task("Add index", arrow(tlist(tint),tlist(tint)),
-             [((l,), map(lambda (i,j): i+j, enumerate(l)))
-              for _ in range(10)
-              for l in [randomList()] ]),
+        # Task("Add index", arrow(tlist(tint),tlist(tint)),
+        #      [((l,), map(lambda (i,j): i+j, enumerate(l)))
+        #       for _ in range(10)
+        #       for l in [randomList()] ]),
         Task("subtract index", arrow(tlist(tint),tlist(tint)),
              [((l,), map(lambda (i,j): i-j, enumerate(l)))
               for _ in range(10)
