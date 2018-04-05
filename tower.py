@@ -88,6 +88,50 @@ def exportTowers(towers, name):
                for ts in towers ]
     towers = np.concatenate(towers, axis = 0)
     Image.fromarray(towers).convert('RGB').save(name)
+
+def bruteForceTower_(size):
+    MAXIMUMWIDTH = 2
+    if size == 0:
+        yield []
+        return
+
+    moves = [ (x + dx,w,h)
+              for p in primitives if 'x' in p.name
+              for x,w,h in p.value
+              for dx in range(-MAXIMUMWIDTH,MAXIMUMWIDTH+1) ]
+    for b in moves:
+        for s in bruteForceTower_(size - 1):
+            yield [b] + s
+def bruteForceTower(size):
+    for s in xrange(1,size + 1):
+        for t in bruteForceTower_(s):
+            yield t
+def bruteForceBaseline(tasks):
+    from towers.tower_common import TowerWorld
+    from PIL import Image
+    towers = set(map(lambda t: tuple(centerTower(t)),bruteForceTower(4)))
+    print "Generated",len(towers),"towers"
+    for t in towers:
+        gotHit = False
+        for task in tasks:
+            ll = task.logLikelihood(Primitive(str(t),None,t))
+            if valid(ll):
+                print "Hit",task,"w/"
+                print t
+                print 
+                # image = TowerWorld().draw(t)
+                # Image.fromarray(image).convert('RGB').save("/tmp/towerBaseline.png")
+                # os.system("feh /tmp/towerBaseline.png")
+                gotHit = True
+                break
+        if gotHit:
+            tasks = [task_ for task_ in tasks if not task == task_ ]
+                
+    import sys
+    sys.exit(0)
+    
+        
+
     
 
 if __name__ == "__main__":
@@ -98,6 +142,7 @@ if __name__ == "__main__":
     test, train = testTrainSplit(tasks, 100./len(tasks))
     eprint("Split %d/%d test/train"%(len(test),len(train)))
     # evaluateArches(train)
+    if False: bruteForceBaseline(train)
 
     generator = ecIterator(g0, train,
                            testingTasks = test,
