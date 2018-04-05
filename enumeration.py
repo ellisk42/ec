@@ -7,6 +7,39 @@ from grammar import *
 
 import gc
 import traceback
+import subprocess
+import threading
+
+
+# Initialise with the command you'll want to run, eg c = Command("./solver")
+# Then c.run(msg, timeout) gives msg to c's stdin, let it run for timeout
+# seconds, then ask nicely to stop. For compatibility with the previous code,
+# this returns (r, e) as return by communicate itself.
+class Command(object):
+    def __init__(self, cmd):
+        self.cmd = cmd
+        self.process = None
+        self.r = None
+        self.e = None
+
+    def run(self, msg, timeout):
+        def target():
+            self.process = subprocess.Popen(self.cmd,
+                                            stdin=subprocess.PIPE,
+                                            stdout=subprocess.PIPE)
+            self.r, self.e = self.process.communicate(msg)
+
+        thread = threading.Thread(target=target)
+        thread.start()
+        thread.join(timeout)   # Wait for finish in less than timeout
+                               # If not ready yet, then:
+        if thread.is_alive():  # Ask him nicely to stop, then wait again
+            self.process.send_signal(signal.SIGUSR1)
+            thread.join()
+
+        return (self.r,self.e)
+
+command = Command("./solver")
 
 def multithreadedEnumeration(g, tasks, likelihoodModel, _=None,
                              solver=None,
@@ -45,7 +78,7 @@ def multithreadedEnumeration(g, tasks, likelihoodModel, _=None,
 
     # Map from task to the shortest time to find a program solving it
     bestSearchTime = {t: None for t in task2grammar}
-    
+
     # For each task we keep track of how long we have been working on it
     stopwatches = {t: Stopwatch() for t in tasks }
 
@@ -60,7 +93,7 @@ def multithreadedEnumeration(g, tasks, likelihoodModel, _=None,
 
     def numberOfHits(f):
         return sum( e.logLikelihood == 0. for e in f)
-    
+
     def budgetIncrement(lb):
         # Very heuristic - not sure what to do here
         if lb < 24.:
@@ -152,21 +185,21 @@ def multithreadedEnumeration(g, tasks, likelihoodModel, _=None,
 
     return [frontiers[t] for t in tasks], [bestSearchTime[t] for t in tasks if bestSearchTime[t] is not None ]
 
-                    
-            
 
-    
+
+
+
 
 def wrapInThread(f):
     """
     Returns a function that is designed to be run in a thread/threadlike process.
     Result will be either put into the q
     """
-    
+
     def _f(*a,**k):
         q = k.pop("q")
         ID = k.pop("ID")
-        
+
         try:
             r = f(*a,**k)
             q.put({"result": "success",
@@ -177,8 +210,8 @@ def wrapInThread(f):
                    "exception": e,
                    "stacktrace": traceback.format_exc(),
                    "ID": ID})
-            return 
-    return _f        
+            return
+    return _f
 
 def solveForTask_ocaml(_ = None,
                        elapsedTime = 0.,
@@ -193,7 +226,7 @@ def solveForTask_ocaml(_ = None,
                                             for l,_,p in g.productions ]},
                "examples": [{"inputs": list(xs), "output": y} for xs,y in task.examples ],
                "programTimeout": evaluationTimeout,
-               "solverTimeout": max(int(timeout + 0.5), 1),
+               # "solverTimeout": max(int(timeout + 0.5), 1),
                "maximumFrontier": maximumFrontier,
                "name": task.name,
                "lowerBound": lowerBound,
@@ -206,17 +239,14 @@ def solveForTask_ocaml(_ = None,
         message["lossThreshold"] = -task.likelihoodThreshold
     if hasattr(task, 'maxParameters') and task.maxParameters is not None:
         message["maxParameters"] = task.maxParameters
-    
+
     message = json.dumps(message)
+    # with open("pipe", "w") as f:
+        # f.write(message)
     try:
-        p = subprocess.Popen(['./solver'],
-                             stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-        try:
-            response, error = p.communicate(message)
-            response = json.loads(response)
-        except Exception as exc:
-            exc = ValueError("Could not load response from ocaml solver: ", (response, error, exc))
-            raise exc
+        response, error = command.run(msg=message,
+                                      timeout=max(int(timeout + 0.5), 1))
+        response = json.loads(response)
     except OSError as exc:
         raise exc
 
@@ -225,7 +255,7 @@ def solveForTask_ocaml(_ = None,
     # This can occur because the solver tries to infer the type
     # Sometimes it infers a type that is too general
     response = [r for r in response[u"solutions"] if Program.parse(r["program"]).canHaveType(task.request) ]
-    
+
     frontier = Frontier([FrontierEntry(program = p,
                                        logLikelihood = e["logLikelihood"],
                                        logPrior = g.logLikelihood(task.request, p))
@@ -279,7 +309,7 @@ def enumerateForTask(g, task, likelihoodModel, _ = None,
                      budgetIncrement=1.0, maximumFrontier = 10**2):
     assert (timeout is not None) or (frontierSize is not None), \
         "enumerateForTask: You must provide either a timeout or a frontier size."
-    
+
     from time import time
 
     timeUntilFirstSolution = None
@@ -291,7 +321,7 @@ def enumerateForTask(g, task, likelihoodModel, _ = None,
         totalNumberOfPrograms = 0
         while len(frontier) < maximumFrontier:
             numberOfPrograms = 0
-            for prior,_,p in g.enumeration(Context.EMPTY, [], task.request, 
+            for prior,_,p in g.enumeration(Context.EMPTY, [], task.request,
                                            maximumDepth = 99,
                                            upperBound = budget,
                                            lowerBound = previousBudget):
@@ -303,12 +333,12 @@ def enumerateForTask(g, task, likelihoodModel, _ = None,
 
                 numberOfPrograms += 1
                 totalNumberOfPrograms += 1
-                
+
                 success, likelihood = likelihoodModel.score(p, task)
                 if success:
                     if verbose:
                         eprint("Hit",task.name,"with the program",p,"which has prior",prior,"after",time() - starting,"seconds")
-                    if frontier == []: timeUntilFirstSolution = time() - starting                        
+                    if frontier == []: timeUntilFirstSolution = time() - starting
                     frontier.append(FrontierEntry(program = p,
                                                   logPrior = prior,
                                                   logLikelihood = likelihood))
@@ -318,7 +348,7 @@ def enumerateForTask(g, task, likelihoodModel, _ = None,
             if verbose:
                 eprint("Enumerated %d programs of satisfying:"%(numberOfPrograms),
                        "%d < MDL <= %d."%(int(previousBudget),int(budget)))
-            
+
             previousBudget = budget
             budget += budgetIncrement
             if verbose:
@@ -332,7 +362,7 @@ def enumerateForTask(g, task, likelihoodModel, _ = None,
 
     frontier = Frontier(frontier,
                         task = task).topK(maximumFrontier)
-    
+
     return frontier, timeUntilFirstSolution, numberOfPrograms
 
 def solveSingleTask(grammar, task, maximumBudget = 15):
@@ -372,17 +402,17 @@ def benchmarkSynthesisTimes(result, tasks, _ = None, timeout = None, CPUs = None
 
 def benchmarkSynthesisTime(result, task, timeout):
     grammar = result.grammars[-1]
-    
+
     from likelihoodModel import AllOrNothingLikelihoodModel
     from time import time
     import signal
-    
+
     startTime = time()
     if result.parameters['useRecognitionModel']:
         # Because grammar induction is the last step of EC, the
         # recognition model is actually trained for the second to last
         # grammar
-        grammar = result.grammars[-2]        
+        grammar = result.grammars[-2]
         features = result.recognitionModel.featureExtractor.featuresOfTask(task)
         variables, productions = result.recognitionModel(features)
         grammar = Grammar(variables.data[0],
@@ -400,4 +430,4 @@ def benchmarkSynthesisTime(result, task, timeout):
     p = solution.entries[0].program
     eprint("Solved",task,"w/",p,"(log likelihood of task given program:",l,").","in time",dt)
     return dt,l
-    
+
