@@ -57,16 +57,13 @@ class GeomFeatureCNN(nn.Module):
         return self(t.examples[0][1])
 
     def featuresOfProgram(self, p, t):  # Won't fix for geom
-        if t == tcanvas:
-            try:
-                output = subprocess.check_output(['./geomDrawLambdaString',
-                                                 p.evaluate([])]).split("\n")
-                shape = map(float, output[0].split(','))
-                bigShape = map(float, output[1].split(','))
-            except OSError as exc:
-                raise exc
-        else:
-            assert(False)
+        try:
+            output = subprocess.check_output(['./geomDrawLambdaString',
+                                             p.evaluate([])]).split("\n")
+            shape = map(float, output[0].split(','))
+            bigShape = map(float, output[1].split(','))
+        except OSError as exc:
+            raise exc
         try:
             self.mean = [x+y for x, y in zip(self.mean, bigShape)]
             self.count += 1
@@ -88,8 +85,7 @@ class GeomFeatureCNN(nn.Module):
             w = png.Writer(256, 256)
             w.write(f, img)
             f.close()
-            del self.mean[:]
-            self.mean = []
+            self.mean = [0]*(256*256)
             self.count = 0
 
 
