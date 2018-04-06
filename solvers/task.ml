@@ -13,7 +13,7 @@ type task =
     log_likelihood: program -> float;
   }
 
-exception Timeout
+exception EnumerationTimeout
 
 let supervised_task ?timeout:(timeout = 0.001) name ty examples =
   { name = name    ;
@@ -32,7 +32,12 @@ let supervised_task ?timeout:(timeout = 0.001) name ty examples =
                 | Some(true) -> loop e
                 | _ -> false
             with | UnknownPrimitive(n) -> raise (Failure ("Unknown primitive: "^n))
-                 | _ -> false
+                 (* we have to be a bit careful with exceptions *)
+                 (* if the synthesized program generated an exception, then we just terminate w/ false *)
+                 (* but if the enumeration timeout was triggered during program evaluation, we need to pass the exception on *)
+                 | otherException -> begin
+                     if otherException = EnumerationTimeout then raise EnumerationTimeout else false
+                   end
         in
         if loop examples
           then 0.0
@@ -75,7 +80,9 @@ let differentiable_task
                     try Some(loss y prediction +& later_loss)
                     with DifferentiableBadShape -> None
             with | UnknownPrimitive(n) -> raise (Failure ("Unknown primitive: "^n))
-                 | _ -> None
+                 | otherException -> begin
+                     if otherException = EnumerationTimeout then raise EnumerationTimeout else None
+                   end
         in
         match loop examples with
         | None -> log 0.0
@@ -136,7 +143,7 @@ let enumerate_for_task (g: grammar) ?verbose:(verbose = true)
 
   let listenForSIGUSR1 =
     Caml.Sys.Signal_handle (
-      fun _ -> raise Timeout
+      fun _ -> raise EnumerationTimeout
     ) in
 
   Caml.Sys.set_signal Caml.Sys.sigusr1 listenForSIGUSR1 ;
@@ -182,4 +189,4 @@ let enumerate_for_task (g: grammar) ?verbose:(verbose = true)
       end else ()
     done ;
     (Heap.to_list hits, !programs_explored)
-  with Timeout -> (Heap.to_list hits, !programs_explored)
+  with EnumerationTimeout -> (Heap.to_list hits, !programs_explored)
