@@ -102,6 +102,19 @@ let load_problem channel =
                                               ex |> member "output" |> unpack))
   in
 
+
+    let timeout = try
+      j |> member "programTimeout" |> to_float
+    with _ ->
+      begin
+        let defaultTimeout = 0.1 in
+        Printf.eprintf
+          "\t(ocaml) WARNING: programTimeout not set. Defaulting to %f.\n"
+          defaultTimeout ;
+        defaultTimeout
+      end
+    in
+
   let differentiable =
     productions |> List.exists ~f:(fun (e,_,_,_) -> is_base_primitive e && "REAL" = primitive_name e)
   in
@@ -153,7 +166,7 @@ let load_problem channel =
     then differentiable_task ~parameterPenalty:parameterPenalty
            ~lossThreshold:lossThreshold ~maxParameters:maxParameters
     else supervised_task)
-                      name task_type examples
+                      ~timeout:timeout name task_type examples
   in
   (t,g,
    lowerBound,upperBound,budgetIncrement,

@@ -1,5 +1,6 @@
 open Core
 
+open Timeout
 open Utils
 open Type
 open Program
@@ -14,57 +15,65 @@ type task =
 
 exception Timeout
 
-let supervised_task name ty examples =
-  { name = name;
-    task_type = ty;
-    log_likelihood = (fun p ->
+let supervised_task ?timeout:(timeout = 0.001) name ty examples =
+  { name = name    ;
+    task_type = ty ;
+    log_likelihood =
+      (fun p ->
         let p = analyze_lazy_evaluation p in
         let rec loop = function
           | [] -> true
           | (xs,y) :: e ->
             try
-              match run_lazy_analyzed_with_arguments p xs = y with
-              | true -> loop e
-              | _ -> false
+              match run_for_interval
+                      timeout
+                      (fun () -> run_lazy_analyzed_with_arguments p xs = y)
+              with
+                | Some(true) -> loop e
+                | _ -> false
             with | UnknownPrimitive(n) -> raise (Failure ("Unknown primitive: "^n))
                  | _ -> false
         in
         if loop examples
-        then 0.0
-        else log 0.0)
+          then 0.0
+          else log 0.0)
   }
 
 let differentiable_task
     ?parameterPenalty:(parameterPenalty=0.)
     ?lossThreshold:(lossThreshold=None)
     ?maxParameters:(maxParameters=100)
-    name ty examples =
+    ?timeout:(timeout = 0.001) name ty examples =
   (* Process the examples and wrap them inside of placeholders *)
   let (argument_types, return_type) = arguments_and_return_of_type ty in
   let examples = examples |> List.map ~f:(fun (xs,y) ->
       (List.map2_exn argument_types xs ~f:placeholder_data,
       placeholder_data return_type y))
   in
-  let loss = polymorphic_sse return_type
-  in
-  { name = name;
-    task_type = ty;
-    log_likelihood = (fun expression ->
+  let loss = polymorphic_sse return_type in
+  { name = name    ;
+    task_type = ty ;
+    log_likelihood =
+      (fun expression ->
         let (p,parameters) = replace_placeholders expression in
         if List.length parameters > maxParameters then log 0. else 
-        (*         Printf.eprintf "%s has d=%d\n" (string_of_program expression) (List.length parameters); *)
+        (* Printf.eprintf "%s has d=%d\n" (string_of_program expression) (List.length parameters); *)
         let p = analyze_lazy_evaluation p in
         (* Returns loss *)
         let rec loop : 'a list -> Differentiation.variable option = function
           | [] -> Some(~$ 0.)
           | (xs,y) :: e ->
             try
-              let prediction = run_lazy_analyzed_with_arguments p xs in
+              match run_for_interval
+                      timeout
+                      (fun () -> run_lazy_analyzed_with_arguments p xs) with
+              | None -> None
+              | Some (prediction) ->
                 match loop e with
-                | None -> None
-                | Some(later_loss) ->
-                  try Some(loss y prediction +& later_loss)
-                  with DifferentiableBadShape -> None
+                  | None -> None
+                  | Some(later_loss) ->
+                    try Some(loss y prediction +& later_loss)
+                    with DifferentiableBadShape -> None
             with | UnknownPrimitive(n) -> raise (Failure ("Unknown primitive: "^n))
                  | _ -> None
         in
