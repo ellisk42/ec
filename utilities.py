@@ -374,21 +374,27 @@ def CPULoad():
 
 def flushEverything():
     sys.stdout.flush()
-    sys.stderr.flush()    
+    sys.stderr.flush()
+
+class RunWithTimeout(Exception): pass
+def runWithTimeout(k, timeout):
+    if timeout is None: return k()
+    def timeoutCallBack(_1,_2): raise RunWithTimeout()
+    signal.signal(signal.SIGVTALRM, timeoutCallBack)
+    signal.setitimer(signal.ITIMER_VIRTUAL, timeout)
+    
+    try:
+        result = k()
+        signal.signal(signal.SIGVTALRM, lambda *_:None)
+        signal.setitimer(signal.ITIMER_VIRTUAL, 0)
+        return result
+    except RunWithTimeout: raise RunWithTimeout()
+    except:
+        signal.signal(signal.SIGVTALRM, lambda *_:None)
+        signal.setitimer(signal.ITIMER_VIRTUAL, 0)
+        raise
 
 if __name__ == "__main__":
-    s = Stopwatch()
-    s.start()
-    time.sleep(2)
-    eprint(s.elapsed)
-    s.stop()
-    time.sleep(2)
-    eprint(s.elapsed)
-    s.start()
-    time.sleep(1)
-    eprint(s.elapsed)
-    time.sleep(1)
-    eprint(s.elapsed)
-    s.stop()
-    time.sleep(1)
-    eprint(s.elapsed)
+    def f():
+        return 5/0
+    eprint(runWithTimeout(f, 0.1))

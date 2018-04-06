@@ -5,6 +5,7 @@ from makeTowerTasks import *
 
 import os
 import random
+import time
 
 class TowerFeatureExtractor(HandCodedFeatureExtractor):
     def _featuresOfProgram(self, p, _):
@@ -132,6 +133,51 @@ def bruteForceBaseline(tasks):
     
         
 
+def updateCaching(g, perturbations, _=None,
+                  evaluationTimeout=None, enumerationTimeout=None):
+    from towers.tower_common import TowerWorld
+    # Runs unconditional enumeration and evaluates the resulting
+    # towers but does nothing else with them. The sole purpose of
+    # this is to make it so that all of the towers that are likely
+    # to be proposed are already cached
+    assert enumerationTimeout is not None
+
+    budget = 1.
+    previousBudget = 0.
+    startTime = time.time()
+    programs = 0
+    oldTowers = 0
+    newTowers = 0
+    
+    caching = getTowerCash()
+    
+    while (time.time() - startTime) < enumerationTimeout:
+        for _,_,p in g.enumeration(Context.EMPTY, [], ttower,
+                                   maximumDepth = 99,
+                                   upperBound = budget,
+                                   lowerBound = previousBudget):
+            if (time.time() - startTime) >= enumerationTimeout: break
+            
+            programs += 1
+            try: t = runWithTimeout(lambda: p.evaluate([]), evaluationTimeout)
+            except: continue
+            if len(t) == 0: continue
+            t = tuple(t)
+            for perturbation in perturbations:
+                if (t,perturbation) in caching:
+                    oldTowers += 1
+                    continue
+                newTowers += 1
+                w = TowerWorld()
+                try: result = w.sampleStability(tower, perturbation, N = 30)
+                except: result = None
+                caching[(t,perturbation)] = result
+        previousBudget = budget
+        budget += 1.
+        
+    eprint("Enumerated %d programs; %d new tower evaluations and %d old tower evaluations."%
+           (programs, newTowers/len(perturbations), oldTowers/len(perturbations)))
+
     
 
 if __name__ == "__main__":
@@ -144,20 +190,31 @@ if __name__ == "__main__":
     # evaluateArches(train)
     if False: bruteForceBaseline(train)
 
+    arguments = commandlineArguments(
+        featureExtractor = TowerFeatureExtractor,
+        CPUs = numberOfCPUs(),
+        helmholtzRatio = 0.5,
+        iterations = 5,
+        a = 3,
+        structurePenalty = 1,
+        pseudoCounts = 10,
+        topK = 10,
+        maximumFrontier = 10**4)
+    evaluationTimeout = 0.005
     generator = ecIterator(g0, train,
                            testingTasks = test,
                            outputPrefix = "experimentOutputs/tower",
+                           evaluationTimeout=evaluationTimeout,
                            solver = "python",
-                           **commandlineArguments(
-                               featureExtractor = TowerFeatureExtractor,
-                               CPUs = numberOfCPUs(),
-                               helmholtzRatio = 0.5,
-                               iterations = 5,
-                               a = 3,
-                               structurePenalty = 1,
-                               pseudoCounts = 10,
-                               topK = 10,
-                               maximumFrontier = 10**4))
+                           **arguments)
+    
+    perturbations = {t.perturbation for t in train}
+    def update(g):
+        updateCaching(g, perturbations,
+                      evaluationTimeout=evaluationTimeout,
+                      enumerationTimeout=arguments["enumerationTimeout"])
+    # update(g0)
+
     # list of list of towers, one for each iteration
     towers = []
     for result in generator:
@@ -165,3 +222,5 @@ if __name__ == "__main__":
                       for frontier in result.taskSolutions.values() if not frontier.empty }
         towers.append(sorted(list(newTowers)))
         exportTowers(towers, 'experimentOutputs/uniqueTowers.png')
+        update(result.grammars[-1])
+        
