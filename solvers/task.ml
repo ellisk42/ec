@@ -31,13 +31,15 @@ let supervised_task ?timeout:(timeout = 0.001) name ty examples =
               with
                 | Some(true) -> loop e
                 | _ -> false
-            with | UnknownPrimitive(n) -> raise (Failure ("Unknown primitive: "^n))
-                 (* we have to be a bit careful with exceptions *)
-                 (* if the synthesized program generated an exception, then we just terminate w/ false *)
-                 (* but if the enumeration timeout was triggered during program evaluation, we need to pass the exception on *)
-                 | otherException -> begin
-                     if otherException = EnumerationTimeout then raise EnumerationTimeout else false
-                   end
+            with (* We have to be a bit careful with exceptions if the
+                  * synthesized program generated an exception, then we just
+                  * terminate w/ false but if the enumeration timeout was
+                  * triggered during program evaluation, we need to pass the
+                  * exception on
+                  *)
+              | UnknownPrimitive(n) -> raise (Failure ("Unknown primitive: "^n))
+              | EnumerationTimeout  -> raise EnumerationTimeout
+              | _                   -> false
         in
         if loop examples
           then 0.0
@@ -80,9 +82,8 @@ let differentiable_task
                     try Some(loss y prediction +& later_loss)
                     with DifferentiableBadShape -> None
             with | UnknownPrimitive(n) -> raise (Failure ("Unknown primitive: "^n))
-                 | otherException -> begin
-                     if otherException = EnumerationTimeout then raise EnumerationTimeout else None
-                   end
+                 | EnumerationTimeout  -> raise EnumerationTimeout
+                 | _                   -> None
         in
         match loop examples with
         | None -> log 0.0
