@@ -12,6 +12,8 @@ type task =
     log_likelihood: program -> float;
   }
 
+exception Timeout
+
 let supervised_task name ty examples =
   { name = name;
     task_type = ty;
@@ -123,52 +125,52 @@ let enumerate_for_task (g: grammar) ?verbose:(verbose = true)
 
   let startTime = Time.now () in
 
-  let reachedTimeout = ref false in
-
   let listenForSIGUSR1 =
     Caml.Sys.Signal_handle (
-      fun _ -> reachedTimeout := true ;
+      fun _ -> raise Timeout
     ) in
 
   Caml.Sys.set_signal Caml.Sys.sigusr1 listenForSIGUSR1 ;
 
-  while Heap.length hits < maximumFrontier
-     && !lower_bound +. budgetIncrement <= upperBound
-     && not !reachedTimeout do
-    let recent_count = ref 0 in
-    enumerate_programs g (t.task_type)
-      (!lower_bound) (!lower_bound +. budgetIncrement)
-      (fun p logPrior ->
-         incr programs_explored ;
-         let mdl = 0.-.logPrior in
+  try
+    while Heap.length hits < maximumFrontier
+       && !lower_bound +. budgetIncrement <= upperBound
+    do
+      let recent_count = ref 0 in
+      enumerate_programs g (t.task_type)
+        (!lower_bound) (!lower_bound +. budgetIncrement)
+        (fun p logPrior ->
+           incr programs_explored ;
+           let mdl = 0.-.logPrior in
 
-         assert( !lower_bound <= mdl);
-         assert( mdl < budgetIncrement+.(!lower_bound));
+           assert( !lower_bound <= mdl);
+           assert( mdl < budgetIncrement+.(!lower_bound));
 
-         incr recent_count ;
+           incr recent_count ;
 
-         let logLikelihood = t.log_likelihood p in
-         if is_valid logLikelihood then begin
-           let dt = Time.abs_diff startTime (Time.now ())
-                    |> Time.Span.to_sec in
-           Heap.add hits (p,logPrior,logLikelihood,dt) ;
-           if Heap.length hits > maximumFrontier then Heap.remove_top hits ;
-           if verbose then
-             Printf.eprintf
-              "\t(ocaml) HIT %s w/ %s\n" (t.name) (string_of_program p)
-           end) ;
-    if verbose then
-      Printf.eprintf "\t(ocaml) For %s : %s, enumerated %d programs satisfying %f < MDL <= %f\n"
-        (t.name) (t.task_type |> string_of_type) (!recent_count) (!lower_bound) (!lower_bound+.budgetIncrement)
-    else ();
-    lower_bound := budgetIncrement+. (!lower_bound);
-    total_count := !total_count + !recent_count;
-    if verbose then begin
-      Printf.eprintf "\t(ocaml) For %s: Total time: %s. Total number of programs: %d.\n"
-        (t.name)
-        (Time.diff (Time.now ()) startTime |> Time.Span.to_string)
-        (!total_count);
-      flush_everything();
-    end else ()
-  done ;
-  (Heap.to_list hits, !programs_explored)
+           let logLikelihood = t.log_likelihood p in
+           if is_valid logLikelihood then begin
+             let dt = Time.abs_diff startTime (Time.now ())
+                      |> Time.Span.to_sec in
+             Heap.add hits (p,logPrior,logLikelihood,dt) ;
+             if Heap.length hits > maximumFrontier then Heap.remove_top hits ;
+             if verbose then
+               Printf.eprintf
+                "\t(ocaml) HIT %s w/ %s\n" (t.name) (string_of_program p)
+             end) ;
+      if verbose then
+        Printf.eprintf "\t(ocaml) For %s : %s, enumerated %d programs satisfying %f < MDL <= %f\n"
+          (t.name) (t.task_type |> string_of_type) (!recent_count) (!lower_bound) (!lower_bound+.budgetIncrement)
+      else ();
+      lower_bound := budgetIncrement+. (!lower_bound);
+      total_count := !total_count + !recent_count;
+      if verbose then begin
+        Printf.eprintf "\t(ocaml) For %s: Total time: %s. Total number of programs: %d.\n"
+          (t.name)
+          (Time.diff (Time.now ()) startTime |> Time.Span.to_string)
+          (!total_count);
+        flush_everything();
+      end else ()
+    done ;
+    (Heap.to_list hits, !programs_explored)
+  with Timeout -> (Heap.to_list hits, !programs_explored)
