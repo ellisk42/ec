@@ -2,13 +2,14 @@ from ec import explorationCompression, commandlineArguments
 from grammar import Grammar
 from utilities import eprint, testTrainSplit, numberOfCPUs
 from makeGeomTasks import makeTasks
-from geomPrimitives import primitives, tcanvas
+from geomPrimitives import primitives
 from math import log
 
 import torch
 import png
 import time
 import subprocess
+import os
 import torch.nn as nn
 
 from recognition import variable
@@ -19,7 +20,7 @@ class GeomFeatureCNN(nn.Module):
     def __init__(self, tasks, cuda=False, H=10):
         super(GeomFeatureCNN, self).__init__()
 
-        self.net1 = nn.Sequential(
+        self.net1 = nn.Sequential( # Maybe dont do that but rather rescale first
             nn.Conv2d(1, 6, kernel_size=(10, 10), stride=2),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=(2, 2), stride=2),
@@ -36,6 +37,7 @@ class GeomFeatureCNN(nn.Module):
 
         self.mean = [0]*(256*256)
         self.count = 0
+        self.sub = "./dreams/" + str(int(time.time()))
 
         self.outputDimensionality = H
 
@@ -57,8 +59,14 @@ class GeomFeatureCNN(nn.Module):
         return self(t.examples[0][1])
 
     def featuresOfProgram(self, p, t):  # Won't fix for geom
+        if not os.path.exists(self.sub):
+                os.makedirs(self.sub)
         try:
             output = subprocess.check_output(['./geomDrawLambdaString',
+                                             self.sub +
+                                              "/" +
+                                              str(self.count) +
+                                              ".png",
                                              p.evaluate([])]).split("\n")
             shape = map(float, output[0].split(','))
             bigShape = map(float, output[1].split(','))
@@ -80,7 +88,7 @@ class GeomFeatureCNN(nn.Module):
             img = [(int(x*254), int(x*254), int(x*254)) for x in mean]
             img = [img[i:i+256] for i in range(0, 256*256, 256)]
             img = [tuple([e for t in x for e in t]) for x in img]
-            fname = 'dream_low_calc/dream-'+(str(int(time.time())))+'.png'
+            fname = self.sub+"/"+str(self.count)+"_sum.png"
             f = open(fname, 'wb')
             w = png.Writer(256, 256)
             w.write(f, img)
@@ -96,7 +104,6 @@ if __name__ == "__main__":
     test, train = testTrainSplit(tasks, 0.5)
     eprint("Split tasks into %d/%d test/train" % (len(test), len(train)))
 
-
     baseGrammar = Grammar.uniform(primitives)
 
     explorationCompression(baseGrammar, train,
@@ -105,14 +112,14 @@ if __name__ == "__main__":
                            compressor="rust",
                            evaluationTimeout=0.01,
                            **commandlineArguments(
-                               steps=50,
+                               steps=200,
                                a=1,
                                iterations=10,
                                useRecognitionModel=True,
                                helmholtzRatio=0.5,
-                               helmholtzBatch=100,
+                               helmholtzBatch=500,
                                featureExtractor=GeomFeatureCNN,
                                topK=2,
-                               maximumFrontier=100,
+                               maximumFrontier=500,
                                CPUs=numberOfCPUs(),
                                pseudoCounts=10.0))
