@@ -42,7 +42,7 @@ def pretty_print(shape, size):
     print (pretty_string(shape, size))
 
 
-def makeTasks():
+def makeTasks(subfolders):
     problems = []
 
     def problem(n, examples, needToTrain=False):
@@ -53,12 +53,13 @@ def makeTasks():
         task.mustTrain = needToTrain
         problems.append(task)
 
-    for _, _, files in os.walk(rootdir):
-        for f in files:
-            if f.endswith(".png"):
-                problem(f,
-                        [([], fileToArray(rootdir + '/' + f))],
-                        needToTrain=True)
+    for subfolder in subfolders:
+        for _, _, files in os.walk(rootdir+subfolder):
+            for f in files:
+                if f.endswith("_l.png"):
+                    problem(f,
+                            [([], fileToArray(rootdir + subfolder + '/' + f))],
+                            needToTrain=True)
 
     return problems
 
@@ -66,8 +67,8 @@ def makeTasks():
 if __name__ == "__main__":
     tasks = makeTasks()
     for t in tasks:
-        print t.name
-        print t.request
+        print(t.name)
+        print(t.request)
         x, y = t.examples[0]
         pretty_print(y, 64)
         print

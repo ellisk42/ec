@@ -4,7 +4,9 @@ from utilities import eprint, testTrainSplit, numberOfCPUs
 from makeGeomTasks import makeTasks
 from geomPrimitives import primitives
 from math import log
+from collections import OrderedDict
 
+import pickle
 import torch
 import png
 import time
@@ -20,7 +22,7 @@ class GeomFeatureCNN(nn.Module):
     def __init__(self, tasks, cuda=False, H=10):
         super(GeomFeatureCNN, self).__init__()
 
-        self.net1 = nn.Sequential( # Maybe dont do that but rather rescale first
+        self.net1 = nn.Sequential(
             nn.Conv2d(1, 6, kernel_size=(10, 10), stride=2),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=(2, 2), stride=2),
@@ -97,29 +99,60 @@ class GeomFeatureCNN(nn.Module):
             self.count = 0
 
 
+def list_options(parser):
+    parser.add_argument("--target", type=str,
+                        default=[],
+                        action='append',
+                        help="Which tasks should this try to solve")
+    parser.add_argument("--reduce", type=str,
+                        default=[],
+                        action='append',
+                        help="Which tasks should this try to solve")
+    parser.add_argument("--child", type=str,
+                        default=None,
+                        help="Set to where to output the grammar if this is a child")
+
+
 if __name__ == "__main__":
-    tasks = makeTasks()
+    args = commandlineArguments(
+            steps=200,
+            a=1,
+            iterations=5,
+            useRecognitionModel=True,
+            helmholtzRatio=0.5,
+            helmholtzBatch=500,
+            featureExtractor=GeomFeatureCNN,
+            maximumFrontier=500,
+            CPUs=numberOfCPUs(),
+            pseudoCounts=10.0,
+            extras=list_options)
+    target = args.pop("target")
+    red = args.pop("reduce")
+    child = args.pop("child")
+    tasks = makeTasks(target)
     eprint("Generated", len(tasks), "tasks")
 
     test, train = testTrainSplit(tasks, 0.5)
     eprint("Split tasks into %d/%d test/train" % (len(test), len(train)))
 
+    if red is not []:
+        for reducing in red:
+            with open(reducing) as f:
+                prods = pickle.load(f)
+            primitives = primitives + prods
+
+    primitives = OrderedDict((x, True) for x in primitives).keys()
     baseGrammar = Grammar.uniform(primitives)
 
-    explorationCompression(baseGrammar, train,
-                           testingTasks=test,
-                           outputPrefix="experimentOutputs/geom",
-                           compressor="rust",
-                           evaluationTimeout=0.01,
-                           **commandlineArguments(
-                               steps=200,
-                               a=1,
-                               iterations=10,
-                               useRecognitionModel=True,
-                               helmholtzRatio=0.5,
-                               helmholtzBatch=500,
-                               featureExtractor=GeomFeatureCNN,
-                               topK=2,
-                               maximumFrontier=500,
-                               CPUs=numberOfCPUs(),
-                               pseudoCounts=10.0))
+    r = explorationCompression(baseGrammar, train,
+                               testingTasks=test,
+                               outputPrefix="experimentOutputs/geom",
+                               compressor="rust",
+                               evaluationTimeout=0.01,
+                               **args)
+    needsExport = [z for _, _, z in r.grammars[-1].productions]
+    if child is not None:
+        with open(child, 'w') as f:
+            pickle.dump(needsExport, f)
+    else:
+        eprint(needsExport)
