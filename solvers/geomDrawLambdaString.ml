@@ -40,7 +40,8 @@ let read_program program_string =
   with e -> (print_endline program_string ; raise e)
 
 let _ =
-  let program_string = Sys.argv.(1) in
+  let output_img = Sys.argv.(1) in
+  let program_string = Sys.argv.(2) in
   (try
     (match read_program program_string with
       | Some (program) ->
@@ -48,6 +49,7 @@ let _ =
             let c  = interpret program              in
             let l  = Plumbing.canvas_to_tlist 64 c  in
             let l' = Plumbing.canvas_to_tlist 256 c in
+            Renderer.output_canvas_png c 256 output_img ;
             (npp l ; print_newline () ;
              npp l' ; print_newline ())
           with Interpreter.MalformedProgram _ ->

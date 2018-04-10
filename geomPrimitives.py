@@ -39,8 +39,8 @@ def _integrate(v1):
            " " + v3 + \
            " " + v4 + \
            ")"
-def _repeat(p):
-    return "(repeat " + p + ")"
+def _repeat(v):
+    return lambda p: "(repeat " + v + " " + p + ")"
 def _concat(p1):
     return lambda p2: "(concat " + p1 + " " + p2 + ")"
 
@@ -67,7 +67,7 @@ primitives = [
                     tmaybe(tvar),
                     tprogram), _integrate),
     Primitive("turn", arrow(tmaybe(tvar), tprogram), _turn),
-    Primitive("repeat", arrow(tprogram, tprogram), _repeat),
+    Primitive("repeat", arrow(tmaybe(tvar), tprogram, tprogram), _repeat),
     Primitive("concat", arrow(tprogram, tprogram, tprogram), _concat),
 
     # RUN

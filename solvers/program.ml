@@ -384,7 +384,7 @@ let primitive_define = primitive
                         GeomLib.Plumbing.define
 let primitive_repeat = primitive
                         "repeat"
-                        (tprogram @> tprogram)
+                        (tmaybe tvar @> tprogram @> tprogram)
                         GeomLib.Plumbing.repeat
 let primitive_integrate= primitive
                         "integrate"
