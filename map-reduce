@@ -1,0 +1,304 @@
+#!/bin/sh
+
+set -o nounset
+set -o errexit
+trap 'echo "Aborting due to errexit on line $LINENO. Exit code: $?" >&2' ERR
+set -o errtrace
+set -o pipefail
+
+# Set IFS to just newline and tab at the start
+DEFAULT_IFS="${IFS}"
+SAFER_IFS=$'\n\t'
+IFS="${SAFER_IFS}"
+
+# Set to the program's basename.
+_ME=$(basename "${0}")
+MAP=()
+MAPTMP=()
+REDUCE=()
+ARGSMAP=()
+ARGSREDUCE=()
+OTHER=()
+PIDs=()
+SBATCH=false
+DRY=false
+PMAP=0
+TMAP=0
+PREDUCE=0
+TREDUCE=0
+PROGRAM=""
+
+# Print the program help information.
+_print_help() {
+  cat <<HEREDOC
+Usage:
+  ${_ME} [-s P,T,P,T] <prog.py> --map <task>... --reduce <task>... -- <args for map> -- <args for reduce>
+  ${_ME} -h | --help
+
+Options:
+  -h --help   Show this screen.
+  -s --sbatch Use sbatch to start programs. Following arguments are
+              P(rocessors) and T(imeouts) for the map, then the reduce.
+  -d --dry    Do not run anything, instead show what would be run
+HEREDOC
+}
+
+_init() {
+  printf "\e[1;93mWarning\e[m: "
+  printf "please ensure python/torch/etc. are available.\n\n"
+}
+
+_map() {
+  echo "  * Map:"
+  for target in "${MAP[@]}"
+  do
+    if [ "$DRY" = "true" ]; then
+      TMP="$(mktemp -u ./$target.XXXXXXXXX)"
+      TMPOUT="$(mktemp -u ./$target.out.XXXXXXXXX)"
+    else
+      TMP="$(mktemp ./$target.XXXXXXXXX)"
+      TMPOUT="$(mktemp -u ./$target.out.XXXXXXXXX)"
+    fi
+    MAPTMP+=("$TMP")
+    CMD="./$PROGRAM ${ARGSMAP[@]} --target $target --save $TMP"
+    if [[ "$SBATCH" = "false" ]]; then
+      echo "      \`$CMD\`"
+      if [ "$DRY" = "false" ]; then
+        CMD="$CMD 2> $TMPOUT"
+        eval "$CMD" &
+        pid=($!)
+        printf "    - Started task \e[1;34m$target\e[m, PID=$pid\n"
+        PIDs+=("$pid")
+      fi
+    else
+      TMP=${TMP#"./"}
+      CMD="sbatch \\\\
+        --job-name=geom_$TMP --output=$TMPOUT \\\\
+        --ntasks=1 --cpus-per-task $PMAP --time=$TMAP \\\\
+        --mail-user=$(whoami)@mit.edu --mail-type=ALL --requeue \\\\
+        --wrap=\"$CMD\""
+      printf "    - \`$CMD\`\n"
+      if [ "$DRY" = "false" ]; then
+        JID=$(eval $CMD)
+        JID=${JID##* }
+        PIDs+=("$JID")
+      else
+        JID="1234"
+        PIDs+=("$JID")
+      fi
+    fi
+  done
+  set -- "${MAPTMP[@]}"
+  set -- "${PIDs[@]}"
+  if [ "$DRY" = "false" ]; then
+    if [[ "$SBATCH" = "false" ]]; then
+      printf "    - \e[1;34mWaiting\e[m for PIDs: "
+      echo "${PIDs[@]}"
+      wait "${PIDs[@]}"
+    fi
+  fi
+}
+
+_reduce() {
+  echo "  * Reduce:"
+
+  if [ "$DRY" = "true" ]; then
+    TMPOUT="$(mktemp -u ./reduce.out.XXXXXXXXX)"
+  else
+    TMPOUT="$(mktemp ./reduce.out.XXXXXXXXX)"
+  fi
+
+  CMD="./$PROGRAM ${ARGSREDUCE[@]}"
+  for target in "${REDUCE[@]}"
+  do
+    CMD="$CMD --target $target"
+  done
+
+  for target in "${MAPTMP[@]}"
+  do
+    CMD="$CMD --red $target"
+  done
+
+  if [[ "$SBATCH" = "false" ]]; then
+    CMD="$CMD 2> $TMPOUT"
+    echo "    - $CMD"
+    if [ "$DRY" = "false" ]; then
+      eval "$CMD" &
+    fi
+    wait
+  else
+    JOBS=$(echo ${PIDs[@]} | tr " " ":")
+    echo $JOBS
+    CMD="sbatch \\\\
+        --job-name=geom_reduce --output=$TMPOUT \\\\
+        --ntasks=1 --cpus-per-task $PREDUCE --time=$TREDUCE \\\\
+        --mail-user=$(whoami)@mit.edu --mail-type=ALL --requeue \\\\
+        --dependency=afterany:${JOBS} \\\\
+        --wrap=\"$CMD\""
+    printf "    - \`$CMD\`\n"
+    if [ "$DRY" = "false" ]; then
+      echo "TODO"
+    fi
+  fi
+
+}
+
+_clean() {
+  echo "  * Cleaning:"
+  for target in "${MAPTMP[@]}"
+  do
+    echo "    - rm $target"
+    if [[ "$DRY" = "false" ]]; then
+      rm "$target"
+    fi
+  done
+}
+
+_main() {
+  isMap=false
+  isReduce=false
+  isArgsMap=false
+  isArgsReduce=false
+  while [[ $# -gt 0 ]]
+  do
+    key="$1"
+    case $key in
+      -d|--dry)
+        DRY=true
+        shift
+        ;;
+      -s|--sbatch)
+        SBATCH=true
+        shift
+        STACK=$1
+        IFS=',' read -ra STACK <<< "$STACK"
+        if [[ "${#STACK[@]}" != "4" ]]; then
+          _print_help
+          printf '\n\e[1;31mError(s):\e[m\n'                      1>&2
+          printf "  Structure should be \e[1;34m...-s P,T,P,T...\e[m\n" 1>&2
+          exit 2
+        fi
+        PMAP=${STACK[0]}
+        TMAP=${STACK[1]}
+        PREDUCE=${STACK[2]}
+        TREDUCE=${STACK[3]}
+        shift
+        ;;
+      --map)
+        isMap=false
+        isArgsMap=false
+        isArgsReduce=false
+        isMap=true
+        shift
+        ;;
+      --reduce)
+        isMap=false
+        isArgsMap=false
+        isArgsReduce=false
+        isReduce=true
+        shift
+        ;;
+      --argsmap)
+        isReduce=false
+        isMap=false
+        isArgsReduce=false
+        isArgsMap=true
+        shift
+        ;;
+      --argsreduce)
+        isReduce=false
+        isMap=false
+        isArgsMap=false
+        isArgsReduce=true
+        shift
+        ;;
+      *)    # unknown option
+        if [ "$isMap" = "true" ]; then
+          MAP+=("$1")
+        elif [ "$isReduce" = "true" ]; then
+          REDUCE+=("$1")
+        elif [ "$isArgsMap" = "true" ]; then
+          ARGSMAP+=("$1")
+        elif [ "$isArgsReduce" = "true" ]; then
+          ARGSREDUCE+=("$1")
+        else
+          OTHER+=("$1")
+        fi
+        shift # past argument
+        ;;
+    esac
+  done
+
+  set -- "${MAP[@]}"
+  set -- "${REDUCE[@]}"
+  set -- "${ARGSMAP[@]}"
+  set -- "${ARGSREDUCE[@]}"
+  set -- "${OTHER[@]}"
+
+  if [[ "${#OTHER[@]}" = "1" ]]; then
+    PROGRAM=${OTHER[0]}
+  fi
+
+  if [[ -z ${PROGRAM} || -z ${MAP[@]} || -z ${REDUCE[@]} ]]; then
+    _print_help
+    printf '\e[1;31mError(s):\e[m\n'                 1>&2
+    if [[ -z ${PROGRAM} ]]; then
+      printf "  I seem to miss argument(s) \e[1;34m" 1>&2
+      printf "<prog.py>"                             1>&2
+      printf "\e[m\n"                                1>&2
+    fi
+    if [[ -z ${MAP[@]} ]]; then
+      printf "  I seem to miss argument(s) \e[1;34m" 1>&2
+      printf "map"                                   1>&2
+      printf "\e[m\n"                                1>&2
+    fi
+    if [[ -z ${REDUCE[@]} ]]; then
+      printf "  I seem to miss argument(s) \e[1;34m" 1>&2
+      printf "reduce"                                1>&2
+      printf "\e[m\n"                                1>&2
+    fi
+    exit 1
+  fi
+
+  printf "======== PARAMETERS ========\n"
+  printf "Program\t—— %s\n" "$(echo ${PROGRAM})"
+  printf "ArgsMap\t—— %s\n"    "$(echo ${ARGSMAP[@]})"
+  printf "ArgsRed\t—— %s\n"    "$(echo ${ARGSREDUCE[@]})"
+  printf "SBATCH\t—— %s\n"  "${SBATCH}"
+  if [[ "$SBATCH" = "true" ]]; then
+    printf " /PMAP\t—— %s\n"  "$PMAP"
+    printf " |TMAP\t—— %s\n"  "$TMAP"
+    printf " |PRED\t—— %s\n"  "$PREDUCE"
+    printf " \TRED\t—— %s\n"  "$TREDUCE"
+  fi
+  printf "Map\t—— %s\n"     "$(echo ${MAP[@]})"
+  printf "Reduce\t—— %s\n" "$(echo ${REDUCE[@]})"
+  printf "============================\n"
+
+  echo ""
+  if [[ "$DRY" = "true" ]]; then
+    printf "This is a \e[1;34mdry run\e[m. Would be run:\n"
+  else
+    echo "Starting:"
+  fi
+
+  _map
+  _reduce
+  _clean
+}
+
+# Description:
+#   Entry point for the program, handling basic option parsing and dispatching.
+_check_help() {
+  # If only needs "help", don't do anything else.
+  if [[ "${1:-}" =~ ^-h|--help$  ]]
+  then
+    _print_help
+  else
+    _init
+    _main "$@"
+  fi
+}
+
+# Call `_check_help` after everything has been defined.
+_check_help "$@"

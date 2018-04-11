@@ -1,0 +1,33 @@
+#!/bin/sh
+
+DRY="true"
+
+PROGRAM="geom.py"
+
+ARGSMAP="-t 1 -g"
+ARGSRED="-t 2"
+
+MAP="circle penoff"
+REDUCE="circle square"
+
+SBATCH="true"
+PMAP="1"
+TMAP="4"
+PRED="1"
+TRED="2"
+
+
+CMD="./map-reduce $PROGRAM"
+
+if [[ "$DRY" = "true" ]]; then
+  CMD="$CMD --dry"
+fi
+
+if [[ "$SBATCH" = "true" ]]; then
+  CMD="$CMD --sbatch $PMAP,$TMAP,$PRED,$TRED"
+fi
+
+CMD="$CMD --map $MAP --reduce $REDUCE --argsmap $ARGSMAP --argsreduce $ARGSRED"
+
+printf "\e[1;34mRunnning\e[m:\n$CMD\n"
+eval $CMD

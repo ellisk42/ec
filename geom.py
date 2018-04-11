@@ -1,3 +1,5 @@
+#!/usr/bin/env python2
+
 from ec import explorationCompression, commandlineArguments
 from grammar import Grammar
 from utilities import eprint, testTrainSplit, numberOfCPUs
@@ -108,7 +110,7 @@ def list_options(parser):
                         default=[],
                         action='append',
                         help="Which tasks should this try to solve")
-    parser.add_argument("--child", type=str,
+    parser.add_argument("--save", type=str,
                         default=None,
                         help="Set to where to output the grammar if this is a child")
 
@@ -117,7 +119,7 @@ if __name__ == "__main__":
     args = commandlineArguments(
             steps=200,
             a=1,
-            iterations=5,
+            iterations=2,
             useRecognitionModel=True,
             helmholtzRatio=0.5,
             helmholtzBatch=500,
@@ -128,7 +130,7 @@ if __name__ == "__main__":
             extras=list_options)
     target = args.pop("target")
     red = args.pop("reduce")
-    child = args.pop("child")
+    save = args.pop("save")
     tasks = makeTasks(target)
     eprint("Generated", len(tasks), "tasks")
 
@@ -151,8 +153,8 @@ if __name__ == "__main__":
                                evaluationTimeout=0.01,
                                **args)
     needsExport = [z for _, _, z in r.grammars[-1].productions]
-    if child is not None:
-        with open(child, 'w') as f:
+    if save is not None:
+        with open(save, 'w') as f:
             pickle.dump(needsExport, f)
     else:
         eprint(needsExport)
