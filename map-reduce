@@ -79,6 +79,7 @@ _map() {
         --wrap=\"$CMD\""
       printf "    - \`$CMD\`\n"
       if [ "$DRY" = "false" ]; then
+	CMD=$(echo $CMD | tr '\n' ' ' | tr '\\' ' ')
         JID=$(eval $CMD)
         JID=${JID##* }
         PIDs+=("$JID")
@@ -128,7 +129,6 @@ _reduce() {
     wait
   else
     JOBS=$(echo ${PIDs[@]} | tr " " ":")
-    echo $JOBS
     CMD="sbatch \\\\
         --job-name=geom_reduce --output=$TMPOUT \\\\
         --ntasks=1 --cpus-per-task $PREDUCE --time=$TREDUCE \\\\
@@ -137,10 +137,11 @@ _reduce() {
         --wrap=\"$CMD\""
     printf "    - \`$CMD\`\n"
     if [ "$DRY" = "false" ]; then
-      echo "TODO"
+      CMD=$(echo $CMD | tr '\n' ' ' | tr '\\' ' ')
+      JID=$(eval $CMD)
+      JID=${JID##* }
     fi
   fi
-
 }
 
 _clean() {
@@ -148,7 +149,7 @@ _clean() {
   for target in "${MAPTMP[@]}"
   do
     echo "    - rm $target"
-    if [[ "$DRY" = "false" ]]; then
+    if [[ "$DRY" = "false" && "$SBATCH" = "false" ]]; then
       rm "$target"
     fi
   done
