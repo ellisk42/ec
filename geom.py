@@ -156,5 +156,3 @@ if __name__ == "__main__":
     if save is not None:
         with open(save, 'w') as f:
             pickle.dump(needsExport, f)
-    else:
-        eprint(needsExport)
