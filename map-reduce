@@ -43,6 +43,7 @@ _init() {
   printf "\\e[1;93mWarning\\e[m: "
   printf "please ensure python/torch/etc. are available.\\n\\n"
   mkdir -p "$PREFIX"
+  mkdir -p "$PREFIX/pickles/"
 }
 
 _map() {
@@ -69,10 +70,10 @@ _map() {
       fi
     else
       TMP=$(echo "${TMP#"./"}" | tr "/" "-")
-      CMD="sbatch \\\\
-        --job-name=geom_$TMP --output=$TMPOUT \\\\
-        --ntasks=1 --cpus-per-task $PMAP --time=$TMAP \\\\
-        --mail-user=$(whoami)@mit.edu --mail-type=ALL --requeue \\\\
+      CMD="sbatch \\
+        --job-name=geom_$TMP --output=$TMPOUT \\
+        --ntasks=1 --cpus-per-task $PMAP --time=$TMAP \\
+        --mail-user=$(whoami)@mit.edu --mail-type=ALL --requeue \\
         --wrap=\"$CMD\""
       printf "    - \`%s\`\\n" "$CMD"
       if [ "$DRY" = "false" ]; then
@@ -87,8 +88,8 @@ _map() {
     fi
   done
   set -- "${MAPTMP[@]}"
-  set -- "${PIDs[@]}"
   if [ "$DRY" = "false" ]; then
+    set -- "${PIDs[@]}"
     if [[ "$SBATCH" = "false" ]]; then
       printf "    - \\e[1;34mWaiting\\e[m for PIDs: "
       echo "${PIDs[@]}"
@@ -128,10 +129,10 @@ _reduce() {
     wait
   else
     JOBS=$(echo "${PIDs[*]}" | tr " " ":")
-    CMD="sbatch \\\\
-        --job-name=geom_reduce-$PREFIX --output=$TMPOUT \\\\
-        --ntasks=1 --cpus-per-task $PREDUCE --time=$TREDUCE \\\\
-        --mail-user=$(whoami)@mit.edu --mail-type=ALL --requeue \\\\
+    CMD="sbatch \\
+        --job-name=geom_reduce-$PREFIX --output=$TMPOUT \\
+        --ntasks=1 --cpus-per-task $PREDUCE --time=$TREDUCE \\
+        --mail-user=$(whoami)@mit.edu --mail-type=ALL --requeue \\
         --dependency=afterany:${JOBS} \\\\
         --wrap=\"$CMD\""
     printf "    - \`%s\`\\n" "$CMD"
