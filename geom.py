@@ -112,7 +112,10 @@ def list_options(parser):
                         help="Which tasks should this try to solve")
     parser.add_argument("--save", type=str,
                         default=None,
-                        help="Set to where to output the grammar if this is a child")
+                        help="Filepath output the grammar if this is a child")
+    parser.add_argument("--prefix", type=str,
+                        default="experimentOutputs/geom",
+                        help="Filepath output the grammar if this is a child")
 
 
 if __name__ == "__main__":
@@ -131,6 +134,7 @@ if __name__ == "__main__":
     target = args.pop("target")
     red = args.pop("reduce")
     save = args.pop("save")
+    prefix = args.pop("prefix") + "/pickles/"
     tasks = makeTasks(target)
     eprint("Generated", len(tasks), "tasks")
 
@@ -139,16 +143,19 @@ if __name__ == "__main__":
 
     if red is not []:
         for reducing in red:
-            with open(reducing) as f:
-                prods = pickle.load(f)
-            primitives = primitives + prods
+            try:
+                with open(reducing) as f:
+                    prods = pickle.load(f)
+                primitives = primitives + prods
+            except IOError:
+                eprint("Couldn't grab frontier from " + reducing)
 
     primitives = OrderedDict((x, True) for x in primitives).keys()
     baseGrammar = Grammar.uniform(primitives)
 
     r = explorationCompression(baseGrammar, train,
                                testingTasks=test,
-                               outputPrefix="experimentOutputs/geom",
+                               outputPrefix=prefix,
                                compressor="rust",
                                evaluationTimeout=0.01,
                                **args)

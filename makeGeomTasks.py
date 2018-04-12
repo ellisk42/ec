@@ -42,8 +42,15 @@ def pretty_print(shape, size):
     print (pretty_string(shape, size))
 
 
+def allTasks():
+    return next(os.walk(rootdir))[1]
+
+
 def makeTasks(subfolders):
     problems = []
+
+    if subfolders == ['all']:
+        subfolders = allTasks()
 
     def problem(n, examples, needToTrain=False):
         outputType = tcanvas
@@ -65,7 +72,8 @@ def makeTasks(subfolders):
 
 
 if __name__ == "__main__":
-    tasks = makeTasks()
+    allTasks()
+    tasks = makeTasks('all')
     for t in tasks:
         print(t.name)
         print(t.request)

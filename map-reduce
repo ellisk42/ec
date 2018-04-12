@@ -1,15 +1,10 @@
-#!/bin/sh
+#!/bin/bash
 
 set -o nounset
 set -o errexit
 trap 'echo "Aborting due to errexit on line $LINENO. Exit code: $?" >&2' ERR
 set -o errtrace
 set -o pipefail
-
-# Set IFS to just newline and tab at the start
-DEFAULT_IFS="${IFS}"
-SAFER_IFS=$'\n\t'
-IFS="${SAFER_IFS}"
 
 # Set to the program's basename.
 _ME=$(basename "${0}")
@@ -27,6 +22,7 @@ TMAP=0
 PREDUCE=0
 TREDUCE=0
 PROGRAM=""
+PREFIX="$(date '+%d-%m-%Y_%H:%M')"
 
 # Print the program help information.
 _print_help() {
@@ -44,8 +40,9 @@ HEREDOC
 }
 
 _init() {
-  printf "\e[1;93mWarning\e[m: "
-  printf "please ensure python/torch/etc. are available.\n\n"
+  printf "\\e[1;93mWarning\\e[m: "
+  printf "please ensure python/torch/etc. are available.\\n\\n"
+  mkdir -p "$PREFIX"
 }
 
 _map() {
@@ -53,34 +50,34 @@ _map() {
   for target in "${MAP[@]}"
   do
     if [ "$DRY" = "true" ]; then
-      TMP="$(mktemp -u ./$target.XXXXXXXXX)"
-      TMPOUT="$(mktemp -u ./$target.out.XXXXXXXXX)"
+      TMP="$(mktemp -u "./$PREFIX/$target.XXXXXXXXX")"
+      TMPOUT="$(mktemp -u "./$PREFIX/$target.out.XXXXXXXXX")"
     else
-      TMP="$(mktemp ./$target.XXXXXXXXX)"
-      TMPOUT="$(mktemp -u ./$target.out.XXXXXXXXX)"
+      TMP="$(mktemp "./$PREFIX/$target.XXXXXXXXX")"
+      TMPOUT="$(mktemp "./$PREFIX/$target.out.XXXXXXXXX")"
     fi
     MAPTMP+=("$TMP")
-    CMD="./$PROGRAM ${ARGSMAP[@]} --target $target --save $TMP"
+    CMD="./$PROGRAM ${ARGSMAP[*]} --target $target --save $TMP --prefix $PREFIX"
     if [[ "$SBATCH" = "false" ]]; then
       echo "      \`$CMD\`"
       if [ "$DRY" = "false" ]; then
         CMD="$CMD 2> $TMPOUT"
         eval "$CMD" &
-        pid=($!)
-        printf "    - Started task \e[1;34m$target\e[m, PID=$pid\n"
+        pid="$!"
+        printf "    - Started task \\e[1;34m%s\\e[m, PID=%s\\n" "$target" "$pid"
         PIDs+=("$pid")
       fi
     else
-      TMP=${TMP#"./"}
+      TMP=$(echo "${TMP#"./"}" | tr "/" "-")
       CMD="sbatch \\\\
         --job-name=geom_$TMP --output=$TMPOUT \\\\
         --ntasks=1 --cpus-per-task $PMAP --time=$TMAP \\\\
         --mail-user=$(whoami)@mit.edu --mail-type=ALL --requeue \\\\
         --wrap=\"$CMD\""
-      printf "    - \`$CMD\`\n"
+      printf "    - \`%s\`\\n" "$CMD"
       if [ "$DRY" = "false" ]; then
-	CMD=$(echo $CMD | tr '\n' ' ' | tr '\\' ' ')
-        JID=$(eval $CMD)
+        CMD=$(echo "$CMD" | tr '\n' ' ' | tr "\\" ' ')
+        JID=$(eval "$CMD")
         JID=${JID##* }
         PIDs+=("$JID")
       else
@@ -93,7 +90,7 @@ _map() {
   set -- "${PIDs[@]}"
   if [ "$DRY" = "false" ]; then
     if [[ "$SBATCH" = "false" ]]; then
-      printf "    - \e[1;34mWaiting\e[m for PIDs: "
+      printf "    - \\e[1;34mWaiting\\e[m for PIDs: "
       echo "${PIDs[@]}"
       wait "${PIDs[@]}"
     fi
@@ -104,12 +101,12 @@ _reduce() {
   echo "  * Reduce:"
 
   if [ "$DRY" = "true" ]; then
-    TMPOUT="$(mktemp -u ./reduce.out.XXXXXXXXX)"
+    TMPOUT="$(mktemp -u "./$PREFIX/reduce.out.XXXXXXXXX")"
   else
-    TMPOUT="$(mktemp ./reduce.out.XXXXXXXXX)"
+    TMPOUT="$(mktemp "./$PREFIX/reduce.out.XXXXXXXXX")"
   fi
 
-  CMD="./$PROGRAM ${ARGSREDUCE[@]}"
+  CMD="./$PROGRAM ${ARGSREDUCE[*]}"
   for target in "${REDUCE[@]}"
   do
     CMD="$CMD --target $target"
@@ -120,6 +117,8 @@ _reduce() {
     CMD="$CMD --red $target"
   done
 
+  CMD="$CMD --prefix $PREFIX"
+
   if [[ "$SBATCH" = "false" ]]; then
     CMD="$CMD 2> $TMPOUT"
     echo "    - $CMD"
@@ -128,17 +127,17 @@ _reduce() {
     fi
     wait
   else
-    JOBS=$(echo ${PIDs[@]} | tr " " ":")
+    JOBS=$(echo "${PIDs[*]}" | tr " " ":")
     CMD="sbatch \\\\
-        --job-name=geom_reduce --output=$TMPOUT \\\\
+        --job-name=geom_reduce-$PREFIX --output=$TMPOUT \\\\
         --ntasks=1 --cpus-per-task $PREDUCE --time=$TREDUCE \\\\
         --mail-user=$(whoami)@mit.edu --mail-type=ALL --requeue \\\\
         --dependency=afterany:${JOBS} \\\\
         --wrap=\"$CMD\""
-    printf "    - \`$CMD\`\n"
+    printf "    - \`%s\`\\n" "$CMD"
     if [ "$DRY" = "false" ]; then
-      CMD=$(echo $CMD | tr '\n' ' ' | tr '\\' ' ')
-      JID=$(eval $CMD)
+      CMD=$(echo "$CMD" | tr '\n' ' ' | tr "\\" ' ')
+      JID=$(eval "$CMD")
       JID=${JID##* }
     fi
   fi
@@ -176,7 +175,7 @@ _main() {
         if [[ "${#STACK[@]}" != "4" ]]; then
           _print_help
           printf '\n\e[1;31mError(s):\e[m\n'                      1>&2
-          printf "  Structure should be \e[1;34m...-s P,T,P,T...\e[m\n" 1>&2
+          printf "  Structure should be \\e[1;34m...-s P,T,P,T...\\e[m\\n" 1>&2
           exit 2
         fi
         PMAP=${STACK[0]}
@@ -240,45 +239,45 @@ _main() {
     PROGRAM=${OTHER[0]}
   fi
 
-  if [[ -z ${PROGRAM} || -z ${MAP[@]} || -z ${REDUCE[@]} ]]; then
+  if [[ -z ${PROGRAM} || "${#MAP[@]}" = "0" || "${#REDUCE[@]}" = "0" ]]; then
     _print_help
-    printf '\e[1;31mError(s):\e[m\n'                 1>&2
+    printf '\\e[1;31mError(s):\\e[m\\n'                 1>&2
     if [[ -z ${PROGRAM} ]]; then
-      printf "  I seem to miss argument(s) \e[1;34m" 1>&2
+      printf "  I seem to miss argument(s) \\e[1;34m" 1>&2
       printf "<prog.py>"                             1>&2
-      printf "\e[m\n"                                1>&2
+      printf "\\e[m\\n"                                1>&2
     fi
-    if [[ -z ${MAP[@]} ]]; then
-      printf "  I seem to miss argument(s) \e[1;34m" 1>&2
+    if [[ "${#MAP[@]}" = "0" ]]; then
+      printf "  I seem to miss argument(s) \\e[1;34m" 1>&2
       printf "map"                                   1>&2
-      printf "\e[m\n"                                1>&2
+      printf "\\e[m\\n"                                1>&2
     fi
-    if [[ -z ${REDUCE[@]} ]]; then
-      printf "  I seem to miss argument(s) \e[1;34m" 1>&2
+    if [[ "${#REDUCE[@]}" = "0" ]]; then
+      printf "  I seem to miss argument(s) \\e[1;34m" 1>&2
       printf "reduce"                                1>&2
-      printf "\e[m\n"                                1>&2
+      printf "\\e[m\\n"                                1>&2
     fi
     exit 1
   fi
 
-  printf "======== PARAMETERS ========\n"
-  printf "Program\t—— %s\n" "$(echo ${PROGRAM})"
-  printf "ArgsMap\t—— %s\n"    "$(echo ${ARGSMAP[@]})"
-  printf "ArgsRed\t—— %s\n"    "$(echo ${ARGSREDUCE[@]})"
-  printf "SBATCH\t—— %s\n"  "${SBATCH}"
+  printf "======== PARAMETERS ========\\n"
+  printf "Program\\t—— %s\\n"   "$PROGRAM"
+  printf "ArgsMap\\t—— %s\\n"   "${ARGSMAP[*]}"
+  printf "ArgsRed\\t—— %s\\n"   "${ARGSREDUCE[*]}"
+  printf "SBATCH\\t—— %s\\n"    "${SBATCH}"
   if [[ "$SBATCH" = "true" ]]; then
-    printf " /PMAP\t—— %s\n"  "$PMAP"
-    printf " |TMAP\t—— %s\n"  "$TMAP"
-    printf " |PRED\t—— %s\n"  "$PREDUCE"
-    printf " \TRED\t—— %s\n"  "$TREDUCE"
+    printf " /PMAP\\t—— %s\\n"  "$PMAP"
+    printf " |TMAP\\t—— %s\\n"  "$TMAP"
+    printf " |PRED\\t—— %s\\n"  "$PREDUCE"
+    printf " \\TRED\\t—— %s\\n" "$TREDUCE"
   fi
-  printf "Map\t—— %s\n"     "$(echo ${MAP[@]})"
-  printf "Reduce\t—— %s\n" "$(echo ${REDUCE[@]})"
-  printf "============================\n"
+  printf "Map\\t—— %s\\n"       "${MAP[@]}"
+  printf "Reduce\\t—— %s\\n"    "${REDUCE[@]}"
+  printf "============================\\n"
 
   echo ""
   if [[ "$DRY" = "true" ]]; then
-    printf "This is a \e[1;34mdry run\e[m. Would be run:\n"
+    printf "This is a \\e[1;34mdry run\\e[m. Would be run:\\n"
   else
     echo "Starting:"
   fi
