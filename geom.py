@@ -120,9 +120,9 @@ def list_options(parser):
 
 if __name__ == "__main__":
     args = commandlineArguments(
-            steps=200,
+            steps=100,
             a=1,
-            iterations=2,
+            iterations=10,
             useRecognitionModel=True,
             helmholtzRatio=0.5,
             helmholtzBatch=500,

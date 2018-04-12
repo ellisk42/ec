@@ -1,7 +1,5 @@
 Repeat {
-  Repeat {
-    Integrate(t=toto) ;
-    toto = Prev(toto) ;
-    Turn
-  }
+  Integrate ;
+  Turn(angle=toto) ;
+  toto = Half(toto)
 }

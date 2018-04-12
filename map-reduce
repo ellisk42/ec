@@ -74,7 +74,7 @@ _map() {
         --job-name=geom_$TMP --output=$TMPOUT \\
         --ntasks=1 --cpus-per-task $PMAP --time=$TMAP \\
         --mail-user=$(whoami)@mit.edu --mail-type=ALL --requeue \\
-        --wrap=\"$CMD\""
+        --wrap=\"$CMD --CPUs $PMAP\""
       printf "    - \`%s\`\\n" "$CMD"
       if [ "$DRY" = "false" ]; then
         CMD=$(echo "$CMD" | tr '\n' ' ' | tr "\\" ' ')
@@ -134,7 +134,7 @@ _reduce() {
         --ntasks=1 --cpus-per-task $PREDUCE --time=$TREDUCE \\
         --mail-user=$(whoami)@mit.edu --mail-type=ALL --requeue \\
         --dependency=afterany:${JOBS} \\\\
-        --wrap=\"$CMD\""
+        --wrap=\"$CMD --CPUs $PREDUCE\""
     printf "    - \`%s\`\\n" "$CMD"
     if [ "$DRY" = "false" ]; then
       CMD=$(echo "$CMD" | tr '\n' ' ' | tr "\\" ' ')
