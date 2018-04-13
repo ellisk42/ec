@@ -119,20 +119,41 @@ let score_programs_for_task (f:frontier) (t:task) : frontier =
        else None)
   }
 
-let enumerate_for_task (g: grammar) ?verbose:(verbose = true)
+type hit_result = {hit_program: string;
+                   hit_likelihood: float;
+                   hit_prior: float;
+                   hit_time: float;}
+
+let enumerate_for_tasks (g: grammar) ?verbose:(verbose = true)
     ?budgetIncrement:(budgetIncrement = 1.)
     ?lowerBound:(lowerBound = 0.)
     ?upperBound:(upperBound = 99.)
-    ?maximumFrontier:(maximumFrontier = 10) (t: task)
+    ?nc:(nc=1)
+    ~timeout
+    (* tasks and maximum frontier sizes *)
+    (tf: (task*int) list)
+  (* Returns, for each task, (program,logPrior,) *)
+     : hit_result list list
   =
+
+  set_enumeration_timeout timeout;
+
+  let nt = List.length tf in
+  let maximumFrontier = Array.of_list (tf |> List.map ~f:snd) in
+  let tasks = Array.of_list (tf |> List.map ~f:fst) in
+
+  let request = tasks.(0).task_type in
+  assert (Array.for_all tasks ~f:(fun t -> t.task_type = request));
 
   (* Store the hits in a priority queue *)
   (* We will only ever maintain maximumFrontier best solutions *)
   let hits =
-    Heap.create
-      ~cmp:(fun (_,lp1,ll1,_) (_,lp2,ll2,_) ->
-              let c = (lp1+.ll1) -. (lp2+.ll2) in
-              if c < 0. then -1 else if c > 0. then 1 else 0) () in
+    Array.init nt ~f:(fun _ -> 
+        Heap.create
+          ~cmp:(fun h1 h2 ->
+              let c = (h1.hit_likelihood+.h1.hit_prior) -. (h2.hit_likelihood+.h2.hit_prior) in
+              if c < 0. then -1 else if c > 0. then 1 else 0) ()) in
+  
   let lower_bound = ref lowerBound in
 
   let total_count = ref 0 in
@@ -141,52 +162,59 @@ let enumerate_for_task (g: grammar) ?verbose:(verbose = true)
 
   let startTime = Time.now () in
 
-  let listenForSIGUSR1 =
-    Caml.Sys.Signal_handle (
-      fun _ -> raise EnumerationTimeout
-    ) in
-
-  Caml.Sys.set_signal Caml.Sys.sigusr1 listenForSIGUSR1 ;
-
-  try
-    while Heap.length hits < maximumFrontier
+  while not (enumeration_timed_out()) &&
+          List.exists (range nt) ~f:(fun j -> Heap.length hits.(j) < maximumFrontier.(j))
        && !lower_bound +. budgetIncrement <= upperBound
     do
-      let recent_count = ref 0 in
-      enumerate_programs g (t.task_type)
-        (!lower_bound) (!lower_bound +. budgetIncrement)
-        (fun p logPrior ->
-           incr programs_explored ;
-           let mdl = 0.-.logPrior in
+      let final_results =
+        (* Returns a list of "final results" *)
+        (* Each final result is [Array.map ~f:Heap.to_list hits] *)
+        (* We flatten it to get a list of arrays of heaps *)
+        enumerate_programs ~nc:nc g request
+          (!lower_bound) (!lower_bound +. budgetIncrement)
+          ~final:(fun () -> [Array.map ~f:Heap.to_list hits])
+          (fun p logPrior ->
+             incr programs_explored ;
+             let mdl = 0.-.logPrior in
 
-           assert( !lower_bound <= mdl);
-           assert( mdl < budgetIncrement+.(!lower_bound));
+             assert( !lower_bound <= mdl);
+             assert( mdl < budgetIncrement+.(!lower_bound));
 
-           incr recent_count ;
+             range nt |> List.iter ~f:(fun j -> 
+                 let logLikelihood = tasks.(j).log_likelihood p in
+                 if is_valid logLikelihood then begin
+                   let dt = Time.abs_diff startTime (Time.now ())
+                            |> Time.Span.to_sec in
+                   Heap.add hits.(j)
+                     {hit_program = string_of_program p;
+                      hit_prior = logPrior;
+                      hit_likelihood = logLikelihood;
+                      hit_time = dt;} ;
+                   if Heap.length hits.(j) > maximumFrontier.(j) then Heap.remove_top hits.(j) ;
+                   if verbose then
+                     Printf.eprintf
+                       "\t(ocaml) HIT %s w/ %s\n" (tasks.(j).name) (string_of_program p)
+                 end)) |> List.concat
+      in
 
-           let logLikelihood = t.log_likelihood p in
-           if is_valid logLikelihood then begin
-             let dt = Time.abs_diff startTime (Time.now ())
-                      |> Time.Span.to_sec in
-             Heap.add hits (p,logPrior,logLikelihood,dt) ;
-             if Heap.length hits > maximumFrontier then Heap.remove_top hits ;
-             if verbose then
-               Printf.eprintf
-                "\t(ocaml) HIT %s w/ %s\n" (t.name) (string_of_program p)
-             end) ;
-      if verbose then
-        Printf.eprintf "\t(ocaml) For %s : %s, enumerated %d programs satisfying %f < MDL <= %f\n"
-          (t.name) (t.task_type |> string_of_type) (!recent_count) (!lower_bound) (!lower_bound+.budgetIncrement)
+      if nc > 1 then
+        (* merge the results from each of the parallel processes *)
+        final_results |> List.iter ~f:(fun array_of_heaps ->
+            range nt |> List.iter ~f:(fun j ->
+                let new_heap = array_of_heaps.(j) in
+                let old_heap = hits.(j) in
+                List.iter new_heap ~f:(fun element ->
+                    if not (Heap.mem old_heap ~equal:(=) element) then
+                      (Heap.add old_heap element;
+                       if Heap.length old_heap > maximumFrontier.(j)
+                       then Heap.remove_top old_heap
+                       else ())
+                    else ())))
       else ();
+      
       lower_bound := budgetIncrement+. (!lower_bound);
-      total_count := !total_count + !recent_count;
-      if verbose then begin
-        Printf.eprintf "\t(ocaml) For %s: Total time: %s. Total number of programs: %d.\n"
-          (t.name)
-          (Time.diff (Time.now ()) startTime |> Time.Span.to_string)
-          (!total_count);
-        flush_everything();
-      end else ()
+
     done ;
-    (Heap.to_list hits, !programs_explored)
-  with EnumerationTimeout -> (Heap.to_list hits, !programs_explored)
+
+    hits |> Array.to_list |> List.map ~f:Heap.to_list
+

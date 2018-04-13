@@ -43,6 +43,11 @@ class Grammar(object):
             lines.append(l)
         return "\n".join(lines)
 
+    def _immutable_code(self): return self.logVariable, tuple(self.productions)
+    def __eq__(self,o): return self._immutable_code() == o._immutable_code()
+    def __ne__(self,o): return not (self == o)
+    def __hash__(self): return hash(self._immutable_code())
+
     @property
     def primitives(self):
         return [p for _, _, p in self.productions]

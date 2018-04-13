@@ -131,6 +131,9 @@ let (--) i j =
     if n < i then acc else aux (n-1) (n :: acc)
   in aux j []
 
+let range n = 0 -- (n-1);;
+
+
 let float_interval (i : float) (s : float) (j : float) : float list = 
   let rec aux n acc =
     if n < i then acc else aux (n-.s) (n :: acc)
@@ -151,6 +154,13 @@ let time_it description callback =
 let flush_everything () =
   flush stdout;
   flush stderr
+
+let shuffle d = begin
+    Random.self_init ();
+    let nd = List.map ~f:(fun c -> (Random.bits (), c)) d in
+    let sond = List.sort compare nd in
+    List.map ~f:snd sond
+  end
 
 (* progress bar *)
 type progress_bar = { maximum_progress : int; mutable current_progress : int; }

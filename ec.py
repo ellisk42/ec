@@ -227,13 +227,12 @@ def ecIterator(grammar, tasks,
             eprint("Expanding enumeration timeout from {} to {} because of no progress".format(
                 oldEnumerationTimeout, enumerationTimeout))
 
-        frontiers, times = multithreadedEnumeration(grammar, tasks, likelihoodModel,
-                                                    solver=solver,
-                                                    frontierSize=frontierSize,
-                                                    maximumFrontier=maximumFrontier,
-                                                    enumerationTimeout=enumerationTimeout,
-                                                    CPUs=CPUs,
-                                                    evaluationTimeout=evaluationTimeout)
+        frontiers, times = multicoreEnumeration(grammar, tasks, likelihoodModel,
+                                                solver=solver,
+                                                maximumFrontier=maximumFrontier,
+                                                enumerationTimeout=enumerationTimeout,
+                                                CPUs=CPUs,
+                                                evaluationTimeout=evaluationTimeout)
         if expandFrontier and j > 0 and (not useRecognitionModel) and \
            sum(not f.empty for f in frontiers) <= result.learningCurve[-1]:
             timeout = enumerationTimeout
@@ -243,13 +242,12 @@ def ecIterator(grammar, tasks,
                     timeout, timeout*expandFrontier, len(unsolvedTasks)))
                 timeout = timeout*expandFrontier
                 unsolvedFrontiers, unsolvedTimes = \
-                                multithreadedEnumeration(grammar, unsolvedTasks, likelihoodModel,
-                                                         solver=solver,
-                                                         frontierSize=frontierSize,
-                                                         maximumFrontier=maximumFrontier,
-                                                         enumerationTimeout=timeout,
-                                                         CPUs=CPUs,
-                                                         evaluationTimeout=evaluationTimeout)
+                                multicoreEnumeration(grammar, unsolvedTasks, likelihoodModel,
+                                                     solver=solver,
+                                                     maximumFrontier=maximumFrontier,
+                                                     enumerationTimeout=timeout,
+                                                     CPUs=CPUs,
+                                                     evaluationTimeout=evaluationTimeout)
                 if any( not f.empty for f in unsolvedFrontiers ):
                     times += unsolvedTimes
                     unsolvedFrontiers = {f.task: f for f in unsolvedFrontiers }

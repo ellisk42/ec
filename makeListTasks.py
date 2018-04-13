@@ -332,6 +332,8 @@ def make_list_bootstrap_tasks():
               for l in [randomListOfLists()] ])
         ]
 
+    if True: return [zipBootstrap[0],zipBootstrap[2]]
+
     # Let's learn everything!
     if True:
         return lengthBootstrap + operationBootstrap + unfoldBootstrap + arrayBootstrap + foldBootstrap + mapBootstrap + zipBootstrap + mapIndexBootstrap + filterBootstrap            

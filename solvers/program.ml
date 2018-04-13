@@ -23,9 +23,6 @@ let is_base_primitive = function
   |Primitive(_,_,_) -> true
   |_ -> false
 
-let primitive_name = function | Primitive(_,n,_) -> n
-                              | _ -> raise (Failure "primitive_name: not a primitive")
-
 let program_children = function
   | Abstraction(b) -> [b]
   | Apply(m,n) -> [m;n]
@@ -34,6 +31,12 @@ let program_children = function
 let rec application_function = function
   | Apply(f,x) -> application_function f
   | e -> e
+
+let rec application_parse = function
+  | Apply(f,x) ->
+    let (f,arguments) = application_parse f in
+    (f,arguments @ [x])
+  | f -> (f,[])
 
 let rec program_size p =
   1 + (List.map ~f:program_size (program_children p) |> sum)
@@ -54,6 +57,10 @@ let rec show_program (is_function : bool) = function
   | Invented(_,i) -> "#"^show_program false i
 
 let string_of_program = show_program false
+
+
+let primitive_name = function | Primitive(_,n,_) -> n
+                              | e -> raise (Failure ("primitive_name: "^string_of_program e^"not a primitive"))
 
 let rec program_equal p1 p2 = match (p1,p2) with
   | (Primitive(_,n1,_),Primitive(_,n2,_)) -> n1 = n2

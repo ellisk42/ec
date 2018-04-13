@@ -1,5 +1,8 @@
 open Core
 
+open Parmap
+open Parallel
+    
 open Utils
 open Type
 open Program
@@ -37,7 +40,164 @@ let violates_commutative f x y =
     match f with
     | "eq?" | "+" -> compare_program x y > 0
     | _ -> false
+
+(* Best first enumeration *)
+let primitive_unknown t = Primitive(t, "??", ref ());;
+type turn =
+  |A of tp
+  |L
+  |R
+
+
+type best_first_state = {skeleton : program;
+                         context : tContext;
+                         path : turn list;
+                         cost : float;}
+
+let path_environment p =
+  p |> List.filter_map ~f:(function
+      | A(t) -> Some(t)
+      | _ -> None) |> List.rev
+
+let string_of_state {skeleton;context;path;cost} =
+  let string_of_turn = function
+    | L -> "L"
+    | R -> "R"
+    | A(t) -> "["^string_of_type (applyContext context t |> snd)^"]"
+  in
+  Printf.sprintf "{cost=%f; skeleton=%s; path=%s; env=[%s];}"
+    cost (string_of_program skeleton) (path |> List.map ~f:string_of_turn |> join ~separator:" ")
+    (path |> path_environment |> List.map ~f:string_of_type |> join ~separator:",")
+
+let state_finished {path;skeleton;} =
+  match skeleton with
+  | Primitive(_,"??",_) -> false
+  | _ -> path = []
+
+let initial_best_first_state request =
+  {skeleton = primitive_unknown request;
+   context = empty_context;
+   path = [];
+   cost = 0.0;}
+
+let rec follow_path e path =
+  match (e,path) with
+  | (Apply(f,_), L :: p') -> follow_path f p'
+  | (Apply(_,x), R :: p') -> follow_path x p'
+  | (Abstraction(body),(A(_)) :: p') ->
+    follow_path body p'
+  | (Primitive(t,"??",_), []) -> e
+  | _ -> assert false
+
+let rec modify_skeleton e q path =
+  match (e,path) with
+  | (Apply(f,x), L :: p') -> Apply(modify_skeleton f q p', x)
+  | (Apply(f,x), R :: p') -> Apply(f, modify_skeleton x q p')
+  | (Abstraction(body),(A(_)) :: p') ->
+    Abstraction(modify_skeleton body q p')
+  | (Primitive(t,"??",_), []) -> q
+  | _ -> assert false
+
+let unwind_path p =
+  let rec unwind = function
+    | [] -> []
+    | (A(_)) :: r -> unwind r
+    | R :: r -> unwind r
+    | L :: r -> R :: r
+  in 
+  List.rev p |> unwind |> List.rev
+
+let state_violates_symmetry {skeleton} =
+  let rec r = function
+    | Abstraction(b) -> r b
+    | Apply(f,x) ->
+      let (f,a) = application_parse (Apply(f,x)) in
+      r f || List.exists a ~f:r ||
+      List.existsi a ~f:(fun n x' -> violates_symmetry f x' n)
+    | _ -> false
+  in
+  r skeleton
       
+
+let state_successors g state =
+  let request = match follow_path state.skeleton state.path with
+    | Primitive(t,"??",_) -> t
+    | _ -> assert false
+  in
+  (* Printf.printf "request: %s\n" (string_of_type request); *)
+  let context = state.context in
+  let (context,request) = applyContext context request in
+
+  match request with
+  | TCon("->",[argument_type;return_type],_) ->
+    [{skeleton = modify_skeleton state.skeleton (Abstraction(primitive_unknown return_type)) state.path;
+      path = state.path @ [A(argument_type)];
+      context = context;
+      cost = state.cost;}]
+  | _ ->
+    let environment = path_environment state.path in
+    let candidates = unifying_expressions g environment request context in
+    candidates |> List.map ~f:(fun (candidate, argument_types, context, ll) ->
+        match argument_types with
+        | [] -> (* terminal - unwind the recursion *)
+          {context;
+           cost = state.cost -. ll;
+           path = unwind_path state.path;
+           skeleton = modify_skeleton state.skeleton candidate state.path;}
+        | first_argument :: later_arguments -> (* nonterminal *)
+          let application_template =
+            List.fold_left argument_types ~init:candidate ~f:(fun e a -> Apply(e,primitive_unknown a))
+          in
+          {skeleton = modify_skeleton state.skeleton application_template state.path;
+           cost = state.cost -. ll;
+           context;
+           path = state.path @ List.map ~f:(fun _ -> L) later_arguments @ [R]; }) |>
+    List.filter ~f:(fun new_state -> not (state_violates_symmetry new_state))
+          
+let best_first_enumeration ?lower_bound:(lower_bound=None)
+    ?upper_bound:(upper_bound=None) ?frontier_size:(frontier_size=150) (g : grammar) (request : tp) =
+  let lower_bound = match lower_bound with
+    | None -> -1.0
+    | Some(lb) -> lb
+  in
+  let upper_bound = match upper_bound with
+    | None -> 9999.0
+    | Some(ub) -> ub
+  in
+  
+  let completed = ref [] in
+  
+  let pq =
+  Heap.create
+      ~cmp:(fun s1 s2 ->
+              let c = s1.cost -. s2.cost in
+              if c < 0. then -1 else if c > 0. then 1 else 0) ()
+  in
+  Heap.add pq (initial_best_first_state request);
+
+  while Heap.length pq > 0 && Heap.length pq < frontier_size do
+    let best = Heap.pop_exn pq in
+    assert (not (state_finished best));
+    (* Printf.printf "\nParent:\n%s\n" (string_of_state best); *)
+    state_successors g best |> List.iter ~f:(fun child ->
+        (* Printf.printf "Child:\n%s\n" (string_of_state child); *)
+        if state_finished child
+        then
+          (if lower_bound <= child.cost && child.cost < upper_bound then completed := child :: !completed else ())
+        else
+          (if child.cost < upper_bound then Heap.add pq child else ()))
+  done;
+
+  (!completed,
+   Heap.to_list pq)
+
+      
+(* Depth first enumeration *)
+let enumeration_timeout = ref Float.max_value;;
+let enumeration_timed_out() = Unix.time() > !enumeration_timeout;;
+let set_enumeration_timeout dt =
+  enumeration_timeout := Unix.time() +. dt;;
+
 
 let rec enumerate_programs' (g: grammar) (context: tContext) (request: tp) (environment: tp list)
     (lower_bound: float) (upper_bound: float)
@@ -45,7 +205,7 @@ let rec enumerate_programs' (g: grammar) (context: tContext) (request: tp) (envi
     (callBack: program -> tContext -> float -> unit) : unit =
   (* Enumerates programs satisfying: lowerBound <= MDL < upperBound *)
   (* INVARIANT: request always has the current context applied to it already *)
-  if maximumDepth < 1 || upper_bound < 0.0 then () else
+  if enumeration_timed_out() || maximumDepth < 1 || upper_bound < 0.0 then () else
     match request with
     | TCon("->",[argument_type;return_type],_) ->
       let newEnvironment = argument_type :: environment in
@@ -77,7 +237,7 @@ and
     (callBack: program -> tContext -> float -> unit) : unit =
   (* Enumerates application chains satisfying: lowerBound <= MDL < upperBound *)
   (* returns the log likelihood of the arguments! not the log likelihood of the application! *)
-  if maximumDepth < 1 || upper_bound < 0.0 then () else 
+  if enumeration_timed_out() || maximumDepth < 1 || upper_bound < 0.0 then () else 
     match argument_types with
     | [] -> (* not a function so we don't need any applications *)
       begin 
@@ -105,7 +265,86 @@ and
                (lower_bound+.ll) (upper_bound+.ll)
                (fun a k a_ll -> callBack a k (a_ll+.ll)))
 
-let enumerate_programs g request lb ub k =
+let dfs_around_skeleton g ~lower_bound ~upper_bound state k =
+  let rec free = function
+    | Abstraction(b) -> free b
+    | Apply(f,x) -> free f || free x
+    | Index(_) -> false
+    | Primitive(_,"??",_) -> true
+    | Invented(_,_) -> false
+    | Primitive(_,_,_) -> false
+  in
+
+  let environment = path_environment state.path in
+
+  let rec around e context abstraction_depth l u k =
+    match e with
+    | Abstraction(body) ->
+      around body context (1+abstraction_depth) l u
+        (fun body newContext ll -> k (Abstraction(body)) newContext ll)
+    | Apply(f,x) when free x && (not (free f)) ->
+      around x context abstraction_depth l u
+        (fun x' newContext ll -> k (Apply(f,x')) newContext ll)
+    | Apply(f,x) when free f && free x ->
+      around f context abstraction_depth 0. u
+        (fun f' context f_ll ->
+           around x context abstraction_depth (l+.f_ll) (u+.f_ll)
+             (fun x' context x_ll ->
+                k (Apply(f',x')) context (f_ll+.x_ll)))
+    | Apply(_,_) ->
+      (* depth-first generation should ensure that functions are never free when their arguments are not free *)
+      assert false
+    | Primitive(t,"??",_) ->
+      let (context, t) = applyContext context t in
+      let environment = List.drop environment (List.length environment - abstraction_depth) in
+      enumerate_programs' g context t environment l u k
+    | _ -> assert false
+  in 
+    
+  around state.skeleton state.context 0 (lower_bound -. state.cost) (upper_bound -. state.cost)
+    (fun e context ll -> k e context (ll-.state.cost))
+
+(* Putting depth first and best first gives us a parallel strategy for enumeration *)
+let multicore_enumeration ?final:(final=fun () -> []) ?cores:(cores=1) ?shatter:(shatter=None) g request lb ub k =
+  let shatter = match (shatter,cores) with
+    | (Some(s),_) -> s
+    | (None,1) -> 1
+    | (None,c) -> 4*c
+  in
+  
+  let (finished, fringe) =
+    best_first_enumeration ~lower_bound:(Some(lb)) ~upper_bound:(Some(ub)) ~frontier_size:shatter g request
+  in
+  
+  
+
+  let strip_context p _ l = k p l in
+
+  let continuation s =
+    dfs_around_skeleton g ~lower_bound:lb ~upper_bound:ub s strip_context
+  in
+
+  let fringe = fringe |>
+               List.sort ~cmp:(fun s1 s2 ->
+                   let d = s1.cost -. s2.cost in
+                   if d > 0. then 1 else if d < 0. then -1 else 0)
+  in
+
+  if cores > 1 then
+    let actions = fringe |>
+                  List.map ~f:(fun s () -> continuation s) in
+    let fringe_results = parallel_work ~nc:cores ~chunk:1 ~final:final actions in
+    finished |> List.iter ~f:(fun s -> k s.skeleton (0.-.s.cost));
+    final() :: fringe_results
+  else begin 
+    List.iter ~f:continuation fringe;
+    finished |> List.iter ~f:(fun s -> k s.skeleton (0.-.s.cost));
+    [final()]
+  end
+;;
+
+
+let enumerate_programs ?final:(final=fun () -> []) ?nc:(nc=1) g request lb ub k =
   let number_of_arguments = arguments_of_type request |> List.length in
   let definitely_recursive = grammar_has_recursion number_of_arguments g in
 
@@ -123,7 +362,7 @@ let enumerate_programs g request lb ub k =
 
   let k' =
     if definitely_recursive then begin 
-      fun p _ l ->
+      fun p l ->
         let p' = 
           match p with
           | Abstraction(body) ->
@@ -137,12 +376,10 @@ let enumerate_programs g request lb ub k =
           | _ -> raise (Failure "enumerated recursive definition that does not start with a lambda")
         in k p' l
     end
-    else begin
-      fun p _ l -> k p l
-    end
+    else k
   in
   
-  enumerate_programs' g' empty_context request' [] lb ub k'
+  multicore_enumeration ~final:final ~cores:nc g' request' lb ub k'
 
 
 let test_recursive_enumeration () =
@@ -162,4 +399,24 @@ let test_recursive_enumeration () =
     Printf.printf "%s\n" (t |> string_of_type))
 ;;
 
-(* test_recursive_enumeration ();; *)
+
+
+let test_best_enumeration() = 
+  let g = primitive_grammar [primitive_cons;primitive_car;primitive_cdr;primitive_is_empty;
+                             primitive_empty;
+                             primitive_if;
+                             primitive_map;
+                             primitive0;
+                             primitive1;
+                             primitive_addition;
+                             primitive_equal;
+                            ]
+  in 
+  let request = tint @> tlist tint @> tlist tint in
+  let frontier = ref [] in 
+  let k p l = frontier := (string_of_program p, l) :: !frontier
+  in
+  let open Sys in
+  enumerate_programs ~final:(fun () -> List.take !frontier 5) ~nc:(Sys.argv.(1) |> Int.of_string) g request 0. (Sys.argv.(2) |> Float.of_string) k
+;;
+

@@ -11,35 +11,172 @@ import subprocess
 import threading
 
 
-# Initialise with the command you'll want to run, eg c = Command("./solver")
-# Then c.run(msg, timeout) gives msg to c's stdin, let it run for timeout
-# seconds, then ask nicely to stop. For compatibility with the previous code,
-# this returns (r, e) as return by communicate itself.
-class Command(object):
-    def __init__(self, cmd):
-        self.cmd = cmd
-        self.process = None
-        self.r = None
-        self.e = None
+def multicoreEnumeration(g, tasks, likelihoodModel, _=None,
+                         solver=None,
+                         enumerationTimeout=None,
+                         CPUs=1,
+                         maximumFrontier=None,
+                         verbose=True,
+                         evaluationTimeout=None):
+    '''g: Either a Grammar, or a map from task to grammar.'''
+    from time import time
 
-    def run(self, msg, timeout):
-        def target():
-            self.process = subprocess.Popen(self.cmd,
-                                            stdin=subprocess.PIPE,
-                                            stdout=subprocess.PIPE)
-            self.r, self.e = self.process.communicate(msg)
+    # We don't use actual threads but instead use the multiprocessing
+    # library. This is because we need to be able to kill workers.
+    from multiprocessing import Process, Queue
 
-        thread = threading.Thread(target=target)
-        thread.start()
-        thread.join(timeout)   # Wait for finish in less than timeout
-                               # If not ready yet, then:
-        if thread.is_alive():  # Ask him nicely to stop, then wait again
-            self.process.send_signal(signal.SIGUSR1)
-            thread.join()
+    solvers = {"ocaml": solveForTask_ocaml,
+               "pypy": solveForTask_pypy,
+               "python": solveForTask_python}
+    assert solver in solvers, \
+        "You must specify a valid solver. options are ocaml, pypy, or python."
+    solver = solvers[solver]
 
-        return (self.r,self.e)
+    if not isinstance(g, dict): g = {t: g for t in tasks }
+    task2grammar = g
 
-command = Command("./solver")
+    # Bin the tasks by request type and grammar
+    # If these are the same then we can enumerate for multiple tasks simultaneously
+    jobs = {}
+    for t in tasks:
+        k = (task2grammar[t], t.request)
+        jobs[k] = jobs.get(k,[]) + [t]
+
+    # Map from task to the shortest time to find a program solving it
+    bestSearchTime = {t: None for t in task2grammar}
+
+    lowerBounds = {k: 0. for k in jobs}
+
+    frontiers = {t: Frontier([], task = t) for t in task2grammar }
+
+    # For each job we keep track of how long we have been working on it
+    stopwatches = {t: Stopwatch() for t in jobs }
+
+    def numberOfHits(f):
+        return sum( e.logLikelihood == 0. for e in f)
+
+    def budgetIncrement(lb):
+        # Very heuristic - not sure what to do here
+        if lb < 24.:
+            return 1.
+        elif lb < 27.:
+            return 0.5
+        else:
+            return 0.25
+
+    def maximumFrontiers(j):
+        tasks = jobs[j]
+        return {t: maximumFrontier - numberOfHits(frontiers[t]) for t in tasks}
+
+    def allocateCPUs(n, tasks):
+        allocation = {t: 0 for t in tasks }
+        while n > 0:
+            for t in tasks:
+                allocation[t] += 1
+                n -= 1
+                if n == 0: break
+        return allocation        
+
+    def refreshJobs():
+        ks = jobs.keys()
+        for k in ks:
+            v = [t for t in jobs[k]
+                 if numberOfHits(frontiers[t]) < maximumFrontier
+                 and stopwatches[k].elapsed <= enumerationTimeout ]
+            if v:
+                jobs[k] = v
+            else:
+                del jobs[k]                
+
+    # Workers put their messages in here
+    q = Queue()
+
+    # How many CPUs are we using?
+    activeCPUs = 0
+
+    # How many CPUs was each job allocated?
+    id2CPUs = {}
+    # What job was each ID working on?
+    id2job = {}
+    nextID = 0
+
+    while True:
+        refreshJobs()
+        # Don't launch a job that we are already working on
+        # We run the stopwatch whenever the job is being worked on
+        # freeJobs are things that we are not working on but could be
+        freeJobs = [ j for j in jobs if not stopwatches[j].running
+                     and stopwatches[j].elapsed < enumerationTimeout - 0.5 ]
+        if freeJobs and activeCPUs < CPUs:
+            # Allocate a CPU to each of the jobs that we have made the least progress on
+            freeJobs.sort(key = lambda j: lowerBounds[j])
+            # Launch some more jobs until all of the CPUs are being used
+            availableCPUs = CPUs - activeCPUs
+            allocation = allocateCPUs(availableCPUs, freeJobs)                
+            for j in freeJobs:
+                if allocation[j] == 0: continue
+                g,request = j
+                bi = budgetIncrement(lowerBounds[j])
+                thisTimeout = enumerationTimeout - stopwatches[j].elapsed
+                launchParallelProcess(wrapInThread(solver),
+                                      q = q, g = g, ID = nextID,
+                                      elapsedTime = stopwatches[j].elapsed,
+                                      CPUs = allocation[j],
+                                      tasks = jobs[j],
+                                      lowerBound = lowerBounds[j],
+                                      upperBound = lowerBounds[j] + bi,
+                                      budgetIncrement = bi,
+                                      timeout = thisTimeout,
+                                      likelihoodModel = likelihoodModel,
+                                      evaluationTimeout = evaluationTimeout,
+                                      maximumFrontiers = maximumFrontiers(j))
+                eprint("(python) Launching %s (%d tasks) w/ %d CPUs. Timeout %f."%
+                       (request, len(jobs[j]), allocation[j], thisTimeout))
+                id2CPUs[nextID] = allocation[j]
+                id2job[nextID] = j
+                nextID += 1                
+
+                stopwatches[j].start()
+                activeCPUs += allocation[j]
+                lowerBounds[j] += bi
+
+        # If nothing is running, and we just tried to launch jobs,
+        # then that means we are finished
+        if all( not s.running for s in stopwatches.values() ): break
+        
+        # Wait to get a response
+        message = Bunch(q.get())
+
+        if message.result == "failure":
+            eprint("PANIC! Exception in child worker:", message.exception)
+            eprint(message.stacktrace)
+            assert False
+        elif message.result == "success":
+            # Mark the CPUs is no longer being used and pause the stopwatch
+            activeCPUs -= id2CPUs[message.ID]
+            stopwatches[id2job[message.ID]].stop()
+
+            newFrontiers, searchTimes = message.value
+            for t,f in newFrontiers.iteritems():
+                frontiers[t] = frontiers[t].combine(f)
+                dt = searchTimes[t]
+                if dt is not None:
+                    if bestSearchTime[t] is None: bestSearchTime[t] = dt
+                    else: bestSearchTime[t] = min(bestSearchTime[t],dt)
+        else:
+            eprint("Unknown message result:",message.result)
+            assert False
+            
+    return [frontiers[t] for t in tasks ], [bestSearchTime[t] for t in tasks if bestSearchTime[t] is not None ]
+            
+
+
+                
+            
+        
+        
+
+    
 
 def multithreadedEnumeration(g, tasks, likelihoodModel, _=None,
                              solver=None,
@@ -215,24 +352,30 @@ def wrapInThread(f):
 
 def solveForTask_ocaml(_ = None,
                        elapsedTime = 0.,
-                       g = None, task = None,
+                       CPUs=1,
+                       g = None, tasks = None,
                        lowerBound = None, upperBound = None, budgetIncrement = None,
                        timeout = None,
                        likelihoodModel = None, # FIXME: unused
-                       evaluationTimeout = None, maximumFrontier = None):
+                       evaluationTimeout = None, maximumFrontiers = None):
     import json
     message = {"DSL": {"logVariable": g.logVariable,
                        "productions": [ {"expression": str(p), "logProbability": l}
                                             for l,_,p in g.productions ]},
-               "examples": [{"inputs": list(xs), "output": y} for xs,y in task.examples ],
+               "tasks": [{
+                   "examples": [{"inputs": list(xs), "output": y} for xs,y in t.examples ],
+                   "name": t.name,
+                   "maximumFrontier": maximumFrontiers[t]}
+                   for t in tasks ],
+               
                "programTimeout": evaluationTimeout,
-               # "solverTimeout": max(int(timeout + 0.5), 1),
-               "maximumFrontier": maximumFrontier,
-               "name": task.name,
+               "nc": CPUs,
+               "timeout": timeout,
                "lowerBound": lowerBound,
                "upperBound": upperBound,
                "budgetIncrement": budgetIncrement,
                "verbose": False}
+    task = tasks[0]
     if hasattr(task, 'BIC'):
         message["parameterPenalty"] = task.BIC*math.log(len(task.examples))
     if hasattr(task, 'likelihoodThreshold') and task.likelihoodThreshold is not None:
@@ -244,29 +387,34 @@ def solveForTask_ocaml(_ = None,
     # with open("pipe", "w") as f:
         # f.write(message)
     try:
-        response, error = command.run(msg=message,
-                                      timeout=max(int(timeout + 0.5), 1))
+        process = subprocess.Popen("./solver",
+                                   stdin=subprocess.PIPE,
+                                   stdout=subprocess.PIPE)
+        response, error = process.communicate(message)
         response = json.loads(response)
     except OSError as exc:
         raise exc
 
-    pc = response[u"programCount"]
-    # Remove all entries that do not type correctly
-    # This can occur because the solver tries to infer the type
-    # Sometimes it infers a type that is too general
-    response = [r for r in response[u"solutions"] if Program.parse(r["program"]).canHaveType(task.request) ]
-
-    frontier = Frontier([FrontierEntry(program = p,
-                                       logLikelihood = e["logLikelihood"],
-                                       logPrior = g.logLikelihood(task.request, p))
-                         for e in response
-                         for p in [Program.parse(e["program"])] ],
-                        task = task)
-
-    if frontier.empty: searchTime = None
-    else: searchTime = min(e["time"] for e in response) + elapsedTime
-
-    return frontier, searchTime, pc
+    pc = 0 # TODO
+    frontiers = {}
+    searchTimes = {}
+    for t in tasks:
+        solutions = response[t.name]
+        # Remove all entries that do not type correctly
+        # This can occur because the solver tries to infer the type
+        # Sometimes it infers a type that is too general
+        solutions = [r for r in solutions if Program.parse(r["program"]).canHaveType(t.request) ]
+        frontier = Frontier([FrontierEntry(program = p,
+                                           logLikelihood = e["logLikelihood"],
+                                           logPrior = g.logLikelihood(t.request, p))
+                             for e in solutions
+                             for p in [Program.parse(e["program"])] ],
+                            task = t)
+        frontiers[t] = frontier
+        if frontier.empty: searchTimes[t] = None
+        else: searchTimes[t] = min(e["time"] for e in solutions) + elapsedTime
+        
+    return frontiers, searchTimes
 
 def solveForTask_pypy(_ = None,
                       elapsedTime = 0.,
