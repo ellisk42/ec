@@ -147,6 +147,8 @@ if __name__ == "__main__":
                 with open(reducing) as f:
                     prods = pickle.load(f)
                 primitives = primitives + prods
+            except EOFError:
+                eprint("Couldn't grab frontier from " + reducing)
             except IOError:
                 eprint("Couldn't grab frontier from " + reducing)
 
