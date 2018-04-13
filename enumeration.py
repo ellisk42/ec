@@ -56,6 +56,7 @@ def multicoreEnumeration(g, tasks, likelihoodModel, _=None,
         return sum( e.logLikelihood == 0. for e in f)
 
     def budgetIncrement(lb):
+        if True: return 1.5
         # Very heuristic - not sure what to do here
         if lb < 24.:
             return 1.
