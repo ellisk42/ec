@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# Some strictness and debug sanity options
 set -o nounset
 set -o errexit
 trap 'echo "Aborting due to errexit on line $LINENO. Exit code: $?" >&2' ERR
@@ -8,6 +9,8 @@ set -o pipefail
 
 # Set to the program's basename.
 _ME=$(basename "${0}")
+
+# The variables we'll need
 MAP=()
 MAPTMP=()
 REDUCE=()
@@ -39,18 +42,25 @@ Options:
 HEREDOC
 }
 
+# Ideally this should ensure the python/conda/torch/whatever is accessible.
+# However that proved to be a pain and was left as an exercise for the wrapper.
 _init() {
   printf "\\e[1;93mWarning\\e[m: "
   printf "please ensure python/torch/etc. are available.\\n\\n"
+
+  # Makes the relevant directories
   mkdir -p "$PREFIX"
   mkdir -p "$PREFIX/pickles/"
   mkdir -p "$PREFIX/dreams/"
 }
 
+# Map functions. Spawn one child per target and either waits for them or at
+# least ensures that reduce will.
 _map() {
   echo "  * Map:"
   for target in "${MAP[@]}"
   do
+    # Create safe to use name for the output
     if [ "$DRY" = "true" ]; then
       TMP="$(mktemp -u "./$PREFIX/$target.XXXXXXXXX")"
       TMPOUT="$(mktemp -u "./$PREFIX/$target.out.XXXXXXXXX")"
@@ -58,8 +68,13 @@ _map() {
       TMP="$(mktemp "./$PREFIX/$target.XXXXXXXXX")"
       TMPOUT="$(mktemp "./$PREFIX/$target.out.XXXXXXXXX")"
     fi
+    # Also saves the name for latter reduce
     MAPTMP+=("$TMP")
+
+    # Prepare the base command to call
     CMD="./$PROGRAM ${ARGSMAP[*]} --target $target --save $TMP --prefix $PREFIX"
+
+    # If not on OM then call it and sacve the PID
     if [[ "$SBATCH" = "false" ]]; then
       echo "      \`$CMD\`"
       if [ "$DRY" = "false" ]; then
@@ -69,6 +84,7 @@ _map() {
         printf "    - Started task \\e[1;34m%s\\e[m, PID=%s\\n" "$target" "$pid"
         PIDs+=("$pid")
       fi
+    # If on OM sbatch it and keep the JOB-ID
     else
       TMP=$(echo "${TMP#"./"}" | tr "/" "-")
       CMD="sbatch \\
@@ -88,9 +104,9 @@ _map() {
       fi
     fi
   done
-  set -- "${MAPTMP[@]}"
+
+  # If not dry and not on OM then wait for *all* the maps to finish
   if [ "$DRY" = "false" ]; then
-    set -- "${PIDs[@]}"
     if [[ "$SBATCH" = "false" ]]; then
       printf "    - \\e[1;34mWaiting\\e[m for PIDs: "
       echo "${PIDs[@]}"
@@ -99,15 +115,19 @@ _map() {
   fi
 }
 
+# This is the "reduce" parts. It collects what was outputed and calls the right
+# program
 _reduce() {
   echo "  * Reduce:"
 
+  # Make safe tmp files/folders
   if [ "$DRY" = "true" ]; then
     TMPOUT="$(mktemp -u "./$PREFIX/reduce.out.XXXXXXXXX")"
   else
     TMPOUT="$(mktemp "./$PREFIX/reduce.out.XXXXXXXXX")"
   fi
 
+  # Iteratively build the relevant command
   CMD="./$PROGRAM ${ARGSREDUCE[*]}"
   for target in "${REDUCE[@]}"
   do
@@ -121,6 +141,7 @@ _reduce() {
 
   CMD="$CMD --prefix $PREFIX"
 
+  # Then calls it (non OM) or create a job that requires the others (OM).
   if [[ "$SBATCH" = "false" ]]; then
     CMD="$CMD 2> $TMPOUT"
     echo "    - $CMD"
@@ -145,6 +166,7 @@ _reduce() {
   fi
 }
 
+# This may get bigger over time, currently it removes the "frontier" pickles
 _clean() {
   echo "  * Cleaning:"
   for target in "${MAPTMP[@]}"
@@ -156,11 +178,16 @@ _clean() {
   done
 }
 
+# Parses the arguments. Sorry if this looks ugly, I'm not that much of a bash
+# person, but it should do the job I guess? This is more or less a state
+# machine where states depend on arguments.
 _main() {
   isMap=false
   isReduce=false
   isArgsMap=false
   isArgsReduce=false
+
+  # Go over all separated " " CLI arguments
   while [[ $# -gt 0 ]]
   do
     key="$1"
@@ -226,21 +253,19 @@ _main() {
         else
           OTHER+=("$1")
         fi
-        shift # past argument
+        shift
         ;;
     esac
   done
 
-  set -- "${MAP[@]}"
-  set -- "${REDUCE[@]}"
-  set -- "${ARGSMAP[@]}"
-  set -- "${ARGSREDUCE[@]}"
-  set -- "${OTHER[@]}"
-
+  # HACK. Sorry. Only one thing has an unexpected shape right now, it is the
+  # "program" part, I should make this cleaner with a --program <program> I
+  # guess...
   if [[ "${#OTHER[@]}" = "1" ]]; then
     PROGRAM=${OTHER[0]}
   fi
 
+  # If I can, I fail nicely by printing help AND what was missing.
   if [[ -z ${PROGRAM} || "${#MAP[@]}" = "0" || "${#REDUCE[@]}" = "0" ]]; then
     _print_help
     printf '\\e[1;31mError(s):\\e[m\\n'                 1>&2
@@ -262,6 +287,8 @@ _main() {
     exit 1
   fi
 
+  # Print what I parsed. This originally was rather for debug purpose but I find
+  # it usefull anyway so I left it.
   printf "======== PARAMETERS ========\\n"
   printf "Program\\t—— %s\\n"   "$PROGRAM"
   printf "ArgsMap\\t—— %s\\n"   "${ARGSMAP[*]}"
@@ -284,6 +311,7 @@ _main() {
     echo "Starting:"
   fi
 
+  # Now that everything's parsed we can call the right functions.
   _map
   _reduce
   _clean
