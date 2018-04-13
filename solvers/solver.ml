@@ -188,6 +188,18 @@ let export_frontier program_count solutions : string =
   in pretty_to_string serialization
 
 let _ =
+
+  Caml.Sys.set_signal
+    Caml.Sys.sigusr2
+    (Caml.Sys.Signal_handle
+      (fun _ ->
+        Caml.Printexc.record_backtrace true ;
+        Caml.Printexc.print_backtrace stdout ;
+        prerr_endline
+          (Caml.Printexc.raw_backtrace_to_string
+            (Caml.Printexc.get_callstack 100)) ;
+        failwith "Show the trace please")) ;
+
   let (t,g,
      lowerBound,upperBound,budgetIncrement,
      maximumFrontier,verbose) =

@@ -232,7 +232,7 @@ def solveForTask_ocaml(_ = None,
                "lowerBound": lowerBound,
                "upperBound": upperBound,
                "budgetIncrement": budgetIncrement,
-               "verbose": False}
+               "verbose": True}
     if hasattr(task, 'BIC'):
         message["parameterPenalty"] = task.BIC*math.log(len(task.examples))
     if hasattr(task, 'likelihoodThreshold') and task.likelihoodThreshold is not None:
