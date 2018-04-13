@@ -332,7 +332,7 @@ def make_list_bootstrap_tasks():
               for l in [randomListOfLists()] ])
         ]
 
-    if False: return [zipBootstrap[0],zipBootstrap[2]]
+    if True: return [zipBootstrap[0],zipBootstrap[2]]
 
     # Let's learn everything!
     if True:
