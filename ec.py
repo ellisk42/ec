@@ -233,8 +233,9 @@ def ecIterator(grammar, tasks,
                                                 enumerationTimeout=enumerationTimeout,
                                                 CPUs=CPUs,
                                                 evaluationTimeout=evaluationTimeout)
-        if expandFrontier and j > 0 and (not useRecognitionModel) and \
-           sum(not f.empty for f in frontiers) <= result.learningCurve[-1]:
+        if expandFrontier and (not useRecognitionModel) \
+           and (j == 0 and times == [] or \
+                j > 0 and sum(not f.empty for f in frontiers) <= result.learningCurve[-1]):
             timeout = enumerationTimeout
             unsolvedTasks = [ f.task for f in frontiers if f.empty ]
             while True:
