@@ -133,7 +133,7 @@ _reduce() {
         --job-name=geom_reduce-$PREFIX --output=$TMPOUT \\
         --ntasks=1 --cpus-per-task $PREDUCE --time=$TREDUCE \\
         --mail-user=$(whoami)@mit.edu --mail-type=ALL --requeue \\
-        --dependency=afterany:${JOBS} \\\\
+        --dependency=afterany:${JOBS} \\
         --wrap=\"$CMD --CPUs $PREDUCE\""
     printf "    - \`%s\`\\n" "$CMD"
     if [ "$DRY" = "false" ]; then
