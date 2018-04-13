@@ -130,8 +130,8 @@ def multicoreEnumeration(g, tasks, likelihoodModel, _=None,
                                       likelihoodModel = likelihoodModel,
                                       evaluationTimeout = evaluationTimeout,
                                       maximumFrontiers = maximumFrontiers(j))
-                eprint("(python) Launching %s (%d tasks) w/ %d CPUs. Timeout %f."%
-                       (request, len(jobs[j]), allocation[j], thisTimeout))
+                eprint("(python) Launching %s (%d tasks) w/ %d CPUs. %f <= MDL < %f. Timeout %f."%
+                       (request, len(jobs[j]), allocation[j], lowerBounds[j], lowerBounds[j] + bi, thisTimeout))
                 id2CPUs[nextID] = allocation[j]
                 id2job[nextID] = j
                 nextID += 1                
