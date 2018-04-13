@@ -18,6 +18,8 @@ import torch.nn as nn
 
 from recognition import variable
 
+global prefix_dreams
+
 
 # : Task -> feature list
 class GeomFeatureCNN(nn.Module):
@@ -41,7 +43,7 @@ class GeomFeatureCNN(nn.Module):
 
         self.mean = [0]*(256*256)
         self.count = 0
-        self.sub = "./dreams/" + str(int(time.time()))
+        self.sub = prefix_dreams + str(int(time.time()))
 
         self.outputDimensionality = H
 
@@ -134,7 +136,8 @@ if __name__ == "__main__":
     target = args.pop("target")
     red = args.pop("reduce")
     save = args.pop("save")
-    prefix = args.pop("prefix") + "/pickles/"
+    prefix = args.pop("prefix")
+    prefix_dreams = prefix + "/dreams/"
     tasks = makeTasks(target)
     eprint("Generated", len(tasks), "tasks")
 
@@ -157,7 +160,7 @@ if __name__ == "__main__":
 
     r = explorationCompression(baseGrammar, train,
                                testingTasks=test,
-                               outputPrefix=prefix,
+                               outputPrefix=prefix + "/pickles/",
                                compressor="rust",
                                evaluationTimeout=0.01,
                                **args)

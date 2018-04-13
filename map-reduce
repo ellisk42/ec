@@ -44,6 +44,7 @@ _init() {
   printf "please ensure python/torch/etc. are available.\\n\\n"
   mkdir -p "$PREFIX"
   mkdir -p "$PREFIX/pickles/"
+  mkdir -p "$PREFIX/dreams/"
 }
 
 _map() {
