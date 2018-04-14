@@ -195,6 +195,10 @@ let _ =
       (fun _ ->
         Caml.Printexc.record_backtrace true ;
         Caml.Printexc.print_backtrace stdout ;
+        Caml.Printexc.print_backtrace stderr ;
+        print_endline
+          (Caml.Printexc.raw_backtrace_to_string
+            (Caml.Printexc.get_callstack 100)) ;
         prerr_endline
           (Caml.Printexc.raw_backtrace_to_string
             (Caml.Printexc.get_callstack 100)) ;

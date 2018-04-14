@@ -137,7 +137,7 @@ if __name__ == "__main__":
     red = args.pop("reduce")
     save = args.pop("save")
     prefix = args.pop("prefix")
-    prefix_dreams = prefix + "/dreams/"
+    prefix_dreams = prefix + "/dreams/" + ('_'.join(target)) + "/"
     tasks = makeTasks(target)
     eprint("Generated", len(tasks), "tasks")
 
