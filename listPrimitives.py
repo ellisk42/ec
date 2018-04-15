@@ -161,7 +161,7 @@ def basePrimitives():
     ]
 
 def McCarthyPrimitives():
-    "These are ~ primitives provided by 1959 lisp as introduced by McCarthy"
+    "These are < primitives provided by 1959 lisp as introduced by McCarthy"
     return [
         Primitive("empty", tlist(t0), []),
         Primitive("cons", arrow(t0, tlist(t0), tlist(t0)), _cons),
@@ -185,13 +185,14 @@ def McCarthyPrimitives():
 if __name__ == "__main__":
     import pickle
     g = Grammar.uniform(McCarthyPrimitives())
-    with open("/home/ellisk/om/ec/experimentOutputs/list_aic=1.0_arity=3_ET=1800_expandFrontier=2.0_it=4_likelihoodModel=all-or-nothing_MF=5_baseline=False_pc=10.0_L=1.0_K=5_rec=False.pickle", "rb") as handle:
-        b = pickle.load(handle).grammars[-1]
-    print b
+    # with open("/home/ellisk/om/ec/experimentOutputs/list_aic=1.0_arity=3_ET=1800_expandFrontier=2.0_it=4_likelihoodModel=all-or-nothing_MF=5_baseline=False_pc=10.0_L=1.0_K=5_rec=False.pickle", "rb") as handle:
+    #     b = pickle.load(handle).grammars[-1]
+    # print b
 
-    p = Program.parse("(lambda (lambda (lambda (if (empty? $0) empty (cons (+ (car $0) (car $1)) ($2 (cdr $0) (cdr $1)))))))")
-    t = arrow(tlist(tint),tlist(tint),tlist(tint))
+    p = Program.parse("(lambda (lambda (lambda (if (empty? $0) empty (cons (+ (car $1) (car $0)) ($2 (cdr $1) (cdr $0)))))))")
+    t = arrow(tlist(tint),tlist(tint),tlist(tint))#,tlist(tbool))
     print g.logLikelihood(arrow(t,t), p)
+    assert False
     print b.logLikelihood(arrow(t,t), p)
     
     # p = Program.parse("""(lambda (lambda
