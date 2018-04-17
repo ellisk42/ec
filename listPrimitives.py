@@ -22,9 +22,11 @@ def _isEmpty(x): return x == []
 def _single(x): return [x]
 def _slice(x): return lambda y: lambda l: l[x:y]
 def _map(f): return lambda l: map(f, l)
+def _zip(a): return lambda b: lambda f: map(f, a, b)
 def _mapi(f): return lambda l: map(lambda (i,x): f(i)(x), enumerate(l))
 def _reduce(f): return lambda x0: lambda l: reduce(lambda a, x: f(a)(x), l, x0)
 def _reducei(f): return lambda x0: lambda l: reduce(lambda a, (i,x): f(i)(a)(x), enumerate(l), x0)
+def _fold(l): return lambda x0: lambda f: reduce(lambda a,x: f(a)(x), l, x0)
 def _eq(x): return lambda y: x == y
 def _eq0(x): return x == 0
 def _a1(x): return x + 1
@@ -159,6 +161,29 @@ def basePrimitives():
         Primitive("+", arrow(tint, tint, tint), _addition),
         Primitive("-", arrow(tint, tint, tint), _subtraction)
     ]
+
+def bootstrapTarget():
+    """These are the primitives that we hope to learn from the bootstrapping procedure"""
+    return [
+        # learned primitives
+        Primitive("map", arrow(arrow(t0, t1), tlist(t0), tlist(t1)), _map),
+        Primitive("zip", arrow(tlist(t0), tlist(t1), arrow(t0, t1, t2), tlist(t2)), _zip),
+        Primitive("unfold", arrow(t0, arrow(t0,t1), arrow(t0,t0), arrow(t0,tbool), tlist(t1)), _unfold),
+        Primitive("range", arrow(tint, tlist(tint)), range),
+        Primitive("index", arrow(tint, tlist(t0), t0), _index),
+        Primitive("fold", arrow(tlist(t0), t1, arrow(t0,t1,t1), t1), _fold),
+
+        # built-ins
+        Primitive("if", arrow(tbool, t0, t0, t0), _if),
+        Primitive("eq?", arrow(tint, tint, tbool), _eq),
+        Primitive("+", arrow(tint, tint, tint), _addition),
+        Primitive("-", arrow(tint, tint, tint), _subtraction),
+        Primitive("empty", tlist(t0), []),
+        Primitive("cons", arrow(t0, tlist(t0), tlist(t0)), _cons),
+        Primitive("car", arrow(tlist(t0), t0), _car),
+        Primitive("cdr", arrow(tlist(t0), tlist(t0)), _cdr),
+        Primitive("empty?", arrow(tlist(t0), tbool), _isEmpty),
+    ] + [ Primitive(str(j), tint, j) for j in xrange(2) ]
 
 def McCarthyPrimitives():
     "These are < primitives provided by 1959 lisp as introduced by McCarthy"

@@ -416,6 +416,12 @@ let rec unfold p h n x =
   if p x then [] else h x :: unfold p h n (n x)
 
 let primitive_unfold = primitive "unfold" ((t0 @> tboolean) @> (t0 @> t1) @> (t0 @> t0) @> t0 @> tlist t1) unfold;;
+let primitive_index = primitive "index" ((tint @> tlist t0 @> t0) @> t0) (fun j l -> List.nth_exn l j);;
+let primitive_zip = primitive "zip" (tlist t0 @> tlist t1 @> (t0 @> t1 @> t2) @> tlist t2)
+    (fun x y f -> List.map2_exn x y ~f:f);;
+let primitive_fold = primitive "fold" (tlist t0 @> t1 @> (t0 @> t1 @> t1) @> t1)
+    (fun l x0 f -> List.fold_right ~f:f ~init:x0 l);;
+
 
 let default_recursion_limit = ref 50;;
 let set_recursion_limit l = default_recursion_limit := l;;
