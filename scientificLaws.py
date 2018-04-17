@@ -199,7 +199,7 @@ tasks = [
 if __name__ == "__main__":
     equationPrimitives = [real, f0, f1, fpi,
                           real_power, real_subtraction, real_addition, real_multiplication]
-    baseGrammar = Grammar.uniform(equationPrimitives + bootstrapTarget)
+    baseGrammar = Grammar.uniform(equationPrimitives + bootstrapTarget())
 
     eprint("Got %d equation discovery tasks..."%len(tasks))
     
