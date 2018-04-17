@@ -337,12 +337,10 @@ def make_list_bootstrap_tasks():
               for _ in range(10)
               for l in [randomListOfLists()] ])
         ]
-
-    if True: return [zipBootstrap[2]]
-
+    
     # Let's learn everything!
     if True:
-        return lengthBootstrap + operationBootstrap + unfoldBootstrap + arrayBootstrap + foldBootstrap + mapBootstrap + zipBootstrap + filterBootstrap            
+        return lengthBootstrap + operationBootstrap + unfoldBootstrap + arrayBootstrap + foldBootstrap + mapBootstrap + zipBootstrap
 
 
 def bonusListProblems():
