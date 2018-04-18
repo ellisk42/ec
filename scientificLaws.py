@@ -83,14 +83,28 @@ def crossProduct(a,b):
             a3*b1 - a1*b3,
             a1*b2 - a2*b1]
 pi = 3.14 # I think this is close enough to pi
-# Data taken from: https://secure-media.collegeboard.org/digitalServices/pdf/ap/ap-physics-1-equations-table.pdf
+# Data taken from:
+# https://secure-media.collegeboard.org/digitalServices/pdf/ap/ap-physics-1-equations-table.pdf
+# https://secure-media.collegeboard.org/digitalServices/pdf/ap/physics-c-tables-and-equations-list.pdf
 tasks = [
     makeTask("work = F.d",
              arrow(tvector, tvector, treal),
              lambda f,d: innerProduct(f,d)),
-    makeTask("tau = rxF",
+    makeTask("P = F.v",
+             arrow(tvector, tvector, treal),
+             lambda f,d: innerProduct(f,d)),
+    makeTask("F = qvxB (3d)",
+             arrow(treal,tvector,tvector,tvector),
+             lambda q,v,b: scaleVector(q,crossProduct(v,b))),
+    makeTask("F = qvxB (2d)",
+             arrow(treal,treal,treal,treal,treal,treal),
+             lambda q,a1,a2,b1,b2: q*(a1*b2 - a2*b1)),
+    makeTask("tau = rxF (3d)",
              arrow(tvector,tvector,tvector),
              crossProduct),
+    makeTask("tau = rxF (2d)",
+             arrow(treal,treal,treal,treal,treal),
+             lambda a1,a2,b1,b2: a1*b2 - a2*b1),
     makeTask("v(t)",
              arrow(treal, treal, treal, treal),
              lambda v0,a,t: v0 + a*t),

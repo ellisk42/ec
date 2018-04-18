@@ -340,7 +340,7 @@ def make_list_bootstrap_tasks():
     
     # Let's learn everything!
     if True:
-        return lengthBootstrap + operationBootstrap + unfoldBootstrap + arrayBootstrap + foldBootstrap + mapBootstrap + zipBootstrap
+        return lengthBootstrap + unfoldBootstrap + arrayBootstrap + foldBootstrap + mapBootstrap + zipBootstrap
 
 
 def bonusListProblems():
