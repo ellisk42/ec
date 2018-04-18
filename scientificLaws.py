@@ -205,6 +205,7 @@ if __name__ == "__main__":
     
     explorationCompression(baseGrammar, tasks,
                            outputPrefix = "experimentOutputs/scientificLaws",
+                           compressor="pypy",
                            evaluationTimeout = 0.1,
                            testingTasks = [],
                            **commandlineArguments(
