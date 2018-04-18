@@ -104,8 +104,7 @@ def bruteForceTower_(size):
             yield [b] + s
 def bruteForceTower(size):
     for s in range(1,size + 1):
-        for t in bruteForceTower_(s):
-            yield t
+        yield from bruteForceTower_(s)
 def bruteForceBaseline(tasks):
     from towers.tower_common import TowerWorld
     from PIL import Image

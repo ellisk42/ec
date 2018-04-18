@@ -271,20 +271,20 @@ def proposeFragmentsFromProgram(p,arity):
     def fragments(expression,a):
         """Generates fragments that unify with subexpressions of expression"""
         
-        for f in fragment(expression,a): yield f
+        yield from fragment(expression,a)
         if isinstance(expression, Application):
             curry = True
             if curry:
-                for f in fragments(expression.f, a): yield f
-                for f in fragments(expression.x, a): yield f
+                yield from fragments(expression.f, a)
+                yield from fragments(expression.x, a)
             else:
                 # Pretend that it is not curried
                 function,arguments = expression.applicationParse()
-                for f in fragments(function,a): yield f
+                yield from fragments(function,a)
                 for argument in arguments:
-                    for f in fragments(argument,a): yield f
+                    yield from fragments(argument,a)
         elif isinstance(expression, Abstraction):
-            for f in fragments(expression.body,a): yield f
+            yield from fragments(expression.body,a)
         else:
             assert isinstance(expression, (Invented,Primitive,Index))
 

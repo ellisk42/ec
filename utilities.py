@@ -38,8 +38,7 @@ def flatten(x, abort=lambda x:False):
         yield x
         return
     try:
-        for e in chain(*(flatten(i, abort) for i in x)):
-            yield e
+        yield from chain(*(flatten(i, abort) for i in x))
     except TypeError:  # not iterable
         yield x
 

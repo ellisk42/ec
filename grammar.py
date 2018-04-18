@@ -374,8 +374,7 @@ class Grammar(object):
             def mutations(tp, loss):
                 for _, _, expr in self.enumeration(Context.EMPTY, [], tp, distance-loss):
                     yield expr
-            for expr in Mutator(self, mutations).execute(expr, request):
-                yield expr
+            yield from Mutator(self, mutations).execute(expr, request)
 
 
 class LikelihoodSummary(object):

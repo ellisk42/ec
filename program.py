@@ -167,14 +167,14 @@ class Application(Program):
     def walkUncurried(self, d=0):
         yield d,self
         f,xs = self.applicationParse()
-        for k in f.walkUncurried(d): yield k
+        yield from f.walkUncurried(d)
         for x in xs:
-            for k in x.walkUncurried(d): yield k
+            yield from x.walkUncurried(d)
 
     def walk(self,surroundingAbstractions=0):
         yield surroundingAbstractions,self
-        for child in self.f.walk(surroundingAbstractions): yield child
-        for child in self.x.walk(surroundingAbstractions): yield child
+        yield from self.f.walk(surroundingAbstractions)
+        yield from self.x.walk(surroundingAbstractions)
 
     def size(self): return self.f.size() + self.x.size()
 
@@ -294,10 +294,10 @@ class Abstraction(Program):
     
     def walk(self,surroundingAbstractions=0):
         yield surroundingAbstractions,self
-        for child in self.body.walk(surroundingAbstractions + 1): yield child
+        yield from self.body.walk(surroundingAbstractions + 1)
     def walkUncurried(self,d=0):
         yield d,self
-        for k in self.body.walkUncurried(d+1): yield k
+        yield from self.body.walkUncurried(d+1)
 
     def size(self): return self.body.size()
 
@@ -500,25 +500,21 @@ class Mutator:
     def application(self,e,tp):
         self.history.append(lambda expr: Application(expr, e.x))
         f_tp = arrow(e.x.infer(), tp)
-        for inner in e.f.visit(self,f_tp):
-            yield inner
+        yield from e.f.visit(self,f_tp)
         self.history[-1] = lambda expr: Application(e.f, expr)
         x_tp = inferArg(tp, e.f.infer())
-        for inner in e.x.visit(self,x_tp):
-            yield inner
+        yield from e.x.visit(self,x_tp)
         self.history.pop()
         for expr in self.fn(tp, -self.logLikelihood(tp, e)):
             yield self.enclose(expr)
     def abstraction(self,e,tp):
         self.history.append(lambda expr: Abstraction(expr))
-        for inner in e.body.visit(self,tp.arguments[1]):
-            yield inner
+        yield from e.body.visit(self,tp.arguments[1])
         self.history.pop()
         # we don't try turning the abstraction into something else, because
         # that other thing will just be an abstraction
     def execute(self,e,tp):
-        for expr in e.visit(self, tp):
-            yield expr
+        yield from e.visit(self, tp)
     def logLikelihood(self, tp, e):
         summary = None
         try:

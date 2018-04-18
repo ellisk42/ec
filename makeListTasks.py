@@ -29,8 +29,7 @@ def make_list_task(name, examples, **params):
     # We explicitly create these by modifying existing routines.
     if name.startswith("identify"):
         boolexamples = [((i,), list(map(bool, o))) for (i,), o in examples]
-        for t in make_list_task("bool-"+name, boolexamples, **params):
-            yield t
+        yield from make_list_task("bool-"+name, boolexamples, **params)
         # for now, we'll stick with the boolean-only tasks and not have a copy
         # for integers.
         return
@@ -77,8 +76,7 @@ def make_list_tasks(n_examples):
                         inps = routine.gen(count=n_examples, **params)
                     examples = [((inp,), routine.eval(inp, **params))
                                 for inp in inps]
-                    for t in make_list_task(routine.id, examples, **params):
-                        yield t
+                    yield from make_list_task(routine.id, examples, **params)
                 except lr.APIError:  # invalid params
                     continue
         else:
@@ -88,8 +86,7 @@ def make_list_tasks(n_examples):
             elif len(inps) < n_examples:
                 inps += routine.gen(count=(n_examples - len(inps)))
             examples = [((inp,), routine.eval(inp)) for inp in inps]
-            for t in make_list_task(routine.id, examples):
-                yield t
+            yield from make_list_task(routine.id, examples)
 
 
 def make_list_bootstrap_tasks():
