@@ -141,7 +141,7 @@ if __name__ == "__main__":
     testing = [t.task() for t in circuits[NUMBEROFTASKS:] ]
 
     baseGrammar = Grammar.uniform(primitives)
-    explorationCompression(baseGrammar, tasks[:30],
+    explorationCompression(baseGrammar, tasks,
                            testingTasks=testing,
                            outputPrefix="experimentOutputs/circuit",
                            evaluationTimeout=None,
