@@ -18,7 +18,7 @@ pygame.display.set_caption('Simple pygame example')
 clock = pygame.time.Clock()
 
 # --- pybox2d world setup ---
-from tower_common import *
+from .tower_common import *
 
 # Create the world
 world = TowerWorld()
@@ -37,7 +37,7 @@ polygonShape.draw = my_draw_polygon
 
 result = TowerWorld().sampleStability(plan, perturbation, N = 100)
 mass = sum(w*h for _,w,h in plan)
-print "This tower has height %f, mass %f, area %s, len %s, staircase %s, and succeeds %d/100 of the time with a perturbation of %f"%(result.height, mass, result.area, result.length, result.staircase, int(result.stability*100),perturbation)
+print("This tower has height %f, mass %f, area %s, len %s, staircase %s, and succeeds %d/100 of the time with a perturbation of %f"%(result.height, mass, result.area, result.length, result.staircase, int(result.stability*100),perturbation))
 
 # --- main game loop ---
 

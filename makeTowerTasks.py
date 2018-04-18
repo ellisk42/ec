@@ -18,13 +18,13 @@ class TowerTask(Task):
     tasks = []
     STABILITYTHRESHOLD = 0.5
     
-    def __init__(self, _ = None, perturbation = 0,
-                 maximumStaircase = 100,
-                 maximumMass = 100,
-                 minimumLength = 0,
-                 minimumArea = 0,
-                 minimumHeight = None):
-        name = "; ".join("%s: %s"%(k,v) for k,v in locals().iteritems()
+    def __init__(self, _=None, perturbation=0,
+                 maximumStaircase=100,
+                 maximumMass=100,
+                 minimumLength=0,
+                 minimumArea=0,
+                 minimumHeight=None):
+        name = "; ".join("%s: %s"%(k,v) for k,v in locals().items()
                          if not k in {"_","self"} )
         features = [perturbation,
                     float(maximumMass),
@@ -33,7 +33,7 @@ class TowerTask(Task):
                     float(minimumArea),
                     float(maximumStaircase)]
         super(TowerTask, self).__init__(name, ttower, [],
-                                        features = features)
+                                        features=features)
 
         self.maximumStaircase = maximumStaircase
         self.perturbation = perturbation
@@ -53,7 +53,7 @@ class TowerTask(Task):
         if key in TOWERCACHING: result = TOWERCACHING[key]
         else:
             w = TowerWorld()
-            try: result = w.sampleStability(tower, perturbation, N = 30)
+            try: result = w.sampleStability(tower, perturbation, N=30)
             except: result = None
             
             # except Exception as exception:
@@ -64,7 +64,7 @@ class TowerTask(Task):
             TOWERCACHING[key] = result
         return Bunch(result) if result is not None else result
 
-    def logLikelihood(self, e, timeout = None):
+    def logLikelihood(self, e, timeout=None):
         if timeout is not None:
             def timeoutCallBack(_1,_2): raise EvaluationTimeout()
             signal.signal(signal.SIGVTALRM, timeoutCallBack)
@@ -133,12 +133,12 @@ def makeTasks():
     MASSES = [20,30,40]
     HEIGHT = [3,5,7]
     STAIRCASE = [10.5, 2.5]
-    return [ TowerTask(maximumMass = float(m),
-                       maximumStaircase = float(s),
-                       minimumArea = float(a),
-                       perturbation = float(p),
-                       minimumLength = float(l),
-                       minimumHeight = float(h))
+    return [ TowerTask(maximumMass=float(m),
+                       maximumStaircase=float(s),
+                       minimumArea=float(a),
+                       perturbation=float(p),
+                       minimumLength=float(l),
+                       minimumHeight=float(h))
              for m in MASSES
              for a in [1, 2.9, 5.8]
              for s in STAIRCASE 

@@ -44,9 +44,9 @@ class Program(object):
         # shifted by the number of abstractions that we will be adding
         e = e.shift(newAbstractions)
 
-        for n in reversed(xrange(newAbstractions)):
+        for n in reversed(range(newAbstractions)):
             e = Application(e, Index(n))
-        for _ in xrange(a): e = Abstraction(e)
+        for _ in range(a): e = Abstraction(e)
 
         assert self.infer() == e.infer(), \
             "FATAL: uncurry has a bug. %s : %s, but uncurried to %s : %s"%(self,self.infer(),
@@ -157,21 +157,21 @@ class Application(Program):
         f,xs = self.f.applicationParse()
         return f,xs + [self.x]
 
-    def shift(self, offset, depth = 0):
+    def shift(self, offset, depth=0):
         return Application(self.f.shift(offset, depth),
                            self.x.shift(offset, depth))
     def substitute(self, old, new):
         if self == old: return new
         return Application(self.f.substitute(old, new), self.x.substitute(old, new))
 
-    def walkUncurried(self, d = 0):
+    def walkUncurried(self, d=0):
         yield d,self
         f,xs = self.applicationParse()
         for k in f.walkUncurried(d): yield k
         for x in xs:
             for k in x.walkUncurried(d): yield k
 
-    def walk(self,surroundingAbstractions = 0):
+    def walk(self,surroundingAbstractions=0):
         yield surroundingAbstractions,self
         for child in self.f.walk(surroundingAbstractions): yield child
         for child in self.x.walk(surroundingAbstractions): yield child
@@ -223,7 +223,7 @@ class Index(Program):
             freeVariables[i] = variable
             return (context, variable)
 
-    def shift(self,offset, depth = 0):
+    def shift(self,offset, depth=0):
         # bound variable
         if self.bound(depth): return self
         else: # free variable
@@ -234,8 +234,8 @@ class Index(Program):
         if old == self: return new
         else: return self
 
-    def walk(self,surroundingAbstractions = 0): yield surroundingAbstractions,self
-    def walkUncurried(self,d = 0): yield d,self
+    def walk(self,surroundingAbstractions=0): yield surroundingAbstractions,self
+    def walkUncurried(self,d=0): yield d,self
 
     def size(self): return 1
 
@@ -284,7 +284,7 @@ class Abstraction(Program):
         (context,returnType) = self.body.inferType(context,[argumentType] + environment,freeVariables)
         return (context, arrow(argumentType,returnType).apply(context))
     
-    def shift(self,offset, depth = 0):
+    def shift(self,offset, depth=0):
         return Abstraction(self.body.shift(offset, depth + 1))
     def substitute(self, old, new):
         if self == old: return new
@@ -292,10 +292,10 @@ class Abstraction(Program):
         new = new.shift(1)
         return Abstraction(self.body.substitute(old, new))
     
-    def walk(self,surroundingAbstractions = 0):
+    def walk(self,surroundingAbstractions=0):
         yield surroundingAbstractions,self
         for child in self.body.walk(surroundingAbstractions + 1): yield child
-    def walkUncurried(self,d = 0):
+    def walkUncurried(self,d=0):
         yield d,self
         for k in self.body.walkUncurried(d+1): yield k
 
@@ -307,8 +307,8 @@ class Abstraction(Program):
             s = s[2:]
         elif s.startswith('(lambda'):
             s = s[len('(lambda'):]
-        elif s.startswith(u'(\u03bb'):
-            s = s[len(u'(\u03bb'):]
+        elif s.startswith('(\u03bb'):
+            s = s[len('(\u03bb'):]
         else: raise ParseFailure(s)
         while len(s) > 0 and s[0].isspace(): s = s[1:]
 
@@ -337,13 +337,13 @@ class Primitive(Program):
     def evaluate(self,environment): return self.value
     def inferType(self,context,environment,freeVariables):
         return self.tp.instantiate(context)
-    def shift(self,offset, depth = 0): return self
+    def shift(self,offset, depth=0): return self
     def substitute(self, old, new):
         if self == old: return new
         else: return self
 
-    def walk(self,surroundingAbstractions = 0): yield surroundingAbstractions,self
-    def walkUncurried(self,d = 0): yield d,self
+    def walk(self,surroundingAbstractions=0): yield surroundingAbstractions,self
+    def walkUncurried(self,d=0): yield d,self
 
     def size(self): return 1
 
@@ -377,13 +377,13 @@ class Invented(Program):
     def evaluate(self,e): return self.body.evaluate([])
     def inferType(self,context,environment,freeVariables):
         return self.tp.instantiate(context)
-    def shift(self,offset, depth = 0): return self
+    def shift(self,offset, depth=0): return self
     def substitute(self, old, new):
         if self == old: return new
         else: return self
 
-    def walk(self,surroundingAbstractions = 0): yield surroundingAbstractions,self
-    def walkUncurried(self,d = 0): yield d,self
+    def walk(self,surroundingAbstractions=0): yield surroundingAbstractions,self
+    def walkUncurried(self,d=0): yield d,self
 
     def size(self): return 1
 
@@ -407,12 +407,12 @@ class FragmentVariable(Program):
         raise Exception('Attempt to evaluate fragment variable')
     def inferType(self,context, environment, freeVariables):
         return context.makeVariable()
-    def shift(self,offset,depth = 0):
+    def shift(self,offset,depth=0):
         raise Exception('Attempt to shift fragment variable')
     def substitute(self, old, new):
         if self == old: return new
         else: return self
-    def match(self, context, expression, holes, variableBindings, environment = []):
+    def match(self, context, expression, holes, variableBindings, environment=[]):
         surroundingAbstractions = len(environment)
         try:
             context, variable = context.makeVariable()
@@ -420,8 +420,8 @@ class FragmentVariable(Program):
             return context, variable
         except ShiftFailure: raise MatchFailure()
 
-    def walk(self, surroundingAbstractions = 0): yield surroundingAbstractions,self
-    def walkUncurried(self,d = 0): yield d,self
+    def walk(self, surroundingAbstractions=0): yield surroundingAbstractions,self
+    def walkUncurried(self,d=0): yield d,self
 
     def size(self): return 1
 
@@ -584,10 +584,10 @@ class PrettyVisitor(object):
             
     def application(self,e,environment,isFunction,isAbstraction):
         self.toplevel = False
-        s = u"%s %s"%(e.f.visit(self,environment,True,False),
+        s = "%s %s"%(e.f.visit(self,environment,True,False),
                       e.x.visit(self,environment,False,False))
         if isFunction: return s
-        else: return u"(" + s + u")"
+        else: return "(" + s + ")"
     def abstraction(self,e,environment,isFunction,isAbstraction):
         toplevel = self.toplevel
         self.toplevel = False
@@ -599,12 +599,12 @@ class PrettyVisitor(object):
                             False,
                             True)
         if not e.body.isAbstraction:
-            body = u"." + body
+            body = "." + body
         body = v + body
         if not isAbstraction:
-            body = u"λ" + body
+            body = "λ" + body
         if not toplevel:
-            body = u"(%s)"%body
+            body = "(%s)"%body
         return body
 
 def prettyProgram(e):

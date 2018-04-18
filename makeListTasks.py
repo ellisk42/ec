@@ -1,11 +1,12 @@
-from __future__ import division
+
 
 from type import *
 from task import Task
 from utilities import eprint, hashable
 
 from random import randint, random, seed
-from itertools import product, izip, imap
+from itertools import product
+from functools import reduce
 
 # Excluded routines either impossible or astronomically improbable
 # I'm cutting these off at ~20 nats in learned grammars.
@@ -27,7 +28,7 @@ def make_list_task(name, examples, **params):
     # We can internally handle lists of bools.
     # We explicitly create these by modifying existing routines.
     if name.startswith("identify"):
-        boolexamples = [((i,), map(bool, o)) for (i,), o in examples]
+        boolexamples = [((i,), list(map(bool, o))) for (i,), o in examples]
         for t in make_list_task("bool-"+name, boolexamples, **params):
             yield t
         # for now, we'll stick with the boolean-only tasks and not have a copy
@@ -58,9 +59,9 @@ def make_list_tasks(n_examples):
         if routine.id in EXCLUDES:
             continue
         if routine.is_parametric():
-            keys = routine.example_params()[0].keys()
-            for params in imap(lambda values: dict(izip(keys, values)),
-                               product(xrange(6), repeat=len(keys))):
+            keys = list(routine.example_params()[0].keys())
+            for params in map(lambda values: dict(zip(keys, values)),
+                               product(range(6), repeat=len(keys))):
                 try:
                     if routine.id == "rotate-k":
                         # rotate-k is hard if list is smaller than k
@@ -68,7 +69,7 @@ def make_list_tasks(n_examples):
                         if k < 1:
                             continue
                         inps = []
-                        for _ in xrange(n_examples):
+                        for _ in range(n_examples):
                             r = randint(abs(k) + 1, 17)
                             inp = routine.gen(len=r, **params)[0]
                             inps.append(inp)
@@ -170,17 +171,17 @@ def make_list_bootstrap_tasks():
     # Encourages learning of unfolding
     unfoldBootstrap = [
         Task("countdown", arrow(tint,tlist(tint)),
-             [((n,), range(n+1,1,-1))
+             [((n,), list(range(n+1,1,-1)))
                               for n in range(10) ]),
         Task("suffixes", arrow(tlist(tint),tlist(tlist(tint))),
              [((l,), suffixes(l))
-              for _ in xrange(10)
+              for _ in range(10)
               for l in [randomList()] ]),
         Task("range", arrow(tint,tlist(tint)),
-             [((n,), range(n))
+             [((n,), list(range(n)))
               for n in range(10) ]),
         Task("range inclusive", arrow(tint,tlist(tint)),
-             [((n,), range(n+1))
+             [((n,), list(range(n+1)))
               for n in range(10) ]),
     ]
     
@@ -253,7 +254,7 @@ def make_list_bootstrap_tasks():
         #       for _ in range(10)
         #       for l in [randomList()] ]),
         Task("map car", arrow(tlist(tlist(tint)),tlist(tint)),
-             [((l,),map(lambda n: n[0],l))
+             [((l,),[n[0] for n in l])
               for _ in range(10)
               for l in [randomListOfLists()]]),
         # Task("map cdr", arrow(tlist(tlist(tbool)),tlist(tlist(tbool))),
@@ -261,7 +262,7 @@ def make_list_bootstrap_tasks():
         #       for _ in range(10)
         #       for l in [randomListOfLists_bool()]]),
         Task("map empty?", arrow(tlist(tlist(tint)),tlist(tboolean)),
-             [((l,),map(lambda n: n == [],l))
+             [((l,),[n == [] for n in l])
               for _ in range(10)
               for l in [[ [] if flip() else randomList() for _ in range(randint(1,5)) ]] ]),
         
@@ -275,17 +276,17 @@ def make_list_bootstrap_tasks():
     # Learning to zip lists together
     zipBootstrap = [
         Task("zip plus", arrow(tlist(tint),tlist(tint),tlist(tint)),
-             [((l1,l2),map(lambda x,y: x+y,l1,l2))
+             [((l1,l2),list(map(lambda x,y: x+y,l1,l2)))
               for _ in range(10)
               for l1 in [randomList()]
               for l2 in [[ randint(0,9) for _ in range(len(l1)) ]]]),
         Task("zip eq?", arrow(tlist(tint),tlist(tint),tlist(tbool)),
-             [((l1,l2),map(lambda x,y: x == y,l1,l2))
+             [((l1,l2),list(map(lambda x,y: x == y,l1,l2)))
               for _ in range(10)
               for l1 in [[ randint(0,3) for _ in range(randint(4,7)) ]]
               for l2 in [[ randint(0,3) for _ in range(len(l1)) ]]]),
         Task("zip minus", arrow(tlist(tint),tlist(tint),tlist(tint)),
-             [((l1,l2),map(lambda x,y: x-y,l1,l2))
+             [((l1,l2),list(map(lambda x,y: x-y,l1,l2)))
               for _ in range(10)
               for l1 in [randomList()]
               for l2 in [[ randint(0,9) for _ in range(len(l1)) ]]]),
@@ -300,7 +301,7 @@ def make_list_bootstrap_tasks():
     filterBootstrap = [
         Task("remove empty lists",
              arrow(tlist(tlist(tbool)), tlist(tlist(tbool))),
-             [((ls,), filter(lambda l: len(l) > 0, ls))
+             [((ls,), [l for l in ls if len(l) > 0])
               for _ in range(10)
               for ls in [[[ flip() for _ in range(randint(0,3)) ]
                           for _ in range(4) ]] ]),
@@ -311,7 +312,7 @@ def make_list_bootstrap_tasks():
         #       for xs in [[ randint(0,3) for _ in range(5) ]] ]),
         Task("remove 0s",
              arrow(tlist(tint), tlist(tint)),
-             [((xs,), filter(lambda x: x != 0, xs))
+             [((xs,), [x for x in xs if x != 0])
               for _ in range(10)
               for xs in [[ randint(0,3) for _ in range(5) ]] ]),
     ]
@@ -323,11 +324,11 @@ def make_list_bootstrap_tasks():
         #       for _ in range(10)
         #       for l in [randomList()] ]),
         Task("subtract index", arrow(tlist(tint),tlist(tint)),
-             [((l,), map(lambda (i,j): i-j, enumerate(l)))
+             [((l,), [i_j[0]-i_j[1] for i_j in enumerate(l)])
               for _ in range(10)
               for l in [randomList()] ]),
         Task("cons index", arrow(tlist(tlist(tint)),tlist(tlist(tint))),
-             [((l,), map(lambda (i,j): [i]+j, enumerate(l)))
+             [((l,), [[i_j1[0]]+i_j1[1] for i_j1 in enumerate(l)])
               for _ in range(10)
               for l in [randomListOfLists()] ])
         ]
@@ -382,25 +383,25 @@ def make_list_bootstrap_tasks():
         #       for _ in range(10)
         #       for l in [[ randint(-9,9) for _ in range(randint(4,7)) ]] ]),
         Task("map eq 1?", arrow(tlist(tint),tlist(tboolean)),
-             [((l,),map(lambda n: 1 == n,l))
+             [((l,),[1 == n for n in l])
               for _ in range(10)
               for l in [[ randint(0,3) for _ in range(randint(4,7)) ]] ]),
         Task("map double", arrow(tlist(tint),tlist(tint)),
-             [((l,),map(lambda n: n*2, l))
+             [((l,),[n*2 for n in l])
               for _ in range(10)
               for l in [randomList()] ]),
         Task("map decrement", arrow(tlist(tint),tlist(tint)),
-             [((l,),map(lambda n: n-1, l))
+             [((l,),[n-1 for n in l])
               for _ in range(10)
               for l in [randomList()] ]),
 
         Task("zip plus", arrow(tlist(tint),tlist(tint),tlist(tint)),
-             [((l1,l2),map(lambda x,y: x+y,l1,l2))
+             [((l1,l2),list(map(lambda x,y: x+y,l1,l2)))
               for _ in range(5)
               for l1 in [randomList()]
               for l2 in [[ randint(0,9) for _ in range(len(l1)) ]]]),
         Task("zip minus", arrow(tlist(tint),tlist(tint),tlist(tint)),
-             [((l1,l2),map(lambda x,y: x-y,l1,l2))
+             [((l1,l2),list(map(lambda x,y: x-y,l1,l2)))
               for _ in range(5)
               for l1 in [randomList()]
               for l2 in [[ randint(0,9) for _ in range(len(l1)) ]]]),
@@ -431,12 +432,12 @@ def make_list_bootstrap_tasks():
         #      [((n,), range(n,0,-1))
         #       for n in range(10) ]),
         Task("countdown", arrow(tint,tlist(tint)),
-             [((n,), range(n+1,1,-1))
+             [((n,), list(range(n+1,1,-1)))
               for n in range(10) ]),
         
         Task("suffixes", arrow(tlist(tint),tlist(tlist(tint))),
              [((l,), suffixes(l))
-              for _ in xrange(10)
+              for _ in range(10)
               for l in [randomList()] ]),
 
         # Task("repeat int", arrow(tint,tint,tlist(tint)),
@@ -485,7 +486,7 @@ def make_list_bootstrap_tasks():
 def bonusListProblems():
     # Taken from https://www.ijcai.org/Proceedings/75/Papers/037.pdf
     # These problems might be a lot easier if we do not use numbers
-    def randomList(lb = None, ub = None):
+    def randomList(lb=None, ub=None):
         if lb is None: lb = 2
         if ub is None: ub = 5
         return [ randint(0,5) for _ in range(randint(lb,ub)) ]
@@ -514,7 +515,7 @@ def bonusListProblems():
         
 def exportTasks():
     import sys
-    import cPickle as pickle
+    import pickle as pickle
 
     n_examples = 15
     if len(sys.argv) > 1:
@@ -531,6 +532,6 @@ def exportTasks():
 
 if __name__ == "__main__":
     for t in make_list_bootstrap_tasks():
-        print t.describe()
-        print 
+        print(t.describe())
+        print() 
     # exportTasks()

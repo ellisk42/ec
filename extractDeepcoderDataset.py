@@ -1,6 +1,6 @@
 import sys
 import json
-import cPickle as pickle
+import pickle as pickle
 
 from utilities import eprint, hashable
 from makeListTasks import list_features

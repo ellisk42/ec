@@ -10,30 +10,30 @@ def randomDelimiter():
     return random.choice(delimiters)
 
 def randomCharacter():
-    return chr(ord(random.choice(['a','A'])) + random.choice(range(26)))
+    return chr(ord(random.choice(['a','A'])) + random.randrange(26))
 def randomWord():
-    return "".join([randomCharacter() for _ in range(random.choice(range(3,6))) ])
+    return "".join([randomCharacter() for _ in range(random.randrange(3,6)) ])
 def randomWhiteWord():
     # Word with white space interspersed
-    w = "".join([randomCharacter() for _ in range(random.choice(range(4,7))) ])
+    w = "".join([randomCharacter() for _ in range(random.randrange(4,7)) ])
 
     # Put up to 2 random spaces into the word
-    numberOfSpaces = random.choice(range(3))
+    numberOfSpaces = random.randrange(3)
     for _ in range(numberOfSpaces):
-        j = random.choice(range(1,len(w)))
+        j = random.randrange(1,len(w))
         w = w[:j] + " " + w[j:]
 
     # Put up to 2 spaces onto the start and end
     while True:
-        starting = random.choice(range(0,3))
-        ending = random.choice(range(0,3))
+        starting = random.randrange(3)
+        ending = random.randrange(3)
         if starting > 0 or ending > 0:
             return " "*starting + w + " "*ending
 def randomWhiteWords(d):
     assert d != " "
-    return d.join(randomWhiteWord() for _ in range(random.choice(range(2,5))) )
+    return d.join(randomWhiteWord() for _ in range(random.randrange(2,5)) )
 def randomWords(d):
-    return d.join([randomWord() for _ in range(random.choice(range(2,5))) ])
+    return d.join([randomWord() for _ in range(random.randrange(2,5)) ])
 
 singleWordOperations = {"lowercase": lambda x: x.lower(),
                         "uppercase": lambda x: x.upper(),
@@ -74,7 +74,7 @@ def makeTasks():
             return [preprocess(z, t.arguments[0]) for z in x]
         return x
         
-    def problem(n, examples, needToTrain = False):
+    def problem(n, examples, needToTrain=False):
         inputType = guess_type([ x for x,y in examples ])
         outputType = guess_type([ y for x,y in examples])
         task = Task(n, arrow(inputType, outputType),
@@ -84,60 +84,60 @@ def makeTasks():
         if needToTrain: task.mustTrain = True
         problems.append(task)
     problem("Map strip",
-                [ (x, map(lambda z: z.strip(), x))
+                [ (x, [z.strip() for z in x])
                   for _ in range(NUMBEROFEXAMPLES)
-                  for x in [[randomWhiteWord() for _ in range(random.choice(range(1,5)))]]
-                ], needToTrain = True)
+                  for x in [[randomWhiteWord() for _ in range(random.randrange(1,5))]]
+                ], needToTrain=True)
     for d in delimiters:
         problem("Map "+"strip"+"after splitting on "+d,
-            [ (x, map(lambda z: z.strip(),x.split(d)))
+            [ (x, [z.strip() for z in x.split(d)])
               for _ in range(NUMBEROFEXAMPLES)
               for x in [randomWords(d)]
             ])
         problem("Map "+"strip"+" and then join with "+d,
-            [ (x, d.join(map(lambda z: z.strip(),x)))
+            [ (x, d.join([z.strip() for z in x]))
               for _ in range(NUMBEROFEXAMPLES)
-              for x in [[randomWord() for _ in range(random.choice(range(1,5)))]]
+              for x in [[randomWord() for _ in range(random.randrange(1,5))]]
             ])
 
-    for n,f in singleWordOperations.iteritems():
+    for n,f in singleWordOperations.items():
         problem("Map "+n,
-                [ (x, map(f,x))
+                [ (x, list(map(f,x)))
                   for _ in range(NUMBEROFEXAMPLES)
-                  for x in [[randomWord() for _ in range(random.choice(range(1,5)))]]
-                ], needToTrain = True)
+                  for x in [[randomWord() for _ in range(random.randrange(1,5))]]
+                ], needToTrain=True)
         for d in delimiters:
             problem("Map "+n+"after splitting on "+d,
-                [ (x, map(f,x.split(d)))
+                [ (x, list(map(f,x.split(d))))
                   for _ in range(NUMBEROFEXAMPLES)
                   for x in [randomWords(d)]
                 ])
             problem("Map "+n+" and then join with "+d,
                 [ (x, d.join(map(f,x)))
                   for _ in range(NUMBEROFEXAMPLES)
-                  for x in [[randomWord() for _ in range(random.choice(range(1,5)))]]
+                  for x in [[randomWord() for _ in range(random.randrange(1,5))]]
                 ])
     
-    for n,f in singleWordOperations.iteritems():
+    for n,f in singleWordOperations.items():
         importantOperations = {"double","capitalize","first character","drop first character"}
         for j in range(2 if n in importantOperations else 1):
             np = n
             if j > 0:
                 np = n + " (%s)"%('I'*j)
-            problem(np, [(x,f(x)) for _ in range(NUMBEROFEXAMPLES) for x in [randomWord()] ], needToTrain = True)
+            problem(np, [(x,f(x)) for _ in range(NUMBEROFEXAMPLES) for x in [randomWord()] ], needToTrain=True)
      
     problem("strip", [(x, x.strip())
                       for _ in range(NUMBEROFEXAMPLES)
                       for x in [randomWhiteWord()] ])
-    for n,f in singleWordOperations.iteritems():
+    for n,f in singleWordOperations.items():
         problem(n+".strip", [(x,f(x.strip()))
                              for _ in range(NUMBEROFEXAMPLES)
                              for x in [randomWhiteWord()] ])
     [problem(n1 + "." + n2, 
              [(x,f1(f2(x))) for _ in range(NUMBEROFEXAMPLES) for x in [randomWord()] ],
-             needToTrain = True)
-     for n1,f1 in singleWordOperations.iteritems()
-     for n2,f2 in singleWordOperations.iteritems()
+             needToTrain=True)
+     for n1,f1 in singleWordOperations.items()
+     for n2,f2 in singleWordOperations.items()
      if (n1,n2) in compatibleCompositions
     ]
     [problem("Replace delimiter '%s' w/ '%s'"%(d1,d2),
@@ -154,7 +154,7 @@ def makeTasks():
              [(x, d2.join(map(f,x.split(d1))))
               for _ in range(NUMBEROFEXAMPLES)
               for x in [randomWords(d1)] ])
-     for n,f in singleWordOperations.iteritems()
+     for n,f in singleWordOperations.items()
      for d1 in delimiters
      for d2 in delimiters
      if d1 != d2 and \
@@ -163,14 +163,14 @@ def makeTasks():
         if d1 == ' ': continue
         for d2 in delimiters:
             problem("Apply strip delimited by '%s' to input delimited by '%s'"%(d1,d2),
-                    [(x,d2.join(map(lambda z: z.strip(),x.split(d1))))
+                    [(x,d2.join([z.strip() for z in x.split(d1)]))
                      for _ in range(NUMBEROFEXAMPLES)
                      for x in [randomWhiteWords(d1)] ])
     [problem("Apply %s to input delimited by '%s'"%(n,d),
              [(x, "".join(map(f,x.split(d))))
               for _ in range(NUMBEROFEXAMPLES)
               for x in [randomWords(d)] ])
-     for n,f in singleWordOperations.iteritems()
+     for n,f in singleWordOperations.items()
      for d in delimiters
      if n not in ['lowercase','uppercase']
      ]
@@ -228,7 +228,7 @@ def makeTasks():
                                  for _ in range(NUMBEROFEXAMPLES)
                                  for y in [randomWord()]
                                  for x in [randomWord() + d1 + y + d2 + randomWord()]])
-                      for n,f in singleWordOperations.iteritems()
+                      for n,f in singleWordOperations.items()
                         for d1 in delimiters
                         for d2 in delimiters]
     for d1 in delimiters:
@@ -292,8 +292,8 @@ def loadPBETasks(directory="PBE_Strings_Track"):
                      [(tuple(constants + xs),y)
                      for xs,y in examples ])
         tasks.append(task)
-        print name
-        print "\n".join(map(str,examples[:3]))
+        print(name)
+        print("\n".join(map(str,examples[:3])))
         cheatingTasks.append(cheat)
 
     return tasks, cheatingTasks
@@ -322,16 +322,16 @@ if __name__ == "__main__":
     else:
         as_tex = len(sys.argv) > 1 and "tex" in sys.argv[1]
         for t in tasks:
-            print t.name
-            print t.request
+            print(t.name)
+            print(t.request)
             if as_tex:
-                print """\\begin{tabular}{ll}
+                print("""\\begin{tabular}{ll}
                 \\toprule Input&Output\\\\\\midrule
         %s
         \\\\\\bottomrule
-        \\end{tabular}"""%(" \\\\\n ".join( x[0] + " & " + y for x,y in t.examples ))
+        \\end{tabular}"""%(" \\\\\n ".join( x[0] + " & " + y for x,y in t.examples )))
             else:
                 for x,y in t.examples:
-                    print x[0],'\t',y
-            print
-        print len(tasks),"tasks"
+                    print(x[0],'\t',y)
+            print()
+        print(len(tasks),"tasks")

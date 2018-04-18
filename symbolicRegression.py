@@ -26,9 +26,9 @@ tasks = [ ((a,b,c,d,e),
                                                                         sign(e),abs(e)),
                               arrow(tint,tint),
                               [((x,),a*x*x*x*x + b*x*x*x + c*x*x + d*x + e) for x in EXAMPLES ],
-                              loss = squaredErrorLoss,
-                              features = [float(a*x*x*x*x + b*x*x*x + c*x*x + d*x + e) for x in EXAMPLES ],
-                              likelihoodThreshold = -0.05))
+                              loss=squaredErrorLoss,
+                              features=[float(a*x*x*x*x + b*x*x*x + c*x*x + d*x + e) for x in EXAMPLES ],
+                              likelihoodThreshold=-0.05))
           for a in COEFFICIENTS
           for b in COEFFICIENTS
           for c in COEFFICIENTS
@@ -56,7 +56,7 @@ RandomParameterization.single = RandomParameterization()
 
 class DeepFeatureExtractor(MLPFeatureExtractor):
     def __init__(self, tasks):
-        super(DeepFeatureExtractor, self).__init__(tasks, H = 16)
+        super(DeepFeatureExtractor, self).__init__(tasks, H=16)
     def _featuresOfProgram(self, program, tp):
         e = program.visit(RandomParameterization.single)
         f = e.evaluate([])
@@ -109,23 +109,23 @@ if __name__ == "__main__":
     if False:
         with timing("best first enumeration"): baseGrammar.bestFirstEnumeration(arrow(tint,tint))
         with timing("depth first search"):
-            print len(list(enumeration(baseGrammar, Context.EMPTY, [], arrow(tint,tint),
-                                       maximumDepth = 99,
-                                       upperBound = 13,
-                                       lowerBound = 0)))
+            print(len(list(enumeration(baseGrammar, Context.EMPTY, [], arrow(tint,tint),
+                                       maximumDepth=99,
+                                       upperBound=13,
+                                       lowerBound=0))))
         assert False
     
     explorationCompression(baseGrammar, train,
-                           outputPrefix = "experimentOutputs/regression",
-                           evaluationTimeout = None,
-                           testingTasks = test,
-                           **commandlineArguments(frontierSize = 10**2,
-                                                  iterations = 10,
-                                                  CPUs = numberOfCPUs(),
-                                                  structurePenalty = 1.,
-                                                  helmholtzRatio = 0.5,
-                                                  a = 1,#arity
-                                                  maximumFrontier = 1000,
-                                                  topK = 2,
-                                                  featureExtractor = DeepFeatureExtractor,
-                                                  pseudoCounts = 10.0))
+                           outputPrefix="experimentOutputs/regression",
+                           evaluationTimeout=None,
+                           testingTasks=test,
+                           **commandlineArguments(frontierSize=10**2,
+                                                  iterations=10,
+                                                  CPUs=numberOfCPUs(),
+                                                  structurePenalty=1.,
+                                                  helmholtzRatio=0.5,
+                                                  a=1,#arity
+                                                  maximumFrontier=1000,
+                                                  topK=2,
+                                                  featureExtractor=DeepFeatureExtractor,
+                                                  pseudoCounts=10.0))

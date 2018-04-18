@@ -39,7 +39,7 @@ def pretty_string(shape, size):
 
 
 def pretty_print(shape, size):
-    print (pretty_string(shape, size))
+    print((pretty_string(shape, size)))
 
 
 def allTasks():
@@ -75,8 +75,8 @@ if __name__ == "__main__":
     allTasks()
     tasks = makeTasks('all')
     for t in tasks:
-        print(t.name)
-        print(t.request)
+        print((t.name))
+        print((t.request))
         x, y = t.examples[0]
         pretty_print(y, 64)
-        print
+        print()

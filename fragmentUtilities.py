@@ -54,8 +54,8 @@ class Matcher(object):
         # This is because everything has to be in eta-longform
         if numberOfArguments > 0:
             expression = expression.shift(numberOfArguments)
-            for j in reversed(xrange(numberOfArguments)): expression = Application(expression, Index(j))
-            for _ in xrange(numberOfArguments): expression = Abstraction(expression)
+            for j in reversed(range(numberOfArguments)): expression = Application(expression, Index(j))
+            for _ in range(numberOfArguments): expression = Abstraction(expression)
 
         # Added to the bindings
         if i in self.variableBindings:
@@ -122,7 +122,7 @@ class CanonicalVisitor(object):
         self.numberOfAbstractions += 1
         return Index(self.numberOfAbstractions - 1 + d)
 
-def fragmentSize(f, boundVariableCost = 0.1, freeVariableCost = 0.01):
+def fragmentSize(f, boundVariableCost=0.1, freeVariableCost=0.01):
     freeVariables = 0
     leaves = 0
     boundVariables = 0
@@ -140,7 +140,7 @@ def defragment(expression):
 
     expression = canonicalFragment(expression)
 
-    for _ in xrange(expression.numberOfFreeVariables):
+    for _ in range(expression.numberOfFreeVariables):
         expression = Abstraction(expression)
 
     return Invented(expression)
@@ -179,10 +179,10 @@ class RewriteFragments(object):
     @staticmethod
     def rewriteFrontier(frontier, fragment):
         worker = RewriteFragments(fragment)
-        return Frontier([ FrontierEntry(program = worker.rewrite(e.program),
-                                        logLikelihood = e.logLikelihood,
-                                        logPrior = e.logPrior,
-                                        logPosterior = e.logPosterior)
+        return Frontier([ FrontierEntry(program=worker.rewrite(e.program),
+                                        logLikelihood=e.logLikelihood,
+                                        logPrior=e.logPrior,
+                                        logPosterior=e.logPosterior)
                           for e in frontier ],
                         task = frontier.task)
         
@@ -194,7 +194,7 @@ def proposeFragmentsFromFragment(f):
     closedSubtrees = Counter(subtree for _, subtree in f.walk()
                              if not isinstance(subtree, Index) and subtree.closed)
     del closedSubtrees[f]
-    for subtree, freq in closedSubtrees.iteritems():
+    for subtree, freq in closedSubtrees.items():
         if freq < 2: continue
         yield canonicalFragment(f.substitute(subtree, Index(freeVariables)))
 
@@ -246,7 +246,7 @@ def violatesLaziness(fragment):
 
 def proposeFragmentsFromProgram(p,arity):
 
-    def fragment(expression,a, toplevel = True):
+    def fragment(expression,a, toplevel=True):
         """Generates fragments that unify with expression"""
         
         if a == 1:
@@ -258,12 +258,12 @@ def proposeFragmentsFromProgram(p,arity):
         if isinstance(expression, Abstraction):
             # Symmetry breaking: (\x \y \z ... f(x,y,z,...)) defragments to be the same as f(x,y,z,...)
             if not toplevel:
-                for b in fragment(expression.body,a,toplevel = False):
+                for b in fragment(expression.body,a,toplevel=False):
                     yield Abstraction(b)
         elif isinstance(expression, Application):
-            for fa in xrange(a + 1):
-                for f in fragment(expression.f,fa,toplevel = False):
-                    for x in fragment(expression.x,a - fa,toplevel = False):
+            for fa in range(a + 1):
+                for f in fragment(expression.f,fa,toplevel=False):
+                    for x in fragment(expression.x,a - fa,toplevel=False):
                         yield Application(f,x)
         else:
             assert isinstance(expression, (Invented,Primitive,Index))
@@ -288,7 +288,7 @@ def proposeFragmentsFromProgram(p,arity):
         else:
             assert isinstance(expression, (Invented,Primitive,Index))
 
-    return { canonicalFragment(f) for b in xrange(arity + 1) for f in fragments(p,b) if nontrivial(f) }
+    return { canonicalFragment(f) for b in range(arity + 1) for f in fragments(p,b) if nontrivial(f) }
 
 def proposeFragmentsFromFrontiers(frontiers, a, CPUs=1):
     fragmentsFromEachFrontier = parallelMap(CPUs, lambda frontier: \
@@ -299,7 +299,7 @@ def proposeFragmentsFromFrontiers(frontiers, a, CPUs=1):
                                             frontiers)
     allFragments = Counter(f for frontierFragments in fragmentsFromEachFrontier
                            for f in frontierFragments)
-    return [ fragment for fragment, frequency in allFragments.iteritems() 
+    return [ fragment for fragment, frequency in allFragments.items() 
              if frequency >= 2 and fragment.wellTyped() and nontrivial(fragment) ]
 
 

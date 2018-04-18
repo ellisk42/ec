@@ -13,27 +13,27 @@ tpositive = baseType("positive")
 
 def makeTrainingData(request, law,
                      # Number of examples
-                     N = 10,
+                     N=10,
                      # Vector dimensionality
-                     D = 2,
+                     D=2,
                      # Maximum absolute value of a random number
-                     S = 1):
+                     S=1):
     from random import random, randint
 
     def sampleArgument(a,listLength):
         if a.name == "real": return random()*S*2 - S
         elif a.name == "positive": return random()*S
         elif a.name == "vector":
-            return [random() for _ in xrange(D) ]
+            return [random() for _ in range(D) ]
         elif a.name == "list":
-            return [sampleArgument(a.arguments[0], listLength) for _ in xrange(listLength) ]
+            return [sampleArgument(a.arguments[0], listLength) for _ in range(listLength) ]
         else:
             assert False, "unknown argument tp %s"%a
         
     
     arguments = request.functionArguments()
     e = []
-    for _ in xrange(N):
+    for _ in range(N):
         # Length of any requested lists
         l = randint(1,4)
 
@@ -45,11 +45,11 @@ def makeTrainingData(request, law,
 
 def makeTask(name, request, law,
              # Number of examples
-             N = 20,
+             N=20,
              # Vector dimensionality
-             D = 3,
+             D=3,
              # Maximum absolute value of a random number
-             S = 5):
+             S=5):
     e = makeTrainingData(request, law,
                          N=N,D=D,S=S)
     def genericType(t):
@@ -64,10 +64,10 @@ def makeTask(name, request, law,
             assert False, "could not make type generic: %s"%t
 
     return DifferentiableTask(name, genericType(request), e,
-                              BIC = 10.,
+                              BIC=10.,
                               likelihoodThreshold=-0.1,
                               maxParameters=1,
-                              loss = squaredErrorLoss)
+                              loss=squaredErrorLoss)
         
 def norm(v):
     return sum(x*x for x in v)**0.5
@@ -141,58 +141,58 @@ tasks = [
     makeTask("Hook's law",
              arrow(tpositive,tpositive),
              lambda x: -2.*x*x,
-             N = 20,
-             S = 5),
+             N=20,
+             S=5),
     makeTask("Ohm's law",
              arrow(tpositive,tpositive,tpositive),
              lambda r,i: r*i,
-             N = 20,
-             S = 5),
+             N=20,
+             S=5),
     makeTask("power/current/voltage relation",
              arrow(tpositive,tpositive,tpositive),
              lambda i,v: v*i,
-             N = 20,
-             S = 5),
+             N=20,
+             S=5),
     makeTask("gravitational potential energy",
              arrow(tpositive,treal,treal),
              lambda m,h: 9.8*m*h,
-             N = 20,
-             S = 5),
+             N=20,
+             S=5),
     makeTask("time/frequency relation",
              arrow(tpositive,tpositive),
              lambda t: 1./t,
-             N = 20,
-             S = 5),
+             N=20,
+             S=5),
     makeTask("Plank relation",
              arrow(tpositive,tpositive),
              lambda p: 4.7/p,
-             N = 20,
-             S = 5),
+             N=20,
+             S=5),
     makeTask("capacitance from charge and voltage",
              arrow(tpositive,tpositive,tpositive),
              lambda v,q: v/q,
-             N = 20,
-             S = 5),    
+             N=20,
+             S=5),    
     makeTask("series resistors",
              arrow(tlist(tpositive),tpositive),
              lambda cs: sum(cs),
-             N = 20,
-             S = 5),
+             N=20,
+             S=5),
     makeTask("parallel resistors",
              arrow(tlist(tpositive),tpositive),
              lambda cs: sum(c**(-1) for c in cs)**(-1),
-             N = 20,
-             S = 5),
+             N=20,
+             S=5),
     makeTask("parallel capacitors",
              arrow(tlist(tpositive),tpositive),
              lambda cs: sum(cs),
-             N = 20,
-             S = 5),
+             N=20,
+             S=5),
     makeTask("series capacitors",
              arrow(tlist(tpositive),tpositive),
              lambda cs: sum(c**(-1) for c in cs)**(-1),
-             N = 20,
-             S = 5),
+             N=20,
+             S=5),
 ]
 
 if __name__ == "__main__":
@@ -202,16 +202,16 @@ if __name__ == "__main__":
     eprint("Got %d equation discovery tasks..."%len(tasks))
     
     explorationCompression(baseGrammar, tasks,
-                           outputPrefix = "experimentOutputs/scientificLaws",
-                           evaluationTimeout = 0.1,
-                           testingTasks = [],
+                           outputPrefix="experimentOutputs/scientificLaws",
+                           evaluationTimeout=0.1,
+                           testingTasks=[],
                            **commandlineArguments(
-                               iterations = 10,
-                               CPUs = numberOfCPUs(),
-                               structurePenalty = 1.,
-                               helmholtzRatio = 0.5,
-                               a = 3,
-                               maximumFrontier = 10000,
-                               topK = 2,
-                               featureExtractor = None,
-                               pseudoCounts = 10.0))
+                               iterations=10,
+                               CPUs=numberOfCPUs(),
+                               structurePenalty=1.,
+                               helmholtzRatio=0.5,
+                               a=3,
+                               maximumFrontier=10000,
+                               topK=2,
+                               featureExtractor=None,
+                               pseudoCounts=10.0))

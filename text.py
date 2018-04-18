@@ -30,10 +30,10 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
                    for (x,),y in self.tokenize(t.examples)
                    for c in x + y }
                 
-        super(LearnedFeatureExtractor, self).__init__(lexicon = list(lexicon),
-                                                      H = 64,
-                                                      tasks = tasks,
-                                                      bidirectional = True)
+        super(LearnedFeatureExtractor, self).__init__(lexicon=list(lexicon),
+                                                      H=64,
+                                                      tasks=tasks,
+                                                      bidirectional=True)
 
 
 if __name__ == "__main__":
@@ -46,18 +46,18 @@ if __name__ == "__main__":
     baseGrammar = Grammar.uniform(primitives)
     
     explorationCompression(baseGrammar, train,
-                           testingTasks = test,
-                           outputPrefix = "experimentOutputs/text",
-                           evaluationTimeout = 0.0005,
+                           testingTasks=test,
+                           outputPrefix="experimentOutputs/text",
+                           evaluationTimeout=0.0005,
                            **commandlineArguments(
-                               steps = 500,
-                               iterations = 10,
-                               helmholtzRatio = 0.5,
-                               topK = 2,
-                               maximumFrontier = 2,
-                               structurePenalty = 10.,
-                               a = 3,
-                               activation = "relu",
-                               CPUs = numberOfCPUs(),
-                               featureExtractor = LearnedFeatureExtractor,
-                               pseudoCounts = 10.0))
+                               steps=500,
+                               iterations=10,
+                               helmholtzRatio=0.5,
+                               topK=2,
+                               maximumFrontier=2,
+                               structurePenalty=10.,
+                               a=3,
+                               activation="relu",
+                               CPUs=numberOfCPUs(),
+                               featureExtractor=LearnedFeatureExtractor,
+                               pseudoCounts=10.0))

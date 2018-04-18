@@ -108,7 +108,9 @@ class TowerWorld(object):
             x1 = min(xs)
             intervals.append((x1,x2))
 
-        def overlap((small1,large1),(small2,large2)):
+        def overlap(xxx_todo_changeme, xxx_todo_changeme1):
+            (small1,large1) = xxx_todo_changeme
+            (small2,large2) = xxx_todo_changeme1
             if large1 < small2: return False
             if large2 < small1: return False
             return True

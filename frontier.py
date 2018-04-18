@@ -2,7 +2,7 @@ from utilities import *
 from task import Task
 
 class FrontierEntry(object):
-    def __init__(self, program, _ = None, logPrior = None, logLikelihood = None, logPosterior = None):
+    def __init__(self, program, _=None, logPrior=None, logLikelihood=None, logPosterior=None):
         self.logPosterior = logPrior + logLikelihood if logPosterior is None else logPosterior
         self.program = program
         self.logPrior = logPrior
@@ -40,12 +40,12 @@ class Frontier(object):
 
     def normalize(self):
         z = self.marginalLikelihood()
-        newEntries = [ FrontierEntry(program = e.program,
-                                     logPrior = e.logPrior,
-                                     logLikelihood = e.logLikelihood,
-                                     logPosterior = e.logPrior + e.logLikelihood - z)
+        newEntries = [ FrontierEntry(program=e.program,
+                                     logPrior=e.logPrior,
+                                     logLikelihood=e.logLikelihood,
+                                     logPosterior=e.logPrior + e.logLikelihood - z)
                           for e in self ]
-        newEntries.sort(key = lambda e: e.logPosterior, reverse=True)
+        newEntries.sort(key=lambda e: e.logPosterior, reverse=True)
         return Frontier(newEntries,
                         self.task)
         
@@ -56,20 +56,20 @@ class Frontier(object):
     def topK(self,k):
         if k <= 0: return self
         newEntries = sorted(self.entries,
-                            key = lambda e: (-e.logPosterior, str(e.program)))
+                            key=lambda e: (-e.logPosterior, str(e.program)))
         return Frontier(newEntries[:k], self.task)
 
     @property
     def bestPosterior(self):
         return min(self.entries,
-                   key = lambda e: (-e.logPosterior, str(e.program)))
+                   key=lambda e: (-e.logPosterior, str(e.program)))
 
     @property
     def empty(self): return self.entries == []
 
     @staticmethod
     def makeEmpty(task):
-        return Frontier([], task = task)
+        return Frontier([], task=task)
 
     def summarize(self):
         if self.empty: return "MISS " + self.task.name
@@ -106,9 +106,9 @@ class Frontier(object):
                         eprint()
                     if abs(e1.logLikelihood - e2.logLikelihood) > tolerance:
                         foundDifference = True
-                        e1 = FrontierEntry(program = e1.program,
-                                           logLikelihood = (e1.logLikelihood + e2.logLikelihood)/2,
-                                           logPrior = e1.logPrior)
+                        e1 = FrontierEntry(program=e1.program,
+                                           logLikelihood=(e1.logLikelihood + e2.logLikelihood)/2,
+                                           logPrior=e1.logPrior)
             else:
                 e1 = y[p]
             union.append(e1)

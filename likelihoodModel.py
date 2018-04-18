@@ -64,7 +64,7 @@ try:
             optimizer = torch.optim.Adam(self.parameters())
             with timing("Trained discriminator"):
                 losses = []
-                for i in xrange(steps):
+                for i in range(steps):
                     self.zero_grad()
                     if random.random() <= self.trainingSuccessRatio:
                         # success

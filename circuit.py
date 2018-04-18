@@ -9,7 +9,7 @@ from recognition import *
 import itertools
 import random
 
-NUMBEROFTASKS = 10**3 / 4
+NUMBEROFTASKS = 10**3 // 4
 inputDistribution = [#(1,1),
                      #(2,2),
                      (3,3),
@@ -46,7 +46,7 @@ GATEFUN = {'NOT': lambda x: not x,
            'm4': lambda a,b,c,d,x,y: [ [a,b][int(x)], [c,d][int(x)] ][int(y)]}
 
 class Circuit(object):
-    def __init__(self, _ = None, numberOfInputs = None, numberOfGates = None):
+    def __init__(self, _=None, numberOfInputs=None, numberOfGates=None):
         assert numberOfInputs != None
         assert numberOfGates != None
 
@@ -56,26 +56,20 @@ class Circuit(object):
         while not self.isConnected():
             self.operations = []
             while len(self.operations) < numberOfGates:
-                validInputs = range(-numberOfInputs, len(self.operations))
                 gate = sampleDistribution(operationDistribution)
-                if 'm' in gate:
-                    if self.numberOfInputs < INPUTSPERGATE[gate]: continue
-                    arguments = list(np.random.choice(validInputs,
-                                                      size = INPUTSPERGATE[gate],
-                                                      replace = False))
-                else:
-                    arguments = list(np.random.choice(validInputs,
-                                                      size = INPUTSPERGATE[gate],
-                                                      replace = False))
+                if 'm' in gate and self.numberOfInputs < INPUTSPERGATE[gate]:
+                    continue
+                validInputs = range(-numberOfInputs, len(self.operations))
+                arguments = random.sample(validInputs, INPUTSPERGATE[gate])
                 self.operations.append(tuple([gate] + arguments))
-            self.name = "%d inputs ; "%self.numberOfInputs + \
-                        " ; ".join("%s(%s)"%(o[0],",".join(map(str,o[1:])))
-                                   for o in self.operations )
+            description = " ; ".join(f"{o[0]}({','.join(map(str,o[1:]))})"
+                                     for o in self.operations)
+            self.name = f"{self.numberOfInputs} inputs ; {description}"
 
         xs = list(itertools.product(*[ [False,True] for _ in range(numberOfInputs) ]))
         
         ys = [ self.evaluate(x) for x in xs ]
-        self.examples = zip(xs,ys)
+        self.examples = list(zip(xs,ys))
 
         # the signature is invariant to the construction of the circuit and only depends on its semantics
         self.signature = tuple(ys)
@@ -85,8 +79,8 @@ class Circuit(object):
 
     def task(self):
         request = arrow(*[tbool for _ in range(self.numberOfInputs + 1) ])
-        features = Circuit.extractFeatures(list(self.signature))
-        return Task(self.name, request, self.examples, features = features, cache = True)
+        features = Circuit.extractFeatures(self.signature)
+        return Task(self.name, request, self.examples, features=features, cache=True)
     @staticmethod
     def extractFeatures(ys):
         features = [ float(int(y)) for y in ys ]
@@ -115,17 +109,17 @@ class Circuit(object):
 class FeatureExtractor(HandCodedFeatureExtractor):
     def _featuresOfProgram(program, t):
         numberOfInputs = len(t.functionArguments())
-        xs = list(itertools.product(*[ [False,True] for _ in range(numberOfInputs) ]))
+        xs = itertools.product(*[ [False,True] for _ in range(numberOfInputs) ])
         f = program.evaluate([])
         ys = [ program.runWithArguments(x) for x in xs ]
         return Circuit.extractFeatures(ys)
 
 class DeepFeatureExtractor(MLPFeatureExtractor):
     def __init__(self, tasks):
-        super(DeepFeatureExtractor, self).__init__(tasks, H = 16)
+        super(DeepFeatureExtractor, self).__init__(tasks, H=16)
     def _featuresOfProgram(self, program, tp):
         numberOfInputs = len(tp.functionArguments())
-        xs = list(itertools.product(*[ [False,True] for _ in range(numberOfInputs) ]))
+        xs = itertools.product(*[ [False,True] for _ in range(numberOfInputs) ])
         ys = [ program.runWithArguments(x) for x in xs ]
         return Circuit.extractFeatures(ys)
         
@@ -137,8 +131,8 @@ if __name__ == "__main__":
     while len(circuits) < NUMBEROFTASKS*2:
         inputs = sampleDistribution(inputDistribution)
         gates = sampleDistribution(gateDistribution)
-        newTask = Circuit(numberOfInputs = inputs,
-                          numberOfGates = gates)
+        newTask = Circuit(numberOfInputs=inputs,
+                          numberOfGates=gates)
         if newTask not in circuits:
             circuits.append(newTask)
     eprint("Sampled %d circuits with %d unique functions"%(len(circuits),
@@ -147,20 +141,20 @@ if __name__ == "__main__":
     testing = [t.task() for t in circuits[NUMBEROFTASKS:] ]
 
     baseGrammar = Grammar.uniform(primitives)
-    explorationCompression(baseGrammar, tasks,
-                           testingTasks = testing,
-                           outputPrefix = "experimentOutputs/circuit",
-                           evaluationTimeout = None,
-                           **commandlineArguments(iterations = 10,
-                                                  aic = 1.,
-                                                  structurePenalty = 1,
-                                                  CPUs = numberOfCPUs(),
-                                                  featureExtractor = DeepFeatureExtractor,
-                                                  topK = 2,
-                                                  maximumFrontier = 100,
-                                                  helmholtzRatio = 0.5,
-                                                  a = 2,
-                                                  activation = "relu",
-                                                  pseudoCounts = 5.))
+    explorationCompression(baseGrammar, tasks[:30],
+                           testingTasks=testing,
+                           outputPrefix="experimentOutputs/circuit",
+                           evaluationTimeout=None,
+                           **commandlineArguments(iterations=10,
+                                                  aic=1.,
+                                                  structurePenalty=1,
+                                                  CPUs=numberOfCPUs(),
+                                                  featureExtractor=DeepFeatureExtractor,
+                                                  topK=2,
+                                                  maximumFrontier=100,
+                                                  helmholtzRatio=0.5,
+                                                  a=2,
+                                                  activation="relu",
+                                                  pseudoCounts=5.))
     
     

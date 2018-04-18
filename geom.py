@@ -49,7 +49,7 @@ class GeomFeatureCNN(nn.Module):
 
     def forward(self, v):
         x, y = 64, 64  # Should not hardocode these.
-        floatOnlyTask = map(float, v)
+        floatOnlyTask = list(map(float, v))
         reshaped = [floatOnlyTask[i:i+x]
                     for i in range(0, len(floatOnlyTask), y)]
         variabled = variable(reshaped).float()
@@ -74,7 +74,7 @@ class GeomFeatureCNN(nn.Module):
                                               str(self.count) +
                                               ".png",
                                              p.evaluate([])]).split("\n")
-            shape = map(float, output[0].split(','))
+            shape = list(map(float, output[0].split(',')))
             bigShape = map(float, output[1].split(','))
         except OSError as exc:
             raise exc
@@ -155,7 +155,7 @@ if __name__ == "__main__":
             except IOError:
                 eprint("Couldn't grab frontier from " + reducing)
 
-    primitives = OrderedDict((x, True) for x in primitives).keys()
+    primitives = list(OrderedDict((x, True) for x in primitives).keys())
     baseGrammar = Grammar.uniform(primitives)
 
     r = explorationCompression(baseGrammar, train,

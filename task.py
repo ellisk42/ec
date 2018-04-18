@@ -11,7 +11,7 @@ EVALUATIONTABLE = {}
 
 
 class Task(object):
-    def __init__(self, name, request, examples, features = None, cache = False):
+    def __init__(self, name, request, examples, features=None, cache=False):
         '''request: the type of this task
         examples: list of tuples of (input, output). input should be a tuple, with one entry for each argument
         cache: should program evaluations be cached?
@@ -99,29 +99,29 @@ class Task(object):
         
 
 class DifferentiableTask(Task):
-    def __init__(self, name, request, examples, _ = None,
-                 features = None, BIC = 1., loss = None, likelihoodThreshold = None, maxParameters=None):
+    def __init__(self, name, request, examples, _=None,
+                 features=None, BIC=1., loss=None, likelihoodThreshold=None, maxParameters=None):
         assert loss is not None
         self.maxParameters = maxParameters
         self.loss = loss
         self.BIC = BIC
         self.likelihoodThreshold = likelihoodThreshold
         
-        super(DifferentiableTask,self).__init__(name, request, examples, features, cache = False)
+        super(DifferentiableTask,self).__init__(name, request, examples, features, cache=False)
         
-    def logLikelihood(self,e,timeout = None):
+    def logLikelihood(self, e, timeout=None):
         assert timeout == None, "timeout not implemented for differentiable tasks, but not for any good reason."
         e, parameters = PlaceholderVisitor.execute(e)
         if self.maxParameters is not None and len(parameters) > self.maxParameters:
             return NEGATIVEINFINITY
         f = e.evaluate([])
 
-        loss = sum( self.loss(self.predict(f, map(float,x)), float(y))
+        loss = sum( self.loss(self.predict(f, list(map(float,x))), float(y))
                     for x,y in self.examples ) / float(len(self.examples))
         if isinstance(loss, DN):
             try:
-                loss = loss.resilientBackPropagation(parameters, lr = 0.05, steps = 500,
-                                                     update = None)
+                loss = loss.resilientBackPropagation(parameters, lr=0.05, steps=500,
+                                                     update=None)
             except InvalidLoss:
                 loss = POSITIVEINFINITY
             

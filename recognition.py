@@ -48,9 +48,9 @@ class DRNN(nn.Module):
 
         self.encoder = nn.Embedding(len(grammar) + 1, hidden)
 
-        self.siblingPrediction = nn.Linear(hidden, hidden, bias = False)
-        self.parentPrediction = nn.Linear(hidden, hidden, bias = False)
-        self.prediction = nn.Linear(hidden, len(grammar) + 1, bias = False)
+        self.siblingPrediction = nn.Linear(hidden, hidden, bias=False)
+        self.parentPrediction = nn.Linear(hidden, hidden, bias=False)
+        self.prediction = nn.Linear(hidden, len(grammar) + 1, bias=False)
 
         # todo: do I include the cell state?
         self.defaultSibling = variable(torch.Tensor(hidden).float()).view(1,1,-1)
@@ -65,7 +65,7 @@ class DRNN(nn.Module):
         if p.isIndex: p = Index(0)
         return variable([self.production2index[p]])
 
-    def predictionFromHidden(self, parent, sibling, alternatives = None):
+    def predictionFromHidden(self, parent, sibling, alternatives=None):
         """Takes the parent and sibling hidden vectors, optionally with a set of alternatives; returns logits"""
         parent = parent[0] if parent else self.defaultParent
         sibling = sibling[0] if sibling else self.defaultSibling
@@ -107,9 +107,9 @@ class DRNN(nn.Module):
                                                 parent = parent)
         return loss
 
-    def _programLoss(self, request, program, _ = None,
-                    parent = None, sibling = None,
-                    context = None, environment = []):
+    def _programLoss(self, request, program, _=None,
+                    parent=None, sibling=None,
+                    context=None, environment=[]):
         """Returns context, root, loss"""
         if context is None: context = Context.EMPTY
 
@@ -117,17 +117,17 @@ class DRNN(nn.Module):
             assert isinstance(program,Abstraction)
             return self._programLoss(request.arguments[1],
                                     program.body,
-                                    context = context,
-                                    environment = [request.arguments[0]] + environment,
-                                    parent = parent, sibling = sibling)
+                                    context=context,
+                                    environment=[request.arguments[0]] + environment,
+                                    parent=parent, sibling=sibling)
 
         f,xs = program.applicationParse()
         candidates = self.grammar.buildCandidates(request, context, environment,
-                                                  normalize = False,
-                                                  returnProbabilities = False,
-                                                  returnTable = True)
+                                                  normalize=False,
+                                                  returnProbabilities=False,
+                                                  returnTable=True)
         assert f in candidates
-        alternatives = candidates.keys()
+        alternatives = list(candidates.keys())
 
         _,tp,context = candidates[f]
 
@@ -135,7 +135,7 @@ class DRNN(nn.Module):
         assert len(xs) == len(argumentTypes)
 
         L = self.singlePredictionLoss(self.predictionFromHidden(parent, sibling,
-                                                                alternatives = alternatives),
+                                                                alternatives=alternatives),
                                       f)
 
         # Update ancestral rnn, which will be passed to the children
@@ -147,8 +147,8 @@ class DRNN(nn.Module):
         for argumentType, argument in zip(argumentTypes, xs):
             argumentType = argumentType.apply(context)
             context, aroot, aL = self._programLoss(argumentType, argument,
-                                                  context = context, environment = environment,
-                                                  parent = parent, sibling = sibling)
+                                                  context=context, environment=environment,
+                                                  parent=parent, sibling=sibling)
             L += aL
             sibling = self.updateSibling(sibling, aroot)
 
@@ -158,30 +158,30 @@ class DRNN(nn.Module):
 
     def sample(self, task):
         context, root, p = self._sample(task.request,
-                                        parent = self.initialParent(task))
+                                        parent=self.initialParent(task))
         return p
 
-    def _sample(self, request, _ = None,
-               parent = None, sibling = None,
-               context = None, environment = []):
+    def _sample(self, request, _=None,
+               parent=None, sibling=None,
+               context=None, environment=[]):
         """Returns context , root , expression"""
         if context is None: context = Context.EMPTY
 
         if request.isArrow():
             context, root, expression = self._sample(request.arguments[1],
-                                                    context = context,
-                                                    parent = parent, sibling = sibling,
-                                                    environment = [request.arguments[0]] + environment)
+                                                    context=context,
+                                                    parent=parent, sibling=sibling,
+                                                    environment=[request.arguments[0]] + environment)
             return context, root, Abstraction(expression)
 
         candidates = self.grammar.buildCandidates(request, context, environment,
-                                                  normalize = False,
-                                                  returnProbabilities = False,
-                                                  returnTable = True)
+                                                  normalize=False,
+                                                  returnProbabilities=False,
+                                                  returnTable=True)
 
-        alternatives = candidates.keys()
+        alternatives = list(candidates.keys())
         prediction = self.predictionFromHidden(parent, sibling,
-                                               alternatives = alternatives).exp()
+                                               alternatives=alternatives).exp()
         f = self.index2production[torch.multinomial(prediction, 1).data[0]]
         root = f
         if f.isIndex:
@@ -202,52 +202,52 @@ class DRNN(nn.Module):
         for argumentType in argumentTypes:
             argumentType = argumentType.apply(context)
             context, childSymbol, a = self._sample(argumentType,
-                                                  context = context, environment = environment,
-                                                  parent = parent, sibling = sibling)
+                                                  context=context, environment=environment,
+                                                  parent=parent, sibling=sibling)
             f = Application(f, a)
             sibling = self.updateSibling(sibling, childSymbol)
 
         return context, root, f
 
-    def enumeration(self, task, interval = 1.):
+    def enumeration(self, task, interval=1.):
         request = task.request
         parent = self.initialParent(task)
 
         lowerBound = 0.
         while True:
             for ll,_,_,e in self._enumeration(request,
-                                              lowerBound = lowerBound, upperBound = lowerBound + interval,
-                                              parent = parent, sibling = None,
-                                              context = Context.EMPTY, environment = []):
+                                              lowerBound=lowerBound, upperBound=lowerBound + interval,
+                                              parent=parent, sibling=None,
+                                              context=Context.EMPTY, environment=[]):
                 yield ll,e
             lowerBound += interval
 
-    def _enumeration(self, request, _ = None,
-                     upperBound = None, lowerBound = None,
-                     context = None, environment = None,
-                     parent = None, sibling = None):
+    def _enumeration(self, request, _=None,
+                     upperBound=None, lowerBound=None,
+                     context=None, environment=None,
+                     parent=None, sibling=None):
         """Generates log likelihood, context, root, expression"""
         if upperBound <= 0: return
 
         if request.isArrow():
             v = request.arguments[0]
             for l, newContext, r, b in self._enumeration(request.arguments[1],
-                                                         context = context, environment = [v] + environment,
-                                                         upperBound = upperBound,
-                                                         lowerBound = lowerBound,
-                                                         parent = parent, sibling = sibling):
+                                                         context=context, environment=[v] + environment,
+                                                         upperBound=upperBound,
+                                                         lowerBound=lowerBound,
+                                                         parent=parent, sibling=sibling):
                 yield l, newContext, r, Abstraction(b)
             return
 
         candidates = self.grammar.buildCandidates(request, context, environment,
-                                                  normalize = False,
-                                                  returnProbabilities = False,
-                                                  returnTable = True)
+                                                  normalize=False,
+                                                  returnProbabilities=False,
+                                                  returnTable=True)
 
-        alternatives = candidates.keys()
+        alternatives = list(candidates.keys())
         numberOfVariables = sum(a.isIndex for a in alternatives)
         prediction = self.predictionFromHidden(parent, sibling,
-                                               alternatives = alternatives).data
+                                               alternatives=alternatives).data
         prediction = dict(zip(self.index2production, prediction))
         # Update the candidates so that they now record what the
         # neural network thinks their likelihood should be
@@ -259,7 +259,7 @@ class DRNN(nn.Module):
             _,tp,newContext = candidates[a]
             candidates[a] = (ll,tp,newContext)
 
-        for f,(ll,tp,newContext) in candidates.iteritems():
+        for f,(ll,tp,newContext) in candidates.items():
             mdl = -ll
             if not (mdl <= upperBound): continue
 
@@ -271,16 +271,16 @@ class DRNN(nn.Module):
 
             for aL, aK, application in \
                 self._enumerateApplication(f, argumentTypes,
-                                           context = newContext, environment = environment,
-                                           upperBound = upperBound + ll,
-                                           lowerBound = lowerBound + ll,
-                                           parent = newParent, sibling = None):
+                                           context=newContext, environment=environment,
+                                           upperBound=upperBound + ll,
+                                           lowerBound=lowerBound + ll,
+                                           parent=newParent, sibling=None):
                 yield aL + ll, aK, root, application
 
-    def _enumerateApplication(self, f, xs, _ = None,
-                              upperBound = None, lowerBound = None,
-                              context = None, environment = None,
-                              parent = None, sibling = None):
+    def _enumerateApplication(self, f, xs, _=None,
+                              upperBound=None, lowerBound=None,
+                              context=None, environment=None,
+                              parent=None, sibling=None):
         if upperBound <= 0: return
         if xs == []:
             if lowerBound < 0. and 0. <= upperBound:
@@ -290,9 +290,9 @@ class DRNN(nn.Module):
         laterRequests = xs[1:]
         for aL, newContext, argumentRoot, argument in \
             self._enumeration(request,
-                              context = context, environment = environment,
-                              upperBound = upperBound, lowerBound = 0.,
-                              parent = parent, sibling = sibling):
+                              context=context, environment=environment,
+                              upperBound=upperBound, lowerBound=0.,
+                              parent=parent, sibling=sibling):
             newFunction = Application(f, argument)
             if laterRequests != []:
                 newSibling = self.updateSibling(sibling, argumentRoot)
@@ -300,9 +300,9 @@ class DRNN(nn.Module):
                 newSibling = None
             for resultL, resultK, result in \
                 self._enumerateApplication(newFunction, laterRequests,
-                                           context = newContext, environment = environment,
-                                           upperBound = upperBound + aL, lowerBound = lowerBound + aL,
-                                           parent = parent, sibling = newSibling):
+                                           context=newContext, environment=environment,
+                                           upperBound=upperBound + aL, lowerBound=lowerBound + aL,
+                                           parent=parent, sibling=newSibling):
                 yield resultL + aL, resultK, result
 
 
@@ -446,9 +446,9 @@ class RecognitionModel(nn.Module):
                     gc.collect()
 
 
-    def sampleHelmholtz(self, requests, statusUpdate = None):
+    def sampleHelmholtz(self, requests, statusUpdate=None):
        request = random.choice(requests)
-       program = self.grammar.sample(request, maximumDepth = 6)
+       program = self.grammar.sample(request, maximumDepth=6)
        features = self.featureExtractor.featuresOfProgram(program, request)
        if statusUpdate is not None:
            eprint(statusUpdate, end = '')
@@ -463,8 +463,8 @@ class RecognitionModel(nn.Module):
         frequency = N/50
         samples = parallelMap(CPUs,
                               lambda n: self.sampleHelmholtz(requests,
-                                                             statusUpdate = '.' if n%frequency == 0 else None),
-                              range(N))
+                                                             statusUpdate='.' if n%frequency == 0 else None),
+                              list(range(N)))
         eprint()
         flushEverything()
         try:
@@ -490,7 +490,7 @@ class RecognitionModel(nn.Module):
 
         return multithreadedEnumeration(grammars, tasks, likelihoodModel,
                                         solver=solver,
-                                        frontierSize = frontierSize, enumerationTimeout=enumerationTimeout,
+                                        frontierSize=frontierSize, enumerationTimeout=enumerationTimeout,
                                         CPUs=CPUs, maximumFrontier=maximumFrontier,
                                         evaluationTimeout=evaluationTimeout)
 
@@ -509,7 +509,7 @@ class RecurrentFeatureExtractor(nn.Module):
         assert tasks is not None, "You must provide a list of all of the tasks, both those that have been hit and those that have not been hit. Input examples are sampled from these tasks."
 
         # maps from a requesting type to all of the inputs that we ever saw that request
-        self.requestToInputs = {tp: [ map(fst, t.examples) for t in tasks if t.request == tp ]
+        self.requestToInputs = {tp: [ list(map(fst, t.examples)) for t in tasks if t.request == tp ]
                                 for tp in {t.request for t in tasks } }
 
         assert lexicon
@@ -530,7 +530,7 @@ class RecurrentFeatureExtractor(nn.Module):
 
         layers = 1
 
-        model = nn.GRU(H, H, layers, bidirectional = bidirectional)
+        model = nn.GRU(H, H, layers, bidirectional=bidirectional)
         if cuda:
             model = model.cuda()
         self.model = model
@@ -588,7 +588,7 @@ class RecurrentFeatureExtractor(nn.Module):
         return x, sizes
 
     def examplesEncoding(self, examples):
-        examples = sorted(examples, key = lambda (xs,y): sum(len(z)+1 for z in xs) + len(y), reverse = True)
+        examples = sorted(examples, key=lambda xs_y: sum(len(z)+1 for z in xs_y[0]) + len(xs_y[1]), reverse=True)
         x,sizes = self.packExamples(examples)
         outputs, hidden = self.model(x)
         #outputs, sizes = pad_packed_sequence(outputs)
@@ -633,12 +633,12 @@ class MLPFeatureExtractor(nn.Module):
 
     def featuresOfTask(self, t):
         f = variable([ (f - self.averages[j])/self.deviations[j] for j,f in enumerate(t.features) ], cuda=self.use_cuda).float()
-        return self.hidden(f).clamp(min = 0)
+        return self.hidden(f).clamp(min=0)
     def featuresOfProgram(self, p, t):
         features = self._featuresOfProgram(p,t)
         if features is None: return None
         f = variable([ (f - self.averages[j])/self.deviations[j] for j,f in enumerate(features) ], cuda=self.use_cuda).float()
-        return self.hidden(f).clamp(min = 0)
+        return self.hidden(f).clamp(min=0)
 
 
 
@@ -668,7 +668,7 @@ if __name__ == "__main__":
     tasks = [Task(p,request,[],features = [j])
              for j,p in enumerate(observations) ]
     fe = HandCodedFeatureExtractor(tasks)
-    observations = map(Program.parse, observations)
+    observations = list(map(Program.parse, observations))
 
     m = DRNN(g, fe, hidden = 8)
     m.float()
@@ -691,15 +691,15 @@ if __name__ == "__main__":
             if l is None: l = _l
             else: l += _l
         if j > 0 and j%150 == 0:
-            print l.data[0]/len(observations)
+            print(l.data[0]/len(observations))
             for t in tasks:
-                print t
-                print m.sample(t)
-                print "enumeration:"
-                for ll,e in sorted(take(5,m.enumeration(t)),reverse = True):
+                print(t)
+                print(m.sample(t))
+                print("enumeration:")
+                for ll,e in sorted(take(5,m.enumeration(t)),reverse=True):
                     gt = m.programLoss(e,t).data[0]
-                    print ll,gt,"\t",e
-                print
+                    print(ll,gt,"\t",e)
+                print()
         l.backward()
         optimizer.step()
 

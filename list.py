@@ -1,4 +1,4 @@
-import cPickle as pickle
+import pickle as pickle
 import random
 from collections import defaultdict
 from itertools import chain
@@ -12,7 +12,7 @@ from recognition import HandCodedFeatureExtractor, MLPFeatureExtractor, Recurren
 from enumeration import enumerateForTask
 
 def retrieveTasks(filename):
-    with open(filename) as f:
+    with open(filename, "rb") as f:
         return pickle.load(f)
 
 
@@ -36,7 +36,7 @@ def list_features(examples):
     imean = [mean(i) for (i,), o in examples]
     ivar = [sum((v - imean[idx])**2
                 for v in examples[idx][0][0])
-            for idx in xrange(len(examples))]
+            for idx in range(len(examples))]
 
     #DISABLED length of each input and output
     # total difference between length of input and output
@@ -51,7 +51,7 @@ def list_features(examples):
         omean = [mean(o) for (i,), o in examples]
         ovar = [sum((v - omean[idx])**2
                     for v in examples[idx][1])
-                for idx in xrange(len(examples))]
+                for idx in range(len(examples))]
         cntr = lambda l, o: 0 if not l else len(set(l).difference(set(o))) / len(l)
         cnt_not_in_output = [cntr(i, o) for (i,), o in examples]
 
@@ -119,11 +119,11 @@ class FeatureExtractor(HandCodedFeatureExtractor):
         e = program.evaluate([])
         examples = []
         if isListFunction(tp):
-            sample = lambda: random.sample(xrange(30), random.randint(0, 8))
+            sample = lambda: random.sample(range(30), random.randint(0, 8))
         elif isIntFunction(tp):
             sample = lambda: random.randint(0, 20)
         else: return None
-        for _ in xrange(self.N_EXAMPLES*5):
+        for _ in range(self.N_EXAMPLES*5):
             x = sample()
             try:
                 y = e(x)
@@ -144,11 +144,11 @@ class DeepFeatureExtractor(MLPFeatureExtractor):
         e = program.evaluate([])
         examples = []
         if isListFunction(tp):
-            sample = lambda: random.sample(xrange(30), random.randint(0, 8))
+            sample = lambda: random.sample(range(30), random.randint(0, 8))
         elif isIntFunction(tp):
             sample = lambda: random.randint(0, 20)
         else: return None
-        for _ in xrange(self.N_EXAMPLES*5):
+        for _ in range(self.N_EXAMPLES*5):
             x = sample()
             try:
                 y = e(x)

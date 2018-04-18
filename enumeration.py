@@ -27,7 +27,7 @@ class Command(object):
             self.process = subprocess.Popen(self.cmd,
                                             stdin=subprocess.PIPE,
                                             stdout=subprocess.PIPE)
-            self.r, self.e = self.process.communicate(msg)
+            self.r, self.e = self.process.communicate(bytes(msg, encoding="utf-8"))
 
         thread = threading.Thread(target=target)
         thread.start()
@@ -68,7 +68,7 @@ def multithreadedEnumeration(g, tasks, likelihoodModel, _=None,
     if not isinstance(g, dict): g = {t: g for t in tasks }
     task2grammar = g
 
-    frontiers = {t: Frontier([], task = t) for t in task2grammar }
+    frontiers = {t: Frontier([], task=t) for t in task2grammar }
 
     # Tasks which have not yet been solved
     activeTasks = set(task2grammar.keys())
@@ -119,23 +119,23 @@ def multithreadedEnumeration(g, tasks, likelihoodModel, _=None,
             while len(workers) < CPUs:
                 # Sort the tasks by lower bound. Prioritize lower
                 # lower bounds to explore shorter programs first
-                for t in sorted(activeTasks, key = lambda t: lowerBounds[t])[:CPUs-len(workers)]:
+                for t in sorted(activeTasks, key=lambda t: lowerBounds[t])[:CPUs-len(workers)]:
                     thisTimeout = enumerationTimeout - stopwatches[t].elapsed
                     if not stopwatches[t].running: stopwatches[t].start()
                     eprint("Launching [%s] w/ lb = %f, timeout = %f"%(t,lowerBounds[t],thisTimeout))
                     bi = budgetIncrement(lowerBounds[t])
                     launchParallelProcess(wrapInThread(solver),
-                                          q = q, ID = nextID,
-                                          elapsedTime = stopwatches[t].elapsed,
-                                          g = task2grammar[t],
-                                          task = t,
-                                          lowerBound = lowerBounds[t],
-                                          upperBound = lowerBounds[t] + bi,
-                                          budgetIncrement = bi,
-                                          timeout = thisTimeout,
-                                          likelihoodModel = likelihoodModel,
-                                          evaluationTimeout = evaluationTimeout,
-                                          maximumFrontier = maximumFrontier - numberOfHits(frontiers[t]))
+                                          q=q, ID=nextID,
+                                          elapsedTime=stopwatches[t].elapsed,
+                                          g=task2grammar[t],
+                                          task=t,
+                                          lowerBound=lowerBounds[t],
+                                          upperBound=lowerBounds[t] + bi,
+                                          budgetIncrement=bi,
+                                          timeout=thisTimeout,
+                                          likelihoodModel=likelihoodModel,
+                                          evaluationTimeout=evaluationTimeout,
+                                          maximumFrontier=maximumFrontier - numberOfHits(frontiers[t]))
                     lowerBounds[t] += bi
                     workers[nextID] = t
                     nextID += 1
@@ -213,13 +213,13 @@ def wrapInThread(f):
             return
     return _f
 
-def solveForTask_ocaml(_ = None,
-                       elapsedTime = 0.,
-                       g = None, task = None,
-                       lowerBound = None, upperBound = None, budgetIncrement = None,
-                       timeout = None,
-                       likelihoodModel = None, # FIXME: unused
-                       evaluationTimeout = None, maximumFrontier = None):
+def solveForTask_ocaml(_=None,
+                       elapsedTime=0.,
+                       g=None, task=None,
+                       lowerBound=None, upperBound=None, budgetIncrement=None,
+                       timeout=None,
+                       likelihoodModel=None, # FIXME: unused
+                       evaluationTimeout=None, maximumFrontier=None):
     import json
     message = {"DSL": {"logVariable": g.logVariable,
                        "productions": [ {"expression": str(p), "logProbability": l}
@@ -250,63 +250,63 @@ def solveForTask_ocaml(_ = None,
     except OSError as exc:
         raise exc
 
-    pc = response[u"programCount"]
+    pc = response["programCount"]
     # Remove all entries that do not type correctly
     # This can occur because the solver tries to infer the type
     # Sometimes it infers a type that is too general
-    response = [r for r in response[u"solutions"] if Program.parse(r["program"]).canHaveType(task.request) ]
+    response = [r for r in response["solutions"] if Program.parse(r["program"]).canHaveType(task.request) ]
 
-    frontier = Frontier([FrontierEntry(program = p,
-                                       logLikelihood = e["logLikelihood"],
-                                       logPrior = g.logLikelihood(task.request, p))
+    frontier = Frontier([FrontierEntry(program=p,
+                                       logLikelihood=e["logLikelihood"],
+                                       logPrior=g.logLikelihood(task.request, p))
                          for e in response
                          for p in [Program.parse(e["program"])] ],
-                        task = task)
+                        task=task)
 
     if frontier.empty: searchTime = None
     else: searchTime = min(e["time"] for e in response) + elapsedTime
 
     return frontier, searchTime, pc
 
-def solveForTask_pypy(_ = None,
-                      elapsedTime = 0.,
-                      g = None, task = None,
-                      lowerBound = None, upperBound = None, budgetIncrement = None,
-                      timeout = None,
-                      likelihoodModel = None,
-                      evaluationTimeout = None, maximumFrontier = None):
+def solveForTask_pypy(_=None,
+                      elapsedTime=0.,
+                      g=None, task=None,
+                      lowerBound=None, upperBound=None, budgetIncrement=None,
+                      timeout=None,
+                      likelihoodModel=None,
+                      evaluationTimeout=None, maximumFrontier=None):
     return callCompiled(enumerateForTask,
                         g,task,likelihoodModel,
-                        timeout = timeout,
-                        evaluationTimeout = evaluationTimeout,
-                        maximumFrontier = maximumFrontier,
-                        budgetIncrement = budgetIncrement,
-                        lowerBound = lowerBound,
-                        upperBound = upperBound)
+                        timeout=timeout,
+                        evaluationTimeout=evaluationTimeout,
+                        maximumFrontier=maximumFrontier,
+                        budgetIncrement=budgetIncrement,
+                        lowerBound=lowerBound,
+                        upperBound=upperBound)
 
-def solveForTask_python(_ = None,
-                        elapsedTime = 0.,
-                        g = None, task = None,
-                        lowerBound = None, upperBound = None, budgetIncrement = None,
-                        timeout = None,
-                        likelihoodModel = None,
-                        evaluationTimeout = None, maximumFrontier = None):
+def solveForTask_python(_=None,
+                        elapsedTime=0.,
+                        g=None, task=None,
+                        lowerBound=None, upperBound=None, budgetIncrement=None,
+                        timeout=None,
+                        likelihoodModel=None,
+                        evaluationTimeout=None, maximumFrontier=None):
     return enumerateForTask(g,task,likelihoodModel,
-                            timeout = timeout,
-                            evaluationTimeout = evaluationTimeout,
-                            maximumFrontier = maximumFrontier,
-                            budgetIncrement = budgetIncrement,
-                            lowerBound = lowerBound, upperBound = upperBound)
+                            timeout=timeout,
+                            evaluationTimeout=evaluationTimeout,
+                            maximumFrontier=maximumFrontier,
+                            budgetIncrement=budgetIncrement,
+                            lowerBound=lowerBound, upperBound=upperBound)
 
 class EnumerationTimeout(Exception): pass
-def enumerateForTask(g, task, likelihoodModel, _ = None,
+def enumerateForTask(g, task, likelihoodModel, _=None,
                      verbose=False,
                      timeout=None,
                      evaluationTimeout=None,
                      frontierSize=None,
-                     lowerBound = 0.,
-                     upperBound = 100.,
-                     budgetIncrement=1.0, maximumFrontier = 10**2):
+                     lowerBound=0.,
+                     upperBound=100.,
+                     budgetIncrement=1.0, maximumFrontier=10**2):
     assert (timeout is not None) or (frontierSize is not None), \
         "enumerateForTask: You must provide either a timeout or a frontier size."
 
@@ -322,9 +322,9 @@ def enumerateForTask(g, task, likelihoodModel, _ = None,
         while len(frontier) < maximumFrontier:
             numberOfPrograms = 0
             for prior,_,p in g.enumeration(Context.EMPTY, [], task.request,
-                                           maximumDepth = 99,
-                                           upperBound = budget,
-                                           lowerBound = previousBudget):
+                                           maximumDepth=99,
+                                           upperBound=budget,
+                                           lowerBound=previousBudget):
                 descriptionLength = -prior
                 # Shouldn't see it on this iteration
                 assert descriptionLength <= budget
@@ -339,9 +339,9 @@ def enumerateForTask(g, task, likelihoodModel, _ = None,
                     if verbose:
                         eprint("Hit",task.name,"with the program",p,"which has prior",prior,"after",time() - starting,"seconds")
                     if frontier == []: timeUntilFirstSolution = time() - starting
-                    frontier.append(FrontierEntry(program = p,
-                                                  logPrior = prior,
-                                                  logLikelihood = likelihood))
+                    frontier.append(FrontierEntry(program=p,
+                                                  logPrior=prior,
+                                                  logLikelihood=likelihood))
 
                 if timeout is not None and time() - starting > timeout:
                     raise EnumerationTimeout
@@ -361,11 +361,11 @@ def enumerateForTask(g, task, likelihoodModel, _ = None,
             eprint("Timeout triggered after",time() - starting,"seconds for task",task)
 
     frontier = Frontier(frontier,
-                        task = task).topK(maximumFrontier)
+                        task=task).topK(maximumFrontier)
 
     return frontier, timeUntilFirstSolution, numberOfPrograms
 
-def solveSingleTask(grammar, task, maximumBudget = 15):
+def solveSingleTask(grammar, task, maximumBudget=15):
     if isinstance(task, DifferentiableTask):
         rememberOld = True
         history = set([])
@@ -379,7 +379,7 @@ def solveSingleTask(grammar, task, maximumBudget = 15):
             if valid(l): return l,p
     return None
 
-def benchmarkSynthesisTimes(result, tasks, _ = None, timeout = None, CPUs = None):
+def benchmarkSynthesisTimes(result, tasks, _=None, timeout=None, CPUs=None):
     if result.parameters['useRecognitionModel']:
         assert hasattr(result, 'recognitionModel') and result.recognitionModel is not None, \
             "Checkpoint was trained using a recognition model but it does not have a saved recognition model."
@@ -422,8 +422,8 @@ def benchmarkSynthesisTime(result, task, timeout):
     elapsed = time() - startTime
     frontier = callCompiled(enumerateForTask,
                             grammar, task, AllOrNothingLikelihoodModel,
-                            maximumFrontier = 1,
-                            timeout = timeout - elapsed)
+                            maximumFrontier=1,
+                            timeout=timeout-elapsed)
     dt = time() - startTime
     if dt > timeout or len(frontier) == 0: return None
     l = solution.entries[0].logLikelihood

@@ -15,7 +15,7 @@ import dill
 import os
 import datetime
 
-import cPickle as pickle
+import pickle as pickle
 
 import torch
 
@@ -63,7 +63,7 @@ class ECResult():
     def parameterOfAbbreviation(abbreviation):
         return ECResult.abbreviationToParameter.get(abbreviation, abbreviation)
 
-ECResult.abbreviationToParameter = {v:k for k,v in ECResult.abbreviations.iteritems() }
+ECResult.abbreviationToParameter = {v:k for k,v in ECResult.abbreviations.items() }
 
 def explorationCompression(*arguments, **keywords):
     for r in ecIterator(*arguments, **keywords): pass
@@ -76,7 +76,7 @@ def ecIterator(grammar, tasks,
                solver="ocaml",
                compressor="rust",
                likelihoodModel="all-or-nothing",
-               testingTasks = [],
+               testingTasks=[],
                benchmark=None,
                iterations=None,
                resume=None,
@@ -88,7 +88,7 @@ def ecIterator(grammar, tasks,
                steps=250,
                helmholtzRatio=0.,
                helmholtzBatch=5000,
-               featureExtractor = None,
+               featureExtractor=None,
                activation='relu',
                topK=1,
                maximumFrontier=None,
@@ -117,7 +117,7 @@ def ecIterator(grammar, tasks,
 
     # We save the parameters that were passed into EC
     # This is for the purpose of exporting the results of the experiment
-    parameters = {k: v for k, v in locals().iteritems()
+    parameters = {k: v for k, v in locals().items()
                   if k not in {"tasks", "grammar", "cuda", "_", "solver",
                                "message", "CPUs", "outputPrefix",
                                "resume", "resumeFrontierSize", "bootstrap",
@@ -153,14 +153,14 @@ def ecIterator(grammar, tasks,
     if message: message = " ("+message+")"
     eprint("Running EC%s on %s @ %s with %d CPUs and parameters:"%(message, os.uname()[1],
                                                                    datetime.datetime.now(), CPUs))
-    for k,v in parameters.iteritems():
+    for k,v in parameters.items():
         eprint("\t", k, " = ", v)
     eprint("\t", "evaluationTimeout", " = ", evaluationTimeout)
     eprint()
 
     # Restore checkpoint
     if resume is not None:
-        path = checkpointPath(resume, extra = "_baselines" if onlyBaselines else "")
+        path = checkpointPath(resume, extra="_baselines" if onlyBaselines else "")
         with open(path, "rb") as handle:
             result = pickle.load(handle)
         eprint("Loaded checkpoint from", path)
@@ -187,8 +187,8 @@ def ecIterator(grammar, tasks,
                        "Falling back on pypy compressor.")
                 compressor = "pypy"
         result = ECResult(parameters=parameters, grammars=[grammar],
-                          taskSolutions = { t: Frontier([], task = t) for t in tasks },
-                          recognitionModel = None)
+                          taskSolutions={ t: Frontier([], task=t) for t in tasks },
+                          recognitionModel=None)
 
     if benchmark is not None:
         assert resume is not None, "Benchmarking requires resuming from checkpoint that you are benchmarking."
@@ -200,9 +200,9 @@ def ecIterator(grammar, tasks,
             benchmark = -benchmark
         if len(result.baselines) == 0: results = {"our algorithm": result}
         else: results = result.baselines
-        for name, result in results.iteritems():
+        for name, result in results.items():
             eprint("Starting benchmark:",name)            
-            benchmarkSynthesisTimes(result, benchmarkTasks, timeout = benchmark, CPUs = CPUs)
+            benchmarkSynthesisTimes(result, benchmarkTasks, timeout=benchmark, CPUs=CPUs)
             eprint("Completed benchmark.")
             eprint()
         yield None
@@ -336,7 +336,7 @@ def ecIterator(grammar, tasks,
         productionUses = FragmentGrammar.fromGrammar(grammar).\
                          expectedUses([f for f in frontiers if not f.empty ]).actualUses
         productionUses = {p: productionUses.get(p,0.) for p in grammar.primitives }
-        for p in sorted(productionUses.keys(),key = lambda p: -productionUses[p]):
+        for p in sorted(productionUses.keys(), key=lambda p: -productionUses[p]):
             eprint("<uses>=%.2f\t%s"%(productionUses[p], p))
         eprint()
         if maximumFrontier <= 10:
@@ -390,7 +390,7 @@ def commandlineArguments(_=None,
                          activation='relu',
                          helmholtzRatio=0.,
                          helmholtzBatch=5000,
-                         featureExtractor = None,
+                         featureExtractor=None,
                          cuda=None,
                          maximumFrontier=None,
                          pseudoCounts=1.0, aic=1.0,
@@ -460,9 +460,9 @@ def commandlineArguments(_=None,
                         Default: %s""" % maximumFrontier,
                         type=int)
     parser.add_argument("--benchmark",
-                        help = """Benchmark synthesis times with a timeout of this many seconds. You must use the --resume option. EC will not run but instead we were just benchmarked the synthesis times of a learned model""",
+                        help="""Benchmark synthesis times with a timeout of this many seconds. You must use the --resume option. EC will not run but instead we were just benchmarked the synthesis times of a learned model""",
                         type=float,
-                        default = None)
+                        default=None)
     parser.add_argument("--recognition",
                         dest="useRecognitionModel",
                         action="store_true",
@@ -485,7 +485,7 @@ def commandlineArguments(_=None,
     parser.add_argument("-r","--Helmholtz",
                         dest="helmholtzRatio",
                         help="""When training recognition models, what fraction of the training data should be samples from the generative model? Default %f""" % helmholtzRatio,
-                        default = helmholtzRatio,
+                        default=helmholtzRatio,
                         type=float)
     parser.add_argument("--helmholtzBatch",
                         dest="helmholtzBatch",

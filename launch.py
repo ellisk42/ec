@@ -9,7 +9,7 @@ def user():
     import getpass
     return getpass.getuser()
 
-def launch(size = "t2.micro", name = ""):
+def launch(size="t2.micro", name=""):
     # aws ec2 run-instances --image-id ami-835f6ae6 --instance-type "t2.micro" --key-name testing --associate-public-ip-address
     o = json.loads(subprocess.check_output(["aws","ec2","run-instances",
                                             "--image-id",#"ami-835f6ae6",
@@ -18,12 +18,12 @@ def launch(size = "t2.micro", name = ""):
                                             "--security-groups","publicssh",
                                             "--instance-initiated-shutdown-behavior","terminate",
                                             "--key-name","testing"]))
-    instance = o[u"Instances"][0][u"InstanceId"]
-    print "Launched instance", instance
+    instance = o["Instances"][0]["InstanceId"]
+    print("Launched instance", instance)
 
     
     name = user() + name
-    print "Naming instance",name
+    print("Naming instance",name)
     os.system("aws ec2 create-tags --resources %s --tags Key=Name,Value=%s"%(instance,
                                                                              name))
     os.system("""
@@ -36,8 +36,8 @@ def launch(size = "t2.micro", name = ""):
     
     o = json.loads(subprocess.check_output(["aws","ec2","describe-instances",
                                             "--instance-ids",instance]))
-    address = o[u'Reservations'][0][u'Instances'][0][u'PublicIpAddress']
-    print "Retrieved IP address of instance %s; got %s"%(instance,address)
+    address = o['Reservations'][0]['Instances'][0]['PublicIpAddress']
+    print("Retrieved IP address of instance %s; got %s"%(instance,address))
     return instance, address
 
 
@@ -52,7 +52,7 @@ rm experimentOutputs/*
 git pull
 """
     if resume:
-        print "Sending tar file"
+        print("Sending tar file")
         os.system("""
             scp -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem \
                 %s ubuntu@%s:ec/""" % (resume, address))
@@ -96,16 +96,16 @@ kill -9 $UPLOADPID
 sudo shutdown -h now
 """
 
-    fd = tempfile.NamedTemporaryFile(mode = 'w',delete = False,dir = "/tmp")
+    fd = tempfile.NamedTemporaryFile(mode='w',delete=False,dir="/tmp")
     fd.write(script)
     fd.close()
     name = fd.name
 
-    print "SCRIPT:"
-    print script
+    print("SCRIPT:")
+    print(script)
 
     # Copy over the script
-    print "Copying script over to",address
+    print("Copying script over to",address)
     os.system("""
         scp -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem \
             %s ubuntu@%s:~/script.sh""" % (name, address))
@@ -115,14 +115,14 @@ sudo shutdown -h now
 
     # Send keys
     if upload:
-        print "Uploading your ssh identity"
+        print("Uploading your ssh identity")
         os.system("""
             scp -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem \
                 ~/.ssh/id_rsa ~/.ssh/id_rsa.pub \
                 ubuntu@%s:.ssh/"""%address)
 
     # Send git patch
-    print "Sending git patch over to",address
+    print("Sending git patch over to",address)
     os.system("git diff --stat")
     os.system("""
         (echo "Base-Ref: $(git rev-parse origin/master)" ; echo ; git diff origin/master) | \
@@ -136,21 +136,21 @@ sudo shutdown -h now
         ssh -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem \
             ubuntu@{} 'bash ./script.sh > /dev/null 2>&1 &'
         """.format(address))
-    print "Executing script on remote host."
+    print("Executing script on remote host.")
 
 
 def launchExperiment(name, command, tail=False, resume="", upload=None, tar=False, shutdown=True, size="t2.micro"):
     job_id = "{}_{}_{}".format(name, user(), datetime.now().strftime("%FT%T"))
     job_id = job_id.replace(":", ".")
     if upload is None and shutdown:
-        print "You didn't specify an upload host, and also specify that the machine should shut down afterwards. These options are incompatible because this would mean that you couldn't get the experiment outputs."
+        print("You didn't specify an upload host, and also specify that the machine should shut down afterwards. These options are incompatible because this would mean that you couldn't get the experiment outputs.")
         sys.exit(1)
 
     if resume and "resume" not in command:
-        print "You said to resume, but didn't give --resume to your python command. I am assuming this is a mistake."
+        print("You said to resume, but didn't give --resume to your python command. I am assuming this is a mistake.")
         sys.exit(1)
     if resume and not resume.endswith(".tar.gz"):
-        print "Invalid tarball for resume."
+        print("Invalid tarball for resume.")
         sys.exit(1)
 
     script = """
