@@ -199,3 +199,10 @@ def guess_type(xs):
         return tlist(guess_type([y for ys in xs for y in ys]))
     else:
         raise ValueError("cannot guess type from {}".format(xs))
+def guess_arrow_type(examples):
+    a = len(examples[0][0])
+    input_types = []
+    for n in xrange(a):
+        input_types.append(guess_type([ xs[n] for xs,_ in examples ]))
+    output_type = guess_type([ y for _,y in examples ])
+    return arrow(*(input_types + [output_type]))

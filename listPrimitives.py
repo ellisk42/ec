@@ -172,6 +172,7 @@ def bootstrapTarget():
         Primitive("range", arrow(tint, tlist(tint)), range),
         Primitive("index", arrow(tint, tlist(t0), t0), _index),
         Primitive("fold", arrow(tlist(t0), t1, arrow(t0,t1,t1), t1), _fold),
+        Primitive("length", arrow(tlist(t0),tint), len),
 
         # built-ins
         Primitive("if", arrow(tbool, t0, t0, t0), _if),

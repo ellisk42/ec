@@ -269,6 +269,8 @@ let primitive_constant_strings = [primitive "','" tcharacter ',';
                                   primitive "'/'" tcharacter '/';
                                   primitive "'|'" tcharacter '|';
                                   primitive "'-'" tcharacter '-';
+                                  primitive "LPAREN" tcharacter '(';
+                                  primitive "RPAREN" tcharacter ')';
                                  ];;
 (* let primitive_slice_string = primitive "slice-string" (tint @> tint @> tstring @> tstring)
  *     (fun i j s ->
@@ -342,8 +344,8 @@ let primitive_reverse = primitive "reverse" (tlist tint @> tlist tint) (List.rev
 let primitive_append = primitive "append"  (tlist tint @> tlist tint @> tlist tint) (@);;
 let primitive_singleton = primitive "singleton"  (tint @> tlist tint) (fun x -> [x]);;
 let primitive_slice = primitive "slice" (tint @> tint @> tlist tint @> tlist tint) slice;;
-let primitive_length = primitive "length" (tlist tint @> tint) (List.length);;
-let primitive_map = primitive "map" ((tint @> tint) @> (tlist tint) @> (tlist tint)) (fun f l -> List.map ~f:f l);;
+let primitive_length = primitive "length" (tlist t0 @> tint) (List.length);;
+let primitive_map = primitive "map" ((t0 @> t1) @> (tlist t0) @> (tlist t1)) (fun f l -> List.map ~f:f l);;
 let primitive_fold_right = primitive "fold_right" ((tint @> tint @> tint) @> tint @> (tlist tint) @> tint) (fun f x0 l -> List.fold_right ~f:f ~init:x0 l);;
 let primitive_mapi = primitive "mapi" ((tint @> t0 @> t1) @> (tlist t0) @> (tlist t1)) (fun f l ->
     List.mapi l ~f:f);;

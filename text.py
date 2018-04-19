@@ -3,6 +3,7 @@ from grammar import Grammar
 from utilities import eprint, testTrainSplit, numberOfCPUs
 from makeTextTasks import makeTasks, delimiters
 from textPrimitives import primitives
+from listPrimitives import bootstrapTarget
 from program import *
 from recognition import *
 
@@ -40,10 +41,10 @@ if __name__ == "__main__":
     tasks = makeTasks()
     eprint("Generated",len(tasks),"tasks")
 
-    test, train = testTrainSplit(tasks, 0.2)
+    test, train = testTrainSplit(tasks, 0.9)
     eprint("Split tasks into %d/%d test/train"%(len(test),len(train)))
 
-    baseGrammar = Grammar.uniform(primitives)
+    baseGrammar = Grammar.uniform(primitives + bootstrapTarget())
     
     explorationCompression(baseGrammar, train,
                            testingTasks = test,

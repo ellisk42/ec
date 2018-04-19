@@ -4,7 +4,7 @@ from type import *
 import random
 
 
-delimiters = ['.',',',' ','<','>','/','@','-','|']
+delimiters = ['.',',',' ','(',')','-']
 
 def randomDelimiter():
     return random.choice(delimiters)
@@ -63,7 +63,7 @@ compatibleCompositions = {(case, character)
   ("drop first character","drop first character")
   }
 
-def makeTasks():
+def makeOldTasks():
     NUMBEROFEXAMPLES = 4
     problems = []
     def toList(s): return [c for c in s]
@@ -241,6 +241,66 @@ def makeTasks():
                      for x in [randomWord() + d1 + y + d2 + randomWord()] ])
     return problems
 
+def makeTasks():
+    NUMBEROFEXAMPLES = 4
+    
+    problems = []
+    def toList(s): return [c for c in s]
+    # Converts strings into a list of characters depending on the type
+    def preprocess(x):
+        if isinstance(x,tuple): return tuple( preprocess(z) for z in x)
+        if isinstance(x,list): return [ preprocess(z) for z in x ]
+        if isinstance(x,str): return [ c for c in x ]
+        assert False
+
+    def problem(n, examples, needToTrain = False):
+        task = Task(n, guess_arrow_type(examples),
+                    [(preprocess(x),
+                      preprocess(y))
+                     for x,y in examples ])
+        if needToTrain: task.mustTrain = True
+        problems.append(task)
+
+    for d1 in delimiters:
+        for d2 in delimiters:
+            if d1 != d2:
+                problem("Replace '%s' w/ '%s'"%(d1,d2),
+                        [ ((x,), x.replace(d1,d2))
+                          for _ in range(NUMBEROFEXAMPLES) 
+                          for x in [randomWords(d1)] ],
+                        needToTrain=True)
+    for d in delimiters:
+        for n in [0,1,-1]:
+            problem("nth (n=%d) word delimited by '%s'"%(n,d),
+                    [ ((x,), x.split(d)[n])
+                      for _ in range(NUMBEROFEXAMPLES)
+                      for x in [randomWords(d)] ],
+                    needToTrain=True)
+    for d1 in delimiters:
+        problem("Append two words delimited by '%s'"%(d1),
+                    [ ((x,y), x + d1 + y)
+                      for _ in range(NUMBEROFEXAMPLES)
+                      for x in [randomWord()]
+                      for y in [randomWord()] ])
+        for d2 in delimiters:
+            problem("Append two words delimited by '%s%s'"%(d1,d2),
+                    [ ((x,y), x + d1 + d2 + y)
+                      for _ in range(NUMBEROFEXAMPLES)
+                      for x in [randomWord()]
+                      for y in [randomWord()] ])
+    for n in xrange(1,4):
+        problem("Drop last %d characters"%n,
+                [ ((x,), x[:-n])
+                  for _ in range(NUMBEROFEXAMPLES)
+                  for x in [randomWord() + randomWord()] ])
+    for d in delimiters:
+        problem("Take first character and append '%s'"%d,
+                [ ((x,), x[0] + d)
+                  for _ in range(NUMBEROFEXAMPLES)
+                  for x in [randomWord()] ])
+    return problems
+
+
 
 def loadPBETasks(directory="PBE_Strings_Track"):
     """
@@ -302,9 +362,10 @@ def loadPBETasks(directory="PBE_Strings_Track"):
 if __name__ == "__main__":
     import sys
     loadPBETasks()
-    assert False
 
     tasks = makeTasks()
+    for t in tasks: print t.describe()
+    assert False
     # def maximumLength(x):
     #     if isinstance(x,list):
     #         return max([len(x)] + map(maximumLength,x))
