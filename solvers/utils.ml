@@ -75,8 +75,8 @@ let index_of l x =
   in loop 0 l
 
 let set_equal c x y = 
-  let x = List.sort ~cmp:c x
-  and y = List.sort ~cmp:c y in
+  let x = List.sort ~compare:c x
+  and y = List.sort ~compare:c y in
   List.compare c x y = 0
 
 

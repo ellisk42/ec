@@ -132,6 +132,7 @@ if __name__ == "__main__":
             maximumFrontier=500,
             CPUs=numberOfCPUs(),
             pseudoCounts=10.0,
+            activation="tanh",
             extras=list_options)
     target = args.pop("target")
     red = args.pop("reduce")
@@ -160,7 +161,7 @@ if __name__ == "__main__":
 
     r = explorationCompression(baseGrammar, train,
                                testingTasks=test,
-                               outputPrefix=prefix + "/pickles/",
+                               outputPrefix=prefix + "/pickles/" + ('_'.join(target)) + "/",
                                compressor="rust",
                                evaluationTimeout=0.01,
                                **args)

@@ -3,7 +3,7 @@
 (executables
  ((names (solver geomDrawLambdaString geomDrawFile geomTest))
   (modes (native))
-  (ocamlopt_flags (:standard -O3 -unboxed-types -nodynlink))
+  (ocamlopt_flags (-g))
   (libraries (core re2 yojson geomLib))
   (preprocess (pps (ppx_jane)))
  ))

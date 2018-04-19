@@ -107,7 +107,7 @@ let differentiable_task
 
 let keep_best_programs_in_frontier (k : int) (f : frontier) : frontier =
   {request = f.request;
-   programs =  List.sort ~cmp:(fun (_,a) (_,b) -> if a > b then -1 else 1) f.programs |> flip List.take k }
+   programs =  List.sort ~compare:(fun (_,a) (_,b) -> if a > b then -1 else 1) f.programs |> flip List.take k }
 
 (* Takes a frontier and a task. Ads in the likelihood on the task to
    the frontier and removes things that didn't hit the task *)
