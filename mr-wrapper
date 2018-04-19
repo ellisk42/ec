@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # DRY=true will show what's going on but run nothing
-DRY="true"
+DRY="false"
 
 # On OM you probably want something like this:
 #module load openmind/miniconda/3.9.1
@@ -16,12 +16,12 @@ DRY="true"
 PROGRAM="geom.py"
 
 # Arguments for the program, respectively for the maps and the reduce
-ARGSMAP="-t 1 -g"
-ARGSRED="-t 2"
+ARGSMAP="-t 1 -g -i 1"
+ARGSRED="-t 20"
 
 # Targets
-MAP="circle penoff"
-REDUCE="circle square"
+MAP="line"
+REDUCE="all"
 
 # Now let's build the command:
 CMD="./map-reduce $PROGRAM"

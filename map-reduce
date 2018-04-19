@@ -72,7 +72,7 @@ _map() {
     MAPTMP+=("$TMP")
 
     # Prepare the base command to call
-    CMD="./$PROGRAM ${ARGSMAP[*]} --target $target --save $TMP --prefix $PREFIX"
+    CMD="python $PROGRAM ${ARGSMAP[*]} --target $target --save $TMP --prefix $PREFIX"
 
     # If not on OM then call it and sacve the PID
     if [[ "$SBATCH" = "false" ]]; then
@@ -128,7 +128,7 @@ _reduce() {
   fi
 
   # Iteratively build the relevant command
-  CMD="./$PROGRAM ${ARGSREDUCE[*]}"
+  CMD="python $PROGRAM ${ARGSREDUCE[*]}"
   for target in "${REDUCE[@]}"
   do
     CMD="$CMD --target $target"
@@ -173,7 +173,7 @@ _clean() {
   do
     echo "    - rm $target"
     if [[ "$DRY" = "false" && "$SBATCH" = "false" ]]; then
-      rm "$target"
+      echo "$target"
     fi
   done
 }
