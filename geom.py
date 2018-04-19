@@ -139,6 +139,11 @@ if __name__ == "__main__":
     save = args.pop("save")
     prefix = args.pop("prefix")
     prefix_dreams = prefix + "/dreams/" + ('_'.join(target)) + "/"
+    prefix_pickles = prefix + "/pickles/" + ('_'.join(target)) + "/"
+    if not os.path.exists(prefix_dreams):
+        os.makedirs(prefix_dreams)
+    if not os.path.exists(prefix_pickles):
+        os.makedirs(prefix_pickles)
     tasks = makeTasks(target)
     eprint("Generated", len(tasks), "tasks")
 
@@ -161,7 +166,7 @@ if __name__ == "__main__":
 
     r = explorationCompression(baseGrammar, train,
                                testingTasks=test,
-                               outputPrefix=prefix + "/pickles/" + ('_'.join(target)) + "/",
+                               outputPrefix=prefix_pickles,
                                compressor="rust",
                                evaluationTimeout=0.01,
                                **args)
