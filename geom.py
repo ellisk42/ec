@@ -66,12 +66,11 @@ class GeomFeatureCNN(nn.Module):
         if not os.path.exists(self.sub):
                 os.makedirs(self.sub)
         try:
+            fname = self.sub + "/" + str(self.count) + ".png"
+            evaluated = p.evaluate([])
             output = subprocess.check_output(['./geomDrawLambdaString',
-                                             self.sub +
-                                              "/" +
-                                              str(self.count) +
-                                              ".png",
-                                             p.evaluate([])]).split("\n")
+                                             fname,
+                                             evaluated]).decode("utf8").split("\n")
             shape = list(map(float, output[0].split(',')))
             bigShape = map(float, output[1].split(','))
         except OSError as exc:
@@ -174,8 +173,10 @@ if __name__ == "__main__":
                                compressor="rust",
                                evaluationTimeout=0.01,
                                **args)
-    needsExport = [str(z) for _, _, z in r.grammars[-1].productions if
-            z.isInvented]
+    needsExport = [str(z)
+                   for _, _, z
+                   in r.grammars[-1].productions
+                   if z.isInvented]
     if save is not None:
         with open(save, 'w') as f:
             json.dump(needsExport, f)
