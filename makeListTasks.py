@@ -126,11 +126,19 @@ def make_list_bootstrap_tasks():
     ]
 
     # Encourages learning of simple nonrecursive operations that are useful in recursive functions
-    operationBootstrap = [
-        Task("increment", arrow(tint,tint),
-             [((n,),n+1) for n in range(10) ]),
+    decrementBootstrap = [
         Task("decrement", arrow(tint,tint),
              [((n,),n-1) for n in range(10) ]),
+        Task("decrement twice", arrow(tint,tint),
+             [((n,),n-2) for n in range(10) ]),
+        Task("decrement car", arrow(tlist(tint),tint),
+             [((l,),l[0] - 1)
+              for _ in range(10)
+              for l in [randomList()] ]),
+    ]        
+    operationBootstrap = decrementBootstrap + [
+        Task("increment", arrow(tint,tint),
+             [((n,),n+1) for n in range(10) ]),
         Task("zero?", arrow(tint,tbool),
              [((n,), n == 0) for n in range(10) ]),
         Task("zero car?", arrow(tlist(tint),tbool),
@@ -149,12 +157,6 @@ def make_list_bootstrap_tasks():
               for l in [randomList()] ]),
         Task("increment twice", arrow(tint,tint),
              [((n,),n+2) for n in range(10) ]),
-        Task("decrement twice", arrow(tint,tint),
-             [((n,),n-2) for n in range(10) ]),
-        Task("decrement car", arrow(tlist(tint),tint),
-             [((l,),l[0] - 1)
-              for _ in range(10)
-              for l in [randomList()] ]),
         Task("or", arrow(tbool,tbool,tbool),
              [((a,b),a or b)
               for a in [True,False]
@@ -340,7 +342,7 @@ def make_list_bootstrap_tasks():
     
     # Let's learn everything!
     if True:
-        return lengthBootstrap + unfoldBootstrap + arrayBootstrap + foldBootstrap + mapBootstrap + zipBootstrap
+        return lengthBootstrap + decrementBootstrap + unfoldBootstrap + arrayBootstrap + foldBootstrap + mapBootstrap + zipBootstrap
 
 
 def bonusListProblems():
