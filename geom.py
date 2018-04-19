@@ -1,5 +1,3 @@
-#!/usr/bin/env python2
-
 from ec import explorationCompression, commandlineArguments
 from grammar import Grammar
 from utilities import eprint, testTrainSplit, numberOfCPUs
@@ -7,8 +5,9 @@ from makeGeomTasks import makeTasks
 from geomPrimitives import primitives
 from math import log
 from collections import OrderedDict
+from program import Program
 
-import pickle
+import json
 import torch
 import png
 import time
@@ -19,7 +18,6 @@ import torch.nn as nn
 from recognition import variable
 
 global prefix_dreams
-
 
 # : Task -> feature list
 class GeomFeatureCNN(nn.Module):
@@ -153,16 +151,22 @@ if __name__ == "__main__":
     if red is not []:
         for reducing in red:
             try:
-                with open(reducing) as f:
-                    prods = pickle.load(f)
-                primitives = primitives + prods
+                with open(reducing, 'r') as f:
+                    prods = json.load(f)
+                    for e in prods:
+                        e = Program.parse(e)
+                        if e.isInvented:
+                            primitives.append(e)
             except EOFError:
                 eprint("Couldn't grab frontier from " + reducing)
             except IOError:
                 eprint("Couldn't grab frontier from " + reducing)
 
+
     primitives = list(OrderedDict((x, True) for x in primitives).keys())
     baseGrammar = Grammar.uniform(primitives)
+
+    eprint(baseGrammar)
 
     r = explorationCompression(baseGrammar, train,
                                testingTasks=test,
@@ -170,7 +174,8 @@ if __name__ == "__main__":
                                compressor="rust",
                                evaluationTimeout=0.01,
                                **args)
-    needsExport = [z for _, _, z in r.grammars[-1].productions]
+    needsExport = [str(z) for _, _, z in r.grammars[-1].productions if
+            z.isInvented]
     if save is not None:
         with open(save, 'w') as f:
-            pickle.dump(needsExport, f)
+            json.dump(needsExport, f)
