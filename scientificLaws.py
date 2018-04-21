@@ -155,7 +155,7 @@ tasks = [
              lambda m1,m2,r: -0.1 * m1 * m2 / (norm(r)**2)),
     makeTask("Hook's law",
              arrow(tpositive,tpositive),
-             lambda x: -2.*x*x,
+             lambda x: -7.29.*x*x,
              N = 20,
              S = 5),
     makeTask("Ohm's law",
