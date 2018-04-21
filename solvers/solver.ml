@@ -172,6 +172,6 @@ let main() =
   in
   export_frontiers tf solutions |> print_string ;;
 
-(* main();; *)
-test_best_enumeration();;
+main();;
+(* test_best_enumeration();; *)
 
