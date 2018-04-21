@@ -172,4 +172,6 @@ let main() =
   in
   export_frontiers tf solutions |> print_string ;;
 
-main();;
+(* main();; *)
+test_best_enumeration();;
+

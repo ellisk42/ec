@@ -202,6 +202,8 @@ let set_enumeration_timeout dt =
 let rec enumerate_programs' (g: grammar) (context: tContext) (request: tp) (environment: tp list)
     (lower_bound: float) (upper_bound: float)
     ?maximumDepth:(maximumDepth = 9999)
+    (* Symmetry breaking *)
+    ?parent:(parent=None)
     (callBack: program -> tContext -> float -> unit) : unit =
   (* Enumerates programs satisfying: lowerBound <= MDL < upperBound *)
   (* INVARIANT: request always has the current context applied to it already *)
@@ -209,7 +211,8 @@ let rec enumerate_programs' (g: grammar) (context: tContext) (request: tp) (envi
     match request with
     | TCon("->",[argument_type;return_type],_) ->
       let newEnvironment = argument_type :: environment in
-      enumerate_programs' ~maximumDepth:maximumDepth (* ~recursion:recursion *)
+      enumerate_programs' ~maximumDepth:maximumDepth
+        ~parent:None
         g context return_type newEnvironment
         lower_bound upper_bound
         (fun body newContext ll -> callBack (Abstraction(body)) newContext ll)
@@ -219,7 +222,11 @@ let rec enumerate_programs' (g: grammar) (context: tContext) (request: tp) (envi
       candidates |> 
       List.iter ~f:(fun (candidate, argument_types, context, ll) ->
           let mdl = 0.-.ll in
-          if mdl >= upper_bound then () else
+          if mdl >= upper_bound ||
+             (match parent with
+              | None -> false
+              | Some((p,j)) -> violates_symmetry p candidate j)
+          then () else
             enumerate_applications
               ~maximumDepth:(maximumDepth - 1)
               g context environment
@@ -251,19 +258,19 @@ and
     | first_argument::later_arguments ->
       let (context,first_argument) = applyContext context first_argument in
       enumerate_programs' ~maximumDepth:maximumDepth (* ~recursion:NoRecursion *)
+        ~parent:(Some((originalFunction,argumentIndex)))
         g context first_argument environment
         0. upper_bound
         (fun a k ll ->
-           if violates_symmetry originalFunction a argumentIndex then () else 
-             let a = Apply(f,a) in
-             enumerate_applications
-               ~originalFunction:originalFunction
-               ~argumentIndex:(argumentIndex+1)
-               ~maximumDepth:maximumDepth
-               g k environment
-               later_arguments a
-               (lower_bound+.ll) (upper_bound+.ll)
-               (fun a k a_ll -> callBack a k (a_ll+.ll)))
+           let a = Apply(f,a) in
+           enumerate_applications
+             ~originalFunction:originalFunction
+             ~argumentIndex:(argumentIndex+1)
+             ~maximumDepth:maximumDepth
+             g k environment
+             later_arguments a
+             (lower_bound+.ll) (upper_bound+.ll)
+             (fun a k a_ll -> callBack a k (a_ll+.ll)))
 
 let dfs_around_skeleton g ~lower_bound ~upper_bound state k =
   let rec free = function
@@ -275,33 +282,53 @@ let dfs_around_skeleton g ~lower_bound ~upper_bound state k =
     | Primitive(_,_,_) -> false
   in
 
+  let rec parent_index = function
+    (* Given that the input is an application, what is the identity of
+       the function, and what is the index of the argument? *)
+    | Apply(f,x) ->
+      (match f with
+       | Apply(_,_) ->
+         let (f',n) = parent_index f in
+         (f',n + 1)
+       | _ -> (f,0))
+    | _ -> assert false
+  in
+
   let environment = path_environment state.path in
 
-  let rec around e context abstraction_depth l u k =
+  let rec around e abstraction_depth ?parent:(parent=None) (* context abstraction_depth l u k *) =
     match e with
     | Abstraction(body) ->
-      around body context (1+abstraction_depth) l u
-        (fun body newContext ll -> k (Abstraction(body)) newContext ll)
+      let around_body = around ~parent:None body (1+abstraction_depth) in 
+      fun context l u k -> 
+        around_body context l u
+          (fun body newContext ll -> k (Abstraction(body)) newContext ll)
     | Apply(f,x) when free x && (not (free f)) ->
-      around x context abstraction_depth l u
-        (fun x' newContext ll -> k (Apply(f,x')) newContext ll)
+      let around_argument = around ~parent:(Some(parent_index e)) x abstraction_depth in
+      fun context l u k ->       
+        around_argument context l u
+          (fun x' newContext ll -> k (Apply(f,x')) newContext ll)
     | Apply(f,x) when free f && free x ->
-      around f context abstraction_depth 0. u
-        (fun f' context f_ll ->
-           around x context abstraction_depth (l+.f_ll) (u+.f_ll)
-             (fun x' context x_ll ->
-                k (Apply(f',x')) context (f_ll+.x_ll)))
+      let around_argument = around ~parent:(Some(parent_index e)) x abstraction_depth in
+      let around_function = around ~parent:None f abstraction_depth in
+      fun context l u k ->             
+        around_function context 0. u
+          (fun f' context f_ll ->
+             around_argument context (l+.f_ll) (u+.f_ll)
+               (fun x' context x_ll ->
+                  k (Apply(f',x')) context (f_ll+.x_ll)))
     | Apply(_,_) ->
       (* depth-first generation should ensure that functions are never free when their arguments are not free *)
       assert false
     | Primitive(t,"??",_) ->
-      let (context, t) = applyContext context t in
       let environment = List.drop environment (List.length environment - abstraction_depth) in
-      enumerate_programs' g context t environment l u k
+      fun context l u k ->             
+        let (context, t) = applyContext context t in
+        enumerate_programs' ~parent:parent g context t environment l u k
     | _ -> assert false
   in 
     
-  around state.skeleton state.context 0 (lower_bound -. state.cost) (upper_bound -. state.cost)
+  around ~parent:None state.skeleton 0 state.context (lower_bound -. state.cost) (upper_bound -. state.cost)
     (fun e context ll -> k e context (ll-.state.cost))
 
 (* Putting depth first and best first gives us a parallel strategy for enumeration *)
@@ -309,7 +336,7 @@ let multicore_enumeration ?final:(final=fun () -> []) ?cores:(cores=1) ?shatter:
   let shatter = match (shatter,cores) with
     | (Some(s),_) -> s
     | (None,1) -> 1
-    | (None,c) -> 4*c
+    | (None,c) -> 10*c
   in
   
   let (finished, fringe) =

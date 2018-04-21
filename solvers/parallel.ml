@@ -48,6 +48,7 @@ let pmap ?processes:(processes=4) ?bsize:(bsize=0) f input output =
   let next_idx, total_computed = ref 0, ref 0
   and in_streams = ref []
   in
+  Gc.compact();
   while !total_computed < Array.length output do
     (* Spawn processes *)
     while !next_idx < Array.length output && List.length !in_streams < processes do
@@ -113,6 +114,8 @@ let parallel_work ~nc ?chunk:(chunk=0) ~final actions =
   let remaining_actions = ref actions in
   let in_streams = ref [] in
   let outputs = ref [] in
+
+  Gc.compact();
 
   while !finished_actions < number_of_actions do
     (* Spawn processes *)
