@@ -114,6 +114,7 @@ let parallel_work ~nc ?chunk:(chunk=0) ~final actions =
   let remaining_actions = ref actions in
   let in_streams = ref [] in
   let outputs = ref [] in
+  let worker_id = ref 0 in
 
   Gc.compact();
 
@@ -126,8 +127,11 @@ let parallel_work ~nc ?chunk:(chunk=0) ~final actions =
           (* Child *)
           Unix.close rd;
           let my_work = List.take !remaining_actions chunk in
+          let start_time = Unix.time() in
           my_work |> List.iter ~f:(fun a -> a());
           let answer = final() in
+          Printf.printf "Worker %d executed in time %f\n"
+            (!worker_id) (Unix.time()-.start_time);
           let chan = Unix.out_channel_of_descr wt in
           Marshal.to_channel chan (List.length my_work, answer) [Marshal.Closures];
           Out_channel.close chan;
@@ -138,7 +142,8 @@ let parallel_work ~nc ?chunk:(chunk=0) ~final actions =
           (* Parent *)
           Unix.close wt;
           in_streams := (rd,pid)::!in_streams;
-          remaining_actions := List.drop !remaining_actions chunk
+          remaining_actions := List.drop !remaining_actions chunk;
+          worker_id := !worker_id + 1
         end
     done;
     (* Receive input from processes *)
