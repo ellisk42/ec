@@ -134,6 +134,10 @@ def fragmentSize(f, boundVariableCost = 0.1, freeVariableCost = 0.01):
         assert not isinstance(e,FragmentVariable)
     return leaves + boundVariableCost*boundVariables + freeVariableCost*freeVariables
 
+def primitiveSize(e):
+    if e.isInvented: e = e.body
+    return fragmentSize(e)
+
 def defragment(expression):
     '''Converts a fragment into an invented primitive'''
     if isinstance(expression, (Primitive,Invented)): return expression

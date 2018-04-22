@@ -76,6 +76,12 @@ class Frontier(object):
         best = self.bestPosterior
         return "HIT %s w/ %s ; log prior = %f ; log likelihood = %f"%(self.task.name, best.program, best.logPrior, best.logLikelihood)
 
+    def summarizeFull(self):
+        if self.empty: return "MISS " + self.task.name
+        return "\n".join([self.task.name] + \
+                         [ "%f\t%s"%(e.logPosterior, e.program)
+                           for e in self.normalize() ])
+
     @staticmethod
     def describe(frontiers):
         numberOfHits = sum(not f.empty for f in frontiers)

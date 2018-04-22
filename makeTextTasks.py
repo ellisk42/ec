@@ -268,8 +268,12 @@ def makeTasks():
                         [ ((x,), x.replace(d1,d2))
                           for _ in range(NUMBEROFEXAMPLES) 
                           for x in [randomWords(d1)] ],
-                        needToTrain=True)
+                        needToTrain=False)
     for d in delimiters:
+        problem("drop first were delimited by '%s'"%d,
+                [ ((x,), d.join(x.split(d)[1:]))
+                  for _ in range(NUMBEROFEXAMPLES)
+                  for x in [randomWords(d)] ])
         for n in [0,1,-1]:
             problem("nth (n=%d) word delimited by '%s'"%(n,d),
                     [ ((x,), x.split(d)[n])

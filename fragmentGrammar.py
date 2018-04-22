@@ -275,7 +275,7 @@ class FragmentGrammar(object):
         def grammarScore(g):
             g = g.makeUniform().insideOutside(restrictedFrontiers, pseudoCounts)
             likelihood = g.jointFrontiersMDL(restrictedFrontiers)
-            structure = sum(fragmentSize(p) for p in g.primitives)
+            structure = sum(primitiveSize(p) for p in g.primitives)
             score = likelihood - aic*len(g) - structurePenalty*structure
             g.clearCache()
             if invalid(score):
@@ -287,6 +287,7 @@ class FragmentGrammar(object):
         if aic is not POSITIVEINFINITY:
             restrictedFrontiers = restrictFrontiers()
             bestScore, _ = grammarScore(bestGrammar)
+            eprint("Starting score",bestScore)
             while True:
                 restrictedFrontiers = restrictFrontiers()
                 fragments = [ f
