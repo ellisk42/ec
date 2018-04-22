@@ -38,7 +38,7 @@ if __name__ == "__main__":
                            testingTasks = test,
                            outputPrefix = "experimentOutputs/text",
                            evaluationTimeout = 0.0005,
-                           #compressor="pypy", # 
+                           compressor="pypy", # 
                            **commandlineArguments(
                                steps = 500,
                                iterations = 10,
