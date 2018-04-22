@@ -243,10 +243,10 @@ def make_list_bootstrap_tasks():
 
     # learning to map
     mapBootstrap = [
-        # Task("map double", arrow(tlist(tint),tlist(tint)),
-        #      [((l,),map(lambda n: n*2, l))
-        #       for _ in range(10)
-        #       for l in [randomList()] ]),
+        Task("map double", arrow(tlist(tint),tlist(tint)),
+             [((l,),map(lambda n: n*2, l))
+              for _ in range(10)
+              for l in [randomList()] ]),
         # Task("map increment", arrow(tlist(tint),tlist(tint)),
         #      [((l,),map(lambda n: n+1, l))
         #       for _ in range(10)
