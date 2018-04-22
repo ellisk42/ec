@@ -307,3 +307,14 @@ let slice s e l =
 let random_choice l =
   Random.int (List.length l) |> 
   List.nth_exn l
+
+let compare_list c xs ys =
+  let d = List.length xs - List.length ys in
+  let rec r x y = match (x,y) with
+    | ([],[]) -> 0
+    | (a :: b, u :: v) ->
+      let d = c a u in
+      if d = 0 then r b v else d
+    | _ -> assert false
+  in 
+  if d = 0 then r xs ys else d

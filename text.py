@@ -10,26 +10,14 @@ from recognition import *
 import random
 
 class LearnedFeatureExtractor(RecurrentFeatureExtractor):
-    def serialize(self, x):
-        if isinstance(x,str): return [x]
-        assert isinstance(x,list)
-        if isinstance(x[0],str): return x
-        assert isinstance(x[0],list)
-        serialization = ["LIST"]
-        for s in x:
-            serialization.append("LISTDELIMITER")
-            serialization += self.serialize(s)
-        return serialization
-
     def tokenize(self, examples):
-        return [ ((self.serialize(x),), self.serialize(y))
-                 for (x,),y in examples]
+        return examples
 
     def __init__(self, tasks):
         lexicon = {c
                    for t in tasks
-                   for (x,),y in self.tokenize(t.examples)
-                   for c in x + y }
+                   for xs,y in self.tokenize(t.examples)
+                   for c in reduce(lambda u,v: u+v, list(xs) + [y]) }
                 
         super(LearnedFeatureExtractor, self).__init__(lexicon = list(lexicon),
                                                       H = 64,

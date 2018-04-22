@@ -228,6 +228,12 @@ let rec shift_free_variables ?height:(height = 0) shift p = match p with
   | Primitive(_,_,_) -> p
   | Abstraction(b) -> Abstraction(shift_free_variables ~height:(height+1) shift b)
 
+let rec free_variables ?d:(d=0) e = match e with
+  | Index(j) -> if j >= d then [j] else []
+  | Apply(f,x) -> free_variables ~d:d f @ free_variables ~d:d x
+  | Abstraction(b) -> free_variables ~d:(d + 1) b
+  | _ -> []
+
 (* PRIMITIVES *)
 let primitive ?manualLaziness:(manualLaziness = false)
     (name : string) (t : tp) x =

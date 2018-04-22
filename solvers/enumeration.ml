@@ -18,6 +18,7 @@ let violates_symmetry f a n =
     let a = application_function a in
     if not (is_base_primitive a) then false else 
       match (n, primitive_name f, primitive_name a) with
+      (* McCarthy primitives *)
       | (0,"car","cons") -> true
       | (0,"car","empty") -> true
       | (0,"cdr","cons") -> true
@@ -33,6 +34,11 @@ let violates_symmetry f a n =
       | (0,"zero?","0") -> true
       | (0,"zero?","1") -> true
       | (0,"zero?","-1") -> true
+      (* bootstrap target *)
+      | (1,"map","empty") -> true
+      | (_,"zip","empty") -> true
+      | (0,"fold","empty") -> true
+      | (1,"index","empty") -> true
       | _ -> false
 
 (* For now this is disabled and is not used *)

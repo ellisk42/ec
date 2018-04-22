@@ -318,7 +318,7 @@ class FragmentGrammar(object):
                 dS = newScore - bestScore
                 bestScore, bestGrammar = newScore, newGrammar
                 newPrimitiveLikelihood,newType,newPrimitive = bestGrammar.productions[-1]
-                expectedUses = bestGrammar.expectedUses(restrictedFrontiers).actualUses[newPrimitive]
+                expectedUses = bestGrammar.expectedUses(restrictedFrontiers).actualUses.get(newPrimitive,0)
                 eprint("New primitive of type %s\t%s\t\n(score = %f; dScore = %f; <uses> = %f)"%
                        (newType,newPrimitive,newScore,dS,expectedUses))
                 
