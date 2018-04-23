@@ -9,6 +9,9 @@ def user():
     import getpass
     return getpass.getuser()
 
+def branch():
+    return subprocess.check_output(['git','rev-parse','--abbrev-ref','HEAD']).strip()
+
 def launch(size = "t2.micro", name = ""):
     # aws ec2 run-instances --image-id ami-835f6ae6 --instance-type "t2.micro" --key-name testing --associate-public-ip-address
     o = json.loads(subprocess.check_output(["aws","ec2","run-instances",
@@ -51,6 +54,13 @@ cd ~/ec
 rm experimentOutputs/*
 git pull
 """
+
+    br = branch()
+    if br != 'master':
+        preamble += """
+git checkout %s
+"""%br
+    
     if resume:
         print "Sending tar file"
         os.system("""
@@ -125,10 +135,10 @@ sudo shutdown -h now
     print "Sending git patch over to",address
     os.system("git diff --stat")
     os.system("""
-        (echo "Base-Ref: $(git rev-parse origin/master)" ; echo ; git diff origin/master) | \
+        (echo "Base-Ref: $(git rev-parse origin/{})" ; echo ; git diff origin/{}) | \
         ssh -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem \
             ubuntu@{} 'cat > ~/ec/patch'
-        """.format(address))
+        """.format(br,br,address))
 
     # Execute the script
     # For some reason you need to pipe the output to /dev/null in order to get it to detach
