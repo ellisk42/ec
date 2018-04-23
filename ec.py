@@ -277,7 +277,6 @@ def ecIterator(grammar, tasks,
                                                                      CPUs=CPUs,
                                                                      solver=solver,
                                                                      maximumFrontier=maximumFrontier,
-                                                                     frontierSize=frontierSize,
                                                                      enumerationTimeout=enumerationTimeout,
                                                                      evaluationTimeout=evaluationTimeout)
             eprint("Recognition model enumeration results:")

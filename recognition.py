@@ -477,7 +477,7 @@ class RecognitionModel(nn.Module):
 
     def enumerateFrontiers(self, tasks, likelihoodModel,
                            solver=None,
-                           frontierSize=None, enumerationTimeout=None,
+                           enumerationTimeout=None,
                            CPUs=1, maximumFrontier=None, evaluationTimeout=None):
         with timing("Evaluated recognition model"):
             grammars = {}
@@ -488,11 +488,11 @@ class RecognitionModel(nn.Module):
                                          [ (productions.data[k],t,p)
                                            for k,(_,t,p) in enumerate(self.grammar.productions) ])
 
-        return multithreadedEnumeration(grammars, tasks, likelihoodModel,
-                                        solver=solver,
-                                        frontierSize = frontierSize, enumerationTimeout=enumerationTimeout,
-                                        CPUs=CPUs, maximumFrontier=maximumFrontier,
-                                        evaluationTimeout=evaluationTimeout)
+        return multicoreEnumeration(grammars, tasks, likelihoodModel,
+                                    solver=solver,
+                                    enumerationTimeout=enumerationTimeout,
+                                    CPUs=CPUs, maximumFrontier=maximumFrontier,
+                                    evaluationTimeout=evaluationTimeout)
 
 class RecurrentFeatureExtractor(nn.Module):
     def __init__(self, _=None,
