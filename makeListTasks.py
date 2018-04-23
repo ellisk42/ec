@@ -135,10 +135,18 @@ def make_list_bootstrap_tasks():
              [((l,),l[0] - 1)
               for _ in range(10)
               for l in [randomList()] ]),
-    ]        
-    operationBootstrap = decrementBootstrap + [
+    ]
+    incrementBootstrap = [
         Task("increment", arrow(tint,tint),
              [((n,),n+1) for n in range(10) ]),
+        Task("increment car", arrow(tlist(tint),tint),
+             [((l,),l[0] + 1)
+              for _ in range(10)
+              for l in [randomList()] ]),
+        Task("increment twice", arrow(tint,tint),
+             [((n,),n+2) for n in range(10) ]),
+    ]
+    operationBootstrap = decrementBootstrap + incrementBootstrap + [
         Task("zero?", arrow(tint,tbool),
              [((n,), n == 0) for n in range(10) ]),
         Task("zero car?", arrow(tlist(tint),tbool),
@@ -151,12 +159,6 @@ def make_list_bootstrap_tasks():
               for _ in range(5)
               for b in [0,randint(1,9)]
               for a in  [randint(1,9)]]),
-        Task("increment car", arrow(tlist(tint),tint),
-             [((l,),l[0] + 1)
-              for _ in range(10)
-              for l in [randomList()] ]),
-        Task("increment twice", arrow(tint,tint),
-             [((n,),n+2) for n in range(10) ]),
         Task("or", arrow(tbool,tbool,tbool),
              [((a,b),a or b)
               for a in [True,False]
@@ -342,7 +344,7 @@ def make_list_bootstrap_tasks():
     
     # Let's learn everything!
     if True:
-        return lengthBootstrap + decrementBootstrap + unfoldBootstrap + arrayBootstrap + foldBootstrap + mapBootstrap + zipBootstrap
+        return lengthBootstrap + incrementBootstrap + decrementBootstrap + unfoldBootstrap + arrayBootstrap + foldBootstrap + mapBootstrap + zipBootstrap
 
 
 def bonusListProblems():
