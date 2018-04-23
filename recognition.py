@@ -614,7 +614,14 @@ class RecurrentFeatureExtractor(nn.Module):
             try:
                 ys = [ p.runWithArguments(xs) for xs in xss ]
             except: continue
-            return self(zip(xss,ys))
+            try:
+                return self(zip(xss,ys))
+            except:
+                eprint("Failure extracting features of %s : %s"%(p,tp))
+                eprint("ys = ",ys)
+                eprint("xs = ",xss)
+                assert False
+                
         return None
 
 class MLPFeatureExtractor(nn.Module):

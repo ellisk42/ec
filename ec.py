@@ -162,7 +162,7 @@ def ecIterator(grammar, tasks,
     if resume is not None:
         path = checkpointPath(resume, extra = "_baselines" if onlyBaselines else "")
         with open(path, "rb") as handle:
-            result = pickle.load(handle)
+            result = dill.load(handle)
         eprint("Loaded checkpoint from", path)
         grammar = result.grammars[-1] if result.grammars else grammar
         recognizer = result.recognitionModel
