@@ -420,10 +420,10 @@ let var_name         = primitive "var_name" tvar GeomLib.Plumbing.var_name
 
 let default_recursion_limit = 20;;
 
-let rec unfold p h n x =
-  if p x then [] else h x :: unfold p h n (n x)
+let rec unfold x p h n =
+  if p x then [] else h x :: unfold (n x) p h n
 
-let primitive_unfold = primitive "unfold" ((t0 @> tboolean) @> (t0 @> t1) @> (t0 @> t0) @> t0 @> tlist t1) unfold;;
+let primitive_unfold = primitive "unfold" (t0 @> (t0 @> tboolean) @> (t0 @> t1) @> (t0 @> t0) @> tlist t1) unfold;;
 let primitive_index = primitive "index" (tint @> tlist t0 @> t0) (fun j l -> List.nth_exn l j);;
 let primitive_zip = primitive "zip" (tlist t0 @> tlist t1 @> (t0 @> t1 @> t2) @> tlist t2)
     (fun x y f -> List.map2_exn x y ~f:f);;

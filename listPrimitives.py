@@ -52,7 +52,7 @@ def _find(x):
         except ValueError:
             return -1
     return _inner
-def _unfold(p): return lambda f: lambda n: lambda x: __unfold(p,f,n,x)
+def _unfold(x): return lambda p: lambda h: lambda n: __unfold(p,f,n,x)
 def __unfold(p,f,n,x):
     if p(x): return []
     return [f(x)] + __unfold(p,f,n,n(x))
@@ -168,7 +168,7 @@ def bootstrapTarget():
         # learned primitives
         Primitive("map", arrow(arrow(t0, t1), tlist(t0), tlist(t1)), _map),
         Primitive("zip", arrow(tlist(t0), tlist(t1), arrow(t0, t1, t2), tlist(t2)), _zip),
-        Primitive("unfold", arrow(t0, arrow(t0,t1), arrow(t0,t0), arrow(t0,tbool), tlist(t1)), _unfold),
+        Primitive("unfold", arrow(t0, arrow(t0,tbool), arrow(t0,t1), arrow(t0,t0), tlist(t1)), _unfold),
         Primitive("range", arrow(tint, tlist(tint)), range),
         Primitive("index", arrow(tint, tlist(t0), t0), _index),
         Primitive("fold", arrow(tlist(t0), t1, arrow(t0,t1,t1), t1), _fold),
