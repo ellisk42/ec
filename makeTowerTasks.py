@@ -134,8 +134,8 @@ def makeTasks():
              for m in MASSES
              for a in [1, 2.9, 5.8]
              for s in STAIRCASE 
-             for l in [0, 2.5, 5, 7.5]
-             for p in [MILDPERTURBATION, STRONGPERTURBATION]
+             for l in [2.5, 5, 7.5]
+             for p in [MILDPERTURBATION]#, STRONGPERTURBATION]
              for h in HEIGHT
              if not ((p == STRONGPERTURBATION and m == min(MASSES)) or \
                      (p == STRONGPERTURBATION and h == max(HEIGHT)))

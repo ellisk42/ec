@@ -504,5 +504,8 @@ def violatesSymmetry(f,x,argumentIndex):
     if f == "-": return argumentIndex == 1 and x == "0"
     if f == "empty?": return x == "cons" or x == "empty"
     if f == "zero?": return x == "0" or x == "1"
+    if f == "index" or f == "map" or f == "zip": return x == "empty"
+    if f == "range": return x == "0"
+    if f == "fold": return argumentIndex == 1 and x == "empty"
     return False
         

@@ -2,6 +2,7 @@ from ec import *
 
 from towerPrimitives import primitives
 from makeTowerTasks import *
+from listPrimitives import bootstrapTarget
 
 import os
 import random
@@ -110,7 +111,7 @@ def bruteForceTower(size):
 def bruteForceBaseline(tasks):
     from towers.tower_common import TowerWorld
     from PIL import Image
-    towers = set(map(lambda t: tuple(centerTower(t)),bruteForceTower(4)))
+    towers = set(map(lambda t: tuple(centerTower(t)),bruteForceTower(3)))
     print "Generated",len(towers),"towers"
     for t in towers:
         gotHit = False
@@ -183,12 +184,13 @@ def updateCaching(g, perturbations, _=None,
 if __name__ == "__main__":
     initializeTowerCaching()
     
-    g0 = Grammar.uniform(primitives)
+    g0 = Grammar.uniform(primitives + bootstrapTarget())
+    
     tasks = makeTasks()
     test, train = testTrainSplit(tasks, 100./len(tasks))
     eprint("Split %d/%d test/train"%(len(test),len(train)))
     # evaluateArches(train)
-    if False: bruteForceBaseline(train)
+    if True: bruteForceBaseline(train)
 
     arguments = commandlineArguments(
         featureExtractor = TowerFeatureExtractor,

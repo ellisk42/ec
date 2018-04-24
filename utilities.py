@@ -10,7 +10,7 @@ import subprocess
 import math
 import cPickle as pickle
 from itertools import chain, imap
-
+import heapq
 
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
@@ -394,6 +394,19 @@ def runWithTimeout(k, timeout):
         signal.setitimer(signal.ITIMER_VIRTUAL, 0)
         raise
 
+class PQ(object):
+    """why the fuck does Python not wrap this in a class"""
+    def __init__(self):
+        self.h = []
+    def push(priority, v):
+        heapq.heappush(self.h, (-priority, v))
+    def popMaximum(self):
+        return heapq.heappop(self.h)[1]
+    def __iter__(self):
+        for _,v in self.h: yield v
+    def __len__(self): return len(self.h)
+        
+    
 if __name__ == "__main__":
     def f():
         return 5/0

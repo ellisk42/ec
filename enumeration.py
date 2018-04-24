@@ -292,42 +292,54 @@ def solveForTask_pypy(_ = None,
 
 def solveForTask_python(_ = None,
                         elapsedTime = 0.,
-                        g = None, task = None,
+                        g = None, tasks = None,
                         lowerBound = None, upperBound = None, budgetIncrement = None,
                         timeout = None,
+                        CPUs=1,
                         likelihoodModel = None,
-                        evaluationTimeout = None, maximumFrontier = None):
-    return enumerateForTask(g,task,likelihoodModel,
+                        evaluationTimeout = None, maximumFrontiers = None):
+    return enumerateForTasks(g,tasks,likelihoodModel,
                             timeout = timeout,
+                             elapsedTime=elapsedTime,
                             evaluationTimeout = evaluationTimeout,
-                            maximumFrontier = maximumFrontier,
+                            maximumFrontiers = maximumFrontiers,
                             budgetIncrement = budgetIncrement,
                             lowerBound = lowerBound, upperBound = upperBound)
 
 class EnumerationTimeout(Exception): pass
-def enumerateForTask(g, task, likelihoodModel, _ = None,
-                     verbose=False,
-                     timeout=None,
-                     evaluationTimeout=None,
-                     frontierSize=None,
-                     lowerBound = 0.,
-                     upperBound = 100.,
-                     budgetIncrement=1.0, maximumFrontier = 10**2):
-    assert (timeout is not None) or (frontierSize is not None), \
-        "enumerateForTask: You must provide either a timeout or a frontier size."
+def enumerateForTasks(g, tasks, likelihoodModel, _ = None,
+                      verbose=False,
+                      timeout=None,
+                      elapsedTime=0.,
+                      CPUs=1,
+                      evaluationTimeout=None,
+                      lowerBound = 0.,
+                      upperBound = 100.,
+                      budgetIncrement=1.0, maximumFrontiers = None):
+    assert timeout is not None, \
+        "enumerateForTasks: You must provide a timeout."
 
     from time import time
 
-    timeUntilFirstSolution = None
-    frontier = []
+    request = tasks[0].request
+    assert all( t.request == request for t in tasks ), \
+        "enumerateForTasks: Expected tasks to all have the same type"
+
+    maximumFrontiers = [ maximumFrontiers[t] for t in tasks ]
+    # store all of the hits in a priority queue
+    # we will never maintain maximumFrontier best solutions
+    hits = [PQ() for _ in tasks ]
+
     starting = time()
     previousBudget = lowerBound
     budget = lowerBound + budgetIncrement
     try:
         totalNumberOfPrograms = 0
-        while len(frontier) < maximumFrontier:
+        while time() < starting + timeout and \
+              any( len(h) < mf for h,mf in zip(hits, maximumFrontiers) ) and \
+              budget <= upperBound:
             numberOfPrograms = 0
-            for prior,_,p in g.enumeration(Context.EMPTY, [], task.request,
+            for prior,_,p in g.enumeration(Context.EMPTY, [], request,
                                            maximumDepth = 99,
                                            upperBound = budget,
                                            lowerBound = previousBudget):
@@ -340,36 +352,34 @@ def enumerateForTask(g, task, likelihoodModel, _ = None,
                 numberOfPrograms += 1
                 totalNumberOfPrograms += 1
 
-                success, likelihood = likelihoodModel.score(p, task)
-                if success:
-                    if verbose:
-                        eprint("Hit",task.name,"with the program",p,"which has prior",prior,"after",time() - starting,"seconds")
-                    if frontier == []: timeUntilFirstSolution = time() - starting
-                    frontier.append(FrontierEntry(program = p,
-                                                  logPrior = prior,
-                                                  logLikelihood = likelihood))
-
+                for n in range(len(tasks)):
+                    task = tasks[n]
+                    likelihood = task.logLikelihood(p, evaluationTimeout)
+                    if invalid(likelihood): continue
+                    dt = time() - start + elapsedTime
+                    priority = -(likelihood + prior)
+                    hits[n].push(priority, (dt, FrontierEntry(program=p,
+                                                              logLikelihood=likelihood,
+                                                              logPrior=prior)))
+                    if len(hits[n]) > maximumFrontier[n]:
+                        hits[n].popMaximum()
+                
                 if timeout is not None and time() - starting > timeout:
                     raise EnumerationTimeout
-            if verbose:
-                eprint("Enumerated %d programs of satisfying:"%(numberOfPrograms),
-                       "%d < MDL <= %d."%(int(previousBudget),int(budget)))
-
+            
             previousBudget = budget
             budget += budgetIncrement
-            if verbose:
-                eprint("\tTotal elapsed time: %d seconds. Total number of programs evaluated: %d. Task: %s."% \
-                       (time() - starting, totalNumberOfPrograms, task))
-            if frontierSize is not None and totalNumberOfPrograms > frontierSize: break
+            
             if budget > upperBound: break
-    except EnumerationTimeout:
-        if verbose:
-            eprint("Timeout triggered after",time() - starting,"seconds for task",task)
+    except EnumerationTimeout: pass
+    
+    frontiers = {tasks[n]: Frontier([ e for _,e in hits[n] ],
+                                    task = tasks[n])
+                 for n in range(len(tasks)) }
+    searchTimes = {tasks[n]: None if len(hits[n]) == 0 else min(t for t,_ in hits[n] )
+                   for n in range(len(tasks)) }
 
-    frontier = Frontier(frontier,
-                        task = task).topK(maximumFrontier)
-
-    return frontier, timeUntilFirstSolution, numberOfPrograms
+    return frontiers, searchTimes
 
 def solveSingleTask(grammar, task, maximumBudget = 15):
     if isinstance(task, DifferentiableTask):
