@@ -25,7 +25,7 @@ def makeTrainingData(request, law,
         if a.name == "real": return random()*S*2 - S
         elif a.name == "positive": return random()*S
         elif a.name == "vector":
-            return [random() for _ in xrange(D) ]
+            return [random()*S*2-S for _ in xrange(D) ]
         elif a.name == "list":
             return [sampleArgument(a.arguments[0], listLength) for _ in xrange(listLength) ]
         else:
@@ -216,7 +216,7 @@ if __name__ == "__main__":
     equationPrimitives = [real, f0, f1, fpi,
                           real_power, real_subtraction, real_addition, real_multiplication]
     baseGrammar = Grammar.uniform(equationPrimitives + bootstrapTarget())
-
+    
     eprint("Got %d equation discovery tasks..."%len(tasks))
     
     explorationCompression(baseGrammar, tasks,

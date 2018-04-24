@@ -116,8 +116,8 @@ class DifferentiableTask(Task):
             return NEGATIVEINFINITY
         f = e.evaluate([])
 
-        loss = sum( self.loss(self.predict(f, map(float,x)), float(y))
-                    for x,y in self.examples ) / float(len(self.examples))
+        loss = sum( self.loss(self.predict(f, xs), y)
+                    for xs,y in self.examples ) / float(len(self.examples))
         if isinstance(loss, DN):
             try:
                 loss = loss.resilientBackPropagation(parameters, lr = 0.05, steps = 500,
