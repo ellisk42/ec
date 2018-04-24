@@ -26,7 +26,7 @@ def _zip(a): return lambda b: lambda f: map(f, a, b)
 def _mapi(f): return lambda l: map(lambda (i,x): f(i)(x), enumerate(l))
 def _reduce(f): return lambda x0: lambda l: reduce(lambda a, x: f(a)(x), l, x0)
 def _reducei(f): return lambda x0: lambda l: reduce(lambda a, (i,x): f(i)(a)(x), enumerate(l), x0)
-def _fold(l): return lambda x0: lambda f: reduce(lambda a,x: f(x)(a), l, x0)
+def _fold(l): return lambda x0: lambda f: reduce(lambda a,x: f(x)(a), l[::-1], x0)
 def _eq(x): return lambda y: x == y
 def _eq0(x): return x == 0
 def _a1(x): return x + 1
@@ -209,6 +209,7 @@ def McCarthyPrimitives():
         ] + [ Primitive(str(j), tint, j) for j in xrange(2) ]
 
 if __name__ == "__main__":
+    bootstrapTarget()
     import pickle
     g = Grammar.uniform(McCarthyPrimitives())
     # with open("/home/ellisk/om/ec/experimentOutputs/list_aic=1.0_arity=3_ET=1800_expandFrontier=2.0_it=4_likelihoodModel=all-or-nothing_MF=5_baseline=False_pc=10.0_L=1.0_K=5_rec=False.pickle", "rb") as handle:

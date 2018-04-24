@@ -710,3 +710,12 @@ let test_lazy_evaluation() =
       ;
       flush_everything()
     );;
+
+let test_string() =
+  let p = parse_program "(lambda (fold $0 $0 (lambda (lambda (cdr (if (char-eq? $1 SPACE) $2 $0))))))" |> get_some in
+  let p = analyze_lazy_evaluation p in
+  let x = String.to_list "this is a rigorous" in
+  let y = run_lazy_analyzed_with_arguments p [x] |> String.of_char_list in
+  Printf.printf "%s\n" y
+;;
+

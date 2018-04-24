@@ -174,4 +174,5 @@ let main() =
 
 main();;
 (* test_best_enumeration();; *)
+(* test_string();; *)
 
