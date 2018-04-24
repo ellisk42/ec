@@ -1,9 +1,9 @@
-from utilities import eprint
-from frontier import *
-from task import *
-from type import *
-from program import *
-from grammar import *
+from .utilities import eprint
+from .frontier import *
+from .task import *
+from .type import *
+from .program import *
+from .grammar import *
 
 import gc
 import traceback

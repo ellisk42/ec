@@ -1,4 +1,4 @@
-from program import *
+from .program import *
 
 def _nand(x): return lambda y: not (x and y)
 primitive_nand = Primitive("nand",arrow(tbool,tbool,tbool), _nand)

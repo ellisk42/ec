@@ -3,7 +3,7 @@ import time
 import traceback
 import pickle as pickle
 
-from utilities import eprint
+from .utilities import eprint
 
 
 if __name__ == "__main__":

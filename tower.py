@@ -1,7 +1,7 @@
-from ec import *
+from .ec import *
 
-from towerPrimitives import primitives
-from makeTowerTasks import *
+from .towerPrimitives import primitives
+from .makeTowerTasks import *
 
 import os
 import random

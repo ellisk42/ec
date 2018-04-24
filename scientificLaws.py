@@ -1,11 +1,11 @@
-from ec import explorationCompression, commandlineArguments, Program
-from grammar import Grammar
-from arithmeticPrimitives import real_addition, real_multiplication, real_power, real_subtraction, real, f0, f1, fpi
-from task import DifferentiableTask, squaredErrorLoss, l1loss, Task
-from type import tint, arrow
-from utilities import *
-from program import *
-from recognition import *
+from .ec import explorationCompression, commandlineArguments, Program
+from .grammar import Grammar
+from .arithmeticPrimitives import real_addition, real_multiplication, real_power, real_subtraction, real, f0, f1, fpi
+from .task import DifferentiableTask, squaredErrorLoss, l1loss, Task
+from .type import tint, arrow
+from .utilities import *
+from .program import *
+from .recognition import *
 
 tvector = baseType("vector")
 treal = baseType("real")

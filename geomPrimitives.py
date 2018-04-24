@@ -1,5 +1,5 @@
-from program import Primitive, Program
-from type import arrow, baseType, tmaybe, t0
+from .program import Primitive, Program
+from .type import arrow, baseType, tmaybe, t0
 
 tprogram = baseType("program")
 tstring  = baseType("string")

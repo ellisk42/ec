@@ -1,5 +1,5 @@
-from utilities import eprint, exp, log, timing, valid
-from task import Task
+from .utilities import eprint, exp, log, timing, valid
+from .task import Task
 import random
 import gc
 

@@ -1,9 +1,9 @@
-from ec import commandlineArguments, explorationCompression
-from grammar import Grammar
-from arithmeticPrimitives import addition, multiplication, k0, k1
-from type import tint, arrow
-from task import Task
-from utilities import eprint
+from .ec import commandlineArguments, explorationCompression
+from .grammar import Grammar
+from .arithmeticPrimitives import addition, multiplication, k0, k1
+from .type import tint, arrow
+from .task import Task
+from .utilities import eprint
 
 primitives = [addition, multiplication, k0, k1]
 

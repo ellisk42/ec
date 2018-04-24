@@ -1,4 +1,4 @@
-from ec import *
+from .ec import *
 
 import dill
 import numpy as np

@@ -1,10 +1,10 @@
-from utilities import *
+from .utilities import *
 
-from task import *
-from fragmentUtilities import *
-from frontier import *
-from grammar import *
-from program import *
+from .task import *
+from .fragmentUtilities import *
+from .frontier import *
+from .grammar import *
+from .program import *
 
 
 import gc
@@ -415,11 +415,15 @@ def rustInduce(g0, frontiers, _=None,
             } for e in f ],
         } for f in frontiers ],
     }
-
+    eprint("MAXDEBUG message:")
+    #eprint(message)
     eprint("running rust compressor")
-    p = subprocess.Popen(['./rust_compressor/rust_compressor'], encoding="utf-8",
+    p = subprocess.Popen(['./ec/rust_compressor/rust_compressor'], encoding="utf-8",
                          stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+
+    #Used to have encoding
     json.dump(message, p.stdin)
+
     p.stdin.close()
     resp = json.load(p.stdout)
     if p.returncode is not None:

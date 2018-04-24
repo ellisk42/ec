@@ -1,7 +1,7 @@
 # coding: utf8
 
-from task import Task
-from geomPrimitives import tcanvas
+from .task import Task
+from .geomPrimitives import tcanvas
 import png
 import os
 

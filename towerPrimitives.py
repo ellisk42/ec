@@ -1,7 +1,7 @@
-from program import *
+from .program import *
 
-from arithmeticPrimitives import *
-from logicalPrimitives import *
+from .arithmeticPrimitives import *
+from .logicalPrimitives import *
 
 import tuplePrimitives
 

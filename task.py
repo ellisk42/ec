@@ -1,6 +1,6 @@
-from program import *
-from utilities import *
-from differentiation import *
+from .program import *
+from .utilities import *
+from .differentiation import *
 
 import random
 import signal

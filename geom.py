@@ -1,10 +1,10 @@
 #!/usr/bin/env python2
 
-from ec import explorationCompression, commandlineArguments
-from grammar import Grammar
-from utilities import eprint, testTrainSplit, numberOfCPUs
-from makeGeomTasks import makeTasks
-from geomPrimitives import primitives
+from .ec import explorationCompression, commandlineArguments
+from .grammar import Grammar
+from .utilities import eprint, testTrainSplit, numberOfCPUs
+from .makeGeomTasks import makeTasks
+from .geomPrimitives import primitives
 from math import log
 from collections import OrderedDict
 
@@ -16,7 +16,7 @@ import subprocess
 import os
 import torch.nn as nn
 
-from recognition import variable
+from .recognition import variable
 
 global prefix_dreams
 
