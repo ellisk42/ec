@@ -302,6 +302,15 @@ def makeTasks():
                 [ ((x,), x[0] + d)
                   for _ in range(NUMBEROFEXAMPLES)
                   for x in [randomWord()] ])
+
+    for n in xrange(3):
+        problem("Append 2 strings (%s)"%('I'*(n+1)),
+                [ ((x,y), x + y)
+                  for _ in range(NUMBEROFEXAMPLES)
+                  for y in [randomWord()] 
+                  for x in [randomWord()] ],
+                needToTrain=True)
+        
     return problems
 
 
