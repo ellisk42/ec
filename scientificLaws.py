@@ -212,6 +212,32 @@ tasks = [
              S = 20),
 ]
 
+class LearnedFeatureExtractor(RecurrentFeatureExtractor):
+    def tokenize(self, examples):
+        # Should convert both the inputs and the outputs to lists
+        def t(z):
+            if isinstance(z, list):
+                return ["STARTLIST"] + [ y for x in z for y in t(x)  ] + ["ENDLIST"]
+            assert isinstance(z, (float,int))
+            return ["REAL"]
+        return [ (tuple(map(t,xs)), t(y))
+                 for xs,y in examples ]
+    
+    def __init__(self, tasks):
+        lexicon = {c
+                   for t in tasks
+                   for xs,y in self.tokenize(t.examples)
+                   for c in reduce(lambda u,v: u+v, list(xs) + [y]) }
+                
+        super(LearnedFeatureExtractor, self).__init__(lexicon = list(lexicon),
+                                                      H = 64,
+                                                      tasks = tasks,
+                                                      bidirectional = True)
+
+    def featuresOfProgram(self, p, tp):
+        p = program.visit(RandomParameterization.single)
+        return super(LearnedFeatureExtractor, self).featuresOfProgram(p, tp)
+
 if __name__ == "__main__":
     equationPrimitives = [real, f0, f1, fpi,
                           real_power, real_subtraction, real_addition, real_multiplication]
@@ -225,6 +251,7 @@ if __name__ == "__main__":
                            evaluationTimeout = 0.1,
                            testingTasks = [],
                            **commandlineArguments(
+                               featureExtractor = LearnedFeatureExtractor,
                                iterations = 10,
                                CPUs = numberOfCPUs(),
                                structurePenalty = 1.,
