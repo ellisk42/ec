@@ -259,5 +259,4 @@ if __name__ == "__main__":
                                a = 3,
                                maximumFrontier = 10000,
                                topK = 2,
-                               featureExtractor = None,
                                pseudoCounts = 10.0))
