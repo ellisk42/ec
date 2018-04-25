@@ -415,8 +415,6 @@ def rustInduce(g0, frontiers, _=None,
             } for e in f ],
         } for f in frontiers ],
     }
-    eprint("MAXDEBUG message:")
-    #eprint(message)
     eprint("running rust compressor")
     p = subprocess.Popen(['./ec/rust_compressor/rust_compressor'], encoding="utf-8",
                          stdin=subprocess.PIPE, stdout=subprocess.PIPE)
