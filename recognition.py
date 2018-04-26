@@ -612,7 +612,8 @@ class RecurrentFeatureExtractor(nn.Module):
         random.shuffle(candidateInputs)
         for xss in candidateInputs:
             try:
-                ys = [ p.runWithArguments(xs) for xs in xss ]
+                ys = runWithTimeout(lambda: [ p.runWithArguments(xs) for xs in xss ],
+                                    0.1)
             except: continue
             try:
                 return self(zip(xss,ys))

@@ -53,9 +53,10 @@ def _find(x):
             return -1
     return _inner
 def _unfold(x): return lambda p: lambda h: lambda n: __unfold(p,f,n,x)
-def __unfold(p,f,n,x):
+def __unfold(p,f,n,x, recursion_limit=50):
+    if recursion_limit <= 0: raise RecursionDepthExceeded()
     if p(x): return []
-    return [f(x)] + __unfold(p,f,n,n(x))
+    return [f(x)] + __unfold(p,f,n,n(x),recursion_limit-1)
 
 class RecursionDepthExceeded(Exception): pass
 def _fix(argument):
