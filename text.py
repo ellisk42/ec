@@ -1,4 +1,4 @@
-from ec import explorationCompression, commandlineArguments, Task
+from ec import explorationCompression, commandlineArguments, Task, ecIterator
 from grammar import Grammar
 from utilities import eprint, testTrainSplit, numberOfCPUs
 from makeTextTasks import makeTasks, delimiters, loadPBETasks
