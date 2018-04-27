@@ -1,5 +1,6 @@
 from task import *
 from type import *
+from utilities import *
 
 import random
 
@@ -242,6 +243,9 @@ def makeOldTasks():
     return problems
 
 def makeTasks():
+    import random
+    random.seed(9)
+    
     NUMBEROFEXAMPLES = 4
     
     problems = []
@@ -270,10 +274,11 @@ def makeTasks():
                           for x in [randomWords(d1)] ],
                         needToTrain=False)
     for d in delimiters:
-        problem("drop first were delimited by '%s'"%d,
+        problem("drop first word delimited by '%s'"%d,
                 [ ((x,), d.join(x.split(d)[1:]))
                   for _ in range(NUMBEROFEXAMPLES)
-                  for x in [randomWords(d)] ])
+                  for x in [randomWords(d)] ],
+                needToTrain=True)
         for n in [0,1,-1]:
             problem("nth (n=%d) word delimited by '%s'"%(n,d),
                     [ ((x,), x.split(d)[n])
@@ -285,25 +290,29 @@ def makeTasks():
                     [ ((x,y), x + d1 + y)
                       for _ in range(NUMBEROFEXAMPLES)
                       for x in [randomWord()]
-                      for y in [randomWord()] ])
-        for d2 in delimiters:
-            problem("Append two words delimited by '%s%s'"%(d1,d2),
-                    [ ((x,y), x + d1 + d2 + y)
-                      for _ in range(NUMBEROFEXAMPLES)
-                      for x in [randomWord()]
-                      for y in [randomWord()] ])
+                      for y in [randomWord()] ],
+                needToTrain=True)
+    for d1,d2 in randomPermutation(crossProduct(delimiters,delimiters))[:len(delimiters)]:        
+        problem("Append two words delimited by '%s%s'"%(d1,d2),
+                [ ((x,y), x + d1 + d2 + y)
+                  for _ in range(NUMBEROFEXAMPLES)
+                  for x in [randomWord()]
+                  for y in [randomWord()] ],
+                needToTrain=True)
     for n in xrange(1,4):
         problem("Drop last %d characters"%n,
                 [ ((x,), x[:-n])
                   for _ in range(NUMBEROFEXAMPLES)
-                  for x in [randomWord() + randomWord()] ])
+                  for x in [randomWord() + randomWord()] ],
+                needToTrain=True)
     for d in delimiters:
         problem("Take first character and append '%s'"%d,
                 [ ((x,), x[0] + d)
                   for _ in range(NUMBEROFEXAMPLES)
-                  for x in [randomWord()] ])
+                  for x in [randomWord()] ],
+                needToTrain=True)
 
-    for n in xrange(3):
+    for n in xrange(len(delimiters)):
         problem("Append 2 strings (%s)"%('I'*(n+1)),
                 [ ((x,y), x + y)
                   for _ in range(NUMBEROFEXAMPLES)

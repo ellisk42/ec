@@ -252,6 +252,12 @@ class timing(object):
         eprint("%s in %.1f seconds"%(self.message,
                                      time.time() - self.start))
 
+def randomPermutation(l):
+    import random
+    l = list(l)
+    random.shuffle(l)
+    return l
+
 def batches(data, size = 1):
     import random
     # Randomly permute the data
@@ -393,6 +399,12 @@ def runWithTimeout(k, timeout):
         signal.signal(signal.SIGVTALRM, lambda *_:None)
         signal.setitimer(signal.ITIMER_VIRTUAL, 0)
         raise
+
+def crossProduct(a,b):
+    b = list(b)
+    for x in a:
+        for y in b:
+            yield x,y
 
 class PQ(object):
     """why the fuck does Python not wrap this in a class"""
