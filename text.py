@@ -6,6 +6,7 @@ from textPrimitives import primitives
 from listPrimitives import bootstrapTarget
 from program import *
 from recognition import *
+from enumeration import *
 
 import random
 
@@ -61,12 +62,21 @@ if __name__ == "__main__":
 
     for result in generator:
         eprint("Evaluating on challenge problems...")
-        recognizer = result.recognitionModel
-        challengeFrontiers, _ = recognizer.enumerateFrontiers(challenge, "all-or-nothing",
-                                                              CPUs=numberOfCPUs(),
-                                                              solver="ocaml",
-                                                              maximumFrontier=1,
-                                                              enumerationTimeout=300,
-                                                              evaluationTimeout=evaluationTimeout)
+        if hasattr(results, 'recognitionModel'):
+            recognizer = result.recognitionModel
+            challengeFrontiers, _ = recognizer.enumerateFrontiers(challenge, "all-or-nothing",
+                                                                  CPUs=numberOfCPUs(),
+                                                                  solver="ocaml",
+                                                                  maximumFrontier=1,
+                                                                  enumerationTimeout=challengeTimeout,
+                                                                  evaluationTimeout=evaluationTimeout)
+        else:
+            challengeFrontiers, _ = \
+                multicoreEnumeration(result.grammars[-1], challenge, "all-or-nothing",
+                                     CPUs=numberOfCPUs(),
+                                     solver="ocaml",
+                                     maximumFrontier=1,
+                                     enumerationTimeout=challengeTimeout,
+                                     evaluationTimeout=evaluationTimeout)
         eprint("Challenge problem enumeration results:")
         eprint(Frontier.describe(challengeFrontiers))
