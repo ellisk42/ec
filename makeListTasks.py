@@ -187,6 +187,9 @@ def make_list_bootstrap_tasks():
         Task("range inclusive", arrow(tint,tlist(tint)),
              [((n,), range(n+1))
               for n in range(10) ]),
+        Task("range exclusive", arrow(tint,tlist(tint)),
+             [((n,), range(n-1))
+              for n in range(1,11) ]),
     ]
     
     # Encourages learning how to treat a list as an array
