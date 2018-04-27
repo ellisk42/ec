@@ -62,7 +62,7 @@ if __name__ == "__main__":
     for result in generator:
         eprint("Evaluating on challenge problems...")
         recognizer = result.recognitionModel
-        challengeFrontiers, _ = recognizer.enumerateFrontiers(challenge, likelihoodModel,
+        challengeFrontiers, _ = recognizer.enumerateFrontiers(challenge, "all-or-nothing",
                                                               CPUs=numberOfCPUs(),
                                                               solver="ocaml",
                                                               maximumFrontier=1,
