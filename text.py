@@ -64,8 +64,8 @@ if __name__ == "__main__":
         eprint("Evaluating on challenge problems...")
         if hasattr(result, 'recognitionModel'):
             recognizer = result.recognitionModel
-            challengeFrontiers, times =
-            recognizer.enumerateFrontiers(challenge, "all-or-nothing",
+            challengeFrontiers, times = \
+                                        recognizer.enumerateFrontiers(challenge, "all-or-nothing",
                                           CPUs=numberOfCPUs(),
                                           solver="ocaml",
                                           maximumFrontier=1,
