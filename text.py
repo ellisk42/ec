@@ -62,7 +62,7 @@ if __name__ == "__main__":
 
     for result in generator:
         eprint("Evaluating on challenge problems...")
-        if hasattr(result, 'recognitionModel'):
+        if result.recognitionModel is not None:
             recognizer = result.recognitionModel
             challengeFrontiers, times = \
                                         recognizer.enumerateFrontiers(challenge, "all-or-nothing",
