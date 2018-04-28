@@ -1,6 +1,6 @@
 from ec import explorationCompression, commandlineArguments, Task, ecIterator
 from grammar import Grammar
-from utilities import eprint, testTrainSplit, numberOfCPUs
+from utilities import eprint, testTrainSplit, numberOfCPUs, median, standardDeviation, mean
 from makeTextTasks import makeTasks, delimiters, loadPBETasks
 from textPrimitives import primitives
 from listPrimitives import bootstrapTarget
@@ -62,16 +62,17 @@ if __name__ == "__main__":
 
     for result in generator:
         eprint("Evaluating on challenge problems...")
-        if hasattr(results, 'recognitionModel'):
+        if hasattr(result, 'recognitionModel'):
             recognizer = result.recognitionModel
-            challengeFrontiers, _ = recognizer.enumerateFrontiers(challenge, "all-or-nothing",
-                                                                  CPUs=numberOfCPUs(),
-                                                                  solver="ocaml",
-                                                                  maximumFrontier=1,
-                                                                  enumerationTimeout=challengeTimeout,
-                                                                  evaluationTimeout=evaluationTimeout)
+            challengeFrontiers, times =
+            recognizer.enumerateFrontiers(challenge, "all-or-nothing",
+                                          CPUs=numberOfCPUs(),
+                                          solver="ocaml",
+                                          maximumFrontier=1,
+                                          enumerationTimeout=challengeTimeout,
+                                          evaluationTimeout=evaluationTimeout)
         else:
-            challengeFrontiers, _ = \
+            challengeFrontiers, times = \
                 multicoreEnumeration(result.grammars[-1], challenge, "all-or-nothing",
                                      CPUs=numberOfCPUs(),
                                      solver="ocaml",
@@ -80,3 +81,9 @@ if __name__ == "__main__":
                                      evaluationTimeout=evaluationTimeout)
         eprint("Challenge problem enumeration results:")
         eprint(Frontier.describe(challengeFrontiers))
+        eprint("Average search time: ",int(mean(times)+0.5),
+               "sec.\tmedian:",int(median(times)+0.5),
+               "\tmax:",int(max(times)+0.5),
+               "\tstandard deviation",int(standardDeviation(times)+0.5))
+
+

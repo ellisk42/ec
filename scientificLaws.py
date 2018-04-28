@@ -72,6 +72,8 @@ def makeTask(name, request, law,
         
 def norm(v):
     return sum(x*x for x in v)**0.5
+def unit(v):
+    return scaleVector(1./norm(v), v)
 def scaleVector(a,v):
     return [a*x for x in v]
 def innerProduct(a,b):
@@ -145,10 +147,10 @@ tasks = [
              lambda m,k: 2*pi*(m/k)**0.5),
     makeTask("Newtonian gravitation (vector)",
              arrow(tpositive, tpositive, tvector, tvector),
-             lambda m1,m2,r: scaleVector(-0.1 * m1 * m2 / (norm(r)**2), r)),
+             lambda m1,m2,r: scaleVector(-0.1 * m1 * m2 / (norm(r)**2), unit(r))),
     makeTask("Coulomb's law (vector)",
              arrow(tpositive, tpositive, tvector, tvector),
-             lambda m1,m2,r: scaleVector(-0.1 * m1 * m2 / (norm(r)**2), r)),
+             lambda m1,m2,r: scaleVector(-0.1 * m1 * m2 / (norm(r)**2), unit(r))),
     makeTask("Newtonian gravitation (scalar)",
              arrow(tpositive, tpositive, tvector, treal),
              lambda m1,m2,r: -27. * m1 * m2 / (norm(r)**2)),
@@ -179,7 +181,7 @@ tasks = [
              arrow(tpositive,tpositive),
              lambda t: 1./t,
              N = 20,
-             S = 20),
+             S = 2.),
     makeTask("Plank relation",
              arrow(tpositive,tpositive),
              lambda p: 4.7/p,
