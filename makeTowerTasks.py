@@ -59,7 +59,7 @@ class TowerTask(Task):
         if key in TOWERCACHING: result = TOWERCACHING[key]
         else:
             w = TowerWorld()
-            try: result = w.sampleStability(tower, perturbation, N = 30)
+            try: result = w.sampleStability(tower, perturbation, N = 15)
             except: result = None
             
             # except Exception as exception:

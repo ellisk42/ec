@@ -37,7 +37,7 @@ polygonShape.draw = my_draw_polygon
 
 result = TowerWorld().sampleStability(plan, perturbation, N = 100)
 mass = sum(w*h for _,w,h in plan)
-print "This tower has height %f, mass %f, area %s, len %s, staircase %s, and succeeds %d/100 of the time with a perturbation of %f"%(result.height, mass, result.area, result.length, result.staircase, int(result.stability*100),perturbation)
+print "This tower has height %f, mass %f, area %s, len %s, staircase %s, and succeeds %d/100 of the time with a perturbation of %f"%(result["height"], mass, result["area"], result["length"], result["staircase"], int(result["stability"]*100),perturbation)
 
 # --- main game loop ---
 
@@ -56,16 +56,15 @@ while running:
             fixture.shape.draw(body, fixture)
 
     # Make Box2D simulate the physics of our world for one step.
-    world.step(TIME_STEP)
+    world.step()
 
     if state == "BUILDING":
-        if world.unmoving():
-            if plan != []:
-                world.placeBlock(*plan[0])
-                plan = plan[1:]
-                timer = time() + 2
-            elif time() > timer:
-                state = "DESTROYING"
+        world.executePlan(plan)
+        state = "BEHOLDING"
+        timer = time() + 2
+    elif state == "BEHOLDING":
+        if time() > timer:
+            state = "DESTROYING"
     elif state == "DESTROYING":
         world.impartImpulses(perturbation)
         state = "SPECTATING"

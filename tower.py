@@ -111,7 +111,7 @@ def bruteForceTower(size):
 def bruteForceBaseline(tasks):
     from towers.tower_common import TowerWorld
     from PIL import Image
-    towers = set(map(lambda t: tuple(centerTower(t)),bruteForceTower(3)))
+    towers = set(map(lambda t: tuple(centerTower(t)),bruteForceTower(2)))
     print "Generated",len(towers),"towers"
     for t in towers:
         gotHit = False
@@ -189,7 +189,7 @@ if __name__ == "__main__":
     tasks = makeTasks()
     test, train = testTrainSplit(tasks, 100./len(tasks))
     eprint("Split %d/%d test/train"%(len(test),len(train)))
-    # evaluateArches(train)
+    #evaluateArches(train)
     if True: bruteForceBaseline(train)
 
     arguments = commandlineArguments(

@@ -20,7 +20,7 @@ class TowerWorld(object):
 
         # self.H = 3.
         # self.W = 0.5
-        self.dt = 1./60
+        self.dt = 1./5
         self.locationNoise = 0.0
 
         self.xOffset = 11
@@ -59,7 +59,7 @@ class TowerWorld(object):
         dx = dx/2
         dy = dy/2
 
-        safetyMargin = 0.1
+        safetyMargin = 0.01
         y = self.lowestLegalHeight(x, dx, dy) + safetyMargin
         
         body = self.world.CreateDynamicBody(position=(x, y),
@@ -73,7 +73,9 @@ class TowerWorld(object):
                                         friction=1)
         self.blocks.append(body)
 
-    def step(self, dt):
+    def step(self, dt = None):
+        if dt is None:
+            dt = self.dt
         self.world.Step(dt, 10, 10)
 
     def unmoving(self):
@@ -244,10 +246,11 @@ class TowerWorld(object):
                           True)
 
     def stepUntilStable(self):
-        for _ in range(50): self.step(self.dt)
-        for _ in range(100000):
-            self.step(self.dt)
-            if self.unmoving(): break
+        for _ in range(25): self.step(self.dt)
+        #if True: return 
+        # for _ in range(100000):
+        #     self.step(self.dt)
+        #     if self.unmoving(): break
 
     def blocksSignificantlyMoved(self, threshold):
         for b in self.blocks:
@@ -262,19 +265,8 @@ class TowerWorld(object):
     def executePlan(self, plan):
         self.latestPlan = plan
         
-        initialHeight = float('-inf')
-        badPlan = False
         for p in plan:
             self.placeBlock(*p)
-            self.stepUntilStable()
-            newHeight = self.height()
-            if newHeight < initialHeight - 0.1: badPlan = True
-            initialHeight = newHeight
-
-            if self.blocksSignificantlyMoved(1):
-                badPlan = True
-                break
-        return not badPlan
     
     def clearWorld(self):
         for b in self.blocks:
@@ -319,24 +311,20 @@ class TowerWorld(object):
         length = 0
         biggestJump, biggestFall = None, None
         for _ in range(N):
-            planSucceeds = self.executePlan(plan)
-            if planSucceeds:
-                initialHeight = self.height()
+            self.executePlan(plan)
+            initialHeight = self.height()
                 
-                if not haveArea:
-                    area = self.enclosedArea()
-                    length = self.supportedLength(initialHeight - 0.5)
-                    biggestJump, biggestFall = self.staircase()
-                    haveArea = True
+            if not haveArea:
+                area = self.enclosedArea()
+                length = self.supportedLength(initialHeight - 0.5)
+                biggestJump, biggestFall = self.staircase()
+                haveArea = True
                     
-                hs.append(initialHeight)
-                self.impartImpulses(perturbation)
-                self.stepUntilStable()
-                wasStable.append(self.height() > initialHeight - 0.1)
-            else:
-                hs.append(0.)
-                wasStable.append(False)
-
+            hs.append(initialHeight)
+            self.impartImpulses(perturbation)
+            self.stepUntilStable()
+            wasStable.append(self.height() > initialHeight - 0.1)
+            
             # reset the world
             self.clearWorld()
         h = sum(hs)/N
