@@ -60,12 +60,13 @@ if __name__ == "__main__":
                                featureExtractor = LearnedFeatureExtractor,
                                pseudoCounts = 10.0))
     eprint("challenge problems before learning...")
-    multicoreEnumeration(baseGrammar, challenge, "all-or-nothing",
+    challengeFrontiers, _ = multicoreEnumeration(baseGrammar, challenge, "all-or-nothing",
                                      CPUs=numberOfCPUs(),
                                      solver="ocaml",
                                      maximumFrontier=1,
                                      enumerationTimeout=challengeTimeout,
                                      evaluationTimeout=evaluationTimeout)
+    eprint(Frontier.describe(challengeFrontiers))
     eprint("done evaluating challenge problems before learning")
 
 

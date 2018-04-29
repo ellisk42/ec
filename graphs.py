@@ -24,12 +24,16 @@ LearnedFeatureExtractor = 'LearnedFeatureExtractor'
 TowerFeatureExtractor = 'TowerFeatureExtractor'
 
 def parseResultsPath(p):
+    def maybe_eval(s):
+        try: return eval(s)
+        except: return s
+        
     p = p[:p.rfind('.')]
     domain = p[p.rindex('/')+1 : p.index('_')]
     rest = p.split('_')[1:]
     if rest[-1] == "baselines":
         rest.pop()
-    parameters = { ECResult.parameterOfAbbreviation(k): eval(v)
+    parameters = { ECResult.parameterOfAbbreviation(k): maybe_eval(v)
                    for binding in rest
                    for [k,v] in [binding.split('=')] }
     parameters['domain'] = domain
