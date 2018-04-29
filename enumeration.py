@@ -42,6 +42,10 @@ def multicoreEnumeration(g, tasks, likelihoodModel, _=None,
         k = (task2grammar[t], t.request)
         jobs[k] = jobs.get(k,[]) + [t]
 
+    disableParallelism = len(jobs) == 1
+    parallelCallback = launchParallelProcess if not disableParallelism else lambda f,*a,**k:  f(*a,**k)
+    if disableParallelism: eprint("Disabling parallelism because we only have one job.")
+
     # Map from task to the shortest time to find a program solving it
     bestSearchTime = {t: None for t in task2grammar}
 
@@ -119,25 +123,25 @@ def multicoreEnumeration(g, tasks, likelihoodModel, _=None,
                 g,request = j
                 bi = budgetIncrement(lowerBounds[j])
                 thisTimeout = enumerationTimeout - stopwatches[j].elapsed
-                launchParallelProcess(wrapInThread(solver),
-                                      q = q, g = g, ID = nextID,
-                                      elapsedTime = stopwatches[j].elapsed,
-                                      CPUs = allocation[j],
-                                      tasks = jobs[j],
-                                      lowerBound = lowerBounds[j],
-                                      upperBound = lowerBounds[j] + bi,
-                                      budgetIncrement = bi,
-                                      timeout = thisTimeout,
-                                      likelihoodModel = likelihoodModel,
-                                      evaluationTimeout = evaluationTimeout,
-                                      maximumFrontiers = maximumFrontiers(j))
                 eprint("(python) Launching %s (%d tasks) w/ %d CPUs. %f <= MDL < %f. Timeout %f."%
                        (request, len(jobs[j]), allocation[j], lowerBounds[j], lowerBounds[j] + bi, thisTimeout))
+                stopwatches[j].start()
+                parallelCallback(wrapInThread(solver),
+                                 q = q, g = g, ID = nextID,
+                                 elapsedTime = stopwatches[j].elapsed,
+                                 CPUs = allocation[j],
+                                 tasks = jobs[j],
+                                 lowerBound = lowerBounds[j],
+                                 upperBound = lowerBounds[j] + bi,
+                                 budgetIncrement = bi,
+                                 timeout = thisTimeout,
+                                 likelihoodModel = likelihoodModel,
+                                 evaluationTimeout = evaluationTimeout,
+                                 maximumFrontiers = maximumFrontiers(j))
                 id2CPUs[nextID] = allocation[j]
                 id2job[nextID] = j
                 nextID += 1                
 
-                stopwatches[j].start()
                 activeCPUs += allocation[j]
                 lowerBounds[j] += bi
 

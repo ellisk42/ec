@@ -56,8 +56,18 @@ class TowerTask(Task):
         from towers.tower_common import TowerWorld
         
         key = (tuple(tower), perturbation)
-        if key in TOWERCACHING: result = TOWERCACHING[key]
+        if key in TOWERCACHING:
+            result = TOWERCACHING[key]
         else:
+            def powerOfTen(n):
+                if n <= 0: return False
+                while True:
+                    if n == 1: return True
+                    if n % 10 != 0: return False
+                    n = n/10
+                
+            if powerOfTen(len(TOWERCACHING)):
+                eprint("Tower cache reached size",len(TOWERCACHING))
             w = TowerWorld()
             try: result = w.sampleStability(tower, perturbation, N = 15)
             except: result = None
