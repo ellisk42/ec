@@ -342,6 +342,8 @@ def loadPBETasks(directory="PBE_Strings_Track"):
         if isinstance(s,str):
             return [s]
         return []
+    def explode(s):
+        return [c for c in s]
     
     tasks = []
     cheatingTasks = []
@@ -368,10 +370,10 @@ def loadPBETasks(directory="PBE_Strings_Track"):
                 constants += findStrings(e)
 
         task = Task(name, arrow(*[tstr]*(len(examples[0][0])+1)),
-                    [(tuple(xs),y)
+                    [(tuple(map(explode,xs)),explode(y))
                      for xs,y in examples ])
         cheat = Task(name + "_cheating", arrow(*[tstr]*(len(examples[0][0])+1+len(constants))),
-                     [(tuple(constants + xs),y)
+                     [(tuple(map(explode, constants + xs)),explode(y))
                      for xs,y in examples ])
         tasks.append(task)
         print name

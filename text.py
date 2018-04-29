@@ -59,6 +59,15 @@ if __name__ == "__main__":
                                CPUs = numberOfCPUs(),
                                featureExtractor = LearnedFeatureExtractor,
                                pseudoCounts = 10.0))
+    eprint("challenge problems before learning...")
+    multicoreEnumeration(baseGrammar, challenge, "all-or-nothing",
+                                     CPUs=numberOfCPUs(),
+                                     solver="ocaml",
+                                     maximumFrontier=1,
+                                     enumerationTimeout=challengeTimeout,
+                                     evaluationTimeout=evaluationTimeout)
+    eprint("done evaluating challenge problems before learning")
+
 
     for result in generator:
         eprint("Evaluating on challenge problems...")

@@ -81,8 +81,14 @@ let load_problems channel =
     in
     let ts = elements |> List.map ~f:guess in
     let t0 = List.hd_exn ts in
-    ts |> List.iter ~f:(fun t -> context := (unify (!context) t0 t));
-    applyContext !context t0 |> snd
+    try
+      ts |> List.iter ~f:(fun t -> context := (unify (!context) t0 t));
+      applyContext !context t0 |> snd
+    with UnificationFailure -> begin
+        Printf.eprintf "Failure unifying types: %s\n"
+          (ts |> List.map ~f:string_of_type |> join ~separator:"\t");
+        assert false
+      end
   in
 
   let rec unpack x =
