@@ -161,7 +161,7 @@ def plotECResult(resultPaths, colors='rgbycm', label=None, title=None, export=No
     legends.append(a1.legend(loc = 'lower right', fontsize = 14,
               #bbox_to_anchor=(1, 0.5),
               handles = [mlines.Line2D([],[],color = 'black',ls = timeoutToStyle[timeout],
-                                       label = str(timeout))
+                                       label = "timeout %ss"%timeout)
                          for timeout in timeouts ]))
     if False:
         # FIXME: figure out how to have two separate legends

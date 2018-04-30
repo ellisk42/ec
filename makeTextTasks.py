@@ -299,11 +299,29 @@ def makeTasks():
                   for x in [randomWord()]
                   for y in [randomWord()] ],
                 needToTrain=True)
-    for n in xrange(1,4):
+    for n in xrange(1,5):
         problem("Drop last %d characters"%n,
                 [ ((x,), x[:-n])
                   for _ in range(NUMBEROFEXAMPLES)
                   for x in [randomWord() + randomWord()] ],
+                needToTrain=True)
+    for d1,d2 in randomPermutation(crossProduct(delimiters,delimiters))[:len(delimiters)]:
+        problem("Extract word delimited by '%s' - '%s'"%(d1,d2),
+                [ ((a + d1 + b + d2 + c + d + e,), b)
+                  for _ in range(NUMBEROFEXAMPLES/2)
+                  for d in [d1,d2]
+                  for a in [randomWord()]
+                  for b in [randomWord()]
+                  for c in [randomWord()]
+                  for e in [randomWord()]],
+        needToTrain=True)
+
+    for n in xrange(len(delimiters)):
+        problem("First letters of words (%s)"%("I"*(1+n)),
+                [ ((x,), "".join(map(lambda z: z[0], x.split(' '))))
+                  for _ in range(NUMBEROFEXAMPLES)
+                  for x in [randomWords(' ')]
+                  ],
                 needToTrain=True)
     for d in delimiters:
         problem("Take first character and append '%s'"%d,
