@@ -218,7 +218,8 @@ def ecIterator(grammar, tasks,
     }[likelihoodModel]()
 
     for j in range(resume or 0, iterations):
-        if j >= 2 and expandFrontier and result.learningCurve[-1] <= result.learningCurve[-2]:
+        if j >= 2 and expandFrontier and result.learningCurve[-1] <= result.learningCurve[-2] and \
+           result.learningCurve[-1] < len(tasks):
             oldEnumerationTimeout = enumerationTimeout
             if expandFrontier <= 10:
                 enumerationTimeout = int(enumerationTimeout * expandFrontier)
@@ -235,7 +236,8 @@ def ecIterator(grammar, tasks,
                                                 evaluationTimeout=evaluationTimeout)
         if expandFrontier and (not useRecognitionModel) \
            and (j == 0 and times == [] or \
-                j > 0 and sum(not f.empty for f in frontiers) <= result.learningCurve[-1]):
+                j > 0 and sum(not f.empty for f in frontiers) <= result.learningCurve[-1] and \
+                result.learningCurve[-1] < len(tasks)):
             timeout = enumerationTimeout
             unsolvedTasks = [ f.task for f in frontiers if f.empty ]
             while True:
