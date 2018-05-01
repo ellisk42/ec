@@ -43,6 +43,15 @@ def flatten(x, abort=lambda x:False):
     except TypeError:  # not iterable
         yield x
 
+def summaryStatistics(n,times):
+    eprint(n,"average: ",int(mean(times)+0.5),
+           "sec.\tmedian:",int(median(times)+0.5),
+           "\tmax:",int(max(times)+0.5),
+           "\tstandard deviation",int(standardDeviation(times)+0.5))
+
+
+
+    
 
 NEGATIVEINFINITY = float('-inf')
 POSITIVEINFINITY = float('inf')

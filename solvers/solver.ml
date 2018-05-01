@@ -1,5 +1,6 @@
 open Core
 
+(* open Vs *)
 open Differentiation
 open TikZ
 open Utils
@@ -181,4 +182,5 @@ let main() =
 main();;
 (* test_best_enumeration();; *)
 (* test_string();; *)
+(* test_version();; *)
 

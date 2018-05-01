@@ -220,8 +220,10 @@ let rec variable_is_bound ?height:(height = 0) (p : program) =
   | Primitive(_,_,_) -> false
   | Abstraction(b) -> variable_is_bound ~height:(height+1) b
 
+exception ShiftFailure;;
 let rec shift_free_variables ?height:(height = 0) shift p = match p with
-  | Index(j) -> if j < height then p else Index(j + shift)
+  | Index(j) -> if j < height then p else
+      if j + shift < 0 then raise ShiftFailure else Index(j + shift)
   | Apply(f,x) -> Apply(shift_free_variables ~height:height shift f,
                         shift_free_variables ~height:height shift x)
   | Invented(_,_) -> p

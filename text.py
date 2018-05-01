@@ -39,8 +39,8 @@ if __name__ == "__main__":
     baseGrammar = Grammar.uniform(primitives + bootstrapTarget())
 
     evaluationTimeout = 0.0005
-    # We will spend five minutes on each challenge problem
-    challengeTimeout = 5 * 60
+    # We will spend 30 minutes on each challenge problem
+    challengeTimeout = 30 * 60
     
     generator = ecIterator(baseGrammar, train,
                            testingTasks = test,
@@ -60,13 +60,14 @@ if __name__ == "__main__":
                                featureExtractor = LearnedFeatureExtractor,
                                pseudoCounts = 10.0))
     eprint("challenge problems before learning...")
-    challengeFrontiers, _ = multicoreEnumeration(baseGrammar, challenge, "all-or-nothing",
+    challengeFrontiers, times = multicoreEnumeration(baseGrammar, challenge, "all-or-nothing",
                                      CPUs=numberOfCPUs(),
                                      solver="ocaml",
                                      maximumFrontier=1,
                                      enumerationTimeout=challengeTimeout,
                                      evaluationTimeout=evaluationTimeout)
     eprint(Frontier.describe(challengeFrontiers))
+    summaryStatistics("Challenge problem search time",times)
     eprint("done evaluating challenge problems before learning")
 
 
@@ -91,9 +92,4 @@ if __name__ == "__main__":
                                      evaluationTimeout=evaluationTimeout)
         eprint("Challenge problem enumeration results:")
         eprint(Frontier.describe(challengeFrontiers))
-        eprint("Average search time: ",int(mean(times)+0.5),
-               "sec.\tmedian:",int(median(times)+0.5),
-               "\tmax:",int(max(times)+0.5),
-               "\tstandard deviation",int(standardDeviation(times)+0.5))
-
-
+        summaryStatistics("Challenge problem search time",times)
