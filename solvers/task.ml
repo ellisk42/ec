@@ -204,10 +204,8 @@ let enumerate_for_tasks (g: grammar) ?verbose:(verbose = true)
                     if not (Heap.mem old_heap ~equal:(=) element) then
                       (Heap.add old_heap element;
                        if Heap.length old_heap > maximumFrontier.(j)
-                       then Heap.remove_top old_heap
-                       else ())
-                    else ())))
-      else ();
+                       then Heap.remove_top old_heap))))
+      ;
       
       lower_bound := budgetIncrement+. (!lower_bound);
 
