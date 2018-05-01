@@ -156,10 +156,6 @@ let enumerate_for_tasks (g: grammar) ?verbose:(verbose = true)
   
   let lower_bound = ref lowerBound in
 
-  let total_count = ref 0 in
-
-  let programs_explored = ref 0 in
-
   let startTime = Time.now () in
 
   while not (enumeration_timed_out()) &&
@@ -174,7 +170,6 @@ let enumerate_for_tasks (g: grammar) ?verbose:(verbose = true)
           (!lower_bound) (!lower_bound +. budgetIncrement)
           ~final:(fun () -> [Array.map ~f:Heap.to_list hits])
           (fun p logPrior ->
-             incr programs_explored ;
              let mdl = 0.-.logPrior in
 
              assert( !lower_bound <= mdl);
@@ -190,7 +185,9 @@ let enumerate_for_tasks (g: grammar) ?verbose:(verbose = true)
                       hit_prior = logPrior;
                       hit_likelihood = logLikelihood;
                       hit_time = dt;} ;
-                   if Heap.length hits.(j) > maximumFrontier.(j) then Heap.remove_top hits.(j) ;
+                   while Heap.length hits.(j) > maximumFrontier.(j) do
+                     Heap.remove_top hits.(j)
+                   done;
                    if verbose then
                      Printf.eprintf
                        "\t(ocaml) HIT %s w/ %s\n" (tasks.(j).name) (string_of_program p)
