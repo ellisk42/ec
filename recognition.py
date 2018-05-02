@@ -601,9 +601,13 @@ class RecurrentFeatureExtractor(nn.Module):
             return None
         e = self.examplesEncoding(tokenized)
         # max pool
-        e,_ = e.max(dim = 0)
+        #e,_ = e.max(dim = 0)
+
+        # take the average activations across all of the examples
+        # I think this might be better because we might be testing on data which has far more o far fewer examples then training
+        e = e.mean(dim=0)
         return e
-        #return self.outputLayer(e).clamp(min = 0)
+        
 
     def featuresOfTask(self, t): return self(t.examples)
     def featuresOfProgram(self, p, tp):

@@ -6,12 +6,18 @@ import random
 
 
 delimiters = ['.',',',' ','(',')','-']
+characters = [chr(ord('a') + j)
+              for j in range(26) ] + \
+             [chr(ord('A') + j)
+              for j in range(26) ] + \
+                  [str(j) for j in range(10) ] + \
+                  ['+']
 
 def randomDelimiter():
     return random.choice(delimiters)
 
 def randomCharacter():
-    return chr(ord(random.choice(['a','A'])) + random.choice(range(26)))
+    return random.choice(characters)
 def randomWord():
     return "".join([randomCharacter() for _ in range(random.choice(range(3,6))) ])
 def randomWhiteWord():
@@ -299,12 +305,18 @@ def makeTasks():
                   for x in [randomWord()]
                   for y in [randomWord()] ],
                 needToTrain=True)
-    for n in xrange(1,5):
+    for n in xrange(1,6):
         problem("Drop last %d characters"%n,
                 [ ((x,), x[:-n])
                   for _ in range(NUMBEROFEXAMPLES)
                   for x in [randomWord() + randomWord()] ],
                 needToTrain=True)
+        if n > 1:
+            problem("Take first %d characters"%n,
+                    [ ((x,), x[:n])
+                      for _ in range(NUMBEROFEXAMPLES)
+                      for x in [randomWord() + randomWord()] ],
+                    needToTrain=True)
     for d1,d2 in randomPermutation(crossProduct(delimiters,delimiters))[:len(delimiters)]:
         problem("Extract word delimited by '%s' - '%s'"%(d1,d2),
                 [ ((a + d1 + b + d2 + c + d + e,), b)
@@ -394,8 +406,8 @@ def loadPBETasks(directory="PBE_Strings_Track"):
                      [(tuple(map(explode, constants + xs)),explode(y))
                      for xs,y in examples ])
         tasks.append(task)
-        print name
-        print "\n".join(map(str,examples[:3]))
+        # print name
+        # print "\n".join(map(str,examples[:3]))
         cheatingTasks.append(cheat)
 
     return tasks, cheatingTasks

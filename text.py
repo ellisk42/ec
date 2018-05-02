@@ -35,6 +35,7 @@ if __name__ == "__main__":
 
     challenge, challengeCheating = loadPBETasks()
     eprint("Got %d challenge PBE tasks"%len(challenge))
+    
 
     baseGrammar = Grammar.uniform(primitives + bootstrapTarget())
 
