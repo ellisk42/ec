@@ -84,6 +84,8 @@ def crossProduct(a,b):
     return [a2*b3 - a3*b2,
             a3*b1 - a1*b3,
             a1*b2 - a2*b1]
+def vectorAddition(u,v):
+    return [a+b for a,b in zip(u,v) ]
 pi = 3.14 # I think this is close enough to pi
 # Data taken from:
 # https://secure-media.collegeboard.org/digitalServices/pdf/ap/ap-physics-1-equations-table.pdf
@@ -106,9 +108,13 @@ tasks = [
     makeTask("e = mc^2",
              arrow(tpositive,tpositive,treal),
              lambda m,c: m*c*c),
-    makeTask("COM (scalar)",
+    makeTask("COM (general scalar)",
              arrow(tvector,tvector,treal),
              lambda ms,xs: sum(m*x for m,x in zip(ms,xs) )/sum(ms)),
+    makeTask("COM (2 vectors)",
+             arrow(tvector,tvector,tpositive,tpositive,tvector),
+             lambda x1,x2,m1,m2: scaleVector(1./(m1 + m2),
+                                             vectorAddition(scaleVector(m1,x1), scaleVector(m2,x2)))),
     makeTask("density = mass/volume",
              arrow(treal,treal,treal),
              lambda m,v: m/v),
@@ -141,7 +147,9 @@ tasks = [
              lambda r: r/2.),
 
     # AP physics
-
+    makeTask("Fnet = sum(F)",
+             arrow(tlist(tvector),tvector),
+             lambda vs: reduce(vectorAddition, vs)),
     makeTask("work = F.d",
              arrow(tvector, tvector, treal),
              lambda f,d: innerProduct(f,d),
