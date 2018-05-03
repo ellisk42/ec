@@ -15,7 +15,7 @@ def _right(x): return map(lambda b: tuple([b[0] + 1] + list(b[1:])), x)
 ttower = baseType("tower")
 
 # name, dimensions
-blocks = {"1x1": (1.,1.),
+blocks = {#"1x1": (1.,1.),
           "2x1": (2.,1.),
           "1x2": (1.,2.),
           "3x1": (3.,1.),
