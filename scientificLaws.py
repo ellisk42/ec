@@ -131,7 +131,7 @@ tasks = [
              arrow(treal,treal,treal),
              lambda c,v: 0.5*c*v),
     makeTask("U = 1/2Q^2/C",
-             arrow(treal,treal,treal),
+             arrow(treal,tpositive,treal),
              lambda q,c: 0.5*q*q/c),
     makeTask("P = 1/f",
              arrow(tpositive,tpositive),

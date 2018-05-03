@@ -357,6 +357,13 @@ class FragmentGrammar(object):
 
         productionUses = bestGrammar.expectedUses([f for f in frontiers if not f.empty ]).actualUses
         productionUses = {p: productionUses.get(p,0.) for p in bestGrammar.primitives }
+        possibleUses = bestGrammar.expectedUses([f for f in frontiers if not f.empty ]).possibleUses
+        possibleUses = {p: possibleUses.get(p,0.) for p in bestGrammar.primitives }
+
+        for p in bestGrammar.primitives:
+            eprint("%f / %f\t%s"%(productionUses[p],
+                                  possibleUses[p],
+                                  p))
 
         bestGrammar.clearCache()
         

@@ -441,7 +441,7 @@ class RecognitionModel(nn.Module):
                     loss.backward()
                     optimizer.step()
                     losses.append(loss.data[0])
-                if i%50 == 0 and losses:
+                if (i == 1 or i%50 == 0) and losses:
                     eprint("Epoch",i,"Loss",sum(losses)/len(losses))
                     gc.collect()
 
