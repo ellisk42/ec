@@ -212,7 +212,7 @@ class FragmentGrammar(object):
         return FragmentGrammar(log(uses.actualVariables + pseudoCounts)
                                - log(max(uses.possibleVariables, 1.)),
                                [ (log(uses.actualUses.get(p,0.) + pseudoCounts)
-                                  - log(uses.possibleUses.get(p,pseudoCounts)),
+                                  - log(uses.possibleUses.get(p,0.) + pseudoCounts),
                                   t,p)
                                  for _,t,p in self.productions ])
 
