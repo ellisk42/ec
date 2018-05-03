@@ -273,6 +273,13 @@ tasks = [
              lambda cs: sum(c**(-1) for c in cs)**(-1),
              N = 20,
              S = 20),
+
+    makeTask("A = pir^2",
+             arrow(tpositive,tpositive),
+             lambda r: pi*r*r),
+    makeTask("c^2 = a^2 + b^2",
+             arrow(tpositive,tpositive,tpositive),
+             lambda a,b: a*a + b*b)
 ]
 
 class LearnedFeatureExtractor(RecurrentFeatureExtractor):
