@@ -76,21 +76,6 @@ def evaluateArches(ts):
     import sys
     sys.exit()
 
-def exportTowers(towers, name):
-    from PIL import Image
-    from towers.tower_common import TowerWorld
-
-    m = max(len(t) for t in towers)
-    towers = [ [ TowerWorld().draw(t) for t in ts ]
-               for ts in towers ]
-    
-    size = towers[0][0].shape
-    tp = towers[0][0].dtype
-    towers = [ np.concatenate(ts + [np.zeros(size, dtype = tp)]*(m - len(ts)), axis = 1)
-               for ts in towers ]
-    towers = np.concatenate(towers, axis = 0)
-    Image.fromarray(towers).convert('RGB').save(name)
-
 def bruteForceTower_(size):
     MAXIMUMWIDTH = 2
     if size == 0:
