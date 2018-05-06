@@ -96,7 +96,7 @@ def bruteForceTower(size):
 def bruteForceBaseline(tasks):
     from towers.tower_common import TowerWorld
     from PIL import Image
-    towers = set(map(lambda t: tuple(centerTower(t)),bruteForceTower(2)))
+    towers = set(map(lambda t: tuple(centerTower(t)),bruteForceTower(4)))
     print "Generated",len(towers),"towers"
     for t in towers:
         gotHit = False
@@ -105,6 +105,7 @@ def bruteForceBaseline(tasks):
             if valid(ll):
                 print "Hit",task,"w/"
                 print t
+                print ll
                 print 
                 # image = TowerWorld().draw(t)
                 # Image.fromarray(image).convert('RGB').save("/tmp/towerBaseline.png")
@@ -169,13 +170,14 @@ def updateCaching(g, perturbations, _=None,
 if __name__ == "__main__":
     initializeTowerCaching()
     
-    g0 = Grammar.uniform(primitives + bootstrapTarget())
+    g0 = Grammar.uniform(primitives + bootstrapTarget() +
+                         [ Primitive(str(j), tint, j) for j in xrange(2,5) ])
     
     tasks = makeTasks()
     test, train = testTrainSplit(tasks, 100./len(tasks))
     eprint("Split %d/%d test/train"%(len(test),len(train)))
     #evaluateArches(train)
-    # if True: bruteForceBaseline(train)
+    if True: bruteForceBaseline(train)
 
     arguments = commandlineArguments(
         featureExtractor = TowerFeatureExtractor,
