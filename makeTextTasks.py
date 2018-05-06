@@ -87,7 +87,7 @@ def makeTasks():
                     [(preprocess(x),
                       preprocess(y))
                      for x,y in examples ])
-        if needToTrain: task.mustTrain = True
+        task.mustTrain = True
         problems.append(task)
 
     for d1 in delimiters:
@@ -174,12 +174,12 @@ def makeTasks():
         problem("Prepend '%s'"%w,
                 [((x,),w+x)
                  for _ in xrange(NUMBEROFEXAMPLES)
-                 for [x] in [randomWord] ])
+                 for [x] in [randomWord()] ])
         w = randomWord()
         problem("Append '%s'"%w,
                 [((x,),x+w)
                  for _ in xrange(NUMBEROFEXAMPLES)
-                 for [x] in [randomWord] ])
+                 for [x] in [randomWord()] ])
 
     for p in problems:
         guessConstantStrings(p)
