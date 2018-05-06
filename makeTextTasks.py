@@ -174,12 +174,12 @@ def makeTasks():
         problem("Prepend '%s'"%w,
                 [((x,),w+x)
                  for _ in xrange(NUMBEROFEXAMPLES)
-                 for [x] in [randomWord()] ])
+                 for x in [randomWord()] ])
         w = randomWord()
         problem("Append '%s'"%w,
                 [((x,),x+w)
                  for _ in xrange(NUMBEROFEXAMPLES)
-                 for [x] in [randomWord()] ])
+                 for x in [randomWord()] ])
 
     for p in problems:
         guessConstantStrings(p)
