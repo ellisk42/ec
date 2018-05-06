@@ -59,6 +59,16 @@ let load_problems channel =
     try Some(j |> member "lossThreshold" |> to_float)
     with _ -> None
   in
+
+  (* string constant parameters *)
+  let stringConstants =
+    try j |> member "stringConstants" |> to_list |> List.map ~f:to_string
+        |> List.map ~f:(String.to_list)
+    with _ -> []
+  in
+  let is_constant_task = productions |> List.exists ~f:(fun (p,_,_,_) ->
+      is_primitive p && primitive_name p = "STRING")
+  in
   
   let guess_type elements =
     let context = ref empty_context in
@@ -120,7 +130,8 @@ let load_problems channel =
         (if differentiable
          then differentiable_task ~parameterPenalty:parameterPenalty
              ~lossThreshold:lossThreshold ~maxParameters:maxParameters
-         else supervised_task)
+         else if is_constant_task then
+           constant_task ~maxParameters:maxParameters ~parameterPenalty:parameterPenalty ~stringConstants:stringConstants else supervised_task)
           ~timeout:timeout name task_type examples
       in 
       (task, maximum_frontier))

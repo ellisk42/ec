@@ -344,7 +344,25 @@ let primitive_is_empty = primitive "empty?" (tlist t0 @> tboolean)
     (function | [] -> true
               | _ -> false);;
 
-      
+let primitive_string_constant = primitive "STRING" (tlist tcharacter) ();;
+let rec substitute_string_constants alternatives e = match e with
+  | Primitive(c,"STRING",_) -> alternatives |> List.map ~f:(fun a -> Primitive(c,"STRING",ref a |> magical))
+  | Primitive(_,_,_) -> [e]
+  | Invented(_,b) -> substitute_string_constants alternatives b
+  | Apply(f,x) -> substitute_string_constants alternatives f |> List.map ~f:(fun f' ->
+      substitute_string_constants alternatives x |> List.map ~f:(fun x' ->
+          Apply(f',x'))) |> List.concat 
+  | Abstraction(b) -> substitute_string_constants alternatives b |> List.map ~f:(fun b' ->
+      Abstraction(b'))
+  | Index(_) -> [e]
+
+let rec number_of_string_constants = function
+  | Primitive(_,"STRING",_) -> 1
+  | Primitive(_,_,_) -> 0
+  | Invented(_,b) | Abstraction(b) -> number_of_string_constants b
+  | Apply(f,x) -> number_of_string_constants f + number_of_string_constants x
+  | Index(_) -> 0
+
 let primitive_empty = primitive "empty" (tlist t0) [];;
 let primitive_range = primitive "range" (tint @> tlist tint) (fun x -> 0 -- (x-1));;
 let primitive_sort = primitive "sort" (tlist tint @> tlist tint) (List.sort ~cmp:(fun x y -> x - y));;

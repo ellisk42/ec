@@ -103,6 +103,41 @@ let differentiable_task
             if l < t then 0. -. d*.parameterPenalty else log 0.)
   }
 
+let constant_task
+    ?parameterPenalty:(parameterPenalty=0.)
+    ?maxParameters:(maxParameters=100)
+    ?timeout:(timeout = 0.001)
+    ~stringConstants
+    name ty examples =
+  (* Process the examples and wrap them inside of placeholders *)
+  { name = name    ;
+    task_type = ty ;
+    log_likelihood =
+      (fun expression ->
+         if number_of_string_constants expression > maxParameters then log 0. else
+           substitute_string_constants stringConstants expression |> List.exists ~f:(fun p ->
+               let p = analyze_lazy_evaluation p in
+               (* Returns loss *)
+               let rec loop = function
+                 | [] -> true
+                 | (xs,y) :: e ->
+                   try
+                     (match run_for_interval
+                             timeout
+                             (fun () -> run_lazy_analyzed_with_arguments p xs = y)
+                     with
+                     | Some(true) -> loop e
+                     | _ -> false)
+                   with | UnknownPrimitive(n) -> raise (Failure ("Unknown primitive: "^n))
+                        | otherException -> begin
+                            if otherException = EnumerationTimeout then raise EnumerationTimeout else false
+                          end
+               in
+               loop examples) |> (function
+               | false -> log 0.0
+               | true -> 0.-.parameterPenalty*.(Float.of_int (number_of_string_constants expression))))
+  }
+
 
 let keep_best_programs_in_frontier (k : int) (f : frontier) : frontier =
   {request = f.request;

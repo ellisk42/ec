@@ -5,6 +5,24 @@ from utilities import *
 import random
 
 
+def lcs(u,v):
+    # t[(n,m)] = length of longest common string ending at first
+    # n elements of u & first m elements of v
+    t = {}
+
+    for n in xrange(len(u) + 1):
+        for m in xrange(len(v) + 1):
+            if m == 0 or n == 0:
+                t[(n,m)] = 0
+                continue
+            
+            if u[n - 1] == v[m - 1]:
+                t[(n,m)] = 1 + t[(n - 1,m - 1)]
+            else:
+                t[(n,m)] = 0
+    l,n,m = max((l,n,m) for (n,m),l in t.iteritems() )
+    return u[n - l:n]    
+
 delimiters = ['.',',',' ','(',')','-']
 characters = [chr(ord('a') + j)
               for j in range(26) ] + \
@@ -150,7 +168,21 @@ def makeTasks():
                   for y in [randomWord()] 
                   for x in [randomWord()] ],
                 needToTrain=True)
-        
+
+    for n in xrange(len(delimiters)):
+        w = randomWord()
+        problem("Prepend '%s'"%w,
+                [((x,),w+x)
+                 for _ in xrange(NUMBEROFEXAMPLES)
+                 for [x] in [randomWord] ])
+        w = randomWord()
+        problem("Append '%s'"%w,
+                [((x,),x+w)
+                 for _ in xrange(NUMBEROFEXAMPLES)
+                 for [x] in [randomWord] ])
+
+    for p in problems:
+        guessConstantStrings(p)
     return problems
 
 
@@ -206,14 +238,31 @@ def loadPBETasks(directory="PBE_Strings_Track"):
         cheat = Task(name + "_cheating", arrow(*[tstr]*(len(examples[0][0])+1+len(constants))),
                      [(tuple(map(explode, constants + xs)),explode(y))
                      for xs,y in examples ])
+                
         tasks.append(task)
         # print name
         # print "\n".join(map(str,examples[:3]))
         cheatingTasks.append(cheat)
 
+    for p in tasks:
+        guessConstantStrings(p)
     return tasks, cheatingTasks
     
+def guessConstantStrings(task):
+    examples = task.examples
+    guesses = []
+    for n in xrange(min(10,len(examples))):
+        for m in xrange(n,min(10,len(examples))):
+            y1 = examples[n][1]
+            y2 = examples[m][1]
+            l = lcs(y1,y2)
+            if len(l) > 2:
+                guesses.append(l)
 
+    task.stringConstants = list(set([''.join(g) for g in guesses]))
+    task.BIC = 1.
+    task.maxParameters = 2
+    
 if __name__ == "__main__":
     import sys
     loadPBETasks()

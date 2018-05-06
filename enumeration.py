@@ -241,6 +241,8 @@ def solveForTask_ocaml(_ = None,
         message["lossThreshold"] = -task.likelihoodThreshold
     if hasattr(task, 'maxParameters') and task.maxParameters is not None:
         message["maxParameters"] = task.maxParameters
+    if hasattr(task, 'stringConstants'):
+        message["stringConstants"] = task.stringConstants
 
     message = json.dumps(message)
     # with open("pipe", "w") as f:
