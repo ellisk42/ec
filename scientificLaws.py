@@ -91,7 +91,18 @@ pi = 3.14 # I think this is close enough to pi
 # https://secure-media.collegeboard.org/digitalServices/pdf/ap/ap-physics-1-equations-table.pdf
 # https://secure-media.collegeboard.org/digitalServices/pdf/ap/physics-c-tables-and-equations-list.pdf
 # http://mcat.prep101.com/wp-content/uploads/ES_MCATPhysics.pdf
+# some linear algebra taken from "parallel distributed processing"
 tasks = [
+    # parallel distributed processing
+    makeTask("vector addition (2)",
+             arrow(tvector,tvector,tvector),
+             vectorAddition),
+    makeTask("vector addition (many)",
+             arrow(tlist(tvector),tvector),
+             lambda vs: reduce(vectorAddition,vs)),
+    makeTask("vector norm",
+             arrow(tvector,treal),
+             lambda v: innerProduct(v,v)**0.5),
     # mcat
     makeTask("freefall velocity = (2gh)**.5",
              arrow(tpositive,treal),
