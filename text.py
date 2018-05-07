@@ -1,10 +1,10 @@
-from .ec import explorationCompression, commandlineArguments, Task
-from .grammar import Grammar
-from .utilities import eprint, testTrainSplit, numberOfCPUs
-from .makeTextTasks import makeTasks, delimiters
-from .textPrimitives import primitives
-from .program import *
-from .recognition import *
+from ec import explorationCompression, commandlineArguments, Task
+from grammar import Grammar
+from utilities import eprint, testTrainSplit, numberOfCPUs
+from makeTextTasks import makeTasks, delimiters
+from textPrimitives import primitives
+from program import *
+from recognition import *
 
 import random
 

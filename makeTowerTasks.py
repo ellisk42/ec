@@ -1,6 +1,6 @@
-from .towerPrimitives import ttower
-from .utilities import *
-from .task import *
+from towerPrimitives import ttower
+from utilities import *
+from task import *
 
 import math
 

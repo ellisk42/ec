@@ -1,4 +1,4 @@
-from .program import *
+from program import *
 
 def _pair(x): return lambda y: (x,y)
 def _first(x): return x[0]

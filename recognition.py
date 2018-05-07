@@ -1,8 +1,8 @@
-from .enumeration import *
-from .fragmentGrammar import *
-from .grammar import *
-from .heapq import *
-from .utilities import eprint
+from enumeration import *
+from fragmentGrammar import *
+from grammar import *
+from heapq import *
+from utilities import eprint
 
 import gc
 

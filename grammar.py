@@ -2,10 +2,10 @@ from collections import defaultdict
 
 import json
 
-from .frontier import *
-from .program import *
-from .type import *
-from .utilities import *
+from frontier import *
+from program import *
+from type import *
+from utilities import *
 
 import time
 

@@ -1,5 +1,5 @@
-from .task import *
-from .type import *
+from task import *
+from type import *
 
 import random
 

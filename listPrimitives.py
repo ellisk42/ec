@@ -1,6 +1,6 @@
-from .program import Primitive, Program
-from .grammar import Grammar
-from .type import tlist, tint, tbool, arrow, t0, t1, t2
+from program import Primitive, Program
+from grammar import Grammar
+from type import tlist, tint, tbool, arrow, t0, t1, t2
 
 import math
 from functools import reduce

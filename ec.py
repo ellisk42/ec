@@ -1,14 +1,14 @@
 
-from .utilities import eprint
-from .likelihoodModel import *
-from .recognition import *
-from .frontier import *
-from .program import *
-from .type import *
-from .task import *
-from .enumeration import *
-from .grammar import *
-from .fragmentGrammar import *
+from utilities import eprint
+from likelihoodModel import *
+from recognition import *
+from frontier import *
+from program import *
+from type import *
+from task import *
+from enumeration import *
+from grammar import *
+from fragmentGrammar import *
 import baselines
 import dill
 

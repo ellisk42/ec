@@ -1,6 +1,6 @@
 import math
 import random
-from .utilities import *
+from utilities import *
 
 class InvalidLoss(Exception): pass
 

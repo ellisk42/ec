@@ -1,5 +1,5 @@
-from .utilities import *
-from .task import Task
+from utilities import *
+from task import Task
 
 class FrontierEntry(object):
     def __init__(self, program, _=None, logPrior=None, logLikelihood=None, logPosterior=None):

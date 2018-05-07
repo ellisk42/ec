@@ -1,5 +1,5 @@
 "Program learning baselines. All functions take the same arguments as ec."
-import .ec
+import ec
 
 def all(*args, **kwargs):
     return {

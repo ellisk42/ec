@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from .type import *
-from .utilities import *
+from type import *
+from utilities import *
 
 from time import time
 import math

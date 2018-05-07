@@ -1,10 +1,10 @@
-from .ec import explorationCompression, commandlineArguments
-from .grammar import Grammar
-from .utilities import eprint, sampleDistribution
-from .circuitPrimitives import primitives
-from .task import Task
-from .type import arrow, tbool
-from .recognition import *
+from ec import explorationCompression, commandlineArguments
+from grammar import Grammar
+from utilities import eprint, sampleDistribution
+from circuitPrimitives import primitives
+from task import Task
+from type import arrow, tbool
+from recognition import *
 
 import itertools
 import random
