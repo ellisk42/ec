@@ -218,13 +218,21 @@ def solveForTask_ocaml(_ = None,
                        likelihoodModel = None, # FIXME: unused
                        evaluationTimeout = None, maximumFrontiers = None):
     import json
+    def taskMessage(t):
+        m = {
+            "examples": [{"inputs": list(xs), "output": y} for xs,y in t.examples ],
+            "name": t.name,
+            "maximumFrontier": maximumFrontiers[t]}
+        towerParameters = ["maximumStaircase","perturbation","minimumLength","maximumMass","minimumHeight",
+                           "minimumArea"]
+        for p in towerParameters:
+            if hasattr(t,p):
+                m[p] = getattr(t,p)
+        return m
     message = {"DSL": {"logVariable": g.logVariable,
                        "productions": [ {"expression": str(p), "logProbability": l}
                                             for l,_,p in g.productions ]},
-               "tasks": [{
-                   "examples": [{"inputs": list(xs), "output": y} for xs,y in t.examples ],
-                   "name": t.name,
-                   "maximumFrontier": maximumFrontiers[t]}
+               "tasks": [taskMessage(t)
                    for t in tasks ],
                
                "programTimeout": evaluationTimeout,
@@ -243,6 +251,7 @@ def solveForTask_ocaml(_ = None,
         message["maxParameters"] = task.maxParameters
     if hasattr(task, 'stringConstants'):
         message["stringConstants"] = task.stringConstants
+    
 
     message = json.dumps(message)
     # with open("pipe", "w") as f:

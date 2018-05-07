@@ -1,5 +1,6 @@
 open Core
 
+open Tower
 (* open Vs *)
 open Differentiation
 open TikZ
@@ -67,10 +68,12 @@ let load_problems channel =
     with _ -> []
   in
   let is_constant_task = productions |> List.exists ~f:(fun (p,_,_,_) ->
-      is_primitive p && primitive_name p = "STRING")
+      is_base_primitive p && primitive_name p = "STRING")
   in
   
   let guess_type elements =
+    if List.length elements = 0 then t0 else
+      
     let context = ref empty_context in
     let rec guess x =
       try ignore(x |> to_int); tint with _ ->
@@ -126,12 +129,30 @@ let load_problems channel =
                                                   ex |> member "output" |> unpack)) in
       let maximum_frontier = j |> member "maximumFrontier" |> to_int in
       let name = j |> member "name" |> to_string in
+      (* towers *)
+      let tower_stuff =
+        try
+          Some(tower_task ~perturbation:(j |> member "perturbation" |> to_float)
+                 ~maximumStaircase:(j |> member "maximumStaircase" |> to_float)
+                 ~maximumMass:(j |> member "maximumMass" |> to_float)
+                 ~minimumLength:(j |> member "minimumLength" |> to_float)
+                 ~minimumArea:(j |> member "minimumArea" |> to_float)
+                 ~minimumHeight:(j |> member "minimumHeight" |> to_float)
+                 ~stabilityThreshold:0.5)
+        with _ -> None
+      in
+
+      let task_type = if is_some tower_stuff then ttower else task_type in
+      
       let task = 
-        (if differentiable
-         then differentiable_task ~parameterPenalty:parameterPenalty
-             ~lossThreshold:lossThreshold ~maxParameters:maxParameters
-         else if is_constant_task then
-           constant_task ~maxParameters:maxParameters ~parameterPenalty:parameterPenalty ~stringConstants:stringConstants else supervised_task)
+        (match tower_stuff with
+         | Some(ts) -> ts
+         | None -> 
+           if differentiable
+           then differentiable_task ~parameterPenalty:parameterPenalty
+               ~lossThreshold:lossThreshold ~maxParameters:maxParameters
+           else if is_constant_task then
+             constant_task ~maxParameters:maxParameters ~parameterPenalty:parameterPenalty ~stringConstants:stringConstants else supervised_task)
           ~timeout:timeout name task_type examples
       in 
       (task, maximum_frontier))
@@ -183,14 +204,17 @@ let main() =
   let (tf,g,
      lowerBound,upperBound,budgetIncrement,
      nc,timeout, verbose) =
-       load_problems stdin in
+    load_problems stdin in
+  if List.exists tf ~f:(fun (t,_) -> t.task_type = ttower) then update_tower_cash() else ();
   let solutions =
     enumerate_for_tasks ~lowerBound:lowerBound ~upperBound:upperBound ~budgetIncrement:budgetIncrement
     ~verbose:verbose ~nc:nc ~timeout:timeout g tf
   in
   export_frontiers tf solutions |> print_string ;;
 
-main();;
+main();; 
+
+
 (* test_best_enumeration();; *)
 (* test_string();; *)
 (* test_version();; *)

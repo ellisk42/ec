@@ -336,3 +336,26 @@ class TowerWorld(object):
     
             
 
+def exportTowers(towers, name):
+    from PIL import Image
+    import numpy as np
+
+    towers = makeNiceArray(towers)
+    m = max(len(t) for t in towers)
+    towers = [ [ TowerWorld().draw(t) for t in ts ]
+               for ts in towers ]
+    
+    size = towers[0][0].shape
+    tp = towers[0][0].dtype
+    towers = [ np.concatenate(ts + [np.zeros(size, dtype = tp)]*(m - len(ts)), axis = 1)
+               for ts in towers ]
+    towers = np.concatenate(towers, axis = 0)
+    Image.fromarray(towers).convert('RGB').save(name)
+def makeNiceArray(l):
+    n = len(l)**0.5
+    n = int(n)
+    a = []
+    while l:
+        a.append(l[:n])
+        l = l[n:]
+    return a

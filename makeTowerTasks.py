@@ -69,7 +69,7 @@ class TowerTask(Task):
             if powerOfTen(len(TOWERCACHING)):
                 eprint("Tower cache reached size",len(TOWERCACHING))
                 name = "experimentOutputs/towers%d.png"%len(TOWERCACHING)
-                exportTowers(makeNiceArray(list(set([ _t for _t,_ in TOWERCACHING.keys()]))), name)
+                exportTowers(list(set([ _t for _t,_ in TOWERCACHING.keys()])), name)
                 eprint("Exported towers to image",name)
             w = TowerWorld()
             try: result = w.sampleStability(tower, perturbation, N = 15)
@@ -135,8 +135,8 @@ def centerTower(t):
 def makeTasks():
     STRONGPERTURBATION = 12
     MILDPERTURBATION = 4
-    MASSES = [20,30,40]
-    HEIGHT = [1.9,3,5]
+    MASSES = [30,40]
+    HEIGHT = [1.9,3]
     STAIRCASE = [10.5, 2.5]
     return [ TowerTask(maximumMass = float(m),
                        maximumStaircase = float(s),
@@ -147,7 +147,7 @@ def makeTasks():
              for m in MASSES
              for a in [1, 2.9, 5.8]
              for s in STAIRCASE 
-             for l in [2.5, 5, 7.5]
+             for l in [2, 5]
              for p in [MILDPERTURBATION]#, STRONGPERTURBATION]
              for h in HEIGHT
              if not ((p == STRONGPERTURBATION and m == min(MASSES)) or \
@@ -155,26 +155,3 @@ def makeTasks():
     ]
 
 
-def exportTowers(towers, name):
-    from PIL import Image
-    import numpy as np
-    from towers.tower_common import TowerWorld
-
-    m = max(len(t) for t in towers)
-    towers = [ [ TowerWorld().draw(t) for t in ts ]
-               for ts in towers ]
-    
-    size = towers[0][0].shape
-    tp = towers[0][0].dtype
-    towers = [ np.concatenate(ts + [np.zeros(size, dtype = tp)]*(m - len(ts)), axis = 1)
-               for ts in towers ]
-    towers = np.concatenate(towers, axis = 0)
-    Image.fromarray(towers).convert('RGB').save(name)
-def makeNiceArray(l):
-    n = len(l)**0.5
-    n = int(n)
-    a = []
-    while l:
-        a.append(l[:n])
-        l = l[n:]
-    return a

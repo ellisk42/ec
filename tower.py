@@ -168,6 +168,7 @@ def updateCaching(g, perturbations, _=None,
     
 
 if __name__ == "__main__":
+    from towers.tower_common import exportTowers
     initializeTowerCaching()
     
     g0 = Grammar.uniform(primitives + bootstrapTarget() +
@@ -177,7 +178,7 @@ if __name__ == "__main__":
     test, train = testTrainSplit(tasks, 100./len(tasks))
     eprint("Split %d/%d test/train"%(len(test),len(train)))
     #evaluateArches(train)
-    #if True: bruteForceBaseline(train)
+    # if True: bruteForceBaseline(train)
 
     arguments = commandlineArguments(
         featureExtractor = TowerFeatureExtractor,
@@ -194,8 +195,13 @@ if __name__ == "__main__":
                            testingTasks = test,
                            outputPrefix = "experimentOutputs/tower",
                            evaluationTimeout=evaluationTimeout,
-                           solver = "python",
+                           solver = "ocaml",
+                           compressor="pypy",
                            **arguments)
+    os.system("python towers/server.py KILL")
+    time.sleep(1)
+    os.system("python towers/server.py &")
+    time.sleep(1)
     
     perturbations = {t.perturbation for t in train}
     def update(g):
@@ -210,6 +216,6 @@ if __name__ == "__main__":
         newTowers = { tuple(centerTower(frontier.bestPosterior.program.evaluate([])))
                       for frontier in result.taskSolutions.values() if not frontier.empty }
         towers.append(sorted(list(newTowers)))
-        exportTowers(towers, 'experimentOutputs/uniqueTowers.png')
-        update(result.grammars[-1])
+        
+        exportTowers(towers[-1], 'experimentOutputs/uniqueTowers%d.png'%len(towers))
         
