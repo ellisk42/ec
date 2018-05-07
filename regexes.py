@@ -163,7 +163,7 @@ if __name__ == "__main__":
 	args.update({
 		"featureExtractor": extractor,
 		"outputPrefix": "experimentOutputs/regex",
-		"evaluationTimeout": 0.005,
+		"evaluationTimeout": 1.0, #0.005,
 		"topK": 5,
 		"maximumFrontier": 5,
 		"solver": "python",
