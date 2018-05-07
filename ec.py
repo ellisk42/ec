@@ -215,6 +215,7 @@ def ecIterator(grammar, tasks,
                                              tasks, featureExtractor(tasks)),
         "euclidean":             lambda: EuclideanLikelihoodModel(
                                              featureExtractor(tasks)),
+		"probabilistic":         lambda: ProbabilisticLikelihoodModel(timeout=evaluationTimeout)
     }[likelihoodModel]()
 
     for j in range(resume or 0, iterations):

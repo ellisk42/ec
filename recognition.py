@@ -13,7 +13,10 @@ from torch.autograd import Variable
 from torch.nn.utils.rnn import pack_padded_sequence
 
 import numpy as np
-
+#luke
+import json
+import string
+import copy
 
 def variable(x, volatile=False, cuda=False):
     if isinstance(x, list):
@@ -654,6 +657,298 @@ class HandCodedFeatureExtractor(object):
         features = self._featuresOfProgram(p,t)
         if features is None: return None
         return variable([ (f - self.averages[j])/self.deviations[j] for j,f in enumerate(features) ], cuda=self.cuda).float()
+
+
+class JSONFeatureExtractor(object):
+    def __init__(self, tasks, cuda=False):
+        #self.averages, self.deviations = Task.featureMeanAndStandardDeviation(tasks)
+        #self.outputDimensionality = len(self.averages)
+        self.cuda = cuda
+        self.tasks = tasks
+
+    def stringify(self, x):
+        return json.dumps(x, separators=(',', ':')) #No whitespace
+
+    def featuresOfTask(self, t):
+        #>>> t.request to get the type
+        #>>> t.examples to get input/output examples
+        return [(self.stringify(input[0]), self.stringify(output)) for (input, output) in t.examples] 
+
+
+    def featuresOfProgram(self, p, t):
+        features = self._featuresOfProgram(p,t)
+        if features is None: 
+            return None
+        return [(self.stringify(x), self.stringify(y)) for (x,y) in features]
+
+
+class NewRecognitionModel(nn.Module):
+    def __init__(self, featureExtractor, grammar, vocabulary=string.printable, cuda=False):
+        super(NewRecognitionModel, self).__init__()
+        self.grammar = grammar
+        self.use_cuda = cuda
+        if cuda:
+            self.cuda()
+            torch.set_default_tensor_type('torch.cuda.FloatTensor')
+        else:
+            # Torch sometimes segfaults in multithreaded mode...
+            pass
+            # torch.set_num_threads(1)
+
+        self.featureExtractor = featureExtractor
+        self.network = Network(
+            input_vocabulary = vocabulary,
+            target_vocabulary = self.getTargetVocabulary(grammar)
+            )
+        # Sanity check - make sure that all of the parameters of the
+        # feature extractor were added to our parameters as well
+        if hasattr(featureExtractor, 'parameters'):
+            for parameter in featureExtractor.parameters():
+                assert any(myParameter is parameter for myParameter in self.parameters())
+
+    def getTargetVocabulary(self, grammar): #Maybe can kill lambdas completely since they're deterministic
+        return ["(_lambda", ")_lambda", "(", ")"] + \
+                                ["$" + str(i) for i in range(10)] + \
+                                [str(p) for p in grammar.primitives]
+
+    def updateGrammar(self, grammar):
+        self.network.set_target_vocabulary(self.getTargetVocabulary(grammar))
+        self.network = copy.deepcopy(self.network) #Annoying to have to do this, but it's okay - why?
+
+    def train(self, frontiers, _=None, steps=250, lr=0.001, topK=1, CPUs=1,
+              helmholtzRatio = 0.):
+        """
+        helmholtzRatio: What fraction of the training data should be forward samples from the generative model?
+        """
+        requests = [ frontier.task.request for frontier in frontiers ]
+
+        frontiers = [ frontier.topK(topK).normalize() for frontier in frontiers if not frontier.empty ]
+
+        # Not sure why this ever happens
+        if helmholtzRatio is None: helmholtzRatio = 0.
+
+        eprint("Training recognition model from %d frontiers, %d%% Helmholtz."%(
+            len(frontiers),
+            int(helmholtzRatio*100)))
+        
+        HELMHOLTZBATCH = 250
+
+        with timing("Trained recognition model"):
+            avgLoss = None
+            avgPermutedLoss = None
+
+            for i in range(1,steps + 1): 
+                eprint("step", i, "out of", steps + 1)   
+                if helmholtzRatio < 1.:
+                    permutedFrontiers = list(frontiers)
+                    random.shuffle(permutedFrontiers)
+                    
+                    eprint("frontiers:")
+                    eprint(frontiers)
+                    eprint("permutedFrontiers:")
+                    eprint(permutedFrontiers)
+                
+                else: permutedFrontiers = [None]
+                frontier_num = 0
+                for frontier in permutedFrontiers:
+                    eprint("frontier num", frontier_num, "out of", len(permutedFrontiers))
+                    frontier_num += 1
+                    # Randomly decide whether to sample from the generative model
+                    doingHelmholtz = random.random() < helmholtzRatio
+                    if doingHelmholtz:
+                        networkInputs = self.helmholtzNetworkInputs(requests, HELMHOLTZBATCH, CPUs)
+                        loss = self.step(*networkInputs)
+                    if not doingHelmholtz:
+                        if helmholtzRatio < 1.:
+                            #placeholder for now
+                            # self.zero_grad()
+                            # loss = self.frontierKL(frontier)
+                            #fix this later
+                            loss = 0
+                            eprint("helmholtz is messed up. Fix it.")
+                            pass
+                        else:
+                            # Refuse to train on the frontiers
+                            pass
+
+                if (i==1 or i%5==0):
+                    # networkInputs = self.helmholtzNetworkInputs(requests, HELMHOLTZBATCH, CPUs)
+                    # loss, permutedLoss = self.getCurrentLoss(*networkInputs)
+                    avgLoss = (0.9*avgLoss + 0.1*loss) if avgLoss is not None else loss
+                    # avgPermutedLoss = (0.9*avgPermutedLoss + 0.1*permutedLoss) if avgPermutedLoss is not None else permutedLoss
+
+                    # inputInformation = avgPermutedLoss - avgLoss
+                    eprint("Epoch %3d Loss %2.2f" % (i, avgLoss))
+                    gc.collect()
+    
+    # def helmholtsNetworkInputs(self, requests, batchSize, CPUs):
+    #     helmholtzSamples = self.sampleManyHelmholtz(requests, batchSize, CPUs)
+    #     helmholtzSamples = [x for x in helmholtzSamples if x is not None]
+
+    #     inputss = [[_in for (_in, _out) in features] for (program, request, features) in helmholtzSamples]
+    #     outputss = [[_out for (_in, _out) in features] for (program, request, features) in helmholtzSamples]
+    #     targets = [tokeniseProgram(program) for (program, request, features) in helmholtzSamples]
+
+    #     #For now, just concat input + output
+    #     joinedInputsOutputs = [[inputss[i][j] + outputss[i][j] for j in range(len(inputss[i]))] for i in range(len(inputss))]
+
+    #     #Filter to length <= 30
+    #     valid_idxs = [i for i in range(len(targets)) if len(targets[i])<=30 and all(len(example)<=30 for example in joinedInputsOutputs[i])]
+    #     batchInputsOutputs = [joinedInputsOutputs[i] for i in valid_idxs]
+    #     batchTargets = [targets[i] for i in valid_idxs]
+
+    #     return batchInputsOutputs, batchTargets
+
+    def helmholtzNetworkInputs(self, requests, batchSize, CPUs):
+        helmholtzSamples = self.sampleManyHelmholtz(requests, batchSize, CPUs)
+        helmholtzSamples = [x for x in helmholtzSamples if x is not None]
+
+        inputss = [[_in for (_in, _out) in features] for (program, request, features) in helmholtzSamples]
+        outputss = [[_out for (_in, _out) in features] for (program, request, features) in helmholtzSamples]
+        targets = [tokeniseProgram(program) for (program, request, features) in helmholtzSamples]
+        #For now, just concat input + output
+        # joinedInputsOutputs = [[inputss[i][j] + outputss[i][j] for j in range(len(inputss[i]))] for i in range(len(inputss))]
+
+        #Filter to length <= 30
+        valid_idxs = [i for i in range(len(targets)) if \
+            len(targets[i])<=30 and \
+            all(len(example)<=30 for example in inputss[i]) and \
+            all(len(example)<=30 for example in outputss[i])]
+
+        # batchInputsOutputs = [joinedInputsOutputs[i] for i in valid_idxs]
+        batchInputs = [inputss[i] for i in valid_idxs]
+        batchOutputs = [outputss[i] for i in valid_idxs]
+        batchTargets = [targets[i] for i in valid_idxs]
+
+        return batchInputs, batchOutputs, batchTargets
+
+    def shuffledNetworkInputs(self, requests, batchSize, CPUs):
+        batchInputs, batchOutputs, batchTargets =  self.helmholtzNetworkInputs(requests, batchSize, CPUs)
+        permutedBatchTargets = batchTargets[:]
+        random.shuffle(permutedBatchTargets)
+        return batchInputs, batchOutputs, permutedBatchTargets #why the shuffle for only the targets??
+
+    def step(self, *networkInputs):
+        score = self.network.optimiser_step(*networkInputs)
+        loss = -score
+        return loss
+
+    # def getCurrentLoss(self, batchInputsOutputs, batchTargets):
+    #     score = self.network.score(batchInputsOutputs, batchTargets)
+    #     loss = -score
+
+    #     permutedBatchTargets = batchTargets[:]
+    #     random.shuffle(permutedBatchTargets)
+    #     permutedScore = self.network.score(batchInputsOutputs, permutedBatchTargets)
+    #     permutedLoss = -permutedScore
+
+    #     return loss, permutedLoss
+
+    def getCurrentLoss(self, batchInputs, batchOutputs, batchTargets):
+        score = self.network.score(batchInputs, batchOutputs, batchTargets)
+        loss = -score
+
+        permutedBatchTargets = batchTargets[:]
+        random.shuffle(permutedBatchTargets)
+        permutedScore = self.network.score(batchInputs, batchOutputs, permutedBatchTargets)
+        permutedLoss = -permutedScore
+
+        return loss, permutedLoss
+
+    def sampleHelmholtz(self, requests):
+           request = random.choice(requests)
+           program = self.grammar.sample(request)
+           #>>> Increase maxDepth, might actually make sampling faster
+           #>>> Call out to pypy
+           features = self.featureExtractor.featuresOfProgram(program, request)
+           #eprint("features_outer:")
+           #eprint(features)
+           # Feature extractor failure
+           if features is None: return None #what's the point of the features???
+           else: return program, request, features
+
+    def sampleManyHelmholtz(self, requests, N, CPUs): #>>> callCompiled
+        helmholtzSamples = parallelMap(CPUs,
+                           lambda _: self.sampleHelmholtz(requests),
+                           range(N))
+        return helmholtzSamples
+
+    """def enumerateFrontiers(self, tasks,
+                           frontierSize=None, enumerationTimeout=None, 
+                           CPUs=1, maximumFrontier=None, evaluationTimeout=None):
+                           """
+
+    def enumerateFrontiers(self, tasks, likelihoodModel,
+                           solver=None,
+                           frontierSize=None, enumerationTimeout=None,
+                           CPUs=1, maximumFrontier=None, evaluationTimeout=None):
+
+        #need to encorporate likelihood model, solver
+
+        # print("New recognition model enumerate frontiers")
+        # print("ONLY USING 10 TASKS!")
+        # tasks = tasks[:10]
+        # with timing("Evaluated recognition model"):
+        # proposals_scores = {}
+        tasks_features = []
+        for task in tasks:
+            # eprint("Getting proposals for task", task)
+            features = self.featureExtractor.featuresOfTask(task)
+            # features = [(input, output) for (input, output) in features if len(input[0])<=30 and len(output)<=30]
+            # np.random.shuffle(features)
+			# had to change the line below for python 3
+            features = sorted(features, key=lambda in_out: len(in_out[0][0])**2 + len(in_out[1])**2)
+            tasks_features.append((task, features))
+
+            # proposals_scores[task] = []
+            # for i in range(1):
+            #     inputs = [input[0] for (input, output) in features[:4]]
+            #     outputs = [output for (input, output) in features[:4]]
+            #     samples, scores = self.network.sampleAndScore([inputs]*500, [outputs]*500, nRepeats=100)
+            #     proposals_scores[task].extend(list(set(
+            #         (tuple(samples[i]), scores[i]) for i in range(len(samples))
+            #     )))
+
+        network = copy.deepcopy(self.network).cpu() #to send to workers
+        torch.set_default_tensor_type('torch.FloatTensor')
+        # print(type(network.input_encoder_init[0].data))
+        # self.network.float()
+        # print(type(self.network.input_encoder_init[0].data))
+        # network = self.network.float()
+        # print(type(network.input_encoder_init[0].data))
+        # print(self.network.input_encoder_init[0])
+        # print(type(self.network.input_encoder_init[0].float()))
+        # print(self.network.input_encoder_init[0].float())
+        # raise Exception()
+        # network = self.network
+
+        #TODO
+        x = enumerateNetwork( #Can't callcompiled because program.Primitive doesn't have the right globals
+                    network, tasks_features, likelihoodModel, solver=solver,
+                    frontierSize = frontierSize, enumerationTimeout=enumerationTimeout, 
+                    CPUs=CPUs, maximumFrontier=maximumFrontier,
+                    evaluationTimeout=evaluationTimeout)
+
+
+
+        if self.use_cuda:
+            torch.set_default_tensor_type('torch.cuda.FloatTensor')
+
+        return x
+
+
+        # return evaluateProposals( #Can't callcompiled because program.Primitive doesn't have the right globals
+        #                     proposals_scores, tasks,
+        #                     frontierSize = frontierSize, enumerationTimeout=enumerationTimeout, 
+        #                     CPUs=CPUs, maximumFrontier=maximumFrontier,
+        #                     evaluationTimeout=evaluationTimeout)
+        # return callCompiled(evaluateProposals,
+        #                     proposals_scores, tasks,
+        #                     frontierSize = frontierSize, enumerationTimeout=enumerationTimeout, 
+        #                     CPUs=CPUs, maximumFrontier=maximumFrontier,
+        #                     evaluationTimeout=evaluationTimeout)
+
+
 
 
 if __name__ == "__main__":

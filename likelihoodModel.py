@@ -1,7 +1,11 @@
 from utilities import eprint, exp, log, timing, valid
-from task import Task
+from task import Task, EvaluationTimeout
 import random
 import gc
+from pregex import pregex
+import signal
+from program import *
+from utilities import *
 
 
 class AllOrNothingLikelihoodModel:
@@ -27,6 +31,66 @@ class EuclideanLikelihoodModel:
         logLikelihood = float(-distance)  # FIXME: this is really naive
         return exp(logLikelihood) > self.successCutoff, logLikelihood
 
+class ProbabilisticLikelihoodModel:
+
+    def __init__(self, timeout):
+        self.timeout = timeout
+        #i need timeout
+    def score(self, program, task): 
+        #need a try, catch here for problems, and for timeouts
+        #can copy task.py for the timeout structure 
+        try:
+            def timeoutCallBack(_1,_2): raise EvaluationTimeout()
+            signal.signal(signal.SIGVTALRM, timeoutCallBack)
+            signal.setitimer(signal.ITIMER_VIRTUAL, self.timeout)
+
+            try:
+                string_pregex = program.evaluate([])
+                #if 'left_paren' in program.show(False): 
+                    #eprint("string_pregex:", string_pregex)
+                #eprint("string_pregex:", string_pregex)
+                preg = string_pregex#pregex.create(string_pregex)
+            except IndexError:
+                # free variable
+                return False, NEGATIVEINFINITY
+            except Exception as e:
+                eprint("Exception during evaluation:", e) 
+                if "Attempt to evaluate fragment variable" in e:
+                    eprint("program (bc fragment error)", program)
+                return False, NEGATIVEINFINITY
+
+        #tries and catches
+            
+        #include prior somehow
+        #right now, just summing up log likelihoods. IDK if this is correct.
+        #also not using prior at all.
+            cum_ll = 0
+            for example in task.examples:
+                #might want a try, accept around the following line:
+                try:
+                    #eprint("about to match", program)
+                    ll = preg.match(example[1])
+                    #eprint("completed match", ll, program)
+                except ValueError as e:
+                    eprint("ValueError:", e)
+                    ll = float('-inf')
+                #eprint("pregex:", string_pregex)
+                #eprint("example[1]", example[1])
+                
+                if ll == float('-inf'):
+                    return False, NEGATIVEINFINITY
+                else: 
+                #eprint("ll", ll)
+                    cum_ll += ll   
+            #eprint("cum_ll", cum_ll)     
+            return True, cum_ll
+
+        except EvaluationTimeout:
+            eprint("Timed out while evaluating", program)
+            return False, NEGATIVEINFINITY
+        finally:
+            signal.signal(signal.SIGVTALRM, lambda *_:None)
+            signal.setitimer(signal.ITIMER_VIRTUAL, 0)
 
 try:
     import torch
