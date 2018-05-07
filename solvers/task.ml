@@ -109,14 +109,16 @@ let constant_task
     ?timeout:(timeout = 0.001)
     ~stringConstants
     name ty examples =
-  (* Process the examples and wrap them inside of placeholders *)
+  let lc = log (26.*.2.+.10.) in
+  let lc = 0.-.lc in
+  
   { name = name    ;
     task_type = ty ;
     log_likelihood =
       (fun expression ->
          if number_of_string_constants expression > maxParameters then log 0. else
-           substitute_string_constants stringConstants expression |> List.exists ~f:(fun p ->
-               let p = analyze_lazy_evaluation p in
+           substitute_string_constants stringConstants expression |> List.map ~f:(fun p ->
+               let p' = analyze_lazy_evaluation p in
                (* Returns loss *)
                let rec loop = function
                  | [] -> true
@@ -124,7 +126,7 @@ let constant_task
                    try
                      (match run_for_interval
                              timeout
-                             (fun () -> run_lazy_analyzed_with_arguments p xs = y)
+                             (fun () -> run_lazy_analyzed_with_arguments p' xs = y)
                      with
                      | Some(true) -> loop e
                      | _ -> false)
@@ -133,9 +135,10 @@ let constant_task
                             if otherException = EnumerationTimeout then raise EnumerationTimeout else false
                           end
                in
-               loop examples) |> (function
-               | false -> log 0.0
-               | true -> 0.-.parameterPenalty*.(Float.of_int (number_of_string_constants expression))))
+               let hit = loop examples in
+               if hit
+               then lc*.(Float.of_int (string_constants_length p))
+               else log 0.) |> lse_list)
   }
 
 

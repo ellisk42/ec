@@ -363,6 +363,15 @@ let rec number_of_string_constants = function
   | Apply(f,x) -> number_of_string_constants f + number_of_string_constants x
   | Index(_) -> 0
 
+let rec string_constants_length = function
+  | Primitive(_,"STRING",v) ->
+    let v = magical v in
+    String.length (!v)
+  | Primitive(_,_,_) -> 0
+  | Invented(_,b) | Abstraction(b) -> string_constants_length b
+  | Apply(f,x) -> string_constants_length f + string_constants_length x
+  | Index(_) -> 0
+
 let primitive_empty = primitive "empty" (tlist t0) [];;
 let primitive_range = primitive "range" (tint @> tlist tint) (fun x -> 0 -- (x-1));;
 let primitive_sort = primitive "sort" (tlist tint @> tlist tint) (List.sort ~cmp:(fun x y -> x - y));;
