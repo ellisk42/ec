@@ -52,6 +52,7 @@ def sendCommand(address, script, job_id, upload, resume, tar, shutdown):
 sudo pip install https://lists.lucasem.com/listroutines-1.0.0-py2.py3-none-any.whl
 pip install sexpdata
 pip install dill
+pip install psutil
 sudo apt-get install -y libcairo-ocaml
 cd ~/ec
 rm experimentOutputs/*
