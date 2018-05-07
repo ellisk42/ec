@@ -109,6 +109,7 @@ let constant_task
     ?timeout:(timeout = 0.001)
     ~stringConstants
     name ty examples =
+  let stringConstants : char list list = stringConstants in
   let lc = log (26.*.2.+.10.) in
   let lc = 0.-.lc in
   
@@ -138,7 +139,7 @@ let constant_task
                let hit = loop examples in
                if hit
                then lc*.(Float.of_int (string_constants_length p))
-               else log 0.) |> lse_list)
+               else log 0.) |> List.fold_right ~init:(log 0.) ~f:max)
   }
 
 

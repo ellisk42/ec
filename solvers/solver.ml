@@ -62,7 +62,7 @@ let load_problems channel =
   in
 
   (* string constant parameters *)
-  let stringConstants =
+  let stringConstants : char list list =
     try j |> member "stringConstants" |> to_list |> List.map ~f:to_string
         |> List.map ~f:(String.to_list)
     with _ -> []

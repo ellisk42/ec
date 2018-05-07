@@ -170,12 +170,12 @@ def makeTasks():
                 needToTrain=True)
 
     for n in xrange(len(delimiters)):
-        w = randomWord()
+        w = randomWord(minimum=3)
         problem("Prepend '%s'"%w,
                 [((x,),w+x)
                  for _ in xrange(NUMBEROFEXAMPLES)
                  for x in [randomWord()] ])
-        w = randomWord()
+        w = randomWord(minimum=3)
         problem("Append '%s'"%w,
                 [((x,),x+w)
                  for _ in xrange(NUMBEROFEXAMPLES)
@@ -268,7 +268,9 @@ if __name__ == "__main__":
     loadPBETasks()
 
     tasks = makeTasks()
-    for t in tasks: print t.describe()
+    for t in tasks:
+        print t.describe()
+        print "\t{%s}"%(t.stringConstants)
     assert False
     # def maximumLength(x):
     #     if isinstance(x,list):

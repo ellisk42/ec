@@ -345,7 +345,7 @@ let primitive_is_empty = primitive "empty?" (tlist t0 @> tboolean)
               | _ -> false);;
 
 let primitive_string_constant = primitive "STRING" (tlist tcharacter) ();;
-let rec substitute_string_constants alternatives e = match e with
+let rec substitute_string_constants (alternatives : char list list) e = match e with
   | Primitive(c,"STRING",_) -> alternatives |> List.map ~f:(fun a -> Primitive(c,"STRING",ref a |> magical))
   | Primitive(_,_,_) -> [e]
   | Invented(_,b) -> substitute_string_constants alternatives b
@@ -366,7 +366,7 @@ let rec number_of_string_constants = function
 let rec string_constants_length = function
   | Primitive(_,"STRING",v) ->
     let v = magical v in
-    String.length (!v)
+    List.length (!v)
   | Primitive(_,_,_) -> 0
   | Invented(_,b) | Abstraction(b) -> string_constants_length b
   | Apply(f,x) -> string_constants_length f + string_constants_length x
