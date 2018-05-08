@@ -69,7 +69,7 @@ class TowerTask(Task):
             if powerOfTen(len(TOWERCACHING)):
                 eprint("Tower cache reached size",len(TOWERCACHING))
                 name = "experimentOutputs/towers%d.png"%len(TOWERCACHING)
-                exportTowers(list(set([ _t for _t,_ in TOWERCACHING.keys()])), name)
+                #exportTowers(list(set([ _t for _t,_ in TOWERCACHING.keys()])), name)
                 eprint("Exported towers to image",name)
             w = TowerWorld()
             try: result = w.sampleStability(tower, perturbation, N = 15)

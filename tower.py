@@ -50,10 +50,13 @@ class TowerFeatureExtractor(HandCodedFeatureExtractor):
 
 def evaluateArches(ts):
     arches = [
-        "(do (do (left 1x3) (do (right 1x3) 3x1)) (right (right (right (do (left 1x3) (do (right 1x3) 3x1))))))",
-       "(do 1x4 (do (left 1x4) 4x1))",
-       "(do (right 1x4) (do (left (left 1x4)) 4x1))",
-        "(do (do (right 1x4) (do (left (left 1x4)) 4x1)) (right (right (right (right (do (right 1x4) (do (left (left 1x4)) 4x1)))))))",
+        "(fold (range 3) 1x3 (lambda (lambda (do 3x1 (right (right $0))))))",
+        "(do (do (right 1x3) (do (left 1x3) 3x1)) (right (right (right (do (right 1x3) (do (left 1x3) 3x1))))))",
+        "(do (do (do (right 1x3) (do (left 1x3) 3x1)) (right (right (right (do (right 1x3) (do (left 1x3) 3x1)))))) (right  (do (right 1x3) (do (left 1x3) 3x1))))",
+       #  "(do (do (left 1x3) (do (right 1x3) 3x1)) (right (right (right (do (left 1x3) (do (right 1x3) 3x1))))))",
+       # "(do 1x4 (do (left 1x4) 4x1))",
+       # "(do (right 1x4) (do (left (left 1x4)) 4x1))",
+       #  "(do (do (right 1x4) (do (left (left 1x4)) 4x1)) (right (right (right (right (do (right 1x4) (do (left (left 1x4)) 4x1)))))))",
     ]
     towers = []
 
@@ -63,7 +66,7 @@ def evaluateArches(ts):
         print
         a = Program.parse(a).evaluate([])
         towers.append(tuple(centerTower(a)))
-        os.system("python towers/visualize.py '%s' %f"%(a, 8))
+        os.system("python towers/visualize.py '%s' %f"%(a, 4))
 
         for t in ts:
             print t,
@@ -177,7 +180,7 @@ if __name__ == "__main__":
     tasks = makeTasks()
     test, train = testTrainSplit(tasks, 100./len(tasks))
     eprint("Split %d/%d test/train"%(len(test),len(train)))
-    #evaluateArches(train)
+    # evaluateArches(train)
     # if True: bruteForceBaseline(train)
 
     arguments = commandlineArguments(

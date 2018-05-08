@@ -20,7 +20,7 @@ class TowerWorld(object):
 
         # self.H = 3.
         # self.W = 0.5
-        self.dt = 1./5
+        self.dt = 1./10
         self.locationNoise = 0.0
 
         self.xOffset = 11
@@ -323,7 +323,8 @@ class TowerWorld(object):
             hs.append(initialHeight)
             self.impartImpulses(perturbation)
             self.stepUntilStable()
-            wasStable.append(self.height() > initialHeight - 0.1)
+            wasStable.append(self.height() > initialHeight - 0.1 and \
+                             (not self.blocksSignificantlyMoved(1)))
             
             # reset the world
             self.clearWorld()
