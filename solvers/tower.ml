@@ -14,6 +14,13 @@ type tower_result = {stability : float;
                      staircase : float;
                      height : float;}
 
+let center_tower p =
+  let xs = p |> List.map ~f:(fun (x,_,_) -> x) in
+  let x1 = List.fold_left ~init:(List.hd_exn xs) ~f:max xs in
+  let x0 = List.fold_left ~init:(List.hd_exn xs) ~f:min xs in
+  let c = (x1-.x0)/.2. in
+  p |> List.map ~f:(fun (x,w,h) -> (x-.c,w,h))
+
 let block w h =
   let n = Printf.sprintf "%dx%d" w h in
   let xOffset = if w mod 2 = 1 then 0.5 else 0.0 in
@@ -107,6 +114,8 @@ let update_tower_cash() =
       | _ -> raise (Failure "tower cache entry"))
 
 let evaluate_tower ?n:(n=15) plan perturbation =
+  (* center the tower *)
+  let plan = center_tower plan in
   let open Yojson.Safe.Util in
   match Hashtbl.Poly.find tower_cash (plan, perturbation) with
   | Some(r) -> r

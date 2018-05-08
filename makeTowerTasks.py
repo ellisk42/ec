@@ -133,10 +133,9 @@ def centerTower(t):
     return [ (x - c, w, h) for x,w,h in t ]
         
 def makeTasks():
-    STRONGPERTURBATION = 12
     MILDPERTURBATION = 4
     MASSES = [30,40]
-    HEIGHT = [1.9,3]
+    HEIGHT = [1.9,6,10]
     STAIRCASE = [10.5, 2.5]
     return [ TowerTask(maximumMass = float(m),
                        maximumStaircase = float(s),
@@ -148,10 +147,8 @@ def makeTasks():
              for a in [1, 2.9, 5.8]
              for s in STAIRCASE 
              for l in [2, 5]
-             for p in [MILDPERTURBATION]#, STRONGPERTURBATION]
+             for p in [MILDPERTURBATION]
              for h in HEIGHT
-             if not ((p == STRONGPERTURBATION and m == min(MASSES)) or \
-                     (p == STRONGPERTURBATION and h == max(HEIGHT)))
     ]
 
 
