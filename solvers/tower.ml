@@ -50,14 +50,13 @@ let send_to_tower_server k =
         connection := Some(Unix.open_connection (ADDR_INET(h,p)));
         if !attempts > 0
         then begin 
-          connection_failures := !connection_failures + 1;
-          Printf.eprintf "Connected to socket after %d attempts (%d/%d attempts had problems)\n" (!attempts) (!connection_failures) (!connection_failures + !connection_successes);
+          connection_failures := !connection_failures + 1
+          (* Printf.eprintf "Connected to socket after %d attempts (%d/%d attempts had problems)\n" (!attempts) (!connection_failures) (!connection_failures + !connection_successes); *)
         end else connection_successes := !connection_successes + 1
         ;
         false
       with Unix.Unix_error(_,_,_) -> true
     do
-      Printf.eprintf "Error connecting to socket (attempt %d); will try again in 0.05 seconds...\n" (!attempts);
       attempts := !attempts + 1;
       Thread.delay 0.05
     done;
