@@ -35,6 +35,9 @@ ignore(primitive "do" (ttower @> ttower @> ttower) (@));;
 ignore(primitive "left" (ttower @> ttower) (fun t -> t |> List.map ~f:(fun (x,w,h) -> (x-.1.0,w,h))));;
 ignore(primitive "right" (ttower @> ttower) (fun t -> t |> List.map ~f:(fun (x,w,h) -> (x+.1.0,w,h))));;
 
+let connection_failures = ref 0;;
+let connection_successes = ref 0;;
+
 let send_to_tower_server k =
   let open Yojson.Safe in
   let p = 9494 in
@@ -45,7 +48,12 @@ let send_to_tower_server k =
     while
       try
         connection := Some(Unix.open_connection (ADDR_INET(h,p)));
-        if !attempts > 0 then Printf.eprintf "Connected to socket after %d attempts\n" (!attempts);
+        if !attempts > 0
+        then begin 
+          connection_failures := !connection_failures + 1;
+          Printf.eprintf "Connected to socket after %d attempts (%d/%d attempts had problems)\n" (!attempts) (!connection_failures) (!connection_failures + !connection_successes);
+        end else connection_successes := !connection_successes + 1
+        ;
         false
       with Unix.Unix_error(_,_,_) -> true
     do
