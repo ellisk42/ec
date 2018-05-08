@@ -10,6 +10,7 @@ import math
 class InferenceFailure(Exception): pass
 class ShiftFailure(Exception): pass
 class ParseFailure(Exception): pass
+class RunFailure(Exception): pass
 
 class Program(object):
     def __repr__(self): return str(self)
