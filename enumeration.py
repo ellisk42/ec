@@ -228,7 +228,10 @@ def solveForTask_ocaml(_ = None,
         for p in towerParameters:
             if hasattr(t,p):
                 m[p] = getattr(t,p)
+        if hasattr(t, 'stringConstants'):
+            m["stringConstants"] = t.stringConstants
         return m
+    
     message = {"DSL": {"logVariable": g.logVariable,
                        "productions": [ {"expression": str(p), "logProbability": l}
                                             for l,_,p in g.productions ]},
@@ -249,9 +252,6 @@ def solveForTask_ocaml(_ = None,
         message["lossThreshold"] = -task.likelihoodThreshold
     if hasattr(task, 'maxParameters') and task.maxParameters is not None:
         message["maxParameters"] = task.maxParameters
-    if hasattr(task, 'stringConstants'):
-        message["stringConstants"] = task.stringConstants
-    
 
     message = json.dumps(message)
     # with open("pipe", "w") as f:

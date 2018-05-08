@@ -62,11 +62,6 @@ let load_problems channel =
   in
 
   (* string constant parameters *)
-  let stringConstants : char list list =
-    try j |> member "stringConstants" |> to_list |> List.map ~f:to_string
-        |> List.map ~f:(String.to_list)
-    with _ -> []
-  in
   let is_constant_task = productions |> List.exists ~f:(fun (p,_,_,_) ->
       is_base_primitive p && primitive_name p = "STRING")
   in
@@ -129,6 +124,14 @@ let load_problems channel =
                                                   ex |> member "output" |> unpack)) in
       let maximum_frontier = j |> member "maximumFrontier" |> to_int in
       let name = j |> member "name" |> to_string in
+      
+      (* string constant parameters *)
+      let stringConstants : char list list =
+        try j |> member "stringConstants" |> to_list |> List.map ~f:to_string
+            |> List.map ~f:(String.to_list)
+        with _ -> []
+      in
+
       (* towers *)
       let tower_stuff =
         try

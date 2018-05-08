@@ -94,7 +94,6 @@ if __name__ == "__main__":
     summaryStatistics("Challenge problem search time",times)
     eprint("done evaluating challenge problems before learning")
 
-
     for result in generator:
         eprint("Evaluating on challenge problems...")
         if result.recognitionModel is not None:
