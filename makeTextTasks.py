@@ -61,8 +61,13 @@ def randomWord(minimum=1):
         WORDS = { w
                   for o in observations
                   for w in splitMany(o,delimiters) }
-        
-    return random.choice([w for w in WORDS if len(w) >= minimum])
+
+    # a disproportionately large fraction of the words have length three
+    # the purpose of this is to decrease the number of 3-length words we have
+    if random.random() > 0.7:
+        return random.choice([w for w in WORDS if len(w) >= minimum])
+    else:
+        return random.choice([w for w in WORDS if len(w) >= minimum and len(w) != 3])
 def randomWords(d,minimum=1):
     return d.join([randomWord(minimum=minimum) for _ in range(random.choice(range(2,5))) ])
 
