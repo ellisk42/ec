@@ -57,9 +57,9 @@ let send_to_tower_server k =
         false
       with Unix.Unix_error(_,_,_) -> true
     do
-      Printf.eprintf "Error connecting to socket (attempt %d); will try again in one second...\n" (!attempts);
+      Printf.eprintf "Error connecting to socket (attempt %d); will try again in 0.05 seconds...\n" (!attempts);
       attempts := !attempts + 1;
-      Unix.sleep 1
+      Thread.delay 0.05
     done;
     !connection |> get_some        
   in
