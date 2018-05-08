@@ -1,0 +1,3 @@
+[submodule "pregex"]
+	path = pregex
+	url = git@github.com:insperatum/pregex.git

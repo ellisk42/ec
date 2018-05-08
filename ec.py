@@ -84,7 +84,7 @@ def ecIterator(grammar, tasks,
                enumerationTimeout=None,
                expandFrontier=None,
                resumeFrontierSize=None,
-               useRecognitionModel=True,
+               useRecognitionModel=False,
                steps=250,
                helmholtzRatio=0.,
                helmholtzBatch=5000,
@@ -94,7 +94,7 @@ def ecIterator(grammar, tasks,
                maximumFrontier=None,
                pseudoCounts=1.0, aic=1.0,
                structurePenalty=0.001, arity=0,
-               evaluationTimeout=0.05, # seconds
+               evaluationTimeout=1.0, # seconds
                CPUs=1,
                cuda=False,
                message="",
@@ -215,6 +215,7 @@ def ecIterator(grammar, tasks,
                                              tasks, featureExtractor(tasks)),
         "euclidean":             lambda: EuclideanLikelihoodModel(
                                              featureExtractor(tasks)),
+		"probabilistic":         lambda: ProbabilisticLikelihoodModel(timeout=evaluationTimeout)
     }[likelihoodModel]()
 
     for j in range(resume or 0, iterations):

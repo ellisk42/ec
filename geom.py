@@ -120,13 +120,14 @@ def list_options(parser):
 if __name__ == "__main__":
     args = commandlineArguments(
             steps=100,
-            a=1,
+            a=3,
             iterations=10,
+            topK=10,
             useRecognitionModel=True,
             helmholtzRatio=0.5,
             helmholtzBatch=500,
             featureExtractor=GeomFeatureCNN,
-            maximumFrontier=500,
+            maximumFrontier=5000,
             CPUs=numberOfCPUs(),
             pseudoCounts=10.0,
             activation="tanh",
