@@ -40,13 +40,17 @@ let send_to_tower_server k =
   let p = 9494 in
   let h = Unix.Inet_addr.localhost in
   let (ic,oc) =
-    let connection=ref None in
+    let attempts = ref 0 in
+    let connection = ref None in
     while
       try
-        connection := Some(Unix.open_connection (ADDR_INET(h,p))); false
+        connection := Some(Unix.open_connection (ADDR_INET(h,p)));
+        if !attempts > 0 then Printf.eprintf "Connected to socket after %d attempts\n" (!attempts);
+        false
       with Unix.Unix_error(_,_,_) -> true
     do
-      Printf.eprintf "Error connecting to socket; will try again in one second...";
+      Printf.eprintf "Error connecting to socket (attempt %d); will try again in one second...\n" (!attempts);
+      attempts := !attempts + 1;
       Unix.sleep 1
     done;
     !connection |> get_some        
