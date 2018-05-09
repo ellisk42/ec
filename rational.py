@@ -102,10 +102,11 @@ def drawFunction(n, dx, f):
     data = np.fromstring(figure.canvas.tostring_rgb(), dtype=np.uint8, sep='')
     data = data.reshape(figure.canvas.get_width_height()[::-1] + (3,))
     data = data[:,:,0]
-    data[data > 250] = 0
-    data = data/2.0
-
-    data = imresize(data, (64,64))
+    data = 255 - data
+    data = data/255.
+    # print "upper and lower bounds before resizing",np.max(data),np.min(data),data.dtype
+    data = imresize(data, (64,64))/255.
+    # print "upper and lower bounds after resizing",np.max(data),np.min(data),data.dtype
 
     plot.close(figure)
 
@@ -168,10 +169,10 @@ def demo():
 #        if makeTask(name,f) is None: continue
         
         print j,"\n",name
-        a = drawFunction(100,10.,f)
+        a = drawFunction(200,10.,f)*255
         Image.fromarray(a).convert('RGB').save("/tmp/functions/%d.png"%j)
-
-
+    assert False
+#demo()
 
 
 if __name__ == "__main__":
