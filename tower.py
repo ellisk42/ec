@@ -50,9 +50,10 @@ class TowerFeatureExtractor(HandCodedFeatureExtractor):
 
 def evaluateArches(ts):
     arches = [
-        "(fold (range 3) 1x3 (lambda (lambda (do 3x1 (right (right $0))))))",
-        "(do (do (right 1x3) (do (left 1x3) 3x1)) (right (right (right (do (right 1x3) (do (left 1x3) 3x1))))))",
-        "(do (do (do (right 1x3) (do (left 1x3) 3x1)) (right (right (right (do (right 1x3) (do (left 1x3) 3x1)))))) (right  (do (right 1x3) (do (left 1x3) 3x1))))",
+        # "(fold (range 3) 1x3 (lambda (lambda (do 3x1 (right (right $0))))))",
+        # "(do (do (right 1x3) (do (left 1x3) 3x1)) (right (right (right (do (right 1x3) (do (left 1x3) 3x1))))))",
+        # "(do (do (do (right 1x3) (do (left 1x3) 3x1)) (right (right (right (do (right 1x3) (do (left 1x3) 3x1)))))) (right  (do (right 1x3) (do (left 1x3) 3x1))))",
+        "(do #(#(lambda (lambda (do $0 (right (right (right $1)))))) #(#(lambda (right (#(lambda (lambda (do (do (right $0) (left $1)) 3x1))) $0 1x3))) 1x3) #(#(lambda (right (#(lambda (lambda (do (do (right $0) (left $1)) 3x1))) $0 1x3))) 1x3)) #(#(lambda (lambda (do $0 (right (right (right $1)))))) #(#(lambda (right (#(lambda (lambda (do (do (right $0) (left $1)) 3x1))) $0 1x3))) 1x3) #(#(lambda (right (#(lambda (lambda (do (do (right $0) (left $1)) 3x1))) $0 1x3))) 1x3)))"
        #  "(do (do (left 1x3) (do (right 1x3) 3x1)) (right (right (right (do (left 1x3) (do (right 1x3) 3x1))))))",
        # "(do 1x4 (do (left 1x4) 4x1))",
        # "(do (right 1x4) (do (left (left 1x4)) 4x1))",

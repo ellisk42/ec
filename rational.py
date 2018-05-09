@@ -41,8 +41,15 @@ def makeTask(name, f):
     
     return None
 
-def randomPolynomial(order,m=3):
-    coefficients = [ random.random()*2*m-m for _ in range(order + 1) ]
+def randomCoefficient():
+    m = 4
+    if random.random() > 0.5:
+        return 1. + (random.random()*(m - 1))
+    return -(1. + (random.random()*(m - 1)))
+
+
+def randomPolynomial(order):
+    coefficients = [ randomCoefficient() for _ in range(order + 1) ]
     def f(x):
         return sum( c*(x**(order-j)) for j,c in enumerate(coefficients) )
     name = ""
@@ -100,6 +107,8 @@ def drawFunction(n, dx, f):
 
     data = imresize(data, (64,64))
 
+    plot.close(figure)
+
     return data
 
 def makeTasks():
@@ -119,7 +128,19 @@ def makeTasks():
         ts.append(makeTask(n,f))
     tasks += ts
     return tasks
-            
+
+class RandomParameterization(object):
+    def primitive(self, e):
+        if e.name == 'REAL':
+            return Primitive(str(e), e.tp, randomCoefficient())
+        return e
+    def invented(self,e): return e.body.visit(self)
+    def abstraction(self,e): return Abstraction(e.body.visit(self))
+    def application(self,e):
+        return Application(e.f.visit(self),e.x.visit(self))
+    def index(self,e): return e
+RandomParameterization.single = RandomParameterization()
+
 
 class FeatureExtractor(ImageFeatureExtractor):
     def __init__(self, tasks):
@@ -129,7 +150,15 @@ class FeatureExtractor(ImageFeatureExtractor):
     def featuresOfTask(self,t):
         return self(t.features)
     def featuresOfProgram(self,p,t):
-        assert False,"feature extractor for program not implemented for rational functions yet!!!"
+        p = p.visit(RandomParameterization.single)
+        f = lambda x: p.runWithArguments([x])
+        t = makeTask(str(p), f)
+        if t is None:
+            return None
+        features = list(drawFunction(200, 10., t.f).ravel())
+        delattr(t,'f')
+        return features
+
 
 def demo():
     from PIL import Image
@@ -141,6 +170,8 @@ def demo():
         print j,"\n",name
         a = drawFunction(100,10.,f)
         Image.fromarray(a).convert('RGB').save("/tmp/functions/%d.png"%j)
+
+
 
 
 if __name__ == "__main__":

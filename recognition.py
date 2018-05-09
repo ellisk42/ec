@@ -423,7 +423,7 @@ class RecognitionModel(nn.Module):
                             helmholtzSamples = \
                             self.sampleManyHelmholtz(requests,
                                                      HELMHOLTZBATCH,
-                                                     1) # TODO THIS IS A HACK
+                                                     CPUs)
                         attempt = helmholtzSamples.pop()
                         if attempt is not None:
                             program, request, features = attempt
@@ -471,8 +471,21 @@ class RecognitionModel(nn.Module):
             self.featureExtractor.finish()
         except AttributeError:
             ()
+        samples = [ z for z in samples if z is not None ]
         eprint()
+        eprint("Got %d/%d valid samples."%(len(samples),N))
         flushEverything()
+        # For some reason trying to run pytorch in parallel causes problems
+        # So if you are using more than one CPU you might want feature extractor to not run the neural network
+        # If that is the case then we will just run the net here
+        for p,r,f in samples:
+            if isinstance(f,list):
+                eprint("Looks like featureExtractor.featuresOfProgram does not actually run the feature extracting network. That's totally okay, just need to clean things up by running the neural net...")
+                break
+        
+        samples = [(p,r,
+                    f if not isinstance(f,list) else self.featureExtractor(f))
+                   for p,r,f in samples ]
         return samples
 
     def enumerateFrontiers(self, tasks, likelihoodModel,
