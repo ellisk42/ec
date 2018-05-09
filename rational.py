@@ -41,7 +41,7 @@ def makeTask(name, f):
     return None
 
 def randomCoefficient():
-    m = 4
+    m = 10
     if random.random() > 0.5:
         return 1. + (random.random()*(m - 1))
     return -(1. + (random.random()*(m - 1)))
@@ -72,6 +72,21 @@ def randomPolynomial(order):
 
     return name,f
 
+def randomFactored(order):
+    offsets = [ randomCoefficient() for _ in range(order) ]
+    def f(x):
+        p = 1.
+        for o in offsets:
+            p = p*(x + o)
+        return p
+    name = ""
+    for c in offsets:
+        if c > 0:
+            name += "(x + %0.1f)"%c
+        else:
+            name += "(x - %0.1f)"%(abs(c))
+    return name,f
+
 def randomRational():
     no = random.choice([0,1,2])
     nn,n = randomPolynomial(no)
@@ -79,10 +94,23 @@ def randomRational():
 
     f = lambda x: n(x)/d(x)
 
-    if no == 0: name = "%s/(%s)"%(nn,dn)
-    else: name = "(%s)/(%s)"%(nn,dn)
+    if no == 0: name = "%s/[%s]"%(nn,dn)
+    else: name = "(%s)/[%s]"%(nn,dn)
 
     return name,f
+
+def randomPower():
+    e = random.choice([1,2,3])
+    c = randomCoefficient()
+
+    def f(x):
+        return c*(x**(-e))
+    if e == 1:
+        name = "%0.1f/x"%c
+    else:
+        name = "%0.1f/x^%d"%(c,e)
+
+    return name, f
 
     
 def drawFunction(n, dx, f):
@@ -98,6 +126,7 @@ def drawFunction(n, dx, f):
     plot.plot(np.arange(-dx,dx,0.05),
               [ f(x) for x in np.arange(-dx,dx,0.05) ],
               linewidth = 20)
+    plot.ylim([-10,10])
     plot.axis('off')
     figure.canvas.draw()
     data = np.fromstring(figure.canvas.tostring_rgb(), dtype=np.uint8, sep='')
@@ -116,16 +145,25 @@ def drawFunction(n, dx, f):
 def makeTasks():
     tasks = []
 
+    tasksPerType = 100
+
     for o in xrange(1,4):
         ts = []
-        while len(ts) < 100:
+        while len(ts) < tasksPerType:
             n,f = randomPolynomial(o)
             if makeTask(n,f) is None: continue
             ts.append(makeTask(n,f))
         tasks += ts
     ts = []
-    while len(ts) < 100:
+    while len(ts) < tasksPerType:
         n,f = randomRational()
+        if makeTask(n,f) is None: continue
+        ts.append(makeTask(n,f))
+    tasks += ts
+
+    ts = []
+    while len(ts) < tasksPerType:
+        n,f = randomPower()
         if makeTask(n,f) is None: continue
         ts.append(makeTask(n,f))
     tasks += ts
@@ -173,11 +211,12 @@ def demo():
         a = drawFunction(200,10.,f)*255
         Image.fromarray(a).convert('RGB').save("/tmp/functions/%d.png"%j)
     assert False
-#demo()
+demo()
 
 
 if __name__ == "__main__":
-    primitives = [real, 
+    primitives = [real,
+                  f1,
                   real_division, real_addition, real_multiplication]
     baseGrammar = Grammar.uniform(primitives)
     random.seed(42)
@@ -189,7 +228,7 @@ if __name__ == "__main__":
     
     eprint("Got %d tasks..."%len(tasks))
 
-    test, train = testTrainSplit(tasks, 0.25)
+    test, train = testTrainSplit(tasks, 0.2)
     
     explorationCompression(baseGrammar, train,
                            outputPrefix = "experimentOutputs/rational",
