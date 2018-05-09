@@ -1,4 +1,5 @@
 from ec import explorationCompression, commandlineArguments, Program
+from fragmentGrammar import *
 from grammar import Grammar
 from arithmeticPrimitives import real_addition, real_multiplication, real_power, real_subtraction, real, f0, f1, fpi, real_division
 from listPrimitives import bootstrapTarget
@@ -7,8 +8,6 @@ from type import tint, arrow
 from utilities import *
 from program import *
 from recognition import *
-
-import numpy as np
 
 import random
 
@@ -87,6 +86,8 @@ def randomRational():
 
     
 def drawFunction(n, dx, f):
+    import numpy as np
+    
     import matplotlib
     matplotlib.use('Agg')
     
@@ -192,7 +193,7 @@ if __name__ == "__main__":
     
     explorationCompression(baseGrammar, train,
                            outputPrefix = "experimentOutputs/rational",
-                           compressor="pypy",
+                           compressor="rust",
                            evaluationTimeout = 0.1,
                            testingTasks = test,
                            **commandlineArguments(
