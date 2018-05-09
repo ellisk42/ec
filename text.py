@@ -51,9 +51,11 @@ if __name__ == "__main__":
     tasks = makeTasks()
     eprint("Generated",len(tasks),"tasks")
 
-    test, train = testTrainSplit(tasks, 1.0)
+    for t in tasks: t.mustTrain = False
+    
+    test, train = testTrainSplit(tasks, 0.5)
     eprint("Split tasks into %d/%d test/train"%(len(test),len(train)))
-
+    
     challenge, challengeCheating = loadPBETasks()
     eprint("Got %d challenge PBE tasks"%len(challenge))
 
