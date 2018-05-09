@@ -85,6 +85,7 @@ def ecIterator(grammar, tasks,
                expandFrontier=None,
                resumeFrontierSize=None,
                useRecognitionModel=False,
+			   useNewRecognitionModel=True,
                steps=250,
                helmholtzRatio=0.,
                helmholtzBatch=5000,
@@ -111,6 +112,10 @@ def ecIterator(grammar, tasks,
         eprint("Warning: Recognition model needs feature extractor.",
                "Ignoring recognition model.")
         useRecognitionModel = False
+    if useNewRecognitionModel and featureExtractor is None:
+        eprint("Warning: Recognition model needs feature extractor.",
+               "Ignoring recognition model.")
+        useNewRecognitionModel = False
     if benchmark is not None and resume is None:
         eprint("You cannot benchmark unless you are loading a checkpoint, aborting.")
         assert False
@@ -131,7 +136,7 @@ def ecIterator(grammar, tasks,
     def checkpointPath(iteration, extra=""):
         parameters["iterations"] = iteration
         kvs = ["{}={}".format(ECResult.abbreviate(k), parameters[k]) for k in sorted(parameters.keys())]
-        if useRecognitionModel:
+        if useRecognitionModel or useNewRecognitionModel:
             kvs += ["feat=%s"%(featureExtractor.__name__)]
         if bootstrap:
             kvs += ["bstrap=True"]
@@ -189,6 +194,13 @@ def ecIterator(grammar, tasks,
         result = ECResult(parameters=parameters, grammars=[grammar],
                           taskSolutions={ t: Frontier([], task=t) for t in tasks },
                           recognitionModel=None)
+
+    #just plopped this in here, hope it works: -it doesn't. having issues.
+    if useNewRecognitionModel and (not hasattr(result, 'recognitionModel') or type(result.recognitionModel) is not NewRecognitionModel):
+        eprint("Creating new recognition model")
+        featureExtractorObject = featureExtractor(tasks + testingTasks)
+        result.recognitionModel = NewRecognitionModel(featureExtractorObject, grammar, cuda=cuda)
+    #end 
 
     if benchmark is not None:
         assert resume is not None, "Benchmarking requires resuming from checkpoint that you are benchmarking."
@@ -282,11 +294,26 @@ def ecIterator(grammar, tasks,
                                                                      frontierSize=frontierSize,
                                                                      enumerationTimeout=enumerationTimeout,
                                                                      evaluationTimeout=evaluationTimeout)
+            
+        elif useNewRecognitionModel: # Train a recognition model
+           	result.recognitionModel.updateGrammar(grammar)
+           	result.recognitionModel.train(frontiers, topK=topK, steps=steps, helmholtzRatio=helmholtzRatio) #changed from result.frontiers to frontiers and added thingy
+           	eprint("done training recognition model")
+           	bottomupFrontiers = result.recognitionModel.enumerateFrontiers(tasks, likelihoodModel,
+                                                                     CPUs=CPUs,
+                                                                     solver=solver,
+                                                                     maximumFrontier=maximumFrontier,
+                                                                     frontierSize=frontierSize,
+                                                                     enumerationTimeout=enumerationTimeout,
+                                                                     evaluationTimeout=evaluationTimeout)     
+        if useRecognitionModel or useNewRecognitionModel:
+			
+			
             eprint("Recognition model enumeration results:")
             eprint(Frontier.describe(bottomupFrontiers))
 
             result.averageDescriptionLength.append(mean( -f.marginalLikelihood()
-                                                         for f in bottomupFrontiers
+           	                                             for f in bottomupFrontiers
                                                          if not f.empty ))
 
             tasksHitBottomUp = {f.task for f in bottomupFrontiers if not f.empty}
@@ -299,12 +326,14 @@ def ecIterator(grammar, tasks,
             result.averageDescriptionLength.append(mean( -f.marginalLikelihood()
                                                          for f in frontiers
                                                          if not f.empty ))
-        result.searchTimes.append(times)
 
-        eprint("Average search time: ",int(mean(times)+0.5),
-               "sec.\tmedian:",int(median(times)+0.5),
-               "\tmax:",int(max(times)+0.5),
-               "\tstandard deviation",int(standardDeviation(times)+0.5))
+        if not useNewRecognitionModel: #This line is changed, beware
+            result.searchTimes.append(times)
+
+            eprint("Average search time: ",int(mean(times)+0.5),
+                   "sec.\tmedian:",int(median(times)+0.5),
+                   "\tmax:",int(max(times)+0.5),
+                   "\tstandard deviation",int(standardDeviation(times)+0.5))
 
         # Incorporate frontiers from anything that was not hit
         frontiers = [ f if not f.empty
@@ -386,7 +415,8 @@ def commandlineArguments(_=None,
                          enumerationTimeout=None,
                          topK=1,
                          CPUs=1,
-                         useRecognitionModel=True,
+                         useRecognitionModel=False,
+                         useNewRecognitionModel=True,
                          steps=250,
                          activation='relu',
                          helmholtzRatio=0.,
