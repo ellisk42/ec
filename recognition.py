@@ -27,7 +27,7 @@ def variable(x, volatile=False, cuda=False):
 def is_torch_not_a_number(v):
     """checks whether a tortured variable is nan"""
     v = v.data
-    if not (v == v): return True
+    if not ((v == v)[0]): return True
     return False
 def is_torch_invalid(v):
     """checks whether a torch variable is nan or inf"""
