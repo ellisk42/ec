@@ -164,6 +164,12 @@ let load_problems channel =
   let verbose = try j |> member "verbose" |> to_bool      
     with _ -> false
   in
+  
+  let _ = try
+      shatter_factor := (j |> member "shatter" |> to_int)
+    with _ -> ()
+  in
+
 
   let lowerBound =
     try j |> member "lowerBound" |> to_float

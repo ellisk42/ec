@@ -244,7 +244,8 @@ def solveForTask_ocaml(_ = None,
                "lowerBound": lowerBound,
                "upperBound": upperBound,
                "budgetIncrement": budgetIncrement,
-               "verbose": False}
+               "verbose": False,
+               "shatter": 10}
     task = tasks[0]
     if hasattr(task, 'BIC'):
         message["parameterPenalty"] = task.BIC*math.log(len(task.examples))

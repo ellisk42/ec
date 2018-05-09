@@ -337,19 +337,23 @@ let dfs_around_skeleton g ~lower_bound ~upper_bound state k =
   around ~parent:None state.skeleton 0 state.context (lower_bound -. state.cost) (upper_bound -. state.cost)
     (fun e context ll -> k e context (ll-.state.cost))
 
+let shatter_factor = ref 10;;
+
 (* Putting depth first and best first gives us a parallel strategy for enumeration *)
 let multicore_enumeration ?final:(final=fun () -> []) ?cores:(cores=1) ?shatter:(shatter=None) g request lb ub k =
   let shatter = match (shatter,cores) with
     | (Some(s),_) -> s
     | (None,1) -> 1
-    | (None,c) -> 10*c
+    | (None,c) -> !shatter_factor*c
   in
   
   let (finished, fringe) =
     best_first_enumeration ~lower_bound:(Some(lb)) ~upper_bound:(Some(ub)) ~frontier_size:shatter g request
   in
   
-  
+  Printf.eprintf "\t(ocaml: %d CPUs. shatter: %d. |fringe| = %d. |finished| = %d.)\n"
+    cores shatter (List.length fringe) (List.length finished);
+  flush_everything();
 
   let strip_context p _ l = k p l in
 
