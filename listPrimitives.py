@@ -179,7 +179,7 @@ def bootstrapTarget():
         Primitive("if", arrow(tbool, t0, t0, t0), _if),
         Primitive("eq?", arrow(tint, tint, tbool), _eq),
         Primitive("+", arrow(tint, tint, tint), _addition),
-        # Primitive("-", arrow(tint, tint, tint), _subtraction),
+        Primitive("-", arrow(tint, tint, tint), _subtraction),
         Primitive("empty", tlist(t0), []),
         Primitive("cons", arrow(t0, tlist(t0), tlist(t0)), _cons),
         Primitive("car", arrow(tlist(t0), t0), _car),
