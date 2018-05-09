@@ -168,7 +168,7 @@ def bootstrapTarget():
     return [
         # learned primitives
         Primitive("map", arrow(arrow(t0, t1), tlist(t0), tlist(t1)), _map),
-        Primitive("zip", arrow(tlist(t0), tlist(t1), arrow(t0, t1, t2), tlist(t2)), _zip),
+        #Primitive("zip", arrow(tlist(t0), tlist(t1), arrow(t0, t1, t2), tlist(t2)), _zip),
         Primitive("unfold", arrow(t0, arrow(t0,tbool), arrow(t0,t1), arrow(t0,t0), tlist(t1)), _unfold),
         Primitive("range", arrow(tint, tlist(tint)), range),
         Primitive("index", arrow(tint, tlist(t0), t0), _index),
@@ -179,7 +179,7 @@ def bootstrapTarget():
         Primitive("if", arrow(tbool, t0, t0, t0), _if),
         Primitive("eq?", arrow(tint, tint, tbool), _eq),
         Primitive("+", arrow(tint, tint, tint), _addition),
-        Primitive("-", arrow(tint, tint, tint), _subtraction),
+        # Primitive("-", arrow(tint, tint, tint), _subtraction),
         Primitive("empty", tlist(t0), []),
         Primitive("cons", arrow(t0, tlist(t0), tlist(t0)), _cons),
         Primitive("car", arrow(tlist(t0), t0), _car),
