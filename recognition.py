@@ -24,6 +24,18 @@ def variable(x, volatile=False, cuda=False):
         x = x.cuda()
     return Variable(x, volatile=volatile)
 
+def is_torch_not_a_number(v):
+    """checks whether a tortured variable is nan"""
+    v = v.data
+    if not (v == v): return True
+    return False
+def is_torch_invalid(v):
+    """checks whether a torch variable is nan or inf"""
+    if is_torch_not_a_number(v): return True
+    a = v - v
+    if is_torch_not_a_number(a): return True
+    return False
+    
 
 class DRNN(nn.Module):
     def __init__(self, grammar, featureExtractor, hidden=64, cuda=False):
@@ -437,10 +449,14 @@ class RecognitionModel(nn.Module):
                         else:
                             # Refuse to train on the frontiers
                             continue
-
-                    loss.backward()
-                    optimizer.step()
-                    losses.append(loss.data[0])
+                    
+                    if is_torch_invalid(loss):
+                        eprint("Invalid loss!")
+                    else:
+                        loss.backward()
+                        optimizer.step()
+                        losses.append(loss.data[0])
+                        eprint("\tdata point loss:",loss.data[0])
                 if (i == 1 or i%10 == 0) and losses:
                     eprint("Epoch",i,"Loss",sum(losses)/len(losses))
                     gc.collect()
