@@ -55,6 +55,8 @@ pip install sexpdata
 pip install dill
 pip install psutil
 sudo apt-get install -y libcairo-ocaml
+sudo apt-get install  -y python-tk
+pip install matplotlib
 cd ~/ec
 rm experimentOutputs/*
 git pull

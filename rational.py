@@ -142,6 +142,7 @@ def demo():
         a = drawFunction(100,10.,f)
         Image.fromarray(a).convert('RGB').save("/tmp/functions/%d.png"%j)
 
+
 if __name__ == "__main__":
     primitives = [real, 
                   real_division, real_addition, real_multiplication]
