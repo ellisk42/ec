@@ -4,23 +4,24 @@
 DRY="false"
 
 # On OM you probably want something like this:
-#module load openmind/miniconda/3.9.1
-#source activate ec
-#SBATCH="false"
-#PMAP="1"
-#TMAP="4"
-#PRED="1"
-#TRED="2"
+module load openmind/miniconda/3.9.1
+source activate ec
+SBATCH="true"
+PMAP="12"
+TMAP="500"
+PRED="48"
+TRED="5000"
 
 # Name of your script
 PROGRAM="geom.py"
 
 # Arguments for the program, respectively for the maps and the reduce
-ARGSMAP="-t 1 -g -i 1"
-ARGSRED="-t 20"
+ARGSMAP="-t 600 -g -i 10"
+ARGSRED="-t 3600 -i 20 --expandFrontier 2"
 
 # Targets
-MAP="line"
+MAP="anyNum circle line los penoff square variable"
+#MAP="line square"
 REDUCE="all"
 
 # Now let's build the command:

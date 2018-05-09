@@ -300,7 +300,7 @@ def solveForTask_python(_=None,
 
 class EnumerationTimeout(Exception): pass
 def enumerateForTask(g, task, likelihoodModel, _=None,
-                     verbose=False,
+                     verbose=True,
                      timeout=None,
                      evaluationTimeout=None,
                      frontierSize=None,

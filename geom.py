@@ -139,15 +139,16 @@ def list_options(parser):
 
 if __name__ == "__main__":
     args = commandlineArguments(
-            steps=100,
+            steps=1000,
             a=3,
+	    topK=5,
             iterations=10,
             topK=10,
             useRecognitionModel=True,
             helmholtzRatio=0.5,
             helmholtzBatch=500,
             featureExtractor=GeomFeatureCNN,
-            maximumFrontier=5000,
+            maximumFrontier=1000,
             CPUs=numberOfCPUs(),
             pseudoCounts=10.0,
             activation="tanh",
@@ -180,6 +181,8 @@ if __name__ == "__main__":
             except EOFError:
                 eprint("Couldn't grab frontier from " + reducing)
             except IOError:
+                eprint("Couldn't grab frontier from " + reducing)
+            except json.decoder.JSONDecodeError:
                 eprint("Couldn't grab frontier from " + reducing)
 
 
