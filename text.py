@@ -46,6 +46,8 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
 
 
 if __name__ == "__main__":
+    doChallenge = True
+    
     tasks = makeTasks()
     eprint("Generated",len(tasks),"tasks")
 
@@ -83,18 +85,21 @@ if __name__ == "__main__":
                                CPUs = numberOfCPUs(),
                                featureExtractor = LearnedFeatureExtractor,
                                pseudoCounts = 10.0))
-    eprint("challenge problems before learning...")
-    challengeFrontiers, times = multicoreEnumeration(baseGrammar, challenge, "all-or-nothing",
-                                     CPUs=numberOfCPUs(),
-                                     solver="ocaml",
-                                     maximumFrontier=1,
-                                     enumerationTimeout=challengeTimeout,
-                                     evaluationTimeout=evaluationTimeout)
-    eprint(Frontier.describe(challengeFrontiers))
-    summaryStatistics("Challenge problem search time",times)
-    eprint("done evaluating challenge problems before learning")
+    if doChallenge:
+        eprint("challenge problems before learning...")
+        challengeFrontiers, times = multicoreEnumeration(baseGrammar, challenge, "all-or-nothing",
+                                         CPUs=numberOfCPUs(),
+                                         solver="ocaml",
+                                         maximumFrontier=1,
+                                         enumerationTimeout=challengeTimeout,
+                                         evaluationTimeout=evaluationTimeout)
+        eprint(Frontier.describe(challengeFrontiers))
+        summaryStatistics("Challenge problem search time",times)
+        eprint("done evaluating challenge problems before learning")
 
     for result in generator:
+        if not doChallenge: continue
+        
         eprint("Evaluating on challenge problems...")
         if result.recognitionModel is not None:
             recognizer = result.recognitionModel

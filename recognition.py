@@ -633,7 +633,7 @@ class RecurrentFeatureExtractor(nn.Module):
                                     0.1)
             except: continue
             try:
-                return self(zip(xss,ys))
+                return zip(xss,ys)
             except:
                 eprint("Failure extracting features of %s : %s"%(p,tp))
                 eprint("ys = ",ys)
