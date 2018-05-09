@@ -211,7 +211,7 @@ def demo():
         a = drawFunction(200,10.,f)*255
         Image.fromarray(a).convert('RGB').save("/tmp/functions/%d.png"%j)
     assert False
-demo()
+#demo()
 
 
 if __name__ == "__main__":
