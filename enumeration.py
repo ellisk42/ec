@@ -57,7 +57,7 @@ def multicoreEnumeration(g, tasks, likelihoodModel, _=None,
     stopwatches = {t: Stopwatch() for t in jobs }
 
     def numberOfHits(f):
-        return sum( e.logLikelihood == 0. for e in f)
+        return sum( e.logLikelihood > -0.01 for e in f)
 
     def budgetIncrement(lb):
         if True: return 1.5

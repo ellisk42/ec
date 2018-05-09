@@ -266,7 +266,7 @@ def guessConstantStrings(task):
 
     task.stringConstants = list(set([''.join(g) for g in guesses]))
     task.BIC = 1.
-    task.maxParameters = 2
+    task.maxParameters = 1
     
 if __name__ == "__main__":
     import sys
