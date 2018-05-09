@@ -80,6 +80,9 @@ def randomRational():
 
     
 def drawFunction(n, dx, f):
+    import matplotlib
+    matplotlib.use('Agg')
+    
     import matplotlib.pyplot as plot
     from scipy.misc import imresize
     
