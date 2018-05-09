@@ -3,6 +3,8 @@ from type import *
 
 def _addition(x): return lambda y: x + y
 def _subtraction(x): return lambda y: x - y
+def _division(x): return lambda y: x/y
+
 subtraction = Primitive("-",
                         arrow(tint,arrow(tint,tint)),
                         _subtraction)
@@ -22,6 +24,9 @@ multiplication = Primitive("*",
 real_multiplication = Primitive("*.",
                                 arrow(treal,treal,treal),
                                 _multiplication)
+real_division = Primitive("/.",
+                                arrow(treal,treal,treal),
+                                _division)
 def _power(a): return lambda b: a**b
 real_power = Primitive("power",
                        arrow(treal,treal,treal),

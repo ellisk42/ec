@@ -92,6 +92,9 @@ let (-&) =
 let ( *& ) =
   make_binary_variable ( *. ) (fun a b -> [b;a])
 
+let ( /& ) =
+  make_binary_variable ( /. ) (fun a b -> [1./.b;0.-.a/.(b*.b)])
+
 let power =
   make_binary_variable ( ** ) (fun a b -> [b*.(a**(b-.1.));
                                           (a**b) *. (log a)])
@@ -250,6 +253,7 @@ let differentiable_pi = primitive "pi" treal (~$ 3.14);;
 let differentiable_add = primitive "+." (treal @> treal @> treal) (+&);;
 let differentiable_subtract = primitive "-." (treal @> treal @> treal) (-&);;
 let differentiable_multiply = primitive "*." (treal @> treal @> treal) ( *&);;
+let differentiable_division = primitive "/." (treal @> treal @> treal) ( /&);;
 let differentiable_power = primitive "power" (treal @> treal @> treal) (power);;
 let differentiable_placeholder = primitive "REAL" treal ();;
 
