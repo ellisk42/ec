@@ -2,7 +2,7 @@ from ec import explorationCompression, commandlineArguments
 from grammar import Grammar
 from utilities import eprint, testTrainSplit, numberOfCPUs
 from makeGeomTasks import makeTasks
-from geomPrimitives import primitives
+from geomPrimitives import primitives, tcanvas
 from math import log
 from collections import OrderedDict
 from program import Program
@@ -79,6 +79,26 @@ class GeomFeatureCNN(nn.Module):
             self.mean = [x+y for x, y in zip(self.mean, bigShape)]
             self.count += 1
             return self(shape)
+        except ValueError:
+            return None
+
+    def renderProgram(self, p, t):  # Won't fix for geom
+        if not os.path.exists(self.sub):
+                os.makedirs(self.sub)
+        try:
+            fname = self.sub + "/" + str(self.count) + ".png"
+            evaluated = p.evaluate([])
+            output = subprocess.check_output(['./geomDrawLambdaString',
+                                             fname,
+                                             evaluated]).decode("utf8").split("\n")
+            shape = list(map(float, output[0].split(',')))
+            bigShape = map(float, output[1].split(','))
+        except OSError as exc:
+            raise exc
+        try:
+            self.mean = [x+y for x, y in zip(self.mean, bigShape)]
+            self.count += 1
+            return shape
         except ValueError:
             return None
 
@@ -167,6 +187,15 @@ if __name__ == "__main__":
     baseGrammar = Grammar.uniform(primitives)
 
     eprint(baseGrammar)
+
+    fe = GeomFeatureCNN(tasks)
+
+    for x in range(0, 500):
+        program = baseGrammar.sample(tcanvas, maximumDepth=6)
+        features = fe.renderProgram(program, tcanvas)
+    fe.finish()
+
+    assert(False)
 
     r = explorationCompression(baseGrammar, train,
                                testingTasks=test,
