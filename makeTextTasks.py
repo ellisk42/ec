@@ -95,14 +95,13 @@ def makeTasks():
         task.mustTrain = True
         problems.append(task)
 
-    for d1 in delimiters:
-        for d2 in delimiters:
-            if d1 != d2:
-                problem("Replace '%s' w/ '%s'"%(d1,d2),
-                        [ ((x,), x.replace(d1,d2))
-                          for _ in range(NUMBEROFEXAMPLES) 
-                          for x in [randomWords(d1)] ],
-                        needToTrain=False)
+    for d1,d2 in randomPermutation(crossProduct(delimiters,delimiters))[:len(delimiters)]:
+        if d1 != d2:
+            problem("Replace '%s' w/ '%s'"%(d1,d2),
+                    [ ((x,), x.replace(d1,d2))
+                      for _ in range(NUMBEROFEXAMPLES) 
+                      for x in [randomWords(d1)] ],
+                    needToTrain=False)
     for d in delimiters:
         problem("drop first word delimited by '%s'"%d,
                 [ ((x,), d.join(x.split(d)[1:]))
