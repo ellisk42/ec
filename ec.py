@@ -261,6 +261,10 @@ def ecIterator(grammar, tasks,
             
         eprint("Generative model enumeration results:")
         eprint(Frontier.describe(frontiers))
+        eprint("Average search time: ",int(mean(times)+0.5),
+               "sec.\tmedian:",int(median(times)+0.5),
+               "\tmax:",int(max(times)+0.5),
+               "\tstandard deviation",int(standardDeviation(times)+0.5))
 
         tasksHitTopDown = {f.task for f in frontiers if not f.empty}
 
@@ -283,6 +287,10 @@ def ecIterator(grammar, tasks,
                                                                      evaluationTimeout=evaluationTimeout)
             eprint("Recognition model enumeration results:")
             eprint(Frontier.describe(bottomupFrontiers))
+            eprint("Average search time: ",int(mean(times)+0.5),
+                   "sec.\tmedian:",int(median(times)+0.5),
+                   "\tmax:",int(max(times)+0.5),
+                   "\tstandard deviation",int(standardDeviation(times)+0.5))
 
             result.averageDescriptionLength.append(mean( -f.marginalLikelihood()
                                                          for f in bottomupFrontiers
@@ -299,11 +307,6 @@ def ecIterator(grammar, tasks,
                                                          for f in frontiers
                                                          if not f.empty ))
         result.searchTimes.append(times)
-
-        eprint("Average search time: ",int(mean(times)+0.5),
-               "sec.\tmedian:",int(median(times)+0.5),
-               "\tmax:",int(max(times)+0.5),
-               "\tstandard deviation",int(standardDeviation(times)+0.5))
 
         # Incorporate frontiers from anything that was not hit
         frontiers = [ f if not f.empty
