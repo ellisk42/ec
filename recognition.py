@@ -382,7 +382,7 @@ class RecognitionModel(nn.Module):
     def frontierKL(self, frontier):
         features = self.featureExtractor.featuresOfTask(frontier.task)
         variables, productions = self(features)
-        g = Grammar(variables, [(productions[k],t,program)
+        g = Grammar(variables, [(productions[k].view(1),t,program)
                                 for k,(_,t,program) in enumerate(self.grammar.productions) ])
         kl = 0.
         for entry in frontier:
@@ -390,7 +390,7 @@ class RecognitionModel(nn.Module):
         return kl
     def HelmholtzKL(self, features, sample, tp):
         variables, productions = self(features)
-        g = Grammar(variables, [(productions[k],t,program)
+        g = Grammar(variables, [(productions[k].view(1),t,program)
                                 for k,(_,t,program) in enumerate(self.grammar.productions) ])
         return - g.logLikelihood(tp, sample)
 
@@ -416,7 +416,7 @@ class RecognitionModel(nn.Module):
         HELMHOLTZBATCH = helmholtzBatch
         helmholtzSamples = []
 
-        optimizer = torch.optim.Adam(self.parameters(), lr=lr)
+        optimizer = torch.optim.Adam(self.parameters(), lr=lr, eps=1e-3, amsgrad=True)
 
         with timing("Trained recognition model"):
             for i in range(1,steps + 1):
@@ -455,8 +455,11 @@ class RecognitionModel(nn.Module):
                     else:
                         loss.backward()
                         optimizer.step()
-                        losses.append(loss.data[0])
-                        eprint("\tdata point loss:",loss.data[0])
+                        losses.append(loss.data.tolist()[0])
+                        if doingHelmholtz:
+                            eprint("\tHelmholtz data point loss:",loss.data.tolist()[0])
+                        else:
+                            eprint("\tReal data point loss:",loss.data.tolist()[0])
                 if (i == 1 or i%10 == 0) and losses:
                     eprint("Epoch",i,"Loss",sum(losses)/len(losses))
                     gc.collect()
@@ -513,8 +516,12 @@ class RecognitionModel(nn.Module):
             for task in tasks:
                 features = self.featureExtractor.featuresOfTask(task)
                 variables, productions = self(features)
-                grammars[task] = Grammar(variables.data[0],
-                                         [ (productions.data[k],t,p)
+                # eprint("variable")
+                # eprint(variables.data[0])
+                # for k in xrange(len(self.grammar.productions)):
+                #     eprint("production",productions.data[k])
+                grammars[task] = Grammar(variables.data.tolist()[0],
+                                         [ (productions.data.tolist()[k],t,p)
                                            for k,(_,t,p) in enumerate(self.grammar.productions) ])
 
         return multicoreEnumeration(grammars, tasks, likelihoodModel,
