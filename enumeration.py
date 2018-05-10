@@ -47,7 +47,7 @@ def multithreadedEnumeration(g, tasks, likelihoodModel, _=None,
                              enumerationTimeout=None,
                              CPUs=1,
                              maximumFrontier=None,
-                             verbose=True,
+                             verbose=False,
                              evaluationTimeout=None):
     '''g: Either a Grammar, or a map from task to grammar.'''
     from time import time
@@ -232,7 +232,7 @@ def solveForTask_ocaml(_=None,
                "lowerBound": lowerBound,
                "upperBound": upperBound,
                "budgetIncrement": budgetIncrement,
-               "verbose": True}
+               "verbose": False}
     if hasattr(task, 'BIC'):
         message["parameterPenalty"] = task.BIC*math.log(len(task.examples))
     if hasattr(task, 'likelihoodThreshold') and task.likelihoodThreshold is not None:
