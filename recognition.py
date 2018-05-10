@@ -373,11 +373,17 @@ class RecognitionModel(nn.Module):
         for layer in self.hiddenLayers:
             features = self.activation(layer(features))
         h = features
+        #added the squeeze
         return self.logVariable(h), self.logProductions(h)
 
     def frontierKL(self, frontier):
         features = self.featureExtractor.featuresOfTask(frontier.task)
         variables, productions = self(features)
+        #eprint("productions:")
+        #eprint(productions)
+        #eprint("len self.grammar.productions")
+        #eprint(len(self.grammar.productions))
+        # issue is that productions should be transposed, I think. But confused about why this happened.
         g = Grammar(variables, [(productions[k],t,program)
                                 for k,(_,t,program) in enumerate(self.grammar.productions) ])
         kl = 0.
@@ -701,6 +707,8 @@ class NewRecognitionModel(nn.Module):
             # torch.set_num_threads(1)
 
         self.featureExtractor = featureExtractor
+
+        #TODO: modify for regex using pinn
         self.network = Network(
             input_vocabulary = vocabulary,
             target_vocabulary = self.getTargetVocabulary(grammar)
@@ -711,6 +719,7 @@ class NewRecognitionModel(nn.Module):
             for parameter in featureExtractor.parameters():
                 assert any(myParameter is parameter for myParameter in self.parameters())
 
+    #TODO: modify for regexes 
     def getTargetVocabulary(self, grammar): #Maybe can kill lambdas completely since they're deterministic
         return ["(_lambda", ")_lambda", "(", ")"] + \
                                 ["$" + str(i) for i in range(10)] + \
@@ -770,7 +779,7 @@ class NewRecognitionModel(nn.Module):
                             # loss = self.frontierKL(frontier)
                             #fix this later
                             loss = 0
-                            eprint("helmholtz is messed up. Fix it.")
+                            eprint("helmholtz ratio is less than 1. for now only works for ratio = 1")
                             pass
                         else:
                             # Refuse to train on the frontiers
@@ -806,8 +815,9 @@ class NewRecognitionModel(nn.Module):
 
     def helmholtzNetworkInputs(self, requests, batchSize, CPUs):
         helmholtzSamples = self.sampleManyHelmholtz(requests, batchSize, CPUs)
-        helmholtzSamples = [x for x in helmholtzSamples if x is not None]
+        helmholtzSamples = [x for x in helmholtzSamples if x is not None] #good
 
+        #TODO: modify for regexes
         inputss = [[_in for (_in, _out) in features] for (program, request, features) in helmholtzSamples]
         outputss = [[_out for (_in, _out) in features] for (program, request, features) in helmholtzSamples]
         targets = [tokeniseProgram(program) for (program, request, features) in helmholtzSamples]
@@ -869,7 +879,7 @@ class NewRecognitionModel(nn.Module):
            #eprint("features_outer:")
            #eprint(features)
            # Feature extractor failure
-           if features is None: return None #what's the point of the features???
+           if features is None: return None 
            else: return program, request, features
 
     def sampleManyHelmholtz(self, requests, N, CPUs): #>>> callCompiled
@@ -902,6 +912,7 @@ class NewRecognitionModel(nn.Module):
             # features = [(input, output) for (input, output) in features if len(input[0])<=30 and len(output)<=30]
             # np.random.shuffle(features)
 			# had to change the line below for python 3
+            # TODO: modify for input output for regexes.
             features = sorted(features, key=lambda in_out: len(in_out[0][0])**2 + len(in_out[1])**2)
             tasks_features.append((task, features))
 
