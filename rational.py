@@ -11,8 +11,6 @@ from recognition import *
 
 import random
 
-treal = baseType("real")
-
 
 
 def makeTask(name, f):
@@ -26,8 +24,8 @@ def makeTask(name, f):
         try: y = f(x)
         except: continue
         if abs(y) < maximum:
-            inputs.append(x)
-            outputs.append(y)
+            inputs.append(float(x))
+            outputs.append(float(y))
 
     if len(inputs) > 25:
         t = DifferentiableTask(name, arrow(treal,treal), [((x,),y) for x,y in zip(inputs, outputs) ],
@@ -195,7 +193,7 @@ class FeatureExtractor(ImageFeatureExtractor):
         t = makeTask(str(p), f)
         if t is None:
             return None
-        features = list(drawFunction(200, 10., t.f).ravel())
+        features = map(float,list(drawFunction(200, 10., t.f).ravel()))
         delattr(t,'f')
         return features
 
@@ -223,7 +221,7 @@ if __name__ == "__main__":
     tasks = makeTasks()
 
     for t in tasks:
-        t.features = list(drawFunction(200, 10., t.f).ravel())
+        t.features = map(float,list(drawFunction(200, 10., t.f).ravel()))
         delattr(t,'f')
     
     eprint("Got %d tasks..."%len(tasks))
@@ -232,7 +230,7 @@ if __name__ == "__main__":
     
     explorationCompression(baseGrammar, train,
                            outputPrefix = "experimentOutputs/rational",
-                           compressor="rust",
+                           compressor="pypy",
                            evaluationTimeout = 0.1,
                            testingTasks = test,
                            **commandlineArguments(
