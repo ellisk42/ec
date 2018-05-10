@@ -298,7 +298,132 @@ def solveForTask_python(_=None,
                             budgetIncrement=budgetIncrement,
                             lowerBound=lowerBound, upperBound=upperBound)
 
+#from luke    
+def enumerateNetwork(network, tasks_features, likelihoodModel, solver=None,
+                       frontierSize=None,
+                       enumerationTimeout=None,
+                       CPUs=1,
+                       maximumFrontier=None,
+                       verbose=True,
+                       evaluationTimeout=None):
+    from time import time
+    
+    start = time()
+
+    chunk_size = int(math.ceil(len(tasks_features) / CPUs)) if int(math.ceil(len(tasks_features) / CPUs)) > 0 else 1
+    eprint("enumerateNetwork with", chunk_size, "tasks per cpu")
+
+    chunked_tasks_features = [tasks_features[i:i + chunk_size] for i in xrange(0, len(tasks_features), chunk_size)]
+    
+
+    #TODO, enumerateNetworkForTasks
+    frontierss = parallelMap(CPUs,            
+                            lambda cpu_idx__tasks_features: enumerateNetworkForTasks(cpu_idx__tasks_features[0], network, cpu_idx__tasks_features[1], #this may break
+                                                                     frontierSize=frontierSize,
+                                                                     timeout=enumerationTimeout,
+                                                                     evaluationTimeout = evaluationTimeout,
+                                                                     verbose=verbose,
+                                                                     maximumFrontier=maximumFrontier),
+                            zip(range(len(chunked_tasks_features)), chunked_tasks_features),
+                            chunk = 1)
+    frontiers = [frontier for frontiers in frontierss for frontier in frontiers] #wtf is happening
+    # if verbose:
+    #     eprint("Enumerated %d frontiers in time %f"%(len(), time() - start))
+    return frontiers
+
 class EnumerationTimeout(Exception): pass
+
+#from luke
+def enumerateNetworkForTasks(cpu_idx, network, tasks_features, _ = None,
+                     verbose=False,
+                     timeout=None,
+                     evaluationTimeout=None,
+                     frontierSize=None,
+                     maximumFrontier = 10**2):
+    assert (timeout is not None) or (frontierSize is not None), \
+        "enumerateForTask: You must provide either a timeout or a frontier size."
+    eprint("(%d)"%cpu_idx, "enumerateNetworkForTasks")
+
+    from time import time
+    def timeoutCallBack(_1,_2): raise EnumerationTimeout()
+    if timeout is not None:
+        if verbose: eprint("Alarming timeout for",timeout,"for task [task undefined for now]")
+        signal.signal(signal.SIGALRM, timeoutCallBack)
+        signal.alarm(timeout)
+    
+    frontiers = []
+    for task, features in tasks_features:
+        frontier = []
+        starting = time()
+        # previousBudget = 0.
+        # budget = previousBudget + budgetIncrement
+
+        try:
+            totalNumberOfPrograms = 0
+
+            
+
+            seen_proposals = set()
+            new_proposals_scores = set()
+            numberOfPrograms = 0
+            numberOfHits = 0
+
+            for i in range(50):
+                random.shuffle(features)
+                inputs = [input for (input, output) in features[:4]]
+                outputs = [output for (input, output) in features[:4]]
+                samples, scores = network.sampleAndScore([inputs]*100, [outputs]*100)
+                new_proposals_scores = [(tuple(samples[i]), scores[i]) for i in range(len(samples)) if tuple(samples[i]) not in seen_proposals]
+                seen_proposals = seen_proposals | set(x[0] for x in new_proposals_scores)
+
+                for sample, prior in new_proposals_scores:
+                    try:
+                        p = untokeniseProgram(sample)
+                        likelihood = task.logLikelihood(p, timeout=evaluationTimeout) #TODO: change this
+                    except ParseFailure: continue
+                    except RunFailure: continue #Happens during likelihood evaluation for e.g. (lambda $3)
+                    
+                    numberOfPrograms += 1
+
+                    if valid(likelihood):
+                        if verbose:
+                            eprint("(%d)"%cpu_idx, "Hit",task.name,"with the program",p,"which has prior",prior,"after",time() - starting,"seconds")
+                        frontier.append(FrontierEntry(program = p,
+                                                      logPrior = prior,
+                                                      logLikelihood = likelihood))
+                        numberOfHits += 1
+
+                    # If the alarm is triggered during evaluation,
+                    # it will be caught by the catchall exception handler
+                    # And so we have to time ourselves out
+                    if timeout is not None and time() - starting > timeout:
+                        signal.alarm(0)
+                        raise EnumerationTimeout
+            if verbose:
+                eprint("(%d)"%cpu_idx, "enumerated: %d samples, %d programs, %d hits" % (len(seen_proposals), numberOfPrograms, numberOfHits))
+                
+                # previousBudget = budget
+                # budget += budgetIncrement
+                # totalNumberOfPrograms += numberOfPrograms
+                # if verbose:
+                #     eprint("\tTotal elapsed time: %d seconds. Total number of programs evaluated: %d. Task: %s."% \
+                #            (time() - starting, totalNumberOfPrograms, task))
+                # if frontierSize is not None and totalNumberOfPrograms > frontierSize: break
+        except EnumerationTimeout:
+            if verbose:
+                eprint("Timeout triggered after",time() - starting,"seconds for task",task)
+        signal.alarm(0)
+
+        frontier = Frontier(frontier,
+                            task = task).topK(maximumFrontier)
+        eprint(frontier.summarize())
+        
+        frontiers.append(frontier)
+
+    return frontiers
+
+
+
 def enumerateForTask(g, task, likelihoodModel, _=None,
                      verbose=False,
                      timeout=None,

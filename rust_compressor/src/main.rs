@@ -6,16 +6,19 @@ extern crate serde_json;
 #[macro_use]
 extern crate serde_derive;
 
-use std::f64;
-use std::io;
 use polytype::{Context, Type};
 use programinduction::{lambda, ECFrontier, Task};
 use rayon::prelude::*;
+use std::f64;
+use std::io;
 
 #[derive(Deserialize)]
 struct ExternalCompressionInput {
     primitives: Vec<Primitive>,
+    #[serde(default)]
     inventions: Vec<Invention>,
+    #[serde(default)]
+    symmetry_violations: Vec<SymmetryViolation>,
     variable_logprob: f64,
     params: Params,
     frontiers: Vec<Frontier>,
@@ -24,6 +27,7 @@ struct ExternalCompressionInput {
 struct ExternalCompressionOutput {
     primitives: Vec<Primitive>,
     inventions: Vec<Invention>,
+    symmetry_violations: Vec<SymmetryViolation>,
     variable_logprob: f64,
     frontiers: Vec<Frontier>,
 }
@@ -32,13 +36,22 @@ struct ExternalCompressionOutput {
 struct Primitive {
     name: String,
     tp: String,
+    #[serde(default)]
     logp: f64,
 }
 
 #[derive(Serialize, Deserialize)]
 struct Invention {
     expression: String,
+    #[serde(default)]
     logp: f64,
+}
+
+#[derive(Serialize, Deserialize)]
+struct SymmetryViolation {
+    f: usize,
+    i: usize,
+    arg: usize,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -88,10 +101,15 @@ impl From<ExternalCompressionInput> for CompressionInput {
             })
             .collect();
         let variable_logprob = eci.variable_logprob;
+        let symmetry_violations = eci.symmetry_violations
+            .into_iter()
+            .map(|s| (s.f, s.i, s.arg))
+            .collect();
         let mut dsl = lambda::Language {
             primitives,
             invented: vec![],
             variable_logprob,
+            symmetry_violations,
         };
         for inv in eci.inventions {
             let expr = dsl.parse(&inv.expression).expect("invalid invention");
@@ -155,6 +173,11 @@ impl From<CompressionInput> for ExternalCompressionOutput {
                 logp,
             })
             .collect();
+        let symmetry_violations = ci.dsl
+            .symmetry_violations
+            .iter()
+            .map(|&(f, i, arg)| SymmetryViolation { f, i, arg })
+            .collect();
         let frontiers = ci.tasks
             .par_iter()
             .zip(&ci.frontiers)
@@ -179,6 +202,7 @@ impl From<CompressionInput> for ExternalCompressionOutput {
             primitives,
             inventions,
             variable_logprob,
+            symmetry_violations,
             frontiers,
         }
     }

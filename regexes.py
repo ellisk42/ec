@@ -2,7 +2,8 @@
 
 from ec import explorationCompression, commandlineArguments, Task
 from grammar import Grammar
-from utilities import eprint, testTrainSplit, numberOfCPUs
+#from utilities import eprint, testTrainSplit, numberOfCPUs, flatten
+from utilities import eprint, numberOfCPUs, flatten, fst, testTrainSplit, POSITIVEINFINITY
 from makeRegexTasks import makeTasks
 from regexPrimitives import basePrimitives, altPrimitives
 #from program import *
@@ -65,17 +66,17 @@ class MyJSONFeatureExtractor(JSONFeatureExtractor):
 
         examples = []
         if isListFunction(tp):
-            sample = lambda: random.sample(xrange(30), random.randint(0, 8))
+            sample = lambda: random.sample(range(30), random.randint(0, 8))
         elif isIntFunction(tp):
             sample = lambda: random.randint(0, 20)
         else:
             return None
-        for _ in xrange(self.N_EXAMPLES*5):
+        for _ in range(self.N_EXAMPLES*5):
             x = sample()
             try:
                 y = e(x)
                 #eprint(tp, program, x, y)
-                examples.append((x, y))
+                examples.append(x, y)
             except: continue
             if len(examples) >= self.N_EXAMPLES: break
         else:
