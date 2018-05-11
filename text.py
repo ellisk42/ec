@@ -2,7 +2,7 @@ from ec import explorationCompression, commandlineArguments, Task, ecIterator
 from grammar import Grammar
 from utilities import eprint, testTrainSplit, numberOfCPUs, median, standardDeviation, mean
 from makeTextTasks import makeTasks, delimiters, loadPBETasks
-from textPrimitives import primitives
+from textPrimitives import primitives, targetTextPrimitives
 from listPrimitives import bootstrapTarget
 from program import *
 from recognition import *
@@ -65,6 +65,7 @@ if __name__ == "__main__":
                                                 for s in t.stringConstants })))
     
     baseGrammar = Grammar.uniform(primitives + bootstrapTarget())
+    challengeGrammar = Grammar.uniform(targetTextPrimitives)#baseGrammar
     
     evaluationTimeout = 0.0005
     # We will spend 30 minutes on each challenge problem
@@ -89,7 +90,7 @@ if __name__ == "__main__":
                                pseudoCounts = 10.0))
     if doChallenge:
         eprint("challenge problems before learning...")
-        challengeFrontiers, times = multicoreEnumeration(baseGrammar, challenge, "all-or-nothing",
+        challengeFrontiers, times = multicoreEnumeration(challengeGrammar, challenge, "all-or-nothing",
                                          CPUs=numberOfCPUs(),
                                          solver="ocaml",
                                          maximumFrontier=1,

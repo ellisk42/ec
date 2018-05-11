@@ -163,11 +163,24 @@ def multicoreEnumeration(g, tasks, likelihoodModel, _=None,
 
             newFrontiers, searchTimes = message.value
             for t,f in newFrontiers.iteritems():
+                oldBest = None if len(frontiers[t]) == 0 else frontiers[t].bestPosterior
                 frontiers[t] = frontiers[t].combine(f)
+                newBest = None if len(frontiers[t]) == 0 else frontiers[t].bestPosterior
+                
                 dt = searchTimes[t]
                 if dt is not None:
                     if bestSearchTime[t] is None: bestSearchTime[t] = dt
-                    else: bestSearchTime[t] = min(bestSearchTime[t],dt)
+                    else:
+                        # newBest & oldBest should both be defined
+                        assert oldBest is not None
+                        assert newBest is not None
+                        newScore = newBest.logPrior + newBest.logLikelihood
+                        oldScore = oldBest.logPrior + oldBest.logLikelihood
+                        
+                        if newScore > oldScore:
+                            bestSearchTime[t] = dt
+                        elif newScore == oldScore:
+                            bestSearchTime[t] = min(bestSearchTime[t],dt)
         else:
             eprint("Unknown message result:",message.result)
             assert False
@@ -286,7 +299,14 @@ def solveForTask_ocaml(_ = None,
                             task = t)
         frontiers[t] = frontier
         if frontier.empty: searchTimes[t] = None
-        else: searchTimes[t] = min(e["time"] for e in solutions) + elapsedTime
+        # This is subtle:
+        # The search time we report is actually not be minimum time to find any solution
+        # Rather it is the time to find the MAP solution
+        # This is important for regression problems,
+        # where we might find something with a good prior but bad likelihood early on,
+        # and only later discovered the good high likelihood program
+        else: searchTimes[t] = min((e["logLikelihood"] + e["logPrior"], e["time"])
+                                   for e in solutions)[1] + elapsedTime
         
     return frontiers, searchTimes
 

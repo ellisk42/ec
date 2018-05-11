@@ -1,6 +1,8 @@
 from program import *
 from makeTextTasks import delimiters
 
+
+
 def _increment(x): return x + 1
 def _decrement(x): return x - 1
 def _lower(x): return x.lower()
@@ -28,3 +30,21 @@ primitives = [
     Primitive("STRING",tstr,None)
 ] + [ Primitive("'%s'"%d, tcharacter, d) for d in delimiters if d not in specialCharacters] + \
 [ Primitive(name, tcharacter, value) for value, name in specialCharacters.iteritems() ]
+
+def _cons(x): return lambda y: [x] + y
+def _car(x): return x[0]
+def _cdr(x): return x[1:]
+
+
+targetTextPrimitives = [
+    Primitive("take-word", arrow(tcharacter, tstr, tstr), None),
+    Primitive("drop-word", arrow(tcharacter, tstr, tstr), None),
+    Primitive("append", arrow(tlist(t0),tlist(t0),tlist(t0)), None),
+    Primitive("abbreviate", arrow(tstr,tstr),None),
+    Primitive("last-word", arrow(tcharacter, tstr, tstr), None),
+    Primitive("replace-character", arrow(tcharacter, tcharacter, tstr, tstr), None),
+] + primitives + [
+    Primitive("empty", tlist(t0), []),
+    Primitive("cons", arrow(t0, tlist(t0), tlist(t0)), _cons),
+    Primitive("car", arrow(tlist(t0), t0), _car),
+    Primitive("cdr", arrow(tlist(t0), tlist(t0)), _cdr)]

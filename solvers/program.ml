@@ -376,7 +376,7 @@ let primitive_empty = primitive "empty" (tlist t0) [];;
 let primitive_range = primitive "range" (tint @> tlist tint) (fun x -> 0 -- (x-1));;
 let primitive_sort = primitive "sort" (tlist tint @> tlist tint) (List.sort ~cmp:(fun x y -> x - y));;
 let primitive_reverse = primitive "reverse" (tlist tint @> tlist tint) (List.rev);;
-let primitive_append = primitive "append"  (tlist tint @> tlist tint @> tlist tint) (@);;
+let primitive_append = primitive "append"  (tlist t0 @> tlist t0 @> tlist t0) (@);;
 let primitive_singleton = primitive "singleton"  (tint @> tlist tint) (fun x -> [x]);;
 let primitive_slice = primitive "slice" (tint @> tint @> tlist tint @> tlist tint) slice;;
 let primitive_length = primitive "length" (tlist t0 @> tint) (List.length);;
@@ -394,6 +394,24 @@ let primitive_and = primitive "and" (tboolean @> tboolean @> tboolean) (fun x y 
 let primitive_nand = primitive "nand" (tboolean @> tboolean @> tboolean) (fun x y -> not (x && y));;
 let primitive_or = primitive "or" (tboolean @> tboolean @> tboolean) (fun x y -> x || y);;
 let primitive_greater_than = primitive "gt?" (tint @> tint @> tboolean) (fun (x: int) (y: int) -> x > y);;
+
+ignore(primitive "take-word" (tcharacter @> tstring @> tstring) (fun c s ->
+    List.take_while s ~f:(fun c' -> not (c = c'))));;
+ignore(primitive "drop-word" (tcharacter @> tstring @> tstring) (fun c s ->
+    List.drop_while s ~f:(fun c' -> not (c = c')) |> List.tl |> get_some));;
+ignore(primitive "abbreviate" (tstring @> tstring) (fun s ->
+    let rec f = function
+      | [] -> []
+      | ' ' :: cs -> f cs
+      | c :: cs -> c :: f (List.drop_while cs ~f:(fun c' -> not (c' = ' ')))
+    in f s));;
+ignore(primitive "last-word" (tcharacter @> tstring @> tstring)
+         (fun c s ->
+            List.rev s |> List.take_while ~f:(fun c' -> not (c = c')) |> List.rev));;
+ignore(primitive "replace-character" (tcharacter @> tcharacter @> tstring @> tstring) (fun c1 c2 s ->
+    s |> List.map ~f:(fun c -> if c = c1 then c2 else c)));;
+
+
 
 let primitive_run   = primitive
                         "run"
