@@ -1,14 +1,13 @@
-#!/usr/bin/env python2
-
 from ec import explorationCompression, commandlineArguments
 from grammar import Grammar
 from utilities import eprint, testTrainSplit, numberOfCPUs
 from makeGeomTasks import makeTasks
-from geomPrimitives import primitives
+from geomPrimitives import primitives, tcanvas
 from math import log
 from collections import OrderedDict
+from program import Program
 
-import pickle
+import json
 import torch
 import png
 import time
@@ -19,7 +18,6 @@ import torch.nn as nn
 from recognition import variable
 
 global prefix_dreams
-
 
 # : Task -> feature list
 class GeomFeatureCNN(nn.Module):
@@ -68,12 +66,11 @@ class GeomFeatureCNN(nn.Module):
         if not os.path.exists(self.sub):
                 os.makedirs(self.sub)
         try:
+            fname = self.sub + "/" + str(self.count) + ".png"
+            evaluated = p.evaluate([])
             output = subprocess.check_output(['./geomDrawLambdaString',
-                                             self.sub +
-                                              "/" +
-                                              str(self.count) +
-                                              ".png",
-                                             p.evaluate([])]).split("\n")
+                                             fname,
+                                             evaluated]).decode("utf8").split("\n")
             shape = list(map(float, output[0].split(',')))
             bigShape = map(float, output[1].split(','))
         except OSError as exc:
@@ -82,6 +79,26 @@ class GeomFeatureCNN(nn.Module):
             self.mean = [x+y for x, y in zip(self.mean, bigShape)]
             self.count += 1
             return self(shape)
+        except ValueError:
+            return None
+
+    def renderProgram(self, p, t):  # Won't fix for geom
+        if not os.path.exists(self.sub):
+                os.makedirs(self.sub)
+        try:
+            fname = self.sub + "/" + str(self.count) + ".png"
+            evaluated = p.evaluate([])
+            output = subprocess.check_output(['./geomDrawLambdaString',
+                                             fname,
+                                             evaluated]).decode("utf8").split("\n")
+            shape = list(map(float, output[0].split(',')))
+            bigShape = map(float, output[1].split(','))
+        except OSError as exc:
+            raise exc
+        try:
+            self.mean = [x+y for x, y in zip(self.mean, bigShape)]
+            self.count += 1
+            return shape
         except ValueError:
             return None
 
@@ -122,22 +139,29 @@ def list_options(parser):
 
 if __name__ == "__main__":
     args = commandlineArguments(
-            steps=100,
-            a=1,
+            steps=1000,
+            a=3,
+	    topK=5,
             iterations=10,
             useRecognitionModel=True,
             helmholtzRatio=0.5,
             helmholtzBatch=500,
             featureExtractor=GeomFeatureCNN,
-            maximumFrontier=500,
+            maximumFrontier=1000,
             CPUs=numberOfCPUs(),
             pseudoCounts=10.0,
+            activation="tanh",
             extras=list_options)
     target = args.pop("target")
     red = args.pop("reduce")
     save = args.pop("save")
     prefix = args.pop("prefix")
     prefix_dreams = prefix + "/dreams/" + ('_'.join(target)) + "/"
+    prefix_pickles = prefix + "/pickles/" + ('_'.join(target)) + "/"
+    if not os.path.exists(prefix_dreams):
+        os.makedirs(prefix_dreams)
+    if not os.path.exists(prefix_pickles):
+        os.makedirs(prefix_pickles)
     tasks = makeTasks(target)
     eprint("Generated", len(tasks), "tasks")
 
@@ -147,24 +171,42 @@ if __name__ == "__main__":
     if red is not []:
         for reducing in red:
             try:
-                with open(reducing) as f:
-                    prods = pickle.load(f)
-                primitives = primitives + prods
+                with open(reducing, 'r') as f:
+                    prods = json.load(f)
+                    for e in prods:
+                        e = Program.parse(e)
+                        if e.isInvented:
+                            primitives.append(e)
             except EOFError:
                 eprint("Couldn't grab frontier from " + reducing)
             except IOError:
                 eprint("Couldn't grab frontier from " + reducing)
+            except json.decoder.JSONDecodeError:
+                eprint("Couldn't grab frontier from " + reducing)
+
 
     primitives = list(OrderedDict((x, True) for x in primitives).keys())
     baseGrammar = Grammar.uniform(primitives)
 
+    eprint(baseGrammar)
+
+    fe = GeomFeatureCNN(tasks)
+
+    for x in range(0, 500):
+        program = baseGrammar.sample(tcanvas, maximumDepth=6)
+        features = fe.renderProgram(program, tcanvas)
+    fe.finish()
+
     r = explorationCompression(baseGrammar, train,
                                testingTasks=test,
-                               outputPrefix=prefix + "/pickles/",
+                               outputPrefix=prefix_pickles,
                                compressor="rust",
                                evaluationTimeout=0.01,
                                **args)
-    needsExport = [z for _, _, z in r.grammars[-1].productions]
+    needsExport = [str(z)
+                   for _, _, z
+                   in r.grammars[-1].productions
+                   if z.isInvented]
     if save is not None:
         with open(save, 'w') as f:
-            pickle.dump(needsExport, f)
+            json.dump(needsExport, f)

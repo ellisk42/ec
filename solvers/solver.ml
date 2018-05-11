@@ -189,6 +189,8 @@ let export_frontier program_count solutions : string =
 
 let _ =
 
+  prerr_endline "DEBUG: Setting the USR2 signal handler" ;
+
   Caml.Sys.set_signal
     Caml.Sys.sigusr2
     (Caml.Sys.Signal_handle
@@ -203,6 +205,8 @@ let _ =
           (Caml.Printexc.raw_backtrace_to_string
             (Caml.Printexc.get_callstack 100)) ;
         failwith "Show the trace please")) ;
+
+  prerr_endline "DEBUG: USR2 signal handler set" ;
 
   let (t,g,
      lowerBound,upperBound,budgetIncrement,

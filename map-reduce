@@ -12,12 +12,12 @@ _ME=$(basename "${0}")
 
 # The variables we'll need
 MAP=()
-MAPTMP=()
 REDUCE=()
 ARGSMAP=()
 ARGSREDUCE=()
 OTHER=()
 PIDs=()
+MAPTMP=()
 SBATCH=false
 DRY=false
 PMAP=0
@@ -57,60 +57,65 @@ _init() {
 # Map functions. Spawn one child per target and either waits for them or at
 # least ensures that reduce will.
 _map() {
-  echo "  * Map:"
-  for target in "${MAP[@]}"
-  do
-    # Create safe to use name for the output
-    if [ "$DRY" = "true" ]; then
-      TMP="$(mktemp -u "./$PREFIX/$target.XXXXXXXXX")"
-      TMPOUT="$(mktemp -u "./$PREFIX/$target.out.XXXXXXXXX")"
-    else
-      TMP="$(mktemp "./$PREFIX/$target.XXXXXXXXX")"
-      TMPOUT="$(mktemp "./$PREFIX/$target.out.XXXXXXXXX")"
-    fi
-    # Also saves the name for latter reduce
-    MAPTMP+=("$TMP")
-
-    # Prepare the base command to call
-    CMD="./$PROGRAM ${ARGSMAP[*]} --target $target --save $TMP --prefix $PREFIX"
-
-    # If not on OM then call it and sacve the PID
-    if [[ "$SBATCH" = "false" ]]; then
-      echo "      \`$CMD\`"
-      if [ "$DRY" = "false" ]; then
-        CMD="$CMD 2> $TMPOUT"
-        eval "$CMD" &
-        pid="$!"
-        printf "    - Started task \\e[1;34m%s\\e[m, PID=%s\\n" "$target" "$pid"
-        PIDs+=("$pid")
-      fi
-    # If on OM sbatch it and keep the JOB-ID
-    else
-      TMP=$(echo "${TMP#"./"}" | tr "/" "-")
-      CMD="sbatch \\
-        --job-name=geom_$TMP --output=$TMPOUT \\
-        --ntasks=1 --cpus-per-task $PMAP --time=$TMAP \\
-        --mail-user=$(whoami)@mit.edu --mail-type=ALL --requeue \\
-        --wrap=\"$CMD --CPUs $PMAP\""
-      printf "    - \`%s\`\\n" "$CMD"
-      if [ "$DRY" = "false" ]; then
-        CMD=$(echo "$CMD" | tr '\n' ' ' | tr "\\" ' ')
-        JID=$(eval "$CMD")
-        JID=${JID##* }
-        PIDs+=("$JID")
+  if [ "${MAP[0]}" = "none" ]; then
+    echo "  * Map: None"
+  else
+    echo "  * Map:"
+    for target in "${MAP[@]}"
+    do
+      # Create safe to use name for the output
+      if [ "$DRY" = "true" ]; then
+        TMP="$(mktemp -u "./$PREFIX/$target.XXXXXXXXX")"
+        TMPOUT="$(mktemp -u "./$PREFIX/$target.out.XXXXXXXXX")"
       else
-        JID="1234"
-        PIDs+=("$JID")
+        TMP="$(mktemp "./$PREFIX/$target.XXXXXXXXX")"
+        TMPOUT="$(mktemp "./$PREFIX/$target.out.XXXXXXXXX")"
       fi
-    fi
-  done
+      # Also saves the name for latter reduce
+      MAPTMP+=("$TMP")
 
-  # If not dry and not on OM then wait for *all* the maps to finish
-  if [ "$DRY" = "false" ]; then
-    if [[ "$SBATCH" = "false" ]]; then
-      printf "    - \\e[1;34mWaiting\\e[m for PIDs: "
-      echo "${PIDs[@]}"
-      wait "${PIDs[@]}"
+      # Prepare the base command to call
+      CMD="python $PROGRAM ${ARGSMAP[*]} --target $target --save $TMP --prefix $PREFIX"
+
+      # If not on OM then call it and sacve the PID
+      if [[ "$SBATCH" = "false" ]]; then
+        echo "      \`$CMD\`"
+        if [ "$DRY" = "false" ]; then
+          CMD="$CMD 2> $TMPOUT"
+          eval "$CMD" &
+          pid="$!"
+          printf "    - Started task \\e[1;34m%s\\e[m, PID=%s\\n" "$target" "$pid"
+          PIDs+=("$pid")
+        fi
+      # If on OM sbatch it and keep the JOB-ID
+      else
+        TMP=$(echo "${TMP#"./"}" | tr "/" "-")
+        CMD="sbatch \\
+          --job-name=geom_$TMP --output=$TMPOUT \\
+          --ntasks=1 --cpus-per-task $PMAP --time=$TMAP \\
+          --mail-user=$(whoami)@mit.edu --mail-type=ALL --requeue \\
+          --qos=tenenbaum \\
+          --wrap=\"$CMD --CPUs $PMAP\""
+        printf "    - \`%s\`\\n" "$CMD"
+        if [ "$DRY" = "false" ]; then
+          CMD=$(echo "$CMD" | tr '\n' ' ' | tr "\\" ' ')
+          JID=$(eval "$CMD")
+          JID=${JID##* }
+          PIDs+=("$JID")
+        else
+          JID="1234"
+          PIDs+=("$JID")
+        fi
+      fi
+    done
+
+    # If not dry and not on OM then wait for *all* the maps to finish
+    if [ "$DRY" = "false" ]; then
+      if [[ "$SBATCH" = "false" ]]; then
+        printf "    - \\e[1;34mWaiting\\e[m for PIDs: "
+        echo "${PIDs[@]}"
+        wait "${PIDs[@]}"
+      fi
     fi
   fi
 }
@@ -118,50 +123,66 @@ _map() {
 # This is the "reduce" parts. It collects what was outputed and calls the right
 # program
 _reduce() {
-  echo "  * Reduce:"
-
-  # Make safe tmp files/folders
-  if [ "$DRY" = "true" ]; then
-    TMPOUT="$(mktemp -u "./$PREFIX/reduce.out.XXXXXXXXX")"
+  if [ "${REDUCE[0]}" = "none" ]; then
+    echo "  * Reduce: None"
   else
-    TMPOUT="$(mktemp "./$PREFIX/reduce.out.XXXXXXXXX")"
-  fi
+    echo "  * Reduce:"
 
-  # Iteratively build the relevant command
-  CMD="./$PROGRAM ${ARGSREDUCE[*]}"
-  for target in "${REDUCE[@]}"
-  do
-    CMD="$CMD --target $target"
-  done
-
-  for target in "${MAPTMP[@]}"
-  do
-    CMD="$CMD --red $target"
-  done
-
-  CMD="$CMD --prefix $PREFIX"
-
-  # Then calls it (non OM) or create a job that requires the others (OM).
-  if [[ "$SBATCH" = "false" ]]; then
-    CMD="$CMD 2> $TMPOUT"
-    echo "    - $CMD"
-    if [ "$DRY" = "false" ]; then
-      eval "$CMD" &
+    # Make safe tmp files/folders
+    if [ "$DRY" = "true" ]; then
+      TMPOUT="$(mktemp -u "./$PREFIX/reduce.out.XXXXXXXXX")"
+    else
+      TMPOUT="$(mktemp "./$PREFIX/reduce.out.XXXXXXXXX")"
     fi
-    wait
-  else
-    JOBS=$(echo "${PIDs[*]}" | tr " " ":")
-    CMD="sbatch \\
-        --job-name=geom_reduce-$PREFIX --output=$TMPOUT \\
-        --ntasks=1 --cpus-per-task $PREDUCE --time=$TREDUCE \\
-        --mail-user=$(whoami)@mit.edu --mail-type=ALL --requeue \\
-        --dependency=afterany:${JOBS} \\
-        --wrap=\"$CMD --CPUs $PREDUCE\""
-    printf "    - \`%s\`\\n" "$CMD"
-    if [ "$DRY" = "false" ]; then
-      CMD=$(echo "$CMD" | tr '\n' ' ' | tr "\\" ' ')
-      JID=$(eval "$CMD")
-      JID=${JID##* }
+
+    # Iteratively build the relevant command
+    CMD="python $PROGRAM ${ARGSREDUCE[*]}"
+    for target in "${REDUCE[@]}"
+    do
+      CMD="$CMD --target $target"
+    done
+
+    if [  ${#MAPTMP[@]} -gt 0 ]; then
+      for target in "${MAPTMP[@]}"
+      do
+        CMD="$CMD --red $target"
+      done
+    fi
+
+    CMD="$CMD --prefix $PREFIX"
+
+    # Then calls it (non OM) or create a job that requires the others (OM).
+    if [[ "$SBATCH" = "false" ]]; then
+      CMD="$CMD 2> $TMPOUT"
+      echo "    - $CMD"
+      if [ "$DRY" = "false" ]; then
+        eval "$CMD" &
+      fi
+      wait
+    else
+      if [  ${#PIDs[@]} -gt 0 ]; then
+        JOBS=$(echo "${PIDs[*]}" | tr " " ":")
+        CMD="sbatch \\
+            --job-name=geom_reduce-$PREFIX --output=$TMPOUT \\
+            --ntasks=1 --cpus-per-task $PREDUCE --time=$TREDUCE \\
+            --mail-user=$(whoami)@mit.edu --mail-type=ALL --requeue \\
+            --qos=tenenbaum \\
+            --dependency=afterany:${JOBS} \\
+            --wrap=\"$CMD --CPUs $PREDUCE\""
+      else
+        CMD="sbatch \\
+            --job-name=geom_reduce-$PREFIX --output=$TMPOUT \\
+            --ntasks=1 --cpus-per-task $PREDUCE --time=$TREDUCE \\
+            --mail-user=$(whoami)@mit.edu --mail-type=ALL --requeue \\
+            --qos=tenenbaum \\
+            --wrap=\"$CMD --CPUs $PREDUCE\""
+      fi
+      printf "    - \`%s\`\\n" "$CMD"
+      if [ "$DRY" = "false" ]; then
+        CMD=$(echo "$CMD" | tr '\n' ' ' | tr "\\" ' ')
+        JID=$(eval "$CMD")
+        JID=${JID##* }
+      fi
     fi
   fi
 }
@@ -169,13 +190,15 @@ _reduce() {
 # This may get bigger over time, currently it removes the "frontier" pickles
 _clean() {
   echo "  * Cleaning:"
-  for target in "${MAPTMP[@]}"
-  do
-    echo "    - rm $target"
-    if [[ "$DRY" = "false" && "$SBATCH" = "false" ]]; then
-      rm "$target"
-    fi
-  done
+  if [  ${#MAPTMP[@]} -gt 0 ]; then
+    for target in "${MAPTMP[@]}"
+    do
+      echo "    - rm $target"
+      if [[ "$DRY" = "false" && "$SBATCH" = "false" ]]; then
+        echo "$target"
+      fi
+    done
+  fi
 }
 
 # Parses the arguments. Sorry if this looks ugly, I'm not that much of a bash

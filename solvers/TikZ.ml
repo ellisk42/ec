@@ -17,9 +17,15 @@ type command =
   | Rectangle of vector*vector
   | Line of vector*vector
 
-let canonical_command_list l =
-  List.dedup l |> List.sort ~cmp:(fun c1 c2 ->
-    if c1 > c2 then 1 else if c1 = c2 then 0 else -1)
+let canonical_command_list : 'a Core.List.t -> 'a Core.List.t =
+  fun l ->
+    let l2 =
+      List.dedup
+      ~compare:(fun c1 c2 -> if c1 > c2 then 1 else if c1 = c2 then 0 else -1)
+      l in
+    List.sort
+      ~compare:(fun c1 c2 -> if c1 > c2 then 1 else if c1 = c2 then 0 else -1)
+      l2
 
 type cid = C|R|L
 

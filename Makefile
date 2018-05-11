@@ -7,10 +7,7 @@ all:
 	  cp _build/default/geomDrawLambdaString.exe \
 	    ../geomDrawLambdaString && \
 	  cp _build/default/geomDrawFile.exe \
-	    ../data/geom/geomDrawFile && \
-	  strip ../solver && \
-	  strip ../geomDrawLambdaString && \
-	  strip ../data/geom/geomDrawFile
+	    ../data/geom/geomDrawFile
 
 drawFile:
 	cd solvers && \
