@@ -711,17 +711,15 @@ class ImageFeatureExtractor(nn.Module):
         
         self.l1 = nn.Sequential(
             nn.Conv2d(1, 8, kernel_size=(10, 10), stride=2),
-            nn.ReLU(),
+            nn.Tanh(),
             nn.MaxPool2d(kernel_size=(2, 2), stride=2),
             nn.Conv2d(8, 16, kernel_size=(5, 5)),
-            nn.ReLU(),
+            nn.Tanh(),
             nn.MaxPool2d(kernel_size=(2, 2), stride=2),
             nn.Conv2d(16, 8, kernel_size=(3, 3), stride=2),
-            nn.ReLU(),
+            nn.Tanh(),
 #            nn.MaxPool2d(kernel_size=(2, 2), stride=2),
         )
-
-        self.fc = nn.Linear(32,32)
 
         self.outputDimensionality = 32
 
@@ -732,7 +730,7 @@ class ImageFeatureExtractor(nn.Module):
         variabled = torch.unsqueeze(variabled, 0)
         y = self.l1(variabled)
         y = y.view((y.shape[0],-1))
-        output = self.fc(y)
+        output = y#self.fc(y)
         return output.view(-1)
 
 
