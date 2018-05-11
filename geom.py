@@ -198,8 +198,6 @@ if __name__ == "__main__":
         features = fe.renderProgram(program, tcanvas)
     fe.finish()
 
-    assert(False)
-
     r = explorationCompression(baseGrammar, train,
                                testingTasks=test,
                                outputPrefix=prefix_pickles,
