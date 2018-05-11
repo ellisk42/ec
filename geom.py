@@ -143,7 +143,6 @@ if __name__ == "__main__":
             a=3,
 	    topK=5,
             iterations=10,
-            topK=10,
             useRecognitionModel=True,
             helmholtzRatio=0.5,
             helmholtzBatch=500,
