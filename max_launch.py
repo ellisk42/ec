@@ -136,12 +136,13 @@ sudo shutdown -h now
         print("Uploading your ssh identity")
         os.system("""
             scp -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem \
-                ~/.ssh/id_rsa ~/.ssh/id_rsa.pub \
+                ~/.ssh/id_rsa_openmind ~/.ssh/id_rsa_openmind.pub \
                 ubuntu@%s:.ssh/"""%address)
 
     # Send git patch
     print("Sending git patch over to",address)
     os.system("git diff --stat")
+    br = "master"
     os.system("""
         (echo "Base-Ref: $(git rev-parse origin/{})" ; echo ; git diff origin/{}) | \
         ssh -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem \
