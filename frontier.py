@@ -117,6 +117,8 @@ class Frontier(object):
                         eprint()
                     if abs(e1.logLikelihood - e2.logLikelihood) > tolerance:
                         foundDifference = True
+                        eprint("WARNING: Log likelihoods deferred for %s: %f & %f"%(p,e1.logLikelihood,
+                                                                                    e2.logLikelihood))
                         e1 = FrontierEntry(program = e1.program,
                                            logLikelihood = (e1.logLikelihood + e2.logLikelihood)/2,
                                            logPrior = e1.logPrior)

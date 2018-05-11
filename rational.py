@@ -145,7 +145,7 @@ def makeTasks():
 
     tasksPerType = 100
 
-    for o in xrange(1,4):
+    for o in xrange(1,5):
         ts = []
         while len(ts) < tasksPerType:
             n,f = randomPolynomial(o)
