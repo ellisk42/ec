@@ -607,3 +607,28 @@ class PrettyVisitor(object):
 def prettyProgram(e):
     return e.visit(PrettyVisitor(),[],True,False)
 
+
+#from luke
+class TokeniseVisitor(object):
+    def invented(self,e):
+        return [e.body]
+    def primitive(self,e): return [e.name]
+    def index(self,e):
+        return ["$" + str(e.i)]
+            
+    def application(self,e):
+        return ["("] + e.f.visit(self) + e.x.visit(self) + [")"]
+
+    def abstraction(self,e):
+        return ["(_lambda"] + e.body.visit(self) + [")_lambda"]
+
+def tokeniseProgram(e):
+    return e.visit(TokeniseVisitor())
+    
+def untokeniseProgram(l):
+    lookup = {
+        "(_lambda":"(lambda",
+        ")_lambda":")"
+    }
+    s = " ".join(lookup.get(x,x) for x in l)
+    return Program.parse(s)

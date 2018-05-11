@@ -157,9 +157,10 @@ class Grammar(object):
         f,xs = expression.applicationParse()
 
         if f not in candidates:
-            if not silent:
+            if not False:#silent:
                 eprint(f,"Not in candidates")
-                # eprint("Candidates is",candidates)
+                eprint("Candidates is",candidates)
+                #eprint("grammar:", grammar.productions) 
                 eprint("request is",request)
                 eprint("xs",xs)
                 eprint("environment",environment)
