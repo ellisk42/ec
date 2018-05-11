@@ -65,7 +65,7 @@ if __name__ == "__main__":
                                                 for s in t.stringConstants })))
     
     baseGrammar = Grammar.uniform(primitives + bootstrapTarget())
-    challengeGrammar = Grammar.uniform(targetTextPrimitives)#baseGrammar
+    challengeGrammar = baseGrammar #Grammar.uniform(targetTextPrimitives)
     
     evaluationTimeout = 0.0005
     # We will spend 30 minutes on each challenge problem

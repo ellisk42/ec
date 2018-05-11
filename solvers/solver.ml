@@ -194,6 +194,7 @@ let load_problems channel =
   in
   (tf,g,
    lowerBound,upperBound,budgetIncrement,
+   maxParameters,
    nc,timeout,verbose)
 
 let export_frontiers tf solutions : string =
@@ -211,12 +212,13 @@ let export_frontiers tf solutions : string =
 
 let main() =
   let (tf,g,
-     lowerBound,upperBound,budgetIncrement,
+       lowerBound,upperBound,budgetIncrement,
+       mfp,
      nc,timeout, verbose) =
     load_problems stdin in
   if List.exists tf ~f:(fun (t,_) -> t.task_type = ttower) then update_tower_cash() else ();
   let solutions =
-    enumerate_for_tasks ~lowerBound:lowerBound ~upperBound:upperBound ~budgetIncrement:budgetIncrement
+    enumerate_for_tasks ~maxFreeParameters:mfp ~lowerBound:lowerBound ~upperBound:upperBound ~budgetIncrement:budgetIncrement
     ~verbose:verbose ~nc:nc ~timeout:timeout g tf
   in
   export_frontiers tf solutions |> print_string ;;

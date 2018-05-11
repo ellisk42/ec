@@ -372,6 +372,21 @@ let rec string_constants_length = function
   | Apply(f,x) -> string_constants_length f + string_constants_length x
   | Index(_) -> 0
 
+let rec number_of_real_constants = function
+  | Primitive(_,"REAL",_) -> 1
+  | Primitive(_,_,_) -> 0
+  | Invented(_,b) | Abstraction(b) -> number_of_real_constants b
+  | Apply(f,x) -> number_of_real_constants f + number_of_real_constants x
+  | Index(_) -> 0
+
+let rec number_of_free_parameters = function
+  | Primitive(_,"REAL",_) | Primitive(_,"STRING",_) -> 1
+  | Primitive(_,_,_) -> 0
+  | Invented(_,b) | Abstraction(b) -> number_of_free_parameters b
+  | Apply(f,x) -> number_of_free_parameters f + number_of_free_parameters x
+  | Index(_) -> 0
+
+
 let primitive_empty = primitive "empty" (tlist t0) [];;
 let primitive_range = primitive "range" (tint @> tlist tint) (fun x -> 0 -- (x-1));;
 let primitive_sort = primitive "sort" (tlist tint @> tlist tint) (List.sort ~cmp:(fun x y -> x - y));;

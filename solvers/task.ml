@@ -164,6 +164,7 @@ type hit_result = {hit_program: string;
                    hit_time: float;}
 
 let enumerate_for_tasks (g: grammar) ?verbose:(verbose = true)
+    ~maxFreeParameters
     ?budgetIncrement:(budgetIncrement = 1.)
     ?lowerBound:(lowerBound = 0.)
     ?upperBound:(upperBound = 99.)
@@ -205,7 +206,7 @@ let enumerate_for_tasks (g: grammar) ?verbose:(verbose = true)
         (* Returns a list of "final results" *)
         (* Each final result is [Array.map ~f:Heap.to_list hits] *)
         (* We flatten it to get a list of arrays of heaps *)
-        enumerate_programs ~nc:nc g request
+        enumerate_programs ~maxFreeParameters:maxFreeParameters ~nc:nc g request
           (!lower_bound) (!lower_bound +. budgetIncrement)
           ~final:(fun () -> [Array.map ~f:Heap.to_list hits])
           (fun p logPrior ->
