@@ -33,7 +33,7 @@ class Grammar(object):
     def __str__(self):
         def productionKey(xxx_todo_changeme):
             (l,t,p) = xxx_todo_changeme
-            return not isinstance(p,Primitive), -l
+            return not isinstance(p,Primitive), l is not None and -l
         lines = ["%f\tt0\t$_"%self.logVariable]
         for l,t,p in sorted(self.productions, key=productionKey):
             l = "%f\t%s\t%s"%(l,t,p)
