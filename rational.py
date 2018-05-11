@@ -133,7 +133,7 @@ def drawFunction(n, dx, f):
     data = 255 - data
     data = data/255.
     # print "upper and lower bounds before resizing",np.max(data),np.min(data),data.dtype
-    data = imresize(data, (64,64))/255.
+    data = imresize(data, (32,32))/255.
     # print "upper and lower bounds after resizing",np.max(data),np.min(data),data.dtype
 
     plot.close(figure)

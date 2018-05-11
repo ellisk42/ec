@@ -710,18 +710,18 @@ class ImageFeatureExtractor(nn.Module):
         super(ImageFeatureExtractor, self).__init__()
         
         self.l1 = nn.Sequential(
-            nn.Conv2d(1, 8, kernel_size=(10, 10), stride=2),
+            nn.Conv2d(1, 8, kernel_size=(5,5), stride=2),
             nn.Tanh(),
             nn.MaxPool2d(kernel_size=(2, 2), stride=2),
             nn.Conv2d(8, 16, kernel_size=(5, 5)),
             nn.Tanh(),
             nn.MaxPool2d(kernel_size=(2, 2), stride=2),
-            nn.Conv2d(16, 8, kernel_size=(3, 3), stride=2),
-            nn.Tanh(),
+            # nn.Conv2d(16, 8, kernel_size=(3, 3), stride=2),
+            # nn.Tanh(),
 #            nn.MaxPool2d(kernel_size=(2, 2), stride=2),
         )
 
-        self.outputDimensionality = 32
+        self.outputDimensionality = 16
 
     def forward(self,v):
         w = int(len(v)**0.5)
