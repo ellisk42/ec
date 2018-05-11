@@ -435,9 +435,9 @@ class RecognitionModel(nn.Module):
                     if doingHelmholtz:
                         if helmholtzSamples == []:
                             helmholtzSamples = \
-                            self.sampleManyHelmholtz(requests,
+                            list(self.sampleManyHelmholtz(requests,
                                                      HELMHOLTZBATCH,
-                                                     1) # TODO THIS IS A HACK
+                                                     1)) # TODO THIS IS A HACK
                         attempt = helmholtzSamples.pop()
                         if attempt is not None:
                             program, request, features = attempt
