@@ -44,6 +44,7 @@ def flatten(x, abort=lambda x:False):
         yield x
 
 def summaryStatistics(n,times):
+    if len(times) == 0: eprint(n,"no successful times to report statistics on!")
     eprint(n,"average: ",int(mean(times)+0.5),
            "sec.\tmedian:",int(median(times)+0.5),
            "\tmax:",int(max(times)+0.5),
