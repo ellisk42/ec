@@ -33,7 +33,7 @@ class Grammar(object):
     def __str__(self):
         def productionKey(xxx_todo_changeme):
             (l,t,p) = xxx_todo_changeme
-            return not isinstance(p,Primitive), -l
+            return not isinstance(p,Primitive), l is not None and -l
         lines = ["%f\tt0\t$_"%self.logVariable]
         for l,t,p in sorted(self.productions, key=productionKey):
             l = "%f\t%s\t%s"%(l,t,p)
@@ -157,9 +157,10 @@ class Grammar(object):
         f,xs = expression.applicationParse()
 
         if f not in candidates:
-            if not silent:
+            if not False:#silent:
                 eprint(f,"Not in candidates")
-                # eprint("Candidates is",candidates)
+                eprint("Candidates is",candidates)
+                #eprint("grammar:", grammar.productions) 
                 eprint("request is",request)
                 eprint("xs",xs)
                 eprint("environment",environment)
