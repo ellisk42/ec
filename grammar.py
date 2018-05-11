@@ -36,7 +36,10 @@ class Grammar(object):
             return not isinstance(p,Primitive), l is not None and -l
         lines = ["%f\tt0\t$_"%self.logVariable]
         for l,t,p in sorted(self.productions, key=productionKey):
-            l = "%f\t%s\t%s"%(l,t,p)
+            if l is not None:
+                l = "%f\t%s\t%s"%(l,t,p)
+            else:
+                l = "-Inf\t%s\t%s"%(t,p)
             if not t.isArrow() and isinstance(p,Invented):
                 try: l += "\teval = %s"%(p.evaluate([]))                    
                 except: pass
