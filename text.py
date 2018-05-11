@@ -53,7 +53,7 @@ if __name__ == "__main__":
 
     for t in tasks: t.mustTrain = False
     
-    test, train = testTrainSplit(tasks, 0.75)
+    test, train = testTrainSplit(tasks, 0.9)
     eprint("Split tasks into %d/%d test/train"%(len(test),len(train)))
     
     challenge, challengeCheating = loadPBETasks()

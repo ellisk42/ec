@@ -59,6 +59,11 @@ class Frontier(object):
                             key = lambda e: (-e.logPosterior, str(e.program)))
         return Frontier(newEntries[:k], self.task)
 
+    def sample(self):
+        """Samples an entry from a frontier"""
+        return sampleDistribution([ (math.exp(e.logLikelihood + e.logPrior), e)
+                                    for e in self ])
+
     @property
     def bestPosterior(self):
         return min(self.entries,

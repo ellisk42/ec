@@ -384,10 +384,9 @@ class RecognitionModel(nn.Module):
         variables, productions = self(features)
         g = Grammar(variables, [(productions[k].view(1),t,program)
                                 for k,(_,t,program) in enumerate(self.grammar.productions) ])
-        kl = 0.
-        for entry in frontier:
-            kl -= math.exp(entry.logPosterior) * g.logLikelihood(frontier.task.request, entry.program)
-        return kl
+        # Monte Carlo estimate: draw a sample from the frontier
+        entry = frontier.sample()
+        return - g.logLikelihood(frontier.task.request, entry.program)
     def HelmholtzKL(self, features, sample, tp):
         variables, productions = self(features)
         g = Grammar(variables, [(productions[k].view(1),t,program)
@@ -451,7 +450,10 @@ class RecognitionModel(nn.Module):
                             continue
                     
                     if is_torch_invalid(loss):
-                        eprint("Invalid loss!")
+                        if doingHelmholtz:
+                            eprint("Invalid real-data loss!")
+                        else:
+                            eprint("Invalid Helmholtz loss!")
                     else:
                         loss.backward()
                         optimizer.step()
