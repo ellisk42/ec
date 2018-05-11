@@ -235,13 +235,13 @@ def loadPBETasks(directory="PBE_Strings_Track"):
             elif e[0] == Symbol('synth-fun'):
                 assert e[1] == Symbol('f')
                 constants += findStrings(e)
+        examples = list({ (tuple(xs),y) for xs,y in examples })
+        
 
         task = Task(name, arrow(*[tstr]*(len(examples[0][0])+1)),
                     [(tuple(map(explode,xs)),explode(y))
                      for xs,y in examples ])
-        cheat = Task(name + "_cheating", arrow(*[tstr]*(len(examples[0][0])+1+len(constants))),
-                     [(tuple(map(explode, constants + xs)),explode(y))
-                     for xs,y in examples ])
+        cheat = task
                 
         tasks.append(task)
         # print name
@@ -254,25 +254,29 @@ def loadPBETasks(directory="PBE_Strings_Track"):
     
 def guessConstantStrings(task):
     examples = task.examples
-    guesses = []
-    for n in xrange(min(10,len(examples))):
-        for m in xrange(n,min(10,len(examples))):
+    guesses = {}
+    N = 10
+    T = 2
+    for n in xrange(min(N,len(examples))):
+        for m in xrange(n+1,min(N,len(examples))):
             y1 = examples[n][1]
             y2 = examples[m][1]
-            l = lcs(y1,y2)
+            l = ''.join(lcs(y1,y2))
             if len(l) > 2:
-                guesses.append(l)
+                guesses[l] = guesses.get(l,0) + 1
 
-    task.stringConstants = list(set([''.join(g) for g in guesses]))
+    task.stringConstants = [g for g,f in guesses.iteritems()
+                            if f >= T]
+    
     task.BIC = 1.
     task.maxParameters = 1
     
 if __name__ == "__main__":
     import sys
-    loadPBETasks()
+    challenge,_ = loadPBETasks()
 
     tasks = makeTasks()
-    for t in tasks:
+    for t in tasks + challenge:
         print t.describe()
         print "\t{%s}"%(t.stringConstants)
     assert False
