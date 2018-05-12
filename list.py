@@ -2,18 +2,49 @@ import cPickle as pickle
 import random
 from collections import defaultdict
 from itertools import chain
+import json
+
 from ec import explorationCompression, commandlineArguments
 from utilities import eprint, numberOfCPUs, flatten, fst, testTrainSplit, POSITIVEINFINITY
 from grammar import Grammar
 from task import Task
-from type import Context, arrow, tlist, tint, t0, UnificationFailure
+from type import Context, arrow, tbool, tlist, tint, t0, UnificationFailure
 from listPrimitives import basePrimitives, primitives, McCarthyPrimitives, bootstrapTarget_extra
 from recognition import HandCodedFeatureExtractor, MLPFeatureExtractor, RecurrentFeatureExtractor
+from makeListTasks import make_list_bootstrap_tasks
 
 
-def retrieveTasks(filename):
+def retrievePickleTasks(filename):
     with open(filename) as f:
-        return pickle.load(f)
+        tasks = pickle.load(f)
+    for task in tasks:
+        task.features = list_features(task.examples)
+        task.cache = False
+    return tasks
+
+def retrieveJSONTasks(filename, features=False):
+    """
+    For JSON of the form:
+        {"name": str,
+         "type": {"input": bool|int|list-of-int,
+                  "output": bool|int|list-of-int},
+         "examples": [{"i": data, "o": data}]}
+    """
+    with open(filename, "rb") as f:
+        loaded = json.load(f)
+    TP = {
+        "bool": tbool,
+        "int": tint,
+        "list-of-int": tlist(tint),
+    }
+    return [Task(
+        item["name"],
+        arrow(TP[item["type"]["input"]], TP[item["type"]["output"]]),
+        [((ex["i"],), ex["o"]) for ex in item["examples"]],
+        features=(None if not features else list_features(
+            [((ex["i"],), ex["o"]) for ex in item["examples"]])),
+        cache=False,
+     ) for item in loaded]
 
 
 def list_features(examples):
@@ -221,17 +252,13 @@ def train_necessary(task):
 
 def list_options(parser):
     parser.add_argument("--dataset", type=str,
-        default="data/list_tasks.pkl",
-        help="location of pickled list function dataset")
-    parser.add_argument("--Lucas",
-                        default=False,
-                        action="store_true",
-                        help="solve Lucas's list problems")
+        default="Lucas-old",
+        choices=["bootstrap", "Lucas-old", "Lucas-depth1", "Lucas-depth2", "Lucas-depth3"])
     parser.add_argument("--maxTasks", type=int,
         default=1000,
         help="truncate tasks to fit within this boundary")
     parser.add_argument("--primitives",
-                        default="McCarthy",
+                        default="common",
                         help="Which primitive set to use",
                         choices=["McCarthy","base","rich","common"])
     parser.add_argument("--extractor", type=str,
@@ -243,40 +270,66 @@ def list_options(parser):
     parser.add_argument("-H", "--hidden", type=int,
         default=16,
         help="number of hidden units")
+    parser.add_argument("--random-seed", type=int, default=17)
 
 
 if __name__ == "__main__":
     args = commandlineArguments(
-        frontierSize=None, activation='sigmoid', iterations=10,
-        a=3, maximumFrontier=10, topK=2, pseudoCounts=10.0,
-        helmholtzRatio=0.5, structurePenalty=1.,
+        enumerationTimeout=10, activation='tanh', iterations=10,
+        a=3, maximumFrontier=2, topK=2, pseudoCounts=10.0,
+        helmholtzRatio=0.5, structurePenalty=10.,
         CPUs=numberOfCPUs(),
         extras=list_options)
 
-    tasks = retrieveTasks(args.pop("dataset"))
+    random.seed(args.pop("random_seed"))
+
+    dataset = args.pop("dataset")
+    tasks = {
+        "Lucas-old": lambda: retrievePickleTasks("data/list_tasks.pkl"),
+        "bootstrap": make_list_bootstrap_tasks,
+        "Lucas-depth1": lambda: retrieveJSONTasks("data/list_tasks2.json")[:105],
+        "Lucas-depth2": lambda: retrieveJSONTasks("data/list_tasks2.json")[:4928],
+        "Lucas-depth3": lambda: retrieveJSONTasks("data/list_tasks2.json"),
+    }[dataset]()
+
+    necessaryTasks = [] # maxTasks will not consider these
+    if dataset.startswith("Lucas2.0") and dataset != "Lucas2.0-depth1":
+        necessaryTasks = tasks[:105]
 
     maxTasks = args.pop("maxTasks")
     if len(tasks) > maxTasks:
         eprint("Unwilling to handle {} tasks, truncating..".format(len(tasks)))
-        random.seed(42)
         random.shuffle(tasks)
         del tasks[maxTasks:]
+    tasks = necessaryTasks + tasks
 
-    # Remove degenerate tasks: either the identity or a constant
-    tasks = [ t for t in tasks
-              if any( xs[0] != y for xs, y in t.examples )]
-    tasks = [ t for t in tasks
-              if not all( t.examples[0][1] == y for xs, y in t.examples )]
+    prims = {"base": basePrimitives,
+             "McCarthy": McCarthyPrimitives,
+             "common": bootstrapTarget_extra,
+             "rich": primitives}[args.pop("primitives")]()
+    baseGrammar = Grammar.uniform(prims)
+
+    extractor = {
+        "hand": FeatureExtractor,
+        "deep": DeepFeatureExtractor,
+        "learned": LearnedFeatureExtractor,
+    }[args.pop("extractor")]
+    extractor.H = args.pop("hidden")
+    extractor.USE_CUDA = args["cuda"]
+
+    args.update({
+        "featureExtractor": extractor,
+        "outputPrefix": "experimentOutputs/list",
+        "evaluationTimeout": 0.0005,
+        "topK": 5,
+        "maximumFrontier": 5,
+        "solver": "ocaml",
+        "compressor": "rust"
+    })
 
     eprint("Got {} list tasks".format(len(tasks)))
-
-    for task in tasks:
-        task.features = list_features(task.examples)
-        task.cache = False
-
     split = args.pop("split")
     if split:
-        random.seed(42)
         train = []
         train_some = defaultdict(list)
         for t in tasks:
@@ -300,33 +353,4 @@ if __name__ == "__main__":
     else:
         train = tasks
         test = []
-
-    prims = {"base": basePrimitives,
-             "McCarthy": McCarthyPrimitives,
-             "common": bootstrapTarget_extra,
-             "rich": primitives}[args.pop("primitives")]
-    
-    extractor = {
-        "hand": FeatureExtractor,
-        "deep": DeepFeatureExtractor,
-        "learned": LearnedFeatureExtractor,
-    }[args.pop("extractor")]
-    extractor.H = args.pop("hidden")
-    extractor.USE_CUDA = args["cuda"]
-
-    args.update({
-        "featureExtractor": extractor,
-        "outputPrefix": "experimentOutputs/list",
-        "evaluationTimeout": 0.0005,
-        "topK": 5,
-        "maximumFrontier": 5,
-        "solver": "ocaml",
-        "compressor": "rust"
-    })
-
-    baseGrammar = Grammar.uniform(prims())
-    from makeListTasks import make_list_bootstrap_tasks, bonusListProblems
-    if not args.pop("Lucas"): train = make_list_bootstrap_tasks()
-    eprint("Total number of training tasks:",len(train))
-    
     explorationCompression(baseGrammar, train, testingTasks=test, **args)
