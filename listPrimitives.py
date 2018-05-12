@@ -187,6 +187,16 @@ def bootstrapTarget():
         Primitive("empty?", arrow(tlist(t0), tbool), _isEmpty),
     ] + [ Primitive(str(j), tint, j) for j in xrange(2) ]
 
+def bootstrapTarget_extra():
+    """This is the bootstrap target plus list domain specific stuff"""
+    return bootstrapTarget() + [
+        Primitive("*", arrow(tint, tint, tint), _multiplication),
+        Primitive("mod", arrow(tint, tint, tint), _mod),
+        Primitive("gt?", arrow(tint, tint, tbool), _gt),
+        Primitive("is-prime", arrow(tint, tbool), _isPrime),
+        Primitive("is-square", arrow(tint, tbool), _isSquare),
+        ] + [ Primitive(str(j), tint, j) for j in xrange(2,6) ]
+
 def McCarthyPrimitives():
     "These are < primitives provided by 1959 lisp as introduced by McCarthy"
     return [

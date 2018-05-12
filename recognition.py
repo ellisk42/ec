@@ -458,10 +458,11 @@ class RecognitionModel(nn.Module):
                         loss.backward()
                         optimizer.step()
                         losses.append(loss.data.tolist()[0])
-                        if doingHelmholtz:
-                            eprint("\tHelmholtz data point loss:",loss.data.tolist()[0])
-                        else:
-                            eprint("\tReal data point loss:",loss.data.tolist()[0])
+                        if False:
+                            if doingHelmholtz:
+                                eprint("\tHelmholtz data point loss:",loss.data.tolist()[0])
+                            else:
+                                eprint("\tReal data point loss:",loss.data.tolist()[0])
                 if (i == 1 or i%10 == 0) and losses:
                     eprint("Epoch",i,"Loss",sum(losses)/len(losses))
                     gc.collect()

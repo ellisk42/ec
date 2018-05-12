@@ -7,9 +7,9 @@ from utilities import eprint, numberOfCPUs, flatten, fst, testTrainSplit, POSITI
 from grammar import Grammar
 from task import Task
 from type import Context, arrow, tlist, tint, t0, UnificationFailure
-from listPrimitives import basePrimitives, primitives, McCarthyPrimitives
+from listPrimitives import basePrimitives, primitives, McCarthyPrimitives, bootstrapTarget_extra
 from recognition import HandCodedFeatureExtractor, MLPFeatureExtractor, RecurrentFeatureExtractor
-from enumeration import enumerateForTask
+
 
 def retrieveTasks(filename):
     with open(filename) as f:
@@ -233,7 +233,7 @@ def list_options(parser):
     parser.add_argument("--primitives",
                         default="McCarthy",
                         help="Which primitive set to use",
-                        choices=["McCarthy","base","rich"])
+                        choices=["McCarthy","base","rich","common"])
     parser.add_argument("--extractor", type=str,
         choices=["hand", "deep", "learned"],
         default="learned")
@@ -303,6 +303,7 @@ if __name__ == "__main__":
 
     prims = {"base": basePrimitives,
              "McCarthy": McCarthyPrimitives,
+             "common": bootstrapTarget_extra,
              "rich": primitives}[args.pop("primitives")]
     
     extractor = {
@@ -327,8 +328,5 @@ if __name__ == "__main__":
     from makeListTasks import make_list_bootstrap_tasks, bonusListProblems
     if not args.pop("Lucas"): train = make_list_bootstrap_tasks()
     eprint("Total number of training tasks:",len(train))
-    for t in make_list_bootstrap_tasks():
-        eprint(t.describe())
-        eprint()
     
     explorationCompression(baseGrammar, train, testingTasks=test, **args)
