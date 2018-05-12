@@ -77,7 +77,7 @@ if __name__ == "__main__":
                            evaluationTimeout = evaluationTimeout,
                            compressor="pypy", # 
                            **commandlineArguments(
-                               steps = 500,
+                               steps = 250,
                                iterations = 10,
                                helmholtzRatio = 0.5,
                                topK = 2,

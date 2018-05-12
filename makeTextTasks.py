@@ -296,8 +296,13 @@ if __name__ == "__main__":
 
     tasks = makeTasks()
     for t in tasks + challenge:
-        print t.describe()
+        print t.name
+        for xs,y in t.examples:
+            xs = [ '"' + "".join(x) + '"' for x in xs ]
+            y = "".join(y)
+            print 'f(%s) = "%s"'%(", ".join(xs), y)
         print "\t{%s}"%(t.stringConstants)
+        print 
     assert False
     # def maximumLength(x):
     #     if isinstance(x,list):

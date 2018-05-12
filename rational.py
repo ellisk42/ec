@@ -153,7 +153,7 @@ def makeTasks():
             ts.append(makeTask(n,f))
         tasks += ts
     ts = []
-    while len(ts) < tasksPerType:
+    while len(ts) < tasksPerType*3:
         n,f = randomRational()
         if makeTask(n,f) is None: continue
         ts.append(makeTask(n,f))
@@ -243,4 +243,5 @@ if __name__ == "__main__":
                                maximumFrontier = 100,
                                a = 3,
                                topK = 2,
-                               pseudoCounts = 10.0))
+                               pseudoCounts = 30.0))
+    
