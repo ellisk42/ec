@@ -473,7 +473,7 @@ class RecognitionModel(nn.Module):
             flushEverything()
         if task is None: return None
         
-        return Frontier([FrontierEntry(program=p,
+        return Frontier([FrontierEntry(program=program,
                                        logLikelihood=0., logPrior=0.)],
                         task=task)
 
