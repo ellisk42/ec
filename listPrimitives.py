@@ -177,7 +177,6 @@ def bootstrapTarget():
 
         # built-ins
         Primitive("if", arrow(tbool, t0, t0, t0), _if),
-        Primitive("eq?", arrow(tint, tint, tbool), _eq),
         Primitive("+", arrow(tint, tint, tint), _addition),
         Primitive("-", arrow(tint, tint, tint), _subtraction),
         Primitive("empty", tlist(t0), []),
@@ -193,6 +192,7 @@ def bootstrapTarget_extra():
         Primitive("*", arrow(tint, tint, tint), _multiplication),
         Primitive("mod", arrow(tint, tint, tint), _mod),
         Primitive("gt?", arrow(tint, tint, tbool), _gt),
+        Primitive("eq?", arrow(tint, tint, tbool), _eq),
         Primitive("is-prime", arrow(tint, tbool), _isPrime),
         Primitive("is-square", arrow(tint, tbool), _isSquare),
         ] + [ Primitive(str(j), tint, j) for j in xrange(2,6) ]
