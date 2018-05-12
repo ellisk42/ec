@@ -95,7 +95,7 @@ def makeTasks():
         task.mustTrain = True
         problems.append(task)
 
-    for d1,d2 in randomPermutation(crossProduct(delimiters,delimiters))[:len(delimiters)]:
+    for d1,d2 in randomPermutation(crossProduct(delimiters,delimiters))[:len(delimiters)*2]:
         if d1 != d2:
             problem("Replace '%s' w/ '%s'"%(d1,d2),
                     [ ((x,), x.replace(d1,d2))
@@ -166,6 +166,19 @@ def makeTasks():
                 needToTrain=True)
 
     for n in xrange(len(delimiters)):
+        problem("Abbreviate separate words (%s)"%("I"*(n+1)),
+                [ ((x,y), "%s.%s."%(x[0],y[0]))
+                  for _ in range(NUMBEROFEXAMPLES)
+                  for y in [randomWord()]
+                  for x in [randomWord()] ])
+        d = delimiters[n]
+        problem("Abbreviate words separated by '%s'"%d,
+                [ ((x+d+y,), "%s.%s."%(x[0],y[0]))
+                  for _ in range(NUMBEROFEXAMPLES)
+                  for y in [randomWord()]
+                  for x in [randomWord()] ])
+
+    for n in xrange(len(delimiters)):
         problem("Append 2 strings (%s)"%('I'*(n+1)),
                 [ ((x,y), x + y)
                   for _ in range(NUMBEROFEXAMPLES)
@@ -184,6 +197,12 @@ def makeTasks():
                 [((x,),x+w)
                  for _ in xrange(NUMBEROFEXAMPLES)
                  for x in [randomWord()] ])
+        w = randomWord(minimum=3)
+        problem("Prepend '%s' to first word"%w,
+                [((x+' '+y,),w+x)
+                 for _ in xrange(NUMBEROFEXAMPLES)
+                 for x in [randomWord()]
+                 for y in [randomWord()] ])
 
     for p in problems:
         guessConstantStrings(p)

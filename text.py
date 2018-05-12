@@ -39,10 +39,10 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
                                                       H = 64,
                                                       tasks = tasks,
                                                       bidirectional = True)
-    def featuresOfProgram(self, p, tp):
+    def taskOfProgram(self, p, tp):
         # Instantiate STRING w/ random words
         p = p.visit(ConstantInstantiateVisitor.SINGLE)
-        return super(LearnedFeatureExtractor, self).featuresOfProgram(p,tp)
+        return super(LearnedFeatureExtractor, self).taskOfProgram(p,tp)
 
 
 if __name__ == "__main__":
@@ -53,7 +53,7 @@ if __name__ == "__main__":
 
     for t in tasks: t.mustTrain = False
     
-    test, train = testTrainSplit(tasks, 0.9)
+    test, train = testTrainSplit(tasks, 1.)
     eprint("Split tasks into %d/%d test/train"%(len(test),len(train)))
     
     challenge, challengeCheating = loadPBETasks()

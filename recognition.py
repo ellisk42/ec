@@ -462,7 +462,9 @@ class RecognitionModel(nn.Module):
                     gc.collect()
 
 
-    def sampleHelmholtz(self, requests, statusUpdate = None):
+    def sampleHelmholtz(self, requests, statusUpdate = None, seed=None):
+        if seed is not None:
+            random.seed(seed)
         request = random.choice(requests)
         program = self.grammar.sample(request, maximumDepth = 6)
         task = self.featureExtractor.taskOfProgram(program, request)
@@ -481,7 +483,8 @@ class RecognitionModel(nn.Module):
         frequency = N/50
         samples = parallelMap(CPUs,
                               lambda n: self.sampleHelmholtz(requests,
-                                                             statusUpdate = '.' if n%frequency == 0 else None),
+                                                             statusUpdate = '.' if n%frequency == 0 else None,
+                                                             seed=n),
                               range(N))
         eprint()
         flushEverything()
