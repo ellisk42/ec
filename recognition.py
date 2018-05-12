@@ -387,12 +387,7 @@ class RecognitionModel(nn.Module):
         # Monte Carlo estimate: draw a sample from the frontier
         entry = frontier.sample()
         return - g.logLikelihood(frontier.task.request, entry.program)
-    def HelmholtzKL(self, features, sample, tp):
-        variables, productions = self(features)
-        g = Grammar(variables, [(productions[k].view(1),t,program)
-                                for k,(_,t,program) in enumerate(self.grammar.productions) ])
-        return - g.logLikelihood(tp, sample)
-
+    
     def train(self, frontiers, _=None, steps=250, lr=0.0001, topK=1, CPUs=1,
               helmholtzRatio=0., helmholtzBatch=5000):
         """
@@ -437,9 +432,8 @@ class RecognitionModel(nn.Module):
                                                      CPUs)
                         attempt = helmholtzSamples.pop()
                         if attempt is not None:
-                            program, request, features = attempt
                             self.zero_grad()
-                            loss = self.HelmholtzKL(features, program, request)
+                            loss = self.frontierKL(attempt)
                         else: doingHelmholtz = False
                     if not doingHelmholtz:
                         if helmholtzRatio < 1.:
@@ -469,15 +463,17 @@ class RecognitionModel(nn.Module):
 
 
     def sampleHelmholtz(self, requests, statusUpdate = None):
-       request = random.choice(requests)
-       program = self.grammar.sample(request, maximumDepth = 6)
-       features = self.featureExtractor.featuresOfProgram(program, request)
-       if statusUpdate is not None:
-           eprint(statusUpdate, end = '')
-           flushEverything()
-       # Feature extractor failure
-       if features is None: return None
-       else: return program, request, features
+        request = random.choice(requests)
+        program = self.grammar.sample(request, maximumDepth = 6)
+        task = self.featureExtractor.taskOfProgram(program, request)
+        if statusUpdate is not None:
+            eprint(statusUpdate, end = '')
+            flushEverything()
+        if task is None: return None
+        
+        return Frontier([FrontierEntry(program=p,
+                                       logLikelihood=0., logPrior=0.)],
+                        task=task)
 
     def sampleManyHelmholtz(self, requests, N, CPUs):
         eprint("Sampling %d programs from the prior on %d CPUs..."%(N,CPUs))
@@ -497,17 +493,7 @@ class RecognitionModel(nn.Module):
         eprint()
         eprint("Got %d/%d valid samples."%(len(samples),N))
         flushEverything()
-        # For some reason trying to run pytorch in parallel causes problems
-        # So if you are using more than one CPU you might want feature extractor to not run the neural network
-        # If that is the case then we will just run the net here
-        for p,r,f in samples:
-            if isinstance(f,list):
-                eprint("Looks like featureExtractor.featuresOfProgram does not actually run the feature extracting network. That's totally okay, just need to clean things up by running the neural net...")
-                break
         
-        samples = [(p,r,
-                    f if not isinstance(f,list) else self.featureExtractor(f))
-                   for p,r,f in samples ]
         return samples
 
     def enumerateFrontiers(self, tasks, likelihoodModel,
@@ -649,7 +635,7 @@ class RecurrentFeatureExtractor(nn.Module):
         
 
     def featuresOfTask(self, t): return self(t.examples)
-    def featuresOfProgram(self, p, tp):
+    def taskOfProgram(self, p, tp):
         candidateInputs = list(self.requestToInputs[tp])
         # Loop over the inputs in a random order and pick the first one that doesn't generate an exception
         random.shuffle(candidateInputs)
@@ -658,13 +644,8 @@ class RecurrentFeatureExtractor(nn.Module):
                 ys = runWithTimeout(lambda: [ p.runWithArguments(xs) for xs in xss ],
                                     0.1)
             except: continue
-            try:
-                return zip(xss,ys)
-            except:
-                eprint("Failure extracting features of %s : %s"%(p,tp))
-                eprint("ys = ",ys)
-                eprint("xs = ",xss)
-                assert False
+            
+            return Task("Helmholtz", tp, zip(xss,ys))
                 
         return None
 
@@ -685,12 +666,6 @@ class MLPFeatureExtractor(nn.Module):
     def featuresOfTask(self, t):
         f = variable([ (f - self.averages[j])/self.deviations[j] for j,f in enumerate(t.features) ], cuda=self.use_cuda).float()
         return self.hidden(f).clamp(min = 0)
-    def featuresOfProgram(self, p, t):
-        features = self._featuresOfProgram(p,t)
-        if features is None: return None
-        f = variable([ (f - self.averages[j])/self.deviations[j] for j,f in enumerate(features) ], cuda=self.use_cuda).float()
-        return self.hidden(f).clamp(min = 0)
-
 
 
 class HandCodedFeatureExtractor(object):

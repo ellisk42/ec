@@ -111,7 +111,7 @@ def randomPower():
     return name, f
 
     
-def drawFunction(n, dx, f):
+def drawFunction(n, dx, f, resolution=32):
     import numpy as np
     
     import matplotlib
@@ -133,7 +133,7 @@ def drawFunction(n, dx, f):
     data = 255 - data
     data = data/255.
     # print "upper and lower bounds before resizing",np.max(data),np.min(data),data.dtype
-    data = imresize(data, (32,32))/255.
+    data = imresize(data, (resolution,resolution))/255.
     # print "upper and lower bounds after resizing",np.max(data),np.min(data),data.dtype
 
     plot.close(figure)
@@ -187,15 +187,15 @@ class FeatureExtractor(ImageFeatureExtractor):
 
     def featuresOfTask(self,t):
         return self(t.features)
-    def featuresOfProgram(self,p,t):
+    def taskOfProgram(self,p,t):
         p = p.visit(RandomParameterization.single)
         f = lambda x: p.runWithArguments([x])
         t = makeTask(str(p), f)
         if t is None:
             return None
-        features = map(float,list(drawFunction(200, 10., t.f).ravel()))
+        t.features = map(float,list(drawFunction(200, 10., t.f).ravel()))
         delattr(t,'f')
-        return features
+        return t
 
 
 def demo():
@@ -206,7 +206,7 @@ def demo():
 #        if makeTask(name,f) is None: continue
         
         print j,"\n",name
-        a = drawFunction(200,10.,f)*255
+        a = drawFunction(200,10.,f,resolution=128)*255
         Image.fromarray(a).convert('RGB').save("/tmp/functions/%d.png"%j)
     assert False
 #demo()
