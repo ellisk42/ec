@@ -291,6 +291,15 @@ def solveForTask_ocaml(_ = None,
         for b in badPrograms:
             eprint("Bad program",b,':',t.request)
         solutions = [r for r in solutions if Program.parse(r["program"]).canHaveType(t.request) ]
+
+        # FIXME:
+        # I have no idea why this bug occurs but sometimes the ocaml backend returns the wrong likelihood for programs with real numbers
+        if hasattr(t,'BIC'):
+            for r in solutions:
+                ll = -substringOccurrences("REAL", r["program"])*t.BIC*math.log(len(t.examples))
+                r["logLikelihood"] = ll
+                eprint("fixed log likelihood...")
+                
         frontier = Frontier([FrontierEntry(program = p,
                                            logLikelihood = e["logLikelihood"],
                                            logPrior = g.logLikelihood(t.request, p))

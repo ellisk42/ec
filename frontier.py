@@ -126,6 +126,8 @@ class Frontier(object):
                                     self.task.BIC*math.log(len(self.task.examples)),
                                     substringOccurrences("REAL", str(p)),
                                     substringOccurrences("REAL", str(p))*self.task.BIC*math.log(len(self.task.examples))))
+                            e1.logLikelihood = -substringOccurrences("REAL", str(p))*self.task.BIC*math.log(len(self.task.examples))
+                            e2.logLikelihood = e1.logLikelihood
                                      
 
                         e1 = FrontierEntry(program = e1.program,
