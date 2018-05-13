@@ -496,10 +496,11 @@ class RecognitionModel(nn.Module):
         eprint("Sampling %d programs from the prior on %d CPUs..."%(N,CPUs))
         flushEverything()
         frequency = N/50
+        startingSeed = random.random()
         samples = parallelMap(CPUs,
                               lambda n: self.sampleHelmholtz(requests,
                                                              statusUpdate = '.' if n%frequency == 0 else None,
-                                                             seed=n),
+                                                             seed=startingSeed+n),
                               range(N))
         eprint()
         flushEverything()
