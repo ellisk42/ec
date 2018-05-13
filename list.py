@@ -255,7 +255,7 @@ def list_options(parser):
         default="Lucas-old",
         choices=["bootstrap", "Lucas-old", "Lucas-depth1", "Lucas-depth2", "Lucas-depth3"])
     parser.add_argument("--maxTasks", type=int,
-        default=1000,
+        default=None,
         help="truncate tasks to fit within this boundary")
     parser.add_argument("--primitives",
                         default="common",
@@ -276,7 +276,7 @@ def list_options(parser):
 if __name__ == "__main__":
     args = commandlineArguments(
         enumerationTimeout=10, activation='tanh', iterations=10,
-        a=3, maximumFrontier=2, topK=2, pseudoCounts=10.0,
+        a=3, maximumFrontier=10, topK=2, pseudoCounts=10.0,
         helmholtzRatio=0.5, structurePenalty=10.,
         CPUs=numberOfCPUs(),
         extras=list_options)
@@ -297,11 +297,11 @@ if __name__ == "__main__":
         necessaryTasks = tasks[:105]
 
     maxTasks = args.pop("maxTasks")
-    if len(tasks) > maxTasks:
+    if maxTasks and len(tasks) > maxTasks:
         eprint("Unwilling to handle {} tasks, truncating..".format(len(tasks)))
         random.shuffle(tasks)
         del tasks[maxTasks:]
-    tasks = necessaryTasks + tasks
+        tasks = necessaryTasks + tasks
 
     prims = {"base": basePrimitives,
              "McCarthy": McCarthyPrimitives,
