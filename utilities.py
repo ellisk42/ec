@@ -300,6 +300,9 @@ def sampleDistribution(d):
     assert False
 
 def testTrainSplit(x, trainingFraction, seed = 0):
+    if trainingFraction > 1.1:
+        # Assume that the training fraction is actually the number of tasks that we want to train on
+        trainingFraction = float(trainingFraction)/len(x)
     needToTrain = {j for j,d in enumerate(x) if hasattr(d, 'mustTrain') and d.mustTrain }
     mightTrain = [ j for j in range(len(x)) if j not in needToTrain ]
     

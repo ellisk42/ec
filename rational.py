@@ -193,7 +193,7 @@ class FeatureExtractor(ImageFeatureExtractor):
         t = makeTask(str(p), f)
         if t is None:
             return None
-        t.features = map(float,list(drawFunction(200, 10., t.f).ravel()))
+        t.features = map(float,list(drawFunction(200, 5., t.f).ravel()))
         delattr(t,'f')
         return t
 
@@ -206,7 +206,7 @@ def demo():
 #        if makeTask(name,f) is None: continue
         
         print j,"\n",name
-        a = drawFunction(200,10.,f,resolution=128)*255
+        a = drawFunction(200,5.,f,resolution=128)*255
         Image.fromarray(a).convert('RGB').save("/tmp/functions/%d.png"%j)
     assert False
 #demo()
@@ -226,7 +226,8 @@ if __name__ == "__main__":
     
     eprint("Got %d tasks..."%len(tasks))
 
-    test, train = testTrainSplit(tasks, 0.2)
+    test, train = testTrainSplit(tasks, 200)
+    eprint("Training on",len(train),"tasks")
     
     explorationCompression(baseGrammar, train,
                            outputPrefix = "experimentOutputs/rational",
