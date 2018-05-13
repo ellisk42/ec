@@ -119,6 +119,15 @@ class Frontier(object):
                         foundDifference = True
                         eprint("WARNING: Log likelihoods deferred for %s: %f & %f"%(p,e1.logLikelihood,
                                                                                     e2.logLikelihood))
+                        if hasattr(self.task,'BIC'):
+                            eprint("\t%d examples, BIC=%f, parameterPenalty=%f, n parameters=%d, correct likelihood=%f"%
+                                   (len(self.task.examples),
+                                    self.task.BIC,
+                                    self.task.BIC*math.log(len(self.task.examples)),
+                                    substringOccurrences("REAL", str(p)),
+                                    substringOccurrences("REAL", str(p))*self.task.BIC*math.log(len(self.task.examples))))
+                                     
+
                         e1 = FrontierEntry(program = e1.program,
                                            logLikelihood = (e1.logLikelihood + e2.logLikelihood)/2,
                                            logPrior = e1.logPrior)

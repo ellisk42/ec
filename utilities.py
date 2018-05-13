@@ -431,7 +431,10 @@ class PQ(object):
         for _,v in self.h: yield v
     def __len__(self): return len(self.h)
         
-    
+
+def substringOccurrences(ss, s):
+    return sum(s[i:].startswith(ss) for i in xrange(len(s)) )
+
 if __name__ == "__main__":
     def f():
         return 5/0
