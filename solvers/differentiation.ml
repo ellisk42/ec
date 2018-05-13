@@ -181,6 +181,15 @@ let rec run_optimizer opt ?update:(update = 1000)
     run_optimizer opt ~update:update ~iterations:(iterations - 1) parameters loss
   end
 
+let restarting_optimize opt ?update:(update = 1000)
+    ?attempts:(attempts=1)
+    ?iterations:(iterations = 10000) parameters loss =
+  (0--attempts) |> List.map ~f:(fun _ ->
+      parameters |> List.iter ~f:(fun parameter ->
+          update_variable parameter (normal 1. 0.));
+      run_optimizer opt ~update:update ~iterations:iterations parameters loss) |>
+  fold1 min
+
 let gradient_descent ?lr:(lr = 0.001) =
   List.map ~f:(fun dx -> ~-. (lr*.dx))
 
@@ -266,6 +275,13 @@ let replace_placeholders program =
     | Invented(t,b) -> Invented(t,r b)
     | Primitive(t,"REAL",_) -> begin
         let v = random_variable() in
+        (* update_variable v 0.; *)
+        placeholders := v :: !placeholders;
+        Primitive(t,"REAL", ref v |> magical)
+      end
+    | Primitive(t,"real",v') -> begin
+        let v = random_variable() in
+        update_variable v (!(magical v'));
         (* update_variable v 0.; *)
         placeholders := v :: !placeholders;
         Primitive(t,"REAL", ref v |> magical)

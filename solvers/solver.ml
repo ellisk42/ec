@@ -235,6 +235,7 @@ let tune_differentiation() =
      nc,timeout, verbose) =
     load_problems stdin in
   if List.exists tf ~f:(fun (t,_) -> t.task_type = ttower) then update_tower_cash() else ();
+  (* "(-6.8x + 4.7)/[(x + 4.5)]" *)
   let p = parse_program "(lambda (/. (+. REAL (*. REAL $0)) (+. $0 REAL)))" |> get_some in
   match tf with
   |[(t,_)] -> Printf.eprintf "%f\n" (t.log_likelihood p)

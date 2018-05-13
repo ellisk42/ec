@@ -567,11 +567,10 @@ let program_parser : program parsing =
       number%%(fun n -> Index(Int.of_string n) |> return_parse))
   in
 
-  let fixed_real : program parsing = token %% (fun name ->
-      if String.prefix name 4 = "real" then
-        let v = String.suffix name 4 |> Float.of_string in
-        Primitive(treal, "REAL", ref (v |> magical)) |> return_parse
-      else parse_failure)
+  let fixed_real : program parsing = constant_parser "real" %% (fun _ ->
+      token %% (fun v ->
+        let v = v |> Float.of_string in
+        Primitive(treal, "real", ref (v |> magical)) |> return_parse))
   in
   
   let rec program_parser () : program parsing =

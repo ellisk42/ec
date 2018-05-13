@@ -90,7 +90,8 @@ let differentiable_task
           let n = List.length examples |> Int.to_float in
           let d = List.length parameters |> Int.to_float in
           let l = l *& (~$ (1. /. n)) in
-          let l = run_optimizer (rprop ~lr:0.1 ~decay:0.5 ~grow:1.2)
+          let l = restarting_optimize (rprop ~lr:0.1 ~decay:0.5 ~grow:1.2)
+              ~attempts:20
               ~update:0
               ~iterations:(if List.length parameters = 0 then 0 else 100)
               parameters l

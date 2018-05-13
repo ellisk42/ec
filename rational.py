@@ -30,7 +30,7 @@ def makeTask(name, f):
     if len(inputs) > 25:
         t = DifferentiableTask(name, arrow(treal,treal), [((x,),y) for x,y in zip(inputs, outputs) ],
                                BIC = 1.,
-                               likelihoodThreshold=-0.005,
+                               likelihoodThreshold=-0.5,
                                maxParameters=6,
                                loss=squaredErrorLoss)
         t.f = f
@@ -157,9 +157,6 @@ def makeTasks():
         n,f = randomRational()
         if makeTask(n,f) is None: continue
         ts.append(makeTask(n,f))
-    j = 1
-    print ts[j]
-    return [ts[1]]
     tasks += ts
 
     ts = []
@@ -229,7 +226,7 @@ if __name__ == "__main__":
     
     eprint("Got %d tasks..."%len(tasks))
 
-    test, train = testTrainSplit(tasks, 200)
+    test, train = testTrainSplit(tasks, 100)
     eprint("Training on",len(train),"tasks")
     
     explorationCompression(baseGrammar, train,
