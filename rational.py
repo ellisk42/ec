@@ -214,7 +214,7 @@ def demo():
 
 if __name__ == "__main__":
     primitives = [real,
-                  f1,
+                  # f1,
                   real_division, real_addition, real_multiplication]
     baseGrammar = Grammar.uniform(primitives)
     random.seed(42)
