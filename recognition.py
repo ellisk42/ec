@@ -386,7 +386,15 @@ class RecognitionModel(nn.Module):
                                 for k,(_,t,program) in enumerate(self.grammar.productions) ])
         # Monte Carlo estimate: draw a sample from the frontier
         entry = frontier.sample()
-        return - g.logLikelihood(frontier.task.request, entry.program)
+        return - entry.program.logLikelihood(g)
+
+    def replaceProgramsWithLikelihoodSummaries(self, frontier):
+        return Frontier([ FrontierEntry(program=self.grammar.closedLikelihoodSummary(frontier.task.request,
+                                                                                     e.program),
+                                        logLikelihood=e.logLikelihood,
+                                        logPrior=e.logPrior)
+                          for e in frontier ],
+                        task=frontier.task)
     
     def train(self, frontiers, _=None, steps=250, lr=0.0001, topK=1, CPUs=1,
               helmholtzRatio=0., helmholtzBatch=5000):
@@ -395,6 +403,12 @@ class RecognitionModel(nn.Module):
         """
         requests = [ frontier.task.request for frontier in frontiers ]
         frontiers = [ frontier.topK(topK).normalize() for frontier in frontiers if not frontier.empty ]
+
+        # We replace each program in the frontier with its likelihoodSummary
+        # This is because calculating likelihood summaries requires juggling types
+        # And type stuff is expensive!
+        frontiers = [ self.replaceProgramsWithLikelihoodSummaries(f).normalize()
+                      for f in frontiers ]
 
         # Not sure why this ever happens
         if helmholtzRatio is None:
@@ -473,9 +487,10 @@ class RecognitionModel(nn.Module):
             flushEverything()
         if task is None: return None
         
-        return Frontier([FrontierEntry(program=program,
-                                       logLikelihood=0., logPrior=0.)],
-                        task=task)
+        frontier = Frontier([FrontierEntry(program=program,
+                                           logLikelihood=0., logPrior=0.)],
+                            task=task)
+        return self.replaceProgramsWithLikelihoodSummaries(frontier)
 
     def sampleManyHelmholtz(self, requests, N, CPUs):
         eprint("Sampling %d programs from the prior on %d CPUs..."%(N,CPUs))
