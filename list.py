@@ -1,4 +1,3 @@
-import cPickle as pickle
 import random
 from collections import defaultdict
 from itertools import chain
@@ -14,20 +13,12 @@ from recognition import HandCodedFeatureExtractor, MLPFeatureExtractor, Recurren
 from makeListTasks import make_list_bootstrap_tasks
 
 
-def retrievePickleTasks(filename):
-    with open(filename) as f:
-        tasks = pickle.load(f)
-    for task in tasks:
-        task.features = list_features(task.examples)
-        task.cache = False
-    return tasks
-
 def retrieveJSONTasks(filename, features=False):
     """
     For JSON of the form:
         {"name": str,
-         "type": {"input": bool|int|list-of-int,
-                  "output": bool|int|list-of-int},
+         "type": {"input" : bool|int|list-of-bool|list-of-int,
+                  "output": bool|int|list-of-bool|list-of-int},
          "examples": [{"i": data, "o": data}]}
     """
     with open(filename, "rb") as f:
@@ -35,6 +26,7 @@ def retrieveJSONTasks(filename, features=False):
     TP = {
         "bool": tbool,
         "int": tint,
+        "list-of-bool": tlist(tbool),
         "list-of-int": tlist(tint),
     }
     return [Task(
@@ -285,7 +277,7 @@ if __name__ == "__main__":
 
     dataset = args.pop("dataset")
     tasks = {
-        "Lucas-old": lambda: retrievePickleTasks("data/list_tasks.pkl"),
+        "Lucas-old": lambda: retrieveJSONTasks("data/list_tasks.json"),
         "bootstrap": make_list_bootstrap_tasks,
         "Lucas-depth1": lambda: retrieveJSONTasks("data/list_tasks2.json")[:105],
         "Lucas-depth2": lambda: retrieveJSONTasks("data/list_tasks2.json")[:4928],
