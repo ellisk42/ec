@@ -298,7 +298,6 @@ def solveForTask_ocaml(_ = None,
             for r in solutions:
                 ll = -substringOccurrences("REAL", r["program"])*t.BIC*math.log(len(t.examples))
                 r["logLikelihood"] = ll
-                eprint("fixed log likelihood...")
                 
         frontier = Frontier([FrontierEntry(program = p,
                                            logLikelihood = e["logLikelihood"],
