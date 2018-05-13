@@ -72,7 +72,7 @@ if __name__ == "__main__":
     challengeTimeout = 30 * 60
     
     generator = ecIterator(baseGrammar, train,
-                           testingTasks = test,
+                           testingTasks = test + challenge,
                            outputPrefix = "experimentOutputs/text",
                            evaluationTimeout = evaluationTimeout,
                            compressor="pypy", # 
