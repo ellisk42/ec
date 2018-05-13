@@ -88,7 +88,7 @@ def randomFactored(order):
 def randomRational():
     no = random.choice([0,1,2])
     nn,n = randomPolynomial(no)
-    dn,d = randomPolynomial(random.choice([1,2]))
+    dn,d = randomFactored(random.choice([1,2]))
 
     f = lambda x: n(x)/d(x)
 
