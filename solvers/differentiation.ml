@@ -68,7 +68,7 @@ let placeholder () =
               }
   in s
 
-let random_variable ?mean:(mean = 0.) ?standard_deviation:(standard_deviation = 0.1) () =
+let random_variable ?mean:(mean = 0.) ?standard_deviation:(standard_deviation = 1.) () =
   let rec s = {gradient = None;
                arguments = [];
                descendents = [];

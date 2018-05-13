@@ -161,6 +161,10 @@ let load_problems channel =
       (task, maximum_frontier))
   in
 
+  (* Ensure that all of the tasks have the same type *)
+  let most_specific_type = unify_many_types (tf |> List.map ~f:(fun (t,_) -> t.task_type)) in
+  let tf = tf |> List.map ~f:(fun (t,f) -> ({t with task_type=most_specific_type},f)) in
+
   let verbose = try j |> member "verbose" |> to_bool      
     with _ -> false
   in
@@ -223,7 +227,23 @@ let main() =
   in
   export_frontiers tf solutions |> print_string ;;
 
-main();; 
+
+let tune_differentiation() =
+  let (tf,g,
+       lowerBound,upperBound,budgetIncrement,
+       mfp,
+     nc,timeout, verbose) =
+    load_problems stdin in
+  if List.exists tf ~f:(fun (t,_) -> t.task_type = ttower) then update_tower_cash() else ();
+  let p = parse_program "(lambda (/. (+. REAL (*. REAL $0)) (+. $0 REAL)))" |> get_some in
+  match tf with
+  |[(t,_)] -> Printf.eprintf "%f\n" (t.log_likelihood p)
+;;
+
+
+(* tune_differentiation();; *)
+
+main();;
 
 
 (* test_best_enumeration();; *)

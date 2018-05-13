@@ -255,3 +255,13 @@ let tprogram           = make_ground "program"
 let tmaybe t           = kind "maybe" [t]
 let tcanvas            = tlist tint
 
+
+let unify_many_types ts =
+  let k = empty_context in
+  let (t,k) = makeTID k in
+  let k = ref k in
+  ts |> List.iter ~f:(fun t' ->
+      let (k',t') = instantiate_type !k t' in
+      k := unify k' t' t);
+  applyContext !k t |> snd
+      

@@ -157,6 +157,9 @@ def makeTasks():
         n,f = randomRational()
         if makeTask(n,f) is None: continue
         ts.append(makeTask(n,f))
+    j = 1
+    print ts[j]
+    return [ts[1]]
     tasks += ts
 
     ts = []

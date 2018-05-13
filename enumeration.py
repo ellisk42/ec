@@ -268,8 +268,8 @@ def solveForTask_ocaml(_ = None,
         message["maxParameters"] = task.maxParameters
 
     message = json.dumps(message)
-    # with open("pipe", "w") as f:
-        # f.write(message)
+    with open("message", "w") as f:
+        f.write(message)
     try:
         process = subprocess.Popen("./solver",
                                    stdin=subprocess.PIPE,
