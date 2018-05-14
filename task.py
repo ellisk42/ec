@@ -100,8 +100,10 @@ class Task(object):
 
 class DifferentiableTask(Task):
     def __init__(self, name, request, examples, _ = None,
-                 features = None, BIC = 1., loss = None, likelihoodThreshold = None, maxParameters=None):
+                 features = None, BIC = 1., loss = None, likelihoodThreshold = None,
+                 temperature = 1., maxParameters=None):
         assert loss is not None
+        self.temperature = temperature
         self.maxParameters = maxParameters
         self.loss = loss
         self.BIC = BIC
@@ -132,7 +134,7 @@ class DifferentiableTask(Task):
             if loss > -self.likelihoodThreshold: return NEGATIVEINFINITY
             else: return -penalty
         else:
-            return -loss - penalty
+            return -loss/self.temperature - penalty
         
 def squaredErrorLoss(prediction, target):
     d = prediction - target

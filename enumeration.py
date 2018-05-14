@@ -243,6 +243,13 @@ def solveForTask_ocaml(_ = None,
                 m[p] = getattr(t,p)
         if hasattr(t, 'stringConstants'):
             m["stringConstants"] = t.stringConstants
+        if hasattr(t, 'BIC'):
+            m["parameterPenalty"] = t.BIC*math.log(len(t.examples))
+        if hasattr(t, 'likelihoodThreshold') and t.likelihoodThreshold is not None:
+            m["lossThreshold"] = -t.likelihoodThreshold
+        if hasattr(t, 'temperature') and t.temperature is not None:
+            m["temperature"] = t.temperature
+
         return m
     
     message = {"DSL": {"logVariable": g.logVariable,
@@ -259,17 +266,14 @@ def solveForTask_ocaml(_ = None,
                "budgetIncrement": budgetIncrement,
                "verbose": False,
                "shatter": 10}
-    task = tasks[0]
-    if hasattr(task, 'BIC'):
-        message["parameterPenalty"] = task.BIC*math.log(len(task.examples))
-    if hasattr(task, 'likelihoodThreshold') and task.likelihoodThreshold is not None:
-        message["lossThreshold"] = -task.likelihoodThreshold
-    if hasattr(task, 'maxParameters') and task.maxParameters is not None:
-        message["maxParameters"] = task.maxParameters
+    
+    if hasattr(tasks[0], 'maxParameters') and tasks[0].maxParameters is not None:
+        message["maxParameters"] = tasks[0].maxParameters
+
 
     message = json.dumps(message)
-    # with open("message", "w") as f:
-    #     f.write(message)
+    with open("message", "w") as f:
+        f.write(message)
     try:
         process = subprocess.Popen("./solver",
                                    stdin=subprocess.PIPE,
@@ -294,10 +298,12 @@ def solveForTask_ocaml(_ = None,
 
         # FIXME:
         # I have no idea why this bug occurs but sometimes the ocaml backend returns the wrong likelihood for programs with real numbers
-        if hasattr(t,'BIC'):
-            for r in solutions:
-                ll = -substringOccurrences("REAL", r["program"])*t.BIC*math.log(len(t.examples))
-                r["logLikelihood"] = ll
+        # This bug should be fixed!
+        # if hasattr(t,'BIC'):
+        #     if not hasattr(t,'likelihoodThreshold') or t.likelihoodThreshold is None:
+        #         for r in solutions:
+        #             ll = -substringOccurrences("REAL", r["program"])*t.BIC*math.log(len(t.examples))
+        #             r["logLikelihood"] = ll
                 
         frontier = Frontier([FrontierEntry(program = p,
                                            logLikelihood = e["logLikelihood"],

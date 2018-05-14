@@ -34,7 +34,8 @@ def makeTask(name, f):
         ex = ex[::len(ex)/N][:N]
         t = DifferentiableTask(name, arrow(treal,treal), [((x,),y) for x,y in ex ],
                                BIC = 1.,
-                               likelihoodThreshold=-0.1,
+                               likelihoodThreshold=-0.05,
+                               temperature=0.1,
                                maxParameters=6,
                                loss=squaredErrorLoss)
         t.f = f
@@ -219,8 +220,28 @@ def demo():
 
 from debugRational import *
 
+def rational_options(p):
+    p.add_argument("--smooth", action="store_true",
+                   default=False,
+                   help="smooth likelihood model")
+
+
+
 if __name__ == "__main__":
     import time
+
+    arguments = commandlineArguments(
+        featureExtractor = FeatureExtractor,
+        iterations = 10,
+        CPUs = numberOfCPUs(),
+        structurePenalty = 1.,
+        helmholtzRatio = 0.5,
+        activation="tanh",
+        maximumFrontier = 100,
+        a = 3,
+        topK = 2,
+        pseudoCounts = 30.0,
+        extras=rational_options)
     
     primitives = [real,
                   # f1,
@@ -229,9 +250,13 @@ if __name__ == "__main__":
     random.seed(42)
     tasks = makeTasks()
 
+    smooth = arguments.pop('smooth')
+
     for t in tasks:
         t.features = map(float,list(drawFunction(200, 10., t.f).ravel()))
         delattr(t,'f')
+        if smooth:
+            t.likelihoodThreshold = None
     
     eprint("Got %d tasks..."%len(tasks))
 
@@ -267,15 +292,5 @@ if __name__ == "__main__":
                            compressor="pypy",
                            evaluationTimeout = 0.1,
                            testingTasks = test,
-                           **commandlineArguments(
-                               featureExtractor = FeatureExtractor,
-                               iterations = 10,
-                               CPUs = numberOfCPUs(),
-                               structurePenalty = 1.,
-                               helmholtzRatio = 0.5,
-                               activation="tanh",
-                               maximumFrontier = 100,
-                               a = 3,
-                               topK = 2,
-                               pseudoCounts = 30.0))
+                           **arguments)
     

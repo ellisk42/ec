@@ -48,18 +48,11 @@ let load_problems channel =
   let differentiable =
     productions |> List.exists ~f:(fun (e,_,_,_) -> is_base_primitive e && "REAL" = primitive_name e)
   in
-  let parameterPenalty =
-    try j |> member "parameterPenalty" |> to_float
-    with _ -> 0.
-  in
   let maxParameters =
     try j |> member "maxParameters" |> to_int
     with _ -> 99
   in
-  let lossThreshold =
-    try Some(j |> member "lossThreshold" |> to_float)
-    with _ -> None
-  in
+
 
   (* string constant parameters *)
   let is_constant_task = productions |> List.exists ~f:(fun (p,_,_,_) ->
@@ -132,6 +125,20 @@ let load_problems channel =
         with _ -> []
       in
 
+      let parameterPenalty =
+        try j |> member "parameterPenalty" |> to_float
+        with _ -> 0.
+      in
+      let temperature =
+        try j |> member "temperature" |> to_float
+        with _ -> 1.
+      in
+      let lossThreshold =
+        try Some(j |> member "lossThreshold" |> to_float)
+        with _ -> None
+      in
+
+
       (* towers *)
       let tower_stuff =
         try
@@ -152,7 +159,7 @@ let load_problems channel =
          | Some(ts) -> ts
          | None -> 
            if differentiable
-           then differentiable_task ~parameterPenalty:parameterPenalty
+           then differentiable_task ~parameterPenalty:parameterPenalty ~temperature:temperature
                ~lossThreshold:lossThreshold ~maxParameters:maxParameters
            else if is_constant_task then
              constant_task ~maxParameters:maxParameters ~parameterPenalty:parameterPenalty ~stringConstants:stringConstants else supervised_task)

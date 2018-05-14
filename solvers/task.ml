@@ -45,6 +45,7 @@ let supervised_task ?timeout:(timeout = 0.001) name ty examples =
   }
 
 let differentiable_task
+  ?temperature:(temperature=1.)
     ?parameterPenalty:(parameterPenalty=0.)
     ?lossThreshold:(lossThreshold=None)
     ?maxParameters:(maxParameters=100)
@@ -99,7 +100,7 @@ let differentiable_task
           (* Printf.eprintf "%s has l=%f\n" (string_of_program expression) l;
            * flush_everything(); *)
           match lossThreshold with
-          | None -> 0. -. d*.parameterPenalty -. n *. l
+          | None -> 0. -. d*.parameterPenalty -. n *. l /. temperature
           | Some(t) ->
             if l < t then 0. -. d*.parameterPenalty else log 0.)
   }
