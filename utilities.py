@@ -289,10 +289,33 @@ def sampleDistribution(d):
     import random
     
     z = float(sum(t[0] for t in d))
+    if z == 0.:
+        eprint("sampleDistribution: z = 0")
+        eprint(d)
     r = random.random()
     u = 0.
     for t in d:
         p = t[0]/z
+        if r < u + p:
+            if len(t) <= 2: return t[1]
+            else: return t[1:]
+        u += p
+    assert False
+
+def sampleLogDistribution(d):
+    """
+    Expects d to be a list of tuples
+    The first element should be the log probability
+    If the tuples are of length 2 then it returns the second element
+    Otherwise it returns the suffix tuple
+    """
+    import random
+    
+    z = lse([t[0] for t in d])
+    r = random.random()
+    u = 0.
+    for t in d:
+        p = math.exp(t[0]-z)
         if r < u + p:
             if len(t) <= 2: return t[1]
             else: return t[1:]

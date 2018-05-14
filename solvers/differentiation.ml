@@ -195,7 +195,7 @@ let restarting_optimize opt ?update:(update = 1000)
     ?iterations:(iterations = 10000) parameters loss =
   (0--attempts) |> List.map ~f:(fun _ ->
       parameters |> List.iter ~f:(fun parameter ->
-          update_variable parameter (normal 1. 0.));
+          update_variable parameter (uniform_interval ~l:(-5.) ~u:5.));
       run_optimizer opt ~update:update ~iterations:iterations parameters loss) |>
   fold1 min
 

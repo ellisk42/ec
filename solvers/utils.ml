@@ -236,6 +236,11 @@ let rec uniform_positive () =
   let u = Random.float 1.0 in
   if u > 0.0 then u else uniform_positive ()
 
+let uniform_interval ~l ~u =
+  assert (u > l);
+  let x = uniform_positive() in
+  (l+.u)/.2. +. (u-.l)*.x
+
 
 let rec sample_gamma a b = 
   if a < 1.0

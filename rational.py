@@ -77,7 +77,7 @@ def randomPolynomial(order):
     return name,f
 
 def randomFactored(order):
-    offsets = [ randomCoefficient(m=10) for _ in range(order) ]
+    offsets = [ randomCoefficient(m=5) for _ in range(order) ]
     def f(x):
         p = 1.
         for o in offsets:
