@@ -38,15 +38,16 @@ def makeTask(name, f):
     
     return None
 
-def randomCoefficient():
-    m = 10
+def randomCoefficient(m=10):
     if random.random() > 0.5:
-        return 1. + (random.random()*(m - 1))
-    return -(1. + (random.random()*(m - 1)))
+        f = 1. + (random.random()*(m - 1))
+    f = -(1. + (random.random()*(m - 1)))
+    f = float("%0.1f"%f)
+    return f
 
 
 def randomPolynomial(order):
-    coefficients = [ randomCoefficient() for _ in range(order + 1) ]
+    coefficients = [ randomCoefficient(m=5) for _ in range(order + 1) ]
     def f(x):
         return sum( c*(x**(order-j)) for j,c in enumerate(coefficients) )
     name = ""
@@ -71,7 +72,7 @@ def randomPolynomial(order):
     return name,f
 
 def randomFactored(order):
-    offsets = [ randomCoefficient() for _ in range(order) ]
+    offsets = [ randomCoefficient(m=10) for _ in range(order) ]
     def f(x):
         p = 1.
         for o in offsets:
@@ -202,8 +203,7 @@ def demo():
     from PIL import Image
     
     for j,t in enumerate(makeTasks()):#xrange(100):
-        name,f = t.name, t.f #randomRational()#randomPolynomial(3)
-#        if makeTask(name,f) is None: continue
+        name,f = t.name, t.f
         
         print j,"\n",name
         a = drawFunction(200,5.,f,resolution=128)*255
@@ -211,6 +211,9 @@ def demo():
     assert False
 #demo()
 
+
+
+from debugRational import *
 
 if __name__ == "__main__":
     primitives = [real,
@@ -221,13 +224,32 @@ if __name__ == "__main__":
     tasks = makeTasks()
 
     for t in tasks:
-        t.features = map(float,list(drawFunction(200, 10., t.f).ravel()))
+        #t.features = map(float,list(drawFunction(200, 10., t.f).ravel()))
         delattr(t,'f')
     
     eprint("Got %d tasks..."%len(tasks))
 
     test, train = testTrainSplit(tasks, 100)
     eprint("Training on",len(train),"tasks")
+
+    if True:
+        hardTasks = [t for t in train
+                     if '/' in t.name and '[' in t.name]
+        for clamp in [ True,False]:
+            for lr in [0.1,0.05,0.5,1.]:
+                for steps in [50,100,200]:
+                    for attempts in [10,50,100,200]:
+                        losses = callCompiled(debugMany,hardTasks,
+                                              clamp,lr,steps, attempts)
+                        losses = dict(zip(hardTasks,losses))
+                        failures = 0
+                        for t,l in sorted(losses.iteritems(),key=lambda (t,l): l):
+                            #print t,l
+                            if l > -t.likelihoodThreshold: failures +=1
+                        eprint("clamp,lr,steps, attempts",clamp,lr,steps, attempts)
+                        eprint("%d/%d failures"%(failures,len(hardTasks)))
+            
+        assert False
     
     explorationCompression(baseGrammar, train,
                            outputPrefix = "experimentOutputs/rational",

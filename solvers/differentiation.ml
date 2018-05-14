@@ -108,6 +108,14 @@ let exponential =
 let square =
   make_unitary_variable (fun a -> a*.a) (fun a -> [2.*.a])
 
+let clamp ~l ~u =
+  make_unitary_variable (fun a ->
+      if a > u then u else
+      if a < l then l else
+        a)
+    (fun a ->
+       if a > u || a < l then [0.] else [1.])
+
 let log_soft_max xs =
   make_variable (fun vs -> 
       let m : float = List.fold_right vs ~init:Float.neg_infinity  ~f:max in

@@ -85,6 +85,7 @@ class DN(object):
     def log(self): return Logarithm(self)
     def square(self): return Square(self)
     def exp(self): return Exponentiation(self)
+    def clamp(self,l,u): return Clamp(self,l,u)
     def __abs__(self): return AbsoluteValue(self)
     def __add__(self,o): return Addition(self, Placeholder.maybe(o))
     def __radd__(self,o): return Addition(self, Placeholder.maybe(o))
@@ -121,6 +122,16 @@ class DN(object):
             for p in parameters:
                 p.data -= lr*p.derivative
         return self.data
+
+    def restartingOptimize(self, parameters, _=None, attempts=1,
+                           lr = 0.1, steps = 10**3, update = None):
+        ls = []
+        for _ in xrange(attempts):
+            for p in parameters:
+                p.data = normal(m=0.,s=1)
+            ls.append(self.resilientBackPropagation(parameters, lr=lr, steps=steps))
+        return min(ls)
+                
 
     def resilientBackPropagation(self, parameters, _ = None, lr = 0.1, steps = 10**3, update = None):
         previousSign = [None]*len(parameters)
@@ -175,6 +186,23 @@ class Placeholder(DN):
     def forward(self): return self.data
     def backward(self): return []
 
+
+class Clamp(DN):
+    def __init__(self, x, l, u):
+        assert u > l
+        self.l = l
+        self.u = u
+        super(Clamp,self).__init__([x])
+        self.name = "clamp"
+
+    def forward(self, x):
+        if x > self.u: return self.u
+        if x < self.l: return self.l
+        return x
+    def backward(self, x):
+        if x > self.u or x < self.l: return [0.]
+        else: return [1.]
+        
 class Addition(DN):
     def __init__(self, x, y):
         super(Addition,self).__init__([x,y])

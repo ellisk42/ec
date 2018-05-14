@@ -435,6 +435,15 @@ class PQ(object):
 def substringOccurrences(ss, s):
     return sum(s[i:].startswith(ss) for i in xrange(len(s)) )
 
+def normal(s=1.,m=0.):
+    u = random.random()
+    v = random.random()
+    
+    n =  math.sqrt(-2.0 * log (u)) * math.cos (2.0 * math.pi * v)
+    
+    return s * n + m
+
+
 if __name__ == "__main__":
     def f():
         return 5/0
