@@ -389,6 +389,7 @@ let multicore_enumeration ?final:(final=fun () -> []) ?cores:(cores=1) ?shatter:
     let actions = fringe |>
                   List.map ~f:(fun s () -> continuation s) in
     let fringe_results = parallel_work ~nc:cores ~chunk:1 ~final:final actions in
+    (* ignore(time_it "Evaluated finished programs" (fun () -> *)
     finished |> List.iter ~f:(fun s -> k s.skeleton (0.-.s.cost));
     final() :: fringe_results
   else begin 

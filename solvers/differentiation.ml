@@ -115,6 +115,7 @@ let clamp ~l ~u =
         a)
     (fun a ->
        if a > u || a < l then [0.] else [1.])
+    
 
 let log_soft_max xs =
   make_variable (fun vs -> 
@@ -310,7 +311,7 @@ let rec placeholder_data t x =
 exception DifferentiableBadShape
 
 let rec polymorphic_sse = function
-  | TCon("real",_,_) -> magical (fun p y -> square (p -& y))
+  | TCon("real",_,_) -> magical (fun p y -> square ((clamp ~l:(-15.) ~u:15. p) -& y))
   | TCon("list",[tp],_) ->
     let e = polymorphic_sse tp in
     magical (fun p y ->

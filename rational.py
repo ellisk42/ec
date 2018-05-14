@@ -18,6 +18,8 @@ def makeTask(name, f):
 
     maximum = 10
 
+    N = 20
+
     inputs = []
     outputs = []
     for x in xs:
@@ -28,7 +30,9 @@ def makeTask(name, f):
             outputs.append(float(y))
 
     if len(inputs) > 25:
-        t = DifferentiableTask(name, arrow(treal,treal), [((x,),y) for x,y in zip(inputs, outputs) ],
+        ex = zip(inputs, outputs)
+        ex = ex[::len(ex)/N][:N]
+        t = DifferentiableTask(name, arrow(treal,treal), [((x,),y) for x,y in ex ],
                                BIC = 1.,
                                likelihoodThreshold=-0.1,
                                maxParameters=6,
@@ -226,7 +230,7 @@ if __name__ == "__main__":
     tasks = makeTasks()
 
     for t in tasks:
-        #t.features = map(float,list(drawFunction(200, 10., t.f).ravel()))
+        t.features = map(float,list(drawFunction(200, 10., t.f).ravel()))
         delattr(t,'f')
     
     eprint("Got %d tasks..."%len(tasks))
@@ -234,7 +238,7 @@ if __name__ == "__main__":
     test, train = testTrainSplit(tasks, 100)
     eprint("Training on",len(train),"tasks")
 
-    if True:
+    if False:
         hardTasks = [t for t in train
                      if '/' in t.name and '[' in t.name]
         for clamp in [ True,False]:

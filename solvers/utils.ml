@@ -143,17 +143,17 @@ let float_interval (i : float) (s : float) (j : float) : float list =
 (*   let open Core.Time in *)
 (*   Core.Time. *)
 (*   Core.Time.to_float @@ Time.now () *)
+let flush_everything () =
+  flush stdout;
+  flush stderr
+
 
 let time_it description callback = 
   let start_time = Time.now () in
   let return_value = callback () in
-  Printf.printf "%s in %s." description (Time.diff (Time.now ()) start_time |> Time.Span.to_string); 
-  print_newline ();
+  Printf.eprintf "%s in %s.\n" description (Time.diff (Time.now ()) start_time |> Time.Span.to_string); 
+  flush_everything();
   return_value
-
-let flush_everything () =
-  flush stdout;
-  flush stderr
 
 let shuffle d = begin
     Random.self_init ();
