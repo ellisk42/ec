@@ -34,8 +34,12 @@ class Command(object):
         thread.start()
         thread.join(timeout)   # Wait for finish in less than timeout
                                # If not ready yet, then:
-        if thread.is_alive():  # Ask him nicely to stop, then wait again
-            self.process.send_signal(signal.SIGUSR1)
+                               # Ask him nicely to stop, then wait again
+        if thread.is_alive() and self.process is not None:
+            try:
+                self.process.send_signal(signal.SIGUSR1)
+            except AttributeError:
+                eprint("A process was 'None'. Investiagate")
             thread.join()
 
         return (self.r,self.e)
