@@ -2,7 +2,8 @@ from ec import *
 
 import dill
 import numpy as np
-
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plot
 from matplotlib.ticker import MaxNLocator
 import matplotlib.lines as mlines
@@ -29,6 +30,7 @@ def parseResultsPath(p):
     rest = p.split('_')[1:]
     if rest[-1] == "baselines":
         rest.pop()
+    rest = [string for string in rest if not 'probabilistic' in string]
     parameters = { ECResult.parameterOfAbbreviation(k): eval(v)
                    for binding in rest
                    for [k,v] in [binding.split('=')] }

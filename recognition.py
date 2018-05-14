@@ -5,7 +5,8 @@ from heapq import *
 from utilities import eprint
 #luke
 from program import tokeniseProgram, untokeniseProgram, ParseFailure
-from network import Network #for now
+#from network import Network #for now
+import pinn
 
 import gc
 from multiprocessing import Pool
@@ -679,21 +680,25 @@ class JSONFeatureExtractor(object):
         self.tasks = tasks
 
     def stringify(self, x):
-        return json.dumps(x, separators=(',', ':')) #No whitespace
+        return json.dumps(x, separators=(',', ':')) #No whitespace #maybe kill the seperators
 
     def featuresOfTask(self, t):
         #>>> t.request to get the type
         #>>> t.examples to get input/output examples
-        return [(self.stringify(input[0]), self.stringify(output)) for (input, output) in t.examples] 
-
+        #this might actually be okay, because the input should just be nothing
+        return [(self.stringify(inputs), self.stringify(output)) for (inputs, output) in t.examples] 
+        return [(self.stringify(output),) for (inputs, output) in t.examples]
 
     def featuresOfProgram(self, p, t):
         features = self._featuresOfProgram(p,t)
         if features is None: 
             return None
-        return [(self.stringify(x), self.stringify(y)) for (x,y) in features]
+        #return [(self.stringify(x), self.stringify(y)) for (x,y) in features]
+        return [(feature,) for feature in features]
+        #TODO: should possibly match 
+        
 
-
+#TODO
 class NewRecognitionModel(nn.Module):
     def __init__(self, featureExtractor, grammar, vocabulary=string.printable, cuda=False):
         super(NewRecognitionModel, self).__init__()
@@ -710,9 +715,9 @@ class NewRecognitionModel(nn.Module):
         self.featureExtractor = featureExtractor
 
         #TODO: modify for regex using pinn
-        self.network = Network(
-            input_vocabulary = vocabulary,
-            target_vocabulary = self.getTargetVocabulary(grammar)
+        self.network = pinn.RobustFill(
+            input_vocabularies=[vocabulary],
+            target_vocabulary=self.getTargetVocabulary(grammar)
             )
         # Sanity check - make sure that all of the parameters of the
         # feature extractor were added to our parameters as well
@@ -727,8 +732,8 @@ class NewRecognitionModel(nn.Module):
                                 [str(p) for p in grammar.primitives]
 
     def updateGrammar(self, grammar):
-        self.network.set_target_vocabulary(self.getTargetVocabulary(grammar))
-        self.network = copy.deepcopy(self.network) #Annoying to have to do this, but it's okay - why?
+        #self.network.set_target_vocabulary(self.getTargetVocabulary(grammar))
+        self.network = self.network.with_target_vocabulary(self.getTargetVocabulary(grammar)) #Annoying to have to do this, but it's okay - why?
 
     def train(self, frontiers, _=None, steps=250, lr=0.001, topK=1, CPUs=1,
               helmholtzRatio = 0.):
@@ -758,20 +763,25 @@ class NewRecognitionModel(nn.Module):
                     permutedFrontiers = list(frontiers)
                     random.shuffle(permutedFrontiers)
                     
-                    eprint("frontiers:")
-                    eprint(frontiers)
-                    eprint("permutedFrontiers:")
-                    eprint(permutedFrontiers)
+                    #eprint("frontiers:")
+                    #eprint(frontiers)
+                    #eprint("permutedFrontiers:")
+                    #eprint(permutedFrontiers)
                 
                 else: permutedFrontiers = [None]
                 frontier_num = 0
                 for frontier in permutedFrontiers:
                     eprint("frontier num", frontier_num, "out of", len(permutedFrontiers))
+                    eprint("frontier:", permutedFrontiers)
                     frontier_num += 1
                     # Randomly decide whether to sample from the generative model
+                    #for now, only helmholtz
+                    assert helmholtzRatio >= 1
                     doingHelmholtz = random.random() < helmholtzRatio
                     if doingHelmholtz:
                         networkInputs = self.helmholtzNetworkInputs(requests, HELMHOLTZBATCH, CPUs)
+                        #eprint("networkInputs[0]", networkInputs[0])
+                        #eprint("networkInputs[1]", networkInputs[1])
                         loss = self.step(*networkInputs)
                     if not doingHelmholtz:
                         if helmholtzRatio < 1.:
@@ -819,25 +829,26 @@ class NewRecognitionModel(nn.Module):
         helmholtzSamples = [x for x in helmholtzSamples if x is not None] #good
 
         #TODO: modify for regexes
-        inputss = [[_in for (_in, _out) in features] for (program, request, features) in helmholtzSamples]
-        outputss = [[_out for (_in, _out) in features] for (program, request, features) in helmholtzSamples]
+        #inputss = [[_in for (_in, _out) in features] for (program, request, features) in helmholtzSamples]
+
+        #TODO: may need to remove the tuple thing - yeah
+        outputss = [[_out for _out in features] for (program, request, features) in helmholtzSamples]
         targets = [tokeniseProgram(program) for (program, request, features) in helmholtzSamples]
         #For now, just concat input + output
         # joinedInputsOutputs = [[inputss[i][j] + outputss[i][j] for j in range(len(inputss[i]))] for i in range(len(inputss))]
 
         #Filter to length <= 30
         valid_idxs = [i for i in range(len(targets)) if \
-            len(targets[i])<=30 and \
-            all(len(example)<=30 for example in inputss[i]) and \
-            all(len(example)<=30 for example in outputss[i])]
+            len(targets[i])<=100 and \
+            all(len(example)<=100 for example in outputss[i])]
 
         # batchInputsOutputs = [joinedInputsOutputs[i] for i in valid_idxs]
-        batchInputs = [inputss[i] for i in valid_idxs]
         batchOutputs = [outputss[i] for i in valid_idxs]
         batchTargets = [targets[i] for i in valid_idxs]
 
-        return batchInputs, batchOutputs, batchTargets
+        return batchOutputs, batchTargets
 
+    #deprecated, does not work
     def shuffledNetworkInputs(self, requests, batchSize, CPUs):
         batchInputs, batchOutputs, batchTargets =  self.helmholtzNetworkInputs(requests, batchSize, CPUs)
         permutedBatchTargets = batchTargets[:]
@@ -860,6 +871,7 @@ class NewRecognitionModel(nn.Module):
 
     #     return loss, permutedLoss
 
+    #TODO: I dont think this is used, it is currently deprecated 
     def getCurrentLoss(self, batchInputs, batchOutputs, batchTargets):
         score = self.network.score(batchInputs, batchOutputs, batchTargets)
         loss = -score
@@ -873,7 +885,10 @@ class NewRecognitionModel(nn.Module):
 
     def sampleHelmholtz(self, requests):
            request = random.choice(requests)
+           #may want to weigh less likely programs more heavily
            program = self.grammar.sample(request)
+
+
            #>>> Increase maxDepth, might actually make sampling faster
            #>>> Call out to pypy
            features = self.featureExtractor.featuresOfProgram(program, request)
@@ -912,9 +927,12 @@ class NewRecognitionModel(nn.Module):
             features = self.featureExtractor.featuresOfTask(task)
             # features = [(input, output) for (input, output) in features if len(input[0])<=30 and len(output)<=30]
             # np.random.shuffle(features)
+
 			# had to change the line below for python 3
             # TODO: modify for input output for regexes.
-            features = sorted(features, key=lambda in_out: len(in_out[0][0])**2 + len(in_out[1])**2)
+
+            #TODO: may need to fix this
+            features = sorted(features, key=lambda out: len(out[0])**2)
             tasks_features.append((task, features))
 
             # proposals_scores[task] = []
@@ -926,7 +944,12 @@ class NewRecognitionModel(nn.Module):
             #         (tuple(samples[i]), scores[i]) for i in range(len(samples))
             #     )))
 
-        network = copy.deepcopy(self.network).cpu() #to send to workers
+
+        #network = copy.deepcopy(self.network).cpu() #to send to workers
+        network = copy.deepcopy(self.network)
+        assert network is not None
+
+
         torch.set_default_tensor_type('torch.FloatTensor')
         # print(type(network.input_encoder_init[0].data))
         # self.network.float()
@@ -938,9 +961,10 @@ class NewRecognitionModel(nn.Module):
         # print(self.network.input_encoder_init[0].float())
         # raise Exception()
         # network = self.network
-
+        assert network is not None
         #TODO
-        x = enumerateNetwork( #Can't callcompiled because program.Primitive doesn't have the right globals
+        #Can't callcompiled because program.Primitive doesn't have the right globals
+        x = enumerateNetwork( 
                     network, tasks_features, likelihoodModel, solver=solver,
                     frontierSize = frontierSize, enumerationTimeout=enumerationTimeout, 
                     CPUs=CPUs, maximumFrontier=maximumFrontier,

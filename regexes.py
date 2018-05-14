@@ -62,21 +62,32 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
 class MyJSONFeatureExtractor(JSONFeatureExtractor):
     N_EXAMPLES = 5
     def _featuresOfProgram(self, program, tp):
-        e = program.evaluate([])
+        try:
+            preg = program.evaluate([])
+            #if 'left_paren' in program.show(False): 
+                #eprint("string_pregex:", string_pregex)
+            #eprint("string_pregex:", string_pregex)
+            
+        except IndexError:
+            # free variable
+            return None
+        except Exception as e:
+            eprint("Exception during evaluation:", e) 
+            if "Attempt to evaluate fragment variable" in e:
+                eprint("program (bc fragment error)", program)
+            return None 
 
         examples = []
-        if isListFunction(tp):
-            sample = lambda: random.sample(range(30), random.randint(0, 8))
-        elif isIntFunction(tp):
-            sample = lambda: random.randint(0, 20)
-        else:
-            return None
-        for _ in range(self.N_EXAMPLES*5):
-            x = sample()
+
+        for _ in range(self.N_EXAMPLES*5): #oh this is arbitrary ig
+
+
+
             try:
-                y = e(x)
+                y = preg.sample() #TODO
+
                 #eprint(tp, program, x, y)
-                examples.append(x, y)
+                examples.append(y)
             except: continue
             if len(examples) >= self.N_EXAMPLES: break
         else:

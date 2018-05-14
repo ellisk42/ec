@@ -4,6 +4,7 @@ from task import *
 from type import *
 from program import *
 from grammar import *
+from pregex import pregex
 
 import gc
 import traceback
@@ -313,19 +314,20 @@ def enumerateNetwork(network, tasks_features, likelihoodModel, solver=None,
     chunk_size = int(math.ceil(len(tasks_features) / CPUs)) if int(math.ceil(len(tasks_features) / CPUs)) > 0 else 1
     eprint("enumerateNetwork with", chunk_size, "tasks per cpu")
 
-    chunked_tasks_features = [tasks_features[i:i + chunk_size] for i in xrange(0, len(tasks_features), chunk_size)]
+    chunked_tasks_features = [tasks_features[i:i + chunk_size] for i in range(0, len(tasks_features), chunk_size)]
     
 
     #TODO, enumerateNetworkForTasks
     frontierss = parallelMap(CPUs,            
-                            lambda cpu_idx__tasks_features: enumerateNetworkForTasks(cpu_idx__tasks_features[0], network, cpu_idx__tasks_features[1], #this may break
+                            lambda cpu_idx__tasks_features: enumerateNetworkForTasks(cpu_idx__tasks_features[0], network, cpu_idx__tasks_features[1],
+                                                                     likelihoodModel=likelihoodModel, #this may break
                                                                      frontierSize=frontierSize,
                                                                      timeout=enumerationTimeout,
                                                                      evaluationTimeout = evaluationTimeout,
                                                                      verbose=verbose,
                                                                      maximumFrontier=maximumFrontier),
-                            zip(range(len(chunked_tasks_features)), chunked_tasks_features),
-                            chunk = 1)
+                            list(zip(list(range(len(chunked_tasks_features))), chunked_tasks_features)),
+                            chunksize=1)
     frontiers = [frontier for frontiers in frontierss for frontier in frontiers] #wtf is happening
     # if verbose:
     #     eprint("Enumerated %d frontiers in time %f"%(len(), time() - start))
@@ -334,12 +336,15 @@ def enumerateNetwork(network, tasks_features, likelihoodModel, solver=None,
 class EnumerationTimeout(Exception): pass
 
 #from luke
-def enumerateNetworkForTasks(cpu_idx, network, tasks_features, _ = None,
+def enumerateNetworkForTasks(cpu_idx, network, tasks_features, likelihoodModel=None,
                      verbose=False,
                      timeout=None,
                      evaluationTimeout=None,
                      frontierSize=None,
                      maximumFrontier = 10**2):
+    assert likelihoodModel is not None
+    assert network is not None
+
     assert (timeout is not None) or (frontierSize is not None), \
         "enumerateForTask: You must provide either a timeout or a frontier size."
     eprint("(%d)"%cpu_idx, "enumerateNetworkForTasks")
@@ -370,16 +375,23 @@ def enumerateNetworkForTasks(cpu_idx, network, tasks_features, _ = None,
 
             for i in range(50):
                 random.shuffle(features)
-                inputs = [input for (input, output) in features[:4]]
-                outputs = [output for (input, output) in features[:4]]
-                samples, scores = network.sampleAndScore([inputs]*100, [outputs]*100)
+                #inputs = [input for (input, output) in features[:4]]
+                outputs = [output for output in features[:5]] #changed from 4 to 5
+                #this line 
+                samples, scores = network.sampleAndScore([outputs]*100)
                 new_proposals_scores = [(tuple(samples[i]), scores[i]) for i in range(len(samples)) if tuple(samples[i]) not in seen_proposals]
                 seen_proposals = seen_proposals | set(x[0] for x in new_proposals_scores)
 
                 for sample, prior in new_proposals_scores:
                     try:
+                        #eprint("untokenized program:", sample)
                         p = untokeniseProgram(sample)
-                        likelihood = task.logLikelihood(p, timeout=evaluationTimeout) #TODO: change this
+                        if not isinstance(p, pregex.Pregex): continue
+
+                        #likelihood = task.logLikelihood(p, timeout=evaluationTimeout) #TODO: change this
+                        #eprint("tokenized program:", p)
+                        _, likelihood = likelihoodModel.score(p, task)
+                        eprint("sampled an actual program")
                     except ParseFailure: continue
                     except RunFailure: continue #Happens during likelihood evaluation for e.g. (lambda $3)
                     
@@ -387,7 +399,7 @@ def enumerateNetworkForTasks(cpu_idx, network, tasks_features, _ = None,
 
                     if valid(likelihood):
                         if verbose:
-                            eprint("(%d)"%cpu_idx, "Hit",task.name,"with the program",p,"which has prior",prior,"after",time() - starting,"seconds")
+                            eprint("(%d)"%cpu_idx, "Hit",task.name,"with the program",p,"which has prior",prior,"after",time() - starting,"seconds using RobustFill model")
                         frontier.append(FrontierEntry(program = p,
                                                       logPrior = prior,
                                                       logLikelihood = likelihood))
