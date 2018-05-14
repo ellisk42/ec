@@ -429,6 +429,7 @@ def rustInduce(g0, frontiers, _=None,
                    zip((p for (_, _, p) in g0.productions if p.isPrimitive), resp["primitives"])] + \
                   [(i["logp"], Invented(Program.parse(i["expression"])))
                    for i in resp["inventions"] ]
+    productions = [(l if l is not None else float("-inf"), p) for l, p in productions]
     g = Grammar.fromProductions(productions, resp["variable_logprob"])
     newFrontiers = [Frontier(
         [FrontierEntry(Program.parse(s["expression"]), logPrior=s["logprior"], logLikelihood=s["loglikelihood"])
