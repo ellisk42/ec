@@ -44,9 +44,29 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
         p = p.visit(ConstantInstantiateVisitor.SINGLE)
         return super(LearnedFeatureExtractor, self).taskOfProgram(p,tp)
 
+def text_options(parser):
+    parser.add_argument("--doChallenge", action="store_true",
+                        default=False,
+                        help="Evaluate model after/before each iteration on sygus")
+    parser.add_argument("--trainChallenge", action="store_true",
+                        default=False,
+                        help="Incorporate a random 50% of the challenge problems into the training set")
 
 if __name__ == "__main__":
-    doChallenge = True
+    arguments = commandlineArguments(
+        steps = 250,
+        iterations = 10,
+        helmholtzRatio = 0.5,
+        topK = 2,
+        maximumFrontier = 2,
+        structurePenalty = 10.,
+        a = 3,
+        activation = "tanh",
+        CPUs = numberOfCPUs(),
+        featureExtractor = LearnedFeatureExtractor,
+        pseudoCounts = 30.0,
+        extras=text_options)
+    doChallenge = arguments.pop('doChallenge')
     
     tasks = makeTasks()
     eprint("Generated",len(tasks),"tasks")
@@ -59,6 +79,14 @@ if __name__ == "__main__":
     challenge, challengeCheating = loadPBETasks()
     eprint("Got %d challenge PBE tasks"%len(challenge))
 
+    if arguments.pop('trainChallenge'):
+        challengeTest, challengeTrain = testTrainSplit(challenge,0.5)
+        challenge = challengeTest
+        train += challengeTrain
+        eprint("Incorporating %d (50%%) challenge problems into the training set."%(len(challengeTrain)),
+               "We will evaluate on the held out challenge problems.",
+               "This makes a total of %d training problems."%len(train))
+
     ConstantInstantiateVisitor.SINGLE = \
      ConstantInstantiateVisitor(map(list,list({ tuple([c for c in s])
                                                 for t in test + train + challenge
@@ -68,28 +96,17 @@ if __name__ == "__main__":
     challengeGrammar = baseGrammar #Grammar.uniform(targetTextPrimitives)
     
     evaluationTimeout = 0.0005
-    # We will spend 30 minutes on each challenge problem
-    challengeTimeout = 30 * 60
+    # We will spend 10 minutes on each challenge problem
+    challengeTimeout = 10 * 60
     
     generator = ecIterator(baseGrammar, train,
                            testingTasks = test + challenge,
                            outputPrefix = "experimentOutputs/text",
                            evaluationTimeout = evaluationTimeout,
                            compressor="pypy", # 
-                           **commandlineArguments(
-                               steps = 250,
-                               iterations = 10,
-                               helmholtzRatio = 0.5,
-                               topK = 2,
-                               maximumFrontier = 2,
-                               structurePenalty = 10.,
-                               a = 3,
-                               activation = "tanh",
-                               CPUs = numberOfCPUs(),
-                               featureExtractor = LearnedFeatureExtractor,
-                               pseudoCounts = 10.0))
+                           **arguments)
     if doChallenge:
-        eprint("challenge problems before learning...")
+        eprint("held out challenge problems before learning...")
         challengeFrontiers, times = multicoreEnumeration(challengeGrammar, challenge, "all-or-nothing",
                                          CPUs=numberOfCPUs(),
                                          solver="ocaml",
