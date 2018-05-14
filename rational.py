@@ -92,7 +92,7 @@ def randomFactored(order):
     return name,f
 
 def randomRational():
-    no = random.choice([0,1,2])
+    no = random.choice([0,1])
     nn,n = randomPolynomial(no)
     dn,d = randomFactored(random.choice([1,2]))
 
