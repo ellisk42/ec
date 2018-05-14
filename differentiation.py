@@ -124,11 +124,12 @@ class DN(object):
         return self.data
 
     def restartingOptimize(self, parameters, _=None, attempts=1,
+                           s=1.,
                            lr = 0.1, steps = 10**3, update = None):
         ls = []
         for _ in xrange(attempts):
             for p in parameters:
-                p.data = normal(m=0.,s=1)
+                p.data = normal(m=0.,s=s)
             ls.append(self.resilientBackPropagation(parameters, lr=lr, steps=steps))
         return min(ls)
                 

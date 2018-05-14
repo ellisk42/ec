@@ -3,7 +3,7 @@ from utilities import *
 from differentiation import *
 
 placeholders = []
-def debug(t, clamp, lr, steps, attempts):
+def debug(t, clamp, lr, steps, attempts,s):
     global placeholders
     import re
 
@@ -39,5 +39,5 @@ def debug(t, clamp, lr, steps, attempts):
                                 lr=lr,
                                 steps=steps)
 
-def debugMany(ts, clamp, lr, steps, attempts):
-    return parallelMap(numberOfCPUs()/2,lambda t: debug(t,clamp, lr, steps, attempts), ts)
+def debugMany(ts, clamp, lr, steps, attempts, s):
+    return parallelMap(numberOfCPUs()*3/4,lambda t: debug(t,clamp, lr, steps, attempts,s), ts)

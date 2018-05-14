@@ -239,15 +239,16 @@ if __name__ == "__main__":
             for lr in [0.1,0.05,0.5,1.]:
                 for steps in [50,100,200]:
                     for attempts in [10,50,100,200]:
-                        losses = callCompiled(debugMany,hardTasks,
-                                              clamp,lr,steps, attempts)
-                        losses = dict(zip(hardTasks,losses))
-                        failures = 0
-                        for t,l in sorted(losses.iteritems(),key=lambda (t,l): l):
-                            #print t,l
-                            if l > -t.likelihoodThreshold: failures +=1
-                        eprint("clamp,lr,steps, attempts",clamp,lr,steps, attempts)
-                        eprint("%d/%d failures"%(failures,len(hardTasks)))
+                        for s in [0.1,0.5,1,3]:
+                            losses = callCompiled(debugMany,hardTasks,
+                                                  clamp,lr,steps, attempts,s)
+                            losses = dict(zip(hardTasks,losses))
+                            failures = 0
+                            for t,l in sorted(losses.iteritems(),key=lambda (t,l): l):
+                                #print t,l
+                                if l > -t.likelihoodThreshold: failures +=1
+                            eprint("clamp,lr,steps, attempts,std",clamp,lr,steps, attempts,s)
+                            eprint("%d/%d failures"%(failures,len(hardTasks)))
             
         assert False
     
