@@ -284,16 +284,37 @@ if __name__ == "__main__":
         "Lucas-depth3": lambda: retrieveJSONTasks("data/list_tasks2.json"),
     }[dataset]()
 
-    necessaryTasks = [] # maxTasks will not consider these
-    if dataset.startswith("Lucas2.0") and dataset != "Lucas2.0-depth1":
-        necessaryTasks = tasks[:105]
-
     maxTasks = args.pop("maxTasks")
     if maxTasks and len(tasks) > maxTasks:
+        necessaryTasks = [] # maxTasks will not consider these
+        if dataset.startswith("Lucas2.0") and dataset != "Lucas2.0-depth1":
+            necessaryTasks = tasks[:105]
+
         eprint("Unwilling to handle {} tasks, truncating..".format(len(tasks)))
         random.shuffle(tasks)
         del tasks[maxTasks:]
         tasks = necessaryTasks + tasks
+
+    if dataset == "Lucas-old":
+        # extra tasks for filter
+        tasks.extend([
+            Task("remove empty lists",
+                 arrow(tlist(tlist(tbool)), tlist(tlist(tbool))),
+                 [((ls,), filter(lambda l: len(l) > 0, ls))
+                  for _ in range(15)
+                  for ls in [[[ random.random() < 0.5 for _ in range(random.randint(0,3)) ]
+                              for _ in range(4) ]] ]),
+            Task("remove non 0s",
+                 arrow(tlist(tint), tlist(tint)),
+                 [((xs,), filter(lambda x: x == 0, xs))
+                  for _ in range(15)
+                  for xs in [[ random.randint(0,3) for _ in range(5) ]] ]),
+            Task("remove 0s",
+                 arrow(tlist(tint), tlist(tint)),
+                 [((xs,), filter(lambda x: x != 0, xs))
+                  for _ in range(15)
+                  for xs in [[ random.randint(0,3) for _ in range(5) ]] ]),
+        ])
 
     prims = {"base": basePrimitives,
              "McCarthy": McCarthyPrimitives,
