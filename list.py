@@ -295,7 +295,7 @@ if __name__ == "__main__":
         del tasks[maxTasks:]
         tasks = necessaryTasks + tasks
 
-    if dataset == "Lucas-old":
+    if dataset.startswith("Lucas"):
         # extra tasks for filter
         tasks.extend([
             Task("remove empty lists",
