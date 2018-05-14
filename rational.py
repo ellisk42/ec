@@ -216,6 +216,8 @@ def demo():
 from debugRational import *
 
 if __name__ == "__main__":
+    import time
+    
     primitives = [real,
                   # f1,
                   real_division, real_addition, real_multiplication]
@@ -240,6 +242,7 @@ if __name__ == "__main__":
                 for steps in [50,100,200]:
                     for attempts in [10,50,100,200]:
                         for s in [0.1,0.5,1,3]:
+                            start = time.time()
                             losses = callCompiled(debugMany,hardTasks,
                                                   clamp,lr,steps, attempts,s)
                             losses = dict(zip(hardTasks,losses))
@@ -249,6 +252,9 @@ if __name__ == "__main__":
                                 if l > -t.likelihoodThreshold: failures +=1
                             eprint("clamp,lr,steps, attempts,std",clamp,lr,steps, attempts,s)
                             eprint("%d/%d failures"%(failures,len(hardTasks)))
+                            eprint("dt=",time.time() - start)
+                            eprint()
+                            eprint()
             
         assert False
     
