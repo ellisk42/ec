@@ -419,8 +419,15 @@ def rustInduce(g0, frontiers, _=None,
     eprint("running rust compressor")
     p = subprocess.Popen(['./rust_compressor/rust_compressor'], encoding='utf-8',
                          stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-    json.dump(message, p.stdin)
+    messageJson = json.dumps(message)
+
+    size = 4096
+    tab = [messageJson[i:i+size] for i in range(0, len(messageJson), size)]
+    for page in tab:
+        p.stdin.write(page)
+        p.stdin.flush()
     p.stdin.close()
+
     resp = json.load(p.stdout)
     if p.returncode is not None:
         raise ValueError("rust compressor failed")
