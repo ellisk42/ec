@@ -30,7 +30,7 @@ def makeTask(name, f):
     if len(inputs) > 25:
         t = DifferentiableTask(name, arrow(treal,treal), [((x,),y) for x,y in zip(inputs, outputs) ],
                                BIC = 1.,
-                               likelihoodThreshold=-0.5,
+                               likelihoodThreshold=-0.1,
                                maxParameters=6,
                                loss=squaredErrorLoss)
         t.f = f
