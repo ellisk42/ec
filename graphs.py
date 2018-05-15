@@ -113,9 +113,9 @@ def plotECResult(resultPaths, colors='rgbycm', label=None, title=None, export=No
     a1.xaxis.set_major_locator(MaxNLocator(integer = True))
 
     if showSolveTime:
-        a1.set_ylabel('% Tasks Solved (solid)', fontsize = 22)
+        a1.set_ylabel('% Testing Tasks Solved (solid)', fontsize = 22)
     else:
-        a1.set_ylabel('% Tasks Solved', fontsize = 22)
+        a1.set_ylabel('% Testing Tasks Solved', fontsize = 22)
 
     if showSolveTime:
         a2 = a1.twinx()
@@ -132,15 +132,15 @@ def plotECResult(resultPaths, colors='rgbycm', label=None, title=None, export=No
         if hasattr(p, "baseline") and p.baseline:
             ys = [ 100. * result.learningCurve[-1] / len(result.taskSolutions) ]*n_iters
         else:
-            ys = [ 100. * x / len(result.taskSolutions) for x in result.learningCurve[:iterations]]
+            ys = [ 100. * len(t) / len(result.taskSolutions) for t in result.testingSearchTime[:iterations]]
         color = recognitionToColor[p.useRecognitionModel]
         l, = a1.plot(range(0, len(ys)), ys, color + timeoutToStyle[p.enumerationTimeout])
         # if label is not None:
         #     l.set_label(label(p))
         
         if showSolveTime:
-            a2.plot(range(len(result.searchTimes[:iterations])),
-                    [ sum(ts)/float(len(ts)) for ts in result.searchTimes[:iterations]],
+            a2.plot(range(len(result.testingSearchTime[:iterations])),
+                    [ sum(ts)/float(len(ts)) for ts in result.testingSearchTime[:iterations]],
                     color + '--')
             
     a1.set_ylim(ymin = 0, ymax = 110)
