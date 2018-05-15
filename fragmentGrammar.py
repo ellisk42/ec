@@ -440,7 +440,11 @@ def rustInduce(g0, frontiers, _=None,
 
         except BrokenPipeError:
             eprint("DEBUG: broken pipe, naive retry, json message bellow:")
-            eprint(messageJson)
+            # eprint(messageJson) WHOOPS too much. It outputs *many* GBs.
+            eprint(page)
+            eprint(p.returncode)
+            eprint(p.stdout)
+            time.sleep(1)
 
 
     productions = [(x["logp"], p) for p, x in
