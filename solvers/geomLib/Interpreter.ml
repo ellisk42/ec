@@ -205,8 +205,7 @@ let evaluateVar v htbl_var =
     | n when n = nan -> raise (MalformedProgram("Some var was NaN"))
     | f -> f
 
-let interpret : shapeprogram -> canvas = fun shapeprogram ->
-    let noise = false in
+let interpret ?noise:(noise=false) shapeprogram =
     let r_canvas = ref (new_canvas ()) in
     let moveto x y = (r_canvas := moveto !r_canvas x y)
     and lineto x y = (r_canvas := lineto !r_canvas x y) in
@@ -220,9 +219,14 @@ let interpret : shapeprogram -> canvas = fun shapeprogram ->
             replace curr_state save_state ;
             moveto curr_state.x curr_state.y
         | Turn f ->
-                let angle : float = match f with None -> 1. | Some(f') ->
-                    evaluateVar f' htbl_var in
-                curr_state.face <- curr_state.face +. angle *. pis2
+                let angle : float = match f with
+                  | None -> 1.
+                  | Some(f') -> evaluateVar f' htbl_var
+                in
+                curr_state.face <-
+                  curr_state.face +.
+                  (angle *. pis2) *.
+                    (1. +. if noise then (normal_random ()) *. 0.05 else 0.)
         | Concat (p1,p2) ->
             inter ~sizes p1 htbl_var curr_state ;
             inter ~sizes p2 htbl_var curr_state
@@ -258,20 +262,24 @@ let interpret : shapeprogram -> canvas = fun shapeprogram ->
                   curr_state.x
                   +. (curr_state.speed *. cos(curr_state.face))
                      *. ratio
+                  +. if noise then 0.001 *. (normal_random ()) else 0.
                 and futur_y =
                   curr_state.y
                   +. (curr_state.speed *. sin(curr_state.face))
-                     *. ratio in
+                     *. ratio
+                  +. if noise then 0.001 *. (normal_random ()) else 0. in
                 if pen then lineto futur_x futur_y
                        else moveto futur_x futur_y ;
                 curr_state.x <- futur_x ;
                 curr_state.y <- futur_y ;
                 curr_state.face <-
                   curr_state.face +.
-                  (pi2 *. curr_state.angularSpeed) /. (steps) ;
+                  (pi2 *. curr_state.angularSpeed) /. (steps) +.
+                  if noise then 0.01 *. (normal_random ()) else 0.;
                 curr_state.speed <-
                   curr_state.speed +.
-                  (curr_state.accel /. (steps)) ;
+                  (curr_state.accel /. (steps)) +.
+                  if noise then 0.01 *. (normal_random ()) else 0.;
                 curr_state.angularSpeed <-
                     curr_state.angularSpeed (* KINDA BROKEN *)
                     +. (2. *. curr_state.angularAccel /. (steps)) ;
@@ -282,7 +290,7 @@ let interpret : shapeprogram -> canvas = fun shapeprogram ->
     let initial_state =
       { x = middle_x !r_canvas
       ; y = middle_y !r_canvas
-      ; face = (if noise then Random.float 10000. else 0.)
+      ; face = (if noise then (0.1 -. Random.float 0.2) else 0.)
       ; speed = 1.
       ; accel = 0.
       ; angularSpeed = 0.

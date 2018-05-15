@@ -419,8 +419,15 @@ def rustInduce(g0, frontiers, _=None,
     eprint("running rust compressor")
     p = subprocess.Popen(['./rust_compressor/rust_compressor'], encoding='utf-8',
                          stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-    json.dump(message, p.stdin)
+    messageJson = json.dumps(message)
+
+    size = 4096
+    tab = [messageJson[i:i+size] for i in range(0, len(messageJson), size)]
+    for page in tab:
+        p.stdin.write(page)
+        p.stdin.flush()
     p.stdin.close()
+
     resp = json.load(p.stdout)
     if p.returncode is not None:
         raise ValueError("rust compressor failed")
@@ -429,6 +436,7 @@ def rustInduce(g0, frontiers, _=None,
                    zip((p for (_, _, p) in g0.productions if p.isPrimitive), resp["primitives"])] + \
                   [(i["logp"], Invented(Program.parse(i["expression"])))
                    for i in resp["inventions"] ]
+    productions = [(l if l is not None else float("-inf"), p) for l, p in productions]
     g = Grammar.fromProductions(productions, resp["variable_logprob"])
     newFrontiers = [Frontier(
         [FrontierEntry(Program.parse(s["expression"]), logPrior=s["logprior"], logLikelihood=s["loglikelihood"])

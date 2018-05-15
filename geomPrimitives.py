@@ -67,7 +67,7 @@ primitives = [
                     tmaybe(tvar),
                     tprogram), _integrate),
     Primitive("turn", arrow(tmaybe(tvar), tprogram), _turn),
-    # Primitive("repeat", arrow(tmaybe(tvar), tprogram, tprogram), _repeat),
+    Primitive("repeat", arrow(tmaybe(tvar), tprogram, tprogram), _repeat),
     Primitive("concat", arrow(tprogram, tprogram, tprogram), _concat),
 
     # RUN

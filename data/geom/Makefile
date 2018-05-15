@@ -1,5 +1,6 @@
 # What to compile by default?
 SOURCES   := $(wildcard */*.LoG)
+#SOURCES   := $(wildcard */203*.LoG)
 TARGETSL  := $(patsubst %.LoG,%_l.png,$(SOURCES))
 TARGETSH  := $(patsubst %.LoG,%_h.png,$(SOURCES))
 TARGETSVH := $(patsubst %.LoG,%_vh.png,$(SOURCES))
@@ -17,4 +18,4 @@ all: $(TARGETSL) $(TARGETSH) $(TARGETSVH)
 
 .PHONY: clean
 clean:
-	rm -Rf $(TARGETSL) $(TARGETSH) $(TARGETSVH)
+	rm -Rf $(TARGETSL) $(TARGETSH) $(TARGETSVH) $$(find -iname "*random*")
