@@ -441,69 +441,50 @@ def enumerateForTasks(g, tasks, likelihoodModel, _ = None,
 
     return frontiers, searchTimes
 
-def solveSingleTask(grammar, task, maximumBudget = 15):
-    if isinstance(task, DifferentiableTask):
-        rememberOld = True
-        history = set([])
-    else: rememberOld = False
-    for budget in range(2, maximumBudget):
-        for _,_,p in grammar.enumeration(Context.EMPTY, [], task.request, budget):
-            if rememberOld:
-                if p in history: continue
-                history.add(p)
-            l = task.logLikelihood(p)
-            if valid(l): return l,p
-    return None
-
-def benchmarkSynthesisTimes(result, tasks, _ = None, timeout = None, CPUs = None):
+def benchmarkSynthesisTimes(result, tasks, _ = None, timeout = None, CPUs = None, evaluationTimeout=None):
     if result.parameters['useRecognitionModel']:
         assert hasattr(result, 'recognitionModel') and result.recognitionModel is not None, \
             "Checkpoint was trained using a recognition model but it does not have a saved recognition model."
 
-    times = parallelMap(CPUs, lambda task: benchmarkSynthesisTime(result, task, timeout), tasks)
+    times = parallelMap(CPUs, lambda task: benchmarkSynthesisTime(result, task, timeout, evaluationTimeout),
+                        tasks)
     timeouts = sum(t == None for t in times)
     successes = sum(t != None for t in times)
     if successes > 0:
-        average = sum(t[0] for t in times if t != None)/float(successes)
-        deviation = (sum( (t[0] - average)**2 for t in times if t != None )/float(successes))**0.5
+        average = sum(t for t in times if t != None)/float(successes)
+        deviation = (sum( (t - average)**2 for t in times if t != None )/float(successes))**0.5
         standardError = deviation/(float(successes)**0.5)
     eprint("BENCHMARK:")
     eprint("Solves %d/%d = %d%%"%(successes, len(tasks), int(100.*successes/len(tasks))))
     if successes > 0:
         eprint("Synthesis time %f +/- %f sec"%(average, standardError))
-        average = sum(t[1] for t in times if t != None)/float(successes)
-        deviation = (sum( (t[1] - average)**2 for t in times if t != None )/float(successes))**0.5
-        standardError = deviation/(float(successes)**0.5)
-        eprint("Expected log P[t|p] =",average,"+/-",standardError)
 
-def benchmarkSynthesisTime(result, task, timeout):
+
+def benchmarkSynthesisTime(result, task, timeout, evaluationTimeout):
     grammar = result.grammars[-1]
 
     from likelihoodModel import AllOrNothingLikelihoodModel
-    from time import time
-    import signal
+    likelihoodModel = AllOrNothingLikelihoodModel
+    solver = "ocaml"
 
-    startTime = time()
     if result.parameters['useRecognitionModel']:
-        # Because grammar induction is the last step of EC, the
-        # recognition model is actually trained for the second to last
-        # grammar
-        grammar = result.grammars[-2]
-        features = result.recognitionModel.featureExtractor.featuresOfTask(task)
-        variables, productions = result.recognitionModel(features)
-        grammar = Grammar(variables.data[0],
-                          [ (productions.data[k],t,p)
-                            for k,(_,t,p) in enumerate(grammar.productions) ])
-
-    elapsed = time() - startTime
-    frontier = callCompiled(enumerateForTask,
-                            grammar, task, AllOrNothingLikelihoodModel,
-                            maximumFrontier = 1,
-                            timeout = timeout - elapsed)
-    dt = time() - startTime
-    if dt > timeout or len(frontier) == 0: return None
-    l = solution.entries[0].logLikelihood
-    p = solution.entries[0].program
-    eprint("Solved",task,"w/",p,"(log likelihood of task given program:",l,").","in time",dt)
-    return dt,l
+        _,times = result.recognitionModel.enumerateFrontiers([task],
+                                                             likelihoodModel,
+                                                             CPUs=1,
+                                                             solver=solver,
+                                                             maximumFrontier=1,
+                                                             enumerationTimeout=timeout,
+                                                             evaluationTimeout=evaluationTimeout)
+    else:
+        _, times = multicoreEnumeration(grammar, [task], likelihoodModel,
+                                        solver=solver,
+                                        maximumFrontier=1,
+                                        enumerationTimeout=timeout,
+                                        CPUs=1,
+                                        evaluationTimeout=evaluationTimeout)
+    if len(times) == 0: return None
+    assert len(times) == 1
+    dt = times[0]
+    eprint("Solved",task,"in time",dt)
+    return dt
 

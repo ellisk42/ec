@@ -5,7 +5,9 @@ def all(*args, **kwargs):
     return {
         "robustfill": robustfill(*args, **kwargs),
         "iterative_pcfg": iterative_pcfg(*args, **kwargs),
-        "enumeration": enumeration(*args, **kwargs),
+        # Enumeration is equivalent to the first wake cycle
+        # We already have this data in results.testingTimes[0]
+#        "enumeration": enumeration(*args, **kwargs),
     }
 
 
@@ -14,6 +16,10 @@ def robustfill(*args, **kwargs):
         "message": "robustfill",
         "onlyBaselines": False,
         "outputPrefix": None,
+
+        # Training robust fill doesn't use any enumeration
+        # So we just put this to a small value
+        "enumerationTimeout": 1,
 
         "useRecognitionModel": True,
         # Trained a recognition model on a ton of iterations on only samples from an unlearned generative model

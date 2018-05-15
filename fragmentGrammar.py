@@ -198,6 +198,8 @@ class FragmentGrammar(object):
         return context, totalLikelihood, allUses
 
     def expectedUses(self, frontiers):
+        if len(frontiers) == 0:
+            return Uses()
         likelihoods = [ [ (l + entry.logLikelihood, u)
                          for entry in frontier
                          for l,u in [self.closedUses(frontier.task.request, entry.program)] ]
@@ -379,6 +381,9 @@ class FragmentGrammar(object):
         return grammar, frontiers
 
 def induceGrammar(*args, **kwargs):
+    if sum( not f.empty for f in args[1] ) == 0:
+        eprint("No nonempty frontiers, exiting grammar induction early.")
+        return args[0], args[1]
     with timing("Induced a grammar"):
         backend = kwargs.pop("backend","pypy")
         if backend == "pypy":

@@ -90,7 +90,10 @@ class Frontier(object):
     @staticmethod
     def describe(frontiers):
         numberOfHits = sum(not f.empty for f in frontiers)
-        averageLikelihood = sum(f.bestPosterior.logPrior for f in frontiers if not f.empty) / numberOfHits
+        if numberOfHits > 0:
+            averageLikelihood = sum(f.bestPosterior.logPrior for f in frontiers if not f.empty) / numberOfHits
+        else:
+            averageLikelihood = 0
         return "\n".join([ f.summarize() for f in frontiers ] + \
                          [ "Hits %d/%d tasks"%(numberOfHits,len(frontiers))] + \
                          [ "Average description length of a program solving a task: %f nats"%(-averageLikelihood) ])

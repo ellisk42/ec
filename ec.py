@@ -148,6 +148,7 @@ def ecIterator(grammar, tasks,
         result = ECResult()
         result.baselines = baselines.all(grammar, tasks,
             CPUs=CPUs, cuda=cuda, featureExtractor=featureExtractor,
+            compressor=compressor,
             **parameters)
         if outputPrefix is not None:
             path = checkpointPath(0, extra="_baselines")
@@ -209,7 +210,8 @@ def ecIterator(grammar, tasks,
         else: results = result.baselines
         for name, result in results.iteritems():
             eprint("Starting benchmark:",name)            
-            benchmarkSynthesisTimes(result, benchmarkTasks, timeout = benchmark, CPUs = CPUs)
+            benchmarkSynthesisTimes(result, benchmarkTasks, timeout = benchmark,
+                                    CPUs=CPUs, evaluationTimeout=evaluationTimeout)
             eprint("Completed benchmark.")
             eprint()
         yield None
@@ -306,7 +308,7 @@ def ecIterator(grammar, tasks,
             recognizer.train(frontiers, topK=topK, steps=steps,
                              CPUs=CPUs,
                              helmholtzBatch=helmholtzBatch,
-                             helmholtzRatio=helmholtzRatio if j > 0 else 0.)
+                             helmholtzRatio=helmholtzRatio if j > 0 or helmholtzRatio == 1. else 0.)
             result.recognitionModel = recognizer
 
             bottomupFrontiers, times = recognizer.enumerateFrontiers(tasks, likelihoodModel,

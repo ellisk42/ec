@@ -45,10 +45,11 @@ def flatten(x, abort=lambda x:False):
 
 def summaryStatistics(n,times):
     if len(times) == 0: eprint(n,"no successful times to report statistics on!")
-    eprint(n,"average: ",int(mean(times)+0.5),
-           "sec.\tmedian:",int(median(times)+0.5),
-           "\tmax:",int(max(times)+0.5),
-           "\tstandard deviation",int(standardDeviation(times)+0.5))
+    else:
+        eprint(n,"average: ",int(mean(times)+0.5),
+               "sec.\tmedian:",int(median(times)+0.5),
+               "\tmax:",int(max(times)+0.5),
+               "\tstandard deviation",int(standardDeviation(times)+0.5))
 
 
 
@@ -359,6 +360,10 @@ def mean(l):
         if t is None: t = x
         else: t = t + x
         n += 1
+
+    if n == 0:
+        eprint("warning: asked to calculate the mean of an empty list. returning zero.")
+        return 0
     return t/float(n)
 def variance(l):
     m = mean(l)
