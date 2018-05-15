@@ -350,11 +350,13 @@ def enumerateNetworkForTasks(cpu_idx, network, tasks_features, likelihoodModel=N
     eprint("(%d)"%cpu_idx, "enumerateNetworkForTasks")
 
     from time import time
-    def timeoutCallBack(_1,_2): raise EnumerationTimeout()
+    def timeoutCallBack(_1,_2):
+        if verbose: eprint("timed out")
+        raise EnumerationTimeout()
     if timeout is not None:
         if verbose: eprint("Alarming timeout for",timeout,"for task [task undefined for now]")
-        signal.signal(signal.SIGALRM, timeoutCallBack)
-        signal.alarm(timeout)
+        signal.signal(signal.SIGVTALRM, timeoutCallBack)
+        signal.setitimer(signal.ITIMER_VIRTUAL, timeout)
     
     frontiers = []
     for task, features in tasks_features:
@@ -386,15 +388,20 @@ def enumerateNetworkForTasks(cpu_idx, network, tasks_features, likelihoodModel=N
                     try:
                         #eprint("untokenized program:", sample)
                         p = untokeniseProgram(sample)
-                        if not isinstance(p, pregex.Pregex): continue
 
+                        preg = p.evaluate([])
+                        if not isinstance(preg, pregex.Pregex): continue
+                        eprint("program:", preg)
                         #likelihood = task.logLikelihood(p, timeout=evaluationTimeout) #TODO: change this
                         #eprint("tokenized program:", p)
                         _, likelihood = likelihoodModel.score(p, task)
-                        eprint("sampled an actual program")
+                        #eprint("sampled an actual program")
                     except ParseFailure: continue
                     except RunFailure: continue #Happens during likelihood evaluation for e.g. (lambda $3)
-                    
+                    except Exception as e:
+                        eprint("Exception during evaluation:", e)
+                        continue 
+
                     numberOfPrograms += 1
 
                     if valid(likelihood):
@@ -409,7 +416,7 @@ def enumerateNetworkForTasks(cpu_idx, network, tasks_features, likelihoodModel=N
                     # it will be caught by the catchall exception handler
                     # And so we have to time ourselves out
                     if timeout is not None and time() - starting > timeout:
-                        signal.alarm(0)
+                        signal.setitimer(signal.ITIMER_VIRTUAL, 0)
                         raise EnumerationTimeout
             if verbose:
                 eprint("(%d)"%cpu_idx, "enumerated: %d samples, %d programs, %d hits" % (len(seen_proposals), numberOfPrograms, numberOfHits))
@@ -424,7 +431,7 @@ def enumerateNetworkForTasks(cpu_idx, network, tasks_features, likelihoodModel=N
         except EnumerationTimeout:
             if verbose:
                 eprint("Timeout triggered after",time() - starting,"seconds for task",task)
-        signal.alarm(0)
+        signal.setitimer(signal.ITIMER_VIRTUAL, 0)
 
         frontier = Frontier(frontier,
                             task = task).topK(maximumFrontier)

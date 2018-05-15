@@ -1,5 +1,5 @@
 from ec import *
-
+from regexes import *
 import dill
 import numpy as np
 import matplotlib
@@ -7,7 +7,6 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plot
 from matplotlib.ticker import MaxNLocator
 import matplotlib.lines as mlines
-
 
 class Bunch(object):
     def __init__(self,d):
@@ -89,6 +88,7 @@ def plotECResult(resultPaths, colors='rgbycm', label=None, title=None, export=No
     parameters = []
     for j,path in enumerate(resultPaths):
         with open(path,'rb') as handle:
+            print("path:", path)
             result = dill.load(handle)
             if hasattr(result, "baselines") and result.baselines:
                 for name, res in result.baselines.items():

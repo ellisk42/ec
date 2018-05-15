@@ -320,7 +320,7 @@ if __name__ == "__main__":
         "topK": 5,
         "maximumFrontier": 5,
         "solver": "ocaml",
-        "compressor": "pypy"
+        "compressor": "rust"
     })
 
     baseGrammar = Grammar.uniform(prims())

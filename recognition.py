@@ -772,7 +772,6 @@ class NewRecognitionModel(nn.Module):
                 frontier_num = 0
                 for frontier in permutedFrontiers:
                     eprint("frontier num", frontier_num, "out of", len(permutedFrontiers))
-                    eprint("frontier:", permutedFrontiers)
                     frontier_num += 1
                     # Randomly decide whether to sample from the generative model
                     #for now, only helmholtz
@@ -856,6 +855,8 @@ class NewRecognitionModel(nn.Module):
         return batchInputs, batchOutputs, permutedBatchTargets #why the shuffle for only the targets??
 
     def step(self, *networkInputs):
+        eprint("networkInputs:")
+        eprint(*networkInputs)
         score = self.network.optimiser_step(*networkInputs)
         loss = -score
         return loss

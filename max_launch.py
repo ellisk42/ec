@@ -10,7 +10,7 @@ def user():
     return getpass.getuser()
 
 def branch():
-    return subprocess.check_output(['git','rev-parse','--abbrev-ref','HEAD']).strip()
+    return subprocess.check_output(['git','rev-parse','--abbrev-ref','HEAD']).strip().decode()
 
 def launch(size = "t2.micro", name = ""):
     # aws ec2 run-instances --image-id ami-835f6ae6 --instance-type "t2.micro" --key-name testing --associate-public-ip-address
@@ -50,6 +50,7 @@ def launch(size = "t2.micro", name = ""):
 
 def sendCommand(address, script, job_id, upload, resume, tar, shutdown):
     import tempfile
+    br = branch()
     preamble = """#!/bin/bash
 sudo pip install https://lists.lucasem.com/listroutines-1.0.0-py2.py3-none-any.whl
 pip install sexpdata
@@ -60,14 +61,10 @@ sudo apt-get install  -y python-tk
 pip install matplotlib
 cd ~/ec
 rm experimentOutputs/*
+git checkout {}
 git pull
-"""
-
-    br = branch()
-    if br != 'master':
-        preamble += """
-git checkout %s
-"""%br
+git submodule update --init --recursive
+""".format(br)
     
     if resume:
         print("Sending tar file")

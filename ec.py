@@ -417,9 +417,9 @@ def commandlineArguments(_=None,
                          CPUs=1,
                          useRecognitionModel=False,
                          useNewRecognitionModel=False,
-                         steps=20,#250,
+                         steps=250,
                          activation='relu',
-                         helmholtzRatio=0.,
+                         helmholtzRatio=1.,
                          helmholtzBatch=5000,
                          featureExtractor=None,
                          cuda=None,
@@ -499,6 +499,11 @@ def commandlineArguments(_=None,
                         action="store_true",
                         help="""Enable bottom-up neural recognition model.
                         Default: %s""" % useRecognitionModel)
+    parser.add_argument("--robustfill",
+                        dest="useNewRecognitionModel",
+                        action="store_true",
+                        help="""Enable bottom-up robustfill recognition model.
+                        Default: %s""" % useNewRecognitionModel)
     parser.add_argument("-g", "--no-recognition",
                         dest="useRecognitionModel",
                         action="store_false",

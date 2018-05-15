@@ -9,10 +9,7 @@ from regexPrimitives import basePrimitives, altPrimitives
 #from program import *
 from recognition import HandCodedFeatureExtractor, MLPFeatureExtractor, RecurrentFeatureExtractor, JSONFeatureExtractor
 import random
-#class MyJSONFeatureExtractor(JSONFeatureExtactor):
-	#TODO
-#	def _featuresOfProgram(self, program, tp):
-		#TODO
+from type import tpregex
 
 class LearnedFeatureExtractor(RecurrentFeatureExtractor):
     H = 16
@@ -183,12 +180,25 @@ if __name__ == "__main__":
 	})
     ####
 
+	#use the 
+	prim_list = prims()
+	n_base_prim = len(prim_list) - 5.
+	specials = ["r_kleene", "r_plus", "r_maybe", "r_alt", "r_concat"]
 
-	baseGrammar = Grammar.uniform(prims())
+	productions = [(0.25/n_base_prim, prim) if prim.name not in specials else (0.15, prim) for prim in prim_list]
 
-	explorationCompression(baseGrammar, train,
-							testingTasks = test,
-							**args)
+	baseGrammar = Grammar.fromProductions(productions)
+	#baseGrammar = Grammar.uniform(prims())
+
+	for i in range(100):
+		eprint(baseGrammar.sample(tpregex))
+
+	eprint(baseGrammar)
+        
+#explor
+	#explorationCompression(baseGrammar, train,
+	#						testingTasks = test,
+	#						**args)
 
 
 
