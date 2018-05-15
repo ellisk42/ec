@@ -403,7 +403,8 @@ def rustInduce(g0, frontiers, _=None,
         },
         "primitives": [{"name": p.name, "tp": str(t), "logp": l}
                        for l,t,p in g0.productions if p.isPrimitive ],
-        "inventions": [{"expression": str(p.body), "logp": l}
+        "inventions": [{"expression": str(p.body),
+                        "logp": l if l != float("-inf") else -100} # -inf=-100
                        for l,t,p in g0.productions if p.isInvented],
         "variable_logprob": g0.logVariable,
         "frontiers": [{
