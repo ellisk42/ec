@@ -29,7 +29,7 @@ def makeTask(name, f):
             inputs.append(float(x))
             outputs.append(float(y))
 
-    if len(inputs) > 25:
+    if len(inputs) >= N:
         ex = zip(inputs, outputs)
         ex = ex[::len(ex)/N][:N]
         t = DifferentiableTask(name, arrow(treal,treal), [((x,),y) for x,y in ex ],
