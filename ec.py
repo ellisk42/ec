@@ -236,14 +236,14 @@ def ecIterator(grammar, tasks,
                                                                       CPUs=CPUs,
                                                                       solver=solver,
                                                                       maximumFrontier=maximumFrontier,
-                                                                      enumerationTimeout=enumerationTimeout,
+                                                                      enumerationTimeout=testingTimeout,
                                                                       evaluationTimeout=evaluationTimeout,
                                                                       testing=True)
             else:
                 _, times = multicoreEnumeration(grammar, testingTasks, likelihoodModel,
                                                 solver=solver,
                                                 maximumFrontier=maximumFrontier,
-                                                enumerationTimeout=enumerationTimeout,
+                                                enumerationTimeout=testingTimeout,
                                                 CPUs=CPUs,
                                                 evaluationTimeout=evaluationTimeout,
                                                 testing=True)
