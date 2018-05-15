@@ -86,10 +86,14 @@ class GeomFeatureCNN(nn.Module):
         if not os.path.exists(self.sub):
                 os.makedirs(self.sub)
         try:
-            fname = self.sub + "/" + str(self.count) + ".png"
+            fname = self.sub + "/" + str(self.count)
             evaluated = p.evaluate([])
+            with open(fname + ".dream", "w") as f:
+                f.write(str(p))
+            with open(fname + ".LoG", "w") as f:
+                f.write(evaluated)
             output = subprocess.check_output(['./geomDrawLambdaString',
-                                             fname,
+                                             fname + ".png",
                                              evaluated]).decode("utf8").split("\n")
             shape = list(map(float, output[0].split(',')))
             bigShape = map(float, output[1].split(','))
