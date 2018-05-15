@@ -43,7 +43,7 @@ def makeTask(name, f):
     
     return None
 
-def randomCoefficient(m=10):
+def randomCoefficient(m=5):
     if random.random() > 0.5:
         f = 1. + (random.random()*(m - 1))
     f = -(1. + (random.random()*(m - 1)))
