@@ -55,6 +55,8 @@ sudo pip install https://lists.lucasem.com/listroutines-1.0.0-py2.py3-none-any.w
 pip install sexpdata
 pip install dill
 pip install psutil
+sudo apt-get install  -y python-matplotlib
+pip install matplotlib
 sudo apt-get install -y libcairo-ocaml
 sudo apt-get install  -y python-tk
 pip install matplotlib
