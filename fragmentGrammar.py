@@ -419,6 +419,10 @@ def rustInduce(g0, frontiers, _=None,
     eprint("running rust compressor")
 
     messageJson = json.dumps(message)
+
+    with open("jsonDebug", "w") as f:
+        f.write(messageJson)
+
     size = 4096
     tabs = [messageJson[i:i+size] for i in range(0, len(messageJson), size)]
     gotResp = False
