@@ -261,6 +261,8 @@ if __name__ == "__main__":
     eprint("Got %d tasks..."%len(tasks))
 
     test, train = testTrainSplit(tasks, 100)
+    random.shuffle(test)
+    test = test[:100]
     eprint("Training on",len(train),"tasks")
 
     if False:

@@ -518,6 +518,7 @@ class RecognitionModel(nn.Module):
     def enumerateFrontiers(self, tasks, likelihoodModel,
                            solver=None,
                            enumerationTimeout=None,
+                           testing=False,
                            CPUs=1, maximumFrontier=None, evaluationTimeout=None):
         with timing("Evaluated recognition model"):
             grammars = {}
@@ -534,6 +535,7 @@ class RecognitionModel(nn.Module):
 
         return multicoreEnumeration(grammars, tasks, likelihoodModel,
                                     solver=solver,
+                                    testing=testing,
                                     enumerationTimeout=enumerationTimeout,
                                     CPUs=CPUs, maximumFrontier=maximumFrontier,
                                     evaluationTimeout=evaluationTimeout)

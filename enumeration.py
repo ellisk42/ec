@@ -17,7 +17,8 @@ def multicoreEnumeration(g, tasks, likelihoodModel, _=None,
                          CPUs=1,
                          maximumFrontier=None,
                          verbose=True,
-                         evaluationTimeout=None):
+                         evaluationTimeout=None,
+                         testing=False):
     '''g: Either a Grammar, or a map from task to grammar.'''
     from time import time
 
@@ -35,11 +36,17 @@ def multicoreEnumeration(g, tasks, likelihoodModel, _=None,
     if not isinstance(g, dict): g = {t: g for t in tasks }
     task2grammar = g
 
+    # If we are not evaluating on held out testing tasks:
     # Bin the tasks by request type and grammar
     # If these are the same then we can enumerate for multiple tasks simultaneously
+    # If we are evaluating testing tasks:
+    # Make sure that each job corresponds to exactly one task
     jobs = {}
-    for t in tasks:
-        k = (task2grammar[t], t.request)
+    for i,t in enumerate(tasks):
+        if testing:
+            k = (task2grammar[t], t.request, i)
+        else:
+            k = (task2grammar[t], t.request)
         jobs[k] = jobs.get(k,[]) + [t]
 
     disableParallelism = len(jobs) == 1
@@ -77,6 +84,9 @@ def multicoreEnumeration(g, tasks, likelihoodModel, _=None,
         allocation = {t: 0 for t in tasks }
         while n > 0:
             for t in tasks:
+                # During testing we use exactly one CPU per task
+                if testing and allocation[t] > 0:
+                    return allocation
                 allocation[t] += 1
                 n -= 1
                 if n == 0: break
@@ -120,7 +130,7 @@ def multicoreEnumeration(g, tasks, likelihoodModel, _=None,
             allocation = allocateCPUs(availableCPUs, freeJobs)                
             for j in freeJobs:
                 if allocation[j] == 0: continue
-                g,request = j
+                g,request = j[:2]
                 bi = budgetIncrement(lowerBounds[j])
                 thisTimeout = enumerationTimeout - stopwatches[j].elapsed
                 eprint("(python) Launching %s (%d tasks) w/ %d CPUs. %f <= MDL < %f. Timeout %f."%

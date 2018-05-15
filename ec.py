@@ -22,6 +22,7 @@ import torch
 
 class ECResult():
     def __init__(self, _=None,
+                 testingSearchTime=None,
                  learningCurve=None,
                  grammars=None,
                  taskSolutions=None,
@@ -30,6 +31,7 @@ class ECResult():
                  recognitionModel=None,
                  searchTimes=None,
                  baselines=None):
+        self.testingSearchTime = testingSearchTime or []
         self.searchTimes = searchTimes or []
         self.recognitionModel = recognitionModel
         self.averageDescriptionLength = averageDescriptionLength or []
@@ -80,6 +82,7 @@ def ecIterator(grammar, tasks,
                benchmark=None,
                iterations=None,
                resume=None,
+               testingTimeout=0,
                frontierSize=None,
                enumerationTimeout=None,
                expandFrontier=None,
@@ -115,10 +118,14 @@ def ecIterator(grammar, tasks,
         eprint("You cannot benchmark unless you are loading a checkpoint, aborting.")
         assert False
 
+    if testingTimeout > 0 and len(testingTasks) == 0:
+        eprint("You specified a testingTimeout, but did not provide any held out testing tasks, aborting.")
+        assert False
+
     # We save the parameters that were passed into EC
     # This is for the purpose of exporting the results of the experiment
     parameters = {k: v for k, v in locals().iteritems()
-                  if k not in {"tasks", "grammar", "cuda", "_", "solver",
+                  if k not in {"tasks", "grammar", "cuda", "_", "solver", "testingTimeout",
                                "message", "CPUs", "outputPrefix",
                                "resume", "resumeFrontierSize", "bootstrap",
                                "featureExtractor", "benchmark",
@@ -218,6 +225,32 @@ def ecIterator(grammar, tasks,
     }[likelihoodModel]()
 
     for j in range(resume or 0, iterations):
+
+        # Evaluate on held out tasks if we have them
+        if testingTimeout > 0:
+            eprint("Evaluating on held out testing tasks.")
+            if useRecognitionModel and j > 0:
+                _, times = result.recognitionModel.enumerateFrontiers(testingTasks, likelihoodModel,
+                                                                      CPUs=CPUs,
+                                                                      solver=solver,
+                                                                      maximumFrontier=maximumFrontier,
+                                                                      enumerationTimeout=enumerationTimeout,
+                                                                      evaluationTimeout=evaluationTimeout,
+                                                                      testing=True)
+            else:
+                _, times = multicoreEnumeration(grammar, testingTasks, likelihoodModel,
+                                                solver=solver,
+                                                maximumFrontier=maximumFrontier,
+                                                enumerationTimeout=enumerationTimeout,
+                                                CPUs=CPUs,
+                                                evaluationTimeout=evaluationTimeout,
+                                                testing=True)
+            eprint("Hits %d/%d testing tasks"%(len(times),len(testingTasks)))
+            summaryStatistics("Testing tasks",times)
+            result.testingSearchTime.append(times)
+                
+
+                
         if j >= 2 and expandFrontier and result.learningCurve[-1] <= result.learningCurve[-2] and \
            result.learningCurve[-1] < len(tasks):
             oldEnumerationTimeout = enumerationTimeout
@@ -474,6 +507,9 @@ def commandlineArguments(_=None,
                         default=steps,
                         help="""Trainings steps for neural recognition model.
                         Default: %s""" % steps)
+    parser.add_argument("--testingTimeout", type=int,
+                        default=0,
+                        help="Number of seconds we should spend evaluating on each held out testing task.")
     parser.add_argument("--activation",
                         choices=["relu", "sigmoid", "tanh"],
                         default=activation,
