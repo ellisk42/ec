@@ -260,7 +260,7 @@ def list_options(parser):
         type=float,
         help="split test/train")
     parser.add_argument("-H", "--hidden", type=int,
-        default=16,
+        default=64,
         help="number of hidden units")
     parser.add_argument("--random-seed", type=int, default=17)
 
@@ -269,7 +269,7 @@ if __name__ == "__main__":
     args = commandlineArguments(
         enumerationTimeout=10, activation='tanh', iterations=10,
         a=3, maximumFrontier=10, topK=2, pseudoCounts=10.0,
-        helmholtzRatio=0.5, structurePenalty=10.,
+        helmholtzRatio=0.5, structurePenalty=2.,
         CPUs=numberOfCPUs(),
         extras=list_options)
 
@@ -297,24 +297,36 @@ if __name__ == "__main__":
 
     if dataset.startswith("Lucas"):
         # extra tasks for filter
-        tasks.extend([
+        tasks.append(
             Task("remove empty lists",
                  arrow(tlist(tlist(tbool)), tlist(tlist(tbool))),
                  [((ls,), filter(lambda l: len(l) > 0, ls))
                   for _ in range(15)
                   for ls in [[[ random.random() < 0.5 for _ in range(random.randint(0,3)) ]
                               for _ in range(4) ]] ]),
-            Task("remove non 0s",
+        )
+        tasks.extend([
+            Task("keep eq %s"%i,
                  arrow(tlist(tint), tlist(tint)),
-                 [((xs,), filter(lambda x: x == 0, xs))
+                 [((xs,), filter(lambda x: x == i, xs))
                   for _ in range(15)
                   for xs in [[ random.randint(0,3) for _ in range(5) ]] ]),
-            Task("remove 0s",
+            Task("remove eq %s"%i,
                  arrow(tlist(tint), tlist(tint)),
-                 [((xs,), filter(lambda x: x != 0, xs))
+                 [((xs,), filter(lambda x: x != i, xs))
                   for _ in range(15)
                   for xs in [[ random.randint(0,3) for _ in range(5) ]] ]),
-        ])
+            Task("keep gt %s"%i,
+                 arrow(tlist(tint), tlist(tint)),
+                 [((xs,), filter(lambda x: x > i, xs))
+                  for _ in range(15)
+                  for xs in [[ random.randint(0,3) for _ in range(5) ]] ]),
+            Task("remove gt %s"%i,
+                 arrow(tlist(tint), tlist(tint)),
+                 [((xs,), filter(lambda x: not x > i, xs))
+                  for _ in range(15)
+                  for xs in [[ random.randint(0,3) for _ in range(5) ]] ]),
+            for i in xrange(4)])
 
     prims = {"base": basePrimitives,
              "McCarthy": McCarthyPrimitives,
@@ -334,8 +346,6 @@ if __name__ == "__main__":
         "featureExtractor": extractor,
         "outputPrefix": "experimentOutputs/list",
         "evaluationTimeout": 0.0005,
-        "topK": 5,
-        "maximumFrontier": 5,
         "solver": "ocaml",
         "compressor": "rust"
     })
