@@ -305,28 +305,29 @@ if __name__ == "__main__":
                   for ls in [[[ random.random() < 0.5 for _ in range(random.randint(0,3)) ]
                               for _ in range(4) ]] ]),
         )
-        tasks.extend([
-            Task("keep eq %s"%i,
-                 arrow(tlist(tint), tlist(tint)),
-                 [((xs,), filter(lambda x: x == i, xs))
-                  for _ in range(15)
-                  for xs in [[ random.randint(0,3) for _ in range(5) ]] ]),
-            Task("remove eq %s"%i,
-                 arrow(tlist(tint), tlist(tint)),
-                 [((xs,), filter(lambda x: x != i, xs))
-                  for _ in range(15)
-                  for xs in [[ random.randint(0,3) for _ in range(5) ]] ]),
-            Task("keep gt %s"%i,
-                 arrow(tlist(tint), tlist(tint)),
-                 [((xs,), filter(lambda x: x > i, xs))
-                  for _ in range(15)
-                  for xs in [[ random.randint(0,3) for _ in range(5) ]] ]),
-            Task("remove gt %s"%i,
-                 arrow(tlist(tint), tlist(tint)),
-                 [((xs,), filter(lambda x: not x > i, xs))
-                  for _ in range(15)
-                  for xs in [[ random.randint(0,3) for _ in range(5) ]] ]),
-            for i in xrange(4)])
+        for i in xrange(4):
+            tasks.extend([
+                Task("keep eq %s"%i,
+                     arrow(tlist(tint), tlist(tint)),
+                     [((xs,), filter(lambda x: x == i, xs))
+                      for _ in range(15)
+                      for xs in [[ random.randint(0,3) for _ in range(5) ]] ]),
+                Task("remove eq %s"%i,
+                     arrow(tlist(tint), tlist(tint)),
+                     [((xs,), filter(lambda x: x != i, xs))
+                      for _ in range(15)
+                      for xs in [[ random.randint(0,3) for _ in range(5) ]] ]),
+                Task("keep gt %s"%i,
+                     arrow(tlist(tint), tlist(tint)),
+                     [((xs,), filter(lambda x: x > i, xs))
+                      for _ in range(15)
+                      for xs in [[ random.randint(0,3) for _ in range(5) ]] ]),
+                Task("remove gt %s"%i,
+                     arrow(tlist(tint), tlist(tint)),
+                     [((xs,), filter(lambda x: not x > i, xs))
+                      for _ in range(15)
+                      for xs in [[ random.randint(0,3) for _ in range(5) ]] ])
+                ])
 
     prims = {"base": basePrimitives,
              "McCarthy": McCarthyPrimitives,
