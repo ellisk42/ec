@@ -417,20 +417,31 @@ def rustInduce(g0, frontiers, _=None,
     }
 
     eprint("running rust compressor")
-    p = subprocess.Popen(['./rust_compressor/rust_compressor'], encoding='utf-8',
-                         stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+
     messageJson = json.dumps(message)
-
     size = 4096
-    tab = [messageJson[i:i+size] for i in range(0, len(messageJson), size)]
-    for page in tab:
-        p.stdin.write(page)
-        p.stdin.flush()
-    p.stdin.close()
+    tabs = [messageJson[i:i+size] for i in range(0, len(messageJson), size)]
+    gotResp = False
 
-    resp = json.load(p.stdout)
-    if p.returncode is not None:
-        raise ValueError("rust compressor failed")
+    while not gotResp:
+        try:
+            p = subprocess.Popen(['./rust_compressor/rust_compressor'], encoding='utf-8',
+                                 stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+            for page in tabs:
+                p.stdin.write(page)
+                p.stdin.flush()
+            p.stdin.close()
+
+            if p.returncode is not None:
+                raise ValueError("rust compressor failed")
+
+            resp = json.load(p.stdout)
+            gotResp = True
+
+        except BrokenPipeError:
+            eprint("DEBUG: broken pipe, naive retry, json message bellow:")
+            eprint(messageJson)
+
 
     productions = [(x["logp"], p) for p, x in
                    zip((p for (_, _, p) in g0.productions if p.isPrimitive), resp["primitives"])] + \
