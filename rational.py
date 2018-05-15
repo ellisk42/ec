@@ -18,7 +18,7 @@ def makeTask(name, f):
 
     maximum = 10
 
-    N = 20
+    N = 50
 
     inputs = []
     outputs = []
