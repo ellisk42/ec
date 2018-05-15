@@ -14,7 +14,7 @@ import random
 
 
 def makeTask(name, f):
-    xs = [ x/10. for x in range(-50,50)]
+    xs = [ x/100. for x in range(-500,500)]
 
     maximum = 10
 
@@ -44,15 +44,16 @@ def makeTask(name, f):
     return None
 
 def randomCoefficient(m=5):
+    t = 0.3
+    f = t + (random.random()*(m - t))
     if random.random() > 0.5:
-        f = 1. + (random.random()*(m - 1))
-    f = -(1. + (random.random()*(m - 1)))
+        f = -f
     f = float("%0.1f"%f)
     return f
 
 
 def randomPolynomial(order):
-    coefficients = [ randomCoefficient(m=5) for _ in range(order + 1) ]
+    coefficients = [ randomCoefficient(m=2.5) for _ in range(order + 1) ]
     def f(x):
         return sum( c*(x**(order-j)) for j,c in enumerate(coefficients) )
     name = ""
@@ -149,7 +150,7 @@ def drawFunction(n, dx, f, resolution=32):
 def makeTasks():
     tasks = []
 
-    tasksPerType = 100
+    tasksPerType = 35
 
     for o in xrange(1,5):
         ts = []
