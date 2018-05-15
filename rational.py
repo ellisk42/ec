@@ -236,6 +236,7 @@ if __name__ == "__main__":
         iterations = 10,
         CPUs = numberOfCPUs(),
         structurePenalty = 1.,
+        steps = 1000,
         helmholtzRatio = 0.5,
         activation="tanh",
         maximumFrontier = 100,
