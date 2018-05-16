@@ -7,7 +7,9 @@ import matplotlib.pyplot as plot
 from matplotlib.ticker import MaxNLocator
 import matplotlib.lines as mlines
 
-
+TITLEFONTSIZE = 14
+TICKFONTSIZE = 10
+LABELFONTSIZE = 11
 class Bunch(object):
     def __init__(self,d):
         self.__dict__.update(d)
@@ -108,23 +110,23 @@ def plotECResult(resultPaths, colors='rgbycm', label=None, title=None, export=No
                            reverse = 2)
     timeoutToStyle = {size: style for size, style in zip(timeouts,["-","--","-."]) }
 
-    f,a1 = plot.subplots(figsize = (5,5))
-    a1.set_xlabel('Iteration', fontsize = 22)
+    f,a1 = plot.subplots(figsize = (3,3))
+    a1.set_xlabel('Iteration', fontsize = LABELFONTSIZE)
     a1.xaxis.set_major_locator(MaxNLocator(integer = True))
 
     if showSolveTime:
-        a1.set_ylabel('% Testing Tasks Solved (solid)', fontsize = 22)
+        a1.set_ylabel('% Testing Tasks Solved (solid)', fontsize = LABELFONTSIZE)
     else:
-        a1.set_ylabel('% Testing Tasks Solved', fontsize = 22)
+        a1.set_ylabel('% Testing Tasks Solved', fontsize = LABELFONTSIZE)
 
     if showSolveTime:
         a2 = a1.twinx()
-        a2.set_ylabel('Avg solve time (dashed)', fontsize = 22)
+        a2.set_ylabel('Avg solve time (dashed)', fontsize = LABELFONTSIZE)
 
     n_iters = max(len(result.learningCurve) for result in results)
     if iterations and n_iters > iterations: n_iters = iterations
 
-    plot.xticks(range(0, n_iters), fontsize = 20)
+    plot.xticks(range(0, n_iters), fontsize = TICKFONTSIZE)
 
     recognitionToColor = {False: "r", True: "b"}
 
@@ -146,7 +148,7 @@ def plotECResult(resultPaths, colors='rgbycm', label=None, title=None, export=No
     a1.set_ylim(ymin = 0, ymax = 110)
     a1.yaxis.grid()
     a1.set_yticks(range(0,110,20))
-    plot.yticks(range(0,110,20),fontsize = 20)
+    plot.yticks(range(0,110,20),fontsize = TICKFONTSIZE)
 
     if showSolveTime:
         a2.set_ylim(ymin = 0)
@@ -154,15 +156,16 @@ def plotECResult(resultPaths, colors='rgbycm', label=None, title=None, export=No
         a2.yaxis.set_ticks(np.arange(starting, ending, (ending - starting)/5.))
 
     if title is not None:
-        plot.title(title, fontsize = 26)
+        plot.title(title, fontsize = TITLEFONTSIZE)
 
     #if label is not None:
     legends = []
-    legends.append(a1.legend(loc = 'lower right', fontsize = 14,
-              #bbox_to_anchor=(1, 0.5),
-              handles = [mlines.Line2D([],[],color = 'black',ls = timeoutToStyle[timeout],
-                                       label = "timeout %ss"%timeout)
-                         for timeout in timeouts ]))
+    if len(timeouts) > 1:
+        legends.append(a1.legend(loc = 'lower right', fontsize = 14,
+                  #bbox_to_anchor=(1, 0.5),
+                  handles = [mlines.Line2D([],[],color = 'black',ls = timeoutToStyle[timeout],
+                                           label = "timeout %ss"%timeout)
+                             for timeout in timeouts ]))
     if False:
         # FIXME: figure out how to have two separate legends
         plot.gca().add_artist(plot.legend(loc = 'lower left', fontsize = 20,
