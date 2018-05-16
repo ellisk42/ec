@@ -589,6 +589,11 @@ class RecurrentFeatureExtractor(nn.Module):
         self.startOfOutputIndex = self.symbolToIndex["STARTOFOUTPUT"]
         self.endOfInputIndex = self.symbolToIndex["ENDOFINPUT"]
 
+        # Maximum number of inputs/outputs we will run the recognition
+        # model on per task
+        # This is an optimization hack
+        self.MAXINPUTS = 100
+
     @property
     def outputDimensionality(self): return self.H
 
@@ -645,6 +650,11 @@ class RecurrentFeatureExtractor(nn.Module):
         tokenized = self.tokenize(examples)
         if not tokenized:
             return None
+        
+        if len(tokenized) > self.MAXINPUTS:
+            tokenized = list(tokenized)
+            random.shuffle(tokenized)
+            tokenized = tokenized[:self.MAXINPUTS]
         e = self.examplesEncoding(tokenized)
         # max pool
         #e,_ = e.max(dim = 0)

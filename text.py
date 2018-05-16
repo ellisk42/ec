@@ -39,6 +39,8 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
                                                       H = 64,
                                                       tasks = tasks,
                                                       bidirectional = True)
+        self.MAXINPUTS = 4
+        
     def taskOfProgram(self, p, tp):
         # Instantiate STRING w/ random words
         p = p.visit(ConstantInstantiateVisitor.SINGLE)
