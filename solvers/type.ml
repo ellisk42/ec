@@ -242,7 +242,7 @@ let make_ground g = TCon(g,[],false);;
 let tint = make_ground "int";;
 let tcharacter = make_ground "char";;
 let treal = make_ground "real";;
-let tboolean = make_ground "boolean";;
+let tboolean = make_ground "bool";;
 let t0 = TID(0);;
 let t1 = TID(1);;
 let t2 = TID(2);;
@@ -264,4 +264,4 @@ let unify_many_types ts =
       let (k',t') = instantiate_type !k t' in
       k := unify k' t' t);
   applyContext !k t |> snd
-      
+     

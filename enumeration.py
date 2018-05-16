@@ -241,10 +241,18 @@ def solveForTask_ocaml(_ = None,
                        likelihoodModel = None, # FIXME: unused
                        evaluationTimeout = None, maximumFrontiers = None):
     import json
+    def requestMessage(r):
+        if isinstance(r,TypeConstructor):
+            return {"constructor": r.name,
+                    "arguments": [ requestMessage(a) for a in r.arguments ]}
+        assert isinstance(r,TypeVariable)
+        return {"index": r.v}
+
     def taskMessage(t):
         m = {
             "examples": [{"inputs": list(xs), "output": y} for xs,y in t.examples ],
             "name": t.name,
+            "request": requestMessage(t.request),
             "maximumFrontier": maximumFrontiers[t]}
         towerParameters = ["maximumStaircase","perturbation","minimumLength","maximumMass","minimumHeight",
                            "minimumArea"]

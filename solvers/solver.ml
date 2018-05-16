@@ -54,44 +54,56 @@ let load_problems channel =
   in
 
 
+  let rec parse_type j =
+    (* try j |> to_string |> make_ground
+     * with _ -> *)
+    try
+      let k = j |> member "constructor" |> to_string in
+      let a = j |> member "arguments" |> to_list |> List.map ~f:parse_type in
+      kind k a
+    with _ ->
+      let i = j |> member "index" |> to_int in
+      TID(i)
+  in 
+
   (* string constant parameters *)
   let is_constant_task = productions |> List.exists ~f:(fun (p,_,_,_) ->
       is_base_primitive p && primitive_name p = "STRING")
   in
   
-  let guess_type elements =
-    if List.length elements = 0 then t0 else
-      
-    let context = ref empty_context in
-    let rec guess x =
-      try ignore(x |> to_int); tint with _ ->
-      try ignore(x |> to_float); treal with _ ->
-      try ignore(x |> to_bool); tboolean with _ ->
-      try
-        let v = x |> to_string in
-        if String.length v = 1 then tcharacter else tstring
-      with _ ->
-      try
-        let l = x |> to_list in
-        let (t,k) = makeTID !context in
-        context := k;
-        l |> List.iter ~f:(fun y ->
-            let yt = guess y in
-            context := unify !context yt t);
-        tlist (applyContext !context t |> snd)
-      with _ -> raise (Failure "Could not guess type")
-    in
-    let ts = elements |> List.map ~f:guess in
-    let t0 = List.hd_exn ts in
-    try
-      ts |> List.iter ~f:(fun t -> context := (unify (!context) t0 t));
-      applyContext !context t0 |> snd
-    with UnificationFailure -> begin
-        Printf.eprintf "Failure unifying types: %s\n"
-          (ts |> List.map ~f:string_of_type |> join ~separator:"\t");
-        assert false
-      end
-  in
+  (* let guess_type elements =
+   *   if List.length elements = 0 then t0 else
+   *     
+   *   let context = ref empty_context in
+   *   let rec guess x =
+   *     try ignore(x |> to_int); tint with _ ->
+   *     try ignore(x |> to_float); treal with _ ->
+   *     try ignore(x |> to_bool); tboolean with _ ->
+   *     try
+   *       let v = x |> to_string in
+   *       if String.length v = 1 then tcharacter else tstring
+   *     with _ ->
+   *     try
+   *       let l = x |> to_list in
+   *       let (t,k) = makeTID !context in
+   *       context := k;
+   *       l |> List.iter ~f:(fun y ->
+   *           let yt = guess y in
+   *           context := unify !context yt t);
+   *       tlist (applyContext !context t |> snd)
+   *     with _ -> raise (Failure "Could not guess type")
+   *   in
+   *   let ts = elements |> List.map ~f:guess in
+   *   let t0 = List.hd_exn ts in
+   *   try
+   *     ts |> List.iter ~f:(fun t -> context := (unify (!context) t0 t));
+   *     applyContext !context t0 |> snd
+   *   with UnificationFailure -> begin
+   *       Printf.eprintf "Failure unifying types: %s\n"
+   *         (ts |> List.map ~f:string_of_type |> join ~separator:"\t");
+   *       assert false
+   *     end
+   * in *)
 
   let rec unpack x =
     try magical (x |> to_int) with _ ->
@@ -108,11 +120,11 @@ let load_problems channel =
 
   let tf = j |> member "tasks" |> to_list |> List.map ~f:(fun j -> 
       let e = j |> member "examples" |> to_list in
-      let inputTypes = e |> List.map ~f:(fun ex -> ex |> member "inputs" |> to_list) |>
-                       List.transpose |> safe_get_some "Not all examples have the same number of inputs." |>
-                       List.map ~f:guess_type in
-      let outputType = e |> List.map ~f:(fun ex -> ex |> member "output") |> guess_type in
-      let task_type = List.fold_right ~f:(fun l r -> l @> r) ~init:outputType inputTypes in
+      (* let inputTypes = e |> List.map ~f:(fun ex -> ex |> member "inputs" |> to_list) |>
+       *                  List.transpose |> safe_get_some "Not all examples have the same number of inputs." |>
+       *                  List.map ~f:guess_type in
+       * let outputType = e |> List.map ~f:(fun ex -> ex |> member "output") |> guess_type in *)
+      let task_type = j |> member "request" |> parse_type in 
       let examples = e |> List.map ~f:(fun ex -> (ex |> member "inputs" |> to_list |> List.map ~f:unpack,
                                                   ex |> member "output" |> unpack)) in
       let maximum_frontier = j |> member "maximumFrontier" |> to_int in
@@ -169,8 +181,8 @@ let load_problems channel =
   in
 
   (* Ensure that all of the tasks have the same type *)
-  let most_specific_type = unify_many_types (tf |> List.map ~f:(fun (t,_) -> t.task_type)) in
-  let tf = tf |> List.map ~f:(fun (t,f) -> ({t with task_type=most_specific_type},f)) in
+  (* let most_specific_type = unify_many_types (tf |> List.map ~f:(fun (t,_) -> t.task_type)) in
+   * let tf = tf |> List.map ~f:(fun (t,f) -> ({t with task_type=most_specific_type},f)) in *)
 
   let verbose = try j |> member "verbose" |> to_bool      
     with _ -> false
