@@ -486,6 +486,10 @@ class RecognitionModel(nn.Module):
             eprint(statusUpdate, end = '')
             flushEverything()
         if task is None: return None
+
+        if hasattr(self.featureExtractor, 'lexicon'):
+            if self.featureExtractor.tokenize(task.examples) is None:
+                return None
         
         frontier = Frontier([FrontierEntry(program=program,
                                            logLikelihood=0., logPrior=0.)],
@@ -665,7 +669,11 @@ class RecurrentFeatureExtractor(nn.Module):
         return e
         
 
-    def featuresOfTask(self, t): return self(t.examples)
+    def featuresOfTask(self, t):
+        f =  self(t.examples)
+        if f is None:
+            eprint(t)
+        return f
     def taskOfProgram(self, p, tp):
         candidateInputs = list(self.requestToInputs[tp])
         # Loop over the inputs in a random order and pick the first one that doesn't generate an exception
