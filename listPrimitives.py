@@ -195,7 +195,7 @@ def bootstrapTarget_extra():
         Primitive("eq?", arrow(tint, tint, tbool), _eq),
         Primitive("is-prime", arrow(tint, tbool), _isPrime),
         Primitive("is-square", arrow(tint, tbool), _isSquare),
-        ] + [ Primitive(str(j), tint, j) for j in xrange(2,6) ]
+        ]
 
 def McCarthyPrimitives():
     "These are < primitives provided by 1959 lisp as introduced by McCarthy"
