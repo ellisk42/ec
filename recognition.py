@@ -651,7 +651,7 @@ class RecurrentFeatureExtractor(nn.Module):
         if not tokenized:
             return None
         
-        if len(tokenized) > self.MAXINPUTS:
+        if hasattr(self,'MAXINPUTS') and len(tokenized) > self.MAXINPUTS:
             tokenized = list(tokenized)
             random.shuffle(tokenized)
             tokenized = tokenized[:self.MAXINPUTS]
