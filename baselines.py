@@ -5,6 +5,7 @@ def all(*args, **kwargs):
     return {
         "robustfill": robustfill(*args, **kwargs),
         "iterative_pcfg": iterative_pcfg(*args, **kwargs),
+        "ec_v1": ec_v1(*args, **kwargs),
         # Enumeration is equivalent to the first wake cycle
         # We already have this data in results.testingTimes[0]
 #        "enumeration": enumeration(*args, **kwargs),
@@ -42,6 +43,19 @@ def iterative_pcfg(*args, **kwargs):
         "iterations": kwargs["iterations"], # XXX: should we change this?
         "aic": float("inf"),
         "pseudoCounts": 0,
+    })
+    return ec.explorationCompression(*args, **kwargs)
+
+def ec_v1(*args, **kwargs):
+    kwargs.update({
+        "message": "ECv1",
+        "onlyBaselines": False,
+        "outputPrefix": None,
+
+        "useRecognitionModel": False,
+        "iterations": kwargs["iterations"], # XXX: should we change this?
+        "pseudoCounts": 0.1,
+        "arity": 0
     })
     return ec.explorationCompression(*args, **kwargs)
 
