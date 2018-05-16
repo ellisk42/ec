@@ -51,7 +51,6 @@ def launch(size = "t2.micro", name = ""):
 def sendCommand(address, script, job_id, upload, resume, tar, shutdown):
     import tempfile
     preamble = """#!/bin/bash
-sudo pip install https://lists.lucasem.com/listroutines-1.0.0-py2.py3-none-any.whl
 pip install sexpdata
 pip install dill
 pip install psutil
