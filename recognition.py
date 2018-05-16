@@ -8,6 +8,7 @@ from program import tokeniseProgram, untokeniseProgram, ParseFailure
 #from network import Network #for now
 import pinn
 
+import time
 import gc
 from multiprocessing import Pool
 
@@ -398,7 +399,7 @@ class RecognitionModel(nn.Module):
         return - g.logLikelihood(tp, sample)
 
     def train(self, frontiers, _=None, steps=250, lr=0.001, topK=1, CPUs=1,
-              helmholtzRatio=0., helmholtzBatch=5000):
+              timeout=None, helmholtzRatio=0., helmholtzBatch=5000):
         """
         helmholtzRatio: What fraction of the training data should be forward samples from the generative model?
         """
@@ -419,10 +420,13 @@ class RecognitionModel(nn.Module):
         HELMHOLTZBATCH = helmholtzBatch
         helmholtzSamples = []
 
-        optimizer = torch.optim.Adam(self.parameters(), lr=lr)
+        optimizer = torch.optim.Adam(self.parameters(), lr=lr, eps=1e-3, amsgrad=True)
+        if timeout:
+            start = time.time()
 
         with timing("Trained recognition model"):
             for i in range(1,steps + 1):
+                if timeout and time.time() - start > timeout: break
                 losses = []
 
                 if helmholtzRatio < 1.:
