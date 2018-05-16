@@ -395,11 +395,12 @@ def induceGrammar(*args, **kwargs):
 
 
 def pypyInduce(*args, **kwargs):
+    kwargs.pop('iteration')
     return FragmentGrammar.induceFromFrontiers(*args, **kwargs)
 
 def rustInduce(g0, frontiers, _=None,
                topK=1, pseudoCounts=1.0, aic=1.0,
-               structurePenalty=0.001, a=0, CPUs=1):
+               structurePenalty=0.001, a=0, CPUs=1, iteration=-1):
     import json
     import os
     import subprocess
@@ -430,9 +431,10 @@ def rustInduce(g0, frontiers, _=None,
     eprint("running rust compressor")
     p = subprocess.Popen(['./rust_compressor/rust_compressor'],
                          stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-    with open('rust_compressor_message.json','w') as handle:
-        json.dump(message, handle)
-    json.dump(message, p.stdin)
+    payload = json.dumps(message)
+    with open('compressor_message_{}.json'.format(iteration),'w') as handle:
+        handle.write(payload)
+    p.stdin.write(payload)
     p.stdin.close()
     resp = json.load(p.stdout)
     if p.returncode is not None:

@@ -61,6 +61,7 @@ sudo apt-get install  -y python-tk
 pip install matplotlib
 cd ~/ec
 rm experimentOutputs/*
+touch compressor_dummy
 git pull
 """
 
@@ -89,7 +90,7 @@ git checkout %s
         UPLOADFREQUENCY = 60*3 # every 3 minutes
         if tar:
             uploadCommand = """\
-tar czf {id}.tar.gz jobs experimentOutputs patch && \
+tar czf {id}.tar.gz jobs experimentOutputs compressor_* patch && \
 scp -o StrictHostKeyChecking=no \
 {id}.tar.gz {upload}""".format(id=job_id, upload=upload)
         else:

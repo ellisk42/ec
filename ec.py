@@ -360,7 +360,7 @@ def ecIterator(grammar, tasks,
         grammar, frontiers = induceGrammar(grammar, frontiers,
                                            topK=topK, pseudoCounts=pseudoCounts, a=arity,
                                            aic=aic, structurePenalty=structurePenalty,
-                                           backend=compressor, CPUs=CPUs)
+                                           backend=compressor, CPUs=CPUs, iteration=j)
         result.grammars.append(grammar)
         eprint("Grammar after iteration %d:" % (j + 1))
         eprint(grammar)
