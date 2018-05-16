@@ -4,6 +4,7 @@ from grammar import *
 from heapq import *
 from utilities import eprint
 
+import time
 import gc
 
 import torch
@@ -397,7 +398,7 @@ class RecognitionModel(nn.Module):
                         task=frontier.task)
     
     def train(self, frontiers, _=None, steps=250, lr=0.0001, topK=1, CPUs=1,
-              helmholtzRatio=0., helmholtzBatch=5000):
+              timeout=None, helmholtzRatio=0., helmholtzBatch=5000):
         """
         helmholtzRatio: What fraction of the training data should be forward samples from the generative model?
         """
@@ -425,9 +426,12 @@ class RecognitionModel(nn.Module):
         helmholtzSamples = []
 
         optimizer = torch.optim.Adam(self.parameters(), lr=lr, eps=1e-3, amsgrad=True)
+        if timeout:
+            start = time.time()
 
         with timing("Trained recognition model"):
             for i in range(1,steps + 1):
+                if timeout and time.time() - start > timeout: break
                 losses = []
 
                 if helmholtzRatio < 1.:
