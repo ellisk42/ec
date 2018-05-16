@@ -2,6 +2,7 @@ import random
 from collections import defaultdict
 from itertools import chain
 import json
+import math
 
 from ec import explorationCompression, commandlineArguments
 from utilities import eprint, numberOfCPUs, flatten, fst, testTrainSplit, POSITIVEINFINITY
@@ -297,36 +298,52 @@ if __name__ == "__main__":
 
     if dataset.startswith("Lucas"):
         # extra tasks for filter
-        tasks.append(
+        tasks.extend([
             Task("remove empty lists",
                  arrow(tlist(tlist(tbool)), tlist(tlist(tbool))),
                  [((ls,), filter(lambda l: len(l) > 0, ls))
                   for _ in range(15)
                   for ls in [[[ random.random() < 0.5 for _ in range(random.randint(0,3)) ]
                               for _ in range(4) ]] ]),
-        )
+            Task("keep squares",
+                 arrow(tlist(tint), tlist(tint)),
+                 [((xs,), filter(lambda x: int(math.sqrt(x)) ** 2 == x, xs))
+                  for _ in range(15)
+                  for xs in [[ random.choice([0, 1, 4, 9, 16, 25])
+                               if random.random() < 0.5
+                               else random.randint(0,9)
+                               for _ in range(7) ]] ]),
+            Task("keep primes",
+                 arrow(tlist(tint), tlist(tint)),
+                 [((xs,), filter(lambda x: x in {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37}, xs))
+                  for _ in range(15)
+                  for xs in [[ random.choice([2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37])
+                               if random.random() < 0.5
+                               else random.randint(0,9)
+                               for _ in range(7) ]] ]),
+        ])
         for i in xrange(4):
             tasks.extend([
                 Task("keep eq %s"%i,
                      arrow(tlist(tint), tlist(tint)),
                      [((xs,), filter(lambda x: x == i, xs))
                       for _ in range(15)
-                      for xs in [[ random.randint(0,3) for _ in range(5) ]] ]),
+                      for xs in [[ random.randint(0,6) for _ in range(5) ]] ]),
                 Task("remove eq %s"%i,
                      arrow(tlist(tint), tlist(tint)),
                      [((xs,), filter(lambda x: x != i, xs))
                       for _ in range(15)
-                      for xs in [[ random.randint(0,3) for _ in range(5) ]] ]),
+                      for xs in [[ random.randint(0,6) for _ in range(5) ]] ]),
                 Task("keep gt %s"%i,
                      arrow(tlist(tint), tlist(tint)),
                      [((xs,), filter(lambda x: x > i, xs))
                       for _ in range(15)
-                      for xs in [[ random.randint(0,3) for _ in range(5) ]] ]),
+                      for xs in [[ random.randint(0,6) for _ in range(5) ]] ]),
                 Task("remove gt %s"%i,
                      arrow(tlist(tint), tlist(tint)),
                      [((xs,), filter(lambda x: not x > i, xs))
                       for _ in range(15)
-                      for xs in [[ random.randint(0,3) for _ in range(5) ]] ])
+                      for xs in [[ random.randint(0,6) for _ in range(5) ]] ])
                 ])
 
     prims = {"base": basePrimitives,
