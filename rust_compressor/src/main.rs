@@ -59,7 +59,7 @@ struct Params {
     pseudocounts: u64,
     topk: usize,
     structure_penalty: f64,
-    aic: f64,
+    aic: Option<f64>,
     arity: u32,
 }
 
@@ -120,7 +120,7 @@ impl From<ExternalCompressionInput> for CompressionInput {
             pseudocounts: eci.params.pseudocounts,
             topk: eci.params.topk,
             structure_penalty: eci.params.structure_penalty,
-            aic: eci.params.aic,
+            aic: eci.params.aic.unwrap_or(f64::INFINITY),
             arity: eci.params.arity,
         };
         let (tasks, frontiers) = eci.frontiers

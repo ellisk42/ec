@@ -398,7 +398,7 @@ def rustInduce(g0, frontiers, _=None,
             "structure_penalty": structurePenalty,
             "pseudocounts": int(pseudoCounts+0.5),
             "topk": topK,
-            "aic": aic,
+            "aic": aic if aic != float("inf") else None,
             "arity": a,
         },
         "primitives": [{"name": p.name, "tp": str(t), "logp": l}
