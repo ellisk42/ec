@@ -424,17 +424,14 @@ def rustInduce(g0, frontiers, _=None,
     with open("jsonDebug", "w") as f:
         f.write(messageJson)
 
-    size = 4096
-    tabs = [messageJson[i:i+size] for i in range(0, len(messageJson), size)]
     gotResp = False
 
     while not gotResp:
         try:
             p = subprocess.Popen(['./rust_compressor/rust_compressor'], encoding='utf-8',
                                  stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-            for page in tabs:
-                p.stdin.write(page)
-                p.stdin.flush()
+            p.stdin.write(messageJson)
+            p.stdin.flush()
             p.stdin.close()
 
             if p.returncode is not None:
