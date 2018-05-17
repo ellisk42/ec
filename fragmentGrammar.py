@@ -414,7 +414,7 @@ def rustInduce(g0, frontiers, _=None,
             "aic": aic if aic != float("inf") else None,
             "arity": a,
         },
-        "primitives": [{"name": p.name, "tp": str(t), "logp": finite_log(l)}
+        "primitives": [{"name": p.name, "tp": str(t), "logp": finite_logp(l)}
                        for l,t,p in g0.productions if p.isPrimitive ],
         "inventions": [{"expression": str(p.body), "logp": finite_logp(l)}
                        for l,t,p in g0.productions if p.isInvented],
