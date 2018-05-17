@@ -448,11 +448,16 @@ class RecognitionModel(nn.Module):
                             self.sampleManyHelmholtz(requests,
                                                      HELMHOLTZBATCH,
                                                      CPUs)
-                        attempt = helmholtzSamples.pop()
-                        if attempt is not None:
-                            self.zero_grad()
-                            loss = self.frontierKL(attempt)
-                        else: doingHelmholtz = False
+                        if len(helmholtzSamples) == 0:
+                            eprint("WARNING: Could not generate any Helmholtz samples. Disabling Helmholtz.")
+                            helmholtzRatio = 0.
+                            doingHelmholtz = False
+                        else:
+                            attempt = helmholtzSamples.pop()
+                            if attempt is not None:
+                                self.zero_grad()
+                                loss = self.frontierKL(attempt)
+                            else: doingHelmholtz = False
                     if not doingHelmholtz:
                         if helmholtzRatio < 1.:
                             self.zero_grad()
@@ -484,7 +489,8 @@ class RecognitionModel(nn.Module):
         if seed is not None:
             random.seed(seed)
         request = random.choice(requests)
-        program = self.grammar.sample(request, maximumDepth = 6)
+        program = self.grammar.sample(request, maximumDepth = 6, maxAttempts = 100)
+        if program is None: return None
         task = self.featureExtractor.taskOfProgram(program, request)
         if statusUpdate is not None:
             eprint(statusUpdate, end = '')

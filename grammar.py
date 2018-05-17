@@ -102,12 +102,18 @@ class Grammar(object):
         else:
             return candidates
 
-    def sample(self, request, maximumDepth = 3):
+    def sample(self, request, maximumDepth = 6, maxAttempts=None):
+        attempts = 0
+        
         while True:
             try:
                 _,e = self._sample(request, Context.EMPTY, [], maximumDepth = maximumDepth)
                 return e
-            except NoCandidates: continue
+            except NoCandidates:
+                if maxAttempts is not None:
+                    attempts += 1
+                    if attempts > maxAttempts: return None
+                continue
     def _sample(self, request, context, environment, maximumDepth):
         if request.isArrow():
             context, expression = self._sample(request.arguments[1],
