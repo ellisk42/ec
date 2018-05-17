@@ -405,6 +405,7 @@ def rustInduce(g0, frontiers, _=None,
     import os
     import subprocess
 
+    finite_logp = lambda l: l if l != float("-inf") else -1000
     message = {
         "params": {
             "structure_penalty": structurePenalty,
@@ -413,12 +414,11 @@ def rustInduce(g0, frontiers, _=None,
             "aic": aic if aic != float("inf") else None,
             "arity": a,
         },
-        "primitives": [{"name": p.name, "tp": str(t), "logp": l}
+        "primitives": [{"name": p.name, "tp": str(t), "logp": finite_log(l)}
                        for l,t,p in g0.productions if p.isPrimitive ],
-        "inventions": [{"expression": str(p.body),
-                        "logp": l if l != float("-inf") else -100} # -inf=-100
+        "inventions": [{"expression": str(p.body), "logp": finite_logp(l)}
                        for l,t,p in g0.productions if p.isInvented],
-        "variable_logprob": g0.logVariable,
+        "variable_logprob": finite_logp(g0.logVariable),
         "frontiers": [{
             "task_tp": str(f.task.request),
             "solutions": [{
