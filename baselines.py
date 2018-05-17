@@ -55,7 +55,9 @@ def ec_v1(*args, **kwargs):
         "useRecognitionModel": False,
         "iterations": kwargs["iterations"], # XXX: should we change this?
         "pseudoCounts": 0.1,
-        "arity": 0
+        "arity": 0,
+        "maximumFrontier": 2,
+        "topK": 2
     })
     return ec.explorationCompression(*args, **kwargs)
 
