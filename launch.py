@@ -47,9 +47,25 @@ def launch(size = "t2.micro", name = ""):
     print "Retrieved IP address of instance %s; got %s"%(instance,address)
     return instance, address
 
+def sendCheckpoint(address, checkpoint):
+    _c = os.path.split(checkpoint)[1]
+    print "Sending checkpoint:"
+    command = """scp -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem \
+                %s ubuntu@%s:~/%s""" % (checkpoint, address, _c)
+    print command
+    os.system(command)
 
-def sendCommand(address, script, job_id, upload, resume, tar, shutdown):
+    
+def sendCommand(address, script, job_id, upload, resume, tar, shutdown, checkpoint=None):
     import tempfile
+
+    if checkpoint is None:
+        copyCheckpoint = ""
+    else:
+        if '/' in checkpoint:
+            checkpoint = os.path.split(checkpoint)[1]
+        copyCheckpoint = "mv ~/%s ~/ec/experimentOutputs"%checkpoint
+    
     preamble = """#!/bin/bash
 pip install sexpdata
 pip install dill
@@ -61,9 +77,10 @@ sudo apt-get install  -y python-tk
 pip install matplotlib
 cd ~/ec
 rm experimentOutputs/*
+%s
 touch compressor_dummy
 git pull
-"""
+"""%copyCheckpoint
 
     br = branch()
     if br != 'master':
@@ -159,7 +176,7 @@ sudo shutdown -h now
     print "Executing script on remote host."
 
 
-def launchExperiment(name, command, tail=False, resume="", upload=None, tar=False, shutdown=True, size="t2.micro"):
+def launchExperiment(name, command, checkpoint=None, tail=False, resume="", upload=None, tar=False, shutdown=True, size="t2.micro"):
     job_id = "{}_{}_{}".format(name, user(), datetime.now().strftime("%FT%T"))
     job_id = job_id.replace(":", ".")
     if upload is None and shutdown:
@@ -179,7 +196,9 @@ def launchExperiment(name, command, tail=False, resume="", upload=None, tar=Fals
 
     instance, address = launch(size, name=name)
     time.sleep(60)
-    sendCommand(address, script, job_id, upload, resume, tar, shutdown)
+    if checkpoint is not None:
+        sendCheckpoint(address, checkpoint)
+    sendCommand(address, script, job_id, upload, resume, tar, shutdown, checkpoint=checkpoint)
     if tail:
         os.system("""
             ssh -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem \
@@ -207,6 +226,8 @@ if __name__ == "__main__":
                         action="store_true")
     parser.add_argument("--resume", metavar="TAR", type=str,
                         help="send tarball to resume checkpoint.")
+    parser.add_argument("--checkpoint", metavar="checkpoint", type=str,
+                        help="Send checkpoint file to resume checkpoint.")
     parser.add_argument('-k',"--shutdown",
                         default=False,
                         action="store_true")
@@ -225,7 +246,8 @@ if __name__ == "__main__":
                      resume=arguments.resume,
                      size=arguments.size,
                      upload=arguments.upload,
-                     tar=arguments.tar)
+                     tar=arguments.tar,
+                     checkpoint=arguments.checkpoint)
 
 """
 BILLING: https://console.aws.amazon.com/billing/home?#/

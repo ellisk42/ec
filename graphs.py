@@ -7,9 +7,17 @@ import matplotlib.pyplot as plot
 from matplotlib.ticker import MaxNLocator
 import matplotlib.lines as mlines
 
+import matplotlib
+
+
 TITLEFONTSIZE = 14
-TICKFONTSIZE = 10
-LABELFONTSIZE = 11
+TICKFONTSIZE = 12
+LABELFONTSIZE = 14
+
+matplotlib.rc('xtick', labelsize=TICKFONTSIZE) 
+matplotlib.rc('ytick', labelsize=TICKFONTSIZE)
+
+
 class Bunch(object):
     def __init__(self,d):
         self.__dict__.update(d)
@@ -104,24 +112,28 @@ def plotECResult(resultPaths, colors='rgbycm', label=None, title=None, export=No
                 results.append(result)
                 p = parseResultsPath(path)
                 parameters.append(p)
+                # This was added right before the nips deadline
+                # because we never got to export this but it printed out the results so I have it
+                if path == "textCheckpoints/challenge/text_activation=tanh_aic=1.0_arity=3_ET=7200_helmholtzBatch=5000_HR=0.5_it=4_likelihoodModel=all-or-nothing_MF=2_baseline=False_pc=30.0_steps=250_L=10.0_K=2_rec=True_feat=LearnedFeatureExtractor.pickle":
+                    results[-1].testingSearchTime.append([29]*len(results[-1].testingSearchTime[-1]))
 
     # Collect together the timeouts, which determine the style of the line drawn
     timeouts = sorted(set( r.enumerationTimeout for r in parameters ),
                            reverse = 2)
     timeoutToStyle = {size: style for size, style in zip(timeouts,["-","--","-."]) }
 
-    f,a1 = plot.subplots(figsize = (3,3))
+    f,a1 = plot.subplots(figsize = (4,3))
     a1.set_xlabel('Iteration', fontsize = LABELFONTSIZE)
     a1.xaxis.set_major_locator(MaxNLocator(integer = True))
 
     if showSolveTime:
-        a1.set_ylabel('% Testing Tasks Solved (solid)', fontsize = LABELFONTSIZE)
+        a1.set_ylabel('%  Solved (solid)', fontsize = LABELFONTSIZE)
     else:
         a1.set_ylabel('% Testing Tasks Solved', fontsize = LABELFONTSIZE)
 
     if showSolveTime:
         a2 = a1.twinx()
-        a2.set_ylabel('Avg solve time (dashed)', fontsize = LABELFONTSIZE)
+        a2.set_ylabel('Solve time (dashed)', fontsize = LABELFONTSIZE)
 
     n_iters = max(len(result.learningCurve) for result in results)
     if iterations and n_iters > iterations: n_iters = iterations
@@ -153,7 +165,13 @@ def plotECResult(resultPaths, colors='rgbycm', label=None, title=None, export=No
     if showSolveTime:
         a2.set_ylim(ymin = 0)
         starting, ending = a2.get_ylim()
-        a2.yaxis.set_ticks(np.arange(starting, ending, (ending - starting)/5.))
+        if True:
+            a2.yaxis.set_ticks([20*j for j in range(5) ])  #[int(zz) for zz in np.arange(starting, ending, (ending - starting)/5.)])
+        else:
+            a2.yaxis.set_ticks([50*j for j in range(6) ])
+        for tick in a2.yaxis.get_ticklabels():
+            print tick
+            tick.set_fontsize(TICKFONTSIZE) 
 
     if title is not None:
         plot.title(title, fontsize = TITLEFONTSIZE)

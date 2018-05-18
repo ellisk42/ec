@@ -489,29 +489,36 @@ class RecognitionModel(nn.Module):
         if seed is not None:
             random.seed(seed)
         request = random.choice(requests)
+        eprint("About to draw a sample")
         program = self.grammar.sample(request, maximumDepth = 6, maxAttempts = 100)
+        eprint("sample",program)
         if program is None: return None
         task = self.featureExtractor.taskOfProgram(program, request)
+        eprint("extracted features")
         if statusUpdate is not None:
             eprint(statusUpdate, end = '')
             flushEverything()
         if task is None: return None
 
         if hasattr(self.featureExtractor, 'lexicon'):
+            eprint("tokenizing...")
             if self.featureExtractor.tokenize(task.examples) is None:
                 return None
         
         frontier = Frontier([FrontierEntry(program=program,
                                            logLikelihood=0., logPrior=0.)],
                             task=task)
-        return self.replaceProgramsWithLikelihoodSummaries(frontier)
+        eprint("replacing with likelihood summary")
+        frontier = self.replaceProgramsWithLikelihoodSummaries(frontier)
+        eprint("successfully got a sample")
+        return frontier
 
     def sampleManyHelmholtz(self, requests, N, CPUs):
         eprint("Sampling %d programs from the prior on %d CPUs..."%(N,CPUs))
         flushEverything()
         frequency = N/50
         startingSeed = random.random()
-        samples = parallelMap(CPUs,
+        samples = parallelMap(1,
                               lambda n: self.sampleHelmholtz(requests,
                                                              statusUpdate = '.' if n%frequency == 0 else None,
                                                              seed=startingSeed+n),

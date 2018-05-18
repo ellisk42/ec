@@ -14,6 +14,7 @@ import heapq
 
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
+    flushEverything()
 
 class Bunch(object):
     def __init__(self,d):
