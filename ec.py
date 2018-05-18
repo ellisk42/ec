@@ -307,7 +307,6 @@ def ecIterator(grammar, tasks,
 
             recognizer.train(frontiers, topK=topK, steps=steps,
                              CPUs=CPUs,
-                             timeout=enumerationTimeout, # give training as much time as enumeration
                              helmholtzBatch=helmholtzBatch,
                              helmholtzRatio=helmholtzRatio if j > 0 else 0.)
             result.recognitionModel = recognizer
