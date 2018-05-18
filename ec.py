@@ -82,6 +82,7 @@ def ecIterator(grammar, tasks,
                resume=None,
                frontierSize=None,
                enumerationTimeout=None,
+               testingTimeout=None,
                expandFrontier=None,
                resumeFrontierSize=None,
                useRecognitionModel=False,
@@ -231,6 +232,29 @@ def ecIterator(grammar, tasks,
     }[likelihoodModel]()
 
     for j in range(resume or 0, iterations):
+
+        # Evaluate on held out tasks if we have them
+        if testingTimeout > 0:
+            eprint("Evaluating on held out testing tasks.")
+            if useRecognitionModel and j > 0:
+                _, times = result.recognitionModel.enumerateFrontiers(testingTasks, likelihoodModel,
+                                                                      CPUs=CPUs,
+                                                                      solver=solver,
+                                                                      maximumFrontier=maximumFrontier,
+                                                                      enumerationTimeout=testingTimeout,
+                                                                      evaluationTimeout=evaluationTimeout,
+                                                                      testing=True)
+            else:
+                _, times = multithreadedEnumeration(grammar, testingTasks, likelihoodModel,
+                                                solver=solver,
+                                                maximumFrontier=maximumFrontier,
+                                                enumerationTimeout=testingTimeout,
+                                                CPUs=CPUs,
+                                                evaluationTimeout=evaluationTimeout)
+            eprint("Hits %d/%d testing tasks"%(len(times),len(testingTasks)))
+            # summaryStatistics("Testing tasks",times)
+            # result.testingSearchTime.append(times)
+
         if j >= 2 and expandFrontier and result.learningCurve[-1] <= result.learningCurve[-2]:
             oldEnumerationTimeout = enumerationTimeout
             if expandFrontier <= 10:
@@ -514,6 +538,10 @@ def commandlineArguments(_=None,
                         default=steps,
                         help="""Trainings steps for neural recognition model.
                         Default: %s""" % steps)
+    parser.add_argument("--testingTimeout", type=int,
+                        dest="testingTimeout",
+                        default=0,
+                        help="Number of seconds we should spend evaluating on each held out testing task.")
     parser.add_argument("--activation",
                         choices=["relu", "sigmoid", "tanh"],
                         default=activation,

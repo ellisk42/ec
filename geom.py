@@ -147,15 +147,15 @@ def list_options(parser):
 
 if __name__ == "__main__":
     args = commandlineArguments(
-            steps=1000,
+            steps=100,
             a=3,
 	    topK=5,
             iterations=10,
             useRecognitionModel=True,
             helmholtzRatio=0.5,
-            helmholtzBatch=500,
+            helmholtzBatch=50,
             featureExtractor=GeomFeatureCNN,
-            maximumFrontier=1000,
+            maximumFrontier=100,
             CPUs=numberOfCPUs(),
             pseudoCounts=10.0,
             activation="tanh",
@@ -200,7 +200,7 @@ if __name__ == "__main__":
 
     fe = GeomFeatureCNN(tasks)
 
-    for x in range(0, 500):
+    for x in range(0, 50):
         program = baseGrammar.sample(tcanvas, maximumDepth=6)
         features = fe.renderProgram(program, tcanvas)
     fe.finish()

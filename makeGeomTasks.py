@@ -63,20 +63,20 @@ def makeTasks(subfolders):
     for subfolder in subfolders:
         for _, _, files in os.walk(rootdir+subfolder):
             for f in files:
+                needed = False if subfolder == "behaviour" else True
                 if f.endswith("_l.png"):
                     problem(f,
                             [([], fileToArray(rootdir + subfolder + '/' + f))],
-                            needToTrain=True)
+                            needToTrain=needed)
 
     return problems
 
 
 if __name__ == "__main__":
     allTasks()
-    tasks = makeTasks('all')
+    tasks = makeTasks(['all'])
     for t in tasks:
-        print((t.name))
-        print((t.request))
+        print((t))
         x, y = t.examples[0]
         pretty_print(y, 64)
         print()
