@@ -242,8 +242,7 @@ def ecIterator(grammar, tasks,
                                                                       solver=solver,
                                                                       maximumFrontier=maximumFrontier,
                                                                       enumerationTimeout=testingTimeout,
-                                                                      evaluationTimeout=evaluationTimeout,
-                                                                      testing=True)
+                                                                      evaluationTimeout=evaluationTimeout)
             else:
                 _, times = multithreadedEnumeration(grammar, testingTasks, likelihoodModel,
                                                 solver=solver,
