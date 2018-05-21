@@ -3,6 +3,7 @@ from grammar import Grammar
 from type import tlist, tint, tbool, arrow, t0, t1, t2
 
 import math
+from functools import reduce
 
 def _flatten(l): return [x for xs in l for x in xs]
 
@@ -42,7 +43,7 @@ def _isSquare(n):
     return int(math.sqrt(n)) ** 2 == n
 
 def _appendmap(f): lambda xs: [y for x in xs for y in f(x)]
-def _filter(f): return lambda l: filter(f, l)
+def _filter(f): return lambda l: list(filter(f, l))
 def _any(f): return lambda l: any(f(x) for x in l)
 def _all(f): return lambda l: all(f(x) for x in l)
 def _find(x):
@@ -78,7 +79,7 @@ def _fix(argument):
 def curry(f): return lambda x: lambda y: f((x,y)) 
 def _fix2(a1):
     return lambda a2: lambda body: \
-        _fix((a1,a2))(lambda r: lambda (n,l): body(curry(r))(n)(l))
+        _fix((a1,a2))(lambda r: lambda n_l: body(curry(r))(n_l[0])(n_l[1]))
 
 primitiveRecursion1 = Primitive("fix1",
                                arrow(t0,
@@ -97,7 +98,7 @@ def _match(l):
 
 
 def primitives():
-    return [ Primitive(str(j), tint, j) for j in xrange(6) ] + [
+    return [ Primitive(str(j), tint, j) for j in range(6) ] + [
         Primitive("empty", tlist(t0), []),
         Primitive("singleton", arrow(t0, tlist(t0)), _single),
         Primitive("range", arrow(tint, tlist(tint)), range),
@@ -146,7 +147,7 @@ def primitives():
 
 
 def basePrimitives():
-    return [ Primitive(str(j), tint, j) for j in xrange(6) ] + [
+    return [ Primitive(str(j), tint, j) for j in range(6) ] + [
         Primitive("*", arrow(tint, tint, tint), _multiplication),
         Primitive("gt?", arrow(tint, tint, tbool), _gt),
         Primitive("is-prime", arrow(tint, tbool), _isPrime),
@@ -217,7 +218,7 @@ def McCarthyPrimitives():
         Primitive("eq?", arrow(tint, tint, tbool), _eq),
         Primitive("+", arrow(tint, tint, tint), _addition),
         Primitive("-", arrow(tint, tint, tint), _subtraction),
-        ] + [ Primitive(str(j), tint, j) for j in xrange(2) ]
+        ] + [ Primitive(str(j), tint, j) for j in range(2) ]
 
 if __name__ == "__main__":
     bootstrapTarget()
@@ -246,73 +247,73 @@ if __name__ == "__main__":
                       # replace("forloop", "(#(lambda (lambda (lambda (lambda (fix1 $0 (lambda (lambda (#(lambda (lambda (lambda (if $0 empty (cons $1 $2))))) ($1 ($3 $0)) ($4 $0) ($5 $0))))))))) (lambda (#(eq? 0) $0)) $0 (lambda (#(lambda (- $0 1)) $0)))").\
                       # replace("inc","#(lambda (+ $0 1))").\
                       # replace("drop","#(lambda (lambda (fix2 $0 $1 (lambda (lambda (lambda (if (#(eq? 0) $1) $0 (cdr ($2 (- $1 1) $0)))))))))"))
-    print p
-    print g.logLikelihood(t,p)
+    print(p)
+    print(g.logLikelihood(t,p))
     assert False
 
-    print "??"
+    print("??")
     p = Program.parse("#(lambda (#(lambda (lambda (lambda (fix1 $0 (lambda (lambda (if (empty? $0) $3 ($4 (car $0) ($1 (cdr $0)))))))))) (lambda $1) 1))")
-    for j in xrange(10):
-        l = range(j)
-        print l,p.evaluate([])(lambda x: x*2)(l)
-        print
-    print 
+    for j in range(10):
+        l = list(range(j))
+        print(l,p.evaluate([])(lambda x: x*2)(l))
+        print()
+    print() 
 
-    print "multiply"
+    print("multiply")
     p = Program.parse("(lambda (lambda (lambda (if (eq? $0 0) 0 (+ $1 ($2 $1 (- $0 1)))))))")
-    print g.logLikelihood(arrow(arrow(tint,tint,tint),tint,tint,tint), p)
-    print
+    print(g.logLikelihood(arrow(arrow(tint,tint,tint),tint,tint,tint), p))
+    print()
 
-    print "take until 0"
+    print("take until 0")
     p = Program.parse("(lambda (lambda (if (eq? $1 0) empty (cons $1 $0))))")
-    print g.logLikelihood(arrow(tint,tlist(tint),tlist(tint)), p)
-    print 
+    print(g.logLikelihood(arrow(tint,tlist(tint),tlist(tint)), p))
+    print() 
 
-    print "countdown primitive"
+    print("countdown primitive")
     p = Program.parse("(lambda (lambda (if (eq? $0 0) empty (cons (+ $0 1) ($1 (- $0 1))))))")
-    print g.logLikelihood(arrow(arrow(tint,tlist(tint)), arrow(tint,tlist(tint))), p)
-    print _fix(9)(p.evaluate([]))
-    print "countdown w/ better primitives"
+    print(g.logLikelihood(arrow(arrow(tint,tlist(tint)), arrow(tint,tlist(tint))), p))
+    print(_fix(9)(p.evaluate([])))
+    print("countdown w/ better primitives")
     p = Program.parse("(lambda (lambda (if (eq0 $0) empty (cons (+1 $0) ($1 (-1 $0))))))")
-    print g.logLikelihood(arrow(arrow(tint,tlist(tint)), arrow(tint,tlist(tint))), p)
+    print(g.logLikelihood(arrow(arrow(tint,tlist(tint)), arrow(tint,tlist(tint))), p))
 
     
-    print 
+    print() 
 
-    print "prepend zeros"
+    print("prepend zeros")
     p = Program.parse("(lambda (lambda (lambda (if (eq? $1 0) $0 (cons 0 ($2 (- $1 1) $0))))))")
-    print g.logLikelihood(arrow(arrow(tint,tlist(tint),tlist(tint)),tint,tlist(tint),tlist(tint)), p)
-    print
+    print(g.logLikelihood(arrow(arrow(tint,tlist(tint),tlist(tint)),tint,tlist(tint),tlist(tint)), p))
+    print()
     assert False
 
     p = Program.parse("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) 0 (+ 1 ($1 (cdr $0))))))))")
-    print p.evaluate([])(range(17))
-    print g.logLikelihood(arrow(tlist(tbool),tint),p)
+    print(p.evaluate([])(list(range(17))))
+    print(g.logLikelihood(arrow(tlist(tbool),tint),p))
 
     p = Program.parse("(lambda (lambda (if (empty? $0) 0 (+ 1 ($1 (cdr $0))))))")
-    print g.logLikelihood(arrow(arrow(tlist(tbool),tint),arrow(tlist(tbool),tint)),p)
+    print(g.logLikelihood(arrow(arrow(tlist(tbool),tint),arrow(tlist(tbool),tint)),p))
 
     p = Program.parse("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) 0 (+ (car $0) ($1 (cdr $0))))))))")
     
-    print p.evaluate([])(range(4))
-    print g.logLikelihood(arrow(tlist(tint),tint),p)
+    print(p.evaluate([])(list(range(4))))
+    print(g.logLikelihood(arrow(tlist(tint),tint),p))
 
     p = Program.parse("(lambda (lambda (if (empty? $0) 0 (+ (car $0) ($1 (cdr $0))))))")
-    print p
-    print g.logLikelihood(arrow(arrow(tlist(tint),tint),tlist(tint),tint),p)
+    print(p)
+    print(g.logLikelihood(arrow(arrow(tlist(tint),tint),tlist(tint),tint),p))
 
-    print "take"
+    print("take")
     p = Program.parse("(lambda (lambda (lambda (if (eq? $1 0) empty (cons (car $0) ($2 (- $1 1) (cdr $0)))))))")
-    print p
-    print g.logLikelihood(arrow(arrow(tint,tlist(tint),tlist(tint)),tint,tlist(tint),tlist(tint)),
-                                p)
+    print(p)
+    print(g.logLikelihood(arrow(arrow(tint,tlist(tint),tlist(tint)),tint,tlist(tint),tlist(tint)),
+                                p))
     assert False
     
     
-    print p.evaluate([])(range(4))
-    print g.logLikelihood(arrow(tlist(tint),tlist(tint)),p)
+    print(p.evaluate([])(list(range(4))))
+    print(g.logLikelihood(arrow(tlist(tint),tlist(tint)),p))
     
     p = Program.parse("""(lambda (fix (lambda (lambda (match $0 0 (lambda (lambda (+ $1 ($3 $0))))))) $0))""")
-    print p.evaluate([])(range(4))
-    print g.logLikelihood(arrow(tlist(tint),tint),p)
+    print(p.evaluate([])(list(range(4))))
+    print(g.logLikelihood(arrow(tlist(tint),tint),p))
     

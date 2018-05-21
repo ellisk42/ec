@@ -410,7 +410,7 @@ let enumerate_programs ?maxFreeParameters:(maxFreeParameters=0) ?final:(final=fu
               g.library |>
               List.filter ~f:(fun (p,_,_,_) -> not (is_recursion_primitive p)) |>
               (* sort library by number of arguments so that it will tend to explore shorter things first *)
-              List.sort ~cmp:(fun (_,a,_,_) (_,b,_,_) -> List.length (arguments_of_type a) - List.length (arguments_of_type b)) } in
+              List.sort ~compare:(fun (_,a,_,_) (_,b,_,_) -> List.length (arguments_of_type a) - List.length (arguments_of_type b)) } in
 
   let request' =
     if definitely_recursive then request @> request else request

@@ -1,4 +1,0 @@
-Repeat {
-  Integrate(pen=off) ;
-  Integrate(t=Half(unit),angularSpeed=unit)
-}

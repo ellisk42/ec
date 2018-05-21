@@ -3,18 +3,27 @@ from fragmentGrammar import *
 from grammar import *
 from heapq import *
 from utilities import eprint
+#luke
+from program import tokeniseProgram, untokeniseProgram, ParseFailure
+#from network import Network #for now
+import pinn
 
 import time
 import gc
+from multiprocessing import Pool
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import torch.optim as optimization
 from torch.autograd import Variable
-from torch.nn.utils.rnn import pack_padded_sequence
+from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 
 import numpy as np
-
+#luke
+import json
+import string
+import copy
 
 def variable(x, volatile=False, cuda=False):
     if isinstance(x, list):
@@ -61,9 +70,9 @@ class DRNN(nn.Module):
 
         self.encoder = nn.Embedding(len(grammar) + 1, hidden)
 
-        self.siblingPrediction = nn.Linear(hidden, hidden, bias = False)
-        self.parentPrediction = nn.Linear(hidden, hidden, bias = False)
-        self.prediction = nn.Linear(hidden, len(grammar) + 1, bias = False)
+        self.siblingPrediction = nn.Linear(hidden, hidden, bias=False)
+        self.parentPrediction = nn.Linear(hidden, hidden, bias=False)
+        self.prediction = nn.Linear(hidden, len(grammar) + 1, bias=False)
 
         # todo: do I include the cell state?
         self.defaultSibling = variable(torch.Tensor(hidden).float()).view(1,1,-1)
@@ -78,7 +87,7 @@ class DRNN(nn.Module):
         if p.isIndex: p = Index(0)
         return variable([self.production2index[p]])
 
-    def predictionFromHidden(self, parent, sibling, alternatives = None):
+    def predictionFromHidden(self, parent, sibling, alternatives=None):
         """Takes the parent and sibling hidden vectors, optionally with a set of alternatives; returns logits"""
         parent = parent[0] if parent else self.defaultParent
         sibling = sibling[0] if sibling else self.defaultSibling
@@ -120,9 +129,9 @@ class DRNN(nn.Module):
                                                 parent = parent)
         return loss
 
-    def _programLoss(self, request, program, _ = None,
-                    parent = None, sibling = None,
-                    context = None, environment = []):
+    def _programLoss(self, request, program, _=None,
+                    parent=None, sibling=None,
+                    context=None, environment=[]):
         """Returns context, root, loss"""
         if context is None: context = Context.EMPTY
 
@@ -130,17 +139,17 @@ class DRNN(nn.Module):
             assert isinstance(program,Abstraction)
             return self._programLoss(request.arguments[1],
                                     program.body,
-                                    context = context,
-                                    environment = [request.arguments[0]] + environment,
-                                    parent = parent, sibling = sibling)
+                                    context=context,
+                                    environment=[request.arguments[0]] + environment,
+                                    parent=parent, sibling=sibling)
 
         f,xs = program.applicationParse()
         candidates = self.grammar.buildCandidates(request, context, environment,
-                                                  normalize = False,
-                                                  returnProbabilities = False,
-                                                  returnTable = True)
+                                                  normalize=False,
+                                                  returnProbabilities=False,
+                                                  returnTable=True)
         assert f in candidates
-        alternatives = candidates.keys()
+        alternatives = list(candidates.keys())
 
         _,tp,context = candidates[f]
 
@@ -148,7 +157,7 @@ class DRNN(nn.Module):
         assert len(xs) == len(argumentTypes)
 
         L = self.singlePredictionLoss(self.predictionFromHidden(parent, sibling,
-                                                                alternatives = alternatives),
+                                                                alternatives=alternatives),
                                       f)
 
         # Update ancestral rnn, which will be passed to the children
@@ -160,8 +169,8 @@ class DRNN(nn.Module):
         for argumentType, argument in zip(argumentTypes, xs):
             argumentType = argumentType.apply(context)
             context, aroot, aL = self._programLoss(argumentType, argument,
-                                                  context = context, environment = environment,
-                                                  parent = parent, sibling = sibling)
+                                                  context=context, environment=environment,
+                                                  parent=parent, sibling=sibling)
             L += aL
             sibling = self.updateSibling(sibling, aroot)
 
@@ -171,30 +180,30 @@ class DRNN(nn.Module):
 
     def sample(self, task):
         context, root, p = self._sample(task.request,
-                                        parent = self.initialParent(task))
+                                        parent=self.initialParent(task))
         return p
 
-    def _sample(self, request, _ = None,
-               parent = None, sibling = None,
-               context = None, environment = []):
+    def _sample(self, request, _=None,
+               parent=None, sibling=None,
+               context=None, environment=[]):
         """Returns context , root , expression"""
         if context is None: context = Context.EMPTY
 
         if request.isArrow():
             context, root, expression = self._sample(request.arguments[1],
-                                                    context = context,
-                                                    parent = parent, sibling = sibling,
-                                                    environment = [request.arguments[0]] + environment)
+                                                    context=context,
+                                                    parent=parent, sibling=sibling,
+                                                    environment=[request.arguments[0]] + environment)
             return context, root, Abstraction(expression)
 
         candidates = self.grammar.buildCandidates(request, context, environment,
-                                                  normalize = False,
-                                                  returnProbabilities = False,
-                                                  returnTable = True)
+                                                  normalize=False,
+                                                  returnProbabilities=False,
+                                                  returnTable=True)
 
-        alternatives = candidates.keys()
+        alternatives = list(candidates.keys())
         prediction = self.predictionFromHidden(parent, sibling,
-                                               alternatives = alternatives).exp()
+                                               alternatives=alternatives).exp()
         f = self.index2production[torch.multinomial(prediction, 1).data[0]]
         root = f
         if f.isIndex:
@@ -215,52 +224,52 @@ class DRNN(nn.Module):
         for argumentType in argumentTypes:
             argumentType = argumentType.apply(context)
             context, childSymbol, a = self._sample(argumentType,
-                                                  context = context, environment = environment,
-                                                  parent = parent, sibling = sibling)
+                                                  context=context, environment=environment,
+                                                  parent=parent, sibling=sibling)
             f = Application(f, a)
             sibling = self.updateSibling(sibling, childSymbol)
 
         return context, root, f
 
-    def enumeration(self, task, interval = 1.):
+    def enumeration(self, task, interval=1.):
         request = task.request
         parent = self.initialParent(task)
 
         lowerBound = 0.
         while True:
             for ll,_,_,e in self._enumeration(request,
-                                              lowerBound = lowerBound, upperBound = lowerBound + interval,
-                                              parent = parent, sibling = None,
-                                              context = Context.EMPTY, environment = []):
+                                              lowerBound=lowerBound, upperBound=lowerBound + interval,
+                                              parent=parent, sibling=None,
+                                              context=Context.EMPTY, environment=[]):
                 yield ll,e
             lowerBound += interval
 
-    def _enumeration(self, request, _ = None,
-                     upperBound = None, lowerBound = None,
-                     context = None, environment = None,
-                     parent = None, sibling = None):
+    def _enumeration(self, request, _=None,
+                     upperBound=None, lowerBound=None,
+                     context=None, environment=None,
+                     parent=None, sibling=None):
         """Generates log likelihood, context, root, expression"""
         if upperBound <= 0: return
 
         if request.isArrow():
             v = request.arguments[0]
             for l, newContext, r, b in self._enumeration(request.arguments[1],
-                                                         context = context, environment = [v] + environment,
-                                                         upperBound = upperBound,
-                                                         lowerBound = lowerBound,
-                                                         parent = parent, sibling = sibling):
+                                                         context=context, environment=[v] + environment,
+                                                         upperBound=upperBound,
+                                                         lowerBound=lowerBound,
+                                                         parent=parent, sibling=sibling):
                 yield l, newContext, r, Abstraction(b)
             return
 
         candidates = self.grammar.buildCandidates(request, context, environment,
-                                                  normalize = False,
-                                                  returnProbabilities = False,
-                                                  returnTable = True)
+                                                  normalize=False,
+                                                  returnProbabilities=False,
+                                                  returnTable=True)
 
-        alternatives = candidates.keys()
+        alternatives = list(candidates.keys())
         numberOfVariables = sum(a.isIndex for a in alternatives)
         prediction = self.predictionFromHidden(parent, sibling,
-                                               alternatives = alternatives).data
+                                               alternatives=alternatives).data
         prediction = dict(zip(self.index2production, prediction))
         # Update the candidates so that they now record what the
         # neural network thinks their likelihood should be
@@ -272,7 +281,7 @@ class DRNN(nn.Module):
             _,tp,newContext = candidates[a]
             candidates[a] = (ll,tp,newContext)
 
-        for f,(ll,tp,newContext) in candidates.iteritems():
+        for f,(ll,tp,newContext) in candidates.items():
             mdl = -ll
             if not (mdl <= upperBound): continue
 
@@ -284,16 +293,16 @@ class DRNN(nn.Module):
 
             for aL, aK, application in \
                 self._enumerateApplication(f, argumentTypes,
-                                           context = newContext, environment = environment,
-                                           upperBound = upperBound + ll,
-                                           lowerBound = lowerBound + ll,
-                                           parent = newParent, sibling = None):
+                                           context=newContext, environment=environment,
+                                           upperBound=upperBound + ll,
+                                           lowerBound=lowerBound + ll,
+                                           parent=newParent, sibling=None):
                 yield aL + ll, aK, root, application
 
-    def _enumerateApplication(self, f, xs, _ = None,
-                              upperBound = None, lowerBound = None,
-                              context = None, environment = None,
-                              parent = None, sibling = None):
+    def _enumerateApplication(self, f, xs, _=None,
+                              upperBound=None, lowerBound=None,
+                              context=None, environment=None,
+                              parent=None, sibling=None):
         if upperBound <= 0: return
         if xs == []:
             if lowerBound < 0. and 0. <= upperBound:
@@ -303,9 +312,9 @@ class DRNN(nn.Module):
         laterRequests = xs[1:]
         for aL, newContext, argumentRoot, argument in \
             self._enumeration(request,
-                              context = context, environment = environment,
-                              upperBound = upperBound, lowerBound = 0.,
-                              parent = parent, sibling = sibling):
+                              context=context, environment=environment,
+                              upperBound=upperBound, lowerBound=0.,
+                              parent=parent, sibling=sibling):
             newFunction = Application(f, argument)
             if laterRequests != []:
                 newSibling = self.updateSibling(sibling, argumentRoot)
@@ -313,9 +322,9 @@ class DRNN(nn.Module):
                 newSibling = None
             for resultL, resultK, result in \
                 self._enumerateApplication(newFunction, laterRequests,
-                                           context = newContext, environment = environment,
-                                           upperBound = upperBound + aL, lowerBound = lowerBound + aL,
-                                           parent = parent, sibling = newSibling):
+                                           context=newContext, environment=environment,
+                                           upperBound=upperBound + aL, lowerBound=lowerBound + aL,
+                                           parent=parent, sibling=newSibling):
                 yield resultL + aL, resultK, result
 
 
@@ -378,12 +387,18 @@ class RecognitionModel(nn.Module):
         for layer in self.hiddenLayers:
             features = self.activation(layer(features))
         h = features
+        #added the squeeze
         return self.logVariable(h), self.logProductions(h)
 
     def frontierKL(self, frontier):
         features = self.featureExtractor.featuresOfTask(frontier.task)
         variables, productions = self(features)
-        g = Grammar(variables, [(productions[k].view(1),t,program)
+        #eprint("productions:")
+        #eprint(productions)
+        #eprint("len self.grammar.productions")
+        #eprint(len(self.grammar.productions))
+        # issue is that productions should be transposed, I think. But confused about why this happened.
+        g = Grammar(variables, [(productions[k],t,program)
                                 for k,(_,t,program) in enumerate(self.grammar.productions) ])
         # Monte Carlo estimate: draw a sample from the frontier
         entry = frontier.sample()
@@ -445,7 +460,7 @@ class RecognitionModel(nn.Module):
                     if doingHelmholtz:
                         if helmholtzSamples == []:
                             helmholtzSamples = \
-                            self.sampleManyHelmholtz(requests,
+                            list(self.sampleManyHelmholtz(requests,
                                                      HELMHOLTZBATCH,
                                                      CPUs)
                         if len(helmholtzSamples) == 0:
@@ -576,7 +591,7 @@ class RecurrentFeatureExtractor(nn.Module):
         assert tasks is not None, "You must provide a list of all of the tasks, both those that have been hit and those that have not been hit. Input examples are sampled from these tasks."
 
         # maps from a requesting type to all of the inputs that we ever saw that request
-        self.requestToInputs = {tp: [ map(fst, t.examples) for t in tasks if t.request == tp ]
+        self.requestToInputs = {tp: [ list(map(fst, t.examples)) for t in tasks if t.request == tp ]
                                 for tp in {t.request for t in tasks } }
 
         assert lexicon
@@ -597,7 +612,7 @@ class RecurrentFeatureExtractor(nn.Module):
 
         layers = 1
 
-        model = nn.GRU(H, H, layers, bidirectional = bidirectional)
+        model = nn.GRU(H, H, layers, bidirectional=bidirectional)
         if cuda:
             model = model.cuda()
         self.model = model
@@ -660,7 +675,7 @@ class RecurrentFeatureExtractor(nn.Module):
         return x, sizes
 
     def examplesEncoding(self, examples):
-        examples = sorted(examples, key = lambda (xs,y): sum(len(z)+1 for z in xs) + len(y), reverse = True)
+        examples = sorted(examples, key=lambda xs_y: sum(len(z)+1 for z in xs_y[0]) + len(xs_y[1]), reverse=True)
         x,sizes = self.packExamples(examples)
         outputs, hidden = self.model(x)
         #outputs, sizes = pad_packed_sequence(outputs)
@@ -722,7 +737,11 @@ class MLPFeatureExtractor(nn.Module):
     def featuresOfTask(self, t):
         f = variable([ (f - self.averages[j])/self.deviations[j] for j,f in enumerate(t.features) ], cuda=self.use_cuda).float()
         return self.hidden(f).clamp(min = 0)
-
+    def featuresOfProgram(self, p, t):
+        features = self._featuresOfProgram(p,t)
+        if features is None: return None
+        f = variable([ (f - self.averages[j])/self.deviations[j] for j,f in enumerate(features) ], cuda=self.use_cuda).float()
+        return self.hidden(f).clamp(min=0)
 
 class HandCodedFeatureExtractor(object):
     def __init__(self, tasks, cuda=False):
@@ -767,6 +786,327 @@ class ImageFeatureExtractor(nn.Module):
 
 
 
+class JSONFeatureExtractor(object):
+    def __init__(self, tasks, cuda=False):
+        #self.averages, self.deviations = Task.featureMeanAndStandardDeviation(tasks)
+        #self.outputDimensionality = len(self.averages)
+        self.cuda = cuda
+        self.tasks = tasks
+
+    def stringify(self, x):
+        return json.dumps(x, separators=(',', ':')) #No whitespace #maybe kill the seperators
+
+    def featuresOfTask(self, t):
+        #>>> t.request to get the type
+        #>>> t.examples to get input/output examples
+        #this might actually be okay, because the input should just be nothing
+        return [(self.stringify(inputs), self.stringify(output)) for (inputs, output) in t.examples] 
+        return [(self.stringify(output),) for (inputs, output) in t.examples]
+
+    def featuresOfProgram(self, p, t):
+        features = self._featuresOfProgram(p,t)
+        if features is None: 
+            return None
+        #return [(self.stringify(x), self.stringify(y)) for (x,y) in features]
+        return [(feature,) for feature in features]
+        #TODO: should possibly match 
+        
+
+#TODO
+class NewRecognitionModel(nn.Module):
+    def __init__(self, featureExtractor, grammar, vocabulary=string.printable, cuda=False):
+        super(NewRecognitionModel, self).__init__()
+        self.grammar = grammar
+        self.use_cuda = cuda
+        if cuda:
+            self.cuda()
+            torch.set_default_tensor_type('torch.cuda.FloatTensor')
+        else:
+            # Torch sometimes segfaults in multithreaded mode...
+            pass
+            # torch.set_num_threads(1)
+
+        self.featureExtractor = featureExtractor
+
+        #TODO: modify for regex using pinn
+        self.network = pinn.RobustFill(
+            input_vocabularies=[vocabulary],
+            target_vocabulary=self.getTargetVocabulary(grammar)
+            )
+        # Sanity check - make sure that all of the parameters of the
+        # feature extractor were added to our parameters as well
+        if hasattr(featureExtractor, 'parameters'):
+            for parameter in featureExtractor.parameters():
+                assert any(myParameter is parameter for myParameter in self.parameters())
+
+    #TODO: modify for regexes 
+    def getTargetVocabulary(self, grammar): #Maybe can kill lambdas completely since they're deterministic
+        return ["(_lambda", ")_lambda", "(", ")"] + \
+                                ["$" + str(i) for i in range(10)] + \
+                                [str(p) for p in grammar.primitives]
+
+    def updateGrammar(self, grammar):
+        #self.network.set_target_vocabulary(self.getTargetVocabulary(grammar))
+        self.network = self.network.with_target_vocabulary(self.getTargetVocabulary(grammar)) #Annoying to have to do this, but it's okay - why?
+
+    def train(self, frontiers, _=None, steps=250, lr=0.001, topK=1, CPUs=1,
+              helmholtzRatio = 0.):
+        """
+        helmholtzRatio: What fraction of the training data should be forward samples from the generative model?
+        """
+        requests = [ frontier.task.request for frontier in frontiers ]
+
+        frontiers = [ frontier.topK(topK).normalize() for frontier in frontiers if not frontier.empty ]
+
+        # Not sure why this ever happens
+        if helmholtzRatio is None: helmholtzRatio = 0.
+
+        eprint("Training recognition model from %d frontiers, %d%% Helmholtz."%(
+            len(frontiers),
+            int(helmholtzRatio*100)))
+        
+        HELMHOLTZBATCH = 250
+
+        with timing("Trained recognition model"):
+            avgLoss = None
+            avgPermutedLoss = None
+
+            for i in range(1,steps + 1): 
+                eprint("step", i, "out of", steps + 1)   
+                if helmholtzRatio < 1.:
+                    permutedFrontiers = list(frontiers)
+                    random.shuffle(permutedFrontiers)
+                    
+                    #eprint("frontiers:")
+                    #eprint(frontiers)
+                    #eprint("permutedFrontiers:")
+                    #eprint(permutedFrontiers)
+                
+                else: permutedFrontiers = [None]
+                frontier_num = 0
+                for frontier in permutedFrontiers:
+                    eprint("frontier num", frontier_num, "out of", len(permutedFrontiers))
+                    frontier_num += 1
+                    # Randomly decide whether to sample from the generative model
+                    #for now, only helmholtz
+                    assert helmholtzRatio >= 1
+                    doingHelmholtz = random.random() < helmholtzRatio
+                    if doingHelmholtz:
+                        networkInputs = self.helmholtzNetworkInputs(requests, HELMHOLTZBATCH, CPUs)
+                        #eprint("networkInputs[0]", networkInputs[0])
+                        #eprint("networkInputs[1]", networkInputs[1])
+                        loss = self.step(*networkInputs)
+                    if not doingHelmholtz:
+                        if helmholtzRatio < 1.:
+                            #placeholder for now
+                            # self.zero_grad()
+                            # loss = self.frontierKL(frontier)
+                            #fix this later
+                            loss = 0
+                            eprint("helmholtz ratio is less than 1. for now only works for ratio = 1")
+                            pass
+                        else:
+                            # Refuse to train on the frontiers
+                            pass
+
+                if (i==1 or i%5==0):
+                    # networkInputs = self.helmholtzNetworkInputs(requests, HELMHOLTZBATCH, CPUs)
+                    # loss, permutedLoss = self.getCurrentLoss(*networkInputs)
+                    avgLoss = (0.9*avgLoss + 0.1*loss) if avgLoss is not None else loss
+                    # avgPermutedLoss = (0.9*avgPermutedLoss + 0.1*permutedLoss) if avgPermutedLoss is not None else permutedLoss
+
+                    # inputInformation = avgPermutedLoss - avgLoss
+                    eprint("Epoch %3d Loss %2.2f" % (i, avgLoss))
+                    gc.collect()
+    
+    # def helmholtsNetworkInputs(self, requests, batchSize, CPUs):
+    #     helmholtzSamples = self.sampleManyHelmholtz(requests, batchSize, CPUs)
+    #     helmholtzSamples = [x for x in helmholtzSamples if x is not None]
+
+    #     inputss = [[_in for (_in, _out) in features] for (program, request, features) in helmholtzSamples]
+    #     outputss = [[_out for (_in, _out) in features] for (program, request, features) in helmholtzSamples]
+    #     targets = [tokeniseProgram(program) for (program, request, features) in helmholtzSamples]
+
+    #     #For now, just concat input + output
+    #     joinedInputsOutputs = [[inputss[i][j] + outputss[i][j] for j in range(len(inputss[i]))] for i in range(len(inputss))]
+
+    #     #Filter to length <= 30
+    #     valid_idxs = [i for i in range(len(targets)) if len(targets[i])<=30 and all(len(example)<=30 for example in joinedInputsOutputs[i])]
+    #     batchInputsOutputs = [joinedInputsOutputs[i] for i in valid_idxs]
+    #     batchTargets = [targets[i] for i in valid_idxs]
+
+    #     return batchInputsOutputs, batchTargets
+
+    def helmholtzNetworkInputs(self, requests, batchSize, CPUs):
+        helmholtzSamples = self.sampleManyHelmholtz(requests, batchSize, CPUs)
+        helmholtzSamples = [x for x in helmholtzSamples if x is not None] #good
+
+        #TODO: modify for regexes
+        #inputss = [[_in for (_in, _out) in features] for (program, request, features) in helmholtzSamples]
+
+        #TODO: may need to remove the tuple thing - yeah
+        outputss = [[_out for _out in features] for (program, request, features) in helmholtzSamples]
+        targets = [tokeniseProgram(program) for (program, request, features) in helmholtzSamples]
+        #For now, just concat input + output
+        # joinedInputsOutputs = [[inputss[i][j] + outputss[i][j] for j in range(len(inputss[i]))] for i in range(len(inputss))]
+
+        #Filter to length <= 30
+        valid_idxs = [i for i in range(len(targets)) if \
+            len(targets[i])<=100 and \
+            all(len(example)<=100 for example in outputss[i])]
+
+        # batchInputsOutputs = [joinedInputsOutputs[i] for i in valid_idxs]
+        batchOutputs = [outputss[i] for i in valid_idxs]
+        batchTargets = [targets[i] for i in valid_idxs]
+
+        return batchOutputs, batchTargets
+
+    #deprecated, does not work
+    def shuffledNetworkInputs(self, requests, batchSize, CPUs):
+        batchInputs, batchOutputs, batchTargets =  self.helmholtzNetworkInputs(requests, batchSize, CPUs)
+        permutedBatchTargets = batchTargets[:]
+        random.shuffle(permutedBatchTargets)
+        return batchInputs, batchOutputs, permutedBatchTargets #why the shuffle for only the targets??
+
+    def step(self, *networkInputs):
+        eprint("networkInputs:")
+        eprint(*networkInputs)
+        score = self.network.optimiser_step(*networkInputs)
+        loss = -score
+        return loss
+
+    # def getCurrentLoss(self, batchInputsOutputs, batchTargets):
+    #     score = self.network.score(batchInputsOutputs, batchTargets)
+    #     loss = -score
+
+    #     permutedBatchTargets = batchTargets[:]
+    #     random.shuffle(permutedBatchTargets)
+    #     permutedScore = self.network.score(batchInputsOutputs, permutedBatchTargets)
+    #     permutedLoss = -permutedScore
+
+    #     return loss, permutedLoss
+
+    #TODO: I dont think this is used, it is currently deprecated 
+    def getCurrentLoss(self, batchInputs, batchOutputs, batchTargets):
+        score = self.network.score(batchInputs, batchOutputs, batchTargets)
+        loss = -score
+
+        permutedBatchTargets = batchTargets[:]
+        random.shuffle(permutedBatchTargets)
+        permutedScore = self.network.score(batchInputs, batchOutputs, permutedBatchTargets)
+        permutedLoss = -permutedScore
+
+        return loss, permutedLoss
+
+    def sampleHelmholtz(self, requests):
+           request = random.choice(requests)
+           #may want to weigh less likely programs more heavily
+           program = self.grammar.sample(request)
+
+
+           #>>> Increase maxDepth, might actually make sampling faster
+           #>>> Call out to pypy
+           features = self.featureExtractor.featuresOfProgram(program, request)
+           #eprint("features_outer:")
+           #eprint(features)
+           # Feature extractor failure
+           if features is None: return None 
+           else: return program, request, features
+
+    def sampleManyHelmholtz(self, requests, N, CPUs): #>>> callCompiled
+        helmholtzSamples = parallelMap(CPUs,
+                           lambda _: self.sampleHelmholtz(requests),
+                           range(N))
+        return helmholtzSamples
+
+    """def enumerateFrontiers(self, tasks,
+                           frontierSize=None, enumerationTimeout=None, 
+                           CPUs=1, maximumFrontier=None, evaluationTimeout=None):
+                           """
+
+    def enumerateFrontiers(self, tasks, likelihoodModel,
+                           solver=None,
+                           frontierSize=None, enumerationTimeout=None,
+                           CPUs=1, maximumFrontier=None, evaluationTimeout=None):
+
+        #need to encorporate likelihood model, solver
+
+        # print("New recognition model enumerate frontiers")
+        # print("ONLY USING 10 TASKS!")
+        # tasks = tasks[:10]
+        # with timing("Evaluated recognition model"):
+        # proposals_scores = {}
+        tasks_features = []
+        for task in tasks:
+            # eprint("Getting proposals for task", task)
+            features = self.featureExtractor.featuresOfTask(task)
+            # features = [(input, output) for (input, output) in features if len(input[0])<=30 and len(output)<=30]
+            # np.random.shuffle(features)
+
+			# had to change the line below for python 3
+            # TODO: modify for input output for regexes.
+
+            #TODO: may need to fix this
+            features = sorted(features, key=lambda out: len(out[0])**2)
+            tasks_features.append((task, features))
+
+            # proposals_scores[task] = []
+            # for i in range(1):
+            #     inputs = [input[0] for (input, output) in features[:4]]
+            #     outputs = [output for (input, output) in features[:4]]
+            #     samples, scores = self.network.sampleAndScore([inputs]*500, [outputs]*500, nRepeats=100)
+            #     proposals_scores[task].extend(list(set(
+            #         (tuple(samples[i]), scores[i]) for i in range(len(samples))
+            #     )))
+
+
+        #network = copy.deepcopy(self.network).cpu() #to send to workers
+        network = copy.deepcopy(self.network)
+        assert network is not None
+
+
+        torch.set_default_tensor_type('torch.FloatTensor')
+        # print(type(network.input_encoder_init[0].data))
+        # self.network.float()
+        # print(type(self.network.input_encoder_init[0].data))
+        # network = self.network.float()
+        # print(type(network.input_encoder_init[0].data))
+        # print(self.network.input_encoder_init[0])
+        # print(type(self.network.input_encoder_init[0].float()))
+        # print(self.network.input_encoder_init[0].float())
+        # raise Exception()
+        # network = self.network
+        assert network is not None
+        #TODO
+        #Can't callcompiled because program.Primitive doesn't have the right globals
+        x = enumerateNetwork( 
+                    network, tasks_features, likelihoodModel, solver=solver,
+                    frontierSize = frontierSize, enumerationTimeout=enumerationTimeout, 
+                    CPUs=CPUs, maximumFrontier=maximumFrontier,
+                    evaluationTimeout=evaluationTimeout)
+
+
+
+        if self.use_cuda:
+            torch.set_default_tensor_type('torch.cuda.FloatTensor')
+
+        return x
+
+
+        # return evaluateProposals( #Can't callcompiled because program.Primitive doesn't have the right globals
+        #                     proposals_scores, tasks,
+        #                     frontierSize = frontierSize, enumerationTimeout=enumerationTimeout, 
+        #                     CPUs=CPUs, maximumFrontier=maximumFrontier,
+        #                     evaluationTimeout=evaluationTimeout)
+        # return callCompiled(evaluateProposals,
+        #                     proposals_scores, tasks,
+        #                     frontierSize = frontierSize, enumerationTimeout=enumerationTimeout, 
+        #                     CPUs=CPUs, maximumFrontier=maximumFrontier,
+        #                     evaluationTimeout=evaluationTimeout)
+
+
+
+
 if __name__ == "__main__":
     from arithmeticPrimitives import *
     g = Grammar.uniform([addition, multiplication, real, k0, k1])
@@ -779,7 +1119,7 @@ if __name__ == "__main__":
     tasks = [Task(p,request,[],features = [j])
              for j,p in enumerate(observations) ]
     fe = HandCodedFeatureExtractor(tasks)
-    observations = map(Program.parse, observations)
+    observations = list(map(Program.parse, observations))
 
     m = DRNN(g, fe, hidden = 8)
     m.float()
@@ -802,15 +1142,15 @@ if __name__ == "__main__":
             if l is None: l = _l
             else: l += _l
         if j > 0 and j%150 == 0:
-            print l.data[0]/len(observations)
+            print(l.data[0]/len(observations))
             for t in tasks:
-                print t
-                print m.sample(t)
-                print "enumeration:"
-                for ll,e in sorted(take(5,m.enumeration(t)),reverse = True):
+                print(t)
+                print(m.sample(t))
+                print("enumeration:")
+                for ll,e in sorted(take(5,m.enumeration(t)),reverse=True):
                     gt = m.programLoss(e,t).data[0]
-                    print ll,gt,"\t",e
-                print
+                    print(ll,gt,"\t",e)
+                print()
         l.backward()
         optimizer.step()
 

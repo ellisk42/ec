@@ -1,6 +1,0 @@
-Repeat {
-    Integrate ;
-    Turn(angle=Half(unit)) ;
-    Integrate ;
-    Turn(angle=Next(Half(unit)))
-}

@@ -233,7 +233,8 @@ let export_frontiers tf solutions : string =
   in pretty_to_string serialization
 ;;
 
-let main() =
+let _ =
+
   let (tf,g,
        lowerBound,upperBound,budgetIncrement,
        mfp,
@@ -245,7 +246,6 @@ let main() =
     ~verbose:verbose ~nc:nc ~timeout:timeout g tf
   in
   export_frontiers tf solutions |> print_string ;;
-
 
 let tune_differentiation() =
   let (tf,g,
@@ -259,14 +259,3 @@ let tune_differentiation() =
   match tf with
   |[(t,_)] -> Printf.eprintf "%f\n" (t.log_likelihood p)
 ;;
-
-
-(* tune_differentiation();; *)
-
-main();;
-
-
-(* test_best_enumeration();; *)
-(* test_string();; *)
-(* test_version();; *)
-

@@ -1,0 +1,4 @@
+Repeat {
+    Integrate(angularSpeed=Half(unit)) ;
+    Integrate(angularSpeed=Opposite(Half(unit)))
+}

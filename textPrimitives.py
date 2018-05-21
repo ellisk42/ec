@@ -11,7 +11,7 @@ def _capitalize(x): return x.capitalize()
 def _append(x): return lambda y: x + y
 def _slice(x): return lambda y: lambda s: s[x:y]
 def _index(n): return lambda x: x[n]
-def _map(f): return lambda x: map(f,x)
+def _map(f): return lambda x: list(map(f,x))
 def _find(pattern): return lambda s: s.index(pattern)
 def _replace(original): return lambda replacement: lambda target: target.replace(original, replacement)
 def _split(delimiter): return lambda s: s.split(delimiter)

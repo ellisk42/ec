@@ -39,11 +39,18 @@ def pretty_string(shape, size):
 
 
 def pretty_print(shape, size):
-    print (pretty_string(shape, size))
+    print((pretty_string(shape, size)))
 
 
-def makeTasks():
+def allTasks():
+    return next(os.walk(rootdir))[1]
+
+
+def makeTasks(subfolders):
     problems = []
+
+    if subfolders == ['all']:
+        subfolders = allTasks()
 
     def problem(n, examples, needToTrain=False):
         outputType = tcanvas
@@ -53,21 +60,23 @@ def makeTasks():
         task.mustTrain = needToTrain
         problems.append(task)
 
-    for _, _, files in os.walk(rootdir):
-        for f in files:
-            if f.endswith(".png"):
-                problem(f,
-                        [([], fileToArray(rootdir + '/' + f))],
-                        needToTrain=True)
+    for subfolder in subfolders:
+        for _, _, files in os.walk(rootdir+subfolder):
+            for f in files:
+                needed = False if subfolder == "behaviour" else True
+                if f.endswith("_l.png"):
+                    problem(f,
+                            [([], fileToArray(rootdir + subfolder + '/' + f))],
+                            needToTrain=needed)
 
     return problems
 
 
 if __name__ == "__main__":
-    tasks = makeTasks()
+    allTasks()
+    tasks = makeTasks(['all'])
     for t in tasks:
-        print t.name
-        print t.request
+        print((t))
         x, y = t.examples[0]
         pretty_print(y, 64)
-        print
+        print()

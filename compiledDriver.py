@@ -1,7 +1,7 @@
 import sys
 import time
 import traceback
-import cPickle as pickle
+import pickle as pickle
 
 from utilities import eprint
 
@@ -10,7 +10,7 @@ if __name__ == "__main__":
     sys.setrecursionlimit(10000)
 
     start = time.time()
-    request = pickle.load(sys.stdin)
+    request = pickle.load(sys.stdin.buffer)
     dt = time.time() - start
     if dt > 1:
         eprint("(compiled driver warning: SLOW) Compiled driver unpacked the message in time", dt)
@@ -28,7 +28,7 @@ if __name__ == "__main__":
         sys.stderr.flush()
     finally:
         start = time.time()
-        pickle.dump(response, sys.stdout)
+        pickle.dump(response, sys.stdout.buffer)
         dt = time.time() - start
         if dt > 1:
             eprint("(compiled driver warning: SLOW) Compiled driver packed the message in time", dt)

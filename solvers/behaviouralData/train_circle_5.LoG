@@ -1,2 +1,0 @@
-Integrate(t=Half(Half(unit)),angularSpeed=unit) ;
-Integrate

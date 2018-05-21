@@ -4,12 +4,46 @@ from task import *
 from type import *
 from program import *
 from grammar import *
+from pregex import pregex
 
 import gc
 import traceback
 import subprocess
 import threading
 
+# Initialise with the command you'll want to run, eg c = Command("./solver")
+# Then c.run(msg, timeout) gives msg to c's stdin, let it run for timeout
+# seconds, then ask nicely to stop. For compatibility with the previous code,
+# this returns (r, e) as return by communicate itself.
+class Command(object):
+    def __init__(self, cmd):
+        self.cmd = cmd
+        self.process = None
+        self.r = None
+        self.e = None
+
+    def run(self, msg, timeout):
+        def target():
+            self.process = subprocess.Popen(self.cmd,
+                                            stdin=subprocess.PIPE,
+                                            stdout=subprocess.PIPE)
+            self.r, self.e = self.process.communicate(bytes(msg, encoding="utf-8"))
+
+        thread = threading.Thread(target=target)
+        thread.start()
+        thread.join(timeout)   # Wait for finish in less than timeout
+                               # If not ready yet, then:
+                               # Ask him nicely to stop, then wait again
+        if thread.is_alive() and self.process is not None:
+            try:
+                self.process.send_signal(signal.SIGUSR1)
+            except AttributeError:
+                eprint("A process was 'None'. Investiagate")
+            thread.join()
+
+        return (self.r,self.e)
+
+command = Command("./solver")
 
 def multicoreEnumeration(g, tasks, likelihoodModel, _=None,
                          solver=None,
@@ -196,17 +230,6 @@ def multicoreEnumeration(g, tasks, likelihoodModel, _=None,
             assert False
             
     return [frontiers[t] for t in tasks ], [bestSearchTime[t] for t in tasks if bestSearchTime[t] is not None ]
-            
-
-
-                
-            
-        
-        
-
-    
-
-
 
 
 def wrapInThread(f):
@@ -342,13 +365,13 @@ def solveForTask_ocaml(_ = None,
         
     return frontiers, searchTimes
 
-def solveForTask_pypy(_ = None,
-                      elapsedTime = 0.,
-                      g = None, task = None,
-                      lowerBound = None, upperBound = None, budgetIncrement = None,
-                      timeout = None,
-                      likelihoodModel = None,
-                      evaluationTimeout = None, maximumFrontier = None):
+def solveForTask_pypy(_=None,
+                      elapsedTime=0.,
+                      g=None, task=None,
+                      lowerBound=None, upperBound=None, budgetIncrement=None,
+                      timeout=None,
+                      likelihoodModel=None,
+                      evaluationTimeout=None, maximumFrontier=None):
     return callCompiled(enumerateForTask,
                         g,task,likelihoodModel,
                         timeout = timeout,
@@ -431,10 +454,10 @@ def enumerateForTasks(g, tasks, likelihoodModel, _ = None,
                                                               logPrior=prior)))
                     if len(hits[n]) > maximumFrontier[n]:
                         hits[n].popMaximum()
-                
+
                 if timeout is not None and time() - starting > timeout:
                     raise EnumerationTimeout
-            
+
             previousBudget = budget
             budget += budgetIncrement
             
@@ -495,4 +518,3 @@ def benchmarkSynthesisTime(result, task, timeout, evaluationTimeout):
     dt = times[0]
     eprint("Solved",task,"in time",dt)
     return dt
-

@@ -1,0 +1,16 @@
+Repeat {
+  Repeat {
+    Repeat {
+      Embed {
+        Repeat {
+          Repeat {
+            Integrate(t=Half(unit)) ;
+            Turn
+          }
+        }
+      } ;
+      Integrate(pen=off)
+    }
+  } ;
+  Turn
+}

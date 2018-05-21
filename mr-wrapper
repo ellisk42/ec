@@ -1,0 +1,42 @@
+#!/bin/bash
+
+# DRY=true will show what's going on but run nothing
+DRY="false"
+
+# On OM you probably want something like this:
+module load openmind/miniconda/3.9.1
+source activate ec
+SBATCH="true"
+PMAP="12"
+TMAP="500"
+PRED="48"
+TRED="5000"
+
+# Name of your script
+PROGRAM="geom.py"
+
+# Arguments for the program, respectively for the maps and the reduce
+ARGSMAP="-t 600 -g -i 10"
+ARGSRED="-t 3600 -i 20 --expandFrontier 2"
+
+# Targets
+MAP="anyNum circle line los penoff square variable"
+#MAP="line square"
+REDUCE="all"
+
+# Now let's build the command:
+CMD="./map-reduce $PROGRAM"
+
+if [[ "$DRY" = "true" ]]; then
+  CMD="$CMD --dry"
+fi
+
+if [[ "$SBATCH" = "true" ]]; then
+  CMD="$CMD --sbatch $PMAP,$TMAP,$PRED,$TRED"
+fi
+
+CMD="$CMD --map $MAP --reduce $REDUCE --argsmap $ARGSMAP --argsreduce $ARGSRED"
+
+# Show it and run it!
+printf "\\e[1;34mRunnning\\e[m:\\n%s\\n" "$CMD"
+eval "$CMD"

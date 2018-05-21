@@ -110,7 +110,7 @@ class DN(object):
             if abs(calculatedGradients[j] - d) > 0.1:
                 eprint("Bad gradient: expected %f, got %f"%(d,calculatedGradients[j]))
     
-    def gradientDescent(self, parameters, _ = None, lr = 0.001, steps = 10**3, update = None):
+    def gradientDescent(self, parameters, _=None, lr=0.001, steps=10**3, update=None):
         for j in range(steps):
             l = self.updateNetwork()
             if update is not None and j%update == 0:
@@ -162,7 +162,7 @@ class DN(object):
 
 class Placeholder(DN):
     COUNTER = 0
-    def __init__(self, initialValue = 0., name = None):
+    def __init__(self, initialValue=0., name=None):
         self.data = initialValue
         super(Placeholder,self).__init__([])
         if name is None:
@@ -171,7 +171,7 @@ class Placeholder(DN):
         self.name = name
 
     @staticmethod
-    def named(namePrefix, initialValue = 0.):
+    def named(namePrefix, initialValue=0.):
         p = Placeholder(initialValue, namePrefix + str(Placeholder.COUNTER))
         Placeholder.COUNTER += 1
         return p

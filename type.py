@@ -56,7 +56,7 @@ class TypeConstructor(Type):
     def negateVariables(self):
         return TypeConstructor(self.name, [a.negateVariables() for a in self.arguments ])
 
-    def instantiate(self, context, bindings = None):
+    def instantiate(self, context, bindings=None):
         if not self.isPolymorphic: return context, self
         if bindings == None: bindings = {}
         newArguments = []
@@ -65,7 +65,7 @@ class TypeConstructor(Type):
             newArguments.append(x)
         return (context, TypeConstructor(self.name, newArguments))
 
-    def canonical(self,bindings = None):
+    def canonical(self,bindings=None):
         if not self.isPolymorphic: return self
         if bindings == None: bindings = {}
         return TypeConstructor(self.name, [ x.canonical(bindings) for x in self.arguments ])
@@ -93,7 +93,7 @@ class TypeVariable(Type):
 
     def occurs(self,v): return v == self.v
 
-    def instantiate(self,context, bindings = None):
+    def instantiate(self,context, bindings=None):
         if bindings == None: bindings = {}
         if self.v in bindings: return (context,bindings[self.v])
         new = TypeVariable(context.nextVariable)
@@ -101,7 +101,7 @@ class TypeVariable(Type):
         context = Context(context.nextVariable + 1, context.substitution)
         return (context, new)
 
-    def canonical(self,bindings = None):
+    def canonical(self,bindings=None):
         if bindings == None: bindings = {}
         if self.v in bindings: return bindings[self.v]
         new = TypeVariable(len(bindings))
@@ -115,7 +115,7 @@ class TypeVariable(Type):
             
 
 class Context(object):
-    def __init__(self, nextVariable = 0, substitution = []):
+    def __init__(self, nextVariable=0, substitution=[]):
         self.nextVariable = nextVariable
         self.substitution = substitution
     def extend(self,j,t):
@@ -174,6 +174,9 @@ tstr = tlist(tcharacter)
 t0 = TypeVariable(0)
 t1 = TypeVariable(1)
 t2 = TypeVariable(2)
+
+#regex types
+tpregex = baseType("pregex")
 
 ARROW = "->"
 def arrow(*arguments):

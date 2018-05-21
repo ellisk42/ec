@@ -1,0 +1,6 @@
+Repeat {
+  Integrate(t=toto) ;
+  toto = Half(toto) ;
+  Turn
+}
+

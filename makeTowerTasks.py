@@ -24,13 +24,13 @@ class TowerTask(Task):
     tasks = []
     STABILITYTHRESHOLD = 0.5
     
-    def __init__(self, _ = None, perturbation = 0,
-                 maximumStaircase = 100,
-                 maximumMass = 100,
-                 minimumLength = 0,
-                 minimumArea = 0,
-                 minimumHeight = None):
-        name = "; ".join("%s: %s"%(k,v) for k,v in locals().iteritems()
+    def __init__(self, _=None, perturbation=0,
+                 maximumStaircase=100,
+                 maximumMass=100,
+                 minimumLength=0,
+                 minimumArea=0,
+                 minimumHeight=None):
+        name = "; ".join("%s: %s"%(k,v) for k,v in locals().items()
                          if not k in {"_","self"} )
         features = [perturbation,
                     float(maximumMass),
@@ -39,7 +39,7 @@ class TowerTask(Task):
                     float(minimumArea),
                     float(maximumStaircase)]
         super(TowerTask, self).__init__(name, ttower, [],
-                                        features = features)
+                                        features=features)
 
         self.maximumStaircase = maximumStaircase
         self.perturbation = perturbation
@@ -84,8 +84,22 @@ class TowerTask(Task):
         return Bunch(result) if result is not None else result
 
     def logLikelihood(self, e, timeout=None):
-        try: tower = runWithTimeout(lambda: e.evaluate([]), timeout)
-        except: return NEGATIVEINFINITY
+        if timeout is not None:
+            def timeoutCallBack(_1,_2): raise EvaluationTimeout()
+            signal.signal(signal.SIGVTALRM, timeoutCallBack)
+            signal.setitimer(signal.ITIMER_VIRTUAL, timeout)
+            
+        try:
+            tower = e.evaluate([])
+            if timeout is not None:
+                signal.signal(signal.SIGVTALRM, lambda *_:None)
+                signal.setitimer(signal.ITIMER_VIRTUAL, 0)
+        except EvaluationTimeout: return NEGATIVEINFINITY
+        except:
+            if timeout is not None:
+                signal.signal(signal.SIGVTALRM, lambda *_:None)
+                signal.setitimer(signal.ITIMER_VIRTUAL, 0)
+            return NEGATIVEINFINITY
 
         
         mass = sum(w*h for _,w,h in tower)
@@ -137,12 +151,12 @@ def makeTasks():
     MASSES = [30,40]
     HEIGHT = [1.9,6,10]
     STAIRCASE = [10.5, 2.5]
-    return [ TowerTask(maximumMass = float(m),
-                       maximumStaircase = float(s),
-                       minimumArea = float(a),
-                       perturbation = float(p),
-                       minimumLength = float(l),
-                       minimumHeight = float(h))
+    return [ TowerTask(maximumMass=float(m),
+                       maximumStaircase=float(s),
+                       minimumArea=float(a),
+                       perturbation=float(p),
+                       minimumLength=float(l),
+                       minimumHeight=float(h))
              for m in MASSES
              for a in [1, 2.9, 5.8]
              for s in STAIRCASE 

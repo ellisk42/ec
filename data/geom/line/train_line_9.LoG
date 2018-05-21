@@ -1,0 +1,10 @@
+Embed {
+  Turn(angle=Next(Half(unit))) ;
+  Integrate
+} ;
+Embed {
+  Turn(angle=Half(unit)) ;
+  Integrate
+} ;
+Turn ;
+Integrate

@@ -74,8 +74,8 @@ expr:
       { Plumbing.embed e }
   | TURN ; s = somev
       { Plumbing.turn s }
-  | REPEAT ; e = expr
-      { Plumbing.repeat e }
+  | REPEAT ; v = somev ; e = expr
+      { Plumbing.repeat v e }
   | INTEGRATE ;
     v1 = somev ;
     b  = someb ;

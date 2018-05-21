@@ -14,9 +14,9 @@ tpositive = baseType("positive")
 
 def makeTrainingData(request, law,
                      # Number of examples
-                     N = 10,
+                     N=10,
                      # Vector dimensionality
-                     D = 2,
+                     D=2,
                      # Maximum absolute value of a random number
                      S = 20.):
     from random import random, randint
@@ -27,14 +27,14 @@ def makeTrainingData(request, law,
         elif a.name == "vector":
             return [random()*S*2-S for _ in xrange(D) ]
         elif a.name == "list":
-            return [sampleArgument(a.arguments[0], listLength) for _ in xrange(listLength) ]
+            return [sampleArgument(a.arguments[0], listLength) for _ in range(listLength) ]
         else:
             assert False, "unknown argument tp %s"%a
         
     
     arguments = request.functionArguments()
     e = []
-    for _ in xrange(N):
+    for _ in range(N):
         # Length of any requested lists
         l = randint(1,4)
 
@@ -46,9 +46,9 @@ def makeTrainingData(request, law,
 
 def makeTask(name, request, law,
              # Number of examples
-             N = 20,
+             N=20,
              # Vector dimensionality
-             D = 3,
+             D=3,
              # Maximum absolute value of a random number
              S = 20.):
     e = makeTrainingData(request, law,
@@ -68,7 +68,7 @@ def makeTask(name, request, law,
                               BIC = 10.,
                               likelihoodThreshold=-0.05,
                               maxParameters=1,
-                              loss = squaredErrorLoss)
+                              loss=squaredErrorLoss)
         
 def norm(v):
     return sum(x*x for x in v)**0.5

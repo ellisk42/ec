@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 
 import signal
 import random
@@ -8,9 +8,9 @@ import sys
 import os
 import subprocess
 import math
-import cPickle as pickle
-from itertools import chain, imap
-import heapq
+import pickle as pickle
+from itertools import chain
+
 
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
@@ -39,8 +39,7 @@ def flatten(x, abort=lambda x:False):
         yield x
         return
     try:
-        for e in chain(*(flatten(i, abort) for i in x)):
-            yield e
+        yield from chain(*(flatten(i, abort) for i in x))
     except TypeError:  # not iterable
         yield x
 
@@ -62,37 +61,35 @@ POSITIVEINFINITY = float('inf')
 PARALLELMAPDATA = None
 
 
-def parallelMap(numberOfCPUs, f, *xs, **keywordArguments):
+def parallelMap(numberOfCPUs, f, *xs, chunksize=None, maxtasksperchild=None):
     global PARALLELMAPDATA
 
     if numberOfCPUs == 1: return map(f,*xs)
 
     n = len(xs[0])
     for x in xs: assert len(x) == n
-    
+
     assert PARALLELMAPDATA is None
     PARALLELMAPDATA = (f,xs)
 
     from multiprocessing import Pool
 
     # Randomize the order in case easier ones come earlier or later
-    permutation = range(n)
+    permutation = list(range(n))
     random.shuffle(permutation)
     inversePermutation = dict(zip(permutation, range(n)))
 
     # Batch size of jobs as they are sent to processes
-    chunk = keywordArguments.get('chunk', max(1,int(n/(numberOfCPUs*2))))
-    
-    maxTasks = keywordArguments.get('maxTasks', None)
-    workers = Pool(numberOfCPUs, maxtasksperchild = maxTasks)
-
-    ys = workers.map(parallelMapCallBack, permutation,
-                     chunksize = chunk)
-    
-    workers.terminate()
+    if chunksize is None:
+        chunksize = max(1,n//(numberOfCPUs*2))
+    pool = Pool(numberOfCPUs, maxtasksperchild=maxtasksperchild)
+    ys = pool.map(parallelMapCallBack, permutation,
+                     chunksize=chunksize)
+    pool.terminate()
 
     PARALLELMAPDATA = None
     return [ ys[inversePermutation[j]] for j in range(n) ]
+
 
 
 def parallelMapCallBack(j):
@@ -103,7 +100,6 @@ def parallelMapCallBack(j):
     except Exception as e:
         eprint("Exception in worker during lightweight parallel map:\n%s"%(traceback.format_exc()))
         raise e
-
 
 def log(x):
     t = type(x)
@@ -120,7 +116,7 @@ def exp(x):
     return x.exp()
 
 
-def lse(x,y = None):
+def lse(x,y=None):
     if y is None:
         largest = None
         if len(x) == 0: raise Exception('LSE: Empty sequence')
@@ -142,16 +138,16 @@ def lse(x,y = None):
             else: return y + math.log(1. + math.exp(x - y))
         return torchSoftMax(x,y)
 
-def torchSoftMax(x,y = None):
+def torchSoftMax(x,y=None):
     from torch.nn.functional import log_softmax
     import torch
     if y is None:
         if isinstance(x,list):
             x = torch.cat(x)
-        return (x - log_softmax(x, dim = 0))[0]
+        return (x - log_softmax(x, dim=0))[0]
     x = torch.cat((x,y))
     # this is so stupid
-    return (x - log_softmax(x, dim = 0))[0]
+    return (x - log_softmax(x, dim=0))[0]
 
 
 def invalid(x):
@@ -188,7 +184,7 @@ def launchParallelProcess(f, *a, **k):
     PARALLELPROCESSDATA = [f,a,k]
 
     from multiprocessing import Process
-    p = Process(target = _launchParallelProcess, args = tuple([]))
+    p = Process(target=_launchParallelProcess, args=tuple([]))
     p.start()
     PARALLELPROCESSDATA = None
     return p
@@ -215,7 +211,7 @@ def callCompiled(f, *arguments, **keywordArguments):
 
     timeout = keywordArguments.pop('compiledTimeout', None)
 
-    p = subprocess.Popen(['pypy'] + pypyArgs + ['compiledDriver.py'],
+    p = subprocess.Popen(['pypy3'] + pypyArgs + ['compiledDriver.py'],
                          stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     
     if PIDCallBack is not None:
@@ -333,7 +329,7 @@ def testTrainSplit(x, trainingFraction, seed = 0):
     
     import random
     random.seed(seed)
-    training = range(len(mightTrain))
+    training = list(range(len(mightTrain)))
     random.shuffle(training)
     training = set(training[:int(len(x)*trainingFraction)-len(needToTrain)]) | needToTrain
 
@@ -373,8 +369,8 @@ def standardDeviation(l): return variance(l)**0.5
 def median(l):
     if len(l) <= 0: return None
     l = sorted(l)
-    if len(l)%2 == 1: return l[len(l)/2]
-    return 0.5*(l[len(l)/2] + l[len(l)/2 - 1])
+    if len(l)%2 == 1: return l[len(l)//2]
+    return 0.5*(l[len(l)//2] + l[len(l)//2 - 1])
 
 class Stopwatch():
     def __init__(self):

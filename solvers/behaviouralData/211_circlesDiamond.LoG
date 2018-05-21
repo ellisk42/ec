@@ -1,8 +1,0 @@
-Turn(angle=Half(unit)) ;
-Repeat(Double(Double(unit))) {
-    Integrate(pen=off) ;
-    Embed {
-        Integrate(angularSpeed=unit)
-    } ;
-    Turn
-}

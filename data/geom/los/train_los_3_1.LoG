@@ -1,0 +1,12 @@
+Repeat {
+  Repeat {
+    Repeat {
+      Embed {
+        Turn(angle=Half(unit)) ;
+        Integrate
+      } ;
+      Integrate(pen=off)
+    }
+  } ;
+  Turn
+}

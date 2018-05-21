@@ -1,1 +1,0 @@
-Integrate(t=Double(unit),accel=Double(unit),angularSpeed=unit)

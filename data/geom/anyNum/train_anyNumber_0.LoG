@@ -1,0 +1,5 @@
+toto = unit ;
+Repeat (unit) {
+  Integrate(angularSpeed=unit) ;
+  Integrate(pen=off)
+}

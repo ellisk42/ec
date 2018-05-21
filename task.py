@@ -11,7 +11,7 @@ EVALUATIONTABLE = {}
 
 
 class Task(object):
-    def __init__(self, name, request, examples, features = None, cache = False):
+    def __init__(self, name, request, examples, features=None, cache=False):
         '''request: the type of this task
         examples: list of tuples of (input, output). input should be a tuple, with one entry for each argument
         cache: should program evaluations be cached?
@@ -47,12 +47,19 @@ class Task(object):
     def check(self, e, timeout=None):
         if timeout is not None:
             def timeoutCallBack(_1,_2): raise EvaluationTimeout()
+        try:    
             signal.signal(signal.SIGVTALRM, timeoutCallBack)
             signal.setitimer(signal.ITIMER_VIRTUAL, timeout)
             
-        try:
-            f = e.evaluate([])
-            
+            try:
+                f = e.evaluate([])
+            except IndexError:
+                # free variable
+                return False
+            except Exception as e:
+                eprint("Exception during evaluation:", e)
+                return False
+
             for x,y in self.examples:
                 if self.cache and (x,e) in EVALUATIONTABLE: p = EVALUATIONTABLE[(x,e)]
                 else:
@@ -65,13 +72,17 @@ class Task(object):
                         signal.setitimer(signal.ITIMER_VIRTUAL, 0)
                     return False
 
-            if timeout is not None:
-                signal.signal(signal.SIGVTALRM, lambda *_:None)
-                signal.setitimer(signal.ITIMER_VIRTUAL, 0)
             return True
+        #except e:
+            #eprint(e)
+            #assert(False)
         except EvaluationTimeout:
             eprint("Timed out while evaluating", e)
             return False
+        finally:
+            if timeout is not None:
+                signal.signal(signal.SIGVTALRM, lambda *_:None)
+                signal.setitimer(signal.ITIMER_VIRTUAL, 0)
         
     def logLikelihood(self,e, timeout=None):
         if self.check(e, timeout): return 0.0
@@ -99,9 +110,14 @@ class Task(object):
         
 
 class DifferentiableTask(Task):
+<<<<<<< HEAD
     def __init__(self, name, request, examples, _ = None,
                  features = None, BIC = 1., loss = None, likelihoodThreshold = None,
                  temperature = 1., maxParameters=None):
+=======
+    def __init__(self, name, request, examples, _=None,
+                 features=None, BIC=1., loss=None, likelihoodThreshold=None, maxParameters=None):
+>>>>>>> master
         assert loss is not None
         self.temperature = temperature
         self.maxParameters = maxParameters
@@ -109,21 +125,26 @@ class DifferentiableTask(Task):
         self.BIC = BIC
         self.likelihoodThreshold = likelihoodThreshold
         
-        super(DifferentiableTask,self).__init__(name, request, examples, features, cache = False)
+        super(DifferentiableTask,self).__init__(name, request, examples, features, cache=False)
         
-    def logLikelihood(self,e,timeout = None):
+    def logLikelihood(self, e, timeout=None):
         assert timeout == None, "timeout not implemented for differentiable tasks, but not for any good reason."
         e, parameters = PlaceholderVisitor.execute(e)
         if self.maxParameters is not None and len(parameters) > self.maxParameters:
             return NEGATIVEINFINITY
         f = e.evaluate([])
 
+<<<<<<< HEAD
         loss = sum( self.loss(self.predict(f, xs), y)
                     for xs,y in self.examples ) / float(len(self.examples))
+=======
+        loss = sum( self.loss(self.predict(f, list(map(float,x))), float(y))
+                    for x,y in self.examples ) / float(len(self.examples))
+>>>>>>> master
         if isinstance(loss, DN):
             try:
-                loss = loss.resilientBackPropagation(parameters, lr = 0.05, steps = 500,
-                                                     update = None)
+                loss = loss.resilientBackPropagation(parameters, lr=0.05, steps=500,
+                                                     update=None)
             except InvalidLoss:
                 loss = POSITIVEINFINITY
             

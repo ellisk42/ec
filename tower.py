@@ -16,7 +16,7 @@ class TowerFeatureExtractor(HandCodedFeatureExtractor):
 
         masses = { t.maximumMass for t in TowerTask.tasks if mass <= t.maximumMass }
         if len(masses) == 0: return None
-        mass = random.choice(list(masses))
+        mass = random.choice(masses)
 
         heights = { t.minimumHeight for t in TowerTask.tasks }
         lengths = { t.minimumLength for t in TowerTask.tasks }
@@ -24,7 +24,7 @@ class TowerFeatureExtractor(HandCodedFeatureExtractor):
         staircases = { t.maximumStaircase for t in TowerTask.tasks }
 
         # Find the largest perturbation that this power can withstand
-        perturbations = sorted({ t.perturbation for t in TowerTask.tasks }, reverse = True)        
+        perturbations = sorted({ t.perturbation for t in TowerTask.tasks }, reverse=True)        
         for perturbation in perturbations:
             result = TowerTask.evaluateTower(p, perturbation)
             
@@ -40,10 +40,10 @@ class TowerFeatureExtractor(HandCodedFeatureExtractor):
                 if result.stability > TowerTask.STABILITYTHRESHOLD:
                     return [perturbation,
                             mass,
-                            random.choice(list(possibleHeightThresholds)),
-                            random.choice(list(possibleLengthThresholds)),
-                            random.choice(list(possibleAreaThresholds)),
-                            random.choice(list(possibleStaircases))]
+                            random.choice(possibleHeightThresholds),
+                            random.choice(possibleLengthThresholds),
+                            random.choice(possibleAreaThresholds),
+                            random.choice(possibleStaircases)]
             else: return None
 
         return None
@@ -62,23 +62,38 @@ def evaluateArches(ts):
     towers = []
 
     for a in arches:
-        print "Evaluating arch:"
-        print a
-        print
+        print("Evaluating arch:")
+        print(a)
+        print()
         a = Program.parse(a).evaluate([])
         towers.append(tuple(centerTower(a)))
         os.system("python towers/visualize.py '%s' %f"%(a, 4))
 
         for t in ts:
-            print t,
-            print t.logLikelihood(Primitive(str(a),None,a)),t.logLikelihood(Primitive(str(a*2),None,a*2)),
-            print
-        print
-        print
+            print(t, end=' ')
+            print(t.logLikelihood(Primitive(str(a),None,a)),t.logLikelihood(Primitive(str(a*2),None,a*2)), end=' ')
+            print()
+        print()
+        print()
 
     exportTowers([towers[:1],towers[:2],towers], "arches.png")
     import sys
     sys.exit()
+
+def exportTowers(towers, name):
+    from PIL import Image
+    from towers.tower_common import TowerWorld
+
+    m = max(len(t) for t in towers)
+    towers = [ [ TowerWorld().draw(t) for t in ts ]
+               for ts in towers ]
+    
+    size = towers[0][0].shape
+    tp = towers[0][0].dtype
+    towers = [ np.concatenate(ts + [np.zeros(size, dtype=tp)]*(m - len(ts)), axis=1)
+               for ts in towers ]
+    towers = np.concatenate(towers, axis=0)
+    Image.fromarray(towers).convert('RGB').save(name)
 
 def bruteForceTower_(size):
     MAXIMUMWIDTH = 2
@@ -94,23 +109,21 @@ def bruteForceTower_(size):
         for s in bruteForceTower_(size - 1):
             yield [b] + s
 def bruteForceTower(size):
-    for s in xrange(1,size + 1):
-        for t in bruteForceTower_(s):
-            yield t
+    for s in range(1,size + 1):
+        yield from bruteForceTower_(s)
 def bruteForceBaseline(tasks):
     from towers.tower_common import TowerWorld
     from PIL import Image
-    towers = set(map(lambda t: tuple(centerTower(t)),bruteForceTower(4)))
-    print "Generated",len(towers),"towers"
+    towers = set([tuple(centerTower(t)) for t in bruteForceTower(4)])
+    print("Generated",len(towers),"towers")
     for t in towers:
         gotHit = False
         for task in tasks:
             ll = task.logLikelihood(Primitive(str(t),None,t))
             if valid(ll):
-                print "Hit",task,"w/"
-                print t
-                print ll
-                print 
+                print("Hit",task,"w/")
+                print(t)
+                print() 
                 # image = TowerWorld().draw(t)
                 # Image.fromarray(image).convert('RGB').save("/tmp/towerBaseline.png")
                 # os.system("feh /tmp/towerBaseline.png")
@@ -219,7 +232,5 @@ if __name__ == "__main__":
     for result in generator:
         newTowers = { tuple(centerTower(frontier.bestPosterior.program.evaluate([])))
                       for frontier in result.taskSolutions.values() if not frontier.empty }
-        towers.append(sorted(list(newTowers)))
-        
-        exportTowers(towers[-1], 'experimentOutputs/uniqueTowers%d.png'%len(towers))
-        
+        towers.append(sorted(newTowers))
+        exportTowers(towers, 'experimentOutputs/uniqueTowers.png')

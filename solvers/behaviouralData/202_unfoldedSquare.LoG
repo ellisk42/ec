@@ -1,7 +1,0 @@
-Integrate ;
-Turn(angle=Next(Half(unit))) ;
-Integrate ;
-Turn(angle=Opposite(Half(unit))) ;
-Integrate ;
-Turn ;
-Integrate

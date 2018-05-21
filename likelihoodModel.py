@@ -1,8 +1,12 @@
 from utilities import eprint, exp, log, timing, valid
-from task import Task
+from task import Task, EvaluationTimeout
 import random
 import gc
-
+from pregex import pregex
+import signal
+from program import *
+from utilities import *
+from collections import Counter
 
 class AllOrNothingLikelihoodModel:
     def __init__(self, timeout=None):
@@ -27,6 +31,90 @@ class EuclideanLikelihoodModel:
         logLikelihood = float(-distance)  # FIXME: this is really naive
         return exp(logLikelihood) > self.successCutoff, logLikelihood
 
+
+def regex_bound(X):
+    c = Counter(X)
+    regexes = [pregex.create(".+"), pregex.create("\d+"), pregex.create("\w+"), pregex.create("\s+"),
+        pregex.create("\\u+"), pregex.create("\l+")]
+    regex_scores = []
+    for r in regexes:
+        regex_scores.append(sum(c[x] * r.match(x) for x in c)/float(sum([len(x) for x in X])) )
+        return max(regex_scores)
+
+class ProbabilisticLikelihoodModel:
+
+    def __init__(self, timeout):
+        self.timeout = timeout
+        #i need timeout
+
+    def score(self, program, task): 
+        #need a try, catch here for problems, and for timeouts
+        #can copy task.py for the timeout structure 
+        try:
+            def timeoutCallBack(_1,_2): raise EvaluationTimeout()
+            signal.signal(signal.SIGVTALRM, timeoutCallBack)
+            signal.setitimer(signal.ITIMER_VIRTUAL, self.timeout)
+
+            try:
+                string_pregex = program.evaluate([])
+                #if 'left_paren' in program.show(False): 
+                    #eprint("string_pregex:", string_pregex)
+                #eprint("string_pregex:", string_pregex)
+                preg = string_pregex#pregex.create(string_pregex)
+            except IndexError:
+                # free variable
+                return False, NEGATIVEINFINITY
+            except Exception as e:
+                eprint("Exception during evaluation:", e) 
+                if "Attempt to evaluate fragment variable" in e:
+                    eprint("program (bc fragment error)", program)
+                return False, NEGATIVEINFINITY
+
+        #tries and catches
+            
+        #include prior somehow
+        #right now, just summing up log likelihoods. IDK if this is correct.
+        #also not using prior at all.
+            cum_ll = 0
+            for example in task.examples:
+                #might want a try, accept around the following line:
+                try:
+                    #eprint("about to match", program)
+                    #print("preg:", preg)
+                    ll = preg.match(example[1])
+                    #eprint("completed match", ll, program)
+                except ValueError as e:
+                    eprint("ValueError:", e)
+                    ll = float('-inf')
+                #eprint("pregex:", string_pregex)
+                #eprint("example[1]", example[1])
+                
+                if ll == float('-inf'):
+                    return False, NEGATIVEINFINITY
+                else: 
+                    #ll_per_char = ll/float(len(example[1]))
+                    #cum_ll_per_char += ll_per_char
+                    cum_ll += ll
+            
+    
+            #normalized_cum_ll_per_char = cum_ll_per_char/float(len(task.examples))
+            avg_char_num = sum([len(example[1]) for example in task.examples])/float(len(task.examples))
+            example_list = [example[1] for example in task.examples]
+            #eprint("regex_bound", regex_bound(example_list))
+            #eprint("avg_char_num", avg_char_num)
+            cutoff_ll = regex_bound(example_list)          
+            normalized_cum_ll = cum_ll/avg_char_num/float(len(task.examples))
+            success = normalized_cum_ll > (cutoff_ll + .0001)
+            #eprint("cutoff_ll", cutoff_ll)
+            #eprint("norm_cum_ll", normalized_cum_ll)	
+            return success, normalized_cum_ll
+
+        except EvaluationTimeout:
+            eprint("Timed out while evaluating", program)
+            return False, NEGATIVEINFINITY
+        finally:
+            signal.signal(signal.SIGVTALRM, lambda *_:None)
+            signal.setitimer(signal.ITIMER_VIRTUAL, 0)
 
 try:
     import torch
@@ -64,7 +152,7 @@ try:
             optimizer = torch.optim.Adam(self.parameters())
             with timing("Trained discriminator"):
                 losses = []
-                for i in xrange(steps):
+                for i in range(steps):
                     self.zero_grad()
                     if random.random() <= self.trainingSuccessRatio:
                         # success
