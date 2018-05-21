@@ -494,23 +494,21 @@ class RunWithTimeout(Exception):
 
 
 def runWithTimeout(k, timeout):
-    if timeout is None:
-        return k()
-
-    def timeoutCallBack(_1, _2): raise RunWithTimeout()
-    signal.signal(signal.SIGVTALRM, timeoutCallBack)
-    signal.setitimer(signal.ITIMER_VIRTUAL, timeout)
-
+    if timeout is None: return k()
+    def timeoutCallBack(_1,_2):
+        raise RunWithTimeout()
+    signal.signal(signal.SIGPROF, timeoutCallBack)
+    signal.setitimer(signal.ITIMER_PROF, timeout)
+    
     try:
         result = k()
-        signal.signal(signal.SIGVTALRM, lambda *_: None)
-        signal.setitimer(signal.ITIMER_VIRTUAL, 0)
+        signal.signal(signal.SIGPROF, lambda *_:None)
+        signal.setitimer(signal.ITIMER_PROF, 0)
         return result
-    except RunWithTimeout:
-        raise RunWithTimeout()
-    except BaseException:
-        signal.signal(signal.SIGVTALRM, lambda *_: None)
-        signal.setitimer(signal.ITIMER_VIRTUAL, 0)
+    except RunWithTimeout: raise RunWithTimeout()
+    except:
+        signal.signal(signal.SIGPROF, lambda *_:None)
+        signal.setitimer(signal.ITIMER_PROF, 0)
         raise
 
 
@@ -555,5 +553,6 @@ def normal(s=1., m=0.):
 
 if __name__ == "__main__":
     def f():
-        return 5 / 0
-    eprint(runWithTimeout(f, 0.1))
+        while True: pass
+        return 5/0
+    eprint(runWithTimeout(f, 0.01))
