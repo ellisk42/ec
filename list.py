@@ -367,6 +367,7 @@ if __name__ == "__main__":
         "solver": "ocaml",
         "compressor": "rust"
     })
+    
 
     eprint("Got {} list tasks".format(len(tasks)))
     split = args.pop("split")
@@ -394,4 +395,14 @@ if __name__ == "__main__":
     else:
         train = tasks
         test = []
+
+    if False:
+        from program import *
+        p = Program.parse("(lambda (#(lambda (cdr (cdr $0))) (fold (map (lambda (gt? 1 0)) $0) (range (#(lambda (fold $0 1 (lambda (lambda (* $1 $0))))) (map (lambda $0) $0))) (lambda (lambda (range #(+ 1 1)))))))")
+        t = p.infer()
+        print t
+
+        print LearnedFeatureExtractor(tasks).taskOfProgram(p, t)
+        assert False
+
     explorationCompression(baseGrammar, train, testingTasks=test, **args)

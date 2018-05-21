@@ -696,12 +696,17 @@ class RecurrentFeatureExtractor(nn.Module):
         # Loop over the inputs in a random order and pick the first one that doesn't generate an exception
         random.shuffle(candidateInputs)
         for xss in candidateInputs:
-            try:
-                ys = runWithTimeout(lambda: [ p.runWithArguments(xs) for xs in xss ],
-                                    0.1)
-            except: continue
+            ys = []
             
-            return Task("Helmholtz", tp, zip(xss,ys))
+            for xs in xss:
+                try:
+                    y = runWithTimeout(lambda: p.runWithArguments(xs),0.01)
+                except:
+                    break
+                
+                ys.append(y)
+            if len(ys) == len(xss):
+                return Task("Helmholtz", tp, zip(xss,ys))
                 
         return None
 

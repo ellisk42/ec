@@ -5,7 +5,9 @@ from type import tlist, tint, tbool, arrow, t0, t1, t2
 import math
 
 def _flatten(l): return [x for xs in l for x in xs]
-
+def _range(n):
+    if n < 100: return range(n)
+    raise ValueError()
 def _if(c): return lambda t: lambda f: t if c else f
 def _and(x): return lambda y: x and y
 def _or(x): return lambda y: x or y
@@ -100,7 +102,7 @@ def primitives():
     return [ Primitive(str(j), tint, j) for j in xrange(6) ] + [
         Primitive("empty", tlist(t0), []),
         Primitive("singleton", arrow(t0, tlist(t0)), _single),
-        Primitive("range", arrow(tint, tlist(tint)), range),
+        Primitive("range", arrow(tint, tlist(tint)), _range),
         Primitive("++", arrow(tlist(t0), tlist(t0), tlist(t0)), _append),
         # Primitive("map", arrow(arrow(t0, t1), tlist(t0), tlist(t1)), _map),
         Primitive("mapi", arrow(arrow(tint, t0, t1), tlist(t0), tlist(t1)), _mapi),
@@ -170,7 +172,7 @@ def bootstrapTarget():
         Primitive("map", arrow(arrow(t0, t1), tlist(t0), tlist(t1)), _map),
         #Primitive("zip", arrow(tlist(t0), tlist(t1), arrow(t0, t1, t2), tlist(t2)), _zip),
         Primitive("unfold", arrow(t0, arrow(t0,tbool), arrow(t0,t1), arrow(t0,t0), tlist(t1)), _unfold),
-        Primitive("range", arrow(tint, tlist(tint)), range),
+        Primitive("range", arrow(tint, tlist(tint)), _range),
         Primitive("index", arrow(tint, tlist(t0), t0), _index),
         Primitive("fold", arrow(tlist(t0), t1, arrow(t0,t1,t1), t1), _fold),
         Primitive("length", arrow(tlist(t0),tint), len),

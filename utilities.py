@@ -427,19 +427,20 @@ def flushEverything():
 class RunWithTimeout(Exception): pass
 def runWithTimeout(k, timeout):
     if timeout is None: return k()
-    def timeoutCallBack(_1,_2): raise RunWithTimeout()
-    signal.signal(signal.SIGVTALRM, timeoutCallBack)
-    signal.setitimer(signal.ITIMER_VIRTUAL, timeout)
+    def timeoutCallBack(_1,_2):
+        raise RunWithTimeout()
+    signal.signal(signal.SIGPROF, timeoutCallBack)
+    signal.setitimer(signal.ITIMER_PROF, timeout)
     
     try:
         result = k()
-        signal.signal(signal.SIGVTALRM, lambda *_:None)
-        signal.setitimer(signal.ITIMER_VIRTUAL, 0)
+        signal.signal(signal.SIGPROF, lambda *_:None)
+        signal.setitimer(signal.ITIMER_PROF, 0)
         return result
     except RunWithTimeout: raise RunWithTimeout()
     except:
-        signal.signal(signal.SIGVTALRM, lambda *_:None)
-        signal.setitimer(signal.ITIMER_VIRTUAL, 0)
+        signal.signal(signal.SIGPROF, lambda *_:None)
+        signal.setitimer(signal.ITIMER_PROF, 0)
         raise
 
 def crossProduct(a,b):
@@ -475,5 +476,6 @@ def normal(s=1.,m=0.):
 
 if __name__ == "__main__":
     def f():
+        while True: pass
         return 5/0
-    eprint(runWithTimeout(f, 0.1))
+    eprint(runWithTimeout(f, 0.01))
