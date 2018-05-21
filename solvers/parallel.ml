@@ -15,7 +15,7 @@ let parallel_do nc actions =
     (* spawn processes *)
     while List.length !children < nc && List.length !actions > 0 do
       (* Printf.printf "SPAWN\n"; *)
-      flush_everything();
+      flush_everything ();
       let next_action = List.hd_exn !actions in
       actions := List.tl_exn !actions;
       match Unix.fork() with
@@ -37,7 +37,7 @@ let parallel_do nc actions =
 (* paralleled map *)
 let pmap ?processes:(processes=4) ?bsize:(bsize=0) f input output =
   if processes = 0 then begin
-        Printf.printf "WARNING: processes = 0\n"; flush stdout
+        Printf.printf "WARNING: processes = 0\n"; Out_channel.flush stdout
   end ;
   let bsize = match bsize with
     | 0 -> Array.length output / processes
@@ -63,7 +63,7 @@ let pmap ?processes:(processes=4) ?bsize:(bsize=0) f input output =
           let chan = Unix.out_channel_of_descr wt in
           Marshal.to_channel chan (start_idx, answer) [Marshal.Closures];
           Out_channel.close chan;
-          flush stdout;
+          Out_channel.flush stdout;
           exit 0
         end
       | `In_the_parent(pid) -> begin
@@ -97,7 +97,7 @@ let parallel_map ~nc l ~f =
       ~bsize:1
       (fun x -> Some(f x)) (Array.get input_array) output_array
   in 
-  flush stdout;
+  Out_channel.flush stdout;
   Array.to_list output_array |> List.map ~f:(safe_get_some "parallel_map")
 
 let parallel_work ~nc ?chunk:(chunk=0) ~final actions =

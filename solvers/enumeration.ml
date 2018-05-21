@@ -380,7 +380,7 @@ let multicore_enumeration ?final:(final=fun () -> []) ?cores:(cores=1) ?shatter:
   in
 
   let fringe = fringe |>
-               List.sort ~cmp:(fun s1 s2 ->
+               List.sort ~compare:(fun s1 s2 ->
                    let d = s1.cost -. s2.cost in
                    if d > 0. then 1 else if d < 0. then -1 else 0)
   in

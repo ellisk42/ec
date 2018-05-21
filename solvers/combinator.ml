@@ -98,11 +98,11 @@ let test_combinator() =
       Printf.printf "\n%s : %s\n" (string_of_program p) (infer_program_type empty_context [] p |> snd |> string_of_type);
       let p = program_to_combinator p in
       Printf.printf "%s :" (string_of_program p);
-      flush stdout;
+      Out_channel.flush stdout;
       Printf.printf " %s\n" (infer_program_type empty_context [] p |> snd |> string_of_type);
       let p = combinator_to_program p in
       Printf.printf "%s :" (string_of_program p);
-      flush stdout;
+      Out_channel.flush stdout;
       Printf.printf " %s\n" (infer_program_type empty_context [] p |> snd |> string_of_type))
 ;;
 

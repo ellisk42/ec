@@ -1,46 +1,69 @@
 from program import Primitive, Program
-from type import arrow, baseType, tmaybe, t0
+from type import arrow, baseType, tmaybe, t0, tlist, tint
 
 tprogram = baseType("program")
-tstring  = baseType("string")
-tcanvas  = baseType("canvas")
-tvar     = baseType("var")
-tbool    = baseType("bool")
+tstring = baseType("string")
+tcanvas = tlist(tint)
+tvar = baseType("var")
+tbool = baseType("bool")
 
 
 def _var_double(x):
     return "(var_double " + x + ")"
+
+
 def _var_half(x):
     return "(var_half " + x + ")"
+
+
 def _var_next(x):
     return "(var_next " + x + ")"
+
+
 def _var_prev(x):
     return "(var_prev " + x + ")"
+
+
 def _var_opposite(x):
     return "(var_opposite " + x + ")"
 
+
 def _embed(p):
     return "(embed " + p + ")"
+
+
 def _turn(p):
     return "(turn " + p + ")"
+
+
 def _run(p):
     return "(run " + p + ")"
+
+
 def _define(v):
     return "(define " + v + ")"
+
+
 def _just(v):
     return "(just " + v + ")"
+
+
 def _integrate(v1):
     return lambda v2: \
-           lambda v3: \
-           lambda v4: \
-           "(integrate" + \
-           " " + v1 + \
-           " " + v2 + \
-           " " + v3 + \
-           " " + v4 + \
-           ")"
+        lambda v3: \
+        lambda v4: \
+        "(integrate" + \
+        " " + v1 + \
+        " " + v2 + \
+        " " + v3 + \
+        " " + v4 + \
+        ")"
+
+
 def _repeat(v):
     return lambda p: "(repeat " + v + " " + p + ")"
+
+
 def _concat(p1):
     return lambda p2: "(concat " + p1 + " " + p2 + ")"
 
@@ -74,7 +97,7 @@ primitives = [
     Primitive("run", arrow(tprogram, tcanvas), _run),
 
     # tbool
-    Primitive("true",  tbool, "true"),
+    Primitive("true", tbool, "true"),
     Primitive("false", tbool, "false"),
 
     # maybe
@@ -83,6 +106,7 @@ primitives = [
 ]
 
 if __name__ == "__main__":
-    x = Program.parse("(#(concat (integrate nothing nothing nothing nothing)) (turn nothing))")
+    x = Program.parse(
+        "(#(concat (integrate nothing nothing nothing nothing)) (turn nothing))")
     # x = Program.parse("(integrate nothing nothing nothing nothing)")
     print((x.evaluate([])))

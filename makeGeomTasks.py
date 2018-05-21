@@ -19,20 +19,20 @@ def pretty_string(shape, size):
     out = ""
     nl = "\n"
     out += "╭"
-    out += "─"*(size*2)
+    out += "─" * (size * 2)
     out += "╮"
     out += nl
     for j in range(size):
         out += "│"
         for i in range(size):
-            if int(shape[j*size + (i % size)]) == 0:
+            if int(shape[j * size + (i % size)]) == 0:
                 out += "░░"
             else:
                 out += "██"
         out += "│"
         out += nl
     out += "╰"
-    out += "─"*(size*2)
+    out += "─" * (size * 2)
     out += "╯"
     out += nl
     return out
@@ -61,7 +61,7 @@ def makeTasks(subfolders):
         problems.append(task)
 
     for subfolder in subfolders:
-        for _, _, files in os.walk(rootdir+subfolder):
+        for _, _, files in os.walk(rootdir + subfolder):
             for f in files:
                 needed = False if subfolder == "behaviour" else True
                 if f.endswith("_l.png"):

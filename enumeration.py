@@ -15,6 +15,8 @@ import threading
 # Then c.run(msg, timeout) gives msg to c's stdin, let it run for timeout
 # seconds, then ask nicely to stop. For compatibility with the previous code,
 # this returns (r, e) as return by communicate itself.
+
+
 class Command(object):
     def __init__(self, cmd):
         self.cmd = cmd
@@ -27,13 +29,14 @@ class Command(object):
             self.process = subprocess.Popen(self.cmd,
                                             stdin=subprocess.PIPE,
                                             stdout=subprocess.PIPE)
-            self.r, self.e = self.process.communicate(bytes(msg, encoding="utf-8"))
+            self.r, self.e = self.process.communicate(
+                bytes(msg, encoding="utf-8"))
 
         thread = threading.Thread(target=target)
         thread.start()
         thread.join(timeout)   # Wait for finish in less than timeout
-                               # If not ready yet, then:
-                               # Ask him nicely to stop, then wait again
+        # If not ready yet, then:
+        # Ask him nicely to stop, then wait again
         if thread.is_alive() and self.process is not None:
             try:
                 self.process.send_signal(signal.SIGUSR1)
@@ -41,9 +44,11 @@ class Command(object):
                 eprint("A process was 'None'. Investiagate")
             thread.join()
 
-        return (self.r,self.e)
+        return (self.r, self.e)
+
 
 command = Command("./solver")
+
 
 def multicoreEnumeration(g, tasks, likelihoodModel, _=None,
                          solver=None,
@@ -67,7 +72,8 @@ def multicoreEnumeration(g, tasks, likelihoodModel, _=None,
         "You must specify a valid solver. options are ocaml, pypy, or python."
     solver = solvers[solver]
 
-    if not isinstance(g, dict): g = {t: g for t in tasks }
+    if not isinstance(g, dict):
+        g = {t: g for t in tasks}
     task2grammar = g
 
     # If we are not evaluating on held out testing tasks:
@@ -76,32 +82,35 @@ def multicoreEnumeration(g, tasks, likelihoodModel, _=None,
     # If we are evaluating testing tasks:
     # Make sure that each job corresponds to exactly one task
     jobs = {}
-    for i,t in enumerate(tasks):
+    for i, t in enumerate(tasks):
         if testing:
             k = (task2grammar[t], t.request, i)
         else:
             k = (task2grammar[t], t.request)
-        jobs[k] = jobs.get(k,[]) + [t]
+        jobs[k] = jobs.get(k, []) + [t]
 
     disableParallelism = len(jobs) == 1
-    parallelCallback = launchParallelProcess if not disableParallelism else lambda f,*a,**k:  f(*a,**k)
-    if disableParallelism: eprint("Disabling parallelism because we only have one job.")
+    parallelCallback = launchParallelProcess if not disableParallelism else lambda f, * \
+        a, **k: f(*a, **k)
+    if disableParallelism:
+        eprint("Disabling parallelism because we only have one job.")
 
     # Map from task to the shortest time to find a program solving it
     bestSearchTime = {t: None for t in task2grammar}
 
     lowerBounds = {k: 0. for k in jobs}
 
-    frontiers = {t: Frontier([], task = t) for t in task2grammar }
+    frontiers = {t: Frontier([], task=t) for t in task2grammar}
 
     # For each job we keep track of how long we have been working on it
-    stopwatches = {t: Stopwatch() for t in jobs }
+    stopwatches = {t: Stopwatch() for t in jobs}
 
     def numberOfHits(f):
-        return sum( e.logLikelihood > -0.01 for e in f)
+        return sum(e.logLikelihood > -0.01 for e in f)
 
     def budgetIncrement(lb):
-        if True: return 1.5
+        if True:
+            return 1.5
         # Very heuristic - not sure what to do here
         if lb < 24.:
             return 1.
@@ -115,7 +124,7 @@ def multicoreEnumeration(g, tasks, likelihoodModel, _=None,
         return {t: maximumFrontier - numberOfHits(frontiers[t]) for t in tasks}
 
     def allocateCPUs(n, tasks):
-        allocation = {t: 0 for t in tasks }
+        allocation = {t: 0 for t in tasks}
         while n > 0:
             for t in tasks:
                 # During testing we use exactly one CPU per task
@@ -123,19 +132,19 @@ def multicoreEnumeration(g, tasks, likelihoodModel, _=None,
                     return allocation
                 allocation[t] += 1
                 n -= 1
-                if n == 0: break
-        return allocation        
+                if n == 0:
+                    break
+        return allocation
 
     def refreshJobs():
-        ks = jobs.keys()
-        for k in ks:
+        for k in list(jobs.keys()):
             v = [t for t in jobs[k]
                  if numberOfHits(frontiers[t]) < maximumFrontier
-                 and stopwatches[k].elapsed <= enumerationTimeout ]
+                 and stopwatches[k].elapsed <= enumerationTimeout]
             if v:
                 jobs[k] = v
             else:
-                del jobs[k]                
+                del jobs[k]
 
     # Workers put their messages in here
     q = Queue()
@@ -154,45 +163,50 @@ def multicoreEnumeration(g, tasks, likelihoodModel, _=None,
         # Don't launch a job that we are already working on
         # We run the stopwatch whenever the job is being worked on
         # freeJobs are things that we are not working on but could be
-        freeJobs = [ j for j in jobs if not stopwatches[j].running
-                     and stopwatches[j].elapsed < enumerationTimeout - 0.5 ]
+        freeJobs = [j for j in jobs if not stopwatches[j].running
+                    and stopwatches[j].elapsed < enumerationTimeout - 0.5]
         if freeJobs and activeCPUs < CPUs:
-            # Allocate a CPU to each of the jobs that we have made the least progress on
-            freeJobs.sort(key = lambda j: lowerBounds[j])
+            # Allocate a CPU to each of the jobs that we have made the least
+            # progress on
+            freeJobs.sort(key=lambda j: lowerBounds[j])
             # Launch some more jobs until all of the CPUs are being used
             availableCPUs = CPUs - activeCPUs
-            allocation = allocateCPUs(availableCPUs, freeJobs)                
+            allocation = allocateCPUs(availableCPUs, freeJobs)
             for j in freeJobs:
-                if allocation[j] == 0: continue
-                g,request = j[:2]
+                if allocation[j] == 0:
+                    continue
+                g, request = j[:2]
                 bi = budgetIncrement(lowerBounds[j])
                 thisTimeout = enumerationTimeout - stopwatches[j].elapsed
-                eprint("(python) Launching %s (%d tasks) w/ %d CPUs. %f <= MDL < %f. Timeout %f."%
-                       (request, len(jobs[j]), allocation[j], lowerBounds[j], lowerBounds[j] + bi, thisTimeout))
+                eprint(
+                    "(python) Launching %s (%d tasks) w/ %d CPUs. %f <= MDL < %f. Timeout %f." %
+                    (request, len(
+                        jobs[j]), allocation[j], lowerBounds[j], lowerBounds[j] + bi, thisTimeout))
                 stopwatches[j].start()
                 parallelCallback(wrapInThread(solver),
-                                 q = q, g = g, ID = nextID,
-                                 elapsedTime = stopwatches[j].elapsed,
-                                 CPUs = allocation[j],
-                                 tasks = jobs[j],
-                                 lowerBound = lowerBounds[j],
-                                 upperBound = lowerBounds[j] + bi,
-                                 budgetIncrement = bi,
-                                 timeout = thisTimeout,
-                                 likelihoodModel = likelihoodModel,
-                                 evaluationTimeout = evaluationTimeout,
-                                 maximumFrontiers = maximumFrontiers(j))
+                                 q=q, g=g, ID=nextID,
+                                 elapsedTime=stopwatches[j].elapsed,
+                                 CPUs=allocation[j],
+                                 tasks=jobs[j],
+                                 lowerBound=lowerBounds[j],
+                                 upperBound=lowerBounds[j] + bi,
+                                 budgetIncrement=bi,
+                                 timeout=thisTimeout,
+                                 likelihoodModel=likelihoodModel,
+                                 evaluationTimeout=evaluationTimeout,
+                                 maximumFrontiers=maximumFrontiers(j))
                 id2CPUs[nextID] = allocation[j]
                 id2job[nextID] = j
-                nextID += 1                
+                nextID += 1
 
                 activeCPUs += allocation[j]
                 lowerBounds[j] += bi
 
         # If nothing is running, and we just tried to launch jobs,
         # then that means we are finished
-        if all( not s.running for s in stopwatches.values() ): break
-        
+        if all(not s.running for s in stopwatches.values()):
+            break
+
         # Wait to get a response
         message = Bunch(q.get())
 
@@ -206,30 +220,34 @@ def multicoreEnumeration(g, tasks, likelihoodModel, _=None,
             stopwatches[id2job[message.ID]].stop()
 
             newFrontiers, searchTimes = message.value
-            for t,f in newFrontiers.iteritems():
-                oldBest = None if len(frontiers[t]) == 0 else frontiers[t].bestPosterior
+            for t, f in newFrontiers.items():
+                oldBest = None if len(
+                    frontiers[t]) == 0 else frontiers[t].bestPosterior
                 frontiers[t] = frontiers[t].combine(f)
-                newBest = None if len(frontiers[t]) == 0 else frontiers[t].bestPosterior
-                
+                newBest = None if len(
+                    frontiers[t]) == 0 else frontiers[t].bestPosterior
+
                 dt = searchTimes[t]
                 if dt is not None:
-                    if bestSearchTime[t] is None: bestSearchTime[t] = dt
+                    if bestSearchTime[t] is None:
+                        bestSearchTime[t] = dt
                     else:
                         # newBest & oldBest should both be defined
                         assert oldBest is not None
                         assert newBest is not None
                         newScore = newBest.logPrior + newBest.logLikelihood
                         oldScore = oldBest.logPrior + oldBest.logLikelihood
-                        
+
                         if newScore > oldScore:
                             bestSearchTime[t] = dt
                         elif newScore == oldScore:
-                            bestSearchTime[t] = min(bestSearchTime[t],dt)
+                            bestSearchTime[t] = min(bestSearchTime[t], dt)
         else:
-            eprint("Unknown message result:",message.result)
+            eprint("Unknown message result:", message.result)
             assert False
-            
-    return [frontiers[t] for t in tasks ], [bestSearchTime[t] for t in tasks if bestSearchTime[t] is not None ]
+
+    return [frontiers[t] for t in tasks], [bestSearchTime[t]
+                                           for t in tasks if bestSearchTime[t] is not None]
 
 
 def wrapInThread(f):
@@ -238,12 +256,12 @@ def wrapInThread(f):
     Result will be either put into the q
     """
 
-    def _f(*a,**k):
+    def _f(*a, **k):
         q = k.pop("q")
         ID = k.pop("ID")
 
         try:
-            r = f(*a,**k)
+            r = f(*a, **k)
             q.put({"result": "success",
                    "ID": ID,
                    "value": r})
@@ -255,50 +273,59 @@ def wrapInThread(f):
             return
     return _f
 
-def solveForTask_ocaml(_ = None,
-                       elapsedTime = 0.,
+
+def solveForTask_ocaml(_=None,
+                       elapsedTime=0.,
                        CPUs=1,
-                       g = None, tasks = None,
-                       lowerBound = None, upperBound = None, budgetIncrement = None,
-                       timeout = None,
-                       likelihoodModel = None, # FIXME: unused
-                       evaluationTimeout = None, maximumFrontiers = None):
+                       g=None, tasks=None,
+                       lowerBound=None, upperBound=None, budgetIncrement=None,
+                       timeout=None,
+                       likelihoodModel=None,  # FIXME: unused
+                       evaluationTimeout=None, maximumFrontiers=None):
     import json
+
     def requestMessage(r):
-        if isinstance(r,TypeConstructor):
+        if isinstance(r, TypeConstructor):
             return {"constructor": r.name,
-                    "arguments": [ requestMessage(a) for a in r.arguments ]}
-        assert isinstance(r,TypeVariable)
+                    "arguments": [requestMessage(a) for a in r.arguments]}
+        assert isinstance(r, TypeVariable)
         return {"index": r.v}
 
     def taskMessage(t):
         m = {
-            "examples": [{"inputs": list(xs), "output": y} for xs,y in t.examples ],
+            "examples": [{"inputs": list(xs), "output": y} for xs, y in t.examples],
             "name": t.name,
             "request": requestMessage(t.request),
             "maximumFrontier": maximumFrontiers[t]}
-        towerParameters = ["maximumStaircase","perturbation","minimumLength","maximumMass","minimumHeight",
-                           "minimumArea"]
+        towerParameters = [
+            "maximumStaircase",
+            "perturbation",
+            "minimumLength",
+            "maximumMass",
+            "minimumHeight",
+            "minimumArea"]
         for p in towerParameters:
-            if hasattr(t,p):
-                m[p] = getattr(t,p)
+            if hasattr(t, p):
+                m[p] = getattr(t, p)
         if hasattr(t, 'stringConstants'):
             m["stringConstants"] = t.stringConstants
         if hasattr(t, 'BIC'):
-            m["parameterPenalty"] = t.BIC*math.log(len(t.examples))
-        if hasattr(t, 'likelihoodThreshold') and t.likelihoodThreshold is not None:
+            m["parameterPenalty"] = t.BIC * math.log(len(t.examples))
+        if hasattr(
+                t,
+                'likelihoodThreshold') and t.likelihoodThreshold is not None:
             m["lossThreshold"] = -t.likelihoodThreshold
         if hasattr(t, 'temperature') and t.temperature is not None:
             m["temperature"] = t.temperature
 
         return m
-    
+
     message = {"DSL": {"logVariable": g.logVariable,
-                       "productions": [ {"expression": str(p), "logProbability": l}
-                                            for l,_,p in g.productions ]},
+                       "productions": [{"expression": str(p), "logProbability": l}
+                                       for l, _, p in g.productions]},
                "tasks": [taskMessage(t)
-                   for t in tasks ],
-               
+                         for t in tasks],
+
                "programTimeout": evaluationTimeout,
                "nc": CPUs,
                "timeout": timeout,
@@ -307,10 +334,11 @@ def solveForTask_ocaml(_ = None,
                "budgetIncrement": budgetIncrement,
                "verbose": False,
                "shatter": 10}
-    
-    if hasattr(tasks[0], 'maxParameters') and tasks[0].maxParameters is not None:
-        message["maxParameters"] = tasks[0].maxParameters
 
+    if hasattr(
+            tasks[0],
+            'maxParameters') and tasks[0].maxParameters is not None:
+        message["maxParameters"] = tasks[0].maxParameters
 
     message = json.dumps(message)
     with open("message", "w") as f:
@@ -319,12 +347,12 @@ def solveForTask_ocaml(_ = None,
         process = subprocess.Popen("./solver",
                                    stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE)
-        response, error = process.communicate(message)
+        response, error = process.communicate(bytes(message, encoding="utf-8"))
         response = json.loads(response)
     except OSError as exc:
         raise exc
 
-    pc = 0 # TODO
+    pc = 0  # TODO
     frontiers = {}
     searchTimes = {}
     for t in tasks:
@@ -332,10 +360,16 @@ def solveForTask_ocaml(_ = None,
         # Remove all entries that do not type correctly
         # This can occur because the solver tries to infer the type
         # Sometimes it infers a type that is too general
-        badPrograms = [r["program"] for r in solutions if not Program.parse(r["program"]).canHaveType(t.request) ]
+        badPrograms = [
+            r["program"] for r in solutions if not Program.parse(
+                r["program"]).canHaveType(
+                t.request)]
         for b in badPrograms:
-            eprint("Bad program",b,':',t.request)
-        solutions = [r for r in solutions if Program.parse(r["program"]).canHaveType(t.request) ]
+            eprint("Bad program", b, ':', t.request)
+        solutions = [
+            r for r in solutions if Program.parse(
+                r["program"]).canHaveType(
+                t.request)]
 
         # FIXME:
         # I have no idea why this bug occurs but sometimes the ocaml backend returns the wrong likelihood for programs with real numbers
@@ -345,25 +379,29 @@ def solveForTask_ocaml(_ = None,
         #         for r in solutions:
         #             ll = -substringOccurrences("REAL", r["program"])*t.BIC*math.log(len(t.examples))
         #             r["logLikelihood"] = ll
-                
-        frontier = Frontier([FrontierEntry(program = p,
-                                           logLikelihood = e["logLikelihood"],
-                                           logPrior = g.logLikelihood(t.request, p))
+
+        frontier = Frontier([FrontierEntry(program=p,
+                                           logLikelihood=e["logLikelihood"],
+                                           logPrior=g.logLikelihood(t.request, p))
                              for e in solutions
-                             for p in [Program.parse(e["program"])] ],
-                            task = t)
+                             for p in [Program.parse(e["program"])]],
+                            task=t)
         frontiers[t] = frontier
-        if frontier.empty: searchTimes[t] = None
+        if frontier.empty:
+            searchTimes[t] = None
         # This is subtle:
         # The search time we report is actually not be minimum time to find any solution
         # Rather it is the time to find the MAP solution
         # This is important for regression problems,
         # where we might find something with a good prior but bad likelihood early on,
         # and only later discovered the good high likelihood program
-        else: searchTimes[t] = min((e["logLikelihood"] + e["logPrior"], e["time"])
-                                   for e in solutions)[1] + elapsedTime
-        
+        else:
+            searchTimes[t] = min(
+                (e["logLikelihood"] + e["logPrior"],
+                 e["time"]) for e in solutions)[1] + elapsedTime
+
     return frontiers, searchTimes
+
 
 def solveForTask_pypy(_=None,
                       elapsedTime=0.,
@@ -373,53 +411,58 @@ def solveForTask_pypy(_=None,
                       likelihoodModel=None,
                       evaluationTimeout=None, maximumFrontier=None):
     return callCompiled(enumerateForTask,
-                        g,task,likelihoodModel,
-                        timeout = timeout,
-                        evaluationTimeout = evaluationTimeout,
-                        maximumFrontier = maximumFrontier,
-                        budgetIncrement = budgetIncrement,
-                        lowerBound = lowerBound,
-                        upperBound = upperBound)
+                        g, task, likelihoodModel,
+                        timeout=timeout,
+                        evaluationTimeout=evaluationTimeout,
+                        maximumFrontier=maximumFrontier,
+                        budgetIncrement=budgetIncrement,
+                        lowerBound=lowerBound,
+                        upperBound=upperBound)
 
-def solveForTask_python(_ = None,
-                        elapsedTime = 0.,
-                        g = None, tasks = None,
-                        lowerBound = None, upperBound = None, budgetIncrement = None,
-                        timeout = None,
+
+def solveForTask_python(_=None,
+                        elapsedTime=0.,
+                        g=None, tasks=None,
+                        lowerBound=None, upperBound=None, budgetIncrement=None,
+                        timeout=None,
                         CPUs=1,
-                        likelihoodModel = None,
-                        evaluationTimeout = None, maximumFrontiers = None):
-    return enumerateForTasks(g,tasks,likelihoodModel,
-                            timeout = timeout,
+                        likelihoodModel=None,
+                        evaluationTimeout=None, maximumFrontiers=None):
+    return enumerateForTasks(g, tasks, likelihoodModel,
+                             timeout=timeout,
                              elapsedTime=elapsedTime,
-                            evaluationTimeout = evaluationTimeout,
-                            maximumFrontiers = maximumFrontiers,
-                            budgetIncrement = budgetIncrement,
-                            lowerBound = lowerBound, upperBound = upperBound)
+                             evaluationTimeout=evaluationTimeout,
+                             maximumFrontiers=maximumFrontiers,
+                             budgetIncrement=budgetIncrement,
+                             lowerBound=lowerBound, upperBound=upperBound)
 
-class EnumerationTimeout(Exception): pass
-def enumerateForTasks(g, tasks, likelihoodModel, _ = None,
+
+class EnumerationTimeout(Exception):
+    pass
+
+
+def enumerateForTasks(g, tasks, likelihoodModel, _=None,
                       verbose=False,
                       timeout=None,
                       elapsedTime=0.,
                       CPUs=1,
                       evaluationTimeout=None,
-                      lowerBound = 0.,
-                      upperBound = 100.,
-                      budgetIncrement=1.0, maximumFrontiers = None):
+                      lowerBound=0.,
+                      upperBound=100.,
+                      budgetIncrement=1.0, maximumFrontiers=None):
     assert timeout is not None, \
         "enumerateForTasks: You must provide a timeout."
 
     from time import time
 
     request = tasks[0].request
-    assert all( t.request == request for t in tasks ), \
+    assert all(t.request == request for t in tasks), \
         "enumerateForTasks: Expected tasks to all have the same type"
 
-    maximumFrontiers = [ maximumFrontiers[t] for t in tasks ]
+    maximumFrontiers = [maximumFrontiers[t] for t in tasks]
     # store all of the hits in a priority queue
     # we will never maintain maximumFrontier best solutions
-    hits = [PQ() for _ in tasks ]
+    hits = [PQ() for _ in tasks]
 
     starting = time()
     previousBudget = lowerBound
@@ -427,13 +470,13 @@ def enumerateForTasks(g, tasks, likelihoodModel, _ = None,
     try:
         totalNumberOfPrograms = 0
         while time() < starting + timeout and \
-              any( len(h) < mf for h,mf in zip(hits, maximumFrontiers) ) and \
-              budget <= upperBound:
+                any(len(h) < mf for h, mf in zip(hits, maximumFrontiers)) and \
+                budget <= upperBound:
             numberOfPrograms = 0
-            for prior,_,p in g.enumeration(Context.EMPTY, [], request,
-                                           maximumDepth = 99,
-                                           upperBound = budget,
-                                           lowerBound = previousBudget):
+            for prior, _, p in g.enumeration(Context.EMPTY, [], request,
+                                             maximumDepth=99,
+                                             upperBound=budget,
+                                             lowerBound=previousBudget):
                 descriptionLength = -prior
                 # Shouldn't see it on this iteration
                 assert descriptionLength <= budget
@@ -446,12 +489,17 @@ def enumerateForTasks(g, tasks, likelihoodModel, _ = None,
                 for n in range(len(tasks)):
                     task = tasks[n]
                     likelihood = task.logLikelihood(p, evaluationTimeout)
-                    if invalid(likelihood): continue
+                    if invalid(likelihood):
+                        continue
                     dt = time() - start + elapsedTime
                     priority = -(likelihood + prior)
-                    hits[n].push(priority, (dt, FrontierEntry(program=p,
-                                                              logLikelihood=likelihood,
-                                                              logPrior=prior)))
+                    hits[n].push(
+                        priority,
+                        (dt,
+                         FrontierEntry(
+                             program=p,
+                             logLikelihood=likelihood,
+                             logPrior=prior)))
                     if len(hits[n]) > maximumFrontier[n]:
                         hits[n].popMaximum()
 
@@ -460,35 +508,58 @@ def enumerateForTasks(g, tasks, likelihoodModel, _ = None,
 
             previousBudget = budget
             budget += budgetIncrement
-            
-            if budget > upperBound: break
-    except EnumerationTimeout: pass
-    
-    frontiers = {tasks[n]: Frontier([ e for _,e in hits[n] ],
-                                    task = tasks[n])
-                 for n in range(len(tasks)) }
-    searchTimes = {tasks[n]: None if len(hits[n]) == 0 else min(t for t,_ in hits[n] )
-                   for n in range(len(tasks)) }
+
+            if budget > upperBound:
+                break
+    except EnumerationTimeout:
+        pass
+
+    frontiers = {tasks[n]: Frontier([e for _, e in hits[n]],
+                                    task=tasks[n])
+                 for n in range(len(tasks))}
+    searchTimes = {
+        tasks[n]: None if len(
+            hits[n]) == 0 else min(
+            t for t,
+            _ in hits[n]) for n in range(
+                len(tasks))}
 
     return frontiers, searchTimes
 
-def benchmarkSynthesisTimes(result, tasks, _ = None, timeout = None, CPUs = None, evaluationTimeout=None):
+
+def benchmarkSynthesisTimes(
+        result,
+        tasks,
+        _=None,
+        timeout=None,
+        CPUs=None,
+        evaluationTimeout=None):
     if result.parameters['useRecognitionModel']:
         assert hasattr(result, 'recognitionModel') and result.recognitionModel is not None, \
             "Checkpoint was trained using a recognition model but it does not have a saved recognition model."
 
-    times = parallelMap(CPUs, lambda task: benchmarkSynthesisTime(result, task, timeout, evaluationTimeout),
-                        tasks)
-    timeouts = sum(t == None for t in times)
-    successes = sum(t != None for t in times)
+    times = parallelMap(
+        CPUs,
+        lambda task: benchmarkSynthesisTime(
+            result,
+            task,
+            timeout,
+            evaluationTimeout),
+        tasks)
+    timeouts = sum(t is None for t in times)
+    successes = sum(t is not None for t in times)
     if successes > 0:
-        average = sum(t for t in times if t != None)/float(successes)
-        deviation = (sum( (t - average)**2 for t in times if t != None )/float(successes))**0.5
-        standardError = deviation/(float(successes)**0.5)
+        average = sum(t for t in times if t is not None) / float(successes)
+        deviation = (
+            sum((t - average)**2 for t in times if t is not None) / float(successes))**0.5
+        standardError = deviation / (float(successes)**0.5)
     eprint("BENCHMARK:")
-    eprint("Solves %d/%d = %d%%"%(successes, len(tasks), int(100.*successes/len(tasks))))
+    eprint(
+        "Solves %d/%d = %d%%" %
+        (successes, len(tasks), int(
+            100. * successes / len(tasks))))
     if successes > 0:
-        eprint("Synthesis time %f +/- %f sec"%(average, standardError))
+        eprint("Synthesis time %f +/- %f sec" % (average, standardError))
 
 
 def benchmarkSynthesisTime(result, task, timeout, evaluationTimeout):
@@ -499,13 +570,13 @@ def benchmarkSynthesisTime(result, task, timeout, evaluationTimeout):
     solver = "ocaml"
 
     if result.parameters['useRecognitionModel']:
-        _,times = result.recognitionModel.enumerateFrontiers([task],
-                                                             likelihoodModel,
-                                                             CPUs=1,
-                                                             solver=solver,
-                                                             maximumFrontier=1,
-                                                             enumerationTimeout=timeout,
-                                                             evaluationTimeout=evaluationTimeout)
+        _, times = result.recognitionModel.enumerateFrontiers([task],
+                                                              likelihoodModel,
+                                                              CPUs=1,
+                                                              solver=solver,
+                                                              maximumFrontier=1,
+                                                              enumerationTimeout=timeout,
+                                                              evaluationTimeout=evaluationTimeout)
     else:
         _, times = multicoreEnumeration(grammar, [task], likelihoodModel,
                                         solver=solver,
@@ -513,8 +584,9 @@ def benchmarkSynthesisTime(result, task, timeout, evaluationTimeout):
                                         enumerationTimeout=timeout,
                                         CPUs=1,
                                         evaluationTimeout=evaluationTimeout)
-    if len(times) == 0: return None
+    if len(times) == 0:
+        return None
     assert len(times) == 1
     dt = times[0]
-    eprint("Solved",task,"in time",dt)
+    eprint("Solved", task, "in time", dt)
     return dt

@@ -5,7 +5,10 @@ from differentiation import *
 import random
 import signal
 
-class EvaluationTimeout(Exception): pass
+
+class EvaluationTimeout(Exception):
+    pass
+
 
 EVALUATIONTABLE = {}
 
@@ -22,35 +25,46 @@ class Task(object):
         self.name = name
         self.examples = examples
         if len(self.examples) > 0:
-            assert all( len(xs) == len(examples[0][0])
-                        for xs,_ in examples ), \
-                            "(for task %s) FATAL: Number of arguments varies."%name
+            assert all(len(xs) == len(examples[0][0])
+                       for xs, _ in examples), \
+                "(for task %s) FATAL: Number of arguments varies." % name
             assert len(examples[0][0]) == len(request.functionArguments()), \
-                "(for task %s) FATAL: Number of arguments in the examples does not agree with the number of arguments according to the type %s."%(name, len(request.functionArguments()))
-        
+                "(for task %s) FATAL: Number of arguments in the examples does not agree with the number of arguments according to the type %s." % (
+                    name, len(request.functionArguments()))
+
     def __str__(self): return self.name
+
     def __repr__(self):
         return "Task(name={self.name}, request={self.request}, examples={self.examples}"\
             .format(self=self)
-    def __eq__(self,o): return self.name == o.name
-    def __ne__(self,o): return not (self == o)
+
+    def __eq__(self, o): return self.name == o.name
+
+    def __ne__(self, o): return not (self == o)
+
     def __hash__(self): return hash(self.name)
+
     def describe(self):
-        description = ["%s : %s"%(self.name, self.request)]
-        for xs,y in self.examples:
-            if len(xs) == 1: description.append("f(%s) = %s"%(xs[0],y))
-            else: description.append("f%s = %s"%(xs,y))
+        description = ["%s : %s" % (self.name, self.request)]
+        for xs, y in self.examples:
+            if len(xs) == 1:
+                description.append("f(%s) = %s" % (xs[0], y))
+            else:
+                description.append("f%s = %s" % (xs, y))
         return "\n".join(description)
+
     def predict(self, f, x):
-        for a in x: f = f(a)
+        for a in x:
+            f = f(a)
         return f
+
     def check(self, e, timeout=None):
         if timeout is not None:
-            def timeoutCallBack(_1,_2): raise EvaluationTimeout()
-        try:    
+            def timeoutCallBack(_1, _2): raise EvaluationTimeout()
+        try:
             signal.signal(signal.SIGVTALRM, timeoutCallBack)
             signal.setitimer(signal.ITIMER_VIRTUAL, timeout)
-            
+
             try:
                 f = e.evaluate([])
             except IndexError:
@@ -60,45 +74,54 @@ class Task(object):
                 eprint("Exception during evaluation:", e)
                 return False
 
-            for x,y in self.examples:
-                if self.cache and (x,e) in EVALUATIONTABLE: p = EVALUATIONTABLE[(x,e)]
+            for x, y in self.examples:
+                if self.cache and (x, e) in EVALUATIONTABLE:
+                    p = EVALUATIONTABLE[(x, e)]
                 else:
-                    try: p = self.predict(f,x)
-                    except: p = None
-                    if self.cache: EVALUATIONTABLE[(x,e)] = p
+                    try:
+                        p = self.predict(f, x)
+                    except BaseException:
+                        p = None
+                    if self.cache:
+                        EVALUATIONTABLE[(x, e)] = p
                 if p != y:
                     if timeout is not None:
-                        signal.signal(signal.SIGVTALRM, lambda *_:None)
+                        signal.signal(signal.SIGVTALRM, lambda *_: None)
                         signal.setitimer(signal.ITIMER_VIRTUAL, 0)
                     return False
 
             return True
-        #except e:
-            #eprint(e)
-            #assert(False)
+        # except e:
+            # eprint(e)
+            # assert(False)
         except EvaluationTimeout:
             eprint("Timed out while evaluating", e)
             return False
         finally:
             if timeout is not None:
-                signal.signal(signal.SIGVTALRM, lambda *_:None)
+                signal.signal(signal.SIGVTALRM, lambda *_: None)
                 signal.setitimer(signal.ITIMER_VIRTUAL, 0)
-        
-    def logLikelihood(self,e, timeout=None):
-        if self.check(e, timeout): return 0.0
-        else: return NEGATIVEINFINITY
+
+    def logLikelihood(self, e, timeout=None):
+        if self.check(e, timeout):
+            return 0.0
+        else:
+            return NEGATIVEINFINITY
 
     @staticmethod
     def featureMeanAndStandardDeviation(tasks):
         dimension = len(tasks[0].features)
-        averages = [ sum(t.features[j] for t in tasks)/float(len(tasks))
-                     for j in range(dimension) ]
-        variances = [ sum( (t.features[j] - averages[j])**2 for t in tasks )/float(len(tasks))
-                      for j in range(dimension) ]
-        standardDeviations = [ v**0.5 for v in variances ]
-        for j,s in enumerate(standardDeviations):
+        averages = [sum(t.features[j] for t in tasks) / float(len(tasks))
+                    for j in range(dimension)]
+        variances = [sum((t.features[j] -
+                          averages[j])**2 for t in tasks) /
+                     float(len(tasks)) for j in range(dimension)]
+        standardDeviations = [v**0.5 for v in variances]
+        for j, s in enumerate(standardDeviations):
             if s == 0.:
-                eprint("WARNING: Feature %d is always %f"%(j+1, averages[j]))
+                eprint(
+                    "WARNING: Feature %d is always %f" %
+                    (j + 1, averages[j]))
         return averages, standardDeviations
 
     def as_json_dict(self):
@@ -107,75 +130,85 @@ class Task(object):
             "request": str(self.request),
             "examples": [{"inputs": x, "output": y} for x, y in self.examples]
         }
-        
+
 
 class DifferentiableTask(Task):
-<<<<<<< HEAD
-    def __init__(self, name, request, examples, _ = None,
-                 features = None, BIC = 1., loss = None, likelihoodThreshold = None,
-                 temperature = 1., maxParameters=None):
-=======
+
     def __init__(self, name, request, examples, _=None,
-                 features=None, BIC=1., loss=None, likelihoodThreshold=None, maxParameters=None):
->>>>>>> master
+                 features=None, BIC=1., loss=None, likelihoodThreshold=None,
+                 temperature=1., maxParameters=None):
         assert loss is not None
         self.temperature = temperature
         self.maxParameters = maxParameters
         self.loss = loss
         self.BIC = BIC
         self.likelihoodThreshold = likelihoodThreshold
-        
-        super(DifferentiableTask,self).__init__(name, request, examples, features, cache=False)
-        
+
+        super(
+            DifferentiableTask,
+            self).__init__(
+            name,
+            request,
+            examples,
+            features,
+            cache=False)
+
     def logLikelihood(self, e, timeout=None):
-        assert timeout == None, "timeout not implemented for differentiable tasks, but not for any good reason."
+        assert timeout is None, "timeout not implemented for differentiable tasks, but not for any good reason."
         e, parameters = PlaceholderVisitor.execute(e)
-        if self.maxParameters is not None and len(parameters) > self.maxParameters:
+        if self.maxParameters is not None and len(
+                parameters) > self.maxParameters:
             return NEGATIVEINFINITY
         f = e.evaluate([])
 
-<<<<<<< HEAD
-        loss = sum( self.loss(self.predict(f, xs), y)
-                    for xs,y in self.examples ) / float(len(self.examples))
-=======
-        loss = sum( self.loss(self.predict(f, list(map(float,x))), float(y))
-                    for x,y in self.examples ) / float(len(self.examples))
->>>>>>> master
+        loss = sum(self.loss(self.predict(f, xs), y)
+                   for xs, y in self.examples) / float(len(self.examples))
         if isinstance(loss, DN):
             try:
-                loss = loss.resilientBackPropagation(parameters, lr=0.05, steps=500,
-                                                     update=None)
+                loss = loss.resilientBackPropagation(
+                    parameters, lr=0.05, steps=500, update=None)
             except InvalidLoss:
                 loss = POSITIVEINFINITY
-            
+
         # BIC penalty
-        penalty = self.BIC*len(parameters)*math.log(len(self.examples))
+        penalty = self.BIC * len(parameters) * math.log(len(self.examples))
 
         if self.likelihoodThreshold is not None:
-            if loss > -self.likelihoodThreshold: return NEGATIVEINFINITY
-            else: return -penalty
+            if loss > -self.likelihoodThreshold:
+                return NEGATIVEINFINITY
+            else:
+                return -penalty
         else:
-            return -loss/self.temperature - penalty
-        
+            return -loss / self.temperature - penalty
+
+
 def squaredErrorLoss(prediction, target):
     d = prediction - target
-    return d*d
+    return d * d
+
+
 def l1loss(prediction, target):
     return abs(prediction - target)
 
+
 class PlaceholderVisitor(object):
     def __init__(self): self.parameters = []
+
     def primitive(self, e):
         if e.name == 'REAL':
             placeholder = Placeholder.named("REAL_", 0.)
             self.parameters.append(placeholder)
             return Primitive(e.name, e.tp, placeholder)
         return e
-    def invented(self,e): return e.body.visit(self)
-    def abstraction(self,e): return Abstraction(e.body.visit(self))
-    def application(self,e):
-        return Application(e.f.visit(self),e.x.visit(self))
-    def index(self,e): return e
+
+    def invented(self, e): return e.body.visit(self)
+
+    def abstraction(self, e): return Abstraction(e.body.visit(self))
+
+    def application(self, e):
+        return Application(e.f.visit(self), e.x.visit(self))
+
+    def index(self, e): return e
 
     @staticmethod
     def execute(e):

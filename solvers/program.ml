@@ -117,7 +117,7 @@ let lookup_primitive n =
   with _ -> raise (UnknownPrimitive n)
 
   
-let rec evaluate (environment: 'b list) (p:program) : 'a =
+let [@warning "-20"] rec evaluate (environment: 'b list) (p:program) : 'a =
   match p with
   | Apply(Apply(Apply(Primitive(_,"if",_),branch),yes),no) ->
     if magical (evaluate environment branch) then evaluate environment yes else evaluate environment no
@@ -166,7 +166,7 @@ let run_analyzed_with_arguments (p : 'b list -> 'c) (arguments : 'a list) =
     | x :: xs -> loop (magical (l x)) xs
   in loop (p []) arguments
 
-let rec lazy_evaluate (environment: ('b Lazy.t) list) (p:program) : 'a Lazy.t =
+let [@warning "-20"] rec lazy_evaluate (environment: ('b Lazy.t) list) (p:program) : 'a Lazy.t =
   (* invariant: always return thunks *)
   match p with
   (* Notice that we do not need to special case conditionals. In lazy
@@ -178,7 +178,7 @@ let rec lazy_evaluate (environment: ('b Lazy.t) list) (p:program) : 'a Lazy.t =
   | Primitive(_,_,v) -> lazy (magical (!v))
   | Invented(_,i) -> lazy_evaluate [] i
 
-let rec analyze_lazy_evaluation (p:program) : (('b Lazy.t) list) -> 'a Lazy.t =
+let [@warning "-20"] rec analyze_lazy_evaluation (p:program) : (('b Lazy.t) list) -> 'a Lazy.t =
   match p with
   (* Notice that we do not need to special case conditionals. In lazy
      evaluation conditionals are function just like any other. *)
@@ -199,7 +199,7 @@ let rec analyze_lazy_evaluation (p:program) : (('b Lazy.t) list) -> 'a Lazy.t =
     let analyzed_body = analyze_lazy_evaluation i in
     fun _ -> analyzed_body []
 
-let run_lazy_analyzed_with_arguments p arguments =
+let [@warning "-20"] run_lazy_analyzed_with_arguments p arguments =
   let rec go l xs =
     match xs with
     | [] -> l |> magical
@@ -237,7 +237,7 @@ let rec free_variables ?d:(d=0) e = match e with
   | _ -> []
 
 (* PRIMITIVES *)
-let primitive ?manualLaziness:(manualLaziness = false)
+let [@warning "-20"] primitive ?manualLaziness:(manualLaziness = false)
     (name : string) (t : tp) x =
   let number_of_arguments = arguments_of_type t |> List.length in
   (* Force the arguments *)
@@ -669,7 +669,7 @@ let parsing_test_cases() =
 
 (* program_test_cases();; *)
              
-let performance_test_case() =
+let [@warning "-20"] performance_test_case() =
   let e = parse_program "(lambda (fix (lambda (lambda (if (empty? $0) $0 (cons (* 2 (car $0)) ($1 (cdr $0)))))) $0))" |> get_some in
   let xs = [2;1;9;3;] in
   let n = 10000000 in
@@ -677,8 +677,8 @@ let performance_test_case() =
       (0--n) |> List.iter ~f:(fun j ->
           if j = n then
             Printf.printf "%s\n" (evaluate [] e xs |> List.map ~f:Int.to_string |> join ~separator:" ")
-          else 
-            ignore(evaluate [] e xs)));
+          else
+            ignore (evaluate [] e xs)));
   let c = analyze_evaluation e [] in
   time_it "evaluate analyzed program many times" (fun () -> 
       (0--n) |> List.iter ~f:(fun j ->
@@ -763,6 +763,7 @@ let test_lazy_evaluation() =
         | 0 -> []
         | 1 -> [42]
         | 2 -> [0;1]
+        | _ -> failwith "I can't handle this number of arguments (?)."
       in
       Printf.printf "\t(arguments: %s)\n"
         (arguments |> List.map ~f:Int.to_string |> join ~separator:"; ");
@@ -774,12 +775,13 @@ let test_lazy_evaluation() =
           Printf.printf "value = %d\n" (v |> magical)
         | "list<int>" ->
           Printf.printf "value = %s\n" (v |> magical |> List.map ~f:Int.to_string |> join ~separator:",")
+        | _ -> failwith "I am not prepared to handle other types"
       end
       ;
-      flush_everything()
+      flush_everything ()
     );;
 
-let test_string() =
+let test_string () =
   let p = parse_program "(lambda (fold $0 $0 (lambda (lambda (cdr (if (char-eq? $1 SPACE) $2 $0))))))" |> get_some in
   let p = analyze_lazy_evaluation p in
   let x = String.to_list "this is a rigorous" in

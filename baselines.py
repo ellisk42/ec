@@ -1,6 +1,7 @@
 "Program learning baselines. All functions take the same arguments as ec."
 import ec
 
+
 def all(*args, **kwargs):
     return {
         "robustfill": robustfill(*args, **kwargs),
@@ -8,7 +9,7 @@ def all(*args, **kwargs):
         "ec_v1": ec_v1(*args, **kwargs),
         # Enumeration is equivalent to the first wake cycle
         # We already have this data in results.testingTimes[0]
-#        "enumeration": enumeration(*args, **kwargs),
+        #        "enumeration": enumeration(*args, **kwargs),
     }
 
 
@@ -23,7 +24,8 @@ def robustfill(*args, **kwargs):
         "enumerationTimeout": 1,
 
         "useRecognitionModel": True,
-        # Trained a recognition model on a ton of iterations on only samples from an unlearned generative model
+        # Trained a recognition model on a ton of iterations on only samples
+        # from an unlearned generative model
         "iterations": 1,
         "steps": 50000,
         "helmholtzRatio": 1.0,
@@ -40,11 +42,12 @@ def iterative_pcfg(*args, **kwargs):
         "outputPrefix": None,
 
         "useRecognitionModel": False,
-        "iterations": kwargs["iterations"], # XXX: should we change this?
+        "iterations": kwargs["iterations"],  # XXX: should we change this?
         "aic": float("inf"),
         "pseudoCounts": 0,
     })
     return ec.explorationCompression(*args, **kwargs)
+
 
 def ec_v1(*args, **kwargs):
     kwargs.update({
@@ -53,7 +56,7 @@ def ec_v1(*args, **kwargs):
         "outputPrefix": None,
 
         "useRecognitionModel": False,
-        "iterations": kwargs["iterations"], # XXX: should we change this?
+        "iterations": kwargs["iterations"],  # XXX: should we change this?
         "pseudoCounts": 0.1,
         "arity": 0,
         "maximumFrontier": 2,
@@ -73,6 +76,6 @@ def enumeration(*args, **kwargs):
         "aic": float("inf"),
         # We will be evaluating the baselines using benchmarking on the testing set
         # So we should just use whatever frontier size will be used for benchmarking
-        #"frontierSize": 200000,
+        # "frontierSize": 200000,
     })
     return ec.explorationCompression(*args, **kwargs)

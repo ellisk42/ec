@@ -7,6 +7,7 @@ from makeListTasks import list_features
 from task import Task
 from type import guess_type, arrow
 
+
 def extractTasks(dataset):
     for i, function in enumerate(dataset):
         name = "deep-coder #{}".format(i)
@@ -20,6 +21,7 @@ def extractTasks(dataset):
         features = list_features(examples)
         cache = all(hashable(x) for x in examples)
         yield Task(name, program_type, examples, features=features, cache=cache)
+
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:

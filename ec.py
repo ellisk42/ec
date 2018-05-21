@@ -60,17 +60,23 @@ class ECResult():
                      "useRecognitionModel": "rec"}
 
     @staticmethod
-    def abbreviate(parameter): return ECResult.abbreviations.get(parameter, parameter)
+    def abbreviate(parameter): return ECResult.abbreviations.get(
+        parameter, parameter)
+
     @staticmethod
     def parameterOfAbbreviation(abbreviation):
         return ECResult.abbreviationToParameter.get(abbreviation, abbreviation)
 
-ECResult.abbreviationToParameter = {v:k for k,v in ECResult.abbreviations.items() }
+
+ECResult.abbreviationToParameter = {
+    v: k for k, v in ECResult.abbreviations.items()}
+
 
 def explorationCompression(*arguments, **keywords):
-    for r in ecIterator(*arguments, **keywords): pass
+    for r in ecIterator(*arguments, **keywords):
+        pass
     return r
-        
+
 
 def ecIterator(grammar, tasks,
                _=None,
@@ -82,15 +88,14 @@ def ecIterator(grammar, tasks,
                benchmark=None,
                iterations=None,
                resume=None,
-               testingTimeout=0,
                frontierSize=None,
                enumerationTimeout=None,
                testingTimeout=None,
                expandFrontier=None,
                resumeFrontierSize=None,
-               useRecognitionModel=False,
-			   useNewRecognitionModel=False,
-               steps=250,#250,
+               useRecognitionModel=True,
+               useNewRecognitionModel=False,
+               steps=250,  # 250,
                helmholtzRatio=0.,
                helmholtzBatch=5000,
                featureExtractor=None,
@@ -99,18 +104,20 @@ def ecIterator(grammar, tasks,
                maximumFrontier=None,
                pseudoCounts=1.0, aic=1.0,
                structurePenalty=0.001, arity=0,
-               evaluationTimeout=1.0, # seconds
+               evaluationTimeout=1.0,  # seconds
                CPUs=1,
                cuda=False,
                message="",
                onlyBaselines=False,
                outputPrefix=None):
     if frontierSize is None and enumerationTimeout is None:
-        eprint("Please specify a frontier size and/or an enumeration timeout:",
-               "explorationCompression(..., enumerationTimeout = ..., frontierSize = ...)")
+        eprint(
+            "Please specify a frontier size and/or an enumeration timeout:",
+            "explorationCompression(..., enumerationTimeout = ..., frontierSize = ...)")
         assert False
     if iterations is None:
-        eprint("Please specify a iteration count: explorationCompression(..., iterations = ...)")
+        eprint(
+            "Please specify a iteration count: explorationCompression(..., iterations = ...)")
         assert False
     if useRecognitionModel and featureExtractor is None:
         eprint("Warning: Recognition model needs feature extractor.",
@@ -130,30 +137,52 @@ def ecIterator(grammar, tasks,
 
     # We save the parameters that were passed into EC
     # This is for the purpose of exporting the results of the experiment
-    parameters = {k: v for k, v in locals().iteritems()
-                  if k not in {"tasks", "grammar", "cuda", "_", "solver", "testingTimeout",
-                               "message", "CPUs", "outputPrefix",
-                               "resume", "resumeFrontierSize", "bootstrap",
-                               "featureExtractor", "benchmark",
-                               "evaluationTimeout", "testingTasks", "compressor"} \
-                  and v is not None}
+    parameters = {
+        k: v for k,
+        v in locals().items() if k not in {
+            "tasks",
+            "grammar",
+            "cuda",
+            "_",
+            "solver",
+            "testingTimeout",
+            "message",
+            "CPUs",
+            "outputPrefix",
+            "resume",
+            "resumeFrontierSize",
+            "bootstrap",
+            "featureExtractor",
+            "benchmark",
+            "evaluationTimeout",
+            "testingTasks",
+            "compressor"} and v is not None}
     if not useRecognitionModel:
-        for k in {"activation","helmholtzRatio","steps"}: del parameters[k]
+        for k in {"activation", "helmholtzRatio", "steps"}:
+            del parameters[k]
 
     # Uses `parameters` to construct the checkpoint path
     def checkpointPath(iteration, extra=""):
         parameters["iterations"] = iteration
-        kvs = ["{}={}".format(ECResult.abbreviate(k), parameters[k]) for k in sorted(parameters.keys())]
+        kvs = [
+            "{}={}".format(
+                ECResult.abbreviate(k),
+                parameters[k]) for k in sorted(
+                parameters.keys())]
         if useRecognitionModel or useNewRecognitionModel:
-            kvs += ["feat=%s"%(featureExtractor.__name__)]
+            kvs += ["feat=%s" % (featureExtractor.__name__)]
         if bootstrap:
             kvs += ["bstrap=True"]
         return "{}_{}{}.pickle".format(outputPrefix, "_".join(kvs), extra)
 
     if onlyBaselines and not benchmark:
         result = ECResult()
-        result.baselines = baselines.all(grammar, tasks,
-            CPUs=CPUs, cuda=cuda, featureExtractor=featureExtractor,
+        result.baselines = baselines.all(
+            grammar,
+            tasks,
+            CPUs=CPUs,
+            cuda=cuda,
+            featureExtractor=featureExtractor,
             compressor=compressor,
             **parameters)
         if outputPrefix is not None:
@@ -162,19 +191,21 @@ def ecIterator(grammar, tasks,
                 pickle.dump(result, f)
             eprint("Exported checkpoint to", path)
         yield result
-        return 
+        return
 
-    if message: message = " ("+message+")"
-    eprint("Running EC%s on %s @ %s with %d CPUs and parameters:"%(message, os.uname()[1],
-                                                                   datetime.datetime.now(), CPUs))
-    for k,v in parameters.items():
+    if message:
+        message = " (" + message + ")"
+    eprint("Running EC%s on %s @ %s with %d CPUs and parameters:" %
+           (message, os.uname()[1], datetime.datetime.now(), CPUs))
+    for k, v in parameters.items():
         eprint("\t", k, " = ", v)
     eprint("\t", "evaluationTimeout", " = ", evaluationTimeout)
     eprint()
 
     # Restore checkpoint
     if resume is not None:
-        path = checkpointPath(resume, extra="_baselines" if onlyBaselines else "")
+        path = checkpointPath(
+            resume, extra="_baselines" if onlyBaselines else "")
         with open(path, "rb") as handle:
             result = dill.load(handle)
         eprint("Loaded checkpoint from", path)
@@ -183,12 +214,14 @@ def ecIterator(grammar, tasks,
         if resumeFrontierSize:
             frontierSize = resumeFrontierSize
             eprint("Set frontier size to", frontierSize)
-        if bootstrap is not None: # Make sure that we register bootstrapped primitives
-            for p in grammar.primitives: RegisterPrimitives.register(p)
+        if bootstrap is not None:  # Make sure that we register bootstrapped primitives
+            for p in grammar.primitives:
+                RegisterPrimitives.register(p)
     else:  # Start from scratch
         if bootstrap is not None:
-            with open(bootstrap, "rb") as handle: strapping = pickle.load(handle).grammars[-1]
-            eprint("Bootstrapping from",bootstrap)
+            with open(bootstrap, "rb") as handle:
+                strapping = pickle.load(handle).grammars[-1]
+            eprint("Bootstrapping from", bootstrap)
             eprint("Bootstrap primitives:")
             for p in strapping.primitives:
                 eprint(p)
@@ -197,19 +230,31 @@ def ecIterator(grammar, tasks,
             grammar = Grammar.uniform(list({p for p in grammar.primitives + strapping.primitives
                                             if not str(p).startswith("fix")}))
             if compressor == "rust":
-                eprint("Rust compressor is currently not compatible with bootstrapping.",
-                       "Falling back on pypy compressor.")
+                eprint(
+                    "Rust compressor is currently not compatible with bootstrapping.",
+                    "Falling back on pypy compressor.")
                 compressor = "pypy"
-        result = ECResult(parameters=parameters, grammars=[grammar],
-                          taskSolutions={ t: Frontier([], task=t) for t in tasks },
-                          recognitionModel=None)
+        result = ECResult(
+            parameters=parameters,
+            grammars=[grammar],
+            taskSolutions={
+                t: Frontier(
+                    [],
+                    task=t) for t in tasks},
+            recognitionModel=None)
 
-    #just plopped this in here, hope it works: -it doesn't. having issues.
-    if useNewRecognitionModel and (not hasattr(result, 'recognitionModel') or type(result.recognitionModel) is not NewRecognitionModel):
+    # just plopped this in here, hope it works: -it doesn't. having issues.
+    if useNewRecognitionModel and (
+        not hasattr(
+            result,
+            'recognitionModel') or not isinstance(
+            result.recognitionModel,
+            NewRecognitionModel)):
         eprint("Creating new recognition model")
         featureExtractorObject = featureExtractor(tasks + testingTasks)
-        result.recognitionModel = NewRecognitionModel(featureExtractorObject, grammar, cuda=cuda)
-    #end 
+        result.recognitionModel = NewRecognitionModel(
+            featureExtractorObject, grammar, cuda=cuda)
+    # end
 
     if benchmark is not None:
         assert resume is not None, "Benchmarking requires resuming from checkpoint that you are benchmarking."
@@ -219,26 +264,33 @@ def ecIterator(grammar, tasks,
         else:
             benchmarkTasks = tasks
             benchmark = -benchmark
-        if len(result.baselines) == 0: results = {"our algorithm": result}
-        else: results = result.baselines
+        if len(result.baselines) == 0:
+            results = {"our algorithm": result}
+        else:
+            results = result.baselines
         for name, result in results.items():
-            eprint("Starting benchmark:",name)            
-            benchmarkSynthesisTimes(result, benchmarkTasks, timeout = benchmark,
-                                    CPUs=CPUs, evaluationTimeout=evaluationTimeout)
+            eprint("Starting benchmark:", name)
+            benchmarkSynthesisTimes(
+                result,
+                benchmarkTasks,
+                timeout=benchmark,
+                CPUs=CPUs,
+                evaluationTimeout=evaluationTimeout)
             eprint("Completed benchmark.")
             eprint()
         yield None
-        return 
+        return
 
     likelihoodModel = {
-        "all-or-nothing":        lambda: AllOrNothingLikelihoodModel(
-                                             timeout=evaluationTimeout),
+        "all-or-nothing": lambda: AllOrNothingLikelihoodModel(
+            timeout=evaluationTimeout),
         "feature-discriminator": lambda: FeatureDiscriminatorLikelihoodModel(
-                                             tasks, featureExtractor(tasks)),
-        "euclidean":             lambda: EuclideanLikelihoodModel(
-                                             featureExtractor(tasks)),
-		"probabilistic":         lambda: ProbabilisticLikelihoodModel(timeout=evaluationTimeout)
-    }[likelihoodModel]()
+            tasks,
+            featureExtractor(tasks)),
+        "euclidean": lambda: EuclideanLikelihoodModel(
+            featureExtractor(tasks)),
+        "probabilistic": lambda: ProbabilisticLikelihoodModel(
+            timeout=evaluationTimeout)}[likelihoodModel]()
 
     for j in range(resume or 0, iterations):
 
@@ -261,12 +313,12 @@ def ecIterator(grammar, tasks,
                                                 CPUs=CPUs,
                                                 evaluationTimeout=evaluationTimeout,
                                                 testing=True)
-            eprint("Hits %d/%d testing tasks"%(len(times),len(testingTasks)))
-            summaryStatistics("Testing tasks",times)
+            eprint(
+                "Hits %d/%d testing tasks" %
+                (len(times), len(testingTasks)))
+            summaryStatistics("Testing tasks", times)
             result.testingSearchTime.append(times)
-                
 
-                
         if j >= 2 and expandFrontier and result.learningCurve[-1] <= result.learningCurve[-2] and \
            result.learningCurve[-1] < len(tasks):
             oldEnumerationTimeout = enumerationTimeout
@@ -274,8 +326,10 @@ def ecIterator(grammar, tasks,
                 enumerationTimeout = int(enumerationTimeout * expandFrontier)
             else:
                 enumerationTimeout = int(enumerationTimeout + expandFrontier)
-            eprint("Expanding enumeration timeout from {} to {} because of no progress".format(
-                oldEnumerationTimeout, enumerationTimeout))
+            eprint(
+                "Expanding enumeration timeout from {} to {} because of no progress".format(
+                    oldEnumerationTimeout,
+                    enumerationTimeout))
 
         frontiers, times = multicoreEnumeration(grammar, tasks, likelihoodModel,
                                                 solver=solver,
@@ -284,44 +338,48 @@ def ecIterator(grammar, tasks,
                                                 CPUs=CPUs,
                                                 evaluationTimeout=evaluationTimeout)
         if expandFrontier and (not useRecognitionModel) \
-           and (j == 0 and times == [] or \
-                j > 0 and sum(not f.empty for f in frontiers) <= result.learningCurve[-1] and \
+           and (j == 0 and times == [] or
+                j > 0 and sum(not f.empty for f in frontiers) <= result.learningCurve[-1] and
                 result.learningCurve[-1] < len(tasks)):
             timeout = enumerationTimeout
-            unsolvedTasks = [ f.task for f in frontiers if f.empty ]
+            unsolvedTasks = [f.task for f in frontiers if f.empty]
             while True:
-                eprint("Expanding enumeration timeout from %i to %i because of no progress. Focusing exclusively on %d unsolved tasks."%(
-                    timeout, timeout*expandFrontier, len(unsolvedTasks)))
-                timeout = timeout*expandFrontier
+                eprint(
+                    "Expanding enumeration timeout from %i to %i because of no progress. Focusing exclusively on %d unsolved tasks." %
+                    (timeout, timeout * expandFrontier, len(unsolvedTasks)))
+                timeout = timeout * expandFrontier
                 unsolvedFrontiers, unsolvedTimes = \
-                                multicoreEnumeration(grammar, unsolvedTasks, likelihoodModel,
-                                                     solver=solver,
-                                                     maximumFrontier=maximumFrontier,
-                                                     enumerationTimeout=timeout,
-                                                     CPUs=CPUs,
-                                                     evaluationTimeout=evaluationTimeout)
-                if any( not f.empty for f in unsolvedFrontiers ):
+                    multicoreEnumeration(grammar, unsolvedTasks, likelihoodModel,
+                                         solver=solver,
+                                         maximumFrontier=maximumFrontier,
+                                         enumerationTimeout=timeout,
+                                         CPUs=CPUs,
+                                         evaluationTimeout=evaluationTimeout)
+                if any(not f.empty for f in unsolvedFrontiers):
                     times += unsolvedTimes
-                    unsolvedFrontiers = {f.task: f for f in unsolvedFrontiers }
-                    frontiers = [ f if not f.empty else unsolvedFrontiers[f.task]
-                                  for f in frontiers ]
+                    unsolvedFrontiers = {f.task: f for f in unsolvedFrontiers}
+                    frontiers = [f if not f.empty else unsolvedFrontiers[f.task]
+                                 for f in frontiers]
                     break
-            
-            
+
         eprint("Generative model enumeration results:")
         eprint(Frontier.describe(frontiers))
-        summaryStatistics("Generative model",times)
+        summaryStatistics("Generative model", times)
 
         tasksHitTopDown = {f.task for f in frontiers if not f.empty}
 
         # Train + use recognition model
         if useRecognitionModel:
             featureExtractorObject = featureExtractor(tasks + testingTasks)
-            recognizer = RecognitionModel(featureExtractorObject, grammar, activation=activation, cuda=cuda)
+            recognizer = RecognitionModel(
+                featureExtractorObject,
+                grammar,
+                activation=activation,
+                cuda=cuda)
 
             recognizer.train(frontiers, topK=topK, steps=steps,
                              CPUs=CPUs,
-                             timeout=enumerationTimeout, # give training as much time as enumeration
+                             timeout=enumerationTimeout,  # give training as much time as enumeration
                              helmholtzBatch=helmholtzBatch,
                              helmholtzRatio=helmholtzRatio if j > 0 or helmholtzRatio == 1. else 0.)
             result.recognitionModel = recognizer
@@ -332,67 +390,82 @@ def ecIterator(grammar, tasks,
                                                                      maximumFrontier=maximumFrontier,
                                                                      enumerationTimeout=enumerationTimeout,
                                                                      evaluationTimeout=evaluationTimeout)
-            
-        elif useNewRecognitionModel: # Train a recognition model
-           	result.recognitionModel.updateGrammar(grammar)
-           	result.recognitionModel.train(frontiers, topK=topK, steps=steps, helmholtzRatio=helmholtzRatio) #changed from result.frontiers to frontiers and added thingy
-           	eprint("done training recognition model")
-           	bottomupFrontiers = result.recognitionModel.enumerateFrontiers(tasks, likelihoodModel,
-                                                                     CPUs=CPUs,
-                                                                     solver=solver,
-                                                                     maximumFrontier=maximumFrontier,
-                                                                     frontierSize=frontierSize,
-                                                                     enumerationTimeout=enumerationTimeout,
-                                                                     evaluationTimeout=evaluationTimeout)     
+
+        elif useNewRecognitionModel:  # Train a recognition model
+            result.recognitionModel.updateGrammar(grammar)
+            # changed from result.frontiers to frontiers and added thingy
+            result.recognitionModel.train(
+                frontiers,
+                topK=topK,
+                steps=steps,
+                helmholtzRatio=helmholtzRatio)
+            eprint("done training recognition model")
+            bottomupFrontiers = result.recognitionModel.enumerateFrontiers(
+                tasks,
+                likelihoodModel,
+                CPUs=CPUs,
+                solver=solver,
+                maximumFrontier=maximumFrontier,
+                frontierSize=frontierSize,
+                enumerationTimeout=enumerationTimeout,
+                evaluationTimeout=evaluationTimeout)
         if useRecognitionModel or useNewRecognitionModel:
-			
-			
+
             eprint("Recognition model enumeration results:")
             eprint(Frontier.describe(bottomupFrontiers))
-            summaryStatistics("Recognition model",times)
+            summaryStatistics("Recognition model", times)
 
-            result.averageDescriptionLength.append(mean( -f.marginalLikelihood()
-           	                                             for f in bottomupFrontiers
-                                                         if not f.empty ))
+            result.averageDescriptionLength.append(mean(-f.marginalLikelihood()
+                                                        for f in bottomupFrontiers
+                                                        if not f.empty))
 
-            tasksHitBottomUp = {f.task for f in bottomupFrontiers if not f.empty}
+            tasksHitBottomUp = {
+                f.task for f in bottomupFrontiers if not f.empty}
             showHitMatrix(tasksHitTopDown, tasksHitBottomUp, tasks)
             # Rescore the frontiers according to the generative model
             # and then combine w/ original frontiers
-            bottomupFrontiers = [ grammar.rescoreFrontier(f) for f in bottomupFrontiers ]
-            frontiers = [f.combine(b) for f, b in zip(frontiers, bottomupFrontiers)]
+            bottomupFrontiers = [
+                grammar.rescoreFrontier(f) for f in bottomupFrontiers]
+            frontiers = [
+                f.combine(b) for f, b in zip(
+                    frontiers, bottomupFrontiers)]
         else:
-            result.averageDescriptionLength.append(mean( -f.marginalLikelihood()
-                                                         for f in frontiers
-                                                         if not f.empty ))
+            result.averageDescriptionLength.append(mean(-f.marginalLikelihood()
+                                                        for f in frontiers
+                                                        if not f.empty))
 
-        if not useNewRecognitionModel: #This line is changed, beware
+        if not useNewRecognitionModel:  # This line is changed, beware
             result.searchTimes.append(times)
 
-            eprint("Average search time: ",int(mean(times)+0.5),
-                   "sec.\tmedian:",int(median(times)+0.5),
-                   "\tmax:",int(max(times)+0.5),
-                   "\tstandard deviation",int(standardDeviation(times)+0.5))
+            eprint("Average search time: ", int(mean(times) + 0.5),
+                   "sec.\tmedian:", int(median(times) + 0.5),
+                   "\tmax:", int(max(times) + 0.5),
+                   "\tstandard deviation", int(standardDeviation(times) + 0.5))
 
         # Incorporate frontiers from anything that was not hit
-        frontiers = [ f if not f.empty
-                      else grammar.rescoreFrontier(result.taskSolutions.get(f.task, Frontier.makeEmpty(f.task)))
-                      for f in frontiers ]
-        frontiers = [ f.topK(maximumFrontier) for f in frontiers ]
+        frontiers = [
+            f if not f.empty else grammar.rescoreFrontier(
+                result.taskSolutions.get(
+                    f.task, Frontier.makeEmpty(
+                        f.task))) for f in frontiers]
+        frontiers = [f.topK(maximumFrontier) for f in frontiers]
 
         if maximumFrontier <= 10:
-            eprint("Because maximumFrontier is small (<=10), I am going to show you the full contents of all the frontiers:")
+            eprint(
+                "Because maximumFrontier is small (<=10), I am going to show you the full contents of all the frontiers:")
             for f in frontiers:
-                if f.empty: continue
+                if f.empty:
+                    continue
                 eprint(f.task)
                 for e in f.normalize():
-                    eprint("%.02f\t%s"%(e.logPosterior, e.program))
+                    eprint("%.02f\t%s" % (e.logPosterior, e.program))
                 eprint()
         # Record the new solutions
         result.taskSolutions = {f.task: f.topK(topK)
                                 for f in frontiers}
-        result.learningCurve += [sum(f is not None and not f.empty for f in result.taskSolutions.values() )]
-        
+        result.learningCurve += [
+            sum(f is not None and not f.empty for f in result.taskSolutions.values())]
+
         # Sleep-G
         grammar, frontiers = induceGrammar(grammar, frontiers,
                                            topK=topK, pseudoCounts=pseudoCounts, a=arity,
@@ -401,20 +474,28 @@ def ecIterator(grammar, tasks,
         result.grammars.append(grammar)
         eprint("Grammar after iteration %d:" % (j + 1))
         eprint(grammar)
-        eprint("Expected uses of each grammar production after iteration %d:" % (j + 1))
+        eprint(
+            "Expected uses of each grammar production after iteration %d:" %
+            (j + 1))
         productionUses = FragmentGrammar.fromGrammar(grammar).\
-                         expectedUses([f for f in frontiers if not f.empty ]).actualUses
-        productionUses = {p: productionUses.get(p,0.) for p in grammar.primitives }
-        for p in sorted(productionUses.keys(), key=lambda p: -productionUses[p]):
-            eprint("<uses>=%.2f\t%s"%(productionUses[p], p))
+            expectedUses([f for f in frontiers if not f.empty]).actualUses
+        productionUses = {
+            p: productionUses.get(
+                p, 0.) for p in grammar.primitives}
+        for p in sorted(
+                productionUses.keys(),
+                key=lambda p: -
+                productionUses[p]):
+            eprint("<uses>=%.2f\t%s" % (productionUses[p], p))
         eprint()
         if maximumFrontier <= 10:
             eprint("Because maximumFrontier is small (<=10), I am going to show you the full contents of all the rewritten frontiers:")
             for f in frontiers:
-                if f.empty: continue
+                if f.empty:
+                    continue
                 eprint(f.task)
                 for e in f.normalize():
-                    eprint("%.02f\t%s"%(e.logPosterior, e.program))
+                    eprint("%.02f\t%s" % (e.logPosterior, e.program))
                 eprint()
 
         if outputPrefix is not None:
@@ -427,20 +508,18 @@ def ecIterator(grammar, tasks,
                     assert(False)
             eprint("Exported checkpoint to", path)
 
-        
         yield result
-
 
 
 def showHitMatrix(top, bottom, tasks):
     tasks = set(tasks)
-    
-    total = bottom|top
-    eprint(len(total),"/",len(tasks),"total hit tasks")
+
+    total = bottom | top
+    eprint(len(total), "/", len(tasks), "total hit tasks")
     bottomMiss = tasks - bottom
     topMiss = tasks - top
-    
-    eprint("{: <13s}{: ^13s}{: ^13s}".format("","bottom miss","bottom hit"))
+
+    eprint("{: <13s}{: ^13s}{: ^13s}".format("", "bottom miss", "bottom hit"))
     eprint("{: <13s}{: ^13d}{: ^13d}".format("top miss",
                                              len(bottomMiss & topMiss),
                                              len(bottom & topMiss)))
@@ -448,13 +527,14 @@ def showHitMatrix(top, bottom, tasks):
                                              len(top & bottomMiss),
                                              len(top & bottom)))
 
+
 def commandlineArguments(_=None,
                          iterations=None,
                          frontierSize=None,
                          enumerationTimeout=None,
                          topK=1,
                          CPUs=1,
-                         useRecognitionModel=False,
+                         useRecognitionModel=True,
                          useNewRecognitionModel=False,
                          steps=250,
                          activation='relu',
@@ -487,16 +567,24 @@ def commandlineArguments(_=None,
                         default=enumerationTimeout,
                         help="In seconds. default: %s" % enumerationTimeout,
                         type=int)
-    parser.add_argument("-F", "--expandFrontier", metavar="FACTOR-OR-AMOUNT",
-                        default=None,
-                        help="if an iteration passes where no new tasks have been solved, the frontier is expanded. If the given value is less than 10, it is scaled (e.g. 1.5), otherwise it is grown (e.g. 2000).",
-                        type=float)
-    parser.add_argument("--resumeFrontierSize", type=int,
-                        help="when resuming a checkpoint which expanded the frontier, use this option to set the appropriate frontier size for the next iteration.")
-    parser.add_argument("-k", "--topK",
-                        default=topK,
-                        help="When training generative and discriminative models, we train them to fit the top K programs. Ideally we would train them to fit the entire frontier, but this is often intractable. default: %d" % topK,
-                        type=int)
+    parser.add_argument(
+        "-F",
+        "--expandFrontier",
+        metavar="FACTOR-OR-AMOUNT",
+        default=None,
+        help="if an iteration passes where no new tasks have been solved, the frontier is expanded. If the given value is less than 10, it is scaled (e.g. 1.5), otherwise it is grown (e.g. 2000).",
+        type=float)
+    parser.add_argument(
+        "--resumeFrontierSize",
+        type=int,
+        help="when resuming a checkpoint which expanded the frontier, use this option to set the appropriate frontier size for the next iteration.")
+    parser.add_argument(
+        "-k",
+        "--topK",
+        default=topK,
+        help="When training generative and discriminative models, we train them to fit the top K programs. Ideally we would train them to fit the entire frontier, but this is often intractable. default: %d" %
+        topK,
+        type=int)
     parser.add_argument("-p", "--pseudoCounts",
                         default=pseudoCounts,
                         help="default: %f" % pseudoCounts,
@@ -529,10 +617,11 @@ def commandlineArguments(_=None,
                         maximum size of the frontier that is kept around.
                         Default: %s""" % maximumFrontier,
                         type=int)
-    parser.add_argument("--benchmark",
-                        help="""Benchmark synthesis times with a timeout of this many seconds. You must use the --resume option. EC will not run but instead we were just benchmarked the synthesis times of a learned model""",
-                        type=float,
-                        default=None)
+    parser.add_argument(
+        "--benchmark",
+        help="""Benchmark synthesis times with a timeout of this many seconds. You must use the --resume option. EC will not run but instead we were just benchmarked the synthesis times of a learned model""",
+        type=float,
+        default=None)
     parser.add_argument("--recognition",
                         dest="useRecognitionModel",
                         action="store_true",
@@ -552,31 +641,48 @@ def commandlineArguments(_=None,
                         default=steps,
                         help="""Trainings steps for neural recognition model.
                         Default: %s""" % steps)
-    parser.add_argument("--testingTimeout", type=int,
-                        dest="testingTimeout",
-                        default=0,
-                        help="Number of seconds we should spend evaluating on each held out testing task.")
-    parser.add_argument("--activation",
-                        choices=["relu", "sigmoid", "tanh"],
-                        default=activation,
-                        help="""Activation function for neural recognition model.
-                        Default: %s""" % activation)
-    parser.add_argument("-r","--Helmholtz",
-                        dest="helmholtzRatio",
-                        help="""When training recognition models, what fraction of the training data should be samples from the generative model? Default %f""" % helmholtzRatio,
-                        default=helmholtzRatio,
-                        type=float)
-    parser.add_argument("--helmholtzBatch",
-                        dest="helmholtzBatch",
-                        help="""When training recognition models, size of the Helmholtz batch? Default %f""" % helmholtzBatch,
-                        default=helmholtzBatch,
-                        type=float)
-    parser.add_argument("-B", "--baselines", dest="onlyBaselines", action="store_true",
-                        help="only compute baselines")
-    parser.add_argument("--bootstrap",
-                        help="Start the learner out with a pretrained DSL. This argument should be a path to a checkpoint file.",
-                        default=None,
-                        type=str)
+    parser.add_argument(
+        "--testingTimeout",
+        type=int,
+        dest="testingTimeout",
+        default=0,
+        help="Number of seconds we should spend evaluating on each held out testing task.")
+    parser.add_argument(
+        "--activation",
+        choices=[
+            "relu",
+            "sigmoid",
+            "tanh"],
+        default=activation,
+        help="""Activation function for neural recognition model.
+                        Default: %s""" %
+        activation)
+    parser.add_argument(
+        "-r",
+        "--Helmholtz",
+        dest="helmholtzRatio",
+        help="""When training recognition models, what fraction of the training data should be samples from the generative model? Default %f""" %
+        helmholtzRatio,
+        default=helmholtzRatio,
+        type=float)
+    parser.add_argument(
+        "--helmholtzBatch",
+        dest="helmholtzBatch",
+        help="""When training recognition models, size of the Helmholtz batch? Default %f""" %
+        helmholtzBatch,
+        default=helmholtzBatch,
+        type=float)
+    parser.add_argument(
+        "-B",
+        "--baselines",
+        dest="onlyBaselines",
+        action="store_true",
+        help="only compute baselines")
+    parser.add_argument(
+        "--bootstrap",
+        help="Start the learner out with a pretrained DSL. This argument should be a path to a checkpoint file.",
+        default=None,
+        type=str)
     parser.set_defaults(useRecognitionModel=useRecognitionModel,
                         featureExtractor=featureExtractor,
                         maximumFrontier=maximumFrontier,

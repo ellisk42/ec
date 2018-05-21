@@ -239,7 +239,7 @@ let _ =
        lowerBound,upperBound,budgetIncrement,
        mfp,
      nc,timeout, verbose) =
-    load_problems stdin in
+    load_problems Pervasives.stdin in
   if List.exists tf ~f:(fun (t,_) -> t.task_type = ttower) then update_tower_cash() else ();
   let solutions =
     enumerate_for_tasks ~maxFreeParameters:mfp ~lowerBound:lowerBound ~upperBound:upperBound ~budgetIncrement:budgetIncrement
@@ -247,15 +247,16 @@ let _ =
   in
   export_frontiers tf solutions |> print_string ;;
 
-let tune_differentiation() =
+let tune_differentiation () =
   let (tf,g,
        lowerBound,upperBound,budgetIncrement,
        mfp,
      nc,timeout, verbose) =
-    load_problems stdin in
+    load_problems  Pervasives.stdin in
   if List.exists tf ~f:(fun (t,_) -> t.task_type = ttower) then update_tower_cash() else ();
   (* "(-6.8x + 4.7)/[(x + 4.5)]" *)
   let p = parse_program "(lambda (/. (+. REAL (*. REAL $0)) (+. $0 REAL)))" |> get_some in
   match tf with
-  |[(t,_)] -> Printf.eprintf "%f\n" (t.log_likelihood p)
+    | [(t,_)] -> Printf.eprintf "%f\n" (t.log_likelihood p)
+    | _ -> failwith "ERROR: no task were given at all"
 ;;

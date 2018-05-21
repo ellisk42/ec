@@ -5,34 +5,39 @@ import os
 import json
 import sys
 
+
 def user():
     import getpass
     return getpass.getuser()
 
-def branch():
-    return subprocess.check_output(['git','rev-parse','--abbrev-ref','HEAD']).strip().decode()
 
-def launch(size = "t2.micro", name = ""):
-    # aws ec2 run-instances --image-id ami-835f6ae6 --instance-type "t2.micro" --key-name testing --associate-public-ip-address
-    o = json.loads(subprocess.check_output(["aws","ec2","run-instances",
-                                            "--image-id",#"ami-835f6ae6",
-                                            #"ami-d6ae9fb3",
-                                            #"ami-2e093b4b",
+def branch():
+    return subprocess.check_output(
+        ['git', 'rev-parse', '--abbrev-ref', 'HEAD']).strip().decode()
+
+
+def launch(size="t2.micro", name=""):
+    # aws ec2 run-instances --image-id ami-835f6ae6 --instance-type "t2.micro"
+    # --key-name testing --associate-public-ip-address
+    o = json.loads(subprocess.check_output(["aws", "ec2", "run-instances",
+                                            "--image-id",  # "ami-835f6ae6",
+                                            # "ami-d6ae9fb3",
+                                            # "ami-2e093b4b",
                                             # "ami-3080b255",
-                                             "ami-0f3c016a",
-                                            #"ami-14033e71",
-                                            "--instance-type",size,
-                                            "--security-groups","publicssh",
-                                            "--instance-initiated-shutdown-behavior","terminate",
-                                            "--key-name","testing"]))
+                                            "ami-0f3c016a",
+                                            # "ami-14033e71",
+                                            "--instance-type", size,
+                                            "--security-groups", "publicssh",
+                                            "--instance-initiated-shutdown-behavior", "terminate",
+                                            "--key-name", "testing"]))
     instance = o["Instances"][0]["InstanceId"]
     print("Launched instance", instance)
 
-    
     name = user() + name
-    print("Naming instance",name)
-    os.system("aws ec2 create-tags --resources %s --tags Key=Name,Value=%s"%(instance,
-                                                                             name))
+    print("Naming instance", name)
+    os.system(
+        "aws ec2 create-tags --resources %s --tags Key=Name,Value=%s" %
+        (instance, name))
     os.system("""
         aws ec2 modify-instance-attribute \
             --instance-id %s \
@@ -40,11 +45,11 @@ def launch(size = "t2.micro", name = ""):
                 {"DeviceName":"/dev/sda1","Ebs":{"DeleteOnTermination":true}}
             ]'
         """ % instance)
-    
-    o = json.loads(subprocess.check_output(["aws","ec2","describe-instances",
-                                            "--instance-ids",instance]))
+
+    o = json.loads(subprocess.check_output(["aws", "ec2", "describe-instances",
+                                            "--instance-ids", instance]))
     address = o['Reservations'][0]['Instances'][0]['PublicIpAddress']
-    print("Retrieved IP address of instance %s; got %s"%(instance,address))
+    print("Retrieved IP address of instance %s; got %s" % (instance, address))
     return instance, address
 
 
@@ -65,7 +70,7 @@ git checkout {}
 git pull
 git submodule update --init --recursive
 """.format(br)
-    
+
     if resume:
         print("Sending tar file")
         os.system("""
@@ -82,7 +87,7 @@ git submodule update --init --recursive
         # Assuming that this is an authorized key at the upload site this will work
         # Of course it also means that if anyone were to pull the keys off of AWS,
         # they would then have access to every machine that you have access to
-        UPLOADFREQUENCY = 60*3 # every 3 minutes
+        UPLOADFREQUENCY = 60 * 3  # every 3 minutes
         if tar:
             uploadCommand = """\
 tar czf {id}.tar.gz jobs experimentOutputs patch && \
@@ -97,21 +102,21 @@ chmod 600 ~/.ssh/id_rsa
 chmod 600 ~/.ssh/id_rsa.pub
 bash -c "while sleep %d; do %s; done" &
 UPLOADPID=$!
-"""%(UPLOADFREQUENCY, uploadCommand)
-    
+""" % (UPLOADFREQUENCY, uploadCommand)
+
     script = preamble + script
 
     if upload:
         script += """
 kill -9 $UPLOADPID
 %s
-"""%(uploadCommand)
+""" % (uploadCommand)
     if shutdown:
         script += """
 sudo shutdown -h now
 """
 
-    fd = tempfile.NamedTemporaryFile(mode = 'w',delete = False,dir = "/tmp")
+    fd = tempfile.NamedTemporaryFile(mode='w', delete=False, dir="/tmp")
     fd.write(script)
     fd.close()
     name = fd.name
@@ -120,13 +125,13 @@ sudo shutdown -h now
     print(script)
 
     # Copy over the script
-    print("Copying script over to",address)
+    print("Copying script over to", address)
     os.system("""
         scp -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem \
             %s ubuntu@%s:~/script.sh""" % (name, address))
 
     # delete local copy
-    os.system("rm %s"%name)
+    os.system("rm %s" % name)
 
     # Send keys
     if upload:
@@ -134,20 +139,21 @@ sudo shutdown -h now
         os.system("""
             scp -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem \
                 ~/.ssh/id_rsa_openmind ~/.ssh/id_rsa_openmind.pub \
-                ubuntu@%s:.ssh/"""%address)
+                ubuntu@%s:.ssh/""" % address)
 
     # Send git patch
-    print("Sending git patch over to",address)
+    print("Sending git patch over to", address)
     os.system("git diff --stat")
     br = "master"
     os.system("""
         (echo "Base-Ref: $(git rev-parse origin/{})" ; echo ; git diff origin/{}) | \
         ssh -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem \
             ubuntu@{} 'cat > ~/ec/patch'
-        """.format(br,br,address))
+        """.format(br, br, address))
 
     # Execute the script
-    # For some reason you need to pipe the output to /dev/null in order to get it to detach
+    # For some reason you need to pipe the output to /dev/null in order to get
+    # it to detach
     os.system("""
         ssh -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem \
             ubuntu@{} 'bash ./script.sh > /dev/null 2>&1 &'
@@ -155,7 +161,15 @@ sudo shutdown -h now
     print("Executing script on remote host.")
 
 
-def launchExperiment(name, command, tail=False, resume="", upload=None, tar=False, shutdown=True, size="t2.micro"):
+def launchExperiment(
+        name,
+        command,
+        tail=False,
+        resume="",
+        upload=None,
+        tar=False,
+        shutdown=True,
+        size="t2.micro"):
     job_id = "{}_{}_{}".format(name, user(), datetime.now().strftime("%FT%T"))
     job_id = job_id.replace(":", ".")
     if upload is None and shutdown:
@@ -171,7 +185,7 @@ def launchExperiment(name, command, tail=False, resume="", upload=None, tar=Fals
 
     script = """
 %s > jobs/%s 2>&1
-"""%(command, job_id)
+""" % (command, job_id)
 
     instance, address = launch(size, name=name)
     time.sleep(60)
@@ -190,13 +204,13 @@ def launchExperiment(name, command, tail=False, resume="", upload=None, tar=Fals
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="")
-    parser.add_argument('-u',"--upload",
+    parser.add_argument('-u', "--upload",
                         default={
                             "ellisk": "ellisk@openmind7.mit.edu:/om2/user/ellisk/ec",
                             "lucasem": "lucasem@rig.lucasem.com:repo/ec",
                             "mnye": "mnye@opemind7.mit.edu:/om/user/mnye/ec_aws_logs"
                         }.get(user(), None))
-    parser.add_argument('-z',"--size",
+    parser.add_argument('-z', "--size",
                         default="t2.micro")
     parser.add_argument("--tail",
                         default=False,
@@ -204,13 +218,15 @@ if __name__ == "__main__":
                         action="store_true")
     parser.add_argument("--resume", metavar="TAR", type=str,
                         help="send tarball to resume checkpoint.")
-    parser.add_argument('-k',"--shutdown",
+    parser.add_argument('-k', "--shutdown",
                         default=False,
                         action="store_true")
-    parser.add_argument('-t',"--tar",
-                        default=False,
-                        help="if uploading, this sends a single tarball with relevant outputs.",
-                        action="store_true")
+    parser.add_argument(
+        '-t',
+        "--tar",
+        default=False,
+        help="if uploading, this sends a single tarball with relevant outputs.",
+        action="store_true")
     parser.add_argument("name")
     parser.add_argument("command")
     arguments = parser.parse_args()
