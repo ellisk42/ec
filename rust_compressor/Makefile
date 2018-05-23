@@ -1,9 +1,6 @@
-default: lock rust_compressor
+default: rust_compressor
 
-lock:
-	cargo update
-
-rust_compressor: Cargo.lock src/main.rs
+rust_compressor: Cargo.toml Cargo.lock src/main.rs
 	cargo build --release
 	mv target/release/rust_compressor ./
 	strip rust_compressor
