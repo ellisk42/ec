@@ -614,8 +614,10 @@ class RecognitionModel(nn.Module):
             enumerationTimeout=None,
             testing=False,
             CPUs=1,
+            frontierSize=None,
             maximumFrontier=None,
-            evaluationTimeout=None):
+            evaluationTimeout=None,
+            useMultithread=False):
         with timing("Evaluated recognition model"):
             grammars = {}
             for task in tasks:
@@ -630,12 +632,20 @@ class RecognitionModel(nn.Module):
                         (productions.data.tolist()[k], t, p) for k, (_, t, p) in enumerate(
                             self.grammar.productions)])
 
-        return multicoreEnumeration(grammars, tasks, likelihoodModel,
-                                    solver=solver,
-                                    testing=testing,
-                                    enumerationTimeout=enumerationTimeout,
-                                    CPUs=CPUs, maximumFrontier=maximumFrontier,
-                                    evaluationTimeout=evaluationTimeout)
+        if useMultithread:
+            return multithreadedEnumeration(grammars, tasks, likelihoodModel,
+                                            solver=solver,
+                                            frontierSize=frontierSize,
+                                            enumerationTimeout=enumerationTimeout,
+                                            CPUs=CPUs, maximumFrontier=maximumFrontier,
+                                            evaluationTimeout=evaluationTimeout)      
+        else:
+            return multicoreEnumeration(grammars, tasks, likelihoodModel,
+                                        solver=solver,
+                                        testing=testing,
+                                        enumerationTimeout=enumerationTimeout,
+                                        CPUs=CPUs, maximumFrontier=maximumFrontier,
+                                        evaluationTimeout=evaluationTimeout)
 
 
 class RecurrentFeatureExtractor(nn.Module):
@@ -796,7 +806,7 @@ class RecurrentFeatureExtractor(nn.Module):
 
                 ys.append(y)
             if len(ys) == len(xss):
-                return Task("Helmholtz", tp, zip(xss,ys))
+                return Task("Helmholtz", tp, list(zip(xss,ys)))
 
         return None
 

@@ -281,6 +281,7 @@ def ecIterator(grammar, tasks,
         yield None
         return
 
+
     likelihoodModel = {
         "all-or-nothing": lambda: AllOrNothingLikelihoodModel(
             timeout=evaluationTimeout),
@@ -291,6 +292,10 @@ def ecIterator(grammar, tasks,
             featureExtractor(tasks)),
         "probabilistic": lambda: ProbabilisticLikelihoodModel(
             timeout=evaluationTimeout)}[likelihoodModel]()
+
+    if solver == 'python':
+        useMultithread = True
+        eprint("WARNING: switching to older 'multithreaded' enumeration code for compatability with python solver")
 
     for j in range(resume or 0, iterations):
 
@@ -304,15 +309,24 @@ def ecIterator(grammar, tasks,
                                                                       maximumFrontier=maximumFrontier,
                                                                       enumerationTimeout=testingTimeout,
                                                                       evaluationTimeout=evaluationTimeout,
-                                                                      testing=True)
+                                                                      testing=True, useMultithread=useMultithread)
             else:
-                _, times = multicoreEnumeration(grammar, testingTasks, likelihoodModel,
-                                                solver=solver,
-                                                maximumFrontier=maximumFrontier,
-                                                enumerationTimeout=testingTimeout,
-                                                CPUs=CPUs,
-                                                evaluationTimeout=evaluationTimeout,
-                                                testing=True)
+                if useMultithread:
+                    _, times = multithreadedEnumeration(grammar, testingTasks, likelihoodModel,
+                                                    solver=solver,
+                                                    maximumFrontier=maximumFrontier,
+                                                    enumerationTimeout=testingTimeout,
+                                                    CPUs=CPUs,
+                                                    evaluationTimeout=evaluationTimeout)                    
+                else:
+                    _, times = multicoreEnumeration(grammar, testingTasks, likelihoodModel,
+                                                    solver=solver,
+                                                    maximumFrontier=maximumFrontier,
+                                                    enumerationTimeout=testingTimeout,
+                                                    CPUs=CPUs,
+                                                    evaluationTimeout=evaluationTimeout,
+                                                    testing=True)
+
             eprint(
                 "Hits %d/%d testing tasks" %
                 (len(times), len(testingTasks)))
@@ -330,13 +344,22 @@ def ecIterator(grammar, tasks,
                 "Expanding enumeration timeout from {} to {} because of no progress".format(
                     oldEnumerationTimeout,
                     enumerationTimeout))
+        if useMultithread:
+            frontiers, times = multithreadedEnumeration(grammar, tasks, likelihoodModel,
+                                            solver=solver,
+                                            frontierSize=frontierSize,
+                                            maximumFrontier=maximumFrontier,
+                                            enumerationTimeout=enumerationTimeout,
+                                            CPUs=CPUs,
+                                            evaluationTimeout=evaluationTimeout)
+        else:             
+            frontiers, times = multicoreEnumeration(grammar, tasks, likelihoodModel,
+                                                    solver=solver,
+                                                    maximumFrontier=maximumFrontier,
+                                                    enumerationTimeout=enumerationTimeout,
+                                                    CPUs=CPUs,
+                                                    evaluationTimeout=evaluationTimeout)
 
-        frontiers, times = multicoreEnumeration(grammar, tasks, likelihoodModel,
-                                                solver=solver,
-                                                maximumFrontier=maximumFrontier,
-                                                enumerationTimeout=enumerationTimeout,
-                                                CPUs=CPUs,
-                                                evaluationTimeout=evaluationTimeout)
         if expandFrontier and (not useRecognitionModel) \
            and (j == 0 and times == [] or
                 j > 0 and sum(not f.empty for f in frontiers) <= result.learningCurve[-1] and
@@ -348,13 +371,23 @@ def ecIterator(grammar, tasks,
                     "Expanding enumeration timeout from %i to %i because of no progress. Focusing exclusively on %d unsolved tasks." %
                     (timeout, timeout * expandFrontier, len(unsolvedTasks)))
                 timeout = timeout * expandFrontier
-                unsolvedFrontiers, unsolvedTimes = \
-                    multicoreEnumeration(grammar, unsolvedTasks, likelihoodModel,
-                                         solver=solver,
-                                         maximumFrontier=maximumFrontier,
-                                         enumerationTimeout=timeout,
-                                         CPUs=CPUs,
-                                         evaluationTimeout=evaluationTimeout)
+                if useMultithread:
+                    unsolvedFrontiers, unsolvedTimes = \
+                        multithreadedEnumeration(grammar, unsolvedTasks, likelihoodModel,
+                                                 solver=solver,
+                                                 frontierSize=frontierSize,
+                                                 maximumFrontier=maximumFrontier,
+                                                 enumerationTimeout=timeout,
+                                                 CPUs=CPUs,
+                                                 evaluationTimeout=evaluationTimeout)                    
+                else:
+                    unsolvedFrontiers, unsolvedTimes = \
+                        multicoreEnumeration(grammar, unsolvedTasks, likelihoodModel,
+                                             solver=solver,
+                                             maximumFrontier=maximumFrontier,
+                                             enumerationTimeout=timeout,
+                                             CPUs=CPUs,
+                                             evaluationTimeout=evaluationTimeout)
                 if any(not f.empty for f in unsolvedFrontiers):
                     times += unsolvedTimes
                     unsolvedFrontiers = {f.task: f for f in unsolvedFrontiers}
@@ -387,9 +420,11 @@ def ecIterator(grammar, tasks,
             bottomupFrontiers, times = recognizer.enumerateFrontiers(tasks, likelihoodModel,
                                                                      CPUs=CPUs,
                                                                      solver=solver,
+                                                                     frontierSize=frontierSize,
                                                                      maximumFrontier=maximumFrontier,
                                                                      enumerationTimeout=enumerationTimeout,
-                                                                     evaluationTimeout=evaluationTimeout)
+                                                                     evaluationTimeout=evaluationTimeout,
+                                                                     useMultithread=useMultithread)
 
         elif useNewRecognitionModel:  # Train a recognition model
             result.recognitionModel.updateGrammar(grammar)
@@ -408,7 +443,8 @@ def ecIterator(grammar, tasks,
                 maximumFrontier=maximumFrontier,
                 frontierSize=frontierSize,
                 enumerationTimeout=enumerationTimeout,
-                evaluationTimeout=evaluationTimeout)
+                evaluationTimeout=evaluationTimeout,
+                useMultithread=useMultithread)
         if useRecognitionModel or useNewRecognitionModel:
 
             eprint("Recognition model enumeration results:")

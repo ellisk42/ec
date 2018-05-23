@@ -525,7 +525,7 @@ class PQ(object):
     def __init__(self):
         self.h = []
 
-    def push(priority, v):
+    def push(self, priority, v):
         heapq.heappush(self.h, (-priority, v))
 
     def popMaximum(self):
