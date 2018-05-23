@@ -61,7 +61,6 @@ class ProbabilisticLikelihoodModel:
             def timeoutCallBack(_1, _2): raise EvaluationTimeout()
             signal.signal(signal.SIGVTALRM, timeoutCallBack)
             signal.setitimer(signal.ITIMER_VIRTUAL, self.timeout)
-
             try:
                 string_pregex = program.evaluate([])
                 # if 'left_paren' in program.show(False):
@@ -83,7 +82,7 @@ class ProbabilisticLikelihoodModel:
         # right now, just summing up log likelihoods. IDK if this is correct.
         # also not using prior at all.
             cum_ll = 0
-<<<<<<< HEAD
+
             example_list = [example[1] for example in task.examples]
             c_example_list = Counter(example_list)
 
@@ -98,6 +97,7 @@ class ProbabilisticLikelihoodModel:
                 except ValueError as e:
                     eprint("ValueError:", e)
                     ll = float('-inf')
+                
                 #eprint("pregex:", string_pregex)
                 #eprint("example[1]", example[1])
 
@@ -106,7 +106,7 @@ class ProbabilisticLikelihoodModel:
                 else:
                     #ll_per_char = ll/float(len(example[1]))
                     #cum_ll_per_char += ll_per_char
-<<<<<<< HEAD
+
                     cum_ll += c_example_list[c_example] * ll
             
             #normalized_cum_ll_per_char = cum_ll_per_char/float(len(task.examples))
@@ -115,7 +115,9 @@ class ProbabilisticLikelihoodModel:
             cutoff_ll = unigram_regex_bound(example_list)   
 
             normalized_cum_ll = cum_ll/ float(sum([len(example) for example in example_list]))
-            success = normalized_cum_ll > cutoff_ll
+            #success = normalized_cum_ll > cutoff_ll
+
+            success = normalized_cum_ll > float('-inf')
 
             #eprint("cutoff_ll:", cutoff_ll, ", norm_cum_ll:", normalized_cum_ll)	
 

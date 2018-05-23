@@ -4,7 +4,7 @@ from ec import explorationCompression, commandlineArguments, Task
 from grammar import Grammar
 #from utilities import eprint, testTrainSplit, numberOfCPUs, flatten
 from utilities import eprint, numberOfCPUs, flatten, fst, testTrainSplit, POSITIVEINFINITY
-from makeRegexTasks import makeTasks
+from makeRegexTasks import makeOldTasks, makeLongTasks, makeShortTasks
 from regexPrimitives import basePrimitives, altPrimitives
 #from program import *
 from recognition import HandCodedFeatureExtractor, MLPFeatureExtractor, RecurrentFeatureExtractor, JSONFeatureExtractor
@@ -114,6 +114,10 @@ def regex_options(parser):
         type=int,
         default=10,
         help="truncate number of examples per task to fit within this boundary")
+    parser.add_argument("--tasks",
+                        default="old",
+                        help="which tasks to use",
+                        choices=["old", "short", "long"])
     parser.add_argument("--primitives",
                         default="base",
                         help="Which primitive set to use",
@@ -123,7 +127,7 @@ def regex_options(parser):
                         default="json")  # if i switch to json it breaks
     parser.add_argument("--split", metavar="TRAIN_RATIO",
                         type=float,
-                        default=0.2,
+                        default=0.6,
                         help="split test/train")
     parser.add_argument("-H", "--hidden", type=int,
                         default=16,
@@ -149,7 +153,12 @@ if __name__ == "__main__":
         CPUs=numberOfCPUs(),
         extras=regex_options)
 
-    tasks = makeTasks()  # TODO
+    regexTasks = {"old": makeOldTasks,
+                "short": makeShortTasks,
+                "long": makeLongTasks
+                }[args.pop("tasks")]
+
+    tasks = regexTasks()  # TODO
     eprint("Generated", len(tasks), "tasks")
 
     maxTasks = args.pop("maxTasks")
