@@ -190,15 +190,15 @@ if __name__ == "__main__":
 	baseGrammar = Grammar.fromProductions(productions)
 	#baseGrammar = Grammar.uniform(prims())
 
-	for i in range(100):
-		eprint(baseGrammar.sample(tpregex))
+	#for i in range(100):
+	#	eprint(baseGrammar.sample(tpregex))
 
-	eprint(baseGrammar)
+	#eprint(baseGrammar)
         
-#explor
-	#explorationCompression(baseGrammar, train,
-	#						testingTasks = test,
-	#						**args)
+#explore
+	explorationCompression(baseGrammar, train,
+							testingTasks = test,
+							**args)
 
 
 

@@ -32,14 +32,14 @@ class EuclideanLikelihoodModel:
         return exp(logLikelihood) > self.successCutoff, logLikelihood
 
 
-def regex_bound(X):
+def unigram_regex_bound(X):
     c = Counter(X)
     regexes = [pregex.create(".+"), pregex.create("\d+"), pregex.create("\w+"), pregex.create("\s+"),
         pregex.create("\\u+"), pregex.create("\l+")]
     regex_scores = []
     for r in regexes:
         regex_scores.append(sum(c[x] * r.match(x) for x in c)/float(sum([len(x) for x in X])) )
-        return max(regex_scores)
+    return max(regex_scores)
 
 class ProbabilisticLikelihoodModel:
 
@@ -76,12 +76,15 @@ class ProbabilisticLikelihoodModel:
         #right now, just summing up log likelihoods. IDK if this is correct.
         #also not using prior at all.
             cum_ll = 0
-            for example in task.examples:
-                #might want a try, accept around the following line:
+            example_list = [example[1] for example in task.examples]
+            c_example_list = Counter(example_list)
+
+            for c_example in c_example_list:
+                #might want a try, except around the following line:
                 try:
                     #eprint("about to match", program)
                     #print("preg:", preg)
-                    ll = preg.match(example[1])
+                    ll = preg.match(c_example)
                     #eprint("completed match", ll, program)
                 except ValueError as e:
                     eprint("ValueError:", e)
@@ -94,19 +97,17 @@ class ProbabilisticLikelihoodModel:
                 else: 
                     #ll_per_char = ll/float(len(example[1]))
                     #cum_ll_per_char += ll_per_char
-                    cum_ll += ll
+                    cum_ll += c_example_list[c_example] * ll
             
-    
             #normalized_cum_ll_per_char = cum_ll_per_char/float(len(task.examples))
-            avg_char_num = sum([len(example[1]) for example in task.examples])/float(len(task.examples))
-            example_list = [example[1] for example in task.examples]
-            #eprint("regex_bound", regex_bound(example_list))
-            #eprint("avg_char_num", avg_char_num)
-            cutoff_ll = regex_bound(example_list)          
-            normalized_cum_ll = cum_ll/avg_char_num/float(len(task.examples))
-            success = normalized_cum_ll > (cutoff_ll + .0001)
-            #eprint("cutoff_ll", cutoff_ll)
-            #eprint("norm_cum_ll", normalized_cum_ll)	
+            #avg_char_num = sum([len(example[1]) for example in task.examples])/float(len(task.examples))
+            
+            cutoff_ll = unigram_regex_bound(example_list)   
+
+            normalized_cum_ll = cum_ll/ float(sum([len(example) for example in example_list]))
+            success = normalized_cum_ll > cutoff_ll
+
+            #eprint("cutoff_ll:", cutoff_ll, ", norm_cum_ll:", normalized_cum_ll)	
             return success, normalized_cum_ll
 
         except EvaluationTimeout:

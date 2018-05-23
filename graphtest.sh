@@ -9,4 +9,6 @@ file2="experimentOutputs/regex_aic=1.0_arity=3_ET=10_helmholtzBatch=5000_it=10_l
 
 file3="experimentOutputs/regex_activation=sigmoid_aic=1.0_arity=3_ET=3_helmholtzBatch=5000_HR=0.5_it=10_likelihoodModel=probabilistic_MF=5_baseline=False_pc=10.0_steps=250_L=1.0_K=5_useNewRecognitionModel=False_rec=True_feat=LearnedFeatureExtractor.pickle"
 
+file3="experimentOutputs/list_activation=sigmoid_aic=1.0_arity=3_ET=5_helmholtzBatch=5000_HR=0.5_it=1_likelihoodModel=all-or-nothing_MF=5_baseline=False_pc=10.0_steps=20_L=1.0_K=5_useNewRecognitionModel=False_rec=True_feat=LearnedFeatureExtractor.pickle"
+
 python graphs.py $file3 "testimg.png" 
