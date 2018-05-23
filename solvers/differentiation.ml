@@ -68,7 +68,7 @@ let placeholder () =
               }
   in s
 
-let random_variable ?mean:(mean = 0.) ?standard_deviation:(standard_deviation = 0.1) () =
+let random_variable ?mean:(mean = 0.) ?standard_deviation:(standard_deviation = 1.) () =
   let rec s = {gradient = None;
                arguments = [];
                descendents = [];
@@ -92,6 +92,9 @@ let (-&) =
 let ( *& ) =
   make_binary_variable ( *. ) (fun a b -> [b;a])
 
+let ( /& ) =
+  make_binary_variable ( /. ) (fun a b -> [1./.b;0.-.a/.(b*.b)])
+
 let power =
   make_binary_variable ( ** ) (fun a b -> [b*.(a**(b-.1.));
                                           (a**b) *. (log a)])
@@ -104,6 +107,15 @@ let exponential =
 
 let square =
   make_unitary_variable (fun a -> a*.a) (fun a -> [2.*.a])
+
+let clamp ~l ~u =
+  make_unitary_variable (fun a ->
+      if a > u then u else
+      if a < l then l else
+        a)
+    (fun a ->
+       if a > u || a < l then [0.] else [1.])
+    
 
 let log_soft_max xs =
   make_variable (fun vs -> 
@@ -178,6 +190,15 @@ let rec run_optimizer opt ?update:(update = 1000)
     run_optimizer opt ~update:update ~iterations:(iterations - 1) parameters loss
   end
 
+let restarting_optimize opt ?update:(update = 1000)
+    ?attempts:(attempts=1)
+    ?iterations:(iterations = 10000) parameters loss =
+  (0--attempts) |> List.map ~f:(fun _ ->
+      parameters |> List.iter ~f:(fun parameter ->
+          update_variable parameter (uniform_interval ~l:(-5.) ~u:5.));
+      run_optimizer opt ~update:update ~iterations:iterations parameters loss) |>
+  fold1 min
+
 let gradient_descent ?lr:(lr = 0.001) =
   List.map ~f:(fun dx -> ~-. (lr*.dx))
 
@@ -250,6 +271,7 @@ let differentiable_pi = primitive "pi" treal (~$ 3.14);;
 let differentiable_add = primitive "+." (treal @> treal @> treal) (+&);;
 let differentiable_subtract = primitive "-." (treal @> treal @> treal) (-&);;
 let differentiable_multiply = primitive "*." (treal @> treal @> treal) ( *&);;
+let differentiable_division = primitive "/." (treal @> treal @> treal) ( /&);;
 let differentiable_power = primitive "power" (treal @> treal @> treal) (power);;
 let differentiable_placeholder = primitive "REAL" treal ();;
 
@@ -262,6 +284,13 @@ let replace_placeholders program =
     | Invented(t,b) -> Invented(t,r b)
     | Primitive(t,"REAL",_) -> begin
         let v = random_variable() in
+        (* update_variable v 0.; *)
+        placeholders := v :: !placeholders;
+        Primitive(t,"REAL", ref v |> magical)
+      end
+    | Primitive(t,"real",v') -> begin
+        let v = random_variable() in
+        update_variable v (!(magical v'));
         (* update_variable v 0.; *)
         placeholders := v :: !placeholders;
         Primitive(t,"REAL", ref v |> magical)
@@ -282,7 +311,7 @@ let rec placeholder_data t x =
 exception DifferentiableBadShape
 
 let rec polymorphic_sse = function
-  | TCon("real",_,_) -> magical (fun p y -> square (p -& y))
+  | TCon("real",_,_) -> magical (fun p y -> square ((clamp ~l:(-15.) ~u:15. p) -& y))
   | TCon("list",[tp],_) ->
     let e = polymorphic_sse tp in
     magical (fun p y ->

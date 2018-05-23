@@ -23,9 +23,6 @@ let is_base_primitive = function
   |Primitive(_,_,_) -> true
   |_ -> false
 
-let primitive_name = function | Primitive(_,n,_) -> n
-                              | _ -> raise (Failure "primitive_name: not a primitive")
-
 let program_children = function
   | Abstraction(b) -> [b]
   | Apply(m,n) -> [m;n]
@@ -34,6 +31,12 @@ let program_children = function
 let rec application_function = function
   | Apply(f,x) -> application_function f
   | e -> e
+
+let rec application_parse = function
+  | Apply(f,x) ->
+    let (f,arguments) = application_parse f in
+    (f,arguments @ [x])
+  | f -> (f,[])
 
 let rec program_size p =
   1 + (List.map ~f:program_size (program_children p) |> sum)
@@ -54,6 +57,10 @@ let rec show_program (is_function : bool) = function
   | Invented(_,i) -> "#"^show_program false i
 
 let string_of_program = show_program false
+
+
+let primitive_name = function | Primitive(_,n,_) -> n
+                              | e -> raise (Failure ("primitive_name: "^string_of_program e^"not a primitive"))
 
 let rec program_equal p1 p2 = match (p1,p2) with
   | (Primitive(_,n1,_),Primitive(_,n2,_)) -> n1 = n2
@@ -110,7 +117,7 @@ let lookup_primitive n =
   with _ -> raise (UnknownPrimitive n)
 
   
-let rec evaluate (environment: 'b list) (p:program) : 'a =
+let [@warning "-20"] rec evaluate (environment: 'b list) (p:program) : 'a =
   match p with
   | Apply(Apply(Apply(Primitive(_,"if",_),branch),yes),no) ->
     if magical (evaluate environment branch) then evaluate environment yes else evaluate environment no
@@ -159,7 +166,7 @@ let run_analyzed_with_arguments (p : 'b list -> 'c) (arguments : 'a list) =
     | x :: xs -> loop (magical (l x)) xs
   in loop (p []) arguments
 
-let rec lazy_evaluate (environment: ('b Lazy.t) list) (p:program) : 'a Lazy.t =
+let [@warning "-20"] rec lazy_evaluate (environment: ('b Lazy.t) list) (p:program) : 'a Lazy.t =
   (* invariant: always return thunks *)
   match p with
   (* Notice that we do not need to special case conditionals. In lazy
@@ -171,7 +178,7 @@ let rec lazy_evaluate (environment: ('b Lazy.t) list) (p:program) : 'a Lazy.t =
   | Primitive(_,_,v) -> lazy (magical (!v))
   | Invented(_,i) -> lazy_evaluate [] i
 
-let rec analyze_lazy_evaluation (p:program) : (('b Lazy.t) list) -> 'a Lazy.t =
+let [@warning "-20"] rec analyze_lazy_evaluation (p:program) : (('b Lazy.t) list) -> 'a Lazy.t =
   match p with
   (* Notice that we do not need to special case conditionals. In lazy
      evaluation conditionals are function just like any other. *)
@@ -192,7 +199,7 @@ let rec analyze_lazy_evaluation (p:program) : (('b Lazy.t) list) -> 'a Lazy.t =
     let analyzed_body = analyze_lazy_evaluation i in
     fun _ -> analyzed_body []
 
-let run_lazy_analyzed_with_arguments p arguments =
+let [@warning "-20"] run_lazy_analyzed_with_arguments p arguments =
   let rec go l xs =
     match xs with
     | [] -> l |> magical
@@ -213,16 +220,24 @@ let rec variable_is_bound ?height:(height = 0) (p : program) =
   | Primitive(_,_,_) -> false
   | Abstraction(b) -> variable_is_bound ~height:(height+1) b
 
+exception ShiftFailure;;
 let rec shift_free_variables ?height:(height = 0) shift p = match p with
-  | Index(j) -> if j < height then p else Index(j + shift)
+  | Index(j) -> if j < height then p else
+      if j + shift < 0 then raise ShiftFailure else Index(j + shift)
   | Apply(f,x) -> Apply(shift_free_variables ~height:height shift f,
                         shift_free_variables ~height:height shift x)
   | Invented(_,_) -> p
   | Primitive(_,_,_) -> p
   | Abstraction(b) -> Abstraction(shift_free_variables ~height:(height+1) shift b)
 
+let rec free_variables ?d:(d=0) e = match e with
+  | Index(j) -> if j >= d then [j] else []
+  | Apply(f,x) -> free_variables ~d:d f @ free_variables ~d:d x
+  | Abstraction(b) -> free_variables ~d:(d + 1) b
+  | _ -> []
+
 (* PRIMITIVES *)
-let primitive ?manualLaziness:(manualLaziness = false)
+let [@warning "-20"] primitive ?manualLaziness:(manualLaziness = false)
     (name : string) (t : tp) x =
   let number_of_arguments = arguments_of_type t |> List.length in
   (* Force the arguments *)
@@ -262,6 +277,8 @@ let primitive_constant_strings = [primitive "','" tcharacter ',';
                                   primitive "'/'" tcharacter '/';
                                   primitive "'|'" tcharacter '|';
                                   primitive "'-'" tcharacter '-';
+                                  primitive "LPAREN" tcharacter '(';
+                                  primitive "RPAREN" tcharacter ')';
                                  ];;
 (* let primitive_slice_string = primitive "slice-string" (tint @> tint @> tstring @> tstring)
  *     (fun i j s ->
@@ -327,16 +344,58 @@ let primitive_is_empty = primitive "empty?" (tlist t0 @> tboolean)
     (function | [] -> true
               | _ -> false);;
 
-      
+let primitive_string_constant = primitive "STRING" (tlist tcharacter) ();;
+let rec substitute_string_constants (alternatives : char list list) e = match e with
+  | Primitive(c,"STRING",_) -> alternatives |> List.map ~f:(fun a -> Primitive(c,"STRING",ref a |> magical))
+  | Primitive(_,_,_) -> [e]
+  | Invented(_,b) -> substitute_string_constants alternatives b
+  | Apply(f,x) -> substitute_string_constants alternatives f |> List.map ~f:(fun f' ->
+      substitute_string_constants alternatives x |> List.map ~f:(fun x' ->
+          Apply(f',x'))) |> List.concat 
+  | Abstraction(b) -> substitute_string_constants alternatives b |> List.map ~f:(fun b' ->
+      Abstraction(b'))
+  | Index(_) -> [e]
+
+let rec number_of_string_constants = function
+  | Primitive(_,"STRING",_) -> 1
+  | Primitive(_,_,_) -> 0
+  | Invented(_,b) | Abstraction(b) -> number_of_string_constants b
+  | Apply(f,x) -> number_of_string_constants f + number_of_string_constants x
+  | Index(_) -> 0
+
+let rec string_constants_length = function
+  | Primitive(_,"STRING",v) ->
+    let v = magical v in
+    List.length (!v)
+  | Primitive(_,_,_) -> 0
+  | Invented(_,b) | Abstraction(b) -> string_constants_length b
+  | Apply(f,x) -> string_constants_length f + string_constants_length x
+  | Index(_) -> 0
+
+let rec number_of_real_constants = function
+  | Primitive(_,"REAL",_) -> 1
+  | Primitive(_,_,_) -> 0
+  | Invented(_,b) | Abstraction(b) -> number_of_real_constants b
+  | Apply(f,x) -> number_of_real_constants f + number_of_real_constants x
+  | Index(_) -> 0
+
+let rec number_of_free_parameters = function
+  | Primitive(_,"REAL",_) | Primitive(_,"STRING",_) -> 1
+  | Primitive(_,_,_) -> 0
+  | Invented(_,b) | Abstraction(b) -> number_of_free_parameters b
+  | Apply(f,x) -> number_of_free_parameters f + number_of_free_parameters x
+  | Index(_) -> 0
+
+
 let primitive_empty = primitive "empty" (tlist t0) [];;
 let primitive_range = primitive "range" (tint @> tlist tint) (fun x -> 0 -- (x-1));;
 let primitive_sort = primitive "sort" (tlist tint @> tlist tint) (List.sort ~compare:(fun x y -> x - y));;
 let primitive_reverse = primitive "reverse" (tlist tint @> tlist tint) (List.rev);;
-let primitive_append = primitive "append"  (tlist tint @> tlist tint @> tlist tint) (@);;
+let primitive_append = primitive "append"  (tlist t0 @> tlist t0 @> tlist t0) (@);;
 let primitive_singleton = primitive "singleton"  (tint @> tlist tint) (fun x -> [x]);;
 let primitive_slice = primitive "slice" (tint @> tint @> tlist tint @> tlist tint) slice;;
-let primitive_length = primitive "length" (tlist tint @> tint) (List.length);;
-let primitive_map = primitive "map" ((tint @> tint) @> (tlist tint) @> (tlist tint)) (fun f l -> List.map ~f:f l);;
+let primitive_length = primitive "length" (tlist t0 @> tint) (List.length);;
+let primitive_map = primitive "map" ((t0 @> t1) @> (tlist t0) @> (tlist t1)) (fun f l -> List.map ~f:f l);;
 let primitive_fold_right = primitive "fold_right" ((tint @> tint @> tint) @> tint @> (tlist tint) @> tint) (fun f x0 l -> List.fold_right ~f:f ~init:x0 l);;
 let primitive_mapi = primitive "mapi" ((tint @> t0 @> t1) @> (tlist t0) @> (tlist t1)) (fun f l ->
     List.mapi l ~f:f);;
@@ -350,6 +409,24 @@ let primitive_and = primitive "and" (tboolean @> tboolean @> tboolean) (fun x y 
 let primitive_nand = primitive "nand" (tboolean @> tboolean @> tboolean) (fun x y -> not (x && y));;
 let primitive_or = primitive "or" (tboolean @> tboolean @> tboolean) (fun x y -> x || y);;
 let primitive_greater_than = primitive "gt?" (tint @> tint @> tboolean) (fun (x: int) (y: int) -> x > y);;
+
+ignore(primitive "take-word" (tcharacter @> tstring @> tstring) (fun c s ->
+    List.take_while s ~f:(fun c' -> not (c = c'))));;
+ignore(primitive "drop-word" (tcharacter @> tstring @> tstring) (fun c s ->
+    List.drop_while s ~f:(fun c' -> not (c = c')) |> List.tl |> get_some));;
+ignore(primitive "abbreviate" (tstring @> tstring) (fun s ->
+    let rec f = function
+      | [] -> []
+      | ' ' :: cs -> f cs
+      | c :: cs -> c :: f (List.drop_while cs ~f:(fun c' -> not (c' = ' ')))
+    in f s));;
+ignore(primitive "last-word" (tcharacter @> tstring @> tstring)
+         (fun c s ->
+            List.rev s |> List.take_while ~f:(fun c' -> not (c = c')) |> List.rev));;
+ignore(primitive "replace-character" (tcharacter @> tcharacter @> tstring @> tstring) (fun c1 c2 s ->
+    s |> List.map ~f:(fun c -> if c = c1 then c2 else c)));;
+
+
 
 let primitive_run   = primitive
                         "run"
@@ -405,10 +482,16 @@ let var_name         = primitive "var_name" tvar GeomLib.Plumbing.var_name
 
 let default_recursion_limit = 20;;
 
-let rec unfold p h n x =
-  if p x then [] else h x :: unfold p h n (n x)
+let rec unfold x p h n =
+  if p x then [] else h x :: unfold (n x) p h n
 
-let primitive_unfold = primitive "unfold" ((t0 @> tboolean) @> (t0 @> t1) @> (t0 @> t0) @> t0 @> tlist t1) unfold;;
+let primitive_unfold = primitive "unfold" (t0 @> (t0 @> tboolean) @> (t0 @> t1) @> (t0 @> t0) @> tlist t1) unfold;;
+let primitive_index = primitive "index" (tint @> tlist t0 @> t0) (fun j l -> List.nth_exn l j);;
+let primitive_zip = primitive "zip" (tlist t0 @> tlist t1 @> (t0 @> t1 @> t2) @> tlist t2)
+    (fun x y f -> List.map2_exn x y ~f:f);;
+let primitive_fold = primitive "fold" (tlist t0 @> t1 @> (t0 @> t1 @> t1) @> t1)
+    (fun l x0 f -> List.fold_right ~f:f ~init:x0 l);;
+
 
 let default_recursion_limit = ref 50;;
 let set_recursion_limit l = default_recursion_limit := l;;
@@ -483,9 +566,15 @@ let program_parser : program parsing =
   let variable : program parsing = constant_parser "$" %% (fun _ ->
       number%%(fun n -> Index(Int.of_string n) |> return_parse))
   in
-      
+
+  let fixed_real : program parsing = constant_parser "real" %% (fun _ ->
+      token %% (fun v ->
+        let v = v |> Float.of_string in
+        Primitive(treal, "real", ref (v |> magical)) |> return_parse))
+  in
+  
   let rec program_parser () : program parsing =
-    (application () <|> primitive <|> variable <|> invented() <|> abstraction())
+    (application () <|> primitive <|> variable <|> invented() <|> abstraction() <|> fixed_real)
 
   and invented() =
     constant_parser "#" %% (fun _ ->
@@ -580,7 +669,7 @@ let parsing_test_cases() =
 
 (* program_test_cases();; *)
              
-let performance_test_case() =
+let [@warning "-20"] performance_test_case() =
   let e = parse_program "(lambda (fix (lambda (lambda (if (empty? $0) $0 (cons (* 2 (car $0)) ($1 (cdr $0)))))) $0))" |> get_some in
   let xs = [2;1;9;3;] in
   let n = 10000000 in
@@ -588,8 +677,8 @@ let performance_test_case() =
       (0--n) |> List.iter ~f:(fun j ->
           if j = n then
             Printf.printf "%s\n" (evaluate [] e xs |> List.map ~f:Int.to_string |> join ~separator:" ")
-          else 
-            ignore(evaluate [] e xs)));
+          else
+            ignore (evaluate [] e xs)));
   let c = analyze_evaluation e [] in
   time_it "evaluate analyzed program many times" (fun () -> 
       (0--n) |> List.iter ~f:(fun j ->
@@ -674,6 +763,7 @@ let test_lazy_evaluation() =
         | 0 -> []
         | 1 -> [42]
         | 2 -> [0;1]
+        | _ -> failwith "I can't handle this number of arguments (?)."
       in
       Printf.printf "\t(arguments: %s)\n"
         (arguments |> List.map ~f:Int.to_string |> join ~separator:"; ");
@@ -685,7 +775,17 @@ let test_lazy_evaluation() =
           Printf.printf "value = %d\n" (v |> magical)
         | "list<int>" ->
           Printf.printf "value = %s\n" (v |> magical |> List.map ~f:Int.to_string |> join ~separator:",")
+        | _ -> failwith "I am not prepared to handle other types"
       end
       ;
-      flush_everything()
+      flush_everything ()
     );;
+
+let test_string () =
+  let p = parse_program "(lambda (fold $0 $0 (lambda (lambda (cdr (if (char-eq? $1 SPACE) $2 $0))))))" |> get_some in
+  let p = analyze_lazy_evaluation p in
+  let x = String.to_list "this is a rigorous" in
+  let y = run_lazy_analyzed_with_arguments p [x] |> String.of_char_list in
+  Printf.printf "%s\n" y
+;;
+

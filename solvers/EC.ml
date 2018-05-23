@@ -32,7 +32,7 @@ let rec exploration_compression
       (List.length frontiers)
       frontier_size;
 
-    flush stdout;
+    Out_channel.flush stdout;
 
     (*     estimate_categorized_fragment_grammar (fragment_grammar_of_grammar g) frontiers; *)
 
@@ -42,19 +42,19 @@ let rec exploration_compression
 
     (*     fragments |> List.iter ~f:(fun f -> Printf.printf "FRAGMENT\t%s\n" (string_of_fragment f)); *)
 
-    flush stdout;
+    Out_channel.flush stdout;
     
     let gf = time_it "Induced grammar" @@ fun _ ->
       induce_fragment_grammar ~lambda:lambda ~alpha:alpha ~beta:beta
         fragments frontiers (fragment_grammar_of_grammar g) in
 
-    flush stdout;
+    Out_channel.flush stdout;
 
     let gp = grammar_of_fragment_grammar gf in
 
     Printf.printf "GRAMMAR\n%s\n" (string_of_grammar gp);
 
-    flush stdout;
+    Out_channel.flush stdout;
 
     exploration_compression tasks gp frontier_size ~keepTheBest:keepTheBest (iterations - 1)
     

@@ -13,7 +13,9 @@ if __name__ == "__main__":
     request = pickle.load(sys.stdin.buffer)
     dt = time.time() - start
     if dt > 1:
-        eprint("(compiled driver warning: SLOW) Compiled driver unpacked the message in time", dt)
+        eprint(
+            "(compiled driver warning: SLOW) Compiled driver unpacked the message in time",
+            dt)
 
     response = (False, None)
     try:
@@ -31,4 +33,6 @@ if __name__ == "__main__":
         pickle.dump(response, sys.stdout.buffer)
         dt = time.time() - start
         if dt > 1:
-            eprint("(compiled driver warning: SLOW) Compiled driver packed the message in time", dt)
+            eprint(
+                "(compiled driver warning: SLOW) Compiled driver packed the message in time",
+                dt)

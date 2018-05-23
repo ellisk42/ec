@@ -165,7 +165,7 @@ let instantiate_type k t =
     match j with
       | TID(i) ->
         (try List.Assoc.find_exn ~equal:(fun a b -> a = b) !substitution i
-	 with Not_found ->
+	 with Caml.Not_found ->
     let (t,k') = makeTID !k in
     k := k';
     substitution := (i,t)::!substitution;
@@ -184,7 +184,7 @@ let canonical_type t =
   let rec canon q = 
     match q with
     | TID(i) -> (try TID(List.Assoc.find_exn ~equal:(=) !substitution i)
-		 with Not_found ->
+		 with Caml.Not_found ->
                    substitution := (i,!next)::!substitution; next := (1+ !next); TID(!next-1))
     | TCon(k,a,_) -> kind k (List.map ~f:canon a)
   in canon t
@@ -242,16 +242,26 @@ let make_ground g = TCon(g,[],false);;
 let tint = make_ground "int";;
 let tcharacter = make_ground "char";;
 let treal = make_ground "real";;
-let tboolean = make_ground "boolean";;
+let tboolean = make_ground "bool";;
 let t0 = TID(0);;
 let t1 = TID(1);;
 let t2 = TID(2);;
 let t3 = TID(3);;
 let t4 = TID(4);;
 let tlist t = kind "list" [t];;
-let tstring = make_ground "string";;
+let tstring = tlist tcharacter;;
 let tvar               = make_ground "var"
 let tprogram           = make_ground "program"
 let tmaybe t           = kind "maybe" [t]
 let tcanvas            = tlist tint
 
+
+let unify_many_types ts =
+  let k = empty_context in
+  let (t,k) = makeTID k in
+  let k = ref k in
+  ts |> List.iter ~f:(fun t' ->
+      let (k',t') = instantiate_type !k t' in
+      k := unify k' t' t);
+  applyContext !k t |> snd
+     

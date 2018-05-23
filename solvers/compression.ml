@@ -544,7 +544,7 @@ let induce_fragment_grammar ?lambda:(lambda = 2.) ?alpha:(alpha = 1.) ?beta:(bet
                  fragments = (f,ft,-1.)::g.fragments}) in
       let (best_child,best_score) = maximum_by ~cmp:(fun (_,l1) (_,l2) -> if l1 > l2 then 1 else -1) children in
       Printf.printf "Best new grammar (%f): %s\n" (best_score) (string_of_fragment_grammar best_child);
-      flush stdout;
+      Out_channel.flush stdout;
       if best_score > previous_score then
         induce best_score (count - 1) best_child
       else g

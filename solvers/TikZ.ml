@@ -20,7 +20,7 @@ type command =
 let canonical_command_list : 'a Core.List.t -> 'a Core.List.t =
   fun l ->
     let l2 =
-      List.dedup
+      List.dedup_and_sort
       ~compare:(fun c1 c2 -> if c1 > c2 then 1 else if c1 = c2 then 0 else -1)
       l in
     List.sort

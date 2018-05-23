@@ -28,16 +28,20 @@ perturbation = float(sys.argv[2])
 
 originalPlan = plan
 
+
 def my_draw_polygon(polygon, body, fixture):
     vertices = [(body.transform * v) * PPM for v in polygon.vertices]
     vertices = [(v[0], SCREEN_HEIGHT - v[1]) for v in vertices]
     pygame.draw.polygon(screen, body.userData["color"], vertices)
+
+
 polygonShape.draw = my_draw_polygon
 
 
-result = TowerWorld().sampleStability(plan, perturbation, N = 100)
-mass = sum(w*h for _,w,h in plan)
-print("This tower has height %f, mass %f, area %s, len %s, staircase %s, and succeeds %d/100 of the time with a perturbation of %f"%(result.height, mass, result.area, result.length, result.staircase, int(result.stability*100),perturbation))
+result = TowerWorld().sampleStability(plan, perturbation, N=100)
+mass = sum(w * h for _, w, h in plan)
+print("This tower has height %f, mass %f, area %s, len %s, staircase %s, and succeeds %d/100 of the time with a perturbation of %f" %
+      (result.height, mass, result.area, result.length, result.staircase, int(result.stability * 100), perturbation))
 
 # --- main game loop ---
 
@@ -46,7 +50,8 @@ timer = None
 running = True
 while running:
     for event in pygame.event.get():
-        if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
+        if event.type == QUIT or (
+                event.type == KEYDOWN and event.key == K_ESCAPE):
             running = False
 
     screen.fill((0, 0, 0, 0))
@@ -56,16 +61,15 @@ while running:
             fixture.shape.draw(body, fixture)
 
     # Make Box2D simulate the physics of our world for one step.
-    world.step(TIME_STEP)
+    world.step()
 
     if state == "BUILDING":
-        if world.unmoving():
-            if plan != []:
-                world.placeBlock(*plan[0])
-                plan = plan[1:]
-                timer = time() + 2
-            elif time() > timer:
-                state = "DESTROYING"
+        world.executePlan(plan)
+        state = "BEHOLDING"
+        timer = time() + 2
+    elif state == "BEHOLDING":
+        if time() > timer:
+            state = "DESTROYING"
     elif state == "DESTROYING":
         world.impartImpulses(perturbation)
         state = "SPECTATING"

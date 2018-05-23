@@ -112,7 +112,7 @@ let merge_a_list ls ~f:c =
           try
             let old_value = Hashtbl.find_exn merged tag in
             Hashtbl.set merged ~key:tag ~data:(c value old_value)
-          with Not_found -> ignore(Hashtbl.add merged tag value)
+          with Caml.Not_found -> ignore (Hashtbl.add merged tag value)
         )
     );
   Hashtbl.to_alist merged
@@ -131,6 +131,9 @@ let (--) i j =
     if n < i then acc else aux (n-1) (n :: acc)
   in aux j []
 
+let range n = 0 -- (n-1);;
+
+
 let float_interval (i : float) (s : float) (j : float) : float list = 
   let rec aux n acc =
     if n < i then acc else aux (n-.s) (n :: acc)
@@ -140,17 +143,24 @@ let float_interval (i : float) (s : float) (j : float) : float list =
 (*   let open Core.Time in *)
 (*   Core.Time. *)
 (*   Core.Time.to_float @@ Time.now () *)
+let flush_everything () =
+  Pervasives.flush stdout;
+  Pervasives.flush stderr
+
 
 let time_it description callback = 
   let start_time = Time.now () in
   let return_value = callback () in
-  Printf.printf "%s in %s." description (Time.diff (Time.now ()) start_time |> Time.Span.to_string); 
-  print_newline ();
+  Printf.eprintf "%s in %s.\n" description (Time.diff (Time.now ()) start_time |> Time.Span.to_string); 
+  flush_everything();
   return_value
 
-let flush_everything () =
-  flush stdout;
-  flush stderr
+let shuffle d = begin
+    Random.self_init ();
+    let nd = List.map ~f:(fun c -> (Random.bits (), c)) d in
+    let sond = List.sort compare nd in
+    List.map ~f:snd sond
+  end
 
 (* progress bar *)
 type progress_bar = { maximum_progress : int; mutable current_progress : int; }
@@ -165,7 +175,7 @@ let update_progress_bar bar new_progress =
   bar.current_progress <- new_progress;
   if new_dots > old_dots then
     let difference = min 80 (new_dots-old_dots) in
-    List.iter (1--difference) (fun _ -> print_char '.'; flush stdout)
+    List.iter (1--difference) (fun _ -> Out_channel.output_char stdout '.'; Out_channel.flush stdout)
 
   
 
@@ -179,10 +189,14 @@ let cpu_count () =
     | _ ->
       let i = Unix.open_process_in "getconf _NPROCESSORS_ONLN" in
       let close () = ignore (Unix.close_process_in i) in
-      try Scanf.fscanf i "%d" (fun n -> close (); n) with e -> close (); raise e
-      with
-      | Not_found | Sys_error _ | Failure _ | Scanf.Scan_failure _ 
-      | End_of_file | Unix.Unix_error (_, _, _) -> 1
+      try Scanf.bscanf (Scanf.Scanning.from_channel i)
+                       "%d"
+                       (fun n -> close (); n)
+      with e ->
+        (close () ; raise e)
+  with
+    | Caml.Not_found | Sys_error _ | Failure _ | Scanf.Scan_failure _ 
+    | End_of_file | Unix.Unix_error (_, _, _) -> 1
 
 
 let string_proper_prefix p s = 
@@ -209,22 +223,27 @@ let rec random_subset l = function
 let avg l = 
   List.fold_left ~init:0.0 ~f:(+.) l /. (Float.of_int @@ List.length l)
 
-let pi = 4.0 *. atan 1.0
+let pi = 4.0 *. Float.atan 1.0
 
 let normal s m =
   let u, v = Random.float 1.0, Random.float 1.0
-  in let n = sqrt (-2.0 *. log u) *. cos (2.0 *. pi *. v)
+  in let n = sqrt (-2.0 *. log u) *. Float.cos (2.0 *. pi *. v)
   in
   s *. n +. m
 
 let print_arguments () = 
   Array.iter Sys.argv ~f:(fun a -> Printf.printf "%s " a);
-  print_newline ()
+  Out_channel.newline stdout
 
 (* samplers adapted from gsl *)
 let rec uniform_positive () = 
   let u = Random.float 1.0 in
   if u > 0.0 then u else uniform_positive ()
+
+let uniform_interval ~l ~u =
+  assert (u > l);
+  let x = uniform_positive() in
+  (l+.u)/.2. +. (u-.l)*.x
 
 
 let rec sample_gamma a b = 
@@ -297,3 +316,14 @@ let slice s e l =
 let random_choice l =
   Random.int (List.length l) |> 
   List.nth_exn l
+
+let compare_list c xs ys =
+  let d = List.length xs - List.length ys in
+  let rec r x y = match (x,y) with
+    | ([],[]) -> 0
+    | (a :: b, u :: v) ->
+      let d = c a u in
+      if d = 0 then r b v else d
+    | _ -> assert false
+  in 
+  if d = 0 then r xs ys else d
