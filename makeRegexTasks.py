@@ -44,7 +44,7 @@ def makeShortTasks():
 
     #load new data:
 
-    taskfile = "./csv_900.p"
+    taskfile = "./regex_data_csv_900.p"
 
     with open(taskfile, 'rb') as handle:
         data = dill.load(handle)
@@ -65,7 +65,7 @@ def makeLongTasks():
 
     #load new data:
 
-    taskfile = "./csv_900.p"
+    taskfile = "./regex_data_csv_900.p"
 
     with open(taskfile, 'rb') as handle:
         data = dill.load(handle)
@@ -86,7 +86,7 @@ def makeWordTasks():
 
     #load new data:
 
-    taskfile = "./csv_900.p"
+    taskfile = "./regex_data_csv_900.p"
 
     with open(taskfile, 'rb') as handle:
         data = dill.load(handle)
