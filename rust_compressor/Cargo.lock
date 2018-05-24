@@ -219,7 +219,7 @@ dependencies = [
 
 [[package]]
 name = "programinduction"
-version = "0.6.3"
+version = "0.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "crossbeam-channel 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -290,10 +290,10 @@ dependencies = [
 
 [[package]]
 name = "rust_compressor"
-version = "0.1.2"
+version = "0.1.3"
 dependencies = [
  "polytype 4.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "programinduction 0.6.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "programinduction 0.6.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "rayon 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.59 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.59 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -404,7 +404,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum parking_lot_core 0.2.14 (registry+https://github.com/rust-lang/crates.io-index)" = "4db1a8ccf734a7bce794cc19b3df06ed87ab2f3907036b693c68f56b4d4537fa"
 "checksum polytype 4.2.1 (registry+https://github.com/rust-lang/crates.io-index)" = "eb6199d21310290e0374efc2d0b834747b3b6ead7eb07d98501d093315401103"
 "checksum proc-macro2 0.4.3 (registry+https://github.com/rust-lang/crates.io-index)" = "a45f2f0ae0b5757f6fe9e68745ba25f5246aea3598984ed81d013865873c1f84"
-"checksum programinduction 0.6.3 (registry+https://github.com/rust-lang/crates.io-index)" = "9e9914ee77a579793c6dbb47e060316776521f8f3eba7cf9343da48953161997"
+"checksum programinduction 0.6.4 (registry+https://github.com/rust-lang/crates.io-index)" = "d81482c89d58d1441bb802fa88d5bd2addb0608f52742f149452294ba2eac973"
 "checksum quote 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)" = "9e53eeda07ddbd8b057dde66d9beded11d0dfda13f0db0769e6b71d6bcf2074e"
 "checksum rand 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)" = "eba5f8cb59cc50ed56be8880a5c7b496bfd9bd26394e176bc67884094145c2c5"
 "checksum rand 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)" = "7a89abf8d34faf9783692392dca7bcdc6e82fa84eca86ccb6301ec87f3497185"
