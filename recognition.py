@@ -553,13 +553,13 @@ class RecognitionModel(nn.Module):
         if seed is not None:
             random.seed(seed)
         request = random.choice(requests)
-        eprint("About to draw a sample")
+        #eprint("About to draw a sample")
         program = self.grammar.sample(request, maximumDepth=6, maxAttempts=100)
-        eprint("sample", program)
+        #eprint("sample", program)
         if program is None:
             return None
         task = self.featureExtractor.taskOfProgram(program, request)
-        eprint("extracted features")
+        #eprint("extracted features")
         if statusUpdate is not None:
             eprint(statusUpdate, end='')
             flushEverything()
@@ -567,16 +567,16 @@ class RecognitionModel(nn.Module):
             return None
 
         if hasattr(self.featureExtractor, 'lexicon'):
-            eprint("tokenizing...")
+            #eprint("tokenizing...")
             if self.featureExtractor.tokenize(task.examples) is None:
                 return None
 
         frontier = Frontier([FrontierEntry(program=program,
                                            logLikelihood=0., logPrior=0.)],
                             task=task)
-        eprint("replacing with likelihood summary")
+        #eprint("replacing with likelihood summary")
         frontier = self.replaceProgramsWithLikelihoodSummaries(frontier)
-        eprint("successfully got a sample")
+        #eprint("successfully got a sample")
         return frontier
 
     def sampleManyHelmholtz(self, requests, N, CPUs):
@@ -638,7 +638,7 @@ class RecognitionModel(nn.Module):
                                             frontierSize=frontierSize,
                                             enumerationTimeout=enumerationTimeout,
                                             CPUs=CPUs, maximumFrontier=maximumFrontier,
-                                            evaluationTimeout=evaluationTimeout)      
+                                            evaluationTimeout=evaluationTimeout,testing=testing)      
         else:
             return multicoreEnumeration(grammars, tasks, likelihoodModel,
                                         solver=solver,
@@ -1110,8 +1110,9 @@ class NewRecognitionModel(nn.Module):
         return batchInputs, batchOutputs, permutedBatchTargets
 
     def step(self, *networkInputs):
-        eprint("networkInputs:")
-        eprint(*networkInputs)
+        #eprint("networkInputs:")
+        #eprint(*networkInputs)
+        eprint(len(networkInputs))
         score = self.network.optimiser_step(*networkInputs)
         loss = -score
         return loss
@@ -1175,7 +1176,8 @@ class NewRecognitionModel(nn.Module):
             enumerationTimeout=None,
             CPUs=1,
             maximumFrontier=None,
-            evaluationTimeout=None):
+            evaluationTimeout=None,
+            useMultithread=None):
 
         # need to encorporate likelihood model, solver
 

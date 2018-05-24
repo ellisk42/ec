@@ -9,6 +9,7 @@ from matplotlib.ticker import MaxNLocator
 import matplotlib.lines as mlines
 
 import matplotlib
+from test_unpickle import loadfun
 
 
 TITLEFONTSIZE = 14
@@ -124,9 +125,13 @@ def plotECResult(
     results = []
     parameters = []
     for j, path in enumerate(resultPaths):
-        with open(path, 'rb') as handle:
-            print("path:", path)
-            result = dill.load(handle)
+        #with open(path, 'rb') as handle:
+            #print("path:", path)
+            #result = dill.load(handle)
+        file3 = "experimentOutputs/regex_activation=sigmoid_aic=1.0_arity=3_ET=30_helmholtzBatch=5000_HR=0.75_it=10_likelihoodModel=probabilistic_MF=50_baseline=False_pc=10.0_steps=250_L=1.0_K=5_useNewRecognitionModel=False_rec=True_feat=LearnedFeatureExtractor.pickle"
+        if True:
+            result = loadfun(file3)
+
             if hasattr(result, "baselines") and result.baselines:
                 for name, res in result.baselines.items():
                     results.append(res)
@@ -206,7 +211,7 @@ def plotECResult(
         else:
             a2.yaxis.set_ticks([50 * j for j in range(6)])
         for tick in a2.yaxis.get_ticklabels():
-            print tick
+            print(tick)
             tick.set_fontsize(TICKFONTSIZE)
 
     if title is not None:

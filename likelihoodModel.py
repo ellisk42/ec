@@ -54,7 +54,7 @@ class ProbabilisticLikelihoodModel:
         self.timeout = timeout
         # i need timeout
 
-    def score(self, program, task):
+    def score(self, program, task, testing=False):
         # need a try, catch here for problems, and for timeouts
         # can copy task.py for the timeout structure
         try:
@@ -115,9 +115,11 @@ class ProbabilisticLikelihoodModel:
             cutoff_ll = unigram_regex_bound(example_list)   
 
             normalized_cum_ll = cum_ll/ float(sum([len(example) for example in example_list]))
-            #success = normalized_cum_ll > cutoff_ll
 
-            success = normalized_cum_ll > float('-inf')
+            if testing:
+                success = normalized_cum_ll > cutoff_ll
+            else:
+                success = normalized_cum_ll > float('-inf')
 
             #eprint("cutoff_ll:", cutoff_ll, ", norm_cum_ll:", normalized_cum_ll)	
 

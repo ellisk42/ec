@@ -4,7 +4,7 @@ from ec import explorationCompression, commandlineArguments, Task
 from grammar import Grammar
 #from utilities import eprint, testTrainSplit, numberOfCPUs, flatten
 from utilities import eprint, numberOfCPUs, flatten, fst, testTrainSplit, POSITIVEINFINITY
-from makeRegexTasks import makeOldTasks, makeLongTasks, makeShortTasks
+from makeRegexTasks import makeOldTasks, makeLongTasks, makeShortTasks, makeWordTasks
 from regexPrimitives import basePrimitives, altPrimitives
 #from program import *
 from recognition import HandCodedFeatureExtractor, MLPFeatureExtractor, RecurrentFeatureExtractor, JSONFeatureExtractor
@@ -117,7 +117,7 @@ def regex_options(parser):
     parser.add_argument("--tasks",
                         default="old",
                         help="which tasks to use",
-                        choices=["old", "short", "long"])
+                        choices=["old", "short", "long", "words"])
     parser.add_argument("--primitives",
                         default="base",
                         help="Which primitive set to use",
@@ -127,7 +127,7 @@ def regex_options(parser):
                         default="json")  # if i switch to json it breaks
     parser.add_argument("--split", metavar="TRAIN_RATIO",
                         type=float,
-                        default=0.6,
+                        default=0.8,
                         help="split test/train")
     parser.add_argument("-H", "--hidden", type=int,
                         default=16,
@@ -155,7 +155,8 @@ if __name__ == "__main__":
 
     regexTasks = {"old": makeOldTasks,
                 "short": makeShortTasks,
-                "long": makeLongTasks
+                "long": makeLongTasks,
+                "words": makeWordTasks
                 }[args.pop("tasks")]
 
     tasks = regexTasks()  # TODO
@@ -195,7 +196,7 @@ if __name__ == "__main__":
         "outputPrefix": "experimentOutputs/regex",
         "evaluationTimeout": 1.0,  # 0.005,
         "topK": 5,
-        "maximumFrontier": 5,
+        "maximumFrontier": 50,
         "solver": "python",
         "compressor": "rust"
     })

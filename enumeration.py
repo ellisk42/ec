@@ -257,7 +257,8 @@ def multithreadedEnumeration(g, tasks, likelihoodModel, _=None,
                              CPUs=1,
                              maximumFrontier=None,
                              verbose=False,
-                             evaluationTimeout=None):
+                             evaluationTimeout=None,
+                             testing=False):
     '''g: Either a Grammar, or a map from task to grammar.'''
     from time import time
 
@@ -344,6 +345,7 @@ def multithreadedEnumeration(g, tasks, likelihoodModel, _=None,
                                           timeout=thisTimeout,
                                           likelihoodModel=likelihoodModel,
                                           evaluationTimeout=evaluationTimeout,
+                                          testing=testing,
                                           maximumFrontier=maximumFrontier - numberOfHits(frontiers[t]))
                     lowerBounds[t] += bi
                     workers[nextID] = t
@@ -572,7 +574,7 @@ def solveForTask_python(_=None,
                         timeout=None,
                         CPUs=1,
                         likelihoodModel=None,
-                        evaluationTimeout=None, maximumFrontiers=None):
+                        evaluationTimeout=None, maximumFrontiers=None, testing=False):
     return enumerateForTasks(g, tasks, likelihoodModel,
                              timeout=timeout,
                              elapsedTime=elapsedTime,
@@ -587,13 +589,13 @@ def solveForTask_python_Multithread(_=None,
                         lowerBound=None, upperBound=None, budgetIncrement=None,
                         timeout=None,
                         likelihoodModel=None,
-                        evaluationTimeout=None, maximumFrontier=None):
+                        evaluationTimeout=None, maximumFrontier=None,testing=False):
     return enumerateForTask(g,task,likelihoodModel,
                             timeout=timeout,
                             evaluationTimeout=evaluationTimeout,
                             maximumFrontier=maximumFrontier,
                             budgetIncrement=budgetIncrement,
-                            lowerBound=lowerBound, upperBound=upperBound)
+                            lowerBound=lowerBound, upperBound=upperBound,testing=testing)
 
 
 class EnumerationTimeout(Exception):
@@ -839,7 +841,7 @@ def enumerateForTask(g, task, likelihoodModel, _=None,
                      frontierSize=None,
                      lowerBound=0.,
                      upperBound=100.,
-                     budgetIncrement=1.0, maximumFrontier=10**2):
+                     budgetIncrement=1.0, maximumFrontier=10**2,testing=False):
     assert (timeout is not None) or (frontierSize is not None), \
         "enumerateForTask: You must provide either a timeout or a frontier size."
 
@@ -867,7 +869,7 @@ def enumerateForTask(g, task, likelihoodModel, _=None,
                 numberOfPrograms += 1
                 totalNumberOfPrograms += 1
 
-                success, likelihood = likelihoodModel.score(p, task)
+                success, likelihood = likelihoodModel.score(p, task, testing=testing)
                 if success:
                     if verbose:
                         eprint("Hit",task.name,"with the program",p,"which has prior",prior,"after",time() - starting,"seconds")

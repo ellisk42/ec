@@ -3,6 +3,7 @@ from task import Task
 from pregex import pregex
 import pickle
 import json
+import dill
 
 
 
