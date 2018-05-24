@@ -4,7 +4,7 @@ version = "0.1.2"
 
 [dependencies]
 polytype = "4.2"
-programinduction = { version = "0.6", features = [ "verbose" ]}
+programinduction = "0.6"
 rayon = "1.0"
 serde = "1.0"
 serde_json = "1.0"

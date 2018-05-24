@@ -21,12 +21,16 @@ rule read =
   | "just"         { JUST        }
   | "integrate"    { INTEGRATE   }
   | "concat"       { CONCAT      }
+  | "basic_line"   { LINE        }
   | "var_unit"     { V_U         }
+  | "var_two"      { V_2         }
+  | "var_three"    { V_3         }
   | "var_name"     { NAME        }
   | "var_next"     { V_N         }
   | "var_prev"     { V_P         }
   | "var_half"     { V_H         }
   | "var_double"   { V_D         }
+  | "var_divide"   { V_Di        }
   | "var_opposite" { V_O         }
   | "true"         { TRUE        }
   | "false"        { FALSE       }

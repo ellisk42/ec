@@ -553,15 +553,15 @@ class RecognitionModel(nn.Module):
         if seed is not None:
             random.seed(seed)
         request = random.choice(requests)
-        eprint("About to draw a sample")
+        # eprint("About to draw a sample")
         program = self.grammar.sample(request, maximumDepth=6, maxAttempts=100)
-        eprint("sample", program)
+        # eprint("sample", program)
         if program is None:
             return None
         task = self.featureExtractor.taskOfProgram(program, request)
-        eprint("extracted features")
+        # eprint("extracted features")
         if statusUpdate is not None:
-            eprint(statusUpdate, end='')
+            # eprint(statusUpdate, end='')
             flushEverything()
         if task is None:
             return None
@@ -574,9 +574,9 @@ class RecognitionModel(nn.Module):
         frontier = Frontier([FrontierEntry(program=program,
                                            logLikelihood=0., logPrior=0.)],
                             task=task)
-        eprint("replacing with likelihood summary")
+        # eprint("replacing with likelihood summary")
         frontier = self.replaceProgramsWithLikelihoodSummaries(frontier)
-        eprint("successfully got a sample")
+        # eprint("successfully got a sample")
         return frontier
 
     def sampleManyHelmholtz(self, requests, N, CPUs):

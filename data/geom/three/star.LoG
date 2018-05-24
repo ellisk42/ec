@@ -1,0 +1,6 @@
+Repeat(three) {
+  Embed {
+    Integrate
+  } ;
+  Turn(angle = Divide(Double(two), three))
+}

@@ -8,6 +8,7 @@ from collections import OrderedDict
 from program import Program
 from task import Task
 
+import random as random
 import json
 import torch
 import png
@@ -63,11 +64,6 @@ class GeomFeatureCNN(nn.Module):
         y = self.net2(y)
         output = y  # self.fc(y)
         return output.view(-1)
-        # output = self.net1(variabled)
-        # output = output.view(-1, 16*5*5)
-        # output = self.net2(output).clamp(min=0)
-        # output = torch.squeeze(output)
-        # return output.view(-1)
 
     def featuresOfTask(self, t):  # Take a task and returns [features]
         return self(t.examples[0][1])
@@ -76,14 +72,15 @@ class GeomFeatureCNN(nn.Module):
         if not os.path.exists(self.sub):
             os.makedirs(self.sub)
         try:
-            fname = self.sub + "/" + str(self.count) + ".png"
+            randomStr = ''.join(random.choice('0123456789') for _ in range(5))
+            fname = self.sub + "/" + str(self.count) + "_" + randomStr
             evaluated = p.evaluate([])
             with open(fname + ".dream", "w") as f:
                 f.write(str(p))
             with open(fname + ".LoG", "w") as f:
                 f.write(evaluated)
             output = subprocess.check_output(['./geomDrawLambdaString',
-                                              fname,
+                                              fname + ".png",
                                               evaluated]).decode("utf8").split("\n")
             shape = list(map(float, output[0].split(',')))
             bigShape = map(float, output[1].split(','))
@@ -101,7 +98,8 @@ class GeomFeatureCNN(nn.Module):
         if not os.path.exists(self.sub):
             os.makedirs(self.sub)
         try:
-            fname = self.sub + "/" + str(self.count) + ".png"
+            randomStr = ''.join(random.choice('0123456789') for _ in range(5))
+            fname = self.sub + "/" + str(self.count) + "_" + randomStr
             evaluated = p.evaluate([])
             with open(fname + ".dream", "w") as f:
                 f.write(str(p))
@@ -158,15 +156,15 @@ def list_options(parser):
 
 if __name__ == "__main__":
     args = commandlineArguments(
-        steps=100,
+        steps=1000,
         a=3,
         topK=5,
         iterations=10,
         useRecognitionModel=True,
         helmholtzRatio=0.5,
-        helmholtzBatch=50,
+        helmholtzBatch=500,
         featureExtractor=GeomFeatureCNN,
-        maximumFrontier=100,
+        maximumFrontier=1000,
         CPUs=numberOfCPUs(),
         pseudoCounts=10.0,
         activation="tanh",
@@ -210,10 +208,10 @@ if __name__ == "__main__":
 
     fe = GeomFeatureCNN(tasks)
 
-    # for x in range(0, 50):
-    # program = baseGrammar.sample(tcanvas, maximumDepth=6)
-    # features = fe.renderProgram(program, tcanvas)
-    # fe.finish()
+    for x in range(0, 500):
+        program = baseGrammar.sample(tcanvas, maximumDepth=6)
+        features = fe.renderProgram(program, tcanvas)
+    fe.finish()
 
     r = explorationCompression(baseGrammar, train,
                                testingTasks=test,

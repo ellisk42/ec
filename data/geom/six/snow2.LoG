@@ -1,0 +1,13 @@
+Repeat(Double(three)) {
+  Embed {
+    Integrate ;
+    Embed {
+      Turn(angle=Half(unit)) ;
+      Integrate(t=Half(unit))
+    } ;
+    Turn(angle=Opposite(Half(unit))) ;
+    Integrate(t=Half(unit))
+  } ;
+  Turn(angle = Divide(two, three))
+
+}
