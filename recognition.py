@@ -553,6 +553,7 @@ class RecognitionModel(nn.Module):
         if seed is not None:
             random.seed(seed)
         request = random.choice(requests)
+
         #eprint("About to draw a sample")
         program = self.grammar.sample(request, maximumDepth=6, maxAttempts=100)
         #eprint("sample", program)
@@ -560,8 +561,9 @@ class RecognitionModel(nn.Module):
             return None
         task = self.featureExtractor.taskOfProgram(program, request)
         #eprint("extracted features")
+
         if statusUpdate is not None:
-            eprint(statusUpdate, end='')
+            # eprint(statusUpdate, end='')
             flushEverything()
         if task is None:
             return None

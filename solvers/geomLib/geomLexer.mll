@@ -39,6 +39,8 @@ rule read =
   | "Prev"   { PREV }
   | "Opposite"   { OPPOSITE }
   | "unit"   { UNIT }
+  | "two"    { TWO }
+  | "three"  { THREE }
   (*| "indefinite"   { INDEFINITE }*)
   | "Nop"    { NOP }
   | "Turn"   { TURN }

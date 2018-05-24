@@ -11,6 +11,8 @@ tbool = baseType("bool")
 def _var_double(x):
     return "(var_double " + x + ")"
 
+def _var_divide(v):
+    return lambda v2: "(var_divide " + v + " " + v2 + ")"
 
 def _var_half(x):
     return "(var_half " + x + ")"
@@ -71,7 +73,10 @@ def _concat(p1):
 primitives = [
     # VAR
     Primitive("var_unit", tvar, "var_unit"),
+    Primitive("var_two", tvar, "var_two"),
+    Primitive("var_three", tvar, "var_three"),
     Primitive("var_double", arrow(tvar, tvar), _var_double),
+    Primitive("var_divide", arrow(tvar, tvar, tvar), _var_divide),
     Primitive("var_half", arrow(tvar, tvar), _var_half),
     Primitive("var_next", arrow(tvar, tvar), _var_next),
     Primitive("var_prev", arrow(tvar, tvar), _var_prev),
@@ -82,6 +87,7 @@ primitives = [
     # Primitive("nop", tprogram, "nop"),
     # Primitive("nop2", tprogram, "nop2"),
     Primitive("embed", arrow(tprogram, tprogram), _embed),
+    Primitive("basic_line", tprogram, "basic_line"),
     Primitive("define", arrow(tvar, tprogram), _define),
     Primitive("integrate",
               arrow(tmaybe(tvar),

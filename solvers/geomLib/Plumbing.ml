@@ -29,11 +29,15 @@ let repeat v p            = Repeat(v,p)
 let run ?size:(size=64) p = canvas_to_tlist size (interpret p)
 
 let integrate v1 v2 v3 v4 = Integrate(v1,Some(v2),(None,v3,v4,None))
+let basic_line            = Integrate(None,Some(true),(None,None,None,None))
 
 let var_unit       = Unit
+let var_two        = Next(Unit)
+let var_three      = Next(Next(Unit))
 let var_half     v = Half(v)
 let var_double   v = Double(v)
 let var_next     v = Next(v)
 let var_prev     v = Prev(v)
+let var_divide v v'= Divide(v,v')
 let var_opposite v = Opposite(v)
 let var_name       = Name("MyOnlyVar")

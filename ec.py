@@ -296,6 +296,8 @@ def ecIterator(grammar, tasks,
     if solver == 'python':
         useMultithread = True
         eprint("WARNING: switching to older 'multithreaded' enumeration code for compatability with python solver")
+    else:
+        useMultithread = False
 
     for j in range(resume or 0, iterations):
 

@@ -18,6 +18,8 @@
 %token OPPOSITE
 %token DIVIDE
 %token UNIT
+%token TWO
+%token THREE
 (*%token INDEFINITE*)
 %token COMMA_ARGS
 %token ARG_ANGLE
@@ -42,7 +44,9 @@ optional_comma:
     | {}
 
 expr:
-  | UNIT { Interpreter.Unit }
+  | UNIT  { Interpreter.Unit }
+  | TWO   { Interpreter.Next(Interpreter.Unit) }
+  | THREE { Interpreter.Next(Interpreter.Next(Interpreter.Unit)) }
   (*| INDEFINITE { Interpreter.Indefinite }*)
   | DOUBLE ; BEGIN_ARGS ; e = expr ; END_ARGS {Interpreter.Double (e) }
   | HALF ; BEGIN_ARGS ; e = expr ; END_ARGS {Interpreter.Half (e) }

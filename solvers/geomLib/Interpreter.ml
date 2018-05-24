@@ -191,8 +191,8 @@ let evaluateVar v htbl_var =
     | Prev v' -> (evaluateVar_helper v' htbl_var) -. 1.
     | Next v' -> (evaluateVar_helper v' htbl_var) +. 1.
     | Opposite v' -> (-1.)*.(evaluateVar_helper v' htbl_var)
-    | Divide (v1,v2) -> (evaluateVar_helper v1 htbl_var) /.
-    (evaluateVar_helper v2 htbl_var)
+    | Divide (v1,v2) ->
+        (evaluateVar_helper v1 htbl_var) /. (evaluateVar_helper v2 htbl_var)
     | Name s ->
         if Hashtbl.mem htbl_var s then
             let value = Hashtbl.find htbl_var s in

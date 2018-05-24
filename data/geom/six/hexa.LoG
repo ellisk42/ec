@@ -1,0 +1,4 @@
+Repeat (Double(three)) {
+  Integrate ;
+  Turn(angle = Divide(two, three))
+}

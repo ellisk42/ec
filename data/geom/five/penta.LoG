@@ -1,0 +1,4 @@
+Repeat (Next(Next(three))) {
+  Integrate ;
+  Turn(angle = Divide(Double(two), Next(Next(three))))
+}
