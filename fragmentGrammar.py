@@ -293,13 +293,13 @@ class FragmentGrammar(object):
             frontiers,
             _=None,
             topK=1,
-            use_map=True,
+            topk_use_map=True,
             pseudoCounts=1.0,
             aic=1.0,
             structurePenalty=0.001,
             a=0,
             CPUs=1):
-        _ = use_map # not used in python compressor
+        _ = topk_use_map # not used in python compressor
         originalFrontiers = frontiers
         frontiers = [frontier for frontier in frontiers if not frontier.empty]
         eprint("Inducing a grammar from", len(frontiers), "frontiers")
@@ -462,7 +462,7 @@ def pypyInduce(*args, **kwargs):
 def rustInduce(g0, frontiers, _=None,
                topK=1, pseudoCounts=1.0, aic=1.0,
                structurePenalty=0.001, a=0, CPUs=1, iteration=-1,
-               use_map=True):
+               topk_use_map=True):
     import json
     import os
     import subprocess
@@ -473,7 +473,7 @@ def rustInduce(g0, frontiers, _=None,
             "structure_penalty": structurePenalty,
             "pseudocounts": int(pseudoCounts + 0.5),
             "topk": topK,
-            "use_map": use_map,
+            "topk_use_map": top_use_map,
             "aic": aic if aic != float("inf") else None,
             "arity": a,
         },
