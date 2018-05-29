@@ -196,6 +196,7 @@ if __name__ == "__main__":
         "outputPrefix": "experimentOutputs/regex",
         "evaluationTimeout": 1.0,  # 0.005,
         "topK": 5,
+        "use_map": False,
         "maximumFrontier": 50,
         "solver": "python",
         "compressor": "rust"

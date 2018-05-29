@@ -101,6 +101,7 @@ def ecIterator(grammar, tasks,
                featureExtractor=None,
                activation='relu',
                topK=1,
+               use_map=True,
                maximumFrontier=None,
                pseudoCounts=1.0, aic=1.0,
                structurePenalty=0.001, arity=0,
@@ -507,7 +508,8 @@ def ecIterator(grammar, tasks,
 
         # Sleep-G
         grammar, frontiers = induceGrammar(grammar, frontiers,
-                                           topK=topK, pseudoCounts=pseudoCounts, a=arity,
+                                           topK=topK, use_map=use_map,
+                                           pseudoCounts=pseudoCounts, a=arity,
                                            aic=aic, structurePenalty=structurePenalty,
                                            backend=compressor, CPUs=CPUs, iteration=j)
         result.grammars.append(grammar)
