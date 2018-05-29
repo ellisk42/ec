@@ -4,7 +4,7 @@ from ec import explorationCompression, commandlineArguments, Task
 from grammar import Grammar
 #from utilities import eprint, testTrainSplit, numberOfCPUs, flatten
 from utilities import eprint, numberOfCPUs, flatten, fst, testTrainSplit, POSITIVEINFINITY
-from makeRegexTasks import makeOldTasks, makeLongTasks, makeShortTasks, makeWordTasks
+from makeRegexTasks import makeOldTasks, makeLongTasks, makeShortTasks, makeWordTasks, makeNumberTasks
 from regexPrimitives import basePrimitives, altPrimitives
 #from program import *
 from recognition import HandCodedFeatureExtractor, MLPFeatureExtractor, RecurrentFeatureExtractor, JSONFeatureExtractor
@@ -156,7 +156,8 @@ if __name__ == "__main__":
     regexTasks = {"old": makeOldTasks,
                 "short": makeShortTasks,
                 "long": makeLongTasks,
-                "words": makeWordTasks
+                "words": makeWordTasks,
+                "number": makeNumberTasks
                 }[args.pop("tasks")]
 
     tasks = regexTasks()  # TODO
@@ -196,7 +197,7 @@ if __name__ == "__main__":
         "outputPrefix": "experimentOutputs/regex",
         "evaluationTimeout": 1.0,  # 0.005,
         "topK": 5,
-        "use_map": False,
+        "topk_use_map": False,
         "maximumFrontier": 50,
         "solver": "python",
         "compressor": "rust"
