@@ -30,7 +30,8 @@ class ECResult():
                  parameters=None,
                  recognitionModel=None,
                  searchTimes=None,
-                 baselines=None):
+                 baselines=None,
+                 numTestingTasks=None):
         self.testingSearchTime = testingSearchTime or []
         self.searchTimes = searchTimes or []
         self.recognitionModel = recognitionModel
@@ -41,6 +42,7 @@ class ECResult():
         self.taskSolutions = taskSolutions or {}
         # baselines is a dictionary of name -> ECResult
         self.baselines = baselines or {}
+        self.numTestingTasks = numTestingTasks
 
     def __repr__(self):
         attrs = ["{}={}".format(k, v) for k, v in self.__dict__.items()]
@@ -235,6 +237,10 @@ def ecIterator(grammar, tasks,
                     "Rust compressor is currently not compatible with bootstrapping.",
                     "Falling back on pypy compressor.")
                 compressor = "pypy"
+
+        #for graphing of testing tasks
+        numTestingTasks = len(testingTasks) if len(testingTasks) != 0 else None
+
         result = ECResult(
             parameters=parameters,
             grammars=[grammar],
@@ -242,7 +248,7 @@ def ecIterator(grammar, tasks,
                 t: Frontier(
                     [],
                     task=t) for t in tasks},
-            recognitionModel=None)
+            recognitionModel=None, numTestingTasks=numTestingTasks)
 
     # just plopped this in here, hope it works: -it doesn't. having issues.
     if useNewRecognitionModel and (

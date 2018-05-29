@@ -227,6 +227,10 @@ def plotECResult(
         if hasattr(p, "baseline") and p.baseline:
             ys = [100. * result.learningCurve[-1] /
                   len(result.taskSolutions)] * n_iters
+        if hasattr(result,'numTestingTasks') and result.numTestingTasks is not None:
+            ys = [100. * len(t) / len(result.numTestingTasks)
+                  for t in result.testingSearchTime[:iterations]]            
+
         else:
             ys = [100. * len(t) / len(result.taskSolutions)
                   for t in result.testingSearchTime[:iterations]]
