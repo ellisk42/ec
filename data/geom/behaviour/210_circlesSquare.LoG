@@ -3,5 +3,5 @@ Repeat(Double(Double(unit))) {
     Embed {
         Integrate(angularSpeed=unit)
     } ;
-    Turn
+    Integrate(t=Half(Half(unit)), angularSpeed=unit)
 }
