@@ -116,7 +116,7 @@ class ProbabilisticLikelihoodModel:
 
             normalized_cum_ll = cum_ll/ float(sum([len(example) for example in example_list]))
 
-            testing = True 
+            #testing = True 
             if testing:
                 success = normalized_cum_ll > cutoff_ll
             else:

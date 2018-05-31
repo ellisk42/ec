@@ -31,7 +31,9 @@ class ECResult():
                  recognitionModel=None,
                  searchTimes=None,
                  baselines=None,
-                 numTestingTasks=None):
+                 numTestingTasks=None,
+                 sumMaxll=None,
+                 testingSumMaxll=None):
         self.testingSearchTime = testingSearchTime or []
         self.searchTimes = searchTimes or []
         self.recognitionModel = recognitionModel
@@ -43,6 +45,9 @@ class ECResult():
         # baselines is a dictionary of name -> ECResult
         self.baselines = baselines or {}
         self.numTestingTasks = numTestingTasks
+        self.sumMaxll = sumMaxll or [] #TODO name change 
+        self.testingSumMaxll = testingSumMaxll or [] #TODO name change
+
 
     def __repr__(self):
         attrs = ["{}={}".format(k, v) for k, v in self.__dict__.items()]
@@ -59,7 +64,12 @@ class ECResult():
                      "helmholtzRatio": "HR",
                      "topK": "K",
                      "enumerationTimeout": "ET",
-                     "useRecognitionModel": "rec"}
+                     "useRecognitionModel": "rec",
+                     "useNewRecognitionModel": "newRec",
+                     "likelihoodModel": "likemod",
+                     "helmholtzBatch": "HB",
+                     "use_ll_cutoff": "llcut",
+                     "topk_use_map": "useMAP"}
 
     @staticmethod
     def abbreviate(parameter): return ECResult.abbreviations.get(
@@ -313,7 +323,7 @@ def ecIterator(grammar, tasks,
         if testingTimeout > 0:
             eprint("Evaluating on held out testing tasks.")
             if useRecognitionModel and j > 0:
-                _, times = result.recognitionModel.enumerateFrontiers(testingTasks, likelihoodModel,
+                testingFrontiers, times = result.recognitionModel.enumerateFrontiers(testingTasks, likelihoodModel,
                                                                       CPUs=CPUs,
                                                                       solver=solver,
                                                                       maximumFrontier=maximumFrontier,
@@ -322,7 +332,7 @@ def ecIterator(grammar, tasks,
                                                                       testing=True, useMultithread=useMultithread)
             else:
                 if useMultithread:
-                    _, times = multithreadedEnumeration(grammar, testingTasks, likelihoodModel,
+                    testingFrontiers, times = multithreadedEnumeration(grammar, testingTasks, likelihoodModel,
                                                     solver=solver,
                                                     maximumFrontier=maximumFrontier,
                                                     enumerationTimeout=testingTimeout,
@@ -330,7 +340,7 @@ def ecIterator(grammar, tasks,
                                                     evaluationTimeout=evaluationTimeout,
                                                     testing=True)                    
                 else:
-                    _, times = multicoreEnumeration(grammar, testingTasks, likelihoodModel,
+                    testingFrontiers, times = multicoreEnumeration(grammar, testingTasks, likelihoodModel,
                                                     solver=solver,
                                                     maximumFrontier=maximumFrontier,
                                                     enumerationTimeout=testingTimeout,
@@ -343,6 +353,7 @@ def ecIterator(grammar, tasks,
                 (len(times), len(testingTasks)))
             summaryStatistics("Testing tasks", times)
             result.testingSearchTime.append(times)
+            result.testingSumMaxll.append(sum(math.exp(f.bestll) for f in testingFrontiers if not f.empty) )
 
         if j >= 2 and expandFrontier and result.learningCurve[-1] <= result.learningCurve[-2] and \
            result.learningCurve[-1] < len(tasks):
@@ -373,7 +384,7 @@ def ecIterator(grammar, tasks,
                                                     evaluationTimeout=evaluationTimeout,
                                                     testing=use_ll_cutoff)
 
-        if expandFrontier and (not useRecognitionModel) \
+        if expandFrontier and (not useRecognitionModel) and (not useNewRecognitionModel) \
            and (j == 0 and times == [] or
                 j > 0 and sum(not f.empty for f in frontiers) <= result.learningCurve[-1] and
                 result.learningCurve[-1] < len(tasks)):
@@ -472,6 +483,8 @@ def ecIterator(grammar, tasks,
                                                         for f in bottomupFrontiers
                                                         if not f.empty))
 
+            result.sumMaxll.append( sum(math.exp(f.bestll) for f in bottomupFrontiers if not f.empty)) #TODO
+
             tasksHitBottomUp = {
                 f.task for f in bottomupFrontiers if not f.empty}
             showHitMatrix(tasksHitTopDown, tasksHitBottomUp, tasks)
@@ -486,6 +499,8 @@ def ecIterator(grammar, tasks,
             result.averageDescriptionLength.append(mean(-f.marginalLikelihood()
                                                         for f in frontiers
                                                         if not f.empty))
+
+            result.sumMaxll.append(sum(math.exp(f.bestll) for f in frontiers if not f.empty)) #TODO - i think this is right
 
         if not useNewRecognitionModel:  # This line is changed, beware
             result.searchTimes.append(times)
@@ -741,6 +756,7 @@ def commandlineArguments(_=None,
         "--ll_cutoff",
         dest="use_ll_cutoff",
         action="store_true",
+        default=False,
         help="use ll cutoff for training tasks (for probabilistic likelihood model only)")
     parser.set_defaults(useRecognitionModel=useRecognitionModel,
                         featureExtractor=featureExtractor,

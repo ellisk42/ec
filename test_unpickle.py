@@ -224,11 +224,8 @@ def plotECResult(
     recognitionToColor = {False: "r", True: "b"}
 
     for result, p in zip(results, parameters):
-        if hasattr(p, "baseline") and p.baseline:
-            ys = [100. * result.learningCurve[-1] /
-                  len(result.taskSolutions)] * n_iters
         if hasattr(result,'numTestingTasks') and result.numTestingTasks is not None:
-            ys = [100. * len(t) / len(result.numTestingTasks)
+            ys = [100. * len(t) / result.numTestingTasks
                   for t in result.testingSearchTime[:iterations]]            
 
         else:
@@ -240,10 +237,17 @@ def plotECResult(
         # if label is not None:
         #     l.set_label(label(p))
 
-        if showSolveTime:
+        plotll = False 
+        if hasattr(result, ' '):
+            plotll = True
             a2.plot(range(len(result.testingSearchTime[:iterations])),
                     [sum(ts) / float(len(ts)) for ts in result.testingSearchTime[:iterations]],
                     color + '--')
+        elif showSolveTime:
+            a2.plot(range(len(result.testingSearchTime[:iterations])),
+                    [sum(ts) / float(len(ts)) for ts in result.testingSearchTime[:iterations]],
+                    color + '--')
+
 
     a1.set_ylim(ymin=0, ymax=110)
     a1.yaxis.grid()

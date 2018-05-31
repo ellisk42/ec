@@ -183,8 +183,9 @@ if __name__ == "__main__":
     eprint("Split tasks into %d/%d test/train" % (len(test), len(train)))
 
     # from list stuff
+    primtype = args.pop("primitives")
     prims = {"base": basePrimitives,
-             "alt1": altPrimitives}[args.pop("primitives")]
+             "alt1": altPrimitives}[primtype]
 
     extractor = {
         "hand": HandCodedFeatureExtractor,
@@ -197,7 +198,7 @@ if __name__ == "__main__":
 
     args.update({
         "featureExtractor": extractor,
-        "outputPrefix": "experimentOutputs/regex",
+        "outputPrefix": "experimentOutputs/regex" + "_" + primtype,
         "evaluationTimeout": 1.0,  # 0.005,
         "topK": 5,
         "topk_use_map": False,
@@ -225,7 +226,7 @@ if __name__ == "__main__":
     #for i in range(100):
     #    eprint(baseGrammar.sample(tpregex))
 
-    eprint(baseGrammar)
+    #eprint(baseGrammar)
 
     #explore
     explorationCompression(baseGrammar, train,

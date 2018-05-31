@@ -90,6 +90,14 @@ class Frontier(object):
         return min(self.entries,
                    key=lambda e: (-e.logPosterior, str(e.program)))
 
+    #added by max to get likelihood summary
+    @property
+    def bestll(self):
+        best = max(self.entries,
+                   key=lambda e: e.logLikelihood)
+        return best.logLikelihood
+
+
     @property
     def empty(self): return self.entries == []
 
