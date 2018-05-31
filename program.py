@@ -161,6 +161,7 @@ class Application(Program):
         self.f = f
         self.x = x
         self.hashCode = None
+        if isinstance(f,int): return 
         self.isConditional = f.isApplication and \
             f.f.isApplication and \
             f.f.f.isPrimitive and \
