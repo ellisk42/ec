@@ -93,7 +93,8 @@ def multicoreEnumeration(g, tasks, likelihoodModel, _=None,
     parallelCallback = launchParallelProcess if not disableParallelism else lambda f, * \
         a, **k: f(*a, **k)
     if disableParallelism:
-        eprint("Disabling parallelism because we only have one job.")
+        eprint("Disabling parallelism on the Python side because we only have one job.")
+        eprint("If you are using ocaml, there could still be parallelism.")
 
     # Map from task to the shortest time to find a program solving it
     bestSearchTime = {t: None for t in task2grammar}
@@ -178,10 +179,8 @@ def multicoreEnumeration(g, tasks, likelihoodModel, _=None,
                 g, request = j[:2]
                 bi = budgetIncrement(lowerBounds[j])
                 thisTimeout = enumerationTimeout - stopwatches[j].elapsed
-                eprint(
-                    "(python) Launching %s (%d tasks) w/ %d CPUs. %f <= MDL < %f. Timeout %f." %
-                    (request, len(
-                        jobs[j]), allocation[j], lowerBounds[j], lowerBounds[j] + bi, thisTimeout))
+                eprint("(python) Launching %s (%d tasks) w/ %d CPUs. %f <= MDL < %f. Timeout %f." %
+                       (request, len(jobs[j]), allocation[j], lowerBounds[j], lowerBounds[j] + bi, thisTimeout))
                 stopwatches[j].start()
                 parallelCallback(wrapInThread(solver),
                                  q=q, g=g, ID=nextID,
@@ -557,15 +556,14 @@ def solveForTask_pypy(_=None,
                       timeout=None,
                       likelihoodModel=None,
                       evaluationTimeout=None, maximumFrontier=None):
-    return callCompiled(enumerateForTask,
-                        g, task, likelihoodModel,
+    return callCompiled(enumerateForTasks,
+                        g, tasks, likelihoodModel,
                         timeout=timeout,
+                        elapsedTime=elapsedTime,
                         evaluationTimeout=evaluationTimeout,
-                        maximumFrontier=maximumFrontier,
+                        maximumFrontiers=maximumFrontiers,
                         budgetIncrement=budgetIncrement,
-                        lowerBound=lowerBound,
-                        upperBound=upperBound)
-
+                        lowerBound=lowerBound, upperBound=upperBound)
 
 def solveForTask_python(_=None,
                         elapsedTime=0.,
@@ -800,13 +798,10 @@ def enumerateForTasks(g, tasks, likelihoodModel, _=None,
 
                     dt = time() - starting + elapsedTime
                     priority = -(likelihood + prior)
-                    hits[n].push(
-                        priority,
-                        (dt,
-                         FrontierEntry(
-                             program=p,
-                             logLikelihood=likelihood,
-                             logPrior=prior)))
+                    hits[n].push(priority,
+                                 (dt, FrontierEntry(program=p,
+                                                    logLikelihood=likelihood,
+                                                    logPrior=prior)))
                     if len(hits[n]) > maximumFrontier[n]:
                         hits[n].popMaximum()
 
@@ -825,11 +820,8 @@ def enumerateForTasks(g, tasks, likelihoodModel, _=None,
                                     task=tasks[n])
                  for n in range(len(tasks))}
     searchTimes = {
-        tasks[n]: None if len(
-            hits[n]) == 0 else min(
-            t for t,
-            _ in hits[n]) for n in range(
-                len(tasks))}
+        tasks[n]: None if len(hits[n]) == 0 else \
+        min(t for t,_ in hits[n]) for n in range(len(tasks))}
 
     return frontiers, searchTimes
 
