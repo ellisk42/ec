@@ -50,11 +50,11 @@ let _ =
           output_canvas_png canvas 64 pngFName ;
           output_canvas_png canvas 128 pngFNameh ;
           output_canvas_png canvas 512 pngFNamevh ;
-          for i = 0 to 5 do
+          for i = 0 to 50 do
             let canvas = interpret ~noise:true program in
             let pngRName = ((Filename.chop_suffix Sys.argv.(1)
             ".LoG")^"_random_"^(string_of_int i)^".png") in
-            output_canvas_png canvas 512 pngRName
+            output_canvas_png canvas 28 pngRName
           done
       | None -> ())
     with MalformedProgram(error_message) ->
