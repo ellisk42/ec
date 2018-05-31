@@ -117,7 +117,7 @@ def regex_options(parser):
     parser.add_argument("--tasks",
                         default="old",
                         help="which tasks to use",
-                        choices=["old", "short", "long", "words"])
+                        choices=["old", "short", "long", "words","number"])
     parser.add_argument("--primitives",
                         default="base",
                         help="Which primitive set to use",
@@ -136,6 +136,9 @@ def regex_options(parser):
                         default="probabilistic",
                         help="likelihood Model",
                         choices=["probabilistic", "all-or-nothing"])
+    parser.add_argument("--topk_use_map",
+                        dest="topk_use_map",
+                        action="store_true",)
 
 # Lucas recommends putting a struct with the definitions of the primitives here.
 # TODO:
@@ -148,8 +151,8 @@ def regex_options(parser):
 if __name__ == "__main__":
     args = commandlineArguments(
         frontierSize=None, activation='sigmoid', iterations=10,
-        a=3, maximumFrontier=10, topK=2, pseudoCounts=10.0,
-        helmholtzRatio=0.5, structurePenalty=1.,
+        a=3, maximumFrontier=10, topK=2, pseudoCounts=10.0, #try 1 0.1 would make prior uniform
+        helmholtzRatio=0.5, structurePenalty=1., #try 
         CPUs=numberOfCPUs(),
         extras=regex_options)
 

@@ -112,7 +112,8 @@ def ecIterator(grammar, tasks,
                cuda=False,
                message="",
                onlyBaselines=False,
-               outputPrefix=None):
+               outputPrefix=None,
+               use_ll_cutoff=False):
     if frontierSize is None and enumerationTimeout is None:
         eprint(
             "Please specify a frontier size and/or an enumeration timeout:",
@@ -361,14 +362,16 @@ def ecIterator(grammar, tasks,
                                             maximumFrontier=maximumFrontier,
                                             enumerationTimeout=enumerationTimeout,
                                             CPUs=CPUs,
-                                            evaluationTimeout=evaluationTimeout)
+                                            evaluationTimeout=evaluationTimeout,
+                                            testing=use_ll_cutoff)
         else:             
             frontiers, times = multicoreEnumeration(grammar, tasks, likelihoodModel,
                                                     solver=solver,
                                                     maximumFrontier=maximumFrontier,
                                                     enumerationTimeout=enumerationTimeout,
                                                     CPUs=CPUs,
-                                                    evaluationTimeout=evaluationTimeout)
+                                                    evaluationTimeout=evaluationTimeout,
+                                                    testing=use_ll_cutoff)
 
         if expandFrontier and (not useRecognitionModel) \
            and (j == 0 and times == [] or
@@ -389,7 +392,8 @@ def ecIterator(grammar, tasks,
                                                  maximumFrontier=maximumFrontier,
                                                  enumerationTimeout=timeout,
                                                  CPUs=CPUs,
-                                                 evaluationTimeout=evaluationTimeout)                    
+                                                 evaluationTimeout=evaluationTimeout,
+                                                 testing=use_ll_cutoff)                    
                 else:
                     unsolvedFrontiers, unsolvedTimes = \
                         multicoreEnumeration(grammar, unsolvedTasks, likelihoodModel,
@@ -397,7 +401,8 @@ def ecIterator(grammar, tasks,
                                              maximumFrontier=maximumFrontier,
                                              enumerationTimeout=timeout,
                                              CPUs=CPUs,
-                                             evaluationTimeout=evaluationTimeout)
+                                             evaluationTimeout=evaluationTimeout,
+                                             testing=use_ll_cutoff)
                 if any(not f.empty for f in unsolvedFrontiers):
                     times += unsolvedTimes
                     unsolvedFrontiers = {f.task: f for f in unsolvedFrontiers}
@@ -434,7 +439,8 @@ def ecIterator(grammar, tasks,
                                                                      maximumFrontier=maximumFrontier,
                                                                      enumerationTimeout=enumerationTimeout,
                                                                      evaluationTimeout=evaluationTimeout,
-                                                                     useMultithread=useMultithread)
+                                                                     useMultithread=useMultithread,
+                                                                     testing=use_ll_cutoff)
 
         elif useNewRecognitionModel:  # Train a recognition model
             result.recognitionModel.updateGrammar(grammar)
@@ -454,7 +460,8 @@ def ecIterator(grammar, tasks,
                 frontierSize=frontierSize,
                 enumerationTimeout=enumerationTimeout,
                 evaluationTimeout=evaluationTimeout,
-                useMultithread=useMultithread)
+                useMultithread=useMultithread,
+                testing=use_ll_cutoff)
         if useRecognitionModel or useNewRecognitionModel:
 
             eprint("Recognition model enumeration results:")
@@ -730,6 +737,11 @@ def commandlineArguments(_=None,
         help="Start the learner out with a pretrained DSL. This argument should be a path to a checkpoint file.",
         default=None,
         type=str)
+    parser.add_argument(
+        "--ll_cutoff",
+        dest="use_ll_cutoff",
+        action="store_true",
+        help="use ll cutoff for training tasks (for probabilistic likelihood model only)")
     parser.set_defaults(useRecognitionModel=useRecognitionModel,
                         featureExtractor=featureExtractor,
                         maximumFrontier=maximumFrontier,

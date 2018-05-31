@@ -87,5 +87,24 @@ def basePrimitives():
     ]
 
 
+
 def altPrimitives():
-    raise unimplemented
+    return [
+        Primitive("empty_string", tpregex, pregex.String(""))
+    ] + [
+        Primitive("string_" + i, tpregex, pregex.String(i)) for i in printable[:-4] if i not in disallowed_list
+    ] + [
+        Primitive("string_" + name, tpregex, pregex.String(char)) for char, name in disallowed
+    ] + [
+        Primitive("r_dot", tpregex, pregex.dot),
+        Primitive("r_d", tpregex, pregex.d),
+        Primitive("r_s", tpregex, pregex.s),
+        Primitive("r_w", tpregex, pregex.w),
+        Primitive("r_l", tpregex, pregex.l),
+        Primitive("r_u", tpregex, pregex.u),
+        Primitive("r_kleene", arrow(tpregex, tpregex), _kleene),
+        #Primitive("r_plus", arrow(tpregex, tpregex), _plus),
+        Primitive("r_maybe", arrow(tpregex, tpregex), _maybe),
+        Primitive("r_alt", arrow(tpregex, tpregex, tpregex), _alt),
+        Primitive("r_concat", arrow(tpregex, tpregex, tpregex), _concat),
+    ]
