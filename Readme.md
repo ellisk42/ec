@@ -25,3 +25,26 @@ Get Rust (e.g. `curl https://sh.rustup.rs -sSf | sh` according to
 Now running make in the `rust_compressor` folder should install the right
 packages and build the binary.
 
+### Blocks world domain
+
+Implemented in `tower.py`. To install the dependencies, do:
+
+```
+pip install box2d
+pip install pygame
+pip install pycairo
+pip install psutil
+```
+
+### PyPy
+
+If for some reason you want to run something in pypy, install it from
+`https://pypy.org/download.html`. Be sure to add `pypy3` to the
+path. Really though you should try to use the rust compressor and the
+ocaml solver. You will have to (annoyingly) install parallel libraries
+on the pypy side even if you have them installed on the Python side:
+
+```
+pypy3 -m pip install --user vmprof
+pypy3 -m pip install --user dill
+```

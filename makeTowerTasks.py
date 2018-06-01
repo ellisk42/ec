@@ -34,7 +34,7 @@ class TowerTask(Task):
                  minimumArea=0,
                  minimumHeight=None):
         name = "; ".join("%s: %s" % (k, v) for k, v in locals().items()
-                         if k not in {"_", "self"})
+                         if k not in {"_", "self", "__class__"})
         features = [perturbation,
                     float(maximumMass),
                     float(minimumHeight),
