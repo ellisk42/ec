@@ -28,7 +28,8 @@ packages and build the binary.
 ### Installing submodules
 
 Run:
-```git submodule update --recursive --init
+```
+git submodule update --recursive --init
 ```
 from within the main project directory. You might need a recent version of git; 2.7.4 worked.
 
