@@ -69,7 +69,8 @@ class ECResult():
                      "likelihoodModel": "likemod",
                      "helmholtzBatch": "HB",
                      "use_ll_cutoff": "llcut",
-                     "topk_use_map": "useMAP"}
+                     "topk_use_map": "useMAP",
+                     "activation": "act"}
 
     @staticmethod
     def abbreviate(parameter): return ECResult.abbreviations.get(
