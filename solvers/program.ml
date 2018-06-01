@@ -389,7 +389,7 @@ let rec number_of_free_parameters = function
 
 let primitive_empty = primitive "empty" (tlist t0) [];;
 let primitive_range = primitive "range" (tint @> tlist tint) (fun x -> 0 -- (x-1));;
-let primitive_sort = primitive "sort" (tlist tint @> tlist tint) (List.sort ~compare:(fun x y -> x - y));;
+let primitive_sort = primitive "sort" (tlist tint @> tlist tint) (List.sort ~cmp:(fun x y -> x - y));;
 let primitive_reverse = primitive "reverse" (tlist tint @> tlist tint) (List.rev);;
 let primitive_append = primitive "append"  (tlist t0 @> tlist t0 @> tlist t0) (@);;
 let primitive_singleton = primitive "singleton"  (tint @> tlist tint) (fun x -> [x]);;

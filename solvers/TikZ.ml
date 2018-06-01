@@ -24,7 +24,7 @@ let canonical_command_list : 'a Core.List.t -> 'a Core.List.t =
       ~compare:(fun c1 c2 -> if c1 > c2 then 1 else if c1 = c2 then 0 else -1)
       l in
     List.sort
-      ~compare:(fun c1 c2 -> if c1 > c2 then 1 else if c1 = c2 then 0 else -1)
+      ~cmp:(fun c1 c2 -> if c1 > c2 then 1 else if c1 = c2 then 0 else -1)
       l2
 
 type cid = C|R|L
