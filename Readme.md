@@ -33,12 +33,16 @@ git submodule update --recursive --init
 ```
 from within the main project directory. You might need a recent version of git; 2.7.4 worked.
 
-### Blocks world domain
+### Miscellaneous python dependencies
 
-Implemented in `tower.py`. To install the dependencies, do:
+This should install all of the Python packages that you need. Not all
+of these are needed for any particular domain, but all of these are
+required by at least one domain.
 
 ```
-pip install box2d
+pip install dill
+pip install sexpdata
+pip install Box2D-kengz
 pip install pygame
 pip install pycairo
 pip install psutil
