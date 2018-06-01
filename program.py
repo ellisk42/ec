@@ -161,15 +161,19 @@ class Application(Program):
         self.f = f
         self.x = x
         self.hashCode = None
-        if isinstance(f,int): return 
-        self.isConditional = f.isApplication and \
-            f.f.isApplication and \
-            f.f.f.isPrimitive and \
-            f.f.f.name == "if"
+        self.isConditional = (not isinstance(f,int)) and \
+                             f.isApplication and \
+                             f.f.isApplication and \
+                             f.f.f.isPrimitive and \
+                             f.f.f.name == "if"
         if self.isConditional:
             self.falseBranch = x
             self.trueBranch = f.x
             self.branch = f.f.x
+        else:
+            self.falseBranch = None
+            self.trueBranch = None
+            self.branch = None
 
     @property
     def isApplication(self): return True
@@ -184,6 +188,13 @@ class Application(Program):
         if self.hashCode is None:
             self.hashCode = hash((hash(self.f), hash(self.x)))
         return self.hashCode
+
+    """Because Python3 randomizes the hash function, we need to never pickle the hash"""
+    def __getstate__(self):
+        return self.f, self.x, self.isConditional, self.falseBranch, self.trueBranch, self.branch
+    def __setstate__(self, state):
+        self.f, self.x, self.isConditional, self.falseBranch, self.trueBranch, self.branch = state
+        self.hashCode = None
 
     def visit(self,
               visitor,
@@ -377,6 +388,14 @@ class Abstraction(Program):
             self.hashCode = hash((hash(self.body),))
         return self.hashCode
 
+        """Because Python3 randomizes the hash function, we need to never pickle the hash"""
+    def __getstate__(self):
+        return self.body
+    def __setstate__(self, state):
+        self.body = state
+        self.hashCode = None
+
+
     def visit(self,
               visitor,
               *arguments,
@@ -523,6 +542,13 @@ class Invented(Program):
         if self.hashCode is None:
             self.hashCode = hash((0, hash(self.body)))
         return self.hashCode
+
+    """Because Python3 randomizes the hash function, we need to never pickle the hash"""
+    def __getstate__(self):
+        return self.body, self.tp
+    def __setstate__(self, state):
+        self.body, self.tp = state
+        self.hashCode = None
 
     def evaluate(self, e): return self.body.evaluate([])
 
