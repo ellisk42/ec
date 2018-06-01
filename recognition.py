@@ -608,18 +608,16 @@ class RecognitionModel(nn.Module):
 
         return samples
 
-    def enumerateFrontiers(
-            self,
-            tasks,
-            likelihoodModel,
-            solver=None,
-            enumerationTimeout=None,
-            testing=False,
-            CPUs=1,
-            frontierSize=None,
-            maximumFrontier=None,
-            evaluationTimeout=None,
-            useMultithread=False):
+    def enumerateFrontiers(self,
+                           tasks,
+                           likelihoodModel,
+                           solver=None,
+                           enumerationTimeout=None,
+                           testing=False,
+                           CPUs=1,
+                           frontierSize=None,
+                           maximumFrontier=None,
+                           evaluationTimeout=None):
         with timing("Evaluated recognition model"):
             grammars = {}
             for task in tasks:
@@ -634,20 +632,12 @@ class RecognitionModel(nn.Module):
                         (productions.data.tolist()[k], t, p) for k, (_, t, p) in enumerate(
                             self.grammar.productions)])
 
-        if useMultithread:
-            return multithreadedEnumeration(grammars, tasks, likelihoodModel,
-                                            solver=solver,
-                                            frontierSize=frontierSize,
-                                            enumerationTimeout=enumerationTimeout,
-                                            CPUs=CPUs, maximumFrontier=maximumFrontier,
-                                            evaluationTimeout=evaluationTimeout,testing=testing)      
-        else:
-            return multicoreEnumeration(grammars, tasks, likelihoodModel,
-                                        solver=solver,
-                                        testing=testing,
-                                        enumerationTimeout=enumerationTimeout,
-                                        CPUs=CPUs, maximumFrontier=maximumFrontier,
-                                        evaluationTimeout=evaluationTimeout)
+        return multicoreEnumeration(grammars, tasks, likelihoodModel,
+                                    solver=solver,
+                                    testing=testing,
+                                    enumerationTimeout=enumerationTimeout,
+                                    CPUs=CPUs, maximumFrontier=maximumFrontier,
+                                    evaluationTimeout=evaluationTimeout)
 
 
 class RecurrentFeatureExtractor(nn.Module):
@@ -1169,25 +1159,18 @@ class NewRecognitionModel(nn.Module):
                            CPUs=1, maximumFrontier=None, evaluationTimeout=None):
                            """
 
-    def enumerateFrontiers(
-            self,
-            tasks,
-            likelihoodModel,
-            solver=None,
-            frontierSize=None,
-            enumerationTimeout=None,
-            CPUs=1,
-            maximumFrontier=None,
-            evaluationTimeout=None,
-            useMultithread=None):
+    def enumerateFrontiers(self,
+                           tasks,
+                           likelihoodModel,
+                           solver=None,
+                           frontierSize=None,
+                           enumerationTimeout=None,
+                           CPUs=1,
+                           maximumFrontier=None,
+                           evaluationTimeout=None):
 
         # need to encorporate likelihood model, solver
 
-        # print("New recognition model enumerate frontiers")
-        # print("ONLY USING 10 TASKS!")
-        # tasks = tasks[:10]
-        # with timing("Evaluated recognition model"):
-        # proposals_scores = {}
         tasks_features = []
         for task in tasks:
             # eprint("Getting proposals for task", task)

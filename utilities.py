@@ -10,6 +10,7 @@ import subprocess
 import math
 import pickle as pickle
 from itertools import chain
+import heapq
 
 
 def eprint(*args, **kwargs):

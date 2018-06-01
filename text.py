@@ -122,7 +122,7 @@ if __name__ == "__main__":
                            testingTasks=test + challenge,
                            outputPrefix="experimentOutputs/text",
                            evaluationTimeout=evaluationTimeout,
-                           compressor="rust",
+                           compressor="pypy",
                            **arguments)
     if doChallenge:
         eprint("held out challenge problems before learning...")
