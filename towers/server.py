@@ -1,3 +1,4 @@
+import codecs
 import random
 import time
 import threading
@@ -35,7 +36,7 @@ def powerOfTen(n):
 
 class CommandHandler(socketserver.StreamRequestHandler):
     def handle(self):
-        k = json.load(self.rfile)
+        k = json.load(codecs.getreader('utf-8')(self.rfile))
         if k == "sendCash":
             COMMANDSERVERSEMAPHORE.acquire()
             v = json.dumps(list(RESULTSCASH.items()))
@@ -122,4 +123,5 @@ if __name__ == "__main__":
     COMMANDSERVERSEMAPHORE = threading.Semaphore(1)
 
     server = ThreadedTCPServer((host, COMMANDSERVERPORT), CommandHandler)
+    print(" [+] Binding python%s tower server on %s port %d"%(sys.version_info[0], host, COMMANDSERVERPORT))
     server.serve_forever()
