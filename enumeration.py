@@ -4,7 +4,6 @@ from task import *
 from type import *
 from program import *
 from grammar import *
-from pregex import pregex
 
 import gc
 import traceback
@@ -445,6 +444,7 @@ def enumerateNetworkForTasks(cpu_idx, network, tasks_features, likelihoodModel=N
                      evaluationTimeout=None,
                      frontierSize=None,
                      maximumFrontier = 10**2):
+    from pregex import pregex
     assert likelihoodModel is not None
     assert network is not None
 
