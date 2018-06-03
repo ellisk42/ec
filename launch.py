@@ -13,7 +13,7 @@ def user():
 
 def branch():
     return subprocess.check_output(
-        ['git', 'rev-parse', '--abbrev-ref', 'HEAD']).strip()
+        ['git', 'rev-parse', '--abbrev-ref', 'HEAD']).decode("utf-8").strip()
 
 
 def launch(size="t2.micro", name=""):
@@ -25,7 +25,8 @@ def launch(size="t2.micro", name=""):
                                             # "ami-2e093b4b",
                                             # "ami-3080b255",
                                             # "ami-0f3c016a",
-                                            "ami-14033e71",
+                                            # "ami-14033e71",
+                                            "ami-23fcc346",
                                             "--instance-type", size,
                                             "--security-groups", "publicssh",
                                             "--instance-initiated-shutdown-behavior", "terminate",
@@ -55,10 +56,10 @@ def launch(size="t2.micro", name=""):
 
 def sendCheckpoint(address, checkpoint):
     _c = os.path.split(checkpoint)[1]
-    print "Sending checkpoint:"
+    print("Sending checkpoint:")
     command = """scp -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem \
                 %s ubuntu@%s:~/%s""" % (checkpoint, address, _c)
-    print command
+    print(command)
     os.system(command)
 
 
@@ -81,14 +82,10 @@ def sendCommand(
         copyCheckpoint = "mv ~/%s ~/ec/experimentOutputs" % checkpoint
 
     preamble = """#!/bin/bash
-pip install sexpdata
-pip install dill
-pip install psutil
-sudo apt-get install  -y python-matplotlib
-pip install matplotlib
-sudo apt-get install -y libcairo-ocaml
-sudo apt-get install  -y python-tk
-pip install matplotlib
+# A bit weird that we need to do this here
+export PATH="/home/ubuntu/pypy3.5-6.0.0-linux_x86_64-portable/bin:$PATH"
+export PATH="/home/ubuntu/miniconda3/bin:$PATH"
+
 cd ~/ec
 rm experimentOutputs/*
 %s
