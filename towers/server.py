@@ -11,6 +11,15 @@ import json
 
 from tower_common import TowerWorld, exportTowers
 
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
+    flushEverything()
+
+def flushEverything():
+    sys.stdout.flush()
+    sys.stderr.flush()
+
+
 COMMANDSERVERPORT = 9494
 COMMANDSERVERSEMAPHORE = None
 MAXIMUMNUMBEROFCONNECTIONS = None
@@ -55,11 +64,11 @@ class CommandHandler(socketserver.StreamRequestHandler):
                 v = TowerWorld().sampleStability(plan, perturbation, n)
                 RESULTSCASH[k] = v
                 if powerOfTen(len(RESULTSCASH)):
-                    print("Tower cache reached size", len(RESULTSCASH))
+                    eprint("Tower cache reached size", len(RESULTSCASH))
                     name = "experimentOutputs/towers%d.png" % len(RESULTSCASH)
                     exportTowers(
                         list(set([_t for _t, _ in list(RESULTSCASH.keys())])), name)
-                    print("Exported towers to image", name)
+                    eprint("Exported towers to image", name)
 
                 COMMANDSERVERSEMAPHORE.release()
 
@@ -76,15 +85,15 @@ def command_server_running():
 
 def start_server():
     if command_server_running():
-        print(" [+] Found existing tower server")
+        eprint(" [+] Found existing tower server")
         return
 
     time.sleep(0.2 + random.random())
     if command_server_running():
-        print(" [+] Found existing tower server")
+        eprint(" [+] Found existing tower server")
         return
 
-    print(" [+] Launching tower server")
+    eprint(" [+] Launching tower server")
     os.system("python towers/server.py")
     time.sleep(0.5)
 
@@ -95,7 +104,7 @@ def kill_servers():
         if p.info['name'] == 'python' and 'towers/server.py' in p.info['cmdline'] and 'KILL' not in p.info['cmdline']:
             ps.append(p.pid)
     for p in ps:
-        print(" [+] Killing tower server with PID %d" % p)
+        eprint(" [+] Killing tower server with PID %d" % p)
         os.system("kill -9 %s" % p)
 
 
@@ -123,5 +132,5 @@ if __name__ == "__main__":
     COMMANDSERVERSEMAPHORE = threading.Semaphore(1)
 
     server = ThreadedTCPServer((host, COMMANDSERVERPORT), CommandHandler)
-    print(" [+] Binding python%s tower server on %s port %d"%(sys.version_info[0], host, COMMANDSERVERPORT))
+    eprint(" [+] Binding python%s tower server on %s port %d"%(sys.version_info[0], host, COMMANDSERVERPORT))
     server.serve_forever()
