@@ -178,10 +178,8 @@ if __name__ == "__main__":
 
     perturbations = {t.perturbation for t in train}
 
-    # list of list of towers, one for each iteration
-    towers = []
     for result in generator:
+        iteration = len(result.learningCurve)
         newTowers = {tuple(centerTower(frontier.sample().program.evaluate([])))
                      for frontier in result.taskSolutions.values() if not frontier.empty}
-        towers.append(sorted(newTowers))
-        exportTowers(towers, 'experimentOutputs/uniqueTowers.png')
+        exportTowers(newTowers, 'experimentOutputs/uniqueTowers%d.png'%iteration)
