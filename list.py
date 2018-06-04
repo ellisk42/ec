@@ -23,7 +23,7 @@ def retrieveJSONTasks(filename, features=False):
                   "output": bool|int|list-of-bool|list-of-int},
          "examples": [{"i": data, "o": data}]}
     """
-    with open(filename, "rb") as f:
+    with open(filename, "r") as f:
         loaded = json.load(f)
     TP = {
         "bool": tbool,
