@@ -190,12 +190,11 @@ class Application(Program):
         if x is not None: return Application(self.f,x)
 
         # Neither of them could be reduced. Is this not a redex?
-        if not f.isAbstraction: return None
+        if not self.f.isAbstraction: return None
 
         # Perform substitution
         b = self.f.body
         v = self.x
-
         return b.substitute(Index(0), v.shift(1)).shift(-1)
 
     @property
