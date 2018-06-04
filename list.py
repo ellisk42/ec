@@ -12,7 +12,7 @@ from task import Task
 from type import Context, arrow, tbool, tlist, tint, t0, UnificationFailure
 from listPrimitives import basePrimitives, primitives, McCarthyPrimitives, bootstrapTarget_extra
 from recognition import HandCodedFeatureExtractor, MLPFeatureExtractor, RecurrentFeatureExtractor
-from makeListTasks import make_list_bootstrap_tasks
+from makeListTasks import make_list_bootstrap_tasks, sortBootstrap
 
 
 def retrieveJSONTasks(filename, features=False):
@@ -286,6 +286,7 @@ def list_options(parser):
         default="Lucas-old",
         choices=[
             "bootstrap",
+            "sorting",
             "Lucas-old",
             "Lucas-depth1",
             "Lucas-depth2",
@@ -323,6 +324,7 @@ if __name__ == "__main__":
     tasks = {
         "Lucas-old": lambda: retrieveJSONTasks("data/list_tasks.json"),
         "bootstrap": make_list_bootstrap_tasks,
+        "sorting": sortBootstrap,
         "Lucas-depth1": lambda: retrieveJSONTasks("data/list_tasks2.json")[:105],
         "Lucas-depth2": lambda: retrieveJSONTasks("data/list_tasks2.json")[:4928],
         "Lucas-depth3": lambda: retrieveJSONTasks("data/list_tasks2.json"),
