@@ -196,9 +196,13 @@ if __name__ == "__main__":
     extractor.H = args.pop("hidden")
     extractor.USE_CUDA = args["cuda"]
 
+
+    from time import gmtime, strftime
+    timestr = strftime("%m%d%H%M%S", gmtime())
+
     args.update({
         "featureExtractor": extractor,
-        "outputPrefix": "experimentOutputs/regex" + "_" + primtype,
+        "outputPrefix": "experimentOutputs/regex" + primtype + timestr,
         "evaluationTimeout": 1.0,  # 0.005,
         "topK": 5,
         "topk_use_map": False,
