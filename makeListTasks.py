@@ -405,12 +405,12 @@ def sortBootstrap():
         return [l[0]] + removeDuplicates([ z for z in l if z != l[0] ])
     
     filterBootstrap = [
-        Task("remove empty lists",
-             arrow(tlist(tlist(tbool)), tlist(tlist(tbool))),
-             [((ls,), [l for l in ls if len(l) > 0])
-              for _ in range(10)
-              for ls in [[[flip() for _ in range(randint(0, 3))]
-                          for _ in range(4)]]]),
+        # Task("remove empty lists",
+        #      arrow(tlist(tlist(tbool)), tlist(tlist(tbool))),
+        #      [((ls,), [l for l in ls if len(l) > 0])
+        #       for _ in range(10)
+        #       for ls in [[[flip() for _ in range(randint(0, 3))]
+        #                   for _ in range(4)]]]),
         # Task("remove non 0s",
         #      arrow(tlist(tint), tlist(tint)),
         #      [((xs,), filter(lambda x: x == 0, xs))
@@ -421,11 +421,21 @@ def sortBootstrap():
              [((xs,), [x for x in xs if x != 0])
               for _ in range(10)
               for xs in [[randint(0, 3) for _ in range(5)]]]),
+        Task("remove primes",
+             arrow(tlist(tint), tlist(tint)),
+             [((xs,), [x for x in xs if not (x in {2,3,5,7,11,13,17,19,23})])
+              for _ in range(10)
+              for xs in [[randint(0, 20) for _ in range(7)]]]),
+        Task("remove squares",
+             arrow(tlist(tint), tlist(tint)),
+             [((xs,), [x for x in xs if not (int(math.sqrt(x))**2 == x)])
+              for _ in range(10)
+              for xs in [[randint(0, 20) for _ in range(7)]]]),
         Task("remove > 1",
              arrow(tlist(tint), tlist(tint)),
              [((xs,), [x for x in xs if not (x > 1)])
               for _ in range(10)
-              for xs in [[randint(0, 3) for _ in range(5)]]]),
+              for xs in [[randint(0, 5) for _ in range(7)]]]),
     ]
 
     # Needed for selection sort
