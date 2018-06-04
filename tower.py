@@ -180,6 +180,6 @@ if __name__ == "__main__":
 
     for result in generator:
         iteration = len(result.learningCurve)
-        newTowers = {tuple(centerTower(frontier.sample().program.evaluate([])))
-                     for frontier in result.taskSolutions.values() if not frontier.empty}
+        newTowers = [tuple(centerTower(frontier.sample().program.evaluate([])))
+                     for frontier in result.taskSolutions.values() if not frontier.empty]
         exportTowers(newTowers, 'experimentOutputs/uniqueTowers%d.png'%iteration)
