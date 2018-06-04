@@ -39,6 +39,13 @@ class Program(object):
         except UnificationFailure as e:
             return False
 
+    def betaNormalForm(self):
+        n = self
+        while True:
+            np = n.betaReduce()
+            if np is None: return n
+            n = np
+
     def infer(self):
         try:
             return self.inferType(Context.EMPTY, [], {})[1].canonical()
@@ -174,6 +181,22 @@ class Application(Program):
             self.falseBranch = None
             self.trueBranch = None
             self.branch = None
+
+    def betaReduce(self):
+        # See if either the function or the argument can be reduced
+        f = self.f.betaReduce()
+        if f is not None: return Application(f,self.x)
+        x = self.x.betaReduce()
+        if x is not None: return Application(self.f,x)
+
+        # Neither of them could be reduced. Is this not a redex?
+        if not f.isAbstraction: return None
+
+        # Perform substitution
+        b = self.f.body
+        v = self.x
+
+        return b.substitute(Index(0), v.shift(1)).shift(-1)
 
     @property
     def isApplication(self): return True
@@ -331,6 +354,8 @@ class Index(Program):
                 raise ShiftFailure()
             return Index(i)
 
+    def betaReduce(self): return None
+
     def substitute(self, old, new):
         if old == self:
             return new
@@ -409,6 +434,11 @@ class Abstraction(Program):
     def evaluate(self, environment):
         return lambda x: self.body.evaluate([x] + environment)
 
+    def betaReduce(self):
+        b = self.body.betaReduce()
+        if b is None: return None
+        return Abstraction(b)
+
     def inferType(self, context, environment, freeVariables):
         (context, argumentType) = context.makeVariable()
         (context, returnType) = self.body.inferType(
@@ -486,6 +516,8 @@ class Primitive(Program):
 
     def evaluate(self, environment): return self.value
 
+    def betaReduce(self): return None
+
     def inferType(self, context, environment, freeVariables):
         return self.tp.instantiate(context)
 
@@ -552,6 +584,8 @@ class Invented(Program):
 
     def evaluate(self, e): return self.body.evaluate([])
 
+    def betaReduce(self): return self.body
+
     def inferType(self, context, environment, freeVariables):
         return self.tp.instantiate(context)
 
@@ -594,6 +628,9 @@ class FragmentVariable(Program):
 
     def evaluate(self, e):
         raise Exception('Attempt to evaluate fragment variable')
+
+    def betaReduce(self):
+        raise Exception('Attempt to beta reduce fragment variable')
 
     def inferType(self, context, environment, freeVariables):
         return context.makeVariable()
