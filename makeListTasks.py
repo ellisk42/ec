@@ -428,7 +428,7 @@ def sortBootstrap():
               for xs in [[randint(0, 20) for _ in range(7)]]]),
         Task("remove squares",
              arrow(tlist(tint), tlist(tint)),
-             [((xs,), [x for x in xs if not (int(math.sqrt(x))**2 == x)])
+             [((xs,), [x for x in xs if not (int(x**0.5)**2 == x)])
               for _ in range(10)
               for xs in [[randint(0, 20) for _ in range(7)]]]),
         Task("remove > 1",
