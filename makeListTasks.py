@@ -421,6 +421,11 @@ def sortBootstrap():
              [((xs,), [x for x in xs if x != 0])
               for _ in range(10)
               for xs in [[randint(0, 3) for _ in range(5)]]]),
+        Task("remove > 1",
+             arrow(tlist(tint), tlist(tint)),
+             [((xs,), [x for x in xs if not (x > 1)])
+              for _ in range(10)
+              for xs in [[randint(0, 3) for _ in range(5)]]]),
     ]
 
     # Needed for selection sort
