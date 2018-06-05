@@ -329,7 +329,7 @@ if __name__ == "__main__":
 
     explorationCompression(baseGrammar, train,
                            outputPrefix="experimentOutputs/rational",
-                           compressor="rust",
+                           compressor="pypy",
                            evaluationTimeout=0.1,
                            testingTasks=test,
                            **arguments)
