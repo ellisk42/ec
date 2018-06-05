@@ -9,10 +9,10 @@ import math
 # evaluation to regular regex form. then I can unflatten using Luke's stuff.
 
 
-def _kleene(x): return pregex.KleeneStar(x)
+def _kleene(x): return pregex.KleeneStar(x, p=0.25)
 
 
-def _plus(x): return pregex.Plus(x)
+def _plus(x): return pregex.Plus(x, p=0.25)
 
 
 def _maybe(x): return pregex.Maybe(x)

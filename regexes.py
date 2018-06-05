@@ -139,6 +139,11 @@ def regex_options(parser):
     parser.add_argument("--topk_use_map",
                         dest="topk_use_map",
                         action="store_true",)
+    """parser.add_argument("--stardecay",
+                        type=float,
+                        dest="stardecay",
+                        default=0.5,
+                        help="p value for kleenestar and plus")"""
 
 # Lucas recommends putting a struct with the definitions of the primitives here.
 # TODO:
@@ -200,11 +205,14 @@ if __name__ == "__main__":
     from time import gmtime, strftime
     timestr = strftime("%m%d%H%M%S", gmtime())
 
+    #stardecay = args.stardecay
+    #stardecay = args.pop('stardecay')
+    #decaystr = 'd' + str(stardecay)
+
     args.update({
         "featureExtractor": extractor,
-        "outputPrefix": "experimentOutputs/regex" + primtype + timestr,
+        "outputPrefix": "experimentOutputs/regex" + primtype + timestr, #+ decaystr,
         "evaluationTimeout": 1.0,  # 0.005,
-        "topK": 5,
         "topk_use_map": False,
         "maximumFrontier": 50,
         "solver": "python",
@@ -213,7 +221,8 @@ if __name__ == "__main__":
     ####
 
 
-    # use the
+        # use the
+    #prim_list = prims(stardecay)
     prim_list = prims()
     n_base_prim = len(prim_list) - 5.
     specials = ["r_kleene", "r_plus", "r_maybe", "r_alt", "r_concat"]
@@ -223,6 +232,7 @@ if __name__ == "__main__":
          prim) if prim.name not in specials else (
             0.15,
             prim) for prim in prim_list]
+
 
     baseGrammar = Grammar.fromProductions(productions)
     #baseGrammar = Grammar.uniform(prims())
