@@ -2,7 +2,6 @@ from utilities import eprint, exp, log, timing, valid
 from task import Task, EvaluationTimeout
 import random
 import gc
-from pregex import pregex
 import signal
 from program import *
 from utilities import *
@@ -35,6 +34,7 @@ class EuclideanLikelihoodModel:
 
 
 def unigram_regex_bound(X):
+    from pregex import pregex
     c = Counter(X)
     regexes = [
         pregex.create(".+"),

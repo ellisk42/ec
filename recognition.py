@@ -5,8 +5,7 @@ from heapq import *
 from utilities import eprint
 # luke
 from program import tokeniseProgram, untokeniseProgram, ParseFailure
-# from network import Network #for now
-import pinn
+
 
 import time
 import gc
@@ -917,6 +916,8 @@ class NewRecognitionModel(nn.Module):
             grammar,
             vocabulary=string.printable,
             cuda=False):
+        import pinn
+        
         super(NewRecognitionModel, self).__init__()
         self.grammar = grammar
         self.use_cuda = cuda

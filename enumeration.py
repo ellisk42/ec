@@ -4,7 +4,6 @@ from task import *
 from type import *
 from program import *
 from grammar import *
-from pregex import pregex
 
 import gc
 import traceback
@@ -302,14 +301,16 @@ def solveForTask_ocaml(_=None,
         message["maxParameters"] = tasks[0].maxParameters
 
     message = json.dumps(message)
-    with open("message", "w") as f:
-        f.write(message)
+    # uncomment this if you want to save the messages being sent to the solver
+    # with open("message", "w") as f:
+    #     f.write(message)
+
     try:
         process = subprocess.Popen("./solver",
                                    stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE)
         response, error = process.communicate(bytes(message, encoding="utf-8"))
-        response = json.loads(response)
+        response = json.loads(response.decode("utf-8"))
     except OSError as exc:
         raise exc
 
@@ -443,6 +444,7 @@ def enumerateNetworkForTasks(cpu_idx, network, tasks_features, likelihoodModel=N
                      evaluationTimeout=None,
                      frontierSize=None,
                      maximumFrontier = 10**2):
+    from pregex import pregex
     assert likelihoodModel is not None
     assert network is not None
 

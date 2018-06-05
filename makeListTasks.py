@@ -388,6 +388,98 @@ def bonusListProblems():
     ]
     return bonus
 
+def sortBootstrap():
+    # These tasks have as their goal the learning of (1) filter, and
+    # (2) sort, which uses filter.
+    def flip(): return random() > 0.5
+    def randomList(lb=None, ub=None):
+        if lb is None:
+            lb = 2
+        if ub is None:
+            ub = 5
+        return [randint(0, 5) for _ in range(randint(lb, ub))]
+    def randomBooleanList():
+        return [flip() for _ in range(randint(4, 7))]
+    def removeDuplicates(l):
+        if len(l) == 0: return l
+        return [l[0]] + removeDuplicates([ z for z in l if z != l[0] ])
+    
+    filterBootstrap = [
+        # Task("remove empty lists",
+        #      arrow(tlist(tlist(tbool)), tlist(tlist(tbool))),
+        #      [((ls,), [l for l in ls if len(l) > 0])
+        #       for _ in range(10)
+        #       for ls in [[[flip() for _ in range(randint(0, 3))]
+        #                   for _ in range(4)]]]),
+        # Task("remove non 0s",
+        #      arrow(tlist(tint), tlist(tint)),
+        #      [((xs,), filter(lambda x: x == 0, xs))
+        #       for _ in range(10)
+        #       for xs in [[ randint(0,3) for _ in range(5) ]] ]),
+        Task("remove 0s",
+             arrow(tlist(tint), tlist(tint)),
+             [((xs,), [x for x in xs if x != 0])
+              for _ in range(10)
+              for xs in [[randint(0, 3) for _ in range(5)]]]),
+        Task("remove primes",
+             arrow(tlist(tint), tlist(tint)),
+             [((xs,), [x for x in xs if not (x in {2,3,5,7,11,13,17,19,23})])
+              for _ in range(10)
+              for xs in [[randint(0, 20) for _ in range(7)]]]),
+        Task("remove squares",
+             arrow(tlist(tint), tlist(tint)),
+             [((xs,), [x for x in xs if not (int(x**0.5)**2 == x)])
+              for _ in range(10)
+              for xs in [[randint(0, 20) for _ in range(7)]]]),
+        Task("remove > 1",
+             arrow(tlist(tint), tlist(tint)),
+             [((xs,), [x for x in xs if not (x > 1)])
+              for _ in range(10)
+              for xs in [[randint(0, 5) for _ in range(7)]]]),
+    ]
+
+    # Needed for selection sort
+    minimumBootstrap = [
+        Task("min2", arrow(tint,tint,tint),
+             [((x,y),min(x,y))
+              for x in range(4)
+              for y in range(4) ]),
+        Task("minimum of list", arrow(tlist(tint),tint),
+             [((l,),min(l))
+              for _ in range(15) 
+              for l in [randomList()] ])
+    ]
+
+    appendBootstrap = [
+        Task("append bool", arrow(tlist(tbool), tlist(tbool), tlist(tbool)),
+             [((x, y), x + y)
+              for _ in range(10)
+              for [x, y] in [[randomBooleanList(), randomBooleanList()]]]),
+        Task("append int", arrow(tlist(tint), tlist(tint), tlist(tint)),
+             [((x, y), x + y)
+              for _ in range(10)
+              for [x, y] in [[randomList(), randomList()]]])
+    ]
+
+    insertionBootstrap = [
+        Task("insert into sorted list", arrow(tint,tlist(tint),tlist(tint)),
+             [((x,l), [y for y in l if y < x ] + [x] + [y for y in l if y > x ])
+              for _ in range(15) 
+              for x in [randint(0,5)]
+              for l in [randomList()] ])
+    ]
+
+
+    sortTask = [
+        Task("sort-and-deduplicate", arrow(tlist(tint),tlist(tint)),
+             [((l,),list(sorted(l)))
+              for _ in range(15)
+              for l in [removeDuplicates(randomList())]
+              #for l in [] 
+             ])]
+
+    return filterBootstrap + appendBootstrap + insertionBootstrap + sortTask
+    
 
 def exportTasks():
     import sys

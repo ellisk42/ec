@@ -39,6 +39,13 @@ class Program(object):
         except UnificationFailure as e:
             return False
 
+    def betaNormalForm(self):
+        n = self
+        while True:
+            np = n.betaReduce()
+            if np is None: return n
+            n = np
+
     def infer(self):
         try:
             return self.inferType(Context.EMPTY, [], {})[1].canonical()
@@ -161,15 +168,34 @@ class Application(Program):
         self.f = f
         self.x = x
         self.hashCode = None
-        if isinstance(f,int): return 
-        self.isConditional = f.isApplication and \
-            f.f.isApplication and \
-            f.f.f.isPrimitive and \
-            f.f.f.name == "if"
+        self.isConditional = (not isinstance(f,int)) and \
+                             f.isApplication and \
+                             f.f.isApplication and \
+                             f.f.f.isPrimitive and \
+                             f.f.f.name == "if"
         if self.isConditional:
             self.falseBranch = x
             self.trueBranch = f.x
             self.branch = f.f.x
+        else:
+            self.falseBranch = None
+            self.trueBranch = None
+            self.branch = None
+
+    def betaReduce(self):
+        # See if either the function or the argument can be reduced
+        f = self.f.betaReduce()
+        if f is not None: return Application(f,self.x)
+        x = self.x.betaReduce()
+        if x is not None: return Application(self.f,x)
+
+        # Neither of them could be reduced. Is this not a redex?
+        if not self.f.isAbstraction: return None
+
+        # Perform substitution
+        b = self.f.body
+        v = self.x
+        return b.substitute(Index(0), v.shift(1)).shift(-1)
 
     @property
     def isApplication(self): return True
@@ -184,6 +210,13 @@ class Application(Program):
         if self.hashCode is None:
             self.hashCode = hash((hash(self.f), hash(self.x)))
         return self.hashCode
+
+    """Because Python3 randomizes the hash function, we need to never pickle the hash"""
+    def __getstate__(self):
+        return self.f, self.x, self.isConditional, self.falseBranch, self.trueBranch, self.branch
+    def __setstate__(self, state):
+        self.f, self.x, self.isConditional, self.falseBranch, self.trueBranch, self.branch = state
+        self.hashCode = None
 
     def visit(self,
               visitor,
@@ -320,6 +353,8 @@ class Index(Program):
                 raise ShiftFailure()
             return Index(i)
 
+    def betaReduce(self): return None
+
     def substitute(self, old, new):
         if old == self:
             return new
@@ -377,6 +412,14 @@ class Abstraction(Program):
             self.hashCode = hash((hash(self.body),))
         return self.hashCode
 
+        """Because Python3 randomizes the hash function, we need to never pickle the hash"""
+    def __getstate__(self):
+        return self.body
+    def __setstate__(self, state):
+        self.body = state
+        self.hashCode = None
+
+
     def visit(self,
               visitor,
               *arguments,
@@ -389,6 +432,11 @@ class Abstraction(Program):
 
     def evaluate(self, environment):
         return lambda x: self.body.evaluate([x] + environment)
+
+    def betaReduce(self):
+        b = self.body.betaReduce()
+        if b is None: return None
+        return Abstraction(b)
 
     def inferType(self, context, environment, freeVariables):
         (context, argumentType) = context.makeVariable()
@@ -467,6 +515,8 @@ class Primitive(Program):
 
     def evaluate(self, environment): return self.value
 
+    def betaReduce(self): return None
+
     def inferType(self, context, environment, freeVariables):
         return self.tp.instantiate(context)
 
@@ -524,7 +574,16 @@ class Invented(Program):
             self.hashCode = hash((0, hash(self.body)))
         return self.hashCode
 
+    """Because Python3 randomizes the hash function, we need to never pickle the hash"""
+    def __getstate__(self):
+        return self.body, self.tp
+    def __setstate__(self, state):
+        self.body, self.tp = state
+        self.hashCode = None
+
     def evaluate(self, e): return self.body.evaluate([])
+
+    def betaReduce(self): return self.body
 
     def inferType(self, context, environment, freeVariables):
         return self.tp.instantiate(context)
@@ -568,6 +627,9 @@ class FragmentVariable(Program):
 
     def evaluate(self, e):
         raise Exception('Attempt to evaluate fragment variable')
+
+    def betaReduce(self):
+        raise Exception('Attempt to beta reduce fragment variable')
 
     def inferType(self, context, environment, freeVariables):
         return context.makeVariable()

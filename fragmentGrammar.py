@@ -358,7 +358,7 @@ class FragmentGrammar(object):
                                               # figuring out how big we can make it without
                                               # running out of memory.
                                               maxtasksperchild=5)
-                newScore, newGrammar = max(scoredFragments)
+                newScore, newGrammar = max(scoredFragments, key=lambda sg: sg[0])
 
                 if newScore <= bestScore:
                     break

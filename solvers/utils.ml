@@ -75,8 +75,8 @@ let index_of l x =
   in loop 0 l
 
 let set_equal c x y = 
-  let x = List.sort ~compare:c x
-  and y = List.sort ~compare:c y in
+  let x = List.sort ~cmp:c x
+  and y = List.sort ~cmp:c y in
   List.compare c x y = 0
 
 
@@ -112,7 +112,7 @@ let merge_a_list ls ~f:c =
           try
             let old_value = Hashtbl.find_exn merged tag in
             Hashtbl.set merged ~key:tag ~data:(c value old_value)
-          with Caml.Not_found -> ignore (Hashtbl.add merged tag value)
+          with Not_found -> ignore (Hashtbl.add merged tag value)
         )
     );
   Hashtbl.to_alist merged
@@ -195,7 +195,7 @@ let cpu_count () =
       with e ->
         (close () ; raise e)
   with
-    | Caml.Not_found | Sys_error _ | Failure _ | Scanf.Scan_failure _ 
+    | Not_found | Sys_error _ | Failure _ | Scanf.Scan_failure _ 
     | End_of_file | Unix.Unix_error (_, _, _) -> 1
 
 

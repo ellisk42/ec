@@ -86,25 +86,10 @@ def evaluateArches(ts):
         print()
         print()
 
-    exportTowers([towers[:1], towers[:2], towers], "arches.png")
+    exportTowers(towers, "arches.png")
     import sys
     sys.exit()
 
-
-def exportTowers(towers, name):
-    from PIL import Image
-    from towers.tower_common import TowerWorld
-
-    m = max(len(t) for t in towers)
-    towers = [[TowerWorld().draw(t) for t in ts]
-              for ts in towers]
-
-    size = towers[0][0].shape
-    tp = towers[0][0].dtype
-    towers = [np.concatenate(
-        ts + [np.zeros(size, dtype=tp)] * (m - len(ts)), axis=1) for ts in towers]
-    towers = np.concatenate(towers, axis=0)
-    Image.fromarray(towers).convert('RGB').save(name)
 
 
 def bruteForceTower_(size):
@@ -152,57 +137,7 @@ def bruteForceBaseline(tasks):
     sys.exit(0)
 
 
-def updateCaching(g, perturbations, _=None,
-                  evaluationTimeout=None, enumerationTimeout=None):
-    from towers.tower_common import TowerWorld
-    # Runs unconditional enumeration and evaluates the resulting
-    # towers but does nothing else with them. The sole purpose of
-    # this is to make it so that all of the towers that are likely
-    # to be proposed are already cached
-    assert enumerationTimeout is not None
 
-    budget = 1.
-    previousBudget = 0.
-    startTime = time.time()
-    programs = 0
-    oldTowers = 0
-    newTowers = 0
-
-    caching = getTowerCash()
-
-    while (time.time() - startTime) < enumerationTimeout:
-        for _, _, p in g.enumeration(Context.EMPTY, [], ttower,
-                                     maximumDepth=99,
-                                     upperBound=budget,
-                                     lowerBound=previousBudget):
-            if (time.time() - startTime) >= enumerationTimeout:
-                break
-
-            programs += 1
-            try:
-                t = runWithTimeout(lambda: p.evaluate([]), evaluationTimeout)
-            except BaseException:
-                continue
-            if len(t) == 0:
-                continue
-            t = tuple(t)
-            for perturbation in perturbations:
-                if (t, perturbation) in caching:
-                    oldTowers += 1
-                    continue
-                newTowers += 1
-                w = TowerWorld()
-                try:
-                    result = w.sampleStability(tower, perturbation, N=30)
-                except BaseException:
-                    result = None
-                caching[(t, perturbation)] = result
-        previousBudget = budget
-        budget += 1.
-
-    eprint(
-        "Enumerated %d programs; %d new tower evaluations and %d old tower evaluations." %
-        (programs, newTowers / len(perturbations), oldTowers / len(perturbations)))
 
 
 if __name__ == "__main__":
@@ -213,9 +148,9 @@ if __name__ == "__main__":
                          [Primitive(str(j), tint, j) for j in range(2, 5)])
 
     tasks = makeTasks()
-    test, train = testTrainSplit(tasks, 100. / len(tasks))
+    test, train = testTrainSplit(tasks, 50. / len(tasks))
     eprint("Split %d/%d test/train" % (len(test), len(train)))
-    evaluateArches(train)
+    # evaluateArches(train)
     # if True: bruteForceBaseline(train)
 
     arguments = commandlineArguments(
@@ -243,16 +178,8 @@ if __name__ == "__main__":
 
     perturbations = {t.perturbation for t in train}
 
-    def update(g):
-        updateCaching(g, perturbations,
-                      evaluationTimeout=evaluationTimeout,
-                      enumerationTimeout=arguments["enumerationTimeout"])
-    # update(g0)
-
-    # list of list of towers, one for each iteration
-    towers = []
     for result in generator:
-        newTowers = {tuple(centerTower(frontier.bestPosterior.program.evaluate([])))
-                     for frontier in result.taskSolutions.values() if not frontier.empty}
-        towers.append(sorted(newTowers))
-        exportTowers(towers, 'experimentOutputs/uniqueTowers.png')
+        iteration = len(result.learningCurve)
+        newTowers = [tuple(centerTower(frontier.sample().program.evaluate([])))
+                     for frontier in result.taskSolutions.values() if not frontier.empty]
+        exportTowers(newTowers, 'experimentOutputs/uniqueTowers%d.png'%iteration)

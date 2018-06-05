@@ -253,8 +253,7 @@ def callCompiled(f, *arguments, **keywordArguments):
     pickle.dump(request, p.stdin)
     dt = time.time() - start
     if dt > 1:
-        eprint(
-            "(Python side of compiled driver: SLOW) Wrote serialized message for {} in time {}".format(
+        eprint("(Python side of compiled driver: SLOW) Wrote serialized message for {} in time {}".format(
                 f.__name__,
                 dt))
 

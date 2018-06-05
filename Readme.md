@@ -25,3 +25,42 @@ Get Rust (e.g. `curl https://sh.rustup.rs -sSf | sh` according to
 Now running make in the `rust_compressor` folder should install the right
 packages and build the binary.
 
+### Installing submodules
+
+Run:
+```
+git submodule update --recursive --init
+```
+from within the main project directory. You might need a recent version of git; 2.7.4 worked.
+
+### Miscellaneous python dependencies
+
+This should install all of the Python packages that you need. Not all
+of these are needed for any particular domain, but all of these are
+required by at least one domain.
+
+```
+pip install dill
+pip install sexpdata
+pip install Box2D-kengz
+pip install pygame
+pip install pycairo
+pip install psutil
+```
+
+### PyPy
+
+If for some reason you want to run something in pypy, install it from:
+```
+https://github.com/squeaky-pl/portable-pypy#portable-pypy-distribution-for-linux
+```
+Be sure to add `pypy3` to the path. Really though you should try to
+use the rust compressor and the ocaml solver. You will have to
+(annoyingly) install parallel libraries on the pypy side even if you
+have them installed on the Python side:
+
+```
+pypy3 -m ensurepip
+pypy3 -m pip install --user vmprof
+pypy3 -m pip install --user dill
+```
