@@ -12,6 +12,7 @@ import random
 from type import tpregex
 
 
+
 class LearnedFeatureExtractor(RecurrentFeatureExtractor):
     H = 16
     USE_CUDA = False
@@ -241,8 +242,8 @@ if __name__ == "__main__":
     #    eprint(baseGrammar.sample(tpregex))
 
     #eprint(baseGrammar)
-
     #explore
+
     explorationCompression(baseGrammar, train,
     						testingTasks = test,
     						**args)
