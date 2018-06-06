@@ -80,7 +80,7 @@ let differentiable_task
                 match loop e with
                   | None -> None
                   | Some(later_loss) ->
-                    try Some(loss y prediction +& later_loss)
+                    try Some(loss prediction y +& later_loss)
                     with DifferentiableBadShape -> None
             with | UnknownPrimitive(n) -> raise (Failure ("Unknown primitive: "^n))
                  | EnumerationTimeout  -> raise EnumerationTimeout
@@ -93,7 +93,7 @@ let differentiable_task
           let d = List.length parameters |> Int.to_float in
           let l = l *& (~$ (1. /. n)) in
           let l = restarting_optimize (rprop ~lr:0.5 ~decay:0.5 ~grow:1.2)
-              ~attempts:100
+              ~attempts:300
               ~update:0
               ~iterations:(if List.length parameters = 0 then 0 else 50)
               parameters l
