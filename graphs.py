@@ -9,8 +9,11 @@ from matplotlib.ticker import MaxNLocator
 import matplotlib.lines as mlines
 
 import matplotlib
-from test_unpickle import loadfun
-
+#from test_unpickle import loadfun
+def loadfun(x):
+    with open(x, 'rb') as handle:
+        result = dill.load(handle)
+    return result
 
 TITLEFONTSIZE = 14
 TICKFONTSIZE = 12
@@ -58,62 +61,6 @@ def parseResultsPath(p):
     return Bunch(parameters)
 
 
-def taskColor(task):
-    n = task.name
-
-    numberOfZeros = sum(c == "0" for c in n)
-    if numberOfZeros == 0:
-        return "r"
-    if numberOfZeros == 1:
-        return "y"
-    if numberOfZeros == 2:
-        return "y"
-    if numberOfZeros == 3:
-        return "y"
-    if numberOfZeros == 4:
-        return "y"
-    assert False
-
-    if "0x^4" not in n:
-        return "r"
-    if "0x^3" not in n:
-        return "r"
-    if "0x^2" not in n:
-        return "g"
-    return "g"
-
-
-def PCAembedding(e, label=lambda l: l, color=lambda ll: 'b'):
-    """e: a map from object to vector
-    label: a function from object to how it should be labeled
-    """
-    primitives = list(e.keys())
-    matrix = np.array([e[p] for p in primitives])
-    N, D = matrix.shape
-
-    from sklearn.decomposition import PCA
-    from sklearn.preprocessing import scale
-
-    matrix = scale(matrix)
-    solver = PCA(n_components=2)
-    matrix = solver.fit_transform(matrix)
-
-    e = dict({p: matrix[j, :]
-              for j, p in enumerate(primitives)})
-    primitiveVectors = list(e.items())
-
-    plot.scatter([v[0] for _, v in primitiveVectors],
-                 [v[1] for _, v in primitiveVectors],
-                 c=[color(p) for p, _ in primitiveVectors])
-    for p, v in primitiveVectors:
-        l = label(p)
-        if not isinstance(l, str):
-            l = str(l)
-        plot.annotate(l,
-                      (v[0] + random.random(),
-                       v[1] + random.random()))
-
-
 def plotECResult(
         resultPaths,
         colors='rgbycm',
@@ -125,29 +72,20 @@ def plotECResult(
     results = []
     parameters = []
     for j, path in enumerate(resultPaths):
-        #with open(path, 'rb') as handle:
-            #print("path:", path)
-            #result = dill.load(handle)
-        file3 = "experimentOutputs/regex_activation=sigmoid_aic=1.0_arity=3_ET=30_helmholtzBatch=5000_HR=0.75_it=10_likelihoodModel=probabilistic_MF=50_baseline=False_pc=10.0_steps=250_L=1.0_K=5_useNewRecognitionModel=False_rec=True_feat=LearnedFeatureExtractor.pickle"
-        if True:
-            result = loadfun(file3)
+#        with open(path, 'rb') as handle:
+        print("path:", path)
+        result = loadfun(path)
 
-            if hasattr(result, "baselines") and result.baselines:
-                for name, res in result.baselines.items():
-                    results.append(res)
-                    p = parseResultsPath(path)
-                    p["baseline"] = name.replace("_", " ")
-                    parameters.append(p)
-            else:
-                results.append(result)
+        if hasattr(result, "baselines") and result.baselines:
+            for name, res in result.baselines.items():
+                results.append(res)
                 p = parseResultsPath(path)
+                p["baseline"] = name.replace("_", " ")
                 parameters.append(p)
-                # This was added right before the nips deadline
-                # because we never got to export this but it printed out the
-                # results so I have it
-                if path == "textCheckpoints/challenge/text_activation=tanh_aic=1.0_arity=3_ET=7200_helmholtzBatch=5000_HR=0.5_it=4_likelihoodModel=all-or-nothing_MF=2_baseline=False_pc=30.0_steps=250_L=10.0_K=2_rec=True_feat=LearnedFeatureExtractor.pickle":
-                    results[-1].testingSearchTime.append(
-                        [29] * len(results[-1].testingSearchTime[-1]))
+        else:
+            results.append(result)
+            p = parseResultsPath(path)
+            parameters.append(p)
 
     # Collect together the timeouts, which determine the style of the line
     # drawn
@@ -166,6 +104,7 @@ def plotECResult(
         a1.set_ylabel('%  Solved (solid)', fontsize=LABELFONTSIZE)
     else:
         a1.set_ylabel('% Testing Tasks Solved', fontsize=LABELFONTSIZE)
+        
 
     if showSolveTime:
         a2 = a1.twinx()
@@ -177,25 +116,22 @@ def plotECResult(
 
     plot.xticks(range(0, n_iters), fontsize=TICKFONTSIZE)
 
-    recognitionToColor = {False: "r", True: "b"}
+    recognitionToColor = {False: "teal", True: "orange"}
 
     for result, p in zip(results, parameters):
         if hasattr(p, "baseline") and p.baseline:
             ys = [100. * result.learningCurve[-1] /
                   len(result.taskSolutions)] * n_iters
         else:
-            ys = [100. * len(t) / len(result.taskSolutions)
+            ys = [100. * len(t) / result.numTestingTasks
                   for t in result.testingSearchTime[:iterations]]
         color = recognitionToColor[p.useRecognitionModel]
-        l, = a1.plot(list(range(0, len(ys))), ys, color +
-                     timeoutToStyle[p.enumerationTimeout])
-        # if label is not None:
-        #     l.set_label(label(p))
+        l, = a1.plot(list(range(0, len(ys))), ys, color=color, ls='-')
 
         if showSolveTime:
             a2.plot(range(len(result.testingSearchTime[:iterations])),
                     [sum(ts) / float(len(ts)) for ts in result.testingSearchTime[:iterations]],
-                    color + '--')
+                    color=color, ls='--')
 
     a1.set_ylim(ymin=0, ymax=110)
     a1.yaxis.grid()
@@ -253,54 +189,7 @@ def plotECResult(
         os.system('feh %s' % export)
     else:
         plot.show()
-    assert False
-
-    for result in results:
-        if hasattr(
-                result,
-                'recognitionModel') and result.recognitionModel is not None:
-            plot.figure()
-            PCAembedding(
-                result.recognitionModel.productionEmbedding(),
-                label=prettyProgram)
-            if export:
-                export = export[:-4] + "_DSLembedding" + export[-4:]
-                plot.savefig(export)
-                os.system("feh %s" % (export))
-            else:
-                plot.show()
-            plot.figure()
-            tasks = list(result.taskSolutions.keys())
-            PCAembedding(result.recognitionModel.taskEmbeddings(tasks),
-                         label=lambda thing: thing,
-                         color=taskColor)
-            if export:
-                export = export[:-4] + "_task_embedding" + export[-4:]
-                plot.savefig(export)
-                os.system("feh %s" % (export))
-            else:
-                plot.show()
-
-            if isinstance(
-                    result.recognitionModel.featureExtractor,
-                    RecurrentFeatureExtractor):
-                plot.figure()
-                colormap = {}
-                for j in range(26):
-                    colormap[chr(ord('a') + j)] = 'b'
-                for j in range(26):
-                    colormap[chr(ord('g') + j)] = 'g'
-                for j in [" ", ",", ">", "<"]:
-                    colormap[j] = 'r'
-
-                PCAembedding(
-                    result.recognitionModel.featureExtractor.symbolEmbeddings(),
-                    label=lambda thing: thing,
-                    color=lambda thing: colormap.get(
-                        thing,
-                        'k'))
-                plot.show()
-
+        
 
 def tryIntegerParse(s):
     try:

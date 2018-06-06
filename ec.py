@@ -80,6 +80,25 @@ class ECResult():
     def parameterOfAbbreviation(abbreviation):
         return ECResult.abbreviationToParameter.get(abbreviation, abbreviation)
 
+    @staticmethod
+    def clearRecognitionModel(path):
+        SUFFIX = '.pickle'
+        assert path.endswith(SUFFIX)
+        
+        with open(path,'rb') as handle:
+            result = dill.load(handle)
+        
+        result.recognitionModel = None
+        
+        clearedPath = path[:-len(SUFFIX)] + "_graph=True" + SUFFIX
+        with open(clearedPath,'wb') as handle:
+            result = dill.dump(result, handle)
+        eprint(" [+] Cleared recognition model from:")
+        eprint("     %s"%path)
+        eprint("     and exported to:")
+        eprint("     %s"%clearedPath)
+        eprint("     Use this one for graphing.")
+
 
 ECResult.abbreviationToParameter = {
     v: k for k, v in ECResult.abbreviations.items()}
@@ -539,6 +558,8 @@ def ecIterator(grammar, tasks,
                     eprint(result)
                     assert(False)
             eprint("Exported checkpoint to", path)
+            if useRecognitionModel:
+                ECResult.clearRecognitionModel(path)
 
         yield result
 
@@ -721,6 +742,11 @@ def commandlineArguments(_=None,
         action="store_true",
         default=False,
         help="use ll cutoff for training tasks (for probabilistic likelihood model only)")
+    parser.add_argument("--clear-recognition",
+                        dest="clear-recognition",
+                        help="Clears the recognition model from a checkpoint. Necessary for graphing results with recognition models, because pickle is kind of stupid sometimes.",
+                        default=None,
+                        type=str)
     parser.set_defaults(useRecognitionModel=useRecognitionModel,
                         featureExtractor=featureExtractor,
                         maximumFrontier=maximumFrontier,
@@ -728,4 +754,9 @@ def commandlineArguments(_=None,
     if extras is not None:
         extras(parser)
     v = vars(parser.parse_args())
+    if v["clear-recognition"] is not None:
+        ECResult.clearRecognitionModel(v["clear-recognition"])
+        sys.exit(0)
+    else:
+        del v["clear-recognition"]
     return v
