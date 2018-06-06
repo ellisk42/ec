@@ -133,6 +133,4 @@ grammar, frontiers = induceGrammar(baseGrammar, frontiers,
                            topK=5, topk_use_map=False,
                            pseudoCounts=1.0, a=3,
                            aic=0.0, structurePenalty=.1,
-                           backend='pypy', CPUs=1, iteration=1)
-
-assert False
+                           backend='rust', CPUs=1, iteration=1)

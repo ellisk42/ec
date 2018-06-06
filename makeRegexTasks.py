@@ -41,6 +41,8 @@ def makeOldTasks():
     return regextasks  # some list of tasks
 
 
+
+
 def makeShortTasks():
 
     #load new data:
@@ -198,5 +200,20 @@ def match_col(dataset, rstring):
             matches.append(i)
     return matches
 
+if __name__ == "__main__":
+    import sys
+    def show_tasks(dataset):
+        task_list = []
+        for task in dataset:
+            print(task.name)
+            print([example[1] for example in task.examples[:20]])
+            task_list.append([example[1] for example in task.examples])
+        return task_list
+
+    task = {"number": makeNumberTasks,
+    "words": makeWordTasks,
+    "all": makeLongTasks}[sys.argv[1]]
+
+    x = show_tasks(task())
 
     
