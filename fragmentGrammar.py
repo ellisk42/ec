@@ -217,7 +217,7 @@ class FragmentGrammar(object):
         return context, totalLikelihood, allUses
 
     def expectedUses(self, frontiers):
-        if len(frontiers) == 0:
+        if len(list(frontiers)) == 0:
             return Uses()
         likelihoods = [[(l + entry.logLikelihood, u)
                         for entry in frontier

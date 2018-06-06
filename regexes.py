@@ -215,7 +215,7 @@ if __name__ == "__main__":
         "outputPrefix": "experimentOutputs/regex" + primtype + timestr, #+ decaystr,
         "evaluationTimeout": 1.0,  # 0.005,
         "topk_use_map": False,
-        "maximumFrontier": 50,
+        "maximumFrontier": 10,
         "solver": "python",
         "compressor": "rust"
     })
