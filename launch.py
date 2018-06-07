@@ -92,6 +92,10 @@ rm experimentOutputs/*
 %s
 touch compressor_dummy
 git pull
+
+curl https://sh.rustup.rs -sSfo rustup-init
+sh ./rustup-init -y
+cd rust_compressor && make && cd ..
 """ % copyCheckpoint
 
     br = branch()
