@@ -118,7 +118,7 @@ class ProbabilisticLikelihoodModel:
 
             #testing = True 
             if testing:
-                success = normalized_cum_ll > cutoff_ll + 0.5 #just a silly thing to see if i get inventions across iterations
+                success = normalized_cum_ll > cutoff_ll #just a silly thing to see if i get inventions across iterations
             else:
                 success = normalized_cum_ll > float('-inf')
 
