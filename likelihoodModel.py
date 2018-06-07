@@ -6,6 +6,7 @@ import signal
 from program import *
 from utilities import *
 from collections import Counter
+import math
 
 
 class AllOrNothingLikelihoodModel:
@@ -33,7 +34,7 @@ class EuclideanLikelihoodModel:
         return exp(logLikelihood) > self.successCutoff, logLikelihood
 
 
-def unigram_regex_bound(X):
+def regex_plus_bound(X):
     from pregex import pregex
     c = Counter(X)
     regexes = [
@@ -47,6 +48,54 @@ def unigram_regex_bound(X):
     for r in regexes:
         regex_scores.append(sum(c[x] * r.match(x) for x in c)/float(sum([len(x) for x in X])) )
     return max(regex_scores)
+
+
+
+def unigram_task_score(X):
+    """
+    Given a list of strings, X, calculate the maximum log-likelihood per character for a unigram model over characters (including STOP symbol)
+    """
+    c = Counter(x for s in X for x in s)
+    c.update("end" for s in X)
+    n = sum(c.values())
+    logp = {x:math.log(c[x]/n) for x in c}
+    return sum(c[x]*logp[x] for x in c)/n
+
+def make_corpus_bigram(C):
+    #using newline as "end"
+    #C is a list of tasks
+
+    #make one big list of strings
+    str_list = [example + '\n' for task in C for example in task]
+
+    #make list of 
+    head_count = Counter(element[0] for element in str_list)
+    head_n = sum(head_count.values())
+    head_logp = {x:math.log(head_count[x]/head_n) for x in head_count}
+
+    body_count = Counter(element[i:i+2] for element in str_list for i in range(len(element)-1))
+    body_bigram_n = sum(body_count.values())
+    #body_count/body_bigram_n gives the joint of a bigram
+    body_character_n = Counter(char for element in str_list for char in element)
+    body_unigram_n = sum(body_character_n.values())
+
+    body_logp = {x:math.log(body_count[x] / body_bigram_n / body_character_n[x[0]] * body_unigram_n) for x in body_count}
+
+    return {**head_logp, **body_logp}
+
+def bigram_corpus_score(X, logp):
+    #assume you have a logp dict
+    task_ll = 0
+    for x in X:
+        bigram_list = [x[0]] + [x[i:i+2] for i in range(len(x)-1)] + [x[-1] + '\n']
+
+        string_ll = sum(logp[bigram] for bigram in bigram_list)/(len(x) + 1)
+
+        task_ll += string_ll
+
+    ll = task_ll/len(X)
+    return ll
+
 
 class ProbabilisticLikelihoodModel:
 
@@ -112,7 +161,7 @@ class ProbabilisticLikelihoodModel:
             #normalized_cum_ll_per_char = cum_ll_per_char/float(len(task.examples))
             #avg_char_num = sum([len(example[1]) for example in task.examples])/float(len(task.examples))
             
-            cutoff_ll = unigram_regex_bound(example_list)   
+            cutoff_ll = regex_plus_bound(example_list)   
 
             normalized_cum_ll = cum_ll/ float(sum([len(example) for example in example_list]))
 
