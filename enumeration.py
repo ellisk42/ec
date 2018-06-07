@@ -17,7 +17,7 @@ def multicoreEnumeration(g, tasks, likelihoodModel, _=None,
                          maximumFrontier=None,
                          verbose=True,
                          evaluationTimeout=None,
-                         testing=False):
+                         testing=False, ll_cutoff=None):
     '''g: Either a Grammar, or a map from task to grammar.'''
     from time import time
 
@@ -154,7 +154,8 @@ def multicoreEnumeration(g, tasks, likelihoodModel, _=None,
                                  likelihoodModel=likelihoodModel,
                                  evaluationTimeout=evaluationTimeout,
                                  maximumFrontiers=maximumFrontiers(j),
-                                 testing=testing)
+                                 testing=testing,
+                                 ll_cutoff=ll_cutoff)
                 id2CPUs[nextID] = allocation[j]
                 id2job[nextID] = j
                 nextID += 1
@@ -241,7 +242,9 @@ def solveForTask_ocaml(_=None,
                        timeout=None,
                        likelihoodModel=None,  # FIXME: unused
                        testing=None, # FIXME: unused
-                       evaluationTimeout=None, maximumFrontiers=None):
+                       evaluationTimeout=None, maximumFrontiers=None, ll_cutoff=None):
+    assert ll_cutoff is None
+
     import json
 
     def requestMessage(r):
@@ -371,7 +374,8 @@ def solveForTask_pypy(_=None,
                       lowerBound=None, upperBound=None, budgetIncrement=None,
                       timeout=None,
                       likelihoodModel=None,
-                      evaluationTimeout=None, maximumFrontier=None, testing=False):
+                      evaluationTimeout=None, maximumFrontier=None, testing=False, ll_cutoff=None):
+    assert ll_cutoff is None
     return callCompiled(enumerateForTasks,
                         g, tasks, likelihoodModel,
                         timeout=timeout,
@@ -389,7 +393,7 @@ def solveForTask_python(_=None,
                         timeout=None,
                         CPUs=1,
                         likelihoodModel=None,
-                        evaluationTimeout=None, maximumFrontiers=None, testing=False):
+                        evaluationTimeout=None, maximumFrontiers=None, testing=False, ll_cutoff=None):
     return enumerateForTasks(g, tasks, likelihoodModel,
                              timeout=timeout,
                              testing=testing,
@@ -397,7 +401,7 @@ def solveForTask_python(_=None,
                              evaluationTimeout=evaluationTimeout,
                              maximumFrontiers=maximumFrontiers,
                              budgetIncrement=budgetIncrement,
-                             lowerBound=lowerBound, upperBound=upperBound)
+                             lowerBound=lowerBound, upperBound=upperBound, ll_cutoff=ll_cutoff)
 
 
 class EnumerationTimeout(Exception):
@@ -549,11 +553,11 @@ def enumerateForTasks(g, tasks, likelihoodModel, _=None,
                       timeout=None,
                       elapsedTime=0.,
                       CPUs=1,
-                      testing=False,
+                      testing=False, #unused
                       evaluationTimeout=None,
                       lowerBound=0.,
                       upperBound=100.,
-                      budgetIncrement=1.0, maximumFrontiers=None):
+                      budgetIncrement=1.0, maximumFrontiers=None, ll_cutoff=None):
     assert timeout is not None, \
         "enumerateForTasks: You must provide a timeout."
 
@@ -597,7 +601,7 @@ def enumerateForTasks(g, tasks, likelihoodModel, _=None,
                     #likelihood = task.logLikelihood(p, evaluationTimeout)
                     #if invalid(likelihood):
                         #continue
-                    success, likelihood = likelihoodModel.score(p, task, testing)
+                    success, likelihood = likelihoodModel.score(p, task, ll_cutoff)
                     if not success:
                         continue
                     

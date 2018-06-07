@@ -34,6 +34,11 @@ class EuclideanLikelihoodModel:
         return exp(logLikelihood) > self.successCutoff, logLikelihood
 
 
+#TODO
+#def make_cutoff_model(use_ll_cutoff, tasks):
+    #use_ll_cutoff is a string with the type
+
+
 def regex_plus_bound(X):
     from pregex import pregex
     c = Counter(X)
@@ -103,7 +108,7 @@ class ProbabilisticLikelihoodModel:
         self.timeout = timeout
         # i need timeout
 
-    def score(self, program, task, testing=False):
+    def score(self, program, task, ll_cutoff=None):
         # need a try, catch here for problems, and for timeouts
         # can copy task.py for the timeout structure
         try:
@@ -161,15 +166,26 @@ class ProbabilisticLikelihoodModel:
             #normalized_cum_ll_per_char = cum_ll_per_char/float(len(task.examples))
             #avg_char_num = sum([len(example[1]) for example in task.examples])/float(len(task.examples))
             
-            cutoff_ll = regex_plus_bound(example_list)   
+            #cutoff_ll = regex_plus_bound(example_list)   
 
             normalized_cum_ll = cum_ll/ float(sum([len(example) for example in example_list]))
 
-            #testing = True 
-            if testing:
-                success = normalized_cum_ll > cutoff_ll #just a silly thing to see if i get inventions across iterations
-            else:
+
+
+            #TODO: change the way normalized_cum_ll is calculated 
+            #TODO: refactor to pass in bigram_model, and others
+            #TODO: refactor to do 95% certainty thing josh wants
+
+            if ll_cutoff is None:
                 success = normalized_cum_ll > float('-inf')
+            elif ll_cutoff[0] == "plus":
+                success = normalized_cum_ll > regex_plus_bound(example_list, )
+            elif ll_cutoff[0] == "bigram":
+                #ll_cutoff[1] is the model
+                success = normalized_cum_ll > bigram_corpus_score(example_list, ll_cutoff[1])
+                
+
+
 
             #eprint("cutoff_ll:", cutoff_ll, ", norm_cum_ll:", normalized_cum_ll)	
 
