@@ -233,9 +233,9 @@ if __name__ == "__main__":
     specials = ["r_kleene", "r_plus", "r_maybe", "r_alt", "r_concat"]
 
     productions = [
-        (0.25 / n_base_prim,
+        (0.5 / n_base_prim,
          prim) if prim.name not in specials else (
-            0.15,
+            0.10,
             prim) for prim in prim_list]
 
 
@@ -247,8 +247,17 @@ if __name__ == "__main__":
 
     #eprint(baseGrammar)
     #explore
-    test_stuff = args.pop["debug"]
+    test_stuff = args.pop("debug")
     if test_stuff:
+        eprint(baseGrammar)
+        eprint("sampled programs from prior:")
+        for i in range(100):
+            eprint(baseGrammar.sample(test[0].request,maximumDepth=1000))
+        eprint("""half the probability mass is on higher-order primitives.
+Therefore half of enumerated programs should have more than one node.
+However, we do not observe this.
+Instead we see a very small fraction of programs have more than one node. 
+So something seems to be wrong with grammar.sample.""")
         assert False
 
     explorationCompression(baseGrammar, train,
