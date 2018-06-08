@@ -7,6 +7,7 @@ from program import *
 from utilities import *
 from collections import Counter
 import math
+from makeRegexTasks import makeLongTasks
 
 
 class AllOrNothingLikelihoodModel:
@@ -35,9 +36,26 @@ class EuclideanLikelihoodModel:
 
 
 #TODO
-#def make_cutoff_model(use_ll_cutoff, tasks):
-    #use_ll_cutoff is a string with the type
+def show_tasks(dataset):
+    task_list = []
+    for task in dataset:
+        task_list.append([example[1] for example in task.examples])
+    return task_list
 
+def make_cutoff_model(use_ll_cutoff, tasks):
+    #use_ll_cutoff is a string with the options,
+    if use_ll_cutoff == 'plus':
+        return None #this should be fine
+    elif use_ll_cutoff == 'bigram':
+        #return make_corpus_bigram(show_tasks(tasks))
+        #the correct thing to do is calculate bigrams on the particular train task. 
+        #That breaks, so for now i will calculate on the whole corpus
+        eprint("WARNING: using entire corpus to make bigram model")
+        return make_corpus_bigram(show_tasks(makeLongTasks()))
+    else:
+        eprint('not implemented yet')
+        assert False
+        
 
 def regex_plus_bound(X):
     from pregex import pregex
@@ -179,7 +197,7 @@ class ProbabilisticLikelihoodModel:
             if ll_cutoff is None:
                 success = normalized_cum_ll > float('-inf')
             elif ll_cutoff[0] == "plus":
-                success = normalized_cum_ll > regex_plus_bound(example_list, )
+                success = normalized_cum_ll > regex_plus_bound(example_list)
             elif ll_cutoff[0] == "bigram":
                 #ll_cutoff[1] is the model
                 success = normalized_cum_ll > bigram_corpus_score(example_list, ll_cutoff[1])

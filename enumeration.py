@@ -414,7 +414,7 @@ def enumerateNetwork(network, tasks_features, likelihoodModel, solver=None,
                        CPUs=1,
                        maximumFrontier=None,
                        verbose=True,
-                       evaluationTimeout=None):
+                       evaluationTimeout=None, ll_cutoff=None):
     from time import time
     
     start = time()
@@ -433,7 +433,8 @@ def enumerateNetwork(network, tasks_features, likelihoodModel, solver=None,
                                                                      timeout=enumerationTimeout,
                                                                      evaluationTimeout = evaluationTimeout,
                                                                      verbose=verbose,
-                                                                     maximumFrontier=maximumFrontier),
+                                                                     maximumFrontier=maximumFrontier,
+                                                                     ll_cutoff=ll_cutoff),
                             list(zip(list(range(len(chunked_tasks_features))), chunked_tasks_features)),
                             chunksize=1)
     frontiers = [frontier for frontiers in frontierss for frontier in frontiers] #wtf is happening
@@ -447,7 +448,8 @@ def enumerateNetworkForTasks(cpu_idx, network, tasks_features, likelihoodModel=N
                      timeout=None,
                      evaluationTimeout=None,
                      frontierSize=None,
-                     maximumFrontier = 10**2):
+                     maximumFrontier = 10**2,
+                     ll_cutoff=None):
     from pregex import pregex
     assert likelihoodModel is not None
     assert network is not None
@@ -501,7 +503,7 @@ def enumerateNetworkForTasks(cpu_idx, network, tasks_features, likelihoodModel=N
                         eprint("program:", preg)
                         #likelihood = task.logLikelihood(p, timeout=evaluationTimeout) #TODO: change this
                         #eprint("tokenized program:", p)
-                        _, likelihood = likelihoodModel.score(p, task)
+                        _, likelihood = likelihoodModel.score(p, task, ll_cutoff)
                         #eprint("sampled an actual program")
                     except ParseFailure: continue
                     except RunFailure: continue #Happens during likelihood evaluation for e.g. (lambda $3)

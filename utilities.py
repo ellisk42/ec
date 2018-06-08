@@ -159,6 +159,8 @@ def torchSoftMax(x, y=None):
     import torch
     if y is None:
         if isinstance(x, list):
+            eprint("torchsoftmax print")
+            eprint(x)
             x = torch.cat(x)
         return (x - log_softmax(x, dim=0))[0]
     x = torch.cat((x, y))
