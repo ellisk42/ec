@@ -89,8 +89,8 @@ class MyJSONFeatureExtractor(JSONFeatureExtractor):
             return None
 
         examples = []
-
-        for _ in range(self.N_EXAMPLES * 5):  # oh this is arbitrary ig
+        #n_ex = random.randint(self.N_EXAMPLES - 3,self.N_EXAMPLES)
+        for _ in range(self.N_EXAMPLES * 5):  # oh this is arbitrary ig, just to make sure we get enough,becase it fails sometimes
 
             try:
                 y = preg.sample()  # TODO

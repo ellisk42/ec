@@ -489,13 +489,20 @@ def enumerateNetworkForTasks(cpu_idx, network, tasks_features, likelihoodModel=N
                 #inputs = [input for (input, output) in features[:4]]
                 outputs = [output for output in features[:5]] #changed from 4 to 5
                 #this line 
-                samples, scores = network.sampleAndScore([outputs]*100)
+                eprint("input to sample and score:")
+                eprint([outputs])
+                samples, scores = network.sampleAndScore([outputs], nRepeats=100)
+                eprint("samples:")
+                eprint(samples)
+                #why is this a tuple??? - it already was a tuple, so nothing is changed.
                 new_proposals_scores = [(tuple(samples[i]), scores[i]) for i in range(len(samples)) if tuple(samples[i]) not in seen_proposals]
                 seen_proposals = seen_proposals | set(x[0] for x in new_proposals_scores)
 
                 for sample, prior in new_proposals_scores:
                     try:
                         #eprint("untokenized program:", sample)
+                        print("sample:")
+                        print(sample)
                         p = untokeniseProgram(sample)
 
                         preg = p.evaluate([])

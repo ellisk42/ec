@@ -895,16 +895,16 @@ class JSONFeatureExtractor(object):
         # >>> t.request to get the type
         # >>> t.examples to get input/output examples
         # this might actually be okay, because the input should just be nothing
-        return [(self.stringify(inputs), self.stringify(output))
-                for (inputs, output) in t.examples]
-        return [(self.stringify(output),) for (inputs, output) in t.examples]
+        #return [(self.stringify(inputs), self.stringify(output))
+        #        for (inputs, output) in t.examples]
+        return [(list(output),) for (inputs, output) in t.examples]
 
     def featuresOfProgram(self, p, t):
         features = self._featuresOfProgram(p, t)
         if features is None:
             return None
         # return [(self.stringify(x), self.stringify(y)) for (x,y) in features]
-        return [(feature,) for feature in features]
+        return [(list(feature),) for feature in features]
         # TODO: should possibly match
 
 
@@ -1105,7 +1105,7 @@ class NewRecognitionModel(nn.Module):
     def step(self, *networkInputs):
         #eprint("networkInputs:")
         #eprint(*networkInputs)
-        eprint(len(networkInputs))
+        #assert False
         score = self.network.optimiser_step(*networkInputs)
         loss = -score
         return loss
@@ -1138,12 +1138,17 @@ class NewRecognitionModel(nn.Module):
         request = random.choice(requests)
         # may want to weigh less likely programs more heavily
         program = self.grammar.sample(request)
+        #TODO: use a very simple grammar here, to check that it's working
 
+        #try:
+        #program = self.grammar.sample(request, maximumDepth=6, maxAttempts=100)
+        eprint("sampled training program:")
+        eprint(program)
         # >>> Increase maxDepth, might actually make sampling faster
         # >>> Call out to pypy
         features = self.featureExtractor.featuresOfProgram(program, request)
-        # eprint("features_outer:")
-        # eprint(features)
+        eprint("features_outer:")
+        eprint(features)
         # Feature extractor failure
         if features is None:
             return None
