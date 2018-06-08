@@ -210,6 +210,10 @@ def plotECResult(
     if hasattr(result, 'testingSumMaxll'):
         plotll = True
 
+    #remove these
+    showSolveTime = False
+    plotll = False
+
     if showSolveTime or plotll:
         a1.set_ylabel('%  Solved (solid)', fontsize=LABELFONTSIZE)
     else:
@@ -423,7 +427,7 @@ if __name__ == "__main__":
 
     plotECResult([a for a in arguments if a.endswith('.pickle')],
                  export=export,
-                 title=title[0] if title else "DSL learning curves",
+                 title=title[0] if title else "DSL learning curve",
                  label=label,
                  showSolveTime=True,
                  iterations=iterations)

@@ -211,12 +211,6 @@ class Application(Program):
             self.hashCode = hash((hash(self.f), hash(self.x)))
         return self.hashCode
 
-    """Because Python3 randomizes the hash function, we need to never pickle the hash"""
-    def __getstate__(self):
-        return self.f, self.x, self.isConditional, self.falseBranch, self.trueBranch, self.branch
-    def __setstate__(self, state):
-        self.f, self.x, self.isConditional, self.falseBranch, self.trueBranch, self.branch = state
-        self.hashCode = None
 
     def visit(self,
               visitor,
@@ -573,13 +567,6 @@ class Invented(Program):
         if self.hashCode is None:
             self.hashCode = hash((0, hash(self.body)))
         return self.hashCode
-
-    """Because Python3 randomizes the hash function, we need to never pickle the hash"""
-    def __getstate__(self):
-        return self.body, self.tp
-    def __setstate__(self, state):
-        self.body, self.tp = state
-        self.hashCode = None
 
     def evaluate(self, e): return self.body.evaluate([])
 
