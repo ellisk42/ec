@@ -1137,7 +1137,7 @@ class NewRecognitionModel(nn.Module):
     def sampleHelmholtz(self, requests):
         request = random.choice(requests)
         # may want to weigh less likely programs more heavily
-        program = self.grammar.sample(request)
+        program = self.grammar.sample(request,maximumDepth=10,maxAttempts=100)
 
         # >>> Increase maxDepth, might actually make sampling faster
         # >>> Call out to pypy

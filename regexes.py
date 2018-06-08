@@ -139,7 +139,11 @@ def regex_options(parser):
                         choices=["probabilistic", "all-or-nothing"])
     parser.add_argument("--topk_use_map",
                         dest="topk_use_map",
-                        action="store_true",)
+                        action="store_true")
+    parser.add_argument("--debug",
+                        dest="debug",
+                        action="store_true"
+                        )
     """parser.add_argument("--stardecay",
                         type=float,
                         dest="stardecay",
@@ -243,6 +247,9 @@ if __name__ == "__main__":
 
     #eprint(baseGrammar)
     #explore
+    test_stuff = args.pop["debug"]
+    if test_stuff:
+        assert False
 
     explorationCompression(baseGrammar, train,
     						testingTasks = test,

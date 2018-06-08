@@ -54,12 +54,12 @@ result1 = loadfun(file3)
 
 
 
+factor = 1.5
 
 
-
-TITLEFONTSIZE = 14
-TICKFONTSIZE = 12
-LABELFONTSIZE = 14
+TITLEFONTSIZE = 14*factor
+TICKFONTSIZE = 12*factor
+LABELFONTSIZE = 14*factor
 
 matplotlib.rc('xtick', labelsize=TICKFONTSIZE)
 matplotlib.rc('ytick', labelsize=TICKFONTSIZE)
@@ -202,7 +202,7 @@ def plotECResult(
             timeouts, [
                 "-", "--", "-."])}
 
-    f, a1 = plot.subplots(figsize=(4, 3))
+    f, a1 = plot.subplots(figsize=(5, 3))
     a1.set_xlabel('Iteration', fontsize=LABELFONTSIZE)
     a1.xaxis.set_major_locator(MaxNLocator(integer=True))
 
@@ -217,7 +217,7 @@ def plotECResult(
     if showSolveTime or plotll:
         a1.set_ylabel('%  Solved (solid)', fontsize=LABELFONTSIZE)
     else:
-        a1.set_ylabel('% Testing Tasks Solved', fontsize=LABELFONTSIZE)
+        a1.set_ylabel('% Tasks Solved', fontsize=LABELFONTSIZE)
 
     if plotll:
         a2 = a1.twinx()
@@ -288,8 +288,8 @@ def plotECResult(
             print(tick)
             tick.set_fontsize(TICKFONTSIZE)
 
-    if title is not None:
-        plot.title(title, fontsize=TITLEFONTSIZE)
+    #if title is not None:
+    #    plot.title(title, fontsize=TITLEFONTSIZE)
 
     # if label is not None:
     legends = []
