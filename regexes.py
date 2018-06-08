@@ -89,8 +89,8 @@ class MyJSONFeatureExtractor(JSONFeatureExtractor):
             return None
 
         examples = []
-        #n_ex = random.randint(self.N_EXAMPLES - 3,self.N_EXAMPLES)
-        for _ in range(self.N_EXAMPLES * 5):  # oh this is arbitrary ig, just to make sure we get enough,becase it fails sometimes
+
+        for _ in range(self.N_EXAMPLES * 5):  # oh this is arbitrary ig
 
             try:
                 y = preg.sample()  # TODO
@@ -139,7 +139,11 @@ def regex_options(parser):
                         choices=["probabilistic", "all-or-nothing"])
     parser.add_argument("--topk_use_map",
                         dest="topk_use_map",
-                        action="store_true",)
+                        action="store_true")
+    parser.add_argument("--debug",
+                        dest="debug",
+                        action="store_true"
+                        )
     """parser.add_argument("--stardecay",
                         type=float,
                         dest="stardecay",
@@ -243,7 +247,10 @@ if __name__ == "__main__":
 
     #eprint(baseGrammar)
     #explore
+    test_stuff = args.pop["debug"]
+    if test_stuff:
+        assert False
 
     explorationCompression(baseGrammar, train,
-    						testingTasks = test,
-    						**args)
+                            testingTasks = test,
+                            **args)
