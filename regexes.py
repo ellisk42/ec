@@ -263,7 +263,7 @@ Furthermore: observe the large print statement above.
 This prints the candidates for sampleDistribution in grammar.sample.
 the first element of each tuple is the probability passed into sampleDistribution.
 Half of the probability mass should be on the functions, but instead they are equally 
-weighted with the constants. If you look at the grammar above, this is an error!!!!"""
+weighted with the constants. If you look at the grammar above, this is an error!!!!
 """)
         assert False
 
