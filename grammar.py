@@ -160,6 +160,8 @@ class Grammar(object):
                                           # leaf; a primitive with no
                                           # function arguments
                                           mustBeLeaf=maximumDepth <= 1)
+        eprint("candidates:")
+        eprint(candidates)
         newType, chosenPrimitive, context = sampleDistribution(candidates)
 
         # Sample the arguments

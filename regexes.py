@@ -251,13 +251,20 @@ if __name__ == "__main__":
     if test_stuff:
         eprint(baseGrammar)
         eprint("sampled programs from prior:")
-        for i in range(100):
+        for i in range(2): #100
             eprint(baseGrammar.sample(test[0].request,maximumDepth=1000))
         eprint("""half the probability mass is on higher-order primitives.
 Therefore half of enumerated programs should have more than one node.
 However, we do not observe this.
 Instead we see a very small fraction of programs have more than one node. 
-So something seems to be wrong with grammar.sample.""")
+So something seems to be wrong with grammar.sample.
+
+Furthermore: observe the large print statement above. 
+This prints the candidates for sampleDistribution in grammar.sample.
+the first element of each tuple is the probability passed into sampleDistribution.
+Half of the probability mass should be on the functions, but instead they are equally 
+weighted with the constants. If you look at the grammar above, this is an error!!!!"""
+""")
         assert False
 
     explorationCompression(baseGrammar, train,
