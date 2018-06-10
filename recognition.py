@@ -974,7 +974,11 @@ class NewRecognitionModel(nn.Module):
             (len(frontiers), int(
                 helmholtzRatio * 100)))
 
-        HELMHOLTZBATCH = 250
+        #HELMHOLTZBATCH = 250
+        HELMHOLTZBATCH = 50
+
+        eprint("trying to cuda, HELMHOLTZBATCH is", HELMHOLTZBATCH)
+        self.network.cuda()
 
         with timing("Trained recognition model"):
             avgLoss = None
@@ -985,7 +989,8 @@ class NewRecognitionModel(nn.Module):
                 if helmholtzRatio < 1.:
                     permutedFrontiers = list(frontiers)
                     random.shuffle(permutedFrontiers)
-
+                    eprint("not implemented")
+                    assert False
                     # eprint("frontiers:")
                     # eprint(frontiers)
                     # eprint("permutedFrontiers:")
@@ -1008,8 +1013,8 @@ class NewRecognitionModel(nn.Module):
                     if doingHelmholtz:
                         networkInputs = self.helmholtzNetworkInputs(
                             requests, HELMHOLTZBATCH, CPUs)
-                        # eprint("networkInputs[0]", networkInputs[0])
-                        # eprint("networkInputs[1]", networkInputs[1])
+                        #eprint("networkInputs[0]:", networkInputs[0])
+                        #eprint("networkInputs[1]:", networkInputs[1])
                         loss = self.step(*networkInputs)
                     if not doingHelmholtz:
                         if helmholtzRatio < 1.:
@@ -1142,13 +1147,13 @@ class NewRecognitionModel(nn.Module):
 
         #try:
         #program = self.grammar.sample(request, maximumDepth=6, maxAttempts=100)
-        eprint("sampled training program:")
-        eprint(program)
+        #eprint("sampled training program:")
+        #eprint(program)
         # >>> Increase maxDepth, might actually make sampling faster
         # >>> Call out to pypy
         features = self.featureExtractor.featuresOfProgram(program, request)
-        eprint("features_outer:")
-        eprint(features)
+        #eprint("features_outer:")
+        #eprint(features)
         # Feature extractor failure
         if features is None:
             return None

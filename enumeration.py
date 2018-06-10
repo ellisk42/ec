@@ -483,6 +483,7 @@ def enumerateNetworkForTasks(cpu_idx, network, tasks_features, likelihoodModel=N
             new_proposals_scores = set()
             numberOfPrograms = 0
             numberOfHits = 0
+            numberOfSamples = 0
 
             for i in range(50):
                 random.shuffle(features)
@@ -492,8 +493,8 @@ def enumerateNetworkForTasks(cpu_idx, network, tasks_features, likelihoodModel=N
                 eprint("input to sample and score:")
                 eprint([outputs])
                 samples, scores = network.sampleAndScore([outputs], nRepeats=100)
-                eprint("samples:")
-                eprint(samples)
+                #eprint("samples:")
+                #eprint(samples)
                 #why is this a tuple??? - it already was a tuple, so nothing is changed.
                 new_proposals_scores = [(tuple(samples[i]), scores[i]) for i in range(len(samples)) if tuple(samples[i]) not in seen_proposals]
                 seen_proposals = seen_proposals | set(x[0] for x in new_proposals_scores)
@@ -501,16 +502,19 @@ def enumerateNetworkForTasks(cpu_idx, network, tasks_features, likelihoodModel=N
                 for sample, prior in new_proposals_scores:
                     try:
                         #eprint("untokenized program:", sample)
-                        print("sample:")
-                        print(sample)
+                        #print("sample:")
+                        #print(sample)
+
+                        numberOfSamples += 1
                         p = untokeniseProgram(sample)
 
                         preg = p.evaluate([])
                         if not isinstance(preg, pregex.Pregex): continue
-                        eprint("program:", preg)
+                        
+                        #eprint("regex program:", preg)
                         #likelihood = task.logLikelihood(p, timeout=evaluationTimeout) #TODO: change this
                         #eprint("tokenized program:", p)
-                        _, likelihood = likelihoodModel.score(p, task, ll_cutoff)
+                        success, likelihood = likelihoodModel.score(p, task, ll_cutoff)
                         #eprint("sampled an actual program")
                     except ParseFailure: continue
                     except RunFailure: continue #Happens during likelihood evaluation for e.g. (lambda $3)
@@ -520,7 +524,7 @@ def enumerateNetworkForTasks(cpu_idx, network, tasks_features, likelihoodModel=N
 
                     numberOfPrograms += 1
 
-                    if valid(likelihood):
+                    if success:
                         if verbose:
                             eprint("(%d)"%cpu_idx, "Hit",task.name,"with the program",p,"which has prior",prior,"after",time() - starting,"seconds using RobustFill model")
                         frontier.append(FrontierEntry(program = p,
@@ -534,8 +538,7 @@ def enumerateNetworkForTasks(cpu_idx, network, tasks_features, likelihoodModel=N
                     if timeout is not None and time() - starting > timeout:
                         signal.setitimer(signal.ITIMER_VIRTUAL, 0)
                         raise EnumerationTimeout
-            if verbose:
-                eprint("(%d)"%cpu_idx, "enumerated: %d samples, %d programs, %d hits" % (len(seen_proposals), numberOfPrograms, numberOfHits))
+
                 
                 # previousBudget = budget
                 # budget += budgetIncrement
@@ -548,6 +551,9 @@ def enumerateNetworkForTasks(cpu_idx, network, tasks_features, likelihoodModel=N
             if verbose:
                 eprint("Timeout triggered after",time() - starting,"seconds for task",task)
         signal.setitimer(signal.ITIMER_VIRTUAL, 0)
+
+        if verbose:
+            eprint("(%d)"%cpu_idx, "enumerated: %d about unique samples, %d total samples, %d programs, %d hits" % (len(seen_proposals), numberOfSamples, numberOfPrograms, numberOfHits))
 
         frontier = Frontier(frontier,
                             task = task).topK(maximumFrontier)

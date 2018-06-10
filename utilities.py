@@ -1,5 +1,6 @@
 
 
+
 import signal
 import random
 import time
@@ -125,6 +126,9 @@ def exp(x):
     return x.exp()
 
 
+def logsumexp(x):
+    return math.log(sum(math.exp(z) for z in x))
+
 def lse(x, y=None):
     if y is None:
         largest = None
@@ -135,8 +139,10 @@ def lse(x, y=None):
         # If these are just numbers...
         t = type(x[0])
         if t == int or t == float:
+            #These don't make sense... changing from:
             largest = max(*x)
             return largest + math.log(sum(math.exp(z - largest) for z in x))
+
         # Must be torch
         return torchSoftMax(x)
     else:
