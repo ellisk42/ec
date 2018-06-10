@@ -10,6 +10,7 @@ from regexPrimitives import basePrimitives, altPrimitives
 from recognition import HandCodedFeatureExtractor, MLPFeatureExtractor, RecurrentFeatureExtractor, JSONFeatureExtractor
 import random
 from type import tpregex
+import math
 
 
 
@@ -233,9 +234,9 @@ if __name__ == "__main__":
     specials = ["r_kleene", "r_plus", "r_maybe", "r_alt", "r_concat"]
 
     productions = [
-        (0.5 / n_base_prim,
+        (math.log(0.5 / n_base_prim),
          prim) if prim.name not in specials else (
-            0.10,
+            math.log(0.10),
             prim) for prim in prim_list]
 
 
@@ -251,7 +252,7 @@ if __name__ == "__main__":
     if test_stuff:
         eprint(baseGrammar)
         eprint("sampled programs from prior:")
-        for i in range(2): #100
+        for i in range(100): #100
             eprint(baseGrammar.sample(test[0].request,maximumDepth=1000))
         eprint("""half the probability mass is on higher-order primitives.
 Therefore half of enumerated programs should have more than one node.
