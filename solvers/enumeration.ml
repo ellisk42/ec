@@ -1,6 +1,5 @@
 open Core
 
-open Parmap
 open Parallel
 
 open Differentiation

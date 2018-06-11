@@ -4,6 +4,6 @@
  ((names (solver geomDrawLambdaString geomDrawFile geomTest logoTest))
   (modes (native))
   (ocamlopt_flags (:standard -O3 -unboxed-types -nodynlink -w -20))
-  (libraries (core re2 yojson geomLib logoLib parmap))
+  (libraries (core re2 yojson geomLib logoLib)) ;parmap
   (preprocess (pps (ppx_jane)))
  ))

@@ -116,7 +116,7 @@ def plotECResult(
 
     plot.xticks(range(0, n_iters), fontsize=TICKFONTSIZE)
 
-    recognitionToColor = {False: "teal", True: "orange"}
+    recognitionToColor = {False: "teal", True: "darkorange"}
 
     for result, p in zip(results, parameters):
         if hasattr(p, "baseline") and p.baseline:
@@ -143,7 +143,7 @@ def plotECResult(
         starting, ending = a2.get_ylim()
         if True:
             # [int(zz) for zz in np.arange(starting, ending, (ending - starting)/5.)])
-            a2.yaxis.set_ticks([20 * j for j in range(5)])
+            a2.yaxis.set_ticks([20 * j for j in range(6)])
         else:
             a2.yaxis.set_ticks([50 * j for j in range(6)])
         for tick in a2.yaxis.get_ticklabels():

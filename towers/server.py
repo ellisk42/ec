@@ -43,14 +43,28 @@ def powerOfTen(n):
         n = n / 10
 
 
+
+def exportToRAM(content):
+    import tempfile
+    #
+    fd = tempfile.NamedTemporaryFile(mode="w", dir="/dev/shm", delete=False)
+    n = fd.name
+
+    json.dump(content,fd)
+
+    fd.close()
+
+    return n
+    
 class CommandHandler(socketserver.StreamRequestHandler):
     def handle(self):
         k = json.load(codecs.getreader('utf-8')(self.rfile))
         if k == "sendCash":
             COMMANDSERVERSEMAPHORE.acquire()
-            v = json.dumps(list(RESULTSCASH.items()))
-            self.wfile.write(bytes(v,'ascii'))
+            v = list(RESULTSCASH.items())
             COMMANDSERVERSEMAPHORE.release()
+            n = exportToRAM(v)
+            self.wfile.write(bytes(n,'ascii'))
         else:
             plan = k["plan"]
             perturbation = k["perturbation"]
