@@ -389,7 +389,7 @@ let rec number_of_free_parameters = function
 
 let primitive_empty = primitive "empty" (tlist t0) [];;
 let primitive_range = primitive "range" (tint @> tlist tint) (fun x -> 0 -- (x-1));;
-let primitive_sort = primitive "sort" (tlist tint @> tlist tint) (List.sort ~cmp:(fun x y -> x - y));;
+let primitive_sort = primitive "sort" (tlist tint @> tlist tint) (List.sort ~compare:(fun x y -> x - y));;
 let primitive_reverse = primitive "reverse" (tlist tint @> tlist tint) (List.rev);;
 let primitive_append = primitive "append"  (tlist t0 @> tlist t0 @> tlist t0) (@);;
 let primitive_singleton = primitive "singleton"  (tint @> tlist tint) (fun x -> [x]);;
@@ -485,6 +485,19 @@ let var_prev         = primitive "var_prev" (tvar @> tvar) GeomLib.Plumbing.var_
 let var_opposite     = primitive "var_opposite" (tvar @> tvar) GeomLib.Plumbing.var_opposite
 let var_opposite     = primitive "var_divide" (tvar @> tvar @> tvar) GeomLib.Plumbing.var_divide
 let var_name         = primitive "var_name" tvar GeomLib.Plumbing.var_name
+
+(* LOGO *)
+let logo_PU  = primitive "logo_PU"                      (turtle) LogoLib.LogoInterpreter.logo_PU
+let logo_PD  = primitive "logo_PD"                      (turtle) LogoLib.LogoInterpreter.logo_PD
+let logo_RT  = primitive "logo_RT"             (ttvar @> turtle) LogoLib.LogoInterpreter.logo_RT
+let logo_FW  = primitive "logo_FW"             (ttvar @> turtle) LogoLib.LogoInterpreter.logo_FW
+let logo_SEQ = primitive "logo_SEQ" (turtle @> turtle @> turtle) LogoLib.LogoInterpreter.logo_SEQ
+let logo_GET = primitive "logo_GET" (tstate @> turtle @> turtle) LogoLib.LogoInterpreter.logo_GET
+let logo_SET = primitive "logo_SET"           (tstate @> turtle) LogoLib.LogoInterpreter.logo_SET
+let logo_NOP = primitive "logo_NOP"                     (turtle) LogoLib.LogoInterpreter.logo_NOP
+
+let logo_var_UNIT   = primitive "logo_var_UNIT" ttvar LogoLib.LogoInterpreter.logo_var_UNIT
+let logo_var_NEXT   = primitive "logo_var_NEXT" (ttvar @> ttvar) LogoLib.LogoInterpreter.logo_var_NEXT
 
 
 let default_recursion_limit = 20;;

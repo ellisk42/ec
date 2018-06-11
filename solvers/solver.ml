@@ -70,40 +70,6 @@ let load_problems channel =
   let is_constant_task = productions |> List.exists ~f:(fun (p,_,_,_) ->
       is_base_primitive p && primitive_name p = "STRING")
   in
-  
-  (* let guess_type elements =
-   *   if List.length elements = 0 then t0 else
-   *     
-   *   let context = ref empty_context in
-   *   let rec guess x =
-   *     try ignore(x |> to_int); tint with _ ->
-   *     try ignore(x |> to_float); treal with _ ->
-   *     try ignore(x |> to_bool); tboolean with _ ->
-   *     try
-   *       let v = x |> to_string in
-   *       if String.length v = 1 then tcharacter else tstring
-   *     with _ ->
-   *     try
-   *       let l = x |> to_list in
-   *       let (t,k) = makeTID !context in
-   *       context := k;
-   *       l |> List.iter ~f:(fun y ->
-   *           let yt = guess y in
-   *           context := unify !context yt t);
-   *       tlist (applyContext !context t |> snd)
-   *     with _ -> raise (Failure "Could not guess type")
-   *   in
-   *   let ts = elements |> List.map ~f:guess in
-   *   let t0 = List.hd_exn ts in
-   *   try
-   *     ts |> List.iter ~f:(fun t -> context := (unify (!context) t0 t));
-   *     applyContext !context t0 |> snd
-   *   with UnificationFailure -> begin
-   *       Printf.eprintf "Failure unifying types: %s\n"
-   *         (ts |> List.map ~f:string_of_type |> join ~separator:"\t");
-   *       assert false
-   *     end
-   * in *)
 
   let rec unpack x =
     try magical (x |> to_int) with _ ->
@@ -120,10 +86,6 @@ let load_problems channel =
 
   let tf = j |> member "tasks" |> to_list |> List.map ~f:(fun j -> 
       let e = j |> member "examples" |> to_list in
-      (* let inputTypes = e |> List.map ~f:(fun ex -> ex |> member "inputs" |> to_list) |>
-       *                  List.transpose |> safe_get_some "Not all examples have the same number of inputs." |>
-       *                  List.map ~f:guess_type in
-       * let outputType = e |> List.map ~f:(fun ex -> ex |> member "output") |> guess_type in *)
       let task_type = j |> member "request" |> parse_type in 
       let examples = e |> List.map ~f:(fun ex -> (ex |> member "inputs" |> to_list |> List.map ~f:unpack,
                                                   ex |> member "output" |> unpack)) in
@@ -165,17 +127,19 @@ let load_problems channel =
       in
 
       let task_type = if is_some tower_stuff then ttower else task_type in
-      
+      let is_turtle_task = true in
+
       let task = 
         (match tower_stuff with
          | Some(ts) -> ts
          | None -> 
-           if differentiable
-           then differentiable_task ~parameterPenalty:parameterPenalty ~temperature:temperature
-               ~lossThreshold:lossThreshold ~maxParameters:maxParameters
-           else if is_constant_task then
-             constant_task ~maxParameters:maxParameters ~parameterPenalty:parameterPenalty ~stringConstants:stringConstants else supervised_task)
-          ~timeout:timeout name task_type examples
+             if differentiable
+               then differentiable_task ~parameterPenalty:parameterPenalty ~temperature:temperature ~lossThreshold:lossThreshold ~maxParameters:maxParameters
+             else if is_constant_task
+               then constant_task ~maxParameters:maxParameters ~parameterPenalty:parameterPenalty ~stringConstants:stringConstants
+             else if is_turtle_task
+               then turtle_task
+            else supervised_task)  ~timeout:timeout name task_type examples
       in 
       (task, maximum_frontier))
   in

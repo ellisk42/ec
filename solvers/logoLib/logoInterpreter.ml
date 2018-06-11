@@ -40,6 +40,11 @@ let pp_logo_instruction i = match i with
       print_string (if s.p then "on" else "off") ;
       print_string ")"
 
+let pp_turtle t =
+  let l,_ = t (init_state ()) in
+  List.iter (pp_logo_instruction) l ;
+  print_newline ()
+
 let eval_turtle turtle =
   let p,_ = turtle (init_state ()) in
   let c = ref (new_canvas ()) in
@@ -93,6 +98,9 @@ let logo_GET : (state -> turtle) -> turtle =
 let logo_SET : (state -> turtle) = fun s -> fun _ -> ([SET(s)], s)
 
 let logo_NOP : turtle = fun s -> ([], s)
+
+let logo_var_UNIT : float  = 100.
+let logo_var_NEXT        f = f +. logo_var_UNIT
 
 let turtle_to_png turtle resolution filename =
   output_canvas_png (eval_turtle turtle) resolution filename

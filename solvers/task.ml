@@ -46,6 +46,47 @@ let supervised_task ?timeout:(timeout = 0.001) name ty examples =
           else log 0.0)
   }
 
+let turtle_task ?timeout:(timeout = 0.001) name ty examples =
+  match examples with
+  | [(_,y)] ->
+    let by = Bigarray.(Array1.of_array int8_unsigned c_layout (Array.of_list y))
+    in
+    { name = name    ;
+      task_type = ty ;
+      log_likelihood =
+        (fun p ->
+          let p = analyze_lazy_evaluation p in
+          print_endline "so far so good 1" ;
+          if (try begin
+                match run_for_interval
+                        timeout
+                        (fun () ->
+                          print_endline "so far so good 2" ;
+                          let x = run_lazy_analyzed_with_arguments p [] in
+                          print_endline "so far so good 3" ;
+                          LogoLib.LogoInterpreter.pp_turtle x ;
+                          print_endline "so far so good 4" ;
+                          let bx = LogoLib.LogoInterpreter.turtle_to_array x 28 in
+                          print_endline "so far so good 5" ;
+                          bx = by)
+                with 
+                  | Some(true) -> true
+                  | _ -> false
+              end
+              with (* We have to be a bit careful with exceptions if the
+                    * synthesized program generated an exception, then we just
+                    * terminate w/ false but if the enumeration timeout was
+                    * triggered during program evaluation, we need to pass the
+                    * exception on
+                    *)
+                | UnknownPrimitive(n) -> raise (Failure ("Unknown primitive: "^n))
+                | EnumerationTimeout  -> raise EnumerationTimeout
+                | _                   -> false)
+            then 0.0
+            else log 0.0)
+    }
+  | _ -> failwith "not a turtle task"
+
 let differentiable_task
   ?temperature:(temperature=1.)
     ?parameterPenalty:(parameterPenalty=0.)
@@ -148,7 +189,7 @@ let constant_task
 
 let keep_best_programs_in_frontier (k : int) (f : frontier) : frontier =
   {request = f.request;
-   programs =  List.sort ~cmp:(fun (_,a) (_,b) -> if a > b then -1 else 1) f.programs |> flip List.take k }
+   programs =  List.sort ~compare:(fun (_,a) (_,b) -> if a > b then -1 else 1) f.programs |> flip List.take k }
 
 (* Takes a frontier and a task. Ads in the likelihood on the task to
    the frontier and removes things that didn't hit the task *)

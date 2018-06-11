@@ -35,7 +35,19 @@ let star (n : int) : turtle =
       )
     )
 
+let line : turtle =
+  logo_FW 100.
+
+let angle : turtle =
+  logo_SEQ
+    (logo_FW 100.)
+    (logo_SEQ
+      (logo_RT 100.)
+      (logo_FW 200.))
+
 let _ =
-  let c = eval_turtle (star 6) in
-  VGWrapper.output_canvas_png c 512 "toto.png" ;
+  let c = eval_turtle line in
+  VGWrapper.output_canvas_png c 28 "line.png" ;
+  let c = eval_turtle angle in
+  VGWrapper.output_canvas_png c 28 "angle.png" ;
   print_endline "done"
