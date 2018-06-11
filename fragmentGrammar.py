@@ -515,6 +515,9 @@ def rustInduce(g0, frontiers, _=None,
             ['./rust_compressor/rust_compressor'],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE)
+
+        messageJson = bytearray(messageJson, encoding='utf-8')
+        #convert messageJson string to bytes
     else:
         eprint("must be python 3.5 or 3.6")
         assert False 

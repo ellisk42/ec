@@ -35,27 +35,32 @@ class EuclideanLikelihoodModel:
         return exp(logLikelihood) > self.successCutoff, logLikelihood
 
 
-#TODO
+
+def add_cutoff_values(tasks, ll_cutoff):
+    if ll_cutoff is None:
+        for task in tasks:
+            task.ll_cutoff = None 
+        return tasks
+    elif ll_cutoff == "plus":
+        for task in tasks:
+            task.ll_cutoff = regex_plus_bound([example[1] for example in task.examples])
+        return tasks
+    elif ll_cutoff == "bigram":
+        eprint("WARNING: using entire corpus to make bigram model")
+        #this means i do it twice, which is eh whatever
+        model = make_corpus_bigram(show_tasks(makeLongTasks()))
+        for task in tasks:
+            task.ll_cutoff = bigram_corpus_score([example[1] for example in task.examples], model)
+        return tasks
+    else:
+        eprint("not implemented")
+        assert False
+
 def show_tasks(dataset):
     task_list = []
     for task in dataset:
         task_list.append([example[1] for example in task.examples])
-    return task_list
-
-def make_cutoff_model(use_ll_cutoff, tasks):
-    #use_ll_cutoff is a string with the options,
-    if use_ll_cutoff == 'plus':
-        return None #this should be fine
-    elif use_ll_cutoff == 'bigram':
-        #return make_corpus_bigram(show_tasks(tasks))
-        #the correct thing to do is calculate bigrams on the particular train task. 
-        #That breaks, so for now i will calculate on the whole corpus
-        eprint("WARNING: using entire corpus to make bigram model")
-        return make_corpus_bigram(show_tasks(makeLongTasks()))
-    else:
-        eprint('not implemented yet')
-        assert False
-        
+    return task_list     
 
 def regex_plus_bound(X):
     from pregex import pregex
@@ -126,7 +131,7 @@ class ProbabilisticLikelihoodModel:
         self.timeout = timeout
         # i need timeout
 
-    def score(self, program, task, ll_cutoff=None):
+    def score(self, program, task):
         # need a try, catch here for problems, and for timeouts
         # can copy task.py for the timeout structure
         try:
@@ -153,6 +158,7 @@ class ProbabilisticLikelihoodModel:
         # include prior somehow
         # right now, just summing up log likelihoods. IDK if this is correct.
         # also not using prior at all.
+
             cum_ll = 0
 
             example_list = [example[1] for example in task.examples]
@@ -193,15 +199,7 @@ class ProbabilisticLikelihoodModel:
             #TODO: change the way normalized_cum_ll is calculated 
             #TODO: refactor to pass in bigram_model, and others
             #TODO: refactor to do 95% certainty thing josh wants
-
-            if ll_cutoff is None:
-                success = normalized_cum_ll > float('-inf')
-            elif ll_cutoff[0] == "plus":
-                success = normalized_cum_ll > regex_plus_bound(example_list)
-            elif ll_cutoff[0] == "bigram":
-                #ll_cutoff[1] is the model
-                success = normalized_cum_ll > bigram_corpus_score(example_list, ll_cutoff[1])
-                
+            success = normalized_cum_ll > task.ll_cutoff
 
 
 
