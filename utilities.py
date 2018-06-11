@@ -126,9 +126,6 @@ def exp(x):
     return x.exp()
 
 
-def logsumexp(x):
-    return math.log(sum(math.exp(z) for z in x))
-
 def lse(x, y=None):
     if y is None:
         largest = None
@@ -139,10 +136,12 @@ def lse(x, y=None):
         # If these are just numbers...
         t = type(x[0])
         if t == int or t == float:
-            #These don't make sense... changing from:
             largest = max(*x)
             return largest + math.log(sum(math.exp(z - largest) for z in x))
-
+        #added clause to avoid zero -dim tensor problem
+        import torch
+        if t == torch.Tensor and x[0].size() == torch.Size([]):
+            return torchSoftMax([datum.view(1) for datum in x])
         # Must be torch
         return torchSoftMax(x)
     else:
@@ -165,8 +164,8 @@ def torchSoftMax(x, y=None):
     import torch
     if y is None:
         if isinstance(x, list):
-            eprint("torchsoftmax print")
-            eprint(x)
+            #eprint("torchsoftmax print")
+            #eprint(x)
             x = torch.cat(x)
         return (x - log_softmax(x, dim=0))[0]
     x = torch.cat((x, y))

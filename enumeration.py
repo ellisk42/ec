@@ -510,7 +510,7 @@ def enumerateNetworkForTasks(cpu_idx, network, tasks_features, likelihoodModel=N
 
                         preg = p.evaluate([])
                         if not isinstance(preg, pregex.Pregex): continue
-                        
+
                         #eprint("regex program:", preg)
                         #likelihood = task.logLikelihood(p, timeout=evaluationTimeout) #TODO: change this
                         #eprint("tokenized program:", p)
@@ -526,7 +526,7 @@ def enumerateNetworkForTasks(cpu_idx, network, tasks_features, likelihoodModel=N
 
                     if success:
                         if verbose:
-                            eprint("(%d)"%cpu_idx, "Hit",task.name,"with the program",p,"which has prior",prior,"after",time() - starting,"seconds using RobustFill model")
+                            eprint("(%d)"%cpu_idx, "Hit",task.name,"with the program", preg,"which has prior",prior, "and likelihood", likelihood, "after",time() - starting,"seconds using RobustFill model")
                         frontier.append(FrontierEntry(program = p,
                                                       logPrior = prior,
                                                       logLikelihood = likelihood))

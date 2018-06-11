@@ -96,10 +96,15 @@ class MyJSONFeatureExtractor(JSONFeatureExtractor):
             try:
                 y = preg.sample()  # TODO
 
+                #this line should keep inputs short, so that helmholtzbatch can be large
+                #allows it to try other samples
+                #(Could also return None off the bat... idk which is better)
+                #if len(y) > 20:
+                #    continue
                 #eprint(tp, program, x, y)
                 examples.append(y)
             except BaseException:
-                continue
+                continues
             if len(examples) >= self.N_EXAMPLES:
                 break
         else:

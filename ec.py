@@ -208,7 +208,9 @@ def ecIterator(grammar, tasks,
             "benchmark",
             "evaluationTimeout",
             "testingTasks",
-            "compressor"} and v is not None}
+            "compressor",
+            "train_ll_cutoff",
+            "test_ll_cutoff"} and v is not None}
     if not useRecognitionModel:
         for k in {"activation", "helmholtzRatio", "steps"}:
             del parameters[k]
