@@ -533,7 +533,8 @@ def rustInduce(g0, frontiers, _=None,
     if sys.version_info[1] == 6:
         resp = json.load(p.stdout)
     elif sys.version_info[1] == 5:
-        resp = json.load(p.stdout.decode("utf-8"))
+        import codecs
+        resp = json.load(codecs.getreader('utf-8')(p.stdout))
 
 
 
