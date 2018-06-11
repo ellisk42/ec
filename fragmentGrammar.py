@@ -530,7 +530,12 @@ def rustInduce(g0, frontiers, _=None,
     if p.returncode is not None:
         raise ValueError("rust compressor failed")
 
-    resp = json.load(p.stdout)
+    if sys.version_info[1] == 6:
+        resp = json.load(p.stdout)
+    elif sys.version_info[1] == 5:
+        resp = json.load(p.stdout.decode("utf-8"))
+
+
 
     productions = [(x["logp"], p) for p, x in
                    zip((p for (_, _, p) in g0.productions if p.isPrimitive), resp["primitives"])] + \
