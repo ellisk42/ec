@@ -500,11 +500,26 @@ def rustInduce(g0, frontiers, _=None,
     with open("jsonDebug", "w") as f:
         f.write(messageJson)
 
-    p = subprocess.Popen(
-        ['./rust_compressor/rust_compressor'],
-        encoding='utf-8',
-        stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE)
+    #check which version of python we are using 
+    import sys
+
+    #if 3.6 do:
+    if sys.version_info[1] == 6:
+        p = subprocess.Popen(
+            ['./rust_compressor/rust_compressor'],
+            encoding='utf-8',
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE)
+    elif sys.version_info[1] == 5:
+        p = subprocess.Popen(
+            ['./rust_compressor/rust_compressor'],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE)
+    else:
+        eprint("must be python 3.5 or 3.6")
+        assert False 
+
+
     p.stdin.write(messageJson)
     p.stdin.flush()
     p.stdin.close()

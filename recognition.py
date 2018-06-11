@@ -616,7 +616,8 @@ class RecognitionModel(nn.Module):
                            CPUs=1,
                            frontierSize=None,
                            maximumFrontier=None,
-                           evaluationTimeout=None):
+                           evaluationTimeout=None,
+                           ll_cutoff=None):
         with timing("Evaluated recognition model"):
             grammars = {}
             for task in tasks:
@@ -636,7 +637,8 @@ class RecognitionModel(nn.Module):
                                     testing=testing,
                                     enumerationTimeout=enumerationTimeout,
                                     CPUs=CPUs, maximumFrontier=maximumFrontier,
-                                    evaluationTimeout=evaluationTimeout)
+                                    evaluationTimeout=evaluationTimeout,
+                                    ll_cutoff=ll_cutoff)
 
 
 class RecurrentFeatureExtractor(nn.Module):
@@ -943,7 +945,6 @@ class NewRecognitionModel(nn.Module):
                 assert any(
                     myParameter is parameter for myParameter in self.parameters())
 
-    # TODO: modify for regexes
     # Maybe can kill lambdas completely since they're deterministic
     def getTargetVocabulary(self, grammar):
         return ["(_lambda", ")_lambda", "(", ")"] + \
@@ -975,7 +976,8 @@ class NewRecognitionModel(nn.Module):
                 helmholtzRatio * 100)))
 
         #HELMHOLTZBATCH = 250
-        HELMHOLTZBATCH = 50
+        HELMHOLTZBATCH = 200
+        #recommended total training of 250000
 
         eprint("trying to cuda, HELMHOLTZBATCH is", HELMHOLTZBATCH)
         self.network.cuda()
@@ -1089,8 +1091,9 @@ class NewRecognitionModel(nn.Module):
 
         # Filter to length <= 30
         valid_idxs = [i for i in range(len(targets)) if
-                      len(targets[i]) <= 100 and
-                      all(len(example) <= 100 for example in outputss[i])]
+                      len(targets[i]) <= 50 and
+                      all(len(example[0]) <= 50 for example in outputss[i])]
+
 
         # batchInputsOutputs = [joinedInputsOutputs[i] for i in valid_idxs]
         batchOutputs = [outputss[i] for i in valid_idxs]

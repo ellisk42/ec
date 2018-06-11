@@ -121,7 +121,7 @@ class Grammar(object):
         #eprint(candidates)
 
         if normalize:
-            z = logsumexp([l for l, t, p, k in candidates])
+            z = lse([l for l, t, p, k in candidates])
             if returnProbabilities:
                 candidates = [(exp(l - z), t, p, k)
                               for l, t, p, k in candidates]
@@ -509,7 +509,7 @@ normalizers = {%s})""" % (self.constant,
     def logLikelihood(self, grammar):
         return self.constant + \
             sum(count * grammar.expression2likelihood[p] for p, count in self.uses.items()) - \
-            sum(count * logsumexp([grammar.expression2likelihood[p] for p in ps])
+            sum(count * lse([grammar.expression2likelihood[p] for p in ps])
                 for ps, count in self.normalizers.items())
 
 
