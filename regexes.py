@@ -6,6 +6,7 @@ from grammar import Grammar
 from utilities import eprint, numberOfCPUs, flatten, fst, testTrainSplit, POSITIVEINFINITY
 from makeRegexTasks import makeOldTasks, makeLongTasks, makeShortTasks, makeWordTasks, makeNumberTasks
 from regexPrimitives import basePrimitives, altPrimitives
+from likelihoodModel import add_cutoff_values
 #from program import *
 from recognition import HandCodedFeatureExtractor, MLPFeatureExtractor, RecurrentFeatureExtractor, JSONFeatureExtractor
 import random
@@ -148,8 +149,12 @@ def regex_options(parser):
                         action="store_true")
     parser.add_argument("--debug",
                         dest="debug",
-                        action="store_true"
-                        )
+                        action="store_true")
+    parser.add_argument("--ll_cutoff",
+                        dest="use_ll_cutoff",
+                        nargs='*',
+                        default=False,
+                        help="use ll cutoff for training tasks (for probabilistic likelihood model only). default is False,")
     """parser.add_argument("--stardecay",
                         type=float,
                         dest="stardecay",
@@ -171,6 +176,26 @@ if __name__ == "__main__":
         helmholtzRatio=0.5, structurePenalty=1., #try 
         CPUs=numberOfCPUs(),
         extras=regex_options)
+
+
+    #parse use_ll_cutoff
+    use_ll_cutoff = args.pop('use_ll_cutoff')
+    if not use_ll_cutoff is False:
+
+        #if use_ll_cutoff is a list of strings, then train_ll_cutoff and train_ll_cutoff 
+        #will be tuples of that string followed by the actual model
+
+        if len(use_ll_cutoff) == 1:
+            train_ll_cutoff = use_ll_cutoff[0] # make_cutoff_model(use_ll_cutoff[0], tasks))
+            test_ll_cutoff = use_ll_cutoff[0] # make_cutoff_model(use_ll_cutoff[0], tasks))
+        else:
+            assert len(use_ll_cutoff) == 2
+            train_ll_cutoff = use_ll_cutoff[0] #make_cutoff_model(use_ll_cutoff[0], tasks))
+            test_ll_cutoff = use_ll_cutoff[1] #make_cutoff_model(use_ll_cutoff[1], tasks))
+    else:
+        train_ll_cutoff = None
+        test_ll_cutoff = None
+
 
     regexTasks = {"old": makeOldTasks,
                 "short": makeShortTasks,
@@ -198,6 +223,12 @@ if __name__ == "__main__":
     test, train = testTrainSplit(tasks, split)
     eprint("Split tasks into %d/%d test/train" % (len(test), len(train)))
 
+
+    test = add_cutoff_values(test, test_ll_cutoff)
+    train = add_cutoff_values(train, train_ll_cutoff)
+    eprint("added cutoff values to tasks, train: ", train_ll_cutoff, ", test:", test_ll_cutoff )
+
+
     # from list stuff
     primtype = args.pop("primitives")
     prims = {"base": basePrimitives,
@@ -222,7 +253,7 @@ if __name__ == "__main__":
 
     args.update({
         "featureExtractor": extractor,
-        "outputPrefix": "experimentOutputs/regex" + primtype + timestr, #+ decaystr,
+        "outputPrefix": "experimentOutputs/regex" + primtype + timestr + 'll' + str(train_ll_cutoff) + str(test_ll_cutoff),
         "evaluationTimeout": 1.0,  # 0.005,
         "topk_use_map": False,
         "maximumFrontier": 10,

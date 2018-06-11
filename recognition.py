@@ -616,8 +616,7 @@ class RecognitionModel(nn.Module):
                            CPUs=1,
                            frontierSize=None,
                            maximumFrontier=None,
-                           evaluationTimeout=None,
-                           ll_cutoff=None):
+                           evaluationTimeout=None):
         with timing("Evaluated recognition model"):
             grammars = {}
             for task in tasks:
@@ -637,8 +636,7 @@ class RecognitionModel(nn.Module):
                                     testing=testing,
                                     enumerationTimeout=enumerationTimeout,
                                     CPUs=CPUs, maximumFrontier=maximumFrontier,
-                                    evaluationTimeout=evaluationTimeout,
-                                    ll_cutoff=ll_cutoff)
+                                    evaluationTimeout=evaluationTimeout)
 
 
 class RecurrentFeatureExtractor(nn.Module):
@@ -1181,8 +1179,7 @@ class NewRecognitionModel(nn.Module):
                            enumerationTimeout=None,
                            CPUs=1,
                            maximumFrontier=None,
-                           evaluationTimeout=None,
-                           ll_cutoff=None):
+                           evaluationTimeout=None):
         # need to encorporate likelihood model, solver
 
         tasks_features = []
@@ -1231,7 +1228,7 @@ class NewRecognitionModel(nn.Module):
             network, tasks_features, likelihoodModel, solver=solver,
             frontierSize=frontierSize, enumerationTimeout=enumerationTimeout,
             CPUs=CPUs, maximumFrontier=maximumFrontier,
-            evaluationTimeout=evaluationTimeout, ll_cutoff=ll_cutoff)
+            evaluationTimeout=evaluationTimeout)
 
         if self.use_cuda:
             torch.set_default_tensor_type('torch.cuda.FloatTensor')

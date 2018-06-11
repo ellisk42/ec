@@ -143,8 +143,7 @@ def ecIterator(grammar, tasks,
                cuda=False,
                message="",
                onlyBaselines=False,
-               outputPrefix=None,
-               use_ll_cutoff=False):
+               outputPrefix=None):
     if frontierSize is None and enumerationTimeout is None:
         eprint(
             "Please specify a frontier size and/or an enumeration timeout:",
@@ -170,22 +169,7 @@ def ecIterator(grammar, tasks,
         eprint("You specified a testingTimeout, but did not provide any held out testing tasks, aborting.")
         assert False
 
-    #parse use_ll_cutoff
-    if not use_ll_cutoff is False:
 
-        #if use_ll_cutoff is a list of strings, then train_ll_cutoff and train_ll_cutoff 
-        #will be tuples of that string followed by the actual model
-
-        if len(use_ll_cutoff) == 1:
-            train_ll_cutoff = (use_ll_cutoff[0], make_cutoff_model(use_ll_cutoff[0], tasks))
-            test_ll_cutoff = (use_ll_cutoff[0], make_cutoff_model(use_ll_cutoff[0], tasks))
-        else:
-            assert len(use_ll_cutoff) == 2
-            train_ll_cutoff = (use_ll_cutoff[0], make_cutoff_model(use_ll_cutoff[0], tasks))
-            test_ll_cutoff = (use_ll_cutoff[1], make_cutoff_model(use_ll_cutoff[1], tasks))
-    else:
-        train_ll_cutoff = None
-        test_ll_cutoff = None
 
     # We save the parameters that were passed into EC
     # This is for the purpose of exporting the results of the experiment
@@ -208,9 +192,7 @@ def ecIterator(grammar, tasks,
             "benchmark",
             "evaluationTimeout",
             "testingTasks",
-            "compressor",
-            "train_ll_cutoff",
-            "test_ll_cutoff"} and v is not None}
+            "compressor"} and v is not None}
     if not useRecognitionModel:
         for k in {"activation", "helmholtzRatio", "steps"}:
             del parameters[k]
@@ -363,7 +345,7 @@ def ecIterator(grammar, tasks,
                                                                       maximumFrontier=maximumFrontier,
                                                                       enumerationTimeout=testingTimeout,
                                                                       evaluationTimeout=evaluationTimeout,
-                                                                      testing=True, ll_cutoff=test_ll_cutoff)
+                                                                      testing=True)
             else:
                 testingFrontiers, times = multicoreEnumeration(grammar, testingTasks, likelihoodModel,
                                                                solver=solver,
@@ -371,7 +353,7 @@ def ecIterator(grammar, tasks,
                                                                enumerationTimeout=testingTimeout,
                                                                CPUs=CPUs,
                                                                evaluationTimeout=evaluationTimeout,
-                                                               testing=True, ll_cutoff=test_ll_cutoff)
+                                                               testing=True)
 
             eprint(
                 "Hits %d/%d testing tasks" %
@@ -396,8 +378,7 @@ def ecIterator(grammar, tasks,
                                                 maximumFrontier=maximumFrontier,
                                                 enumerationTimeout=enumerationTimeout,
                                                 CPUs=CPUs,
-                                                evaluationTimeout=evaluationTimeout,
-                                                ll_cutoff=train_ll_cutoff)
+                                                evaluationTimeout=evaluationTimeout)
 
         if expandFrontier and (not useRecognitionModel) and (not useNewRecognitionModel) \
            and (j == 0 and times == [] or
@@ -416,8 +397,7 @@ def ecIterator(grammar, tasks,
                                          maximumFrontier=maximumFrontier,
                                          enumerationTimeout=timeout,
                                          CPUs=CPUs,
-                                         evaluationTimeout=evaluationTimeout,
-                                         ll_cutoff=train_ll_cutoff)
+                                         evaluationTimeout=evaluationTimeout)
                 if any(not f.empty for f in unsolvedFrontiers):
                     times += unsolvedTimes
                     unsolvedFrontiers = {f.task: f for f in unsolvedFrontiers}
@@ -453,8 +433,7 @@ def ecIterator(grammar, tasks,
                                                                      frontierSize=frontierSize,
                                                                      maximumFrontier=maximumFrontier,
                                                                      enumerationTimeout=enumerationTimeout,
-                                                                     evaluationTimeout=evaluationTimeout,
-                                                                     ll_cutoff=train_ll_cutoff)
+                                                                     evaluationTimeout=evaluationTimeout)
 
         elif useNewRecognitionModel:  # Train a recognition model
             result.recognitionModel.updateGrammar(grammar)
@@ -473,8 +452,7 @@ def ecIterator(grammar, tasks,
                 maximumFrontier=maximumFrontier,
                 frontierSize=frontierSize,
                 enumerationTimeout=enumerationTimeout,
-                evaluationTimeout=evaluationTimeout,
-                ll_cutoff=train_ll_cutoff)
+                evaluationTimeout=evaluationTimeout)
         if useRecognitionModel or useNewRecognitionModel:
 
             eprint("Recognition model enumeration results:")
@@ -756,12 +734,6 @@ def commandlineArguments(_=None,
         help="Start the learner out with a pretrained DSL. This argument should be a path to a checkpoint file.",
         default=None,
         type=str)
-    parser.add_argument(
-        "--ll_cutoff",
-        dest="use_ll_cutoff",
-        nargs='*',
-        default=False,
-        help="use ll cutoff for training tasks (for probabilistic likelihood model only). default is False,")
     parser.add_argument("--clear-recognition",
                         dest="clear-recognition",
                         help="Clears the recognition model from a checkpoint. Necessary for graphing results with recognition models, because pickle is kind of stupid sometimes.",
