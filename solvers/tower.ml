@@ -98,11 +98,16 @@ let parse_tower_result result =
 let tower_cash = Hashtbl.Poly.create();;
 
 
+
 let update_tower_cash() =
   let open Yojson.Safe.Util in
   let open Yojson.Safe in
   let m = (`String("sendCash")) in
-  let new_entries = send_to_tower_server m in
+  let filename =  send_to_tower_server m |> to_string in
+  (* For some reason the filename still includes quotes, so we need to remove the first and last characters *)
+  let filename = String.sub ~pos:1 ~len:(String.length filename - 2) filename in
+  let new_entries = Yojson.Safe.from_file filename in
+  
   new_entries |> to_list |> List.iter ~f:(fun e ->
       match e |> to_list with
       | [`List([plan;perturbation;]);result] ->
@@ -112,6 +117,9 @@ let update_tower_cash() =
         let perturbation = perturbation |> to_float in
         Hashtbl.Poly.set tower_cash ~key:(plan,perturbation) ~data:(parse_tower_result(result))
       | _ -> raise (Failure "tower cache entry"))
+  ;
+  Sys.remove filename
+
 
 let evaluate_tower ?n:(n=15) plan perturbation =
   (* center the tower *)

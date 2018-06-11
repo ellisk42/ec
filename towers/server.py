@@ -46,7 +46,6 @@ def powerOfTen(n):
 
 def exportToRAM(content):
     import tempfile
-    #
     fd = tempfile.NamedTemporaryFile(mode="w", dir="/dev/shm", delete=False)
     n = fd.name
 
@@ -64,7 +63,7 @@ class CommandHandler(socketserver.StreamRequestHandler):
             v = list(RESULTSCASH.items())
             COMMANDSERVERSEMAPHORE.release()
             n = exportToRAM(v)
-            self.wfile.write(bytes(n,'ascii'))
+            self.wfile.write(bytes(json.dumps(n), 'ascii'))
         else:
             plan = k["plan"]
             perturbation = k["perturbation"]
