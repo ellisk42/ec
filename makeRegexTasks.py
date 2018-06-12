@@ -193,6 +193,29 @@ def makeNumberTasks():
 
     return regextasks
 
+
+def makeDateTasks():
+
+    #load new data:
+    #TODO
+
+    taskfile = "./dates.p"
+
+    with open(taskfile, 'rb') as handle:
+        data = dill.load(handle)
+
+    tasklist =  [column['data'] for column in data if len(column['data']) >= 5]
+
+    regextasks = [
+        Task("Date data column no. " + str(i),
+            tpregex,
+            [((), example) for example in task] 
+        ) for i, task in enumerate(tasklist)]
+
+
+
+    return regextasks    
+
 # a helper function which takes a list of lists and sees which match a specific regex.
 def match_col(dataset, rstring):
     r = pregex.create(rstring)

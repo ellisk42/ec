@@ -4,7 +4,7 @@ from ec import explorationCompression, commandlineArguments, Task
 from grammar import Grammar
 #from utilities import eprint, testTrainSplit, numberOfCPUs, flatten
 from utilities import eprint, numberOfCPUs, flatten, fst, testTrainSplit, POSITIVEINFINITY
-from makeRegexTasks import makeOldTasks, makeLongTasks, makeShortTasks, makeWordTasks, makeNumberTasks
+from makeRegexTasks import makeOldTasks, makeLongTasks, makeShortTasks, makeWordTasks, makeNumberTasks, makeDateTasks
 from regexPrimitives import basePrimitives, altPrimitives, easyWordsPrimitives, alt2Primitives
 from likelihoodModel import add_cutoff_values
 #from program import *
@@ -16,7 +16,7 @@ import math
 
 
 class LearnedFeatureExtractor(RecurrentFeatureExtractor):
-    H = 16
+    H = 64
     USE_CUDA = False
 
     def tokenize(self, examples):
@@ -125,7 +125,7 @@ def regex_options(parser):
     parser.add_argument("--tasks",
                         default="old",
                         help="which tasks to use",
-                        choices=["old", "short", "long", "words","number"])
+                        choices=["old", "short", "long", "words","number","dates"])
     parser.add_argument("--primitives",
                         default="base",
                         help="Which primitive set to use",
@@ -202,6 +202,7 @@ if __name__ == "__main__":
                 "long": makeLongTasks,
                 "words": makeWordTasks,
                 "number": makeNumberTasks,
+                "dates": makeDateTasks
                 }[args.pop("tasks")]
 
     tasks = regexTasks()  # TODO
@@ -224,10 +225,9 @@ if __name__ == "__main__":
     eprint("Split tasks into %d/%d test/train" % (len(test), len(train)))
 
 
-    test = add_cutoff_values(test, test_ll_cutoff)
-    train = add_cutoff_values(train, train_ll_cutoff)
+    test = add_cutoff_values(test, test_ll_cutoff, corpus=regexTasks())
+    train = add_cutoff_values(train, train_ll_cutoff, corpus=regexTasks())
     eprint("added cutoff values to tasks, train: ", train_ll_cutoff, ", test:", test_ll_cutoff )
-
 
     # from list stuff
     primtype = args.pop("primitives")

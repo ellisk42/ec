@@ -36,7 +36,7 @@ class EuclideanLikelihoodModel:
 
 
 
-def add_cutoff_values(tasks, ll_cutoff):
+def add_cutoff_values(tasks, ll_cutoff, corpus=None):
     if ll_cutoff is None:
         for task in tasks:
             task.ll_cutoff = None 
@@ -48,9 +48,16 @@ def add_cutoff_values(tasks, ll_cutoff):
     elif ll_cutoff == "bigram":
         eprint("WARNING: using entire corpus to make bigram model")
         #this means i do it twice, which is eh whatever
-        model = make_corpus_bigram(show_tasks(makeLongTasks()))
+        model = make_corpus_bigram(show_tasks(corpus))
         for task in tasks:
             task.ll_cutoff = bigram_corpus_score([example[1] for example in task.examples], model)
+        return tasks
+    elif ll_cutoff == "unigram":
+        eprint("WARNING: using entire corpus to make unigram model")
+        #flatten corpus out
+        model = make_corpus_unigram([example[1] for task in corpus for example in task.examples])
+        for task in tasks:
+            task.ll_cutoff = unigram_corpus_score([example[1] for example in task.examples], model)
         return tasks
     else:
         eprint("not implemented")
@@ -77,6 +84,28 @@ def regex_plus_bound(X):
         regex_scores.append(sum(c[x] * r.match(x) for x in c)/float(sum([len(x) for x in X])) )
     return max(regex_scores)
 
+
+def unigram_corpus_score(X, model):
+    """
+    Given a list of strings, X, calculate the maximum 
+    log-likelihood per character for a unigram model over characters (including STOP symbol)
+    done using corpus score
+    """
+    c = Counter(x for s in X for x in s)
+    c.update("end" for s in X)
+    n = sum(c.values())
+    return sum(c[x]*model[x] for x in c)/n
+
+def make_corpus_unigram(X):
+    """
+    make a corpus unigram score (including STOP symbol)
+    """
+
+    c = Counter(x for s in X for x in s)
+    c.update("end" for s in X)
+    n = sum(c.values())
+    logp = {x:math.log(c[x]/n) for x in c}
+    return logp
 
 
 def unigram_task_score(X):
@@ -199,7 +228,10 @@ class ProbabilisticLikelihoodModel:
             #TODO: change the way normalized_cum_ll is calculated 
             #TODO: refactor to pass in bigram_model, and others
             #TODO: refactor to do 95% certainty thing josh wants
-            success = normalized_cum_ll > task.ll_cutoff
+            if task.ll_cutoff is not None:
+                success = normalized_cum_ll > task.ll_cutoff
+            else:
+                success = normalized_cum_ll > float('-inf')
 
 
 

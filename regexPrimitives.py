@@ -9,10 +9,10 @@ import math
 # evaluation to regular regex form. then I can unflatten using Luke's stuff.
 
 
-def _kleene(x): return pregex.KleeneStar(x, p=0.5)
+def _kleene(x): return pregex.KleeneStar(x, p=0.25)
 
 
-def _plus(x): return pregex.Plus(x, p=0.5)
+def _plus(x): return pregex.Plus(x, p=0.25)
 
 
 def _maybe(x): return pregex.Maybe(x)
@@ -23,9 +23,40 @@ def _alt(x): return lambda y: pregex.Alt([x, y])
 
 
 def _concat(x): return lambda y: pregex.Concat([x, y])  # "(" + x + y + ")"
+
 #def _wrapper(x): return lambda y: y
 
 #specials = [".","*","+","?","|"]
+"""
+>>> import pregex as pre
+>>> abc = pre.CharacterClass("abc", [0.1, 0.1, 0.8], name="MyConcept")
+>>> abc.sample()
+'b'
+>>> abc.sample()
+'c'
+>>> abc.sample()
+'c'
+>>> abc.match("c")
+-0.2231435513142097
+>>> abc.match("a")
+-2.3025850929940455
+>>> abc
+MyConcept
+>>> x = pre.KleeneStar(abc)
+>>> x.match("aabbac")
+-16.58809928020405
+>>> x.sample()
+''
+>>> x.sample()
+''
+>>> x.sample()
+'cbcacc'
+>>> x
+(KleeneStar 0.5 MyConcept)
+>>> str(x)
+'MyConcept*'
+"""
+
 
 
 disallowed = [
@@ -142,6 +173,27 @@ def easyWordsPrimitives():
         Primitive("r_kleene", arrow(tpregex, tpregex), _kleene),
         Primitive("r_plus", arrow(tpregex, tpregex), _plus),
         Primitive("r_maybe", arrow(tpregex, tpregex), _maybe),
+        Primitive("r_alt", arrow(tpregex, tpregex, tpregex), _alt),
+        Primitive("r_concat", arrow(tpregex, tpregex, tpregex), _concat),
+    ]
+
+def matchEmpericalPrimitives():
+    return [
+        Primitive("empty_string", tpregex, pregex.String(""))
+    ] + [
+        Primitive("string_" + i, tpregex, pregex.String(i)) for i in printable[:-4] if i not in disallowed_list
+    ] + [
+        Primitive("string_" + name, tpregex, pregex.String(char)) for char, name in disallowed
+    ] + [
+        Primitive("r_dot", tpregex, pregex.dot),
+        Primitive("r_d", tpregex, pregex.d),
+        Primitive("r_s", tpregex, pregex.s),
+        Primitive("r_w", tpregex, pregex.w),
+        Primitive("r_l", tpregex, pregex.l),
+        Primitive("r_u", tpregex, pregex.u),
+        Primitive("r_kleene", arrow(tpregex, tpregex), _kleene),
+        #Primitive("r_plus", arrow(tpregex, tpregex), _plus),
+        #Primitive("r_maybe", arrow(tpregex, tpregex), _maybe),
         Primitive("r_alt", arrow(tpregex, tpregex, tpregex), _alt),
         Primitive("r_concat", arrow(tpregex, tpregex, tpregex), _concat),
     ]

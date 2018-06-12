@@ -113,7 +113,12 @@ git checkout %s
                 %s ubuntu@%s:ec/""" % (resume, address))
         preamble += "tar xf {}\n".format(os.path.basename(resume))
     else:
-        preamble += "git apply patch ; mkdir jobs\n"
+        preamble += """git apply patch ; mkdir jobs
+rm -rf pregex
+rm -rf pinn
+git clone https://github.com/insperatum/pinn.git
+git clone https://github.com/insperatum/pregex.git
+"""
 
     if upload:
         # This is probably a terribly insecure idea...
