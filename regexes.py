@@ -5,7 +5,7 @@ from grammar import Grammar
 #from utilities import eprint, testTrainSplit, numberOfCPUs, flatten
 from utilities import eprint, numberOfCPUs, flatten, fst, testTrainSplit, POSITIVEINFINITY
 from makeRegexTasks import makeOldTasks, makeLongTasks, makeShortTasks, makeWordTasks, makeNumberTasks
-from regexPrimitives import basePrimitives, altPrimitives
+from regexPrimitives import basePrimitives, altPrimitives, easyWordsPrimitives, alt2Primitives
 from likelihoodModel import add_cutoff_values
 #from program import *
 from recognition import HandCodedFeatureExtractor, MLPFeatureExtractor, RecurrentFeatureExtractor, JSONFeatureExtractor
@@ -129,7 +129,7 @@ def regex_options(parser):
     parser.add_argument("--primitives",
                         default="base",
                         help="Which primitive set to use",
-                        choices=["base", "alt1"])
+                        choices=["base", "alt1", "easyWords", "alt2"])
     parser.add_argument("--extractor", type=str,
                         choices=["hand", "deep", "learned", "json"],
                         default="json")  # if i switch to json it breaks
@@ -201,7 +201,7 @@ if __name__ == "__main__":
                 "short": makeShortTasks,
                 "long": makeLongTasks,
                 "words": makeWordTasks,
-                "number": makeNumberTasks
+                "number": makeNumberTasks,
                 }[args.pop("tasks")]
 
     tasks = regexTasks()  # TODO
@@ -232,7 +232,9 @@ if __name__ == "__main__":
     # from list stuff
     primtype = args.pop("primitives")
     prims = {"base": basePrimitives,
-             "alt1": altPrimitives}[primtype]
+             "alt1": altPrimitives,
+             "alt2": alt2Primitives,
+             "easyWords":easyWordsPrimitives}[primtype]
 
     extractor = {
         "hand": HandCodedFeatureExtractor,
@@ -266,11 +268,11 @@ if __name__ == "__main__":
         # use the
     #prim_list = prims(stardecay)
     prim_list = prims()
-    n_base_prim = len(prim_list) - 5.
     specials = ["r_kleene", "r_plus", "r_maybe", "r_alt", "r_concat"]
+    n_base_prim = len(prim_list) - len(specials)
 
     productions = [
-        (math.log(0.5 / n_base_prim),
+        (math.log(0.5 / float(n_base_prim)),
          prim) if prim.name not in specials else (
             math.log(0.10),
             prim) for prim in prim_list]

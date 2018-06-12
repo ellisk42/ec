@@ -496,7 +496,7 @@ def enumerateNetworkForTasks(cpu_idx, network, tasks_features, likelihoodModel=N
 
                 for sample, prior in new_proposals_scores:
                     try:
-                        #eprint("untokenized program:", sample)
+                        eprint("untokenized program:", sample)
                         #print("sample:")
                         #print(sample)
 
@@ -506,7 +506,7 @@ def enumerateNetworkForTasks(cpu_idx, network, tasks_features, likelihoodModel=N
                         preg = p.evaluate([])
                         if not isinstance(preg, pregex.Pregex): continue
 
-                        #eprint("regex program:", preg)
+                        eprint("regex program:", preg)
                         #likelihood = task.logLikelihood(p, timeout=evaluationTimeout) #TODO: change this
                         #eprint("tokenized program:", p)
                         success, likelihood = likelihoodModel.score(p, task)
