@@ -117,6 +117,8 @@ class Grammar(object):
                        for t, p, k in variableCandidates]
         if candidates == []:
             raise NoCandidates()
+        #eprint("candidates inside buildCandidates before norm:")
+        #eprint(candidates)
 
         if normalize:
             z = lse([l for l, t, p, k in candidates])
@@ -126,10 +128,14 @@ class Grammar(object):
             else:
                 candidates = [(l - z, t, p, k) for l, t, p, k in candidates]
 
+        #eprint("candidates inside buildCandidates after norm:")
+        #eprint(candidates)
+
         if returnTable:
             return {p: (l, t, k) for l, t, p, k in candidates}
         else:
             return candidates
+
 
     def sample(self, request, maximumDepth=6, maxAttempts=None):
         attempts = 0
@@ -160,6 +166,8 @@ class Grammar(object):
                                           # leaf; a primitive with no
                                           # function arguments
                                           mustBeLeaf=maximumDepth <= 1)
+        #eprint("candidates:")
+        #eprint(candidates)
         newType, chosenPrimitive, context = sampleDistribution(candidates)
 
         # Sample the arguments

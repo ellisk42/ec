@@ -20,14 +20,16 @@ def launch(size="t2.micro", name=""):
     # aws ec2 run-instances --image-id ami-835f6ae6 --instance-type "t2.micro"
     # --key-name testing --associate-public-ip-address
     o = json.loads(subprocess.check_output(["aws", "ec2", "run-instances",
-                                            "--image-id",  # "ami-835f6ae6",
+                                            "--image-id",
+                                            # "ami-835f6ae6",
                                             # "ami-d6ae9fb3",
                                             # "ami-2e093b4b",
                                             # "ami-3080b255",
                                             # "ami-0f3c016a",
                                             # "ami-14033e71",
                                             # "ami-23fcc346",
-                                            "ami-b2a798d7",
+                                            #"ami-b2a798d7",
+                                            "ami-0d380668",
                                             "--instance-type", size,
                                             "--security-groups", "publicssh",
                                             "--instance-initiated-shutdown-behavior", "terminate",

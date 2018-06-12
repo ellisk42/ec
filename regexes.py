@@ -5,11 +5,13 @@ from grammar import Grammar
 #from utilities import eprint, testTrainSplit, numberOfCPUs, flatten
 from utilities import eprint, numberOfCPUs, flatten, fst, testTrainSplit, POSITIVEINFINITY
 from makeRegexTasks import makeOldTasks, makeLongTasks, makeShortTasks, makeWordTasks, makeNumberTasks
-from regexPrimitives import basePrimitives, altPrimitives
+from regexPrimitives import basePrimitives, altPrimitives, easyWordsPrimitives, alt2Primitives
+from likelihoodModel import add_cutoff_values
 #from program import *
 from recognition import HandCodedFeatureExtractor, MLPFeatureExtractor, RecurrentFeatureExtractor, JSONFeatureExtractor
 import random
 from type import tpregex
+import math
 
 
 
@@ -95,10 +97,15 @@ class MyJSONFeatureExtractor(JSONFeatureExtractor):
             try:
                 y = preg.sample()  # TODO
 
+                #this line should keep inputs short, so that helmholtzbatch can be large
+                #allows it to try other samples
+                #(Could also return None off the bat... idk which is better)
+                #if len(y) > 20:
+                #    continue
                 #eprint(tp, program, x, y)
                 examples.append(y)
             except BaseException:
-                continue
+                continues
             if len(examples) >= self.N_EXAMPLES:
                 break
         else:
@@ -122,7 +129,7 @@ def regex_options(parser):
     parser.add_argument("--primitives",
                         default="base",
                         help="Which primitive set to use",
-                        choices=["base", "alt1"])
+                        choices=["base", "alt1", "easyWords", "alt2"])
     parser.add_argument("--extractor", type=str,
                         choices=["hand", "deep", "learned", "json"],
                         default="json")  # if i switch to json it breaks
@@ -142,8 +149,12 @@ def regex_options(parser):
                         action="store_true")
     parser.add_argument("--debug",
                         dest="debug",
-                        action="store_true"
-                        )
+                        action="store_true")
+    parser.add_argument("--ll_cutoff",
+                        dest="use_ll_cutoff",
+                        nargs='*',
+                        default=False,
+                        help="use ll cutoff for training tasks (for probabilistic likelihood model only). default is False,")
     """parser.add_argument("--stardecay",
                         type=float,
                         dest="stardecay",
@@ -166,11 +177,31 @@ if __name__ == "__main__":
         CPUs=numberOfCPUs(),
         extras=regex_options)
 
+
+    #parse use_ll_cutoff
+    use_ll_cutoff = args.pop('use_ll_cutoff')
+    if not use_ll_cutoff is False:
+
+        #if use_ll_cutoff is a list of strings, then train_ll_cutoff and train_ll_cutoff 
+        #will be tuples of that string followed by the actual model
+
+        if len(use_ll_cutoff) == 1:
+            train_ll_cutoff = use_ll_cutoff[0] # make_cutoff_model(use_ll_cutoff[0], tasks))
+            test_ll_cutoff = use_ll_cutoff[0] # make_cutoff_model(use_ll_cutoff[0], tasks))
+        else:
+            assert len(use_ll_cutoff) == 2
+            train_ll_cutoff = use_ll_cutoff[0] #make_cutoff_model(use_ll_cutoff[0], tasks))
+            test_ll_cutoff = use_ll_cutoff[1] #make_cutoff_model(use_ll_cutoff[1], tasks))
+    else:
+        train_ll_cutoff = None
+        test_ll_cutoff = None
+
+
     regexTasks = {"old": makeOldTasks,
                 "short": makeShortTasks,
                 "long": makeLongTasks,
                 "words": makeWordTasks,
-                "number": makeNumberTasks
+                "number": makeNumberTasks,
                 }[args.pop("tasks")]
 
     tasks = regexTasks()  # TODO
@@ -192,10 +223,18 @@ if __name__ == "__main__":
     test, train = testTrainSplit(tasks, split)
     eprint("Split tasks into %d/%d test/train" % (len(test), len(train)))
 
+
+    test = add_cutoff_values(test, test_ll_cutoff)
+    train = add_cutoff_values(train, train_ll_cutoff)
+    eprint("added cutoff values to tasks, train: ", train_ll_cutoff, ", test:", test_ll_cutoff )
+
+
     # from list stuff
     primtype = args.pop("primitives")
     prims = {"base": basePrimitives,
-             "alt1": altPrimitives}[primtype]
+             "alt1": altPrimitives,
+             "alt2": alt2Primitives,
+             "easyWords":easyWordsPrimitives}[primtype]
 
     extractor = {
         "hand": HandCodedFeatureExtractor,
@@ -216,8 +255,8 @@ if __name__ == "__main__":
 
     args.update({
         "featureExtractor": extractor,
-        "outputPrefix": "experimentOutputs/regex" + primtype + timestr, #+ decaystr,
-        "evaluationTimeout": 1.0,  # 0.005,
+        "outputPrefix": "experimentOutputs/regex" + primtype + timestr + 'll' + str(train_ll_cutoff) + str(test_ll_cutoff),
+        "evaluationTimeout": 2.0,  # 0.005,
         "topk_use_map": False,
         "maximumFrontier": 10,
         "solver": "python",
@@ -229,13 +268,13 @@ if __name__ == "__main__":
         # use the
     #prim_list = prims(stardecay)
     prim_list = prims()
-    n_base_prim = len(prim_list) - 5.
     specials = ["r_kleene", "r_plus", "r_maybe", "r_alt", "r_concat"]
+    n_base_prim = len(prim_list) - len(specials)
 
     productions = [
-        (0.5 / n_base_prim,
+        (math.log(0.5 / float(n_base_prim)),
          prim) if prim.name not in specials else (
-            0.10,
+            math.log(0.10),
             prim) for prim in prim_list]
 
 
@@ -251,13 +290,20 @@ if __name__ == "__main__":
     if test_stuff:
         eprint(baseGrammar)
         eprint("sampled programs from prior:")
-        for i in range(100):
+        for i in range(100): #100
             eprint(baseGrammar.sample(test[0].request,maximumDepth=1000))
         eprint("""half the probability mass is on higher-order primitives.
 Therefore half of enumerated programs should have more than one node.
 However, we do not observe this.
 Instead we see a very small fraction of programs have more than one node. 
-So something seems to be wrong with grammar.sample.""")
+So something seems to be wrong with grammar.sample.
+
+Furthermore: observe the large print statement above. 
+This prints the candidates for sampleDistribution in grammar.sample.
+the first element of each tuple is the probability passed into sampleDistribution.
+Half of the probability mass should be on the functions, but instead they are equally 
+weighted with the constants. If you look at the grammar above, this is an error!!!!
+""")
         assert False
 
     explorationCompression(baseGrammar, train,

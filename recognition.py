@@ -943,7 +943,6 @@ class NewRecognitionModel(nn.Module):
                 assert any(
                     myParameter is parameter for myParameter in self.parameters())
 
-    # TODO: modify for regexes
     # Maybe can kill lambdas completely since they're deterministic
     def getTargetVocabulary(self, grammar):
         return ["(_lambda", ")_lambda", "(", ")"] + \
@@ -974,7 +973,12 @@ class NewRecognitionModel(nn.Module):
             (len(frontiers), int(
                 helmholtzRatio * 100)))
 
-        HELMHOLTZBATCH = 250
+        #HELMHOLTZBATCH = 250
+        HELMHOLTZBATCH = 200
+        #recommended total training of 250000
+
+        eprint("trying to cuda, HELMHOLTZBATCH is", HELMHOLTZBATCH)
+        self.network.cuda()
 
         with timing("Trained recognition model"):
             avgLoss = None
@@ -985,7 +989,8 @@ class NewRecognitionModel(nn.Module):
                 if helmholtzRatio < 1.:
                     permutedFrontiers = list(frontiers)
                     random.shuffle(permutedFrontiers)
-
+                    eprint("not implemented")
+                    assert False
                     # eprint("frontiers:")
                     # eprint(frontiers)
                     # eprint("permutedFrontiers:")
@@ -1008,8 +1013,8 @@ class NewRecognitionModel(nn.Module):
                     if doingHelmholtz:
                         networkInputs = self.helmholtzNetworkInputs(
                             requests, HELMHOLTZBATCH, CPUs)
-                        # eprint("networkInputs[0]", networkInputs[0])
-                        # eprint("networkInputs[1]", networkInputs[1])
+                        #eprint("networkInputs[0]:", networkInputs[0])
+                        #eprint("networkInputs[1]:", networkInputs[1])
                         loss = self.step(*networkInputs)
                     if not doingHelmholtz:
                         if helmholtzRatio < 1.:
@@ -1084,8 +1089,9 @@ class NewRecognitionModel(nn.Module):
 
         # Filter to length <= 30
         valid_idxs = [i for i in range(len(targets)) if
-                      len(targets[i]) <= 100 and
-                      all(len(example) <= 100 for example in outputss[i])]
+                      len(targets[i]) <= 30 and
+                      all(len(example[0]) <= 30 for example in outputss[i])]
+
 
         # batchInputsOutputs = [joinedInputsOutputs[i] for i in valid_idxs]
         batchOutputs = [outputss[i] for i in valid_idxs]
@@ -1142,13 +1148,13 @@ class NewRecognitionModel(nn.Module):
 
         #try:
         #program = self.grammar.sample(request, maximumDepth=6, maxAttempts=100)
-        eprint("sampled training program:")
-        eprint(program)
+        #eprint("sampled training program:")
+        #eprint(program)
         # >>> Increase maxDepth, might actually make sampling faster
         # >>> Call out to pypy
         features = self.featureExtractor.featuresOfProgram(program, request)
-        eprint("features_outer:")
-        eprint(features)
+        #eprint("features_outer:")
+        #eprint(features)
         # Feature extractor failure
         if features is None:
             return None
@@ -1173,8 +1179,7 @@ class NewRecognitionModel(nn.Module):
                            enumerationTimeout=None,
                            CPUs=1,
                            maximumFrontier=None,
-                           evaluationTimeout=None,
-                           ll_cutoff=None):
+                           evaluationTimeout=None):
         # need to encorporate likelihood model, solver
 
         tasks_features = []
@@ -1223,7 +1228,7 @@ class NewRecognitionModel(nn.Module):
             network, tasks_features, likelihoodModel, solver=solver,
             frontierSize=frontierSize, enumerationTimeout=enumerationTimeout,
             CPUs=CPUs, maximumFrontier=maximumFrontier,
-            evaluationTimeout=evaluationTimeout, ll_cutoff=ll_cutoff)
+            evaluationTimeout=evaluationTimeout)
 
         if self.use_cuda:
             torch.set_default_tensor_type('torch.cuda.FloatTensor')

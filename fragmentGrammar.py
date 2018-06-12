@@ -500,11 +500,29 @@ def rustInduce(g0, frontiers, _=None,
     with open("jsonDebug", "w") as f:
         f.write(messageJson)
 
-    p = subprocess.Popen(
-        ['./rust_compressor/rust_compressor'],
-        encoding='utf-8',
-        stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE)
+    #check which version of python we are using 
+    import sys
+
+    #if 3.6 do:
+    if sys.version_info[1] == 6:
+        p = subprocess.Popen(
+            ['./rust_compressor/rust_compressor'],
+            encoding='utf-8',
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE)
+    elif sys.version_info[1] == 5:
+        p = subprocess.Popen(
+            ['./rust_compressor/rust_compressor'],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE)
+
+        messageJson = bytearray(messageJson, encoding='utf-8')
+        #convert messageJson string to bytes
+    else:
+        eprint("must be python 3.5 or 3.6")
+        assert False 
+
+
     p.stdin.write(messageJson)
     p.stdin.flush()
     p.stdin.close()
@@ -512,7 +530,13 @@ def rustInduce(g0, frontiers, _=None,
     if p.returncode is not None:
         raise ValueError("rust compressor failed")
 
-    resp = json.load(p.stdout)
+    if sys.version_info[1] == 6:
+        resp = json.load(p.stdout)
+    elif sys.version_info[1] == 5:
+        import codecs
+        resp = json.load(codecs.getreader('utf-8')(p.stdout))
+
+
 
     productions = [(x["logp"], p) for p, x in
                    zip((p for (_, _, p) in g0.productions if p.isPrimitive), resp["primitives"])] + \

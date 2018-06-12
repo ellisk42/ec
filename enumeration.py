@@ -17,7 +17,7 @@ def multicoreEnumeration(g, tasks, likelihoodModel, _=None,
                          maximumFrontier=None,
                          verbose=True,
                          evaluationTimeout=None,
-                         testing=False, ll_cutoff=None):
+                         testing=False):
     '''g: Either a Grammar, or a map from task to grammar.'''
     from time import time
 
@@ -154,8 +154,7 @@ def multicoreEnumeration(g, tasks, likelihoodModel, _=None,
                                  likelihoodModel=likelihoodModel,
                                  evaluationTimeout=evaluationTimeout,
                                  maximumFrontiers=maximumFrontiers(j),
-                                 testing=testing,
-                                 ll_cutoff=ll_cutoff)
+                                 testing=testing)
                 id2CPUs[nextID] = allocation[j]
                 id2job[nextID] = j
                 nextID += 1
@@ -242,8 +241,7 @@ def solveForTask_ocaml(_=None,
                        timeout=None,
                        likelihoodModel=None,  # FIXME: unused
                        testing=None, # FIXME: unused
-                       evaluationTimeout=None, maximumFrontiers=None, ll_cutoff=None):
-    assert ll_cutoff is None
+                       evaluationTimeout=None, maximumFrontiers=None):
 
     import json
 
@@ -374,8 +372,7 @@ def solveForTask_pypy(_=None,
                       lowerBound=None, upperBound=None, budgetIncrement=None,
                       timeout=None,
                       likelihoodModel=None,
-                      evaluationTimeout=None, maximumFrontier=None, testing=False, ll_cutoff=None):
-    assert ll_cutoff is None
+                      evaluationTimeout=None, maximumFrontier=None, testing=False):
     return callCompiled(enumerateForTasks,
                         g, tasks, likelihoodModel,
                         timeout=timeout,
@@ -393,7 +390,7 @@ def solveForTask_python(_=None,
                         timeout=None,
                         CPUs=1,
                         likelihoodModel=None,
-                        evaluationTimeout=None, maximumFrontiers=None, testing=False, ll_cutoff=None):
+                        evaluationTimeout=None, maximumFrontiers=None, testing=False):
     return enumerateForTasks(g, tasks, likelihoodModel,
                              timeout=timeout,
                              testing=testing,
@@ -401,7 +398,7 @@ def solveForTask_python(_=None,
                              evaluationTimeout=evaluationTimeout,
                              maximumFrontiers=maximumFrontiers,
                              budgetIncrement=budgetIncrement,
-                             lowerBound=lowerBound, upperBound=upperBound, ll_cutoff=ll_cutoff)
+                             lowerBound=lowerBound, upperBound=upperBound)
 
 
 class EnumerationTimeout(Exception):
@@ -414,7 +411,7 @@ def enumerateNetwork(network, tasks_features, likelihoodModel, solver=None,
                        CPUs=1,
                        maximumFrontier=None,
                        verbose=True,
-                       evaluationTimeout=None, ll_cutoff=None):
+                       evaluationTimeout=None):
     from time import time
     
     start = time()
@@ -433,8 +430,7 @@ def enumerateNetwork(network, tasks_features, likelihoodModel, solver=None,
                                                                      timeout=enumerationTimeout,
                                                                      evaluationTimeout = evaluationTimeout,
                                                                      verbose=verbose,
-                                                                     maximumFrontier=maximumFrontier,
-                                                                     ll_cutoff=ll_cutoff),
+                                                                     maximumFrontier=maximumFrontier),
                             list(zip(list(range(len(chunked_tasks_features))), chunked_tasks_features)),
                             chunksize=1)
     frontiers = [frontier for frontiers in frontierss for frontier in frontiers] #wtf is happening
@@ -448,8 +444,7 @@ def enumerateNetworkForTasks(cpu_idx, network, tasks_features, likelihoodModel=N
                      timeout=None,
                      evaluationTimeout=None,
                      frontierSize=None,
-                     maximumFrontier = 10**2,
-                     ll_cutoff=None):
+                     maximumFrontier = 10**2):
     from pregex import pregex
     assert likelihoodModel is not None
     assert network is not None
@@ -483,6 +478,7 @@ def enumerateNetworkForTasks(cpu_idx, network, tasks_features, likelihoodModel=N
             new_proposals_scores = set()
             numberOfPrograms = 0
             numberOfHits = 0
+            numberOfSamples = 0
 
             for i in range(50):
                 random.shuffle(features)
@@ -492,25 +488,28 @@ def enumerateNetworkForTasks(cpu_idx, network, tasks_features, likelihoodModel=N
                 eprint("input to sample and score:")
                 eprint([outputs])
                 samples, scores = network.sampleAndScore([outputs], nRepeats=100)
-                eprint("samples:")
-                eprint(samples)
+                #eprint("samples:")
+                #eprint(samples)
                 #why is this a tuple??? - it already was a tuple, so nothing is changed.
                 new_proposals_scores = [(tuple(samples[i]), scores[i]) for i in range(len(samples)) if tuple(samples[i]) not in seen_proposals]
                 seen_proposals = seen_proposals | set(x[0] for x in new_proposals_scores)
 
                 for sample, prior in new_proposals_scores:
                     try:
-                        #eprint("untokenized program:", sample)
-                        print("sample:")
-                        print(sample)
+                        eprint("untokenized program:", sample)
+                        #print("sample:")
+                        #print(sample)
+
+                        numberOfSamples += 1
                         p = untokeniseProgram(sample)
 
                         preg = p.evaluate([])
                         if not isinstance(preg, pregex.Pregex): continue
-                        eprint("program:", preg)
+
+                        eprint("regex program:", preg)
                         #likelihood = task.logLikelihood(p, timeout=evaluationTimeout) #TODO: change this
                         #eprint("tokenized program:", p)
-                        _, likelihood = likelihoodModel.score(p, task, ll_cutoff)
+                        success, likelihood = likelihoodModel.score(p, task)
                         #eprint("sampled an actual program")
                     except ParseFailure: continue
                     except RunFailure: continue #Happens during likelihood evaluation for e.g. (lambda $3)
@@ -520,9 +519,9 @@ def enumerateNetworkForTasks(cpu_idx, network, tasks_features, likelihoodModel=N
 
                     numberOfPrograms += 1
 
-                    if valid(likelihood):
+                    if success:
                         if verbose:
-                            eprint("(%d)"%cpu_idx, "Hit",task.name,"with the program",p,"which has prior",prior,"after",time() - starting,"seconds using RobustFill model")
+                            eprint("(%d)"%cpu_idx, "Hit",task.name,"with the program", preg,"which has prior",prior, "and likelihood", likelihood, "after",time() - starting,"seconds using RobustFill model")
                         frontier.append(FrontierEntry(program = p,
                                                       logPrior = prior,
                                                       logLikelihood = likelihood))
@@ -534,8 +533,7 @@ def enumerateNetworkForTasks(cpu_idx, network, tasks_features, likelihoodModel=N
                     if timeout is not None and time() - starting > timeout:
                         signal.setitimer(signal.ITIMER_VIRTUAL, 0)
                         raise EnumerationTimeout
-            if verbose:
-                eprint("(%d)"%cpu_idx, "enumerated: %d samples, %d programs, %d hits" % (len(seen_proposals), numberOfPrograms, numberOfHits))
+
                 
                 # previousBudget = budget
                 # budget += budgetIncrement
@@ -548,6 +546,9 @@ def enumerateNetworkForTasks(cpu_idx, network, tasks_features, likelihoodModel=N
             if verbose:
                 eprint("Timeout triggered after",time() - starting,"seconds for task",task)
         signal.setitimer(signal.ITIMER_VIRTUAL, 0)
+
+        if verbose:
+            eprint("(%d)"%cpu_idx, "enumerated: %d about unique samples, %d total samples, %d programs, %d hits" % (len(seen_proposals), numberOfSamples, numberOfPrograms, numberOfHits))
 
         frontier = Frontier(frontier,
                             task = task).topK(maximumFrontier)
@@ -566,7 +567,7 @@ def enumerateForTasks(g, tasks, likelihoodModel, _=None,
                       evaluationTimeout=None,
                       lowerBound=0.,
                       upperBound=100.,
-                      budgetIncrement=1.0, maximumFrontiers=None, ll_cutoff=None):
+                      budgetIncrement=1.0, maximumFrontiers=None):
     assert timeout is not None, \
         "enumerateForTasks: You must provide a timeout."
 
@@ -610,7 +611,7 @@ def enumerateForTasks(g, tasks, likelihoodModel, _=None,
                     #likelihood = task.logLikelihood(p, evaluationTimeout)
                     #if invalid(likelihood):
                         #continue
-                    success, likelihood = likelihoodModel.score(p, task, ll_cutoff)
+                    success, likelihood = likelihoodModel.score(p, task)
                     if not success:
                         continue
                     

@@ -1,5 +1,6 @@
 
 
+
 import signal
 import random
 import time
@@ -137,6 +138,10 @@ def lse(x, y=None):
         if t == int or t == float:
             largest = max(*x)
             return largest + math.log(sum(math.exp(z - largest) for z in x))
+        #added clause to avoid zero -dim tensor problem
+        import torch
+        if t == torch.Tensor and x[0].size() == torch.Size([]):
+            return torchSoftMax([datum.view(1) for datum in x])
         # Must be torch
         return torchSoftMax(x)
     else:
