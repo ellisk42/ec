@@ -36,14 +36,14 @@ let star (n : int) : turtle =
     )
 
 let line : turtle =
-  logo_FW 100.
+  logo_FW logo_var_UNIT
 
 let angle : turtle =
   logo_SEQ
-    (logo_FW 100.)
+    (logo_FW logo_var_UNIT)
     (logo_SEQ
-      (logo_RT 100.)
-      (logo_FW 200.))
+      (logo_RT (logo_var_DIV logo_var_PI logo_var_TWO))
+      (logo_FW logo_var_UNIT))
 
 let _ =
   let c = eval_turtle line in

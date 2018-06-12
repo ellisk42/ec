@@ -22,28 +22,38 @@ let (<<-) t1 t2 =
   t1.t <- t2.t ;
   t1.p <- t2.p
 
-let init_state () = {x = 200.; y = 200.; t = 0.; p = true}
+let init_state () = {x = d_from_origin; y = d_from_origin; t = 0.; p = true}
 
-let pp_logo_instruction i = match i with
-  | PU     -> print_string "PU"
-  | PD     -> print_string "PD"
-  | FW(a)  -> print_string "FW(" ; print_float a ; print_string ")"
-  | RT(a)  -> print_string "RT(" ; print_float a ; print_string ")"
+let flush_everything () =
+  Pervasives.flush stdout;
+  Pervasives.flush stderr
+
+let pp_logo_instruction i =
+  match i with
+  | PU     -> prerr_string "PU"
+  | PD     -> prerr_string "PD"
+  | FW(a)  -> prerr_string "FW(" ; prerr_float a ; prerr_string ")"
+  | RT(a)  -> prerr_string "RT(" ; prerr_float a ; prerr_string ")"
   | SET(s) ->
-      print_string "SET(" ;
-      print_float s.x ;
-      print_string "," ;
-      print_float s.y ;
-      print_string "," ;
-      print_float s.t ;
-      print_string "," ;
-      print_string (if s.p then "on" else "off") ;
-      print_string ")"
+      prerr_string "SET(" ;
+      prerr_float s.x ;
+      prerr_string "," ;
+      prerr_float s.y ;
+      prerr_string "," ;
+      prerr_float s.t ;
+      prerr_string "," ;
+      prerr_string (if s.p then "on" else "off") ;
+      prerr_string ")"
 
 let pp_turtle t =
   let l,_ = t (init_state ()) in
-  List.iter (pp_logo_instruction) l ;
-  print_newline ()
+  List.iter
+    (fun e ->
+       pp_logo_instruction e ;
+       prerr_string "; " ;
+       flush_everything () )
+    l ;
+  prerr_newline ()
 
 let eval_turtle turtle =
   let p,_ = turtle (init_state ()) in
@@ -64,7 +74,6 @@ let eval_turtle turtle =
         t.x <- x ;
         t.y <- y
   in
-  List.iter pp_logo_instruction p ;
   List.iter eval_instruction p ;
   !c
 
@@ -99,8 +108,18 @@ let logo_SET : (state -> turtle) = fun s -> fun _ -> ([SET(s)], s)
 
 let logo_NOP : turtle = fun s -> ([], s)
 
-let logo_var_UNIT : float  = 100.
-let logo_var_NEXT        f = f +. logo_var_UNIT
+let logo_var_UNIT : float  = 1.
+let logo_var_TWO : float   = 2.
+let logo_var_THREE: float  = 3.
+let logo_var_PI   : float  = 3.14159265359
+let logo_var_NXT         f = f +. 1.
+let logo_var_PRV         f = f -. 1.
+let logo_var_DBL         f = f *. 2.
+let logo_var_HLF         f = f /. 2.
+let logo_var_ADD      f f' = f +. f'
+let logo_var_SUB      f f' = f -. f'
+let logo_var_MUL      f f' = f *. f'
+let logo_var_DIV      f f' = f /. f'
 
 let turtle_to_png turtle resolution filename =
   output_canvas_png (eval_turtle turtle) resolution filename

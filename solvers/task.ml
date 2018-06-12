@@ -48,7 +48,7 @@ let supervised_task ?timeout:(timeout = 0.001) name ty examples =
 
 let turtle_task ?timeout:(timeout = 0.001) name ty examples =
   match examples with
-  | [(_,y)] ->
+  | [([],y)] ->
     let by = Bigarray.(Array1.of_array int8_unsigned c_layout (Array.of_list y))
     in
     { name = name    ;
@@ -56,34 +56,30 @@ let turtle_task ?timeout:(timeout = 0.001) name ty examples =
       log_likelihood =
         (fun p ->
           let p = analyze_lazy_evaluation p in
-          print_endline "so far so good 1" ;
-          if (try begin
-                match run_for_interval
-                        timeout
-                        (fun () ->
-                          print_endline "so far so good 2" ;
-                          let x = run_lazy_analyzed_with_arguments p [] in
-                          print_endline "so far so good 3" ;
-                          LogoLib.LogoInterpreter.pp_turtle x ;
-                          print_endline "so far so good 4" ;
-                          let bx = LogoLib.LogoInterpreter.turtle_to_array x 28 in
-                          print_endline "so far so good 5" ;
-                          bx = by)
-                with 
-                  | Some(true) -> true
-                  | _ -> false
-              end
-              with (* We have to be a bit careful with exceptions if the
-                    * synthesized program generated an exception, then we just
-                    * terminate w/ false but if the enumeration timeout was
-                    * triggered during program evaluation, we need to pass the
-                    * exception on
-                    *)
-                | UnknownPrimitive(n) -> raise (Failure ("Unknown primitive: "^n))
-                | EnumerationTimeout  -> raise EnumerationTimeout
-                | _                   -> false)
-            then 0.0
-            else log 0.0)
+          if
+            (try begin
+              match
+                run_for_interval
+                  timeout
+                  (fun () ->
+                    let x = run_lazy_analyzed_with_arguments p [] in
+                    let bx = LogoLib.LogoInterpreter.turtle_to_array x 28 in
+                    bx = by)
+              with
+                | Some(true) -> true
+                | _ -> false
+            end
+            with (* We have to be a bit careful with exceptions if the
+                  * synthesized program generated an exception, then we just
+                  * terminate w/ false but if the enumeration timeout was
+                  * triggered during program evaluation, we need to pass the
+                  * exception on
+                  *)
+              | UnknownPrimitive(n) -> raise (Failure ("Unknown primitive: "^n))
+              | EnumerationTimeout  -> raise EnumerationTimeout
+              | _                   -> false)
+          then 0.0
+          else log 0.0)
     }
   | _ -> failwith "not a turtle task"
 

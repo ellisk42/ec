@@ -202,7 +202,7 @@ let [@warning "-20"] rec analyze_lazy_evaluation (p:program) : (('b Lazy.t) list
 let [@warning "-20"] run_lazy_analyzed_with_arguments p arguments =
   let rec go l xs =
     match xs with
-    | [] -> l |> magical
+    | []      -> l |> magical
     | x :: xs -> go (lazy x |> magical l) xs
   in go (p [] |> Lazy.force) arguments
 
@@ -496,8 +496,18 @@ let logo_GET = primitive "logo_GET" (tstate @> turtle @> turtle) LogoLib.LogoInt
 let logo_SET = primitive "logo_SET"           (tstate @> turtle) LogoLib.LogoInterpreter.logo_SET
 let logo_NOP = primitive "logo_NOP"                     (turtle) LogoLib.LogoInterpreter.logo_NOP
 
-let logo_var_UNIT   = primitive "logo_var_UNIT" ttvar LogoLib.LogoInterpreter.logo_var_UNIT
-let logo_var_NEXT   = primitive "logo_var_NEXT" (ttvar @> ttvar) LogoLib.LogoInterpreter.logo_var_NEXT
+let logo_var_UNIT = primitive "logo_var_UNIT" ttvar LogoLib.LogoInterpreter.logo_var_UNIT
+let logo_var_TWO = primitive "logo_var_TWO" ttvar LogoLib.LogoInterpreter.logo_var_TWO
+let logo_var_THREE = primitive "logo_var_THREE" ttvar LogoLib.LogoInterpreter.logo_var_THREE
+let logo_var_PI   = primitive "logo_var_PI" ttvar LogoLib.LogoInterpreter.logo_var_PI
+let logo_var_NXT  = primitive "logo_var_NXT" (ttvar @> ttvar) LogoLib.LogoInterpreter.logo_var_NXT
+let logo_var_PRV  = primitive "logo_var_PRV" (ttvar @> ttvar) LogoLib.LogoInterpreter.logo_var_PRV
+let logo_var_DBL  = primitive "logo_var_DBL" (ttvar @> ttvar) LogoLib.LogoInterpreter.logo_var_DBL
+let logo_var_HLF  = primitive "logo_var_HLF" (ttvar @> ttvar) LogoLib.LogoInterpreter.logo_var_HLF
+let logo_var_ADD  = primitive "logo_var_ADD" (ttvar @> ttvar @> ttvar) LogoLib.LogoInterpreter.logo_var_ADD
+let logo_var_SUB  = primitive "logo_var_SUB" (ttvar @> ttvar @> ttvar) LogoLib.LogoInterpreter.logo_var_SUB
+let logo_var_MUL  = primitive "logo_var_MUL" (ttvar @> ttvar @> ttvar) LogoLib.LogoInterpreter.logo_var_MUL
+let logo_var_DIV  = primitive "logo_var_DIV" (ttvar @> ttvar @> ttvar) LogoLib.LogoInterpreter.logo_var_DIV
 
 
 let default_recursion_limit = 20;;

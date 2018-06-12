@@ -1,5 +1,4 @@
 open Core
-
 open Funarray
 
 type tp = 
@@ -165,7 +164,7 @@ let instantiate_type k t =
     match j with
       | TID(i) ->
         (try List.Assoc.find_exn ~equal:(fun a b -> a = b) !substitution i
-	 with Not_found ->
+	 with Not_found->
     let (t,k') = makeTID !k in
     k := k';
     substitution := (i,t)::!substitution;
