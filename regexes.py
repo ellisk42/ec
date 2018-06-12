@@ -256,7 +256,7 @@ if __name__ == "__main__":
     args.update({
         "featureExtractor": extractor,
         "outputPrefix": "experimentOutputs/regex" + primtype + timestr + 'll' + str(train_ll_cutoff) + str(test_ll_cutoff),
-        "evaluationTimeout": 1.0,  # 0.005,
+        "evaluationTimeout": 2.0,  # 0.005,
         "topk_use_map": False,
         "maximumFrontier": 10,
         "solver": "python",
