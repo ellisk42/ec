@@ -148,7 +148,7 @@ if __name__ == "__main__":
                          [Primitive(str(j), tint, j) for j in range(2, 5)])
 
     tasks = makeTasks()
-    test, train = testTrainSplit(tasks, 50. / len(tasks))
+    test, train = testTrainSplit(tasks, 1.) #50. / len(tasks))
     eprint("Split %d/%d test/train" % (len(test), len(train)))
     # evaluateArches(train)
     # if True: bruteForceBaseline(train)

@@ -162,9 +162,9 @@ def centerTower(t):
 
 def makeTasks():
     MILDPERTURBATION = 4
-    MASSES = [30, 40]
+    MASSES = [50]
     HEIGHT = [1.9, 6, 10]
-    STAIRCASE = [10.5, 2.5]
+    STAIRCASE = [10.5, 2.5, 1.5]
     return [TowerTask(maximumMass=float(m),
                       maximumStaircase=float(s),
                       minimumArea=float(a),
@@ -174,7 +174,7 @@ def makeTasks():
             for m in MASSES
             for a in [1, 2.9, 5.8]
             for s in STAIRCASE
-            for l in [2, 5]
+            for l in [2, 5, 8]
             for p in [MILDPERTURBATION]
             for h in HEIGHT
             ]
