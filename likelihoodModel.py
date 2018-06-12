@@ -7,7 +7,6 @@ from program import *
 from utilities import *
 from collections import Counter
 import math
-from makeRegexTasks import makeLongTasks
 
 
 class AllOrNothingLikelihoodModel:
@@ -37,6 +36,7 @@ class EuclideanLikelihoodModel:
 
 
 def add_cutoff_values(tasks, ll_cutoff):
+    from makeRegexTasks import makeLongTasks
     if ll_cutoff is None:
         for task in tasks:
             task.ll_cutoff = None 
