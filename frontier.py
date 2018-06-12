@@ -16,7 +16,7 @@ class FrontierEntry(object):
         self.logLikelihood = logLikelihood
 
     def __repr__(self):
-        return "FrontierEntry(program={self.program}, logPrior={self.logPrior}, logLikelihood={self.logLikelihood}".format(
+        return "FrontierEntry(program={self.program}, logPrior={self.logPrior}, logLikelihood={self.logLikelihood})".format(
             self=self)
 
 
@@ -110,7 +110,9 @@ class Frontier(object):
             return "MISS " + self.task.name
         best = self.bestPosterior
         return "HIT %s w/ %s ; log prior = %f ; log likelihood = %f" % (
-            self.task.name, best.program, best.logPrior, best.logLikelihood)
+            self.task.name, best.program.evaluate([]), best.logPrior, best.logLikelihood)
+        #return "HIT %s w/ %s ; log prior = %f ; log likelihood = %f" % (
+            #self.task.name, best.program, best.logPrior, best.logLikelihood)
 
     def summarizeFull(self):
         if self.empty:

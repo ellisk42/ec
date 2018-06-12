@@ -505,8 +505,11 @@ def ecIterator(grammar, tasks,
                 if f.empty:
                     continue
                 eprint(f.task)
+                eprint("examples:", [example[1] for example in f.task.examples[:5]])
                 for e in f.normalize():
-                    eprint("%.02f\t%s" % (e.logPosterior, e.program))
+                    #this doesn't work yet
+                        eprint("%.02f\t%s\t%.02f\n%s" % (e.logPosterior, e.program.evaluate([]), e.logLikelihood, prettyProgram(e.program)))
+                        #eprint("%.02f\t%s" % (e.logPosterior, e.program))
                 eprint()
         # Record the new solutions
         result.taskSolutions = {f.task: f.topK(topK)
@@ -543,8 +546,11 @@ def ecIterator(grammar, tasks,
                 if f.empty:
                     continue
                 eprint(f.task)
+                eprint("examples:", [example[1] for example in f.task.examples[:5]])
                 for e in f.normalize():
-                    eprint("%.02f\t%s" % (e.logPosterior, e.program))
+                    preg = e.program.evaluate([])
+                    eprint("%.02f\t%s\t%.02f\n%s\nsamples: %s" % (e.logPosterior, preg, e.logLikelihood, prettyProgram(e.program), [preg.sample() for _ in range(5)]))
+                    #eprint("%.02f\t%s" % (e.logPosterior, e.program))
                 eprint()
 
         if outputPrefix is not None:
