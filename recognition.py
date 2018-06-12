@@ -1089,8 +1089,8 @@ class NewRecognitionModel(nn.Module):
 
         # Filter to length <= 30
         valid_idxs = [i for i in range(len(targets)) if
-                      len(targets[i]) <= 50 and
-                      all(len(example[0]) <= 50 for example in outputss[i])]
+                      len(targets[i]) <= 30 and
+                      all(len(example[0]) <= 30 for example in outputss[i])]
 
 
         # batchInputsOutputs = [joinedInputsOutputs[i] for i in valid_idxs]
