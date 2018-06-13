@@ -56,13 +56,13 @@ def _single(x): return [x]
 def _slice(x): return lambda y: lambda l: l[x:y]
 
 
-def _map(f): return lambda l: map(f, l)
+def _map(f): return lambda l: list(map(f, l))
 
 
-def _zip(a): return lambda b: lambda f: map(f, a, b)
+def _zip(a): return lambda b: lambda f: list(map(f, a, b))
 
 
-def _mapi(f): return lambda l: map(lambda i_x: f(i_x[0])(i_x[1]), enumerate(l))
+def _mapi(f): return lambda l: list(map(lambda i_x: f(i_x[0])(i_x[1]), enumerate(l)))
 
 
 def _reduce(f): return lambda x0: lambda l: reduce(lambda a, x: f(a)(x), l, x0)
