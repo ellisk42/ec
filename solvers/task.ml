@@ -13,6 +13,8 @@ type task =
     log_likelihood: program -> float;
   }
 
+let p2i : (LogoLib.LogoInterpreter.logo_instruction list, (int, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t) Hashtbl.Poly.t  = Hashtbl.Poly.create ()
+
 exception EnumerationTimeout
 
 let supervised_task ?timeout:(timeout = 0.001) name ty examples =
@@ -63,8 +65,14 @@ let turtle_task ?timeout:(timeout = 0.001) name ty examples =
                   timeout
                   (fun () ->
                     let x = run_lazy_analyzed_with_arguments p [] in
-                    let bx = LogoLib.LogoInterpreter.turtle_to_array x 28 in
-                    bx = by)
+                    let l = LogoLib.LogoInterpreter.turtle_to_list x in
+                    let bx = match Hashtbl.Poly.find p2i l with
+                      | Some(x) -> x
+                      | _ ->
+                          let bx' = LogoLib.LogoInterpreter.turtle_to_array x 28 in
+                          Hashtbl.Poly.set p2i l bx' ;
+                          bx'
+                    in bx = by)
               with
                 | Some(true) -> true
                 | _ -> false

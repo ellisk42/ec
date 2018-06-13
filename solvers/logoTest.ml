@@ -42,12 +42,42 @@ let angle : turtle =
   logo_SEQ
     (logo_FW logo_var_UNIT)
     (logo_SEQ
-      (logo_RT (logo_var_DIV logo_var_PI logo_var_TWO))
+      (logo_RT (logo_var_HLF logo_var_UNIT))
       (logo_FW logo_var_UNIT))
 
+let square1 : turtle =
+  let angle =
+    logo_SEQ
+      (logo_FW logo_var_UNIT)
+      (logo_RT (logo_var_HLF logo_var_UNIT))
+  in
+  let half = logo_SEQ angle angle in
+  logo_SEQ half half
+
+let square2 : turtle =
+  let angle =
+    logo_SEQ
+      (logo_FW logo_var_UNIT)
+      (logo_RT (logo_var_HLF logo_var_UNIT)) in
+  List.fold_left
+    (fun (k : turtle) (e : float) : turtle ->
+      logo_SEQ
+        k
+        angle
+    )
+    logo_NOP
+    ([0.; 1.; 2.; 3.])
+
+
 let _ =
-  let c = eval_turtle line in
-  VGWrapper.output_canvas_png c 28 "line.png" ;
-  let c = eval_turtle angle in
-  VGWrapper.output_canvas_png c 28 "angle.png" ;
+  let c1 = eval_turtle line in
+  let c2 = eval_turtle angle in
+  let c3 = eval_turtle square1 in
+  let c4 = eval_turtle square2 in
+  pp_turtle square1;
+  pp_turtle square2;
+  VGWrapper.output_canvas_png c1 28 "line_l.png" ;
+  VGWrapper.output_canvas_png c2 28 "angle_l.png" ;
+  VGWrapper.output_canvas_png c3 28 "square1_l.png" ;
+  VGWrapper.output_canvas_png c4 28 "square2_l.png" ;
   print_endline "done"

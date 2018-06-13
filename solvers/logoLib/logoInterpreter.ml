@@ -1,5 +1,7 @@
 open VGWrapper
 
+exception DIV0
+
 type state =
   { mutable x : float
   ; mutable y : float
@@ -56,6 +58,7 @@ let pp_turtle t =
   prerr_newline ()
 
 let eval_turtle turtle =
+  (*pp_turtle turtle ;*)
   let p,_ = turtle (init_state ()) in
   let c = ref (new_canvas ()) in
   let lineto x y = (c := (lineto !c x y))
@@ -84,7 +87,7 @@ let logo_PD : turtle =
   fun s -> ([PD], {s with p = true})
 
 let logo_RT : float -> turtle =
-  fun angle -> fun s -> ([RT(angle)], {s with t = s.t +. angle})
+  fun angle -> fun s -> ([RT(angle*.3.14159265359)], {s with t = s.t +. angle})
 
 let logo_FW : float -> turtle =
   fun length  ->
@@ -119,7 +122,10 @@ let logo_var_HLF         f = f /. 2.
 let logo_var_ADD      f f' = f +. f'
 let logo_var_SUB      f f' = f -. f'
 let logo_var_MUL      f f' = f *. f'
-let logo_var_DIV      f f' = f /. f'
+let logo_var_DIV      f f' = if f' = 0. then (raise DIV0) else f /. f'
+
+let turtle_to_list turtle =
+  let l,_ = turtle (init_state ()) in l
 
 let turtle_to_png turtle resolution filename =
   output_canvas_png (eval_turtle turtle) resolution filename
