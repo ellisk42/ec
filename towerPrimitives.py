@@ -33,7 +33,7 @@ def xOffset(w, h):
 
 TOWERASLIST = True
 if TOWERASLIST:
-    tblock = baseType("tblock")
+    tblock = baseType("block")
     ttower = tlist(tblock)
     primitives = [
     Primitive("left", arrow(tblock, tblock), _left1),
