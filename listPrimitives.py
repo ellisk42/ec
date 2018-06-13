@@ -59,7 +59,7 @@ def _slice(x): return lambda y: lambda l: l[x:y]
 def _map(f): return lambda l: list(map(f, l))
 
 
-def _zip(a): return lambda b: lambda f: list(map(f, a, b))
+def _zip(a): return lambda b: lambda f: list(map(lambda x,y: f(x)(y), a, b))
 
 
 def _mapi(f): return lambda l: list(map(lambda i_x: f(i_x[0])(i_x[1]), enumerate(l)))
