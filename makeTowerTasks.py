@@ -172,7 +172,7 @@ def makeTasks():
                       minimumLength=float(l),
                       minimumHeight=float(h))
             for m in MASSES
-            for a in [1, 2.9, 5.8]
+            for a in [1, 2.9, 5.8, 11.6]
             for s in STAIRCASE
             for l in [2, 5, 8]
             for p in [MILDPERTURBATION]

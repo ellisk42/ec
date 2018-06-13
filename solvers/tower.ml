@@ -6,7 +6,11 @@ open Utils
 open Program
 open Type
 
-let ttower = make_ground "tower";;
+let towerAsList = true;;
+
+
+let tblock = make_ground "block";;
+let ttower = if towerAsList then tlist tblock else make_ground "tower";;
 
 type tower_result = {stability : float;
                      length : float;
@@ -39,8 +43,13 @@ block 4 1;;
 block 1 4;;
 
 ignore(primitive "do" (ttower @> ttower @> ttower) (@));;
-ignore(primitive "left" (ttower @> ttower) (fun t -> t |> List.map ~f:(fun (x,w,h) -> (x-.1.0,w,h))));;
-ignore(primitive "right" (ttower @> ttower) (fun t -> t |> List.map ~f:(fun (x,w,h) -> (x+.1.0,w,h))));;
+ignore(if towerAsList
+       then primitive "left" (tblock @> tblock) (fun (x,w,h) -> (x-.1.0,w,h))
+       else primitive "left" (ttower @> ttower) (fun t -> t |> List.map ~f:(fun (x,w,h) -> (x-.1.0,w,h))));;
+ignore(if towerAsList
+       then primitive "right" (tblock @> tblock) (fun (x,w,h) -> (x+.1.0,w,h))
+       else primitive "right" (ttower @> ttower) (fun t -> t |> List.map ~f:(fun (x,w,h) -> (x+.1.0,w,h))));;
+
 
 let connection_failures = ref 0;;
 let connection_successes = ref 0;;
