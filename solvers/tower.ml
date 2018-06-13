@@ -31,8 +31,14 @@ let block w h =
   let e = 0.05 in
   let w = Float.of_int w -.e in
   let h = Float.of_int h -.e in
-  let v = [(xOffset,w,h)] in
-  ignore(primitive n ttower v);;
+  if towerAsList then
+    let v = (xOffset,w,h) in
+    ignore(primitive n tblock v)
+  else
+    let v = [(xOffset,w,h)] in
+    ignore(primitive n ttower v)
+;;
+
 
 block 3 1;;
 block 1 3;;

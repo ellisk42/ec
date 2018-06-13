@@ -161,8 +161,12 @@ def centerTower(t):
 
 
 def makeTasks():
+    """ideas:
+    House (enclose some minimum area)
+    Bridge (be able to walk along it for some long distance, and also have a certain minimum height; enclosing elevated area at a certain height)
+    Overpass (have a large hole)"""
     MILDPERTURBATION = 4
-    MASSES = [50]
+    MASSES = [500]
     HEIGHT = [1.9, 6, 10]
     STAIRCASE = [10.5, 2.5, 1.5]
     return [TowerTask(maximumMass=float(m),
