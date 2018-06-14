@@ -209,7 +209,73 @@ class TowerWorld(object):
         flooded = binary_fill_holes(picture).astype(int)
         return resolution * resolution * ((flooded - picture) == 1).sum()
 
+    def overpass(self):
+        import numpy as np
+        resolution = 0.25
+        picture = self.calculateMask(resolution=resolution)
+        w,h = picture.shape
+
+        def flood(x,y):
+            if x >= 0 and y >= 0 and x < w and y < h and picture[x,y] == 0.:
+                picture[x,y] = 1.
+                flood(x - 1,y)
+                flood(x + 1,y)
+                flood(x,y - 1)
+                flood(x,y + 1)
+
+        flood(w - 1, h - 1)
+        overpass = 0
+        for x in range(w):
+            for y in range(h):
+                if picture[x,y] == 0.:
+                    old = picture.sum()
+                    flood(x,y)
+                    new = picture.sum()
+                    overpass = max(overpass, new - old)
+        return overpass*resolution*resolution
+
+        
+
+    def bridge(self):
+        import numpy as np
+
+        resolution = 0.25
+        originalPicture = self.calculateMask(resolution=resolution)
+        # maximum height
+        ht = np.where(originalPicture.sum(axis=0) > 0)[0].max()
+        # bridge slice
+        br = originalPicture[:,ht] > 0
+
+        # 0: have not yet found the bridge
+        # 1: walking along the bridge
+        # 2: have finished walking along the bridge
+        state = 0
+        extent = 0
+        for b in br:
+            if b:
+                extent += 1
+                if state == 0:
+                    state = 1
+                elif state == 1:
+                    pass
+                elif state == 2:
+                    return 0.0
+            else:
+                if state == 0:
+                    pass
+                elif state == 1:
+                    state = 2
+                elif state == 2:
+                    pass
+        return extent*resolution
+
+                
+
+
+
+
     def staircase(self):
+        """Needs to go up and then down"""
         import numpy as np
 
         resolution = 0.25
@@ -217,6 +283,11 @@ class TowerWorld(object):
 
         def simulateWalker(picture):
             w, h = picture.shape
+
+            # Are we jumping or falling?
+            # 0: have only jumped
+            # 1: have also fallen
+            state = 0
 
             # Our simulated staircase Walker
             x = 0
@@ -235,6 +306,9 @@ class TowerWorld(object):
                 while picture[x, y - 1] == 0:
                     fallSize += 1
                     y -= 1
+                if fallSize > 0:
+                    state = 1
+                    
                 biggestFall = max(fallSize, biggestFall)
 
                 # Now that we have fallen, see if we can walk forward
@@ -257,6 +331,9 @@ class TowerWorld(object):
 
                         assert y < h,\
                             "Walker hit the ceiling - should be impossible. Plan: %s" % self.originalPlan
+                    if jumpSize > 0 and state == 1:
+                        # We ended up jumping but were actually only supposed to be falling
+                        return float('inf'), float('inf')
                     biggestJump = max(jumpSize, biggestJump)
                     x += 1
 
@@ -343,6 +420,7 @@ class TowerWorld(object):
         area = 0
         haveArea = False
         length = 0
+        overpass = 0
         biggestJump, biggestFall = None, None
         for _ in range(N):
             self.executePlan(plan)
@@ -350,8 +428,9 @@ class TowerWorld(object):
 
             if not haveArea:
                 area = self.enclosedArea()
-                length = self.supportedLength(initialHeight - 0.5)
+                length = self.bridge()
                 biggestJump, biggestFall = self.staircase()
+                overpass = self.overpass()
                 haveArea = True
 
             hs.append(initialHeight)
@@ -367,6 +446,7 @@ class TowerWorld(object):
                 "stability": sum(wasStable) / float(len(wasStable)),
                 "area": area,
                 "length": length,
+                "overpass": overpass,
                 "staircase": max(biggestFall, biggestJump)}
 
 

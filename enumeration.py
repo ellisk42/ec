@@ -264,7 +264,8 @@ def solveForTask_ocaml(_=None,
             "minimumLength",
             "maximumMass",
             "minimumHeight",
-            "minimumArea"]
+            "minimumArea",
+            "minimumOverpass"]
         for p in towerParameters:
             if hasattr(t, p):
                 m[p] = getattr(t, p)
@@ -272,9 +273,7 @@ def solveForTask_ocaml(_=None,
             m["stringConstants"] = t.stringConstants
         if hasattr(t, 'BIC'):
             m["parameterPenalty"] = t.BIC * math.log(len(t.examples))
-        if hasattr(
-                t,
-                'likelihoodThreshold') and t.likelihoodThreshold is not None:
+        if hasattr(t, 'likelihoodThreshold') and t.likelihoodThreshold is not None:
             m["lossThreshold"] = -t.likelihoodThreshold
         if hasattr(t, 'temperature') and t.temperature is not None:
             m["temperature"] = t.temperature

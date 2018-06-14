@@ -16,7 +16,8 @@ type tower_result = {stability : float;
                      length : float;
                      area : float;
                      staircase : float;
-                     height : float;}
+                     height : float;
+                     overpass : float;}
 
 let center_tower p =
   let xs = p |> List.map ~f:(fun (x,_,_) -> x) in
@@ -109,7 +110,8 @@ let parse_tower_result result =
   let area = result |> member "area" |> to_float in
   let staircase = result |> member "staircase" |> to_float in
   let height = result |> member "height" |> to_float in
-  {stability;length;area;staircase;height;}  
+  let overpass = result |> member "overpass" |> to_float in
+  {stability;length;area;staircase;height;overpass;}  
 
 let tower_cash = Hashtbl.Poly.create();;
 
@@ -166,7 +168,7 @@ let evaluate_tower ?n:(n=15) plan perturbation =
 
 let tower_task ?timeout:(timeout = 0.001)
     ?stabilityThreshold:(stabilityThreshold=0.5)
-    ~perturbation ~maximumStaircase ~maximumMass ~minimumLength ~minimumArea ~minimumHeight
+    ~perturbation ~maximumStaircase ~maximumMass ~minimumLength ~minimumArea ~minimumHeight ~minimumOverpass
     name task_type examples =
   assert (task_type = ttower);
   assert (examples = []);
@@ -189,6 +191,7 @@ let tower_task ?timeout:(timeout = 0.001)
                || result.stability < stabilityThreshold
                || result.length < minimumLength
                || result.area < minimumArea
+               || result.overpass < minimumOverpass
                then log 0.0
                else 50.0 *. log result.stability
            | _ -> log 0.0
@@ -202,11 +205,11 @@ let tower_task ?timeout:(timeout = 0.001)
 
   }
 
-let test_tower() =
-  update_tower_cash();
-  let t = tower_task ~perturbation:4. ~maximumStaircase:10. ~maximumMass:200.
-      ~minimumLength:1.0 ~minimumArea:0. ~minimumHeight:2. "test" ttower [] in
-  let p = parse_program "(do 3x1 (do (left 1x3) (do (right 1x3) 3x1)))" |> get_some in
-  Printf.printf "%f\n" (t.log_likelihood p)
-  ;
-  flush_everything()
+(* let test_tower() = *)
+(*   update_tower_cash(); *)
+(*   let t = tower_task ~perturbation:4. ~maximumStaircase:10. ~maximumMass:200. *)
+(*       ~minimumLength:1.0 ~minimumArea:0. ~minimumHeight:2. "test" ttower [] in *)
+(*   let p = parse_program "(do 3x1 (do (left 1x3) (do (right 1x3) 3x1)))" |> get_some in *)
+(*   Printf.printf "%f\n" (t.log_likelihood p) *)
+(*   ; *)
+(*   flush_everything() *)

@@ -32,6 +32,7 @@ class TowerTask(Task):
                  maximumMass=100,
                  minimumLength=0,
                  minimumArea=0,
+                 minimumOverpass=0,
                  minimumHeight=None):
         name = "; ".join("%s: %s" % (k, v) for k, v in locals().items()
                          if k not in {"_", "self", "__class__"})
@@ -40,10 +41,12 @@ class TowerTask(Task):
                     float(minimumHeight),
                     float(minimumLength),
                     float(minimumArea),
-                    float(maximumStaircase)]
+                    float(maximumStaircase),
+                    float(minimumOverpass)]
         super(TowerTask, self).__init__(name, ttower, [],
                                         features=features)
 
+        self.minimumOverpass = minimumOverpass
         self.maximumStaircase = maximumStaircase
         self.perturbation = perturbation
         self.minimumLength = minimumLength
@@ -133,6 +136,8 @@ class TowerTask(Task):
         if result.area < self.minimumArea:
             # eprint("area")
             return NEGATIVEINFINITY
+        if result.overpass < self.minimumOverpass:
+            return NEGATIVEINFINITY
         return 50.0 * math.log(result.stability)
 
     def animateSolution(self, e):
@@ -164,21 +169,29 @@ def makeTasks():
     """ideas:
     House (enclose some minimum area)
     Bridge (be able to walk along it for some long distance, and also have a certain minimum height; enclosing elevated area at a certain height)
+    Overhang (like a porch)
     Overpass (have a large hole)"""
-    MILDPERTURBATION = 4
+    
+    MILDPERTURBATION = 2
     MASSES = [500]
     HEIGHT = [1.9, 6, 10]
     STAIRCASE = [10.5, 2.5, 1.5]
+    OVERPASS = [2.9,5.8]
+    LENGTHS = [2, 5, 8]
+    AREAS = [1, 2.9, 5.8, 11.6]
     return [TowerTask(maximumMass=float(m),
                       maximumStaircase=float(s),
                       minimumArea=float(a),
                       perturbation=float(p),
                       minimumLength=float(l),
-                      minimumHeight=float(h))
+                      minimumHeight=float(h),
+                      minimumOverpass=float(o))
+            for o in OVERPASS 
             for m in MASSES
-            for a in [1, 2.9, 5.8, 11.6]
+            for a in AREAS
             for s in STAIRCASE
-            for l in [2, 5, 8]
+            for l in LENGTHS
             for p in [MILDPERTURBATION]
             for h in HEIGHT
+            if o <= a
             ]

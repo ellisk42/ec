@@ -121,6 +121,7 @@ let load_problems channel =
                  ~maximumMass:(j |> member "maximumMass" |> to_float)
                  ~minimumLength:(j |> member "minimumLength" |> to_float)
                  ~minimumArea:(j |> member "minimumArea" |> to_float)
+                 ~minimumOverpass:(j |> member "minimumOverpass" |> to_float)
                  ~minimumHeight:(j |> member "minimumHeight" |> to_float)
                  ~stabilityThreshold:0.5)
         with _ -> None
