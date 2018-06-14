@@ -96,7 +96,9 @@ def parseResultsPath(p):
     rest = p.split('_')[1:]
     if rest[-1] == "baselines":
         rest.pop()
+    #eprint(rest)
     parameters = {ECResult.parameterOfAbbreviation(k): maybe_eval(v)
+
                   for binding in rest
                   for [k, v] in [binding.split('=')]}
     parameters['domain'] = domain
@@ -207,8 +209,8 @@ def plotECResult(
     a1.xaxis.set_major_locator(MaxNLocator(integer=True))
 
     plotll = False 
-    if hasattr(result, 'testingSumMaxll'):
-        plotll = True
+    #if hasattr(result, 'testingSumMaxll'):
+    #    plotll = True
 
     if showSolveTime or plotll:
         a1.set_ylabel('%  Solved (solid)', fontsize=LABELFONTSIZE)

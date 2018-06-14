@@ -5,7 +5,7 @@ from grammar import Grammar
 #from utilities import eprint, testTrainSplit, numberOfCPUs, flatten
 from utilities import eprint, numberOfCPUs, flatten, fst, testTrainSplit, POSITIVEINFINITY
 from makeRegexTasks import makeOldTasks, makeLongTasks, makeShortTasks, makeWordTasks, makeNumberTasks, makeDateTasks
-from regexPrimitives import basePrimitives, altPrimitives, easyWordsPrimitives, alt2Primitives
+from regexPrimitives import basePrimitives, altPrimitives, easyWordsPrimitives, alt2Primitives, matchEmpericalPrimitives
 from likelihoodModel import add_cutoff_values
 #from program import *
 from recognition import HandCodedFeatureExtractor, MLPFeatureExtractor, RecurrentFeatureExtractor, JSONFeatureExtractor
@@ -129,7 +129,7 @@ def regex_options(parser):
     parser.add_argument("--primitives",
                         default="base",
                         help="Which primitive set to use",
-                        choices=["base", "alt1", "easyWords", "alt2"])
+                        choices=["base", "alt1", "easyWords", "alt2", "emp"])
     parser.add_argument("--extractor", type=str,
                         choices=["hand", "deep", "learned", "json"],
                         default="json")  # if i switch to json it breaks
@@ -197,16 +197,18 @@ if __name__ == "__main__":
         test_ll_cutoff = None
 
 
+    tasktype = args.pop("tasks")
     regexTasks = {"old": makeOldTasks,
                 "short": makeShortTasks,
                 "long": makeLongTasks,
                 "words": makeWordTasks,
                 "number": makeNumberTasks,
                 "dates": makeDateTasks
-                }[args.pop("tasks")]
+                }[tasktype]
 
     tasks = regexTasks()  # TODO
     eprint("Generated", len(tasks), "tasks")
+    eprint("using ",tasktype, " tasks")
 
     maxTasks = args.pop("maxTasks")
     if len(tasks) > maxTasks:
@@ -234,7 +236,11 @@ if __name__ == "__main__":
     prims = {"base": basePrimitives,
              "alt1": altPrimitives,
              "alt2": alt2Primitives,
-             "easyWords":easyWordsPrimitives}[primtype]
+             "easyWords": easyWordsPrimitives,
+             "emp": matchEmpericalPrimitives(corpus=regexTasks())
+             }[primtype]
+    eprint("using", primtype, "primitives")
+    eprint("using sped up regex match evaluation from Luke")
 
     extractor = {
         "hand": HandCodedFeatureExtractor,
@@ -256,7 +262,7 @@ if __name__ == "__main__":
     args.update({
         "featureExtractor": extractor,
         "outputPrefix": "experimentOutputs/regex" + primtype + timestr + 'll' + str(train_ll_cutoff) + str(test_ll_cutoff),
-        "evaluationTimeout": 2.0,  # 0.005,
+        "evaluationTimeout": 0.5,  # 0.005,
         "topk_use_map": False,
         "maximumFrontier": 10,
         "solver": "python",

@@ -164,88 +164,95 @@ class ProbabilisticLikelihoodModel:
         # need a try, catch here for problems, and for timeouts
         # can copy task.py for the timeout structure
         try:
-            def timeoutCallBack(_1, _2): raise EvaluationTimeout()
-            signal.signal(signal.SIGVTALRM, timeoutCallBack)
-            signal.setitimer(signal.ITIMER_VIRTUAL, self.timeout)
             try:
-                string_pregex = program.evaluate([])
-                # if 'left_paren' in program.show(False):
-                #eprint("string_pregex:", string_pregex)
-                #eprint("string_pregex:", string_pregex)
-                preg = string_pregex  # pregex.create(string_pregex)
-            except IndexError:
-                # free variable
-                return False, NEGATIVEINFINITY
-            except Exception as e:
-                eprint("Exception during evaluation:", e)
-                if "Attempt to evaluate fragment variable" in e:
-                    eprint("program (bc fragment error)", program)
-                return False, NEGATIVEINFINITY
-
-        #tries and catches
-
-        # include prior somehow
-        # right now, just summing up log likelihoods. IDK if this is correct.
-        # also not using prior at all.
-
-            cum_ll = 0
-
-            example_list = [example[1] for example in task.examples]
-            c_example_list = Counter(example_list)
-
-            for c_example in c_example_list:
-                #might want a try, except around the following line:
-
+                def timeoutCallBack(_1, _2): raise EvaluationTimeout()
+                signal.signal(signal.SIGVTALRM, timeoutCallBack)
+                signal.setitimer(signal.ITIMER_VIRTUAL, self.timeout)
                 try:
-                    #eprint("about to match", program)
-                    #print("preg:", preg)
-                    ll = preg.match(c_example)
-                    #eprint("completed match", ll, program)
-                except ValueError as e:
-                    eprint("ValueError:", e)
-                    ll = float('-inf')
-                
-                #eprint("pregex:", string_pregex)
-                #eprint("example[1]", example[1])
-
-                if ll == float('-inf'):
+                    string_pregex = program.evaluate([])
+                    # if 'left_paren' in program.show(False):
+                    #eprint("string_pregex:", string_pregex)
+                    #eprint("string_pregex:", string_pregex)
+                    preg = string_pregex  # pregex.create(string_pregex)
+                except IndexError:
+                    # free variable
                     return False, NEGATIVEINFINITY
+                except Exception as e:
+                    eprint("Exception during evaluation:", e)
+                    if "Attempt to evaluate fragment variable" in e:
+                        eprint("program (bc fragment error)", program)
+                    return False, NEGATIVEINFINITY
+
+            #tries and catches
+
+            # include prior somehow
+            # right now, just summing up log likelihoods. IDK if this is correct.
+            # also not using prior at all.
+
+                cum_ll = 0
+
+                example_list = [example[1] for example in task.examples]
+                c_example_list = Counter(example_list)
+
+                for c_example in c_example_list:
+                    #might want a try, except around the following line:
+
+                    try:
+                        #eprint("about to match", program)
+                        #print("preg:", preg)
+                        ll = preg.match(c_example)
+                        #eprint("completed match", ll, program)
+                    except ValueError as e:
+                        eprint("ValueError:", e)
+                        ll = float('-inf')
+                    
+                    #eprint("pregex:", string_pregex)
+                    #eprint("example[1]", example[1])
+
+                    if ll == float('-inf'):
+                        return False, NEGATIVEINFINITY
+                    else:
+                        #ll_per_char = ll/float(len(example[1]))
+                        #cum_ll_per_char += ll_per_char
+
+                        cum_ll += c_example_list[c_example] * ll
+                
+                #normalized_cum_ll_per_char = cum_ll_per_char/float(len(task.examples))
+                #avg_char_num = sum([len(example[1]) for example in task.examples])/float(len(task.examples))
+                
+                #cutoff_ll = regex_plus_bound(example_list)   
+
+                normalized_cum_ll = cum_ll/ float(sum([len(example) for example in example_list]))
+
+
+
+                #TODO: change the way normalized_cum_ll is calculated 
+                #TODO: refactor to pass in bigram_model, and others
+                #TODO: refactor to do 95% certainty thing josh wants
+                if task.ll_cutoff is not None:
+                    success = normalized_cum_ll > task.ll_cutoff
                 else:
-                    #ll_per_char = ll/float(len(example[1]))
-                    #cum_ll_per_char += ll_per_char
-
-                    cum_ll += c_example_list[c_example] * ll
-            
-            #normalized_cum_ll_per_char = cum_ll_per_char/float(len(task.examples))
-            #avg_char_num = sum([len(example[1]) for example in task.examples])/float(len(task.examples))
-            
-            #cutoff_ll = regex_plus_bound(example_list)   
-
-            normalized_cum_ll = cum_ll/ float(sum([len(example) for example in example_list]))
+                    success = normalized_cum_ll > float('-inf')
 
 
 
-            #TODO: change the way normalized_cum_ll is calculated 
-            #TODO: refactor to pass in bigram_model, and others
-            #TODO: refactor to do 95% certainty thing josh wants
-            if task.ll_cutoff is not None:
-                success = normalized_cum_ll > task.ll_cutoff
-            else:
-                success = normalized_cum_ll > float('-inf')
+                #eprint("cutoff_ll:", cutoff_ll, ", norm_cum_ll:", normalized_cum_ll)	
 
+                return success, normalized_cum_ll
 
-
-            #eprint("cutoff_ll:", cutoff_ll, ", norm_cum_ll:", normalized_cum_ll)	
-
-            return success, normalized_cum_ll
-
+            except EvaluationTimeout:
+                eprint("Timed out while evaluating", program)
+                return False, NEGATIVEINFINITY
+            finally:
+                signal.signal(signal.SIGVTALRM, lambda *_: None)
+                signal.setitimer(signal.ITIMER_VIRTUAL, 0)
+        #Is this okay?
         except EvaluationTimeout:
-            eprint("Timed out while evaluating", program)
+            eprint("Timed out (layer 2) while evaluating", program)
             return False, NEGATIVEINFINITY
         finally:
             signal.signal(signal.SIGVTALRM, lambda *_: None)
             signal.setitimer(signal.ITIMER_VIRTUAL, 0)
-
 
 try:
     import torch

@@ -17,7 +17,7 @@ def multicoreEnumeration(g, tasks, likelihoodModel, _=None,
                          maximumFrontier=None,
                          verbose=True,
                          evaluationTimeout=None,
-                         testing=False):
+                         testing=False, use_map=True):
     '''g: Either a Grammar, or a map from task to grammar.'''
     from time import time
 
@@ -154,7 +154,7 @@ def multicoreEnumeration(g, tasks, likelihoodModel, _=None,
                                  likelihoodModel=likelihoodModel,
                                  evaluationTimeout=evaluationTimeout,
                                  maximumFrontiers=maximumFrontiers(j),
-                                 testing=testing)
+                                 testing=testing, use_map=use_map)
                 id2CPUs[nextID] = allocation[j]
                 id2job[nextID] = j
                 nextID += 1
@@ -241,7 +241,7 @@ def solveForTask_ocaml(_=None,
                        timeout=None,
                        likelihoodModel=None,  # FIXME: unused
                        testing=None, # FIXME: unused
-                       evaluationTimeout=None, maximumFrontiers=None):
+                       evaluationTimeout=None, maximumFrontiers=None,use_map=True):
 
     import json
 
@@ -359,9 +359,15 @@ def solveForTask_ocaml(_=None,
         # where we might find something with a good prior but bad likelihood early on,
         # and only later discovered the good high likelihood program
         else:
-            searchTimes[t] = min(
-                (e["logLikelihood"] + e["logPrior"],
-                 e["time"]) for e in solutions)[1] + elapsedTime
+            if use_map:
+                searchTimes[t] = min(
+                    (e["logLikelihood"] + e["logPrior"],
+                     e["time"]) for e in solutions)[1] + elapsedTime
+            else:
+                searchTimes[t] = min(
+                    (e["logLikelihood"], e["logPrior"],
+                     e["time"]) for e in solutions)[2] + elapsedTime                
+
 
     return frontiers, searchTimes
 
@@ -372,7 +378,7 @@ def solveForTask_pypy(_=None,
                       lowerBound=None, upperBound=None, budgetIncrement=None,
                       timeout=None,
                       likelihoodModel=None,
-                      evaluationTimeout=None, maximumFrontier=None, testing=False):
+                      evaluationTimeout=None, maximumFrontier=None, testing=False, use_map=True):
     return callCompiled(enumerateForTasks,
                         g, tasks, likelihoodModel,
                         timeout=timeout,
@@ -381,7 +387,7 @@ def solveForTask_pypy(_=None,
                         evaluationTimeout=evaluationTimeout,
                         maximumFrontiers=maximumFrontiers,
                         budgetIncrement=budgetIncrement,
-                        lowerBound=lowerBound, upperBound=upperBound)
+                        lowerBound=lowerBound, upperBound=upperBound, use_map=use_map)
 
 def solveForTask_python(_=None,
                         elapsedTime=0.,
@@ -390,7 +396,7 @@ def solveForTask_python(_=None,
                         timeout=None,
                         CPUs=1,
                         likelihoodModel=None,
-                        evaluationTimeout=None, maximumFrontiers=None, testing=False):
+                        evaluationTimeout=None, maximumFrontiers=None, testing=False, use_map=True):
     return enumerateForTasks(g, tasks, likelihoodModel,
                              timeout=timeout,
                              testing=testing,
@@ -398,7 +404,7 @@ def solveForTask_python(_=None,
                              evaluationTimeout=evaluationTimeout,
                              maximumFrontiers=maximumFrontiers,
                              budgetIncrement=budgetIncrement,
-                             lowerBound=lowerBound, upperBound=upperBound)
+                             lowerBound=lowerBound, upperBound=upperBound, use_map=use_map)
 
 
 class EnumerationTimeout(Exception):
@@ -411,7 +417,7 @@ def enumerateNetwork(network, tasks_features, likelihoodModel, solver=None,
                        CPUs=1,
                        maximumFrontier=None,
                        verbose=True,
-                       evaluationTimeout=None):
+                       evaluationTimeout=None, use_map=True):
     from time import time
     
     start = time()
@@ -423,6 +429,7 @@ def enumerateNetwork(network, tasks_features, likelihoodModel, solver=None,
     
 
     #TODO, enumerateNetworkForTasks
+    #TODO, give times
     frontierss = parallelMap(CPUs,            
                             lambda cpu_idx__tasks_features: enumerateNetworkForTasks(cpu_idx__tasks_features[0], network, cpu_idx__tasks_features[1],
                                                                      likelihoodModel=likelihoodModel, #this may break
@@ -444,7 +451,7 @@ def enumerateNetworkForTasks(cpu_idx, network, tasks_features, likelihoodModel=N
                      timeout=None,
                      evaluationTimeout=None,
                      frontierSize=None,
-                     maximumFrontier = 10**2):
+                     maximumFrontier = 10**2, use_map=True):
     from pregex import pregex
     assert likelihoodModel is not None
     assert network is not None
@@ -567,7 +574,7 @@ def enumerateForTasks(g, tasks, likelihoodModel, _=None,
                       evaluationTimeout=None,
                       lowerBound=0.,
                       upperBound=100.,
-                      budgetIncrement=1.0, maximumFrontiers=None):
+                      budgetIncrement=1.0, maximumFrontiers=None, use_map=True):
     assert timeout is not None, \
         "enumerateForTasks: You must provide a timeout."
 
@@ -639,9 +646,19 @@ def enumerateForTasks(g, tasks, likelihoodModel, _=None,
     frontiers = {tasks[n]: Frontier([e for _, e in hits[n]],
                                     task=tasks[n])
                  for n in range(len(tasks))}
-    searchTimes = {
-        tasks[n]: None if len(hits[n]) == 0 else \
-        min(t for t,_ in hits[n]) for n in range(len(tasks))}
+    if use_map:
+        searchTimes = {
+            tasks[n]: None if len(hits[n]) == 0 else \
+            min(t for t,_ in hits[n]) for n in range(len(tasks))}
+            #I need to change this min to a max in likelihood, i think 
+            #TODO
+    else:
+        assert False
+        searchTimes = {
+            tasks[n]: None if len(hits[n]) == 0 else \
+            min(t for t,_ in hits[n]) for n in range(len(tasks))}
+            #I need to change this min to a max in likelihood, i think 
+            #TODO
 
     return frontiers, searchTimes
 
