@@ -44,7 +44,7 @@ primitives = [
     Primitive("logo_var_UNIT", ttvar, "logo_var_UNIT"),
     Primitive("logo_var_TWO", ttvar, "logo_var_TWO"),
     Primitive("logo_var_THREE", ttvar, "logo_var_THREE"),
-    Primitive("logo_var_PI",   ttvar, "logo_var_PI"),
+    # Primitive("logo_var_PI",   ttvar, "logo_var_PI"),
     Primitive("logo_var_NXT",  arrow(ttvar,ttvar), _logo_var_next),
     Primitive("logo_var_PRV",  arrow(ttvar,ttvar), _logo_var_prev),
     Primitive("logo_var_DBL",  arrow(ttvar,ttvar), _logo_var_double),

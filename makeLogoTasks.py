@@ -67,7 +67,7 @@ def makeTasks(subfolders):
                 if f.endswith("_l.png"):
                     problem(subfolder+"_"+f,
                             [([], fileToArray(rootdir + subfolder + '/' + f))],
-                            needToTrain=needed)
+                            needToTrain=True)
     return problems
 
 
