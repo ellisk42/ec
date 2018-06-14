@@ -72,7 +72,9 @@ class CommandHandler(socketserver.StreamRequestHandler):
             k = (tuple(map(tuple, plan)), perturbation)
             if k in RESULTSCASH:
                 v = RESULTSCASH[k]
+                # eprint("(python: hit %s)"%str(k[0]))
             else:
+                # eprint("(python: miss %s)"%str(k[0]))
                 COMMANDSERVERSEMAPHORE.acquire()
                 v = TowerWorld().sampleStability(plan, perturbation, n)
                 RESULTSCASH[k] = v

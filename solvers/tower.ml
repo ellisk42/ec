@@ -140,18 +140,29 @@ let update_tower_cash() =
 let evaluate_tower ?n:(n=15) plan perturbation =
   (* center the tower *)
   let plan = center_tower plan in
+  let key = (plan, perturbation) in
   let open Yojson.Safe.Util in
-  match Hashtbl.Poly.find tower_cash (plan, perturbation) with
-  | Some(r) -> r
+  match Hashtbl.Poly.find tower_cash key with
+  | Some(r) -> begin
+      (* Printf.eprintf "(ocaml: hit %s)\n" *)
+      (*   (plan |> List.map ~f:(fun (a,b,c) -> Printf.sprintf "%f,%f,%f" a b c) |> join ~separator:"; "); *)
+      (* flush_everything(); *)
+      r
+    end
   | None ->
+    (* Printf.eprintf "(ocaml: miss %s)\n" *)
+    (*   (plan |> List.map ~f:(fun (a,b,c) -> Printf.sprintf "%f,%f,%f" a b c) |> join ~separator:"; "); *)
+    (* flush_everything(); *)
+      
     let plan = `List(plan |> List.map ~f:(fun (a,b,c) -> `List([`Float(a);
                                                                 `Float(b);
                                                                 `Float(c);]))) in
     let response = send_to_tower_server (`Assoc([("plan",plan);
                                                  ("n",`Int(n));
                                                  ("perturbation",`Float(perturbation))])) in
-    
-    parse_tower_result response
+    let r = parse_tower_result response in
+    Hashtbl.Poly.set tower_cash ~key:key ~data:r;
+    r
 
 let tower_task ?timeout:(timeout = 0.001)
     ?stabilityThreshold:(stabilityThreshold=0.5)
