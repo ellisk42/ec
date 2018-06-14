@@ -6,7 +6,7 @@ extern crate serde_json;
 #[macro_use]
 extern crate serde_derive;
 
-use polytype::{Context, Type};
+use polytype::Type;
 use programinduction::{lambda, ECFrontier, Task};
 use rayon::prelude::*;
 use std::f64;
@@ -96,7 +96,7 @@ impl From<ExternalCompressionInput> for CompressionInput {
                     p.name,
                     Type::parse(&p.tp)
                         .expect("invalid primitive type")
-                        .generalize(&Context::default()),
+                        .generalize(&[]),
                     p.logp,
                 )
             })
@@ -130,7 +130,7 @@ impl From<ExternalCompressionInput> for CompressionInput {
             .map(|f| {
                 let tp = Type::parse(&f.task_tp)
                     .expect("invalid task type")
-                    .generalize(&Context::default());
+                    .generalize(&[]);
                 let task = Task {
                     oracle: Box::new(noop_oracle),
                     observation: (),
