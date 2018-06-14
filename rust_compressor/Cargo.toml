@@ -1,10 +1,10 @@
 [package]
 name = "rust_compressor"
-version = "0.1.6"
+version = "0.1.7"
 
 [dependencies]
-polytype = "4.2"
-programinduction = { version = "0.6.9" , features = [ "verbose" ] }
+polytype = "5.0"
+programinduction = { version = "0.6.10" , features = [ "verbose" ] }
 rayon = "1.0"
 serde = "1.0"
 serde_json = "1.0"
