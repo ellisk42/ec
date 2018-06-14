@@ -70,7 +70,8 @@ class ECResult():
                      "likelihoodModel": "likemod",
                      "helmholtzBatch": "HB",
                      "use_ll_cutoff": "llcut",
-                     "topk_use_map": "useMAP",
+                     "topk_use_only_likelihood": "topkNotMAP",
+                     "joint_mdl_use_only_likelihood": "mdlNotMAP",
                      "activation": "act"}
 
     @staticmethod
@@ -134,7 +135,8 @@ def ecIterator(grammar, tasks,
                featureExtractor=None,
                activation='relu',
                topK=1,
-               topk_use_map=True,
+               topk_use_only_likelihood=False,
+               joint_mdl_use_only_likelihood=False,
                maximumFrontier=None,
                pseudoCounts=1.0, aic=1.0,
                structurePenalty=0.001, arity=0,
@@ -516,9 +518,11 @@ def ecIterator(grammar, tasks,
 
         # Sleep-G
         grammar, frontiers = induceGrammar(grammar, frontiers,
-                                           topK=topK, topk_use_map=topk_use_map,
+                                           topK=topK,
                                            pseudoCounts=pseudoCounts, a=arity,
                                            aic=aic, structurePenalty=structurePenalty,
+                                           topk_use_only_likelihood=topk_use_only_likelihood,
+                                           joint_mdl_use_only_likelihood=joint_mdl_use_only_likelihood,
                                            backend=compressor, CPUs=CPUs, iteration=j)
         result.grammars.append(grammar)
         eprint("Grammar after iteration %d:" % (j + 1))
