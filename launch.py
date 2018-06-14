@@ -97,7 +97,8 @@ git pull
 
 curl https://sh.rustup.rs -sSfo rustup-init
 sh ./rustup-init -y
-cd rust_compressor && make && cd ..
+source ~/.bashrc
+make -C rust_compressor
 """ % copyCheckpoint
 
     br = branch()
@@ -258,7 +259,7 @@ if __name__ == "__main__":
                         default={
                             "ellisk": "ellisk@openmind7.mit.edu:/om2/user/ellisk/ec",
                             "lucasem": "lucasem@rig.lucasem.com:repo/ec",
-                            "mnye": "mnye@opemind7.mit.edu:/om/user/mnye/ec"
+                            "mnye": "mnye@openmind7.mit.edu:/om/user/mnye/ecawslogs"
                         }.get(user(), None))
     parser.add_argument('-z', "--size",
                         default="t2.micro")
