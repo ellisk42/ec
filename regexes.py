@@ -258,15 +258,21 @@ if __name__ == "__main__":
 
 
     from time import gmtime, strftime
-    timestr = strftime("%m%d%H%M%S", gmtime())
+    timestr = strftime("%H%M", gmtime())
 
     #stardecay = args.stardecay
     #stardecay = args.pop('stardecay')
     #decaystr = 'd' + str(stardecay)
 
+    if train_ll_cutoff == test_ll_cutoff:
+        llstr = str(train_ll_cutoff)[:2]
+    else:
+        llstr = str(train_ll_cutoff)[:2] + str(test_ll_cutoff)[:2]
+
+
     args.update({
         "featureExtractor": extractor,
-        "outputPrefix": "experimentOutputs/regex" + primtype + timestr + 'll' + str(train_ll_cutoff) + str(test_ll_cutoff),
+        "outputPrefix": "experimentOutputs/r" + primtype + timestr + llstr + tasktype,
         "evaluationTimeout": 0.5,  # 0.005,
         "topk_use_only_likelihood": True,
         "joint_mdl_use_only_likelihood": True,

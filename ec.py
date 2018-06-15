@@ -59,7 +59,7 @@ class ECResult():
     abbreviations = {"frontierSize": "fs",
                      "iterations": "it",
                      "maximumFrontier": "MF",
-                     "onlyBaselines": "baseline",
+                     "onlyBaselines": "baseln",
                      "pseudoCounts": "pc",
                      "structurePenalty": "L",
                      "helmholtzRatio": "HR",
@@ -67,9 +67,9 @@ class ECResult():
                      "enumerationTimeout": "ET",
                      "useRecognitionModel": "rec",
                      "useNewRecognitionModel": "newRec",
-                     "likelihoodModel": "likemod",
+                     "likelihoodModel": "lkMod",
                      "helmholtzBatch": "HB",
-                     "topk_use_only_likelihood": "topkNotMAP",
+                     "topk_use_only_likelihood": "kNotMAP",
                      "joint_mdl_use_only_likelihood": "mdlNotMAP",
                      "activation": "act"}
 
@@ -195,7 +195,9 @@ def ecIterator(grammar, tasks,
             "evaluationTimeout",
             "testingTasks",
             "compressor",
-            "use_map_search_times"} and v is not None}
+            "use_map_search_times",
+            "likelihoodModel",
+            "activation"} and v is not None}
     if not useRecognitionModel:
         for k in {"activation", "helmholtzRatio", "steps"}:
             del parameters[k]
