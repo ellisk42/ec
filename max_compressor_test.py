@@ -129,8 +129,16 @@ frontier = Frontier.dummy(program4, logLikelihood=0., logPrior=0.)
 frontiers.append(frontier)
 
 
+#grammar, frontiers = induceGrammar(baseGrammar, frontiers,
+#                           topK=5, topk_use_map=False,
+#                           pseudoCounts=1.0, a=3,
+#                           aic=0.0, structurePenalty=.1,
+#                           backend='rust', CPUs=1, iteration=1)
+
 grammar, frontiers = induceGrammar(baseGrammar, frontiers,
-                           topK=5, topk_use_map=False,
-                           pseudoCounts=1.0, a=3,
-                           aic=0.0, structurePenalty=.1,
-                           backend='rust', CPUs=1, iteration=1)
+                                   topK=5,
+                                   pseudoCounts=1.0, a=3,
+                                   aic=0.0, structurePenalty=1,
+                                   topk_use_only_likelihood=True,
+                                   joint_mdl_use_only_likelihood=True,
+                                   backend='rust', CPUs=1, iteration=1)

@@ -115,7 +115,7 @@ class MyJSONFeatureExtractor(JSONFeatureExtractor):
 
 def regex_options(parser):
     parser.add_argument("--maxTasks", type=int,
-                        default=500,
+                        default=128,
                         help="truncate tasks to fit within this boundary")
     parser.add_argument(
         "--maxExamples",
@@ -135,7 +135,7 @@ def regex_options(parser):
                         default="json")  # if i switch to json it breaks
     parser.add_argument("--split", metavar="TRAIN_RATIO",
                         type=float,
-                        default=0.8,
+                        default=0.5,
                         help="split test/train")
     parser.add_argument("-H", "--hidden", type=int,
                         default=16,
@@ -217,7 +217,7 @@ if __name__ == "__main__":
     maxTasks = args.pop("maxTasks")
     if len(tasks) > maxTasks:
         eprint("Unwilling to handle {} tasks, truncating..".format(len(tasks)))
-        random.seed(42)
+        random.seed(80) #42
         random.shuffle(tasks)
         del tasks[maxTasks:]
 
