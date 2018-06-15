@@ -5,7 +5,7 @@ import pickle
 import json
 import dill
 
-
+from string import printable
 
 
 
@@ -193,6 +193,32 @@ def makeNumberTasks():
 
     return regextasks
 
+def makeNonLetterTasks():
+
+    #load new data:
+
+    taskfile = "./regex_data_csv_900.p"
+
+    with open(taskfile, 'rb') as handle:
+        data = dill.load(handle)
+
+    tasklist = data[0] #a list of indices
+
+    #full_list = test_list + train_list
+
+    disallowed_list = printable[10:62]
+
+    regextasks = [
+        Task("Data column no. " + str(i),
+            tpregex,
+            [((), example) for example in task] 
+        ) for i, task in enumerate(tasklist) if not any(any(dis in ex for ex in task) for dis in disallowed_list)]
+
+    #for i in train_list:
+    #    regextasks[i].mustTrain = True
+
+
+    return regextasks
 
 def makeDateTasks():
 

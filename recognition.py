@@ -616,7 +616,7 @@ class RecognitionModel(nn.Module):
                            CPUs=1,
                            frontierSize=None,
                            maximumFrontier=None,
-                           evaluationTimeout=None):
+                           evaluationTimeout=None, use_map=True):
         with timing("Evaluated recognition model"):
             grammars = {}
             for task in tasks:
@@ -636,7 +636,7 @@ class RecognitionModel(nn.Module):
                                     testing=testing,
                                     enumerationTimeout=enumerationTimeout,
                                     CPUs=CPUs, maximumFrontier=maximumFrontier,
-                                    evaluationTimeout=evaluationTimeout)
+                                    evaluationTimeout=evaluationTimeout, use_map=use_map)
 
 
 class RecurrentFeatureExtractor(nn.Module):

@@ -4,8 +4,8 @@ from ec import explorationCompression, commandlineArguments, Task
 from grammar import Grammar
 #from utilities import eprint, testTrainSplit, numberOfCPUs, flatten
 from utilities import eprint, numberOfCPUs, flatten, fst, testTrainSplit, POSITIVEINFINITY
-from makeRegexTasks import makeOldTasks, makeLongTasks, makeShortTasks, makeWordTasks, makeNumberTasks, makeDateTasks
-from regexPrimitives import basePrimitives, altPrimitives, easyWordsPrimitives, alt2Primitives, matchEmpericalPrimitives
+from makeRegexTasks import makeOldTasks, makeLongTasks, makeShortTasks, makeWordTasks, makeNumberTasks, makeDateTasks, makeNonLetterTasks
+from regexPrimitives import basePrimitives, altPrimitives, easyWordsPrimitives, alt2Primitives, matchEmpericalPrimitives, matchEmpericalNoLetterPrimitives
 from likelihoodModel import add_cutoff_values
 #from program import *
 from recognition import HandCodedFeatureExtractor, MLPFeatureExtractor, RecurrentFeatureExtractor, JSONFeatureExtractor
@@ -125,11 +125,11 @@ def regex_options(parser):
     parser.add_argument("--tasks",
                         default="old",
                         help="which tasks to use",
-                        choices=["old", "short", "long", "words","number","dates"])
+                        choices=["old", "short", "long", "words","number","dates", "nonLetter"])
     parser.add_argument("--primitives",
                         default="base",
                         help="Which primitive set to use",
-                        choices=["base", "alt1", "easyWords", "alt2", "emp"])
+                        choices=["base", "alt1", "easyWords", "alt2", "emp", "empNonLetter"])
     parser.add_argument("--extractor", type=str,
                         choices=["hand", "deep", "learned", "json"],
                         default="json")  # if i switch to json it breaks
@@ -206,7 +206,8 @@ if __name__ == "__main__":
                 "long": makeLongTasks,
                 "words": makeWordTasks,
                 "number": makeNumberTasks,
-                "dates": makeDateTasks
+                "dates": makeDateTasks,
+                "nonLetter": makeNonLetterTasks
                 }[tasktype]
 
     tasks = regexTasks()  # TODO
@@ -240,7 +241,8 @@ if __name__ == "__main__":
              "alt1": altPrimitives,
              "alt2": alt2Primitives,
              "easyWords": easyWordsPrimitives,
-             "emp": matchEmpericalPrimitives(corpus=regexTasks())
+             "emp": matchEmpericalPrimitives(corpus=regexTasks()),
+             "empNonLetter": matchEmpericalNoLetterPrimitives(corpus=regexTasks())
              }[primtype]
     eprint("using", primtype, "primitives")
     eprint("using sped up regex match evaluation from Luke")
@@ -270,7 +272,8 @@ if __name__ == "__main__":
         "joint_mdl_use_only_likelihood": True,
         "maximumFrontier": 10,
         "solver": "python",
-        "compressor": "rust"
+        "compressor": "rust",
+        "use_map_search_times": False
     })
     ####
 

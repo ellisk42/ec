@@ -186,6 +186,8 @@ def emp_d(corpus): return pregex.CharacterClass(printable[:10], emp_distro_from_
 
 #emp_s = pre.CharacterClass(slist, [], name="emp\\s") #may want to forgo this one. 
 
+def emp_dot_no_letter(corpus): return pregex.CharacterClass(printable[:10]+printable[62:], emp_distro_from_corpus(corpus, printable[:10]+printable[62:]), name="\\d")
+
 def emp_w(corpus): return pregex.CharacterClass(printable[:62], emp_distro_from_corpus(corpus, printable[:62]), name="\\w")
 
 def emp_l(corpus): return pregex.CharacterClass(printable[10:36], emp_distro_from_corpus(corpus, printable[10:36]), name="\\l")
@@ -221,3 +223,24 @@ def matchEmpericalPrimitives(corpus):
         Primitive("r_alt", arrow(tpregex, tpregex, tpregex), _alt),
         Primitive("r_concat", arrow(tpregex, tpregex, tpregex), _concat),
     ]
+
+def matchEmpericalNoLetterPrimitives(corpus):
+    return lambda: [
+        Primitive("empty_string", tpregex, pregex.String(""))
+    ] + [
+        Primitive("string_" + i, tpregex, pregex.String(i)) for i in printable[:-4] if i not in disallowed_list + list(printable[10:62])
+    ] + [
+        Primitive("string_" + name, tpregex, pregex.String(char)) for char, name in disallowed
+    ] + [
+        Primitive("r_dot", tpregex, emp_dot_no_letter(corpus) ),
+        Primitive("r_d", tpregex, emp_d(corpus) ),
+        Primitive("r_s", tpregex, pregex.s),
+        Primitive("r_kleene", arrow(tpregex, tpregex), _kleene),
+        #Primitive("r_plus", arrow(tpregex, tpregex), _plus),
+        #Primitive("r_maybe", arrow(tpregex, tpregex), _maybe),
+        Primitive("r_alt", arrow(tpregex, tpregex, tpregex), _alt),
+        Primitive("r_concat", arrow(tpregex, tpregex, tpregex), _concat),
+    ]
+
+
+

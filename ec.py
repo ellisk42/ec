@@ -69,7 +69,6 @@ class ECResult():
                      "useNewRecognitionModel": "newRec",
                      "likelihoodModel": "likemod",
                      "helmholtzBatch": "HB",
-                     "use_ll_cutoff": "llcut",
                      "topk_use_only_likelihood": "topkNotMAP",
                      "joint_mdl_use_only_likelihood": "mdlNotMAP",
                      "activation": "act"}
@@ -137,6 +136,7 @@ def ecIterator(grammar, tasks,
                topK=1,
                topk_use_only_likelihood=False,
                joint_mdl_use_only_likelihood=False,
+               use_map_search_times=True,
                maximumFrontier=None,
                pseudoCounts=1.0, aic=1.0,
                structurePenalty=0.001, arity=0,
@@ -194,7 +194,8 @@ def ecIterator(grammar, tasks,
             "benchmark",
             "evaluationTimeout",
             "testingTasks",
-            "compressor"} and v is not None}
+            "compressor",
+            "use_map_search_times"} and v is not None}
     if not useRecognitionModel:
         for k in {"activation", "helmholtzRatio", "steps"}:
             del parameters[k]
@@ -347,7 +348,7 @@ def ecIterator(grammar, tasks,
                                                                       maximumFrontier=maximumFrontier,
                                                                       enumerationTimeout=testingTimeout,
                                                                       evaluationTimeout=evaluationTimeout,
-                                                                      testing=True)
+                                                                      testing=True, use_map=use_map_search_times)
             else:
                 testingFrontiers, times = multicoreEnumeration(grammar, testingTasks, likelihoodModel,
                                                                solver=solver,
@@ -355,7 +356,7 @@ def ecIterator(grammar, tasks,
                                                                enumerationTimeout=testingTimeout,
                                                                CPUs=CPUs,
                                                                evaluationTimeout=evaluationTimeout,
-                                                               testing=True)
+                                                               testing=True, use_map=use_map_search_times)
 
             eprint(
                 "Hits %d/%d testing tasks" %
@@ -380,7 +381,7 @@ def ecIterator(grammar, tasks,
                                                 maximumFrontier=maximumFrontier,
                                                 enumerationTimeout=enumerationTimeout,
                                                 CPUs=CPUs,
-                                                evaluationTimeout=evaluationTimeout)
+                                                evaluationTimeout=evaluationTimeout, use_map=use_map_search_times)
 
         if expandFrontier and (not useRecognitionModel) and (not useNewRecognitionModel) \
            and (j == 0 and times == [] or
@@ -399,7 +400,8 @@ def ecIterator(grammar, tasks,
                                          maximumFrontier=maximumFrontier,
                                          enumerationTimeout=timeout,
                                          CPUs=CPUs,
-                                         evaluationTimeout=evaluationTimeout)
+                                         evaluationTimeout=evaluationTimeout,
+                                         use_map=use_map_search_times)
                 if any(not f.empty for f in unsolvedFrontiers):
                     times += unsolvedTimes
                     unsolvedFrontiers = {f.task: f for f in unsolvedFrontiers}
@@ -435,7 +437,8 @@ def ecIterator(grammar, tasks,
                                                                      frontierSize=frontierSize,
                                                                      maximumFrontier=maximumFrontier,
                                                                      enumerationTimeout=enumerationTimeout,
-                                                                     evaluationTimeout=evaluationTimeout)
+                                                                     evaluationTimeout=evaluationTimeout,
+                                                                     use_map=use_map_search_times)
 
         elif useNewRecognitionModel:  # Train a recognition model
             result.recognitionModel.updateGrammar(grammar)
@@ -454,7 +457,8 @@ def ecIterator(grammar, tasks,
                 maximumFrontier=maximumFrontier,
                 frontierSize=frontierSize,
                 enumerationTimeout=enumerationTimeout,
-                evaluationTimeout=evaluationTimeout)
+                evaluationTimeout=evaluationTimeout,
+                use_map=use_map_search_times)
         if useRecognitionModel or useNewRecognitionModel:
 
             eprint("Recognition model enumeration results:")

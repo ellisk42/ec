@@ -241,7 +241,7 @@ def solveForTask_ocaml(_=None,
                        timeout=None,
                        likelihoodModel=None,  # FIXME: unused
                        testing=None, # FIXME: unused
-                       evaluationTimeout=None, maximumFrontiers=None,use_map=True):
+                       evaluationTimeout=None, maximumFrontiers=None, use_map=True):
 
     import json
 
@@ -653,10 +653,9 @@ def enumerateForTasks(g, tasks, likelihoodModel, _=None,
             #I need to change this min to a max in likelihood, i think 
             #TODO
     else:
-        assert False
         searchTimes = {
             tasks[n]: None if len(hits[n]) == 0 else \
-            min(t for t,_ in hits[n]) for n in range(len(tasks))}
+            min((frontierentry.logLikelihood, frontierentry.logPrior, t) for t, frontierentry in hits[n])[2] for n in range(len(tasks))}
             #I need to change this min to a max in likelihood, i think 
             #TODO
 
