@@ -147,9 +147,6 @@ def regex_options(parser):
     parser.add_argument("--topk_use_map",
                         dest="topk_use_only_likelihood",
                         action="store_false")
-    parser.add_argument("--joint_mdl_use_map",
-                        dest="joint_mdl_use_only_likelihood",
-                        action="store_false")
     parser.add_argument("--debug",
                         dest="debug",
                         action="store_true")
@@ -261,7 +258,6 @@ if __name__ == "__main__":
         "outputPrefix": "experimentOutputs/regex" + primtype + timestr + 'll' + str(train_ll_cutoff) + str(test_ll_cutoff),
         "evaluationTimeout": 2.0,  # 0.005,
         "topk_use_only_likelihood": True,
-        "joint_mdl_use_only_likelihood": True,
         "maximumFrontier": 10,
         "solver": "python",
         "compressor": "rust"
