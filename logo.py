@@ -65,74 +65,26 @@ class LogoFeatureCNN(nn.Module):
     def featuresOfTask(self, t):  # Take a task and returns [features]
         return self(t.examples[0][1])
 
-    # def taskOfProgram(self, p, t):  # Won't fix for 
-        # if not os.path.exists(self.sub):
-            # os.makedirs(self.sub)
-        # try:
-            # randomStr = ''.join(random.choice('0123456789') for _ in range(5))
-            # fname = self.sub + "/" + str(self.count) + "_" + randomStr
-            # evaluated = p.evaluate([])
-            # with open(fname + ".dream", "w") as f:
-                # f.write(str(p))
-            # with open(fname + ".LoG", "w") as f:
-                # f.write(evaluated)
-            # output = subprocess.check_output(['./DrawLambdaString',
-                                              # fname + ".png",
-                                              # evaluated]).decode("utf8").split("\n")
-            # shape = list(map(float, output[0].split(',')))
-            # bigShape = map(float, output[1].split(','))
-        # except OSError as exc:
-            # raise exc
-        # try:
-            # self.mean = [x + y for x, y in zip(self.mean, bigShape)]
-            # task = Task("Helm", t, [((), shape)])
-            # self.count += 1
-            # return task
-        # except ValueError:
-            # return None
-
-    # def renderProgram(self, p, t):  # Won't fix for 
-        # if not os.path.exists(self.sub):
-            # os.makedirs(self.sub)
-        # try:
-            # randomStr = ''.join(random.choice('0123456789') for _ in range(5))
-            # fname = self.sub + "/" + str(self.count) + "_" + randomStr
-            # evaluated = p.evaluate([])
-            # with open(fname + ".dream", "w") as f:
-                # f.write(str(p))
-            # with open(fname + ".LoG", "w") as f:
-                # f.write(evaluated)
-            # output = subprocess.check_output(['./DrawLambdaString',
-                                              # fname + ".png",
-                                              # evaluated]).decode("utf8").split("\n")
-            # shape = list(map(float, output[0].split(',')))
-            # bigShape = map(float, output[1].split(','))
-        # except OSError as exc:
-            # raise exc
-        # try:
-            # self.mean = [x + y for x, y in zip(self.mean, bigShape)]
-            # self.count += 1
-            # return shape
-        # except ValueError:
-            # return None
-
-    # def finish(self):
-        # if self.count > 0:
-            # mean = [log(1 + float(x / self.count)) for x in self.mean]
-            # mi = min(mean)
-            # ma = max(mean)
-            # mean = [(x - mi + (1 / 255)) / (ma - mi) for x in mean]
-            # img = [(int(x * 254), int(x * 254), int(x * 254)) for x in mean]
-            # img = [img[i:i + 256] for i in range(0, 256 * 256, 256)]
-            # img = [tuple([e for t in x for e in t]) for x in img]
-            # fname = self.sub + "/" + str(self.count) + "_sum.png"
-            # f = open(fname, 'wb')
-            # w = png.Writer(256, 256)
-            # w.write(f, img)
-            # f.close()
-            # self.mean = [0] * (256 * 256)
-            # self.count = 0
-
+    def taskOfProgram(self, p, t):
+        if not os.path.exists(self.sub):
+            os.makedirs(self.sub)
+        try:
+            randomStr = ''.join(random.choice('0123456789') for _ in range(5))
+            fname = self.sub + "/" + str(self.count) + "_" + randomStr
+            with open(fname + ".dream", "w") as f:
+                f.write(str(p))
+            output = subprocess.check_output(['./logoDrawString',
+                                              '512',
+                                              fname + ".png",
+                                              '28',
+                                              str(p)]).decode("utf8")
+            if (len(output) > 0):
+                shape = list(map(float, output.split(',')))
+                return Task("Helm", t, [((), shape)])
+            else:
+                return None
+        except OSError as exc:
+            raise exc
 
 def list_options(parser):
     parser.add_argument("--target", type=str,
@@ -153,12 +105,12 @@ def list_options(parser):
 
 if __name__ == "__main__":
     args = commandlineArguments(
-        steps=100000,
+        steps=1000,
         a=3,
         topK=5,
         iterations=10,
         useRecognitionModel=True,
-        helmholtzRatio=0.0,
+        helmholtzRatio=0.5,
         helmholtzBatch=500,
         featureExtractor=LogoFeatureCNN,
         maximumFrontier=1000,
@@ -170,7 +122,7 @@ if __name__ == "__main__":
     red = args.pop("reduce")
     save = args.pop("save")
     prefix = args.pop("prefix")
-    prefix_dreams = prefix + "/dreams/" + ('_'.join(target)) + "/"
+    prefix_dreams = prefix + "dreams/" + ('_'.join(target)) + "/"
     prefix_pickles = prefix + "/pickles/" + ('_'.join(target)) + "/"
     if not os.path.exists(prefix_dreams):
         os.makedirs(prefix_dreams)

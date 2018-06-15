@@ -3,7 +3,10 @@ all:
 	  jbuilder build solver.exe && \
 	  jbuilder build geomDrawLambdaString.exe && \
 	  jbuilder build geomDrawFile.exe && \
+	  jbuilder build logoDrawString.exe && \
 	  cp _build/default/solver.exe ../solver && \
+	  cp _build/default/logoDrawString.exe \
+	    ../logoDrawString && \
 	  cp _build/default/geomDrawLambdaString.exe \
 	    ../geomDrawLambdaString && \
 	  cp _build/default/geomDrawFile.exe \

@@ -66,12 +66,13 @@ let turtle_task ?timeout:(timeout = 0.001) name ty examples =
                   (fun () ->
                     let x = run_lazy_analyzed_with_arguments p [] in
                     let l = LogoLib.LogoInterpreter.turtle_to_list x in
-                    let bx = match Hashtbl.Poly.find p2i l with
-                      | Some(x) -> x
-                      | _ ->
-                          let bx' = LogoLib.LogoInterpreter.turtle_to_array x 28 in
-                          Hashtbl.Poly.set p2i l bx' ;
-                          bx'
+                    let bx =
+                        match Hashtbl.Poly.find p2i l with
+                        | Some(x) -> x
+                        | _ ->
+                            let bx' = LogoLib.LogoInterpreter.turtle_to_array x 28 in
+                            Hashtbl.Poly.set p2i l bx' ;
+                            bx'
                     in bx = by)
               with
                 | Some(true) -> true
