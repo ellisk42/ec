@@ -186,7 +186,7 @@ def emp_d(corpus): return pregex.CharacterClass(printable[:10], emp_distro_from_
 
 #emp_s = pre.CharacterClass(slist, [], name="emp\\s") #may want to forgo this one. 
 
-def emp_dot_no_letter(corpus): return pregex.CharacterClass(printable[:10]+printable[62:], emp_distro_from_corpus(corpus, printable[:10]+printable[62:]), name="\\d")
+def emp_dot_no_letter(corpus): return pregex.CharacterClass(printable[:10]+printable[62:], emp_distro_from_corpus(corpus, printable[:10]+printable[62:]), name=".")
 
 def emp_w(corpus): return pregex.CharacterClass(printable[:62], emp_distro_from_corpus(corpus, printable[:62]), name="\\w")
 
@@ -219,7 +219,7 @@ def matchEmpericalPrimitives(corpus):
         Primitive("r_u", tpregex, emp_u(corpus) ),
         Primitive("r_kleene", arrow(tpregex, tpregex), _kleene),
         #Primitive("r_plus", arrow(tpregex, tpregex), _plus),
-        #Primitive("r_maybe", arrow(tpregex, tpregex), _maybe),
+        Primitive("r_maybe", arrow(tpregex, tpregex), _maybe),
         Primitive("r_alt", arrow(tpregex, tpregex, tpregex), _alt),
         Primitive("r_concat", arrow(tpregex, tpregex, tpregex), _concat),
     ]
