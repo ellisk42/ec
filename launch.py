@@ -69,6 +69,8 @@ def sendCommand(
         checkpoint=None):
     import tempfile
 
+    br = branch()
+
     if checkpoint is None:
         copyCheckpoint = ""
     else:
@@ -76,20 +78,15 @@ def sendCommand(
             checkpoint = os.path.split(checkpoint)[1]
         copyCheckpoint = "mv ~/%s ~/ec/experimentOutputs" % checkpoint
 
-    preamble = """#!/bin/bash
+    preamble = f"""#!/bin/bash
 cd ~/ec
-%s
+{copyCheckpoint}
 touch compressor_dummy
 git pull
+git checkout {br}
 
 make -C rust_compressor
-""" % copyCheckpoint
-
-    br = branch()
-    if br != 'master':
-        preamble += """
-git checkout %s
-""" % br
+"""
 
     if resume:
         print("Sending tar file")
