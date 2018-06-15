@@ -21,15 +21,7 @@ def launch(size="t2.micro", name=""):
     # --key-name testing --associate-public-ip-address
     o = json.loads(subprocess.check_output(["aws", "ec2", "run-instances",
                                             "--image-id",
-                                            # "ami-835f6ae6",
-                                            # "ami-d6ae9fb3",
-                                            # "ami-2e093b4b",
-                                            # "ami-3080b255",
-                                            # "ami-0f3c016a",
-                                            # "ami-14033e71",
-                                            # "ami-23fcc346",
-                                            #"ami-b2a798d7",
-                                            "ami-0d380668",
+                                            "ami-37ccf252",
                                             "--instance-type", size,
                                             "--security-groups", "publicssh",
                                             "--instance-initiated-shutdown-behavior", "terminate",
@@ -85,19 +77,11 @@ def sendCommand(
         copyCheckpoint = "mv ~/%s ~/ec/experimentOutputs" % checkpoint
 
     preamble = """#!/bin/bash
-# A bit weird that we need to do this here
-export PATH="/home/ubuntu/pypy3.5-6.0.0-linux_x86_64-portable/bin:$PATH"
-export PATH="/home/ubuntu/miniconda3/bin:$PATH"
-
 cd ~/ec
-rm experimentOutputs/*
 %s
 touch compressor_dummy
 git pull
 
-curl https://sh.rustup.rs -sSfo rustup-init
-sh ./rustup-init -y
-source ~/.bashrc
 make -C rust_compressor
 """ % copyCheckpoint
 
