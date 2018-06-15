@@ -216,12 +216,15 @@ class TowerWorld(object):
         w,h = picture.shape
 
         def flood(x,y):
-            if x >= 0 and y >= 0 and x < w and y < h and picture[x,y] == 0.:
-                picture[x,y] = 1.
-                flood(x - 1,y)
-                flood(x + 1,y)
-                flood(x,y - 1)
-                flood(x,y + 1)
+            stack = [(x,y)]
+            while len(stack) > 0:
+                x,y = stack.pop()
+                if x >= 0 and y >= 0 and x < w and y < h and picture[x,y] == 0.:
+                    picture[x,y] = 1.
+                    stack.append((x - 1,y))
+                    stack.append((x + 1,y))
+                    stack.append((x,y - 1))
+                    stack.append((x,y + 1))
 
         flood(w - 1, h - 1)
         overpass = 0
@@ -233,7 +236,6 @@ class TowerWorld(object):
                     new = picture.sum()
                     overpass = max(overpass, new - old)
         return overpass*resolution*resolution
-
         
 
     def bridge(self):
