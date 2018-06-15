@@ -24,12 +24,16 @@ let _ =
       | Some(p) ->
           let p = analyze_lazy_evaluation p in
           let turtle = run_lazy_analyzed_with_arguments p [] in
+          (*pp_turtle turtle ;*)
           let c = (eval_turtle turtle) in
+          (*prerr_endline (Vg.P.to_string c) ;*)
           let bx = canvas_to_1Darray c size in
-          if bx = b0 then ()
+          if bx = b0 then (*prerr_endline "emptyDrawing"*) ()
           else begin
             output_canvas_png c sizeFile fname ;
             npp (canvas_to_1Darray c size)
           end
       | _ -> ()
+          (*(prerr_endline "Could not parse")*)
     with Invalid_argument _ | Failure _ | DIV0 | Stack_overflow -> ()
+      (*(prerr_endline "other error")*)

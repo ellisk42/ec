@@ -4,12 +4,14 @@ open Lexing
 
 exception MalformedProgram of string
 
-let empty32 =
-  Bigarray.(Array1.create int8_unsigned c_layout (32*32))
-let empty64 =
-  Bigarray.(Array1.create int8_unsigned c_layout (64*64))
-let empty256 =
-  Bigarray.(Array1.create int8_unsigned c_layout (256*256))
+let empty32 = Bigarray.(Array1.create int8_unsigned c_layout (32*32))
+let empty64 = Bigarray.(Array1.create int8_unsigned c_layout (64*64))
+let empty256 = Bigarray.(Array1.create int8_unsigned c_layout (256*256))
+
+let _ =
+  Bigarray.Array1.fill empty32 0 ;
+  Bigarray.Array1.fill empty64 0 ;
+  Bigarray.Array1.fill empty256 0
 
 let npp data =
   for i = 0 to (Bigarray.Array1.dim data) - 2 do
