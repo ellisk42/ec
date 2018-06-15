@@ -140,5 +140,4 @@ grammar, frontiers = induceGrammar(baseGrammar, frontiers,
                                    pseudoCounts=1.0, a=3,
                                    aic=0.0, structurePenalty=1,
                                    topk_use_only_likelihood=True,
-                                   joint_mdl_use_only_likelihood=True,
                                    backend='rust', CPUs=1, iteration=1)
