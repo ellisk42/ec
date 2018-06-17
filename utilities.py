@@ -529,18 +529,63 @@ class PQ(object):
 
     def __init__(self):
         self.h = []
+        self.index2value = {}
+        self.nextIndex = 0
 
     def push(self, priority, v):
-        heapq.heappush(self.h, (-priority, v))
+        self.index2value[self.nextIndex] = v
+        heapq.heappush(self.h, (-priority, self.nextIndex))
+        self.nextIndex += 1
 
     def popMaximum(self):
-        return heapq.heappop(self.h)[1]
+        i = heapq.heappop(self.h)[1]
+        v = self.index2value[i]
+        del self.index2value[i]
+        return v
 
     def __iter__(self):
         for _, v in self.h:
-            yield v
+            yield self.index2value[v]
 
     def __len__(self): return len(self.h)
+
+class UnionFind:
+    class Class:
+        def __init__(self, x):
+            self.members = {x}
+            self.leader = None
+        def chase(self):
+            k = self
+            while k.leader is not None:
+                k = k.leader
+            self.leader = k
+            return k
+            
+    def __init__(self):
+        # Map from keys to classes
+        self.classes = {}
+    def unify(self,x,y):
+        k1 = self.classes[x].chase()
+        k2 = self.classes[y].chase()
+        # k2 will be the new leader
+        k1.leader = k2
+        k2.members |= k1.members
+        k1.members = None
+        self.classes[x] = k2
+        self.classes[y] = k2
+        return k2
+    def newClass(self,x):
+        if x not in self.classes:
+            n = Class(x)
+            self.classes[x] = n
+
+    def otherMembers(self,x):
+        k = self.classes[x].chase()
+        self.classes[x] = k
+        return k.members        
+        
+
+    
 
 
 def substringOccurrences(ss, s):
