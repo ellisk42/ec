@@ -42,6 +42,7 @@ def _logo_get(v):
 
 primitives = [
     Primitive("logo_var_UNIT", ttvar, "logo_var_UNIT"),
+    Primitive("logo_var_IFTY", ttvar, "logo_var_IFTY"),
     Primitive("logo_var_TWO", ttvar, "logo_var_TWO"),
     Primitive("logo_var_THREE", ttvar, "logo_var_THREE"),
     # Primitive("logo_var_PI",   ttvar, "logo_var_PI"),

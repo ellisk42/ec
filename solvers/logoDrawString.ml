@@ -28,12 +28,12 @@ let _ =
           let c = (eval_turtle turtle) in
           (*prerr_endline (Vg.P.to_string c) ;*)
           let bx = canvas_to_1Darray c size in
-          if bx = b0 then (*prerr_endline "emptyDrawing"*) ()
+          if bx = b0 then prerr_endline "emptyDrawing"
           else begin
             output_canvas_png c sizeFile fname ;
             npp (canvas_to_1Darray c size)
           end
-      | _ -> ()
-          (*(prerr_endline "Could not parse")*)
-    with Invalid_argument _ | Failure _ | DIV0 | Stack_overflow -> ()
-      (*(prerr_endline "other error")*)
+      | _ ->
+          (prerr_endline "Could not parse")
+    with Invalid_argument _ | Failure _ | DIV0 | Stack_overflow ->
+      (prerr_endline "other error")

@@ -73,15 +73,19 @@ class LogoFeatureCNN(nn.Module):
             fname = self.sub + "/" + str(self.count) + "_" + randomStr
             with open(fname + ".dream", "w") as f:
                 f.write(str(p))
-            output = subprocess.check_output(['./logoDrawString',
-                                              '512',
-                                              fname + ".png",
-                                              '28',
-                                              str(p)]).decode("utf8")
-            if (len(output) > 0):
-                shape = list(map(float, output.split(',')))
-                return Task("Helm", t, [((), shape)])
-            else:
+            try:
+                output = subprocess.check_output(['./logoDrawString',
+                                                  '512',
+                                                  fname + ".png",
+                                                  '28',
+                                                  str(p)],
+                                                  timeout=1).decode("utf8")
+                if (len(output) > 0):
+                    shape = list(map(float, output.split(',')))
+                    return Task("Helm", t, [((), shape)])
+                else:
+                    return None
+            except subprocess.TimeoutExpired:
                 return None
         except OSError as exc:
             raise exc

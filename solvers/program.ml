@@ -500,6 +500,7 @@ let logo_var_I2F = primitive "logo_I2F" (tint @> ttvar) (fun i -> float_of_int i
 let logo_var_F2I = primitive "logo_F2I" (ttvar @> tint) (fun f -> int_of_float f)
 
 let logo_var_UNIT = primitive "logo_var_UNIT" ttvar LogoLib.LogoInterpreter.logo_var_UNIT
+let logo_var_IFTY = primitive "logo_var_IFTY" ttvar LogoLib.LogoInterpreter.logo_var_IFTY
 let logo_var_TWO = primitive "logo_var_TWO" ttvar LogoLib.LogoInterpreter.logo_var_TWO
 let logo_var_THREE = primitive "logo_var_THREE" ttvar LogoLib.LogoInterpreter.logo_var_THREE
 let logo_var_PI   = primitive "logo_var_PI" ttvar LogoLib.LogoInterpreter.logo_var_PI

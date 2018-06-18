@@ -112,8 +112,9 @@ let logo_SET : (state -> turtle) = fun s -> fun _ -> ([SET(s)], s)
 let logo_NOP : turtle = fun s -> ([], s)
 
 let logo_var_UNIT : float  = 1.
-let logo_var_TWO : float   = 2.
+let logo_var_TWO  : float  = 2.
 let logo_var_THREE: float  = 3.
+let logo_var_IFTY : float  = 20.
 let logo_var_PI   : float  = 3.14159265359
 let logo_var_NXT         f = f +. 1.
 let logo_var_PRV         f = f -. 1.
