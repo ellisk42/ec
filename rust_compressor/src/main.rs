@@ -59,7 +59,6 @@ struct Params {
     pseudocounts: u64,
     topk: usize,
     topk_use_only_likelihood: Option<bool>,
-    joint_mdl_use_only_likelihood: Option<bool>,
     structure_penalty: f64,
     aic: Option<f64>,
     arity: u32,
@@ -122,9 +121,6 @@ impl From<ExternalCompressionInput> for CompressionInput {
             pseudocounts: eci.params.pseudocounts,
             topk: eci.params.topk,
             topk_use_only_likelihood: eci.params.topk_use_only_likelihood.unwrap_or(false),
-            joint_mdl_use_only_likelihood: eci.params
-                .joint_mdl_use_only_likelihood
-                .unwrap_or(false),
             structure_penalty: eci.params.structure_penalty,
             aic: eci.params.aic.unwrap_or(f64::INFINITY),
             arity: eci.params.arity,
