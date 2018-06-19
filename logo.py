@@ -29,7 +29,6 @@ class LogoFeatureCNN(nn.Module):
         super(LogoFeatureCNN, self).__init__()
 
         self.mean = [0] * (256 * 256)
-        self.count = 0
         self.sub = prefix_dreams + str(int(time.time()))
 
         self.outputDimensionality = H
@@ -69,8 +68,8 @@ class LogoFeatureCNN(nn.Module):
         if not os.path.exists(self.sub):
             os.makedirs(self.sub)
         try:
-            randomStr = ''.join(random.choice('0123456789') for _ in range(5))
-            fname = self.sub + "/" + str(self.count) + "_" + randomStr
+            randomStr = ''.join(random.choice('0123456789') for _ in range(10))
+            fname = self.sub + "/" + randomStr
             with open(fname + ".dream", "w") as f:
                 f.write(str(p))
             try:

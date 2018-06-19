@@ -125,6 +125,11 @@ let logo_var_SUB      f f' = f -. f'
 let logo_var_MUL      f f' = f *. f'
 let logo_var_DIV      f f' = if f' = 0. then (raise DIV0) else f /. f'
 
+let logo_CHEAT : float -> turtle =
+  fun length ->
+    (logo_SEQ (logo_FW length) (logo_RT (logo_var_HLF logo_var_UNIT)))
+
+
 let turtle_to_list turtle =
   let l,_ = turtle (init_state ()) in l
 
