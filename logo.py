@@ -70,8 +70,6 @@ class LogoFeatureCNN(nn.Module):
         try:
             randomStr = ''.join(random.choice('0123456789') for _ in range(10))
             fname = self.sub + "/" + randomStr
-            with open(fname + ".dream", "w") as f:
-                f.write(str(p))
             try:
                 output = subprocess.check_output(['./logoDrawString',
                                                   '512',
@@ -81,6 +79,8 @@ class LogoFeatureCNN(nn.Module):
                                                   timeout=1).decode("utf8")
                 if (len(output) > 0):
                     shape = list(map(float, output.split(',')))
+                    with open(fname + ".dream", "w") as f:
+                        f.write(str(p))
                     return Task("Helm", t, [((), shape)])
                 else:
                     return None
