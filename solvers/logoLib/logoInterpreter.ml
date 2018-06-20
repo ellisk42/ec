@@ -134,10 +134,13 @@ let logo_CHEAT2 : float -> turtle =
   fun length ->
     (logo_SEQ (logo_FW length) (logo_RT (logo_var_HLF (logo_var_HLF (logo_var_HLF logo_var_UNIT)))))
 
-
 let logo_CHEAT3 : float -> turtle =
   fun length ->
     (logo_SEQ (logo_FW length) (logo_RT (logo_var_HLF (logo_var_HLF (logo_var_HLF (logo_var_HLF logo_var_UNIT))))))
+
+let logo_CHEAT4 : float -> turtle =
+  fun length ->
+    (logo_SEQ (logo_FW length) (logo_RT (logo_var_HLF logo_var_UNIT)))
 
 let turtle_to_list turtle =
   let l,_ = turtle (init_state ()) in l

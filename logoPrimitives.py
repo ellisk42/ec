@@ -37,6 +37,8 @@ def _logo_cheat2(x):
     return "(logo_CHEAT2 " + x + ")"
 def _logo_cheat3(x):
     return "(logo_CHEAT3 " + x + ")"
+def _logo_cheat4(x):
+    return "(logo_CHEAT4 " + x + ")"
 def _logo_rt(x):
     return "(logo_RT " + x + ")"
 def _logo_set(x):
@@ -68,6 +70,7 @@ primitives = [
     Primitive("logo_CHEAT",  arrow(ttvar,turtle), _logo_cheat),
     Primitive("logo_CHEAT2",  arrow(ttvar,turtle), _logo_cheat),
     Primitive("logo_CHEAT3",  arrow(ttvar,turtle), _logo_cheat),
+    Primitive("logo_CHEAT4",  arrow(ttvar,turtle), _logo_cheat),
     Primitive("logo_RT",  arrow(ttvar,turtle), _logo_rt),
     Primitive("logo_SET",  arrow(tstate,turtle), _logo_set),
     Primitive("logo_SEQ",  arrow(turtle,turtle,turtle), _logo_seq),

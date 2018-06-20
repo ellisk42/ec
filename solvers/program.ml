@@ -494,6 +494,7 @@ let logo_FW  = primitive "logo_FW"             (ttvar @> turtle) LogoLib.LogoInt
 let logo_CHEAT  = primitive "logo_CHEAT"             (ttvar @> turtle) LogoLib.LogoInterpreter.logo_CHEAT
 let logo_CHEAT2  = primitive "logo_CHEAT2"             (ttvar @> turtle) LogoLib.LogoInterpreter.logo_CHEAT2
 let logo_CHEAT3  = primitive "logo_CHEAT3"             (ttvar @> turtle) LogoLib.LogoInterpreter.logo_CHEAT3
+let logo_CHEAT4  = primitive "logo_CHEAT4"             (ttvar @> turtle) LogoLib.LogoInterpreter.logo_CHEAT4
 let logo_SEQ = primitive "logo_SEQ" (turtle @> turtle @> turtle) LogoLib.LogoInterpreter.logo_SEQ
 let logo_GET = primitive "logo_GET" (tstate @> turtle @> turtle) LogoLib.LogoInterpreter.logo_GET
 let logo_SET = primitive "logo_SET"           (tstate @> turtle) LogoLib.LogoInterpreter.logo_SET
