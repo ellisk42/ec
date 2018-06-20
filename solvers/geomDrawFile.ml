@@ -42,18 +42,22 @@ let _ =
   (try
     (match read_program program_string with
       | Some (program) ->
-          let canvas = interpret program in
+          let canvas = interpret program
+          and cost = costProgram program in
           let pngFName = ((Filename.chop_suffix Sys.argv.(1) ".LoG")^"_l.png")
           and pngFNameh= ((Filename.chop_suffix Sys.argv.(1) ".LoG")^"_h.png")
           and pngFNamevh= ((Filename.chop_suffix Sys.argv.(1) ".LoG")^"_vh.png")
+          and costFName = ((Filename.chop_suffix Sys.argv.(1) ".LoG")^".cost")
           in
           output_canvas_png canvas 28 pngFName ;
           output_canvas_png canvas 128 pngFNameh ;
           output_canvas_png canvas 512 pngFNamevh ;
+          let oc = open_out costFName in
+          fprintf oc "%s,%s\n" ((Filename.chop_suffix Sys.argv.(1) ".LoG")) (string_of_int cost) ;
+          close_out oc;   
           for i = 0 to 50 do
             let canvas = interpret ~noise:true program in
-            let pngRName = ((Filename.chop_suffix Sys.argv.(1)
-            ".LoG")^"_random_"^(string_of_int i)^".png") in
+            let pngRName = ((Filename.chop_suffix Sys.argv.(1) ".LoG")^"_random_"^(string_of_int i)^".png") in
             output_canvas_png canvas 28 pngRName
           done
       | None -> ())
