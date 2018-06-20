@@ -33,6 +33,10 @@ def _logo_fw(x):
     return "(logo_FW " + x + ")"
 def _logo_cheat(x):
     return "(logo_CHEAT " + x + ")"
+def _logo_cheat2(x):
+    return "(logo_CHEAT2 " + x + ")"
+def _logo_cheat3(x):
+    return "(logo_CHEAT3 " + x + ")"
 def _logo_rt(x):
     return "(logo_RT " + x + ")"
 def _logo_set(x):
@@ -62,6 +66,8 @@ primitives = [
     Primitive("logo_PD",  turtle, "logo_PD"),
     Primitive("logo_FW",  arrow(ttvar,turtle), _logo_fw),
     Primitive("logo_CHEAT",  arrow(ttvar,turtle), _logo_cheat),
+    Primitive("logo_CHEAT2",  arrow(ttvar,turtle), _logo_cheat),
+    Primitive("logo_CHEAT3",  arrow(ttvar,turtle), _logo_cheat),
     Primitive("logo_RT",  arrow(ttvar,turtle), _logo_rt),
     Primitive("logo_SET",  arrow(tstate,turtle), _logo_set),
     Primitive("logo_SEQ",  arrow(turtle,turtle,turtle), _logo_seq),
@@ -70,7 +76,7 @@ primitives = [
     Primitive("logo_I2F", arrow(tint,ttvar), _logo_I2F),
     Primitive("logo_F2I", arrow(ttvar,tint), _logo_I2F)
 
-] + bootstrapTarget() + [Primitive(str(j), tint, j) for j in range(2,5)]
+] + bootstrapTarget() + [Primitive(str(j), tint, j) for j in range(2,7)]
 # ] + [
     # Primitive("map", arrow(arrow(t0, t1), tlist(t0), tlist(t1)), _map),
     # Primitive("zip", arrow(tlist(t0), tlist(t1), arrow(t0, t1, t2), tlist(t2)), _zip),
