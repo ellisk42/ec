@@ -576,7 +576,7 @@ class UnionFind:
         return k2
     def newClass(self,x):
         if x not in self.classes:
-            n = Class(x)
+            n = self.Class(x)
             self.classes[x] = n
 
     def otherMembers(self,x):

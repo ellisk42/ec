@@ -35,6 +35,7 @@ class LiftedLeaf(Lifted):
     def isLeaf(self): return True
 
     def __str__(self): return str(self.primitive)
+    def __len__(self): return 1
 
     def chase(self): return self
 
@@ -61,6 +62,7 @@ class LiftedApply(Lifted):
     def isApplication(self): return True
 
     def __str__(self): return "@(%s,%s)"%(str(self.f), str(self.x))
+    def __len__(self): return len(self.f)*len(self.x)
 
     def chase(self):
         f = self.f.chase()
@@ -104,6 +106,7 @@ class LiftedAbstract(Lifted):
     def isAbstraction(self): return True
 
     def __str__(self): return "abs(%s)"%str(self.body)
+    def __len__(self): return len(self.body)
 
     def chase(self):
         b = self.body.chase()
@@ -136,6 +139,7 @@ class LiftedIndex(Lifted):
     def isIndex(self): return True
 
     def __str__(self): return "$%d"%self.i
+    def __len__(self): return 1
 
     def chase(self): return self
 
@@ -179,6 +183,7 @@ class Terms():
     def __or__(self,o):
         assert isinstance(o,Terms)
         return Terms(self.elements|o.elements)
+    def __len__(self): return sum(len(e) for e in self.elements)
 
     def __le__(self,o):
         """Whether one versions space contains another"""
@@ -217,18 +222,20 @@ class Terms():
         # i = Terms([ LiftedApply(Terms([LiftedAbstract(t.substitutions(0,v))]),v)
         #             for t in self
         #             for v in t.closedChildren()])
-        i = Terms([ lift(ie)
-                    for e in self.extension()
-                    for ie in inverseBeta_(e) ])
+        i = Terms([ LiftedApply(Terms([getOne(lift(b).elements) for b in possibleBodies(c,e)]), lift(c))
+                    for l in self
+                    for e in l.extension()
+                    for c in closedChildren(e) ])
         Terms.TOPINVERSION[self] = i
         return i
 
     def recursiveInvert(self):
         if self in Terms.RECURSIVEINVERSION: return Terms.RECURSIVEINVERSION[self]
         i = Terms(reduce(lambda x,y: x|y, [e.recursiveInvert() for e in self] + [self.invert()]))
-        Terms.EQUIVALENCES.newClass(self)
-        Terms.EQUIVALENCES.newClass(i)
-        Terms.EQUIVALENCES.unify(self,i)
+        if False:
+            Terms.EQUIVALENCES.newClass(self)
+            Terms.EQUIVALENCES.newClass(i)
+            Terms.EQUIVALENCES.unify(self,i)
         Terms.RECURSIVEINVERSION[self] = i
         return i
     def R(self,n=1):
@@ -672,7 +679,7 @@ class ExpressionGraph():
                                                                for l in self.children(k) ]))
 
     def garbageCollect(self, roots):
-        es = { j for r in roots for j in self.reachable(r) }
+        es = { j for r in roots for j in self.reachable(r.chase()) }
         ls = { l for e in es for l in self.children(e)  }
 
         deadClasses = set(self.incident.keys()) - es
@@ -772,7 +779,9 @@ class ExpressionGraph():
         allowedExpressions = { child
                                for r in self.reachable(v)|self.reachable(self.getClass(l_))
                                for child in self.children(r) }
-            
+
+        # memo wise previous results
+        previousResults = {}
 
         """Acyclic is a bit tricky here"""
         """We are recursively constructing a tree, and it is okay at different
@@ -790,6 +799,9 @@ class ExpressionGraph():
                 return set()
 
             visited = visited | {k}
+
+            for (n_,le_),r_ in previousResults.items():
+                if n_ == n and le_.chase() == le: return r_
 
             # Optimization: if all of the free variables of v do not
             # occur in le then we can be sure v does not occur in le
@@ -833,6 +845,7 @@ class ExpressionGraph():
                 assert False
 
             chasedResult = {b.chase() for b in bodies }
+            previousResults[(n,le.chase())] = chasedResult
             return chasedResult
 
         return S(0,0,l_,set())
@@ -851,10 +864,12 @@ class ExpressionGraph():
         eprint("Inverse beta",k,"which has",len(l2v),"members",
                "and a total of",sum(len(v) for v in l2v.values() ),"closed children")
         for l,vs in l2v.items():
+            #self.visualize(simplify=False)
             eprint("\tProcessing a expression w/ closed children =",len(vs))
             for v in vs:
                 l = l.chase()
                 v = v.chase()
+                print("\t\t","Getting possible bodies for v = ",v,"l = ",l)
                     
                 for b in set(self.possibleBodies(v,l)):
                     b = self.abstractClass(b)
@@ -880,7 +895,9 @@ class ExpressionGraph():
                     #self.debug(verbose=False)
 
             eprint("Updated equivalences.")
-
+            
+        self.garbageCollect(roots)
+        
         self.inverseBetaEverything(roots, steps - 1)
 
     def reachable(self,e):
@@ -1070,6 +1087,25 @@ def possibleBodies(v,e,n=0):
         assert False
 
 
+def testVersionSpace(ps,n=1):
+    ls = [lift(p) for p in ps ]
+    vs = {p:[] for p in ps }
+    for l,p in zip(ls,ps):
+        with timing("calculated version space for %s"%p):
+            for n_ in range(1,n+1):
+                vs[p].append(l.R(n_))
+        
+def testGraph(ps,n=1):
+    
+    g = ExpressionGraph()
+    ks = [g.getClass(g.incorporate(p)) for p in ps ]
+
+    for _ in range(n):
+#        g.visualize(simplify=False)    
+        g.inverseBetaEverything(ks, steps=1)
+#        g.visualize(simplify=False)
+        g.debug()
+    
 if __name__ == "__main__":
     from arithmeticPrimitives import *
     from listPrimitives import *
@@ -1077,45 +1113,11 @@ if __name__ == "__main__":
     bootstrapTarget_extra()
     p1 = Program.parse("(lambda (fold empty $0 (lambda (lambda (cons (- $0) $1)))))")
     p2 = Program.parse("(lambda (fold empty $0 (lambda (lambda (cons (+ $0 1) $1)))))")
-    p3 = Program.parse("car")
-    p4 = Program.parse("(lambda $0)")
+    p3 = Program.parse("(lambda (+ $0 5))")
+    p4 = Program.parse("(lambda (+ $0 9))")
+    p5 = Program.parse("car")
 
-    p = p1
-    l = lift(p)
-    print()
-    n = 2
-    i = set()
-    with timing("calculated version space for %s"%p):
-        for n_ in range(1,n+1):
-            i = i | set(l.R(n_).extension())
-    gt = set(inverseBeta(p,n))
-    print(len(gt - i),"missing from the inversion")
-    print(len(i - gt),"missing from ground truth")
-    print(len(i),"programs in the extension of the inversion")
-    print(len(gt),"programs in the ground truth")
-    assert False
-    
-    for c in i:
-        print(c)
-        continue
-    
-        for e in c.extension():
-            print(e)
-            assert e.betaNormalForm() == getOne(l.extension()).betaNormalForm()
-    assert False
+    testVersionSpace([p1,p2,p3,p4],1)
 
-    g = ExpressionGraph()
-    k1 = g.incorporate(p3)
-    g.inverseBetaEverything(g.classes(k1), steps=2)
+    testGraph([p1],2)
 
-    g.debug()
-    
-    # k2 = g.incorporate(p4).body
-    # g.makeEquivalent(k1,k2)
-    # #g.inverseBetaEverything([k1])
-    # g.debug()
-    g.visualize()
-    for program in g.extract(getOne(g.classes(g.incorporate(p3)))):
-        eprint(program)
-        eprint(program.betaNormalForm())
-    
