@@ -1,6 +1,7 @@
 from program import *
-
 from utilities import *
+
+from frozendict import frozendict
 
 DEBUG = False
 
@@ -41,12 +42,14 @@ class LiftedLeaf(Lifted):
 
     def shift(self,d,c=0): return self
     def closedChildren(self,n=0):
-        yield Terms([self])
+        yield self.primitive
     def extension(self): yield self.primitive
     
     def substitutions(self,n,v): return self
 
-    def recursiveInvert(self): return Terms([])
+    def recursiveInvert(self):
+        return
+        yield 
         
 
 class LiftedApply(Lifted):
@@ -89,8 +92,8 @@ class LiftedApply(Lifted):
                            self.x.substitutions(n,v))
 
     def recursiveInvert(self):
-        return Terms([LiftedApply(self.f.recursiveInvert(),self.x),
-                      LiftedApply(self.f,self.x.recursiveInvert())])
+        yield LiftedApply(self.f.recursiveInvert(),self.x)
+        yield LiftedApply(self.f,self.x.recursiveInvert())
                                         
     
 
@@ -126,7 +129,7 @@ class LiftedAbstract(Lifted):
         return LiftedAbstract(self.body.substitutions(n + 1, v))
 
     def recursiveInvert(self):
-        return Terms([LiftedAbstract(self.body.recursiveInvert())])
+        yield LiftedAbstract(self.body.recursiveInvert())
         
 
 class LiftedIndex(Lifted):
@@ -157,7 +160,10 @@ class LiftedIndex(Lifted):
         if self.i < n: return self
         return LiftedIndex(self.i + 1)
 
-    def recursiveInvert(self): return Terms([])
+    def recursiveInvert(self):
+        return 
+        yield
+        
 
     def incorporate(self,g):
         return {g.indexClass(self.i)}
@@ -165,25 +171,36 @@ class LiftedIndex(Lifted):
 
 
 class Terms():
-    def __init__(self, elements):
-        self.elements = frozenset(elements)
-        self.freeVariables = reduce(lambda x,y: x|y, map(lambda e: e.freeVariables, list(elements)), set())
+    def __init__(self, equivalences):
+        self.equivalences = frozendict(frozenset(e)
+                                       for k,e in equivalences.items())
+        self.elements = frozenset(l for e in equivalences.values() for l in e  )
+        self.freeVariables = reduce(lambda x,y: x|y,
+                                    (l.freeVariables
+                                     for l in self.elements ),
+                                    set())
+    @staticmethod
+    def single(l):
+        ts = Terms({Terms.nextClass: {l}})
+        Terms.nextClass += 1
+        return ts
 
     def __eq__(self,o):
-        return isinstance(o,Terms) and self.elements == o.elements
+        return isinstance(o,Terms) and self.equivalences == o.equivalences
     def __ne__(self,o): return not (self == o)
-    def __hash__(self): return hash(self.elements)
+    def __hash__(self): return hash(self.equivalences)
     def __str__(self):
-        return "{%s}"%(",".join(map(str,list(self.elements))))
+        return "{%s}"%(",".join([ "{%s}"%(",".join(map(str,e)))
+                                  for e in self.equivalences.values() ]))
         return "E_%d"%self.name
         return "E_%d: {%s}"%(self.name,
                              ",".join(str(fv) for fv in self.freeVariables))
     def __repr__(self): return str(self)
-    def __iter__(self): return iter(self.elements)
+    def __iter__(self): return iter(self.equivalences)
     def __or__(self,o):
         assert isinstance(o,Terms)
-        return Terms(self.elements|o.elements)
-    def __len__(self): return sum(len(e) for e in self.elements)
+        return Terms(self.equivalences|o.equivalences)
+    def __len__(self): return sum(sum(len(l) for l in e ) for e in self.equivalences)
 
     def __le__(self,o):
         """Whether one versions space contains another"""
@@ -193,8 +210,10 @@ class Terms():
                          (t1.isLeaf and t2.isLeaf and t1 == t2) or \
                          (t1.isAbstraction and t2.isAbstraction and t1.body <= t2.body) or \
                          (t1.isApplication and t2.isApplication and t1.f <= t2.f and t1.x <= t2.x)
-                         for t2 in o)
-                    for t1 in self )
+                         for e2 in o 
+                         for t2 in e2)
+                    for e1 in self 
+                    for t1 in e1 )
 
     def closedChildren(self,n=0):
         if all( fv >= n for fv in self.freeVariables ):
@@ -206,8 +225,9 @@ class Terms():
         return Terms({t.shift(d,c) for t in self })
 
     def extension(self):
-        for t in self:
-            yield from t.extension()
+        for e in self:
+            for l in e:                
+                yield from l.extension()
 
     def substitutions(self,n,v):
         s = [ t.substitutions(n,v)
@@ -215,23 +235,43 @@ class Terms():
         if v.shift(n) <= self: s.append(LiftedIndex(n))
         return Terms(s)
 
-    def invert(self):
+    def invert(self, k):
         """beta expansion at the top level"""
-        if self in Terms.TOPINVERSION: return Terms.TOPINVERSION[self]
-        
-        # i = Terms([ LiftedApply(Terms([LiftedAbstract(t.substitutions(0,v))]),v)
-        #             for t in self
-        #             for v in t.closedChildren()])
-        i = Terms([ LiftedApply(Terms([getOne(lift(b).elements) for b in possibleBodies(c,e)]), lift(c))
-                    for l in self
-                    for e in l.extension()
-                    for c in closedChildren(e) ])
-        Terms.TOPINVERSION[self] = i
+        if k in Terms.TOPINVERSION: return Terms.TOPINVERSION[k]
+
+        # {k: {
+        #     for e in l.extension() 
+        #     for c in set(closedChildren(e)) }
+        #  for k,ls in self.equivalences
+        # }
+        #Terms([ LiftedApply(Terms([getOne(lift(b).elements) for b in possibleBodies(c,e)]), lift(c))
+        i = { k: frozenset( LiftedApply(lift(b), cl)
+                            for l in ls
+                            for e in l.extension()
+                            for c in set(closedChildren(e))
+                            for cl in [lift(c)] 
+                            for b in possibleBodies(c,e) )
+              for k,ls in self.equivalences.items() }
+        Terms.TOPINVERSION[k] = i
         return i
 
     def recursiveInvert(self):
         if self in Terms.RECURSIVEINVERSION: return Terms.RECURSIVEINVERSION[self]
-        i = Terms(reduce(lambda x,y: x|y, [e.recursiveInvert() for e in self] + [self.invert()]))
+        mapping = {k: set() for k in self.equivalences.values() }
+        for k,ls in self.equivalences.items():
+            # Top-level inversion
+            for l in ls:
+                for e in l.extension():
+                    for v in set(closedChildren(e)):
+                        for b in possibleBodies(e,v):
+                            b = Terms.single(LiftedAbstract(lift(b)))
+                            mapping[k].add(LiftedApply(b, lift(v)))
+            # recursive inversion
+            for l in ls:
+                mapping[k].add(l.recursiveInvert())
+
+        i = Terms(mapping)
+        
         if False:
             Terms.EQUIVALENCES.newClass(self)
             Terms.EQUIVALENCES.newClass(i)
@@ -250,7 +290,7 @@ class Terms():
 Terms.RECURSIVEINVERSION = {}
 Terms.TOPINVERSION = {}
 Terms.EQUIVALENCES = UnionFind()
-        
+Terms.nextClass = 0        
             
 def lift(t):
     assert isinstance(t,Program)
@@ -262,7 +302,7 @@ def lift(t):
         t = LiftedIndex(t.i)
     else:
         t = LiftedLeaf(t)
-    return Terms({t})
+    return Terms.single(t)
 
 class EquivalenceClass():
     def __init__(self, name, freeVariables):
@@ -372,7 +412,28 @@ class ExpressionGraph():
                              if (l.isAbstraction and l.body == e) or (l.isApplication and (l.f == e or l.x == e))}
                 assert len(incident^self.incident[e]) == 0
 
-    
+
+    def extractEverything(self,eq):
+        def visitClass(k,h):
+            k = k.chase()
+            if k in h: return
+            h.add(k)
+            for l in self.children(k):
+                yield from visitLifted(l,h)
+        def visitLifted(l,h):
+            if l.isLeaf: yield l.primitive
+            elif l.isIndex: yield Index(l.i)
+            elif l.isAbstraction:
+                for b in visitClass(l.body,h):
+                    yield Abstraction(b)
+            elif l.isApplication:
+                for f in visitClass(l.f,h):
+                    for x in visitClass(l.x,h):
+                        yield Application(f,x)
+            else: assert False
+        return set(visitClass(eq,set()))
+                        
+
     def extract(self,eq):
         """Yields a stream of increasingly large (acyclic) expressions
         drawn from the equivalence class"""
@@ -540,7 +601,16 @@ class ExpressionGraph():
         
         if a == b: return a
 
-        assert a.freeVariables == b.freeVariables
+        
+        if not (a.freeVariables == b.freeVariables):
+            print("Attempt to merge")
+            print(a)
+            print(a.freeVariables)
+            print(b)
+            print(b.freeVariables)
+            self.visualize(roots = {a,b},simplify=False)
+            assert False
+            
 
         z = self.newClass(a.freeVariables)
 
@@ -783,6 +853,8 @@ class ExpressionGraph():
         # memo wise previous results
         previousResults = {}
 
+        shiftCash = {}
+
         """Acyclic is a bit tricky here"""
         """We are recursively constructing a tree, and it is okay at different
         branches of the tree refer to the same class"""
@@ -821,7 +893,13 @@ class ExpressionGraph():
                 # gt = len(valueExtension&expressionExtension) > 0
                 # pr = 
                 # assert gt == pr
-                if self.shiftEqual(n,v,le):
+                if n in shiftCash:
+                    vn = shiftCash[n].chase()
+                else:
+                    vn = self.shiftEquivalent(v,n)
+                    shiftCash[n] = vn
+                    #if self.shiftEqual(n,v,le):
+                if self.getClass(le) == vn:
                     bodies.add(self.indexClass(n))
 
             if le.isIndex:
@@ -858,6 +936,13 @@ class ExpressionGraph():
         _DOES NOT_ introduce any new equivalences
         """
         k = k.chase()
+
+        # HACK
+        for e in self.extractEverything(k):
+            for i in inverseBeta_(e):
+                yield self.getClass(self.incorporate(i))
+        return 
+        
         # Sequestered immutable part
         l2v = {l.chase(): set(self.closedChildren(l.chase()))
                for l in self.children(k) }
@@ -870,10 +955,12 @@ class ExpressionGraph():
                 l = l.chase()
                 v = v.chase()
                 print("\t\t","Getting possible bodies for v = ",v,"l = ",l)
-                    
+                N = 0
                 for b in set(self.possibleBodies(v,l)):
                     b = self.abstractClass(b)
                     yield self.applyClass(b,v)
+                    N += 1
+                print("\t\t",N,"possible bodies")
 
     def inverseBetaEverything(self, roots, steps=1):
         if steps <= 0: return 
@@ -888,11 +975,12 @@ class ExpressionGraph():
             newEquivalences = {j: {ne for ne in self.inverseBeta1(j)}
                                for j in everything }
             eprint("Calculated",sum(len(eq) for eq in newEquivalences.values() ),"new equivalences")
-            for j,eq in newEquivalences.items():
-                for e in eq:
-                    eprint("Making",j,"equivalent to",e)
-                    j = self.makeEquivalent(j,e)
-                    #self.debug(verbose=False)
+            with timing("enforced equivalences"):
+                for j,eq in newEquivalences.items():
+                    for e in eq:
+                        #eprint("Making",j,"equivalent to",e)
+                        j = self.makeEquivalent(j,e)
+                        #self.debug(verbose=False)
 
             eprint("Updated equivalences.")
             
@@ -916,42 +1004,72 @@ class ExpressionGraph():
         curse(e)
         return visited
 
-    def minimumCost(self,j,given,table=None):
-        if table is None: table = {}
-        if j in table: return table[j]
-
+    def minimumCost(self,given):
+        """What is the minimum cost of anything from the equivalence class"""
+        basicClasses = {k
+                        for k in self.e2l
+                        if k in given or any( l.isLeaf or l.isIndex for l in self.children(k) )}
+        table = {k: 1 if k in basicClasses else POSITIVEINFINITY for k in self.e2l }
         
-        if j in given: c = 1
-        else:        
-            e = self.i2e[j]
-            if e.isPrimitive or e.isIndex or e.isInvented: c = 1
-            if e.isApplication:
-                c = self.minimumCost(e.f,given,table) + self.minimumCost(e.x,given,table)
-            if e.isAbstraction:
-                c = self.minimumCost(e.body, given, table)
-        table[j] = c
-        return c
+
+        def liftedCost(l):
+            if l.isApplication: return table[l.f] + table[l.x]
+            if l.isAbstraction: return table[l.body]
+            if l.isLeaf: return 1
+            if l.isIndex: return 1
+            assert False
+        def relax(e):
+            old = table[e]
+            new = old
+            for l in self.children(e):
+                new = min(liftedCost(l),new)
+            return new, new < old
+
+        q = {self.getClass(i)
+             for b in basicClasses
+             for i in self.incident[b] }
+
+        while True:
+            if len(q) == 0:
+                for k in table:
+                    _,change = relax(k)
+                    assert not changed
+                return table
+            
+            n = getOne(q)
+            q.remove(n)
+            new, changed = relax(n)
+            if changed:
+                table[n] = new
+                q.update(self.getClass(i)
+                         for i in self.incident[n])
+                
+                    
+            
+        
 
     def bestNewInvention(self,alternatives):
         from collections import Counter
         
         candidates = [ { r for a in a_ for r in self.reachable(a) }
-                       for a_ in alternatives.values()                       
+                       for a_ in alternatives
         ]
         candidates = Counter(k for ks in candidates for k in ks)
         candidates = {k for k,f in candidates.items() if f >= 2 }
         def scoreInvention(k):
-            t = {}
-            return sum(min(self.minimumCost(i,{k},t)
+            t = self.minimumCost({k})
+            return sum(min(t[i]
                            for i in a )
-                       for a in alternatives.values())
+                       for a in alternatives) + t[k]
         eprint(len(candidates),"candidates to consider for invention")
         j = min(candidates,
                 key = scoreInvention)
-        return list(self.extract(j))[0]
+        return self.extractEverything(j)
 
     def visualize(self, simplify=True, roots=None, pause=False):
         from graphviz import Digraph
+
+        cost = self.minimumCost({})
 
         d = Digraph(comment='expression graph')
 
@@ -969,7 +1087,7 @@ class ExpressionGraph():
                 if roots is not None:
                     elements = elements & reachable
                 if simplify and len(elements) <= 1: return nodeCode(list(elements)[0])
-                return "E%d"%l.name
+                return "E%d, k=%s"%(l.name,cost[l])
             if l.isLeaf:
                 return str(l.primitive)
             elif l.isIndex:
@@ -1009,8 +1127,10 @@ class ExpressionGraph():
             if simplify and len(elements) <= 1: continue
             
             code = nodeCode(k)
-            d.node(code, "E_%d: {%s}"%(k.name,
-                                     ",".join(str(fv) for fv in k.freeVariables)))
+            d.node(code, "E_%d: {%s}, c=%s"%(k.name,
+                                             ",".join(str(fv) for fv in k.freeVariables),
+                                             cost[k]))
+            print(k,cost[k])
 
             for e in elements:
                 d.edge(code, nodeCode(e), color="chocolate")
@@ -1104,20 +1224,25 @@ def testGraph(ps,n=1):
 #        g.visualize(simplify=False)    
         g.inverseBetaEverything(ks, steps=1)
 #        g.visualize(simplify=False)
-        g.debug()
+        #g.debug()
+    g.minimumCost({})
+    print(g.bestNewInvention([[k] for k in ks ]))
     
 if __name__ == "__main__":
     from arithmeticPrimitives import *
     from listPrimitives import *
     from grammar import *
     bootstrapTarget_extra()
-    p1 = Program.parse("(lambda (fold empty $0 (lambda (lambda (cons (- $0) $1)))))")
+    p1 = Program.parse("(lambda (fold empty $0 (lambda (lambda (cons (- $0 5) $1)))))")
     p2 = Program.parse("(lambda (fold empty $0 (lambda (lambda (cons (+ $0 1) $1)))))")
     p3 = Program.parse("(lambda (+ $0 5))")
     p4 = Program.parse("(lambda (+ $0 9))")
     p5 = Program.parse("car")
 
-    testVersionSpace([p1,p2,p3,p4],1)
+    #testVersionSpace([p1,p2,p3,p4],1)
 
-    testGraph([p1],2)
+    try:
+        runWithTimeout(lambda : testGraph([p1,p2],3),600)
+    except RunWithTimeout:
+        print("timeout")
 
