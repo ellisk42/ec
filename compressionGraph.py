@@ -1235,8 +1235,8 @@ if __name__ == "__main__":
     bootstrapTarget_extra()
     p1 = Program.parse("(lambda (fold empty $0 (lambda (lambda (cons (- $0 5) $1)))))")
     p2 = Program.parse("(lambda (fold empty $0 (lambda (lambda (cons (+ $0 1) $1)))))")
-    p3 = Program.parse("(lambda (+ $0 5))")
-    p4 = Program.parse("(lambda (+ $0 9))")
+    p3 = Program.parse("(cons (- $0 5) $1)")
+    p4 = Program.parse("(cons (+ $0 1) $1)")
     p5 = Program.parse("car")
 
     #testVersionSpace([p1,p2,p3,p4],1)
