@@ -136,15 +136,81 @@ class ExpressionTable():
         self.substitutionTable[(n,v,e)] = s
         return s
 
+    def SC(self,n,j):
+        e = self.expressions[j]
+        mapping = {True: set()}
+
+        if all( fv - n >= 0 for fv in self.freeVariables[j] ):
+            v = self.shift(j,-n)
+            mapping[v] = {self._incorporate(Index(n))}
+
+        if e.isIndex:
+            if e.i < n:
+                mapping[True] = {j}
+            else:
+                mapping[True] = {self._incorporate(Index(e.i + 1))}
+        elif e.isApplication:
+            fm = self.SC(n,e.f)
+            xm = self.SC(n,e.x)
+            for v in fm:
+                if v is True: continue
+                if not (v in xm): continue
+                if not (v in mapping): mapping[v] = set()
+                mapping[v].update(self._incorporate(Application(fp,xp))
+                                  for fp in fm[v]
+                                  for xp in xm[v] )
+            for ft in fm.get(True,[]):
+                # ft: program
+                for v,xt in ((xValue,xBody)
+                           for xValue, xBodies in xm.items()
+                           for xBody in xBodies):
+                    if not (v in mapping): mapping[v] = set()
+                    mapping[v].add(self._incorporate(Application(ft,xt)))
+            for xt in xm.get(True,[]):
+                # ft: program
+                for v,ft in ((fValue,fBody)
+                           for fValue, fBodies in fm.items()
+                           for fBody in fBodies):
+                    if not (v in mapping): mapping[v] = set()
+                    mapping[v].add(self._incorporate(Application(ft,xt)))
+
+        elif e.isAbstraction:
+            bm = self.SC(n + 1, e.body)
+            for v,bodies in bm.items():
+                bodies = {self._incorporate(Abstraction(b)) for b in bodies }
+                if v not in mapping:
+                    mapping[v] = bodies
+                else:
+                    mapping[v].update(bodies)
+        elif e.isPrimitive or e.isInvented:
+            mapping[True] = mapping.get(True,set())
+            mapping[True].add(j)
+        else: assert False
+
+        return mapping
+
+            
+        
+
     def invert(self,j):
         if self.inversionTable[j] is not None: return self.inversionTable[j]
 
         s = []
-        for v,mapping in self.CC(j).items():
-            for b in self.substitutions(0,v,mapping,j):
-                f = self._incorporate(Abstraction(b))
-                a = self._incorporate(Application(f,v))
-                s.append(a)
+        if False:
+            for v,mapping in self.CC(j).items():
+                for b in self.substitutions(0,v,mapping,j):
+                    f = self._incorporate(Abstraction(b))
+                    a = self._incorporate(Application(f,v))
+                    s.append(a)
+        else:
+            for v,bodies in self.SC(0,j).items():
+                if v is True: continue
+                for b in bodies:
+                    f = self._incorporate(Abstraction(b))
+                    a = self._incorporate(Application(f,v))
+                    s.append(a)
+                
+                
         self.inversionTable[j] = s
         return s
 
@@ -246,11 +312,11 @@ if __name__ == "__main__":
     p1 = Program.parse("(lambda (fold empty $0 (lambda (lambda (cons (- $0 5) $1)))))")
     p2 = Program.parse("(lambda (fold empty $0 (lambda (lambda (cons (+ $0 $0) $1)))))")
 
-    N = 3
+    N = 2
     v = ExpressionTable()
     with timing("Computed expansions"):
         b1 = v.expand(v.incorporate(p1),n=N)
         b2 = v.expand(v.incorporate(p2),n=N)
         print(f"expression table has size {len(v)}")
-    # with timing("invented a primitive"):
-    #     print(v.bestInvention([b1,b2]))
+    with timing("invented a primitive"):
+        print(v.bestInvention([b1,b2]))
