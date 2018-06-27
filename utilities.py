@@ -563,12 +563,17 @@ class UnionFind:
             return not (self == o)
         def __hash__(self):
             assert self.leader is None
-            return hash(self.ID)
+            return self.ID
+        def __str__(self):
+            if self.leader is None:
+                return f"EC({self.ID}, {self.members})"
+            else:
+                return f"EC(points to {self.leader})"
         def chase(self):
+            if self.leader is None: return self
             k = self
             while k.leader is not None:
                 k = k.leader
-            self.leader = k
             return k
             
     def __init__(self):
@@ -594,9 +599,11 @@ class UnionFind:
     def otherMembers(self,x):
         return self.getClass(x).members
     def getClass(self,x):
-        k = self.classes[x].chase()
-        self.classes[x] = k
-        return k
+        k1 = self.classes[x]
+        k2 = k1.chase()
+        if k1.ID != k2.ID:
+            self.classes[x] = k2
+        return k2
         
 
     

@@ -2,6 +2,8 @@ from utilities import *
 from program import *
 from betaExpansion import *
 
+def getOne(s):
+    return next(iter(s))
 
 class ExpressionTable():
     def __init__(self):
@@ -13,8 +15,11 @@ class ExpressionTable():
         self.substitutionTable = {}
         self.inversionTable = []
         self.recursiveInversionTable = []
+        
         self.equivalenceClass = []
         self.uf = UnionFind()
+        
+        self.newEquivalences = []
 
     def __len__(self): return len(self.expressions)
 
@@ -50,7 +55,7 @@ class ExpressionTable():
         self.childrenTable.append(None)
         self.inversionTable.append(None)
         self.recursiveInversionTable.append(None)
-        #self.equivalenceClass.append(self.uf.newClass(j))
+        self.equivalenceClass.append(self.uf.newClass(j))
 
         return j
 
@@ -80,27 +85,10 @@ class ExpressionTable():
             assert False
             
 
-    # def closedChildren(self,n,j):
-    #     if (n,j) in self.childrenTable: return self.childrenTable[(n,j)]
-
-    #     cc = set()
-    #     if all( f - n >= 0
-    #             for f in self.freeVariables[j] ):
-    #         cc.add(self.shift(j,-n))
-            
-    #     l = self.expressions[j]
-    #     if l.isAbstraction:
-    #         cc.update(self.closedChildren(n + 1, l.body))
-    #     elif l.isApplication:
-    #         cc.update(self.closedChildren(n, l.f))
-    #         cc.update(self.closedChildren(n, l.x))
-
-    #     self.childrenTable[(n,j)] = cc
-    #     return cc
-
     def CC(self,j):
         if self.childrenTable[j] is not None: return self.childrenTable[j]
-        canonical = j#self.uf.getClass(j)
+        canonical = self.uf.getClass(j)
+        assert canonical.leader is None
         cc = {canonical: {0: canonical}}
 
         l = self.expressions[j]
@@ -113,8 +101,9 @@ class ExpressionTable():
                 cc[v].update(shifts)
         elif l.isAbstraction:
             for v,shifts in self.CC(l.body).items():
+                v = getOne(v.members)
                 if any( fv == 0 for fv in self.freeVariables[v] ): continue
-                vp = self.shift(v,-1)
+                vp = self.uf.getClass(self.shift(v,-1))
                 if vp not in cc: cc[vp] = {}
                 cc[vp].update({n + 1: vn for n,vn in shifts.items() })
 
@@ -127,7 +116,7 @@ class ExpressionTable():
 
         s = []
 
-        if n in mapping and e == mapping[n]:
+        if n in mapping and self.uf.getClass(e) == mapping[n].chase():
             s.append(self._incorporate(Index(n)))
 
         l = self.expressions[e]
@@ -178,16 +167,23 @@ class ExpressionTable():
                 s.append(self._incorporate(Abstraction(b)))
         
         self.recursiveInversionTable[j] = s
+        self.newEquivalences.append(j,s)
         return s
 
     def expand(self,j,n=1):
         es = {j}
+        self.newEquivalences = []
         previous = {j}
-        for _ in range(n):
+        for iteration in range(n):
+            print(f"Starting iteration {iteration + 1}")
             previous = {rw
                         for p in previous
                         for rw in self.recursiveInvert(p) }
+            for oldIndex, newIndices in self.newEquivalences:
+                for n in newIndices: self.uf.unify(oldIndex,n)
             es.update(previous)
+            self.newEquivalences = []
+            print(f"Finished iteration {iteration + 1}")
         return es
 
     def minimumCosts(self, givens, alternatives):
