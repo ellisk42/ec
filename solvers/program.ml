@@ -489,34 +489,37 @@ let var_name         = primitive "var_name" tvar GeomLib.Plumbing.var_name
 (* LOGO *)
 let logo_PU  = primitive "logo_PU"                      (turtle) LogoLib.LogoInterpreter.logo_PU
 let logo_PD  = primitive "logo_PD"                      (turtle) LogoLib.LogoInterpreter.logo_PD
-let logo_RT  = primitive "logo_RT"             (ttvar @> turtle) LogoLib.LogoInterpreter.logo_RT
-let logo_FW  = primitive "logo_FW"             (ttvar @> turtle) LogoLib.LogoInterpreter.logo_FW
-let logo_CHEAT  = primitive "logo_CHEAT"             (ttvar @> turtle) LogoLib.LogoInterpreter.logo_CHEAT
-let logo_CHEAT2  = primitive "logo_CHEAT2"             (ttvar @> turtle) LogoLib.LogoInterpreter.logo_CHEAT2
-let logo_CHEAT3  = primitive "logo_CHEAT3"             (ttvar @> turtle) LogoLib.LogoInterpreter.logo_CHEAT3
-let logo_CHEAT4  = primitive "logo_CHEAT4"             (ttvar @> turtle) LogoLib.LogoInterpreter.logo_CHEAT4
+let logo_RT  = primitive "logo_RT"             (tangle @> turtle) LogoLib.LogoInterpreter.logo_RT
+let logo_FW  = primitive "logo_FW"             (tlength @> turtle) LogoLib.LogoInterpreter.logo_FW
 let logo_SEQ = primitive "logo_SEQ" (turtle @> turtle @> turtle) LogoLib.LogoInterpreter.logo_SEQ
 let logo_GET = primitive "logo_GET" (tstate @> turtle @> turtle) LogoLib.LogoInterpreter.logo_GET
 let logo_SET = primitive "logo_SET"           (tstate @> turtle) LogoLib.LogoInterpreter.logo_SET
 let logo_NOP = primitive "logo_NOP"                     (turtle) LogoLib.LogoInterpreter.logo_NOP
 
-let logo_var_I2F = primitive "logo_I2F" (tint @> ttvar) (fun i -> float_of_int i)
-let logo_var_F2I = primitive "logo_F2I" (ttvar @> tint) (fun f -> int_of_float f)
+let logo_I2S = primitive "logo_I2S" (tint @> tscalar) (fun i -> float_of_int i)
+let logo_S2A = primitive "logo_S2A" (tscalar @> tangle) (fun i -> i)
+let logo_S2L = primitive "logo_S2L" (tscalar @> tlength) (fun i -> i)
 
-let logo_var_UNIT = primitive "logo_var_UNIT" ttvar LogoLib.LogoInterpreter.logo_var_UNIT
-let logo_var_IFTY = primitive "logo_var_IFTY" ttvar LogoLib.LogoInterpreter.logo_var_IFTY
-let logo_var_TWO = primitive "logo_var_TWO" ttvar LogoLib.LogoInterpreter.logo_var_TWO
-let logo_var_THREE = primitive "logo_var_THREE" ttvar LogoLib.LogoInterpreter.logo_var_THREE
-let logo_var_PI   = primitive "logo_var_PI" ttvar LogoLib.LogoInterpreter.logo_var_PI
-let logo_var_NXT  = primitive "logo_var_NXT" (ttvar @> ttvar) LogoLib.LogoInterpreter.logo_var_NXT
-let logo_var_PRV  = primitive "logo_var_PRV" (ttvar @> ttvar) LogoLib.LogoInterpreter.logo_var_PRV
-let logo_var_HLF  = primitive "logo_var_HLF" (ttvar @> ttvar) LogoLib.LogoInterpreter.logo_var_HLF
-let logo_var_DBL  = primitive "logo_var_DBL" (ttvar @> ttvar) LogoLib.LogoInterpreter.logo_var_DBL
-let logo_var_ADD  = primitive "logo_var_ADD" (ttvar @> ttvar @> ttvar) LogoLib.LogoInterpreter.logo_var_ADD
-let logo_var_SUB  = primitive "logo_var_SUB" (ttvar @> ttvar @> ttvar) LogoLib.LogoInterpreter.logo_var_SUB
-let logo_var_MUL  = primitive "logo_var_MUL" (ttvar @> ttvar @> ttvar) LogoLib.LogoInterpreter.logo_var_MUL
-let logo_var_DIV  = primitive "logo_var_DIV" (ttvar @> ttvar @> ttvar) LogoLib.LogoInterpreter.logo_var_DIV
+let logo_IFTY = primitive "logo_IFTY" (tint) (20)
 
+let logo_DIVS = primitive "logo_DIVS" (tscalar @> tscalar @> tscalar) ( /. )
+let logo_MULS = primitive "logo_MULS" (tscalar @> tscalar @> tscalar) ( *. )
+
+let logo_DIVA = primitive "logo_DIVA" (tangle @> tscalar @> tangle) ( /. )
+let logo_MULA = primitive "logo_MULA" (tangle @> tscalar @> tangle) ( *. )
+let logo_DIVL = primitive "logo_DIVL" (tlength @> tscalar @> tlength) ( /. )
+let logo_MULL = primitive "logo_MULL" (tlength @> tscalar @> tlength) ( *. )
+
+let logo_ADDA = primitive "logo_ADDA" (tangle @> tangle @> tangle) ( +. )
+let logo_SUBA = primitive "logo_SUBA" (tangle @> tangle @> tangle) ( -. )
+let logo_ADDL = primitive "logo_ADDL" (tlength @> tlength @> tlength) ( +. )
+let logo_SUBL = primitive "logo_SUBL" (tlength @> tlength @> tlength) ( -. )
+
+
+(*let logo_CHEAT  = primitive "logo_CHEAT"             (ttvar @> turtle) LogoLib.LogoInterpreter.logo_CHEAT*)
+(*let logo_CHEAT2  = primitive "logo_CHEAT2"             (ttvar @> turtle) LogoLib.LogoInterpreter.logo_CHEAT2*)
+(*let logo_CHEAT3  = primitive "logo_CHEAT3"             (ttvar @> turtle) LogoLib.LogoInterpreter.logo_CHEAT3*)
+(*let logo_CHEAT4  = primitive "logo_CHEAT4"             (ttvar @> turtle) LogoLib.LogoInterpreter.logo_CHEAT4*)
 
 let default_recursion_limit = 20;;
 

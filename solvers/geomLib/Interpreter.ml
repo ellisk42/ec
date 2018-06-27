@@ -162,26 +162,6 @@ let valuesCostProgram : shapeprogram -> int =
     | Nop -> 0
     | Integrate(_,_,_) -> 1
 
-let rec costProgram : shapeprogram -> int =
-    fun p -> match p with
-    | Turn v -> (valuesCostProgram (Turn v)) + (costVar v)
-    | Embed (p) -> (valuesCostProgram (Embed(p))) + costProgram p
-    | Concat (p1,p2) -> (valuesCostProgram (Concat (p1,p2)))
-                        + costProgram p1 + costProgram p2
-    | Repeat (v,p') -> (valuesCostProgram (Repeat(v,p')))
-                       + (costVar v) + (costProgram p')
-    | Nop -> 0
-    | Define (s,v) -> (valuesCostProgram (Define (s,v)))
-                      + costVar (Some v)
-    | Integrate(v1,v2,(v3,v4,v5,v6)) ->
-            (valuesCostProgram (Integrate(v1,v2,(v3,v4,v5,v6))))
-          + costVar v1
-          + (match v2 with None -> 0 | Some _ -> 1)
-          + costVar v3
-          + costVar v4
-          + costVar v5
-          + costVar v6
-
 let evaluateVar v htbl_var =
     let rec evaluateVar_helper v htbl_var = match v with
     | Unit -> 1.
@@ -204,6 +184,70 @@ let evaluateVar v htbl_var =
     in match evaluateVar_helper v htbl_var with
     | n when n = nan -> raise (MalformedProgram("Some var was NaN"))
     | f -> f
+
+let rec costProgram : shapeprogram -> int =
+    fun p -> match p with
+    | Turn v -> (valuesCostProgram (Turn v)) + (costVar v)
+    | Embed (p) -> (valuesCostProgram (Embed(p))) + costProgram p
+    | Concat (p1,p2) -> (valuesCostProgram (Concat (p1,p2)))
+                        + costProgram p1 + costProgram p2
+    | Repeat (v,p') -> (valuesCostProgram (Repeat(v,p')))
+                       + (costVar v) + (costProgram p')
+    | Nop -> 0
+    | Define (s,v) -> (valuesCostProgram (Define (s,v)))
+                      + costVar (Some v)
+    | Integrate(v1,v2,(v3,v4,v5,v6)) ->
+            (valuesCostProgram (Integrate(v1,v2,(v3,v4,v5,v6))))
+          + costVar v1
+          + (match v2 with None -> 0 | Some _ -> 1)
+          + costVar v3
+          + costVar v4
+          + costVar v5
+          + costVar v6
+
+let rec costProgram_norepeat : shapeprogram -> int =
+    fun p -> match p with
+    | Turn v -> (valuesCostProgram (Turn v)) + (costVar v)
+    | Embed (p) -> (valuesCostProgram (Embed(p))) + costProgram_norepeat p
+    | Concat (p1,p2) -> (valuesCostProgram (Concat (p1,p2)))
+                        + costProgram_norepeat p1 + costProgram_norepeat p2
+    | Repeat (v,p') -> ((valuesCostProgram (Repeat(v,p')))
+                         + (costVar v) + (costProgram_norepeat p'))
+                       * (match v with
+                            | None -> 2
+                            | Some(v') -> (int_of_float (evaluateVar v'
+                            (Hashtbl.create 101))))
+    | Nop -> 0
+    | Define (s,v) -> (valuesCostProgram (Define (s,v)))
+                      + costVar (Some v)
+    | Integrate(v1,v2,(v3,v4,v5,v6)) ->
+            (valuesCostProgram (Integrate(v1,v2,(v3,v4,v5,v6))))
+          + costVar v1
+          + (match v2 with None -> 0 | Some _ -> 1)
+          + costVar v3
+          + costVar v4
+          + costVar v5
+          + costVar v6
+
+let rec costProgram_noembed : shapeprogram -> int =
+    fun p -> match p with
+    | Turn v -> (valuesCostProgram (Turn v)) + (costVar v)
+    | Embed (p) -> 2 * ((valuesCostProgram (Embed(p))) + costProgram_noembed p)
+    | Concat (p1,p2) -> (valuesCostProgram (Concat (p1,p2)))
+                        + costProgram_noembed p1 + costProgram_noembed p2
+    | Repeat (v,p') -> (valuesCostProgram (Repeat(v,p')))
+                       + (costVar v) + (costProgram_noembed p')
+    | Nop -> 0
+    | Define (s,v) -> (valuesCostProgram (Define (s,v)))
+                      + costVar (Some v)
+    | Integrate(v1,v2,(v3,v4,v5,v6)) ->
+            (valuesCostProgram (Integrate(v1,v2,(v3,v4,v5,v6))))
+          + costVar v1
+          + (match v2 with None -> 0 | Some _ -> 1)
+          + costVar v3
+          + costVar v4
+          + costVar v5
+          + costVar v6
 
 let interpret ?noise:(noise=false) shapeprogram =
     let r_canvas = ref (new_canvas ()) in

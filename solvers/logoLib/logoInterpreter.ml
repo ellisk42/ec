@@ -1,7 +1,5 @@
 open VGWrapper
 
-exception DIV0
-
 type state =
   { mutable x : float
   ; mutable y : float
@@ -57,27 +55,44 @@ let pp_turtle t =
     l ;
   prerr_newline ()
 
-let eval_turtle turtle =
-  (*pp_turtle turtle ;*)
+let eval_turtle ?sequence turtle =
   let p,_ = turtle (init_state ()) in
   let c = ref (new_canvas ()) in
   let lineto x y = (c := (lineto !c x y))
   and moveto x y = (c := (moveto !c x y)) in
   let t = init_state () in
   moveto t.x t.y ;
-  let rec eval_instruction i = match i with
+  let rec eval_instruction n i = match i with
     | PU         -> t.p <- false
     | PD         -> t.p <- true
     | RT(angle)  -> t.t <- t.t +. angle
-    | SET(state) -> t <<- state ; moveto (t.x) (t.y)
+    | SET(state) ->
+        begin
+          t <<- state ;
+          moveto (t.x) (t.y) ;
+          match sequence with
+            | None -> ()
+            | Some path ->
+                let l_c = ref (new_canvas ()) in
+                l_c := circle !l_c t.x t.y ;
+                let name = Printf.sprintf "%s%03d.png" path n in
+                output_canvas_png !l_c 512 name
+        end
     | FW(length) ->
         let x = t.x +. (length *. cos(t.t))
         and y = t.y +. (length *. sin(t.t)) in
         (if t.p then lineto else moveto) x y ;
         t.x <- x ;
-        t.y <- y
+        t.y <- y ;
+        match sequence with
+          | None -> ()
+          | Some path ->
+              let l_c = ref (new_canvas ()) in
+              l_c := circle !l_c x y ;
+              let name = Printf.sprintf "%s%03d.png" path n in
+              output_canvas_png !l_c 512 name
   in
-  List.iter eval_instruction p ;
+  List.iteri eval_instruction p ;
   !c
 
 let logo_PU : turtle =
@@ -107,40 +122,26 @@ let logo_GET : (state -> turtle) -> turtle =
     fun s ->
       f s s
 
-let logo_SET : (state -> turtle) = fun s -> fun _ -> ([SET(s)], s)
+let logo_SET : (state -> turtle) = fun s -> fun _ -> ([SET({s with t=s.t*.3.14159265359})], s)
 
 let logo_NOP : turtle = fun s -> ([], s)
 
-let logo_var_UNIT : float  = 1.
-let logo_var_TWO  : float  = 2.
-let logo_var_THREE: float  = 3.
-let logo_var_IFTY : float  = 20.
-let logo_var_PI   : float  = 3.14159265359
-let logo_var_NXT         f = f +. 1.
-let logo_var_PRV         f = f -. 1.
-let logo_var_DBL         f = f *. 2.
-let logo_var_HLF         f = f /. 2.
-let logo_var_ADD      f f' = f +. f'
-let logo_var_SUB      f f' = f -. f'
-let logo_var_MUL      f f' = f *. f'
-let logo_var_DIV      f f' = if f' = 0. then (raise DIV0) else f /. f'
-
-let logo_CHEAT : float -> turtle =
-  fun length ->
-    (logo_SEQ (logo_FW length) (logo_RT (logo_var_HLF (logo_var_HLF logo_var_UNIT))))
+(*let logo_CHEAT : float -> turtle =*)
+  (*fun length ->*)
+    (*(logo_SEQ (logo_FW length) (logo_RT (logo_var_HLF (logo_var_HLF logo_var_UNIT))))*)
 
 
-let logo_CHEAT2 : float -> turtle =
-  fun length ->
-    (logo_SEQ (logo_FW length) (logo_RT (logo_var_HLF (logo_var_HLF (logo_var_HLF logo_var_UNIT)))))
+(*let logo_CHEAT2 : float -> turtle =*)
+  (*fun length ->*)
+    (*(logo_SEQ (logo_FW length) (logo_RT (logo_var_HLF (logo_var_HLF (logo_var_HLF logo_var_UNIT)))))*)
 
-let logo_CHEAT3 : float -> turtle =
-  fun length ->
-    (logo_SEQ (logo_FW length) (logo_RT (logo_var_HLF (logo_var_HLF (logo_var_HLF (logo_var_HLF logo_var_UNIT))))))
+(*let logo_CHEAT3 : float -> turtle =*)
+  (*fun length ->*)
+    (*(logo_SEQ (logo_FW length) (logo_RT (logo_var_HLF (logo_var_HLF (logo_var_HLF (logo_var_HLF logo_var_UNIT))))))*)
 
-let logo_CHEAT4 : float -> turtle =
-  fun length ->
-    (logo_SEQ (logo_FW length) (logo_RT (logo_var_HLF logo_var_UNIT)))
+(*let logo_CHEAT4 : float -> turtle =*)
+  (*fun length ->*)
+    (*(logo_SEQ (logo_FW length) (logo_RT (logo_var_HLF logo_var_UNIT)))*)
 
 let turtle_to_list turtle =
   let l,_ = turtle (init_state ()) in l

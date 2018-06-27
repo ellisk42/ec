@@ -35,5 +35,5 @@ let _ =
           end
       | _ -> ()
           (*(prerr_endline "Could not parse")*)
-    with Invalid_argument _ | Failure _ | DIV0 | Stack_overflow -> ()
+    with Invalid_argument _ | Failure _ | Stack_overflow -> ()
       (*(prerr_endline "other error")*)

@@ -4,41 +4,42 @@ from type import arrow, baseType, t0, t1, tint, tlist, tbool
 
 turtle = baseType("turtle")
 tstate = baseType("tstate")
-ttvar = baseType("ttvar")
+tangle = baseType("tangle")
+tlength = baseType("tlength")
+tscalar = baseType("tscalar")
 
-def _logo_var_next(x):
-    return "(logo_var_NXT " + x + ")"
-def _logo_var_prev(x):
-    return "(logo_var_PRV " + x + ")"
-def _logo_var_double(x):
-    return "(logo_var_DBL " + x + ")"
-def _logo_var_half(x):
-    return "(logo_var_HLF " + x + ")"
+def _logo_I2S(x):
+    return str(float(x))
+def _logo_S2A(x):
+    return str(x)
+def _logo_S2L(x):
+    return str(x)
 
-def _logo_F2I(x):
-    return "(logo_F2I " + str(x) + ")"
-def _logo_I2F(x):
-    return "(logo_I2F " + str(x) + ")"
+def _logo_var_divs(v1):
+    return lambda v2: str(v1/v2)
+def _logo_var_muls(v1):
+    return lambda v2: str(v1*v2)
 
-def _logo_var_add(x):
-    return lambda v2: "(logo_var_ADD " + x + " " + v2 + ")"
-def _logo_var_sub(x):
-    return lambda v2: "(logo_var_SUB " + x + " " + v2 + ")"
-def _logo_var_div(x):
-    return lambda v2: "(logo_var_DIV " + x + " " + v2 + ")"
-def _logo_var_mul(x):
-    return lambda v2: "(logo_var_MUL " + x + " " + v2 + ")"
+def _logo_var_diva(v1):
+    return lambda v2: str(v1/v2)
+def _logo_var_mula(v1):
+    return lambda v2: str(v1*v2)
+def _logo_var_divl(v1):
+    return lambda v2: str(v1/v2)
+def _logo_var_mull(v1):
+    return lambda v2: str(v1*v2)
+
+def _logo_var_adda(v1):
+    return lambda v2: str(v1+v2)
+def _logo_var_suba(v1):
+    return lambda v2: str(v1-v2)
+def _logo_var_addl(v1):
+    return lambda v2: str(v1+v2)
+def _logo_var_subl(v1):
+    return lambda v2: str(v1-v2)
 
 def _logo_fw(x):
     return "(logo_FW " + x + ")"
-def _logo_cheat(x):
-    return "(logo_CHEAT " + x + ")"
-def _logo_cheat2(x):
-    return "(logo_CHEAT2 " + x + ")"
-def _logo_cheat3(x):
-    return "(logo_CHEAT3 " + x + ")"
-def _logo_cheat4(x):
-    return "(logo_CHEAT4 " + x + ")"
 def _logo_rt(x):
     return "(logo_RT " + x + ")"
 def _logo_set(x):
@@ -48,55 +49,55 @@ def _logo_seq(v):
 def _logo_get(v):
     return lambda v2: "(logo_GET " + v + " " + v2 + ")"
 
+# def _logo_cheat(x):
+    # return "(logo_CHEAT " + x + ")"
+# def _logo_cheat2(x):
+    # return "(logo_CHEAT2 " + x + ")"
+# def _logo_cheat3(x):
+    # return "(logo_CHEAT3 " + x + ")"
+# def _logo_cheat4(x):
+    # return "(logo_CHEAT4 " + x + ")"
+
 primitives = [
-    Primitive("logo_var_UNIT", ttvar, "logo_var_UNIT"),
-    Primitive("logo_var_IFTY", ttvar, "logo_var_IFTY"),
-    Primitive("logo_var_TWO", ttvar, "logo_var_TWO"),
-    Primitive("logo_var_THREE", ttvar, "logo_var_THREE"),
-    # Primitive("logo_var_PI",   ttvar, "logo_var_PI"),
-    Primitive("logo_var_NXT",  arrow(ttvar,ttvar), _logo_var_next),
-    Primitive("logo_var_PRV",  arrow(ttvar,ttvar), _logo_var_prev),
-    Primitive("logo_var_DBL",  arrow(ttvar,ttvar), _logo_var_double),
-    Primitive("logo_var_HLF",  arrow(ttvar,ttvar), _logo_var_half),
-    Primitive("logo_var_ADD",  arrow(ttvar,ttvar,ttvar), _logo_var_add),
-    Primitive("logo_var_SUB",  arrow(ttvar,ttvar,ttvar), _logo_var_sub),
-    Primitive("logo_var_DIV",  arrow(ttvar,ttvar,ttvar), _logo_var_div),
-    Primitive("logo_var_MUL",  arrow(ttvar,ttvar,ttvar), _logo_var_mul),
+    Primitive("logo_I2S", arrow(tint,tscalar), _logo_I2S),
+    Primitive("logo_S2A", arrow(tscalar,tangle), _logo_S2A),
+    Primitive("logo_S2L", arrow(tscalar,tlength), _logo_S2L),
 
-    Primitive("logo_NOP", turtle, "logo_NOP"),
-    Primitive("logo_PU",  turtle, "logo_PU"),
-    Primitive("logo_PD",  turtle, "logo_PD"),
-    Primitive("logo_FW",  arrow(ttvar,turtle), _logo_fw),
-    Primitive("logo_CHEAT",  arrow(ttvar,turtle), _logo_cheat),
-    Primitive("logo_CHEAT2",  arrow(ttvar,turtle), _logo_cheat),
-    Primitive("logo_CHEAT3",  arrow(ttvar,turtle), _logo_cheat),
-    Primitive("logo_CHEAT4",  arrow(ttvar,turtle), _logo_cheat),
-    Primitive("logo_RT",  arrow(ttvar,turtle), _logo_rt),
-    Primitive("logo_SET",  arrow(tstate,turtle), _logo_set),
+    Primitive("logo_IFTY", tint, "20"),
+
+    Primitive("logo_DIVS",  arrow(tscalar,tscalar,tscalar), _logo_var_divs),
+    Primitive("logo_MULS",  arrow(tscalar,tscalar,tscalar), _logo_var_muls),
+
+    Primitive("logo_DIVA",  arrow(tangle,tscalar,tangle), _logo_var_diva),
+    Primitive("logo_MULA",  arrow(tangle,tscalar,tangle), _logo_var_mula),
+    Primitive("logo_DIVL",  arrow(tlength,tscalar,tlength), _logo_var_divl),
+    Primitive("logo_MULL",  arrow(tlength,tscalar,tlength), _logo_var_mull),
+
+    Primitive("logo_ADDA",  arrow(tangle,tangle,tangle), _logo_var_adda),
+    Primitive("logo_SUBA",  arrow(tangle,tangle,tangle), _logo_var_suba),
+    Primitive("logo_ADDL",  arrow(tlength,tlength,tlength), _logo_var_addl),
+    Primitive("logo_SUBL",  arrow(tlength,tlength,tlength), _logo_var_subl),
+
+    # Primitive("logo_NOP", turtle, "logo_NOP"),
+    # Primitive("logo_PU",  turtle, "logo_PU"),
+    # Primitive("logo_PD",  turtle, "logo_PD"),
+    Primitive("logo_FW",  arrow(tlength,turtle), _logo_fw),
+    Primitive("logo_RT",  arrow(tangle,turtle), _logo_rt),
+    # Primitive("logo_SET",  arrow(tstate,turtle), _logo_set),
     Primitive("logo_SEQ",  arrow(turtle,turtle,turtle), _logo_seq),
-    Primitive("logo_GET",  arrow(tstate,turtle,turtle), _logo_get),
+    # Primitive("logo_GET",  arrow(arrow(tstate,turtle),turtle), _logo_get)
 
-    Primitive("logo_I2F", arrow(tint,ttvar), _logo_I2F),
-    Primitive("logo_F2I", arrow(ttvar,tint), _logo_I2F)
-
-] + bootstrapTarget() + [Primitive(str(j), tint, j) for j in range(2,7)]
-# ] + [
+    # Primitive("logo_CHEAT",  arrow(ttvar,turtle), _logo_cheat),
+    # Primitive("logo_CHEAT2",  arrow(ttvar,turtle), _logo_cheat),
+    # Primitive("logo_CHEAT3",  arrow(ttvar,turtle), _logo_cheat),
+    # Primitive("logo_CHEAT4",  arrow(ttvar,turtle), _logo_cheat),
+] + [
     # Primitive("map", arrow(arrow(t0, t1), tlist(t0), tlist(t1)), _map),
-    # Primitive("zip", arrow(tlist(t0), tlist(t1), arrow(t0, t1, t2), tlist(t2)), _zip),
-    # Primitive("unfold", arrow(t0, arrow(t0,tbool), arrow(t0,t1), arrow(t0,t0), tlist(t1)), _unfold),
     # Primitive("range", arrow(tint, tlist(tint)), _range),
-    # Primitive("index", arrow(tint, tlist(t0), t0), _index),
     # Primitive("fold", arrow(tlist(t0), t1, arrow(t0, t1, t1), t1), _fold),
-    # Primitive("length", arrow(tlist(t0), tint), len),
-    # Primitive("if", arrow(tbool, t0, t0, t0), _if),
     # Primitive("+", arrow(tint, tint, tint), _addition),
     # Primitive("-", arrow(tint, tint, tint), _subtraction),
-    # Primitive("empty", tlist(t0), []),
-    # Primitive("cons", arrow(t0, tlist(t0), tlist(t0)), _cons),
-    # Primitive("car", arrow(tlist(t0), t0), _car),
-    # Primitive("cdr", arrow(tlist(t0), tlist(t0)), _cdr),
-    # Primitive("empty?", arrow(tlist(t0), tbool), _isEmpty),
-# ] + [Primitive(str(j), tint, j) for j in range(3)]
+] + [Primitive(str(j), tint, j) for j in range(7)]
 
 if __name__ == "__main__":
     # x = Program.parse(

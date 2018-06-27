@@ -10,6 +10,7 @@ let new_canvas () = (P.sub (Gg.P2.v 0. 0.) P.empty)
 
 let moveto c x y = P.sub  (P2.v x y) c
 let lineto c x y = P.line (P2.v x y) c
+let circle c x y = (Vg.P.circle (Gg.P2.v x y) 0.1) c
 
 let print_canvas canvas =
     print_endline (P.to_string canvas)
