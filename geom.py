@@ -16,6 +16,7 @@ import time
 import subprocess
 import os
 import torch.nn as nn
+import torch.nn.functional as F
 
 from recognition import variable
 
@@ -29,41 +30,39 @@ class GeomFeatureCNN(nn.Module):
     def __init__(self, tasks, cuda=False, H=10):
         super(GeomFeatureCNN, self).__init__()
 
-        self.net1 = nn.Sequential(
-            nn.Conv2d(1, 6, kernel_size=(10, 10), stride=2),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=(2, 2), stride=2),
-            nn.Conv2d(6, 16, kernel_size=(5, 5)),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=(2, 2), stride=2),
-        )
-
-        self.net2 = nn.Sequential(
-            nn.Linear(16 * 5 * 5, 120),  # Hardocde the first one I guess :/
-            nn.Linear(120, 84),
-            nn.Linear(84, H)
-        )
-
         self.mean = [0] * (256 * 256)
         self.count = 0
         self.sub = prefix_dreams + str(int(time.time()))
 
         self.outputDimensionality = H
 
+        self.pad   = nn.ConstantPad2d(2,0)
+        self.conv1 = nn.Conv2d(1, 6, 5)
+        self.conv2 = nn.Conv2d(6, 16, 5)
+        self.fc1   = nn.Linear(16*5*5, 120)
+        self.fc2   = nn.Linear(120, 84)
+        self.fc3   = nn.Linear(84, H)
+
     def forward(self, v):
-        x = int(len(v)**0.5)
-        y = x
+        x = 28
+        y = 28
         floatOnlyTask = list(map(float, v))
         reshaped = [floatOnlyTask[i:i + x]
                     for i in range(0, len(floatOnlyTask), y)]
-        variabled = variable(reshaped).float()
-        variabled = torch.unsqueeze(variabled, 0)
-        variabled = torch.unsqueeze(variabled, 0)
-        y = self.net1(variabled)
-        y = y.view((y.shape[0], -1))
-        y = self.net2(y)
-        output = y  # self.fc(y)
-        return output.view(-1)
+        v = variable(reshaped).float()
+        v = self.pad(v)
+        v = torch.unsqueeze(v, 0)
+        v = torch.unsqueeze(v, 0)
+        out = F.relu(self.conv1(v))
+        out = F.max_pool2d(out, 2)
+        out = F.relu(self.conv2(out))
+        out = F.max_pool2d(out, 2)
+        out = out.view(out.size(0), -1)
+        out = F.relu(self.fc1(out))
+        out = F.relu(self.fc2(out))
+        out = self.fc3(out)
+        out = torch.squeeze(out)
+        return out
 
     def featuresOfTask(self, t):  # Take a task and returns [features]
         return self(t.examples[0][1])
@@ -182,7 +181,9 @@ if __name__ == "__main__":
     tasks = makeTasks(target)
     eprint("Generated", len(tasks), "tasks")
 
-    test, train = testTrainSplit(tasks, 0.5)
+    # test, train = testTrainSplit(tasks, 1.0)
+    test = []
+    train = tasks
     eprint("Split tasks into %d/%d test/train" % (len(test), len(train)))
 
     if red is not []:
@@ -209,7 +210,7 @@ if __name__ == "__main__":
     fe = GeomFeatureCNN(tasks)
 
     for x in range(0, 500):
-        program = baseGrammar.sample(tcanvas, maximumDepth=6)
+        program = baseGrammar.sample(tcanvas, maximumDepth=12)
         features = fe.renderProgram(program, tcanvas)
     fe.finish()
 
