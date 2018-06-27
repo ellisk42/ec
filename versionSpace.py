@@ -1,5 +1,7 @@
 from utilities import *
 from program import *
+from betaExpansion import *
+
 
 class ExpressionTable():
     def __init__(self):
@@ -11,6 +13,10 @@ class ExpressionTable():
         self.substitutionTable = {}
         self.inversionTable = []
         self.recursiveInversionTable = []
+        self.equivalenceClass = []
+        self.uf = UnionFind()
+
+    def __len__(self): return len(self.expressions)
 
     def incorporate(self,p):
         if p.isIndex or p.isPrimitive or p.isInvented:
@@ -44,6 +50,7 @@ class ExpressionTable():
         self.childrenTable.append(None)
         self.inversionTable.append(None)
         self.recursiveInversionTable.append(None)
+        #self.equivalenceClass.append(self.uf.newClass(j))
 
         return j
 
@@ -93,20 +100,17 @@ class ExpressionTable():
 
     def CC(self,j):
         if self.childrenTable[j] is not None: return self.childrenTable[j]
-        cc = {j: {0: j}}
+        canonical = j#self.uf.getClass(j)
+        cc = {canonical: {0: canonical}}
 
         l = self.expressions[j]
         if l.isApplication:
             for v, shifts in self.CC(l.f).items():
-                if v in cc:
-                    cc[v].update(shifts)
-                else:
-                    cc[v] = shifts
+                if v not in cc: cc[v] = {}
+                cc[v].update(shifts)
             for v, shifts in self.CC(l.x).items():
-                if v in cc:
-                    cc[v].update(shifts)
-                else:
-                    cc[v] = shifts
+                if v not in cc: cc[v] = {}
+                cc[v].update(shifts)
         elif l.isAbstraction:
             for v,shifts in self.CC(l.body).items():
                 if any( fv == 0 for fv in self.freeVariables[v] ): continue
@@ -186,6 +190,57 @@ class ExpressionTable():
             es.update(previous)
         return es
 
+    def minimumCosts(self, givens, alternatives):
+        costTable = [None]*len(self)
+
+        def cost(j):
+            if costTable[j] is not None: return costTable[j]
+
+            if j in givens: c = 1
+            else:
+                l = self.expressions[j]
+                if l.isApplication:
+                    c = cost(l.f) + cost(l.x)
+                elif l.isAbstraction:
+                    c = cost(l.body)
+                elif l.isIndex or l.isPrimitive or l.isInvented:
+                    c = 1
+                else: assert False
+
+            costTable[j] = c
+            return c
+
+        return sum(min(cost(a) for a in ass ) for ass in alternatives )
+
+    def reachable(self,indices):
+        visited = set()
+        def visit(i):
+            if i in visited: return
+            visited.add(i)
+            l = self.expressions[i]
+            if l.isApplication:
+                visit(l.f)
+                visit(l.x)
+            elif l.isAbstraction:
+                visit(l.body)
+        for j in indices:
+            visit(j)
+        return visited
+    
+    def bestInvention(self, alternatives):
+        from collections import Counter
+        
+        candidates = [ self.reachable(alternative)
+                       for alternative in alternatives ]
+        candidates = Counter(k for ks in candidates for k in ks)
+        candidates = {k for k,f in candidates.items() if f >= 2 }
+
+        j = min(candidates, key = lambda candidate: self.minimumCosts({candidate},alternatives))
+        return self.extract(j)
+
+        
+                    
+
 
         
 if __name__ == "__main__":
@@ -195,10 +250,12 @@ if __name__ == "__main__":
     bootstrapTarget_extra()
     p1 = Program.parse("(lambda (fold empty $0 (lambda (lambda (cons (- $0 5) $1)))))")
     p2 = Program.parse("(lambda (fold empty $0 (lambda (lambda (cons (+ $0 $0) $1)))))")
-    #p1 = Program.parse("(lambda (fold $1 (lambda ($0 fold $2))))")
 
+    N = 3
     v = ExpressionTable()
     with timing("Computed expansions"):
-        b1 = v.expand(v.incorporate(p1),n=2)
-        b2 = v.expand(v.incorporate(p2),n=2)
-    
+        b1 = v.expand(v.incorporate(p1),n=N)
+        b2 = v.expand(v.incorporate(p2),n=N)
+        print(f"expression table has size {len(v)}")
+    # with timing("invented a primitive"):
+    #     print(v.bestInvention([b1,b2]))

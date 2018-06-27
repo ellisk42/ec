@@ -551,9 +551,19 @@ class PQ(object):
 
 class UnionFind:
     class Class:
-        def __init__(self, x):
+        def __init__(self, x, ID):
+            self.ID = ID
             self.members = {x}
             self.leader = None
+        def __eq__(self,o):
+            assert self.leader is None
+            assert o.leader is None
+            return self.ID == o.ID
+        def __ne__(self,o):
+            return not (self == o)
+        def __hash__(self):
+            assert self.leader is None
+            return hash(self.ID)
         def chase(self):
             k = self
             while k.leader is not None:
@@ -564,6 +574,7 @@ class UnionFind:
     def __init__(self):
         # Map from keys to classes
         self.classes = {}
+        self.nextClass = 0
     def unify(self,x,y):
         k1 = self.classes[x].chase()
         k2 = self.classes[y].chase()
@@ -576,13 +587,16 @@ class UnionFind:
         return k2
     def newClass(self,x):
         if x not in self.classes:
-            n = self.Class(x)
+            n = self.Class(x,self.nextClass)
+            self.nextClass += 1
             self.classes[x] = n
 
     def otherMembers(self,x):
+        return self.getClass(x).members
+    def getClass(self,x):
         k = self.classes[x].chase()
         self.classes[x] = k
-        return k.members        
+        return k
         
 
     
