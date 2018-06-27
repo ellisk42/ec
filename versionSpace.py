@@ -87,10 +87,8 @@ class ExpressionTable():
 
     def CC(self,j):
         if self.childrenTable[j] is not None: return self.childrenTable[j]
-        canonical = self.uf.getClass(j)
-        assert canonical.leader is None
-        cc = {canonical: {0: canonical}}
-
+        cc = {j:{0:j}}
+        
         l = self.expressions[j]
         if l.isApplication:
             for v, shifts in self.CC(l.f).items():
@@ -101,9 +99,8 @@ class ExpressionTable():
                 cc[v].update(shifts)
         elif l.isAbstraction:
             for v,shifts in self.CC(l.body).items():
-                v = getOne(v.members)
                 if any( fv == 0 for fv in self.freeVariables[v] ): continue
-                vp = self.uf.getClass(self.shift(v,-1))
+                vp = self.shift(v,-1)
                 if vp not in cc: cc[vp] = {}
                 cc[vp].update({n + 1: vn for n,vn in shifts.items() })
 
@@ -116,7 +113,7 @@ class ExpressionTable():
 
         s = []
 
-        if n in mapping and self.uf.getClass(e) == mapping[n].chase():
+        if n in mapping and e == mapping[n]:
             s.append(self._incorporate(Index(n)))
 
         l = self.expressions[e]
@@ -167,7 +164,7 @@ class ExpressionTable():
                 s.append(self._incorporate(Abstraction(b)))
         
         self.recursiveInversionTable[j] = s
-        self.newEquivalences.append(j,s)
+        self.newEquivalences.append((j,s))
         return s
 
     def expand(self,j,n=1):
@@ -179,8 +176,10 @@ class ExpressionTable():
             previous = {rw
                         for p in previous
                         for rw in self.recursiveInvert(p) }
-            for oldIndex, newIndices in self.newEquivalences:
-                for n in newIndices: self.uf.unify(oldIndex,n)
+            if False:
+                print("Enforcing equivalences")
+                for oldIndex, newIndices in self.newEquivalences:
+                    for n in newIndices: self.uf.unify(oldIndex,n)
             es.update(previous)
             self.newEquivalences = []
             print(f"Finished iteration {iteration + 1}")

@@ -574,6 +574,7 @@ class UnionFind:
             k = self
             while k.leader is not None:
                 k = k.leader
+            self.leader = k
             return k
             
     def __init__(self):
