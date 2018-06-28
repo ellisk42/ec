@@ -84,21 +84,27 @@ class ExpressionTable():
         return l
 
     def equivalentK(self,k,j):
-        if k > 0:
+        if k == 0: return j
+        elif k >= 2:
+            for e in self.equivalentK(k - 1, j):
+                yield from self.equivalentK(1, e)
+        else:
+            assert j == 1
             for e in self.edgesTo[j]:
-                yield from self.equivalentK(k - 1, e)
-        l = self.expressions[j]
-        if l.isIndex or l.isPrimitive or l.isInvented:
-            if k == 0: yield j
-        elif l.isAbstraction:
-            for b in self.equivalentK(k,l.body):
-                yield self._incorporate(Abstraction(b))
-        elif l.isApplication:
-            for i in range(k + 1):
-                for f in self.equivalentK(i,l.f):
-                    for x in self.equivalentK(k - i,l.x):
-                        yield self._incorporate(Application(f,x))
-        else: assert False
+                #yield from self.equivalentK(k - 1, e)
+                yield e
+            l = self.expressions[j]
+            if l.isIndex or l.isPrimitive or l.isInvented:
+                if k == 0: yield j
+            elif l.isAbstraction:
+                for b in self.equivalentK(k,l.body):
+                    yield self._incorporate(Abstraction(b))
+            elif l.isApplication:
+                for i in range(k + 1):
+                    for f in self.equivalentK(i,l.f):
+                        for x in self.equivalentK(k - i,l.x):
+                            yield self._incorporate(Application(f,x))
+            else: assert False
             
 
     def shift(self,j, d, c=0):
@@ -191,18 +197,24 @@ class ExpressionTable():
                     s.append(a)
         return set(s)
 
-    def betaExpandK(self, k, heads):        
+    def betaExpandK(self, k, heads):
+        print("Expanding:")
         toExpand = self.reachable({p
                                    for h in heads
                                    for p in self.equivalentK(k - 1, h)})
         for p in toExpand:
+            print(self.extract(p))
             for v,bodies in self.SC(0,p).items():
                 if v is self.Omega: continue
                 for b in bodies:
                     f = self._incorporate(Abstraction(b))
                     a = self._incorporate(Application(f,v))
                     self.addEdge(source=a, destination=p)
+                    print(f"\t <--- {self.extract(a)}")
+            print()
+        print()
     def repeatedBetaExpandK(self, K, heads):
+        previous = set()
         for k in range(1, K+1):
             self.betaExpandK(k, heads)
         
@@ -352,13 +364,19 @@ class ExpressionTable():
 def testVisual():
     bootstrapTarget_extra()
     p = Program.parse("(lambda (+ $0 5))")
-    p = Program.parse("(+ 5)")
+    p = Program.parse("5")
 
-    N = 2
+    N = 3
 
     v = ExpressionTable()
     j = v.incorporate(p)
     v.repeatedBetaExpandK(N,{j})
+    for k in range(0,N+1):
+        print(f"{k} steps away:")
+        for _e in {v.extract(e)
+                   for e in v.equivalentK(k,j)}:
+            print(_e)
+        print()
     beta = {v.extract(e)
             for k in range(0,N+1)
             for e in v.equivalentK(k,j)}

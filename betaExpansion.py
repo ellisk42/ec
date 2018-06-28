@@ -84,15 +84,24 @@ def SC(n,e):
 
     return mapping
         
-def inverseBeta_(e):
-    """1 beta reduction step at the top level"""
-    for v in set(closedChildren(e)):
-        for b in possibleBodies(v,e):
-            yield Application(Abstraction(b),v)
+def recursiveBetaExpand(e,N=1):
+    if N > 1:
+        for e_ in recursiveBetaExpand(e,N - 1):
+            yield e_
+            yield from recursiveBetaExpand(e_,N=1)
+    else:
+        yield from betaExpand(e)
+        if e.isApplication:
+            for x in recursiveBetaExpand(e.x):
+                yield Application(e.f,x)
+            for f in recursiveBetaExpand(e.f):
+                yield Application(f,e.x)
+        if e.isAbstraction:
+            for b in recursiveBetaExpand(e.body):
+                yield Abstraction(b)
 def betaExpand(e):
     for v,bodies in SC(0,e).items():
         if v is True: continue
-        
         for b in bodies:
             yield Application(Abstraction(b),v)
 
