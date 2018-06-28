@@ -78,25 +78,25 @@ primitives = [
     Primitive("logo_ADDL",  arrow(tlength,tlength,tlength), _logo_var_addl),
     Primitive("logo_SUBL",  arrow(tlength,tlength,tlength), _logo_var_subl),
 
-    # Primitive("logo_NOP", turtle, "logo_NOP"),
+    Primitive("logo_NOP", turtle, "logo_NOP"),
     # Primitive("logo_PU",  turtle, "logo_PU"),
     # Primitive("logo_PD",  turtle, "logo_PD"),
     Primitive("logo_FW",  arrow(tlength,turtle), _logo_fw),
     Primitive("logo_RT",  arrow(tangle,turtle), _logo_rt),
-    # Primitive("logo_SET",  arrow(tstate,turtle), _logo_set),
+    Primitive("logo_SET",  arrow(tstate,turtle), _logo_set),
     Primitive("logo_SEQ",  arrow(turtle,turtle,turtle), _logo_seq),
-    # Primitive("logo_GET",  arrow(arrow(tstate,turtle),turtle), _logo_get)
+    Primitive("logo_GET",  arrow(arrow(tstate,turtle),turtle), _logo_get)
 
     # Primitive("logo_CHEAT",  arrow(ttvar,turtle), _logo_cheat),
     # Primitive("logo_CHEAT2",  arrow(ttvar,turtle), _logo_cheat),
     # Primitive("logo_CHEAT3",  arrow(ttvar,turtle), _logo_cheat),
     # Primitive("logo_CHEAT4",  arrow(ttvar,turtle), _logo_cheat),
 ] + [
-    # Primitive("map", arrow(arrow(t0, t1), tlist(t0), tlist(t1)), _map),
-    # Primitive("range", arrow(tint, tlist(tint)), _range),
-    # Primitive("fold", arrow(tlist(t0), t1, arrow(t0, t1, t1), t1), _fold),
-    # Primitive("+", arrow(tint, tint, tint), _addition),
-    # Primitive("-", arrow(tint, tint, tint), _subtraction),
+    Primitive("map", arrow(arrow(t0, t1), tlist(t0), tlist(t1)), _map),
+    Primitive("range", arrow(tint, tlist(tint)), _range),
+    Primitive("fold", arrow(tlist(t0), t1, arrow(t0, t1, t1), t1), _fold),
+    Primitive("+", arrow(tint, tint, tint), _addition),
+    Primitive("-", arrow(tint, tint, tint), _subtraction),
 ] + [Primitive(str(j), tint, j) for j in range(7)]
 
 if __name__ == "__main__":

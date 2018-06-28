@@ -57,7 +57,7 @@ let _ =
           let oc = open_out costFName in
           fprintf oc "%s,%d,%d,%d\n" ((Filename.chop_suffix Sys.argv.(1)".LoG")) cost cost_nor cost_noe ;
           close_out oc;
-          for i = 0 to 100 do
+          for i = 0 to 5 do
             let canvas = interpret ~noise:true program in
             let pngRName = ((Filename.chop_suffix Sys.argv.(1) ".LoG")^"_random_"^(string_of_int i)^".png") in
             output_canvas_png canvas 512 pngRName

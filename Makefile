@@ -7,6 +7,8 @@ all:
 	  cp _build/default/solver.exe ../solver && \
 	  cp _build/default/logoDrawString.exe \
 	    ../logoDrawString && \
+	  ln -s ../../logoDrawString \
+	    ../data/geom/logoDrawString && \
 	  cp _build/default/geomDrawLambdaString.exe \
 	    ../geomDrawLambdaString && \
 	  cp _build/default/geomDrawFile.exe \
@@ -22,3 +24,6 @@ clean:
 	cd solvers && jbuilder clean
 	rm -f geomDrawLambdaString
 	rm -f solver
+	rm -f logoDrawString
+	rm -f data/geom/geomDrawFile
+	rm -f data/geom/logoDrawString
