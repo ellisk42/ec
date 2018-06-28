@@ -125,6 +125,9 @@ class Program(object):
     def isIndex(self): return False
 
     @property
+    def isUnion(self): return False
+
+    @property
     def isApplication(self): return False
 
     @property
