@@ -12,6 +12,7 @@ class ExpressionTable():
         self.freeVariables = []
 
         self.childrenTable = []
+        self.substituteChildTable = {}
         self.substitutionTable = {}
         self.inversionTable = []
         self.recursiveInversionTable = []
@@ -20,6 +21,18 @@ class ExpressionTable():
         self.uf = UnionFind()
         
         self.newEquivalences = []
+
+        # Map from expression index to all of the indices with beta edge is pointing to it
+        self.edgesTo = []
+        # Map from expression index to all of the indices it beta reduces to in one step
+        self.edgesFrom = []
+
+        # Special primitive that means the set of all possible lambda expressions
+        self.Omega = self.incorporate(Primitive("OMEGA",None,None))
+
+    def addEdge(self, _=None, destination=None, source=None):
+        self.edgesTo[destination].add(source)
+        self.edgesFrom[source].add(destination)
 
     def __len__(self): return len(self.expressions)
 
@@ -56,6 +69,8 @@ class ExpressionTable():
         self.inversionTable.append(None)
         self.recursiveInversionTable.append(None)
         self.equivalenceClass.append(self.uf.newClass(j))
+        self.edgesTo.append(set())
+        self.edgesFrom.append(set())
 
         return j
 
@@ -67,6 +82,24 @@ class ExpressionTable():
             return Application(self.extract(l.f),
                                self.extract(l.x))
         return l
+
+    def equivalentK(self,k,j):
+        if k > 0:
+            for e in self.edgesTo[j]:
+                yield from self.equivalentK(k - 1, e)
+        l = self.expressions[j]
+        if l.isIndex or l.isPrimitive or l.isInvented:
+            if k == 0: yield j
+        elif l.isAbstraction:
+            for b in self.equivalentK(k,l.body):
+                yield self._incorporate(Abstraction(b))
+        elif l.isApplication:
+            for i in range(k + 1):
+                for f in self.equivalentK(i,l.f):
+                    for x in self.equivalentK(k - i,l.x):
+                        yield self._incorporate(Application(f,x))
+        else: assert False
+            
 
     def shift(self,j, d, c=0):
         if n == 0 or all( f < c for f in self.freeVariables[j] ): return j
@@ -85,60 +118,12 @@ class ExpressionTable():
             assert False
             
 
-    def CC(self,j):
-        if self.childrenTable[j] is not None: return self.childrenTable[j]
-        cc = {j:{0:j}}
-        
-        l = self.expressions[j]
-        if l.isApplication:
-            for v, shifts in self.CC(l.f).items():
-                if v not in cc: cc[v] = {}
-                cc[v].update(shifts)
-            for v, shifts in self.CC(l.x).items():
-                if v not in cc: cc[v] = {}
-                cc[v].update(shifts)
-        elif l.isAbstraction:
-            for v,shifts in self.CC(l.body).items():
-                if any( fv == 0 for fv in self.freeVariables[v] ): continue
-                vp = self.shift(v,-1)
-                if vp not in cc: cc[vp] = {}
-                cc[vp].update({n + 1: vn for n,vn in shifts.items() })
-
-        self.childrenTable[j] = cc
-        
-        return cc                    
-
-    def substitutions(self,n,v,mapping,e):
-        if (n,v,e) in self.substitutionTable: return self.substitutionTable[(n,v,e)]
-
-        s = []
-
-        if n in mapping and e == mapping[n]:
-            s.append(self._incorporate(Index(n)))
-
-        l = self.expressions[e]
-        if l.isPrimitive or l.isInvented:
-            s.append(e)
-        elif l.isAbstraction:
-            for b in self.substitutions(n + 1, v, mapping, l.body):
-                s.append(self._incorporate(Abstraction(b)))
-        elif l.isApplication:
-            for f in self.substitutions(n, v, mapping, l.f):
-                for x in self.substitutions(n, v, mapping, l.x):
-                    s.append(self._incorporate(Application(f,x)))
-        elif l.isIndex:
-            if l.i < n:
-                s.append(e)
-            else:
-                s.append(self._incorporate(Index(l.i + 1)))
-        else: assert False
-
-        self.substitutionTable[(n,v,e)] = s
-        return s
-
+    
     def SC(self,n,j):
+        if (n,j) in self.substituteChildTable: return self.substituteChildTable[(n,j)]
+        
         e = self.expressions[j]
-        mapping = {True: set()}
+        mapping = {self.Omega: set()}
 
         if all( fv - n >= 0 for fv in self.freeVariables[j] ):
             v = self.shift(j,-n)
@@ -146,27 +131,27 @@ class ExpressionTable():
 
         if e.isIndex:
             if e.i < n:
-                mapping[True] = {j}
+                mapping[self.Omega] = {j}
             else:
-                mapping[True] = {self._incorporate(Index(e.i + 1))}
+                mapping[self.Omega] = {self._incorporate(Index(e.i + 1))}
         elif e.isApplication:
             fm = self.SC(n,e.f)
             xm = self.SC(n,e.x)
             for v in fm:
-                if v is True: continue
+                if v == self.Omega: continue
                 if not (v in xm): continue
                 if not (v in mapping): mapping[v] = set()
                 mapping[v].update(self._incorporate(Application(fp,xp))
                                   for fp in fm[v]
                                   for xp in xm[v] )
-            for ft in fm.get(True,[]):
+            for ft in fm.get(self.Omega,[]):
                 # ft: program
                 for v,xt in ((xValue,xBody)
                            for xValue, xBodies in xm.items()
                            for xBody in xBodies):
                     if not (v in mapping): mapping[v] = set()
                     mapping[v].add(self._incorporate(Application(ft,xt)))
-            for xt in xm.get(True,[]):
+            for xt in xm.get(self.Omega,[]):
                 # ft: program
                 for v,ft in ((fValue,fBody)
                            for fValue, fBodies in fm.items()
@@ -183,14 +168,68 @@ class ExpressionTable():
                 else:
                     mapping[v].update(bodies)
         elif e.isPrimitive or e.isInvented:
-            mapping[True] = mapping.get(True,set())
-            mapping[True].add(j)
+            mapping[self.Omega].add(j)
         else: assert False
+
+        # print(f"SC_{n}({self.extract(j)}) = { {self.extract(v): {self.extract(b) for b in bs } for v,bs in mapping.items() } }")
+        # from frozendict import frozendict
+        # mapping = frozendict({v: frozenset(bs) for v,bs in mapping.items() })
+
+        self.substituteChildTable[(n,j)] = mapping
 
         return mapping
 
             
+    def invertK(self,k,j):
+        s = []
+        for p in self.equivalentK(k - 1, j):
+            for v,bodies in self.SC(0,p).items():
+                if v is self.Omega: continue
+                for b in bodies:
+                    f = self._incorporate(Abstraction(b))
+                    a = self._incorporate(Application(f,v))
+                    s.append(a)
+        return set(s)
+
+    def betaExpandK(self, k, heads):        
+        toExpand = self.reachable({p
+                                   for h in heads
+                                   for p in self.equivalentK(k - 1, h)})
+        for p in toExpand:
+            for v,bodies in self.SC(0,p).items():
+                if v is self.Omega: continue
+                for b in bodies:
+                    f = self._incorporate(Abstraction(b))
+                    a = self._incorporate(Application(f,v))
+                    self.addEdge(source=a, destination=p)
+    def repeatedBetaExpandK(self, K, heads):
+        for k in range(1, K+1):
+            self.betaExpandK(k, heads)
         
+                
+    def visualize(self):
+        from graphviz import Digraph
+
+        d = Digraph(comment='expression graph')
+
+        for j,l in enumerate(self.expressions):
+            if l.isPrimitive or l.isIndex or l.isInvented: label = str(l)
+            elif l.isAbstraction: label = "abs"
+            elif l.isApplication: label = "@"
+            d.node(str(j), label)
+
+        for j,l in enumerate(self.expressions):
+            if l.isApplication:
+                d.edge(str(j), str(l.f), label="f")
+                d.edge(str(j), str(l.x), label="x")
+            elif l.isAbstraction:
+                d.edge(str(j), str(l.body))
+
+            for b in self.edgesFrom[j]:
+                d.edge(str(j), str(b), label="B", color="cyan")
+
+        d.render('/tmp/betaGraph.gv', view=True)
+                
 
     def invert(self,j):
         if self.inversionTable[j] is not None: return self.inversionTable[j]
@@ -203,12 +242,20 @@ class ExpressionTable():
                     a = self._incorporate(Application(f,v))
                     s.append(a)
         else:
+            gt = self.extract(j).betaNormalForm()
             for v,bodies in self.SC(0,j).items():
-                if v is True: continue
+                if v is self.Omega: continue
                 for b in bodies:
                     f = self._incorporate(Abstraction(b))
                     a = self._incorporate(Application(f,v))
                     s.append(a)
+                    a = self.extract(a)
+                    if a.betaNormalForm() != gt:
+                        print(self.extract(j))
+                        print(gt)
+                        print(a)
+                        assert False
+                    
                 
                 
         self.inversionTable[j] = s
@@ -302,7 +349,55 @@ class ExpressionTable():
         
                     
 
+def testVisual():
+    bootstrapTarget_extra()
+    p = Program.parse("(lambda (+ $0 5))")
+    p = Program.parse("(+ 5)")
 
+    N = 2
+
+    v = ExpressionTable()
+    j = v.incorporate(p)
+    v.repeatedBetaExpandK(N,{j})
+    beta = {v.extract(e)
+            for k in range(0,N+1)
+            for e in v.equivalentK(k,j)}
+    print(len(v))
+    # v.visualize()
+    
+
+    v = ExpressionTable()
+    j = v.incorporate(p)
+    bruteForce = {v.extract(e) for e in v.expand(j,n=N)}
+    print(len(v))
+    # v.visualize()
+
+
+    print("In brute force but not in beta")
+    for e in bruteForce - beta:
+        print(e)
+        assert e.betaNormalForm() == p
+        for _ in range(N):
+            e = e.betaReduce()
+            print(f"\t--> {e}")
+        print()
+              
+    print("In beta but not in brute force")
+    for e in beta - bruteForce:
+        print(e)
+        assert e.betaNormalForm() == p
+        for _ in range(N):
+            e = e.betaReduce()
+            print(f"\t--> {e}")
+        print()        
+    
+    assert False
+
+def testSubstitute():
+    v = ExpressionTable()
+    p = Program.parse("(lambda ($0 (+ 5) $1))")
+    v.SC(0,v.incorporate(p))
+    assert False
         
 if __name__ == "__main__":
     from arithmeticPrimitives import *
@@ -312,8 +407,12 @@ if __name__ == "__main__":
     p1 = Program.parse("(lambda (fold empty $0 (lambda (lambda (cons (- $0 5) $1)))))")
     p2 = Program.parse("(lambda (fold empty $0 (lambda (lambda (cons (+ $0 $0) $1)))))")
 
-    N = 2
+    # testSubstitute()
+    testVisual()
+
+    N = 3
     v = ExpressionTable()
+    assert False
     with timing("Computed expansions"):
         b1 = v.expand(v.incorporate(p1),n=N)
         b2 = v.expand(v.incorporate(p2),n=N)
