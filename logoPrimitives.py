@@ -63,8 +63,6 @@ primitives = [
     Primitive("logo_S2A", arrow(tscalar,tangle), _logo_S2A),
     Primitive("logo_S2L", arrow(tscalar,tlength), _logo_S2L),
 
-    Primitive("logo_IFTY", tint, "20"),
-
     Primitive("logo_DIVS",  arrow(tscalar,tscalar,tscalar), _logo_var_divs),
     Primitive("logo_MULS",  arrow(tscalar,tscalar,tscalar), _logo_var_muls),
 
@@ -97,6 +95,7 @@ primitives = [
     Primitive("fold", arrow(tlist(t0), t1, arrow(t0, t1, t1), t1), _fold),
     Primitive("+", arrow(tint, tint, tint), _addition),
     Primitive("-", arrow(tint, tint, tint), _subtraction),
+    Primitive("20", tint, 20),
 ] + [Primitive(str(j), tint, j) for j in range(7)]
 
 if __name__ == "__main__":

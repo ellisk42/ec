@@ -55,6 +55,52 @@ let pp_turtle t =
     l ;
   prerr_newline ()
 
+let eval_normal_turtle turtle =
+  let p,_ = turtle (init_state ()) in
+  let c = ref (new_canvas ()) in
+  let lineto x y = (c := (lineto !c x y))
+  and moveto x y = (c := (moveto !c x y)) in
+  let t = init_state () in
+  moveto t.x t.y ;
+  let rec eval_instruction n i = match i with
+    | PU         -> t.p <- false
+    | PD         -> t.p <- true
+    | RT(angle)  -> t.t <- t.t +. angle
+    | SET(state) -> t <<- state ; moveto (t.x) (t.y) ;
+    | FW(length) ->
+        let x = t.x +. (length *. cos(t.t))
+        and y = t.y +. (length *. sin(t.t)) in
+        (if t.p then lineto else moveto) x y ;
+        t.x <- x ;
+        t.y <- y
+  in
+  let rec remove_start pd l = match l with
+    | [] -> []
+    | PU :: r -> remove_start false r
+    | PD :: r -> remove_start true r
+    | RT(_)::r -> remove_start pd r
+    | FW(0.)::r -> remove_start pd r
+    | FW(_)::r -> if pd then l else remove_start pd r
+    | SET(_)::r -> remove_start pd r
+  in
+  let rec scale l f = match l with
+    | [] -> []
+    | FW(x)::r when (abs_float x < 0.2) -> FW(x)::(scale r f)
+    | FW(x)::r -> FW(x*.f)::(scale r f)
+    | e::r -> e::(scale r f)
+  in
+  let rec find_min l = match l with
+    | [] -> 99999.
+    | FW(x)::r when (abs_float x) < 0.2 -> find_min r
+    | FW(x)::r -> min (x) (find_min r)
+    | e::r -> find_min r
+  in
+  let p' = remove_start true p in
+  let m = find_min p' in
+  let p'' = scale p' (1./.m) in
+  List.iteri eval_instruction p'' ;
+  !c
+
 let eval_turtle ?sequence turtle =
   let p,_ = turtle (init_state ()) in
   let c = ref (new_canvas ()) in

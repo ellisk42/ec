@@ -26,11 +26,13 @@ let _ =
           let turtle = run_lazy_analyzed_with_arguments p [] in
           (*pp_turtle turtle ;*)
           let c = (eval_turtle turtle) in
+          let c' = (eval_normal_turtle turtle) in
           (*prerr_endline (Vg.P.to_string c) ;*)
           let bx = canvas_to_1Darray c size in
           if bx = b0 then (*prerr_endline "emptyDrawing"*) ()
           else begin
-            output_canvas_png c sizeFile fname ;
+            output_canvas_png c sizeFile (fname^".png") ;
+            output_canvas_png c' sizeFile (fname^"_norm.png") ;
             npp (canvas_to_1Darray c size)
           end
       | _ -> ()

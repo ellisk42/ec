@@ -596,10 +596,6 @@ class RecognitionModel(nn.Module):
             range(N))
         eprint()
         flushEverything()
-        try:
-            self.featureExtractor.finish()
-        except AttributeError:
-            ()
         samples = [z for z in samples if z is not None]
         eprint()
         eprint("Got %d/%d valid samples." % (len(samples), N))

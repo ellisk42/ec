@@ -30,8 +30,6 @@ class GeomFeatureCNN(nn.Module):
     def __init__(self, tasks, cuda=False, H=10):
         super(GeomFeatureCNN, self).__init__()
 
-        self.mean = [0] * (256 * 256)
-        self.count = 0
         self.sub = prefix_dreams + str(int(time.time()))
 
         self.outputDimensionality = H
@@ -72,7 +70,7 @@ class GeomFeatureCNN(nn.Module):
             os.makedirs(self.sub)
         try:
             randomStr = ''.join(random.choice('0123456789') for _ in range(5))
-            fname = self.sub + "/" + str(self.count) + "_" + randomStr
+            fname = self.sub + "/" + randomStr
             evaluated = p.evaluate([])
             with open(fname + ".dream", "w") as f:
                 f.write(str(p))
@@ -80,15 +78,12 @@ class GeomFeatureCNN(nn.Module):
                 f.write(evaluated)
             output = subprocess.check_output(['./geomDrawLambdaString',
                                               fname + ".png",
-                                              evaluated]).decode("utf8").split("\n")
-            shape = list(map(float, output[0].split(',')))
-            bigShape = map(float, output[1].split(','))
+                                              evaluated]).decode("utf8")
         except OSError as exc:
             raise exc
         try:
-            self.mean = [x + y for x, y in zip(self.mean, bigShape)]
+            shape = list(map(float, output.split(',')))
             task = Task("Helm", t, [((), shape)])
-            self.count += 1
             return task
         except ValueError:
             return None
@@ -98,7 +93,7 @@ class GeomFeatureCNN(nn.Module):
             os.makedirs(self.sub)
         try:
             randomStr = ''.join(random.choice('0123456789') for _ in range(5))
-            fname = self.sub + "/" + str(self.count) + "_" + randomStr
+            fname = self.sub + "/" + randomStr
             evaluated = p.evaluate([])
             with open(fname + ".dream", "w") as f:
                 f.write(str(p))
@@ -106,34 +101,14 @@ class GeomFeatureCNN(nn.Module):
                 f.write(evaluated)
             output = subprocess.check_output(['./geomDrawLambdaString',
                                               fname + ".png",
-                                              evaluated]).decode("utf8").split("\n")
-            shape = list(map(float, output[0].split(',')))
-            bigShape = map(float, output[1].split(','))
+                                              evaluated]).decode("utf8")
         except OSError as exc:
             raise exc
         try:
-            self.mean = [x + y for x, y in zip(self.mean, bigShape)]
-            self.count += 1
+            shape = list(map(float, output.split(',')))
             return shape
         except ValueError:
             return None
-
-    def finish(self):
-        if self.count > 0:
-            mean = [log(1 + float(x / self.count)) for x in self.mean]
-            mi = min(mean)
-            ma = max(mean)
-            mean = [(x - mi + (1 / 255)) / (ma - mi) for x in mean]
-            img = [(int(x * 254), int(x * 254), int(x * 254)) for x in mean]
-            img = [img[i:i + 256] for i in range(0, 256 * 256, 256)]
-            img = [tuple([e for t in x for e in t]) for x in img]
-            fname = self.sub + "/" + str(self.count) + "_sum.png"
-            f = open(fname, 'wb')
-            w = png.Writer(256, 256)
-            w.write(f, img)
-            f.close()
-            self.mean = [0] * (256 * 256)
-            self.count = 0
 
 
 def list_options(parser):
@@ -212,7 +187,6 @@ if __name__ == "__main__":
     for x in range(0, 500):
         program = baseGrammar.sample(tcanvas, maximumDepth=12)
         features = fe.renderProgram(program, tcanvas)
-    fe.finish()
 
     r = explorationCompression(baseGrammar, train,
                                testingTasks=test,

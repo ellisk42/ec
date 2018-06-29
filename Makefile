@@ -1,4 +1,5 @@
 all:
+	rm -f data/geom/logoDrawString
 	cd solvers && \
 	  jbuilder build solver.exe && \
 	  jbuilder build geomDrawLambdaString.exe && \
