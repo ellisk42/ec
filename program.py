@@ -171,7 +171,7 @@ class Application(Program):
         self.f = f
         self.x = x
         self.hashCode = None
-        self.isConditional = (not isinstance(f,int)) and \
+        self.isConditional = isinstance(f,Program) and \
                              f.isApplication and \
                              f.f.isApplication and \
                              f.f.f.isPrimitive and \

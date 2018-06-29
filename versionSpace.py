@@ -426,14 +426,13 @@ if __name__ == "__main__":
     p2 = Program.parse("(lambda (fold empty $0 (lambda (lambda (cons (+ $0 $0) $1)))))")
 
     # testSubstitute()
-    testVisual()
+    # testVisual()
 
-    N = 3
+    N = 4
     v = ExpressionTable()
-    assert False
     with timing("Computed expansions"):
         b1 = v.expand(v.incorporate(p1),n=N)
-        b2 = v.expand(v.incorporate(p2),n=N)
+#        b2 = v.expand(v.incorporate(p2),n=N)
         print(f"expression table has size {len(v)}")
     with timing("invented a primitive"):
         print(v.bestInvention([b1,b2]))

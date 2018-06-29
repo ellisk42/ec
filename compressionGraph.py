@@ -782,8 +782,6 @@ class ExpressionGraph():
                         for l in liftedExpressions
                         for e in self.classes(l) })
 
-    def __len__(self): return len(self.liftedToCanonical)
-
     def shiftLifted(self, e, d, c=0, visited=None):
         """Shifts a lifted expression, returning a lifted expression"""
         assert isinstance(e,Lifted)
@@ -1115,7 +1113,7 @@ class ExpressionGraph():
     def visualize(self, simplify=True, roots=None, pause=False):
         from graphviz import Digraph
 
-        cost = self.minimumCost({})
+        #cost = self.minimumCost({})
 
         d = Digraph(comment='expression graph')
 
@@ -1133,7 +1131,7 @@ class ExpressionGraph():
                 if roots is not None:
                     elements = elements & reachable
                 if simplify and len(elements) <= 1: return nodeCode(list(elements)[0])
-                return "E%d, k=%s"%(l.name,cost[l])
+                return f"E{l.name}"
             if l.isLeaf:
                 return str(l.primitive)
             elif l.isIndex:
@@ -1173,10 +1171,8 @@ class ExpressionGraph():
             if simplify and len(elements) <= 1: continue
             
             code = nodeCode(k)
-            d.node(code, "E_%d: {%s}, c=%s"%(k.name,
-                                             ",".join(str(fv) for fv in k.freeVariables),
-                                             cost[k]))
-            print(k,cost[k])
+            d.node(code, "E_%d: {%s}"%(k.name,
+                                       ",".join(str(fv) for fv in k.freeVariables)))
 
             for e in elements:
                 d.edge(code, nodeCode(e), color="chocolate")
