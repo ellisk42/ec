@@ -229,10 +229,13 @@ class Application(Program):
                                                       **keywords)
 
     def show(self, isFunction):
-        if isFunction:
-            return "%s %s" % (self.f.show(True), self.x.show(False))
+        if isinstance(self.f,Program) and isinstance(self.x,Program):
+            if isFunction:
+                return "%s %s" % (self.f.show(True), self.x.show(False))
+            else:
+                return "(%s %s)" % (self.f.show(True), self.x.show(False))
         else:
-            return "(%s %s)" % (self.f.show(True), self.x.show(False))
+            return "(%s %s)"%(self.f,self.x)
 
     def evaluate(self, environment):
         if self.isConditional:
@@ -431,7 +434,10 @@ class Abstraction(Program):
                                                       **keywords)
 
     def show(self, isFunction):
-        return "(lambda %s)" % (self.body.show(False))
+        if isinstance(self.body, Program):
+            return "(lambda %s)" % (self.body.show(False))
+        else:
+            return "(lambda %s)"%self.body
 
     def evaluate(self, environment):
         return lambda x: self.body.evaluate([x] + environment)

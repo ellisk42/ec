@@ -1,6 +1,7 @@
 from betaExpansion import *
 
 from program import *
+from type import *
 
 def getOne(s):
     return next(iter(s))
@@ -25,11 +26,128 @@ class VersionTable():
         self.recursiveTable = []
         self.substitutionTable = {}
         self.expression2index = {}
-
-        self.universe = self.incorporate(Primitive("U",None,None))
+        self.maximumShift = []
+        self.tp = []
+        
+        self.bottom = baseType("BOTTOM")
+        self.universe = self.incorporate(Primitive("U",t0,None))
         self.empty = self.incorporate(Union([]))
         
 
+
+    def infer(self,j):
+        if self.tp[j] is not None: return self.tp[j]
+        try:
+            self.tp[j] = self._infer(j)
+        except UnificationFailure:
+            self.tp[j] = self.bottom
+        return self.tp[j]
+    def _infer(self,j):
+        def instantiate(context, environment, tp):
+            bindings = {}
+            context, tp = tp.instantiate(context, bindings)
+            newEnvironment = {}
+            for i,ti in environment.items():
+                context,newEnvironment[i] = ti.instantiate(context, bindings)
+            return context, newEnvironment, tp
+            
+        e = self.expressions[j]
+        if e.isPrimitive or e.isInvented:
+            t = e.tp
+            environment = {}
+        elif e.isIndex:
+            t = t0
+            environment = {e.i: t0}
+        elif e.isAbstraction:
+            body = self.infer(e.body)
+            if body == self.bottom: return self.bottom
+
+            be,bt = body
+            context, be, bt = instantiate(Context(), be, bt)
+
+            environment = {n - 1: t.apply(context)
+                           for n,t in be.items()
+                           if n > 0}
+            if 0 in be:
+                argumentType = be[0].apply(context)
+            else:
+                context, argumentType = context.makeVariable()
+
+            t = arrow(argumentType,bt).apply(context)
+
+        elif e.isApplication:
+            k = Context()
+
+            functionResult = self.infer(e.f)
+            if functionResult == self.bottom: return self.bottom
+            argumentResult = self.infer(e.x)
+            if argumentResult == self.bottom: return self.bottom
+            k,fe,ft = instantiate(k, *functionResult)
+            k,xe,xt = instantiate(k, *argumentResult)
+
+            k,value = k.makeVariable()
+            k = k.unify(ft,arrow(xt, value))
+
+            environment = dict(fe)
+            for n,nt in xe.items():
+                if n in environment:
+                    k = k.unify(environment[n],nt)
+                else:
+                    environment[n] = nt
+
+            t = value.apply(k)
+            environment = {n: nt.apply(k)
+                           for n,nt in environment.items() }
+
+        elif e.isUnion:
+            k = Context()
+            environments = []
+            ts = []
+            for v in e:
+                elementResult = self.infer(v)
+                if elementResult == self.bottom: continue
+                
+                k,newEnvironment,newType = instantiate(k, *elementResult)
+                environments.append(newEnvironment)
+                ts.append(newType)
+
+            if len(ts) == 0:
+                return {},t0
+
+            try:
+                t = ts[0]
+                for t_ in ts[1:]:
+                    k = k.unify(t,t_)
+                environment = {}
+                for newEnvironment in environments:
+                    for n,nt in newEnvironment.items():
+                        if n in environment:
+                            k = k.unify(environment[n],nt)
+                        else:
+                            environment[n] = nt
+                t = t.apply(k)
+                environment = {n: nt.apply(k)
+                               for n,nt in environment.items() }
+            except UnificationFailure:
+                print("unification failure in union")
+                print(ts)
+                print(environments)
+                for subspace in e:
+                    print("denotation of subspace")
+                    for p in self.extract(subspace):
+                        print(p)
+                    print()
+                assert False
+        else:
+            assert False
+
+        return environment,t
+
+        
+                
+                
+                
+                
     def incorporate(self,p):
         if p.isIndex or p.isPrimitive or p.isInvented:
             pass
@@ -52,6 +170,9 @@ class VersionTable():
         self.expressions.append(p)
         self.expression2index[p] = j
         self.recursiveTable.append(None)
+        self.tp.append(None)
+        # if p.isAbstraction:
+        # self.maximumShift.append(ms)
         
         return j
 
@@ -304,11 +425,12 @@ class VersionTable():
         g = EquivalenceGraph()
         with timing("calculated version spaces"):
             spaces = self.rewriteReachable(heads,n)
+        print(f"{len(self.expressions)} distinct version spaces enumerated.")
         with timing("loaded equivalences"):
             self.loadEquivalences(g,spaces)
         print(f"{len(g.incident)} E nodes, {len(g.classes)} L nodes in equivalence graph.")
-        print(f"{len(self.expressions)} distinct version spaces enumerated.")
         # g.visualize(simplify=False)
+        return g
             
             
 class Class():
@@ -481,8 +603,117 @@ class EquivalenceGraph():
             ks = list(self.classes[l])
             assert len(ks) == self.numberOfClasses[l]
             for j in range(1,len(ks)):
-                self.makeEquivalent(ks[0],ks[j])        
+                self.makeEquivalent(ks[0],ks[j])
+
+    def minimumCosts(self, given):
+        basicClasses = {k
+                        for k,children in self.classMembers.items()
+                        if k in given or any( l.isIndex or l.isPrimitive or l.isInvented
+                                              for l in children )}
+        table = {k: 1 if k in basicClasses else POSITIVEINFINITY for k in self.classMembers }
+
+        def expressionCost(l):
+            if l.isApplication: return table[l.f] + table[l.x]
+            if l.isAbstraction: return table[l.body]
+            if l.isPrimitive or l.isInvented: return 1
+            if l.isIndex: return 1
+            assert False
+        def relax(e):
+            old = table[e]
+            new = old
+            for l in self.classMembers[e]:
+                new = min(expressionCost(l),new)
+            return new, new < old
+
+
+        q = {getOne(self.classes[i])
+             for b in basicClasses
+             for i in self.incident[b] }
+
+        while True:
+            if len(q) == 0:
+                for k in table:
+                    _,change = relax(k)
+                    assert not changed
+                return table
+            
+            n = getOne(q)
+            q.remove(n)
+            new, changed = relax(n)
+            if changed:
+                table[n] = new
+                q.update(getOne(self.classes[i])
+                         for i in self.incident[n])
         
+        
+    def extract(self,k):
+        table = self.minimumCosts([])
+        def expressionCost(l):
+            if l.isApplication: return table[l.f] + table[l.x]
+            if l.isAbstraction: return table[l.body]
+            if l.isPrimitive or l.isInvented: return 1
+            if l.isIndex: return 1
+            assert False
+        def visitClass(k):
+            return visitExpression(min(self.classMembers[k],
+                                       key=expressionCost))
+        def visitExpression(e):
+            if e.isApplication:
+                return Application(visitClass(e.f),
+                                   visitClass(e.x))
+            if e.isAbstraction:
+                return Abstraction(visitClass(e.body))
+            return e
+        return visitClass(k)
+
+    def reachable(self,heads):
+        r = set()
+        def visit(k):
+            if isinstance(k,Program):
+                if k.isApplication:
+                    visit(k.f)
+                    visit(k.x)
+                elif k.isAbstraction:
+                    visit(k.body)
+                return 
+            if k in r: return
+            r.add(k)
+            for e in self.classMembers[k]:
+                visit(e)
+
+        for h in heads:
+            visit(h)
+        return r
+            
+
+    def bestInvention(self,heads):
+        def score(k):
+            t = self.minimumCosts([k])
+            return sum(t[h] for h in heads )
+        candidates = [self.reachable([h])
+                      for h in heads ]
+        from collections import Counter
+        candidates = Counter(k for ks in candidates for k in ks)
+        candidates = list({k for k,f in candidates.items() if f >= 2 })
+        print(f"{len(candidates)} candidates")
+        candidates = [(score(k),k) for k in candidates ]
+        best = min(candidates,key = lambda s: s[0])[1]
+        return self.extract(best)
+            
+            
+def testTyping(p):
+    v = VersionTable()
+    j = v.incorporate(p)
+
+    print(v.repeatedExpansion(j,2))
+    for i,e in enumerate(v.expressions):
+        print(f"{i} = {e}, denotation:")
+        for expression in v.extract(i):
+            print(expression)
+        print()
+
+    assert False
+    
 
 if __name__ == "__main__":
     from arithmeticPrimitives import *
@@ -490,14 +721,21 @@ if __name__ == "__main__":
     from grammar import *
     bootstrapTarget_extra()
     p1 = Program.parse("(lambda (fold empty $0 (lambda (lambda (cons (- $0 5) $1)))))")
-    #p1 = Program.parse("(lambda (fold $0  fold))")
+    testTyping(Program.parse("(fold empty)"))
     p2 = Program.parse("(lambda (fold empty $0 (lambda (lambda (cons (+ $0 $0) $1)))))")
 
-    N=4
+    N=2
     
 
     v = VersionTable()
-    v.makeEquivalenceGraph({v.incorporate(p1)},N)
+    g = v.makeEquivalenceGraph({v.incorporate(p1),
+                                v.incorporate(p2)},
+                               N)
+    for j in range(len(v.expressions)):
+        print(v.infer(j))
+    print(g.bestInvention([g.incorporate(p1),
+                           g.incorporate(p2)]))
+    
     # with timing("calculated table space"):
     #     j = v.rewriteReachable({v.incorporate(p1)},N)
     # with timing("denotation of table space"):
