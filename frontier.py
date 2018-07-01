@@ -82,8 +82,8 @@ class Frontier(object):
 
     def sample(self):
         """Samples an entry from a frontier"""
-        return sampleDistribution([(math.exp(e.logLikelihood + e.logPrior), e)
-                                   for e in self])
+        return sampleLogDistribution([(e.logLikelihood + e.logPrior, e)
+                                      for e in self])
 
     @property
     def bestPosterior(self):
