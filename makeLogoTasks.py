@@ -4,6 +4,7 @@ from task import Task
 from logoPrimitives import turtle
 import png
 import os
+import sys
 
 rootdir = "./data/logo/"
 
@@ -25,8 +26,14 @@ def pretty_string(shape, size):
     for j in range(size):
         out += "│"
         for i in range(size):
-            if int(shape[j * size + (i % size)]) == 0:
+            if int(shape[j * size + (i % size)]) < 51:
+                out += "  "
+            elif int(shape[j * size + (i % size)]) < 102:
                 out += "░░"
+            elif int(shape[j * size + (i % size)]) < 153.6:
+                out += "▒▒"
+            elif int(shape[j * size + (i % size)]) < 204.8:
+                out += "▓▓"
             else:
                 out += "██"
         out += "│"
@@ -63,20 +70,35 @@ def makeTasks(subfolders):
     for subfolder in subfolders:
         for _, _, files in os.walk(rootdir + subfolder):
             for f in files:
-                needed = False if subfolder == "behaviour" else True
                 if f.endswith("_l.png"):
-                    problem(subfolder+"_"+f,
-                            [([], fileToArray(rootdir + subfolder + '/' + f))],
-                            needToTrain=True)
+                    fnorm = f[:-4] + "_norm.png"
+                    img1 = fileToArray(rootdir + subfolder + '/' + f)
+                    try:
+                        img2 = fileToArray(rootdir + subfolder + '/' + fnorm)
+                        problem(subfolder+"_"+f,
+                                [([], img1), ([], img2)],
+                                needToTrain=True)
+                    except FileNotFoundError:
+                        problem(subfolder+"_"+f,
+                                [([], img1)],
+                                needToTrain=True)
     return problems
 
 
 if __name__ == "__main__":
     allTasks()
-    tasks = makeTasks(['all'])
-    print(tasks)
+    if len(sys.argv) > 1:
+        tasks = makeTasks(sys.argv[1:])
+    else:
+        tasks = makeTasks(['all'])
     for t in tasks:
-        print((t))
+        print(t)
         x, y = t.examples[0]
         pretty_print(y, 28)
+        try:
+            x, y = t.examples[1]
+            pretty_print(y, 28)
+        except IndexError:
+            print("no NORM")
+            pretty_print(y, 28)
         print()

@@ -42,6 +42,8 @@ def _logo_fw(x):
     return "(logo_FW " + x + ")"
 def _logo_rt(x):
     return "(logo_RT " + x + ")"
+def _logo_fwrt(v1):
+    return lambda v2: "(logo_FWRT " + v1 + " " + v2 + ")"
 def _logo_set(x):
     return "(logo_SET " + x + ")"
 def _logo_seq(v):
@@ -79,8 +81,9 @@ primitives = [
     Primitive("logo_NOP", turtle, "logo_NOP"),
     # Primitive("logo_PU",  turtle, "logo_PU"),
     # Primitive("logo_PD",  turtle, "logo_PD"),
-    Primitive("logo_FW",  arrow(tlength,turtle), _logo_fw),
-    Primitive("logo_RT",  arrow(tangle,turtle), _logo_rt),
+    # Primitive("logo_FW",  arrow(tlength,turtle), _logo_fw),
+    # Primitive("logo_RT",  arrow(tangle,turtle), _logo_rt),
+    Primitive("logo_FWRT",  arrow(tlength,tangle,turtle), _logo_fwrt),
     Primitive("logo_SET",  arrow(tstate,turtle), _logo_set),
     Primitive("logo_SEQ",  arrow(turtle,turtle,turtle), _logo_seq),
     Primitive("logo_GET",  arrow(arrow(tstate,turtle),turtle), _logo_get)
@@ -98,8 +101,8 @@ primitives = [
     Primitive("20", tint, 20),
 ] + [Primitive(str(j), tint, j) for j in range(7)]
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
     # x = Program.parse(
         # "(#(concat (integrate nothing nothing nothing nothing)) (turn nothing))")
     # x = Program.parse("(integrate nothing nothing nothing nothing)")
-    print((x.evaluate([])))
+    # print((x.evaluate([])))

@@ -497,6 +497,14 @@ let logo_GET = primitive "logo_GET" (tstate @> turtle @> turtle) LogoLib.LogoInt
 let logo_SET = primitive "logo_SET"           (tstate @> turtle) LogoLib.LogoInterpreter.logo_SET
 let logo_NOP = primitive "logo_NOP"                     (turtle) LogoLib.LogoInterpreter.logo_NOP
 
+let logo_FW  = primitive "logo_FWRT"
+                        (tlength @> tangle @> turtle)
+                        (fun x y ->
+                          LogoLib.LogoInterpreter.logo_SEQ
+                            (LogoLib.LogoInterpreter.logo_FW x)
+                            (LogoLib.LogoInterpreter.logo_RT y))
+
+
 let logo_I2S = primitive "logo_I2S" (tint @> tscalar) (fun i -> float_of_int i)
 let logo_S2A = primitive "logo_S2A" (tscalar @> tangle) (fun i -> i)
 let logo_S2L = primitive "logo_S2L" (tscalar @> tlength) (fun i -> i)

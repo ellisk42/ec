@@ -17,7 +17,7 @@ let print_canvas canvas =
 
 let size = Size2.v d2 d2
 let view = Box2.v P2.o (Size2.v d2 d2)
-let area = `O { P.o with P.width = 0.45 ; P.join = `Round }
+let area = `O { P.o with P.width = 0.225 ; P.join = `Round }
 (*let area = `O { P.o with P.width = 0.01 ; P.cap = `Round ; P.join = `Round }*)
 let black = I.const Color.black
 

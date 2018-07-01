@@ -13,7 +13,8 @@ type task =
     log_likelihood: program -> float;
   }
 
-let p2i : (LogoLib.LogoInterpreter.logo_instruction list, (int, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t) Hashtbl.Poly.t  = Hashtbl.Poly.create ()
+let p2i : (LogoLib.LogoInterpreter.logo_instruction list,((int, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t * (int, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t)) Hashtbl.Poly.t = Hashtbl.Poly.create ()
+
 
 exception EnumerationTimeout
 
@@ -49,48 +50,56 @@ let supervised_task ?timeout:(timeout = 0.001) name ty examples =
   }
 
 let turtle_task ?timeout:(timeout = 0.001) name ty examples =
-  match examples with
-  | [([],y)] ->
-    let by = Bigarray.(Array1.of_array int8_unsigned c_layout (Array.of_list y))
-    in
-    { name = name    ;
-      task_type = ty ;
-      log_likelihood =
-        (fun p ->
-          let p = analyze_lazy_evaluation p in
-          if
-            (try begin
-              match
-                run_for_interval
-                  timeout
-                  (fun () ->
-                    let x = run_lazy_analyzed_with_arguments p [] in
-                    let l = LogoLib.LogoInterpreter.turtle_to_list x in
-                    let bx =
-                        match Hashtbl.Poly.find p2i l with
-                        | Some(x) -> x
-                        | _ ->
-                            let bx' = LogoLib.LogoInterpreter.turtle_to_array x 28 in
-                            Hashtbl.Poly.set p2i l bx' ;
-                            bx'
-                    in bx = by)
-              with
-                | Some(true) -> true
-                | _ -> false
-            end
-            with (* We have to be a bit careful with exceptions if the
-                  * synthesized program generated an exception, then we just
-                  * terminate w/ false but if the enumeration timeout was
-                  * triggered during program evaluation, we need to pass the
-                  * exception on
-                  *)
-              | UnknownPrimitive(n) -> raise (Failure ("Unknown primitive: "^n))
-              | EnumerationTimeout  -> raise EnumerationTimeout
-              | _                   -> false)
-          then 0.0
-          else log 0.0)
-    }
-  | _ -> failwith "not a turtle task"
+  let by, by' = match examples with
+      | [([],y)] ->
+          (Bigarray.(Array1.of_array int8_unsigned c_layout (Array.of_list y)),
+           None)
+      | [([],y) ; ([],y')] ->
+          (Bigarray.(Array1.of_array int8_unsigned c_layout (Array.of_list y)),
+          Some(Bigarray.(Array1.of_array int8_unsigned c_layout (Array.of_list
+          y'))))
+      | _ -> failwith "not a turtle task"
+  in
+  { name = name    ;
+    task_type = ty ;
+    log_likelihood =
+      (fun p ->
+        let p = analyze_lazy_evaluation p in
+        (try begin
+          match
+            run_for_interval
+              timeout
+              (fun () ->
+                let x = run_lazy_analyzed_with_arguments p [] in
+                let l = LogoLib.LogoInterpreter.turtle_to_list x in
+                let bx,bx' =
+                    match Hashtbl.Poly.find p2i l with
+                    | Some((x,x')) -> (x,x')
+                    | _ ->
+                        let bx = LogoLib.LogoInterpreter.turtle_to_array x 28 in
+                        let bx' = LogoLib.LogoInterpreter.normal_turtle_to_array x 28 in
+                        Hashtbl.Poly.set p2i l (bx,bx') ;
+                        (bx,bx')
+                in
+                match by' with
+                | None -> if bx = by then 0.0 else log 0.0
+                | Some(by') ->
+                    if bx = by then 0.0
+                    else -. (LogoLib.LogoInterpreter.distance bx' by'))
+          with
+            | Some(x) -> x
+            | _ -> log 0.0
+        end
+        with (* We have to be a bit careful with exceptions if the
+              * synthesized program generated an exception, then we just
+              * terminate w/ false but if the enumeration timeout was
+              * triggered during program evaluation, we need to pass the
+              * exception on
+              *)
+          | UnknownPrimitive(n) -> raise (Failure ("Unknown primitive: "^n))
+          | EnumerationTimeout  -> raise EnumerationTimeout
+          | _                   -> log 0.0))
+  }
 
 let differentiable_task
   ?temperature:(temperature=1.)

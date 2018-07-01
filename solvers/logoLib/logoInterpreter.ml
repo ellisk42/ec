@@ -95,10 +95,18 @@ let eval_normal_turtle turtle =
     | FW(x)::r -> min (x) (find_min r)
     | e::r -> find_min r
   in
+  let rec mirror found bit l = match l with
+    | [] -> []
+    | RT(x) :: r ->
+        if not found then RT(abs_float(x)) :: (mirror true (x > 0.) r)
+        else RT(if bit then x else (-. x)) :: (mirror found bit r)
+    | x :: r -> x :: (mirror found bit r)
+  in
   let p' = remove_start true p in
   let m = find_min p' in
   let p'' = scale p' (1./.m) in
-  List.iteri eval_instruction p'' ;
+  let p''' = mirror false true p'' in
+  List.iteri eval_instruction p''' ;
   !c
 
 let eval_turtle ?sequence turtle =
@@ -198,7 +206,19 @@ let turtle_to_png turtle resolution filename =
 let turtle_to_array turtle resolution =
   canvas_to_1Darray (eval_turtle turtle) resolution
 
+let normal_turtle_to_array turtle resolution =
+  canvas_to_1Darray (eval_normal_turtle turtle) resolution
+
 let turtle_to_both turtle resolution filename =
   let c = (eval_turtle turtle) in
   output_canvas_png c resolution filename ;
   canvas_to_1Darray c resolution
+
+let max = 28. *. 256.
+
+let distance x y =
+  let sum = ref 0. in
+  for i = 0 to Bigarray.Array1.dim x - 1 do
+    sum := !sum +. (((float_of_int (x.{i} - y.{i})) /. 256.) ** 2.)
+  done ;
+  50. +. (50. *. !sum)
