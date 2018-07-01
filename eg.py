@@ -2,6 +2,29 @@ from program import *
 
 from utilities import *
 
+def instantiate(context, environment, tp):
+    bindings = {}
+    context, tp = tp.instantiate(context, bindings)
+    newEnvironment = {}
+    for i,ti in environment.items():
+        context,newEnvironment[i] = ti.instantiate(context, bindings)
+    return context, newEnvironment, tp
+
+def unify(*environmentsAndTypes):
+    k = Context.EMPTY
+    e = {}
+    k,t = k.makeVariable()
+    for e_,t_ in environmentsAndTypes:
+        k, e_, t_ = instantiate(k, e_, t_)
+        k = k.unify(t,t_)
+        for i,ti in e_.items():
+            if i not in e: e[i] = ti
+            else: k = k.unify(e[i], ti)
+    return {i: ti.apply(k) for i,ti in e.items() }, t.apply(k)
+
+
+
+
 class Class():
     nextName = 0
     def __init__(self):
@@ -36,6 +59,75 @@ class EquivalenceGraph():
         # external sets referring to equivalence classes
         self.externalUsers = {}
 
+        # map from a equivalents class to its principal type
+        # principal types are (environment, return type)
+        self.typeOfClass = {}
+        # ditto
+        self.typeOfExpression = {}
+
+    def inferClass(self,k):
+        return self.typeOfClass[k]
+    def inferExpression(self,l):
+        if l in self.typeOfExpression: return self.typeOfExpression[l]
+
+        if l.isIndex: T = ({l.i: t0}, t0)
+        elif l.isPrimitive or l.isInvented: T = ({}, l.tp)
+        elif l.isAbstraction:
+            Tb = self.inferClass(l.body)
+            assert Tb is not None
+            be,bt = Tb
+            k = Context.EMPTY
+            k,be,bt = instantiate(k,be,bt)
+            if 0 in be:
+                k,argumentType = be[0]
+            else:
+                k,argumentType = k.makeVariable()
+
+            T = ({i - 1: ti
+                  for i,ti in be.items()
+                  if i > 0},
+                 arrow(argumentType, bt))
+        elif l.isApplication:
+            Tf = self.inferClass(l.f)
+            Tx = self.inferClass(l.x)
+            assert Tf is not None
+            assert Tx is not None
+
+            k = Context.EMPTY
+            k,fe,ft = instantiate(k, *Tf)
+            k,xe,xt = instantiate(k, *Tx)
+
+            k,value = k.makeVariable()
+            try:
+                k = k.unify(ft,arrow(xt, value))
+
+                environment = dict(fe)
+                for n,nt in xe.items():
+                    if n in environment:
+                        k = k.unify(environment[n],nt)
+                    else:
+                        environment[n] = nt
+
+                T = ({n: nt.apply(k)
+                      for n,nt in environment.items() },
+                     value.apply(k))
+            except UnificationValue: T = None
+        else: assert False
+
+        _,e,t = instantiate(Context.EMPTY, *T)
+        self.typeOfExpression[l] = (e,t)
+        return e,t
+
+        
+
+        
+
+
+            
+            
+                
+        
+
     def setOfClasses(self,ks):
         ks = {k.chase() for k in ks}
         for k in ks:
@@ -43,15 +135,17 @@ class EquivalenceGraph():
             self.externalUsers[k].append(ks)
         return ks
 
-    def makeClass(self):
+    def makeClass(self, tp):
         k = Class()
         self.classMembers[k] = set()
         self.incident[k] = set()
+        self.typeOfClass[k] = tp
         return k
 
     def addEdge(self,k,l):
         self.classMembers[k].add(l)
         self.classes[l].add(k)
+        assert self.typeOfClass[k] == self.typeOfExpression[l]
         if len(self.classes[l]) > 1:
             self.numberOfClasses[l] = len(self.classes[l])
     def deleteEdge(self,k,l):
@@ -68,6 +162,7 @@ class EquivalenceGraph():
         del self.classMembers[k]
         assert len(self.incident[k]) == 0
         del self.incident[k]
+        del self.typeOfClass[k]
 
     def deleteExpression(self,l):
         assert len(self.classes[l]) == 0
@@ -77,6 +172,7 @@ class EquivalenceGraph():
         elif l.isAbstraction:
             self.incident[l.body].remove(l)
         del self.classes[l]
+        del self.typeOfExpression[l]
 
     def rename(self, old, new):
         for refersToOld in list(self.classes[old]):
@@ -89,12 +185,13 @@ class EquivalenceGraph():
     def incorporateClass(self,l):
         if l not in self.classes: self.classes[l] = set()
         if len(self.classes[l]) == 0:
-            k = self.makeClass()
+            k = self.makeClass(self.typeOfExpression[l])
             self.addEdge(k,l)
             return k
         return getOne(self.classes[l])
     def incorporateExpression(self,l):
         if l in self.classes: return l
+        self.typeOfClass = self.inferExpression(l)
         self.classes[l] = set()
         if l.isApplication:
             self.incident[l.f].add(l)
@@ -107,6 +204,7 @@ class EquivalenceGraph():
         f = f.chase()
         x = x.chase()
         l = Application(f,x)
+        self.inferExpression(l)
         self.incident[f].add(l)
         self.incident[x].add(l)
         return self.incorporateClass(Application(f,x))

@@ -36,6 +36,8 @@ class Union(Program):
     def __hash__(self): return hash(self.elements)
     def __str__(self):
         return "{%s}"%(", ".join(map(str,list(self.elements))))
+    def show(self, isFunction):
+        return str(self)
     def __repr__(self): return str(self)
     def __iter__(self): return iter(self.elements)
 
@@ -55,12 +57,20 @@ class VersionTable():
         self.universe = self.incorporate(Primitive("U",t0,None))
         self.empty = self.incorporate(Union([]))
         
-
+    def intention(self,j, isFunction=False):
+        l = self.expressions[j]
+        if l.isIndex or l.isPrimitive or l.isInvented: return l
+        if l.isAbstraction: return Abstraction(self.intention(l.body))
+        if l.isApplication: return Application(self.intention(l.f),
+                                               self.intention(l.x))
+        if l.isUnion: return Union(self.intention(e)
+                                   for e in l )
+        assert False
             
     def infer(self,j):
         if self.tp[j] is not None: return self.tp[j]
         try:
-            self.tp[j] = self._infer(j)
+            self.tp[j] = tuple(instantiate(Context.EMPTY, *self._infer(j))[1:])            
         except UnificationFailure:
             self.tp[j] = self.bottom
             if False:
@@ -170,8 +180,6 @@ class VersionTable():
         return environment,t
 
         
-                
-                
                 
                 
     def incorporate(self,p):
@@ -431,9 +439,30 @@ class VersionTable():
         return m
 
     def inversion(self,j):
-        return self.union([self.apply(self.abstract(b),v)
-                           for v,b in self.substitutions(j)
-                           if v != self.universe])
+        i = self.union([self.apply(self.abstract(b),v)
+                         for v,b in self.substitutions(j)
+                         if v != self.universe])
+        if self.debug and self.typed:
+            if not (self.infer(i) == self.infer(j)):
+                print("inversion produced space with a different type!")
+                print("the original type was",self.infer(j))
+                print("the type of the rewritten expressions is",self.infer(i))
+                print("the original extension was")
+                n = None
+                for e in self.extract(j):
+                    print(e, e.infer())
+                    print(f"\t{e.betaNormalForm()} : {e.betaNormalForm().infer()}")
+                    assert n is None or e.betaNormalForm() == n
+                    n = e.betaNormalForm()
+                    print("the rewritten extension is")
+                for e in self.extract(i):
+                    print(e, e.infer())
+                    print(f"\t{e.betaNormalForm()} : {e.betaNormalForm().infer()}")
+                    assert n is None or e.betaNormalForm() == n
+                    assert self.infer(i) == self.infer(j)
+                assert False
+        return i
+
 
     def recursiveInversion(self,j):
         if self.recursiveTable[j] is not None: return self.recursiveTable[j]
@@ -445,6 +474,26 @@ class VersionTable():
         t = [self.apply(self.abstract(b),v)
              for v,b in self.substitutions(j)
              if v != self.universe]
+        if self.debug and self.typed:
+            ru = self.union(t)
+            if not (self.infer(ru) == self.infer(j)):
+                print("inversion produced space with a different type!")
+                print("the original type was",self.infer(j))
+                print("the type of the rewritten expressions is",self.infer(ru))
+                print("the original extension was")
+                n = None
+                for e in self.extract(j):
+                    print(e, e.infer())
+                    print(f"\t{e.betaNormalForm()} : {e.betaNormalForm().infer()}")
+                    assert n is None or e.betaNormalForm() == n
+                    n = e.betaNormalForm()
+                print("the rewritten extension is")
+                for e in self.extract(ru):
+                    print(e, e.infer())
+                    print(f"\t{e.betaNormalForm()} : {e.betaNormalForm().infer()}")
+                    assert n is None or e.betaNormalForm() == n
+            assert self.infer(ru) == self.infer(j)
+
 
         if l.isApplication:
             t.append(self.apply(self.recursiveInversion(l.f),l.x))
@@ -452,7 +501,7 @@ class VersionTable():
         elif l.isAbstraction:
             t.append(self.abstract(self.recursiveInversion(l.body)))
 
-        ru = self.union(t)
+        ru = self.union(t)        
         self.recursiveTable[j] = ru
         return ru
 
@@ -524,7 +573,7 @@ def testTyping(p):
     v = VersionTable()
     j = v.incorporate(p)
     
-    wellTyped = set(v.extract(v.recursiveInversion(v.recursiveInversion(v.recursiveInversion(j)))))
+    wellTyped = set(v.extract(v.inversion(j)))
     print(len(wellTyped))
     v = VersionTable(typed=False)
     j = v.incorporate(p)
@@ -538,14 +587,31 @@ def testTyping(p):
     import sys
     sys.exit()
     
-
+def testSharing():
+    from versionSpace import ExpressionTable
+    source = "(+ 1 1)"
+    N = 100
+    for _ in range(N):
+        t = ExpressionTable()
+        t.invert(t.incorporate(Program.parse(source)))
+        v = VersionTable(typed=False)
+        v.inversion(v.incorporate(Program.parse(source)))
+        print(len(v.expressions),len(t))
+        source = f"(+ 1 {source})"
+    assert False
+        
 if __name__ == "__main__":
     from arithmeticPrimitives import *
     from listPrimitives import *
     from grammar import *
     bootstrapTarget_extra()
+    testSharing()
+    v = VersionTable(typed=False)
+    j = v.incorporate(Program.parse("(+ 1 (+ 1 1))"))
+    print(v.intention(v.inversion(j)))
+    assert False
     p1 = Program.parse("(lambda (fold $0 empty (lambda (lambda (cons (- $1 5) $0)))))")
-    testTyping(Program.parse("((lambda $0) +1 ((lambda $0) 1))"))
+    testTyping(Program.parse("((lambda $0) cons ((lambda $0) 9))"))
     p2 = Program.parse("(lambda (fold $0 empty (lambda (lambda (cons (+ $1 $1) $0)))))")
 
     N=3

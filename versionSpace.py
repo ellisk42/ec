@@ -108,7 +108,8 @@ class ExpressionTable():
             
 
     def shift(self,j, d, c=0):
-        if n == 0 or all( f < c for f in self.freeVariables[j] ): return j
+        if d == 0:# or all( f < c for f in self.freeVariables[j] ): return j
+            return j
 
         l = self.expressions[j]
         if l.isIndex:
