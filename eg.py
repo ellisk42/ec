@@ -1,6 +1,7 @@
 from program import *
-
 from utilities import *
+
+from frozendict import frozendict
 
 def instantiate(context, environment, tp):
     bindings = {}
@@ -115,7 +116,7 @@ class EquivalenceGraph():
         else: assert False
 
         _,e,t = instantiate(Context.EMPTY, *T)
-        self.typeOfExpression[l] = (e,t)
+        self.typeOfExpression[l] = (frozendict(e),t)
         return e,t
 
         
@@ -129,7 +130,7 @@ class EquivalenceGraph():
         
 
     def setOfClasses(self,ks):
-        ks = {k.chase() for k in ks}
+        ks = {k.chase() for k in ks if k is not None}
         for k in ks:
             if k not in self.externalUsers: self.externalUsers[k] = []
             self.externalUsers[k].append(ks)
@@ -183,6 +184,7 @@ class EquivalenceGraph():
         
 
     def incorporateClass(self,l):
+        if self.inferExpression(l) is None: return None
         if l not in self.classes: self.classes[l] = set()
         if len(self.classes[l]) == 0:
             k = self.makeClass(self.typeOfExpression[l])
@@ -191,7 +193,8 @@ class EquivalenceGraph():
         return getOne(self.classes[l])
     def incorporateExpression(self,l):
         if l in self.classes: return l
-        self.typeOfClass = self.inferExpression(l)
+        t = self.inferExpression(l)
+        if t is None: return None
         self.classes[l] = set()
         if l.isApplication:
             self.incident[l.f].add(l)
@@ -204,13 +207,14 @@ class EquivalenceGraph():
         f = f.chase()
         x = x.chase()
         l = Application(f,x)
-        self.inferExpression(l)
+        if self.inferExpression(l) is None: return None
         self.incident[f].add(l)
         self.incident[x].add(l)
         return self.incorporateClass(Application(f,x))
     def abstractClass(self,b):
         b = b.chase()
         l = Abstraction(b)
+        if self.inferExpression(l) is None: return None
         self.incident[b].add(l)
         return self.incorporateClass(l)
     def abstractLeaf(self,l):
@@ -228,6 +232,7 @@ class EquivalenceGraph():
         k1 = k1.chase()
         k2 = k2.chase()
         if k1 == k2: return k1
+        if self.typeOfClass[k1] != self.typeOfClass[k2]: assert False
 
         # k2 is going to be deleted
         k2.leader = k1

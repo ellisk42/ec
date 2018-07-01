@@ -68,6 +68,7 @@ class VersionTable():
         assert False
             
     def infer(self,j):
+        assert self.typed
         if self.tp[j] is not None: return self.tp[j]
         try:
             self.tp[j] = tuple(instantiate(Context.EMPTY, *self._infer(j))[1:])            
@@ -183,6 +184,7 @@ class VersionTable():
                 
                 
     def incorporate(self,p):
+        assert isinstance(p,Union) or p.wellTyped()
         if p.isIndex or p.isPrimitive or p.isInvented:
             pass
         elif p.isAbstraction:
@@ -195,7 +197,6 @@ class VersionTable():
         else: assert False
 
         j = self._incorporate(p)
-        assert self.infer(j) != self.bottom
         return j
 
     def _incorporate(self,p):
@@ -543,6 +544,10 @@ class VersionTable():
         N = len(next(iter(spaces.values())))
         vertices = list(sorted(spaces.keys(), key=lambda v: self.size(v)))
 
+        # maps from a vertex to a map from types to classes
+        # the idea is to only enforceable equivalence between terms of the same type
+        typedClassesOfVertex = {v: {} for v in vertices }
+        
         for n in range(N):
             print(f"Processing rewrites {n} steps away from original expressions...")
             for v in vertices:
@@ -550,8 +555,17 @@ class VersionTable():
                 assert len(expressions) == 1
                 expression = expressions[0]
                 k = g.incorporate(expression)
+                if k is None: continue
+                t0 = g.typeOfClass[k]
+                if t0 not in typedClassesOfVertex[v]:
+                    typedClassesOfVertex[v][t0] = k
+                
                 for e in list(extract(spaces[v][n])):
-                    g.makeEquivalent(k,e)
+                    t = g.typeOfClass[e]
+                    if t in typedClassesOfVertex[v]:
+                        g.makeEquivalent(typedClassesOfVertex[v][t],e)
+                    else:
+                        typedClassesOfVertex[v][e] = e
 
     def makeEquivalenceGraph(self,heads,n):
         from eg import EquivalenceGraph
@@ -605,13 +619,13 @@ if __name__ == "__main__":
     from listPrimitives import *
     from grammar import *
     bootstrapTarget_extra()
-    testSharing()
-    v = VersionTable(typed=False)
-    j = v.incorporate(Program.parse("(+ 1 (+ 1 1))"))
-    print(v.intention(v.inversion(j)))
-    assert False
+    # testSharing()
+    # v = VersionTable(typed=False)
+    # j = v.incorporate(Program.parse("(+ 1 (+ 1 1))"))
+    # print(v.intention(v.inversion(j)))
+    # assert False
     p1 = Program.parse("(lambda (fold $0 empty (lambda (lambda (cons (- $1 5) $0)))))")
-    testTyping(Program.parse("((lambda $0) cons ((lambda $0) 9))"))
+#    testTyping(Program.parse("((lambda $0) cons ((lambda $0) 9))"))
     p2 = Program.parse("(lambda (fold $0 empty (lambda (lambda (cons (+ $1 $1) $0)))))")
 
     N=3
