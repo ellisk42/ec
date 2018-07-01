@@ -3,8 +3,27 @@ from betaExpansion import *
 from program import *
 from type import *
 
-def getOne(s):
-    return next(iter(s))
+
+
+def instantiate(context, environment, tp):
+    bindings = {}
+    context, tp = tp.instantiate(context, bindings)
+    newEnvironment = {}
+    for i,ti in environment.items():
+        context,newEnvironment[i] = ti.instantiate(context, bindings)
+    return context, newEnvironment, tp
+
+def unify(*environmentsAndTypes):
+    k = Context.EMPTY
+    e = {}
+    k,t = k.makeVariable()
+    for e_,t_ in environmentsAndTypes:
+        k, e_, t_ = instantiate(k, e_, t_)
+        k = k.unify(t,t_)
+        for i,ti in e_.items():
+            if i not in e: e[i] = ti
+            else: k = k.unify(e[i], ti)
+    return {i: ti.apply(k) for i,ti in e.items() }, t.apply(k)
 
 class Union(Program):
     def __init__(self, elements):
@@ -21,7 +40,10 @@ class Union(Program):
     def __iter__(self): return iter(self.elements)
 
 class VersionTable():
-    def __init__(self):
+    def __init__(self, typed=True):
+        self.typed = typed
+        self.debug = True
+        
         self.expressions = []
         self.recursiveTable = []
         self.substitutionTable = {}
@@ -34,23 +56,25 @@ class VersionTable():
         self.empty = self.incorporate(Union([]))
         
 
-
+            
     def infer(self,j):
         if self.tp[j] is not None: return self.tp[j]
         try:
             self.tp[j] = self._infer(j)
         except UnificationFailure:
             self.tp[j] = self.bottom
+            if False:
+                print("could not infer type for:")
+                for p in self.extract(j):
+                    print(p)
+                for j in range(len(self.expressions)):
+                    print(j)
+                    if j != self.empty:
+                        print(getOne(self.extract(j)))
+                    print(self.tp[j])
+                    print()
         return self.tp[j]
     def _infer(self,j):
-        def instantiate(context, environment, tp):
-            bindings = {}
-            context, tp = tp.instantiate(context, bindings)
-            newEnvironment = {}
-            for i,ti in environment.items():
-                context,newEnvironment[i] = ti.instantiate(context, bindings)
-            return context, newEnvironment, tp
-            
         e = self.expressions[j]
         if e.isPrimitive or e.isInvented:
             t = e.tp
@@ -76,7 +100,7 @@ class VersionTable():
             t = arrow(argumentType,bt).apply(context)
 
         elif e.isApplication:
-            k = Context()
+            k = Context.EMPTY
 
             functionResult = self.infer(e.f)
             if functionResult == self.bottom: return self.bottom
@@ -132,7 +156,9 @@ class VersionTable():
                 print("unification failure in union")
                 print(ts)
                 print(environments)
-                for subspace in e:
+                print()
+                for n,subspace in enumerate(e):
+                    print(f"the subspace has the type {ts[n]} and environment:\n{environments[n]}")
                     print("denotation of subspace")
                     for p in self.extract(subspace):
                         print(p)
@@ -160,7 +186,9 @@ class VersionTable():
             p = Union([self.incorporate(e) for e in p ])
         else: assert False
 
-        return self._incorporate(p)
+        j = self._incorporate(p)
+        assert self.infer(j) != self.bottom
+        return j
 
     def _incorporate(self,p):
         if p in self.expression2index: return self.expression2index[p]
@@ -171,8 +199,6 @@ class VersionTable():
         self.expression2index[p] = j
         self.recursiveTable.append(None)
         self.tp.append(None)
-        # if p.isAbstraction:
-        # self.maximumShift.append(ms)
         
         return j
 
@@ -274,56 +300,114 @@ class VersionTable():
                                 for y_ in y ])
         return self.empty
 
-    def shift(self,j,n,c=0):
+    # def shift(self,j,n,c=0):
+    #     if n == 0: return j
+
+    #     l = self.expressions[j]
+
+    #     if l.isUnion:
+    #         return self.union([ self.shift(e,n,c)
+    #                             for e in l ])
+    #     if l.isApplication:
+    #         return self.apply(self.shift(l.f,n,c),self.shift(l.x,n,c))
+    #     if l.isAbstraction:
+    #         return self.abstract(self.shift(l.body,n,c+1))
+    #     if l.isIndex:
+    #         if l.i >= c:
+    #             if l.i + n >= 0:
+    #                 return self.index(l.i + n)
+    #             else:
+    #                 return self.empty
+    #         return j
+    #     assert l.isPrimitive or l.isInvented
+    #     return j
+
+    def shiftFree(self,j,n,c=0):
         if n == 0: return j
-
         l = self.expressions[j]
-
         if l.isUnion:
-            return self.union([ self.shift(e,n,c)
+            return self.union([ self.shiftFree(e,n,c)
                                 for e in l ])
         if l.isApplication:
-            return self.apply(self.shift(l.f,n,c),self.shift(l.x,n,c))
+            return self.apply(self.shiftFree(l.f,n,c),
+                              self.shiftFree(l.x,n,c))
         if l.isAbstraction:
-            return self.abstract(self.shift(l.body,n,c+1))
+            return self.abstract(self.shiftFree(l.body,n,c+1))
         if l.isIndex:
-            if l.i >= c:
-                if l.i + n >= 0:
-                    return self.index(l.i + n)
-                else:
-                    return self.empty
-            return j
+            if l.i < c: return j
+            if l.i >= n + c: return self.index(l.i - n)
+            return self.empty
         assert l.isPrimitive or l.isInvented
-        return j        
+        return j
 
-    def substitutions(self,j,n):
+    def substitutions(self,j):
+        if self.typed:
+            for (v,_),b in self._substitutions(j,0).items():
+                yield v,b
+        else:
+            yield from self._substitutions(j,0).items()
+
+    def _substitutions(self,j,n):
         if (j,n) in self.substitutionTable: return self.substitutionTable[(j,n)]
         
-        s = self.shift(j,-n)
+        
+        s = self.shiftFree(j,n)
+        if self.debug:
+            assert set(self.extract(s)) == set( e.shift(-n)
+                                                for e in self.extract(j)
+                                                if all( f >= n for f in e.freeVariables()  )),\
+                                                   f"shiftFree_{n}: {set(self.extract(s))}"
         if s == self.empty: m = {}
-        else: m = {s: self.index(n)}
+        else:
+            if self.typed:
+                principalType = self.infer(s)
+                if principalType == self.bottom:
+                    print(self.infer(j))
+                    print(list(self.extract(j)))
+                    print(list(self.extract(s)))
+                    assert False
+                m = {(s, self.infer(s)[1].canonical()): self.index(n)}
+            else:
+                m = {s: self.index(n)}
 
         l = self.expressions[j]
         if l.isPrimitive or l.isInvented:
-            m[self.universe] = j
+            m[(self.universe,t0) if self.typed else self.universe] = j
         elif l.isIndex:
-            m[self.universe] = j if l.i < n else self.index(l.i + 1)
+            m[(self.universe,t0) if self.typed else self.universe] = \
+                    j if l.i < n else self.index(l.i + 1)
         elif l.isAbstraction:
-            for v,b in self.substitutions(l.body, n + 1).items():
+            for v,b in self._substitutions(l.body, n + 1).items():
                 m[v] = self.abstract(b)
         elif l.isApplication:
             newMapping = {}
-            fm = self.substitutions(l.f,n)
-            xm = self.substitutions(l.x,n)
+            fm = self._substitutions(l.f,n)
+            xm = self._substitutions(l.x,n)
             for v1,f in fm.items():
+                if self.typed: v1,nType1 = v1
                 for v2,x in xm.items():
+                    if self.typed: v2,nType2 = v2
+
+                    a = self.apply(f,x)
+                    # See if the types that they assigned to $n are consistent
+                    if self.typed:
+                        if self.infer(a) == self.bottom: continue
+                        try:
+                            nType = canonicalUnification(nType1, nType2,
+                                                         self.infer(a)[0].get(n,t0))
+                        except UnificationFailure:
+                            continue
+                        
                     v = self.intersection(v1,v2)
                     if v == self.empty: continue
-                    a = self.apply(f,x)
-                    if v in newMapping:
-                        newMapping[v].append(a)
+                    if self.typed and self.infer(v) == self.bottom: continue
+
+                    key = (v,nType) if self.typed else v                        
+                        
+                    if key in newMapping:
+                        newMapping[key].append(a)
                     else:
-                        newMapping[v] = [a]
+                        newMapping[key] = [a]
             for v in newMapping:
                 newMapping[v] = self.union(newMapping[v])
             newMapping.update(m)
@@ -331,7 +415,7 @@ class VersionTable():
         elif l.isUnion:
             newMapping = {}
             for e in l:
-                for v,b in self.substitutions(e,n).items():
+                for v,b in self._substitutions(e,n).items():
                     if v in newMapping:
                         newMapping[v].append(b)
                     else:
@@ -348,7 +432,7 @@ class VersionTable():
 
     def inversion(self,j):
         return self.union([self.apply(self.abstract(b),v)
-                           for v,b in self.substitutions(j,0).items()
+                           for v,b in self.substitutions(j)
                            if v != self.universe])
 
     def recursiveInversion(self,j):
@@ -359,7 +443,7 @@ class VersionTable():
             return self.union([self.recursiveInversion(e) for e in l ])
         
         t = [self.apply(self.abstract(b),v)
-             for v,b in self.substitutions(j,0).items()
+             for v,b in self.substitutions(j)
              if v != self.universe]
 
         if l.isApplication:
@@ -376,7 +460,7 @@ class VersionTable():
         spaces = [j]
         for _ in range(n):
             spaces.append(self.recursiveInversion(spaces[-1]))
-        return spaces #self.union(spaces)
+        return spaces
             
     def rewriteReachable(self,heads,n):
         vertices = self.reachable(heads)
@@ -439,15 +523,20 @@ class VersionTable():
 def testTyping(p):
     v = VersionTable()
     j = v.incorporate(p)
+    
+    wellTyped = set(v.extract(v.recursiveInversion(v.recursiveInversion(v.recursiveInversion(j)))))
+    print(len(wellTyped))
+    v = VersionTable(typed=False)
+    j = v.incorporate(p)
+    arbitrary = set(v.extract(v.recursiveInversion(v.recursiveInversion(v.recursiveInversion(j)))))
+    print(len(arbitrary))
+    assert wellTyped <= arbitrary
+    assert wellTyped == {e
+                         for e in arbitrary if e.wellTyped() }
+    assert all( e.wellTyped() for e in wellTyped  )
 
-    print(v.repeatedExpansion(j,2))
-    for i,e in enumerate(v.expressions):
-        print(f"{i} = {e}, denotation:")
-        for expression in v.extract(i):
-            print(expression)
-        print()
-
-    assert False
+    import sys
+    sys.exit()
     
 
 if __name__ == "__main__":
@@ -455,19 +544,18 @@ if __name__ == "__main__":
     from listPrimitives import *
     from grammar import *
     bootstrapTarget_extra()
-    p1 = Program.parse("(lambda (fold empty $0 (lambda (lambda (cons (- $0 5) $1)))))")
-    testTyping(Program.parse("((lambda $0) ((lambda $0) 1))"))
-    p2 = Program.parse("(lambda (fold empty $0 (lambda (lambda (cons (+ $0 $0) $1)))))")
+    p1 = Program.parse("(lambda (fold $0 empty (lambda (lambda (cons (- $1 5) $0)))))")
+    testTyping(Program.parse("((lambda $0) +1 ((lambda $0) 1))"))
+    p2 = Program.parse("(lambda (fold $0 empty (lambda (lambda (cons (+ $1 $1) $0)))))")
 
-    N=2
+    N=3
     
 
-    v = VersionTable()
+    v = VersionTable(typed=False)
+    v.incorporate(p1)
     g = v.makeEquivalenceGraph({v.incorporate(p1),
                                 v.incorporate(p2)},
                                N)
-    for j in range(len(v.expressions)):
-        print(v.infer(j))
     print(g.bestInvention([g.incorporate(p1),
                            g.incorporate(p2)]))
     

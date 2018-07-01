@@ -185,6 +185,9 @@ class Application(Program):
             self.trueBranch = None
             self.branch = None
 
+    def freeVariables(self):
+        return self.f.freeVariables() | self.x.freeVariables()
+
     def betaReduce(self):
         # See if either the function or the argument can be reduced
         f = self.f.betaReduce()
@@ -322,6 +325,8 @@ class Index(Program):
     def __init__(self, i):
         self.i = i
 
+    def freeVariables(self): return {self.i}
+
     def show(self, isFunction): return "$%d" % self.i
 
     def __eq__(self, o): return isinstance(o, Index) and o.i == self.i
@@ -406,6 +411,9 @@ class Abstraction(Program):
     def __init__(self, body):
         self.body = body
         self.hashCode = None
+
+    def freeVariables(self):
+        return {f - 1 for f in self.body.freeVariables() if f > 0}
 
     @property
     def isAbstraction(self): return True
@@ -505,6 +513,8 @@ class Primitive(Program):
         if name not in Primitive.GLOBALS:
             Primitive.GLOBALS[name] = self
 
+    def freeVariables(self): return set()
+
     @property
     def isPrimitive(self): return True
 
@@ -563,6 +573,8 @@ class Invented(Program):
         self.body = body
         self.tp = self.body.infer()
         self.hashCode = None
+
+    def freeVariables(self): return set()
 
     @property
     def isInvented(self): return True

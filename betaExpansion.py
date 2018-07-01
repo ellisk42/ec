@@ -1,9 +1,14 @@
 from program import *
 
+def freeVariables(e):
+    if e.isIndex: return {e.i}
+    if e.isApplication: return freeVariables(e.f) | freeVariables(e.x)
+    if e.isAbstraction: return {f - 1 for f in freeVariables(e.body) if f > 0 }
+    return set()
+
 def closedChildren(e,j=0):
-    try:
+    if all( f >= j for f in freeVariables(e) ):
         yield e.shift(-j)
-    except ShiftFailure: pass
 
     if e.isApplication:
         yield from closedChildren(e.f,j)
@@ -111,7 +116,19 @@ if __name__ == "__main__":
     from listPrimitives import *
     from grammar import *
     bootstrapTarget_extra()
+    p = Program.parse("(lambda (lambda $1))")
+    for c in closedChildren(p):
+        print("CHILD",c)
+        for b in possibleBodies(c,p):
+            print(b)
+            a = Application(Abstraction(b),c)
+            print(a)
+            print(a.betaNormalForm())
+            print()
+    assert False
+        
     p1 = Program.parse("(lambda (fold empty $0 (lambda (lambda (cons (- $0 5) $1)))))")
+    
 #    p1 = Program.parse("empty")
     p2 = Program.parse("(lambda (fold empty $0 (lambda (lambda (cons (+ $0 $0) $1)))))")
 

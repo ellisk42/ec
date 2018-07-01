@@ -622,6 +622,8 @@ def normal(s=1., m=0.):
 
     return s * n + m
 
+def getOne(s):
+    return next(iter(s))
 
 if __name__ == "__main__":
     def f():

@@ -248,6 +248,13 @@ def inferArg(tp, tcaller):
     ctx = ctx.unify(tcaller, arrow(targ, tp))
     return targ.apply(ctx)
 
+def canonicalUnification(*ts):
+    k = Context.EMPTY
+    k, t0 = k.makeVariable()
+    for t in ts:
+        k, t = t.instantiate(k)
+        k = k.unify(t0,t)
+    return t0.apply(k).canonical()
 
 def guess_type(xs):
     """

@@ -55,5 +55,8 @@ f0 = Primitive("0.", treal, 0)
 real = Primitive("REAL", treal, None)
 fpi = Primitive("pi", treal, 3.14)
 
+def _incr(n): return n + 1
+incr = Primitive("+1", arrow(tint,tint), _incr)
+
 for n in range(2,10):
     Primitive(str(n),tint,n)
