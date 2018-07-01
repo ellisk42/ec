@@ -51,9 +51,7 @@ class VersionTable():
         self.substitutionTable = {}
         self.expression2index = {}
         self.maximumShift = []
-        self.tp = []
         
-        self.bottom = baseType("BOTTOM")
         self.universe = self.incorporate(Primitive("U",t0,None))
         self.empty = self.incorporate(Union([]))
         
@@ -66,122 +64,7 @@ class VersionTable():
         if l.isUnion: return Union(self.intention(e)
                                    for e in l )
         assert False
-            
-    def infer(self,j):
-        assert self.typed
-        if self.tp[j] is not None: return self.tp[j]
-        try:
-            self.tp[j] = tuple(instantiate(Context.EMPTY, *self._infer(j))[1:])            
-        except UnificationFailure:
-            self.tp[j] = self.bottom
-            if False:
-                print("could not infer type for:")
-                for p in self.extract(j):
-                    print(p)
-                for j in range(len(self.expressions)):
-                    print(j)
-                    if j != self.empty:
-                        print(getOne(self.extract(j)))
-                    print(self.tp[j])
-                    print()
-        return self.tp[j]
-    def _infer(self,j):
-        e = self.expressions[j]
-        if e.isPrimitive or e.isInvented:
-            t = e.tp
-            environment = {}
-        elif e.isIndex:
-            t = t0
-            environment = {e.i: t0}
-        elif e.isAbstraction:
-            body = self.infer(e.body)
-            if body == self.bottom: return self.bottom
 
-            be,bt = body
-            context, be, bt = instantiate(Context(), be, bt)
-
-            environment = {n - 1: t.apply(context)
-                           for n,t in be.items()
-                           if n > 0}
-            if 0 in be:
-                argumentType = be[0].apply(context)
-            else:
-                context, argumentType = context.makeVariable()
-
-            t = arrow(argumentType,bt).apply(context)
-
-        elif e.isApplication:
-            k = Context.EMPTY
-
-            functionResult = self.infer(e.f)
-            if functionResult == self.bottom: return self.bottom
-            argumentResult = self.infer(e.x)
-            if argumentResult == self.bottom: return self.bottom
-            k,fe,ft = instantiate(k, *functionResult)
-            k,xe,xt = instantiate(k, *argumentResult)
-
-            k,value = k.makeVariable()
-            k = k.unify(ft,arrow(xt, value))
-
-            environment = dict(fe)
-            for n,nt in xe.items():
-                if n in environment:
-                    k = k.unify(environment[n],nt)
-                else:
-                    environment[n] = nt
-
-            t = value.apply(k)
-            environment = {n: nt.apply(k)
-                           for n,nt in environment.items() }
-
-        elif e.isUnion:
-            k = Context()
-            environments = []
-            ts = []
-            for v in e:
-                elementResult = self.infer(v)
-                if elementResult == self.bottom: continue
-                
-                k,newEnvironment,newType = instantiate(k, *elementResult)
-                environments.append(newEnvironment)
-                ts.append(newType)
-
-            if len(ts) == 0:
-                return {},t0
-
-            try:
-                t = ts[0]
-                for t_ in ts[1:]:
-                    k = k.unify(t,t_)
-                environment = {}
-                for newEnvironment in environments:
-                    for n,nt in newEnvironment.items():
-                        if n in environment:
-                            k = k.unify(environment[n],nt)
-                        else:
-                            environment[n] = nt
-                t = t.apply(k)
-                environment = {n: nt.apply(k)
-                               for n,nt in environment.items() }
-            except UnificationFailure:
-                print("unification failure in union")
-                print(ts)
-                print(environments)
-                print()
-                for n,subspace in enumerate(e):
-                    print(f"the subspace has the type {ts[n]} and environment:\n{environments[n]}")
-                    print("denotation of subspace")
-                    for p in self.extract(subspace):
-                        print(p)
-                    print()
-                assert False
-        else:
-            assert False
-
-        return environment,t
-
-        
-                
                 
     def incorporate(self,p):
         assert isinstance(p,Union) or p.wellTyped()
@@ -207,7 +90,6 @@ class VersionTable():
         self.expressions.append(p)
         self.expression2index[p] = j
         self.recursiveTable.append(None)
-        self.tp.append(None)
         
         return j
 
