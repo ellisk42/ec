@@ -46,7 +46,9 @@ class Class():
         return k
     
 class EquivalenceGraph():
-    def __init__(self):
+    def __init__(self, typed=True):
+        self.typed = typed
+        
         # Map from equivalence class to a set of expressions
         self.classMembers = {}
         # Map from expression to a set of equivalence classes
@@ -69,6 +71,8 @@ class EquivalenceGraph():
     def inferClass(self,k):
         return self.typeOfClass[k]
     def inferExpression(self,l):
+        if not self.typed: return (None,None)
+        
         if l in self.typeOfExpression: return self.typeOfExpression[l]
 
         if l.isIndex: T = ({l.i: t0}, t0)
@@ -80,7 +84,7 @@ class EquivalenceGraph():
             k = Context.EMPTY
             k,be,bt = instantiate(k,be,bt)
             if 0 in be:
-                k,argumentType = be[0]
+                argumentType = be[0]
             else:
                 k,argumentType = k.makeVariable()
 
@@ -112,9 +116,13 @@ class EquivalenceGraph():
                 T = ({n: nt.apply(k)
                       for n,nt in environment.items() },
                      value.apply(k))
-            except UnificationValue: T = None
+            except UnificationFailure: T = None
         else: assert False
 
+        if T is None:
+            self.typeOfExpression[l] = None
+            return None
+        
         _,e,t = instantiate(Context.EMPTY, *T)
         self.typeOfExpression[l] = (frozendict(e),t)
         return e,t
@@ -146,7 +154,7 @@ class EquivalenceGraph():
     def addEdge(self,k,l):
         self.classMembers[k].add(l)
         self.classes[l].add(k)
-        assert self.typeOfClass[k] == self.typeOfExpression[l]
+        assert self.inferClass(k) == self.inferExpression(l)
         if len(self.classes[l]) > 1:
             self.numberOfClasses[l] = len(self.classes[l])
     def deleteEdge(self,k,l):
@@ -173,7 +181,7 @@ class EquivalenceGraph():
         elif l.isAbstraction:
             self.incident[l.body].remove(l)
         del self.classes[l]
-        del self.typeOfExpression[l]
+        if self.typed: del self.typeOfExpression[l]
 
     def rename(self, old, new):
         for refersToOld in list(self.classes[old]):
@@ -187,7 +195,7 @@ class EquivalenceGraph():
         if self.inferExpression(l) is None: return None
         if l not in self.classes: self.classes[l] = set()
         if len(self.classes[l]) == 0:
-            k = self.makeClass(self.typeOfExpression[l])
+            k = self.makeClass(self.inferExpression(l))
             self.addEdge(k,l)
             return k
         return getOne(self.classes[l])
@@ -277,12 +285,15 @@ class EquivalenceGraph():
             for j in range(1,len(ks)):
                 self.makeEquivalent(ks[0],ks[j])
 
-    def minimumCosts(self, given):
+    def minimumCosts(self, given, oldTable=None):
         basicClasses = {k
                         for k,children in self.classMembers.items()
                         if k in given or any( l.isIndex or l.isPrimitive or l.isInvented
                                               for l in children )}
-        table = {k: 1 if k in basicClasses else POSITIVEINFINITY for k in self.classMembers }
+        if oldTable is None:
+            table = {k: 1 if k in basicClasses else POSITIVEINFINITY for k in self.classMembers }
+        else:
+            table = {k: 1 if k in basicClasses else oldTable[k] for k in self.classMembers }
 
         def expressionCost(l):
             if l.isApplication: return table[l.f] + table[l.x]
@@ -359,9 +370,12 @@ class EquivalenceGraph():
             
 
     def bestInvention(self,heads):
+        referenceTable = self.minimumCosts([])
         def score(k):
-            t = self.minimumCosts([k])
-            return sum(t[h] for h in heads )
+            t = self.minimumCosts([k],oldTable=referenceTable)
+            s = sum(t[h] for h in heads )
+            print(s)
+            return s
         candidates = [self.reachable([h])
                       for h in heads ]
         from collections import Counter

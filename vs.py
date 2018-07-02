@@ -44,7 +44,9 @@ class Union(Program):
 class VersionTable():
     def __init__(self, typed=True):
         self.typed = typed
-        self.debug = True
+        self.debug = False
+        if self.debug:
+            print("WARNING: running version spaces in debug mode. Will be substantially slower.")
         
         self.expressions = []
         self.recursiveTable = []
@@ -451,7 +453,7 @@ class VersionTable():
 
     def makeEquivalenceGraph(self,heads,n):
         from eg import EquivalenceGraph
-        g = EquivalenceGraph()
+        g = EquivalenceGraph(typed=False)
         with timing("calculated version spaces"):
             spaces = self.rewriteReachable(heads,n)
         print(f"{len(self.expressions)} distinct version spaces enumerated.")
@@ -518,8 +520,9 @@ if __name__ == "__main__":
     g = v.makeEquivalenceGraph({v.incorporate(p1),
                                 v.incorporate(p2)},
                                N)
-    print(g.bestInvention([g.incorporate(p1),
-                           g.incorporate(p2)]))
+    with timing("invented a new primitive"):
+        print(g.bestInvention([g.incorporate(p1),
+                               g.incorporate(p2)]))
     
     # with timing("calculated table space"):
     #     j = v.rewriteReachable({v.incorporate(p1)},N)
