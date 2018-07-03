@@ -286,47 +286,114 @@ class EquivalenceGraph():
                 self.makeEquivalent(ks[0],ks[j])
 
     def minimumCosts(self, given, oldTable=None):
-        basicClasses = {k
-                        for k,children in self.classMembers.items()
-                        if k in given or any( l.isIndex or l.isPrimitive or l.isInvented
-                                              for l in children )}
         if oldTable is None:
+            basicClasses = {k
+                            for k,children in self.classMembers.items()
+                            if k in given or any( l.isIndex or l.isPrimitive or l.isInvented
+                                                  for l in children )}
             table = {k: 1 if k in basicClasses else POSITIVEINFINITY for k in self.classMembers }
         else:
-            table = {k: 1 if k in basicClasses else oldTable[k] for k in self.classMembers }
+            basicClasses = given
+            table = {g: 1 for g in given}
+
+        def indexTable(k):
+            if k in table: return table[k]
+            return oldTable[k]
 
         def expressionCost(l):
-            if l.isApplication: return table[l.f] + table[l.x]
-            if l.isAbstraction: return table[l.body]
+            if l.isApplication: return indexTable(l.f) + indexTable(l.x)
+            if l.isAbstraction: return indexTable(l.body)
             if l.isPrimitive or l.isInvented: return 1
             if l.isIndex: return 1
             assert False
         def relax(e):
-            old = table[e]
+            old = indexTable(e)
             new = old
             for l in self.classMembers[e]:
                 new = min(expressionCost(l),new)
             return new, new < old
 
-
         q = {getOne(self.classes[i])
              for b in basicClasses
              for i in self.incident[b] }
-
+        numberOfRelaxations = 0
         while True:
             if len(q) == 0:
                 for k in table:
                     _,change = relax(k)
                     assert not changed
+                print(f"Relaxed {numberOfRelaxations}")
                 return table
             
             n = getOne(q)
             q.remove(n)
             new, changed = relax(n)
+            numberOfRelaxations += 1
             if changed:
                 table[n] = new
                 q.update(getOne(self.classes[i])
                          for i in self.incident[n])
+
+    def betaLongCost(self, given, oldTable=None):
+        # table[k] = (functionCost, argumentCost)
+        if oldTable is None:
+            basicClasses = {k
+                            for k,children in self.classMembers.items()
+                            if k in given or any( l.isIndex or l.isPrimitive or l.isInvented
+                                                  for l in children )}
+            table = {k: (1,1) if k in basicClasses else (POSITIVEINFINITY,POSITIVEINFINITY)
+                     for k in self.classMembers }
+        else:
+            basicClasses = given
+            table = {g: (1,1) for g in given}
+
+        def argumentCost(k):
+            if k in table: return table[k][1]
+            return oldTable[k][1]
+        def functionCost(k):
+            if k in table: return table[k][0]
+            return oldTable[k][0]
+
+        def expressionCost(l):
+            if l.isApplication: return functionCost(l.f) + argumentCost(l.x)
+            if l.isAbstraction: return argumentCost(l.body)
+            if l.isPrimitive or l.isInvented: return 1
+            if l.isIndex: return 1
+            assert False
+        def relax(e):
+            ac, fc = argumentCost(e), functionCost(e)
+            new_ac, new_fc = ac, fc
+            for l in self.classMembers[e]:
+                lc = expressionCost(l)
+                new_ac = min(lc,new_ac)
+                if not l.isAbstraction:
+                    new_fc = min(lc,new_fc)
+            return (new_fc,new_ac), new_fc < fc, new_ac < ac
+
+        q = {getOne(self.classes[i])
+             for b in basicClasses
+             for i in self.incident[b] }
+        numberOfRelaxations = 0
+        while True:
+            if len(q) == 0:
+                if False:
+                    for k in table:
+                        _,changeF, changeA = relax(k)
+                        assert not changedF
+                        assert not changedA
+                #print(f"Relaxed {numberOfRelaxations}")
+                return table
+            
+            n = getOne(q)
+            q.remove(n)
+            new, changedF, changedA = relax(n)
+            numberOfRelaxations += 1
+            if changedF or changedA:
+                table[n] = new
+                for i in self.incident[n]:
+                    if (changedF and i.isApplication and i.f == n) or \
+                       (changedA and ((not i.isApplication) or i.x == n)):
+                        q.add(getOne(self.classes[i]))
         
         
     def extract(self,k):
@@ -367,14 +434,16 @@ class EquivalenceGraph():
         for h in heads:
             visit(h)
         return r
-            
+
+    def solveInvention(self,heads):
+        candidates = [self.reachable([h])
+                      for h in heads ]
 
     def bestInvention(self,heads):
-        referenceTable = self.minimumCosts([])
+        referenceTable = self.betaLongCost([])
         def score(k):
-            t = self.minimumCosts([k],oldTable=referenceTable)
-            s = sum(t[h] for h in heads )
-            print(s)
+            t = self.betaLongCost([k], oldTable=referenceTable)
+            s = sum(min(t.get(h,referenceTable[h])) for h in heads )
             return s
         candidates = [self.reachable([h])
                       for h in heads ]

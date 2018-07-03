@@ -42,7 +42,8 @@ class Union(Program):
     def __iter__(self): return iter(self.elements)
 
 class VersionTable():
-    def __init__(self, typed=True):
+    def __init__(self, typed=True, identity=True):
+        self.identity = identity
         self.typed = typed
         self.debug = False
         if self.debug:
@@ -358,7 +359,7 @@ class VersionTable():
         
         t = [self.apply(self.abstract(b),v)
              for v,b in self.substitutions(j)
-             if v != self.universe]
+             if v != self.universe and (self.identity or b != self.index(0))]
         if self.debug and self.typed:
             ru = self.union(t)
             if not (self.infer(ru) == self.infer(j)):
@@ -515,7 +516,7 @@ if __name__ == "__main__":
     N=3
     
 
-    v = VersionTable(typed=False)
+    v = VersionTable(typed=False, identity=True)
     v.incorporate(p1)
     g = v.makeEquivalenceGraph({v.incorporate(p1),
                                 v.incorporate(p2)},
