@@ -1,9 +1,8 @@
-from ec import explorationCompression, commandlineArguments
+from ec import commandlineArguments, ecIterator
 from grammar import Grammar
-from utilities import eprint, testTrainSplit, numberOfCPUs
+from utilities import eprint, numberOfCPUs  # testTrainSplit
 from makeGeomTasks import makeTasks
 from geomPrimitives import primitives, tcanvas
-from math import log
 from collections import OrderedDict
 from program import Program
 from task import Task
@@ -11,7 +10,6 @@ from task import Task
 import random as random
 import json
 import torch
-import png
 import time
 import subprocess
 import os
@@ -34,12 +32,12 @@ class GeomFeatureCNN(nn.Module):
 
         self.outputDimensionality = H
 
-        self.pad   = nn.ConstantPad2d(2,0)
+        self.pad = nn.ConstantPad2d(2, 0)
         self.conv1 = nn.Conv2d(1, 6, 5)
         self.conv2 = nn.Conv2d(6, 16, 5)
-        self.fc1   = nn.Linear(16*5*5, 120)
-        self.fc2   = nn.Linear(120, 84)
-        self.fc3   = nn.Linear(84, H)
+        self.fc1 = nn.Linear(16*5*5, 120)
+        self.fc2 = nn.Linear(120, 84)
+        self.fc3 = nn.Linear(84, H)
 
     def forward(self, v):
         x = 28
@@ -62,53 +60,42 @@ class GeomFeatureCNN(nn.Module):
         out = torch.squeeze(out)
         return out
 
-    def featuresOfTask(self, t):  # Take a task and returns [features]
+    def featuresOfTask(self, t):
         return self(t.examples[0][1])
 
-    def taskOfProgram(self, p, t):  # Won't fix for geom
-        if not os.path.exists(self.sub):
-            os.makedirs(self.sub)
+    def taskOfProgram(self, p, t):
         try:
-            randomStr = ''.join(random.choice('0123456789') for _ in range(5))
-            fname = self.sub + "/" + randomStr
-            evaluated = p.evaluate([])
-            with open(fname + ".dream", "w") as f:
-                f.write(str(p))
-            with open(fname + ".LoG", "w") as f:
-                f.write(evaluated)
             output = subprocess.check_output(['./geomDrawLambdaString',
-                                              fname + ".png",
-                                              evaluated]).decode("utf8")
-        except OSError as exc:
-            raise exc
-        try:
+                                              "none",
+                                              p.evaluate([])]).decode("utf8")
             shape = list(map(float, output.split(',')))
             task = Task("Helm", t, [((), shape)])
             return task
         except ValueError:
             return None
+        except OSError as exc:
+            raise exc
 
-    def renderProgram(self, p, t):  # Won't fix for geom
+    def renderProgram(self, p, t):
         if not os.path.exists(self.sub):
             os.makedirs(self.sub)
         try:
             randomStr = ''.join(random.choice('0123456789') for _ in range(5))
             fname = self.sub + "/" + randomStr
             evaluated = p.evaluate([])
-            with open(fname + ".dream", "w") as f:
-                f.write(str(p))
-            with open(fname + ".LoG", "w") as f:
-                f.write(evaluated)
-            output = subprocess.check_output(['./geomDrawLambdaString',
-                                              fname + ".png",
-                                              evaluated]).decode("utf8")
-        except OSError as exc:
-            raise exc
-        try:
-            shape = list(map(float, output.split(',')))
-            return shape
+            subprocess.check_output(['./geomDrawLambdaString',
+                                     fname + ".png",
+                                     evaluated]).decode("utf8")
+            if os.path.isfile(fname + ".png"):
+                with open(fname + ".dream", "w") as f:
+                    f.write(str(p))
+                with open(fname + ".LoG", "w") as f:
+                    f.write(evaluated)
+            return None
         except ValueError:
             return None
+        except OSError as exc:
+            raise exc
 
 
 def list_options(parser):
@@ -132,13 +119,13 @@ if __name__ == "__main__":
     args = commandlineArguments(
         steps=1000,
         a=3,
-        topK=5,
+        topK=3,
         iterations=10,
         useRecognitionModel=True,
         helmholtzRatio=0.5,
         helmholtzBatch=500,
         featureExtractor=GeomFeatureCNN,
-        maximumFrontier=1000,
+        maximumFrontier=200,
         CPUs=numberOfCPUs(),
         pseudoCounts=10.0,
         activation="tanh",
@@ -183,17 +170,26 @@ if __name__ == "__main__":
     eprint(baseGrammar)
 
     fe = GeomFeatureCNN(tasks)
-
-    for x in range(0, 500):
-        program = baseGrammar.sample(tcanvas, maximumDepth=12)
+    for x in range(0, 1000):
+        program = baseGrammar.sample(tcanvas, maximumDepth=200)
         features = fe.renderProgram(program, tcanvas)
 
-    r = explorationCompression(baseGrammar, train,
-                               testingTasks=test,
-                               outputPrefix=prefix_pickles,
-                               compressor="rust",
-                               evaluationTimeout=0.01,
-                               **args)
+    generator = ecIterator(baseGrammar, train,
+                           testingTasks=test,
+                           outputPrefix=prefix_pickles,
+                           compressor="rust",
+                           evaluationTimeout=0.01,
+                           **args)
+
+    r = None
+    for result in generator:
+        fe = GeomFeatureCNN(tasks)
+        for x in range(0, 1000):
+            program = result.grammars[-1].sample(tcanvas, maximumDepth=200)
+            features = fe.renderProgram(program, tcanvas)
+        iteration = len(result.learningCurve)
+        r = result
+
     needsExport = [str(z)
                    for _, _, z
                    in r.grammars[-1].productions

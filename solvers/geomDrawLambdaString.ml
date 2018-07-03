@@ -50,8 +50,9 @@ let _ =
             let l  = Plumbing.canvas_to_tlist 28 c  in
             if (l = empty28) then ()
             else begin
-              Renderer.output_canvas_png c 512 output_img ;
-              npp l ;
+              if not (output_img = "none") then
+                Renderer.output_canvas_png c 512 output_img
+              else npp l ;
               print_newline ()
             end
           with Interpreter.MalformedProgram _ ->
