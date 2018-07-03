@@ -322,16 +322,16 @@ def solveForTask_ocaml(_=None,
         # Remove all entries that do not type correctly
         # This can occur because the solver tries to infer the type
         # Sometimes it infers a type that is too general
-        badPrograms = [
-            r["program"] for r in solutions if not Program.parse(
-                r["program"]).canHaveType(
-                t.request)]
-        for b in badPrograms:
-            eprint("Bad program", b, ':', t.request)
-        solutions = [
-            r for r in solutions if Program.parse(
-                r["program"]).canHaveType(
-                t.request)]
+        # badPrograms = [
+            # r["program"] for r in solutions if not Program.parse(
+                # r["program"]).canHaveType(
+                # t.request)]
+        # for b in badPrograms:
+            # eprint("Bad program", b, ':', t.request)
+        # solutions = [
+            # r for r in solutions if Program.parse(
+                # r["program"]).canHaveType(
+                # t.request)]
 
         # FIXME:
         # I have no idea why this bug occurs but sometimes the ocaml backend returns the wrong likelihood for programs with real numbers
