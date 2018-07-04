@@ -511,6 +511,13 @@ let logo_S2L = primitive "logo_S2L" (tscalar @> tlength) (fun i -> i)
 
 let logo_IFTY = primitive "logo_IFTY" (tint) (20)
 
+let logo_IFTY = primitive "eps" (tscalar) (0.05)
+let logo_IFTY = primitive "line"
+                          (turtle)
+                          (LogoLib.LogoInterpreter.logo_SEQ
+                            (LogoLib.LogoInterpreter.logo_FW 1.)
+                            (LogoLib.LogoInterpreter.logo_RT 0.))
+
 let logo_DIVS = primitive "logo_DIVS" (tscalar @> tscalar @> tscalar) ( /. )
 let logo_MULS = primitive "logo_MULS" (tscalar @> tscalar @> tscalar) ( *. )
 

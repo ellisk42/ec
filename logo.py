@@ -1,9 +1,8 @@
-from ec import explorationCompression, commandlineArguments
+from ec import ecIterator, commandlineArguments
 from grammar import Grammar
 from utilities import eprint, testTrainSplit, numberOfCPUs
 from makeLogoTasks import makeTasks
 from logoPrimitives import primitives, turtle
-from math import log
 from collections import OrderedDict
 from program import Program
 from task import Task
@@ -11,7 +10,6 @@ from task import Task
 import random as random
 import json
 import torch
-import png
 import time
 import subprocess
 import os
@@ -28,17 +26,16 @@ class LogoFeatureCNN(nn.Module):
     def __init__(self, tasks, cuda=False, H=10):
         super(LogoFeatureCNN, self).__init__()
 
-        self.mean = [0] * (256 * 256)
         self.sub = prefix_dreams + str(int(time.time()))
 
         self.outputDimensionality = H
 
-        self.pad   = nn.ConstantPad2d(2,0)
+        self.pad = nn.ConstantPad2d(2, 0)
         self.conv1 = nn.Conv2d(1, 6, 5)
         self.conv2 = nn.Conv2d(6, 16, 5)
-        self.fc1   = nn.Linear(16*5*5, 120)
-        self.fc2   = nn.Linear(120, 84)
-        self.fc3   = nn.Linear(84, H)
+        self.fc1 = nn.Linear(16*5*5, 120)
+        self.fc2 = nn.Linear(120, 84)
+        self.fc3 = nn.Linear(84, H)
 
     def forward(self, v):
         x = 28
@@ -65,29 +62,48 @@ class LogoFeatureCNN(nn.Module):
         return self(t.examples[0][1])
 
     def taskOfProgram(self, p, t):
+        try:
+            output = subprocess.check_output(['./logoDrawString',
+                                              '0',
+                                              "none",
+                                              '28',
+                                              str(p)],
+                                             timeout=1).decode("utf8")
+            shape = list(map(float, output.split(',')))
+            return Task("Helm", t, [((), shape)])
+        except subprocess.TimeoutExpired:
+            return None
+        except ValueError:
+            return None
+        except OSError as exc:
+            raise exc
+
+    def renderProgram(self, p, t):
         if not os.path.exists(self.sub):
             os.makedirs(self.sub)
         try:
             randomStr = ''.join(random.choice('0123456789') for _ in range(10))
             fname = self.sub + "/" + randomStr
-            try:
-                output = subprocess.check_output(['./logoDrawString',
-                                                  '512',
-                                                  fname + ".png",
-                                                  '28',
-                                                  str(p)],
-                                                  timeout=1).decode("utf8")
-                if (len(output) > 0):
-                    shape = list(map(float, output.split(',')))
-                    with open(fname + ".dream", "w") as f:
-                        f.write(str(p))
-                    return Task("Helm", t, [((), shape)])
-                else:
-                    return None
-            except subprocess.TimeoutExpired:
-                return None
+            evaluated = p.evaluate([])
+            subprocess.check_output(['./logoDrawString',
+                                     '512',
+                                     fname + ".png",
+                                     '0',
+                                     str(evaluated)],
+                                    timeout=1).decode("utf8")
+            if os.path.isfile(fname + ".png"):
+                with open(fname + ".dream", "w") as f:
+                    f.write(str(p))
+                with open(fname + ".LOGO", "w") as f:
+                    f.write(evaluated)
+            return None
+        except subprocess.TimeoutExpired:
+            return None
+        except ValueError:
+            return None
         except OSError as exc:
             raise exc
+
 
 def list_options(parser):
     parser.add_argument("--target", type=str,
@@ -110,13 +126,13 @@ if __name__ == "__main__":
     args = commandlineArguments(
         steps=1000,
         a=3,
-        topK=5,
+        topK=3,
         iterations=10,
         useRecognitionModel=True,
         helmholtzRatio=0.5,
         helmholtzBatch=500,
         featureExtractor=LogoFeatureCNN,
-        maximumFrontier=1000,
+        maximumFrontier=50,
         CPUs=numberOfCPUs(),
         pseudoCounts=10.0,
         activation="tanh",
@@ -125,7 +141,7 @@ if __name__ == "__main__":
     red = args.pop("reduce")
     save = args.pop("save")
     prefix = args.pop("prefix")
-    prefix_dreams = prefix + "dreams/" + ('_'.join(target)) + "/"
+    prefix_dreams = prefix + "/dreams/" + ('_'.join(target)) + "/"
     prefix_pickles = prefix + "/pickles/" + ('_'.join(target)) + "/"
     if not os.path.exists(prefix_dreams):
         os.makedirs(prefix_dreams)
@@ -158,12 +174,27 @@ if __name__ == "__main__":
 
     eprint(baseGrammar)
 
-    r = explorationCompression(baseGrammar, train,
-                               testingTasks=test,
-                               outputPrefix=prefix_pickles,
-                               compressor="rust",
-                               evaluationTimeout=0.01,
-                               **args)
+    fe = LogoFeatureCNN(tasks)
+    for x in range(0, 100):
+        program = baseGrammar.sample(turtle, maximumDepth=20)
+        features = fe.renderProgram(program, turtle)
+
+    generator = ecIterator(baseGrammar, train,
+                           testingTasks=test,
+                           outputPrefix=prefix_pickles,
+                           compressor="rust",
+                           evaluationTimeout=0.01,
+                           **args)
+
+    r = None
+    for result in generator:
+        fe = LogoFeatureCNN(tasks)
+        for x in range(0, 1000):
+            program = result.grammars[-1].sample(turtle, maximumDepth=200)
+            features = fe.renderProgram(program, turtle)
+        iteration = len(result.learningCurve)
+        r = result
+
     needsExport = [str(z)
                    for _, _, z
                    in r.grammars[-1].productions

@@ -20,8 +20,6 @@ from recognition import variable
 
 global prefix_dreams
 
-# : Task -> feature list
-
 
 class GeomFeatureCNN(nn.Module):
 
@@ -67,6 +65,7 @@ class GeomFeatureCNN(nn.Module):
         try:
             output = subprocess.check_output(['./geomDrawLambdaString',
                                               "none",
+                                              "nonoise",
                                               p.evaluate([])]).decode("utf8")
             shape = list(map(float, output.split(',')))
             task = Task("Helm", t, [((), shape)])
@@ -80,11 +79,12 @@ class GeomFeatureCNN(nn.Module):
         if not os.path.exists(self.sub):
             os.makedirs(self.sub)
         try:
-            randomStr = ''.join(random.choice('0123456789') for _ in range(5))
+            randomStr = ''.join(random.choice('0123456789') for _ in range(10))
             fname = self.sub + "/" + randomStr
             evaluated = p.evaluate([])
             subprocess.check_output(['./geomDrawLambdaString',
                                      fname + ".png",
+                                     "nonoise",
                                      evaluated]).decode("utf8")
             if os.path.isfile(fname + ".png"):
                 with open(fname + ".dream", "w") as f:

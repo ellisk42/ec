@@ -17,25 +17,23 @@ let _ =
   and fname    = Sys.argv.(2)
   and size     = int_of_string (Sys.argv.(3))
   and str      = Sys.argv.(4) in
-  let b0 = Bigarray.(Array1.create int8_unsigned c_layout (size*size)) in
+  let b0 = Bigarray.(Array1.create int8_unsigned c_layout (8*8)) in
   Bigarray.Array1.fill b0 0 ;
   try
     match parse_program str with
       | Some(p) ->
           let p = analyze_lazy_evaluation p in
           let turtle = run_lazy_analyzed_with_arguments p [] in
-          (*pp_turtle turtle ;*)
           let c = (eval_turtle turtle) in
           let c' = (eval_normal_turtle turtle) in
-          (*prerr_endline (Vg.P.to_string c) ;*)
-          let bx = canvas_to_1Darray c size in
-          if bx = b0 then (*prerr_endline "emptyDrawing"*) ()
+          let bx = canvas_to_1Darray c 8 in
+          if bx = b0 then ()
           else begin
-            output_canvas_png c sizeFile (fname^".png") ;
-            output_canvas_png c' sizeFile (fname^"_norm.png") ;
-            npp (canvas_to_1Darray c size)
+            if sizeFile > 0 then begin
+              output_canvas_png c sizeFile (fname^".png") ;
+              output_canvas_png c' sizeFile (fname^"_norm.png")
+            end ;
+            if size > 0 then npp (canvas_to_1Darray c size)
           end
       | _ -> ()
-          (*(prerr_endline "Could not parse")*)
     with Invalid_argument _ | Failure _ | Stack_overflow -> ()
-      (*(prerr_endline "other error")*)

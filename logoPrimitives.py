@@ -9,47 +9,47 @@ tlength = baseType("tlength")
 tscalar = baseType("tscalar")
 
 def _logo_I2S(x):
-    return str(float(x))
+    return float(x)
 def _logo_S2A(x):
-    return str(x)
+    return x
 def _logo_S2L(x):
-    return str(x)
+    return x
 
 def _logo_var_divs(v1):
-    return lambda v2: str(v1/v2)
+    return lambda v2: v1/v2
 def _logo_var_muls(v1):
-    return lambda v2: str(v1*v2)
+    return lambda v2: v1*v2
 
 def _logo_var_diva(v1):
-    return lambda v2: str(v1/v2)
+    return lambda v2: v1/v2
 def _logo_var_mula(v1):
-    return lambda v2: str(v1*v2)
+    return lambda v2: v1*v2
 def _logo_var_divl(v1):
-    return lambda v2: str(v1/v2)
+    return lambda v2: v1/v2
 def _logo_var_mull(v1):
-    return lambda v2: str(v1*v2)
+    return lambda v2: v1*v2
 
 def _logo_var_adda(v1):
-    return lambda v2: str(v1+v2)
+    return lambda v2: v1+v2
 def _logo_var_suba(v1):
-    return lambda v2: str(v1-v2)
+    return lambda v2: v1-v2
 def _logo_var_addl(v1):
-    return lambda v2: str(v1+v2)
+    return lambda v2: v1+v2
 def _logo_var_subl(v1):
-    return lambda v2: str(v1-v2)
+    return lambda v2: v1-v2
 
 def _logo_fw(x):
-    return "(logo_FW " + x + ")"
+    return "(logo_FW " + str(x) + ")"
 def _logo_rt(x):
-    return "(logo_RT " + x + ")"
+    return "(logo_RT " + str(x) + ")"
 def _logo_fwrt(v1):
-    return lambda v2: "(logo_FWRT " + v1 + " " + v2 + ")"
+    return lambda v2: "(logo_FWRT " + str(v1) + " " + str(v2) + ")"
 def _logo_set(x):
     return "(logo_SET " + x + ")"
 def _logo_seq(v):
-    return lambda v2: "(logo_SEQ " + v + " " + v2 + ")"
+    return lambda v2: "(logo_SEQ " + str(v) + " " + str(v2) + ")"
 def _logo_get(v):
-    return lambda v2: "(logo_GET " + v + " " + v2 + ")"
+    return lambda v2: "(logo_GET " + str(v) + " " + str(v2) + ")"
 
 # def _logo_cheat(x):
     # return "(logo_CHEAT " + x + ")"
@@ -68,10 +68,10 @@ primitives = [
     Primitive("logo_DIVS",  arrow(tscalar,tscalar,tscalar), _logo_var_divs),
     Primitive("logo_MULS",  arrow(tscalar,tscalar,tscalar), _logo_var_muls),
 
-    Primitive("logo_DIVA",  arrow(tangle,tscalar,tangle), _logo_var_diva),
-    Primitive("logo_MULA",  arrow(tangle,tscalar,tangle), _logo_var_mula),
-    Primitive("logo_DIVL",  arrow(tlength,tscalar,tlength), _logo_var_divl),
-    Primitive("logo_MULL",  arrow(tlength,tscalar,tlength), _logo_var_mull),
+    # Primitive("logo_DIVA",  arrow(tangle,tscalar,tangle), _logo_var_diva),
+    # Primitive("logo_MULA",  arrow(tangle,tscalar,tangle), _logo_var_mula),
+    # Primitive("logo_DIVL",  arrow(tlength,tscalar,tlength), _logo_var_divl),
+    # Primitive("logo_MULL",  arrow(tlength,tscalar,tlength), _logo_var_mull),
 
     Primitive("logo_ADDA",  arrow(tangle,tangle,tangle), _logo_var_adda),
     Primitive("logo_SUBA",  arrow(tangle,tangle,tangle), _logo_var_suba),
@@ -99,6 +99,8 @@ primitives = [
     Primitive("+", arrow(tint, tint, tint), _addition),
     Primitive("-", arrow(tint, tint, tint), _subtraction),
     Primitive("20", tint, 20),
+    Primitive("eps", tscalar, 0.05),
+    Primitive("line", turtle, "line"),
 ] + [Primitive(str(j), tint, j) for j in range(7)]
 
 # if __name__ == "__main__":
