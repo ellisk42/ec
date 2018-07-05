@@ -71,7 +71,7 @@ class LogoFeatureCNN(nn.Module):
                                               str(p)],
                                              timeout=1).decode("utf8")
             shape = list(map(float, output.split(',')))
-            return Task("Helm", t, [((), shape)])
+            return Task("Helm", t, [(([0]), shape)])
         except subprocess.TimeoutExpired:
             return None
         except ValueError:
@@ -85,20 +85,15 @@ class LogoFeatureCNN(nn.Module):
         try:
             randomStr = ''.join(random.choice('0123456789') for _ in range(10))
             fname = self.sub + "/" + randomStr
-            evaluated = p.evaluate(["$0"])
-            print(evaluated)
-            assert(False)
             subprocess.check_output(['./logoDrawString',
                                      '512',
-                                     fname + ".png",
+                                     fname,
                                      '0',
                                      str(p)],
                                     timeout=1).decode("utf8")
             if os.path.isfile(fname + ".png"):
                 with open(fname + ".dream", "w") as f:
                     f.write(str(p))
-                with open(fname + ".LOGO", "w") as f:
-                    f.write(evaluated)
             return None
         except subprocess.TimeoutExpired:
             return None
@@ -127,7 +122,7 @@ def list_options(parser):
 
 if __name__ == "__main__":
     args = commandlineArguments(
-        steps=1000,
+        steps=100,
         a=3,
         topK=3,
         iterations=10,
@@ -135,7 +130,7 @@ if __name__ == "__main__":
         helmholtzRatio=0.5,
         helmholtzBatch=500,
         featureExtractor=LogoFeatureCNN,
-        maximumFrontier=50,
+        maximumFrontier=30,
         CPUs=numberOfCPUs(),
         pseudoCounts=10.0,
         activation="tanh",
@@ -179,8 +174,8 @@ if __name__ == "__main__":
 
     fe = LogoFeatureCNN(tasks)
     for x in range(0, 100):
-        program = baseGrammar.sample(arrow(turtle,turtle), maximumDepth=20)
-        features = fe.renderProgram(program, arrow(turtle,turtle))
+        program = baseGrammar.sample(arrow(turtle, turtle), maximumDepth=20)
+        features = fe.renderProgram(program, arrow(turtle, turtle))
 
     generator = ecIterator(baseGrammar, train,
                            testingTasks=test,
@@ -191,10 +186,12 @@ if __name__ == "__main__":
 
     r = None
     for result in generator:
+        print("WILL DREAM:")
         fe = LogoFeatureCNN(tasks)
-        for x in range(0, 1000):
-            program = result.grammars[-1].sample(arrow(turtle,turtle), maximumDepth=200)
-            features = fe.renderProgram(program, arrow(turtle,turtle))
+        for x in range(0, 500):
+            program = result.grammars[-1].sample(arrow(turtle, turtle),
+                                                 maximumDepth=200)
+            features = fe.renderProgram(program, arrow(turtle, turtle))
         iteration = len(result.learningCurve)
         r = result
 

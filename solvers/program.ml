@@ -311,7 +311,7 @@ let primitive6 = primitive "6" tint 6;;
 let primitive7 = primitive "7" tint 7;;
 let primitive8 = primitive "8" tint 8;;
 let primitive9 = primitive "9" tint 9;;
-let primitive20 = primitive "20" tint 20;;
+let primitive20 = primitive "ifty" tint 20;;
 let primitive_addition = primitive "+" (tint @> tint @> tint) (fun x y -> x + y);;
 let primitive_increment = primitive "incr" (tint @> tint) (fun x -> 1+x);;
 let primitive_decrement = primitive "decr" (tint @> tint) (fun x -> x - 1);;
@@ -491,8 +491,6 @@ let var_name         = primitive "var_name" tvar GeomLib.Plumbing.var_name
 let logo_RT  = primitive "logo_RT"             (tangle @> turtle) LogoLib.LogoInterpreter.logo_RT
 let logo_FW  = primitive "logo_FW"             (tlength @> turtle) LogoLib.LogoInterpreter.logo_FW
 let logo_SEQ = primitive "logo_SEQ" (turtle @> turtle @> turtle) LogoLib.LogoInterpreter.logo_SEQ
-let logo_GET = primitive "logo_GET" (tstate @> turtle @> turtle) LogoLib.LogoInterpreter.logo_GET
-let logo_SET = primitive "logo_SET"           (tstate @> turtle) LogoLib.LogoInterpreter.logo_SET
 let logo_NOP = primitive "logo_NOP"                     (turtle) LogoLib.LogoInterpreter.logo_NOP
 
 let logo_FW  = primitive "logo_FWRT"
@@ -516,6 +514,22 @@ let logo_PD  = primitive "logo_PD"
                            LogoLib.LogoInterpreter.logo_SEQ
                              LogoLib.LogoInterpreter.logo_PD
                              x)
+
+(*let logo_GET = primitive "logo_GET"*)
+                         (*(tstate @> turtle @> turtle @> turtle)*)
+                         (*(fun f t ->*)
+                           (*LogoLib.LogoInterpreter.logo_SEQ*)
+                              (*(LogoLib.LogoInterpreter.logo_GET f)*)
+                              (*t)*)
+let logo_GET = primitive "logo_GET"
+                         (tstate @> turtle @> turtle)
+                         (fun f -> (LogoLib.LogoInterpreter.logo_GET f))
+let logo_SET = primitive "logo_SET"
+                         (tstate @> turtle @> turtle)
+                         (fun s -> fun z ->
+                           LogoLib.LogoInterpreter.logo_SEQ
+                            (LogoLib.LogoInterpreter.logo_SET s)
+                            z)
 
 
 let logo_I2S = primitive "logo_I2S" (tint @> tscalar) (fun i -> float_of_int i)
@@ -547,6 +561,9 @@ let logo_SUBA = primitive "logo_SUBA" (tangle @> tangle @> tangle) ( -. )
 let logo_ADDL = primitive "logo_ADDL" (tlength @> tlength @> tlength) ( +. )
 let logo_SUBL = primitive "logo_SUBL" (tlength @> tlength @> tlength) ( -. )
 
+let _ = primitive "logo_forLoop"
+                   (tint @> (tint @> turtle @> turtle) @> turtle @> turtle)
+                   (fun i f z -> List.fold_right (0 -- (i-1)) ~f ~init:z)
 
 (*let logo_CHEAT  = primitive "logo_CHEAT"             (ttvar @> turtle) LogoLib.LogoInterpreter.logo_CHEAT*)
 (*let logo_CHEAT2  = primitive "logo_CHEAT2"             (ttvar @> turtle) LogoLib.LogoInterpreter.logo_CHEAT2*)

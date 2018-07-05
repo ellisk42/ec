@@ -70,7 +70,7 @@ primitives = [
     # Primitive("logo_DIVS",  arrow(tscalar,tscalar,tscalar), _logo_var_divs),
     # Primitive("logo_MULS",  arrow(tscalar,tscalar,tscalar), _logo_var_muls),
 
-    # Primitive("logo_DIVA",  arrow(tangle,tscalar,tangle), _logo_var_diva),
+    Primitive("logo_DIVA",  arrow(tangle,tscalar,tangle), _logo_var_diva),
     # Primitive("logo_MULA",  arrow(tangle,tscalar,tangle), _logo_var_mula),
     # Primitive("logo_DIVL",  arrow(tlength,tscalar,tlength), _logo_var_divl),
     # Primitive("logo_MULL",  arrow(tlength,tscalar,tlength), _logo_var_mull),
@@ -86,26 +86,25 @@ primitives = [
     # Primitive("logo_FW",  arrow(tlength,turtle), _logo_fw),
     # Primitive("logo_RT",  arrow(tangle,turtle), _logo_rt),
     Primitive("logo_FWRT",  arrow(tlength,tangle,turtle,turtle), _logo_fwrt),
-    # Primitive("logo_SET",  arrow(tstate,turtle), _logo_set),
+    Primitive("logo_SET",  arrow(tstate,turtle,turtle), _logo_set),
     # Primitive("logo_SEQ",  arrow(turtle,turtle,turtle), _logo_seq),
-    # Primitive("logo_GET",  arrow(arrow(tstate,turtle),turtle), _logo_get)
+    Primitive("logo_GET",  arrow(arrow(tstate,turtle),turtle), _logo_get)
+    # Primitive("logo_GET",  arrow(arrow(tstate,turtle),turtle,turtle), _logo_get)
 
     # Primitive("logo_CHEAT",  arrow(ttvar,turtle), _logo_cheat),
     # Primitive("logo_CHEAT2",  arrow(ttvar,turtle), _logo_cheat),
     # Primitive("logo_CHEAT3",  arrow(ttvar,turtle), _logo_cheat),
     # Primitive("logo_CHEAT4",  arrow(ttvar,turtle), _logo_cheat),
 ] + [
-    # Primitive("map", arrow(arrow(t0, t1), tlist(t0), tlist(t1)), _map),
-    Primitive("range", arrow(tint, tlist(tint)), _range),
-    Primitive("fold", arrow(tlist(t0), t1, arrow(t0, t1, t1), t1), _fold),
-    # Primitive("+", arrow(tint, tint, tint), _addition),
-    # Primitive("-", arrow(tint, tint, tint), _subtraction),
-    Primitive("20", tint, 20),
-    # Primitive("eps", tscalar, 0.05),
+    Primitive("ifty", tint, 20),
+    Primitive("eps", tscalar, 0.05),
     Primitive("line", arrow(turtle, turtle), _logo_line),
+    Primitive("logo_forLoop", arrow(tint, arrow(tint, turtle, turtle), turtle, turtle), "ERROR: python has no way of expressing this hence you shouldn't eval on this"),
 ] + [Primitive(str(j), tint, j) for j in range(7)]
 
 if __name__ == "__main__":
-    x = Program.parse("(lambda (fold (range 20) $0 (lambda (lambda (line (logo_FWRT (logo_S2L (logo_I2S $1)) (logo_S2A (logo_I2S 1)) $0))))))")
+    x = Program.parse("(lambda (fold #(range 20) $0 (lambda (lambda (line (logo_FWRT (logo_S2L (eps)) (logo_S2A (eps)) $0))))))")
     print(x)
-    print((x.evaluate([])("$0")))
+
+
+expr_s = "(lambda (lambda (lambda (fold (range $1) $0 (lambda (lambda ($4 $1 $0)))))))"

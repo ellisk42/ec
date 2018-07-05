@@ -158,7 +158,7 @@ let logo_PD : turtle =
   fun s -> ([PD], {s with p = true})
 
 let logo_RT : float -> turtle =
-  fun angle -> fun s -> ([RT(angle*.1.570796326795)], {s with t = s.t +. angle})
+  fun angle -> fun s -> ([RT(angle *. 4. *. atan(1.))], {s with t = s.t +. angle})
 
 let logo_FW : float -> turtle =
   fun length  ->
@@ -178,7 +178,7 @@ let logo_GET : (state -> turtle) -> turtle =
     fun s ->
       f s s
 
-let logo_SET : (state -> turtle) = fun s -> fun _ -> ([SET({s with t=s.t*.1.570796326795})], s)
+let logo_SET : (state -> turtle) = fun s -> fun _ -> ([SET({s with t=s.t *. 4. *. atan(1.)})], s)
 
 (*let logo_CHEAT : float -> turtle =*)
   (*fun length ->*)

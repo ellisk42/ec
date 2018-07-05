@@ -26,7 +26,8 @@ PREDUCE=0
 TREDUCE=0
 PROGRAM=""
 FOLDER="$(date '+%d-%m-%Y_%H:%M')"
-PREFIX="/om/scratch/$(date +"%a")/mathsm/$FOLDER"
+#PREFIX="/om2/scratch/$(date +"%a")/mathsm/$FOLDER"
+PREFIX="/tmp/$FOLDER"
 
 # Print the program help information.
 _print_help() {
