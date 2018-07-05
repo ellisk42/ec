@@ -6,6 +6,7 @@ from logoPrimitives import primitives, turtle
 from collections import OrderedDict
 from program import Program
 from task import Task
+from type import arrow
 
 import random as random
 import json
@@ -84,12 +85,14 @@ class LogoFeatureCNN(nn.Module):
         try:
             randomStr = ''.join(random.choice('0123456789') for _ in range(10))
             fname = self.sub + "/" + randomStr
-            evaluated = p.evaluate([])
+            evaluated = p.evaluate(["$0"])
+            print(evaluated)
+            assert(False)
             subprocess.check_output(['./logoDrawString',
                                      '512',
                                      fname + ".png",
                                      '0',
-                                     str(evaluated)],
+                                     str(p)],
                                     timeout=1).decode("utf8")
             if os.path.isfile(fname + ".png"):
                 with open(fname + ".dream", "w") as f:
@@ -176,8 +179,8 @@ if __name__ == "__main__":
 
     fe = LogoFeatureCNN(tasks)
     for x in range(0, 100):
-        program = baseGrammar.sample(turtle, maximumDepth=20)
-        features = fe.renderProgram(program, turtle)
+        program = baseGrammar.sample(arrow(turtle,turtle), maximumDepth=20)
+        features = fe.renderProgram(program, arrow(turtle,turtle))
 
     generator = ecIterator(baseGrammar, train,
                            testingTasks=test,
@@ -190,8 +193,8 @@ if __name__ == "__main__":
     for result in generator:
         fe = LogoFeatureCNN(tasks)
         for x in range(0, 1000):
-            program = result.grammars[-1].sample(turtle, maximumDepth=200)
-            features = fe.renderProgram(program, turtle)
+            program = result.grammars[-1].sample(arrow(turtle,turtle), maximumDepth=200)
+            features = fe.renderProgram(program, arrow(turtle,turtle))
         iteration = len(result.learningCurve)
         r = result
 

@@ -51,10 +51,10 @@ let supervised_task ?timeout:(timeout = 0.001) name ty examples =
 
 let turtle_task ?timeout:(timeout = 0.001) name ty examples =
   let by, by' = match examples with
-      | [([],y)] ->
+      | [([0],y)] ->
           (Bigarray.(Array1.of_array int8_unsigned c_layout (Array.of_list y)),
            None)
-      | [([],y) ; ([],y')] ->
+      | [([0],y) ; ([0],y')] ->
           (Bigarray.(Array1.of_array int8_unsigned c_layout (Array.of_list y)),
           Some(Bigarray.(Array1.of_array int8_unsigned c_layout (Array.of_list
           y'))))
@@ -64,6 +64,7 @@ let turtle_task ?timeout:(timeout = 0.001) name ty examples =
     task_type = ty ;
     log_likelihood =
       (fun p ->
+        (*prerr_endline (string_of_program p) ;*)
         let p = analyze_lazy_evaluation p in
         (try begin
           match
@@ -71,6 +72,7 @@ let turtle_task ?timeout:(timeout = 0.001) name ty examples =
               timeout
               (fun () ->
                 let x = run_lazy_analyzed_with_arguments p [] in
+                (*(LogoLib.LogoInterpreter.pp_turtle x) ;*)
                 let l = LogoLib.LogoInterpreter.turtle_to_list x in
                 let bx,bx' =
                     match Hashtbl.Poly.find p2i l with
@@ -84,7 +86,8 @@ let turtle_task ?timeout:(timeout = 0.001) name ty examples =
                 match by' with
                 | None -> if bx = by then 0.0 else log 0.0
                 | Some(by') ->
-                    if bx = by then 0.0
+                    (*if bx = by then (prerr_endline "=====hit=====" ; 0.0)*)
+                    if bx = by then (0.0)
                     else -. (LogoLib.LogoInterpreter.distance bx' by'))
           with
             | Some(x) -> x

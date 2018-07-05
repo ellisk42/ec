@@ -128,7 +128,7 @@ let load_problems channel =
       in
 
       let task_type = if is_some tower_stuff then ttower else task_type in
-      let is_turtle_task = task_type = make_ground "turtle" in
+      let is_turtle_task = task_type = make_ground "turtle" @> make_ground "turtle" in
 
       let task = 
         (match tower_stuff with

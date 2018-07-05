@@ -1,6 +1,7 @@
 # coding: utf8
 
 from task import Task
+from type import arrow
 from logoPrimitives import turtle
 import png
 import os
@@ -60,10 +61,10 @@ def makeTasks(subfolders):
         subfolders = allTasks()
 
     def problem(n, examples, needToTrain=False):
-        outputType = turtle
+        outputType = arrow(turtle, turtle)
         task = Task(n,
                     outputType,
-                    [((), y) for _, y in examples])
+                    [([0], y) for _, y in examples])
         task.mustTrain = needToTrain
         problems.append(task)
 

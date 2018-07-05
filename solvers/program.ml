@@ -488,8 +488,6 @@ let var_opposite     = primitive "var_divide" (tvar @> tvar @> tvar) GeomLib.Plu
 let var_name         = primitive "var_name" tvar GeomLib.Plumbing.var_name
 
 (* LOGO *)
-let logo_PU  = primitive "logo_PU"                      (turtle) LogoLib.LogoInterpreter.logo_PU
-let logo_PD  = primitive "logo_PD"                      (turtle) LogoLib.LogoInterpreter.logo_PD
 let logo_RT  = primitive "logo_RT"             (tangle @> turtle) LogoLib.LogoInterpreter.logo_RT
 let logo_FW  = primitive "logo_FW"             (tlength @> turtle) LogoLib.LogoInterpreter.logo_FW
 let logo_SEQ = primitive "logo_SEQ" (turtle @> turtle @> turtle) LogoLib.LogoInterpreter.logo_SEQ
@@ -498,11 +496,26 @@ let logo_SET = primitive "logo_SET"           (tstate @> turtle) LogoLib.LogoInt
 let logo_NOP = primitive "logo_NOP"                     (turtle) LogoLib.LogoInterpreter.logo_NOP
 
 let logo_FW  = primitive "logo_FWRT"
-                        (tlength @> tangle @> turtle)
-                        (fun x y ->
+                        (tlength @> tangle @> turtle @> turtle)
+                        (fun x y z ->
                           LogoLib.LogoInterpreter.logo_SEQ
-                            (LogoLib.LogoInterpreter.logo_FW x)
-                            (LogoLib.LogoInterpreter.logo_RT y))
+                            (LogoLib.LogoInterpreter.logo_SEQ
+                              (LogoLib.LogoInterpreter.logo_FW x)
+                              (LogoLib.LogoInterpreter.logo_RT y))
+                            z)
+
+let logo_PU  = primitive "logo_PU"
+                         (turtle @> turtle)
+                         (fun x ->
+                           LogoLib.LogoInterpreter.logo_SEQ
+                             LogoLib.LogoInterpreter.logo_PU
+                             x)
+let logo_PD  = primitive "logo_PD"
+                         (turtle @> turtle)
+                         (fun x ->
+                           LogoLib.LogoInterpreter.logo_SEQ
+                             LogoLib.LogoInterpreter.logo_PD
+                             x)
 
 
 let logo_I2S = primitive "logo_I2S" (tint @> tscalar) (fun i -> float_of_int i)
@@ -513,10 +526,13 @@ let logo_IFTY = primitive "logo_IFTY" (tint) (20)
 
 let logo_IFTY = primitive "eps" (tscalar) (0.05)
 let logo_IFTY = primitive "line"
-                          (turtle)
-                          (LogoLib.LogoInterpreter.logo_SEQ
-                            (LogoLib.LogoInterpreter.logo_FW 1.)
-                            (LogoLib.LogoInterpreter.logo_RT 0.))
+                          (turtle @> turtle)
+                          (fun z ->
+                            LogoLib.LogoInterpreter.logo_SEQ
+                              (LogoLib.LogoInterpreter.logo_SEQ
+                                (LogoLib.LogoInterpreter.logo_FW 1.)
+                                (LogoLib.LogoInterpreter.logo_RT 0.))
+                              z)
 
 let logo_DIVS = primitive "logo_DIVS" (tscalar @> tscalar @> tscalar) ( /. )
 let logo_MULS = primitive "logo_MULS" (tscalar @> tscalar @> tscalar) ( *. )

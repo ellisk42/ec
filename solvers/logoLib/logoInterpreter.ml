@@ -22,6 +22,8 @@ let (<<-) t1 t2 =
   t1.t <- t2.t ;
   t1.p <- t2.p
 
+let logo_NOP : turtle = fun s -> ([], s)
+
 let init_state () = {x = d_from_origin; y = d_from_origin; t = 0.; p = true}
 
 let flush_everything () =
@@ -46,7 +48,7 @@ let pp_logo_instruction i =
       prerr_string ")"
 
 let pp_turtle t =
-  let l,_ = t (init_state ()) in
+  let l,_ = (t logo_NOP) (init_state ()) in
   List.iter
     (fun e ->
        pp_logo_instruction e ;
@@ -55,8 +57,8 @@ let pp_turtle t =
     l ;
   prerr_newline ()
 
-let eval_normal_turtle turtle =
-  let p,_ = turtle (init_state ()) in
+let eval_normal_turtle t2t =
+  let p,_ = (t2t logo_NOP) (init_state ()) in
   let c = ref (new_canvas ()) in
   let lineto x y = (c := (lineto !c x y))
   and moveto x y = (c := (moveto !c x y)) in
@@ -109,8 +111,8 @@ let eval_normal_turtle turtle =
   List.iteri eval_instruction p''' ;
   !c
 
-let eval_turtle ?sequence turtle =
-  let p,_ = turtle (init_state ()) in
+let eval_turtle ?sequence t2t =
+  let p,_ = (t2t logo_NOP) (init_state ()) in
   let c = ref (new_canvas ()) in
   let lineto x y = (c := (lineto !c x y))
   and moveto x y = (c := (moveto !c x y)) in
@@ -156,7 +158,7 @@ let logo_PD : turtle =
   fun s -> ([PD], {s with p = true})
 
 let logo_RT : float -> turtle =
-  fun angle -> fun s -> ([RT(angle*.3.14159265359)], {s with t = s.t +. angle})
+  fun angle -> fun s -> ([RT(angle*.1.570796326795)], {s with t = s.t +. angle})
 
 let logo_FW : float -> turtle =
   fun length  ->
@@ -176,9 +178,7 @@ let logo_GET : (state -> turtle) -> turtle =
     fun s ->
       f s s
 
-let logo_SET : (state -> turtle) = fun s -> fun _ -> ([SET({s with t=s.t*.3.14159265359})], s)
-
-let logo_NOP : turtle = fun s -> ([], s)
+let logo_SET : (state -> turtle) = fun s -> fun _ -> ([SET({s with t=s.t*.1.570796326795})], s)
 
 (*let logo_CHEAT : float -> turtle =*)
   (*fun length ->*)
@@ -198,7 +198,7 @@ let logo_NOP : turtle = fun s -> ([], s)
     (*(logo_SEQ (logo_FW length) (logo_RT (logo_var_HLF logo_var_UNIT)))*)
 
 let turtle_to_list turtle =
-  let l,_ = turtle (init_state ()) in l
+  let l,_ = (turtle logo_NOP) (init_state ()) in l
 
 let turtle_to_png turtle resolution filename =
   output_canvas_png (eval_turtle turtle) resolution filename
