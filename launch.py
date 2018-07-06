@@ -207,7 +207,7 @@ def launchExperiment(
 """ % (command, job_id)
 
     instance, address = launch(size, name=name)
-    time.sleep(60)
+    time.sleep(120)
     if checkpoint is not None:
         sendCheckpoint(address, checkpoint)
     sendCommand(
