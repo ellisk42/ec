@@ -84,10 +84,10 @@ let turtle_task ?timeout:(timeout = 0.001) name ty examples =
                         (bx,bx')
                 in
                 match by' with
-                | None -> if bx = by then 0.0 else log 0.0
+                | None -> if (LogoLib.LogoInterpreter.fp_equal bx by 5) then 0.0 else log 0.0
                 | Some(by') ->
                     (*if bx = by then (prerr_endline "=====hit=====" ; 0.0)*)
-                    if bx = by then (0.0)
+                    if (LogoLib.LogoInterpreter.fp_equal bx by 5) then (0.0)
                     else -. (LogoLib.LogoInterpreter.distance bx' by'))
           with
             | Some(x) -> x

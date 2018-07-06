@@ -1,5 +1,7 @@
 open VGWrapper
 
+exception DoesNotMatch
+
 type state =
   { mutable x : float
   ; mutable y : float
@@ -215,6 +217,14 @@ let turtle_to_both turtle resolution filename =
   canvas_to_1Darray c resolution
 
 let max = 28. *. 256.
+
+let fp_equal x y eps =
+  try
+    for i = 0 to Bigarray.Array1.dim x - 1 do
+      if (abs x.{i} - y.{i}) > eps then raise DoesNotMatch
+    done ;
+    true
+  with DoesNotMatch -> false
 
 let distance x y =
   let sum = ref 0. in
