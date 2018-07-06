@@ -43,7 +43,7 @@ class TowerTask(Task):
                     float(minimumArea),
                     float(maximumStaircase),
                     float(minimumOverpass)]
-        super(TowerTask, self).__init__(name, ttower, [],
+        super(TowerTask, self).__init__(name, arrow(ttower,ttower), [],
                                         features=features)
 
         self.minimumOverpass = minimumOverpass
@@ -101,7 +101,7 @@ class TowerTask(Task):
             signal.setitimer(signal.ITIMER_VIRTUAL, timeout)
 
         try:
-            tower = e.evaluate([])
+            tower = e.evaluate([])([])
             if timeout is not None:
                 signal.signal(signal.SIGVTALRM, lambda *_: None)
                 signal.setitimer(signal.ITIMER_VIRTUAL, 0)
@@ -144,7 +144,7 @@ class TowerTask(Task):
         import os
 
         if isinstance(e, Program):
-            tower = e.evaluate([])
+            tower = e.evaluate([])([])
         else:
             assert isinstance(e, list)
             tower = e

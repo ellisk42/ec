@@ -12,7 +12,7 @@ import time
 class TowerFeatureExtractor(HandCodedFeatureExtractor):
     def _featuresOfProgram(self, p, _):
         # [perturbation, mass, height, length, area]
-        p = p.evaluate([])
+        p = p.evaluate([])([])
         mass = sum(w * h for _, w, h in p)
 
         masses = {
@@ -180,6 +180,6 @@ if __name__ == "__main__":
 
     for result in generator:
         iteration = len(result.learningCurve)
-        newTowers = [tuple(centerTower(frontier.sample().program.evaluate([])))
+        newTowers = [tuple(centerTower(frontier.sample().program.evaluate([])([])))
                      for frontier in result.taskSolutions.values() if not frontier.empty]
         exportTowers(newTowers, 'experimentOutputs/uniqueTowers%d.png'%iteration)

@@ -127,7 +127,7 @@ let load_problems channel =
         with _ -> None
       in
 
-      let task_type = if is_some tower_stuff then ttower else task_type in
+      let task_type = if is_some tower_stuff then ttower @> ttower else task_type in
       let is_turtle_task = task_type = make_ground "turtle" @> make_ground "turtle" in
 
       let task = 
@@ -205,23 +205,23 @@ let _ =
        mfp,
      nc,timeout, verbose) =
     load_problems Pervasives.stdin in
-  if List.exists tf ~f:(fun (t,_) -> t.task_type = ttower) then update_tower_cash() else ();
+  if List.exists tf ~f:(fun (t,_) -> t.task_type = ttower @> ttower) then update_tower_cash() else ();
   let solutions =
     enumerate_for_tasks ~maxFreeParameters:mfp ~lowerBound:lowerBound ~upperBound:upperBound ~budgetIncrement:budgetIncrement
     ~verbose:verbose ~nc:nc ~timeout:timeout g tf
   in
   export_frontiers tf solutions |> print_string ;;
 
-let tune_differentiation () =
-  let (tf,g,
-       lowerBound,upperBound,budgetIncrement,
-       mfp,
-     nc,timeout, verbose) =
-    load_problems  Pervasives.stdin in
-  if List.exists tf ~f:(fun (t,_) -> t.task_type = ttower) then update_tower_cash() else ();
-  (* "(-6.8x + 4.7)/[(x + 4.5)]" *)
-  let p = parse_program "(lambda (/. (+. REAL (*. REAL $0)) (+. $0 REAL)))" |> get_some in
-  match tf with
-    | [(t,_)] -> Printf.eprintf "%f\n" (t.log_likelihood p)
-    | _ -> failwith "ERROR: no task were given at all"
-;;
+(* let tune_differentiation () = *)
+(*   let (tf,g, *)
+(*        lowerBound,upperBound,budgetIncrement, *)
+(*        mfp, *)
+(*      nc,timeout, verbose) = *)
+(*     load_problems  Pervasives.stdin in *)
+(*   if List.exists tf ~f:(fun (t,_) -> t.task_type = ttower) then update_tower_cash() else (); *)
+(*   (\* "(-6.8x + 4.7)/[(x + 4.5)]" *\) *)
+(*   let p = parse_program "(lambda (/. (+. REAL (\*. REAL $0)) (+. $0 REAL)))" |> get_some in *)
+(*   match tf with *)
+(*     | [(t,_)] -> Printf.eprintf "%f\n" (t.log_likelihood p) *)
+(*     | _ -> failwith "ERROR: no task were given at all" *)
+(* ;; *)

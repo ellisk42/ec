@@ -302,8 +302,8 @@ def solveForTask_ocaml(_=None,
 
     message = json.dumps(message)
     # uncomment this if you want to save the messages being sent to the solver
-    # with open("message", "w") as f:
-    #     f.write(message)
+    with open("message", "w") as f:
+        f.write(message)
 
     try:
         process = subprocess.Popen("./solver",

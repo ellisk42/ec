@@ -6,11 +6,7 @@ open Utils
 open Program
 open Type
 
-let towerAsList = true;;
-
-
-let tblock = make_ground "block";;
-let ttower = if towerAsList then tlist tblock else make_ground "tower";;
+let ttower = make_ground "tower";;
 
 type tower_result = {stability : float;
                      length : float;
@@ -32,12 +28,8 @@ let block w h =
   let e = 0.05 in
   let w = Float.of_int w -.e in
   let h = Float.of_int h -.e in
-  if towerAsList then
-    let v = (xOffset,w,h) in
-    ignore(primitive n tblock v)
-  else
-    let v = [(xOffset,w,h)] in
-    ignore(primitive n ttower v)
+  let v = fun k -> (xOffset,w,h) :: k in
+  ignore(primitive n (ttower @> ttower) v)
 ;;
 
 
@@ -49,13 +41,8 @@ block 1 2;;
 block 4 1;;
 block 1 4;;
 
-ignore(primitive "do" (ttower @> ttower @> ttower) (@));;
-ignore(if towerAsList
-       then primitive "left" (tblock @> tblock) (fun (x,w,h) -> (x-.1.0,w,h))
-       else primitive "left" (ttower @> ttower) (fun t -> t |> List.map ~f:(fun (x,w,h) -> (x-.1.0,w,h))));;
-ignore(if towerAsList
-       then primitive "right" (tblock @> tblock) (fun (x,w,h) -> (x+.1.0,w,h))
-       else primitive "right" (ttower @> ttower) (fun t -> t |> List.map ~f:(fun (x,w,h) -> (x+.1.0,w,h))));;
+ignore(primitive "left" (ttower @> ttower) (fun t -> t |> List.map ~f:(fun (x,w,h) -> (x-.1.0,w,h))));;
+ignore(primitive "right" (ttower @> ttower) (fun t -> t |> List.map ~f:(fun (x,w,h) -> (x+.1.0,w,h))));;
 
 
 let connection_failures = ref 0;;
@@ -170,17 +157,17 @@ let tower_task ?timeout:(timeout = 0.001)
     ?stabilityThreshold:(stabilityThreshold=0.5)
     ~perturbation ~maximumStaircase ~maximumMass ~minimumLength ~minimumArea ~minimumHeight ~minimumOverpass
     name task_type examples =
-  assert (task_type = ttower);
+  assert (task_type = ttower @> ttower);
   assert (examples = []);
   { name = name    ;
-    task_type = ttower ;
+    task_type = task_type ;
     log_likelihood =
       (fun p ->
          let p = analyze_lazy_evaluation p in
          try
            match run_for_interval
                    timeout
-                   (fun () -> run_lazy_analyzed_with_arguments p [])
+                   (fun () -> run_lazy_analyzed_with_arguments p [[]])
            with
            | Some(p) ->
              let m = p |> List.map ~f:(fun (_,w,h) -> w*.h) |> List.fold_right ~f:(+.) ~init:0. in

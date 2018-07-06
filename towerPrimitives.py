@@ -3,12 +3,20 @@ from program import *
 from arithmeticPrimitives import *
 from logicalPrimitives import *
 
-def _concatenate(x): return lambda y: x + y
+#def _concatenate(x): return lambda y: x + y
 
 def _left(x): return [tuple([b[0] - 1] + list(b[1:])) for b in x]
 def _right(x): return [tuple([b[0] + 1] + list(b[1:])) for b in x]
 def _left1(b): return tuple([b[0] - 1] + list(b[1:]))
 def _right1(b): return tuple([b[0] + 1] + list(b[1:]))
+
+class TowerContinuation(object):
+    def __init__(self, x, w, h):
+        self.x = x
+        self.w = w
+        self.h = h
+    def __call__(self, k):
+        return [(self.x,self.w,self.h)] + k
 
 # name, dimensions
 blocks = {  # "1x1": (1.,1.),
@@ -31,20 +39,9 @@ def xOffset(w, h):
         return 0.5
     return 0.
 
-TOWERASLIST = True
-if TOWERASLIST:
-    tblock = baseType("block")
-    ttower = tlist(tblock)
-    primitives = [
-    Primitive("left", arrow(tblock, tblock), _left1),
-    Primitive("right", arrow(tblock, tblock), _right1),
-    ] + [Primitive(name, tblock, (xOffset(w, h), w - epsilon, h - epsilon))
-         for name, (w, h) in blocks.items()]
-else:
-    ttower = baseType("tower")
-    primitives = [
-        Primitive("do", arrow(ttower, ttower, ttower), _concatenate),
+ttower = baseType("tower")
+primitives = [
         Primitive("left", arrow(ttower, ttower), _left),
         Primitive("right", arrow(ttower, ttower), _right),
-    ] + [Primitive(name, ttower, [(xOffset(w, h), w - epsilon, h - epsilon)])
+    ] + [Primitive(name, arrow(ttower,ttower), TowerContinuation(xOffset(w, h), w - epsilon, h - epsilon))
          for name, (w, h) in blocks.items()]
