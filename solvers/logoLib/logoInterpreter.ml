@@ -221,7 +221,7 @@ let max = 28. *. 256.
 let fp_equal x y eps =
   try
     for i = 0 to Bigarray.Array1.dim x - 1 do
-      if (abs x.{i} - y.{i}) > eps then raise DoesNotMatch
+      if (abs (x.{i} - y.{i})) > eps then raise DoesNotMatch
     done ;
     true
   with DoesNotMatch -> false
