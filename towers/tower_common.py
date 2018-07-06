@@ -387,7 +387,7 @@ class TowerWorld(object):
         self.blocks = []
 
     def draw(self, plan):
-        import cairo
+        import cairo #cairocffi as 
         import numpy as np
 
         self.executePlan(plan)

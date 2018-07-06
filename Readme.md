@@ -45,6 +45,7 @@ pip install sexpdata
 pip install Box2D-kengz
 pip install pygame
 pip install pycairo
+pip install cairocffi
 pip install psutil
 ```
 
