@@ -7,7 +7,7 @@ TARGETSVH := $(patsubst %.LoG,%_vh.png,$(SOURCES))
 BINARY    := ./geomDrawFile
 
 .PHONY: all
-all: clean $(TARGETSL) $(TARGETSH) $(TARGETSVH) others
+all: clean $(TARGETSL) $(TARGETSH) $(TARGETSVH)
 
 %_l.png: %.LoG $(BINARY) Makefile
 	$(BINARY) $<

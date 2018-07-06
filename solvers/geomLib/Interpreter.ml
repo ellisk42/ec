@@ -403,11 +403,11 @@ let interpret_normal ?noise:(noise=false) p =
   let _,b = find_bit p' in
   let p'' = if (not b) then (swap_bit p') else p' in
   let factor = min_t p'' in
-  print_endline (pp_shapeprogram p) ;
-  print_newline () ;
-  print_endline (pp_shapeprogram p'') ;
-  print_newline () ;
-  print_float factor ;
-  print_newline () ;
-  print_endline "=========================" ;
+  (*print_endline (pp_shapeprogram p) ;*)
+  (*print_newline () ;*)
+  (*print_endline (pp_shapeprogram p'') ;*)
+  (*print_newline () ;*)
+  (*print_float factor ;*)
+  (*print_newline () ;*)
+  (*print_endline "=========================" ;*)
   interpret ~factor ~noise p''
