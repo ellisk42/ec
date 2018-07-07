@@ -38,10 +38,18 @@ def xOffset(w, h):
     if w % 2 == 1:
         return 0.5
     return 0.
+def _range(n):
+    if n < 100: return range(n)
+    raise ValueError()
+def _fold(l): return lambda x0: lambda f: reduce(
+    lambda a, x: f(x)(a), l[::-1], x0)
 
 ttower = baseType("tower")
 primitives = [
         Primitive("left", arrow(ttower, ttower), _left),
         Primitive("right", arrow(ttower, ttower), _right),
     ] + [Primitive(name, arrow(ttower,ttower), TowerContinuation(xOffset(w, h), w - epsilon, h - epsilon))
-         for name, (w, h) in blocks.items()]
+         for name, (w, h) in blocks.items()] + [
+                 Primitive("range", arrow(tint, tlist(tint)), _range),
+                 Primitive("fold", arrow(tlist(t0), t1, arrow(t0, t1, t1), t1), _fold),
+         ]

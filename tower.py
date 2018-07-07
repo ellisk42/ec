@@ -144,7 +144,7 @@ if __name__ == "__main__":
     from towers.tower_common import exportTowers
     initializeTowerCaching()
 
-    g0 = Grammar.uniform(primitives + bootstrapTarget() +
+    g0 = Grammar.uniform(primitives + 
                          [Primitive(str(j), tint, j) for j in range(2, 5)])
 
     tasks = makeTasks()
@@ -169,7 +169,7 @@ if __name__ == "__main__":
                            outputPrefix="experimentOutputs/tower",
                            evaluationTimeout=evaluationTimeout,
                            solver="ocaml",
-                           compressor="rust",
+                           compressor="pypy",
                            **arguments)
     os.system("python towers/server.py KILL")
     time.sleep(1)
