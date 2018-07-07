@@ -190,7 +190,7 @@ if __name__ == "__main__":
         fe = LogoFeatureCNN(tasks)
         for x in range(0, 500):
             program = result.grammars[-1].sample(arrow(turtle, turtle),
-                                                 maximumDepth=200)
+                                                 maximumDepth=20)
             features = fe.renderProgram(program, arrow(turtle, turtle))
         iteration = len(result.learningCurve)
         r = result
