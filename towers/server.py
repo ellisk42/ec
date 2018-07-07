@@ -80,10 +80,10 @@ class CommandHandler(socketserver.StreamRequestHandler):
                 RESULTSCASH[k] = v
                 if powerOfTen(len(RESULTSCASH)):
                     eprint("Tower cache reached size", len(RESULTSCASH))
-                    name = "experimentOutputs/towers%d.png" % len(RESULTSCASH)
-                    exportTowers(
-                        list(set([_t for _t, _ in list(RESULTSCASH.keys())])), name)
-                    eprint("Exported towers to image", name)
+                    # name = "experimentOutputs/towers%d.png" % len(RESULTSCASH)
+                    # exportTowers(
+                    #     list(set([_t for _t, _ in list(RESULTSCASH.keys())])), name)
+                    # eprint("Exported towers to image", name)
 
                 COMMANDSERVERSEMAPHORE.release()
 
