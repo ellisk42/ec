@@ -79,7 +79,6 @@ def sendCommand(
         copyCheckpoint = "mv ~/%s ~/ec/experimentOutputs" % checkpoint
 
     preamble = f"""#!/bin/bash
-pip install pypng
 cd ~/ec
 {copyCheckpoint}
 touch compressor_dummy
