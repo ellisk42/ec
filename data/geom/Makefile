@@ -7,7 +7,7 @@ TARGETSVH := $(patsubst %.LoG,%_vh.png,$(SOURCES))
 BINARY    := ./geomDrawFile
 
 .PHONY: all
-all: clean $(TARGETSL) $(TARGETSH) $(TARGETSVH)
+all: clean $(TARGETSL) $(TARGETSH) $(TARGETSVH) others
 
 %_l.png: %.LoG $(BINARY) Makefile
 	$(BINARY) $<
@@ -17,8 +17,9 @@ all: clean $(TARGETSL) $(TARGETSH) $(TARGETSVH)
 	$(BINARY) $<
 
 others: clean
-	cd spiral && ./generate.sh
-	cd repeat && ./generate.sh
+	#cd spiral && ./generate.sh
+	#cd repeat && ./generate.sh
+	cd logoTasks && ./generate.sh
 
 .PHONY: clean
 clean:

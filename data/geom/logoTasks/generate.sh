@@ -11,3 +11,7 @@ for i in {3..6}; do
   ../logoDrawString $resh "smooth_spiral${i}_h" 0 "(lambda (logo_forLoopM (logo_IFTY) (lambda (logo_FWRT (logo_MULL (logo_DIVL logo_epsL 2) \$0) (logo_MULA logo_epsA $i) \$1)) \$0))"
 done
 
+for i in "5" "7"; do
+  ../logoDrawString $resl "star_${i}_l" 0 "(lambda (logo_forLoopM ($i) (lambda (logo_FWRT (logo_MULL logo_UL 3) (logo_SUBA (logo_UA) (logo_DIVA (logo_MULA logo_UA 1) $i)) \$1)) \$0))"
+  ../logoDrawString $resh "star_${i}_h" 0 "(lambda (logo_forLoopM ($i) (lambda (logo_FWRT (logo_MULL logo_UL 3) (logo_SUBA (logo_UA) (logo_DIVA (logo_MULA logo_UA 1) $i)) \$1)) \$0))"
+done
