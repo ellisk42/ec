@@ -93,7 +93,8 @@ primitives = [
     Primitive("ifty", tint, 20),
     Primitive("eps", tscalar, 0.05),
     # Primitive("line", arrow(turtle, turtle), _logo_line),
-    Primitive("logo_forLoop", arrow(tint, arrow(tint, turtle, turtle), turtle, turtle), "ERROR: python has no way of expressing this hence you shouldn't eval on this"),
+    # Primitive("logo_forLoop", arrow(tint, arrow(tint, turtle, turtle), turtle, turtle), "ERROR: python has no way of expressing this hence you shouldn't eval on this"),
+    Primitive("logo_forLoopM", arrow(tint, arrow(tint, turtle), turtle, turtle), "ERROR: python has no way of expressing this hence you shouldn't eval on this"),
     Primitive("+", arrow(tint, tint, tint), _addition)
 ] + [Primitive(str(j), tint, j) for j in range(7)]
 

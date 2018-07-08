@@ -564,7 +564,16 @@ let logo_SUBL = primitive "logo_SUBL" (tlength @> tlength @> tlength) ( -. )
 let _ = primitive "logo_forLoop"
                    (tint @> (tint @> turtle @> turtle) @> turtle @> turtle)
                    (fun i f z -> List.fold_right (0 -- (i-1)) ~f ~init:z)
-
+let _ = primitive "logo_forLoopM"
+                   (tint @> (tint @> turtle) @> turtle @> turtle)
+                   (fun n body k0 ->
+                      let rec loop i k =
+                        if i = n
+                        then k
+                        else loop (i+1)
+                            (LogoLib.LogoInterpreter.logo_SEQ (body i) k)
+                      in loop 0 k0)
+                   
 (*let logo_CHEAT  = primitive "logo_CHEAT"             (ttvar @> turtle) LogoLib.LogoInterpreter.logo_CHEAT*)
 (*let logo_CHEAT2  = primitive "logo_CHEAT2"             (ttvar @> turtle) LogoLib.LogoInterpreter.logo_CHEAT2*)
 (*let logo_CHEAT3  = primitive "logo_CHEAT3"             (ttvar @> turtle) LogoLib.LogoInterpreter.logo_CHEAT3*)
