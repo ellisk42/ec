@@ -396,11 +396,34 @@ class EquivalenceGraph():
                         q.add(getOne(self.classes[i]))
         
         
-    def extract(self,k):
-        table = self.minimumCosts([])
+    def extract(self,k,table=None):
+        if table is None: table = self.minimumCosts([])
         def expressionCost(l):
             if l.isApplication: return table[l.f] + table[l.x]
             if l.isAbstraction: return table[l.body]
+            if l.isPrimitive or l.isInvented: return 1
+            if l.isIndex: return 1
+            assert False
+        def visitClass(k):
+            return visitExpression(min(self.classMembers[k],
+                                       key=expressionCost))
+        def visitExpression(e):
+            if e.isApplication:
+                return Application(visitClass(e.f),
+                                   visitClass(e.x))
+            if e.isAbstraction:
+                return Abstraction(visitClass(e.body))
+            return e
+        return visitClass(k)
+
+    def extractBetaLong(self,k,table=None, given=[]):
+        if table is None: table = self.betaLongCost(given)
+        def argumentCost(k): return table[k][1]
+        def functionCost(k): return table[k][0]
+
+        def expressionCost(l):
+            if l.isApplication: return functionCost(l.f) + argumentCost(l.x)
+            if l.isAbstraction: return argumentCost(l.body)
             if l.isPrimitive or l.isInvented: return 1
             if l.isIndex: return 1
             assert False
@@ -454,3 +477,69 @@ class EquivalenceGraph():
         candidates = [(score(k),k) for k in candidates ]
         best = min(candidates,key = lambda s: s[0])[1]
         return self.extract(best)
+
+
+    def rewriteWithInvention(self, invention, heads):
+        inventionK = self.incorporate(invention)
+        cost = self.betaLongCost([inventionK])
+        heads = [ self.extractBetaLong(self.incorporate(h), cost) for h in heads ]
+
+        v = RewriteWithInventionVisitor(invention)
+        heads = [ v.execute(h) for h in heads ]
+        return v.invention, heads
+
+        
+
+class CloseInventionVisitor():
+    """normalize free variables - e.g., if $1 & $3 occur free then rename them to $0, $1
+    then wrap in enough lambdas so that there are no free variables and finally wrap in invention"""
+    def __init__(self, p):
+        
+        freeVariables = list(sorted(set(p.freeVariables())))
+        self.mapping = {fv: j for j,fv in enumerate(freeVariables) }
+    def index(self, e, d):
+        if e.i - d in self.mapping:
+            return Index(self.mapping[e.i - d] + d)
+        return e
+    def abstraction(self, e, d):
+        return Abstraction(e.body.visit(self, d + 1))
+    def application(self, e, d):
+        return Application(e.f.visit(self, d),
+                           e.x.visit(self, d))
+    def primitive(self, e, d): return e
+    def invented(self, e, d): return e
+
+    def execute(self):
+        normed = self.invention.visit(self, 0)
+        closed = normed
+        for _ in range(len(self.mapping)):
+            closed = Abstraction(closed)
+        return Invention(closed)
+        
+        
+class RewriteWithInventionVisitor():
+    def __init__(self, p):
+        v = CloseInventionVisitor(p)
+        self.original = p
+        self.mapping = { j: fv for fv, j in v.mapping.items() }
+        self.invention = v.execute()
+
+    def tryRewrite(self, e):
+        if e == self.original:
+            application = self.invention
+            for j in range(len(mapping) - 1, -1, -1):
+                application = Application(application, Index(mapping[j]))
+            return application
+        return None
+
+    def index(self, e): return e
+    def primitive(self, e): return e
+    def invented(self, e): return e
+    def abstraction(self, e):
+        return self.tryRewrite(e) or Abstraction(e.body.visit(self))
+    def application(self, e):
+        return self.tryRewrite(e) or Application(e.f.visit(self),
+                                                 e.x.visit(self))
+    def execute(self, e):
+        return e.visit(self)
+            

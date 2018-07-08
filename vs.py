@@ -513,7 +513,7 @@ if __name__ == "__main__":
 #    testTyping(Program.parse("((lambda $0) cons ((lambda $0) 9))"))
     p2 = Program.parse("(lambda (fold $0 empty (lambda (lambda (cons (+ $1 $1) $0)))))")
 
-    N=3
+    N=2
     
 
     v = VersionTable(typed=False, identity=True)
@@ -522,8 +522,9 @@ if __name__ == "__main__":
                                 v.incorporate(p2)},
                                N)
     with timing("invented a new primitive"):
-        print(g.bestInvention([g.incorporate(p1),
-                               g.incorporate(p2)]))
+        i = g.bestInvention([g.incorporate(p1),
+                             g.incorporate(p2)])
+        print(g.rewriteWithInvention(i, [p1,p2]))
     
     # with timing("calculated table space"):
     #     j = v.rewriteReachable({v.incorporate(p1)},N)
