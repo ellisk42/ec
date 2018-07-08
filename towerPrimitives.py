@@ -3,6 +3,8 @@ from program import *
 from arithmeticPrimitives import *
 from logicalPrimitives import *
 
+from functools import reduce
+
 #def _concatenate(x): return lambda y: x + y
 
 def _left(x): return [tuple([b[0] - 1] + list(b[1:])) for b in x]
