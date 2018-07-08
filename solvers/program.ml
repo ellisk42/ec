@@ -491,9 +491,8 @@ let var_name         = primitive "var_name" tvar GeomLib.Plumbing.var_name
 let logo_RT  = primitive "logo_RT"             (tangle @> turtle) LogoLib.LogoInterpreter.logo_RT
 let logo_FW  = primitive "logo_FW"             (tlength @> turtle) LogoLib.LogoInterpreter.logo_FW
 let logo_SEQ = primitive "logo_SEQ" (turtle @> turtle @> turtle) LogoLib.LogoInterpreter.logo_SEQ
-let logo_NOP = primitive "logo_NOP"                     (turtle) LogoLib.LogoInterpreter.logo_NOP
 
-let logo_FW  = primitive "logo_FWRT"
+let logo_FWRT  = primitive "logo_FWRT"
                         (tlength @> tangle @> turtle @> turtle)
                         (fun x y z ->
                           LogoLib.LogoInterpreter.logo_SEQ
@@ -515,12 +514,6 @@ let logo_PD  = primitive "logo_PD"
                              LogoLib.LogoInterpreter.logo_PD
                              x)
 
-(*let logo_GET = primitive "logo_GET"*)
-                         (*(tstate @> turtle @> turtle @> turtle)*)
-                         (*(fun f t ->*)
-                           (*LogoLib.LogoInterpreter.logo_SEQ*)
-                              (*(LogoLib.LogoInterpreter.logo_GET f)*)
-                              (*t)*)
 let logo_GET = primitive "logo_GET"
                          (tstate @> turtle @> turtle)
                          (fun f -> (LogoLib.LogoInterpreter.logo_GET f))
@@ -532,13 +525,14 @@ let logo_SET = primitive "logo_SET"
                             z)
 
 
-let logo_I2S = primitive "logo_I2S" (tint @> tscalar) (fun i -> float_of_int i)
-let logo_S2A = primitive "logo_S2A" (tscalar @> tangle) (fun i -> i)
-let logo_S2L = primitive "logo_S2L" (tscalar @> tlength) (fun i -> i)
+let logo_S2A = primitive "logo_UA" (tangle) (1.)
+let logo_S2A = primitive "logo_UL" (tlength) (1.)
 
 let logo_IFTY = primitive "logo_IFTY" (tint) (20)
 
-let logo_IFTY = primitive "eps" (tscalar) (0.05)
+let logo_IFTY = primitive "logo_epsL" (tlength) (0.05)
+let logo_IFTY = primitive "logo_epsA" (tangle) (0.05)
+
 let logo_IFTY = primitive "line"
                           (turtle @> turtle)
                           (fun z ->
@@ -548,13 +542,18 @@ let logo_IFTY = primitive "line"
                                 (LogoLib.LogoInterpreter.logo_RT 0.))
                               z)
 
-let logo_DIVS = primitive "logo_DIVS" (tscalar @> tscalar @> tscalar) ( /. )
-let logo_MULS = primitive "logo_MULS" (tscalar @> tscalar @> tscalar) ( *. )
-
-let logo_DIVA = primitive "logo_DIVA" (tangle @> tscalar @> tangle) ( /. )
-let logo_MULA = primitive "logo_MULA" (tangle @> tscalar @> tangle) ( *. )
-let logo_DIVL = primitive "logo_DIVL" (tlength @> tscalar @> tlength) ( /. )
-let logo_MULL = primitive "logo_MULL" (tlength @> tscalar @> tlength) ( *. )
+let logo_DIVA = primitive "logo_DIVA"
+                          (tangle @> tint @> tangle)
+                          (fun a b -> a /. (float_of_int b) )
+let logo_DIVA = primitive "logo_MULA"
+                          (tangle @> tint @> tangle)
+                          (fun a b -> a *. (float_of_int b) )
+let logo_DIVA = primitive "logo_DIVL"
+                          (tlength @> tint @> tlength)
+                          (fun a b -> a /. (float_of_int b) )
+let logo_DIVA = primitive "logo_MULL"
+                          (tlength @> tint @> tlength)
+                          (fun a b -> a *. (float_of_int b) )
 
 let logo_ADDA = primitive "logo_ADDA" (tangle @> tangle @> tangle) ( +. )
 let logo_SUBA = primitive "logo_SUBA" (tangle @> tangle @> tangle) ( -. )
@@ -567,12 +566,11 @@ let _ = primitive "logo_forLoop"
 let _ = primitive "logo_forLoopM"
                    (tint @> (tint @> turtle) @> turtle @> turtle)
                    (fun n body k0 ->
-                      let rec loop i k =
-                        if i = n
-                        then k
-                        else loop (i+1)
-                            (LogoLib.LogoInterpreter.logo_SEQ (body i) k)
-                      in loop 0 k0)
+                     ((List.map (0 -- (n-1)) ~f:body))
+                      |> List.fold_right
+                          ~f:(LogoLib.LogoInterpreter.logo_SEQ)
+                          ~init:k0
+                   )
                    
 (*let logo_CHEAT  = primitive "logo_CHEAT"             (ttvar @> turtle) LogoLib.LogoInterpreter.logo_CHEAT*)
 (*let logo_CHEAT2  = primitive "logo_CHEAT2"             (ttvar @> turtle) LogoLib.LogoInterpreter.logo_CHEAT2*)
