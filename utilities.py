@@ -331,14 +331,16 @@ def sampleDistribution(d):
         eprint(d)
     r = random.random()
     u = 0.
-    for t in d:
+    for index, t in enumerate(d):
         p = t[0] / z
-        if r < u + p:
+        # This extra condition is needed for floating-point bullshit
+        if r <= u + p or index == len(d) - 1:
             if len(t) <= 2:
                 return t[1]
             else:
                 return t[1:]
         u += p
+        
     assert False
 
 
