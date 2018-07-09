@@ -27,7 +27,7 @@ class TowerWorld(object):
 
         # self.H = 3.
         # self.W = 0.5
-        self.dt = 1. / 10
+        self.dt = 1. / 20
         self.locationNoise = 0.0
 
         self.xOffset = 11
@@ -357,16 +357,17 @@ class TowerWorld(object):
                                   True)
 
     def stepUntilStable(self):
-        for _ in range(25):
+        for _ in range(50):
             self.step(self.dt)
         # if True: return
         # for _ in range(100000):
         #     self.step(self.dt)
         #     if self.unmoving(): break
 
-    def blocksSignificantlyMoved(self, threshold):
+    def blocksSignificantlyMoved(self, threshold, rotationThreshold=0.3):
         for b in self.blocks:
             p = (b.worldCenter[0], b.worldCenter[1])
+            if abs(b.angle) > rotationThreshold: return True
             p0 = b.userData["p0"]
             d = (p[0] - p0[0],
                  p[1] - p0[1])
