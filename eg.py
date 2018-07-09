@@ -494,7 +494,7 @@ class CloseInventionVisitor():
     """normalize free variables - e.g., if $1 & $3 occur free then rename them to $0, $1
     then wrap in enough lambdas so that there are no free variables and finally wrap in invention"""
     def __init__(self, p):
-        
+        self.p = p
         freeVariables = list(sorted(set(p.freeVariables())))
         self.mapping = {fv: j for j,fv in enumerate(freeVariables) }
     def index(self, e, d):
@@ -510,11 +510,11 @@ class CloseInventionVisitor():
     def invented(self, e, d): return e
 
     def execute(self):
-        normed = self.invention.visit(self, 0)
+        normed = self.p.visit(self, 0)
         closed = normed
         for _ in range(len(self.mapping)):
             closed = Abstraction(closed)
-        return Invention(closed)
+        return Invented(closed)
         
         
 class RewriteWithInventionVisitor():
@@ -527,8 +527,8 @@ class RewriteWithInventionVisitor():
     def tryRewrite(self, e):
         if e == self.original:
             application = self.invention
-            for j in range(len(mapping) - 1, -1, -1):
-                application = Application(application, Index(mapping[j]))
+            for j in range(len(self.mapping) - 1, -1, -1):
+                application = Application(application, Index(self.mapping[j]))
             return application
         return None
 
@@ -541,5 +541,9 @@ class RewriteWithInventionVisitor():
         return self.tryRewrite(e) or Application(e.f.visit(self),
                                                  e.x.visit(self))
     def execute(self, e):
-        return e.visit(self)
+        return EtaLongVisitor().execute(e.visit(self))
+
+
+
+
             

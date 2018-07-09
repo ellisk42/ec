@@ -513,6 +513,9 @@ if __name__ == "__main__":
 #    testTyping(Program.parse("((lambda $0) cons ((lambda $0) 9))"))
     p2 = Program.parse("(lambda (fold $0 empty (lambda (lambda (cons (+ $1 $1) $0)))))")
 
+    # eprint(EtaLongVisitor().execute(Program.parse("+")))
+    # assert False
+
     N=2
     
 

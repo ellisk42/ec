@@ -840,6 +840,90 @@ class RegisterPrimitives(object):
     @staticmethod
     def register(e): e.visit(RegisterPrimitives())
 
+class EtaLongVisitor(object):
+    """Converts an expression into eta-longform"""
+    def __init__(self, request=None):
+        self.request = request
+        self.context = Context.EMPTY
+
+    def makeLong(self, e, request):
+        if request.isArrow():
+            # eta expansion
+            return Abstraction(Application(e.shift(1),
+                                           Index(0)))
+            # a loop which will repeatedly perform eta expansion,
+            # exactly as many times as are needed
+            # n = len(request.functionArguments())
+            # e = e.shift(n)
+            # for i in range(n - 1, -1, -1): e = Application(e, Index(i))
+            # for i in range(n - 1, -1, -1): e = Abstraction(e)
+            # return e
+        return None
+        
+
+    def abstraction(self, e, request, environment):
+        assert request.isArrow()
+        return Abstraction(e.body.visit(self,
+                                        request.arguments[1],
+                                        [request.arguments[0]] + environment))
+    def application(self, e, request, environment):
+        l = self.makeLong(e, request)
+        if l is not None: return l.visit(self, request, environment)
+
+        f, xs = e.applicationParse()
+
+        if f.isIndex:
+            ft = environment[f.i].apply(self.context)
+        elif f.isInvented or f.isPrimitive:
+            self.context, ft = f.tp.instantiate(self.context)
+        else: assert False, "Not in beta long form"
+
+        self.context = self.context.unify(request, ft.returns())
+        ft = ft.apply(self.context)
+
+        xt = ft.functionArguments()
+
+        returnValue = f
+        for x,t in zip(xs,xt):
+            t = t.apply(self.context)
+            returnValue = Application(returnValue,
+                                      x.visit(self, t, environment))
+        return returnValue
+
+    def index(self, e, request, environment):
+        l = self.makeLong(e, request)
+        if l is not None: return l.visit(self, request, environment)
+
+        self.context = self.context.unify(request, environment[e.i])
+        return e
+
+    def primitive(self, e, request, environment):
+        l = self.makeLong(e, request)
+        if l is not None: return l.visit(self, request, environment)
+
+        self.context, t = e.tp.instantiate(self.context)
+        self.context = self.context.unify(request, t)
+        return e
+
+    def invented(self, e, request, environment):
+        l = self.makeLong(e, request)
+        if l is not None: return l.visit(self, request, environment)
+
+        self.context, t = e.tp.instantiate(self.context)
+        self.context = self.context.unify(request, t)
+        return e
+
+    def execute(self, e):
+        assert len(e.freeVariables()) == 0
+        
+        if self.request is None:
+            self.request = e.infer()
+        el = e.visit(self, self.request, [])
+        assert el.infer().canonical() == e.infer().canonical()
+        return el
+        
+        
+        
 
 class PrettyVisitor(object):
     def __init__(self):
