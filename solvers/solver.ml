@@ -205,7 +205,9 @@ let _ =
        mfp,
      nc,timeout, verbose) =
     load_problems Pervasives.stdin in
-  if List.exists tf ~f:(fun (t,_) -> t.task_type = ttower @> ttower) then update_tower_cash() else ();
+  if List.exists tf ~f:(fun (t,_) -> t.task_type = ttower @> ttower)
+  then update_serialized_tower_cash()
+  else ();
   let solutions =
     enumerate_for_tasks ~maxFreeParameters:mfp ~lowerBound:lowerBound ~upperBound:upperBound ~budgetIncrement:budgetIncrement
     ~verbose:verbose ~nc:nc ~timeout:timeout g tf

@@ -19,8 +19,15 @@ let center_tower p =
   let xs = p |> List.map ~f:(fun (x,_,_) -> x) in
   let x1 = List.fold_left ~init:(List.hd_exn xs) ~f:max xs in
   let x0 = List.fold_left ~init:(List.hd_exn xs) ~f:min xs in
-  let c = (x1-.x0)/.2. in
+  (* bounding box: [x0,x1] *)
+  let c = (x1-.x0)/.2. +. x0 in
   p |> List.map ~f:(fun (x,w,h) -> (x-.c,w,h))
+
+let discrete_plan p =
+  p |> List.map ~f:(fun (x,w,h) ->
+      (round (x*.10.) |> Int.of_float,
+       round (w*.10.) |> Int.of_float,
+       round (h*.10.) |> Int.of_float))
 
 let block w h =
   let n = Printf.sprintf "%dx%d" w h in
@@ -98,49 +105,55 @@ let parse_tower_result result =
   let staircase = result |> member "staircase" |> to_float in
   let height = result |> member "height" |> to_float in
   let overpass = result |> member "overpass" |> to_float in
-  {stability;length;area;staircase;height;overpass;}  
+  {stability;length;area;staircase;height;overpass;}
 
 let tower_cash = Hashtbl.Poly.create();;
 
-
-
-let update_tower_cash() =
+let update_serialized_tower_cash() =
   let open Yojson.Safe.Util in
   let open Yojson.Safe in
-  let m = (`String("sendCash")) in
+  let open Cache_pb in
+  let m = (`String("sendSerializedCash")) in
   let filename =  send_to_tower_server m |> to_string in
   (* For some reason the filename still includes quotes, so we need to remove the first and last characters *)
   let filename = String.sub ~pos:1 ~len:(String.length filename - 2) filename in
-  let new_entries = Yojson.Safe.from_file filename in
-  
-  new_entries |> to_list |> List.iter ~f:(fun e ->
-      match e |> to_list with
-      | [`List([plan;perturbation;]);result] ->
-        let plan = plan |> to_list |> List.map ~f:(fun b -> match b |> to_list with
-            | [a;b;c] -> (a |> to_float, b |> to_float, c |> to_float)
-            | _ -> raise (Failure ("plan entry\n"^(pretty_to_string plan)))) in
-        let perturbation = perturbation |> to_float in
-        Hashtbl.Poly.set tower_cash ~key:(plan,perturbation) ~data:(parse_tower_result(result))
-      | _ -> raise (Failure "tower cache entry"))
-  ;
-  Sys.remove filename
+  let c = 
+    let ic = open_in filename in
+    let len = in_channel_length ic in
+    let bytes = Bytes.create len in 
+    really_input ic bytes 0 len; 
+    close_in ic; 
+    Cache_pb.decode_tower_cash (Pbrt.Decoder.of_bytes bytes)
+  in
+  c.entries |> List.iter ~f:(fun e ->
+      let plan = e.plan |> List.map ~f:(fun b -> (Int32.to_int_exn b.x10,
+                                                  Int32.to_int_exn b.w10,
+                                                  Int32.to_int_exn b.h10)) in
+      (* Printf.eprintf "(ocaml received entry: %s)\n" *)
+      (*   (plan |> List.map ~f:(fun (x ,w,h) -> Printf.sprintf "(%d,%d,%d)" x w h) |> join ~separator:";"); *)
+      Hashtbl.Poly.set tower_cash ~key:plan ~data:{stability = e.stability;
+                                                   length = e.length;
+                                                   height = e.height;
+                                                   area = e.area;
+                                                   staircase = e.staircase;
+                                                   overpass = e.overpass;})
 
 
 let evaluate_tower ?n:(n=15) plan perturbation =
   (* center the tower *)
   let plan = center_tower plan in
-  let key = (plan, perturbation) in
+  let key = discrete_plan plan in
   let open Yojson.Safe.Util in
   match Hashtbl.Poly.find tower_cash key with
   | Some(r) -> begin
       (* Printf.eprintf "(ocaml: hit %s)\n" *)
-      (*   (plan |> List.map ~f:(fun (a,b,c) -> Printf.sprintf "%f,%f,%f" a b c) |> join ~separator:"; "); *)
+      (*   (key |> List.map ~f:(fun (a,b,c) -> Printf.sprintf "%d,%d,%d" a b c) |> join ~separator:"; "); *)
       (* flush_everything(); *)
       r
     end
   | None ->
     (* Printf.eprintf "(ocaml: miss %s)\n" *)
-    (*   (plan |> List.map ~f:(fun (a,b,c) -> Printf.sprintf "%f,%f,%f" a b c) |> join ~separator:"; "); *)
+    (*   (key |> List.map ~f:(fun (a,b,c) -> Printf.sprintf "%d,%d,%d" a b c) |> join ~separator:"; "); *)
     (* flush_everything(); *)
       
     let plan = `List(plan |> List.map ~f:(fun (a,b,c) -> `List([`Float(a);
@@ -191,12 +204,3 @@ let tower_task ?timeout:(timeout = 0.001)
                 end)
 
   }
-
-(* let test_tower() = *)
-(*   update_tower_cash(); *)
-(*   let t = tower_task ~perturbation:4. ~maximumStaircase:10. ~maximumMass:200. *)
-(*       ~minimumLength:1.0 ~minimumArea:0. ~minimumHeight:2. "test" ttower [] in *)
-(*   let p = parse_program "(do 3x1 (do (left 1x3) (do (right 1x3) 3x1)))" |> get_some in *)
-(*   Printf.printf "%f\n" (t.log_likelihood p) *)
-(*   ; *)
-(*   flush_everything() *)

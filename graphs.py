@@ -68,6 +68,7 @@ def plotECResult(
         title=None,
         export=None,
         showSolveTime=False,
+        showTraining=False,
         iterations=None):
     results = []
     parameters = []
@@ -103,8 +104,11 @@ def plotECResult(
     if showSolveTime:
         a1.set_ylabel('%  Solved (solid)', fontsize=LABELFONTSIZE)
     else:
-        a1.set_ylabel('% Testing Tasks Solved', fontsize=LABELFONTSIZE)
-        
+        if not showTraining:
+            a1.set_ylabel('% Testing Tasks Solved', fontsize=LABELFONTSIZE)
+        else:
+            a1.set_ylabel('% Tasks Solved', fontsize=LABELFONTSIZE)
+            
 
     if showSolveTime:
         a2 = a1.twinx()
@@ -122,6 +126,9 @@ def plotECResult(
         if hasattr(p, "baseline") and p.baseline:
             ys = [100. * result.learningCurve[-1] /
                   len(result.taskSolutions)] * n_iters
+        elif showTraining:
+            ys = [t/136. # FIXME: somehow calculate the number of training tasks
+                  for t in result.learningCurve[:iterations]]
         else:
             ys = [100. * len(t) / result.numTestingTasks
                   for t in result.testingSearchTime[:iterations]]
@@ -129,9 +136,14 @@ def plotECResult(
         l, = a1.plot(list(range(0, len(ys))), ys, color=color, ls='-')
 
         if showSolveTime:
-            a2.plot(range(len(result.testingSearchTime[:iterations])),
-                    [sum(ts) / float(len(ts)) for ts in result.testingSearchTime[:iterations]],
-                    color=color, ls='--')
+            if not showTraining:
+                a2.plot(range(len(result.testingSearchTime[:iterations])),
+                        [sum(ts) / float(len(ts)) for ts in result.testingSearchTime[:iterations]],
+                        color=color, ls='--')
+            else:
+                a2.plot(range(len(result.searchTimes[:iterations])),
+                        [sum(ts) / float(len(ts)) for ts in result.searchTimes[:iterations]],
+                        color=color, ls='--')
 
     a1.set_ylim(ymin=0, ymax=110)
     a1.yaxis.grid()
@@ -147,7 +159,6 @@ def plotECResult(
         else:
             a2.yaxis.set_ticks([50 * j for j in range(6)])
         for tick in a2.yaxis.get_ticklabels():
-            print(tick)
             tick.set_fontsize(TICKFONTSIZE)
 
     if title is not None:
@@ -220,6 +231,8 @@ if __name__ == "__main__":
             l += " (timeout %ss)" % p.enumerationTimeout
         return l
     arguments = sys.argv[1:]
+    training = 'training' in arguments
+    arguments = [a for a in arguments if a != 'training' ]
     export = [a for a in arguments if a.endswith('.png') or a.endswith('.eps')]
     export = export[0] if export else None
     title = [

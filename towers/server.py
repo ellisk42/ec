@@ -1,3 +1,4 @@
+import cache_pb2
 import codecs
 import random
 import time
@@ -22,6 +23,7 @@ def flushEverything():
 
 COMMANDSERVERPORT = 9494
 COMMANDSERVERSEMAPHORE = None
+SERIALIZEDSEMAPHORE = None
 MAXIMUMNUMBEROFCONNECTIONS = None
 
 
@@ -32,6 +34,45 @@ class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
 RESULTSCASH = {}
 
 
+SERIALIZEDCASH = cache_pb2.TowerCash()
+LASTSERIALIZED = None
+def addToSerialized(plan, result):
+    global LASTSERIALIZED
+    LASTSERIALIZED = None
+    entry = SERIALIZEDCASH.entries.add()
+    entry.height = result['height']
+    entry.stability = result['stability']
+    entry.area = result['area']
+    entry.length = result['length']
+    entry.overpass = result['overpass']
+    entry.staircase = result['staircase']
+
+    for x,w,h in plan:
+        b = entry.plan.add()
+        b.w10 = int(w*10 + 0.5)
+        b.h10 = int(h*10 + 0.5)
+        b.x10 = int(x*10 + 0.5)
+def outputSerialized():
+    global LASTSERIALIZED
+    if LASTSERIALIZED is not None: return LASTSERIALIZED
+    
+    import tempfile
+    fd = tempfile.NamedTemporaryFile(mode="wb", dir="/dev/shm", delete=False)
+    n = fd.name
+    fd.write(SERIALIZEDCASH.SerializeToString())
+    fd.close()
+    LASTSERIALIZED = n
+    return n
+
+def inputSerialized(n):
+    with open(n,'rb') as handle:
+        c = cache_pb2.TowerCash()
+        stuff = handle.read()
+        c.ParseFromString(stuff)
+        print(c)
+    return c
+    
+
 def powerOfTen(n):
     if n <= 0:
         return False
@@ -41,7 +82,6 @@ def powerOfTen(n):
         if n % 10 != 0:
             return False
         n = n / 10
-
 
 
 def exportToRAM(content):
@@ -58,12 +98,17 @@ def exportToRAM(content):
 class CommandHandler(socketserver.StreamRequestHandler):
     def handle(self):
         k = json.load(codecs.getreader('utf-8')(self.rfile))
-        if k == "sendCash":
-            COMMANDSERVERSEMAPHORE.acquire()
-            v = list(RESULTSCASH.items())
-            COMMANDSERVERSEMAPHORE.release()
-            n = exportToRAM(v)
-            self.wfile.write(bytes(json.dumps(n), 'ascii'))
+        # if k == "sendCash":
+        #     COMMANDSERVERSEMAPHORE.acquire()
+        #     v = list(RESULTSCASH.items())
+        #     COMMANDSERVERSEMAPHORE.release()
+        #     n = exportToRAM(v)
+        #     self.wfile.write(bytes(json.dumps(n), 'ascii'))
+        if k == "sendSerializedCash":
+            SERIALIZEDSEMAPHORE.acquire()
+            n = outputSerialized()
+            SERIALIZEDSEMAPHORE.release()
+            self.wfile.write(bytes(json.dumps(n), 'ascii'))            
         else:
             plan = k["plan"]
             perturbation = k["perturbation"]
@@ -72,20 +117,18 @@ class CommandHandler(socketserver.StreamRequestHandler):
             k = (tuple(map(tuple, plan)), perturbation)
             if k in RESULTSCASH:
                 v = RESULTSCASH[k]
-                # eprint("(python: hit %s)"%str(k[0]))
             else:
-                # eprint("(python: miss %s)"%str(k[0]))
                 COMMANDSERVERSEMAPHORE.acquire()
                 v = TowerWorld().sampleStability(plan, perturbation, n)
                 RESULTSCASH[k] = v
                 if powerOfTen(len(RESULTSCASH)):
                     eprint("Tower cache reached size", len(RESULTSCASH))
-                    # name = "experimentOutputs/towers%d.png" % len(RESULTSCASH)
-                    # exportTowers(
-                    #     list(set([_t for _t, _ in list(RESULTSCASH.keys())])), name)
-                    # eprint("Exported towers to image", name)
 
                 COMMANDSERVERSEMAPHORE.release()
+
+                SERIALIZEDSEMAPHORE.acquire()
+                addToSerialized(plan, v)
+                SERIALIZEDSEMAPHORE.release()
 
             v = bytes(json.dumps(v), 'ascii')
             self.wfile.write(v)
@@ -145,6 +188,7 @@ if __name__ == "__main__":
 
     host = "localhost"
     COMMANDSERVERSEMAPHORE = threading.Semaphore(1)
+    SERIALIZEDSEMAPHORE = threading.Semaphore(1)
 
     server = ThreadedTCPServer((host, COMMANDSERVERPORT), CommandHandler)
     eprint(" [+] Binding python%s tower server on %s port %d"%(sys.version_info[0], host, COMMANDSERVERPORT))

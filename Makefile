@@ -20,7 +20,10 @@ drawFile:
 	  jbuilder build geomDrawFile.exe && \
 	  cp _build/default/geomDrawFile.exe \
 	    ./behaviouralData/geomDrawFile
-
+pb:
+	cd towers && \
+	  protoc --python_out=. cache.proto && \
+	  ocaml-protoc -binary -ml_out ../solvers cache.proto
 clean:
 	cd solvers && jbuilder clean
 	rm -f geomDrawLambdaString
