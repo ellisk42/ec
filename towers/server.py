@@ -105,34 +105,49 @@ class CommandHandler(socketserver.StreamRequestHandler):
         #     n = exportToRAM(v)
         #     self.wfile.write(bytes(json.dumps(n), 'ascii'))
         if k == "sendSerializedCash":
+            eprint("Received sendSerializedCash")
             SERIALIZEDSEMAPHORE.acquire()
             n = outputSerialized()
             SERIALIZEDSEMAPHORE.release()
-            self.wfile.write(bytes(json.dumps(n), 'ascii'))            
+            eprint("Wrote serialized cash to %s"%n)
+            self.wfile.write(bytes(json.dumps(n), 'ascii'))
+            eprint("Successfully wrote serialized output to output handle")
         else:
             plan = k["plan"]
             perturbation = k["perturbation"]
             n = k["n"]
 
             k = (tuple(map(tuple, plan)), perturbation)
+            eprint("About to acquire command server semaphore...")
             COMMANDSERVERSEMAPHORE.acquire()
+            eprint("Successfully acquired")
             if k in RESULTSCASH:
                 v = RESULTSCASH[k]
                 COMMANDSERVERSEMAPHORE.release()
+                eprint("Releasing command server semaphore because it is already cashed")
             else:
                 v = TowerWorld().sampleStability(plan, perturbation, n)
                 RESULTSCASH[k] = v
                 if powerOfTen(len(RESULTSCASH)):
                     eprint("Tower cache reached size", len(RESULTSCASH))
 
+                eprint("Releasing command server semaphore because we ran the simulation")
+
                 COMMANDSERVERSEMAPHORE.release()
+
+                eprint("Acquiring serialization semaphore")
 
                 SERIALIZEDSEMAPHORE.acquire()
                 addToSerialized(plan, v)
+                
+                eprint("Releasing serialization semaphore")
                 SERIALIZEDSEMAPHORE.release()
 
+            eprint("Writing out simulation result")
             v = bytes(json.dumps(v), 'ascii')
             self.wfile.write(v)
+
+        eprint("Totally done handling request")
 
 
 def command_server_running():
