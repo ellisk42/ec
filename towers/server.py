@@ -115,10 +115,11 @@ class CommandHandler(socketserver.StreamRequestHandler):
             n = k["n"]
 
             k = (tuple(map(tuple, plan)), perturbation)
+            COMMANDSERVERSEMAPHORE.acquire()
             if k in RESULTSCASH:
                 v = RESULTSCASH[k]
+                COMMANDSERVERSEMAPHORE.release()
             else:
-                COMMANDSERVERSEMAPHORE.acquire()
                 v = TowerWorld().sampleStability(plan, perturbation, n)
                 RESULTSCASH[k] = v
                 if powerOfTen(len(RESULTSCASH)):
