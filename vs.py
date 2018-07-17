@@ -465,7 +465,53 @@ class VersionTable():
         return g
             
             
+def induceGrammar_Beta(frontiers, g0, _=None,
+                       arity=2,
+                       topK=2,
+                       topI=100,
+                       structurePenalty=1.):
 
+    from fragmentUtilities import primitiveSize
+    
+    def objective(g, fs):
+        return sum(g.frontierMDL(f) for f in fs ) - \
+               len(g.productions) - \
+               structurePenalty * sum(primitiveSize(p) for p in g.primitives)
+    
+    def scoreCandidate(graph, candidate, currentFrontiers, currentGrammar):
+        newGrammar, newFrontiers = graph.addInventionToGrammar(candidate, currentGrammar, currentFrontiers)
+        return objective(newGrammar, newFrontiers)
+        
+
+    oldScore = objective(g0, frontiers)
+    
+    while True:
+        v = VersionTable(typed=False, identity=False)
+        frontierHeads = [ [ v.incorporate(e.program) for e in f ]
+                          for f in frontiers ]
+        graph = v.makeEquivalenceGraph({ h for hs in frontierHeads for h in hs }, arity)
+
+        candidates = graph.bestInventions([ { graph.incorporate(e.program)
+                                              for e in f }
+                                            for f in frontiers ],
+                                          K=topI)
+        scoredCandidates = [(candidate, scoreCandidate(graph, candidate, frontiers, g0))
+                            for candidate in candidates ]
+        bestNew, bestScore = max(scoredCandidates, key=lambda sc: sc[1])
+        if bestScore < oldScore:
+            eprint("No improvement possible.")
+            return g0, frontiers
+
+        eprint(f"Improved score to {bestScore} w/ invention {bestNew}")
+        oldScore = bestScore
+        newGrammar, newFrontiers = graph.addInventionToGrammar(bestNew, g0, frontiers)
+
+        g0, frontiers = newGrammar, newFrontiers        
+
+        
+        
+        
+        
             
             
 def testTyping(p):
@@ -503,6 +549,7 @@ if __name__ == "__main__":
     from arithmeticPrimitives import *
     from listPrimitives import *
     from grammar import *
+    from frontier import *
     bootstrapTarget_extra()
     # testSharing()
     # v = VersionTable(typed=False)
@@ -513,10 +560,21 @@ if __name__ == "__main__":
 #    testTyping(Program.parse("((lambda $0) cons ((lambda $0) 9))"))
     p2 = Program.parse("(lambda (fold $0 empty (lambda (lambda (cons (+ $1 $1) $0)))))")
 
+    
+
     # eprint(EtaLongVisitor().execute(Program.parse("+")))
     # assert False
 
     N=2
+
+    primitives = set()
+    for p in [p1,p2]:
+        for _, s in p.walk():
+            if s.isPrimitive:
+                primitives.add(s)
+    g0 = Grammar.uniform(list(primitives))
+
+    induceGrammar_Beta([Frontier.dummy(p1),Frontier.dummy(p2)], g0)
     
 
     v = VersionTable(typed=False, identity=True)
@@ -527,6 +585,9 @@ if __name__ == "__main__":
     with timing("invented a new primitive"):
         i = g.bestInvention([g.incorporate(p1),
                              g.incorporate(p2)])
+
+        print(g.addInventionToGrammar(i, g0,
+                                      [Frontier.dummy(p1),Frontier.dummy(p2)])[0])
         print(g.rewriteWithInvention(i, [p1,p2]))
     
     # with timing("calculated table space"):

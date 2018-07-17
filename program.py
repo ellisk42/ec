@@ -840,6 +840,7 @@ class RegisterPrimitives(object):
     @staticmethod
     def register(e): e.visit(RegisterPrimitives())
 
+class EtaExpandFailure(Exception): pass
 class EtaLongVisitor(object):
     """Converts an expression into eta-longform"""
     def __init__(self, request=None):
@@ -882,6 +883,7 @@ class EtaLongVisitor(object):
         ft = ft.apply(self.context)
 
         xt = ft.functionArguments()
+        if len(xs) != len(xt): raise EtaExpandFailure()
 
         returnValue = f
         for x,t in zip(xs,xt):
@@ -919,7 +921,8 @@ class EtaLongVisitor(object):
         if self.request is None:
             self.request = e.infer()
         el = e.visit(self, self.request, [])
-        assert el.infer().canonical() == e.infer().canonical()
+        assert el.infer().canonical() == e.infer().canonical(), \
+            f"Types are not preserved by ETA expansion: {e} : {e.infer().canonical()} vs {el} : {el.infer().canonical()}"
         return el
         
         

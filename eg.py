@@ -1,5 +1,7 @@
+from grammar import *
 from program import *
 from utilities import *
+from frontier import *
 
 from frozendict import frozendict
 
@@ -322,7 +324,6 @@ class EquivalenceGraph():
                 for k in table:
                     _,change = relax(k)
                     assert not changed
-                print(f"Relaxed {numberOfRelaxations}")
                 return table
             
             n = getOne(q)
@@ -478,6 +479,24 @@ class EquivalenceGraph():
         best = min(candidates,key = lambda s: s[0])[1]
         return self.extract(best)
 
+    def bestInventions(self,heads,K):
+        referenceTable = self.betaLongCost([])
+        def score(k):
+            t = self.betaLongCost([k], oldTable=referenceTable)
+            s = sum(min(min(t.get(h,referenceTable[h])) for h in hs ) for hs in heads )
+            return s
+        candidates = [self.reachable(hs)
+                      for hs in heads ]
+        from collections import Counter
+        candidates = Counter(k for ks in candidates for k in ks)
+        candidates = list({k for k,f in candidates.items() if f >= 2 })
+        print(f"{len(candidates)} candidates")
+        if len(candidates) < 1: return []
+        
+        candidates = [(score(k),k) for k in candidates ]
+        candidates.sort(key=lambda s: s[0])
+        return [self.extract(k) for _,k in candidates[:K] ]
+
 
     def rewriteWithInvention(self, invention, heads):
         inventionK = self.incorporate(invention)
@@ -487,6 +506,20 @@ class EquivalenceGraph():
         v = RewriteWithInventionVisitor(invention)
         heads = [ v.execute(h) for h in heads ]
         return v.invention, heads
+
+    def addInventionToGrammar(self, invention, g, frontiers, pseudoCounts=1.):
+        heads = list({ e.program for f in frontiers for e in f })
+        invention, newHeads = self.rewriteWithInvention(invention, heads)
+        sourceUpdate = dict(zip(heads, newHeads))
+        frontiers = [ Frontier([ FrontierEntry(program=sourceUpdate[e.program],
+                                               logLikelihood=e.logLikelihood,
+                                               logPrior=0.)
+                                 for e in f ],
+                               task=f.task)
+                      for f in frontiers ]
+        g = Grammar.uniform([invention] + g.primitives).insideOutside(frontiers, pseudoCounts)
+        frontiers = [g.rescoreFrontier(f) for f in frontiers]
+        return g, frontiers
 
         
 
@@ -541,7 +574,10 @@ class RewriteWithInventionVisitor():
         return self.tryRewrite(e) or Application(e.f.visit(self),
                                                  e.x.visit(self))
     def execute(self, e):
-        return EtaLongVisitor().execute(e.visit(self))
+        try:
+            return EtaLongVisitor().execute(e.visit(self))
+        except EtaExpandFailure:
+            return e
 
 
 

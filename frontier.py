@@ -61,9 +61,8 @@ class Frontier(object):
                 program=e.program,
                 logPrior=e.logPrior,
                 logLikelihood=e.logLikelihood,
-                logPosterior=e.logPrior +
-                e.logLikelihood -
-                z) for e in self]
+                logPosterior=e.logPrior + e.logLikelihood - z)
+            for e in self]
         newEntries.sort(key=lambda e: e.logPosterior, reverse=True)
         return Frontier(newEntries,
                         self.task)

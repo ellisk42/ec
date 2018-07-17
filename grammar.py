@@ -465,6 +465,49 @@ class Grammar(object):
                     yield expr
             yield from Mutator(self, mutations).execute(expr, request)
 
+    def insideOutside(self, frontiers, pseudoCounts, iterations=1):
+        # Replace programs with (likelihood summary, uses)
+        frontiers = [ Frontier([ FrontierEntry((summary, summary.toUses()),
+                                               logPrior=summary.logLikelihood(self),
+                                               logLikelihood=e.logLikelihood)
+                                 for e in f
+                                 for summary in [self.closedLikelihoodSummary(f.task.request, e.program)] ],
+                               task=f.task)
+                      for f in frontiers ]
+
+        g = self
+        for i in range(iterations):
+            u = Uses()
+            for f in frontiers:
+                f = f.normalize()
+                for e in f:
+                    _, eu = e.program
+                    u += math.exp(e.logPosterior) * eu
+
+            lv = math.log(u.actualVariables + pseudoCounts) - \
+                 math.log(u.possibleVariables + pseudoCounts)
+            g = Grammar(lv,
+                        [ (math.log(u.actualUses.get(p,0.) + pseudoCounts) - \
+                           math.log(u.possibleUses.get(p,0.) + pseudoCounts),
+                           t,p)
+                          for _,t,p in g.productions ])
+            if i < iterations - 1:
+                frontiers = [Frontier([ FrontierEntry((summary, uses),
+                                                      logPrior=summary.logLikelihood(g),
+                                                      logLikelihood=e.logLikelihood)
+                                        for e in f
+                                        for (summary, uses) in [e.program] ],
+                                      task=f.task)
+                             for f in frontiers ]
+        return g
+
+    def frontierMDL(self, frontier):
+        return max( e.logLikelihood + self.logLikelihood(frontier.task.request, e.program)
+                    for e in frontier )
+                        
+                        
+                
+
 
 class LikelihoodSummary(object):
     '''Summarizes the terms that will be used in a likelihood calculation'''
@@ -511,6 +554,23 @@ normalizers = {%s})""" % (self.constant,
             sum(count * grammar.expression2likelihood[p] for p, count in self.uses.items()) - \
             sum(count * lse([grammar.expression2likelihood[p] for p in ps])
                 for ps, count in self.normalizers.items())
+    
+    def toUses(self):
+        from collections import Counter
+        
+        possibleVariables = sum( count if Index(0) in ps else 0
+                                 for ps, count in self.normalizers.items() )
+        actualVariables = self.uses.get(Index(0), 0.)
+        actualUses = {k: v
+                      for k, v in self.uses.items()
+                      if not k.isIndex }
+        possibleUses = dict(Counter(p
+                                    for ps, count in self.normalizers.items()
+                                    for p_ in ps
+                                    if not p_.isIndex
+                                    for p in [p_]*count ))
+        return Uses(possibleVariables, actualVariables,
+                    possibleUses, actualUses)
 
 
 class Uses(object):
