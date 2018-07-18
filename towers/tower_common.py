@@ -452,6 +452,13 @@ class TowerWorld(object):
                 "overpass": overpass,
                 "staircase": max(biggestFall, biggestJump)}
 
+TowerWorld.BADRESULT = {"height": 0.,
+                        "stability": 0.,
+                        "area": 0.,
+                        "length": 0.,
+                        "overpass": 0.,
+                        "staircase": float('inf')}
+
 
 def exportTowers(towers, name):
     from PIL import Image

@@ -8,12 +8,21 @@ open Type
 
 let ttower = make_ground "tower";;
 
+let maximum_number_of_blocks = 35;;
+let maximum_tower_extent = 15.;;
+
 type tower_result = {stability : float;
                      length : float;
                      area : float;
                      staircase : float;
                      height : float;
                      overpass : float;}
+
+let tower_extent p =
+  let xs = p |> List.map ~f:(fun (x,_,_) -> x) in
+  let x1 = List.fold_left ~init:(List.hd_exn xs) ~f:max xs in
+  let x0 = List.fold_left ~init:(List.hd_exn xs) ~f:min xs in
+  x1 -. x0
 
 let center_tower p =
   let xs = p |> List.map ~f:(fun (x,_,_) -> x) in
@@ -184,7 +193,11 @@ let tower_task ?timeout:(timeout = 0.001)
            with
            | Some(p) ->
              let m = p |> List.map ~f:(fun (_,w,h) -> w*.h) |> List.fold_right ~f:(+.) ~init:0. in
-             if m > maximumMass then log 0.0 else 
+             if m > maximumMass ||
+                tower_extent p > maximum_tower_extent ||
+                List.length p > maximum_number_of_blocks
+             then log 0.0
+             else 
                let result = evaluate_tower p perturbation in
                if result.height < minimumHeight
                || result.staircase > maximumStaircase
