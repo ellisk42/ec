@@ -11,6 +11,9 @@ primitives = [
     Primitive("logo_UA", tangle, ""),
     Primitive("logo_UL", tlength, ""),
 
+    Primitive("logo_ZA", tangle, ""),
+    Primitive("logo_ZL", tlength, ""),
+
     Primitive("logo_DIVA",  arrow(tangle,tint,tangle), ""),
     Primitive("logo_MULA",  arrow(tangle,tint,tangle), ""),
     Primitive("logo_DIVL",  arrow(tlength,tint,tlength), ""),

@@ -540,6 +540,9 @@ let logo_GETSET = primitive "logo_GETSET"
 let logo_S2A = primitive "logo_UA" (tangle) (1.)
 let logo_S2A = primitive "logo_UL" (tlength) (1.)
 
+let logo_S2A = primitive "logo_ZA" (tangle) (0.)
+let logo_S2A = primitive "logo_ZL" (tlength) (0.)
+
 let logo_IFTY = primitive "logo_IFTY" (tint) (20)
 
 let logo_IFTY = primitive "logo_epsL" (tlength) (0.05)
