@@ -494,6 +494,9 @@ def induceGrammar_Beta(frontiers, g0, _=None,
         frontierHeads = [ [ v.incorporate(e.program) for e in f ]
                           for f in frontiers ]
         graph = v.makeEquivalenceGraph({ h for hs in frontierHeads for h in hs }, arity)
+        # cost = graph.betaLongCost([])
+        # for k in graph.classMembers.keys(): eprint(f"{k} > {graph.extractBetaLong(k, cost)}")
+        
 
         candidates = graph.bestInventions([ { graph.incorporate(e.program)
                                               for e in f }

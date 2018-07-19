@@ -288,53 +288,53 @@ class EquivalenceGraph():
             for j in range(1,len(ks)):
                 self.makeEquivalent(ks[0],ks[j])
 
-    def minimumCosts(self, given, oldTable=None):
-        if oldTable is None:
-            basicClasses = {k
-                            for k,children in self.classMembers.items()
-                            if k in given or any( l.isIndex or l.isPrimitive or l.isInvented
-                                                  for l in children )}
-            table = {k: 1 if k in basicClasses else POSITIVEINFINITY for k in self.classMembers }
-        else:
-            basicClasses = given
-            table = {g: 1 for g in given}
+    # def minimumCosts(self, given, oldTable=None):
+    #     if oldTable is None:
+    #         basicClasses = {k
+    #                         for k,children in self.classMembers.items()
+    #                         if k in given or any( l.isIndex or l.isPrimitive or l.isInvented
+    #                                               for l in children )}
+    #         table = {k: 1 if k in basicClasses else POSITIVEINFINITY for k in self.classMembers }
+    #     else:
+    #         basicClasses = given
+    #         table = {g: 1 for g in given}
 
-        def indexTable(k):
-            if k in table: return table[k]
-            return oldTable[k]
+    #     def indexTable(k):
+    #         if k in table: return table[k]
+    #         return oldTable[k]
 
-        def expressionCost(l):
-            if l.isApplication: return indexTable(l.f) + indexTable(l.x)
-            if l.isAbstraction: return indexTable(l.body)
-            if l.isPrimitive or l.isInvented: return 1
-            if l.isIndex: return 1
-            assert False
-        def relax(e):
-            old = indexTable(e)
-            new = old
-            for l in self.classMembers[e]:
-                new = min(expressionCost(l),new)
-            return new, new < old
+    #     def expressionCost(l):
+    #         if l.isApplication: return indexTable(l.f) + indexTable(l.x)
+    #         if l.isAbstraction: return indexTable(l.body)
+    #         if l.isPrimitive or l.isInvented: return 1
+    #         if l.isIndex: return 1
+    #         assert False
+    #     def relax(e):
+    #         old = indexTable(e)
+    #         new = old
+    #         for l in self.classMembers[e]:
+    #             new = min(expressionCost(l),new)
+    #         return new, new < old
 
-        q = {getOne(self.classes[i])
-             for b in basicClasses
-             for i in self.incident[b] }
-        numberOfRelaxations = 0
-        while True:
-            if len(q) == 0:
-                for k in table:
-                    _,change = relax(k)
-                    assert not changed
-                return table
+    #     q = {getOne(self.classes[i])
+    #          for b in basicClasses
+    #          for i in self.incident[b] }
+    #     numberOfRelaxations = 0
+    #     while True:
+    #         if len(q) == 0:
+    #             for k in table:
+    #                 _,change = relax(k)
+    #                 assert not changed
+    #             return table
             
-            n = getOne(q)
-            q.remove(n)
-            new, changed = relax(n)
-            numberOfRelaxations += 1
-            if changed:
-                table[n] = new
-                q.update(getOne(self.classes[i])
-                         for i in self.incident[n])
+    #         n = getOne(q)
+    #         q.remove(n)
+    #         new, changed = relax(n)
+    #         numberOfRelaxations += 1
+    #         if changed:
+    #             table[n] = new
+    #             q.update(getOne(self.classes[i])
+    #                      for i in self.incident[n])
 
     def betaLongCost(self, given, oldTable=None):
         # table[k] = (functionCost, argumentCost)
@@ -343,34 +343,10 @@ class EquivalenceGraph():
                             for k,children in self.classMembers.items()
                             if k in given or any( l.isIndex or l.isPrimitive or l.isInvented
                                                   for l in children )}
-            table = {k: (1,1) if k in basicClasses else (POSITIVEINFINITY,POSITIVEINFINITY)
-                     for k in self.classMembers }
+            table = CostTable(basicClasses)
         else:
             basicClasses = given
-            table = {g: (1,1) for g in given}
-
-        def argumentCost(k):
-            if k in table: return table[k][1]
-            return oldTable[k][1]
-        def functionCost(k):
-            if k in table: return table[k][0]
-            return oldTable[k][0]
-
-        def expressionCost(l):
-            if l.isApplication: return functionCost(l.f) + argumentCost(l.x) + EquivalenceGraph.EPSILONCOST
-            if l.isAbstraction: return argumentCost(l.body) + EquivalenceGraph.EPSILONCOST
-            if l.isPrimitive or l.isInvented: return 1
-            if l.isIndex: return 1
-            assert False
-        def relax(e):
-            ac, fc = argumentCost(e), functionCost(e)
-            new_ac, new_fc = ac, fc
-            for l in self.classMembers[e]:
-                lc = expressionCost(l)
-                new_ac = min(lc,new_ac)
-                if not l.isAbstraction:
-                    new_fc = min(lc,new_fc)
-            return (new_fc,new_ac), new_fc < fc, new_ac < ac
+            table = CostTable(basicClasses, oldTable=oldTable)
 
         q = {getOne(self.classes[i])
              for b in basicClasses
@@ -378,9 +354,9 @@ class EquivalenceGraph():
         numberOfRelaxations = 0
         while True:
             if len(q) == 0:
-                if False:
-                    for k in table:
-                        _,changeF, changeA = relax(k)
+                if True:
+                    for k in set(table.functionCosts)|set(table.argumentCosts):
+                        changeF, changeA = table.relax(self,k)
                         assert not changedF
                         assert not changedA
                 #print(f"Relaxed {numberOfRelaxations}")
@@ -388,60 +364,59 @@ class EquivalenceGraph():
             
             n = getOne(q)
             q.remove(n)
-            new, changedF, changedA = relax(n)
+            changedF, changedA = table.relax(self,n)
             numberOfRelaxations += 1
             if changedF or changedA:
-                table[n] = new
                 for i in self.incident[n]:
-                    if (changedF and i.isApplication and i.f == n) or \
-                       (changedA and ((not i.isApplication) or i.x == n)):
-                        q.add(getOne(self.classes[i]))
-        
-        
-    def extract(self,k,table=None):
-        if table is None: table = self.minimumCosts([])
-        def expressionCost(l):
-            if l.isApplication: return table[l.f] + table[l.x] + EquivalenceGraph.EPSILONCOST
-            if l.isAbstraction: return table[l.body] + EquivalenceGraph.EPSILONCOST
-            if l.isPrimitive or l.isInvented: return 1
-            if l.isIndex: return 1
-            assert False
-        def visitClass(k):
-            return visitExpression(min(self.classMembers[k],
-                                       key=expressionCost))
-        def visitExpression(e):
-            if e.isApplication:
-                return Application(visitClass(e.f),
-                                   visitClass(e.x))
-            if e.isAbstraction:
-                return Abstraction(visitClass(e.body))
-            return e
-        return visitClass(k)
+                    q.add(getOne(self.classes[i]))
+                    # if (changedF and i.isApplication and i.f == n) or \
+                    #    (changedA and ((not i.isApplication) or i.x == n)):
 
+        
+        
+    # def extract(self,k,table=None):
+    #     if table is None: table = self.minimumCosts([])
+    #     def expressionCost(l):
+    #         if l.isApplication: return table[l.f] + table[l.x] + EquivalenceGraph.EPSILONCOST
+    #         if l.isAbstraction: return table[l.body] + EquivalenceGraph.EPSILONCOST
+    #         if l.isPrimitive or l.isInvented: return 1
+    #         if l.isIndex: return 1
+    #         assert False
+    #     def visitClass(k):
+    #         return visitExpression(min(self.classMembers[k],
+    #                                    key=expressionCost))
+    #     def visitExpression(e):
+    #         if e.isApplication:
+    #             return Application(visitClass(e.f),
+    #                                visitClass(e.x))
+    #         if e.isAbstraction:
+    #             return Abstraction(visitClass(e.body))
+    #         return e
+    #     return visitClass(k)
+    
     def extractBetaLong(self,k,table=None, given=[]):
         if table is None: table = self.betaLongCost(given)
-        def functionCost(k): return table[k][0]
-        def argumentCost(k): return table[k][1]
 
-        def expressionCost(l):
-            if l.isApplication: return functionCost(l.f) + argumentCost(l.x) + EquivalenceGraph.EPSILONCOST
-            if l.isAbstraction: return argumentCost(l.body) + EquivalenceGraph.EPSILONCOST
-            if l.isPrimitive or l.isInvented: return 1
-            if l.isIndex: return 1
-            assert False
-        def visitClass(k):
-            # eprint(f"Visiting class {k} w/ fc={functionCost(k)} & ac={argumentCost(k)}")
-            # eprint(f"\t{self.classMembers[k]}")
-            return visitExpression(min(self.classMembers[k],
-                                       key=expressionCost))
-        def visitExpression(e):
+        def validHistory(l, H):
+            if l.isApplication: return (l.f not in H) and (l.x not in H)
+            if l.isAbstraction: return l.body not in H
+            return True
+        
+        def visitClass(k, H):
+            assert k not in H
+            H = H|{k}
+            return visitExpression(min((m for m in self.classMembers[k]
+                                        if validHistory(m,H)),
+                                       key=lambda l: table.expressionCost(l)),
+                                   H)
+        def visitExpression(e, H):
             if e.isApplication:
-                return Application(visitClass(e.f),
-                                   visitClass(e.x))
+                return Application(visitClass(e.f, H),
+                                   visitClass(e.x, H))
             if e.isAbstraction:
-                return Abstraction(visitClass(e.body))
+                return Abstraction(visitClass(e.body, H))
             return e
-        return visitClass(k)
+        return visitClass(k, set())
 
     def reachable(self,heads):
         r = set()
@@ -489,7 +464,7 @@ class EquivalenceGraph():
         referenceTable = self.betaLongCost([])
         def score(k):
             t = self.betaLongCost([k], oldTable=referenceTable)
-            s = sum(min(min(t.get(h,referenceTable[h])) for h in hs ) for hs in heads )
+            s = sum(min(t.minimumCost(h) for h in hs ) for hs in heads )
             return s
         candidates = [self.reachable(hs)
                       for hs in heads ]
@@ -501,7 +476,7 @@ class EquivalenceGraph():
         
         candidates = [(score(k),k) for k in candidates ]
         candidates.sort(key=lambda s: s[0])
-        return [self.extract(k) for _,k in candidates[:K] ]
+        return [self.extractBetaLong(k) for _,k in candidates[:K] ]
 
 
     def rewriteWithInvention(self, invention, heads):
@@ -536,6 +511,46 @@ class EquivalenceGraph():
 
         
 
+class CostTable():
+    """Map from a equivalence class to it's cost either as a function or as an argument"""
+    EPSILONCOST = 0.001
+    def __init__(self, basicClasses, oldTable=None):
+        self.oldTable = oldTable
+        self.functionCosts = {k: 1 for k in basicClasses }
+        self.argumentCosts = {k: 1 for k in basicClasses }
+        
+    def argumentCost(self, k):
+        if k in self.argumentCosts: return self.argumentCosts[k]
+        if self.oldTable is not None: return self.oldTable.argumentCost(k)
+        return POSITIVEINFINITY
+    def functionCost(self, k):
+        if k in self.functionCosts: return self.functionCosts[k]
+        if self.oldTable is not None: return self.oldTable.functionCost(k)
+        return POSITIVEINFINITY
+    def minimumCost(self, k):
+        return min(self.argumentCost(k), self.functionCost(k))
+    
+    def expressionCost(self, l):
+        if l.isApplication: return self.functionCost(l.f) + self.argumentCost(l.x) + CostTable.EPSILONCOST
+        if l.isAbstraction: return self.argumentCost(l.body) + CostTable.EPSILONCOST
+        if l.isPrimitive or l.isInvented: return 1
+        if l.isIndex: return 1
+        assert False
+
+    def relax(self, g, e):
+        ac, fc = self.argumentCost(e), self.functionCost(e)
+        new_ac, new_fc = ac, fc
+        for l in g.classMembers[e]:
+            lc = self.expressionCost(l)
+            new_ac = min(lc,new_ac)
+            if not l.isAbstraction:
+                new_fc = min(lc,new_fc)
+        self.functionCosts[e] = new_fc
+        self.argumentCosts[e] = new_ac
+        return new_fc < fc, new_ac < ac
+
+        
+    
 class CloseInventionVisitor():
     """normalize free variables - e.g., if $1 & $3 occur free then rename them to $0, $1
     then wrap in enough lambdas so that there are no free variables and finally wrap in invention"""
