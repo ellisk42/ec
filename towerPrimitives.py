@@ -50,7 +50,7 @@ ttower = baseType("tower")
 primitives = [
         Primitive("left", arrow(ttower, ttower), _left),
         Primitive("right", arrow(ttower, ttower), _right),
-    ] + [Primitive(name, arrow(ttower,ttower), TowerContinuation(xOffset(w, h), w - epsilon, h - epsilon))
+    ] + [Primitive(name, arrow(ttower,ttower), TowerContinuation(xOffset(w, h), w - 2*epsilon, h - epsilon))
          for name, (w, h) in blocks.items()] + [
                  Primitive("range", arrow(tint, tlist(tint)), _range),
                  Primitive("fold", arrow(tlist(t0), t1, arrow(t0, t1, t1), t1), _fold),

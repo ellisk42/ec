@@ -161,7 +161,7 @@ class TowerTask(Task):
 def centerTower(t):
     x1 = max(x for x, _, _ in t)
     x0 = min(x for x, _, _ in t)
-    c = float(x1 + x0) / 2. + x0
+    c = float(x1 - x0) / 2. + x0
     return [(x - c, w, h) for x, w, h in t]
 
 

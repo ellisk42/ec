@@ -42,8 +42,8 @@ let block w h =
   let n = Printf.sprintf "%dx%d" w h in
   let xOffset = if w mod 2 = 1 then 0.5 else 0.0 in
   let e = 0.05 in
-  let w = Float.of_int w -.e in
-  let h = Float.of_int h -.e in
+  let w = Float.of_int w -. 2. *. e in
+  let h = Float.of_int h -. e in
   let v = fun k -> (xOffset,w,h) :: k in
   ignore(primitive n (ttower @> ttower) v)
 ;;
