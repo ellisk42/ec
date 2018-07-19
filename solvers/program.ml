@@ -525,7 +525,7 @@ let logo_SET = primitive "logo_SET"
                             z)
 
 let logo_GETSET = primitive "logo_GETSET"
-                            (turtle @> turtle @> turtle @> turtle)
+                            ((turtle @> turtle) @> turtle @> turtle)
                             (fun t -> fun z ->
                               (LogoLib.LogoInterpreter.logo_GET
                                 (fun s ->
