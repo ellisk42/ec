@@ -48,6 +48,7 @@ class Class():
         return k
     
 class EquivalenceGraph():
+    EPSILONCOST = 0.00001
     def __init__(self, typed=True):
         self.typed = typed
         
@@ -356,8 +357,8 @@ class EquivalenceGraph():
             return oldTable[k][0]
 
         def expressionCost(l):
-            if l.isApplication: return functionCost(l.f) + argumentCost(l.x)
-            if l.isAbstraction: return argumentCost(l.body)
+            if l.isApplication: return functionCost(l.f) + argumentCost(l.x) + EquivalenceGraph.EPSILONCOST
+            if l.isAbstraction: return argumentCost(l.body) + EquivalenceGraph.EPSILONCOST
             if l.isPrimitive or l.isInvented: return 1
             if l.isIndex: return 1
             assert False
@@ -400,8 +401,8 @@ class EquivalenceGraph():
     def extract(self,k,table=None):
         if table is None: table = self.minimumCosts([])
         def expressionCost(l):
-            if l.isApplication: return table[l.f] + table[l.x]
-            if l.isAbstraction: return table[l.body]
+            if l.isApplication: return table[l.f] + table[l.x] + EquivalenceGraph.EPSILONCOST
+            if l.isAbstraction: return table[l.body] + EquivalenceGraph.EPSILONCOST
             if l.isPrimitive or l.isInvented: return 1
             if l.isIndex: return 1
             assert False
@@ -419,16 +420,18 @@ class EquivalenceGraph():
 
     def extractBetaLong(self,k,table=None, given=[]):
         if table is None: table = self.betaLongCost(given)
-        def argumentCost(k): return table[k][1]
         def functionCost(k): return table[k][0]
+        def argumentCost(k): return table[k][1]
 
         def expressionCost(l):
-            if l.isApplication: return functionCost(l.f) + argumentCost(l.x)
-            if l.isAbstraction: return argumentCost(l.body)
+            if l.isApplication: return functionCost(l.f) + argumentCost(l.x) + EquivalenceGraph.EPSILONCOST
+            if l.isAbstraction: return argumentCost(l.body) + EquivalenceGraph.EPSILONCOST
             if l.isPrimitive or l.isInvented: return 1
             if l.isIndex: return 1
             assert False
         def visitClass(k):
+            # eprint(f"Visiting class {k} w/ fc={functionCost(k)} & ac={argumentCost(k)}")
+            # eprint(f"\t{self.classMembers[k]}")
             return visitExpression(min(self.classMembers[k],
                                        key=expressionCost))
         def visitExpression(e):
@@ -480,6 +483,9 @@ class EquivalenceGraph():
         return self.extract(best)
 
     def bestInventions(self,heads,K):
+        """heads: list of list of (indices to) programs; get these using the incorporate method.
+        K: number of inventions to return
+        returns: K expressions, _not_ wrapped in Invention"""
         referenceTable = self.betaLongCost([])
         def score(k):
             t = self.betaLongCost([k], oldTable=referenceTable)
@@ -499,17 +505,23 @@ class EquivalenceGraph():
 
 
     def rewriteWithInvention(self, invention, heads):
+        originalHeads = heads
         inventionK = self.incorporate(invention)
         cost = self.betaLongCost([inventionK])
         heads = [ self.extractBetaLong(self.incorporate(h), cost) for h in heads ]
 
         v = RewriteWithInventionVisitor(invention)
-        heads = [ v.execute(h) for h in heads ]
+        heads = [ v.execute(h) or o for h, o in zip(heads,originalHeads) ]
         return v.invention, heads
 
     def addInventionToGrammar(self, invention, g, frontiers, pseudoCounts=1.):
         heads = list({ e.program for f in frontiers for e in f })
+        for h in heads:
+            eprint(f"(old) PROGRAM {h}")
         invention, newHeads = self.rewriteWithInvention(invention, heads)
+        eprint(f"INVENTION {invention}")
+        for h in newHeads:
+            eprint(f"(new) PROGRAM {h}")
         sourceUpdate = dict(zip(heads, newHeads))
         frontiers = [ Frontier([ FrontierEntry(program=sourceUpdate[e.program],
                                                logLikelihood=e.logLikelihood,
@@ -517,6 +529,7 @@ class EquivalenceGraph():
                                  for e in f ],
                                task=f.task)
                       for f in frontiers ]
+        
         g = Grammar.uniform([invention] + g.primitives).insideOutside(frontiers, pseudoCounts)
         frontiers = [g.rescoreFrontier(f) for f in frontiers]
         return g, frontiers
@@ -557,11 +570,17 @@ class RewriteWithInventionVisitor():
         self.mapping = { j: fv for fv, j in v.mapping.items() }
         self.invention = v.execute()
 
+        self.appliedInvention = self.invention
+        for j in range(len(self.mapping) - 1, -1, -1):
+            self.appliedInvention = Application(self.appliedInvention, Index(self.mapping[j]))
+                
+
     def tryRewrite(self, e):
         if e == self.original:
             application = self.invention
             for j in range(len(self.mapping) - 1, -1, -1):
                 application = Application(application, Index(self.mapping[j]))
+            eprint(f"REWRITE {e} > {application}")
             return application
         return None
 
@@ -575,9 +594,13 @@ class RewriteWithInventionVisitor():
                                                  e.x.visit(self))
     def execute(self, e):
         try:
-            return EtaLongVisitor().execute(e.visit(self))
+            i = e.visit(self)
+            l = EtaLongVisitor().execute(i)
+            eprint(f"(rwi) {e} > {i} > {l}")
+            return l
         except EtaExpandFailure:
-            return e
+            eprint(f"(rwi: failure) {e}")
+            return None
 
 
 

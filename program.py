@@ -852,18 +852,12 @@ class EtaLongVisitor(object):
             # eta expansion
             return Abstraction(Application(e.shift(1),
                                            Index(0)))
-            # a loop which will repeatedly perform eta expansion,
-            # exactly as many times as are needed
-            # n = len(request.functionArguments())
-            # e = e.shift(n)
-            # for i in range(n - 1, -1, -1): e = Application(e, Index(i))
-            # for i in range(n - 1, -1, -1): e = Abstraction(e)
-            # return e
         return None
         
 
     def abstraction(self, e, request, environment):
-        assert request.isArrow()
+        if not request.isArrow(): raise EtaExpandFailure()
+        
         return Abstraction(e.body.visit(self,
                                         request.arguments[1],
                                         [request.arguments[0]] + environment))

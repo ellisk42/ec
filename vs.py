@@ -479,7 +479,11 @@ def induceGrammar_Beta(frontiers, g0, _=None,
                structurePenalty * sum(primitiveSize(p) for p in g.primitives)
     
     def scoreCandidate(graph, candidate, currentFrontiers, currentGrammar):
+        eprint(f"Considering adding {candidate}")
         newGrammar, newFrontiers = graph.addInventionToGrammar(candidate, currentGrammar, currentFrontiers)
+        # eprint(f"Got the new grammar:\n {newGrammar}")
+        # for f in newFrontiers:
+        #     eprint(f.entries[0].program)
         return objective(newGrammar, newFrontiers)
         
 
