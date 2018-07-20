@@ -120,6 +120,13 @@ let eval_turtle ?sequence t2t =
   and moveto x y = (c := (moveto !c x y)) in
   let t = init_state () in
   moveto t.x t.y ;
+  let oc = match sequence with
+    | None -> None
+    | Some path ->
+      let oc = open_out (path^".seq")
+      in output_string oc "[[0.5,0.5]" ;
+      Some oc
+  in
   let rec eval_instruction n i = match i with
     | PU         -> t.p <- false
     | PD         -> t.p <- true
@@ -128,13 +135,18 @@ let eval_turtle ?sequence t2t =
         begin
           t <<- state ;
           moveto (t.x) (t.y) ;
-          match sequence with
-            | None -> ()
-            | Some path ->
+          match sequence, oc with
+            | Some path , Some oc ->
                 let l_c = ref (new_canvas ()) in
                 l_c := circle !l_c t.x t.y ;
                 let name = Printf.sprintf "%s%03d.png" path n in
+                output_string oc
+                  (Printf.sprintf
+                    ",[%f,%f]"
+                    (t.x /. (2. *. d_from_origin))
+                    (t.y /. (2. *. d_from_origin))) ;
                 output_canvas_png !l_c 512 name
+            | _ -> ()
         end
     | FW(length) ->
         let x = t.x +. (length *. cos(t.t))
@@ -142,15 +154,23 @@ let eval_turtle ?sequence t2t =
         (if t.p then lineto else moveto) x y ;
         t.x <- x ;
         t.y <- y ;
-        match sequence with
-          | None -> ()
-          | Some path ->
+        match sequence, oc with
+          | Some path , Some oc ->
               let l_c = ref (new_canvas ()) in
               l_c := circle !l_c x y ;
               let name = Printf.sprintf "%s%03d.png" path n in
+              output_string oc
+                (Printf.sprintf
+                  ",[%f,%f]"
+                  (t.x /. (2. *. d_from_origin))
+                  (t.y /. (2. *. d_from_origin))) ;
               output_canvas_png !l_c 512 name
+          | _ -> ()
   in
   List.iteri eval_instruction p ;
+  (match oc with
+    | Some oc -> output_string oc "]" ; close_out oc
+    | None -> () );
   !c
 
 let logo_PU : turtle =

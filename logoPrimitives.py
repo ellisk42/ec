@@ -29,7 +29,7 @@ primitives = [
     Primitive("logo_FWRT",  arrow(tlength,tangle,turtle,turtle), ""),
     # Primitive("logo_SET",  arrow(tstate,turtle,turtle), ""),
     # Primitive("logo_GET",  arrow(arrow(tstate,turtle),turtle), "")
-    Primitive("logo_GETSET",  arrow(arrow(turtle,turtle),turtle,turtle), "")
+    Primitive("logo_GETSET",  arrow(turtle,turtle,turtle), "")
 ] + [
     Primitive("logo_IFTY", tint, ""),
     Primitive("logo_epsA", tangle, ""),
