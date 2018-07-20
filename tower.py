@@ -174,12 +174,13 @@ if __name__ == "__main__":
 
     perturbations = {t.perturbation for t in train}
 
+    timestamp = datetime.datetime.now().isoformat()
+    os.system(f"mkdir -p experimentOutputs/towers/{timestamp}")
+    
     for result in generator:
-        os.system("mkdir -p experimentOutputs/towers")
-        timestamp = datetime.datetime.now().isoformat()
         iteration = len(result.learningCurve)
         newTowers = [tuple(centerTower(executeTower(frontier.sample().program)))
                      for frontier in result.taskSolutions.values() if not frontier.empty]
-        fn = 'experimentOutputs/towers/solutions_%d_%s.png'%(iteration,timestamp)
+        fn = f'experimentOutputs/towers/{timestamp}/solutions_{iteration}.png'
         exportTowers(newTowers, fn)
         eprint(f"Exported solutions to {fn}\n")
