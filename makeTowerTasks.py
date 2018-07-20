@@ -101,7 +101,7 @@ class TowerTask(Task):
             signal.setitimer(signal.ITIMER_VIRTUAL, timeout)
 
         try:
-            tower = e.evaluate([])([])
+            tower = executeTower(e)
             if timeout is not None:
                 signal.signal(signal.SIGVTALRM, lambda *_: None)
                 signal.setitimer(signal.ITIMER_VIRTUAL, 0)
@@ -144,7 +144,7 @@ class TowerTask(Task):
         import os
 
         if isinstance(e, Program):
-            tower = e.evaluate([])([])
+            tower = executeTower(e)
         else:
             assert isinstance(e, list)
             tower = e

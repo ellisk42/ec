@@ -1,18 +1,19 @@
 from ec import *
 
-from towerPrimitives import primitives
+from towerPrimitives import primitives, executeTower
 from makeTowerTasks import *
 from listPrimitives import bootstrapTarget
 
 import os
 import random
 import time
+import datetime
 
 
 class TowerFeatureExtractor(HandCodedFeatureExtractor):
     def _featuresOfProgram(self, p, _):
         # [perturbation, mass, height, length, area]
-        p = p.evaluate([])([])
+        p = executeTower(p)
         mass = sum(w * h for _, w, h in p)
 
         masses = {
@@ -71,7 +72,7 @@ def evaluateArches(ts):
         print("Evaluating arch:")
         print(a)
         print()
-        a = Program.parse(a).evaluate([])([])
+        a = Program.parse(a)
         towers.append(tuple(centerTower(a)))
         os.system("python towers/visualize.py '%s' %f" % (a, 4))
 
@@ -147,8 +148,6 @@ if __name__ == "__main__":
     tasks = makeTasks()
     test, train = testTrainSplit(tasks, 1.) #50. / len(tasks))
     eprint("Split %d/%d test/train" % (len(test), len(train)))
-    # evaluateArches(train)
-    # if True: bruteForceBaseline(train)
 
     arguments = commandlineArguments(
         featureExtractor=TowerFeatureExtractor,
@@ -175,8 +174,13 @@ if __name__ == "__main__":
 
     perturbations = {t.perturbation for t in train}
 
+    timestamp = datetime.datetime.now().isoformat()
+    os.system(f"mkdir -p experimentOutputs/towers/{timestamp}")
+    
     for result in generator:
         iteration = len(result.learningCurve)
-        newTowers = [tuple(centerTower(frontier.sample().program.evaluate([])([])))
+        newTowers = [tuple(centerTower(executeTower(frontier.sample().program)))
                      for frontier in result.taskSolutions.values() if not frontier.empty]
-        exportTowers(newTowers, 'experimentOutputs/uniqueTowers%d.png'%iteration)
+        fn = f'experimentOutputs/towers/{timestamp}/solutions_{iteration}.png'
+        exportTowers(newTowers, fn)
+        eprint(f"Exported solutions to {fn}\n")
