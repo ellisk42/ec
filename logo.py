@@ -1,6 +1,6 @@
 from ec import ecIterator, commandlineArguments
 from grammar import Grammar
-from utilities import eprint, testTrainSplit, numberOfCPUs
+from utilities import eprint, testTrainSplit, numberOfCPUs, parallelMap
 from makeLogoTasks import makeTasks
 from logoPrimitives import primitives, turtle
 from collections import OrderedDict
@@ -79,19 +79,22 @@ class LogoFeatureCNN(nn.Module):
         except OSError as exc:
             raise exc
 
-    def renderProgram(self, p, t):
+    def renderProgram(self, p, t, index=None):
         if not os.path.exists(self.sub):
-            os.makedirs(self.sub)
+            os.system(f"mkdir -p {self.sub}")
         try:
-            randomStr = ''.join(random.choice('0123456789') for _ in range(10))
+            if index is None:
+                randomStr = ''.join(random.choice('0123456789') for _ in range(10))
+            else:
+                randomStr = str(index)
             fname = self.sub + "/" + randomStr
-            subprocess.check_output(['./logoDrawString',
-                                     '512',
-                                     fname,
-                                     '0',
-                                     str(p),
-                                     "pretty"],
-                                    timeout=1).decode("utf8")
+            for suffix in [[],["pretty"],["smooth_pretty"]]:
+                subprocess.check_output(['./logoDrawString',
+                                         '512',
+                                         fname + ("" if len(suffix) == 0 else suffix[0]),
+                                         '0',
+                                         str(p)] + suffix,
+                                        timeout=1).decode("utf8")
             if os.path.isfile(fname + ".png"):
                 with open(fname + ".dream", "w") as f:
                     f.write(str(p))
@@ -174,7 +177,7 @@ if __name__ == "__main__":
     fe = LogoFeatureCNN(tasks)
     for x in range(0, 100):
         program = baseGrammar.sample(arrow(turtle, turtle), maximumDepth=20)
-        features = fe.renderProgram(program, arrow(turtle, turtle))
+        features = fe.renderProgram(program, arrow(turtle, turtle), index=x)
 
     generator = ecIterator(baseGrammar, train,
                            testingTasks=test,
@@ -186,10 +189,11 @@ if __name__ == "__main__":
     r = None
     for result in generator:
         fe = LogoFeatureCNN(tasks)
-        for x in range(0, 500):
-            program = result.grammars[-1].sample(arrow(turtle, turtle),
-                                                 maximumDepth=20)
-            features = fe.renderProgram(program, arrow(turtle, turtle))
+        parallelMap(numberOfCPUs(),
+                    lambda x: fe.renderProgram(result.grammars[-1].sample(arrow(turtle, turtle),
+                                                                          maximumDepth=20),
+                                               arrow(turtle, turtle), index=x),
+                    list(range(0, 500)))
         iteration = len(result.learningCurve)
         r = result
 
