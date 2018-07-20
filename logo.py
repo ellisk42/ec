@@ -89,7 +89,8 @@ class LogoFeatureCNN(nn.Module):
                                      '512',
                                      fname,
                                      '0',
-                                     str(p)],
+                                     str(p),
+                                     "pretty"],
                                     timeout=1).decode("utf8")
             if os.path.isfile(fname + ".png"):
                 with open(fname + ".dream", "w") as f:
@@ -122,9 +123,9 @@ def list_options(parser):
 
 if __name__ == "__main__":
     args = commandlineArguments(
-        steps=100,
+        steps=2500,
         a=3,
-        topK=3,
+        topK=5,
         iterations=10,
         useRecognitionModel=True,
         helmholtzRatio=0.5,
@@ -140,7 +141,7 @@ if __name__ == "__main__":
     save = args.pop("save")
     prefix = args.pop("prefix")
     prefix_dreams = prefix + "/dreams/" + ('_'.join(target)) + "/"
-    prefix_pickles = prefix + "logo." + ('.'.join(target))
+    prefix_pickles = prefix + "/logo." + ('.'.join(target))
     if not os.path.exists(prefix_dreams):
         os.makedirs(prefix_dreams)
     tasks = makeTasks(target)
@@ -178,13 +179,12 @@ if __name__ == "__main__":
     generator = ecIterator(baseGrammar, train,
                            testingTasks=test,
                            outputPrefix=prefix_pickles,
-                           compressor="pypy",
+                           compressor="rust",
                            evaluationTimeout=0.01,
                            **args)
 
     r = None
     for result in generator:
-        print("WILL DREAM:")
         fe = LogoFeatureCNN(tasks)
         for x in range(0, 500):
             program = result.grammars[-1].sample(arrow(turtle, turtle),

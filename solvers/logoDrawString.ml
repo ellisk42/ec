@@ -17,6 +17,7 @@ let _ =
   and fname    = Sys.argv.(2)
   and size     = int_of_string (Sys.argv.(3))
   and str      = Sys.argv.(4) in
+  let pretty = try Sys.argv.(5) = "pretty" with _ -> false in
   let b0 = Bigarray.(Array1.create int8_unsigned c_layout (8*8)) in
   Bigarray.Array1.fill b0 0 ;
   try
@@ -30,8 +31,8 @@ let _ =
           if bx = b0 then ()
           else begin
             if sizeFile > 0 then begin
-              output_canvas_png c sizeFile (fname^".png") ;
-              output_canvas_png c' sizeFile (fname^"_norm.png")
+              output_canvas_png ~pretty c sizeFile (fname^".png") ;
+              output_canvas_png ~pretty c' sizeFile (fname^"_norm.png")
             end ;
             if size > 0 then npp (canvas_to_1Darray c size)
           end

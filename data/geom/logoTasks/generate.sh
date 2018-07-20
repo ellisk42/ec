@@ -1,5 +1,7 @@
 #!/bin/bash
 
+rm "./*.png"
+
 resh=512
 resl=28
 
@@ -22,7 +24,7 @@ done
 ../logoDrawString $resl "iter2_l" 0 "(lambda (logo_forLoopM 2 (lambda (logo_forLoopM logo_IFTY (lambda (logo_FWRT logo_epsL (logo_DIVA logo_epsA 2) \$2)) (logo_FWRT (logo_MULL logo_UL 0) (logo_DIVA logo_UA 2) \$1))) \$0))"
 
 for i in "5" "7"; do
-  ../logoDrawString $resl "flower_${i}_h" 0 "(lambda (logo_forLoopM $i (lambda (logo_forLoopM 2 (lambda (logo_forLoopM logo_IFTY (lambda (logo_FWRT logo_epsL (logo_DIVA logo_epsA 2) \$3)) (logo_FWRT (logo_MULL logo_UL 0) (logo_DIVA logo_UA 2) \$2))) (logo_FWRT (logo_MULL logo_UL 0) (logo_DIVA (logo_MULA logo_UA 2) $i) \$1))) \$0))"
+  ../logoDrawString $resh "flower_${i}_h" 0 "(lambda (logo_forLoopM $i (lambda (logo_forLoopM 2 (lambda (logo_forLoopM logo_IFTY (lambda (logo_FWRT logo_epsL (logo_DIVA logo_epsA 2) \$3)) (logo_FWRT (logo_MULL logo_UL 0) (logo_DIVA logo_UA 2) \$2))) (logo_FWRT (logo_MULL logo_UL 0) (logo_DIVA (logo_MULA logo_UA 2) $i) \$1))) \$0))"
   ../logoDrawString $resl "flower_${i}_l" 0 "(lambda (logo_forLoopM $i (lambda (logo_forLoopM 2 (lambda (logo_forLoopM logo_IFTY (lambda (logo_FWRT logo_epsL (logo_DIVA logo_epsA 2) \$3)) (logo_FWRT (logo_MULL logo_UL 0) (logo_DIVA logo_UA 2) \$2))) (logo_FWRT (logo_MULL logo_UL 0) (logo_DIVA (logo_MULA logo_UA 2) $i) \$1))) \$0))"
 done
 
