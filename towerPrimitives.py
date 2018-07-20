@@ -7,18 +7,37 @@ from functools import reduce
 
 #def _concatenate(x): return lambda y: x + y
 
-def _left(x): return [tuple([b[0] - 1] + list(b[1:])) for b in x]
-def _right(x): return [tuple([b[0] + 1] + list(b[1:])) for b in x]
-def _left1(b): return tuple([b[0] - 1] + list(b[1:]))
-def _right1(b): return tuple([b[0] + 1] + list(b[1:]))
-
+def _left(d):
+    return lambda k: lambda hand: k(hand - d)
+def _right(x):
+    return lambda k: lambda hand: k(hand + d)
+def _loop(n):
+    def f(start, stop, body, hand):
+        if start >= stop: return hand,[]
+        hand, thisIteration = body(start)(hand)
+        hand, laterIterations = f(start + 1, stop, body, hand)
+        return hand, thisIteration + laterIterations
+    return lambda b: lambda h: f(0,n,b,h)
+def _embed(body):
+    def f(k):
+        def g(hand):
+            _, bodyActions = body(hand)
+            hand, laterActions = k(hand)
+            return hand, bodyActions + laterActions
+        return g
+    return f
+    
 class TowerContinuation(object):
     def __init__(self, x, w, h):
         self.x = x
         self.w = w
         self.h = h
     def __call__(self, k):
-        return [(self.x,self.w,self.h)] + k
+        def f(hand):
+            thisAction = [(self.x + hand,self.w,self.h)]
+            hand, rest = k(hand)
+            return hand, thisAction + rest
+        return f
 
 # name, dimensions
 blocks = {  # "1x1": (1.,1.),
@@ -48,10 +67,12 @@ def _fold(l): return lambda x0: lambda f: reduce(
 
 ttower = baseType("tower")
 primitives = [
-        Primitive("left", arrow(ttower, ttower), _left),
-        Primitive("right", arrow(ttower, ttower), _right),
-    ] + [Primitive(name, arrow(ttower,ttower), TowerContinuation(xOffset(w, h), w - 2*epsilon, h - epsilon))
-         for name, (w, h) in blocks.items()] + [
-                 Primitive("range", arrow(tint, tlist(tint)), _range),
-                 Primitive("fold", arrow(tlist(t0), t1, arrow(t0, t1, t1), t1), _fold),
-         ]
+    Primitive("left", arrow(tint, ttower, ttower), _left),
+    Primitive("right", arrow(tint, ttower, ttower), _right),
+    Primitive("tower_loop", arrow(tint, arrow(tint, ttower), ttower), _loop),
+    Primitive("tower_embed", arrow(ttower, ttower, ttower), _embed),
+] + [Primitive(name, arrow(ttower,ttower), TowerContinuation(xOffset(w, h), w - 2*epsilon, h - epsilon))
+     for name, (w, h) in blocks.items()] + [
+             addition, subtraction
+         ] + \
+         [Primitive(str(j), tint, j) for j in list(range(1,3)) + list(range(-2,0,-1)) ]

@@ -6,6 +6,9 @@ open Utils
 open Program
 open Type
 
+(* ttower = state -> (state, list of blocks) *)
+type tt = int -> int * ( (float*float*float) list)
+
 let ttower = make_ground "tower";;
 
 let maximum_number_of_blocks = 35;;
@@ -44,10 +47,13 @@ let block w h =
   let e = 0.05 in
   let w = Float.of_int w -. 2. *. e in
   let h = Float.of_int h -. e in
-  let v = fun k -> (xOffset,w,h) :: k in
+  let v : tt -> tt = fun k : tt ->
+    fun hand ->
+      let (hand', rest) = k hand in
+      (hand', (xOffset +. (Float.of_int hand), w, h) :: rest)
+  in
   ignore(primitive n (ttower @> ttower) v)
 ;;
-
 
 block 3 1;;
 block 1 3;;
@@ -57,8 +63,36 @@ block 1 2;;
 block 4 1;;
 block 1 4;;
 
-ignore(primitive "left" (ttower @> ttower) (fun t -> t |> List.map ~f:(fun (x,w,h) -> (x-.1.0,w,h))));;
-ignore(primitive "right" (ttower @> ttower) (fun t -> t |> List.map ~f:(fun (x,w,h) -> (x+.1.0,w,h))));;
+ignore(primitive "left" (tint @> ttower @> ttower)
+         (let f : int -> tt -> tt = fun (d : int) ->
+             fun (k : tt) ->
+             fun (hand : int) ->
+               let hand' = hand - d in
+               let (hand'', rest) = k hand' in
+               (hand'', rest)
+          in f));;
+ignore(primitive "right" (tint @> ttower @> ttower)
+         (let f : int -> tt -> tt = fun (d : int) ->
+             fun (k : tt) ->
+             fun (hand : int) ->
+               let hand' = hand + d in
+               let (hand'', rest) = k hand' in
+               (hand'', rest)
+          in f));;
+ignore(primitive "tower_loop" (tint @> (tint @> ttower) @> ttower)
+         (let rec f (start : int) (stop : int) (body : int -> tt) : tt = fun (hand : int) -> 
+             if start >= stop then (hand,[]) else
+               let (hand', thisIteration) = body start hand in
+               let (hand'', laterIterations) = f (start+1) stop body hand' in
+               (hand'', thisIteration @ laterIterations)
+          in fun n b -> f 0 n b));;
+ignore(primitive "tower_embed" (ttower @> ttower @> ttower)
+         (fun (body : tt) (k : tt) : tt ->
+            fun (hand : int) ->
+              let (_, bodyActions) = body hand in
+              let (hand', laterActions) = k hand in
+              (hand', bodyActions @ laterActions)));;             
+            
 
 
 let connection_failures = ref 0;;
@@ -189,7 +223,7 @@ let tower_task ?timeout:(timeout = 0.001)
          try
            match run_for_interval
                    timeout
-                   (fun () -> run_lazy_analyzed_with_arguments p [[]])
+                   (fun () -> run_lazy_analyzed_with_arguments p [fun s -> (s, [])] 0 |> snd)
            with
            | Some(p) ->
              let m = p |> List.map ~f:(fun (_,w,h) -> w*.h) |> List.fold_right ~f:(+.) ~init:0. in
