@@ -183,4 +183,4 @@ if __name__ == "__main__":
                      for frontier in result.taskSolutions.values() if not frontier.empty]
         fn = 'experimentOutputs/towers/%s/solutions_%d.png'%(timestamp,iteration)
         exportTowers(newTowers, fn)
-        eprint(f"Exported solutions to {fn}\n")
+        eprint("Exported solutions to %s\n"%fn)
