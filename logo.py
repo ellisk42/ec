@@ -81,7 +81,7 @@ class LogoFeatureCNN(nn.Module):
 
     def renderProgram(self, p, t, index=None):
         if not os.path.exists(self.sub):
-            os.system(f"mkdir -p {self.sub}")
+            os.system("mkdir -p "%self.sub)
         try:
             if index is None:
                 randomStr = ''.join(random.choice('0123456789') for _ in range(10))
