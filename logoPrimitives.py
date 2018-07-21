@@ -1,5 +1,6 @@
 from program import Primitive, Program
 from listPrimitives import _map, _unfold, _range, _index, _fold, _if, _addition, _subtraction, _cons, _car, _cdr, _isEmpty, bootstrapTarget
+from arithmeticPrimitives import addition
 from type import arrow, baseType, t0, t1, tint, tlist, tbool
 
 turtle = baseType("turtle")
@@ -31,6 +32,7 @@ primitives = [
     # Primitive("logo_GET",  arrow(arrow(tstate,turtle),turtle), "")
     Primitive("logo_GETSET",  arrow(turtle,turtle,turtle), "")
 ] + [
+    addition,
     Primitive("logo_IFTY", tint, ""),
     Primitive("logo_epsA", tangle, ""),
     Primitive("logo_epsL", tlength, ""),
