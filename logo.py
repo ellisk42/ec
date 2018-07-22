@@ -16,6 +16,8 @@ import subprocess
 import os
 import torch.nn as nn
 import torch.nn.functional as F
+from sys import exit
+
 
 from recognition import variable
 
@@ -122,8 +124,43 @@ def list_options(parser):
     parser.add_argument("--prefix", type=str,
                         default="experimentOutputs/",
                         help="Filepath output the grammar if this is a child")
+    parser.add_argument("--dreamCheckpoint", type=str,
+                        default=None,
+                        help="File to load in order to get dreams")
+    parser.add_argument("--dreamDirectory", type=str,
+                        default=None,
+                        help="Directory in which to dream from --dreamCheckpoint")
 
 
+def outputDreams(checkpoint, directory):
+    from utilities import loadPickle
+    result = loadPickle(checkpoint)
+    eprint(" [+] Loaded checkpoint",checkpoint)
+    g = result.grammars[-1]
+    if directory is None:
+        randomStr = ''.join(random.choice('0123456789') for _ in range(10))
+        directory = "/tmp/" + randomStr
+    eprint(" Dreaming into",directory)
+    os.system("mkdir  -p %s"%directory)
+    for n in range(500):
+        try:
+            p = g.sample(arrow(turtle, turtle),
+                         maximumDepth=8)
+            fname = directory + "/" + str(n)
+            for suffix in [[],["pretty"],["smooth_pretty"]]:
+                subprocess.check_output(['./logoDrawString',
+                                         '512',
+                                         fname + ("" if len(suffix) == 0 else suffix[0]),
+                                         '0',
+                                         str(p)] + suffix,
+                                        timeout=1).decode("utf8")
+            if os.path.isfile(fname + ".png"):
+                with open(fname + ".dream", "w") as f:
+                    f.write(str(p))
+        except: continue
+        
+
+        
 if __name__ == "__main__":
     args = commandlineArguments(
         steps=2500,
@@ -139,6 +176,12 @@ if __name__ == "__main__":
         pseudoCounts=10.0,
         activation="tanh",
         extras=list_options)
+    dreamCheckpoint = args.pop("dreamCheckpoint")
+    dreamDirectory = args.pop("dreamDirectory")
+    if dreamCheckpoint is not None:
+        outputDreams(dreamCheckpoint, dreamDirectory)
+        sys.exit(0)        
+        
     target = args.pop("target")
     red = args.pop("reduce")
     save = args.pop("save")
