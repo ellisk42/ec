@@ -16,17 +16,15 @@ def load_image(array):
     torch_image = torch.from_numpy(np.array(np_image, np.float32, copy=False))
     torch_image = (torch_image / 255).transpose(0, 1).contiguous()
     view_image = 1.0 - torch_image.view(1, size, size)
-    print(torch.unsqueeze(view_image, 0))
     return torch.unsqueeze(view_image, 0)
 
 
 def load_image_path(path):
-    _, _, _, a = Image.open("data/geometry/data/"+path).split()
+    _, _, _, a = Image.open("data/geometry/data/"+path+"/output_vh.png").split()
     np_image = ImageOps.invert(a).resize((size, size))
     torch_image = torch.from_numpy(np.array(np_image, np.float32, copy=False))
     torch_image = (torch_image / 255).transpose(0, 1).contiguous()
     view_image = 1.0 - torch_image.view(1, size, size)
-    print(torch.unsqueeze(view_image, 0))
     return torch.unsqueeze(view_image, 0)
 
 

@@ -1,8 +1,7 @@
 import socket
+import _thread
 import sys
 import os
-
-import time
 
 from protonet_score import PretrainedProtonetDistScore, \
                            load_image_path, load_image
@@ -27,6 +26,33 @@ def compute_score(idRef, img):
         return score
 
 
+def handle_client(connection):
+    try:
+        eprint("-> Client connected")
+        while True:
+
+            l1 = int.from_bytes(connection.recv(4), byteorder='big')
+            data = connection.recv(l1)
+            idRef = data.decode("utf8")
+
+            l2 = int.from_bytes(connection.recv(4), byteorder='big')
+            img = connection.recv(l2)
+
+            if idRef != "DONE":
+                score = compute_score(idRef, img)
+                dist = str(score['dist'][0][0]).encode("utf8")
+                connection.sendall(len(dist).to_bytes(4, byteorder='big'))
+                connection.sendall(dist)
+            else:
+                break
+
+    finally:
+        # Clean up the connection
+        connection.close()
+
+        eprint("<- Client disconnected")
+
+
 if __name__ == "__main__":
 
     server_address = "./protonet_socket"
@@ -42,25 +68,5 @@ if __name__ == "__main__":
     sock.listen(1)
 
     while True:
-        eprint("Protonet server waiting for a connection")
-        connection, client_address = sock.accept()
-        try:
-            eprint("Client connected")
-
-            l1 = int.from_bytes(connection.recv(4), byteorder='big')
-            data = connection.recv(l1)
-            idRef = data.decode("utf8")
-
-            l2 = int.from_bytes(connection.recv(4), byteorder='big')
-            img = connection.recv(l2)
-
-            score = compute_score(idRef, img)
-            dist = str(score['dist'][0][0]).encode("utf8")
-            connection.sendall(len(dist).to_bytes(4, byteorder='big'))
-            connection.sendall(dist)
-
-        finally:
-            # Clean up the connection
-            connection.close()
-
-            eprint("Client exiting : closing")
+        c, _ = sock.accept()
+        _thread.start_new_thread(handle_client, (c,))

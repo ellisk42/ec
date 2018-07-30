@@ -218,14 +218,14 @@ if __name__ == "__main__":
     eprint(baseGrammar)
 
     fe = LogoFeatureCNN(tasks)
-    for x in range(0, 100):
+    for x in range(0, 50):
         program = baseGrammar.sample(arrow(turtle, turtle), maximumDepth=20)
         features = fe.renderProgram(program, arrow(turtle, turtle), index=x)
 
     generator = ecIterator(baseGrammar, train,
                            testingTasks=test,
                            outputPrefix=prefix_pickles,
-                           compressor="pypy",
+                           compressor="rust",
                            evaluationTimeout=0.01,
                            **args)
 

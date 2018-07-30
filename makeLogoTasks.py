@@ -73,12 +73,11 @@ def makeTasks(subfolders):
             for subfl in subf:
                 for _, _, files in os.walk(rootdir + subfolder + "/" + subfl):
                     for f in files:
-                        print(f)
                         if f.endswith("_l.png"):
                             # fnorm = f[:-4] + "_norm.png"
                             img1 = fileToArray(rootdir + subfolder + "/" + subfl + '/' + f)
                             try:
-                                problem(subfolder+"_"+f,
+                                problem(subfolder+"/"+subfl,
                                         [([], img1)],
                                         needToTrain=True)
                                 # img2 = fileToArray(rootdir + subfolder + '/' + fnorm)
