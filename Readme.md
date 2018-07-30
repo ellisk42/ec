@@ -67,3 +67,47 @@ pypy3 -m ensurepip
 pypy3 -m pip install --user vmprof
 pypy3 -m pip install --user dill
 ```
+
+### Credit of (most of) the `protonet` code
+
+The `protonet-networks` folder contains some modifications over a big chunk of
+code from [https://github.com/jakesnell/prototypical-networks](this
+repository), here is the attribution information :
+
+> Code for the NIPS 2017 paper [Prototypical Networks for Few-shot Learning](http://papers.nips.cc/paper/6996-prototypical-networks-for-few-shot-learning.pdf)
+
+If you use that part of the code, please cite their paper paper, and check out
+what they did:
+
+```bibtex
+@inproceedings{snell2017prototypical,
+  title={Prototypical Networks for Few-shot Learning},
+  author={Snell, Jake and Swersky, Kevin and Zemel, Richard},
+  booktitle={Advances in Neural Information Processing Systems},
+  year={2017}
+}
+```
+
+### LICENSE of `protonets-networks` folder
+
+MIT License
+
+Copyright (c) 2017 Jake Snell
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

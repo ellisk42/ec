@@ -44,25 +44,19 @@ let _ =
       | Some (program) ->
           let canvas = interpret program
           and canvas_norm = interpret_normal program
-          and cost = costProgram program
-          and cost_nor = costProgram_norepeat program
-          and cost_noe = costProgram_noembed program in
-          let pngFName = ((Filename.chop_suffix Sys.argv.(1) ".LoG")^"_l.png")
-          and pngFNameNorm = ((Filename.chop_suffix Sys.argv.(1) ".LoG")^"_l_norm.png")
-          and pngFNameh= ((Filename.chop_suffix Sys.argv.(1) ".LoG")^"_h.png")
-          and pngFNamevh= ((Filename.chop_suffix Sys.argv.(1) ".LoG")^"_vh.png")
-          and costFName = ((Filename.chop_suffix Sys.argv.(1) ".LoG")^".cost")
+          and prefix = Filename.chop_suffix Sys.argv.(1) ".LoG" in
+          (try Unix.mkdir prefix 0o777
+          with Unix.Unix_error(Unix.EEXIST, _, _) -> ()) ;
+          let pngFName = (prefix^"/output_l.png")
+          and pngFNameh= (prefix^"/output_h.png")
+          and pngFNamevh= (prefix^"/output_vh.png")
           in
           output_canvas_png canvas 28 pngFName ;
-          output_canvas_png canvas_norm 28 pngFNameNorm ;
           output_canvas_png canvas 128 pngFNameh ;
           output_canvas_png canvas 512 pngFNamevh ;
-          let oc = open_out costFName in
-          fprintf oc "%s,%d,%d,%d\n" ((Filename.chop_suffix Sys.argv.(1)".LoG")) cost cost_nor cost_noe ;
-          close_out oc;
-          for i = 0 to 5 do
+          for i = 0 to 30 do
             let canvas = interpret ~noise:true program in
-            let pngRName = ((Filename.chop_suffix Sys.argv.(1) ".LoG")^"_random_"^(string_of_int i)^".png") in
+            let pngRName = (prefix^"/random_"^(string_of_int i)^".png") in
             output_canvas_png canvas 512 pngRName
           done
       | None -> ())
