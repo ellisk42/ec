@@ -71,7 +71,7 @@ pypy3 -m pip install --user dill
 ### Credit of (most of) the `protonet` code
 
 The `protonet-networks` folder contains some modifications over a big chunk of
-code from [https://github.com/jakesnell/prototypical-networks](this repository), here is the attribution information :
+code from [this repository](https://github.com/jakesnell/prototypical-networks), here is the attribution information :
 
 > Code for the NIPS 2017 paper [Prototypical Networks for Few-shot Learning](http://papers.nips.cc/paper/6996-prototypical-networks-for-few-shot-learning.pdf)
 
