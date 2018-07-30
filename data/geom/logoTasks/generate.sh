@@ -15,7 +15,7 @@ done
 
 for i in "5" "7"; do
   ../logoDrawString $resl "star_${i}_l" 0 "(lambda (logo_forLoopM ($i) (lambda (logo_FWRT (logo_MULL logo_UL 3) (logo_SUBA (logo_UA) (logo_DIVA (logo_MULA logo_UA 1) $i)) \$1)) \$0))"
-  ../logoDrawString $resh "star_${i}_h" 0 "(lambda (logo_forLoopM ($i) (lambda (logo_FWRT (logo_MULL logo_UL 3) (logo_SUBA (logo_UA) (logo_DIVA (logo_MULA logo_UA 1) $i)) \$1)) \$0))"
+  ../logoDrawString $resh "star_${i}_h" 0 "(lambda (logo_forLoopM ($i) (lambda (logo_FWRT (logo_MULL logo_UL 3) (logo_SUBA (logo_UA) (logo_DIVA (logo_MULA logo_UA 1) $i)) \$1)) \$0))" pretty
 done
 
 ../logoDrawString $resh "iter1_h" 0 "(lambda (logo_forLoopM logo_IFTY (lambda (logo_FWRT logo_epsL (logo_DIVA logo_epsA 2) \$1)) \$0))"
