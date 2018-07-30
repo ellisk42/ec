@@ -24,3 +24,4 @@ others: clean
 .PHONY: clean
 clean:
 	rm -Rf $$(find -iname "*.png")
+	rm -Rf $$(find -iname "*.cost")

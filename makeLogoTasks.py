@@ -69,23 +69,26 @@ def makeTasks(subfolders):
         problems.append(task)
 
     for subfolder in subfolders:
-        for _, _, files in os.walk(rootdir + subfolder):
-            for f in files:
-                if f.endswith("_l.png"):
-                    # fnorm = f[:-4] + "_norm.png"
-                    img1 = fileToArray(rootdir + subfolder + '/' + f)
-                    try:
-                        problem(subfolder+"_"+f,
-                                [([], img1)],
-                                needToTrain=True)
-                        # img2 = fileToArray(rootdir + subfolder + '/' + fnorm)
-                        # problem(subfolder+"_"+f,
-                                # [([], img1), ([], img2)],
-                                # needToTrain=True)
-                    except FileNotFoundError:
-                        problem(subfolder+"_"+f,
-                                [([], img1)],
-                                needToTrain=True)
+        for _, subf, _ in os.walk(rootdir + subfolder):
+            for subfl in subf:
+                for _, _, files in os.walk(rootdir + subfolder + "/" + subfl):
+                    for f in files:
+                        print(f)
+                        if f.endswith("_l.png"):
+                            # fnorm = f[:-4] + "_norm.png"
+                            img1 = fileToArray(rootdir + subfolder + "/" + subfl + '/' + f)
+                            try:
+                                problem(subfolder+"_"+f,
+                                        [([], img1)],
+                                        needToTrain=True)
+                                # img2 = fileToArray(rootdir + subfolder + '/' + fnorm)
+                                # problem(subfolder+"_"+f,
+                                        # [([], img1), ([], img2)],
+                                        # needToTrain=True)
+                            except FileNotFoundError:
+                                problem(subfolder+"_"+f,
+                                        [([], img1)],
+                                        needToTrain=True)
     return problems
 
 
@@ -96,7 +99,6 @@ if __name__ == "__main__":
     else:
         tasks = makeTasks(['all'])
     for t in tasks:
-        print(t)
         x, y = t.examples[0]
         pretty_print(y, 28)
         try:
