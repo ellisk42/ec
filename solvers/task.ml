@@ -121,7 +121,7 @@ let turtle_task ?timeout:(timeout = 0.001) name ty examples =
         flush s_out ;
         shutdown_connection s_in ;
         close_in s_in ;
-        -. (1000. *. log_likelihood))
+        (-. (100. *. log_likelihood)))
   }
 
 let differentiable_task

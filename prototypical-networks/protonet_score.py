@@ -3,7 +3,7 @@
 import torch
 import numpy as np
 
-from PIL import Image, ImageOps
+from PIL import Image
 
 from torch import nn
 
@@ -20,9 +20,10 @@ def load_image(array):
 
 
 def load_image_path(path):
-    _, _, _, a = Image.open("data/geometry/data/"+path+"/output_vh.png").split()
-    np_image = ImageOps.invert(a).resize((size, size))
-    torch_image = torch.from_numpy(np.array(np_image, np.float32, copy=False))
+    _, _, _, a = Image.open("data/geometry/data/"+path+"/output_l.png").split()
+    resized_a = a.resize((size, size), resample=Image.BILINEAR)
+    np_array = np.array(resized_a, np.float32, copy=False)
+    torch_image = torch.from_numpy(np.array(np_array, np.float32, copy=False))
     torch_image = (torch_image / 255).transpose(0, 1).contiguous()
     view_image = 1.0 - torch_image.view(1, size, size)
     return torch.unsqueeze(view_image, 0)

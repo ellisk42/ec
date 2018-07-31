@@ -5,7 +5,9 @@ all:
 	  jbuilder build geomDrawLambdaString.exe && \
 	  jbuilder build geomDrawFile.exe && \
 	  jbuilder build logoDrawString.exe && \
+	  jbuilder build protonet-tester.exe && \
 	  cp _build/default/solver.exe ../solver && \
+	  cp _build/default/protonet-tester.exe ../protonet-tester && \
 	  cp _build/default/logoDrawString.exe \
 	    ../logoDrawString && \
 	  ln -s ../../logoDrawString \

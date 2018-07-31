@@ -18,11 +18,11 @@ GEOMETRY_CACHE = { }
 
 def load_image_path(key, out_field, d):
     _, _, _, a = Image.open(d[key]).split()
-    d[out_field] = ImageOps.invert(a)
+    d[out_field] = a
     return d
 
 def convert_tensor(key, d):
-    d[key] = 1.0 - torch.from_numpy(np.array(d[key], np.float32, copy=False)).transpose(0, 1).contiguous().view(1, d[key].size[0], d[key].size[1])
+    d[key] = 1.0 - (torch.from_numpy(np.array(d[key], np.float32, copy=False)) / 255).transpose(0, 1).contiguous().view(1, d[key].size[0], d[key].size[1])
     return d
 
 def rotate_image(key, rot, d):
@@ -30,7 +30,7 @@ def rotate_image(key, rot, d):
     return d
 
 def scale_image(key, height, width, d):
-    d[key] = d[key].resize((height, width))
+    d[key] = d[key].resize((height, width), resample=Image.BILINEAR)
     return d
 
 def load_class_images(d):

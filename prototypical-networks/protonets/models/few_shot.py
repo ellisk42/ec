@@ -57,7 +57,7 @@ class Protonet(nn.Module):
         return loss_val, {
             'loss': loss_val.item(),
             'acc': acc_val.item(),
-            # 'dist': dists.detach().numpy(),
+            'dist': dists.detach().cpu().numpy(),
             'vect': z
         }
 
