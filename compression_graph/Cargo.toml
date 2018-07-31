@@ -1,0 +1,6 @@
+[package]
+name = "compression_graph"
+version = "0.1.0"
+authors = ["Kevin Ellis <ellisk@mit.edu>"]
+
+[dependencies]
