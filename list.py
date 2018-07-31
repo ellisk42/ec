@@ -10,7 +10,7 @@ from utilities import eprint, numberOfCPUs, flatten, fst, testTrainSplit, POSITI
 from grammar import Grammar
 from task import Task
 from type import Context, arrow, tbool, tlist, tint, t0, UnificationFailure
-from listPrimitives import basePrimitives, primitives, McCarthyPrimitives, bootstrapTarget_extra
+from listPrimitives import basePrimitives, primitives, McCarthyPrimitives, bootstrapTarget_extra, no_length
 from recognition import HandCodedFeatureExtractor, MLPFeatureExtractor, RecurrentFeatureExtractor
 from makeListTasks import make_list_bootstrap_tasks, sortBootstrap
 
@@ -297,7 +297,7 @@ def list_options(parser):
     parser.add_argument("--primitives",
                         default="common",
                         help="Which primitive set to use",
-                        choices=["McCarthy", "base", "rich", "common"])
+                        choices=["McCarthy", "base", "rich", "common", "noLength"])
     parser.add_argument("--extractor", type=str,
                         choices=["hand", "deep", "learned"],
                         default="learned")
@@ -396,6 +396,7 @@ if __name__ == "__main__":
     prims = {"base": basePrimitives,
              "McCarthy": McCarthyPrimitives,
              "common": bootstrapTarget_extra,
+             "noLength": no_length,
              "rich": primitives}[args.pop("primitives")]()
     baseGrammar = Grammar.uniform(prims)
 
