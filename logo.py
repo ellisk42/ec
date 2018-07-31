@@ -110,6 +110,10 @@ class LogoFeatureCNN(nn.Module):
 
 
 def list_options(parser):
+    parser.add_argument("--proto",
+                        default=False,
+                        action="store_true",
+                        help="Should we use prototypical networks?")
     parser.add_argument("--target", type=str,
                         default=[],
                         action='append',
@@ -178,6 +182,8 @@ if __name__ == "__main__":
         extras=list_options)
     dreamCheckpoint = args.pop("dreamCheckpoint")
     dreamDirectory = args.pop("dreamDirectory")
+    proto = args.pop("proto")
+
     if dreamCheckpoint is not None:
         outputDreams(dreamCheckpoint, dreamDirectory)
         sys.exit(0)        
@@ -190,7 +196,7 @@ if __name__ == "__main__":
     prefix_pickles = prefix + "/logo." + ('.'.join(target))
     if not os.path.exists(prefix_dreams):
         os.makedirs(prefix_dreams)
-    tasks = makeTasks(target)
+    tasks = makeTasks(target, proto)
     eprint("Generated", len(tasks), "tasks")
 
     test, train = testTrainSplit(tasks, 1.)
@@ -218,9 +224,9 @@ if __name__ == "__main__":
     eprint(baseGrammar)
 
     fe = LogoFeatureCNN(tasks)
-    for x in range(0, 50):
-        program = baseGrammar.sample(arrow(turtle, turtle), maximumDepth=20)
-        features = fe.renderProgram(program, arrow(turtle, turtle), index=x)
+    # for x in range(0, 50):
+        # program = baseGrammar.sample(arrow(turtle, turtle), maximumDepth=20)
+        # features = fe.renderProgram(program, arrow(turtle, turtle), index=x)
 
     generator = ecIterator(baseGrammar, train,
                            testingTasks=test,

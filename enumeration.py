@@ -277,6 +277,8 @@ def solveForTask_ocaml(_=None,
             m["lossThreshold"] = -t.likelihoodThreshold
         if hasattr(t, 'temperature') and t.temperature is not None:
             m["temperature"] = t.temperature
+        if hasattr(t, 'proto') and t.proto is not None:
+            m["proto"] = t.proto
 
         return m
 

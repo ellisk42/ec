@@ -40,7 +40,7 @@ def handle_client(connection):
 
             if idRef != "DONE":
                 score = compute_score(idRef, img)
-                loss = str(1000 * score['dist'][0][0]).encode("utf8")
+                loss = str(100000 * score['dist'][0][0]).encode("utf8")
                 # loss = str(score['loss']).encode("utf8")
                 connection.sendall(len(loss).to_bytes(4, byteorder='big'))
                 connection.sendall(loss)

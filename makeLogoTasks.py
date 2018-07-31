@@ -54,7 +54,7 @@ def allTasks():
     return next(os.walk(rootdir))[1]
 
 
-def makeTasks(subfolders):
+def makeTasks(subfolders, proto):
     problems = []
 
     if subfolders == ['all']:
@@ -66,6 +66,7 @@ def makeTasks(subfolders):
                     outputType,
                     [([0], y) for _, y in examples])
         task.mustTrain = needToTrain
+        task.proto = proto
         problems.append(task)
 
     for subfolder in subfolders:

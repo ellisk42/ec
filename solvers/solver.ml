@@ -111,6 +111,10 @@ let load_problems channel =
         try Some(j |> member "lossThreshold" |> to_float)
         with _ -> None
       in
+      let proto =
+        try j |> member "proto" |> to_bool
+        with _ -> false
+      in
 
 
       (* towers *)
@@ -139,7 +143,7 @@ let load_problems channel =
              else if is_constant_task
                then constant_task ~maxParameters:maxParameters ~parameterPenalty:parameterPenalty ~stringConstants:stringConstants
              else if is_turtle_task
-               then turtle_task
+               then turtle_task ~proto
             else supervised_task)  ~timeout:timeout name task_type examples
       in 
       (task, maximum_frontier))
