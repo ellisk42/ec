@@ -64,9 +64,9 @@ let turtle_task ?timeout:(timeout = 0.001) name ty examples =
     task_type = ty ;
     log_likelihood =
       (fun p ->
-        let s_in, s_out =
-          open_connection
-          (ADDR_UNIX("./prototypical-networks/protonet_socket")) in
+        (*let s_in, s_out =*)
+          (*open_connection*)
+          (*(ADDR_UNIX("./prototypical-networks/protonet_socket")) in*)
         let p = analyze_lazy_evaluation p in
         let log_likelihood = (try begin
           match
@@ -85,21 +85,21 @@ let turtle_task ?timeout:(timeout = 0.001) name ty examples =
                         (bx,bx')
                 in
                 match by' with
-                | None ->
-                    (*if (LogoLib.LogoInterpreter.fp_equal bx by 5) then 0.0*)
-                    (*else log 0.0 ;*)
-                    let bytes_version = Bytes.create (28 * 28) in
-                    for i = 0 to (28 * 28) - 1 do
-                      Bytes.set bytes_version i (char_of_int (by.{i}))
-                    done ;
-                    let img = Bytes.to_string bytes_version in
-                    output_binary_int s_out (String.length name) ;
-                    output_string s_out name ;
-                    output_binary_int s_out (String.length img) ;
-                    output_string s_out img ;
-                    flush s_out ;
-                    let l = input_binary_int s_in in
-                    float_of_string (really_input_string s_in l)
+                | None -> 
+                    if (LogoLib.LogoInterpreter.fp_equal bx by 5) then 0.0
+                    else log 0.0
+                    (*let bytes_version = Bytes.create (28 * 28) in*)
+                    (*for i = 0 to (28 * 28) - 1 do*)
+                      (*Bytes.set bytes_version i (char_of_int (by.{i}))*)
+                    (*done ;*)
+                    (*let img = Bytes.to_string bytes_version in*)
+                    (*output_binary_int s_out (String.length name) ;*)
+                    (*output_string s_out name ;*)
+                    (*output_binary_int s_out (String.length img) ;*)
+                    (*output_string s_out img ;*)
+                    (*flush s_out ;*)
+                    (*let l = input_binary_int s_in in*)
+                    (*float_of_string (really_input_string s_in l)*)
                 | Some(by') ->
                     if (LogoLib.LogoInterpreter.fp_equal bx by 5) then (0.0)
                     else -. (LogoLib.LogoInterpreter.distance bx' by'))
@@ -116,12 +116,13 @@ let turtle_task ?timeout:(timeout = 0.001) name ty examples =
           | UnknownPrimitive(n) -> raise (Failure ("Unknown primitive: "^n))
           | EnumerationTimeout  -> raise EnumerationTimeout
           | _                   -> log 0.0) in
-        output_binary_int s_out (String.length "DONE") ;
-        output_string s_out "DONE" ;
-        flush s_out ;
-        shutdown_connection s_in ;
-        close_in s_in ;
-        (-. (100. *. log_likelihood)))
+        (*output_binary_int s_out (String.length "DONE") ;*)
+        (*output_string s_out "DONE" ;*)
+        (*flush s_out ;*)
+        (*shutdown_connection s_in ;*)
+        (*close_in s_in ;*)
+        (*(-. (100. *. log_likelihood)))*)
+        log_likelihood)
   }
 
 let differentiable_task

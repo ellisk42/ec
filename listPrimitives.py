@@ -314,7 +314,7 @@ def basePrimitives():
         Primitive("is-square", arrow(tint, tbool), _isSquare),
         # McCarthy
         Primitive("empty", tlist(t0), []),
-        Primitive("cons", arrow(t-1, tlist(t0), tlist(t0)), _cons),
+        Primitive("cons", arrow(t0, tlist(t0), tlist(t0)), _cons),
         Primitive("car", arrow(tlist(t0), t0), _car),
         Primitive("cdr", arrow(tlist(t0), tlist(t0)), _cdr),
         Primitive("empty?", arrow(tlist(t0), tbool), _isEmpty),
