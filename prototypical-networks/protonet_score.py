@@ -45,7 +45,7 @@ class PretrainedProtonetDistScore(nn.Module):
 
         d = {'xs': xs, 'xq': xq}
 
-        results = self.model.loss(d)
+        results = self.model.myloss(d)
 
         return results[1]
 
