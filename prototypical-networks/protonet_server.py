@@ -40,9 +40,9 @@ def handle_client(connection):
 
             if idRef != "DONE":
                 score = compute_score(idRef, img)
-                dist = str(score['dist'][0][0]).encode("utf8")
-                connection.sendall(len(dist).to_bytes(4, byteorder='big'))
-                connection.sendall(dist)
+                loss = str(score['loss'][0][0]).encode("utf8")
+                connection.sendall(len(loss).to_bytes(4, byteorder='big'))
+                connection.sendall(loss)
             else:
                 break
 

@@ -63,4 +63,3 @@ if __name__ == '__main__':
 
     res = model.score(x, y)
     print(res['loss'])
-    print(res['dist'])
