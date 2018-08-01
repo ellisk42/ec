@@ -7,7 +7,8 @@ from protonet_score import PretrainedProtonetDistScore, \
                            load_image_path, load_image
 
 cache = {}
-model = PretrainedProtonetDistScore("./results-OM/best_model.pt")
+model = PretrainedProtonetDistScore(os.path.dirname(os.path.realpath(__file__))
+        + "/results-OM/best_model.pt")
 
 
 def eprint(*args, **kwargs):
@@ -40,7 +41,7 @@ def handle_client(connection):
 
             if idRef != "DONE":
                 score = compute_score(idRef, img)
-                loss = str(100000 * score['dist'][0][0]).encode("utf8")
+                loss = str(1000000 * score['dist'][0][0]).encode("utf8")
                 # loss = str(score['loss']).encode("utf8")
                 connection.sendall(len(loss).to_bytes(4, byteorder='big'))
                 connection.sendall(loss)
@@ -48,7 +49,8 @@ def handle_client(connection):
                 break
 
     except (BrokenPipeError, ConnectionResetError) as e:
-        eprint("Client died too fast for me to answer 😢")
+        # eprint("Client died too fast for me to answer 😢")
+        pass
 
     finally:
         connection.close()

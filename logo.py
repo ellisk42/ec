@@ -182,6 +182,7 @@ if __name__ == "__main__":
         extras=list_options)
     dreamCheckpoint = args.pop("dreamCheckpoint")
     dreamDirectory = args.pop("dreamDirectory")
+
     proto = args.pop("proto")
 
     if dreamCheckpoint is not None:
@@ -198,6 +199,12 @@ if __name__ == "__main__":
         os.makedirs(prefix_dreams)
     tasks = makeTasks(target, proto)
     eprint("Generated", len(tasks), "tasks")
+
+    os.chdir("prototypical-networks")
+    subprocess.Popen(["python","./protonet_server.py"])
+    time.sleep(3)
+    os.chdir("..")
+
 
     test, train = testTrainSplit(tasks, 1.)
     eprint("Split tasks into %d/%d test/train" % (len(test), len(train)))
