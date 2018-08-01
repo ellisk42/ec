@@ -329,3 +329,33 @@ let compare_list c xs ys =
     | _ -> assert false
   in 
   if d = 0 then r xs ys else d
+
+
+(* resizable arrays *)
+type 'a ra = {mutable ra_occupancy : int;
+              mutable ra_contents : ('a option) Array.t}
+
+let empty_resizable() =
+  {ra_occupancy = 0;
+   ra_contents = Array.create ~len:10 None}
+
+let push_resizable a x =
+  let l = Array.length a.ra_contents in
+  if a.ra_occupancy >= l then  begin
+    let n = Array.create ~len:(l*2) None in
+    Array.blito ~src:a.ra_contents
+      ~dst:n ();
+    a.ra_contents <- n;
+  end else ();
+
+  Array.set a.ra_contents (a.ra_occupancy) (Some(x));
+  a.ra_occupancy <- a.ra_occupancy + 1
+
+let get_resizable a i =
+  assert (i < a.ra_occupancy);
+  Array.get a.ra_contents i |> get_some
+    
+let set_resizable a i v =
+  assert (i < a.ra_occupancy);
+  Array.set a.ra_contents i (Some(v))
+    

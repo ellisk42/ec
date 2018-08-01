@@ -236,6 +236,49 @@ let rec free_variables ?d:(d=0) e = match e with
   | Abstraction(b) -> free_variables ~d:(d + 1) b
   | _ -> []
 
+let rec substitute i v e =
+  match e with
+  | Index(j) ->
+    if i = j then v else e
+  | Abstraction(b) ->
+    Abstraction(substitute (i + 1) (shift_free_variables 1 v) b)
+  | Apply(f,x) ->
+    Apply(substitute i v f, substitute i v x)
+  | _ -> e
+
+let rec beta_normal_form ?reduceInventions:(reduceInventions=false) e =
+  let rec step = function
+    | Abstraction(b) -> begin
+        match step b with
+        | Some(b') -> Some(Abstraction(b'))
+        | None -> None
+      end
+    | Invented(_,b) when reduceInventions -> Some(b)
+    | Apply(f,x) -> begin 
+        match step f with
+        | Some(f') -> Some(Apply(f',x))
+        | None -> match step x with
+          | Some(x') -> Some(Apply(f,x'))
+          | None -> match f with
+            | Abstraction(body) -> Some(shift_free_variables ~height:0 (-1)
+                                          (substitute 0 (shift_free_variables 1 x) body))
+            | _ -> None
+      end
+    | _ -> None
+  in 
+  match step e with
+  | None -> e
+  | Some(e') -> beta_normal_form ~reduceInventions e'
+
+
+let unit_reference = ref ()
+let rec strip_primitives = function
+  | Index(n) -> Index(n)
+  | Invented(t, e) -> Invented(t, strip_primitives e)
+  | Apply(f,x) -> Apply(strip_primitives f, strip_primitives x)
+  | Abstraction(b) -> Abstraction(strip_primitives b)
+  | Primitive(t,n,_) -> Primitive(t,n,unit_reference)
+
 (* PRIMITIVES *)
 let [@warning "-20"] primitive ?manualLaziness:(manualLaziness = false)
     (name : string) (t : tp) x =
