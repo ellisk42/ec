@@ -6,9 +6,9 @@ all:
 	  jbuilder build geomDrawFile.exe && \
 	  jbuilder build logoDrawString.exe && \
 	  jbuilder build protonet-tester.exe && \
-	  jbuilder build versions.exe && \
+	  jbuilder build compression.exe && \
 	  cp _build/default/solver.exe ../solver && \
-	  cp _build/default/versions.exe ../versions && \
+	  cp _build/default/compression.exe ../compression && \
 	  cp _build/default/protonet-tester.exe ../protonet-tester && \
 	  cp _build/default/logoDrawString.exe \
 	    ../logoDrawString && \

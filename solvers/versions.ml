@@ -25,6 +25,7 @@ type vt = {universe : int;
            substitution_table : ((int*int), ((int,int) Hashtbl.t)) Hashtbl.t;}
 
 let index_table t index = get_resizable t.i2s index
+let version_table_size t = t.i2s.ra_occupancy
 
 let incorporate_space t v : int =
   match Hashtbl.find t.s2i v with
@@ -92,6 +93,15 @@ let rec extract t j =
         Abstraction(b'))
   | Universe -> [primitive "UNIVERSE" t0 ()]
 
+let rec child_spaces t j =
+  (j :: 
+   match index_table t j with
+   | Union(u) -> List.map u ~f:(child_spaces t) |> List.concat
+   | ApplySpace(f,x) -> child_spaces t f @ child_spaces t x
+   | AbstractSpace(b) -> child_spaces t b
+   | _ -> [])
+  |> List.dedup_and_sort ~compare:(-)
+    
 let rec shift_free ?c:(c=0) t ~n ~index =
   if n = 0 then index else
     match index_table t index with
@@ -206,15 +216,8 @@ let rec recursive_inversion t j =
     set_resizable t.recursive_inversion_table j (Some(ri));
     ri
 
-let _ =
-  let t = new_version_table() in
-  let p = parse_program "(lambda (fold $0 empty (lambda (lambda (cons (+ (+ 5 5) (+ $1 $1)) $0)))))" |> get_some in
-  let p' = parse_program "(+ 9 9)" |> get_some in
-  let j = time_it "calculated versions base" (fun () -> p |> incorporate t |> recursive_inversion t |> recursive_inversion t  |> recursive_inversion t) in
-  extract t j |> List.map ~f:(fun r ->
-      (* Printf.printf "%s\n\t%s\n" (string_of_program r) *)
-      (*   (beta_normal_form r |> string_of_program); *)
-      (* flush_everything(); *)
-      assert ((string_of_program p) = (beta_normal_form r |> string_of_program)));
-  Printf.printf "Enumerated %d version spaces.\n"
-    (t.i2s.ra_occupancy)
+let rec log_version_size t j = match index_table t j with
+  | ApplySpace(f,x) -> log_version_size t f +. log_version_size t x
+  | AbstractSpace(b) -> log_version_size t b
+  | Union(u) -> u |> List.map ~f:(log_version_size t) |> lse_list
+  | _ -> 0.
