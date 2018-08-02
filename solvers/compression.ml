@@ -28,7 +28,7 @@ let build_graph_from_versions ?steps:(steps=3) expressions =
   let rec extract_classes j =
     match version_classes.(j) with
     | Some(ks) ->
-      let ks = ks |> List.map ~f:chase |> List.dedup ~compare:compare_class in
+      let ks = ks |> List.map ~f:(chase g) |> List.dedup ~compare:compare_class in
       version_classes.(j) <- Some(ks);
       ks
     | None ->
@@ -41,10 +41,11 @@ let build_graph_from_versions ?steps:(steps=3) expressions =
           f |> List.map ~f:(fun f' -> x |> List.map ~f:(fun x' -> apply_class g f' x')) |> List.concat 
         | IndexSpace(n) -> [leaf_class g (Index(n))]
         | TerminalSpace(p) -> [leaf_class g p]
-        | Universe | Void -> []
+        | Void -> []
+        | Universe -> assert false
       in
-      let ks = ks |> List.map ~f:chase |> List.dedup ~compare:compare_class  in
-      (* version_classes.(j) <- Some(ks); *)
+      let ks = ks |> List.map ~f:(chase g) |> List.dedup ~compare:compare_class  in
+      version_classes.(j) <- Some(ks);
       ks
   in
 
@@ -63,12 +64,14 @@ let build_graph_from_versions ?steps:(steps=3) expressions =
             let followers = List.nth_exn ss (i - 1) in
             Printf.printf "%f\t%d\n" (log_version_size v followers)
               (extract_classes followers |> List.length);
+            Printf.printf "# eq = %d\n"
+              (g.members_of_class |> Hashtbl.length);
+              
             flush_everything();
             extract_classes followers |> List.iter ~f:(fun f ->
                 
-                ignore(make_equivalent g leader (chase f)))
+                ignore(make_equivalent g leader f))
           | _ -> assert false)))
-
   
       
       
