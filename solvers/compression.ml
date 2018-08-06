@@ -1,5 +1,8 @@
 open Core
 
+
+open Gc
+    
 open Utils
 open Type
 open Program
@@ -28,7 +31,7 @@ let build_graph_from_versions ?steps:(steps=3) expressions =
   let rec extract_classes j =
     match version_classes.(j) with
     | Some(ks) ->
-      let ks = ks |> List.map ~f:(chase g) |> List.dedup ~compare:compare_class in
+      let ks = ks |> List.map ~f:chase |> List.dedup ~compare:compare_class in
       version_classes.(j) <- Some(ks);
       ks
     | None ->
@@ -44,14 +47,15 @@ let build_graph_from_versions ?steps:(steps=3) expressions =
         | Void -> []
         | Universe -> assert false
       in
-      let ks = ks |> List.map ~f:(chase g) |> List.dedup ~compare:compare_class  in
-      version_classes.(j) <- Some(ks);
+      let ks = ks |> List.map ~f:chase |> List.dedup ~compare:compare_class  in
+      (* version_classes.(j) <- Some(ks); *)
       ks
   in
 
   List.range 1 (steps + 1) |> List.iter ~f:(fun i ->
       time_it (Printf.sprintf "Loaded rewrites %d steps outward into the graph" i)
-        (fun _ -> 
+        (fun _ ->
+           (* FIXME: version size calculation should be memo'd *)
            !expanded_children |> List.sort ~compare:(fun xs ys ->
                Float.to_int (log_version_size v (List.nth_exn xs i) -.
                              log_version_size v (List.nth_exn ys i))
@@ -62,15 +66,21 @@ let build_graph_from_versions ?steps:(steps=3) expressions =
           match extract_classes s with
           | [leader] ->
             let followers = List.nth_exn ss (i - 1) in
+            let following_classes = time_it "EXTRACTED"
+                (fun () ->extract_classes followers)
+            in
             Printf.printf "%f\t%d\n" (log_version_size v followers)
-              (extract_classes followers |> List.length);
+              (following_classes |> List.length);
             Printf.printf "# eq = %d\n"
               (g.members_of_class |> Hashtbl.length);
               
             flush_everything();
-            extract_classes followers |> List.iter ~f:(fun f ->
-                
-                ignore(make_equivalent g leader f))
+            Printf.printf "About to enforce equivalent!\n";
+            flush_everything();
+              
+            time_it "ENFORCED" (fun () -> following_classes |> List.iter ~f:(fun f ->                
+                ignore(make_equivalent g leader f));
+              Gc.compact())
           | _ -> assert false)))
   
       
