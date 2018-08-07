@@ -70,7 +70,7 @@ def parallelMap(numberOfCPUs, f, *xs, chunksize=None, maxtasksperchild=None):
     global PARALLELMAPDATA
 
     if numberOfCPUs == 1:
-        return map(f, *xs)
+        return list(map(f, *xs))
 
     n = len(xs[0])
     for x in xs:
@@ -331,16 +331,14 @@ def sampleDistribution(d):
         eprint(d)
     r = random.random()
     u = 0.
-    for index, t in enumerate(d):
+    for t in d:
         p = t[0] / z
-        # This extra condition is needed for floating-point bullshit
-        if r <= u + p or index == len(d) - 1:
+        if r < u + p:
             if len(t) <= 2:
                 return t[1]
             else:
                 return t[1:]
         u += p
-        
     assert False
 
 
@@ -553,10 +551,26 @@ class PQ(object):
 
 class UnionFind:
     class Class:
-        def __init__(self, x):
+        def __init__(self, x, ID):
+            self.ID = ID
             self.members = {x}
             self.leader = None
+        def __eq__(self,o):
+            assert self.leader is None
+            assert o.leader is None
+            return self.ID == o.ID
+        def __ne__(self,o):
+            return not (self == o)
+        def __hash__(self):
+            assert self.leader is None
+            return self.ID
+        def __str__(self):
+            if self.leader is None:
+                return f"EC({self.ID}, {self.members})"
+            else:
+                return f"EC(points to {self.leader})"
         def chase(self):
+            if self.leader is None: return self
             k = self
             while k.leader is not None:
                 k = k.leader
@@ -566,6 +580,7 @@ class UnionFind:
     def __init__(self):
         # Map from keys to classes
         self.classes = {}
+        self.nextClass = 0
     def unify(self,x,y):
         k1 = self.classes[x].chase()
         k2 = self.classes[y].chase()
@@ -578,13 +593,18 @@ class UnionFind:
         return k2
     def newClass(self,x):
         if x not in self.classes:
-            n = Class(x)
+            n = self.Class(x,self.nextClass)
+            self.nextClass += 1
             self.classes[x] = n
 
     def otherMembers(self,x):
-        k = self.classes[x].chase()
-        self.classes[x] = k
-        return k.members        
+        return self.getClass(x).members
+    def getClass(self,x):
+        k1 = self.classes[x]
+        k2 = k1.chase()
+        if k1.ID != k2.ID:
+            self.classes[x] = k2
+        return k2
         
 
     
@@ -602,6 +622,8 @@ def normal(s=1., m=0.):
 
     return s * n + m
 
+def getOne(s):
+    return next(iter(s))
 
 if __name__ == "__main__":
     def f():

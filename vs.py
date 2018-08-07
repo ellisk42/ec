@@ -436,7 +436,6 @@ class VersionTable():
         for n in range(N):
             print(f"Processing rewrites {n} steps away from original expressions...")
             for v in vertices:
-                print("Processing Vertex...said")
                 expressions = list(self.extract(v))
                 assert len(expressions) == 1
                 expression = expressions[0]
@@ -445,14 +444,15 @@ class VersionTable():
                 t0 = g.typeOfClass[k]
                 if t0 not in typedClassesOfVertex[v]:
                     typedClassesOfVertex[v][t0] = k
-                es = list(extract(spaces[v][n]))
-                print(len(es))
-                for e in es:
-                    t = g.typeOfClass[e]
-                    if t in typedClassesOfVertex[v]:
-                        g.makeEquivalent(typedClassesOfVertex[v][t],e)
-                    else:
-                        typedClassesOfVertex[v][e] = e
+                with timing("EXTRACT"):
+                    extracted = list(extract(spaces[v][n]))
+                with timing("ENFORCE"):
+                    for e in extracted:
+                        t = g.typeOfClass[e]
+                        if t in typedClassesOfVertex[v]:
+                            g.makeEquivalent(typedClassesOfVertex[v][t],e)
+                        else:
+                            typedClassesOfVertex[v][e] = e
 
     def makeEquivalenceGraph(self,heads,n):
         from eg import EquivalenceGraph
@@ -598,8 +598,7 @@ if __name__ == "__main__":
                 Program.parse("(lambda (+ 4 4))")]
     
     N=3
-    programs = [programs[0]]
-    
+
     primitives = set()
     for p in programs:
         for _, s in p.walk():
