@@ -313,6 +313,10 @@ def guessConstantStrings(task):
     task.BIC = 1.
     task.maxParameters = 1
 
+    task.specialTask = ("stringConstant",
+                        {"maxParameters": task.maxParameters,
+                         "stringConstants": task.stringConstants})
+
 
 if __name__ == "__main__":
     import sys

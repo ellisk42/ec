@@ -59,7 +59,18 @@ let supervised_task ?timeout:(timeout = 0.001) name ty examples =
           else log 0.0)
   }
 
-let turtle_task ?proto:(proto = false) ?timeout:(timeout = 0.001) name ty examples =
+let task_handler = Hashtbl.Poly.create();;
+let register_special_task name handler = Hashtbl.set task_handler name handler;;
+
+
+register_special_task "LOGO" (fun extras ?timeout:(timeout = 0.001) name ty examples ->
+    let open Yojson.Basic.Util in
+    let proto =
+      try
+        extras |> member "proto" |> to_bool
+      with _ -> (Printf.eprintf "proto parameter not set! FATAL"; exit 1)                
+    in
+
   let by, by' = match examples with
       | [([0],y)] ->
           (Bigarray.(Array1.of_array int8_unsigned c_layout (Array.of_list y)),
@@ -149,14 +160,36 @@ let turtle_task ?proto:(proto = false) ?timeout:(timeout = 0.001) name ty exampl
           close_in s_in ;
           (-. (100. *. log_likelihood))
         end else log_likelihood)
-  }
+  });;
 
-let differentiable_task
-  ?temperature:(temperature=1.)
-    ?parameterPenalty:(parameterPenalty=0.)
-    ?lossThreshold:(lossThreshold=None)
-    ?maxParameters:(maxParameters=100)
-    ?timeout:(timeout = 0.001) name ty examples =
+
+
+register_special_task "differentiable"
+  (fun extras
+  (* ?temperature:(temperature=1.) *)
+  (*   ?parameterPenalty:(parameterPenalty=0.) *)
+  (*   ?lossThreshold:(lossThreshold=None) *)
+  (*   ?maxParameters:(maxParameters=100) *)
+    ?timeout:(timeout = 0.001) name ty examples ->
+
+
+    let open Yojson.Basic.Util in
+    let maybe_float name default =
+      try
+        extras |> member name |> to_float
+      with _ -> default
+    in
+    let maybe_int name default =
+      try
+        extras |> member name |> to_int
+      with _ -> default
+    in 
+    let temperature = maybe_float "temperature" 1. in
+    let parameterPenalty = maybe_float "parameterPenalty" 0. in
+    let maxParameters = maybe_int "maxParameters" 99 in
+    let lossThreshold = try Some(extras |> member "lossThreshold" |> to_float) with _ -> None in
+    
+                                         
   (* Process the examples and wrap them inside of placeholders *)
   let (argument_types, return_type) = arguments_and_return_of_type ty in
   let examples = examples |> List.map ~f:(fun (xs,y) ->
@@ -209,15 +242,25 @@ let differentiable_task
           | None -> 0. -. d*.parameterPenalty -. n *. l /. temperature
           | Some(t) ->
             if l < t then 0. -. d*.parameterPenalty else log 0.)
-  }
+  });;
 
-let constant_task
-    ?parameterPenalty:(parameterPenalty=0.)
-    ?maxParameters:(maxParameters=100)
+register_special_task "stringConstant" (fun extras
+    (* ?parameterPenalty:(parameterPenalty=0.) *)
+    (* ?maxParameters:(maxParameters=100) *)
     ?timeout:(timeout = 0.001)
-    ~stringConstants
-    name ty examples =
-  let stringConstants : char list list = stringConstants in
+    name ty examples ->
+    let open Yojson.Basic.Util in
+    let maybe_int name default =
+      try
+        extras |> member name |> to_int
+      with _ -> default
+    in 
+    let stringConstants =
+      extras |> member "stringConstants" |> to_list |> List.map ~f:to_string |> List.map ~f:(String.to_list)
+    in
+    let maxParameters = maybe_int "maxParameters" 99 in
+
+
   let lc = log (26.*.2.+.10.) in
   let lc = 0.-.lc in
   
@@ -248,7 +291,8 @@ let constant_task
                if hit
                then lc*.(Float.of_int (string_constants_length p))
                else log 0.) |> List.fold_right ~init:(log 0.) ~f:max)
-  }
+  });;
+
 
 
 let keep_best_programs_in_frontier (k : int) (f : frontier) : frontier =

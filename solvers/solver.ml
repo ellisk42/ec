@@ -55,8 +55,6 @@ let load_problems channel =
 
 
   let rec parse_type j =
-    (* try j |> to_string |> make_ground
-     * with _ -> *)
     try
       let k = j |> member "constructor" |> to_string in
       let a = j |> member "arguments" |> to_list |> List.map ~f:parse_type in
@@ -91,60 +89,15 @@ let load_problems channel =
                                                   ex |> member "output" |> unpack)) in
       let maximum_frontier = j |> member "maximumFrontier" |> to_int in
       let name = j |> member "name" |> to_string in
-      
-      (* string constant parameters *)
-      let stringConstants : char list list =
-        try j |> member "stringConstants" |> to_list |> List.map ~f:to_string
-            |> List.map ~f:(String.to_list)
-        with _ -> []
-      in
 
-      let parameterPenalty =
-        try j |> member "parameterPenalty" |> to_float
-        with _ -> 0.
-      in
-      let temperature =
-        try j |> member "temperature" |> to_float
-        with _ -> 1.
-      in
-      let lossThreshold =
-        try Some(j |> member "lossThreshold" |> to_float)
-        with _ -> None
-      in
-      let proto =
-        try j |> member "proto" |> to_bool
-        with _ -> false
-      in
-
-
-      (* towers *)
-      let tower_stuff =
-        try
-          Some(tower_task ~perturbation:(j |> member "perturbation" |> to_float)
-                 ~maximumStaircase:(j |> member "maximumStaircase" |> to_float)
-                 ~maximumMass:(j |> member "maximumMass" |> to_float)
-                 ~minimumLength:(j |> member "minimumLength" |> to_float)
-                 ~minimumArea:(j |> member "minimumArea" |> to_float)
-                 ~minimumOverpass:(j |> member "minimumOverpass" |> to_float)
-                 ~minimumHeight:(j |> member "minimumHeight" |> to_float)
-                 ~stabilityThreshold:0.5)
-        with _ -> None
-      in
-
-      let task_type = if is_some tower_stuff then ttower @> ttower else task_type in
-      let is_turtle_task = task_type = make_ground "turtle" @> make_ground "turtle" in
-
-      let task = 
-        (match tower_stuff with
-         | Some(ts) -> ts
-         | None -> 
-             if differentiable
-               then differentiable_task ~parameterPenalty:parameterPenalty ~temperature:temperature ~lossThreshold:lossThreshold ~maxParameters:maxParameters
-             else if is_constant_task
-               then constant_task ~maxParameters:maxParameters ~parameterPenalty:parameterPenalty ~stringConstants:stringConstants
-             else if is_turtle_task
-               then turtle_task ~proto
-            else supervised_task)  ~timeout:timeout name task_type examples
+      let task =
+        (try
+           let special = j |> member "specialTask" |> to_string in
+           match special |> Hashtbl.find task_handler with
+           | Some(handler) -> handler (j |> member "extras")
+           | None -> (Printf.eprintf " (ocaml) FATAL: Could not find handler for %s\n" special;
+                      exit 1)
+         with _ -> supervised_task) ~timeout:timeout name task_type examples
       in 
       (task, maximum_frontier))
   in

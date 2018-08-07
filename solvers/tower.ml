@@ -207,14 +207,27 @@ let evaluate_tower ?n:(n=15) plan perturbation =
                                                  ("perturbation",`Float(perturbation))])) in
     let r = parse_tower_result response in
     Hashtbl.Poly.set tower_cash ~key:key ~data:r;
-    r
+    r;;
 
-let tower_task ?timeout:(timeout = 0.001)
-    ?stabilityThreshold:(stabilityThreshold=0.5)
-    ~perturbation ~maximumStaircase ~maximumMass ~minimumLength ~minimumArea ~minimumHeight ~minimumOverpass
-    name task_type examples =
+
+register_special_task "tower" (fun extra ?timeout:(timeout = 0.001)
+    (* ?stabilityThreshold:(stabilityThreshold=0.5) *)
+    (* ~perturbation ~maximumStaircase ~maximumMass ~minimumLength ~minimumArea ~minimumHeight ~minimumOverpass *)
+    name task_type examples -> 
   assert (task_type = ttower @> ttower);
   assert (examples = []);
+
+  let open Yojson.Basic.Util in
+  
+  let perturbation = extra |> member "perturbation" |> to_float in  
+  let maximumStaircase = extra |> member "maximumStaircase" |> to_float in
+  let maximumMass = extra |> member "maximumMass" |> to_float in 
+  let minimumLength = extra |> member "minimumLength" |> to_float in 
+  let minimumArea = extra |> member "minimumArea" |> to_float in 
+  let minimumOverpass = extra |> member "minimumOverpass" |> to_float in 
+  let minimumHeight = extra |> member "minimumHeight" |> to_float in 
+  let stabilityThreshold = 0.5 in
+
   { name = name    ;
     task_type = task_type ;
     log_likelihood =
@@ -250,4 +263,4 @@ let tower_task ?timeout:(timeout = 0.001)
                   if otherException = EnumerationTimeout then raise EnumerationTimeout else log 0.
                 end)
 
-  }
+  })

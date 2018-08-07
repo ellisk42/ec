@@ -54,6 +54,15 @@ class TowerTask(Task):
         self.minimumHeight = minimumHeight
         self.minimumArea = minimumArea
 
+        self.specialTask = ("tower",
+                            {"maximumStaircase": maximumStaircase,
+                             "perturbation": perturbation,
+                             "minimumLength": minimumLength,
+                             "maximumMass": maximumMass,
+                             "minimumHeight": minimumHeight,
+                             "minimumArea": minimumArea,
+                             "minimumOverpass": minimumOverpass})
+
         TowerTask.tasks.append(self)
 
     @staticmethod

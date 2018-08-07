@@ -67,6 +67,7 @@ def makeTasks(subfolders, proto):
                     [([0], y) for _, y in examples])
         task.mustTrain = needToTrain
         task.proto = proto
+        task.specialTask = ("LOGO", {"proto": proto})
         problems.append(task)
 
     for subfolder in subfolders:
