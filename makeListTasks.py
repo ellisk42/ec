@@ -451,18 +451,28 @@ def sortBootstrap():
     ]
 
     appendBootstrap = [
-        Task("append bool", arrow(tlist(tbool), tlist(tbool), tlist(tbool)),
-             [((x, y), x + y)
+        Task("append single bool", arrow(tbool, tlist(tbool), tlist(tbool)),
+             [((x[0], y), [x[0]] + y)
               for _ in range(10)
               for [x, y] in [[randomBooleanList(), randomBooleanList()]]]),
-        Task("append int", arrow(tlist(tint), tlist(tint), tlist(tint)),
-             [((x, y), x + y)
+        Task("append single int", arrow(tint, tlist(tint), tlist(tint)),
+             [((x[0], y), [x[0]] + y)
               for _ in range(10)
               for [x, y] in [[randomList(), randomList()]]])
     ]
 
     insertionBootstrap = [
-        Task("insert into sorted list", arrow(tint,tlist(tint),tlist(tint)),
+        Task("filter greater than", arrow(tint,tlist(tint),tlist(tint)),
+             [((x,l), [y for y in l if y > x ])
+              for _ in range(15) 
+              for x in [randint(0,5)]
+              for l in [randomList()] ]),
+        Task("filter less than (I)", arrow(tint,tlist(tint),tlist(tint)),
+             [((x,l), [y for y in l if y < x ])
+              for _ in range(15) 
+              for x in [randint(0,5)]
+              for l in [randomList()] ]),
+        Task("insert into sorted list (II)", arrow(tint,tlist(tint),tlist(tint)),
              [((x,l), [y for y in l if y < x ] + [x] + [y for y in l if y > x ])
               for _ in range(15) 
               for x in [randint(0,5)]
