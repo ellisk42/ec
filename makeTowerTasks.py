@@ -22,6 +22,15 @@ def getTowerCash():
     global TOWERCACHING
     return TOWERCACHING
 
+class VerbatimTower(Task):
+    def __init__(self, name, plan):
+        plan = executeTower(plan)
+        super(VerbatimTower, self).__init__(name, arrow(ttower,ttower), [([], plan)],
+                                            features=[])
+        self.specialTask = ("verbatimTower",
+                            {})
+
+    
 
 class TowerTask(Task):
     tasks = []
@@ -204,3 +213,15 @@ def makeTasks():
             for h in HEIGHT
             if o <= a
             ]
+def makeSupervisedTasks():
+    from towerPrimitives import *
+    w,h = 2,1
+    _21 = TowerContinuation(xOffset(w, h), w - 2*epsilon, h - epsilon)
+    w,h = 1,2
+    _12 = TowerContinuation(xOffset(w, h), w - 2*epsilon, h - epsilon)
+    w,h = 1,3
+    _13 = TowerContinuation(xOffset(w, h), w - 2*epsilon, h - epsilon)
+    w,h = 3,1
+    _13 = TowerContinuation(xOffset(w, h), w - 2*epsilon, h - epsilon)
+
+makeSupervisedTasks()
