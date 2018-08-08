@@ -1,4 +1,4 @@
-from towerPrimitives import ttower
+from towerPrimitives import ttower, executeTower
 from utilities import *
 from task import *
 
@@ -22,13 +22,16 @@ def getTowerCash():
     global TOWERCACHING
     return TOWERCACHING
 
-class VerbatimTower(Task):
+class SupervisedTower(Task):
     def __init__(self, name, plan):
-        plan = executeTower(plan)
-        super(VerbatimTower, self).__init__(name, arrow(ttower,ttower), [([], plan)],
-                                            features=[])
-        self.specialTask = ("verbatimTower",
-                            {})
+        plan = plan(lambda s: (s,[]))(0)[1]
+        super(SupervisedTower, self).__init__(name, arrow(ttower,ttower), [],
+                                              features=[])
+        self.specialTask = ("supervisedTower",
+                            {"plan": plan})
+        self.plan = plan
+    def animate(self):
+        os.system("python towers/visualize.py '%s' 3"%(self.plan))
 
     
 
@@ -214,7 +217,7 @@ def makeTasks():
             if o <= a
             ]
 def makeSupervisedTasks():
-    from towerPrimitives import *
+    from towerPrimitives import epsilon,TowerContinuation,xOffset,_left,_right
     w,h = 2,1
     _21 = TowerContinuation(xOffset(w, h), w - 2*epsilon, h - epsilon)
     w,h = 1,2
@@ -222,6 +225,17 @@ def makeSupervisedTasks():
     w,h = 1,3
     _13 = TowerContinuation(xOffset(w, h), w - 2*epsilon, h - epsilon)
     w,h = 3,1
-    _13 = TowerContinuation(xOffset(w, h), w - 2*epsilon, h - epsilon)
+    _31 = TowerContinuation(xOffset(w, h), w - 2*epsilon, h - epsilon)
+    r = lambda n,k: _right(n)(k)
+    l = lambda n,k: _left(n)(k)
 
-makeSupervisedTasks()
+    st = [SupervisedTower("arch leg 1",lambda z: \
+                          _13(r(2,_13(l(1,_31(z)))))),
+          SupervisedTower("arch leg 2",lambda z: \
+                          _13(_13(r(2,_13(_13(l(1,_31(z)))))))),
+          SupervisedTower("arch leg 3",lambda z: \
+                          _13(_13(_13(r(2,_13(_13(_13(l(1,_31(z)))))))))),
+          SupervisedTower("arch leg 4",lambda z: \
+                    _13(_13(_13(_13(r(2,_13(_13(_13(_13(l(1,_31(z))))))))))))
+          ]
+    return st

@@ -145,7 +145,7 @@ if __name__ == "__main__":
     g0 = Grammar.uniform(primitives + 
                          [Primitive(str(j), tint, j) for j in range(2, 5)])
 
-    tasks = makeTasks()
+    tasks = makeSupervisedTasks()#makeTasks()
     test, train = testTrainSplit(tasks, 1.) #50. / len(tasks))
     eprint("Split %d/%d test/train" % (len(test), len(train)))
 
@@ -172,7 +172,7 @@ if __name__ == "__main__":
     os.system("python towers/server.py &")
     time.sleep(1)
 
-    perturbations = {t.perturbation for t in train}
+    perturbations = {t.perturbation for t in train if isinstance(t,TowerTask)}
 
     timestamp = datetime.datetime.now().isoformat()
     os.system("mkdir -p experimentOutputs/towers/%s"%timestamp)

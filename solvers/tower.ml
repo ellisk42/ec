@@ -264,3 +264,40 @@ register_special_task "tower" (fun extra ?timeout:(timeout = 0.001)
                 end)
 
   })
+;;
+register_special_task "supervisedTower" (fun extra ?timeout:(timeout = 0.001)
+    name task_type examples -> 
+  assert (task_type = ttower @> ttower);
+  assert (examples = []);
+
+  let open Yojson.Basic.Util in
+  
+  let plan = extra |> member "plan" |> to_list |> List.map ~f:(fun command ->
+      match command |> to_list with
+      | [a;b;c;] -> (a |> to_float, b |> to_float, c |> to_float)
+      |_ -> assert false) |> center_tower |> discrete_plan
+  in 
+
+  { name = name    ;
+    task_type = task_type ;
+    log_likelihood =
+      (fun p ->
+         let p = analyze_lazy_evaluation p in
+         try
+           match run_for_interval
+                   timeout
+                   (fun () -> run_lazy_analyzed_with_arguments p [fun s -> (s, [])] 0 |> snd)
+           with
+           | Some(p) ->
+             if discrete_plan (center_tower p) = plan then 0.0 else log 0.0
+           | _ -> log 0.0
+         with | UnknownPrimitive(n) -> raise (Failure ("Unknown primitive: "^n))
+              (* we have to be a bit careful with exceptions *)
+              (* if the synthesized program generated an exception, then we just terminate w/ false *)
+              (* but if the enumeration timeout was triggered during program evaluation, we need to pass the exception on *)
+              | otherException -> begin
+                  if otherException = EnumerationTimeout then raise EnumerationTimeout else log 0.
+                end)
+
+  })
+;;
