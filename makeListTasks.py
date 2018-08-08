@@ -421,11 +421,11 @@ def sortBootstrap():
              [((xs,), [x for x in xs if x != 0])
               for _ in range(10)
               for xs in [[randint(0, 3) for _ in range(5)]]]),
-        Task("remove primes",
-             arrow(tlist(tint), tlist(tint)),
-             [((xs,), [x for x in xs if not (x in {2,3,5,7,11,13,17,19,23})])
-              for _ in range(10)
-              for xs in [[randint(0, 20) for _ in range(7)]]]),
+        # Task("remove primes",
+        #      arrow(tlist(tint), tlist(tint)),
+        #      [((xs,), [x for x in xs if not (x in {2,3,5,7,11,13,17,19,23})])
+        #       for _ in range(10)
+        #       for xs in [[randint(0, 20) for _ in range(7)]]]),
         Task("remove squares",
              arrow(tlist(tint), tlist(tint)),
              [((xs,), [x for x in xs if not (int(x**0.5)**2 == x)])
@@ -451,12 +451,12 @@ def sortBootstrap():
     ]
 
     appendBootstrap = [
-        Task("append single bool", arrow(tbool, tlist(tbool), tlist(tbool)),
-             [((x[0], y), [x[0]] + y)
+        Task("append bool", arrow(tlist(tbool), tlist(tbool), tlist(tbool)),
+             [((x, y), x + y)
               for _ in range(10)
               for [x, y] in [[randomBooleanList(), randomBooleanList()]]]),
-        Task("append single int", arrow(tint, tlist(tint), tlist(tint)),
-             [((x[0], y), [x[0]] + y)
+        Task("append int", arrow(tlist(tint), tlist(tint), tlist(tint)),
+             [((x, y), x + y)
               for _ in range(10)
               for [x, y] in [[randomList(), randomList()]]])
     ]
@@ -467,8 +467,13 @@ def sortBootstrap():
               for _ in range(15) 
               for x in [randint(0,5)]
               for l in [randomList()] ]),
-        Task("filter less than (I)", arrow(tint,tlist(tint),tlist(tint)),
+        Task("filter less than", arrow(tint,tlist(tint),tlist(tint)),
              [((x,l), [y for y in l if y < x ])
+              for _ in range(15) 
+              for x in [randint(0,5)]
+              for l in [randomList()] ]),
+        Task("insert into sorted list (I)", arrow(tint,tlist(tint),tlist(tint)),
+             [((x,l), [y for y in l if y < x ] + [x] + [y for y in l if y > x ])
               for _ in range(15) 
               for x in [randint(0,5)]
               for l in [randomList()] ]),
