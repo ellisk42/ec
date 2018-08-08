@@ -354,10 +354,9 @@ def ecIterator(grammar, tasks,
                                                                CPUs=CPUs,
                                                                evaluationTimeout=evaluationTimeout,
                                                                testing=True)
+            print("\n".join(f.summarize() for f in testingFrontiers))
+            eprint("Hits %d/%d testing tasks" % (len(times), len(testingTasks)))
 
-            eprint(
-                "Hits %d/%d testing tasks" %
-                (len(times), len(testingTasks)))
             summaryStatistics("Testing tasks", times)
             result.testingSearchTime.append(times)
             result.testingSumMaxll.append(sum(math.exp(f.bestll) for f in testingFrontiers if not f.empty) )
@@ -369,10 +368,9 @@ def ecIterator(grammar, tasks,
                 enumerationTimeout = int(enumerationTimeout * expandFrontier)
             else:
                 enumerationTimeout = int(enumerationTimeout + expandFrontier)
-            eprint(
-                "Expanding enumeration timeout from {} to {} because of no progress".format(
-                    oldEnumerationTimeout,
-                    enumerationTimeout))
+            eprint("Expanding enumeration timeout from {} to {} because of no progress".format(
+                oldEnumerationTimeout,enumerationTimeout))
+            
         frontiers, times = multicoreEnumeration(grammar, tasks, likelihoodModel,
                                                 solver=solver,
                                                 maximumFrontier=maximumFrontier,
