@@ -82,8 +82,9 @@ def sendCommand(
 cd ~/ec
 {copyCheckpoint}
 touch compressor_dummy
-git pull
+git fetch
 git checkout {br}
+git pull
 
 make -C rust_compressor
 """
