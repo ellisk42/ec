@@ -4,7 +4,7 @@ from ec import explorationCompression, commandlineArguments, Task
 from grammar import Grammar
 #from utilities import eprint, testTrainSplit, numberOfCPUs, flatten
 from utilities import eprint, numberOfCPUs, flatten, fst, testTrainSplit, POSITIVEINFINITY
-from makeRegexTasks import makeOldTasks, makeLongTasks, makeShortTasks, makeWordTasks, makeNumberTasks, makeDateTasks, makeNonLetterTasks
+from makeRegexTasks import makeOldTasks, makeLongTasks, makeShortTasks, makeWordTasks, makeNumberTasks, makeDateTasks, makeNonLetterTasks, makeHandPickedTasks
 from regexPrimitives import basePrimitives, altPrimitives, easyWordsPrimitives, alt2Primitives, matchEmpericalPrimitives, matchEmpericalNoLetterPrimitives
 from likelihoodModel import add_cutoff_values
 #from program import *
@@ -12,7 +12,7 @@ from recognition import HandCodedFeatureExtractor, MLPFeatureExtractor, Recurren
 import random
 from type import tpregex
 import math
-
+from string import printable
 
 
 class LearnedFeatureExtractor(RecurrentFeatureExtractor):
@@ -168,6 +168,14 @@ def regex_options(parser):
 # make primitives
 # make tasks
 
+def remove_letter_tasks(tasks):
+    outtasks = []
+    disallowed_list = printable[10:62]
+    for task in tasks:
+        if not any(any(dis in ex[1] for ex in task.examples) for dis in disallowed_list):
+            outtasks.append(task)
+    return outtasks
+
 
 if __name__ == "__main__":
     args = commandlineArguments(
@@ -204,7 +212,8 @@ if __name__ == "__main__":
                 "words": makeWordTasks,
                 "number": makeNumberTasks,
                 "dates": makeDateTasks,
-                "nonLetter": makeNonLetterTasks
+                "nonLetter": makeNonLetterTasks,
+                "handpicked": makeHandPickedTasks
                 }[tasktype]
 
     tasks = regexTasks()  # TODO
@@ -214,7 +223,7 @@ if __name__ == "__main__":
     maxTasks = args.pop("maxTasks")
     if len(tasks) > maxTasks:
         eprint("Unwilling to handle {} tasks, truncating..".format(len(tasks)))
-        random.seed(80) #42
+        random.seed(42) #42 #80
         random.shuffle(tasks)
         del tasks[maxTasks:]
 
@@ -231,6 +240,16 @@ if __name__ == "__main__":
     test = add_cutoff_values(test, test_ll_cutoff, corpus=regexTasks())
     train = add_cutoff_values(train, train_ll_cutoff, corpus=regexTasks())
     eprint("added cutoff values to tasks, train: ", train_ll_cutoff, ", test:", test_ll_cutoff )
+
+
+    #test = remove_letter_tasks(test)
+    #eprint("Using only non-letter tasks, of which there are", len(test))
+
+    #for task in train:
+    #    eprint(task.name)
+    #    eprint([example[1] for example in task.examples[:5]])
+
+    #assert False
 
     # from list stuff
     primtype = args.pop("primitives")
@@ -305,7 +324,7 @@ if __name__ == "__main__":
     if test_stuff:
         eprint(baseGrammar)
         eprint("sampled programs from prior:")
-        for i in range(100): #100
+        for i in range(10): #100
             eprint(baseGrammar.sample(test[0].request,maximumDepth=1000))
         eprint("""half the probability mass is on higher-order primitives.
 Therefore half of enumerated programs should have more than one node.
@@ -322,5 +341,5 @@ weighted with the constants. If you look at the grammar above, this is an error!
         assert False
 
     explorationCompression(baseGrammar, train,
-                            testingTasks = test,
+                            testingTasks=test,
                             **args)

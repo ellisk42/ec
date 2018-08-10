@@ -172,12 +172,12 @@ def plotECResult(
     results = []
     parameters = []
     for j, path in enumerate(resultPaths):
-        #with open(path, 'rb') as handle:
+        with open(path, 'rb') as handle:
             #print("path:", path)
-            #result = dill.load(handle)
+            result = dill.load(handle)
         if True:
             #result = loadfun(file3)
-            result = result1
+            #result = result1
             if hasattr(result, "baselines") and result.baselines:
                 for name, res in result.baselines.items():
                     results.append(res)
@@ -209,8 +209,8 @@ def plotECResult(
     a1.xaxis.set_major_locator(MaxNLocator(integer=True))
 
     plotll = False 
-    #if hasattr(result, 'testingSumMaxll'):
-    #    plotll = True
+    if hasattr(result, 'testingSumMaxll'):
+       plotll = True
 
     if showSolveTime or plotll:
         a1.set_ylabel('%  Solved (solid)', fontsize=LABELFONTSIZE)
@@ -268,7 +268,8 @@ def plotECResult(
         starting, ending = a2.get_ylim()
         # if True:
         #[int(zz) for zz in np.arange(starting, ending, (ending - starting)/5.)]
-        a2.yaxis.set_ticks([ending])
+        end = ending/1.1
+        a2.yaxis.set_ticks([(end-starting)*i/5 + starting for i in range(6)])
         # else:
         #     a2.yaxis.set_ticks([50 * j for j in range(6)])
         # for tick in a2.yaxis.get_ticklabels():
@@ -278,8 +279,9 @@ def plotECResult(
         a2.set_ylim(ymin=0)
         starting, ending = a2.get_ylim()
         if True:
+            end = ending/1.1
             # [int(zz) for zz in np.arange(starting, ending, (ending - starting)/5.)])
-            a2.yaxis.set_ticks([20 * j for j in range(5)])
+            a2.yaxis.set_ticks([(end-starting)*i/5 + starting for i in range(6)])
         else:
             a2.yaxis.set_ticks([50 * j for j in range(6)])
         for tick in a2.yaxis.get_ticklabels():
