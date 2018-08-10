@@ -237,8 +237,9 @@ if __name__ == "__main__":
     eprint("Split tasks into %d/%d test/train" % (len(test), len(train)))
 
 
-    test = add_cutoff_values(test, test_ll_cutoff, corpus=regexTasks())
-    train = add_cutoff_values(train, train_ll_cutoff, corpus=regexTasks())
+    eprint("WARNING: using long corpus for cutoff values")
+    test = add_cutoff_values(test, test_ll_cutoff, corpus=makeLongTasks()) #corpus=regexTasks()
+    train = add_cutoff_values(train, train_ll_cutoff, corpus=makeLongTasks()) #corpus=regexTasks()
     eprint("added cutoff values to tasks, train: ", train_ll_cutoff, ", test:", test_ll_cutoff )
 
 
