@@ -76,9 +76,15 @@ def randomWord(minimum=1):
             [w for w in WORDS if len(w) >= minimum and len(w) != 3])
 
 
-def randomWords(d, minimum=1):
-    return d.join([randomWord(minimum=minimum)
-                   for _ in range(random.choice(range(2, 5)))])
+def randomWords(ds, minimum=1, lb=2, ub=4):
+    words = [randomWord(minimum=minimum)
+             for _ in range(random.choice(range(lb, ub+1)))]
+    s = ""
+    for j,w in enumerate(words):
+        if j > 0:
+            s += random.choice(ds)
+        s += w
+    return s
 
 
 def makeTasks():
@@ -224,6 +230,23 @@ def makeTasks():
                  for _ in range(NUMBEROFEXAMPLES)
                  for x in [randomWord()]
                  for y in [randomWord()]])
+
+    problem("parentheses around a single word",
+            [((w,),"(%s)"%w)
+             for _ in range(NUMBEROFEXAMPLES)
+             for w in [randomWord()] ])
+    for d1 in delimiters:
+        for d2 in delimiters:
+            if d1 in "()": continue
+            if d2 in "()": continue
+            problem("parentheses around word delimited by '%s' & '%s'"%(d1,d2),
+                    [((prefix + d1 + word + d2 + suffix,),
+                      prefix + d1 + '(' + word + ')' + d2 + suffix)
+                     for _ in range(NUMBEROFEXAMPLES)
+                     for prefix in [randomWords("", lb=0, ub=1)]
+                     for suffix in [randomWords(delimiters, ub=2, lb=1)]
+                     for word in [randomWord()] ])
+            
 
     for p in problems:
         guessConstantStrings(p)
