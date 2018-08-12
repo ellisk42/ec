@@ -125,6 +125,9 @@ class Program(object):
     def isIndex(self): return False
 
     @property
+    def isUnion(self): return False
+
+    @property
     def isApplication(self): return False
 
     @property
@@ -168,7 +171,7 @@ class Application(Program):
         self.f = f
         self.x = x
         self.hashCode = None
-        self.isConditional = (not isinstance(f,int)) and \
+        self.isConditional = isinstance(f,Program) and \
                              f.isApplication and \
                              f.f.isApplication and \
                              f.f.f.isPrimitive and \
@@ -181,6 +184,9 @@ class Application(Program):
             self.falseBranch = None
             self.trueBranch = None
             self.branch = None
+
+    def freeVariables(self):
+        return self.f.freeVariables() | self.x.freeVariables()
 
     def betaReduce(self):
         # See if either the function or the argument can be reduced
@@ -199,6 +205,9 @@ class Application(Program):
 
     @property
     def isApplication(self): return True
+
+    def isBetaLong(self):
+        return (not self.f.isAbstraction) and self.f.isBetaLong() and self.x.isBetaLong()
 
     def __eq__(
         self,
@@ -226,10 +235,13 @@ class Application(Program):
                                                       **keywords)
 
     def show(self, isFunction):
-        if isFunction:
-            return "%s %s" % (self.f.show(True), self.x.show(False))
+        if isinstance(self.f,Program) and isinstance(self.x,Program):
+            if isFunction:
+                return "%s %s" % (self.f.show(True), self.x.show(False))
+            else:
+                return "(%s %s)" % (self.f.show(True), self.x.show(False))
         else:
-            return "(%s %s)" % (self.f.show(True), self.x.show(False))
+            return "(%s %s)"%(self.f,self.x)
 
     def evaluate(self, environment):
         if self.isConditional:
@@ -316,6 +328,8 @@ class Index(Program):
     def __init__(self, i):
         self.i = i
 
+    def freeVariables(self): return {self.i}
+
     def show(self, isFunction): return "$%d" % self.i
 
     def __eq__(self, o): return isinstance(o, Index) and o.i == self.i
@@ -354,6 +368,8 @@ class Index(Program):
             return Index(i)
 
     def betaReduce(self): return None
+
+    def isBetaLong(self): return True
 
     def substitute(self, old, new):
         if old == self:
@@ -401,6 +417,9 @@ class Abstraction(Program):
         self.body = body
         self.hashCode = None
 
+    def freeVariables(self):
+        return {f - 1 for f in self.body.freeVariables() if f > 0}
+
     @property
     def isAbstraction(self): return True
 
@@ -428,7 +447,10 @@ class Abstraction(Program):
                                                       **keywords)
 
     def show(self, isFunction):
-        return "(lambda %s)" % (self.body.show(False))
+        if isinstance(self.body, Program):
+            return "(lambda %s)" % (self.body.show(False))
+        else:
+            return "(lambda %s)"%self.body
 
     def evaluate(self, environment):
         return lambda x: self.body.evaluate([x] + environment)
@@ -437,6 +459,8 @@ class Abstraction(Program):
         b = self.body.betaReduce()
         if b is None: return None
         return Abstraction(b)
+
+    def isBetaLong(self): return self.body.isBetaLong()
 
     def inferType(self, context, environment, freeVariables):
         (context, argumentType) = context.makeVariable()
@@ -496,6 +520,8 @@ class Primitive(Program):
         if name not in Primitive.GLOBALS:
             Primitive.GLOBALS[name] = self
 
+    def freeVariables(self): return set()
+
     @property
     def isPrimitive(self): return True
 
@@ -516,6 +542,8 @@ class Primitive(Program):
     def evaluate(self, environment): return self.value
 
     def betaReduce(self): return None
+
+    def isBetaLong(self): return True
 
     def inferType(self, context, environment, freeVariables):
         return self.tp.instantiate(context)
@@ -555,6 +583,8 @@ class Invented(Program):
         self.tp = self.body.infer()
         self.hashCode = None
 
+    def freeVariables(self): return set()
+
     @property
     def isInvented(self): return True
 
@@ -584,6 +614,8 @@ class Invented(Program):
     def evaluate(self, e): return self.body.evaluate([])
 
     def betaReduce(self): return self.body
+
+    def isBetaLong(self): return True
 
     def inferType(self, context, environment, freeVariables):
         return self.tp.instantiate(context)
@@ -819,6 +851,87 @@ class RegisterPrimitives(object):
     @staticmethod
     def register(e): e.visit(RegisterPrimitives())
 
+class EtaExpandFailure(Exception): pass
+class EtaLongVisitor(object):
+    """Converts an expression into eta-longform"""
+    def __init__(self, request=None):
+        self.request = request
+        self.context = Context.EMPTY
+
+    def makeLong(self, e, request):
+        if request.isArrow():
+            # eta expansion
+            return Abstraction(Application(e.shift(1),
+                                           Index(0)))
+        return None
+        
+
+    def abstraction(self, e, request, environment):
+        if not request.isArrow(): raise EtaExpandFailure()
+        
+        return Abstraction(e.body.visit(self,
+                                        request.arguments[1],
+                                        [request.arguments[0]] + environment))
+    def application(self, e, request, environment):
+        l = self.makeLong(e, request)
+        if l is not None: return l.visit(self, request, environment)
+
+        f, xs = e.applicationParse()
+
+        if f.isIndex:
+            ft = environment[f.i].apply(self.context)
+        elif f.isInvented or f.isPrimitive:
+            self.context, ft = f.tp.instantiate(self.context)
+        else: assert False, "Not in beta long form: %s"%e
+
+        self.context = self.context.unify(request, ft.returns())
+        ft = ft.apply(self.context)
+
+        xt = ft.functionArguments()
+        if len(xs) != len(xt): raise EtaExpandFailure()
+
+        returnValue = f
+        for x,t in zip(xs,xt):
+            t = t.apply(self.context)
+            returnValue = Application(returnValue,
+                                      x.visit(self, t, environment))
+        return returnValue
+
+    def index(self, e, request, environment):
+        l = self.makeLong(e, request)
+        if l is not None: return l.visit(self, request, environment)
+
+        self.context = self.context.unify(request, environment[e.i])
+        return e
+
+    def primitive(self, e, request, environment):
+        l = self.makeLong(e, request)
+        if l is not None: return l.visit(self, request, environment)
+
+        self.context, t = e.tp.instantiate(self.context)
+        self.context = self.context.unify(request, t)
+        return e
+
+    def invented(self, e, request, environment):
+        l = self.makeLong(e, request)
+        if l is not None: return l.visit(self, request, environment)
+
+        self.context, t = e.tp.instantiate(self.context)
+        self.context = self.context.unify(request, t)
+        return e
+
+    def execute(self, e):
+        assert len(e.freeVariables()) == 0
+        
+        if self.request is None:
+            self.request = e.infer()
+        el = e.visit(self, self.request, [])
+        assert el.infer().canonical() == e.infer().canonical(), \
+            f"Types are not preserved by ETA expansion: {e} : {e.infer().canonical()} vs {el} : {el.infer().canonical()}"
+        return el
+        
+        
+        
 
 class PrettyVisitor(object):
     def __init__(self):

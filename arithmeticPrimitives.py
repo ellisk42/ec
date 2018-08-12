@@ -54,3 +54,5 @@ f1 = Primitive("1.", treal, 1.)
 f0 = Primitive("0.", treal, 0)
 real = Primitive("REAL", treal, None)
 fpi = Primitive("pi", treal, 3.14)
+
+for i in range(2,10): Primitive(str(i), tint, i)

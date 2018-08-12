@@ -2,7 +2,9 @@ from betaExpansion import *
 
 from program import *
 from type import *
-6
+
+
+epsilon = 0.001
 
 
 def instantiate(context, environment, tp):
@@ -26,8 +28,9 @@ def unify(*environmentsAndTypes):
     return {i: ti.apply(k) for i,ti in e.items() }, t.apply(k)
 
 class Union(Program):
-    def __init__(self, elements):
+    def __init__(self, elements, canBeEmpty=False):
         self.elements = frozenset(elements)
+        if not canBeEmpty: assert len(self.elements) > 1
         
     @property
     def isUnion(self): return True
@@ -54,9 +57,14 @@ class VersionTable():
         self.substitutionTable = {}
         self.expression2index = {}
         self.maximumShift = []
+        # Table containing (minimum cost, set of minimum cost programs)
+        self.inhabitantTable = []
+        # Table containing (minimum cost, set of minimum cost programs NOT starting w/ abstraction)
+        self.functionInhabitantTable = []
+        self.superCache = {}
         
         self.universe = self.incorporate(Primitive("U",t0,None))
-        self.empty = self.incorporate(Union([]))
+        self.empty = self.incorporate(Union([], canBeEmpty=True))
         
     def intention(self,j, isFunction=False):
         l = self.expressions[j]
@@ -79,7 +87,8 @@ class VersionTable():
             p = Application(self.incorporate(p.f),
                             self.incorporate(p.x))
         elif p.isUnion:
-            p = Union([self.incorporate(e) for e in p ])
+            if len(p.elements) > 0:
+                p = Union([self.incorporate(e) for e in p ])
         else: assert False
 
         j = self._incorporate(p)
@@ -93,6 +102,8 @@ class VersionTable():
         self.expressions.append(p)
         self.expression2index[p] = j
         self.recursiveTable.append(None)
+        self.inhabitantTable.append(None)
+        self.functionInhabitantTable.append(None)
         
         return j
 
@@ -194,27 +205,92 @@ class VersionTable():
                                 for y_ in y ])
         return self.empty
 
-    # def shift(self,j,n,c=0):
-    #     if n == 0: return j
+    def haveOverlap(self,a,b):
+        if a == self.empty or b == self.empty: return False
+        if a == self.universe: return True
+        if b == self.universe: return True
+        if a == b: return True
 
-    #     l = self.expressions[j]
+        x = self.expressions[a]
+        y = self.expressions[b]
 
-    #     if l.isUnion:
-    #         return self.union([ self.shift(e,n,c)
-    #                             for e in l ])
-    #     if l.isApplication:
-    #         return self.apply(self.shift(l.f,n,c),self.shift(l.x,n,c))
-    #     if l.isAbstraction:
-    #         return self.abstract(self.shift(l.body,n,c+1))
-    #     if l.isIndex:
-    #         if l.i >= c:
-    #             if l.i + n >= 0:
-    #                 return self.index(l.i + n)
-    #             else:
-    #                 return self.empty
-    #         return j
-    #     assert l.isPrimitive or l.isInvented
-    #     return j
+        if x.isAbstraction and y.isAbstraction:
+            return self.haveOverlap(x.body,y.body)
+        if x.isApplication and y.isApplication:
+            return self.haveOverlap(x.f,y.f) and \
+                self.haveOverlap(x.x,y.x)
+        if x.isUnion:
+            if y.isUnion:
+                return any( self.haveOverlap(x_,y_)
+                            for x_ in x
+                            for y_ in y )
+            return any( self.haveOverlap(x_, b)
+                        for x_ in x )
+        if y.isUnion:
+            return any( self.haveOverlap(a, y_)
+                        for y_ in y )
+        return False
+
+    def minimalInhabitants(self,j):
+        """Returns (minimal size, set of singleton version spaces)"""
+        assert isinstance(j,int)
+        if self.inhabitantTable[j] is not None: return self.inhabitantTable[j]
+        e = self.expressions[j]
+        if e.isAbstraction:
+            cost, members = self.minimalInhabitants(e.body)
+            cost = cost + epsilon
+            members = {self.abstract(m) for m in members}
+        elif e.isApplication:
+            fc, fm = self.minimalFunctionInhabitants(e.f)
+            xc, xm = self.minimalInhabitants(e.x)
+            cost = fc + xc + epsilon
+            members = {self.apply(f_,x_)
+                       for f_ in fm for x_ in xm }
+        elif e.isUnion:
+            children = [self.minimalInhabitants(z)
+                        for z in e ]
+            cost = min(c for c,_ in children)
+            members = {zp
+                       for c,z in children
+                       if c == cost
+                       for zp in z }
+        else:
+            assert e.isIndex or e.isInvented or e.isPrimitive
+            cost = 1
+            members = {j}
+
+        self.inhabitantTable[j] = (cost, members)
+        return cost, members
+
+    def minimalFunctionInhabitants(self,j):
+        """Returns (minimal size, set of singleton version spaces)"""
+        assert isinstance(j,int)
+        if self.functionInhabitantTable[j] is not None: return self.functionInhabitantTable[j]
+        e = self.expressions[j]
+        if e.isAbstraction:
+            cost = POSITIVEINFINITY
+            members = set()
+        elif e.isApplication:
+            fc, fm = self.minimalFunctionInhabitants(e.f)
+            xc, xm = self.minimalInhabitants(e.x)
+            cost = fc + xc + epsilon
+            members = {self.apply(f_,x_)
+                       for f_ in fm for x_ in xm }
+        elif e.isUnion:
+            children = [self.minimalFunctionInhabitants(z)
+                        for z in e ]
+            cost = min(c for c,_ in children)
+            members = {zp
+                       for c,z in children
+                       if c == cost
+                       for zp in z }
+        else:
+            assert e.isIndex or e.isInvented or e.isPrimitive
+            cost = 1
+            members = {j}
+
+        self.functionInhabitantTable[j] = (cost, members)
+        return cost, members
 
     def shiftFree(self,j,n,c=0):
         if n == 0: return j
@@ -402,6 +478,27 @@ class VersionTable():
         spaces = {v: self.repeatedExpansion(v,n)
                   for v in vertices }
         return spaces
+
+    def superVersionSpace(self, j, n):
+        """Construct decorated tree and then merge version spaces with subtrees via union operator"""
+        if j in self.superCache: return self.superCache[j]
+        spaces = self.rewriteReachable({j}, n)
+        def superSpace(i):
+            assert i in spaces
+            e = self.expressions[i]
+            components = [i] + spaces[i]
+            if e.isIndex or e.isPrimitive or e.isInvented:
+                pass
+            elif e.isAbstraction:
+                components.append(self.abstract(superSpace(e.body)))
+            elif e.isApplication:
+                components.append(self.apply(superSpace(e.f), superSpace(e.x)))
+            elif e.isUnion: assert False
+            else: assert False
+            
+            return self.union(components)
+        self.superCache[j] = superSpace(j)
+        return self.superCache[j]
             
     def loadEquivalences(self, g, spaces):
         versionClasses = [None]*len(self.expressions)
@@ -444,15 +541,13 @@ class VersionTable():
                 t0 = g.typeOfClass[k]
                 if t0 not in typedClassesOfVertex[v]:
                     typedClassesOfVertex[v][t0] = k
-                with timing("EXTRACT"):
-                    extracted = list(extract(spaces[v][n]))
-                with timing("ENFORCE"):
-                    for e in extracted:
-                        t = g.typeOfClass[e]
-                        if t in typedClassesOfVertex[v]:
-                            g.makeEquivalent(typedClassesOfVertex[v][t],e)
-                        else:
-                            typedClassesOfVertex[v][e] = e
+                extracted = list(extract(spaces[v][n]))
+                for e in extracted:
+                    t = g.typeOfClass[e]
+                    if t in typedClassesOfVertex[v]:
+                        g.makeEquivalent(typedClassesOfVertex[v][t],e)
+                    else:
+                        typedClassesOfVertex[v][e] = e
 
     def makeEquivalenceGraph(self,heads,n):
         from eg import EquivalenceGraph
@@ -463,11 +558,263 @@ class VersionTable():
         with timing("loaded equivalences"):
             self.loadEquivalences(g,spaces)
         print(f"{len(g.incident)} E nodes, {len(g.classes)} L nodes in equivalence graph.")
-        # g.visualize(simplify=False)
         return g
-            
-            
+
+    def bestInventions(self, versions, bs=25):
+        """versions: [[version index]]"""
+        """bs: beam size"""
+        """returns: list of (indices to) candidates"""
+        def nontrivial(proposal):
+            primitives = 0
+            collisions = 0
+            indices = set()
+            for d, tree in proposal.walk():
+                if tree.isPrimitive or tree.isInvented: primitives += 1
+                elif tree.isIndex:
+                    i = tree.i - d
+                    if i in indices: collisions += 1
+                    indices.add(i)
+            return primitives > 1 or (primitives == 1 and collisions > 0)
+
+        with timing("calculated candidates from version space"):
+            candidates = [{j
+                           for k in self.reachable(hs)
+                           for _,js in [self.minimalInhabitants(k), self.minimalFunctionInhabitants(k)]
+                           for j in js }
+                          for hs in versions]
+            from collections import Counter
+            candidates = Counter(k for ks in candidates for k in ks)
+            candidates = list({k for k,f in candidates.items() if f >= 2 and nontrivial(next(self.extract(k))) })
+            # candidates = [k for k in candidates if next(self.extract(k)).isBetaLong()]
+            print(f"{len(candidates)} candidates from version space")
+
+        inhabitTable = self.inhabitantTable
+        functionTable = self.functionInhabitantTable
+
+        class B():
+            def __init__(self, j):
+                self.space = j
+                cost, inhabitants = inhabitTable[j]
+                functionCost, functionInhabitants = functionTable[j]
+                self.relativeCost = {inhabitant: 1
+                                     for inhabitant in inhabitants
+                                     if inhabitant in candidates}
+                self.relativeFunctionCost = {inhabitant: 1
+                                             # INTENTIONALLY, do not use function inhabitants
+                                             for inhabitant in inhabitants
+                                             if inhabitant in candidates}
+                self.defaultCost = cost
+                self.defaultFunctionCost = functionCost
+
+            @property
+            def domain(self):
+                return set(self.relativeCost.keys())
+            @property
+            def functionDomain(self):
+                return set(self.relativeFunctionCost.keys())
+            def restrict(self):
+                if len(self.relativeCost) > bs:
+                    self.relativeCost = dict(sorted(self.relativeCost.items(),
+                                                    key=lambda rk: rk[1])[:bs])
+                if len(self.relativeFunctionCost) > bs:
+                    self.relativeFunctionCost = dict(sorted(self.relativeFunctionCost.items(),
+                                                            key=lambda rk: rk[1])[:bs])
+            def getCost(self, given):
+                return self.relativeCost.get(given, self.defaultCost)
+            def getFunctionCost(self, given):
+                return self.relativeFunctionCost.get(given, self.defaultFunctionCost)
+            def relax(self, given, cost):
+                self.relativeCost[given] = min(cost,
+                                               self.getCost(given))
+            def relaxFunction(self, given, cost):
+                self.relativeFunctionCost[given] = min(cost,
+                                                       self.getFunctionCost(given))
+
+        beamTable = [None]*len(self.expressions)
+
+        def costs(j):
+            if beamTable[j] is not None: return beamTable[j]
+
+            beamTable[j] = B(j)
+
+            e = self.expressions[j]
+            if e.isIndex or e.isPrimitive or e.isInvented:
+                pass
+            elif e.isAbstraction:
+                b = costs(e.body)
+                for i,c in b.relativeCost.items():
+                    beamTable[j].relax(i, c + epsilon)
+            elif e.isApplication:
+                f = costs(e.f)
+                x = costs(e.x)
+                for i in f.functionDomain | x.domain:
+                    beamTable[j].relax(i, f.getFunctionCost(i) + x.getCost(i) + epsilon)
+                    beamTable[j].relaxFunction(i, f.getFunctionCost(i) + x.getCost(i) + epsilon)
+            elif e.isUnion:
+                for z in e:
+                    cz = costs(z)
+                    for i,c in cz.relativeCost.items(): beamTable[j].relax(i, c)
+                    for i,c in cz.relativeFunctionCost.items(): beamTable[j].relaxFunction(i, c)
+            else: assert False
+
+            beamTable[j].restrict()
+            return beamTable[j]
+
+        with timing("beamed version spaces"):
+            beams = [ [ costs(h) for h in hs ]
+                      for hs in versions ]
+        candidates = {d
+                      for _bs in beams
+                      for b in _bs
+                      for d in b.domain }
+        def score(candidate):
+            return sum(min(min(b.getCost(candidate),
+                               b.getFunctionCost(candidate))
+                           for b in _bs )
+                       for _bs in beams )
+        candidates = sorted(candidates, key=score)
+        if False:
+            for k in candidates:
+                print(score(k), "\t", list(self.extract(k))[0])
+                for hs in versions:
+                    for h in hs:
+                        print(self.rewriteWithInvention(k,h))
+                print()
+        return candidates
+
+    def rewriteWithInvention(self, i, js):
+        """Rewrites list of indices in beta long form using invention"""
+        class RW():
+            """rewritten cost/expression either as a function or argument"""            
+            def __init__(self, f,fc,a,ac):
+                assert not (fc < ac)
+                self.f, self.fc, self.a, self.ac = f,fc,a,ac
+        
+        _i = list(self.extract(i))
+        assert len(_i) == 1
+        _i = _i[0]
+        
+        table = {}
+        def rewrite(j):
+            if j in table: return table[j]
+            e = self.expressions[j]
+            if self.haveOverlap(i, j): r = RW(fc=1,ac=1,
+                                              f=_i,a=_i)
+            elif e.isPrimitive or e.isInvented or e.isIndex:
+                r = RW(fc=1,ac=1,
+                       f=e,a=e)
+            elif e.isApplication:
+                f = rewrite(e.f)
+                x = rewrite(e.x)
+                cost = f.fc + x.ac + epsilon
+                ep = Application(f.f, x.a) if cost < POSITIVEINFINITY else None
+                r = RW(fc=cost, ac=cost,
+                       f=ep, a=ep)
+            elif e.isAbstraction:
+                b = rewrite(e.body)
+                cost = b.ac + epsilon
+                ep = Abstraction(b.a) if cost < POSITIVEINFINITY else None
+                r = RW(f=None, fc=POSITIVEINFINITY,
+                       a=ep, ac=cost)
+            elif e.isUnion:
+                children = [rewrite(z) for z in e ]
+                f,fc = min([ (child.f, child.fc) for child in children ],
+                           key=cindex(1))
+                a,ac = min([ (child.a, child.ac) for child in children ],
+                           key=cindex(1))
+                r = RW(f=f,fc=fc,
+                       a=a,ac=ac)
+            else: assert False
+            table[j] = r
+            return r
+        return [ rewrite(j).a for j in js ]
+        
+    def addInventionToGrammar(self, candidate, g0, frontiers,
+                              pseudoCounts=1.):
+        from eg import RewriteWithInventionVisitor
+        candidateSource = next(self.extract(candidate))
+        v = RewriteWithInventionVisitor(candidateSource)
+        invention = v.invention
+
+        rewriteMapping = list({e.program
+                               for f in frontiers
+                               for e in f })
+        spaces = [self.superCache[self.incorporate(program)]
+                  for program in rewriteMapping ]
+        rewriteMapping = dict(zip(rewriteMapping,
+                                  self.rewriteWithInvention(candidate, spaces)))
+
+        def tryRewrite(program):
+            return v.execute(rewriteMapping[program]) or program
+
+        frontiers = [Frontier([FrontierEntry(program=tryRewrite(e.program),
+                                             logLikelihood=e.logLikelihood,
+                                             logPrior=0.)
+                                       for e in f ],
+                              f.task)
+                     for f in frontiers ]
+        g = Grammar.uniform([invention] + g0.primitives).insideOutside(frontiers,
+                                                                       pseudoCounts=pseudoCounts)
+        frontiers = [g.rescoreFrontier(f) for f in frontiers]
+        return g, frontiers                
+        
+
+
+
 def induceGrammar_Beta(frontiers, g0, _=None,
+                       arity=2,
+                       topK=2,
+                       topI=10,
+                       structurePenalty=1.,
+                       CPUs=1):
+    """grammar induction using only version spaces"""
+    from fragmentUtilities import primitiveSize
+
+    def restrictFrontiers():
+        return parallelMap(CPUs,
+                           lambda f: g0.rescoreFrontier(f).topK(topK),
+                           frontiers)
+    restrictedFrontiers = restrictFrontiers()
+    
+    def objective(g, fs):
+        ll = sum(g.frontierMDL(f) for f in fs )
+        sp = structurePenalty * sum(primitiveSize(p) for p in g.primitives)
+        return ll - sp - len(g.productions)
+            
+    v = None
+    def scoreCandidate(candidate, currentFrontiers, currentGrammar):
+        newGrammar, newFrontiers = v.addInventionToGrammar(candidate, currentGrammar, currentFrontiers)
+        o = objective(newGrammar, newFrontiers)
+        
+        return o
+        
+
+    oldScore = objective(g0, restrictedFrontiers)
+    eprint(f"Starting grammar induction score {oldScore}")
+    
+    while True:
+        v = VersionTable(typed=False, identity=False)
+        with timing("constructed version spaces"):
+            versions = [[v.superVersionSpace(v.incorporate(e.program), arity) for e in f]
+                        for f in restrictedFrontiers ]
+        candidates = v.bestInventions(versions, bs=topI)[:topI]
+        scoredCandidates = parallelMap(CPUs,
+                                       lambda candidate: \
+                                       (candidate, scoreCandidate(candidate, restrictedFrontiers, g0)),
+                                        candidates)
+        bestNew, bestScore = max(scoredCandidates, key=lambda sc: sc[1])
+        if bestScore < oldScore:
+            eprint("No improvement possible.")
+            return g0, frontiers
+
+        newGrammar, newFrontiers = v.addInventionToGrammar(bestNew, g0, frontiers)
+        eprint(f"Improved score to {bestScore} (dS={bestScore-oldScore}) w/ invention {newGrammar.primitives[0]} : {newGrammar.primitives[0].infer()}")
+        oldScore = bestScore
+
+        g0, frontiers = newGrammar, newFrontiers
+        restrictedFrontiers = restrictFrontiers()
+
+def induceGrammar_Beta_eq(frontiers, g0, _=None,
                        arity=2,
                        topK=2,
                        topI=10,
@@ -483,23 +830,14 @@ def induceGrammar_Beta(frontiers, g0, _=None,
     restrictedFrontiers = restrictFrontiers()
     
     def objective(g, fs):
-        for f in fs:
-            print(f.entries[0].program)
         ll = sum(g.frontierMDL(f) for f in fs )
         sp = structurePenalty * sum(primitiveSize(p) for p in g.primitives)
-        print(f"\tll = {ll}\tsp = {sp}")
         return ll - sp - len(g.productions)
             
     
     def scoreCandidate(graph, candidate, currentFrontiers, currentGrammar):
         newGrammar, newFrontiers = graph.addInventionToGrammar(candidate, currentGrammar, currentFrontiers)
-        # eprint(f"Got the new grammar:\n {newGrammar}")
-        # for f in newFrontiers:
-        #     eprint(f.entries[0].program)
-        print(f"{newGrammar.productions[0][-1]}")
-        o = objective(newGrammar, newFrontiers)
-        print()
-        
+        o = objective(newGrammar, newFrontiers)        
         return o
         
 
@@ -510,6 +848,7 @@ def induceGrammar_Beta(frontiers, g0, _=None,
         v = VersionTable(typed=False, identity=False)
         frontierHeads = [ [ v.incorporate(e.program) for e in f ]
                           for f in restrictedFrontiers ]
+        # v.bestInventions(frontierHeads, arity)
         graph = v.makeEquivalenceGraph({ h for hs in frontierHeads for h in hs }, arity)
 
         h_k = [ { graph.incorporate(e.program)
@@ -521,9 +860,9 @@ def induceGrammar_Beta(frontiers, g0, _=None,
         beamSize = max(int(math.log(len(graph.classMembers))), 25)
         print("Beam size:",beamSize)
         candidates2 = graph.beamBestInventions(h_k,
-                                              CPUs=CPUs,
-                                              K=topI,
-                                              bs=beamSize)
+                                               CPUs=CPUs,
+                                               K=topI,
+                                               bs=beamSize)
         print("Exact candidates:")
         for candidate in candidates1:
             print(candidate)
@@ -547,7 +886,6 @@ def induceGrammar_Beta(frontiers, g0, _=None,
 
         g0, frontiers = newGrammar, newFrontiers
         restrictedFrontiers = restrictFrontiers()
-
         
         
         
@@ -585,7 +923,7 @@ def testSharing():
         source = f"(+ 1 {source})"
     assert False
         
-if __name__ == "__main__":
+def compressionDemo():
     from arithmeticPrimitives import *
     from listPrimitives import *
     from grammar import *
@@ -606,39 +944,23 @@ if __name__ == "__main__":
                 primitives.add(s)
     g0 = Grammar.uniform(list(primitives))
 
-    induceGrammar_Beta([Frontier.dummy(p) for p in programs], g0,
-                       CPUs=1,
-                       arity=N)
+    with timing("induced DSL"):
+        induceGrammar_Beta([Frontier.dummy(p) for p in programs], g0,
+                           CPUs=4,
+                           arity=N)
 
-    sys.exit(0)
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser(description = "Version-space based compression")
+    parser.add_argument("CPUs", type=int, default=1)
+    parser.add_argument("arity", type=int, default=3)
+    parser.add_argument("bs", type=int, default=25,
+                        help="beam size")
+    parser.add_argument("topK", type=int, default=2)
+    parser.add_argument("pseudoCounts",
+                        type=float,
+                        default=1.)
+    parser.add_argument("structurePenalty",
+                        type=float, default=1.)
+    arguments = parser.parse_args()
     
-
-    v = VersionTable(typed=False, identity=True)
-    v.incorporate(p1)
-    g = v.makeEquivalenceGraph({v.incorporate(p1),
-                                v.incorporate(p2)},
-                               N)
-    with timing("invented a new primitive"):
-        i = g.bestInvention([g.incorporate(p1),
-                             g.incorporate(p2)])
-
-        print(g.addInventionToGrammar(i, g0,
-                                      [Frontier.dummy(p1),Frontier.dummy(p2)])[0])
-        print(g.rewriteWithInvention(i, [p1,p2]))
-    
-    # with timing("calculated table space"):
-    #     j = v.rewriteReachable({v.incorporate(p1)},N)
-    # with timing("denotation of table space"):
-    #     t = set(v.extract(j))
-    
-    
-    # with timing("did the brute force thing"):
-    #     gt = set(recursiveBetaExpand(p1,N=N))
-    # vs = t
-    # print(vs - gt)
-    # print(gt - vs)
-    # for spurious in vs - gt:
-    #     print("spurious")
-    #     print(spurious)
-    #     print(spurious.betaNormalForm())
-        
