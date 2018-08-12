@@ -45,9 +45,6 @@ let load_problems channel =
   in
 
   (* Automatic differentiation parameters *)
-  let differentiable =
-    productions |> List.exists ~f:(fun (e,_,_,_) -> is_base_primitive e && "REAL" = primitive_name e)
-  in
   let maxParameters =
     try j |> member "maxParameters" |> to_int
     with _ -> 99
@@ -63,11 +60,6 @@ let load_problems channel =
       let i = j |> member "index" |> to_int in
       TID(i)
   in 
-
-  (* string constant parameters *)
-  let is_constant_task = productions |> List.exists ~f:(fun (p,_,_,_) ->
-      is_base_primitive p && primitive_name p = "STRING")
-  in
 
   let rec unpack x =
     try magical (x |> to_int) with _ ->

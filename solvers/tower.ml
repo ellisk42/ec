@@ -265,6 +265,53 @@ register_special_task "tower" (fun extra ?timeout:(timeout = 0.001)
 
   })
 ;;
+
+let simulate_without_physics plan =
+  let overlaps (x,w,h) (x',y',w',h')  =
+    let x1 = x -. w/.2. in
+    let x2 = x +. w/.2. in
+    let x1' = x' -. w'/.2. in
+    let x2' = x' +. w'/.2. in
+    if x1' > x2 || x1 > x2' then None else
+      Some(y' +. h/.2. +. h'/.2.)
+  in
+
+  let lowest_possible_height (_,_,h) = h/.2. in
+  let place_at_height (x,w,h) y = (x,y,w,h) in 
+
+  let place_block world block =
+    let lowest = List.filter_map world ~f:(overlaps block) |>
+                 List.fold_right ~init:(lowest_possible_height block) ~f:max
+    in
+    place_at_height block lowest :: world
+  in
+
+  let rec run plan world = match plan with
+    | [] -> world
+    | b :: bs -> run bs (place_block world b)
+  in
+  let simulated = run plan [] |> List.sort ~compare:(fun x y ->
+      if x > y then 1 else if x < y then -1 else 0
+    ) in
+  (* plan |> List.iter ~f:(fun (x,w,h) -> *)
+  (*     Printf.eprintf "COMMAND : X=%f, W=%f, H=%f\n" *)
+  (*       x w h); *)
+  (* simulated |> List.iter ~f:(fun (x,y,w,h) -> *)
+  (*     Printf.eprintf "BLOCK(x=%f, y=%f, w=%f, h=%f)\n" *)
+  (*       x y w h *)
+  (*   ); *)
+  (* Printf.eprintf "\n"; *)
+  (* flush_everything(); *)
+  simulated
+;;
+let discrete_tower t =
+  t |> List.map ~f:(fun (a,b,c,d) ->
+      (round (a*.10.) |> Int.of_float,
+       round (b*.10.) |> Int.of_float,
+       round (c*.10.) |> Int.of_float,
+       round (d*.10.) |> Int.of_float));;
+
+     
 register_special_task "supervisedTower" (fun extra ?timeout:(timeout = 0.001)
     name task_type examples -> 
   assert (task_type = ttower @> ttower);
@@ -275,7 +322,7 @@ register_special_task "supervisedTower" (fun extra ?timeout:(timeout = 0.001)
   let plan = extra |> member "plan" |> to_list |> List.map ~f:(fun command ->
       match command |> to_list with
       | [a;b;c;] -> (a |> to_float, b |> to_float, c |> to_float)
-      |_ -> assert false) |> center_tower |> discrete_plan
+      |_ -> assert false) |> center_tower |> simulate_without_physics |> discrete_tower
   in 
 
   { name = name    ;
@@ -289,7 +336,7 @@ register_special_task "supervisedTower" (fun extra ?timeout:(timeout = 0.001)
                    (fun () -> run_lazy_analyzed_with_arguments p [fun s -> (s, [])] 0 |> snd)
            with
            | Some(p) ->
-             if discrete_plan (center_tower p) = plan then 0.0 else log 0.0
+             if discrete_tower (simulate_without_physics (center_tower p)) = plan then 0.0 else log 0.0
            | _ -> log 0.0
          with | UnknownPrimitive(n) -> raise (Failure ("Unknown primitive: "^n))
               (* we have to be a bit careful with exceptions *)

@@ -587,12 +587,9 @@ class RecognitionModel(nn.Module):
         startingSeed = random.random()
         samples = parallelMap(
             1,
-            lambda n: self.sampleHelmholtz(
-                requests,
-                statusUpdate='.' if n %
-                frequency == 0 else None,
-                seed=startingSeed +
-                n),
+            lambda n: self.sampleHelmholtz(requests,
+                                           statusUpdate='.' if n % frequency == 0 else None,
+                                           seed=startingSeed + n),
             range(N))
         eprint()
         flushEverything()

@@ -70,7 +70,7 @@ def parallelMap(numberOfCPUs, f, *xs, chunksize=None, maxtasksperchild=None):
     global PARALLELMAPDATA
 
     if numberOfCPUs == 1:
-        return map(f, *xs)
+        return list(map(f, *xs))
 
     n = len(xs[0])
     for x in xs:

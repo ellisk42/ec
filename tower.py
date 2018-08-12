@@ -181,6 +181,9 @@ if __name__ == "__main__":
         iteration = len(result.learningCurve)
         newTowers = [tuple(centerTower(executeTower(frontier.sample().program)))
                      for frontier in result.taskSolutions.values() if not frontier.empty]
-        fn = 'experimentOutputs/towers/%s/solutions_%d.png'%(timestamp,iteration)
-        exportTowers(newTowers, fn)
-        eprint("Exported solutions to %s\n"%fn)
+        try:
+            fn = 'experimentOutputs/towers/%s/solutions_%d.png'%(timestamp,iteration)
+            exportTowers(newTowers, fn)
+            eprint("Exported solutions to %s\n"%fn)
+        except ImportError:
+            eprint("Could not import required libraries for exporting towers.")
