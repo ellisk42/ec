@@ -105,6 +105,9 @@ let rec infer_program_type context environment p : tContext*tp = match p with
 
 let closed_inference = snd % infer_program_type empty_context [];;
 
+let make_invention i =
+  Invented(closed_inference i, i)
+
 
 exception UnknownPrimitive of string
 

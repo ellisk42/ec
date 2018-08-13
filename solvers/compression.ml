@@ -10,90 +10,156 @@ open Enumeration
 open Task
 open Grammar
 
-open Eg
+(* open Eg *)
 open Versions
 
-let build_graph_from_versions ?steps:(steps=3) expressions =
-  let v = new_version_table() in
-  let version_indices = expressions |> List.map ~f:(incorporate v) in
-  let version_children = version_indices |> List.map ~f:(child_spaces v) |> List.concat |>
-                         List.dedup_and_sort ~compare:(-) in
-  let expanded_children = ref (version_children |> List.map ~f:(fun z -> [z])) in
+exception EtaExpandFailure;;
 
-  List.range 1 (steps + 1) |> List.iter ~f:(fun i ->
-      time_it (Printf.sprintf "Expanded version spaces to contain expressions %d beta steps outward" i)
-        (fun () -> 
-           expanded_children := !expanded_children |> List.map ~f:(fun ss ->
-               ss @ [List.last_exn ss |> recursive_inversion v])));
+let eta_long request e =
+  let context = ref empty_context in
 
-  let g = new_class_graph() in
-  let version_classes = Array.create ~len:(version_table_size v) None in
-  let rec extract_classes j =
-    match version_classes.(j) with
-    | Some(ks) ->
-      let ks = ks |> List.map ~f:chase |> List.dedup ~compare:compare_class in
-      version_classes.(j) <- Some(ks);
-      ks
-    | None ->
-      let ks = match index_table v j with
-        | Union(u) -> u |> List.map ~f:extract_classes |> List.concat
-        | AbstractSpace(b) -> extract_classes b |> List.map ~f:(abstract_class g)
-        | ApplySpace(f,x) ->
-          let f = extract_classes f in
-          let x = extract_classes x in
-          f |> List.map ~f:(fun f' -> x |> List.map ~f:(fun x' -> apply_class g f' x')) |> List.concat 
-        | IndexSpace(n) -> [leaf_class g (Index(n))]
-        | TerminalSpace(p) -> [leaf_class g p]
-        | Void -> []
-        | Universe -> assert false
-      in
-      let ks = ks |> List.map ~f:chase |> List.dedup ~compare:compare_class  in
-      (* version_classes.(j) <- Some(ks); *)
-      ks
+  let make_long e request =
+    if is_arrow request then Some(Abstraction(Apply(shift_free_variables 1 e, Index(0)))) else None
+  in 
+
+  let rec visit request environment e = match e with
+    | Abstraction(b) when (is_arrow request) ->
+      Abstraction(visit (right_of_arrow request) (left_of_arrow request :: environment) b)
+    | Abstraction(_) -> raise EtaExpandFailure
+    | _ -> match make_long e request with
+      | Some(e') -> visit request environment e'
+      | None -> (* match e with *)
+        (* | Index(i) -> (unify' context request (List.nth_exn environment i); e) *)
+        (* | Primitive(t,_,_) | Invented(t,_) -> *)
+        (*   (let t = instantiate_type' context t in *)
+        (*    unify' context t request; *)
+        (*    e) *)
+        (* | Abstraction(_) -> assert false *)
+        (* | Apply(_,_) -> *)
+        let f,xs = application_parse e in
+        let ft = match f with
+          | Index(i) -> environment $$ i |> applyContext' context
+          | Primitive(t,_,_) | Invented(t,_) -> instantiate_type' context t
+          | Abstraction(_) -> assert false (* not in beta long form *)
+          | Apply(_,_) -> assert false
+        in
+        unify' context request (return_of_type ft);
+        let ft = applyContext' context ft in
+        let xt = arguments_of_type ft in
+        if List.length xs <> List.length xt then raise EtaExpandFailure else
+          List.fold_right (List.zip_exn xs xt) ~init:f ~f:(fun (x,t) return_value ->
+              Apply(return_value,
+                    visit (applyContext' context t) environment x))
   in
 
-  List.range 1 (steps + 1) |> List.iter ~f:(fun i ->
-      time_it (Printf.sprintf "Loaded rewrites %d steps outward into the graph" i)
-        (fun _ ->
-           (* FIXME: version size calculation should be memo'd *)
-           !expanded_children |> List.sort ~compare:(fun xs ys ->
-               Float.to_int (log_version_size v (List.nth_exn xs i) -.
-                             log_version_size v (List.nth_exn ys i))
-             ) |> List.iter ~f:(fun ss ->
-          match ss with
-          | [] -> assert false
-          | s :: ss -> 
-          match extract_classes s with
-          | [leader] ->
-            let followers = List.nth_exn ss (i - 1) in
-            let following_classes = time_it "EXTRACTED"
-                (fun () ->extract_classes followers)
-            in
-            Printf.printf "%f\t%d\n" (log_version_size v followers)
-              (following_classes |> List.length);
-            Printf.printf "# eq = %d\n"
-              (g.members_of_class |> Hashtbl.length);
-              
-            flush_everything();
-            Printf.printf "About to enforce equivalent!\n";
-            flush_everything();
-              
-            time_it "ENFORCED" (fun () -> following_classes |> List.iter ~f:(fun f ->                
-                ignore(make_equivalent g leader f));
-              Gc.compact())
-          | _ -> assert false)))
+  let e' = visit request [] e in
+  assert (tp_eq
+            (e |> closed_inference |> canonical_type)
+            (e' |> closed_inference |> canonical_type));
+  e'
+;;
+
+let normalize_invention i =
+  let mapping = free_variables i |> List.dedup_and_sort ~compare:(-) |> List.mapi ~f:(fun i v -> (v,i)) in
+
+  let rec visit d = function
+    | Index(i) when i < d -> Index(i)
+    | Index(i) -> Index(List.Assoc.find_exn ~equal:(=) mapping (i - d))
+    | Abstraction(b) -> Abstraction(visit (d + 1) b)
+    | Apply(f,x) -> Apply(visit d f,
+                          visit d x)
+    | Primitive(_,_,_) | Invented(_,_) as e -> e
+  in
   
-      
-      
-  
+  let renamed = visit 0 i in
+  List.fold_right mapping ~init:renamed ~f:(fun _ e -> Abstraction(e)) |> make_invention
+
+let rewrite_with_invention i =
+  let mapping = free_variables i |> List.dedup_and_sort ~compare:(-) |> List.mapi ~f:(fun i v -> (i,v)) in
+  let closed = normalize_invention i in
+  (* FIXME : no idea whether I got this correct or not... *)
+  let applied_invention = List.fold_left ~init:closed
+      (List.range ~start:`exclusive ~stop:`inclusive ~stride:(-1) (List.length mapping) 0)
+      ~f:(fun e i -> Apply(e,Index(List.Assoc.find_exn ~equal:(=) mapping i)))
+  in
+
+  let rec visit e =
+    if program_equal e i then applied_invention else
+      match e with
+      | Apply(f,x) -> Apply(visit f, visit x)
+      | Abstraction(b) -> Abstraction(visit b)
+      | Index(_) | Primitive(_,_,_) | Invented(_,_) -> e
+  in
+  fun request e -> 
+    try visit e |> eta_long request
+    with EtaExpandFailure -> e
+
+let nontrivial e =
+  let indices = ref [] in
+  let duplicated_indices = ref 0 in
+  let primitives = ref 0 in
+  let rec visit d = function
+    | Index(i) ->
+      let i = i - d in
+      if List.mem ~equal:(=) !indices i
+      then incr duplicated_indices
+      else indices := i :: !indices
+    | Apply(f,x) -> (visit d f; visit d x)
+    | Abstraction(b) -> visit (d + 1) b
+    | Primitive(_,_,_) | Invented(_,_) -> incr primitives
+  in
+  visit 0 e;
+  !primitives > 1 || !primitives = 1 && !duplicated_indices > 0
+;;
 
   
+  
+let compression_step ?arity:(arity=3) ~bs g frontiers =
+  let v = new_version_table() in
+  let frontier_indices = time_it "calculated version spaces" (fun () ->
+      frontiers |> List.map ~f:(fun f -> f.programs |> List.map ~f:(fun (p,_) ->
+          incorporate v p |> n_step_inversion v ~n:arity))) in
+  
+  let cost_table = empty_cost_table v in
+  let candidates : int list = time_it "proposed candidates" (fun () ->
+      let reachable : int list list = frontier_indices |> List.map ~f:(reachable_versions v) in
+      let inhabitants : int list list = reachable |> List.map ~f:(fun indices ->
+          List.concat_map ~f:(snd % minimum_cost_inhabitants cost_table) indices |>
+          List.dedup_and_sort ~compare:(-)) in
+      inhabitants |> List.concat |> occurs_multiple_times)
+  in
+  let candidates = candidates |> List.filter ~f:(nontrivial % List.hd_exn % extract v) in
+  Printf.eprintf "Got %d candidates.\n" (List.length candidates);
+
+  let ranked_candidates = time_it "beamed version spaces" (fun () ->
+      beam_costs ~ct:cost_table ~bs candidates frontier_indices)
+  in
+
+  ranked_candidates |> List.iter ~f:(fun (c,i) ->
+      let [i] = extract v i in
+      Printf.eprintf "%f\t%s\n"
+        c
+        (string_of_program i))
+;;
+
+        
+  
+  
+
+
+
+
   
   
 
 let _ =
-  let p = parse_program "(lambda (fold $0 empty (lambda (lambda (cons (+ (+ 5 5) (+ $1 $1)) $0)))))" |> get_some in
-  build_graph_from_versions ~steps:3 [p]
+  let ps = ["(lambda (fold $0 empty (lambda (lambda (cons (+ (+ 5 5) (+ $1 $1)) $0)))))";
+            "(lambda (fold $0 empty (lambda (lambda (cons (- 0 $1) $0)))))";
+            "(lambda (fold $0 empty (lambda (lambda (cons (+ $1 $1) $0)))))";
+            "(lambda (+ $0 $0))";
+            "(lambda (+ 4 4))";] |> List.map ~f:(compose get_some parse_program)
+    in
+  compression_step ~bs:25 () (ps |> List.map ~f:(fun p -> {request=magical();programs=[(p,0.)]}))
   (* let p' = parse_program "(+ 9 9)" |> get_some in *)
   (* let j = time_it "calculated versions base" (fun () -> p |> incorporate t |> recursive_inversion t |> recursive_inversion t  |> recursive_inversion t) in *)
   (* extract t j |> List.map ~f:(fun r -> *)

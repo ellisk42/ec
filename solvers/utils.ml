@@ -26,6 +26,19 @@ let ( *| ) a v = v |> List.map ~f:(fun x -> a*.x)
 let compose f g = fun x -> f (g x);;
 let (%) = compose;;
 
+let ($$) = List.nth_exn;;
+
+let occurs_multiple_times (xs : 'a list) : 'a list =
+  let f = Hashtbl.Poly.create() in
+  xs |> List.iter ~f:(fun x ->
+      match Hashtbl.find f x with
+      | None -> Hashtbl.set f ~key:x ~data:1
+      | Some(old) -> Hashtbl.set f ~key:x ~data:(1 + old));
+  f |> Hashtbl.to_alist |> List.filter_map ~f:(fun (k, f) ->
+    if f > 1 then Some(k) else None)
+  
+  
+
 let fold1 f l = List.fold_right ~init:(List.hd_exn l) ~f:f (List.tl_exn l)
 
 let is_some = function
@@ -359,3 +372,6 @@ let set_resizable a i v =
   assert (i < a.ra_occupancy);
   Array.set a.ra_contents i (Some(v))
     
+let rec ensure_resizable_length a l default =
+  if a.ra_occupancy >= l then () else 
+  (push_resizable a default; ensure_resizable_length a l default)

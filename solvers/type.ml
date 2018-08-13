@@ -31,6 +31,10 @@ let empty_context : tContext = (0, Funarray.empty);;
 
 let make_arrow t q = kind "->" [t;q];;
 let (@>) = make_arrow;;
+let is_arrow = function
+  | TCon("->",_,_) -> true
+  | _ -> false;;
+
 
 (* arguments_and_return_up_type (t1 @> t2 @> ... @> T) = ([t1;t2;...] T) *)
 let rec arguments_and_return_of_type t =
@@ -55,6 +59,11 @@ let rec arguments_of_type t =
 let right_of_arrow t =
   match t with
   | TCon("->",[_;p],_) -> p
+  | _ -> raise (Failure "right_of_arrow")
+
+let left_of_arrow t =
+  match t with
+  | TCon("->",[p;_],_) -> p
   | _ -> raise (Failure "right_of_arrow")
 
 let rec show_type (is_return : bool) (t : tp) : string = 
@@ -116,6 +125,11 @@ let rec applyContext k t =
       let k = if tp_eq tp tp' then k else bindTID j tp' k in
       (k,tp')
 
+let applyContext' k t =
+  let new_context, t' = applyContext !k t in
+  k := new_context;
+  t'
+
 
 
 let rec occurs (i : int) (t : tp) : bool =
@@ -156,6 +170,8 @@ let rec unify context t1 t2 : tContext =
       List.fold2_exn ~init:context as1 as2 ~f:unify
     | _ -> raise UnificationFailure
 
+let unify' context_reference t1 t2 = context_reference := unify !context_reference t1 t2
+
 let instantiate_type k t = 
   let substitution = ref [] in
   let k = ref k in
@@ -173,7 +189,10 @@ let instantiate_type k t =
   in let q = instantiate t in
   (!k, q)
 
-
+let instantiate_type' context_reference t =
+  let new_context, t' = instantiate_type !context_reference t in
+  context_reference := new_context;
+  t'
   
 
 (* puts a type into normal form *)
