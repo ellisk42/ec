@@ -512,7 +512,10 @@ def runWithTimeout(k, timeout):
         signal.signal(signal.SIGPROF, lambda *_:None)
         signal.setitimer(signal.ITIMER_PROF, 0)
         return result
-    except RunWithTimeout: raise RunWithTimeout()
+    except RunWithTimeout:
+        signal.signal(signal.SIGPROF, lambda *_:None)
+        signal.setitimer(signal.ITIMER_PROF, 0)
+        raise RunWithTimeout()
     except:
         signal.signal(signal.SIGPROF, lambda *_:None)
         signal.setitimer(signal.ITIMER_PROF, 0)
