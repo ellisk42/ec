@@ -68,6 +68,9 @@ class VersionTable():
         
         self.universe = self.incorporate(Primitive("U",t0,None))
         self.empty = self.incorporate(Union([], canBeEmpty=True))
+
+    def clearOverlapTable(self):
+        self.overlapTable = {}
         
     def intention(self,j, isFunction=False):
         l = self.expressions[j]
@@ -695,6 +698,7 @@ class VersionTable():
 
     def rewriteWithInvention(self, i, js):
         """Rewrites list of indices in beta long form using invention"""
+        self.clearOverlapTable()
         class RW():
             """rewritten cost/expression either as a function or argument"""            
             def __init__(self, f,fc,a,ac):
@@ -729,16 +733,18 @@ class VersionTable():
                        a=ep, ac=cost)
             elif e.isUnion:
                 children = [rewrite(z) for z in e ]
-                f,fc = min([ (child.f, child.fc) for child in children ],
+                f,fc = min(( (child.f, child.fc) for child in children ),
                            key=cindex(1))
-                a,ac = min([ (child.a, child.ac) for child in children ],
+                a,ac = min(( (child.a, child.ac) for child in children ),
                            key=cindex(1))
                 r = RW(f=f,fc=fc,
                        a=a,ac=ac)
             else: assert False
             table[j] = r
             return r
-        return [ rewrite(j).a for j in js ]
+        js = [ rewrite(j).a for j in js ]
+        self.clearOverlapTable()
+        return js
         
     def addInventionToGrammar(self, candidate, g0, frontiers,
                               pseudoCounts=1.):
@@ -812,6 +818,9 @@ def induceGrammar_Beta(g0, frontiers, _=None,
             return NEGATIVEINFINITY
             
         o = objective(newGrammar, newFrontiers)
+
+        eprint("+", end='')
+        flushEverything()
         
         return o
         
@@ -821,10 +830,11 @@ def induceGrammar_Beta(g0, frontiers, _=None,
     
     while True:
         v = VersionTable(typed=False, identity=False)
-        with timing("constructed version spaces"):
+        with timing("constructed %d-step version spaces"%arity):
             versions = [[v.superVersionSpace(v.incorporate(e.program), arity) for e in f]
                         for f in restrictedFrontiers ]
         candidates = v.bestInventions(versions, bs=topI)[:topI]
+        eprint("Only considering the top %d candidates"%len(candidates))
         with timing("scored the candidate inventions"):
             scoredCandidates = parallelMap(CPUs,
                                            lambda candidate: \
@@ -839,7 +849,16 @@ def induceGrammar_Beta(g0, frontiers, _=None,
             frontiers = [frontiers.get(f.task, f)
                          for f in originalFrontiers]
             return g0, frontiers
-
+        
+        # This is subtle: at this point we have not calculated
+        # versions bases for programs outside the restricted
+        # frontiers; but here we are rewriting the entire frontier in
+        # terms of the new primitive. So we have to recalculate
+        # version spaces for everything.
+        with timing("constructed versions bases for entire frontiers"):
+            for f in frontiers:
+                for e in f:
+                    v.superVersionSpace(v.incorporate(e.program), arity)
         newGrammar, newFrontiers = v.addInventionToGrammar(bestNew, g0, frontiers,
                                                            pseudoCounts=pseudoCounts)
         eprint("Improved score to", bestScore, "(dS =", bestScore-oldScore, ") w/ invention",newGrammar.primitives[0],":",newGrammar.primitives[0].infer())

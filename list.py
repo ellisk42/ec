@@ -413,7 +413,7 @@ if __name__ == "__main__":
         "outputPrefix": "experimentOutputs/list",
         "evaluationTimeout": 0.0005,
         "solver": "ocaml",
-        "compressor": "beta"
+        "compressor": "pypy"
     })
     
 
