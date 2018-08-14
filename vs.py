@@ -764,7 +764,7 @@ class VersionTable():
 def induceGrammar_Beta(frontiers, g0, _=None,
                        arity=2,
                        topK=2,
-                       topI=10,
+                       topI=100,
                        structurePenalty=1.,
                        CPUs=1):
     """grammar induction using only version spaces"""
@@ -798,10 +798,11 @@ def induceGrammar_Beta(frontiers, g0, _=None,
             versions = [[v.superVersionSpace(v.incorporate(e.program), arity) for e in f]
                         for f in restrictedFrontiers ]
         candidates = v.bestInventions(versions, bs=topI)[:topI]
-        scoredCandidates = parallelMap(CPUs,
-                                       lambda candidate: \
-                                       (candidate, scoreCandidate(candidate, restrictedFrontiers, g0)),
-                                        candidates)
+        with timing("scored the candidate inventions"):
+            scoredCandidates = parallelMap(CPUs,
+                                           lambda candidate: \
+                                           (candidate, scoreCandidate(candidate, restrictedFrontiers, g0)),
+                                            candidates)
         bestNew, bestScore = max(scoredCandidates, key=lambda sc: sc[1])
         if bestScore < oldScore:
             eprint("No improvement possible.")
@@ -814,78 +815,7 @@ def induceGrammar_Beta(frontiers, g0, _=None,
         g0, frontiers = newGrammar, newFrontiers
         restrictedFrontiers = restrictFrontiers()
 
-def induceGrammar_Beta_eq(frontiers, g0, _=None,
-                       arity=2,
-                       topK=2,
-                       topI=10,
-                       structurePenalty=1.,
-                       CPUs=1):
 
-    from fragmentUtilities import primitiveSize
-
-    def restrictFrontiers():
-        return parallelMap(CPUs,
-                           lambda f: g0.rescoreFrontier(f).topK(topK),
-                           frontiers)
-    restrictedFrontiers = restrictFrontiers()
-    
-    def objective(g, fs):
-        ll = sum(g.frontierMDL(f) for f in fs )
-        sp = structurePenalty * sum(primitiveSize(p) for p in g.primitives)
-        return ll - sp - len(g.productions)
-            
-    
-    def scoreCandidate(graph, candidate, currentFrontiers, currentGrammar):
-        newGrammar, newFrontiers = graph.addInventionToGrammar(candidate, currentGrammar, currentFrontiers)
-        o = objective(newGrammar, newFrontiers)        
-        return o
-        
-
-    oldScore = objective(g0, restrictedFrontiers)
-    eprint(f"Starting grammar induction score {oldScore}")
-    
-    while True:
-        v = VersionTable(typed=False, identity=False)
-        frontierHeads = [ [ v.incorporate(e.program) for e in f ]
-                          for f in restrictedFrontiers ]
-        # v.bestInventions(frontierHeads, arity)
-        graph = v.makeEquivalenceGraph({ h for hs in frontierHeads for h in hs }, arity)
-
-        h_k = [ { graph.incorporate(e.program)
-                  for e in f }
-                for f in restrictedFrontiers ]
-        candidates1 = []# graph.bestInventions(h_k,
-                      #                     CPUs=CPUs,
-                      #                     K=topI)
-        beamSize = max(int(math.log(len(graph.classMembers))), 25)
-        print("Beam size:",beamSize)
-        candidates2 = graph.beamBestInventions(h_k,
-                                               CPUs=CPUs,
-                                               K=topI,
-                                               bs=beamSize)
-        print("Exact candidates:")
-        for candidate in candidates1:
-            print(candidate)
-        print("Heuristic candidates:")
-        for candidate in candidates2:
-            print(candidate)
-        candidates = candidates2
-        eprint(f"{len(candidates)} possible new inventions")
-        scoredCandidates = parallelMap(CPUs,
-                                       lambda candidate: \
-                                       (candidate, scoreCandidate(graph, candidate, restrictedFrontiers, g0)),
-                                        candidates)
-        bestNew, bestScore = max(scoredCandidates, key=lambda sc: sc[1])
-        if bestScore < oldScore:
-            eprint("No improvement possible.")
-            return g0, frontiers
-
-        eprint(f"Improved score to {bestScore} w/ invention {bestNew} : {bestNew.infer()}")
-        oldScore = bestScore
-        newGrammar, newFrontiers = graph.addInventionToGrammar(bestNew, g0, frontiers)
-
-        g0, frontiers = newGrammar, newFrontiers
-        restrictedFrontiers = restrictFrontiers()
         
         
         
@@ -947,7 +877,7 @@ if __name__ == "__main__":
 
     with timing("induced DSL"):
         induceGrammar_Beta([Frontier.dummy(p) for p in programs], g0,
-                           CPUs=4,
+                           CPUs=1,
                            arity=N)
 
 if __name__ == "__main__":
