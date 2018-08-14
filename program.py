@@ -136,6 +136,9 @@ class Program(object):
     @property
     def isInvented(self): return False
 
+    @property
+    def isHole(self): return True
+
     @staticmethod
     def parse(s):
         e, s = Program._parse(s.strip())
@@ -153,6 +156,7 @@ class Program(object):
                 Index,
                 Invented,
                 FragmentVariable,
+                Hole,
                 Primitive]:
             try:
                 return p._parse(s)
@@ -675,8 +679,46 @@ class FragmentVariable(Program):
             return FragmentVariable.single, s[1:]
         raise ParseFailure(s)
 
+class Hole(Program):
+    def __init__(self): pass
 
-FragmentVariable.single = FragmentVariable()
+    def show(self, isFunction): return "<HOLE>"
+
+    @property
+    def isHole(self): return True
+
+    def __eq__(self, o): return isinstance(o, Hole)
+
+    def __hash__(self): return 42
+
+    def evaluate(self, e):
+        raise Exception('Attempt to evaluate hole')
+
+    def betaReduce(self):
+        raise Exception('Attempt to beta reduce hole')
+
+    def inferType(self, context, environment, freeVariables):
+        return context.makeVariable()
+
+    def shift(self, offset, depth=0):
+        raise Exception('Attempt to shift fragment variable')
+
+    def walk(self, surroundingAbstractions=0): yield surroundingAbstractions, self
+
+    def walkUncurried(self, d=0): yield d, self
+
+    def size(self): return 1
+
+    @staticmethod
+    def _parse(s):
+        while len(s) > 0 and s[0].isspace():
+            s = s[1:]
+        if s.startswith('<HOLE>'):
+            return Hole.single, s[len('<HOLE>'):]
+        raise ParseFailure(s)
+
+
+Hole.single = Hole()
 
 
 class ShareVisitor(object):
