@@ -679,6 +679,9 @@ class FragmentVariable(Program):
             return FragmentVariable.single, s[1:]
         raise ParseFailure(s)
 
+FragmentVariable.single = FragmentVariable()
+
+
 class Hole(Program):
     def __init__(self): pass
 

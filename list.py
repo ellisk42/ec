@@ -322,7 +322,7 @@ if __name__ == "__main__":
 
     dataset = args.pop("dataset")
     tasks = {
-        "Lucas-old": lambda: retrieveJSONTasks("data/list_tasks.json"),
+        "Lucas-old": lambda: retrieveJSONTasks("data/list_tasks.json") + sortBootstrap(),
         "bootstrap": make_list_bootstrap_tasks,
         "sorting": sortBootstrap,
         "Lucas-depth1": lambda: retrieveJSONTasks("data/list_tasks2.json")[:105],
@@ -420,7 +420,6 @@ if __name__ == "__main__":
     eprint("Got {} list tasks".format(len(tasks)))
     split = args.pop("split")
     if split:
-        train = []
         train_some = defaultdict(list)
         for t in tasks:
             necessary = train_necessary(t)
@@ -429,15 +428,13 @@ if __name__ == "__main__":
             if necessary == "some":
                 train_some[t.name.split()[0]].append(t)
             else:
-                train.append(t)
+                t.mustTrain = True
         for k in sorted(train_some):
             ts = train_some[k]
             random.shuffle(ts)
-            train.append(ts.pop())
+            ts.pop().mustTrain = True
 
-        tasks = [t for t in tasks if t not in train]
-        test, more_train = testTrainSplit(tasks, split)
-        train.extend(more_train)
+        test, train = testTrainSplit(tasks, split)
 
         eprint(
             "Alotted {} tasks for training and {} for testing".format(
@@ -445,13 +442,5 @@ if __name__ == "__main__":
     else:
         train = tasks
         test = []
-
-    if False:
-        from program import *
-        p = Program.parse("(lambda (#(lambda (cdr (cdr $0))) (fold (map (lambda (gt? 1 0)) $0) (range (#(lambda (fold $0 1 (lambda (lambda (* $1 $0))))) (map (lambda $0) $0))) (lambda (lambda (range #(+ 1 1)))))))")
-        t = p.infer()
-        print(t)
-        print(LearnedFeatureExtractor(tasks).taskOfProgram(p, t))
-        assert False
 
     explorationCompression(baseGrammar, train, testingTasks=test, **args)

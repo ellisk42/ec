@@ -372,17 +372,16 @@ def testTrainSplit(x, trainingFraction, seed=0):
         # Assume that the training fraction is actually the number of tasks
         # that we want to train on
         trainingFraction = float(trainingFraction) / len(x)
-    needToTrain = {
-        j for j, d in enumerate(x) if hasattr(
-            d, 'mustTrain') and d.mustTrain}
+    needToTrain = { j for j, d in enumerate(x)
+                    if hasattr(d, 'mustTrain') and d.mustTrain }
     mightTrain = [j for j in range(len(x)) if j not in needToTrain]
+
+    trainingSize = max(0, int(len(x) * trainingFraction - len(needToTrain)))
 
     import random
     random.seed(seed)
-    training = list(range(len(mightTrain)))
-    random.shuffle(training)
-    training = set(
-        training[:int(len(x) * trainingFraction) - len(needToTrain)]) | needToTrain
+    random.shuffle(mightTrain)
+    training = set(mightTrain[:trainingSize]) | needToTrain
 
     train = [t for j, t in enumerate(x) if j in training]
     test = [t for j, t in enumerate(x) if j not in training]

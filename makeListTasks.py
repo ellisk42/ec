@@ -490,10 +490,11 @@ def sortBootstrap():
              [((l,),list(sorted(l)))
               for _ in range(15)
               for l in [removeDuplicates(randomList())]
-              #for l in [] 
              ])]
 
-    return filterBootstrap + appendBootstrap + insertionBootstrap + sortTask
+    tasks = filterBootstrap + insertionBootstrap + sortTask
+    for t in tasks: t.mustTrain = True
+    return tasks
     
 
 def exportTasks():
