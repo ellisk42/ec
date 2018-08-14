@@ -462,8 +462,8 @@ def sortBootstrap():
     ]
 
     insertionBootstrap = [
-        Task("filter greater than", arrow(tint,tlist(tint),tlist(tint)),
-             [((x,l), [y for y in l if y > x ])
+        Task("filter greater than or equal", arrow(tint,tlist(tint),tlist(tint)),
+             [((x,l), [y for y in l if y >= x ])
               for _ in range(15) 
               for x in [randint(0,5)]
               for l in [randomList()] ]),
@@ -473,12 +473,12 @@ def sortBootstrap():
               for x in [randint(0,5)]
               for l in [randomList()] ]),
         Task("insert into sorted list (I)", arrow(tint,tlist(tint),tlist(tint)),
-             [((x,l), [y for y in l if y < x ] + [x] + [y for y in l if y > x ])
+             [((x,l), [y for y in l if y < x ] + [x] + [y for y in l if y >= x ])
               for _ in range(15) 
               for x in [randint(0,5)]
               for l in [randomList()] ]),
         Task("insert into sorted list (II)", arrow(tint,tlist(tint),tlist(tint)),
-             [((x,l), [y for y in l if y < x ] + [x] + [y for y in l if y > x ])
+             [((x,l), [y for y in l if y < x ] + [x] + [y for y in l if y >= x ])
               for _ in range(15) 
               for x in [randint(0,5)]
               for l in [randomList()] ])
