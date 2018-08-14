@@ -114,9 +114,9 @@ let nontrivial e =
 
   
   
-let compression_step ?arity:(arity=3) ~bs g frontiers =
+let compression_step ?arity:(arity=3) ~bs ~topI g frontiers =
   let v = new_version_table() in
-  let frontier_indices = time_it "calculated version spaces" (fun () ->
+  let frontier_indices : int list list = time_it "calculated version spaces" (fun () ->
       frontiers |> List.map ~f:(fun f -> f.programs |> List.map ~f:(fun (p,_) ->
           incorporate v p |> n_step_inversion v ~n:arity))) in
   
@@ -134,12 +134,22 @@ let compression_step ?arity:(arity=3) ~bs g frontiers =
   let ranked_candidates = time_it "beamed version spaces" (fun () ->
       beam_costs ~ct:cost_table ~bs candidates frontier_indices)
   in
+  let ranked_candidates = List.take ranked_candidates topI in
 
   ranked_candidates |> List.iter ~f:(fun (c,i) ->
-      let [i] = extract v i in
-      Printf.eprintf "%f\t%s\n"
+      let [i'] = extract v i in
+      Printf.eprintf "\nINVENTION %f\t%s\t%b\n"
         c
-        (string_of_program i))
+        (string_of_program i')
+        (nontrivial i');
+      let new_cost_table = empty_cost_table v in
+      frontier_indices |> List.iter ~f:(fun frontier ->
+          Printf.eprintf "FRONTIER\n";
+          frontier |> List.iter ~f:(fun (index : int) -> 
+              minimum_cost_inhabitants new_cost_table ~given:(Some(i)) index |> snd |> List.iter ~f:(fun index ->
+                  extract v index |> List.iter ~f:(fun program ->
+                      flush_everything();
+                      Printf.eprintf "program: %s\n" (program |> string_of_program))))))
 ;;
 
         
@@ -159,7 +169,7 @@ let _ =
             "(lambda (+ $0 $0))";
             "(lambda (+ 4 4))";] |> List.map ~f:(compose get_some parse_program)
     in
-  compression_step ~bs:25 () (ps |> List.map ~f:(fun p -> {request=magical();programs=[(p,0.)]}))
+  compression_step ~topI:2500 ~bs:25 () (ps |> List.map ~f:(fun p -> {request=magical();programs=[(p,0.)]}))
   (* let p' = parse_program "(+ 9 9)" |> get_some in *)
   (* let j = time_it "calculated versions base" (fun () -> p |> incorporate t |> recursive_inversion t |> recursive_inversion t  |> recursive_inversion t) in *)
   (* extract t j |> List.map ~f:(fun r -> *)

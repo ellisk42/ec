@@ -289,34 +289,43 @@ type cost_table = {function_cost : ((float*(int list)) option) ra;
 let empty_cost_table t = {function_cost = empty_resizable();
                           argument_cost = empty_resizable();
                           cost_table_parent = t;}
-let rec minimum_cost_inhabitants ?canBeLambda:(canBeLambda=true) t j : float*(int list) =
+let rec minimum_cost_inhabitants ?given:(given=None) ?canBeLambda:(canBeLambda=true) t j : float*(int list) =
   let caching_table = if canBeLambda then t.argument_cost else t.function_cost in
   ensure_resizable_length caching_table (j + 1) None;
+  
   match get_resizable caching_table j with
   | Some(c) -> c
-  | None -> let c = match index_table t.cost_table_parent j with
+  | None ->
+    let c =
+      match given with
+      | Some(invention) when have_intersection t.cost_table_parent invention j -> (1., [invention])
+      | _ -> 
+      match index_table t.cost_table_parent j with
       | Universe | Void -> assert false
       | IndexSpace(_) | TerminalSpace(_) -> (1., [j])
       | Union(u) ->
-        let children = u |> List.map ~f:(minimum_cost_inhabitants ~canBeLambda t) in
-        let c = children |> List.map ~f:(fun (cost,_) -> cost) |> fold1 min in
-        if is_invalid c then (c,[]) else 
-          let children = children |> List.filter ~f:(fun (cost,_) -> cost = c) in
-          (c, children |> List.concat_map ~f:(fun (_,p) -> p))
+        let children = u |> List.map ~f:(minimum_cost_inhabitants ~given ~canBeLambda t) in
+        minimum_by fst children
+        (* let c = children |> List.map ~f:(fun (cost,_) -> cost) |> fold1 min in *)
+        (* if is_invalid c then (c,[]) else  *)
+        (*   let children = children |> List.filter ~f:(fun (cost,_) -> cost = c) in *)
+        (*   (c, children |> List.concat_map ~f:(fun (_,p) -> p)) *)
       | AbstractSpace(b) when canBeLambda ->
-        let cost, children = minimum_cost_inhabitants ~canBeLambda:true t b in
+        let cost, children = minimum_cost_inhabitants ~given ~canBeLambda:true t b in
         (cost+.epsilon_cost, children |> List.map ~f:(version_abstract t.cost_table_parent))
       | AbstractSpace(b) -> (Float.infinity,[])
       | ApplySpace(f,x) ->
-        let fc, fs = minimum_cost_inhabitants ~canBeLambda:false t f in
-        let xc, xs = minimum_cost_inhabitants ~canBeLambda:true t x in
+        let fc, fs = minimum_cost_inhabitants ~given ~canBeLambda:false t f in
+        let xc, xs = minimum_cost_inhabitants ~given ~canBeLambda:true t x in
         if is_invalid fc || is_invalid xc then (Float.infinity,[]) else
           (fc+.xc+.epsilon_cost,
           fs |> List.map ~f:(fun f' -> xs |> List.map ~f:(fun x' -> version_apply t.cost_table_parent f' x')) |> List.concat)
     in
+    let cost, indices = c in
+    let indices = indices |> List.dedup_and_sort ~compare:(-) in
+    let c = (cost, indices) in
     set_resizable caching_table j (Some(c));
     c
-
 
 type beam = {default_function_cost : float;
              default_argument_cost : float;
@@ -399,9 +408,12 @@ let beam_costs ~ct ~bs (candidates : int list) (frontier_indices : (int list) li
   let frontier_beams = frontier_indices |> List.map ~f:(List.map ~f:calculate_costs) in
 
   let score i =
-    frontier_beams |> List.map ~f:(fun bs ->
+    let invention_size, _ = minimum_cost_inhabitants ct i in
+    let corpus_size = frontier_beams |> List.map ~f:(fun bs ->
         bs |> List.map ~f:(fun b -> min (relative_argument b i) (relative_function b i)) |>
         fold1 min) |> fold1 (+.)
+    in
+    invention_size +. corpus_size
   in
 
   let scored = candidates' |> List.map ~f:(fun i -> (score i,i)) in

@@ -54,6 +54,10 @@ let safe_get_some message = function
 let sum = List.fold_left ~f:(+) ~init:0
 
 let minimum l = List.reduce_exn l ~f:min
+;;
+let minimum_by f l = List.reduce_exn l ~f:(fun x y -> if f x < f y then x else y)
+;;
+
 
 let memorize f = 
   let table = Hashtbl.Poly.create () in

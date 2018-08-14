@@ -923,7 +923,8 @@ def testSharing():
         source = f"(+ 1 {source})"
     assert False
         
-def compressionDemo():
+if __name__ == "__main__":
+    
     from arithmeticPrimitives import *
     from listPrimitives import *
     from grammar import *
