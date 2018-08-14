@@ -726,7 +726,7 @@ class RewriteWithInventionVisitor():
             i = e.visit(self)
             l = EtaLongVisitor().execute(i)
             return l
-        except EtaExpandFailure:
+        except (UnificationFailure, EtaExpandFailure):
             return None
 
 
