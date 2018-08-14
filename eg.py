@@ -35,7 +35,7 @@ class Class():
         self.leader = None
         Class.nextName += 1
     def __hash__(self): return self.name
-    def __str__(self): return f"E{self.name}"
+    def __str__(self): return "E"%self.name
     def __eq__(self,o): return self.name == o.name
     def __ne__(self,o): return not (self == o)
 
@@ -455,7 +455,7 @@ class EquivalenceGraph():
         from collections import Counter
         candidates = Counter(k for ks in candidates for k in ks)
         candidates = list({k for k,f in candidates.items() if f >= 2 })
-        print(f"{len(candidates)} candidates")
+        print("%s candidates"%len(candidates))
         candidates = [(score(k),k) for k in candidates ]
         best = min(candidates,key = lambda s: s[0])[1]
         return self.extract(best)
@@ -481,7 +481,7 @@ class EquivalenceGraph():
                            if f >= 2 and \
                            nontrivial(self.extractBetaLong(k, referenceTable))
         })
-        print(f"{len(candidates)} candidates")
+        print("%s candidates"%len(candidates))
         if len(candidates) < 1: return []
 
         with timing("Scored candidates"):
@@ -514,7 +514,7 @@ class EquivalenceGraph():
                            if f >= 2 and \
                            nontrivial(self.extractBetaLong(k, referenceTable))
         })
-        print(f"{len(candidates)} candidates")
+        print("%s candidates"%len(candidates))
         if len(candidates) < 1: return []
 
         with timing("calculated beams"):

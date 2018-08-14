@@ -2,7 +2,8 @@ from betaExpansion import *
 
 from program import *
 from type import *
-
+from frontier import *
+from grammar import *
 
 epsilon = 0.001
 
@@ -326,7 +327,7 @@ class VersionTable():
             assert set(self.extract(s)) == set( e.shift(-n)
                                                 for e in self.extract(j)
                                                 if all( f >= n for f in e.freeVariables()  )),\
-                                                   f"shiftFree_{n}: {set(self.extract(s))}"
+                                                   "shiftFree_%d: %s"%(n,set(self.extract(s)))
         if s == self.empty: m = {}
         else:
             if self.typed:
@@ -413,13 +414,13 @@ class VersionTable():
                 n = None
                 for e in self.extract(j):
                     print(e, e.infer())
-                    print(f"\t{e.betaNormalForm()} : {e.betaNormalForm().infer()}")
+                    # print(f"\t{e.betaNormalForm()} : {e.betaNormalForm().infer()}")
                     assert n is None or e.betaNormalForm() == n
                     n = e.betaNormalForm()
                     print("the rewritten extension is")
                 for e in self.extract(i):
                     print(e, e.infer())
-                    print(f"\t{e.betaNormalForm()} : {e.betaNormalForm().infer()}")
+                    # print(f"\t{e.betaNormalForm()} : {e.betaNormalForm().infer()}")
                     assert n is None or e.betaNormalForm() == n
                     assert self.infer(i) == self.infer(j)
                 assert False
@@ -446,13 +447,13 @@ class VersionTable():
                 n = None
                 for e in self.extract(j):
                     print(e, e.infer())
-                    print(f"\t{e.betaNormalForm()} : {e.betaNormalForm().infer()}")
+                    # print(f"\t{e.betaNormalForm()} : {e.betaNormalForm().infer()}")
                     assert n is None or e.betaNormalForm() == n
                     n = e.betaNormalForm()
                 print("the rewritten extension is")
                 for e in self.extract(ru):
                     print(e, e.infer())
-                    print(f"\t{e.betaNormalForm()} : {e.betaNormalForm().infer()}")
+                    # print(f"\t{e.betaNormalForm()} : {e.betaNormalForm().infer()}")
                     assert n is None or e.betaNormalForm() == n
             assert self.infer(ru) == self.infer(j)
 
@@ -531,7 +532,7 @@ class VersionTable():
         typedClassesOfVertex = {v: {} for v in vertices }
         
         for n in range(N):
-            print(f"Processing rewrites {n} steps away from original expressions...")
+            # print(f"Processing rewrites {n} steps away from original expressions...")
             for v in vertices:
                 expressions = list(self.extract(v))
                 assert len(expressions) == 1
@@ -554,10 +555,10 @@ class VersionTable():
         g = EquivalenceGraph(typed=False)
         with timing("calculated version spaces"):
             spaces = self.rewriteReachable(heads,n)
-        print(f"{len(self.expressions)} distinct version spaces enumerated.")
+        # print(f"{len(self.expressions)} distinct version spaces enumerated.")
         with timing("loaded equivalences"):
             self.loadEquivalences(g,spaces)
-        print(f"{len(g.incident)} E nodes, {len(g.classes)} L nodes in equivalence graph.")
+        # print(f"{len(g.incident)} E nodes, {len(g.classes)} L nodes in equivalence graph.")
         return g
 
     def bestInventions(self, versions, bs=25):
@@ -586,7 +587,7 @@ class VersionTable():
             candidates = Counter(k for ks in candidates for k in ks)
             candidates = list({k for k,f in candidates.items() if f >= 2 and nontrivial(next(self.extract(k))) })
             # candidates = [k for k in candidates if next(self.extract(k)).isBetaLong()]
-            print(f"{len(candidates)} candidates from version space")
+            eprint(len(candidates),"candidates from version space")
 
         inhabitTable = self.inhabitantTable
         functionTable = self.functionInhabitantTable
@@ -761,14 +762,21 @@ class VersionTable():
 
 
 
-def induceGrammar_Beta(frontiers, g0, _=None,
-                       arity=2,
+def induceGrammar_Beta(g0, frontiers, _=None,
+                       pseudoCounts=1.,
+                       a=3,
+                       aic=1.,
                        topK=2,
-                       topI=100,
+                       topI=500,
                        structurePenalty=1.,
                        CPUs=1):
     """grammar induction using only version spaces"""
     from fragmentUtilities import primitiveSize
+    originalFrontiers = frontiers
+    frontiers = [frontier for frontier in frontiers if not frontier.empty]
+    eprint("Inducing a grammar from", len(frontiers), "frontiers")
+
+    arity = a
 
     def restrictFrontiers():
         return parallelMap(CPUs,
@@ -779,18 +787,19 @@ def induceGrammar_Beta(frontiers, g0, _=None,
     def objective(g, fs):
         ll = sum(g.frontierMDL(f) for f in fs )
         sp = structurePenalty * sum(primitiveSize(p) for p in g.primitives)
-        return ll - sp - len(g.productions)
+        return ll - sp - aic*len(g.productions)
             
     v = None
     def scoreCandidate(candidate, currentFrontiers, currentGrammar):
-        newGrammar, newFrontiers = v.addInventionToGrammar(candidate, currentGrammar, currentFrontiers)
+        newGrammar, newFrontiers = v.addInventionToGrammar(candidate, currentGrammar, currentFrontiers,
+                                                           pseudoCounts=pseudoCounts)
         o = objective(newGrammar, newFrontiers)
         
         return o
         
 
     oldScore = objective(g0, restrictedFrontiers)
-    eprint(f"Starting grammar induction score {oldScore}")
+    eprint("Starting grammar induction score",oldScore)
     
     while True:
         v = VersionTable(typed=False, identity=False)
@@ -806,10 +815,16 @@ def induceGrammar_Beta(frontiers, g0, _=None,
         bestNew, bestScore = max(scoredCandidates, key=lambda sc: sc[1])
         if bestScore < oldScore:
             eprint("No improvement possible.")
+            # Return all of the frontiers, which have now been rewritten to use the
+            # new fragments
+            frontiers = {f.task: f for f in frontiers}
+            frontiers = [frontiers.get(f.task, f)
+                         for f in originalFrontiers]
             return g0, frontiers
 
-        newGrammar, newFrontiers = v.addInventionToGrammar(bestNew, g0, frontiers)
-        eprint(f"Improved score to {bestScore} (dS={bestScore-oldScore}) w/ invention {newGrammar.primitives[0]} : {newGrammar.primitives[0].infer()}")
+        newGrammar, newFrontiers = v.addInventionToGrammar(bestNew, g0, frontiers,
+                                                           pseudoCounts=pseudoCounts)
+        eprint("Improved score to", bestScore, "(dS =", bestScore-oldScore, ") w/ invention",newGrammar.primitives[0],":",newGrammar.primitives[0].infer())
         oldScore = bestScore
 
         g0, frontiers = newGrammar, newFrontiers
@@ -850,15 +865,13 @@ def testSharing():
         v = VersionTable(typed=False)
         v.inversion(v.incorporate(Program.parse(source)))
         print(len(v.expressions),len(t))
-        source = f"(+ 1 {source})"
+        source = "(+ 1 %s)"%source
     assert False
         
 if __name__ == "__main__":
     
     from arithmeticPrimitives import *
     from listPrimitives import *
-    from grammar import *
-    from frontier import *
     bootstrapTarget_extra()
     programs = [Program.parse("(lambda (fold $0 empty (lambda (lambda (cons (+ (+ 5 5) (+ $1 $1)) $0)))))"),
                 Program.parse("(lambda (fold $0 empty (lambda (lambda (cons (- 0 $1) $0)))))"),
@@ -880,18 +893,21 @@ if __name__ == "__main__":
                            CPUs=1,
                            arity=N)
 
-if __name__ == "__main__":
-    import argparse
-    parser = argparse.ArgumentParser(description = "Version-space based compression")
-    parser.add_argument("CPUs", type=int, default=1)
-    parser.add_argument("arity", type=int, default=3)
-    parser.add_argument("bs", type=int, default=25,
-                        help="beam size")
-    parser.add_argument("topK", type=int, default=2)
-    parser.add_argument("pseudoCounts",
-                        type=float,
-                        default=1.)
-    parser.add_argument("structurePenalty",
-                        type=float, default=1.)
-    arguments = parser.parse_args()
+# if __name__ == "__main__":
+#     import argparse
+#     parser = argparse.ArgumentParser(description = "Version-space based compression")
+#     parser.add_argument("--CPUs", type=int, default=1)
+#     parser.add_argument("--arity", type=int, default=3)
+#     parser.add_argument("--bs", type=int, default=25,
+#                         help="beam size")
+#     parser.add_argument("--topK", type=int, default=2)
+#     parser.add_argument("--topI", type=int, default=None,
+#                         help="defaults to beam size")
+#     parser.add_argument("--pseudoCounts",
+#                         type=float,
+#                         default=1.)
+#     parser.add_argument("--structurePenalty",
+#                         type=float, default=1.)
+#     arguments = parser.parse_args()
+    
     

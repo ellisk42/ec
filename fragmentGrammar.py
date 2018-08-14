@@ -5,7 +5,7 @@ from fragmentUtilities import *
 from frontier import *
 from grammar import *
 from program import *
-
+from vs import *
 
 import gc
 
@@ -447,6 +447,10 @@ def induceGrammar(*args, **kwargs):
             g, newFrontiers = callCompiled(pypyInduce, *args, **kwargs)
         elif backend == "rust":
             g, newFrontiers = rustInduce(*args, **kwargs)
+        elif backend == "beta":
+            kwargs.pop('iteration')
+            kwargs.pop('topk_use_only_likelihood')
+            g, newFrontiers = callCompiled(induceGrammar_Beta, *args, **kwargs)
         else:
             assert False, ""
     return g, newFrontiers

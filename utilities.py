@@ -567,9 +567,9 @@ class UnionFind:
             return self.ID
         def __str__(self):
             if self.leader is None:
-                return f"EC({self.ID}, {self.members})"
+                return "EC(%s, %s)"%(self.ID,self.members)
             else:
-                return f"EC(points to {self.leader})"
+                return "EC(points to %s)"%self.leader
         def chase(self):
             if self.leader is None: return self
             k = self
