@@ -63,6 +63,8 @@ class VersionTable():
         # Table containing (minimum cost, set of minimum cost programs NOT starting w/ abstraction)
         self.functionInhabitantTable = []
         self.superCache = {}
+
+        self.overlapTable = {}
         
         self.universe = self.incorporate(Primitive("U",t0,None))
         self.empty = self.incorporate(Union([], canBeEmpty=True))
@@ -212,25 +214,33 @@ class VersionTable():
         if b == self.universe: return True
         if a == b: return True
 
+        if a in self.overlapTable:
+            if b in self.overlapTable[a]:
+                return self.overlapTable[a][b]
+        else: self.overlapTable[a] = {}
+
         x = self.expressions[a]
         y = self.expressions[b]
 
         if x.isAbstraction and y.isAbstraction:
-            return self.haveOverlap(x.body,y.body)
+            overlap = self.haveOverlap(x.body,y.body)
         if x.isApplication and y.isApplication:
-            return self.haveOverlap(x.f,y.f) and \
+            overlap = self.haveOverlap(x.f,y.f) and \
                 self.haveOverlap(x.x,y.x)
         if x.isUnion:
             if y.isUnion:
-                return any( self.haveOverlap(x_,y_)
+                overlap = any( self.haveOverlap(x_,y_)
                             for x_ in x
                             for y_ in y )
-            return any( self.haveOverlap(x_, b)
+            overlap = any( self.haveOverlap(x_, b)
                         for x_ in x )
         if y.isUnion:
-            return any( self.haveOverlap(a, y_)
+            overlap = any( self.haveOverlap(a, y_)
                         for y_ in y )
-        return False
+        else:
+            overlap = False
+        self.overlapTable[a][b] = overlap
+        return overlap
 
     def minimalInhabitants(self,j):
         """Returns (minimal size, set of singleton version spaces)"""
@@ -791,8 +801,16 @@ def induceGrammar_Beta(g0, frontiers, _=None,
             
     v = None
     def scoreCandidate(candidate, currentFrontiers, currentGrammar):
-        newGrammar, newFrontiers = v.addInventionToGrammar(candidate, currentGrammar, currentFrontiers,
-                                                           pseudoCounts=pseudoCounts)
+        try:
+            newGrammar, newFrontiers = v.addInventionToGrammar(candidate, currentGrammar, currentFrontiers,
+                                                               pseudoCounts=pseudoCounts)
+        except InferenceFailure:
+            # And this can occur if the candidate is not well typed:
+            # it is expected that this can occur;
+            # in practice, it is more efficient to filter out the ill typed terms,
+            # then it is to construct the version spaces so that they only contain well typed terms.
+            return NEGATIVEINFINITY
+            
         o = objective(newGrammar, newFrontiers)
         
         return o
