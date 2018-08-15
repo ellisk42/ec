@@ -476,7 +476,8 @@ def sortBootstrap():
              [((x,l), [y for y in l if y < x ] + [x] + [y for y in l if y >= x ])
               for _ in range(15) 
               for x in [randint(0,5)]
-              for l in [randomList()] ]),
+              for _l in [randomList()]
+              for l in [sorted(_l)] ]),
         Task("insert into sorted list (II)", arrow(tint,tlist(tint),tlist(tint)),
              [((x,l), [y for y in l if y < x ] + [x] + [y for y in l if y >= x ])
               for _ in range(15) 
@@ -515,7 +516,7 @@ def exportTasks():
 
 
 if __name__ == "__main__":
-    for t in make_list_bootstrap_tasks():
+    for t in sortBootstrap():
         print(t.describe())
         print()
     # exportTasks()
