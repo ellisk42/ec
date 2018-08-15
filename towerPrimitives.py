@@ -17,7 +17,11 @@ def _loop(n):
         hand, thisIteration = body(start)(hand)
         hand, laterIterations = f(start + 1, stop, body, hand)
         return hand, thisIteration + laterIterations
-    return lambda b: lambda h: f(0,n,b,h)
+    def sequence(b,k,h):
+        h,bodyBlocks = f(0,n,b,h)
+        h,laterBlocks = k(h)
+        return h,bodyBlocks+laterBlocks
+    return lambda b: lambda k: lambda h: sequence(b,k,h)
 def _embed(body):
     def f(k):
         def g(hand):
@@ -69,7 +73,7 @@ ttower = baseType("tower")
 primitives = [
     Primitive("left", arrow(tint, ttower, ttower), _left),
     Primitive("right", arrow(tint, ttower, ttower), _right),
-    Primitive("tower_loop", arrow(tint, arrow(tint, ttower), ttower), _loop),
+    Primitive("tower_loop", arrow(tint, arrow(tint, ttower), ttower, ttower), _loop),
     Primitive("tower_embed", arrow(ttower, ttower, ttower), _embed),
 ] + [Primitive(name, arrow(ttower,ttower), TowerContinuation(xOffset(w, h), w - 2*epsilon, h - epsilon))
      for name, (w, h) in blocks.items()] + [

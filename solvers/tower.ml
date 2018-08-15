@@ -79,13 +79,16 @@ ignore(primitive "right" (tint @> ttower @> ttower)
                let (hand'', rest) = k hand' in
                (hand'', rest)
           in f));;
-ignore(primitive "tower_loop" (tint @> (tint @> ttower) @> ttower)
+ignore(primitive "tower_loop" (tint @> (tint @> ttower) @> ttower @> ttower)
          (let rec f (start : int) (stop : int) (body : int -> tt) : tt = fun (hand : int) -> 
              if start >= stop then (hand,[]) else
                let (hand', thisIteration) = body start hand in
                let (hand'', laterIterations) = f (start+1) stop body hand' in
                (hand'', thisIteration @ laterIterations)
-          in fun n b -> f 0 n b));;
+          in fun (n : int) (b : int -> tt) (k : tt) : tt -> fun (hand : int) -> 
+            let (hand, body_blocks) = f 0 n b hand in
+            let hand, later_blocks = k hand in
+            (hand, body_blocks @ later_blocks)));;
 ignore(primitive "tower_embed" (ttower @> ttower @> ttower)
          (fun (body : tt) (k : tt) : tt ->
             fun (hand : int) ->
