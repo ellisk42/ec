@@ -26,7 +26,7 @@ let embed p               = Embed(p)
 let turn x                = Turn(x)
 let define x              = Define("MyOnlyVar",x)
 let repeat v p            = Repeat(v,p)
-let run ?size:(size=64) p = canvas_to_tlist size (interpret p)
+let run ?size:(size=28) p = canvas_to_tlist size (interpret p)
 
 let integrate v1 v2 v3 v4 = Integrate(v1,Some(v2),(None,v3,v4,None))
 let basic_line            = Integrate(None,Some(true),(None,None,None,None))

@@ -258,26 +258,10 @@ def solveForTask_ocaml(_=None,
             "name": t.name,
             "request": requestMessage(t.request),
             "maximumFrontier": maximumFrontiers[t]}
-        towerParameters = [
-            "maximumStaircase",
-            "perturbation",
-            "minimumLength",
-            "maximumMass",
-            "minimumHeight",
-            "minimumArea",
-            "minimumOverpass"]
-        for p in towerParameters:
-            if hasattr(t, p):
-                m[p] = getattr(t, p)
-        if hasattr(t, 'stringConstants'):
-            m["stringConstants"] = t.stringConstants
-        if hasattr(t, 'BIC'):
-            m["parameterPenalty"] = t.BIC * math.log(len(t.examples))
-        if hasattr(t, 'likelihoodThreshold') and t.likelihoodThreshold is not None:
-            m["lossThreshold"] = -t.likelihoodThreshold
-        if hasattr(t, 'temperature') and t.temperature is not None:
-            m["temperature"] = t.temperature
-
+        if hasattr(t, "specialTask"):
+            special, extra = t.specialTask
+            m["specialTask"] = special
+            m["extras"] = extra
         return m
 
     message = {"DSL": {"logVariable": g.logVariable,
@@ -302,8 +286,8 @@ def solveForTask_ocaml(_=None,
 
     message = json.dumps(message)
     # uncomment this if you want to save the messages being sent to the solver
-    # with open("message", "w") as f:
-    #     f.write(message)
+    with open("message", "w") as f:
+        f.write(message)
 
     try:
         process = subprocess.Popen("./solver",
@@ -322,16 +306,16 @@ def solveForTask_ocaml(_=None,
         # Remove all entries that do not type correctly
         # This can occur because the solver tries to infer the type
         # Sometimes it infers a type that is too general
-        badPrograms = [
-            r["program"] for r in solutions if not Program.parse(
-                r["program"]).canHaveType(
-                t.request)]
-        for b in badPrograms:
-            eprint("Bad program", b, ':', t.request)
-        solutions = [
-            r for r in solutions if Program.parse(
-                r["program"]).canHaveType(
-                t.request)]
+        # badPrograms = [
+            # r["program"] for r in solutions if not Program.parse(
+                # r["program"]).canHaveType(
+                # t.request)]
+        # for b in badPrograms:
+            # eprint("Bad program", b, ':', t.request)
+        # solutions = [
+            # r for r in solutions if Program.parse(
+                # r["program"]).canHaveType(
+                # t.request)]
 
         # FIXME:
         # I have no idea why this bug occurs but sometimes the ocaml backend returns the wrong likelihood for programs with real numbers

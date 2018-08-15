@@ -1,18 +1,19 @@
 from ec import *
 
-from towerPrimitives import primitives
+from towerPrimitives import primitives, executeTower
 from makeTowerTasks import *
 from listPrimitives import bootstrapTarget
 
 import os
 import random
 import time
+import datetime
 
 
 class TowerFeatureExtractor(HandCodedFeatureExtractor):
     def _featuresOfProgram(self, p, _):
         # [perturbation, mass, height, length, area]
-        p = p.evaluate([])
+        p = executeTower(p)
         mass = sum(w * h for _, w, h in p)
 
         masses = {
@@ -59,10 +60,7 @@ class TowerFeatureExtractor(HandCodedFeatureExtractor):
 
 def evaluateArches(ts):
     arches = [
-        # "(fold (range 3) 1x3 (lambda (lambda (do 3x1 (right (right $0))))))",
-        # "(do (do (right 1x3) (do (left 1x3) 3x1)) (right (right (right (do (right 1x3) (do (left 1x3) 3x1))))))",
-        # "(do (do (do (right 1x3) (do (left 1x3) 3x1)) (right (right (right (do (right 1x3) (do (left 1x3) 3x1)))))) (right  (do (right 1x3) (do (left 1x3) 3x1))))",
-        "(do #(#(lambda (lambda (do $0 (right (right (right $1)))))) #(#(lambda (right (#(lambda (lambda (do (do (right $0) (left $1)) 3x1))) $0 1x3))) 1x3) #(#(lambda (right (#(lambda (lambda (do (do (right $0) (left $1)) 3x1))) $0 1x3))) 1x3)) #(#(lambda (lambda (do $0 (right (right (right $1)))))) #(#(lambda (right (#(lambda (lambda (do (do (right $0) (left $1)) 3x1))) $0 1x3))) 1x3) #(#(lambda (right (#(lambda (lambda (do (do (right $0) (left $1)) 3x1))) $0 1x3))) 1x3)))"
+        "(lambda (left (1x3 (right (right (right (1x3 (left (3x1 $0)))))))))"
         #  "(do (do (left 1x3) (do (right 1x3) 3x1)) (right (right (right (do (left 1x3) (do (right 1x3) 3x1))))))",
         # "(do 1x4 (do (left 1x4) 4x1))",
         # "(do (right 1x4) (do (left (left 1x4)) 4x1))",
@@ -74,7 +72,7 @@ def evaluateArches(ts):
         print("Evaluating arch:")
         print(a)
         print()
-        a = Program.parse(a).evaluate([])
+        a = Program.parse(a)
         towers.append(tuple(centerTower(a)))
         os.system("python towers/visualize.py '%s' %f" % (a, 4))
 
@@ -144,14 +142,12 @@ if __name__ == "__main__":
     from towers.tower_common import exportTowers
     initializeTowerCaching()
 
-    g0 = Grammar.uniform(primitives + bootstrapTarget() +
+    g0 = Grammar.uniform(primitives + 
                          [Primitive(str(j), tint, j) for j in range(2, 5)])
 
-    tasks = makeTasks()
+    tasks = makeSupervisedTasks()#makeTasks()
     test, train = testTrainSplit(tasks, 1.) #50. / len(tasks))
     eprint("Split %d/%d test/train" % (len(test), len(train)))
-    # evaluateArches(train)
-    # if True: bruteForceBaseline(train)
 
     arguments = commandlineArguments(
         featureExtractor=TowerFeatureExtractor,
@@ -169,17 +165,25 @@ if __name__ == "__main__":
                            outputPrefix="experimentOutputs/tower",
                            evaluationTimeout=evaluationTimeout,
                            solver="ocaml",
-                           compressor="rust",
+                           compressor="pypy",
                            **arguments)
     os.system("python towers/server.py KILL")
     time.sleep(1)
     os.system("python towers/server.py &")
     time.sleep(1)
 
-    perturbations = {t.perturbation for t in train}
+    perturbations = {t.perturbation for t in train if isinstance(t,TowerTask)}
 
+    timestamp = datetime.datetime.now().isoformat()
+    os.system("mkdir -p experimentOutputs/towers/%s"%timestamp)
+    
     for result in generator:
         iteration = len(result.learningCurve)
-        newTowers = [tuple(centerTower(frontier.sample().program.evaluate([])))
+        newTowers = [tuple(centerTower(executeTower(frontier.sample().program)))
                      for frontier in result.taskSolutions.values() if not frontier.empty]
-        exportTowers(newTowers, 'experimentOutputs/uniqueTowers%d.png'%iteration)
+        try:
+            fn = 'experimentOutputs/towers/%s/solutions_%d.png'%(timestamp,iteration)
+            exportTowers(newTowers, fn)
+            eprint("Exported solutions to %s\n"%fn)
+        except ImportError:
+            eprint("Could not import required libraries for exporting towers.")

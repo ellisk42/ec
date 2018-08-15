@@ -1,4 +1,5 @@
 open Core
+open Unix
 
 open Timeout
 open Utils
@@ -13,9 +14,19 @@ type task =
     log_likelihood: program -> float;
   }
 
-let p2i : (LogoLib.LogoInterpreter.logo_instruction list, (int, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t) Hashtbl.Poly.t  = Hashtbl.Poly.create ()
+let p2i : (LogoLib.LogoInterpreter.logo_instruction list,((int, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t * (int, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t)) Hashtbl.Poly.t = Hashtbl.Poly.create ()
+
 
 exception EnumerationTimeout
+
+let gen_passwd length =
+    let gen() = match Random.int(26+26+10) with
+        n when n < 26 -> int_of_char 'a' + n
+      | n when n < 26 + 26 -> int_of_char 'A' + n - 26
+      | n -> int_of_char '0' + n - 26 - 26 in
+    let gen _ = String.make 1 (char_of_int(gen())) in
+    String.concat (Array.to_list (Array.init length gen))
+
 
 let supervised_task ?timeout:(timeout = 0.001) name ty examples =
   { name = name    ;
@@ -48,56 +59,137 @@ let supervised_task ?timeout:(timeout = 0.001) name ty examples =
           else log 0.0)
   }
 
-let turtle_task ?timeout:(timeout = 0.001) name ty examples =
-  match examples with
-  | [([],y)] ->
-    let by = Bigarray.(Array1.of_array int8_unsigned c_layout (Array.of_list y))
-    in
-    { name = name    ;
-      task_type = ty ;
-      log_likelihood =
-        (fun p ->
-          let p = analyze_lazy_evaluation p in
-          if
-            (try begin
-              match
-                run_for_interval
-                  timeout
-                  (fun () ->
-                    let x = run_lazy_analyzed_with_arguments p [] in
-                    let l = LogoLib.LogoInterpreter.turtle_to_list x in
-                    let bx =
-                        match Hashtbl.Poly.find p2i l with
-                        | Some(x) -> x
-                        | _ ->
-                            let bx' = LogoLib.LogoInterpreter.turtle_to_array x 28 in
-                            Hashtbl.Poly.set p2i l bx' ;
-                            bx'
-                    in bx = by)
-              with
-                | Some(true) -> true
-                | _ -> false
-            end
-            with (* We have to be a bit careful with exceptions if the
-                  * synthesized program generated an exception, then we just
-                  * terminate w/ false but if the enumeration timeout was
-                  * triggered during program evaluation, we need to pass the
-                  * exception on
-                  *)
-              | UnknownPrimitive(n) -> raise (Failure ("Unknown primitive: "^n))
-              | EnumerationTimeout  -> raise EnumerationTimeout
-              | _                   -> false)
-          then 0.0
-          else log 0.0)
-    }
-  | _ -> failwith "not a turtle task"
+let task_handler = Hashtbl.Poly.create();;
+let register_special_task name handler = Hashtbl.set task_handler name handler;;
 
-let differentiable_task
-  ?temperature:(temperature=1.)
-    ?parameterPenalty:(parameterPenalty=0.)
-    ?lossThreshold:(lossThreshold=None)
-    ?maxParameters:(maxParameters=100)
-    ?timeout:(timeout = 0.001) name ty examples =
+
+register_special_task "LOGO" (fun extras ?timeout:(timeout = 0.001) name ty examples ->
+    let open Yojson.Basic.Util in
+    let proto =
+      try
+        extras |> member "proto" |> to_bool
+      with _ -> (Printf.eprintf "proto parameter not set! FATAL"; exit 1)                
+    in
+
+  let by, by' = match examples with
+      | [([0],y)] ->
+          (Bigarray.(Array1.of_array int8_unsigned c_layout (Array.of_list y)),
+           None)
+      | [([0],y) ; ([0],y')] ->
+          (Bigarray.(Array1.of_array int8_unsigned c_layout (Array.of_list y)),
+          Some(Bigarray.(Array1.of_array int8_unsigned c_layout (Array.of_list
+          y'))))
+      | _ -> failwith "not a turtle task" in
+  { name = name    ;
+    task_type = ty ;
+    log_likelihood =
+      (fun p ->
+        let s_inout =
+          if proto then
+            Some(
+              open_connection
+                (ADDR_UNIX("./prototypical-networks/protonet_socket"))
+                )
+          else None in
+        let p = analyze_lazy_evaluation p in
+        let log_likelihood = (try begin
+          match
+            run_for_interval
+              timeout
+              (fun () ->
+                let x = run_lazy_analyzed_with_arguments p [] in
+                let l = LogoLib.LogoInterpreter.turtle_to_list x in
+                let bx,bx' =
+                    match Hashtbl.Poly.find p2i l with
+                    | Some((x,x')) -> (x,x')
+                    | _ ->
+                        let bx = LogoLib.LogoInterpreter.turtle_to_array x 28 in
+                        let bx' = LogoLib.LogoInterpreter.normal_turtle_to_array x 28 in
+                        Hashtbl.Poly.set p2i l (bx,bx') ;
+                        (bx,bx')
+                in
+                match by' with
+                | None -> 
+                    if proto then begin
+                      let s_in, s_out = match s_inout with
+                        | Some(x,y) -> x, y
+                        | _ -> failwith "NOOOOO, don't dooo that !!!"
+                      in
+                      let bytes_version = Bytes.create (28 * 28) in
+                      for i = 0 to (28 * 28) - 1 do
+                        Bytes.set bytes_version i (char_of_int (bx.{i}))
+                      done ;
+                      let img = Bytes.to_string bytes_version in
+                      output_binary_int s_out (String.length name) ;
+                      output_string s_out name ;
+                      output_binary_int s_out (String.length img) ;
+                      output_string s_out img ;
+                      flush s_out ;
+                      let l = input_binary_int s_in in
+                      float_of_string (really_input_string s_in l)
+                    end
+                    else begin
+                      if (LogoLib.LogoInterpreter.fp_equal bx by 5) then 0.0
+                      else log 0.0
+                    end
+                | Some(by') ->
+                    if (LogoLib.LogoInterpreter.fp_equal bx by 5) then (0.0)
+                    else -. (LogoLib.LogoInterpreter.distance bx' by'))
+          with
+            | Some(x) -> x
+            | _ -> log 0.0
+        end
+        with (* We have to be a bit careful with exceptions if the
+              * synthesized program generated an exception, then we just
+              * terminate w/ false but if the enumeration timeout was
+              * triggered during program evaluation, we need to pass the
+              * exception on
+              *)
+          | UnknownPrimitive(n) -> raise (Failure ("Unknown primitive: "^n))
+          | EnumerationTimeout  -> raise EnumerationTimeout
+          | _                   -> log 0.0) in
+        if proto then begin
+          let s_in, s_out = match s_inout with
+            | Some(x,y) -> x, y
+            | _ -> failwith "NOOOOO, don't dooo that !!!"
+          in
+          output_binary_int s_out (String.length "DONE") ;
+          output_string s_out "DONE" ;
+          flush s_out ;
+          shutdown_connection s_in ;
+          close_in s_in ;
+          (-. (100. *. log_likelihood))
+        end else log_likelihood)
+  });;
+
+
+
+register_special_task "differentiable"
+  (fun extras
+  (* ?temperature:(temperature=1.) *)
+  (*   ?parameterPenalty:(parameterPenalty=0.) *)
+  (*   ?lossThreshold:(lossThreshold=None) *)
+  (*   ?maxParameters:(maxParameters=100) *)
+    ?timeout:(timeout = 0.001) name ty examples ->
+
+
+    let open Yojson.Basic.Util in
+    let maybe_float name default =
+      try
+        extras |> member name |> to_float
+      with _ -> default
+    in
+    let maybe_int name default =
+      try
+        extras |> member name |> to_int
+      with _ -> default
+    in 
+    let temperature = maybe_float "temperature" 1. in
+    let parameterPenalty = maybe_float "parameterPenalty" 0. in
+    let maxParameters = maybe_int "maxParameters" 99 in
+    let lossThreshold = try Some(extras |> member "lossThreshold" |> to_float) with _ -> None in
+    
+                                         
   (* Process the examples and wrap them inside of placeholders *)
   let (argument_types, return_type) = arguments_and_return_of_type ty in
   let examples = examples |> List.map ~f:(fun (xs,y) ->
@@ -150,15 +242,25 @@ let differentiable_task
           | None -> 0. -. d*.parameterPenalty -. n *. l /. temperature
           | Some(t) ->
             if l < t then 0. -. d*.parameterPenalty else log 0.)
-  }
+  });;
 
-let constant_task
-    ?parameterPenalty:(parameterPenalty=0.)
-    ?maxParameters:(maxParameters=100)
+register_special_task "stringConstant" (fun extras
+    (* ?parameterPenalty:(parameterPenalty=0.) *)
+    (* ?maxParameters:(maxParameters=100) *)
     ?timeout:(timeout = 0.001)
-    ~stringConstants
-    name ty examples =
-  let stringConstants : char list list = stringConstants in
+    name ty examples ->
+    let open Yojson.Basic.Util in
+    let maybe_int name default =
+      try
+        extras |> member name |> to_int
+      with _ -> default
+    in 
+    let stringConstants =
+      extras |> member "stringConstants" |> to_list |> List.map ~f:to_string |> List.map ~f:(String.to_list)
+    in
+    let maxParameters = maybe_int "maxParameters" 99 in
+
+
   let lc = log (26.*.2.+.10.) in
   let lc = 0.-.lc in
   
@@ -189,7 +291,8 @@ let constant_task
                if hit
                then lc*.(Float.of_int (string_constants_length p))
                else log 0.) |> List.fold_right ~init:(log 0.) ~f:max)
-  }
+  });;
+
 
 
 let keep_best_programs_in_frontier (k : int) (f : frontier) : frontier =

@@ -69,7 +69,12 @@ class ECResult():
                      "useNewRecognitionModel": "newRec",
                      "likelihoodModel": "likemod",
                      "helmholtzBatch": "HB",
+<<<<<<< HEAD
                      "topk_use_only_likelihood": "kNotMAP",
+=======
+                     "use_ll_cutoff": "llcut",
+                     "topk_use_only_likelihood": "topkNotMAP",
+>>>>>>> 9e293ae8c73c1d4eda9b9f79de97f2c904461fee
                      "activation": "act"}
 
     @staticmethod
@@ -134,11 +139,7 @@ def ecIterator(grammar, tasks,
                activation='relu',
                topK=1,
                topk_use_only_likelihood=False,
-<<<<<<< HEAD
-               joint_mdl_use_only_likelihood=False,
-=======
                use_map_search_times=True,
->>>>>>> e2acf46... removed joint_mdl_use_only_likelihood
                maximumFrontier=None,
                pseudoCounts=1.0, aic=1.0,
                structurePenalty=0.001, arity=0,
@@ -358,10 +359,9 @@ def ecIterator(grammar, tasks,
                                                                CPUs=CPUs,
                                                                evaluationTimeout=evaluationTimeout,
                                                                testing=True)
+            print("\n".join(f.summarize() for f in testingFrontiers))
+            eprint("Hits %d/%d testing tasks" % (len(times), len(testingTasks)))
 
-            eprint(
-                "Hits %d/%d testing tasks" %
-                (len(times), len(testingTasks)))
             summaryStatistics("Testing tasks", times)
             result.testingSearchTime.append(times)
             result.testingSumMaxll.append(sum(math.exp(f.bestll) for f in testingFrontiers if not f.empty) )
@@ -373,10 +373,9 @@ def ecIterator(grammar, tasks,
                 enumerationTimeout = int(enumerationTimeout * expandFrontier)
             else:
                 enumerationTimeout = int(enumerationTimeout + expandFrontier)
-            eprint(
-                "Expanding enumeration timeout from {} to {} because of no progress".format(
-                    oldEnumerationTimeout,
-                    enumerationTimeout))
+            eprint("Expanding enumeration timeout from {} to {} because of no progress".format(
+                oldEnumerationTimeout,enumerationTimeout))
+            
         frontiers, times = multicoreEnumeration(grammar, tasks, likelihoodModel,
                                                 solver=solver,
                                                 maximumFrontier=maximumFrontier,

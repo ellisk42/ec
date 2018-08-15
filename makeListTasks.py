@@ -421,11 +421,11 @@ def sortBootstrap():
              [((xs,), [x for x in xs if x != 0])
               for _ in range(10)
               for xs in [[randint(0, 3) for _ in range(5)]]]),
-        Task("remove primes",
-             arrow(tlist(tint), tlist(tint)),
-             [((xs,), [x for x in xs if not (x in {2,3,5,7,11,13,17,19,23})])
-              for _ in range(10)
-              for xs in [[randint(0, 20) for _ in range(7)]]]),
+        # Task("remove primes",
+        #      arrow(tlist(tint), tlist(tint)),
+        #      [((xs,), [x for x in xs if not (x in {2,3,5,7,11,13,17,19,23})])
+        #       for _ in range(10)
+        #       for xs in [[randint(0, 20) for _ in range(7)]]]),
         Task("remove squares",
              arrow(tlist(tint), tlist(tint)),
              [((xs,), [x for x in xs if not (int(x**0.5)**2 == x)])
@@ -462,8 +462,24 @@ def sortBootstrap():
     ]
 
     insertionBootstrap = [
-        Task("insert into sorted list", arrow(tint,tlist(tint),tlist(tint)),
-             [((x,l), [y for y in l if y < x ] + [x] + [y for y in l if y > x ])
+        Task("filter greater than or equal", arrow(tint,tlist(tint),tlist(tint)),
+             [((x,l), [y for y in l if y >= x ])
+              for _ in range(15) 
+              for x in [randint(0,5)]
+              for l in [randomList()] ]),
+        Task("filter less than", arrow(tint,tlist(tint),tlist(tint)),
+             [((x,l), [y for y in l if y < x ])
+              for _ in range(15) 
+              for x in [randint(0,5)]
+              for l in [randomList()] ]),
+        Task("insert into sorted list (I)", arrow(tint,tlist(tint),tlist(tint)),
+             [((x,l), [y for y in l if y < x ] + [x] + [y for y in l if y >= x ])
+              for _ in range(15) 
+              for x in [randint(0,5)]
+              for _l in [randomList()]
+              for l in [sorted(_l)] ]),
+        Task("insert into sorted list (II)", arrow(tint,tlist(tint),tlist(tint)),
+             [((x,l), [y for y in l if y < x ] + [x] + [y for y in l if y >= x ])
               for _ in range(15) 
               for x in [randint(0,5)]
               for l in [randomList()] ])
@@ -475,10 +491,11 @@ def sortBootstrap():
              [((l,),list(sorted(l)))
               for _ in range(15)
               for l in [removeDuplicates(randomList())]
-              #for l in [] 
              ])]
 
-    return filterBootstrap + appendBootstrap + insertionBootstrap + sortTask
+    tasks = filterBootstrap + insertionBootstrap + sortTask
+    for t in tasks: t.mustTrain = True
+    return tasks
     
 
 def exportTasks():
@@ -499,7 +516,7 @@ def exportTasks():
 
 
 if __name__ == "__main__":
-    for t in make_list_bootstrap_tasks():
+    for t in sortBootstrap():
         print(t.describe())
         print()
     # exportTasks()

@@ -9,6 +9,8 @@ let float_of_bool = function
   | true -> 1.
   | false -> 0.
 
+let round f = floor (f+.0.5)
+  
 let join ?separator:(separator = " ") elements= String.concat ~sep:separator elements
 
 (* let rec replicate (n : int) (x : 'a) : 'a list = *)

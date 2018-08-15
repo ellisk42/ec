@@ -4,14 +4,13 @@ open Lexing
 
 exception MalformedProgram of string
 
-let empty32 = Bigarray.(Array1.create int8_unsigned c_layout (32*32))
-let empty64 = Bigarray.(Array1.create int8_unsigned c_layout (64*64))
-let empty256 = Bigarray.(Array1.create int8_unsigned c_layout (256*256))
+let empty28 = Bigarray.(Array1.create int8_unsigned c_layout (28*28))
+(*let empty32 = Bigarray.(Array1.create int8_unsigned c_layout (32*32))*)
+(*let empty64 = Bigarray.(Array1.create int8_unsigned c_layout (64*64))*)
+(*let empty256 = Bigarray.(Array1.create int8_unsigned c_layout (256*256))*)
 
-let _ =
-  Bigarray.Array1.fill empty32 0 ;
-  Bigarray.Array1.fill empty64 0 ;
-  Bigarray.Array1.fill empty256 0
+let _ = Bigarray.Array1.fill empty28 0 ; Random.self_init ()
+
 
 let npp data =
   for i = 0 to (Bigarray.Array1.dim data) - 2 do
@@ -43,20 +42,22 @@ let read_program program_string =
 
 let _ =
   let output_img = Sys.argv.(1) in
-  let program_string = Sys.argv.(2) in
+  let noise = (String.equal Sys.argv.(2) "noise") in
+  let program_string = Sys.argv.(3) in
   (try
     (match read_program program_string with
       | Some (program) ->
           (try
-            let c  = interpret program              in
-            let l  = Plumbing.canvas_to_tlist 64 c  in
-            let l' = Plumbing.canvas_to_tlist 256 c in
-            Renderer.output_canvas_png c 256 output_img ;
-            (npp l ; print_newline () ;
-             npp l' ; print_newline ())
+            let c  = interpret ~noise program       in
+            let l  = Plumbing.canvas_to_tlist 28 c  in
+            if (l = empty28) then ()
+            else begin
+              if not (output_img = "none") then
+                Renderer.output_canvas_png c 512 output_img
+              else npp l
+            end
           with Interpreter.MalformedProgram _ ->
-            (npp empty64  ; print_newline () ;
-             npp empty256 ; print_newline () )
+            print_newline ()
             )
       | None -> ())
     with MalformedProgram(error_message) ->

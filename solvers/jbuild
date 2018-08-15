@@ -1,9 +1,9 @@
 (jbuild_version 1)
 
 (executables
- ((names (solver geomDrawLambdaString geomDrawFile geomTest logoTest logoDrawString))
+ ((names (solver geomDrawLambdaString geomDrawFile geomTest logoTest logoDrawString logoSequenceString protonet-tester))
   (modes (native))
   (ocamlopt_flags (:standard -O3 -unboxed-types -nodynlink -w -20))
-  (libraries (core re2 yojson geomLib logoLib)) ;parmap
+  (libraries (core re2 yojson geomLib logoLib ocaml-protoc)) ;parmap
   (preprocess (pps (ppx_jane)))
  ))

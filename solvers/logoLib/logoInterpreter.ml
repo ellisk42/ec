@@ -1,6 +1,6 @@
 open VGWrapper
 
-exception DIV0
+exception DoesNotMatch
 
 type state =
   { mutable x : float
@@ -23,6 +23,8 @@ let (<<-) t1 t2 =
   t1.y <- t2.y ;
   t1.t <- t2.t ;
   t1.p <- t2.p
+
+let logo_NOP : turtle = fun s -> ([], s)
 
 let init_state () = {x = d_from_origin; y = d_from_origin; t = 0.; p = true}
 
@@ -48,7 +50,7 @@ let pp_logo_instruction i =
       prerr_string ")"
 
 let pp_turtle t =
-  let l,_ = t (init_state ()) in
+  let l,_ = (t logo_NOP) (init_state ()) in
   List.iter
     (fun e ->
        pp_logo_instruction e ;
@@ -57,19 +59,18 @@ let pp_turtle t =
     l ;
   prerr_newline ()
 
-let eval_turtle turtle =
-  (*pp_turtle turtle ;*)
-  let p,_ = turtle (init_state ()) in
+let eval_normal_turtle t2t =
+  let p,_ = (t2t logo_NOP) (init_state ()) in
   let c = ref (new_canvas ()) in
   let lineto x y = (c := (lineto !c x y))
   and moveto x y = (c := (moveto !c x y)) in
   let t = init_state () in
   moveto t.x t.y ;
-  let rec eval_instruction i = match i with
+  let rec eval_instruction n i = match i with
     | PU         -> t.p <- false
     | PD         -> t.p <- true
     | RT(angle)  -> t.t <- t.t +. angle
-    | SET(state) -> t <<- state ; moveto (t.x) (t.y)
+    | SET(state) -> t <<- state ; moveto (t.x) (t.y) ;
     | FW(length) ->
         let x = t.x +. (length *. cos(t.t))
         and y = t.y +. (length *. sin(t.t)) in
@@ -77,7 +78,99 @@ let eval_turtle turtle =
         t.x <- x ;
         t.y <- y
   in
-  List.iter eval_instruction p ;
+  let rec remove_start pd l = match l with
+    | [] -> []
+    | PU :: r -> remove_start false r
+    | PD :: r -> remove_start true r
+    | RT(_)::r -> remove_start pd r
+    | FW(0.)::r -> remove_start pd r
+    | FW(_)::r -> if pd then l else remove_start pd r
+    | SET(_)::r -> remove_start pd r
+  in
+  let rec scale l f = match l with
+    | [] -> []
+    | FW(x)::r when (abs_float x < 0.2) -> FW(x)::(scale r f)
+    | FW(x)::r -> FW(x*.f)::(scale r f)
+    | e::r -> e::(scale r f)
+  in
+  let rec find_min l = match l with
+    | [] -> 99999.
+    | FW(x)::r when (abs_float x) < 0.2 -> find_min r
+    | FW(x)::r -> min (x) (find_min r)
+    | e::r -> find_min r
+  in
+  let rec mirror found bit l = match l with
+    | [] -> []
+    | RT(x) :: r ->
+        if not found then RT(abs_float(x)) :: (mirror true (x > 0.) r)
+        else RT(if bit then x else (-. x)) :: (mirror found bit r)
+    | x :: r -> x :: (mirror found bit r)
+  in
+  let p' = remove_start true p in
+  let m = find_min p' in
+  let p'' = scale p' (1./.m) in
+  let p''' = mirror false true p'' in
+  List.iteri eval_instruction p''' ;
+  !c
+
+let eval_turtle ?sequence t2t =
+  let p,_ = (t2t logo_NOP) (init_state ()) in
+  let c = ref (new_canvas ()) in
+  let lineto x y = (c := (lineto !c x y))
+  and moveto x y = (c := (moveto !c x y)) in
+  let t = init_state () in
+  moveto t.x t.y ;
+  let oc = match sequence with
+    | None -> None
+    | Some path ->
+      let oc = open_out (path^".seq")
+      in output_string oc "[[0.5,0.5]" ;
+      Some oc
+  in
+  let rec eval_instruction n i = match i with
+    | PU         -> t.p <- false
+    | PD         -> t.p <- true
+    | RT(angle)  -> t.t <- t.t +. angle
+    | SET(state) ->
+        begin
+          t <<- state ;
+          moveto (t.x) (t.y) ;
+          match sequence, oc with
+            | Some path , Some oc ->
+                let l_c = ref (new_canvas ()) in
+                l_c := circle !l_c t.x t.y ;
+                let name = Printf.sprintf "%s%03d.png" path n in
+                output_string oc
+                  (Printf.sprintf
+                    ",[%f,%f]"
+                    (t.x /. (2. *. d_from_origin))
+                    (t.y /. (2. *. d_from_origin))) ;
+                output_canvas_png !l_c 512 name
+            | _ -> ()
+        end
+    | FW(length) ->
+        let x = t.x +. (length *. cos(t.t))
+        and y = t.y +. (length *. sin(t.t)) in
+        (if t.p then lineto else moveto) x y ;
+        t.x <- x ;
+        t.y <- y ;
+        match sequence, oc with
+          | Some path , Some oc ->
+              let l_c = ref (new_canvas ()) in
+              l_c := circle !l_c x y ;
+              let name = Printf.sprintf "%s%03d.png" path n in
+              output_string oc
+                (Printf.sprintf
+                  ",[%f,%f]"
+                  (t.x /. (2. *. d_from_origin))
+                  (t.y /. (2. *. d_from_origin))) ;
+              output_canvas_png !l_c 512 name
+          | _ -> ()
+  in
+  List.iteri eval_instruction p ;
+  (match oc with
+    | Some oc -> output_string oc "]" ; close_out oc
+    | None -> () );
   !c
 
 let logo_PU : turtle =
@@ -87,7 +180,7 @@ let logo_PD : turtle =
   fun s -> ([PD], {s with p = true})
 
 let logo_RT : float -> turtle =
-  fun angle -> fun s -> ([RT(angle*.3.14159265359)], {s with t = s.t +. angle})
+  fun angle -> fun s -> ([RT(angle *. 4. *. atan(1.))], {s with t = s.t +. angle})
 
 let logo_FW : float -> turtle =
   fun length  ->
@@ -107,25 +200,27 @@ let logo_GET : (state -> turtle) -> turtle =
     fun s ->
       f s s
 
-let logo_SET : (state -> turtle) = fun s -> fun _ -> ([SET(s)], s)
+let logo_SET : (state -> turtle) = fun s -> fun _ -> ([SET({s with t=s.t *. 4. *. atan(1.)})], s)
 
-let logo_NOP : turtle = fun s -> ([], s)
+(*let logo_CHEAT : float -> turtle =*)
+  (*fun length ->*)
+    (*(logo_SEQ (logo_FW length) (logo_RT (logo_var_HLF (logo_var_HLF logo_var_UNIT))))*)
 
-let logo_var_UNIT : float  = 1.
-let logo_var_TWO : float   = 2.
-let logo_var_THREE: float  = 3.
-let logo_var_PI   : float  = 3.14159265359
-let logo_var_NXT         f = f +. 1.
-let logo_var_PRV         f = f -. 1.
-let logo_var_DBL         f = f *. 2.
-let logo_var_HLF         f = f /. 2.
-let logo_var_ADD      f f' = f +. f'
-let logo_var_SUB      f f' = f -. f'
-let logo_var_MUL      f f' = f *. f'
-let logo_var_DIV      f f' = if f' = 0. then (raise DIV0) else f /. f'
+
+(*let logo_CHEAT2 : float -> turtle =*)
+  (*fun length ->*)
+    (*(logo_SEQ (logo_FW length) (logo_RT (logo_var_HLF (logo_var_HLF (logo_var_HLF logo_var_UNIT)))))*)
+
+(*let logo_CHEAT3 : float -> turtle =*)
+  (*fun length ->*)
+    (*(logo_SEQ (logo_FW length) (logo_RT (logo_var_HLF (logo_var_HLF (logo_var_HLF (logo_var_HLF logo_var_UNIT))))))*)
+
+(*let logo_CHEAT4 : float -> turtle =*)
+  (*fun length ->*)
+    (*(logo_SEQ (logo_FW length) (logo_RT (logo_var_HLF logo_var_UNIT)))*)
 
 let turtle_to_list turtle =
-  let l,_ = turtle (init_state ()) in l
+  let l,_ = (turtle logo_NOP) (init_state ()) in l
 
 let turtle_to_png turtle resolution filename =
   output_canvas_png (eval_turtle turtle) resolution filename
@@ -133,7 +228,27 @@ let turtle_to_png turtle resolution filename =
 let turtle_to_array turtle resolution =
   canvas_to_1Darray (eval_turtle turtle) resolution
 
+let normal_turtle_to_array turtle resolution =
+  canvas_to_1Darray (eval_normal_turtle turtle) resolution
+
 let turtle_to_both turtle resolution filename =
   let c = (eval_turtle turtle) in
   output_canvas_png c resolution filename ;
   canvas_to_1Darray c resolution
+
+let max = 28. *. 256.
+
+let fp_equal x y eps =
+  try
+    for i = 0 to Bigarray.Array1.dim x - 1 do
+      if (abs (x.{i} - y.{i})) > eps then raise DoesNotMatch
+    done ;
+    true
+  with DoesNotMatch -> false
+
+let distance x y =
+  let sum = ref 0. in
+  for i = 0 to Bigarray.Array1.dim x - 1 do
+    sum := !sum +. (((float_of_int (x.{i} - y.{i})) /. 256.) ** 2.)
+  done ;
+  50. +. (50. *. !sum)

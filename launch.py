@@ -79,11 +79,14 @@ def sendCommand(
         copyCheckpoint = "mv ~/%s ~/ec/experimentOutputs" % checkpoint
 
     preamble = f"""#!/bin/bash
+pip install pypng
+conda install protobuf
 cd ~/ec
 {copyCheckpoint}
 touch compressor_dummy
-git pull
+git fetch
 git checkout {br}
+git pull
 
 make -C rust_compressor
 """
@@ -205,7 +208,7 @@ def launchExperiment(
 """ % (command, job_id)
 
     instance, address = launch(size, name=name)
-    time.sleep(60)
+    time.sleep(120)
     if checkpoint is not None:
         sendCheckpoint(address, checkpoint)
     sendCommand(

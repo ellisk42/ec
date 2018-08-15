@@ -107,9 +107,9 @@ if __name__ == "__main__":
             len(train))
 
     ConstantInstantiateVisitor.SINGLE = \
-        ConstantInstantiateVisitor(map(list, list({tuple([c for c in s])
-                                                   for t in test + train + challenge
-                                                   for s in t.stringConstants})))
+        ConstantInstantiateVisitor(list(map(list, list({tuple([c for c in s])
+                                                        for t in test + train + challenge
+                                                        for s in t.stringConstants}))))
 
     baseGrammar = Grammar.uniform(primitives + bootstrapTarget())
     challengeGrammar = baseGrammar  # Grammar.uniform(targetTextPrimitives)

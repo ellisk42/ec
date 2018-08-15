@@ -1,4 +1,4 @@
-from towerPrimitives import ttower
+from towerPrimitives import ttower, executeTower
 from utilities import *
 from task import *
 
@@ -22,6 +22,20 @@ def getTowerCash():
     global TOWERCACHING
     return TOWERCACHING
 
+class SupervisedTower(Task):
+    def __init__(self, name, plan):
+        self.original = plan
+        plan = plan(lambda s: (s,[]))(0)[1]
+        super(SupervisedTower, self).__init__(name, arrow(ttower,ttower), [],
+                                              features=[])
+        self.specialTask = ("supervisedTower",
+                            {"plan": plan})
+        self.plan = plan
+
+    def animate(self):
+        os.system("python towers/visualize.py '%s' 3"%(self.plan))
+
+    
 
 class TowerTask(Task):
     tasks = []
@@ -43,7 +57,7 @@ class TowerTask(Task):
                     float(minimumArea),
                     float(maximumStaircase),
                     float(minimumOverpass)]
-        super(TowerTask, self).__init__(name, ttower, [],
+        super(TowerTask, self).__init__(name, arrow(ttower,ttower), [],
                                         features=features)
 
         self.minimumOverpass = minimumOverpass
@@ -53,6 +67,15 @@ class TowerTask(Task):
         self.maximumMass = maximumMass
         self.minimumHeight = minimumHeight
         self.minimumArea = minimumArea
+
+        self.specialTask = ("tower",
+                            {"maximumStaircase": maximumStaircase,
+                             "perturbation": perturbation,
+                             "minimumLength": minimumLength,
+                             "maximumMass": maximumMass,
+                             "minimumHeight": minimumHeight,
+                             "minimumArea": minimumArea,
+                             "minimumOverpass": minimumOverpass})
 
         TowerTask.tasks.append(self)
 
@@ -101,7 +124,7 @@ class TowerTask(Task):
             signal.setitimer(signal.ITIMER_VIRTUAL, timeout)
 
         try:
-            tower = e.evaluate([])
+            tower = executeTower(e)
             if timeout is not None:
                 signal.signal(signal.SIGVTALRM, lambda *_: None)
                 signal.setitimer(signal.ITIMER_VIRTUAL, 0)
@@ -144,7 +167,7 @@ class TowerTask(Task):
         import os
 
         if isinstance(e, Program):
-            tower = e.evaluate([])
+            tower = executeTower(e)
         else:
             assert isinstance(e, list)
             tower = e
@@ -161,7 +184,7 @@ class TowerTask(Task):
 def centerTower(t):
     x1 = max(x for x, _, _ in t)
     x0 = min(x for x, _, _ in t)
-    c = float(x1 + x0) / 2.
+    c = float(x1 - x0) / 2. + x0
     return [(x - c, w, h) for x, w, h in t]
 
 
@@ -195,3 +218,53 @@ def makeTasks():
             for h in HEIGHT
             if o <= a
             ]
+def makeSupervisedTasks():
+    from towerPrimitives import epsilon,TowerContinuation,xOffset,_left,_right,_loop
+    w,h = 2,1
+    _21 = TowerContinuation(xOffset(w, h), w - 2*epsilon, h - epsilon)
+    w,h = 1,2
+    _12 = TowerContinuation(xOffset(w, h), w - 2*epsilon, h - epsilon)
+    w,h = 1,3
+    _13 = TowerContinuation(xOffset(w, h), w - 2*epsilon, h - epsilon)
+    w,h = 3,1
+    _31 = TowerContinuation(xOffset(w, h), w - 2*epsilon, h - epsilon)
+    r = lambda n,k: _right(n)(k)
+    l = lambda n,k: _left(n)(k)
+
+    arches = [SupervisedTower("arch leg 1",lambda z: \
+               _13(r(2,_13(l(1,_31(z)))))),
+              SupervisedTower("arch leg 2",lambda z: \
+               _13(_13(r(2,_13(_13(l(1,_31(z)))))))),
+              SupervisedTower("arch leg 3",lambda z: \
+               _13(_13(_13(r(2,_13(_13(_13(l(1,_31(z)))))))))),
+              SupervisedTower("arch leg 4",lambda z: \
+               _13(_13(_13(_13(r(2,_13(_13(_13(_13(l(1,_31(z))))))))))))
+    ]
+    Bridges = [SupervisedTower("bridge (%d) of %s"%(n,a.name),
+                lambda z: _loop(n)(lambda i: a.original(r(2,z)))(z))
+               for n in range(2,5)
+               for a in arches]
+    Josh = [SupervisedTower("Josh (%d)"%n,
+                            lambda z: _loop(n)(lambda i: _31(_13(l(1,_13(r(2,_13(l(1,(_31(r(3,z)))))))))))(z))
+            for n in range(1,5) ]
+    staircase = [SupervisedTower("staircase %d"%n,
+                                 lambda z: _loop(n)(lambda i: _loop(i)(lambda j: _13(r(2,_13(l(1,_31(l(1,z)))))))(r(3,z)))(z))
+                 for n in range(2,5) ]
+    simpleLoops = [SupervisedTower("horizontal row %d"%n,
+                                   lambda z: _loop(n)(lambda i: _31(r(3,z)))(z))
+                   for n in range(3,5) ]+\
+                [SupervisedTower("vertical row %d"%n,
+                                   lambda z: _loop(n)(lambda i: _13(r(1,z)))(z))
+                   for n in range(3,5) ]+\
+                [SupervisedTower("horizontal stack %d"%n,
+                                   lambda z: _loop(n)(lambda i: _31(z))(z))
+                   for n in range(3,5) ]+\
+                [SupervisedTower("vertical stack %d"%n,
+                                   lambda z: _loop(n)(lambda i: _13(z))(z))
+                   for n in range(3,5) ]
+    everything = simpleLoops + staircase + Josh + arches + Bridges
+    for t in everything:
+        delattr(t,'original')
+    return everything
+if __name__ == "__main__":
+    for t in makeSupervisedTasks(): t.animate()

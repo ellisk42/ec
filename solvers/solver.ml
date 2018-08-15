@@ -45,9 +45,6 @@ let load_problems channel =
   in
 
   (* Automatic differentiation parameters *)
-  let differentiable =
-    productions |> List.exists ~f:(fun (e,_,_,_) -> is_base_primitive e && "REAL" = primitive_name e)
-  in
   let maxParameters =
     try j |> member "maxParameters" |> to_int
     with _ -> 99
@@ -55,8 +52,6 @@ let load_problems channel =
 
 
   let rec parse_type j =
-    (* try j |> to_string |> make_ground
-     * with _ -> *)
     try
       let k = j |> member "constructor" |> to_string in
       let a = j |> member "arguments" |> to_list |> List.map ~f:parse_type in
@@ -65,11 +60,6 @@ let load_problems channel =
       let i = j |> member "index" |> to_int in
       TID(i)
   in 
-
-  (* string constant parameters *)
-  let is_constant_task = productions |> List.exists ~f:(fun (p,_,_,_) ->
-      is_base_primitive p && primitive_name p = "STRING")
-  in
 
   let rec unpack x =
     try magical (x |> to_int) with _ ->
@@ -91,56 +81,15 @@ let load_problems channel =
                                                   ex |> member "output" |> unpack)) in
       let maximum_frontier = j |> member "maximumFrontier" |> to_int in
       let name = j |> member "name" |> to_string in
-      
-      (* string constant parameters *)
-      let stringConstants : char list list =
-        try j |> member "stringConstants" |> to_list |> List.map ~f:to_string
-            |> List.map ~f:(String.to_list)
-        with _ -> []
-      in
 
-      let parameterPenalty =
-        try j |> member "parameterPenalty" |> to_float
-        with _ -> 0.
-      in
-      let temperature =
-        try j |> member "temperature" |> to_float
-        with _ -> 1.
-      in
-      let lossThreshold =
-        try Some(j |> member "lossThreshold" |> to_float)
-        with _ -> None
-      in
-
-
-      (* towers *)
-      let tower_stuff =
-        try
-          Some(tower_task ~perturbation:(j |> member "perturbation" |> to_float)
-                 ~maximumStaircase:(j |> member "maximumStaircase" |> to_float)
-                 ~maximumMass:(j |> member "maximumMass" |> to_float)
-                 ~minimumLength:(j |> member "minimumLength" |> to_float)
-                 ~minimumArea:(j |> member "minimumArea" |> to_float)
-                 ~minimumOverpass:(j |> member "minimumOverpass" |> to_float)
-                 ~minimumHeight:(j |> member "minimumHeight" |> to_float)
-                 ~stabilityThreshold:0.5)
-        with _ -> None
-      in
-
-      let task_type = if is_some tower_stuff then ttower else task_type in
-      let is_turtle_task = true in
-
-      let task = 
-        (match tower_stuff with
-         | Some(ts) -> ts
-         | None -> 
-             if differentiable
-               then differentiable_task ~parameterPenalty:parameterPenalty ~temperature:temperature ~lossThreshold:lossThreshold ~maxParameters:maxParameters
-             else if is_constant_task
-               then constant_task ~maxParameters:maxParameters ~parameterPenalty:parameterPenalty ~stringConstants:stringConstants
-             else if is_turtle_task
-               then turtle_task
-            else supervised_task)  ~timeout:timeout name task_type examples
+      let task =
+        (try
+           let special = j |> member "specialTask" |> to_string in
+           match special |> Hashtbl.find task_handler with
+           | Some(handler) -> handler (j |> member "extras")
+           | None -> (Printf.eprintf " (ocaml) FATAL: Could not find handler for %s\n" special;
+                      exit 1)
+         with _ -> supervised_task) ~timeout:timeout name task_type examples
       in 
       (task, maximum_frontier))
   in
@@ -205,23 +154,25 @@ let _ =
        mfp,
      nc,timeout, verbose) =
     load_problems Pervasives.stdin in
-  if List.exists tf ~f:(fun (t,_) -> t.task_type = ttower) then update_tower_cash() else ();
+  if List.exists tf ~f:(fun (t,_) -> t.task_type = ttower @> ttower)
+  then update_serialized_tower_cash()
+  else ();
   let solutions =
     enumerate_for_tasks ~maxFreeParameters:mfp ~lowerBound:lowerBound ~upperBound:upperBound ~budgetIncrement:budgetIncrement
     ~verbose:verbose ~nc:nc ~timeout:timeout g tf
   in
   export_frontiers tf solutions |> print_string ;;
 
-let tune_differentiation () =
-  let (tf,g,
-       lowerBound,upperBound,budgetIncrement,
-       mfp,
-     nc,timeout, verbose) =
-    load_problems  Pervasives.stdin in
-  if List.exists tf ~f:(fun (t,_) -> t.task_type = ttower) then update_tower_cash() else ();
-  (* "(-6.8x + 4.7)/[(x + 4.5)]" *)
-  let p = parse_program "(lambda (/. (+. REAL (*. REAL $0)) (+. $0 REAL)))" |> get_some in
-  match tf with
-    | [(t,_)] -> Printf.eprintf "%f\n" (t.log_likelihood p)
-    | _ -> failwith "ERROR: no task were given at all"
-;;
+(* let tune_differentiation () = *)
+(*   let (tf,g, *)
+(*        lowerBound,upperBound,budgetIncrement, *)
+(*        mfp, *)
+(*      nc,timeout, verbose) = *)
+(*     load_problems  Pervasives.stdin in *)
+(*   if List.exists tf ~f:(fun (t,_) -> t.task_type = ttower) then update_tower_cash() else (); *)
+(*   (\* "(-6.8x + 4.7)/[(x + 4.5)]" *\) *)
+(*   let p = parse_program "(lambda (/. (+. REAL (\*. REAL $0)) (+. $0 REAL)))" |> get_some in *)
+(*   match tf with *)
+(*     | [(t,_)] -> Printf.eprintf "%f\n" (t.log_likelihood p) *)
+(*     | _ -> failwith "ERROR: no task were given at all" *)
+(* ;; *)

@@ -144,6 +144,12 @@ class DifferentiableTask(Task):
         self.BIC = BIC
         self.likelihoodThreshold = likelihoodThreshold
 
+        self.specialTask = ("differentiable",
+                            {"parameterPenalty": BIC * math.log(len(examples)),
+                             "temperature": temperature,
+                             "maxParameters": maxParameters,
+                             "lossThreshold": -likelihoodThreshold})
+
         super(
             DifferentiableTask,
             self).__init__(

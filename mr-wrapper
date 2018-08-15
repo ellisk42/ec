@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # DRY=true will show what's going on but run nothing
-DRY="false"
+DRY="true"
 
 # On OM you probably want something like this:
 module load openmind/miniconda/3.9.1
@@ -9,18 +9,18 @@ source activate ec
 SBATCH="true"
 PMAP="12"
 TMAP="500"
-PRED="48"
+PRED="30"
 TRED="5000"
 
 # Name of your script
-PROGRAM="geom.py"
+PROGRAM="logo.py"
 
 # Arguments for the program, respectively for the maps and the reduce
 ARGSMAP="-t 600 -g -i 10"
-ARGSRED="-t 3600 -i 20 --expandFrontier 2"
+ARGSRED="-t 7200 -i 20 --expandFrontier 2"
 
 # Targets
-MAP="anyNum circle line los penoff square variable"
+MAP="none"
 #MAP="line square"
 REDUCE="all"
 

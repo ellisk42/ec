@@ -70,7 +70,7 @@ def parallelMap(numberOfCPUs, f, *xs, chunksize=None, maxtasksperchild=None):
     global PARALLELMAPDATA
 
     if numberOfCPUs == 1:
-        return map(f, *xs)
+        return list(map(f, *xs))
 
     n = len(xs[0])
     for x in xs:
@@ -331,14 +331,16 @@ def sampleDistribution(d):
         eprint(d)
     r = random.random()
     u = 0.
-    for t in d:
+    for index, t in enumerate(d):
         p = t[0] / z
-        if r < u + p:
+        # This extra condition is needed for floating-point bullshit
+        if r <= u + p or index == len(d) - 1:
             if len(t) <= 2:
                 return t[1]
             else:
                 return t[1:]
         u += p
+        
     assert False
 
 
@@ -370,17 +372,16 @@ def testTrainSplit(x, trainingFraction, seed=0):
         # Assume that the training fraction is actually the number of tasks
         # that we want to train on
         trainingFraction = float(trainingFraction) / len(x)
-    needToTrain = {
-        j for j, d in enumerate(x) if hasattr(
-            d, 'mustTrain') and d.mustTrain}
+    needToTrain = { j for j, d in enumerate(x)
+                    if hasattr(d, 'mustTrain') and d.mustTrain }
     mightTrain = [j for j in range(len(x)) if j not in needToTrain]
+
+    trainingSize = max(0, int(len(x) * trainingFraction - len(needToTrain)))
 
     import random
     random.seed(seed)
-    training = list(range(len(mightTrain)))
-    random.shuffle(training)
-    training = set(
-        training[:int(len(x) * trainingFraction) - len(needToTrain)]) | needToTrain
+    random.shuffle(mightTrain)
+    training = set(mightTrain[:trainingSize]) | needToTrain
 
     train = [t for j, t in enumerate(x) if j in training]
     test = [t for j, t in enumerate(x) if j not in training]
@@ -510,7 +511,10 @@ def runWithTimeout(k, timeout):
         signal.signal(signal.SIGPROF, lambda *_:None)
         signal.setitimer(signal.ITIMER_PROF, 0)
         return result
-    except RunWithTimeout: raise RunWithTimeout()
+    except RunWithTimeout:
+        signal.signal(signal.SIGPROF, lambda *_:None)
+        signal.setitimer(signal.ITIMER_PROF, 0)
+        raise RunWithTimeout()
     except:
         signal.signal(signal.SIGPROF, lambda *_:None)
         signal.setitimer(signal.ITIMER_PROF, 0)
@@ -529,18 +533,63 @@ class PQ(object):
 
     def __init__(self):
         self.h = []
+        self.index2value = {}
+        self.nextIndex = 0
 
     def push(self, priority, v):
-        heapq.heappush(self.h, (-priority, v))
+        self.index2value[self.nextIndex] = v
+        heapq.heappush(self.h, (-priority, self.nextIndex))
+        self.nextIndex += 1
 
     def popMaximum(self):
-        return heapq.heappop(self.h)[1]
+        i = heapq.heappop(self.h)[1]
+        v = self.index2value[i]
+        del self.index2value[i]
+        return v
 
     def __iter__(self):
         for _, v in self.h:
-            yield v
+            yield self.index2value[v]
 
     def __len__(self): return len(self.h)
+
+class UnionFind:
+    class Class:
+        def __init__(self, x):
+            self.members = {x}
+            self.leader = None
+        def chase(self):
+            k = self
+            while k.leader is not None:
+                k = k.leader
+            self.leader = k
+            return k
+            
+    def __init__(self):
+        # Map from keys to classes
+        self.classes = {}
+    def unify(self,x,y):
+        k1 = self.classes[x].chase()
+        k2 = self.classes[y].chase()
+        # k2 will be the new leader
+        k1.leader = k2
+        k2.members |= k1.members
+        k1.members = None
+        self.classes[x] = k2
+        self.classes[y] = k2
+        return k2
+    def newClass(self,x):
+        if x not in self.classes:
+            n = Class(x)
+            self.classes[x] = n
+
+    def otherMembers(self,x):
+        k = self.classes[x].chase()
+        self.classes[x] = k
+        return k.members        
+        
+
+    
 
 
 def substringOccurrences(ss, s):

@@ -62,7 +62,7 @@ let get_infos smart d_from_origin box canvas =
     let size = Gg.Size2.v d2 d2 in
     let area =
       `O { P.o with
-            P.width = if smart then (1. /. dim) else 0.1 ;
+            P.width = if smart then (1. /. dim) else 0.05 ;
             (*P.cap = `Round ; Makes subpath render weird...! *)
             P.join = `Round }
     in

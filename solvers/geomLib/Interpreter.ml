@@ -162,26 +162,6 @@ let valuesCostProgram : shapeprogram -> int =
     | Nop -> 0
     | Integrate(_,_,_) -> 1
 
-let rec costProgram : shapeprogram -> int =
-    fun p -> match p with
-    | Turn v -> (valuesCostProgram (Turn v)) + (costVar v)
-    | Embed (p) -> (valuesCostProgram (Embed(p))) + costProgram p
-    | Concat (p1,p2) -> (valuesCostProgram (Concat (p1,p2)))
-                        + costProgram p1 + costProgram p2
-    | Repeat (v,p') -> (valuesCostProgram (Repeat(v,p')))
-                       + (costVar v) + (costProgram p')
-    | Nop -> 0
-    | Define (s,v) -> (valuesCostProgram (Define (s,v)))
-                      + costVar (Some v)
-    | Integrate(v1,v2,(v3,v4,v5,v6)) ->
-            (valuesCostProgram (Integrate(v1,v2,(v3,v4,v5,v6))))
-          + costVar v1
-          + (match v2 with None -> 0 | Some _ -> 1)
-          + costVar v3
-          + costVar v4
-          + costVar v5
-          + costVar v6
-
 let evaluateVar v htbl_var =
     let rec evaluateVar_helper v htbl_var = match v with
     | Unit -> 1.
@@ -205,7 +185,71 @@ let evaluateVar v htbl_var =
     | n when n = nan -> raise (MalformedProgram("Some var was NaN"))
     | f -> f
 
-let interpret ?noise:(noise=false) shapeprogram =
+let rec costProgram : shapeprogram -> int =
+    fun p -> match p with
+    | Turn v -> (valuesCostProgram (Turn v)) + (costVar v)
+    | Embed (p) -> (valuesCostProgram (Embed(p))) + costProgram p
+    | Concat (p1,p2) -> (valuesCostProgram (Concat (p1,p2)))
+                        + costProgram p1 + costProgram p2
+    | Repeat (v,p') -> (valuesCostProgram (Repeat(v,p')))
+                       + (costVar v) + (costProgram p')
+    | Nop -> 0
+    | Define (s,v) -> (valuesCostProgram (Define (s,v)))
+                      + costVar (Some v)
+    | Integrate(v1,v2,(v3,v4,v5,v6)) ->
+            (valuesCostProgram (Integrate(v1,v2,(v3,v4,v5,v6))))
+          + costVar v1
+          + (match v2 with None -> 0 | Some _ -> 1)
+          + costVar v3
+          + costVar v4
+          + costVar v5
+          + costVar v6
+
+let rec costProgram_norepeat : shapeprogram -> int =
+    fun p -> match p with
+    | Turn v -> (valuesCostProgram (Turn v)) + (costVar v)
+    | Embed (p) -> (valuesCostProgram (Embed(p))) + costProgram_norepeat p
+    | Concat (p1,p2) -> (valuesCostProgram (Concat (p1,p2)))
+                        + costProgram_norepeat p1 + costProgram_norepeat p2
+    | Repeat (v,p') -> ((valuesCostProgram (Repeat(v,p')))
+                         + (costVar v) + (costProgram_norepeat p'))
+                       * (match v with
+                            | None -> 2
+                            | Some(v') -> (int_of_float (evaluateVar v'
+                            (Hashtbl.create 101))))
+    | Nop -> 0
+    | Define (s,v) -> (valuesCostProgram (Define (s,v)))
+                      + costVar (Some v)
+    | Integrate(v1,v2,(v3,v4,v5,v6)) ->
+            (valuesCostProgram (Integrate(v1,v2,(v3,v4,v5,v6))))
+          + costVar v1
+          + (match v2 with None -> 0 | Some _ -> 1)
+          + costVar v3
+          + costVar v4
+          + costVar v5
+          + costVar v6
+
+let rec costProgram_noembed : shapeprogram -> int =
+    fun p -> match p with
+    | Turn v -> (valuesCostProgram (Turn v)) + (costVar v)
+    | Embed (p) -> 2 * ((valuesCostProgram (Embed(p))) + costProgram_noembed p)
+    | Concat (p1,p2) -> (valuesCostProgram (Concat (p1,p2)))
+                        + costProgram_noembed p1 + costProgram_noembed p2
+    | Repeat (v,p') -> (valuesCostProgram (Repeat(v,p')))
+                       + (costVar v) + (costProgram_noembed p')
+    | Nop -> 0
+    | Define (s,v) -> (valuesCostProgram (Define (s,v)))
+                      + costVar (Some v)
+    | Integrate(v1,v2,(v3,v4,v5,v6)) ->
+            (valuesCostProgram (Integrate(v1,v2,(v3,v4,v5,v6))))
+          + costVar v1
+          + (match v2 with None -> 0 | Some _ -> 1)
+          + costVar v3
+          + costVar v4
+          + costVar v5
+          + costVar v6
+
+let interpret ?factor:(factor=1.) ?noise:(noise=false) shapeprogram =
     let r_canvas = ref (new_canvas ()) in
     let moveto x y = (r_canvas := moveto !r_canvas x y)
     and lineto x y = (r_canvas := lineto !r_canvas x y) in
@@ -257,7 +301,7 @@ let interpret ?noise:(noise=false) shapeprogram =
             curr_state.angularSpeed <- angularSpeed ;
             curr_state.angularAccel <- angularAccel ;
             let pen = match pen with | None -> true | Some b -> b in
-            for i = 1 to (int_of_float (f *. steps)) do
+            for i = 1 to (int_of_float (f *. steps /. factor)) do
                 let futur_x =
                   curr_state.x
                   +. (curr_state.speed *. cos(curr_state.face))
@@ -274,11 +318,11 @@ let interpret ?noise:(noise=false) shapeprogram =
                 curr_state.y <- futur_y ;
                 curr_state.face <-
                   curr_state.face +.
-                  (pi2 *. curr_state.angularSpeed) /. (steps) +.
+                  (pi2 *. curr_state.angularSpeed *. factor ) /. (steps) +.
                   if noise then 0.01 *. (normal_random ()) else 0.;
                 curr_state.speed <-
                   curr_state.speed +.
-                  (curr_state.accel /. (steps)) +.
+                  (curr_state.accel *. factor /. (steps)) +.
                   if noise then 0.01 *. (normal_random ()) else 0.;
                 curr_state.angularSpeed <-
                     curr_state.angularSpeed (* KINDA BROKEN *)
@@ -299,3 +343,71 @@ let interpret ?noise:(noise=false) shapeprogram =
     let canvas = !r_canvas in
     r_canvas := (new_canvas ());
     canvas
+
+let interpret_normal ?noise:(noise=false) p =
+  let rec remove_start found p = match p with
+    | Nop -> Nop, found
+    | Define (_,_) -> p,found
+    | Turn f -> (if found then Turn f else Nop),found
+    | Integrate(a,Some(false),c) ->
+        if found then (p,found)
+        else Nop,false
+    | Integrate(a,pen,c) -> p,true
+    | Concat(p1,p2) ->
+        if found then p,found
+        else begin
+          let (p',f') = remove_start found p1 in
+          if f' then Concat(p',p2),f'
+          else begin
+            let (p'',f'') = remove_start f' p2 in
+            Concat(p',p''),f''
+          end
+        end
+    | Embed p' ->
+        if found then (p,found)
+        else begin
+          let (p'',f) = remove_start found p' in
+          if f then Embed(p''),f
+          else Nop,false
+        end
+    | Repeat(v,p') -> p,found
+  in
+  let rec find_bit p = match p with
+    | Turn(Some(v)) ->
+        let f = evaluateVar v (Hashtbl.create 101) in
+        (true,(f > 0.))
+    | Turn(None) -> (true,true)
+    | Concat(p1,p2) ->
+        let (b1,b2) = find_bit p1 in
+        if b1 then b1,b2 else (find_bit p2)
+    | Embed (p) -> false,false
+    | Repeat (v,p) -> find_bit p
+    | _ -> false,false
+  in
+  let rec swap_bit p = match p with
+    | Turn(Some(v)) -> Turn(Some(Opposite(v)))
+    | Concat(p1,p2) -> Concat(swap_bit p1, swap_bit p2)
+    | Embed(p) -> Embed(swap_bit p)
+    | Repeat(v,p) -> Repeat(v, swap_bit p)
+    | x -> x
+  in
+  let rec min_t p = match p with
+    | Integrate(Some(t),_,_) -> evaluateVar t (Hashtbl.create 101)
+    | Integrate(None,_,_) -> 1.
+    | Concat(p1,p2) -> min (min_t p1) (min_t p2)
+    | Embed(p) -> min_t p
+    | Repeat(_,p) -> min_t p
+    | _ -> 99999.
+  in
+  let p',_ = remove_start false p in
+  let _,b = find_bit p' in
+  let p'' = if (not b) then (swap_bit p') else p' in
+  let factor = min_t p'' in
+  (*print_endline (pp_shapeprogram p) ;*)
+  (*print_newline () ;*)
+  (*print_endline (pp_shapeprogram p'') ;*)
+  (*print_newline () ;*)
+  (*print_float factor ;*)
+  (*print_newline () ;*)
+  (*print_endline "=========================" ;*)
+  interpret ~factor ~noise p''

@@ -375,14 +375,9 @@ class Grammar(object):
         return Grammar(-log(frequencies[0]), [(-log(frequencies[len(t.functionArguments())]) - len(
             t.functionArguments()) * expectedSize, t, p) for l, t, p in self.productions])
 
-    def enumeration(
-            self,
-            context,
-            environment,
-            request,
-            upperBound,
-            maximumDepth=20,
-            lowerBound=0.):
+    def enumeration(self,context,environment,request,upperBound,
+                    maximumDepth=20,
+                    lowerBound=0.):
         '''Enumerates all programs whose MDL satisfies: lowerBound < MDL <= upperBound'''
         if upperBound <= 0 or maximumDepth == 1:
             return
@@ -452,6 +447,93 @@ class Grammar(object):
                                                                           maximumDepth=maximumDepth,
                                                                           originalFunction=originalFunction,
                                                                           argumentIndex=argumentIndex + 1):
+                    yield resultL + argL, resultK, result
+
+    def sketchEnumeration(self,context,environment,request,sk,upperBound,
+                           maximumDepth=20,
+                           lowerBound=0.):
+        '''Enumerates all sketch instantiations whose MDL satisfies: lowerBound < MDL <= upperBound'''
+        if upperBound <= 0 or maximumDepth == 1:
+            return
+
+        if sk.isHole:
+            yield from self.enumeration(context, environment, request, upperBound,
+                                        maximumDepth=maximumDepth,
+                                        lowerBound=lowerBound)
+        elif request.isArrow():
+            assert sk.isAbstraction
+            v = request.arguments[0]
+            for l, newContext, b in self.sketchEnumeration(context, [v] + environment,
+                                                           request.arguments[1],
+                                                           sk.body,
+                                                           upperBound=upperBound,
+                                                           lowerBound=lowerBound,
+                                                           maximumDepth=maximumDepth):
+                yield l, newContext, Abstraction(b)
+
+        else:
+            f, xs = sk.applicationParse()
+            if f.isIndex:
+                ft = environment[f.i].apply(context)
+            elif f.isInvented or f.isPrimitive:
+                context, ft = f.tp.instantiate(context)
+            elif f.isAbstraction:
+                assert False, "sketch is not in beta longform"
+            elif f.isHole:
+                assert False, "hole as function not yet supported"
+            elif f.isApplication:
+                assert False, "should never happen - bug in applicationParse"
+            else: assert False
+
+            try: context = context.unify(ft.returns(), request)                
+            except UnificationFailure: assert False, "sketch is ill-typed"
+            ft = ft.apply(context)
+            argumentRequests = ft.functionArguments()
+
+            assert len(argumentRequests) == len(xs)
+
+            yield from self.sketchApplication(context, environment,
+                                              f, xs, argumentRequests,
+                                              upperBound=upperBound,
+                                              lowerBound=lowerBound,
+                                              maximumDepth=maximumDepth - 1)
+
+
+    def sketchApplication(self, context, environment,
+                          function, arguments, argumentRequests,
+                          # Upper bound on the description length of all of
+                          # the arguments
+                          upperBound,
+                          # Lower bound on the description length of all of
+                          # the arguments
+                          lowerBound=0.,
+                          maximumDepth=20):
+        if upperBound <= 0 or maximumDepth == 1:
+            return
+
+        if argumentRequests == []:
+            if lowerBound < 0. and 0. <= upperBound:
+                yield 0., context, function
+            else:
+                return
+        else:
+            argRequest = argumentRequests[0].apply(context)
+            laterRequests = argumentRequests[1:]
+            firstSketch = arguments[0]
+            laterSketches = arguments[1:]
+            for argL, newContext, arg in self.sketchEnumeration(context, environment, argRequest,
+                                                                firstSketch,
+                                                                upperBound=upperBound,
+                                                                lowerBound=0.,
+                                                                maximumDepth=maximumDepth):
+
+                newFunction = Application(function, arg)
+                for resultL, resultK, result in self.sketchApplication(newContext, environment, newFunction,
+                                                                       laterSketches, laterRequests,
+                                                                       upperBound=upperBound + argL,
+                                                                       lowerBound=lowerBound + argL,
+                                                                       maximumDepth=maximumDepth):
+
                     yield resultL + argL, resultK, result
 
     def enumerateNearby(self, request, expr, distance=3.0):
@@ -629,3 +711,11 @@ def violatesSymmetry(f, x, argumentIndex):
     if f == "fold":
         return argumentIndex == 1 and x == "empty"
     return False
+
+if __name__ == "__main__":
+    from arithmeticPrimitives import *
+    g = Grammar.uniform([k0,k1,addition, subtraction])
+    p = Program.parse("(lambda (+ <HOLE> <HOLE>))")
+    for stuff in g.sketchEnumeration(Context.EMPTY,[],arrow(tint,tint),
+                                     p,12.):
+        print(stuff)

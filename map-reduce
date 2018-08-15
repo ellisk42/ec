@@ -25,7 +25,9 @@ TMAP=0
 PREDUCE=0
 TREDUCE=0
 PROGRAM=""
-PREFIX="$(date '+%d-%m-%Y_%H:%M')"
+FOLDER="$(date '+%d-%m-%Y_%H:%M')"
+#PREFIX="/om2/scratch/$(date +"%a")/mathsm/$FOLDER"
+PREFIX="/tmp/$FOLDER"
 
 # Print the program help information.
 _print_help() {
@@ -65,11 +67,11 @@ _map() {
     do
       # Create safe to use name for the output
       if [ "$DRY" = "true" ]; then
-        TMP="$(mktemp -u "./$PREFIX/$target.XXXXXXXXX")"
-        TMPOUT="$(mktemp -u "./$PREFIX/$target.out.XXXXXXXXX")"
+        TMP="$(mktemp -u "$PREFIX/$target.XXXXXXXXX")"
+        TMPOUT="$(mktemp -u "$PREFIX/$target.out.XXXXXXXXX")"
       else
-        TMP="$(mktemp "./$PREFIX/$target.XXXXXXXXX")"
-        TMPOUT="$(mktemp "./$PREFIX/$target.out.XXXXXXXXX")"
+        TMP="$(mktemp "$PREFIX/$target.XXXXXXXXX")"
+        TMPOUT="$(mktemp "$PREFIX/$target.out.XXXXXXXXX")"
       fi
       # Also saves the name for latter reduce
       MAPTMP+=("$TMP")
@@ -130,9 +132,9 @@ _reduce() {
 
     # Make safe tmp files/folders
     if [ "$DRY" = "true" ]; then
-      TMPOUT="$(mktemp -u "./$PREFIX/reduce.out.XXXXXXXXX")"
+      TMPOUT="$(mktemp -u "$PREFIX/reduce.out.XXXXXXXXX")"
     else
-      TMPOUT="$(mktemp "./$PREFIX/reduce.out.XXXXXXXXX")"
+      TMPOUT="$(mktemp "$PREFIX/reduce.out.XXXXXXXXX")"
     fi
 
     # Iteratively build the relevant command
@@ -163,7 +165,7 @@ _reduce() {
       if [  ${#PIDs[@]} -gt 0 ]; then
         JOBS=$(echo "${PIDs[*]}" | tr " " ":")
         CMD="sbatch \\
-            --job-name=geom_reduce-$PREFIX --output=$TMPOUT \\
+            --job-name=geom_reduce-$FOLDER --output=$TMPOUT \\
             --ntasks=1 --cpus-per-task $PREDUCE --time=$TREDUCE \\
             --mail-user=$(whoami)@mit.edu --mail-type=ALL --requeue \\
             --qos=tenenbaum \\
@@ -171,7 +173,7 @@ _reduce() {
             --wrap=\"$CMD --CPUs $PREDUCE\""
       else
         CMD="sbatch \\
-            --job-name=geom_reduce-$PREFIX --output=$TMPOUT \\
+            --job-name=geom_reduce-$FOLDER --output=$TMPOUT \\
             --ntasks=1 --cpus-per-task $PREDUCE --time=$TREDUCE \\
             --mail-user=$(whoami)@mit.edu --mail-type=ALL --requeue \\
             --qos=tenenbaum \\
