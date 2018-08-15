@@ -255,21 +255,21 @@ def makeHandPickedTasks():
     tasklist = data[0] #a list of indices
 
 
-    full_list = list(range(199)) + 
-[209,218,222,223,224,225,226] +
-list(range(222,233)) +
-[235,237,238,239,243,244,245,252,253,254,255,257,258,259,260,261,264,265,269,272,274] +
-list(range(275,291)) +
-[295,297,300,303,304,305,306,310,311,312,314,315,316,320,321,323,327,329,330,333,334,335,337,338,339,340,341,342,343,344] +
-list(range(348,359)) +
-[361,369,373,379,380,382,387,403,405,407,408] +
-list(range(409,417)) +
-list(range(418,437)) +
-list(range(440,444)) +
-list(range(446,452)) +
-list(range(456,460)) +
-list(range(466,472)) +
-[503,504]
+    full_list = list(range(199)) + \
+    [209,218,222,223,224,225,226] + \
+    list(range(222,233)) + \
+    [235,237,238,239,243,244,245,252,253,254,255,257,258,259,260,261,264,265,269,272,274] + \
+    list(range(275,291)) + \
+    [295,297,300,303,304,305,306,310,311,312,314,315,316,320,321,323,327,329,330,333,334,335,337,338,339,340,341,342,343,344] + \
+    list(range(348,359)) + \
+    [361,369,373,379,380,382,387,403,405,407,408] + \
+    list(range(409,417)) + \
+    list(range(418,437)) + \
+    list(range(440,444)) + \
+    list(range(446,452)) + \
+    list(range(456,460)) + \
+    list(range(466,472)) + \
+    [503,504]
 
 
     regextasks = [
@@ -278,8 +278,8 @@ list(range(466,472)) +
             [((), example) for example in task] 
         ) for i, task in enumerate(tasklist) if i in full_list ]
 
-    for i in train_list:
-        regextasks[i].mustTrain = True
+    #for i in train_list:
+    #    regextasks[i].mustTrain = True
 
 
     return regextasks
@@ -307,7 +307,8 @@ if __name__ == "__main__":
 
     task = {"number": makeNumberTasks,
     "words": makeWordTasks,
-    "all": makeLongTasks}[sys.argv[1]]
+    "all": makeLongTasks,
+    "handpicked": makeHandPickedTasks}[sys.argv[1]]
 
     x = show_tasks(task())
 

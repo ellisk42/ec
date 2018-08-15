@@ -125,7 +125,7 @@ def regex_options(parser):
     parser.add_argument("--tasks",
                         default="old",
                         help="which tasks to use",
-                        choices=["old", "short", "long", "words","number","dates", "nonLetter"])
+                        choices=["old", "short", "long", "words","number","dates", "nonLetter", "handpicked"])
     parser.add_argument("--primitives",
                         default="base",
                         help="Which primitive set to use",
