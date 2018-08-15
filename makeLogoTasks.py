@@ -60,7 +60,7 @@ def makeTasks(subfolders, proto):
     if subfolders == ['all']:
         subfolders = allTasks()
 
-    def problem(n, examples, needToTrain=False):
+    def problem(n, examples, highresolution, needToTrain=False):
         outputType = arrow(turtle, turtle)
         task = Task(n,
                     outputType,
@@ -68,6 +68,7 @@ def makeTasks(subfolders, proto):
         task.mustTrain = needToTrain
         task.proto = proto
         task.specialTask = ("LOGO", {"proto": proto})
+        task.highresolution = highresolution
         problems.append(task)
 
     for subfolder in subfolders:
@@ -76,19 +77,18 @@ def makeTasks(subfolders, proto):
                 for _, _, files in os.walk(rootdir + subfolder + "/" + subfl):
                     for f in files:
                         if f.endswith("_l.png"):
-                            # fnorm = f[:-4] + "_norm.png"
-                            img1 = fileToArray(rootdir + subfolder + "/" + subfl + '/' + f)
+                            fullPath = rootdir + subfolder + "/" + subfl + '/' + f
+                            img1 = fileToArray(fullPath)
+                            highresolution = fileToArray(fullPath.replace("_l.png", "_h.png"))
                             try:
                                 problem(subfolder+"/"+subfl,
                                         [([], img1)],
+                                        highresolution,
                                         needToTrain=True)
-                                # img2 = fileToArray(rootdir + subfolder + '/' + fnorm)
-                                # problem(subfolder+"_"+f,
-                                        # [([], img1), ([], img2)],
-                                        # needToTrain=True)
                             except FileNotFoundError:
                                 problem(subfolder+"_"+f,
                                         [([], img1)],
+                                        highresolution,
                                         needToTrain=True)
     return problems
 

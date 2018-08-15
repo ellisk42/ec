@@ -11,6 +11,7 @@ from type import arrow
 import random as random
 import json
 import torch
+import torchvision
 import time
 import subprocess
 import os
@@ -23,57 +24,82 @@ from recognition import variable
 
 global prefix_dreams
 
+class Flatten(nn.Module):
+    def __init__(self):
+        super(Flatten, self).__init__()
+
+    def forward(self, x):
+        return x.view(x.size(0), -1)
+
 
 class LogoFeatureCNN(nn.Module):
 
-    def __init__(self, tasks, cuda=False, H=10):
+    def __init__(self, tasks, cuda=False, H=64):
         super(LogoFeatureCNN, self).__init__()
 
         self.sub = prefix_dreams + str(int(time.time()))
 
         self.outputDimensionality = H
+        def conv_block(in_channels, out_channels):
+            return nn.Sequential(
+                nn.Conv2d(in_channels, out_channels, 3, padding=1),
+                # nn.BatchNorm2d(out_channels),
+                nn.ReLU(),
+                nn.MaxPool2d(2)
+            )
 
-        self.pad = nn.ConstantPad2d(2, 0)
-        self.conv1 = nn.Conv2d(1, 6, 5)
-        self.conv2 = nn.Conv2d(6, 16, 5)
-        self.fc1 = nn.Linear(16*5*5, 120)
-        self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, H)
+        self.inputImageDimension = 128
+        self.resizedDimension = 64
+        assert self.inputImageDimension % self.resizedDimension == 0
+
+        # channels for hidden
+        hid_dim = 64
+        z_dim = 64
+
+        self.encoder = nn.Sequential(
+            conv_block(1, hid_dim),
+            conv_block(hid_dim, hid_dim),
+            conv_block(hid_dim, hid_dim),
+            conv_block(hid_dim, z_dim),
+            Flatten()
+        )
+
+        self.outputDimensionality = 1024
+
+        
+
 
     def forward(self, v):
-        x = 28
-        y = 28
+        assert len(v) == self.inputImageDimension*self.inputImageDimension
         floatOnlyTask = list(map(float, v))
-        reshaped = [floatOnlyTask[i:i + x]
-                    for i in range(0, len(floatOnlyTask), y)]
+        reshaped = [floatOnlyTask[i:i + self.inputImageDimension]
+                    for i in range(0, len(floatOnlyTask), self.inputImageDimension)]
         v = variable(reshaped).float()
-        v = self.pad(v)
+        # insert channel and batch
         v = torch.unsqueeze(v, 0)
         v = torch.unsqueeze(v, 0)
-        out = F.relu(self.conv1(v))
-        out = F.max_pool2d(out, 2)
-        out = F.relu(self.conv2(out))
-        out = F.max_pool2d(out, 2)
-        out = out.view(out.size(0), -1)
-        out = F.relu(self.fc1(out))
-        out = F.relu(self.fc2(out))
-        out = self.fc3(out)
-        out = torch.squeeze(out)
-        return out
+        window = int(self.inputImageDimension/self.resizedDimension)
+        v = F.avg_pool2d(v, (window,window))
+        v = self.encoder(v)
+        return v.view(-1)
 
     def featuresOfTask(self, t):  # Take a task and returns [features]
-        return self(t.examples[0][1])
+        return self(t.highresolution)
 
     def taskOfProgram(self, p, t):
         try:
-            output = subprocess.check_output(['./logoDrawString',
+            [output, highresolution] = \
+                    [subprocess.check_output(['./logoDrawString',
                                               '0',
                                               "none",
-                                              '28',
+                                              str(resolution),
                                               str(p)],
                                              timeout=1).decode("utf8")
+                     for resolution in [28,128]] 
             shape = list(map(float, output.split(',')))
-            return Task("Helm", t, [(([0]), shape)])
+            t = Task("Helm", t, [(([0]), shape)])
+            t.highresolution = highresolution
+            return t
         except subprocess.TimeoutExpired:
             return None
         except ValueError:
@@ -167,6 +193,7 @@ def outputDreams(checkpoint, directory):
         
 if __name__ == "__main__":
     args = commandlineArguments(
+        structurePenalty=1.5,
         steps=2500,
         a=3,
         topK=5,
@@ -238,7 +265,7 @@ if __name__ == "__main__":
     generator = ecIterator(baseGrammar, train,
                            testingTasks=test,
                            outputPrefix=prefix_pickles,
-                           compressor="rust",
+                           compressor="pypy",
                            evaluationTimeout=0.01,
                            **args)
 
