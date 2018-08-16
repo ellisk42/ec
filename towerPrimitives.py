@@ -79,7 +79,7 @@ primitives = [
      for name, (w, h) in blocks.items()] + [
              addition, subtraction
          ] + \
-         [Primitive(str(j), tint, j) for j in list(range(1,3)) + list(range(-2,0,-1)) ]
+         [Primitive(str(j), tint, j) for j in list(range(1,6)) + list(range(-2,0,-1)) ]
 
 def executeTower(p):
     return p.evaluate([])(lambda s: (s,[]))(0)[1]
