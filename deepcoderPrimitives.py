@@ -1,10 +1,17 @@
 from program import Primitive, Program, prettyProgram
 from grammar import Grammar
-from type import tlist, tint, tbool, arrow #, t0, t1, t2
+from type import tlist, tint, tbool, arrow, baseType #, t0, t1, t2
 
 
 import math
 #from functools import reduce
+
+
+#todo
+int_to_int = baseType("int_to_int")
+int_to_bool = baseType("int_to_bool")
+int_to_int_to_int = baseType("int_to_int_to_int")
+
 
 #deepcoderPrimitives
 Null = None #or perhaps something else, like "an integer outside the working range"?
@@ -72,11 +79,11 @@ def deepcoderPrimitives():
         Primitive("sort", arrow(tlist(tint), tlist(tint)), _sort),
         Primitive("sum", arrow(tlist(tint), tint), _sum)
         ] + [
-        Primitive("map", arrow(arrow(tint, tint), tlist(tint), tlist(tint)), _map), #is this okay???
-        Primitive("filter", arrow(arrow(tint, tbool), tlist(tint), tlist(tint)), _filter), #is this okay???
-        Primitive("count", arrow(arrow(tint, tbool), tlist(tint), tint), _count), #is this okay???
-        Primitive("zipwith", arrow(arrow(tint, tint, tint), tlist(tint), tlist(tint), tlist(tint)), _zipwith), #is this okay???
-        Primitive("scanl1", arrow(arrow(tint, tint, tint), tlist(tint), tlist(tint)), _scanl1), #is this okay???
+        Primitive("map", arrow(int_to_int, tlist(tint), tlist(tint)), _map), #is this okay???
+        Primitive("filter", arrow(int_to_bool, tlist(tint), tlist(tint)), _filter), #is this okay???
+        Primitive("count", arrow(int_to_bool, tlist(tint), tint), _count), #is this okay???
+        Primitive("zipwith", arrow(int_to_int_to_int, tlist(tint), tlist(tint), tlist(tint)), _zipwith), #is this okay???
+        Primitive("scanl1", arrow(int_to_int_to_int, tlist(tint), tlist(tint)), _scanl1), #is this okay???
         ] + [
         Primitive("succ", arrow(tint, tint), _succ),
         Primitive("pred", arrow(tint, tint), _pred),
@@ -99,6 +106,28 @@ def deepcoderPrimitives():
         Primitive("mult", arrow(tint, tint, tint), _mult),
         Primitive("min", arrow(tint, tint, tint), _min),
         Primitive("max", arrow(tint, tint, tint), _max)
+        ] + [
+        Primitive("succ_fn", int_to_int, _succ),
+        Primitive("pred_fn", int_to_int, _pred),
+        Primitive("double_fn", int_to_int, _double),
+        Primitive("half_fn", int_to_int, _half),
+        Primitive("neg_fn", int_to_int, _neg),
+        Primitive("square_fn", int_to_int, _square),
+        Primitive("triple_fn", int_to_int, _triple),
+        Primitive("third_fn", int_to_int, _third),
+        Primitive("quad_fn", int_to_int, _quad),
+        Primitive("quarter_fn", int_to_int, _quarter),
+        ] + [
+        Primitive("pos_fn", int_to_bool, _pos),
+        Primitive("neg_fn", int_to_bool, _neg),
+        Primitive("even_fn", int_to_bool, _even),
+        Primitive("odd_fn", int_to_bool, _odd),
+        ] + [
+        Primitive("add_fn", int_to_int_to_int, _add),
+        Primitive("sub_fn", int_to_int_to_int, _sub),
+        Primitive("mult_fn", int_to_int_to_int, _mult),
+        Primitive("min_fn", int_to_int_to_int, _min),
+        Primitive("max_fn", int_to_int_to_int, _max)       
     ]
 
 
@@ -106,14 +135,30 @@ def deepcoderProductions():
     return [(0.0, prim) for prim in deepcoderPrimitives()]
 
 
+def flatten_program(p):
+    string = p.show(False)
+    num_inputs = string.count('lambda')
+    string = string.replace('lambda', '')
+    string = string.replace('(', '')
+    string = string.replace(')', '')
+    #remove '_fn' (optional)
+    for i in range(num_inputs):
+        string = string.replace('$' + str(num_inputs-i-1),'input_' + str(i))
+    string = string.split(' ')
+    string = list(filter(lambda x: x is not '', string))
+    return string
+
 if __name__ == "__main__":
     #g = Grammar.uniform(deepcoderPrimitives())
     g = Grammar.fromProductions(deepcoderProductions(), logVariable= -100000000000)
-    request = arrow(tlist(tint), tint)
+    request = arrow(tlist(tint), tint, tint)
     p = g.sample(request)
     print("request:", request)
     print("program:")
     print(prettyProgram(p))
+    print("flattened_program:")
+    flat = flatten_program(p)
+    print(flat)
 
     # # with open("/home/ellisk/om/ec/experimentOutputs/list_aic=1.0_arity=3_ET=1800_expandFrontier=2.0_it=4_likelihoodModel=all-or-nothing_MF=5_baseline=False_pc=10.0_L=1.0_K=5_rec=False.pickle", "rb") as handle:
     # #     b = pickle.load(handle).grammars[-1]
