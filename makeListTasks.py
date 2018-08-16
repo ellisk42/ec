@@ -397,7 +397,7 @@ def sortBootstrap():
             lb = 2
         if ub is None:
             ub = 5
-        return [randint(0, 5) for _ in range(randint(lb, ub))]
+        return [randint(0, 10) for _ in range(randint(lb, ub))]
     def randomBooleanList():
         return [flip() for _ in range(randint(4, 7))]
     def removeDuplicates(l):
