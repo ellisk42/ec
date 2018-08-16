@@ -95,8 +95,9 @@ class LogoFeatureCNN(nn.Module):
                                               str(resolution),
                                               str(p)],
                                              timeout=1).decode("utf8")
-                     for resolution in [28,128]] 
+                     for resolution in [28,self.inputImageDimension]]
             shape = list(map(float, output.split(',')))
+            highresolution = list(map(float, highresolution.split(',')))
             t = Task("Helm", t, [(([0]), shape)])
             t.highresolution = highresolution
             return t
