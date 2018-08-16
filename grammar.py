@@ -548,6 +548,30 @@ class Grammar(object):
             yield from Mutator(self, mutations).execute(expr, request)
 
 
+    def enumerateHoles(self, request, expr, distance=100.0, k=3): #distance is cranked up bc only looks at every node, so not a huge cost
+        """Enumerate programs with a single hole within mdl distance"""
+        #TODO: make it possible to enumerate sketches with multiple holes
+        if distance <= 0:
+            yield expr
+        else:
+            def mutations(tp, loss):
+                if distance - loss > 0:
+                    yield Program.Hole
+            top_k = [] # (expr, logl)
+            for expr in Mutator(self, mutations).execute(expr, request):
+                l = self.logLikelihood(expr)
+                if len(top_k) > 0:
+                    i, v = min(enumerate(top_k), key=lambda x:x[1][1])
+                    if l > v[1]:
+                        if len(top_k) == k:
+                            top_k[i] = (expr, l)
+                        else:
+                            top_k.append((expr, l))
+                else:
+                    top_k.append((expr, l))
+            return sorted(top_k, key=lambda x:x[1])
+
+
 class LikelihoodSummary(object):
     '''Summarizes the terms that will be used in a likelihood calculation'''
 
