@@ -69,12 +69,8 @@ class ECResult():
                      "useNewRecognitionModel": "newRec",
                      "likelihoodModel": "likemod",
                      "helmholtzBatch": "HB",
-<<<<<<< HEAD
-                     "topk_use_only_likelihood": "kNotMAP",
-=======
                      "use_ll_cutoff": "llcut",
                      "topk_use_only_likelihood": "topkNotMAP",
->>>>>>> 9e293ae8c73c1d4eda9b9f79de97f2c904461fee
                      "activation": "act"}
 
     @staticmethod
