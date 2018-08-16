@@ -109,7 +109,10 @@ def deepcoderProductions():
 if __name__ == "__main__":
     #g = Grammar.uniform(deepcoderPrimitives())
     g = Grammar.fromProductions(deepcoderProductions(), logVariable= -100000000000)
-    p = g.sample(arrow(tlist(tint), tint))
+    request = arrow(tlist(tint), tint)
+    p = g.sample(request)
+    print("request:", request)
+    print("program:")
     print(prettyProgram(p))
 
     # # with open("/home/ellisk/om/ec/experimentOutputs/list_aic=1.0_arity=3_ET=1800_expandFrontier=2.0_it=4_likelihoodModel=all-or-nothing_MF=5_baseline=False_pc=10.0_L=1.0_K=5_rec=False.pickle", "rb") as handle:
