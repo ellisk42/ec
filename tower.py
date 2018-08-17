@@ -135,19 +135,17 @@ def bruteForceBaseline(tasks):
     sys.exit(0)
 
 
-
+def tower_options(parser):
+    parser.add_argument("--tasks",
+                        choices=["supervised","everything","distant"],
+                        default="supervised")
 
 
 if __name__ == "__main__":
     from towers.tower_common import exportTowers
     initializeTowerCaching()
 
-    g0 = Grammar.uniform(primitives + 
-                         [Primitive(str(j), tint, j) for j in range(2, 5)])
-
-    tasks = makeSupervisedTasks()#makeTasks()
-    test, train = testTrainSplit(tasks, 1.) #50. / len(tasks))
-    eprint("Split %d/%d test/train" % (len(test), len(train)))
+    g0 = Grammar.uniform(primitives)
 
     arguments = commandlineArguments(
         featureExtractor=TowerFeatureExtractor,
@@ -158,7 +156,21 @@ if __name__ == "__main__":
         structurePenalty=1,
         pseudoCounts=10,
         topK=10,
-        maximumFrontier=10**4)
+        maximumFrontier=10**4,
+        extras=tower_options)
+    
+    tasks = arguments.pop("tasks")
+    if tasks == "supervised":
+        tasks = makeSupervisedTasks()
+    elif tasks == "distant":
+        tasks = makeTasks()
+    elif tasks == "everything":
+        tasks = makeTasks() + makeSupervisedTasks()
+    else: assert False
+        
+    test, train = testTrainSplit(tasks, 1.)
+    eprint("Split %d/%d test/train" % (len(test), len(train)))
+
     evaluationTimeout = 0.005
     generator = ecIterator(g0, train,
                            testingTasks=test,

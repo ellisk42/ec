@@ -252,16 +252,16 @@ def makeSupervisedTasks():
                  for n in range(3,6) ]
     simpleLoops = [SupervisedTower("horizontal row %d"%n,
                                    lambda z: _loop(n)(lambda i: _31(r(3,z)))(z))
-                   for n in range(4,6) ]+\
+                   for n in [4,7] ]+\
                 [SupervisedTower("vertical row %d"%n,
                                    lambda z: _loop(n)(lambda i: _13(r(1,z)))(z))
-                   for n in range(4,6) ]+\
+                   for n in [3,6] ]+\
                 [SupervisedTower("horizontal stack %d"%n,
                                    lambda z: _loop(n)(lambda i: _31(z))(z))
-                   for n in range(4,6) ]+\
+                   for n in [4,6] ]+\
                 [SupervisedTower("vertical stack %d"%n,
                                    lambda z: _loop(n)(lambda i: _13(z))(z))
-                   for n in range(4,6) ]
+                   for n in [3,7] ]
     everything = simpleLoops + staircase + Josh + arches + Bridges
     for t in everything:
         delattr(t,'original')

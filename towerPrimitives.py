@@ -22,6 +22,11 @@ def _loop(n):
         h,laterBlocks = k(h)
         return h,bodyBlocks+laterBlocks
     return lambda b: lambda k: lambda h: sequence(b,k,h)
+def _simpleLoop(n):
+    def f(start, body, k):
+        if start >= n: return k
+        return body(start)(f(start + 1, body, k))
+    return lambda b: lambda k: f(0,b,k)
 def _embed(body):
     def f(k):
         def g(hand):
@@ -73,13 +78,16 @@ ttower = baseType("tower")
 primitives = [
     Primitive("left", arrow(tint, ttower, ttower), _left),
     Primitive("right", arrow(tint, ttower, ttower), _right),
-    Primitive("tower_loop", arrow(tint, arrow(tint, ttower), ttower, ttower), _loop),
+    #Primitive("tower_loop", arrow(tint, arrow(tint, ttower), ttower, ttower), _loop),
+    Primitive("tower_loopM", arrow(tint, arrow(tint, ttower, ttower), ttower, ttower), _simpleLoop),
     Primitive("tower_embed", arrow(ttower, ttower, ttower), _embed),
 ] + [Primitive(name, arrow(ttower,ttower), TowerContinuation(xOffset(w, h), w - 2*epsilon, h - epsilon))
-     for name, (w, h) in blocks.items()] + [
-             addition, subtraction
-         ] + \
-         [Primitive(str(j), tint, j) for j in list(range(1,6)) + list(range(-2,0,-1)) ]
+     for name, (w, h) in blocks.items()] + \
+         [Primitive(str(j), tint, j) for j in range(1,8) ]
+         # [
+         #     addition, subtraction
+         # ] + \
+
 
 def executeTower(p):
     return p.evaluate([])(lambda s: (s,[]))(0)[1]

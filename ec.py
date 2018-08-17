@@ -200,7 +200,7 @@ def ecIterator(grammar, tasks,
             "testingTasks",
             "compressor"} and v is not None}
     if not useRecognitionModel:
-        for k in {"activation", "helmholtzRatio", "steps"}:
+        for k in {"helmholtzRatio", "steps"}:
             del parameters[k]
 
     # Uses `parameters` to construct the checkpoint path

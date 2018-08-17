@@ -9,6 +9,12 @@ open Type
 (* ttower = state -> (state, list of blocks) *)
 type tt = int -> int * ( (float*float*float) list)
 
+let tower_sequence (a : tt) (b : tt) : tt = fun hand ->
+  let hand, a' = a hand in
+  let hand, b' = b hand in
+  (hand, a' @ b');;
+let empty_tower : tt = fun h -> (h,[]);;
+
 let ttower = make_ground "tower";;
 
 let maximum_number_of_blocks = 35;;
@@ -89,6 +95,8 @@ ignore(primitive "tower_loop" (tint @> (tint @> ttower) @> ttower @> ttower)
             let (hand, body_blocks) = f 0 n b hand in
             let hand, later_blocks = k hand in
             (hand, body_blocks @ later_blocks)));;
+ignore(primitive "tower_loopM" (tint @> (tint @> ttower @> ttower) @> ttower @> ttower)
+         (fun i (f : int -> tt -> tt) (z : tt) : tt -> List.fold_right (0 -- (i-1)) ~f ~init:z));;
 ignore(primitive "tower_embed" (ttower @> ttower @> ttower)
          (fun (body : tt) (k : tt) : tt ->
             fun (hand : int) ->
