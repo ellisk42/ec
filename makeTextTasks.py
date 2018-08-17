@@ -231,7 +231,7 @@ def makeTasks():
                  for x in [randomWord()]
                  for y in [randomWord()]])
 
-    for n in range(1,3):
+    for n in range(1,5):
         problem("parentheses around a single word (%s)"%('I'*n),
                 [((w,),"(%s)"%w)
                  for _ in range(NUMBEROFEXAMPLES)
