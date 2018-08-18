@@ -231,7 +231,7 @@ def makeTasks():
                  for x in [randomWord()]
                  for y in [randomWord()]])
 
-    for n in range(1,5):
+    for n in range(1,6):
         problem("parentheses around a single word (%s)"%('I'*n),
                 [((w,),"(%s)"%w)
                  for _ in range(NUMBEROFEXAMPLES)
@@ -241,17 +241,28 @@ def makeTasks():
              for _ in range(NUMBEROFEXAMPLES)
              for w in [randomWord()]
              for s in [randomWords(" ")] ])
-    for d1 in delimiters:
-        for d2 in delimiters:
-            if d1 in "()": continue
-            if d2 in "()": continue
-            problem("parentheses around word delimited by '%s' & '%s'"%(d1,d2),
-                    [((prefix + d1 + word + d2 + suffix,),
-                      prefix + d1 + '(' + word + ')' + d2 + suffix)
-                     for _ in range(NUMBEROFEXAMPLES)
-                     for prefix in [randomWords("", lb=0, ub=1)]
-                     for suffix in [randomWords(delimiters, ub=2, lb=1)]
-                     for word in [randomWord()] ])
+    problem("parentheses around second word",
+            [((s,), "(%s)"%(s.split(" ")[1]))
+             for _ in range(NUMBEROFEXAMPLES)
+             for s in [randomWords(" ")] ])
+
+    allowed = [d for d in delimiters if d not in "()"]
+    for d1,d2 in randomPermutation(crossProduct(allowed, allowed))[:len(delimiters)]:
+        problem("parentheses around word delimited by '%s' & '%s'"%(d1,d2),
+                [((prefix + d1 + word + d2 + suffix,),
+                  prefix + d1 + '(' + word + ')' + d2 + suffix)
+                 for _ in range(NUMBEROFEXAMPLES)
+                 for prefix in [randomWords("", lb=0, ub=1)]
+                 for suffix in [randomWords(allowed, ub=2, lb=1)]
+                 for word in [randomWord()] ])
+
+    for n in range(7):
+        w = randomWord(minimum=3)
+        problem("ensure suffix `%s`"%w,
+                [ ((s + (w if f else ""),), s + w)
+                  for _ in range(NUMBEROFEXAMPLES)
+                  for s in [randomWords(" ")]
+                  for f in [random.choice([True,False])] ])
             
 
     for p in problems:
@@ -352,6 +363,7 @@ if __name__ == "__main__":
     challenge, _ = loadPBETasks()
 
     tasks = makeTasks()
+    print(len(tasks), "synthetic tasks")
     for t in tasks + challenge:
         print(t.name)
         for xs, y in t.examples:
