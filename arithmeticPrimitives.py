@@ -49,6 +49,8 @@ real_power = Primitive("power",
 k1 = Primitive("1", tint, 1)
 k_negative1 = Primitive("negative_1", tint, -1)
 k0 = Primitive("0", tint, 0)
+for n in range(2,10):
+    Primitive(str(n),tint,n)
 
 f1 = Primitive("1.", treal, 1.)
 f0 = Primitive("0.", treal, 0)

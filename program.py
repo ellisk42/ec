@@ -125,6 +125,9 @@ class Program(object):
     def isIndex(self): return False
 
     @property
+    def isUnion(self): return False
+
+    @property
     def isApplication(self): return False
 
     @property
@@ -200,6 +203,13 @@ class Application(Program):
         b = self.f.body
         v = self.x
         return b.substitute(Index(0), v.shift(1)).shift(-1)
+
+    def isBetaLong(self):
+        return (not self.f.isAbstraction) and self.f.isBetaLong() and self.x.isBetaLong()
+
+    def freeVariables(self):
+        return self.f.freeVariables() | self.x.freeVariables()
+
 
     @property
     def isApplication(self): return True
@@ -359,6 +369,10 @@ class Index(Program):
 
     def betaReduce(self): return None
 
+    def isBetaLong(self): return True
+
+    def freeVariables(self): return {self.i}
+
     def substitute(self, old, new):
         if old == self:
             return new
@@ -423,6 +437,10 @@ class Abstraction(Program):
         self.body = state
         self.hashCode = None
 
+    def isBetaLong(self): return self.body.isBetaLong()
+
+    def freeVariables(self):
+        return {f - 1 for f in self.body.freeVariables() if f > 0}
 
     def visit(self,
               visitor,
@@ -521,6 +539,10 @@ class Primitive(Program):
 
     def betaReduce(self): return None
 
+    def isBetaLong(self): return True
+
+    def freeVariables(self): return set()
+
     def inferType(self, context, environment, freeVariables):
         return self.tp.instantiate(context)
 
@@ -588,6 +610,10 @@ class Invented(Program):
     def evaluate(self, e): return self.body.evaluate([])
 
     def betaReduce(self): return self.body
+
+    def isBetaLong(self): return True
+
+    def freeVariables(self): return set()
 
     def inferType(self, context, environment, freeVariables):
         return self.tp.instantiate(context)
@@ -935,6 +961,87 @@ class PrettyVisitor(object):
 def prettyProgram(e):
     return e.visit(PrettyVisitor(), [], True, False)
 
+class EtaExpandFailure(Exception): pass
+class EtaLongVisitor(object):
+    """Converts an expression into eta-longform"""
+    def __init__(self, request=None):
+        self.request = request
+        self.context = Context.EMPTY
+
+    def makeLong(self, e, request):
+        if request.isArrow():
+            # eta expansion
+            return Abstraction(Application(e.shift(1),
+                                           Index(0)))
+        return None
+        
+
+    def abstraction(self, e, request, environment):
+        if not request.isArrow(): raise EtaExpandFailure()
+        
+        return Abstraction(e.body.visit(self,
+                                        request.arguments[1],
+                                        [request.arguments[0]] + environment))
+    def application(self, e, request, environment):
+        l = self.makeLong(e, request)
+        if l is not None: return l.visit(self, request, environment)
+
+        f, xs = e.applicationParse()
+
+        if f.isIndex:
+            ft = environment[f.i].apply(self.context)
+        elif f.isInvented or f.isPrimitive:
+            self.context, ft = f.tp.instantiate(self.context)
+        else: assert False, "Not in beta long form: %s"%e
+
+        self.context = self.context.unify(request, ft.returns())
+        ft = ft.apply(self.context)
+
+        xt = ft.functionArguments()
+        if len(xs) != len(xt): raise EtaExpandFailure()
+
+        returnValue = f
+        for x,t in zip(xs,xt):
+            t = t.apply(self.context)
+            returnValue = Application(returnValue,
+                                      x.visit(self, t, environment))
+        return returnValue
+
+    def index(self, e, request, environment):
+        l = self.makeLong(e, request)
+        if l is not None: return l.visit(self, request, environment)
+
+        self.context = self.context.unify(request, environment[e.i])
+        return e
+
+    def primitive(self, e, request, environment):
+        l = self.makeLong(e, request)
+        if l is not None: return l.visit(self, request, environment)
+
+        self.context, t = e.tp.instantiate(self.context)
+        self.context = self.context.unify(request, t)
+        return e
+
+    def invented(self, e, request, environment):
+        l = self.makeLong(e, request)
+        if l is not None: return l.visit(self, request, environment)
+
+        self.context, t = e.tp.instantiate(self.context)
+        self.context = self.context.unify(request, t)
+        return e
+
+    def execute(self, e):
+        assert len(e.freeVariables()) == 0
+        
+        if self.request is None:
+            self.request = e.infer()
+        el = e.visit(self, self.request, [])
+        assert el.infer().canonical() == e.infer().canonical(), \
+            f"Types are not preserved by ETA expansion: {e} : {e.infer().canonical()} vs {el} : {el.infer().canonical()}"
+        return el
+        
+        
+        
 
 # from luke
 class TokeniseVisitor(object):

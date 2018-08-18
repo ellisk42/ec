@@ -1,0 +1,997 @@
+from program import *
+from type import *
+from frontier import *
+from grammar import *
+
+epsilon = 0.001
+
+
+def instantiate(context, environment, tp):
+    bindings = {}
+    context, tp = tp.instantiate(context, bindings)
+    newEnvironment = {}
+    for i,ti in environment.items():
+        context,newEnvironment[i] = ti.instantiate(context, bindings)
+    return context, newEnvironment, tp
+
+def unify(*environmentsAndTypes):
+    k = Context.EMPTY
+    e = {}
+    k,t = k.makeVariable()
+    for e_,t_ in environmentsAndTypes:
+        k, e_, t_ = instantiate(k, e_, t_)
+        k = k.unify(t,t_)
+        for i,ti in e_.items():
+            if i not in e: e[i] = ti
+            else: k = k.unify(e[i], ti)
+    return {i: ti.apply(k) for i,ti in e.items() }, t.apply(k)
+
+class Union(Program):
+    def __init__(self, elements, canBeEmpty=False):
+        self.elements = frozenset(elements)
+        if not canBeEmpty: assert len(self.elements) > 1
+        
+    @property
+    def isUnion(self): return True
+    def __eq__(self,o):
+        return isinstance(o,Union) and self.elements == o.elements
+    def __hash__(self): return hash(self.elements)
+    def __str__(self):
+        return "{%s}"%(", ".join(map(str,list(self.elements))))
+    def show(self, isFunction):
+        return str(self)
+    def __repr__(self): return str(self)
+    def __iter__(self): return iter(self.elements)
+
+class VersionTable():
+    def __init__(self, typed=True, identity=True):
+        self.identity = identity
+        self.typed = typed
+        self.debug = False
+        if self.debug:
+            print("WARNING: running version spaces in debug mode. Will be substantially slower.")
+        
+        self.expressions = []
+        self.recursiveTable = []
+        self.substitutionTable = {}
+        self.expression2index = {}
+        self.maximumShift = []
+        # Table containing (minimum cost, set of minimum cost programs)
+        self.inhabitantTable = []
+        # Table containing (minimum cost, set of minimum cost programs NOT starting w/ abstraction)
+        self.functionInhabitantTable = []
+        self.superCache = {}
+
+        self.overlapTable = {}
+        
+        self.universe = self.incorporate(Primitive("U",t0,None))
+        self.empty = self.incorporate(Union([], canBeEmpty=True))
+
+    def clearOverlapTable(self):
+        self.overlapTable = {}
+        
+    def intention(self,j, isFunction=False):
+        l = self.expressions[j]
+        if l.isIndex or l.isPrimitive or l.isInvented: return l
+        if l.isAbstraction: return Abstraction(self.intention(l.body))
+        if l.isApplication: return Application(self.intention(l.f),
+                                               self.intention(l.x))
+        if l.isUnion: return Union(self.intention(e)
+                                   for e in l )
+        assert False
+
+                
+    def incorporate(self,p):
+        assert isinstance(p,Union) or p.wellTyped()
+        if p.isIndex or p.isPrimitive or p.isInvented:
+            pass
+        elif p.isAbstraction:
+            p = Abstraction(self.incorporate(p.body))
+        elif p.isApplication:
+            p = Application(self.incorporate(p.f),
+                            self.incorporate(p.x))
+        elif p.isUnion:
+            if len(p.elements) > 0:
+                p = Union([self.incorporate(e) for e in p ])
+        else: assert False
+
+        j = self._incorporate(p)
+        return j
+
+    def _incorporate(self,p):
+        if p in self.expression2index: return self.expression2index[p]
+
+        j = len(self.expressions)
+        
+        self.expressions.append(p)
+        self.expression2index[p] = j
+        self.recursiveTable.append(None)
+        self.inhabitantTable.append(None)
+        self.functionInhabitantTable.append(None)
+        
+        return j
+
+    def extract(self,j):
+        l = self.expressions[j]
+        if l.isAbstraction:
+            for b in self.extract(l.body):
+                yield Abstraction(b)
+        elif l.isApplication:
+            for f in self.extract(l.f):
+                for x in self.extract(l.x):
+                    yield Application(f,x)
+        elif l.isIndex or l.isPrimitive or l.isInvented:
+            yield l
+        elif l.isUnion:
+            for e in l:
+                yield from self.extract(e)
+        else: assert False
+
+    def reachable(self, heads):
+        visited = set()
+        def visit(j):
+            if j in visited: return
+            visited.add(j)
+
+            l = self.expressions[j]
+            if l.isUnion:
+                for e in l:
+                    visit(e)
+            elif l.isAbstraction: visit(l.body)
+            elif l.isApplication:
+                visit(l.f)
+                visit(l.x)
+
+        for h in heads:
+            visit(h)
+        return visited
+
+    def size(self,j):
+        l = self.expressions[j]
+        if l.isApplication:
+            return self.size(l.f) + self.size(l.x)
+        elif l.isAbstraction:
+            return self.size(l.body)
+        elif l.isUnion:
+            return sum(self.size(e) for e in l )
+        else:
+            return 1
+            
+
+    def union(self,elements):
+        if self.universe in elements: return self.universe
+        
+        _e = []
+        for e in elements:
+            if self.expressions[e].isUnion:
+                for j in self.expressions[e]:
+                    _e.append(j)
+            elif e != self.empty:
+                _e.append(e)
+
+        elements = frozenset(_e)
+        if len(elements) == 0: return self.empty
+        if len(elements) == 1: return next(iter(elements))
+        return self._incorporate(Union(elements))
+    def apply(self,f,x):
+        if f == self.empty: return f
+        if x == self.empty: return x
+        return self._incorporate(Application(f,x))
+    def abstract(self,b):
+        if b == self.empty: return self.empty
+        return self._incorporate(Abstraction(b))
+    def index(self,i):
+        return self._incorporate(Index(i))
+
+    def intersection(self,a,b):
+        if a == self.empty or b == self.empty: return self.empty
+        if a == self.universe: return b
+        if b == self.universe: return a
+        if a == b: return a
+
+        x = self.expressions[a]
+        y = self.expressions[b]
+
+        if x.isAbstraction and y.isAbstraction:
+            return self.abstract(self.intersection(x.body,y.body))
+        if x.isApplication and y.isApplication:
+            return self.apply(self.intersection(x.f,y.f),
+                              self.intersection(x.x,y.x))
+        if x.isUnion:
+            if y.isUnion:
+                return self.union([ self.intersection(x_,y_)
+                                    for x_ in x
+                                    for y_ in y ])
+            return self.union([ self.intersection(x_, b)
+                                for x_ in x ])
+        if y.isUnion:
+            return self.union([ self.intersection(a, y_)
+                                for y_ in y ])
+        return self.empty
+
+    def haveOverlap(self,a,b):
+        if a == self.empty or b == self.empty: return False
+        if a == self.universe: return True
+        if b == self.universe: return True
+        if a == b: return True
+
+        if a in self.overlapTable:
+            if b in self.overlapTable[a]:
+                return self.overlapTable[a][b]
+        else: self.overlapTable[a] = {}
+
+        x = self.expressions[a]
+        y = self.expressions[b]
+
+        if x.isAbstraction and y.isAbstraction:
+            overlap = self.haveOverlap(x.body,y.body)
+        if x.isApplication and y.isApplication:
+            overlap = self.haveOverlap(x.f,y.f) and \
+                self.haveOverlap(x.x,y.x)
+        if x.isUnion:
+            if y.isUnion:
+                overlap = any( self.haveOverlap(x_,y_)
+                            for x_ in x
+                            for y_ in y )
+            overlap = any( self.haveOverlap(x_, b)
+                        for x_ in x )
+        if y.isUnion:
+            overlap = any( self.haveOverlap(a, y_)
+                        for y_ in y )
+        else:
+            overlap = False
+        self.overlapTable[a][b] = overlap
+        return overlap
+
+    def minimalInhabitants(self,j):
+        """Returns (minimal size, set of singleton version spaces)"""
+        assert isinstance(j,int)
+        if self.inhabitantTable[j] is not None: return self.inhabitantTable[j]
+        e = self.expressions[j]
+        if e.isAbstraction:
+            cost, members = self.minimalInhabitants(e.body)
+            cost = cost + epsilon
+            members = {self.abstract(m) for m in members}
+        elif e.isApplication:
+            fc, fm = self.minimalFunctionInhabitants(e.f)
+            xc, xm = self.minimalInhabitants(e.x)
+            cost = fc + xc + epsilon
+            members = {self.apply(f_,x_)
+                       for f_ in fm for x_ in xm }
+        elif e.isUnion:
+            children = [self.minimalInhabitants(z)
+                        for z in e ]
+            cost = min(c for c,_ in children)
+            members = {zp
+                       for c,z in children
+                       if c == cost
+                       for zp in z }
+        else:
+            assert e.isIndex or e.isInvented or e.isPrimitive
+            cost = 1
+            members = {j}
+
+        self.inhabitantTable[j] = (cost, members)
+        return cost, members
+
+    def minimalFunctionInhabitants(self,j):
+        """Returns (minimal size, set of singleton version spaces)"""
+        assert isinstance(j,int)
+        if self.functionInhabitantTable[j] is not None: return self.functionInhabitantTable[j]
+        e = self.expressions[j]
+        if e.isAbstraction:
+            cost = POSITIVEINFINITY
+            members = set()
+        elif e.isApplication:
+            fc, fm = self.minimalFunctionInhabitants(e.f)
+            xc, xm = self.minimalInhabitants(e.x)
+            cost = fc + xc + epsilon
+            members = {self.apply(f_,x_)
+                       for f_ in fm for x_ in xm }
+        elif e.isUnion:
+            children = [self.minimalFunctionInhabitants(z)
+                        for z in e ]
+            cost = min(c for c,_ in children)
+            members = {zp
+                       for c,z in children
+                       if c == cost
+                       for zp in z }
+        else:
+            assert e.isIndex or e.isInvented or e.isPrimitive
+            cost = 1
+            members = {j}
+
+        self.functionInhabitantTable[j] = (cost, members)
+        return cost, members
+
+    def shiftFree(self,j,n,c=0):
+        if n == 0: return j
+        l = self.expressions[j]
+        if l.isUnion:
+            return self.union([ self.shiftFree(e,n,c)
+                                for e in l ])
+        if l.isApplication:
+            return self.apply(self.shiftFree(l.f,n,c),
+                              self.shiftFree(l.x,n,c))
+        if l.isAbstraction:
+            return self.abstract(self.shiftFree(l.body,n,c+1))
+        if l.isIndex:
+            if l.i < c: return j
+            if l.i >= n + c: return self.index(l.i - n)
+            return self.empty
+        assert l.isPrimitive or l.isInvented
+        return j
+
+    def substitutions(self,j):
+        if self.typed:
+            for (v,_),b in self._substitutions(j,0).items():
+                yield v,b
+        else:
+            yield from self._substitutions(j,0).items()
+
+    def _substitutions(self,j,n):
+        if (j,n) in self.substitutionTable: return self.substitutionTable[(j,n)]
+        
+        
+        s = self.shiftFree(j,n)
+        if self.debug:
+            assert set(self.extract(s)) == set( e.shift(-n)
+                                                for e in self.extract(j)
+                                                if all( f >= n for f in e.freeVariables()  )),\
+                                                   "shiftFree_%d: %s"%(n,set(self.extract(s)))
+        if s == self.empty: m = {}
+        else:
+            if self.typed:
+                principalType = self.infer(s)
+                if principalType == self.bottom:
+                    print(self.infer(j))
+                    print(list(self.extract(j)))
+                    print(list(self.extract(s)))
+                    assert False
+                m = {(s, self.infer(s)[1].canonical()): self.index(n)}
+            else:
+                m = {s: self.index(n)}
+
+        l = self.expressions[j]
+        if l.isPrimitive or l.isInvented:
+            m[(self.universe,t0) if self.typed else self.universe] = j
+        elif l.isIndex:
+            m[(self.universe,t0) if self.typed else self.universe] = \
+                    j if l.i < n else self.index(l.i + 1)
+        elif l.isAbstraction:
+            for v,b in self._substitutions(l.body, n + 1).items():
+                m[v] = self.abstract(b)
+        elif l.isApplication:
+            newMapping = {}
+            fm = self._substitutions(l.f,n)
+            xm = self._substitutions(l.x,n)
+            for v1,f in fm.items():
+                if self.typed: v1,nType1 = v1
+                for v2,x in xm.items():
+                    if self.typed: v2,nType2 = v2
+
+                    a = self.apply(f,x)
+                    # See if the types that they assigned to $n are consistent
+                    if self.typed:
+                        if self.infer(a) == self.bottom: continue
+                        try:
+                            nType = canonicalUnification(nType1, nType2,
+                                                         self.infer(a)[0].get(n,t0))
+                        except UnificationFailure:
+                            continue
+                        
+                    v = self.intersection(v1,v2)
+                    if v == self.empty: continue
+                    if self.typed and self.infer(v) == self.bottom: continue
+
+                    key = (v,nType) if self.typed else v                        
+                        
+                    if key in newMapping:
+                        newMapping[key].append(a)
+                    else:
+                        newMapping[key] = [a]
+            for v in newMapping:
+                newMapping[v] = self.union(newMapping[v])
+            newMapping.update(m)
+            m = newMapping
+        elif l.isUnion:
+            newMapping = {}
+            for e in l:
+                for v,b in self._substitutions(e,n).items():
+                    if v in newMapping:
+                        newMapping[v].append(b)
+                    else:
+                        newMapping[v] = [b]
+            for v in newMapping:
+                newMapping[v] = self.union(newMapping[v])
+            newMapping.update(m)
+            m = newMapping
+        else: assert False
+
+        self.substitutionTable[(j,n)] = m
+
+        return m
+
+    def inversion(self,j):
+        i = self.union([self.apply(self.abstract(b),v)
+                         for v,b in self.substitutions(j)
+                         if v != self.universe])
+        if self.debug and self.typed:
+            if not (self.infer(i) == self.infer(j)):
+                print("inversion produced space with a different type!")
+                print("the original type was",self.infer(j))
+                print("the type of the rewritten expressions is",self.infer(i))
+                print("the original extension was")
+                n = None
+                for e in self.extract(j):
+                    print(e, e.infer())
+                    # print(f"\t{e.betaNormalForm()} : {e.betaNormalForm().infer()}")
+                    assert n is None or e.betaNormalForm() == n
+                    n = e.betaNormalForm()
+                    print("the rewritten extension is")
+                for e in self.extract(i):
+                    print(e, e.infer())
+                    # print(f"\t{e.betaNormalForm()} : {e.betaNormalForm().infer()}")
+                    assert n is None or e.betaNormalForm() == n
+                    assert self.infer(i) == self.infer(j)
+                assert False
+        return i
+
+
+    def recursiveInversion(self,j):
+        if self.recursiveTable[j] is not None: return self.recursiveTable[j]
+        
+        l = self.expressions[j]
+        if l.isUnion:
+            return self.union([self.recursiveInversion(e) for e in l ])
+        
+        t = [self.apply(self.abstract(b),v)
+             for v,b in self.substitutions(j)
+             if v != self.universe and (self.identity or b != self.index(0))]
+        if self.debug and self.typed:
+            ru = self.union(t)
+            if not (self.infer(ru) == self.infer(j)):
+                print("inversion produced space with a different type!")
+                print("the original type was",self.infer(j))
+                print("the type of the rewritten expressions is",self.infer(ru))
+                print("the original extension was")
+                n = None
+                for e in self.extract(j):
+                    print(e, e.infer())
+                    # print(f"\t{e.betaNormalForm()} : {e.betaNormalForm().infer()}")
+                    assert n is None or e.betaNormalForm() == n
+                    n = e.betaNormalForm()
+                print("the rewritten extension is")
+                for e in self.extract(ru):
+                    print(e, e.infer())
+                    # print(f"\t{e.betaNormalForm()} : {e.betaNormalForm().infer()}")
+                    assert n is None or e.betaNormalForm() == n
+            assert self.infer(ru) == self.infer(j)
+
+
+        if l.isApplication:
+            t.append(self.apply(self.recursiveInversion(l.f),l.x))
+            t.append(self.apply(l.f,self.recursiveInversion(l.x)))
+        elif l.isAbstraction:
+            t.append(self.abstract(self.recursiveInversion(l.body)))
+
+        ru = self.union(t)        
+        self.recursiveTable[j] = ru
+        return ru
+
+    def repeatedExpansion(self,j,n):
+        spaces = [j]
+        for _ in range(n):
+            spaces.append(self.recursiveInversion(spaces[-1]))
+        return spaces
+            
+    def rewriteReachable(self,heads,n):
+        vertices = self.reachable(heads)
+        spaces = {v: self.repeatedExpansion(v,n)
+                  for v in vertices }
+        return spaces
+
+    def superVersionSpace(self, j, n):
+        """Construct decorated tree and then merge version spaces with subtrees via union operator"""
+        if j in self.superCache: return self.superCache[j]
+        spaces = self.rewriteReachable({j}, n)
+        def superSpace(i):
+            assert i in spaces
+            e = self.expressions[i]
+            components = [i] + spaces[i]
+            if e.isIndex or e.isPrimitive or e.isInvented:
+                pass
+            elif e.isAbstraction:
+                components.append(self.abstract(superSpace(e.body)))
+            elif e.isApplication:
+                components.append(self.apply(superSpace(e.f), superSpace(e.x)))
+            elif e.isUnion: assert False
+            else: assert False
+            
+            return self.union(components)
+        self.superCache[j] = superSpace(j)
+        return self.superCache[j]
+            
+    def loadEquivalences(self, g, spaces):
+        versionClasses = [None]*len(self.expressions)
+        def extract(j):
+            if versionClasses[j] is not None:
+                return versionClasses[j]
+            
+            l = self.expressions[j]
+            if l.isAbstraction:
+                ks = g.setOfClasses(g.abstractClass(b)
+                                    for b in extract(l.body))
+            elif l.isApplication:
+                fs = extract(l.f)
+                xs = extract(l.x)
+                ks = g.setOfClasses(g.applyClass(f,x)
+                                    for x in xs for f in fs )
+            elif l.isUnion:
+                ks = g.setOfClasses(e for u in l for e in extract(u))
+            else:
+                ks = g.setOfClasses({g.incorporate(l)})
+            versionClasses[j] = ks
+            return ks
+            
+
+        N = len(next(iter(spaces.values())))
+        vertices = list(sorted(spaces.keys(), key=lambda v: self.size(v)))
+
+        # maps from a vertex to a map from types to classes
+        # the idea is to only enforceable equivalence between terms of the same type
+        typedClassesOfVertex = {v: {} for v in vertices }
+        
+        for n in range(N):
+            # print(f"Processing rewrites {n} steps away from original expressions...")
+            for v in vertices:
+                expressions = list(self.extract(v))
+                assert len(expressions) == 1
+                expression = expressions[0]
+                k = g.incorporate(expression)
+                if k is None: continue
+                t0 = g.typeOfClass[k]
+                if t0 not in typedClassesOfVertex[v]:
+                    typedClassesOfVertex[v][t0] = k
+                extracted = list(extract(spaces[v][n]))
+                for e in extracted:
+                    t = g.typeOfClass[e]
+                    if t in typedClassesOfVertex[v]:
+                        g.makeEquivalent(typedClassesOfVertex[v][t],e)
+                    else:
+                        typedClassesOfVertex[v][e] = e
+
+    def bestInventions(self, versions, bs=25):
+        """versions: [[version index]]"""
+        """bs: beam size"""
+        """returns: list of (indices to) candidates"""
+        def nontrivial(proposal):
+            primitives = 0
+            collisions = 0
+            indices = set()
+            for d, tree in proposal.walk():
+                if tree.isPrimitive or tree.isInvented: primitives += 1
+                elif tree.isIndex:
+                    i = tree.i - d
+                    if i in indices: collisions += 1
+                    indices.add(i)
+            return primitives > 1 or (primitives == 1 and collisions > 0)
+
+        with timing("calculated candidates from version space"):
+            candidates = [{j
+                           for k in self.reachable(hs)
+                           for _,js in [self.minimalInhabitants(k), self.minimalFunctionInhabitants(k)]
+                           for j in js }
+                          for hs in versions]
+            from collections import Counter
+            candidates = Counter(k for ks in candidates for k in ks)
+            candidates = list({k for k,f in candidates.items() if f >= 2 and nontrivial(next(self.extract(k))) })
+            # candidates = [k for k in candidates if next(self.extract(k)).isBetaLong()]
+            eprint(len(candidates),"candidates from version space")
+
+        inhabitTable = self.inhabitantTable
+        functionTable = self.functionInhabitantTable
+
+        class B():
+            def __init__(self, j):
+                self.space = j
+                cost, inhabitants = inhabitTable[j]
+                functionCost, functionInhabitants = functionTable[j]
+                self.relativeCost = {inhabitant: 1
+                                     for inhabitant in inhabitants
+                                     if inhabitant in candidates}
+                self.relativeFunctionCost = {inhabitant: 1
+                                             # INTENTIONALLY, do not use function inhabitants
+                                             for inhabitant in inhabitants
+                                             if inhabitant in candidates}
+                self.defaultCost = cost
+                self.defaultFunctionCost = functionCost
+
+            @property
+            def domain(self):
+                return set(self.relativeCost.keys())
+            @property
+            def functionDomain(self):
+                return set(self.relativeFunctionCost.keys())
+            def restrict(self):
+                if len(self.relativeCost) > bs:
+                    self.relativeCost = dict(sorted(self.relativeCost.items(),
+                                                    key=lambda rk: rk[1])[:bs])
+                if len(self.relativeFunctionCost) > bs:
+                    self.relativeFunctionCost = dict(sorted(self.relativeFunctionCost.items(),
+                                                            key=lambda rk: rk[1])[:bs])
+            def getCost(self, given):
+                return self.relativeCost.get(given, self.defaultCost)
+            def getFunctionCost(self, given):
+                return self.relativeFunctionCost.get(given, self.defaultFunctionCost)
+            def relax(self, given, cost):
+                self.relativeCost[given] = min(cost,
+                                               self.getCost(given))
+            def relaxFunction(self, given, cost):
+                self.relativeFunctionCost[given] = min(cost,
+                                                       self.getFunctionCost(given))
+
+        beamTable = [None]*len(self.expressions)
+
+        def costs(j):
+            if beamTable[j] is not None: return beamTable[j]
+
+            beamTable[j] = B(j)
+
+            e = self.expressions[j]
+            if e.isIndex or e.isPrimitive or e.isInvented:
+                pass
+            elif e.isAbstraction:
+                b = costs(e.body)
+                for i,c in b.relativeCost.items():
+                    beamTable[j].relax(i, c + epsilon)
+            elif e.isApplication:
+                f = costs(e.f)
+                x = costs(e.x)
+                for i in f.functionDomain | x.domain:
+                    beamTable[j].relax(i, f.getFunctionCost(i) + x.getCost(i) + epsilon)
+                    beamTable[j].relaxFunction(i, f.getFunctionCost(i) + x.getCost(i) + epsilon)
+            elif e.isUnion:
+                for z in e:
+                    cz = costs(z)
+                    for i,c in cz.relativeCost.items(): beamTable[j].relax(i, c)
+                    for i,c in cz.relativeFunctionCost.items(): beamTable[j].relaxFunction(i, c)
+            else: assert False
+
+            beamTable[j].restrict()
+            return beamTable[j]
+
+        with timing("beamed version spaces"):
+            beams = [ [ costs(h) for h in hs ]
+                      for hs in versions ]
+        candidates = {d
+                      for _bs in beams
+                      for b in _bs
+                      for d in b.domain }
+        def score(candidate):
+            return sum(min(min(b.getCost(candidate),
+                               b.getFunctionCost(candidate))
+                           for b in _bs )
+                       for _bs in beams )
+        candidates = sorted(candidates, key=score)
+        if False:
+            for k in candidates:
+                print(score(k), "\t", list(self.extract(k))[0])
+                for hs in versions:
+                    for h in hs:
+                        print(self.rewriteWithInvention(k,h))
+                print()
+        return candidates
+
+    def rewriteWithInvention(self, i, js):
+        """Rewrites list of indices in beta long form using invention"""
+        self.clearOverlapTable()
+        class RW():
+            """rewritten cost/expression either as a function or argument"""            
+            def __init__(self, f,fc,a,ac):
+                assert not (fc < ac)
+                self.f, self.fc, self.a, self.ac = f,fc,a,ac
+        
+        _i = list(self.extract(i))
+        assert len(_i) == 1
+        _i = _i[0]
+        
+        table = {}
+        def rewrite(j):
+            if j in table: return table[j]
+            e = self.expressions[j]
+            if self.haveOverlap(i, j): r = RW(fc=1,ac=1,
+                                              f=_i,a=_i)
+            elif e.isPrimitive or e.isInvented or e.isIndex:
+                r = RW(fc=1,ac=1,
+                       f=e,a=e)
+            elif e.isApplication:
+                f = rewrite(e.f)
+                x = rewrite(e.x)
+                cost = f.fc + x.ac + epsilon
+                ep = Application(f.f, x.a) if cost < POSITIVEINFINITY else None
+                r = RW(fc=cost, ac=cost,
+                       f=ep, a=ep)
+            elif e.isAbstraction:
+                b = rewrite(e.body)
+                cost = b.ac + epsilon
+                ep = Abstraction(b.a) if cost < POSITIVEINFINITY else None
+                r = RW(f=None, fc=POSITIVEINFINITY,
+                       a=ep, ac=cost)
+            elif e.isUnion:
+                children = [rewrite(z) for z in e ]
+                f,fc = min(( (child.f, child.fc) for child in children ),
+                           key=cindex(1))
+                a,ac = min(( (child.a, child.ac) for child in children ),
+                           key=cindex(1))
+                r = RW(f=f,fc=fc,
+                       a=a,ac=ac)
+            else: assert False
+            table[j] = r
+            return r
+        js = [ rewrite(j).a for j in js ]
+        self.clearOverlapTable()
+        return js
+        
+    def addInventionToGrammar(self, candidate, g0, frontiers,
+                              pseudoCounts=1.):
+        candidateSource = next(self.extract(candidate))
+        v = RewriteWithInventionVisitor(candidateSource)
+        invention = v.invention
+
+        rewriteMapping = list({e.program
+                               for f in frontiers
+                               for e in f })
+        spaces = [self.superCache[self.incorporate(program)]
+                  for program in rewriteMapping ]
+        rewriteMapping = dict(zip(rewriteMapping,
+                                  self.rewriteWithInvention(candidate, spaces)))
+
+        def tryRewrite(program):
+            return v.execute(rewriteMapping[program]) or program
+
+        frontiers = [Frontier([FrontierEntry(program=tryRewrite(e.program),
+                                             logLikelihood=e.logLikelihood,
+                                             logPrior=0.)
+                                       for e in f ],
+                              f.task)
+                     for f in frontiers ]
+        g = Grammar.uniform([invention] + g0.primitives).insideOutside(frontiers,
+                                                                       pseudoCounts=pseudoCounts)
+        frontiers = [g.rescoreFrontier(f) for f in frontiers]
+        return g, frontiers
+
+class CloseInventionVisitor():
+    """normalize free variables - e.g., if $1 & $3 occur free then rename them to $0, $1
+    then wrap in enough lambdas so that there are no free variables and finally wrap in invention"""
+    def __init__(self, p):
+        self.p = p
+        freeVariables = list(sorted(set(p.freeVariables())))
+        self.mapping = {fv: j for j,fv in enumerate(freeVariables) }
+    def index(self, e, d):
+        if e.i - d in self.mapping:
+            return Index(self.mapping[e.i - d] + d)
+        return e
+    def abstraction(self, e, d):
+        return Abstraction(e.body.visit(self, d + 1))
+    def application(self, e, d):
+        return Application(e.f.visit(self, d),
+                           e.x.visit(self, d))
+    def primitive(self, e, d): return e
+    def invented(self, e, d): return e
+
+    def execute(self):
+        normed = self.p.visit(self, 0)
+        closed = normed
+        for _ in range(len(self.mapping)):
+            closed = Abstraction(closed)
+        return Invented(closed)
+        
+        
+class RewriteWithInventionVisitor():
+    def __init__(self, p):
+        v = CloseInventionVisitor(p)
+        self.original = p
+        self.mapping = { j: fv for fv, j in v.mapping.items() }
+        self.invention = v.execute()
+
+        self.appliedInvention = self.invention
+        for j in range(len(self.mapping) - 1, -1, -1):
+            self.appliedInvention = Application(self.appliedInvention, Index(self.mapping[j]))
+                
+
+    def tryRewrite(self, e):
+        if e == self.original:
+            return self.appliedInvention
+        return None
+
+    def index(self, e): return e
+    def primitive(self, e): return e
+    def invented(self, e): return e
+    def abstraction(self, e):
+        return self.tryRewrite(e) or Abstraction(e.body.visit(self))
+    def application(self, e):
+        return self.tryRewrite(e) or Application(e.f.visit(self),
+                                                 e.x.visit(self))
+    def execute(self, e):
+        try:
+            i = e.visit(self)
+            l = EtaLongVisitor().execute(i)
+            return l
+        except (UnificationFailure, EtaExpandFailure):
+            return None    
+        
+
+
+
+def induceGrammar_Beta(g0, frontiers, _=None,
+                       pseudoCounts=1.,
+                       a=3,
+                       aic=1.,
+                       topK=2,
+                       topI=500,
+                       structurePenalty=1.,
+                       CPUs=1):
+    """grammar induction using only version spaces"""
+    from fragmentUtilities import primitiveSize
+    originalFrontiers = frontiers
+    frontiers = [frontier for frontier in frontiers if not frontier.empty]
+    eprint("Inducing a grammar from", len(frontiers), "frontiers")
+
+    arity = a
+
+    def restrictFrontiers():
+        return parallelMap(CPUs,
+                           lambda f: g0.rescoreFrontier(f).topK(topK),
+                           frontiers)
+    restrictedFrontiers = restrictFrontiers()
+    
+    def objective(g, fs):
+        ll = sum(g.frontierMDL(f) for f in fs )
+        sp = structurePenalty * sum(primitiveSize(p) for p in g.primitives)
+        return ll - sp - aic*len(g.productions)
+            
+    v = None
+    def scoreCandidate(candidate, currentFrontiers, currentGrammar):
+        try:
+            newGrammar, newFrontiers = v.addInventionToGrammar(candidate, currentGrammar, currentFrontiers,
+                                                               pseudoCounts=pseudoCounts)
+        except InferenceFailure:
+            # And this can occur if the candidate is not well typed:
+            # it is expected that this can occur;
+            # in practice, it is more efficient to filter out the ill typed terms,
+            # then it is to construct the version spaces so that they only contain well typed terms.
+            return NEGATIVEINFINITY
+            
+        o = objective(newGrammar, newFrontiers)
+
+        eprint("+", end='')
+        flushEverything()
+        
+        return o
+        
+
+    oldScore = objective(g0, restrictedFrontiers)
+    eprint("Starting grammar induction score",oldScore)
+    
+    while True:
+        v = VersionTable(typed=False, identity=False)
+        with timing("constructed %d-step version spaces"%arity):
+            versions = [[v.superVersionSpace(v.incorporate(e.program), arity) for e in f]
+                        for f in restrictedFrontiers ]
+        candidates = v.bestInventions(versions, bs=topI)[:topI]
+        eprint("Only considering the top %d candidates"%len(candidates))
+        with timing("scored the candidate inventions"):
+            scoredCandidates = parallelMap(CPUs,
+                                           lambda candidate: \
+                                           (candidate, scoreCandidate(candidate, restrictedFrontiers, g0)),
+                                            candidates)
+        bestNew, bestScore = max(scoredCandidates, key=lambda sc: sc[1])
+        if bestScore < oldScore:
+            eprint("No improvement possible.")
+            # Return all of the frontiers, which have now been rewritten to use the
+            # new fragments
+            frontiers = {f.task: f for f in frontiers}
+            frontiers = [frontiers.get(f.task, f)
+                         for f in originalFrontiers]
+            return g0, frontiers
+        
+        # This is subtle: at this point we have not calculated
+        # versions bases for programs outside the restricted
+        # frontiers; but here we are rewriting the entire frontier in
+        # terms of the new primitive. So we have to recalculate
+        # version spaces for everything.
+        with timing("constructed versions bases for entire frontiers"):
+            for f in frontiers:
+                for e in f:
+                    v.superVersionSpace(v.incorporate(e.program), arity)
+        newGrammar, newFrontiers = v.addInventionToGrammar(bestNew, g0, frontiers,
+                                                           pseudoCounts=pseudoCounts)
+        eprint("Improved score to", bestScore, "(dS =", bestScore-oldScore, ") w/ invention",newGrammar.primitives[0],":",newGrammar.primitives[0].infer())
+        oldScore = bestScore
+
+        g0, frontiers = newGrammar, newFrontiers
+        restrictedFrontiers = restrictFrontiers()
+
+
+        
+        
+        
+        
+            
+            
+def testTyping(p):
+    v = VersionTable()
+    j = v.incorporate(p)
+    
+    wellTyped = set(v.extract(v.inversion(j)))
+    print(len(wellTyped))
+    v = VersionTable(typed=False)
+    j = v.incorporate(p)
+    arbitrary = set(v.extract(v.recursiveInversion(v.recursiveInversion(v.recursiveInversion(j)))))
+    print(len(arbitrary))
+    assert wellTyped <= arbitrary
+    assert wellTyped == {e
+                         for e in arbitrary if e.wellTyped() }
+    assert all( e.wellTyped() for e in wellTyped  )
+
+    import sys
+    sys.exit()
+    
+def testSharing():
+    from versionSpace import ExpressionTable
+    source = "(+ 1 1)"
+    N = 100
+    for _ in range(N):
+        t = ExpressionTable()
+        t.invert(t.incorporate(Program.parse(source)))
+        v = VersionTable(typed=False)
+        v.inversion(v.incorporate(Program.parse(source)))
+        print(len(v.expressions),len(t))
+        source = "(+ 1 %s)"%source
+    assert False
+        
+if __name__ == "__main__":
+    
+    from arithmeticPrimitives import *
+    from listPrimitives import *
+    bootstrapTarget_extra()
+    
+    programs = [Program.parse("(lambda (fold $0 empty (lambda (lambda (cons (+ (+ 5 5) (+ $1 $1)) $0)))))"),
+                Program.parse("(lambda (fold $0 empty (lambda (lambda (cons (- 0 $1) $0)))))"),
+                Program.parse("(lambda (fold $0 empty (lambda (lambda (cons (+ $1 $1) $0)))))"),
+                Program.parse("(lambda (+ $0 $0))"),
+                Program.parse("(lambda (+ 4 4))")]
+    
+    N=3
+
+    primitives = set()
+    for p in programs:
+        for _, s in p.walk():
+            if s.isPrimitive:
+                primitives.add(s)
+    g0 = Grammar.uniform(list(primitives))
+
+    with timing("induced DSL"):
+        induceGrammar_Beta(g0, [Frontier.dummy(p) for p in programs],
+                           CPUs=1,
+                           a=N)
+
+# if __name__ == "__main__":
+#     import argparse
+#     parser = argparse.ArgumentParser(description = "Version-space based compression")
+#     parser.add_argument("--CPUs", type=int, default=1)
+#     parser.add_argument("--arity", type=int, default=3)
+#     parser.add_argument("--bs", type=int, default=25,
+#                         help="beam size")
+#     parser.add_argument("--topK", type=int, default=2)
+#     parser.add_argument("--topI", type=int, default=None,
+#                         help="defaults to beam size")
+#     parser.add_argument("--pseudoCounts",
+#                         type=float,
+#                         default=1.)
+#     parser.add_argument("--structurePenalty",
+#                         type=float, default=1.)
+#     arguments = parser.parse_args()
+    
+    
