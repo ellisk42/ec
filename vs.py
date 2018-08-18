@@ -748,7 +748,16 @@ class VersionTable():
                                   self.rewriteWithInvention(candidate, spaces)))
 
         def tryRewrite(program):
-            return v.execute(rewriteMapping[program]) or program
+            rw = v.execute(rewriteMapping[program])
+            # print(f"Rewriting {program} ({rewriteMapping[program]}) : rw={rw}")
+            # print("slow-motion:")
+            # try:
+            #     i = rewriteMapping[program].visit(v)
+            #     print(f"\ti={i}")
+            #     l = EtaLongVisitor().execute(i)
+            #     print(f"\tl={l}")
+            # except Exception as e: print(e)
+            return rw or program
 
         frontiers = [Frontier([FrontierEntry(program=tryRewrite(e.program),
                                              logLikelihood=e.logLikelihood,
@@ -756,6 +765,10 @@ class VersionTable():
                                        for e in f ],
                               f.task)
                      for f in frontiers ]
+        # print(invention)
+        # for f in frontiers: print(f.entries[0].program)
+        # print()
+        # print()
         g = Grammar.uniform([invention] + g0.primitives).insideOutside(frontiers,
                                                                        pseudoCounts=pseudoCounts)
         frontiers = [g.rescoreFrontier(f) for f in frontiers]
@@ -956,6 +969,9 @@ if __name__ == "__main__":
     from arithmeticPrimitives import *
     from listPrimitives import *
     bootstrapTarget_extra()
+
+    # p = Program.parse("(#(lambda (lambda (lambda (fold $0 empty ($1 $2))))) cons (lambda (lambda (lambda ($2 (+ (+ 5 5) (+ $1 $1)) $0)))))")
+    # print(EtaLongVisitor().execute(p))
     
     programs = [Program.parse("(lambda (fold $0 empty (lambda (lambda (cons (+ (+ 5 5) (+ $1 $1)) $0)))))"),
                 Program.parse("(lambda (fold $0 empty (lambda (lambda (cons (- 0 $1) $0)))))"),

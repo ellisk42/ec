@@ -982,7 +982,8 @@ class EtaLongVisitor(object):
         return Abstraction(e.body.visit(self,
                                         request.arguments[1],
                                         [request.arguments[0]] + environment))
-    def application(self, e, request, environment):
+
+    def _application(self, e, request, environment):
         l = self.makeLong(e, request)
         if l is not None: return l.visit(self, request, environment)
 
@@ -1007,28 +1008,16 @@ class EtaLongVisitor(object):
                                       x.visit(self, t, environment))
         return returnValue
 
-    def index(self, e, request, environment):
-        l = self.makeLong(e, request)
-        if l is not None: return l.visit(self, request, environment)
+    # This procedure works by recapitulating the generative process
+    # applications indices and primitives are all generated identically
+    
+    def application(self, e, request, environment): return self._application(e, request, environment)
+    
+    def index(self, e, request, environment): return self._application(e, request, environment)
 
-        self.context = self.context.unify(request, environment[e.i])
-        return e
+    def primitive(self, e, request, environment): return self._application(e, request, environment)
 
-    def primitive(self, e, request, environment):
-        l = self.makeLong(e, request)
-        if l is not None: return l.visit(self, request, environment)
-
-        self.context, t = e.tp.instantiate(self.context)
-        self.context = self.context.unify(request, t)
-        return e
-
-    def invented(self, e, request, environment):
-        l = self.makeLong(e, request)
-        if l is not None: return l.visit(self, request, environment)
-
-        self.context, t = e.tp.instantiate(self.context)
-        self.context = self.context.unify(request, t)
-        return e
+    def invented(self, e, request, environment): return self._application(e, request, environment)
 
     def execute(self, e):
         assert len(e.freeVariables()) == 0
