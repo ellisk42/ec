@@ -809,7 +809,7 @@ class Mutator:
 
     def __init__(self, grammar, fn):
         """Fn yields expressions from a type and loss."""
-        self.fn = fn
+        self.fn = fn #want to output ll of replaced part as well
         self.grammar = grammar
         self.history = []
 
@@ -820,15 +820,15 @@ class Mutator:
 
     def invented(self, e, tp):
         for expr in self.fn(tp, -self.grammar.expression2likelihood[e]):
-            yield self.enclose(expr)
+            yield self.enclose(expr), -self.grammar.expression2likelihood[e]
 
     def primitive(self, e, tp):
         for expr in self.fn(tp, -self.grammar.expression2likelihood[e]):
-            yield self.enclose(expr)
+            yield self.enclose(expr), -self.grammar.expression2likelihood[e]
 
     def index(self, e, tp):
         for expr in self.fn(tp, -self.grammar.logVariable):
-            yield self.enclose(expr)
+            yield self.enclose(expr), -self.grammar.logVariable
 
     def application(self, e, tp):
         self.history.append(lambda expr: Application(expr, e.x))
@@ -839,7 +839,7 @@ class Mutator:
         yield from e.x.visit(self, x_tp)
         self.history.pop()
         for expr in self.fn(tp, -self.logLikelihood(tp, e)):
-            yield self.enclose(expr)
+            yield self.enclose(expr), -self.logLikelihood(tp, e)
 
     def abstraction(self, e, tp):
         self.history.append(lambda expr: Abstraction(expr))

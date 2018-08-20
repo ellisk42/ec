@@ -599,9 +599,10 @@ class Grammar(object):
                 if distance - loss > 0:
                     yield Hole()
             top_k = [] # (expr, logl)
-            for expr in Mutator(self, mutations).execute(expr, request):
-                print("expr", expr)
-                l = self.logLikelihood(expr.infer(), expr) #TODO, ll of wrong expr, should take ll of hole
+            for expr, l in Mutator(self, mutations).execute(expr, request):
+                # print("expr", expr)
+                # print("l", l)
+                # l = self.logLikelihood(expr.infer(), expr) #TODO, ll of wrong expr, should take ll of hole
                 if len(top_k) > 0:
                     i, v = min(enumerate(top_k), key=lambda x:x[1][1])
                     if l > v[1]:
@@ -611,7 +612,11 @@ class Grammar(object):
                             top_k.append((expr, l))
                 else:
                     top_k.append((expr, l))
-            return sorted(top_k, key=lambda x:x[1])
+
+            # print("len top k", len(top_k))
+            # print("top_k", top_k)
+            # assert False
+            return 5 #sorted(top_k, key=lambda x:x[1])
 
 
 class LikelihoodSummary(object):
