@@ -137,7 +137,7 @@ class Program(object):
     def isInvented(self): return False
 
     @property
-    def isHole(self): return True
+    def isHole(self): return False
 
     @staticmethod
     def parse(s):

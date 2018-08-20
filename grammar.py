@@ -556,10 +556,11 @@ class Grammar(object):
         else:
             def mutations(tp, loss):
                 if distance - loss > 0:
-                    yield Hole
+                    yield Hole()
             top_k = [] # (expr, logl)
             for expr in Mutator(self, mutations).execute(expr, request):
-                l = self.logLikelihood(expr)
+                print("expr", expr)
+                l = self.logLikelihood(expr.infer(), expr) #TODO, ll of wrong expr, should take ll of hole
                 if len(top_k) > 0:
                     i, v = min(enumerate(top_k), key=lambda x:x[1][1])
                     if l > v[1]:
