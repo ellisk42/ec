@@ -265,10 +265,22 @@ def makeSupervisedTasks():
                 [SupervisedTower("vertical stack %d"%n,
                                    lambda z: _loop(n)(lambda i: _13(z))(z))
                    for n in [3,7] ]
-    pyramids = [SupervisedTower("pyramid %d"%n,
+    pyramids = [SupervisedTower("arch pyramid %d"%n,
                                 lambda z: \
                                 _loop(n)(lambda i: _loop(i)(lambda j: _13(r(2,_13(l(1,_31(l(1,z)))))))(r(3,z)))(\
                                 _loop(n)(lambda i: _loop(n - i)(lambda j: _13(r(2,_13(l(1,_31(l(1,z)))))))(r(3,z)))(\
+                                                                                                                z)))
+                for n in range(2,5) ]
+    pyramids += [SupervisedTower("H pyramid %d"%n,
+                                lambda z: \
+                                _loop(n)(lambda i: _loop(i)(lambda j: _31(z))(r(3,z)))(\
+                                _loop(n)(lambda i: _loop(n - i)(lambda j: _31(z))(r(3,z)))(\
+                                                                                                                z)))
+                for n in range(2,5) ]
+    pyramids += [SupervisedTower("V pyramid %d"%n,
+                                lambda z: \
+                                _loop(n)(lambda i: _loop(i)(lambda j: _13(z))(r(1,z)))(\
+                                _loop(n)(lambda i: _loop(n - i)(lambda j: _13(z))(r(1,z)))(\
                                                                                                                 z)))
                 for n in range(2,5) ]
     everything = pyramids + staircase2 + staircase1 + Josh + arches + Bridges + simpleLoops
@@ -276,4 +288,6 @@ def makeSupervisedTasks():
         delattr(t,'original')
     return everything
 if __name__ == "__main__":
-    for t in makeSupervisedTasks(): t.animate()
+    ts = makeSupervisedTasks()
+    print(len(ts))
+    for t in ts: t.animate()

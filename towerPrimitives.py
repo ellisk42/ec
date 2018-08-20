@@ -89,5 +89,8 @@ primitives = [
          # ] + \
 
 
-def executeTower(p):
-    return p.evaluate([])(lambda s: (s,[]))(0)[1]
+def executeTower(p, timeout=None):
+    try:
+        return runWithTimeout(lambda : p.evaluate([])(lambda s: (s,[]))(0)[1],
+                              timeout=timeout)
+    except RunWithTimeout: return None
