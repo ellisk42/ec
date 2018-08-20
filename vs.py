@@ -747,8 +747,8 @@ class VersionTable():
         rewriteMapping = dict(zip(rewriteMapping,
                                   self.rewriteWithInvention(candidate, spaces)))
 
-        def tryRewrite(program):
-            rw = v.execute(rewriteMapping[program])
+        def tryRewrite(program, request=None):
+            rw = v.execute(rewriteMapping[program], request=request)
             # print(f"Rewriting {program} ({rewriteMapping[program]}) : rw={rw}")
             # print("slow-motion:")
             # try:
@@ -759,7 +759,7 @@ class VersionTable():
             # except Exception as e: print(e)
             return rw or program
 
-        frontiers = [Frontier([FrontierEntry(program=tryRewrite(e.program),
+        frontiers = [Frontier([FrontierEntry(program=tryRewrite(e.program, request=f.task.request),
                                              logLikelihood=e.logLikelihood,
                                              logPrior=0.)
                                        for e in f ],
@@ -826,10 +826,10 @@ class RewriteWithInventionVisitor():
     def application(self, e):
         return self.tryRewrite(e) or Application(e.f.visit(self),
                                                  e.x.visit(self))
-    def execute(self, e):
+    def execute(self, e, request=None):
         try:
             i = e.visit(self)
-            l = EtaLongVisitor().execute(i)
+            l = EtaLongVisitor(request=request).execute(i)
             return l
         except (UnificationFailure, EtaExpandFailure):
             return None    
@@ -842,7 +842,7 @@ def induceGrammar_Beta(g0, frontiers, _=None,
                        a=3,
                        aic=1.,
                        topK=2,
-                       topI=500,
+                       topI=50,
                        structurePenalty=1.,
                        CPUs=1):
     """grammar induction using only version spaces"""

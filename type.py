@@ -64,6 +64,12 @@ class TypeConstructor(Type):
         return TypeConstructor(self.name,
                                [x.apply(context) for x in self.arguments])
 
+    def applyMutable(self, context):
+        if not self.isPolymorphic:
+            return self
+        return TypeConstructor(self.name,
+                               [x.applyMutable(context) for x in self.arguments])
+
     def occurs(self, v):
         if not self.isPolymorphic:
             return False
@@ -83,6 +89,16 @@ class TypeConstructor(Type):
             (context, x) = x.instantiate(context, bindings)
             newArguments.append(x)
         return (context, TypeConstructor(self.name, newArguments))
+
+    def instantiateMutable(self, context, bindings=None):
+        if not self.isPolymorphic:
+            return self
+        if bindings is None:
+            bindings = {}
+        newArguments = []
+        return TypeConstructor(self.name, [x.instantiateMutable(context, bindings)
+                                           for x in self.arguments ])
+        
 
     def canonical(self, bindings=None):
         if not self.isPolymorphic:
@@ -120,6 +136,13 @@ class TypeVariable(Type):
                 return t.apply(context)
         return self
 
+    def applyMutable(self, context):
+        s = context.substitution[self.v]
+        if s is None: return self
+        new = s.applyMutable(context)
+        context.substitution[self.v] = new
+        return new
+
     def occurs(self, v): return v == self.v
 
     def instantiate(self, context, bindings=None):
@@ -131,6 +154,13 @@ class TypeVariable(Type):
         bindings[self.v] = new
         context = Context(context.nextVariable + 1, context.substitution)
         return (context, new)
+
+    def instantiateMutable(self, context, bindings=None):
+        if bindings is None: bindings = {}
+        if self.v in bindings: return bindings[self.v]
+        new = context.makeVariable()
+        bindings[self.v] = new
+        return new
 
     def canonical(self, bindings=None):
         if bindings is None:
@@ -186,6 +216,44 @@ class Context(object):
             "t%d ||> %s" % (k, v.apply(self)) for k, v in self.substitution))
 
     def __repr__(self): return str(self)
+
+class MutableContext(object):
+    def __init__(self):
+        self.substitution = []
+
+    def extend(self,i,t):
+        assert self.substitution[i] is None
+        self.substitution[i] = t
+
+    def makeVariable(self):
+        self.substitution.append(None)
+        return TypeVariable(len(self.substitution) - 1)
+
+    def unify(self, t1, t2):
+        t1 = t1.applyMutable(self)
+        t2 = t2.applyMutable(self)
+
+        if t1 == t2: return
+
+        # t1&t2 are not equal
+        if not t1.isPolymorphic and not t2.isPolymorphic:
+            raise UnificationFailure(t1, t2)
+
+        if isinstance(t1, TypeVariable):
+            if t2.occurs(t1.v):
+                raise Occurs()
+            self.extend(t1.v, t2)
+            return 
+        if isinstance(t2, TypeVariable):
+            if t1.occurs(t2.v):
+                raise Occurs()
+            self.extend(t2.v, t1)
+            return 
+        if t1.name != t2.name:
+            raise UnificationFailure(t1, t2)
+        
+        for x, y in zip(t2.arguments, t1.arguments):
+            self.unify(x, y)
 
 
 Context.EMPTY = Context(0, [])
