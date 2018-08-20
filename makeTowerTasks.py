@@ -33,7 +33,7 @@ class SupervisedTower(Task):
         self.plan = plan
 
     def animate(self):
-        os.system("python towers/visualize.py '%s' 3"%(self.plan))
+        os.system("python towers/visualize.py '%s' 3"%(centerTower(self.plan)))
 
     
 
@@ -247,8 +247,11 @@ def makeSupervisedTasks():
     Josh = [SupervisedTower("Josh (%d)"%n,
                             lambda z: _loop(n)(lambda i: _31(_13(l(1,_13(r(2,_13(l(1,(_31(r(3,z)))))))))))(z))
             for n in range(1,5) ]
-    staircase = [SupervisedTower("staircase %d"%n,
+    staircase1 = [SupervisedTower("R staircase %d"%n,
                                  lambda z: _loop(n)(lambda i: _loop(i)(lambda j: _13(r(2,_13(l(1,_31(l(1,z)))))))(r(3,z)))(z))
+                 for n in range(3,6) ]
+    staircase2 = [SupervisedTower("L staircase %d"%n,
+                                 lambda z: _loop(n)(lambda i: _loop(i)(lambda j: _13(r(2,_13(l(1,_31(l(1,z)))))))(l(3,z)))(z))
                  for n in range(3,6) ]
     simpleLoops = [SupervisedTower("horizontal row %d"%n,
                                    lambda z: _loop(n)(lambda i: _31(r(3,z)))(z))
@@ -262,7 +265,13 @@ def makeSupervisedTasks():
                 [SupervisedTower("vertical stack %d"%n,
                                    lambda z: _loop(n)(lambda i: _13(z))(z))
                    for n in [3,7] ]
-    everything = simpleLoops + staircase + Josh + arches + Bridges
+    pyramids = [SupervisedTower("pyramid %d"%n,
+                                lambda z: \
+                                _loop(n)(lambda i: _loop(i)(lambda j: _13(r(2,_13(l(1,_31(l(1,z)))))))(r(3,z)))(\
+                                _loop(n)(lambda i: _loop(n - i)(lambda j: _13(r(2,_13(l(1,_31(l(1,z)))))))(r(3,z)))(\
+                                                                                                                z)))
+                for n in range(2,5) ]
+    everything = pyramids + staircase2 + staircase1 + Josh + arches + Bridges + simpleLoops
     for t in everything:
         delattr(t,'original')
     return everything
