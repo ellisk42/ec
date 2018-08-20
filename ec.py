@@ -178,6 +178,11 @@ def ecIterator(grammar, tasks,
         k: v for k,
         v in locals().items() if k not in {
             "tasks",
+            "useNewRecognitionModel",
+            "likelihoodModel",
+            "use_map_search_times",
+            "activation",
+            "helmholtzBatch",
             "grammar",
             "cuda",
             "_",
@@ -195,7 +200,7 @@ def ecIterator(grammar, tasks,
             "testingTasks",
             "compressor"} and v is not None}
     if not useRecognitionModel:
-        for k in {"activation", "helmholtzRatio", "steps"}:
+        for k in {"helmholtzRatio", "steps"}:
             del parameters[k]
 
     # Uses `parameters` to construct the checkpoint path
