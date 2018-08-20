@@ -556,7 +556,7 @@ class Grammar(object):
         else:
             def mutations(tp, loss):
                 if distance - loss > 0:
-                    yield Program.Hole
+                    yield Hole
             top_k = [] # (expr, logl)
             for expr in Mutator(self, mutations).execute(expr, request):
                 l = self.logLikelihood(expr)

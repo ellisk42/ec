@@ -46,7 +46,7 @@ def _succ(x): return x+1
 def _pred(x): return x-1
 def _double(x): return x*2
 def _half(x): return int(x/2)
-def _neg(x): return -x
+def _negate(x): return -x
 def _square(x): return x**2
 def _triple(x): return x*3
 def _third(x): return int(x/3)
@@ -84,34 +84,34 @@ def deepcoderPrimitives():
         Primitive("count", arrow(int_to_bool, tlist(tint), tint), _count), #is this okay???
         Primitive("zipwith", arrow(int_to_int_to_int, tlist(tint), tlist(tint), tlist(tint)), _zipwith), #is this okay???
         Primitive("scanl1", arrow(int_to_int_to_int, tlist(tint), tlist(tint)), _scanl1), #is this okay???
-        ] + [
-        Primitive("succ", arrow(tint, tint), _succ),
-        Primitive("pred", arrow(tint, tint), _pred),
-        Primitive("double", arrow(tint, tint), _double),
-        Primitive("half", arrow(tint, tint), _half),
-        Primitive("neg", arrow(tint, tint), _neg),
-        Primitive("square", arrow(tint, tint), _square),
-        Primitive("triple", arrow(tint, tint), _triple),
-        Primitive("third", arrow(tint, tint), _third),
-        Primitive("quad", arrow(tint, tint), _quad),
-        Primitive("quarter", arrow(tint, tint), _quarter),
-        ] + [
-        Primitive("pos", arrow(tint, tbool), _pos),
-        Primitive("neg", arrow(tint, tbool), _neg),
-        Primitive("even", arrow(tint, tbool), _even),
-        Primitive("odd", arrow(tint, tbool), _odd),
-        ] + [
-        Primitive("add", arrow(tint, tint, tint), _add),
-        Primitive("sub", arrow(tint, tint, tint), _sub),
-        Primitive("mult", arrow(tint, tint, tint), _mult),
-        Primitive("min", arrow(tint, tint, tint), _min),
-        Primitive("max", arrow(tint, tint, tint), _max)
+        # ] + [
+        # Primitive("succ", arrow(tint, tint), _succ),
+        # Primitive("pred", arrow(tint, tint), _pred),
+        # Primitive("double", arrow(tint, tint), _double),
+        # Primitive("half", arrow(tint, tint), _half),
+        # Primitive("neg", arrow(tint, tint), _neg),
+        # Primitive("square", arrow(tint, tint), _square),
+        # Primitive("triple", arrow(tint, tint), _triple),
+        # Primitive("third", arrow(tint, tint), _third),
+        # Primitive("quad", arrow(tint, tint), _quad),
+        # Primitive("quarter", arrow(tint, tint), _quarter),
+        # ] + [
+        # Primitive("pos", arrow(tint, tbool), _pos),
+        # Primitive("neg", arrow(tint, tbool), _neg),
+        # Primitive("even", arrow(tint, tbool), _even),
+        # Primitive("odd", arrow(tint, tbool), _odd),
+        # ] + [
+        # Primitive("add", arrow(tint, tint, tint), _add),
+        # Primitive("sub", arrow(tint, tint, tint), _sub),
+        # Primitive("mult", arrow(tint, tint, tint), _mult),
+        # Primitive("min", arrow(tint, tint, tint), _min),
+        # Primitive("max", arrow(tint, tint, tint), _max)
         ] + [
         Primitive("succ_fn", int_to_int, _succ),
         Primitive("pred_fn", int_to_int, _pred),
         Primitive("double_fn", int_to_int, _double),
         Primitive("half_fn", int_to_int, _half),
-        Primitive("neg_fn", int_to_int, _neg),
+        Primitive("negate_fn", int_to_int, _negate),
         Primitive("square_fn", int_to_int, _square),
         Primitive("triple_fn", int_to_int, _triple),
         Primitive("third_fn", int_to_int, _third),
@@ -150,7 +150,7 @@ def flatten_program(p):
 
 if __name__ == "__main__":
     #g = Grammar.uniform(deepcoderPrimitives())
-    g = Grammar.fromProductions(deepcoderProductions(), logVariable= -100000000000)
+    g = Grammar.fromProductions(deepcoderProductions())
     request = arrow(tlist(tint), tint, tint)
     p = g.sample(request)
     print("request:", request)
@@ -159,6 +159,12 @@ if __name__ == "__main__":
     print("flattened_program:")
     flat = flatten_program(p)
     print(flat)
+
+    #robustfill output = names from productions + input_0-2 or 3
+
+
+
+
 
     # # with open("/home/ellisk/om/ec/experimentOutputs/list_aic=1.0_arity=3_ET=1800_expandFrontier=2.0_it=4_likelihoodModel=all-or-nothing_MF=5_baseline=False_pc=10.0_L=1.0_K=5_rec=False.pickle", "rb") as handle:
     # #     b = pickle.load(handle).grammars[-1]
