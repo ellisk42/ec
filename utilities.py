@@ -1,6 +1,3 @@
-
-
-
 import signal
 import random
 import time
@@ -13,6 +10,7 @@ import pickle as pickle
 from itertools import chain
 import heapq
 
+def cindex(i): return lambda a: a[i]
 
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
