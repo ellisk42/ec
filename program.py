@@ -805,11 +805,13 @@ class ShareVisitor(object):
 
 
 class Mutator:
-    """Perform local mutations to an expr"""
+    """Perform local mutations to an expr, yielding the expr and the
+    description length distance from the original program"""
 
     def __init__(self, grammar, fn):
-        """Fn yields expressions from a type and loss."""
-        self.fn = fn #want to output ll of replaced part as well
+        """Fn yields (expression, loglikelihood) from a type and loss.
+        Therefore, loss+loglikelihood is the distance from the original program."""
+        self.fn = fn
         self.grammar = grammar
         self.history = []
 
@@ -819,16 +821,19 @@ class Mutator:
         return expr
 
     def invented(self, e, tp):
-        for expr in self.fn(tp, -self.grammar.expression2likelihood[e]):
-            yield self.enclose(expr), -self.grammar.expression2likelihood[e]
+        deleted_ll = -self.logLikelihood(tp, e)
+        for expr, replaced_ll in self.fn(tp, deleted):
+            yield self.enclose(expr), deleted_ll + replaced_ll
 
     def primitive(self, e, tp):
-        for expr in self.fn(tp, -self.grammar.expression2likelihood[e]):
-            yield self.enclose(expr), -self.grammar.expression2likelihood[e]
+        deleted_ll = -self.logLikelihood(tp, e)
+        for expr, replaced_ll in self.fn(tp, deleted_ll):
+            yield self.enclose(expr), deleted_ll + replaced_ll
 
     def index(self, e, tp):
-        for expr in self.fn(tp, -self.grammar.logVariable):
-            yield self.enclose(expr), -self.grammar.logVariable
+        deleted_ll = -self.grammar.logVariable
+        for expr, replaced_ll in self.fn(tp, deleted_ll):
+            yield self.enclose(expr), deleted_ll + replaced_ll
 
     def application(self, e, tp):
         self.history.append(lambda expr: Application(expr, e.x))
@@ -838,15 +843,17 @@ class Mutator:
         x_tp = inferArg(tp, e.f.infer())
         yield from e.x.visit(self, x_tp)
         self.history.pop()
-        for expr in self.fn(tp, -self.logLikelihood(tp, e)):
-            yield self.enclose(expr), -self.logLikelihood(tp, e)
+        deleted_ll = -self.logLikelihood(tp, e)
+        for expr, replaced_ll in self.fn(tp, deleted_ll):
+            yield self.enclose(expr), deleted_ll + replaced_ll
 
     def abstraction(self, e, tp):
         self.history.append(lambda expr: Abstraction(expr))
         yield from e.body.visit(self, tp.arguments[1])
         self.history.pop()
-        # we don't try turning the abstraction into something else, because
-        # that other thing will just be an abstraction
+        deleted_ll = -self.logLikelihood(tp, e)
+        for expr, replaced_ll in self.fn(tp, deleted_ll):
+            yield self.enclose(expr), deleted_ll + replaced_ll
 
     def execute(self, e, tp):
         yield from e.visit(self, tp)
@@ -860,16 +867,18 @@ class Mutator:
         if summary is not None:
             return summary.logLikelihood(self.grammar)
         else:
-            depth, tmpTp = 0, tp
-            while tmpTp.isArrow() and not isinstance(e, Abstraction):
-                depth, tmpTp = depth + 1, tmpTp.arguments[1]
-            old = e
-            for _ in range(depth):
-                e = Abstraction(Application(e, Index(0)))
-            if e == old:
+            tmpE, depth = e, 0
+            while isinstance(tmpE, Abstraction):
+                depth += 1
+                tmpE = e.body
+            to_introduce = len(tp.functionArguments()) - depth
+            if to_introduce == 0:
                 return NEGATIVEINFINITY
-            else:
-                return self.logLikelihood(tp, e)
+            for i in range(to_introduce):
+                e = Application(e, Index(i))
+            for _ in range(to_introduce):
+                e = Abstraction(e)
+            return self.logLikelihood(tp, e)
 
 
 class RegisterPrimitives(object):

@@ -493,7 +493,19 @@ def sortBootstrap():
               for l in [removeDuplicates(randomList())]
              ])]
 
-    tasks = filterBootstrap + insertionBootstrap + sortTask
+    slowSort = [
+        Task("+1 maximum list", arrow(tlist(tint), tint),
+             [((l,),max(l) + 1)
+              for _ in range(15)
+              for l in [randomList()] ]),
+        Task("range +1 maximum list", arrow(tlist(tint), tlist(tint)),
+             [((l,),list(range(max(l) + 1)))
+              for _ in range(15)
+              for l in [randomList()] ]),
+        ]
+        
+
+    tasks = sortTask + slowSort
     for t in tasks: t.mustTrain = True
     return tasks
     
@@ -516,7 +528,32 @@ def exportTasks():
 
 
 if __name__ == "__main__":
-    for t in sortBootstrap():
+    import json
+    def retrieveJSONTasks(filename, features=False):
+        """
+        For JSON of the form:
+            {"name": str,
+             "type": {"input" : bool|int|list-of-bool|list-of-int,
+                      "output": bool|int|list-of-bool|list-of-int},
+             "examples": [{"i": data, "o": data}]}
+        """
+        with open(filename, "r") as f:
+            loaded = json.load(f)
+        TP = {
+            "bool": tbool,
+            "int": tint,
+            "list-of-bool": tlist(tbool),
+            "list-of-int": tlist(tint),
+        }
+        return [Task(
+            item["name"],
+            arrow(TP[item["type"]["input"]], TP[item["type"]["output"]]),
+            [((ex["i"],), ex["o"]) for ex in item["examples"]],
+            features=(None if not features else list_features(
+                [((ex["i"],), ex["o"]) for ex in item["examples"]])),
+            cache=False,
+        ) for item in loaded]
+    for t in retrieveJSONTasks("data/list_tasks.json") + sortBootstrap():
         print(t.describe())
         print()
     # exportTasks()
