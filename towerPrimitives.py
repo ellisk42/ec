@@ -8,9 +8,9 @@ from functools import reduce
 #def _concatenate(x): return lambda y: x + y
 
 def _left(d):
-    return lambda k: lambda hand: k(hand - d)
+    return lambda k: lambda hand: k(hand - d/2.)
 def _right(d):
-    return lambda k: lambda hand: k(hand + d)
+    return lambda k: lambda hand: k(hand + d/2.)
 def _loop(n):
     def f(start, stop, body, hand):
         if start >= stop: return hand,[]

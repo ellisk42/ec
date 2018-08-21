@@ -7,7 +7,7 @@ open Program
 open Type
 
 (* ttower = state -> (state, list of blocks) *)
-type tt = int -> int * ( (float*float*float) list)
+type tt = float -> float * ( (float*float*float) list)
 
 let tower_sequence (a : tt) (b : tt) : tt = fun hand ->
   let hand, a' = a hand in
@@ -56,7 +56,7 @@ let block w h =
   let v : tt -> tt = fun k : tt ->
     fun hand ->
       let (hand', rest) = k hand in
-      (hand', (xOffset +. (Float.of_int hand), w, h) :: rest)
+      (hand', (xOffset +. hand, w, h) :: rest)
   in
   ignore(primitive n (ttower @> ttower) v)
 ;;
@@ -72,26 +72,26 @@ block 1 4;;
 ignore(primitive "left" (tint @> ttower @> ttower)
          (let f : int -> tt -> tt = fun (d : int) ->
              fun (k : tt) ->
-             fun (hand : int) ->
-               let hand' = hand - d in
+             fun (hand : float) ->
+               let hand' = hand -. (Float.of_int d /. 2.) in
                let (hand'', rest) = k hand' in
                (hand'', rest)
           in f));;
 ignore(primitive "right" (tint @> ttower @> ttower)
          (let f : int -> tt -> tt = fun (d : int) ->
              fun (k : tt) ->
-             fun (hand : int) ->
-               let hand' = hand + d in
+             fun (hand : float) ->
+               let hand' = hand +. (Float.of_int d /. 2.) in
                let (hand'', rest) = k hand' in
                (hand'', rest)
           in f));;
 ignore(primitive "tower_loop" (tint @> (tint @> ttower) @> ttower @> ttower)
-         (let rec f (start : int) (stop : int) (body : int -> tt) : tt = fun (hand : int) -> 
+         (let rec f (start : int) (stop : int) (body : int -> tt) : tt = fun (hand : float) -> 
              if start >= stop then (hand,[]) else
                let (hand', thisIteration) = body start hand in
                let (hand'', laterIterations) = f (start+1) stop body hand' in
                (hand'', thisIteration @ laterIterations)
-          in fun (n : int) (b : int -> tt) (k : tt) : tt -> fun (hand : int) -> 
+          in fun (n : int) (b : int -> tt) (k : tt) : tt -> fun (hand : float) -> 
             let (hand, body_blocks) = f 0 n b hand in
             let hand, later_blocks = k hand in
             (hand, body_blocks @ later_blocks)));;
@@ -99,7 +99,7 @@ ignore(primitive "tower_loopM" (tint @> (tint @> ttower @> ttower) @> ttower @> 
          (fun i (f : int -> tt -> tt) (z : tt) : tt -> List.fold_right (0 -- (i-1)) ~f ~init:z));;
 ignore(primitive "tower_embed" (ttower @> ttower @> ttower)
          (fun (body : tt) (k : tt) : tt ->
-            fun (hand : int) ->
+            fun (hand : float) ->
               let (_, bodyActions) = body hand in
               let (hand', laterActions) = k hand in
               (hand', bodyActions @ laterActions)));;             
@@ -247,7 +247,7 @@ register_special_task "tower" (fun extra ?timeout:(timeout = 0.001)
          try
            match run_for_interval
                    timeout
-                   (fun () -> run_lazy_analyzed_with_arguments p [fun s -> (s, [])] 0 |> snd)
+                   (fun () -> run_lazy_analyzed_with_arguments p [fun s -> (s, [])] 0.0 |> snd)
            with
            | Some(p) ->
              let m = p |> List.map ~f:(fun (_,w,h) -> w*.h) |> List.fold_right ~f:(+.) ~init:0. in
@@ -344,7 +344,7 @@ register_special_task "supervisedTower" (fun extra ?timeout:(timeout = 0.001)
          try
            match run_for_interval
                    timeout
-                   (fun () -> run_lazy_analyzed_with_arguments p [fun s -> (s, [])] 0 |> snd)
+                   (fun () -> run_lazy_analyzed_with_arguments p [fun s -> (s, [])] 0.0 |> snd)
            with
            | Some(p) ->
              if discrete_tower (simulate_without_physics (center_tower p)) = plan then 0.0 else log 0.0

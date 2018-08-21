@@ -187,6 +187,11 @@ def centerTower(t):
     c = float(x1 - x0) / 2. + x0
     return [(x - c, w, h) for x, w, h in t]
 
+def towerLength(t):
+    x1 = max(x for x, _, _ in t)
+    x0 = min(x for x, _, _ in t)
+    return x1 - x0
+
 
 def makeTasks():
     """ideas:
@@ -219,7 +224,7 @@ def makeTasks():
             if o <= a
             ]
 def makeSupervisedTasks():
-    from towerPrimitives import epsilon,TowerContinuation,xOffset,_left,_right,_loop
+    from towerPrimitives import epsilon,TowerContinuation,xOffset,_left,_right,_loop,_embed
     w,h = 2,1
     _21 = TowerContinuation(xOffset(w, h), w - 2*epsilon, h - epsilon)
     w,h = 1,2
@@ -228,8 +233,13 @@ def makeSupervisedTasks():
     _13 = TowerContinuation(xOffset(w, h), w - 2*epsilon, h - epsilon)
     w,h = 3,1
     _31 = TowerContinuation(xOffset(w, h), w - 2*epsilon, h - epsilon)
-    r = lambda n,k: _right(n)(k)
-    l = lambda n,k: _left(n)(k)
+    r = lambda n,k: _right(2*n)(k)
+    l = lambda n,k: _left(2*n)(k)
+    _e = _embed
+    _lp = lambda n,b,k: _loop(n)(b)(k)
+    _arch = lambda k: l(1,_13(r(2,_13(l(1,_31(k))))))
+    _tallArch = lambda h,z,k: _lp(h, lambda _: _13(r(2,_13(l(2,z)))),
+                                  r(1,_31(k)))
 
     arches = [SupervisedTower("arch leg 1",lambda z: \
                _13(r(2,_13(l(1,_31(z)))))),
@@ -283,11 +293,48 @@ def makeSupervisedTasks():
                                 _loop(n)(lambda i: _loop(n - i)(lambda j: _13(z))(r(1,z)))(\
                                                                                                                 z)))
                 for n in range(2,5) ]
-    everything = pyramids + staircase2 + staircase1 + Josh + arches + Bridges + simpleLoops
+    pyramids += [SupervisedTower("H 1/2 pyramid %d"%n,
+                                lambda z: \
+                                _lp(n,lambda i: \
+                                    _e(_lp(n - i,lambda j: _31(r(3,z)),z))(r(1.5,z)),
+                                    z))
+                for n in range(2,7) ]
+    pyramids += [SupervisedTower("arch 1/2 pyramid %d"%n,
+                                lambda z: \
+                                _lp(n,lambda i: \
+                                    _e(_lp(n - i,lambda j: _arch(r(3,z)),z))(r(1.5,z)),
+                                    z))
+                for n in range(2,5) ]
+    pyramids += [SupervisedTower("V 1/2 pyramid %d"%n,
+                                lambda z: \
+                                _lp(n,lambda i: \
+                                    _e(_lp(n - i,lambda j: _13(r(1,z)),z))(r(0.5,z)),
+                                    z))
+                for n in range(2,7) ]
+    bricks = [SupervisedTower("brickwall, %dx%d"%(w,h),
+                              lambda z: \
+                              _loop(h)(lambda i: \
+                        _e(_loop(w)(lambda j: _31(r(3,z)))(z))
+                       (_e(r(1.5,
+                             _loop(w)(lambda k: _31(r(3,z)))(z)))(z))
+                              )(z)
+    )
+              for w in [3,4,5]
+              for h in [1,2,3] ]
+    aqueducts = [SupervisedTower("aqueduct: %dx%d"%(w,h),
+                                 lambda z: \
+                                 _lp(w, lambda j: _tallArch(h,z,_arch(r(2,z))), z))
+                 for w in range(2,6)
+                 for h in range(2,5)
+                 ]
+    everything = aqueducts + pyramids + bricks + staircase2 + staircase1 + Josh + arches + Bridges + simpleLoops
     for t in everything:
         delattr(t,'original')
     return everything
 if __name__ == "__main__":
     ts = makeSupervisedTasks()
     print(len(ts))
+    print(max(len(f.plan) for f in ts ))
+    print(max(towerLength(f.plan) for f in ts ))
+    
     for t in ts: t.animate()
