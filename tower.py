@@ -194,14 +194,14 @@ if __name__ == "__main__":
         newTowers = [tuple(centerTower(executeTower(frontier.sample().program)))
                      for frontier in result.taskSolutions.values() if not frontier.empty]
         request = arrow(ttower,ttower)
-        randomTowers = {tuple(centerTower(t))
+        randomTowers = list({tuple(centerTower(t))
                         for _ in range(250)
                         for program in [result.grammars[-1].sample(request,
                                                                    maximumDepth=12,
                                                                    maxAttempts=100)]
                         if program is not None
                         for t in [executeTower(program, timeout=0.5) or []]
-                        if len(t) >= 1}
+                        if len(t) >= 1})
         
         try:
             fn = 'experimentOutputs/towers/%s/solutions_%d.png'%(timestamp,iteration)
