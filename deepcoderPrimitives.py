@@ -150,7 +150,7 @@ def flatten_program(p):
 
 if __name__ == "__main__":
     #g = Grammar.uniform(deepcoderPrimitives())
-    g = Grammar.fromProductions(deepcoderProductions())
+    g = Grammar.fromProductions(deepcoderProductions(), logVariable=.9)
     request = arrow(tlist(tint), tint, tint)
     p = g.sample(request)
     print("request:", request)

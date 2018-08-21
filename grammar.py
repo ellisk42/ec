@@ -616,7 +616,7 @@ class Grammar(object):
             # print("len top k", len(top_k))
             # print("top_k", top_k)
             # assert False
-            return sorted(top_k, key=lambda x:x[1])
+            yield from sorted(top_k, key=lambda x:x[1])
 
 
 class LikelihoodSummary(object):
