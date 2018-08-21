@@ -213,7 +213,7 @@ class Grammar(object):
         f, xs = expression.applicationParse()
 
         if f not in candidates:
-            if not False:  # silent:
+            if not silent:
                 eprint(f, "Not in candidates")
                 eprint("Candidates is", candidates)
                 #eprint("grammar:", grammar.productions)
@@ -583,40 +583,28 @@ class Grammar(object):
             yield expr
         else:
             def mutations(tp, loss):
-                for _, _, expr in self.enumeration(
+                for l, _, expr in self.enumeration(
                         Context.EMPTY, [], tp, distance - loss):
-                    yield expr
+                    yield expr, l
             yield from Mutator(self, mutations).execute(expr, request)
 
 
-    def enumerateHoles(self, request, expr, distance=100.0, k=3): #distance is cranked up bc only looks at every node, so not a huge cost
+    def enumerateHoles(self, request, expr, k=3):
         """Enumerate programs with a single hole within mdl distance"""
         #TODO: make it possible to enumerate sketches with multiple holes
-        if distance <= 0:
-            yield expr
-        else:
-            def mutations(tp, loss):
-                if distance - loss > 0:
-                    yield Hole()
-            top_k = [] # (expr, logl)
-            for expr, l in Mutator(self, mutations).execute(expr, request):
-                # print("expr", expr)
-                # print("l", l)
-                # l = self.logLikelihood(expr.infer(), expr) #TODO, ll of wrong expr, should take ll of hole
-                if len(top_k) > 0:
-                    i, v = min(enumerate(top_k), key=lambda x:x[1][1])
-                    if l > v[1]:
-                        if len(top_k) == k:
-                            top_k[i] = (expr, l)
-                        else:
-                            top_k.append((expr, l))
+        def mutations(tp, loss):
+            yield Hole(), 0
+        top_k = []
+        for expr, l in Mutator(self, mutations).execute(expr, request):
+            if len(top_k) > 0:
+                i, v = min(enumerate(top_k), key=lambda x:x[1][1])
+                if len(top_k) >= k and l > v[1]:
+                    top_k[i] = (expr, l)
                 else:
                     top_k.append((expr, l))
-
-            # print("len top k", len(top_k))
-            # print("top_k", top_k)
-            # assert False
-            return sorted(top_k, key=lambda x:x[1])
+            else:
+                top_k.append((expr, l))
+        return sorted(top_k, key=lambda x:x[1])
 
 
 class LikelihoodSummary(object):
