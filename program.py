@@ -820,49 +820,51 @@ class Mutator:
             expr = h(expr)
         return expr
 
-    def invented(self, e, tp):
-        deleted_ll = -self.logLikelihood(tp, e)
+    def invented(self, e, tp, env):
+        deleted_ll = self.logLikelihood(tp, e, env)
         for expr, replaced_ll in self.fn(tp, deleted):
             yield self.enclose(expr), deleted_ll + replaced_ll
 
-    def primitive(self, e, tp):
-        deleted_ll = -self.logLikelihood(tp, e)
+    def primitive(self, e, tp, env):
+        deleted_ll = self.logLikelihood(tp, e, env)
         for expr, replaced_ll in self.fn(tp, deleted_ll):
             yield self.enclose(expr), deleted_ll + replaced_ll
 
-    def index(self, e, tp):
-        deleted_ll = -self.grammar.logVariable
+    def index(self, e, tp, env):
+        deleted_ll = self.grammar.logVariable
         for expr, replaced_ll in self.fn(tp, deleted_ll):
             yield self.enclose(expr), deleted_ll + replaced_ll
 
-    def application(self, e, tp):
+    def application(self, e, tp, env):
         self.history.append(lambda expr: Application(expr, e.x))
         f_tp = arrow(e.x.infer(), tp)
-        yield from e.f.visit(self, f_tp)
+        yield from e.f.visit(self, f_tp, env)
         self.history[-1] = lambda expr: Application(e.f, expr)
         x_tp = inferArg(tp, e.f.infer())
-        yield from e.x.visit(self, x_tp)
+        yield from e.x.visit(self, x_tp, env)
         self.history.pop()
-        deleted_ll = -self.logLikelihood(tp, e)
+        deleted_ll = self.logLikelihood(tp, e, env)
         for expr, replaced_ll in self.fn(tp, deleted_ll):
             yield self.enclose(expr), deleted_ll + replaced_ll
 
-    def abstraction(self, e, tp):
+    def abstraction(self, e, tp, env):
         self.history.append(lambda expr: Abstraction(expr))
-        yield from e.body.visit(self, tp.arguments[1])
+        yield from e.body.visit(self, tp.arguments[1], [tp.arguments[0]]+env)
         self.history.pop()
-        deleted_ll = -self.logLikelihood(tp, e)
+        deleted_ll = self.logLikelihood(tp, e, env)
         for expr, replaced_ll in self.fn(tp, deleted_ll):
             yield self.enclose(expr), deleted_ll + replaced_ll
 
     def execute(self, e, tp):
-        yield from e.visit(self, tp)
+        yield from e.visit(self, tp, [])
 
-    def logLikelihood(self, tp, e):
+    def logLikelihood(self, tp, e, env):
         summary = None
         try:
-            summary = self.grammar.closedLikelihoodSummary(tp, e, silent=True)
-        except AssertionError:
+            _, summary = self.grammar.likelihoodSummary(Context.EMPTY, env,
+                tp, e, silent=True)
+        except AssertionError as err:
+            #print(f"closedLikelihoodSummary failed on tp={tp}, e={e}, error={err}")
             pass
         if summary is not None:
             return summary.logLikelihood(self.grammar)
@@ -870,15 +872,16 @@ class Mutator:
             tmpE, depth = e, 0
             while isinstance(tmpE, Abstraction):
                 depth += 1
-                tmpE = e.body
+                tmpE = tmpE.body
             to_introduce = len(tp.functionArguments()) - depth
             if to_introduce == 0:
+                #print(f"HIT NEGATIVEINFINITY, tp={tp}, e={e}")
                 return NEGATIVEINFINITY
-            for i in range(to_introduce):
+            for i in reversed(range(to_introduce)):
                 e = Application(e, Index(i))
             for _ in range(to_introduce):
                 e = Abstraction(e)
-            return self.logLikelihood(tp, e)
+            return self.logLikelihood(tp, e, env)
 
 
 class RegisterPrimitives(object):

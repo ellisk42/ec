@@ -14,7 +14,7 @@ int_to_int_to_int = baseType("int_to_int_to_int")
 
 
 #deepcoderPrimitives
-Null = None #or perhaps something else, like "an integer outside the working range"?
+Null = 300 #or perhaps something else, like "an integer outside the working range"?
 
 def _head(xs): return xs[0] if len(xs)>0 else Null
 def _tail(xs): return xs[-1] if len(xs)>0 else Null
@@ -31,15 +31,16 @@ def _sum(xs): return sum(xs)
 def _map(f): return lambda l: list(map(f, l)) 
 def _filter(f): return lambda l: list(filter(f, l))
 def _count(f): return lambda l: len([x for x in l if f(x)])
-def _zipwith(f): return lambda xs: lambda ys: [f(x, y) for (x, y) in zip(xs, ys)]
+def _zipwith(f): return lambda xs: lambda ys: [f(x)(y) for (x, y) in zip(xs, ys)]
 def _scanl1(f): 
     def _inner(xs):
         ys = []
-        ys.append(xs[0])
-        for i in range(1, len(xs)):
-            ys.append( f(ys[i-1], xs[i]))
+        if len(xs) > 0:
+            ys.append(xs[0])
+            for i in range(1, len(xs)):
+                ys.append( f(ys[i-1])(xs[i]))
         return ys
-    return _inner 
+    return _inner
 
 #int to int:
 def _succ(x): return x+1
@@ -70,8 +71,8 @@ def deepcoderPrimitives():
     return [
         Primitive("head", arrow(tlist(tint), tint), _head), 
         Primitive("tail", arrow(tlist(tint), tint), _tail),
-        Primitive("take", arrow(tint, tlist(tint), tint), _take),
-        Primitive("take", arrow(tint, tlist(tint), tint), _drop),
+        Primitive("take", arrow(tint, tlist(tint), tlist(tint)), _take),
+        Primitive("drop", arrow(tint, tlist(tint), tlist(tint)), _drop),
         Primitive("access", arrow(tint, tlist(tint), tint), _access),
         Primitive("minimum", arrow(tlist(tint), tint), _minimum),
         Primitive("maximum", arrow(tlist(tint), tint), _maximum),

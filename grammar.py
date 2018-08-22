@@ -598,13 +598,16 @@ class Grammar(object):
         for expr, l in Mutator(self, mutations).execute(expr, request):
             if len(top_k) > 0:
                 i, v = min(enumerate(top_k), key=lambda x:x[1][1])
-                if len(top_k) >= k and l > v[1]:
-                    top_k[i] = (expr, l)
-                else:
+                if l > v[1]:
+                    if len(top_k) >= k:
+                        top_k[i] = (expr, l)
+                    else:
+                        top_k.append((expr, l))
+                elif len(top_k) < k:
                     top_k.append((expr, l))
             else:
                 top_k.append((expr, l))
-        return sorted(top_k, key=lambda x:x[1])
+        return sorted(top_k, key=lambda x:-x[1])
 
 class LikelihoodSummary(object):
     '''Summarizes the terms that will be used in a likelihood calculation'''
