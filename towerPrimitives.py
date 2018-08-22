@@ -94,3 +94,4 @@ def executeTower(p, timeout=None):
         return runWithTimeout(lambda : p.evaluate([])(lambda s: (s,[]))(0)[1],
                               timeout=timeout)
     except RunWithTimeout: return None
+    except: return None
