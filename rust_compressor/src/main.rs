@@ -1,3 +1,5 @@
+extern crate clap;
+extern crate itertools;
 extern crate polytype;
 extern crate programinduction;
 extern crate rayon;
@@ -6,11 +8,18 @@ extern crate serde_json;
 #[macro_use]
 extern crate serde_derive;
 
+mod vs;
+use self::vs::induce_version_spaces;
+
+use clap::{App, Arg};
 use polytype::Type;
 use programinduction::{lambda, ECFrontier, Task};
 use rayon::prelude::*;
 use std::f64;
 use std::io;
+
+/// version space parameter
+const TOP_I: usize = 50;
 
 #[derive(Deserialize)]
 struct ExternalCompressionInput {
@@ -89,7 +98,8 @@ struct CompressionInput {
 }
 impl From<ExternalCompressionInput> for CompressionInput {
     fn from(eci: ExternalCompressionInput) -> Self {
-        let primitives = eci.primitives
+        let primitives = eci
+            .primitives
             .into_par_iter()
             .map(|p| {
                 (
@@ -102,7 +112,8 @@ impl From<ExternalCompressionInput> for CompressionInput {
             })
             .collect();
         let variable_logprob = eci.variable_logprob;
-        let symmetry_violations = eci.symmetry_violations
+        let symmetry_violations = eci
+            .symmetry_violations
             .into_iter()
             .map(|s| (s.f, s.i, s.arg))
             .collect();
@@ -125,7 +136,8 @@ impl From<ExternalCompressionInput> for CompressionInput {
             aic: eci.params.aic.unwrap_or(f64::INFINITY),
             arity: eci.params.arity,
         };
-        let (tasks, frontiers) = eci.frontiers
+        let (tasks, frontiers) = eci
+            .frontiers
             .into_par_iter()
             .map(|f| {
                 let tp = Type::parse(&f.task_tp)
@@ -136,10 +148,12 @@ impl From<ExternalCompressionInput> for CompressionInput {
                     observation: (),
                     tp,
                 };
-                let sols = f.solutions
+                let sols = f
+                    .solutions
                     .into_iter()
                     .map(|s| {
-                        let expr = dsl.parse(&s.expression)
+                        let expr = dsl
+                            .parse(&s.expression)
                             .expect("invalid expression in frontier");
                         (expr, s.logprior, s.loglikelihood)
                     })
@@ -157,7 +171,8 @@ impl From<ExternalCompressionInput> for CompressionInput {
 }
 impl From<CompressionInput> for ExternalCompressionOutput {
     fn from(ci: CompressionInput) -> Self {
-        let primitives = ci.dsl
+        let primitives = ci
+            .dsl
             .primitives
             .par_iter()
             .map(|&(ref name, ref tp, logp)| Primitive {
@@ -167,7 +182,8 @@ impl From<CompressionInput> for ExternalCompressionOutput {
             })
             .collect();
         let variable_logprob = ci.dsl.variable_logprob;
-        let inventions = ci.dsl
+        let inventions = ci
+            .dsl
             .invented
             .par_iter()
             .map(|&(ref expr, _, logp)| Invention {
@@ -175,16 +191,19 @@ impl From<CompressionInput> for ExternalCompressionOutput {
                 logp,
             })
             .collect();
-        let symmetry_violations = ci.dsl
+        let symmetry_violations = ci
+            .dsl
             .symmetry_violations
             .iter()
             .map(|&(f, i, arg)| SymmetryViolation { f, i, arg })
             .collect();
-        let frontiers = ci.tasks
+        let frontiers = ci
+            .tasks
             .par_iter()
             .zip(&ci.frontiers)
             .map(|(t, f)| {
-                let solutions = f.iter()
+                let solutions = f
+                    .iter()
                     .map(|&(ref expr, logprior, loglikelihood)| {
                         let expression = ci.dsl.display(expr);
                         Solution {
@@ -211,6 +230,25 @@ impl From<CompressionInput> for ExternalCompressionOutput {
 }
 
 fn main() {
+    let matches = App::new("λ-calculus compressor")
+        .arg(
+            Arg::with_name("strategy")
+                .short("s")
+                .long("strategy")
+                .value_name("STRATEGY")
+                .help(
+                    "\
+                     Sets the compression strategy. \
+                     Either `fg' or `vs' for fragment-grammar-based and version-space-based \
+                     compression, respectively.",
+                )
+                .possible_values(&["fg", "vs"])
+                .default_value("fg")
+                .takes_value(true),
+        )
+        .get_matches();
+    let strategy = matches.value_of("strategy").unwrap();
+
     let eci: ExternalCompressionInput = {
         let stdin = io::stdin();
         let handle = stdin.lock();
@@ -218,7 +256,11 @@ fn main() {
     };
 
     let mut ci = CompressionInput::from(eci);
-    let (dsl, frontiers) = ci.dsl.compress(&ci.params, &ci.tasks, ci.frontiers);
+    let (dsl, frontiers) = match strategy {
+        "fg" => ci.dsl.compress(&ci.params, &ci.tasks, ci.frontiers),
+        "vs" => induce_version_spaces(&ci.dsl, &ci.params, &ci.tasks, ci.frontiers, TOP_I),
+        _ => unreachable!(),
+    };
     for i in ci.dsl.invented.len()..dsl.invented.len() {
         let &(ref expr, _, _) = &dsl.invented[i];
         eprintln!("invented {}", dsl.display(expr));
