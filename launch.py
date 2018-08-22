@@ -80,7 +80,7 @@ def sendCommand(
 
     preamble = f"""#!/bin/bash
 pip install pypng
-conda install protobuf
+conda install -y protobuf
 cd ~/ec
 {copyCheckpoint}
 touch compressor_dummy
