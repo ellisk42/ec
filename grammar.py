@@ -594,7 +594,7 @@ class Grammar(object):
         #TODO: make it possible to enumerate sketches with multiple holes
         def mutations(tp, loss, is_left_application=False):
             """
-            for applications lhs as hole, 
+            to allow applications lhs to become a hole,  
             remove the condition below and ignore all the is_left_application kwds 
             """
             if not is_left_application: 

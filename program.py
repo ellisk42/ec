@@ -844,7 +844,7 @@ class Mutator:
         yield from e.x.visit(self, x_tp, env)
         self.history.pop()
         deleted_ll = self.logLikelihood(tp, e, env)
-        for expr, replaced_ll in self.fn(tp, deleted_ll):
+        for expr, replaced_ll in self.fn(tp, deleted_ll, is_left_application=is_lhs):
             yield self.enclose(expr), deleted_ll + replaced_ll
 
     def abstraction(self, e, tp, env, is_lhs=False):
