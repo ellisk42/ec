@@ -820,25 +820,25 @@ class Mutator:
             expr = h(expr)
         return expr
 
-    def invented(self, e, tp, env):
+    def invented(self, e, tp, env, is_lhs=False):
         deleted_ll = self.logLikelihood(tp, e, env)
-        for expr, replaced_ll in self.fn(tp, deleted):
+        for expr, replaced_ll in self.fn(tp, deleted, is_left_application=is_lhs):
             yield self.enclose(expr), deleted_ll + replaced_ll
 
-    def primitive(self, e, tp, env):
+    def primitive(self, e, tp, env, is_lhs=False):
         deleted_ll = self.logLikelihood(tp, e, env)
-        for expr, replaced_ll in self.fn(tp, deleted_ll):
+        for expr, replaced_ll in self.fn(tp, deleted_ll, is_left_application=is_lhs):
             yield self.enclose(expr), deleted_ll + replaced_ll
 
-    def index(self, e, tp, env):
-        deleted_ll = self.grammar.logVariable
-        for expr, replaced_ll in self.fn(tp, deleted_ll):
+    def index(self, e, tp, env, is_lhs=False):
+        deleted_ll = self.logLikelihood(tp, e, env) #self.grammar.logVariable
+        for expr, replaced_ll in self.fn(tp, deleted_ll, is_left_application=is_lhs):
             yield self.enclose(expr), deleted_ll + replaced_ll
 
-    def application(self, e, tp, env):
+    def application(self, e, tp, env, is_lhs=False):
         self.history.append(lambda expr: Application(expr, e.x))
         f_tp = arrow(e.x.infer(), tp)
-        yield from e.f.visit(self, f_tp, env)
+        yield from e.f.visit(self, f_tp, env, is_lhs=True)
         self.history[-1] = lambda expr: Application(e.f, expr)
         x_tp = inferArg(tp, e.f.infer())
         yield from e.x.visit(self, x_tp, env)
@@ -847,12 +847,12 @@ class Mutator:
         for expr, replaced_ll in self.fn(tp, deleted_ll):
             yield self.enclose(expr), deleted_ll + replaced_ll
 
-    def abstraction(self, e, tp, env):
+    def abstraction(self, e, tp, env, is_lhs=False):
         self.history.append(lambda expr: Abstraction(expr))
         yield from e.body.visit(self, tp.arguments[1], [tp.arguments[0]]+env)
         self.history.pop()
         deleted_ll = self.logLikelihood(tp, e, env)
-        for expr, replaced_ll in self.fn(tp, deleted_ll):
+        for expr, replaced_ll in self.fn(tp, deleted_ll, is_left_application=is_lhs):
             yield self.enclose(expr), deleted_ll + replaced_ll
 
     def execute(self, e, tp):
