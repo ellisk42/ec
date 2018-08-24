@@ -225,17 +225,17 @@ class VersionTable():
 
         if x.isAbstraction and y.isAbstraction:
             overlap = self.haveOverlap(x.body,y.body)
-        if x.isApplication and y.isApplication:
+        elif x.isApplication and y.isApplication:
             overlap = self.haveOverlap(x.f,y.f) and \
                 self.haveOverlap(x.x,y.x)
-        if x.isUnion:
+        elif x.isUnion:
             if y.isUnion:
                 overlap = any( self.haveOverlap(x_,y_)
                             for x_ in x
                             for y_ in y )
             overlap = any( self.haveOverlap(x_, b)
                         for x_ in x )
-        if y.isUnion:
+        elif y.isUnion:
             overlap = any( self.haveOverlap(a, y_)
                         for y_ in y )
         else:
@@ -674,13 +674,6 @@ class VersionTable():
                            for b in _bs )
                        for _bs in beams )
         candidates = sorted(candidates, key=score)
-        if False:
-            for k in candidates:
-                print(score(k), "\t", list(self.extract(k))[0])
-                for hs in versions:
-                    for h in hs:
-                        print(self.rewriteWithInvention(k,h))
-                print()
         return candidates
 
     def rewriteWithInvention(self, i, js):
@@ -879,7 +872,11 @@ def induceGrammar_Beta(g0, frontiers, _=None,
         o = objective(newGrammar, newFrontiers)
 
         eprint("+", end='')
-        flushEverything()
+
+        # eprint(next(v.extract(candidate)))
+        # for f in newFrontiers:
+        #     for e in f:
+        #         eprint(e.program)
         
         return o
         
@@ -892,7 +889,7 @@ def induceGrammar_Beta(g0, frontiers, _=None,
         with timing("constructed %d-step version spaces"%arity):
             versions = [[v.superVersionSpace(v.incorporate(e.program), arity) for e in f]
                         for f in restrictedFrontiers ]
-        candidates = v.bestInventions(versions, bs=topI)[:topI]
+        candidates = v.bestInventions(versions, bs=topI)[:topBy]
         eprint("Only considering the top %d candidates"%len(candidates))
         with timing("scored the candidate inventions"):
             scoredCandidates = parallelMap(CPUs,
@@ -990,10 +987,11 @@ if __name__ == "__main__":
     g0 = Grammar.uniform(list(primitives))
 
     with timing("RUST test"):
-        induceGrammar(g0, [Frontier.dummy(p) for p in programs],
+        g = induceGrammar(g0, [Frontier.dummy(p) for p in programs],
                       CPUs=1,
                       a=N,
                       backend="vs")
+        eprint(g)
 
     with timing("induced DSL"):
         induceGrammar_Beta(g0, [Frontier.dummy(p) for p in programs],
