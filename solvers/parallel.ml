@@ -1,4 +1,6 @@
 open Core
+
+open Client
 open Utils
 
 let parallel_do nc actions =
@@ -124,6 +126,7 @@ let parallel_work ~nc ?chunk:(chunk=0) ~final actions =
       let rd, wt = Unix.pipe () in
       match Unix.fork () with
       | `In_the_child -> begin
+          refresh_socket_connections();
           (* Child *)
           Unix.close rd;
           let my_work = List.take !remaining_actions chunk in
@@ -132,6 +135,7 @@ let parallel_work ~nc ?chunk:(chunk=0) ~final actions =
           let answer = final() in
           (* Printf.printf "Worker %d executed in time %f\n"
            *   (!worker_id) (Unix.time()-.start_time); *)
+          close_socket_connections();
           let chan = Unix.out_channel_of_descr wt in
           Marshal.to_channel chan (List.length my_work, answer) [Marshal.Closures];
           Out_channel.close chan;

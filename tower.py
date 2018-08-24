@@ -74,7 +74,7 @@ def evaluateArches(ts):
         print()
         a = Program.parse(a)
         towers.append(tuple(centerTower(a)))
-        os.system("python towers/visualize.py '%s' %f" % (a, 4))
+        os.system("python tower_visualize.py '%s' %f" % (a, 4))
 
         for t in ts:
             print(t, end=' ')
@@ -111,7 +111,7 @@ def bruteForceTower(size):
 
 
 def bruteForceBaseline(tasks):
-    from towers.tower_common import TowerWorld
+    from tower_common import TowerWorld
     from PIL import Image
     towers = set([tuple(centerTower(t)) for t in bruteForceTower(4)])
     print("Generated", len(towers), "towers")
@@ -163,7 +163,7 @@ def dreamOfTowers(grammar, prefix, N=250):
 
 
 if __name__ == "__main__":
-    from towers.tower_common import exportTowers
+    from tower_common import exportTowers
     initializeTowerCaching()
 
     g0 = Grammar.uniform(primitives)
@@ -200,9 +200,9 @@ if __name__ == "__main__":
                            solver="ocaml",
                            compressor="pypy",
                            **arguments)
-    os.system("python towers/server.py KILL")
+    os.system("python tower_server.py KILL")
     time.sleep(1)
-    os.system("python towers/server.py &")
+    os.system("python tower_server.py &")
     time.sleep(1)
 
     perturbations = {t.perturbation for t in train if isinstance(t,TowerTask)}

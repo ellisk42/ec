@@ -33,7 +33,7 @@ class SupervisedTower(Task):
         self.plan = plan
 
     def animate(self):
-        os.system("python towers/visualize.py '%s' 3"%(centerTower(self.plan)))
+        os.system("python tower_visualize.py '%s' 3"%(centerTower(self.plan)))
 
     
 
@@ -82,7 +82,7 @@ class TowerTask(Task):
     @staticmethod
     def evaluateTower(tower, perturbation):
         global TOWERCACHING
-        from towers.tower_common import TowerWorld
+        from tower_common import TowerWorld
 
         key = (tuple(tower), perturbation)
         if key in TOWERCACHING:

@@ -1,0 +1,18 @@
+
+message TowerCash {
+	message Block {
+		required int32 x10 = 1;
+		required int32 w10 = 2;
+		required int32 h10 = 3;
+	}
+	message Entry {
+		repeated Block plan = 4;
+		required float height = 5;
+		required float stability = 6;
+		required float area = 7;
+		required float length = 8;
+		required float overpass = 9;
+		required float staircase = 10;
+	}
+	repeated Entry entries = 1;
+}

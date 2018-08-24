@@ -1,5 +1,6 @@
 open Core
 
+open Client
 open Timeout
 open Task
 open Utils
@@ -104,53 +105,11 @@ ignore(primitive "tower_embed" (ttower @> ttower @> ttower)
               let (hand', laterActions) = k hand in
               (hand', bodyActions @ laterActions)));;             
             
-
-
-let connection_failures = ref 0;;
-let connection_successes = ref 0;;
+let tower_socket = connect_socket 9494;;
 
 let send_to_tower_server k =
-  let open Yojson.Safe in
-  let p = 9494 in
-  let h = Unix.Inet_addr.localhost in
-  let (ic,oc) =
-    let attempts = ref 0 in
-    let connection = ref None in
-    while
-      try
-        connection := Some(Unix.open_connection (ADDR_INET(h,p)));
-        if !attempts > 0
-        then begin 
-          connection_failures := !connection_failures + 1;
-          Printf.eprintf "Connected to socket after %d attempts (%d/%d attempts had problems)\n" (!attempts) (!connection_failures) (!connection_failures + !connection_successes);
-          flush_everything()
-        end else connection_successes := !connection_successes + 1
-        ;
-        false
-      with Unix.Unix_error(_,_,_) -> true
-    do
-      attempts := !attempts + 1;
-      Thread.delay 0.05
-    done;
-    !connection |> get_some        
-  in
-  (*   let message : string = Yojson.Basic.to_string k in *)
-  (* output_string oc message;
-   * output_string oc "\n"; *)
-  Yojson.Safe.to_channel oc k;
-  (* basin *)
-  Out_channel.flush oc;
-  (* Printf.printf "outputted message %s\n" message; *)
-  Unix.shutdown ~mode:SHUTDOWN_SEND (Unix.descr_of_out_channel oc);
-  
-  let r = Yojson.Safe.from_channel ic in
-  (*   Unix.shutdown_connection  *)
-  Unix.shutdown ~mode:SHUTDOWN_RECEIVE (Unix.descr_of_in_channel ic);
-  In_channel.close ic;
-  (*   Printf.printf "gotTheMessage %s\n" (pretty_to_string r); *)
-  flush_everything();
-  r
-
+  socket_json tower_socket k
+    
 let parse_tower_result result =
   let open Yojson.Safe.Util in
   let stability = result |> member "stability" |> to_float in
@@ -359,3 +318,14 @@ register_special_task "supervisedTower" (fun extra ?timeout:(timeout = 0.001)
 
   })
 ;;
+
+let rec stress_test_client() =
+  let open Yojson.Basic.Util in
+  let m = (`String("doNothing")) in
+  assert(send_to_tower_server m = `String("noop"));
+  Printf.printf "+";
+  flush_everything();
+  stress_test_client()
+;;
+
+  
