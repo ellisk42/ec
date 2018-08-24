@@ -1,4 +1,5 @@
 {
+    "strategy": "vs",
   "primitives": [
     {"name": "nand", "tp": "bool -> bool -> bool", "logp": -0.3677247801253172}
   ],

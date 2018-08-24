@@ -447,6 +447,8 @@ def induceGrammar(*args, **kwargs):
             g, newFrontiers = callCompiled(pypyInduce, *args, **kwargs)
         elif backend == "rust":
             g, newFrontiers = rustInduce(*args, **kwargs)
+        elif backend == "vs":
+            g, newFrontiers = rustInduce(*args, vs=True, **kwargs)
         else:
             assert False, ""
     return g, newFrontiers
@@ -460,13 +462,15 @@ def pypyInduce(*args, **kwargs):
 def rustInduce(g0, frontiers, _=None,
                topK=1, pseudoCounts=1.0, aic=1.0,
                structurePenalty=0.001, a=0, CPUs=1, iteration=-1,
-               topk_use_only_likelihood=False):
+               topk_use_only_likelihood=False,
+               vs=False):
     import json
     import os
     import subprocess
 
     def finite_logp(l): return l if l != float("-inf") else -1000
     message = {
+        "strategy": "vs" if vs else "fg",
         "params": {
             "structure_penalty": structurePenalty,
             "pseudocounts": int(pseudoCounts + 0.5),

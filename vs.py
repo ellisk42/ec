@@ -968,6 +968,7 @@ if __name__ == "__main__":
     
     from arithmeticPrimitives import *
     from listPrimitives import *
+    from fragmentGrammar import *
     bootstrapTarget_extra()
 
     # p = Program.parse("(#(lambda (lambda (lambda (fold $0 empty ($1 $2))))) cons (lambda (lambda (lambda ($2 (+ (+ 5 5) (+ $1 $1)) $0)))))")
@@ -987,6 +988,12 @@ if __name__ == "__main__":
             if s.isPrimitive:
                 primitives.add(s)
     g0 = Grammar.uniform(list(primitives))
+
+    with timing("RUST test"):
+        induceGrammar(g0, [Frontier.dummy(p) for p in programs],
+                      CPUs=1,
+                      a=N,
+                      backend="vs")
 
     with timing("induced DSL"):
         induceGrammar_Beta(g0, [Frontier.dummy(p) for p in programs],
