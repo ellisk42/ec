@@ -280,14 +280,12 @@ def ecIterator(grammar, tasks,
         #for graphing of testing tasks
         numTestingTasks = len(testingTasks) if len(testingTasks) != 0 else None
 
-        result = ECResult(
-            parameters=parameters,
-            grammars=[grammar],
-            taskSolutions={
-                t: Frontier(
-                    [],
-                    task=t) for t in tasks},
-            recognitionModel=None, numTestingTasks=numTestingTasks)
+        result = ECResult(parameters=parameters,            
+                          grammars=[grammar],
+                          taskSolutions={
+                              t: Frontier([],
+                                          task=t) for t in tasks},
+                          recognitionModel=None, numTestingTasks=numTestingTasks)
 
     # just plopped this in here, hope it works: -it doesn't. having issues.
     if useNewRecognitionModel and (
@@ -367,47 +365,13 @@ def ecIterator(grammar, tasks,
             result.testingSearchTime.append(times)
             result.testingSumMaxll.append(sum(math.exp(f.bestll) for f in testingFrontiers if not f.empty) )
 
-        if j >= 2 and expandFrontier and result.learningCurve[-1] <= result.learningCurve[-2] and \
-           result.learningCurve[-1] < len(tasks):
-            oldEnumerationTimeout = enumerationTimeout
-            if expandFrontier <= 10:
-                enumerationTimeout = int(enumerationTimeout * expandFrontier)
-            else:
-                enumerationTimeout = int(enumerationTimeout + expandFrontier)
-            eprint("Expanding enumeration timeout from {} to {} because of no progress".format(
-                oldEnumerationTimeout,enumerationTimeout))
-            
+                   
         frontiers, times = multicoreEnumeration(grammar, tasks, likelihoodModel,
                                                 solver=solver,
                                                 maximumFrontier=maximumFrontier,
                                                 enumerationTimeout=enumerationTimeout,
                                                 CPUs=CPUs,
                                                 evaluationTimeout=evaluationTimeout)
-
-        if expandFrontier and (not useRecognitionModel) and (not useNewRecognitionModel) \
-           and (j == 0 and times == [] or
-                j > 0 and sum(not f.empty for f in frontiers) <= result.learningCurve[-1] and
-                result.learningCurve[-1] < len(tasks)):
-            timeout = enumerationTimeout
-            unsolvedTasks = [f.task for f in frontiers if f.empty]
-            while True:
-                eprint(
-                    "Expanding enumeration timeout from %i to %i because of no progress. Focusing exclusively on %d unsolved tasks." %
-                    (timeout, timeout * expandFrontier, len(unsolvedTasks)))
-                timeout = timeout * expandFrontier
-                unsolvedFrontiers, unsolvedTimes = \
-                    multicoreEnumeration(grammar, unsolvedTasks, likelihoodModel,
-                                         solver=solver,
-                                         maximumFrontier=maximumFrontier,
-                                         enumerationTimeout=timeout,
-                                         CPUs=CPUs,
-                                         evaluationTimeout=evaluationTimeout)
-                if any(not f.empty for f in unsolvedFrontiers):
-                    times += unsolvedTimes
-                    unsolvedFrontiers = {f.task: f for f in unsolvedFrontiers}
-                    frontiers = [f if not f.empty else unsolvedFrontiers[f.task]
-                                 for f in frontiers]
-                    break
 
         eprint("Generative model enumeration results:")
         eprint(Frontier.describe(frontiers))
@@ -418,11 +382,10 @@ def ecIterator(grammar, tasks,
         # Train + use recognition model
         if useRecognitionModel:
             featureExtractorObject = featureExtractor(tasks + testingTasks)
-            recognizer = RecognitionModel(
-                featureExtractorObject,
-                grammar,
-                activation=activation,
-                cuda=cuda)
+            recognizer = RecognitionModel(featureExtractorObject,
+                                          grammar,
+                                          activation=activation,
+                                          cuda=cuda)
 
             recognizer.train(frontiers, topK=topK, steps=steps,
                              CPUs=CPUs,
@@ -438,6 +401,7 @@ def ecIterator(grammar, tasks,
                                                                      maximumFrontier=maximumFrontier,
                                                                      enumerationTimeout=enumerationTimeout,
                                                                      evaluationTimeout=evaluationTimeout)
+            tasksHitBottomUp = {f.task for f in bottomupFrontiers if not f.empty}
 
         elif useNewRecognitionModel:  # Train a recognition model
             result.recognitionModel.updateGrammar(grammar)
@@ -457,6 +421,50 @@ def ecIterator(grammar, tasks,
                 frontierSize=frontierSize,
                 enumerationTimeout=enumerationTimeout,
                 evaluationTimeout=evaluationTimeout)
+
+
+        # Repeatedly expand the frontier until we hit something that we have not solved yet
+        solvedTasks = tasksHitTopDown | (tasksHitBottomUp if useRecognitionModel else set())
+        numberOfSolvedTasks = len(solvedTasks)
+        if j > 0 and expandFrontier and numberOfSolvedTasks <= result.learningCurve[-1] and \
+           result.learningCurve[-1] < len(tasks):
+            unsolved = [t for t in tasks if t not in solvedTasks ]
+            eprint("We are currently stuck: there are %d remaining unsolved tasks, and we only solved %d ~ %d in the last two iterations"%(len(unsolved),
+                                                                                                                                         numberOfSolvedTasks,
+                                                                                                                                         result.learningCurve[-1]))
+            eprint("Going to repeatedly expand the search timeout until we solve something new...")
+            timeout = enumerationTimeout
+            while True:
+                eprint("Expanding enumeration timeout from %i to %i because of no progress. Focusing exclusively on %d unsolved tasks." % (timeout, timeout * expandFrontier, len(unsolved)))
+                timeout = timeout * expandFrontier
+                unsolvedFrontiers, unsolvedTimes = \
+                    multicoreEnumeration(grammar, unsolved, likelihoodModel,
+                                         solver=solver,
+                                         maximumFrontier=maximumFrontier,
+                                         enumerationTimeout=timeout,
+                                         CPUs=CPUs,
+                                         evaluationTimeout=evaluationTimeout)
+                if useRecognitionModel:
+                    bottomUnsolved, unsolvedTimes = recognizer.enumerateFrontiers(unsolved, likelihoodModel,
+                                                                                  CPUs=CPUs,
+                                                                                  solver=solver,
+                                                                                  frontierSize=frontierSize,
+                                                                                  maximumFrontier=maximumFrontier,
+                                                                                  enumerationTimeout=enumerationTimeout,
+                                                                                  evaluationTimeout=evaluationTimeout)
+                    # Merge top-down w/ bottom-up
+                    unsolvedFrontiers = [f.combine(grammar.rescoreFrontier(b))
+                                         for f, b in zip(unsolvedFrontiers, bottomUnsolved) ]
+                    
+                if any(not f.empty for f in unsolvedFrontiers):
+                    times += unsolvedTimes
+                    unsolvedFrontiers = {f.task: f for f in unsolvedFrontiers}
+                    frontiers = [f if not f.empty else unsolvedFrontiers[f.task]
+                                 for f in frontiers]
+                    print("Completed frontier expansion; solved: %s"%
+                          {t.name for t,f in unsolvedFrontiers.items() if not f.empty })
+                    break
+                
         if useRecognitionModel or useNewRecognitionModel:
 
             eprint("Recognition model enumeration results:")
@@ -469,16 +477,10 @@ def ecIterator(grammar, tasks,
 
             result.sumMaxll.append( sum(math.exp(f.bestll) for f in bottomupFrontiers if not f.empty)) #TODO
 
-            tasksHitBottomUp = {
-                f.task for f in bottomupFrontiers if not f.empty}
             showHitMatrix(tasksHitTopDown, tasksHitBottomUp, tasks)
             # Rescore the frontiers according to the generative model
             # and then combine w/ original frontiers
-            bottomupFrontiers = [
-                grammar.rescoreFrontier(f) for f in bottomupFrontiers]
-            frontiers = [
-                f.combine(b) for f, b in zip(
-                    frontiers, bottomupFrontiers)]
+            frontiers = [ f.combine(grammar.rescoreFrontier(b)) for f, b in zip(frontiers, bottomupFrontiers)]
         else:
             result.averageDescriptionLength.append(mean(-f.marginalLikelihood()
                                                         for f in frontiers
@@ -502,21 +504,27 @@ def ecIterator(grammar, tasks,
                         f.task))) for f in frontiers]
         frontiers = [f.topK(maximumFrontier) for f in frontiers]
 
-        if maximumFrontier <= 10:
-            eprint(
-                "Because maximumFrontier is small (<=10), I am going to show you the full contents of all the frontiers:")
-            for f in frontiers:
-                if f.empty:
-                    continue
-                eprint(f.task)
-                for e in f.normalize():
-                    eprint("%.02f\t%s" % (e.logPosterior, e.program))
-                eprint()
+        eprint("Showing the top 5 programs in each frontier:")
+        for f in frontiers:
+            if f.empty:
+                continue
+            eprint(f.task)
+            for e in f.normalize().topK(5):
+                eprint("%.02f\t%s" % (e.logPosterior, e.program))
+            eprint()
+            
         # Record the new solutions
         result.taskSolutions = {f.task: f.topK(topK)
                                 for f in frontiers}
         result.learningCurve += [
             sum(f is not None and not f.empty for f in result.taskSolutions.values())]
+
+        
+            
+
+
+
+                
 
         # Sleep-G
         grammar, frontiers = induceGrammar(grammar, frontiers,
@@ -528,29 +536,21 @@ def ecIterator(grammar, tasks,
         result.grammars.append(grammar)
         eprint("Grammar after iteration %d:" % (j + 1))
         eprint(grammar)
-        eprint(
-            "Expected uses of each grammar production after iteration %d:" %
-            (j + 1))
-        productionUses = FragmentGrammar.fromGrammar(grammar).\
-            expectedUses([f for f in frontiers if not f.empty]).actualUses
-        productionUses = {
-            p: productionUses.get(
-                p, 0.) for p in grammar.primitives}
-        for p in sorted(
-                productionUses.keys(),
-                key=lambda p: -
-                productionUses[p]):
-            eprint("<uses>=%.2f\t%s" % (productionUses[p], p))
-        eprint()
-        if maximumFrontier <= 10:
-            eprint("Because maximumFrontier is small (<=10), I am going to show you the full contents of all the rewritten frontiers:")
-            for f in frontiers:
-                if f.empty:
-                    continue
-                eprint(f.task)
-                for e in f.normalize():
-                    eprint("%.02f\t%s" % (e.logPosterior, e.program))
-                eprint()
+        
+        # eprint(
+        #     "Expected uses of each grammar production after iteration %d:" %
+        #     (j + 1))
+        # productionUses = FragmentGrammar.fromGrammar(grammar).\
+        #     expectedUses([f for f in frontiers if not f.empty]).actualUses
+        # productionUses = {
+        #     p: productionUses.get(
+        #         p, 0.) for p in grammar.primitives}
+        # for p in sorted(
+        #         productionUses.keys(),
+        #         key=lambda p: -
+        #         productionUses[p]):
+        #     eprint("<uses>=%.2f\t%s" % (productionUses[p], p))
+        # eprint()
 
         if outputPrefix is not None:
             path = checkpointPath(j + 1)
