@@ -21,7 +21,7 @@ def launch(size="t2.micro", name=""):
     # --key-name testing --associate-public-ip-address
     o = json.loads(subprocess.check_output(["aws", "ec2", "run-instances",
                                             "--image-id",
-                                            "ami-37ccf252",
+                                            "ami-0b75245c1e9b00c36",
                                             "--instance-type", size,
                                             "--security-groups", "publicssh",
                                             "--instance-initiated-shutdown-behavior", "terminate",
@@ -79,8 +79,6 @@ def sendCommand(
         copyCheckpoint = "mv ~/%s ~/ec/experimentOutputs" % checkpoint
 
     preamble = f"""#!/bin/bash
-pip install pypng
-conda install -y protobuf
 cd ~/ec
 {copyCheckpoint}
 touch compressor_dummy
