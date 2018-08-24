@@ -1,6 +1,7 @@
 from python_server import *
 from utilities import *
 
+from multiprocessing import Pool
 import cache_pb2
 import codecs
 import random
@@ -14,10 +15,11 @@ import json
 from tower_common import TowerWorld, exportTowers
 
 COMMANDSERVERPORT = 9494
-COMMANDSERVERSEMAPHORE = None
+CASHSEMAPHORE = None
 SERIALIZEDSEMAPHORE = None
+WORKERSEMAPHORE = None
 MAXIMUMNUMBEROFCONNECTIONS = None
-
+WORKERS = None
 
 
 
@@ -85,7 +87,15 @@ def exportToRAM(content):
     fd.close()
 
     return n
-    
+
+def runSimulation(plan, perturbation, n):
+    try:
+        v = TowerWorld().sampleStability(plan, perturbation, n)
+    except:
+        v = TowerWorld.BADRESULT
+    return v
+
+
 def handleTowerRequest(request):
     k = json.loads(request,encoding="utf-8")
     if k == "doNothing":
@@ -101,27 +111,28 @@ def handleTowerRequest(request):
         n = k["n"]
 
         k = (tuple(map(tuple, plan)), perturbation)
-        COMMANDSERVERSEMAPHORE.acquire()
+        CASHSEMAPHORE.acquire()
         if k in RESULTSCASH:
             v = RESULTSCASH[k]
-            COMMANDSERVERSEMAPHORE.release()
+            CASHSEMAPHORE.release()
         else:
-            try:
-                v = TowerWorld().sampleStability(plan, perturbation, n)
-            except:
-                v = TowerWorld.BADRESULT
+            CASHSEMAPHORE.release()
 
+            WORKERSEMAPHORE.acquire()
+            v = WORKERS.apply_async(runSimulation,
+                                    args=(plan, perturbation, n))
+            WORKERSEMAPHORE.release()
+            v = v.get()
+
+            CASHSEMAPHORE.acquire()
             RESULTSCASH[k] = v
             if powerOfTen(len(RESULTSCASH)):
                 eprint("Tower cache reached size", len(RESULTSCASH))
-
-            COMMANDSERVERSEMAPHORE.release()
+            CASHSEMAPHORE.release()
 
 
             SERIALIZEDSEMAPHORE.acquire()
             addToSerialized(plan, v)
-
-            # eprint("Releasing serialization semaphore")
             SERIALIZEDSEMAPHORE.release()
 
         # eprint("Writing out simulation result")
@@ -167,7 +178,11 @@ if __name__ == "__main__":
         kill_servers()
         sys.exit(0)
 
-    COMMANDSERVERSEMAPHORE = threading.Semaphore(1)
+    CASHSEMAPHORE = threading.Semaphore(1)
     SERIALIZEDSEMAPHORE = threading.Semaphore(1)
+    WORKERSEMAPHORE = threading.Semaphore(1)
+    nc = numberOfCPUs()
+    WORKERS = Pool(nc)
 
-    runPythonServer(COMMANDSERVERPORT, handleTowerRequest, threads=30)
+    runPythonServer(COMMANDSERVERPORT, handleTowerRequest, threads=nc)
+else: assert False

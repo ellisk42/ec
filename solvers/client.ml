@@ -29,7 +29,6 @@ let refresh_socket_connections() =
   match !socket_connections with
     [] -> ()
   | _ -> begin
-      Printf.eprintf "Refreshing socket %d connections!\n" (List.length !socket_connections);
       context := Zmq.Context.create();
       socket_connections := !socket_connections |> List.map ~f:(fun (r,p) ->
           r := connect_socket' p;

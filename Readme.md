@@ -11,7 +11,7 @@ following packages (anecdotal data from Arch x64, assuming you have `opam`):
 opam update                 # Seriously, do that one
 opam switch 4.06.1+flambda  # caml.inria.fr/pub/docs/manual-ocaml/flambda.html
 eval `opam config env`      # *sight*
-opam install ppx_jane core re2 yojson vg cairo2 camlimages menhir ocaml-protoc
+opam install ppx_jane core re2 yojson vg cairo2 camlimages menhir ocaml-protoc zmq
 ```
 
 Now try to run `make` in the root folder, it should build several ocaml
@@ -49,6 +49,7 @@ pip install cairocffi
 pip install psutil
 conda install protobuf
 pip install pypng
+conda install pyzmq
 ```
 
 ### PyPy
