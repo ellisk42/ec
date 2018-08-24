@@ -97,7 +97,7 @@ def runSimulation(plan, perturbation, n):
 
 
 def handleTowerRequest(request):
-    k = json.loads(request,encoding="utf-8")
+    k = json.loads(request.decode("utf-8"))
     if k == "doNothing":
         response = "noop"
     elif k == "sendSerializedCash":
