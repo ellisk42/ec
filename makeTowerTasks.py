@@ -265,6 +265,9 @@ def makeSupervisedTasks():
               SupervisedTower("arch leg 4",lambda z: \
                _13(_13(_13(_13(r(2,_13(_13(_13(_13(l(1,_31(z))))))))))))
     ]
+    archesStacks = [SupervisedTower("arch stack %d"%n,
+                                    lambda z: _loop(n)(lambda _: _arch(z))(z))
+                    for n in range(3,7) ]
     Bridges = [SupervisedTower("bridge (%d) of %s"%(n,a.name),
                 lambda z: _loop(n)(lambda i: a.original(r(2,z)))(z))
                for n in range(2,5)
@@ -348,7 +351,7 @@ def makeSupervisedTasks():
                  for w in range(2,6)
                  for h in range(2,5)
                  ]
-    everything = aqueducts + pyramids + bricks + staircase2 + staircase1 + Josh + arches + Bridges + simpleLoops
+    everything = archesStacks + aqueducts + pyramids + bricks + staircase2 + staircase1 + Josh + arches + Bridges + simpleLoops
     for t in everything:
         delattr(t,'original')
     return everything
