@@ -53,7 +53,7 @@ let block w h =
   let xOffset = if w mod 2 = 1 then 0.5 else 0.0 in
   let e = 0.05 in
   let w = Float.of_int w -. 2. *. e in
-  let h = Float.of_int h -. e in
+  let h = Float.of_int h in
   let v : tt -> tt = fun k : tt ->
     fun hand ->
       let (hand', rest) = k hand in

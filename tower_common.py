@@ -65,7 +65,7 @@ class TowerWorld(object):
         dx = dx / 2
         dy = dy / 2
 
-        safetyMargin = 0.01
+        safetyMargin = 0.0
         y = self.lowestLegalHeight(x, dx, dy) + safetyMargin
 
         body = self.world.CreateDynamicBody(
@@ -477,6 +477,78 @@ def exportTowers(towers, name):
     Image.fromarray(towers).convert('RGB').save(name)
 
 
+def simulateWithoutPhysics(plan):
+    def overlap(b1,
+                b2):
+        (x,w,h) = b1
+        (x_,y_,w_,h_) = b2
+        x1 = x - w/2.
+        x2 = x + w/2.
+        x1_ = x_ - w_/2.
+        x2_ = x_ + w_/2.
+        if x1_ > x2 or x1 > x2_: return None
+        return y_ + h_/2. + h/2.
+    def lowestPossibleHeight(b): return b[2]/2.
+    def placeAtHeight(b,y):
+        (x,w,h) = b
+        return (x,y,w,h)
+    def placeBlock(world, block):
+        lowest = max([lowestPossibleHeight(block)] + \
+                     [overlap(block,other)
+                      for other in world
+                      if overlap(block,other) is not None])
+        world.append(placeAtHeight(block, lowest))
+
+    w = []
+    for p in plan: placeBlock(w,p)
+    return list(sorted(w))
+
+def fastRendererPlan(plan, resolution=256, window=30, floorHeight=10,
+                     borderSize=1, bodyColor=(0.,1.,1.),
+                     borderColor=(1.,0.,0.),
+                     pretty=False):
+    import numpy as np
+    
+    world = simulateWithoutPhysics(plan)
+    a = np.zeros((resolution, resolution, 3))
+
+    def transform(x,y):
+        y = resolution - y*resolution/float(window)
+        x = resolution/2 + x*resolution/float(window)
+        return int(x + 0.5),int(y + 0.5)
+    def clip(p):
+        if p < 0: return 0
+        if p >= resolution: return resolution - 1
+        return p
+
+    
+    for x,y,w,h in world:
+        x1,y1 = transform(x - w/2.,
+                          y - h/2.)
+        x2,y2 = transform(x + w/2.,
+                          y + h/2.)
+        y1 -= floorHeight
+        y2 -= floorHeight
+
+        if pretty:
+            a[clip(y2) : clip(y1),
+              clip(x1) : clip(x2),
+              :] = (random.random(),random.random(),random.random())
+        else:
+            a[clip(y2) : clip(y1),
+              clip(x1) : clip(x2),
+              :] = borderColor
+            a[clip(y2 + borderSize) : clip(y1 - borderSize),
+              clip(x1 + borderSize) : clip(x2 - borderSize),
+              :] = bodyColor
+        
+        
+    a[resolution - floorHeight:,:,:] = 1.
+    return a
+                
+        
+    
+
 def makeNiceArray(l):
     n = len(l)**0.5
     n = int(n)
@@ -485,3 +557,17 @@ def makeNiceArray(l):
         a.append(l[:n])
         l = l[n:]
     return a
+
+def montage(arrays):
+    import numpy as np
+    arrays = makeNiceArray(arrays)
+    m = max(len(t) for t in arrays)
+
+    size = arrays[0][0].shape
+    tp = arrays[0][0].dtype
+
+    arrays = [np.concatenate(ts + [np.zeros(size, dtype=tp)] * (m - len(ts)), axis=1) for ts in arrays]
+    arrays = np.concatenate(arrays, axis=0)
+    return arrays
+
+    

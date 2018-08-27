@@ -5,23 +5,6 @@ from task import *
 import math
 
 
-TOWERCACHING = None
-
-
-def initializeTowerCaching():
-    global TOWERCACHING
-    if False:
-        from multiprocessing import Manager
-        m = Manager()
-        TOWERCACHING = m.dict()
-    else:
-        TOWERCACHING = {}
-
-
-def getTowerCash():
-    global TOWERCACHING
-    return TOWERCACHING
-
 class SupervisedTower(Task):
     def __init__(self, name, plan):
         self.original = plan
@@ -31,9 +14,41 @@ class SupervisedTower(Task):
         self.specialTask = ("supervisedTower",
                             {"plan": plan})
         self.plan = plan
+        self.image = None
+
+    def getImage(self):
+        from tower_common import fastRendererPlan
+        if self.image is not None: return self.image
+
+        self.image = fastRendererPlan(centerTower(self.plan))
+
+        return self.image
+
+    
+    # do not pickle the image
+    def __getstate__(self):
+        return self.specialTask, self.plan, self.request, self.cache, self.name, self.examples
+    def __setstate__(self, state):
+        self.specialTask, self.plan, self.request, self.cache, self.name, self.examples = state
+        self.image = None
+
 
     def animate(self):
-        os.system("python tower_visualize.py '%s' 3"%(centerTower(self.plan)))
+        from tower_common import fastRendererPlan
+        from pylab import imshow,show
+        a = fastRendererPlan(centerTower(self.plan))
+        imshow(a)
+        show()
+
+    @staticmethod
+    def showMany(ts):
+        from tower_common import fastRendererPlan,montage
+        from pylab import imshow,show
+        a = montage([fastRendererPlan(centerTower(t.plan),pretty=True)
+                         for t in ts]) 
+        imshow(a)
+        show()
+        
 
     
 
@@ -336,5 +351,5 @@ if __name__ == "__main__":
     print(len(ts))
     print(max(len(f.plan) for f in ts ))
     print(max(towerLength(f.plan) for f in ts ))
-    
-    for t in ts: t.animate()
+    SupervisedTower.showMany(ts)
+    #for t in ts: t.animate()

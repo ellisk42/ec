@@ -38,7 +38,7 @@ def my_draw_polygon(polygon, body, fixture):
 polygonShape.draw = my_draw_polygon
 
 
-result = TowerWorld().sampleStability(plan, perturbation, N=100)
+result = TowerWorld().sampleStability(plan, perturbation, N=1)
 mass = sum(w * h for _, w, h in plan)
 print("This tower has mass %f, and gives the following result with a perturbation of %f:" %
       (mass, perturbation))
