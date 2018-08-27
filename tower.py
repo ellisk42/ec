@@ -169,7 +169,7 @@ if __name__ == "__main__":
         structurePenalty=1,
         pseudoCounts=10,
         topK=10,
-        maximumFrontier=10**4,
+        maximumFrontier=10,
         extras=tower_options)
     
     tasks = arguments.pop("tasks")
