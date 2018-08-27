@@ -589,6 +589,13 @@ class VersionTable():
             # candidates = [k for k in candidates if next(self.extract(k)).isBetaLong()]
             eprint(len(candidates),"candidates from version space")
 
+            # Calculate the number of free variables for each candidate invention
+            # This is important because, if a candidate has free variables,
+            # then whenever we use it we will have to apply it to those free variables;
+            # thus using a candidate with free variables is more expensive
+            candidateCost = {k: len(set(next(self.extract(k)).freeVariables())) + 1
+                             for k in candidates }
+
         inhabitTable = self.inhabitantTable
         functionTable = self.functionInhabitantTable
 
@@ -597,10 +604,10 @@ class VersionTable():
                 self.space = j
                 cost, inhabitants = inhabitTable[j]
                 functionCost, functionInhabitants = functionTable[j]
-                self.relativeCost = {inhabitant: 1
+                self.relativeCost = {inhabitant: candidateCost[inhabitant]
                                      for inhabitant in inhabitants
                                      if inhabitant in candidates}
-                self.relativeFunctionCost = {inhabitant: 1
+                self.relativeFunctionCost = {inhabitant: candidateCost[inhabitant]
                                              # INTENTIONALLY, do not use function inhabitants
                                              for inhabitant in inhabitants
                                              if inhabitant in candidates}
@@ -889,15 +896,16 @@ def induceGrammar_Beta(g0, frontiers, _=None,
         with timing("constructed %d-step version spaces"%arity):
             versions = [[v.superVersionSpace(v.incorporate(e.program), arity) for e in f]
                         for f in restrictedFrontiers ]
-        candidates = v.bestInventions(versions, bs=topI)[:topBy]
+        candidates = v.bestInventions(versions, bs=topI)[:topI]
         eprint("Only considering the top %d candidates"%len(candidates))
         with timing("scored the candidate inventions"):
             scoredCandidates = parallelMap(CPUs,
                                            lambda candidate: \
                                            (candidate, scoreCandidate(candidate, restrictedFrontiers, g0)),
                                             candidates)
-        bestNew, bestScore = max(scoredCandidates, key=lambda sc: sc[1])
-        if bestScore < oldScore:
+        if len(scoredCandidates) > 0:
+            bestNew, bestScore = max(scoredCandidates, key=lambda sc: sc[1])
+        if len(scoredCandidates) == 0 or bestScore < oldScore:
             eprint("No improvement possible.")
             # Return all of the frontiers, which have now been rewritten to use the
             # new fragments

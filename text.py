@@ -65,6 +65,10 @@ def text_options(parser):
         action="store_true",
         default=False,
         help="Incorporate a random 50% of the challenge problems into the training set")
+    parser.add_argument(
+        "--compressor",
+        default="pypy",
+        choices=["pypy","rust","vs","pypy_vs"])
 
 
 if __name__ == "__main__":
@@ -81,6 +85,7 @@ if __name__ == "__main__":
         featureExtractor=LearnedFeatureExtractor,
         pseudoCounts=30.0,
         extras=text_options)
+    compressor = arguments.pop('compressor')
     doChallenge = arguments.pop('doChallenge')
 
     tasks = makeTasks()
@@ -122,7 +127,7 @@ if __name__ == "__main__":
                            testingTasks=test + challenge,
                            outputPrefix="experimentOutputs/text",
                            evaluationTimeout=evaluationTimeout,
-                           compressor="pypy",
+                           compressor=compressor,
                            **arguments)
     if doChallenge:
         eprint("held out challenge problems before learning...")

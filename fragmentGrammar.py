@@ -438,6 +438,7 @@ class FragmentGrammar(object):
 
 
 def induceGrammar(*args, **kwargs):
+    from vs import induceGrammar_Beta
     if sum(not f.empty for f in args[1]) == 0:
         eprint("No nonempty frontiers, exiting grammar induction early.")
         return args[0], args[1]
@@ -449,8 +450,12 @@ def induceGrammar(*args, **kwargs):
             g, newFrontiers = rustInduce(*args, **kwargs)
         elif backend == "vs":
             g, newFrontiers = rustInduce(*args, vs=True, **kwargs)
+        elif backend == "pypy_vs":
+            kwargs.pop('iteration')
+            kwargs.pop('topk_use_only_likelihood')
+            g, newFrontiers = callCompiled(induceGrammar_Beta, *args, **kwargs)
         else:
-            assert False, ""
+            assert False, "unknown compressor"
     return g, newFrontiers
 
 
