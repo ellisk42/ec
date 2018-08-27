@@ -301,13 +301,19 @@ def makeSupervisedTasks():
                                 _loop(n)(lambda i: _loop(i)(lambda j: _31(z))(r(3,z)))(\
                                 _loop(n)(lambda i: _loop(n - i)(lambda j: _31(z))(r(3,z)))(\
                                                                                                                 z)))
-                for n in range(2,5) ]
+                for n in range(3,5) ]
     pyramids += [SupervisedTower("V pyramid %d"%n,
                                 lambda z: \
                                 _loop(n)(lambda i: _loop(i)(lambda j: _13(z))(r(1,z)))(\
                                 _loop(n)(lambda i: _loop(n - i)(lambda j: _13(z))(r(1,z)))(\
                                                                                                                 z)))
-                for n in range(2,5) ]
+                for n in range(3,7) ]
+    pyramids += [SupervisedTower("V3 pyramid %d"%n,
+                                lambda z: \
+                                _loop(n)(lambda i: _loop(i)(lambda j: _13(z))(r(3,z)))(\
+                                _loop(n)(lambda i: _loop(n - i)(lambda j: _13(z))(r(3,z)))(\
+                                                                                                                z)))
+                for n in range(3,7) ]
     pyramids += [SupervisedTower("H 1/2 pyramid %d"%n,
                                 lambda z: \
                                 _lp(n,lambda i: \
@@ -325,7 +331,7 @@ def makeSupervisedTasks():
                                 _lp(n,lambda i: \
                                     _e(_lp(n - i,lambda j: _13(r(1,z)),z))(r(0.5,z)),
                                     z))
-                for n in range(2,7) ]
+                for n in range(3,7) ]
     bricks = [SupervisedTower("brickwall, %dx%d"%(w,h),
                               lambda z: \
                               _loop(h)(lambda i: \
