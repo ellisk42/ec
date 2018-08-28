@@ -494,6 +494,7 @@ class Grammar(object):
                            maximumDepth=20,
                            lowerBound=0.):
         '''Enumerates all sketch instantiations whose MDL satisfies: lowerBound < MDL <= upperBound'''
+        # may now be lowerBound <= MDL <= upperBound ... unsure
         if upperBound <= 0 or maximumDepth == 1:
             return
 
@@ -552,8 +553,9 @@ class Grammar(object):
         if upperBound <= 0 or maximumDepth == 1:
             return
 
+        #Max changed lowerBound < 0. to lowerBound <= 0.
         if argumentRequests == []:
-            if lowerBound < 0. and 0. <= upperBound:
+            if lowerBound <= 0. and 0. <= upperBound:
                 yield 0., context, function
             else:
                 return
@@ -798,6 +800,7 @@ if __name__ == "__main__":
     from arithmeticPrimitives import *
     g = Grammar.uniform([k0,k1,addition, subtraction])
     p = Program.parse("(lambda (+ <HOLE> <HOLE>))")
+    #p = Program.parse("(lambda (+ 1 $0))")
     for stuff in g.sketchEnumeration(Context.EMPTY,[],arrow(tint,tint),
-                                     p,12.):
+                                     p, 12.):
         print(stuff)
