@@ -521,6 +521,11 @@ def fastRendererPlan(plan, resolution=256, window=30, floorHeight=10,
         if p >= resolution: return resolution - 1
         return p
 
+    def _color():
+        return random.random()*0.7 + 0.3
+    def color():
+        return (_color(),_color(),_color())
+
     
     for x,y,w,h in world:
         x1,y1 = transform(x - w/2.,
@@ -533,7 +538,7 @@ def fastRendererPlan(plan, resolution=256, window=30, floorHeight=10,
         if pretty:
             a[clip(y2) : clip(y1),
               clip(x1) : clip(x2),
-              :] = (random.random(),random.random(),random.random())
+              :] = color()
         else:
             a[clip(y2) : clip(y1),
               clip(x1) : clip(x2),
@@ -558,9 +563,9 @@ def makeNiceArray(l):
         l = l[n:]
     return a
 
-def montage(arrays):
+def montageMatrix(matrix):
     import numpy as np
-    arrays = makeNiceArray(arrays)
+    arrays = matrix
     m = max(len(t) for t in arrays)
 
     size = arrays[0][0].shape
@@ -571,3 +576,6 @@ def montage(arrays):
     return arrays
 
     
+    
+def montage(arrays):
+    return montageMatrix(makeNiceArray(arrays))

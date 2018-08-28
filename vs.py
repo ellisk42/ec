@@ -896,6 +896,7 @@ def induceGrammar_Beta(g0, frontiers, _=None,
         with timing("constructed %d-step version spaces"%arity):
             versions = [[v.superVersionSpace(v.incorporate(e.program), arity) for e in f]
                         for f in restrictedFrontiers ]
+            eprint("Enumerated %d distinct version spaces"%len(v.expressions))
         candidates = v.bestInventions(versions, bs=topI)[:topI]
         eprint("Only considering the top %d candidates"%len(candidates))
         with timing("scored the candidate inventions"):
