@@ -9,8 +9,77 @@ import random
 import time
 import datetime
 
+from recognition import variable
+import torch
+import torchvision
+import torch.nn as nn
+import torch.nn.functional as F
 
-class TowerFeatureExtractor(HandCodedFeatureExtractor):
+
+
+class Flatten(nn.Module):
+    def __init__(self):
+        super(Flatten, self).__init__()
+
+    def forward(self, x):
+        return x.view(x.size(0), -1)
+
+
+class TowerCNN(nn.Module):
+    def __init__(self, tasks, cuda=False, H=64):
+        super(TowerCNN, self).__init__()
+
+        self.outputDimensionality = H
+        def conv_block(in_channels, out_channels):
+            return nn.Sequential(
+                nn.Conv2d(in_channels, out_channels, 3, padding=1),
+                # nn.BatchNorm2d(out_channels),
+                nn.ReLU(),
+                nn.MaxPool2d(2)
+            )
+
+        self.inputImageDimension = 256
+        self.resizedDimension = 64
+        assert self.inputImageDimension % self.resizedDimension == 0
+
+        # channels for hidden
+        hid_dim = 64
+        z_dim = 64
+
+        self.encoder = nn.Sequential(
+            conv_block(3, hid_dim),
+            conv_block(hid_dim, hid_dim),
+            conv_block(hid_dim, hid_dim),
+            conv_block(hid_dim, z_dim),
+            Flatten()
+        )
+
+        self.outputDimensionality = 1024
+
+    def forward(self, v):
+        v = np.transpose(v,(2,0,1))
+        assert v.shape == (3,self.inputImageDimension,self.inputImageDimension)
+        v = variable(v).float()
+        # insert batch
+        v = torch.unsqueeze(v, 0)
+        window = int(self.inputImageDimension/self.resizedDimension)
+        v = F.avg_pool2d(v, (window,window))
+        v = self.encoder(v)
+        return v.view(-1)
+
+    def featuresOfTask(self, t):  # Take a task and returns [features]
+        return self(t.getImage())
+
+    def taskOfProgram(self, p, t):
+        #from telecom_and import TowerWorld
+        pl = executeTower(p,0.05)
+        if pl is None or len(pl) == 0: return None
+        
+        t = SupervisedTower("tower dream", p.evaluate([]))
+        return t
+        
+
+class TowerFeatureExtractor(ImageFeatureExtractor):
     def _featuresOfProgram(self, p, _):
         # [perturbation, mass, height, length, area]
         p = executeTower(p)
@@ -58,82 +127,6 @@ class TowerFeatureExtractor(HandCodedFeatureExtractor):
         return None
 
 
-def evaluateArches(ts):
-    arches = [
-        "(lambda (left (1x3 (right (right (right (1x3 (left (3x1 $0)))))))))"
-        #  "(do (do (left 1x3) (do (right 1x3) 3x1)) (right (right (right (do (left 1x3) (do (right 1x3) 3x1))))))",
-        # "(do 1x4 (do (left 1x4) 4x1))",
-        # "(do (right 1x4) (do (left (left 1x4)) 4x1))",
-        #  "(do (do (right 1x4) (do (left (left 1x4)) 4x1)) (right (right (right (right (do (right 1x4) (do (left (left 1x4)) 4x1)))))))",
-    ]
-    towers = []
-
-    for a in arches:
-        print("Evaluating arch:")
-        print(a)
-        print()
-        a = Program.parse(a)
-        towers.append(tuple(centerTower(a)))
-        os.system("python towers/visualize.py '%s' %f" % (a, 4))
-
-        for t in ts:
-            print(t, end=' ')
-            print(t.logLikelihood(Primitive(str(a), None, a)),
-                  t.logLikelihood(Primitive(str(a * 2), None, a * 2)), end=' ')
-            print()
-        print()
-        print()
-
-    exportTowers(towers, "arches.png")
-    import sys
-    sys.exit()
-
-
-
-def bruteForceTower_(size):
-    MAXIMUMWIDTH = 2
-    if size == 0:
-        yield []
-        return
-
-    moves = [(x + dx, w, h)
-             for p in primitives if 'x' in p.name
-             for x, w, h in p.value
-             for dx in range(-MAXIMUMWIDTH, MAXIMUMWIDTH + 1)]
-    for b in moves:
-        for s in bruteForceTower_(size - 1):
-            yield [b] + s
-
-
-def bruteForceTower(size):
-    for s in range(1, size + 1):
-        yield from bruteForceTower_(s)
-
-
-def bruteForceBaseline(tasks):
-    from towers.tower_common import TowerWorld
-    from PIL import Image
-    towers = set([tuple(centerTower(t)) for t in bruteForceTower(4)])
-    print("Generated", len(towers), "towers")
-    for t in towers:
-        gotHit = False
-        for task in tasks:
-            ll = task.logLikelihood(Primitive(str(t), None, t))
-            if valid(ll):
-                print("Hit", task, "w/")
-                print(t)
-                print()
-                # image = TowerWorld().draw(t)
-                # Image.fromarray(image).convert('RGB').save("/tmp/towerBaseline.png")
-                # os.system("feh /tmp/towerBaseline.png")
-                gotHit = True
-                break
-        if gotHit:
-            tasks = [task_ for task_ in tasks if not task == task_]
-
-    import sys
-    sys.exit(0)
-
 
 def tower_options(parser):
     parser.add_argument("--tasks",
@@ -163,13 +156,12 @@ def dreamOfTowers(grammar, prefix, N=250):
 
 
 if __name__ == "__main__":
-    from towers.tower_common import exportTowers
-    initializeTowerCaching()
+    from tower_common import exportTowers
 
     g0 = Grammar.uniform(primitives)
 
     arguments = commandlineArguments(
-        featureExtractor=TowerFeatureExtractor,
+        featureExtractor=TowerCNN,
         CPUs=numberOfCPUs(),
         helmholtzRatio=0.5,
         iterations=5,
@@ -177,7 +169,7 @@ if __name__ == "__main__":
         structurePenalty=1,
         pseudoCounts=10,
         topK=10,
-        maximumFrontier=10**4,
+        maximumFrontier=10,
         extras=tower_options)
     
     tasks = arguments.pop("tasks")
@@ -200,9 +192,9 @@ if __name__ == "__main__":
                            solver="ocaml",
                            compressor="pypy",
                            **arguments)
-    os.system("python towers/server.py KILL")
+    os.system("python tower_server.py KILL")
     time.sleep(1)
-    os.system("python towers/server.py &")
+    os.system("python tower_server.py &")
     time.sleep(1)
 
     perturbations = {t.perturbation for t in train if isinstance(t,TowerTask)}

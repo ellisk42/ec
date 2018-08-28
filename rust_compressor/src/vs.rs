@@ -1090,10 +1090,10 @@ mod beam {
                         self.costs(beam_table, z);
                         let cz = &beam_table[z];
                         for (ref i, c) in &cz.relative_cost {
-                            beam.relax(i, c + EPSILON);
+                            beam.relax(i, c);
                         }
                         for (ref i, c) in &cz.relative_function_cost {
-                            beam.relax_function(i, c + EPSILON);
+                            beam.relax_function(i, c);
                         }
                     }
                 }

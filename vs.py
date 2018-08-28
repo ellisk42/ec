@@ -225,17 +225,17 @@ class VersionTable():
 
         if x.isAbstraction and y.isAbstraction:
             overlap = self.haveOverlap(x.body,y.body)
-        if x.isApplication and y.isApplication:
+        elif x.isApplication and y.isApplication:
             overlap = self.haveOverlap(x.f,y.f) and \
                 self.haveOverlap(x.x,y.x)
-        if x.isUnion:
+        elif x.isUnion:
             if y.isUnion:
                 overlap = any( self.haveOverlap(x_,y_)
                             for x_ in x
                             for y_ in y )
             overlap = any( self.haveOverlap(x_, b)
                         for x_ in x )
-        if y.isUnion:
+        elif y.isUnion:
             overlap = any( self.haveOverlap(a, y_)
                         for y_ in y )
         else:
@@ -589,6 +589,13 @@ class VersionTable():
             # candidates = [k for k in candidates if next(self.extract(k)).isBetaLong()]
             eprint(len(candidates),"candidates from version space")
 
+            # Calculate the number of free variables for each candidate invention
+            # This is important because, if a candidate has free variables,
+            # then whenever we use it we will have to apply it to those free variables;
+            # thus using a candidate with free variables is more expensive
+            candidateCost = {k: len(set(next(self.extract(k)).freeVariables())) + 1
+                             for k in candidates }
+
         inhabitTable = self.inhabitantTable
         functionTable = self.functionInhabitantTable
 
@@ -597,10 +604,10 @@ class VersionTable():
                 self.space = j
                 cost, inhabitants = inhabitTable[j]
                 functionCost, functionInhabitants = functionTable[j]
-                self.relativeCost = {inhabitant: 1
+                self.relativeCost = {inhabitant: candidateCost[inhabitant]
                                      for inhabitant in inhabitants
                                      if inhabitant in candidates}
-                self.relativeFunctionCost = {inhabitant: 1
+                self.relativeFunctionCost = {inhabitant: candidateCost[inhabitant]
                                              # INTENTIONALLY, do not use function inhabitants
                                              for inhabitant in inhabitants
                                              if inhabitant in candidates}
@@ -674,13 +681,6 @@ class VersionTable():
                            for b in _bs )
                        for _bs in beams )
         candidates = sorted(candidates, key=score)
-        if False:
-            for k in candidates:
-                print(score(k), "\t", list(self.extract(k))[0])
-                for hs in versions:
-                    for h in hs:
-                        print(self.rewriteWithInvention(k,h))
-                print()
         return candidates
 
     def rewriteWithInvention(self, i, js):
@@ -879,7 +879,11 @@ def induceGrammar_Beta(g0, frontiers, _=None,
         o = objective(newGrammar, newFrontiers)
 
         eprint("+", end='')
-        flushEverything()
+
+        # eprint(next(v.extract(candidate)))
+        # for f in newFrontiers:
+        #     for e in f:
+        #         eprint(e.program)
         
         return o
         
@@ -899,8 +903,9 @@ def induceGrammar_Beta(g0, frontiers, _=None,
                                            lambda candidate: \
                                            (candidate, scoreCandidate(candidate, restrictedFrontiers, g0)),
                                             candidates)
-        bestNew, bestScore = max(scoredCandidates, key=lambda sc: sc[1])
-        if bestScore < oldScore:
+        if len(scoredCandidates) > 0:
+            bestNew, bestScore = max(scoredCandidates, key=lambda sc: sc[1])
+        if len(scoredCandidates) == 0 or bestScore < oldScore:
             eprint("No improvement possible.")
             # Return all of the frontiers, which have now been rewritten to use the
             # new fragments
@@ -968,6 +973,7 @@ if __name__ == "__main__":
     
     from arithmeticPrimitives import *
     from listPrimitives import *
+    from fragmentGrammar import *
     bootstrapTarget_extra()
 
     # p = Program.parse("(#(lambda (lambda (lambda (fold $0 empty ($1 $2))))) cons (lambda (lambda (lambda ($2 (+ (+ 5 5) (+ $1 $1)) $0)))))")
@@ -987,6 +993,13 @@ if __name__ == "__main__":
             if s.isPrimitive:
                 primitives.add(s)
     g0 = Grammar.uniform(list(primitives))
+
+    with timing("RUST test"):
+        g = induceGrammar(g0, [Frontier.dummy(p) for p in programs],
+                      CPUs=1,
+                      a=N,
+                      backend="vs")
+        eprint(g)
 
     with timing("induced DSL"):
         induceGrammar_Beta(g0, [Frontier.dummy(p) for p in programs],

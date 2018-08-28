@@ -438,6 +438,7 @@ class FragmentGrammar(object):
 
 
 def induceGrammar(*args, **kwargs):
+    from vs import induceGrammar_Beta
     if sum(not f.empty for f in args[1]) == 0:
         eprint("No nonempty frontiers, exiting grammar induction early.")
         return args[0], args[1]
@@ -447,8 +448,14 @@ def induceGrammar(*args, **kwargs):
             g, newFrontiers = callCompiled(pypyInduce, *args, **kwargs)
         elif backend == "rust":
             g, newFrontiers = rustInduce(*args, **kwargs)
+        elif backend == "vs":
+            g, newFrontiers = rustInduce(*args, vs=True, **kwargs)
+        elif backend == "pypy_vs":
+            kwargs.pop('iteration')
+            kwargs.pop('topk_use_only_likelihood')
+            g, newFrontiers = callCompiled(induceGrammar_Beta, *args, **kwargs)
         else:
-            assert False, ""
+            assert False, "unknown compressor"
     return g, newFrontiers
 
 
@@ -460,13 +467,15 @@ def pypyInduce(*args, **kwargs):
 def rustInduce(g0, frontiers, _=None,
                topK=1, pseudoCounts=1.0, aic=1.0,
                structurePenalty=0.001, a=0, CPUs=1, iteration=-1,
-               topk_use_only_likelihood=False):
+               topk_use_only_likelihood=False,
+               vs=False):
     import json
     import os
     import subprocess
 
     def finite_logp(l): return l if l != float("-inf") else -1000
     message = {
+        "strategy": "vs" if vs else "fg",
         "params": {
             "structure_penalty": structurePenalty,
             "pseudocounts": int(pseudoCounts + 0.5),

@@ -5,23 +5,6 @@ from task import *
 import math
 
 
-TOWERCACHING = None
-
-
-def initializeTowerCaching():
-    global TOWERCACHING
-    if False:
-        from multiprocessing import Manager
-        m = Manager()
-        TOWERCACHING = m.dict()
-    else:
-        TOWERCACHING = {}
-
-
-def getTowerCash():
-    global TOWERCACHING
-    return TOWERCACHING
-
 class SupervisedTower(Task):
     def __init__(self, name, plan):
         self.original = plan
@@ -31,9 +14,41 @@ class SupervisedTower(Task):
         self.specialTask = ("supervisedTower",
                             {"plan": plan})
         self.plan = plan
+        self.image = None
+
+    def getImage(self):
+        from tower_common import fastRendererPlan
+        if self.image is not None: return self.image
+
+        self.image = fastRendererPlan(centerTower(self.plan))
+
+        return self.image
+
+    
+    # do not pickle the image
+    def __getstate__(self):
+        return self.specialTask, self.plan, self.request, self.cache, self.name, self.examples
+    def __setstate__(self, state):
+        self.specialTask, self.plan, self.request, self.cache, self.name, self.examples = state
+        self.image = None
+
 
     def animate(self):
-        os.system("python towers/visualize.py '%s' 3"%(centerTower(self.plan)))
+        from tower_common import fastRendererPlan
+        from pylab import imshow,show
+        a = fastRendererPlan(centerTower(self.plan))
+        imshow(a)
+        show()
+
+    @staticmethod
+    def showMany(ts):
+        from tower_common import fastRendererPlan,montage
+        from pylab import imshow,show
+        a = montage([fastRendererPlan(centerTower(t.plan),pretty=True)
+                         for t in ts]) 
+        imshow(a)
+        show()
+        
 
     
 
@@ -82,7 +97,7 @@ class TowerTask(Task):
     @staticmethod
     def evaluateTower(tower, perturbation):
         global TOWERCACHING
-        from towers.tower_common import TowerWorld
+        from tower_common import TowerWorld
 
         key = (tuple(tower), perturbation)
         if key in TOWERCACHING:
@@ -250,6 +265,9 @@ def makeSupervisedTasks():
               SupervisedTower("arch leg 4",lambda z: \
                _13(_13(_13(_13(r(2,_13(_13(_13(_13(l(1,_31(z))))))))))))
     ]
+    archesStacks = [SupervisedTower("arch stack %d"%n,
+                                    lambda z: _loop(n)(lambda _: _arch(z))(z))
+                    for n in range(3,7) ]
     Bridges = [SupervisedTower("bridge (%d) of %s"%(n,a.name),
                 lambda z: _loop(n)(lambda i: a.original(r(2,z)))(z))
                for n in range(2,5)
@@ -286,13 +304,19 @@ def makeSupervisedTasks():
                                 _loop(n)(lambda i: _loop(i)(lambda j: _31(z))(r(3,z)))(\
                                 _loop(n)(lambda i: _loop(n - i)(lambda j: _31(z))(r(3,z)))(\
                                                                                                                 z)))
-                for n in range(2,5) ]
+                for n in range(3,5) ]
     pyramids += [SupervisedTower("V pyramid %d"%n,
                                 lambda z: \
                                 _loop(n)(lambda i: _loop(i)(lambda j: _13(z))(r(1,z)))(\
                                 _loop(n)(lambda i: _loop(n - i)(lambda j: _13(z))(r(1,z)))(\
                                                                                                                 z)))
-                for n in range(2,5) ]
+                for n in range(3,7) ]
+    pyramids += [SupervisedTower("V3 pyramid %d"%n,
+                                lambda z: \
+                                _loop(n)(lambda i: _loop(i)(lambda j: _13(z))(r(3,z)))(\
+                                _loop(n)(lambda i: _loop(n - i)(lambda j: _13(z))(r(3,z)))(\
+                                                                                                                z)))
+                for n in range(3,7) ]
     pyramids += [SupervisedTower("H 1/2 pyramid %d"%n,
                                 lambda z: \
                                 _lp(n,lambda i: \
@@ -310,7 +334,7 @@ def makeSupervisedTasks():
                                 _lp(n,lambda i: \
                                     _e(_lp(n - i,lambda j: _13(r(1,z)),z))(r(0.5,z)),
                                     z))
-                for n in range(2,7) ]
+                for n in range(3,7) ]
     bricks = [SupervisedTower("brickwall, %dx%d"%(w,h),
                               lambda z: \
                               _loop(h)(lambda i: \
@@ -327,7 +351,7 @@ def makeSupervisedTasks():
                  for w in range(2,6)
                  for h in range(2,5)
                  ]
-    everything = aqueducts + pyramids + bricks + staircase2 + staircase1 + Josh + arches + Bridges + simpleLoops
+    everything = archesStacks + aqueducts + pyramids + bricks + staircase2 + staircase1 + Josh + arches + Bridges + simpleLoops
     for t in everything:
         delattr(t,'original')
     return everything
@@ -336,5 +360,5 @@ if __name__ == "__main__":
     print(len(ts))
     print(max(len(f.plan) for f in ts ))
     print(max(towerLength(f.plan) for f in ts ))
-    
-    for t in ts: t.animate()
+    SupervisedTower.showMany(ts)
+    #for t in ts: t.animate()
