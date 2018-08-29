@@ -609,6 +609,16 @@ def powerOfTen(n):
             return False
         n = n / 10
 
+def powerOf(p, n):
+    if n <= 0:
+        return False
+    while True:
+        if n == 1:
+            return True
+        if n % p != 0:
+            return False
+        n = n / p
+
 if __name__ == "__main__":
     def f():
         while True: pass

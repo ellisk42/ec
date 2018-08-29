@@ -574,6 +574,8 @@ class VersionTable():
         """versions: [[version index]]"""
         """bs: beam size"""
         """returns: list of (indices to) candidates"""
+        import gc
+        
         def nontrivial(proposal):
             primitives = 0
             collisions = 0
@@ -594,7 +596,7 @@ class VersionTable():
                           for hs in versions]
             from collections import Counter
             candidates = Counter(k for ks in candidates for k in ks)
-            candidates = list({k for k,f in candidates.items() if f >= 2 and nontrivial(next(self.extract(k))) })
+            candidates = {k for k,f in candidates.items() if f >= 2 and nontrivial(next(self.extract(k))) }
             # candidates = [k for k in candidates if next(self.extract(k)).isBetaLong()]
             eprint(len(candidates),"candidates from version space")
 
@@ -648,17 +650,12 @@ class VersionTable():
 
         beamTable = [None]*len(self.expressions)
 
-        numberOfCalculatedBeams = [0]
-
         def costs(j):
             if beamTable[j] is not None:
                 return beamTable[j]
 
             beamTable[j] = B(j)
-            numberOfCalculatedBeams[0] += 1
-            if powerOfTen(numberOfCalculatedBeams[0]):
-                eprint("Calculated",numberOfCalculatedBeams[0],"beams")
-
+            
             e = self.expressions[j]
             if e.isIndex or e.isPrimitive or e.isInvented:
                 pass
@@ -685,6 +682,11 @@ class VersionTable():
         with timing("beamed version spaces"):
             beams = [ [ costs(h) for h in hs ]
                       for hs in versions ]
+
+        # This can get pretty memory intensive - clean up the garbage
+        beamTable = None
+        gc.collect()
+        
         candidates = {d
                       for _bs in beams
                       for b in _bs

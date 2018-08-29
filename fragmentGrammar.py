@@ -571,4 +571,6 @@ if __name__ == "__main__":
     from vs import induceGrammar_Beta
     with open('inductionInput.p','rb') as handle:
         a,k = pickle.load(handle)
-    g, newFrontiers = callCompiled(induceGrammar_Beta, *a, **k)
+    g, newFrontiers = callCompiled(induceGrammar_Beta, *a,
+                                   profile="compressedText.profile",
+                                   **k)
