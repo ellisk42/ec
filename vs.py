@@ -996,30 +996,31 @@ if __name__ == "__main__":
     # p = Program.parse("(#(lambda (lambda (lambda (fold $0 empty ($1 $2))))) cons (lambda (lambda (lambda ($2 (+ (+ 5 5) (+ $1 $1)) $0)))))")
     # print(EtaLongVisitor().execute(p))
     
-    programs = [Program.parse("(lambda (fold $0 empty (lambda (lambda (cons (+ (+ 5 5) (+ $1 $1)) $0)))))"),
-                Program.parse("(lambda (fold $0 empty (lambda (lambda (cons (- 0 $1) $0)))))"),
-                Program.parse("(lambda (fold $0 empty (lambda (lambda (cons (+ $1 $1) $0)))))"),
-                Program.parse("(lambda (+ $0 $0))"),
-                Program.parse("(lambda (+ 4 4))")]
+    programs = [(Program.parse("(lambda (fold $0 empty (lambda (lambda (cons (+ (+ 5 5) (+ $1 $1)) $0)))))"), None),
+                (Program.parse("(lambda (fold $0 empty (lambda (lambda (cons (- 0 $1) $0)))))"), None),
+                (Program.parse("(lambda (fold $0 empty (lambda (lambda (cons (+ $1 $1) $0)))))"), None),
+                (Program.parse("(lambda (+ $0 $0))"), None),
+                (Program.parse("(lambda (+ 4 4))"), arrow(tint, tint))]
     
     N=3
 
     primitives = set()
-    for p in programs:
+    for p, _ in programs:
         for _, s in p.walk():
             if s.isPrimitive:
                 primitives.add(s)
     g0 = Grammar.uniform(list(primitives))
+    print(g0)
 
     with timing("RUST test"):
-        g = induceGrammar(g0, [Frontier.dummy(p) for p in programs],
+        g = induceGrammar(g0, [Frontier.dummy(p, tp=tp) for p, tp in programs],
                       CPUs=1,
                       a=N,
                       backend="vs")
         eprint(g)
 
     with timing("induced DSL"):
-        induceGrammar_Beta(g0, [Frontier.dummy(p) for p in programs],
+        induceGrammar_Beta(g0, [Frontier.dummy(p, tp=tp) for p, tp in programs],
                            CPUs=1,
                            a=N)
 

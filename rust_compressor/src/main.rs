@@ -11,18 +11,28 @@ extern crate serde_derive;
 mod vs;
 use self::vs::induce_version_spaces;
 
-use clap::{App, Arg};
 use polytype::Type;
 use programinduction::{lambda, ECFrontier, Task};
 use rayon::prelude::*;
 use std::f64;
 use std::io;
 
-/// version space parameter
-const TOP_I: usize = 50;
+#[derive(Copy, Clone, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+enum Strategy {
+    VersionSpaces { top_i: usize },
+    FragmentGrammars,
+}
+impl Default for Strategy {
+    fn default() -> Strategy {
+        Strategy::FragmentGrammars
+    }
+}
 
 #[derive(Deserialize)]
 struct ExternalCompressionInput {
+    #[serde(default)]
+    strategy: Strategy,
     primitives: Vec<Primitive>,
     #[serde(default)]
     inventions: Vec<Invention>,
@@ -230,36 +240,19 @@ impl From<CompressionInput> for ExternalCompressionOutput {
 }
 
 fn main() {
-    let matches = App::new("λ-calculus compressor")
-        .arg(
-            Arg::with_name("strategy")
-                .short("s")
-                .long("strategy")
-                .value_name("STRATEGY")
-                .help(
-                    "\
-                     Sets the compression strategy. \
-                     Either `fg' or `vs' for fragment-grammar-based and version-space-based \
-                     compression, respectively.",
-                )
-                .possible_values(&["fg", "vs"])
-                .default_value("fg")
-                .takes_value(true),
-        )
-        .get_matches();
-    let strategy = matches.value_of("strategy").unwrap();
-
     let eci: ExternalCompressionInput = {
         let stdin = io::stdin();
         let handle = stdin.lock();
         serde_json::from_reader(handle).expect("invalid json")
     };
+    let strategy = eci.strategy;
 
     let mut ci = CompressionInput::from(eci);
     let (dsl, frontiers) = match strategy {
-        "fg" => ci.dsl.compress(&ci.params, &ci.tasks, ci.frontiers),
-        "vs" => induce_version_spaces(&ci.dsl, &ci.params, &ci.tasks, ci.frontiers, TOP_I),
-        _ => unreachable!(),
+        Strategy::FragmentGrammars => ci.dsl.compress(&ci.params, &ci.tasks, ci.frontiers),
+        Strategy::VersionSpaces { top_i } => {
+            induce_version_spaces(&ci.dsl, &ci.params, &ci.tasks, ci.frontiers, top_i)
+        }
     };
     for i in ci.dsl.invented.len()..dsl.invented.len() {
         let &(ref expr, _, _) = &dsl.invented[i];

@@ -41,13 +41,18 @@ pub fn induce_version_spaces<O: Sync>(
                         .collect()
                 })
                 .collect();
-            eprintln!("VERSION_SPACES: collecting best proposals..");
+            eprintln!(
+                "VERSION_SPACES: collecting {} best proposals from {}..",
+                top_i,
+                vt.len()
+            );
             out.append(&mut vt.best_inventions(&versions, top_i))
         },
         |vt, candidate, dsl, frontiers, params| {
             eprintln!("VERSION_SPACES: proposed VS {}", candidate.0.display(dsl));
             let expr = candidate.extract().pop().unwrap();
-            if dsl.invent(expr.clone(), 0.0).is_err() {
+            if let Err(e) = dsl.invent(expr.clone(), 0.0) {
+                eprintln!("VERSION_SPACES: could not invent: {}", e);
                 return None;
             }
             let mut frontiers = frontiers.to_vec();
@@ -299,6 +304,9 @@ impl VersionTable {
                 .collect(),
             overlaps: HashMap::new(),
         }
+    }
+    pub fn len(&self) -> usize {
+        self.all.len()
     }
     pub fn vs_apply(&mut self, f: VersionSpace, x: VersionSpace) -> VersionSpace {
         match (&*f.0, &*x.0) {
@@ -886,7 +894,7 @@ impl VersionTable {
                 *counts.entry(k).or_default() += 1
             }
         }
-        let candidates: Vec<_> = counts
+        let candidates: HashSet<_> = counts
             .into_par_iter()
             .filter_map(|(vs, count)| {
                 if count >= 2 && nontrivial(&vs.extract()[0]) {
@@ -1037,17 +1045,17 @@ fn rewrite(p: &lambda::Expression, inv: &lambda::Expression, e: &mut lambda::Exp
 mod beam {
     use super::{VersionSpace, VersionTable, EPSILON, VS};
     use itertools::Itertools;
-    use std::collections::HashMap;
+    use std::collections::{HashSet, HashMap};
 
     pub struct Beamer<'a> {
         vt: &'a VersionTable,
-        candidates: &'a [VersionSpace],
+        candidates: &'a HashSet<VersionSpace>,
         beam_size: usize,
     }
     impl<'a> Beamer<'a> {
         pub fn new(
             vt: &'a VersionTable,
-            candidates: &'a [VersionSpace],
+            candidates: &'a HashSet<VersionSpace>,
             beam_size: usize,
         ) -> Beamer<'a> {
             Beamer {
@@ -1090,10 +1098,10 @@ mod beam {
                         self.costs(beam_table, z);
                         let cz = &beam_table[z];
                         for (ref i, c) in &cz.relative_cost {
-                            beam.relax(i, c);
+                            beam.relax(i, *c);
                         }
                         for (ref i, c) in &cz.relative_function_cost {
-                            beam.relax_function(i, c);
+                            beam.relax_function(i, *c);
                         }
                     }
                 }

@@ -475,7 +475,9 @@ def rustInduce(g0, frontiers, _=None,
 
     def finite_logp(l): return l if l != float("-inf") else -1000
     message = {
-        "strategy": "vs" if vs else "fg",
+        "strategy": {"version-spaces": {"top_i": 50}}
+                    if vs else
+                    {"fragment-grammars": {}},
         "params": {
             "structure_penalty": structurePenalty,
             "pseudocounts": int(pseudoCounts + 0.5),
@@ -510,8 +512,8 @@ def rustInduce(g0, frontiers, _=None,
     #check which version of python we are using 
     import sys
 
-    #if 3.6 do:
-    if sys.version_info[1] == 6:
+    #if >=3.6 do:
+    if sys.version_info[1] >= 6:
         p = subprocess.Popen(
             ['./rust_compressor/rust_compressor'],
             encoding='utf-8',
@@ -537,7 +539,7 @@ def rustInduce(g0, frontiers, _=None,
     if p.returncode is not None:
         raise ValueError("rust compressor failed")
 
-    if sys.version_info[1] == 6:
+    if sys.version_info[1] >= 6:
         resp = json.load(p.stdout)
     elif sys.version_info[1] == 5:
         import codecs
