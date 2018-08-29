@@ -428,7 +428,8 @@ def ecIterator(grammar, tasks,
         numberOfSolvedTasks = len(solvedTasks)
         if j > 0 and expandFrontier and numberOfSolvedTasks <= result.learningCurve[-1] and \
            result.learningCurve[-1] < len(tasks):
-            unsolved = [t for t in tasks if t not in solvedTasks ]
+            # Focus on things we did not solve this iteration AND also did not solve last iteration
+            unsolved = [t for t in tasks if (t not in solvedTasks) and result.taskSolutions[t].empty ]
             eprint("We are currently stuck: there are %d remaining unsolved tasks, and we only solved %d ~ %d in the last two iterations"%(len(unsolved),
                                                                                                                                          numberOfSolvedTasks,
                                                                                                                                          result.learningCurve[-1]))
@@ -450,7 +451,7 @@ def ecIterator(grammar, tasks,
                                                                                   solver=solver,
                                                                                   frontierSize=frontierSize,
                                                                                   maximumFrontier=maximumFrontier,
-                                                                                  enumerationTimeout=enumerationTimeout,
+                                                                                  enumerationTimeout=timeout,
                                                                                   evaluationTimeout=evaluationTimeout)
                     # Merge top-down w/ bottom-up
                     unsolvedFrontiers = [f.combine(grammar.rescoreFrontier(b))
@@ -459,7 +460,8 @@ def ecIterator(grammar, tasks,
                 if any(not f.empty for f in unsolvedFrontiers):
                     times += unsolvedTimes
                     unsolvedFrontiers = {f.task: f for f in unsolvedFrontiers}
-                    frontiers = [f if not f.empty else unsolvedFrontiers[f.task]
+                    frontiers = [f if (not f.empty) or (f.task not in unsolvedFrontiers) \
+                                 else unsolvedFrontiers[f.task]
                                  for f in frontiers]
                     print("Completed frontier expansion; solved: %s"%
                           {t.name for t,f in unsolvedFrontiers.items() if not f.empty })
@@ -518,12 +520,6 @@ def ecIterator(grammar, tasks,
                                 for f in frontiers}
         result.learningCurve += [
             sum(f is not None and not f.empty for f in result.taskSolutions.values())]
-
-        
-            
-
-
-
                 
 
         # Sleep-G
