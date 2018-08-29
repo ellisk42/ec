@@ -66,15 +66,6 @@ def inputSerialized(n):
     return c
     
 
-def powerOfTen(n):
-    if n <= 0:
-        return False
-    while True:
-        if n == 1:
-            return True
-        if n % 10 != 0:
-            return False
-        n = n / 10
 
 
 def exportToRAM(content):

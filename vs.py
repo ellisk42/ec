@@ -271,7 +271,12 @@ class VersionTable():
             cost = 1
             members = {j}
 
+
+        # if len(members) > 1:
+        #     for m in members: break
+        #     members = {m}
         self.inhabitantTable[j] = (cost, members)
+        
         return cost, members
 
     def minimalFunctionInhabitants(self,j):
@@ -301,6 +306,10 @@ class VersionTable():
             cost = 1
             members = {j}
 
+        # if len(members) > 1:
+        #     for m in members: break
+        #     members = {m}
+            
         self.functionInhabitantTable[j] = (cost, members)
         return cost, members
 
@@ -601,7 +610,6 @@ class VersionTable():
 
         class B():
             def __init__(self, j):
-                self.space = j
                 cost, inhabitants = inhabitTable[j]
                 functionCost, functionInhabitants = functionTable[j]
                 self.relativeCost = {inhabitant: candidateCost[inhabitant]
@@ -640,10 +648,16 @@ class VersionTable():
 
         beamTable = [None]*len(self.expressions)
 
+        numberOfCalculatedBeams = [0]
+
         def costs(j):
-            if beamTable[j] is not None: return beamTable[j]
+            if beamTable[j] is not None:
+                return beamTable[j]
 
             beamTable[j] = B(j)
+            numberOfCalculatedBeams[0] += 1
+            if powerOfTen(numberOfCalculatedBeams[0]):
+                eprint("Calculated",numberOfCalculatedBeams[0],"beams")
 
             e = self.expressions[j]
             if e.isIndex or e.isPrimitive or e.isInvented:

@@ -53,312 +53,6 @@ def is_torch_invalid(v):
     return False
 
 
-class DRNN(nn.Module):
-    def __init__(self, grammar, featureExtractor, hidden=64, cuda=False):
-        super(DRNN, self).__init__()
-
-        self.featureExtractor = featureExtractor
-        # Converts the output of the feature extractor into the
-        # initial hidden state of the parent rnn
-        self.featureExtractor2parentH = \
-            nn.Linear(featureExtractor.outputDimensionality, hidden)
-        self.featureExtractor2parentC = \
-            nn.Linear(featureExtractor.outputDimensionality, hidden)
-
-        self.grammar = grammar
-        self.production2index = \
-            {p: j + 1 for j, (_, _, p) in enumerate(grammar.productions)}
-        self.production2index[Index(0)] = 0
-        self.index2production = [
-            Index(0)] + [p for _, _, p in grammar.productions]
-
-        self.parent = nn.LSTM(hidden, hidden)
-        self.sibling = nn.LSTM(hidden, hidden)
-
-        self.encoder = nn.Embedding(len(grammar) + 1, hidden)
-
-        self.siblingPrediction = nn.Linear(hidden, hidden, bias=False)
-        self.parentPrediction = nn.Linear(hidden, hidden, bias=False)
-        self.prediction = nn.Linear(hidden, len(grammar) + 1, bias=False)
-
-        # todo: do I include the cell state?
-        self.defaultSibling = variable(
-            torch.Tensor(hidden).float()).view(
-            1, 1, -1)
-
-        self.defaultParent = variable(
-            torch.Tensor(hidden).float()).view(
-            1, 1, -1)
-
-    def embedProduction(self, p):
-        if p.isIndex:
-            p = Index(0)
-        return self.encoder(variable([self.production2index[p]]))
-
-    def indexProduction(self, p):
-        if p.isIndex:
-            p = Index(0)
-        return variable([self.production2index[p]])
-
-    def predictionFromHidden(self, parent, sibling, alternatives=None):
-        """Takes the parent and sibling hidden vectors, optionally with a set of alternatives; returns logits"""
-        parent = parent[0] if parent else self.defaultParent
-        sibling = sibling[0] if sibling else self.defaultSibling
-
-        predictive = F.tanh(
-            self.parentPrediction(parent) +
-            self.siblingPrediction(sibling))
-
-        r = self.prediction(predictive).view(-1)
-        if alternatives is not None:
-            haveVariables = any(a.isIndex for a in alternatives)
-            mask = variable([float(int((p in alternatives) or
-                                       (p.isIndex and haveVariables)))
-                             for p in self.index2production]).float().log()
-            r += mask
-        return F.log_softmax(r)
-
-    def initialParent(self, task):
-        features = self.featureExtractor.featuresOfTask(task)
-        return (self.featureExtractor2parentH(features).view(1, 1, -1),
-                self.featureExtractor2parentC(features).view(1, 1, -1))
-
-    def updateParent(self, parent, symbol):
-        embedding = self.embedProduction(symbol)
-        _, h = self.parent(embedding.view(1, 1, -1), parent)
-        return h
-
-    def updateSibling(self, sibling, symbol):
-        embedding = self.embedProduction(symbol)
-        _, h = self.sibling(embedding.view(1, 1, -1), sibling)
-        return h
-
-    def singlePredictionLoss(self, prediction, target):
-        return F.nll_loss(prediction.view(1, -1),
-                          self.indexProduction(target))
-
-    def programLoss(self, program, task):
-        request = task.request
-        parent = self.initialParent(task)
-        context, root, loss = self._programLoss(request, program,
-                                                parent=parent)
-        return loss
-
-    def _programLoss(self, request, program, _=None,
-                     parent=None, sibling=None,
-                     context=None, environment=[]):
-        """Returns context, root, loss"""
-        if context is None:
-            context = Context.EMPTY
-
-        if request.isArrow():
-            assert isinstance(program, Abstraction)
-            return self._programLoss(request.arguments[1],
-                                     program.body,
-                                     context=context,
-                                     environment=[
-                request.arguments[0]] + environment,
-                parent=parent, sibling=sibling)
-
-        f, xs = program.applicationParse()
-        candidates = self.grammar.buildCandidates(
-            request,
-            context,
-            environment,
-            normalize=False,
-            returnProbabilities=False,
-            returnTable=True)
-        assert f in candidates
-        alternatives = list(candidates.keys())
-
-        _, tp, context = candidates[f]
-
-        argumentTypes = tp.functionArguments()
-        assert len(xs) == len(argumentTypes)
-
-        L = self.singlePredictionLoss(
-            self.predictionFromHidden(
-                parent, sibling, alternatives=alternatives), f)
-
-        # Update ancestral rnn, which will be passed to the children
-        if xs != []:
-            parent = self.updateParent(parent, f)
-
-        sibling = None
-
-        for argumentType, argument in zip(argumentTypes, xs):
-            argumentType = argumentType.apply(context)
-            context, aroot, aL = self._programLoss(argumentType, argument,
-                                                   context=context, environment=environment,
-                                                   parent=parent, sibling=sibling)
-            L += aL
-            sibling = self.updateSibling(sibling, aroot)
-
-        return (context,
-                Index(0) if f.isIndex else f,
-                L)
-
-    def sample(self, task):
-        context, root, p = self._sample(task.request,
-                                        parent=self.initialParent(task))
-        return p
-
-    def _sample(self, request, _=None,
-                parent=None, sibling=None,
-                context=None, environment=[]):
-        """Returns context , root , expression"""
-        if context is None:
-            context = Context.EMPTY
-
-        if request.isArrow():
-            context, root, expression = self._sample(
-                request.arguments[1], context=context, parent=parent, sibling=sibling, environment=[
-                    request.arguments[0]] + environment)
-            return context, root, Abstraction(expression)
-
-        candidates = self.grammar.buildCandidates(
-            request,
-            context,
-            environment,
-            normalize=False,
-            returnProbabilities=False,
-            returnTable=True)
-
-        alternatives = list(candidates.keys())
-        prediction = self.predictionFromHidden(parent, sibling,
-                                               alternatives=alternatives).exp()
-        f = self.index2production[torch.multinomial(prediction, 1).data[0]]
-        root = f
-        if f.isIndex:
-            # _Sample one of the variables uniformly
-            assert f == Index(0)
-            f = random.choice([a for a in alternatives if a.isIndex])
-
-        _, tp, context = candidates[f]
-
-        argumentTypes = tp.functionArguments()
-
-        # Update ancestral rnn, which will be passed to the children
-        if argumentTypes != []:
-            parent = self.updateParent(parent, f)
-
-        sibling = None
-
-        for argumentType in argumentTypes:
-            argumentType = argumentType.apply(context)
-            context, childSymbol, a = self._sample(
-                argumentType, context=context, environment=environment, parent=parent, sibling=sibling)
-            f = Application(f, a)
-            sibling = self.updateSibling(sibling, childSymbol)
-
-        return context, root, f
-
-    def enumeration(self, task, interval=1.):
-        request = task.request
-        parent = self.initialParent(task)
-
-        lowerBound = 0.
-        while True:
-            for ll, _, _, e in self._enumeration(request,
-                                                 lowerBound=lowerBound, upperBound=lowerBound + interval,
-                                                 parent=parent, sibling=None,
-                                                 context=Context.EMPTY, environment=[]):
-                yield ll, e
-            lowerBound += interval
-
-    def _enumeration(self, request, _=None,
-                     upperBound=None, lowerBound=None,
-                     context=None, environment=None,
-                     parent=None, sibling=None):
-        """Generates log likelihood, context, root, expression"""
-        if upperBound <= 0:
-            return
-
-        if request.isArrow():
-            v = request.arguments[0]
-            for l, newContext, r, b in self._enumeration(request.arguments[1],
-                                                         context=context, environment=[
-                                                             v] + environment,
-                                                         upperBound=upperBound,
-                                                         lowerBound=lowerBound,
-                                                         parent=parent, sibling=sibling):
-                yield l, newContext, r, Abstraction(b)
-            return
-
-        candidates = self.grammar.buildCandidates(
-            request,
-            context,
-            environment,
-            normalize=False,
-            returnProbabilities=False,
-            returnTable=True)
-
-        alternatives = list(candidates.keys())
-        numberOfVariables = sum(a.isIndex for a in alternatives)
-        prediction = self.predictionFromHidden(parent, sibling,
-                                               alternatives=alternatives).data
-        prediction = dict(zip(self.index2production, prediction))
-        # Update the candidates so that they now record what the
-        # neural network thinks their likelihood should be
-        for a in alternatives:
-            if a.isIndex:
-                ll = prediction[Index(0)] - math.log(numberOfVariables)
-            else:
-                ll = prediction[a]
-            _, tp, newContext = candidates[a]
-            candidates[a] = (ll, tp, newContext)
-
-        for f, (ll, tp, newContext) in candidates.items():
-            mdl = -ll
-            if not (mdl <= upperBound):
-                continue
-
-            argumentTypes = tp.functionArguments()
-            if argumentTypes != []:
-                newParent = self.updateParent(parent, f)
-            else:
-                newParent = parent
-
-            root = Index(0) if f.isIndex else f
-
-            for aL, aK, application in \
-                self._enumerateApplication(f, argumentTypes,
-                                           context=newContext, environment=environment,
-                                           upperBound=upperBound + ll,
-                                           lowerBound=lowerBound + ll,
-                                           parent=newParent, sibling=None):
-                yield aL + ll, aK, root, application
-
-    def _enumerateApplication(self, f, xs, _=None,
-                              upperBound=None, lowerBound=None,
-                              context=None, environment=None,
-                              parent=None, sibling=None):
-        if upperBound <= 0:
-            return
-        if xs == []:
-            if lowerBound < 0. and 0. <= upperBound:
-                yield 0., context, f
-            return
-        request = xs[0].apply(context)
-        laterRequests = xs[1:]
-        for aL, newContext, argumentRoot, argument in \
-            self._enumeration(request,
-                              context=context, environment=environment,
-                              upperBound=upperBound, lowerBound=0.,
-                              parent=parent, sibling=sibling):
-            newFunction = Application(f, argument)
-            if laterRequests != []:
-                newSibling = self.updateSibling(sibling, argumentRoot)
-            else:
-                newSibling = None
-            for resultL, resultK, result in \
-                self._enumerateApplication(newFunction, laterRequests,
-                                           context=newContext, environment=environment,
-                                           upperBound=upperBound + aL, lowerBound=lowerBound + aL,
-                                           parent=parent, sibling=newSibling):
-                yield resultL + aL, resultK, result
-
-
 def _relu(x): return x.clamp(min=0)
 
 
@@ -444,13 +138,12 @@ class RecognitionModel(nn.Module):
 
     def replaceProgramsWithLikelihoodSummaries(self, frontier):
         return Frontier(
-            [
-                FrontierEntry(
-                    program=self.grammar.closedLikelihoodSummary(
-                        frontier.task.request,
-                        e.program),
-                    logLikelihood=e.logLikelihood,
-                    logPrior=e.logPrior) for e in frontier],
+            [FrontierEntry(
+                program=self.grammar.closedLikelihoodSummary(
+                    frontier.task.request,
+                    e.program),
+                logLikelihood=e.logLikelihood,
+                logPrior=e.logPrior) for e in frontier],
             task=frontier.task)
 
     def train(self, frontiers, _=None, steps=250, lr=0.0001, topK=1, CPUs=1,
@@ -1239,52 +932,121 @@ class NewRecognitionModel(nn.Module):
         #                     CPUs=CPUs, maximumFrontier=maximumFrontier,
         #                     evaluationTimeout=evaluationTimeout)
 
+import threading
 
-if __name__ == "__main__":
-    from arithmeticPrimitives import *
-    g = Grammar.uniform([addition, multiplication, real, k0, k1])
+def handleRecognitionServer(message, qi, qo):
+    message = pickle.loads(message)
+    qi.put(message)
+    return pickle.dumps(qo.get())
 
-    observations = [  # "(* 0 REAL)",
-        "(lambda (* $0 REAL))",
-        "(lambda (+ REAL (* $0 REAL)))"
-    ]
-    request = arrow(tint, tint)
-    tasks = [Task(p, request, [], features=[j])
-             for j, p in enumerate(observations)]
-    fe = HandCodedFeatureExtractor(tasks)
-    observations = list(map(Program.parse, observations))
+def launchRecognitionServer():
+    from multiprocessing import Process
+    Process(target=_launchRecognitionServer,args=()).start()
+def _launchRecognitionServer():
+    import queue
+    
+    qi = queue.Queue()
+    qo = queue.Queue()
 
-    m = DRNN(g, fe, hidden=8)
-    m.float()
+    trainer = threading.Thread(target=training_thread, args=(qi,qo))
+    trainer.start()
+    runPythonServer(4599, handleRecognitionServer, threads=1, args=(qi,qo))
+    
+def training_thread(qi,qo):
+    rm = None
+    helmholtzRatio = 0.
+    helmholtzBatch = 500
+    featureExtractor = None
+    optimizer = None
+    DSL = None
+    cuda = False
+    lr=0.0001
+    helmholtzSamples = []
 
-    optimizer = torch.optim.Adam(m.parameters(), lr=0.0001)
-
-    def take(n, g):
-        r = []
-        for x in g:
-            r.append(x)
-            if len(r) >= n:
-                break
-        return r
-
-    for j in range(100000):
-        m.zero_grad()
-        l = None
-        for t, p in zip(observations, tasks):
-            _l = m.programLoss(t, p)
-            if l is None:
-                l = _l
+    while True:
+        try:
+            message = qi.get(block=(rm is None))
+            if message == "get":
+                qo.put(rm)
+                continue
+            if "helmholtzRatio" in message:
+                helmholtzRatio = message['helmholtzRatio']
+            if "cuda" in message:
+                cuda = message["cuda"]
+            if "lr" in message:
+                lr = message["lr"]
+            if "featureExtractor" in message:
+                featureExtractor = message['featureExtractor']
+            if "DSL" in message:
+                DSL = message["DSL"]
+                rm = RecognitionModel(featureExtractor,
+                                      DSL,
+                                      hidden=[],
+                                      cuda=cuda)
+                optimizer = torch.optim.Adam(rm.parameters(), lr=lr, eps=1e-3, amsgrad=True)
+                helmholtzSamples = []
+            if "frontiers" in message:
+                frontiers = [frontier.normalize()
+                             for frontier in message["frontier"] if not frontier.empty ]
+                frontiers = [rm.replaceProgramsWithLikelihoodSummaries(f).normalize()
+                             for f in frontiers]
+                requests = [frontier.task.request for frontier in frontiers]
+                permutedFrontiers = []
+            if "evaluate" in message:
+                assert rm is not None
+                tasks = message["evaluate"]
+                with timing("Evaluated recognition model"):
+                    grammars = {}
+                    for task in tasks:
+                        features = rm.featureExtractor.featuresOfTask(task)
+                        variables, productions = rm(features)
+                        grammars[task] = Grammar(
+                            variables.data.tolist()[0], [
+                                (productions.data.tolist()[k], t, p) for k, (_, t, p) in enumerate(
+                                    rm.grammar.productions)])
+                qo.put(grammars)
             else:
-                l += _l
-        if j > 0 and j % 150 == 0:
-            print(l.data[0] / len(observations))
-            for t in tasks:
-                print(t)
-                print(m.sample(t))
-                print("enumeration:")
-                for ll, e in sorted(take(5, m.enumeration(t)), reverse=True):
-                    gt = m.programLoss(e, t).data[0]
-                    print(ll, gt, "\t", e)
-                print()
-        l.backward()
-        optimizer.step()
+                qo.put("okay")
+        except Empty:
+            # Another training step
+            if len(permutedFrontiers) == 0:
+                permutedFrontiers = list(frontiers)
+                random.shuffle(permutedFrontiers)
+            frontier = permutedFrontiers.pop()
+            
+            # Randomly decide whether to sample from the generative
+            # model
+            doingHelmholtz = random.random() < helmholtzRatio
+            if doingHelmholtz:
+                if helmholtzSamples == []:
+                    helmholtzSamples = \
+                        list(rm.sampleManyHelmholtz(requests,
+                                                    helmholtzBatch,
+                                                    1))
+                if len(helmholtzSamples) == 0:
+                    eprint("WARNING: Could not generate any Helmholtz samples. Disabling Helmholtz.")
+                    helmholtzRatio = 0.
+                    doingHelmholtz = False
+                else:
+                    attempt = helmholtzSamples.pop()
+                    if attempt is not None:
+                        rm.zero_grad()
+                        loss = rm.frontierKL(attempt)
+                    else:
+                        doingHelmholtz = False
+            if not doingHelmholtz:
+                if helmholtzRatio < 1.:
+                    rm.zero_grad()
+                    loss = rm.frontierKL(frontier)
+                else:
+                    # Refuse to train on the frontiers
+                    continue
+
+            if is_torch_invalid(loss):
+                if doingHelmholtz:
+                    eprint("Invalid real-data loss!")
+                else:
+                    eprint("Invalid Helmholtz loss!")
+            else:
+                loss.backward()
+                optimizer.step()

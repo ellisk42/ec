@@ -568,42 +568,7 @@ def rustInduce(g0, frontiers, _=None,
 
 
 if __name__ == "__main__":
-    from arithmeticPrimitives import *
-    from listPrimitives import *
-    McCarthyPrimitives()
-    f = Program.parse(
-        "(fix1 $0 (lambda (lambda (if (empty? $0) $3 ($4 ($5 $0) ($1 (cdr $0)))))))")
-    p = Program.parse(
-        "(fix1 $0 (lambda (lambda (if (empty? $0) empty (cons (cdr $0) ($1 (cdr $0)))))))")
-    print(p)
-    print(f)
-    request = arrow(tlist(tint), tlist(tlist(tint)))
-    _, t, b = Matcher.match(Context.EMPTY, f, p, 2)
-    print(
-        "With fragment likelihood",
-        FragmentGrammar.uniform(
-            [f] +
-            McCarthyPrimitives()).logLikelihood(
-            request,
-            Abstraction(p)))
-    print(
-        "without fragment likelihood",
-        FragmentGrammar.uniform(
-            McCarthyPrimitives()).logLikelihood(
-            request,
-            Abstraction(p)))
-    pp = RewriteFragments(f).rewrite(Abstraction(p))
-    print(pp)
-    print(pp.infer())
-
-    g = FragmentGrammar.fromGrammar(Grammar.uniform(
-        [defragment(f)] + McCarthyPrimitives()))
-    print(g)
-    g.logLikelihood(request, pp)
-    # p = Abstraction(p)
-    # for a in range(3):
-    #     for b in range(3):
-    #         for c in range(3):
-    #             print pp.evaluate([])(a)(b)(c) == p.evaluate([])(a)(b)(c)
-    print(t)
-    print(b)
+    from vs import induceGrammar_Beta
+    with open('inductionInput.p','rb') as handle:
+        a,k = pickle.load(handle)
+    g, newFrontiers = callCompiled(induceGrammar_Beta, *a, **k)

@@ -587,9 +587,6 @@ class UnionFind:
         return k.members        
         
 
-    
-
-
 def substringOccurrences(ss, s):
     return sum(s[i:].startswith(ss) for i in range(len(s)))
 
@@ -602,6 +599,15 @@ def normal(s=1., m=0.):
 
     return s * n + m
 
+def powerOfTen(n):
+    if n <= 0:
+        return False
+    while True:
+        if n == 1:
+            return True
+        if n % 10 != 0:
+            return False
+        n = n / 10
 
 if __name__ == "__main__":
     def f():
