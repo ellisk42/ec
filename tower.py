@@ -71,13 +71,13 @@ class TowerCNN(nn.Module):
         return self(t.getImage())
 
     def taskOfProgram(self, p, t):
-        #from telecom_and import TowerWorld
-        pl = executeTower(p,0.05)
-        if pl is None or len(pl) == 0: return None
-        
-        t = SupervisedTower("tower dream", p.evaluate([]))
-        return t
-        
+        try:
+            pl = executeTower(p,0.05)
+            if pl is None or len(pl) == 0: return None
+
+            t = SupervisedTower("tower dream", p.evaluate([]))
+            return t
+        except: return None
 
 class TowerFeatureExtractor(ImageFeatureExtractor):
     def _featuresOfProgram(self, p, _):
