@@ -64,8 +64,19 @@ POSITIVEINFINITY = float('inf')
 PARALLELMAPDATA = None
 
 
-def parallelMap(numberOfCPUs, f, *xs, chunksize=None, maxtasksperchild=None):
+def parallelMap(numberOfCPUs, f, *xs, chunksize=None, maxtasksperchild=None, memorySensitive=False):
     global PARALLELMAPDATA
+
+    if memorySensitive:
+        memoryUsage = getMemoryUsageFraction()/100.
+        correctedCPUs = max(1,
+                            min(int(1./memoryUsage),numberOfCPUs))
+        assert correctedCPUs <= numberOfCPUs
+        assert correctedCPUs >= 1
+        if correctedCPUs < numberOfCPUs:
+            eprint("In order to not use all of the memory on the machine, we are limiting this parallel map to only use %d CPUs"%correctedCPUs)
+        numberOfCPUs = correctedCPUs
+        
 
     if numberOfCPUs == 1:
         return list(map(f, *xs))
@@ -619,8 +630,21 @@ def powerOf(p, n):
             return False
         n = n / p
 
+
+def getThisMemoryUsage():
+    import os
+    import psutil
+    process = psutil.Process(os.getpid())
+    return process.memory_info().rss
+def getMemoryUsageFraction():
+    import psutil
+    return psutil.virtual_memory().percent
+
 if __name__ == "__main__":
-    def f():
-        while True: pass
-        return 5/0
-    eprint(runWithTimeout(f, 0.01))
+    def f(n):
+        if n == 0: return None
+        return [f(n - 1),f(n - 1)]
+    z = f(22)
+    eprint(getMemoryUsageFraction().percent)
+    eprint(getThisMemoryUsage())
+    

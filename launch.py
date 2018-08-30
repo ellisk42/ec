@@ -79,6 +79,7 @@ def sendCommand(
         copyCheckpoint = "mv ~/%s ~/ec/experimentOutputs" % checkpoint
 
     preamble = f"""#!/bin/bash
+pypy3 -m pip install psutil
 cd ~/ec
 {copyCheckpoint}
 touch compressor_dummy

@@ -919,7 +919,8 @@ def induceGrammar_Beta(g0, frontiers, _=None,
             scoredCandidates = parallelMap(CPUs,
                                            lambda candidate: \
                                            (candidate, scoreCandidate(candidate, restrictedFrontiers, g0)),
-                                            candidates)
+                                            candidates,
+                                           memorySensitive=True)
         if len(scoredCandidates) > 0:
             bestNew, bestScore = max(scoredCandidates, key=lambda sc: sc[1])
         if len(scoredCandidates) == 0 or bestScore < oldScore:
