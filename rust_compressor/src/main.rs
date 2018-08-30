@@ -1,5 +1,6 @@
 extern crate clap;
 extern crate itertools;
+#[cfg_attr(test, macro_use)]
 extern crate polytype;
 extern crate programinduction;
 extern crate rayon;

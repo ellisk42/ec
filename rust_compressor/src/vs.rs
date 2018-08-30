@@ -19,17 +19,35 @@ pub fn induce_version_spaces<O: Sync>(
     original_frontiers: Vec<ECFrontier<lambda::Language>>,
     top_i: usize,
 ) -> (lambda::Language, Vec<ECFrontier<lambda::Language>>) {
+    induce_version_spaces_vt(
+        dsl,
+        params,
+        tasks,
+        original_frontiers,
+        top_i,
+        &Arc::new(Mutex::new(VersionTable::new())),
+    )
+}
+
+pub fn induce_version_spaces_vt<O: Sync>(
+    dsl: &lambda::Language,
+    params: &lambda::CompressionParams,
+    tasks: &[Task<lambda::Language, lambda::Expression, O>],
+    original_frontiers: Vec<ECFrontier<lambda::Language>>,
+    top_i: usize,
+    vt: &Arc<Mutex<VersionTable>>,
+) -> (lambda::Language, Vec<ECFrontier<lambda::Language>>) {
     lambda::induce(
         dsl,
         params,
         tasks,
         original_frontiers,
-        Arc::new(Mutex::new(VersionTable::new())),
+        Arc::clone(vt),
         |vt, _dsl, frontiers, params, out| {
             eprintln!("VERSION_SPACES: generating proposals..");
             let mut vt = vt.lock().unwrap();
             *vt = VersionTable::new();
-            let versions: Vec<_> = frontiers
+            let versions: Vec<Vec<_>> = frontiers
                 .into_iter()
                 .map(|fs| {
                     fs.1
@@ -49,15 +67,24 @@ pub fn induce_version_spaces<O: Sync>(
             out.append(&mut vt.best_inventions(&versions, top_i))
         },
         |vt, candidate, dsl, frontiers, params| {
-            eprintln!("VERSION_SPACES: proposed VS {}", candidate.0.display(dsl));
             let expr = candidate.extract().pop().unwrap();
             if let Err(e) = dsl.invent(expr.clone(), 0.0) {
-                eprintln!("VERSION_SPACES: could not invent: {}", e);
+                eprintln!(
+                    "VERSION_SPACES: could not invent VS {}: {}",
+                    candidate.0.display(dsl),
+                    e
+                );
                 return None;
             }
             let mut frontiers = frontiers.to_vec();
             rewrite_frontiers(vt, candidate.clone(), expr, dsl, &mut frontiers, params);
-            Some(dsl.inside_outside(&frontiers, params.pseudocounts))
+            let joint_mdl = dsl.inside_outside(&frontiers, params.pseudocounts);
+            eprintln!(
+                "VERSION_SPACES: proposed VS {} with joint_mdl={}",
+                candidate.0.display(dsl),
+                joint_mdl
+            );
+            Some(joint_mdl)
         },
         |expr| close_invention(expr).0,
         rewrite_frontiers,
@@ -188,7 +215,7 @@ impl VersionSpace {
                 .collect(),
             VS::Application(ref f, ref x) => VersionSpace::extract_inner(f)
                 .into_iter()
-                .zip(VersionSpace::extract_inner(x))
+                .cartesian_product(VersionSpace::extract_inner(x))
                 .map(|(f, x)| Expression::Application(Box::new(f), Box::new(x)))
                 .collect(),
             VS::Index(i) => vec![Expression::Index(i)],
@@ -571,8 +598,8 @@ impl VersionTable {
                 let mut inversions: Vec<_> = self
                     .substitutions(&vs)
                     .iter()
-                    .filter_map(|(v, b)| match *v.0 {
-                        VS::Universe | VS::Index(0) => None,
+                    .filter_map(|(v, b)| match (&*v.0, &*b.0) {
+                        (VS::Universe, _) | (_, VS::Index(0)) => None,
                         _ => {
                             let b = self.vs_abstract(b.clone());
                             Some(self.vs_apply(b, v.clone()))
@@ -1045,7 +1072,7 @@ fn rewrite(p: &lambda::Expression, inv: &lambda::Expression, e: &mut lambda::Exp
 mod beam {
     use super::{VersionSpace, VersionTable, EPSILON, VS};
     use itertools::Itertools;
-    use std::collections::{HashSet, HashMap};
+    use std::collections::{HashMap, HashSet};
 
     pub struct Beamer<'a> {
         vt: &'a VersionTable,
@@ -1186,6 +1213,61 @@ mod beam {
                 .entry(e.clone())
                 .or_insert(self.default_costs.1);
             *c = f64::min(cost, *c);
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{induce_version_spaces, VersionTable};
+    use programinduction::{lambda, ECFrontier, Task};
+    use std::f64;
+
+    fn noop_oracle(_: &lambda::Language, _: &lambda::Expression) -> f64 {
+        f64::NEG_INFINITY
+    }
+
+    #[test]
+    fn show_inversion() {
+        let dsl = lambda::Language::uniform(vec![
+            (">=", ptp!(@arrow[tp!(int), tp!(int), tp!(bool)])),
+            ("+", ptp!(@arrow[tp!(int), tp!(int), tp!(int)])),
+            ("0", ptp!(int)),
+            ("1", ptp!(int)),
+        ]);
+        let e = dsl.parse("(+ +)").unwrap();
+        {
+            let mut vt = VersionTable::new();
+            let vs = vt.incorporate(e.clone());
+            let subs = vt.substitutions(&vs);
+            for (k, v) in subs.iter() {
+                eprintln!(
+                    "substution k={}\tv={}",
+                    k.0.display(&dsl),
+                    v.0.display(&dsl)
+                )
+            }
+            let inv = vt.inversion(&vs);
+            for expr in inv.extract() {
+                eprintln!("inversion: {}", dsl.display(&expr))
+            }
+        }
+        let frontier = ECFrontier(vec![(e.clone(), 0., 0.)]);
+        let task = Task {
+            oracle: Box::new(noop_oracle),
+            tp: ptp!(bool),
+            observation: (),
+        };
+        let (dsl, _) = induce_version_spaces(
+            &dsl,
+            &lambda::CompressionParams::default(),
+            &[task],
+            vec![frontier],
+            50,
+        );
+        for i in dsl.invented.len()..dsl.invented.len() {
+            let &(ref expr, _, _) = &dsl.invented[i];
+            eprintln!("invented {}", dsl.display(expr));
         }
     }
 }
