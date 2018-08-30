@@ -70,7 +70,7 @@ def parallelMap(numberOfCPUs, f, *xs, chunksize=None, maxtasksperchild=None, mem
     if memorySensitive:
         memoryUsage = getMemoryUsageFraction()/100.
         correctedCPUs = max(1,
-                            min(int(1./memoryUsage),numberOfCPUs))
+                            min(int(0.9/memoryUsage),numberOfCPUs))
         assert correctedCPUs <= numberOfCPUs
         assert correctedCPUs >= 1
         if correctedCPUs < numberOfCPUs:
