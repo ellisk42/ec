@@ -863,6 +863,8 @@ def induceGrammar_Beta(g0, frontiers, _=None,
                        CPUs=1):
     """grammar induction using only version spaces"""
     from fragmentUtilities import primitiveSize
+    import gc
+    
     originalFrontiers = frontiers
     frontiers = [frontier for frontier in frontiers if not frontier.empty]
     eprint("Inducing a grammar from", len(frontiers), "frontiers")
@@ -915,12 +917,22 @@ def induceGrammar_Beta(g0, frontiers, _=None,
             eprint("Enumerated %d distinct version spaces"%len(v.expressions))
         candidates = v.bestInventions(versions, bs=topI)[:topI]
         eprint("Only considering the top %d candidates"%len(candidates))
+
+        # Cleaner out caches that are no longer needed
+        v.recursiveTable = [None]*len(v)
+        v.inhabitantTable = [None]*len(v)
+        v.functionInhabitantTable = [None]*len(v)
+        v.substitutionTable = {}
+        gc.collect()
+        
         with timing("scored the candidate inventions"):
             scoredCandidates = parallelMap(CPUs,
                                            lambda candidate: \
                                            (candidate, scoreCandidate(candidate, restrictedFrontiers, g0)),
                                             candidates,
-                                           memorySensitive=True)
+                                           memorySensitive=True,
+                                           chunksize=1,
+                                           maxtasksperchild=1)
         if len(scoredCandidates) > 0:
             bestNew, bestScore = max(scoredCandidates, key=lambda sc: sc[1])
         if len(scoredCandidates) == 0 or bestScore < oldScore:
