@@ -263,24 +263,27 @@ def makeSupervisedTasks():
               SupervisedTower("arch leg 3",lambda z: \
                _13(_13(_13(r(2,_13(_13(_13(l(1,_31(z)))))))))),
               SupervisedTower("arch leg 4",lambda z: \
-               _13(_13(_13(_13(r(2,_13(_13(_13(_13(l(1,_31(z))))))))))))
+                              _13(_13(_13(_13(r(2,_13(_13(_13(_13(l(1,_31(z)))))))))))),
+              SupervisedTower("arch leg 5",lambda z: \
+                              _13(_13(_13(_13(_13(r(2,_13(_13(_13(_13(_13(l(1,_31(z)))))))))))))),
+
     ]
     archesStacks = [SupervisedTower("arch stack %d"%n,
                                     lambda z: _loop(n)(lambda _: _arch(z))(z))
                     for n in range(3,7) ]
     Bridges = [SupervisedTower("bridge (%d) of %s"%(n,a.name),
                 lambda z: _loop(n)(lambda i: a.original(r(2,z)))(z))
-               for n in range(2,5)
+               for n in range(2,8)
                for a in arches]
     Josh = [SupervisedTower("Josh (%d)"%n,
                             lambda z: _loop(n)(lambda i: _31(_13(l(1,_13(r(2,_13(l(1,(_31(r(3,z)))))))))))(z))
-            for n in range(1,5) ]
+            for n in range(1,7) ]
     staircase1 = [SupervisedTower("R staircase %d"%n,
                                  lambda z: _loop(n)(lambda i: _loop(i)(lambda j: _13(r(2,_13(l(1,_31(l(1,z)))))))(r(3,z)))(z))
-                 for n in range(3,6) ]
+                 for n in range(3,8) ]
     staircase2 = [SupervisedTower("L staircase %d"%n,
                                  lambda z: _loop(n)(lambda i: _loop(i)(lambda j: _13(r(2,_13(l(1,_31(l(1,z)))))))(l(3,z)))(z))
-                 for n in range(3,6) ]
+                 for n in range(3,8) ]
     simpleLoops = [SupervisedTower("horizontal row %d"%n,
                                    lambda z: _loop(n)(lambda i: _31(r(3,z)))(z))
                    for n in [4,7] ]+\
@@ -289,7 +292,7 @@ def makeSupervisedTasks():
                    for n in [3,6] ]+\
                 [SupervisedTower("horizontal stack %d"%n,
                                    lambda z: _loop(n)(lambda i: _31(z))(z))
-                   for n in [4,6] ]+\
+                   for n in range(4,8) ]+\
                 [SupervisedTower("vertical stack %d"%n,
                                    lambda z: _loop(n)(lambda i: _13(z))(z))
                    for n in [3,7] ]
@@ -298,7 +301,7 @@ def makeSupervisedTasks():
                                 _loop(n)(lambda i: _loop(i)(lambda j: _13(r(2,_13(l(1,_31(l(1,z)))))))(r(3,z)))(\
                                 _loop(n)(lambda i: _loop(n - i)(lambda j: _13(r(2,_13(l(1,_31(l(1,z)))))))(r(3,z)))(\
                                                                                                                 z)))
-                for n in range(2,5) ]
+                for n in range(2,6) ]
     pyramids += [SupervisedTower("H pyramid %d"%n,
                                 lambda z: \
                                 _loop(n)(lambda i: _loop(i)(lambda j: _31(z))(r(3,z)))(\
@@ -310,7 +313,7 @@ def makeSupervisedTasks():
                                 _loop(n)(lambda i: _loop(i)(lambda j: _13(z))(r(1,z)))(\
                                 _loop(n)(lambda i: _loop(n - i)(lambda j: _13(z))(r(1,z)))(\
                                                                                                                 z)))
-                for n in range(3,7) ]
+                for n in range(3,8) ]
     pyramids += [SupervisedTower("V3 pyramid %d"%n,
                                 lambda z: \
                                 _loop(n)(lambda i: _loop(i)(lambda j: _13(z))(r(3,z)))(\
@@ -328,13 +331,13 @@ def makeSupervisedTasks():
                                 _lp(n,lambda i: \
                                     _e(_lp(n - i,lambda j: _arch(r(3,z)),z))(r(1.5,z)),
                                     z))
-                for n in range(2,5) ]
+                for n in range(2,8) ]
     pyramids += [SupervisedTower("V 1/2 pyramid %d"%n,
                                 lambda z: \
                                 _lp(n,lambda i: \
                                     _e(_lp(n - i,lambda j: _13(r(1,z)),z))(r(0.5,z)),
                                     z))
-                for n in range(3,7) ]
+                for n in range(3,8) ]
     bricks = [SupervisedTower("brickwall, %dx%d"%(w,h),
                               lambda z: \
                               _loop(h)(lambda i: \
@@ -343,14 +346,18 @@ def makeSupervisedTasks():
                              _loop(w)(lambda k: _31(r(3,z)))(z)))(z))
                               )(z)
     )
-              for w in [3,4,5]
-              for h in [1,2,3] ]
+              for w in range(4,7)
+              for h in range(2,8) ]
     aqueducts = [SupervisedTower("aqueduct: %dx%d"%(w,h),
                                  lambda z: \
                                  _lp(w, lambda j: _tallArch(h,z,_arch(r(2,z))), z))
-                 for w in range(2,6)
-                 for h in range(2,5)
+                 for w in range(4,8)
+                 for h in range(3,6)
                  ]
+    arches += [
+        SupervisedTower("arch leg 6",lambda z: _tallArch(6,z,z)),
+        SupervisedTower("arch leg 7",lambda z: _tallArch(7,z,z))
+    ]
     everything = archesStacks + aqueducts + pyramids + bricks + staircase2 + staircase1 + Josh + arches + Bridges + simpleLoops
     for t in everything:
         delattr(t,'original')
