@@ -67,6 +67,8 @@ class VersionTable():
         self.universe = self.incorporate(Primitive("U",t0,None))
         self.empty = self.incorporate(Union([], canBeEmpty=True))
 
+    def __len__(self): return len(self.expressions)
+
     def clearOverlapTable(self):
         self.overlapTable = {}
         
