@@ -258,26 +258,26 @@ def make_list_bootstrap_tasks():
              [((l,), map(lambda n: n * 2, l))
               for _ in range(10)
               for l in [randomList()]]),
-        # Task("map increment", arrow(tlist(tint),tlist(tint)),
-        #      [((l,),map(lambda n: n+1, l))
-        #       for _ in range(10)
-        #       for l in [randomList()] ]),
-        # Task("map negation", arrow(tlist(tint),tlist(tint)),
-        #      [((l,),map(lambda n: 0-n, l))
-        #       for _ in range(10)
-        #       for l in [randomList()] ]),
-        Task("map car", arrow(tlist(tlist(tint)), tlist(tint)),
-             [((l,), [n[0] for n in l])
+        Task("map increment", arrow(tlist(tint),tlist(tint)),
+             [((l,),map(lambda n: n+1, l))
               for _ in range(10)
-              for l in [randomListOfLists()]]),
+              for l in [randomList()] ]),
+        Task("map negation", arrow(tlist(tint),tlist(tint)),
+             [((l,),map(lambda n: 0-n, l))
+              for _ in range(10)
+              for l in [randomList()] ]),
+        # Task("map car", arrow(tlist(tlist(tint)), tlist(tint)),
+        #      [((l,), [n[0] for n in l])
+        #       for _ in range(10)
+        #       for l in [randomListOfLists()]]),
         # Task("map cdr", arrow(tlist(tlist(tbool)),tlist(tlist(tbool))),
         #      [((l,),map(lambda n: n[1:],l))
         #       for _ in range(10)
         #       for l in [randomListOfLists_bool()]]),
-        Task("map empty?", arrow(tlist(tlist(tint)), tlist(tboolean)),
-             [((l,), [n == [] for n in l])
-              for _ in range(10)
-              for l in [[[] if flip() else randomList() for _ in range(randint(1, 5))]]]),
+        # Task("map empty?", arrow(tlist(tlist(tint)), tlist(tboolean)),
+        #      [((l,), [n == [] for n in l])
+        #       for _ in range(10)
+        #       for l in [[[] if flip() else randomList() for _ in range(randint(1, 5))]]]),
 
         # Task("map eq 0?", arrow(tlist(tint),tlist(tboolean)),
         #      [((l,),map(lambda n: 0 == n,l))
