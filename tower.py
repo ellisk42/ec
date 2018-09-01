@@ -258,7 +258,6 @@ if __name__ == "__main__":
                            outputPrefix="experimentOutputs/tower",
                            evaluationTimeout=evaluationTimeout,
                            solver="ocaml",
-                           compressor="pypy",
                            **arguments)
     os.system("python tower_server.py KILL")
     time.sleep(1)

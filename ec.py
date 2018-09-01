@@ -735,6 +735,10 @@ def commandlineArguments(_=None,
         help="Start the learner out with a pretrained DSL. This argument should be a path to a checkpoint file.",
         default=None,
         type=str)
+    parser.add_argument(
+        "--compressor",
+        default="pypy",
+        choices=["pypy","rust","vs","pypy_vs"])
     parser.add_argument("--clear-recognition",
                         dest="clear-recognition",
                         help="Clears the recognition model from a checkpoint. Necessary for graphing results with recognition models, because pickle is kind of stupid sometimes.",
