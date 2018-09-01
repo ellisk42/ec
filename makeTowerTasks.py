@@ -292,10 +292,10 @@ def makeSupervisedTasks():
                    for n in [3,6] ]+\
                 [SupervisedTower("horizontal stack %d"%n,
                                    lambda z: _loop(n)(lambda i: _31(z))(z))
-                   for n in range(4,8) ]+\
+                   for n in range(5,8) ]+\
                 [SupervisedTower("vertical stack %d"%n,
                                    lambda z: _loop(n)(lambda i: _13(z))(z))
-                   for n in [3,7] ]
+                   for n in [5,7] ]
     pyramids = [SupervisedTower("arch pyramid %d"%n,
                                 lambda z: \
                                 _loop(n)(lambda i: _loop(i)(lambda j: _13(r(2,_13(l(1,_31(l(1,z)))))))(r(3,z)))(\
@@ -313,7 +313,7 @@ def makeSupervisedTasks():
                                 _loop(n)(lambda i: _loop(i)(lambda j: _13(z))(r(1,z)))(\
                                 _loop(n)(lambda i: _loop(n - i)(lambda j: _13(z))(r(1,z)))(\
                                                                                                                 z)))
-                for n in range(3,8) ]
+                for n in range(4,8) ]
     pyramids += [SupervisedTower("V3 pyramid %d"%n,
                                 lambda z: \
                                 _loop(n)(lambda i: _loop(i)(lambda j: _13(z))(r(3,z)))(\
@@ -325,7 +325,7 @@ def makeSupervisedTasks():
                                 _lp(n,lambda i: \
                                     _e(_lp(n - i,lambda j: _31(r(3,z)),z))(r(1.5,z)),
                                     z))
-                for n in range(2,7) ]
+                for n in range(3,7) ]
     pyramids += [SupervisedTower("arch 1/2 pyramid %d"%n,
                                 lambda z: \
                                 _lp(n,lambda i: \
@@ -346,8 +346,8 @@ def makeSupervisedTasks():
                              _loop(w)(lambda k: _31(r(3,z)))(z)))(z))
                               )(z)
     )
-              for w in range(4,7)
-              for h in range(2,8) ]
+              for w in range(1,5)
+              for h in range(2,6) ]
     aqueducts = [SupervisedTower("aqueduct: %dx%d"%(w,h),
                                  lambda z: \
                                  _lp(w, lambda j: _tallArch(h,z,_arch(r(2,z))), z))
@@ -368,4 +368,3 @@ if __name__ == "__main__":
     print(max(len(f.plan) for f in ts ))
     print(max(towerLength(f.plan) for f in ts ))
     SupervisedTower.showMany(ts)
-    #for t in ts: t.animate()

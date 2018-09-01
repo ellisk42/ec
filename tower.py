@@ -136,6 +136,8 @@ def tower_options(parser):
                         default=None, type=str)
 
 def dreamOfTowers(grammar, prefix, N=250):
+    from tower_common import fastRendererPlan,montage
+    
     request = arrow(ttower,ttower)
     randomTowers = [tuple(centerTower(t))
                     for _ in range(N)
@@ -144,17 +146,14 @@ def dreamOfTowers(grammar, prefix, N=250):
                                                    maxAttempts=100)]
                     if program is not None
                     for t in [executeTower(program, timeout=0.5) or []]
-                    if len(t) >= 1 and len(t) < 65 and towerLength(t) < 25.]
-    for ti,randomTower in enumerate(randomTowers):
-        fn = '%s_%d.png'%(prefix,ti)
-        try:
-            exportTowers([randomTower], fn)
-            eprint("Exported random tower to %s\n"%fn)
-        except ImportError:
-            eprint("Could not import required libraries for dreaming.")
-            break
-        except: pass
+                    if len(t) >= 1 and len(t) < 100 and towerLength(t) < 25.]
+    matrix = [fastRendererPlan(p,pretty=True)
+              for p in randomTowers]
+    matrix = montage(matrix)
+    import scipy.misc
+    scipy.misc.imsave('%s.png'%prefix, matrix)
 
+    
 def visualizePrimitives(primitives):
     from itertools import product
     from tower_common import fastRendererPlan,montageMatrix
