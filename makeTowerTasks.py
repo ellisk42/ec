@@ -346,7 +346,7 @@ def makeSupervisedTasks():
                              _loop(w)(lambda k: _31(r(3,z)))(z)))(z))
                               )(z)
     )
-              for w in range(1,5)
+              for w in range(2,5)
               for h in range(2,6) ]
     aqueducts = [SupervisedTower("aqueduct: %dx%d"%(w,h),
                                  lambda z: \

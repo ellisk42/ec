@@ -228,7 +228,7 @@ if __name__ == "__main__":
         a=3,
         structurePenalty=1,
         pseudoCounts=10,
-        topK=10,
+        topK=2,
         maximumFrontier=10,
         extras=tower_options)
 

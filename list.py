@@ -412,8 +412,7 @@ if __name__ == "__main__":
         "featureExtractor": extractor,
         "outputPrefix": "experimentOutputs/list",
         "evaluationTimeout": 0.0005,
-        "solver": "ocaml",
-        "compressor": "pypy"
+        "solver": "ocaml"
     })
     
 

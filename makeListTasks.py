@@ -194,7 +194,7 @@ def make_list_bootstrap_tasks():
              [((n,), list(range(n + 1)))
               for n in range(10)]),
         Task("range exclusive", arrow(tint, tlist(tint)),
-             [((n,), range(n - 1))
+             [((n,), list(range(n - 1)))
               for n in range(1, 11)]),
     ]
 
@@ -255,15 +255,15 @@ def make_list_bootstrap_tasks():
     # learning to map
     mapBootstrap = [
         Task("map double", arrow(tlist(tint), tlist(tint)),
-             [((l,), map(lambda n: n * 2, l))
+             [((l,), list(map(lambda n: n * 2, l)))
               for _ in range(10)
               for l in [randomList()]]),
         Task("map increment", arrow(tlist(tint),tlist(tint)),
-             [((l,),map(lambda n: n+1, l))
+             [((l,),list(map(lambda n: n+1, l)))
               for _ in range(10)
               for l in [randomList()] ]),
         Task("map negation", arrow(tlist(tint),tlist(tint)),
-             [((l,),map(lambda n: 0-n, l))
+             [((l,),list(map(lambda n: 0-n, l)))
               for _ in range(10)
               for l in [randomList()] ]),
         # Task("map car", arrow(tlist(tlist(tint)), tlist(tint)),
@@ -304,12 +304,12 @@ def make_list_bootstrap_tasks():
               for l1 in [[randint(0, 3) for _ in range(randint(4, 7))]]
               for l2 in [[randint(0, 3) for _ in range(len(l1))]]]),
         Task("zip cons", arrow(tlist(tbool), tlist(tlist(tbool)), tlist(tlist(tbool))),
-             [((l1, l2), map(lambda x, y: [x] + y, l1, l2))
+             [((l1, l2), list(map(lambda x, y: [x] + y, l1, l2)))
               for _ in range(10)
               for l1 in [randomBooleanList()]
               for l2 in [randomListOfLists_bool(l=len(l1))]]),
         # Task("zip cons", arrow(tlist(tint),tlist(tlist(tint)),tlist(tlist(tint))),
-        #      [((l1,l2),map(lambda x,y: [x]+y,l1,l2))
+        #      [((l1,l2),list(map(lambda x,y: [x]+y,l1,l2)))
         #       for _ in range(10)
         #       for l1 in [randomList()]
         #       for l2 in [[ randomList() for _ in range(len(l1)) ]]]),

@@ -876,7 +876,10 @@ def induceGrammar_Beta(g0, frontiers, _=None,
     def restrictFrontiers():
         return parallelMap(CPUs,
                            lambda f: g0.rescoreFrontier(f).topK(topK),
-                           frontiers)
+                           frontiers,
+                           memorySensitive=True,
+                           chunksize=1,
+                           maxtasksperchild=1)
     restrictedFrontiers = restrictFrontiers()
     
     def objective(g, fs):
@@ -917,10 +920,12 @@ def induceGrammar_Beta(g0, frontiers, _=None,
             versions = [[v.superVersionSpace(v.incorporate(e.program), arity) for e in f]
                         for f in restrictedFrontiers ]
             eprint("Enumerated %d distinct version spaces"%len(v.expressions))
-        candidates = v.bestInventions(versions, bs=topI)[:topI]
+        
+        # Bigger beam because I feel like it
+        candidates = v.bestInventions(versions, bs=3*topI)[:topI]
         eprint("Only considering the top %d candidates"%len(candidates))
 
-        # Cleaner out caches that are no longer needed
+        # Clean caches that are no longer needed
         v.recursiveTable = [None]*len(v)
         v.inhabitantTable = [None]*len(v)
         v.functionInhabitantTable = [None]*len(v)
