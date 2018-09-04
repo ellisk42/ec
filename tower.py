@@ -3,6 +3,7 @@ from ec import *
 from towerPrimitives import primitives, executeTower
 from makeTowerTasks import *
 from listPrimitives import bootstrapTarget
+from utilities import *
 
 import os
 import random

@@ -2,7 +2,7 @@ from ec import ecIterator, commandlineArguments
 from grammar import Grammar
 from utilities import eprint, testTrainSplit, numberOfCPUs, parallelMap
 from makeLogoTasks import makeTasks
-from logoPrimitives import primitives, turtle
+from logoPrimitives import *
 from collections import OrderedDict
 from program import Program
 from task import Task
@@ -18,11 +18,27 @@ import os
 import torch.nn as nn
 import torch.nn.functional as F
 from sys import exit
-
+import pickle
 
 from recognition import variable
 
 global prefix_dreams
+
+def renderLogoProgram(program,R=128):
+    import numpy as np
+    
+    hr = subprocess.check_output(['./logoDrawString',
+                                  '0',
+                                  "none",
+                                  str(R),
+                                  str(program)],
+                                 timeout=1).decode("utf8")
+    try:
+        hr = list(map(float, hr.split(',')))
+        return np.reshape(np.array(hr),(R,R))
+    except: return None
+
+    
 
 class Flatten(nn.Module):
     def __init__(self):
@@ -161,6 +177,9 @@ def list_options(parser):
     parser.add_argument("--dreamDirectory", type=str,
                         default=None,
                         help="Directory in which to dream from --dreamCheckpoint")
+    parser.add_argument("--visualize",
+                        default=None, type=str)
+
 
 
 def outputDreams(checkpoint, directory):
@@ -190,6 +209,61 @@ def outputDreams(checkpoint, directory):
                     f.write(str(p))
         except: continue
         
+def visualizePrimitives(primitives, export='/tmp/logo_primitives.png'):
+    from itertools import product
+    from pylab import imshow,show
+    from program import Index,Abstraction,Application,Primitive
+    from utilities import montageMatrix
+    from type import tint
+
+    angles = [Program.parse(a)
+              for a in ["logo_ZA",
+                        "logo_epsA",
+                        "(logo_MULA logo_epsA 2)",
+                        "(logo_DIVA logo_UA 2)",
+                        "logo_UA"] ]
+    numbers = [Program.parse(n)
+               for n in ["0","1","2","logo_IFTY"] ]
+    distances = [Program.parse(l)
+                 for l in ["logo_ZL",
+                           "logo_epsL",
+                           "(logo_MULL logo_epsL 2)",
+                           "(logo_DIVL logo_UL 2)",
+                           "logo_UL"] ]
+    
+    matrix = []
+    for p in primitives:
+        if not p.isInvented: continue
+        t = p.tp
+        if t.returns() != turtle: continue
+        eprint(p,":",p.tp)
+
+        def argumentChoices(t):
+            if t == turtle:
+                return [Index(0)]
+            elif t == tint:
+                return numbers
+            elif t == tangle:
+                return angles
+            elif t == tlength:
+                return distances
+            else: return []
+
+        ts = []
+        for arguments in product(*[argumentChoices(t) for t in t.functionArguments() ]):
+            pp = p
+            for a in arguments: pp = Application(pp,a)
+            pp = Abstraction(pp)
+            i = renderLogoProgram(pp)
+            if i is not None:
+                ts.append(i)
+
+        if ts == []: continue
+
+        matrix.append(ts)
+    matrix = montageMatrix(matrix)
+    import scipy.misc
+    scipy.misc.imsave(export, matrix)
 
         
 if __name__ == "__main__":
@@ -208,6 +282,14 @@ if __name__ == "__main__":
         pseudoCounts=10.0,
         activation="tanh",
         extras=list_options)
+    visualizeCheckpoint = args.pop("visualize")
+    if visualizeCheckpoint is not None:
+        with open(visualizeCheckpoint,'rb') as handle:
+            primitives = pickle.load(handle).grammars[-1].primitives
+        visualizePrimitives(primitives,
+                            export="%s.png"%visualizeCheckpoint)
+        sys.exit(0)
+
     dreamCheckpoint = args.pop("dreamCheckpoint")
     dreamDirectory = args.pop("dreamDirectory")
 

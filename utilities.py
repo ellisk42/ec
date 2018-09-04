@@ -640,6 +640,31 @@ def getMemoryUsageFraction():
     import psutil
     return psutil.virtual_memory().percent
 
+
+# image montage!
+def makeNiceArray(l):
+    n = len(l)**0.5
+    n = int(n)
+    a = []
+    while l:
+        a.append(l[:n])
+        l = l[n:]
+    return a
+def montageMatrix(matrix):
+    import numpy as np
+    arrays = matrix
+    m = max(len(t) for t in arrays)
+
+    size = arrays[0][0].shape
+    tp = arrays[0][0].dtype
+
+    arrays = [np.concatenate(ts + [np.zeros(size, dtype=tp)] * (m - len(ts)), axis=1) for ts in arrays]
+    arrays = np.concatenate(arrays, axis=0)
+    return arrays
+def montage(arrays):
+    return montageMatrix(makeNiceArray(arrays))
+
+
 if __name__ == "__main__":
     def f(n):
         if n == 0: return None
