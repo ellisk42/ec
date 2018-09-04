@@ -39,6 +39,10 @@ let violates_symmetry f a n =
       | (_,"zip","empty") -> true
       | (0,"fold","empty") -> true
       | (1,"index","empty") -> true
+      | (_,"left","left") -> true
+      | (_,"left","right") -> true
+      | (_,"right","right") -> true
+      | (_,"right","left") -> true
       | _ -> false
 
 (* For now this is disabled and is not used *)
