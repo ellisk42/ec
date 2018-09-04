@@ -27,6 +27,12 @@ let string_of_grammar g =
   string_of_float g.logVariable ^ "\n" ^
   join ~separator:"\n" (g.library |> List.map ~f:(fun (p,t,l,_) -> Float.to_string l^"\t"^(string_of_type t)^"\t"^(string_of_program p)))
 
+let imperative_type : (tp option) ref = ref None;;
+let register_imperative_type t =
+  match !imperative_type with
+  | Some(_) -> assert false
+  | None -> imperative_type := Some(t)
+
 let unifying_expressions g environment request context : (program*tp list*tContext*float) list =
   (* given a grammar environment requested type and typing context,
      what are all of the possible leaves that we might use?
@@ -66,7 +72,14 @@ let unifying_expressions g environment request context : (program*tp list*tConte
 
   let candidates = variable_candidates@grammar_candidates in
   let z = List.map ~f:(fun (_,_,_,ll) -> ll) candidates |> lse_list in
-  List.map ~f:(fun (p,t,k,ll) -> (p,t,k,ll-.z)) candidates
+  let candidates = List.map ~f:(fun (p,t,k,ll) -> (p,t,k,ll-.z)) candidates in
+  match !imperative_type with
+  | Some(t) when t = request ->
+    candidates |> List.filter ~f:(fun (p,t,_,_) ->
+        not (is_index p) ||
+        not (t = []) ||
+        get_index_value p = 0)
+  | _ -> candidates
 
 
 (* let likelihood_under_grammar g request expression = *)

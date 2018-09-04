@@ -281,7 +281,38 @@ let discrete_tower t =
        round (c*.10.) |> Int.of_float,
        round (d*.10.) |> Int.of_float));;
 
-     
+let recent_tower : (program option) ref = ref None;;
+let recent_discrete : ((int*int*int*int) list) ref = ref [];;
+
+let evaluate_discrete_tower_program timeout p =
+  match !recent_tower with
+  | Some(p') when program_equal p p' -> !recent_discrete
+  | _ ->
+    begin
+      recent_tower := Some(p);
+      let p = analyze_lazy_evaluation p in
+      let new_discrete = 
+        try
+          match run_for_interval
+                  timeout
+                  (fun () -> run_lazy_analyzed_with_arguments p [fun s -> (s, [])] 0.0 |> snd)
+          with
+          | Some(p) ->
+            discrete_tower (simulate_without_physics (center_tower p))
+          | _ -> []
+        with | UnknownPrimitive(n) -> raise (Failure ("Unknown primitive: "^n))
+             (* we have to be a bit careful with exceptions *)
+             (* if the synthesized program generated an exception, then we just terminate w/ false *)
+             (* but if the enumeration timeout was triggered during program evaluation, we need to pass the exception on *)
+             | otherException -> begin
+                 if otherException = EnumerationTimeout then raise EnumerationTimeout else []
+               end
+      in
+      recent_discrete := new_discrete;
+      new_discrete
+    end
+;;
+
 register_special_task "supervisedTower" (fun extra ?timeout:(timeout = 0.001)
     name task_type examples -> 
   assert (task_type = ttower @> ttower);
@@ -299,23 +330,7 @@ register_special_task "supervisedTower" (fun extra ?timeout:(timeout = 0.001)
     task_type = task_type ;
     log_likelihood =
       (fun p ->
-         let p = analyze_lazy_evaluation p in
-         try
-           match run_for_interval
-                   timeout
-                   (fun () -> run_lazy_analyzed_with_arguments p [fun s -> (s, [])] 0.0 |> snd)
-           with
-           | Some(p) ->
-             if discrete_tower (simulate_without_physics (center_tower p)) = plan then 0.0 else log 0.0
-           | _ -> log 0.0
-         with | UnknownPrimitive(n) -> raise (Failure ("Unknown primitive: "^n))
-              (* we have to be a bit careful with exceptions *)
-              (* if the synthesized program generated an exception, then we just terminate w/ false *)
-              (* but if the enumeration timeout was triggered during program evaluation, we need to pass the exception on *)
-              | otherException -> begin
-                  if otherException = EnumerationTimeout then raise EnumerationTimeout else log 0.
-                end)
-
+         if evaluate_discrete_tower_program timeout p = plan then 0. else log 0.)
   })
 ;;
 

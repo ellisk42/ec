@@ -14,6 +14,10 @@ let is_index = function
   |Index(_) -> true
   |_ -> false
 
+let get_index_value = function
+  | Index(n) -> n
+  |_ -> assert false
+
 let is_primitive = function
   |Primitive(_,_,_) -> true
   |Invented(_,_) -> true
