@@ -135,9 +135,11 @@ def tower_options(parser):
                         default="supervised")
     parser.add_argument("--visualize",
                         default=None, type=str)
+    parser.add_argument("--solutions",
+                        default=None, type=str)
 
 def dreamOfTowers(grammar, prefix, N=250):
-    from tower_common import fastRendererPlan,montage
+    from tower_common import fastRendererPlan
     
     request = arrow(ttower,ttower)
     randomTowers = [tuple(centerTower(t))
@@ -213,8 +215,22 @@ def visualizePrimitives(primitives):
     scipy.misc.imsave('/tmp/tower_primitives.png', matrix)
     show()
     
-        
-            
+def visualizeSolutions(solutions, export):
+    from pylab import imshow,show
+    from tower_common import fastRendererPlan
+    
+    tasks = list(solutions.keys())
+    tasks.sort(key=lambda t: t.name)
+
+    matrix = []
+    for t in tasks:
+        i = fastRendererPlan(centerTower(t.plan),pretty=True)
+        if solutions[t].empty: i = i/3.
+        matrix.append(i)
+    matrix = montage(matrix)
+    imshow(matrix)
+    import scipy.misc
+    scipy.misc.imsave(export, matrix)
 
 if __name__ == "__main__":
     from tower_common import exportTowers
@@ -239,10 +255,19 @@ if __name__ == "__main__":
             primitives = pickle.load(handle).grammars[-1].primitives
         visualizePrimitives(primitives)
         sys.exit(0)
+    checkpoint = arguments.pop("solutions")
+    if checkpoint is not None:
+        with open(checkpoint,'rb') as handle:
+            solutions = pickle.load(handle).taskSolutions
+        visualizeSolutions(solutions,
+                           checkpoint + ".solutions.png")
+        sys.exit(0)
         
     
     tasks = arguments.pop("tasks")
+    supervised = False
     if tasks == "supervised":
+        supervised = True
         tasks = makeSupervisedTasks()
     elif tasks == "distant":
         tasks = makeTasks()
@@ -277,7 +302,10 @@ if __name__ == "__main__":
                      for frontier in result.taskSolutions.values() if not frontier.empty]
         try:
             fn = 'experimentOutputs/towers/%s/solutions_%d.png'%(timestamp,iteration)
-            exportTowers(newTowers, fn)
+            if supervised:
+                visualizeSolutions(result.taskSolutions, fn)
+            else:
+                exportTowers(newTowers, fn)
             eprint("Exported solutions to %s\n"%fn)
             dreamOfTowers(result.grammars[-1],
                           'experimentOutputs/towers/%s/random_%d'%(timestamp,iteration))

@@ -874,7 +874,7 @@ def induceGrammar_Beta(g0, frontiers, _=None,
     arity = a
 
     def restrictFrontiers():
-        return parallelMap(CPUs,
+        return parallelMap(1,#CPUs,
                            lambda f: g0.rescoreFrontier(f).topK(topK),
                            frontiers,
                            memorySensitive=True,
