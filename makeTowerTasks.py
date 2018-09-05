@@ -42,7 +42,7 @@ class SupervisedTower(Task):
 
     @staticmethod
     def showMany(ts):
-        from tower_common import fastRendererPlan,montage
+        from tower_common import fastRendererPlan
         from pylab import imshow,show
         a = montage([fastRendererPlan(centerTower(t.plan),pretty=True)
                          for t in ts]) 
@@ -346,8 +346,8 @@ def makeSupervisedTasks():
                              _loop(w)(lambda k: _31(r(3,z)))(z)))(z))
                               )(z)
     )
-              for w in range(2,5)
-              for h in range(2,6) ]
+              for w in range(2,6)
+              for h in range(1,6) ]
     aqueducts = [SupervisedTower("aqueduct: %dx%d"%(w,h),
                                  lambda z: \
                                  _lp(w, lambda j: _tallArch(h,z,_arch(r(2,z))), z))
@@ -356,9 +356,10 @@ def makeSupervisedTasks():
                  ]
     arches += [
         SupervisedTower("arch leg 6",lambda z: _tallArch(6,z,z)),
-        SupervisedTower("arch leg 7",lambda z: _tallArch(7,z,z))
+        SupervisedTower("arch leg 7",lambda z: _tallArch(7,z,z)),
+        SupervisedTower("arch leg 8",lambda z: _tallArch(8,z,z))
     ]
-    everything = archesStacks + aqueducts + pyramids + bricks + staircase2 + staircase1 + Josh + arches + Bridges + simpleLoops
+    everything = simpleLoops + arches + Bridges + archesStacks + aqueducts + Josh + pyramids + bricks + staircase2 + staircase1
     for t in everything:
         delattr(t,'original')
     return everything

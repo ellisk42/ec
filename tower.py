@@ -215,12 +215,12 @@ def visualizePrimitives(primitives):
     scipy.misc.imsave('/tmp/tower_primitives.png', matrix)
     show()
     
-def visualizeSolutions(solutions, export):
-    from pylab import imshow,show
+def visualizeSolutions(solutions, export, tasks=None):
     from tower_common import fastRendererPlan
-    
-    tasks = list(solutions.keys())
-    tasks.sort(key=lambda t: t.name)
+
+    if tasks is None:
+        tasks = list(solutions.keys())
+        tasks.sort(key=lambda t: t.name)
 
     matrix = []
     for t in tasks:
@@ -228,7 +228,6 @@ def visualizeSolutions(solutions, export):
         if solutions[t].empty: i = i/3.
         matrix.append(i)
     matrix = montage(matrix)
-    imshow(matrix)
     import scipy.misc
     scipy.misc.imsave(export, matrix)
 
@@ -303,7 +302,8 @@ if __name__ == "__main__":
         try:
             fn = 'experimentOutputs/towers/%s/solutions_%d.png'%(timestamp,iteration)
             if supervised:
-                visualizeSolutions(result.taskSolutions, fn)
+                visualizeSolutions(result.taskSolutions, fn,
+                                   train)
             else:
                 exportTowers(newTowers, fn)
             eprint("Exported solutions to %s\n"%fn)
