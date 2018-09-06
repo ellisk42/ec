@@ -8,7 +8,7 @@ open Program
 open Type
 
 (* ttower = state -> (state, list of blocks) *)
-type tt = float -> float * ( (float*float*float) list)
+type tt = int -> int * ( (int*int*int) list)
 
 let tower_sequence (a : tt) (b : tt) : tt = fun hand ->
   let hand, a' = a hand in
@@ -32,32 +32,33 @@ let tower_extent p =
   let xs = p |> List.map ~f:(fun (x,_,_) -> x) in
   let x1 = List.fold_left ~init:(List.hd_exn xs) ~f:max xs in
   let x0 = List.fold_left ~init:(List.hd_exn xs) ~f:min xs in
-  x1 -. x0
+  x1 - x0
 
 let center_tower p =
   let xs = p |> List.map ~f:(fun (x,_,_) -> x) in
   let x1 = List.fold_left ~init:(List.hd_exn xs) ~f:max xs in
   let x0 = List.fold_left ~init:(List.hd_exn xs) ~f:min xs in
   (* bounding box: [x0,x1] *)
-  let c = (x1-.x0)/.2. +. x0 in
-  p |> List.map ~f:(fun (x,w,h) -> (x-.c,w,h))
+  let c = (x1-x0)/2 + x0 in
+  p |> List.map ~f:(fun (x,w,h) -> (x-c,w,h))
 
-let discrete_plan p =
-  p |> List.map ~f:(fun (x,w,h) ->
-      (round (x*.10.) |> Int.of_float,
-       round (w*.10.) |> Int.of_float,
-       round (h*.10.) |> Int.of_float))
+(* let discrete_plan p = *)
+(*   p |> List.map ~f:(fun (x,w,h) -> *)
+(*       (round (x*.10.) |> Int.of_float, *)
+(*        round (w*.10.) |> Int.of_float, *)
+(*        round (h*.10.) |> Int.of_float))c *)
 
 let block w h =
   let n = Printf.sprintf "%dx%d" w h in
-  let xOffset = if w mod 2 = 1 then 0.5 else 0.0 in
-  let e = 0.05 in
-  let w = Float.of_int w -. 2. *. e in
-  let h = Float.of_int h in
+  let xOffset = if w mod 2 = 1 then 5 else 0 in
+  let e = 1 in
+  (* This will ensure that the width is an even number *)
+  let w = 10*w - 2 * e in
+  let h = 10*h in
   let v : tt -> tt = fun k : tt ->
     fun hand ->
       let (hand', rest) = k hand in
-      (hand', (xOffset +. hand, w, h) :: rest)
+      (hand', (xOffset + hand, w, h) :: rest)
   in
   ignore(primitive n (ttower @> ttower) v)
 ;;
@@ -73,26 +74,26 @@ block 1 4;;
 ignore(primitive "left" (tint @> ttower @> ttower)
          (let f : int -> tt -> tt = fun (d : int) ->
              fun (k : tt) ->
-             fun (hand : float) ->
-               let hand' = hand -. (Float.of_int d /. 2.) in
+             fun (hand : int) ->
+               let hand' = hand - 5*d in
                let (hand'', rest) = k hand' in
                (hand'', rest)
           in f));;
 ignore(primitive "right" (tint @> ttower @> ttower)
          (let f : int -> tt -> tt = fun (d : int) ->
              fun (k : tt) ->
-             fun (hand : float) ->
-               let hand' = hand +. (Float.of_int d /. 2.) in
+             fun (hand : int) ->
+               let hand' = hand + 5*d in
                let (hand'', rest) = k hand' in
                (hand'', rest)
           in f));;
 ignore(primitive "tower_loop" (tint @> (tint @> ttower) @> ttower @> ttower)
-         (let rec f (start : int) (stop : int) (body : int -> tt) : tt = fun (hand : float) -> 
+         (let rec f (start : int) (stop : int) (body : int -> tt) : tt = fun (hand : int) -> 
              if start >= stop then (hand,[]) else
                let (hand', thisIteration) = body start hand in
                let (hand'', laterIterations) = f (start+1) stop body hand' in
                (hand'', thisIteration @ laterIterations)
-          in fun (n : int) (b : int -> tt) (k : tt) : tt -> fun (hand : float) -> 
+          in fun (n : int) (b : int -> tt) (k : tt) : tt -> fun (hand : int) -> 
             let (hand, body_blocks) = f 0 n b hand in
             let hand, later_blocks = k hand in
             (hand, body_blocks @ later_blocks)));;
@@ -100,7 +101,7 @@ ignore(primitive "tower_loopM" (tint @> (tint @> ttower @> ttower) @> ttower @> 
          (fun i (f : int -> tt -> tt) (z : tt) : tt -> List.fold_right (0 -- (i-1)) ~f ~init:z));;
 ignore(primitive "tower_embed" (ttower @> ttower @> ttower)
          (fun (body : tt) (k : tt) : tt ->
-            fun (hand : float) ->
+            fun (hand : int) ->
               let (_, bodyActions) = body hand in
               let (hand', laterActions) = k hand in
               (hand', bodyActions @ laterActions)));;             
@@ -155,7 +156,7 @@ let update_serialized_tower_cash() =
 let evaluate_tower ?n:(n=15) plan perturbation =
   (* center the tower *)
   let plan = center_tower plan in
-  let key = discrete_plan plan in
+  let key = plan in
   let open Yojson.Safe.Util in
   match Hashtbl.Poly.find tower_cash key with
   | Some(r) -> begin
@@ -169,9 +170,9 @@ let evaluate_tower ?n:(n=15) plan perturbation =
     (*   (key |> List.map ~f:(fun (a,b,c) -> Printf.sprintf "%d,%d,%d" a b c) |> join ~separator:"; "); *)
     (* flush_everything(); *)
       
-    let plan = `List(plan |> List.map ~f:(fun (a,b,c) -> `List([`Float(a);
-                                                                `Float(b);
-                                                                `Float(c);]))) in
+    let plan = `List(plan |> List.map ~f:(fun (a,b,c) -> `List([`Int(a);
+                                                                `Int(b);
+                                                                `Int(c);]))) in
     let response = send_to_tower_server (`Assoc([("plan",plan);
                                                  ("n",`Int(n));
                                                  ("perturbation",`Float(perturbation))])) in
@@ -183,7 +184,10 @@ let evaluate_tower ?n:(n=15) plan perturbation =
 register_special_task "tower" (fun extra ?timeout:(timeout = 0.001)
     (* ?stabilityThreshold:(stabilityThreshold=0.5) *)
     (* ~perturbation ~maximumStaircase ~maximumMass ~minimumLength ~minimumArea ~minimumHeight ~minimumOverpass *)
-    name task_type examples -> 
+                                name task_type examples ->
+                                Printf.eprintf "FIXME: tower task needs to be updated to use int\n";
+                                assert false;
+                                  
   assert (task_type = ttower @> ttower);
   assert (examples = []);
 
@@ -206,12 +210,13 @@ register_special_task "tower" (fun extra ?timeout:(timeout = 0.001)
          try
            match run_for_interval
                    timeout
-                   (fun () -> run_lazy_analyzed_with_arguments p [fun s -> (s, [])] 0.0 |> snd)
+                   (fun () -> run_lazy_analyzed_with_arguments p [fun s -> (s, [])] 0 |> snd)
            with
            | Some(p) ->
              let m = p |> List.map ~f:(fun (_,w,h) -> w*.h) |> List.fold_right ~f:(+.) ~init:0. in
              if m > maximumMass ||
-                tower_extent p > maximum_tower_extent ||
+                (* TODO *)
+                (* tower_extent p > maximum_tower_extent || *)
                 List.length p > maximum_number_of_blocks
              then log 0.0
              else 
@@ -238,15 +243,15 @@ register_special_task "tower" (fun extra ?timeout:(timeout = 0.001)
 
 let simulate_without_physics plan =
   let overlaps (x,w,h) (x',y',w',h')  =
-    let x1 = x -. w/.2. in
-    let x2 = x +. w/.2. in
-    let x1' = x' -. w'/.2. in
-    let x2' = x' +. w'/.2. in
+    let x1 = x - w/2 in
+    let x2 = x + w/2 in
+    let x1' = x' - w'/2 in
+    let x2' = x' + w'/2 in
     if x1' > x2 || x1 > x2' then None else
-      Some(y' +. h/.2. +. h'/.2.)
+      Some(y' + h/2 + h'/2)
   in
 
-  let lowest_possible_height (_,_,h) = h/.2. in
+  let lowest_possible_height (_,_,h) = h/2 in
   let place_at_height (x,w,h) y = (x,y,w,h) in 
 
   let place_block world block =
@@ -274,12 +279,17 @@ let simulate_without_physics plan =
   (* flush_everything(); *)
   simulated
 ;;
-let discrete_tower t =
-  t |> List.map ~f:(fun (a,b,c,d) ->
-      (round (a*.10.) |> Int.of_float,
-       round (b*.10.) |> Int.of_float,
-       round (c*.10.) |> Int.of_float,
-       round (d*.10.) |> Int.of_float));;
+(* let discrete_tower t = *)
+(*   t |> List.map ~f:(fun (a,b,c,d) -> *)
+(*       (round (a*.10.) |> Int.of_float, *)
+(*        round (b*.10.) |> Int.of_float, *)
+(*        round (c*.10.) |> Int.of_float, *)
+(*        round (d*.10.) |> Int.of_float));; *)
+
+let show_tower dt =
+  dt |> List.map ~f:(fun (a,b,c,d) ->
+      Printf.sprintf "BLOCK{w=%d, h=%d, x=%d, y=%d}"
+        c d a b) |> join ~separator:"\n"
 
 let recent_tower : (program option) ref = ref None;;
 let recent_discrete : ((int*int*int*int) list) ref = ref [];;
@@ -290,15 +300,19 @@ let evaluate_discrete_tower_program timeout p =
   | _ ->
     begin
       recent_tower := Some(p);
+      (* Printf.eprintf "%s\n" (string_of_program p); *)
       let p = analyze_lazy_evaluation p in
       let new_discrete = 
         try
           match run_for_interval
                   timeout
-                  (fun () -> run_lazy_analyzed_with_arguments p [fun s -> (s, [])] 0.0 |> snd)
+                  (fun () -> run_lazy_analyzed_with_arguments p [fun s -> (s, [])] 0 |> snd)
           with
           | Some(p) ->
-            discrete_tower (simulate_without_physics (center_tower p))
+            let p = center_tower p in
+            let t = simulate_without_physics p in
+            t
+            (* (Printf.eprintf "%s\n" (show_tower t); t) *)
           | _ -> []
         with | UnknownPrimitive(n) -> raise (Failure ("Unknown primitive: "^n))
              (* we have to be a bit careful with exceptions *)
@@ -322,15 +336,19 @@ register_special_task "supervisedTower" (fun extra ?timeout:(timeout = 0.001)
   
   let plan = extra |> member "plan" |> to_list |> List.map ~f:(fun command ->
       match command |> to_list with
-      | [a;b;c;] -> (a |> to_float, b |> to_float, c |> to_float)
-      |_ -> assert false) |> center_tower |> simulate_without_physics |> discrete_tower
-  in 
+      | [a;b;c;] -> (a |> to_int, b |> to_int, c |> to_int)
+      |_ -> assert false) |> center_tower |> simulate_without_physics
+  in
+  (* Printf.eprintf "TARGETING:\n%s\n\n" *)
+  (*   (show_tower plan); *)
 
   { name = name    ;
     task_type = task_type ;
     log_likelihood =
       (fun p ->
-         if evaluate_discrete_tower_program timeout p = plan then 0. else log 0.)
+         let hit = evaluate_discrete_tower_program timeout p = plan in
+         (* Printf.eprintf "\t%b\n\n" hit; *)
+         if hit then 0. else log 0.)
   })
 ;;
 
@@ -344,3 +362,4 @@ let rec stress_test_client() =
 ;;
 
   
+(* (lambda (tower_loopM 6 (lambda (lambda (3x1 $0))) $0)) *)

@@ -12,7 +12,7 @@ import os
 import sys
 import json
 
-from tower_common import TowerWorld, exportTowers
+from tower_common import TowerWorld
 
 COMMANDSERVERPORT = 9494
 CASHSEMAPHORE = None

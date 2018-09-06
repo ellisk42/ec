@@ -199,7 +199,7 @@ class TowerTask(Task):
 def centerTower(t):
     x1 = max(x for x, _, _ in t)
     x0 = min(x for x, _, _ in t)
-    c = float(x1 - x0) / 2. + x0
+    c = (x1 - x0) / 2 + x0
     return [(x - c, w, h) for x, w, h in t]
 
 def towerLength(t):
@@ -239,17 +239,16 @@ def makeTasks():
             if o <= a
             ]
 def makeSupervisedTasks():
-    from towerPrimitives import epsilon,TowerContinuation,xOffset,_left,_right,_loop,_embed
-    w,h = 2,1
-    _21 = TowerContinuation(xOffset(w, h), w - 2*epsilon, h - epsilon)
-    w,h = 1,2
-    _12 = TowerContinuation(xOffset(w, h), w - 2*epsilon, h - epsilon)
-    w,h = 1,3
-    _13 = TowerContinuation(xOffset(w, h), w - 2*epsilon, h - epsilon)
-    w,h = 3,1
-    _31 = TowerContinuation(xOffset(w, h), w - 2*epsilon, h - epsilon)
-    r = lambda n,k: _right(2*n)(k)
-    l = lambda n,k: _left(2*n)(k)
+    from towerPrimitives import _left,_right,_loop,_embed
+    # w,h = 2,1
+    # _21 = TowerContinuation(xOffset(w, h), w - 2*epsilon, h - epsilon)
+    # w,h = 1,2
+    # _12 = TowerContinuation(xOffset(w, h), w - 2*epsilon, h - epsilon)
+    # w,h = 1,3
+    _13 = Program.parse("1x3").value
+    _31 = Program.parse("3x1").value
+    r = lambda n,k: _right(int(2*n))(k)
+    l = lambda n,k: _left(int(2*n))(k)
     _e = _embed
     _lp = lambda n,b,k: _loop(n)(b)(k)
     _arch = lambda k: l(1,_13(r(2,_13(l(1,_31(k))))))
@@ -360,6 +359,9 @@ def makeSupervisedTasks():
         SupervisedTower("arch leg 8",lambda z: _tallArch(8,z,z))
     ]
     everything = simpleLoops + arches + Bridges + archesStacks + aqueducts + Josh + pyramids + bricks + staircase2 + staircase1
+    # everything = [SupervisedTower("horizontal stack %d"%n,
+    #                               lambda z: _loop(n)(lambda i: _31(z))(z))
+    #               for n in [6] ]
     for t in everything:
         delattr(t,'original')
     return everything

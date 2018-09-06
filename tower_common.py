@@ -460,35 +460,34 @@ TowerWorld.BADRESULT = {"height": 0.,
                         "staircase": float('inf')}
 
 
-def exportTowers(towers, name):
-    from PIL import Image
-    import numpy as np
+# def exportTowers(towers, name):
+#     from PIL import Image
+#     import numpy as np
 
-    towers = makeNiceArray(towers)
-    m = max(len(t) for t in towers)
-    towers = [[TowerWorld().draw(t) for t in ts]
-              for ts in towers]
+#     towers = makeNiceArray(towers)
+#     m = max(len(t) for t in towers)
+#     towers = [[TowerWorld().draw(t) for t in ts]
+#               for ts in towers]
 
-    size = towers[0][0].shape
-    tp = towers[0][0].dtype
-    towers = [np.concatenate(
-        ts + [np.zeros(size, dtype=tp)] * (m - len(ts)), axis=1) for ts in towers]
-    towers = np.concatenate(towers, axis=0)
-    Image.fromarray(towers).convert('RGB').save(name)
-
+#     size = towers[0][0].shape
+#     tp = towers[0][0].dtype
+#     towers = [np.concatenate(
+#         ts + [np.zeros(size, dtype=tp)] * (m - len(ts)), axis=1) for ts in towers]
+#     towers = np.concatenate(towers, axis=0)
+#     Image.fromarray(towers).convert('RGB').save(name)
 
 def simulateWithoutPhysics(plan):
     def overlap(b1,
                 b2):
         (x,w,h) = b1
         (x_,y_,w_,h_) = b2
-        x1 = x - w/2.
-        x2 = x + w/2.
-        x1_ = x_ - w_/2.
-        x2_ = x_ + w_/2.
+        x1 = x - w/2
+        x2 = x + w/2
+        x1_ = x_ - w_/2
+        x2_ = x_ + w_/2
         if x1_ > x2 or x1 > x2_: return None
-        return y_ + h_/2. + h/2.
-    def lowestPossibleHeight(b): return b[2]/2.
+        return y_ + h_/2 + h/2
+    def lowestPossibleHeight(b): return b[2]/2
     def placeAtHeight(b,y):
         (x,w,h) = b
         return (x,y,w,h)
@@ -510,6 +509,8 @@ def fastRendererPlan(plan, resolution=256, window=30, floorHeight=10,
     import numpy as np
     
     world = simulateWithoutPhysics(plan)
+    world = [ [float(zz)/10. for zz in wb ]
+              for wb in world ]
     a = np.zeros((resolution, resolution, 3))
 
     def transform(x,y):

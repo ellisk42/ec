@@ -232,8 +232,6 @@ def visualizeSolutions(solutions, export, tasks=None):
     scipy.misc.imsave(export, matrix)
 
 if __name__ == "__main__":
-    from tower_common import exportTowers
-
     g0 = Grammar.uniform(primitives)
 
     arguments = commandlineArguments(
@@ -305,7 +303,7 @@ if __name__ == "__main__":
                 visualizeSolutions(result.taskSolutions, fn,
                                    train)
             else:
-                exportTowers(newTowers, fn)
+                assert False
             eprint("Exported solutions to %s\n"%fn)
             dreamOfTowers(result.grammars[-1],
                           'experimentOutputs/towers/%s/random_%d'%(timestamp,iteration))
