@@ -1,3 +1,4 @@
+extern crate chashmap;
 extern crate clap;
 extern crate itertools;
 #[cfg_attr(test, macro_use)]

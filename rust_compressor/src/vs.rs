@@ -1,3 +1,4 @@
+use chashmap::CHashMap;
 use itertools::Itertools;
 use programinduction::{
     lambda::{self, Expression},
@@ -8,7 +9,7 @@ use std::cmp::Ordering;
 use std::collections::{HashMap, HashSet};
 use std::f64;
 use std::hash::{Hash, Hasher};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Weak};
 
 const EPSILON: f64 = 0.001;
 
@@ -25,7 +26,7 @@ pub fn induce_version_spaces<O: Sync>(
         tasks,
         original_frontiers,
         top_i,
-        &Arc::new(Mutex::new(VersionTable::new())),
+        &VersionTable::new(),
     )
 }
 
@@ -35,18 +36,16 @@ pub fn induce_version_spaces_vt<O: Sync>(
     tasks: &[Task<lambda::Language, lambda::Expression, O>],
     original_frontiers: Vec<ECFrontier<lambda::Language>>,
     top_i: usize,
-    vt: &Arc<Mutex<VersionTable>>,
+    vt: &VersionTable,
 ) -> (lambda::Language, Vec<ECFrontier<lambda::Language>>) {
     lambda::induce(
         dsl,
         params,
         tasks,
         original_frontiers,
-        Arc::clone(vt),
+        vt,
         |vt, _dsl, frontiers, params, out| {
             eprintln!("VERSION_SPACES: generating proposals..");
-            let mut vt = vt.lock().unwrap();
-            *vt = VersionTable::new();
             let versions: Vec<Vec<_>> = frontiers
                 .into_iter()
                 .map(|fs| {
@@ -64,7 +63,8 @@ pub fn induce_version_spaces_vt<O: Sync>(
                 top_i,
                 vt.len()
             );
-            out.append(&mut vt.best_inventions(&versions, top_i))
+            let mut best = vt.best_inventions(&versions, top_i);
+            out.append(&mut best)
         },
         |vt, candidate, dsl, frontiers, params| {
             let expr = candidate.extract().pop().unwrap();
@@ -91,9 +91,9 @@ pub fn induce_version_spaces_vt<O: Sync>(
     )
 }
 
-#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
+#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value, trivially_copy_pass_by_ref))]
 fn rewrite_frontiers(
-    vt: &Arc<Mutex<VersionTable>>,
+    vt: &&VersionTable,
     candidate: VersionSpace,
     nonclosed_invention: Expression,
     _dsl: &lambda::Language,
@@ -107,20 +107,17 @@ fn rewrite_frontiers(
         .unique()
         .cloned()
         .collect();
-    let mut rewrite_mapping: HashMap<_, _> = {
-        let mut vt = vt.lock().unwrap();
-        let spaces = rewrite_mapping
-            .iter()
-            .map(|p| {
-                let vs = vt.incorporate(p.clone());
-                vt.super_version_space(&vs, params.arity)
-            })
-            .collect();
-        rewrite_mapping
-            .into_iter()
-            .zip(vt.rewrite_with_invention(&candidate, spaces))
-            .collect()
-    };
+    let spaces = rewrite_mapping
+        .par_iter()
+        .map(|p| {
+            let vs = vt.incorporate(p.clone());
+            vt.super_version_space(&vs, params.arity)
+        })
+        .collect();
+    let mut rewrite_mapping: HashMap<_, _> = rewrite_mapping
+        .into_par_iter()
+        .zip(vt.rewrite_with_invention(&candidate, spaces))
+        .collect();
     let (inv, mapping) = close_invention(nonclosed_invention.clone());
     let mut applied_invention = inv;
     let mapping: HashMap<_, _> = mapping.into_iter().map(|(a, b)| (b, a)).collect();
@@ -302,20 +299,32 @@ impl RWCost {
 }
 
 /// metadata for a version space
-#[derive(Default)]
 struct VersionMeta {
+    vs: Weak<VS>,
     inverse: Option<VersionSpace>,
     substitutions: HashMap<usize, Arc<HashMap<VersionSpace, VersionSpace>>>,
     inhabitants: Option<(f64, Arc<HashSet<VersionSpace>>)>,
     function_inhabitants: Option<(f64, Arc<HashSet<VersionSpace>>)>,
     super_space: Option<VersionSpace>,
 }
+impl VersionMeta {
+    pub fn new(parent: &Arc<VS>) -> VersionMeta {
+        VersionMeta {
+            vs: Arc::downgrade(parent),
+            inverse: None,
+            substitutions: HashMap::new(),
+            inhabitants: None,
+            function_inhabitants: None,
+            super_space: None,
+        }
+    }
+}
 
 pub struct VersionTable {
     void: VersionSpace,
     universe: VersionSpace,
-    all: HashMap<Arc<VS>, VersionMeta>,
-    overlaps: HashMap<(VersionSpace, VersionSpace), bool>,
+    all: CHashMap<Arc<VS>, VersionMeta>,
+    overlaps: CHashMap<(VersionSpace, VersionSpace), bool>,
 }
 impl VersionTable {
     pub fn new() -> VersionTable {
@@ -325,36 +334,36 @@ impl VersionTable {
             void: VersionSpace::from(&void),
             universe: VersionSpace::from(&universe),
             all: vec![
-                (void, VersionMeta::default()),
-                (universe, VersionMeta::default()),
+                (Arc::clone(&void), VersionMeta::new(&void)),
+                (Arc::clone(&universe), VersionMeta::new(&universe)),
             ].into_iter()
                 .collect(),
-            overlaps: HashMap::new(),
+            overlaps: CHashMap::new(),
         }
     }
     pub fn len(&self) -> usize {
         self.all.len()
     }
-    pub fn vs_apply(&mut self, f: VersionSpace, x: VersionSpace) -> VersionSpace {
+    pub fn vs_apply(&self, f: VersionSpace, x: VersionSpace) -> VersionSpace {
         match (&*f.0, &*x.0) {
             (VS::Void, _) => x,
             (_, VS::Void) => f,
             _ => self.incorporate_space(VS::Application(f.0, x.0)),
         }
     }
-    pub fn vs_abstract(&mut self, body: VersionSpace) -> VersionSpace {
+    pub fn vs_abstract(&self, body: VersionSpace) -> VersionSpace {
         match *body.0 {
             VS::Void => body,
             _ => self.incorporate_space(VS::Abstraction(body.0)),
         }
     }
-    pub fn vs_index(&mut self, idx: usize) -> VersionSpace {
+    pub fn vs_index(&self, idx: usize) -> VersionSpace {
         self.incorporate_space(VS::Index(idx))
     }
-    pub fn vs_terminal(&mut self, terminal: lambda::Expression) -> VersionSpace {
+    pub fn vs_terminal(&self, terminal: lambda::Expression) -> VersionSpace {
         self.incorporate_space(VS::Terminal(terminal))
     }
-    pub fn incorporate(&mut self, e: Expression) -> VersionSpace {
+    pub fn incorporate(&self, e: Expression) -> VersionSpace {
         match e {
             lambda::Expression::Index(i) => self.vs_index(i),
             lambda::Expression::Abstraction(body) => {
@@ -371,10 +380,10 @@ impl VersionTable {
             }
         }
     }
-    pub fn shift(&mut self, vs: &VersionSpace, offset: i64) -> VersionSpace {
+    pub fn shift(&self, vs: &VersionSpace, offset: i64) -> VersionSpace {
         self.shift_inner(&vs.0, offset, 0)
     }
-    fn shift_inner(&mut self, vs: &Arc<VS>, offset: i64, bound: usize) -> VersionSpace {
+    fn shift_inner(&self, vs: &Arc<VS>, offset: i64, bound: usize) -> VersionSpace {
         match **vs {
             VS::Union(ref inner) => {
                 let inner = inner
@@ -400,7 +409,7 @@ impl VersionTable {
             VS::Terminal(_) | VS::Universe | VS::Void => VersionSpace::from(vs),
         }
     }
-    pub fn union(&mut self, vss: Vec<VersionSpace>) -> VersionSpace {
+    pub fn union(&self, vss: Vec<VersionSpace>) -> VersionSpace {
         if vss.contains(&self.universe) {
             self.universe.clone()
         } else {
@@ -427,10 +436,10 @@ impl VersionTable {
             }
         }
     }
-    pub fn intersection(&mut self, a: &VersionSpace, b: &VersionSpace) -> VersionSpace {
+    pub fn intersection(&self, a: &VersionSpace, b: &VersionSpace) -> VersionSpace {
         self.intersection_inner(&a.0, &b.0)
     }
-    fn intersection_inner(&mut self, a: &Arc<VS>, b: &Arc<VS>) -> VersionSpace {
+    fn intersection_inner(&self, a: &Arc<VS>, b: &Arc<VS>) -> VersionSpace {
         match (&**a, &**b) {
             (VS::Universe, _) => VersionSpace::from(b),
             (_, VS::Universe) => VersionSpace::from(a),
@@ -471,7 +480,7 @@ impl VersionTable {
             _ => self.void.clone(),
         }
     }
-    pub fn has_intersection(&mut self, a: &VersionSpace, b: &VersionSpace) -> bool {
+    pub fn has_intersection(&self, a: &VersionSpace, b: &VersionSpace) -> bool {
         match (&*a.0, &*b.0) {
             (VS::Void, _) | (_, VS::Void) => return false,
             (VS::Universe, _) | (_, VS::Universe) => return true,
@@ -509,16 +518,22 @@ impl VersionTable {
         self.overlaps.insert(k, overlap);
         overlap
     }
-    pub fn substitutions(&mut self, vs: &VersionSpace) -> Arc<HashMap<VersionSpace, VersionSpace>> {
+    pub fn substitutions(&self, vs: &VersionSpace) -> Arc<HashMap<VersionSpace, VersionSpace>> {
         self.substitutions_inner(vs, 0)
     }
     fn substitutions_inner(
-        &mut self,
+        &self,
         vs: &VersionSpace,
         offset: usize,
     ) -> Arc<HashMap<VersionSpace, VersionSpace>> {
-        if self.all[&vs.0].substitutions.contains_key(&offset) {
-            return Arc::clone(&self.all[&vs.0].substitutions[&offset]);
+        if self
+            .all
+            .get(&vs.0)
+            .unwrap()
+            .substitutions
+            .contains_key(&offset)
+        {
+            return Arc::clone(&self.all.get(&vs.0).unwrap().substitutions[&offset]);
         }
         let mut sub = HashMap::new();
         let shifted = self.shift(&vs, offset as i64);
@@ -578,12 +593,12 @@ impl VersionTable {
             }
             _ => (),
         }
-        let meta = self.all.get_mut(&vs.0).unwrap();
+        let mut meta = self.all.get_mut(&vs.0).unwrap();
         meta.substitutions.insert(offset, Arc::new(sub));
         Arc::clone(&meta.substitutions[&offset])
     }
-    pub fn inversion(&mut self, vs: &VersionSpace) -> VersionSpace {
-        if let Some(ref ri) = self.all[&vs.0].inverse {
+    pub fn inversion(&self, vs: &VersionSpace) -> VersionSpace {
+        if let Some(ref ri) = self.all.get(&vs.0).unwrap().inverse {
             return ri.clone();
         }
         let ri = match *vs.0 {
@@ -624,15 +639,15 @@ impl VersionTable {
                 self.union(inversions)
             }
         };
-        let meta = self.all.get_mut(&vs.0).unwrap();
+        let mut meta = self.all.get_mut(&vs.0).unwrap();
         meta.inverse = Some(ri.clone());
         ri
     }
-    fn minimal_inhabitants(&mut self, vs: &VersionSpace) -> (f64, Arc<HashSet<VersionSpace>>) {
+    fn minimal_inhabitants(&self, vs: &VersionSpace) -> (f64, Arc<HashSet<VersionSpace>>) {
         self.minimal_inhabitants_inner(&vs.0)
     }
-    fn minimal_inhabitants_inner(&mut self, vs: &Arc<VS>) -> (f64, Arc<HashSet<VersionSpace>>) {
-        if let Some(ref x) = self.all[vs].inhabitants {
+    fn minimal_inhabitants_inner(&self, vs: &Arc<VS>) -> (f64, Arc<HashSet<VersionSpace>>) {
+        if let Some(ref x) = self.all.get(vs).unwrap().inhabitants {
             return x.clone();
         }
         let (cost, members) = match **vs {
@@ -679,21 +694,18 @@ impl VersionTable {
             }
         };
         let v = (cost, Arc::new(members));
-        let meta = self.all.get_mut(vs).unwrap();
+        let mut meta = self.all.get_mut(vs).unwrap();
         meta.inhabitants = Some(v.clone());
         v
     }
-    fn minimal_function_inhabitants(
-        &mut self,
-        vs: &VersionSpace,
-    ) -> (f64, Arc<HashSet<VersionSpace>>) {
+    fn minimal_function_inhabitants(&self, vs: &VersionSpace) -> (f64, Arc<HashSet<VersionSpace>>) {
         self.minimal_function_inhabitants_inner(&vs.0)
     }
     fn minimal_function_inhabitants_inner(
-        &mut self,
+        &self,
         vs: &Arc<VS>,
     ) -> (f64, Arc<HashSet<VersionSpace>>) {
-        if let Some(ref x) = self.all[vs].function_inhabitants {
+        if let Some(ref x) = self.all.get(vs).unwrap().function_inhabitants {
             return x.clone();
         }
         let (cost, members) = match **vs {
@@ -733,11 +745,11 @@ impl VersionTable {
             }
         };
         let v = (cost, Arc::new(members));
-        let meta = self.all.get_mut(vs).unwrap();
+        let mut meta = self.all.get_mut(vs).unwrap();
         meta.function_inhabitants = Some(v.clone());
         v
     }
-    fn repeated_expansion(&mut self, vs: VersionSpace, n: u32) -> Vec<VersionSpace> {
+    fn repeated_expansion(&self, vs: VersionSpace, n: u32) -> Vec<VersionSpace> {
         let mut spaces = vec![vs];
         for i in 0..n {
             let next = self.inversion(&spaces[i as usize]);
@@ -746,7 +758,7 @@ impl VersionTable {
         spaces
     }
     fn rewrite_reachable(
-        &mut self,
+        &self,
         heads: Vec<VersionSpace>,
         n: u32,
     ) -> HashMap<Arc<VS>, Vec<VersionSpace>> {
@@ -759,18 +771,18 @@ impl VersionTable {
             .map(|vs| (vs.0.clone(), self.repeated_expansion(vs, n)))
             .collect()
     }
-    pub fn super_version_space(&mut self, vs: &VersionSpace, n: u32) -> VersionSpace {
-        if let Some(ref x) = self.all[&vs.0].super_space {
+    pub fn super_version_space(&self, vs: &VersionSpace, n: u32) -> VersionSpace {
+        if let Some(ref x) = self.all.get(&vs.0).unwrap().super_space {
             return x.clone();
         }
         let spaces = self.rewrite_reachable(vec![vs.clone()], n);
         let svs = self.super_version_space_inner(&vs.0, &spaces);
-        let meta = self.all.get_mut(&vs.0).unwrap();
+        let mut meta = self.all.get_mut(&vs.0).unwrap();
         meta.super_space = Some(svs.clone());
         svs
     }
     fn super_version_space_inner(
-        &mut self,
+        &self,
         vs: &Arc<VS>,
         spaces: &HashMap<Arc<VS>, Vec<VersionSpace>>,
     ) -> VersionSpace {
@@ -791,17 +803,17 @@ impl VersionTable {
         }
         self.union(components)
     }
-    fn incorporate_space(&mut self, vs: VS) -> VersionSpace {
+    fn incorporate_space(&self, vs: VS) -> VersionSpace {
         let vs = Arc::new(vs);
         if self.all.contains_key(&vs) {
-            VersionSpace::from(self.all.entry(vs).key())
+            VersionSpace::from(self.all.get(&vs).unwrap().vs.upgrade().unwrap())
         } else {
-            self.all.insert(Arc::clone(&vs), VersionMeta::default());
+            self.all.insert(Arc::clone(&vs), VersionMeta::new(&vs));
             VersionSpace(vs)
         }
     }
     fn rewrite(
-        &mut self,
+        &self,
         e: &VersionSpace,
         ex: &lambda::Expression,
         v: VersionSpace,
@@ -881,7 +893,7 @@ impl VersionTable {
         r
     }
     fn rewrite_with_invention(
-        &mut self,
+        &self,
         invented: &VersionSpace,
         vs: Vec<VersionSpace>,
     ) -> Vec<lambda::Expression> {
@@ -892,11 +904,11 @@ impl VersionTable {
             .map(|v| self.rewrite(&invented, &ex, v, &mut table))
             .map(|r| r.a.unwrap().0)
             .collect();
-        self.overlaps = HashMap::new();
+        self.overlaps.clear();
         ret
     }
     fn best_inventions(
-        &mut self,
+        &self,
         versions: &[Vec<VersionSpace>],
         beam_size: usize,
     ) -> Vec<VersionSpace> {
@@ -1138,7 +1150,7 @@ mod beam {
             beam_table.insert(e.clone(), beam);
         }
         fn new_beam(&self, space: &VersionSpace) -> Beam {
-            let meta = &self.vt.all[&space.0];
+            let meta = &self.vt.all.get(&space.0).unwrap();
             let (cost, inhabitants) = meta.inhabitants.clone().unwrap();
             let (function_cost, _) = meta.function_inhabitants.clone().unwrap();
             let default_costs = (cost, function_cost);
