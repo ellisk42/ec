@@ -47,7 +47,7 @@ pub fn induce_version_spaces_vt<O: Sync>(
         |vt, _dsl, frontiers, params, out| {
             eprintln!("VERSION_SPACES: generating proposals..");
             let versions: Vec<Vec<_>> = frontiers
-                .into_iter()
+                .into_par_iter()
                 .map(|fs| {
                     fs.1
                         .iter()
@@ -119,8 +119,8 @@ fn rewrite_frontiers(
         .zip(vt.rewrite_with_invention(&candidate, spaces))
         .collect();
     let (inv, mapping) = close_invention(nonclosed_invention.clone());
-    let mut applied_invention = inv;
     let mapping: HashMap<_, _> = mapping.into_iter().map(|(a, b)| (b, a)).collect();
+    let mut applied_invention = inv;
     for j in (0..mapping.len()).rev() {
         applied_invention = Expression::Application(
             Box::new(applied_invention),
@@ -944,22 +944,26 @@ impl VersionTable {
             })
             .collect();
         let beamer = beam::Beamer::new(self, &candidates, beam_size);
-        let mut beam_table: HashMap<VersionSpace, beam::Beam> = HashMap::new();
-        for heads in versions {
-            for head in heads {
-                beamer.costs(&mut beam_table, head);
-            }
-        }
-        let vss: Vec<_> = beam_table
-            .values()
-            .flat_map(beam::Beam::domain)
-            .unique()
+        let beam_table: CHashMap<VersionSpace, beam::Beam> = CHashMap::new();
+        versions
+            .into_par_iter()
+            .flat_map(|heads| heads)
+            .all(|head| {
+                beamer.costs(&beam_table, head);
+                true
+            });
+        let beam_table: HashMap<_, _> = beam_table.into_iter().collect();
+        let mut vss: Vec<_> = beam_table
+            .par_iter()
+            .flat_map(|(_vs, beam)| beam.par_domain())
             .collect();
+        vss.par_sort_unstable();
+        vss.dedup();
         let mut pairs: Vec<_> = vss
             .into_par_iter()
             .map(|candidate| {
                 let value = versions
-                    .iter()
+                    .par_iter()
                     .map(|heads| {
                         heads
                             .into_iter()
@@ -1083,7 +1087,9 @@ fn rewrite(p: &lambda::Expression, inv: &lambda::Expression, e: &mut lambda::Exp
 
 mod beam {
     use super::{VersionSpace, VersionTable, EPSILON, VS};
+    use chashmap::CHashMap;
     use itertools::Itertools;
+    use rayon::prelude::*;
     use std::collections::{HashMap, HashSet};
 
     pub struct Beamer<'a> {
@@ -1103,7 +1109,7 @@ mod beam {
                 beam_size,
             }
         }
-        pub fn costs(&self, beam_table: &mut HashMap<VersionSpace, Beam>, e: &VersionSpace) {
+        pub fn costs(&self, beam_table: &CHashMap<VersionSpace, Beam>, e: &VersionSpace) {
             if beam_table.contains_key(e) {
                 return;
             }
@@ -1113,7 +1119,7 @@ mod beam {
                 VS::Abstraction(ref b) => {
                     let b = &VersionSpace::from(b);
                     self.costs(beam_table, b);
-                    let b = &beam_table[b];
+                    let b = beam_table.get(b).unwrap();
                     for (ref i, c) in &b.relative_cost {
                         beam.relax(i, c + EPSILON);
                     }
@@ -1123,8 +1129,8 @@ mod beam {
                     let x = &VersionSpace::from(x);
                     self.costs(beam_table, f);
                     self.costs(beam_table, x);
-                    let f = &beam_table[f];
-                    let x = &beam_table[x];
+                    let f = beam_table.get(f).unwrap();
+                    let x = beam_table.get(x).unwrap();
                     for i in f.function_domain().chain(x.domain()) {
                         let c = f.function_cost(i) + x.cost(i) + EPSILON;
                         beam.relax(i, c);
@@ -1135,7 +1141,7 @@ mod beam {
                     for z in u {
                         let z = &VersionSpace::from(z);
                         self.costs(beam_table, z);
-                        let cz = &beam_table[z];
+                        let cz = beam_table.get(z).unwrap();
                         for (ref i, c) in &cz.relative_cost {
                             beam.relax(i, *c);
                         }
@@ -1175,6 +1181,9 @@ mod beam {
         default_costs: (f64, f64),
     }
     impl Beam {
+        pub fn par_domain(&self) -> impl ParallelIterator<Item = &VersionSpace> {
+            self.relative_cost.par_iter().map(|(k, _v)| k)
+        }
         pub fn domain(&self) -> impl Iterator<Item = &VersionSpace> {
             self.relative_cost.keys()
         }
