@@ -85,28 +85,6 @@ def deepcoderPrimitives():
         Primitive("COUNT", arrow(int_to_bool, tlist(tint), tint), _count), #is this okay???
         Primitive("ZIPWITH", arrow(int_to_int_to_int, tlist(tint), tlist(tint), tlist(tint)), _zipwith), #is this okay???
         Primitive("SCANL1", arrow(int_to_int_to_int, tlist(tint), tlist(tint)), _scanl1), #is this okay???
-        # ] + [
-        # Primitive("succ", arrow(tint, tint), _succ),
-        # Primitive("pred", arrow(tint, tint), _pred),
-        # Primitive("double", arrow(tint, tint), _double),
-        # Primitive("half", arrow(tint, tint), _half),
-        # Primitive("neg", arrow(tint, tint), _neg),
-        # Primitive("square", arrow(tint, tint), _square),
-        # Primitive("triple", arrow(tint, tint), _triple),
-        # Primitive("third", arrow(tint, tint), _third),
-        # Primitive("quad", arrow(tint, tint), _quad),
-        # Primitive("quarter", arrow(tint, tint), _quarter),
-        # ] + [
-        # Primitive("pos", arrow(tint, tbool), _pos),
-        # Primitive("neg", arrow(tint, tbool), _neg),
-        # Primitive("even", arrow(tint, tbool), _even),
-        # Primitive("odd", arrow(tint, tbool), _odd),
-        # ] + [
-        # Primitive("add", arrow(tint, tint, tint), _add),
-        # Primitive("sub", arrow(tint, tint, tint), _sub),
-        # Primitive("mult", arrow(tint, tint, tint), _mult),
-        # Primitive("min", arrow(tint, tint, tint), _min),
-        # Primitive("max", arrow(tint, tint, tint), _max)
         ] + [
         Primitive("INC", int_to_int, _succ),
         Primitive("DEC", int_to_int, _pred),
