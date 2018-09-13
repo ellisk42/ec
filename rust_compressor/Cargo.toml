@@ -1,8 +1,9 @@
 [package]
 name = "rust_compressor"
-version = "0.1.9"
+version = "0.2.0"
 
 [dependencies]
+chashmap = "2.2"
 clap = "2.32"
 itertools = "0.7"
 polytype = "6.0"

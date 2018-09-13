@@ -180,9 +180,12 @@ def make_list_bootstrap_tasks():
 
     # Encourages learning of unfolding
     unfoldBootstrap = [
-        Task("countdown", arrow(tint, tlist(tint)),
-             [((n,), list(range(n + 1, 1, -1)))
-              for n in range(10)]),
+        # Task("countdown", arrow(tint, tlist(tint)),
+        #      [((n,), list(range(n + 1, 1, -1)))
+        #       for n in range(10)]),
+        Task("weird count", arrow(tint, tlist(tint)),
+             [((n,), list(range(-n,0,-1)))
+              for n in range(-10,0) ]),
         Task("suffixes", arrow(tlist(tint), tlist(tlist(tint))),
              [((l,), suffixes(l))
               for _ in range(10)
@@ -242,10 +245,10 @@ def make_list_bootstrap_tasks():
              [((l,), reduce(lambda x, y: y - x, reversed(l), 1))
               for _ in range(10)
               for l in [randomList()[:4]]]),
-        Task("append bool", arrow(tlist(tbool), tlist(tbool), tlist(tbool)),
-             [((x, y), x + y)
-              for _ in range(10)
-              for [x, y] in [[randomBooleanList(), randomBooleanList()]]]),
+        # Task("append bool", arrow(tlist(tbool), tlist(tbool), tlist(tbool)),
+        #      [((x, y), x + y)
+        #       for _ in range(10)
+        #       for [x, y] in [[randomBooleanList(), randomBooleanList()]]]),
         # Task("append constant 0", arrow(tlist(tint),tlist(tint)),
         #      [((l,),l + [0])
         #       for _ in range(10)
@@ -285,6 +288,17 @@ def make_list_bootstrap_tasks():
         #       for l in [[ randint(0,3) for _ in range(randint(4,7)) ]] ])
 
     ]
+    difficultMaps = [
+                Task("map quadruple", arrow(tlist(tint), tlist(tint)),
+             [((l,), list(map(lambda n: n * 4, l)))
+              for _ in range(10)
+              for l in [randomList()]]),
+        Task("map add 4", arrow(tlist(tint),tlist(tint)),
+             [((l,),list(map(lambda n: n+4, l)))
+              for _ in range(10)
+              for l in [randomList()] ]),
+
+        ]
 
     # Learning to zip lists together
     zipBootstrap = [
@@ -353,8 +367,8 @@ def make_list_bootstrap_tasks():
 
     # Let's learn everything!
     if True:
-        return lengthBootstrap + incrementBootstrap + decrementBootstrap + \
-            unfoldBootstrap + arrayBootstrap + foldBootstrap + mapBootstrap + zipBootstrap
+        return lengthBootstrap + \
+            unfoldBootstrap + arrayBootstrap + foldBootstrap + difficultMaps + zipBootstrap
 
 
 def bonusListProblems():
