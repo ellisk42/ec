@@ -901,7 +901,8 @@ def induceGrammar_Beta(g0, frontiers, _=None,
             
         o = objective(newGrammar, newFrontiers)
 
-        eprint("+", end='')
+        #eprint("+", end='')
+        eprint(o,'\t',newGrammar.primitives[0],':',newGrammar.primitives[0].tp)
 
         # eprint(next(v.extract(candidate)))
         # for f in newFrontiers:
@@ -943,7 +944,9 @@ def induceGrammar_Beta(g0, frontiers, _=None,
         if len(scoredCandidates) > 0:
             bestNew, bestScore = max(scoredCandidates, key=lambda sc: sc[1])
         if len(scoredCandidates) == 0 or bestScore < oldScore:
-            eprint("No improvement possible.")
+            # eprint("No improvement possible.")
+            # eprint("Runner-up:")
+            # eprint(next(v.extract(bestNew)))
             # Return all of the frontiers, which have now been rewritten to use the
             # new fragments
             frontiers = {f.task: f for f in frontiers}
@@ -964,6 +967,9 @@ def induceGrammar_Beta(g0, frontiers, _=None,
                                                            pseudoCounts=pseudoCounts)
         eprint("Improved score to", bestScore, "(dS =", bestScore-oldScore, ") w/ invention",newGrammar.primitives[0],":",newGrammar.primitives[0].infer())
         oldScore = bestScore
+
+        for f in newFrontiers:
+            eprint(f.summarizeFull())
 
         g0, frontiers = newGrammar, newFrontiers
         restrictedFrontiers = restrictFrontiers()
@@ -1012,37 +1018,60 @@ if __name__ == "__main__":
     from listPrimitives import *
     from fragmentGrammar import *
     bootstrapTarget_extra()
+    McCarthyPrimitives()
 
     # p = Program.parse("(#(lambda (lambda (lambda (fold $0 empty ($1 $2))))) cons (lambda (lambda (lambda ($2 (+ (+ 5 5) (+ $1 $1)) $0)))))")
     # print(EtaLongVisitor().execute(p))
-    
-    programs = [(Program.parse("(lambda (fold $0 empty (lambda (lambda (cons (+ (+ 5 5) (+ $1 $1)) $0)))))"), None),
-                (Program.parse("(lambda (fold $0 empty (lambda (lambda (cons (- 0 $1) $0)))))"), None),
-                (Program.parse("(lambda (fold $0 empty (lambda (lambda (cons (+ $1 $1) $0)))))"), None),
-                (Program.parse("(lambda (+ $0 $0))"), None),
-                (Program.parse("(lambda (+ 4 4))"), arrow(tint, tint))]
-    
+
+    # BOOTSTRAP
+    programs = [# "(lambda (fix1 $0 (lambda (lambda (if (empty? $0) 0 (+ ($1 (cdr $0)) 1))))))",
+                # "(lambda (fix1 $0 (lambda (lambda (if (empty? $0) 0 (+ ($1 (cdr $0)) 1))))))",
+                # "(lambda (+ $0 1))",
+                # "(lambda (+ (car $0) 1))",
+                # "(lambda (+ $0 (+ 1 1)))",
+                # "(lambda (- $0 1))",
+                # "(lambda (- $0 (+ 1 1)))",
+                # "(lambda (- (car $0) 1))",
+        ("(lambda (fix1 $0 (lambda (lambda (if (eq? 0 $0) empty (cons (- 0 $0) ($1 (+ 1 $0))))))))",None),
+        ("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) empty (cons (cdr $0) ($1 (cdr $0))))))))",arrow(tlist(tint),tlist(tlist(tint)))),
+        # drop the last element
+        # ("(lambda (fix1 $0 (lambda (lambda (if (empty? (cdr $0)) empty (cons (car $0) ($1 (cdr $0))))))))",arrow(tlist(tint),tlist(tint))),
+        # take in till 1
+        # ("(lambda (fix1 $0 (lambda (lambda (if (eq? (car $0) 1) empty (cons (car $0) ($1 (cdr $0))))))))",arrow(tlist(tint),tlist(tint))),
+                # "(lambda (lambda (fix2 $1 $0 (lambda (lambda (lambda (if (eq? $1 0) (car $0) ($2 (- $1 1) (cdr $0)))))))))",
+                # "(lambda (lambda (fix2 $1 $0 (lambda (lambda (lambda (if (eq? $1 0) (car $0) ($2 (- $1 1) (cdr $0)))))))))",
+                ("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) 0 (+ ($1 (cdr $0)) (car $0)))))))",None),
+                ("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) 1 (- (car $0) ($1 (cdr $0))))))))",None),
+                # "(lambda (lambda (fix2 $1 $0 (lambda (lambda (lambda (if (empty? $1) $0 (cons (car $1) ($2 (cdr $1) $0)))))))))",
+        #         ("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) empty (cons (+ (car $0) (car $0)) ($1 (cdr $0))))))))",None),
+        #         ("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) empty (cons (+ (car $0) 1) ($1 (cdr $0))))))))",None),
+        # ("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) empty (cons (- (car $0) 1) ($1 (cdr $0))))))))",None),
+        # ("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) empty (cons (cons (car $0) empty) ($1 (cdr $0))))))))",arrow(tlist(tint),tlist(tlist(tint)))),
+        # ("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) empty (cons (- 0 (car $0)) ($1 (cdr $0))))))))",None)
+    ]
+    programs = [(Program.parse(p),t) for p,t in programs ]
     N=3
 
-    primitives = set()
-    for p, _ in programs:
-        for _, s in p.walk():
-            if s.isPrimitive:
-                primitives.add(s)
+    primitives = McCarthyPrimitives()
+    # for p, _ in programs:
+    #     for _, s in p.walk():
+    #         if s.isPrimitive:
+    #             primitives.add(s)
     g0 = Grammar.uniform(list(primitives))
     print(g0)
 
-    with timing("RUST test"):
-        g = induceGrammar(g0, [Frontier.dummy(p, tp=tp) for p, tp in programs],
-                      CPUs=1,
-                      a=N,
-                      backend="vs")
-        eprint(g)
+    # with timing("RUST test"):
+    #     g = induceGrammar(g0, [Frontier.dummy(p, tp=tp) for p, tp in programs],
+    #                   CPUs=1,
+    #                   a=N,
+    #                   backend="vs")
+    #     eprint(g)
 
     with timing("induced DSL"):
         induceGrammar_Beta(g0, [Frontier.dummy(p, tp=tp) for p, tp in programs],
                            CPUs=1,
-                           a=N)
+                           a=N,
+                           structurePenalty=0.)
 
 # if __name__ == "__main__":
 #     import argparse
