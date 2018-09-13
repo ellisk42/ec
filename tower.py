@@ -157,20 +157,15 @@ def dreamOfTowers(grammar, prefix, N=250):
     scipy.misc.imsave('%s.png'%prefix, matrix)
 
     
-def visualizePrimitives(primitives):
+def visualizePrimitives(primitives, fn=None):
     from itertools import product
-    from tower_common import fastRendererPlan,montageMatrix
-    from pylab import imshow,show
+    from tower_common import fastRendererPlan
+    #from pylab import imshow,show
 
-    from towerPrimitives import epsilon,TowerContinuation,xOffset,_left,_right,_loop,_embed
-    w,h = 2,1
-    _21 = TowerContinuation(xOffset(w, h), w - 2*epsilon, h - epsilon)
-    w,h = 1,2
-    _12 = TowerContinuation(xOffset(w, h), w - 2*epsilon, h - epsilon)
-    w,h = 1,3
-    _13 = TowerContinuation(xOffset(w, h), w - 2*epsilon, h - epsilon)
-    w,h = 3,1
-    _31 = TowerContinuation(xOffset(w, h), w - 2*epsilon, h - epsilon)
+    from towerPrimitives import TowerContinuation,xOffset,_left,_right,_loop,_embed
+    _13 = Program.parse("1x3").value
+    _31 = Program.parse("3x1").value
+
     r = lambda n,k: _right(2*n)(k)
     l = lambda n,k: _left(2*n)(k)
     _e = _embed
@@ -209,11 +204,11 @@ def visualizePrimitives(primitives):
                        for p in ts])
 
     matrix = montageMatrix(matrix)
-    imshow(matrix)
+    # imshow(matrix)
     
     import scipy.misc
-    scipy.misc.imsave('/tmp/tower_primitives.png', matrix)
-    show()
+    scipy.misc.imsave(fn, matrix)
+    #    show()
     
 def visualizeSolutions(solutions, export, tasks=None):
     from tower_common import fastRendererPlan
@@ -306,6 +301,11 @@ if __name__ == "__main__":
                 assert False
             eprint("Exported solutions to %s\n"%fn)
             dreamOfTowers(result.grammars[-1],
-                          'experimentOutputs/towers/%s/random_%d'%(timestamp,iteration))
+                          'experimentOutputs/towers/%s/random_%d'%(timestamp,iteration))           
         except ImportError:
             eprint("Could not import required libraries for exporting towers.")
+        primitiveFilename = 'experimentOutputs/towers/%s/primitives_%d.png'%(timestamp, iteration)
+        visualizePrimitives(result.grammars[-1].primitives,
+                            primitiveFilename)
+        eprint("Exported primitives to",primitiveFilename)
+
