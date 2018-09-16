@@ -55,6 +55,25 @@ let unifying_expressions g environment request context : (program*tp list*tConte
           with UnificationFailure -> None
         else None)
   in
+  let variable_candidates = match (variable_candidates, !imperative_type) with
+      | (_ :: _, Some(t)) when t = request -> 
+        let terminal_indices = List.filter_map variable_candidates ~f:(fun (p,t,_,_) ->
+            if t = [] then Some(get_index_value p) else None) in
+        if terminal_indices = [] then variable_candidates else
+          let smallest_terminal_index = fold1 min terminal_indices in
+          variable_candidates |> List.filter ~f:(fun (p,t,_,_) ->
+              let okay = not (is_index p) ||
+                         not (t = []) ||
+                         get_index_value p = smallest_terminal_index in
+              (* if not okay then *)
+              (*   Printf.eprintf "Pruning imperative index %s with request %s; environment=%s; smallest=%i\n" *)
+              (*     (string_of_program p) *)
+              (*     (string_of_type request) *)
+              (*     (environment |> List.map ~f:string_of_type |> join ~separator:";") *)
+              (*     smallest_terminal_index; *)
+              okay)
+      | _ -> variable_candidates
+  in
   let nv = List.length variable_candidates |> Float.of_int |> log in
   let variable_candidates = variable_candidates |> List.map ~f:(fun (p,t,k,ll) -> (p,t,k,ll-.nv)) in
 
@@ -73,26 +92,26 @@ let unifying_expressions g environment request context : (program*tp list*tConte
   let candidates = variable_candidates@grammar_candidates in
   let z = List.map ~f:(fun (_,_,_,ll) -> ll) candidates |> lse_list in
   let candidates = List.map ~f:(fun (p,t,k,ll) -> (p,t,k,ll-.z)) candidates in
-  match !imperative_type with
-  | Some(t) when t = request && List.exists candidates ~f:(fun (p,_,_,_) -> is_index p) ->
-    let terminal_indices = List.filter_map candidates ~f:(fun (p,t,_,_) ->
-        if is_index p && t = [] then Some(get_index_value p) else None) in
-    if terminal_indices = [] then candidates else
-      let smallest_terminal_index = fold1 min terminal_indices in
-      candidates |> List.filter ~f:(fun (p,t,_,_) ->
-          let okay = not (is_index p) ||
-                     not (t = []) ||
-                     get_index_value p = smallest_terminal_index in
-          (* if not okay then *)
-          (*   Printf.eprintf "Pruning imperative index %s with request %s; environment=%s; smallest=%i\n" *)
-          (*     (string_of_program p) *)
-          (*     (string_of_type request) *)
-          (*     (environment |> List.map ~f:string_of_type |> join ~separator:";") *)
-          (*     smallest_terminal_index; *)
-          okay)
+  (* match !imperative_type with *)
+  (* | Some(t) when t = request && List.exists candidates ~f:(fun (p,_,_,_) -> is_index p) -> *)
+  (*   let terminal_indices = List.filter_map candidates ~f:(fun (p,t,_,_) -> *)
+  (*       if is_index p && t = [] then Some(get_index_value p) else None) in *)
+  (*   if terminal_indices = [] then candidates else *)
+  (*     let smallest_terminal_index = fold1 min terminal_indices in *)
+  (*     candidates |> List.filter ~f:(fun (p,t,_,_) -> *)
+  (*         let okay = not (is_index p) || *)
+  (*                    not (t = []) || *)
+  (*                    get_index_value p = smallest_terminal_index in *)
+  (*         (\* if not okay then *\) *)
+  (*         (\*   Printf.eprintf "Pruning imperative index %s with request %s; environment=%s; smallest=%i\n" *\) *)
+  (*         (\*     (string_of_program p) *\) *)
+  (*         (\*     (string_of_type request) *\) *)
+  (*         (\*     (environment |> List.map ~f:string_of_type |> join ~separator:";") *\) *)
+  (*         (\*     smallest_terminal_index; *\) *)
+  (*         okay) *)
         
-  | _ -> candidates
-
+  (* | _ -> candidates *)
+  candidates
 
 (* let likelihood_under_grammar g request expression = *)
 (*   let rec walk_application_tree tree = *)

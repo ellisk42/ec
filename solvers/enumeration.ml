@@ -43,6 +43,7 @@ let violates_symmetry f a n =
       | (_,"left","right") -> true
       | (_,"right","right") -> true
       | (_,"right","left") -> true
+      (* | (_,"tower_embed","tower_embed") -> true *)
       | _ -> false
 
 (* For now this is disabled and is not used *)

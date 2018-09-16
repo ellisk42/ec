@@ -419,8 +419,8 @@ class Grammar(object):
     def enumeration(self,context,environment,request,upperBound,
                     maximumDepth=20,
                     lowerBound=0.):
-        '''Enumerates all programs whose MDL satisfies: lowerBound < MDL <= upperBound'''
-        if upperBound <= 0 or maximumDepth == 1:
+        '''Enumerates all programs whose MDL satisfies: lowerBound <= MDL < upperBound'''
+        if upperBound < 0 or maximumDepth == 1:
             return
 
         if request.isArrow():
@@ -438,7 +438,7 @@ class Grammar(object):
 
             for l, t, p, newContext in candidates:
                 mdl = -l
-                if not (mdl <= upperBound):
+                if not (mdl < upperBound):
                     continue
 
                 xs = t.functionArguments()
@@ -460,13 +460,13 @@ class Grammar(object):
                              maximumDepth=20,
                              originalFunction=None,
                              argumentIndex=0):
-        if upperBound <= 0 or maximumDepth == 1:
+        if upperBound < 0. or maximumDepth == 1:
             return
         if originalFunction is None:
             originalFunction = function
 
         if argumentRequests == []:
-            if lowerBound < 0. and 0. <= upperBound:
+            if lowerBound <= 0. and 0. < upperBound:
                 yield 0., context, function
             else:
                 return
@@ -493,9 +493,8 @@ class Grammar(object):
     def sketchEnumeration(self,context,environment,request,sk,upperBound,
                            maximumDepth=20,
                            lowerBound=0.):
-        '''Enumerates all sketch instantiations whose MDL satisfies: lowerBound < MDL <= upperBound'''
-        # may now be lowerBound <= MDL <= upperBound ... unsure
-        if upperBound <= 0 or maximumDepth == 1:
+        '''Enumerates all sketch instantiations whose MDL satisfies: lowerBound <= MDL < upperBound'''
+        if upperBound < 0. or maximumDepth == 1:
             return
 
         if sk.isHole:
@@ -550,12 +549,11 @@ class Grammar(object):
                           # the arguments
                           lowerBound=0.,
                           maximumDepth=20):
-        if upperBound <= 0 or maximumDepth == 1:
+        if upperBound < 0. or maximumDepth == 1:
             return
 
-        #Max changed lowerBound < 0. to lowerBound <= 0.
         if argumentRequests == []:
-            if lowerBound <= 0. and 0. <= upperBound:
+            if lowerBound <= 0. and 0. < upperBound:
                 yield 0., context, function
             else:
                 return

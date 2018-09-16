@@ -99,10 +99,10 @@ ignore(primitive "tower_loop" (tint @> (tint @> ttower) @> ttower @> ttower)
             (hand, body_blocks @ later_blocks)));;
 ignore(primitive "tower_loopM" (tint @> (tint @> ttower @> ttower) @> ttower @> ttower)
          (fun i (f : int -> tt -> tt) (z : tt) : tt -> List.fold_right (0 -- (i-1)) ~f ~init:z));;
-ignore(primitive "tower_embed" (ttower @> ttower @> ttower)
-         (fun (body : tt) (k : tt) : tt ->
+ignore(primitive "tower_embed" ((ttower @> ttower) @> ttower @> ttower)
+         (fun (body : tt -> tt) (k : tt) : tt ->
             fun (hand : int) ->
-              let (_, bodyActions) = body hand in
+              let (_, bodyActions) = body empty_tower hand in
               let (hand', laterActions) = k hand in
               (hand', bodyActions @ laterActions)));;             
             

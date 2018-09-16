@@ -30,6 +30,9 @@ class TowerCNN(nn.Module):
     def __init__(self, tasks, cuda=False, H=64):
         super(TowerCNN, self).__init__()
 
+        self.helmholtzEnumeration = False
+        self.helmholtzEnumerationTimeout = 60
+
         self.outputDimensionality = H
         def conv_block(in_channels, out_channels):
             return nn.Sequential(
@@ -80,52 +83,55 @@ class TowerCNN(nn.Module):
             return t
         except: return None
 
-class TowerFeatureExtractor(ImageFeatureExtractor):
-    def _featuresOfProgram(self, p, _):
-        # [perturbation, mass, height, length, area]
-        p = executeTower(p)
-        mass = sum(w * h for _, w, h in p)
+    def hashOfTask(self, t):
+        return tuple(centerTower(t.plan))
 
-        masses = {
-            t.maximumMass for t in TowerTask.tasks if mass <= t.maximumMass}
-        if len(masses) == 0:
-            return None
-        mass = random.choice(masses)
+# class TowerFeatureExtractor(ImageFeatureExtractor):
+#     def _featuresOfProgram(self, p, _):
+#         # [perturbation, mass, height, length, area]
+#         p = executeTower(p)
+#         mass = sum(w * h for _, w, h in p)
 
-        heights = {t.minimumHeight for t in TowerTask.tasks}
-        lengths = {t.minimumLength for t in TowerTask.tasks}
-        areas = {t.minimumArea for t in TowerTask.tasks}
-        staircases = {t.maximumStaircase for t in TowerTask.tasks}
+#         masses = {
+#             t.maximumMass for t in TowerTask.tasks if mass <= t.maximumMass}
+#         if len(masses) == 0:
+#             return None
+#         mass = random.choice(masses)
 
-        # Find the largest perturbation that this power can withstand
-        perturbations = sorted(
-            {t.perturbation for t in TowerTask.tasks}, reverse=True)
-        for perturbation in perturbations:
-            result = TowerTask.evaluateTower(p, perturbation)
+#         heights = {t.minimumHeight for t in TowerTask.tasks}
+#         lengths = {t.minimumLength for t in TowerTask.tasks}
+#         areas = {t.minimumArea for t in TowerTask.tasks}
+#         staircases = {t.maximumStaircase for t in TowerTask.tasks}
 
-            possibleHeightThresholds = {
-                h for h in heights if result.height >= h}
-            possibleLengthThresholds = {
-                l for l in lengths if result.length >= l}
-            possibleAreaThresholds = {a for a in areas if result.area >= a}
-            possibleStaircases = {
-                s for s in staircases if result.staircase <= s}
+#         # Find the largest perturbation that this power can withstand
+#         perturbations = sorted(
+#             {t.perturbation for t in TowerTask.tasks}, reverse=True)
+#         for perturbation in perturbations:
+#             result = TowerTask.evaluateTower(p, perturbation)
 
-            if len(possibleHeightThresholds) > 0 and \
-               len(possibleLengthThresholds) > 0 and \
-               len(possibleStaircases) > 0 and \
-               len(possibleAreaThresholds) > 0:
-                if result.stability > TowerTask.STABILITYTHRESHOLD:
-                    return [perturbation,
-                            mass,
-                            random.choice(possibleHeightThresholds),
-                            random.choice(possibleLengthThresholds),
-                            random.choice(possibleAreaThresholds),
-                            random.choice(possibleStaircases)]
-            else:
-                return None
+#             possibleHeightThresholds = {
+#                 h for h in heights if result.height >= h}
+#             possibleLengthThresholds = {
+#                 l for l in lengths if result.length >= l}
+#             possibleAreaThresholds = {a for a in areas if result.area >= a}
+#             possibleStaircases = {
+#                 s for s in staircases if result.staircase <= s}
 
-        return None
+#             if len(possibleHeightThresholds) > 0 and \
+#                len(possibleLengthThresholds) > 0 and \
+#                len(possibleStaircases) > 0 and \
+#                len(possibleAreaThresholds) > 0:
+#                 if result.stability > TowerTask.STABILITYTHRESHOLD:
+#                     return [perturbation,
+#                             mass,
+#                             random.choice(possibleHeightThresholds),
+#                             random.choice(possibleLengthThresholds),
+#                             random.choice(possibleAreaThresholds),
+#                             random.choice(possibleStaircases)]
+#             else:
+#                 return None
+
+#         return None
 
 
 

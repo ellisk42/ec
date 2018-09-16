@@ -173,6 +173,16 @@ class RecognitionModel(nn.Module):
         HELMHOLTZBATCH = helmholtzBatch
         helmholtzSamples = []
 
+        if hasattr(self.featureExtractor, 'hashOfTask') and self.featureExtractor.helmholtzEnumeration:
+            eprint("Enumerating Helmholtz frontier...")
+            helmholtzSamples = self.enumerateHelmholtz(list(set(requests)),
+                                                       self.featureExtractor.helmholtzEnumerationTimeout,
+                                                       CPUs)
+            helmholtzEnumeration = list(helmholtzSamples)
+            eprint("Enumerated",len(helmholtzEnumeration),"Helmholtz programs.")
+        else: helmholtzEnumeration = []
+            
+
         optimizer = torch.optim.Adam(
             self.parameters(), lr=lr, eps=1e-3, amsgrad=True)
         if timeout:
@@ -195,7 +205,9 @@ class RecognitionModel(nn.Module):
                     doingHelmholtz = random.random() < helmholtzRatio
                     if doingHelmholtz:
                         if helmholtzSamples == []:
-                            helmholtzSamples = \
+                            if helmholtzEnumeration:  helmholtzSamples = list(helmholtzEnumeration)
+                            else:
+                                helmholtzSamples = \
                                 list(self.sampleManyHelmholtz(requests,
                                                               HELMHOLTZBATCH,
                                                               CPUs))
@@ -261,7 +273,6 @@ class RecognitionModel(nn.Module):
             return None
 
         if hasattr(self.featureExtractor, 'lexicon'):
-            #eprint("tokenizing...")
             if self.featureExtractor.tokenize(task.examples) is None:
                 return None
 
@@ -292,6 +303,37 @@ class RecognitionModel(nn.Module):
         flushEverything()
 
         return samples
+
+    def enumerateHelmholtz(self, requests, timeout, CPUs=1):
+        if len(requests) > 1:
+            return [f
+                    for fs in \
+                    parallelMap(CPUs, lambda request: (request, self.enumerateHelmholtz(request, timeout)),
+                                requests)
+                    for f in fs] 
+        request = requests[0]
+        frontier = {} # maps from (task key) > (task, program, ll)
+        startTime = time.time()
+        for lb in range(0,99):
+            if time.time() - startTime > timeout: break
+            for ll,_,e in self.grammar.enumeration(Context.EMPTY, [], request,
+                                                  lowerBound=float(lb), upperBound=float(lb+1)):
+                if time.time() - startTime > timeout: break
+
+                task = self.featureExtractor.taskOfProgram(e, request)
+                if task is None: continue
+
+                k = self.featureExtractor.hashOfTask(task)
+                if k not in frontier or frontier[k][-1] < ll:
+                    frontier[k] = (task, e, ll)
+
+        return [ self.replaceProgramsWithLikelihoodSummaries(Frontier([FrontierEntry(program,
+                                                                                     logLikelihood=0.,
+                                                                                     logPrior=0.)],
+                                                                      task=task))
+                 for t, program, _ in frontier.values() ]
+                    
+                    
 
     def enumerateFrontiers(self,
                            tasks,
