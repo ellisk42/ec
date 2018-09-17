@@ -195,7 +195,7 @@ def visualizePrimitives(primitives, fn=None):
             elif t == arrow(ttower,ttower):
                 return [_arch,_13,_31]
             else:
-                assert False
+                return []
 
         ts = []
         for arguments in product(*[argumentChoices(t) for t in t.functionArguments() ]):
