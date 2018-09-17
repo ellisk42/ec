@@ -411,7 +411,7 @@ def makeSupervisedTasks():
     return everything
 if __name__ == "__main__":
     ts = makeSupervisedTasks()
-    print(len(ts))
-    print(max(len(f.plan) for f in ts ))
-    print(max(towerLength(f.plan) for f in ts ))
+    print(len(ts),"total tasks")
+    print("maximum plan length",max(len(f.plan) for f in ts ))
+    print("maximum tower length",max(towerLength(f.plan) for f in ts ))
     SupervisedTower.showMany(ts)

@@ -155,7 +155,7 @@ def dreamOfTowers(grammar, prefix, N=250):
                                                    maxAttempts=100)]
                     if program is not None
                     for t in [executeTower(program, timeout=0.5) or []]
-                    if len(t) >= 1 and len(t) < 100 and towerLength(t) < 25.]
+                    if len(t) >= 1 and len(t) < 100 and towerLength(t) <= 360.]
     matrix = [fastRendererPlan(p,pretty=True)
               for p in randomTowers]
     matrix = montage(matrix)
