@@ -74,7 +74,7 @@ def parallelMap(numberOfCPUs, f, *xs, chunksize=None, maxtasksperchild=None, mem
         assert correctedCPUs <= numberOfCPUs
         assert correctedCPUs >= 1
         if correctedCPUs < numberOfCPUs:
-            eprint("In order to not use all of the memory on the machine, we are limiting this parallel map to only use %d CPUs"%correctedCPUs)
+            eprint("In order to not use all of the memory on the machine (%f gb), we are limiting this parallel map to only use %d CPUs"%(howManyGigabytesOfMemory(),correctedCPUs))
         numberOfCPUs = correctedCPUs
         
 
@@ -639,6 +639,9 @@ def getThisMemoryUsage():
 def getMemoryUsageFraction():
     import psutil
     return psutil.virtual_memory().percent
+def howManyGigabytesOfMemory():
+    import psutil
+    return psutil.virtual_memory().total/10**9
 
 
 # image montage!
