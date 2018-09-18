@@ -79,7 +79,7 @@ class TowerCNN(nn.Module):
             pl = executeTower(p,0.05)
             if pl is None or len(pl) == 0: return None
 
-            t = SupervisedTower("tower dream", p.evaluate([]))
+            t = SupervisedTower("tower dream", pl)
             return t
         except: return None
 

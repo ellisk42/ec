@@ -7,14 +7,17 @@ import math
 
 class SupervisedTower(Task):
     def __init__(self, name, program):
-        try:
-            program = parseTower(program)
-        except:
-            eprint("Parse failure:")
-            eprint(program)
-            assert False
-        self.original = program
-        plan = program.evaluate([])(lambda s: (s,[]))(0)[1]
+        if isinstance(program,str):
+            try:
+                program = parseTower(program)
+            except:
+                eprint("Parse failure:")
+                eprint(program)
+                assert False
+            self.original = program
+            plan = program.evaluate([])(lambda s: (s,[]))(0)[1]
+        else:
+            plan = program
         super(SupervisedTower, self).__init__(name, arrow(ttower,ttower), [],
                                               features=[])
         self.specialTask = ("supervisedTower",
