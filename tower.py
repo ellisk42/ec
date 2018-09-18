@@ -78,6 +78,7 @@ class TowerCNN(nn.Module):
         try:
             pl = executeTower(p,0.05)
             if pl is None or len(pl) == 0: return None
+            if len(pl) > 100 or towerLength(pl) > 360: return None
 
             t = SupervisedTower("tower dream", pl)
             return t
