@@ -92,25 +92,6 @@ let unifying_expressions g environment request context : (program*tp list*tConte
   let candidates = variable_candidates@grammar_candidates in
   let z = List.map ~f:(fun (_,_,_,ll) -> ll) candidates |> lse_list in
   let candidates = List.map ~f:(fun (p,t,k,ll) -> (p,t,k,ll-.z)) candidates in
-  (* match !imperative_type with *)
-  (* | Some(t) when t = request && List.exists candidates ~f:(fun (p,_,_,_) -> is_index p) -> *)
-  (*   let terminal_indices = List.filter_map candidates ~f:(fun (p,t,_,_) -> *)
-  (*       if is_index p && t = [] then Some(get_index_value p) else None) in *)
-  (*   if terminal_indices = [] then candidates else *)
-  (*     let smallest_terminal_index = fold1 min terminal_indices in *)
-  (*     candidates |> List.filter ~f:(fun (p,t,_,_) -> *)
-  (*         let okay = not (is_index p) || *)
-  (*                    not (t = []) || *)
-  (*                    get_index_value p = smallest_terminal_index in *)
-  (*         (\* if not okay then *\) *)
-  (*         (\*   Printf.eprintf "Pruning imperative index %s with request %s; environment=%s; smallest=%i\n" *\) *)
-  (*         (\*     (string_of_program p) *\) *)
-  (*         (\*     (string_of_type request) *\) *)
-  (*         (\*     (environment |> List.map ~f:string_of_type |> join ~separator:";") *\) *)
-  (*         (\*     smallest_terminal_index; *\) *)
-  (*         okay) *)
-        
-  (* | _ -> candidates *)
   candidates
 
 (* let likelihood_under_grammar g request expression = *)
@@ -148,3 +129,46 @@ let unifying_expressions g environment request context : (program*tp list*tConte
 
 let grammar_has_recursion a g =
   g.library |> List.exists ~f:(fun (p,_,_,_) -> is_recursion_of_arity a p)
+
+
+(*  *)
+type contextual_grammar = {
+  no_context : grammar;
+  variable_context : grammar;
+  contextual_library : (program * grammar list) list;
+}
+
+let make_dummy_contextual g =
+  {no_context=g;
+   variable_context=g;
+   contextual_library =
+     g.library |> List.map ~f:(fun (e,t,_,_) -> (e, arguments_of_type t |> List.map ~f:(fun _ -> g)))}
+
+let deserialize_grammar g =
+  let open Yojson.Basic.Util in
+  let logVariable = g |> member "logVariable" |> to_float in
+  let productions = g |> member "productions" |> to_list |> List.map ~f:(fun p ->
+    let source = p |> member "expression" |> to_string in
+    let e = parse_program source |> safe_get_some ("Error parsing: "^source) in
+    let t =
+      try
+        infer_program_type empty_context [] e |> snd
+      with UnificationFailure -> raise (Failure ("Could not type "^source))
+    in
+    let logProbability = p |> member "logProbability" |> to_float in
+    (e,t,logProbability,compile_unifier t))
+  in
+  (* Successfully parsed the grammar *)
+  let g = {logVariable = logVariable; library = productions;} in
+  g
+
+let deserialize_contextual_grammar j =
+  let open Yojson.Basic.Util in
+
+  {no_context = j |> member "noParent" |> deserialize_grammar;
+   variable_context = j |> member "variableParent" |> deserialize_grammar;
+   contextual_library =
+     j |> member "productions" |> to_list |> List.map ~f:(fun production ->
+         let e = production |> member "program" |> to_string |> parse_program |> get_some in
+         let children = production |> member "arguments" |> to_list |> List.map ~f:deserialize_grammar in
+         (e, children));}

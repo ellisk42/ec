@@ -67,6 +67,7 @@ have them installed on the Python side:
 pypy3 -m ensurepip
 pypy3 -m pip install --user vmprof
 pypy3 -m pip install --user dill
+pypy3 -m pip install --user psutil
 ```
 
 ### Credit of (most of) the `protonet` code

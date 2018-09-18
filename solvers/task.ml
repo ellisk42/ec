@@ -315,7 +315,7 @@ type hit_result = {hit_program: string;
                    hit_prior: float;
                    hit_time: float;}
 
-let enumerate_for_tasks (g: grammar) ?verbose:(verbose = true)
+let enumerate_for_tasks (g: contextual_grammar) ?verbose:(verbose = true)
     ~maxFreeParameters
     ?budgetIncrement:(budgetIncrement = 1.)
     ?lowerBound:(lowerBound = 0.)
