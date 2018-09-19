@@ -264,9 +264,19 @@ def solveForTask_ocaml(_=None,
             m["extras"] = extra
         return m
 
-    message = {"DSL": {"logVariable": g.logVariable,
-                       "productions": [{"expression": str(p), "logProbability": l}
-                                       for l, _, p in g.productions]},
+    def serializeGrammar(g):
+        if isinstance(g, Grammar):
+            return {"logVariable": g.logVariable,
+                    "productions": [{"expression": str(p), "logProbability": l}
+                                       for l, _, p in g.productions]}
+        if isinstance(g, ContextualGrammar):
+            return {"noParent": serializeGrammar(g.noParent),
+                    "variableParent": serializeGrammar(g.variableParent),
+                    "productions": [{"program": str(e),
+                                     "arguments": [serializeGrammar(gp) for gp in gs ]}
+                                    for e,gs in g.library.items() ]}
+
+    message = {"DSL": serializeGrammar(g),
                "tasks": [taskMessage(t)
                          for t in tasks],
 
@@ -279,9 +289,7 @@ def solveForTask_ocaml(_=None,
                "verbose": False,
                "shatter": 10}
 
-    if hasattr(
-            tasks[0],
-            'maxParameters') and tasks[0].maxParameters is not None:
+    if hasattr(tasks[0], 'maxParameters') and tasks[0].maxParameters is not None:
         message["maxParameters"] = tasks[0].maxParameters
 
     message = json.dumps(message)

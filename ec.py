@@ -385,7 +385,8 @@ def ecIterator(grammar, tasks,
             recognizer = RecognitionModel(featureExtractorObject,
                                           grammar,
                                           activation=activation,
-                                          cuda=cuda)
+                                          cuda=cuda,
+                                          contextual=True)
 
             recognizer.train(frontiers, topK=topK, steps=steps,
                              CPUs=CPUs,

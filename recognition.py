@@ -57,15 +57,8 @@ def _relu(x): return x.clamp(min=0)
 
 
 class RecognitionModel(nn.Module):
-    def __init__(
-            self,
-            featureExtractor,
-            grammar,
-            hidden=[64],
-            activation="relu",
-            cuda=False):
+    def __init__(self,featureExtractor,grammar,hidden=[64],activation="relu",cuda=False,contextual=False):
         super(RecognitionModel, self).__init__()
-        self.grammar = grammar
         self.use_cuda = cuda
         if cuda:
             self.cuda()
@@ -75,17 +68,17 @@ class RecognitionModel(nn.Module):
         # feature extractor were added to our parameters as well
         if hasattr(featureExtractor, 'parameters'):
             for parameter in featureExtractor.parameters():
-                assert any(
-                    myParameter is parameter for myParameter in self.parameters())
+                assert any(myParameter is parameter for myParameter in self.parameters())
 
         self.hiddenLayers = []
         inputDimensionality = featureExtractor.outputDimensionality
-        for h in hidden:
+        for i,h in enumerate(hidden):
             layer = nn.Linear(inputDimensionality, h)
             if cuda:
                 layer = layer.cuda()
             self.hiddenLayers.append(layer)
             inputDimensionality = h
+            self.add_module("fc layer %d"%i, layer)
 
         if activation == "sigmoid":
             self.activation = F.sigmoid
@@ -96,42 +89,66 @@ class RecognitionModel(nn.Module):
         else:
             raise Exception('Unknown activation function ' + str(activation))
 
-        self.logVariable = nn.Linear(inputDimensionality, 1)
-        self.logProductions = nn.Linear(inputDimensionality, len(self.grammar))
-        if cuda:
-            self.logVariable = self.logVariable.cuda()
-            self.logProductions = self.logProductions.cuda()
+        self.contextual = contextual
 
-    def productionEmbedding(self):
-        # Calculates the embedding 's of the primitives based on the last
-        # weight layer
-        w = self.logProductions._parameters['weight']
-        # w: len(self.grammar) x E
-        if self.use_cuda:
-            w = w.cpu()
-        e = dict({p: w[j, :].data.numpy()
-                  for j, (t, l, p) in enumerate(self.grammar.productions)})
-        e[Index(0)] = w[0, :].data.numpy()
-        return e
+        # creates and registers layers for predicting production probabilities
+        def productionProjection(name):
+            logVariable = nn.Linear(inputDimensionality, 1)
+            logProductions = nn.Linear(inputDimensionality, len(grammar.productions))
+            
+            if cuda:
+                logProductions = logProductions.cuda()
+                logVariable = logVariable.cuda()
+            
+            self.add_module("%s variable"%name, logVariable)
+            self.add_module("%s productions"%name, logProductions)
+            
+            return logVariable, logProductions
+            
+        if self.contextual:            
+            self.variableParent = productionProjection("variable parent")
+            self.noParent = productionProjection("no parent")
+            self.library = {e: [productionProjection(str(e) + " " + str(n))
+                                for n in range(len(e.infer().functionArguments())) ]
+                            for e in grammar.primitives }
+        else:
+            self.logVariable = nn.Linear(inputDimensionality, 1)
+            self.logProductions = nn.Linear(inputDimensionality, len(grammar))
+            if cuda:
+                self.logVariable = self.logVariable.cuda()
+                self.logProductions = self.logProductions.cuda()
+
+        self.grammar = ContextualGrammar.fromGrammar(grammar) if contextual else grammar
+        self.generativeModel = grammar
 
     def taskEmbeddings(self, tasks):
         return {task: self.featureExtractor.featuresOfTask(task).data.numpy()
                 for task in tasks}
 
     def forward(self, features):
+        """returns either a Grammar or a ContextualGrammar"""
         for layer in self.hiddenLayers:
             features = self.activation(layer(features))
         h = features
-        # added the squeeze
-        return self.logVariable(h), self.logProductions(h)
+        def buildGrammarObject(variables, productions):
+            variables = variables(h)
+            productions = productions(h)
+            return Grammar(variables,
+                           [(productions[k].view(1), t, program)
+                            for k, (_, t, program) in enumerate(self.grammar.productions)])
+
+        if not self.contextual:
+            return buildGrammarObject(self.logVariable, self.logProductions)
+
+        variableParent = buildGrammarObject(*self.variableParent)
+        noParent = buildGrammarObject(*self.noParent)
+        library = {e: [buildGrammarObject(*p) for p in projectors ]
+                   for e, projectors in self.library.items() }
+        return ContextualGrammar(noParent, variableParent, library)
 
     def frontierKL(self, frontier):
         features = self.featureExtractor.featuresOfTask(frontier.task)
-        variables, productions = self(features)
-        g = Grammar(
-            variables, [
-                (productions[k].view(1), t, program) for k, (_, t, program) in enumerate(
-                    self.grammar.productions)])
+        g = self(features)
         # Monte Carlo estimate: draw a sample from the frontier
         entry = frontier.sample()
         return - entry.program.logLikelihood(g)
@@ -139,9 +156,7 @@ class RecognitionModel(nn.Module):
     def replaceProgramsWithLikelihoodSummaries(self, frontier):
         return Frontier(
             [FrontierEntry(
-                program=self.grammar.closedLikelihoodSummary(
-                    frontier.task.request,
-                    e.program),
+                program=self.grammar.closedLikelihoodSummary(frontier.task.request, e.program),
                 logLikelihood=e.logLikelihood,
                 logPrior=e.logPrior) for e in frontier],
             task=frontier.task)
@@ -258,9 +273,7 @@ class RecognitionModel(nn.Module):
             random.seed(seed)
         request = random.choice(requests)
 
-        #eprint("About to draw a sample")
-        program = self.grammar.sample(request, maximumDepth=6, maxAttempts=100)
-        #eprint("sample", program)
+        program = self.generativeModel.sample(request, maximumDepth=6, maxAttempts=100)
         if program is None:
             return None
         task = self.featureExtractor.taskOfProgram(program, request)
@@ -316,8 +329,8 @@ class RecognitionModel(nn.Module):
         startTime = time.time()
         for lb in range(0,99):
             if time.time() - startTime > timeout: break
-            for ll,_,e in self.grammar.enumeration(Context.EMPTY, [], request,
-                                                  lowerBound=float(lb), upperBound=float(lb+1)):
+            for ll,_,e in self.generativeModel.enumeration(Context.EMPTY, [], request,
+                                                           lowerBound=float(lb), upperBound=float(lb+1)):
                 if time.time() - startTime > timeout: break
 
                 task = self.featureExtractor.taskOfProgram(e, request)
@@ -349,15 +362,19 @@ class RecognitionModel(nn.Module):
             grammars = {}
             for task in tasks:
                 features = self.featureExtractor.featuresOfTask(task)
-                variables, productions = self(features)
-                # eprint("variable")
-                # eprint(variables.data[0])
-                # for k in range(len(self.grammar.productions)):
-                #     eprint("production",productions.data[k])
-                grammars[task] = Grammar(
-                    variables.data.tolist()[0], [
-                        (productions.data.tolist()[k], t, p) for k, (_, t, p) in enumerate(
-                            self.grammar.productions)])
+                g = self(features)
+                def untorch(g):
+                    if isinstance(g,Grammar):
+                        return Grammar(g.logVariable.data.tolist()[0], 
+                                       [ (l.data.tolist()[0], t, p)
+                                         for l, t, p in g.productions])
+                    assert isinstance(g, ContextualGrammar)
+                    return ContextualGrammar(untorch(g.noParent),
+                                             untorch(g.variableParent),
+                                             {e: [untorch(p) for p in gs ]
+                                              for e,gs in g.library.items() })
+                    
+                grammars[task] = untorch(g)
 
         return multicoreEnumeration(grammars, tasks, likelihoodModel,
                                     solver=solver,
