@@ -182,13 +182,7 @@ class Grammar(object):
 
         return context, returnValue
 
-    def likelihoodSummary(
-            self,
-            context,
-            environment,
-            request,
-            expression,
-            silent=False):
+    def likelihoodSummary(self, context, environment, request, expression, silent=False):
         if request.isArrow():
             if not isinstance(expression, Abstraction):
                 if not silent:
@@ -224,8 +218,8 @@ class Grammar(object):
             return context, None
 
         thisSummary = LikelihoodSummary()
-        thisSummary.record(f, possibles, constant=-
-                           math.log(numberOfVariables) if f.isIndex else 0)
+        thisSummary.record(f, possibles,
+                           constant= -math.log(numberOfVariables) if f.isIndex else 0)
 
         _, tp, context = candidates[f]
         argumentTypes = tp.functionArguments()
@@ -281,13 +275,12 @@ class Grammar(object):
                          newContext,
                          Abstraction(p)))
             else:
-                candidates = self.buildCandidates(
-                    request,
-                    context,
-                    environment,
-                    normalize=True,
-                    returnProbabilities=False,
-                    returnTable=True)
+                candidates = self.buildCandidates(request,
+                                                  context,
+                                                  environment,
+                                                  normalize=True,
+                                                  returnProbabilities=False,
+                                                  returnTable=True)
                 choices(parentCost,
                         [(-f_ll_tp_newContext[1][0],
                           lambda: ga(parentCost - f_ll_tp_newContext[1][0],
@@ -326,8 +319,7 @@ class Grammar(object):
 
     def closedLikelihoodSummary(self, request, expression, silent=False):
         try:
-            context, summary = self.likelihoodSummary(
-                Context.EMPTY, [], request, expression, silent=silent)
+            context, summary = self.likelihoodSummary(Context.EMPTY, [], request, expression, silent=silent)
         except GrammarFailure as e:
             failureExport = 'failures/grammarFailure%s.pickle' % (
                 time.time() + getPID())
@@ -763,6 +755,104 @@ class Uses(object):
 
 
 Uses.empty = Uses()
+
+class ContextualGrammar:
+    def __init__(self, noParent, variableParent, library):
+        self.noParent, self.variableParent, self.library = noParent, variableParent, library
+
+        self.productions = [(None,t,p) for _,t,p in self.noParent.productions ]
+        self.primitives = [p for _,_2,p in self.productions ]
+
+        assert set(noParent.primitives) == set(variableParent.primitives)
+        assert set(variableParent.primitives) == set(library.keys())
+        for e,gs in library.items():
+            assert len(gs) == len(e.infer().functionArguments())
+            for g in gs:
+                assert set(g.primitives) == set(library.keys())
+
+    @staticmethod
+    def fromGrammar(g):
+        return ContextualGrammar(g, g,
+                                 {e: [g]*len(e.infer().functionArguments())
+                                  for e in g.primitives })
+                
+
+    class LS: # likelihood summary
+        def __init__(self, owner):
+            self.noParent = LikelihoodSummary()
+            self.variableParent = LikelihoodSummary()
+            self.library = {e: [LikelihoodSummary() for _ in gs]  for e,gs in owner.library.items() }
+
+        def record(self, parent, parentIndex, actual, possibles, constant):
+            if parent is None: ls = self.noParent
+            elif parent.isIndex: ls = self.variableParent
+            else: ls = self.library[parent][parentIndex]
+            ls.record(actual, possibles, constant=constant)
+
+        def join(self, other):
+            self.noParent.join(other.noParent)
+            self.variableParent.join(other.variableParent)
+            for e,gs in self.library.items():
+                for g1,g2 in zip(gs, other.library[e]):
+                    g1.join(g2)
+
+        def logLikelihood(self, owner):
+            return self.noParent.logLikelihood(owner.noParent) + \
+                   self.variableParent.logLikelihood(owner.variableParent) + \
+                   sum(r.logLikelihood(g)
+                       for e, rs in self.library.items()
+                       for r,g in zip(rs, owner.library[e]) )            
+
+    def likelihoodSummary(self, parent, parentIndex, context, environment, request, expression):
+        if request.isArrow():
+            assert expression.isAbstraction
+            return self.likelihoodSummary(parent, parentIndex,
+                                          context,
+                                          [request.arguments[0]] + environment,
+                                          request.arguments[1],
+                                          expression.body)
+        if parent is None: g = self.noParent
+        elif parent.isIndex: g = self.variableParent
+        else: g = self.library[parent][parentIndex]            
+        candidates = g.buildCandidates(request, context, environment,
+                                       normalize=False, returnTable=True)
+
+        # A list of everything that would have been possible to use here
+        possibles = [p for p in candidates.keys() if not p.isIndex]
+        numberOfVariables = sum(p.isIndex for p in candidates.keys())
+        if numberOfVariables > 0:
+            possibles += [Index(0)]
+
+        f, xs = expression.applicationParse()
+
+        assert f in candidates
+
+        thisSummary = self.LS(self)
+        thisSummary.record(parent, parentIndex,
+                           f, possibles,
+                           constant= -math.log(numberOfVariables) if f.isIndex else 0)
+
+        _, tp, context = candidates[f]
+        argumentTypes = tp.functionArguments()
+        assert len(xs) == len(argumentTypes)
+
+        for i, (argumentType, argument) in enumerate(zip(argumentTypes, xs)):
+            argumentType = argumentType.apply(context)
+            context, newSummary = self.likelihoodSummary(f, i,
+                                                         context, environment, argumentType, argument)
+            thisSummary.join(newSummary)
+
+        return context, thisSummary
+
+    def closedLikelihoodSummary(self, request, expression):
+        return self.likelihoodSummary(None,None,
+                                      Context.EMPTY,[],
+                                      request, expression)[1]
+
+    def logLikelihood(self, request, expression):
+        return self.closedLikelihoodSummary(request, expression).logLikelihood(self)
+
+        
 
 
 def violatesSymmetry(f, x, argumentIndex):
