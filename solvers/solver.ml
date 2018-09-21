@@ -158,8 +158,9 @@ let _ =
   if List.exists tf ~f:(fun (t,_) -> t.task_type = ttower @> ttower)
   then (update_serialized_tower_cash();
         register_imperative_type ttower;
-       ())
-  else ();
+        ());
+  if List.exists tf ~f:(fun (t,_) -> t.task_type = turtle @> turtle)
+  then register_imperative_type turtle;
   let solutions =
     enumerate_for_tasks ~maxFreeParameters:mfp ~lowerBound:lowerBound ~upperBound:upperBound ~budgetIncrement:budgetIncrement
     ~verbose:verbose ~nc:nc ~timeout:timeout g tf

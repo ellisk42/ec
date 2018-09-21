@@ -1,8 +1,0 @@
-Repeat {
-  Repeat {
-    Embed {
-      Integrate(t=Half(unit))
-    } ;
-    Integrate(pen=off)
-  }
-}

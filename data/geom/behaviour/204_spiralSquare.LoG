@@ -1,6 +1,0 @@
-dist = Half(unit) ;
-Repeat(Double(Double(Double(unit)))) {
-   Integrate(t=dist) ;
-   dist = Half(Next(Double(dist))) ;
-   Turn
-}

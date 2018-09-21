@@ -911,7 +911,8 @@ def induceGrammar_Beta(g0, frontiers, _=None,
         
         return o
         
-
+    with timing("Estimated initial grammar production probabilities"):
+        g0 = g0.insideOutside(restrictedFrontiers, pseudoCounts)
     oldScore = objective(g0, restrictedFrontiers)
     eprint("Starting grammar induction score",oldScore)
     
@@ -944,7 +945,7 @@ def induceGrammar_Beta(g0, frontiers, _=None,
         if len(scoredCandidates) > 0:
             bestNew, bestScore = max(scoredCandidates, key=lambda sc: sc[1])
         if len(scoredCandidates) == 0 or bestScore < oldScore:
-            # eprint("No improvement possible.")
+            eprint("No improvement possible.")
             # eprint("Runner-up:")
             # eprint(next(v.extract(bestNew)))
             # Return all of the frontiers, which have now been rewritten to use the

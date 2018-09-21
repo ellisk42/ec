@@ -528,30 +528,30 @@ let logo_SET = primitive "logo_SET"
                             (LogoLib.LogoInterpreter.logo_SET s)
                             z)
 
-(*let logo_GETSET = primitive "logo_GETSET"*)
-                            (*((turtle @> turtle) @> turtle @> turtle)*)
-                            (*(fun t -> fun z ->*)
-                              (*(LogoLib.LogoInterpreter.logo_GET*)
-                                (*(fun s ->*)
-                                  (*t*)
-                                  (*(LogoLib.LogoInterpreter.logo_SEQ*)
-                                    (*(LogoLib.LogoInterpreter.logo_SET s)*)
-                                    (*z)*)
-                            (*)))*)
 let logo_GETSET = primitive "logo_GETSET"
-                            (turtle @> turtle @> turtle)
-                            (fun t -> fun k ->
+                            ((turtle @> turtle) @> turtle @> turtle)
+                            (fun t -> fun z ->
                               (LogoLib.LogoInterpreter.logo_GET
                                 (fun s ->
+                                  t
                                   (LogoLib.LogoInterpreter.logo_SEQ
-                                    t
-                                    (LogoLib.LogoInterpreter.logo_SEQ
-                                      (LogoLib.LogoInterpreter.logo_SET s)
-                                      k)
-                                    )
-                                )
-                              )
-                            )
+                                    (LogoLib.LogoInterpreter.logo_SET s)
+                                    z)
+                            )))
+(* let logo_GETSET = primitive "logo_GETSET" *)
+(*                             (turtle @> turtle @> turtle) *)
+(*                             (fun t -> fun k -> *)
+(*                               (LogoLib.LogoInterpreter.logo_GET *)
+(*                                 (fun s -> *)
+(*                                   (LogoLib.LogoInterpreter.logo_SEQ *)
+(*                                     t *)
+(*                                     (LogoLib.LogoInterpreter.logo_SEQ *)
+(*                                       (LogoLib.LogoInterpreter.logo_SET s) *)
+(*                                       k) *)
+(*                                     ) *)
+(*                                 ) *)
+(*                               ) *)
+(*                             ) *)
 
 
 

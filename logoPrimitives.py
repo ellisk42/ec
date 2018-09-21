@@ -30,13 +30,13 @@ primitives = [
     Primitive("logo_FWRT",  arrow(tlength,tangle,turtle,turtle), ""),
     # Primitive("logo_SET",  arrow(tstate,turtle,turtle), ""),
     # Primitive("logo_GET",  arrow(arrow(tstate,turtle),turtle), "")
-    Primitive("logo_GETSET",  arrow(turtle,turtle,turtle), "")
+    Primitive("logo_GETSET",  arrow(arrow(turtle,turtle),turtle,turtle), "")
 ] + [
     addition,
     Primitive("logo_IFTY", tint, ""),
     Primitive("logo_epsA", tangle, ""),
     Primitive("logo_epsL", tlength, ""),
-    Primitive("logo_forLoopM", arrow(tint, arrow(tint, turtle), turtle, turtle), "ERROR: python has no way of expressing this hence you shouldn't eval on this"),
+    Primitive("logo_forLoop", arrow(tint, arrow(tint, turtle, turtle), turtle, turtle), "ERROR: python has no way of expressing this hence you shouldn't eval on this"),
     Primitive("+", arrow(tint, tint, tint), _addition)
 ] + [Primitive(str(j), tint, j) for j in range(7)]
 

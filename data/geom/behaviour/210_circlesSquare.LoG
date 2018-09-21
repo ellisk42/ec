@@ -1,7 +1,0 @@
-Repeat(Double(Double(unit))) {
-    Integrate(pen=off) ;
-    Embed {
-        Integrate(angularSpeed=unit)
-    } ;
-    Integrate(t=Half(Half(unit)), angularSpeed=unit)
-}
