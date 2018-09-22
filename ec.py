@@ -744,6 +744,11 @@ def commandlineArguments(_=None,
                         help="Clears the recognition model from a checkpoint. Necessary for graphing results with recognition models, because pickle is kind of stupid sometimes.",
                         default=None,
                         type=str)
+    parser.add_argument("--primitive-graph",
+                        dest="primitive-graph",
+                        help="Displays a dependency graph of the learned primitives",
+                        default=None,
+                        type=str)
     parser.set_defaults(useRecognitionModel=useRecognitionModel,
                         featureExtractor=featureExtractor,
                         maximumFrontier=maximumFrontier,
@@ -756,4 +761,74 @@ def commandlineArguments(_=None,
         sys.exit(0)
     else:
         del v["clear-recognition"]
+        
+    if v["primitive-graph"] is not None:
+        graphPrimitives(v["primitive-graph"])
+        sys.exit(0)
+    else:
+        del v["primitive-graph"]
+        
     return v
+
+
+def graphPrimitives(checkpoint):
+    with open(checkpoint,'rb') as handle:
+        result = pickle.load(handle)
+
+    primitives = { p
+                   for g in result.grammars
+                   for p in g.primitives
+                   if p.isInvented }
+    age = {p: min(j for j,g in enumerate(result.grammars) if p in g.primitives)
+           for p in primitives }
+
+    from graphviz import Digraph
+
+    ages = set(age.values())
+    age2primitives = {a: {p for p,ap in age.items() if a == ap }
+                      for a in ages}
+
+    name = {}
+    simplification = {}
+    depth = {}
+    def getName(p):
+        if p in name: return name[p]
+        children = {k: getName(k)
+                    for _,k in p.body.walk()
+                    if k.isInvented}
+        simplification_ = p.body
+        for k,childName in children.items():
+            simplification_ = simplification_.substitute(k, Primitive(childName,None,None))
+        name[p] = "f%d"%len(name)
+        simplification[p] = name[p] + '=' + str(simplification_)
+        depth[p] = 1 + max([depth[k] for k in children] + [0])
+        return name[p]
+
+    for p in primitives: getName(p)
+
+    depths = {depth[p] for p in primitives}
+    depth2primitives = {d: {p for p in primitives if depth[p] == d }
+                        for d in depths}
+
+    def makeGraph(ordering, fn):
+        g = Digraph()
+        g.graph_attr['rankdir'] = 'LR'
+
+        for o in sorted(ordering.keys()):
+            with g.subgraph(name='age%d'%o) as sg:
+                sg.graph_attr['rank'] = 'same'
+                for p in ordering[o]:
+                    sg.node(getName(p), label=simplification[p])
+
+            for p in ordering[o]:
+                children = {k
+                            for _,k in p.body.walk()
+                            if k.isInvented}
+                for k in children:
+                    g.edge(name[k],name[p])
+
+        g.render('/tmp/%s.pdf'%fn,view=True)
+        
+
+    makeGraph(depth2primitives,checkpoint+'depth')
+    makeGraph(age2primitives,checkpoint+'iter')
