@@ -453,6 +453,10 @@ def induceGrammar(*args, **kwargs):
         elif backend == "pypy_vs":
             kwargs.pop('iteration')
             kwargs.pop('topk_use_only_likelihood')
+            fn = '/tmp/vs.pickle'
+            with open(fn,'wb') as handle:
+                pickle.dump((args,kwargs), handle)
+            eprint("For debugging purposes, the version space compression invocation has been saved to",fn)
             g, newFrontiers = callCompiled(induceGrammar_Beta, *args, **kwargs)
         else:
             assert False, "unknown compressor"
