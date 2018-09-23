@@ -138,11 +138,45 @@ type contextual_grammar = {
   contextual_library : (program * grammar list) list;
 }
 
+let show_contextual_grammar cg =
+  let ls = ["No context grammar:";string_of_grammar cg.no_context;"";
+            "Variable context grammar:";string_of_grammar cg.variable_context;"";
+           ] @ (cg.contextual_library |> List.map ~f:(fun (e,gs) ->
+      gs |> List.mapi ~f:(fun i g ->
+          [Printf.sprintf "Parent %s, argument index %i:" (string_of_program e) i;
+          string_of_grammar g; ""]) |> List.concat) |> List.concat)
+  in join ~separator:"\n" ls
+
+let prune_contextual_grammar (g : contextual_grammar) =
+  let prune e gs =
+    let t = closed_inference e in
+    let argument_types = arguments_of_type t in
+    List.map2_exn argument_types gs ~f:(fun argument_type g ->
+        let argument_type = return_of_type argument_type in
+        {logVariable=g.logVariable;
+         library=g.library |> List.filter ~f:(fun (_,child_type,_,_) ->
+             let child_type = return_of_type child_type in
+             try
+               let k, child_type = instantiate_type empty_context child_type in
+               let k, argument_type = instantiate_type k argument_type in
+               let _ = unify k child_type argument_type in
+               true
+             with UnificationFailure -> false)})
+  in 
+  {no_context=g.no_context;
+   variable_context=g.variable_context;
+   contextual_library=
+     g.contextual_library |> List.map ~f:(fun (e,gs) -> (e, prune e gs))}
+
+
 let make_dummy_contextual g =
   {no_context=g;
    variable_context=g;
    contextual_library =
-     g.library |> List.map ~f:(fun (e,t,_,_) -> (e, arguments_of_type t |> List.map ~f:(fun _ -> g)))}
+     g.library |> List.map ~f:(fun (e,t,_,_) -> (e, arguments_of_type t |> List.map ~f:(fun _ -> g)))} |>
+  prune_contextual_grammar
+
+
 
 let deserialize_grammar g =
   let open Yojson.Basic.Util in
@@ -171,4 +205,4 @@ let deserialize_contextual_grammar j =
      j |> member "productions" |> to_list |> List.map ~f:(fun production ->
          let e = production |> member "program" |> to_string |> parse_program |> get_some in
          let children = production |> member "arguments" |> to_list |> List.map ~f:deserialize_grammar in
-         (e, children));}
+         (e, children));} |> prune_contextual_grammar

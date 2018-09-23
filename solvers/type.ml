@@ -269,3 +269,13 @@ let unify_many_types ts =
       k := unify k' t' t);
   applyContext !k t |> snd
      
+
+let rec deserialize_type j =
+  let open Yojson.Basic.Util in
+  try
+    let k = j |> member "constructor" |> to_string in
+    let a = j |> member "arguments" |> to_list |> List.map ~f:deserialize_type in
+    kind k a
+  with _ ->
+    let i = j |> member "index" |> to_int in
+    TID(i)

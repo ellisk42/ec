@@ -268,23 +268,23 @@ let simulate_without_physics plan =
   let simulated = run plan [] |> List.sort ~compare:(fun x y ->
       if x > y then 1 else if x < y then -1 else 0
     ) in
-  (* plan |> List.iter ~f:(fun (x,w,h) -> *)
-  (*     Printf.eprintf "COMMAND : X=%f, W=%f, H=%f\n" *)
-  (*       x w h); *)
-  (* simulated |> List.iter ~f:(fun (x,y,w,h) -> *)
-  (*     Printf.eprintf "BLOCK(x=%f, y=%f, w=%f, h=%f)\n" *)
-  (*       x y w h *)
-  (*   ); *)
-  (* Printf.eprintf "\n"; *)
-  (* flush_everything(); *)
   simulated
 ;;
-(* let discrete_tower t = *)
-(*   t |> List.map ~f:(fun (a,b,c,d) -> *)
-(*       (round (a*.10.) |> Int.of_float, *)
-(*        round (b*.10.) |> Int.of_float, *)
-(*        round (c*.10.) |> Int.of_float, *)
-(*        round (d*.10.) |> Int.of_float));; *)
+
+let blocks_extent blocks =
+  if blocks = [] then 0 else
+  let xs = blocks |> List.map ~f:(fun (x,_,_,_) -> x) in
+  let x1 = List.fold_left ~init:(List.hd_exn xs) ~f:max xs in
+  let x0 = List.fold_left ~init:(List.hd_exn xs) ~f:min xs in
+  x1 - x0
+
+let tower_height blocks =
+  if blocks = [] then 0 else
+    let ys = blocks |> List.map ~f:(fun (_,y,_,h) -> y + h/2) in
+    let y1 = List.fold_left ~init:(List.hd_exn ys) ~f:max ys in    
+    let ys = blocks |> List.map ~f:(fun (_,y,_,h) -> y - h/2) in
+    let y0 = List.fold_left ~init:(List.hd_exn ys) ~f:min ys in
+    y1 - y0
 
 let show_tower dt =
   dt |> List.map ~f:(fun (a,b,c,d) ->

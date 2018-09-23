@@ -643,6 +643,9 @@ def howManyGigabytesOfMemory():
     import psutil
     return psutil.virtual_memory().total/10**9
 
+def tuplify(x):
+    if isinstance(x,(list,tuple)): return tuple(tuplify(z) for z in x)
+    return x
 
 # image montage!
 def makeNiceArray(l):

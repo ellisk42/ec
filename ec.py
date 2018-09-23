@@ -63,6 +63,7 @@ class ECResult():
                      "pseudoCounts": "pc",
                      "structurePenalty": "L",
                      "helmholtzRatio": "HR",
+                     "biasOptimal": "BO",
                      "topK": "K",
                      "enumerationTimeout": "ET",
                      "useRecognitionModel": "rec",
@@ -117,6 +118,7 @@ def ecIterator(grammar, tasks,
                solver="ocaml",
                compressor="rust",
                likelihoodModel="all-or-nothing",
+               biasOptimal=False,
                testingTasks=[],
                benchmark=None,
                iterations=None,
@@ -165,6 +167,9 @@ def ecIterator(grammar, tasks,
     if benchmark is not None and resume is None:
         eprint("You cannot benchmark unless you are loading a checkpoint, aborting.")
         assert False
+    if biasOptimal and not useRecognitionModel:
+        eprint("Bias optimality only applies to recognition models, aborting.")
+        assert False
 
     if testingTimeout > 0 and len(testingTasks) == 0:
         eprint("You specified a testingTimeout, but did not provide any held out testing tasks, aborting.")
@@ -200,7 +205,7 @@ def ecIterator(grammar, tasks,
             "testingTasks",
             "compressor"} and v is not None}
     if not useRecognitionModel:
-        for k in {"helmholtzRatio", "steps"}:
+        for k in {"helmholtzRatio", "steps", "biasOptimal"}:
             del parameters[k]
 
     # Uses `parameters` to construct the checkpoint path
@@ -287,19 +292,6 @@ def ecIterator(grammar, tasks,
                                           task=t) for t in tasks},
                           recognitionModel=None, numTestingTasks=numTestingTasks)
 
-    # just plopped this in here, hope it works: -it doesn't. having issues.
-    if useNewRecognitionModel and (
-        not hasattr(
-            result,
-            'recognitionModel') or not isinstance(
-            result.recognitionModel,
-            NewRecognitionModel)):
-        eprint("Creating new recognition model")
-        featureExtractorObject = featureExtractor(tasks + testingTasks)
-        result.recognitionModel = NewRecognitionModel(
-            featureExtractorObject, grammar, cuda=cuda)
-    # end
-
     if benchmark is not None:
         assert resume is not None, "Benchmarking requires resuming from checkpoint that you are benchmarking."
         if benchmark > 0:
@@ -365,7 +357,16 @@ def ecIterator(grammar, tasks,
             result.testingSearchTime.append(times)
             result.testingSumMaxll.append(sum(math.exp(f.bestll) for f in testingFrontiers if not f.empty) )
 
-                   
+        # If we have to also enumerate Helmholtz frontiers,
+        # do this extra sneaky in the background
+        if useRecognitionModel and biasOptimal and helmholtzRatio > 0:
+            helmholtzFrontiers = backgroundHelmholtzEnumeration(tasks, grammar, enumerationTimeout,
+                                                                evaluationTimeout=evaluationTimeout,
+                                                                special=featureExtractor.special)
+        else:
+            helmholtzFrontiers = lambda: []
+
+        # WAKING UP
         frontiers, times = multicoreEnumeration(grammar, tasks, likelihoodModel,
                                                 solver=solver,
                                                 maximumFrontier=maximumFrontier,
@@ -386,13 +387,17 @@ def ecIterator(grammar, tasks,
                                           grammar,
                                           activation=activation,
                                           cuda=cuda,
-                                          contextual=True)
+                                          contextual=biasOptimal)
 
-            recognizer.train(frontiers, topK=topK, steps=steps,
-                             CPUs=CPUs,
-                             timeout=enumerationTimeout,  # give training as much time as enumeration
-                             helmholtzBatch=helmholtzBatch,
-                             helmholtzRatio=helmholtzRatio if j > 0 or helmholtzRatio == 1. else 0.)
+            if biasOptimal:
+                recognizer.trainBiasOptimal(frontiers, helmholtzFrontiers(), 
+                                            steps=steps, CPUs=CPUs,
+                                            evaluationTimeout=evaluationTimeout,
+                                            timeout=enumerationTimeout,
+                                            helmholtzRatio=helmholtzRatio)
+            else:
+                recognizer.train(frontiers, steps=steps, CPUs=CPUs, timeout=enumerationTimeout,
+                                 helmholtzRatio=helmholtzRatio if j > 0 or helmholtzRatio == 1. else 0.)                                
             result.recognitionModel = recognizer
 
             bottomupFrontiers, times = recognizer.enumerateFrontiers(tasks, likelihoodModel,
@@ -740,6 +745,9 @@ def commandlineArguments(_=None,
         "--compressor",
         default="pypy",
         choices=["pypy","rust","vs","pypy_vs"])
+    parser.add_argument("--biasOptimal",
+                        help="Enumerate dreams rather than sample them & bias-optimal recognition objective",
+                        default=False, action="store_true")
     parser.add_argument("--clear-recognition",
                         dest="clear-recognition",
                         help="Clears the recognition model from a checkpoint. Necessary for graphing results with recognition models, because pickle is kind of stupid sometimes.",

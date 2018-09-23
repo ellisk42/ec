@@ -153,6 +153,16 @@ class RecognitionModel(nn.Module):
         entry = frontier.sample()
         return - entry.program.logLikelihood(g)
 
+    def frontierBiasOptimal(self, frontier):
+        features = self.featureExtractor.featuresOfTask(frontier.task)
+        g = self(features)
+        l = [entry.program.logLikelihood(g)
+             for entry in frontier]
+        l = torch.stack(l,1).squeeze(0)
+        l = l.max(0)[0]
+        l = l.unsqueeze(0)
+        return -l
+
     def replaceProgramsWithLikelihoodSummaries(self, frontier):
         return Frontier(
             [FrontierEntry(
@@ -161,7 +171,7 @@ class RecognitionModel(nn.Module):
                 logPrior=e.logPrior) for e in frontier],
             task=frontier.task)
 
-    def train(self, frontiers, _=None, steps=250, lr=0.0001, topK=1, CPUs=1,
+    def train(self, frontiers, _=None, steps=250, lr=0.0001, topK=5, CPUs=1,
               timeout=None, helmholtzRatio=0., helmholtzBatch=5000):
         """
         helmholtzRatio: What fraction of the training data should be forward samples from the generative model?
@@ -188,18 +198,7 @@ class RecognitionModel(nn.Module):
         HELMHOLTZBATCH = helmholtzBatch
         helmholtzSamples = []
 
-        if hasattr(self.featureExtractor, 'hashOfTask') and self.featureExtractor.helmholtzEnumeration:
-            eprint("Enumerating Helmholtz frontier...")
-            helmholtzSamples = self.enumerateHelmholtz(list(set(requests)),
-                                                       self.featureExtractor.helmholtzEnumerationTimeout,
-                                                       CPUs)
-            helmholtzEnumeration = list(helmholtzSamples)
-            eprint("Enumerated",len(helmholtzEnumeration),"Helmholtz programs.")
-        else: helmholtzEnumeration = []
-            
-
-        optimizer = torch.optim.Adam(
-            self.parameters(), lr=lr, eps=1e-3, amsgrad=True)
+        optimizer = torch.optim.Adam(self.parameters(), lr=lr, eps=1e-3, amsgrad=True)
         if timeout:
             start = time.time()
 
@@ -220,12 +219,10 @@ class RecognitionModel(nn.Module):
                     doingHelmholtz = random.random() < helmholtzRatio
                     if doingHelmholtz:
                         if helmholtzSamples == []:
-                            if helmholtzEnumeration:  helmholtzSamples = list(helmholtzEnumeration)
-                            else:
-                                helmholtzSamples = \
-                                list(self.sampleManyHelmholtz(requests,
-                                                              HELMHOLTZBATCH,
-                                                              CPUs))
+                            helmholtzSamples = \
+                            list(self.sampleManyHelmholtz(requests,
+                                                          HELMHOLTZBATCH,
+                                                          CPUs))
                         if len(helmholtzSamples) == 0:
                             eprint(
                                 "WARNING: Could not generate any Helmholtz samples. Disabling Helmholtz.")
@@ -267,6 +264,93 @@ class RecognitionModel(nn.Module):
                 if (i == 1 or i % 10 == 0) and losses:
                     eprint("Epoch", i, "Loss", sum(losses) / len(losses))
                     gc.collect()
+
+    def concreteGrammarOfTask(self, task):
+        features = self.featureExtractor.featuresOfTask(task)
+        g = self(features)
+        def untorch(g):
+            if isinstance(g,Grammar):
+                return Grammar(g.logVariable.data.tolist()[0], 
+                               [ (l.data.tolist()[0], t, p)
+                                 for l, t, p in g.productions])
+            assert isinstance(g, ContextualGrammar)
+            return ContextualGrammar(untorch(g.noParent),
+                                     untorch(g.variableParent),
+                                     {e: [untorch(p) for p in gs ]
+                                      for e,gs in g.library.items() })
+        return untorch(g)
+
+
+    def trainBiasOptimal(self, frontiers, helmholtzFrontiers, _=None,
+                         steps=250, lr=0.0001, timeout=None, CPUs=None,
+                         evaluationTimeout=0.001,
+                         helmholtzRatio=0.5):
+        # We replace each program in the frontier with its likelihoodSummary
+        # This is because calculating likelihood summaries requires juggling types
+        # And type stuff is expensive!
+        frontiers = [self.replaceProgramsWithLikelihoodSummaries(f)
+                     for f in frontiers]
+
+        # Should we recompute tasks on the fly from Helmholtz?  This
+        # should be done if the task is stochastic, or if there are
+        # different kinds of inputs on which it could be run. For
+        # example, lists and strings need this; towers and graphics do
+        # not. There is no harm in recomputed the tasks, it just
+        # wastes time.
+        if not hasattr(self.featureExtractor, 'recomputeTasks'):
+            self.featureExtractor.recomputeTasks = True
+        def updateTask(f,t):
+            return Frontier(f.entries, task=t)
+        if not self.featureExtractor.recomputeTasks:
+            with timing("precomputed Helmholtz tasks"):
+                helmholtzFrontiers = [updateTask(self.replaceProgramsWithLikelihoodSummaries(f),
+                                                 t)
+                                      for f in helmholtzFrontiers
+                                      for aProgram in [random.choice(f.entries).program]
+                                      for t in [self.featureExtractor.taskOfProgram(aProgram, f.task.request)]
+                                      if t]
+        else:
+            helmholtzFrontiers = [(f,self.replaceProgramsWithLikelihoodSummaries(f))
+                                  for f in helmholtzFrontiers]
+        
+        optimizer = torch.optim.Adam(self.parameters(), lr=lr, eps=1e-3, amsgrad=True)
+        if timeout:
+            start = time.time()
+
+        frontiers = [f for f in frontiers if not f.empty ]
+
+        with timing("Trained recognition model"):
+            for i in range(1, steps + 1):
+                if timeout and time.time() - start > timeout:
+                    break
+                losses = []
+
+                permutedFrontiers = list(frontiers)
+                random.shuffle(permutedFrontiers)
+                for frontier in permutedFrontiers:
+                    if random.random() < helmholtzRatio:
+                        if self.featureExtractor.recomputeTasks:
+                            _frontier, summaryFrontier = random.choice(helmholtzFrontiers)
+                            aProgram = random.choice(_frontier.entries).program
+                            task = self.featureExtractor.taskOfProgram(aProgram, _frontier.task.request)
+                            if task is not None:
+                                frontier = updateTask(summaryFrontier, task)
+                        else:
+                            frontier = random.choice(helmholtzFrontiers)
+                    
+                    self.zero_grad()
+                    loss = self.frontierBiasOptimal(frontier)
+                    if is_torch_invalid(loss):
+                        eprint("Invalid real-data loss!")
+                    else:
+                        loss.backward()
+                        optimizer.step()
+                        losses.append(loss.data.tolist()[0])
+                if (i == 1 or i % 10 == 0) and losses:
+                    eprint("Epoch", i, "Loss", sum(losses) / len(losses))
+                    gc.collect()
+                    
+
 
     def sampleHelmholtz(self, requests, statusUpdate=None, seed=None):
         if seed is not None:
@@ -359,22 +443,8 @@ class RecognitionModel(nn.Module):
                            maximumFrontier=None,
                            evaluationTimeout=None):
         with timing("Evaluated recognition model"):
-            grammars = {}
-            for task in tasks:
-                features = self.featureExtractor.featuresOfTask(task)
-                g = self(features)
-                def untorch(g):
-                    if isinstance(g,Grammar):
-                        return Grammar(g.logVariable.data.tolist()[0], 
-                                       [ (l.data.tolist()[0], t, p)
-                                         for l, t, p in g.productions])
-                    assert isinstance(g, ContextualGrammar)
-                    return ContextualGrammar(untorch(g.noParent),
-                                             untorch(g.variableParent),
-                                             {e: [untorch(p) for p in gs ]
-                                              for e,gs in g.library.items() })
-                    
-                grammars[task] = untorch(g)
+            grammars = {task: self.concreteGrammarOfTask(task)
+                        for task in tasks}
 
         return multicoreEnumeration(grammars, tasks, likelihoodModel,
                                     solver=solver,
@@ -567,15 +637,6 @@ class MLPFeatureExtractor(nn.Module):
                       for j, f in enumerate(t.features)], cuda=self.use_cuda).float()
         return self.hidden(f).clamp(min=0)
 
-    def featuresOfProgram(self, p, t):
-        features = self._featuresOfProgram(p, t)
-        if features is None:
-            return None
-        f = variable([(f - self.averages[j]) / self.deviations[j]
-                      for j, f in enumerate(features)], cuda=self.use_cuda).float()
-        return self.hidden(f).clamp(min=0)
-
-
 class HandCodedFeatureExtractor(object):
     def __init__(self, tasks, cuda=False):
         self.averages, self.deviations = Task.featureMeanAndStandardDeviation(
@@ -588,13 +649,15 @@ class HandCodedFeatureExtractor(object):
         return variable([(f - self.averages[j]) / self.deviations[j]
                          for j, f in enumerate(t.features)], cuda=self.cuda).float()
 
-    def featuresOfProgram(self, p, t):
-        features = self._featuresOfProgram(p, t)
-        if features is None:
-            return None
-        return variable([(f - self.averages[j]) / self.deviations[j]
-                         for j, f in enumerate(features)], cuda=self.cuda).float()
 
+class DummyFeatureExtractor(nn.Module):
+    def __init__(self, tasks):
+        super(DummyFeatureExtractor, self).__init__()
+        self.outputDimensionality = 1
+    def featuresOfTask(self, t):
+        return variable([0.]).float()
+    def taskOfProgram(self, p, t):
+        return None
 
 class ImageFeatureExtractor(nn.Module):
     def __init__(self, tasks):
@@ -643,14 +706,6 @@ class JSONFeatureExtractor(object):
         #return [(self.stringify(inputs), self.stringify(output))
         #        for (inputs, output) in t.examples]
         return [(list(output),) for (inputs, output) in t.examples]
-
-    def featuresOfProgram(self, p, t):
-        features = self._featuresOfProgram(p, t)
-        if features is None:
-            return None
-        # return [(self.stringify(x), self.stringify(y)) for (x,y) in features]
-        return [(list(feature),) for feature in features]
-        # TODO: should possibly match
 
 
 # TODO
@@ -991,121 +1046,95 @@ class NewRecognitionModel(nn.Module):
         #                     CPUs=CPUs, maximumFrontier=maximumFrontier,
         #                     evaluationTimeout=evaluationTimeout)
 
-import threading
 
-def handleRecognitionServer(message, qi, qo):
-    message = pickle.loads(message)
-    qi.put(message)
-    return pickle.dumps(qo.get())
+def helmholtzEnumeration(g, request, inputs, timeout, _=None,
+                         special=None, evaluationTimeout=None):
+    import json
 
-def launchRecognitionServer():
-    from multiprocessing import Process
-    Process(target=_launchRecognitionServer,args=()).start()
-def _launchRecognitionServer():
-    import queue
-    
-    qi = queue.Queue()
-    qo = queue.Queue()
+    def requestMessage(r):
+        if isinstance(r, TypeConstructor):
+            return {"constructor": r.name,
+                    "arguments": [requestMessage(a) for a in r.arguments]}
+        assert isinstance(r, TypeVariable)
+        return {"index": r.v}
+    def serializeGrammar(g):
+        if isinstance(g, Grammar):
+            return {"logVariable": g.logVariable,
+                    "productions": [{"expression": str(p), "logProbability": l}
+                                       for l, _, p in g.productions]}
+        if isinstance(g, ContextualGrammar):
+            return {"noParent": serializeGrammar(g.noParent),
+                    "variableParent": serializeGrammar(g.variableParent),
+                    "productions": [{"program": str(e),
+                                     "arguments": [serializeGrammar(gp) for gp in gs ]}
+                                    for e,gs in g.library.items() ]}
 
-    trainer = threading.Thread(target=training_thread, args=(qi,qo))
-    trainer.start()
-    runPythonServer(4599, handleRecognitionServer, threads=1, args=(qi,qo))
-    
-def training_thread(qi,qo):
-    rm = None
-    helmholtzRatio = 0.
-    helmholtzBatch = 500
-    featureExtractor = None
-    optimizer = None
-    DSL = None
-    cuda = False
-    lr=0.0001
-    helmholtzSamples = []
+    message = {"request": requestMessage(request),
+               "timeout": timeout,
+               "DSL": serializeGrammar(g),
+               "extras": inputs}
+    if evaluationTimeout: message["evaluationTimeout"] = evaluationTimeout
+    if special: message["special"] = special
+    message = json.dumps(message)
+    #    with open('/tmp/message','w') as handle: handle.write(message)
+    try:
+        process = subprocess.Popen("./helmholtz",
+                                   stdin=subprocess.PIPE,
+                                   stdout=subprocess.PIPE)
+        response, error = process.communicate(bytes(message, encoding="utf-8"))
+        response = json.loads(response.decode("utf-8"))
+    except OSError as exc:
+        raise exc
 
-    while True:
-        try:
-            message = qi.get(block=(rm is None))
-            if message == "get":
-                qo.put(rm)
-                continue
-            if "helmholtzRatio" in message:
-                helmholtzRatio = message['helmholtzRatio']
-            if "cuda" in message:
-                cuda = message["cuda"]
-            if "lr" in message:
-                lr = message["lr"]
-            if "featureExtractor" in message:
-                featureExtractor = message['featureExtractor']
-            if "DSL" in message:
-                DSL = message["DSL"]
-                rm = RecognitionModel(featureExtractor,
-                                      DSL,
-                                      hidden=[],
-                                      cuda=cuda)
-                optimizer = torch.optim.Adam(rm.parameters(), lr=lr, eps=1e-3, amsgrad=True)
-                helmholtzSamples = []
-            if "frontiers" in message:
-                frontiers = [frontier.normalize()
-                             for frontier in message["frontier"] if not frontier.empty ]
-                frontiers = [rm.replaceProgramsWithLikelihoodSummaries(f).normalize()
-                             for f in frontiers]
-                requests = [frontier.task.request for frontier in frontiers]
-                permutedFrontiers = []
-            if "evaluate" in message:
-                assert rm is not None
-                tasks = message["evaluate"]
-                with timing("Evaluated recognition model"):
-                    grammars = {}
-                    for task in tasks:
-                        features = rm.featureExtractor.featuresOfTask(task)
-                        variables, productions = rm(features)
-                        grammars[task] = Grammar(
-                            variables.data.tolist()[0], [
-                                (productions.data.tolist()[k], t, p) for k, (_, t, p) in enumerate(
-                                    rm.grammar.productions)])
-                qo.put(grammars)
-            else:
-                qo.put("okay")
-        except Empty:
-            # Another training step
-            if len(permutedFrontiers) == 0:
-                permutedFrontiers = list(frontiers)
-                random.shuffle(permutedFrontiers)
-            frontier = permutedFrontiers.pop()
+    h = set()
+    frontiers = []
+    for b, entry in enumerate(response):
+        frontiers.append(Frontier([FrontierEntry(program=Program.parse(p),
+                                                 logPrior=entry["ll"],
+                                                 logLikelihood=0.)
+                                   for p in entry["programs"] ],
+                                  task=Task(str(b),
+                                            request,
+                                            [])))
+
+    return frontiers
+
+def backgroundHelmholtzEnumeration(tasks, g, timeout, _=None,
+                                   special=None, evaluationTimeout=None):
+    requests = list({t.request for t in tasks})
+    inputs = {r: list({tuplify(xs)
+                       for t in tasks if t.request == r
+                       for xs,y in t.examples })
+              for r in requests }
+    workers = Pool(len(requests))
+    promises = [workers.apply_async(helmholtzEnumeration,
+                                    args=(g,r,inputs[r],float(timeout)),
+                                    kwds={'special': special,
+                                          'evaluationTimeout': evaluationTimeout})
+                for r in requests ]
+    def get():
+        results = [p.get() for p in promises]
+        return [x for xs in results for x in xs]
+    return get
             
-            # Randomly decide whether to sample from the generative
-            # model
-            doingHelmholtz = random.random() < helmholtzRatio
-            if doingHelmholtz:
-                if helmholtzSamples == []:
-                    helmholtzSamples = \
-                        list(rm.sampleManyHelmholtz(requests,
-                                                    helmholtzBatch,
-                                                    1))
-                if len(helmholtzSamples) == 0:
-                    eprint("WARNING: Could not generate any Helmholtz samples. Disabling Helmholtz.")
-                    helmholtzRatio = 0.
-                    doingHelmholtz = False
-                else:
-                    attempt = helmholtzSamples.pop()
-                    if attempt is not None:
-                        rm.zero_grad()
-                        loss = rm.frontierKL(attempt)
-                    else:
-                        doingHelmholtz = False
-            if not doingHelmholtz:
-                if helmholtzRatio < 1.:
-                    rm.zero_grad()
-                    loss = rm.frontierKL(frontier)
-                else:
-                    # Refuse to train on the frontiers
-                    continue
-
-            if is_torch_invalid(loss):
-                if doingHelmholtz:
-                    eprint("Invalid real-data loss!")
-                else:
-                    eprint("Invalid Helmholtz loss!")
-            else:
-                loss.backward()
-                optimizer.step()
+if __name__ == "__main__":
+    from arithmeticPrimitives import *
+    g = Grammar.uniform([k1,k0,addition,subtraction,multiplication])
+    frontiers = helmholtzEnumeration(g,
+                         arrow(tint,tint),
+                         [[0],[1],[2]],
+                         10.)
+    eprint("average frontier size",mean(len(f.entries) for f in frontiers ))
+    f = DummyFeatureExtractor([])
+    r = RecognitionModel(f, g, hidden=[], contextual=True)
+    r.trainBiasOptimal(frontiers, frontiers, steps=70)
+    g = r.concreteGrammarOfTask(frontiers[0].task)
+    frontiers = helmholtzEnumeration(g,
+                         arrow(tint,tint),
+                         [[0],[1],[2]],
+                         10.)
+    for f in frontiers:
+        eprint(f.summarizeFull())
+    eprint("average frontier size",mean(len(f.entries) for f in frontiers ))
+    
+    

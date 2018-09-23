@@ -770,6 +770,17 @@ class ContextualGrammar:
             for g in gs:
                 assert set(g.primitives) == set(library.keys())
 
+    def __str__(self):
+        lines = ["No parent:",str(self.noParent),"",
+                 "Variable parent:",str(self.variableParent),"",
+                 ""]
+        for e,gs in self.library.items():
+            for j,g in enumerate(gs):
+                lines.extend(["Parent %s, argument index %s"%(e,j),
+                              str(g),
+                              ""])
+        return "\n".join(lines)
+
     @staticmethod
     def fromGrammar(g):
         return ContextualGrammar(g, g,

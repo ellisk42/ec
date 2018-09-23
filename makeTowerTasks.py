@@ -216,6 +216,11 @@ def towerLength(t):
     x0 = min(x for x, _, _ in t)
     return x1 - x0
 
+def towerHeight(t):
+    y1 = max(y + h/2 for _, y, _, h in t )
+    y0 = min(y - h/2 for _, y, _, h in t )
+    return y1 - y0
+
 
 def makeTasks():
     """ideas:
@@ -413,8 +418,10 @@ def makeSupervisedTasks():
         delattr(t,'original')
     return everything
 if __name__ == "__main__":
+    from tower_common import *
     ts = makeSupervisedTasks()
     print(len(ts),"total tasks")
     print("maximum plan length",max(len(f.plan) for f in ts ))
     print("maximum tower length",max(towerLength(f.plan) for f in ts ))
+    print("maximum tower height",max(towerHeight(simulateWithoutPhysics(f.plan)) for f in ts ))
     SupervisedTower.showMany(ts)

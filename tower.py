@@ -27,11 +27,12 @@ class Flatten(nn.Module):
 
 
 class TowerCNN(nn.Module):
+    special = 'tower'
+    
     def __init__(self, tasks, cuda=False, H=64):
         super(TowerCNN, self).__init__()
 
-        self.helmholtzEnumeration = False
-        self.helmholtzEnumerationTimeout = 60
+        self.recomputeTasks = False
 
         self.outputDimensionality = H
         def conv_block(in_channels, out_channels):
@@ -87,52 +88,6 @@ class TowerCNN(nn.Module):
     def hashOfTask(self, t):
         return tuple(centerTower(t.plan))
 
-# class TowerFeatureExtractor(ImageFeatureExtractor):
-#     def _featuresOfProgram(self, p, _):
-#         # [perturbation, mass, height, length, area]
-#         p = executeTower(p)
-#         mass = sum(w * h for _, w, h in p)
-
-#         masses = {
-#             t.maximumMass for t in TowerTask.tasks if mass <= t.maximumMass}
-#         if len(masses) == 0:
-#             return None
-#         mass = random.choice(masses)
-
-#         heights = {t.minimumHeight for t in TowerTask.tasks}
-#         lengths = {t.minimumLength for t in TowerTask.tasks}
-#         areas = {t.minimumArea for t in TowerTask.tasks}
-#         staircases = {t.maximumStaircase for t in TowerTask.tasks}
-
-#         # Find the largest perturbation that this power can withstand
-#         perturbations = sorted(
-#             {t.perturbation for t in TowerTask.tasks}, reverse=True)
-#         for perturbation in perturbations:
-#             result = TowerTask.evaluateTower(p, perturbation)
-
-#             possibleHeightThresholds = {
-#                 h for h in heights if result.height >= h}
-#             possibleLengthThresholds = {
-#                 l for l in lengths if result.length >= l}
-#             possibleAreaThresholds = {a for a in areas if result.area >= a}
-#             possibleStaircases = {
-#                 s for s in staircases if result.staircase <= s}
-
-#             if len(possibleHeightThresholds) > 0 and \
-#                len(possibleLengthThresholds) > 0 and \
-#                len(possibleStaircases) > 0 and \
-#                len(possibleAreaThresholds) > 0:
-#                 if result.stability > TowerTask.STABILITYTHRESHOLD:
-#                     return [perturbation,
-#                             mass,
-#                             random.choice(possibleHeightThresholds),
-#                             random.choice(possibleLengthThresholds),
-#                             random.choice(possibleAreaThresholds),
-#                             random.choice(possibleStaircases)]
-#             else:
-#                 return None
-
-#         return None
 
 
 
@@ -235,6 +190,27 @@ def visualizeSolutions(solutions, export, tasks=None):
 
 if __name__ == "__main__":
     g0 = Grammar.uniform(primitives)
+
+    # request = arrow(ttower,ttower)
+    # g = g0
+    # extras = []
+    # frontiers = helmholtzEnumeration(g, request, extras, 2.,special="tower")
+    # f = TowerCNN([])
+    # frontiers = [ Frontier(frontier.entries,
+    #                        task=f.taskOfProgram(frontier.entries[0].program,None))
+    #               for frontier in frontiers ]
+    # # i = f.taskOfProgram(frontiers[0].entries[0].program,None)
+    # # SupervisedTower.showMany([i])
+    # # for f in frontiers:
+    # #     eprint(f.summarizeFull())
+    # # assert False
+    # eprint("average frontier size",mean(len(f.entries) for f in frontiers ))
+    # # f = DummyFeatureExtractor([])
+    # r = RecognitionModel(f, g, hidden=[], contextual=True)
+    # r.trainBiasOptimal(frontiers, frontiers, steps=70)
+    # g = r.concreteGrammarOfTask(frontiers[0].task)
+    # eprint(g)
+
 
     arguments = commandlineArguments(
         featureExtractor=TowerCNN,

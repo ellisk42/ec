@@ -41,16 +41,6 @@ let load_problems channel =
   in
 
 
-  let rec parse_type j =
-    try
-      let k = j |> member "constructor" |> to_string in
-      let a = j |> member "arguments" |> to_list |> List.map ~f:parse_type in
-      kind k a
-    with _ ->
-      let i = j |> member "index" |> to_int in
-      TID(i)
-  in 
-
   let rec unpack x =
     try magical (x |> to_int) with _ ->
     try magical (x |> to_float) with _ ->
@@ -66,7 +56,7 @@ let load_problems channel =
 
   let tf = j |> member "tasks" |> to_list |> List.map ~f:(fun j -> 
       let e = j |> member "examples" |> to_list in
-      let task_type = j |> member "request" |> parse_type in 
+      let task_type = j |> member "request" |> deserialize_type in 
       let examples = e |> List.map ~f:(fun ex -> (ex |> member "inputs" |> to_list |> List.map ~f:unpack,
                                                   ex |> member "output" |> unpack)) in
       let maximum_frontier = j |> member "maximumFrontier" |> to_int in

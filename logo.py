@@ -49,11 +49,14 @@ class Flatten(nn.Module):
 
 
 class LogoFeatureCNN(nn.Module):
-
+    special = "LOGO"
+    
     def __init__(self, tasks, cuda=False, H=64):
         super(LogoFeatureCNN, self).__init__()
 
         self.sub = prefix_dreams + str(int(time.time()))
+
+        self.recomputeTasks = False
 
         self.outputDimensionality = H
         def conv_block(in_channels, out_channels):
