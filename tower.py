@@ -191,27 +191,6 @@ def visualizeSolutions(solutions, export, tasks=None):
 if __name__ == "__main__":
     g0 = Grammar.uniform(primitives)
 
-    # request = arrow(ttower,ttower)
-    # g = g0
-    # extras = []
-    # frontiers = helmholtzEnumeration(g, request, extras, 2.,special="tower")
-    # f = TowerCNN([])
-    # frontiers = [ Frontier(frontier.entries,
-    #                        task=f.taskOfProgram(frontier.entries[0].program,None))
-    #               for frontier in frontiers ]
-    # # i = f.taskOfProgram(frontiers[0].entries[0].program,None)
-    # # SupervisedTower.showMany([i])
-    # # for f in frontiers:
-    # #     eprint(f.summarizeFull())
-    # # assert False
-    # eprint("average frontier size",mean(len(f.entries) for f in frontiers ))
-    # # f = DummyFeatureExtractor([])
-    # r = RecognitionModel(f, g, hidden=[], contextual=True)
-    # r.trainBiasOptimal(frontiers, frontiers, steps=70)
-    # g = r.concreteGrammarOfTask(frontiers[0].task)
-    # eprint(g)
-
-
     arguments = commandlineArguments(
         featureExtractor=TowerCNN,
         CPUs=numberOfCPUs(),

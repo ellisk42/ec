@@ -7,6 +7,7 @@ import png
 import os
 import sys
 from program import *
+from utilities import *
 
 rootdir = "./data/logo/"
 
@@ -91,7 +92,7 @@ def makeTasks(subfolders, proto):
                                         [([], img1)],
                                         highresolution,
                                         needToTrain=True)
-    return problems
+    return problems + manualLogoTasks()
 
 def parseLogo(s):
         
@@ -165,13 +166,15 @@ def parseLogo(s):
                    "-a": _sa,
                    "-d": _sl, "-l": _sl,
                    "+": _addition,
+                   "infinity": _infinity,
                    "epsilonAngle": _ea,
                    "epsilonDistance": _el,
                    "epsilonLength": _el}
+        if e == float('inf'): return _infinity
         for name, value in mapping.items():
             if e == Symbol(name): return value
             
-        assert isinstance(e,list)
+        assert isinstance(e,list), "not a list %s"%e
         for name, value in mapping.items():
             if e[0] == Symbol(name):
                 f = value
@@ -211,28 +214,161 @@ def manualLogoTask(name, expression, proto=False, needToTrain=False):
 
     return t
 
-# t = manualLogoTask('test',"""
-# (loop i 4 
-#  (move 1l 0a) pu (move 1l 0a)  pd (move 1l 0a) (move 0l (/a 1a 2))
-# )
-# """)
-# pretty_print(t.highresolution, 128)
-# assert False
+def manualLogoTasks():
+    tasks = []
+    def T(*a): tasks.append(manualLogoTask(*a))
 
+    for i in range(3,7):
+        T("Greek spiral %d"%i,
+          """
+          (loop i %d
+          (move (*l 1l i) (/a 1a 2)))
+          """%i)
+        
+        T("smooth spiral %d"%i,
+          """
+          (loop i infinity 
+          (move (*d epsilonLength i) (*a epsilonAngle %d)))
+          """%i)
+
+    for i in [5,7,9]:
+        T("star %d"%i,
+          """
+          (loop i %d (move (*d 1d 3) (-a 1a (/a 1a %s))))
+          """%(i,i))
+
+    T("leaf iteration 1.1",
+      """
+      (loop i infinity (move epsilonDistance (/a epsilonAngle 2)))
+      """)
+    T("leaf iteration 1.2",
+      """
+      ((move 0d 1a)
+      (loop i infinity (move epsilonDistance (/a epsilonAngle 2))))
+      """)
+    T("leaf iteration 2.1",
+      """
+      (loop n 2
+      (loop i infinity (move epsilonDistance (/a epsilonAngle 2)))
+      (move 0d (/a 1a 2)))
+      """)
+    T("leaf iteration 2.2",
+      """
+      ((move 0d 1a)
+      (loop n 2
+      (loop i infinity (move epsilonDistance (/a epsilonAngle 2)))
+      (move 0d (/a 1a 2))))
+      """)
+    for n in [5,7]:
+        T("flower %d"%n,
+          """
+          (loop j %d
+          (loop n 2
+          (loop i infinity (move epsilonDistance (/a epsilonAngle 2)))
+          (move 0d (/a 1a 2)))
+          (move 0d (/a (*a 1a 2) %d)))
+          """%(n,n))
+        
+
+    for n in [3,5]:
+        T("staircase %d"%n,
+          """
+          (loop i %d
+          (move 1d (/a 1a 2))
+          (move 1d (/a 1a 2))
+          (move 0d 1a))
+          """%n)
+
+    for n in range(1,4):
+        T("blocks zigzag %d"%n,
+          """
+          (loop i %d
+          (move 1d (/a 1a 2)) (move 1d (/a 1a 2))
+          (move 1d (+a 1a (/a 1a 2))) (move 1d (+a 1a (/a 1a 2))))
+          """%n)
+    for n in range(1,5):
+        T("diagonal zigzag %d"%n,
+          """
+          ((move 0d (/a 1a 4))
+          (loop i %d
+          (move 1d (/a 1a 2)) 
+          (move 1d (+a 1a (/a 1a 2)))))
+          """%n)
+
+    for n in range(1,7):
+        T("semicircle of size %d"%n,
+          """
+          (loop i infinity
+          (move (*d epsilonLength %d) epsilonAngle))
+          """%n)
+        T("circle of size %d"%n,
+          """
+          ((loop i infinity
+          (move (*d epsilonLength %d) epsilonAngle))
+          (loop i infinity
+          (move (*d epsilonLength %d) epsilonAngle)))
+          """%(n,n))
+
+    for n in range(3,8):
+        T("%d enclosed circles"%n,
+          """
+          (loop j %d
+          (loop i infinity
+          (move (*d epsilonLength j) epsilonAngle))
+          (loop i infinity
+          (move (*d epsilonLength j) epsilonAngle)))"""%n)
+
+    for n,l in [(4,2),
+                (5,3),
+                (6,4),
+                (3,1)]:
+        T("%d-circle flower l=%d"%(n,l),
+          """
+          (loop j %d
+          (move 0d (/a 1a %d))
+          (move 0d (/a 1a %d))
+          (loop i infinity
+          (move (*d epsilonLength %d) epsilonAngle))
+          (loop i infinity
+          (move (*d epsilonLength %d) epsilonAngle)))"""%(n,n,n,l,l))
+
+    for n,l in [(3,1),(2,2),(1,3)]:
+        T("%d-semicircle sequence L=%d"%(n,l),
+          """
+          (loop j %d
+          (loop i infinity
+          (move (*d epsilonLength %d) epsilonAngle))
+          (loop i infinity
+          (move (*d epsilonLength %d) (-a 0a epsilonAngle))))
+          """%(n,l,l))
+        
+
+    return tasks
+
+def montageTasks(tasks):
+    import numpy as np
+    
+    w = 128
+    arrays = [t.highresolution for t in tasks]
+    for a in arrays:
+        assert len(a) == w*w
+
+    arrays = [np.array([a[i:i + w]
+                        for i in range(0, len(a), w) ])
+              for a in arrays]
+    i = montage(arrays)
+
+    import scipy.misc
+    scipy.misc.imsave('/tmp/montage.png', i)
+    
+    
+    
 
 if __name__ == "__main__":
     allTasks()
     if len(sys.argv) > 1:
-        tasks = makeTasks(sys.argv[1:])
+        tasks = makeTasks(sys.argv[1:],proto=False)
     else:
-        tasks = makeTasks(['all'])
-    for t in tasks:
-        x, y = t.examples[0]
-        pretty_print(y, 28)
-        try:
-            x, y = t.examples[1]
-            pretty_print(y, 28)
-        except IndexError:
-            print("no NORM")
-            pretty_print(y, 28)
-        print()
+        tasks = makeTasks(['all'],proto=False)
+    montageTasks(tasks)
+    eprint(len(tasks),"tasks")
