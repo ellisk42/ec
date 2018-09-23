@@ -296,11 +296,18 @@ def manualLogoTasks():
           """%n)
 
     for n in range(1,7):
-        T("semicircle of size %d"%n,
-          """
-          (loop i infinity
-          (move (*d epsilonLength %d) epsilonAngle))
-          """%n)
+        if n%2 == 0:
+            T("semicircle of size %d"%n,
+              """
+              (loop i infinity
+              (move (*d epsilonLength %d) (-a 0a epsilonAngle)))
+              """%n)
+        else:
+            T("semicircle of size %d"%n,
+              """
+              (loop i infinity
+              (move (*d epsilonLength %d) epsilonAngle))
+              """%n)
         T("circle of size %d"%n,
           """
           ((loop i infinity
