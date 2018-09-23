@@ -166,6 +166,8 @@ let tower_hash ?timeout:(timeout=0.001) request inputs : program -> (int*json) o
 
   assert (request = (ttower @> ttower));
 
+  register_imperative_type ttower;
+
   fun program ->
     let arrangement = evaluate_discrete_tower_program timeout program in
     let l = List.length arrangement in
@@ -184,6 +186,8 @@ let logo_hash ?timeout:(timeout=0.001) request inputs : program -> (int*json) op
   let open Yojson.Basic.Util in
 
   assert (request = (turtle @> turtle));
+
+  register_imperative_type turtle;
 
   let table = Hashtbl.Poly.create() in
 
