@@ -12,6 +12,10 @@ import heapq
 
 def cindex(i): return lambda a: a[i]
 
+class ConstantFunction:
+    def __init__(self,v): self.v = v
+    def __call__(self,*a,**k): return self.v
+
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
     flushEverything()

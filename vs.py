@@ -650,6 +650,10 @@ class VersionTable():
                 self.relativeFunctionCost[given] = min(cost,
                                                        self.getFunctionCost(given))
 
+            def unobject(self):
+                return {'relativeCost': self.relativeCost, 'defaultCost': self.defaultCost,
+                        'relativeFunctionCost': self.relativeFunctionCost, 'defaultFunctionCost': self.defaultFunctionCost}
+
         beamTable = [None]*len(self.expressions)
 
         def costs(j):
@@ -682,8 +686,12 @@ class VersionTable():
             return beamTable[j]
 
         with timing("beamed version spaces"):
-            beams = [ [ costs(h) for h in hs ]
-                      for hs in versions ]
+            beams = parallelMap(numberOfCPUs(),
+                                lambda hs: [ costs(h).unobject() for h in hs ],
+                                versions,
+                                memorySensitive=True,
+                                chunksize=1,
+                                maxtasksperchild=1)
 
         # This can get pretty memory intensive - clean up the garbage
         beamTable = None
@@ -692,10 +700,10 @@ class VersionTable():
         candidates = {d
                       for _bs in beams
                       for b in _bs
-                      for d in b.domain }
+                      for d in b['relativeCost'].keys() }
         def score(candidate):
-            return sum(min(min(b.getCost(candidate),
-                               b.getFunctionCost(candidate))
+            return sum(min(min(b['relativeCost'].get(candidate, b['defaultCost']),
+                               b['relativeFunctionCost'].get(candidate, b['defaultFunctionCost']))
                            for b in _bs )
                        for _bs in beams )
         candidates = sorted(candidates, key=score)
