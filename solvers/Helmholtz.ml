@@ -256,7 +256,7 @@ let output_job result =
                 "ll", `Float(l);
                 "programs", `List(ps |> List.map ~f:(fun p -> `String(p |> string_of_program)))])))
   in 
-  pretty_to_string message
+  message
 
-let _ =
-  run_job Pervasives.stdin |> output_job |> print_string
+let () =
+  run_job Pervasives.stdin |> output_job |> to_channel Pervasives.stdout
