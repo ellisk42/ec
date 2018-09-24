@@ -186,6 +186,10 @@ def make_list_bootstrap_tasks():
         Task("weird count", arrow(tint, tlist(tint)),
              [((n,), list(range(-n,0,-1)))
               for n in range(-10,0) ]),
+        Task("take every other", arrow(tlist(tint),tlist(tint)),
+             [((l,), [x for j,x in enumerate(l) if j%2 == 0])
+              for _ in range(10)
+              for l in [ [randint(0, 9) for _ in range(randint(1,4)*2)] ] ]),
         Task("suffixes", arrow(tlist(tint), tlist(tlist(tint))),
              [((l,), suffixes(l))
               for _ in range(10)
@@ -249,10 +253,10 @@ def make_list_bootstrap_tasks():
         #      [((x, y), x + y)
         #       for _ in range(10)
         #       for [x, y] in [[randomBooleanList(), randomBooleanList()]]]),
-        # Task("append constant 0", arrow(tlist(tint),tlist(tint)),
-        #      [((l,),l + [0])
-        #       for _ in range(10)
-        #       for l in [randomList()] ]),
+        Task("append constant 0", arrow(tlist(tint),tlist(tint)),
+             [((l,),l + [0])
+              for _ in range(10)
+              for l in [randomList()] ]),
     ]
 
     # learning to map

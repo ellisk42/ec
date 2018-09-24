@@ -1042,15 +1042,17 @@ if __name__ == "__main__":
                 # "(lambda (- $0 (+ 1 1)))",
                 # "(lambda (- (car $0) 1))",
         ("(lambda (fix1 $0 (lambda (lambda (if (eq? 0 $0) empty (cons (- 0 $0) ($1 (+ 1 $0))))))))",None),
-        ("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) empty (cons (cdr $0) ($1 (cdr $0))))))))",arrow(tlist(tint),tlist(tlist(tint)))),
+        # ("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) empty (cons (cdr $0) ($1 (cdr $0))))))))",arrow(tlist(tint),tlist(tlist(tint)))),
         # drop the last element
         # ("(lambda (fix1 $0 (lambda (lambda (if (empty? (cdr $0)) empty (cons (car $0) ($1 (cdr $0))))))))",arrow(tlist(tint),tlist(tint))),
         # take in till 1
         # ("(lambda (fix1 $0 (lambda (lambda (if (eq? (car $0) 1) empty (cons (car $0) ($1 (cdr $0))))))))",arrow(tlist(tint),tlist(tint))),
                 # "(lambda (lambda (fix2 $1 $0 (lambda (lambda (lambda (if (eq? $1 0) (car $0) ($2 (- $1 1) (cdr $0)))))))))",
                 # "(lambda (lambda (fix2 $1 $0 (lambda (lambda (lambda (if (eq? $1 0) (car $0) ($2 (- $1 1) (cdr $0)))))))))",
-                ("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) 0 (+ ($1 (cdr $0)) (car $0)))))))",None),
+                ("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) 0 (+ (car $0) ($1 (cdr $0))))))))",None),
                 ("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) 1 (- (car $0) ($1 (cdr $0))))))))",None),
+        ("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) (cons 0 empty) (cons (car $0) ($1 (cdr $0))))))))",None),
+                ("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) (empty? empty) (if (car $0) ($1 (cdr $0)) (eq? 1 0)))))))",None),
                 # "(lambda (lambda (fix2 $1 $0 (lambda (lambda (lambda (if (empty? $1) $0 (cons (car $1) ($2 (cdr $1) $0)))))))))",
         #         ("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) empty (cons (+ (car $0) (car $0)) ($1 (cdr $0))))))))",None),
         #         ("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) empty (cons (+ (car $0) 1) ($1 (cdr $0))))))))",None),
@@ -1075,6 +1077,10 @@ if __name__ == "__main__":
     #                   a=N,
     #                   backend="vs")
     #     eprint(g)
+
+    # with open('vs.pickle','rb') as handle:
+    #     a,kw = pickle.load(handle)
+    #     induceGrammar_Beta(*a,**kw)
 
     with timing("induced DSL"):
         induceGrammar_Beta(g0, [Frontier.dummy(p, tp=tp) for p, tp in programs],
