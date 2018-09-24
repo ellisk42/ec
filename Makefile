@@ -7,6 +7,8 @@ all:
 	  jbuilder build geomDrawFile.exe && \
 	  jbuilder build logoDrawString.exe && \
 	  jbuilder build protonet-tester.exe && \
+	  jbuilder build compression.exe && \
+	  cp _build/default/compression.exe ../compression && \
 	  cp _build/default/solver.exe ../solver && \
 	  cp _build/default/helmholtz.exe ../helmholtz && \
 	  cp _build/default/protonet-tester.exe ../protonet-tester && \
@@ -31,6 +33,7 @@ clean:
 	cd solvers && jbuilder clean
 	rm -f geomDrawLambdaString
 	rm -f solver
+	rm -f compression
 	rm -f helmholtz
 	rm -f logoDrawString
 	rm -f data/geom/geomDrawFile
