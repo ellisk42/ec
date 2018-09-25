@@ -3,6 +3,10 @@ open Unix.Select_fds
 open Sys
 open Obj
 
+let singleton_head = function
+  | [x] -> x
+  | _ -> assert false
+
 let magical = Obj.magic;;
 
 let float_of_bool = function
@@ -56,6 +60,13 @@ let minimum l = List.reduce_exn l ~f:min
 ;;
 let minimum_by f l = List.reduce_exn l ~f:(fun x y -> if f x < f y then x else y)
 ;;
+let maximum_by f l = List.reduce_exn l ~f:(fun x y -> if f x > f y then x else y)
+;;
+let sort_by f l = List.sort ~compare:(fun x y ->
+    let x = f x in
+    let y = f y in
+    if x = y then 0 else
+      if x > y then 1 else -1) l
 
 
 let memorize f = 

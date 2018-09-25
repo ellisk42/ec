@@ -13,6 +13,30 @@ type frontier = {
   request: tp
 }
 
+let string_of_frontier f =
+  join ~separator:"\n" ([Printf.sprintf "Frontier with request %s:" (string_of_type f.request)] @
+                        (f.programs |> List.map ~f:(fun (p,l) -> Printf.sprintf "%f\t%s"
+                                                       l (string_of_program p))))
+
+let deserialize_frontier j =
+  let open Yojson.Basic.Util in
+  let request = j |> member "request" |> deserialize_type in
+  let programs = j |> member "programs" |> to_list |> List.map ~f:(fun j ->
+      (j |> member "program" |> to_string |> parse_program |> get_some |> strip_primitives,
+       j |> member "logLikelihood" |> to_float))
+  in
+  {programs;request}
+
+let serialize_frontier f =
+  let open Yojson.Basic in
+  let j : json =
+    `Assoc(["request",serialize_type f.request;
+            "programs",`List(f.programs |> List.map ~f:(fun (p,l) ->
+                `Assoc(["program",`String(string_of_program p);
+                       "logLikelihood",`Float(l)])))])
+  in
+  j
+
 let violates_symmetry f a n = 
   if not (is_base_primitive f) then false else
     let a = application_function a in

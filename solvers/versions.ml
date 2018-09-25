@@ -22,6 +22,7 @@ type vt = {universe : int;
            (* equivalence_class : int ra; *)
            (* dynamic programming *)
            recursive_inversion_table : (int option) ra;
+           n_step_table : ((int*int),int) Hashtbl.t;
            substitution_table : ((int*int), ((int,int) Hashtbl.t)) Hashtbl.t;}
 
 let index_table t index = get_resizable t.i2s index
@@ -46,6 +47,7 @@ let new_version_table() : vt =
            i2s=empty_resizable();
            (* equivalence_class=empty_resizable(); *)
            substitution_table=Hashtbl.Poly.create();
+           n_step_table=Hashtbl.Poly.create();
            recursive_inversion_table=empty_resizable();} in
   assert (incorporate_space t Void = t.void);
   assert (incorporate_space t Universe = t.universe);
@@ -262,26 +264,31 @@ let rec log_version_size t j = match index_table t j with
   | _ -> 0.
 
 let rec n_step_inversion t ~n j =
+  let key = (n,j) in
+  match Hashtbl.find t.n_step_table key with
+  | Some(ns) -> ns
+  | None -> 
+    (* list of length (n+1), corresponding to 0 steps, 1, ..., n *)
+    let rec n_step ?completed:(completed=0) current : int list =
+      if completed = n then [current] else
+        let next = recursive_inversion t current in
+        let next = beta_pruning t next in
+        current :: n_step ~completed:(completed+1) next
+    in
 
-  (* list of length (n+1), corresponding to 0 steps, 1, ..., n *)
-  let rec n_step ?completed:(completed=0) current : int list =
-    if completed = n then [current] else
-      let next = recursive_inversion t current in
-      let next = beta_pruning t next in
-      current :: n_step ~completed:(completed+1) next
-  in
-
-  let rec visit j =
-    let children = match index_table t j with
+    let rec visit j =
+      let children = match index_table t j with
         | Union(_) | Void | Universe -> assert false
         | ApplySpace(f,x) -> version_apply t (visit f) (visit x)
         | AbstractSpace(b) -> version_abstract t (visit b)
         | IndexSpace(_) | TerminalSpace(_) -> j
+      in 
+      union t (children :: n_step j)
     in 
-    union t (children :: n_step j)
-  in 
-    
-  visit j
+
+    let ns = visit j in
+    Hashtbl.set t.n_step_table key ns;
+    ns
 
 
 let reachable_versions t indices : int list =
@@ -326,11 +333,10 @@ let rec minimum_cost_inhabitants ?given:(given=None) ?canBeLambda:(canBeLambda=t
       | IndexSpace(_) | TerminalSpace(_) -> (1., [j])
       | Union(u) ->
         let children = u |> List.map ~f:(minimum_cost_inhabitants ~given ~canBeLambda t) in
-        minimum_by fst children
-        (* let c = children |> List.map ~f:(fun (cost,_) -> cost) |> fold1 min in *)
-        (* if is_invalid c then (c,[]) else  *)
-        (*   let children = children |> List.filter ~f:(fun (cost,_) -> cost = c) in *)
-        (*   (c, children |> List.concat_map ~f:(fun (_,p) -> p)) *)
+        let c = children |> List.map ~f:(fun (cost,_) -> cost) |> fold1 min in
+        if is_invalid c then (c,[]) else
+          let children = children |> List.filter ~f:(fun (cost,_) -> cost = c) in
+          (c, children |> List.concat_map ~f:(fun (_,p) -> p))
       | AbstractSpace(b) when canBeLambda ->
         let cost, children = minimum_cost_inhabitants ~given ~canBeLambda:true t b in
         (cost+.epsilon_cost, children |> List.map ~f:(version_abstract t.cost_table_parent))
@@ -386,6 +392,15 @@ let beam_costs ~ct ~bs (candidates : int list) (frontier_indices : (int list) li
   let caching_table = empty_resizable() in
   let v = ct.cost_table_parent in
 
+  (* calculate the number of free variables for each candidate  *)
+  (* if a candidate has free variables and whenever we use it we have to apply it to those variables *)
+  (* thus using these candidates is more expensive *)
+  let candidate_cost = Hashtbl.Poly.create() in
+  candidates' |> List.iter ~f:(fun k ->
+      let cost = extract v k |> singleton_head |> free_variables ~d:0 |>
+                 List.dedup_and_sort ~compare:(-) |> List.length |> Float.of_int in
+      Hashtbl.set candidate_cost ~key:k ~data:(1.+.cost));
+
   let rec calculate_costs j =
     ensure_resizable_length caching_table (j + 1) None;    
     match get_resizable caching_table j with
@@ -399,8 +414,9 @@ let beam_costs ~ct ~bs (candidates : int list) (frontier_indices : (int list) li
                 relative_argument=Hashtbl.Poly.create();}
       in
       inhabitants |> List.filter ~f:(Hash_set.mem candidates) |> List.iter ~f:(fun candidate ->
-          Hashtbl.set bm.relative_function ~key:candidate ~data:1.;
-          Hashtbl.set bm.relative_argument ~key:candidate ~data:1.);
+          let cost = Hashtbl.find_exn candidate_cost candidate in
+          Hashtbl.set bm.relative_function ~key:candidate ~data:cost;
+          Hashtbl.set bm.relative_argument ~key:candidate ~data:cost);
       (match index_table v j with
        | AbstractSpace(b) ->
          let child = calculate_costs b in
@@ -429,12 +445,12 @@ let beam_costs ~ct ~bs (candidates : int list) (frontier_indices : (int list) li
   let frontier_beams = frontier_indices |> List.map ~f:(List.map ~f:calculate_costs) in
 
   let score i =
-    let invention_size, _ = minimum_cost_inhabitants ct i in
+    (* let invention_size, _ = minimum_cost_inhabitants ct i in *)
     let corpus_size = frontier_beams |> List.map ~f:(fun bs ->
         bs |> List.map ~f:(fun b -> min (relative_argument b i) (relative_function b i)) |>
         fold1 min) |> fold1 (+.)
     in
-    invention_size +. corpus_size
+    (* invention_size +.  *)corpus_size
   in
 
   let scored = candidates' |> List.map ~f:(fun i -> (score i,i)) in

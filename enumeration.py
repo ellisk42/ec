@@ -245,18 +245,11 @@ def solveForTask_ocaml(_=None,
 
     import json
 
-    def requestMessage(r):
-        if isinstance(r, TypeConstructor):
-            return {"constructor": r.name,
-                    "arguments": [requestMessage(a) for a in r.arguments]}
-        assert isinstance(r, TypeVariable)
-        return {"index": r.v}
-
     def taskMessage(t):
         m = {
             "examples": [{"inputs": list(xs), "output": y} for xs, y in t.examples],
             "name": t.name,
-            "request": requestMessage(t.request),
+            "request": t.request.json(),
             "maximumFrontier": maximumFrontiers[t]}
         if hasattr(t, "specialTask"):
             special, extra = t.specialTask
@@ -264,19 +257,8 @@ def solveForTask_ocaml(_=None,
             m["extras"] = extra
         return m
 
-    def serializeGrammar(g):
-        if isinstance(g, Grammar):
-            return {"logVariable": g.logVariable,
-                    "productions": [{"expression": str(p), "logProbability": l}
-                                       for l, _, p in g.productions]}
-        if isinstance(g, ContextualGrammar):
-            return {"noParent": serializeGrammar(g.noParent),
-                    "variableParent": serializeGrammar(g.variableParent),
-                    "productions": [{"program": str(e),
-                                     "arguments": [serializeGrammar(gp) for gp in gs ]}
-                                    for e,gs in g.library.items() ]}
 
-    message = {"DSL": serializeGrammar(g),
+    message = {"DSL": g.json(),
                "tasks": [taskMessage(t)
                          for t in tasks],
 

@@ -44,6 +44,11 @@ class TypeConstructor(Type):
             return "%s(%s)" % (self.name, ", ".join(x.show(True)
                                                     for x in self.arguments))
 
+    def json(self):
+        return {"constructor": self.name,
+                "arguments": [a.json() for a in self.arguments]}
+
+
     def isArrow(self): return self.name == ARROW
 
     def functionArguments(self):
@@ -123,6 +128,9 @@ class TypeVariable(Type):
     def __hash__(self): return self.v
 
     def show(self, _): return "t%d" % self.v
+
+    def json(self):
+        return {"index": self.v}
 
     def returns(self): return self
 

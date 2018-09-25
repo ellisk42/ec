@@ -744,7 +744,7 @@ def commandlineArguments(_=None,
     parser.add_argument(
         "--compressor",
         default="pypy",
-        choices=["pypy","rust","vs","pypy_vs"])
+        choices=["pypy","rust","vs","pypy_vs","ocaml"])
     parser.add_argument("--biasOptimal",
                         help="Enumerate dreams rather than sample them & bias-optimal recognition objective",
                         default=False, action="store_true")

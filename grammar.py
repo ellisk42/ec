@@ -57,6 +57,11 @@ class Grammar(object):
             lines.append(l)
         return "\n".join(lines)
 
+    def json(self):
+        return {"logVariable": self.logVariable,
+                "productions": [{"expression": str(p), "logProbability": l}
+                                for l, _, p in self.productions]}
+
     def _immutable_code(self): return self.logVariable, tuple(self.productions)
 
     def __eq__(self, o): return self._immutable_code() == o._immutable_code()
@@ -780,6 +785,13 @@ class ContextualGrammar:
                               str(g),
                               ""])
         return "\n".join(lines)
+
+    def json(self):
+        return {"noParent": self.noParent.json(),
+                "variableParent": self.variableParent.json(),
+                "productions": [{"program": str(e),
+                                 "arguments": [gp.json() for gp in gs ]}
+                                    for e,gs in self.library.items() ]}
 
     @staticmethod
     def fromGrammar(g):

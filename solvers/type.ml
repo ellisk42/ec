@@ -4,6 +4,7 @@ open Funarray
 type tp = 
   | TID of int
   | TCon of string * tp list * bool
+            
 
 let is_polymorphic = function
   | TID(_) -> true
@@ -297,3 +298,15 @@ let rec deserialize_type j =
   with _ ->
     let i = j |> member "index" |> to_int in
     TID(i)
+
+
+let rec serialize_type t =
+  let open Yojson.Basic in
+  let j : json =
+  match t with
+  | TID(i) -> `Assoc(["index",`Int(i)])
+  | TCon(k,a,_) ->
+    `Assoc(["constructor",`String(k);
+            "arguments",`List(a |> List.map ~f:serialize_type)])
+  in
+  j

@@ -42,8 +42,11 @@ let rec application_parse = function
     (f,arguments @ [x])
   | f -> (f,[])
 
-let rec program_size p =
-  1 + (List.map ~f:program_size (program_children p) |> sum)
+let rec program_size = function
+  | Apply(f,x) -> program_size f + program_size x
+  | Abstraction(b) -> program_size b
+  | Index(_) | Invented(_,_) | Primitive(_,_,_) -> 1
+
 
 let rec program_subexpressions p =
   p::(List.map (program_children p) program_subexpressions |> List.concat)
@@ -110,7 +113,7 @@ let rec infer_program_type context environment p : tContext*tp = match p with
 let closed_inference = snd % infer_program_type empty_context [];;
 
 let make_invention i =
-  Invented(closed_inference i, i)
+  Invented(closed_inference i |> canonical_type, i)
 
 
 exception UnknownPrimitive of string
@@ -238,7 +241,7 @@ let rec shift_free_variables ?height:(height = 0) shift p = match p with
   | Abstraction(b) -> Abstraction(shift_free_variables ~height:(height+1) shift b)
 
 let rec free_variables ?d:(d=0) e = match e with
-  | Index(j) -> if j >= d then [j] else []
+  | Index(j) -> if j >= d then [j - d] else []
   | Apply(f,x) -> free_variables ~d:d f @ free_variables ~d:d x
   | Abstraction(b) -> free_variables ~d:(d + 1) b
   | _ -> []
