@@ -566,6 +566,9 @@ def ecIterator(grammar, tasks,
             if useRecognitionModel:
                 ECResult.clearRecognitionModel(path)
 
+            graphPrimitives(result, path)
+            
+
         yield result
 
 
@@ -772,7 +775,8 @@ def commandlineArguments(_=None,
         del v["clear-recognition"]
         
     if v["primitive-graph"] is not None:
-        graphPrimitives(v["primitive-graph"])
+        result = loadPickle(v["primitive-graph"])
+        graphPrimitives(result,v["primitive-graph"],view=True)
         sys.exit(0)
     else:
         del v["primitive-graph"]
@@ -780,9 +784,13 @@ def commandlineArguments(_=None,
     return v
 
 
-def graphPrimitives(checkpoint):
-    with open(checkpoint,'rb') as handle:
-        result = pickle.load(handle)
+def graphPrimitives(result, prefix, view=False):
+    try:
+        from graphviz import Digraph
+    except:
+        eprint("You are missing the graphviz library - cannot graph primitives!")
+        return
+    
 
     primitives = { p
                    for g in result.grammars
@@ -791,7 +799,7 @@ def graphPrimitives(checkpoint):
     age = {p: min(j for j,g in enumerate(result.grammars) if p in g.primitives)
            for p in primitives }
 
-    from graphviz import Digraph
+
 
     ages = set(age.values())
     age2primitives = {a: {p for p,ap in age.items() if a == ap }
@@ -836,8 +844,9 @@ def graphPrimitives(checkpoint):
                 for k in children:
                     g.edge(name[k],name[p])
 
-        g.render('/tmp/%s.pdf'%fn,view=True)
+        eprint("Exported primitive graph to",fn)
+        g.render(fn,view=view)
         
 
-    makeGraph(depth2primitives,checkpoint+'depth')
-    makeGraph(age2primitives,checkpoint+'iter')
+    makeGraph(depth2primitives,prefix+'depth.pdf')
+    makeGraph(age2primitives,prefix+'iter.pdf')
