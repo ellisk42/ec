@@ -92,7 +92,7 @@ def makeTasks(subfolders, proto):
                                         [([], img1)],
                                         highresolution,
                                         needToTrain=True)
-    return problems + manualLogoTasks()
+    return manualLogoTasks() + problems
 
 def parseLogo(s):
         
@@ -202,7 +202,7 @@ def manualLogoTask(name, expression, proto=False, needToTrain=False):
                                       str(p)],
                                      timeout=1).decode("utf8")
              for resolution in [28,128]]
-    shape = list(map(float, output.split(',')))
+    shape = list(map(int, output.split(',')))
     highresolution = list(map(float, highresolution.split(',')))
     t = Task(name, arrow(turtle,turtle),
              [(([0]), shape)])

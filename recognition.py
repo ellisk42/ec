@@ -303,11 +303,14 @@ class RecognitionModel(nn.Module):
             return Frontier(f.entries, task=t)
         if not self.featureExtractor.recomputeTasks:
             with timing("precomputed Helmholtz tasks"):
-                helmholtzFrontiers = [updateTask(self.replaceProgramsWithLikelihoodSummaries(f),
-                                                 t)
-                                      for f in helmholtzFrontiers
-                                      for aProgram in [random.choice(f.entries).program]
-                                      for t in [self.featureExtractor.taskOfProgram(aProgram, f.task.request)]
+                helmholtzTasks = \
+                   parallelMap(CPUs,
+                               lambda f: \
+                               self.featureExtractor.taskOfProgram(random.choice(f.entries).program,
+                                                                   f.task.request),
+                               helmholtzFrontiers)
+                helmholtzFrontiers = [updateTask(self.replaceProgramsWithLikelihoodSummaries(f),t)
+                                      for f,t in zip(helmholtzFrontiers, helmholtzTasks)
                                       if t]
         else:
             helmholtzFrontiers = [(f,self.replaceProgramsWithLikelihoodSummaries(f))

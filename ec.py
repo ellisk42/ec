@@ -566,7 +566,7 @@ def ecIterator(grammar, tasks,
             if useRecognitionModel:
                 ECResult.clearRecognitionModel(path)
 
-            graphPrimitives(result, path)
+            graphPrimitives(result, "%s_primitives_%d_"%(outputPrefix,j))
             
 
         yield result

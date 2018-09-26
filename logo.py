@@ -350,7 +350,7 @@ if __name__ == "__main__":
 
     generator = ecIterator(baseGrammar, train,
                            testingTasks=test,
-                           outputPrefix=prefix_pickles,
+                           outputPrefix="experimentOutputs/logo",
                            evaluationTimeout=0.01,
                            **args)
 
