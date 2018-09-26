@@ -232,10 +232,14 @@ if __name__ == "__main__":
     test, train = testTrainSplit(tasks, 1.)
     eprint("Split %d/%d test/train" % (len(test), len(train)))
 
+    timestamp = datetime.datetime.now().isoformat()
+    outputDirectory = "experimentOutputs/towers/%s"%timestamp
+    os.system("mkdir -p %s"%outputDirectory)
+
     evaluationTimeout = 0.005
     generator = ecIterator(g0, train,
                            testingTasks=test,
-                           outputPrefix="experimentOutputs/tower",
+                           outputPrefix="%s/tower"%outputDirectory,
                            evaluationTimeout=evaluationTimeout,
                            solver="ocaml",
                            **arguments)
@@ -246,16 +250,14 @@ if __name__ == "__main__":
 
     perturbations = {t.perturbation for t in train if isinstance(t,TowerTask)}
 
-    timestamp = datetime.datetime.now().isoformat()
-    os.system("mkdir -p experimentOutputs/towers/%s"%timestamp)
-    dreamOfTowers(g0, "experimentOutputs/towers/%s/random_0"%timestamp)
+    dreamOfTowers(g0, "%s/random_0"%outputDirectory)
     
     for result in generator:
         iteration = len(result.learningCurve)
         newTowers = [tuple(centerTower(executeTower(frontier.sample().program)))
                      for frontier in result.taskSolutions.values() if not frontier.empty]
         try:
-            fn = 'experimentOutputs/towers/%s/solutions_%d.png'%(timestamp,iteration)
+            fn = '%s/solutions_%d.png'%(outputDirectory,iteration)
             if supervised:
                 visualizeSolutions(result.taskSolutions, fn,
                                    train)
@@ -263,10 +265,10 @@ if __name__ == "__main__":
                 assert False
             eprint("Exported solutions to %s\n"%fn)
             dreamOfTowers(result.grammars[-1],
-                          'experimentOutputs/towers/%s/random_%d'%(timestamp,iteration))           
+                          '%s/random_%d'%(outputDirectory,iteration))           
         except ImportError:
             eprint("Could not import required libraries for exporting towers.")
-        primitiveFilename = 'experimentOutputs/towers/%s/primitives_%d.png'%(timestamp, iteration)
+        primitiveFilename = '%s/primitives_%d.png'%(outputDirectory, iteration)
         visualizePrimitives(result.grammars[-1].primitives,
                             primitiveFilename)
         eprint("Exported primitives to",primitiveFilename)

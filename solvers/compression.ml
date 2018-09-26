@@ -258,6 +258,7 @@ let compression_step ~structurePenalty ~aic ~pseudoCounts ?arity:(arity=3) ~bs ~
 
 
     let best_score,g',frontiers',best_index =
+      time_it (Printf.sprintf "Evaluated top-%d candidates" topI) (fun () -> 
       ranked_candidates |> List.map ~f:(fun (c,i) ->
           let source = extract v i |> singleton_head in
           let source = normalize_invention source in
@@ -271,7 +272,7 @@ let compression_step ~structurePenalty ~aic ~pseudoCounts ?arity:(arity=3) ~bs ~
              frontiers' |> List.iter ~f:(fun f -> Printf.eprintf "%s\n" (string_of_frontier f));
              Printf.eprintf "\n"; flush_everything());
           (s,g',frontiers',i))
-      |> minimum_by (fun (s,_,_,_) -> -.s) in
+      |> minimum_by (fun (s,_,_,_) -> -.s)) in
 
     if best_score < initial_score then
       (Printf.eprintf "No improvement possible.\n"; None)

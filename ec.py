@@ -251,10 +251,14 @@ def ecIterator(grammar, tasks,
 
     # Restore checkpoint
     if resume is not None:
-        path = checkpointPath(
-            resume, extra="_baselines" if onlyBaselines else "")
+        try:
+            resume = int(resume)
+            path = checkpointPath(resume, extra="_baselines" if onlyBaselines else "")
+        except ValueError:
+            path = resume
         with open(path, "rb") as handle:
             result = dill.load(handle)
+        resume = len(result.grammars) - 1
         eprint("Loaded checkpoint from", path)
         grammar = result.grammars[-1] if result.grammars else grammar
         recognizer = result.recognitionModel
@@ -613,9 +617,9 @@ def commandlineArguments(_=None,
     import argparse
     parser = argparse.ArgumentParser(description="")
     parser.add_argument("--resume",
-                        help="Resumes EC algorithm from checkpoint",
+                        help="Resumes EC algorithm from checkpoint. You can either pass in the path of a checkpoint, or you can pass in the iteration to resume from, in which case it will try to figure out the path.",
                         default=None,
-                        type=int)
+                        type=str)
     parser.add_argument("-i", "--iterations",
                         help="default: %d" % iterations,
                         default=iterations,
