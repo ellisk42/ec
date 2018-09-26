@@ -108,9 +108,9 @@ class RecognitionModel(nn.Module):
         if self.contextual:            
             self.variableParent = productionProjection("variable parent")
             self.noParent = productionProjection("no parent")
-            self.library = {e: [productionProjection(str(e) + " " + str(n))
+            self.library = {e: [productionProjection("primitive" + str(ei) + " " + str(n))
                                 for n in range(len(e.infer().functionArguments())) ]
-                            for e in grammar.primitives }
+                            for ei,e in enumerate(grammar.primitives) }
         else:
             self.logVariable = nn.Linear(inputDimensionality, 1)
             self.logProductions = nn.Linear(inputDimensionality, len(grammar))
