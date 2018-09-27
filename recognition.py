@@ -281,6 +281,7 @@ class RecognitionModel(nn.Module):
         return untorch(g)
 
 
+    
     def trainBiasOptimal(self, frontiers, helmholtzFrontiers, _=None,
                          steps=250, lr=0.0001, timeout=None, CPUs=None,
                          evaluationTimeout=0.001,
@@ -290,6 +291,28 @@ class RecognitionModel(nn.Module):
         # And type stuff is expensive!
         frontiers = [self.replaceProgramsWithLikelihoodSummaries(f)
                      for f in frontiers]
+        class HelmholtzEntry():
+            def __init__(self, frontier, owner):
+                self.request = frontier.task.request
+                self.task = None
+                self.programs = [e.program for e in frontier]
+                self.frontier = owner.replaceProgramsWithLikelihoodSummaries(frontier)
+                self.owner = owner
+
+            def clear(self): self.task = None
+
+            def calculateTask(self):
+                assert self.task is None
+                p = random.choice(self.programs)
+                return self.owner.featureExtractor.taskOfProgram(p, self.request)
+
+            def makeFrontier(self):
+                assert self.task is not None
+                f = Frontier(self.frontier.entries,
+                             task=self.task)
+                return f
+            
+            
 
         # Should we recompute tasks on the fly from Helmholtz?  This
         # should be done if the task is stochastic, or if there are
@@ -299,22 +322,46 @@ class RecognitionModel(nn.Module):
         # wastes time.
         if not hasattr(self.featureExtractor, 'recomputeTasks'):
             self.featureExtractor.recomputeTasks = True
-        def updateTask(f,t):
-            return Frontier(f.entries, task=t)
-        if not self.featureExtractor.recomputeTasks:
-            with timing("precomputed Helmholtz tasks"):
-                helmholtzTasks = \
-                   parallelMap(CPUs,
-                               lambda f: \
-                               self.featureExtractor.taskOfProgram(random.choice(f.entries).program,
-                                                                   f.task.request),
-                               helmholtzFrontiers)
-                helmholtzFrontiers = [updateTask(self.replaceProgramsWithLikelihoodSummaries(f),t)
-                                      for f,t in zip(helmholtzFrontiers, helmholtzTasks)
-                                      if t]
-        else:
-            helmholtzFrontiers = [(f,self.replaceProgramsWithLikelihoodSummaries(f))
-                                  for f in helmholtzFrontiers]
+        helmholtzFrontiers = [HelmholtzEntry(f, self)
+                              for f in helmholtzFrontiers]
+        random.shuffle(helmholtzFrontiers)
+
+        
+        helmholtzIndex = [0]
+        def getHelmholtz():
+            f = helmholtzFrontiers[helmholtzIndex[0]]
+            if f.task is None:
+                with timing("Evaluated another batch of Helmholtz tasks"):
+                    updateHelmholtzTasks()
+                return getHelmholtz()
+
+            helmholtzIndex[0] += 1
+            if helmholtzIndex[0] >= len(helmholtzFrontiers):
+                helmholtzIndex[0] = 0
+                random.shuffle(helmholtzFrontiers)
+                if self.featureExtractor.recomputeTasks:
+                    for fp in helmholtzFrontiers:
+                        fp.clear()
+            assert f.task is not None
+            return f.makeFrontier()
+            
+        def updateHelmholtzTasks():
+            HELMHOLTZBATCHSIZE = 500
+            newTasks = \
+             parallelMap(1,
+                         lambda f: f.calculateTask(),
+                        helmholtzFrontiers[helmholtzIndex[0]:helmholtzIndex[0] + HELMHOLTZBATCHSIZE])
+            badIndices = []
+            for i in range(helmholtzIndex[0], min(helmholtzIndex[0] + HELMHOLTZBATCHSIZE,
+                                                  len(helmholtzFrontiers))):
+                helmholtzFrontiers[i].task = newTasks[i - helmholtzIndex[0]]
+                if helmholtzFrontiers[i].task is None: badIndices.append(i)
+            # Permanently kill anything which failed to give a task
+            for i in reversed(badIndices):
+                assert helmholtzFrontiers[i].task is None
+                del helmholtzFrontiers[i]
+            
+                
         eprint("Training bias optimal w/ %d Helmholtz frontiers"%len(helmholtzFrontiers))
         
         optimizer = torch.optim.Adam(self.parameters(), lr=lr, eps=1e-3, amsgrad=True)
@@ -333,15 +380,7 @@ class RecognitionModel(nn.Module):
                 random.shuffle(permutedFrontiers)
                 for frontier in permutedFrontiers:
                     if random.random() < helmholtzRatio:
-                        if self.featureExtractor.recomputeTasks:
-                            _frontier, summaryFrontier = random.choice(helmholtzFrontiers)
-                            aProgram = random.choice(_frontier.entries).program
-                            task = self.featureExtractor.taskOfProgram(aProgram, _frontier.task.request)
-                            if task is not None:
-                                frontier = updateTask(summaryFrontier, task)
-                        else:
-                            frontier = random.choice(helmholtzFrontiers)
-                    
+                        frontier = getHelmholtz()
                     self.zero_grad()
                     loss = self.frontierBiasOptimal(frontier)
                     if is_torch_invalid(loss):
