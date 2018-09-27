@@ -1,3 +1,11 @@
+### Running using Singularity
+
+If you don't want to manually install all the of the software dependencies locally you can instead do everything inside of singularity container. To build the container, you can use the recipe `singularity` in the repository, and just do (tested using singularity version 2.5):
+
+```sudo singularity build container.img singularity
+./container.img # will give you a shell into the container environment
+```
+
 # Bunch of general information
 
 To do.

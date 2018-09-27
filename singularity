@@ -1,0 +1,65 @@
+Bootstrap: docker
+
+From: ubuntu
+
+
+%runscript
+	eval `opam config env`
+	exec bash
+
+
+
+
+%environment
+
+    HOME=/container
+    export HOME
+
+    PATH="/usr/local/conda/bin:/container/pypy3.5-6.0.0-linux_x86_64-portable/bin:$PATH"
+    export PATH
+
+
+%labels
+
+   AUTHOR ellisk@mit.edu
+
+
+%post
+
+    apt-get update && apt-get -y install python3 git wget opam m4 libcairo2-dev libzmq3-dev swig graphviz
+
+    mkdir /container
+    chmod 777 /container
+    HOME=/container
+    export HOME
+
+    opam init -y --auto-setup --root /container/.opam
+    opam update
+    opam switch 4.06.1+flambda
+    eval `opam config env`
+    opam install -y  ppx_jane core re2 yojson vg cairo2 camlimages menhir ocaml-protoc zmq
+    #opam install ocp-indent merlin
+
+    wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
+    chmod +x Miniconda3-latest-Linux-x86_64.sh
+    ./Miniconda3-latest-Linux-x86_64.sh -b  -p /usr/local/conda
+    rm ./Miniconda3-latest-Linux-x86_64.sh
+    export PATH="/usr/local/conda/bin:$PATH"
+
+    conda install -y  numpy dill pyzmq matplotlib scipy protobuf
+    conda install -y  pytorch=0.4.0 torchvision -c pytorch
+    pip install dill sexpdata pygame pycairo cairocffi psutil pypng Box2D-kengz graphviz
+
+    wget https://bitbucket.org/squeaky/portable-pypy/downloads/pypy3.5-6.0.0-linux_x86_64-portable.tar.bz2
+    tar xjvf pypy3.5-6.0.0-linux_x86_64-portable.tar.bz2
+    rm pypy3.5-6.0.0-linux_x86_64-portable.tar.bz2
+    mv pypy3.5-6.0.0-linux_x86_64-portable /container
+    PATH=/container/pypy3.5-6.0.0-linux_x86_64-portable/bin:$PATH
+
+    pypy3 -m ensurepip
+    pypy3 -m pip install --user vmprof
+    pypy3 -m pip install --user dill
+    pypy3 -m pip install --user psutil
+
+
+
