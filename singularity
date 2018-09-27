@@ -5,8 +5,7 @@ From: ubuntu
 
 %runscript
 	eval `opam config env`
-	exec bash
-
+	if [ $# = 0 ] ; then exec bash; else exec "$@"; fi
 
 
 
