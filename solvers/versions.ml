@@ -384,9 +384,10 @@ let relative_argument b i = match Hashtbl.find b.relative_argument i with
   | Some(c) -> c
 ;;
 
-  
-let beam_costs ~ct ~bs (candidates : int list) (frontier_indices : (int list) list)
-  : (float*int) list =
+
+(* For each of the candidates returns the minimum description length of the frontiers *)
+let beam_costs' ~ct ~bs (candidates : int list) (frontier_indices : (int list) list)
+  : float list =
   let candidates' = candidates in
   let candidates = Hash_set.Poly.of_list candidates in
   let caching_table = empty_resizable() in
@@ -453,8 +454,13 @@ let beam_costs ~ct ~bs (candidates : int list) (frontier_indices : (int list) li
     (* invention_size +.  *)corpus_size
   in
 
-  let scored = candidates' |> List.map ~f:(fun i -> (score i,i)) in
-  scored |> List.sort ~compare:(fun (s1,_) (s2,_) -> Float.compare s1 s2)
+  candidates' |> List.map ~f:score
+
+  (* let scored = candidates' |> List.map ~f:(fun i -> (score i,i)) in *)
+  (* scored |> List.sort ~compare:(fun (s1,_) (s2,_) -> Float.compare s1 s2) *)
 
   
   
+let beam_costs ~ct ~bs (candidates : int list) (frontier_indices : (int list) list) =
+  let scored = List.zip_exn (beam_costs' ~ct ~bs candidates frontier_indices) candidates in
+  scored |> List.sort ~compare:(fun (s1,_) (s2,_) -> Float.compare s1 s2)

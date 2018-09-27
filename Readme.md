@@ -43,6 +43,7 @@ required by at least one domain.
 pip install dill
 pip install sexpdata
 pip install Box2D-kengz
+pip install graphviz
 pip install pygame
 pip install pycairo
 pip install cairocffi

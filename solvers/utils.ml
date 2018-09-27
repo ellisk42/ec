@@ -177,11 +177,13 @@ let flush_everything () =
   Pervasives.flush stderr
 
 
-let time_it description callback = 
+let time_it ?verbose:(verbose=true) description callback = 
   let start_time = Time.now () in
   let return_value = callback () in
-  Printf.eprintf "%s in %s.\n" description (Time.diff (Time.now ()) start_time |> Time.Span.to_string); 
-  flush_everything();
+  if verbose then begin 
+    Printf.eprintf "%s in %s.\n" description (Time.diff (Time.now ()) start_time |> Time.Span.to_string); 
+    flush_everything()
+  end;
   return_value
 
 let shuffle d = begin
