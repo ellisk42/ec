@@ -190,10 +190,10 @@ def make_list_bootstrap_tasks():
              [((l,), [x for j,x in enumerate(l) if j%2 == 0])
               for _ in range(10)
               for l in [ [randint(0, 9) for _ in range(randint(1,4)*2)] ] ]),
-        Task("suffixes", arrow(tlist(tint), tlist(tlist(tint))),
-             [((l,), suffixes(l))
-              for _ in range(10)
-              for l in [randomList()]]),
+        # Task("suffixes", arrow(tlist(tint), tlist(tlist(tint))),
+        #      [((l,), suffixes(l))
+        #       for _ in range(10)
+        #       for l in [randomList()]]),
         Task("range", arrow(tint, tlist(tint)),
              [((n,), list(range(n)))
               for n in range(10)]),
@@ -297,8 +297,8 @@ def make_list_bootstrap_tasks():
              [((l,), list(map(lambda n: n * 4, l)))
               for _ in range(10)
               for l in [randomList()]]),
-        Task("map add 4", arrow(tlist(tint),tlist(tint)),
-             [((l,),list(map(lambda n: n+4, l)))
+        Task("map add 3", arrow(tlist(tint),tlist(tint)),
+             [((l,),list(map(lambda n: n+3, l)))
               for _ in range(10)
               for l in [randomList()] ]),
 
