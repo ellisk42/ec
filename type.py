@@ -13,6 +13,13 @@ class Type(object):
 
     def __repr__(self): return str(self)
 
+    @staticmethod
+    def fromjson(j):
+        if "index" in j: return TypeVariable(j["index"])
+        if "constructor" in j: return TypeConstructor(j["constructor"],
+                                                      [ Type.fromjson(a) for a in j["arguments"] ])
+        assert False
+
 
 class TypeConstructor(Type):
     def __init__(self, name, arguments):

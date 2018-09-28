@@ -283,7 +283,7 @@ let compression_step_master ~nc ~structurePenalty ~aic ~pseudoCounts ?arity:(ari
   let fork_worker frontiers =
     let p = List.length !sockets in
     let address = Printf.sprintf "ipc:///tmp/compression_ipc_%d" p in
-    sockets := address :: !sockets;
+    sockets := !sockets @ [address];
 
     match Unix.fork() with
     | `In_the_child -> compression_worker address ~arity ~bs ~topK g frontiers
@@ -316,10 +316,14 @@ let compression_step_master ~nc ~structurePenalty ~aic ~pseudoCounts ?arity:(ari
       Zmq.Socket.bind socket address;
       socket)
   in
-  let send socket data = Zmq.Socket.send socket (Marshal.to_string data []) in
+  let send data =
+    let data = Marshal.to_string data [] in
+    sockets |> List.iter ~f:(fun socket -> Zmq.Socket.send socket data)
+  in
   let receive socket = Marshal.from_string (Zmq.Socket.recv socket) 0 in
   let finish() =
-    sockets |> List.iter ~f:(fun s -> send s KillWorker; Zmq.Socket.close s);
+    send KillWorker;
+    sockets |> List.iter ~f:(fun s -> Zmq.Socket.close s);
     Zmq.Context.terminate context
   in 
     
@@ -332,7 +336,7 @@ let compression_step_master ~nc ~structurePenalty ~aic ~pseudoCounts ?arity:(ari
     (Time.diff (Time.now ()) start_time |> Time.Span.to_string);
   flush_everything();
   
-  sockets |> List.iter ~f:(fun s -> send s candidates);
+  send candidates;
 
   let candidate_scores : float list list =
     sockets |> List.map ~f:(fun s -> let ss : float list = receive s in ss)
@@ -360,7 +364,7 @@ let compression_step_master ~nc ~structurePenalty ~aic ~pseudoCounts ?arity:(ari
 
   (* now we have our final list of candidates! *)
   (* ask each of the workers to rewrite w/ each candidate *)
-  sockets |> List.iter ~f:(fun s -> send s @@ Rewrite(candidates));
+  send @@ Rewrite(candidates);
   (* For each invention, the full rewritten frontiers *)
   let new_frontiers : frontier list list =
     time_it "Rewrote topK" (fun () ->
@@ -370,8 +374,6 @@ let compression_step_master ~nc ~structurePenalty ~aic ~pseudoCounts ?arity:(ari
   
   let score frontiers candidate =
     let new_grammar = uniform_grammar (normalize_invention candidate :: grammar_primitives g) in
-    (* sockets |> List.iter ~f:(fun s -> send s @@ Rewrite(candidate)); *)
-    (* let frontiers = sockets |> List.map ~f:(fun s -> let fs : frontier list = receive s in fs) |> List.concat in *)
     let g',s = grammar_induction_score ~aic ~pseudoCounts ~structurePenalty frontiers new_grammar in
     if !verbose_compression then
       (let source = normalize_invention candidate in
@@ -403,7 +405,7 @@ let compression_step_master ~nc ~structurePenalty ~aic ~pseudoCounts ?arity:(ari
        flush_everything();
        (* Rewrite the entire frontiers *)
        let frontiers'' = time_it "rewrote all of the frontiers" (fun () ->
-           sockets |> List.iter ~f:(fun s -> send s @@ RewriteEntireFrontiers(best_candidate));
+           send @@ RewriteEntireFrontiers(best_candidate);
            sockets |> List.map ~f:receive |> List.concat)
        in
        finish();
