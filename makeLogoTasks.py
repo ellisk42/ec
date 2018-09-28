@@ -231,7 +231,7 @@ def manualLogoTasks():
           (move (*d epsilonLength i) (*a epsilonAngle %d)))
           """%i)
 
-    for i in [5,7,9]:
+    for i in [3,5,7,9]:
         T("star %d"%i,
           """
           (loop i %d (move (*d 1d 3) (-a 1a (/a 1a %s))))
