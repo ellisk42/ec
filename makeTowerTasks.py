@@ -344,12 +344,12 @@ def makeSupervisedTasks():
 (embed v (r 4) v (l 2) h)) (l 6))
 """%(n))
                  for n in range(3,8) ]
-    simpleLoops = [SupervisedTower("horizontal row %d"%n,
-                                   """(for j %d h (r 6))"""%n)
-                   for n in [4,7] ]+\
-                [SupervisedTower("vertical row %d"%n,
-                                   """(for j %d v (r 2))"""%n)
-                   for n in [3,6] ]+\
+    simpleLoops = [SupervisedTower("horizontal row %d, spacing %d"%(n,s),
+                                   """(for j %d h (r %s))"""%(n,s))
+                   for n,s in [(4,6),(5,7)] ]+\
+                [SupervisedTower("vertical row %d, spacing %d"%(n,s),
+                                   """(for j %d v (r %d))"""%(n,s))
+                   for n,s in [(3,2),(6,4)] ]+\
                 [SupervisedTower("horizontal stack %d"%n,
                                    """(for j %d h)"""%n)
                    for n in range(5,8) ]+\
@@ -384,7 +384,7 @@ def makeSupervisedTasks():
   (embed
     (for j i h (l 3))))
                                  """%n)
-                for n in range(3,7) ]
+                for n in range(4,8) ]
     pyramids += [SupervisedTower("arch 1/2 pyramid %d"%n,
 """
 (for i %d
@@ -399,7 +399,7 @@ def makeSupervisedTasks():
   (r 2)
   (embed
                                  (for j i v (l 1))))"""%(n))
-                for n in range(3,8) ]
+                for n in range(4,8) ]
     bricks = [SupervisedTower("brickwall, %dx%d"%(w,h),
                               """(for j %d
                               (embed (for i %d h (r 6)))
