@@ -280,7 +280,7 @@ let compression_step_master ~nc ~structurePenalty ~aic ~pseudoCounts ?arity:(ari
   let sockets = ref [] in
   let fork_worker frontiers =
     let p = List.length !sockets in
-    let address = Printf.sprintf "ipc:////tmp/compression/%d" p in
+    let address = Printf.sprintf "ipc:////tmp/compression_ipc_%d" p in
     sockets := address :: !sockets;
 
     match Unix.fork() with
