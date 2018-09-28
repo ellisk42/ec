@@ -111,9 +111,11 @@ let eta_long request e =
         let ft = applyContext' context ft in
         let xt = arguments_of_type ft in
         if List.length xs <> List.length xt then raise EtaExpandFailure else
-          List.fold_left (List.zip_exn xs xt) ~init:f ~f:(fun return_value (x,t) ->
-              Apply(return_value,
-                    visit (applyContext' context t) environment x))
+          let xs' =
+            List.map2_exn xs xt ~f:(fun x t -> visit (applyContext' context t) environment x)
+          in
+          List.fold_left xs' ~init:f ~f:(fun return_value x ->
+              Apply(return_value,x))
   in
 
   let e' = visit request [] e in
