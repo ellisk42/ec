@@ -1095,51 +1095,34 @@ def helmholtzEnumeration(g, request, inputs, timeout, _=None,
                          special=None, evaluationTimeout=None):
     import json
 
-    def requestMessage(r):
-        if isinstance(r, TypeConstructor):
-            return {"constructor": r.name,
-                    "arguments": [requestMessage(a) for a in r.arguments]}
-        assert isinstance(r, TypeVariable)
-        return {"index": r.v}
-    def serializeGrammar(g):
-        if isinstance(g, Grammar):
-            return {"logVariable": g.logVariable,
-                    "productions": [{"expression": str(p), "logProbability": l}
-                                       for l, _, p in g.productions]}
-        if isinstance(g, ContextualGrammar):
-            return {"noParent": serializeGrammar(g.noParent),
-                    "variableParent": serializeGrammar(g.variableParent),
-                    "productions": [{"program": str(e),
-                                     "arguments": [serializeGrammar(gp) for gp in gs ]}
-                                    for e,gs in g.library.items() ]}
-
-    message = {"request": requestMessage(request),
+    message = {"request": request.json(),
                "timeout": timeout,
-               "DSL": serializeGrammar(g),
+               "DSL": g.json(),
                "extras": inputs}
     if evaluationTimeout: message["evaluationTimeout"] = evaluationTimeout
     if special: message["special"] = special
     message = json.dumps(message)
-    #    with open('/tmp/message','w') as handle: handle.write(message)
     try:
         process = subprocess.Popen("./helmholtz",
                                    stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE)
         response, error = process.communicate(bytes(message, encoding="utf-8"))
-        response = json.loads(response.decode("utf-8"))
+        with timing("(Helmholtz enumeration) parsed json"):
+            response = json.loads(response.decode("utf-8"))
     except OSError as exc:
         raise exc
 
     h = set()
     frontiers = []
-    for b, entry in enumerate(response):
-        frontiers.append(Frontier([FrontierEntry(program=Program.parse(p),
-                                                 logPrior=entry["ll"],
-                                                 logLikelihood=0.)
-                                   for p in entry["programs"] ],
-                                  task=Task(str(b),
-                                            request,
-                                            [])))
+    with timing("(Helmholtz enumeration) constructed frontiers"):
+        for b, entry in enumerate(response):
+            frontiers.append(Frontier([FrontierEntry(program=Program.parse(p),
+                                                     logPrior=entry["ll"],
+                                                     logLikelihood=0.)
+                                       for p in entry["programs"] ],
+                                      task=Task(str(b),
+                                                request,
+                                                [])))
 
     return frontiers
 
