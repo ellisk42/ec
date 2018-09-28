@@ -363,6 +363,7 @@ class RecognitionModel(nn.Module):
             
                 
         eprint("Training bias optimal w/ %d Helmholtz frontiers"%len(helmholtzFrontiers))
+        with timing("Precomputed a Helmholtz batch"): updateHelmholtzTasks()
         
         optimizer = torch.optim.Adam(self.parameters(), lr=lr, eps=1e-3, amsgrad=True)
         if timeout:

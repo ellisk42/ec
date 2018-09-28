@@ -823,24 +823,26 @@ let parse_program s = run_parser program_parser s
 
 let parsing_test_case s =
   Printf.printf "Parsing the string %s\n" s;
-  program_parser s |> List.iter ~f:(fun (p,suffix) ->
-      if suffix = "" then
+  program_parser (s,0) |> List.iter ~f:(fun (p,n) ->
+      if n = String.length s then
         (Printf.printf "Parsed into the program: %s\n" (string_of_program p);
-         assert (s = (string_of_program p)))
+         assert (s = (string_of_program p));
+        flush_everything())
       else
-        Printf.printf "With the suffix %s, we get the program %s\n" suffix (string_of_program p));
+        (Printf.printf "With the suffix %n, we get the program %s\n" n (string_of_program p);
+         flush_everything()));
   Printf.printf "\n"
 ;;
 
 let parsing_test_cases() =
-  parsing_test_case "+1";
+  parsing_test_case "(+ 1)";
   parsing_test_case "($0 $1)";
-  parsing_test_case "(+1 $0 $2)";
-  parsing_test_case "(map +1 $0 $1)";
-  parsing_test_case "(map +1 ($0 +1 -1 (+ -)) $1)";
+  parsing_test_case "(+ 1 $0 $2)";
+  parsing_test_case "(map (+ 1) $0 $1)";
+  parsing_test_case "(map (+ 1) ($0 (+ 1) (- 1) (+ -)) $1)";
   parsing_test_case "(lambda $0)";
-  parsing_test_case "(lambda (+ k1 #(* k8 k1)))";
-  parsing_test_case "(lambda (+ k1 #(* k8 map)))";
+  parsing_test_case "(lambda (+ 1 #(* 8 1)))";
+  parsing_test_case "(lambda (+ 1 #(* 8 map)))";
 ;;
 
 
@@ -850,7 +852,7 @@ let parsing_test_cases() =
 (* program_test_cases();; *)
              
 let [@warning "-20"] performance_test_case() =
-  let e = parse_program "(lambda (fix (lambda (lambda (if (empty? $0) $0 (cons (* 2 (car $0)) ($1 (cdr $0)))))) $0))" |> get_some in
+  let e = parse_program "(lambda (fix1 $0 (lambda (lambda (if (empty? $0) $0 (cons (* 2 (car $0)) ($1 (cdr $0))))))))" |> get_some in
   let xs = [2;1;9;3;] in
   let n = 10000000 in
   time_it "evaluate program many times" (fun () -> 
@@ -927,7 +929,7 @@ let test_lazy_evaluation() =
             "(car (cdr (cons 1 (cons 2 (cons 3 empty)))))";
             "(cdr (cons 1 (cons 2 (cons 3 empty))))";
             "(map (+ 1) (cons 1 (cons 2 (cons 3 empty))))";
-            "(map +1 (cons 1 (cons 2 (cons 3 empty))))";
+            "(map (+ 1) (cons 1 (cons 2 (cons 3 empty))))";
             "(map (lambda (+ $0 $0)) (cons 1 (cons 2 (cons 3 empty))))";
             "(fold_right (lambda2 (+ $0 $1)) 0 (cons 1 (cons 2 (cons 3 empty))))";
             "(fix1 (cons 1 (cons 2 (cons 3 empty))) (lambda2 (if (empty? $0) 0 (+ 1 ($1 (cdr $0))))))";

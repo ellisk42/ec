@@ -113,7 +113,7 @@ class LogoFeatureCNN(nn.Module):
                                               "none",
                                               str(resolution),
                                               str(p)],
-                                             timeout=1).decode("utf8")
+                                             timeout=0.05).decode("utf8")
                      for resolution in [28,self.inputImageDimension]]
             shape = list(map(float, output.split(',')))
             highresolution = list(map(float, highresolution.split(',')))
