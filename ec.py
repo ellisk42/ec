@@ -848,8 +848,12 @@ def graphPrimitives(result, prefix, view=False):
                 for k in children:
                     g.edge(name[k],name[p])
 
-        eprint("Exported primitive graph to",fn)
-        g.render(fn,view=view)
+        try:
+            g.render(fn,view=view)
+            eprint("Exported primitive graph to",fn)
+        except:
+            eprint("Got some kind of error while trying to render primitive graph! Did you install graphviz/dot?")
+        
         
 
     makeGraph(depth2primitives,prefix+'depth.pdf')
