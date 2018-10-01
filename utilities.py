@@ -680,6 +680,7 @@ class ParseFailure(Exception):
     pass
 
 def parseSExpression(s):
+    s = s.strip()
     def p(n):
         while n <= len(s) and s[n].isspace(): n += 1
         if n == len(s): raise ParseFailure(s)
@@ -704,8 +705,10 @@ def parseSExpression(s):
             n += 1
         name = "".join(name)
         return name,n
-    e,_ = p(0)
-    return e
+    e,n = p(0)
+    if n == len(s):
+        return e
+    raise ParseFailure(s)
 
 
 if __name__ == "__main__":
