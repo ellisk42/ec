@@ -139,10 +139,26 @@ class Program(object):
 
     @staticmethod
     def parse(s):
-        e, n = Program._parse(s.strip(),0)
-        if n != len(s):
+        s = parseSExpression(s)
+        def p(e):
+            if isinstance(e,list):
+                if e[0] == '#':
+                    assert len(e) == 2
+                    return Invented(p(e[1]))
+                if e[0] == 'lambda':
+                    assert len(e) == 2
+                    return Abstraction(p(e[1]))                    
+                f = p(e[0])
+                for x in e[1:]:
+                    f = Application(f,p(x))
+                return f
+            assert isinstance(e,str)
+            if e[0] == '$': return Index(int(e[1:]))
+            if e in Primitive.GLOBALS: return Primitive.GLOBALS[e]
+            if e == '??' or e == '?': return FragmentVariable.single
+            if e == '<HOLE>': return Hole.single
             raise ParseFailure(s)
-        return e
+        return p(s)
 
     @staticmethod
     def _parse(s,n):

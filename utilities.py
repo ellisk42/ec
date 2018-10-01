@@ -686,7 +686,7 @@ def parseSExpression(s):
         if n == len(s): raise ParseFailure(s)
         if s[n] == '#':
             e,n = p(n + 1)
-            return ['#', e]
+            return ['#', e],n
         if s[n] == '(':
             l = []
             n += 1
