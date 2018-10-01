@@ -117,7 +117,7 @@ def list_options(parser):
 
 if __name__ == "__main__":
     args = commandlineArguments(
-        steps=1000,
+        recognitionTimeout=7200,
         a=3,
         topK=3,
         iterations=10,

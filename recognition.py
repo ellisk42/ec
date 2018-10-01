@@ -1114,6 +1114,13 @@ def helmholtzEnumeration(g, request, inputs, timeout, _=None,
 
     h = set()
     frontiers = []
+    np = 0
+    with timing("(Helmholtz enumeration) parsed programs"):
+        for e in response:
+            for p in e["programs"]:
+                parseSExpression(p)
+                np += 1
+    eprint("(Helmholtz enumeration) %d distinct programs"%np)
     with timing("(Helmholtz enumeration) constructed frontiers"):
         for b, entry in enumerate(response):
             frontiers.append(Frontier([FrontierEntry(program=Program.parse(p),

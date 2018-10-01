@@ -14,11 +14,6 @@ class InferenceFailure(Exception):
 class ShiftFailure(Exception):
     pass
 
-
-class ParseFailure(Exception):
-    pass
-
-
 class RunFailure(Exception):
     pass
 

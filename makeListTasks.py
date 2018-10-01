@@ -204,9 +204,9 @@ def make_list_bootstrap_tasks():
         Task("range inclusive", arrow(tint, tlist(tint)),
              [((n,), list(range(n + 1)))
               for n in range(10)]),
-        Task("range exclusive", arrow(tint, tlist(tint)),
-             [((n,), list(range(n - 1)))
-              for n in range(1, 11)]),
+        # Task("range exclusive", arrow(tint, tlist(tint)),
+        #      [((n,), list(range(n - 1)))
+        #       for n in range(1, 11)]),
     ]
 
     # Encourages learning how to treat a list as an array
@@ -279,7 +279,7 @@ def make_list_bootstrap_tasks():
               for l in [randomList()] ]),
         # Task("map car", arrow(tlist(tlist(tint)), tlist(tint)),
         #      [((l,), [n[0] for n in l])
-        #       for _ in range(10)
+        #       for _ in4 range(10)
         #       for l in [randomListOfLists()]]),
         # Task("map cdr", arrow(tlist(tlist(tbool)),tlist(tlist(tbool))),
         #      [((l,),map(lambda n: n[1:],l))
@@ -376,7 +376,7 @@ def make_list_bootstrap_tasks():
     # Let's learn everything!
     if True:
         return lengthBootstrap + \
-            unfoldBootstrap + arrayBootstrap + foldBootstrap + difficultMaps + zipBootstrap + mapBootstrap
+            unfoldBootstrap + arrayBootstrap + foldBootstrap + zipBootstrap + mapBootstrap
 
 
 def bonusListProblems():

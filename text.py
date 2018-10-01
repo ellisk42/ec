@@ -72,7 +72,7 @@ def text_options(parser):
 
 if __name__ == "__main__":
     arguments = commandlineArguments(
-        steps=250,
+        recognitionTimeout=7200,
         iterations=10,
         helmholtzRatio=0.5,
         topK=2,

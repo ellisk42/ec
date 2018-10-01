@@ -130,7 +130,7 @@ def ecIterator(grammar, tasks,
                resumeFrontierSize=None,
                useRecognitionModel=True,
                useNewRecognitionModel=False,
-               steps=250,  # 250,
+               recognitionTimeout=None,
                helmholtzRatio=0.,
                helmholtzBatch=5000,
                featureExtractor=None,
@@ -205,7 +205,7 @@ def ecIterator(grammar, tasks,
             "testingTasks",
             "compressor"} and v is not None}
     if not useRecognitionModel:
-        for k in {"helmholtzRatio", "steps", "biasOptimal"}:
+        for k in {"helmholtzRatio", "recognitionTimeout", "biasOptimal"}:
             del parameters[k]
 
     # Uses `parameters` to construct the checkpoint path
@@ -395,12 +395,12 @@ def ecIterator(grammar, tasks,
 
             if biasOptimal:
                 recognizer.trainBiasOptimal(frontiers, helmholtzFrontiers(), 
-                                            steps=steps, CPUs=CPUs,
+                                            CPUs=CPUs,
                                             evaluationTimeout=evaluationTimeout,
-                                            timeout=enumerationTimeout,
+                                            timeout=recognitionTimeout,
                                             helmholtzRatio=helmholtzRatio)
             else:
-                recognizer.train(frontiers, steps=steps, CPUs=CPUs, timeout=enumerationTimeout,
+                recognizer.train(frontiers, CPUs=CPUs, timeout=recognitionTimeout,
                                  helmholtzRatio=helmholtzRatio if j > 0 or helmholtzRatio == 1. else 0.)                                
             result.recognitionModel = recognizer
 
@@ -419,7 +419,6 @@ def ecIterator(grammar, tasks,
             result.recognitionModel.train(
                 frontiers,
                 topK=topK,
-                steps=steps,
                 helmholtzRatio=helmholtzRatio)
             eprint("done training recognition model")
             bottomupFrontiers = result.recognitionModel.enumerateFrontiers(
@@ -601,7 +600,7 @@ def commandlineArguments(_=None,
                          CPUs=1,
                          useRecognitionModel=True,
                          useNewRecognitionModel=False,
-                         steps=250,
+                         recognitionTimeout=None,
                          activation='relu',
                          helmholtzRatio=1.,
                          helmholtzBatch=5000,
@@ -631,6 +630,10 @@ def commandlineArguments(_=None,
     parser.add_argument("-t", "--enumerationTimeout",
                         default=enumerationTimeout,
                         help="In seconds. default: %s" % enumerationTimeout,
+                        type=int)
+    parser.add_argument("-R", "--recognitionTimeout",
+                        default=recognitionTimeout,
+                        help="In seconds. Amount of time to train the recognition model on each iteration. Defaults to enumeration timeout.",
                         type=int)
     parser.add_argument(
         "-F",
@@ -702,10 +705,6 @@ def commandlineArguments(_=None,
                         action="store_false",
                         help="""Disable bottom-up neural recognition model.
                         Default: %s""" % (not useRecognitionModel))
-    parser.add_argument("--steps", type=int,
-                        default=steps,
-                        help="""Trainings steps for neural recognition model.
-                        Default: %s""" % steps)
     parser.add_argument(
         "--testingTimeout",
         type=int,
@@ -784,6 +783,9 @@ def commandlineArguments(_=None,
         sys.exit(0)
     else:
         del v["primitive-graph"]
+
+    if v["useRecognitionModel"] and v["recognitionTimeout"] is None:
+        v["recognitionTimeout"] = v["enumerationTimeout"]
         
     return v
 

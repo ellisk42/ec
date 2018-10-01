@@ -675,6 +675,39 @@ def montage(arrays):
     return montageMatrix(makeNiceArray(arrays))
 
 
+
+class ParseFailure(Exception):
+    pass
+
+def parseSExpression(s):
+    def p(n):
+        while n <= len(s) and s[n].isspace(): n += 1
+        if n == len(s): raise ParseFailure(s)
+        if s[n] == '#':
+            e,n = p(n + 1)
+            return ['#', e]
+        if s[n] == '(':
+            l = []
+            n += 1
+            while True:
+                x,n = p(n)
+                l.append(x)
+                while n <= len(s) and s[n].isspace(): n += 1
+                if n == len(s): raise ParseFailure(s)
+                if s[n] == ')':
+                    n += 1
+                    break
+            return l,n
+        name = []
+        while n < len(s) and not s[n].isspace() and s[n] not in '()':
+            name.append(s[n])
+            n += 1
+        name = "".join(name)
+        return name,n
+    e,_ = p(0)
+    return e
+
+
 if __name__ == "__main__":
     def f(n):
         if n == 0: return None

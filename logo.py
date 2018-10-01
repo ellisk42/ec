@@ -272,7 +272,7 @@ def visualizePrimitives(primitives, export='/tmp/logo_primitives.png'):
 if __name__ == "__main__":
     args = commandlineArguments(
         structurePenalty=1.5,
-        steps=2500,
+        recognitionTimeout=7200,
         a=3,
         topK=2,
         iterations=10,
