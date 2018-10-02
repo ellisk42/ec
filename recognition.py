@@ -171,11 +171,15 @@ class RecognitionModel(nn.Module):
                 logPrior=e.logPrior) for e in frontier],
             task=frontier.task)
 
-    def train(self, frontiers, _=None, steps=250, lr=0.0001, topK=5, CPUs=1,
+    def train(self, frontiers, _=None, steps=None, lr=0.0001, topK=5, CPUs=1,
               timeout=None, helmholtzRatio=0., helmholtzBatch=5000):
         """
         helmholtzRatio: What fraction of the training data should be forward samples from the generative model?
         """
+        assert (steps is not None) or (timeout is not None), \
+            "Cannot train recognition model without either a bound on the number of epochs or bound on the training time"
+        if steps is None: steps = 9999999
+        
         requests = [frontier.task.request for frontier in frontiers]
         frontiers = [frontier.topK(topK).normalize()
                      for frontier in frontiers if not frontier.empty]
@@ -283,9 +287,12 @@ class RecognitionModel(nn.Module):
 
     
     def trainBiasOptimal(self, frontiers, helmholtzFrontiers, _=None,
-                         steps=250, lr=0.0001, timeout=None, CPUs=None,
+                         steps=None, lr=0.0001, timeout=None, CPUs=None,
                          evaluationTimeout=0.001,
                          helmholtzRatio=0.5):
+        assert (steps is not None) or (timeout is not None), \
+            "Cannot train recognition model without either a bound on the number of epochs or bound on the training time"
+        if steps is None: steps = 9999999
         # We replace each program in the frontier with its likelihoodSummary
         # This is because calculating likelihood summaries requires juggling types
         # And type stuff is expensive!
