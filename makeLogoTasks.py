@@ -295,6 +295,8 @@ def manualLogoTasks():
           (move 1d (+a 1a (/a 1a 2)))))
           """%n)
 
+    
+
     for n in range(1,7):
         if n%2 == 0:
             T("semicircle of size %d"%n,
@@ -316,7 +318,7 @@ def manualLogoTasks():
           (move (*d epsilonLength %d) epsilonAngle)))
           """%(n,n))
 
-    for n in range(3,8):
+    for n in [5]:
         T("%d enclosed circles"%n,
           """
           (loop j %d
@@ -348,7 +350,25 @@ def manualLogoTasks():
           (loop i infinity
           (move (*d epsilonLength %d) (-a 0a epsilonAngle))))
           """%(n,l,l))
-        
+
+    for n,l in [(3,"1d")]:
+        T("row of %d circles"%n,
+          """
+          (loop j %d
+          (embed (loop i (+ infinity infinity) (move epsilonLength epsilonAngle)))
+          pu (move %s 0a) pd)"""%(n,l))
+    for n,l in [(4,"1d")]:
+        T("row of %d dashes"%n,
+          """
+          (loop j %d
+          (embed (move 0d (/a 1a 2)) (move 1d 0a))
+          pu (move %s 0a) pd)"""%(n,l))        
+    for n,l in [(5,"1d")]:
+        T("row of %d semicircles"%n,
+          """
+          (loop j %d
+          (embed (loop i infinity (move epsilonLength epsilonAngle)))
+          pu (move %s 0a) pd)"""%(n,l))        
 
     return tasks
 

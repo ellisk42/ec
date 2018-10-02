@@ -1,5 +1,0 @@
-toto = Next(Next(unit)) ;
-Repeat (toto) {
-  Integrate(angularSpeed=unit) ;
-  Integrate(pen=off)
-}
