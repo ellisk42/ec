@@ -211,9 +211,11 @@ let compression_worker connection ~arity ~bs ~topK g frontiers =
       !frontiers |> List.map ~f:(fun f -> f.programs |> List.map ~f:(fun (p,_) ->
               incorporate v p |> n_step_inversion v ~n:arity))) in
   if !verbose_compression then
-    Printf.eprintf "(worker) %d distinct version spaces enumerated; vs log sizes: %s\n"
-      v.i2s.ra_occupancy (frontier_indices |> List.concat |> List.map ~f:(Float.to_string % log_version_size v)
-                          |> join ~separator:"; ");
+    Printf.eprintf "(worker) %d distinct version spaces enumerated; %d accessible vs size; vs log sizes: %s\n"
+      v.i2s.ra_occupancy
+      (frontier_indices |> List.concat |> reachable_versions v |> List.length)
+      (frontier_indices |> List.concat |> List.map ~f:(Float.to_string % log_version_size v)
+       |> join ~separator:"; ");
   
   let candidates : program list list = time_it ~verbose:!verbose_compression "(worker) proposed candidates"
       (fun () ->
