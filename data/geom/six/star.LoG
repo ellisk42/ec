@@ -1,6 +1,0 @@
-Repeat(Double(three)) {
-  Embed {
-    Integrate
-  } ;
-  Turn(angle = Divide(two, three))
-}

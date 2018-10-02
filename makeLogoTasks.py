@@ -80,6 +80,7 @@ def makeTasks(subfolders, proto):
                     for f in files:
                         if f.endswith("_l.png"):
                             fullPath = rootdir + subfolder + "/" + subfl + '/' + f
+                            eprint(fullPath)
                             img1 = fileToArray(fullPath)
                             highresolution = fileToArray(fullPath.replace("_l.png", "_h.png"))
                             try:
@@ -368,8 +369,19 @@ def manualLogoTasks():
           """
           (loop j %d
           (embed (loop i infinity (move epsilonLength epsilonAngle)))
-          pu (move %s 0a) pd)"""%(n,l))        
+          pu (move %s 0a) pd)"""%(n,l))
 
+    for n in [3,5,6]:
+        body = {"empty": "(move 1d 0a)",
+                "dashed": "pu (move 1d 0a) pd (move 1d 0a)",
+                "circle": "(move 1d 0a) (loop i (+ infinity infinity) (move epsilonLength epsilonAngle))",
+                "semicircle": "(move 1d 0a) (loop i infinity (move epsilonLength epsilonAngle))"}
+        for name in body:
+            T("%d-%s snowflake"%(n,name),
+              """
+              (loop j %d
+              (embed %s)
+              (move 0d (/a (+a 1a 1a) %d)))"""%(n,body[name],n))
     return tasks
 
 def montageTasks(tasks):
