@@ -177,7 +177,7 @@ def visualizeSolutions(solutions, export, tasks=None):
 
     if tasks is None:
         tasks = list(solutions.keys())
-        tasks.sort(key=lambda t: t.name)
+        tasks.sort(key=lambda t: len(t.plan))
 
     matrix = []
     for t in tasks:
