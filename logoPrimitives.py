@@ -22,8 +22,8 @@ primitives = [
 
     Primitive("logo_ADDA",  arrow(tangle,tangle,tangle), ""),
     Primitive("logo_SUBA",  arrow(tangle,tangle,tangle), ""),
-    Primitive("logo_ADDL",  arrow(tlength,tlength,tlength), ""),
-    Primitive("logo_SUBL",  arrow(tlength,tlength,tlength), ""),
+    # Primitive("logo_ADDL",  arrow(tlength,tlength,tlength), ""),
+    # Primitive("logo_SUBL",  arrow(tlength,tlength,tlength), ""),
 
     Primitive("logo_PU",  arrow(turtle,turtle), ""),
     Primitive("logo_PD",  arrow(turtle,turtle), ""),

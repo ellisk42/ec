@@ -110,8 +110,8 @@ def parseLogo(s):
 
     _aa = Program.parse("logo_ADDA")
     _sa = Program.parse("logo_SUBA")
-    _al = Program.parse("logo_ADDL")
-    _sl = Program.parse("logo_SUBL")
+    _al = None#Program.parse("logo_ADDL")
+    _sl = None#Program.parse("logo_SUBL")
 
     _pu = Program.parse("logo_PU")
     _pd = Program.parse("logo_PD")
@@ -331,7 +331,7 @@ def manualLogoTasks():
 
     
 
-    for n in range(1,7):
+    for n in [1,4,3,6]:
         if n%2 == 0:
             T("semicircle of size %d"%n,
               """
@@ -344,13 +344,13 @@ def manualLogoTasks():
               (loop i infinity
               (move (*d epsilonLength %d) epsilonAngle))
               """%n)
-        T("circle of size %d"%n,
-          """
-          ((loop i infinity
-          (move (*d epsilonLength %d) epsilonAngle))
-          (loop i infinity
-          (move (*d epsilonLength %d) epsilonAngle)))
-          """%(n,n))
+            T("circle of size %d"%n,
+              """
+              ((loop i infinity
+              (move (*d epsilonLength %d) epsilonAngle))
+              (loop i infinity
+              (move (*d epsilonLength %d) epsilonAngle)))
+              """%(n,n))
 
     for n in [5]:
         T("%d enclosed circles"%n,
@@ -361,8 +361,8 @@ def manualLogoTasks():
           (loop i infinity
           (move (*d epsilonLength j) epsilonAngle)))"""%n)
 
-    for n,l in [(4,2),
-                (5,3),
+    for n,l in [#(4,2),
+                #(5,3),
                 (6,4),
                 (3,1)]:
         T("%d-circle flower l=%d"%(n,l),
