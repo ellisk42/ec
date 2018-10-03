@@ -194,6 +194,11 @@ def parseLogo(s):
 
 def manualLogoTask(name, expression, proto=False, needToTrain=False):
     p = parseLogo(expression)
+    from logoPrimitives import primitives
+    from grammar import Grammar
+    g = Grammar.uniform(primitives)
+    try: g.logLikelihood(arrow(turtle,turtle),p)
+    except: eprint("WARNING: could not calculate likelihood of manual logo",p)
 
     [output, highresolution] = \
             [subprocess.check_output(['./logoDrawString',
@@ -218,12 +223,40 @@ def manualLogoTask(name, expression, proto=False, needToTrain=False):
 def manualLogoTasks():
     tasks = []
     def T(*a): tasks.append(manualLogoTask(*a))
+    T("pu/pd",
+      """((move 1l 0a) pu (move 1l epsilonAngle) pd (move 1l 0a))""")
+    T("pd",
+      """(pu (move 1l (/a 1a 2)) (move 1l epsilonAngle) pd (move (*d 1d 2) 0a))""")
+    T("pd square",
+      """(loop i 4 
+      pu (move 1l 0a) pd (move 1l (/a 1a 4)))""")
+    T("pd dashed",
+      """
+      (loop i infinity
+      pu (move epsilonLength 0a) pd (move epsilonLength 0a))
+      """)
+
+    for n,l in [(3,"1l"),
+                (5,"1l"),
+                (6,"(*d 1d 2)"),
+                (7,"1l"),
+                (8,"(/d 1d 2)")]:
+        T("%d-gon %s"%(n,l),
+          """
+          (loop i %d
+          (move %s (/a 1a %d)))
+          """%(n,l,n))
+
+    T("upwards", "((move 0d (/a 1a 4)) (move 1d 0a))")
+    T("right angle", "((move (*d 1d 2) (/a 1a 4)) (move 1d 0a))")
+    T("right angle epsilon", "((move epsilonLength (/a 1a 4)) (move epsilonLength 0a))")
+    
 
     for i in range(3,7):
         T("Greek spiral %d"%i,
           """
           (loop i %d
-          (move (*l 1l i) (/a 1a 2)))
+          (move (*l 1l i) (/a 1a 4)))
           """%i)
         
         T("smooth spiral %d"%i,
@@ -235,7 +268,7 @@ def manualLogoTasks():
     for i in [3,5,7,9]:
         T("star %d"%i,
           """
-          (loop i %d (move (*d 1d 3) (-a 1a (/a 1a %s))))
+          (loop i %d (move (*d 1d 3) (-a (/a 1a 2) (/a (/a 1a 2) %s))))
           """%(i,i))
 
     T("leaf iteration 1.1",
@@ -244,21 +277,21 @@ def manualLogoTasks():
       """)
     T("leaf iteration 1.2",
       """
-      ((move 0d 1a)
+      ((move 0d (/a 1a 2))
       (loop i infinity (move epsilonDistance (/a epsilonAngle 2))))
       """)
     T("leaf iteration 2.1",
       """
       (loop n 2
       (loop i infinity (move epsilonDistance (/a epsilonAngle 2)))
-      (move 0d (/a 1a 2)))
+      (move 0d (/a 1a 4)))
       """)
     T("leaf iteration 2.2",
       """
-      ((move 0d 1a)
+      ((move 0d (/a 1a 2))
       (loop n 2
       (loop i infinity (move epsilonDistance (/a epsilonAngle 2)))
-      (move 0d (/a 1a 2))))
+      (move 0d (/a 1a 4))))
       """)
     for n in [5,7]:
         T("flower %d"%n,
@@ -266,8 +299,8 @@ def manualLogoTasks():
           (loop j %d
           (loop n 2
           (loop i infinity (move epsilonDistance (/a epsilonAngle 2)))
-          (move 0d (/a 1a 2)))
-          (move 0d (/a (*a 1a 2) %d)))
+          (move 0d (/a 1a 4)))
+          (move 0d (/a 1a %d)))
           """%(n,n))
         
 
@@ -275,25 +308,25 @@ def manualLogoTasks():
         T("staircase %d"%n,
           """
           (loop i %d
-          (move 1d (/a 1a 2))
-          (move 1d (/a 1a 2))
-          (move 0d 1a))
+          (move 1d (/a 1a 4))
+          (move 1d (/a 1a 4))
+          (move 0d (/a 1a 2)))
           """%n)
 
     for n in range(1,4):
         T("blocks zigzag %d"%n,
           """
           (loop i %d
-          (move 1d (/a 1a 2)) (move 1d (/a 1a 2))
-          (move 1d (+a 1a (/a 1a 2))) (move 1d (+a 1a (/a 1a 2))))
+          (move 1d (/a 1a 4)) (move 1d (/a 1a 4))
+          (move 1d (+a (/a 1a 2) (/a 1a 4))) (move 1d (+a (/a 1a 2) (/a 1a 4))))
           """%n)
     for n in range(1,5):
         T("diagonal zigzag %d"%n,
           """
-          ((move 0d (/a 1a 4))
+          ((move 0d (/a 1a 8))
           (loop i %d
-          (move 1d (/a 1a 2)) 
-          (move 1d (+a 1a (/a 1a 2)))))
+          (move 1d (/a 1a 4)) 
+          (move 1d (+a (/a 1a 2) (/a 1a 4)))))
           """%n)
 
     
@@ -336,11 +369,10 @@ def manualLogoTasks():
           """
           (loop j %d
           (move 0d (/a 1a %d))
-          (move 0d (/a 1a %d))
-          (loop i infinity
+          (embed (loop i infinity
           (move (*d epsilonLength %d) epsilonAngle))
           (loop i infinity
-          (move (*d epsilonLength %d) epsilonAngle)))"""%(n,n,n,l,l))
+          (move (*d epsilonLength %d) epsilonAngle))))"""%(n,n,l,l))
 
     for n,l in [(3,1),(2,2),(1,3)]:
         T("%d-semicircle sequence L=%d"%(n,l),
@@ -356,13 +388,13 @@ def manualLogoTasks():
         T("row of %d circles"%n,
           """
           (loop j %d
-          (embed (loop i (+ infinity infinity) (move epsilonLength epsilonAngle)))
+          (embed (loop k 2 (loop i infinity (move epsilonLength epsilonAngle))))
           pu (move %s 0a) pd)"""%(n,l))
     for n,l in [(4,"1d")]:
         T("row of %d dashes"%n,
           """
           (loop j %d
-          (embed (move 0d (/a 1a 2)) (move 1d 0a))
+          (embed (move 0d (/a 1a 4)) (move 1d 0a))
           pu (move %s 0a) pd)"""%(n,l))        
     for n,l in [(5,"1d")]:
         T("row of %d semicircles"%n,
@@ -374,14 +406,48 @@ def manualLogoTasks():
     for n in [3,5,6]:
         body = {"empty": "(move 1d 0a)",
                 "dashed": "pu (move 1d 0a) pd (move 1d 0a)",
-                "circle": "(move 1d 0a) (loop i (+ infinity infinity) (move epsilonLength epsilonAngle))",
+                "circle": "(move 1d 0a) (loop k 2 (loop i infinity (move epsilonLength epsilonAngle)))",
+                "square": "(loop s 4 (move 1d (/a 1a 4)))",
                 "semicircle": "(move 1d 0a) (loop i infinity (move epsilonLength epsilonAngle))"}
         for name in body:
             T("%d-%s snowflake"%(n,name),
               """
               (loop j %d
               (embed %s)
-              (move 0d (/a (+a 1a 1a) %d)))"""%(n,body[name],n))
+              (move 0d (/a 1a %d)))"""%(n,body[name],n))
+
+    for n in [2,3,4]:
+        T("%d-row of squares"%n,
+          """
+          (loop i %d
+          (embed (loop k 4 (move 1d (/a 1a 4))))
+          (move 1d 0a))
+          """%n)
+    T("2x2 grid",
+    """
+    (for x 2 (embed (for y 2
+       (embed (loop k 4 (move 1d (/a 1a 4))))
+       (move 1d 0a)))
+       (move 0d (/a 1a 4)) (move 1d (-a 0a (/a 1a 4))))
+    """)
+    T("slanted squares",
+      """
+      ((embed (loop k 4 (move 1d (/a 1a 4))))
+      (move 0d (/a 1a 8))
+      (loop k 4 (move 1d (/a 1a 4))))
+      """)
+    for l in range(1,4):
+        T("square of size %d"%l,
+          """
+          (for i 4
+          (move (*d 1d %d) (/a 1a 4)))
+          """%l)
+    for n in [5]:
+        T("%d-concentric squares"%n,
+          """
+          (for i %d
+          (embed (loop j 4 (move (*d 1d i) (/a 1a 4)))))
+          """%n)
     return tasks
 
 def montageTasks(tasks):

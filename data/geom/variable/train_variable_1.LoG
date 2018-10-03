@@ -1,7 +1,0 @@
-Repeat {
-  Repeat {
-    Integrate(t=toto) ;
-    toto = Next(toto) ;
-    Turn
-  }
-}

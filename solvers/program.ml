@@ -614,7 +614,7 @@ let logo_S2A = primitive "logo_ZL" (tlength) (0.)
 let logo_IFTY = primitive "logo_IFTY" (tint) (20)
 
 let logo_IFTY = primitive "logo_epsL" (tlength) (0.05)
-let logo_IFTY = primitive "logo_epsA" (tangle) (0.05)
+let logo_IFTY = primitive "logo_epsA" (tangle) (0.025)
 
 let logo_IFTY = primitive "line"
                           (turtle @> turtle)

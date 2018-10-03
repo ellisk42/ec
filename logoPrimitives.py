@@ -34,8 +34,7 @@ primitives = [
     Primitive("logo_epsA", tangle, ""),
     Primitive("logo_epsL", tlength, ""),
     Primitive("logo_forLoop", arrow(tint, arrow(tint, turtle, turtle), turtle, turtle), "ERROR: python has no way of expressing this hence you shouldn't eval on this"),
-    Primitive("+", arrow(tint, tint, tint), _addition)
-] + [Primitive(str(j), tint, j) for j in range(7)]
+] + [Primitive(str(j), tint, j) for j in range(10)]
 
 if __name__ == "__main__":
     expr_s = "(lambda (logo_forLoop 3 (lambda (lambda (logo_GET (lambda (logo_FWRT (logo_S2L (logo_I2S 1)) (logo_S2A (logo_I2S 0)) (logo_SET $0 (logo_FWRT (logo_S2L eps) (logo_DIVA (logo_S2A (logo_I2S 2)) (logo_I2S 3)) ($1)))))))) ($0)))"
