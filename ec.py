@@ -811,6 +811,18 @@ def graphPrimitives(result, prefix, view=False):
     age2primitives = {a: {p for p,ap in age.items() if a == ap }
                       for a in ages}
 
+    def lb(s,T=20):
+        s = s.split()
+        l = []
+        n = 0
+        for w in s:
+            if n + len(w) > T:
+                l.append("\\n")
+                n = 0
+            n += len(w)
+            l.append(w)
+        return " ".join(l)
+                
     name = {}
     simplification = {}
     depth = {}
@@ -823,7 +835,7 @@ def graphPrimitives(result, prefix, view=False):
         for k,childName in children.items():
             simplification_ = simplification_.substitute(k, Primitive(childName,None,None))
         name[p] = "f%d"%len(name)
-        simplification[p] = name[p] + '=' + str(simplification_)
+        simplification[p] = name[p] + '=' + lb(str(simplification_))
         depth[p] = 1 + max([depth[k] for k in children] + [0])
         return name[p]
 

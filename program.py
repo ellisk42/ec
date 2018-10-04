@@ -251,7 +251,30 @@ class Application(Program):
     def __getstate__(self):
         return self.f, self.x, self.isConditional, self.falseBranch, self.trueBranch, self.branch
     def __setstate__(self, state):
-        self.f, self.x, self.isConditional, self.falseBranch, self.trueBranch, self.branch = state
+        try:
+            self.f, self.x, self.isConditional, self.falseBranch, self.trueBranch, self.branch = state
+        except ValueError:
+            # backward compatibility
+            assert 'x' in state
+            assert 'f' in state
+            f = state['f']
+            x = state['x']
+            self.f = f
+            self.x = x
+            self.isConditional = (not isinstance(f,int)) and \
+                                 f.isApplication and \
+                                 f.f.isApplication and \
+                                 f.f.f.isPrimitive and \
+                                 f.f.f.name == "if"
+            if self.isConditional:
+                self.falseBranch = x
+                self.trueBranch = f.x
+                self.branch = f.f.x
+            else:
+                self.falseBranch = None
+                self.trueBranch = None
+                self.branch = None
+
         self.hashCode = None
 
     def visit(self,
