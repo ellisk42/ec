@@ -500,9 +500,14 @@ def ocamlInduce(g, frontiers, _=None,
                               for f in frontiers ]}
 
     message = json.dumps(message)
-    # uncomment this if you want to save the messages being sent to the solver
-    with open("compressionMessage", "w") as f:
-        f.write(message)
+    if True:
+        import datetime
+        timestamp = datetime.datetime.now().isoformat()
+        os.system("mkdir  -p compressionMessages")
+        fn = "compressionMessages/%s"%timestamp
+        with open(fn, "w") as f:
+            f.write(message)
+        eprint("Compression message saved to:",fn)
 
     try:
         process = subprocess.Popen("./compression",

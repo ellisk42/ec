@@ -206,7 +206,7 @@ def ecIterator(grammar, tasks,
             "compressor"} and v is not None}
     if not useRecognitionModel:
         for k in {"helmholtzRatio", "recognitionTimeout", "biasOptimal"}:
-            del parameters[k]
+            if k in parameters: del parameters[k]
 
     # Uses `parameters` to construct the checkpoint path
     def checkpointPath(iteration, extra=""):
