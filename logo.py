@@ -216,17 +216,25 @@ def visualizePrimitives(primitives, export='/tmp/logo_primitives.png'):
     from itertools import product
     from pylab import imshow,show
     from program import Index,Abstraction,Application,Primitive
-    from utilities import montageMatrix
+    from utilities import montageMatrix,makeNiceArray
     from type import tint
+    import scipy.misc
 
     angles = [Program.parse(a)
               for a in ["logo_ZA",
                         "logo_epsA",
                         "(logo_MULA logo_epsA 2)",
-                        "(logo_DIVA logo_UA 2)",
-                        "logo_UA"] ]
+                        "(logo_DIVA logo_UA 4)",
+                        "(logo_DIVA logo_UA 5)",
+                        "(logo_DIVA logo_UA 7)",
+                        "(logo_DIVA logo_UA 9)",
+                        ] ]
+    specialAngles = {"#(lambda (lambda (logo_forLoop logo_IFTY (lambda (lambda (logo_FWRT (logo_MULL logo_UL 3) (logo_MULA $2 4) $0))) $1)))":
+                     [Program.parse("(logo_MULA logo_epsA 4)")]+[Program.parse("(logo_DIVA logo_UA %d)"%n) for n in [7,9] ]}
     numbers = [Program.parse(n)
-               for n in ["0","1","2","logo_IFTY"] ]
+               for n in ["1","2","5","7","logo_IFTY"] ]
+    specialNumbers = {"#(lambda (#(lambda (lambda (lambda (lambda (logo_forLoop $2 (lambda (lambda (logo_FWRT $5 (logo_DIVA logo_UA $3) $0))) $0))))) (logo_MULL logo_UL $0) 4 4))":
+                      [Program.parse(str(n)) for n in [1,2,3] ]}
     distances = [Program.parse(l)
                  for l in ["logo_ZL",
                            "logo_epsL",
@@ -245,9 +253,9 @@ def visualizePrimitives(primitives, export='/tmp/logo_primitives.png'):
             if t == turtle:
                 return [Index(0)]
             elif t == tint:
-                return numbers
+                return specialNumbers.get(str(p),numbers)
             elif t == tangle:
-                return angles
+                return specialAngles.get(str(p),angles)
             elif t == tlength:
                 return distances
             else: return []
@@ -264,8 +272,12 @@ def visualizePrimitives(primitives, export='/tmp/logo_primitives.png'):
         if ts == []: continue
 
         matrix.append(ts)
+        if len(ts) < 6: ts = [ts]
+        else: ts = makeNiceArray(ts)
+        r = montageMatrix(ts)
+        scipy.misc.imsave("/tmp/logo_primitive_%d.png"%len(matrix), r)
+        
     matrix = montageMatrix(matrix)
-    import scipy.misc
     scipy.misc.imsave(export, matrix)
 
         
@@ -289,8 +301,8 @@ if __name__ == "__main__":
     if visualizeCheckpoint is not None:
         with open(visualizeCheckpoint,'rb') as handle:
             primitives = pickle.load(handle).grammars[-1].primitives
-        visualizePrimitives(primitives,
-                            export="%s.png"%visualizeCheckpoint)
+        visualizePrimitives(primitives)
+        import sys                            
         sys.exit(0)
 
     dreamCheckpoint = args.pop("dreamCheckpoint")
