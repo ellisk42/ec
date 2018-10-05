@@ -34,6 +34,7 @@ class Frontier(object):
 
     def json(self):
         return {"request": self.task.request.json(),
+                "task": str(self.task),
                 "programs": [{"program": str(e.program),
                               "logLikelihood": e.logLikelihood}
                              for e in self ]}
