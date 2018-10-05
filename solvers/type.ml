@@ -4,6 +4,7 @@ open Funarray
 type tp = 
   | TID of int
   | TCon of string * tp list * bool
+            
 
 let is_polymorphic = function
   | TID(_) -> true
@@ -31,6 +32,9 @@ let empty_context : tContext = (0, Funarray.empty);;
 
 let make_arrow t q = kind "->" [t;q];;
 let (@>) = make_arrow;;
+let is_arrow = function
+  | TCon("->",_,_) -> true
+  | _ -> false;;
 
 (* arguments_and_return_up_type (t1 @> t2 @> ... @> T) = ([t1;t2;...] T) *)
 let rec arguments_and_return_of_type t =
@@ -56,6 +60,12 @@ let right_of_arrow t =
   match t with
   | TCon("->",[_;p],_) -> p
   | _ -> raise (Failure "right_of_arrow")
+
+let left_of_arrow t =
+  match t with
+  | TCon("->",[p;_],_) -> p
+  | _ -> raise (Failure "right_of_arrow")
+
 
 let rec show_type (is_return : bool) (t : tp) : string = 
   match t with
@@ -174,6 +184,15 @@ let instantiate_type k t =
   (!k, q)
 
 
+let applyContext' k t =
+  let new_context, t' = applyContext !k t in
+  k := new_context;
+  t';;
+let unify' context_reference t1 t2 = context_reference := unify !context_reference t1 t2;;
+let instantiate_type' context_reference t =
+  let new_context, t' = instantiate_type !context_reference t in
+  context_reference := new_context;
+  t'
   
 
 (* puts a type into normal form *)
@@ -269,3 +288,25 @@ let unify_many_types ts =
       k := unify k' t' t);
   applyContext !k t |> snd
      
+
+let rec deserialize_type j =
+  let open Yojson.Basic.Util in
+  try
+    let k = j |> member "constructor" |> to_string in
+    let a = j |> member "arguments" |> to_list |> List.map ~f:deserialize_type in
+    kind k a
+  with _ ->
+    let i = j |> member "index" |> to_int in
+    TID(i)
+
+
+let rec serialize_type t =
+  let open Yojson.Basic in
+  let j : json =
+  match t with
+  | TID(i) -> `Assoc(["index",`Int(i)])
+  | TCon(k,a,_) ->
+    `Assoc(["constructor",`String(k);
+            "arguments",`List(a |> List.map ~f:serialize_type)])
+  in
+  j

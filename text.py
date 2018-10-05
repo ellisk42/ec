@@ -33,6 +33,8 @@ class ConstantInstantiateVisitor(object):
 
 
 class LearnedFeatureExtractor(RecurrentFeatureExtractor):
+    special = 'string'
+    
     def tokenize(self, examples):
         return examples
 
@@ -41,6 +43,8 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
                    for t in tasks
                    for xs, y in self.tokenize(t.examples)
                    for c in reduce(lambda u, v: u + v, list(xs) + [y])}
+
+        self.recomputeTasks = True
 
         super(LearnedFeatureExtractor, self).__init__(lexicon=list(lexicon),
                                                       H=64,
@@ -68,7 +72,7 @@ def text_options(parser):
 
 if __name__ == "__main__":
     arguments = commandlineArguments(
-        steps=250,
+        recognitionTimeout=7200,
         iterations=10,
         helmholtzRatio=0.5,
         topK=2,

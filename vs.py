@@ -650,6 +650,10 @@ class VersionTable():
                 self.relativeFunctionCost[given] = min(cost,
                                                        self.getFunctionCost(given))
 
+            def unobject(self):
+                return {'relativeCost': self.relativeCost, 'defaultCost': self.defaultCost,
+                        'relativeFunctionCost': self.relativeFunctionCost, 'defaultFunctionCost': self.defaultFunctionCost}
+
         beamTable = [None]*len(self.expressions)
 
         def costs(j):
@@ -682,8 +686,12 @@ class VersionTable():
             return beamTable[j]
 
         with timing("beamed version spaces"):
-            beams = [ [ costs(h) for h in hs ]
-                      for hs in versions ]
+            beams = parallelMap(numberOfCPUs(),
+                                lambda hs: [ costs(h).unobject() for h in hs ],
+                                versions,
+                                memorySensitive=True,
+                                chunksize=1,
+                                maxtasksperchild=1)
 
         # This can get pretty memory intensive - clean up the garbage
         beamTable = None
@@ -692,10 +700,10 @@ class VersionTable():
         candidates = {d
                       for _bs in beams
                       for b in _bs
-                      for d in b.domain }
+                      for d in b['relativeCost'].keys() }
         def score(candidate):
-            return sum(min(min(b.getCost(candidate),
-                               b.getFunctionCost(candidate))
+            return sum(min(min(b['relativeCost'].get(candidate, b['defaultCost']),
+                               b['relativeFunctionCost'].get(candidate, b['defaultFunctionCost']))
                            for b in _bs )
                        for _bs in beams )
         candidates = sorted(candidates, key=score)
@@ -911,7 +919,8 @@ def induceGrammar_Beta(g0, frontiers, _=None,
         
         return o
         
-
+    with timing("Estimated initial grammar production probabilities"):
+        g0 = g0.insideOutside(restrictedFrontiers, pseudoCounts)
     oldScore = objective(g0, restrictedFrontiers)
     eprint("Starting grammar induction score",oldScore)
     
@@ -944,7 +953,7 @@ def induceGrammar_Beta(g0, frontiers, _=None,
         if len(scoredCandidates) > 0:
             bestNew, bestScore = max(scoredCandidates, key=lambda sc: sc[1])
         if len(scoredCandidates) == 0 or bestScore < oldScore:
-            # eprint("No improvement possible.")
+            eprint("No improvement possible.")
             # eprint("Runner-up:")
             # eprint(next(v.extract(bestNew)))
             # Return all of the frontiers, which have now been rewritten to use the
@@ -1033,15 +1042,17 @@ if __name__ == "__main__":
                 # "(lambda (- $0 (+ 1 1)))",
                 # "(lambda (- (car $0) 1))",
         ("(lambda (fix1 $0 (lambda (lambda (if (eq? 0 $0) empty (cons (- 0 $0) ($1 (+ 1 $0))))))))",None),
-        ("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) empty (cons (cdr $0) ($1 (cdr $0))))))))",arrow(tlist(tint),tlist(tlist(tint)))),
+        # ("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) empty (cons (cdr $0) ($1 (cdr $0))))))))",arrow(tlist(tint),tlist(tlist(tint)))),
         # drop the last element
         # ("(lambda (fix1 $0 (lambda (lambda (if (empty? (cdr $0)) empty (cons (car $0) ($1 (cdr $0))))))))",arrow(tlist(tint),tlist(tint))),
         # take in till 1
         # ("(lambda (fix1 $0 (lambda (lambda (if (eq? (car $0) 1) empty (cons (car $0) ($1 (cdr $0))))))))",arrow(tlist(tint),tlist(tint))),
                 # "(lambda (lambda (fix2 $1 $0 (lambda (lambda (lambda (if (eq? $1 0) (car $0) ($2 (- $1 1) (cdr $0)))))))))",
                 # "(lambda (lambda (fix2 $1 $0 (lambda (lambda (lambda (if (eq? $1 0) (car $0) ($2 (- $1 1) (cdr $0)))))))))",
-                ("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) 0 (+ ($1 (cdr $0)) (car $0)))))))",None),
+                ("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) 0 (+ (car $0) ($1 (cdr $0))))))))",None),
                 ("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) 1 (- (car $0) ($1 (cdr $0))))))))",None),
+        ("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) (cons 0 empty) (cons (car $0) ($1 (cdr $0))))))))",None),
+                ("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) (empty? empty) (if (car $0) ($1 (cdr $0)) (eq? 1 0)))))))",None),
                 # "(lambda (lambda (fix2 $1 $0 (lambda (lambda (lambda (if (empty? $1) $0 (cons (car $1) ($2 (cdr $1) $0)))))))))",
         #         ("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) empty (cons (+ (car $0) (car $0)) ($1 (cdr $0))))))))",None),
         #         ("(lambda (fix1 $0 (lambda (lambda (if (empty? $0) empty (cons (+ (car $0) 1) ($1 (cdr $0))))))))",None),
@@ -1066,6 +1077,10 @@ if __name__ == "__main__":
     #                   a=N,
     #                   backend="vs")
     #     eprint(g)
+
+    # with open('vs.pickle','rb') as handle:
+    #     a,kw = pickle.load(handle)
+    #     induceGrammar_Beta(*a,**kw)
 
     with timing("induced DSL"):
         induceGrammar_Beta(g0, [Frontier.dummy(p, tp=tp) for p, tp in programs],

@@ -80,6 +80,8 @@ def sendCommand(
 
     preamble = f"""#!/bin/bash
 pypy3 -m pip install psutil
+pip install graphviz
+sudo apt-get install  -y graphviz
 cd ~/ec
 {copyCheckpoint}
 touch compressor_dummy

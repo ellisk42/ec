@@ -17,20 +17,10 @@ let load_problems channel =
   let open Yojson.Basic.Util in
   let j = Yojson.Basic.from_channel channel in
   let g = j |> member "DSL" in
-  let logVariable = g |> member "logVariable" |> to_float in
-  let productions = g |> member "productions" |> to_list |> List.map ~f:(fun p ->
-    let source = p |> member "expression" |> to_string in
-    let e = parse_program source |> safe_get_some ("Error parsing: "^source) in
-    let t =
-      try
-        infer_program_type empty_context [] e |> snd
-      with UnificationFailure -> raise (Failure ("Could not type "^source))
-    in
-    let logProbability = p |> member "logProbability" |> to_float in
-    (e,t,logProbability,compile_unifier t))
+  let g =
+    try deserialize_grammar g |> make_dummy_contextual
+    with _ -> deserialize_contextual_grammar g
   in
-  (* Successfully parsed the grammar *)
-  let g = {logVariable = logVariable; library = productions;} in
 
   let timeout = try
       j |> member "programTimeout" |> to_float
@@ -51,16 +41,6 @@ let load_problems channel =
   in
 
 
-  let rec parse_type j =
-    try
-      let k = j |> member "constructor" |> to_string in
-      let a = j |> member "arguments" |> to_list |> List.map ~f:parse_type in
-      kind k a
-    with _ ->
-      let i = j |> member "index" |> to_int in
-      TID(i)
-  in 
-
   let rec unpack x =
     try magical (x |> to_int) with _ ->
     try magical (x |> to_float) with _ ->
@@ -76,7 +56,7 @@ let load_problems channel =
 
   let tf = j |> member "tasks" |> to_list |> List.map ~f:(fun j -> 
       let e = j |> member "examples" |> to_list in
-      let task_type = j |> member "request" |> parse_type in 
+      let task_type = j |> member "request" |> deserialize_type in 
       let examples = e |> List.map ~f:(fun ex -> (ex |> member "inputs" |> to_list |> List.map ~f:unpack,
                                                   ex |> member "output" |> unpack)) in
       let maximum_frontier = j |> member "maximumFrontier" |> to_int in
@@ -158,8 +138,9 @@ let _ =
   if List.exists tf ~f:(fun (t,_) -> t.task_type = ttower @> ttower)
   then (update_serialized_tower_cash();
         register_imperative_type ttower;
-       ())
-  else ();
+        ());
+  if List.exists tf ~f:(fun (t,_) -> t.task_type = turtle @> turtle)
+  then register_imperative_type turtle;
   let solutions =
     enumerate_for_tasks ~maxFreeParameters:mfp ~lowerBound:lowerBound ~upperBound:upperBound ~budgetIncrement:budgetIncrement
     ~verbose:verbose ~nc:nc ~timeout:timeout g tf

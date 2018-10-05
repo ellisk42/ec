@@ -130,62 +130,30 @@ def make_list_bootstrap_tasks():
               for l in [randomList()]]),
     ]
 
-    # Encourages learning of simple nonrecursive operations that are useful in
-    # recursive functions
-    decrementBootstrap = [
-        Task("decrement", arrow(tint, tint),
-             [((n,), n - 1) for n in range(10)]),
-        Task("decrement twice", arrow(tint, tint),
-             [((n,), n - 2) for n in range(10)]),
-        Task("decrement car", arrow(tlist(tint), tint),
-             [((l,), l[0] - 1)
-              for _ in range(10)
-              for l in [randomList()]]),
-    ]
-    incrementBootstrap = [
-        Task("increment", arrow(tint, tint),
-             [((n,), n + 1) for n in range(10)]),
-        Task("increment car", arrow(tlist(tint), tint),
-             [((l,), l[0] + 1)
-              for _ in range(10)
-              for l in [randomList()]]),
-        Task("increment twice", arrow(tint, tint),
-             [((n,), n + 2) for n in range(10)]),
-    ]
-    operationBootstrap = decrementBootstrap + incrementBootstrap + [
-        Task("zero?", arrow(tint, tbool),
-             [((n,), n == 0) for n in range(10)]),
-        Task("zero car?", arrow(tlist(tint), tbool),
-             [(([h] + l,), h == 0)
-              for _ in range(5)
-              for h in [0, randint(1, 9)]
-              for l in [randomList()]]),
-        Task("second argument zero?", arrow(tint, tint, tbool),
-             [((a, b), b == 0)
-              for _ in range(5)
-              for b in [0, randint(1, 9)]
-              for a in [randint(1, 9)]]),
-        Task("or", arrow(tbool, tbool, tbool),
-             [((a, b), a or b)
-              for a in [True, False]
-              for b in [True, False]]),
-        Task("and", arrow(tbool, tbool, tbool),
-             [((a, b), a and b)
-              for a in [True, False]
-              for b in [True, False]]),
-        Task("singleton", arrow(tint, tlist(tint)),
-             [((n,), [n])
-              for n in range(10)]),
-    ]
-
     # Encourages learning of unfolding
     unfoldBootstrap = [
-        # Task("countdown", arrow(tint, tlist(tint)),
-        #      [((n,), list(range(n + 1, 1, -1)))
-        #       for n in range(10)]),
+        Task("countdown", arrow(tint, tlist(tint)),
+             [((n,), list(range(n + 1, 1, -1)))
+              for n in range(10)]),
         Task("weird count", arrow(tint, tlist(tint)),
              [((n,), list(range(-n,0,-1)))
               for n in range(-10,0) ]),
+        Task("take every other", arrow(tlist(tint),tlist(tint)),
+             [((l,), [x for j,x in enumerate(l) if j%2 == 0])
+              for _ in range(10)
+              for l in [ [randint(0, 9) for _ in range(randint(1,4)*2)] ] ]),
+        Task("stutter every other", arrow(tlist(tint),tlist(tint)),
+             [((l,), [l[int(j/2)] for j in range(len(l)) ])
+              for _ in range(10)
+              for l in [ [randint(0, 9) for _ in range(randint(1,4)*2)] ] ]),
+        Task("stutter", arrow(tlist(tint),tlist(tint)),
+             [((l,), [z for x in l for z in [x,x] ])
+              for _ in range(10)
+              for l in [randomList()] ]),
+        Task("drop last element", arrow(tlist(tint),tlist(tint)),
+             [((l,), l[:-1])
+              for _ in range(10)
+              for l in [ [randint(0, 9) for _ in range(randint(2,5))] ] ]),
         Task("suffixes", arrow(tlist(tint), tlist(tlist(tint))),
              [((l,), suffixes(l))
               for _ in range(10)
@@ -199,6 +167,10 @@ def make_list_bootstrap_tasks():
         Task("range exclusive", arrow(tint, tlist(tint)),
              [((n,), list(range(n - 1)))
               for n in range(1, 11)]),
+        Task("range length", arrow(tlist(tint),tlist(tint)),
+             [((l,),list(range(len(l))))
+              for _ in range(10)
+              for l in [randomList()] ])
     ]
 
     # Encourages learning how to treat a list as an array
@@ -249,10 +221,10 @@ def make_list_bootstrap_tasks():
         #      [((x, y), x + y)
         #       for _ in range(10)
         #       for [x, y] in [[randomBooleanList(), randomBooleanList()]]]),
-        # Task("append constant 0", arrow(tlist(tint),tlist(tint)),
-        #      [((l,),l + [0])
-        #       for _ in range(10)
-        #       for l in [randomList()] ]),
+        Task("append constant 0", arrow(tlist(tint),tlist(tint)),
+             [((l,),l + [0])
+              for _ in range(10)
+              for l in [randomList()] ]),
     ]
 
     # learning to map
@@ -271,7 +243,7 @@ def make_list_bootstrap_tasks():
               for l in [randomList()] ]),
         # Task("map car", arrow(tlist(tlist(tint)), tlist(tint)),
         #      [((l,), [n[0] for n in l])
-        #       for _ in range(10)
+        #       for _ in4 range(10)
         #       for l in [randomListOfLists()]]),
         # Task("map cdr", arrow(tlist(tlist(tbool)),tlist(tlist(tbool))),
         #      [((l,),map(lambda n: n[1:],l))
@@ -293,8 +265,8 @@ def make_list_bootstrap_tasks():
              [((l,), list(map(lambda n: n * 4, l)))
               for _ in range(10)
               for l in [randomList()]]),
-        Task("map add 4", arrow(tlist(tint),tlist(tint)),
-             [((l,),list(map(lambda n: n+4, l)))
+        Task("map add 3", arrow(tlist(tint),tlist(tint)),
+             [((l,),list(map(lambda n: n+3, l)))
               for _ in range(10)
               for l in [randomList()] ]),
 
@@ -368,7 +340,7 @@ def make_list_bootstrap_tasks():
     # Let's learn everything!
     if True:
         return lengthBootstrap + \
-            unfoldBootstrap + arrayBootstrap + foldBootstrap + difficultMaps + zipBootstrap
+            unfoldBootstrap + arrayBootstrap + foldBootstrap + zipBootstrap + mapBootstrap
 
 
 def bonusListProblems():

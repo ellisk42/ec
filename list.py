@@ -212,6 +212,7 @@ class DeepFeatureExtractor(MLPFeatureExtractor):
 class LearnedFeatureExtractor(RecurrentFeatureExtractor):
     H = 16
     USE_CUDA = False
+    special = None
 
     def tokenize(self, examples):
         def sanitize(l): return [z if z in self.lexicon else "?"
@@ -253,6 +254,8 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
                                  for t in tasks
                                  for xs, y in self.tokenize(t.examples)
                                  for l in [y] + [x for x in xs])
+
+        self.recomputeTasks = True
 
         super(
             LearnedFeatureExtractor,
@@ -312,7 +315,7 @@ def list_options(parser):
 
 if __name__ == "__main__":
     args = commandlineArguments(
-        enumerationTimeout=10, activation='tanh', iterations=10,
+        enumerationTimeout=10, activation='tanh', iterations=10, recognitionTimeout=7200,
         a=3, maximumFrontier=10, topK=2, pseudoCounts=10.0,
         helmholtzRatio=0.5, structurePenalty=2.,
         CPUs=numberOfCPUs(),

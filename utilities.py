@@ -12,6 +12,10 @@ import heapq
 
 def cindex(i): return lambda a: a[i]
 
+class ConstantFunction:
+    def __init__(self,v): self.v = v
+    def __call__(self,*a,**k): return self.v
+
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
     flushEverything()
@@ -74,7 +78,7 @@ def parallelMap(numberOfCPUs, f, *xs, chunksize=None, maxtasksperchild=None, mem
         assert correctedCPUs <= numberOfCPUs
         assert correctedCPUs >= 1
         if correctedCPUs < numberOfCPUs:
-            eprint("In order to not use all of the memory on the machine, we are limiting this parallel map to only use %d CPUs"%correctedCPUs)
+            eprint("In order to not use all of the memory on the machine (%f gb), we are limiting this parallel map to only use %d CPUs"%(howManyGigabytesOfMemory(),correctedCPUs))
         numberOfCPUs = correctedCPUs
         
 
@@ -647,7 +651,13 @@ def getThisMemoryUsage():
 def getMemoryUsageFraction():
     import psutil
     return psutil.virtual_memory().percent
+def howManyGigabytesOfMemory():
+    import psutil
+    return psutil.virtual_memory().total/10**9
 
+def tuplify(x):
+    if isinstance(x,(list,tuple)): return tuple(tuplify(z) for z in x)
+    return x
 
 # image montage!
 def makeNiceArray(l):
@@ -671,6 +681,42 @@ def montageMatrix(matrix):
     return arrays
 def montage(arrays):
     return montageMatrix(makeNiceArray(arrays))
+
+
+
+class ParseFailure(Exception):
+    pass
+
+def parseSExpression(s):
+    s = s.strip()
+    def p(n):
+        while n <= len(s) and s[n].isspace(): n += 1
+        if n == len(s): raise ParseFailure(s)
+        if s[n] == '#':
+            e,n = p(n + 1)
+            return ['#', e],n
+        if s[n] == '(':
+            l = []
+            n += 1
+            while True:
+                x,n = p(n)
+                l.append(x)
+                while n <= len(s) and s[n].isspace(): n += 1
+                if n == len(s): raise ParseFailure(s)
+                if s[n] == ')':
+                    n += 1
+                    break
+            return l,n
+        name = []
+        while n < len(s) and not s[n].isspace() and s[n] not in '()':
+            name.append(s[n])
+            n += 1
+        name = "".join(name)
+        return name,n
+    e,n = p(0)
+    if n == len(s):
+        return e
+    raise ParseFailure(s)
 
 
 if __name__ == "__main__":

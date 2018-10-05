@@ -22,23 +22,20 @@ primitives = [
 
     Primitive("logo_ADDA",  arrow(tangle,tangle,tangle), ""),
     Primitive("logo_SUBA",  arrow(tangle,tangle,tangle), ""),
-    Primitive("logo_ADDL",  arrow(tlength,tlength,tlength), ""),
-    Primitive("logo_SUBL",  arrow(tlength,tlength,tlength), ""),
+    # Primitive("logo_ADDL",  arrow(tlength,tlength,tlength), ""),
+    # Primitive("logo_SUBL",  arrow(tlength,tlength,tlength), ""),
 
-    Primitive("logo_PU",  arrow(turtle,turtle), ""),
-    Primitive("logo_PD",  arrow(turtle,turtle), ""),
+    # Primitive("logo_PU",  arrow(turtle,turtle), ""),
+    # Primitive("logo_PD",  arrow(turtle,turtle), ""),
+    Primitive("logo_PT", arrow(arrow(turtle,turtle),arrow(turtle,turtle)), None),
     Primitive("logo_FWRT",  arrow(tlength,tangle,turtle,turtle), ""),
-    # Primitive("logo_SET",  arrow(tstate,turtle,turtle), ""),
-    # Primitive("logo_GET",  arrow(arrow(tstate,turtle),turtle), "")
-    Primitive("logo_GETSET",  arrow(turtle,turtle,turtle), "")
+    Primitive("logo_GETSET",  arrow(arrow(turtle,turtle),turtle,turtle), "")
 ] + [
-    addition,
     Primitive("logo_IFTY", tint, ""),
     Primitive("logo_epsA", tangle, ""),
     Primitive("logo_epsL", tlength, ""),
-    Primitive("logo_forLoopM", arrow(tint, arrow(tint, turtle), turtle, turtle), "ERROR: python has no way of expressing this hence you shouldn't eval on this"),
-    Primitive("+", arrow(tint, tint, tint), _addition)
-] + [Primitive(str(j), tint, j) for j in range(7)]
+    Primitive("logo_forLoop", arrow(tint, arrow(tint, turtle, turtle), turtle, turtle), "ERROR: python has no way of expressing this hence you shouldn't eval on this"),
+] + [Primitive(str(j), tint, j) for j in range(10)]
 
 if __name__ == "__main__":
     expr_s = "(lambda (logo_forLoop 3 (lambda (lambda (logo_GET (lambda (logo_FWRT (logo_S2L (logo_I2S 1)) (logo_S2A (logo_I2S 0)) (logo_SET $0 (logo_FWRT (logo_S2L eps) (logo_DIVA (logo_S2A (logo_I2S 2)) (logo_I2S 3)) ($1)))))))) ($0)))"

@@ -1,7 +1,0 @@
-Repeat {
-  Repeat {
-    Integrate ;
-    Integrate(pen=off) ;
-    Turn
-  }
-}

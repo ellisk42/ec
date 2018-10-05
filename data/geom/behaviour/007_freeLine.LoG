@@ -1,6 +1,0 @@
-Integrate(angularSpeed=unit) ;
-Integrate(t=Half(unit), angularSpeed=Opposite(unit)) ;
-Integrate(pen=on,angularAccel=unit);
-Integrate(pen=off,angularAccel=Opposite(unit));
-Integrate();
-Integrate(accel=unit, angularAccel=unit)

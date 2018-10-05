@@ -14,7 +14,7 @@ type task =
     log_likelihood: program -> float;
   }
 
-let p2i : (LogoLib.LogoInterpreter.logo_instruction list,((int, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t * (int, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t)) Hashtbl.Poly.t = Hashtbl.Poly.create ()
+let p2i : (LogoLib.LogoInterpreter.logo_instruction list,(int, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t) Hashtbl.Poly.t = Hashtbl.Poly.create ()
 
 
 exception EnumerationTimeout
@@ -62,6 +62,28 @@ let supervised_task ?timeout:(timeout = 0.001) name ty examples =
 let task_handler = Hashtbl.Poly.create();;
 let register_special_task name handler = Hashtbl.set task_handler name handler;;
 
+let recent_logo_program : (program*((int, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t option)) option ref = ref None;;
+let run_recent_logo ~timeout program =
+  match !recent_logo_program with
+  | Some(program', bx) when program_equal program program' -> bx
+  | _ ->
+    let bx = run_for_interval timeout
+                 (fun () ->
+                    let p = analyze_lazy_evaluation program in
+                    let x = run_lazy_analyzed_with_arguments p [] in
+                    let l = LogoLib.LogoInterpreter.turtle_to_list x in
+                    match Hashtbl.find p2i l with
+                    | Some(bx) -> bx
+                    | None -> 
+                      let bx = LogoLib.LogoInterpreter.turtle_to_array x 28 in
+                      Hashtbl.set p2i l bx;
+                      bx)
+    in
+    recent_logo_program := Some(program, bx);
+    bx
+;;
+
+
 
 register_special_task "LOGO" (fun extras ?timeout:(timeout = 0.001) name ty examples ->
     let open Yojson.Basic.Util in
@@ -71,14 +93,9 @@ register_special_task "LOGO" (fun extras ?timeout:(timeout = 0.001) name ty exam
       with _ -> (Printf.eprintf "proto parameter not set! FATAL"; exit 1)                
     in
 
-  let by, by' = match examples with
+  let by = match examples with
       | [([0],y)] ->
-          (Bigarray.(Array1.of_array int8_unsigned c_layout (Array.of_list y)),
-           None)
-      | [([0],y) ; ([0],y')] ->
-          (Bigarray.(Array1.of_array int8_unsigned c_layout (Array.of_list y)),
-          Some(Bigarray.(Array1.of_array int8_unsigned c_layout (Array.of_list
-          y'))))
+          Bigarray.(Array1.of_array int8_unsigned c_layout (Array.of_list y))
       | _ -> failwith "not a turtle task" in
   { name = name    ;
     task_type = ty ;
@@ -91,50 +108,50 @@ register_special_task "LOGO" (fun extras ?timeout:(timeout = 0.001) name ty exam
                 (ADDR_UNIX("./prototypical-networks/protonet_socket"))
                 )
           else None in
-        let p = analyze_lazy_evaluation p in
+
         let log_likelihood = (try begin
-          match
+            match
+              if true then
+                (match run_recent_logo ~timeout p with
+                 | Some(bx) when (LogoLib.LogoInterpreter.fp_equal bx by 5) -> Some(0.)
+                 | _ -> None)
+              else 
             run_for_interval
               timeout
               (fun () ->
-                let x = run_lazy_analyzed_with_arguments p [] in
+                let x = run_lazy_analyzed_with_arguments (analyze_lazy_evaluation p) [] in
                 let l = LogoLib.LogoInterpreter.turtle_to_list x in
-                let bx,bx' =
+                let bx =
+                  if false then LogoLib.LogoInterpreter.turtle_to_array x 28 else 
                     match Hashtbl.Poly.find p2i l with
-                    | Some((x,x')) -> (x,x')
+                    | Some(x) -> x
                     | _ ->
                         let bx = LogoLib.LogoInterpreter.turtle_to_array x 28 in
-                        let bx' = LogoLib.LogoInterpreter.normal_turtle_to_array x 28 in
-                        Hashtbl.Poly.set p2i l (bx,bx') ;
-                        (bx,bx')
+                        Hashtbl.Poly.set p2i l bx ;
+                        bx
                 in
-                match by' with
-                | None -> 
-                    if proto then begin
-                      let s_in, s_out = match s_inout with
-                        | Some(x,y) -> x, y
-                        | _ -> failwith "NOOOOO, don't dooo that !!!"
-                      in
-                      let bytes_version = Bytes.create (28 * 28) in
-                      for i = 0 to (28 * 28) - 1 do
-                        Bytes.set bytes_version i (char_of_int (bx.{i}))
-                      done ;
-                      let img = Bytes.to_string bytes_version in
-                      output_binary_int s_out (String.length name) ;
-                      output_string s_out name ;
-                      output_binary_int s_out (String.length img) ;
-                      output_string s_out img ;
-                      flush s_out ;
-                      let l = input_binary_int s_in in
-                      float_of_string (really_input_string s_in l)
-                    end
-                    else begin
-                      if (LogoLib.LogoInterpreter.fp_equal bx by 5) then 0.0
-                      else log 0.0
-                    end
-                | Some(by') ->
-                    if (LogoLib.LogoInterpreter.fp_equal bx by 5) then (0.0)
-                    else -. (LogoLib.LogoInterpreter.distance bx' by'))
+                if proto then begin
+                  let s_in, s_out = match s_inout with
+                    | Some(x,y) -> x, y
+                    | _ -> failwith "NOOOOO, don't dooo that !!!"
+                  in
+                  let bytes_version = Bytes.create (28 * 28) in
+                  for i = 0 to (28 * 28) - 1 do
+                    Bytes.set bytes_version i (char_of_int (bx.{i}))
+                  done ;
+                  let img = Bytes.to_string bytes_version in
+                  output_binary_int s_out (String.length name) ;
+                  output_string s_out name ;
+                  output_binary_int s_out (String.length img) ;
+                  output_string s_out img ;
+                  flush s_out ;
+                  let l = input_binary_int s_in in
+                  float_of_string (really_input_string s_in l)
+                end
+                else begin
+                  if (LogoLib.LogoInterpreter.fp_equal bx by 5) then 0.0
+                  else log 0.0
+                end)
           with
             | Some(x) -> x
             | _ -> log 0.0
@@ -315,7 +332,7 @@ type hit_result = {hit_program: string;
                    hit_prior: float;
                    hit_time: float;}
 
-let enumerate_for_tasks (g: grammar) ?verbose:(verbose = true)
+let enumerate_for_tasks (g: contextual_grammar) ?verbose:(verbose = true)
     ~maxFreeParameters
     ?budgetIncrement:(budgetIncrement = 1.)
     ?lowerBound:(lowerBound = 0.)

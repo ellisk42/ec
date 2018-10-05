@@ -1,7 +1,0 @@
-Repeat(Double(Double(unit))) {
-    Embed {
-        Turn ;
-        Integrate
-    } ;
-    Integrate(t=Half(unit),pen=off)
-}

@@ -245,18 +245,11 @@ def solveForTask_ocaml(_=None,
 
     import json
 
-    def requestMessage(r):
-        if isinstance(r, TypeConstructor):
-            return {"constructor": r.name,
-                    "arguments": [requestMessage(a) for a in r.arguments]}
-        assert isinstance(r, TypeVariable)
-        return {"index": r.v}
-
     def taskMessage(t):
         m = {
             "examples": [{"inputs": list(xs), "output": y} for xs, y in t.examples],
             "name": t.name,
-            "request": requestMessage(t.request),
+            "request": t.request.json(),
             "maximumFrontier": maximumFrontiers[t]}
         if hasattr(t, "specialTask"):
             special, extra = t.specialTask
@@ -264,9 +257,8 @@ def solveForTask_ocaml(_=None,
             m["extras"] = extra
         return m
 
-    message = {"DSL": {"logVariable": g.logVariable,
-                       "productions": [{"expression": str(p), "logProbability": l}
-                                       for l, _, p in g.productions]},
+
+    message = {"DSL": g.json(),
                "tasks": [taskMessage(t)
                          for t in tasks],
 
@@ -279,9 +271,7 @@ def solveForTask_ocaml(_=None,
                "verbose": False,
                "shatter": 10}
 
-    if hasattr(
-            tasks[0],
-            'maxParameters') and tasks[0].maxParameters is not None:
+    if hasattr(tasks[0], 'maxParameters') and tasks[0].maxParameters is not None:
         message["maxParameters"] = tasks[0].maxParameters
 
     message = json.dumps(message)

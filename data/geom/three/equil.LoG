@@ -1,4 +1,0 @@
-Repeat (three) {
-  Integrate ;
-  Turn(angle = Divide(Next(three), three))
-}

@@ -1,5 +1,9 @@
-open Core.Std
+open Core
 
+
+open Gc
+
+open Tower
 open Utils
 open Type
 open Program
@@ -7,631 +11,589 @@ open Enumeration
 open Task
 open Grammar
 
-module FreeMap = Map.Make(Int)
+(* open Eg *)
+open Versions
 
-type fragment =
-  | FIndex of int
-  | FAbstraction of fragment
-  | FApply of fragment*fragment
-  | FPrimitive of tp * string
-  | FInvented of tp * program
-  | FVariable
+let verbose_compression = ref false;;
 
-let rec string_of_fragment = function
-  | FIndex(j) -> "$" ^ string_of_int j
-  | FAbstraction(body) ->
-    "(lambda "^string_of_fragment body^")"
-  | FApply(p,q) ->
-    "("^string_of_fragment p^" "^string_of_fragment q^")"
-  | FPrimitive(_,n) -> n
-  | FInvented(_,i) -> "#"^string_of_program i
-  | FVariable -> "??"
-    
-let is_fragment_index = function
-  | FIndex(_) -> true
-  | _ -> false
-
-let rec fragment_size = function
-  | FIndex(_) -> 1
-  | FVariable -> 1
-  | FPrimitive(_,_) -> 1
-  | FInvented(_,_) -> 1
-  | FAbstraction(b) -> 1 + fragment_size b
-  | FApply(p,q) -> 1 + fragment_size p + fragment_size q
-
-let infer_fragment_type ?context:(context = empty_context) ?environment:(environment = [])
-    (f : fragment) : tp =
-  let bindings : (tp FreeMap.t) ref = ref FreeMap.empty in
-  let rec infer context environment = function
-    | FIndex(j) when j < List.length environment ->
-      let (t,context) = List.nth_exn environment j |> chaseType context in (context,t)
-    | FIndex(j) -> begin 
-      match FreeMap.find !bindings (j - List.length environment) with
-      | Some(t) -> (context,t)
-      | None ->
-        let (t,context) = makeTID context in
-        bindings := FreeMap.add !bindings ~key:(j - List.length environment) ~data:t;
-        (context,t)
-      end
-    | FPrimitive(t,_) -> let (t,context) = instantiate_type context t in (context,t)
-    | FInvented(t,_) -> let (t,context) = instantiate_type context t in (context,t)
-    | FVariable ->
-      let (t,context) = makeTID context in (context,t)
-    | FAbstraction(b) ->
-      let (xt,context) = makeTID context in
-      let (context,rt) = infer context (xt::environment) b in
-      let (ft,context) = chaseType context (xt @> rt) in
-      (context,ft)
-    | FApply(f,x) ->
-      let (rt,context) = makeTID context in
-      let (context, xt) = infer context environment x in
-      let (context, ft) = infer context environment f in
-      let context = unify context ft (xt @> rt) in
-      let (rt, context) = chaseType context rt in
-      (context, rt)
+let restrict ~topK g frontier =
+  let restriction =
+    frontier.programs |> List.map ~f:(fun (p,ll) ->
+        (ll+.likelihood_under_grammar g frontier.request p,p,ll)) |>
+    sort_by (fun (posterior,_,_) -> 0.-.posterior) |>
+    List.map ~f:(fun (_,p,ll) -> (p,ll))
   in
-  let (context,t) = infer context environment f
-  in chaseType context t |> fst
+  {request=frontier.request; programs=List.take restriction topK}
 
-type fragment_grammar = {
-  logVariable : float;
-  fragments : (fragment*tp*float) list;
-}
 
-let string_of_fragment_grammar g =
-  "logVariable = "^(Float.to_string g.logVariable)^"\n"^
-  (join ~separator:"\n" (g.fragments |> List.map ~f:(fun (f,t,l) ->
-     Float.to_string l^"\t"^string_of_type t^"\t"^string_of_fragment f)))
+let inside_outside ~pseudoCounts g (frontiers : frontier list) =
+  let summaries = frontiers |> List.map ~f:(fun f ->
+      f.programs |> List.map ~f:(fun (p,l) ->
+          let s = make_likelihood_summary g f.request p in
+          (l, s))) in
 
-exception FragmentFail
-
-(* Tries binding the program with the fragment. The type returned is
-   that of the *fragment*, not that of the program or the program
-   unified with the fragment *)
-let rec bind_fragment context environment
-    (f : fragment) (p : program) : tContext*tp*((tp*program) list)*((tp*program) FreeMap.t) =
-  
-  let combine context (l,m) (lp,mp) =
-    let (context,free) = 
-     FreeMap.fold2 m mp ~init:(context, FreeMap.empty)
-       ~f:(fun ~key:key ~data:merge (context,accumulator) ->
-         match merge with
-         | `Both((t1,p1),(t2,p2)) when not (p1 <> p2) -> raise FragmentFail
-         | `Both((t1,p1),(t2,p2)) -> begin 
-             try
-               let context = unify context t1 t2 in
-               let (t,context) = chaseType context t1 in
-               (context, FreeMap.add accumulator ~key:key ~data:(t,p1))
-             with _ -> raise FragmentFail
-           end
-         | `Left(program_and_type) ->
-           (context, FreeMap.add accumulator ~key:key ~data:program_and_type)
-         | `Right(program_and_type) ->
-           (context, FreeMap.add accumulator ~key:key ~data:program_and_type))
-    in (context, l@lp, free)
-    
-  in
-  
-  let rec hoist ?d:(d = 0) j p = match p with
-    | Primitive(_,_) -> p
-    | Invented(_,_) -> p
-    | Apply(f,x) -> Apply(hoist j f ~d:d, hoist j x ~d:d)
-    | Abstraction(b) -> Abstraction(hoist j b ~d:(d+1))
-    | Index(i) when i < d -> p (* bound within the hoisted code *)
-    | Index(i) when i >= d+j -> Index(i - j) (* bound outside the hoisted code but also outside the fragment *)
-    | Index(_) -> raise FragmentFail (* bound inside of the fragment and so cannot be hoisted *)
-  in
-  match (f,p) with
-  | (FApply(a,b),Apply(m,n)) ->
-    let (context, ft,holes1,free1) = bind_fragment context environment a m in
-    let (context, xt,holes2,free2) = bind_fragment context environment b n in
-    let (context, holes, free) = combine context (holes1,free1) (holes2,free2) in
-    let (alpha, context) = makeTID context in
-    let context =
-      try
-        unify context (xt @> alpha) ft
-      with  _ -> raise FragmentFail
+  let update g =
+    let weighted_summaries = summaries |> List.map ~f:(fun ss ->
+        let log_weights = ss |> List.map ~f:(fun (l,s) ->
+            l+. summary_likelihood g s) in
+        let z = lse_list log_weights in
+        List.map2_exn log_weights ss ~f:(fun lw (_,s) -> (exp (lw-.z),s))) |>
+                             List.concat
     in
-    let (alpha, context) = chaseType context alpha in
-    (context, alpha, holes, free)
-    
-  | (FPrimitive(t,n1),Primitive(_,n2)) when n1 = n2 ->
-    let (t,context) = instantiate_type context t in
-    (context,t,[],FreeMap.empty)
-  | (FInvented(t,n1),Invented(_,n2)) when n1 = n2 ->
-    let (t,context) = instantiate_type context t in
-    (context,t,[],FreeMap.empty)
-  | (FAbstraction(m),Abstraction(n)) ->
-    let (alpha, context) = makeTID context in
-    let (context,beta,holes,free) = bind_fragment context (alpha::environment) m n in
-    (context, alpha @> beta, holes, free)
-  | (FVariable, _) ->
-    let (alpha, context) = makeTID context in
-    let p = hoist (List.length environment) p in
-    (context, alpha, [(alpha, p)], FreeMap.empty)
-  | (FIndex(j),_) when j >= List.length environment ->
-    let p = hoist (List.length environment) p in
-    let (alpha, context) = makeTID context in
-    (context, alpha, [],
-     FreeMap.singleton (j - List.length environment) (alpha,p))
-  | (FIndex(j),Index(k)) when j < List.length environment && j = k ->
-    (context, List.nth_exn environment j, [], FreeMap.empty)
-  | _ -> raise FragmentFail
 
-let unifying_fragment_variables g environment request context : (fragment*tp*float) list = 
-  (* construct variables and remove those that do not have the correct type *)
-  let candidates = environment |> List.mapi ~f:(fun j t -> (FIndex(j),t,g.logVariable))
-                   |> List.filter ~f:(fun (_,t,_) ->
-                       try ignore(unify context t request); true
-                       with UnificationFailure -> false)
+    let s = mix_summaries weighted_summaries in
+    let possible p = Hashtbl.fold ~init:0. s.normalizer_frequency  ~f:(fun ~key ~data accumulator ->
+        if List.mem ~equal:program_equal key p then accumulator+.data else accumulator)
+    in
+    let actual p = match Hashtbl.find s.use_frequency p with
+      | None -> 0.
+      | Some(f) -> f
+    in
+
+    {logVariable = log (actual (Index(0)) +. pseudoCounts) -. log (possible (Index(0)) +. pseudoCounts);
+     library = g.library |> List.map ~f:(fun (p,t,_,u) ->
+         let l = log (actual p +. pseudoCounts) -. log (possible p +. pseudoCounts) in
+       (p,t,l,u))}
   in
-  (* normalize variables *)
-  let log_number_of_variables = List.length candidates |> Float.of_int |> log in
-  candidates |> List.map ~f:(fun (e,t,ll) ->
-      (e,t,ll-.log_number_of_variables))
+  let g = update g in
+  (g,
+   summaries |> List.map ~f:(fun ss ->
+     ss |> List.map ~f:(fun (l,s) -> l+. summary_likelihood g s) |> lse_list) |> fold1 (+.))
     
-let unifying_fragments (g : fragment_grammar) (environment : tp list) (request : tp) (context : tContext)
-   : (int*fragment*tp*tContext*float) list =
-  let candidates = 
-  g.fragments @ unifying_fragment_variables g environment request context |>
-  List.filter_mapi ~f:(fun i (p,t,ll) ->
-      try
-        let (t,context) = if not (is_fragment_index p) then instantiate_type context t else (t,context) in
-        let (_, return_type) = arguments_and_return_of_type t in
-        let newContext = unify context return_type request in
-        Some(i, p, t, newContext,ll)
-      with UnificationFailure -> None)
-  in
-  let z = List.map ~f:(fun (_,_,_,_,ll) -> ll) candidates |> lse_list in
-  List.map ~f:(fun (i,p,t,k,ll) -> (i,p,t,k,ll-.z)) candidates
+    
+let grammar_induction_score ~aic ~structurePenalty ~pseudoCounts frontiers g =
+  let g,ll = inside_outside ~pseudoCounts g frontiers in
 
-type use_counter = {possible_uses: float list; actual_uses: float list;
-                   possible_variables: float; actual_variables: float}
+    let production_size = function
+      | Primitive(_,_,_) -> 1
+      | Invented(_,e) -> program_size e
+      | _ -> raise (Failure "Element of grammar is neither primitive nor invented")
+    in 
 
-let use_plus u1 u2 = {possible_uses = u1.possible_uses +| u2.possible_uses;
-                      actual_uses = u1.actual_uses +| u2.actual_uses;
-                      possible_variables = u1.possible_variables +. u2.possible_variables;
-                      actual_variables = u1.actual_variables +. u2.actual_variables;}
+    (g,
+     ll-. aic*.(List.length g.library |> Float.of_int) -.
+     structurePenalty*.(g.library |> List.map ~f:(fun (p,_,_,_) ->
+         production_size p) |> sum |> Float.of_int))
 
-let scale_uses a u = {possible_uses = a *| u.possible_uses;
-                      actual_uses = a *| u.actual_uses;
-                      possible_variables = a *. u.possible_variables;
-                      actual_variables = a *. u.actual_variables;}
-                     
-
-let zero_uses g =
-  let n = List.length (g.fragments) in
-  let u = zeros n in
-  {possible_uses = u; actual_uses = u;
-   possible_variables = 0.; actual_variables = 0.;}
-
-let pseudo_uses a g =
-  let n = List.length (g.fragments) in
-  let u = replicate n a in
-  {possible_uses = u; actual_uses = u;
-   possible_variables = a; actual_variables = a;}
   
-let one_hot_uses g j =
-  let n = List.length (g.fragments) in
-  assert (j < n);
-  let u = zeros j @ [1.] @ zeros (n - j - 1) in
-  {possible_uses = u; actual_uses = u;
-   possible_variables = 0.; actual_variables = 0.;}
 
-let one_hot_variable_use g =
-  let n = List.length (g.fragments) in
-  let u = zeros n in
-  {possible_uses = u; actual_uses = u;
-  possible_variables = 1.; actual_variables = 1.;}
+exception EtaExpandFailure;;
 
-let no_uses = {possible_uses = []; actual_uses = [];
-               possible_variables = 0.; actual_variables = 0.;}
+let eta_long request e =
+  let context = ref empty_context in
 
-let show_uses g u =
-  List.iter2_exn (g.fragments) (List.zip_exn (u.actual_uses) (u.possible_uses)) ~f:(fun (f,_,_) (a, p) ->
-      (*       assert (a >= p); *)
-      if a > 0. then Printf.printf "Fragment %s used %f/%f times\n" (string_of_fragment f) a p else ())
+  let make_long e request =
+    if is_arrow request then Some(Abstraction(Apply(shift_free_variables 1 e, Index(0)))) else None
+  in 
 
-(* Any chain of applications could be broken up at any point by a
-   fragment. This enumerates all of the different ways of breaking up an
-   application chain into a function and a list of arguments.
-   Example: (+ 1 2) -> [(+,[1,2]), (+1,[2])] *)
-let rec possible_application_parses (p : program) : (program*(program list)) list =
-  match p with
-  | Apply(f,x) ->
-    [(p,[])] @
-    (possible_application_parses f |> List.map ~f:(fun (fp,xp) -> (fp,xp @ [x])))
-  | _ -> [(p,[])]
+  let rec visit request environment e = match e with
+    | Abstraction(b) when is_arrow request ->
+      Abstraction(visit (right_of_arrow request) (left_of_arrow request :: environment) b)
+    | Abstraction(_) -> raise EtaExpandFailure
+    | _ -> match make_long e request with
+      | Some(e') -> visit request environment e'
+      | None -> (* match e with *)
+        (* | Index(i) -> (unify' context request (List.nth_exn environment i); e) *)
+        (* | Primitive(t,_,_) | Invented(t,_) -> *)
+        (*   (let t = instantiate_type' context t in *)
+        (*    unify' context t request; *)
+        (*    e) *)
+        (* | Abstraction(_) -> assert false *)
+        (* | Apply(_,_) -> *)
+        let f,xs = application_parse e in
+        let ft = match f with
+          | Index(i) -> environment $$ i |> applyContext' context
+          | Primitive(t,_,_) | Invented(t,_) -> instantiate_type' context t
+          | Abstraction(_) -> assert false (* not in beta long form *)
+          | Apply(_,_) -> assert false
+        in
+        unify' context request (return_of_type ft);
+        let ft = applyContext' context ft in
+        let xt = arguments_of_type ft in
+        if List.length xs <> List.length xt then raise EtaExpandFailure else
+          let xs' =
+            List.map2_exn xs xt ~f:(fun x t -> visit (applyContext' context t) environment x)
+          in
+          List.fold_left xs' ~init:f ~f:(fun return_value x ->
+              Apply(return_value,x))
+  in
 
-let test_possible_application_parses () =
-  let test_cases = ["(+ k1 k2)"; "(* (+ k1 k2) k9)"; "(lambda $0)"; "k0"] in
-  test_cases |> List.iter ~f:(fun e ->
-      Printf.printf "Test case: %s\n" e;
-      let e = parse_program e |> get_some in
-      possible_application_parses e |> List.iter ~f:(fun (f,xs) ->
-          Printf.printf "f = %s\txs = %s\n" (string_of_program f)
-            (xs |> List.map ~f:string_of_program |> join ~separator:" ;; ")))
+  let e' = visit request [] e in
+  
+  assert (tp_eq
+            (e |> closed_inference |> canonical_type)
+            (e' |> closed_inference |> canonical_type));
+  e'
+;;
 
+let normalize_invention i =
+  let mapping = free_variables i |> List.dedup_and_sort ~compare:(-) |> List.mapi ~f:(fun i v -> (v,i)) in
 
-let likelihood_under_fragments (g : fragment_grammar) (request : tp) (expression : program) : float*use_counter =
+  let rec visit d = function
+    | Index(i) when i < d -> Index(i)
+    | Index(i) -> Index(d + List.Assoc.find_exn ~equal:(=) mapping (i - d))
+    | Abstraction(b) -> Abstraction(visit (d + 1) b)
+    | Apply(f,x) -> Apply(visit d f,
+                          visit d x)
+    | Primitive(_,_,_) | Invented(_,_) as e -> e
+  in
+  
+  let renamed = visit 0 i in
+  let abstracted = List.fold_right mapping ~init:renamed ~f:(fun _ e -> Abstraction(e)) in
+  make_invention abstracted
 
- 
-  let rec likelihood (context : tContext) (environment : tp list) (request : tp) (p : program)
-    : (tContext*float*use_counter) =
-    let (request,context) = chaseType context request in
-    match request with
+let rewrite_with_invention i =
+  (* Raises EtaExpandFailure if this is not successful *)
+  let mapping = free_variables i |> List.dedup_and_sort ~compare:(-) |> List.mapi ~f:(fun i v -> (i,v)) in
+  let closed = normalize_invention i in
+  (* FIXME : no idea whether I got this correct or not... *)
+  let applied_invention = List.fold_left ~init:closed
+      (List.range ~start:`exclusive ~stop:`inclusive ~stride:(-1) (List.length mapping) 0)
+      ~f:(fun e i -> Apply(e,Index(List.Assoc.find_exn ~equal:(=) mapping i)))
+  in
+
+  let rec visit e =
+    if program_equal e i then applied_invention else
+      match e with
+      | Apply(f,x) -> Apply(visit f, visit x)
+      | Abstraction(b) -> Abstraction(visit b)
+      | Index(_) | Primitive(_,_,_) | Invented(_,_) -> e
+  in
+  fun request e ->
+    let e' = visit e |> eta_long request in
+    assert (program_equal
+              (beta_normal_form ~reduceInventions:true e)
+              (beta_normal_form ~reduceInventions:true e'));
+    e'
+
+let nontrivial e =
+  let indices = ref [] in
+  let duplicated_indices = ref 0 in
+  let primitives = ref 0 in
+  let rec visit d = function
+    | Index(i) ->
+      let i = i - d in
+      if List.mem ~equal:(=) !indices i
+      then incr duplicated_indices
+      else indices := i :: !indices
+    | Apply(f,x) -> (visit d f; visit d x)
+    | Abstraction(b) -> visit (d + 1) b
+    | Primitive(_,_,_) | Invented(_,_) -> incr primitives
+  in
+  visit 0 e;
+  !primitives > 1 || !primitives = 1 && !duplicated_indices > 0
+;;
+
+open Zmq
+
+type worker_command =
+  | Rewrite of program list
+  | RewriteEntireFrontiers of program
+  | KillWorker
     
-    (* a function - must start out with a sequence of lambdas *)
-    | TCon("->",[argument;return_type]) -> begin 
-        let newEnvironment = argument :: environment in
-        match p with
-        | Abstraction(body) -> 
-          likelihood context newEnvironment return_type body
-        | _ ->
-          Printf.printf "WARNING: likelihood: expected lambda for type %s, got %s\n"
-            (string_of_type request) (string_of_program p);
-          (context, Float.neg_infinity, zero_uses g)
-      end
-      
-    | _ -> (* not a function so must be an application *)
-      (* fragments we might match with based on their type *)
-      let candidates = unifying_fragments g environment request context in
-      
-      (* The candidates are all different things that we could have possibly used *)
-      let number_of_productions = List.length g.fragments in
-      let used_indexes = candidates |> List.filter_map ~f:(fun (index,_,_,_,_) ->
-          if index < number_of_productions then Some(index) else None) in
-      let possible_uses = {actual_uses = zeros number_of_productions;
-                           actual_variables = 0.;
-                           possible_variables =
-                             candidates |> List.exists ~f:(fun (_,f,_,_,_) -> is_fragment_index f) |>
-                             float_of_bool;
-                           possible_uses = 
-                             (0--(number_of_productions - 1)) |> List.map ~f:(fun i ->
-                                 if List.mem used_indexes i then 1.0 else 0.0)} in
+let compression_worker connection ~arity ~bs ~topK g frontiers =
+  let context = Zmq.Context.create() in
+  let socket = Zmq.Socket.create context Zmq.Socket.req in
+  Zmq.Socket.connect socket connection;
+  let send data = Zmq.Socket.send socket (Marshal.to_string data []) in
+  let receive() = Marshal.from_string (Zmq.Socket.recv socket) 0 in
 
-      (* Printf.printf "For the requested type %s, the possible use of vector is:\n\t%s\n" *)
-      (*   (string_of_type request) *)
-      (*   (possible_uses.possible_uses |> List.map ~f:Float.to_string |> join ~separator:" "); *)
-      
-      (* For each way of carving up the program into a function and a list of arguments... *)
-      possible_application_parses p |> List.map ~f:(fun (f,arguments) ->
-          List.map candidates ~f:(fun (candidate_index,candidate,unified_type,context,ll) ->
-            try
-              let (context, fragment_type, holes, bindings) = match f with
-                | Index(i) ->
-                  if FIndex(i) = candidate then (context, List.nth_exn environment i, [], FreeMap.empty)
-                  else raise FragmentFail
-                | _ -> 
-                  bind_fragment context environment candidate f
-              in
-              (* Printf.printf "BOUND: %s & %s\n" (string_of_program f) (string_of_fragment candidate); *)
 
-              (* The final return type of the fragment corresponds to the requested type *)
-              let (context, fragment_request) =
-                pad_type_with_arguments context (List.length arguments) request in
-              let context = unify context fragment_request fragment_type in
-              let (fragment_type, context) = chaseType context fragment_type in
-              
-              let (argument_types, _) = arguments_and_return_of_type fragment_type in
-              if not (List.length argument_types = List.length arguments) then
-                begin
-                  Printf.printf "request: %s\n" (string_of_type request);
-                  Printf.printf "program: %s\n" (string_of_program p);
-                  Printf.printf "F = %s, xs = %s\n" (string_of_program f)
-                    (arguments |> List.map ~f:string_of_program |> join ~separator:" ;; ");
-                  Printf.printf "fragment: %s\n" (string_of_fragment candidate);
-                  Printf.printf "fragment type: %s\n" (string_of_type fragment_type);
-                  Printf.printf "argument types: %s\n" (argument_types |> List.map ~f:string_of_type |> join);
-                  Printf.printf "arguments: %s\n" (arguments |> List.map ~f:string_of_program |> join);
-                  assert false
-                end
-              else ()
-              ;
+  let original_frontiers = frontiers in
+  let frontiers = ref (List.map ~f:(restrict ~topK g) frontiers) in
 
-              (* treat the holes and the bindings as though they were arguments *)
-              let arguments = List.map holes ~f:(fun (_,h) -> h) @
-                              List.map (FreeMap.to_alist bindings) ~f:(fun (_,(_,binding)) -> binding) @ 
-                              arguments in
-              let argument_types = List.map holes ~f:(fun (ht,_) -> ht) @
-                                   List.map (FreeMap.to_alist bindings) ~f:(fun (_,(binding,_)) -> binding) @ 
-                                   argument_types in
+  let v = new_version_table() in
+  let cost_table = empty_cost_table v in
 
-              let initial_use_vector = use_plus possible_uses (if is_index f
-                                                               then one_hot_variable_use g
-                                                               else one_hot_uses g candidate_index)
-              in
-
-              let (application_likelihood, context, application_uses) = 
-                List.fold_right (List.zip_exn arguments argument_types)
-                  ~init:(ll,context,initial_use_vector)
-                  ~f:(fun (argument, argument_type) (ll,context,uv) ->
-                      let (context,argument_likelihood,uvp) =
-                        likelihood context environment argument_type argument
-                      in (ll+.argument_likelihood, context, use_plus uv uvp))
-              in
-              (Some(context), application_likelihood, application_uses)
-            with | FragmentFail -> (None, Float.neg_infinity, no_uses)
-                 | UnificationFailure -> assert false)) |> List.concat |>
-
-      (* Accumulate the probabilities from each parse. All of the contexts should be equivalent. *)
-      List.fold_right ~init:(context, Float.neg_infinity, []) ~f:(fun (mayBeContext, ll, u)
-                                                                   (oldContext, acc, us) ->
-          match mayBeContext with
-          | None -> begin
-              assert (is_invalid ll);
-              (oldContext,acc,us) end
-          | Some(c) when is_valid ll -> (c, lse acc ll, (ll,u) :: us)
-          | Some(_) -> (oldContext, acc, us))
-      |> (fun (context,ll,listOfUses) ->
-          let expectedUses = listOfUses |> List.map ~f:(fun (_ll,u) -> scale_uses (exp (_ll -. ll)) u) |>
-                             List.fold_right ~init:(zero_uses g) ~f:use_plus in
-          (context,ll,expectedUses))
-          
-        
+  (* calculate candidates from the frontiers we can see *)
+  let frontier_indices : int list list = time_it ~verbose:!verbose_compression
+      "(worker) calculated version spaces" (fun () ->
+      !frontiers |> List.map ~f:(fun f -> f.programs |> List.map ~f:(fun (p,_) ->
+              incorporate v p |> n_step_inversion v ~n:arity))) in
+  if !verbose_compression then
+    Printf.eprintf "(worker) %d distinct version spaces enumerated; %d accessible vs size; vs log sizes: %s\n"
+      v.i2s.ra_occupancy
+      (frontier_indices |> List.concat |> reachable_versions v |> List.length)
+      (frontier_indices |> List.concat |> List.map ~f:(Float.to_string % log_version_size v)
+       |> join ~separator:"; ");
+  
+  let candidates : program list list = time_it ~verbose:!verbose_compression "(worker) proposed candidates"
+      (fun () ->
+      let reachable : int list list = frontier_indices |> List.map ~f:(reachable_versions v) in
+      let inhabitants : program list list = reachable |> List.map ~f:(fun indices ->
+          List.concat_map ~f:(snd % minimum_cost_inhabitants cost_table) indices |>
+          List.dedup_and_sort ~compare:(-) |> 
+          List.map ~f:(List.hd_exn % extract v) |>
+          List.filter ~f:nontrivial) in 
+          inhabitants)
   in
-  let (_,ll,u) = likelihood empty_context [] request expression in
-  (ll,u)
 
+  (* relay this information to the master, whose job it is to pool the candidates *)
+  send candidates;  
+  let candidates : program list = receive() in
+  let candidates : int list = candidates |> List.map ~f:(incorporate v) in
+  
+  if !verbose_compression then
+    (Printf.eprintf "(worker) Got %d candidates.\n" (List.length candidates);
+     flush_everything());
 
-let rec fragment_of_program = function
-  | Index(j) -> FIndex(j)
-  | Abstraction(body) ->FAbstraction(fragment_of_program body)
-  | Apply(p,q) -> FApply(fragment_of_program p, fragment_of_program q)
-  | Primitive(t,n) -> FPrimitive(t,n)
-  | Invented(t,i) -> FInvented(t,i)
-
-let fragment_grammar_of_grammar (g : grammar) : fragment_grammar =
-  {logVariable = g.logVariable;
-  fragments = List.map (g.library) ~f:(fun (p,t,l) -> (fragment_of_program p, t, l))}
-
-let close_fragment (f:fragment) : program =
-  (* Mapping from <index beyond this fragment>, <which lambda it refers to, starting at 0> *)
-  let mapping = Hashtbl.Poly.create () in
-  let number_of_abstractions = ref 0 in
-  let rec walk d = function
-    | FVariable -> begin incr number_of_abstractions; Index(!number_of_abstractions + d - 1) end
-    | FPrimitive(t,n) -> Primitive(t,n)
-    | FInvented(t,n) -> Invented(t,n)
-    | FAbstraction(b) -> Abstraction(walk (d+1) b)
-    | FApply(f,x) -> Apply(walk d f, walk d x)
-    | FIndex(j) when j < d -> Index(j)
-    | FIndex(j) ->
-      match Hashtbl.Poly.find mapping (j - d) with
-      | Some(lambda_index) -> Index(lambda_index + d)
-      | None -> begin
-          incr number_of_abstractions;
-          ignore(Hashtbl.Poly.add mapping ~key:(j - d) ~data:(!number_of_abstractions - 1));
-          Index(!number_of_abstractions + d - 1)
-        end
+  let candidate_scores : float list = time_it ~verbose:!verbose_compression "(worker) beamed version spaces"
+      (fun () ->
+      beam_costs' ~ct:cost_table ~bs candidates frontier_indices)
   in
-  let body = walk 0 f in
-  List.fold_left (0--(!number_of_abstractions - 1)) ~init:body ~f:(fun b _ -> Abstraction(b))
 
-let rec fragments (d:int) (a:int) (p:program) =
-  (* All of the fragments that have exactly a variables *)
-  (* Assumed that we are in an environment with d lambda expressions *)
-  let recursiveFragments = 
-    match p with
-    | Apply(f,x) ->
-      List.map (0--a) ~f:(fun fa ->
-          let functionFragments = fragments d fa f in
-          let argumentFragments = fragments d (a-fa) x in
-          List.cartesian_product functionFragments argumentFragments |>
-          List.map ~f:(fun (fp,xp) -> FApply(fp,xp))) |>
-      List.concat
-    | Index(j) when a = 0 -> [FIndex(j)]
-    | Index(_) -> []
-    | Abstraction(body) ->
-      fragments (d+1) a body |> List.map ~f:(fun b -> FAbstraction(b))
-    | Primitive(t,n) when a = 0 -> [FPrimitive(t,n)]
-    | Primitive(_,_) -> []
-    | Invented(t,n) when a = 0 -> [FInvented(t,n)]
-    | Invented(_,_) -> []
+  send candidate_scores;
+   (* I hope that this leads to garbage collection *)
+  let candidate_scores = ()
+  and cost_table = ()
   in
-  (* Given that there are d surrounding lambdas in the thing we are
-     trying to fragment, and e surrounding lambdas in the fragmented
-     self, are we allowed to replace it with a fragment?  The idea
-     here is that any variable has to NOT refer to anything bound in
-     the larger program which is not bound in the fragment*)
-  let rec refers_to_bound_variables e = function
-    | Apply(f,x) -> refers_to_bound_variables e f || refers_to_bound_variables e x
-    | Abstraction(b) -> refers_to_bound_variables (e + 1) b
-    | Index(j) -> j > e - 1 && (* has to not refer to something bound in the fragment *)
-                  j < e + d (* has to not refer to something outside the whole program body *)
-    | Primitive(_,_) -> false
-    | Invented(_,_) -> false
-  in
-  if a = 1 && (not (refers_to_bound_variables 0 p)) then FVariable :: recursiveFragments else recursiveFragments
 
-let is_fragment_nontrivial = function
-  | FAbstraction(_) -> false
-  | FApply(FAbstraction(_),FIndex(_)) -> false
-  | FApply(FAbstraction(_),FVariable) -> false
-  | f ->
-    let rec variables height uses = function
-      | FVariable -> 0
-      | FAbstraction(b) -> variables (height + 1) uses b
-      | FApply(f,x) -> variables height uses f + variables height uses x
-      | FIndex(j) ->
-        (match Hashtbl.find uses (j - height) with
-         | None -> (ignore(Hashtbl.add uses ~key:(j - height) ~data:1); 0)
-         | Some(old) -> 
-           Hashtbl.set uses ~key:(j - height) ~data:(old + 1);
-           if old = 1 then 2 else 1)
-      | _ -> 0
+  let rewrite_frontiers invention_source =
+    let i = incorporate v invention_source in
+    let rewriter = rewrite_with_invention invention_source in
+    (* Extract the frontiers in terms of the new primitive *)
+    let new_cost_table = empty_cost_table v in
+    let new_frontiers = List.map !frontiers
+        ~f:(fun frontier ->
+            let programs' =
+              List.map frontier.programs ~f:(fun (originalProgram, ll) ->
+                  let index = incorporate v originalProgram |> n_step_inversion v ~n:arity in
+                  let program = minimum_cost_inhabitants new_cost_table ~given:(Some(i)) index |> snd |> 
+                                List.hd_exn |> extract v |> singleton_head in
+                  let program' =
+                    try rewriter frontier.request program
+                    with EtaExpandFailure -> originalProgram
+                  in
+                  (program',ll))
+            in 
+            {request=frontier.request;
+             programs=programs'})
     in
-    let rec primitives = function
-      | FPrimitive(_,_) -> 1
-      | FInvented(_,_) -> 1
-      | FAbstraction(b) -> primitives b
-      | FApply(f,x) -> primitives f + primitives x
-      | _ -> 0
-    in
-    let keep = Float.of_int (primitives f) +. (0.5 *. (Float.of_int (variables 0 (Int.Table.create()) f))) > 1.5 in
-    (* if keep then Printf.printf "Keeping fragment %s\n" (string_of_fragment f) else *)
-    (*   Printf.printf "Discarding fragment (%d,%d) %s\n" (primitives f) (variables f) (string_of_fragment f); *)
-    keep
+    new_frontiers
+  in 
 
-let rec propose_fragments (a:int) (program:program) : fragment list =
-  let recursiveFragments =
-    match program with
-    | Apply(f,x) -> propose_fragments a f @ propose_fragments a x
-    | Abstraction(b) -> propose_fragments a b
-    | _ -> []
+  while true do
+    match receive() with
+    | Rewrite(i) -> send (i |> List.map ~f:rewrite_frontiers)
+    | RewriteEntireFrontiers(i) ->
+      (frontiers := original_frontiers;
+       send (rewrite_frontiers i))
+    | KillWorker -> 
+       (Zmq.Socket.close socket;
+        Zmq.Context.terminate context;
+       exit 0)
+  done;;
+
+let compression_step_master ~nc ~structurePenalty ~aic ~pseudoCounts ?arity:(arity=3) ~bs ~topI ~topK g frontiers =
+
+  let sockets = ref [] in
+  let fork_worker frontiers =
+    let p = List.length !sockets in
+    let address = Printf.sprintf "ipc:///tmp/compression_ipc_%d" p in
+    sockets := !sockets @ [address];
+
+    match Unix.fork() with
+    | `In_the_child -> compression_worker address ~arity ~bs ~topK g frontiers
+    | _ -> ()
   in
-  recursiveFragments @ (List.map (0--a) ~f:(fun ap -> fragments 0 ap program) |> List.concat
-                        |> List.filter ~f:is_fragment_nontrivial)
-   
-let rec propose_fragments_from_frontiers (a:int) (frontiers: frontier list) : fragment list =
-  let from_each = frontiers |> List.map ~f:(fun f ->
-      f.programs |> List.map ~f:(fun (p,_) -> propose_fragments a p) |> List.concat |> remove_duplicates) in
-  let counts = Hashtbl.Poly.create() in
-  List.iter from_each ~f:(List.iter ~f:(fun f ->
-      match Hashtbl.find counts f with
-      | Some(k) -> Hashtbl.set counts ~key:f ~data:(k + 1)
-      | None -> ignore(Hashtbl.add counts ~key:f ~data:1)));
-  let thisa = Hashtbl.to_alist counts |> List.filter_map ~f:(fun (f,k) ->
-      if k > 1 then Some(f) else None)
-  in
-  if a = 0 then thisa else thisa@(propose_fragments_from_frontiers (a - 1) frontiers)
 
-let marginal_likelihood_of_frontiers (g : fragment_grammar) (frontiers : frontier list) : float =
-  frontiers |> List.map ~f:(fun frontier ->
-      frontier.programs |> List.map ~f:(fun (expression,_) -> 
-          likelihood_under_fragments g frontier.request expression |> fst) |>
-      lse_list) |> List.fold ~init:0.0 ~f:(+.)
-
-let inside_outside ?alpha:(alpha = 1.0) (g : fragment_grammar) (frontiers : frontier list)
-  : fragment_grammar =
-  let compiled_uses = frontiers |> List.map ~f:(fun frontier ->
-      let likelihoods = frontier.programs |> List.map ~f:(fun (expression,_) -> 
-          likelihood_under_fragments g frontier.request expression)
+  let divide_work_fairly nc xs =
+    let nt = List.length xs in
+    let base_count = nt/nc in
+    let residual = nt - base_count*nc in
+    let rec partition residual xs =
+      let this_count =
+        base_count + (if residual > 0 then 1 else 0)
       in
-      let z = likelihoods |> List.map ~f:(fun (ll,_) -> ll) |> lse_list in
-      likelihoods |> List.map ~f:(fun (ll,u) -> scale_uses (exp (ll-.z)) u)) |> List.concat 
+      match xs with
+      | [] -> []
+      | _ :: _ ->
+        let prefix, suffix = List.split_n xs this_count in
+        prefix :: partition (residual - 1) suffix
+    in
+    partition residual xs
   in
-  let uses = compiled_uses |> List.fold_right ~init:(pseudo_uses alpha g) ~f:use_plus in
-  let log_likelihoods = List.map2_exn (uses.actual_uses) (uses.possible_uses) ~f:(fun a p -> log a -. log p) in
-  {logVariable = log uses.actual_variables -. log uses.possible_variables;
-   fragments = List.map2_exn (g.fragments) log_likelihoods ~f:(fun (f,t,_) l -> (f,t,l))}
+  let start_time = Time.now () in
+  divide_work_fairly nc frontiers |> List.iter ~f:fork_worker;
 
-let induce_fragment_grammar ?lambda:(lambda = 2.) ?alpha:(alpha = 1.) ?beta:(beta = 1.)
-    (candidates : fragment list) (frontiers : frontier list) (g0 : fragment_grammar)
-     : fragment_grammar =
-  let frontiers = frontiers |> List.filter ~f:(fun f -> List.length (f.programs) > 0) in
-  (* types of the candidates *)
-  let candidates = candidates |> List.map ~f:(fun f -> (f, infer_fragment_type f)) in
+  (* Now that we have created the workers, we can make our own sockets *)
+  let context = Zmq.Context.create() in
+  let sockets = !sockets |> List.map ~f:(fun address ->
+      let socket = Zmq.Socket.create context Zmq.Socket.rep in
+      Zmq.Socket.bind socket address;
+      socket)
+  in
+  let send data =
+    let data = Marshal.to_string data [] in
+    sockets |> List.iter ~f:(fun socket -> Zmq.Socket.send socket data)
+  in
+  let receive socket = Marshal.from_string (Zmq.Socket.recv socket) 0 in
+  let finish() =
+    send KillWorker;
+    sockets |> List.iter ~f:(fun s -> Zmq.Socket.close s);
+    Zmq.Context.terminate context
+  in 
+    
+    
+  
+  let candidates : program list list = sockets |> List.map ~f:(fun s -> receive s) |> List.concat in  
+  let candidates : program list = occurs_multiple_times (List.concat candidates) in
+  Printf.eprintf "Total number of candidates: %d\n" (List.length candidates);
+  Printf.eprintf "Constructed version spaces and coalesced candidates in %s.\n"
+    (Time.diff (Time.now ()) start_time |> Time.Span.to_string);
+  flush_everything();
+  
+  send candidates;
 
-  let score (g : fragment_grammar) : fragment_grammar*float =
-    (* flatten the fragment grammar's production probabilities *)
-    let gp = {logVariable = -1.;
-             fragments = g.fragments |> List.map ~f:(fun (f,t,_) -> (f,t,-1.))} in
-    let gp = inside_outside ~alpha:alpha gp frontiers in
-    let child_likelihood = marginal_likelihood_of_frontiers gp frontiers in
-    let child_structure_penalty =
-      lambda *. (List.fold_left gp.fragments ~init:0.0 ~f:(fun penalty (f,_,_) -> penalty +. (fragment_size f |> Float.of_int))) in
-    let child_parameter_penalty = beta *. Float.of_int (List.length gp.fragments) in
-    (gp, child_likelihood-.child_structure_penalty-.child_parameter_penalty)
+  let candidate_scores : float list list =
+    sockets |> List.map ~f:(fun s -> let ss : float list = receive s in ss)
+  in
+  if !verbose_compression then (Printf.eprintf "(master) Received worker beams\n"; flush_everything());
+  let candidates : program list = 
+    candidate_scores |> List.transpose_exn |>
+    List.map ~f:(fold1 (+.)) |> List.zip_exn candidates |>
+    List.sort ~compare:(fun (_,s1) (_,s2) -> Float.compare s1 s2) |> List.map ~f:fst
+  in
+  let candidates = List.take candidates topI in
+  let candidates = candidates |> List.filter ~f:(fun candidate ->
+      try
+        let candidate = normalize_invention candidate in
+        not (List.mem ~equal:program_equal (grammar_primitives g) candidate)
+      with UnificationFailure -> false) (* not well typed *)
+  in
+  Printf.eprintf "Trimmed down the beam, have only %d best candidates\n"
+    (List.length candidates);
+  flush_everything();
+
+  match candidates with
+  | [] -> (finish(); None)
+  | _ -> 
+
+  (* now we have our final list of candidates! *)
+  (* ask each of the workers to rewrite w/ each candidate *)
+  send @@ Rewrite(candidates);
+  (* For each invention, the full rewritten frontiers *)
+  let new_frontiers : frontier list list =
+    time_it "Rewrote topK" (fun () ->
+        sockets |> List.map ~f:receive |> List.transpose_exn |> List.map ~f:List.concat)
+  in
+  assert (List.length new_frontiers = List.length candidates);
+  
+  let score frontiers candidate =
+    let new_grammar = uniform_grammar (normalize_invention candidate :: grammar_primitives g) in
+    let g',s = grammar_induction_score ~aic ~pseudoCounts ~structurePenalty frontiers new_grammar in
+    if !verbose_compression then
+      (let source = normalize_invention candidate in
+       Printf.eprintf "Invention %s : %s\n\tContinuous score %f\n"
+         (string_of_program source)
+         (closed_inference source |> string_of_type)
+         s;
+       frontiers |> List.iter ~f:(fun f -> Printf.eprintf "%s\n" (string_of_frontier f));
+       Printf.eprintf "\n"; flush_everything());
+    (g',s)
+  in 
+  
+  let _,initial_score = grammar_induction_score ~aic ~structurePenalty ~pseudoCounts
+      (frontiers |> List.map ~f:(restrict ~topK g)) g
+  in
+  Printf.eprintf "Initial score: %f\n" initial_score;
+
+  let (g',best_score), best_candidate = time_it "Scored candidates" (fun () ->
+      List.map2_exn candidates new_frontiers ~f:(fun candidate frontiers ->
+          (score frontiers candidate, candidate)) |> minimum_by (fun ((_,s),_) -> -.s))
+  in
+  if best_score < initial_score then
+      (Printf.eprintf "No improvement possible.\n"; finish(); None)
+    else
+      (let new_primitive = grammar_primitives g' |> List.hd_exn in
+       Printf.eprintf "Improved score to %f (dScore=%f) w/ new primitive\n\t%s : %s\n"
+         best_score (best_score-.initial_score)
+         (string_of_program new_primitive) (closed_inference new_primitive |> canonical_type |> string_of_type);
+       flush_everything();
+       (* Rewrite the entire frontiers *)
+       let frontiers'' = time_it "rewrote all of the frontiers" (fun () ->
+           send @@ RewriteEntireFrontiers(best_candidate);
+           sockets |> List.map ~f:receive |> List.concat)
+       in
+       finish();
+       let g'' = inside_outside ~pseudoCounts g' frontiers'' |> fst in
+       Some(g'',frontiers''))
+
+        
+  
+
+  
+  
+  
+  
+  
+let compression_step ~structurePenalty ~aic ~pseudoCounts ?arity:(arity=3) ~bs ~topI ~topK g frontiers =
+
+  let restrict frontier =
+    let restriction =
+      frontier.programs |> List.map ~f:(fun (p,ll) ->
+          (ll+.likelihood_under_grammar g frontier.request p,p,ll)) |>
+      sort_by (fun (posterior,_,_) -> 0.-.posterior) |>
+      List.map ~f:(fun (_,p,ll) -> (p,ll))
+    in
+    {request=frontier.request; programs=List.take restriction topK}
+  in
+
+  let original_frontiers = frontiers in
+  let frontiers = ref (List.map ~f:restrict frontiers) in
+  
+  let score g frontiers =
+    grammar_induction_score ~aic ~pseudoCounts ~structurePenalty frontiers g
   in
   
-  let rec induce (previous_score : float) (count : int) (g : fragment_grammar) : fragment_grammar =
-    if count = 0 then g else
-      let unused_candidates = candidates |> List.filter ~f:(fun (f,_) ->
-          not (List.exists (g.fragments)  ~f:(fun (fp,_,_) -> fp = f))) in
-      let children = unused_candidates |> List.map ~f:(fun (f,ft) ->
-          score {logVariable = g0.logVariable;
-                 fragments = (f,ft,-1.)::g.fragments}) in
-      let (best_child,best_score) = maximum_by ~cmp:(fun (_,l1) (_,l2) -> if l1 > l2 then 1 else -1) children in
-      Printf.printf "Best new grammar (%f): %s\n" (best_score) (string_of_fragment_grammar best_child);
-      Out_channel.flush stdout;
-      if best_score > previous_score then
-        induce best_score (count - 1) best_child
-      else g
+  let v = new_version_table() in
+  let cost_table = empty_cost_table v in
 
+  (* calculate candidates *)
+  let frontier_indices : int list list = time_it "calculated version spaces" (fun () ->
+      !frontiers |> List.map ~f:(fun f -> f.programs |> List.map ~f:(fun (p,_) ->
+          incorporate v p |> n_step_inversion v ~n:arity))) in
+  
+
+  let candidates : int list = time_it "proposed candidates" (fun () ->
+      let reachable : int list list = frontier_indices |> List.map ~f:(reachable_versions v) in
+      let inhabitants : int list list = reachable |> List.map ~f:(fun indices ->
+          List.concat_map ~f:(snd % minimum_cost_inhabitants cost_table) indices |>
+          List.dedup_and_sort ~compare:(-)) in
+      inhabitants |> List.concat |> occurs_multiple_times)
   in
-  let (g0,s0) = score g0 in
-  induce s0 100 g0
+  let candidates = candidates |> List.filter ~f:(nontrivial % List.hd_exn % extract v) in
+  Printf.eprintf "Got %d candidates.\n" (List.length candidates);
 
-let grammar_of_fragment_grammar (g : fragment_grammar) : grammar =
-  {logVariable = g.logVariable;
-   library = g.fragments |> List.map ~f:(fun (f,_,l) ->
-       let p = close_fragment f in
-       let (_,t) = infer_program_type empty_context [] p in
-       let p = if is_primitive p then p else Invented(t,p) in
-       (p,t,l))}
+  match candidates with
+  | [] -> None
+  | _ -> 
 
-let testClosing() =
-  let p = Apply(Abstraction(Apply(Index(2),Index(0))),Index(1)) in
-  [FApply(FIndex(0),FAbstraction(FIndex(99)))] @ propose_fragments 1 p |>
-  List.map ~f:(fun f -> Printf.printf "%s\t%s\n" (string_of_fragment f) (close_fragment f |> string_of_program))
+    let ranked_candidates = time_it "beamed version spaces" (fun () ->
+        beam_costs ~ct:cost_table ~bs candidates frontier_indices)
+    in
+    let ranked_candidates = List.take ranked_candidates topI in
 
-let testBinding (intended_outcome : bool) (f : fragment) (p : program) =
-  Printf.printf "\nBinding test case: %s  ==  %s\n" (string_of_fragment f) (string_of_program p);
-  try
-    let (context,t,holes, bindings) = bind_fragment empty_context [] f p in
-    (*   let context = unify context t (tint @> tint) in *)
-    let (t,context) = chaseType context t in
-    Printf.printf "Fragment return type: %s\n" (string_of_type t);
-    FreeMap.iteri bindings ~f:(fun ~key ~data:(bound_type,bound_program) ->
-        Printf.printf "Free variable binding of %d is %s : %s\n" key (string_of_program bound_program)
-          (string_of_type @@ fst @@ chaseType context bound_type));
-    holes |> List.iteri ~f:(fun h (t,v) ->
-        Printf.printf "hole binding %d is %s : %s\n" h (string_of_program v) (string_of_type t));
-    assert intended_outcome
-  with _ -> begin
-      Printf.printf "Failure binding %s with %s\n" (string_of_fragment f) (string_of_program p);
-      assert (not intended_outcome)
-    end
+    let try_invention_and_rewrite_frontiers (i : int) =
+      let invention_source = extract v i |> singleton_head in
+      try
+        let new_primitive = invention_source |> normalize_invention in
+        if List.mem ~equal:program_equal (grammar_primitives g) new_primitive then raise DuplicatePrimitive;
+        let new_grammar =
+          uniform_grammar (new_primitive :: (grammar_primitives g))
+        in 
+
+        let rewriter = rewrite_with_invention invention_source in
+        (* Extract the frontiers in terms of the new primitive *)
+        let new_cost_table = empty_cost_table v in
+        let new_frontiers = List.map !frontiers
+            ~f:(fun frontier ->
+                let programs' =
+                  List.map frontier.programs ~f:(fun (originalProgram, ll) ->
+                      let index = incorporate v originalProgram |> n_step_inversion v ~n:arity in
+                      let program = minimum_cost_inhabitants new_cost_table ~given:(Some(i)) index |> snd |> 
+                                    List.hd_exn |> extract v |> singleton_head in
+                      let program' =
+                        try rewriter frontier.request program
+                        with EtaExpandFailure -> originalProgram
+                      in
+                      (program',ll))
+                in 
+                {request=frontier.request;
+                 programs=programs'})
+        in
+        let new_grammar,s = score new_grammar new_frontiers in
+        (s,new_grammar,new_frontiers)
+      with UnificationFailure | DuplicatePrimitive -> (* ill-typed / duplicatedprimitive *)
+        (Float.neg_infinity, g, !frontiers)
+    in
+
+    let _,initial_score = score g !frontiers in
+    Printf.eprintf "Initial score: %f\n" initial_score;
+
+
+    let best_score,g',frontiers',best_index =
+      time_it (Printf.sprintf "Evaluated top-%d candidates" topI) (fun () -> 
+      ranked_candidates |> List.map ~f:(fun (c,i) ->
+          let source = extract v i |> singleton_head in
+          let source = normalize_invention source in
+
+          let s,g',frontiers' = try_invention_and_rewrite_frontiers i in
+          if !verbose_compression then
+            (Printf.eprintf "Invention %s : %s\nDiscrete score %f\n\tContinuous score %f\n"
+              (string_of_program source)
+              (closed_inference source |> string_of_type)
+              c s;
+             frontiers' |> List.iter ~f:(fun f -> Printf.eprintf "%s\n" (string_of_frontier f));
+             Printf.eprintf "\n"; flush_everything());
+          (s,g',frontiers',i))
+      |> minimum_by (fun (s,_,_,_) -> -.s)) in
+
+    if best_score < initial_score then
+      (Printf.eprintf "No improvement possible.\n"; None)
+    else
+      (let new_primitive = grammar_primitives g' |> List.hd_exn in
+       Printf.eprintf "Improved score to %f (dScore=%f) w/ new primitive\n\t%s : %s\n"
+         best_score (best_score-.initial_score)
+         (string_of_program new_primitive) (closed_inference new_primitive |> canonical_type |> string_of_type);
+       flush_everything();
+       (* Rewrite the entire frontiers *)
+       frontiers := original_frontiers;
+       let _,g'',frontiers'' = time_it "rewrote all of the frontiers" (fun () ->
+           try_invention_and_rewrite_frontiers best_index)
+       in
+
+       Some(g'',frontiers''))
 ;;
 
-let binding_test_cases () = 
-  testBinding true
-    (FApply(FIndex(0),FIndex(1))) (Apply(primitive "+" (tint @> tint @> tint) (+),
-                                         primitive "k0" tint 0));
+let compression_loop
+    ?nc:(nc=1) ~structurePenalty ~aic ~topK ~pseudoCounts ?arity:(arity=3) ~bs ~topI g frontiers =
 
-  testBinding true
-    (FAbstraction(FApply(FIndex(0),FVariable)))
-    (Abstraction(Apply(Index(0), primitive "k0" tint 0)))
-  ;
+  let step = if nc = 1 then compression_step else compression_step_master ~nc in 
 
-  testBinding true
-    (FAbstraction(FApply(FIndex(0),FVariable)))
-    (Abstraction(Apply(Index(0), Index(99))))
-  ;
-
-  testBinding false
-    (FAbstraction(FAbstraction(FApply(FIndex(1),FVariable))))
-    (Abstraction(Abstraction(Apply(Index(1), Index(0)))))
-  ;
-
-
-  testBinding false
-    (FAbstraction(FAbstraction(FApply(FIndex(1),FVariable))))
-    ( Abstraction( Abstraction( Apply( Index(1),
-                                       Abstraction(Apply(Index(0), Index(2)))))))
-  ;
-
-  testBinding true
-    (FAbstraction(FAbstraction(FApply(FIndex(1),FVariable))))
-    ( Abstraction( Abstraction( Apply( Index(1),
-                                       Abstraction(Apply(Index(0), Index(3)))))))
+  let rec loop g frontiers = 
+    match step ~structurePenalty ~topK ~aic ~pseudoCounts ~arity ~bs ~topI g frontiers with
+    | None -> g, frontiers
+    | Some(g',frontiers') -> loop g' frontiers'
+  in
+  time_it "completed ocaml compression" (fun () ->
+      loop g frontiers)
 ;;
 
-let application_parses_test_cases() =
-  let rec possible_application_parses (p : program) : (program*(program list)) list =
-    match p with
-    | Apply(f,x) ->
-      [(p,[])] @
-      (possible_application_parses f |> List.map ~f:(fun (fp,xp) -> (fp,xp @ [x])))
-    | _ -> [(p,[])]
+  
+
+
+
+
+  
+  
+
+let () =
+  let open Yojson.Basic.Util in
+  let open Yojson.Basic in
+  let j = Yojson.Basic.from_channel Pervasives.stdin in
+  let g = j |> member "DSL" |> deserialize_grammar |> strip_grammar in
+  let topK = j |> member "topK" |> to_int in
+  let topI = j |> member "topI" |> to_int in
+  let bs = j |> member "bs" |> to_int in
+  let arity = j |> member "arity" |> to_int in
+  let aic = j |> member "aic" |> to_float in
+  let pseudoCounts = j |> member "pseudoCounts" |> to_float in
+  let structurePenalty = j |> member "structurePenalty" |> to_float in
+
+  verbose_compression := (try
+      j |> member "verbose" |> to_bool
+                          with _ -> false);
+
+  let nc =
+    try j |> member "CPUs" |> to_int
+    with _ -> 1
   in
 
-  possible_application_parses (Apply(Apply(Apply(Index(0),Index(1)),Index(2)),Index(3))) |> List.iter ~f:(fun (f,a) ->
-      Printf.printf "%s w/arguments %s\n" (string_of_program f) (a |> List.map ~f:string_of_program |> join ~separator:" ;; "))
-;;
+  let frontiers = j |> member "frontiers" |> to_list |> List.map ~f:deserialize_frontier in 
+  let g, frontiers = compression_loop ~nc ~topK ~aic ~structurePenalty ~pseudoCounts ~arity ~topI ~bs g frontiers in
 
-(* application_parses_test_cases();; *)
-
-
-(* binding_test_cases() *)
+  let j = `Assoc(["DSL",serialize_grammar g;
+                  "frontiers",`List(frontiers |> List.map ~f:serialize_frontier)])
+  in
+  pretty_to_string j |> print_string

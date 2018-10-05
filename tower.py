@@ -27,8 +27,12 @@ class Flatten(nn.Module):
 
 
 class TowerCNN(nn.Module):
+    special = 'tower'
+    
     def __init__(self, tasks, cuda=False, H=64):
         super(TowerCNN, self).__init__()
+
+        self.recomputeTasks = False
 
         self.outputDimensionality = H
         def conv_block(in_channels, out_channels):
@@ -75,57 +79,15 @@ class TowerCNN(nn.Module):
         try:
             pl = executeTower(p,0.05)
             if pl is None or len(pl) == 0: return None
+            if len(pl) > 100 or towerLength(pl) > 360: return None
 
-            t = SupervisedTower("tower dream", p.evaluate([]))
+            t = SupervisedTower("tower dream", pl)
             return t
         except: return None
 
-class TowerFeatureExtractor(ImageFeatureExtractor):
-    def _featuresOfProgram(self, p, _):
-        # [perturbation, mass, height, length, area]
-        p = executeTower(p)
-        mass = sum(w * h for _, w, h in p)
+    def hashOfTask(self, t):
+        return tuple(centerTower(t.plan))
 
-        masses = {
-            t.maximumMass for t in TowerTask.tasks if mass <= t.maximumMass}
-        if len(masses) == 0:
-            return None
-        mass = random.choice(masses)
-
-        heights = {t.minimumHeight for t in TowerTask.tasks}
-        lengths = {t.minimumLength for t in TowerTask.tasks}
-        areas = {t.minimumArea for t in TowerTask.tasks}
-        staircases = {t.maximumStaircase for t in TowerTask.tasks}
-
-        # Find the largest perturbation that this power can withstand
-        perturbations = sorted(
-            {t.perturbation for t in TowerTask.tasks}, reverse=True)
-        for perturbation in perturbations:
-            result = TowerTask.evaluateTower(p, perturbation)
-
-            possibleHeightThresholds = {
-                h for h in heights if result.height >= h}
-            possibleLengthThresholds = {
-                l for l in lengths if result.length >= l}
-            possibleAreaThresholds = {a for a in areas if result.area >= a}
-            possibleStaircases = {
-                s for s in staircases if result.staircase <= s}
-
-            if len(possibleHeightThresholds) > 0 and \
-               len(possibleLengthThresholds) > 0 and \
-               len(possibleStaircases) > 0 and \
-               len(possibleAreaThresholds) > 0:
-                if result.stability > TowerTask.STABILITYTHRESHOLD:
-                    return [perturbation,
-                            mass,
-                            random.choice(possibleHeightThresholds),
-                            random.choice(possibleLengthThresholds),
-                            random.choice(possibleAreaThresholds),
-                            random.choice(possibleStaircases)]
-            else:
-                return None
-
-        return None
 
 
 
@@ -149,7 +111,7 @@ def dreamOfTowers(grammar, prefix, N=250):
                                                    maxAttempts=100)]
                     if program is not None
                     for t in [executeTower(program, timeout=0.5) or []]
-                    if len(t) >= 1 and len(t) < 100 and towerLength(t) < 25.]
+                    if len(t) >= 1 and len(t) < 100 and towerLength(t) <= 360.]
     matrix = [fastRendererPlan(p,pretty=True)
               for p in randomTowers]
     matrix = montage(matrix)
@@ -189,7 +151,7 @@ def visualizePrimitives(primitives, fn=None):
             elif t == arrow(ttower,ttower):
                 return [_arch,_13,_31]
             else:
-                assert False
+                return []
 
         ts = []
         for arguments in product(*[argumentChoices(t) for t in t.functionArguments() ]):
@@ -215,7 +177,7 @@ def visualizeSolutions(solutions, export, tasks=None):
 
     if tasks is None:
         tasks = list(solutions.keys())
-        tasks.sort(key=lambda t: t.name)
+        tasks.sort(key=lambda t: len(t.plan))
 
     matrix = []
     for t in tasks:
@@ -270,10 +232,14 @@ if __name__ == "__main__":
     test, train = testTrainSplit(tasks, 1.)
     eprint("Split %d/%d test/train" % (len(test), len(train)))
 
+    timestamp = datetime.datetime.now().isoformat()
+    outputDirectory = "experimentOutputs/towers/%s"%timestamp
+    os.system("mkdir -p %s"%outputDirectory)
+
     evaluationTimeout = 0.005
     generator = ecIterator(g0, train,
                            testingTasks=test,
-                           outputPrefix="experimentOutputs/tower",
+                           outputPrefix="%s/tower"%outputDirectory,
                            evaluationTimeout=evaluationTimeout,
                            solver="ocaml",
                            **arguments)
@@ -284,16 +250,14 @@ if __name__ == "__main__":
 
     perturbations = {t.perturbation for t in train if isinstance(t,TowerTask)}
 
-    timestamp = datetime.datetime.now().isoformat()
-    os.system("mkdir -p experimentOutputs/towers/%s"%timestamp)
-    dreamOfTowers(g0, "experimentOutputs/towers/%s/random_0"%timestamp)
+    dreamOfTowers(g0, "%s/random_0"%outputDirectory)
     
     for result in generator:
         iteration = len(result.learningCurve)
         newTowers = [tuple(centerTower(executeTower(frontier.sample().program)))
                      for frontier in result.taskSolutions.values() if not frontier.empty]
         try:
-            fn = 'experimentOutputs/towers/%s/solutions_%d.png'%(timestamp,iteration)
+            fn = '%s/solutions_%d.png'%(outputDirectory,iteration)
             if supervised:
                 visualizeSolutions(result.taskSolutions, fn,
                                    train)
@@ -301,10 +265,10 @@ if __name__ == "__main__":
                 assert False
             eprint("Exported solutions to %s\n"%fn)
             dreamOfTowers(result.grammars[-1],
-                          'experimentOutputs/towers/%s/random_%d'%(timestamp,iteration))           
+                          '%s/random_%d'%(outputDirectory,iteration))           
         except ImportError:
             eprint("Could not import required libraries for exporting towers.")
-        primitiveFilename = 'experimentOutputs/towers/%s/primitives_%d.png'%(timestamp, iteration)
+        primitiveFilename = '%s/primitives_%d.png'%(outputDirectory, iteration)
         visualizePrimitives(result.grammars[-1].primitives,
                             primitiveFilename)
         eprint("Exported primitives to",primitiveFilename)

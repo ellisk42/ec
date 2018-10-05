@@ -42,8 +42,11 @@ let rec application_parse = function
     (f,arguments @ [x])
   | f -> (f,[])
 
-let rec program_size p =
-  1 + (List.map ~f:program_size (program_children p) |> sum)
+let rec program_size = function
+  | Apply(f,x) -> program_size f + program_size x
+  | Abstraction(b) -> program_size b
+  | Index(_) | Invented(_,_) | Primitive(_,_,_) -> 1
+
 
 let rec program_subexpressions p =
   p::(List.map (program_children p) program_subexpressions |> List.concat)
@@ -108,6 +111,9 @@ let rec infer_program_type context environment p : tContext*tp = match p with
     applyContext context rt
 
 let closed_inference = snd % infer_program_type empty_context [];;
+
+let make_invention i =
+  Invented(closed_inference i |> canonical_type, i)
 
 
 exception UnknownPrimitive of string
@@ -235,10 +241,54 @@ let rec shift_free_variables ?height:(height = 0) shift p = match p with
   | Abstraction(b) -> Abstraction(shift_free_variables ~height:(height+1) shift b)
 
 let rec free_variables ?d:(d=0) e = match e with
-  | Index(j) -> if j >= d then [j] else []
+  | Index(j) -> if j >= d then [j - d] else []
   | Apply(f,x) -> free_variables ~d:d f @ free_variables ~d:d x
   | Abstraction(b) -> free_variables ~d:(d + 1) b
   | _ -> []
+
+let rec substitute i v e =
+  match e with
+  | Index(j) ->
+    if i = j then v else e
+  | Abstraction(b) ->
+    Abstraction(substitute (i + 1) (shift_free_variables 1 v) b)
+  | Apply(f,x) ->
+    Apply(substitute i v f, substitute i v x)
+  | _ -> e
+
+let rec beta_normal_form ?reduceInventions:(reduceInventions=false) e =
+  let rec step = function
+    | Abstraction(b) -> begin
+        match step b with
+        | Some(b') -> Some(Abstraction(b'))
+        | None -> None
+      end
+    | Invented(_,b) when reduceInventions -> Some(b)
+    | Apply(f,x) -> begin 
+        match step f with
+        | Some(f') -> Some(Apply(f',x))
+        | None -> match step x with
+          | Some(x') -> Some(Apply(f,x'))
+          | None -> match f with
+            | Abstraction(body) -> Some(shift_free_variables ~height:0 (-1)
+                                          (substitute 0 (shift_free_variables 1 x) body))
+            | _ -> None
+      end
+    | _ -> None
+  in 
+  match step e with
+  | None -> e
+  | Some(e') -> beta_normal_form ~reduceInventions e'
+
+
+let unit_reference = ref ()
+let rec strip_primitives = function
+  | Index(n) -> Index(n)
+  | Invented(t, e) -> Invented(t, strip_primitives e)
+  | Apply(f,x) -> Apply(strip_primitives f, strip_primitives x)
+  | Abstraction(b) -> Abstraction(strip_primitives b)
+  | Primitive(t,n,_) -> Primitive(t,n,unit_reference)
+
 
 (* PRIMITIVES *)
 let [@warning "-20"] primitive ?manualLaziness:(manualLaziness = false)
@@ -339,7 +389,7 @@ let primitive_is_square = primitive "is-square" (tint @> tboolean)
        let s = sqrt y |> Int.of_float in
        s*s = x);;
 let primitive_is_prime = primitive "is-prime" (tint @> tboolean)
-    (List.mem [2; 3; 5; 7; 11; 13; 17; 19; 23; 29; 31; 37; 41; 43; 47; 53; 59; 61; 67; 71; 73; 79; 83; 89; 97; 101; 103; 107; 109; 113; 127; 131; 137; 139; 149; 151; 157; 163; 167; 173; 179; 181; 191; 193; 197; 199]);;
+    (fun x -> List.mem ~equal:(=) [2; 3; 5; 7; 11; 13; 17; 19; 23; 29; 31; 37; 41; 43; 47; 53; 59; 61; 67; 71; 73; 79; 83; 89; 97; 101; 103; 107; 109; 113; 127; 131; 137; 139; 149; 151; 157; 163; 167; 173; 179; 181; 191; 193; 197; 199] x);;
 
 
 let primitive_cons = primitive "cons" (t0 @> tlist t0 @> tlist t0) (fun x xs -> x :: xs);;
@@ -516,7 +566,19 @@ let logo_PD  = primitive "logo_PD"
                          (fun x ->
                            LogoLib.LogoInterpreter.logo_SEQ
                              LogoLib.LogoInterpreter.logo_PD
-                             x)
+                             x);;
+primitive "logo_PT"
+  ((turtle @> turtle) @> (turtle @> turtle))
+  (fun body continuation ->
+     LogoLib.LogoInterpreter.logo_GET (fun state ->
+         let original_state = state.p in
+         LogoLib.LogoInterpreter.logo_SEQ
+           LogoLib.LogoInterpreter.logo_PU
+           (body (LogoLib.LogoInterpreter.logo_SEQ
+                    (if original_state
+                     then LogoLib.LogoInterpreter.logo_PD else LogoLib.LogoInterpreter.logo_PU)
+                    continuation))))
+                         
 
 let logo_GET = primitive "logo_GET"
                          (tstate @> turtle @> turtle)
@@ -528,30 +590,30 @@ let logo_SET = primitive "logo_SET"
                             (LogoLib.LogoInterpreter.logo_SET s)
                             z)
 
-(*let logo_GETSET = primitive "logo_GETSET"*)
-                            (*((turtle @> turtle) @> turtle @> turtle)*)
-                            (*(fun t -> fun z ->*)
-                              (*(LogoLib.LogoInterpreter.logo_GET*)
-                                (*(fun s ->*)
-                                  (*t*)
-                                  (*(LogoLib.LogoInterpreter.logo_SEQ*)
-                                    (*(LogoLib.LogoInterpreter.logo_SET s)*)
-                                    (*z)*)
-                            (*)))*)
 let logo_GETSET = primitive "logo_GETSET"
-                            (turtle @> turtle @> turtle)
-                            (fun t -> fun k ->
+                            ((turtle @> turtle) @> turtle @> turtle)
+                            (fun t -> fun z ->
                               (LogoLib.LogoInterpreter.logo_GET
                                 (fun s ->
+                                  t
                                   (LogoLib.LogoInterpreter.logo_SEQ
-                                    t
-                                    (LogoLib.LogoInterpreter.logo_SEQ
-                                      (LogoLib.LogoInterpreter.logo_SET s)
-                                      k)
-                                    )
-                                )
-                              )
-                            )
+                                    (LogoLib.LogoInterpreter.logo_SET s)
+                                    z)
+                            )))
+(* let logo_GETSET = primitive "logo_GETSET" *)
+(*                             (turtle @> turtle @> turtle) *)
+(*                             (fun t -> fun k -> *)
+(*                               (LogoLib.LogoInterpreter.logo_GET *)
+(*                                 (fun s -> *)
+(*                                   (LogoLib.LogoInterpreter.logo_SEQ *)
+(*                                     t *)
+(*                                     (LogoLib.LogoInterpreter.logo_SEQ *)
+(*                                       (LogoLib.LogoInterpreter.logo_SET s) *)
+(*                                       k) *)
+(*                                     ) *)
+(*                                 ) *)
+(*                               ) *)
+(*                             ) *)
 
 
 
@@ -564,7 +626,7 @@ let logo_S2A = primitive "logo_ZL" (tlength) (0.)
 let logo_IFTY = primitive "logo_IFTY" (tint) (20)
 
 let logo_IFTY = primitive "logo_epsL" (tlength) (0.05)
-let logo_IFTY = primitive "logo_epsA" (tangle) (0.05)
+let logo_IFTY = primitive "logo_epsA" (tangle) (0.025)
 
 let logo_IFTY = primitive "line"
                           (turtle @> turtle)
@@ -773,24 +835,26 @@ let parse_program s = run_parser program_parser s
 
 let parsing_test_case s =
   Printf.printf "Parsing the string %s\n" s;
-  program_parser s |> List.iter ~f:(fun (p,suffix) ->
-      if suffix = "" then
+  program_parser (s,0) |> List.iter ~f:(fun (p,n) ->
+      if n = String.length s then
         (Printf.printf "Parsed into the program: %s\n" (string_of_program p);
-         assert (s = (string_of_program p)))
+         assert (s = (string_of_program p));
+        flush_everything())
       else
-        Printf.printf "With the suffix %s, we get the program %s\n" suffix (string_of_program p));
+        (Printf.printf "With the suffix %n, we get the program %s\n" n (string_of_program p);
+         flush_everything()));
   Printf.printf "\n"
 ;;
 
 let parsing_test_cases() =
-  parsing_test_case "+1";
+  parsing_test_case "(+ 1)";
   parsing_test_case "($0 $1)";
-  parsing_test_case "(+1 $0 $2)";
-  parsing_test_case "(map +1 $0 $1)";
-  parsing_test_case "(map +1 ($0 +1 -1 (+ -)) $1)";
+  parsing_test_case "(+ 1 $0 $2)";
+  parsing_test_case "(map (+ 1) $0 $1)";
+  parsing_test_case "(map (+ 1) ($0 (+ 1) (- 1) (+ -)) $1)";
   parsing_test_case "(lambda $0)";
-  parsing_test_case "(lambda (+ k1 #(* k8 k1)))";
-  parsing_test_case "(lambda (+ k1 #(* k8 map)))";
+  parsing_test_case "(lambda (+ 1 #(* 8 1)))";
+  parsing_test_case "(lambda (+ 1 #(* 8 map)))";
 ;;
 
 
@@ -800,7 +864,7 @@ let parsing_test_cases() =
 (* program_test_cases();; *)
              
 let [@warning "-20"] performance_test_case() =
-  let e = parse_program "(lambda (fix (lambda (lambda (if (empty? $0) $0 (cons (* 2 (car $0)) ($1 (cdr $0)))))) $0))" |> get_some in
+  let e = parse_program "(lambda (fix1 $0 (lambda (lambda (if (empty? $0) $0 (cons (* 2 (car $0)) ($1 (cdr $0))))))))" |> get_some in
   let xs = [2;1;9;3;] in
   let n = 10000000 in
   time_it "evaluate program many times" (fun () -> 
@@ -877,7 +941,7 @@ let test_lazy_evaluation() =
             "(car (cdr (cons 1 (cons 2 (cons 3 empty)))))";
             "(cdr (cons 1 (cons 2 (cons 3 empty))))";
             "(map (+ 1) (cons 1 (cons 2 (cons 3 empty))))";
-            "(map +1 (cons 1 (cons 2 (cons 3 empty))))";
+            "(map (+ 1) (cons 1 (cons 2 (cons 3 empty))))";
             "(map (lambda (+ $0 $0)) (cons 1 (cons 2 (cons 3 empty))))";
             "(fold_right (lambda2 (+ $0 $1)) 0 (cons 1 (cons 2 (cons 3 empty))))";
             "(fix1 (cons 1 (cons 2 (cons 3 empty))) (lambda2 (if (empty? $0) 0 (+ 1 ($1 (cdr $0))))))";

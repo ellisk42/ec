@@ -1,5 +1,0 @@
-Turn(angle=Half(unit)) ;
-Repeat(Double(Double(unit))) {
-    Integrate() ;
-    Turn()
-}

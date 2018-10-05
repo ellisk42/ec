@@ -1,9 +1,0 @@
-Repeat(Next(Next(three))) {
-  Embed {
-    Integrate ;
-    Turn(angle=Opposite(unit)) ;
-    Integrate(angularSpeed=unit)
-  } ;
-  Turn(angle = Divide(Double(two), Next(Next(three))))
-
-}

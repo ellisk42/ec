@@ -453,7 +453,19 @@ def induceGrammar(*args, **kwargs):
         elif backend == "pypy_vs":
             kwargs.pop('iteration')
             kwargs.pop('topk_use_only_likelihood')
+            fn = '/tmp/vs.pickle'
+            with open(fn,'wb') as handle:
+                pickle.dump((args,kwargs), handle)
+            eprint("For debugging purposes, the version space compression invocation has been saved to",fn)
             g, newFrontiers = callCompiled(induceGrammar_Beta, *args, **kwargs)
+        elif backend == "ocaml":
+            kwargs.pop('iteration')
+            kwargs.pop('topk_use_only_likelihood')
+            kwargs['topI'] = 100
+            kwargs['bs'] = 300
+            g, newFrontiers = ocamlInduce(*args, **kwargs)
+            
+            
         else:
             assert False, "unknown compressor"
     return g, newFrontiers
@@ -462,6 +474,69 @@ def induceGrammar(*args, **kwargs):
 def pypyInduce(*args, **kwargs):
     kwargs.pop('iteration')
     return FragmentGrammar.induceFromFrontiers(*args, **kwargs)
+
+def ocamlInduce(g, frontiers, _=None,
+               topK=1, pseudoCounts=1.0, aic=1.0,
+               structurePenalty=0.001, a=0, CPUs=1, 
+                bs=300, topI=100):
+    import json
+    import os
+    import subprocess
+
+    originalFrontiers = frontiers
+    t2f = {f.task: f for f in frontiers}
+    frontiers = [f for f in frontiers if not f.empty ]
+
+    message = {"arity": a,
+               "topK": topK,
+               "pseudoCounts": float(pseudoCounts),
+               "aic": aic,
+               "bs": bs,
+               "topI": topI,
+               "structurePenalty": float(structurePenalty),
+               "CPUs": CPUs,
+               "DSL": g.json(),
+               "frontiers": [ f.json()
+                              for f in frontiers ]}
+
+    message = json.dumps(message)
+    if True:
+        import datetime
+        timestamp = datetime.datetime.now().isoformat()
+        os.system("mkdir  -p compressionMessages")
+        fn = "compressionMessages/%s"%timestamp
+        with open(fn, "w") as f:
+            f.write(message)
+        eprint("Compression message saved to:",fn)
+
+    try:
+        process = subprocess.Popen("./compression",
+                                   stdin=subprocess.PIPE,
+                                   stdout=subprocess.PIPE)
+        response, error = process.communicate(bytes(message, encoding="utf-8"))
+        response = json.loads(response.decode("utf-8"))
+    except OSError as exc:
+        raise exc
+
+    
+
+    g = response["DSL"]
+    g = Grammar(g["logVariable"],
+                [(l,p.infer(),p)
+                 for production in g["productions"]
+                 for l in [production["logProbability"]]
+                 for p in [Program.parse(production["expression"])] ])
+    frontiers = {original.task:
+                 Frontier([FrontierEntry(p,
+                                         logLikelihood=e["logLikelihood"],
+                                         logPrior=g.logLikelihood(original.task.request, p))
+                           for e in new["programs"]
+                           for p in [Program.parse(e["program"])] ],
+                          task=original.task)
+                 for original, new in zip(frontiers, response["frontiers"]) }
+    frontiers = [frontiers.get(f.task, t2f[f.task])
+                 for f in originalFrontiers ]
+    return g, frontiers
 
 
 def rustInduce(g0, frontiers, _=None,
@@ -569,10 +644,3 @@ def rustInduce(g0, frontiers, _=None,
     return g, newFrontiers
 
 
-if __name__ == "__main__":
-    from vs import induceGrammar_Beta
-    with open('inductionInput.p','rb') as handle:
-        a,k = pickle.load(handle)
-    g, newFrontiers = callCompiled(induceGrammar_Beta, *a,
-                                   profile="compressedText.profile",
-                                   **k)

@@ -1,3 +1,11 @@
+### Running using Singularity
+
+If you don't want to manually install all the of the software dependencies locally you can instead do everything inside of singularity container. To build the container, you can use the recipe `singularity` in the repository, and just do (tested using singularity version 2.5):
+
+```sudo singularity build container.img singularity
+./container.img # will give you a shell into the container environment
+```
+
 # Bunch of general information
 
 To do.
@@ -43,6 +51,7 @@ required by at least one domain.
 pip install dill
 pip install sexpdata
 pip install Box2D-kengz
+pip install graphviz
 pip install pygame
 pip install pycairo
 pip install cairocffi
@@ -67,6 +76,7 @@ have them installed on the Python side:
 pypy3 -m ensurepip
 pypy3 -m pip install --user vmprof
 pypy3 -m pip install --user dill
+pypy3 -m pip install --user psutil
 ```
 
 ### Credit of (most of) the `protonet` code

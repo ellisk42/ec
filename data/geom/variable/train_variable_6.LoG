@@ -1,5 +1,0 @@
-Repeat {
-  Integrate(t=toto) ;
-  toto = Double(toto) ;
-  Turn
-}

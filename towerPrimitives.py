@@ -6,7 +6,8 @@ from logicalPrimitives import *
 from functools import reduce
 
 #def _concatenate(x): return lambda y: x + y
-
+#let _empty_tower =
+def _empty_tower(h): return (h,[])
 def _left(d):
     return lambda k: lambda hand: k(hand - d*5)
 def _right(d):
@@ -30,7 +31,7 @@ def _simpleLoop(n):
 def _embed(body):
     def f(k):
         def g(hand):
-            _, bodyActions = body(hand)
+            _, bodyActions = body(_empty_tower)(hand)
             hand, laterActions = k(hand)
             return hand, bodyActions + laterActions
         return g
@@ -77,14 +78,13 @@ ttower = baseType("tower")
 primitives = [
     Primitive("left", arrow(tint, ttower, ttower), _left),
     Primitive("right", arrow(tint, ttower, ttower), _right),
-    #Primitive("tower_loop", arrow(tint, arrow(tint, ttower), ttower, ttower), _loop),
     Primitive("tower_loopM", arrow(tint, arrow(tint, ttower, ttower), ttower, ttower), _simpleLoop),
-    Primitive("tower_embed", arrow(ttower, ttower, ttower), _embed),
+    Primitive("tower_embed", arrow(arrow(ttower,ttower), ttower, ttower), _embed),
 ] + [Primitive(name, arrow(ttower,ttower), TowerContinuation(xOffset(w, h), 10*w - 2, h*10))
      for name, (w, h) in blocks.items()] + \
          [Primitive(str(j), tint, j) for j in range(1,8) ] + \
          [
-             subtraction
+#             subtraction
          ]
 
 

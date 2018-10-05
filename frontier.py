@@ -32,6 +32,13 @@ class Frontier(object):
 
     def __len__(self): return len(self.entries)
 
+    def json(self):
+        return {"request": self.task.request.json(),
+                "task": str(self.task),
+                "programs": [{"program": str(e.program),
+                              "logLikelihood": e.logLikelihood}
+                             for e in self ]}
+
     DUMMYFRONTIERCOUNTER = 0
 
     @staticmethod

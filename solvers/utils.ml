@@ -3,6 +3,10 @@ open Unix.Select_fds
 open Sys
 open Obj
 
+let singleton_head = function
+  | [x] -> x
+  | _ -> assert false
+
 let magical = Obj.magic;;
 
 let float_of_bool = function
@@ -26,6 +30,18 @@ let ( *| ) a v = v |> List.map ~f:(fun x -> a*.x)
 let compose f g = fun x -> f (g x);;
 let (%) = compose;;
 
+let ($$) = List.nth_exn;;
+
+let occurs_multiple_times (xs : 'a list) : 'a list =
+  let f = Hashtbl.Poly.create() in
+  xs |> List.iter ~f:(fun x ->
+      match Hashtbl.find f x with
+      | None -> Hashtbl.set f ~key:x ~data:1
+      | Some(old) -> Hashtbl.set f ~key:x ~data:(1 + old));
+  f |> Hashtbl.to_alist |> List.filter_map ~f:(fun (k, f) ->
+    if f > 1 then Some(k) else None)
+
+
 let fold1 f l = List.fold_right ~init:(List.hd_exn l) ~f:f (List.tl_exn l)
 
 let is_some = function
@@ -41,6 +57,17 @@ let safe_get_some message = function
 let sum = List.fold_left ~f:(+) ~init:0
 
 let minimum l = List.reduce_exn l ~f:min
+;;
+let minimum_by f l = List.reduce_exn l ~f:(fun x y -> if f x < f y then x else y)
+;;
+let maximum_by f l = List.reduce_exn l ~f:(fun x y -> if f x > f y then x else y)
+;;
+let sort_by f l = List.sort ~compare:(fun x y ->
+    let x = f x in
+    let y = f y in
+    if x = y then 0 else
+      if x > y then 1 else -1) l
+
 
 let memorize f = 
   let table = Hashtbl.Poly.create () in
@@ -150,11 +177,13 @@ let flush_everything () =
   Pervasives.flush stderr
 
 
-let time_it description callback = 
+let time_it ?verbose:(verbose=true) description callback = 
   let start_time = Time.now () in
   let return_value = callback () in
-  Printf.eprintf "%s in %s.\n" description (Time.diff (Time.now ()) start_time |> Time.Span.to_string); 
-  flush_everything();
+  if verbose then begin 
+    Printf.eprintf "%s in %s.\n" description (Time.diff (Time.now ()) start_time |> Time.Span.to_string); 
+    flush_everything()
+  end;
   return_value
 
 let shuffle d = begin
@@ -329,3 +358,37 @@ let compare_list c xs ys =
     | _ -> assert false
   in 
   if d = 0 then r xs ys else d
+
+
+
+(* resizable arrays *)
+type 'a ra = {mutable ra_occupancy : int;
+              mutable ra_contents : ('a option) Array.t}
+
+let empty_resizable() =
+  {ra_occupancy = 0;
+   ra_contents = Array.create ~len:10 None}
+
+let push_resizable a x =
+  let l = Array.length a.ra_contents in
+  if a.ra_occupancy >= l then  begin
+    let n = Array.create ~len:(l*2) None in
+    Array.blito ~src:a.ra_contents
+      ~dst:n ();
+    a.ra_contents <- n;
+  end else ();
+
+  Array.set a.ra_contents (a.ra_occupancy) (Some(x));
+  a.ra_occupancy <- a.ra_occupancy + 1
+
+let get_resizable a i =
+  assert (i < a.ra_occupancy);
+  Array.get a.ra_contents i |> get_some
+    
+let set_resizable a i v =
+  assert (i < a.ra_occupancy);
+  Array.set a.ra_contents i (Some(v))
+    
+let rec ensure_resizable_length a l default =
+  if a.ra_occupancy >= l then () else 
+  (push_resizable a default; ensure_resizable_length a l default)

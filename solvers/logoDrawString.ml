@@ -15,10 +15,16 @@ let npp data =
 let smooth_logo_wrapper t2t k s0 =
   let e = 1./.20. in
   let (p,s) = t2t k s0 in
-  let rec smooth_path = function
-    | FW(d) when d > e ->
-      FW(e) :: smooth_path (FW(d-.e))
-    | tc -> [tc]
+  let rec smooth_path command = match command with
+    | SEGMENT(x1,y1,x2,y2) ->
+      let dx = x2-.x1 in
+      let dy = y2-.y1 in
+      let l = dx*.dx+.dy*.dy |> sqrt in
+      if l <= e then [command] else
+        let f = e/.l in
+        let x = x1 +. f*.dx in
+        let y = y1 +. f*.dy in        
+        (SEGMENT(x1,y1,x,y)) :: smooth_path (SEGMENT(x,y,x2,y2))
   in       
   (p |> List.map smooth_path |> List.concat, s)
 
@@ -38,13 +44,11 @@ let _ =
           let turtle = run_lazy_analyzed_with_arguments p [] in
           let turtle = if smooth_pretty then smooth_logo_wrapper turtle else turtle in
           let c = (eval_turtle turtle) in
-          let c' = (eval_normal_turtle turtle) in
           let bx = canvas_to_1Darray c 8 in
           if bx = b0 then ()
           else begin
             if sizeFile > 0 then begin
               output_canvas_png ~pretty c sizeFile (fname^".png") ;
-              output_canvas_png ~pretty c' sizeFile (fname^"_norm.png")
             end ;
             if size > 0 then npp (canvas_to_1Darray c size)
           end

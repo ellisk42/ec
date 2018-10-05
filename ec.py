@@ -63,6 +63,7 @@ class ECResult():
                      "pseudoCounts": "pc",
                      "structurePenalty": "L",
                      "helmholtzRatio": "HR",
+                     "biasOptimal": "BO",
                      "topK": "K",
                      "enumerationTimeout": "ET",
                      "useRecognitionModel": "rec",
@@ -117,6 +118,7 @@ def ecIterator(grammar, tasks,
                solver="ocaml",
                compressor="rust",
                likelihoodModel="all-or-nothing",
+               biasOptimal=False,
                testingTasks=[],
                benchmark=None,
                iterations=None,
@@ -128,7 +130,7 @@ def ecIterator(grammar, tasks,
                resumeFrontierSize=None,
                useRecognitionModel=True,
                useNewRecognitionModel=False,
-               steps=250,  # 250,
+               recognitionTimeout=None,
                helmholtzRatio=0.,
                helmholtzBatch=5000,
                featureExtractor=None,
@@ -165,6 +167,9 @@ def ecIterator(grammar, tasks,
     if benchmark is not None and resume is None:
         eprint("You cannot benchmark unless you are loading a checkpoint, aborting.")
         assert False
+    if biasOptimal and not useRecognitionModel:
+        eprint("Bias optimality only applies to recognition models, aborting.")
+        assert False
 
     if testingTimeout > 0 and len(testingTasks) == 0:
         eprint("You specified a testingTimeout, but did not provide any held out testing tasks, aborting.")
@@ -200,8 +205,8 @@ def ecIterator(grammar, tasks,
             "testingTasks",
             "compressor"} and v is not None}
     if not useRecognitionModel:
-        for k in {"helmholtzRatio", "steps"}:
-            del parameters[k]
+        for k in {"helmholtzRatio", "recognitionTimeout", "biasOptimal"}:
+            if k in parameters: del parameters[k]
 
     # Uses `parameters` to construct the checkpoint path
     def checkpointPath(iteration, extra=""):
@@ -246,10 +251,14 @@ def ecIterator(grammar, tasks,
 
     # Restore checkpoint
     if resume is not None:
-        path = checkpointPath(
-            resume, extra="_baselines" if onlyBaselines else "")
+        try:
+            resume = int(resume)
+            path = checkpointPath(resume, extra="_baselines" if onlyBaselines else "")
+        except ValueError:
+            path = resume
         with open(path, "rb") as handle:
             result = dill.load(handle)
+        resume = len(result.grammars) - 1
         eprint("Loaded checkpoint from", path)
         grammar = result.grammars[-1] if result.grammars else grammar
         recognizer = result.recognitionModel
@@ -286,19 +295,6 @@ def ecIterator(grammar, tasks,
                               t: Frontier([],
                                           task=t) for t in tasks},
                           recognitionModel=None, numTestingTasks=numTestingTasks)
-
-    # just plopped this in here, hope it works: -it doesn't. having issues.
-    if useNewRecognitionModel and (
-        not hasattr(
-            result,
-            'recognitionModel') or not isinstance(
-            result.recognitionModel,
-            NewRecognitionModel)):
-        eprint("Creating new recognition model")
-        featureExtractorObject = featureExtractor(tasks + testingTasks)
-        result.recognitionModel = NewRecognitionModel(
-            featureExtractorObject, grammar, cuda=cuda)
-    # end
 
     if benchmark is not None:
         assert resume is not None, "Benchmarking requires resuming from checkpoint that you are benchmarking."
@@ -365,7 +361,16 @@ def ecIterator(grammar, tasks,
             result.testingSearchTime.append(times)
             result.testingSumMaxll.append(sum(math.exp(f.bestll) for f in testingFrontiers if not f.empty) )
 
-                   
+        # If we have to also enumerate Helmholtz frontiers,
+        # do this extra sneaky in the background
+        if useRecognitionModel and biasOptimal and helmholtzRatio > 0:
+            helmholtzFrontiers = backgroundHelmholtzEnumeration(tasks, grammar, enumerationTimeout,
+                                                                evaluationTimeout=evaluationTimeout,
+                                                                special=featureExtractor.special)
+        else:
+            helmholtzFrontiers = lambda: []
+
+        # WAKING UP
         frontiers, times = multicoreEnumeration(grammar, tasks, likelihoodModel,
                                                 solver=solver,
                                                 maximumFrontier=maximumFrontier,
@@ -385,13 +390,18 @@ def ecIterator(grammar, tasks,
             recognizer = RecognitionModel(featureExtractorObject,
                                           grammar,
                                           activation=activation,
-                                          cuda=cuda)
+                                          cuda=cuda,
+                                          contextual=biasOptimal)
 
-            recognizer.train(frontiers, topK=topK, steps=steps,
-                             CPUs=CPUs,
-                             timeout=enumerationTimeout,  # give training as much time as enumeration
-                             helmholtzBatch=helmholtzBatch,
-                             helmholtzRatio=helmholtzRatio if j > 0 or helmholtzRatio == 1. else 0.)
+            if biasOptimal:
+                recognizer.trainBiasOptimal(frontiers, helmholtzFrontiers(), 
+                                            CPUs=CPUs,
+                                            evaluationTimeout=evaluationTimeout,
+                                            timeout=recognitionTimeout,
+                                            helmholtzRatio=helmholtzRatio)
+            else:
+                recognizer.train(frontiers, CPUs=CPUs, timeout=recognitionTimeout,
+                                 helmholtzRatio=helmholtzRatio if j > 0 or helmholtzRatio == 1. else 0.)                                
             result.recognitionModel = recognizer
 
             bottomupFrontiers, times = recognizer.enumerateFrontiers(tasks, likelihoodModel,
@@ -409,7 +419,6 @@ def ecIterator(grammar, tasks,
             result.recognitionModel.train(
                 frontiers,
                 topK=topK,
-                steps=steps,
                 helmholtzRatio=helmholtzRatio)
             eprint("done training recognition model")
             bottomupFrontiers = result.recognitionModel.enumerateFrontiers(
@@ -560,6 +569,9 @@ def ecIterator(grammar, tasks,
             if useRecognitionModel:
                 ECResult.clearRecognitionModel(path)
 
+            graphPrimitives(result, "%s_primitives_%d_"%(outputPrefix,j))
+            
+
         yield result
 
 
@@ -588,7 +600,7 @@ def commandlineArguments(_=None,
                          CPUs=1,
                          useRecognitionModel=True,
                          useNewRecognitionModel=False,
-                         steps=250,
+                         recognitionTimeout=None,
                          activation='relu',
                          helmholtzRatio=1.,
                          helmholtzBatch=5000,
@@ -604,9 +616,9 @@ def commandlineArguments(_=None,
     import argparse
     parser = argparse.ArgumentParser(description="")
     parser.add_argument("--resume",
-                        help="Resumes EC algorithm from checkpoint",
+                        help="Resumes EC algorithm from checkpoint. You can either pass in the path of a checkpoint, or you can pass in the iteration to resume from, in which case it will try to figure out the path.",
                         default=None,
-                        type=int)
+                        type=str)
     parser.add_argument("-i", "--iterations",
                         help="default: %d" % iterations,
                         default=iterations,
@@ -618,6 +630,10 @@ def commandlineArguments(_=None,
     parser.add_argument("-t", "--enumerationTimeout",
                         default=enumerationTimeout,
                         help="In seconds. default: %s" % enumerationTimeout,
+                        type=int)
+    parser.add_argument("-R", "--recognitionTimeout",
+                        default=recognitionTimeout,
+                        help="In seconds. Amount of time to train the recognition model on each iteration. Defaults to enumeration timeout.",
                         type=int)
     parser.add_argument(
         "-F",
@@ -689,10 +705,6 @@ def commandlineArguments(_=None,
                         action="store_false",
                         help="""Disable bottom-up neural recognition model.
                         Default: %s""" % (not useRecognitionModel))
-    parser.add_argument("--steps", type=int,
-                        default=steps,
-                        help="""Trainings steps for neural recognition model.
-                        Default: %s""" % steps)
     parser.add_argument(
         "--testingTimeout",
         type=int,
@@ -738,10 +750,18 @@ def commandlineArguments(_=None,
     parser.add_argument(
         "--compressor",
         default="pypy",
-        choices=["pypy","rust","vs","pypy_vs"])
+        choices=["pypy","rust","vs","pypy_vs","ocaml"])
+    parser.add_argument("--biasOptimal",
+                        help="Enumerate dreams rather than sample them & bias-optimal recognition objective",
+                        default=False, action="store_true")
     parser.add_argument("--clear-recognition",
                         dest="clear-recognition",
                         help="Clears the recognition model from a checkpoint. Necessary for graphing results with recognition models, because pickle is kind of stupid sometimes.",
+                        default=None,
+                        type=str)
+    parser.add_argument("--primitive-graph",
+                        dest="primitive-graph",
+                        help="Displays a dependency graph of the learned primitives",
                         default=None,
                         type=str)
     parser.set_defaults(useRecognitionModel=useRecognitionModel,
@@ -756,4 +776,99 @@ def commandlineArguments(_=None,
         sys.exit(0)
     else:
         del v["clear-recognition"]
+        
+    if v["primitive-graph"] is not None:
+        result = loadPickle(v["primitive-graph"])
+        graphPrimitives(result,v["primitive-graph"],view=True)
+        sys.exit(0)
+    else:
+        del v["primitive-graph"]
+
+    if v["useRecognitionModel"] and v["recognitionTimeout"] is None:
+        v["recognitionTimeout"] = v["enumerationTimeout"]
+        
     return v
+
+
+def graphPrimitives(result, prefix, view=False):
+    try:
+        from graphviz import Digraph
+    except:
+        eprint("You are missing the graphviz library - cannot graph primitives!")
+        return
+    
+
+    primitives = { p
+                   for g in result.grammars
+                   for p in g.primitives
+                   if p.isInvented }
+    age = {p: min(j for j,g in enumerate(result.grammars) if p in g.primitives)
+           for p in primitives }
+
+
+
+    ages = set(age.values())
+    age2primitives = {a: {p for p,ap in age.items() if a == ap }
+                      for a in ages}
+
+    def lb(s,T=20):
+        s = s.split()
+        l = []
+        n = 0
+        for w in s:
+            if n + len(w) > T:
+                l.append("\\n")
+                n = 0
+            n += len(w)
+            l.append(w)
+        return " ".join(l)
+                
+    name = {}
+    simplification = {}
+    depth = {}
+    def getName(p):
+        if p in name: return name[p]
+        children = {k: getName(k)
+                    for _,k in p.body.walk()
+                    if k.isInvented}
+        simplification_ = p.body
+        for k,childName in children.items():
+            simplification_ = simplification_.substitute(k, Primitive(childName,None,None))
+        name[p] = "f%d"%len(name)
+        simplification[p] = name[p] + '=' + lb(str(simplification_))
+        depth[p] = 1 + max([depth[k] for k in children] + [0])
+        return name[p]
+
+    for p in primitives: getName(p)
+
+    depths = {depth[p] for p in primitives}
+    depth2primitives = {d: {p for p in primitives if depth[p] == d }
+                        for d in depths}
+
+    def makeGraph(ordering, fn):
+        g = Digraph()
+        g.graph_attr['rankdir'] = 'LR'
+
+        for o in sorted(ordering.keys()):
+            with g.subgraph(name='age%d'%o) as sg:
+                sg.graph_attr['rank'] = 'same'
+                for p in ordering[o]:
+                    sg.node(getName(p), label=simplification[p])
+
+            for p in ordering[o]:
+                children = {k
+                            for _,k in p.body.walk()
+                            if k.isInvented}
+                for k in children:
+                    g.edge(name[k],name[p])
+
+        try:
+            g.render(fn,view=view)
+            eprint("Exported primitive graph to",fn)
+        except:
+            eprint("Got some kind of error while trying to render primitive graph! Did you install graphviz/dot?")
+        
+        
+
+    makeGraph(depth2primitives,prefix+'depth.pdf')
+    makeGraph(age2primitives,prefix+'iter.pdf')
