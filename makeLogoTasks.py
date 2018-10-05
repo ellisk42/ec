@@ -113,8 +113,9 @@ def parseLogo(s):
     _al = None#Program.parse("logo_ADDL")
     _sl = None#Program.parse("logo_SUBL")
 
-    _pu = Program.parse("logo_PU")
-    _pd = Program.parse("logo_PD")
+    _pu = None#Program.parse("logo_PU")
+    _pd = None#Program.parse("logo_PD")
+    _p = Program.parse("logo_PT")
     _move = Program.parse("logo_FWRT")
     _embed = Program.parse("logo_GETSET")
 
@@ -127,8 +128,8 @@ def parseLogo(s):
     from sexpdata import loads, Symbol
     s = loads(s)
     def command(k, environment, continuation):
-        if k == Symbol("pu"): return Application(_pu, continuation)
-        if k == Symbol("pd"): return Application(_pd, continuation)
+        # if k == Symbol("pu"): return Application(_pu, continuation)
+        # if k == Symbol("pd"): return Application(_pd, continuation)
         assert isinstance(k,list)
         if k[0] == Symbol("move"):
             return Application(Application(Application(_move,
@@ -146,7 +147,10 @@ def parseLogo(s):
         if k[0] == Symbol("embed"):
             body = block(k[1:], [None] + environment, Index(0))
             return Application(Application(_embed,Abstraction(body)),continuation)
-            
+        if k[0] == Symbol("p"):
+            body = block(k[1:], [None] + environment, Index(0))
+            return Application(Application(_p,Abstraction(body)),continuation)
+
         assert False
     def expression(e, environment):
         for n, v in enumerate(environment):
@@ -223,18 +227,24 @@ def manualLogoTask(name, expression, proto=False, needToTrain=False):
 def manualLogoTasks():
     tasks = []
     def T(*a): tasks.append(manualLogoTask(*a))
-    T("pu/pd",
-      """((move 1l 0a) pu (move 1l epsilonAngle) pd (move 1l 0a))""")
-    T("pd",
-      """(pu (move 1l (/a 1a 2)) (move 1l epsilonAngle) pd (move (*d 1d 2) 0a))""")
-    T("pd square",
-      """(loop i 4 
-      pu (move 1l 0a) pd (move 1l (/a 1a 4)))""")
-    T("pd dashed",
-      """
-      (loop i infinity
-      pu (move epsilonLength 0a) pd (move epsilonLength 0a))
-      """)
+    if False:
+        for d,a,s in [('1l','0a','(loop i infinity (move epsilonLength epsilonAngle))'),
+                      ('epsilonLength','0a','(loop i infinity (move epsilonLength epsilonAngle))'),
+                      ('(*d 1l 3)','0a','(move 1l 0a)'),
+                      ('epsilonLength','0a','(move (*d 1l 2) 0a)'),
+                      ('(*d epsilonLength 9)','0a','(move epsilonLength 0a)'),
+                      ('(/d 1l 2)','0a','(move 1l 0a)')]:
+            #            'epsilonLength']:
+            # for a in ['epsilonAngle','0a']:
+            #     for s in ['(move 1l 0a)',
+            #               '(move epsilonLength 0a)',
+            #               '(loop i infinity (move epsilonLength epsilonAngle))']:
+            #         if d == 'epsilonLength' and s == '(move epsilonLength 0a)': continue
+            T("pu: %s/%s/%s"%(d,a,s),
+              """
+              (pu (move %s %s) pd %s)
+              """%(d,a,s))
+        return tasks
 
     for n,l in [(3,"1l"),
                 (5,"1l"),
@@ -344,7 +354,7 @@ def manualLogoTasks():
               (loop i infinity
               (move (*d epsilonLength %d) epsilonAngle))
               """%n)
-            T("circle of size %d"%n,
+        T("circle of size %d"%n,
               """
               ((loop i infinity
               (move (*d epsilonLength %d) epsilonAngle))
@@ -389,23 +399,23 @@ def manualLogoTasks():
           """
           (loop j %d
           (embed (loop k 2 (loop i infinity (move epsilonLength epsilonAngle))))
-          pu (move %s 0a) pd)"""%(n,l))
+          (p (move %s 0a)))"""%(n,l))
     for n,l in [(4,"1d")]:
         T("row of %d dashes"%n,
           """
           (loop j %d
           (embed (move 0d (/a 1a 4)) (move 1d 0a))
-          pu (move %s 0a) pd)"""%(n,l))        
+          (p (move %s 0a)))"""%(n,l))        
     for n,l in [(5,"1d")]:
         T("row of %d semicircles"%n,
           """
           (loop j %d
           (embed (loop i infinity (move epsilonLength epsilonAngle)))
-          pu (move %s 0a) pd)"""%(n,l))
+          (p (move %s 0a)))"""%(n,l))
 
     for n in [3,5,6]:
         body = {"empty": "(move 1d 0a)",
-                "dashed": "pu (move 1d 0a) pd (move 1d 0a)",
+                "dashed": "(p (move 1d 0a)) (move 1d 0a)",
                 "circle": "(move 1d 0a) (loop k 2 (loop i infinity (move epsilonLength epsilonAngle)))",
                 "square": "(loop s 4 (move 1d (/a 1a 4)))",
                 "semicircle": "(move 1d 0a) (loop i infinity (move epsilonLength epsilonAngle))"}

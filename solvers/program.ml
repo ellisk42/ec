@@ -566,7 +566,19 @@ let logo_PD  = primitive "logo_PD"
                          (fun x ->
                            LogoLib.LogoInterpreter.logo_SEQ
                              LogoLib.LogoInterpreter.logo_PD
-                             x)
+                             x);;
+primitive "logo_PT"
+  ((turtle @> turtle) @> (turtle @> turtle))
+  (fun body continuation ->
+     LogoLib.LogoInterpreter.logo_GET (fun state ->
+         let original_state = state.p in
+         LogoLib.LogoInterpreter.logo_SEQ
+           LogoLib.LogoInterpreter.logo_PU
+           (body (LogoLib.LogoInterpreter.logo_SEQ
+                    (if original_state
+                     then LogoLib.LogoInterpreter.logo_PD else LogoLib.LogoInterpreter.logo_PU)
+                    continuation))))
+                         
 
 let logo_GET = primitive "logo_GET"
                          (tstate @> turtle @> turtle)

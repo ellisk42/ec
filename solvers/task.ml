@@ -62,6 +62,28 @@ let supervised_task ?timeout:(timeout = 0.001) name ty examples =
 let task_handler = Hashtbl.Poly.create();;
 let register_special_task name handler = Hashtbl.set task_handler name handler;;
 
+let recent_logo_program : (program*((int, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t option)) option ref = ref None;;
+let run_recent_logo ~timeout program =
+  match !recent_logo_program with
+  | Some(program', bx) when program_equal program program' -> bx
+  | _ ->
+    let bx = run_for_interval timeout
+                 (fun () ->
+                    let p = analyze_lazy_evaluation program in
+                    let x = run_lazy_analyzed_with_arguments p [] in
+                    let l = LogoLib.LogoInterpreter.turtle_to_list x in
+                    match Hashtbl.find p2i l with
+                    | Some(bx) -> bx
+                    | None -> 
+                      let bx = LogoLib.LogoInterpreter.turtle_to_array x 28 in
+                      Hashtbl.set p2i l bx;
+                      bx)
+    in
+    recent_logo_program := Some(program, bx);
+    bx
+;;
+
+
 
 register_special_task "LOGO" (fun extras ?timeout:(timeout = 0.001) name ty examples ->
     let open Yojson.Basic.Util in
@@ -86,15 +108,21 @@ register_special_task "LOGO" (fun extras ?timeout:(timeout = 0.001) name ty exam
                 (ADDR_UNIX("./prototypical-networks/protonet_socket"))
                 )
           else None in
-        let p = analyze_lazy_evaluation p in
+
         let log_likelihood = (try begin
-          match
+            match
+              if true then
+                (match run_recent_logo ~timeout p with
+                 | Some(bx) when (LogoLib.LogoInterpreter.fp_equal bx by 5) -> Some(0.)
+                 | _ -> None)
+              else 
             run_for_interval
               timeout
               (fun () ->
-                let x = run_lazy_analyzed_with_arguments p [] in
+                let x = run_lazy_analyzed_with_arguments (analyze_lazy_evaluation p) [] in
                 let l = LogoLib.LogoInterpreter.turtle_to_list x in
                 let bx =
+                  if false then LogoLib.LogoInterpreter.turtle_to_array x 28 else 
                     match Hashtbl.Poly.find p2i l with
                     | Some(x) -> x
                     | _ ->

@@ -365,18 +365,18 @@ def makeSupervisedTasks():
                                  """((for i %d (for j i h) (r 6))
                                  (for i %d (for j (- %d i) h) (r 6)))"""%(n,n,n))
                 for n in range(4,6) ]
-    pyramids += [SupervisedTower("V pyramid %d"%n,
-"""
-((for i %d (for j i v) (r 2))
- (for i %d (for j (- %d i) v) (r 2)))
-"""%(n,n,n))
-                for n in range(4,8) ]
-    pyramids += [SupervisedTower("V3 pyramid %d"%n,
-"""
-((for i %d (for j i v) (r 6))
- (for i %d (for j (- %d i) v) (r 6)))
-"""%(n,n,n))
-                 for n in range(4,8) ]
+#     pyramids += [SupervisedTower("V pyramid %d"%n,
+# """
+# ((for i %d (for j i v) (r 2))
+#  (for i %d (for j (- %d i) v) (r 2)))
+# """%(n,n,n))
+#                 for n in range(4,8) ]
+#     pyramids += [SupervisedTower("V3 pyramid %d"%n,
+# """
+# ((for i %d (for j i v) (r 6))
+#  (for i %d (for j (- %d i) v) (r 6)))
+# """%(n,n,n))
+#                  for n in range(4,8) ]
     pyramids += [SupervisedTower("H 1/2 pyramid %d"%n,
                                  """
 (for i %d
@@ -393,18 +393,19 @@ def makeSupervisedTasks():
     (for j i (embed v (r 4) v (l 2) h) (l 3))))
 """%n)
                 for n in range(2,8) ]
-    pyramids += [SupervisedTower("V 1/2 pyramid %d"%n,
-                                 """
-(for i %d
-  (r 2)
-  (embed
-                                 (for j i v (l 1))))"""%(n))
-                for n in range(4,8) ]
+    if False:
+        pyramids += [SupervisedTower("V 1/2 pyramid %d"%n,
+                                     """
+    (for i %d
+      (r 2)
+      (embed
+                                     (for j i v (l 1))))"""%(n))
+                    for n in range(4,8) ]
     bricks = [SupervisedTower("brickwall, %dx%d"%(w,h),
                               """(for j %d
                               (embed (for i %d h (r 6)))
                               (embed (r 3) (for i %d h (r 6))))"""%(h,w,w))
-              for w in range(2,6)
+              for w in range(3,7)
               for h in range(1,6) ]
     aqueducts = [SupervisedTower("aqueduct: %dx%d"%(w,h),
                                  """(for j %d

@@ -25,8 +25,9 @@ primitives = [
     # Primitive("logo_ADDL",  arrow(tlength,tlength,tlength), ""),
     # Primitive("logo_SUBL",  arrow(tlength,tlength,tlength), ""),
 
-    Primitive("logo_PU",  arrow(turtle,turtle), ""),
-    Primitive("logo_PD",  arrow(turtle,turtle), ""),
+    # Primitive("logo_PU",  arrow(turtle,turtle), ""),
+    # Primitive("logo_PD",  arrow(turtle,turtle), ""),
+    Primitive("logo_PT", arrow(arrow(turtle,turtle),arrow(turtle,turtle)), None),
     Primitive("logo_FWRT",  arrow(tlength,tangle,turtle,turtle), ""),
     Primitive("logo_GETSET",  arrow(arrow(turtle,turtle),turtle,turtle), "")
 ] + [
