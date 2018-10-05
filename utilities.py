@@ -255,6 +255,7 @@ def callCompiled(f, *arguments, **keywordArguments):
     p = subprocess.Popen(['pypy3'] + pypyArgs + ['compiledDriver.py'],
                          stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
+
     if PIDCallBack is not None:
         PIDCallBack(p.pid)
 
@@ -265,6 +266,13 @@ def callCompiled(f, *arguments, **keywordArguments):
     }
     start = time.time()
     pickle.dump(request, p.stdin)
+
+    #p.stdin.write(request)
+    p.stdin.flush()
+    #p.stdin.close()
+
+
+
     dt = time.time() - start
     if dt > 1:
         eprint("(Python side of compiled driver: SLOW) Wrote serialized message for {} in time {}".format(

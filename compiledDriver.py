@@ -4,11 +4,11 @@ import traceback
 import pickle as pickle
 
 from utilities import eprint
-
+from fun import f
 
 if __name__ == "__main__":
     sys.setrecursionlimit(10000)
-
+    
     start = time.time()
     request = pickle.load(sys.stdin.buffer)
     dt = time.time() - start

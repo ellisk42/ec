@@ -271,7 +271,7 @@ def makeTasks():
     return problems
 
 
-def loadPBETasks(directory="PBE_Strings_Track"):
+def loadPBETasks(directory="../ec/PBE_Strings_Track"):
     """
     Processes sygus benchmarks into task objects
     For these benchmarks, all of the constant strings are given to us.

@@ -176,7 +176,6 @@ def OldDeepcoderPrimitives():
 def deepcoderProductions():
     return [(0.0, prim) for prim in deepcoderPrimitives()]
 
-
 def flatten_program(p):
     string = p.show(False)
     num_inputs = string.count('lambda')
