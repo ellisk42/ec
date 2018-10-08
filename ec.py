@@ -279,7 +279,8 @@ def ecIterator(grammar, tasks,
                 RegisterPrimitives.register(p)
             eprint()
             grammar = Grammar.uniform(list({p for p in grammar.primitives + strapping.primitives
-                                            if not str(p).startswith("fix")}))
+                                            if not str(p).startswith("fix")}),
+                                      continuationType=grammar.continuationType)
             if compressor == "rust":
                 eprint(
                     "Rust compressor is currently not compatible with bootstrapping.",

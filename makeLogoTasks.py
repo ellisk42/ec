@@ -200,8 +200,9 @@ def manualLogoTask(name, expression, proto=False, needToTrain=False):
     p = parseLogo(expression)
     from logoPrimitives import primitives
     from grammar import Grammar
-    g = Grammar.uniform(primitives)
-    try: g.logLikelihood(arrow(turtle,turtle),p)
+    g = Grammar.uniform(primitives, continuationType=turtle)
+    gp = Grammar.uniform(primitives)
+    try: assert g.logLikelihood(arrow(turtle,turtle),p) >= gp.logLikelihood(arrow(turtle,turtle),p)
     except: eprint("WARNING: could not calculate likelihood of manual logo",p)
 
     [output, highresolution] = \
@@ -480,10 +481,18 @@ def montageTasks(tasks):
     
 
 if __name__ == "__main__":
+    import scipy.misc
+    import numpy as np
+    
     allTasks()
     if len(sys.argv) > 1:
         tasks = makeTasks(sys.argv[1:],proto=False)
     else:
         tasks = makeTasks(['all'],proto=False)
     montageTasks(tasks)
+    for n,t in enumerate(tasks):
+        a = t.highresolution
+        w = int(len(a)**0.5)
+        scipy.misc.imsave('/tmp/logo%d.png'%n, np.array([a[i:i+w]
+                                                         for i in range(0,len(a),w) ]))
     eprint(len(tasks),"tasks")

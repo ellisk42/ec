@@ -351,7 +351,7 @@ if __name__ == "__main__":
                 eprint("Couldn't grab frontier from " + reducing)
 
     primitives = list(OrderedDict((x, True) for x in primitives).keys())
-    baseGrammar = Grammar.uniform(primitives)
+    baseGrammar = Grammar.uniform(primitives, continuationType=turtle)
 
     eprint(baseGrammar)
 

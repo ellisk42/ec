@@ -448,7 +448,7 @@ let enumerate_programs ?maxFreeParameters:(maxFreeParameters=0) ?final:(final=fu
 
   (* Strip out the recursion operators because they only occur at the top level *)
   let strip_recursion g =
-    {logVariable = g.logVariable;
+    {g with     
      library =
        g.library |>
        List.filter ~f:(fun (p,_,_,_) -> not (is_recursion_primitive p)) |>

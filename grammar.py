@@ -19,22 +19,43 @@ class NoCandidates(Exception):
 
 
 class Grammar(object):
-    def __init__(self, logVariable, productions):
+    def __init__(self, logVariable, productions, continuationType=None):
         self.logVariable = logVariable
         self.productions = productions
+
+        self.continuationType = continuationType
 
         self.expression2likelihood = dict((p, l) for l, _, p in productions)
         self.expression2likelihood[Index(0)] = self.logVariable
 
-    @staticmethod
-    def fromProductions(productions, logVariable=0.0):
-        """Make a grammar from primitives and their relative logpriors."""
-        return Grammar(logVariable, [(l, p.infer(), p)
-                                     for l, p in productions])
+    def __setstate__(self, state):
+        """
+        Legacy support for loading grammar objects without the imperative type filled in
+        """
+        assert 'logVariable' in state
+        assert 'productions' in state
+        if 'continuationType' in state:
+            continuationType = state['continuationType']
+        else:
+            if any( 'turtle' in str(t) for l,t,p in state['productions'] ):
+                continuationType = baseType("turtle")
+            elif any( 'tower' in str(t) for l,t,p in state['productions'] ):
+                continuationType = baseType("tower")
+            else:
+                continuationType = None
+                
+        self.__init__(state['logVariable'], state['productions'], continuationType=continuationType)
 
     @staticmethod
-    def uniform(primitives):
-        return Grammar(0.0, [(0.0, p.infer(), p) for p in primitives])
+    def fromProductions(productions, logVariable=0.0, continuationType=None):
+        """Make a grammar from primitives and their relative logpriors."""
+        return Grammar(logVariable, [(l, p.infer(), p)
+                                     for l, p in productions],
+                       continuationType=continuationType)
+
+    @staticmethod
+    def uniform(primitives, continuationType=None):
+        return Grammar(0.0, [(0.0, p.infer(), p) for p in primitives], continuationType=continuationType)
 
     def __len__(self): return len(self.productions)
 
@@ -42,7 +63,11 @@ class Grammar(object):
         def productionKey(xxx_todo_changeme):
             (l, t, p) = xxx_todo_changeme
             return not isinstance(p, Primitive), l is not None and -l
-        lines = ["%f\tt0\t$_" % self.logVariable]
+        if self.continuationType is not None:
+            lines = ["continuation : %s"%self.continuationType]
+        else:
+            lines = []
+        lines += ["%f\tt0\t$_" % self.logVariable]
         for l, t, p in sorted(self.productions, key=productionKey):
             if l is not None:
                 l = "%f\t%s\t%s" % (l, t, p)
@@ -58,9 +83,12 @@ class Grammar(object):
         return "\n".join(lines)
 
     def json(self):
-        return {"logVariable": self.logVariable,
-                "productions": [{"expression": str(p), "logProbability": l}
-                                for l, _, p in self.productions]}
+        j = {"logVariable": self.logVariable,
+             "productions": [{"expression": str(p), "logProbability": l}
+                             for l, _, p in self.productions]}
+        if self.continuationType is not None:
+            j["continuationType"] = self.continuationType.json()
+        return j
 
     def _immutable_code(self): return self.logVariable, tuple(self.productions)
 
@@ -78,7 +106,8 @@ class Grammar(object):
         return Grammar(
             self.logVariable, [
                 (l, t, p) for (
-                    l, t, p) in self.productions if p not in ps])
+                    l, t, p) in self.productions if p not in ps],
+            continuationType=self.continuationType)
 
     def buildCandidates(self, request, context, environment,
                         # Should the log probabilities be normalized?
@@ -118,6 +147,13 @@ class Grammar(object):
             except UnificationFailure:
                 continue
 
+        if self.continuationType == request:
+            terminalIndices = [v.i for t,v,k in variableCandidates if not t.isArrow()]
+            if terminalIndices:
+                smallestIndex = Index(min(terminalIndices))
+                variableCandidates = [(t,v,k) for t,v,k in variableCandidates
+                                      if t.isArrow() or v == smallestIndex]
+            
         candidates += [(self.logVariable - log(len(variableCandidates)), t, p, k)
                        for t, p, k in variableCandidates]
         if candidates == []:
@@ -212,6 +248,11 @@ class Grammar(object):
         f, xs = expression.applicationParse()
 
         if f not in candidates:
+            if self.continuationType is not None and f.isIndex:
+                ls = LikelihoodSummary()
+                ls.constant = NEGATIVEINFINITY
+                return ls
+            
             if not silent:
                 eprint(f, "Not in candidates")
                 eprint("Candidates is", candidates)
@@ -364,14 +405,6 @@ class Grammar(object):
                     uses[p] += u * math.exp(e.logPosterior)
         return uses
 
-    def smartlyInitialize(self, expectedSize):
-        frequencies = {}
-        for _, t, p in self.productions:
-            a = len(t.functionArguments())
-            frequencies[a] = frequencies.get(a, 0) + 1
-        return Grammar(-log(frequencies[0]), [(-log(frequencies[len(t.functionArguments())]) - len(
-            t.functionArguments()) * expectedSize, t, p) for l, t, p in self.productions])
-
     def insideOutside(self, frontiers, pseudoCounts, iterations=1):
         # Replace programs with (likelihood summary, uses)
         frontiers = [ Frontier([ FrontierEntry((summary, summary.toUses()),
@@ -397,7 +430,8 @@ class Grammar(object):
                         [ (math.log(u.actualUses.get(p,0.) + pseudoCounts) - \
                            math.log(u.possibleUses.get(p,0.) + pseudoCounts),
                            t,p)
-                          for _,t,p in g.productions ])
+                          for _,t,p in g.productions ],
+                        continuationType=self.continuationType)
             if i < iterations - 1:
                 frontiers = [Frontier([ FrontierEntry((summary, uses),
                                                       logPrior=summary.logLikelihood(g),
@@ -768,12 +802,16 @@ class ContextualGrammar:
         self.productions = [(None,t,p) for _,t,p in self.noParent.productions ]
         self.primitives = [p for _,_2,p in self.productions ]
 
+        self.continuationType = noParent.continuationType
+        assert variableParent.continuationType == self.continuationType
+
         assert set(noParent.primitives) == set(variableParent.primitives)
         assert set(variableParent.primitives) == set(library.keys())
         for e,gs in library.items():
             assert len(gs) == len(e.infer().functionArguments())
             for g in gs:
                 assert set(g.primitives) == set(library.keys())
+                assert g.continuationType == self.continuationType
 
     def __str__(self):
         lines = ["No parent:",str(self.noParent),"",

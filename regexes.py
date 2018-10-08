@@ -278,7 +278,7 @@ if __name__ == "__main__":
             prim) for prim in prim_list]
 
 
-    baseGrammar = Grammar.fromProductions(productions)
+    baseGrammar = Grammar.fromProductions(productions, continuationType=tpregex)
     #baseGrammar = Grammar.uniform(prims())
 
     #for i in range(100):

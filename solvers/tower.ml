@@ -16,8 +16,6 @@ let tower_sequence (a : tt) (b : tt) : tt = fun hand ->
   (hand, a' @ b');;
 let empty_tower : tt = fun h -> (h,[]);;
 
-let ttower = make_ground "tower";;
-
 let maximum_number_of_blocks = 35;;
 let maximum_tower_extent = 15.;;
 

@@ -50,7 +50,8 @@ let inside_outside ~pseudoCounts g (frontiers : frontier list) =
       | Some(f) -> f
     in
 
-    {logVariable = log (actual (Index(0)) +. pseudoCounts) -. log (possible (Index(0)) +. pseudoCounts);
+    {g with
+     logVariable = log (actual (Index(0)) +. pseudoCounts) -. log (possible (Index(0)) +. pseudoCounts);
      library = g.library |> List.map ~f:(fun (p,t,_,u) ->
          let l = log (actual p +. pseudoCounts) -. log (possible p +. pseudoCounts) in
        (p,t,l,u))}
@@ -590,7 +591,8 @@ let () =
     with _ -> 1
   in
 
-  let frontiers = j |> member "frontiers" |> to_list |> List.map ~f:deserialize_frontier in 
+  let frontiers = j |> member "frontiers" |> to_list |> List.map ~f:deserialize_frontier in
+  
   let g, frontiers = compression_loop ~nc ~topK ~aic ~structurePenalty ~pseudoCounts ~arity ~topI ~bs g frontiers in
 
   let j = `Assoc(["DSL",serialize_grammar g;

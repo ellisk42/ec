@@ -483,6 +483,8 @@ def ocamlInduce(g, frontiers, _=None,
     import os
     import subprocess
 
+    g0 = g
+
     originalFrontiers = frontiers
     t2f = {f.task: f for f in frontiers}
     frontiers = [f for f in frontiers if not f.empty ]
@@ -525,7 +527,10 @@ def ocamlInduce(g, frontiers, _=None,
                 [(l,p.infer(),p)
                  for production in g["productions"]
                  for l in [production["logProbability"]]
-                 for p in [Program.parse(production["expression"])] ])
+                 for p in [Program.parse(production["expression"])] ],
+                continuationType=g0.continuationType)
+    
+
     frontiers = {original.task:
                  Frontier([FrontierEntry(p,
                                          logLikelihood=e["logLikelihood"],
@@ -628,7 +633,7 @@ def rustInduce(g0, frontiers, _=None,
                    for i in resp["inventions"]]
     productions = [(l if l is not None else float("-inf"), p)
                    for l, p in productions]
-    g = Grammar.fromProductions(productions, resp["variable_logprob"])
+    g = Grammar.fromProductions(productions, resp["variable_logprob"], continuationType=g0.continuationType)
     newFrontiers = [
         Frontier(
             [
