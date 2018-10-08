@@ -263,7 +263,7 @@ def manualLogoTasks():
     T("right angle epsilon", "((move epsilonLength (/a 1a 4)) (move epsilonLength 0a))")
     
 
-    for i in range(3,7):
+    for i in range(4,7):
         T("Greek spiral %d"%i,
           """
           (loop i %d
