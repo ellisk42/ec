@@ -176,9 +176,10 @@ class FeatureExtractor(HandCodedFeatureExtractor):
 class DeepFeatureExtractor(MLPFeatureExtractor):
     N_EXAMPLES = 15
     H = 16
-    USE_CUDA = False
+    
 
-    def __init__(self, tasks):
+    def __init__(self, tasks, cuda=False):
+        self.USE_CUDA = cuda
         super(
             DeepFeatureExtractor,
             self).__init__(
@@ -211,7 +212,7 @@ class DeepFeatureExtractor(MLPFeatureExtractor):
 
 class LearnedFeatureExtractor(RecurrentFeatureExtractor):
     H = 16
-    USE_CUDA = False
+    
     special = None
 
     def tokenize(self, examples):
@@ -244,7 +245,8 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
 
         return tokenized
 
-    def __init__(self, tasks):
+    def __init__(self, tasks, cuda=False):
+        self.USE_CUDA = False
         self.lexicon = set(flatten((t.examples for t in tasks), abort=lambda x: isinstance(
             x, str))).union({"LIST_START", "LIST_END", "?"})
 

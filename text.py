@@ -38,7 +38,7 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
     def tokenize(self, examples):
         return examples
 
-    def __init__(self, tasks):
+    def __init__(self, tasks, cuda=False):
         lexicon = {c
                    for t in tasks
                    for xs, y in self.tokenize(t.examples)
@@ -49,7 +49,8 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
         super(LearnedFeatureExtractor, self).__init__(lexicon=list(lexicon),
                                                       H=64,
                                                       tasks=tasks,
-                                                      bidirectional=True)
+                                                      bidirectional=True,
+                                                      cuda=cuda)
         self.MAXINPUTS = 4
 
     def taskOfProgram(self, p, tp):
