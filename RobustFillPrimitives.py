@@ -279,7 +279,7 @@ class CPrimitive(Primitive):
     def __setstate__(self, state):
         #for backwards compatibility:
         if type(state) == dict:
-            pass
+            pass #do nothing, i don't need to load them if they are old...
         else:
             p = Primitive.GLOBALS[state]
             self.__init__(p.name, p.tp, p.value, p.constraint) 

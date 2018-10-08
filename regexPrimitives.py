@@ -70,6 +70,39 @@ disallowed = [
 
 disallowed_list = [char for char, _ in disallowed]
 
+class PRC(): #PregexContinuation
+    def __init__(self, f, arity=0, args=[]):
+        self.f = f  
+        self.arity = arity
+        self.args = args
+
+    def __call__(self, pre):
+
+        if self.arity == len(self.args):
+            if self.arity == 0: return pregex.Concat([self.f, pre]) #TODO
+            else: return pregex.Concat([self.f(*self.args), pre])
+        else: return PRC(self.f, self.arity, args=self.args+[pre])
+
+
+def ConcatPrimitives():
+    return [Primitive("string_" + i, arrow(tpregex, tpregex), PRC(pregex.String(i))) for i in printable[:-4] if i not in disallowed_list
+            ] + [
+        Primitive("string_" + name, arrow(tpregex, tpregex), PRC(pregex.String(char))) for char, name in disallowed
+    ] + [
+        Primitive("r_dot", arrow(tpregex, tpregex), PRC(pregex.dot)),
+        Primitive("r_d", arrow(tpregex, tpregex), PRC(pregex.d)),
+        Primitive("r_s", arrow(tpregex, tpregex), PRC(pregex.s)),
+        Primitive("r_w", arrow(tpregex, tpregex), PRC(pregex.w)),
+        Primitive("r_l", arrow(tpregex, tpregex), PRC(pregex.l)),
+        Primitive("r_u", arrow(tpregex, tpregex), PRC(pregex.u)),
+        #todo
+        Primitive("r_kleene", arrow(tpregex, tpregex), PRC(pregex.KleeneStar,1)),
+        Primitive("r_plus", arrow(tpregex, tpregex, tpregex), PRC(pregex.Plus,1)),
+        Primitive("r_maybe", arrow(tpregex, tpregex, tpregex), PRC(pregex.Maybe,1)),
+        Primitive("r_alt", arrow(tpregex, tpregex, tpregex, tpregex), PRC(pregex.Alt, 2)),
+    ]
+
+
 
 def sketchPrimitives():
     return [Primitive("string_" + i, tpregex, pregex.String(i)) for i in printable[:-4] if i not in disallowed_list
@@ -265,4 +298,10 @@ def matchEmpericalNoLetterPrimitives(corpus):
     ]
 
 
+if __name__=='__main__':
+    ConcatPrimitives()
+    from program import Program
 
+    p=Program.parse("(lambda (r_kleene (r_maybe (string_x $0) $0) $0))")
+    print(p)
+    print(p.runWithArguments([pregex.create('')]))

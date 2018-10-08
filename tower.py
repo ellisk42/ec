@@ -61,10 +61,14 @@ class TowerCNN(nn.Module):
 
         self.outputDimensionality = 1024
 
+        if cuda:
+            self.CUDA=True
+            self.cuda()  # I think this should work?
+
     def forward(self, v):
         v = np.transpose(v,(2,0,1))
         assert v.shape == (3,self.inputImageDimension,self.inputImageDimension)
-        v = variable(v).float()
+        v = variable(v, cuda=self.CUDA).float()
         # insert batch
         v = torch.unsqueeze(v, 0)
         window = int(self.inputImageDimension/self.resizedDimension)

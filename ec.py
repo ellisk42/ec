@@ -233,7 +233,7 @@ def ecIterator(grammar, tasks,
             compressor=compressor,
             **parameters)
         if outputPrefix is not None:
-            path = checkpointPath(0, extra="_baselines")
+            path = checkpointPath(0, extra="_e")
             with open(path, "wb") as f:
                 pickle.dump(result, f)
             eprint("Exported checkpoint to", path)
@@ -387,7 +387,7 @@ def ecIterator(grammar, tasks,
 
         # Train + use recognition model
         if useRecognitionModel:
-            featureExtractorObject = featureExtractor(tasks + testingTasks)
+            featureExtractorObject = featureExtractor(tasks + testingTasks, cuda=cuda)
             recognizer = RecognitionModel(featureExtractorObject,
                                           grammar,
                                           activation=activation,
