@@ -415,10 +415,11 @@ def manualLogoTasks():
           (p (move %s 0a)))"""%(n,l))
 
     for n in [3,5,6]:
-        body = {"empty": "(move 1d 0a)",
+        body = {#"empty": "(move 1d 0a)",
                 "dashed": "(p (move 1d 0a)) (move 1d 0a)",
                 "circle": "(move 1d 0a) (loop k 2 (loop i infinity (move epsilonLength epsilonAngle)))",
-                "square": "(loop s 4 (move 1d (/a 1a 4)))",
+                "square dashed": "(p (move 1d 0a)) (loop s 4 (move 1d (/a 1a 4)))",
+                "square": "(move 1d 0a) (loop s 4 (move 1d (/a 1a 4)))",
                 "semicircle": "(move 1d 0a) (loop i infinity (move epsilonLength epsilonAngle))"}
         for name in body:
             T("%d-%s snowflake"%(n,name),
