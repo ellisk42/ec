@@ -256,12 +256,16 @@ let rec pad_type_with_arguments context n t =
     let (context,suffix) = pad_type_with_arguments context (n - 1) t in
     (context, a @> suffix)
 
+
 let make_ground g = TCon(g,[],false);;
+
+
 let tint = make_ground "int";;
 let tcharacter = make_ground "char";;
 let treal = make_ground "real";;
 let tboolean = make_ground "bool";;
 let turtle = make_ground "turtle";;
+let ttower = make_ground "tower";;
 let tstate = make_ground "tstate";;
 let tscalar = make_ground "tscalar";;
 let tangle = make_ground "tangle";;

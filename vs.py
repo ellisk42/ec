@@ -795,8 +795,9 @@ class VersionTable():
         # for f in frontiers: print(f.entries[0].program)
         # print()
         # print()
-        g = Grammar.uniform([invention] + g0.primitives).insideOutside(frontiers,
-                                                                       pseudoCounts=pseudoCounts)
+        g = Grammar.uniform([invention] + g0.primitives, continuationType=g0.continuationType).\
+            insideOutside(frontiers,
+                          pseudoCounts=pseudoCounts)
         frontiers = [g.rescoreFrontier(f) for f in frontiers]
         return g, frontiers
 

@@ -189,7 +189,7 @@ def visualizeSolutions(solutions, export, tasks=None):
     scipy.misc.imsave(export, matrix)
 
 if __name__ == "__main__":
-    g0 = Grammar.uniform(primitives)
+    g0 = Grammar.uniform(primitives, continuationType=ttower)
 
     arguments = commandlineArguments(
         featureExtractor=TowerCNN,

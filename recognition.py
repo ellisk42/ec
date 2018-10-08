@@ -135,7 +135,8 @@ class RecognitionModel(nn.Module):
             productions = productions(h)
             return Grammar(variables,
                            [(productions[k].view(1), t, program)
-                            for k, (_, t, program) in enumerate(self.grammar.productions)])
+                            for k, (_, t, program) in enumerate(self.grammar.productions)],
+                           continuationType=self.grammar.continuationType)
 
         if not self.contextual:
             return buildGrammarObject(self.logVariable, self.logProductions)
@@ -276,7 +277,8 @@ class RecognitionModel(nn.Module):
             if isinstance(g,Grammar):
                 return Grammar(g.logVariable.data.tolist()[0], 
                                [ (l.data.tolist()[0], t, p)
-                                 for l, t, p in g.productions])
+                                 for l, t, p in g.productions],
+                               continuationType=g.continuationType)
             assert isinstance(g, ContextualGrammar)
             return ContextualGrammar(untorch(g.noParent),
                                      untorch(g.variableParent),
@@ -349,6 +351,7 @@ class RecognitionModel(nn.Module):
                 if self.featureExtractor.recomputeTasks:
                     for fp in helmholtzFrontiers:
                         fp.clear()
+                    return getHelmholtz() # because we just cleared everything
             assert f.task is not None
             return f.makeFrontier()
             
@@ -383,6 +386,7 @@ class RecognitionModel(nn.Module):
                 if timeout and time.time() - start > timeout:
                     break
                 losses = []
+                descriptionLengths = []
 
                 permutedFrontiers = list(frontiers)
                 random.shuffle(permutedFrontiers)
@@ -397,8 +401,10 @@ class RecognitionModel(nn.Module):
                         loss.backward()
                         optimizer.step()
                         losses.append(loss.data.tolist()[0])
+                        descriptionLengths.append(min(-e.logPrior for e in frontier))
                 if (i == 1 or i % 10 == 0) and losses:
-                    eprint("Epoch", i, "Loss", sum(losses) / len(losses))
+                    eprint("Epoch", i, "Loss", sum(losses) / len(losses),
+                           "\n\tvs MDL (w/o neural net)", sum(descriptionLengths) / len(descriptionLengths))
                     gc.collect()
                     
 
@@ -1109,6 +1115,8 @@ def helmholtzEnumeration(g, request, inputs, timeout, _=None,
     if evaluationTimeout: message["evaluationTimeout"] = evaluationTimeout
     if special: message["special"] = special
     message = json.dumps(message)
+    with open('/tmp/hm','w') as handle:
+        handle.write(message)
     try:
         process = subprocess.Popen("./helmholtz",
                                    stdin=subprocess.PIPE,

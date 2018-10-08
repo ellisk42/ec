@@ -200,8 +200,9 @@ def manualLogoTask(name, expression, proto=False, needToTrain=False):
     p = parseLogo(expression)
     from logoPrimitives import primitives
     from grammar import Grammar
-    g = Grammar.uniform(primitives)
-    try: g.logLikelihood(arrow(turtle,turtle),p)
+    g = Grammar.uniform(primitives, continuationType=turtle)
+    gp = Grammar.uniform(primitives)
+    try: assert g.logLikelihood(arrow(turtle,turtle),p) >= gp.logLikelihood(arrow(turtle,turtle),p)
     except: eprint("WARNING: could not calculate likelihood of manual logo",p)
 
     [output, highresolution] = \
@@ -262,7 +263,7 @@ def manualLogoTasks():
     T("right angle epsilon", "((move epsilonLength (/a 1a 4)) (move epsilonLength 0a))")
     
 
-    for i in range(3,7):
+    for i in range(4,7):
         T("Greek spiral %d"%i,
           """
           (loop i %d
@@ -414,10 +415,11 @@ def manualLogoTasks():
           (p (move %s 0a)))"""%(n,l))
 
     for n in [3,5,6]:
-        body = {"empty": "(move 1d 0a)",
+        body = {#"empty": "(move 1d 0a)",
                 "dashed": "(p (move 1d 0a)) (move 1d 0a)",
                 "circle": "(move 1d 0a) (loop k 2 (loop i infinity (move epsilonLength epsilonAngle)))",
-                "square": "(loop s 4 (move 1d (/a 1a 4)))",
+                "square dashed": "(p (move 1d 0a)) (loop s 4 (move 1d (/a 1a 4)))",
+                "square": "(move 1d 0a) (loop s 4 (move 1d (/a 1a 4)))",
                 "semicircle": "(move 1d 0a) (loop i infinity (move epsilonLength epsilonAngle))"}
         for name in body:
             T("%d-%s snowflake"%(n,name),
@@ -480,10 +482,18 @@ def montageTasks(tasks):
     
 
 if __name__ == "__main__":
+    import scipy.misc
+    import numpy as np
+    
     allTasks()
     if len(sys.argv) > 1:
         tasks = makeTasks(sys.argv[1:],proto=False)
     else:
         tasks = makeTasks(['all'],proto=False)
     montageTasks(tasks)
+    for n,t in enumerate(tasks):
+        a = t.highresolution
+        w = int(len(a)**0.5)
+        scipy.misc.imsave('/tmp/logo%d.png'%n, np.array([a[i:i+w]
+                                                         for i in range(0,len(a),w) ]))
     eprint(len(tasks),"tasks")

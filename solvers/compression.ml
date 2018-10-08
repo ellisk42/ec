@@ -50,7 +50,8 @@ let inside_outside ~pseudoCounts g (frontiers : frontier list) =
       | Some(f) -> f
     in
 
-    {logVariable = log (actual (Index(0)) +. pseudoCounts) -. log (possible (Index(0)) +. pseudoCounts);
+    {g with
+     logVariable = log (actual (Index(0)) +. pseudoCounts) -. log (possible (Index(0)) +. pseudoCounts);
      library = g.library |> List.map ~f:(fun (p,t,_,u) ->
          let l = log (actual p +. pseudoCounts) -. log (possible p +. pseudoCounts) in
        (p,t,l,u))}
@@ -571,7 +572,13 @@ let compression_loop
 let () =
   let open Yojson.Basic.Util in
   let open Yojson.Basic in
-  let j = Yojson.Basic.from_channel Pervasives.stdin in
+  let j =
+    if Array.length Sys.argv > 1 then
+      (assert (Array.length Sys.argv = 2);
+       Yojson.Basic.from_file Sys.argv.(1))
+    else 
+      Yojson.Basic.from_channel Pervasives.stdin
+  in
   let g = j |> member "DSL" |> deserialize_grammar |> strip_grammar in
   let topK = j |> member "topK" |> to_int in
   let topI = j |> member "topI" |> to_int in
@@ -590,7 +597,8 @@ let () =
     with _ -> 1
   in
 
-  let frontiers = j |> member "frontiers" |> to_list |> List.map ~f:deserialize_frontier in 
+  let frontiers = j |> member "frontiers" |> to_list |> List.map ~f:deserialize_frontier in
+  
   let g, frontiers = compression_loop ~nc ~topK ~aic ~structurePenalty ~pseudoCounts ~arity ~topI ~bs g frontiers in
 
   let j = `Assoc(["DSL",serialize_grammar g;

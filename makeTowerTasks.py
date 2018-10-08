@@ -327,6 +327,13 @@ def makeSupervisedTasks():
                                """%(n,l))
                for n in range(2,8)
                for l in range(1,6)]
+    offsetArches = [SupervisedTower("bridge (%d) of arch, spaced %d"%(n,l),
+                               """
+                               (for j %d
+                                 v (r 4) v (l 2) h 
+                                (r %d))
+                               """%(n,l))
+                    for n,l in [(3,7),(4,6)]]
     Josh = [SupervisedTower("Josh (%d)"%n,
                             """(for i %d
                             h (l 2) v (r 2) v (r 2) v (l 2) h (r 6))"""%n)
@@ -347,9 +354,6 @@ def makeSupervisedTasks():
     simpleLoops = [SupervisedTower("horizontal row %d, spacing %d"%(n,s),
                                    """(for j %d h (r %s))"""%(n,s))
                    for n,s in [(4,6),(5,7)] ]+\
-                [SupervisedTower("vertical row %d, spacing %d"%(n,s),
-                                   """(for j %d v (r %d))"""%(n,s))
-                   for n,s in [(3,2),(6,4)] ]+\
                 [SupervisedTower("horizontal stack %d"%n,
                                    """(for j %d h)"""%n)
                    for n in range(5,8) ]+\
@@ -414,7 +418,7 @@ def makeSupervisedTasks():
                  for w in range(4,8)
                  for h in range(3,6)
                  ]
-    everything = simpleLoops + arches + Bridges + archesStacks + aqueducts + Josh + pyramids + bricks + staircase2 + staircase1
+    everything = simpleLoops + arches + Bridges + archesStacks + aqueducts + offsetArches + pyramids + bricks + staircase2 + staircase1
     for t in everything:
         delattr(t,'original')
     return everything

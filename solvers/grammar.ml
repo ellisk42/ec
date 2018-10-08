@@ -9,19 +9,21 @@ open FastType
 type grammar = {
   logVariable: float;
   library: (program*tp*float*(tContext -> tp -> tContext*(tp list))) list;
+  continuation_type : tp option;
 }
 
-let primitive_grammar primitives =
+let primitive_grammar ?continuation_type:(continuation_type=None) primitives =
   {library = List.map primitives ~f:(fun p -> match p with
        |Primitive(t,_,_) -> (p,t, 0.0 -. (log (float_of_int (List.length primitives))),
                             compile_unifier t)
        |_ -> raise (Failure "primitive_grammar: not primitive"));
-   logVariable = log 0.5
+   logVariable = log 0.5;
+   continuation_type;
   }
 
 exception DuplicatePrimitive;;
 
-let uniform_grammar primitives =
+let uniform_grammar ?continuation_type:(continuation_type=None) primitives =
   if List.length primitives = List.length (List.dedup_and_sort
                                              ~compare:compare_program(* (fun p1 p2 -> String.compare (string_of_program p1) *)
                                                       (*     (string_of_program p2)) *) primitives) then
@@ -30,18 +32,23 @@ let uniform_grammar primitives =
          (p,t, 0.0 -. (log (float_of_int (List.length primitives))),
           compile_unifier t)
        |_ -> raise (Failure "primitive_grammar: not primitive"));
-   logVariable = log 0.5
+   logVariable = log 0.5;
+   continuation_type
   }
   else raise DuplicatePrimitive
 
-let strip_grammar {logVariable;library} =
+let strip_grammar {logVariable;continuation_type;library;} =
   {logVariable;
-  library=library |> List.map ~f:(fun (p,t,l,u) -> (strip_primitives p,t,l,u))}
+   continuation_type;
+   library=library |> List.map ~f:(fun (p,t,l,u) -> (strip_primitives p,t,l,u))}
 
 let grammar_primitives g =
    g.library |> List.map ~f:(fun (p,_,_,_) -> p)
 
 let string_of_grammar g =
+  (match g.continuation_type with
+   | None -> ""
+   | Some(ct) -> Printf.sprintf "continuation : %s\n" (string_of_type ct))^
   string_of_float g.logVariable ^ "\n" ^
   join ~separator:"\n" (g.library |> List.map ~f:(fun (p,t,l,_) -> Float.to_string l^"\t"^(string_of_type t)^"\t"^(string_of_program p)))
 
@@ -55,12 +62,6 @@ let grammar_log_weight g p =
                                (string_of_program p) (string_of_grammar g)))
     | [] -> raise (Failure (Printf.sprintf "Could not find the following primitive:\n\t%s\n\tinside the DSL:\n%s\n"
                           (string_of_program p) (string_of_grammar g)))
-
-let imperative_type : (tp option) ref = ref None;;
-let register_imperative_type t =
-  match !imperative_type with
-  | Some(_) -> assert false
-  | None -> imperative_type := Some(t)
 
 let unifying_expressions g environment request context : (program*tp list*tContext*float) list =
   (* given a grammar environment requested type and typing context,
@@ -84,7 +85,7 @@ let unifying_expressions g environment request context : (program*tp list*tConte
           with UnificationFailure -> None
         else None)
   in
-  let variable_candidates = match (variable_candidates, !imperative_type) with
+  let variable_candidates = match (variable_candidates, g.continuation_type) with
       | (_ :: _, Some(t)) when t = request -> 
         let terminal_indices = List.filter_map variable_candidates ~f:(fun (p,t,_,_) ->
             if t = [] then Some(get_index_value p) else None) in
@@ -212,7 +213,8 @@ let make_likelihood_summary g request expression =
       | [] -> raise (Failure "walking the application tree")
       | f::xs ->
         match List.find candidates ~f:(fun (candidate,_,_,_) -> program_equal candidate f) with
-        | None -> raise (Failure ("could not find function in grammar: "^(string_of_program p)))
+        | None ->
+          s.likelihood_constant <- Float.neg_infinity
         | Some(_, argument_types, newContext, functionLikelihood) ->
           context := newContext;
           record_likelihood_event s f (candidates |> List.map ~f:(fun (candidate,_,_,_) -> candidate));
@@ -256,6 +258,7 @@ let prune_contextual_grammar (g : contextual_grammar) =
     List.map2_exn argument_types gs ~f:(fun argument_type g ->
         let argument_type = return_of_type argument_type in
         {logVariable=g.logVariable;
+         continuation_type=g.continuation_type;
          library=g.library |> List.filter ~f:(fun (_,child_type,_,_) ->
              let child_type = return_of_type child_type in
              try
@@ -292,19 +295,27 @@ let deserialize_grammar g =
       with UnificationFailure -> raise (Failure ("Could not type "^source))
     in
     let logProbability = p |> member "logProbability" |> to_float in
+    
     (e,t,logProbability,compile_unifier t))
   in
+  let continuation_type =
+    try Some(g |> member "continuationType" |> deserialize_type)
+    with _ -> None
+  in
   (* Successfully parsed the grammar *)
-  let g = {logVariable = logVariable; library = productions;} in
+  let g = {continuation_type; logVariable; library = productions;} in
   g
 
-let serialize_grammar {logVariable; library} =
+let serialize_grammar {logVariable; continuation_type; library} =
   let open Yojson.Basic in
   let j : json =
   `Assoc(["logVariable",`Float(logVariable);
           "productions",`List(library |> List.map ~f:(fun (e,t,l,_) ->
               `Assoc(["expression",`String(string_of_program e);
-                      "logProbability",`Float(l)])))])
+                      "logProbability",`Float(l)])))] @
+         match continuation_type with
+         | None -> []
+         | Some(it) -> ["continuationType", serialize_type it])
   in
   j
     
