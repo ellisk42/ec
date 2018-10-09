@@ -136,6 +136,7 @@ class DifferentiableTask(Task):
 
     def __init__(self, name, request, examples, _=None,
                  features=None, BIC=1., loss=None, likelihoodThreshold=None,
+                 steps=50, restarts=300, lr=0.5, decay=0.5, grow=1.2,
                  temperature=1., maxParameters=None):
         assert loss is not None
         self.temperature = temperature
@@ -147,6 +148,7 @@ class DifferentiableTask(Task):
         self.specialTask = ("differentiable",
                             {"parameterPenalty": BIC * math.log(len(examples)),
                              "temperature": temperature,
+                             "steps": steps, "restarts": restarts, "lr": lr, "decay": decay, "grow": grow,
                              "maxParameters": maxParameters,
                              "lossThreshold": -likelihoodThreshold})
 

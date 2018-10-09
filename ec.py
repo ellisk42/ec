@@ -599,6 +599,7 @@ def commandlineArguments(_=None,
                          enumerationTimeout=None,
                          topK=1,
                          CPUs=1,
+                         compressor="ocaml",
                          useRecognitionModel=True,
                          useNewRecognitionModel=False,
                          recognitionTimeout=None,
@@ -750,7 +751,7 @@ def commandlineArguments(_=None,
         type=str)
     parser.add_argument(
         "--compressor",
-        default="pypy",
+        default=compressor,
         choices=["pypy","rust","vs","pypy_vs","ocaml"])
     parser.add_argument("--biasOptimal",
                         help="Enumerate dreams rather than sample them & bias-optimal recognition objective",

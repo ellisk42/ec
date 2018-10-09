@@ -77,6 +77,8 @@ def makeTask(name, request, law,
     return DifferentiableTask(name, genericType(request), e,
                               BIC=10.,
                               likelihoodThreshold=-0.05,
+                              restarts=2,
+                              steps=25,
                               maxParameters=1,
                               loss=squaredErrorLoss)
 
@@ -361,10 +363,10 @@ if __name__ == "__main__":
 
     explorationCompression(baseGrammar, tasks,
                            outputPrefix="experimentOutputs/scientificLaws",
-                           compressor="pypy",
                            evaluationTimeout=0.1,
                            testingTasks=[],
                            **commandlineArguments(
+                               compressor="ocaml",
                                featureExtractor=LearnedFeatureExtractor,
                                iterations=10,
                                CPUs=numberOfCPUs(),
