@@ -146,6 +146,11 @@ def make_list_bootstrap_tasks():
              [((l,), [l[int(j/2)] for j in range(len(l)) ])
               for _ in range(10)
               for l in [ [randint(0, 9) for _ in range(randint(1,4)*2)] ] ]),
+        Task("take until 1 reached", arrow(tlist(tint),tlist(tint)),
+             [((p + [1] + s,),p)
+              for _ in range(10)
+              for p in [ [z for z in randomList()[:5] if z != 1 ]]
+              for s in [randomList()] ]),
         Task("stutter", arrow(tlist(tint),tlist(tint)),
              [((l,), [z for x in l for z in [x,x] ])
               for _ in range(10)
@@ -164,9 +169,12 @@ def make_list_bootstrap_tasks():
         Task("range inclusive", arrow(tint, tlist(tint)),
              [((n,), list(range(n + 1)))
               for n in range(10)]),
+        Task("range inclusive+1", arrow(tint, tlist(tint)),
+             [((n,), list(range(n + 2)))
+              for n in range(10)]),
         Task("range exclusive", arrow(tint, tlist(tint)),
              [((n,), list(range(n - 1)))
-              for n in range(1, 11)]),
+              for n in range(2, 11)]),
         Task("range length", arrow(tlist(tint),tlist(tint)),
              [((l,),list(range(len(l))))
               for _ in range(10)
@@ -539,7 +547,7 @@ if __name__ == "__main__":
                 [((ex["i"],), ex["o"]) for ex in item["examples"]])),
             cache=False,
         ) for item in loaded]
-    for t in retrieveJSONTasks("data/list_tasks.json") + sortBootstrap():
+    for t in retrieveJSONTasks("data/list_tasks.json") + sortBootstrap() + make_list_bootstrap_tasks():
         print(t.describe())
         print()
     # exportTasks()
