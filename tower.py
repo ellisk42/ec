@@ -31,7 +31,7 @@ class TowerCNN(nn.Module):
     
     def __init__(self, tasks, cuda=False, H=64):
         super(TowerCNN, self).__init__()
-
+        self.CUDA = cuda
         self.recomputeTasks = False
 
         self.outputDimensionality = H

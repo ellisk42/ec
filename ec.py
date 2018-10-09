@@ -247,7 +247,9 @@ def ecIterator(grammar, tasks,
     for k, v in parameters.items():
         eprint("\t", k, " = ", v)
     eprint("\t", "evaluationTimeout", " = ", evaluationTimeout)
+    eprint("\t", "cuda", " = ", cuda)
     eprint()
+
 
     # Restore checkpoint
     if resume is not None:
