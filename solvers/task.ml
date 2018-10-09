@@ -183,10 +183,6 @@ register_special_task "LOGO" (fun extras ?timeout:(timeout = 0.001) name ty exam
 
 register_special_task "differentiable"
   (fun extras
-  (* ?temperature:(temperature=1.) *)
-  (*   ?parameterPenalty:(parameterPenalty=0.) *)
-  (*   ?lossThreshold:(lossThreshold=None) *)
-  (*   ?maxParameters:(maxParameters=100) *)
     ?timeout:(timeout = 0.001) name ty examples ->
 
 
@@ -204,6 +200,11 @@ register_special_task "differentiable"
     let temperature = maybe_float "temperature" 1. in
     let parameterPenalty = maybe_float "parameterPenalty" 0. in
     let maxParameters = maybe_int "maxParameters" 99 in
+    let restarts = maybe_int "restarts" 300 in
+    let steps = maybe_int "steps" 50 in
+    let lr = maybe_float "lr" 0.5 in
+    let decay = maybe_float "decay" 0.5 in
+    let grow = maybe_float "grow" 1.2 in
     let lossThreshold = try Some(extras |> member "lossThreshold" |> to_float) with _ -> None in
     
                                          
@@ -247,10 +248,10 @@ register_special_task "differentiable"
           let n = List.length examples |> Int.to_float in
           let d = List.length parameters |> Int.to_float in
           let l = l *& (~$ (1. /. n)) in
-          let l = restarting_optimize (rprop ~lr:0.5 ~decay:0.5 ~grow:1.2)
-              ~attempts:300
+          let l = restarting_optimize (rprop ~lr ~decay ~grow)
+              ~attempts:restarts
               ~update:0
-              ~iterations:(if List.length parameters = 0 then 0 else 50)
+              ~iterations:(if List.length parameters = 0 then 0 else steps)
               parameters l
           in
           (* Printf.eprintf "%s has l=%f\n" (string_of_program expression) l;
