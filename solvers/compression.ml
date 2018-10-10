@@ -128,6 +128,7 @@ let eta_long request e =
 ;;
 
 let normalize_invention i =
+  (* Raises UnificationFailure if i is not well typed *)
   let mapping = free_variables i |> List.dedup_and_sort ~compare:(-) |> List.mapi ~f:(fun i v -> (v,i)) in
 
   let rec visit d = function
@@ -142,6 +143,7 @@ let normalize_invention i =
   let renamed = visit 0 i in
   let abstracted = List.fold_right mapping ~init:renamed ~f:(fun _ e -> Abstraction(e)) in
   make_invention abstracted
+    
 
 let rewrite_with_invention i =
   (* Raises EtaExpandFailure if this is not successful *)
@@ -463,7 +465,11 @@ let compression_step ~structurePenalty ~aic ~pseudoCounts ?arity:(arity=3) ~bs ~
           List.dedup_and_sort ~compare:(-)) in
       inhabitants |> List.concat |> occurs_multiple_times)
   in
-  let candidates = candidates |> List.filter ~f:(nontrivial % List.hd_exn % extract v) in
+  let candidates = candidates |> List.filter ~f:(fun candidate ->
+      let candidate = List.hd_exn (extract v candidate) in
+      try (ignore(normalize_invention candidate); true)
+      with UnificationFailure -> false)
+  in 
   Printf.eprintf "Got %d candidates.\n" (List.length candidates);
 
   match candidates with
