@@ -467,7 +467,7 @@ let compression_step ~structurePenalty ~aic ~pseudoCounts ?arity:(arity=3) ~bs ~
   in
   let candidates = candidates |> List.filter ~f:(fun candidate ->
       let candidate = List.hd_exn (extract v candidate) in
-      try (ignore(normalize_invention candidate); true)
+      try (ignore(normalize_invention candidate); nontrivial candidate)
       with UnificationFailure -> false)
   in 
   Printf.eprintf "Got %d candidates.\n" (List.length candidates);
