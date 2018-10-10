@@ -318,7 +318,6 @@ tasks = [
              lambda a, b: a * a + b * b)
 ]
 
-
 class LearnedFeatureExtractor(RecurrentFeatureExtractor):
     def tokenize(self, examples):
         # Should convert both the inputs and the outputs to lists

@@ -49,7 +49,7 @@ let string_of_grammar g =
   (match g.continuation_type with
    | None -> ""
    | Some(ct) -> Printf.sprintf "continuation : %s\n" (string_of_type ct))^
-  string_of_float g.logVariable ^ "\n" ^
+  string_of_float g.logVariable ^ "\tt0\t$_\n" ^
   join ~separator:"\n" (g.library |> List.map ~f:(fun (p,t,l,_) -> Float.to_string l^"\t"^(string_of_type t)^"\t"^(string_of_program p)))
 
 let grammar_log_weight g p =
