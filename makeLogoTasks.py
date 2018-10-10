@@ -263,13 +263,13 @@ def manualLogoTasks():
     T("right angle epsilon", "((move epsilonLength (/a 1a 4)) (move epsilonLength 0a))")
     
 
-    for i in range(4,7):
+    for i in [5,6,8]:
         T("Greek spiral %d"%i,
           """
           (loop i %d
           (move (*l 1l i) (/a 1a 4)))
           """%i)
-        
+        i -= 2
         T("smooth spiral %d"%i,
           """
           (loop i infinity 
@@ -304,7 +304,7 @@ def manualLogoTasks():
       (loop i infinity (move epsilonDistance (/a epsilonAngle 2)))
       (move 0d (/a 1a 4))))
       """)
-    for n in [5,7]:
+    for n in range(3,8):
         T("flower %d"%n,
           """
           (loop j %d
@@ -418,6 +418,7 @@ def manualLogoTasks():
         body = {#"empty": "(move 1d 0a)",
                 "dashed": "(p (move 1d 0a)) (move 1d 0a)",
                 "circle": "(move 1d 0a) (loop k 2 (loop i infinity (move epsilonLength epsilonAngle)))",
+            "lonely circle": "(p (move 1d 0a)) (loop k 2 (loop i infinity (move epsilonLength epsilonAngle)))",
                 "square dashed": "(p (move 1d 0a)) (loop s 4 (move 1d (/a 1a 4)))",
                 "square": "(move 1d 0a) (loop s 4 (move 1d (/a 1a 4)))",
                 "semicircle": "(move 1d 0a) (loop i infinity (move epsilonLength epsilonAngle))"}
@@ -477,6 +478,8 @@ def montageTasks(tasks):
 
     import scipy.misc
     scipy.misc.imsave('/tmp/montage.png', i)
+    random.shuffle(arrays)
+    scipy.misc.imsave('/tmp/randomMontage.png', montage(arrays))
     
     
     
