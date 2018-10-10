@@ -1,6 +1,6 @@
 from ec import explorationCompression, commandlineArguments, Program
 from grammar import Grammar
-from arithmeticPrimitives import real_addition, real_multiplication, real_power, real_subtraction, real, f0, f1, fpi
+from arithmeticPrimitives import real_addition, real_multiplication, real_power, real_subtraction, real, f0, f1, fpi, real_division
 from listPrimitives import bootstrapTarget
 from task import DifferentiableTask, squaredErrorLoss, l1loss, Task
 from type import tint, arrow
@@ -348,6 +348,7 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
 
 
 if __name__ == "__main__":
+    bootstrapTarget()
     equationPrimitives = [
         real,
         f0,
@@ -356,8 +357,13 @@ if __name__ == "__main__":
         real_power,
         real_subtraction,
         real_addition,
-        real_multiplication]
-    baseGrammar = Grammar.uniform(equationPrimitives + bootstrapTarget())
+        real_division,
+        real_multiplication] + [
+            Program.parse(n)
+            for n in ["map","fold",
+                      "empty","cons","car","cdr",
+                      "zip"]]
+    baseGrammar = Grammar.uniform(equationPrimitives)
 
     eprint("Got %d equation discovery tasks..." % len(tasks))
 
