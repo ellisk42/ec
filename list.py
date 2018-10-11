@@ -343,8 +343,6 @@ if __name__ == "__main__":
     baseGrammar = Grammar.uniform(prims)
 
     extractor = {
-        "hand": FeatureExtractor,
-        "deep": DeepFeatureExtractor,
         "learned": LearnedFeatureExtractor,
     }[args.pop("extractor")]
     extractor.H = args.pop("hidden")
