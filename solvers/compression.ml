@@ -206,7 +206,6 @@ let compression_worker connection ~arity ~bs ~topK g frontiers =
   let frontiers = ref (List.map ~f:(restrict ~topK g) frontiers) in
 
   let v = new_version_table() in
-  let cost_table = empty_cost_table v in
 
   (* calculate candidates from the frontiers we can see *)
   let frontier_indices : int list list = time_it ~verbose:!verbose_compression
@@ -219,6 +218,11 @@ let compression_worker connection ~arity ~bs ~topK g frontiers =
       (frontier_indices |> List.concat |> reachable_versions v |> List.length)
       (frontier_indices |> List.concat |> List.map ~f:(Float.to_string % log_version_size v)
        |> join ~separator:"; ");
+
+  let v, frontier_indices = garbage_collect_versions ~verbose:!verbose_compression v frontier_indices in
+  Gc.compact();
+  
+  let cost_table = empty_cost_table v in
   
   let candidates : program list list = time_it ~verbose:!verbose_compression "(worker) proposed candidates"
       (fun () ->
@@ -250,6 +254,7 @@ let compression_worker connection ~arity ~bs ~topK g frontiers =
   let candidate_scores = ()
   and cost_table = ()
   in
+  Gc.compact();
 
   let rewrite_frontiers invention_source =
     let i = incorporate v invention_source in
