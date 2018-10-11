@@ -29,7 +29,7 @@ class Flatten(nn.Module):
 class TowerCNN(nn.Module):
     special = 'tower'
     
-    def __init__(self, tasks, cuda=False, H=64):
+    def __init__(self, tasks, testingTasks=[], cuda=False, H=64):
         super(TowerCNN, self).__init__()
         self.CUDA = cuda
         self.recomputeTasks = False
