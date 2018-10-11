@@ -4,7 +4,6 @@ import traceback
 import pickle as pickle
 
 from utilities import eprint
-from fun import f
 
 if __name__ == "__main__":
     sys.setrecursionlimit(10000)
