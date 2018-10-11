@@ -556,12 +556,34 @@ let compression_step ~structurePenalty ~aic ~pseudoCounts ?arity:(arity=3) ~bs ~
 let compression_loop
     ?nc:(nc=1) ~structurePenalty ~aic ~topK ~pseudoCounts ?arity:(arity=3) ~bs ~topI g frontiers =
 
+  let find_new_primitive old_grammar new_grammar =
+    new_grammar |> grammar_primitives |> List.filter ~f:(fun p ->
+        not (List.mem ~equal:program_equal (old_grammar |> grammar_primitives) p)) |>
+    singleton_head
+  in
+  let illustrate_new_primitive new_grammar primitive frontiers =
+    let illustrations = 
+      frontiers |> List.filter_map ~f:(fun frontier ->
+          let best_program = (restrict ~topK:1 new_grammar frontier).programs |> List.hd_exn |> fst in
+          if List.mem ~equal:program_equal (program_subexpressions best_program) primitive then
+            Some(best_program)
+          else None)
+    in
+    Printf.eprintf "New primitive is used %d times in the best programs in each of the frontiers.\n"
+      (List.length illustrations);
+    Printf.eprintf "Here is where it is used:\n";
+    illustrations |> List.iter ~f:(fun program -> Printf.eprintf "  %s\n" (string_of_program program))
+  in 
+
   let step = if nc = 1 then compression_step else compression_step_master ~nc in 
 
   let rec loop g frontiers = 
     match step ~structurePenalty ~topK ~aic ~pseudoCounts ~arity ~bs ~topI g frontiers with
     | None -> g, frontiers
-    | Some(g',frontiers') -> loop g' frontiers'
+    | Some(g',frontiers') ->
+      illustrate_new_primitive g' (find_new_primitive g g') frontiers';
+      flush_everything();
+      loop g' frontiers'
   in
   time_it "completed ocaml compression" (fun () ->
       loop g frontiers)
