@@ -1,5 +1,6 @@
 open Core
 
+open Pregex
 open Tower
 (* open Vs *)
 open Differentiation

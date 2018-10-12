@@ -1,5 +1,6 @@
 open Core
 
+open Pregex
 open Program
 open Enumeration
 open Grammar
@@ -207,6 +208,17 @@ let logo_hash ?timeout:(timeout=0.001) request inputs : program -> (int*json) op
       Some(((hash_json j, j)));;
 register_special_helmholtz "LOGO" logo_hash;;
 
+let regex_hash  ?timeout:(timeout=0.001) request inputs : program -> (int*json) option =
+  let open Yojson.Basic.Util in
+  assert (request = (tregex @> tregex));
+
+  let inputs : char list list = unpack inputs in 
+
+  fun expression ->
+    let p = analyze_lazy_evaluation expression in
+    let r : pregex = run_lazy_analyzed_with_arguments p [empty_regex] in
+    
+    
 
 let run_job channel =
   let open Yojson.Basic.Util in

@@ -1,5 +1,11 @@
 open Core
 
+open Timeout
+open Task
+open Utils
+open Program
+open Type
+    
 type str = String of char list | Dot | D | S | W | L | U
 
 type pregex = 
@@ -122,6 +128,48 @@ let preg_match preg str = (* dikjstras *)
 	| Some(score) -> score ;;
 
 
+let tregex = make_ground "pregex" ;;
+let empty_regex = Constant(String([]));;
+
+ignore(primitive "r_dot" (tregex @> tregex)
+         (fun k -> Concat(Constant(Dot),k)));;
+ignore(primitive "r_kleene" ((tregex @> tregex) @> tregex @> tregex)
+         (fun b k -> Concat(Kleene(b empty_regex),k)));;
+ignore(primitive "r_plus" ((tregex @> tregex) @> tregex @> tregex)
+         (fun b k -> Concat(Plus(b empty_regex),k)));;
+ignore(primitive "r_maybe" ((tregex @> tregex) @> tregex @> tregex)
+         (fun b k -> Concat(Maybe(b empty_regex),k)));;
+ignore(primitive "r_alt" ((tregex @> tregex) @> (tregex @> tregex) @> tregex @> tregex)
+         (fun a b k -> Concat(Alt(a empty_regex, b empty_regex),k)));;
+
+
+register_special_task "regex"
+  (fun extra ?timeout:(timeout=0.001)
+    name task_type examples ->
+    assert (task_type = tregex @> tregex);
+    examples |> List.iter ~f:(fun (xs,_) -> assert (List.length xs = 0));
+
+    let observations : char list list = examples |> List.map ~f:(fun (_,y) -> y |> magical) in 
+
+    let log_likelihood expression =
+      match run_for_interval timeout
+              (fun () ->
+                 let p = analyze_lazy_evaluation expression in
+                 let r : pregex = run_lazy_analyzed_with_arguments p [empty_regex] in
+                 let rec loop = function
+                   | [] -> 0.
+                   | e :: es ->
+                     let this_score = preg_match r e in
+                     if is_invalid this_score then log 0. else this_score +. loop es
+                 in
+                 loop observations)                 
+      with
+      | Some(l) -> l
+      | None -> log 0.
+    in 
+
+    {name; task_type; log_likelihood;}
+                                
 
 
 (* qs for kevin:
