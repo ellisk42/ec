@@ -53,7 +53,7 @@ class SupervisedTower(Task):
     def showMany(ts):
         from tower_common import fastRendererPlan
         from pylab import imshow,show
-        a = montage([fastRendererPlan(centerTower(t.plan),pretty=True)
+        a = montage([fastRendererPlan(centerTower(t.plan),pretty=True,Lego=True)
                          for t in ts]) 
         imshow(a)
         show()
@@ -307,7 +307,7 @@ def parseTower(s):
     
 def makeSupervisedTasks():
     from towerPrimitives import _left,_right,_loop,_embed
-
+    
     arches = [SupervisedTower("arch leg %d"%n,
                               "(%s (r 4) %s (l 2) h)"%("v "*n, "v "*n))
               for n in range(1,9)
