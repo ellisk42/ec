@@ -1,14 +1,14 @@
 open Core
-(*
+
 open Timeout
 open Task
 open Utils
 open Program
 open Type
 
-*)
     
 type str = String of char list | Dot | D | S | W | L | U
+[@@deriving compare]           
 
 type pregex = 
 	| Constant of str
@@ -16,7 +16,41 @@ type pregex =
 	| Plus of pregex
 	| Maybe of pregex
 	| Alt of pregex * pregex
-	| Concat of pregex * pregex;;
+	| Concat of pregex * pregex
+[@@deriving compare]
+
+let rec hash_regex = function
+  | Plus(r) -> Hashtbl.hash (hash_regex r, 0)
+  | Kleene(r) -> Hashtbl.hash (hash_regex r, 1)
+  | Maybe(r) -> Hashtbl.hash (hash_regex r, 2)
+  | Alt(a,b) -> Hashtbl.hash (hash_regex a, hash_regex b, 3)
+  | Concat(a,b) -> Hashtbl.hash (hash_regex a, hash_regex b, 4)
+  | Constant(k) -> Hashtbl.hash (hash_constant k, 5)
+and
+  hash_constant = function
+  | String(cs) -> List.fold_right ~init:17 ~f:(fun c a -> Hashtbl.hash (Hashtbl.hash c,a)) cs
+  | c -> Hashtbl.hash c
+                   
+
+let rec canonical_regex r = match r with
+  | Constant(_) -> r
+  | Plus(b) ->
+    let b = canonical_regex b in 
+    canonical_regex (Concat(b,Kleene(b)))
+  | Kleene(b) -> Kleene(canonical_regex b)
+  | Maybe(b) -> Maybe(canonical_regex b)
+  (* associative rules *)
+  | Concat(Concat(a,b),c) -> canonical_regex (Concat(a,Concat(b,c)))
+  | Alt(Alt(a,b),c) -> canonical_regex (Alt(a,Alt(b,c)))
+  | Concat(a,b) -> Concat(canonical_regex a, canonical_regex b)
+  | Alt(a,b) ->
+    let a = canonical_regex a in
+    let b = canonical_regex b in
+    match compare_pregex a b with
+    | 0 -> a
+    | d when d > 0 -> Alt(a,b)
+    | d when d < 0 -> Alt(b,a)
+    | _ -> assert false 
 
 type continuation = pregex option * string
 
@@ -129,7 +163,7 @@ let preg_match preg str = (* dikjstras *)
 	| None -> log 0.
 	| Some(score) -> score ;;
 
-(*
+
 let tregex = make_ground "pregex" ;;
 let empty_regex = Constant(String([]));;
 
@@ -145,6 +179,10 @@ ignore(primitive "r_alt" ((tregex @> tregex) @> (tregex @> tregex) @> tregex @> 
          (fun a b k -> Concat(Alt(a empty_regex, b empty_regex),k)));;
 
 
+let regex_of_program expression : pregex =
+  run_lazy_analyzed_with_arguments (analyze_lazy_evaluation expression) [empty_regex];;
+
+
 register_special_task "regex"
   (fun extra ?timeout:(timeout=0.001)
     name task_type examples ->
@@ -156,8 +194,7 @@ register_special_task "regex"
     let log_likelihood expression =
       match run_for_interval timeout
               (fun () ->
-                 let p = analyze_lazy_evaluation expression in
-                 let r : pregex = run_lazy_analyzed_with_arguments p [empty_regex] in
+                 let r : pregex = regex_of_program expression in
                  let rec loop = function
                    | [] -> 0.
                    | e :: es ->
@@ -172,9 +209,8 @@ register_special_task "regex"
 
     {name; task_type; log_likelihood;} )
                                 
-*)
 
-let _ = Printf.printf "%f\n"  (preg_match (Alt(Constant(String(['d'])), Constant(D)))  ['9'] |> exp) 
+(* let _ = Printf.printf "%f\n"  (preg_match (Alt(Constant(String(['d'])), Constant(D)))  ['9'] |> exp)  *)
 
 
 (* qs for kevin:

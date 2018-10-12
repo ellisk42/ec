@@ -212,11 +212,17 @@ let regex_hash  ?timeout:(timeout=0.001) request inputs : program -> (int*json) 
   let open Yojson.Basic.Util in
   assert (request = (tregex @> tregex));
 
-  let inputs : char list list = unpack inputs in 
 
   fun expression ->
-    let p = analyze_lazy_evaluation expression in
-    let r : pregex = run_lazy_analyzed_with_arguments p [empty_regex] in
+    run_for_interval timeout
+      (fun () -> 
+         let r = expression |> regex_of_program |> canonical_regex in
+         let h = hash_regex r in
+         (h, `Int(h)))
+;;
+register_special_helmholtz "regex" regex_hash;;
+
+
     
     
 
