@@ -70,19 +70,13 @@ let f_concat a b partial =
 	| ((Some(r), remainder), score) -> ((Some(Concat(r, b)), remainder), score) ;;
 
 let rec kleeneConsume a str = 
-	((None, str), log 0.5 ) :: match consume (Some(a), str) with 
-								| [] -> [] (*maybe not needed?*)
-								| ls -> List.map ls ~f:(f_kleene a)
+	((None, str), log 0.5 ) :: (consume (Some(a), str) |> List.map ~f:(f_kleene a))
 
 and plusConsume a str = 
-	match consume (Some(a), str) with 
-	| [] -> []
-	| ls -> List.map ls ~f:(f_plus a)
+  consume (Some(a), str) |> List.map ~f:(f_plus a)
 
 and maybeConsume a str = 
-	((None, str), log 0.5 ) :: match consume (Some(a), str) with
-								| [] -> [] (*maybe not needed?*)
-								| ls -> List.map ls ~f:(f_maybe a)
+  ((None, str), log 0.5 ) :: (consume (Some(a), str) |> List.map ~f:(f_maybe a))
 
 and concatConsume a b str = List.map (consume (Some(a), str)) ~f:(f_concat a b)
 
@@ -100,15 +94,15 @@ and consume cont = (* return a list of continuation, score tuples? *)
 
 let preg_match preg str = (* dikjstras *)
 
-	let cmp = fun (_, score1) (_, score2) -> if score2 -. score1 > 0. then 1 else -1 in 
+	let cmp = fun (_, score1) (_, score2) -> Float.compare score2 score1 in 
 	let heap = Heap.create ~cmp:cmp () in
 	Heap.add heap ((Some(preg), str), 0.);
 	let visited = Hash_set.Poly.create() in
 	let solution = ref None in
 
 	let consume_loop (cont_old, score_old) = 
-		List.map consume cont ~f:(fun (cont, score) ->
-			if not Hash_set.mem visited cont then
+		consume cont_old |> List.map ~f:(fun (cont, score) ->
+			if not (Hash_set.mem visited cont) then
 				Hash_set.add visited cont;
 				let newscore = score +. score_old in
 					match cont with
@@ -117,14 +111,15 @@ let preg_match preg str = (* dikjstras *)
 					| _ -> 
 						Heap.add heap (cont, newscore); () ) (* TODO output *) in
 
-	while !solution = None && not Heap.top heap = None do
-		let partial = Heap.pop heap in 
-		consume_loop partial;
+ while !solution = None && not (Heap.top heap = None) do
+   match Heap.pop heap with
+   | Some(partial) -> consume_loop partial
+   | None -> assert false		
 	done;
 
 	match !solution with
 	| None -> log 0.
-	| score -> score ;;
+	| Some(score) -> score ;;
 
 
 
