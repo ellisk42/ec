@@ -1,10 +1,12 @@
 open Core
-
+(*
 open Timeout
 open Task
 open Utils
 open Program
 open Type
+
+*)
     
 type str = String of char list | Dot | D | S | W | L | U
 
@@ -45,12 +47,12 @@ let consumeConst c char_list =
 	| [] -> []
 	| char_list -> 
 		match c with 
-		| Dot -> if in_list dot_ls char_list then let _::t = char_list in [ (None, t), 0. ] else []
-		| D -> if in_list d_ls char_list then let _::t = char_list in [ (None, t), 0. ] else []
-		| S -> if in_list s_ls char_list then let _::t = char_list in [ (None, t), 0. ] else []
-		| W -> if in_list w_ls char_list then let _::t = char_list in [ (None, t), 0. ] else []
-		| L -> if in_list l_ls char_list then let _::t = char_list in [ (None, t), 0. ] else []
-		| U -> if in_list u_ls char_list then let _::t = char_list in [ (None, t), 0. ] else []
+		| Dot -> if in_list dot_ls char_list then let _::t = char_list in [ (None, t), -. log (List.length dot_ls |> Float.of_int) ] else []
+		| D -> if in_list d_ls char_list then let _::t = char_list in [ (None, t), -. log (List.length d_ls |> Float.of_int) ] else []
+		| S -> if in_list s_ls char_list then let _::t = char_list in [ (None, t), -. log (List.length s_ls |> Float.of_int) ] else []
+		| W -> if in_list w_ls char_list then let _::t = char_list in [ (None, t), -. log (List.length w_ls |> Float.of_int) ] else []
+		| L -> if in_list l_ls char_list then let _::t = char_list in [ (None, t), -. log (List.length l_ls |> Float.of_int) ] else []
+		| U -> if in_list u_ls char_list then let _::t = char_list in [ (None, t), -. log (List.length u_ls |> Float.of_int) ] else []
 		| String(ls) -> 
 			match try_remove_prefix ls char_list with 
 				| None -> []
@@ -107,15 +109,15 @@ let preg_match preg str = (* dikjstras *)
 	let solution = ref None in
 
 	let consume_loop (cont_old, score_old) = 
-		consume cont_old |> List.map ~f:(fun (cont, score) ->
+		consume cont_old |> List.iter ~f:(fun (cont, score) ->
 			if not (Hash_set.mem visited cont) then
 				Hash_set.add visited cont;
 				let newscore = score +. score_old in
 					match cont with
 					| (None, []) -> 
-						solution := newscore; () (* TODO output *)
+						solution := Some(newscore) (* TODO output *)
 					| _ -> 
-						Heap.add heap (cont, newscore); () ) (* TODO output *) in
+						Heap.add heap (cont, newscore) ) (* TODO output *) in
 
  while !solution = None && not (Heap.top heap = None) do
    match Heap.pop heap with
@@ -127,7 +129,7 @@ let preg_match preg str = (* dikjstras *)
 	| None -> log 0.
 	| Some(score) -> score ;;
 
-
+(*
 let tregex = make_ground "pregex" ;;
 let empty_regex = Constant(String([]));;
 
@@ -168,8 +170,11 @@ register_special_task "regex"
       | None -> log 0.
     in 
 
-    {name; task_type; log_likelihood;}
+    {name; task_type; log_likelihood;} )
                                 
+*)
+
+let _ = Printf.printf "%f\n"  (preg_match (Alt(Constant(String(['d'])), Constant(D)))  ['9'] |> exp) 
 
 
 (* qs for kevin:
