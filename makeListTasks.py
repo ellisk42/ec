@@ -146,11 +146,11 @@ def make_list_bootstrap_tasks():
              [((l,), [l[int(j/2)] for j in range(len(l)) ])
               for _ in range(10)
               for l in [ [randint(0, 9) for _ in range(randint(1,4)*2)] ] ]),
-        Task("take until 1 reached", arrow(tlist(tint),tlist(tint)),
-             [((p + [1] + s,),p)
-              for _ in range(10)
-              for p in [ [z for z in randomList()[:5] if z != 1 ]]
-              for s in [randomList()] ]),
+        # Task("take until 1 reached", arrow(tlist(tint),tlist(tint)),
+        #      [((p + [1] + s,),p)
+        #       for _ in range(10)
+        #       for p in [ [z for z in randomList()[:5] if z != 1 ]]
+        #       for s in [randomList()] ]),
         Task("stutter", arrow(tlist(tint),tlist(tint)),
              [((l,), [z for x in l for z in [x,x] ])
               for _ in range(10)

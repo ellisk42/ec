@@ -51,7 +51,7 @@ class Flatten(nn.Module):
 class LogoFeatureCNN(nn.Module):
     special = "LOGO"
     
-    def __init__(self, tasks, cuda=False, H=64):
+    def __init__(self, tasks, testingTasks=[], cuda=False, H=64):
         super(LogoFeatureCNN, self).__init__()
 
         self.sub = prefix_dreams + str(int(time.time()))

@@ -674,39 +674,6 @@ class RecurrentFeatureExtractor(nn.Module):
         return None
 
 
-class MLPFeatureExtractor(nn.Module):
-    def __init__(self, tasks, cuda=False, H=16):
-        super(MLPFeatureExtractor, self).__init__()
-
-        self.averages, self.deviations = Task.featureMeanAndStandardDeviation(
-            tasks)
-        self.tasks = tasks
-        self.use_cuda = cuda
-
-        self.outputDimensionality = H
-        hidden = nn.Linear(len(self.averages), H)
-        if cuda:
-            hidden = hidden.cuda()
-        self.hidden = hidden
-
-    def featuresOfTask(self, t):
-        f = variable([(f - self.averages[j]) / self.deviations[j]
-                      for j, f in enumerate(t.features)], cuda=self.use_cuda).float()
-        return self.hidden(f).clamp(min=0)
-
-class HandCodedFeatureExtractor(object):
-    def __init__(self, tasks, cuda=False):
-        self.averages, self.deviations = Task.featureMeanAndStandardDeviation(
-            tasks)
-        self.outputDimensionality = len(self.averages)
-        self.cuda = cuda
-        self.tasks = tasks
-
-    def featuresOfTask(self, t):
-        return variable([(f - self.averages[j]) / self.deviations[j]
-                         for j, f in enumerate(t.features)], cuda=self.cuda).float()
-
-
 class DummyFeatureExtractor(nn.Module):
     def __init__(self, tasks):
         super(DummyFeatureExtractor, self).__init__()
@@ -1022,11 +989,6 @@ class NewRecognitionModel(nn.Module):
         helmholtzSamples = parallelMap(
             CPUs, lambda _: self.sampleHelmholtz(requests), range(N))
         return helmholtzSamples
-
-    """def enumerateFrontiers(self, tasks,
-                           frontierSize=None, enumerationTimeout=None,
-                           CPUs=1, maximumFrontier=None, evaluationTimeout=None):
-                           """
 
     def enumerateFrontiers(self,
                            tasks,

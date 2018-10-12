@@ -217,7 +217,7 @@ RandomParameterization.single = RandomParameterization()
 
 
 class FeatureExtractor(ImageFeatureExtractor):
-    def __init__(self, tasks):
+    def __init__(self, tasks, testingTasks=[], cuda=False):
         super(FeatureExtractor, self).__init__(tasks)
         self.tasks = tasks
 

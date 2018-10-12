@@ -324,13 +324,13 @@ def basePrimitives():
         Primitive("-", arrow(tint, tint, tint), _subtraction)
     ]
 
+zip_primitive = Primitive("zip", arrow(tlist(t0), tlist(t1), arrow(t0, t1, t2), tlist(t2)), _zip)
 
 def bootstrapTarget():
     """These are the primitives that we hope to learn from the bootstrapping procedure"""
     return [
         # learned primitives
         Primitive("map", arrow(arrow(t0, t1), tlist(t0), tlist(t1)), _map),
-        #Primitive("zip", arrow(tlist(t0), tlist(t1), arrow(t0, t1, t2), tlist(t2)), _zip),
         Primitive("unfold", arrow(t0, arrow(t0,tbool), arrow(t0,t1), arrow(t0,t0), tlist(t1)), _unfold),
         Primitive("range", arrow(tint, tlist(tint)), _range),
         Primitive("index", arrow(tint, tlist(t0), t0), _index),

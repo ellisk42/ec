@@ -310,10 +310,18 @@ let rec placeholder_data t x =
 
 exception DifferentiableBadShape
 
-let rec polymorphic_sse = function
-  | TCon("real",_,_) -> magical (fun p y -> square ((clamp ~l:(-15.) ~u:15. p) -& y))
+let rec polymorphic_sse ?clipOutput:(clipOutput=None) ?clipLoss:(clipLoss=None) = function
+  | TCon("real",_,_) -> magical (fun p y ->
+      let p = match clipOutput with
+        | None -> p
+        | Some(clip) -> clamp ~l:(-.clip) ~u:clip p
+      in
+      let l = square (p -& y) in
+      match clipLoss with
+      | None -> l
+      | Some(clip) -> clamp ~l:0. ~u:clip l)
   | TCon("list",[tp],_) ->
-    let e = polymorphic_sse tp in
+    let e = polymorphic_sse ~clipOutput ~clipLoss tp in
     magical (fun p y ->
         try
           List.fold2_exn p y ~init:(~$0.) ~f:(fun a _p _y -> a +& (e _p _y))

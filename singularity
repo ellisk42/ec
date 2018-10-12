@@ -36,8 +36,15 @@ From: ubuntu
     opam update
     opam switch 4.06.1+flambda
     eval `opam config env`
-    opam install -y  ppx_jane core re2 yojson vg cairo2 camlimages menhir ocaml-protoc zmq
+    opam install -y  ppx_jane core re2 yojson vg cairo2 camlimages menhir ocaml-protoc zmq utop
     #opam install ocp-indent merlin
+    echo "
+#use "topfind";;
+#thread;;
+#require "core.top";;
+#require "core.syntax";;
+open Core
+" >> /container/.ocamlinit
 
     wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
     chmod +x Miniconda3-latest-Linux-x86_64.sh

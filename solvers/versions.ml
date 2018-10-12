@@ -18,8 +18,6 @@ type vt = {universe : int;
            void : int;
            s2i : (vs,int) Hashtbl.t;
            i2s : vs ra;
-           (* equivalence classes *)
-           (* equivalence_class : int ra; *)
            (* dynamic programming *)
            recursive_inversion_table : (int option) ra;
            n_step_table : ((int*int),int) Hashtbl.t;
@@ -304,6 +302,24 @@ let reachable_versions t indices : int list =
   in
   indices |> List.iter ~f:visit;
   Hash_set.fold visited ~f:(fun a x -> x :: a) ~init:[]
+
+(* garbage collection *)
+let garbage_collect_versions ?verbose:(verbose=false) t indices =
+  let nt = new_version_table() in
+  let rec reincorporate i = match index_table t i with
+    | Union(u) -> union nt (u |> List.map ~f:reincorporate)
+    | ApplySpace(f,x) -> version_apply nt (reincorporate f) (reincorporate x)
+    | AbstractSpace(b) -> version_abstract nt (reincorporate b)
+    | IndexSpace(i) -> version_index nt i
+    | TerminalSpace(p) -> version_terminal nt p
+    | Universe -> nt.universe
+    | Void -> nt.void
+  in
+  let indices = indices |> List.map ~f:(List.map ~f:reincorporate) in
+  if verbose then
+    Printf.eprintf "Garbage collection reduced table to %d%% of previous size\n"
+      (100*nt.i2s.ra_occupancy/t.i2s.ra_occupancy);
+  (nt, indices)
   
 
 (* cost calculations *)

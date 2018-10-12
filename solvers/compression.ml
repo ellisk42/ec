@@ -128,6 +128,7 @@ let eta_long request e =
 ;;
 
 let normalize_invention i =
+  (* Raises UnificationFailure if i is not well typed *)
   let mapping = free_variables i |> List.dedup_and_sort ~compare:(-) |> List.mapi ~f:(fun i v -> (v,i)) in
 
   let rec visit d = function
@@ -142,6 +143,7 @@ let normalize_invention i =
   let renamed = visit 0 i in
   let abstracted = List.fold_right mapping ~init:renamed ~f:(fun _ e -> Abstraction(e)) in
   make_invention abstracted
+    
 
 let rewrite_with_invention i =
   (* Raises EtaExpandFailure if this is not successful *)
@@ -204,7 +206,6 @@ let compression_worker connection ~arity ~bs ~topK g frontiers =
   let frontiers = ref (List.map ~f:(restrict ~topK g) frontiers) in
 
   let v = new_version_table() in
-  let cost_table = empty_cost_table v in
 
   (* calculate candidates from the frontiers we can see *)
   let frontier_indices : int list list = time_it ~verbose:!verbose_compression
@@ -217,6 +218,11 @@ let compression_worker connection ~arity ~bs ~topK g frontiers =
       (frontier_indices |> List.concat |> reachable_versions v |> List.length)
       (frontier_indices |> List.concat |> List.map ~f:(Float.to_string % log_version_size v)
        |> join ~separator:"; ");
+
+  let v, frontier_indices = garbage_collect_versions ~verbose:!verbose_compression v frontier_indices in
+  Gc.compact();
+  
+  let cost_table = empty_cost_table v in
   
   let candidates : program list list = time_it ~verbose:!verbose_compression "(worker) proposed candidates"
       (fun () ->
@@ -248,6 +254,7 @@ let compression_worker connection ~arity ~bs ~topK g frontiers =
   let candidate_scores = ()
   and cost_table = ()
   in
+  Gc.compact();
 
   let rewrite_frontiers invention_source =
     let i = incorporate v invention_source in
@@ -463,7 +470,11 @@ let compression_step ~structurePenalty ~aic ~pseudoCounts ?arity:(arity=3) ~bs ~
           List.dedup_and_sort ~compare:(-)) in
       inhabitants |> List.concat |> occurs_multiple_times)
   in
-  let candidates = candidates |> List.filter ~f:(nontrivial % List.hd_exn % extract v) in
+  let candidates = candidates |> List.filter ~f:(fun candidate ->
+      let candidate = List.hd_exn (extract v candidate) in
+      try (ignore(normalize_invention candidate); nontrivial candidate)
+      with UnificationFailure -> false)
+  in 
   Printf.eprintf "Got %d candidates.\n" (List.length candidates);
 
   match candidates with
@@ -550,12 +561,34 @@ let compression_step ~structurePenalty ~aic ~pseudoCounts ?arity:(arity=3) ~bs ~
 let compression_loop
     ?nc:(nc=1) ~structurePenalty ~aic ~topK ~pseudoCounts ?arity:(arity=3) ~bs ~topI g frontiers =
 
+  let find_new_primitive old_grammar new_grammar =
+    new_grammar |> grammar_primitives |> List.filter ~f:(fun p ->
+        not (List.mem ~equal:program_equal (old_grammar |> grammar_primitives) p)) |>
+    singleton_head
+  in
+  let illustrate_new_primitive new_grammar primitive frontiers =
+    let illustrations = 
+      frontiers |> List.filter_map ~f:(fun frontier ->
+          let best_program = (restrict ~topK:1 new_grammar frontier).programs |> List.hd_exn |> fst in
+          if List.mem ~equal:program_equal (program_subexpressions best_program) primitive then
+            Some(best_program)
+          else None)
+    in
+    Printf.eprintf "New primitive is used %d times in the best programs in each of the frontiers.\n"
+      (List.length illustrations);
+    Printf.eprintf "Here is where it is used:\n";
+    illustrations |> List.iter ~f:(fun program -> Printf.eprintf "  %s\n" (string_of_program program))
+  in 
+
   let step = if nc = 1 then compression_step else compression_step_master ~nc in 
 
   let rec loop g frontiers = 
     match step ~structurePenalty ~topK ~aic ~pseudoCounts ~arity ~bs ~topI g frontiers with
     | None -> g, frontiers
-    | Some(g',frontiers') -> loop g' frontiers'
+    | Some(g',frontiers') ->
+      illustrate_new_primitive g' (find_new_primitive g g') frontiers';
+      flush_everything();
+      loop g' frontiers'
   in
   time_it "completed ocaml compression" (fun () ->
       loop g frontiers)

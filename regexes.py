@@ -8,7 +8,7 @@ from makeRegexTasks import makeOldTasks, makeLongTasks, makeShortTasks, makeWord
 from regexPrimitives import basePrimitives, altPrimitives, easyWordsPrimitives, alt2Primitives
 from likelihoodModel import add_cutoff_values
 #from program import *
-from recognition import HandCodedFeatureExtractor, MLPFeatureExtractor, RecurrentFeatureExtractor, JSONFeatureExtractor
+from recognition import RecurrentFeatureExtractor, JSONFeatureExtractor
 import random
 from type import tpregex
 import math
@@ -49,8 +49,8 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
 
         return tokenized
 
-    def __init__(self, tasks):
-        self.lexicon = set(flatten((t.examples for t in tasks), abort=lambda x: isinstance(
+    def __init__(self, tasks, testingTasks=[]):
+        self.lexicon = set(flatten((t.examples for t in tasks + testingTasks), abort=lambda x: isinstance(
             x, str))).union({"LIST_START", "LIST_END", "?"})
 
         # Calculate the maximum length
@@ -237,7 +237,6 @@ if __name__ == "__main__":
              "easyWords":easyWordsPrimitives}[primtype]
 
     extractor = {
-        "hand": HandCodedFeatureExtractor,
         "learned": LearnedFeatureExtractor,
         "json": MyJSONFeatureExtractor
     }[args.pop("extractor")]

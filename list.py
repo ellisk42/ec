@@ -11,7 +11,7 @@ from grammar import Grammar
 from task import Task
 from type import Context, arrow, tbool, tlist, tint, t0, UnificationFailure
 from listPrimitives import basePrimitives, primitives, McCarthyPrimitives, bootstrapTarget_extra, no_length
-from recognition import HandCodedFeatureExtractor, MLPFeatureExtractor, RecurrentFeatureExtractor
+from recognition import RecurrentFeatureExtractor
 from makeListTasks import make_list_bootstrap_tasks, sortBootstrap
 
 
@@ -147,69 +147,6 @@ def isIntFunction(tp):
         return False
 
 
-class FeatureExtractor(HandCodedFeatureExtractor):
-    N_EXAMPLES = 15
-
-    def _featuresOfProgram(self, program, tp):
-        e = program.evaluate([])
-        examples = []
-        if isListFunction(tp):
-            def sample(): return random.sample(range(30), random.randint(0, 8))
-        elif isIntFunction(tp):
-            def sample(): return random.randint(0, 20)
-        else:
-            return None
-        for _ in range(self.N_EXAMPLES * 5):
-            x = sample()
-            try:
-                y = e(x)
-                examples.append(((x,), y))
-            except BaseException:
-                continue
-            if len(examples) >= self.N_EXAMPLES:
-                break
-        else:
-            return None
-        return list_features(examples)
-
-
-class DeepFeatureExtractor(MLPFeatureExtractor):
-    N_EXAMPLES = 15
-    H = 16
-    
-
-    def __init__(self, tasks, cuda=False):
-        self.USE_CUDA = cuda
-        super(
-            DeepFeatureExtractor,
-            self).__init__(
-            tasks,
-            cuda=self.USE_CUDA,
-            H=self.H)
-
-    def _featuresOfProgram(self, program, tp):
-        e = program.evaluate([])
-        examples = []
-        if isListFunction(tp):
-            def sample(): return random.sample(range(30), random.randint(0, 8))
-        elif isIntFunction(tp):
-            def sample(): return random.randint(0, 20)
-        else:
-            return None
-        for _ in range(self.N_EXAMPLES * 5):
-            x = sample()
-            try:
-                y = e(x)
-                examples.append(((x,), y))
-            except BaseException:
-                continue
-            if len(examples) >= self.N_EXAMPLES:
-                break
-        else:
-            return None
-        return list_features(examples)
-
-
 class LearnedFeatureExtractor(RecurrentFeatureExtractor):
     H = 16
     
@@ -245,15 +182,15 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
 
         return tokenized
 
-    def __init__(self, tasks, cuda=False):
+    def __init__(self, tasks, testingTasks=[], cuda=False):
         self.USE_CUDA = False
-        self.lexicon = set(flatten((t.examples for t in tasks), abort=lambda x: isinstance(
+        self.lexicon = set(flatten((t.examples for t in tasks + testingTasks), abort=lambda x: isinstance(
             x, str))).union({"LIST_START", "LIST_END", "?"})
 
         # Calculate the maximum length
         self.maximumLength = POSITIVEINFINITY
         self.maximumLength = max(len(l)
-                                 for t in tasks
+                                 for t in tasks + testingTasks
                                  for xs, y in self.tokenize(t.examples)
                                  for l in [y] + [x for x in xs])
 
@@ -406,8 +343,6 @@ if __name__ == "__main__":
     baseGrammar = Grammar.uniform(prims)
 
     extractor = {
-        "hand": FeatureExtractor,
-        "deep": DeepFeatureExtractor,
         "learned": LearnedFeatureExtractor,
     }[args.pop("extractor")]
     extractor.H = args.pop("hidden")

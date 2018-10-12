@@ -389,7 +389,7 @@ def ecIterator(grammar, tasks,
 
         # Train + use recognition model
         if useRecognitionModel:
-            featureExtractorObject = featureExtractor(tasks + testingTasks, cuda=cuda)
+            featureExtractorObject = featureExtractor(tasks, testingTasks=testingTasks, cuda=cuda)
             recognizer = RecognitionModel(featureExtractorObject,
                                           grammar,
                                           activation=activation,

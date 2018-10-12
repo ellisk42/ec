@@ -137,7 +137,7 @@ class DifferentiableTask(Task):
     def __init__(self, name, request, examples, _=None,
                  features=None, BIC=1., loss=None, likelihoodThreshold=None,
                  steps=50, restarts=300, lr=0.5, decay=0.5, grow=1.2,
-                 temperature=1., maxParameters=None):
+                 temperature=1., maxParameters=None, clipLoss=None, clipOutput=None):
         assert loss is not None
         self.temperature = temperature
         self.maxParameters = maxParameters
@@ -145,12 +145,16 @@ class DifferentiableTask(Task):
         self.BIC = BIC
         self.likelihoodThreshold = likelihoodThreshold
 
+        arguments = {"parameterPenalty": BIC * math.log(len(examples)),
+                     "temperature": temperature,
+                     "steps": steps, "restarts": restarts, "lr": lr, "decay": decay, "grow": grow,
+                     "maxParameters": maxParameters,
+                     "lossThreshold": -likelihoodThreshold}
+        if clipLoss is not None: arguments['clipLoss'] = float(clipLoss)
+        if clipOutput is not None: arguments['clipOutput'] = float(clipOutput)
+        
         self.specialTask = ("differentiable",
-                            {"parameterPenalty": BIC * math.log(len(examples)),
-                             "temperature": temperature,
-                             "steps": steps, "restarts": restarts, "lr": lr, "decay": decay, "grow": grow,
-                             "maxParameters": maxParameters,
-                             "lossThreshold": -likelihoodThreshold})
+                            arguments)
 
         super(
             DifferentiableTask,

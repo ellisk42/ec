@@ -38,9 +38,9 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
     def tokenize(self, examples):
         return examples
 
-    def __init__(self, tasks, cuda=False):
+    def __init__(self, tasks, testingTasks=[], cuda=False):
         lexicon = {c
-                   for t in tasks
+                   for t in tasks + testingTasks
                    for xs, y in self.tokenize(t.examples)
                    for c in reduce(lambda u, v: u + v, list(xs) + [y])}
 
@@ -51,7 +51,7 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
                                                       tasks=tasks,
                                                       bidirectional=True,
                                                       cuda=cuda)
-        self.MAXINPUTS = 4
+        self.MAXINPUTS = 8
 
     def taskOfProgram(self, p, tp):
         # Instantiate STRING w/ random words

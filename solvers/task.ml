@@ -206,6 +206,8 @@ register_special_task "differentiable"
     let decay = maybe_float "decay" 0.5 in
     let grow = maybe_float "grow" 1.2 in
     let lossThreshold = try Some(extras |> member "lossThreshold" |> to_float) with _ -> None in
+    let clipOutput = try Some(extras |> member "clipOutput" |> to_float) with _ -> None in
+    let clipLoss = try Some(extras |> member "clipLoss" |> to_float) with _ -> None in
     
                                          
   (* Process the examples and wrap them inside of placeholders *)
@@ -214,14 +216,15 @@ register_special_task "differentiable"
       (List.map2_exn argument_types xs ~f:placeholder_data,
       placeholder_data return_type y))
   in
-  let loss = polymorphic_sse return_type in
+    
+  let loss = polymorphic_sse ~clipOutput ~clipLoss return_type in
   { name = name    ;
     task_type = ty ;
     log_likelihood =
       (fun expression ->
-        let (p,parameters) = replace_placeholders expression in
+         let (p,parameters) = replace_placeholders expression in
+         assert (List.length parameters <= maxParameters);
         if List.length parameters > maxParameters then log 0. else 
-        (* Printf.eprintf "%s has d=%d\n" (string_of_program expression) (List.length parameters); *)
         let p = analyze_lazy_evaluation p in
         (* Returns loss *)
         let rec loop : 'a list -> Differentiation.variable option = function
@@ -233,11 +236,14 @@ register_special_task "differentiable"
                       (fun () -> run_lazy_analyzed_with_arguments p xs) with
               | None -> None
               | Some (prediction) ->
+                (* Printf.eprintf "PREDICTION\t%s\n" *)
+                (*   (prediction |> magical |> List.map ~f:(fun v -> v.data |> get_some |> Printf.sprintf "%f;") *)
+                (*    |> join ~separator:" "); *)
                 match loop e with
-                  | None -> None
-                  | Some(later_loss) ->
-                    try Some(loss prediction y +& later_loss)
-                    with DifferentiableBadShape -> None
+                | None -> None
+                | Some(later_loss) ->
+                  try Some(loss prediction y +& later_loss)
+                  with DifferentiableBadShape -> None
             with | UnknownPrimitive(n) -> raise (Failure ("Unknown primitive: "^n))
                  | EnumerationTimeout  -> raise EnumerationTimeout
                  | _                   -> None
@@ -254,8 +260,6 @@ register_special_task "differentiable"
               ~iterations:(if List.length parameters = 0 then 0 else steps)
               parameters l
           in
-          (* Printf.eprintf "%s has l=%f\n" (string_of_program expression) l;
-           * flush_everything(); *)
           match lossThreshold with
           | None -> 0. -. d*.parameterPenalty -. n *. l /. temperature
           | Some(t) ->
