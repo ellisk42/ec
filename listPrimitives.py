@@ -9,7 +9,7 @@ from functools import reduce
 def _flatten(l): return [x for xs in l for x in xs]
 
 def _range(n):
-    if n < 100: return range(n)
+    if n < 100: return list(range(n))
     raise ValueError()
 def _if(c): return lambda t: lambda f: t if c else f
 

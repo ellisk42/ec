@@ -329,3 +329,7 @@ let deserialize_contextual_grammar j =
          let e = production |> member "program" |> to_string |> parse_program |> get_some in
          let children = production |> member "arguments" |> to_list |> List.map ~f:deserialize_grammar in
          (e, children));} |> prune_contextual_grammar
+
+let deserialize_contextual_grammar g = 
+  try deserialize_grammar g |> make_dummy_contextual
+  with _ -> deserialize_contextual_grammar g

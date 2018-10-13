@@ -400,7 +400,7 @@ let dfs_around_skeleton cg ~maxFreeParameters ~lower_bound ~upper_bound state k 
 let shatter_factor = ref 10;;
 
 (* Putting depth first and best first gives us a parallel strategy for enumeration *)
-let multicore_enumeration ?final:(final=fun () -> []) ?cores:(cores=1) ?shatter:(shatter=None) cg request lb ub ~maxFreeParameters k =
+let multicore_enumeration ?extraQuiet:(extraQuiet=false) ?final:(final=fun () -> []) ?cores:(cores=1) ?shatter:(shatter=None) cg request lb ub ~maxFreeParameters k =
   let shatter = match (shatter,cores) with
     | (Some(s),_) -> s
     | (None,1) -> 1
@@ -410,10 +410,11 @@ let multicore_enumeration ?final:(final=fun () -> []) ?cores:(cores=1) ?shatter:
   let (finished, fringe) =
     best_first_enumeration ~lower_bound:(Some(lb)) ~upper_bound:(Some(ub)) ~frontier_size:shatter ~maxFreeParameters:maxFreeParameters cg request
   in
-  
-  Printf.eprintf "\t(ocaml: %d CPUs. shatter: %d. |fringe| = %d. |finished| = %d.)\n"
+
+  if not extraQuiet then  
+    (Printf.eprintf "\t(ocaml: %d CPUs. shatter: %d. |fringe| = %d. |finished| = %d.)\n"
     cores shatter (List.length fringe) (List.length finished);
-  flush_everything();
+     flush_everything());
 
   let strip_context p _ l = k p l in
 
@@ -442,7 +443,7 @@ let multicore_enumeration ?final:(final=fun () -> []) ?cores:(cores=1) ?shatter:
 ;;
 
 
-let enumerate_programs ?maxFreeParameters:(maxFreeParameters=0) ?final:(final=fun () -> []) ?nc:(nc=1) cg request lb ub k =
+let enumerate_programs ?extraQuiet:(extraQuiet=false) ?maxFreeParameters:(maxFreeParameters=0) ?final:(final=fun () -> []) ?nc:(nc=1) cg request lb ub k =
   let number_of_arguments = arguments_of_type request |> List.length in
   let definitely_recursive = grammar_has_recursion number_of_arguments cg.no_context in
 
@@ -484,7 +485,7 @@ let enumerate_programs ?maxFreeParameters:(maxFreeParameters=0) ?final:(final=fu
     else k
   in
   
-  multicore_enumeration ~maxFreeParameters:maxFreeParameters ~final:final ~cores:nc g' request' lb ub k'
+  multicore_enumeration ~extraQuiet ~maxFreeParameters:maxFreeParameters ~final:final ~cores:nc g' request' lb ub k'
 
 
 

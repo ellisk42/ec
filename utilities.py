@@ -242,6 +242,23 @@ def _launchParallelProcess():
         raise e
 
 
+def jsonBinaryInvoke(binary, message):
+    import json
+    import subprocess
+    import os
+
+    message = json.dumps(message)
+    try:
+        process = subprocess.Popen(binary,
+                                   stdin=subprocess.PIPE,
+                                   stdout=subprocess.PIPE)
+        response, error = process.communicate(bytes(message, encoding="utf-8"))
+        response = json.loads(response.decode("utf-8"))
+    except OSError as exc:
+        raise exc
+    return response
+
+    
 class CompiledTimeout(Exception):
     pass
 
