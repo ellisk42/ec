@@ -188,7 +188,6 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
             x, str))).union({"LIST_START", "LIST_END", "?"})
 
         # Calculate the maximum length
-        self.maximumLength = POSITIVEINFINITY
         self.maximumLength = max(len(l)
                                  for t in tasks + testingTasks
                                  for xs, y in self.tokenize(t.examples)

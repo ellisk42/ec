@@ -156,6 +156,7 @@ class RecognitionModel(nn.Module):
 
     def frontierBiasOptimal(self, frontier):
         features = self.featureExtractor.featuresOfTask(frontier.task)
+        if features is None: return None
         g = self(features)
         l = [entry.program.logLikelihood(g)
              for entry in frontier]
@@ -391,10 +392,19 @@ class RecognitionModel(nn.Module):
                 permutedFrontiers = list(frontiers)
                 random.shuffle(permutedFrontiers)
                 for frontier in permutedFrontiers:
-                    if random.random() < helmholtzRatio:
+                    dreaming = random.random() < helmholtzRatio
+                    if dreaming:
                         frontier = getHelmholtz()
                     self.zero_grad()
                     loss = self.frontierBiasOptimal(frontier)
+                    if loss is None:
+                        if not dreaming:
+                            eprint("ERROR: Could not extract features during experience replay.")
+                            eprint("Task is:",frontier.task)
+                            eprint("Aborting - we need to be able to extract features of every actual task.")
+                            assert False
+                        else:
+                            continue
                     if is_torch_invalid(loss):
                         eprint("Invalid real-data loss!")
                     else:
