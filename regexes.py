@@ -5,7 +5,7 @@ from grammar import Grammar
 #from utilities import eprint, testTrainSplit, numberOfCPUs, flatten
 from utilities import eprint, numberOfCPUs, flatten, fst, testTrainSplit, POSITIVEINFINITY
 from makeRegexTasks import makeOldTasks, makeLongTasks, makeShortTasks, makeWordTasks, makeNumberTasks
-from regexPrimitives import basePrimitives, altPrimitives, easyWordsPrimitives, alt2Primitives
+from regexPrimitives import basePrimitives, altPrimitives, easyWordsPrimitives, alt2Primitives, concatPrimitives
 from likelihoodModel import add_cutoff_values
 #from program import *
 from recognition import RecurrentFeatureExtractor, JSONFeatureExtractor
@@ -234,8 +234,8 @@ if __name__ == "__main__":
     prims = {"base": basePrimitives,
              "alt1": altPrimitives,
              "alt2": alt2Primitives,
-             "easyWords": easyWordsPrimitives
-             "concat": concatPrimitives
+             "easyWords": easyWordsPrimitives,
+             "concat": concatPrimitives,
              }[primtype]
 
     extractor = {
