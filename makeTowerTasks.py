@@ -57,6 +57,16 @@ class SupervisedTower(Task):
                          for t in ts]) 
         imshow(a)
         show()
+
+    def exportImage(self, f, pretty=True, Lego=True):
+        from tower_common import fastRendererPlan
+        a = fastRendererPlan(centerTower(t.plan),
+                             pretty=pretty, Lego=Lego)
+        import scipy.misc
+        scipy.misc.imsave(f, a)
+        
+        
+        
         
 
     
@@ -423,10 +433,18 @@ def makeSupervisedTasks():
         delattr(t,'original')
     return everything
 if __name__ == "__main__":
+    from pylab import imshow,show
     from tower_common import *
+    
     ts = makeSupervisedTasks()
     print(len(ts),"total tasks")
     print("maximum plan length",max(len(f.plan) for f in ts ))
     print("maximum tower length",max(towerLength(f.plan) for f in ts ))
     print("maximum tower height",max(towerHeight(simulateWithoutPhysics(f.plan)) for f in ts ))
     SupervisedTower.showMany(ts)
+    
+    for j,t in enumerate(ts):
+        t.exportImage(f"/tmp/tower_{j}.png")
+        
+        
+        

@@ -645,6 +645,12 @@ class Grammar(object):
                 top_k.append((expr, l))
         return sorted(top_k, key=lambda x:-x[1])
 
+    def untorch(self):
+        return Grammar(self.logVariable.data.tolist()[0], 
+                       [ (l.data.tolist()[0], t, p)
+                         for l, t, p in self.productions],
+                       continuationType=self.continuationType)
+
 class LikelihoodSummary(object):
     '''Summarizes the terms that will be used in a likelihood calculation'''
 
@@ -812,6 +818,11 @@ class ContextualGrammar:
             for g in gs:
                 assert set(g.primitives) == set(library.keys())
                 assert g.continuationType == self.continuationType
+
+    def untorch(self):
+        return ContextualGrammar(self.noParent.untorch(), self.variableParent.untorch(),
+                                 {e: [g.untorch() for g in gs ]
+                                  for e,gs in self.library.items() })
 
     def __str__(self):
         lines = ["No parent:",str(self.noParent),"",
