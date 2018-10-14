@@ -73,14 +73,6 @@ class GrammarNetwork(nn.Module):
                         for k, (_, t, program) in enumerate(self.grammar.productions)],
                        continuationType=self.grammar.continuationType)
 
-    def concreteGrammar(self, x):
-        """Like forward but returns float-valued probabilities"""
-        g = self(x)
-        return Grammar(g.logVariable.data.tolist()[0], 
-                       [ (l.data.tolist()[0], t, p)
-                         for l, t, p in g.productions],
-                       continuationType=g.continuationType)
-
 class ContextualGrammarNetwork(nn.Module):
     """Like GrammarNetwork but ~contextual~"""
     def __init__(self, inputDimensionality, grammar):
@@ -103,10 +95,7 @@ class ContextualGrammarNetwork(nn.Module):
         return ContextualGrammar(self.noParent(x), self.variableParent(x),
                                  {e: [g(x) for g in gs ]
                                   for e,gs in self.library.items() })
-    def concreteGrammar(self, x):
-        return ContextualGrammar(self.noParent.concreteGrammar(x), self.variableParent.concreteGrammar(x),
-                                 {e: [g.concreteGrammar(x) for g in gs ]
-                                  for e,gs in self.library.items() })
+
         
 
 class RecognitionModel(nn.Module):
@@ -154,10 +143,16 @@ class RecognitionModel(nn.Module):
                 for task in tasks}
 
     def forward(self, features):
-        """returns either a Grammar or a ContextualGrammar"""
+        """returns either a Grammar or a ContextualGrammar
+        Takes as input the output of featureExtractor.featuresOfTask"""
         for layer in self.hiddenLayers:
             features = self.activation(layer(features))
         return self.grammarBuilder(features)
+
+    def grammarOfTask(self, task):
+        features = self.featureExtractor.featuresOfTask(task)
+        if features is None: return None
+        return self(features)
 
     def frontierKL(self, frontier):
         features = self.featureExtractor.featuresOfTask(frontier.task)
@@ -283,10 +278,6 @@ class RecognitionModel(nn.Module):
                     eprint("Epoch", i, "Loss", sum(losses) / len(losses))
                     gc.collect()
 
-    def concreteGrammarOfTask(self, task):
-        features = self.featureExtractor.featuresOfTask(task)
-        return self.grammarBuilder.concreteGrammar(features)
-    
     def trainBiasOptimal(self, frontiers, helmholtzFrontiers, _=None,
                          steps=None, lr=0.0001, timeout=None, CPUs=None,
                          evaluationTimeout=0.001,
@@ -508,7 +499,7 @@ class RecognitionModel(nn.Module):
                            maximumFrontier=None,
                            evaluationTimeout=None):
         with timing("Evaluated recognition model"):
-            grammars = {task: self.concreteGrammarOfTask(task)
+            grammars = {task: self.grammarOfTask(task).untorch()
                         for task in tasks}
 
         return multicoreEnumeration(grammars, tasks, likelihoodModel,
@@ -655,8 +646,6 @@ class RecurrentFeatureExtractor(nn.Module):
 
     def featuresOfTask(self, t):
         f = self(t.examples)
-        if f is None:
-            eprint(t)
         return f
 
     def taskOfProgram(self, p, tp):
@@ -678,6 +667,8 @@ class RecurrentFeatureExtractor(nn.Module):
                 return Task("Helmholtz", tp, list(zip(xss,ys)))
 
         return None
+
+    
 
 
 class DummyFeatureExtractor(nn.Module):
@@ -1143,7 +1134,7 @@ if __name__ == "__main__":
     f = DummyFeatureExtractor([])
     r = RecognitionModel(f, g, hidden=[], contextual=True)
     r.trainBiasOptimal(frontiers, frontiers, steps=70)
-    g = r.concreteGrammarOfTask(frontiers[0].task)
+    g = r.grammarOfTask(frontiers[0].task).untorch()
     frontiers = helmholtzEnumeration(g,
                          arrow(tint,tint),
                          [[0],[1],[2]],
