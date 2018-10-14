@@ -169,6 +169,18 @@ let empty_regex = Constant(String([]));;
 
 ignore(primitive "r_dot" (tregex @> tregex)
          (fun k -> Concat(Constant(Dot),k)));;
+ignore(primitive "r_d" (tregex @> tregex)
+         (fun k -> Concat(Constant(D),k)));;
+ignore(primitive "r_s" (tregex @> tregex)
+         (fun k -> Concat(Constant(S),k)));;
+ignore(primitive "r_w" (tregex @> tregex)
+         (fun k -> Concat(Constant(W),k)));;
+ignore(primitive "r_l" (tregex @> tregex)
+         (fun k -> Concat(Constant(L),k)));;
+ignore(primitive "r_u" (tregex @> tregex)
+         (fun k -> Concat(Constant(U),k)));;
+
+
 ignore(primitive "r_kleene" ((tregex @> tregex) @> tregex @> tregex)
          (fun b k -> Concat(Kleene(b empty_regex),k)));;
 ignore(primitive "r_plus" ((tregex @> tregex) @> tregex @> tregex)
