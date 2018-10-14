@@ -127,9 +127,9 @@ def regex_options(parser):
                         help="which tasks to use",
                         choices=["old", "short", "long", "words","number"])
     parser.add_argument("--primitives",
-                        default="base",
+                        default="concat",
                         help="Which primitive set to use",
-                        choices=["base", "alt1", "easyWords", "alt2"])
+                        choices=["base", "alt1", "easyWords", "alt2", "concat"])
     parser.add_argument("--extractor", type=str,
                         choices=["hand", "deep", "learned", "json"],
                         default="json")  # if i switch to json it breaks
@@ -171,9 +171,9 @@ def regex_options(parser):
 
 if __name__ == "__main__":
     args = commandlineArguments(
-        frontierSize=None, activation='sigmoid', iterations=10,
+        frontierSize=None, activation='relu', iterations=10,
         a=3, maximumFrontier=10, topK=2, pseudoCounts=10.0, #try 1 0.1 would make prior uniform
-        helmholtzRatio=0.5, structurePenalty=1., #try 
+        helmholtzRatio=0.5, structurePenalty=1.5, #try 
         CPUs=numberOfCPUs(),
         extras=regex_options)
 
@@ -234,7 +234,9 @@ if __name__ == "__main__":
     prims = {"base": basePrimitives,
              "alt1": altPrimitives,
              "alt2": alt2Primitives,
-             "easyWords":easyWordsPrimitives}[primtype]
+             "easyWords": easyWordsPrimitives
+             "concat": concatPrimitives
+             }[primtype]
 
     extractor = {
         "learned": LearnedFeatureExtractor,
@@ -255,11 +257,11 @@ if __name__ == "__main__":
     args.update({
         "featureExtractor": extractor,
         "outputPrefix": "experimentOutputs/regex" + primtype + timestr + 'll' + str(train_ll_cutoff) + str(test_ll_cutoff),
-        "evaluationTimeout": 2.0,  # 0.005,
+        "evaluationTimeout": 0.005,
         "topk_use_only_likelihood": True,
         "maximumFrontier": 10,
-        "solver": "python",
-        "compressor": "rust"
+        "solver": "ocaml",
+        "compressor": "ocaml"
     })
     ####
 
