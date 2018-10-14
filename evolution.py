@@ -1,8 +1,31 @@
-
 from program import *
 from grammar import *
+
+
 from arithmeticPrimitives import *
 from listPrimitives import *
+
+from recognition import *
+
+import torch.nn.functional as F
+
+
+class EvolutionGuide(RecognitionModel):
+    def __init__(self, featureExtractor, grammar, hidden=[64], activation="relu",
+                 cuda=False, contextual=False):
+        super(EvolutionGuide, self).__init__(featureExtractor, grammar,
+                                             hidden=hidden, activation=activation,
+                                             cuda=cuda, contextual=contextual)
+
+        outputDimensionality = self.hiddenLayers[-1].out_features
+
+        # value and policy
+        self.value = nn.Linear(outputDimensionality, 1)
+        self.policy = ContextualGrammarNetwork(outputDimensionality, grammar)
+
+        if cuda: self.cuda()
+
+        
 
 bootstrapTarget()
 g = Grammar.uniform([Program.parse(p)

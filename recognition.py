@@ -55,13 +55,64 @@ def is_torch_invalid(v):
 
 def _relu(x): return x.clamp(min=0)
 
+class GrammarNetwork(nn.Module):
+    """Neural network that outputs a grammar"""
+    def __init__(self, inputDimensionality, grammar):
+        super(GrammarNetwork, self).__init__()
+        self.logVariable = nn.Linear(inputDimensionality, 1)
+        self.logProductions = nn.Linear(inputDimensionality, len(grammar))
+        self.grammar = grammar
+        
+    def forward(self, x):
+        """Takes as input inputDimensionality-dimensional vector and returns Grammar
+        Tensor-valued probabilities"""
+        logVariable = self.logVariable(x)
+        logProductions = self.logProductions(x)
+        return Grammar(logVariable,
+                       [(logProductions[k].view(1), t, program)
+                        for k, (_, t, program) in enumerate(self.grammar.productions)],
+                       continuationType=self.grammar.continuationType)
+
+    def concreteGrammar(self, x):
+        """Like forward but returns float-valued probabilities"""
+        g = self(x)
+        return Grammar(g.logVariable.data.tolist()[0], 
+                       [ (l.data.tolist()[0], t, p)
+                         for l, t, p in g.productions],
+                       continuationType=g.continuationType)
+
+class ContextualGrammarNetwork(nn.Module):
+    """Like GrammarNetwork but ~contextual~"""
+    def __init__(self, inputDimensionality, grammar):
+        super(ContextualGrammarNetwork, self).__init__()
+        
+        self.grammar = grammar
+        
+        self.variableParent = GrammarNetwork(inputDimensionality, grammar)
+        self.noParent = GrammarNetwork(inputDimensionality, grammar)
+        self.library = {e: [GrammarNetwork(inputDimensionality, grammar)
+                            for n in range(len(e.infer().functionArguments())) ]
+                        for ei,e in enumerate(grammar.primitives) }
+        # Explicitly register each of the library grammars
+        for ei,e in enumerate(grammar.primitives):
+            for n in range(len(e.infer().functionArguments())):
+                self.add_module("Invention %d, argument %d"%(ei,n),
+                                self.library[e][n])
+
+    def forward(self,x):
+        return ContextualGrammar(self.noParent(x), self.variableParent(x),
+                                 {e: [g(x) for g in gs ]
+                                  for e,gs in self.library.items() })
+    def concreteGrammar(self, x):
+        return ContextualGrammar(self.noParent.concreteGrammar(x), self.variableParent.concreteGrammar(x),
+                                 {e: [g.concreteGrammar(x) for g in gs ]
+                                  for e,gs in self.library.items() })
+        
 
 class RecognitionModel(nn.Module):
     def __init__(self,featureExtractor,grammar,hidden=[64],activation="relu",cuda=False,contextual=False):
         super(RecognitionModel, self).__init__()
         self.use_cuda = cuda
-        if cuda:
-            self.cuda()
 
         self.featureExtractor = featureExtractor
         # Sanity check - make sure that all of the parameters of the
@@ -74,8 +125,6 @@ class RecognitionModel(nn.Module):
         inputDimensionality = featureExtractor.outputDimensionality
         for i,h in enumerate(hidden):
             layer = nn.Linear(inputDimensionality, h)
-            if cuda:
-                layer = layer.cuda()
             self.hiddenLayers.append(layer)
             inputDimensionality = h
             self.add_module("fc layer %d"%i, layer)
@@ -90,36 +139,15 @@ class RecognitionModel(nn.Module):
             raise Exception('Unknown activation function ' + str(activation))
 
         self.contextual = contextual
-
-        # creates and registers layers for predicting production probabilities
-        def productionProjection(name):
-            logVariable = nn.Linear(inputDimensionality, 1)
-            logProductions = nn.Linear(inputDimensionality, len(grammar.productions))
-            
-            if cuda:
-                logProductions = logProductions.cuda()
-                logVariable = logVariable.cuda()
-            
-            self.add_module("%s variable"%name, logVariable)
-            self.add_module("%s productions"%name, logProductions)
-            
-            return logVariable, logProductions
-            
-        if self.contextual:            
-            self.variableParent = productionProjection("variable parent")
-            self.noParent = productionProjection("no parent")
-            self.library = {e: [productionProjection("primitive" + str(ei) + " " + str(n))
-                                for n in range(len(e.infer().functionArguments())) ]
-                            for ei,e in enumerate(grammar.primitives) }
+        if self.contextual:
+            self.grammarBuilder = ContextualGrammarNetwork(inputDimensionality, grammar)
         else:
-            self.logVariable = nn.Linear(inputDimensionality, 1)
-            self.logProductions = nn.Linear(inputDimensionality, len(grammar))
-            if cuda:
-                self.logVariable = self.logVariable.cuda()
-                self.logProductions = self.logProductions.cuda()
-
+            self.grammarBuilder = GrammarNetwork(inputDimensionality, grammar)
+        
         self.grammar = ContextualGrammar.fromGrammar(grammar) if contextual else grammar
         self.generativeModel = grammar
+
+        if cuda: self.cuda()
 
     def taskEmbeddings(self, tasks):
         return {task: self.featureExtractor.featuresOfTask(task).data.numpy()
@@ -129,23 +157,7 @@ class RecognitionModel(nn.Module):
         """returns either a Grammar or a ContextualGrammar"""
         for layer in self.hiddenLayers:
             features = self.activation(layer(features))
-        h = features
-        def buildGrammarObject(variables, productions):
-            variables = variables(h)
-            productions = productions(h)
-            return Grammar(variables,
-                           [(productions[k].view(1), t, program)
-                            for k, (_, t, program) in enumerate(self.grammar.productions)],
-                           continuationType=self.grammar.continuationType)
-
-        if not self.contextual:
-            return buildGrammarObject(self.logVariable, self.logProductions)
-
-        variableParent = buildGrammarObject(*self.variableParent)
-        noParent = buildGrammarObject(*self.noParent)
-        library = {e: [buildGrammarObject(*p) for p in projectors ]
-                   for e, projectors in self.library.items() }
-        return ContextualGrammar(noParent, variableParent, library)
+        return self.grammarBuilder(features)
 
     def frontierKL(self, frontier):
         features = self.featureExtractor.featuresOfTask(frontier.task)
@@ -273,21 +285,7 @@ class RecognitionModel(nn.Module):
 
     def concreteGrammarOfTask(self, task):
         features = self.featureExtractor.featuresOfTask(task)
-        g = self(features)
-        def untorch(g):
-            if isinstance(g,Grammar):
-                return Grammar(g.logVariable.data.tolist()[0], 
-                               [ (l.data.tolist()[0], t, p)
-                                 for l, t, p in g.productions],
-                               continuationType=g.continuationType)
-            assert isinstance(g, ContextualGrammar)
-            return ContextualGrammar(untorch(g.noParent),
-                                     untorch(g.variableParent),
-                                     {e: [untorch(p) for p in gs ]
-                                      for e,gs in g.library.items() })
-        return untorch(g)
-
-
+        return self.grammarBuilder.concreteGrammar(features)
     
     def trainBiasOptimal(self, frontiers, helmholtzFrontiers, _=None,
                          steps=None, lr=0.0001, timeout=None, CPUs=None,
@@ -555,8 +553,6 @@ class RecurrentFeatureExtractor(nn.Module):
         ]
         lexicon += self.specialSymbols
         encoder = nn.Embedding(len(lexicon), H)
-        if cuda:
-            encoder = encoder.cuda()
         self.encoder = encoder
 
         self.H = H
@@ -565,8 +561,6 @@ class RecurrentFeatureExtractor(nn.Module):
         layers = 1
 
         model = nn.GRU(H, H, layers, bidirectional=bidirectional)
-        if cuda:
-            model = model.cuda()
         self.model = model
 
         self.use_cuda = cuda
@@ -583,6 +577,8 @@ class RecurrentFeatureExtractor(nn.Module):
         # model on per task
         # This is an optimization hack
         self.MAXINPUTS = 100
+
+        if cuda: self.cuda()
 
     @property
     def outputDimensionality(self): return self.H
@@ -723,7 +719,7 @@ class ImageFeatureExtractor(nn.Module):
 
 
 class JSONFeatureExtractor(object):
-    def __init__(self, tasks, cuda=False):
+    def __init__(self, tasks, cudaFalse):
         # self.averages, self.deviations = Task.featureMeanAndStandardDeviation(tasks)
         # self.outputDimensionality = len(self.averages)
         self.cuda = cuda

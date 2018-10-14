@@ -183,11 +183,11 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
         return tokenized
 
     def __init__(self, tasks, testingTasks=[], cuda=False):
-        self.USE_CUDA = False
         self.lexicon = set(flatten((t.examples for t in tasks + testingTasks), abort=lambda x: isinstance(
             x, str))).union({"LIST_START", "LIST_END", "?"})
 
         # Calculate the maximum length
+        self.maximumLength = float('inf') # Believe it or not this is actually important to have here
         self.maximumLength = max(len(l)
                                  for t in tasks + testingTasks
                                  for xs, y in self.tokenize(t.examples)
@@ -201,7 +201,7 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
             lexicon=list(
                 self.lexicon),
             tasks=tasks,
-            cuda=self.USE_CUDA,
+            cuda=cuda,
             H=self.H,
             bidirectional=True)
 
@@ -345,8 +345,7 @@ if __name__ == "__main__":
         "learned": LearnedFeatureExtractor,
     }[args.pop("extractor")]
     extractor.H = args.pop("hidden")
-    extractor.USE_CUDA = args["cuda"]
-
+    
     args.update({
         "featureExtractor": extractor,
         "outputPrefix": "experimentOutputs/list",
