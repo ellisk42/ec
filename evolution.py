@@ -69,7 +69,7 @@ def fitness(p):
 
     
 population = []
-timeout=10
+timeout=20
 best = 2
 request = tlist(tint)
 for generation in range(3):

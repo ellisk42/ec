@@ -179,6 +179,54 @@ ignore(primitive "r_alt" ((tregex @> tregex) @> (tregex @> tregex) @> tregex @> 
          (fun a b k -> Concat(Alt(a empty_regex, b empty_regex),k)));;
 
 
+let disallowed_regex = Hashtbl.Poly.create ();;
+
+[
+    ('#', "hash");
+    ('!', "bang");
+    ('\"', "double_quote");
+    ('$', "dollar");
+    ('%', "percent");
+    ('&', "ampersand");
+    ('\'', "single_quote");
+    (')', "left_paren");
+    ('(', "right_paren");
+    ('*', "astrisk");
+    ('+', "plus");
+    (',', "comma");
+    ('-', "dash");
+    ('.', "period");
+    ('/', "slash");
+    (':', "colon");
+    (';', "semicolon");
+    ('<', "less_than");
+    ('=', "equal");
+    ('>', "greater_than");
+    ('?', "question_mark");
+    ('@', "at");
+    ('[', "left_bracket");
+    ('\\', "backslash");
+    (']', "right_bracket");
+    ('^', "carrot");
+    ('_', "underscore");
+    ('`', "backtick");
+    ('|', "bar");
+    ('}', "right_brace");
+    ('{', "left_brace");
+    ('~', "tilde");
+    (' ', "space");
+    ('\t', "tab")
+] |> List.iter ~f: (fun (c, name) -> Hashtbl.set disallowed_regex ~key:c ~data:name);;
+
+
+
+dot_ls |> List.iter ~f: (fun i -> match Hashtbl.find disallowed_regex i with
+	| None -> ignore(primitive (Printf.sprintf "string_%c" i) (tregex @> tregex)
+         (fun k -> Concat(Constant(String([i])),k)))
+	| Some(datum) -> ignore(primitive (Printf.sprintf "string_%s" datum) (tregex @> tregex)
+         (fun k -> Concat(Constant(String([i])),k)))) ;;
+
+
 let regex_of_program expression : pregex =
   run_lazy_analyzed_with_arguments (analyze_lazy_evaluation expression) [empty_regex];;
 

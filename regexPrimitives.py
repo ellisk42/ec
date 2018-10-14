@@ -81,7 +81,7 @@ class PRC(): #PregexContinuation
         if self.arity == len(self.args):
             if self.arity == 0: return pregex.Concat([self.f, pre]) #TODO
             else: return pregex.Concat([self.f(*self.args), pre])
-        else: return PRC(self.f, self.arity, args=self.args+[pre])
+        else: return PRC(self.f, self.arity, args=self.args+[pre(pregex.String(""))])
 
 
 def ConcatPrimitives():
@@ -96,10 +96,10 @@ def ConcatPrimitives():
         Primitive("r_l", arrow(tpregex, tpregex), PRC(pregex.l)),
         Primitive("r_u", arrow(tpregex, tpregex), PRC(pregex.u)),
         #todo
-        Primitive("r_kleene", arrow(tpregex, tpregex), PRC(pregex.KleeneStar,1)),
-        Primitive("r_plus", arrow(tpregex, tpregex, tpregex), PRC(pregex.Plus,1)),
-        Primitive("r_maybe", arrow(tpregex, tpregex, tpregex), PRC(pregex.Maybe,1)),
-        Primitive("r_alt", arrow(tpregex, tpregex, tpregex, tpregex), PRC(pregex.Alt, 2)),
+        Primitive("r_kleene", arrow(arrow(tpregex, tpregex), arrow(tpregex,tpregex)), PRC(pregex.KleeneStar,1)),
+        Primitive("r_plus", arrow(arrow(tpregex, tpregex), arrow(tpregex,tpregex)), PRC(pregex.Plus,1)),
+        Primitive("r_maybe", arrow(arrow(tpregex, tpregex), arrow(tpregex,tpregex)), PRC(pregex.Maybe,1)),
+        Primitive("r_alt", arrow(arrow(tpregex, tpregex),arrow(tpregex, tpregex), arrow(tpregex,tpregex)), PRC(pregex.Alt, 2)),
     ]
 
 
@@ -302,6 +302,6 @@ if __name__=='__main__':
     ConcatPrimitives()
     from program import Program
 
-    p=Program.parse("(lambda (r_kleene (r_maybe (string_x $0) $0) $0))")
+    p=Program.parse("(lambda (r_kleene (lambda (r_maybe (lambda (string_x $0)) $0)) $0))")
     print(p)
-    print(p.runWithArguments([pregex.create('')]))
+    print(p.runWithArguments([pregex.String("")]))
