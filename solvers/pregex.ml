@@ -358,10 +358,13 @@ register_special_task "regex"
                    | [] -> 0.
                    | e :: es ->
                      let this_score = preg_match r e in
-                     Printf.eprintf "%s\t%s\t%f\n"
+                     let kevin_score = match_regex r e in
+                     Printf.eprintf "%s\t%s\t%f\t%f\n"
                        (show_regex r)
                        (String.of_char_list e)
-                       this_score;
+                       kevin_score this_score;
+                     if is_valid this_score || is_valid kevin_score then
+                       Printf.eprintf "HIT\n";
                      flush_everything();
 
                      if is_invalid this_score then log 0. else this_score +. loop es
