@@ -489,6 +489,13 @@ def ocamlInduce(g, frontiers, _=None,
     t2f = {f.task: f for f in frontiers}
     frontiers = [f for f in frontiers if not f.empty ]
 
+    # This is a dirty hack!
+    # Memory consumption increases with the number of CPUs
+    # And early on we have a lot of stuff to compress
+    # If this is the first iteration, only use a fraction of the available CPUs
+    if all( not p.isInvented for p in g.primitives ):
+        CPUs = max(1, int(CPUs/3))
+
     message = {"arity": a,
                "topK": topK,
                "pseudoCounts": float(pseudoCounts),
