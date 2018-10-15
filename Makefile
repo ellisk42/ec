@@ -3,8 +3,6 @@ all:
 	cd solvers && \
 	  jbuilder build solver.exe && \
 	  jbuilder build helmholtz.exe && \
-	  jbuilder build geomDrawLambdaString.exe && \
-	  jbuilder build geomDrawFile.exe && \
 	  jbuilder build logoDrawString.exe && \
 	  jbuilder build protonet-tester.exe && \
 	  jbuilder build compression.exe && \
@@ -17,26 +15,12 @@ all:
 	  cp _build/default/logoDrawString.exe \
 	    ../logoDrawString && \
 	  ln -s ../../logoDrawString \
-	    ../data/geom/logoDrawString && \
-	  cp _build/default/geomDrawLambdaString.exe \
-	    ../geomDrawLambdaString && \
-	  cp _build/default/geomDrawFile.exe \
-	    ../data/geom/geomDrawFile
+	    ../data/geom/logoDrawString
 
-drawFile:
-	cd solvers && \
-	  jbuilder build geomDrawFile.exe && \
-	  cp _build/default/geomDrawFile.exe \
-	    ./behaviouralData/geomDrawFile
-pb:
-	protoc --python_out=. cache.proto && \
-	ocaml-protoc -binary -ml_out ./solvers cache.proto
 clean:
 	cd solvers && jbuilder clean
-	rm -f geomDrawLambdaString
 	rm -f solver
 	rm -f compression
 	rm -f helmholtz
 	rm -f logoDrawString
-	rm -f data/geom/geomDrawFile
 	rm -f data/geom/logoDrawString

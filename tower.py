@@ -247,10 +247,6 @@ if __name__ == "__main__":
                            evaluationTimeout=evaluationTimeout,
                            solver="ocaml",
                            **arguments)
-    os.system("python tower_server.py KILL")
-    time.sleep(1)
-    os.system("python tower_server.py &")
-    time.sleep(1)
 
     perturbations = {t.perturbation for t in train if isinstance(t,TowerTask)}
 

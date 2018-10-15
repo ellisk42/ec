@@ -1,7 +1,7 @@
-#use "topfind"
-#thread
-#require "core"
-#require "yojson" ;;
+(* #use "topfind" *)
+(* #thread *)
+(* #require "core" *)
+(* #require "yojson" ;; *)
 
 open Yojson;;
 open Core;;
