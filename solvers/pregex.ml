@@ -221,14 +221,8 @@ and concatConsume a b str = List.map (consume (Some(a), str)) ~f:(f_concat a b)
 
 and consume cont = (* return a list of continuation, score tuples? *)
   match cont with
-<<<<<<< HEAD
-  | (None, []) -> [] (* needed here?*)
-  | (None, _ :: _) -> (* let _ = Printf.eprintf "%s" ("OUTPUT OUTPUT:"^ (String.concat ~sep:"\n" (snd cont |> List.map ~f:Char.to_string))) in *) 
-  				[ (None, (snd cont)), log 0. ]
-=======
   | (None, []) -> assert false (* no regular expression and nothing to consume - this is a match, and should have been caught earlier *)
   | (None, _ :: _) -> [] (* no regular expression and things to consume - not a match *)
->>>>>>> e7b1a83e56b79f7f61f5cc573ac8fe45fc4b4c89
   | (Some(Constant(c)), str) -> consumeConst c str
   | (Some(Kleene(a)), str) -> kleeneConsume a str 
   | (Some(Plus(a)), str) -> plusConsume a str 
