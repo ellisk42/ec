@@ -1,13 +1,9 @@
-from type import tpregex
+from type import tpregex, arrow
 from task import Task
 from pregex import pregex
 import pickle
 import json
 import dill
-
-
-
-
 
 
 def makeOldTasks():
@@ -25,7 +21,7 @@ def makeOldTasks():
     # if I were to just dump all of them:
     regextasks = [
         Task("Luke data column no." + str(i),
-             tpregex,
+             arrow(tpregex, tpregex),
                  [((), example) for example in task_list[i]]
              ) for i in range(len(task_list))]
 
@@ -59,7 +55,7 @@ def makeShortTasks():
 
     regextasks = [
         Task("Data column no. " + str(i),
-            tpregex,
+            arrow(tpregex, tpregex),
             [((), example) for example in task] 
         ) for i, task in enumerate(tasklist)]
 
@@ -80,7 +76,7 @@ def makeLongTasks():
 
     regextasks = [
         Task("Data column no. " + str(i),
-            tpregex,
+            arrow(tpregex, tpregex),
             [((), example) for example in task] 
         ) for i, task in enumerate(tasklist)]
 
@@ -129,7 +125,7 @@ def makeWordTasks():
 
     regextasks = [
         Task("Data column no. " + str(i),
-            tpregex,
+            arrow(tpregex, tpregex),
             [((), example) for example in task] 
         ) for i, task in enumerate(tasklist) if i in full_list ]
 
@@ -183,7 +179,7 @@ def makeNumberTasks():
 
     regextasks = [
         Task("Data column no. " + str(i),
-            tpregex,
+            arrow(tpregex, tpregex),
             [((), example) for example in task] 
         ) for i, task in enumerate(tasklist) if i in full_list ]
 

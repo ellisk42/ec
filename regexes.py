@@ -18,6 +18,7 @@ import math
 class LearnedFeatureExtractor(RecurrentFeatureExtractor):
     H = 16
     USE_CUDA = False
+    special = 'regex'
 
     def tokenize(self, examples):
         def sanitize(l): return [z if z in self.lexicon else "?"
@@ -218,6 +219,10 @@ if __name__ == "__main__":
     for task in tasks:
         if len(task.examples) > maxExamples:
             task.examples = task.examples[:maxExamples]
+
+        task.specialTask = ("regex",{})
+        task.examples = [(xs, [y for y in ys ])
+                         for xs,ys in task.examples ]
 
     split = args.pop("split")
     test, train = testTrainSplit(tasks, split)

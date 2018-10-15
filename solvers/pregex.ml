@@ -8,7 +8,19 @@ open Type
 
     
 type str = String of char list | Dot | D | S | W | L | U
-[@@deriving compare]           
+[@@deriving compare]
+
+let dot_ls = List.rev (String.to_list_rev "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!\"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~ \t")
+let d_ls = List.rev (String.to_list_rev "0123456789")
+let s_ls = List.rev (String.to_list_rev " \t")
+let w_ls = List.rev (String.to_list_rev "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+let l_ls = List.rev (String.to_list_rev "abcdefghijklmnopqrstuvwxyz")
+let u_ls = List.rev (String.to_list_rev "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+let get_character_class = function
+  | Dot -> dot_ls
+  | D -> d_ls | S -> s_ls | W -> w_ls | L -> l_ls | U -> u_ls
+  | _ -> assert (false)
 
 type pregex = 
 	| Constant of str
@@ -18,6 +30,19 @@ type pregex =
 	| Alt of pregex * pregex
 	| Concat of pregex * pregex
 [@@deriving compare]
+
+let rec show_regex = function
+  | Kleene(b) -> show_regex b |> Printf.sprintf "(%s)*"
+  | Plus(b) -> show_regex b |> Printf.sprintf "(%s)+"
+  | Maybe(b) -> show_regex b |> Printf.sprintf "(%s)?"
+  | Alt(a,b) -> Printf.sprintf "(%s|%s)" (show_regex a) (show_regex b)
+  | Concat(a,b) -> Printf.sprintf "%s%s" (show_regex a) (show_regex b)
+  | Constant(k) -> match k with
+    | String(c) -> String.of_char_list c
+    | Dot -> "."
+    | D -> "[0-9]"
+    | S -> "\\w" | W -> "[0-9a-zA-Z]" | L -> "[a-z]" | U -> "A-Z"
+      
 
 let rec hash_regex = function
   | Plus(r) -> Hashtbl.hash (hash_regex r, 0)
@@ -50,17 +75,88 @@ let rec canonical_regex r = match r with
     | 0 -> a
     | d when d > 0 -> Alt(a,b)
     | d when d < 0 -> Alt(b,a)
-    | _ -> assert false 
+    | _ -> assert false
+
+
+type match_state = {
+  match_target: char list;
+  match_likelihood : float;
+}
+
+let rec match_regex random (state : match_state) r return = match r with
+  | Constant(String(s)) ->
+    if List.take state.match_target (List.length s) = s then
+      return {state with match_target=List.drop state.match_target (List.length s)}
+  | Constant(k) ->
+    (match state.match_target with
+     | hd :: tl when List.mem ~equal:(=) (get_character_class k) hd ->
+       return {match_likelihood=state.match_likelihood-.(get_character_class k |> List.length
+                                                        |> Float.of_int |> log);
+               match_target=tl}
+     | _ -> ())
+
+  | Concat(x,y) ->
+    match_regex random state x (fun state' ->
+        match_regex random state' y return)
+  | Alt(x,y) -> begin
+      let state' = {state with match_likelihood = state.match_likelihood-.log 2.} in
+      random state'
+        (fun () -> match_regex random state' x return);
+      random state'
+        (fun () -> match_regex random state' y return)
+    end
+  | Maybe(x) -> begin
+      let state' = {state with match_likelihood = state.match_likelihood-.log 2.} in
+      random state'
+        (fun () -> match_regex random state' x return);
+      random state'
+        (fun () -> return state')
+    end
+  | Kleene(x) -> begin
+      let state' = {state with match_likelihood = state.match_likelihood-.log 2.} in
+      random state'
+        (fun () -> match_regex random state' (Concat(x,r)) return);
+      random state'
+        (fun () -> return state')
+    end
+  | Plus(x) -> match_regex random state (Concat(x,Kleene(x))) return
+
+
+let match_regex regex s =
+  let h = Heap.create ~cmp:(fun (s1,_) (s2,_) -> Float.compare s2 s1) () in
+
+  let final_state = ref None in
+
+  match_regex (fun state k ->
+      Heap.add h (state.match_likelihood, k))
+    {match_target=s; match_likelihood=0.;}
+    regex
+    (fun final ->
+       if final.match_target = [] then  
+         final_state := Some(final));
+  while !final_state = None && not (Heap.is_empty h) do
+    let _,k = Heap.pop_exn h in
+    k()
+  done;
+  match !final_state with
+  | Some(s) -> s.match_likelihood
+  | _ -> log 0.
+;;
+
+if false then begin 
+  Printf.eprintf "%f\n"
+    (match_regex (Concat(Kleene(Alt(Constant(D),Constant(S))),Constant(String([])))) ['9';' ';]);
+  flush_everything();
+  assert (false)
+end;;
+
+           
+  
+
 
 type continuation = pregex option * string
 
 
-let dot_ls = List.rev (String.to_list_rev "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!\"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~ \t")
-let d_ls = List.rev (String.to_list_rev "0123456789")
-let s_ls = List.rev (String.to_list_rev " \t")
-let w_ls = List.rev (String.to_list_rev "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
-let l_ls = List.rev (String.to_list_rev "abcdefghijklmnopqrstuvwxyz")
-let u_ls = List.rev (String.to_list_rev "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
 let rec try_remove_prefix prefix str = 
 	(* returns a none if can't remove, else the removed list*)
@@ -123,15 +219,15 @@ and maybeConsume a str =
 and concatConsume a b str = List.map (consume (Some(a), str)) ~f:(f_concat a b)
 
 and consume cont = (* return a list of continuation, score tuples? *)
-	match cont with
-		| (None, []) -> [] (* needed here?*)
-		| (Some(Constant(c)), str) -> consumeConst c str
-		| (Some(Kleene(a)), str) -> kleeneConsume a str 
-		| (Some(Plus(a)), str) -> plusConsume a str 
-		| (Some(Maybe(a)), str) -> maybeConsume a str
-		| (Some(Alt(a,b)), str) -> List.map (List.concat [(consume (Some(a), str)); (consume (Some(b), str))]) ~f:f_alt
-		| (Some(Concat(a,b)), str) -> concatConsume a b str ;;
-
+  match cont with
+  | (None, []) -> [] (* needed here?*)
+  | (None, _ :: _) -> assert (false)
+  | (Some(Constant(c)), str) -> consumeConst c str
+  | (Some(Kleene(a)), str) -> kleeneConsume a str 
+  | (Some(Plus(a)), str) -> plusConsume a str 
+  | (Some(Maybe(a)), str) -> maybeConsume a str
+  | (Some(Alt(a,b)), str) -> List.map (consume (Some(a), str) @ consume (Some(b), str)) ~f:f_alt
+  | (Some(Concat(a,b)), str) -> concatConsume a b str
 
 
 let preg_match preg str = (* dikjstras *)
@@ -255,6 +351,9 @@ register_special_task "regex"
       match run_for_interval timeout
               (fun () ->
                  let r : pregex = regex_of_program expression in
+                 Printf.eprintf "%s\t%s\n"
+                   (string_of_program expression)
+                   (show_regex r);
                  let rec loop = function
                    | [] -> 0.
                    | e :: es ->
