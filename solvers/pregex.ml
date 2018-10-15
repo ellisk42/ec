@@ -31,18 +31,19 @@ type pregex =
 	| Concat of pregex * pregex
 [@@deriving compare]
 
+let rec string_of_str = function
+  | String(c) -> String.of_char_list c
+  | Dot -> "."
+  | D -> "[0-9]"
+  | S -> "\\w" | W -> "[0-9a-zA-Z]" | L -> "[a-z]" | U -> "A-Z"
+
 let rec show_regex = function
   | Kleene(b) -> show_regex b |> Printf.sprintf "(%s)*"
   | Plus(b) -> show_regex b |> Printf.sprintf "(%s)+"
   | Maybe(b) -> show_regex b |> Printf.sprintf "(%s)?"
   | Alt(a,b) -> Printf.sprintf "(%s|%s)" (show_regex a) (show_regex b)
   | Concat(a,b) -> Printf.sprintf "%s%s" (show_regex a) (show_regex b)
-  | Constant(k) -> match k with
-    | String(c) -> String.of_char_list c
-    | Dot -> "."
-    | D -> "[0-9]"
-    | S -> "\\w" | W -> "[0-9a-zA-Z]" | L -> "[a-z]" | U -> "A-Z"
-      
+  | Constant(k) -> string_of_str k
 
 let rec hash_regex = function
   | Plus(r) -> Hashtbl.hash (hash_regex r, 0)
@@ -221,7 +222,8 @@ and concatConsume a b str = List.map (consume (Some(a), str)) ~f:(f_concat a b)
 and consume cont = (* return a list of continuation, score tuples? *)
   match cont with
   | (None, []) -> [] (* needed here?*)
-  | (None, _ :: _) -> assert (false)
+  | (None, _ :: _) -> (* let _ = Printf.eprintf "%s" ("OUTPUT OUTPUT:"^ (String.concat ~sep:"\n" (snd cont |> List.map ~f:Char.to_string))) in *) 
+  				[ (None, (snd cont)), log 0. ]
   | (Some(Constant(c)), str) -> consumeConst c str
   | (Some(Kleene(a)), str) -> kleeneConsume a str 
   | (Some(Plus(a)), str) -> plusConsume a str 
@@ -352,6 +354,7 @@ register_special_task "regex"
       match run_for_interval timeout
               (fun () ->
                  let r : pregex = regex_of_program expression in
+
                  Printf.eprintf "%s\t%s\n"
                    (string_of_program expression)
                    (show_regex r);
