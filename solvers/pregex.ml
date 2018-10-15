@@ -166,28 +166,25 @@ let rec try_remove_prefix prefix str =
 	| (_, []) ->  None
 	| (ph::pt, sh::st) -> if ph = sh then try_remove_prefix pt st else None;;
 
-let rec in_list ls str =
-	(* checks if there's an element in ls which can be the first element in str*) 
-	match (ls, str) with
-	| ([], l) -> false
-	| (_, []) -> false
-	| (h::t, x::xs) -> if h = x then true else in_list t (x::xs);;
-
-let consumeConst c char_list = 
-	match char_list with 
-	| [] -> []
-	| char_list -> 
-		match c with 
-		| Dot -> if in_list dot_ls char_list then let _::t = char_list in [ (None, t), -. log (List.length dot_ls |> Float.of_int) ] else []
-		| D -> if in_list d_ls char_list then let _::t = char_list in [ (None, t), -. log (List.length d_ls |> Float.of_int) ] else []
-		| S -> if in_list s_ls char_list then let _::t = char_list in [ (None, t), -. log (List.length s_ls |> Float.of_int) ] else []
-		| W -> if in_list w_ls char_list then let _::t = char_list in [ (None, t), -. log (List.length w_ls |> Float.of_int) ] else []
-		| L -> if in_list l_ls char_list then let _::t = char_list in [ (None, t), -. log (List.length l_ls |> Float.of_int) ] else []
-		| U -> if in_list u_ls char_list then let _::t = char_list in [ (None, t), -. log (List.length u_ls |> Float.of_int) ] else []
-		| String(ls) -> 
-			match try_remove_prefix ls char_list with 
-				| None -> []
-				| Some(remainder) -> [ (None, remainder), 0. ] ;;
+let consumeConst c char_list =
+  match char_list with 
+  | [] -> (match c with
+      (* We are done! We didn't need to match anything and we have nothing *)
+      | String([]) -> [(None, []), 0.]
+      (* We failed - we needed to terminate matching because the string is up *)
+      | _ -> [])
+  | hd :: tl -> 
+    match c with 
+    | String(ls) -> 
+      (match try_remove_prefix ls char_list with 
+       | None -> []
+       | Some(remainder) -> [ (None, remainder), 0. ])
+    | _ ->
+      let character_class = get_character_class c in 
+      if List.mem ~equal:(=) character_class hd
+      then [(None, tl), -. (List.length character_class |> Float.of_int)]
+      else []
+        
 
 let f_kleene a partial = 
 	match partial with
@@ -355,22 +352,10 @@ register_special_task "regex"
       match run_for_interval timeout
               (fun () ->
                  let r : pregex = regex_of_program expression in
-                 Printf.eprintf "%s\t%s\n"
-                   (string_of_program expression)
-                   (show_regex r);
                  let rec loop = function
                    | [] -> 0.
                    | e :: es ->
                      let this_score = preg_match r e in
-                     let kevin_score = match_regex r e in
-                     Printf.eprintf "%s\t%s\t%f\t%f\n"
-                       (show_regex r)
-                       (String.of_char_list e)
-                       kevin_score this_score;
-                     if is_valid this_score || is_valid kevin_score then
-                       Printf.eprintf "HIT\n";
-                     flush_everything();
-
                      if is_invalid this_score then log 0. else this_score +. loop es
                  in
                  loop observations)                 
