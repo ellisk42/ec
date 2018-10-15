@@ -334,6 +334,11 @@ if __name__ == "__main__":
                       for xs in [[random.randint(0, 6) for _ in range(5)]]])
             ])
 
+    def isIdentityTask(t):
+        return all( len(xs) == 1 and xs[0] == y for xs, y in t.examples  )
+    eprint("Removed", sum(isIdentityTask(t) for t in tasks), "tasks that were just the identity function")
+    tasks = [t for t in tasks if not isIdentityTask(t) ]
+
     prims = {"base": basePrimitives,
              "McCarthy": McCarthyPrimitives,
              "common": bootstrapTarget_extra,
