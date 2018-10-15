@@ -221,9 +221,14 @@ and concatConsume a b str = List.map (consume (Some(a), str)) ~f:(f_concat a b)
 
 and consume cont = (* return a list of continuation, score tuples? *)
   match cont with
+<<<<<<< HEAD
   | (None, []) -> [] (* needed here?*)
   | (None, _ :: _) -> (* let _ = Printf.eprintf "%s" ("OUTPUT OUTPUT:"^ (String.concat ~sep:"\n" (snd cont |> List.map ~f:Char.to_string))) in *) 
   				[ (None, (snd cont)), log 0. ]
+=======
+  | (None, []) -> assert false (* no regular expression and nothing to consume - this is a match, and should have been caught earlier *)
+  | (None, _ :: _) -> [] (* no regular expression and things to consume - not a match *)
+>>>>>>> e7b1a83e56b79f7f61f5cc573ac8fe45fc4b4c89
   | (Some(Constant(c)), str) -> consumeConst c str
   | (Some(Kleene(a)), str) -> kleeneConsume a str 
   | (Some(Plus(a)), str) -> plusConsume a str 
@@ -234,32 +239,34 @@ and consume cont = (* return a list of continuation, score tuples? *)
 
 let preg_match preg str = (* dikjstras *)
 
-	let cmp = fun (_, score1) (_, score2) -> Float.compare score2 score1 in 
-	let heap = Heap.create ~cmp:cmp () in
-	Heap.add heap ((Some(preg), str), 0.);
-	let visited = Hash_set.Poly.create() in
-	let solution = ref None in
+  let cmp = fun (_, score1) (_, score2) -> Float.compare score2 score1 in 
+  let heap = Heap.create ~cmp:cmp () in
+  Heap.add heap ((Some(preg), str), 0.);
+  let visited = Hash_set.Poly.create() in
+  let solution = ref None in
 
-	let consume_loop (cont_old, score_old) = 
-		consume cont_old |> List.iter ~f:(fun (cont, score) ->
-			if not (Hash_set.mem visited cont) then
-				Hash_set.add visited cont;
-				let newscore = score +. score_old in
-					match cont with
-					| (None, []) -> 
-						solution := Some(newscore) (* TODO output *)
-					| _ -> 
-						Heap.add heap (cont, newscore) ) (* TODO output *) in
+  let consume_loop (cont_old, score_old) = 
+    consume cont_old |> List.iter ~f:(fun (cont, score) ->
+	if not (Hash_set.mem visited cont) then begin 
+	  Hash_set.add visited cont;
+	  let newscore = score +. score_old in
+	  match cont with
+	  | (None, []) -> 
+	    solution := Some(newscore) (* TODO output *)
+          | _ ->
+            Heap.add heap (cont, newscore)
+        end)
+  in 
 
- while !solution = None && not (Heap.top heap = None) do
-   match Heap.pop heap with
-   | Some(partial) -> consume_loop partial
-   | None -> assert false		
-	done;
+  while !solution = None && not (Heap.top heap = None) do
+    match Heap.pop heap with
+    | Some(partial) -> consume_loop partial
+    | None -> assert false		
+  done;
 
-	match !solution with
-	| None -> log 0.
-	| Some(score) -> score ;;
+  match !solution with
+  | None -> log 0.
+  | Some(score) -> score ;;
 
 
 let tregex = make_ground "pregex" ;;
@@ -354,7 +361,6 @@ register_special_task "regex"
       match run_for_interval timeout
               (fun () ->
                  let r : pregex = regex_of_program expression in
-
                  Printf.eprintf "%s\t%s\n"
                    (string_of_program expression)
                    (show_regex r);
@@ -362,6 +368,15 @@ register_special_task "regex"
                    | [] -> 0.
                    | e :: es ->
                      let this_score = preg_match r e in
+                     let kevin_score = match_regex r e in
+                     Printf.eprintf "%s\t%s\t%f\t%f\n"
+                       (show_regex r)
+                       (String.of_char_list e)
+                       kevin_score this_score;
+                     if is_valid this_score || is_valid kevin_score then
+                       Printf.eprintf "HIT\n";
+                     flush_everything();
+
                      if is_invalid this_score then log 0. else this_score +. loop es
                  in
                  loop observations)                 
