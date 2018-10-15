@@ -45,6 +45,7 @@ From: ubuntu
 #require "core.syntax";;
 open Core
 " >> /container/.ocamlinit
+    echo 'eval `opam config env`' >> /container/.bashrc  
 
     wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
     chmod +x Miniconda3-latest-Linux-x86_64.sh
