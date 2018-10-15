@@ -242,7 +242,8 @@ dot_ls |> List.iter ~f: (fun i -> match Hashtbl.find disallowed_regex i with
 let regex_of_program expression : pregex =
   run_lazy_analyzed_with_arguments (analyze_lazy_evaluation expression) [empty_regex];;
 
-
+(* Printf.eprintf "hello world %" *)
+ 
 register_special_task "regex"
   (fun extra ?timeout:(timeout=0.001)
     name task_type examples ->
