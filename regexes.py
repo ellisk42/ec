@@ -17,7 +17,6 @@ import math
 
 class LearnedFeatureExtractor(RecurrentFeatureExtractor):
     H = 16
-    USE_CUDA = False
     special = 'regex'
 
     def tokenize(self, examples):
@@ -50,7 +49,7 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
 
         return tokenized
 
-    def __init__(self, tasks, testingTasks=[]):
+    def __init__(self, tasks, testingTasks=[], cuda=False):
         self.lexicon = set(flatten((t.examples for t in tasks + testingTasks), abort=lambda x: isinstance(
             x, str))).union({"LIST_START", "LIST_END", "?"})
 
@@ -67,7 +66,7 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
             lexicon=list(
                 self.lexicon),
             tasks=tasks,
-            cuda=self.USE_CUDA,
+                cuda=cuda,
             H=self.H,
             bidirectional=True)
 
@@ -133,7 +132,7 @@ def regex_options(parser):
                         choices=["base", "alt1", "easyWords", "alt2", "concat"])
     parser.add_argument("--extractor", type=str,
                         choices=["hand", "deep", "learned", "json"],
-                        default="json")  # if i switch to json it breaks
+                        default="learned")  # if i switch to json it breaks
     parser.add_argument("--split", metavar="TRAIN_RATIO",
                         type=float,
                         default=0.8,
@@ -249,7 +248,6 @@ if __name__ == "__main__":
     }[args.pop("extractor")]
 
     extractor.H = args.pop("hidden")
-    extractor.USE_CUDA = args["cuda"]
 
 
     from time import gmtime, strftime
