@@ -5,6 +5,7 @@ open Task
 open Utils
 open Program
 open Type
+open Yojson.Basic.Util
 
     
 type str = String of char list | Dot | D | S | W | L | U
@@ -160,34 +161,31 @@ type continuation = pregex option * string
 
 
 let rec try_remove_prefix prefix str = 
-	(* returns a none if can't remove, else the removed list*)
+	(* returns a none if can't remove, else the removed list *)
 	match (prefix, str) with
 	| ([], l) -> Some(l)
 	| (_, []) ->  None
 	| (ph::pt, sh::st) -> if ph = sh then try_remove_prefix pt st else None;;
 
-let rec in_list ls str =
-	(* checks if there's an element in ls which can be the first element in str*) 
-	match (ls, str) with
-	| ([], l) -> false
-	| (_, []) -> false
-	| (h::t, x::xs) -> if h = x then true else in_list t (x::xs);;
-
-let consumeConst c char_list = 
-	match char_list with 
-	| [] -> []
-	| char_list -> 
-		match c with 
-		| Dot -> if in_list dot_ls char_list then let _::t = char_list in [ (None, t), -. log (List.length dot_ls |> Float.of_int) ] else []
-		| D -> if in_list d_ls char_list then let _::t = char_list in [ (None, t), -. log (List.length d_ls |> Float.of_int) ] else []
-		| S -> if in_list s_ls char_list then let _::t = char_list in [ (None, t), -. log (List.length s_ls |> Float.of_int) ] else []
-		| W -> if in_list w_ls char_list then let _::t = char_list in [ (None, t), -. log (List.length w_ls |> Float.of_int) ] else []
-		| L -> if in_list l_ls char_list then let _::t = char_list in [ (None, t), -. log (List.length l_ls |> Float.of_int) ] else []
-		| U -> if in_list u_ls char_list then let _::t = char_list in [ (None, t), -. log (List.length u_ls |> Float.of_int) ] else []
-		| String(ls) -> 
-			match try_remove_prefix ls char_list with 
-				| None -> []
-				| Some(remainder) -> [ (None, remainder), 0. ] ;;
+let consumeConst c char_list =
+  match char_list with 
+  | [] -> (match c with
+      (* We are done! We didn't need to match anything and we have nothing *)
+      | String([]) -> [(None, []), 0.]
+      (* We failed - we needed to terminate matching because the string is up *)
+      | _ -> [])
+  | hd :: tl -> 
+    match c with 
+    | String(ls) -> 
+      (match try_remove_prefix ls char_list with 
+       | None -> []
+       | Some(remainder) -> [ (None, remainder), 0. ])
+    | _ ->
+      let character_class = get_character_class c in 
+      if List.mem ~equal:(=) character_class hd
+      then [(None, tl), -. log (List.length character_class |> Float.of_int)]
+      else []
+        
 
 let f_kleene a partial = 
 	match partial with
@@ -355,35 +353,51 @@ register_special_task "regex"
       match run_for_interval timeout
               (fun () ->
                  let r : pregex = regex_of_program expression in
-                 Printf.eprintf "%s\t%s\n"
-                   (string_of_program expression)
-                   (show_regex r);
                  let rec loop = function
                    | [] -> 0.
                    | e :: es ->
                      let this_score = preg_match r e in
-                     let kevin_score = match_regex r e in
-                     Printf.eprintf "%s\t%s\t%f\t%f\n"
-                       (show_regex r)
-                       (String.of_char_list e)
-                       kevin_score this_score;
-                     if is_valid this_score || is_valid kevin_score then
-                       Printf.eprintf "HIT\n";
-                     flush_everything();
-
                      if is_invalid this_score then log 0. else this_score +. loop es
                  in
-                 loop observations)                 
+
+             	(* loop observations ) *) 
+                 let total_char_num = observations |> List.map ~f:List.length |> List.fold_right ~init:0 ~f:(+) |> Float.of_int in
+                 (* Printf.eprintf "total_char_num %f\n" total_char_num; *)
+                 let total_ll = loop observations in
+                 let per_char_ll = total_ll /. total_char_num in
+                 
+                 (* let _ = if per_char_ll <> (log 0.) then 
+                 (Printf.eprintf "per_char_ll %f\n" per_char_ll; 
+                 Printf.eprintf "total_char_num %f\n" total_char_num;
+                 Printf.eprintf "total_ll %f\n" total_ll;
+                 () ) in *)
+
+                 (*Printf.eprintf "ll %f\n" per_char_ll; *)
+                 per_char_ll )         
       with
-      | Some(l) -> l
       | None -> log 0.
+      | Some(l) -> 
+      	(let cutoff_option = extra |> member "cutoff" |> to_number_option in
+      	match cutoff_option with
+      	| None -> 
+      		(* Printf.eprintf "l %f\n" l; *)
+      		l
+      	| Some(cutoff) -> 
+      		(* let _ = if l <> (log 0.) then 
+      		(Printf.eprintf "Cutoff %f\n" cutoff;
+      		Printf.eprintf "l %f\n" l;  ()) in *)
+      		if l >= cutoff then l else log 0.)
     in 
 
     {name; task_type; log_likelihood;} )
                                 
 
-(* let _ = Printf.printf "%f\n"  (preg_match (Alt(Constant(String(['d'])), Constant(D)))  ['9'] |> exp)  *)
+(* let _ = Printf.eprintf "\n\n\n\nLIKELIHOOD: %f\n\n\n\n"  (preg_match (Alt(Constant(String(['d'])), Constant(D)))  ['9'] |> exp) ;;
+let _ = Printf.eprintf "\n\n\n\nLIKELIHOOD: %f\n\n\n\n"  ((preg_match (Constant(D)) ['9']) |> exp) ;; *)
 
+(*let _ = assert (preg_match (Alt(Constant(String(['d'])), Constant(D)))  ['9'] = log (1. /. 20.) ) ;;
+let _ = assert (preg_match (Alt(Constant(String(['s'])), Constant(D)))  ['9'] = log (1. /. 20.) ) ;;
+let _ = assert (preg_match (Alt(Constant(String(['k'])), Constant(D)))  ['9'] = log (1. /. 20.) ) ;;*)
 
 (* qs for kevin:
 map -> List.map list ~f:fun

@@ -88,7 +88,7 @@ touch compressor_dummy
 git fetch
 git checkout {br}
 git pull
-
+git submodule update --init --recursive
 make -C rust_compressor
 """
 

@@ -17,7 +17,7 @@ import math
 
 class LearnedFeatureExtractor(RecurrentFeatureExtractor):
     H = 16
-    USE_CUDA = False
+    #USE_CUDA = False
     special = 'regex'
 
     def tokenize(self, examples):
@@ -50,7 +50,7 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
 
         return tokenized
 
-    def __init__(self, tasks, testingTasks=[]):
+    def __init__(self, tasks, testingTasks=[], cuda=False):
         self.lexicon = set(flatten((t.examples for t in tasks + testingTasks), abort=lambda x: isinstance(
             x, str))).union({"LIST_START", "LIST_END", "?"})
 
@@ -67,7 +67,7 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
             lexicon=list(
                 self.lexicon),
             tasks=tasks,
-            cuda=self.USE_CUDA,
+            cuda=cuda,
             H=self.H,
             bidirectional=True)
 
@@ -124,16 +124,16 @@ def regex_options(parser):
         default=10,
         help="truncate number of examples per task to fit within this boundary")
     parser.add_argument("--tasks",
-                        default="old",
+                        default="long",
                         help="which tasks to use",
-                        choices=["old", "short", "long", "words","number"])
+                        choices=["old", "short", "long", "words", "number"])
     parser.add_argument("--primitives",
                         default="concat",
                         help="Which primitive set to use",
                         choices=["base", "alt1", "easyWords", "alt2", "concat"])
     parser.add_argument("--extractor", type=str,
                         choices=["hand", "deep", "learned", "json"],
-                        default="json")  # if i switch to json it breaks
+                        default="learned")  # if i switch to json it breaks
     parser.add_argument("--split", metavar="TRAIN_RATIO",
                         type=float,
                         default=0.8,
@@ -216,13 +216,7 @@ if __name__ == "__main__":
         del tasks[maxTasks:]
 
     maxExamples = args.pop("maxExamples")
-    for task in tasks:
-        if len(task.examples) > maxExamples:
-            task.examples = task.examples[:maxExamples]
-
-        task.specialTask = ("regex",{})
-        task.examples = [(xs, [y for y in ys ])
-                         for xs,ys in task.examples ]
+   
 
     split = args.pop("split")
     test, train = testTrainSplit(tasks, split)
@@ -232,7 +226,14 @@ if __name__ == "__main__":
     test = add_cutoff_values(test, test_ll_cutoff)
     train = add_cutoff_values(train, train_ll_cutoff)
     eprint("added cutoff values to tasks, train: ", train_ll_cutoff, ", test:", test_ll_cutoff )
+    
+    for task in test + train:
+        if len(task.examples) > maxExamples:
+            task.examples = task.examples[:maxExamples]
 
+        task.specialTask = ("regex", {"cutoff": task.ll_cutoff})
+        task.examples = [(xs, [y for y in ys ])
+                         for xs,ys in task.examples ]
 
     # from list stuff
     primtype = args.pop("primitives")

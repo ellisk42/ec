@@ -3,6 +3,7 @@ open Core
 
 open Gc
 
+open Pregex
 open Tower
 open Utils
 open Type
