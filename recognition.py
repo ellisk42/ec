@@ -112,11 +112,11 @@ class RecognitionModel(nn.Module):
 
         # Build the multilayer perceptron that is sandwiched between the feature extractor and the grammar
         if activation == "sigmoid":
-            activation = nn.sigmoid
+            activation = nn.Sigmoid
         elif activation == "relu":
             activation = nn.ReLU
         elif activation == "tanh":
-            activation = nn.tanh
+            activation = nn.Tanh
         else:
             raise Exception('Unknown activation function ' + str(activation))
         self._MLP = nn.Sequential(*[ layer

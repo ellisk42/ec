@@ -17,15 +17,20 @@ class EvolutionGuide(RecognitionModel):
                                              hidden=hidden, activation=activation,
                                              cuda=cuda, contextual=contextual)
 
-        outputDimensionality = self.hiddenLayers[-1].out_features
-
         # value and policy
-        self.value = nn.Linear(outputDimensionality, 1)
-        self.policy = ContextualGrammarNetwork(outputDimensionality, grammar)
+        self.value = nn.Linear(self.outputDimensionality, 1)
+        self.policy = ContextualGrammarNetwork(self.outputDimensionality, grammar)
 
         if cuda: self.cuda()
 
-        
+    def mutationGrammar(self, goal, current):
+        return self.policy(self._MLP(self.featureExtractor.featuresOfTask(goal, current)))
+    def getFitness(self, goal, current):
+        return self.value(self._MLP(self.featureExtractor.featuresOfTask(goal, current)))
+    def mutationAndFitness(self, goal, current):
+        features = self._MLP(self.featureExtractor.featuresOfTask(goal, current))
+        return self.policy(features), self.value(features)
+    
 
 bootstrapTarget()
 g = Grammar.uniform([Program.parse(p)
