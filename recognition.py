@@ -110,28 +110,32 @@ class RecognitionModel(nn.Module):
             for parameter in featureExtractor.parameters():
                 assert any(myParameter is parameter for myParameter in self.parameters())
 
-        self.hiddenLayers = []
-        inputDimensionality = featureExtractor.outputDimensionality
-        for i,h in enumerate(hidden):
-            layer = nn.Linear(inputDimensionality, h)
-            self.hiddenLayers.append(layer)
-            inputDimensionality = h
-            self.add_module("fc layer %d"%i, layer)
-
+        # Build the multilayer perceptron that is sandwiched between the feature extractor and the grammar
         if activation == "sigmoid":
-            self.activation = F.sigmoid
+            activation = nn.sigmoid
         elif activation == "relu":
-            self.activation = _relu
+            activation = nn.ReLU
         elif activation == "tanh":
-            self.activation = F.tanh
+            activation = nn.tanh
         else:
             raise Exception('Unknown activation function ' + str(activation))
+        self._MLP = nn.Sequential(*[ layer
+                                     for j in range(len(hidden))
+                                     for layer in [
+                                             nn.Linear(([featureExtractor.outputDimensionality] + hidden)[j],
+                                                       hidden[j]),
+                                             activation()]])
+        if len(hidden) > 0:
+            self.outputDimensionality = self._MLP[-2].out_features
+            assert self.outputDimensionality == hidden[-1]
+        else:
+            self.outputDimensionality = self.featureExtractor.outputDimensionality
 
         self.contextual = contextual
         if self.contextual:
-            self.grammarBuilder = ContextualGrammarNetwork(inputDimensionality, grammar)
+            self.grammarBuilder = ContextualGrammarNetwork(self.outputDimensionality, grammar)
         else:
-            self.grammarBuilder = GrammarNetwork(inputDimensionality, grammar)
+            self.grammarBuilder = GrammarNetwork(self.outputDimensionality, grammar)
         
         self.grammar = ContextualGrammar.fromGrammar(grammar) if contextual else grammar
         self.generativeModel = grammar
@@ -145,8 +149,7 @@ class RecognitionModel(nn.Module):
     def forward(self, features):
         """returns either a Grammar or a ContextualGrammar
         Takes as input the output of featureExtractor.featuresOfTask"""
-        for layer in self.hiddenLayers:
-            features = self.activation(layer(features))
+        features = self._MLP(features)
         return self.grammarBuilder(features)
 
     def grammarOfTask(self, task):
