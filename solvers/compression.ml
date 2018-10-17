@@ -305,9 +305,10 @@ let compression_worker connection ~arity ~bs ~topK g frontiers =
 let compression_step_master ~nc ~structurePenalty ~aic ~pseudoCounts ?arity:(arity=3) ~bs ~topI ~topK g frontiers =
 
   let sockets = ref [] in
+  let timestamp = Time.now() |> Time.to_filename_string ~zone:Time.Zone.utc in
   let fork_worker frontiers =
     let p = List.length !sockets in
-    let address = Printf.sprintf "ipc:///tmp/compression_ipc_%d" p in
+    let address = Printf.sprintf "ipc:///tmp/compression_ipc_%s_%d" timestamp p in
     sockets := !sockets @ [address];
 
     match Unix.fork() with
