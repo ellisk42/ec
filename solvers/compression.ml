@@ -224,24 +224,29 @@ let compression_worker connection ~arity ~bs ~topK g frontiers =
   Gc.compact();
   
   let cost_table = empty_cost_table v in
-  
-  let candidates : program list list = time_it ~verbose:!verbose_compression "(worker) proposed candidates"
+
+  (* pack the candidates into a version space for efficiency *)
+  let candidate_table = new_version_table() in
+  let candidates : int list list = time_it ~verbose:!verbose_compression "(worker) proposed candidates"
       (fun () ->
       let reachable : int list list = frontier_indices |> List.map ~f:(reachable_versions v) in
-      let inhabitants : program list list = reachable |> List.map ~f:(fun indices ->
+      let inhabitants : int list list = reachable |> List.map ~f:(fun indices ->
           List.concat_map ~f:(snd % minimum_cost_inhabitants cost_table) indices |>
           List.dedup_and_sort ~compare:(-) |> 
           List.map ~f:(List.hd_exn % extract v) |>
-          List.filter ~f:nontrivial) in 
+          List.filter ~f:nontrivial |>
+          List.map ~f:(incorporate candidate_table)) in 
           inhabitants)
   in
-  if !verbose_compression then Printf.eprintf "(worker) Total candidates: [%s] = %d\n"
+  if !verbose_compression then Printf.eprintf "(worker) Total candidates: [%s] = %d, packs into %d vs\n"
       (candidates |> List.map ~f:(Printf.sprintf "%d" % List.length) |> join ~separator:";")
-      (candidates |> List.map ~f:List.length |> sum);
+      (candidates |> List.map ~f:List.length |> sum)
+      (candidate_table.i2s.ra_occupancy);
   flush_everything();
 
   (* relay this information to the master, whose job it is to pool the candidates *)
-  send candidates;  
+  send (candidates,candidate_table.i2s);
+  let candidate_table = () in
   let candidates : program list = receive() in
   let candidates : int list = candidates |> List.map ~f:(incorporate v) in
   
@@ -349,7 +354,11 @@ let compression_step_master ~nc ~structurePenalty ~aic ~pseudoCounts ?arity:(ari
     
     
   
-  let candidates : program list list = sockets |> List.map ~f:(fun s -> receive s) |> List.concat in  
+  let candidates : program list list = sockets |> List.map ~f:(fun s ->
+      let candidate_message : (int list list)*(vs ra) = receive s in
+      let (candidates, candidate_table) = candidate_message in
+      let candidate_table = {(new_version_table()) with i2s=candidate_table} in
+      candidates |> List.map ~f:(List.map ~f:(singleton_head % extract candidate_table))) |> List.concat in  
   let candidates : program list = occurs_multiple_times (List.concat candidates) in
   Printf.eprintf "Total number of candidates: %d\n" (List.length candidates);
   Printf.eprintf "Constructed version spaces and coalesced candidates in %s.\n"
