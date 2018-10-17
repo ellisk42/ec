@@ -478,7 +478,7 @@ def pypyInduce(*args, **kwargs):
 def ocamlInduce(g, frontiers, _=None,
                topK=1, pseudoCounts=1.0, aic=1.0,
                structurePenalty=0.001, a=0, CPUs=1, 
-                bs=300, topI=100):
+                bs=1000000, topI=300):
     import json
     import os
     import subprocess

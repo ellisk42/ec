@@ -316,6 +316,8 @@ let compression_step_master ~nc ~structurePenalty ~aic ~pseudoCounts ?arity:(ari
     | _ -> ()
   in
 
+  if !verbose_compression then ignore(Unix.system "ps aux|grep compression 1>&2");
+
   let divide_work_fairly nc xs =
     let nt = List.length xs in
     let base_count = nt/nc in
@@ -551,7 +553,10 @@ let compression_step ~structurePenalty ~aic ~pseudoCounts ?arity:(arity=3) ~bs ~
               (string_of_program source)
               (closed_inference source |> string_of_type)
               c s;
-             frontiers' |> List.iter ~f:(fun f -> Printf.eprintf "%s\n" (string_of_frontier f));
+             frontiers' |> List.iter ~f:(fun f ->
+                 let f = string_of_frontier f in
+                 if String.is_substring ~substring:(string_of_program source) f then  
+                   Printf.eprintf "%s\n" f);
              Printf.eprintf "\n"; flush_everything());
           (s,g',frontiers',i))
       |> minimum_by (fun (s,_,_,_) -> -.s)) in
