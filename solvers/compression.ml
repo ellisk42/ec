@@ -235,6 +235,10 @@ let compression_worker connection ~arity ~bs ~topK g frontiers =
           List.filter ~f:nontrivial) in 
           inhabitants)
   in
+  if !verbose_compression then Printf.eprintf "(worker) Total candidates: [%s] = %d\n"
+      (candidates |> List.map ~f:(Printf.sprintf "%d" % List.length) |> join ~separator:";")
+      (candidates |> List.map ~f:List.length |> sum);
+  flush_everything();
 
   (* relay this information to the master, whose job it is to pool the candidates *)
   send candidates;  
