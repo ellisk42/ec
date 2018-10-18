@@ -461,8 +461,8 @@ def induceGrammar(*args, **kwargs):
         elif backend == "ocaml":
             kwargs.pop('iteration')
             kwargs.pop('topk_use_only_likelihood')
-            kwargs['topI'] = 100
-            kwargs['bs'] = 300
+            kwargs['topI'] = 300
+            kwargs['bs'] = 1000000
             g, newFrontiers = ocamlInduce(*args, **kwargs)
             
             
