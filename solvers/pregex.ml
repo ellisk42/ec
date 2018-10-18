@@ -69,9 +69,7 @@ let rec canonical_regex r =
   | Kleene(b) ->
     let b = canonical_regex b in
     if b = empty_regex then empty_regex else Kleene(b)    
-  | Maybe(b) ->
-    let b = canonical_regex b in
-    if b = empty_regex then b else Maybe(b)
+  | Maybe(b) -> Alt(empty_regex,b) |> canonical_regex
   (* associative rules *)
   | Concat(Concat(a,b),c) -> canonical_regex (Concat(a,Concat(b,c)))
   | Alt(Alt(a,b),c) -> canonical_regex (Alt(a,Alt(b,c)))

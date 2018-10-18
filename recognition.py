@@ -1068,6 +1068,7 @@ class NewRecognitionModel(nn.Module):
 
 def helmholtzEnumeration(g, request, inputs, timeout, _=None,
                          special=None, evaluationTimeout=None):
+    """Returns json (as text)"""
     import json
 
     message = {"request": request.json(),
@@ -1084,29 +1085,9 @@ def helmholtzEnumeration(g, request, inputs, timeout, _=None,
                                    stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE)
         response, error = process.communicate(bytes(message, encoding="utf-8"))
-        with timing("(Helmholtz enumeration) parsed json"):
-            response = json.loads(response.decode("utf-8"))
     except OSError as exc:
         raise exc
-
-    h = set()
-    frontiers = []
-    np = 0
-    for e in response:
-        for p in e["programs"]:
-            np += 1
-    eprint("(Helmholtz enumeration) %d distinct programs"%np)
-    with timing("(Helmholtz enumeration) constructed frontiers"):
-        for b, entry in enumerate(response):
-            frontiers.append(Frontier([FrontierEntry(program=Program.parse(p),
-                                                     logPrior=entry["ll"],
-                                                     logLikelihood=0.)
-                                       for p in entry["programs"] ],
-                                      task=Task(str(b),
-                                                request,
-                                                [])))
-
-    return frontiers
+    return response
 
 def backgroundHelmholtzEnumeration(tasks, g, timeout, _=None,
                                    special=None, evaluationTimeout=None):
@@ -1123,7 +1104,20 @@ def backgroundHelmholtzEnumeration(tasks, g, timeout, _=None,
                 for r in requests ]
     def get():
         results = [p.get() for p in promises]
-        return [x for xs in results for x in xs]
+        frontiers = []
+        with timing("(Helmholtz enumeration) Decoded json into frontiers"):
+            for request, result in zip(requests, results):
+                response = json.loads(result.decode("utf-8"))
+                for b, entry in enumerate(response):
+                    frontiers.append(Frontier([FrontierEntry(program=Program.parse(p),
+                                                             logPrior=entry["ll"],
+                                                             logLikelihood=0.)
+                                               for p in entry["programs"] ],
+                                              task=Task(str(b),
+                                                        request,
+                                                        [])))
+        eprint("Total number of Helmholtz frontiers:",len(frontiers))
+        return frontiers
     return get
             
 if __name__ == "__main__":
