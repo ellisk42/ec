@@ -461,8 +461,8 @@ def induceGrammar(*args, **kwargs):
         elif backend == "ocaml":
             kwargs.pop('iteration')
             kwargs.pop('topk_use_only_likelihood')
-            kwargs['topI'] = 100
-            kwargs['bs'] = 300
+            kwargs['topI'] = 300
+            kwargs['bs'] = 1000000
             g, newFrontiers = ocamlInduce(*args, **kwargs)
             
             
@@ -478,7 +478,7 @@ def pypyInduce(*args, **kwargs):
 def ocamlInduce(g, frontiers, _=None,
                topK=1, pseudoCounts=1.0, aic=1.0,
                structurePenalty=0.001, a=0, CPUs=1, 
-                bs=300, topI=100):
+                bs=1000000, topI=300):
     import json
     import os
     import subprocess
@@ -489,7 +489,17 @@ def ocamlInduce(g, frontiers, _=None,
     t2f = {f.task: f for f in frontiers}
     frontiers = [f for f in frontiers if not f.empty ]
 
+    # This is a dirty hack!
+    # Memory consumption increases with the number of CPUs
+    # And early on we have a lot of stuff to compress
+    # If this is the first iteration, only use a fraction of the available CPUs
+    if all( not p.isInvented for p in g.primitives ):
+        CPUs = max(1, int(CPUs/3))
+    else:
+        CPUs = max(1, int(CPUs/2))
+
     message = {"arity": a,
+               "verbose": True,
                "topK": topK,
                "pseudoCounts": float(pseudoCounts),
                "aic": aic,

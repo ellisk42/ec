@@ -224,20 +224,29 @@ let compression_worker connection ~arity ~bs ~topK g frontiers =
   Gc.compact();
   
   let cost_table = empty_cost_table v in
-  
-  let candidates : program list list = time_it ~verbose:!verbose_compression "(worker) proposed candidates"
+
+  (* pack the candidates into a version space for efficiency *)
+  let candidate_table = new_version_table() in
+  let candidates : int list list = time_it ~verbose:!verbose_compression "(worker) proposed candidates"
       (fun () ->
       let reachable : int list list = frontier_indices |> List.map ~f:(reachable_versions v) in
-      let inhabitants : program list list = reachable |> List.map ~f:(fun indices ->
+      let inhabitants : int list list = reachable |> List.map ~f:(fun indices ->
           List.concat_map ~f:(snd % minimum_cost_inhabitants cost_table) indices |>
           List.dedup_and_sort ~compare:(-) |> 
           List.map ~f:(List.hd_exn % extract v) |>
-          List.filter ~f:nontrivial) in 
+          List.filter ~f:nontrivial |>
+          List.map ~f:(incorporate candidate_table)) in 
           inhabitants)
   in
+  if !verbose_compression then Printf.eprintf "(worker) Total candidates: [%s] = %d, packs into %d vs\n"
+      (candidates |> List.map ~f:(Printf.sprintf "%d" % List.length) |> join ~separator:";")
+      (candidates |> List.map ~f:List.length |> sum)
+      (candidate_table.i2s.ra_occupancy);
+  flush_everything();
 
   (* relay this information to the master, whose job it is to pool the candidates *)
-  send candidates;  
+  send (candidates,candidate_table.i2s);
+  let candidate_table = () in
   let candidates : program list = receive() in
   let candidates : int list = candidates |> List.map ~f:(incorporate v) in
   
@@ -296,15 +305,18 @@ let compression_worker connection ~arity ~bs ~topK g frontiers =
 let compression_step_master ~nc ~structurePenalty ~aic ~pseudoCounts ?arity:(arity=3) ~bs ~topI ~topK g frontiers =
 
   let sockets = ref [] in
+  let timestamp = Time.now() |> Time.to_filename_string ~zone:Time.Zone.utc in
   let fork_worker frontiers =
     let p = List.length !sockets in
-    let address = Printf.sprintf "ipc:///tmp/compression_ipc_%d" p in
+    let address = Printf.sprintf "ipc:///tmp/compression_ipc_%s_%d" timestamp p in
     sockets := !sockets @ [address];
 
     match Unix.fork() with
     | `In_the_child -> compression_worker address ~arity ~bs ~topK g frontiers
     | _ -> ()
   in
+
+  if !verbose_compression then ignore(Unix.system "ps aux|grep compression 1>&2");
 
   let divide_work_fairly nc xs =
     let nt = List.length xs in
@@ -345,7 +357,11 @@ let compression_step_master ~nc ~structurePenalty ~aic ~pseudoCounts ?arity:(ari
     
     
   
-  let candidates : program list list = sockets |> List.map ~f:(fun s -> receive s) |> List.concat in  
+  let candidates : program list list = sockets |> List.map ~f:(fun s ->
+      let candidate_message : (int list list)*(vs ra) = receive s in
+      let (candidates, candidate_table) = candidate_message in
+      let candidate_table = {(new_version_table()) with i2s=candidate_table} in
+      candidates |> List.map ~f:(List.map ~f:(singleton_head % extract candidate_table))) |> List.concat in  
   let candidates : program list = occurs_multiple_times (List.concat candidates) in
   Printf.eprintf "Total number of candidates: %d\n" (List.length candidates);
   Printf.eprintf "Constructed version spaces and coalesced candidates in %s.\n"
@@ -537,7 +553,10 @@ let compression_step ~structurePenalty ~aic ~pseudoCounts ?arity:(arity=3) ~bs ~
               (string_of_program source)
               (closed_inference source |> string_of_type)
               c s;
-             frontiers' |> List.iter ~f:(fun f -> Printf.eprintf "%s\n" (string_of_frontier f));
+             frontiers' |> List.iter ~f:(fun f ->
+                 let f = string_of_frontier f in
+                 if String.is_substring ~substring:(string_of_program source) f then  
+                   Printf.eprintf "%s\n" f);
              Printf.eprintf "\n"; flush_everything());
           (s,g',frontiers',i))
       |> minimum_by (fun (s,_,_,_) -> -.s)) in
@@ -584,7 +603,9 @@ let compression_loop
   let step = if nc = 1 then compression_step else compression_step_master ~nc in 
 
   let rec loop g frontiers = 
-    match step ~structurePenalty ~topK ~aic ~pseudoCounts ~arity ~bs ~topI g frontiers with
+    match time_it "Completed one step of memory consolidation"
+            (fun () -> step ~structurePenalty ~topK ~aic ~pseudoCounts ~arity ~bs ~topI g frontiers)
+    with
     | None -> g, frontiers
     | Some(g',frontiers') ->
       illustrate_new_primitive g' (find_new_primitive g g') frontiers';

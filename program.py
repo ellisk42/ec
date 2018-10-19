@@ -232,6 +232,15 @@ class Application(Program):
     def freeVariables(self):
         return self.f.freeVariables() | self.x.freeVariables()
 
+    def clone(self): return Application(self.f.clone(), self.x.clone)
+
+    def annotateTypes(self, context, environment):
+        self.f.annotateTypes(context, environment)
+        self.x.annotateTypes(context, environment)
+        r = context.makeVariable()
+        context.unify(arrow(x.annotatedType, r), f.annotatedType)
+        self.annotatedType = r.applyMutable(context)        
+
 
     @property
     def isApplication(self): return True
@@ -399,6 +408,11 @@ class Index(Program):
             freeVariables[i] = variable
             return (context, variable)
 
+    def clone(self): return Index(self.i)
+
+    def annotateTypes(self, context, environment):
+        self.annotatedType = environment[self.i].applyMutable(context)
+
     def shift(self, offset, depth=0):
         # bound variable
         if self.bound(depth):
@@ -490,6 +504,13 @@ class Abstraction(Program):
                                                       *arguments,
                                                       **keywords)
 
+    def clone(self): return Abstraction(self.body.clone())
+
+    def annotateTypes(self, context, environment):
+        v = context.makeVariable()
+        self.body.annotateTypes(context, [v] + environment)
+        self.annotatedType = arrow(v.applyMutable(context), self.body.annotatedType)
+
     def show(self, isFunction):
         return "(lambda %s)" % (self.body.show(False))
 
@@ -567,6 +588,11 @@ class Primitive(Program):
 
     def show(self, isFunction): return self.name
 
+    def clone(self): return Primitive(self.name, self.tp, self.value)
+
+    def annotateTypes(self, context, environment):
+        self.annotatedType = self.tp.instantiateMutable(context)
+
     def evaluate(self, environment): return self.value
 
     def betaReduce(self): return None
@@ -638,6 +664,11 @@ class Invented(Program):
     def __setstate__(self, state):
         self.body, self.tp = state
         self.hashCode = None
+
+    def clone(self): return Invented(self.body)
+
+    def annotateTypes(self, context, environment):
+        self.annotatedType = self.tp.instantiateMutable(context)
 
     def evaluate(self, e): return self.body.evaluate([])
 

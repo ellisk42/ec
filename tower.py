@@ -1,5 +1,6 @@
 from ec import *
 
+from tower_common import *
 from towerPrimitives import primitives, executeTower
 from makeTowerTasks import *
 from listPrimitives import bootstrapTarget
@@ -52,7 +53,7 @@ class TowerCNN(nn.Module):
         z_dim = 64
 
         self.encoder = nn.Sequential(
-            conv_block(3, hid_dim),
+            conv_block(6, hid_dim),
             conv_block(hid_dim, hid_dim),
             conv_block(hid_dim, hid_dim),
             conv_block(hid_dim, z_dim),
@@ -65,9 +66,14 @@ class TowerCNN(nn.Module):
             self.CUDA=True
             self.cuda()  # I think this should work?
 
-    def forward(self, v):
+    def forward(self, v, v2=None):
+        """v: tower to build. v2: image of tower we have built so far"""
+        if v2 is None:
+            v2 = np.zeros((self.inputImageDimension, self.inputImageDimension, 3))
+        v = np.concatenate((v,v2), axis=2)
+        
         v = np.transpose(v,(2,0,1))
-        assert v.shape == (3,self.inputImageDimension,self.inputImageDimension)
+        assert v.shape == (6,self.inputImageDimension,self.inputImageDimension)
         v = variable(v, cuda=self.CUDA).float()
         # insert batch
         v = torch.unsqueeze(v, 0)
@@ -76,8 +82,9 @@ class TowerCNN(nn.Module):
         v = self.encoder(v)
         return v.view(-1)
 
-    def featuresOfTask(self, t):  # Take a task and returns [features]
-        return self(t.getImage())
+    def featuresOfTask(self, t, t2=None):  # Take a task and returns [features]
+        return self(t.getImage(),
+                    None if t2 is None else t2.getImage(drawHand=True))
 
     def taskOfProgram(self, p, t):
         try:
@@ -247,12 +254,6 @@ if __name__ == "__main__":
                            evaluationTimeout=evaluationTimeout,
                            solver="ocaml",
                            **arguments)
-    os.system("python tower_server.py KILL")
-    time.sleep(1)
-    os.system("python tower_server.py &")
-    time.sleep(1)
-
-    perturbations = {t.perturbation for t in train if isinstance(t,TowerTask)}
 
     dreamOfTowers(g0, "%s/random_0"%outputDirectory)
     

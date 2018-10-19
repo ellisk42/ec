@@ -18,7 +18,6 @@ import pregex as pre
 
 class LearnedFeatureExtractor(RecurrentFeatureExtractor):
     H = 16
-    #USE_CUDA = False
     special = 'regex'
 
     def tokenize(self, examples):
@@ -263,7 +262,6 @@ if __name__ == "__main__":
     }[args.pop("extractor")]
 
     extractor.H = args.pop("hidden")
-    extractor.USE_CUDA = args["cuda"]
 
 
     from time import gmtime, strftime

@@ -207,7 +207,7 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
 
 
 def train_necessary(task):
-    if t.name in {"head", "is-primes", "len", "pop", "repeat-many", "tail"}:
+    if t.name in {"head", "is-primes", "len", "pop", "repeat-many", "tail", "keep primes", "keep squares"}:
         return True
     if any(t.name.startswith(x) for x in {
         "add-k", "append-k", "bool-identify-geq-k", "count-k", "drop-k",
@@ -333,6 +333,11 @@ if __name__ == "__main__":
                       for _ in range(15)
                       for xs in [[random.randint(0, 6) for _ in range(5)]]])
             ])
+
+    def isIdentityTask(t):
+        return all( len(xs) == 1 and xs[0] == y for xs, y in t.examples  )
+    eprint("Removed", sum(isIdentityTask(t) for t in tasks), "tasks that were just the identity function")
+    tasks = [t for t in tasks if not isIdentityTask(t) ]
 
     prims = {"base": basePrimitives,
              "McCarthy": McCarthyPrimitives,

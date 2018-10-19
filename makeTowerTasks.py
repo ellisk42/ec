@@ -18,20 +18,28 @@ class SupervisedTower(Task):
             plan = program.evaluate([])(lambda s: (s,[]))(0)[1]
         else:
             plan = program
+        self.original = program
+        self.hand, self.plan = program.evaluate([])(lambda s: (s,[]))(0)
         super(SupervisedTower, self).__init__(name, arrow(ttower,ttower), [],
                                               features=[])
         self.specialTask = ("supervisedTower",
-                            {"plan": plan})
-        self.plan = plan
+                            {"plan": self.plan})
         self.image = None
+        self.handImage = None
 
-    def getImage(self):
+    def getImage(self, drawHand=False):
         from tower_common import fastRendererPlan
-        if self.image is not None: return self.image
 
-        self.image = fastRendererPlan(centerTower(self.plan))
-
-        return self.image
+        if not drawHand:
+            if self.image is not None: return self.image
+            self.image = fastRendererPlan(self.plan)
+            return self.image
+        else:
+            if self.handImage is not None: return self.handImage
+            self.handImage = fastRendererPlan(self.plan,
+                                              drawHand=self.hand)
+            return self.handImage
+                
 
     
     # do not pickle the image
@@ -45,7 +53,7 @@ class SupervisedTower(Task):
     def animate(self):
         from tower_common import fastRendererPlan
         from pylab import imshow,show
-        a = fastRendererPlan(centerTower(self.plan))
+        a = fastRendererPlan(self.plan)
         imshow(a)
         show()
 
@@ -53,15 +61,16 @@ class SupervisedTower(Task):
     def showMany(ts):
         from tower_common import fastRendererPlan
         from pylab import imshow,show
-        a = montage([fastRendererPlan(centerTower(t.plan),pretty=True,Lego=True)
+        a = montage([fastRendererPlan(t.plan,pretty=True,Lego=True)
                          for t in ts]) 
         imshow(a)
         show()
 
-    def exportImage(self, f, pretty=True, Lego=True):
+    def exportImage(self, f, pretty=True, Lego=True, drawHand=False):
         from tower_common import fastRendererPlan
-        a = fastRendererPlan(centerTower(t.plan),
-                             pretty=pretty, Lego=Lego)
+        a = fastRendererPlan(t.plan,
+                             pretty=pretty, Lego=Lego,
+                             drawHand=t.hand if drawHand else None)
         import scipy.misc
         scipy.misc.imsave(f, a)
         
@@ -70,198 +79,6 @@ class SupervisedTower(Task):
         
 
     
-
-class TowerTask(Task):
-    tasks = []
-    STABILITYTHRESHOLD = 0.5
-
-    def __init__(self, _=None, perturbation=0,
-                 maximumStaircase=100,
-                 maximumMass=100,
-                 minimumLength=0,
-                 minimumArea=0,
-                 minimumOverpass=0,
-                 minimumHeight=None):
-        name = "; ".join("%s: %s" % (k, v) for k, v in locals().items()
-                         if k not in {"_", "self", "__class__"})
-        features = [perturbation,
-                    float(maximumMass),
-                    float(minimumHeight),
-                    float(minimumLength),
-                    float(minimumArea),
-                    float(maximumStaircase),
-                    float(minimumOverpass)]
-        super(TowerTask, self).__init__(name, arrow(ttower,ttower), [],
-                                        features=features)
-
-        self.minimumOverpass = minimumOverpass
-        self.maximumStaircase = maximumStaircase
-        self.perturbation = perturbation
-        self.minimumLength = minimumLength
-        self.maximumMass = maximumMass
-        self.minimumHeight = minimumHeight
-        self.minimumArea = minimumArea
-
-        self.specialTask = ("tower",
-                            {"maximumStaircase": maximumStaircase,
-                             "perturbation": perturbation,
-                             "minimumLength": minimumLength,
-                             "maximumMass": maximumMass,
-                             "minimumHeight": minimumHeight,
-                             "minimumArea": minimumArea,
-                             "minimumOverpass": minimumOverpass})
-
-        TowerTask.tasks.append(self)
-
-    @staticmethod
-    def evaluateTower(tower, perturbation):
-        global TOWERCACHING
-        from tower_common import TowerWorld
-
-        key = (tuple(tower), perturbation)
-        if key in TOWERCACHING:
-            result = TOWERCACHING[key]
-        else:
-            def powerOfTen(n):
-                if n <= 0:
-                    return False
-                while True:
-                    if n == 1:
-                        return True
-                    if n % 10 != 0:
-                        return False
-                    n = n / 10
-
-            if powerOfTen(len(TOWERCACHING)):
-                eprint("Tower cache reached size", len(TOWERCACHING))
-                name = "experimentOutputs/towers%d.png" % len(TOWERCACHING)
-                #exportTowers(list(set([ _t for _t,_ in TOWERCACHING.keys()])), name)
-                eprint("Exported towers to image", name)
-            w = TowerWorld()
-            try:
-                result = w.sampleStability(tower, perturbation, N=15)
-            except BaseException:
-                result = None
-
-            # except Exception as exception:
-            #     eprint("exception",exception)
-            #     eprint(perturbation, tower)
-            #     raise exception
-
-            TOWERCACHING[key] = result
-        return Bunch(result) if result is not None else result
-
-    def logLikelihood(self, e, timeout=None):
-        if timeout is not None:
-            def timeoutCallBack(_1, _2): raise EvaluationTimeout()
-            signal.signal(signal.SIGVTALRM, timeoutCallBack)
-            signal.setitimer(signal.ITIMER_VIRTUAL, timeout)
-
-        try:
-            tower = executeTower(e)
-            if timeout is not None:
-                signal.signal(signal.SIGVTALRM, lambda *_: None)
-                signal.setitimer(signal.ITIMER_VIRTUAL, 0)
-        except EvaluationTimeout:
-            return NEGATIVEINFINITY
-        except BaseException:
-            if timeout is not None:
-                signal.signal(signal.SIGVTALRM, lambda *_: None)
-                signal.setitimer(signal.ITIMER_VIRTUAL, 0)
-            return NEGATIVEINFINITY
-
-        mass = sum(w * h for _, w, h in tower)
-        if mass > self.maximumMass:
-            return NEGATIVEINFINITY
-
-        tower = centerTower(tower)
-
-        result = TowerTask.evaluateTower(tower, self.perturbation)
-        if result is None:
-            return NEGATIVEINFINITY
-
-        if result.height < self.minimumHeight:
-            return NEGATIVEINFINITY
-        if result.staircase > self.maximumStaircase:
-            return NEGATIVEINFINITY
-        if result.stability < TowerTask.STABILITYTHRESHOLD:
-            # eprint("stability")
-            return NEGATIVEINFINITY
-        if result.length < self.minimumLength:
-            #eprint("len()", result.length)
-            return NEGATIVEINFINITY
-        if result.area < self.minimumArea:
-            # eprint("area")
-            return NEGATIVEINFINITY
-        if result.overpass < self.minimumOverpass:
-            return NEGATIVEINFINITY
-        return 50.0 * math.log(result.stability)
-
-    def animateSolution(self, e):
-        import os
-
-        if isinstance(e, Program):
-            tower = executeTower(e)
-        else:
-            assert isinstance(e, list)
-            tower = e
-
-        os.system(
-            "python towers/visualize.py '%s' %f" %
-            (tower, self.perturbation))
-
-    def drawSolution(self, tower):
-        from towers.tower_common import TowerWorld
-        return TowerWorld().draw(tower)
-
-
-def centerTower(t):
-    x1 = max(x for x, _, _ in t)
-    x0 = min(x for x, _, _ in t)
-    c = (x1 - x0) / 2 + x0
-    return [(x - c, w, h) for x, w, h in t]
-
-def towerLength(t):
-    x1 = max(x for x, _, _ in t)
-    x0 = min(x for x, _, _ in t)
-    return x1 - x0
-
-def towerHeight(t):
-    y1 = max(y + h/2 for _, y, _, h in t )
-    y0 = min(y - h/2 for _, y, _, h in t )
-    return y1 - y0
-
-
-def makeTasks():
-    """ideas:
-    House (enclose some minimum area)
-    Bridge (be able to walk along it for some long distance, and also have a certain minimum height; enclosing elevated area at a certain height)
-    Overhang (like a porch)
-    Overpass (have a large hole)"""
-    
-    MILDPERTURBATION = 2
-    MASSES = [500]
-    HEIGHT = [1.9, 6, 10]
-    STAIRCASE = [10.5, 2.5, 1.5]
-    OVERPASS = [2.9,5.8]
-    LENGTHS = [2, 5, 8]
-    AREAS = [1, 2.9, 5.8, 11.6]
-    return [TowerTask(maximumMass=float(m),
-                      maximumStaircase=float(s),
-                      minimumArea=float(a),
-                      perturbation=float(p),
-                      minimumLength=float(l),
-                      minimumHeight=float(h),
-                      minimumOverpass=float(o))
-            for o in OVERPASS 
-            for m in MASSES
-            for a in AREAS
-            for s in STAIRCASE
-            for l in LENGTHS
-            for p in [MILDPERTURBATION]
-            for h in HEIGHT
-            if o <= a
-            ]
 
 def parseTower(s):
     _13 = Program.parse("1x3")
@@ -317,7 +134,6 @@ def parseTower(s):
     
 def makeSupervisedTasks():
     from towerPrimitives import _left,_right,_loop,_embed
-    
     arches = [SupervisedTower("arch leg %d"%n,
                               "(%s (r 4) %s (l 2) h)"%("v "*n, "v "*n))
               for n in range(1,9)
@@ -444,7 +260,8 @@ if __name__ == "__main__":
     SupervisedTower.showMany(ts)
     
     for j,t in enumerate(ts):
-        t.exportImage(f"/tmp/tower_{j}.png")
+        t.exportImage(f"/tmp/tower_{j}.png",
+                      drawHand=False)
         
         
         

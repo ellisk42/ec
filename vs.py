@@ -1010,16 +1010,22 @@ def testTyping(p):
     sys.exit()
     
 def testSharing():
-    from versionSpace import ExpressionTable
     source = "(+ 1 1)"
-    N = 100
+    N = 9
+    smart = []
+    dumb = []
     for _ in range(N):
-        t = ExpressionTable()
-        t.invert(t.incorporate(Program.parse(source)))
         v = VersionTable(typed=False)
-        v.inversion(v.incorporate(Program.parse(source)))
-        print(len(v.expressions),len(t))
+        j = v.inversion(v.incorporate(Program.parse(source)))
+        smart.append(len(v.expressions))
+        dumb.append(len(set(v.extract(j))))
         source = "(+ 1 %s)"%source
+
+    import matplotlib.pyplot as plot
+    plot.plot(range(N),smart)
+    plot.plot(range(N),dumb)
+    plot.legend(['vs','no vs'])
+    plot.show()
     assert False
         
 if __name__ == "__main__":
@@ -1029,6 +1035,7 @@ if __name__ == "__main__":
     from fragmentGrammar import *
     bootstrapTarget_extra()
     McCarthyPrimitives()
+    testSharing()
 
     # p = Program.parse("(#(lambda (lambda (lambda (fold $0 empty ($1 $2))))) cons (lambda (lambda (lambda ($2 (+ (+ 5 5) (+ $1 $1)) $0)))))")
     # print(EtaLongVisitor().execute(p))

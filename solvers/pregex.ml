@@ -59,17 +59,27 @@ and
   | c -> Hashtbl.hash c
                    
 
-let rec canonical_regex r = match r with
+let rec canonical_regex r =
+  let empty_regex = Constant(String([])) in
+  
+  match r with
   | Constant(_) -> r
   | Plus(b) ->
     let b = canonical_regex b in 
     canonical_regex (Concat(b,Kleene(b)))
-  | Kleene(b) -> Kleene(canonical_regex b)
-  | Maybe(b) -> Maybe(canonical_regex b)
+  | Kleene(b) ->
+    let b = canonical_regex b in
+    if b = empty_regex then empty_regex else Kleene(b)    
+  | Maybe(b) -> Alt(empty_regex,b) |> canonical_regex
   (* associative rules *)
   | Concat(Concat(a,b),c) -> canonical_regex (Concat(a,Concat(b,c)))
   | Alt(Alt(a,b),c) -> canonical_regex (Alt(a,Alt(b,c)))
-  | Concat(a,b) -> Concat(canonical_regex a, canonical_regex b)
+  | Concat(a,b) ->
+    let a = canonical_regex a in
+    let b = canonical_regex b in
+    if a = empty_regex then b else
+    if b = empty_regex then a else
+      Concat(a, b)
   | Alt(a,b) ->
     let a = canonical_regex a in
     let b = canonical_regex b in
