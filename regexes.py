@@ -17,7 +17,7 @@ import pregex as pre
 
 
 class LearnedFeatureExtractor(RecurrentFeatureExtractor):
-    H = 16
+    H = 64
     special = 'regex'
 
     def tokenize(self, examples):
@@ -54,6 +54,8 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
         self.lexicon = set(flatten((t.examples for t in tasks + testingTasks), abort=lambda x: isinstance(
             x, str))).union({"LIST_START", "LIST_END", "?"})
 
+        self.num_examples_list = [len(t.examples) for t in tasks]
+
         # Calculate the maximum length
         self.maximumLength = POSITIVEINFINITY
         self.maximumLength = max(len(l)
@@ -71,12 +73,13 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
             H=self.H,
             bidirectional=True)
 
-    #def taskOfProgram(self, p, t):
+
+    def taskOfProgram(self, p, t):
         #raise NotImplementedError
-        #preg = p.evaluate([])(pre.String(""))
-        #t = Task("Helm", t, [((), preg.sample()) for _ in range(5) ])
-        #return t
-        
+        num_examples = random.choice(self.num_examples_list)
+        preg = p.evaluate([])(pre.String(""))
+        t = Task("Helm", t, [((), preg.sample()) for _ in range(num_examples) ])
+        return t
         
         #in init: loop over tasks, save lengths, 
 

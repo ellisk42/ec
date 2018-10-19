@@ -91,7 +91,7 @@ class ContextualGrammarNetwork(nn.Module):
                 self.add_module("Invention %d, argument %d"%(ei,n),
                                 self.library[e][n])
 
-    def forward(self,x):
+    def forward(self, x):
         return ContextualGrammar(self.noParent(x), self.variableParent(x),
                                  {e: [g(x) for g in gs ]
                                   for e,gs in self.library.items() })
@@ -165,9 +165,8 @@ class RecognitionModel(nn.Module):
         return - entry.program.logLikelihood(g)
 
     def frontierBiasOptimal(self, frontier):
-        features = self.featureExtractor.featuresOfTask(frontier.task)
-        if features is None: return None
-        g = self(features)
+        g = self.grammarOfTask(frontier.task)
+        if g is None: return None
         l = [entry.program.logLikelihood(g)
              for entry in frontier]
         l = torch.stack(l,1).squeeze(0)
@@ -298,7 +297,7 @@ class RecognitionModel(nn.Module):
                 self.request = frontier.task.request
                 self.task = None
                 self.programs = [e.program for e in frontier]
-                self.frontier = owner.replaceProgramsWithLikelihoodSummaries(frontier)
+                self.frontier = Thunk(lambda: owner.replaceProgramsWithLikelihoodSummaries(frontier))
                 self.owner = owner
 
             def clear(self): self.task = None
@@ -310,7 +309,7 @@ class RecognitionModel(nn.Module):
 
             def makeFrontier(self):
                 assert self.task is not None
-                f = Frontier(self.frontier.entries,
+                f = Frontier(self.frontier.force().entries,
                              task=self.task)
                 return f
             
@@ -324,8 +323,10 @@ class RecognitionModel(nn.Module):
         # wastes time.
         if not hasattr(self.featureExtractor, 'recomputeTasks'):
             self.featureExtractor.recomputeTasks = True
+        eprint("TEST HELMHOLTZ ENTRY START")
         helmholtzFrontiers = [HelmholtzEntry(f, self)
                               for f in helmholtzFrontiers]
+        eprint("TEST HELMHOLTZ ENTRY END")
         random.shuffle(helmholtzFrontiers)
 
         

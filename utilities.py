@@ -10,6 +10,20 @@ import pickle as pickle
 from itertools import chain
 import heapq
 
+class Thunk(object):
+    # A class for lazy evaluation
+    def __init__(self, thing):
+        self.thing = thing
+        self.evaluated = False 
+
+    def force(self):
+        if self.evaluated:
+            return self.thing
+        else: 
+            self.thing = self.thing()
+            self.evaluated = True
+            return self.thing
+
 def cindex(i): return lambda a: a[i]
 
 class ConstantFunction:
