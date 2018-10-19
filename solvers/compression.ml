@@ -164,11 +164,21 @@ let rewrite_with_invention i =
       | Index(_) | Primitive(_,_,_) | Invented(_,_) -> e
   in
   fun request e ->
-    let e' = visit e |> eta_long request in
-    assert (program_equal
-              (beta_normal_form ~reduceInventions:true e)
-              (beta_normal_form ~reduceInventions:true e'));
-    e'
+    try
+      let e' = visit e |> eta_long request in
+      assert (program_equal
+                (beta_normal_form ~reduceInventions:true e)
+                (beta_normal_form ~reduceInventions:true e'));
+      e'
+    with UnificationFailure ->
+      Printf.eprintf "WARNING: rewriting with invention gave ill typed term.\n";
+      Printf.eprintf "Original:\t\t%s\n" (e |> string_of_program);
+      Printf.eprintf "Original:\t\t%s\n" (e |> beta_normal_form ~reduceInventions:true |> string_of_program);
+      Printf.eprintf "Rewritten:\t\t%s\n" (visit e |> string_of_program);
+      Printf.eprintf "Rewritten:\t\t%s\n" (visit e |> beta_normal_form ~reduceInventions:true |> string_of_program);
+      Printf.eprintf "Going to proceed as if the rewrite had failed - but look into this because it could be a bug.\n";
+      flush_everything();
+      raise EtaExpandFailure
 
 let nontrivial e =
   let indices = ref [] in
