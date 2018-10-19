@@ -603,7 +603,9 @@ let compression_loop
   let step = if nc = 1 then compression_step else compression_step_master ~nc in 
 
   let rec loop g frontiers = 
-    match step ~structurePenalty ~topK ~aic ~pseudoCounts ~arity ~bs ~topI g frontiers with
+    match time_it "Completed one step of memory consolidation"
+            (fun () -> step ~structurePenalty ~topK ~aic ~pseudoCounts ~arity ~bs ~topI g frontiers)
+    with
     | None -> g, frontiers
     | Some(g',frontiers') ->
       illustrate_new_primitive g' (find_new_primitive g g') frontiers';
