@@ -4,7 +4,7 @@ from ec import explorationCompression, commandlineArguments, Task
 from grammar import Grammar
 #from utilities import eprint, testTrainSplit, numberOfCPUs, flatten
 from utilities import eprint, numberOfCPUs, flatten, fst, testTrainSplit, POSITIVEINFINITY
-from makeRegexTasks import makeOldTasks, makeLongTasks, makeShortTasks, makeWordTasks, makeNumberTasks
+from makeRegexTasks import makeOldTasks, makeLongTasks, makeShortTasks, makeWordTasks, makeNumberTasks, makeHandPickedTasks, makeNewTasks
 from regexPrimitives import basePrimitives, altPrimitives, easyWordsPrimitives, alt2Primitives, concatPrimitives
 from likelihoodModel import add_cutoff_values
 #from program import *
@@ -12,6 +12,7 @@ from recognition import RecurrentFeatureExtractor, JSONFeatureExtractor
 import random
 from type import tpregex
 import math
+import pregex as pre
 
 
 
@@ -71,6 +72,16 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
             H=self.H,
             bidirectional=True)
 
+    #def taskOfProgram(self, p, t):
+        #raise NotImplementedError
+        #preg = p.evaluate([])(pre.String(""))
+        #t = Task("Helm", t, [((), preg.sample()) for _ in range(5) ])
+        #return t
+        
+        
+        #in init: loop over tasks, save lengths, 
+
+
 
 class MyJSONFeatureExtractor(JSONFeatureExtractor):
     N_EXAMPLES = 5
@@ -126,7 +137,7 @@ def regex_options(parser):
     parser.add_argument("--tasks",
                         default="long",
                         help="which tasks to use",
-                        choices=["old", "short", "long", "words", "number"])
+                        choices=["old", "short", "long", "words", "number", "handpicked", "new"])
     parser.add_argument("--primitives",
                         default="concat",
                         help="Which primitive set to use",
@@ -203,6 +214,8 @@ if __name__ == "__main__":
                 "long": makeLongTasks,
                 "words": makeWordTasks,
                 "number": makeNumberTasks,
+                "handpicked": makeHandPickedTasks,
+                "new": makeNewTasks
                 }[args.pop("tasks")]
 
     tasks = regexTasks()  # TODO

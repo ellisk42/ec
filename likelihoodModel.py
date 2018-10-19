@@ -36,7 +36,7 @@ class EuclideanLikelihoodModel:
 
 
 def add_cutoff_values(tasks, ll_cutoff):
-    from makeRegexTasks import makeLongTasks
+    from makeRegexTasks import makeLongTasks, makeNewTasks
     if ll_cutoff is None:
         for task in tasks:
             task.ll_cutoff = None 
@@ -48,7 +48,7 @@ def add_cutoff_values(tasks, ll_cutoff):
     elif ll_cutoff == "bigram":
         eprint("WARNING: using entire corpus to make bigram model")
         #this means i do it twice, which is eh whatever
-        model = make_corpus_bigram(show_tasks(makeLongTasks()))
+        model = make_corpus_bigram(show_tasks(makeNewTasks()))
         for task in tasks:
             task.ll_cutoff = bigram_corpus_score([example[1] for example in task.examples], model)
         return tasks

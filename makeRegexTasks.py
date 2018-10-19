@@ -189,6 +189,72 @@ def makeNumberTasks():
 
     return regextasks
 
+
+def makeHandPickedTasks():
+
+    #load new data:
+
+    taskfile = "./regex_data_csv_900.p"
+
+    with open(taskfile, 'rb') as handle:
+        data = dill.load(handle)
+
+    tasklist = data[0] #a list of indices
+
+
+    full_list = list(range(199)) + \
+    [209,218,222,223,224,225,226] + \
+    list(range(222,233)) + \
+    [235,237,238,239,243,244,245,252,253,254,255,257,258,259,260,261,264,265,269,272,274] + \
+    list(range(275,291)) + \
+    [295,297,300,303,304,305,306,310,311,312,314,315,316,320,321,323,327,329,330,333,334,335,337,338,339,340,341,342,343,344] + \
+    list(range(348,359)) + \
+    [361,369,373,379,380,382,387,403,405,407,408] + \
+    list(range(409,417)) + \
+    list(range(418,437)) + \
+    list(range(440,444)) + \
+    list(range(446,452)) + \
+    list(range(456,460)) + \
+    list(range(466,472)) + \
+    [503,504]
+
+
+    regextasks = [
+        Task("Data column no. " + str(i),
+            arrow(tpregex, tpregex),
+            [((), example) for example in task] 
+        ) for i, task in enumerate(tasklist) if i in full_list ]
+
+    #for i in train_list:
+    #    regextasks[i].mustTrain = True
+
+
+    return regextasks
+
+def makeNewTasks():
+
+    #load new data:
+
+    taskfile = "./csv_filtered_all_background_novel.p"
+
+    with open(taskfile, 'rb') as handle:
+        data = dill.load(handle)
+
+    tasklist = data['background'] #a list of indices
+
+
+    regextasks = [
+        Task("Data column no. " + str(i),
+            arrow(tpregex, tpregex),
+            [((), example) for example in task['train']] 
+        ) for i, task in enumerate(tasklist)]
+
+    #for i in train_list:
+    #    regextasks[i].mustTrain = True
+
+    return regextasks
+
+
 # a helper function which takes a list of lists and sees which match a specific regex.
 def match_col(dataset, rstring):
     r = pregex.create(rstring)
