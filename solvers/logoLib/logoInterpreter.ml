@@ -23,6 +23,36 @@ let flush_everything () =
   Pervasives.flush stdout;
   Pervasives.flush stderr
 
+let center_logo_list (l : logo_instruction list) : logo_instruction list =
+  let rec minimum = function
+    | [] -> assert (false)
+    | [x] -> x
+    | h :: t -> min h (minimum t)
+  and maximum = function
+    | [] -> assert (false)
+    | [x] -> x
+    | h :: t -> max h (maximum t)
+  in 
+  match l with
+  | [] -> []
+  | _ ->
+    let xs = l |> List.map (function | (SEGMENT(x,_,x',_)) -> [x-.d_from_origin;
+                                                               x'-.d_from_origin;]) |> List.concat in 
+    let ys = l |> List.map (function | (SEGMENT(_,y,_,y')) -> [y-.d_from_origin;
+                                                               y'-.d_from_origin;]) |> List.concat in
+    let x0 = xs |> minimum in
+    let x1 = xs |> maximum in
+    let y0 = ys |> minimum in
+    let y1 = ys |> maximum in
+    let dx = (x1-.x0)/.2.+.x0 in
+    let dy = (y1-.y0)/.2.+.y0 in
+    let d_from_origin = 0. in
+    l |> List.map (function | (SEGMENT(x,y,x',y')) ->
+        SEGMENT(x-.dx+.d_from_origin, y-.dy+.d_from_origin,
+                x'-.dx+.d_from_origin, y'-.dy+.d_from_origin))
+
+
+  
 let pp_logo_instruction i =
   match i with
   | SEGMENT(x1,y1,x2,y2) -> Printf.eprintf "segment{%f,%f,%f,%f}"
@@ -40,6 +70,7 @@ let pp_turtle t =
 
 let eval_turtle ?sequence (t2t : turtle -> turtle) =
   let p,_ = (t2t logo_NOP) (init_state ()) in
+  let p = center_logo_list p in
   let c = ref (new_canvas ()) in
   let lineto x y = (c := (lineto !c x y))
   and moveto x y = (c := (moveto !c x y)) in
@@ -86,25 +117,10 @@ let logo_GET : (state -> turtle) -> turtle =
 (* let logo_SET : (state -> turtle) = fun s -> fun _ -> ([SET({s with t=s.t *. 4. *. atan(1.)})], s) *)
 let logo_SET : (state -> turtle) = fun s -> fun _ -> ([], s)
 
-(*let logo_CHEAT : float -> turtle =*)
-  (*fun length ->*)
-    (*(logo_SEQ (logo_FW length) (logo_RT (logo_var_HLF (logo_var_HLF logo_var_UNIT))))*)
-
-
-(*let logo_CHEAT2 : float -> turtle =*)
-  (*fun length ->*)
-    (*(logo_SEQ (logo_FW length) (logo_RT (logo_var_HLF (logo_var_HLF (logo_var_HLF logo_var_UNIT)))))*)
-
-(*let logo_CHEAT3 : float -> turtle =*)
-  (*fun length ->*)
-    (*(logo_SEQ (logo_FW length) (logo_RT (logo_var_HLF (logo_var_HLF (logo_var_HLF (logo_var_HLF logo_var_UNIT))))))*)
-
-(*let logo_CHEAT4 : float -> turtle =*)
-  (*fun length ->*)
-    (*(logo_SEQ (logo_FW length) (logo_RT (logo_var_HLF logo_var_UNIT)))*)
+   
 
 let turtle_to_list turtle =
-  let l,_ = (turtle logo_NOP) (init_state ()) in l
+  let l,_ = (turtle logo_NOP) (init_state ()) in l |> center_logo_list
 
 let turtle_to_png turtle resolution filename =
   output_canvas_png (eval_turtle turtle) resolution filename

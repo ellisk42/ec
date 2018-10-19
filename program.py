@@ -232,13 +232,13 @@ class Application(Program):
     def freeVariables(self):
         return self.f.freeVariables() | self.x.freeVariables()
 
-    def clone(self): return Application(self.f.clone(), self.x.clone)
+    def clone(self): return Application(self.f.clone(), self.x.clone())
 
     def annotateTypes(self, context, environment):
         self.f.annotateTypes(context, environment)
         self.x.annotateTypes(context, environment)
         r = context.makeVariable()
-        context.unify(arrow(x.annotatedType, r), f.annotatedType)
+        context.unify(arrow(self.x.annotatedType, r), self.f.annotatedType)
         self.annotatedType = r.applyMutable(context)        
 
 

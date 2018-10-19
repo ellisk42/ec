@@ -79,7 +79,38 @@ def possibleAncestors(request, program):
     program = program.clone()
     context = MutableContext()
     program.annotateTypes(context, [])
-    eprint(program.annotatedType)
+    def annotateIndices(p):
+        if p.isIndex:
+            p.variableTypes = {p.i: p.annotatedType.applyMutable(context)}
+        elif p.isPrimitive or p.isInvented:
+            p.variableTypes = dict()
+        elif p.isAbstraction:
+            annotateIndices(p.body)
+            p.variableTypes = {(i - 1): t
+                               for i,t in p.body.variableTypes.items()
+                               if i > 0}
+        elif p.isApplication:
+            annotateIndices(p.f)
+            annotateIndices(p.x)
+            p.variableTypes = {i: p.f.variableTypes.get(i, p.x.variableTypes.get(i, None))
+                               for i in set(list(p.f.variableTypes.keys()) + list(p.x.variableTypes.keys()))}
+        else: assert False
+
+    annotateIndices(program)
+
+    def renameAncestorVariables(d,a, mapping):
+        if a.isIndex:
+            if a.i - d >= 0:
+                return Index(mapping[a.i - d])
+            return a
+        if a.isApplication:
+            return Application(renameAncestorVariables(d,a.f,mapping),
+                               renameAncestorVariables(d,a.x,mapping))
+        if a.isAbstraction:
+            return Abstraction(renameAncestorVariables(d + 1, a.body, mapping))
+        if a.isPrimitive or a.isInvented:
+            return a
+        assert False
     
     desiredNumberOfArguments = len(request.functionArguments())
     def curse(d, p):
@@ -87,19 +118,25 @@ def possibleAncestors(request, program):
         parses = set()
 
         # Could this be the ancestor?
-        freeVariableTypes = {}
+        freeVariableTypes = p.variableTypes
         tp = p.annotatedType
-        if len(freeVariableTypes) + len(tp.functionArguments()) == desiredNumberOfArguments:
-            for fv in permutations( (fi, ft.apply(context))
-                                    for fi, ft in freeVariableTypes.items()):
+        if not p.isIndex and \
+           len(freeVariableTypes) + len(tp.functionArguments()) == desiredNumberOfArguments:
+            for fv in permutations(freeVariableTypes.items()):
                 t = tp
                 for _,fvt in reversed(fv): t = arrow(fvt,t)
                 if canUnify(t, request):
-                    parses.add((Index(d), p))
+                    # Apply the ancestor
+                    m = Index(d)
+                    for fi,_ in fv: m = Application(m,Index(fi))
+                    # rename variables inside of ancestor
+                    mapping = {fi: fi_ for fi_,(fi,_) in enumerate(reversed(fv)) }
+                    a = renameAncestorVariables(0, p, mapping)
+                    for _ in fv: a = Abstraction(a)
+                    a = EtaLongVisitor(request).execute(a)
+                    parses.add((m, a))
 
-        if p.isIndex:
-            parses.add((Index(p.i + 1),None))
-        if p.isPrimitive:
+        if p.isIndex or p.isPrimitive or p.isInvented:
             parses.add((p,None))
         if p.isApplication:
             f = curse(d, p.f)
@@ -117,16 +154,45 @@ def possibleAncestors(request, program):
                 parses.add((Abstraction(b), a))
         return parses
 
-    return curse(0, program)
+    return {(EtaLongVisitor(arrow(request, request)).execute(Abstraction(m).clone()),
+             a.clone())
+            for m,a in curse(0, program)
+            if a is not None and m != Index(0) and a != program}
 
+def evolutionaryTrajectories(request, seed):
+    table = {}
+    def trajectories(p):
+        if p in table: return table[p]
+        ts = [[p]]
+        for m,a in possibleAncestors(request,p):
+            ts.append([m] + trajectories(a))
+        table[p] = ts
+        return ts
+    return trajectories(seed)
+        
+    
 
 bootstrapTarget()
+from towerPrimitives import *
 g = Grammar.uniform([Program.parse(p)
                      for p in ["+","-","0","1","car",
                                "fold","empty","cons"] ])
-
-eprint(possibleAncestors(arrow(tlist(tint),tlist(tint)),
-                         Program.parse("(lambda (fold $0 (cons (car $0) empty) (lambda (lambda (cons $1 $0)))))")))
+for r,a in [(arrow(tlist(tint),tlist(tint)),
+             "(lambda (fold $0 (cons (car $0) empty) (lambda (lambda (cons $1 $0)))))"),
+            (arrow(ttower,ttower),
+             "(lambda (tower_loopM 4 (lambda (lambda (left 1 (1x3 $0)))) $0))")]:
+    a = Program.parse(a)
+    for ts in evolutionaryTrajectories(r,a):
+        eprint("Possible trajectory:")
+        for m in reversed(ts):
+            eprint(m)
+        eprint()
+    # for m,a in possibleAncestors(r,
+    #                              a):
+    #     eprint("ancestor",a)
+    #     eprint("mutation",m)
+    #     eprint()
+assert False
 def children(g, request, _=None,
              ancestor=None, timeout=None):
     message = {"DSL": g.json(),
