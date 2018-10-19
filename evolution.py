@@ -76,7 +76,10 @@ class EvolutionGuide(RecognitionModel):
 def possibleAncestors(request, program):
     from itertools import permutations
 
-    eprint(program.infer())
+    program = program.clone()
+    context = MutableContext()
+    program.annotateTypes(context, [])
+    eprint(program.annotatedType)
     
     desiredNumberOfArguments = len(request.functionArguments())
     def curse(d, p):
@@ -85,7 +88,7 @@ def possibleAncestors(request, program):
 
         # Could this be the ancestor?
         freeVariableTypes = {}
-        context, tp = p.inferType(Context.EMPTY, [], freeVariableTypes)
+        tp = p.annotatedType
         if len(freeVariableTypes) + len(tp.functionArguments()) == desiredNumberOfArguments:
             for fv in permutations( (fi, ft.apply(context))
                                     for fi, ft in freeVariableTypes.items()):
