@@ -19,7 +19,10 @@ class EvolutionGuide(RecognitionModel):
 
         # value and policy
         self.value = nn.Linear(self.outputDimensionality, 1)
-        self.policy = ContextualGrammarNetwork(self.outputDimensionality, grammar)
+        if contextual:
+            self.policy = ContextualGrammarNetwork(self.outputDimensionality, grammar)
+        else:
+            self.policy = GrammarNetwork(self.outputDimensionality, grammar)
 
         if cuda: self.cuda()
 
@@ -49,6 +52,43 @@ class EvolutionGuide(RecognitionModel):
             else: child = Application(mutation,ancestor)
             children.append(child)
         return children
+
+    def policyLoss(self, ev, table=None):
+        if ev.isGoal: return 0.
+        if ev.current is None and ev.program is not None:
+            ev.current = self.featureExtractor.taskOfProgram(ev.program, ev.goal.request)
+
+        if table is None: table = {}
+
+        alternatives = []
+        mg = self.mutationGrammar(ev.goal, ev.current)
+        request = ev.goal.request if ev.program is None else arrow(ev.goal.request, ev.goal.request)
+        for mutation, child in ev.descendents:
+            l = self.policyLoss(child)
+            likelihoodSummary = self.grammar.closedLikelihoodSummary(request, mutation)
+            l -= likelihoodSummary.logLikelihood(mg)
+            alternatives.append(l)
+            
+        l = torch.stack(alternatives,1).squeeze(0)
+        l = l.min(0)[0]
+        l = l.unsqueeze(0)
+        table[ev] = l
+        return l
+
+    def trainPolicy(self, graphs, lr=0.001):
+        optimizer = torch.optim.Adam(self.parameters(), lr=lr, eps=1e-3, amsgrad=True)
+
+        losses = []
+        while True:
+            for ev in graphs:
+                self.zero_grad()
+                loss = self.policyLoss(ev)
+                loss.backward()
+                optimizer.step()
+                losses.append(loss.data.tolist()[0])
+                eprint(losses[-1])
+
+        
 
     def search(self, goal, _=None,
                populationSize=None, timeout=None, generations=None):
@@ -159,34 +199,76 @@ def possibleAncestors(request, program):
             for m,a in curse(0, program)
             if a is not None and m != Index(0) and a != program}
 
-def evolutionaryTrajectories(request, seed):
-    table = {}
-    def trajectories(p):
-        if p in table: return table[p]
-        ts = [[p]]
-        for m,a in possibleAncestors(request,p):
-            ts.append([m] + trajectories(a))
-        table[p] = ts
-        return ts
-    return trajectories(seed)
+class EV():
+    """evolution vertex: a vertex in the graph describing all evolutionary trajectories to a solution"""
+    def __init__(self, goal, program):
+        self.program = program
+        self.goal = goal
+        # outgoing edges
+        # descendents: [(mutation, EV)]
+        self.descendents = set()
+
+        # current: task option
+        # where we are currently in the search space
+        self.current = None
+
+        self.isGoal = False
+
+    def __eq__(self,o): return self.program == o.program
+    def __ne__(self,o): return not (self == o)
+    def __hash__(self): return hash(self.program)
         
+def evolutionaryTrajectories(task, seed):
+    request = task.request
+    
+    # map from program to EV
+    # Initially we just have no program
+    table = {None: EV(task, None)}
+
+    def getVertex(p):
+        if p in table: return table[p]
+        v = EV(task,p)
+        # Single step mutation that just gets us here in one shot
+        table[None].descendents.add((p,v))
+        table[p] = v
+        for m,a in possibleAncestors(request,p):
+            av = getVertex(a)
+            av.descendents.add((m,v))
+        return v
+
+    v = getVertex(seed)
+    v.isGoal = True
+
+    from graphviz import Digraph
+
+    g = Digraph()
+
+    for p,v in table.items():
+        g.node(str(p))
+    for p,v in table.items():
+        for m,d in v.descendents:
+            g.edge(str(p), str(d.program),
+                   label=str(m) if p is not None else None)
+    g.render("/tmp/whatever.pdf",view=True)
+    return table[None]        
     
 
-bootstrapTarget()
 from towerPrimitives import *
-g = Grammar.uniform([Program.parse(p)
-                     for p in ["+","-","0","1","car",
-                               "fold","empty","cons"] ])
-for r,a in [(arrow(tlist(tint),tlist(tint)),
-             "(lambda (fold $0 (cons (car $0) empty) (lambda (lambda (cons $1 $0)))))"),
-            (arrow(ttower,ttower),
-             "(lambda (tower_loopM 4 (lambda (lambda (left 1 (1x3 $0)))) $0))")]:
-    a = Program.parse(a)
-    for ts in evolutionaryTrajectories(r,a):
-        eprint("Possible trajectory:")
-        for m in reversed(ts):
-            eprint(m)
-        eprint()
+from makeTowerTasks import *
+g = Grammar.uniform(primitives)
+t = makeSupervisedTasks()[0]
+
+trajectories = [evolutionaryTrajectories(t,
+                         Program.parse("(lambda (1x3 (right 4 (1x3 (left 2 (3x1 $0))))))"))]
+from tower import TowerCNN
+
+
+rm = EvolutionGuide(TowerCNN([]),g,contextual=False)
+rm.trainPolicy(trajectories)
+        # eprint("Possible trajectory:")
+        # for m in reversed(ts):
+        #     eprint(m)
+        # eprint()
     # for m,a in possibleAncestors(r,
     #                              a):
     #     eprint("ancestor",a)
