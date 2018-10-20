@@ -122,13 +122,12 @@ register_special_task "LOGO" (fun extras ?timeout:(timeout = 0.001) name ty exam
                 let x = run_lazy_analyzed_with_arguments (analyze_lazy_evaluation p) [] in
                 let l = LogoLib.LogoInterpreter.turtle_to_list x in
                 let bx =
-                  if false then LogoLib.LogoInterpreter.turtle_to_array x 28 else 
-                    match Hashtbl.Poly.find p2i l with
-                    | Some(x) -> x
-                    | _ ->
-                        let bx = LogoLib.LogoInterpreter.turtle_to_array x 28 in
-                        Hashtbl.Poly.set p2i l bx ;
-                        bx
+                  match Hashtbl.Poly.find p2i l with
+                  | Some(x) -> x
+                  | _ ->
+                    let bx = LogoLib.LogoInterpreter.turtle_to_array x 28 in
+                    Hashtbl.Poly.set p2i l bx ;
+                    bx
                 in
                 if proto then begin
                   let s_in, s_out = match s_inout with

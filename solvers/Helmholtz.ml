@@ -52,10 +52,17 @@ let run_job channel =
 
   helmholtz_enumeration ~nc:nc (k ~timeout:evaluationTimeout request (j |> member "extras")) g request ~timeout ~maximumSize
 
-let output_job result =
+let output_job ?maxExamples:(maxExamples=1000000) result =
   let open Yojson.Basic.Util in
+  let result = Hashtbl.to_alist result in
+  let results =
+    let l = List.length result in
+    if l < maxExamples then result else
+      let p = (maxExamples |> Float.of_int)/.(l |> Float.of_int) in
+      result |> List.filter ~f:(fun _ -> Random.float 1. < p)
+  in
   let message : json = 
-    `List(Hashtbl.to_alist result |> List.map ~f:(fun ((_, behavior), (l,ps)) ->
+    `List(results |> List.map ~f:(fun ((_, behavior), (l,ps)) ->
         `Assoc([(* "behavior", behavior; *)
                 "ll", `Float(l);
                 "programs", `List(ps |> List.map ~f:(fun p -> `String(p |> string_of_program)))])))
