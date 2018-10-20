@@ -51,6 +51,10 @@ let center_logo_list (l : logo_instruction list) : logo_instruction list =
         SEGMENT(x-.dx+.d_from_origin, y-.dy+.d_from_origin,
                 x'-.dx+.d_from_origin, y'-.dy+.d_from_origin))
 
+let logo_contained_in_canvas (l : logo_instruction list) =
+  let okay p = p >= 0.0 && p <= 2.*.d_from_origin in 
+  List.for_all (function | (SEGMENT(a,b,c,d)) -> okay a && okay b && okay c && okay d) l
+
 
   
 let pp_logo_instruction i =
