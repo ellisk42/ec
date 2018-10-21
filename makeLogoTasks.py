@@ -269,7 +269,7 @@ def manualLogoTasks():
           (loop i %d
           (move (*l 1l i) (/a 1a 4)))
           """%i)
-    for i in [3,4,6]:
+    for i in [3]:#,4,6]:
         T("smooth spiral %d"%i,
           """
           (loop i infinity 
@@ -411,6 +411,13 @@ def manualLogoTasks():
       """
       ((move 1d 0a) (p (move 1d 0a)) (loop i infinity (move epsilonLength epsilonAngle)))
       """)
+    T("circle next to line",
+      """
+      ((loop i infinity (move epsilonLength epsilonAngle)) (p (move 1d 0a)) (move 1d 0a))
+      """)
+    for n,l in [(3,"(/d 1d 2)")]:
+        T("%d dashed lines of size %s"%(n,l),
+          """(loop i %d (p (move 1d 0a)) (move %s 0a))"""%(n,l))
     T("broken circle",
       """
       ((loop i infinity (move epsilonLength epsilonAngle)) (p (move 1d 0a)) (loop i infinity (move epsilonLength epsilonAngle)))
