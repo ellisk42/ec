@@ -3,6 +3,7 @@ from grammar import *
 
 
 from arithmeticPrimitives import *
+from utilities import *
 from listPrimitives import *
 
 from recognition import *
@@ -55,6 +56,46 @@ class EvolutionGuide(RecognitionModel):
 
     def policyLoss(self, ev, table=None):
         if ev.isGoal: return 0.
+        if ev.current is None and ev.program is not None:
+            ev.current = self.featureExtractor.taskOfProgram(ev.program, ev.goal.request)
+
+        if table is None: table = {}
+
+        alternatives = []
+        mg = self.mutationGrammar(ev.goal, ev.current)
+        request = ev.goal.request if ev.program is None else arrow(ev.goal.request, ev.goal.request)
+        for mutation, child in ev.descendents:
+            l = self.policyLoss(child)
+            likelihoodSummary = self.grammar.closedLikelihoodSummary(request, mutation)
+            l -= likelihoodSummary.logLikelihood(mg)
+            alternatives.append(l)
+            
+        l = torch.stack(alternatives,1).squeeze(0)
+        l = l.min(0)[0]
+        l = l.unsqueeze(0)
+        table[ev] = l
+        return l
+
+    def valueLoss(self, ev):
+        distanceTable = {}
+        def distance(ev):
+            if ev in distanceTable: return distanceTable[ev]
+            request = ev.goal.request if ev.program is None else arrow(ev.goal.request, ev.goal.request)
+            
+            if ev.isGoal:
+                d = 0.
+            else:
+                d = POSITIVEINFINITY
+                mg = self.mutationGrammar(ev.goal, ev.current)
+                for mutation, child in ev.descendents:
+                    edgeCost = -self.grammar.closedLikelihoodSummary(request, mutation).logLikelihood(mg)
+                    edgeCost = edgeCost.view(-1).data.tolist()[0]
+                    d = min(edgeCost + distance(child), d)
+            distanceTable[ev] = d
+            return d
+
+        
+                
         if ev.current is None and ev.program is not None:
             ev.current = self.featureExtractor.taskOfProgram(ev.program, ev.goal.request)
 

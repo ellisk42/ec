@@ -263,13 +263,13 @@ def manualLogoTasks():
     T("right angle epsilon", "((move epsilonLength (/a 1a 4)) (move epsilonLength 0a))")
     
 
-    for i in [5,6,8]:
+    for i in [8]:
         T("Greek spiral %d"%i,
           """
           (loop i %d
           (move (*l 1l i) (/a 1a 4)))
           """%i)
-        i -= 2
+    for i in [3,4,6]:
         T("smooth spiral %d"%i,
           """
           (loop i infinity 
@@ -315,7 +315,7 @@ def manualLogoTasks():
           """%(n,n))
         
 
-    for n in [3,5]:
+    for n in [5]:
         T("staircase %d"%n,
           """
           (loop i %d
@@ -331,7 +331,7 @@ def manualLogoTasks():
           (move 1d (/a 1a 4)) (move 1d (/a 1a 4))
           (move 1d (+a (/a 1a 2) (/a 1a 4))) (move 1d (+a (/a 1a 2) (/a 1a 4))))
           """%n)
-    for n in range(1,5):
+    for n in [4]:#range(1,5):
         T("diagonal zigzag %d"%n,
           """
           ((move 0d (/a 1a 8))
@@ -395,12 +395,26 @@ def manualLogoTasks():
           (move (*d epsilonLength %d) (-a 0a epsilonAngle))))
           """%(n,l,l))
 
-    for n,l in [(3,"1d")]:
+    for n,l in [(2,"1d")]:
         T("row of %d circles"%n,
           """
           (loop j %d
           (embed (loop k 2 (loop i infinity (move epsilonLength epsilonAngle))))
           (p (move %s 0a)))"""%(n,l))
+    for n,l in [(2,"1d")]:
+        T("row of %d lines"%n,
+          """
+          (loop j %d
+          (move 1d 0a)
+          (p (move %s 0a)))"""%(n,l))
+    T("line next to circle",
+      """
+      ((move 1d 0a) (p (move 1d 0a)) (loop i infinity (move epsilonLength epsilonAngle)))
+      """)
+    T("broken circle",
+      """
+      ((loop i infinity (move epsilonLength epsilonAngle)) (p (move 1d 0a)) (loop i infinity (move epsilonLength epsilonAngle)))
+      """)
     for n,l in [(4,"1d")]:
         T("row of %d dashes"%n,
           """
@@ -429,7 +443,7 @@ def manualLogoTasks():
               (embed %s)
               (move 0d (/a 1a %d)))"""%(n,body[name],n))
 
-    for n in [2,3,4]:
+    for n in [4]:#2,3,4]:
         T("%d-row of squares"%n,
           """
           (loop i %d
