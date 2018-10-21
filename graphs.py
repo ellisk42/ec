@@ -64,18 +64,17 @@ def parseResultsPath(p):
 def plotECResult(
         resultPaths,
         colors='rgbycm',
-        label=None,
+        labels=None,
         title=None,
         export=None,
-        showSolveTime=False,
+        showSolveTime=True,
         showTraining=False,
         iterations=None):
     results = []
     parameters = []
     for j, path in enumerate(resultPaths):
-#        with open(path, 'rb') as handle:
-        print("path:", path)
         result = loadfun(path)
+        print("loaded path:", path)
 
         if hasattr(result, "baselines") and result.baselines:
             for name, res in result.baselines.items():
@@ -85,8 +84,7 @@ def plotECResult(
                 parameters.append(p)
         else:
             results.append(result)
-            p = parseResultsPath(path)
-            parameters.append(p)
+            parameters.append(parseResultsPath(path))
 
     # Collect together the timeouts, which determine the style of the line
     # drawn
@@ -103,16 +101,14 @@ def plotECResult(
 
     if showSolveTime:
         a1.set_ylabel('%  Solved (solid)', fontsize=LABELFONTSIZE)
+        a2 = a1.twinx()
+        a2.set_ylabel('Solve time (dashed)', fontsize=LABELFONTSIZE)
     else:
         if not showTraining:
             a1.set_ylabel('% Testing Tasks Solved', fontsize=LABELFONTSIZE)
         else:
             a1.set_ylabel('% Tasks Solved', fontsize=LABELFONTSIZE)
             
-
-    if showSolveTime:
-        a2 = a1.twinx()
-        a2.set_ylabel('Solve time (dashed)', fontsize=LABELFONTSIZE)
 
     n_iters = max(len(result.learningCurve) for result in results)
     if iterations and n_iters > iterations:
@@ -127,7 +123,7 @@ def plotECResult(
             ys = [100. * result.learningCurve[-1] /
                   len(result.taskSolutions)] * n_iters
         elif showTraining:
-            ys = [t/136. # FIXME: somehow calculate the number of training tasks
+            ys = [t/float(len(result.taskSolutions))
                   for t in result.learningCurve[:iterations]]
         else:
             ys = [100. * len(t) / result.numTestingTasks
@@ -153,7 +149,7 @@ def plotECResult(
     if showSolveTime:
         a2.set_ylim(ymin=0)
         starting, ending = a2.get_ylim()
-        if True:
+        if False:
             # [int(zz) for zz in np.arange(starting, ending, (ending - starting)/5.)])
             a2.yaxis.set_ticks([20 * j for j in range(6)])
         else:
@@ -172,26 +168,6 @@ def plotECResult(
                                  handles=[mlines.Line2D([], [], color='black', ls=timeoutToStyle[timeout],
                                                         label="timeout %ss" % timeout)
                                           for timeout in timeouts]))
-    if False:
-        # FIXME: figure out how to have two separate legends
-        plot.gca().add_artist(
-            plot.legend(
-                loc='lower left',
-                fontsize=20,
-                handles=[
-                    mlines.Line2D(
-                        [],
-                        [],
-                        color=recognitionToColor[True],
-                        ls='-',
-                        label="DreamCoder"),
-                    mlines.Line2D(
-                        [],
-                        [],
-                        color=recognitionToColor[False],
-                        ls='-',
-                        label="No NN")]))
-
     f.tight_layout()
     if export:
         plot.savefig(export)  # , additional_artists=legends)
@@ -212,43 +188,22 @@ def tryIntegerParse(s):
 if __name__ == "__main__":
     import sys
 
-    def label(p):
-        #l = p.domain
-        l = ""
-        if hasattr(p, 'baseline') and p.baseline:
-            l += "baseline %s" % p.baseline
-            return l
-        if p.useRecognitionModel:
-            if hasattr(p, 'helmholtzRatio') and p.helmholtzRatio > 0:
-                l += "DreamCoder"
-            else:
-                l += "AE"
-        else:
-            l += "no NN"
-        if hasattr(p, "frontierSize"):
-            l += " (frontier size %s)" % p.frontierSize
-        else:
-            l += " (timeout %ss)" % p.enumerationTimeout
-        return l
-    arguments = sys.argv[1:]
-    training = 'training' in arguments
-    arguments = [a for a in arguments if a != 'training' ]
-    export = [a for a in arguments if a.endswith('.png') or a.endswith('.eps')]
-    export = export[0] if export else None
-    title = [
-        a for a in arguments if not any(
-            a.endswith(s) for s in {
-                '.eps',
-                '.png',
-                '.pickle'})]
-
-    # pass in an integer on the command line to  number of plotted iterations
-    iterations = [tryIntegerParse(a) for a in arguments if tryIntegerParse(a)]
-    iterations = None if iterations == [] else iterations[0]
-
-    plotECResult([a for a in arguments if a.endswith('.pickle')],
-                 export=export,
-                 title=title[0] if title else "DSL learning curves",
-                 label=label,
-                 showSolveTime=True,
-                 iterations=iterations)
+    import argparse
+    parser = argparse.ArgumentParser(description = "")
+    parser.add_argument("checkpoints",nargs='+')
+    parser.add_argument("--title","-t",type=str,
+                        default="")
+    parser.add_argument("--iterations","-i",
+                        type=str, default=None)
+    parser.add_argument("--names","-n",
+                        type=str, default="",
+                        help="comma-separated list of names to put on the plot for each checkpoint")
+    parser.add_argument("--export","-e",
+                        type=str, default=None)
+    arguments = parser.parse_args()
+    
+    plotECResult(arguments.checkpoints,
+                 export=arguments.export,
+                 title=arguments.title,
+                 labels=arguments.names.split(","),
+                 iterations=arguments.iterations)
