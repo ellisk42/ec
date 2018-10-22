@@ -55,7 +55,7 @@ def parseResultsPath(p):
     if rest[-1] == "baselines":
         rest.pop()
     parameters = {ECResult.parameterOfAbbreviation(k): maybe_eval(v)
-                  for binding in rest
+                  for binding in rest if '=' in binding
                   for [k, v] in [binding.split('=')]}
     parameters['domain'] = domain
     return Bunch(parameters)
@@ -238,6 +238,10 @@ if __name__ == "__main__":
     parser.add_argument("--failAsTimeout",
                         default=False, action="store_true",
                         help="When calculating average solve time, should you count missed tasks as timeout OR should you just ignore them? Default: ignore them.")
+    parser.add_argument("--showTraining",
+                        default=False, action="store_true",
+                        help="Show training tasks in plot, i think...")
+    
     arguments = parser.parse_args()
     
     plotECResult(arguments.checkpoints,
@@ -248,4 +252,5 @@ if __name__ == "__main__":
                  failAsTimeout=arguments.failAsTimeout,
                  labels=arguments.names.split(","),
                  interval=arguments.interval,
-                 iterations=arguments.iterations)
+                 iterations=arguments.iterations,
+                 showTraining=arguments.showTraining)
