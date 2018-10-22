@@ -67,6 +67,7 @@ def plotECResult(
         timePercentile=False,
         colors='rgbycm',
         labels=None,
+        failAsTimeout=False,
         title=None,
         testingTimeout=None,
         export=None,
@@ -93,7 +94,6 @@ def plotECResult(
         for r in results:
             r.testingSearchTime = [ [t for t in ts if t <= testingTimeout ]
                                     for ts in result.testingSearchTime ]
-
     # Collect together the timeouts, which determine the style of the line
     # drawn
     timeouts = sorted(set(r.enumerationTimeout for r in parameters),
@@ -124,7 +124,8 @@ def plotECResult(
 
     plot.xticks(range(0, n_iters), fontsize=TICKFONTSIZE)
 
-    recognitionToColor = {False: "teal", True: "darkorange"}
+    recognitionToColor = {False: "#1B9E77",#"teal",
+                          True: "#D95F02"}#"darkorange"}
 
     for result, p in zip(results, parameters):
         if hasattr(p, "baseline") and p.baseline:
@@ -140,18 +141,24 @@ def plotECResult(
         l, = a1.plot(list(range(0, len(ys))), ys, color=color, ls='-')
 
         if showSolveTime:
+            if failAsTimeout:
+                assert testingTimeout is not None
+                result.testingSearchTime = [ ts + [testingTimeout]*(result.numTestingTasks - len(ts))
+                                             for ts in result.testingSearchTime ]
+                result.searchTimes = [ ts + [p.enumerationTimeout]*(len(result.taskSolutions) - len(ts))
+                                       for ts in result.searchTimes ]
+
             if not showTraining: times = result.testingSearchTime[:iterations]
             else: times = result.searchTimes[:iterations]
-            
             a2.plot(range(len(times)),
-                        [mean(ts) if not percentile else median(ts)
+                        [mean(ts) if not timePercentile else median(ts)
                          for ts in times],
                         color=color, ls='--')
             if interval:
                 a2.fill_between(range(len(times)),
-                                [percentile(ts, 0.75) if percentile else mean(ts) + standardDeviation(ts)
+                                [percentile(ts, 0.75) if timePercentile else mean(ts) + standardDeviation(ts)
                                  for ts in times],
-                                [percentile(ts, 0.25) if percentile else mean(ts) - standardDeviation(ts)
+                                [percentile(ts, 0.25) if timePercentile else mean(ts) - standardDeviation(ts)
                                  for ts in times],
                                 facecolor=color, alpha=0.2)
 
@@ -188,11 +195,12 @@ def plotECResult(
     f.tight_layout()
     if export:
         plot.savefig(export)  # , additional_artists=legends)
+        eprint("Exported figure ",export)
         if export.endswith('.png'):
             os.system('convert -trim %s %s' % (export, export))
         os.system('feh %s' % export)
     else:
-        plot.show()
+        f.show()
         
 
 def tryIntegerParse(s):
@@ -211,18 +219,25 @@ if __name__ == "__main__":
     parser.add_argument("--title","-t",type=str,
                         default="")
     parser.add_argument("--iterations","-i",
-                        type=int, default=None)
+                        type=int, default=None,
+                        help="number of iterations of EC to show")
     parser.add_argument("--names","-n",
                         type=str, default="",
                         help="comma-separated list of names to put on the plot for each checkpoint")
     parser.add_argument("--export","-e",
                         type=str, default=None)
     parser.add_argument("--percentile","-p",
-                        default=False, action="store_true")
+                        default=False, action="store_true",
+                        help="When displaying error bars for synthesis times, this option will cause it to show 25%/75% interval. By default it instead shows +/-1 stddev")
     parser.add_argument("--interval",
-                        default=False, action="store_true")
+                        default=False, action="store_true",
+                        help="Should we show error bars for synthesis times?")
     parser.add_argument("--testingTimeout",
-                        default=None, type=float)
+                        default=None, type=float,
+                        help="Retroactively pretend that the testing timeout was something else. WARNING: This will only give valid results if you are retroactively pretending that the testing timeout was smaller than it actually was!!!")
+    parser.add_argument("--failAsTimeout",
+                        default=False, action="store_true",
+                        help="When calculating average solve time, should you count missed tasks as timeout OR should you just ignore them? Default: ignore them.")
     arguments = parser.parse_args()
     
     plotECResult(arguments.checkpoints,
@@ -230,6 +245,7 @@ if __name__ == "__main__":
                  timePercentile=arguments.percentile,
                  export=arguments.export,
                  title=arguments.title,
+                 failAsTimeout=arguments.failAsTimeout,
                  labels=arguments.names.split(","),
                  interval=arguments.interval,
                  iterations=arguments.iterations)
