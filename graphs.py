@@ -68,6 +68,7 @@ def plotECResult(
         colors='rgbycm',
         labels=None,
         title=None,
+        testingTimeout=None,
         export=None,
         showSolveTime=True,
         showTraining=False,
@@ -87,6 +88,11 @@ def plotECResult(
         else:
             results.append(result)
             parameters.append(parseResultsPath(path))
+
+    if testingTimeout is not None:
+        for r in results:
+            r.testingSearchTime = [ [t for t in ts if t <= testingTimeout ]
+                                    for ts in result.testingSearchTime ]
 
     # Collect together the timeouts, which determine the style of the line
     # drawn
@@ -205,7 +211,7 @@ if __name__ == "__main__":
     parser.add_argument("--title","-t",type=str,
                         default="")
     parser.add_argument("--iterations","-i",
-                        type=str, default=None)
+                        type=int, default=None)
     parser.add_argument("--names","-n",
                         type=str, default="",
                         help="comma-separated list of names to put on the plot for each checkpoint")
@@ -215,9 +221,12 @@ if __name__ == "__main__":
                         default=False, action="store_true")
     parser.add_argument("--interval",
                         default=False, action="store_true")
+    parser.add_argument("--testingTimeout",
+                        default=None, type=float)
     arguments = parser.parse_args()
     
     plotECResult(arguments.checkpoints,
+                 testingTimeout=arguments.testingTimeout,
                  timePercentile=arguments.percentile,
                  export=arguments.export,
                  title=arguments.title,
