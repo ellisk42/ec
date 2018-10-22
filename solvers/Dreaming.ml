@@ -11,7 +11,7 @@ open Tower
     
 open Yojson.Basic
 
-let helmholtz_enumeration (behavior_hash : program -> (int*json) option) ?nc:(nc=1) g request ~timeout ~maximumSize =
+let helmholtz_enumeration (behavior_hash : program -> (int*(json list)) option) ?nc:(nc=1) g request ~timeout ~maximumSize =
   assert (nc = 1); (* FIXME *)
   
   let behavior_to_programs = Hashtbl.Poly.create() in
@@ -88,7 +88,7 @@ let special_helmholtz =   Hashtbl.Poly.create();;
 let register_special_helmholtz name handle = Hashtbl.set special_helmholtz name handle;;
 
 
-let default_hash ?timeout:(timeout=0.001) request inputs : program -> (int*json) option =
+let default_hash ?timeout:(timeout=0.001) request inputs : program -> (int*(json list)) option =
   let open Yojson.Basic.Util in
 
   (* convert json -> ocaml *)
@@ -113,13 +113,13 @@ let default_hash ?timeout:(timeout=0.001) request inputs : program -> (int*json)
         | UnknownPrimitive(n) -> raise (Failure ("Unknown primitive: "^n))
         | _                   -> None) in
     if List.exists outputs ~f:is_some then
-      let outputs = `List(outputs |> List.map ~f:(function
+      let outputs' = outputs |> List.map ~f:(function
           | None -> `Null
-          | Some(j) -> j)) in
-      Some((hash_json outputs, outputs))
+          | Some(j) -> j) in
+      Some((hash_json (`List(outputs')), outputs'))
     else None
 
-let string_hash ?timeout:(timeout=0.001) request inputs : program -> (int*json) option =
+let string_hash ?timeout:(timeout=0.001) request inputs : program -> (int*(json list)) option =
   let open Yojson.Basic.Util in
 
   (* convert json -> ocaml *)
@@ -131,38 +131,29 @@ let string_hash ?timeout:(timeout=0.001) request inputs : program -> (int*json) 
 
   fun program ->
     let constant_results = (* results from substituting with each constant *)
-      constants |> List.map ~f:(fun constant ->
+      constants |> List.concat_map ~f:(fun constant ->
           match substitute_string_constants [constant] program with
           | [program'] -> 
             let p = analyze_lazy_evaluation program' in    
-            let outputs = inputs |> List.map ~f:(fun input ->
+            inputs |> List.map ~f:(fun input ->
                 try
                   match run_for_interval timeout (fun () -> run_lazy_analyzed_with_arguments p input) with
-                  | Some(value) -> Some(value |> pack return)
-                  | _ -> None
+                  | Some(value) -> value |> pack return
+                  | _ -> `Null
                 with
                 | UnknownPrimitive(n) -> raise (Failure ("Unknown primitive: "^n))
-                | _                   -> None) in
-            if List.exists outputs ~f:is_some then
-              let outputs = `List(outputs |> List.map ~f:(function
-                  | None -> `Null
-                  | Some(j) -> j)) in
-              Some(outputs)
-            else None
+                | _                   -> `Null)
           | _ -> assert false)
     in
-    if List.exists constant_results ~f:is_some then
-      let outputs = `List(constant_results |> List.map ~f:(function
-          | None -> `Null
-          | Some(j) -> j)) in
-      Some((hash_json outputs, outputs))
+    if List.exists constant_results ~f:(function | `Null -> false | _ -> true) then
+      Some((`List(constant_results) |> hash_json, constant_results))
     else None
 ;;
 
 
 register_special_helmholtz "string" string_hash;;
 
-let tower_hash ?timeout:(timeout=0.001) request inputs : program -> (int*json) option =
+let tower_hash ?timeout:(timeout=0.001) request inputs : program -> (int*(json list)) option =
   let open Yojson.Basic.Util in
 
   assert (request = (ttower @> ttower));
@@ -177,11 +168,11 @@ let tower_hash ?timeout:(timeout=0.001) request inputs : program -> (int*json) o
                                                                         `Int(b);
                                                                         `Int(c);
                                                                         `Int(d);]))) in
-      Some((hash_json j, j))
+      Some((hash_json j, [j]))
 ;;
 register_special_helmholtz "tower" tower_hash;;
 
-let logo_hash ?timeout:(timeout=0.001) request inputs : program -> (int*json) option =
+let logo_hash ?timeout:(timeout=0.001) request inputs : program -> (int*(json list)) option =
   let open Yojson.Basic.Util in
 
   assert (request = (turtle @> turtle));
@@ -207,10 +198,10 @@ let logo_hash ?timeout:(timeout=0.001) request inputs : program -> (int*json) op
     | Some(None) -> None (* escaped the canvas *)
     | Some(Some(a)) ->
       let j = `List(range (28*28) |> List.map ~f:(fun i -> `Int(a.{i}))) in
-      Some(((hash_json j, j)));;
+      Some(((hash_json j, [j])));;
 register_special_helmholtz "LOGO" logo_hash;;
 
-let regex_hash  ?timeout:(timeout=0.001) request inputs : program -> (int*json) option =
+let regex_hash  ?timeout:(timeout=0.001) request inputs : program -> (int*(json list)) option =
   let open Yojson.Basic.Util in
   assert (request = (tregex @> tregex));
 
@@ -220,7 +211,7 @@ let regex_hash  ?timeout:(timeout=0.001) request inputs : program -> (int*json) 
       (fun () -> 
          let r = expression |> regex_of_program |> canonical_regex in
          let h = hash_regex r in
-         (h, `Int(h)))
+         (* TODO: the json should actually incurred the regular expression *)
+         (h, [`Int(h)]))
 ;;
 register_special_helmholtz "regex" regex_hash;;
-
