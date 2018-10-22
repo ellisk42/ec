@@ -63,6 +63,8 @@ def parseResultsPath(p):
 
 def plotECResult(
         resultPaths,
+        interval=False,
+        timePercentile=False,
         colors='rgbycm',
         labels=None,
         title=None,
@@ -132,14 +134,20 @@ def plotECResult(
         l, = a1.plot(list(range(0, len(ys))), ys, color=color, ls='-')
 
         if showSolveTime:
-            if not showTraining:
-                a2.plot(range(len(result.testingSearchTime[:iterations])),
-                        [sum(ts) / float(len(ts)) for ts in result.testingSearchTime[:iterations]],
+            if not showTraining: times = result.testingSearchTime[:iterations]
+            else: times = result.searchTimes[:iterations]
+            
+            a2.plot(range(len(times)),
+                        [mean(ts) if not percentile else median(ts)
+                         for ts in times],
                         color=color, ls='--')
-            else:
-                a2.plot(range(len(result.searchTimes[:iterations])),
-                        [sum(ts) / float(len(ts)) for ts in result.searchTimes[:iterations]],
-                        color=color, ls='--')
+            if interval:
+                a2.fill_between(range(len(times)),
+                                [percentile(ts, 0.75) if percentile else mean(ts) + standardDeviation(ts)
+                                 for ts in times],
+                                [percentile(ts, 0.25) if percentile else mean(ts) - standardDeviation(ts)
+                                 for ts in times],
+                                facecolor=color, alpha=0.2)
 
     a1.set_ylim(ymin=0, ymax=110)
     a1.yaxis.grid()
@@ -149,11 +157,14 @@ def plotECResult(
     if showSolveTime:
         a2.set_ylim(ymin=0)
         starting, ending = a2.get_ylim()
-        if False:
-            # [int(zz) for zz in np.arange(starting, ending, (ending - starting)/5.)])
-            a2.yaxis.set_ticks([20 * j for j in range(6)])
-        else:
-            a2.yaxis.set_ticks([50 * j for j in range(6)])
+        ending10 = 10*int(ending/10 + 1)
+        a2.yaxis.set_ticks([ int(ending10/6)*j
+                             for j in range(0, 6)]) 
+        # if False:
+        #     # [int(zz) for zz in np.arange(starting, ending, (ending - starting)/5.)])
+        #     a2.yaxis.set_ticks([20 * j for j in range(6)])
+        # else:
+        #     a2.yaxis.set_ticks([50 * j for j in range(6)])
         for tick in a2.yaxis.get_ticklabels():
             tick.set_fontsize(TICKFONTSIZE)
 
@@ -200,10 +211,16 @@ if __name__ == "__main__":
                         help="comma-separated list of names to put on the plot for each checkpoint")
     parser.add_argument("--export","-e",
                         type=str, default=None)
+    parser.add_argument("--percentile","-p",
+                        default=False, action="store_true")
+    parser.add_argument("--interval",
+                        default=False, action="store_true")
     arguments = parser.parse_args()
     
     plotECResult(arguments.checkpoints,
+                 timePercentile=arguments.percentile,
                  export=arguments.export,
                  title=arguments.title,
                  labels=arguments.names.split(","),
+                 interval=arguments.interval,
                  iterations=arguments.iterations)

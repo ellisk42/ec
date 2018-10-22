@@ -474,6 +474,10 @@ def median(l):
         return l[len(l) // 2]
     return 0.5 * (l[len(l) // 2] + l[len(l) // 2 - 1])
 
+def percentile(l, p):
+    l = sorted(l)
+    return l[int(len(l)*p)]
+
 
 class Stopwatch():
     def __init__(self):
