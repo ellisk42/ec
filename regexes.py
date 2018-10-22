@@ -59,7 +59,7 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
         # Calculate the maximum length
         self.maximumLength = POSITIVEINFINITY
         self.maximumLength = max(len(l)
-                                 for t in tasks
+                                 for t in tasks + testingTasks
                                  for xs, y in self.tokenize(t.examples)
                                  for l in [y] + [x for x in xs])
 

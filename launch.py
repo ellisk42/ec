@@ -239,7 +239,7 @@ if __name__ == "__main__":
                         default={
                             "ellisk": "ellisk@openmind7.mit.edu:/om2/user/ellisk/ec",
                             "lucasem": "lucasem@rig.lucasem.com:repo/ec",
-                            "mnye": "mnye@opemind7.mit.edu:/om/user/mnye/ec_aws_logs"
+                            "mnye": "mnye@openmind7.mit.edu:/om/user/mnye/ec_aws_logs"
                         }.get(user(), None))
     parser.add_argument('-z', "--size",
                         default="t2.micro")

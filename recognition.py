@@ -503,8 +503,10 @@ class RecognitionModel(nn.Module):
                            maximumFrontier=None,
                            evaluationTimeout=None):
         with timing("Evaluated recognition model"):
-            grammars = {task: self.grammarOfTask(task).untorch()
+            grammars = {task: self.grammarOfTask(task)
                         for task in tasks}
+            #untorch seperately to make sure you filter out None grammars
+            grammars = {task: grammar.untorch() for task, grammar in grammars.items() if grammar is not None}
 
         return multicoreEnumeration(grammars, tasks, likelihoodModel,
                                     solver=solver,
