@@ -16,3 +16,7 @@ jobs
 data/geom/**/*.png
 rust_compressor/target
 *.cost
+compressionMessages/
+container.img
+launchers/
+message
