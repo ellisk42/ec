@@ -9,6 +9,7 @@ from task import *
 from enumeration import *
 from grammar import *
 from fragmentGrammar import *
+from taskBatcher import *
 import baselines
 import dill
 
@@ -48,7 +49,6 @@ class ECResult():
         self.numTestingTasks = numTestingTasks
         self.sumMaxll = sumMaxll or [] #TODO name change 
         self.testingSumMaxll = testingSumMaxll or [] #TODO name change
-
 
     def __repr__(self):
         attrs = ["{}={}".format(k, v) for k, v in self.__dict__.items()]
@@ -142,6 +142,8 @@ def ecIterator(grammar, tasks,
                pseudoCounts=1.0, aic=1.0,
                structurePenalty=0.001, arity=0,
                evaluationTimeout=1.0,  # seconds
+               taskBatchSize=None,
+               taskReranker='default',
                CPUs=1,
                cuda=False,
                message="",
@@ -174,8 +176,6 @@ def ecIterator(grammar, tasks,
     if testingTimeout > 0 and len(testingTasks) == 0:
         eprint("You specified a testingTimeout, but did not provide any held out testing tasks, aborting.")
         assert False
-
-
 
     # We save the parameters that were passed into EC
     # This is for the purpose of exporting the results of the experiment
@@ -336,6 +336,15 @@ def ecIterator(grammar, tasks,
         "probabilistic": lambda: ProbabilisticLikelihoodModel(
             timeout=evaluationTimeout)}[likelihoodModel]()
 
+    # Set up the task batcher.
+    if taskReranker == 'default':
+        taskBatcher = DefaultTaskBatcher()
+    elif taskReranker == 'random':
+        taskBatcher = RandomTaskBatcher()
+    else:
+        eprint("Invalid task reranker: " + taskReranker + ", aborting.")
+        assert False
+ 
     for j in range(resume or 0, iterations):
 
         # Evaluate on held out tasks if we have them
@@ -373,8 +382,11 @@ def ecIterator(grammar, tasks,
         else:
             helmholtzFrontiers = lambda: []
 
+        # Get waking task batch.
+        wakingTaskBatch = taskBatcher.getTaskBatch(result, tasks, taskBatchSize, j)
+
         # WAKING UP
-        frontiers, times = multicoreEnumeration(grammar, tasks, likelihoodModel,
+        frontiers, times = multicoreEnumeration(grammar, wakingTaskBatch, likelihoodModel,
                                                 solver=solver,
                                                 maximumFrontier=maximumFrontier,
                                                 enumerationTimeout=enumerationTimeout,
@@ -407,7 +419,7 @@ def ecIterator(grammar, tasks,
                                  helmholtzRatio=helmholtzRatio if j > 0 or helmholtzRatio == 1. else 0.)                                
             result.recognitionModel = recognizer
 
-            bottomupFrontiers, times = recognizer.enumerateFrontiers(tasks, likelihoodModel,
+            bottomupFrontiers, times = recognizer.enumerateFrontiers(wakingTaskBatch, likelihoodModel,
                                                                      CPUs=CPUs,
                                                                      solver=solver,
                                                                      frontierSize=frontierSize,
@@ -425,7 +437,7 @@ def ecIterator(grammar, tasks,
                 helmholtzRatio=helmholtzRatio)
             eprint("done training recognition model")
             bottomupFrontiers = result.recognitionModel.enumerateFrontiers(
-                tasks,
+                wakingTaskBatch,
                 likelihoodModel,
                 CPUs=CPUs,
                 solver=solver,
@@ -613,6 +625,7 @@ def commandlineArguments(_=None,
                          maximumFrontier=None,
                          pseudoCounts=1.0, aic=1.0,
                          structurePenalty=0.001, a=0,
+                         taskBatchSize=None, taskReranker="default",
                          onlyBaselines=False,
                          extras=None):
     if cuda is None:
@@ -768,6 +781,21 @@ def commandlineArguments(_=None,
                         help="Displays a dependency graph of the learned primitives",
                         default=None,
                         type=str)
+    parser.add_argument(
+        "--taskBatchSize",
+        dest="taskBatchSize",
+        help="Number of tasks to train on during wake. Defaults to all tasks if None.",
+        default=None,
+        type=int)
+    parser.add_argument(
+        "--taskReranker",
+        dest="taskReranker",
+        help="Reranking function used to order the tasks we train on during waking.",
+        choices=[
+            "default",
+            "random"],
+        default=taskReranker,
+        type=str)
     parser.set_defaults(useRecognitionModel=useRecognitionModel,
                         featureExtractor=featureExtractor,
                         maximumFrontier=maximumFrontier,
