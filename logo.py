@@ -122,6 +122,8 @@ class LogoFeatureCNN(nn.Module):
             return t
         except subprocess.TimeoutExpired:
             return None
+        except subprocess.CalledProcessError:
+            return None
         except ValueError:
             return None
         except OSError as exc:
@@ -148,6 +150,8 @@ class LogoFeatureCNN(nn.Module):
                     f.write(str(p))
             return None
         except subprocess.TimeoutExpired:
+            return None
+        except subprocess.CalledProcessError:
             return None
         except ValueError:
             return None

@@ -57,6 +57,7 @@ class ECResult():
     # Linux does not like files that have more than 256 characters
     # So when exporting the results we abbreviate the parameters
     abbreviations = {"frontierSize": "fs",
+                     "recognitionTimeout": "RT",
                      "iterations": "it",
                      "maximumFrontier": "MF",
                      "onlyBaselines": "baseline",
@@ -75,8 +76,7 @@ class ECResult():
                      "activation": "act"}
 
     @staticmethod
-    def abbreviate(parameter): return ECResult.abbreviations.get(
-        parameter, parameter)
+    def abbreviate(parameter): return ECResult.abbreviations.get(parameter, parameter)
 
     @staticmethod
     def parameterOfAbbreviation(abbreviation):

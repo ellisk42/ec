@@ -499,7 +499,7 @@ def ocamlInduce(g, frontiers, _=None,
         CPUs = max(1, int(CPUs/2))
 
     message = {"arity": a,
-               "verbose": True,
+               "verbose": False,
                "topK": topK,
                "pseudoCounts": float(pseudoCounts),
                "aic": aic,

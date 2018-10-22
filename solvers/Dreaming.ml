@@ -193,17 +193,19 @@ let logo_hash ?timeout:(timeout=0.001) request inputs : program -> (int*json) op
     let l = run_for_interval timeout (fun () ->
         let x = run_lazy_analyzed_with_arguments p [] in
         let l = LogoLib.LogoInterpreter.turtle_to_list x in
-        match Hashtbl.find table l with
-        | Some(a) -> a
-        | None -> begin
-            let a = LogoLib.LogoInterpreter.turtle_to_array x 28 in
-            Hashtbl.set table ~key:l ~data:a;
-            a
-          end)
+        if not (LogoLib.LogoInterpreter.logo_contained_in_canvas l) then None else 
+          match Hashtbl.find table l with
+          | Some(a) -> Some(a)
+          | None -> begin
+              let a = LogoLib.LogoInterpreter.turtle_to_array x 28 in
+              Hashtbl.set table ~key:l ~data:a;
+              Some(a)
+            end)
     in
     match l with
-    | None -> None
-    | Some(a) ->
+    | None -> None (* timeout *)
+    | Some(None) -> None (* escaped the canvas *)
+    | Some(Some(a)) ->
       let j = `List(range (28*28) |> List.map ~f:(fun i -> `Int(a.{i}))) in
       Some(((hash_json j, j)));;
 register_special_helmholtz "LOGO" logo_hash;;
