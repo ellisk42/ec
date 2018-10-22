@@ -34,8 +34,4 @@ class RandomTaskTaskBatcher:
 			assert False
 
 		return random.sample(tasks, taskBatchSize)
-
-
-
-
-
+		
