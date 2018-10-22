@@ -202,7 +202,12 @@ def manualLogoTask(name, expression, proto=False, needToTrain=False):
     from grammar import Grammar
     g = Grammar.uniform(primitives, continuationType=turtle)
     gp = Grammar.uniform(primitives)
-    try: assert g.logLikelihood(arrow(turtle,turtle),p) >= gp.logLikelihood(arrow(turtle,turtle),p)
+    try:
+        l = g.logLikelihood(arrow(turtle,turtle),p)
+        lp = gp.logLikelihood(arrow(turtle,turtle),p)
+        assert l >= lp
+        eprint(name,-l,"nats")
+        
     except: eprint("WARNING: could not calculate likelihood of manual logo",p)
 
     [output, highresolution] = \
@@ -422,6 +427,28 @@ def manualLogoTasks():
       """
       ((loop i infinity (move epsilonLength epsilonAngle)) (p (move 1d 0a)) (loop i infinity (move epsilonLength epsilonAngle)))
       """)
+    T("circle next to semicircle",
+      """
+      ((loop i infinity (move epsilonLength epsilonAngle))
+      (loop i infinity (move epsilonLength epsilonAngle))
+      (p (move 1d 0a))
+      (loop i infinity (move epsilonLength epsilonAngle)))
+      """)
+    T("circle next to line",
+      """
+      ((loop i infinity (move epsilonLength epsilonAngle))
+      (loop i infinity (move epsilonLength epsilonAngle))
+      (p (move 1d 0a))
+      (move 1d 0a))
+      """)
+    T("line next to circle",
+      """
+      ((move 1d 0a)
+      (p (move 1d 0a))
+      (loop i infinity (move epsilonLength epsilonAngle))
+      (loop i infinity (move epsilonLength epsilonAngle))      
+      (move 1d 0a))
+      """)
     for n,l in [(4,"1d")]:
         T("row of %d dashes"%n,
           """
@@ -436,14 +463,16 @@ def manualLogoTasks():
           (p (move %s 0a)))"""%(n,l))
 
     for n in [3,5,6]:
-        body = {#"empty": "(move 1d 0a)",
+        body = {"empty": "(move 1d 0a)",
                 "dashed": "(p (move 1d 0a)) (move 1d 0a)",
                 "circle": "(move 1d 0a) (loop k 2 (loop i infinity (move epsilonLength epsilonAngle)))",
-            "lonely circle": "(p (move 1d 0a)) (loop k 2 (loop i infinity (move epsilonLength epsilonAngle)))",
+                "lonely circle": "(p (move 1d 0a)) (loop k 2 (loop i infinity (move epsilonLength epsilonAngle)))",
                 "square dashed": "(p (move 1d 0a)) (loop s 4 (move 1d (/a 1a 4)))",
                 "square": "(move 1d 0a) (loop s 4 (move 1d (/a 1a 4)))",
                 "semicircle": "(move 1d 0a) (loop i infinity (move epsilonLength epsilonAngle))"}
         for name in body:
+            if name == "empty" and n != 5: continue
+            
             T("%d-%s snowflake"%(n,name),
               """
               (loop j %d
