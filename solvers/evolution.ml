@@ -12,8 +12,9 @@ open Dreaming
 
 open Yojson.Basic
 
+open PolyValue
 
-let evolution_enumeration (behavior_hash : program -> (int*(json list)) option) ?nc:(nc=1) g request ~ancestor
+let evolution_enumeration (behavior_hash : program -> PolyList.t option) ?nc:(nc=1) g request ~ancestor
     ~timeout ~maximumSize =
   let request = match ancestor with
       None -> request
@@ -69,7 +70,7 @@ let run_job channel =
 let output_job result =
   let open Yojson.Basic.Util in
   let message : json = 
-    `List(Hashtbl.to_alist result |> List.map ~f:(fun ((_, behavior), (l,ps)) ->
+    `List(Hashtbl.to_alist result |> List.map ~f:(fun (behavior, (l,ps)) ->
         `Assoc([(* "behavior", behavior; *)
                 "ll", `Float(l);
                 "programs", `List(ps |> List.map ~f:(fun p -> `String(p |> string_of_program)))])))
