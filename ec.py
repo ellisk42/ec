@@ -177,10 +177,14 @@ def ecIterator(grammar, tasks,
         eprint("You specified a testingTimeout, but did not provide any held out testing tasks, aborting.")
         assert False
 
-    if taskReranker == 'recognition-density' and not useRecognitionModel and not useNewRecognitionModel:
-        eprint("Recognition density batching only applies to recognition models, aborting.")
+    if taskReranker == 'recognition-density' and not useRecognitionModel:
+        eprint("Recognition density batching only applies to the neural recognition model, aborting.")
         assert False
 
+    if taskReranker == 'recognition-density' and biasOptimal:
+        eprint("Recognition density batching cannot yet be used with bias optimality, aborting.")
+        assert False
+        
     # We save the parameters that were passed into EC
     # This is for the purpose of exporting the results of the experiment
     parameters = {
@@ -426,7 +430,7 @@ def ecIterator(grammar, tasks,
                                  helmholtzRatio=helmholtzRatio if j > 0 or helmholtzRatio == 1. else 0.)                                
             result.recognitionModel = recognizer
 
-            # If useful, get a task batch using the newly trained results.
+            # If useful, get a task batch reordered using the newly trained results.
             recognizerTaskBatch = wakingTaskBatch
             if get_recognition_batch:
                 recognizerTaskBatch = batcher.getTaskBatch(result, tasks, taskBatchSize, j)

@@ -62,7 +62,7 @@ class GrammarNetwork(nn.Module):
         self.logVariable = nn.Linear(inputDimensionality, 1)
         self.logProductions = nn.Linear(inputDimensionality, len(grammar))
         self.grammar = grammar
-        
+      
     def forward(self, x):
         """Takes as input inputDimensionality-dimensional vector and returns Grammar
         Tensor-valued probabilities"""
@@ -156,6 +156,34 @@ class RecognitionModel(nn.Module):
         features = self.featureExtractor.featuresOfTask(task)
         if features is None: return None
         return self(features)
+
+    def grammarLogProductionsOfTask(self, task):
+        """Returns the actual log probabilities from non-contextual models."""
+        if self.contextual:
+            eprint("Cannot calculate log probabilities for contextual grammars, aborting.")
+            assert False
+
+        features = self.featureExtractor.featuresOfTask(task)
+        if features is None: return None
+
+        features = self._MLP(features)
+        return self.grammarBuilder.logProductions(features)
+
+    def grammarEntropyOfTask(self, task):
+        """Returns the entropy of the grammar distribution from non-contextual models for a task."""
+        grammarLogProductionsOfTask = self.grammarLogProductionsOfTask(task)
+
+        if grammarLogProductionsOfTask is None: return None
+
+        return -torch.sum(torch.exp(grammarLogProductionsOfTask) * grammarLogProductionsOfTask)
+
+    def taskGrammarLogProductions(self, tasks):
+        return {task: self.grammarLogProductionsOfTask(task).data.numpy()
+                for task in tasks}
+
+    def taskGrammarEntropies(self, tasks):
+        return {task: self.grammarEntropyOfTask(task).data.numpy()
+                for task in tasks}
 
     def frontierKL(self, frontier):
         features = self.featureExtractor.featuresOfTask(frontier.task)

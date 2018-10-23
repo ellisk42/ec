@@ -40,7 +40,8 @@ class RandomTaskTaskBatcher:
 		return random.sample(tasks, taskBatchSize)
 
 class RecognitionDensityTaskBatcher:
-	"""Reranks tasks according to recognition model density, then returns the top-k tasks as a batch."""
+	"""Reranks tasks according to recognition model for density, then returns the top-k tasks as a batch.
+	   Only works for contextual grammars. """
 
 	def __init__(self):
 		pass
@@ -58,9 +59,15 @@ class RecognitionDensityTaskBatcher:
 			return defaultBatching(tasks, taskBatchSize, currIteration)
 		else:
 			eprint("Recognition model found, reranking tasks by probability density.")
-			taskEmbeddings = ec_result.recognitionModel.taskEmbeddings(tasks)
-			eprint("Task embedding size: " + str(taskEmbeddings[tasks[0]].shape))
+			# Get the task 
+			grammarLogs = ec_result.recognitionModel.taskGrammarLogProductions(tasks)
+			entropies = ec_result.recognitionModel.taskGrammarEntropies(tasks)
 
+			for task in grammarLogs:
+				if grammarLogs[task] is not none:
+					eprint("Task grammar log size: " + str(grammarLogs[tasks[0]].shape))
+					eprint("Task entropy size: " + str(entropies[tasks[0]].shape))
+					break
 	
 		return defaultBatching(tasks, taskBatchSize, currIteration)
 		
