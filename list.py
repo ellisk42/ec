@@ -354,7 +354,7 @@ if __name__ == "__main__":
     args.update({
         "featureExtractor": extractor,
         "outputPrefix": "experimentOutputs/list",
-        "evaluationTimeout": 0.001,
+        "evaluationTimeout": 0.0005,
         "solver": "ocaml"
     })
     

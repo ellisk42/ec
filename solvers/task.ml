@@ -72,12 +72,18 @@ let run_recent_logo ~timeout program =
                     let p = analyze_lazy_evaluation program in
                     let x = run_lazy_analyzed_with_arguments p [] in
                     let l = LogoLib.LogoInterpreter.turtle_to_list x in
-                    match Hashtbl.find p2i l with
-                    | Some(bx) -> bx
-                    | None -> 
-                      let bx = LogoLib.LogoInterpreter.turtle_to_array x 28 in
-                      Hashtbl.set p2i l bx;
-                      bx)
+                    if not (LogoLib.LogoInterpreter.logo_contained_in_canvas l)
+                    then None  
+                    else match Hashtbl.find p2i l with
+                      | Some(bx) -> Some(bx)
+                      | None -> 
+                        let bx = LogoLib.LogoInterpreter.turtle_to_array x 28 in
+                        Hashtbl.set p2i l bx;
+                        Some(bx))
+    in
+    let bx = match bx with
+      | Some(Some(bx')) -> Some(bx')
+      | Some(None) | None -> None
     in
     recent_logo_program := Some(program, bx);
     bx
