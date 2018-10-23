@@ -54,7 +54,7 @@ let run_job channel =
 
 let output_job ?maxExamples:(maxExamples=1000000) result =
   let open Yojson.Basic.Util in
-  let result = Hashtbl.to_alist result in
+  (* let result = Hashtbl.to_alist result in *)
   let results =
     let l = List.length result in
     if l < maxExamples then result else
@@ -70,4 +70,4 @@ let output_job ?maxExamples:(maxExamples=1000000) result =
   message
 
 let () =
-  run_job Pervasives.stdin |> output_job |> to_channel Pervasives.stdout
+  run_job Pervasives.stdin |> remove_bad_dreams |> output_job |> to_channel Pervasives.stdout

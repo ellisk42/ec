@@ -11,6 +11,60 @@ open Tower
     
 open Yojson.Basic
 
+let remove_bad_dreams behavior_to_programs =
+  let start_time = Time.now () in
+  
+  let containers = Hashtbl.Poly.create() in
+  let output_vectors = empty_resizable() in
+  
+  Hashtbl.iteri behavior_to_programs ~f:(fun ~key ~data ->
+      let this_index = output_vectors.ra_occupancy in
+      push_resizable output_vectors (key, data);
+
+      let _, outputs = key in
+      outputs |> List.iteri ~f:(fun output_index this_output ->
+          (* Record that we are one of the behaviors that produces this output *)
+          if this_output = `Null then () else
+            match Hashtbl.find containers (output_index, this_output) with
+            | None -> Hashtbl.set containers ~key:(output_index, this_output)
+                        ~data:(Int.Set.singleton this_index)
+            | Some(others) -> Hashtbl.set containers ~key:(output_index, this_output)
+                                ~data:(Int.Set.add others this_index)
+        ));
+
+  (* Checks whether there exists another output vector that contains everything in this vector *)
+  let is_bad_index i =
+    let dominating = ref None in 
+    
+    let (_, outputs), _ = get_resizable output_vectors i in
+    outputs |> List.iteri ~f:(fun output_index this_output ->
+        if this_output = `Null then () else
+          match Hashtbl.find containers (output_index, this_output) with
+          | None -> assert (false)
+          | Some(others) ->
+            match !dominating with
+            | None -> dominating := Some(others)
+            | Some(d) -> dominating := Some(Int.Set.inter d others));
+    let nightmare = Int.Set.length (!dominating |> get_some) > 1 in
+    if nightmare then begin 
+      Printf.eprintf "NIGHTMARE!!!";
+      get_resizable output_vectors i |> snd |> snd |> List.iter ~f:(fun p -> p |> string_of_program |> Printf.eprintf "%s\n")
+    end;
+    nightmare
+  in
+
+  let number_of_nightmares = ref 0 in
+  let sweet_dreams = 
+    List.range 0 output_vectors.ra_occupancy |>
+    List.filter_map ~f:(fun i ->
+        if is_bad_index i then (incr number_of_nightmares; None) else
+          Some(get_resizable output_vectors i))  
+  in
+  Printf.eprintf "Removed %d nightmares in %s.\n"
+    (!number_of_nightmares) (Time.diff (Time.now ()) start_time |> Time.Span.to_string);
+  sweet_dreams
+
+  
 let helmholtz_enumeration (behavior_hash : program -> (int*(json list)) option) ?nc:(nc=1) g request ~timeout ~maximumSize =
   assert (nc = 1); (* FIXME *)
   
