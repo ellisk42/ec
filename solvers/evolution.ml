@@ -13,7 +13,7 @@ open Dreaming
 open Yojson.Basic
 
 
-let evolution_enumeration (behavior_hash : program -> (int*json) option) ?nc:(nc=1) g request ~ancestor
+let evolution_enumeration (behavior_hash : program -> (int*(json list)) option) ?nc:(nc=1) g request ~ancestor
     ~timeout ~maximumSize =
   let request = match ancestor with
       None -> request
