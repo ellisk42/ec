@@ -177,6 +177,10 @@ def ecIterator(grammar, tasks,
         eprint("You specified a testingTimeout, but did not provide any held out testing tasks, aborting.")
         assert False
 
+    if taskReranker == 'recognition-density' and not useRecognitionModel and not useNewRecognitionModel:
+        eprint("Recognition density batching only applies to recognition models, aborting.")
+        assert False
+
     # We save the parameters that were passed into EC
     # This is for the purpose of exporting the results of the experiment
     parameters = {
@@ -338,9 +342,12 @@ def ecIterator(grammar, tasks,
 
     # Set up the task batcher.
     if taskReranker == 'default':
-        taskBatcher = DefaultTaskBatcher()
+        batcher = DefaultTaskBatcher()
     elif taskReranker == 'random':
-        taskBatcher = RandomTaskBatcher()
+        batcher = RandomTaskBatcher()
+    elif taskReranker == 'recognition-density':
+        get_recognition_batch = True # Whether to get a special batch reranked by the recognition model
+        batcher = RecognitionDensityTaskBatcher()
     else:
         eprint("Invalid task reranker: " + taskReranker + ", aborting.")
         assert False
@@ -383,7 +390,7 @@ def ecIterator(grammar, tasks,
             helmholtzFrontiers = lambda: []
 
         # Get waking task batch.
-        wakingTaskBatch = taskBatcher.getTaskBatch(result, tasks, taskBatchSize, j)
+        wakingTaskBatch = batcher.getTaskBatch(result, tasks, taskBatchSize, j)
 
         # WAKING UP
         frontiers, times = multicoreEnumeration(grammar, wakingTaskBatch, likelihoodModel,
@@ -419,7 +426,12 @@ def ecIterator(grammar, tasks,
                                  helmholtzRatio=helmholtzRatio if j > 0 or helmholtzRatio == 1. else 0.)                                
             result.recognitionModel = recognizer
 
-            bottomupFrontiers, times = recognizer.enumerateFrontiers(wakingTaskBatch, likelihoodModel,
+            # If useful, get a task batch using the newly trained results.
+            recognizerTaskBatch = wakingTaskBatch
+            if get_recognition_batch:
+                recognizerTaskBatch = batcher.getTaskBatch(result, tasks, taskBatchSize, j)
+
+            bottomupFrontiers, times = recognizer.enumerateFrontiers(recognizerTaskBatch, likelihoodModel,
                                                                      CPUs=CPUs,
                                                                      solver=solver,
                                                                      frontierSize=frontierSize,
@@ -436,6 +448,12 @@ def ecIterator(grammar, tasks,
                 topK=topK,
                 helmholtzRatio=helmholtzRatio)
             eprint("done training recognition model")
+
+            # If useful, get a task batch using the newly trained results.
+            recognizerTaskBatch = wakingTaskBatch
+            if get_recognition_batch:
+                recognizerTaskBatch = batcher.getTaskBatch(result, tasks, taskBatchSize, j)
+
             bottomupFrontiers = result.recognitionModel.enumerateFrontiers(
                 wakingTaskBatch,
                 likelihoodModel,
@@ -793,7 +811,8 @@ def commandlineArguments(_=None,
         help="Reranking function used to order the tasks we train on during waking.",
         choices=[
             "default",
-            "random"],
+            "random",
+            "recognition-density"],
         default=taskReranker,
         type=str)
     parser.set_defaults(useRecognitionModel=useRecognitionModel,
