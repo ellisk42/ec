@@ -59,15 +59,13 @@ class RecognitionDensityTaskBatcher:
 			return defaultBatching(tasks, taskBatchSize, currIteration)
 		else:
 			eprint("Recognition model found, reranking tasks by probability density.")
-			# Get the task 
-			grammarLogs = ec_result.recognitionModel.taskGrammarLogProductions(tasks)
+			
+			# Rank based on least entropy if applicable and choose the top k.
 			entropies = ec_result.recognitionModel.taskGrammarEntropies(tasks)
+			entropies_array = np.array([entropies[task] if entropies[task] is not None else np.nan for task in tasks ])
+			task_ranks = np.argsort(entropies_array)
+			eprint(entropies_array[task_ranks])
 
-			for task in grammarLogs:
-				if grammarLogs[task] is not none:
-					eprint("Task grammar log size: " + str(grammarLogs[tasks[0]].shape))
-					eprint("Task entropy size: " + str(entropies[tasks[0]].shape))
-					break
-	
-		return defaultBatching(tasks, taskBatchSize, currIteration)
+			reranked_tasks = list(np.array(tasks)[task_ranks])
+		return reranked_tasks[:taskBatchSize]
 		
