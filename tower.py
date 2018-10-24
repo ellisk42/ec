@@ -68,23 +68,45 @@ class TowerCNN(nn.Module):
 
     def forward(self, v, v2=None):
         """v: tower to build. v2: image of tower we have built so far"""
-        if v2 is None:
-            v2 = np.zeros((self.inputImageDimension, self.inputImageDimension, 3))
-        v = np.concatenate((v,v2), axis=2)
+        # insert batch if it is not already there
+        if len(v.shape) == 3:
+            v = np.expand_dims(v, 0)
+            inserted_batch = True
+        elif len(v.shape) == 4:
+            inserted_batch = False
+            pass
+        else: assert False
         
-        v = np.transpose(v,(2,0,1))
-        assert v.shape == (6,self.inputImageDimension,self.inputImageDimension)
+        if v2 is None: v2 = np.zeros(v.shape)
+            
+        v = np.concatenate((v,v2), axis=3)
+        v = np.transpose(v,(0,3,1,2))
+        assert v.shape == (v.shape[0], 6,self.inputImageDimension,self.inputImageDimension)
         v = variable(v, cuda=self.CUDA).float()
-        # insert batch
-        v = torch.unsqueeze(v, 0)
         window = int(self.inputImageDimension/self.resizedDimension)
         v = F.avg_pool2d(v, (window,window))
         v = self.encoder(v)
-        return v.view(-1)
+        if inserted_batch:
+            return v.view(-1)
+        else:
+            return v
 
     def featuresOfTask(self, t, t2=None):  # Take a task and returns [features]
         return self(t.getImage(),
                     None if t2 is None else t2.getImage(drawHand=True))
+    
+    def featuresOfTasks(self, ts, t2=None):  # Take a task and returns [features]
+        if t2 is None:
+            pass
+        elif isinstance(t2, Task):
+            t2 = np.array([t2.getImage(drawHand=True)]*len(ts))
+        elif isinstance(t2, list):
+            t2 = np.array(t.getImage(drawHand=True) for t in t2)
+        else:
+            assert False
+            
+        return self(np.array(t.getImage() for t in ts),
+                    t2)
 
     def taskOfProgram(self, p, t):
         try:
@@ -95,9 +117,6 @@ class TowerCNN(nn.Module):
             t = SupervisedTower("tower dream", pl)
             return t
         except: return None
-
-    def hashOfTask(self, t):
-        return tuple(centerTower(t.plan))
 
 
 

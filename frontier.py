@@ -83,8 +83,8 @@ class Frontier(object):
         return self
 
     def topK(self, k):
-        if k <= 0:
-            return self
+        if k == 0: return Frontier([], self.task)
+        if k < 0: return self            
         newEntries = sorted(self.entries,
                             key=lambda e: (-e.logPosterior, str(e.program)))
         return Frontier(newEntries[:k], self.task)
@@ -98,6 +98,12 @@ class Frontier(object):
     def bestPosterior(self):
         return min(self.entries,
                    key=lambda e: (-e.logPosterior, str(e.program)))
+
+    def replaceWithSupervised(self, g):
+        assert self.task.supervision is not None
+        return g.rescoreFrontier(Frontier([FrontierEntry(self.task.supervision,
+                                                         logLikelihood=0., logPrior=0.)],
+                                          task=self.task))
 
     #added by max to get likelihood summary
     @property

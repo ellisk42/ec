@@ -27,13 +27,50 @@ class EvolutionGuide(RecognitionModel):
 
         if cuda: self.cuda()
 
-    def mutationGrammar(self, goal, current):
-        return self.policy(self._MLP(self.featureExtractor.featuresOfTask(goal, current)))
-    def getFitness(self, goal, current):
-        return self.value(self._MLP(self.featureExtractor.featuresOfTask(goal, current)))
-    def mutationAndFitness(self, goal, current):
-        features = self._MLP(self.featureExtractor.featuresOfTask(goal, current))
-        return self.policy(features), self.value(features)
+    def batchedForward(self, goal, currents):
+        features = self._MLP(self.featureExtractor.featuresOfTask(currents, goal))
+        B = features.shape[0]
+        v = self.value(features)
+        return [self.policy(features[b]) for b in range(B) ], [v[b] for b in range(B) ]
+
+    def graphForward(self, root):
+        """Returns a dictionary of {node: (policy, value)}, for each node in the graph"""
+        children = root.reachable()
+        children = list(children)
+        # Make sure that everything has a task associated with it
+        for c in children:
+            if c.current is None and c.program is not None:
+                c.current = self.featureExtractor.taskOfProgram(c.program, c.goal.request)
+
+        goal = root.goal
+        policies, values = self.batchedForward(goal, children)
+        return {c: (p,v)
+                for c,p,v in zip(children, policies, values) }
+
+    def batchedLoss(self, root):
+        pv = self.graphForward(root)
+
+        distance = {} # map from node in graph to distance
+        def _distance(ev):
+            if ev in distance: return distance[ev]
+            if ev.isGoal:
+                d = 0.
+            else:
+                d = POSITIVEINFINITY
+                mg = pv[ev][0]
+                request = ev.goal.request if ev.program is None else arrow(ev.goal.request, ev.goal.request)
+                for mutation, child in ev.descendents:
+                    edgeCost = -self.grammar.closedLikelihoodSummary(request, mutation).logLikelihood(mg).data.tolist()[0]
+                    d = min(edgeCost + _distance(child), d)
+            distance[ev] = d
+            return d
+        for ev in pv: _
+
+                
+            
+        
+        
+                
 
     def children(self, goal, _=None,
                  ancestor=None, timeout=None):
@@ -78,6 +115,7 @@ class EvolutionGuide(RecognitionModel):
 
     def valueLoss(self, ev):
         distanceTable = {}
+        l = [0.]
         def distance(ev):
             if ev in distanceTable: return distanceTable[ev]
             request = ev.goal.request if ev.program is None else arrow(ev.goal.request, ev.goal.request)
@@ -86,47 +124,37 @@ class EvolutionGuide(RecognitionModel):
                 d = 0.
             else:
                 d = POSITIVEINFINITY
-                mg = self.mutationGrammar(ev.goal, ev.current)
+                mg = self.mutationGrammar(ev.goal, ev.current).untorch()
                 for mutation, child in ev.descendents:
                     edgeCost = -self.grammar.closedLikelihoodSummary(request, mutation).logLikelihood(mg)
-                    edgeCost = edgeCost.view(-1).data.tolist()[0]
                     d = min(edgeCost + distance(child), d)
             distanceTable[ev] = d
+            prediction = -self.getFitness(ev.goal, ev.current)
+            l[0] += (d - prediction)**2
             return d
 
-        
-                
-        if ev.current is None and ev.program is not None:
-            ev.current = self.featureExtractor.taskOfProgram(ev.program, ev.goal.request)
-
-        if table is None: table = {}
-
-        alternatives = []
-        mg = self.mutationGrammar(ev.goal, ev.current)
-        request = ev.goal.request if ev.program is None else arrow(ev.goal.request, ev.goal.request)
-        for mutation, child in ev.descendents:
-            l = self.policyLoss(child)
-            likelihoodSummary = self.grammar.closedLikelihoodSummary(request, mutation)
-            l -= likelihoodSummary.logLikelihood(mg)
-            alternatives.append(l)
-            
-        l = torch.stack(alternatives,1).squeeze(0)
-        l = l.min(0)[0]
-        l = l.unsqueeze(0)
-        table[ev] = l
-        return l
-
-    def trainPolicy(self, graphs, lr=0.001):
-        optimizer = torch.optim.Adam(self.parameters(), lr=lr, eps=1e-3, amsgrad=True)
+        distance(ev)
+        return l[0]
+    
+    def train(self, graphs, lr=0.001):
+        policy_optimizer = torch.optim.Adam(self.parameters(), lr=lr, eps=1e-3, amsgrad=True)
+        value_optimizer = torch.optim.Adam(self.parameters(), lr=lr, eps=1e-3, amsgrad=True)
 
         losses = []
         while True:
             for ev in graphs:
                 self.zero_grad()
-                loss = self.policyLoss(ev)
-                loss.backward()
-                optimizer.step()
-                losses.append(loss.data.tolist()[0])
+                pl = self.policyLoss(ev)
+                pl.backward()
+                policy_optimizer.step()
+
+                self.zero_grad()
+                vl = self.valueLoss(ev)
+                vl.backward()
+                value_optimizer.step()
+                                
+                losses.append((pl.data.tolist()[0],
+                               vl.data.tolist()[0]))
                 eprint(losses[-1])
 
         
@@ -258,6 +286,13 @@ class EV():
     def __eq__(self,o): return self.program == o.program
     def __ne__(self,o): return not (self == o)
     def __hash__(self): return hash(self.program)
+
+    def reachable(self, visited=None):
+        if visited is None: visited = set()
+        if self in visited: return visited
+        visited.add(self)
+        for _,c in self.descendents: c.reachable(visited)
+        return visited
         
 def evolutionaryTrajectories(task, seed):
     request = task.request
@@ -305,7 +340,7 @@ from tower import TowerCNN
 
 
 rm = EvolutionGuide(TowerCNN([]),g,contextual=False)
-rm.trainPolicy(trajectories)
+rm.train(trajectories)
         # eprint("Possible trajectory:")
         # for m in reversed(ts):
         #     eprint(m)

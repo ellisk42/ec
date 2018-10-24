@@ -522,13 +522,17 @@ def ecIterator(grammar, tasks,
                    "\tmax:", int(max(times) + 0.5),
                    "\tstandard deviation", int(standardDeviation(times) + 0.5))
 
-        # Incorporate frontiers from anything that was not hit
-        frontiers = [
-            f if not f.empty else grammar.rescoreFrontier(
-                result.taskSolutions.get(
-                    f.task, Frontier.makeEmpty(
-                        f.task))) for f in frontiers]
-        frontiers = [f.topK(maximumFrontier) for f in frontiers]
+        # Incorporate frontiers from anything that was not hit,
+        # but which we either hit on the previous iteration,
+        # or for which we have strong supervision
+        _frontiers = []
+        for f in frontiers:
+            if not f.empty: pass
+            elif f.task in result.taskSolutions: f = grammar.rescoreFrontier(result.taskSolutions[f.task])
+            else:
+                f = Frontier.makeEmpty(f.task)
+            _frontiers.append(f.topK(maximumFrontier))
+        frontiers = _frontiers
 
         eprint("Showing the top 5 programs in each frontier:")
         for f in frontiers:
@@ -546,32 +550,25 @@ def ecIterator(grammar, tasks,
             sum(f is not None and not f.empty for f in result.taskSolutions.values())]
                 
 
+        
         # Sleep-G
-        grammar, frontiers = induceGrammar(grammar, frontiers,
-                                           topK=topK,
-                                           pseudoCounts=pseudoCounts, a=arity,
-                                           aic=aic, structurePenalty=structurePenalty,
-                                           topk_use_only_likelihood=topk_use_only_likelihood,
-                                           backend=compressor, CPUs=CPUs, iteration=j)
+        # First check if we have supervision at the program level for any task that was not solved
+        needToSupervise = {f.task for f in frontiers
+                           if f.task.supervision is not None and f.empty}
+        compressionFrontiers = [f.replaceWithSupervised(grammar) if f.task in needToSupervise else f
+                                for f in frontiers ]
+        grammar, compressionFrontiers = induceGrammar(grammar, compressionFrontiers,
+                                                      topK=topK,
+                                                      pseudoCounts=pseudoCounts, a=arity,
+                                                      aic=aic, structurePenalty=structurePenalty,
+                                                      topk_use_only_likelihood=topk_use_only_likelihood,
+                                                      backend=compressor, CPUs=CPUs, iteration=j)
+        frontiers = [f.topK(0) if f in needToSupervise else f
+                     for f in compressionFrontiers ]
         result.grammars.append(grammar)
         eprint("Grammar after iteration %d:" % (j + 1))
         eprint(grammar)
         
-        # eprint(
-        #     "Expected uses of each grammar production after iteration %d:" %
-        #     (j + 1))
-        # productionUses = FragmentGrammar.fromGrammar(grammar).\
-        #     expectedUses([f for f in frontiers if not f.empty]).actualUses
-        # productionUses = {
-        #     p: productionUses.get(
-        #         p, 0.) for p in grammar.primitives}
-        # for p in sorted(
-        #         productionUses.keys(),
-        #         key=lambda p: -
-        #         productionUses[p]):
-        #     eprint("<uses>=%.2f\t%s" % (productionUses[p], p))
-        # eprint()
-
         if outputPrefix is not None:
             path = checkpointPath(j + 1)
             with open(path, "wb") as handle:

@@ -196,7 +196,7 @@ def parseLogo(s):
     except: return Abstraction(block(s, [], Index(0)))
 
 
-def manualLogoTask(name, expression, proto=False, needToTrain=False):
+def manualLogoTask(name, expression, proto=False, needToTrain=False, supervise = False):
     p = parseLogo(expression)
     from logoPrimitives import primitives
     from grammar import Grammar
@@ -228,11 +228,14 @@ def manualLogoTask(name, expression, proto=False, needToTrain=False):
 
     t.highresolution = highresolution
 
+    if supervise:
+        t.supervisedSolution = p
+
     return t
 
 def manualLogoTasks():
     tasks = []
-    def T(*a): tasks.append(manualLogoTask(*a))
+    def T(name, source, supervise=False): tasks.append(manualLogoTask(name, source, supervise=supervise))
     if False:
         for d,a,s in [('1l','0a','(loop i infinity (move epsilonLength epsilonAngle))'),
                       ('epsilonLength','0a','(loop i infinity (move epsilonLength epsilonAngle))'),
@@ -474,12 +477,16 @@ def manualLogoTasks():
                 "semicircle": "(move 1d 0a) (loop i infinity (move epsilonLength epsilonAngle))"}
         for name in body:
             if name == "empty" and n != 5: continue
-            
+
+            supervised = (name == "semicircle" and n == 5) or \
+                         (name == "square dashed" and n == 6) or \
+                         (name == "square" and n == 3)
             T("%d-%s snowflake"%(n,name),
               """
               (loop j %d
               (embed %s)
-              (move 0d (/a 1a %d)))"""%(n,body[name],n))
+              (move 0d (/a 1a %d)))"""%(n,body[name],n),
+              supervised)
 
     for n in [4]:#2,3,4]:
         T("%d-row of squares"%n,
