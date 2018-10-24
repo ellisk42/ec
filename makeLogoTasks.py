@@ -266,6 +266,8 @@ def manualLogoTasks():
     T("upwards", "((move 0d (/a 1a 4)) (move 1d 0a))")
     T("right angle", "((move (*d 1d 2) (/a 1a 4)) (move 1d 0a))")
     T("right angle epsilon", "((move epsilonLength (/a 1a 4)) (move epsilonLength 0a))")
+
+    T("line segment", "(move 1d 0a)")
     
 
     for i in [8]:
@@ -462,7 +464,7 @@ def manualLogoTasks():
           (embed (loop i infinity (move epsilonLength epsilonAngle)))
           (p (move %s 0a)))"""%(n,l))
 
-    for n in [3,5,6]:
+    for n in [3,4,5,6]:
         body = {"empty": "(move 1d 0a)",
                 "dashed": "(p (move 1d 0a)) (move 1d 0a)",
                 "circle": "(move 1d 0a) (loop k 2 (loop i infinity (move epsilonLength epsilonAngle)))",
