@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "taskRankGraphs.py", line 80, in <module>
+    arguments.export)
+  File "taskRankGraphs.py", line 60, in plotTimeMetrics
+    result = loadfun(path)
+  File "taskRankGraphs.py", line 16, in loadfun
+    result = dill.load(handle)
+  File "/usr/local/conda/lib/python3.6/site-packages/dill/_dill.py", line 304, in load
+    obj = pik.load()
+_pickle.UnpicklingError: NEWOBJ class argument isn't a type object

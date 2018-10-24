@@ -207,7 +207,7 @@ def multicoreEnumeration(g, tasks, likelihoodModel, _=None,
             assert False
 
     return [frontiers[t] for t in tasks], [bestSearchTime[t]
-                                           for t in tasks if bestSearchTime[t] is not None]
+                                           for t in tasks if bestSearchTime[t] is not None], bestSearchTime
 
 def wrapInThread(f):
     """
