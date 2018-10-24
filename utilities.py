@@ -75,6 +75,13 @@ def summaryStatistics(n, times):
                "\tmax:", int(max(times) + 0.5),
                "\tstandard deviation", int(standardDeviation(times) + 0.5))
 
+def updateTaskSummaryMetrics(taskSummaryMetrics, newMetricsDict, key):
+    """Updates a taskSummaryMetrics dict from tasks -> metrics with new metrics under the given key"""
+    for task in newMetricsDict:
+        if task in taskSummaryMetrics:
+            taskSummaryMetrics[task][key] = newMetricsDict[task]
+        else:
+            taskSummaryMetrics[task] = {key : newMetricsDict[task]}
 
 NEGATIVEINFINITY = float('-inf')
 POSITIVEINFINITY = float('inf')

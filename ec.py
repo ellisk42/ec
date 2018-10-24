@@ -32,12 +32,16 @@ class ECResult():
                  parameters=None,
                  recognitionModel=None,
                  searchTimes=None,
+                 recognitionTaskTimes=None,
+                 recognitionTaskMetrics=None,
                  baselines=None,
                  numTestingTasks=None,
                  sumMaxll=None,
                  testingSumMaxll=None):
         self.testingSearchTime = testingSearchTime or []
         self.searchTimes = searchTimes or []
+        self.recognitionTaskTimes = recognitionTaskTimes or {}
+        self.recognitionTaskMetrics = recognitionTaskMetrics or {} 
         self.recognitionModel = recognitionModel
         self.averageDescriptionLength = averageDescriptionLength or []
         self.parameters = parameters
@@ -351,7 +355,7 @@ def ecIterator(grammar, tasks,
         if testingTimeout > 0:
             eprint("Evaluating on held out testing tasks.")
             if useRecognitionModel and j > 0:
-                testingFrontiers, times = result.recognitionModel.enumerateFrontiers(testingTasks, likelihoodModel,
+                testingFrontiers, times, allTimes = result.recognitionModel.enumerateFrontiers(testingTasks, likelihoodModel,
                                                                       CPUs=CPUs,
                                                                       solver=solver,
                                                                       maximumFrontier=maximumFrontier,
@@ -359,7 +363,7 @@ def ecIterator(grammar, tasks,
                                                                       evaluationTimeout=evaluationTimeout,
                                                                       testing=True)
             else:
-                testingFrontiers, times = multicoreEnumeration(grammar, testingTasks, likelihoodModel,
+                testingFrontiers, times, allTimes = multicoreEnumeration(grammar, testingTasks, likelihoodModel,
                                                                solver=solver,
                                                                maximumFrontier=maximumFrontier,
                                                                enumerationTimeout=testingTimeout,
@@ -386,7 +390,7 @@ def ecIterator(grammar, tasks,
         wakingTaskBatch = taskBatcher.getTaskBatch(result, tasks, taskBatchSize, j)
 
         # WAKING UP
-        frontiers, times = multicoreEnumeration(grammar, wakingTaskBatch, likelihoodModel,
+        frontiers, times, allTimes = multicoreEnumeration(grammar, wakingTaskBatch, likelihoodModel,
                                                 solver=solver,
                                                 maximumFrontier=maximumFrontier,
                                                 enumerationTimeout=enumerationTimeout,
@@ -419,13 +423,16 @@ def ecIterator(grammar, tasks,
                                  helmholtzRatio=helmholtzRatio if j > 0 or helmholtzRatio == 1. else 0.)                                
             result.recognitionModel = recognizer
 
-            bottomupFrontiers, times = recognizer.enumerateFrontiers(wakingTaskBatch, likelihoodModel,
+            bottomupFrontiers, times, allRecognitionTimes = recognizer.enumerateFrontiers(wakingTaskBatch, likelihoodModel,
                                                                      CPUs=CPUs,
                                                                      solver=solver,
                                                                      frontierSize=frontierSize,
                                                                      maximumFrontier=maximumFrontier,
                                                                      enumerationTimeout=enumerationTimeout,
                                                                      evaluationTimeout=evaluationTimeout)
+            # Store the recognition times
+            #result.recognitionTaskTimes = allRecognitionTimes
+            #updateTaskSummaryMetrics(result.recognitionTaskMetrics, allRecognitionTimes, 'bestSearchTime')
             tasksHitBottomUp = {f.task for f in bottomupFrontiers if not f.empty}
 
         elif useNewRecognitionModel:  # Train a recognition model
@@ -462,7 +469,7 @@ def ecIterator(grammar, tasks,
             while True:
                 eprint("Expanding enumeration timeout from %i to %i because of no progress. Focusing exclusively on %d unsolved tasks." % (timeout, timeout * expandFrontier, len(unsolved)))
                 timeout = timeout * expandFrontier
-                unsolvedFrontiers, unsolvedTimes = \
+                unsolvedFrontiers, unsolvedTimes, allUnsolvedTimes = \
                     multicoreEnumeration(grammar, unsolved, likelihoodModel,
                                          solver=solver,
                                          maximumFrontier=maximumFrontier,
@@ -470,13 +477,15 @@ def ecIterator(grammar, tasks,
                                          CPUs=CPUs,
                                          evaluationTimeout=evaluationTimeout)
                 if useRecognitionModel:
-                    bottomUnsolved, unsolvedTimes = recognizer.enumerateFrontiers(unsolved, likelihoodModel,
+                    bottomUnsolved, unsolvedTimes, allUnsolvedRecognitionTimes = recognizer.enumerateFrontiers(unsolved, likelihoodModel,
                                                                                   CPUs=CPUs,
                                                                                   solver=solver,
                                                                                   frontierSize=frontierSize,
                                                                                   maximumFrontier=maximumFrontier,
                                                                                   enumerationTimeout=timeout,
                                                                                   evaluationTimeout=evaluationTimeout)
+                   
+                    #result.recognitionTaskTimes.update(allUnsolvedRecognitionTimes)
                     # Merge top-down w/ bottom-up
                     unsolvedFrontiers = [f.combine(grammar.rescoreFrontier(b))
                                          for f, b in zip(unsolvedFrontiers, bottomUnsolved) ]
