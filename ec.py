@@ -144,6 +144,7 @@ def ecIterator(grammar, tasks,
                evaluationTimeout=1.0,  # seconds
                taskBatchSize=None,
                taskReranker='default',
+               taskRerankMetrics=False,
                CPUs=1,
                cuda=False,
                message="",
@@ -345,6 +346,7 @@ def ecIterator(grammar, tasks,
             timeout=evaluationTimeout)}[likelihoodModel]()
 
     # Set up the task batcher.
+    get_recognition_batch = False
     if taskReranker == 'default':
         batcher = DefaultTaskBatcher()
     elif taskReranker == 'random':
@@ -394,7 +396,7 @@ def ecIterator(grammar, tasks,
             helmholtzFrontiers = lambda: []
 
         # Get waking task batch.
-        wakingTaskBatch = batcher.getTaskBatch(result, tasks, taskBatchSize, j)
+        wakingTaskBatch, batchMetrics = batcher.getTaskBatch(result, tasks, taskBatchSize, j)
 
         # WAKING UP
         frontiers, times = multicoreEnumeration(grammar, wakingTaskBatch, likelihoodModel,
@@ -407,6 +409,9 @@ def ecIterator(grammar, tasks,
         eprint("Generative model enumeration results:")
         eprint(Frontier.describe(frontiers))
         summaryStatistics("Generative model", times)
+
+        if taskRerankMetrics:
+            
 
         tasksHitTopDown = {f.task for f in frontiers if not f.empty}
 
@@ -456,7 +461,7 @@ def ecIterator(grammar, tasks,
             # If useful, get a task batch using the newly trained results.
             recognizerTaskBatch = wakingTaskBatch
             if get_recognition_batch:
-                recognizerTaskBatch = batcher.getTaskBatch(result, tasks, taskBatchSize, j)
+                recognizerTaskBatch, batchMetrics = batcher.getTaskBatch(result, tasks, taskBatchSize, j)
 
             bottomupFrontiers = result.recognitionModel.enumerateFrontiers(
                 wakingTaskBatch,
@@ -526,9 +531,15 @@ def ecIterator(grammar, tasks,
             result.sumMaxll.append( sum(math.exp(f.bestll) for f in bottomupFrontiers if not f.empty)) #TODO
 
             showHitMatrix(tasksHitTopDown, tasksHitBottomUp, tasks)
-            # Rescore the frontiers according to the generative model
-            # and then combine w/ original frontiers
-            frontiers = [ f.combine(grammar.rescoreFrontier(b)) for f, b in zip(frontiers, bottomupFrontiers)]
+
+            # Merge bottom-up with existing frontiers: rescore the bottom-up frontiers according to the generative model
+            # and then combine w/ original frontiers. These might not be the same if we're using different orderings/batches for top down and bototm up.
+            bottomupFrontiers = {f.task: f for f in bottomupFrontiers}
+
+            frontiers = [f.combine(grammar.rescoreFrontier(bottomupFrontiers[f.task])) if f.task in bottomupFrontiers 
+                        else f 
+                        for f in frontiers]
+
         else:
             result.averageDescriptionLength.append(mean(-f.marginalLikelihood()
                                                         for f in frontiers
@@ -819,6 +830,12 @@ def commandlineArguments(_=None,
             "recognition-density"],
         default=taskReranker,
         type=str)
+    parser.add_argument(
+        "--taskRerankMetrics",
+        dest="taskRerankMetrics",
+        help='Whether to output detailed task reranking metrics.',
+        default=False,
+        action="store_true")
     parser.set_defaults(useRecognitionModel=useRecognitionModel,
                         featureExtractor=featureExtractor,
                         maximumFrontier=maximumFrontier,

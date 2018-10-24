@@ -22,7 +22,7 @@ class DefaultTaskBatcher:
 			eprint("Task batch size is greater than total number of tasks, aborting.")
 			assert False
 
-		return defaultBatching(tasks, taskBatchSize, currIteration)
+		return defaultBatching(tasks, taskBatchSize, currIteration), None
 
 class RandomTaskTaskBatcher:
 	"""Returns a randomly sampled task batch of the specified size. Defaults to all tasks if taskBatchSize is None."""
@@ -37,11 +37,11 @@ class RandomTaskTaskBatcher:
 			eprint("Task batch size is greater than total number of tasks, aborting.")
 			assert False
 
-		return random.sample(tasks, taskBatchSize)
+		return random.sample(tasks, taskBatchSize), None
 
 class RecognitionDensityTaskBatcher:
 	"""Reranks tasks according to recognition model for density, then returns the top-k tasks as a batch.
-	   Only works for contextual grammars. """
+	   Only works for context-free grammars. """
 
 	def __init__(self):
 		pass
@@ -56,16 +56,19 @@ class RecognitionDensityTaskBatcher:
 		# Use the recognition model from the previous result if we have it
 		if ec_result.recognitionModel is None:
 			eprint("No recognition model, falling back on default ranking.")
-			return defaultBatching(tasks, taskBatchSize, currIteration)
+			return defaultBatching(tasks, taskBatchSize, currIteration), None
 		else:
 			eprint("Recognition model found, reranking tasks by probability density.")
 			
 			# Rank based on least entropy if applicable and choose the top k.
 			entropies = ec_result.recognitionModel.taskGrammarEntropies(tasks)
-			entropies_array = np.array([entropies[task] if entropies[task] is not None else np.nan for task in tasks ])
-			task_ranks = np.argsort(entropies_array)
-			eprint(entropies_array[task_ranks])
+			entropiesArray = np.array([entropies[task] if entropies[task] is not None else np.nan for task in tasks ])
+			taskRanks = np.argsort(entropiesArray)
 
-			reranked_tasks = list(np.array(tasks)[task_ranks])
-		return reranked_tasks[:taskBatchSize]
+			eprint(taskRanks.shape, np.array(tasks).shape, np.array(tasks)[taskRanks].shape)
+			rerankedTasks = list(np.array(tasks)[taskRanks])
+			taskEntropies = list(np.array(entropiesArray)[taskRanks])
+		return rerankedTasks[:taskBatchSize], taskEntropies[:taskBatchSize]
+
+
 		

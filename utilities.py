@@ -75,6 +75,9 @@ def summaryStatistics(n, times):
                "\tmax:", int(max(times) + 0.5),
                "\tstandard deviation", int(standardDeviation(times) + 0.5))
 
+def rerankMetrics(times, metrics):
+    
+
 
 NEGATIVEINFINITY = float('-inf')
 POSITIVEINFINITY = float('inf')
