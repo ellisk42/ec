@@ -11,5 +11,5 @@ graphableCheckpoint="experimentOutputs/text_aic=1.0_arity=4_BO=False_ET=60_HR=0.
 
 srun --job-name=graphs$1 --output=data/taskRankGraphs --ntasks=1 --mem-per-cpu=5000 --cpus-per-task 1 --time=10:00 --qos=tenenbaum \
   singularity exec -B /om2  container.img \
-  python taskRankGraphs.py --checkpoints $graphableCheckpoint \
+  python taskRankGraphs.py --checkpoints $graphableCheckpoint --metricsToPlot taskGrammarEntropies\
   &

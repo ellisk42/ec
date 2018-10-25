@@ -10,6 +10,7 @@ from matplotlib.ticker import MaxNLocator
 import matplotlib.lines as mlines
 
 import matplotlib
+plot.style.use('seaborn-whitegrid')
 
 import text
 from text import LearnedFeatureExtractor
@@ -57,16 +58,32 @@ def parseResultsPath(p):
 
 def plotTimeMetrics(
 	resultPaths,
+	metricsToPlot,
 	export=None):
 	"""Plot times vs. the desired metrics for each iteration."""
 	for j, path in enumerate(resultPaths):
 		result = loadfun(path)
 		print("loaded path:", path)
 
-		if hasattr(result, "recognitionTaskTimes") and result.recognitionTaskTimes:
-			print("Has recognitionTaskTimes")
-			for task in result.recognitionTaskTimes:
-				print(result.recognitionTaskTimes[task])
+		if not hasattr(result, "recognitionTaskMetrics"):
+			print("No recognitionTaskMetrics found, aborting.")
+			assert False
+
+		recognitionTaskMetrics = result.recognitionTaskMetrics
+
+		# Get all the times.
+		taskTimes = [recognitionTaskMetrics[t]['recognitionBestTimes'] for t in recognitionTaskMetrics]
+		# Replace the Nones with -1 for the purpose of this.
+		taskTimes = [time if time is not None else -1.0 for time in taskTimes]
+
+		for k, metricToPlot in enumerate(metricsToPlot):
+			print("Plotting metric: " + metricToPlot)
+			taskMetrics = [recognitionTaskMetrics[t][metricToPlot] for t in recognitionTaskMetrics]
+			plot.scatter(taskTimes, taskMetrics)
+			plot.xlabel('Recognition Best Times')
+			plot.ylabel(metricToPlot)
+			plot.savefig(os.path.join(export, metricToPlot + ".png"))
+
 
 	
 if __name__ == "__main__":
@@ -75,10 +92,12 @@ if __name__ == "__main__":
 	import argparse
 	parser = argparse.ArgumentParser(description = "")
 	parser.add_argument("--checkpoints",nargs='+')
+	parser.add_argument("--metricsToPlot", nargs='+',type=str)
 	parser.add_argument("--export","-e",
-						type=str, default=None)
+						type=str, default='data')
 
 	arguments = parser.parse_args()
 
 	plotTimeMetrics(arguments.checkpoints,
+					arguments.metricsToPlot,
 					arguments.export)
