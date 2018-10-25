@@ -114,7 +114,7 @@ class ContextualGrammarNetwork(nn.Module):
 
     def forward(self, x):
 
-        assert len(x.size()) = 1, "contextual grammar doesn't currently support batching"
+        assert len(x.size()) == 1, "contextual grammar doesn't currently support batching"
 
         allVars = self.network(x).view(self.n_grammars, -1) # i think this should work ...
 
