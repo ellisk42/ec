@@ -19,4 +19,5 @@ rust_compressor/target
 compressionMessages/
 container.img
 launchers/
+data/
 message
