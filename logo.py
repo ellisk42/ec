@@ -298,7 +298,7 @@ if __name__ == "__main__":
         featureExtractor=LogoFeatureCNN,
         maximumFrontier=5,
         CPUs=numberOfCPUs(),
-        pseudoCounts=10.0,
+        pseudoCounts=30.0,
         activation="tanh",
         extras=list_options)
     visualizeCheckpoint = args.pop("visualize")

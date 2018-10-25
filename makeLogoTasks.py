@@ -196,7 +196,7 @@ def parseLogo(s):
     except: return Abstraction(block(s, [], Index(0)))
 
 
-def manualLogoTask(name, expression, proto=False, needToTrain=False):
+def manualLogoTask(name, expression, proto=False, needToTrain=False, supervise = False):
     p = parseLogo(expression)
     from logoPrimitives import primitives
     from grammar import Grammar
@@ -228,11 +228,14 @@ def manualLogoTask(name, expression, proto=False, needToTrain=False):
 
     t.highresolution = highresolution
 
+    if supervise:
+        t.supervisedSolution = p
+
     return t
 
 def manualLogoTasks():
     tasks = []
-    def T(*a): tasks.append(manualLogoTask(*a))
+    def T(name, source, supervise=False): tasks.append(manualLogoTask(name, source, supervise=supervise))
     if False:
         for d,a,s in [('1l','0a','(loop i infinity (move epsilonLength epsilonAngle))'),
                       ('epsilonLength','0a','(loop i infinity (move epsilonLength epsilonAngle))'),
@@ -266,6 +269,8 @@ def manualLogoTasks():
     T("upwards", "((move 0d (/a 1a 4)) (move 1d 0a))")
     T("right angle", "((move (*d 1d 2) (/a 1a 4)) (move 1d 0a))")
     T("right angle epsilon", "((move epsilonLength (/a 1a 4)) (move epsilonLength 0a))")
+
+    T("line segment", "(move 1d 0a)")
     
 
     for i in [8]:
@@ -462,7 +467,7 @@ def manualLogoTasks():
           (embed (loop i infinity (move epsilonLength epsilonAngle)))
           (p (move %s 0a)))"""%(n,l))
 
-    for n in [3,5,6]:
+    for n in [3,4,5,6]:
         body = {"empty": "(move 1d 0a)",
                 "dashed": "(p (move 1d 0a)) (move 1d 0a)",
                 "circle": "(move 1d 0a) (loop k 2 (loop i infinity (move epsilonLength epsilonAngle)))",
@@ -472,12 +477,16 @@ def manualLogoTasks():
                 "semicircle": "(move 1d 0a) (loop i infinity (move epsilonLength epsilonAngle))"}
         for name in body:
             if name == "empty" and n != 5: continue
-            
+
+            supervised = (name == "semicircle" and n == 5) or \
+                         (name == "square dashed" and n == 6) or \
+                         (name == "square" and n == 3)
             T("%d-%s snowflake"%(n,name),
               """
               (loop j %d
               (embed %s)
-              (move 0d (/a 1a %d)))"""%(n,body[name],n))
+              (move 0d (/a 1a %d)))"""%(n,body[name],n),
+              supervised)
 
     for n in [4]:#2,3,4]:
         T("%d-row of squares"%n,

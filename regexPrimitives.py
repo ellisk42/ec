@@ -104,7 +104,6 @@ def concatPrimitives():
     ]
 
 
-
 def sketchPrimitives():
     return [Primitive("string_" + i, tpregex, pregex.String(i)) for i in printable[:-4] if i not in disallowed_list
             ] + [
