@@ -10,6 +10,20 @@ import pickle as pickle
 from itertools import chain
 import heapq
 
+class Thunk(object):
+    # A class for lazy evaluation
+    def __init__(self, thing):
+        self.thing = thing
+        self.evaluated = False 
+
+    def force(self):
+        if self.evaluated:
+            return self.thing
+        else: 
+            self.thing = self.thing()
+            self.evaluated = True
+            return self.thing
+
 def cindex(i): return lambda a: a[i]
 
 class ConstantFunction:
@@ -473,6 +487,13 @@ def median(l):
     if len(l) % 2 == 1:
         return l[len(l) // 2]
     return 0.5 * (l[len(l) // 2] + l[len(l) // 2 - 1])
+
+def percentile(l, p):
+    l = sorted(l)
+    j = int(len(l)*p)
+    if j < len(l):
+        return l[j]
+    return 0
 
 
 class Stopwatch():

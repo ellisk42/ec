@@ -72,12 +72,18 @@ let run_recent_logo ~timeout program =
                     let p = analyze_lazy_evaluation program in
                     let x = run_lazy_analyzed_with_arguments p [] in
                     let l = LogoLib.LogoInterpreter.turtle_to_list x in
-                    match Hashtbl.find p2i l with
-                    | Some(bx) -> bx
-                    | None -> 
-                      let bx = LogoLib.LogoInterpreter.turtle_to_array x 28 in
-                      Hashtbl.set p2i l bx;
-                      bx)
+                    if not (LogoLib.LogoInterpreter.logo_contained_in_canvas l)
+                    then None  
+                    else match Hashtbl.find p2i l with
+                      | Some(bx) -> Some(bx)
+                      | None -> 
+                        let bx = LogoLib.LogoInterpreter.turtle_to_array x 28 in
+                        Hashtbl.set p2i l bx;
+                        Some(bx))
+    in
+    let bx = match bx with
+      | Some(Some(bx')) -> Some(bx')
+      | Some(None) | None -> None
     in
     recent_logo_program := Some(program, bx);
     bx
@@ -122,13 +128,12 @@ register_special_task "LOGO" (fun extras ?timeout:(timeout = 0.001) name ty exam
                 let x = run_lazy_analyzed_with_arguments (analyze_lazy_evaluation p) [] in
                 let l = LogoLib.LogoInterpreter.turtle_to_list x in
                 let bx =
-                  if false then LogoLib.LogoInterpreter.turtle_to_array x 28 else 
-                    match Hashtbl.Poly.find p2i l with
-                    | Some(x) -> x
-                    | _ ->
-                        let bx = LogoLib.LogoInterpreter.turtle_to_array x 28 in
-                        Hashtbl.Poly.set p2i l bx ;
-                        bx
+                  match Hashtbl.Poly.find p2i l with
+                  | Some(x) -> x
+                  | _ ->
+                    let bx = LogoLib.LogoInterpreter.turtle_to_array x 28 in
+                    Hashtbl.Poly.set p2i l bx ;
+                    bx
                 in
                 if proto then begin
                   let s_in, s_out = match s_inout with

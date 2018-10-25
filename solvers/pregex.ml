@@ -5,6 +5,7 @@ open Task
 open Utils
 open Program
 open Type
+open Yojson.Basic.Util
 
     
 type str = String of char list | Dot | D | S | W | L | U
@@ -58,17 +59,27 @@ and
   | c -> Hashtbl.hash c
                    
 
-let rec canonical_regex r = match r with
+let rec canonical_regex r =
+  let empty_regex = Constant(String([])) in
+  
+  match r with
   | Constant(_) -> r
   | Plus(b) ->
     let b = canonical_regex b in 
     canonical_regex (Concat(b,Kleene(b)))
-  | Kleene(b) -> Kleene(canonical_regex b)
-  | Maybe(b) -> Maybe(canonical_regex b)
+  | Kleene(b) ->
+    let b = canonical_regex b in
+    if b = empty_regex then empty_regex else Kleene(b)    
+  | Maybe(b) -> Alt(empty_regex,b) |> canonical_regex
   (* associative rules *)
   | Concat(Concat(a,b),c) -> canonical_regex (Concat(a,Concat(b,c)))
   | Alt(Alt(a,b),c) -> canonical_regex (Alt(a,Alt(b,c)))
-  | Concat(a,b) -> Concat(canonical_regex a, canonical_regex b)
+  | Concat(a,b) ->
+    let a = canonical_regex a in
+    let b = canonical_regex b in
+    if a = empty_regex then b else
+    if b = empty_regex then a else
+      Concat(a, b)
   | Alt(a,b) ->
     let a = canonical_regex a in
     let b = canonical_regex b in
@@ -160,7 +171,7 @@ type continuation = pregex option * string
 
 
 let rec try_remove_prefix prefix str = 
-	(* returns a none if can't remove, else the removed list*)
+	(* returns a none if can't remove, else the removed list *)
 	match (prefix, str) with
 	| ([], l) -> Some(l)
 	| (_, []) ->  None
@@ -182,7 +193,7 @@ let consumeConst c char_list =
     | _ ->
       let character_class = get_character_class c in 
       if List.mem ~equal:(=) character_class hd
-      then [(None, tl), -. (List.length character_class |> Float.of_int)]
+      then [(None, tl), -. log (List.length character_class |> Float.of_int)]
       else []
         
 
@@ -358,17 +369,45 @@ register_special_task "regex"
                      let this_score = preg_match r e in
                      if is_invalid this_score then log 0. else this_score +. loop es
                  in
-                 loop observations)                 
+
+             	(* loop observations ) *) 
+                 let total_char_num = observations |> List.map ~f:List.length |> List.fold_right ~init:0 ~f:(+) |> Float.of_int in
+                 (* Printf.eprintf "total_char_num %f\n" total_char_num; *)
+                 let total_ll = loop observations in
+                 let per_char_ll = total_ll /. total_char_num in
+                 
+                 (* let _ = if per_char_ll <> (log 0.) then 
+                 (Printf.eprintf "per_char_ll %f\n" per_char_ll; 
+                 Printf.eprintf "total_char_num %f\n" total_char_num;
+                 Printf.eprintf "total_ll %f\n" total_ll;
+                 () ) in *)
+
+                 (*Printf.eprintf "ll %f\n" per_char_ll; *)
+                 per_char_ll )         
       with
-      | Some(l) -> l
       | None -> log 0.
+      | Some(l) -> 
+      	(let cutoff_option = extra |> member "cutoff" |> to_number_option in
+      	match cutoff_option with
+      	| None -> 
+      		(* Printf.eprintf "l %f\n" l; *)
+      		l
+      	| Some(cutoff) -> 
+      		(* let _ = if l <> (log 0.) then 
+      		(Printf.eprintf "Cutoff %f\n" cutoff;
+      		Printf.eprintf "l %f\n" l;  ()) in *)
+      		if l >= cutoff then l else log 0.)
     in 
 
     {name; task_type; log_likelihood;} )
                                 
 
-(* let _ = Printf.printf "%f\n"  (preg_match (Alt(Constant(String(['d'])), Constant(D)))  ['9'] |> exp)  *)
+(* let _ = Printf.eprintf "\n\n\n\nLIKELIHOOD: %f\n\n\n\n"  (preg_match (Alt(Constant(String(['d'])), Constant(D)))  ['9'] |> exp) ;;
+let _ = Printf.eprintf "\n\n\n\nLIKELIHOOD: %f\n\n\n\n"  ((preg_match (Constant(D)) ['9']) |> exp) ;; *)
 
+(*let _ = assert (preg_match (Alt(Constant(String(['d'])), Constant(D)))  ['9'] = log (1. /. 20.) ) ;;
+let _ = assert (preg_match (Alt(Constant(String(['s'])), Constant(D)))  ['9'] = log (1. /. 20.) ) ;;
+let _ = assert (preg_match (Alt(Constant(String(['k'])), Constant(D)))  ['9'] = log (1. /. 20.) ) ;;*)
 
 (* qs for kevin:
 map -> List.map list ~f:fun

@@ -356,3 +356,13 @@ def guess_arrow_type(examples):
         input_types.append(guess_type([xs[n] for xs, _ in examples]))
     output_type = guess_type([y for _, y in examples])
     return arrow(*(input_types + [output_type]))
+
+def canUnify(t1, t2):
+    k = MutableContext()
+    t1 = t1.instantiateMutable(k)
+    t2 = t2.instantiateMutable(k)
+    try:
+        k.unify(t1, t2)
+        return True
+    except UnificationFailure: return False
+    

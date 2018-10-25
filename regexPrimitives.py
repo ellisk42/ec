@@ -79,8 +79,9 @@ class PRC(): #PregexContinuation
     def __call__(self, pre):
 
         if self.arity == len(self.args):
-            if self.arity == 0: return pregex.Concat([self.f, pre]) #TODO
-            else: return pregex.Concat([self.f(*self.args), pre])
+            if self.arity == 0: return pregex.Concat([self.f, pre]) 
+            elif self.arity == 1: return pregex.Concat([self.f(*self.args), pre])
+            else: return pregex.Concat([self.f(self.args), pre]) #this line is bad, need brackets around input to f if f is Alt
         else: return PRC(self.f, self.arity, args=self.args+[pre(pregex.String(""))])
 
 
@@ -99,7 +100,7 @@ def concatPrimitives():
         Primitive("r_kleene", arrow(arrow(tpregex, tpregex), arrow(tpregex,tpregex)), PRC(pregex.KleeneStar,1)),
         Primitive("r_plus", arrow(arrow(tpregex, tpregex), arrow(tpregex,tpregex)), PRC(pregex.Plus,1)),
         Primitive("r_maybe", arrow(arrow(tpregex, tpregex), arrow(tpregex,tpregex)), PRC(pregex.Maybe,1)),
-        Primitive("r_alt", arrow(arrow(tpregex, tpregex),arrow(tpregex, tpregex), arrow(tpregex,tpregex)), PRC(pregex.Alt, 2)),
+        Primitive("r_alt", arrow(arrow(tpregex, tpregex) , arrow(tpregex, tpregex), arrow(tpregex,tpregex)), PRC(pregex.Alt, 2)),
     ]
 
 
@@ -298,9 +299,21 @@ def matchEmpericalNoLetterPrimitives(corpus):
 
 
 if __name__=='__main__':
-    oncatPrimitives()
+    concatPrimitives()
     from program import Program
 
     p=Program.parse("(lambda (r_kleene (lambda (r_maybe (lambda (string_x $0)) $0)) $0))")
     print(p)
     print(p.runWithArguments([pregex.String("")]))
+
+    prims = concatPrimitives()
+    g = Grammar.uniform(prims)
+
+    for i in range(100):
+        prog = g.sample(arrow(tpregex,tpregex))
+        preg = prog.runWithArguments([pregex.String("")])
+        print("preg:", preg.__repr__())
+        print("sample:", preg.sample())
+
+
+

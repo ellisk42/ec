@@ -21,7 +21,8 @@ def launch(size="t2.micro", name=""):
     # --key-name testing --associate-public-ip-address
     o = json.loads(subprocess.check_output(["aws", "ec2", "run-instances",
                                             "--image-id",
-                                            "ami-0b75245c1e9b00c36",
+                                            "ami-0866b9d387d1a80de",
+                                            #"ami-0b75245c1e9b00c36",
                                             "--instance-type", size,
                                             "--security-groups", "publicssh",
                                             "--instance-initiated-shutdown-behavior", "terminate",
@@ -88,7 +89,6 @@ touch compressor_dummy
 git fetch
 git checkout {br}
 git pull
-
 make -C rust_compressor
 """
 
@@ -99,7 +99,7 @@ make -C rust_compressor
                 %s ubuntu@%s:ec/""" % (resume, address))
         preamble += "tar xf {}\n".format(os.path.basename(resume))
     else:
-        preamble += "git apply patch ; mkdir jobs\n"
+        preamble += "git apply patch ; mkdir jobs\ngit submodule update --init --recursive\n"
 
     if upload:
         # This is probably a terribly insecure idea...
@@ -239,7 +239,7 @@ if __name__ == "__main__":
                         default={
                             "ellisk": "ellisk@openmind7.mit.edu:/om2/user/ellisk/ec",
                             "lucasem": "lucasem@rig.lucasem.com:repo/ec",
-                            "mnye": "mnye@opemind7.mit.edu:/om/user/mnye/ec_aws_logs"
+                            "mnye": "mnye@openmind7.mit.edu:/om/user/mnye/ec_aws_logs"
                         }.get(user(), None))
     parser.add_argument('-z', "--size",
                         default="t2.micro")

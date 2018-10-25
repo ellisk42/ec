@@ -196,13 +196,18 @@ def parseLogo(s):
     except: return Abstraction(block(s, [], Index(0)))
 
 
-def manualLogoTask(name, expression, proto=False, needToTrain=False):
+def manualLogoTask(name, expression, proto=False, needToTrain=False, supervise = False):
     p = parseLogo(expression)
     from logoPrimitives import primitives
     from grammar import Grammar
     g = Grammar.uniform(primitives, continuationType=turtle)
     gp = Grammar.uniform(primitives)
-    try: assert g.logLikelihood(arrow(turtle,turtle),p) >= gp.logLikelihood(arrow(turtle,turtle),p)
+    try:
+        l = g.logLikelihood(arrow(turtle,turtle),p)
+        lp = gp.logLikelihood(arrow(turtle,turtle),p)
+        assert l >= lp
+        eprint(name,-l,"nats")
+        
     except: eprint("WARNING: could not calculate likelihood of manual logo",p)
 
     [output, highresolution] = \
@@ -223,11 +228,14 @@ def manualLogoTask(name, expression, proto=False, needToTrain=False):
 
     t.highresolution = highresolution
 
+    if supervise:
+        t.supervisedSolution = p
+
     return t
 
 def manualLogoTasks():
     tasks = []
-    def T(*a): tasks.append(manualLogoTask(*a))
+    def T(name, source, supervise=False): tasks.append(manualLogoTask(name, source, supervise=supervise))
     if False:
         for d,a,s in [('1l','0a','(loop i infinity (move epsilonLength epsilonAngle))'),
                       ('epsilonLength','0a','(loop i infinity (move epsilonLength epsilonAngle))'),
@@ -261,15 +269,17 @@ def manualLogoTasks():
     T("upwards", "((move 0d (/a 1a 4)) (move 1d 0a))")
     T("right angle", "((move (*d 1d 2) (/a 1a 4)) (move 1d 0a))")
     T("right angle epsilon", "((move epsilonLength (/a 1a 4)) (move epsilonLength 0a))")
+
+    T("line segment", "(move 1d 0a)")
     
 
-    for i in [5,6,8]:
+    for i in [8]:
         T("Greek spiral %d"%i,
           """
           (loop i %d
           (move (*l 1l i) (/a 1a 4)))
           """%i)
-        i -= 2
+    for i in [3]:#,4,6]:
         T("smooth spiral %d"%i,
           """
           (loop i infinity 
@@ -315,7 +325,7 @@ def manualLogoTasks():
           """%(n,n))
         
 
-    for n in [3,5]:
+    for n in [5]:
         T("staircase %d"%n,
           """
           (loop i %d
@@ -331,7 +341,7 @@ def manualLogoTasks():
           (move 1d (/a 1a 4)) (move 1d (/a 1a 4))
           (move 1d (+a (/a 1a 2) (/a 1a 4))) (move 1d (+a (/a 1a 2) (/a 1a 4))))
           """%n)
-    for n in range(1,5):
+    for n in [4]:#range(1,5):
         T("diagonal zigzag %d"%n,
           """
           ((move 0d (/a 1a 8))
@@ -395,12 +405,55 @@ def manualLogoTasks():
           (move (*d epsilonLength %d) (-a 0a epsilonAngle))))
           """%(n,l,l))
 
-    for n,l in [(3,"1d")]:
+    for n,l in [(2,"1d")]:
         T("row of %d circles"%n,
           """
           (loop j %d
           (embed (loop k 2 (loop i infinity (move epsilonLength epsilonAngle))))
           (p (move %s 0a)))"""%(n,l))
+    for n,l in [(2,"1d")]:
+        T("row of %d lines"%n,
+          """
+          (loop j %d
+          (move 1d 0a)
+          (p (move %s 0a)))"""%(n,l))
+    T("line next to circle",
+      """
+      ((move 1d 0a) (p (move 1d 0a)) (loop i infinity (move epsilonLength epsilonAngle)))
+      """)
+    T("circle next to line",
+      """
+      ((loop i infinity (move epsilonLength epsilonAngle)) (p (move 1d 0a)) (move 1d 0a))
+      """)
+    for n,l in [(3,"(/d 1d 2)")]:
+        T("%d dashed lines of size %s"%(n,l),
+          """(loop i %d (p (move 1d 0a)) (move %s 0a))"""%(n,l))
+    T("broken circle",
+      """
+      ((loop i infinity (move epsilonLength epsilonAngle)) (p (move 1d 0a)) (loop i infinity (move epsilonLength epsilonAngle)))
+      """)
+    T("circle next to semicircle",
+      """
+      ((loop i infinity (move epsilonLength epsilonAngle))
+      (loop i infinity (move epsilonLength epsilonAngle))
+      (p (move 1d 0a))
+      (loop i infinity (move epsilonLength epsilonAngle)))
+      """)
+    T("circle next to line",
+      """
+      ((loop i infinity (move epsilonLength epsilonAngle))
+      (loop i infinity (move epsilonLength epsilonAngle))
+      (p (move 1d 0a))
+      (move 1d 0a))
+      """)
+    T("line next to circle",
+      """
+      ((move 1d 0a)
+      (p (move 1d 0a))
+      (loop i infinity (move epsilonLength epsilonAngle))
+      (loop i infinity (move epsilonLength epsilonAngle))      
+      (move 1d 0a))
+      """)
     for n,l in [(4,"1d")]:
         T("row of %d dashes"%n,
           """
@@ -414,22 +467,28 @@ def manualLogoTasks():
           (embed (loop i infinity (move epsilonLength epsilonAngle)))
           (p (move %s 0a)))"""%(n,l))
 
-    for n in [3,5,6]:
-        body = {#"empty": "(move 1d 0a)",
+    for n in [3,4,5,6]:
+        body = {"empty": "(move 1d 0a)",
                 "dashed": "(p (move 1d 0a)) (move 1d 0a)",
                 "circle": "(move 1d 0a) (loop k 2 (loop i infinity (move epsilonLength epsilonAngle)))",
-            "lonely circle": "(p (move 1d 0a)) (loop k 2 (loop i infinity (move epsilonLength epsilonAngle)))",
+                "lonely circle": "(p (move 1d 0a)) (loop k 2 (loop i infinity (move epsilonLength epsilonAngle)))",
                 "square dashed": "(p (move 1d 0a)) (loop s 4 (move 1d (/a 1a 4)))",
                 "square": "(move 1d 0a) (loop s 4 (move 1d (/a 1a 4)))",
                 "semicircle": "(move 1d 0a) (loop i infinity (move epsilonLength epsilonAngle))"}
         for name in body:
+            if name == "empty" and n != 5: continue
+
+            supervised = (name == "semicircle" and n == 5) or \
+                         (name == "square dashed" and n == 6) or \
+                         (name == "square" and n == 3)
             T("%d-%s snowflake"%(n,name),
               """
               (loop j %d
               (embed %s)
-              (move 0d (/a 1a %d)))"""%(n,body[name],n))
+              (move 0d (/a 1a %d)))"""%(n,body[name],n),
+              supervised)
 
-    for n in [2,3,4]:
+    for n in [4]:#2,3,4]:
         T("%d-row of squares"%n,
           """
           (loop i %d

@@ -122,6 +122,8 @@ class LogoFeatureCNN(nn.Module):
             return t
         except subprocess.TimeoutExpired:
             return None
+        except subprocess.CalledProcessError:
+            return None
         except ValueError:
             return None
         except OSError as exc:
@@ -148,6 +150,8 @@ class LogoFeatureCNN(nn.Module):
                     f.write(str(p))
             return None
         except subprocess.TimeoutExpired:
+            return None
+        except subprocess.CalledProcessError:
             return None
         except ValueError:
             return None
@@ -294,7 +298,7 @@ if __name__ == "__main__":
         featureExtractor=LogoFeatureCNN,
         maximumFrontier=5,
         CPUs=numberOfCPUs(),
-        pseudoCounts=10.0,
+        pseudoCounts=30.0,
         activation="tanh",
         extras=list_options)
     visualizeCheckpoint = args.pop("visualize")

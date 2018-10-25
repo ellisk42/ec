@@ -55,7 +55,7 @@ def parseResultsPath(p):
     if rest[-1] == "baselines":
         rest.pop()
     parameters = {ECResult.parameterOfAbbreviation(k): maybe_eval(v)
-                  for binding in rest
+                  for binding in rest if '=' in binding
                   for [k, v] in [binding.split('=')]}
     parameters['domain'] = domain
     return Bunch(parameters)
@@ -63,19 +63,22 @@ def parseResultsPath(p):
 
 def plotECResult(
         resultPaths,
+        interval=False,
+        timePercentile=False,
         colors='rgbycm',
-        label=None,
+        labels=None,
+        failAsTimeout=False,
         title=None,
+        testingTimeout=None,
         export=None,
-        showSolveTime=False,
+        showSolveTime=True,
         showTraining=False,
         iterations=None):
     results = []
     parameters = []
     for j, path in enumerate(resultPaths):
-#        with open(path, 'rb') as handle:
-        print("path:", path)
         result = loadfun(path)
+        print("loaded path:", path)
 
         if hasattr(result, "baselines") and result.baselines:
             for name, res in result.baselines.items():
@@ -85,9 +88,12 @@ def plotECResult(
                 parameters.append(p)
         else:
             results.append(result)
-            p = parseResultsPath(path)
-            parameters.append(p)
+            parameters.append(parseResultsPath(path))
 
+    if testingTimeout is not None:
+        for r in results:
+            r.testingSearchTime = [ [t for t in ts if t <= testingTimeout ]
+                                    for ts in result.testingSearchTime ]
     # Collect together the timeouts, which determine the style of the line
     # drawn
     timeouts = sorted(set(r.enumerationTimeout for r in parameters),
@@ -103,6 +109,8 @@ def plotECResult(
 
     if showSolveTime:
         a1.set_ylabel('%  Solved (solid)', fontsize=LABELFONTSIZE)
+        a2 = a1.twinx()
+        a2.set_ylabel('Solve time (dashed)', fontsize=LABELFONTSIZE)
     else:
         if not showTraining:
             a1.set_ylabel('% Testing Tasks Solved', fontsize=LABELFONTSIZE)
@@ -110,24 +118,21 @@ def plotECResult(
             a1.set_ylabel('% Tasks Solved', fontsize=LABELFONTSIZE)
             
 
-    if showSolveTime:
-        a2 = a1.twinx()
-        a2.set_ylabel('Solve time (dashed)', fontsize=LABELFONTSIZE)
-
     n_iters = max(len(result.learningCurve) for result in results)
     if iterations and n_iters > iterations:
         n_iters = iterations
 
     plot.xticks(range(0, n_iters), fontsize=TICKFONTSIZE)
 
-    recognitionToColor = {False: "teal", True: "darkorange"}
+    recognitionToColor = {False: "#1B9E77",#"teal",
+                          True: "#D95F02"}#"darkorange"}
 
     for result, p in zip(results, parameters):
         if hasattr(p, "baseline") and p.baseline:
             ys = [100. * result.learningCurve[-1] /
                   len(result.taskSolutions)] * n_iters
         elif showTraining:
-            ys = [t/136. # FIXME: somehow calculate the number of training tasks
+            ys = [t/float(len(result.taskSolutions))
                   for t in result.learningCurve[:iterations]]
         else:
             ys = [100. * len(t) / result.numTestingTasks
@@ -136,14 +141,26 @@ def plotECResult(
         l, = a1.plot(list(range(0, len(ys))), ys, color=color, ls='-')
 
         if showSolveTime:
-            if not showTraining:
-                a2.plot(range(len(result.testingSearchTime[:iterations])),
-                        [sum(ts) / float(len(ts)) for ts in result.testingSearchTime[:iterations]],
+            if failAsTimeout:
+                assert testingTimeout is not None
+                result.testingSearchTime = [ ts + [testingTimeout]*(result.numTestingTasks - len(ts))
+                                             for ts in result.testingSearchTime ]
+                result.searchTimes = [ ts + [p.enumerationTimeout]*(len(result.taskSolutions) - len(ts))
+                                       for ts in result.searchTimes ]
+
+            if not showTraining: times = result.testingSearchTime[:iterations]
+            else: times = result.searchTimes[:iterations]
+            a2.plot(range(len(times)),
+                        [mean(ts) if not timePercentile else median(ts)
+                         for ts in times],
                         color=color, ls='--')
-            else:
-                a2.plot(range(len(result.searchTimes[:iterations])),
-                        [sum(ts) / float(len(ts)) for ts in result.searchTimes[:iterations]],
-                        color=color, ls='--')
+            if interval:
+                a2.fill_between(range(len(times)),
+                                [percentile(ts, 0.75) if timePercentile else mean(ts) + standardDeviation(ts)
+                                 for ts in times],
+                                [percentile(ts, 0.25) if timePercentile else mean(ts) - standardDeviation(ts)
+                                 for ts in times],
+                                facecolor=color, alpha=0.2)
 
     a1.set_ylim(ymin=0, ymax=110)
     a1.yaxis.grid()
@@ -153,11 +170,14 @@ def plotECResult(
     if showSolveTime:
         a2.set_ylim(ymin=0)
         starting, ending = a2.get_ylim()
-        if True:
-            # [int(zz) for zz in np.arange(starting, ending, (ending - starting)/5.)])
-            a2.yaxis.set_ticks([20 * j for j in range(6)])
-        else:
-            a2.yaxis.set_ticks([50 * j for j in range(6)])
+        ending10 = 10*int(ending/10 + 1)
+        a2.yaxis.set_ticks([ int(ending10/6)*j
+                             for j in range(0, 6)]) 
+        # if False:
+        #     # [int(zz) for zz in np.arange(starting, ending, (ending - starting)/5.)])
+        #     a2.yaxis.set_ticks([20 * j for j in range(6)])
+        # else:
+        #     a2.yaxis.set_ticks([50 * j for j in range(6)])
         for tick in a2.yaxis.get_ticklabels():
             tick.set_fontsize(TICKFONTSIZE)
 
@@ -172,34 +192,15 @@ def plotECResult(
                                  handles=[mlines.Line2D([], [], color='black', ls=timeoutToStyle[timeout],
                                                         label="timeout %ss" % timeout)
                                           for timeout in timeouts]))
-    if False:
-        # FIXME: figure out how to have two separate legends
-        plot.gca().add_artist(
-            plot.legend(
-                loc='lower left',
-                fontsize=20,
-                handles=[
-                    mlines.Line2D(
-                        [],
-                        [],
-                        color=recognitionToColor[True],
-                        ls='-',
-                        label="DreamCoder"),
-                    mlines.Line2D(
-                        [],
-                        [],
-                        color=recognitionToColor[False],
-                        ls='-',
-                        label="No NN")]))
-
     f.tight_layout()
     if export:
         plot.savefig(export)  # , additional_artists=legends)
+        eprint("Exported figure ",export)
         if export.endswith('.png'):
             os.system('convert -trim %s %s' % (export, export))
         os.system('feh %s' % export)
     else:
-        plot.show()
+        f.show()
         
 
 def tryIntegerParse(s):
@@ -212,43 +213,44 @@ def tryIntegerParse(s):
 if __name__ == "__main__":
     import sys
 
-    def label(p):
-        #l = p.domain
-        l = ""
-        if hasattr(p, 'baseline') and p.baseline:
-            l += "baseline %s" % p.baseline
-            return l
-        if p.useRecognitionModel:
-            if hasattr(p, 'helmholtzRatio') and p.helmholtzRatio > 0:
-                l += "DreamCoder"
-            else:
-                l += "AE"
-        else:
-            l += "no NN"
-        if hasattr(p, "frontierSize"):
-            l += " (frontier size %s)" % p.frontierSize
-        else:
-            l += " (timeout %ss)" % p.enumerationTimeout
-        return l
-    arguments = sys.argv[1:]
-    training = 'training' in arguments
-    arguments = [a for a in arguments if a != 'training' ]
-    export = [a for a in arguments if a.endswith('.png') or a.endswith('.eps')]
-    export = export[0] if export else None
-    title = [
-        a for a in arguments if not any(
-            a.endswith(s) for s in {
-                '.eps',
-                '.png',
-                '.pickle'})]
-
-    # pass in an integer on the command line to  number of plotted iterations
-    iterations = [tryIntegerParse(a) for a in arguments if tryIntegerParse(a)]
-    iterations = None if iterations == [] else iterations[0]
-
-    plotECResult([a for a in arguments if a.endswith('.pickle')],
-                 export=export,
-                 title=title[0] if title else "DSL learning curves",
-                 label=label,
-                 showSolveTime=True,
-                 iterations=iterations)
+    import argparse
+    parser = argparse.ArgumentParser(description = "")
+    parser.add_argument("checkpoints",nargs='+')
+    parser.add_argument("--title","-t",type=str,
+                        default="")
+    parser.add_argument("--iterations","-i",
+                        type=int, default=None,
+                        help="number of iterations of EC to show")
+    parser.add_argument("--names","-n",
+                        type=str, default="",
+                        help="comma-separated list of names to put on the plot for each checkpoint")
+    parser.add_argument("--export","-e",
+                        type=str, default=None)
+    parser.add_argument("--percentile","-p",
+                        default=False, action="store_true",
+                        help="When displaying error bars for synthesis times, this option will cause it to show 25%/75% interval. By default it instead shows +/-1 stddev")
+    parser.add_argument("--interval",
+                        default=False, action="store_true",
+                        help="Should we show error bars for synthesis times?")
+    parser.add_argument("--testingTimeout",
+                        default=None, type=float,
+                        help="Retroactively pretend that the testing timeout was something else. WARNING: This will only give valid results if you are retroactively pretending that the testing timeout was smaller than it actually was!!!")
+    parser.add_argument("--failAsTimeout",
+                        default=False, action="store_true",
+                        help="When calculating average solve time, should you count missed tasks as timeout OR should you just ignore them? Default: ignore them.")
+    parser.add_argument("--showTraining",
+                        default=False, action="store_true",
+                        help="Show training tasks in plot, i think...")
+    
+    arguments = parser.parse_args()
+    
+    plotECResult(arguments.checkpoints,
+                 testingTimeout=arguments.testingTimeout,
+                 timePercentile=arguments.percentile,
+                 export=arguments.export,
+                 title=arguments.title,
+                 failAsTimeout=arguments.failAsTimeout,
+                 labels=arguments.names.split(","),
+                 interval=arguments.interval,
+                 iterations=arguments.iterations,
+                 showTraining=arguments.showTraining)

@@ -4,7 +4,7 @@ from ec import explorationCompression, commandlineArguments, Task
 from grammar import Grammar
 #from utilities import eprint, testTrainSplit, numberOfCPUs, flatten
 from utilities import eprint, numberOfCPUs, flatten, fst, testTrainSplit, POSITIVEINFINITY
-from makeRegexTasks import makeOldTasks, makeLongTasks, makeShortTasks, makeWordTasks, makeNumberTasks
+from makeRegexTasks import makeOldTasks, makeLongTasks, makeShortTasks, makeWordTasks, makeNumberTasks, makeHandPickedTasks, makeNewTasks
 from regexPrimitives import basePrimitives, altPrimitives, easyWordsPrimitives, alt2Primitives, concatPrimitives
 from likelihoodModel import add_cutoff_values
 #from program import *
@@ -12,11 +12,12 @@ from recognition import RecurrentFeatureExtractor, JSONFeatureExtractor
 import random
 from type import tpregex
 import math
+import pregex as pre
 
 
 
 class LearnedFeatureExtractor(RecurrentFeatureExtractor):
-    H = 16
+    H = 64
     special = 'regex'
 
     def tokenize(self, examples):
@@ -53,10 +54,12 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
         self.lexicon = set(flatten((t.examples for t in tasks + testingTasks), abort=lambda x: isinstance(
             x, str))).union({"LIST_START", "LIST_END", "?"})
 
+        self.num_examples_list = [len(t.examples) for t in tasks]
+
         # Calculate the maximum length
         self.maximumLength = POSITIVEINFINITY
         self.maximumLength = max(len(l)
-                                 for t in tasks
+                                 for t in tasks + testingTasks
                                  for xs, y in self.tokenize(t.examples)
                                  for l in [y] + [x for x in xs])
 
@@ -66,9 +69,20 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
             lexicon=list(
                 self.lexicon),
             tasks=tasks,
-                cuda=cuda,
+            cuda=cuda,
             H=self.H,
             bidirectional=True)
+
+
+    def taskOfProgram(self, p, t):
+        #raise NotImplementedError
+        num_examples = random.choice(self.num_examples_list)
+        preg = p.evaluate([])(pre.String(""))
+        t = Task("Helm", t, [((), preg.sample()) for _ in range(num_examples) ])
+        return t
+        
+        #in init: loop over tasks, save lengths, 
+
 
 
 class MyJSONFeatureExtractor(JSONFeatureExtractor):
@@ -123,9 +137,9 @@ def regex_options(parser):
         default=10,
         help="truncate number of examples per task to fit within this boundary")
     parser.add_argument("--tasks",
-                        default="old",
+                        default="long",
                         help="which tasks to use",
-                        choices=["old", "short", "long", "words","number"])
+                        choices=["old", "short", "long", "words", "number", "handpicked", "new"])
     parser.add_argument("--primitives",
                         default="concat",
                         help="Which primitive set to use",
@@ -202,6 +216,8 @@ if __name__ == "__main__":
                 "long": makeLongTasks,
                 "words": makeWordTasks,
                 "number": makeNumberTasks,
+                "handpicked": makeHandPickedTasks,
+                "new": makeNewTasks
                 }[args.pop("tasks")]
 
     tasks = regexTasks()  # TODO
@@ -215,13 +231,7 @@ if __name__ == "__main__":
         del tasks[maxTasks:]
 
     maxExamples = args.pop("maxExamples")
-    for task in tasks:
-        if len(task.examples) > maxExamples:
-            task.examples = task.examples[:maxExamples]
-
-        task.specialTask = ("regex",{})
-        task.examples = [(xs, [y for y in ys ])
-                         for xs,ys in task.examples ]
+   
 
     split = args.pop("split")
     test, train = testTrainSplit(tasks, split)
@@ -231,7 +241,14 @@ if __name__ == "__main__":
     test = add_cutoff_values(test, test_ll_cutoff)
     train = add_cutoff_values(train, train_ll_cutoff)
     eprint("added cutoff values to tasks, train: ", train_ll_cutoff, ", test:", test_ll_cutoff )
+    
+    for task in test + train:
+        if len(task.examples) > maxExamples:
+            task.examples = task.examples[:maxExamples]
 
+        task.specialTask = ("regex", {"cutoff": task.ll_cutoff})
+        task.examples = [(xs, [y for y in ys ])
+                         for xs,ys in task.examples ]
 
     # from list stuff
     primtype = args.pop("primitives")

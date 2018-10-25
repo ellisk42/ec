@@ -29,7 +29,11 @@ class Task(object):
                        for xs, _ in examples), \
                 "(for task %s) FATAL: Number of arguments varies." % name
 
-    def __str__(self): return self.name
+    def __str__(self):
+        if self.supervision is None:
+            return self.name
+        else:
+            return self.name + " (%s)"%self.supervision
 
     def __repr__(self):
         return "Task(name={self.name}, request={self.request}, examples={self.examples}"\
@@ -54,6 +58,11 @@ class Task(object):
         for a in x:
             f = f(a)
         return f
+
+    @property
+    def supervision(self):
+        if not hasattr(self, 'supervisedSolution'): return None
+        return self.supervisedSolution
 
     def check(self, e, timeout=None):
         if timeout is not None:

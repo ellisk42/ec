@@ -91,7 +91,7 @@ class ContextualGrammarNetwork(nn.Module):
                 self.add_module("Invention %d, argument %d"%(ei,n),
                                 self.library[e][n])
 
-    def forward(self,x):
+    def forward(self, x):
         return ContextualGrammar(self.noParent(x), self.variableParent(x),
                                  {e: [g(x) for g in gs ]
                                   for e,gs in self.library.items() })
@@ -165,9 +165,8 @@ class RecognitionModel(nn.Module):
         return - entry.program.logLikelihood(g)
 
     def frontierBiasOptimal(self, frontier):
-        features = self.featureExtractor.featuresOfTask(frontier.task)
-        if features is None: return None
-        g = self(features)
+        g = self.grammarOfTask(frontier.task)
+        if g is None: return None
         l = [entry.program.logLikelihood(g)
              for entry in frontier]
         l = torch.stack(l,1).squeeze(0)
@@ -298,7 +297,7 @@ class RecognitionModel(nn.Module):
                 self.request = frontier.task.request
                 self.task = None
                 self.programs = [e.program for e in frontier]
-                self.frontier = owner.replaceProgramsWithLikelihoodSummaries(frontier)
+                self.frontier = Thunk(lambda: owner.replaceProgramsWithLikelihoodSummaries(frontier))
                 self.owner = owner
 
             def clear(self): self.task = None
@@ -310,7 +309,7 @@ class RecognitionModel(nn.Module):
 
             def makeFrontier(self):
                 assert self.task is not None
-                f = Frontier(self.frontier.entries,
+                f = Frontier(self.frontier.force().entries,
                              task=self.task)
                 return f
             
@@ -324,8 +323,10 @@ class RecognitionModel(nn.Module):
         # wastes time.
         if not hasattr(self.featureExtractor, 'recomputeTasks'):
             self.featureExtractor.recomputeTasks = True
+        eprint("TEST HELMHOLTZ ENTRY START")
         helmholtzFrontiers = [HelmholtzEntry(f, self)
                               for f in helmholtzFrontiers]
+        eprint("TEST HELMHOLTZ ENTRY END")
         random.shuffle(helmholtzFrontiers)
 
         
@@ -350,8 +351,10 @@ class RecognitionModel(nn.Module):
             
         def updateHelmholtzTasks():
             HELMHOLTZBATCHSIZE = 500
+            updateCPUs = CPUs if hasattr(self.featureExtractor, 'parallelTaskOfProgram') and self.featureExtractor.parallelTaskOfProgram else 1
+            if updateCPUs > 1: eprint("Updating Helmholtz tasks with",updateCPUs,"CPUs")
             newTasks = \
-             parallelMap(1,
+             parallelMap(updateCPUs,
                          lambda f: f.calculateTask(),
                         helmholtzFrontiers[helmholtzIndex[0]:helmholtzIndex[0] + HELMHOLTZBATCHSIZE])
             badIndices = []
@@ -502,8 +505,10 @@ class RecognitionModel(nn.Module):
                            maximumFrontier=None,
                            evaluationTimeout=None):
         with timing("Evaluated recognition model"):
-            grammars = {task: self.grammarOfTask(task).untorch()
+            grammars = {task: self.grammarOfTask(task)
                         for task in tasks}
+            #untorch seperately to make sure you filter out None grammars
+            grammars = {task: grammar.untorch() for task, grammar in grammars.items() if grammar is not None}
 
         return multicoreEnumeration(grammars, tasks, likelihoodModel,
                                     solver=solver,
@@ -523,21 +528,36 @@ class RecurrentFeatureExtractor(nn.Module):
                  # how many hidden units
                  H=32,
                  # Should the recurrent units be bidirectional?
-                 bidirectional=False):
+                 bidirectional=False,
+                 # What should be the timeout for trying to construct Helmholtz tasks?
+                 helmholtzTimeout=0.25,
+                 # What should be the timeout for running a Helmholtz program?
+                 helmholtzEvaluationTimeout=0.01):
         super(RecurrentFeatureExtractor, self).__init__()
 
         assert tasks is not None, "You must provide a list of all of the tasks, both those that have been hit and those that have not been hit. Input examples are sampled from these tasks."
 
-        # maps from a requesting type to all of the inputs that we ever saw
-        # that request
-        self.requestToInputs = {
-            tp: [
-                list(
-                    map(
-                        fst,
-                        t.examples)) for t in tasks if t.request == tp] for tp in {
-                t.request for t in tasks}}
-
+        inputTypes = {t
+                      for task in tasks
+                      for t in task.request.functionArguments()}
+        # maps from a type to all of the inputs that we ever saw having that type
+        self.argumentsWithType = {
+            tp: [ x
+                  for t in tasks
+                  for xs,_ in t.examples
+                  for tpp, x in zip(t.request.functionArguments(), xs)
+                  if tpp == tp]
+            for tp in inputTypes
+        }
+        self.requestToNumberOfExamples = {
+            tp: [ len(t.examples)
+                  for t in tasks if t.request == tp ]
+            for tp in {t.request for t in tasks}
+        }
+        self.helmholtzTimeout = helmholtzTimeout
+        self.helmholtzEvaluationTimeout = helmholtzEvaluationTimeout
+        self.parallelTaskOfProgram = True
+        
         assert lexicon
         self.specialSymbols = [
             "STARTING",  # start of entire sequence
@@ -652,25 +672,31 @@ class RecurrentFeatureExtractor(nn.Module):
         return f
 
     def taskOfProgram(self, p, tp):
-        candidateInputs = list(self.requestToInputs[tp])
-        # Loop over the inputs in a random order and pick the first one that
+        def randomInput(t): return random.choice(self.argumentsWithType[t])
+        # Loop over the inputs in a random order and pick the first ones that
         # doesn't generate an exception
-        random.shuffle(candidateInputs)
-        for xss in candidateInputs:
-            ys = []
 
-            for xs in xss:
-                try:
-                    y = runWithTimeout(lambda: p.runWithArguments(xs),0.01)
-                except:
-                    break
+        startTime = time.time()
+        examples = []
+        while True:
+            # TIMEOUT! this must not be a very good program
+            if time.time() - startTime > self.helmholtzTimeout: return None
 
-                ys.append(y)
-            if len(ys) == len(xss):
-                return Task("Helmholtz", tp, list(zip(xss,ys)))
-
-        return None
-
+            # Grab some random inputs
+            xs = [randomInput(t) for t in tp.functionArguments()]
+            try:
+                y = runWithTimeout(lambda: p.runWithArguments(xs), self.helmholtzEvaluationTimeout)
+                examples.append((tuple(xs),y))
+                if len(examples) >= random.choice(self.requestToNumberOfExamples[tp]):
+                    if False:
+                        eprint("Helmholtz task")
+                        eprint(p,":",tp)
+                        for xs,y in examples:
+                            eprint("f%s = %s"%(xs,y))
+                        eprint()
+                    return Task("Helmholtz", tp, examples)
+            except: continue
+            
     
 
 
@@ -1068,6 +1094,7 @@ class NewRecognitionModel(nn.Module):
 
 def helmholtzEnumeration(g, request, inputs, timeout, _=None,
                          special=None, evaluationTimeout=None):
+    """Returns json (as text)"""
     import json
 
     message = {"request": request.json(),
@@ -1084,29 +1111,9 @@ def helmholtzEnumeration(g, request, inputs, timeout, _=None,
                                    stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE)
         response, error = process.communicate(bytes(message, encoding="utf-8"))
-        with timing("(Helmholtz enumeration) parsed json"):
-            response = json.loads(response.decode("utf-8"))
     except OSError as exc:
         raise exc
-
-    h = set()
-    frontiers = []
-    np = 0
-    for e in response:
-        for p in e["programs"]:
-            np += 1
-    eprint("(Helmholtz enumeration) %d distinct programs"%np)
-    with timing("(Helmholtz enumeration) constructed frontiers"):
-        for b, entry in enumerate(response):
-            frontiers.append(Frontier([FrontierEntry(program=Program.parse(p),
-                                                     logPrior=entry["ll"],
-                                                     logLikelihood=0.)
-                                       for p in entry["programs"] ],
-                                      task=Task(str(b),
-                                                request,
-                                                [])))
-
-    return frontiers
+    return response
 
 def backgroundHelmholtzEnumeration(tasks, g, timeout, _=None,
                                    special=None, evaluationTimeout=None):
@@ -1123,7 +1130,20 @@ def backgroundHelmholtzEnumeration(tasks, g, timeout, _=None,
                 for r in requests ]
     def get():
         results = [p.get() for p in promises]
-        return [x for xs in results for x in xs]
+        frontiers = []
+        with timing("(Helmholtz enumeration) Decoded json into frontiers"):
+            for request, result in zip(requests, results):
+                response = json.loads(result.decode("utf-8"))
+                for b, entry in enumerate(response):
+                    frontiers.append(Frontier([FrontierEntry(program=Program.parse(p),
+                                                             logPrior=entry["ll"],
+                                                             logLikelihood=0.)
+                                               for p in entry["programs"] ],
+                                              task=Task(str(b),
+                                                        request,
+                                                        [])))
+        eprint("Total number of Helmholtz frontiers:",len(frontiers))
+        return frontiers
     return get
             
 if __name__ == "__main__":

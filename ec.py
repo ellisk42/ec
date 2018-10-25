@@ -9,6 +9,7 @@ from task import *
 from enumeration import *
 from grammar import *
 from fragmentGrammar import *
+from taskBatcher import *
 import baselines
 import dill
 
@@ -49,7 +50,6 @@ class ECResult():
         self.sumMaxll = sumMaxll or [] #TODO name change 
         self.testingSumMaxll = testingSumMaxll or [] #TODO name change
 
-
     def __repr__(self):
         attrs = ["{}={}".format(k, v) for k, v in self.__dict__.items()]
         return "ECResult({})".format(", ".join(attrs))
@@ -57,6 +57,7 @@ class ECResult():
     # Linux does not like files that have more than 256 characters
     # So when exporting the results we abbreviate the parameters
     abbreviations = {"frontierSize": "fs",
+                     "recognitionTimeout": "RT",
                      "iterations": "it",
                      "maximumFrontier": "MF",
                      "onlyBaselines": "baseline",
@@ -75,8 +76,7 @@ class ECResult():
                      "activation": "act"}
 
     @staticmethod
-    def abbreviate(parameter): return ECResult.abbreviations.get(
-        parameter, parameter)
+    def abbreviate(parameter): return ECResult.abbreviations.get(parameter, parameter)
 
     @staticmethod
     def parameterOfAbbreviation(abbreviation):
@@ -142,6 +142,8 @@ def ecIterator(grammar, tasks,
                pseudoCounts=1.0, aic=1.0,
                structurePenalty=0.001, arity=0,
                evaluationTimeout=1.0,  # seconds
+               taskBatchSize=None,
+               taskReranker='default',
                CPUs=1,
                cuda=False,
                message="",
@@ -174,8 +176,6 @@ def ecIterator(grammar, tasks,
     if testingTimeout > 0 and len(testingTasks) == 0:
         eprint("You specified a testingTimeout, but did not provide any held out testing tasks, aborting.")
         assert False
-
-
 
     # We save the parameters that were passed into EC
     # This is for the purpose of exporting the results of the experiment
@@ -336,6 +336,15 @@ def ecIterator(grammar, tasks,
         "probabilistic": lambda: ProbabilisticLikelihoodModel(
             timeout=evaluationTimeout)}[likelihoodModel]()
 
+    # Set up the task batcher.
+    if taskReranker == 'default':
+        taskBatcher = DefaultTaskBatcher()
+    elif taskReranker == 'random':
+        taskBatcher = RandomTaskBatcher()
+    else:
+        eprint("Invalid task reranker: " + taskReranker + ", aborting.")
+        assert False
+ 
     for j in range(resume or 0, iterations):
 
         # Evaluate on held out tasks if we have them
@@ -373,8 +382,11 @@ def ecIterator(grammar, tasks,
         else:
             helmholtzFrontiers = lambda: []
 
+        # Get waking task batch.
+        wakingTaskBatch = taskBatcher.getTaskBatch(result, tasks, taskBatchSize, j)
+
         # WAKING UP
-        frontiers, times = multicoreEnumeration(grammar, tasks, likelihoodModel,
+        frontiers, times = multicoreEnumeration(grammar, wakingTaskBatch, likelihoodModel,
                                                 solver=solver,
                                                 maximumFrontier=maximumFrontier,
                                                 enumerationTimeout=enumerationTimeout,
@@ -407,7 +419,7 @@ def ecIterator(grammar, tasks,
                                  helmholtzRatio=helmholtzRatio if j > 0 or helmholtzRatio == 1. else 0.)                                
             result.recognitionModel = recognizer
 
-            bottomupFrontiers, times = recognizer.enumerateFrontiers(tasks, likelihoodModel,
+            bottomupFrontiers, times = recognizer.enumerateFrontiers(wakingTaskBatch, likelihoodModel,
                                                                      CPUs=CPUs,
                                                                      solver=solver,
                                                                      frontierSize=frontierSize,
@@ -425,7 +437,7 @@ def ecIterator(grammar, tasks,
                 helmholtzRatio=helmholtzRatio)
             eprint("done training recognition model")
             bottomupFrontiers = result.recognitionModel.enumerateFrontiers(
-                tasks,
+                wakingTaskBatch,
                 likelihoodModel,
                 CPUs=CPUs,
                 solver=solver,
@@ -510,13 +522,17 @@ def ecIterator(grammar, tasks,
                    "\tmax:", int(max(times) + 0.5),
                    "\tstandard deviation", int(standardDeviation(times) + 0.5))
 
-        # Incorporate frontiers from anything that was not hit
-        frontiers = [
-            f if not f.empty else grammar.rescoreFrontier(
-                result.taskSolutions.get(
-                    f.task, Frontier.makeEmpty(
-                        f.task))) for f in frontiers]
-        frontiers = [f.topK(maximumFrontier) for f in frontiers]
+        # Incorporate frontiers from anything that was not hit,
+        # but which we either hit on the previous iteration,
+        # or for which we have strong supervision
+        _frontiers = []
+        for f in frontiers:
+            if not f.empty: pass
+            elif f.task in result.taskSolutions: f = grammar.rescoreFrontier(result.taskSolutions[f.task])
+            else:
+                f = Frontier.makeEmpty(f.task)
+            _frontiers.append(f.topK(maximumFrontier))
+        frontiers = _frontiers
 
         eprint("Showing the top 5 programs in each frontier:")
         for f in frontiers:
@@ -534,32 +550,25 @@ def ecIterator(grammar, tasks,
             sum(f is not None and not f.empty for f in result.taskSolutions.values())]
                 
 
+        
         # Sleep-G
-        grammar, frontiers = induceGrammar(grammar, frontiers,
-                                           topK=topK,
-                                           pseudoCounts=pseudoCounts, a=arity,
-                                           aic=aic, structurePenalty=structurePenalty,
-                                           topk_use_only_likelihood=topk_use_only_likelihood,
-                                           backend=compressor, CPUs=CPUs, iteration=j)
+        # First check if we have supervision at the program level for any task that was not solved
+        needToSupervise = {f.task for f in frontiers
+                           if f.task.supervision is not None and f.empty}
+        compressionFrontiers = [f.replaceWithSupervised(grammar) if f.task in needToSupervise else f
+                                for f in frontiers ]
+        grammar, compressionFrontiers = induceGrammar(grammar, compressionFrontiers,
+                                                      topK=topK,
+                                                      pseudoCounts=pseudoCounts, a=arity,
+                                                      aic=aic, structurePenalty=structurePenalty,
+                                                      topk_use_only_likelihood=topk_use_only_likelihood,
+                                                      backend=compressor, CPUs=CPUs, iteration=j)
+        frontiers = [f.topK(0) if f in needToSupervise else f
+                     for f in compressionFrontiers ]
         result.grammars.append(grammar)
         eprint("Grammar after iteration %d:" % (j + 1))
         eprint(grammar)
         
-        # eprint(
-        #     "Expected uses of each grammar production after iteration %d:" %
-        #     (j + 1))
-        # productionUses = FragmentGrammar.fromGrammar(grammar).\
-        #     expectedUses([f for f in frontiers if not f.empty]).actualUses
-        # productionUses = {
-        #     p: productionUses.get(
-        #         p, 0.) for p in grammar.primitives}
-        # for p in sorted(
-        #         productionUses.keys(),
-        #         key=lambda p: -
-        #         productionUses[p]):
-        #     eprint("<uses>=%.2f\t%s" % (productionUses[p], p))
-        # eprint()
-
         if outputPrefix is not None:
             path = checkpointPath(j + 1)
             with open(path, "wb") as handle:
@@ -613,6 +622,7 @@ def commandlineArguments(_=None,
                          maximumFrontier=None,
                          pseudoCounts=1.0, aic=1.0,
                          structurePenalty=0.001, a=0,
+                         taskBatchSize=None, taskReranker="default",
                          onlyBaselines=False,
                          extras=None):
     if cuda is None:
@@ -768,6 +778,21 @@ def commandlineArguments(_=None,
                         help="Displays a dependency graph of the learned primitives",
                         default=None,
                         type=str)
+    parser.add_argument(
+        "--taskBatchSize",
+        dest="taskBatchSize",
+        help="Number of tasks to train on during wake. Defaults to all tasks if None.",
+        default=None,
+        type=int)
+    parser.add_argument(
+        "--taskReranker",
+        dest="taskReranker",
+        help="Reranking function used to order the tasks we train on during waking.",
+        choices=[
+            "default",
+            "random"],
+        default=taskReranker,
+        type=str)
     parser.set_defaults(useRecognitionModel=useRecognitionModel,
                         featureExtractor=featureExtractor,
                         maximumFrontier=maximumFrontier,
