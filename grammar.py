@@ -613,7 +613,7 @@ class Grammar(object):
         calculates mdl of full program 'full' from sketch 'sk'
         """
         if sk.isHole:
-            summary = self.closedLikelihoodSummary(request, full)
+            _, summary = self.likelihoodSummary(context, environment, request, full)
             if summary is None:
                 eprint(
                     "FATAL: program [ %s ] does not have a likelihood summary." %
@@ -623,7 +623,7 @@ class Grammar(object):
 
         elif request.isArrow():
             assert sk.isAbstraction and full.isAbstraction
-            assert sk.f == full.f #is this right? or do i need to recurse?
+            #assert sk.f == full.f #is this right? or do i need to recurse?
             v = request.arguments[0]
             return self.sketchLogLikelihood(request.arguments[1], full.body, sk.body, context=context, environment=[v] + environment)
 
@@ -673,10 +673,10 @@ class Grammar(object):
             sk_newFunction = Application(sk_function, sk_firstSketch)  # is this redundant? maybe 
             full_newFunction = Application(full_function, full_firstSketch)
 
-            resultL = self.sketchllApplication(newContext, environment, sk_newFunction, sk_laterSketches,
+            resultL, context = self.sketchllApplication(newContext, environment, sk_newFunction, sk_laterSketches,
                                             full_newFunction, full_laterSketches, laterRequests)
 
-            return resultL + argL
+            return resultL + argL, context
 
         
     def enumerateNearby(self, request, expr, distance=3.0):
