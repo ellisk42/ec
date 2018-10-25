@@ -608,6 +608,77 @@ class Grammar(object):
 
                     yield resultL + argL, resultK, result
 
+    def sketchLogLikelihood(self, request, full, sk, context=Context.EMPTY, environment=[]):
+        """
+        calculates mdl of full program 'full' from sketch 'sk'
+        """
+        if sk.isHole:
+            _, summary = self.likelihoodSummary(context, environment, request, full)
+            if summary is None:
+                eprint(
+                    "FATAL: program [ %s ] does not have a likelihood summary." %
+                    full, "r = ", request, "\n", self)
+                assert False
+            return summary.logLikelihood(self), context
+
+        elif request.isArrow():
+            assert sk.isAbstraction and full.isAbstraction
+            #assert sk.f == full.f #is this right? or do i need to recurse?
+            v = request.arguments[0]
+            return self.sketchLogLikelihood(request.arguments[1], full.body, sk.body, context=context, environment=[v] + environment)
+
+        else:
+            sk_f, sk_xs = sk.applicationParse()
+            full_f, full_xs = full.applicationParse()
+            if sk_f.isIndex:
+                assert sk_f == full_f, "sketch and full program don't match on an index"
+                ft = environment[sk_f.i].apply(context)
+            elif sk_f.isInvented or sk_f.isPrimitive:
+                assert sk_f == full_f, "sketch and full program don't match on a primitive"
+                context, ft = sk_f.tp.instantiate(context)
+            elif sk_f.isAbstraction:
+                assert False, "sketch is not in beta longform"
+            elif sk_f.isHole:
+                assert False, "hole as function not yet supported"
+            elif sk_f.isApplication:
+                assert False, "should never happen - bug in applicationParse"
+            else: assert False
+
+            try: context = context.unify(ft.returns(), request)                
+            except UnificationFailure: assert False, "sketch is ill-typed"
+            ft = ft.apply(context)
+            argumentRequests = ft.functionArguments()
+
+            assert len(argumentRequests) == len(sk_xs) == len(full_xs)  #this might not be true if holes??
+
+            return self.sketchllApplication(context, environment,
+                                              sk_f, sk_xs, full_f, full_xs, argumentRequests)
+
+    def sketchllApplication(self, context, environment,
+                          sk_function, sk_arguments, full_function, full_arguments, argumentRequests):
+        if argumentRequests == []:
+                return 0, context #does this make sense?
+        else:
+            argRequest = argumentRequests[0].apply(context)
+            laterRequests = argumentRequests[1:]
+
+            sk_firstSketch = sk_arguments[0]
+            full_firstSketch = full_arguments[0]
+            sk_laterSketches = sk_arguments[1:]
+            full_laterSketches = full_arguments[1:]
+
+            argL, newContext = self.sketchLogLikelihood(argRequest, full_firstSketch, sk_firstSketch, context=context, environment=environment)
+
+            #finish this...
+            sk_newFunction = Application(sk_function, sk_firstSketch)  # is this redundant? maybe 
+            full_newFunction = Application(full_function, full_firstSketch)
+
+            resultL, context = self.sketchllApplication(newContext, environment, sk_newFunction, sk_laterSketches,
+                                            full_newFunction, full_laterSketches, laterRequests)
+
+            return resultL + argL, context
+
+        
     def enumerateNearby(self, request, expr, distance=3.0):
         """Enumerate programs with local mutations in subtrees with small description length"""
         if distance <= 0:

@@ -59,16 +59,16 @@ class GrammarNetwork(nn.Module):
     """Neural network that outputs a grammar"""
     def __init__(self, inputDimensionality, grammar):
         super(GrammarNetwork, self).__init__()
-        self.logVariable = nn.Linear(inputDimensionality, 1)
-        self.logProductions = nn.Linear(inputDimensionality, len(grammar))
+        #self.logVariable = nn.Linear(inputDimensionality, 1)
+        self.logProductions = nn.Linear(inputDimensionality, len(grammar)+1)
         self.grammar = grammar
         
     def forward(self, x):
         """Takes as input inputDimensionality-dimensional vector and returns Grammar
         Tensor-valued probabilities"""
-        logVariable = self.logVariable(x)
+        #logVariable = self.logVariable(x)
         logProductions = self.logProductions(x)
-        return Grammar(logVariable,
+        return Grammar(logProductions[-1].view(1), #logVariable
                        [(logProductions[k].view(1), t, program)
                         for k, (_, t, program) in enumerate(self.grammar.productions)],
                        continuationType=self.grammar.continuationType)
@@ -78,24 +78,53 @@ class ContextualGrammarNetwork(nn.Module):
     def __init__(self, inputDimensionality, grammar):
         super(ContextualGrammarNetwork, self).__init__()
         
-        self.grammar = grammar
-        
-        self.variableParent = GrammarNetwork(inputDimensionality, grammar)
-        self.noParent = GrammarNetwork(inputDimensionality, grammar)
-        self.library = {e: [GrammarNetwork(inputDimensionality, grammar)
-                            for n in range(len(e.infer().functionArguments())) ]
-                        for ei,e in enumerate(grammar.primitives) }
-        # Explicitly register each of the library grammars
-        for ei,e in enumerate(grammar.primitives):
-            for n in range(len(e.infer().functionArguments())):
-                self.add_module("Invention %d, argument %d"%(ei,n),
-                                self.library[e][n])
+        # self.grammar = grammar 
+        # self.variableParent = GrammarNetwork(inputDimensionality, grammar)
+        # self.noParent = GrammarNetwork(inputDimensionality, grammar)
+        # self.library = {e: [GrammarNetwork(inputDimensionality, grammar)
+        #                     for n in range(len(e.infer().functionArguments())) ]
+        #                 for ei,e in enumerate(grammar.primitives) }
+        # # Explicitly register each of the library grammars
+        # for ei,e in enumerate(grammar.primitives):
+        #     for n in range(len(e.infer().functionArguments())):
+        #         self.add_module("Invention %d, argument %d"%(ei,n),
+        #                         self.library[e][n])
+
+        #max:
+        #library now just contains a list of indicies which go with each primitive
+        self.grammar = grammr
+        self.library = {}
+        idx = 0
+        for prim in grammar.primitives:
+            idx_list = list(range(idx, idx+len(prim.infer().functionArguments())))
+            self.library[prim] = idx_list
+            idx = idx_list[-1] + 1
+
+
+        # idx is 1 more than the number of things in library, and we need 2 more than number of things in library
+        self.n_grammars = idx+1
+        self.network = nn.Linear(inputDimensionality, (self.n_grammars)*(len(grammar) + 1))
+
+
+    def grammarFromVector(self, logProductions):
+        return Grammar(logProductions[-1].view(1), #logVariable
+                       [(logProductions[k].view(1), t, program)
+                        for k, (_, t, program) in enumerate(self.grammar.productions)],
+                       continuationType=self.grammar.continuationType)
 
     def forward(self, x):
-        return ContextualGrammar(self.noParent(x), self.variableParent(x),
-                                 {e: [g(x) for g in gs ]
-                                  for e,gs in self.library.items() })
 
+        assert len(x.size()) = 1, "contextual grammar doesn't currently support batching"
+
+        allVars = self.network(x).view(self.n_grammars, -1) # i think this should work ...
+
+        # return ContextualGrammar(self.noParent(x), self.variableParent(x),
+        #                          {e: [g(x) for g in gs ]
+        #                           for e,gs in self.library.items() })
+
+        #return ContextualGrammar(grammar noparent, grammar variableparent, {prim: [grammar list] } )
+        return ContextualGrammar(grammarFromVector(allVars[-1]), grammarFromVector(allVars[-2]),
+                {prim: [grammarFromVector(allVars[j]) for j in js]  for prim, js in self.library.items()} )
         
 
 class RecognitionModel(nn.Module):
