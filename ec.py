@@ -592,6 +592,7 @@ def ecIterator(grammar, tasks,
         result.grammars.append(grammar)
         eprint("Grammar after iteration %d:" % (j + 1))
         eprint(grammar)
+
         
         if outputPrefix is not None:
             path = checkpointPath(j + 1)

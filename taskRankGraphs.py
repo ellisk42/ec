@@ -64,12 +64,15 @@ def plotTimeMetrics(
 	for j, path in enumerate(resultPaths):
 		result = loadfun(path)
 		print("loaded path:", path)
-
 		if not hasattr(result, "recognitionTaskMetrics"):
 			print("No recognitionTaskMetrics found, aborting.")
 			assert False
 
+		iterations = result.parameters['iterations']
 		recognitionTaskMetrics = result.recognitionTaskMetrics
+
+		for t in recognitionTaskMetrics:
+			print(t.name)
 
 		# Get all the times.
 		taskTimes = [recognitionTaskMetrics[t]['recognitionBestTimes'] for t in recognitionTaskMetrics]
@@ -82,7 +85,7 @@ def plotTimeMetrics(
 			plot.scatter(taskTimes, taskMetrics)
 			plot.xlabel('Recognition Best Times')
 			plot.ylabel(metricToPlot)
-			plot.savefig(os.path.join(export, metricToPlot + ".png"))
+			plot.savefig(os.path.join(export, metricToPlot + "_iters_" + str(iterations) + ".png"))
 
 
 	
