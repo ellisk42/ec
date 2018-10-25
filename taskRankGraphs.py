@@ -63,10 +63,10 @@ def plotTimeMetrics(
 		result = loadfun(path)
 		print("loaded path:", path)
 
-		if hasattr(result, "recognitionTaskMetrics") and result.recognitionTaskMetrics:
-			print("Has recognitionTaskMetrics")
-			for task in result.recognitionTaskMetrics:
-				print(result.recognitionTaskMetrics[task])
+		if hasattr(result, "recognitionTaskTimes") and result.recognitionTaskTimes:
+			print("Has recognitionTaskTimes")
+			for task in result.recognitionTaskTimes:
+				print(result.recognitionTaskTimes[task])
 
 	
 if __name__ == "__main__":

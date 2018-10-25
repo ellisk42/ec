@@ -158,7 +158,8 @@ def ecIterator(grammar, tasks,
                cuda=False,
                message="",
                onlyBaselines=False,
-               outputPrefix=None):
+               outputPrefix=None,
+               storeTaskMetrics=False):
     if frontierSize is None and enumerationTimeout is None:
         eprint(
             "Please specify a frontier size and/or an enumeration timeout:",
@@ -441,8 +442,10 @@ def ecIterator(grammar, tasks,
                                                                      enumerationTimeout=enumerationTimeout,
                                                                      evaluationTimeout=evaluationTimeout)
             # Store the recognition metrics.
-            result.recognitionTaskTimes = allRecognitionTimes
-            updateTaskSummaryMetrics(result.recognitionTaskMetrics, allRecognitionTimes, 'recognitionBestTimes')
+            if storeTaskMetrics:
+                updateTaskSummaryMetrics(result.recognitionTaskMetrics, allRecognitionTimes, 'recognitionBestTimes')
+                updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskGrammarLogProductions(wakingTaskBatch), 'taskLogProductions')
+                updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskGrammarEntropies(wakingTaskBatch), 'taskGrammarEntropies')
 
             tasksHitBottomUp = {f.task for f in bottomupFrontiers if not f.empty}
             result.hitsAtEachWake.append(len(tasksHitBottomUp))
@@ -817,6 +820,12 @@ def commandlineArguments(_=None,
             "random"],
         default=taskReranker,
         type=str)
+    parser.add_argument(
+        "--storeTaskMetrics",
+        dest="storeTaskMetrics",
+        help="Whether to store task metrics directly in the ECResults.",
+        action="store_true"
+        )
     parser.set_defaults(useRecognitionModel=useRecognitionModel,
                         featureExtractor=featureExtractor,
                         maximumFrontier=maximumFrontier,
