@@ -45,6 +45,7 @@ def centerTower(t,hand=None):
         return t, hand - c
 
 def towerLength(t):
+    if len(t) == 0: return 0
     x1 = max(x for x, _, _ in t)
     x0 = min(x for x, _, _ in t)
     return x1 - x0
