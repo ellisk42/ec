@@ -136,12 +136,8 @@ def plotECResult(
             ys = [100. * result.learningCurve[-1] /
                   len(result.taskSolutions)] * n_iters
         elif showTraining:
-            ys = [100. * len(ts)/float(len(result.taskSolutions))
-                  for ts in result.searchTimes[:iterations]]
-            #ys = [len(ts) 
-            #      for ts in result.searchTimes[:iterations]]
-
-
+            ys = [100.*t/float(len(result.taskSolutions))
+                  for t in result.learningCurve[:iterations]]
         else:
             ys = [100. * len(t) / result.numTestingTasks
                   for t in result.testingSearchTime[:iterations]]
@@ -248,7 +244,7 @@ if __name__ == "__main__":
                         help="When calculating average solve time, should you count missed tasks as timeout OR should you just ignore them? Default: ignore them.")
     parser.add_argument("--showTraining",
                         default=False, action="store_true",
-                        help="Show training tasks in plot, i think...")
+                        help="Graph results for training tasks. By default only shows results for testing tasks.")
     
     arguments = parser.parse_args()
     

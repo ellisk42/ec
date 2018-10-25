@@ -10,6 +10,11 @@ from recognition import *
 
 import torch.nn.functional as F
 
+def extract_scaler(v):
+    v = v.view(-1)
+    assert v.shape == (1,)
+    v = v.data.tolist()[0]
+    return v
 
 class EvolutionGuide(RecognitionModel):
     def __init__(self, featureExtractor, grammar, hidden=[64], activation="relu",
@@ -61,16 +66,70 @@ class EvolutionGuide(RecognitionModel):
                 alternatives = []
                 mg = pv[ev][0]
                 for edge in ev.descendents:
-                    edgeCost = -edge.likelihoodSummary(self.generativeModel).logLikelihood(mg).view(-1)
+                    edgeCost = -edge.likelihoodSummary(self.grammar).logLikelihood(mg).view(-1)
                     alternatives.append(edgeCost + _distance(edge.child))
-                d = torch.stack(alternatives,1).view(-1)
-                d = d.squeeze(0).min(0)[0]
+                if False:
+                    d = torch.stack(alternatives,1).view(-1)
+                    d = d.squeeze(0).min(0)[0]
+                else:
+                    d = -torchSoftMax([-a for a in alternatives ])
             distance[ev] = d
             return d
         pl = _distance(root)
         vl = sum( (distance[ev] - pv[ev][1])**2
                   for ev in root.reachable())
+        vl = vl/len(distance) # MSE
         return pl,vl
+
+    def visualize(self, root):
+        pv = self.graphForward(root)
+
+        actualDistance = {}
+        predictedDistance = {}
+        edgeCost = {}
+        
+        def analyze(ev):
+            if ev in predictedDistance: return
+            predictedDistance[ev] = extract_scaler(pv[ev][1])
+            
+            if ev.isGoal:
+                actualDistance[ev] = 0.
+            else:
+                alternatives = []
+                mg = pv[ev][0]
+                for edge in ev.descendents:
+                    ec = -edge.likelihoodSummary(self.generativeModel).logLikelihood(mg).view(-1)
+                    ec = extract_scaler(ec)
+                    edgeCost[edge] = ec
+                    analyze(edge.child)
+                    alternatives.append(ec + actualDistance[edge.child])
+                
+                actualDistance[ev] = min(alternatives)
+            
+        analyze(root)
+
+        from graphviz import Digraph
+        g = Digraph()
+
+        def name(ev):
+            return "%s\nV*=%f\nV=%f"%(ev.program,
+                                      actualDistance[ev],
+                                      predictedDistance[ev])
+
+        for ev in actualDistance:
+            g.node(name(ev))
+        for ev in actualDistance:
+            if len(ev.descendents) == 0: continue
+            
+            bestEdge = min(ev.descendents, key=lambda e: edgeCost[e])
+            for edge in ev.descendents:
+                g.edge(name(ev),
+                       name(edge.child),
+                       label="%s\n%f"%(edge.mutation,
+                                       edgeCost[edge]),
+                       color="red" if edge == bestEdge else "black")
+        g.render("/tmp/evolutionGraph.pdf",view=True)
+        
 
                 
             
@@ -78,74 +137,37 @@ class EvolutionGuide(RecognitionModel):
         
                 
 
-    def children(self, goal, _=None,
+    def children(self, _=None,
                  ancestor=None, timeout=None):
-        g = self.mutationGrammar(goal, ancestor).untorch()
+        """
+        ancestor: EV.
+        returns: list of programs built from ancestor
+        """
+        g = self.policy(self._MLP(self.featureExtractor.featuresOfTask(ancestor.goal, ancestor.current))).untorch()
         message = {"DSL": g.json(),
-                   "request": goal.request.json(),
+                   "request": ancestor.goal.request.json(),
                    "extras": [[]],
                    "timeout": float(timeout)
         }
-        if ancestor is not None: message["ancestor"] = str(ancestor)
+        if ancestor.program is not None: message["ancestor"] = str(ancestor.program)
+        if self.featureExtractor.__class__.special:
+            message["special"] = self.featureExtractor.__class__.special
 
         response = jsonBinaryInvoke("./evolution", message)
         children = []
         for e in response:
             mutation = Program.parse(e['programs'][0])
-            if ancestor is None: child = mutation
-            else: child = Application(mutation,ancestor)
+            if ancestor.program is None: child = mutation
+            else: child = Application(mutation,ancestor.program)
             children.append(child)
         return children
 
-    # def policyLoss(self, ev, table=None):
-    #     if ev.isGoal: return 0.
-    #     if ev.current is None and ev.program is not None:
-    #         ev.current = self.featureExtractor.taskOfProgram(ev.program, ev.goal.request)
-
-    #     if table is None: table = {}
-
-    #     alternatives = []
-    #     mg = self.mutationGrammar(ev.goal, ev.current)
-    #     request = ev.goal.request if ev.program is None else arrow(ev.goal.request, ev.goal.request)
-    #     for mutation, child in ev.descendents:
-    #         l = self.policyLoss(child)
-    #         likelihoodSummary = self.grammar.closedLikelihoodSummary(request, mutation)
-    #         l -= likelihoodSummary.logLikelihood(mg)
-    #         alternatives.append(l)
-            
-    #     l = torch.stack(alternatives,1).squeeze(0)
-    #     l = l.min(0)[0]
-    #     l = l.unsqueeze(0)
-    #     table[ev] = l
-    #     return l
-
-    # def valueLoss(self, ev):
-    #     distanceTable = {}
-    #     l = [0.]
-    #     def distance(ev):
-    #         if ev in distanceTable: return distanceTable[ev]
-    #         request = ev.goal.request if ev.program is None else arrow(ev.goal.request, ev.goal.request)
-            
-    #         if ev.isGoal:
-    #             d = 0.
-    #         else:
-    #             d = POSITIVEINFINITY
-    #             mg = self.mutationGrammar(ev.goal, ev.current).untorch()
-    #             for mutation, child in ev.descendents:
-    #                 edgeCost = -self.grammar.closedLikelihoodSummary(request, mutation).logLikelihood(mg)
-    #                 d = min(edgeCost + distance(child), d)
-    #         distanceTable[ev] = d
-    #         prediction = -self.getFitness(ev.goal, ev.current)
-    #         l[0] += (d - prediction)**2
-    #         return d
-
-    #     distance(ev)
-    #     return l[0]
-    
-    def train(self, graphs, lr=0.001):
+    def train(self, graphs, _=None,
+              lr=0.001, timeout=None, steps=None):
         policy_optimizer = torch.optim.Adam(self.parameters(), lr=lr, eps=1e-3, amsgrad=True)
         value_optimizer = torch.optim.Adam(self.parameters(), lr=lr, eps=1e-3, amsgrad=True)
 
+        startTime = time.time()
         losses = []
         while True:
             for ev in graphs:
@@ -167,27 +189,63 @@ class EvolutionGuide(RecognitionModel):
                                vl.data.tolist()[0]))
                 eprint(losses[-1])
 
-        
+                if steps and len(losses) > steps or timeout and time.time() - startTime > timeout:
+                    return 
 
+        
     def search(self, goal, _=None,
-               populationSize=None, timeout=None, generations=None):
+               populationSize=None, timeout=None, generations=None,
+               fitnessBatch=100):
         assert populationSize is not None
         assert timeout is not None
         assert generations is not None
 
         # Map from parent to fitness
-        population = {None: 1.}
+        population = {EV(goal, None): 1.}
         everyChild = set()
 
         for _ in range(generations):
             z = sum(population.values())
             children = []
             for ancestor, fitness in population.items():
-                children.extend(self.children(goal, ancestor,
-                                              timeout=timeout*fitness/z))
-            population = {child: self.getFitness(goal, self.taskOfProgram(child)).view(-1).data[0]
-                          for child in set(children) }
-            for child in population: everyChild.add(child)
+                numberOfChildren = 0
+                for child in self.children(ancestor=ancestor,
+                                           timeout=timeout*fitness/z):
+                    ev = EV(goal, child)
+                    ev.current = self.featureExtractor.taskOfProgram(child, goal.request)
+                    if ev.current is not None:
+                        children.append(ev)
+                        numberOfChildren += 1
+                eprint("Ancestor",ancestor.program,
+                       "produced",numberOfChildren,"children.")
+                
+            children = list(set(children))
+            eprint("All of the ancestors collectively produced",len(children),
+                   "new children.")
+
+            # Keep only populationSize children
+
+            bestChildren = PQ()
+            childIndex = 0
+            while childIndex < len(children):
+                childBatch = children[childIndex:childIndex + fitnessBatch]
+                childTasks = [ child.current for child in childBatch ]
+                childFeatures = self.featureExtractor.featuresOfTasks([goal]*len(childTasks), childTasks)
+                ds = self.value(self._MLP(childFeatures))
+                ds = ds.data.view(-1).tolist()
+                for child, d, batchIndex in zip(childBatch, ds, range(len(childBatch))):
+                    f = -d
+                    eprint("Child",child.program,"has fitness",f)
+                    bestChildren.push(-f, (f, childIndex + batchIndex, child))
+                    if len(bestChildren) > populationSize:
+                        _1, worstChildIndex, _2 = bestChildren.popMaximum()
+                        children[worstChildIndex] = None # garbage collect
+                childIndex += fitnessBatch
+                    
+            population = {}
+            for f,_,child in bestChildren:
+                everyChild.add(child)
+                population[child] = f
 
         return everyChild
             
@@ -306,6 +364,27 @@ class EV:
         for d in self.descendents: d.child.reachable(visited)
         return visited
 
+    def removeLongPaths(self, maxPath):
+        assert self.program is None
+
+        shortestPath = {}
+        def curse(v):
+            if v in shortestPath:
+                assert shortestPath[v] <= maxPath
+                return shortestPath[v]
+            if v.isGoal:
+                shortestPath[v] = 0
+                return 0
+
+            for d in v.descendents: curse(d.child)
+            v.descendents = [d for d in v.descendents
+                             if shortestPath[d.child] + 1 <= maxPath]
+            shortestPath[v] = min( shortestPath[c.child] for c in v.descendents ) + 1
+            assert shortestPath[v] <= maxPath
+            return shortestPath[v]
+        curse(self)
+            
+
     class Edge:
         """evolutionary edge"""
         def __init__(self, ancestor, mutation, child, request):
@@ -314,6 +393,12 @@ class EV:
             self.child = child
             self.request = request
             self._likelihoodSummary = None
+
+        def __eq__(self, o):
+            return (self.ancestor, self.mutation, self.child) == \
+                (o.ancestor, o.mutation, o.child)
+        def __ne__(self, o): return not (self == o)
+        def __hash__(self): return hash((self.ancestor, self.mutation, self.child))
 
         def likelihoodSummary(self, g):
             if self._likelihoodSummary is None:
@@ -347,18 +432,6 @@ def evolutionaryTrajectories(task, seed):
     v = getVertex(seed)
     v.isGoal = True
 
-    from graphviz import Digraph
-
-    g = Digraph()
-
-    for p,v in table.items():
-        g.node(str(p))
-    for p,v in table.items():
-        for edge in v.descendents:
-            g.edge(str(p),
-                   str(edge.child.program),
-                   label=str(edge.mutation))
-    #g.render("/tmp/whatever.pdf",view=True)
     return table[None]        
     
 
@@ -368,80 +441,17 @@ g = Grammar.uniform(primitives)
 t = makeSupervisedTasks()[0]
 p = Program.parse("(lambda (1x3 (right 4 (1x3 (left 2 (3x1 $0))))))")
 eprint(g.logLikelihood(t.request,p))
-trajectories = [evolutionaryTrajectories(t,
-                                         p)]
+trajectory = evolutionaryTrajectories(t,p)
+trajectory.removeLongPaths(2)
+trajectories = [trajectory]
 from tower import TowerCNN
 
 
-rm = EvolutionGuide(TowerCNN([]),g,contextual=False)
-rm.train(trajectories)
-        # eprint("Possible trajectory:")
-        # for m in reversed(ts):
-        #     eprint(m)
-        # eprint()
-    # for m,a in possibleAncestors(r,
-    #                              a):
-    #     eprint("ancestor",a)
-    #     eprint("mutation",m)
-    #     eprint()
-assert False
-def children(g, request, _=None,
-             ancestor=None, timeout=None):
-    message = {"DSL": g.json(),
-               "request": request.json(),
-               "extras": [[]],
-               "timeout": float(timeout)
-    }
-    if ancestor is not None: message["ancestor"] = str(ancestor)
+rm = EvolutionGuide(TowerCNN([]),g,contextual=True)
+rm.train(trajectories, timeout=30)
+rm.visualize(trajectory)
+rm.search(trajectory.goal,
+          populationSize=10,
+          timeout=3,
+          generations=3)
 
-    response = jsonBinaryInvoke("./evolution", message)
-    children = []
-    for e in response:
-        mutation = Program.parse(e['programs'][0])
-        if ancestor is None: child = mutation
-        else: child = Application(mutation,ancestor)
-        children.append(child)
-    return children
-
-def fitness(p):
-    try:
-        l = p.runWithArguments([])
-    except: return -10
-    reference = [-1,2,1,0]*2
-    if len(l) < len(reference):
-        l = l + [None]*(len(reference) - len(l))
-    elif len(l) > len(reference):
-        return -100
-    for f,(x,y) in enumerate(zip(l,reference)):
-        if x != y:
-            if x is None:
-                return f
-            return -10
-    return 100
-
-    
-population = []
-timeout=20
-best = 2
-request = tlist(tint)
-for generation in range(3):
-    eprint(" ==  ==  ==  == ")
-    eprint("Starting generation",generation)
-    eprint("Current members of population:")
-    for p in population:
-        eprint(p, "\t", fitness(p))
-    eprint(" ==  ==  ==  == ")
-    eprint()
-
-    if generation == 0:
-        newPopulation = children(g, request, timeout=timeout)
-    else:
-        newPopulation = []
-        for ancestor in population:
-            newPopulation.extend(children(g, request, timeout=timeout,
-                                          ancestor=ancestor))
-
-    
-    newPopulation.sort(key=fitness, reverse=True)
-    population = newPopulation[:best]
-    

@@ -72,6 +72,9 @@ class TowerCNN(nn.Module):
         if len(v.shape) == 3:
             v = np.expand_dims(v, 0)
             inserted_batch = True
+            if v2 is not None:
+                assert len(v2.shape) == 3
+                v2 = np.expand_dims(v2, 0)
         elif len(v.shape) == 4:
             inserted_batch = False
             pass
@@ -79,7 +82,7 @@ class TowerCNN(nn.Module):
             assert False, "v has the shape %s"%(str(v.shape))
         
         if v2 is None: v2 = np.zeros(v.shape)
-            
+        
         v = np.concatenate((v,v2), axis=3)
         v = np.transpose(v,(0,3,1,2))
         assert v.shape == (v.shape[0], 6,self.inputImageDimension,self.inputImageDimension)
