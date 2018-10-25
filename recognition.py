@@ -92,7 +92,7 @@ class ContextualGrammarNetwork(nn.Module):
 
         #max:
         #library now just contains a list of indicies which go with each primitive
-        self.grammar = grammr
+        self.grammar = grammar
         self.library = {}
         idx = 0
         for prim in grammar.primitives:
@@ -123,8 +123,8 @@ class ContextualGrammarNetwork(nn.Module):
         #                           for e,gs in self.library.items() })
 
         #return ContextualGrammar(grammar noparent, grammar variableparent, {prim: [grammar list] } )
-        return ContextualGrammar(grammarFromVector(allVars[-1]), grammarFromVector(allVars[-2]),
-                {prim: [grammarFromVector(allVars[j]) for j in js]  for prim, js in self.library.items()} )
+        return ContextualGrammar(self.grammarFromVector(allVars[-1]), self.grammarFromVector(allVars[-2]),
+                {prim: [self.grammarFromVector(allVars[j]) for j in js]  for prim, js in self.library.items()} )
         
 
 class RecognitionModel(nn.Module):
