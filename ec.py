@@ -559,15 +559,15 @@ def ecIterator(grammar, tasks,
                 
 
         # Sleep-G
-        # grammar, frontiers = induceGrammar(grammar, frontiers,
-        #                                    topK=topK,
-        #                                    pseudoCounts=pseudoCounts, a=arity,
-        #                                    aic=aic, structurePenalty=structurePenalty,
-        #                                    topk_use_only_likelihood=topk_use_only_likelihood,
-        #                                    backend=compressor, CPUs=CPUs, iteration=j)
-        # result.grammars.append(grammar)
-        # eprint("Grammar after iteration %d:" % (j + 1))
-        # eprint(grammar)
+        grammar, frontiers = induceGrammar(grammar, frontiers,
+                                           topK=topK,
+                                           pseudoCounts=pseudoCounts, a=arity,
+                                           aic=aic, structurePenalty=structurePenalty,
+                                           topk_use_only_likelihood=topk_use_only_likelihood,
+                                           backend=compressor, CPUs=CPUs, iteration=j)
+        result.grammars.append(grammar)
+        eprint("Grammar after iteration %d:" % (j + 1))
+        eprint(grammar)
 
 
         
