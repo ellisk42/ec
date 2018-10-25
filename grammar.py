@@ -625,7 +625,7 @@ class Grammar(object):
             assert sk.isAbstraction and full.isAbstraction
             assert sk.f == full.f #is this right? or do i need to recurse?
             v = request.arguments[0]
-            return self.sketchLogLikelihood(request.arguments[1], full.body, sk.body, context=context, environment=[v] + environment):
+            return self.sketchLogLikelihood(request.arguments[1], full.body, sk.body, context=context, environment=[v] + environment)
 
         else:
             sk_f, sk_xs = sk.applicationParse()
