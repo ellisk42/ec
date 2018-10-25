@@ -55,6 +55,16 @@ def is_torch_invalid(v):
 
 def _relu(x): return x.clamp(min=0)
 
+class Entropy(nn.Module):
+    """Calculates the entropy of logits"""
+    def __init__(self):
+        super(Entropy, self).__init__()
+
+    def forward(self, x):
+        b = F.softmax(x, dim=0) * F.log_softmax(x, dim=0)
+        b = -1.0 * b.sum()
+        return b
+
 class GrammarNetwork(nn.Module):
     """Neural network that outputs a grammar"""
     def __init__(self, inputDimensionality, grammar):
@@ -137,6 +147,9 @@ class RecognitionModel(nn.Module):
                                              nn.Linear(([featureExtractor.outputDimensionality] + hidden)[j],
                                                        hidden[j]),
                                              activation()]])
+
+        self.entropy = Entropy()
+
         if len(hidden) > 0:
             self.outputDimensionality = self._MLP[-2].out_features
             assert self.outputDimensionality == hidden[-1]
@@ -168,6 +181,34 @@ class RecognitionModel(nn.Module):
         features = self.featureExtractor.featuresOfTask(task)
         if features is None: return None
         return self(features)
+
+    def grammarLogProductionsOfTask(self, task):
+        """Returns the grammar logits from non-contextual models."""
+        if self.contextual:
+            eprint("Cannot calculate log productions for contextual grammars, aborting.")
+            assert False
+
+        features = self.featureExtractor.featuresOfTask(task)
+        if features is None: return None
+
+        features = self._MLP(features)
+        return self.grammarBuilder.logProductions(features)
+
+    def grammarEntropyOfTask(self, task):
+        """Returns the entropy of the grammar distribution from non-contextual models for a task."""
+        grammarLogProductionsOfTask = self.grammarLogProductionsOfTask(task)
+
+        if grammarLogProductionsOfTask is None: return None
+
+        return self.entropy(grammarLogProductionsOfTask)
+
+    def taskGrammarLogProductions(self, tasks):
+        return {task: self.grammarLogProductionsOfTask(task).data.numpy()
+                for task in tasks}
+
+    def taskGrammarEntropies(self, tasks):
+        return {task: self.grammarEntropyOfTask(task).data.numpy()
+                for task in tasks}
 
     def frontierKL(self, frontier):
         features = self.featureExtractor.featuresOfTask(frontier.task)
