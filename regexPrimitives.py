@@ -103,7 +103,6 @@ def concatPrimitives():
     ]
 
 
-
 def sketchPrimitives():
     return [Primitive("string_" + i, tpregex, pregex.String(i)) for i in printable[:-4] if i not in disallowed_list
             ] + [
@@ -299,7 +298,7 @@ def matchEmpericalNoLetterPrimitives(corpus):
 
 
 if __name__=='__main__':
-    ConcatPrimitives()
+    oncatPrimitives()
     from program import Program
 
     p=Program.parse("(lambda (r_kleene (lambda (r_maybe (lambda (string_x $0)) $0)) $0))")

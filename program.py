@@ -858,6 +858,7 @@ class Mutator:
             yield self.enclose(expr), deleted_ll + replaced_ll
 
     def index(self, e, tp, env, is_lhs=False):
+        #yield from ()
         deleted_ll = self.logLikelihood(tp, e, env) #self.grammar.logVariable
         for expr, replaced_ll in self.fn(tp, deleted_ll, is_left_application=is_lhs):
             yield self.enclose(expr), deleted_ll + replaced_ll

@@ -620,7 +620,7 @@ class Grammar(object):
             yield from Mutator(self, mutations).execute(expr, request)
 
 
-    def enumerateHoles(self, request, expr, k=3):
+    def enumerateHoles(self, request, expr, k=3, return_obj=Hole):
         """Enumerate programs with a single hole within mdl distance"""
         #TODO: make it possible to enumerate sketches with multiple holes
         def mutations(tp, loss, is_left_application=False):
@@ -629,7 +629,7 @@ class Grammar(object):
             remove the condition below and ignore all the is_left_application kwds 
             """
             if not is_left_application: 
-                yield Hole(), 0
+                yield return_obj(), 0
         top_k = []
         for expr, l in Mutator(self, mutations).execute(expr, request):
             if len(top_k) > 0:
