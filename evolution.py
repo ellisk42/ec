@@ -28,7 +28,7 @@ class EvolutionGuide(RecognitionModel):
         if cuda: self.cuda()
 
     def batchedForward(self, goal, currents):
-        features = self._MLP(self.featureExtractor.featuresOfTask(currents, goal))
+        features = self._MLP(self.featureExtractor.featuresOfTasks([goal]*len(currents), currents))
         B = features.shape[0]
         v = self.value(features)
         return [self.policy(features[b]) for b in range(B) ], [v[b] for b in range(B) ]
@@ -40,10 +40,12 @@ class EvolutionGuide(RecognitionModel):
         # Make sure that everything has a task associated with it
         for c in children:
             if c.current is None and c.program is not None:
-                c.current = self.featureExtractor.taskOfProgram(c.program, c.goal.request)
+                c.current = self.featureExtractor.taskOfProgram(c.program, c.goal.request,
+                                                                lenient=True)
+                assert c.current is not None
 
         goal = root.goal
-        policies, values = self.batchedForward(goal, children)
+        policies, values = self.batchedForward(goal, [c.current for c in children])
         return {c: (p,v)
                 for c,p,v in zip(children, policies, values) }
 
@@ -56,15 +58,19 @@ class EvolutionGuide(RecognitionModel):
             if ev.isGoal:
                 d = 0.
             else:
-                d = POSITIVEINFINITY
+                alternatives = []
                 mg = pv[ev][0]
-                request = ev.goal.request if ev.program is None else arrow(ev.goal.request, ev.goal.request)
-                for mutation, child in ev.descendents:
-                    edgeCost = -self.grammar.closedLikelihoodSummary(request, mutation).logLikelihood(mg).data.tolist()[0]
-                    d = min(edgeCost + _distance(child), d)
+                for edge in ev.descendents:
+                    edgeCost = -edge.likelihoodSummary(self.generativeModel).logLikelihood(mg).view(-1)
+                    alternatives.append(edgeCost + _distance(edge.child))
+                d = torch.stack(alternatives,1).view(-1)
+                d = d.squeeze(0).min(0)[0]
             distance[ev] = d
             return d
-        for ev in pv: _
+        pl = _distance(root)
+        vl = sum( (distance[ev] - pv[ev][1])**2
+                  for ev in root.reachable())
+        return pl,vl
 
                 
             
@@ -91,50 +97,50 @@ class EvolutionGuide(RecognitionModel):
             children.append(child)
         return children
 
-    def policyLoss(self, ev, table=None):
-        if ev.isGoal: return 0.
-        if ev.current is None and ev.program is not None:
-            ev.current = self.featureExtractor.taskOfProgram(ev.program, ev.goal.request)
+    # def policyLoss(self, ev, table=None):
+    #     if ev.isGoal: return 0.
+    #     if ev.current is None and ev.program is not None:
+    #         ev.current = self.featureExtractor.taskOfProgram(ev.program, ev.goal.request)
 
-        if table is None: table = {}
+    #     if table is None: table = {}
 
-        alternatives = []
-        mg = self.mutationGrammar(ev.goal, ev.current)
-        request = ev.goal.request if ev.program is None else arrow(ev.goal.request, ev.goal.request)
-        for mutation, child in ev.descendents:
-            l = self.policyLoss(child)
-            likelihoodSummary = self.grammar.closedLikelihoodSummary(request, mutation)
-            l -= likelihoodSummary.logLikelihood(mg)
-            alternatives.append(l)
+    #     alternatives = []
+    #     mg = self.mutationGrammar(ev.goal, ev.current)
+    #     request = ev.goal.request if ev.program is None else arrow(ev.goal.request, ev.goal.request)
+    #     for mutation, child in ev.descendents:
+    #         l = self.policyLoss(child)
+    #         likelihoodSummary = self.grammar.closedLikelihoodSummary(request, mutation)
+    #         l -= likelihoodSummary.logLikelihood(mg)
+    #         alternatives.append(l)
             
-        l = torch.stack(alternatives,1).squeeze(0)
-        l = l.min(0)[0]
-        l = l.unsqueeze(0)
-        table[ev] = l
-        return l
+    #     l = torch.stack(alternatives,1).squeeze(0)
+    #     l = l.min(0)[0]
+    #     l = l.unsqueeze(0)
+    #     table[ev] = l
+    #     return l
 
-    def valueLoss(self, ev):
-        distanceTable = {}
-        l = [0.]
-        def distance(ev):
-            if ev in distanceTable: return distanceTable[ev]
-            request = ev.goal.request if ev.program is None else arrow(ev.goal.request, ev.goal.request)
+    # def valueLoss(self, ev):
+    #     distanceTable = {}
+    #     l = [0.]
+    #     def distance(ev):
+    #         if ev in distanceTable: return distanceTable[ev]
+    #         request = ev.goal.request if ev.program is None else arrow(ev.goal.request, ev.goal.request)
             
-            if ev.isGoal:
-                d = 0.
-            else:
-                d = POSITIVEINFINITY
-                mg = self.mutationGrammar(ev.goal, ev.current).untorch()
-                for mutation, child in ev.descendents:
-                    edgeCost = -self.grammar.closedLikelihoodSummary(request, mutation).logLikelihood(mg)
-                    d = min(edgeCost + distance(child), d)
-            distanceTable[ev] = d
-            prediction = -self.getFitness(ev.goal, ev.current)
-            l[0] += (d - prediction)**2
-            return d
+    #         if ev.isGoal:
+    #             d = 0.
+    #         else:
+    #             d = POSITIVEINFINITY
+    #             mg = self.mutationGrammar(ev.goal, ev.current).untorch()
+    #             for mutation, child in ev.descendents:
+    #                 edgeCost = -self.grammar.closedLikelihoodSummary(request, mutation).logLikelihood(mg)
+    #                 d = min(edgeCost + distance(child), d)
+    #         distanceTable[ev] = d
+    #         prediction = -self.getFitness(ev.goal, ev.current)
+    #         l[0] += (d - prediction)**2
+    #         return d
 
-        distance(ev)
-        return l[0]
+    #     distance(ev)
+    #     return l[0]
     
     def train(self, graphs, lr=0.001):
         policy_optimizer = torch.optim.Adam(self.parameters(), lr=lr, eps=1e-3, amsgrad=True)
@@ -144,16 +150,20 @@ class EvolutionGuide(RecognitionModel):
         while True:
             for ev in graphs:
                 self.zero_grad()
-                pl = self.policyLoss(ev)
+                pl, vl = self.batchedLoss(ev)
                 pl.backward()
                 policy_optimizer.step()
 
                 self.zero_grad()
-                vl = self.valueLoss(ev)
+                pl, vl = self.batchedLoss(ev)
                 vl.backward()
                 value_optimizer.step()
+                # self.zero_grad()
+                # vl = self.valueLoss(ev)
+                # vl.backward()
+                # value_optimizer.step()7
                                 
-                losses.append((pl.data.tolist()[0],
+                losses.append((pl.data.tolist(),
                                vl.data.tolist()[0]))
                 eprint(losses[-1])
 
@@ -268,14 +278,13 @@ def possibleAncestors(request, program):
             for m,a in curse(0, program)
             if a is not None and m != Index(0) and a != program}
 
-class EV():
+class EV:
     """evolution vertex: a vertex in the graph describing all evolutionary trajectories to a solution"""
     def __init__(self, goal, program):
         self.program = program
         self.goal = goal
         # outgoing edges
-        # descendents: [(mutation, EV)]
-        self.descendents = set()
+        self.descendents = []
 
         # current: task option
         # where we are currently in the search space
@@ -283,7 +292,10 @@ class EV():
 
         self.isGoal = False
 
-    def __eq__(self,o): return self.program == o.program
+    def __eq__(self,o):
+        if self.program is None: return o.program is None
+        if o.program is None: return False
+        return self.program == o.program
     def __ne__(self,o): return not (self == o)
     def __hash__(self): return hash(self.program)
 
@@ -291,12 +303,26 @@ class EV():
         if visited is None: visited = set()
         if self in visited: return visited
         visited.add(self)
-        for _,c in self.descendents: c.reachable(visited)
+        for d in self.descendents: d.child.reachable(visited)
         return visited
+
+    class Edge:
+        """evolutionary edge"""
+        def __init__(self, ancestor, mutation, child, request):
+            self.ancestor = ancestor
+            self.mutation = mutation
+            self.child = child
+            self.request = request
+            self._likelihoodSummary = None
+
+        def likelihoodSummary(self, g):
+            if self._likelihoodSummary is None:
+                self._likelihoodSummary = g.closedLikelihoodSummary(self.request, self.mutation)
+            return self._likelihoodSummary
         
 def evolutionaryTrajectories(task, seed):
     request = task.request
-    
+
     # map from program to EV
     # Initially we just have no program
     table = {None: EV(task, None)}
@@ -305,11 +331,17 @@ def evolutionaryTrajectories(task, seed):
         if p in table: return table[p]
         v = EV(task,p)
         # Single step mutation that just gets us here in one shot
-        table[None].descendents.add((p,v))
+        table[None].descendents.append(EV.Edge(ancestor=None,
+                                               mutation=p,
+                                               child=v,
+                                               request=request))
         table[p] = v
         for m,a in possibleAncestors(request,p):
             av = getVertex(a)
-            av.descendents.add((m,v))
+            av.descendents.append(EV.Edge(ancestor=av,
+                                          mutation=m,
+                                          child=v,
+                                          request=arrow(request,request)))
         return v
 
     v = getVertex(seed)
@@ -322,10 +354,11 @@ def evolutionaryTrajectories(task, seed):
     for p,v in table.items():
         g.node(str(p))
     for p,v in table.items():
-        for m,d in v.descendents:
-            g.edge(str(p), str(d.program),
-                   label=str(m) if p is not None else None)
-    g.render("/tmp/whatever.pdf",view=True)
+        for edge in v.descendents:
+            g.edge(str(p),
+                   str(edge.child.program),
+                   label=str(edge.mutation))
+    #g.render("/tmp/whatever.pdf",view=True)
     return table[None]        
     
 
@@ -333,9 +366,10 @@ from towerPrimitives import *
 from makeTowerTasks import *
 g = Grammar.uniform(primitives)
 t = makeSupervisedTasks()[0]
-
+p = Program.parse("(lambda (1x3 (right 4 (1x3 (left 2 (3x1 $0))))))")
+eprint(g.logLikelihood(t.request,p))
 trajectories = [evolutionaryTrajectories(t,
-                         Program.parse("(lambda (1x3 (right 4 (1x3 (left 2 (3x1 $0))))))"))]
+                                         p)]
 from tower import TowerCNN
 
 

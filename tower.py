@@ -75,7 +75,8 @@ class TowerCNN(nn.Module):
         elif len(v.shape) == 4:
             inserted_batch = False
             pass
-        else: assert False
+        else:
+            assert False, "v has the shape %s"%(str(v.shape))
         
         if v2 is None: v2 = np.zeros(v.shape)
             
@@ -96,27 +97,34 @@ class TowerCNN(nn.Module):
                     None if t2 is None else t2.getImage(drawHand=True))
     
     def featuresOfTasks(self, ts, t2=None):  # Take a task and returns [features]
+        """Takes the goal first; optionally also takes the current state second"""
         if t2 is None:
             pass
         elif isinstance(t2, Task):
-            t2 = np.array([t2.getImage(drawHand=True)]*len(ts))
+            assert False
+            #t2 = np.array([t2.getImage(drawHand=True)]*len(ts))
         elif isinstance(t2, list):
-            t2 = np.array(t.getImage(drawHand=True) for t in t2)
+            t2 = np.array([t.getImage(drawHand=True) if t else np.zeros((self.inputImageDimension,
+                                                                         self.inputImageDimension,
+                                                                         3))
+                           for t in t2])
         else:
             assert False
             
-        return self(np.array(t.getImage() for t in ts),
+        return self(np.array([t.getImage() for t in ts]),
                     t2)
 
-    def taskOfProgram(self, p, t):
+    def taskOfProgram(self, p, t,
+                      lenient=False):
         try:
             pl = executeTower(p,0.05)
-            if pl is None or len(pl) == 0: return None
+            if pl is None or (not lenient and len(pl) == 0): return None
             if len(pl) > 100 or towerLength(pl) > 360: return None
 
-            t = SupervisedTower("tower dream", pl)
+            t = SupervisedTower("tower dream", p)
             return t
-        except: return None
+        except Exception as e:
+            return None
 
 
 

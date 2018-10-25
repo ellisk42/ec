@@ -16,6 +16,9 @@ class SupervisedTower(Task):
                 assert False
             self.original = program
             plan = program.evaluate([])(lambda s: (s,[]))(0)[1]
+        elif isinstance(program,Program):
+            self.original = program
+            plan = program.evaluate([])(lambda s: (s,[]))(0)[1]
         else:
             plan = program
         self.original = program
