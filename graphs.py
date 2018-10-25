@@ -128,12 +128,20 @@ def plotECResult(
                           True: "#D95F02"}#"darkorange"}
 
     for result, p in zip(results, parameters):
+
+
+
+
         if hasattr(p, "baseline") and p.baseline:
             ys = [100. * result.learningCurve[-1] /
                   len(result.taskSolutions)] * n_iters
         elif showTraining:
-            ys = [t/float(len(result.taskSolutions))
-                  for t in result.learningCurve[:iterations]]
+            ys = [100. * len(ts)/float(len(result.taskSolutions))
+                  for ts in result.searchTimes[:iterations]]
+            #ys = [len(ts) 
+            #      for ts in result.searchTimes[:iterations]]
+
+
         else:
             ys = [100. * len(t) / result.numTestingTasks
                   for t in result.testingSearchTime[:iterations]]
