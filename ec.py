@@ -440,9 +440,10 @@ def ecIterator(grammar, tasks,
                                                                      maximumFrontier=maximumFrontier,
                                                                      enumerationTimeout=enumerationTimeout,
                                                                      evaluationTimeout=evaluationTimeout)
-            # Store the recognition times
-            #result.recognitionTaskTimes = allRecognitionTimes
-            #updateTaskSummaryMetrics(result.recognitionTaskMetrics, allRecognitionTimes, 'bestSearchTime')
+            # Store the recognition metrics.
+            result.recognitionTaskTimes = allRecognitionTimes
+            updateTaskSummaryMetrics(result.recognitionTaskMetrics, allRecognitionTimes, 'recognitionBestTimes')
+
             tasksHitBottomUp = {f.task for f in bottomupFrontiers if not f.empty}
             result.hitsAtEachWake.append(len(tasksHitBottomUp))
             result.timesAtEachWake.append(times)
@@ -497,7 +498,6 @@ def ecIterator(grammar, tasks,
                                                                                   enumerationTimeout=timeout,
                                                                                   evaluationTimeout=evaluationTimeout)
                    
-                    #result.recognitionTaskTimes.update(allUnsolvedRecognitionTimes)
                     # Merge top-down w/ bottom-up
                     unsolvedFrontiers = [f.combine(grammar.rescoreFrontier(b))
                                          for f, b in zip(unsolvedFrontiers, bottomUnsolved) ]

@@ -1,0 +1,5 @@
+ [+] Cleared recognition model from:
+     experimentOutputs/text_aic=1.0_arity=4_BO=False_ET=60_HR=0.5_it=1_MF=5_baseline=False_pc=30.0_RT=1_L=1.0_taskReranker=default_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor.pickle
+     and exported to:
+     experimentOutputs/text_aic=1.0_arity=4_BO=False_ET=60_HR=0.5_it=1_MF=5_baseline=False_pc=30.0_RT=1_L=1.0_taskReranker=default_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor_graph=True.pickle
+     Use this one for graphing.

@@ -11,6 +11,9 @@ import matplotlib.lines as mlines
 
 import matplotlib
 
+import text
+from text import LearnedFeatureExtractor
+
 def loadfun(x):
 	with open(x, 'rb') as handle:
 		result = dill.load(handle)
@@ -60,9 +63,10 @@ def plotTimeMetrics(
 		result = loadfun(path)
 		print("loaded path:", path)
 
-		if hasattr(result, "recognitionTaskTimes") and result.recognitionTaskTimes:
-			for task in result.recognitionTaskTimes:
-				print(result.recognitionTaskTimes[task]+"\n")
+		if hasattr(result, "recognitionTaskMetrics") and result.recognitionTaskMetrics:
+			print("Has recognitionTaskMetrics")
+			for task in result.recognitionTaskMetrics:
+				print(result.recognitionTaskMetrics[task])
 
 	
 if __name__ == "__main__":
@@ -70,7 +74,7 @@ if __name__ == "__main__":
 
 	import argparse
 	parser = argparse.ArgumentParser(description = "")
-	parser.add_argument("checkpoints",nargs='+')
+	parser.add_argument("--checkpoints",nargs='+')
 	parser.add_argument("--export","-e",
 						type=str, default=None)
 
