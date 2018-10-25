@@ -430,9 +430,10 @@ def ecIterator(grammar, tasks,
                                                                      maximumFrontier=maximumFrontier,
                                                                      enumerationTimeout=enumerationTimeout,
                                                                      evaluationTimeout=evaluationTimeout)
-            # Store the recognition times
-            #result.recognitionTaskTimes = allRecognitionTimes
-            #updateTaskSummaryMetrics(result.recognitionTaskMetrics, allRecognitionTimes, 'bestSearchTime')
+            # Store the recognition metrics.
+            result.recognitionTaskTimes = allRecognitionTimes
+            updateTaskSummaryMetrics(result.recognitionTaskMetrics, allRecognitionTimes, 'recognitionBestTimes')
+
             tasksHitBottomUp = {f.task for f in bottomupFrontiers if not f.empty}
 
         elif useNewRecognitionModel:  # Train a recognition model
@@ -485,7 +486,6 @@ def ecIterator(grammar, tasks,
                                                                                   enumerationTimeout=timeout,
                                                                                   evaluationTimeout=evaluationTimeout)
                    
-                    #result.recognitionTaskTimes.update(allUnsolvedRecognitionTimes)
                     # Merge top-down w/ bottom-up
                     unsolvedFrontiers = [f.combine(grammar.rescoreFrontier(b))
                                          for f, b in zip(unsolvedFrontiers, bottomUnsolved) ]
@@ -556,15 +556,17 @@ def ecIterator(grammar, tasks,
                 
 
         # Sleep-G
-        grammar, frontiers = induceGrammar(grammar, frontiers,
-                                           topK=topK,
-                                           pseudoCounts=pseudoCounts, a=arity,
-                                           aic=aic, structurePenalty=structurePenalty,
-                                           topk_use_only_likelihood=topk_use_only_likelihood,
-                                           backend=compressor, CPUs=CPUs, iteration=j)
-        result.grammars.append(grammar)
-        eprint("Grammar after iteration %d:" % (j + 1))
-        eprint(grammar)
+        # grammar, frontiers = induceGrammar(grammar, frontiers,
+        #                                    topK=topK,
+        #                                    pseudoCounts=pseudoCounts, a=arity,
+        #                                    aic=aic, structurePenalty=structurePenalty,
+        #                                    topk_use_only_likelihood=topk_use_only_likelihood,
+        #                                    backend=compressor, CPUs=CPUs, iteration=j)
+        # result.grammars.append(grammar)
+        # eprint("Grammar after iteration %d:" % (j + 1))
+        # eprint(grammar)
+
+
         
         # eprint(
         #     "Expected uses of each grammar production after iteration %d:" %
