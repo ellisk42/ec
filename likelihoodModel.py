@@ -52,6 +52,24 @@ def add_cutoff_values(tasks, ll_cutoff):
         for task in tasks:
             task.ll_cutoff = bigram_corpus_score([example[1] for example in task.examples], model)
         return tasks
+    elif ll_cutoff =="unigram":
+        eprint("WARNING: using entire corpus to make unigram model")
+        #this means i do it twice, which is eh whatever
+        model = make_corpus_unigram(show_tasks(makeNewTasks()))
+        for task in tasks:
+            task.ll_cutoff = unigram_corpus_score([example[1] for example in task.examples], model)
+        return tasks
+    elif ll_cutoff =="mix":
+        eprint("WARNING: using entire corpus to make bigram model")
+        eprint("WARNING: using entire corpus to make unigram model")
+        #this means i do it twice, which is eh whatever
+        unigram = make_corpus_unigram(show_tasks(makeNewTasks()))
+        bigram = make_corpus_bigram(show_tasks(makeNewTasks()))
+        for task in tasks:
+            uniscore = unigram_corpus_score([example[1] for example in task.examples], unigram)
+            biscore = bigram_corpus_score([example[1] for example in task.examples], bigram)
+            task.ll_cutoff = math.log(0.75*math.exp(biscore) + 0.25*math.exp(uniscore))
+        return tasks
     else:
         eprint("not implemented")
         assert False
@@ -60,7 +78,7 @@ def show_tasks(dataset):
     task_list = []
     for task in dataset:
         task_list.append([example[1] for example in task.examples])
-    return task_list     
+    return task_list
 
 def regex_plus_bound(X):
     from pregex import pregex
@@ -78,6 +96,22 @@ def regex_plus_bound(X):
     return max(regex_scores)
 
 
+def make_corpus_unigram(C):
+    str_list = [example + '\n' for task in C for example in task]
+    c = Counter(char for example in str_list for char in example )
+    n = sum(c.values())
+
+    logp = {x:math.log(c[x]/n) for x in c}
+    return logp
+
+def unigram_corpus_score(X, logp):
+    task_ll = 0
+    for x in X:
+        x = x + '\n'
+        task_ll += sum( logp.get(c, float('-inf')) for c in x)/len(x)
+
+    ll = task_ll/len(X)
+    return ll
 
 def unigram_task_score(X):
     """
@@ -117,7 +151,7 @@ def bigram_corpus_score(X, logp):
     for x in X:
         bigram_list = [x[0]] + [x[i:i+2] for i in range(len(x)-1)] + [x[-1] + '\n']
 
-        string_ll = sum(logp[bigram] for bigram in bigram_list)/(len(x) + 1)
+        string_ll = sum(logp.get(bigram, float('-inf')) for bigram in bigram_list)/(len(x) + 1)
 
         task_ll += string_ll
 
