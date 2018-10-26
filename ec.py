@@ -569,7 +569,6 @@ def ecIterator(grammar, tasks,
         eprint("Grammar after iteration %d:" % (j + 1))
         eprint(grammar)
 
-
         
         # eprint(
         #     "Expected uses of each grammar production after iteration %d:" %

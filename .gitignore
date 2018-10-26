@@ -19,5 +19,6 @@ rust_compressor/target
 compressionMessages/
 container.img
 launchers/
-data/*
+data/
+data/taskRankGraphs
 message

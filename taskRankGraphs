@@ -2,7 +2,7 @@
 
 module add openmind/singularity
 
-graphableCheckpoint="experimentOutputs/text_aic=1.0_arity=4_BO=False_ET=60_HR=0.5_it=1_MF=5_baseline=False_pc=30.0_RT=1_storeTaskMetrics=True_L=1.0_taskReranker=default_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor_graph=True.pickle"
+graphableCheckpoint="experimentOutputs/list_aic=1.0_arity=4_BO=False_ET=60_HR=0.5_it=1_MF=5_baseline=False_pc=30.0_RT=1_storeTaskMetrics=True_L=1.0_taskReranker=default_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor_graph=True.pickle"
 # graphableCheckpoint=${checkpoint/%'.pickle'/'_graph=True.pickle'}
 
 # srun --job-name=clearRecognition --output data/clearRecognition --ntasks=1 --mem-per-cpu=5000 --cpus-per-task 1 --time=10:00 --qos=tenenbaum \
@@ -11,5 +11,5 @@ graphableCheckpoint="experimentOutputs/text_aic=1.0_arity=4_BO=False_ET=60_HR=0.
 
 srun --job-name=graphs$1 --output=data/taskRankGraphs --ntasks=1 --mem-per-cpu=5000 --cpus-per-task 1 --time=10:00 --qos=tenenbaum \
   singularity exec -B /om2  container.img \
-  python taskRankGraphs.py --checkpoints $graphableCheckpoint --metricsToPlot taskGrammarEntropies --export data/benchmarkText \
+  python taskRankGraphs.py --checkpoints $graphableCheckpoint --metricsToPlot taskGrammarEntropies --cluster taskLogProductions --export data/benchmarks \
   &
