@@ -3,6 +3,7 @@
 from ec import *
 import dill
 import numpy as np
+from sklearn.manifold import TSNE
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plot
@@ -55,6 +56,23 @@ def parseResultsPath(p):
 	parameters['domain'] = domain
 	return Bunch(parameters)
 
+def loadResult(path):
+	result = loadfun(path)
+	print("loaded path:", path)
+	if not hasattr(result, "recognitionTaskMetrics"):
+		print("No recognitionTaskMetrics found, aborting.")
+		assert False
+
+	domain = parseResultsPath(path)['domain']
+	iterations = result.parameters['iterations']
+	recognitionTaskMetrics = result.recognitionTaskMetrics
+
+	# Create a folder for the domain if it does not exist.
+	if not os.path.exists(os.path.join(export, domain)):
+		os.makedirs(os.path.join(export, domain))
+		
+	return result, domain, iterations, recognitionTaskMetrics
+
 
 def plotTimeMetrics(
 	resultPaths,
@@ -62,17 +80,7 @@ def plotTimeMetrics(
 	export=None):
 	"""Plot times vs. the desired metrics for each iteration."""
 	for j, path in enumerate(resultPaths):
-		result = loadfun(path)
-		print("loaded path:", path)
-		if not hasattr(result, "recognitionTaskMetrics"):
-			print("No recognitionTaskMetrics found, aborting.")
-			assert False
-
-		iterations = result.parameters['iterations']
-		recognitionTaskMetrics = result.recognitionTaskMetrics
-
-		for t in recognitionTaskMetrics:
-			print(t.name)
+		result, domain, iterations, recognitionTaskMetrics = loadResult(path)
 
 		# Get all the times.
 		taskTimes = [recognitionTaskMetrics[t]['recognitionBestTimes'] for t in recognitionTaskMetrics]
@@ -85,8 +93,25 @@ def plotTimeMetrics(
 			plot.scatter(taskTimes, taskMetrics)
 			plot.xlabel('Recognition Best Times')
 			plot.ylabel(metricToPlot)
-			plot.savefig(os.path.join(export, metricToPlot + "_iters_" + str(iterations) + ".png"))
+			plot.savefig(os.path.join(export, domain, metricToPlot + "_iters_" + str(iterations) + "_time_plot.png"))
 
+def plotTSNE(
+	resultPaths,
+	metricsToCluster,
+	export=None):
+	"""Plots TSNE clusters of the given metrics."""
+	if metricsToCluster is None:
+		return
+
+	for j, path in enumerate(resultPaths):
+		result, domain, iterations, recognitionTaskMetrics = loadResult(path)
+
+		for k, metricToCluster in enumerate(metricsToCluster):
+			print("Clustering metric: " + metricToCluster)
+			for task in recognitionTaskMetrics:
+				print(task.name)
+				print(recognitionTaskMetrics[task][metricToCluster])
+				break
 
 	
 if __name__ == "__main__":
@@ -96,6 +121,7 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description = "")
 	parser.add_argument("--checkpoints",nargs='+')
 	parser.add_argument("--metricsToPlot", nargs='+',type=str)
+	parser.add_argument("--clusterMetrics", nargs='+', type=str, default=None)
 	parser.add_argument("--export","-e",
 						type=str, default='data')
 
@@ -104,3 +130,7 @@ if __name__ == "__main__":
 	plotTimeMetrics(arguments.checkpoints,
 					arguments.metricsToPlot,
 					arguments.export)
+
+	plotTSNE(arguments.checkpoints,
+			 arguments.clusterMetrics,
+			 arguments.export)
