@@ -273,13 +273,13 @@ def manualLogoTasks():
     T("line segment", "(move 1d 0a)")
     
 
-    for i in [8]:
+    for i in [7,8]:
         T("Greek spiral %d"%i,
           """
           (loop i %d
           (move (*l 1l i) (/a 1a 4)))
           """%i)
-    for i in [3]:#,4,6]:
+    for i in [3,6]:#,4,6]:
         T("smooth spiral %d"%i,
           """
           (loop i infinity 
@@ -481,6 +481,7 @@ def manualLogoTasks():
             supervised = (name == "semicircle" and n == 5) or \
                          (name == "square dashed" and n == 6) or \
                          (name == "square" and n == 3)
+            supervised = False
             T("%d-%s snowflake"%(n,name),
               """
               (loop j %d

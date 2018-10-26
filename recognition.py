@@ -55,6 +55,16 @@ def is_torch_invalid(v):
 
 def _relu(x): return x.clamp(min=0)
 
+class Entropy(nn.Module):
+    """Calculates the entropy of logits"""
+    def __init__(self):
+        super(Entropy, self).__init__()
+
+    def forward(self, x):
+        b = F.softmax(x, dim=0) * F.log_softmax(x, dim=0)
+        b = -1.0 * b.sum()
+        return b
+
 class GrammarNetwork(nn.Module):
     """Neural network that outputs a grammar"""
     def __init__(self, inputDimensionality, grammar):
@@ -78,27 +88,15 @@ class ContextualGrammarNetwork(nn.Module):
     def __init__(self, inputDimensionality, grammar):
         super(ContextualGrammarNetwork, self).__init__()
         
-        # self.grammar = grammar 
-        # self.variableParent = GrammarNetwork(inputDimensionality, grammar)
-        # self.noParent = GrammarNetwork(inputDimensionality, grammar)
-        # self.library = {e: [GrammarNetwork(inputDimensionality, grammar)
-        #                     for n in range(len(e.infer().functionArguments())) ]
-        #                 for ei,e in enumerate(grammar.primitives) }
-        # # Explicitly register each of the library grammars
-        # for ei,e in enumerate(grammar.primitives):
-        #     for n in range(len(e.infer().functionArguments())):
-        #         self.add_module("Invention %d, argument %d"%(ei,n),
-        #                         self.library[e][n])
-
-        #max:
-        #library now just contains a list of indicies which go with each primitive
+        # library now just contains a list of indicies which go with each primitive
         self.grammar = grammar
         self.library = {}
         idx = 0
         for prim in grammar.primitives:
-            idx_list = list(range(idx, idx+len(prim.infer().functionArguments())))
+            numberOfArguments = len(prim.infer().functionArguments())
+            idx_list = list(range(idx, idx+numberOfArguments))
             self.library[prim] = idx_list
-            idx = idx_list[-1] + 1
+            idx += numberOfArguments
 
 
         # idx is 1 more than the number of things in library, and we need 2 more than number of things in library
@@ -107,7 +105,7 @@ class ContextualGrammarNetwork(nn.Module):
 
 
     def grammarFromVector(self, logProductions):
-        return Grammar(logProductions[-1].view(1), #logVariable
+        return Grammar(logProductions[-1].view(1),
                        [(logProductions[k].view(1), t, program)
                         for k, (_, t, program) in enumerate(self.grammar.productions)],
                        continuationType=self.grammar.continuationType)
@@ -116,15 +114,10 @@ class ContextualGrammarNetwork(nn.Module):
 
         assert len(x.size()) == 1, "contextual grammar doesn't currently support batching"
 
-        allVars = self.network(x).view(self.n_grammars, -1) # i think this should work ...
-
-        # return ContextualGrammar(self.noParent(x), self.variableParent(x),
-        #                          {e: [g(x) for g in gs ]
-        #                           for e,gs in self.library.items() })
-
-        #return ContextualGrammar(grammar noparent, grammar variableparent, {prim: [grammar list] } )
+        allVars = self.network(x).view(self.n_grammars, -1)
         return ContextualGrammar(self.grammarFromVector(allVars[-1]), self.grammarFromVector(allVars[-2]),
-                {prim: [self.grammarFromVector(allVars[j]) for j in js]  for prim, js in self.library.items()} )
+                {prim: [self.grammarFromVector(allVars[j]) for j in js]
+                 for prim, js in self.library.items()} )
         
 
 class RecognitionModel(nn.Module):
@@ -154,6 +147,9 @@ class RecognitionModel(nn.Module):
                                              nn.Linear(([featureExtractor.outputDimensionality] + hidden)[j],
                                                        hidden[j]),
                                              activation()]])
+
+        self.entropy = Entropy()
+
         if len(hidden) > 0:
             self.outputDimensionality = self._MLP[-2].out_features
             assert self.outputDimensionality == hidden[-1]
@@ -185,6 +181,34 @@ class RecognitionModel(nn.Module):
         features = self.featureExtractor.featuresOfTask(task)
         if features is None: return None
         return self(features)
+
+    def grammarLogProductionsOfTask(self, task):
+        """Returns the grammar logits from non-contextual models."""
+        if self.contextual:
+            eprint("Cannot calculate log productions for contextual grammars, aborting.")
+            assert False
+
+        features = self.featureExtractor.featuresOfTask(task)
+        if features is None: return None
+
+        features = self._MLP(features)
+        return self.grammarBuilder.logProductions(features)
+
+    def grammarEntropyOfTask(self, task):
+        """Returns the entropy of the grammar distribution from non-contextual models for a task."""
+        grammarLogProductionsOfTask = self.grammarLogProductionsOfTask(task)
+
+        if grammarLogProductionsOfTask is None: return None
+
+        return self.entropy(grammarLogProductionsOfTask)
+
+    def taskGrammarLogProductions(self, tasks):
+        return {task: self.grammarLogProductionsOfTask(task).data.numpy()
+                for task in tasks}
+
+    def taskGrammarEntropies(self, tasks):
+        return {task: self.grammarEntropyOfTask(task).data.numpy()
+                for task in tasks}
 
     def frontierKL(self, frontier):
         features = self.featureExtractor.featuresOfTask(frontier.task)
