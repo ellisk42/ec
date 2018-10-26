@@ -247,7 +247,46 @@ def makeSupervisedTasks():
                  for w in range(4,8)
                  for h in range(3,6)
                  ]
-    everything = simpleLoops + arches + Bridges + archesStacks + aqueducts + offsetArches + pyramids + bricks + staircase2 + staircase1
+
+    compositions = [SupervisedTower("%dx%d-bridge on top of %dx%d bricks"%(b1,b2,w1,w2),
+                                    """
+                                    ((for j %d
+                                    (embed (for i %d h (r 6)))
+                                    (embed (r 3) (for i %d h (r 6))))
+                                    (r 1)
+                                    (for j %d
+                                    (for i %d 
+                                    v (r 4) v (l 4)) (r 2) h 
+                                    (r 4)))
+                                    """%(w1,w2,w2,b1,b2))
+                    for b1,b2,w1,w2 in [(5,2,4,5)]
+                    ] + [
+                        SupervisedTower("%d pyramid on top of %dx%d bricks"%(p,w1,w2),
+                                        """
+                                        ((for j %d
+                                        (embed (for i %d h (r 6)))
+                                        (embed (r 3) (for i %d h (r 6))))
+                                        (r 1)
+                                        (for i %d (for j i (embed v (r 4) v (l 2) h)) (r 6))
+                                        (for i %d (for j (- %d i) (embed v (r 4) v (l 2) h)) (r 6)))
+                                        """%(w1,w2,w2,p,p,p))
+                        for w1,w2,p in [(2,5,2)]
+                        ] + \
+                        [
+                            SupervisedTower("%d tower on top of %dx%d bricks"%(t,w1,w2),
+                                            """
+                                            ((for j %d
+                                            (embed (for i %d h (r 6)))
+                                            (embed (r 3) (for i %d h (r 6))))
+                                            (r 6)
+                                            %s (r 4) %s (l 2) h)
+                                            """%(w1,w2,w2,
+                                                 "v "*t, "v "*t))
+                            for t,w1,w2 in [(4,1,3)] ]
+                            
+    
+                     
+    everything = simpleLoops + arches + Bridges + archesStacks + aqueducts + offsetArches + pyramids + bricks + staircase2 + staircase1 + compositions
     for t in everything:
         delattr(t,'original')
     return everything
