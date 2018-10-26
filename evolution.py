@@ -452,6 +452,6 @@ rm.train(trajectories, timeout=30)
 rm.visualize(trajectory)
 rm.search(trajectory.goal,
           populationSize=10,
-          timeout=3,
-          generations=3)
+          timeout=1,
+          generations=2)
 

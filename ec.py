@@ -35,7 +35,9 @@ class ECResult():
                  baselines=None,
                  numTestingTasks=None,
                  sumMaxll=None,
-                 testingSumMaxll=None):
+                 testingSumMaxll=None,
+                 hitsAtEachWake=None):
+        self.hitsAtEachWake = hitsAtEachWake or []
         self.testingSearchTime = testingSearchTime or []
         self.searchTimes = searchTimes or []
         self.recognitionModel = recognitionModel
@@ -398,6 +400,7 @@ def ecIterator(grammar, tasks,
         summaryStatistics("Generative model", times)
 
         tasksHitTopDown = {f.task for f in frontiers if not f.empty}
+        result.hitsAtEachWake.append(len(tasksHitTopDown))
 
         # Train + use recognition model
         if useRecognitionModel:
@@ -427,6 +430,7 @@ def ecIterator(grammar, tasks,
                                                                      enumerationTimeout=enumerationTimeout,
                                                                      evaluationTimeout=evaluationTimeout)
             tasksHitBottomUp = {f.task for f in bottomupFrontiers if not f.empty}
+            result.hitsAtEachWake.append(len(tasksHitBottomUp))
 
         elif useNewRecognitionModel:  # Train a recognition model
             result.recognitionModel.updateGrammar(grammar)
