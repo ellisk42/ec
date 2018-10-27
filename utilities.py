@@ -720,6 +720,11 @@ def montageMatrix(matrix):
 def montage(arrays):
     return montageMatrix(makeNiceArray(arrays))
 
+def showArrayAsImage(a):
+    from pylab import imshow,show
+    imshow(a)
+    show()
+
 
 
 class ParseFailure(Exception):

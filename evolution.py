@@ -16,19 +16,43 @@ def extract_scaler(v):
     v = v.data.tolist()[0]
     return v
 
+def ancestorPrimitive(t):
+    return Primitive("ancestor",t,None)
+
+class InvalidMutation(Exception): pass
+
+def applyMutation(m,a):
+    def curse(e):
+        if e.isPrimitive and e.name == "ancestor":
+            if a is None: raise InvalidMutation()
+            return a
+        if e.isApplication:
+            return Application(curse(e.f),
+                               curse(e.x))
+        if e.isAbstraction:
+            return Abstraction(curse(e.body))
+        return e
+    return curse(m)
+
 class EvolutionGuide(RecognitionModel):
-    def __init__(self, featureExtractor, grammar, hidden=[64], activation="relu",
+    def __init__(self, featureExtractor, grammar, hidden=[64], activation="relu", request=None,
                  cuda=False, contextual=False):
         super(EvolutionGuide, self).__init__(featureExtractor, grammar,
                                              hidden=hidden, activation=activation,
                                              cuda=cuda, contextual=contextual)
 
+        assert request is not None
+
         # value and policy
         self.value = nn.Linear(self.outputDimensionality, 1)
+
+        self.mutationGrammar = Grammar.uniform(grammar.primitives + [ancestorPrimitive(request)],
+                                               continuationType=grammar.continuationType)
         if contextual:
-            self.policy = ContextualGrammarNetwork(self.outputDimensionality, grammar)
+            self.policy = ContextualGrammarNetwork(self.outputDimensionality, self.mutationGrammar)
+            self.mutationGrammar = ContextualGrammar.fromGrammar(self.mutationGrammar)
         else:
-            self.policy = GrammarNetwork(self.outputDimensionality, grammar)
+            self.policy = GrammarNetwork(self.outputDimensionality, self.mutationGrammar)
 
         if cuda: self.cuda()
 
@@ -66,9 +90,11 @@ class EvolutionGuide(RecognitionModel):
                 alternatives = []
                 mg = pv[ev][0]
                 for edge in ev.descendents:
-                    edgeCost = -edge.likelihoodSummary(self.grammar).logLikelihood(mg).view(-1)
+                    edgeCost = -edge.likelihoodSummary(self.mutationGrammar).logLikelihood(mg).view(-1)
                     alternatives.append(edgeCost + _distance(edge.child))
                 if False:
+                    alternatives = [ edgeCost + distanceToGo
+                                     for edgeCost, distanceToGo in alternatives ]
                     d = torch.stack(alternatives,1).view(-1)
                     d = d.squeeze(0).min(0)[0]
                 else:
@@ -98,7 +124,7 @@ class EvolutionGuide(RecognitionModel):
                 alternatives = []
                 mg = pv[ev][0]
                 for edge in ev.descendents:
-                    ec = -edge.likelihoodSummary(self.generativeModel).logLikelihood(mg).view(-1)
+                    ec = -edge.likelihoodSummary(self.mutationGrammar).logLikelihood(mg).view(-1)
                     ec = extract_scaler(ec)
                     edgeCost[edge] = ec
                     analyze(edge.child)
@@ -169,6 +195,7 @@ class EvolutionGuide(RecognitionModel):
 
         startTime = time.time()
         losses = []
+        
         while True:
             for ev in graphs:
                 self.zero_grad()
@@ -248,7 +275,32 @@ class EvolutionGuide(RecognitionModel):
                 population[child] = f
 
         return everyChild
-            
+
+    def sampleWithPolicy(self, goal):
+        currentProgram = None
+        while True:
+            if currentProgram is None:
+                currentTask = None
+            else:
+                currentTask = self.featureExtractor.taskOfProgram(currentProgram, goal.request)
+                if currentTask is None: assert False
+
+            mg = self.policy(self._MLP(self.featureExtractor.featuresOfTask(goal, currentTask)))
+            mg = mg.untorch()
+            request = goal.request
+            m = mg.sample(request, maxAttempts=50)
+
+            eprint("Mutation",m)
+            if m is None: return
+            try: currentProgram = applyMutation(m, currentProgram).betaNormalForm()
+            except InvalidMutation:
+                eprint("Invalid mutation - this means it uses the ancestor but it has no ancestor")
+                return 
+            eprint("New current program:")
+            eprint(currentProgram)
+            eprint()
+            yield currentProgram
+                
                 
 def possibleAncestors(request, program):
     from itertools import permutations
@@ -304,7 +356,7 @@ def possibleAncestors(request, program):
                 for _,fvt in reversed(fv): t = arrow(fvt,t)
                 if canUnify(t, request):
                     # Apply the ancestor
-                    m = Index(d)
+                    m = ancestorPrimitive(request)
                     for fi,_ in fv: m = Application(m,Index(fi))
                     # rename variables inside of ancestor
                     mapping = {fi: fi_ for fi_,(fi,_) in enumerate(reversed(fv)) }
@@ -331,10 +383,10 @@ def possibleAncestors(request, program):
                 parses.add((Abstraction(b), a))
         return parses
 
-    return {(EtaLongVisitor(arrow(request, request)).execute(Abstraction(m).clone()),
+    return {(EtaLongVisitor(request).execute(m.clone()),
              a.clone())
             for m,a in curse(0, program)
-            if a is not None and m != Index(0) and a != program}
+            if a is not None and m != ancestorPrimitive(request) and a != program}
 
 class EV:
     """evolution vertex: a vertex in the graph describing all evolutionary trajectories to a solution"""
@@ -426,32 +478,56 @@ def evolutionaryTrajectories(task, seed):
             av.descendents.append(EV.Edge(ancestor=av,
                                           mutation=m,
                                           child=v,
-                                          request=arrow(request,request)))
+                                          request=request))
         return v
 
     v = getVertex(seed)
     v.isGoal = True
 
     return table[None]        
-    
 
 from towerPrimitives import *
 from makeTowerTasks import *
+from tower import TowerCNN
 g = Grammar.uniform(primitives)
-t = makeSupervisedTasks()[0]
 p = Program.parse("(lambda (1x3 (right 4 (1x3 (left 2 (3x1 $0))))))")
+t = TowerCNN([]).taskOfProgram(p,None)
 eprint(g.logLikelihood(t.request,p))
 trajectory = evolutionaryTrajectories(t,p)
 trajectory.removeLongPaths(2)
 trajectories = [trajectory]
-from tower import TowerCNN
 
 
-rm = EvolutionGuide(TowerCNN([]),g,contextual=True)
-rm.train(trajectories, timeout=30)
+
+rm = EvolutionGuide(TowerCNN([]),g,contextual=True,
+                    request=t.request)
+rm.train(trajectories, timeout=600)
 rm.visualize(trajectory)
-rm.search(trajectory.goal,
-          populationSize=10,
-          timeout=1,
-          generations=2)
+
+solutions = []
+for _ in range(15):
+    eprint("Sampling a new trajectory from the policy...")
+    thisSequence = []
+    for p in rm.sampleWithPolicy(t):
+        current = rm.featureExtractor.taskOfProgram(p,None)
+        if current is None: break
+        
+        thisSequence.append(current)
+        if len(thisSequence) > 3: break
+    if thisSequence:
+        solutions.append(thisSequence)
+
+from utilities import *
+from tower_common import fastRendererPlan
+m = montageMatrix([[fastRendererPlan(t.plan,pretty=True,Lego=True)
+                    for t in ts]
+                   for ts in solutions])
+from pylab import imshow,show
+imshow(m)
+show()
+        
+# rm.search(trajectory.goal,
+#           populationSize=10,
+#           timeout=1,
+#           generations=2)
 

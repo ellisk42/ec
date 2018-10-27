@@ -217,8 +217,7 @@ class Grammar(object):
 
         for x in xs:
             x = x.apply(context)
-            context, x = self._sample(
-                x, context, environment, maximumDepth - 1)
+            context, x = self._sample(x, context, environment, maximumDepth - 1)
             returnValue = Application(returnValue, x)
 
         return context, returnValue
@@ -995,6 +994,43 @@ class ContextualGrammar:
     def logLikelihood(self, request, expression):
         return self.closedLikelihoodSummary(request, expression).logLikelihood(self)
 
+    def sample(self, request, maximumDepth=8, maxAttempts=None):
+        attempts = 0
+        while True:
+            try:
+                _, e = self._sample(None, None, Context.EMPTY, [], request, maximumDepth)
+                return e
+            except NoCandidates:
+                if maxAttempts is not None:
+                    attempts += 1
+                    if attempts > maxAttempts: return None
+                continue
+            
+    def _sample(self, parent, parentIndex, context, environment, request, maximumDepth):
+        if request.isArrow():
+            context, body = self._sample(parent, parentIndex, context,
+                                         [request.arguments[0]] + environment,
+                                         request.arguments[1],
+                                         maximumDepth)
+            return context, Abstraction(body)
+        if parent is None: g = self.noParent
+        elif parent.isIndex: g = self.variableParent
+        else: g = self.library[parent][parentIndex]
+        candidates = g.buildCandidates(request, context, environment,
+                                       normalize=True, returnProbabilities=True,
+                                       mustBeLeaf=(maximumDepth <= 1))
+        newType, chosenPrimitive, context = sampleDistribution(candidates)
+
+        xs = newType.functionArguments()
+        returnValue = chosenPrimitive
+
+        for j,x in enumerate(xs):
+            x = x.apply(context)
+            context, x = self._sample(chosenPrimitive, j, context, environment, x, maximumDepth - 1)
+            returnValue = Application(returnValue, x)
+            
+        return context, returnValue
+        
         
 
 
