@@ -36,8 +36,10 @@ class ECResult():
                  numTestingTasks=None,
                  sumMaxll=None,
                  testingSumMaxll=None,
-                 hitsAtEachWake=None):
+                 hitsAtEachWake=None,
+                 timesAtEachWake=None):
         self.hitsAtEachWake = hitsAtEachWake or []
+        self.timesAtEachWake = timesAtEachWake or []
         self.testingSearchTime = testingSearchTime or []
         self.searchTimes = searchTimes or []
         self.recognitionModel = recognitionModel
@@ -67,6 +69,7 @@ class ECResult():
                      "structurePenalty": "L",
                      "helmholtzRatio": "HR",
                      "biasOptimal": "BO",
+                     "contextual": "CO",
                      "topK": "K",
                      "enumerationTimeout": "ET",
                      "useRecognitionModel": "rec",
@@ -121,6 +124,7 @@ def ecIterator(grammar, tasks,
                compressor="rust",
                likelihoodModel="all-or-nothing",
                biasOptimal=False,
+               contextual=False,
                testingTasks=[],
                benchmark=None,
                iterations=None,
@@ -174,6 +178,9 @@ def ecIterator(grammar, tasks,
     if biasOptimal and not useRecognitionModel:
         eprint("Bias optimality only applies to recognition models, aborting.")
         assert False
+    if contextual and not useRecognitionModel:
+        eprint("Contextual only applies to recognition models, aborting")
+        assert False
 
     if testingTimeout > 0 and len(testingTasks) == 0:
         eprint("You specified a testingTimeout, but did not provide any held out testing tasks, aborting.")
@@ -207,7 +214,7 @@ def ecIterator(grammar, tasks,
             "testingTasks",
             "compressor"} and v is not None}
     if not useRecognitionModel:
-        for k in {"helmholtzRatio", "recognitionTimeout", "biasOptimal"}:
+        for k in {"helmholtzRatio", "recognitionTimeout", "biasOptimal", "contextual"}:
             if k in parameters: del parameters[k]
 
     # Uses `parameters` to construct the checkpoint path
@@ -401,6 +408,7 @@ def ecIterator(grammar, tasks,
 
         tasksHitTopDown = {f.task for f in frontiers if not f.empty}
         result.hitsAtEachWake.append(len(tasksHitTopDown))
+        result.timesAtEachWake.append(times)
 
         # Train + use recognition model
         if useRecognitionModel:
@@ -409,17 +417,16 @@ def ecIterator(grammar, tasks,
                                           grammar,
                                           activation=activation,
                                           cuda=cuda,
-                                          contextual=biasOptimal)
-
-            if biasOptimal:
-                recognizer.trainBiasOptimal(frontiers, helmholtzFrontiers(), 
-                                            CPUs=CPUs,
-                                            evaluationTimeout=evaluationTimeout,
-                                            timeout=recognitionTimeout,
-                                            helmholtzRatio=helmholtzRatio)
-            else:
-                recognizer.train(frontiers, CPUs=CPUs, timeout=recognitionTimeout,
-                                 helmholtzRatio=helmholtzRatio if j > 0 or helmholtzRatio == 1. else 0.)                                
+                                          contextual=contextual)
+            thisRatio = helmholtzRatio
+            if j == 0 and not biasOptimal: thisRatio = 0.
+            recognizer.train(frontiers,
+                             helmholtzFrontiers=helmholtzFrontiers(), 
+                             CPUs=CPUs,
+                             evaluationTimeout=evaluationTimeout,
+                             timeout=recognitionTimeout,
+                             helmholtzRatio=thisRatio)
+            
             result.recognitionModel = recognizer
 
             bottomupFrontiers, times = recognizer.enumerateFrontiers(wakingTaskBatch, likelihoodModel,
@@ -431,6 +438,7 @@ def ecIterator(grammar, tasks,
                                                                      evaluationTimeout=evaluationTimeout)
             tasksHitBottomUp = {f.task for f in bottomupFrontiers if not f.empty}
             result.hitsAtEachWake.append(len(tasksHitBottomUp))
+            result.timesAtEachWake.append(times)
 
         elif useNewRecognitionModel:  # Train a recognition model
             result.recognitionModel.updateGrammar(grammar)
@@ -771,6 +779,9 @@ def commandlineArguments(_=None,
         choices=["pypy","rust","vs","pypy_vs","ocaml"])
     parser.add_argument("--biasOptimal",
                         help="Enumerate dreams rather than sample them & bias-optimal recognition objective",
+                        default=False, action="store_true")
+    parser.add_argument("--contextual",
+                        help="bigram recognition model (default is unigram model)",
                         default=False, action="store_true")
     parser.add_argument("--clear-recognition",
                         dest="clear-recognition",

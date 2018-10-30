@@ -467,7 +467,7 @@ def manualLogoTasks():
           (embed (loop i infinity (move epsilonLength epsilonAngle)))
           (p (move %s 0a)))"""%(n,l))
 
-    for n in [3,4,5,6]:
+    for n in [3,4,5,6,7]:
         body = {"empty": "(move 1d 0a)",
                 "dashed": "(p (move 1d 0a)) (move 1d 0a)",
                 "circle": "(move 1d 0a) (loop k 2 (loop i infinity (move epsilonLength epsilonAngle)))",
@@ -477,6 +477,8 @@ def manualLogoTasks():
                 "semicircle": "(move 1d 0a) (loop i infinity (move epsilonLength epsilonAngle))"}
         for name in body:
             if name == "empty" and n != 5: continue
+            if name == "dashed" and n != 4: continue
+            
 
             supervised = (name == "semicircle" and n == 5) or \
                          (name == "square dashed" and n == 6) or \
