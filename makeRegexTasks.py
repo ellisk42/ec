@@ -4,6 +4,7 @@ from pregex import pregex
 import pickle
 import json
 import dill
+from string import printable
 
 
 def makeOldTasks():
@@ -255,6 +256,13 @@ def makeNewTasks():
     return regextasks
 
 
+def makeNewNumberTasks():
+
+    tasks = makeNewTasks()
+    numberTasks = [t for t in tasks if not any(p in ex for p in printable[10:62] for _, ex in t.examples)]
+    return numberTasks 
+
+
 # a helper function which takes a list of lists and sees which match a specific regex.
 def match_col(dataset, rstring):
     r = pregex.create(rstring)
@@ -277,7 +285,8 @@ if __name__ == "__main__":
 
     task = {"number": makeNumberTasks,
     "words": makeWordTasks,
-    "all": makeLongTasks}[sys.argv[1]]
+    "all": makeLongTasks,
+    "new": makeNewTasks}[sys.argv[1]]
 
     x = show_tasks(task())
 

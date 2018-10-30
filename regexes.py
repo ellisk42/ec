@@ -4,7 +4,7 @@ from ec import explorationCompression, commandlineArguments, Task
 from grammar import Grammar
 #from utilities import eprint, testTrainSplit, numberOfCPUs, flatten
 from utilities import eprint, numberOfCPUs, flatten, fst, testTrainSplit, POSITIVEINFINITY
-from makeRegexTasks import makeOldTasks, makeLongTasks, makeShortTasks, makeWordTasks, makeNumberTasks, makeHandPickedTasks, makeNewTasks
+from makeRegexTasks import makeOldTasks, makeLongTasks, makeShortTasks, makeWordTasks, makeNumberTasks, makeHandPickedTasks, makeNewTasks, makeNewNumberTasks
 from regexPrimitives import basePrimitives, altPrimitives, easyWordsPrimitives, alt2Primitives, concatPrimitives
 from likelihoodModel import add_cutoff_values
 #from program import *
@@ -139,7 +139,7 @@ def regex_options(parser):
     parser.add_argument("--tasks",
                         default="long",
                         help="which tasks to use",
-                        choices=["old", "short", "long", "words", "number", "handpicked", "new"])
+                        choices=["old", "short", "long", "words", "number", "handpicked", "new", "newNumber"])
     parser.add_argument("--primitives",
                         default="concat",
                         help="Which primitive set to use",
@@ -217,7 +217,8 @@ if __name__ == "__main__":
                 "words": makeWordTasks,
                 "number": makeNumberTasks,
                 "handpicked": makeHandPickedTasks,
-                "new": makeNewTasks
+                "new": makeNewTasks,
+                "newNumber": makeNewNumberTasks
                 }[args.pop("tasks")]
 
     tasks = regexTasks()  # TODO

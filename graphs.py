@@ -73,7 +73,8 @@ def plotECResult(
         export=None,
         showSolveTime=True,
         showTraining=False,
-        iterations=None):
+        iterations=None,
+        maxP=110):
     results = []
     parameters = []
     for j, path in enumerate(resultPaths):
@@ -166,10 +167,10 @@ def plotECResult(
                                  for ts in times],
                                 facecolor=color, alpha=0.2)
 
-    a1.set_ylim(ymin=0, ymax=110)
+    a1.set_ylim(ymin=0, ymax=maxP)
     a1.yaxis.grid()
-    a1.set_yticks(range(0, 110, 20))
-    plot.yticks(range(0, 110, 20), fontsize=TICKFONTSIZE)
+    a1.set_yticks(range(0, maxP, 20))
+    plot.yticks(range(0, maxP, 20), fontsize=TICKFONTSIZE)
 
     if showSolveTime:
         a2.set_ylim(ymin=0)
@@ -245,6 +246,9 @@ if __name__ == "__main__":
     parser.add_argument("--showTraining",
                         default=False, action="store_true",
                         help="Graph results for training tasks. By default only shows results for testing tasks.")
+    parser.add_argument("--maxPercent","-m",
+                        type=int, default=110,
+                        help="Maximum percent for the percent hits graph")
     
     arguments = parser.parse_args()
     
@@ -257,4 +261,5 @@ if __name__ == "__main__":
                  labels=arguments.names.split(","),
                  interval=arguments.interval,
                  iterations=arguments.iterations,
-                 showTraining=arguments.showTraining)
+                 showTraining=arguments.showTraining,
+                 maxP=arguments.maxPercent)
