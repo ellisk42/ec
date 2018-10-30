@@ -236,9 +236,12 @@ class RecognitionModel(nn.Module):
             task=frontier.task)
 
     def train(self, frontiers, _=None, steps=None, lr=0.0001, topK=5, CPUs=1,
-              timeout=None, helmholtzRatio=0., helmholtzBatch=5000):
+              timeout=None, evaluationTimeout=0.001,
+              helmholtzFrontiers=[], helmholtzRatio=0., helmholtzBatch=500):
         """
         helmholtzRatio: What fraction of the training data should be forward samples from the generative model?
+        helmholtzFrontiers: Frontiers from programs enumerated from generative model (optional)
+        If helmholtzFrontiers is not provided then we will sample programs during training
         """
         assert (steps is not None) or (timeout is not None), \
             "Cannot train recognition model without either a bound on the number of epochs or bound on the training time"
@@ -248,104 +251,10 @@ class RecognitionModel(nn.Module):
         frontiers = [frontier.topK(topK).normalize()
                      for frontier in frontiers if not frontier.empty]
 
-        # We replace each program in the frontier with its likelihoodSummary
-        # This is because calculating likelihood summaries requires juggling types
-        # And type stuff is expensive!
-        frontiers = [self.replaceProgramsWithLikelihoodSummaries(f).normalize()
-                     for f in frontiers]
-
-        # Not sure why this ever happens
-        if helmholtzRatio is None:
-            helmholtzRatio = 0.
-
-        eprint("Training a recognition model from %d frontiers, %d%% Helmholtz, feature extractor %s." % (
-            len(frontiers), int(helmholtzRatio * 100), self.featureExtractor.__class__.__name__))
-
-        # The number of Helmholtz samples that we generate at once
-        # Should only affect performance and shouldn't affect anything else
-        HELMHOLTZBATCH = helmholtzBatch
-        helmholtzSamples = []
-
-        optimizer = torch.optim.Adam(self.parameters(), lr=lr, eps=1e-3, amsgrad=True)
-        if timeout:
-            start = time.time()
-
-        with timing("Trained recognition model"):
-            for i in range(1, steps + 1):
-                if timeout and time.time() - start > timeout:
-                    break
-                losses = []
-
-                if helmholtzRatio < 1.:
-                    permutedFrontiers = list(frontiers)
-                    random.shuffle(permutedFrontiers)
-                else:
-                    permutedFrontiers = [None]
-                for frontier in permutedFrontiers:
-                    # Randomly decide whether to sample from the generative
-                    # model
-                    doingHelmholtz = random.random() < helmholtzRatio
-                    if doingHelmholtz:
-                        if helmholtzSamples == []:
-                            helmholtzSamples = \
-                            list(self.sampleManyHelmholtz(requests,
-                                                          HELMHOLTZBATCH,
-                                                          CPUs))
-                        if len(helmholtzSamples) == 0:
-                            eprint(
-                                "WARNING: Could not generate any Helmholtz samples. Disabling Helmholtz.")
-                            helmholtzRatio = 0.
-                            doingHelmholtz = False
-                        else:
-                            attempt = helmholtzSamples.pop()
-                            if attempt is not None:
-                                self.zero_grad()
-                                loss = self.frontierKL(attempt)
-                            else:
-                                doingHelmholtz = False
-                    if not doingHelmholtz:
-                        if helmholtzRatio < 1.:
-                            self.zero_grad()
-                            loss = self.frontierKL(frontier)
-                        else:
-                            # Refuse to train on the frontiers
-                            continue
-
-                    if is_torch_invalid(loss):
-                        if doingHelmholtz:
-                            eprint("Invalid real-data loss!")
-                        else:
-                            eprint("Invalid Helmholtz loss!")
-                    else:
-                        loss.backward()
-                        optimizer.step()
-                        losses.append(loss.data.tolist()[0])
-                        if False:
-                            if doingHelmholtz:
-                                eprint(
-                                    "\tHelmholtz data point loss:",
-                                    loss.data.tolist()[0])
-                            else:
-                                eprint(
-                                    "\tReal data point loss:",
-                                    loss.data.tolist()[0])
-                if (i == 1 or i % 10 == 0) and losses:
-                    eprint("Epoch", i, "Loss", sum(losses) / len(losses))
-                    gc.collect()
-
-    def trainBiasOptimal(self, frontiers, helmholtzFrontiers, _=None,
-                         steps=None, lr=0.0001, timeout=None, CPUs=None,
-                         evaluationTimeout=0.001,
-                         helmholtzRatio=0.5):
-        assert (steps is not None) or (timeout is not None), \
-            "Cannot train recognition model without either a bound on the number of epochs or bound on the training time"
-        if steps is None: steps = 9999999
-        # We replace each program in the frontier with its likelihoodSummary
-        # This is because calculating likelihood summaries requires juggling types
-        # And type stuff is expensive!
-        frontiers = [self.replaceProgramsWithLikelihoodSummaries(f)
-                     for f in frontiers]
-        class HelmholtzEntry():
+        # Should we sample programs or use the enumerated programs?
+        randomHelmholtz = len(helmholtzFrontiers) == 0
+        
+        class HelmholtzEntry:
             def __init__(self, frontier, owner):
                 self.request = frontier.task.request
                 self.task = None
@@ -365,6 +274,7 @@ class RecognitionModel(nn.Module):
                 f = Frontier(self.frontier.force().entries,
                              task=self.task)
                 return f
+        
             
             
 
@@ -376,15 +286,20 @@ class RecognitionModel(nn.Module):
         # wastes time.
         if not hasattr(self.featureExtractor, 'recomputeTasks'):
             self.featureExtractor.recomputeTasks = True
-        eprint("TEST HELMHOLTZ ENTRY START")
         helmholtzFrontiers = [HelmholtzEntry(f, self)
                               for f in helmholtzFrontiers]
-        eprint("TEST HELMHOLTZ ENTRY END")
         random.shuffle(helmholtzFrontiers)
-
         
         helmholtzIndex = [0]
         def getHelmholtz():
+            if randomHelmholtz:
+                if helmholtzIndex[0] >= len(helmholtzFrontiers):
+                    updateHelmholtzTasks()
+                    helmholtzIndex[0] = 0
+                    return getHelmholtz()
+                helmholtzIndex[0] += 1
+                return helmholtzFrontiers[helmholtzIndex[0] - 1].makeFrontier()
+            
             f = helmholtzFrontiers[helmholtzIndex[0]]
             if f.task is None:
                 with timing("Evaluated another batch of Helmholtz tasks"):
@@ -403,15 +318,26 @@ class RecognitionModel(nn.Module):
             return f.makeFrontier()
             
         def updateHelmholtzTasks():
-            HELMHOLTZBATCHSIZE = 500
             updateCPUs = CPUs if hasattr(self.featureExtractor, 'parallelTaskOfProgram') and self.featureExtractor.parallelTaskOfProgram else 1
             if updateCPUs > 1: eprint("Updating Helmholtz tasks with",updateCPUs,"CPUs")
+            
+            if randomHelmholtz:
+                newFrontiers = self.sampleManyHelmholtz(requests, helmholtzBatch, CPUs)
+                newEntries = []
+                for f in newFrontiers:
+                    e = HelmholtzEntry(f,self)
+                    e.task = f.task
+                    newEntries.append(e)
+                helmholtzFrontiers.clear()
+                helmholtzFrontiers.extend(newEntries)
+                return 
+                
             newTasks = \
              parallelMap(updateCPUs,
                          lambda f: f.calculateTask(),
-                        helmholtzFrontiers[helmholtzIndex[0]:helmholtzIndex[0] + HELMHOLTZBATCHSIZE])
+                        helmholtzFrontiers[helmholtzIndex[0]:helmholtzIndex[0] + helmholtzBatch])
             badIndices = []
-            for i in range(helmholtzIndex[0], min(helmholtzIndex[0] + HELMHOLTZBATCHSIZE,
+            for i in range(helmholtzIndex[0], min(helmholtzIndex[0] + helmholtzBatch,
                                                   len(helmholtzFrontiers))):
                 helmholtzFrontiers[i].task = newTasks[i - helmholtzIndex[0]]
                 if helmholtzFrontiers[i].task is None: badIndices.append(i)
@@ -419,53 +345,74 @@ class RecognitionModel(nn.Module):
             for i in reversed(badIndices):
                 assert helmholtzFrontiers[i].task is None
                 del helmholtzFrontiers[i]
-            
-                
-        eprint("Training bias optimal w/ %d Helmholtz frontiers"%len(helmholtzFrontiers))
-        with timing("Precomputed a Helmholtz batch"): updateHelmholtzTasks()
-        
+
+
+        # We replace each program in the frontier with its likelihoodSummary
+        # This is because calculating likelihood summaries requires juggling types
+        # And type stuff is expensive!
+        frontiers = [self.replaceProgramsWithLikelihoodSummaries(f).normalize()
+                     for f in frontiers]
+
+        eprint("Training a recognition model from %d frontiers, %d%% Helmholtz, feature extractor %s." % (
+            len(frontiers), int(helmholtzRatio * 100), self.featureExtractor.__class__.__name__))
+        eprint("Got %d Helmholtz frontiers - random Helmholtz training? : %s"%(
+            len(helmholtzFrontiers), len(helmholtzFrontiers) == 0))
+
+        # The number of Helmholtz samples that we generate at once
+        # Should only affect performance and shouldn't affect anything else
+        helmholtzSamples = []
+
         optimizer = torch.optim.Adam(self.parameters(), lr=lr, eps=1e-3, amsgrad=True)
-        if timeout:
-            start = time.time()
+        start = time.time()
+        for i in range(1, steps + 1):
+            if timeout and time.time() - start > timeout:
+                break
+            losses, descriptionLengths = [], []
+            realLosses, dreamLosses, realMDL, dreamMDL = [], [], [], []
 
-        frontiers = [f for f in frontiers if not f.empty ]
-
-        with timing("Trained recognition model"):
-            for i in range(1, steps + 1):
-                if timeout and time.time() - start > timeout:
-                    break
-                losses = []
-                descriptionLengths = []
-
+            if helmholtzRatio < 1.:
                 permutedFrontiers = list(frontiers)
                 random.shuffle(permutedFrontiers)
-                for frontier in permutedFrontiers:
-                    dreaming = random.random() < helmholtzRatio
-                    if dreaming:
-                        frontier = getHelmholtz()
-                    self.zero_grad()
-                    loss = self.frontierBiasOptimal(frontier)
-                    if loss is None:
-                        if not dreaming:
-                            eprint("ERROR: Could not extract features during experience replay.")
-                            eprint("Task is:",frontier.task)
-                            eprint("Aborting - we need to be able to extract features of every actual task.")
-                            assert False
-                        else:
-                            continue
-                    if is_torch_invalid(loss):
-                        eprint("Invalid real-data loss!")
+            else:
+                permutedFrontiers = [None]
+            for frontier in permutedFrontiers:
+                # Randomly decide whether to sample from the generative model
+                dreaming = random.random() < helmholtzRatio
+                if dreaming: frontier = getHelmholtz()
+                self.zero_grad()
+                loss = self.frontierBiasOptimal(frontier) if not randomHelmholtz else self.frontierKL(frontier)
+                if loss is None:
+                    if not dreaming:
+                        eprint("ERROR: Could not extract features during experience replay.")
+                        eprint("Task is:",frontier.task)
+                        eprint("Aborting - we need to be able to extract features of every actual task.")
+                        assert False
                     else:
-                        loss.backward()
-                        optimizer.step()
-                        losses.append(loss.data.tolist()[0])
-                        descriptionLengths.append(min(-e.logPrior for e in frontier))
-                if (i == 1 or i % 10 == 0) and losses:
-                    eprint("Epoch", i, "Loss", sum(losses) / len(losses),
-                           "\n\tvs MDL (w/o neural net)", sum(descriptionLengths) / len(descriptionLengths))
-                    gc.collect()
-                    
-
+                        continue
+                if is_torch_invalid(loss):
+                    eprint("Invalid real-data loss!")
+                else:
+                    loss.backward()
+                    optimizer.step()
+                    losses.append(loss.data.tolist()[0])
+                    descriptionLengths.append(min(-e.logPrior for e in frontier))
+                    if dreaming:
+                        dreamLosses.append(losses[-1])
+                        dreamMDL.append(descriptionLengths[-1])
+                    else:
+                        realLosses.append(losses[-1])
+                        realMDL.append(descriptionLengths[-1])
+                        
+            if (i == 1 or i % 10 == 0) and losses:
+                eprint("Epoch", i, "Loss", mean(losses))
+                if realLosses and dreamLosses:
+                    eprint("\t\t(real loss): ", mean(realLosses), "\t(dream loss):", mean(dreamLosses))
+                eprint("\tvs MDL (w/o neural net)", mean(descriptionLengths))
+                if realMDL and dreamMDL:
+                    eprint("\t\t(real MDL): ", mean(realMDL), "\t(dream MDL):", mean(dreamMDL))
+                gc.collect()
+        
+        eprint("Trained recognition model in",time.time() - start,"seconds")
 
     def sampleHelmholtz(self, requests, statusUpdate=None, seed=None):
         if seed is not None:
@@ -476,10 +423,8 @@ class RecognitionModel(nn.Module):
         if program is None:
             return None
         task = self.featureExtractor.taskOfProgram(program, request)
-        #eprint("extracted features")
 
         if statusUpdate is not None:
-            # eprint(statusUpdate, end='')
             flushEverything()
         if task is None:
             return None
@@ -487,13 +432,11 @@ class RecognitionModel(nn.Module):
         if hasattr(self.featureExtractor, 'lexicon'):
             if self.featureExtractor.tokenize(task.examples) is None:
                 return None
-
+        
+        ll = self.generativeModel.logLikelihood(request, program)
         frontier = Frontier([FrontierEntry(program=program,
-                                           logLikelihood=0., logPrior=0.)],
+                                           logLikelihood=0., logPrior=ll)],
                             task=task)
-        #eprint("replacing with likelihood summary")
-        frontier = self.replaceProgramsWithLikelihoodSummaries(frontier)
-        #eprint("successfully got a sample")
         return frontier
 
     def sampleManyHelmholtz(self, requests, N, CPUs):
@@ -515,37 +458,6 @@ class RecognitionModel(nn.Module):
         flushEverything()
 
         return samples
-
-    def enumerateHelmholtz(self, requests, timeout, CPUs=1):
-        if len(requests) > 1:
-            return [f
-                    for fs in \
-                    parallelMap(CPUs, lambda request: (request, self.enumerateHelmholtz(request, timeout)),
-                                requests)
-                    for f in fs] 
-        request = requests[0]
-        frontier = {} # maps from (task key) > (task, program, ll)
-        startTime = time.time()
-        for lb in range(0,99):
-            if time.time() - startTime > timeout: break
-            for ll,_,e in self.generativeModel.enumeration(Context.EMPTY, [], request,
-                                                           lowerBound=float(lb), upperBound=float(lb+1)):
-                if time.time() - startTime > timeout: break
-
-                task = self.featureExtractor.taskOfProgram(e, request)
-                if task is None: continue
-
-                k = self.featureExtractor.hashOfTask(task)
-                if k not in frontier or frontier[k][-1] < ll:
-                    frontier[k] = (task, e, ll)
-
-        return [ self.replaceProgramsWithLikelihoodSummaries(Frontier([FrontierEntry(program,
-                                                                                     logLikelihood=0.,
-                                                                                     logPrior=0.)],
-                                                                      task=task))
-                 for t, program, _ in frontier.values() ]
-                    
-                    
 
     def enumerateFrontiers(self,
                            tasks,
@@ -1145,6 +1057,7 @@ class NewRecognitionModel(nn.Module):
         #                     evaluationTimeout=evaluationTimeout)
 
 
+               
 def helmholtzEnumeration(g, request, inputs, timeout, _=None,
                          special=None, evaluationTimeout=None):
     """Returns json (as text)"""
