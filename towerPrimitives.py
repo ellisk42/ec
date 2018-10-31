@@ -81,7 +81,7 @@ primitives = [
     Primitive("tower_embed", arrow(arrow(ttower,ttower), ttower, ttower), _embed),
 ] + [Primitive(name, arrow(ttower,ttower), TowerContinuation(xOffset(w, h), 10*w - 2, h*10))
      for name, (w, h) in blocks.items()] + \
-         [Primitive(str(j), tint, j) for j in range(1,8) ] + \
+         [Primitive(str(j), tint, j) for j in range(1,9) ] + \
          [
 #             subtraction
          ]

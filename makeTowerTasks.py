@@ -76,9 +76,15 @@ class SupervisedTower(Task):
                              drawHand=t.hand if drawHand else None)
         import scipy.misc
         scipy.misc.imsave(f, a)
-        
-        
-        
+
+    def logLikelihood(self, e, timeout=None):
+        from tower_common import centerTower
+        def k():
+            plan = e.evaluate([])(lambda s: (s,[]))(0)[1]
+            if centerTower(plan) == centerTower(self.plan): return 0.
+            return NEGATIVEINFINITY
+        try: return runWithTimeout(k, timeout)
+        except RunWithTimeout: return NEGATIVEINFINITY        
         
 
     
@@ -138,7 +144,7 @@ def parseTower(s):
 def makeSupervisedTasks():
     from towerPrimitives import _left,_right,_loop,_embed
     arches = [SupervisedTower("arch leg %d"%n,
-                              "(%s (r 4) %s (l 2) h)"%("v "*n, "v "*n))
+                              "((for i %d v) (r 4) (for i %d v) (l 2) h)"%(n,n))
               for n in range(1,9)
     ]
     archesStacks = [SupervisedTower("arch stack %d"%n,
@@ -286,9 +292,10 @@ def makeSupervisedTasks():
                             
     
                      
-    everything = simpleLoops + arches + Bridges + archesStacks + aqueducts + offsetArches + pyramids + bricks + staircase2 + staircase1 + compositions
-    for t in everything:
-        delattr(t,'original')
+    everything = arches + simpleLoops + Bridges + archesStacks + aqueducts + offsetArches + pyramids + bricks + staircase2 + staircase1 + compositions
+    if False:
+        for t in everything:
+            delattr(t,'original')
     return everything
 if __name__ == "__main__":
     from pylab import imshow,show

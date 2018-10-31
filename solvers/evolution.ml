@@ -14,16 +14,19 @@ open Yojson.Basic
 
 open PolyValue
 
+exception AncestorFailure;;
+
 let evolution_enumeration (behavior_hash : program -> PolyList.t option) ?nc:(nc=1) g request ~ancestor
     ~timeout ~maximumSize =
-  let request = match ancestor with
-      None -> request
-    | Some(_) -> request @> request
-  in
 
-  let behavior_hash = match ancestor with
-    | None -> behavior_hash
-    | Some(a) -> fun p -> behavior_hash (Apply(p,a))
+  let rec substitute_ancestor = function
+    | Primitive(_,"ancestor",_) -> if is_some ancestor then get_some ancestor else raise AncestorFailure
+    | Abstraction(b) -> Abstraction(substitute_ancestor b)
+    | Apply(f,x) -> Apply(substitute_ancestor f, substitute_ancestor x)
+    | anything_else -> anything_else
+  in
+  
+  let behavior_hash = behavior_hash % substitute_ancestor
   in
 
   helmholtz_enumeration behavior_hash ~nc g request ~timeout ~maximumSize
@@ -47,12 +50,27 @@ let run_job channel =
     try j |> member "maximumSize" |> to_int
     with _ -> Int.max_value
   in
-  let g = j |> member "DSL" |> deserialize_contextual_grammar in
-
   let ancestor =
     try j |> member "ancestor" |> to_string |> parse_program
     with _ -> None
   in
+  ignore(primitive "ancestor" request ());
+  let g = j |> member "DSL" |> deserialize_contextual_grammar in  
+
+  (* this will remove the ancestor primitive if we do not have an ancestor *)
+  let strip_ancestor g =
+    {g with library =
+              g.library |> List.filter ~f:(fun (p,_,_,_) -> match (ancestor, p) with
+                  (* do not have an ancestor - strip out the ancestor primitive *)
+                  | None, Primitive(_,"ancestor",_) -> false
+                  | _ -> true)}
+  in
+  let g = {no_context = g.no_context |> strip_ancestor;
+           variable_context = g.no_context |> strip_ancestor;
+           contextual_library = g.contextual_library |>
+                                List.map ~f:(fun (p,gs) ->
+                                    (p,gs |> List.map ~f:strip_ancestor))}
+  in 
 
   let k =
     try Some(j |> member "special" |> to_string)

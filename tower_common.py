@@ -158,3 +158,20 @@ def fastRendererPlan(plan, resolution=256, window=30, floorHeight=10,
         
     
 
+def uglyTowerRender(plan, drawHand=None):
+    import numpy as np
+
+    if drawHand is not None:
+        plan, drawHand = centerTower(plan, drawHand)
+        drawHand = drawHand/10.
+    else:
+        plan = centerTower(plan)
+
+    world = simulateWithoutPhysics(plan)
+    world = [ [float(zz)/10. for zz in wb ]
+              for wb in world ]
+
+    a = np.zeros((resolution, resolution, 3))
+    eprint(world)
+
+

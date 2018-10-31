@@ -421,7 +421,7 @@ def ecIterator(grammar, tasks,
 
         tasksHitTopDown = {f.task for f in frontiers if not f.empty}
         result.hitsAtEachWake.append(len(tasksHitTopDown))
-        result.timesAtEachWake.append(times)
+        #result.timesAtEachWake.append(times)
 
         # Train + use recognition model
         if useRecognitionModel:
@@ -457,7 +457,7 @@ def ecIterator(grammar, tasks,
 
             tasksHitBottomUp = {f.task for f in bottomupFrontiers if not f.empty}
             result.hitsAtEachWake.append(len(tasksHitBottomUp))
-            result.timesAtEachWake.append(times)
+            #result.timesAtEachWake.append(times)
 
         elif useNewRecognitionModel:  # Train a recognition model
             result.recognitionModel.updateGrammar(grammar)
