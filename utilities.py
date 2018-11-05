@@ -76,7 +76,7 @@ def summaryStatistics(n, times):
                "\tstandard deviation", int(standardDeviation(times) + 0.5))
 
 def updateTaskSummaryMetrics(taskSummaryMetrics, newMetricsDict, key):
-    """Updates a taskSummaryMetrics dict from tasks -> metrics with new metrics under the given key"""
+    """Updates a taskSummaryMetrics dict from tasks -> metrics with new metrics under the given key."""
     for task in newMetricsDict:
         if task in taskSummaryMetrics:
             taskSummaryMetrics[task][key] = newMetricsDict[task]

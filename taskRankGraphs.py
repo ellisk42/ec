@@ -1,4 +1,12 @@
-"""Creates graphs for the task reranking metrics."""
+"""
+Creates graphs for task re-ranking metrics from an ECResults checkpoint.
+Requires metrics to be available in a recognitionTaskMetrics dict: you can specify this via --storeTaskMetrics.
+Or you can attempt to back add them using the --addTaskMetrics function.
+
+Usage: Example script is in taskRankGraphs.
+
+Note: this requires a container with sklearn installed. A sample container is available in /om2/user/zyzzyva/ec/sklearn-container.img
+"""
 
 from ec import *
 import dill
@@ -85,31 +93,30 @@ def plotTimeMetrics(
 	resultPaths,
 	outlierThreshold,
 	metricsToPlot,
+	timesArg,
 	export=None):
-	"""Plot times vs. the desired metrics for each iteration."""
+	"""Plots task times vs. the desired metrics (ie. entropy) for each checkpoint iteration."""
+
 	for j, path in enumerate(resultPaths):
 		result, domain, iterations, recognitionTaskMetrics = loadResult(path, export)
 
 		# Get all the times.
-		taskTimes = [recognitionTaskMetrics[t]['recognitionBestTimes'] for t in recognitionTaskMetrics]
+		tasks = [t for t in recognitionTaskMetrics if timesArg in recognitionTaskMetrics[t]]
+		for t in recognitionTaskMetrics:
+			print(list(recognitionTaskMetrics[t].keys()))
+		taskTimes = [recognitionTaskMetrics[t][timesArg] for t in tasks]
 		# Replace the Nones with -1 for the purpose of this.
 		taskTimes = [time if time is not None else -1.0 for time in taskTimes]
-		taskNames=[t.name for t in recognitionTaskMetrics]
+		taskNames=[t.name for t in tasks]
 
 		for k, metricToPlot in enumerate(metricsToPlot):
 			print("Plotting metric: " + metricToPlot)
 
-			#taskMetrics = [recognitionTaskMetrics[t][metricToPlot] for t in recognitionTaskMetrics]
-			taskMetrics = []
-			for task in recognitionTaskMetrics:
-				print(recognitionTaskMetrics[task]["taskLogProductions"])
-				taskMetrics.append(normalizeAndEntropy(recognitionTaskMetrics[task]["taskLogProductions"]))
-
+			taskMetrics = [recognitionTaskMetrics[t][metricToPlot] for t in tasks]
 
 			if outlierThreshold:
 				# Threshold to only outlierThreshold stddeviations from the median
-				ceiling = outlierThreshold
-				#ceiling = (np.std(taskTimes) * outlierThreshold) + np.median(taskTimes)
+				ceiling = (np.std(taskTimes) * outlierThreshold) + np.median(taskTimes)
 				noOutliersNames, noOutliersTimes, noOutliersMetrics = [], [], []
 				for t in range(len(taskTimes)):
 					if taskTimes[t] < ceiling:
@@ -124,7 +131,7 @@ def plotTimeMetrics(
 				xlabel = ('Recognition Best Times')
 			title = ("Domain: %s, Iteration: %d" % (domain, iterations))
 			ylabel = metricToPlot
-			export_name = metricToPlot + "_iters_" + str(iterations) + "outlier_threshold_" + str(outlierThreshold) + "_time_plot_sanity_check.png"
+			export_name = metricToPlot + "_iters_" + str(iterations) + "outlier_threshold_" + str(outlierThreshold) + "_time_plot.png"
 
 			plot.scatter(taskTimes, taskMetrics)
 			plot.xlabel(xlabel)
@@ -164,6 +171,7 @@ def plotTSNE(
 	metricsToCluster,
 	export=None):
 	"""Plots TSNE clusters of the given metrics. Requires Sklearn."""
+
 	from sklearn.manifold import TSNE
 
 	if metricsToCluster is None:
@@ -200,6 +208,7 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description = "")
 	parser.add_argument("--checkpoints",nargs='+')
 	parser.add_argument("--metricsToPlot", nargs='+',type=str)
+	parser.add_argument("--times", type=str, default='recognitionBestTimes')
 	parser.add_argument("--outlierThreshold", type=float, default=None)
 	parser.add_argument("--metricsToCluster", nargs='+', type=str, default=None)
 	parser.add_argument("--export","-e",
@@ -211,6 +220,7 @@ if __name__ == "__main__":
 		plotTimeMetrics(arguments.checkpoints,
 						arguments.outlierThreshold,
 						arguments.metricsToPlot,
+						arguments.times,
 						arguments.export)
 
 	if arguments.metricsToCluster:
