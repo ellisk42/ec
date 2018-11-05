@@ -3,7 +3,6 @@
 from ec import *
 import dill
 import numpy as np
-from sklearn.manifold import TSNE
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plot
@@ -15,6 +14,8 @@ plot.style.use('seaborn-whitegrid')
 
 import text
 from text import LearnedFeatureExtractor
+from scipy import stats
+from scipy.stats import entropy
 
 def loadfun(x):
 	with open(x, 'rb') as handle:
@@ -56,7 +57,7 @@ def parseResultsPath(p):
 	parameters['domain'] = domain
 	return Bunch(parameters)
 
-def loadResult(path):
+def loadResult(path, export):
 	result = loadfun(path)
 	print("loaded path:", path)
 	if not hasattr(result, "recognitionTaskMetrics"):
@@ -73,45 +74,123 @@ def loadResult(path):
 		
 	return result, domain, iterations, recognitionTaskMetrics
 
+def softmax(x):
+    """Compute softmax values for each sets of scores in x."""
+    return np.exp(x) / np.sum(np.exp(x))
+
+def normalizeAndEntropy(x):
+	return entropy(softmax(x))
 
 def plotTimeMetrics(
 	resultPaths,
+	outlierThreshold,
 	metricsToPlot,
 	export=None):
 	"""Plot times vs. the desired metrics for each iteration."""
 	for j, path in enumerate(resultPaths):
-		result, domain, iterations, recognitionTaskMetrics = loadResult(path)
+		result, domain, iterations, recognitionTaskMetrics = loadResult(path, export)
 
 		# Get all the times.
 		taskTimes = [recognitionTaskMetrics[t]['recognitionBestTimes'] for t in recognitionTaskMetrics]
 		# Replace the Nones with -1 for the purpose of this.
 		taskTimes = [time if time is not None else -1.0 for time in taskTimes]
+		taskNames=[t.name for t in recognitionTaskMetrics]
 
 		for k, metricToPlot in enumerate(metricsToPlot):
 			print("Plotting metric: " + metricToPlot)
-			taskMetrics = [recognitionTaskMetrics[t][metricToPlot] for t in recognitionTaskMetrics]
+
+			#taskMetrics = [recognitionTaskMetrics[t][metricToPlot] for t in recognitionTaskMetrics]
+			taskMetrics = []
+			for task in recognitionTaskMetrics:
+				print(recognitionTaskMetrics[task]["taskLogProductions"])
+				taskMetrics.append(normalizeAndEntropy(recognitionTaskMetrics[task]["taskLogProductions"]))
+
+
+			if outlierThreshold:
+				# Threshold to only outlierThreshold stddeviations from the median
+				ceiling = outlierThreshold
+				#ceiling = (np.std(taskTimes) * outlierThreshold) + np.median(taskTimes)
+				noOutliersNames, noOutliersTimes, noOutliersMetrics = [], [], []
+				for t in range(len(taskTimes)):
+					if taskTimes[t] < ceiling:
+						noOutliersTimes.append(taskTimes[t])
+						noOutliersMetrics.append(taskMetrics[t])
+						noOutliersNames.append(taskNames[t])
+				taskNames, taskTimes, taskMetrics = noOutliersNames, noOutliersTimes, noOutliersMetrics
+
+			if outlierThreshold:
+				xlabel = ('Recognition Best Times, Outlier Threshold From Median: %d, Ceiling: %f' % (outlierThreshold, ceiling))
+			else:
+				xlabel = ('Recognition Best Times')
+			title = ("Domain: %s, Iteration: %d" % (domain, iterations))
+			ylabel = metricToPlot
+			export_name = metricToPlot + "_iters_" + str(iterations) + "outlier_threshold_" + str(outlierThreshold) + "_time_plot_sanity_check.png"
+
 			plot.scatter(taskTimes, taskMetrics)
-			plot.xlabel('Recognition Best Times')
-			plot.ylabel(metricToPlot)
-			plot.savefig(os.path.join(export, domain, metricToPlot + "_iters_" + str(iterations) + "_time_plot.png"))
+			plot.xlabel(xlabel)
+			plot.ylabel(ylabel)
+			plot.title(title)
+			plot.savefig(os.path.join(export, domain, export_name))
+
+			# Also try plotting with labels.
+			times_and_metrics = np.column_stack((taskTimes, taskMetrics))
+			plotEmbeddingWithLabels(
+				times_and_metrics,
+				taskNames,
+				title,
+				os.path.join(export, domain, "labels_" + export_name),
+				xlabel,
+				ylabel)
+
+
+
+def plotEmbeddingWithLabels(embeddings, labels, title, exportPath, xlabel=None, ylabel=None):
+	plot.figure(figsize=(20,20))
+	for i, label in enumerate(labels):
+		x, y = embeddings[i, 0], embeddings[i, 1]
+		plot.scatter(x,y)
+		plot.text(x+0.02, y+0.02, label, fontsize=8)
+	plot.title(title)
+	if xlabel:
+		plot.xlabel(xlabel)
+	if ylabel:
+		plot.ylabel(ylabel)
+	plot.savefig(exportPath)
+	return
+
 
 def plotTSNE(
 	resultPaths,
 	metricsToCluster,
 	export=None):
-	"""Plots TSNE clusters of the given metrics."""
+	"""Plots TSNE clusters of the given metrics. Requires Sklearn."""
+	from sklearn.manifold import TSNE
+
 	if metricsToCluster is None:
 		return
 
 	for j, path in enumerate(resultPaths):
-		result, domain, iterations, recognitionTaskMetrics = loadResult(path)
+		result, domain, iterations, recognitionTaskMetrics = loadResult(path, export)
 
 		for k, metricToCluster in enumerate(metricsToCluster):
 			print("Clustering metric: " + metricToCluster)
+			tsne = TSNE(random_state=0)
+			taskNames, taskMetrics = [], []
 			for task in recognitionTaskMetrics:
-				print(task.name)
-				print(recognitionTaskMetrics[task][metricToCluster])
-				break
+				if recognitionTaskMetrics[task][metricToCluster] is not None:
+					taskNames.append(task.name)  
+					taskMetrics.append(recognitionTaskMetrics[task][metricToCluster])
+			taskNames = np.array(taskNames)
+			taskMetrics = np.array(taskMetrics)
+			print(taskNames.shape, taskMetrics.shape)
+			print("Clustering %d tasks with embeddings of shape: %s" % (len(taskMetrics), str(taskMetrics[0].shape)) )
+			
+			clusteredTaskMetrics = tsne.fit_transform(taskMetrics)
+			title = ("Metric: %s, Domain: %s, Iteration: %d" % (metricToCluster, domain, iterations))
+			plotEmbeddingWithLabels(clusteredTaskMetrics, 
+				taskNames, 
+				title, 
+				os.path.join(export, domain, metricToCluster + "_iters_" + str(iterations) + "_tsne.png"))
 
 	
 if __name__ == "__main__":
@@ -121,16 +200,20 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description = "")
 	parser.add_argument("--checkpoints",nargs='+')
 	parser.add_argument("--metricsToPlot", nargs='+',type=str)
-	parser.add_argument("--clusterMetrics", nargs='+', type=str, default=None)
+	parser.add_argument("--outlierThreshold", type=float, default=None)
+	parser.add_argument("--metricsToCluster", nargs='+', type=str, default=None)
 	parser.add_argument("--export","-e",
 						type=str, default='data')
 
 	arguments = parser.parse_args()
 
-	plotTimeMetrics(arguments.checkpoints,
-					arguments.metricsToPlot,
-					arguments.export)
+	if arguments.metricsToPlot:
+		plotTimeMetrics(arguments.checkpoints,
+						arguments.outlierThreshold,
+						arguments.metricsToPlot,
+						arguments.export)
 
-	plotTSNE(arguments.checkpoints,
-			 arguments.clusterMetrics,
-			 arguments.export)
+	if arguments.metricsToCluster:
+		plotTSNE(arguments.checkpoints,
+				 arguments.metricsToCluster,
+				 arguments.export)

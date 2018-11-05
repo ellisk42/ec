@@ -1,15 +1,17 @@
 #!/bin/bash
 
+# Note: clustering requires a container with sklearn installed.
+
 module add openmind/singularity
 
-graphableCheckpoint="experimentOutputs/list_aic=1.0_arity=4_BO=False_ET=60_HR=0.5_it=1_MF=5_baseline=False_pc=30.0_RT=1_storeTaskMetrics=True_L=1.0_taskReranker=default_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor_graph=True.pickle"
+graphableCheckpoint='experimentOutputs/list_aic=1.0_arity=4_BO=False_ET=5400_HR=0.5_it=4_MF=5_baseline=False_pc=30.0_RT=7200_storeTaskMetrics=True_L=1.0_taskReranker=default_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor_graph=True.pickle'
 # graphableCheckpoint=${checkpoint/%'.pickle'/'_graph=True.pickle'}
 
 # srun --job-name=clearRecognition --output data/clearRecognition --ntasks=1 --mem-per-cpu=5000 --cpus-per-task 1 --time=10:00 --qos=tenenbaum \
 # 	singularity exec -B /om2  container.img \
 # 	python text.py --clear-recognition $checkpoint
 
-srun --job-name=graphs$1 --output=data/taskRankGraphs --ntasks=1 --mem-per-cpu=5000 --cpus-per-task 1 --time=10:00 --qos=tenenbaum \
-  singularity exec -B /om2  container.img \
-  python taskRankGraphs.py --checkpoints $graphableCheckpoint --metricsToPlot taskGrammarEntropies --cluster taskLogProductions --export data/benchmarks \
+srun --job-name=graphs4$1 --output=data/taskRankGraphs4 --ntasks=1 --mem-per-cpu=5000 --cpus-per-task 1 --time=5:00 --qos=tenenbaum \
+  singularity exec -B /om2  sklearn-container.img \
+  python taskRankGraphs.py --checkpoints $graphableCheckpoint --metricsToPlot taskGrammarEntropies --metricsToCluster taskLogProductions --outlierThreshold 100 --export data \
   &
