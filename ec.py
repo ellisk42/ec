@@ -356,13 +356,19 @@ def ecIterator(grammar, tasks,
         if testingTimeout > 0:
             eprint("Evaluating on held out testing tasks.")
             if useRecognitionModel and j > 0:
-                testingFrontiers, times, allTimes = result.recognitionModel.enumerateFrontiers(testingTasks, likelihoodModel,
+                testingFrontiers, times, testingTimes = result.recognitionModel.enumerateFrontiers(testingTasks, likelihoodModel,
                                                                       CPUs=CPUs,
                                                                       solver=solver,
                                                                       maximumFrontier=maximumFrontier,
                                                                       enumerationTimeout=testingTimeout,
                                                                       evaluationTimeout=evaluationTimeout,
                                                                       testing=True)
+
+                if storeTaskMetrics:
+                    updateTaskSummaryMetrics(result.recognitionTaskMetrics, testingTimes, 'heldoutTestingTimes')
+                    updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskGrammarLogProductions(testingTasks), 'heldoutTaskLogProductions')
+                    updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskGrammarEntropies(testingTasks), 'heldoutTaskGrammarEntropies')
+
             else:
                 testingFrontiers, times, allTimes = multicoreEnumeration(grammar, testingTasks, likelihoodModel,
                                                                solver=solver,
@@ -378,6 +384,7 @@ def ecIterator(grammar, tasks,
             result.testingSearchTime.append(times)
             result.testingSumMaxll.append(sum(math.exp(f.bestll) for f in testingFrontiers if not f.empty) )
 
+            
         # If we have to also enumerate Helmholtz frontiers,
         # do this extra sneaky in the background
         if useRecognitionModel and biasOptimal and helmholtzRatio > 0:
@@ -815,6 +822,11 @@ def commandlineArguments(_=None,
         help="Whether to store task metrics directly in the ECResults.",
         action="store_true"
         )
+    parser.add_argument("--addTaskMetrics",
+        dest="addTaskMetrics",
+        help="Creates a checkpoint with task metrics and no recognition model for graphing.",
+        default=None,
+        type=str)
     parser.set_defaults(useRecognitionModel=useRecognitionModel,
                         featureExtractor=featureExtractor,
                         maximumFrontier=maximumFrontier,
@@ -835,11 +847,41 @@ def commandlineArguments(_=None,
     else:
         del v["primitive-graph"]
 
+    if v["addTaskMetrics"] is not None:
+        with open(v["addTaskMetrics"],'rb') as handle:
+            result = dill.load(handle)
+        addTaskMetrics(result, v["addTaskMetrics"])
+        sys.exit(0)
+    else:
+        del v["addTaskMetrics"]
+
     if v["useRecognitionModel"] and v["recognitionTimeout"] is None:
         v["recognitionTimeout"] = v["enumerationTimeout"]
         
     return v
 
+def addTaskMetrics(result, path):
+    """Adds a task metrics to ECResults that were pickled without them."""
+    SUFFIX = '.pickle'
+    assert path.endswith(SUFFIX)
+
+    tasks = result.taskSolutions.keys()
+    eprint("Found %d tasks: " % len(tasks))
+    if not hasattr(result, "recognitionTaskMetrics") or result.recognitionTaskMetrics is None:
+        result.recognitionTaskMetrics = {}
+    updateTaskSummaryMetrics(result.recognitionTaskMetrics, result.recognitionModel.taskGrammarLogProductions(tasks), 'task_no_parent_log_productions')
+    updateTaskSummaryMetrics(result.recognitionTaskMetrics, result.recognitionModel.taskGrammarEntropies(tasks), 'taskGrammarEntropies')
+
+    result.recognitionModel = None
+        
+    clearedPath = path[:-len(SUFFIX)] + "_graph=True" + SUFFIX
+    with open(clearedPath,'wb') as handle:
+        result = dill.dump(result, handle)
+    eprint(" [+] Cleared recognition model from:")
+    eprint("     %s"%path)
+    eprint("     and exported to:")
+    eprint("     %s"%clearedPath)
+    eprint("     Use this one for graphing.")
 
 def graphPrimitives(result, prefix, view=False):
     try:
