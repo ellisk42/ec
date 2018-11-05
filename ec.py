@@ -32,6 +32,8 @@ class ECResult():
                  parameters=None,
                  recognitionModel=None,
                  searchTimes=None,
+                 recognitionTaskTimes=None,
+                 recognitionTaskMetrics=None,
                  baselines=None,
                  numTestingTasks=None,
                  sumMaxll=None,
@@ -42,6 +44,8 @@ class ECResult():
         self.timesAtEachWake = timesAtEachWake or []
         self.testingSearchTime = testingSearchTime or []
         self.searchTimes = searchTimes or []
+        self.recognitionTaskTimes = recognitionTaskTimes or {}
+        self.recognitionTaskMetrics = recognitionTaskMetrics or {} 
         self.recognitionModel = recognitionModel
         self.averageDescriptionLength = averageDescriptionLength or []
         self.parameters = parameters
@@ -154,7 +158,8 @@ def ecIterator(grammar, tasks,
                cuda=False,
                message="",
                onlyBaselines=False,
-               outputPrefix=None):
+               outputPrefix=None,
+               storeTaskMetrics=False):
     if frontierSize is None and enumerationTimeout is None:
         eprint(
             "Please specify a frontier size and/or an enumeration timeout:",
@@ -360,15 +365,22 @@ def ecIterator(grammar, tasks,
         if testingTimeout > 0:
             eprint("Evaluating on held out testing tasks.")
             if useRecognitionModel and j > 0:
-                testingFrontiers, times = result.recognitionModel.enumerateFrontiers(testingTasks, likelihoodModel,
+                testingFrontiers, times, testingTimes = result.recognitionModel.enumerateFrontiers(testingTasks, likelihoodModel,
                                                                       CPUs=CPUs,
                                                                       solver=solver,
                                                                       maximumFrontier=maximumFrontier,
                                                                       enumerationTimeout=testingTimeout,
                                                                       evaluationTimeout=evaluationTimeout,
                                                                       testing=True)
+
+                if storeTaskMetrics:
+                    updateTaskSummaryMetrics(result.recognitionTaskMetrics, testingTimes, 'heldoutTestingTimes')
+                    updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskGrammarLogProductions(testingTasks), 'heldoutTaskLogProductions')
+                    updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskGrammarEntropies(testingTasks), 'heldoutTaskGrammarEntropies')
+
+
             else:
-                testingFrontiers, times = multicoreEnumeration(grammar, testingTasks, likelihoodModel,
+                testingFrontiers, times, allTimes = multicoreEnumeration(grammar, testingTasks, likelihoodModel,
                                                                solver=solver,
                                                                maximumFrontier=maximumFrontier,
                                                                enumerationTimeout=testingTimeout,
@@ -382,6 +394,7 @@ def ecIterator(grammar, tasks,
             result.testingSearchTime.append(times)
             result.testingSumMaxll.append(sum(math.exp(f.bestll) for f in testingFrontiers if not f.empty) )
 
+            
         # If we have to also enumerate Helmholtz frontiers,
         # do this extra sneaky in the background
         if useRecognitionModel and biasOptimal and helmholtzRatio > 0:
@@ -395,7 +408,7 @@ def ecIterator(grammar, tasks,
         wakingTaskBatch = taskBatcher.getTaskBatch(result, tasks, taskBatchSize, j)
 
         # WAKING UP
-        frontiers, times = multicoreEnumeration(grammar, wakingTaskBatch, likelihoodModel,
+        frontiers, times, allTimes = multicoreEnumeration(grammar, wakingTaskBatch, likelihoodModel,
                                                 solver=solver,
                                                 maximumFrontier=maximumFrontier,
                                                 enumerationTimeout=enumerationTimeout,
@@ -429,13 +442,19 @@ def ecIterator(grammar, tasks,
             
             result.recognitionModel = recognizer
 
-            bottomupFrontiers, times = recognizer.enumerateFrontiers(wakingTaskBatch, likelihoodModel,
+            bottomupFrontiers, times, allRecognitionTimes = recognizer.enumerateFrontiers(wakingTaskBatch, likelihoodModel,
                                                                      CPUs=CPUs,
                                                                      solver=solver,
                                                                      frontierSize=frontierSize,
                                                                      maximumFrontier=maximumFrontier,
                                                                      enumerationTimeout=enumerationTimeout,
                                                                      evaluationTimeout=evaluationTimeout)
+            # Store the recognition metrics.
+            if storeTaskMetrics:
+                updateTaskSummaryMetrics(result.recognitionTaskMetrics, allRecognitionTimes, 'recognitionBestTimes')
+                updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskGrammarLogProductions(wakingTaskBatch), 'taskLogProductions')
+                updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskGrammarEntropies(wakingTaskBatch), 'taskGrammarEntropies')
+
             tasksHitBottomUp = {f.task for f in bottomupFrontiers if not f.empty}
             result.hitsAtEachWake.append(len(tasksHitBottomUp))
             result.timesAtEachWake.append(times)
@@ -448,7 +467,7 @@ def ecIterator(grammar, tasks,
                 topK=topK,
                 helmholtzRatio=helmholtzRatio)
             eprint("done training recognition model")
-            bottomupFrontiers = result.recognitionModel.enumerateFrontiers(
+            bottomupFrontiers, times, allRecognitionTimes = result.recognitionModel.enumerateFrontiers(
                 wakingTaskBatch,
                 likelihoodModel,
                 CPUs=CPUs,
@@ -474,7 +493,7 @@ def ecIterator(grammar, tasks,
             while True:
                 eprint("Expanding enumeration timeout from %i to %i because of no progress. Focusing exclusively on %d unsolved tasks." % (timeout, timeout * expandFrontier, len(unsolved)))
                 timeout = timeout * expandFrontier
-                unsolvedFrontiers, unsolvedTimes = \
+                unsolvedFrontiers, unsolvedTimes, allUnsolvedTimes = \
                     multicoreEnumeration(grammar, unsolved, likelihoodModel,
                                          solver=solver,
                                          maximumFrontier=maximumFrontier,
@@ -482,13 +501,14 @@ def ecIterator(grammar, tasks,
                                          CPUs=CPUs,
                                          evaluationTimeout=evaluationTimeout)
                 if useRecognitionModel:
-                    bottomUnsolved, unsolvedTimes = recognizer.enumerateFrontiers(unsolved, likelihoodModel,
+                    bottomUnsolved, unsolvedTimes, allUnsolvedRecognitionTimes = recognizer.enumerateFrontiers(unsolved, likelihoodModel,
                                                                                   CPUs=CPUs,
                                                                                   solver=solver,
                                                                                   frontierSize=frontierSize,
                                                                                   maximumFrontier=maximumFrontier,
                                                                                   enumerationTimeout=timeout,
                                                                                   evaluationTimeout=evaluationTimeout)
+                   
                     # Merge top-down w/ bottom-up
                     unsolvedFrontiers = [f.combine(grammar.rescoreFrontier(b))
                                          for f, b in zip(unsolvedFrontiers, bottomUnsolved) ]
@@ -528,11 +548,12 @@ def ecIterator(grammar, tasks,
 
         if not useNewRecognitionModel:  # This line is changed, beware
             result.searchTimes.append(times)
+            if len(times) > 0:
+                eprint("Average search time: ", int(mean(times) + 0.5),
+                       "sec.\tmedian:", int(median(times) + 0.5),
+                       "\tmax:", int(max(times) + 0.5),
+                       "\tstandard deviation", int(standardDeviation(times) + 0.5))
 
-            eprint("Average search time: ", int(mean(times) + 0.5),
-                   "sec.\tmedian:", int(median(times) + 0.5),
-                   "\tmax:", int(max(times) + 0.5),
-                   "\tstandard deviation", int(standardDeviation(times) + 0.5))
 
         # Incorporate frontiers from anything that was not hit,
         # but which we either hit on the previous iteration,
@@ -545,6 +566,7 @@ def ecIterator(grammar, tasks,
                 f = Frontier.makeEmpty(f.task)
             _frontiers.append(f.topK(maximumFrontier))
         frontiers = _frontiers
+
 
         eprint("Showing the top 5 programs in each frontier:")
         for f in frontiers:
@@ -580,6 +602,7 @@ def ecIterator(grammar, tasks,
         result.grammars.append(grammar)
         eprint("Grammar after iteration %d:" % (j + 1))
         eprint(grammar)
+
         
         if outputPrefix is not None:
             path = checkpointPath(j + 1)
@@ -808,6 +831,17 @@ def commandlineArguments(_=None,
             "random"],
         default=taskReranker,
         type=str)
+    parser.add_argument(
+        "--storeTaskMetrics",
+        dest="storeTaskMetrics",
+        help="Whether to store task metrics directly in the ECResults.",
+        action="store_true"
+        )
+    parser.add_argument("--addTaskMetrics",
+        dest="addTaskMetrics",
+        help="Creates a checkpoint with task metrics and no recognition model for graphing.",
+        default=None,
+        type=str)
     parser.set_defaults(useRecognitionModel=useRecognitionModel,
                         featureExtractor=featureExtractor,
                         maximumFrontier=maximumFrontier,
@@ -828,11 +862,41 @@ def commandlineArguments(_=None,
     else:
         del v["primitive-graph"]
 
+    if v["addTaskMetrics"] is not None:
+        with open(v["addTaskMetrics"],'rb') as handle:
+            result = dill.load(handle)
+        addTaskMetrics(result, v["addTaskMetrics"])
+        sys.exit(0)
+    else:
+        del v["addTaskMetrics"]
+
     if v["useRecognitionModel"] and v["recognitionTimeout"] is None:
         v["recognitionTimeout"] = v["enumerationTimeout"]
         
     return v
 
+def addTaskMetrics(result, path):
+    """Adds a task metrics to ECResults that were pickled without them."""
+    SUFFIX = '.pickle'
+    assert path.endswith(SUFFIX)
+
+    tasks = result.taskSolutions.keys()
+    eprint("Found %d tasks: " % len(tasks))
+    if not hasattr(result, "recognitionTaskMetrics") or result.recognitionTaskMetrics is None:
+        result.recognitionTaskMetrics = {}
+    updateTaskSummaryMetrics(result.recognitionTaskMetrics, result.recognitionModel.taskGrammarLogProductions(tasks), 'task_no_parent_log_productions')
+    updateTaskSummaryMetrics(result.recognitionTaskMetrics, result.recognitionModel.taskGrammarEntropies(tasks), 'taskGrammarEntropies')
+
+    result.recognitionModel = None
+        
+    clearedPath = path[:-len(SUFFIX)] + "_graph=True" + SUFFIX
+    with open(clearedPath,'wb') as handle:
+        result = dill.dump(result, handle)
+    eprint(" [+] Cleared recognition model from:")
+    eprint("     %s"%path)
+    eprint("     and exported to:")
+    eprint("     %s"%clearedPath)
+    eprint("     Use this one for graphing.")
 
 def graphPrimitives(result, prefix, view=False):
     try:

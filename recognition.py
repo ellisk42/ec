@@ -184,15 +184,25 @@ class RecognitionModel(nn.Module):
 
     def grammarLogProductionsOfTask(self, task):
         """Returns the grammar logits from non-contextual models."""
-        if self.contextual:
-            eprint("Cannot calculate log productions for contextual grammars, aborting.")
-            assert False
 
         features = self.featureExtractor.featuresOfTask(task)
         if features is None: return None
 
-        features = self._MLP(features)
-        return self.grammarBuilder.logProductions(features)
+        if hasattr(self, 'hiddenLayers'):
+            eprint("Found hiddenLayers, extracting hidden layers instead.")
+            # Backward compatability with old checkpoints.
+            for layer in self.hiddenLayers:
+                features = self.activation(layer(features))
+            # return features
+            return self.noParent[1](features)
+        else:
+            features = self._MLP(features)
+
+        if self.contextual:
+            eprint("Found contextual model, extracting logProductions of no-parent model.")
+            return self.grammarBuilder.variableParent.logProductions(features)
+        else:
+            return self.grammarBuilder.logProductions(features)
 
     def grammarEntropyOfTask(self, task):
         """Returns the entropy of the grammar distribution from non-contextual models for a task."""
@@ -200,7 +210,11 @@ class RecognitionModel(nn.Module):
 
         if grammarLogProductionsOfTask is None: return None
 
-        return self.entropy(grammarLogProductionsOfTask)
+        if hasattr(self, 'entropy'):
+            return self.entropy(grammarLogProductionsOfTask)
+        else:
+            e = Entropy()
+            return e(grammarLogProductionsOfTask)
 
     def taskGrammarLogProductions(self, tasks):
         return {task: self.grammarLogProductionsOfTask(task).data.numpy()

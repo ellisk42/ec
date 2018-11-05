@@ -1,0 +1,8 @@
+/usr/local/conda/lib/python3.6/site-packages/sklearn/externals/joblib/externals/cloudpickle/cloudpickle.py:47: DeprecationWarning: the imp module is deprecated in favour of importlib; see the module's documentation for alternative uses
+  import imp
+loaded path: experimentOutputs/text_aic=1.0_arity=4_BO=False_ET=5400_HR=0.5_it=1_MF=5_baseline=False_pc=30.0_RT=7200_storeTaskMetrics=True_L=1.0_taskReranker=default_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor_graph=True.pickle
+Plotting metric: taskGrammarEntropies
+loaded path: experimentOutputs/text_aic=1.0_arity=4_BO=False_ET=5400_HR=0.5_it=1_MF=5_baseline=False_pc=30.0_RT=7200_storeTaskMetrics=True_L=1.0_taskReranker=default_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor_graph=True.pickle
+Clustering metric: taskLogProductions
+(128,) (128, 24)
+Clustering 128 tasks with embeddings of shape: (24,)

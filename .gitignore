@@ -19,4 +19,7 @@ rust_compressor/target
 compressionMessages/
 container.img
 launchers/
+data/
+data/taskRankGraphs
 message
+sklearn-container.img
