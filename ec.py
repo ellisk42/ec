@@ -369,6 +369,7 @@ def ecIterator(grammar, tasks,
                     updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskGrammarLogProductions(testingTasks), 'heldoutTaskLogProductions')
                     updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskGrammarEntropies(testingTasks), 'heldoutTaskGrammarEntropies')
 
+
             else:
                 testingFrontiers, times, allTimes = multicoreEnumeration(grammar, testingTasks, likelihoodModel,
                                                                solver=solver,
@@ -535,11 +536,11 @@ def ecIterator(grammar, tasks,
 
         if not useNewRecognitionModel:  # This line is changed, beware
             result.searchTimes.append(times)
-
-            eprint("Average search time: ", int(mean(times) + 0.5),
-                   "sec.\tmedian:", int(median(times) + 0.5),
-                   "\tmax:", int(max(times) + 0.5),
-                   "\tstandard deviation", int(standardDeviation(times) + 0.5))
+            if len(times) > 0:
+                eprint("Average search time: ", int(mean(times) + 0.5),
+                       "sec.\tmedian:", int(median(times) + 0.5),
+                       "\tmax:", int(max(times) + 0.5),
+                       "\tstandard deviation", int(standardDeviation(times) + 0.5))
 
         # Incorporate frontiers from anything that was not hit
         frontiers = [
