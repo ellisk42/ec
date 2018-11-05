@@ -554,6 +554,7 @@ def ecIterator(grammar, tasks,
                        "\tmax:", int(max(times) + 0.5),
                        "\tstandard deviation", int(standardDeviation(times) + 0.5))
 
+
         # Incorporate frontiers from anything that was not hit,
         # but which we either hit on the previous iteration,
         # or for which we have strong supervision
@@ -565,6 +566,7 @@ def ecIterator(grammar, tasks,
                 f = Frontier.makeEmpty(f.task)
             _frontiers.append(f.topK(maximumFrontier))
         frontiers = _frontiers
+
 
         eprint("Showing the top 5 programs in each frontier:")
         for f in frontiers:
