@@ -467,7 +467,7 @@ def ecIterator(grammar, tasks,
                 topK=topK,
                 helmholtzRatio=helmholtzRatio)
             eprint("done training recognition model")
-            bottomupFrontiers = result.recognitionModel.enumerateFrontiers(
+            bottomupFrontiers, times, allRecognitionTimes = result.recognitionModel.enumerateFrontiers(
                 wakingTaskBatch,
                 likelihoodModel,
                 CPUs=CPUs,
