@@ -102,8 +102,6 @@ def plotTimeMetrics(
 
 		# Get all the times.
 		tasks = [t for t in recognitionTaskMetrics if timesArg in recognitionTaskMetrics[t]]
-		for t in recognitionTaskMetrics:
-			print(list(recognitionTaskMetrics[t].keys()))
 		taskTimes = [recognitionTaskMetrics[t][timesArg] for t in tasks]
 		# Replace the Nones with -1 for the purpose of this.
 		taskTimes = [time if time is not None else -1.0 for time in taskTimes]
@@ -116,7 +114,7 @@ def plotTimeMetrics(
 
 			if outlierThreshold:
 				# Threshold to only outlierThreshold stddeviations from the median
-				ceiling = (np.std(taskTimes) * outlierThreshold) + np.median(taskTimes)
+				ceiling = outlierThreshold
 				noOutliersNames, noOutliersTimes, noOutliersMetrics = [], [], []
 				for t in range(len(taskTimes)):
 					if taskTimes[t] < ceiling:
@@ -126,7 +124,7 @@ def plotTimeMetrics(
 				taskNames, taskTimes, taskMetrics = noOutliersNames, noOutliersTimes, noOutliersMetrics
 
 			if outlierThreshold:
-				xlabel = ('Recognition Best Times, Outlier Threshold From Median: %d, Ceiling: %f' % (outlierThreshold, ceiling))
+				xlabel = ('Recognition Best Times, Outlier Threshold: %d' % (outlierThreshold))
 			else:
 				xlabel = ('Recognition Best Times')
 			title = ("Domain: %s, Iteration: %d" % (domain, iterations))
@@ -139,6 +137,8 @@ def plotTimeMetrics(
 			plot.title(title)
 			plot.savefig(os.path.join(export, domain, export_name))
 
+			print("Plotted metric without labels.")
+
 			# Also try plotting with labels.
 			times_and_metrics = np.column_stack((taskTimes, taskMetrics))
 			plotEmbeddingWithLabels(
@@ -148,6 +148,9 @@ def plotTimeMetrics(
 				os.path.join(export, domain, "labels_" + export_name),
 				xlabel,
 				ylabel)
+
+			print("Plotted metric with labels.")
+			return
 
 
 
