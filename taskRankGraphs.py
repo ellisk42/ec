@@ -114,9 +114,6 @@ def plotTimeMetrics(
 
 			if outlierThreshold:
 				# Threshold to only outlierThreshold stddeviations from the median
-				
-
-				#ceiling = (np.std(taskTimes) * outlierThreshold) + np.median(taskTimes)
 				ceiling = outlierThreshold
 				noOutliersNames, noOutliersTimes, noOutliersMetrics = [], [], []
 				for t in range(len(taskTimes)):
@@ -127,7 +124,7 @@ def plotTimeMetrics(
 				taskNames, taskTimes, taskMetrics = noOutliersNames, noOutliersTimes, noOutliersMetrics
 
 			if outlierThreshold:
-				xlabel = ('Recognition Best Times, Outlier Threshold From Median: %d, Ceiling: %f' % (outlierThreshold, ceiling))
+				xlabel = ('Recognition Best Times, Outlier Threshold: %d' % (outlierThreshold))
 			else:
 				xlabel = ('Recognition Best Times')
 			title = ("Domain: %s, Iteration: %d" % (domain, iterations))
