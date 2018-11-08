@@ -440,7 +440,7 @@ def ecIterator(grammar, tasks,
 
         # Combine topDownFrontiers from this task batch with all frontiers.
         for f in topDownFrontiers:
-            result.allFrontiers[f.task].combine(f)
+            result.allFrontiers[f.task] = result.allFrontiers[f.task].combine(f)
 
         #REMOVE
         eprint("Frontiers discovered top down: " + str(len(tasksHitTopDown)))
@@ -456,8 +456,7 @@ def ecIterator(grammar, tasks,
                                           cuda=cuda,
                                           contextual=contextual)
             thisRatio = helmholtzRatio
-            if j == 0 and not biasOptimal: thisRatio = 0.
-           .
+            if j == 0 and not biasOptimal: thisRatio = 0
             recognizer.train(result.allFrontiers.values(),
                              helmholtzFrontiers=helmholtzFrontiers(), 
                              CPUs=CPUs,
@@ -564,7 +563,7 @@ def ecIterator(grammar, tasks,
             # Rescore the frontiers according to the generative model
             # and then combine w/ original frontiers
             for b in bottomupFrontiers:
-                result.allFrontiers[b.task].combine(grammar.rescoreFrontier(b))
+                result.allFrontiers[b.task] = result.allFrontiers[b.task].combine(grammar.rescoreFrontier(b))
 
             #REMOVE
             eprint("Frontiers discovered bottom up: " + str(len(tasksHitBottomUp)))
@@ -611,18 +610,17 @@ def ecIterator(grammar, tasks,
             
         # Record the new topK solutions
         result.taskSolutions = {f.task: f.topK(topK)
-                                for f in results.allFrontiers.values()}
+                                for f in result.allFrontiers.values()}
         result.learningCurve += [
             sum(f is not None and not f.empty for f in result.taskSolutions.values())]
                 
-
         
         # Sleep-G
         # First check if we have supervision at the program level for any task that was not solved
-        needToSupervise = {f.task for f in results.allFrontiers.values()
+        needToSupervise = {f.task for f in result.allFrontiers.values()
                            if f.task.supervision is not None and f.empty}
         compressionFrontiers = [f.replaceWithSupervised(grammar) if f.task in needToSupervise else f
-                                for f in results.allFrontiers.values() ]
+                                for f in result.allFrontiers.values() ]
         grammar, compressionFrontiers = induceGrammar(grammar, compressionFrontiers,
                                                       topK=topK,
                                                       pseudoCounts=pseudoCounts, a=arity,
@@ -631,7 +629,8 @@ def ecIterator(grammar, tasks,
                                                       backend=compressor, CPUs=CPUs, iteration=j)
         # Store compression frontiers in the result.
         for c in compressionFrontiers:
-            results.allFrontiers[c.task] = c.topK(0) if c in needToSupervise else c
+            result.allFrontiers[c.task] = c.topK(0) if c in needToSupervise else c
+
 
         result.grammars.append(grammar)
         eprint("Grammar after iteration %d:" % (j + 1))
