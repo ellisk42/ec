@@ -249,7 +249,7 @@ class RecognitionModel(nn.Module):
                 logPrior=e.logPrior) for e in frontier],
             task=frontier.task)
 
-    def train(self, frontiers, _=None, steps=None, lr=0.0001, topK=5, CPUs=1,
+    def train(self, frontiers, _=None, steps=None, lr=0.001, topK=5, CPUs=1,
               timeout=None, evaluationTimeout=0.001,
               helmholtzFrontiers=[], helmholtzRatio=0., helmholtzBatch=500):
         """
@@ -313,7 +313,7 @@ class RecognitionModel(nn.Module):
                     return getHelmholtz()
                 helmholtzIndex[0] += 1
                 return helmholtzFrontiers[helmholtzIndex[0] - 1].makeFrontier()
-            
+
             f = helmholtzFrontiers[helmholtzIndex[0]]
             if f.task is None:
                 with timing("Evaluated another batch of Helmholtz tasks"):
@@ -351,15 +351,15 @@ class RecognitionModel(nn.Module):
                          lambda f: f.calculateTask(),
                         helmholtzFrontiers[helmholtzIndex[0]:helmholtzIndex[0] + helmholtzBatch])
             badIndices = []
-            for i in range(helmholtzIndex[0], min(helmholtzIndex[0] + helmholtzBatch,
-                                                  len(helmholtzFrontiers))):
+            endingIndex = min(helmholtzIndex[0] + helmholtzBatch, len(helmholtzFrontiers))
+            for i in range(helmholtzIndex[0], endingIndex):
                 helmholtzFrontiers[i].task = newTasks[i - helmholtzIndex[0]]
                 if helmholtzFrontiers[i].task is None: badIndices.append(i)
             # Permanently kill anything which failed to give a task
             for i in reversed(badIndices):
                 assert helmholtzFrontiers[i].task is None
                 del helmholtzFrontiers[i]
-
+                
 
         # We replace each program in the frontier with its likelihoodSummary
         # This is because calculating likelihood summaries requires juggling types
@@ -378,11 +378,10 @@ class RecognitionModel(nn.Module):
 
         optimizer = torch.optim.Adam(self.parameters(), lr=lr, eps=1e-3, amsgrad=True)
         start = time.time()
+        losses, descriptionLengths, realLosses, dreamLosses, realMDL, dreamMDL = [], [], [], [], [], []
         for i in range(1, steps + 1):
             if timeout and time.time() - start > timeout:
                 break
-            losses, descriptionLengths = [], []
-            realLosses, dreamLosses, realMDL, dreamMDL = [], [], [], []
 
             if helmholtzRatio < 1.:
                 permutedFrontiers = list(frontiers)
@@ -424,6 +423,7 @@ class RecognitionModel(nn.Module):
                 eprint("\tvs MDL (w/o neural net)", mean(descriptionLengths))
                 if realMDL and dreamMDL:
                     eprint("\t\t(real MDL): ", mean(realMDL), "\t(dream MDL):", mean(dreamMDL))
+                losses, descriptionLengths, realLosses, dreamLosses, realMDL, dreamMDL = [], [], [], [], [], []
                 gc.collect()
         
         eprint("Trained recognition model in",time.time() - start,"seconds")
@@ -683,10 +683,11 @@ class DummyFeatureExtractor(nn.Module):
     def __init__(self, tasks):
         super(DummyFeatureExtractor, self).__init__()
         self.outputDimensionality = 1
+        self.recomputeTasks = False
     def featuresOfTask(self, t):
         return variable([0.]).float()
     def taskOfProgram(self, p, t):
-        return None
+        return Task("dummy task", t, [])
 
 class ImageFeatureExtractor(nn.Module):
     def __init__(self, tasks):
