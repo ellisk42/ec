@@ -223,6 +223,7 @@ def visualizePrimitives(primitives, export='/tmp/logo_primitives.png'):
     from utilities import montageMatrix,makeNiceArray
     from type import tint
     import scipy.misc
+    from makeLogoTasks import parseLogo
 
     angles = [Program.parse(a)
               for a in ["logo_ZA",
@@ -245,17 +246,26 @@ def visualizePrimitives(primitives, export='/tmp/logo_primitives.png'):
                            "(logo_MULL logo_epsL 2)",
                            "(logo_DIVL logo_UL 2)",
                            "logo_UL"] ]
+    subprograms = [parseLogo(sp)
+                   for sp in ["(move 1d 0a)",
+                              "(loop i infinity (move (*l epsilonLength 4) (*a epsilonAngle 2)))",
+                              "(loop i infinity (move (*l epsilonLength 5) (/a epsilonAngle 2)))",
+                              "(loop i 4 (move 1d (/a 1a 4)))"]]
     
     matrix = []
     for p in primitives:
         if not p.isInvented: continue
         t = p.tp
-        if t.returns() != turtle: continue
         eprint(p,":",p.tp)
+        if t.returns() != turtle:
+            eprint("\t(does not return a turtle)")
+            continue
 
         def argumentChoices(t):
             if t == turtle:
                 return [Index(0)]
+            elif t == arrow(turtle,turtle):
+                return subprograms
             elif t == tint:
                 return specialNumbers.get(str(p),numbers)
             elif t == tangle:
@@ -279,7 +289,9 @@ def visualizePrimitives(primitives, export='/tmp/logo_primitives.png'):
         if len(ts) < 6: ts = [ts]
         else: ts = makeNiceArray(ts)
         r = montageMatrix(ts)
-        scipy.misc.imsave("/tmp/logo_primitive_%d.png"%len(matrix), r)
+        fn = "/tmp/logo_primitive_%d.png"%len(matrix)
+        eprint("\tExported to",fn)
+        scipy.misc.imsave(fn, r)
         
     matrix = montageMatrix(matrix)
     scipy.misc.imsave(export, matrix)
@@ -359,10 +371,15 @@ if __name__ == "__main__":
 
     eprint(baseGrammar)
 
-    fe = LogoFeatureCNN(tasks)
-    # for x in range(0, 50):
-        # program = baseGrammar.sample(arrow(turtle, turtle), maximumDepth=20)
-        # features = fe.renderProgram(program, arrow(turtle, turtle), index=x)
+    if False:
+        fe = LogoFeatureCNN(tasks)
+        for x in range(0, 500):
+            program = baseGrammar.sample(arrow(turtle, turtle), maximumDepth=20)
+            try:
+                features = fe.renderProgram(program, arrow(turtle, turtle), index=x)
+            except: continue
+        eprint(fe.sub)    
+        assert False
 
     generator = ecIterator(baseGrammar, train,
                            testingTasks=test,
