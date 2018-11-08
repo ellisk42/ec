@@ -34,4 +34,14 @@ class RandomTaskTaskBatcher:
 			assert False
 
 		return random.sample(tasks, taskBatchSize)
+
+class UnsolvedTaskBatcher:
+	"""Returns tasks that have never been solved at any previous iteration."""
+
+	def __init__(self):
+		pass
+
+	def getTaskBatch(self, ec_result, tasks, taskBatchSize, currIteration):
+		return [t for t in tasks if ec_result.allFrontiers[t].empty]
+
 		
