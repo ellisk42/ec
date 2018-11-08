@@ -31,16 +31,17 @@ class SupervisedTower(Task):
         self.handImage = None
 
     def getImage(self, drawHand=False):
-        from tower_common import fastRendererPlan
+        from tower_common import renderPlan
 
         if not drawHand:
             if self.image is not None: return self.image
-            self.image = fastRendererPlan(self.plan)
+            self.image = renderPlan(self.plan, pretty=False)
             return self.image
         else:
             if self.handImage is not None: return self.handImage
-            self.handImage = fastRendererPlan(self.plan,
-                                              drawHand=self.hand)
+            self.handImage = renderPlan(self.plan,
+                                        drawHand=self.hand,
+                                        pretty=False)
             return self.handImage
                 
 
@@ -54,26 +55,26 @@ class SupervisedTower(Task):
 
 
     def animate(self):
-        from tower_common import fastRendererPlan
+        from tower_common import renderPlan
         from pylab import imshow,show
-        a = fastRendererPlan(self.plan)
+        a = renderPlan(self.plan)
         imshow(a)
         show()
 
     @staticmethod
     def showMany(ts):
-        from tower_common import fastRendererPlan
         from pylab import imshow,show
-        a = montage([fastRendererPlan(t.plan,pretty=True,Lego=True)
-                         for t in ts]) 
+        a = montage([renderPlan(t.plan, pretty=True, Lego=True, resolution=256,
+                                drawHand=False)
+                     for t in ts]) 
         imshow(a)
         show()
 
     def exportImage(self, f, pretty=True, Lego=True, drawHand=False):
-        from tower_common import fastRendererPlan
-        a = fastRendererPlan(t.plan,
-                             pretty=pretty, Lego=Lego,
-                             drawHand=t.hand if drawHand else None)
+        from tower_common import renderPlan
+        a = renderPlan(t.plan,
+                       pretty=pretty, Lego=Lego,
+                       drawHand=t.hand if drawHand else None)
         import scipy.misc
         scipy.misc.imsave(f, a)
 

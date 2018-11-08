@@ -8,9 +8,9 @@ from functools import reduce
 #let _empty_tower =
 def _empty_tower(h): return (h,[])
 def _left(d):
-    return lambda k: lambda hand: k(hand - d*5)
+    return lambda k: lambda hand: k(hand - d)
 def _right(d):
-    return lambda k: lambda hand: k(hand + d*5)
+    return lambda k: lambda hand: k(hand + d)
 def _loop(n):
     def f(start, stop, body, hand):
         if start >= stop: return hand,[]
@@ -39,8 +39,8 @@ def _embed(body):
 class TowerContinuation(object):
     def __init__(self, x, w, h):
         self.x = x
-        self.w = w
-        self.h = h
+        self.w = w*2
+        self.h = h*2
     def __call__(self, k):
         def f(hand):
             thisAction = [(self.x + hand,self.w,self.h)]
@@ -58,20 +58,6 @@ blocks = {  # "1x1": (1.,1.),
     #          "1x4": (1.,4.)
 }
 
-# Ensures axis aligned blocks
-
-
-def xOffset(w, h):
-    assert w == int(w)
-    w = int(w)
-    if w % 2 == 1:
-        return 5
-    return 0
-def _range(n):
-    if n < 100: return range(n)
-    raise ValueError()
-def _fold(l): return lambda x0: lambda f: reduce(
-    lambda a, x: f(x)(a), l[::-1], x0)
 
 ttower = baseType("tower")
 primitives = [
@@ -79,7 +65,7 @@ primitives = [
     Primitive("right", arrow(tint, ttower, ttower), _right),
     Primitive("tower_loopM", arrow(tint, arrow(tint, ttower, ttower), ttower, ttower), _simpleLoop),
     Primitive("tower_embed", arrow(arrow(ttower,ttower), ttower, ttower), _embed),
-] + [Primitive(name, arrow(ttower,ttower), TowerContinuation(xOffset(w, h), 10*w - 2, h*10))
+] + [Primitive(name, arrow(ttower,ttower), TowerContinuation(0, w, h))
      for name, (w, h) in blocks.items()] + \
          [Primitive(str(j), tint, j) for j in range(1,9) ] + \
          [
