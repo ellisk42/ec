@@ -310,7 +310,7 @@ if __name__ == "__main__":
     SupervisedTower.showMany(ts)
     
     for j,t in enumerate(ts):
-        t.exportImage(f"/tmp/tower_{j}.png",
+        t.exportImage(f"/tmp/tower_%d.png"%j,
                       drawHand=False)
         
         
