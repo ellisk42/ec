@@ -251,7 +251,8 @@ class RecognitionModel(nn.Module):
 
     def train(self, frontiers, _=None, steps=None, lr=0.001, topK=5, CPUs=1,
               timeout=None, evaluationTimeout=0.001,
-              helmholtzFrontiers=[], helmholtzRatio=0., helmholtzBatch=500):
+              helmholtzFrontiers=[], helmholtzRatio=0., helmholtzBatch=500,
+              defaultRequest=None):
         """
         helmholtzRatio: What fraction of the training data should be forward samples from the generative model?
         helmholtzFrontiers: Frontiers from programs enumerated from generative model (optional)
@@ -262,6 +263,9 @@ class RecognitionModel(nn.Module):
         if steps is None: steps = 9999999
         
         requests = [frontier.task.request for frontier in frontiers]
+        if len(requests) == 0 and helmholtzRatio > 0 and len(helmholtzFrontiers) == 0:
+            assert defaultRequest is not None, "You are trying to random Helmholtz training, but don't have any frontiers. Therefore we would not know the type of the program to sample. Try specifying defaultRequest=..."
+            requests = [defaultRequest]
         frontiers = [frontier.topK(topK).normalize()
                      for frontier in frontiers if not frontier.empty]
 
