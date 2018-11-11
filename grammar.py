@@ -943,7 +943,17 @@ class ContextualGrammar:
                    self.variableParent.logLikelihood(owner.variableParent) + \
                    sum(r.logLikelihood(g)
                        for e, rs in self.library.items()
-                       for r,g in zip(rs, owner.library[e]) )            
+                       for r,g in zip(rs, owner.library[e]) )
+
+        def __str__(self):
+            return "\n".join([ "No parent", str(self.noParent),
+                               "",
+                               "Variable parent",str(self.variableParent),
+                               ""] + \
+                             ["Parent %s, argument index %d\n%s\n"%(e,i,ls)
+                              for e,lss in self.library.items()
+                              for i,ls in enumerate(lss) ])
+                               
 
     def likelihoodSummary(self, parent, parentIndex, context, environment, request, expression):
         if request.isArrow():
