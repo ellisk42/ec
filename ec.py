@@ -535,7 +535,7 @@ def ecIterator(grammar, tasks,
 
             result.sumMaxll.append( sum(math.exp(f.bestll) for f in bottomupFrontiers if not f.empty)) #TODO
 
-            showHitMatrix(tasksHitTopDown, tasksHitBottomUp, tasks)
+            showHitMatrix(tasksHitTopDown, tasksHitBottomUp, wakingTaskBatch)
             # Rescore the frontiers according to the generative model
             # and then combine w/ original frontiers
             frontiers = [ f.combine(grammar.rescoreFrontier(b)) for f, b in zip(frontiers, bottomupFrontiers)]
@@ -884,8 +884,20 @@ def addTaskMetrics(result, path):
     eprint("Found %d tasks: " % len(tasks))
     if not hasattr(result, "recognitionTaskMetrics") or result.recognitionTaskMetrics is None:
         result.recognitionTaskMetrics = {}
-    updateTaskSummaryMetrics(result.recognitionTaskMetrics, result.recognitionModel.taskGrammarLogProductions(tasks), 'task_no_parent_log_productions')
-    updateTaskSummaryMetrics(result.recognitionTaskMetrics, result.recognitionModel.taskGrammarEntropies(tasks), 'taskGrammarEntropies')
+
+    # If task has images, store them.
+    if hasattr(list(tasks)[0], 'getImage'):
+        images = {t: t.getImage() for t in tasks}
+        updateTaskSummaryMetrics(result.recognitionTaskMetrics, images, 'taskImages')
+
+    if hasattr(list(tasks)[0], 'highresolution'):
+        images = {t: t.highresolution for t in tasks}
+        updateTaskSummaryMetrics(result.recognitionTaskMetrics, images, 'taskImages')
+
+    updateTaskSummaryMetrics(result.recognitionTaskMetrics, result.recognitionModel.taskGrammarLogProductions(tasks), 'contextualLogProductions')
+
+    #updateTaskSummaryMetrics(result.recognitionTaskMetrics, result.recognitionModel.taskGrammarLogProductions(tasks), 'task_no_parent_log_productions')
+    #updateTaskSummaryMetrics(result.recognitionTaskMetrics, result.recognitionModel.taskGrammarEntropies(tasks), 'taskGrammarEntropies')
 
     result.recognitionModel = None
         

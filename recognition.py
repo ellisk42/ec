@@ -199,8 +199,12 @@ class RecognitionModel(nn.Module):
             features = self._MLP(features)
 
         if self.contextual:
-            eprint("Found contextual model, extracting logProductions of no-parent model.")
-            return self.grammarBuilder.variableParent.logProductions(features)
+            if hasattr(self.grammarBuilder, 'variableParent'):
+                eprint("Found contextual model, extracting logProductions of no-parent model.")
+                return self.grammarBuilder.variableParent.logProductions(features)
+            else:
+                eprint("Found contextual model, extracting logProductions of full network.")
+                return self.grammarBuilder.network(features).view(-1)
         else:
             return self.grammarBuilder.logProductions(features)
 
