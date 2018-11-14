@@ -630,6 +630,16 @@ class Primitive(Program):
             return Primitive.GLOBALS[name], n
         raise ParseFailure(s)
 
+    def __getstate__(self):
+        return self.name
+
+    def __setstate__(self, state):
+        #for backwards compatibility:
+        if type(state) == dict:
+            self.__dict__ = state
+        else:
+            p = Primitive.GLOBALS[state]
+            self.__init__(p.name, p.tp, p.value)
 
 class Invented(Program):
     '''New invented primitives'''

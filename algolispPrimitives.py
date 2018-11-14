@@ -98,7 +98,9 @@ c = dict(
 ("true","true"),
 ("h","h"),
 ("i","i"),
-("j","j")]
+("j","j"),
+("k","k"),
+("l","l")]
     )
 
 const_lookup = {
@@ -108,18 +110,28 @@ const_lookup = {
 primitive_lookup = {**const_lookup, **fn_lookup}
 #Do i need arguments??
 
+def _fn_call(f):
+    #print("f", f)
+    def inner(sx):
+        #print("sx", sx)
+        if not type(sx) == list:
+            sx = [sx]
+        return [f] + sx
+    return lambda sx: inner(sx)
+
 def algolispPrimitives():
     return [
-    Primitive("fn_call", arrow(tfunction, tlist(tsymbol), tsymbol), lambda f: lambda sx: [f] + sx),
-    Primitive("lambda1_call", arrow(tfunction, tlist(tsymbol), tsymbol), lambda f: lambda sx: ["lambda1", [f] + sx]),
-    Primitive("lambda2_call", arrow(tfunction, tlist(tsymbol), tsymbol), lambda f: lambda sx: ["lambda2", [f] + sx]),
+    Primitive("fn_call", arrow(tfunction, tlist(tsymbol), tsymbol), _fn_call),
+
+    Primitive("lambda1_call", arrow(tfunction, tlist(tsymbol), tsymbol), lambda f: lambda sx: ["lambda1", [f] + sx] if type(sx)==list else ["lambda1", [f] + [sx]] ),
+    Primitive("lambda2_call", arrow(tfunction, tlist(tsymbol), tsymbol), lambda f: lambda sx: ["lambda2", [f] + sx] if type(sx)==list else ["lambda2", [f] + [sx]] ),
     #symbol converters:
     # SYMBOL = constant | argument | function_call | function | lambda
     Primitive("symbol_constant", arrow(tconstant, tsymbol), lambda x: x),
     Primitive("symbol_function", arrow(tfunction, tsymbol), lambda x: x),
     #list converters
-    Primitive('list_init_symbol', arrow(tsymbol, tlist(tsymbol)), lambda symbol: [symbol]),
-    Primitive('list_add_symbol', arrow(tsymbol, tlist(tsymbol), tlist(tsymbol)), lambda symbol: lambda symbols: symbols + [symbol])
+    Primitive('list_init_symbol', arrow(tsymbol, tlist(tsymbol)), lambda symbol: [symbol] ),
+    Primitive('list_add_symbol', arrow(tsymbol, tlist(tsymbol), tlist(tsymbol)), lambda symbol: lambda symbols: symbols + [symbol] if type(symbols) == list else [symbols] + [symbol])
     ] + [
     #functions:
     Primitive(ec_name, tfunction, algo_name) for algo_name, ec_name in fn_lookup.items()
@@ -467,13 +479,19 @@ algolisp_input_vocab = [
 "delete",
 "non",
 "l",
-"erase"]
+"erase",
+"m",
+"comes",
+"up",
+"comparison",
+"during",
+"'s value is the largest inclusive, which is strictly less than maximum element in numbers from 1 to the element in `a` which'",
+"'s value is the biggest (inclusive), which is strictly less than maximum element of range from 1 to the element in `a` which'",
+"'s value is the highest, which is strictly less than maximum element among sequence of digits of the element in `a` which'"]
 
 
 if __name__ == "__main__":
     #g = Grammar.uniform(deepcoderPrimitives())
-
-
 
     g = Grammar.fromProductions(algolispProductions(), logVariable=.9)
 

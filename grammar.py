@@ -8,11 +8,13 @@ from type import *
 from utilities import *
 
 import time
-
+import torch
 
 class GrammarFailure(Exception):
     pass
 
+class SketchEnumerationFailure(Exception):
+    pass
 
 class NoCandidates(Exception):
     pass
@@ -557,7 +559,10 @@ class Grammar(object):
             else: assert False
 
             try: context = context.unify(ft.returns(), request)                
-            except UnificationFailure: assert False, "sketch is ill-typed"
+            except UnificationFailure:
+                print("Exception: sketch is ill-typed")
+                return #so that we can continue evaluating
+                # raise SketchEnumerationFailure() #"sketch is ill-typed"
             ft = ft.apply(context)
             argumentRequests = ft.functionArguments()
 
@@ -656,7 +661,7 @@ class Grammar(object):
     def sketchllApplication(self, context, environment,
                           sk_function, sk_arguments, full_function, full_arguments, argumentRequests):
         if argumentRequests == []:
-                return 0, context #does this make sense?
+                return torch.tensor([0.]).cuda(), context #does this make sense?
         else:
             argRequest = argumentRequests[0].apply(context)
             laterRequests = argumentRequests[1:]
