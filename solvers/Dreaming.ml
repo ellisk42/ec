@@ -16,10 +16,6 @@ open Yojson.Basic
 
 let remove_bad_dreams behavior_to_programs : (PolyList.t * (float* program list)) list =
   let start_time = Time.now () in
-  (* let extra = match PolyValue.of_json extra with  *)
-  (*   | PolyValue.List(l) -> l *)
-  (*   |in_ -> assert false *)
-  (* in  *)
 
   (* number of inputs *)
   let l = ref None in
@@ -49,9 +45,18 @@ let remove_bad_dreams behavior_to_programs : (PolyList.t * (float* program list)
 
   (* Checks whether there exists another output vector that contains everything in this vector *)
   let is_bad_index i =
-    let dominating = ref None in 
-    
+    let dominating = ref None in  
     let outputs, _ = get_resizable output_vectors i in
+    (* Initialize dominating to be the smallest set *)
+    outputs |> List.iteri ~f:(fun output_index this_output ->
+        if this_output = PolyValue.None then () else
+          match Hashtbl.find containers.(output_index) this_output with
+          | None -> assert (false)
+          | Some(others) ->
+            match !dominating with
+            | Some(d) when Int.Set.length d > Int.Set.length others -> dominating := Some(others)
+            | _ -> ());
+
     outputs |> List.iteri ~f:(fun output_index this_output ->
         if this_output = PolyValue.None then () else
           match Hashtbl.find containers.(output_index) this_output with
@@ -63,9 +68,9 @@ let remove_bad_dreams behavior_to_programs : (PolyList.t * (float* program list)
     let nightmare = Int.Set.length (!dominating |> get_some) > 1 in
     if nightmare && false then begin 
       Printf.eprintf "NIGHTMARE!!!";
-      get_resizable output_vectors i |> snd |> snd |> List.iter ~f:(fun p -> p |> string_of_program |> Printf.eprintf "%s\n");
-      get_resizable output_vectors i |> fst |> List.iter2_exn [] (* extra *) ~f:(fun i pv ->
-          Printf.eprintf "%s -> %s\n" (PolyValue.to_string i) (PolyValue.to_string pv))
+      get_resizable output_vectors i |> snd |> snd |> List.iter ~f:(fun p -> p |> string_of_program |> Printf.eprintf "%s\n")
+      (* get_resizable output_vectors i |> fst |> List.iter2_exn extra ~f:(fun i pv -> *)
+      (*     Printf.eprintf "%s -> %s\n" (PolyValue.to_string i) (PolyValue.to_string pv)) *)
     end;
     nightmare
   in

@@ -16,6 +16,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plot
 from matplotlib.ticker import MaxNLocator
 import matplotlib.lines as mlines
+from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 
 import matplotlib
 plot.style.use('seaborn-whitegrid')
@@ -23,7 +24,11 @@ plot.style.use('seaborn-whitegrid')
 import text
 from text import LearnedFeatureExtractor
 from scipy import stats
+
+np.set_printoptions(threshold=np.inf) #Print full arrays for debugging
+
 from scipy.stats import entropy
+
 
 def loadfun(x):
 	with open(x, 'rb') as handle:
@@ -54,8 +59,9 @@ def parseResultsPath(p):
 		except BaseException:
 			return s
 
+	p = os.path.basename(p)
 	p = p[:p.rfind('.')]
-	domain = p[p.rindex('/') + 1: p.index('_')]
+	domain = p[:p.index('_')]
 	rest = p.split('_')[1:]
 	if rest[-1] == "baselines":
 		rest.pop()
@@ -73,7 +79,7 @@ def loadResult(path, export):
 		assert False
 
 	domain = parseResultsPath(path)['domain']
-	iterations = result.parameters['iterations']
+	iterations = parseResultsPath(path)['iterations'] 
 	recognitionTaskMetrics = result.recognitionTaskMetrics
 
 	# Create a folder for the domain if it does not exist.
@@ -83,8 +89,8 @@ def loadResult(path, export):
 	return result, domain, iterations, recognitionTaskMetrics
 
 def softmax(x):
-    """Compute softmax values for each sets of scores in x."""
-    return np.exp(x) / np.sum(np.exp(x))
+	"""Compute softmax values for each sets of scores in x."""
+	return np.exp(x) / np.sum(np.exp(x))
 
 def normalizeAndEntropy(x):
 	return entropy(softmax(x))
@@ -102,8 +108,6 @@ def plotTimeMetrics(
 
 		# Get all the times.
 		tasks = [t for t in recognitionTaskMetrics if timesArg in recognitionTaskMetrics[t]]
-		for t in recognitionTaskMetrics:
-			print(list(recognitionTaskMetrics[t].keys()))
 		taskTimes = [recognitionTaskMetrics[t][timesArg] for t in tasks]
 		# Replace the Nones with -1 for the purpose of this.
 		taskTimes = [time if time is not None else -1.0 for time in taskTimes]
@@ -116,7 +120,7 @@ def plotTimeMetrics(
 
 			if outlierThreshold:
 				# Threshold to only outlierThreshold stddeviations from the median
-				ceiling = (np.std(taskTimes) * outlierThreshold) + np.median(taskTimes)
+				ceiling = outlierThreshold
 				noOutliersNames, noOutliersTimes, noOutliersMetrics = [], [], []
 				for t in range(len(taskTimes)):
 					if taskTimes[t] < ceiling:
@@ -126,7 +130,7 @@ def plotTimeMetrics(
 				taskNames, taskTimes, taskMetrics = noOutliersNames, noOutliersTimes, noOutliersMetrics
 
 			if outlierThreshold:
-				xlabel = ('Recognition Best Times, Outlier Threshold From Median: %d, Ceiling: %f' % (outlierThreshold, ceiling))
+				xlabel = ('Recognition Best Times, Outlier Threshold: %d' % (outlierThreshold))
 			else:
 				xlabel = ('Recognition Best Times')
 			title = ("Domain: %s, Iteration: %d" % (domain, iterations))
@@ -139,6 +143,8 @@ def plotTimeMetrics(
 			plot.title(title)
 			plot.savefig(os.path.join(export, domain, export_name))
 
+			print("Plotted metric without labels.")
+
 			# Also try plotting with labels.
 			times_and_metrics = np.column_stack((taskTimes, taskMetrics))
 			plotEmbeddingWithLabels(
@@ -148,6 +154,9 @@ def plotTimeMetrics(
 				os.path.join(export, domain, "labels_" + export_name),
 				xlabel,
 				ylabel)
+
+			print("Plotted metric with labels.")
+			return
 
 
 
@@ -165,10 +174,49 @@ def plotEmbeddingWithLabels(embeddings, labels, title, exportPath, xlabel=None, 
 	plot.savefig(exportPath)
 	return
 
+def plotEmbeddingWithImages(embeddings, images, title, exportPath, xlabel=None, ylabel=None, image_zoom=1):
+	"""
+	Plots embeddings with thumbnail images.
+	Reference: https://www.kaggle.com/gaborvecsei/plants-t-sne
+	"""
+	fig, ax = plot.subplots(figsize=(45,45))
+	artists = []
+	for xy, i in zip(embeddings, images):
+		x0, y0 = xy
+		img = OffsetImage(i, zoom=1)
+		ab = AnnotationBbox(img, (x0, y0), xycoords='data', frameon=False)
+		artists.append(ax.add_artist(ab))
+
+	ax.update_datalim(embeddings)
+	ax.autoscale()
+
+	plot.title(title)
+	if xlabel:
+		plot.xlabel(xlabel)
+	if ylabel:
+		plot.ylabel(ylabel)
+	print("Saving to: " + exportPath)
+	plot.savefig(exportPath)
+	return
+
+def makeLogoImage(im):
+	im = np.reshape(np.array(im),(128, 128))
+	# Make black and white.
+	black_mask = im != 0
+	white_mask = im == 0
+	im[black_mask] = 0
+	im[white_mask] = 255
+
+	alpha = np.zeros(im.shape)
+	alpha[black_mask] = 255
+	# Need to make it the opposite for alpha.
+	im = np.dstack([im, im, im, alpha])
+	return im
 
 def plotTSNE(
 	resultPaths,
 	metricsToCluster,
+	labelWithImages,
 	export=None):
 	"""Plots TSNE clusters of the given metrics. Requires Sklearn."""
 
@@ -195,10 +243,24 @@ def plotTSNE(
 			
 			clusteredTaskMetrics = tsne.fit_transform(taskMetrics)
 			title = ("Metric: %s, Domain: %s, Iteration: %d" % (metricToCluster, domain, iterations))
-			plotEmbeddingWithLabels(clusteredTaskMetrics, 
-				taskNames, 
-				title, 
-				os.path.join(export, domain, metricToCluster + "_iters_" + str(iterations) + "_tsne.png"))
+
+			if labelWithImages:
+				images = []
+				for i, task in enumerate(recognitionTaskMetrics):
+					im = np.array(recognitionTaskMetrics[task]['taskImages'])
+					if domain == 'logo':
+						im = makeLogoImage(im)
+					images.append(im)
+
+				plotEmbeddingWithImages(clusteredTaskMetrics, 
+					images, 
+					title, 
+					os.path.join(export, domain, metricToCluster + "_iters_" + str(iterations) + "_tsne_images.png"))
+			else:
+				plotEmbeddingWithLabels(clusteredTaskMetrics, 
+					taskNames, 
+					title, 
+					os.path.join(export, domain, metricToCluster + "_iters_" + str(iterations) + "_tsne_labels.png"))
 
 	
 if __name__ == "__main__":
@@ -211,6 +273,7 @@ if __name__ == "__main__":
 	parser.add_argument("--times", type=str, default='recognitionBestTimes')
 	parser.add_argument("--outlierThreshold", type=float, default=None)
 	parser.add_argument("--metricsToCluster", nargs='+', type=str, default=None)
+	parser.add_argument("--labelWithImages", type=bool, default=None)
 	parser.add_argument("--export","-e",
 						type=str, default='data')
 
@@ -226,4 +289,5 @@ if __name__ == "__main__":
 	if arguments.metricsToCluster:
 		plotTSNE(arguments.checkpoints,
 				 arguments.metricsToCluster,
+				 arguments.labelWithImages,
 				 arguments.export)

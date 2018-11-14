@@ -167,7 +167,7 @@ class EvolutionGuide(RecognitionModel):
                  ancestor=None, timeout=None):
         """
         ancestor: EV.
-        returns: list of programs built from ancestor
+        returns: list of (program built from ancestor, log likelihood of transition)
         """
         g = self.policy(self._MLP(self.featureExtractor.featuresOfTask(ancestor.goal, ancestor.current))).untorch()
         message = {"DSL": g.json(),
@@ -184,34 +184,30 @@ class EvolutionGuide(RecognitionModel):
         for e in response:
             mutation = Program.parse(e['programs'][0])
             if ancestor.program is None: child = mutation
-            else: child = Application(mutation,ancestor.program)
-            children.append(child)
+            else: child = applyMutation(mutation, ancestor.program)
+            children.append((child, e['ll']))
         return children
 
     def train(self, graphs, _=None,
               lr=0.001, timeout=None, steps=None):
-        policy_optimizer = torch.optim.Adam(self.parameters(), lr=lr, eps=1e-3, amsgrad=True)
-        value_optimizer = torch.optim.Adam(self.parameters(), lr=lr, eps=1e-3, amsgrad=True)
+        # Use a single optimizer for both the policy and the value
+        # Just add the losses from the policy and the value
+        # This is what Alpha go does
+        optimizer = torch.optim.Adam(self.parameters(), lr=lr, eps=1e-3, amsgrad=True)
 
         startTime = time.time()
         losses = []
+        graphs = list(graphs)
         
         while True:
+            random.shuffle(graphs)
             for ev in graphs:
-                self.zero_grad()
-                pl, vl = self.batchedLoss(ev)
-                pl.backward()
-                policy_optimizer.step()
+                with timing("gradient step with %d vertices"%len(ev.reachable())):
+                    self.zero_grad()
+                    pl, vl = self.batchedLoss(ev)
+                    (pl + vl).backward()
+                    optimizer.step()
 
-                self.zero_grad()
-                pl, vl = self.batchedLoss(ev)
-                vl.backward()
-                value_optimizer.step()
-                # self.zero_grad()
-                # vl = self.valueLoss(ev)
-                # vl.backward()
-                # value_optimizer.step()7
-                                
                 losses.append((pl.data.tolist(),
                                vl.data.tolist()[0]))
                 eprint(losses[-1])
@@ -228,25 +224,29 @@ class EvolutionGuide(RecognitionModel):
         assert generations is not None
 
         # Map from parent to fitness
-        population = {EV(goal, None): 1.}
+        seed = EV(goal, None)
+        seed.logLikelihood = 0
+        population = {seed: 1.}
         everyChild = set()
 
         for _ in range(generations):
             z = sum(population.values())
-            children = []
+            children = {} # map from EV to log likelihood
             for ancestor, fitness in population.items():
                 numberOfChildren = 0
-                for child in self.children(ancestor=ancestor,
+                for child, ll in self.children(ancestor=ancestor,
                                            timeout=timeout*fitness/z):
                     ev = EV(goal, child)
+                    ev.logLikelihood = ll + ancestor.logLikelihood
                     ev.current = self.featureExtractor.taskOfProgram(child, goal.request)
                     if ev.current is not None:
-                        children.append(ev)
+                        if ev not in children or children[ev] < ev.logLikelihood:
+                            children[ev] = ev.logLikelihood
                         numberOfChildren += 1
                 eprint("Ancestor",ancestor.program,
                        "produced",numberOfChildren,"children.")
                 
-            children = list(set(children))
+            children = list(children.keys())
             eprint("All of the ancestors collectively produced",len(children),
                    "new children.")
 
@@ -261,7 +261,7 @@ class EvolutionGuide(RecognitionModel):
                 ds = self.value(self._MLP(childFeatures))
                 ds = ds.data.view(-1).tolist()
                 for child, d, batchIndex in zip(childBatch, ds, range(len(childBatch))):
-                    f = -d
+                    f = -d + child.logLikelihood
                     eprint("Child",child.program,"has fitness",f)
                     bestChildren.push(-f, (f, childIndex + batchIndex, child))
                     if len(bestChildren) > populationSize:
@@ -273,6 +273,11 @@ class EvolutionGuide(RecognitionModel):
             for f,_,child in bestChildren:
                 everyChild.add(child)
                 population[child] = f
+
+            for child, fitness in sorted(population.items(), key=lambda cf: -cf[1]):
+                eprint("Surviving child",child.program,"has fitness",fitness)
+                if goal.logLikelihood(child.program) > -0.01:
+                    eprint("\t^^^^HIT\n")
 
         return everyChild
 
@@ -419,6 +424,19 @@ class EV:
     def removeLongPaths(self, maxPath):
         assert self.program is None
 
+        distanceFromSource = {}
+        frontier = {self}
+        d = 0
+        while len(frontier) > 0:
+            for v in frontier:
+                if v not in distanceFromSource: distanceFromSource[v] = d
+            frontier = {v
+                        for f in frontier
+                        for e in f.descendents
+                        for v in [e.child]
+                        if v not in frontier and v not in distanceFromSource}
+            d += 1
+
         shortestPath = {}
         def curse(v):
             if v in shortestPath:
@@ -430,21 +448,21 @@ class EV:
 
             for d in v.descendents: curse(d.child)
             v.descendents = [d for d in v.descendents
-                             if shortestPath[d.child] + 1 <= maxPath]
+                             if shortestPath[d.child] + distanceFromSource[v] + 1 <= maxPath]
             shortestPath[v] = min( shortestPath[c.child] for c in v.descendents ) + 1
             assert shortestPath[v] <= maxPath
             return shortestPath[v]
         curse(self)
-            
-
+        
     class Edge:
         """evolutionary edge"""
-        def __init__(self, ancestor, mutation, child, request):
+        def __init__(self, ancestor, mutation, child, request, ll=None):
             self.ancestor = ancestor
             self.mutation = mutation
             self.child = child
             self.request = request
             self._likelihoodSummary = None
+            self.ll = ll
 
         def __eq__(self, o):
             return (self.ancestor, self.mutation, self.child) == \
@@ -453,9 +471,13 @@ class EV:
         def __hash__(self): return hash((self.ancestor, self.mutation, self.child))
 
         def likelihoodSummary(self, g):
-            if self._likelihoodSummary is None:
-                self._likelihoodSummary = g.closedLikelihoodSummary(self.request, self.mutation)
-            return self._likelihoodSummary
+            try:
+                if self._likelihoodSummary is None:
+                    self._likelihoodSummary = g.closedLikelihoodSummary(self.request, self.mutation)
+                return self._likelihoodSummary
+            except:
+                eprint("Could not calculate likelihood of mutation",self.mutation)
+                assert False
         
 def evolutionaryTrajectories(task, seed):
     request = task.request
@@ -490,44 +512,51 @@ from towerPrimitives import *
 from makeTowerTasks import *
 from tower import TowerCNN
 g = Grammar.uniform(primitives)
-p = Program.parse("(lambda (1x3 (right 4 (1x3 (left 2 (3x1 $0))))))")
-t = TowerCNN([]).taskOfProgram(p,None)
-eprint(g.logLikelihood(t.request,p))
-trajectory = evolutionaryTrajectories(t,p)
-trajectory.removeLongPaths(2)
-trajectories = [trajectory]
+tasks = makeSupervisedTasks()#[:3]
 
+trajectories = []
+for t in tasks:
+    p = t.original
+    try: g.logLikelihood(t.request, p)
+    except: continue
+    
+    trajectory = evolutionaryTrajectories(t,p)
+    trajectory.removeLongPaths(2)
+    trajectories.append(trajectory)
 
+eprint("Training on",len(trajectories),"/",len(tasks),"tasks")
 
 rm = EvolutionGuide(TowerCNN([]),g,contextual=True,
                     request=t.request)
 rm.train(trajectories, timeout=600)
-rm.visualize(trajectory)
+#rm.visualize(trajectories[0])
 
-solutions = []
-for _ in range(15):
-    eprint("Sampling a new trajectory from the policy...")
-    thisSequence = []
-    for p in rm.sampleWithPolicy(t):
-        current = rm.featureExtractor.taskOfProgram(p,None)
-        if current is None: break
-        
-        thisSequence.append(current)
-        if len(thisSequence) > 3: break
-    if thisSequence:
-        solutions.append(thisSequence)
 
-from utilities import *
-from tower_common import fastRendererPlan
-m = montageMatrix([[fastRendererPlan(t.plan,pretty=True,Lego=True)
-                    for t in ts]
-                   for ts in solutions])
-from pylab import imshow,show
-imshow(m)
-show()
-        
-# rm.search(trajectory.goal,
-#           populationSize=10,
-#           timeout=1,
-#           generations=2)
+if False:
+    solutions = []
+    for _ in range(15):
+        eprint("Sampling a new trajectory from the policy...")
+        thisSequence = []
+        for p in rm.sampleWithPolicy(t):
+            current = rm.featureExtractor.taskOfProgram(p,None)
+            if current is None: break
+
+            thisSequence.append(current)
+            if len(thisSequence) > 3: break
+        if thisSequence:
+            solutions.append(thisSequence)
+
+    from utilities import *
+    from tower_common import fastRendererPlan
+    m = montageMatrix([[fastRendererPlan(t.plan,pretty=True,Lego=True)
+                        for t in ts]
+                       for ts in solutions])
+    from pylab import imshow,show
+    imshow(m)
+    show()
+else:        
+    rm.search(trajectory.goal,
+              populationSize=10,
+              timeout=1,
+              generations=2)
 

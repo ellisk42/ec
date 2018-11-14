@@ -89,6 +89,7 @@ class TowerCNN(nn.Module):
         v = variable(v, cuda=self.CUDA).float()
         window = int(self.inputImageDimension/self.resizedDimension)
         v = F.avg_pool2d(v, (window,window))
+        #showArrayAsImage(np.transpose(v.data.numpy()[0,:3,:,:],[1,2,0]))
         v = self.encoder(v)
         if inserted_batch:
             return v.view(-1)
@@ -142,7 +143,7 @@ def tower_options(parser):
                         default=None, type=str)
 
 def dreamOfTowers(grammar, prefix, N=250):
-    from tower_common import fastRendererPlan
+    from tower_common import renderPlan
     
     request = arrow(ttower,ttower)
     randomTowers = [tuple(centerTower(t))
@@ -153,7 +154,7 @@ def dreamOfTowers(grammar, prefix, N=250):
                     if program is not None
                     for t in [executeTower(program, timeout=0.5) or []]
                     if len(t) >= 1 and len(t) < 100 and towerLength(t) <= 360.]
-    matrix = [fastRendererPlan(p,pretty=True)
+    matrix = [renderPlan(p,Lego=True,pretty=True)
               for p in randomTowers]
     matrix = montage(matrix)
     import scipy.misc
@@ -162,10 +163,10 @@ def dreamOfTowers(grammar, prefix, N=250):
     
 def visualizePrimitives(primitives, fn=None):
     from itertools import product
-    from tower_common import fastRendererPlan
+    from tower_common import renderPlan
     #from pylab import imshow,show
 
-    from towerPrimitives import TowerContinuation,xOffset,_left,_right,_loop,_embed
+    from towerPrimitives import TowerContinuation,_left,_right,_loop,_embed
     _13 = Program.parse("1x3").value
     _31 = Program.parse("3x1").value
 
@@ -203,7 +204,7 @@ def visualizePrimitives(primitives, fn=None):
 
         if ts == []: continue
         
-        matrix.append([fastRendererPlan(p,pretty=True)
+        matrix.append([renderPlan(p,pretty=True)
                        for p in ts])
 
     matrix = montageMatrix(matrix)
@@ -214,7 +215,7 @@ def visualizePrimitives(primitives, fn=None):
     #    show()
     
 def visualizeSolutions(solutions, export, tasks=None):
-    from tower_common import fastRendererPlan
+    from tower_common import renderPlan
 
     if tasks is None:
         tasks = list(solutions.keys())
@@ -222,7 +223,7 @@ def visualizeSolutions(solutions, export, tasks=None):
 
     matrix = []
     for t in tasks:
-        i = fastRendererPlan(centerTower(t.plan),pretty=True)
+        i = renderPlan(centerTower(t.plan),pretty=True,Lego=True)
         if solutions[t].empty: i = i/3.
         matrix.append(i)
     matrix = montage(matrix)

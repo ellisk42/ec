@@ -53,7 +53,7 @@ open Core
     rm ./Miniconda3-latest-Linux-x86_64.sh
     export PATH="/usr/local/conda/bin:$PATH"
 
-    conda install -y  numpy dill pyzmq matplotlib scipy protobuf
+    conda install -y  numpy dill pyzmq matplotlib scipy protobuf scikit-learn
     conda install -y  pytorch=0.4.0 torchvision -c pytorch
     pip install dill sexpdata pygame pycairo cairocffi psutil pypng Box2D-kengz graphviz
 

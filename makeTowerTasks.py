@@ -31,16 +31,17 @@ class SupervisedTower(Task):
         self.handImage = None
 
     def getImage(self, drawHand=False):
-        from tower_common import fastRendererPlan
+        from tower_common import renderPlan
 
         if not drawHand:
             if self.image is not None: return self.image
-            self.image = fastRendererPlan(self.plan)
+            self.image = renderPlan(self.plan, pretty=False)
             return self.image
         else:
             if self.handImage is not None: return self.handImage
-            self.handImage = fastRendererPlan(self.plan,
-                                              drawHand=self.hand)
+            self.handImage = renderPlan(self.plan,
+                                        drawHand=self.hand,
+                                        pretty=False)
             return self.handImage
                 
 
@@ -54,31 +55,37 @@ class SupervisedTower(Task):
 
 
     def animate(self):
-        from tower_common import fastRendererPlan
+        from tower_common import renderPlan
         from pylab import imshow,show
-        a = fastRendererPlan(self.plan)
+        a = renderPlan(self.plan)
         imshow(a)
         show()
 
     @staticmethod
     def showMany(ts):
-        from tower_common import fastRendererPlan
         from pylab import imshow,show
-        a = montage([fastRendererPlan(t.plan,pretty=True,Lego=True)
-                         for t in ts]) 
+        a = montage([renderPlan(t.plan, pretty=True, Lego=True, resolution=256,
+                                drawHand=False)
+                     for t in ts]) 
         imshow(a)
         show()
 
     def exportImage(self, f, pretty=True, Lego=True, drawHand=False):
-        from tower_common import fastRendererPlan
-        a = fastRendererPlan(t.plan,
-                             pretty=pretty, Lego=Lego,
-                             drawHand=t.hand if drawHand else None)
+        from tower_common import renderPlan
+        a = renderPlan(t.plan,
+                       pretty=pretty, Lego=Lego,
+                       drawHand=t.hand if drawHand else None)
         import scipy.misc
         scipy.misc.imsave(f, a)
-        
-        
-        
+
+    def logLikelihood(self, e, timeout=None):
+        from tower_common import centerTower
+        def k():
+            plan = e.evaluate([])(lambda s: (s,[]))(0)[1]
+            if centerTower(plan) == centerTower(self.plan): return 0.
+            return NEGATIVEINFINITY
+        try: return runWithTimeout(k, timeout)
+        except RunWithTimeout: return NEGATIVEINFINITY        
         
 
     
@@ -138,7 +145,7 @@ def parseTower(s):
 def makeSupervisedTasks():
     from towerPrimitives import _left,_right,_loop,_embed
     arches = [SupervisedTower("arch leg %d"%n,
-                              "(%s (r 4) %s (l 2) h)"%("v "*n, "v "*n))
+                              "((for i %d v) (r 4) (for i %d v) (l 2) h)"%(n,n))
               for n in range(1,9)
     ]
     archesStacks = [SupervisedTower("arch stack %d"%n,
@@ -286,9 +293,10 @@ def makeSupervisedTasks():
                             
     
                      
-    everything = simpleLoops + arches + Bridges + archesStacks + aqueducts + offsetArches + pyramids + bricks + staircase2 + staircase1 + compositions
-    for t in everything:
-        delattr(t,'original')
+    everything = arches + simpleLoops + Bridges + archesStacks + aqueducts + offsetArches + pyramids + bricks + staircase2 + staircase1 + compositions
+    if False:
+        for t in everything:
+            delattr(t,'original')
     return everything
 if __name__ == "__main__":
     from pylab import imshow,show
@@ -302,7 +310,7 @@ if __name__ == "__main__":
     SupervisedTower.showMany(ts)
     
     for j,t in enumerate(ts):
-        t.exportImage(f"/tmp/tower_{j}.png",
+        t.exportImage("/tmp/tower_%d.png"%j,
                       drawHand=False)
         
         
