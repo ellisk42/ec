@@ -887,7 +887,7 @@ def addTaskMetrics(result, path):
 
     # If task has images, store them.
     if hasattr(list(tasks)[0], 'getImage'):
-        images = {t: t.getImage() for t in tasks}
+        images = {t: t.getImage(pretty=True) for t in tasks}
         updateTaskSummaryMetrics(result.recognitionTaskMetrics, images, 'taskImages')
 
     if hasattr(list(tasks)[0], 'highresolution'):

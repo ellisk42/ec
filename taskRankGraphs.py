@@ -213,6 +213,14 @@ def makeLogoImage(im):
 	im = np.dstack([im, im, im, alpha])
 	return im
 
+def makeTowerImage(im):
+	# Set the black pixels to transparent.
+	black_mask = im[:, :, 0] == 0
+	alpha = np.ones((256,256)) * 255
+	alpha[black_mask] = 0
+	im = np.dstack([im, alpha])
+	return im
+
 def plotTSNE(
 	resultPaths,
 	metricsToCluster,
@@ -250,6 +258,8 @@ def plotTSNE(
 					im = np.array(recognitionTaskMetrics[task]['taskImages'])
 					if domain == 'logo':
 						im = makeLogoImage(im)
+					elif domain == 'tower':
+						im = makeTowerImage(im)
 					images.append(im)
 
 				plotEmbeddingWithImages(clusteredTaskMetrics, 
