@@ -30,18 +30,18 @@ class SupervisedTower(Task):
         self.image = None
         self.handImage = None
 
-    def getImage(self, drawHand=False):
+    def getImage(self, drawHand=False, pretty=False):
         from tower_common import renderPlan
 
         if not drawHand:
             if self.image is not None: return self.image
-            self.image = renderPlan(self.plan, pretty=False)
+            self.image = renderPlan(self.plan, pretty=pretty)
             return self.image
         else:
             if self.handImage is not None: return self.handImage
             self.handImage = renderPlan(self.plan,
                                         drawHand=self.hand,
-                                        pretty=False)
+                                        pretty=pretty)
             return self.handImage
                 
 

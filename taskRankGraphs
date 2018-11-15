@@ -7,7 +7,7 @@ module add openmind/singularity
 
 graphableCheckpoint='data/old_checkpoints/towers/2018-11-09T01:46:05.902965/tower_aic=1.0_arity=3_BO=True_CO=True_ET=300_HR=0.5_it=10_MF=10_baseline=False_pc=30.0_RT=300_storeTaskMetrics=False_L=1_taskReranker=default_K=2_topkNotMAP=False_rec=True_feat=TowerCNN_graph=True.pickle'
 
-srun --job-name=taskRankGraphsTower$1 --output=data/taskRankGraphsTower --ntasks=1 --mem-per-cpu=5000 --cpus-per-task 1 --time=5:00 --qos=tenenbaum \
+srun --job-name=taskRankGraphsTower10$1 --output=data/taskRankGraphsTower --ntasks=1 --mem-per-cpu=5000 --cpus-per-task 1 --time=5:00 --qos=tenenbaum \
   singularity exec -B /om2  sklearn-container.img \
   python taskRankGraphs.py --checkpoints $graphableCheckpoint --metricsToCluster contextualLogProductions --labelWithImages True --export data \
   &
