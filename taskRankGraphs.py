@@ -311,6 +311,7 @@ if __name__ == "__main__":
 	import sys
 
 	import argparse
+
 	parser = argparse.ArgumentParser(description = "")
 	parser.add_argument("--checkpoints",nargs='+')
 	parser.add_argument("--metricsToPlot", nargs='+',type=str)
