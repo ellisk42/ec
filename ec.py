@@ -161,7 +161,8 @@ def ecIterator(grammar, tasks,
                message="",
                onlyBaselines=False,
                outputPrefix=None,
-               storeTaskMetrics=False):
+               storeTaskMetrics=False,
+               rewriteTaskMetrics=True):
     if frontierSize is None and enumerationTimeout is None:
         eprint(
             "Please specify a frontier size and/or an enumeration timeout:",
@@ -374,6 +375,8 @@ def ecIterator(grammar, tasks,
         assert False
  
     for j in range(resume or 0, iterations):
+        if storeTaskMetrics and rewriteTaskMetrics:
+            result.recognitionTaskMetrics = {}
 
         # Evaluate on held out tasks if we have them
         if testingTimeout > 0:
@@ -437,13 +440,6 @@ def ecIterator(grammar, tasks,
         tasksHitTopDown = {f.task for f in topDownFrontiers if not f.empty}
         result.hitsAtEachWake.append(len(tasksHitTopDown))
         #result.timesAtEachWake.append(times)
-
-        # Combine topDownFrontiers from this task batch with all frontiers.
-        for f in topDownFrontiers:
-            result.allFrontiers[f.task] = result.allFrontiers[f.task].combine(f)
-
-        eprint("Frontiers discovered top down: " + str(len(tasksHitTopDown)))
-        eprint("Total frontiers: " + str(len([f for f in result.allFrontiers.values() if not f.empty])))
 
         # Combine topDownFrontiers from this task batch with all frontiers.
         for f in topDownFrontiers:
@@ -621,24 +617,24 @@ def ecIterator(grammar, tasks,
         
         # Sleep-G
         # First check if we have supervision at the program level for any task that was not solved
-        needToSupervise = {f.task for f in result.allFrontiers.values()
-                           if f.task.supervision is not None and f.empty}
-        compressionFrontiers = [f.replaceWithSupervised(grammar) if f.task in needToSupervise else f
-                                for f in result.allFrontiers.values() ]
-        grammar, compressionFrontiers = induceGrammar(grammar, compressionFrontiers,
-                                                      topK=topK,
-                                                      pseudoCounts=pseudoCounts, a=arity,
-                                                      aic=aic, structurePenalty=structurePenalty,
-                                                      topk_use_only_likelihood=topk_use_only_likelihood,
-                                                      backend=compressor, CPUs=CPUs, iteration=j)
-        # Store compression frontiers in the result.
-        for c in compressionFrontiers:
-            result.allFrontiers[c.task] = c.topK(0) if c in needToSupervise else c
+        # needToSupervise = {f.task for f in result.allFrontiers.values()
+        #                    if f.task.supervision is not None and f.empty}
+        # compressionFrontiers = [f.replaceWithSupervised(grammar) if f.task in needToSupervise else f
+        #                         for f in result.allFrontiers.values() ]
+        # grammar, compressionFrontiers = induceGrammar(grammar, compressionFrontiers,
+        #                                               topK=topK,
+        #                                               pseudoCounts=pseudoCounts, a=arity,
+        #                                               aic=aic, structurePenalty=structurePenalty,
+        #                                               topk_use_only_likelihood=topk_use_only_likelihood,
+        #                                               backend=compressor, CPUs=CPUs, iteration=j)
+        # # Store compression frontiers in the result.
+        # for c in compressionFrontiers:
+        #     result.allFrontiers[c.task] = c.topK(0) if c in needToSupervise else c
 
 
-        result.grammars.append(grammar)
-        eprint("Grammar after iteration %d:" % (j + 1))
-        eprint(grammar)
+        # result.grammars.append(grammar)
+        # eprint("Grammar after iteration %d:" % (j + 1))
+        # eprint(grammar)
 
         
         if outputPrefix is not None:
@@ -696,7 +692,9 @@ def commandlineArguments(_=None,
                          structurePenalty=0.001, a=0,
                          taskBatchSize=None, taskReranker="default",
                          onlyBaselines=False,
-                         extras=None):
+                         extras=None,
+                         storeTaskMetrics=False,
+                        rewriteTaskMetrics=True):
     if cuda is None:
         cuda = torch.cuda.is_available()
     import argparse
@@ -873,6 +871,12 @@ def commandlineArguments(_=None,
         "--storeTaskMetrics",
         dest="storeTaskMetrics",
         help="Whether to store task metrics directly in the ECResults.",
+        action="store_true"
+        )
+    parser.add_argument(
+        "--rewriteTaskMetrics",
+        dest="rewriteTaskMetrics",
+        help="Whether to rewrite a new task metrics dictionary at each iteration, rather than retaining the old.",
         action="store_true"
         )
     parser.add_argument("--addTaskMetrics",
