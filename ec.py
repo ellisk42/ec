@@ -420,7 +420,7 @@ def ecIterator(grammar, tasks,
 
         # Get waking task batch.
         wakingTaskBatch = taskBatcher.getTaskBatch(result, tasks, taskBatchSize, j)
-        eprint("Found: waking task batch of size: " + str(len(wakingTaskBatch))) # REMOVE
+        eprint("Using a waking task batch of size: " + str(len(wakingTaskBatch)))
 
         # WAKING UP
         topDownFrontiers, times, allTimes = multicoreEnumeration(grammar, wakingTaskBatch, likelihoodModel,
@@ -442,10 +442,8 @@ def ecIterator(grammar, tasks,
         for f in topDownFrontiers:
             result.allFrontiers[f.task] = result.allFrontiers[f.task].combine(f)
 
-        #REMOVE
         eprint("Frontiers discovered top down: " + str(len(tasksHitTopDown)))
         eprint("Total frontiers: " + str(len([f for f in result.allFrontiers.values() if not f.empty])))
-        #REMOVE
 
         # Train + use recognition model
         if useRecognitionModel:
@@ -565,10 +563,9 @@ def ecIterator(grammar, tasks,
             for b in bottomupFrontiers:
                 result.allFrontiers[b.task] = result.allFrontiers[b.task].combine(grammar.rescoreFrontier(b))
 
-            #REMOVE
             eprint("Frontiers discovered bottom up: " + str(len(tasksHitBottomUp)))
             eprint("Total frontiers: " + str(len([f for f in result.allFrontiers.values() if not f.empty])))
-            #REMOVE
+
 
         else:
             result.averageDescriptionLength.append(mean(-f.marginalLikelihood()
