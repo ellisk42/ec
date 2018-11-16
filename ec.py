@@ -445,6 +445,13 @@ def ecIterator(grammar, tasks,
         eprint("Frontiers discovered top down: " + str(len(tasksHitTopDown)))
         eprint("Total frontiers: " + str(len([f for f in result.allFrontiers.values() if not f.empty])))
 
+        # Combine topDownFrontiers from this task batch with all frontiers.
+        for f in topDownFrontiers:
+            result.allFrontiers[f.task] = result.allFrontiers[f.task].combine(f)
+
+        eprint("Frontiers discovered top down: " + str(len(tasksHitTopDown)))
+        eprint("Total frontiers: " + str(len([f for f in result.allFrontiers.values() if not f.empty])))
+
         # Train + use recognition model
         if useRecognitionModel:
             featureExtractorObject = featureExtractor(tasks, testingTasks=testingTasks, cuda=cuda)
