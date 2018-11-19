@@ -77,7 +77,7 @@ if __name__ == "__main__":
         iterations=10,
         helmholtzRatio=0.5,
         topK=2,
-        maximumFrontier=2,
+        maximumFrontier=5,
         structurePenalty=10.,
         a=3,
         activation="tanh",
