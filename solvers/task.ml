@@ -394,6 +394,11 @@ let enumerate_for_tasks (g: contextual_grammar) ?verbose:(verbose = true)
              assert( !lower_bound <= mdl);
              assert( mdl < budgetIncrement+.(!lower_bound));
 
+             if string_of_program p = "(lambda (fold $0 STRING (lambda (lambda (cons $1 $0)))))" then
+               Printf.eprintf "ocaml finds a good program! %s\n"
+                 (string_of_program p);
+
+
              range nt |> List.iter ~f:(fun j -> 
                  let logLikelihood = tasks.(j).log_likelihood p in
                  if is_valid logLikelihood then begin
@@ -402,10 +407,7 @@ let enumerate_for_tasks (g: contextual_grammar) ?verbose:(verbose = true)
                      (string_of_program p)
                      (logLikelihood)
                      (logPrior);
-                   if string_of_program p = "(lambda (fold $0 STRING (lambda (lambda (cons $1 $0)))))" then
-                     Printf.eprintf "ocaml finds a good program! %s\n"
-                       (string_of_program p);
-                     
+                   
                    let dt = Time.abs_diff startTime (Time.now ())
                             |> Time.Span.to_sec in
                    Heap.add hits.(j)
