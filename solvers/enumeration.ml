@@ -201,7 +201,7 @@ let state_successors ~maxFreeParameters cg state =
            context;
            path = state.path @ List.map ~f:(fun _ -> L) later_arguments @ [R]; }) |>
     List.filter ~f:(fun new_state -> (not (state_violates_symmetry new_state)) &&
-                                     new_state.free_parameters < maxFreeParameters)
+                                     new_state.free_parameters <= maxFreeParameters)
 
 let best_first_enumeration ?lower_bound:(lower_bound=None)
     ?upper_bound:(upper_bound=None) ?frontier_size:(frontier_size=150) ~maxFreeParameters (cg : contextual_grammar) (request : tp) =
