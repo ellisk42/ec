@@ -84,7 +84,10 @@ class ECResult():
                      "helmholtzBatch": "HB",
                      "use_ll_cutoff": "llcut",
                      "topk_use_only_likelihood": "topkNotMAP",
-                     "activation": "act"}
+                     "activation": "act",
+                     "storeTaskMetrics": 'storeTask',
+                     "rewriteTaskMetrics": "RW",
+                     'taskBatchSize': 'batch'}
 
     @staticmethod
     def abbreviate(parameter): return ECResult.abbreviations.get(parameter, parameter)
@@ -382,7 +385,8 @@ def ecIterator(grammar, tasks,
         # Evaluate on held out tasks if we have them
         if testingTimeout > 0:
             eprint("Evaluating on held out testing tasks.")
-            if useRecognitionModel and j > 0:
+            if useRecognitionModel and result.recognitionModel is not None: 
+                eprint("Evaluating using trained recognition model.")
                 testingFrontiers, times, testingTimes = result.recognitionModel.enumerateFrontiers(testingTasks, likelihoodModel,
                                                                       CPUs=CPUs,
                                                                       solver=solver,
@@ -398,6 +402,7 @@ def ecIterator(grammar, tasks,
 
 
             else:
+                eprint("Evaluating using multicore enumeration without a recognition model.")
                 testingFrontiers, times, allTimes = multicoreEnumeration(grammar, testingTasks, likelihoodModel,
                                                                solver=solver,
                                                                maximumFrontier=maximumFrontier,
@@ -451,8 +456,9 @@ def ecIterator(grammar, tasks,
 
         # Train + use recognition model
         if useRecognitionModel:
-            if len(result.allFrontiers.values()) == 0:
+            if len([f for f in result.allFrontiers.values() if not f.empty]) == 0:
                 eprint("No frontiers to train recognition model, cannot do recognition model enumeration.")
+                tasksHitBottomUp = set()
             else:
                 featureExtractorObject = featureExtractor(tasks, testingTasks=testingTasks, cuda=cuda)
                 recognizer = RecognitionModel(featureExtractorObject,
@@ -461,7 +467,7 @@ def ecIterator(grammar, tasks,
                                               cuda=cuda,
                                               contextual=contextual)
                 
-                 thisRatio = helmholtzRatio
+                thisRatio = helmholtzRatio
                 if j == 0 and not biasOptimal: thisRatio = 0
                 recognizer.train(result.allFrontiers.values(),
                                  helmholtzFrontiers=helmholtzFrontiers(), 
@@ -486,15 +492,16 @@ def ecIterator(grammar, tasks,
                     updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskGrammarEntropies(wakingTaskBatch), 'taskGrammarEntropies')
 
                 tasksHitBottomUp = {f.task for f in bottomupFrontiers if not f.empty}
-                result.hitsAtEachWake.append(len(tasksHitBottomUp))
                 #result.timesAtEachWake.append(times)
+                result.hitsAtEachWake.append(len(tasksHitBottomUp))
+                
 
         elif useNewRecognitionModel:  # Train a recognition model
-            if len(result.allFrontiers.values()) == 0:
+            if len([f for f in result.allFrontiers.values() if not f.empty]) == 0:
                 eprint("No frontiers to train recognition model, cannot do recognition model enumeration.")
+                tasksHitBottomUp = set()
             else:
                 result.recognitionModel.updateGrammar(grammar)
-                # changed from result.frontiers to frontiers and added thingy
                 result.recognitionModel.train(
                     result.allFrontiers.values(),
                     topK=topK,
@@ -509,6 +516,7 @@ def ecIterator(grammar, tasks,
                     frontierSize=frontierSize,
                     enumerationTimeout=enumerationTimeout,
                     evaluationTimeout=evaluationTimeout)
+                tasksHitBottomUp = {f.task for f in bottomupFrontiers if not f.empty}
 
 
         # Repeatedly expand the frontier until we hit something that we have not solved yet
@@ -558,7 +566,7 @@ def ecIterator(grammar, tasks,
                     break
                 
         if useRecognitionModel or useNewRecognitionModel:
-            if len(result.allFrontiers.values()) > 0:
+            if len([f for f in result.allFrontiers.values() if not f.empty]) > 0:
                 eprint("Recognition model enumeration results:")
                 eprint(Frontier.describe(bottomupFrontiers))
                 summaryStatistics("Recognition model", times)
@@ -618,7 +626,7 @@ def ecIterator(grammar, tasks,
         compressionFrontiers = [f.replaceWithSupervised(grammar) if f.task in needToSupervise else f
                                 for f in result.allFrontiers.values() ]
 
-        if len(compressionFrontiers) == 0:
+        if len([f for f in compressionFrontiers if not f.empty]) == 0:
             eprint("No compression frontiers; not inducing a grammar this iteration.")
         else:
             grammar, compressionFrontiers = induceGrammar(grammar, compressionFrontiers,
