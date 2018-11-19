@@ -108,6 +108,9 @@ let exponential =
 let square =
   make_unitary_variable (fun a -> a*.a) (fun a -> [2.*.a])
 
+let square_root =
+  make_unitary_variable sqrt (fun a -> [0.5/.(sqrt a)])
+
 let clamp ~l ~u =
   make_unitary_variable (fun a ->
       if a > u then u else
@@ -311,6 +314,7 @@ let rec placeholder_data t x =
 exception DifferentiableBadShape
 
 let rec polymorphic_sse ?clipOutput:(clipOutput=None) ?clipLoss:(clipLoss=None) = function
+  | TCon("vector",_,_) -> polymorphic_sse ~clipOutput ~clipLoss (tlist treal)
   | TCon("real",_,_) -> magical (fun p y ->
       let p = match clipOutput with
         | None -> p
