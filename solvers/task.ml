@@ -397,6 +397,12 @@ let enumerate_for_tasks (g: contextual_grammar) ?verbose:(verbose = true)
              range nt |> List.iter ~f:(fun j -> 
                  let logLikelihood = tasks.(j).log_likelihood p in
                  if is_valid logLikelihood then begin
+                   Printf.eprintf "ocaml hits %s w/ %s ; ll=%f, lp=%f\n"
+                     (tasks.(j).name)
+                     (string_of_program p)
+                     (logLikelihood)
+                     (logPrior);
+                     
                    let dt = Time.abs_diff startTime (Time.now ())
                             |> Time.Span.to_sec in
                    Heap.add hits.(j)
