@@ -114,6 +114,7 @@ def makeTasks():
                      for x, y in examples])
         task.mustTrain = True
         problems.append(task)
+        guessConstantStrings(task)
 
     for d1, d2 in randomPermutation(crossProduct(delimiters, delimiters))[
             :len(delimiters) * 2]:
@@ -264,9 +265,6 @@ def makeTasks():
                   for s in [randomWords(" ")]
                   for f in [random.choice([True,False])] ])
             
-
-    for p in problems:
-        guessConstantStrings(p)
 
     return problems
 

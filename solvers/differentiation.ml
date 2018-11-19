@@ -105,6 +105,9 @@ let logarithm =
 let exponential =
   make_unitary_variable exp (fun a -> [exp a])
 
+let dsqrt =
+  make_unitary_variable sqrt (fun a -> [0.5/.(sqrt a)])
+
 let square =
   make_unitary_variable (fun a -> a*.a) (fun a -> [2.*.a])
 
