@@ -8,7 +8,6 @@ from type import *
 from utilities import *
 
 import time
-import torch
 
 class GrammarFailure(Exception):
     pass
@@ -613,6 +612,7 @@ class Grammar(object):
                     yield resultL + argL, resultK, result
 
     def sketchLogLikelihood(self, request, full, sk, context=Context.EMPTY, environment=[]):
+        import torch
         """
         calculates mdl of full program 'full' from sketch 'sk'
         """

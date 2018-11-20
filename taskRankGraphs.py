@@ -95,6 +95,36 @@ def softmax(x):
 def normalizeAndEntropy(x):
 	return entropy(softmax(x))
 
+def exportTaskTimes(
+	resultPaths,
+	timesArg,
+	export):
+	"""Exports the task time information to the output file"""
+	for j, path in enumerate(resultPaths):
+		print("Logging result: " + path)
+		result, domain, iterations, recognitionTaskMetrics = loadResult(path, export)
+		enumerationTimeout = result.parameters['enumerationTimeout'] 
+
+		# Get all the times.
+		tasks = [t for t in recognitionTaskMetrics if timesArg in recognitionTaskMetrics[t]]
+		taskTimes = [recognitionTaskMetrics[t][timesArg] for t in tasks]
+
+		solvedTaskTimes = [time for time in taskTimes if time is not None ]
+		# Replace the Nones with enumeration timeout for the purpose of this.
+		taskTimes = [time if time is not None else enumerationTimeout for time in taskTimes]
+		taskNames=[t.name for t in tasks]
+
+
+		# Log Results.
+		print("Solved tasks: " + str(len(solvedTaskTimes)))
+		print ("Total tasks this round: " + str(len(taskTimes)))
+		print("Average solve time (secs): " + str(np.mean(solvedTaskTimes)))
+		print("Total time spent solving tasks (secs): " + str(np.sum(taskTimes)))
+
+		for i, name in enumerate(taskNames):
+			print("TASK: " + name + " TIME: " + str(taskTimes[i]))
+
+
 def plotTimeMetrics(
 	resultPaths,
 	outlierThreshold,
@@ -102,6 +132,7 @@ def plotTimeMetrics(
 	timesArg,
 	export=None):
 	"""Plots task times vs. the desired metrics (ie. entropy) for each checkpoint iteration."""
+
 
 	for j, path in enumerate(resultPaths):
 		result, domain, iterations, recognitionTaskMetrics = loadResult(path, export)
@@ -240,8 +271,11 @@ def plotTSNE(
 			print("Clustering metric: " + metricToCluster)
 			tsne = TSNE(random_state=0)
 			taskNames, taskMetrics = [], []
+
+			print(len(recognitionTaskMetrics))
+
 			for task in recognitionTaskMetrics:
-				if recognitionTaskMetrics[task][metricToCluster] is not None:
+				if metricToCluster in recognitionTaskMetrics[task] and recognitionTaskMetrics[task][metricToCluster] is not None:
 					taskNames.append(task.name)  
 					taskMetrics.append(recognitionTaskMetrics[task][metricToCluster])
 			taskNames = np.array(taskNames)
@@ -277,10 +311,12 @@ if __name__ == "__main__":
 	import sys
 
 	import argparse
+
 	parser = argparse.ArgumentParser(description = "")
 	parser.add_argument("--checkpoints",nargs='+')
 	parser.add_argument("--metricsToPlot", nargs='+',type=str)
 	parser.add_argument("--times", type=str, default='recognitionBestTimes')
+	parser.add_argument("--exportTaskTimes", type=bool)
 	parser.add_argument("--outlierThreshold", type=float, default=None)
 	parser.add_argument("--metricsToCluster", nargs='+', type=str, default=None)
 	parser.add_argument("--labelWithImages", type=bool, default=None)
@@ -288,6 +324,11 @@ if __name__ == "__main__":
 						type=str, default='data')
 
 	arguments = parser.parse_args()
+
+	if arguments.exportTaskTimes:
+		exportTaskTimes(arguments.checkpoints,
+						arguments.times,
+						arguments.export)
 
 	if arguments.metricsToPlot:
 		plotTimeMetrics(arguments.checkpoints,

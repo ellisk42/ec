@@ -5,9 +5,12 @@
 
 module add openmind/singularity
 
-graphableCheckpoint='data/old_checkpoints/towers/2018-11-09T01:46:05.902965/tower_aic=1.0_arity=3_BO=True_CO=True_ET=300_HR=0.5_it=10_MF=10_baseline=False_pc=30.0_RT=300_storeTaskMetrics=False_L=1_taskReranker=default_K=2_topkNotMAP=False_rec=True_feat=TowerCNN_graph=True.pickle'
+checkpoint2='experimentOutputs/list_aic=1.0_arity=4_BO=False_ET=5400_HR=0.5_it=2_MF=5_baseline=False_pc=30.0_RT=7200_storeTaskMetrics=True_L=1.0_taskReranker=default_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor_graph=True.pickle'
+checkpoint3='experimentOutputs/list_aic=1.0_arity=4_BO=False_ET=5400_HR=0.5_it=3_MF=5_baseline=False_pc=30.0_RT=7200_storeTaskMetrics=True_L=1.0_taskReranker=default_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor_graph=True.pickle'
+checkpoint4='experimentOutputs/list_aic=1.0_arity=4_BO=False_ET=5400_HR=0.5_it=4_MF=5_baseline=False_pc=30.0_RT=7200_storeTaskMetrics=True_L=1.0_taskReranker=default_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor_graph=True.pickle'
+checkpoint5='experimentOutputs/list_aic=1.0_arity=4_BO=False_ET=5400_HR=0.5_it=5_MF=5_baseline=False_pc=30.0_RT=7200_storeTaskMetrics=True_L=1.0_taskReranker=default_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor_graph=True.pickle'
 
-srun --job-name=taskRankGraphsTower10$1 --output=data/taskRankGraphsTower --ntasks=1 --mem-per-cpu=5000 --cpus-per-task 1 --time=5:00 --qos=tenenbaum \
+srun --job-name=graphsHeldout$1 --output=data/heldout --ntasks=1 --mem-per-cpu=5000 --cpus-per-task 1 --time=5:00 --qos=tenenbaum \
   singularity exec -B /om2  sklearn-container.img \
-  python taskRankGraphs.py --checkpoints $graphableCheckpoint --metricsToCluster contextualLogProductions --labelWithImages True --export data \
+  python taskRankGraphs.py --checkpoints $checkpoint2 $checkpoint3 $checkpoint4 $checkpoint5 --metricsToCluster heldoutTaskLogProductions --export data \
   &
