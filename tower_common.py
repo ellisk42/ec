@@ -69,7 +69,7 @@ def renderPlan(plan, resolution=256, window=64, floorHeight=2, borderSize=1, bod
 
     if Lego: assert pretty
 
-    if drawHand is not None:
+    if drawHand is not None and drawHand is not False:
         plan, drawHand = centerTower(plan, drawHand)
         drawHand = drawHand
     else:

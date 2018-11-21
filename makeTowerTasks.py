@@ -70,6 +70,16 @@ class SupervisedTower(Task):
         imshow(a)
         show()
 
+    @staticmethod
+    def exportMany(f, ts):
+        ts = list(ts)
+        random.shuffle(ts)
+        a = montage([renderPlan(t.plan, pretty=True, Lego=True, resolution=256)
+                     for t in ts]) 
+        import scipy.misc
+        scipy.misc.imsave(f, a)
+        
+
     def exportImage(self, f, pretty=True, Lego=True, drawHand=False):
         from tower_common import renderPlan
         a = renderPlan(t.plan,
@@ -308,6 +318,7 @@ if __name__ == "__main__":
     print("maximum tower length",max(towerLength(f.plan) for f in ts ))
     print("maximum tower height",max(towerHeight(simulateWithoutPhysics(f.plan)) for f in ts ))
     SupervisedTower.showMany(ts)
+    SupervisedTower.exportMany("/tmp/every_tower.png",ts)
     
     for j,t in enumerate(ts):
         t.exportImage("/tmp/tower_%d.png"%j,

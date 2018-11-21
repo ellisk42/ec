@@ -251,6 +251,14 @@ def visualizePrimitives(primitives, export='/tmp/logo_primitives.png'):
                               "(loop i infinity (move (*l epsilonLength 4) (*a epsilonAngle 2)))",
                               "(loop i infinity (move (*l epsilonLength 5) (/a epsilonAngle 2)))",
                               "(loop i 4 (move 1d (/a 1a 4)))"]]
+
+    entireArguments = {"#(lambda (lambda (#(#(lambda (lambda (lambda (logo_forLoop $2 (lambda (lambda (logo_FWRT $2 $3 $0))))))) logo_IFTY) (logo_MULA (#(logo_DIVA logo_UA) $1) $0) (#(logo_MULL logo_UL) 3))))":
+                       [[Program.parse(str(x)) for x in xs ]
+                        for xs in [("3", "1", "$0"),
+                                   ("4", "1", "$0"),
+                                   ("5", "1", "$0"),
+                                   ("5", "3", "$0"),
+                                   ("7", "3", "$0")]]}
     
     matrix = []
     for p in primitives:
@@ -275,13 +283,15 @@ def visualizePrimitives(primitives, export='/tmp/logo_primitives.png'):
             else: return []
 
         ts = []
-        for arguments in product(*[argumentChoices(t) for t in t.functionArguments() ]):
+        for arguments in entireArguments.get(str(p),product(*[argumentChoices(t) for t in t.functionArguments() ])):
+            eprint(arguments)
             pp = p
             for a in arguments: pp = Application(pp,a)
             pp = Abstraction(pp)
             i = renderLogoProgram(pp)
             if i is not None:
                 ts.append(i)
+            
 
         if ts == []: continue
 
