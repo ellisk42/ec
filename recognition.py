@@ -357,7 +357,8 @@ class RecognitionModel(nn.Module):
             newTasks = \
              parallelMap(updateCPUs,
                          lambda f: f.calculateTask(),
-                        helmholtzFrontiers[helmholtzIndex[0]:helmholtzIndex[0] + helmholtzBatch])
+                         helmholtzFrontiers[helmholtzIndex[0]:helmholtzIndex[0] + helmholtzBatch],
+                         seedRandom=True)
             badIndices = []
             endingIndex = min(helmholtzIndex[0] + helmholtzBatch, len(helmholtzFrontiers))
             for i in range(helmholtzIndex[0], endingIndex):
@@ -524,6 +525,12 @@ class RecurrentFeatureExtractor(nn.Module):
 
         assert tasks is not None, "You must provide a list of all of the tasks, both those that have been hit and those that have not been hit. Input examples are sampled from these tasks."
 
+        # maps from a requesting type to all of the inputs that we ever saw with that request
+        self.requestToInputs = {
+            tp: [list(map(fst, t.examples)) for t in tasks if t.request == tp ]
+            for tp in {t.request for t in tasks}
+        }
+
         inputTypes = {t
                       for task in tasks
                       for t in task.request.functionArguments()}
@@ -659,30 +666,43 @@ class RecurrentFeatureExtractor(nn.Module):
         return f
 
     def taskOfProgram(self, p, tp):
-        def randomInput(t): return random.choice(self.argumentsWithType[t])
-        # Loop over the inputs in a random order and pick the first ones that
-        # doesn't generate an exception
+        # half of the time we randomly mix together inputs
+        # this gives better generalization on held out tasks
+        # the other half of the time we train on sets of inputs in the training data
+        # this gives better generalization on unsolved training tasks
+        if random.random() < 0.5:
+            def randomInput(t): return random.choice(self.argumentsWithType[t])
+            # Loop over the inputs in a random order and pick the first ones that
+            # doesn't generate an exception
 
-        startTime = time.time()
-        examples = []
-        while True:
-            # TIMEOUT! this must not be a very good program
-            if time.time() - startTime > self.helmholtzTimeout: return None
+            startTime = time.time()
+            examples = []
+            while True:
+                # TIMEOUT! this must not be a very good program
+                if time.time() - startTime > self.helmholtzTimeout: return None
 
-            # Grab some random inputs
-            xs = [randomInput(t) for t in tp.functionArguments()]
-            try:
-                y = runWithTimeout(lambda: p.runWithArguments(xs), self.helmholtzEvaluationTimeout)
-                examples.append((tuple(xs),y))
-                if len(examples) >= random.choice(self.requestToNumberOfExamples[tp]):
-                    if False:
-                        eprint("Helmholtz task")
-                        eprint(p,":",tp)
-                        for xs,y in examples:
-                            eprint("f%s = %s"%(xs,y))
-                        eprint()
-                    return Task("Helmholtz", tp, examples)
-            except: continue
+                # Grab some random inputs
+                xs = [randomInput(t) for t in tp.functionArguments()]
+                try:
+                    y = runWithTimeout(lambda: p.runWithArguments(xs), self.helmholtzEvaluationTimeout)
+                    examples.append((tuple(xs),y))
+                    if len(examples) >= random.choice(self.requestToNumberOfExamples[tp]):
+                        return Task("Helmholtz", tp, examples)
+                except: continue
+
+        else:
+            candidateInputs = list(self.requestToInputs[tp])
+            random.shuffle(candidateInputs)
+            for xss in candidateInputs:
+                ys = []
+                for xs in xss:
+                    try: y = runWithTimeout(lambda: p.runWithArguments(xs), self.helmholtzEvaluationTimeout)
+                    except: break
+                    ys.append(y)
+                if len(ys) == len(xss):
+                    return Task("Helmholtz", tp, list(zip(xss, ys)))
+            return None
+                
             
     
 

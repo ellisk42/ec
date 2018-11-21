@@ -87,10 +87,14 @@ NEGATIVEINFINITY = float('-inf')
 POSITIVEINFINITY = float('inf')
 
 PARALLELMAPDATA = None
+PARALLELBASESEED = None
 
 
-def parallelMap(numberOfCPUs, f, *xs, chunksize=None, maxtasksperchild=None, memorySensitive=False):
+def parallelMap(numberOfCPUs, f, *xs, chunksize=None, maxtasksperchild=None, memorySensitive=False,
+                seedRandom=False):
+    """seedRandom: Should each parallel worker be given a different random seed?"""
     global PARALLELMAPDATA
+    global PARALLELBASESEED
 
     if memorySensitive:
         memoryUsage = getMemoryUsageFraction()/100.
@@ -110,8 +114,11 @@ def parallelMap(numberOfCPUs, f, *xs, chunksize=None, maxtasksperchild=None, mem
     for x in xs:
         assert len(x) == n
 
-    assert PARALLELMAPDATA is None
+    assert PARALLELMAPDATA is None    
     PARALLELMAPDATA = (f, xs)
+    assert PARALLELBASESEED is None
+    if seedRandom:
+        PARALLELBASESEED = random.random()
 
     from multiprocessing import Pool
 
@@ -129,11 +136,15 @@ def parallelMap(numberOfCPUs, f, *xs, chunksize=None, maxtasksperchild=None, mem
     pool.terminate()
 
     PARALLELMAPDATA = None
+    PARALLELBASESEED = None
     return [ys[inversePermutation[j]] for j in range(n)]
 
 
 def parallelMapCallBack(j):
     global PARALLELMAPDATA
+    global PARALLELBASESEED
+    if PARALLELBASESEED is not None:
+        random.seed(PARALLELBASESEED + j)
     f, xs = PARALLELMAPDATA
     try:
         return f(*[x[j] for x in xs])
