@@ -259,6 +259,8 @@ def visualizePrimitives(primitives, export='/tmp/logo_primitives.png'):
                                    ("5", "1", "$0"),
                                    ("5", "3", "$0"),
                                    ("7", "3", "$0")]]}
+    specialDistances = {"#(lambda (lambda (logo_forLoop 7 (lambda (lambda (#(lambda (lambda (lambda (#(lambda (lambda (lambda (logo_forLoop $2 (lambda (lambda (logo_FWRT $2 $3 $0))))))) 7 $1 $2 $0)))) $3 logo_epsA $0))) $0)))":
+                        [Program.parse("(logo_MULL logo_epsL %d)"%n) for n in range(5)]}
     
     matrix = []
     for p in primitives:
@@ -279,7 +281,7 @@ def visualizePrimitives(primitives, export='/tmp/logo_primitives.png'):
             elif t == tangle:
                 return specialAngles.get(str(p),angles)
             elif t == tlength:
-                return distances
+                return specialDistances.get(str(p),distances)
             else: return []
 
         ts = []
