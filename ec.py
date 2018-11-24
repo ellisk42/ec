@@ -449,7 +449,7 @@ def ecIterator(grammar, tasks,
 
         # Combine topDownFrontiers from this task batch with all frontiers.
         for f in topDownFrontiers:
-            result.allFrontiers[f.task] = result.allFrontiers[f.task].combine(f)
+            result.allFrontiers[f.task] = result.allFrontiers[f.task].combine(f).topK(maximumFrontier)
 
         eprint("Frontiers discovered top down: " + str(len(tasksHitTopDown)))
         eprint("Total frontiers: " + str(len([f for f in result.allFrontiers.values() if not f.empty])))
@@ -581,7 +581,9 @@ def ecIterator(grammar, tasks,
                 # Rescore the frontiers according to the generative model
                 # and then combine w/ original frontiers
                 for b in bottomupFrontiers:
-                    result.allFrontiers[b.task] = result.allFrontiers[b.task].combine(grammar.rescoreFrontier(b))
+                    result.allFrontiers[b.task] = result.allFrontiers[b.task].\
+                                                  combine(grammar.rescoreFrontier(b)).\
+                                                  topK(maximumFrontier)
 
                 eprint("Frontiers discovered bottom up: " + str(len(tasksHitBottomUp)))
                 eprint("Total frontiers: " + str(len([f for f in result.allFrontiers.values() if not f.empty])))
