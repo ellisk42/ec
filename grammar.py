@@ -224,17 +224,36 @@ class Grammar(object):
 
         return context, returnValue
 
-    def likelihoodSummary(self, context, environment, request, expression, silent=False):
+    def likelihoodSummary(self, context, environment, request, expression, silent=False, mem=None):
+        #print("len mem:", len(mem), flush=True)
+        rvalue = mem.get((context, tuple(environment), request, expression), None) if mem is not None else None
+        if rvalue is not None:
+            #print("hit memoized")
+            return rvalue
+
+        #print("didn't hit memoized")
+        #print("input:",(context, tuple(environment), request, expression))
+        
+        originalContext, originalEnvironment = context, environment
+
         if request.isArrow():
             if not isinstance(expression, Abstraction):
                 if not silent:
                     eprint("Request is an arrow but I got", expression)
+                assert mem is None or (originalContext, tuple(originalEnvironment), request, expression) not in mem
+                if mem: mem[(originalContext, tuple(originalEnvironment), request, expression)] = (context, None)
                 return context, None
-            return self.likelihoodSummary(context,
+            rvalue = self.likelihoodSummary(context,
                                           [request.arguments[0]] + environment,
                                           request.arguments[1],
                                           expression.body,
-                                          silent=silent)
+                                          silent=silent, mem=mem)
+            #memoize
+            assert mem is None or (originalContext, tuple(originalEnvironment), request, expression) not in mem
+            if mem: mem[(originalContext, tuple(originalEnvironment), request, expression)] = rvalue
+            return rvalue
+
+
         # Build the candidates
         candidates = self.buildCandidates(request, context, environment,
                                           normalize=False,
@@ -262,6 +281,9 @@ class Grammar(object):
                 eprint("xs", xs)
                 eprint("environment", environment)
                 assert False
+            #memoize
+            assert mem is None or (originalContext, tuple(originalEnvironment), request, expression) not in mem
+            if mem: mem[(originalContext, tuple(originalEnvironment), request, expression)] = (context, None)
             return context, None
 
         thisSummary = LikelihoodSummary()
@@ -283,11 +305,14 @@ class Grammar(object):
         for argumentType, argument in zip(argumentTypes, xs):
             argumentType = argumentType.apply(context)
             context, newSummary = self.likelihoodSummary(
-                context, environment, argumentType, argument, silent=silent)
+                context, environment, argumentType, argument, silent=silent, mem=mem)
             if newSummary is None:
+                mem[(originalContext, tuple(originalEnvironment), request, expression)] = (context, None)
                 return context, None
             thisSummary.join(newSummary)
-
+        #memoize
+        assert mem is None or (originalContext, tuple(originalEnvironment), request, expression) not in mem
+        if mem: mem[(originalContext, tuple(originalEnvironment), request, expression)] = (context, thisSummary)
         return context, thisSummary
 
     def bestFirstEnumeration(self, request):
@@ -719,6 +744,22 @@ class Grammar(object):
             else:
                 top_k.append((expr, l))
         return sorted(top_k, key=lambda x:-x[1])
+
+
+    def enumerateMultipleHoles(self, request, expr, k=3, return_obj=Hole, nHoles=4):
+        """Enumerate programs with a single hole within mdl distance"""
+        #TODO: make it possible to enumerate sketches with multiple holes 
+        exprs = [expr]
+        top_k = [(expr, 0.0)]
+        for i in range(nHoles):
+            #add on 
+            for sketch in exprs:
+                #add a hole
+                top_k.extend(self.enumerateHoles(request, sketch, k=k, return_obj=return_obj) )
+                top_k = sorted(top_k, key=lambda x:-x[1])
+                if len(top_k) > k: del top_k[k:]
+            exprs = list(zip(*top_k))[0]
+        return top_k
 
     def untorch(self):
         return Grammar(self.logVariable.data.tolist()[0], 

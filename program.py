@@ -814,6 +814,13 @@ class Hole(Program):
                                   '<HOLE>')
         return Hole.single, n
 
+    def visit(self,
+          visitor,
+          *arguments,
+          **keywords): return visitor.hole(self,
+                                            *arguments,
+                                            **keywords)
+
 
 Hole.single = Hole()
 
@@ -882,6 +889,7 @@ class Mutator:
         self.fn = fn
         self.grammar = grammar
         self.history = []
+        self.mem = {}
 
     def enclose(self, expr):
         for h in self.history[::-1]:
@@ -924,19 +932,33 @@ class Mutator:
         for expr, replaced_ll in self.fn(tp, deleted_ll, is_left_application=is_lhs):
             yield self.enclose(expr), deleted_ll + replaced_ll
 
+    #finish this:
+    def hole(self, e, tp, env, is_lhs=False):
+        deleted_ll = 0
+        for expr, replaced_ll in self.fn(tp, deleted_ll, is_left_application=is_lhs):
+            yield self.enclose(expr), deleted_ll + replaced_ll
+
     def execute(self, e, tp):
         yield from e.visit(self, tp, [])
 
     def logLikelihood(self, tp, e, env):
+        #try to look up summary in mem table
+        # ll = self.mem.get((tp, e, tuple(env)), None)
+        # if ll is not None: 
+        #     print("hit memoized", (tp, e, tuple(env)), "got", ll)
+        #     return ll
+        # else: print("not hit")
         summary = None
-        try:
-            _, summary = self.grammar.likelihoodSummary(Context.EMPTY, env,
-                tp, e, silent=True)
-        except AssertionError as err:
-            #print(f"closedLikelihoodSummary failed on tp={tp}, e={e}, error={err}")
-            pass
+        if summary is None:
+            try:
+                _, summary = self.grammar.likelihoodSummary(Context.EMPTY, env,
+                    tp, e, silent=True, mem=self.mem)
+            except AssertionError as err:
+                print(f"closedLikelihoodSummary failed on tp={tp}, e={e}, error={err}")
+                pass
         if summary is not None:
-            return summary.logLikelihood(self.grammar)
+            ll = summary.logLikelihood(self.grammar)
+            return ll
         else:
             tmpE, depth = e, 0
             while isinstance(tmpE, Abstraction):
@@ -1112,7 +1134,6 @@ class EtaLongVisitor(object):
         # assert el.infer().canonical() == e.infer().canonical(), \
         #     f"Types are not preserved by ETA expansion: {e} : {e.infer().canonical()} vs {el} : {el.infer().canonical()}"
         return el
-        
         
         
 
