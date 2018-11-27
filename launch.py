@@ -90,7 +90,6 @@ touch compressor_dummy
 git fetch
 git checkout {br}
 git pull
-make -C rust_compressor
 """
 
     if resume:
@@ -120,9 +119,11 @@ scp -o StrictHostKeyChecking=no \
 rsync  -e 'ssh  -o StrictHostKeyChecking=no' -avz \
 jobs experimentOutputs {}""".format(upload)
         preamble += """
-chmod 600 ~/.ssh/%s
-chmod 600 ~/.ssh/%s.pub
-bash -c "while sleep %d; do %s; done" &
+mv ~/.ssh/%s ~/.ssh/id_rsa
+mv ~/.ssh/%s.pub ~/.ssh/id_rsa.pub
+chmod 600 ~/.ssh/id_rsa
+chmod 600 ~/.ssh/id_rsa.pub
+bash -c "while sleep %d; do %s; done" &> /tmp/test.txt & 
 UPLOADPID=$!
 """ % (ssh_key, ssh_key, UPLOADFREQUENCY, uploadCommand)
 
@@ -243,7 +244,7 @@ if __name__ == "__main__":
                             "ellisk": "ellisk@openmind7.mit.edu:/om2/user/ellisk/ec",
                             "lucasem": "lucasem@rig.lucasem.com:repo/ec",
                             "mnye": "mnye@openmind7.mit.edu:/om/user/mnye/ec_aws_logs",
-                            "zyzzyva": "zyzzyva@openmind7.mit.edu:/om2/user/zyzzyva/ec"
+                            "catwong": "zyzzyva@openmind7.mit.edu:/om2/user/zyzzyva/ec"
                         }.get(user(), None))
     parser.add_argument('-z', "--size",
                         default="t2.micro")
