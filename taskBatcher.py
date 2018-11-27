@@ -20,7 +20,7 @@ class DefaultTaskBatcher:
 		taskBatch = (tasks + tasks)[start:end] # Handle wraparound.
 		return taskBatch
 
-class RandomTaskTaskBatcher:
+class RandomTaskBatcher:
 	"""Returns a randomly sampled task batch of the specified size. Defaults to all tasks if taskBatchSize is None."""
 
 	def __init__(self):
