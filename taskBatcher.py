@@ -36,12 +36,22 @@ class RandomTaskBatcher:
 		return random.sample(tasks, taskBatchSize)
 
 class UnsolvedTaskBatcher:
-	"""Returns tasks that have never been solved at any previous iteration."""
+	"""Returns tasks that have never been solved at any previous iteration. If a batch size is passed in, returns
+	   a randomly sampled task batch of the specified size."""
 
 	def __init__(self):
 		pass
 
 	def getTaskBatch(self, ec_result, tasks, taskBatchSize, currIteration):
-		return [t for t in tasks if ec_result.allFrontiers[t].empty]
+		unsolvedTasks = [t for t in tasks if ec_result.allFrontiers[t].empty]
 
-		
+		if taskBatchSize is None:
+			return unsolvedTasks
+		elif taskBatchSize > len(tasks):
+			eprint("Task batch size is greater than total number of tasks, aborting.")
+			assert False
+
+		eprint("Randomly sampling %d tasks from the unsolved %d remaining tasks." % (taskBatchSize, len(unsolvedTasks)))
+		return random.sample(unsolvedTasks, taskBatchSize)
+
+
