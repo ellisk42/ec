@@ -54,4 +54,22 @@ class UnsolvedTaskBatcher:
 		eprint("Randomly sampling %d tasks from the unsolved %d remaining tasks." % (taskBatchSize, len(unsolvedTasks)))
 		return random.sample(unsolvedTasks, taskBatchSize)
 
+class UnsolvedEntropyTaskBatcher:
+	"""Returns tasks that have never been solved at any previous iteration.
+	   Given a task batch size, returns the unsolved tasks with the lowest entropy."""
+	def __init__(self):
+		pass
+
+	def getTaskBatch(self, ec_result, tasks, taskBatchSize, currIteration):
+		unsolvedTasks = [t for t in tasks if ec_result.allFrontiers[t].empty]
+
+		if taskBatchSize is None:
+			return unsolvedTasks
+		elif taskBatchSize > len(tasks):
+			eprint("Task batch size is greater than total number of tasks, aborting.")
+			assert False
+
+		# NOT YET DONE.
+		eprint("Selecting top %d tasks from the unsolved %d remaining tasks given lowest entropy." % (taskBatchSize, len(unsolvedTasks)))
+		return random.sample(unsolvedTasks, taskBatchSize)
 
