@@ -141,6 +141,7 @@ def ecIterator(grammar, tasks,
                frontierSize=None,
                enumerationTimeout=None,
                testingTimeout=None,
+               testEvery=1,
                expandFrontier=None,
                resumeFrontierSize=None,
                useRecognitionModel=True,
@@ -219,6 +220,7 @@ def ecIterator(grammar, tasks,
             "_",
             "solver",
             "testingTimeout",
+            "testEvery",
             "message",
             "CPUs",
             "outputPrefix",
@@ -383,8 +385,8 @@ def ecIterator(grammar, tasks,
             result.recognitionTaskMetrics = {}
 
         # Evaluate on held out tasks if we have them
-        if testingTimeout > 0:
-            eprint("Evaluating on held out testing tasks.")
+        if testingTimeout > 0 and (j % testEvery == 0):
+            eprint("Evaluating on held out testing tasks for iteration: %d" % (j))
             if useRecognitionModel and result.recognitionModel is not None: 
                 eprint("Evaluating using trained recognition model.")
                 testingFrontiers, times, testingTimes = result.recognitionModel.enumerateFrontiers(testingTasks, likelihoodModel,
@@ -686,6 +688,7 @@ def commandlineArguments(_=None,
                          iterations=None,
                          frontierSize=None,
                          enumerationTimeout=None,
+                         testEvery=1,
                          topK=1,
                          CPUs=1,
                          compressor="ocaml",
@@ -805,6 +808,13 @@ def commandlineArguments(_=None,
         dest="testingTimeout",
         default=0,
         help="Number of seconds we should spend evaluating on each held out testing task.")
+    parser.add_argument(
+        "--testEvery",
+        type=int,
+        dest="testEvery",
+        default=1,
+        help="Run heldout testing every X iterations."
+        )
     parser.add_argument(
         "--activation",
         choices=[
