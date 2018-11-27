@@ -64,6 +64,7 @@ def sendCommand(
         script,
         job_id,
         upload,
+        ssh_key,
         resume,
         tar,
         shutdown,
@@ -119,11 +120,11 @@ scp -o StrictHostKeyChecking=no \
 rsync  -e 'ssh  -o StrictHostKeyChecking=no' -avz \
 jobs experimentOutputs {}""".format(upload)
         preamble += """
-chmod 600 ~/.ssh/id_rsa
-chmod 600 ~/.ssh/id_rsa.pub
+chmod 600 ~/.ssh/%s
+chmod 600 ~/.ssh/%s.pub
 bash -c "while sleep %d; do %s; done" &
 UPLOADPID=$!
-""" % (UPLOADFREQUENCY, uploadCommand)
+""" % (ssh_key, ssh_key, UPLOADFREQUENCY, uploadCommand)
 
     script = preamble + script
 
@@ -159,8 +160,8 @@ sudo shutdown -h now
         print("Uploading your ssh identity")
         os.system("""
             scp -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem \
-                ~/.ssh/id_rsa ~/.ssh/id_rsa.pub \
-                ubuntu@%s:.ssh/""" % address)
+                ~/.ssh/%s ~/.ssh/%s.pub \
+                ubuntu@%s:.ssh/""" % (ssh_key, ssh_key, address))
 
     # Send git patch
     print("Sending git patch over to", address)
@@ -188,6 +189,7 @@ def launchExperiment(
         tail=False,
         resume="",
         upload=None,
+        ssh_key="id_rsa",
         tar=False,
         shutdown=True,
         size="t2.micro"):
@@ -217,6 +219,7 @@ def launchExperiment(
         script,
         job_id,
         upload,
+        ssh_key,
         resume,
         tar,
         shutdown,
@@ -240,7 +243,7 @@ if __name__ == "__main__":
                             "ellisk": "ellisk@openmind7.mit.edu:/om2/user/ellisk/ec",
                             "lucasem": "lucasem@rig.lucasem.com:repo/ec",
                             "mnye": "mnye@openmind7.mit.edu:/om/user/mnye/ec_aws_logs",
-                            "zyzzyva": "zyzzyva@openmind7.mit.edu:/om2/user/zyzzyva/ec/aws_jobs"
+                            "catwong": "zyzzyva@openmind7.mit.edu:/om2/user/zyzzyva/ec"
                         }.get(user(), None))
     parser.add_argument('-z', "--size",
                         default="t2.micro")
@@ -262,6 +265,7 @@ if __name__ == "__main__":
         default=False,
         help="if uploading, this sends a single tarball with relevant outputs.",
         action="store_true")
+    parser.add_argument("--ssh_key", default='id_rsa', help="Name of local RSA key file for openmind.")
     parser.add_argument("name")
     parser.add_argument("command")
     arguments = parser.parse_args()
@@ -273,6 +277,7 @@ if __name__ == "__main__":
                      resume=arguments.resume,
                      size=arguments.size,
                      upload=arguments.upload,
+                     ssh_key=arguments.ssh_key,
                      tar=arguments.tar,
                      checkpoint=arguments.checkpoint)
 
