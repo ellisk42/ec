@@ -189,7 +189,6 @@ class RecognitionModel(nn.Module):
         if features is None: return None
 
         if hasattr(self, 'hiddenLayers'):
-            eprint("Found hiddenLayers, extracting hidden layers instead.")
             # Backward compatability with old checkpoints.
             for layer in self.hiddenLayers:
                 features = self.activation(layer(features))
@@ -200,10 +199,8 @@ class RecognitionModel(nn.Module):
 
         if self.contextual:
             if hasattr(self.grammarBuilder, 'variableParent'):
-                eprint("Found contextual model, extracting logProductions of no-parent model.")
                 return self.grammarBuilder.variableParent.logProductions(features)
             else:
-                eprint("Found contextual model, extracting logProductions of full network.")
                 return self.grammarBuilder.network(features).view(-1)
         else:
             return self.grammarBuilder.logProductions(features)
