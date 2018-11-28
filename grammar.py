@@ -226,31 +226,35 @@ class Grammar(object):
 
     def likelihoodSummary(self, context, environment, request, expression, silent=False, mem=None):
         #print("len mem:", len(mem), flush=True)
-        rvalue = mem.get((context, tuple(environment), request, expression), None) if mem is not None else None
-        if rvalue is not None:
-            #print("hit memoized")
-            return rvalue
-
+        if mem is not None:
+            rvalue = mem.get((context, tuple(environment), request, expression), None)
+            if rvalue is not None:
+                #print("hit memoized")
+                return rvalue
         #print("didn't hit memoized")
         #print("input:",(context, tuple(environment), request, expression))
-        
         originalContext, originalEnvironment = context, environment
 
         if request.isArrow():
             if not isinstance(expression, Abstraction):
                 if not silent:
                     eprint("Request is an arrow but I got", expression)
-                assert mem is None or (originalContext, tuple(originalEnvironment), request, expression) not in mem
-                if mem: mem[(originalContext, tuple(originalEnvironment), request, expression)] = (context, None)
+
+                if mem is not None:
+                    assert (originalContext, tuple(originalEnvironment), request, expression) not in mem
+                    mem[(originalContext, tuple(originalEnvironment), request, expression)] = (context, None)
+
                 return context, None
+
             rvalue = self.likelihoodSummary(context,
                                           [request.arguments[0]] + environment,
                                           request.arguments[1],
                                           expression.body,
-                                          silent=silent, mem=mem)
+                                          silent=silent, mem=mem) #path=path+['body']
             #memoize
-            assert mem is None or (originalContext, tuple(originalEnvironment), request, expression) not in mem
-            if mem: mem[(originalContext, tuple(originalEnvironment), request, expression)] = rvalue
+            if mem is not None:
+                assert (originalContext, tuple(originalEnvironment), request, expression) not in mem
+                mem[(originalContext, tuple(originalEnvironment), request, expression)] = rvalue
             return rvalue
 
 
@@ -282,8 +286,9 @@ class Grammar(object):
                 eprint("environment", environment)
                 assert False
             #memoize
-            assert mem is None or (originalContext, tuple(originalEnvironment), request, expression) not in mem
-            if mem: mem[(originalContext, tuple(originalEnvironment), request, expression)] = (context, None)
+            if mem is not None:
+                assert (originalContext, tuple(originalEnvironment), request, expression) not in mem
+                mem[(originalContext, tuple(originalEnvironment), request, expression)] = (context, None)
             return context, None
 
         thisSummary = LikelihoodSummary()
@@ -311,8 +316,9 @@ class Grammar(object):
                 return context, None
             thisSummary.join(newSummary)
         #memoize
-        assert mem is None or (originalContext, tuple(originalEnvironment), request, expression) not in mem
-        if mem: mem[(originalContext, tuple(originalEnvironment), request, expression)] = (context, thisSummary)
+        if mem is not None:
+            assert (originalContext, tuple(originalEnvironment), request, expression) not in mem
+            mem[(originalContext, tuple(originalEnvironment), request, expression)] = (context, thisSummary)
         return context, thisSummary
 
     def bestFirstEnumeration(self, request):

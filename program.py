@@ -974,6 +974,155 @@ class Mutator:
                 e = Abstraction(e)
             return self.logLikelihood(tp, e, env)
 
+from collections import namedtuple
+Subtree = namedtuple("subtree", ['p', 'path', 'mdl'])
+
+class HoleFinder:
+    """Perform local mutations to an expr, yielding the expr and the
+    description length distance from the original program"""
+
+    def __init__(self, grammar, fn):
+        """Fn yields (expression, loglikelihood) from a type and loss.
+        Therefore, loss+loglikelihood is the distance from the original program."""
+        self.fn = fn
+        self.grammar = grammar
+
+    def invented(self, e, tp, env, is_lhs=False, path=[]):
+        deleted_ll = self.logLikelihood(tp, e, env)
+        for expr, replaced_ll in self.fn(tp, deleted, is_left_application=is_lhs):
+            yield Subtree(e, path, deleted_ll + replaced_ll)
+
+    def primitive(self, e, tp, env, is_lhs=False, path=[]):
+        deleted_ll = self.logLikelihood(tp, e, env)
+        for expr, replaced_ll in self.fn(tp, deleted_ll, is_left_application=is_lhs):
+            yield Subtree(e, path, deleted_ll + replaced_ll)
+
+    def index(self, e, tp, env, is_lhs=False, path=[]):
+        #yield from ()
+        deleted_ll = self.logLikelihood(tp, e, env) #self.grammar.logVariable
+        for expr, replaced_ll in self.fn(tp, deleted_ll, is_left_application=is_lhs):
+            yield Subtree(e, path, deleted_ll + replaced_ll)
+
+    def application(self, e, tp, env, is_lhs=False, path=[]):
+        f_tp = arrow(e.x.infer(), tp)
+        yield from e.f.visit(self, f_tp, env, is_lhs=True, path=path+['f'])
+        x_tp = inferArg(tp, e.f.infer())
+        yield from e.x.visit(self, x_tp, env, path=path+['x'])
+        deleted_ll = self.logLikelihood(tp, e, env)
+        for expr, replaced_ll in self.fn(tp, deleted_ll, is_left_application=is_lhs):
+            yield Subtree(e, path, deleted_ll + replaced_ll)
+
+    def abstraction(self, e, tp, env, is_lhs=False, path=[]):
+        yield from e.body.visit(self, tp.arguments[1], [tp.arguments[0]]+env, path=path+['body'])
+        deleted_ll = self.logLikelihood(tp, e, env)
+        for expr, replaced_ll in self.fn(tp, deleted_ll, is_left_application=is_lhs):
+            yield Subtree(e, path, deleted_ll + replaced_ll)
+
+    #finish this:
+    def hole(self, e, tp, env, is_lhs=False, path=[]):
+        deleted_ll = 0
+        for expr, replaced_ll in self.fn(tp, deleted_ll, is_left_application=is_lhs):
+            yield Subtree(e, path, deleted_ll + replaced_ll)
+
+    def execute(self, e, tp):
+        return e.visit(self, tp, [], path=[])
+
+    def logLikelihood(self, tp, e, env):
+        #try to look up summary in mem table
+        # ll = self.mem.get((tp, e, tuple(env)), None)
+        # if ll is not None: 
+        #     print("hit memoized", (tp, e, tuple(env)), "got", ll)
+        #     return ll
+        # else: print("not hit")
+        summary = None
+        if summary is None:
+            try:
+                _, summary = self.grammar.likelihoodSummary(Context.EMPTY, env,
+                    tp, e, silent=True)
+            except AssertionError as err:
+                print(f"closedLikelihoodSummary failed on tp={tp}, e={e}, error={err}")
+                pass
+        if summary is not None:
+            ll = summary.logLikelihood(self.grammar)
+            return ll
+        else:
+            tmpE, depth = e, 0
+            while isinstance(tmpE, Abstraction):
+                depth += 1
+                tmpE = tmpE.body
+            to_introduce = len(tp.functionArguments()) - depth
+            if to_introduce == 0:
+                #print(f"HIT NEGATIVEINFINITY, tp={tp}, e={e}")
+                return NEGATIVEINFINITY
+            for i in reversed(range(to_introduce)):
+                e = Application(e, Index(i))
+            for _ in range(to_introduce):
+                e = Abstraction(e)
+            return self.logLikelihood(tp, e, env)
+
+
+class HolePuncher:
+    """Perform local mutations to an expr, yielding the expr and the
+    description length distance from the original program"""
+
+    def __init__(self, grammar, path, expr):
+        """Fn yields (expression, loglikelihood) from a type and loss.
+        Therefore, loss+loglikelihood is the distance from the original program."""
+        self.grammar = grammar
+        self.history = []
+        self.path = list(reversed(path))
+        self.expr = expr
+
+    def enclose(self, expr):
+        for h in self.history[::-1]:
+            expr = h(expr)
+        return expr
+
+    def invented(self, e):
+        assert self.path == []
+        return self.enclose(self.expr)
+
+    def primitive(self, e):
+        if not self.path == []:
+            print(self.path)
+            print(e)
+            assert False
+        return self.enclose(self.expr)
+
+    def index(self, e):
+        #yield from ()
+        assert self.path == []
+        return self.enclose(self.expr)
+
+    def application(self, e):
+        if self.path==[]:
+            return self.enclose(self.expr)
+
+        step = self.path.pop()
+        if step == 'f': #idk if i can do this ...
+            self.history.append(lambda expr: Application(expr, e.x))
+            return e.f.visit(self)
+        else:
+            assert step == 'x' #TODO
+            self.history.append(lambda expr: Application(e.f, expr))
+            return e.x.visit(self)
+        #return step(e).visit(self)
+
+    def abstraction(self, e):
+        if self.path==[]:
+            return self.enclose(self.expr)
+        step = self.path.pop()
+        assert step == 'body' #TODO
+        self.history.append(lambda expr: Abstraction(expr))
+        return e.body.visit(self)
+
+    #finish this:
+    def hole(self, e):
+        assert False, "you shouldn't be here, I think"
+
+    def execute(self, e):
+        return e.visit(self) #should return actual program
+
 
 class RegisterPrimitives(object):
     def invented(self, e): e.body.visit(self)
