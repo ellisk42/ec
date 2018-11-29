@@ -256,6 +256,7 @@ class RecognitionModel(nn.Module):
     def train(self, frontiers, _=None, steps=None, lr=0.001, topK=5, CPUs=1,
               timeout=None, evaluationTimeout=0.001,
               helmholtzFrontiers=[], helmholtzRatio=0., helmholtzBatch=500,
+              biasOptimal=None,
               defaultRequest=None):
         """
         helmholtzRatio: What fraction of the training data should be forward samples from the generative model?
@@ -265,6 +266,7 @@ class RecognitionModel(nn.Module):
         assert (steps is not None) or (timeout is not None), \
             "Cannot train recognition model without either a bound on the number of epochs or bound on the training time"
         if steps is None: steps = 9999999
+        if biasOptimal is None: biasOptimal = len(helmholtzFrontiers) > 0
         
         requests = [frontier.task.request for frontier in frontiers]
         if len(requests) == 0 and helmholtzRatio > 0 and len(helmholtzFrontiers) == 0:
@@ -380,6 +382,8 @@ class RecognitionModel(nn.Module):
             len(frontiers), int(helmholtzRatio * 100), self.featureExtractor.__class__.__name__))
         eprint("Got %d Helmholtz frontiers - random Helmholtz training? : %s"%(
             len(helmholtzFrontiers), len(helmholtzFrontiers) == 0))
+        eprint("Contextual?",self.contextual)
+        eprint("Bias optimal?",biasOptimal)
 
         # The number of Helmholtz samples that we generate at once
         # Should only affect performance and shouldn't affect anything else
@@ -402,7 +406,7 @@ class RecognitionModel(nn.Module):
                 dreaming = random.random() < helmholtzRatio
                 if dreaming: frontier = getHelmholtz()
                 self.zero_grad()
-                loss = self.frontierBiasOptimal(frontier) if not randomHelmholtz else self.frontierKL(frontier)
+                loss = self.frontierBiasOptimal(frontier) if biasOptimal else self.frontierKL(frontier)
                 if loss is None:
                     if not dreaming:
                         eprint("ERROR: Could not extract features during experience replay.")

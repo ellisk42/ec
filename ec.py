@@ -420,7 +420,8 @@ def ecIterator(grammar, tasks,
             
         # If we have to also enumerate Helmholtz frontiers,
         # do this extra sneaky in the background
-        if useRecognitionModel and biasOptimal and helmholtzRatio > 0:
+        if useRecognitionModel and biasOptimal and helmholtzRatio > 0 and \
+           all( str(p) != "REAL" for p in grammar.primitives ): # real numbers don't support this
             helmholtzFrontiers = backgroundHelmholtzEnumeration(tasks, grammar, enumerationTimeout,
                                                                 evaluationTimeout=evaluationTimeout,
                                                                 special=featureExtractor.special)
@@ -470,6 +471,7 @@ def ecIterator(grammar, tasks,
                 thisRatio = helmholtzRatio
                 if j == 0 and not biasOptimal: thisRatio = 0
                 recognizer.train(result.allFrontiers.values(),
+                                 biasOptimal=biasOptimal,
                                  helmholtzFrontiers=helmholtzFrontiers(), 
                                  CPUs=CPUs,
                                  evaluationTimeout=evaluationTimeout,
