@@ -375,6 +375,10 @@ def ecIterator(grammar, tasks,
         taskBatcher = RandomTaskBatcher()
     elif taskReranker == 'unsolved':
         taskBatcher = UnsolvedTaskBatcher()
+    elif taskReranker == 'unsolvedEntropy':
+        taskBatcher = UnsolvedEntropyTaskBatcher()
+    elif taskReranker == 'unsolvedRandomEntropy':
+        taskBatcher = UnsolvedRandomEntropyTaskBatcher()
     else:
         eprint("Invalid task reranker: " + taskReranker + ", aborting.")
         assert False
@@ -884,7 +888,9 @@ def commandlineArguments(_=None,
         choices=[
             "default",
             "random",
-            "unsolved"],
+            "unsolved",
+            "unsolvedEntropy",
+            "unsolvedRandomEntropy"],
         default=taskReranker,
         type=str)
     parser.add_argument(
