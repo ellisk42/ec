@@ -34,13 +34,10 @@ def makeTask(name, f):
         ex = list(zip(inputs, outputs))
         ex = ex[::int(len(ex) / N)][:N]
         t = DifferentiableTask(name,
-                               arrow(treal,
-                                     treal),
-                               [((x,
-                                  ),
-                                 y) for x,
-                                y in ex],
+                               arrow(treal, treal),                                     
+                               [((x,),y) for x, y in ex],
                                BIC=1.,
+                               restarts=50, steps=25,
                                likelihoodThreshold=-0.05,
                                temperature=0.1,
                                maxParameters=6,
@@ -217,7 +214,10 @@ RandomParameterization.single = RandomParameterization()
 
 
 class FeatureExtractor(ImageFeatureExtractor):
+    special = 'differentiable'
+    
     def __init__(self, tasks, testingTasks=[], cuda=False):
+        self.recomputeTasks = True
         super(FeatureExtractor, self).__init__(tasks)
         self.tasks = tasks
 
@@ -246,10 +246,6 @@ def demo():
         a = drawFunction(200, 5., f, resolution=128) * 255
         Image.fromarray(a).convert('RGB').save("/tmp/functions/%d.png" % j)
     assert False
-# demo()
-
-
-from debugRational import *
 
 
 def rational_options(p):
@@ -329,7 +325,6 @@ if __name__ == "__main__":
 
     explorationCompression(baseGrammar, train,
                            outputPrefix="experimentOutputs/rational",
-                           compressor="pypy",
                            evaluationTimeout=0.1,
                            testingTasks=test,
                            **arguments)
