@@ -1,7 +1,7 @@
 from ec import ecIterator, commandlineArguments
 from grammar import Grammar
 from utilities import eprint, testTrainSplit, numberOfCPUs, parallelMap
-from makeLogoTasks import makeTasks
+from makeLogoTasks import makeTasks, montageTasks
 from logoPrimitives import *
 from collections import OrderedDict
 from program import Program
@@ -186,6 +186,8 @@ def list_options(parser):
                         help="Directory in which to dream from --dreamCheckpoint")
     parser.add_argument("--visualize",
                         default=None, type=str)
+    parser.add_argument("--split",
+                        default=0., type=float)
 
 
 
@@ -359,8 +361,10 @@ if __name__ == "__main__":
     os.chdir("..")
 
 
-    test, train = testTrainSplit(tasks, 1.)
+    test, train = testTrainSplit(tasks, args.pop("split"))
     eprint("Split tasks into %d/%d test/train" % (len(test), len(train)))
+    montageTasks(test,"test_")
+    montageTasks(train,"train_")
 
     if red is not []:
         for reducing in red:
@@ -382,16 +386,6 @@ if __name__ == "__main__":
     baseGrammar = Grammar.uniform(primitives, continuationType=turtle)
 
     eprint(baseGrammar)
-
-    if False:
-        fe = LogoFeatureCNN(tasks)
-        for x in range(0, 500):
-            program = baseGrammar.sample(arrow(turtle, turtle), maximumDepth=20)
-            try:
-                features = fe.renderProgram(program, arrow(turtle, turtle), index=x)
-            except: continue
-        eprint(fe.sub)    
-        assert False
 
     generator = ecIterator(baseGrammar, train,
                            testingTasks=test,
