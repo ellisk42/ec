@@ -123,7 +123,7 @@ if __name__ == "__main__":
     challengeTimeout = 10 * 60
 
     for t in train + test + challenge:
-        t.maxParameters = 2
+        t.maxParameters = 1
 
     generator = ecIterator(baseGrammar, train,
                            testingTasks=test + challenge,
