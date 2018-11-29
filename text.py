@@ -122,6 +122,9 @@ if __name__ == "__main__":
     # We will spend 10 minutes on each challenge problem
     challengeTimeout = 10 * 60
 
+    for t in train + test + challenge:
+        t.maxParameters = 2
+
     generator = ecIterator(baseGrammar, train,
                            testingTasks=test + challenge,
                            outputPrefix="experimentOutputs/text",
