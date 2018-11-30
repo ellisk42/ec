@@ -265,7 +265,7 @@ if __name__ == "__main__":
         recognitionTimeout=7200,
         helmholtzRatio=0.5,
         activation="tanh",
-        maximumFrontier=100,
+        maximumFrontier=5,
         a=3,
         topK=2,
         pseudoCounts=30.0,

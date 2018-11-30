@@ -241,12 +241,12 @@ if __name__ == "__main__":
         featureExtractor=TowerCNN,
         CPUs=numberOfCPUs(),
         helmholtzRatio=0.5,
-        iterations=5,
+        iterations=6,
         a=3,
         structurePenalty=1,
         pseudoCounts=10,
         topK=2,
-        maximumFrontier=10,
+        maximumFrontier=5,
         extras=tower_options)
 
     checkpoint = arguments.pop("visualize")
