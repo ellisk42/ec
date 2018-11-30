@@ -97,6 +97,7 @@ def normalizeAndEntropy(x):
 
 def exportTaskTimes(
 	resultPaths,
+	experimentNames,
 	timesArg,
 	export):
 	"""Exports the task time information to the output file"""
@@ -127,6 +128,7 @@ def exportTaskTimes(
 
 def plotTimeMetrics(
 	resultPaths,
+	experimentNames,
 	outlierThreshold,
 	metricsToPlot,
 	timesArg,
@@ -136,6 +138,11 @@ def plotTimeMetrics(
 
 	for j, path in enumerate(resultPaths):
 		result, domain, iterations, recognitionTaskMetrics = loadResult(path, export)
+
+		if experimentNames is None:
+			experimentName = "none"
+		else:
+			experimentName = experimentNames[j]
 
 		# Get all the times.
 		tasks = [t for t in recognitionTaskMetrics if timesArg in recognitionTaskMetrics[t]]
@@ -164,9 +171,9 @@ def plotTimeMetrics(
 				xlabel = ('Recognition Best Times, Outlier Threshold: %d' % (outlierThreshold))
 			else:
 				xlabel = ('Recognition Best Times')
-			title = ("Domain: %s, Iteration: %d" % (domain, iterations))
+			title = ("Experiment: %s Domain: %s, Iteration: %d" % (experimentName, domain, iterations))
 			ylabel = metricToPlot
-			export_name = metricToPlot + "_iters_" + str(iterations) + "outlier_threshold_" + str(outlierThreshold) + "_time_plot.png"
+			export_name = experimentName + metricToPlot + "_iters_" + str(iterations) + "outlier_threshold_" + str(outlierThreshold) + "_time_plot.png"
 
 			plot.scatter(taskTimes, taskMetrics)
 			plot.xlabel(xlabel)
@@ -187,7 +194,7 @@ def plotTimeMetrics(
 				ylabel)
 
 			print("Plotted metric with labels.")
-			return
+	return
 
 
 
@@ -254,6 +261,7 @@ def makeTowerImage(im):
 
 def plotTSNE(
 	resultPaths,
+	experimentNames,
 	metricsToCluster,
 	labelWithImages,
 	export=None):
@@ -266,6 +274,10 @@ def plotTSNE(
 
 	for j, path in enumerate(resultPaths):
 		result, domain, iterations, recognitionTaskMetrics = loadResult(path, export)
+		if experimentNames is None:
+			experimentName = "none"
+		else:
+			experimentName = experimentNames[j]
 
 		for k, metricToCluster in enumerate(metricsToCluster):
 			print("Clustering metric: " + metricToCluster)
@@ -284,7 +296,7 @@ def plotTSNE(
 			print("Clustering %d tasks with embeddings of shape: %s" % (len(taskMetrics), str(taskMetrics[0].shape)) )
 			
 			clusteredTaskMetrics = tsne.fit_transform(taskMetrics)
-			title = ("Metric: %s, Domain: %s, Iteration: %d" % (metricToCluster, domain, iterations))
+			title = ("Metric: %s, Domain: %s, Experiment: %s, Iteration: %d" % (metricToCluster, domain, experimentName, iterations))
 
 			if labelWithImages:
 				images = []
@@ -299,12 +311,12 @@ def plotTSNE(
 				plotEmbeddingWithImages(clusteredTaskMetrics, 
 					images, 
 					title, 
-					os.path.join(export, domain, metricToCluster + "_iters_" + str(iterations) + "_tsne_images.png"))
+					os.path.join(export, domain, experimentName + metricToCluster + "_iters_" + str(iterations) + "_tsne_images.png"))
 			else:
 				plotEmbeddingWithLabels(clusteredTaskMetrics, 
 					taskNames, 
 					title, 
-					os.path.join(export, domain, metricToCluster + "_iters_" + str(iterations) + "_tsne_labels.png"))
+					os.path.join(export, domain, experimentName + metricToCluster + "_iters_" + str(iterations) + "_tsne_labels.png"))
 
 	
 if __name__ == "__main__":
@@ -314,6 +326,7 @@ if __name__ == "__main__":
 
 	parser = argparse.ArgumentParser(description = "")
 	parser.add_argument("--checkpoints",nargs='+')
+	parser.add_argument ("--experimentNames", nargs='+', type=str, default=None)
 	parser.add_argument("--metricsToPlot", nargs='+',type=str)
 	parser.add_argument("--times", type=str, default='recognitionBestTimes')
 	parser.add_argument("--exportTaskTimes", type=bool)
@@ -327,11 +340,13 @@ if __name__ == "__main__":
 
 	if arguments.exportTaskTimes:
 		exportTaskTimes(arguments.checkpoints,
+						arguments.experimentNames,
 						arguments.times,
 						arguments.export)
 
 	if arguments.metricsToPlot:
 		plotTimeMetrics(arguments.checkpoints,
+						arguments.experimentNames,
 						arguments.outlierThreshold,
 						arguments.metricsToPlot,
 						arguments.times,
@@ -339,6 +354,7 @@ if __name__ == "__main__":
 
 	if arguments.metricsToCluster:
 		plotTSNE(arguments.checkpoints,
+				 arguments.experimentNames,
 				 arguments.metricsToCluster,
 				 arguments.labelWithImages,
 				 arguments.export)

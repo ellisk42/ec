@@ -389,7 +389,7 @@ def ecIterator(grammar, tasks,
             result.recognitionTaskMetrics = {}
 
         # Evaluate on held out tasks if we have them
-        if testingTimeout > 0 and (j % testEvery == 0):
+        if testingTimeout > 0 and ((j % testEvery == 0) or (j == iterations - 1)):
             eprint("Evaluating on held out testing tasks for iteration: %d" % (j))
             if useRecognitionModel and result.recognitionModel is not None: 
                 eprint("Evaluating using trained recognition model.")
