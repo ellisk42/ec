@@ -8,6 +8,7 @@ from program import Program
 from task import Task
 from type import arrow
 
+import datetime
 import random as random
 import json
 import torch
@@ -38,6 +39,28 @@ def renderLogoProgram(program,R=128):
         return np.reshape(np.array(hr),(R,R))
     except: return None
 
+def dreamFromGrammar(g, directory, N=500):
+    parallelMap(numberOfCPUs(), lambda x: saveDream(g.sample(arrow(turtle,turtle),
+                                                             maximumDepth=20),
+                                                    x,
+                                                    directory),
+                range(N))
+
+def saveDream(program, index, directory):
+    with open("%s/%d.dream"%(directory, index), "w") as handle:
+        handle.write(str(program))
+
+    for suffix in [[],["pretty"],["smooth_pretty"]]:
+        try:
+            subprocess.check_output(['./logoDrawString',
+                                     '512',
+                                     "%s/%d%s"%(directory, index,
+                                                suffix[0] if suffix else ""),
+                                     '0',
+                                     str(program)] + suffix,
+                                    timeout=1).decode("utf8")
+        except: continue
+        
     
 
 class Flatten(nn.Module):
@@ -387,21 +410,25 @@ if __name__ == "__main__":
 
     eprint(baseGrammar)
 
+    timestamp = datetime.datetime.now().isoformat()
+    outputDirectory = "experimentOutputs/logo/%s"%timestamp
+    os.system("mkdir -p %s"%outputDirectory)
+
+
     generator = ecIterator(baseGrammar, train,
                            testingTasks=test,
-                           outputPrefix="experimentOutputs/logo",
+                           outputPrefix="%s/logo"%outputDirectory,
                            evaluationTimeout=0.01,
                            **args)
 
     r = None
     for result in generator:
-        fe = LogoFeatureCNN(tasks)
-        parallelMap(numberOfCPUs(),
-                    lambda x: fe.renderProgram(result.grammars[-1].sample(arrow(turtle, turtle),
-                                                                          maximumDepth=20),
-                                               arrow(turtle, turtle), index=x),
-                    list(range(0, 500)))
         iteration = len(result.learningCurve)
+        dreamDirectory = "%s/dreams_%d"%(outputDirectory, iteration)
+        os.system("mkdir  -p %s"%dreamDirectory)
+        eprint("Dreaming into directory",dreamDirectory)
+        dreamFromGrammar(result.grammars[-1],
+                         dreamDirectory)
         r = result
 
     needsExport = [str(z)
