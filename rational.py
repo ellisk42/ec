@@ -56,6 +56,11 @@ def randomCoefficient(m=5):
     f = float("%0.1f" % f)
     return f
 
+def randomOffset():
+    c = randomCoefficient(m=2.5)
+    def f(x): return x + c
+    name = "x + %0.1f" % c
+    return name, f
 
 def randomPolynomial(order):
     coefficients = [randomCoefficient(m=2.5) for _ in range(order + 1)]
@@ -131,7 +136,7 @@ def randomPower():
     return name, f
 
 
-def drawFunction(n, dx, f, resolution=32):
+def drawFunction(n, dx, f, resolution=64):
     import numpy as np
 
     import matplotlib
@@ -167,6 +172,14 @@ def makeTasks():
     tasks = []
 
     tasksPerType = 35
+
+    ts = []
+    while len(ts) < tasksPerType:
+        n, f = randomOffset()
+        if makeTask(n, f) is None:
+            continue
+        ts.append(makeTask(n, f))
+    tasks += ts
 
     for o in range(1, 5):
         ts = []
@@ -216,9 +229,10 @@ RandomParameterization.single = RandomParameterization()
 class FeatureExtractor(ImageFeatureExtractor):
     special = 'differentiable'
     
-    def __init__(self, tasks, testingTasks=[], cuda=False):
+    def __init__(self, tasks, testingTasks=[], cuda=False, H=64):
         self.recomputeTasks = True
-        super(FeatureExtractor, self).__init__(tasks)
+        super(FeatureExtractor, self).__init__(inputImageDimension=64,
+                                               channels=1)
         self.tasks = tasks
 
     def featuresOfTask(self, t):
@@ -231,7 +245,7 @@ class FeatureExtractor(ImageFeatureExtractor):
         t = makeTask(str(p), f)
         if t is None:
             return None
-        t.features = list(map(float, list(drawFunction(200, 5., t.f).ravel())))
+        t.features = drawFunction(200, 5., t.f)
         delattr(t, 'f')
         return t
 
@@ -243,10 +257,9 @@ def demo():
         name, f = t.name, t.f
 
         print(j, "\n", name)
-        a = drawFunction(200, 5., f, resolution=128) * 255
+        a = drawFunction(200, 5., f, resolution=32) * 255
         Image.fromarray(a).convert('RGB').save("/tmp/functions/%d.png" % j)
     assert False
-
 
 def rational_options(p):
     p.add_argument("--smooth", action="store_true",
@@ -259,7 +272,7 @@ if __name__ == "__main__":
 
     arguments = commandlineArguments(
         featureExtractor=FeatureExtractor,
-        iterations=10,
+        iterations=6,
         CPUs=numberOfCPUs(),
         structurePenalty=1.,
         recognitionTimeout=7200,
@@ -281,8 +294,7 @@ if __name__ == "__main__":
     smooth = arguments.pop('smooth')
 
     for t in tasks:
-        t.features = list(
-            map(float, list(drawFunction(200, 10., t.f).ravel())))
+        t.features = drawFunction(200, 10., t.f)
         delattr(t, 'f')
         if smooth:
             t.likelihoodThreshold = None

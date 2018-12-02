@@ -69,14 +69,12 @@ class GrammarNetwork(nn.Module):
     """Neural network that outputs a grammar"""
     def __init__(self, inputDimensionality, grammar):
         super(GrammarNetwork, self).__init__()
-        #self.logVariable = nn.Linear(inputDimensionality, 1)
         self.logProductions = nn.Linear(inputDimensionality, len(grammar)+1)
         self.grammar = grammar
         
     def forward(self, x):
         """Takes as input inputDimensionality-dimensional vector and returns Grammar
         Tensor-valued probabilities"""
-        #logVariable = self.logVariable(x)
         logProductions = self.logProductions(x)
         return Grammar(logProductions[-1].view(1), #logVariable
                        [(logProductions[k].view(1), t, program)
@@ -721,34 +719,71 @@ class DummyFeatureExtractor(nn.Module):
     def taskOfProgram(self, p, t):
         return Task("dummy task", t, [])
 
+class Flatten(nn.Module):
+    def __init__(self):
+        super(Flatten, self).__init__()
+
+    def forward(self, x):
+        return x.view(x.size(0), -1)
+
 class ImageFeatureExtractor(nn.Module):
-    def __init__(self, tasks):
+    def __init__(self, inputImageDimension, resizedDimension=None,
+                 channels=1):
         super(ImageFeatureExtractor, self).__init__()
+        
+        self.resizedDimension = resizedDimension or inputImageDimension
+        self.inputImageDimension = inputImageDimension
+        self.channels = channels
 
-        self.l1 = nn.Sequential(
-            nn.Conv2d(1, 8, kernel_size=(5, 5), stride=2),
-            nn.Tanh(),
-            nn.MaxPool2d(kernel_size=(2, 2), stride=2),
-            nn.Conv2d(8, 16, kernel_size=(5, 5)),
-            nn.Tanh(),
-            nn.MaxPool2d(kernel_size=(2, 2), stride=2),
-            # nn.Conv2d(16, 8, kernel_size=(3, 3), stride=2),
-            # nn.Tanh(),
-            #            nn.MaxPool2d(kernel_size=(2, 2), stride=2),
+        def conv_block(in_channels, out_channels):
+            return nn.Sequential(
+                nn.Conv2d(in_channels, out_channels, 3, padding=1),
+                # nn.BatchNorm2d(out_channels),
+                nn.ReLU(),
+                nn.MaxPool2d(2)
+            )
+
+        # channels for hidden
+        hid_dim = 64
+        z_dim = 64
+
+        self.encoder = nn.Sequential(
+            conv_block(channels, hid_dim),
+            conv_block(hid_dim, hid_dim),
+            conv_block(hid_dim, hid_dim),
+            conv_block(hid_dim, z_dim),
+            Flatten()
         )
-
-        self.outputDimensionality = 16
+        
+        # Each layer of the encoder halves the dimension, except for the last layer which flattens
+        outputImageDimensionality = self.resizedDimension/(2**(len(self.encoder) - 1))
+        self.outputDimensionality = z_dim*outputImageDimensionality*outputImageDimensionality
 
     def forward(self, v):
-        w = int(len(v)**0.5)
-        variabled = variable(v).float().view((w, w))
-        variabled = torch.unsqueeze(variabled, 0)
-        variabled = torch.unsqueeze(variabled, 0)
-        y = self.l1(variabled)
-        y = y.view((y.shape[0], -1))
-        output = y  # self.fc(y)
-        return output.view(-1)
+        """1 channel: v: BxWxW or v:WxW
+        > 1 channel: v: BxCxWxW or v:CxWxW"""
 
+        insertBatch = False
+        variabled = variable(v).float()
+        if self.channels == 1: # insert channel dimension
+            if len(variabled.shape) == 3: # batching
+                variabled = variabled[:,None,:,:]
+            elif len(variabled.shape) == 2: # no batching
+                variabled = variabled[None,:,:]
+                insertBatch = True
+            else: assert False
+        else: # expect to have a channel dimension
+            if len(variabled.shape) == 4:
+                pass
+            elif len(variabled.shape) == 3:
+                insertBatch = True
+            else: assert False                
+
+        if insertBatch: variabled = torch.unsqueeze(variabled, 0)
+        
+        y = self.encoder(variabled)
+        if insertBatch: y = y[0,:]
+        return y
 
 class JSONFeatureExtractor(object):
     def __init__(self, tasks, cudaFalse):
