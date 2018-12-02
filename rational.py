@@ -37,7 +37,7 @@ def makeTask(name, f):
                                arrow(treal, treal),                                     
                                [((x,),y) for x, y in ex],
                                BIC=1.,
-                               restarts=50, steps=25,
+                               restarts=150, steps=50,
                                likelihoodThreshold=-0.05,
                                temperature=0.1,
                                maxParameters=6,
