@@ -326,7 +326,14 @@ let deserialize_contextual_grammar j =
    variable_context = j |> member "variableParent" |> deserialize_grammar;
    contextual_library =
      j |> member "productions" |> to_list |> List.map ~f:(fun production ->
-         let e = production |> member "program" |> to_string |> parse_program |> get_some in
+         let e = production |> member "program" |> to_string in
+         let e = 
+           try e |> parse_program |> get_some             
+           with _ ->
+             Printf.eprintf "Could not parse `%s'\n"
+               e;
+             assert (false)
+         in
          let children = production |> member "arguments" |> to_list |> List.map ~f:deserialize_grammar in
          (e, children));} |> prune_contextual_grammar
 
