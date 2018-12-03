@@ -67,6 +67,9 @@ class Vignette():
     def visualize(self):
         import matplotlib.pyplot as plot
         plot.figure()
+        colors = [[1.,0,0],
+                  [0,1.,0.],
+                  [0.,0.,1.]] #['r','b','g']
         colors = ['r','b','g']
         for t in self.trajectories:
             xs = []
@@ -76,8 +79,10 @@ class Vignette():
                 ys.append(o.x[1])
             eprint(xs)
             eprint(ys)
-            plot.scatter(xs,ys,
-                         c=colors[0])
+            for n,(x,y) in enumerate(zip(xs,ys)):
+                plot.scatter([x],[y],
+                             c=colors[0],
+                             alpha=n/float(len(xs)))
             colors = colors[1:]
         plot.show()
 
@@ -97,6 +102,26 @@ def freefallVignette():
                        1)
         trajectories.append(trajectory)
     return Vignette(*trajectories)
+
+def spring(k, n):
+    trajectories = []
+    for _ in range(n):
+        m = random.random()
+        x0 = np.array([random.random(), random.random()])*2 - np.array([1,1])
+        v0 = np.array([random.random(), random.random()])*2 - np.array([1,1])
+        v0 = v0*0.2
+        p = Particle(m,x0,v0)
+        trajectory = []
+        for _ in range(10):
+            trajectory.append(p)
+            f = -k * (p.x*p.x).sum()**0.5
+            f = f*p.x/(p.x*p.x).sum()**0.5
+            p = p.step(f/m,
+                       0.1)
+        trajectories.append(trajectory)
+    return Vignette(*trajectories)
+        
+    
 
 
 def makeTasks(namePrefix, vignettes):
@@ -138,7 +163,8 @@ makeTasks("freefall",
 
 def physicsTasks():
     return makeTasks("freefall",
-                     [freefallVignette()])
+                     [freefallVignette()]) + \
+            makeTasks("spring",[spring(0.3,3)])
 
 def physics_options(parser):
     pass
