@@ -35,6 +35,29 @@ class RandomTaskBatcher:
 
 		return random.sample(tasks, taskBatchSize)
 
+class RandomShuffleTaskBatcher:
+	"""Randomly shuffles the task batch first, and then iterates through task batches of the specified size like DefaultTaskBatcher.
+	   Uses a fixed shuffling across iterations - intended as benchmark comparison to test the task ordering."""
+	def __init__(self):
+		pass
+
+	def getTaskBatch(self, ec_result, tasks, taskBatchSize, currIteration):
+		if taskBatchSize is None:
+			taskBatchSize = len(tasks)
+		elif taskBatchSize > len(tasks):
+			eprint("Task batch size is greater than total number of tasks, aborting.")
+			assert False
+		
+		# Shuffles tasks with a set seed across iterations.
+		shuffledTasks = tasks.copy() # Since shuffle works in place.
+		random.Random(0).shuffle(shuffledTasks)
+
+		start = (taskBatchSize * currIteration) % len(shuffledTasks)
+		end = start + taskBatchSize
+		taskBatch = (tasks + tasks)[start:end] # Handle wraparound.
+		return taskBatch
+
+
 class UnsolvedTaskBatcher:
 	"""Returns tasks that have never been solved at any previous iteration. If a batch size is passed in, returns
 	   a randomly sampled task batch of the specified size."""

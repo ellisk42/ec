@@ -373,6 +373,8 @@ def ecIterator(grammar, tasks,
         taskBatcher = DefaultTaskBatcher()
     elif taskReranker == 'random':
         taskBatcher = RandomTaskBatcher()
+    elif taskReranker == 'randomShuffle':
+        taskBatcher = RandomShuffleTaskBatcher()
     elif taskReranker == 'unsolved':
         taskBatcher = UnsolvedTaskBatcher()
     elif taskReranker == 'unsolvedEntropy':
@@ -888,6 +890,7 @@ def commandlineArguments(_=None,
         choices=[
             "default",
             "random",
+            "randomShuffle",
             "unsolved",
             "unsolvedEntropy",
             "unsolvedRandomEntropy"],
