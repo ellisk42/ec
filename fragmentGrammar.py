@@ -494,7 +494,10 @@ def ocamlInduce(g, frontiers, _=None,
     # And early on we have a lot of stuff to compress
     # If this is the first iteration, only use a fraction of the available CPUs
     if all( not p.isInvented for p in g.primitives ):
-        CPUs = max(1, int(CPUs/3))
+        if a > 3:
+            CPUs = max(1, int(CPUs/6))
+        else:
+            CPUs = max(1, int(CPUs/3))
     else:
         CPUs = max(1, int(CPUs/2))
 

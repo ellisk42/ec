@@ -216,8 +216,57 @@ let string_hash ?timeout:(timeout=0.001) request inputs : program -> PolyList.t 
     else None
 ;;
 
-
 register_special_helmholtz "string" string_hash;;
+
+
+
+(* let rational_hash ?timeout:(timeout=0.001) request inputs : program -> PolyList.t option = *)
+(*   assert (request = (treal @> treal)); *)
+
+(*   let open Differentiation in *)
+
+(*   let number_of_constant_sequences = 1 in *)
+(*   let max_parameters = 5 in *)
+(*   let constant_sequences = List.range 0 number_of_constant_sequences |> *)
+(*                            List.map ~f:(fun _ -> *)
+(*                                let c = Random.float_range (-3.) (3.) in *)
+(*                                List.range 0 max_parameters |> List.map ~f:(fun _ -> c)) *)
+(*   in *)
+
+(*   let test_inputs = (0--30) |> List.map ~f:(fun _ -> Random.float_range (-10.) (10.)) in *)
+
+(*   let rec substitute program constant_sequence = match program with *)
+(*     | Primitive(t,"REAL",_) -> begin *)
+(*         let v = random_variable() in *)
+(*         update_variable v (List.hd_exn constant_sequence); *)
+(*         Primitive(t,"REAL", ref v |> magical), List.tl_exn constant_sequence *)
+(*       end *)
+(*     | Invented(_,b) -> substitute b constant_sequence *)
+(*     | Abstraction(b) -> *)
+(*       let b',s' = substitute b constant_sequence in *)
+(*       Abstraction(b'), s' *)
+(*     | Apply(f,x) -> *)
+(*       let f',s' = substitute f constant_sequence in *)
+(*       let x',s'' = substitute x constant_sequence in *)
+(*       Apply(f',x'), s'' *)
+(*     | Index(_) | Primitive(_,_,_) -> program, constant_sequence *)
+(*   in  *)
+
+(*   fun program -> *)
+(*     constant_sequences |> List.map ~f:(fun s -> *)
+(*         test_inputs |> List.map ~f:(fun x -> *)
+(*             let x' = placeholder_data treal x in *)
+(*             let p = substitute program s in *)
+(*             match  *)
+(*               try *)
+(*                 run_for_internal ~attempts:2 timeout *)
+(*                   (fun () -> run_lazy_analyzed_with_arguments (analyze_lazy_evaluation p) [x']) *)
+(*               with _ -> None *)
+(*             with *)
+(*             | None -> None *)
+(*             |  *)
+  
+  
 
 let tower_hash ?timeout:(timeout=0.001) request inputs : program -> PolyList.t option =
   let open Yojson.Basic.Util in

@@ -120,10 +120,10 @@ def make_list_bootstrap_tasks():
     # Reliably learned in under a minute; always triggers learning of length
     # primitive
     lengthBootstrap = [
-        Task("length bool", arrow(tlist(tbool), tint),
-             [((l,), len(l))
-              for _ in range(10)
-              for l in [[flip() for _ in range(randint(0, 10))]]]),
+        # Task("length bool", arrow(tlist(tbool), tint),
+        #      [((l,), len(l))
+        #       for _ in range(10)
+        #       for l in [[flip() for _ in range(randint(0, 10))]]]),
         Task("length int", arrow(tlist(tint), tint),
              [((l,), len(l))
               for _ in range(10)
@@ -142,10 +142,10 @@ def make_list_bootstrap_tasks():
              [((l,), [x for j,x in enumerate(l) if j%2 == 0])
               for _ in range(10)
               for l in [ [randint(0, 9) for _ in range(randint(1,4)*2)] ] ]),
-        Task("stutter every other", arrow(tlist(tint),tlist(tint)),
-             [((l,), [l[int(j/2)] for j in range(len(l)) ])
-              for _ in range(10)
-              for l in [ [randint(0, 9) for _ in range(randint(1,4)*2)] ] ]),
+        # Task("stutter every other", arrow(tlist(tint),tlist(tint)),
+        #      [((l,), [l[int(j/2)] for j in range(len(l)) ])
+        #       for _ in range(10)
+        #       for l in [ [randint(0, 9) for _ in range(randint(1,4)*2)] ] ]),
         Task("take until 1 reached", arrow(tlist(tint),tlist(tint)),
              [((p + [1] + s,),p)
               for _ in range(10)
@@ -159,26 +159,26 @@ def make_list_bootstrap_tasks():
              [((l,), l[:-1])
               for _ in range(10)
               for l in [ [randint(0, 9) for _ in range(randint(2,5))] ] ]),
-        Task("suffixes", arrow(tlist(tint), tlist(tlist(tint))),
-             [((l,), suffixes(l))
-              for _ in range(10)
-              for l in [randomList()]]),
+        # Task("suffixes", arrow(tlist(tint), tlist(tlist(tint))),
+        #      [((l,), suffixes(l))
+        #       for _ in range(10)
+        #       for l in [randomList()]]),
         Task("range", arrow(tint, tlist(tint)),
              [((n,), list(range(n)))
               for n in range(10)]),
         Task("range inclusive", arrow(tint, tlist(tint)),
              [((n,), list(range(n + 1)))
               for n in range(10)]),
-        Task("range inclusive+1", arrow(tint, tlist(tint)),
-             [((n,), list(range(n + 2)))
-              for n in range(10)]),
-        Task("range exclusive", arrow(tint, tlist(tint)),
-             [((n,), list(range(n - 1)))
-              for n in range(2, 11)]),
-        Task("range length", arrow(tlist(tint),tlist(tint)),
-             [((l,),list(range(len(l))))
-              for _ in range(10)
-              for l in [randomList()] ])
+        # Task("range inclusive+1", arrow(tint, tlist(tint)),
+        #      [((n,), list(range(n + 2)))
+        #       for n in range(10)]),
+        # Task("range exclusive", arrow(tint, tlist(tint)),
+        #      [((n,), list(range(n - 1)))
+        #       for n in range(2, 11)]),
+        # Task("range length", arrow(tlist(tint),tlist(tint)),
+        #      [((l,),list(range(len(l))))
+        #       for _ in range(10)
+        #       for l in [randomList()] ])
     ]
 
     # Encourages learning how to treat a list as an array
@@ -221,10 +221,10 @@ def make_list_bootstrap_tasks():
              [((l,), sum(l))
               for _ in range(10)
               for l in [randomList()]]),
-        Task("difference", arrow(tlist(tint), tint),
-             [((l,), reduce(lambda x, y: y - x, reversed(l), 1))
-              for _ in range(10)
-              for l in [randomList()[:4]]]),
+        # Task("difference", arrow(tlist(tint), tint),
+        #      [((l,), reduce(lambda x, y: y - x, reversed(l), 1))
+        #       for _ in range(10)
+        #       for l in [randomList()[:4]]]),
         # Task("append bool", arrow(tlist(tbool), tlist(tbool), tlist(tbool)),
         #      [((x, y), x + y)
         #       for _ in range(10)
@@ -348,7 +348,7 @@ def make_list_bootstrap_tasks():
     # Let's learn everything!
     if True:
         return lengthBootstrap + \
-            unfoldBootstrap + arrayBootstrap + foldBootstrap + zipBootstrap + mapBootstrap
+            unfoldBootstrap + arrayBootstrap + foldBootstrap + mapBootstrap
 
 
 def bonusListProblems():

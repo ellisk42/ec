@@ -141,6 +141,10 @@ def tower_options(parser):
                         default=None, type=str)
     parser.add_argument("--solutions",
                         default=None, type=str)
+    parser.add_argument("--split",
+                        default=1., type=float)
+    
+    
 
 def dreamOfTowers(grammar, prefix, N=250):
     from tower_common import renderPlan
@@ -237,12 +241,12 @@ if __name__ == "__main__":
         featureExtractor=TowerCNN,
         CPUs=numberOfCPUs(),
         helmholtzRatio=0.5,
-        iterations=5,
+        iterations=6,
         a=3,
         structurePenalty=1,
         pseudoCounts=10,
         topK=2,
-        maximumFrontier=10,
+        maximumFrontier=5,
         extras=tower_options)
 
     checkpoint = arguments.pop("visualize")
@@ -271,7 +275,7 @@ if __name__ == "__main__":
         tasks = makeTasks() + makeSupervisedTasks()
     else: assert False
         
-    test, train = testTrainSplit(tasks, 1.)
+    test, train = testTrainSplit(tasks, arguments.pop("split"))
     eprint("Split %d/%d test/train" % (len(test), len(train)))
 
     timestamp = datetime.datetime.now().isoformat()

@@ -48,6 +48,8 @@ primitive "normalize" (tvector @> tvector)
 primitive "sq" (treal @> treal) square;;
 primitive "dp" (tvector @> tvector @> treal)
   (fun a b -> List.map2_exn a b ~f:( *&) |> List.reduce_exn ~f:(+&));;
+primitive "vector-length" (tvector @> treal)
+  (fun v -> v |> List.map ~f:(fun x -> x *& x) |> List.reduce_exn ~f:(+&) |> square_root);;
 
   
       

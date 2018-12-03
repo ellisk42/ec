@@ -53,7 +53,9 @@ let get_some = function
   | _ -> raise (Failure "get_some");;
 let safe_get_some message = function
   | Some(x) -> x
-  | _ -> raise (Failure message);;
+  | _ ->
+    Printf.eprintf "safe_get_some failure: %s\n" message;
+    raise (Failure message);;
 
 let sum = List.fold_left ~f:(+) ~init:0
 

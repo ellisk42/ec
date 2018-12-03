@@ -428,7 +428,8 @@ def ecIterator(grammar, tasks,
             
         # If we have to also enumerate Helmholtz frontiers,
         # do this extra sneaky in the background
-        if useRecognitionModel and biasOptimal and helmholtzRatio > 0:
+        if useRecognitionModel and biasOptimal and helmholtzRatio > 0 and \
+           all( str(p) != "REAL" for p in grammar.primitives ): # real numbers don't support this
             helmholtzFrontiers = backgroundHelmholtzEnumeration(tasks, grammar, enumerationTimeout,
                                                                 evaluationTimeout=evaluationTimeout,
                                                                 special=featureExtractor.special)
@@ -478,6 +479,7 @@ def ecIterator(grammar, tasks,
                 thisRatio = helmholtzRatio
                 if j == 0 and not biasOptimal: thisRatio = 0
                 recognizer.train(result.allFrontiers.values(),
+                                 biasOptimal=biasOptimal,
                                  helmholtzFrontiers=helmholtzFrontiers(), 
                                  CPUs=CPUs,
                                  evaluationTimeout=evaluationTimeout,
@@ -1008,7 +1010,7 @@ def graphPrimitives(result, prefix, view=False):
         n = 0
         for w in s:
             if n + len(w) > T:
-                l.append("\\n")
+                l.append("<br />")
                 n = 0
             n += len(w)
             l.append(w)
@@ -1030,11 +1032,43 @@ def graphPrimitives(result, prefix, view=False):
         depth[p] = 1 + max([depth[k] for k in children] + [0])
         return name[p]
 
-    for p in primitives: getName(p)
+    for p in primitives:
+        getName(p)
 
     depths = {depth[p] for p in primitives}
     depth2primitives = {d: {p for p in primitives if depth[p] == d }
                         for d in depths}
+
+    englishDescriptions = {"#(lambda (lambda (map (lambda (index $0 $2)) (range $0))))":
+                           "Prefix",
+                           "#(lambda (lambda (fold $0 $1 (lambda (lambda (cons $1 $0))))))":
+                           "Append",
+                           "#(lambda (cons LPAREN (#(lambda (lambda (fold $0 $1 (lambda (lambda (cons $1 $0)))))) (cons RPAREN empty) $0)))":
+                           "Enclose w/ parens",
+                           "#(lambda (unfold $0 (lambda (empty? $0)) (lambda (car $0)) (lambda (#(lambda (lambda (fold $1 $1 (lambda (lambda (cdr (if (char-eq? $1 $2) $3 $0))))))) $0 SPACE))))":
+                           "Abbreviate",
+                           "#(lambda (lambda (fold $1 $1 (lambda (lambda (cdr (if (char-eq? $1 $2) $3 $0)))))))":
+                           "Drop until char",
+                           "#(lambda (lambda (fold $1 $1 (lambda (lambda (if (char-eq? $1 $2) empty (cons $1 $0)))))))":
+                           "Take until char",
+                           "#(lambda (lambda (#(lambda (lambda (fold $0 $1 (lambda (lambda (cons $1 $0)))))) (cons $0 $1))))":
+                           "Append char",
+                           "#(lambda (lambda (map (lambda (if (char-eq? $0 $1) $2 $0)))))":
+                           "Substitute char",
+                           "#(lambda (lambda (length (unfold $1 (lambda (char-eq? (car $0) $1)) (lambda ',') (lambda (cdr $0))))))":
+                           "Index of char",
+                           "#(lambda (#(lambda (lambda (fold $0 $1 (lambda (lambda (cons $1 $0)))))) $0 STRING))":
+                           "Append const",
+                           "#(lambda (lambda (fold $1 $1 (lambda (lambda (fold $0 $0 (lambda (lambda (cdr (if (char-eq? $1 $4) $0 (cons $1 $0)))))))))))":
+                           "Last word",
+                           "#(lambda (lambda (cons (car $1) (cons '.' (cons (car $0) (cons '.' empty))))))":
+                           "Abbreviate name",
+                           "#(lambda (lambda (cons (car $1) (cons $0 empty))))":
+                           "First char+char",
+                           "#(lambda (#(lambda (lambda (fold $0 $1 (lambda (lambda (cons $1 $0)))))) (#(lambda (lambda (fold $1 $1 (lambda (lambda (fold $0 $0 (lambda (lambda (cdr (if (char-eq? $1 $4) $0 (cons $1 $0))))))))))) STRING (index (length (cdr $0)) $0)) $0))":
+                           "Ensure suffix"
+                           
+    }
 
     def makeGraph(ordering, fn):
         g = Digraph()
@@ -1044,7 +1078,14 @@ def graphPrimitives(result, prefix, view=False):
             with g.subgraph(name='age%d'%o) as sg:
                 sg.graph_attr['rank'] = 'same'
                 for p in ordering[o]:
-                    sg.node(getName(p), label=simplification[p])
+                    if str(p) in englishDescriptions:
+                        thisLabel = '<<font face="boldfontname"><u>%s</u></font><br />%s>'%(englishDescriptions[str(p)],simplification[p])
+                    else:
+                        eprint("WARNING: Do not have an English description of:\n",p)
+                        eprint()
+                        thisLabel = "<%s>"%simplification[p]
+                    sg.node(getName(p),
+                            label=thisLabel)
 
             for p in ordering[o]:
                 children = {k

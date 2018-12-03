@@ -66,6 +66,7 @@ def randomWord(minimum=1):
         WORDS = {w
                  for o in observations
                  for w in splitMany(o, delimiters)}
+        WORDS = list(sorted(list(WORDS)))
 
     # a disproportionately large fraction of the words have length three
     # the purpose of this is to decrease the number of 3-length words we have
@@ -263,6 +264,7 @@ def makeTasks():
                   for _ in range(NUMBEROFEXAMPLES)
                   for s in [randomWords(" ")]
                   for f in [random.choice([True,False])] ])
+        eprint(problems[-1])
             
 
     for p in problems:

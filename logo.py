@@ -1,13 +1,14 @@
 from ec import ecIterator, commandlineArguments
 from grammar import Grammar
 from utilities import eprint, testTrainSplit, numberOfCPUs, parallelMap
-from makeLogoTasks import makeTasks
+from makeLogoTasks import makeTasks, montageTasks
 from logoPrimitives import *
 from collections import OrderedDict
 from program import Program
 from task import Task
 from type import arrow
 
+import datetime
 import random as random
 import json
 import torch
@@ -38,6 +39,28 @@ def renderLogoProgram(program,R=128):
         return np.reshape(np.array(hr),(R,R))
     except: return None
 
+def dreamFromGrammar(g, directory, N=500):
+    parallelMap(numberOfCPUs(), lambda x: saveDream(g.sample(arrow(turtle,turtle),
+                                                             maximumDepth=20),
+                                                    x,
+                                                    directory),
+                range(N))
+
+def saveDream(program, index, directory):
+    with open("%s/%d.dream"%(directory, index), "w") as handle:
+        handle.write(str(program))
+
+    for suffix in [[],["pretty"],["smooth_pretty"]]:
+        try:
+            subprocess.check_output(['./logoDrawString',
+                                     '512',
+                                     "%s/%d%s"%(directory, index,
+                                                suffix[0] if suffix else ""),
+                                     '0',
+                                     str(program)] + suffix,
+                                    timeout=1).decode("utf8")
+        except: continue
+        
     
 
 class Flatten(nn.Module):
@@ -58,7 +81,6 @@ class LogoFeatureCNN(nn.Module):
 
         self.recomputeTasks = False
 
-        self.outputDimensionality = H
         def conv_block(in_channels, out_channels):
             return nn.Sequential(
                 nn.Conv2d(in_channels, out_channels, 3, padding=1),
@@ -186,6 +208,8 @@ def list_options(parser):
                         help="Directory in which to dream from --dreamCheckpoint")
     parser.add_argument("--visualize",
                         default=None, type=str)
+    parser.add_argument("--split",
+                        default=0., type=float)
 
 
 
@@ -359,8 +383,10 @@ if __name__ == "__main__":
     os.chdir("..")
 
 
-    test, train = testTrainSplit(tasks, 1.)
+    test, train = testTrainSplit(tasks, args.pop("split"))
     eprint("Split tasks into %d/%d test/train" % (len(test), len(train)))
+    montageTasks(test,"test_")
+    montageTasks(train,"train_")
 
     if red is not []:
         for reducing in red:
@@ -383,31 +409,25 @@ if __name__ == "__main__":
 
     eprint(baseGrammar)
 
-    if False:
-        fe = LogoFeatureCNN(tasks)
-        for x in range(0, 500):
-            program = baseGrammar.sample(arrow(turtle, turtle), maximumDepth=20)
-            try:
-                features = fe.renderProgram(program, arrow(turtle, turtle), index=x)
-            except: continue
-        eprint(fe.sub)    
-        assert False
+    timestamp = datetime.datetime.now().isoformat()
+    outputDirectory = "experimentOutputs/logo/%s"%timestamp
+    os.system("mkdir -p %s"%outputDirectory)
+
 
     generator = ecIterator(baseGrammar, train,
                            testingTasks=test,
-                           outputPrefix="experimentOutputs/logo",
+                           outputPrefix="%s/logo"%outputDirectory,
                            evaluationTimeout=0.01,
                            **args)
 
     r = None
     for result in generator:
-        fe = LogoFeatureCNN(tasks)
-        parallelMap(numberOfCPUs(),
-                    lambda x: fe.renderProgram(result.grammars[-1].sample(arrow(turtle, turtle),
-                                                                          maximumDepth=20),
-                                               arrow(turtle, turtle), index=x),
-                    list(range(0, 500)))
         iteration = len(result.learningCurve)
+        dreamDirectory = "%s/dreams_%d"%(outputDirectory, iteration)
+        os.system("mkdir  -p %s"%dreamDirectory)
+        eprint("Dreaming into directory",dreamDirectory)
+        dreamFromGrammar(result.grammars[-1],
+                         dreamDirectory)
         r = result
 
     needsExport = [str(z)
