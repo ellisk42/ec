@@ -159,10 +159,10 @@ def make_list_bootstrap_tasks():
              [((l,), l[:-1])
               for _ in range(10)
               for l in [ [randint(0, 9) for _ in range(randint(2,5))] ] ]),
-        Task("suffixes", arrow(tlist(tint), tlist(tlist(tint))),
-             [((l,), suffixes(l))
-              for _ in range(10)
-              for l in [randomList()]]),
+        # Task("suffixes", arrow(tlist(tint), tlist(tlist(tint))),
+        #      [((l,), suffixes(l))
+        #       for _ in range(10)
+        #       for l in [randomList()]]),
         Task("range", arrow(tint, tlist(tint)),
              [((n,), list(range(n)))
               for n in range(10)]),
