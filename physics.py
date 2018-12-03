@@ -77,12 +77,8 @@ class Vignette():
             for o in t:
                 xs.append(o.x[0])
                 ys.append(o.x[1])
-            eprint(xs)
-            eprint(ys)
-            for n,(x,y) in enumerate(zip(xs,ys)):
-                plot.scatter([x],[y],
-                             c=colors[0],
-                             alpha=n/float(len(xs)))
+            plot.scatter(xs,ys,
+                         c=colors[0])
             colors = colors[1:]
         plot.show()
 
@@ -98,7 +94,7 @@ def freefallVignette():
         trajectory = []
         for _ in range(20):
             trajectory.append(p)
-            p = p.step(np.array([0.,-0.5]),
+            p = p.step(np.array([0.,-0.5])*p.m,
                        1)
         trajectories.append(trajectory)
     return Vignette(*trajectories)
@@ -116,13 +112,62 @@ def spring(k, n):
             trajectory.append(p)
             f = -k * (p.x*p.x).sum()**0.5
             f = f*p.x/(p.x*p.x).sum()**0.5
-            p = p.step(f/m,
+            p = p.step(f,
                        0.1)
         trajectories.append(trajectory)
     return Vignette(*trajectories)
         
     
+def airResistance(k, n):
+    trajectories = []
+    for _ in range(n):
+        m = random.random()
+        x0 = np.array([random.random(), random.random()])*2 - np.array([1,1])
+        v0 = np.array([random.random(), random.random()])*2 - np.array([1,1])
+        v0 = v0*0.2
+        p = Particle(m,x0,v0)
+        trajectory = []
+        for _ in range(10):
+            trajectory.append(p)
+            f = -k * (p.v*p.v).sum()**0.5
+            f = f*p.v/(p.v*p.v).sum()**0.5
+            p = p.step(f,
+                       0.1)
+        trajectories.append(trajectory)
+    return Vignette(*trajectories)
 
+def gravity(g):
+    trajectories = [[],[]]
+    m = random.random()
+    def makeParticle(i):
+        x0 = np.array([-2 if i == 0 else 2,0.])*10
+        v0 = np.array([0., 0 if i == 0 else -2])
+        v0 = v0*.9
+        m = 100. if i == 0 else 0.1
+        p = Particle(m,x0,v0)
+        return p
+    objects = [makeParticle(0),makeParticle(1)]
+    for _ in range(30000):
+        newObjects = []
+        for i in range(len(objects)):
+            f = 0
+            for j in range(len(objects)):
+                if i == j: continue
+                r = objects[i].x - objects[j].x
+                rl = (r*r).sum()**0.5
+                rh = r/rl
+                r2 = rl*rl
+                f -= g*rh*objects[i].m*objects[j].m/r2
+
+            newObjects.append(objects[i].step(f,
+                                              0.01))
+        objects = newObjects
+        for i in range(len(objects)):
+            trajectories[i].append(objects[i])
+    return Vignette(*trajectories)
+
+gravity(2).visualize()
+                
 
 def makeTasks(namePrefix, vignettes):
     for v in vignettes:
@@ -158,13 +203,11 @@ def makeTasks(namePrefix, vignettes):
     return tasks
 
 
-makeTasks("freefall",
-          [freefallVignette()])
-
 def physicsTasks():
     return makeTasks("freefall",
                      [freefallVignette()]) + \
-            makeTasks("spring",[spring(0.3,3)])
+            makeTasks("spring",[spring(0.3,3)]) + \
+            makeTasks("viscous",[airResistance(0.1,3)])
 
 def physics_options(parser):
     pass
