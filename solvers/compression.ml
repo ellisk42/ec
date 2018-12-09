@@ -171,15 +171,22 @@ let rewrite_with_invention i =
                 (beta_normal_form ~reduceInventions:true e)
                 (beta_normal_form ~reduceInventions:true e'));
       e'
-    with UnificationFailure ->
-      Printf.eprintf "WARNING: rewriting with invention gave ill typed term.\n";
-      Printf.eprintf "Original:\t\t%s\n" (e |> string_of_program);
-      Printf.eprintf "Original:\t\t%s\n" (e |> beta_normal_form ~reduceInventions:true |> string_of_program);
-      Printf.eprintf "Rewritten:\t\t%s\n" (visit e |> string_of_program);
-      Printf.eprintf "Rewritten:\t\t%s\n" (visit e |> beta_normal_form ~reduceInventions:true |> string_of_program);
-      Printf.eprintf "Going to proceed as if the rewrite had failed - but look into this because it could be a bug.\n";
-      flush_everything();
-      raise EtaExpandFailure
+    with UnificationFailure -> begin
+        if false then begin  
+          Printf.eprintf "WARNING: rewriting with invention gave ill typed term.\n";
+          Printf.eprintf "Original:\t\t%s\n" (e |> string_of_program);
+          Printf.eprintf "Original:\t\t%s\n" (e |> beta_normal_form ~reduceInventions:true |> string_of_program);
+          Printf.eprintf "Rewritten:\t\t%s\n" (visit e |> string_of_program);
+          Printf.eprintf "Rewritten:\t\t%s\n" (visit e |> beta_normal_form ~reduceInventions:true |> string_of_program);
+          Printf.eprintf "Going to proceed as if the rewrite had failed - but look into this because it could be a bug.\n";
+          flush_everything()
+        end;
+        let normal_original = e |> beta_normal_form ~reduceInventions:true in
+        let normal_rewritten = e |> visit |> beta_normal_form ~reduceInventions:true in
+        assert (program_equal normal_original normal_rewritten);        
+        raise EtaExpandFailure
+    end
+      
 
 let nontrivial e =
   let indices = ref [] in

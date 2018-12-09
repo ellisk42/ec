@@ -144,7 +144,7 @@ def plotECResult(
                   for t in result.testingSearchTime[:iterations]]
         color = recognitionToColor[p.useRecognitionModel]
         l, = a1.plot(list(range(0, len(ys))), ys, color=color, ls='-')
-
+        
         if showSolveTime:
             if failAsTimeout:
                 assert testingTimeout is not None

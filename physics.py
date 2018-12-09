@@ -166,7 +166,6 @@ def gravity(g):
             trajectories[i].append(objects[i])
     return Vignette(*trajectories)
 
-gravity(2).visualize()
                 
 
 def makeTasks(namePrefix, vignettes):
@@ -197,17 +196,25 @@ def makeTasks(namePrefix, vignettes):
         t.specialTask = ("physics",
                          {"parameterPenalty": 20,
                           "temperature": 1.,
-                          "lossThreshold": 0.3,
+                          "lossThreshold": 0.005,
                           "examples": examples})
         tasks.append(t)
     return tasks
 
 
 def physicsTasks():
-    return makeTasks("freefall",
-                     [freefallVignette()]) + \
-            makeTasks("spring",[spring(0.3,3)]) + \
-            makeTasks("viscous",[airResistance(0.1,3)])
+    tasks = makeTasks("freefall",
+                   [freefallVignette()]) + \
+                   makeTasks("spring",[spring(0.3,3)]) + \
+                   makeTasks("viscous",[airResistance(0.1,3)]) + \
+                   makeTasks("gravity",[gravity(2)])
+    # subsample examples
+    numberOfExamples = 1000
+    for t in tasks:
+        examples = t.specialTask[1]["examples"]
+        if len(examples) > numberOfExamples:
+            t.specialTask[1]["examples"] = examples[0:len(examples):len(examples)//numberOfExamples]
+    return tasks
 
 def physics_options(parser):
     pass
