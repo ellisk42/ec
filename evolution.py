@@ -57,10 +57,14 @@ class EvolutionGuide(RecognitionModel):
         if cuda: self.cuda()
 
     def batchedForward(self, goal, currents):
-        features = self._MLP(self.featureExtractor.featuresOfTasks([goal]*len(currents), currents))
+        with timing("batchedForward/features"):
+            features = self._MLP(self.featureExtractor.featuresOfTasks([goal]*len(currents), currents))
         B = features.shape[0]
-        v = self.value(features)
-        return [self.policy(features[b]) for b in range(B) ], [v[b] for b in range(B) ]
+        with timing("batchedForward/value"):
+            v = self.value(features)
+        with timing("batchedForward/policy"):
+            ps = [self.policy(features[b]) for b in range(B) ]
+        return ps, [v[b] for b in range(B) ]
 
     def graphForward(self, root):
         """Returns a dictionary of {node: (policy, value)}, for each node in the graph"""
@@ -101,10 +105,12 @@ class EvolutionGuide(RecognitionModel):
                     d = -torchSoftMax([-a for a in alternatives ])
             distance[ev] = d
             return d
-        pl = _distance(root)
-        vl = sum( (distance[ev] - pv[ev][1])**2
-                  for ev in root.reachable())
-        vl = vl/len(distance) # MSE
+        with timing("batchedLoss/_distance"):
+            pl = _distance(root)
+        with timing("batchedLoss/value loss"):
+            vl = sum( (distance[ev] - pv[ev][1])**2
+                      for ev in root.reachable())
+            vl = vl/len(distance) # MSE
         return pl,vl
 
     def visualize(self, root):
@@ -204,8 +210,10 @@ class EvolutionGuide(RecognitionModel):
             for ev in graphs:
                 with timing("gradient step with %d vertices"%len(ev.reachable())):
                     self.zero_grad()
-                    pl, vl = self.batchedLoss(ev)
-                    (pl + vl).backward()
+                    with timing("train/forward"):
+                        pl, vl = self.batchedLoss(ev)
+                    with timing("train/backward"):
+                        (pl + vl).backward()
                     optimizer.step()
 
                 losses.append((pl.data.tolist(),
