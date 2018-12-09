@@ -527,7 +527,8 @@ for t in tasks:
 eprint("Training on",len(trajectories),"/",len(tasks),"tasks")
 
 rm = EvolutionGuide(TowerCNN([]),g,contextual=True,
-                    request=t.request)
+                    request=t.request,
+                    cuda=torch.cuda.is_available())
 rm.train(trajectories, timeout=600)
 #rm.visualize(trajectories[0])
 
