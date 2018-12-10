@@ -101,7 +101,8 @@ class EvolutionGuide(RecognitionModel):
                     d = -torchSoftMax([-a for a in alternatives ])
             distance[ev] = d
             return d
-        pl = _distance(root)
+        with timing("_distance"):
+            pl = _distance(root)
         vl = sum( (distance[ev] - pv[ev][1])**2
                   for ev in root.reachable())
         vl = vl/len(distance) # MSE
@@ -524,12 +525,13 @@ for t in tasks:
     trajectory.removeLongPaths(2)
     trajectories.append(trajectory)
 
+testing, trajectories = testTrainSplit(trajectories, 0.7)
 eprint("Training on",len(trajectories),"/",len(tasks),"tasks")
 
 rm = EvolutionGuide(TowerCNN([]),g,contextual=True,
                     request=t.request,
                     cuda=torch.cuda.is_available())
-rm.train(trajectories, timeout=600)
+rm.train(trajectories, timeout=7200*2)
 #rm.visualize(trajectories[0])
 
 
@@ -555,9 +557,11 @@ if False:
     from pylab import imshow,show
     imshow(m)
     show()
-else:        
-    rm.search(trajectory.goal,
-              populationSize=10,
-              timeout=1,
-              generations=2)
+else:
+    for trajectory in testing:
+        eprint("Testing on",trajectory.goal)
+        rm.search(trajectory.goal,
+                  populationSize=10,
+                  timeout=20,
+                  generations=2)
 
