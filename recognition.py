@@ -81,6 +81,33 @@ class GrammarNetwork(nn.Module):
                         for k, (_, t, program) in enumerate(self.grammar.productions)],
                        continuationType=self.grammar.continuationType)
 
+    def batchedLogLikelihoods(self, xs, summaries):
+        """Takes as input BxinputDimensionality vector & B likelihood summaries;
+        returns B-dimensional vector containing log likelihood of each summary"""
+
+        B = xs.shape[0]
+        assert len(summaries) == B
+        
+        logProductions = self.logProductions(xs)
+
+        # uses[b][p] is # uses of primitive p by summary b
+        uses = np.zeros((B,len(self.grammar) + 1))
+        for b,summary in enumerate(summaries):
+            eprint(summary.uses)
+            for p, (_1,_2,production) in enumerate(self.grammar.productions):
+                uses[b,p] = summary.uses.get(production, 0.)
+            uses[b,len(self.grammar)] = summary.uses.get(Index(0), 0)
+
+        numerator = (logProductions * torch.from_numpy(uses).float()).sum(1)
+        numerator += torch.tensor([summary.constant for summary in summaries ]).float()
+
+        assert False, "this method is not yet finished"
+
+        
+
+        
+                
+
 class ContextualGrammarNetwork(nn.Module):
     """Like GrammarNetwork but ~contextual~"""
     def __init__(self, inputDimensionality, grammar):
@@ -716,6 +743,8 @@ class DummyFeatureExtractor(nn.Module):
         self.recomputeTasks = False
     def featuresOfTask(self, t):
         return variable([0.]).float()
+    def featuresOfTasks(self, ts):
+        return variable([[0.]]*len(ts)).float()
     def taskOfProgram(self, p, t):
         return Task("dummy task", t, [])
 
