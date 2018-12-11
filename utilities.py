@@ -363,8 +363,12 @@ class timing(object):
         return self
 
     def __exit__(self, type, value, traceback):
-        eprint("%s in %.1f seconds" % (self.message,
-                                       time.time() - self.start))
+        dt = time.time() - self.start
+        if isinstance(self.message, str): message = self.message
+        elif callable(self.message): message = self.message(dt)
+        else: assert False, "Timing message should be string function"
+        eprint("%s in %.1f seconds" % (message, dt))
+
 
 
 def randomPermutation(l):

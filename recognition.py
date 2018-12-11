@@ -93,15 +93,40 @@ class GrammarNetwork(nn.Module):
         # uses[b][p] is # uses of primitive p by summary b
         uses = np.zeros((B,len(self.grammar) + 1))
         for b,summary in enumerate(summaries):
-            eprint(summary.uses)
-            for p, (_1,_2,production) in enumerate(self.grammar.productions):
+            for p, production in enumerate(self.grammar.primitives):
                 uses[b,p] = summary.uses.get(production, 0.)
             uses[b,len(self.grammar)] = summary.uses.get(Index(0), 0)
 
         numerator = (logProductions * torch.from_numpy(uses).float()).sum(1)
         numerator += torch.tensor([summary.constant for summary in summaries ]).float()
 
-        assert False, "this method is not yet finished"
+        alternativeSet = {normalizer
+                          for s in summaries
+                          for normalizer in s.normalizers }
+        alternativeSet = list(alternativeSet)
+
+        mask = np.zeros((len(alternativeSet), len(self.grammar) + 1))
+        for tau in range(len(alternativeSet)):
+            for p, production in enumerate(self.grammar.primitives):
+                mask[tau,p] = 0. if production in alternativeSet[tau] else NEGATIVEINFINITY
+            mask[tau,len(self.grammar)] = 0. if Index(0) in alternativeSet[tau] else NEGATIVEINFINITY
+        mask = torch.tensor(mask).float()
+
+        # mask: Rx|G|
+        # logProductions: Bx|G|
+        # Want: mask + logProductions : BxRx|G| = z
+        z = mask.repeat(B,1,1) + logProductions.repeat(len(alternativeSet),1,1).transpose(1,0)
+        # z: BxR
+        z = torch.logsumexp(z, 2) # pytorch 1.0 dependency
+
+        # Calculate how many times each normalizer was used
+        N = torch.zeros(B, len(alternativeSet))
+        for b, summary in enumerate(summaries):
+            for tau, alternatives in enumerate(alternativeSet):
+                N[b, tau] = summary.normalizers.get(alternatives,0.)
+
+        denominator = (N * z).sum(1)
+        return numerator - denominator
 
         
 
@@ -116,16 +141,15 @@ class ContextualGrammarNetwork(nn.Module):
         # library now just contains a list of indicies which go with each primitive
         self.grammar = grammar
         self.library = {}
-        idx = 0
+        self.n_grammars = 0
         for prim in grammar.primitives:
             numberOfArguments = len(prim.infer().functionArguments())
-            idx_list = list(range(idx, idx+numberOfArguments))
+            idx_list = list(range(self.n_grammars, self.n_grammars+numberOfArguments))
             self.library[prim] = idx_list
-            idx += numberOfArguments
-
-
-        # idx is 1 more than the number of things in library, and we need 2 more than number of things in library
-        self.n_grammars = idx+1
+            self.n_grammars += numberOfArguments
+        
+        # We had an extra grammar for when there is no parent and for when the parent is a variable
+        self.n_grammars += 2
         self.network = nn.Linear(inputDimensionality, (self.n_grammars)*(len(grammar) + 1))
 
 
@@ -136,13 +160,97 @@ class ContextualGrammarNetwork(nn.Module):
                        continuationType=self.grammar.continuationType)
 
     def forward(self, x):
-
         assert len(x.size()) == 1, "contextual grammar doesn't currently support batching"
 
         allVars = self.network(x).view(self.n_grammars, -1)
         return ContextualGrammar(self.grammarFromVector(allVars[-1]), self.grammarFromVector(allVars[-2]),
                 {prim: [self.grammarFromVector(allVars[j]) for j in js]
                  for prim, js in self.library.items()} )
+
+    def batchedLogLikelihoods(self, xs, summaries):
+        """Takes as input BxinputDimensionality vector & B likelihood summaries;
+        returns B-dimensional vector containing log likelihood of each summary"""
+
+        B = xs.shape[0]
+        G = len(self.grammar) + 1
+        assert len(summaries) == B
+
+        # logProductions: Bx n_grammars x G
+        logProductions = self.network(xs).view(B, self.n_grammars, G)
+        # uses[b][g][p] is # uses of primitive p by summary b for parent g
+        uses = np.zeros((B,self.n_grammars,len(self.grammar)+1))
+        for b,summary in enumerate(summaries):
+            for e, ss in summary.library.items():
+                for g,s in zip(self.library[e], ss):
+                    assert g < self.n_grammars - 2
+                    for p, production in enumerate(self.grammar.primitives):
+                        uses[b,g,p] = s.uses.get(production, 0.)
+                    uses[b,g,len(self.grammar)] = s.uses.get(Index(0), 0)
+                    
+            # noParent: this is the last network output
+            for p, production in enumerate(self.grammar.primitives):            
+                uses[b, self.n_grammars - 1, p] = summary.noParent.uses.get(production, 0.)
+            uses[b, self.n_grammars - 1, G - 1] = summary.noParent.uses.get(Index(0), 0.)
+
+            # variableParent: this is the penultimate network output
+            for p, production in enumerate(self.grammar.primitives):            
+                uses[b, self.n_grammars - 2, p] = summary.variableParent.uses.get(production, 0.)
+            uses[b, self.n_grammars - 2, G - 1] = summary.variableParent.uses.get(Index(0), 0.)
+            
+        numerator = (logProductions*torch.tensor(uses).float()).view(B,-1).sum(1)
+
+        constant = np.zeros(B)
+        for b,summary in enumerate(summaries):
+            constant[b] += summary.noParent.constant + summary.variableParent.constant
+            for ss in summary.library.values():
+                for s in ss:
+                    constant[b] += s.constant
+            
+        numerator += torch.tensor(constant).float()
+
+        # Calculate the god-awful denominator
+        alternativeSet = set()
+        for summary in summaries:
+            for normalizer in summary.noParent.normalizers: alternativeSet.add(normalizer)
+            for normalizer in summary.variableParent.normalizers: alternativeSet.add(normalizer)
+            for ss in summary.library.values():
+                for s in ss:
+                    for normalizer in s.normalizers: alternativeSet.add(normalizer)
+        alternativeSet = list(alternativeSet)
+
+        mask = np.zeros((len(alternativeSet), G))
+        for tau in range(len(alternativeSet)):
+            for p, production in enumerate(self.grammar.primitives):
+                mask[tau,p] = 0. if production in alternativeSet[tau] else NEGATIVEINFINITY
+            mask[tau, G - 1] = 0. if Index(0) in alternativeSet[tau] else NEGATIVEINFINITY
+        mask = torch.tensor(mask).float()
+
+        z = mask.repeat(self.n_grammars,1,1).repeat(B,1,1,1) + \
+            logProductions.repeat(len(alternativeSet),1,1,1).transpose(0,1).transpose(1,2)
+        z = torch.logsumexp(z, 3) # pytorch 1.0 dependency
+
+        N = np.zeros((B, self.n_grammars, len(alternativeSet)))
+        for b, summary in enumerate(summaries):
+            for e, ss in summary.library.items():
+                for g,s in zip(self.library[e], ss):
+                    assert g < self.n_grammars - 2
+                    for r, alternatives in enumerate(alternativeSet):                
+                        N[b,g,r] = s.normalizers.get(alternatives, 0.)
+            # noParent: this is the last network output
+            for r, alternatives in enumerate(alternativeSet):
+                N[b,self.n_grammars - 1,r] = summary.noParent.normalizers.get(alternatives, 0.)
+            # variableParent: this is the penultimate network output
+            for r, alternatives in enumerate(alternativeSet):
+                N[b,self.n_grammars - 2,r] = summary.variableParent.normalizers.get(alternatives, 0.)
+        N = torch.tensor(N).float()
+        
+
+        
+        denominator = (N*z).sum(1).sum(1)
+        return numerator - denominator
+            
+        
+
         
 
 class RecognitionModel(nn.Module):
@@ -745,6 +853,18 @@ class DummyFeatureExtractor(nn.Module):
         return variable([0.]).float()
     def featuresOfTasks(self, ts):
         return variable([[0.]]*len(ts)).float()
+    def taskOfProgram(self, p, t):
+        return Task("dummy task", t, [])
+
+class RandomFeatureExtractor(nn.Module):
+    def __init__(self, tasks):
+        super(RandomFeatureExtractor, self).__init__()
+        self.outputDimensionality = 1
+        self.recomputeTasks = False
+    def featuresOfTask(self, t):
+        return variable([random.random()]).float()
+    def featuresOfTasks(self, ts):
+        return variable([[random.random()] for _ in range(len(ts)) ]).float()
     def taskOfProgram(self, p, t):
         return Task("dummy task", t, [])
 

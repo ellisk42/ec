@@ -82,16 +82,21 @@ class EvolutionGuide(RecognitionModel):
         pv = self.graphForward(root)
 
         distance = {} # map from node in graph to distance
+        edgeCost = {}
+        with timing(lambda dt: "calculated %d edge costs (%f s/edge)"%(len(edgeCost),dt/len(edgeCost))):
+            for ev in root.reachable():
+                mg = pv[ev][0]
+                for edge in ev.descendents:
+                    edgeCost[edge] = -edge.likelihoodSummary(self.mutationGrammar).logLikelihood(mg).view(-1)
+        
         def _distance(ev):
             if ev in distance: return distance[ev]
             if ev.isGoal:
                 d = 0.
             else:
                 alternatives = []
-                mg = pv[ev][0]
                 for edge in ev.descendents:
-                    edgeCost = -edge.likelihoodSummary(self.mutationGrammar).logLikelihood(mg).view(-1)
-                    alternatives.append(edgeCost + _distance(edge.child))
+                    alternatives.append(edgeCost[edge] + _distance(edge.child))
                 if False:
                     alternatives = [ edgeCost + distanceToGo
                                      for edgeCost, distanceToGo in alternatives ]
@@ -278,7 +283,7 @@ class EvolutionGuide(RecognitionModel):
             for child, fitness in sorted(population.items(), key=lambda cf: -cf[1]):
                 eprint("Surviving child",child.program,"has fitness",fitness)
                 if goal.logLikelihood(child.program) > -0.01:
-                    eprint("\t^^^^HIT\n")
+                    eprint("\t^^^^HIT ",goal,"\n")
 
         return everyChild
 
@@ -531,6 +536,14 @@ eprint("Training on",len(trajectories),"/",len(tasks),"tasks")
 rm = EvolutionGuide(TowerCNN([]),g,contextual=True,
                     request=t.request,
                     cuda=torch.cuda.is_available())
+for trajectory in []:#testing:
+    eprint("Testing on",trajectory.goal)
+    rm.search(trajectory.goal,
+              populationSize=10,
+              timeout=20,
+              generations=2)
+
+
 rm.train(trajectories, timeout=7200*2)
 #rm.visualize(trajectories[0])
 
