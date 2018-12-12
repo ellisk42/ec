@@ -10,6 +10,7 @@ from enumeration import *
 
 import random
 from functools import reduce
+import dill
 
 
 class ConstantInstantiateVisitor(object):
@@ -59,6 +60,74 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
         return super(LearnedFeatureExtractor, self).taskOfProgram(p, tp)
 
 
+### COMPETITION CODE
+
+def competeOnOneTask(checkpoint, task,
+                     CPUs=8, timeout=3600, evaluationTimeout=0.0005):
+    if checkpoint.recognitionModel is not None:
+        recognizer = result.recognitionModel
+        challengeFrontiers, times, bestSearchTime = \
+                recognizer.enumerateFrontiers([task], "all-or-nothing",
+                                              CPUs=CPUs,
+                                              solver="ocaml",
+                                              maximumFrontier=1,
+                                              enumerationTimeout=timeout,
+                                              evaluationTimeout=evaluationTimeout)
+    else:
+        challengeFrontiers, times, bestSearchTimes = \
+                multicoreEnumeration(checkpoint.grammars[-1], [task], "all-or-nothing",
+                                     CPUs=CPUs,
+                                     solver="ocaml",
+                                     maximumFrontier=1,
+                                     enumerationTimeout=timeout,
+                                     evaluationTimeout=evaluationTimeout)
+    if len(times) == 0: return None
+    assert len(times) == 1
+    return times[0]
+
+        
+
+def sygusCompetition(checkpoint, tasks):
+    from multiprocessing import Pool
+    import datetime
+    
+    # map from task to search time. search time will be None if it is not solved
+    searchTimes = {}
+
+    CPUs = 8
+    timeout = 3600
+
+    maxWorkers = int(numberOfCPUs()/CPUs)
+    workers = Pool(maxWorkers)
+
+    promises = []
+    for t in tasks:
+        promise = workers.apply_async(competeOnOneTask,
+                                      (checkpoint,task),
+                                      {"CPUs": CPUs,
+                                       "timeout": timeout})
+        promises.append(promise)
+    for promise, task in zip(promises, tasks):
+        searchTimes[task] = promise.get()
+        if searchTimes[task] is None:
+            eprint(" > competition < Did not solve %s"%task)
+        else:
+            eprint(" > competition < Solved %s in %f seconds"%(task,searchTimes[task]))
+    
+    fn = "experimentOutputs/text_competition_%s.p"%(datetime.datetime.now().isoformat())
+    with open(fn,"wb") as handle:
+        pickle.dump(searchTimes, handle)
+    eprint()
+
+    hits = sum( t is not None for t in searchTimes.values )
+    total = len(searchTimes)
+    percentage = 100*hits/total
+    eprint("Hits %d/%d = %f\%"%(hits, total, percentage))
+    eprint()
+    eprint("Exported competition results to",fn)
+    
+    
+
 def text_options(parser):
     parser.add_argument(
         "--doChallenge",
@@ -70,6 +139,11 @@ def text_options(parser):
         action="store_true",
         default=False,
         help="Incorporate a random 50% of the challenge problems into the training set")
+    parser.add_argument(
+        "--compete",
+        default=None,
+        type=str,
+        help="Do a simulated sygus competition (1hr+8cpus/problem) on the sygus tasks, restoring from a provided checkpoint")
 
 if __name__ == "__main__":
     arguments = commandlineArguments(
@@ -109,6 +183,7 @@ if __name__ == "__main__":
             "We will evaluate on the held out challenge problems.",
             "This makes a total of %d training problems." %
             len(train))
+        
 
     ConstantInstantiateVisitor.SINGLE = \
         ConstantInstantiateVisitor(list(map(list, list({tuple([c for c in s])
@@ -124,6 +199,13 @@ if __name__ == "__main__":
 
     for t in train + test + challenge:
         t.maxParameters = 1
+
+    competitionCheckpoint = arguments.pop("compete")
+    if competitionCheckpoint:
+        with open(competitionCheckpoint, 'rb') as handle:
+            competitionCheckpoint = dill.load(competitionCheckpoint)
+        sygusCompetition(competitionCheckpoint, challenge)
+        sys.exit(0)
 
     generator = ecIterator(baseGrammar, train,
                            testingTasks=test + challenge,
