@@ -313,7 +313,8 @@ def manualLogoTasks():
         T("star %d"%i,
           """
           (loop i %d (move (*d 1d 3) (-a (/a 1a 2) (/a (/a 1a 2) %s))))
-          """%(i,i))
+          """%(i,i),
+          needToTrain=i in [5,9])
 
     T("leaf iteration 1.1",
       """
@@ -352,7 +353,7 @@ def manualLogoTasks():
           """%(n,n),
           needToTrain=n in range(3,5))        
 
-    for n in [5]:
+    for n in [5,6]:
         T("staircase %d"%n,
           """
           (loop i %d
@@ -360,7 +361,7 @@ def manualLogoTasks():
           (move 1d (/a 1a 4))
           (move 0d (/a 1a 2)))
           """%n,
-          needToTrain=False)
+          needToTrain=n in [5])
 
     for n in range(1,6):
         T("blocks zigzag %d"%n,
@@ -370,14 +371,15 @@ def manualLogoTasks():
           (move 1d (+a (/a 1a 2) (/a 1a 4))) (move 1d (+a (/a 1a 2) (/a 1a 4))))
           """%n,
           needToTrain=n in [1,2,3])
-    for n in [4]:#range(1,5):
+    for n in [3,4]:#range(1,5):
         T("diagonal zigzag %d"%n,
           """
           ((move 0d (/a 1a 8))
           (loop i %d
           (move 1d (/a 1a 4)) 
           (move 1d (+a (/a 1a 2) (/a 1a 4)))))
-          """%n)
+          """%n,
+          needToTrain=n == 4)
 
     
 
@@ -439,13 +441,14 @@ def manualLogoTasks():
           """%(n,l,l),
           needToTrain=(n,l) in [(3,1),(2,2),(1,3)])
 
-    for n,l in [(2,"1d")]:
+    for n,l in [(2,"1d"),
+                (3,"1d")]:
         T("row of %d circles"%n,
           """
           (loop j %d
           (embed (loop k 2 (loop i infinity (move epsilonLength epsilonAngle))))
           (p (move %s 0a)))"""%(n,l),
-          needToTrain=True)
+          needToTrain=n == 2)
     for n,l in [(2,"1d"),
                 (3,"1d")]:
         T("row of %d lines"%n,
@@ -473,7 +476,7 @@ def manualLogoTasks():
       """
       ((loop i infinity (move epsilonLength epsilonAngle)) (p (move 1d 0a)) (loop i infinity (move epsilonLength epsilonAngle)))
       """,
-      needToTrain=False)
+      needToTrain=True)
     T("circle next to semicircle",
       """
       ((loop i infinity (move epsilonLength epsilonAngle))
@@ -482,6 +485,21 @@ def manualLogoTasks():
       (loop i infinity (move epsilonLength epsilonAngle)))
       """,
       needToTrain=True)
+    T("semicircle next to square",
+      """
+      ((loop i infinity (move epsilonLength epsilonAngle))
+      (p (move 1d 0a))
+      (loop i infinity (move 1d (/a 1a 4))))
+      """,
+      needToTrain=False)
+    T("circle next to square",
+      """
+      ((loop i infinity (move epsilonLength epsilonAngle))
+      (loop i infinity (move epsilonLength epsilonAngle))
+      (p (move 1d 0a))
+      (loop i infinity (move 1d (/a 1a 4))))
+      """,
+      needToTrain=False)
     T("circle next to line",
       """
       ((loop i infinity (move epsilonLength epsilonAngle))
@@ -489,7 +507,7 @@ def manualLogoTasks():
       (p (move 1d 0a))
       (move 1d 0a))
       """,
-      needToTrain=False)
+      needToTrain=True)
     T("line next to circle",
       """
       ((move 1d 0a)
@@ -515,37 +533,49 @@ def manualLogoTasks():
           (p (move %s 0a)))"""%(n,l),
           needToTrain=n == 5)
 
-    for n in [3,4,5,6,7]:
-        body = {"empty": "(move 1d 0a)",
-                "dashed": "(p (move 1d 0a)) (move 1d 0a)",
-                "circle": "(move 1d 0a) (loop k 2 (loop i infinity (move epsilonLength epsilonAngle)))",
-                "lonely circle": "(p (move 1d 0a)) (loop k 2 (loop i infinity (move epsilonLength epsilonAngle)))",
-                "square dashed": "(p (move 1d 0a)) (loop s 4 (move 1d (/a 1a 4)))",
-                "square": "(move 1d 0a) (loop s 4 (move 1d (/a 1a 4)))",
-                "semicircle": "(move 1d 0a) (loop i infinity (move epsilonLength epsilonAngle))"}
-        for name in body:
-            # if name == "empty" and n != 5: continue
-            # if name == "dashed" and n != 4: continue
-            
+    with random_seed(42): # carefully selected for maximum entropy
+        for n in [3,4,5,6,7]:
+            body = {"empty": "(move 1d 0a)",
+                    "dashed": "(p (move 1d 0a)) (move 1d 0a)",
+                    "circle": "(move 1d 0a) (loop k 2 (loop i infinity (move epsilonLength epsilonAngle)))",
+                    "lonely circle": "(p (move 1d 0a)) (loop k 2 (loop i infinity (move epsilonLength epsilonAngle)))",
+                    "square dashed": "(p (move 1d 0a)) (loop s 4 (move 1d (/a 1a 4)))",
+                    "square": "(move 1d 0a) (loop s 4 (move 1d (/a 1a 4)))",
+                    "semicircle": "(move 1d 0a) (loop i infinity (move epsilonLength epsilonAngle))"}
+            for name in body:
+                mustTrain = False
 
-            supervised = (name == "semicircle" and n == 5) or \
-                         (name == "square dashed" and n == 6) or \
-                         (name == "square" and n == 3)
-            supervised = False
-            T("%d-%s snowflake"%(n,name),
-              """
-              (loop j %d
-              (embed %s)
-              (move 0d (/a 1a %d)))"""%(n,body[name],n),
-              supervised)
+                mustTrain = mustTrain or (n == 5 and name == "empty")
+                mustTrain = mustTrain or (n == 4 and name == "dashed")
+                mustTrain = mustTrain or (n == 7 and name == "circle")
+                mustTrain = mustTrain or (n == 6 and name == "lonely circle")
+                mustTrain = mustTrain or (n == 5 and name == "square")
+                mustTrain = mustTrain or (n == 5 and name == "semicircle")
+                mustTrain = mustTrain or (n == 3 and name == "square dashed")
 
-    for n in [4]:#2,3,4]:
+                mustTrain = mustTrain or (random.random() < 0.095) # calibrated to give 70 training tasks
+                
+
+                # At this point in time I no longer remember _why_ I thought it was necessary to do this
+                if name == "empty" and n != 5: mustTrain = False
+                if name == "dashed" and n != 4: mustTrain = False
+                
+
+                T("%d-%s snowflake"%(n,name),
+                  """
+                  (loop j %d
+                  (embed %s)
+                  (move 0d (/a 1a %d)))"""%(n,body[name],n),
+                  needToTrain=mustTrain)
+
+    for n in [3,4]:#2,3,4]:
         T("%d-row of squares"%n,
           """
           (loop i %d
           (embed (loop k 4 (move 1d (/a 1a 4))))
           (move 1d 0a))
-          """%n)
+          """%n,
+          needToTrain=n == 4)
     T("2x2 grid",
     """
     (for x 2 (embed (for y 2
@@ -565,7 +595,7 @@ def manualLogoTasks():
           (for i 4
           (move (*d 1d %d) (/a 1a 4)))
           """%l,
-          needToTrain=l in range(3))
+          needToTrain=l in range(4))
     for n in [4,5]:
         T("%d-concentric squares"%n,
           """
@@ -612,3 +642,4 @@ if __name__ == "__main__":
         scipy.misc.imsave('/tmp/logo%d.png'%n, np.array([a[i:i+w]
                                                          for i in range(0,len(a),w) ]))
     eprint(len(tasks),"tasks")
+    eprint(sum(t.mustTrain for t in tasks),"need to be trained on")

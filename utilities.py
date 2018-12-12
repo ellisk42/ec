@@ -369,6 +369,17 @@ class timing(object):
         else: assert False, "Timing message should be string function"
         eprint("%s in %.1f seconds" % (message, dt))
 
+class random_seed(object):
+    def __init__(self, seed):
+        self.seed = seed
+
+    def __enter__(self):
+        self._oldSeed = random.getstate()
+        random.seed(self.seed)
+        return self
+
+    def __exit__(self, type, value, traceback):
+        random.setstate(self._oldSeed)
 
 
 def randomPermutation(l):

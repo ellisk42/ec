@@ -78,17 +78,56 @@ class EvolutionGuide(RecognitionModel):
         return {c: (p,v)
                 for c,p,v in zip(children, policies, values) }
 
-    def batchedLoss(self, root):
-        pv = self.graphForward(root)
+    def valuesAndEdgeCosts(self, root):
+        """Returns a dictionary of {node: value}, for each node in the graph,
+        as well as a dictionary of {edge: -logLikelihood}, for each edge in the graph"""
+        children = root.reachable()
+        children = list(children)
+        edges = []
+        # Make sure that everything has a task associated with it
+        for childIndex, c in enumerate(children):
+            for e in c.descendents: edges.append((e,childIndex))
+            if c.current is None and c.program is not None:
+                c.current = self.featureExtractor.taskOfProgram(c.program, c.goal.request,
+                                                                lenient=True)
+                assert c.current is not None
 
-        distance = {} # map from node in graph to distance
-        edgeCost = {}
-        with timing(lambda dt: "calculated %d edge costs (%f s/edge)"%(len(edgeCost),dt/len(edgeCost))):
-            for ev in root.reachable():
-                mg = pv[ev][0]
-                for edge in ev.descendents:
-                    edgeCost[edge] = -edge.likelihoodSummary(self.mutationGrammar).logLikelihood(mg).view(-1)
+        goal = root.goal
+        # features: (# vertices) x (self.outputDimensionality)
+        features = self._MLP(self.featureExtractor.featuresOfTasks([goal]*len(children),
+                                                                   [c.current for c in children]))
+        B = features.shape[0]
+        V = self.value(features)
+
+        summaries = [ e.likelihoodSummary(self.mutationGrammar) for e,_ in edges ]
+        xs_indices = torch.tensor(np.array([ childIndex for _,childIndex in edges ]))
+        xs = features[xs_indices]
+        edgeCosts = -self.policy.batchedLogLikelihoods(xs, summaries)
         
+        return ({children[b]: V[b]
+                 for b in range(B) },
+                {edges[e][0]: edgeCosts[e]
+                 for e in range(len(edges)) })
+
+    def batchedLoss(self, root):
+        if True:
+            with timing(lambda dt: "calculated %d edge costs (%f s/edge)"%(len(edgeCost),
+                                                                           dt/len(edgeCost))):
+                values, edgeCost = self.valuesAndEdgeCosts(root)
+        else:
+            with timing(lambda dt: "calculated %d edge costs (%f s/edge)"%(len(edgeCost),
+                                                                           dt/len(edgeCost))):
+                pv = self.graphForward(root)
+                values = {ev: value[1] for ev, value in pv.items() }
+                edgeCost = {}
+                for ev,(policy,_) in pv.items():
+                    for edge in ev.descendents:
+                        edgeCost[edge] = -edge.likelihoodSummary(self.mutationGrammar).logLikelihood(policy)[0]
+                eprint(edgeCost)
+
+            
+
+        distance = {}
         def _distance(ev):
             if ev in distance: return distance[ev]
             if ev.isGoal:
@@ -97,18 +136,20 @@ class EvolutionGuide(RecognitionModel):
                 alternatives = []
                 for edge in ev.descendents:
                     alternatives.append(edgeCost[edge] + _distance(edge.child))
+                if alternatives == []:
+                    eprint(ev,"has no alternatives/descendents")
                 if False:
                     alternatives = [ edgeCost + distanceToGo
                                      for edgeCost, distanceToGo in alternatives ]
                     d = torch.stack(alternatives,1).view(-1)
                     d = d.squeeze(0).min(0)[0]
                 else:
-                    d = -torchSoftMax([-a for a in alternatives ])
+                    d = -torch.logsumexp(-torch.stack(alternatives), 0)
             distance[ev] = d
             return d
         with timing("_distance"):
             pl = _distance(root)
-        vl = sum( (distance[ev] - pv[ev][1])**2
+        vl = sum( (distance[ev] - values[ev])**2
                   for ev in root.reachable())
         vl = vl/len(distance) # MSE
         return pl,vl
@@ -207,19 +248,26 @@ class EvolutionGuide(RecognitionModel):
         
         while True:
             random.shuffle(graphs)
-            for ev in graphs:
-                with timing("gradient step with %d vertices"%len(ev.reachable())):
-                    self.zero_grad()
-                    pl, vl = self.batchedLoss(ev)
-                    (pl + vl).backward()
-                    optimizer.step()
+            latestLosses = []
+            with timing("completed a single pass over the data set"):
+                for ev in graphs:
+                    with timing("gradient step with %d vertices"%len(ev.reachable())):
+                        self.zero_grad()
+                        pl, vl = self.batchedLoss(ev)
+                        (pl + vl).backward()
+                        optimizer.step()
 
-                losses.append((pl.data.tolist(),
-                               vl.data.tolist()[0]))
-                eprint(losses[-1])
+                    losses.append((pl.data.tolist(),
+                                   vl.data.tolist()[0]))
+                    latestLosses.append(pl.data.tolist())
+                    eprint(losses[-1])
 
-                if steps and len(losses) > steps or timeout and time.time() - startTime > timeout:
-                    return 
+                    if steps and len(losses) > steps or timeout and time.time() - startTime > timeout:
+                        return
+                eprint(latestLosses)
+                eprint("Average policy loss over the most recent pass:\n\t",
+                       sum(latestLosses)/len(latestLosses))
+                    
 
         
     def search(self, goal, _=None,
@@ -531,6 +579,7 @@ for t in tasks:
     trajectories.append(trajectory)
 
 testing, trajectories = testTrainSplit(trajectories, 0.7)
+#trajectories = trajectories[:2]
 eprint("Training on",len(trajectories),"/",len(tasks),"tasks")
 
 rm = EvolutionGuide(TowerCNN([]),g,contextual=True,
