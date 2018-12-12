@@ -1,5 +1,6 @@
 from utilities import eprint
 import random
+import numpy as np
 
 class DefaultTaskBatcher:
 	"""Iterates through task batches of the specified size. Defaults to all tasks if taskBatchSize is None."""
@@ -92,6 +93,58 @@ def entropyRandomBatch(ec_result, tasks, taskBatchSize, randomRatio):
 
 	return batch
 
+def kNearestNeighbors(ec_result, tasks, k, task):
+	"""Finds the k nearest neighbors in the recognition model logProduction space to a given task."""
+	cosDistance = ec_result.recognitionModel.grammarLogProductionDistanceToTask(task, tasks)
+	argSort = np.argsort(-cosDistance)# Want the greatest similarity.
+	topK = argSort[:k]
+	topKTasks = list(np.array(tasks)[topK])
+	return topKTasks
+
+
+class RandomkNNTaskBatcher:
+	"""Chooses a random task and finds the (taskBatchSize - 1) nearest neighbors using the recognition model logits."""
+	def __init__(self):
+		pass
+
+	def getTaskBatch(self, ec_result, tasks, taskBatchSize, currIteration):
+		if taskBatchSize is None:
+			taskBatchSize = len(tasks)
+		elif taskBatchSize > len(tasks):
+			eprint("Task batch size is greater than total number of tasks, aborting.")
+			assert False
+
+		if ec_result.recognitionModel is None:
+			eprint("No recognition model, falling back on random %d" % taskBatchSize)
+			return random.sample(tasks, taskBatchSize)
+		else:
+			randomTask = random.choice(tasks)
+			kNN = kNearestNeighbors(ec_result, tasks, taskBatchSize - 1, randomTask)
+			return [randomTask] + kNN
+
+class RandomLowEntropykNNTaskBatcher:
+	"""Choose a random task from the 10 unsolved with the lowest entropy, and finds the (taskBatchSize - 1) nearest neighbors using the recognition model logits."""
+	def __init__(self):
+		pass
+
+	def getTaskBatch(self, ec_result, tasks, taskBatchSize, currIteration):
+		unsolvedTasks = [t for t in tasks if ec_result.allFrontiers[t].empty]
+
+		if taskBatchSize is None:
+			return unsolvedTasks
+		elif taskBatchSize > len(tasks):
+			eprint("Task batch size is greater than total number of tasks, aborting.")
+			assert False
+
+		if ec_result.recognitionModel is None:
+			eprint("No recognition model, falling back on random %d tasks from the remaining %d" %(taskBatchSize, len(unsolvedTasks)))
+			return random.sample(unsolvedTasks, taskBatchSize)
+		else:
+			lowEntropyUnsolved = entropyRandomBatch(ec_result, unsolvedTasks, taskBatchSize, randomRatio=0)
+			randomTask = random.choice(lowEntropyUnsolved)
+			kNN = kNearestNeighbors(ec_result, tasks, taskBatchSize - 1, randomTask)
+			return [randomTask] + kNN
+
 
 class UnsolvedEntropyTaskBatcher:
 	"""Returns tasks that have never been solved at any previous iteration.
@@ -136,7 +189,9 @@ class UnsolvedRandomEntropyTaskBatcher:
 		else:
 			return entropyRandomBatch(ec_result, unsolvedTasks, taskBatchSize, randomRatio=.5)
 
-			
+
+
+
 
 		
 

@@ -203,6 +203,18 @@ class RecognitionModel(nn.Module):
         else:
             return self.grammarBuilder.logProductions(features)
 
+    def grammarLogProductionDistanceToTask(self, task, tasks):
+        """Returns the cosine similarity of all other tasks to a given task."""
+        taskLogits = self.grammarLogProductionsOfTask(task).unsqueeze(0) # Change to [1, D]
+        assert taskLogits is not None, 'Grammar log productions are not defined for this task.'
+        otherTasks = [t for t in tasks if t is not task] # [nTasks -1 , D]
+
+        # Build matrix of all other tasks.
+        otherLogits = torch.stack([self.grammarLogProductionsOfTask(t) for t in otherTasks])
+        cos = nn.CosineSimilarity(dim=1, eps=1e-6)
+        cosMatrix = cos(taskLogits, otherLogits)
+        return cosMatrix.data.numpy()
+
     def grammarEntropyOfTask(self, task):
         """Returns the entropy of the grammar distribution from non-contextual models for a task."""
         grammarLogProductionsOfTask = self.grammarLogProductionsOfTask(task)
