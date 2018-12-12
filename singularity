@@ -54,7 +54,7 @@ open Core
     export PATH="/usr/local/conda/bin:$PATH"
 
     conda install -y  numpy dill pyzmq matplotlib scipy protobuf scikit-learn
-    conda install -y  pytorch=0.4.0 torchvision -c pytorch
+    conda install pytorch torchvision -c pytorch
     pip install dill sexpdata pygame pycairo cairocffi psutil pypng Box2D-kengz graphviz
 
     wget https://bitbucket.org/squeaky/portable-pypy/downloads/pypy3.5-6.0.0-linux_x86_64-portable.tar.bz2
