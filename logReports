@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# Summarizes log report files.
+
+module add openmind/singularity
+
+srun --job-name=logReport --output=jobs/logReports --ntasks=1 --mem-per-cpu=5000 --cpus-per-task 1 --time=5:00 --qos=tenenbaum \
+  singularity exec -B /om2  sklearn-container.img \
+  python logReports.py --experimentsFile launchers/batchExperiments_12_2_2018  \
+  &
