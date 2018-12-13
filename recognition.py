@@ -1300,7 +1300,6 @@ class NewRecognitionModel(nn.Module):
 def helmholtzEnumeration(g, request, inputs, timeout, _=None,
                          special=None, evaluationTimeout=None):
     """Returns json (as text)"""
-    eprint("I'M BEING CALLED")
     import json
 
     message = {"request": request.json(),
@@ -1319,7 +1318,6 @@ def helmholtzEnumeration(g, request, inputs, timeout, _=None,
         response, error = process.communicate(bytes(message, encoding="utf-8"))
     except OSError as exc:
         raise exc
-    eprint("I'M DONE")
     return response
 
 def backgroundHelmholtzEnumeration(tasks, g, timeout, _=None,
