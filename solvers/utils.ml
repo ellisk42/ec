@@ -2,7 +2,14 @@ open Core
 open Unix.Select_fds
 open Sys
 open Obj
-  
+
+let power_of exponent natural =
+  let rec loop n =
+    if n = natural then true else
+    if n > natural then false else
+      loop (n*exponent)
+  in loop 1
+    
 
 let singleton_head = function
   | [x] -> x

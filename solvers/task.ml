@@ -1,6 +1,7 @@
 open Core
 open Unix
 
+open CachingTable
 open Timeout
 open Utils
 open Type
@@ -14,7 +15,8 @@ type task =
     log_likelihood: program -> float;
   }
 
-let p2i : (LogoLib.LogoInterpreter.logo_instruction list,(int, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t) Hashtbl.Poly.t = Hashtbl.Poly.create ()
+(* let p2i : (LogoLib.LogoInterpreter.logo_instruction list,(int, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t) Hashtbl.Poly.t = Hashtbl.Poly.create () *)
+let p2i = CachingTable.create 100000
 
 
 exception EnumerationTimeout
@@ -74,11 +76,15 @@ let run_recent_logo ~timeout program =
                     let l = LogoLib.LogoInterpreter.turtle_to_list x in
                     if not (LogoLib.LogoInterpreter.logo_contained_in_canvas l)
                     then None  
-                    else match Hashtbl.find p2i l with
+                    else match CachingTable.find p2i l with
                       | Some(bx) -> Some(bx)
                       | None -> 
                         let bx = LogoLib.LogoInterpreter.turtle_to_array x 28 in
-                        Hashtbl.set p2i l bx;
+                        CachingTable.set p2i l bx;
+                        let l = CachingTable.length p2i in
+                        if power_of 10 l then
+                          (Printf.eprintf "logo caching has reached size %d\n" l;
+                           flush_everything());
                         Some(bx))
     in
     let bx = match bx with
@@ -128,11 +134,11 @@ register_special_task "LOGO" (fun extras ?timeout:(timeout = 0.001) name ty exam
                 let x = run_lazy_analyzed_with_arguments (analyze_lazy_evaluation p) [] in
                 let l = LogoLib.LogoInterpreter.turtle_to_list x in
                 let bx =
-                  match Hashtbl.Poly.find p2i l with
+                  match CachingTable.find p2i l with
                   | Some(x) -> x
                   | _ ->
                     let bx = LogoLib.LogoInterpreter.turtle_to_array x 28 in
-                    Hashtbl.Poly.set p2i l bx ;
+                    CachingTable.set p2i l bx ;
                     bx
                 in
                 if proto then begin
