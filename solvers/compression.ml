@@ -296,6 +296,12 @@ let compression_worker connection ~arity ~bs ~topK g frontiers =
                   let index = incorporate v originalProgram |> n_step_inversion v ~n:arity in
                   let program = minimum_cost_inhabitants new_cost_table ~given:(Some(i)) index |> snd |> 
                                 List.hd_exn |> extract v |> singleton_head in
+                  if !verbose_compression then
+                    Printf.eprintf "\t%s | %s -> %s\n"
+                      (string_of_program originalProgram)
+                      (invention_source |> normalize_invention |> string_of_program)
+                      (program |> string_of_program)
+                    ;
                   let program' =
                     try rewriter frontier.request program
                     with EtaExpandFailure -> originalProgram
