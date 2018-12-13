@@ -268,10 +268,14 @@ let rec n_step_inversion t ~n j =
   | None -> 
     (* list of length (n+1), corresponding to 0 steps, 1, ..., n *)
     let rec n_step ?completed:(completed=0) current : int list =
-      if completed = n then [current] else
-        let next = recursive_inversion t current in
-        let next = beta_pruning t next in
-        current :: n_step ~completed:(completed+1) next
+      let rest = if completed = n then [] else
+          n_step ~completed:(completed+1) (recursive_inversion t current)
+      in
+      beta_pruning t current :: rest
+      (* if completed = n then [current] else *)
+      (*   let next = recursive_inversion t current in *)
+      (*   let next = beta_pruning t next in *)
+      (*   current :: n_step ~completed:(completed+1) next *)
     in
 
     let rec visit j =
@@ -284,7 +288,7 @@ let rec n_step_inversion t ~n j =
       union t (children :: n_step j)
     in 
 
-    let ns = visit j in
+    let ns = visit j |> beta_pruning t in
     Hashtbl.set t.n_step_table key ns;
     ns
 

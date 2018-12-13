@@ -172,7 +172,7 @@ let rewrite_with_invention i =
                 (beta_normal_form ~reduceInventions:true e'));
       e'
     with UnificationFailure -> begin
-        if false then begin  
+        if !verbose_compression then begin  
           Printf.eprintf "WARNING: rewriting with invention gave ill typed term.\n";
           Printf.eprintf "Original:\t\t%s\n" (e |> string_of_program);
           Printf.eprintf "Original:\t\t%s\n" (e |> beta_normal_form ~reduceInventions:true |> string_of_program);
