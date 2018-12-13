@@ -88,7 +88,7 @@ def competeOnOneTask(checkpoint, task,
         
 
 def sygusCompetition(checkpoint, tasks):
-    from multiprocessing import Pool
+    from pathos.multiprocessing import Pool
     import datetime
     
     # map from task to search time. search time will be None if it is not solved

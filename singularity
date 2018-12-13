@@ -56,6 +56,7 @@ open Core
     conda install -y  numpy dill pyzmq matplotlib scipy protobuf scikit-learn
     conda install pytorch torchvision -c pytorch
     pip install dill sexpdata pygame pycairo cairocffi psutil pypng Box2D-kengz graphviz
+    pip install pathos
 
     wget https://bitbucket.org/squeaky/portable-pypy/downloads/pypy3.5-6.0.0-linux_x86_64-portable.tar.bz2
     tar xjvf pypy3.5-6.0.0-linux_x86_64-portable.tar.bz2
