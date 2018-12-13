@@ -152,7 +152,7 @@ def regex_options(parser):
                         default=0.8,
                         help="split test/train")
     parser.add_argument("-H", "--hidden", type=int,
-                        default=16,
+                        default=256,
                         help="number of hidden units")
     parser.add_argument("--likelihoodModel",
                         default="probabilistic",
