@@ -51,6 +51,7 @@ def parseLogFile(experimentLog):
     with open(os.path.join('jobs', experimentLog)) as f:
         lines = f.readlines()
 
+    possiblyBroken = ""
     testingStats = defaultdict(list)
     for i, line in enumerate(lines):
         testing_iteration = re.match('Evaluating on held out testing tasks for iteration: (\d+)', line)
@@ -58,14 +59,26 @@ def parseLogFile(experimentLog):
         if 'iterations  =' in line:
             iterations = re.match('.*iterations  =  (\d+)', line)
             total_iterations = int(iterations.group(1))
+        if ('Uncaught exception:' in line) or ('Fatal' in line) or ('fatal' in line):
+            possiblyBroken = "POSSIBLY BROKEN"
         if testing_iteration:
             testingStats['test_iteration'].append(int(testing_iteration.group(1)))
         if testing_hits:
             testingStats['test_hits'].append(int(testing_hits.group(1)))
             totalTasks = int(testing_hits.group(2))
             testingStats['test_total_tasks'].append(totalTasks)
+
+
     is_done = "DONE" if (testingStats['test_iteration'][-1] == total_iterations - 1) else ""
-    print("%s Total iterations: %d, on test iteration %d, best test is %d/%d" % (is_done, total_iterations, testingStats['test_iteration'][-1]+1, max(testingStats['test_hits']), testingStats['test_total_tasks'][-1]))
+    last_few_test_hits = testingStats['test_hits'][-1], testingStats['test_hits'][-2] if len(testingStats['test_hits']) > 2 else -1, testingStats['test_hits'][-3] if len(testingStats['test_hits']) > 3 else -1
+    print("%s %s Total iterations: %d, on test iteration %d, best test is %d/%d, last few tests are: %d, %d, %d" % \
+        (is_done, 
+            possiblyBroken,
+            total_iterations, 
+            testingStats['test_iteration'][-1]+1, 
+            max(testingStats['test_hits']), 
+            testingStats['test_total_tasks'][-1],
+            *last_few_test_hits))
 
 
 def summarizeLogs(experimentsFile):
