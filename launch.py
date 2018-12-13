@@ -21,7 +21,8 @@ def launch(size="t2.micro", name=""):
     # --key-name testing --associate-public-ip-address
     o = json.loads(subprocess.check_output(["aws", "ec2", "run-instances",
                                             "--image-id",
-                                            "ami-0351f49971957f1c9" if arguments.gpuImage else "ami-0866b9d387d1a80de",
+                                            "ami-0d38af51a5f929bc8",
+                                            #"ami-0351f49971957f1c9" if arguments.gpuImage else "ami-0866b9d387d1a80de",
                                             #"ami-0b75245c1e9b00c36",
                                             "--instance-type", size,
                                             "--security-groups", "publicssh",
@@ -81,9 +82,6 @@ def sendCommand(
         copyCheckpoint = "mv ~/%s ~/ec/experimentOutputs" % checkpoint
 
     preamble = f"""#!/bin/bash
-pypy3 -m pip install psutil
-pip install graphviz
-sudo apt-get install  -y graphviz
 cd ~/ec
 {copyCheckpoint}
 touch compressor_dummy
@@ -207,6 +205,9 @@ def launchExperiment(
         print("Invalid tarball for resume.")
         sys.exit(1)
 
+    command = "singularity exec %s container.img %s"%(
+        "--nv" if arguments.gpuImage else "",
+        command)
     script = """
 %s > jobs/%s 2>&1
 """ % (command, job_id)
