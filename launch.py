@@ -21,7 +21,8 @@ def launch(size="t2.micro", name=""):
     # --key-name testing --associate-public-ip-address
     o = json.loads(subprocess.check_output(["aws", "ec2", "run-instances",
                                             "--image-id",
-                                            "ami-0d38af51a5f929bc8",
+                                            "ami-05b392ead9557a161",
+                                            #"ami-0d38af51a5f929bc8",
                                             #"ami-0351f49971957f1c9" if arguments.gpuImage else "ami-0866b9d387d1a80de",
                                             #"ami-0b75245c1e9b00c36",
                                             "--instance-type", size,
