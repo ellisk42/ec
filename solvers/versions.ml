@@ -288,7 +288,7 @@ let rec n_step_inversion t ~n j =
       union t (children :: n_step j)
     in 
 
-    let ns = visit j in
+    let ns = visit j |> beta_pruning t in
     Hashtbl.set t.n_step_table key ns;
     ns
 
