@@ -34,11 +34,17 @@ def variable(x, volatile=False, cuda=False):
         x = x.cuda()
     return Variable(x, volatile=volatile)
 
+def maybe_cuda(x, use_cuda):
+    if use_cuda:
+        return x.cuda()
+    else:
+        return x
+
 
 def is_torch_not_a_number(v):
     """checks whether a tortured variable is nan"""
     v = v.data
-    if not ((v == v)[0]):
+    if not ((v == v).item()):
         return True
     return False
 
@@ -84,10 +90,10 @@ class GrammarNetwork(nn.Module):
     def batchedLogLikelihoods(self, xs, summaries):
         """Takes as input BxinputDimensionality vector & B likelihood summaries;
         returns B-dimensional vector containing log likelihood of each summary"""
+        use_cuda = xs.device.type == 'cuda'
 
-        B = xs.shape[0]
+        B = xs.size(0)
         assert len(summaries) == B
-        
         logProductions = self.logProductions(xs)
 
         # uses[b][p] is # uses of primitive p by summary b
@@ -97,8 +103,8 @@ class GrammarNetwork(nn.Module):
                 uses[b,p] = summary.uses.get(production, 0.)
             uses[b,len(self.grammar)] = summary.uses.get(Index(0), 0)
 
-        numerator = (logProductions * torch.from_numpy(uses).float()).sum(1)
-        numerator += torch.tensor([summary.constant for summary in summaries ]).float()
+        numerator = (logProductions * maybe_cuda(torch.from_numpy(uses).float(),use_cuda)).sum(1)
+        numerator += maybe_cuda(torch.tensor([summary.constant for summary in summaries ]).float(), use_cuda)
 
         alternativeSet = {normalizer
                           for s in summaries
@@ -110,7 +116,7 @@ class GrammarNetwork(nn.Module):
             for p, production in enumerate(self.grammar.primitives):
                 mask[tau,p] = 0. if production in alternativeSet[tau] else NEGATIVEINFINITY
             mask[tau,len(self.grammar)] = 0. if Index(0) in alternativeSet[tau] else NEGATIVEINFINITY
-        mask = torch.tensor(mask).float()
+        mask = maybe_cuda(torch.tensor(mask).float(), use_cuda)
 
         # mask: Rx|G|
         # logProductions: Bx|G|
@@ -120,12 +126,12 @@ class GrammarNetwork(nn.Module):
         z = torch.logsumexp(z, 2) # pytorch 1.0 dependency
 
         # Calculate how many times each normalizer was used
-        N = torch.zeros(B, len(alternativeSet))
+        N = np.zeros((B, len(alternativeSet)))
         for b, summary in enumerate(summaries):
             for tau, alternatives in enumerate(alternativeSet):
                 N[b, tau] = summary.normalizers.get(alternatives,0.)
 
-        denominator = (N * z).sum(1)
+        denominator = (maybe_cuda(torch.tensor(N).float(),use_cuda) * z).sum(1)
         return numerator - denominator
 
         
@@ -168,6 +174,7 @@ class ContextualGrammarNetwork(nn.Module):
                  for prim, js in self.library.items()} )
 
     def batchedLogLikelihoods(self, xs, summaries):
+        use_cuda = xs.device.type == 'cuda'
         """Takes as input BxinputDimensionality vector & B likelihood summaries;
         returns B-dimensional vector containing log likelihood of each summary"""
 
@@ -197,7 +204,7 @@ class ContextualGrammarNetwork(nn.Module):
                 uses[b, self.n_grammars - 2, p] = summary.variableParent.uses.get(production, 0.)
             uses[b, self.n_grammars - 2, G - 1] = summary.variableParent.uses.get(Index(0), 0.)
             
-        numerator = (logProductions*torch.tensor(uses).float()).view(B,-1).sum(1)
+        numerator = (logProductions*maybe_cuda(torch.tensor(uses).float(),use_cuda)).view(B,-1).sum(1)
 
         constant = np.zeros(B)
         for b,summary in enumerate(summaries):
@@ -206,7 +213,7 @@ class ContextualGrammarNetwork(nn.Module):
                 for s in ss:
                     constant[b] += s.constant
             
-        numerator += torch.tensor(constant).float()
+        numerator += maybe_cuda(torch.tensor(constant).float(),use_cuda)
 
         # Calculate the god-awful denominator
         alternativeSet = set()
@@ -223,7 +230,7 @@ class ContextualGrammarNetwork(nn.Module):
             for p, production in enumerate(self.grammar.primitives):
                 mask[tau,p] = 0. if production in alternativeSet[tau] else NEGATIVEINFINITY
             mask[tau, G - 1] = 0. if Index(0) in alternativeSet[tau] else NEGATIVEINFINITY
-        mask = torch.tensor(mask).float()
+        mask = maybe_cuda(torch.tensor(mask).float(), use_cuda)
 
         z = mask.repeat(self.n_grammars,1,1).repeat(B,1,1,1) + \
             logProductions.repeat(len(alternativeSet),1,1,1).transpose(0,1).transpose(1,2)
@@ -242,7 +249,7 @@ class ContextualGrammarNetwork(nn.Module):
             # variableParent: this is the penultimate network output
             for r, alternatives in enumerate(alternativeSet):
                 N[b,self.n_grammars - 2,r] = summary.variableParent.normalizers.get(alternatives, 0.)
-        N = torch.tensor(N).float()
+        N = maybe_cuda(torch.tensor(N).float(), use_cuda)
         
 
         
@@ -369,14 +376,15 @@ class RecognitionModel(nn.Module):
         return - entry.program.logLikelihood(g)
 
     def frontierBiasOptimal(self, frontier):
-        g = self.grammarOfTask(frontier.task)
-        if g is None: return None
-        l = [entry.program.logLikelihood(g)
-             for entry in frontier]
-        l = torch.stack(l,1).squeeze(0)
-        l = l.max(0)[0]
-        l = l.unsqueeze(0)
-        return -l
+        batchSize = len(frontier.entries)
+        features = self.featureExtractor.featuresOfTask(frontier.task)
+        if features is None: return None
+        features = self._MLP(features)
+        features = features.expand(batchSize, features.size(-1))  # TODO
+        lls = self.grammarBuilder.batchedLogLikelihoods(features, [entry.program for entry in frontier])
+        actual_ll = torch.Tensor([ entry.logLikelihood for entry in frontier])
+        lls += (actual_ll.cuda() if self.use_cuda else actual_ll)
+        return -lls.max() #Beware that inputs to max change output type
 
     def replaceProgramsWithLikelihoodSummaries(self, frontier):
         return Frontier(
@@ -553,7 +561,7 @@ class RecognitionModel(nn.Module):
                 else:
                     loss.backward()
                     optimizer.step()
-                    losses.append(loss.data.tolist()[0])
+                    losses.append(loss.data.item())
                     descriptionLengths.append(min(-e.logPrior for e in frontier))
                     if dreaming:
                         dreamLosses.append(losses[-1])
@@ -1292,6 +1300,7 @@ class NewRecognitionModel(nn.Module):
 def helmholtzEnumeration(g, request, inputs, timeout, _=None,
                          special=None, evaluationTimeout=None):
     """Returns json (as text)"""
+    eprint("I'M BEING CALLED")
     import json
 
     message = {"request": request.json(),
@@ -1310,6 +1319,7 @@ def helmholtzEnumeration(g, request, inputs, timeout, _=None,
         response, error = process.communicate(bytes(message, encoding="utf-8"))
     except OSError as exc:
         raise exc
+    eprint("I'M DONE")
     return response
 
 def backgroundHelmholtzEnumeration(tasks, g, timeout, _=None,
