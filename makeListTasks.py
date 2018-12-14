@@ -146,15 +146,11 @@ def make_list_bootstrap_tasks():
         #      [((l,), [l[int(j/2)] for j in range(len(l)) ])
         #       for _ in range(10)
         #       for l in [ [randint(0, 9) for _ in range(randint(1,4)*2)] ] ]),
-        Task("take until 1 reached", arrow(tlist(tint),tlist(tint)),
-             [((p + [1] + s,),p)
+        Task("take until 5 reached", arrow(tlist(tint),tlist(tint)),
+             [((p + [5] + s,),p)
               for _ in range(10)
-              for p in [ [z for z in randomList()[:5] if z != 1 ]]
+              for p in [ [z for z in randomList()[:5] if z != 5 ]]
               for s in [randomList()] ]),
-        Task("stutter", arrow(tlist(tint),tlist(tint)),
-             [((l,), [z for x in l for z in [x,x] ])
-              for _ in range(10)
-              for l in [randomList()] ]),
         Task("drop last element", arrow(tlist(tint),tlist(tint)),
              [((l,), l[:-1])
               for _ in range(10)
@@ -217,6 +213,10 @@ def make_list_bootstrap_tasks():
 
     # learning to fold
     foldBootstrap = [
+        Task("stutter", arrow(tlist(tint),tlist(tint)),
+             [((l,), [z for x in l for z in [x,x] ])
+              for _ in range(10)
+              for l in [randomList()] ]),
         Task("sum", arrow(tlist(tint), tint),
              [((l,), sum(l))
               for _ in range(10)
@@ -347,7 +347,7 @@ def make_list_bootstrap_tasks():
 
     # Let's learn everything!
     if True:
-        return lengthBootstrap + \
+        return lengthBootstrap + filterBootstrap + \
             unfoldBootstrap + arrayBootstrap + foldBootstrap + mapBootstrap
 
 
