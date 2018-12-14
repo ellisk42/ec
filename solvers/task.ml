@@ -16,7 +16,7 @@ type task =
   }
 
 (* let p2i : (LogoLib.LogoInterpreter.logo_instruction list,(int, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t) Hashtbl.Poly.t = Hashtbl.Poly.create () *)
-let p2i = CachingTable.create 100000
+let p2i = CachingTable.create 10000
 
 
 exception EnumerationTimeout
@@ -82,7 +82,7 @@ let run_recent_logo ~timeout program =
                         let bx = LogoLib.LogoInterpreter.turtle_to_array x 28 in
                         CachingTable.set p2i l bx;
                         let l = CachingTable.length p2i in
-                        if power_of 10 l then
+                        if power_of 10 l && l >= 1000 then
                           (Printf.eprintf "logo caching has reached size %d\n" l;
                            flush_everything());
                         Some(bx))
