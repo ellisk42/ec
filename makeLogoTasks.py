@@ -216,7 +216,7 @@ def manualLogoTask(name, expression, proto=False, needToTrain=False, supervise =
                                       "none",
                                       str(resolution),
                                       str(p)],
-                                     timeout=1).decode("utf8")
+                                     timeout=10).decode("utf8")
              for resolution in [28,128]]
     shape = list(map(int, output.split(',')))
     highresolution = list(map(float, highresolution.split(',')))
