@@ -287,7 +287,7 @@ let compression_worker connection ~arity ~bs ~topK g frontiers =
   let rewrite_frontiers invention_source =
     time_it ~verbose:!verbose_compression "(worker) rewrote frontiers" (fun () -> 
         time_it ~verbose:!verbose_compression "(worker) gc during rewrite" Gc.compact;
-
+        let intersectionTable = Some(Hashtbl.Poly.create()) in
         let i = incorporate v invention_source in
         let rewriter = rewrite_with_invention invention_source in
         (* Extract the frontiers in terms of the new primitive *)
@@ -297,7 +297,9 @@ let compression_worker connection ~arity ~bs ~topK g frontiers =
                 let programs' =
                   List.map frontier.programs ~f:(fun (originalProgram, ll) ->
                       let index = incorporate v originalProgram |> n_step_inversion v ~n:arity in
-                      let program = minimal_inhabitant new_cost_table ~given:(Some(i)) index |> get_some in 
+                      let program =
+                        minimal_inhabitant ~intersectionTable new_cost_table ~given:(Some(i)) index |> get_some
+                      in 
                       let program' =
                         try rewriter frontier.request program
                         with EtaExpandFailure -> originalProgram

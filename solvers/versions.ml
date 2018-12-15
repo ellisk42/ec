@@ -135,24 +135,39 @@ let rec intersection t a b =
   | TerminalSpace(t1), TerminalSpace(t2) when t1 = t2 -> a
   | _ -> t.void
 
-let rec have_intersection t a b =
-  match index_table t a, index_table t b with
-  | Void, _ | _, Void -> false
-  | Universe, _ -> true
-  | _, Universe -> true
-  | Union(xs), Union(ys) ->
-    xs |> List.exists ~f:(fun x -> ys |> List.exists ~f:(fun y -> have_intersection t x y))
-  | Union(xs), _ -> 
-    xs |> List.exists ~f:(fun x -> have_intersection t x b)
-  | _, Union(xs) ->
-    xs |> List.exists ~f:(fun x -> have_intersection t x a)
-  | AbstractSpace(b1), AbstractSpace(b2) ->
-    have_intersection t b1 b2
-  | ApplySpace(f1,x1), ApplySpace(f2,x2) ->
-    have_intersection t f1 f2 && have_intersection t x1 x2
-  | IndexSpace(i1), IndexSpace(i2) when i1 = i2 -> true
-  | TerminalSpace(t1), TerminalSpace(t2) when t1 = t2 -> true
-  | _ -> false
+let rec have_intersection ?table:(table=None) t a b =
+  if a = b then true else
+    let a, b = if a > b then (b,a) else (a,b) in
+
+    let intersect a b =
+      match index_table t a, index_table t b with
+      | Void, _ | _, Void -> false
+      | Universe, _ -> true
+      | _, Universe -> true
+      | Union(xs), Union(ys) ->
+        xs |> List.exists ~f:(fun x -> ys |> List.exists ~f:(fun y -> have_intersection ~table t x y))
+      | Union(xs), _ -> 
+        xs |> List.exists ~f:(fun x -> have_intersection ~table t x b)
+      | _, Union(xs) ->
+        xs |> List.exists ~f:(fun x -> have_intersection ~table t x a)
+      | AbstractSpace(b1), AbstractSpace(b2) ->
+        have_intersection ~table t b1 b2
+      | ApplySpace(f1,x1), ApplySpace(f2,x2) ->
+        have_intersection ~table t f1 f2 && have_intersection ~table t x1 x2
+      | IndexSpace(i1), IndexSpace(i2) when i1 = i2 -> true
+      | TerminalSpace(t1), TerminalSpace(t2) when t1 = t2 -> true
+      | _ -> false
+    in
+    
+    match table with
+    | None -> intersect a b
+    | Some(table') ->
+      match Hashtbl.find table' (a,b) with
+      | Some(i) -> i
+      | None ->
+        let i = intersect a b in
+        Hashtbl.set table' ~key:(a,b) ~data:i;
+        i
 
 let rec substitutions t ?n:(n=0) index =
   match Hashtbl.find t.substitution_table (index,n) with
@@ -382,7 +397,8 @@ type cheap_cost_table = {function_cost : (float option) ra;
 let empty_cheap_cost_table t = {function_cost = empty_resizable();
                                 argument_cost = empty_resizable();
                                 cost_table_parent = t;}
-let rec minimal_inhabitant_cost ?given:(given=None) ?canBeLambda:(canBeLambda=true) t j : float =
+let rec minimal_inhabitant_cost
+    ?intersectionTable:(intersectionTable=None) ?given:(given=None) ?canBeLambda:(canBeLambda=true) t j : float =
   let caching_table = if canBeLambda then t.argument_cost else t.function_cost in
   ensure_resizable_length caching_table (j + 1) None;
   
@@ -391,30 +407,32 @@ let rec minimal_inhabitant_cost ?given:(given=None) ?canBeLambda:(canBeLambda=tr
   | None ->
     let c =
       match given with
-      | Some(invention) when have_intersection t.cost_table_parent invention j -> 1.
+      | Some(invention) when have_intersection ~table:intersectionTable t.cost_table_parent invention j -> 1.
       | _ -> 
       match index_table t.cost_table_parent j with
       | Universe | Void -> assert false
       | IndexSpace(_) | TerminalSpace(_) -> 1.
       | Union(u) ->
-         u |> List.map ~f:(minimal_inhabitant_cost ~given ~canBeLambda t) |> fold1 min
+         u |> List.map ~f:(minimal_inhabitant_cost ~intersectionTable ~given ~canBeLambda t) |> fold1 min
       | AbstractSpace(b) when canBeLambda ->
-        epsilon_cost +. minimal_inhabitant_cost ~given ~canBeLambda:true t b
+        epsilon_cost +. minimal_inhabitant_cost ~intersectionTable ~given ~canBeLambda:true t b
       | AbstractSpace(b) -> Float.infinity
       | ApplySpace(f,x) ->
-        epsilon_cost +. minimal_inhabitant_cost ~given ~canBeLambda:false t f +.
-        minimal_inhabitant_cost ~given ~canBeLambda:true t x 
+        epsilon_cost +. minimal_inhabitant_cost ~intersectionTable ~given ~canBeLambda:false t f +.
+        minimal_inhabitant_cost ~intersectionTable ~given ~canBeLambda:true t x 
     in
     set_resizable caching_table j (Some(c));
     c
 
-let rec minimal_inhabitant ?given:(given=None) ?canBeLambda:(canBeLambda=true) t j : program option =
-  let c = minimal_inhabitant_cost ~given ~canBeLambda t j in
+let rec minimal_inhabitant
+    ?intersectionTable:(intersectionTable=None) ?given:(given=None) ?canBeLambda:(canBeLambda=true)
+    t j : program option =
+  let c = minimal_inhabitant_cost ~intersectionTable ~given ~canBeLambda t j in
   if is_invalid c then None else
     let vs = index_table t.cost_table_parent j in
     let p =
       match c, given with
-      | 1., Some(invention) when have_intersection t.cost_table_parent invention j ->
+      | 1., Some(invention) when have_intersection ~table:intersectionTable t.cost_table_parent invention j ->
         extract t.cost_table_parent invention |> singleton_head
       | _ -> 
       match vs with
@@ -422,14 +440,14 @@ let rec minimal_inhabitant ?given:(given=None) ?canBeLambda:(canBeLambda=true) t
       | IndexSpace(_) | TerminalSpace(_) ->
         extract t.cost_table_parent j |> singleton_head
       | Union(u) ->
-        u |> minimum_by (minimal_inhabitant_cost ~given ~canBeLambda t) |>
-        minimal_inhabitant ~given ~canBeLambda t |>
+        u |> minimum_by (minimal_inhabitant_cost ~intersectionTable ~given ~canBeLambda t) |>
+        minimal_inhabitant ~intersectionTable ~given ~canBeLambda t |>
         get_some
       | AbstractSpace(b) ->
-        Abstraction(minimal_inhabitant ~given ~canBeLambda:true t b |> get_some)
+        Abstraction(minimal_inhabitant ~intersectionTable ~given ~canBeLambda:true t b |> get_some)
       | ApplySpace(f,x) ->
-        Apply(minimal_inhabitant ~given ~canBeLambda:false t f |> get_some,
-              minimal_inhabitant ~given ~canBeLambda:true t x |> get_some)
+        Apply(minimal_inhabitant ~intersectionTable ~given ~canBeLambda:false t f |> get_some,
+              minimal_inhabitant ~intersectionTable ~given ~canBeLambda:true t x |> get_some)
     in
     Some(p)
 
