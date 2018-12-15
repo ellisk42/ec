@@ -8,7 +8,7 @@ from type import *
 from utilities import *
 
 import time
-import torch
+#import torch
 
 class GrammarFailure(Exception):
     pass
@@ -312,7 +312,8 @@ class Grammar(object):
             context, newSummary = self.likelihoodSummary(
                 context, environment, argumentType, argument, silent=silent, mem=mem)
             if newSummary is None:
-                mem[(originalContext, tuple(originalEnvironment), request, expression)] = (context, None)
+                if mem:
+                    mem[(originalContext, tuple(originalEnvironment), request, expression)] = (context, None)
                 return context, None
             thisSummary.join(newSummary)
         #memoize
@@ -691,8 +692,10 @@ class Grammar(object):
 
     def sketchllApplication(self, context, environment,
                           sk_function, sk_arguments, full_function, full_arguments, argumentRequests):
+        import torch
         if argumentRequests == []:
-                return torch.tensor([0.]).cuda(), context #does this make sense?
+            #print(self.logVariable.device.type)
+            return ( torch.tensor([0.]).cuda() if self.logVariable.device.type=='cuda' else torch.tensor([0.]) ), context #does this make sense?
         else:
             argRequest = argumentRequests[0].apply(context)
             laterRequests = argumentRequests[1:]
