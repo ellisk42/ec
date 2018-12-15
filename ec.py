@@ -67,6 +67,7 @@ class ECResult():
     # Linux does not like files that have more than 256 characters
     # So when exporting the results we abbreviate the parameters
     abbreviations = {"frontierSize": "fs",
+                     "reuseRecognition": "RR",
                      "recognitionTimeout": "RT",
                      "iterations": "it",
                      "maximumFrontier": "MF",
@@ -142,6 +143,7 @@ def ecIterator(grammar, tasks,
                enumerationTimeout=None,
                testingTimeout=None,
                testEvery=1,
+               reuseRecognition=False,
                expandFrontier=None,
                resumeFrontierSize=None,
                useRecognitionModel=True,
@@ -193,6 +195,9 @@ def ecIterator(grammar, tasks,
     if contextual and not useRecognitionModel:
         eprint("Contextual only applies to recognition models, aborting")
         assert False
+    if reuseRecognition and not useRecognitionModel:
+        eprint("Reuse of recognition model weights at successive iteration only applies to recognition models, aborting")
+        assert False
 
     if testingTimeout > 0 and len(testingTasks) == 0:
         eprint("You specified a testingTimeout, but did not provide any held out testing tasks, aborting.")
@@ -233,7 +238,7 @@ def ecIterator(grammar, tasks,
             "testingTasks",
             "compressor"} and v is not None}
     if not useRecognitionModel:
-        for k in {"helmholtzRatio", "recognitionTimeout", "biasOptimal", "contextual"}:
+        for k in {"helmholtzRatio", "recognitionTimeout", "biasOptimal", "contextual", "reuseRecognition"}:
             if k in parameters: del parameters[k]
 
     # Uses `parameters` to construct the checkpoint path
@@ -473,12 +478,18 @@ def ecIterator(grammar, tasks,
                 eprint("No frontiers to train recognition model, cannot do recognition model enumeration.")
                 tasksHitBottomUp = set()
             else:
+                # Should we initialize the weights to be what they were before?
+                previousRecognitionModel = None
+                if reuseRecognition and result.recognitionModel is not None:
+                    previousRecognitionModel = result.recognitionModel
+                
                 featureExtractorObject = featureExtractor(tasks, testingTasks=testingTasks, cuda=cuda)
                 recognizer = RecognitionModel(featureExtractorObject,
                                               grammar,
                                               activation=activation,
                                               cuda=cuda,
-                                              contextual=contextual)
+                                              contextual=contextual,
+                                              previousRecognitionModel=previousRecognitionModel)
                 
                 thisRatio = helmholtzRatio
                 if j == 0 and not biasOptimal: thisRatio = 0
@@ -702,6 +713,7 @@ def commandlineArguments(_=None,
                          enumerationTimeout=None,
                          testEvery=1,
                          topK=1,
+                         reuseRecognition=False,
                          CPUs=1,
                          compressor="ocaml",
                          useRecognitionModel=True,
@@ -794,6 +806,10 @@ def commandlineArguments(_=None,
                         maximum size of the frontier that is kept around.
                         Default: %s""" % maximumFrontier,
                         type=int)
+    parser.add_argument("--reuseRecognition",
+                        help="""Should we initialize recognition model weights to be what they were at the previous DreamCoder iteration? Default: %s""" % reuseRecognition,
+                        default=reuseRecognition,
+                        action="store_true")
     parser.add_argument(
         "--benchmark",
         help="""Benchmark synthesis times with a timeout of this many seconds. You must use the --resume option. EC will not run but instead we were just benchmarked the synthesis times of a learned model""",

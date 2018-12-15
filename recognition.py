@@ -261,7 +261,9 @@ class ContextualGrammarNetwork(nn.Module):
         
 
 class RecognitionModel(nn.Module):
-    def __init__(self,featureExtractor,grammar,hidden=[64],activation="relu",cuda=False,contextual=False):
+    def __init__(self,featureExtractor,grammar,hidden=[128],activation="relu",
+                 cuda=False,contextual=False,
+                 previousRecognitionModel=None):
         super(RecognitionModel, self).__init__()
         self.use_cuda = cuda
 
@@ -306,6 +308,10 @@ class RecognitionModel(nn.Module):
         self.generativeModel = grammar
 
         if cuda: self.cuda()
+
+        if previousRecognitionModel:
+            self._MLP.load_state_dict(previousRecognitionModel._MLP.state_dict())
+            self.featureExtractor.load_state_dict(previousRecognitionModel.featureExtractor.state_dict())
 
     def taskEmbeddings(self, tasks):
         return {task: self.featureExtractor.featuresOfTask(task).data.numpy()
