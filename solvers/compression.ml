@@ -285,27 +285,29 @@ let compression_worker connection ~arity ~bs ~topK g frontiers =
   Gc.compact();
 
   let rewrite_frontiers invention_source =
-    Gc.compact();
-    let i = incorporate v invention_source in
-    let rewriter = rewrite_with_invention invention_source in
-    (* Extract the frontiers in terms of the new primitive *)
-    let new_cost_table = empty_cheap_cost_table v in
-    let new_frontiers = List.map !frontiers
-        ~f:(fun frontier ->
-            let programs' =
-              List.map frontier.programs ~f:(fun (originalProgram, ll) ->
-                  let index = incorporate v originalProgram |> n_step_inversion v ~n:arity in
-                  let program = minimal_inhabitant new_cost_table ~given:(Some(i)) index |> get_some in 
-                  let program' =
-                    try rewriter frontier.request program
-                    with EtaExpandFailure -> originalProgram
-                  in
-                  (program',ll))
-            in 
-            {request=frontier.request;
-             programs=programs'})
-    in
-    new_frontiers
+    time_it ~verbose:!verbose_compression "(worker) rewrote frontiers" (fun () -> 
+        time_it ~verbose:!verbose_compression "(worker) gc during rewrite" Gc.compact;
+
+        let i = incorporate v invention_source in
+        let rewriter = rewrite_with_invention invention_source in
+        (* Extract the frontiers in terms of the new primitive *)
+        let new_cost_table = empty_cheap_cost_table v in
+        let new_frontiers = List.map !frontiers
+            ~f:(fun frontier ->
+                let programs' =
+                  List.map frontier.programs ~f:(fun (originalProgram, ll) ->
+                      let index = incorporate v originalProgram |> n_step_inversion v ~n:arity in
+                      let program = minimal_inhabitant new_cost_table ~given:(Some(i)) index |> get_some in 
+                      let program' =
+                        try rewriter frontier.request program
+                        with EtaExpandFailure -> originalProgram
+                      in
+                      (program',ll))
+                in 
+                {request=frontier.request;
+                 programs=programs'})
+        in
+        new_frontiers)
   in 
 
   while true do
