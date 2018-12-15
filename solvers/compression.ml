@@ -285,6 +285,7 @@ let compression_worker connection ~arity ~bs ~topK g frontiers =
   Gc.compact();
 
   let rewrite_frontiers invention_source =
+    Gc.compact();
     let i = incorporate v invention_source in
     let rewriter = rewrite_with_invention invention_source in
     (* Extract the frontiers in terms of the new primitive *)
@@ -521,6 +522,7 @@ let compression_step ~structurePenalty ~aic ~pseudoCounts ?arity:(arity=3) ~bs ~
     let ranked_candidates = List.take ranked_candidates topI in
 
     let try_invention_and_rewrite_frontiers (i : int) =
+      Gc.compact();
       let invention_source = extract v i |> singleton_head in
       try
         let new_primitive = invention_source |> normalize_invention in
@@ -531,14 +533,13 @@ let compression_step ~structurePenalty ~aic ~pseudoCounts ?arity:(arity=3) ~bs ~
 
         let rewriter = rewrite_with_invention invention_source in
         (* Extract the frontiers in terms of the new primitive *)
-        let new_cost_table = empty_cost_table v in
+        let new_cost_table = empty_cheap_cost_table v in
         let new_frontiers = List.map !frontiers
             ~f:(fun frontier ->
                 let programs' =
                   List.map frontier.programs ~f:(fun (originalProgram, ll) ->
                       let index = incorporate v originalProgram |> n_step_inversion v ~n:arity in
-                      let program = minimum_cost_inhabitants new_cost_table ~given:(Some(i)) index |> snd |> 
-                                    List.hd_exn |> extract v |> singleton_head in
+                      let program = minimal_inhabitant new_cost_table ~given:(Some(i)) index |> get_some in 
                       let program' =
                         try rewriter frontier.request program
                         with EtaExpandFailure -> originalProgram
