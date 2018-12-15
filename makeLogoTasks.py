@@ -541,6 +541,7 @@ def manualLogoTasks():
                     "lonely circle": "(p (move 1d 0a)) (loop k 2 (loop i infinity (move epsilonLength epsilonAngle)))",
                     "square dashed": "(p (move 1d 0a)) (loop s 4 (move 1d (/a 1a 4)))",
                     "square": "(move 1d 0a) (loop s 4 (move 1d (/a 1a 4)))",
+                    "close semicircle": "(loop i infinity (move epsilonLength epsilonAngle))",
                     "semicircle": "(move 1d 0a) (loop i infinity (move epsilonLength epsilonAngle))"}
             for name in body:
                 mustTrain = False
@@ -552,13 +553,15 @@ def manualLogoTasks():
                 mustTrain = mustTrain or (n == 5 and name == "square")
                 mustTrain = mustTrain or (n == 5 and name == "semicircle")
                 mustTrain = mustTrain or (n == 3 and name == "square dashed")
+                mustTrain = mustTrain or (n == 4 and name == "close semicircle")
+                #mustTrain = mustTrain or (n == 6 and name == "empty")
 
-                mustTrain = mustTrain or (random.random() < 0.095) # calibrated to give 70 training tasks
+                mustTrain = mustTrain or (random.random() < 0.07) # calibrated to give 70 training tasks
                 
 
-                # At this point in time I no longer remember _why_ I thought it was necessary to do this
-                if name == "empty" and n != 5: mustTrain = False
-                if name == "dashed" and n != 4: mustTrain = False
+                # cap number of super easy snowflakes
+                if name == "empty" and n not in [5]: mustTrain = False
+                if name == "dashed" and n not in [7]: mustTrain = False
                 
 
                 T("%d-%s snowflake"%(n,name),
