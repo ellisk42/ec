@@ -374,6 +374,65 @@ let rec minimum_cost_inhabitants ?given:(given=None) ?canBeLambda:(canBeLambda=t
     set_resizable caching_table j (Some(c));
     c
 
+(* Holds the minimum cost of each version space, WITHOUT actually holding the programs *)
+type cheap_cost_table = {function_cost : (float option) ra;
+                         argument_cost : (float option) ra;
+                         cost_table_parent : vt;}
+
+let empty_cheap_cost_table t = {function_cost = empty_resizable();
+                                argument_cost = empty_resizable();
+                                cost_table_parent = t;}
+let rec minimal_inhabitant_cost ?given:(given=None) ?canBeLambda:(canBeLambda=true) t j : float =
+  let caching_table = if canBeLambda then t.argument_cost else t.function_cost in
+  ensure_resizable_length caching_table (j + 1) None;
+  
+  match get_resizable caching_table j with
+  | Some(c) -> c
+  | None ->
+    let c =
+      match given with
+      | Some(invention) when have_intersection t.cost_table_parent invention j -> 1.
+      | _ -> 
+      match index_table t.cost_table_parent j with
+      | Universe | Void -> assert false
+      | IndexSpace(_) | TerminalSpace(_) -> 1.
+      | Union(u) ->
+         u |> List.map ~f:(minimal_inhabitant_cost ~given ~canBeLambda t) |> fold1 min
+      | AbstractSpace(b) when canBeLambda ->
+        epsilon_cost +. minimal_inhabitant_cost ~given ~canBeLambda:true t b
+      | AbstractSpace(b) -> Float.infinity
+      | ApplySpace(f,x) ->
+        epsilon_cost +. minimal_inhabitant_cost ~given ~canBeLambda:false t f +.
+        minimal_inhabitant_cost ~given ~canBeLambda:true t x 
+    in
+    set_resizable caching_table j (Some(c));
+    c
+
+let rec minimal_inhabitant ?given:(given=None) ?canBeLambda:(canBeLambda=true) t j : program option =
+  let c = minimal_inhabitant_cost ~given ~canBeLambda t j in
+  if is_invalid c then None else
+    let vs = index_table t.cost_table_parent j in
+    let p =
+      match c, given with
+      | 1., Some(invention) when have_intersection t.cost_table_parent invention j ->
+        extract t.cost_table_parent invention |> singleton_head
+      | _ -> 
+      match vs with
+      | Universe | Void -> assert false
+      | IndexSpace(_) | TerminalSpace(_) ->
+        extract t.cost_table_parent j |> singleton_head
+      | Union(u) ->
+        u |> minimum_by (minimal_inhabitant_cost ~given ~canBeLambda t) |>
+        minimal_inhabitant ~given ~canBeLambda t |>
+        get_some
+      | AbstractSpace(b) ->
+        Abstraction(minimal_inhabitant ~given ~canBeLambda:true t b |> get_some)
+      | ApplySpace(f,x) ->
+        Apply(minimal_inhabitant ~given ~canBeLambda:false t f |> get_some,
+              minimal_inhabitant ~given ~canBeLambda:true t x |> get_some)
+    in
+    Some(p)
+
 type beam = {default_function_cost : float;
              default_argument_cost : float;
              mutable relative_function : (int,float) Hashtbl.t;
@@ -408,6 +467,7 @@ let relative_argument b i = match Hashtbl.find b.relative_argument i with
 (* For each of the candidates returns the minimum description length of the frontiers *)
 let beam_costs' ~ct ~bs (candidates : int list) (frontier_indices : (int list) list)
   : float list =
+  let ct : cost_table = ct in
   let candidates' = candidates in
   let candidates = Hash_set.Poly.of_list candidates in
   let caching_table = empty_resizable() in
