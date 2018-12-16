@@ -1,4 +1,5 @@
 open Core
+open Enumeration
 open Program
 open Utils
 open Type
@@ -481,24 +482,27 @@ let relative_argument b i = match Hashtbl.find b.relative_argument i with
   | Some(c) -> c
 ;;
 
+(* calculate the number of free variables for each candidate  *)
+(* if a candidate has free variables and whenever we use it we have to apply it to those variables *)
+(* thus using these candidates is more expensive *)
+let calculate_candidate_costs v candidates =
+  let candidate_cost = Hashtbl.Poly.create() in
+  candidates |> List.iter ~f:(fun k ->
+      let cost = extract v k |> singleton_head |> free_variables ~d:0 |>
+                 List.dedup_and_sort ~compare:(-) |> List.length |> Float.of_int in
+      Hashtbl.set candidate_cost ~key:k ~data:(1.+.cost));
+  candidate_cost
+  
 
-(* For each of the candidates returns the minimum description length of the frontiers *)
-let beam_costs' ~ct ~bs (candidates : int list) (frontier_indices : (int list) list)
-  : float list =
+let beam_costs'' ~ct ~bs (candidates : int list) (frontier_indices : (int list) list)
+  : beam option ra =
   let ct : cost_table = ct in
   let candidates' = candidates in
   let candidates = Hash_set.Poly.of_list candidates in
   let caching_table = empty_resizable() in
   let v = ct.cost_table_parent in
 
-  (* calculate the number of free variables for each candidate  *)
-  (* if a candidate has free variables and whenever we use it we have to apply it to those variables *)
-  (* thus using these candidates is more expensive *)
-  let candidate_cost = Hashtbl.Poly.create() in
-  candidates' |> List.iter ~f:(fun k ->
-      let cost = extract v k |> singleton_head |> free_variables ~d:0 |>
-                 List.dedup_and_sort ~compare:(-) |> List.length |> Float.of_int in
-      Hashtbl.set candidate_cost ~key:k ~data:(1.+.cost));
+  let candidate_cost = calculate_candidate_costs v candidates' in
 
   let rec calculate_costs j =
     ensure_resizable_length caching_table (j + 1) None;    
@@ -541,24 +545,80 @@ let beam_costs' ~ct ~bs (candidates : int list) (frontier_indices : (int list) l
       bm
   in
 
-  let frontier_beams = frontier_indices |> List.map ~f:(List.map ~f:calculate_costs) in
+  frontier_indices |> List.iter ~f:(List.iter ~f:(fun j -> ignore(calculate_costs j)));
+  caching_table
+
+
+(* For each of the candidates returns the minimum description length of the frontiers *)
+let beam_costs' ~ct ~bs (candidates : int list) (frontier_indices : (int list) list)
+  : float list =
+  let caching_table = beam_costs'' ~ct ~bs candidates frontier_indices in
+  let frontier_beams = frontier_indices |> List.map ~f:(List.map ~f:(fun j ->
+    get_resizable caching_table j |> get_some)) in
 
   let score i =
-    (* let invention_size, _ = minimum_cost_inhabitants ct i in *)
     let corpus_size = frontier_beams |> List.map ~f:(fun bs ->
         bs |> List.map ~f:(fun b -> min (relative_argument b i) (relative_function b i)) |>
         fold1 min) |> fold1 (+.)
     in
-    (* invention_size +.  *)corpus_size
+    corpus_size
   in
 
-  candidates' |> List.map ~f:score
-
-  (* let scored = candidates' |> List.map ~f:(fun i -> (score i,i)) in *)
-  (* scored |> List.sort ~compare:(fun (s1,_) (s2,_) -> Float.compare s1 s2) *)
+  candidates |> List.map ~f:score
 
   
   
 let beam_costs ~ct ~bs (candidates : int list) (frontier_indices : (int list) list) =
   let scored = List.zip_exn (beam_costs' ~ct ~bs candidates frontier_indices) candidates in
   scored |> List.sort ~compare:(fun (s1,_) (s2,_) -> Float.compare s1 s2)
+
+
+let batched_refactor ~ct (candidates : int list) (frontier_indices : (int list) list) =
+  let caching_table = beam_costs'' ~ct ~bs:(List.length candidates) candidates frontier_indices in
+
+  let v = ct.cost_table_parent in
+  let candidate_cost = calculate_candidate_costs v candidates in
+  
+  let rec refactor ~canBeLambda i j =
+    let bm = get_resizable caching_table j |> get_some in
+
+    (* If our cost relative to I is the cost of I then we must be I *)
+    if (if canBeLambda then relative_argument else relative_function) bm i =
+       Hashtbl.find_exn candidate_cost i
+    then
+      i |> extract v |> singleton_head
+    else
+      match index_table v j with
+      | AbstractSpace(b) -> (assert (canBeLambda); Abstraction(refactor ~canBeLambda:true i b))
+      | ApplySpace(f, x) ->
+        Apply(refactor ~canBeLambda:false i f,
+              refactor ~canBeLambda:true i x)
+      | Union(u) ->
+        u |> minimum_by (fun u' ->
+            let bm' = get_resizable caching_table u' |> get_some in
+            (if canBeLambda then relative_argument else relative_function) bm' i) |>
+        refactor ~canBeLambda i
+      | IndexSpace(j) -> Index(j) | TerminalSpace(e) -> e
+      | Universe | Void -> assert (false)
+  in
+
+  candidates |> List.map ~f:(fun i ->
+      frontier_indices |> List.map ~f:(fun f ->
+          f |> List.map ~f:(fun j ->
+              refactor ~canBeLambda:true i j)))
+            
+                              
+(* let batched_refactor ~ct (candidates : int list) (frontiers : frontier list) = *)
+(*   let ct : cost_table = ct in *)
+(*   let v = ct.cost_table_parent in *)
+(*   let indices = *)
+(*     frontiers |> List.map ~f:(fun f -> f.programs |> List.map ~f:(incorporate v % fst)) *)
+(*   in *)
+(*   let programs = batched_refactor' ~ct candidates indices in *)
+(*   programs |> List.map ~f:(fun programs_for_invention -> *)
+(*       List.map2_exn programs_for_invention frontiers ~f:(fun programs_for_frontier frontier -> *)
+(*           {frontier *)
+(*            with programs = List.map2_exn programs_for_frontier frontier.programs *)
+(*            ~f:(fun p (_,ll) -> (p,ll))} *)
+  
+  
