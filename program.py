@@ -974,7 +974,8 @@ class RegisterPrimitives(object):
 
 
 class PrettyVisitor(object):
-    def __init__(self):
+    def __init__(self, Lisp=False):
+        self.Lisp = Lisp
         self.numberOfVariables = 0
         self.freeVariables = {}
 
@@ -992,12 +993,7 @@ class PrettyVisitor(object):
         s = e.body.visit(self, [], isFunction, isAbstraction)
         return s
 
-    def primitive(
-        self,
-        e,
-        environment,
-        isVariable,
-        isAbstraction): return e.name
+    def primitive(self, e, environment, isVariable, isAbstraction): return e.name
 
     def index(self, e, environment, isVariable, isAbstraction):
         if e.i < len(environment):
@@ -1023,25 +1019,36 @@ class PrettyVisitor(object):
     def abstraction(self, e, environment, isFunction, isAbstraction):
         toplevel = self.toplevel
         self.toplevel = False
-        # Invent a new variable
-        v = self.makeVariable()
+        if not self.Lisp:
+            # Invent a new variable
+            v = self.makeVariable()
+            body = e.body.visit(self,
+                                [v] + environment,
+                                False,
+                                True)
+            if not e.body.isAbstraction:
+                body = "." + body
+            body = v + body
+            if not isAbstraction:
+                body = "λ" + body
+            if not toplevel:
+                body = "(%s)" % body
+            return body
+        else:
+            child = e
+            newVariables = []
+            while child.isAbstraction:
+                newVariables = [self.makeVariable()] + newVariables
+                child = child.body
+            body = child.visit(self, newVariables + environment,
+                               False, True)
+            body = "(λ (%s) %s)"%(" ".join(reversed(newVariables)), body)
+            return body
+            
+            
 
-        body = e.body.visit(self,
-                            [v] + environment,
-                            False,
-                            True)
-        if not e.body.isAbstraction:
-            body = "." + body
-        body = v + body
-        if not isAbstraction:
-            body = "λ" + body
-        if not toplevel:
-            body = "(%s)" % body
-        return body
-
-
-def prettyProgram(e):
-    return e.visit(PrettyVisitor(), [], True, False)
+def prettyProgram(e, Lisp=False):
+    return e.visit(PrettyVisitor(Lisp=Lisp), [], True, False)
 
 class EtaExpandFailure(Exception): pass
 class EtaLongVisitor(object):

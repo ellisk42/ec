@@ -1017,7 +1017,7 @@ def graphPrimitives(result, prefix, view=False):
                    for g in result.grammars
                    for p in g.primitives
                    if p.isInvented }
-    age = {p: min(j for j,g in enumerate(result.grammars) if p in g.primitives)
+    age = {p: min(j for j,g in enumerate(result.grammars) if p in g.primitives) + 1
            for p in primitives }
 
 
@@ -1050,7 +1050,7 @@ def graphPrimitives(result, prefix, view=False):
         for k,childName in children.items():
             simplification_ = simplification_.substitute(k, Primitive(childName,None,None))
         name[p] = "f%d"%len(name)
-        simplification[p] = name[p] + '=' + lb(str(simplification_))
+        simplification[p] = name[p] + '=' + lb(prettyProgram(simplification_, Lisp=True))
         depth[p] = 1 + max([depth[k] for k in children] + [0])
         return name[p]
 
@@ -1096,9 +1096,18 @@ def graphPrimitives(result, prefix, view=False):
         g = Digraph()
         g.graph_attr['rankdir'] = 'LR'
 
-        for o in sorted(ordering.keys()):
-            with g.subgraph(name='age%d'%o) as sg:
+        if False:
+            with g.subgraph(name='cluster_0') as sg:
                 sg.graph_attr['rank'] = 'same'
+                sg.attr(label='Primitives')
+                for j, primitive in enumerate(result.grammars[-1].primitives):
+                    if primitive.isInvented: continue
+                    sg.node("primitive%d"%j, label=str(primitive))
+
+        for o in sorted(ordering.keys()):
+            with g.subgraph(name='cluster_%d'%o) as sg:
+                sg.graph_attr['rank'] = 'same'
+                sg.attr(label='Depth %d'%o)
                 for p in ordering[o]:
                     if str(p) in englishDescriptions:
                         thisLabel = '<<font face="boldfontname"><u>%s</u></font><br />%s>'%(englishDescriptions[str(p)],simplification[p])
@@ -1114,7 +1123,7 @@ def graphPrimitives(result, prefix, view=False):
                             for _,k in p.body.walk()
                             if k.isInvented}
                 for k in children:
-                    g.edge(name[k],name[p])
+                    g.edge(name[p],name[k])
 
         try:
             g.render(fn,view=view)
@@ -1125,4 +1134,4 @@ def graphPrimitives(result, prefix, view=False):
         
 
     makeGraph(depth2primitives,prefix+'depth.pdf')
-    makeGraph(age2primitives,prefix+'iter.pdf')
+    #makeGraph(age2primitives,prefix+'iter.pdf')
