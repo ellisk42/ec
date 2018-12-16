@@ -333,7 +333,9 @@ let compression_worker connection ~arity ~bs ~topK g frontiers =
                                 (beta_normal_form ~reduceInventions:true originalProgram)) then
                         (Printf.eprintf "FATAL: %s refactored into %s\n"
                            (string_of_program originalProgram)
-                           (string_of_program program));
+                           (string_of_program program);
+                         Printf.eprintf "This has never occurred before! Definitely send this to Kevin, if this occurs it is a terrifying bug.\n";
+                        assert (false));
                       let program' =
                         try rewriter frontier.request program
                         with EtaExpandFailure -> originalProgram
