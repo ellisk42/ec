@@ -577,15 +577,11 @@ let batched_refactor ~ct (candidates : int list) (frontier_indices : (int list) 
   let caching_table = beam_costs'' ~ct ~bs:(List.length candidates) candidates frontier_indices in
 
   let v = ct.cost_table_parent in
-  let candidate_cost = calculate_candidate_costs v candidates in
   
   let rec refactor ~canBeLambda i j =
-    let bm = get_resizable caching_table j |> get_some in
+    let inhabitants = minimum_cost_inhabitants ~canBeLambda:true ct j |> snd in
 
-    (* If our cost relative to I is the cost of I then we must be I *)
-    if (if canBeLambda then relative_argument else relative_function) bm i =
-       Hashtbl.find_exn candidate_cost i
-    then
+    if List.mem ~equal:(=) inhabitants i then
       i |> extract v |> singleton_head
     else
       match index_table v j with
@@ -608,17 +604,3 @@ let batched_refactor ~ct (candidates : int list) (frontier_indices : (int list) 
               refactor ~canBeLambda:true i j)))
             
                               
-(* let batched_refactor ~ct (candidates : int list) (frontiers : frontier list) = *)
-(*   let ct : cost_table = ct in *)
-(*   let v = ct.cost_table_parent in *)
-(*   let indices = *)
-(*     frontiers |> List.map ~f:(fun f -> f.programs |> List.map ~f:(incorporate v % fst)) *)
-(*   in *)
-(*   let programs = batched_refactor' ~ct candidates indices in *)
-(*   programs |> List.map ~f:(fun programs_for_invention -> *)
-(*       List.map2_exn programs_for_invention frontiers ~f:(fun programs_for_frontier frontier -> *)
-(*           {frontier *)
-(*            with programs = List.map2_exn programs_for_frontier frontier.programs *)
-(*            ~f:(fun p (_,ll) -> (p,ll))} *)
-  
-  

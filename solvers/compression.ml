@@ -212,7 +212,7 @@ type worker_command =
   | Rewrite of program list
   | RewriteEntireFrontiers of program
   | KillWorker
-  | FinalFrontier
+  | FinalFrontier of program
   | BatchedRewrite of program list
     
 let compression_worker connection ~arity ~bs ~topK g frontiers =
@@ -328,6 +328,12 @@ let compression_worker connection ~arity ~bs ~topK g frontiers =
             List.map2_exn new_programs !frontiers ~f:(fun new_programs frontier ->
                 let programs' =
                   List.map2_exn new_programs frontier.programs ~f:(fun program (originalProgram, ll) ->
+                      if not (program_equal
+                                (beta_normal_form ~reduceInventions:true program)
+                                (beta_normal_form ~reduceInventions:true originalProgram)) then
+                        (Printf.eprintf "FATAL: %s refactored into %s\n"
+                           (string_of_program originalProgram)
+                           (string_of_program program));
                       let program' =
                         try rewriter frontier.request program
                         with EtaExpandFailure -> originalProgram
@@ -345,7 +351,9 @@ let compression_worker connection ~arity ~bs ~topK g frontiers =
       (frontiers := original_frontiers;
        send (rewrite_frontiers i))
     | BatchedRewrite(inventions) -> send (batched_rewrite inventions)
-    | FinalFrontier -> frontiers := original_frontiers
+    | FinalFrontier(invention) ->
+      (frontiers := original_frontiers;
+       send (batched_rewrite [invention] |> singleton_head))
     | KillWorker -> 
        (Zmq.Socket.close socket;
         Zmq.Context.terminate context;
@@ -487,9 +495,8 @@ let compression_step_master ~nc ~structurePenalty ~aic ~pseudoCounts ?arity:(ari
        flush_everything();
        (* Rewrite the entire frontiers *)
        let frontiers'' = time_it "rewrote all of the frontiers" (fun () ->
-           send @@ FinalFrontier;
-           send @@ BatchedRewrite([best_candidate]);
-           sockets |> List.map ~f:(singleton_head%receive) |> List.concat)
+           send @@ FinalFrontier(best_candidate);
+           sockets |> List.map ~f:receive |> List.concat)
        in
        finish();
        let g'' = inside_outside ~pseudoCounts g' frontiers'' |> fst in
