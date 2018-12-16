@@ -212,6 +212,8 @@ type worker_command =
   | Rewrite of program list
   | RewriteEntireFrontiers of program
   | KillWorker
+  | FinalFrontier of program
+  | BatchedRewrite of program list
     
 let compression_worker connection ~arity ~bs ~topK g frontiers =
   let context = Zmq.Context.create() in
@@ -310,7 +312,41 @@ let compression_worker connection ~arity ~bs ~topK g frontiers =
                  programs=programs'})
         in
         new_frontiers)
-  in 
+  in
+
+  let batched_rewrite inventions =
+    time_it ~verbose:!verbose_compression "(worker) batched rewrote frontiers" (fun () ->
+        Gc.compact();
+        let invention_indices : int list = inventions |> List.map ~f:(incorporate v) in
+        let frontier_indices : int list list =
+          !frontiers |> List.map ~f:(fun f ->
+              f.programs |> List.map ~f:(n_step_inversion v ~n:arity % incorporate v % fst))
+        in
+        clear_dynamic_programming_tables v;
+        let refactored = batched_refactor ~ct:(empty_cost_table v) invention_indices frontier_indices in
+        Gc.compact();
+        List.map2_exn refactored inventions ~f:(fun new_programs invention ->
+            let rewriter = rewrite_with_invention invention in
+            List.map2_exn new_programs !frontiers ~f:(fun new_programs frontier ->
+                let programs' =
+                  List.map2_exn new_programs frontier.programs ~f:(fun program (originalProgram, ll) ->
+                      if not (program_equal
+                                (beta_normal_form ~reduceInventions:true program)
+                                (beta_normal_form ~reduceInventions:true originalProgram)) then
+                        (Printf.eprintf "FATAL: %s refactored into %s\n"
+                           (string_of_program originalProgram)
+                           (string_of_program program);
+                         Printf.eprintf "This has never occurred before! Definitely send this to Kevin, if this occurs it is a terrifying bug.\n";
+                        assert (false));
+                      let program' =
+                        try rewriter frontier.request program
+                        with EtaExpandFailure -> originalProgram
+                      in
+                      (program',ll))
+                in 
+                {request=frontier.request;
+                 programs=programs'})))
+  in
 
   while true do
     match receive() with
@@ -318,6 +354,10 @@ let compression_worker connection ~arity ~bs ~topK g frontiers =
     | RewriteEntireFrontiers(i) ->
       (frontiers := original_frontiers;
        send (rewrite_frontiers i))
+    | BatchedRewrite(inventions) -> send (batched_rewrite inventions)
+    | FinalFrontier(invention) ->
+      (frontiers := original_frontiers;
+       send (batched_rewrite [invention] |> singleton_head))
     | KillWorker -> 
        (Zmq.Socket.close socket;
         Zmq.Context.terminate context;
@@ -418,7 +458,7 @@ let compression_step_master ~nc ~structurePenalty ~aic ~pseudoCounts ?arity:(ari
 
   (* now we have our final list of candidates! *)
   (* ask each of the workers to rewrite w/ each candidate *)
-  send @@ Rewrite(candidates);
+  send @@ BatchedRewrite(candidates);
   (* For each invention, the full rewritten frontiers *)
   let new_frontiers : frontier list list =
     time_it "Rewrote topK" (fun () ->
@@ -459,7 +499,7 @@ let compression_step_master ~nc ~structurePenalty ~aic ~pseudoCounts ?arity:(ari
        flush_everything();
        (* Rewrite the entire frontiers *)
        let frontiers'' = time_it "rewrote all of the frontiers" (fun () ->
-           send @@ RewriteEntireFrontiers(best_candidate);
+           send @@ FinalFrontier(best_candidate);
            sockets |> List.map ~f:receive |> List.concat)
        in
        finish();
