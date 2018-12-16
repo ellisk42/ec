@@ -348,6 +348,43 @@ let compression_worker connection ~arity ~bs ~topK g frontiers =
                  programs=programs'})))
   in
 
+  let final_rewrite invention =
+    (* As our last act, free as much memory as we can *)
+    deallocate_versions v; Gc.compact();
+
+    (* exchanging time for memory - invert everything again *)
+    frontiers := original_frontiers;
+    let v = new_version_table() in
+    let frontier_inversions = Hashtbl.Poly.create() in
+    time_it ~verbose:!verbose_compression "(worker) did final inversion" (fun () -> 
+        !frontiers |> List.iter ~f:(fun f ->
+            f.programs |> List.iter ~f:(fun (p,_) ->
+                Hashtbl.set frontier_inversions
+                  ~key:(incorporate v p)
+                  ~data:(n_step_inversion v ~n:arity (incorporate v p)))));
+    clear_dynamic_programming_tables v; Gc.compact();    
+    
+    let i = incorporate v invention in
+    let new_cost_table = empty_cheap_cost_table v in
+    time_it ~verbose:!verbose_compression "(worker) did final refactor" (fun () -> 
+        List.map !frontiers
+          ~f:(fun frontier ->
+              let programs' =
+                List.map frontier.programs ~f:(fun (originalProgram, ll) ->
+                    let index = Hashtbl.find_exn frontier_inversions (incorporate v originalProgram) in 
+                    let program =
+                      minimal_inhabitant new_cost_table ~given:(Some(i)) index |> get_some
+                    in 
+                    let program' =
+                      try rewrite_with_invention invention frontier.request program
+                      with EtaExpandFailure -> originalProgram
+                    in
+                    (program',ll))
+              in 
+              {request=frontier.request;
+               programs=programs'}))
+  in 
+
   while true do
     match receive() with
     | Rewrite(i) -> send (i |> List.map ~f:rewrite_frontiers)
@@ -357,8 +394,7 @@ let compression_worker connection ~arity ~bs ~topK g frontiers =
     | BatchedRewrite(inventions) -> send (batched_rewrite inventions)
     | FinalFrontier(invention) ->
       (frontiers := original_frontiers;
-       send (batched_rewrite [invention] |> singleton_head);
-       deallocate_versions v;
+       send (final_rewrite invention |> singleton_head);
        Gc.compact())
     | KillWorker -> 
        (Zmq.Socket.close socket;
