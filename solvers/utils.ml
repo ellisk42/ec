@@ -402,3 +402,7 @@ let set_resizable a i v =
 let rec ensure_resizable_length a l default =
   if a.ra_occupancy >= l then () else 
   (push_resizable a default; ensure_resizable_length a l default)
+
+let clear_resizable a =
+  a.ra_occupancy <- 0;
+  a.ra_contents <- Array.create ~len:10 None

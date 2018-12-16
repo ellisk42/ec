@@ -357,7 +357,9 @@ let compression_worker connection ~arity ~bs ~topK g frontiers =
     | BatchedRewrite(inventions) -> send (batched_rewrite inventions)
     | FinalFrontier(invention) ->
       (frontiers := original_frontiers;
-       send (batched_rewrite [invention] |> singleton_head))
+       send (batched_rewrite [invention] |> singleton_head);
+       deallocate_versions v;
+       Gc.compact())
     | KillWorker -> 
        (Zmq.Socket.close socket;
         Zmq.Context.terminate context;
