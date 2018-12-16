@@ -27,6 +27,10 @@ type vt = {universe : int;
 let index_table t index = get_resizable t.i2s index
 let version_table_size t = t.i2s.ra_occupancy
 
+let clear_dynamic_programming_tables {n_step_table; substitution_table;} =
+  Hashtbl.clear n_step_table;
+  Hashtbl.clear substitution_table
+
 let incorporate_space t v : int =
   match Hashtbl.find t.s2i v with
   | Some(i) -> i

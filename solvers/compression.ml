@@ -316,13 +316,15 @@ let compression_worker connection ~arity ~bs ~topK g frontiers =
 
   let batched_rewrite inventions =
     time_it ~verbose:!verbose_compression "(worker) batched rewrote frontiers" (fun () ->
+        Gc.compact();
         let invention_indices : int list = inventions |> List.map ~f:(incorporate v) in
-        let ct = empty_cost_table v in
         let frontier_indices : int list list =
           !frontiers |> List.map ~f:(fun f ->
               f.programs |> List.map ~f:(n_step_inversion v ~n:arity % incorporate v % fst))
         in
-        let refactored = batched_refactor ~ct invention_indices frontier_indices in
+        clear_dynamic_programming_tables v;
+        let refactored = batched_refactor ~ct:(empty_cost_table v) invention_indices frontier_indices in
+        Gc.compact();
         List.map2_exn refactored inventions ~f:(fun new_programs invention ->
             let rewriter = rewrite_with_invention invention in
             List.map2_exn new_programs !frontiers ~f:(fun new_programs frontier ->
@@ -343,7 +345,7 @@ let compression_worker connection ~arity ~bs ~topK g frontiers =
                       (program',ll))
                 in 
                 {request=frontier.request;
-                 programs=programs'})))        
+                 programs=programs'})))
   in
 
   while true do
