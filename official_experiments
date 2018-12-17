@@ -1,0 +1,25 @@
+The hyper parameters here are not consistent. A key thing we need to
+do is make sure that we are always using the same hyper parameters, or
+if we are not, we need a good reason for it. For example, the
+structure penalty on text is larger than for the other domains, but
+this is justifiable. And the top K for regular expressions is larger
+than for the other domains but that is also justifiable. In contrast
+the pseudocounts really should be the same everywhere.
+
+LOGO:
+Full model without batching:
+     python launch.py -k  -z x1.32xlarge DreamLogo "python logo.py -t 7200 --structurePenalty 1.5 --pseudoCounts 30.0 --biasOptimal --contextual --split 0.5 --testingTimeout 3600"
+
+TEXT:
+Full model without batching:
+     python launch.py -k  -z x1.32xlarge TextDream "python text.py  -i 6 -t 7200 --pseudoCounts 30 --testingTimeout 1800 --compressor ocaml --contextual --biasOptimal -l 5 --maximumFrontier 2"
+
+LIST:
+Full model without batching:
+     python launch.py -k  -z x1.32xlarge ListDream "python list.py -t 7200 --split 0.5 --testingTimeout 600 --contextual --biasOptimal -i 6 --maximumFrontier 5 --pseudoCounts 10. --structurePenalty 2"
+
+TOWER:
+Full model without batching:
+     python launch.py -k -z m4.16xlarge TowerDream5 "python tower.py -i 6 -t 300 --pseudoCounts 30 --tasks supervised --maximumFrontier 5 --compressor ocaml --biasOptimal --contextual --testingTimeout 600 --split 0.5 --pseudoCounts 10. --structurePenalty 1"
+
+REGEX: Max: your stuff here
