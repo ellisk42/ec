@@ -28,9 +28,9 @@ def getMostRecent(ex1, ex2):
     return ex1 if date1 > date2 else ex2
 
 
-def getExperimentLogs(experiments):
+def getExperimentLogs(experiments, logsDirectory):
     """Get experiment logs; if most recent, get name."""
-    allLogs = os.listdir("jobs")
+    allLogs = os.listdir(logsDirectory)
     experimentLogs = {}
     for e in experiments:
         for log in allLogs:
@@ -46,9 +46,9 @@ def getExperimentLogs(experiments):
         print("%s : %s" % (e, experimentLogs[e]))
     return experimentLogs
 
-def parseLogFile(experimentLog):
+def parseLogFile(experimentLog, logsDirectory):
     totalIters, currentIter, bestTest, lastTest = 0, 0, 0, 0
-    with open(os.path.join('jobs', experimentLog)) as f:
+    with open(os.path.join(logsDirectory, experimentLog)) as f:
         lines = f.readlines()
 
     possiblyBroken = ""
@@ -81,14 +81,14 @@ def parseLogFile(experimentLog):
             *last_few_test_hits))
 
 
-def summarizeLogs(experimentsFile):
+def summarizeLogs(experimentsFile, logsDirectory):
     experiments = getExperimentNames(experimentsFile)
-    experimentLogs = getExperimentLogs(experiments)
+    experimentLogs = getExperimentLogs(experiments, logsDirectory)
     print("Summarizing logs:")
 
     for e in experimentLogs:
         print("Summarizing %s (%s)" % (e, experimentLogs[e]))
-        parseLogFile(experimentLogs[e])
+        parseLogFile(experimentLogs[e], logsDirectory)
 
 
 
@@ -99,7 +99,9 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description = "")
     parser.add_argument("--experimentsFile", type=str)
+    parser.add_argument("--logsDirectory", type=str)
 
     arguments = parser.parse_args()
     
-    summarizeLogs(arguments.experimentsFile)
+    summarizeLogs(arguments.experimentsFile, 
+        arguments.logsDirectory)
