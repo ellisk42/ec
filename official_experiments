@@ -9,10 +9,16 @@ the pseudocounts really should be the same everywhere.
 LOGO:
 Full model without batching:
      python launch.py -k  -z x1.32xlarge DreamLogo "python logo.py -t 7200 --structurePenalty 1.5 --pseudoCounts 30.0 --biasOptimal --contextual --split 0.5 --testingTimeout 3600"
-
+Random shuffle (batches of 10), 720s:
+     python launch.py -k  -z r4.16xlarge LogoBatch "python logo.py -t 720  --structurePenalty 1.5 --pseudoCounts 30.0 --biasOptimal --contextual --split 0.5 --testingTimeout 3600  --storeTaskMetrics --taskReranker randomShuffle --taskBatchSize 10 -i 20  -R 1800 --reuseRecognition"
+     
 TEXT:
 Full model without batching:
      python launch.py -k  -z x1.32xlarge TextDream "python text.py  -i 6 -t 7200 --pseudoCounts 30 --testingTimeout 1800 --compressor ocaml --contextual --biasOptimal -l 5 --maximumFrontier 2"
+
+
+Derby: (You can replace this checkpoint with a different one and it will run the Derby with it)
+	python launch.py -k  -z c4.8xlarge --checkpoint experimentOutputs/text_aic=1.0_arity=3_BO=True_CO=True_ET=720_HR=0.5_it=19_MF=5_baseline=False_pc=30.0_RT=7200_RW=False_storeTask=True_L=1.0_batch=10_taskReranker=randomShuffle_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor.pickle  batched_derby "python text.py --compete experimentOutputs/text_aic=1.0_arity=3_BO=True_CO=True_ET=720_HR=0.5_it=19_MF=5_baseline=False_pc=30.0_RT=7200_RW=False_storeTask=True_L=1.0_batch=10_taskReranker=randomShuffle_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor.pickle"
 
 Baseline without batching, 3600s: text_baseline_3600s [Done: solves up to 80 tasks.]
 	python launch.py  -k -z r4.16xlarge text_baseline_3600s "python text.py  -t 3600 --compressor ocaml --pseudoCounts 30 --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 7 -R 7200 --storeTaskMetrics --testingTimeout 3600 --biasOptimal --contextual --taskReranker default"
