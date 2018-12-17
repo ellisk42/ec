@@ -951,7 +951,8 @@ def commandlineArguments(_=None,
         del v["clear-recognition"]
         
     if v["primitive-graph"] is not None:
-        result = loadPickle(v["primitive-graph"])
+        with open(v["primitive-graph"],'rb') as handle:
+            result = dill.load(handle)
         graphPrimitives(result,v["primitive-graph"],view=True)
         sys.exit(0)
     else:
@@ -1094,7 +1095,7 @@ def graphPrimitives(result, prefix, view=False):
 
     def makeGraph(ordering, fn):
         g = Digraph()
-        g.graph_attr['rankdir'] = 'LR'
+        g.graph_attr['rankdir'] = 'RL'
 
         if False:
             with g.subgraph(name='cluster_0') as sg:

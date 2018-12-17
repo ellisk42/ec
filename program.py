@@ -1048,7 +1048,7 @@ class PrettyVisitor(object):
             
 
 def prettyProgram(e, Lisp=False):
-    return e.visit(PrettyVisitor(Lisp=Lisp), [], True, False)
+    return e.visit(PrettyVisitor(Lisp=Lisp), [], False, False)
 
 class EtaExpandFailure(Exception): pass
 class EtaLongVisitor(object):
