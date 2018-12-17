@@ -160,9 +160,14 @@ def dreamOfTowers(grammar, prefix, N=250):
                     if len(t) >= 1 and len(t) < 100 and towerLength(t) <= 360.]
     matrix = [renderPlan(p,Lego=True,pretty=True)
               for p in randomTowers]
-    matrix = montage(matrix)
-    import scipy.misc
-    scipy.misc.imsave('%s.png'%prefix, matrix)
+
+    # Only visualize if it has something to visualize.
+    if len(matrix) > 0:
+        matrix = montage(matrix)
+        import scipy.misc
+        scipy.misc.imsave('%s.png'%prefix, matrix)
+    else:
+        eprint("Tried to visualize dreams, but none to visualize.")
 
     
 def visualizePrimitives(primitives, fn=None):
@@ -211,12 +216,16 @@ def visualizePrimitives(primitives, fn=None):
         matrix.append([renderPlan(p,pretty=True)
                        for p in ts])
 
-    matrix = montageMatrix(matrix)
-    # imshow(matrix)
-    
-    import scipy.misc
-    scipy.misc.imsave(fn, matrix)
-    #    show()
+    # Only visualize if it has something to visualize.
+    if len(matrix) > 0:
+        matrix = montageMatrix(matrix)
+        # imshow(matrix)
+        
+        import scipy.misc
+        scipy.misc.imsave(fn, matrix)
+        #    show()
+    else:
+        eprint("Tried to visualize primitives, but none to visualize.")
     
 def visualizeSolutions(solutions, export, tasks=None):
     from tower_common import renderPlan
@@ -230,9 +239,14 @@ def visualizeSolutions(solutions, export, tasks=None):
         i = renderPlan(centerTower(t.plan),pretty=True,Lego=True)
         if solutions[t].empty: i = i/3.
         matrix.append(i)
-    matrix = montage(matrix)
-    import scipy.misc
-    scipy.misc.imsave(export, matrix)
+
+    # Only visualize if it has something to visualize.
+    if len(matrix) > 0:
+        matrix = montage(matrix)
+        import scipy.misc
+        scipy.misc.imsave(export, matrix)
+    else:
+        eprint("Tried to visualize solutions, but none to visualize.")
 
 if __name__ == "__main__":
     g0 = Grammar.uniform(primitives, continuationType=ttower)
