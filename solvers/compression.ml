@@ -394,7 +394,7 @@ let compression_worker connection ~arity ~bs ~topK g frontiers =
     | BatchedRewrite(inventions) -> send (batched_rewrite inventions)
     | FinalFrontier(invention) ->
       (frontiers := original_frontiers;
-       send (final_rewrite invention |> singleton_head);
+       send (final_rewrite invention);
        Gc.compact())
     | KillWorker -> 
        (Zmq.Socket.close socket;
@@ -536,7 +536,7 @@ let compression_step_master ~nc ~structurePenalty ~aic ~pseudoCounts ?arity:(ari
          (string_of_program new_primitive) (closed_inference new_primitive |> canonical_type |> string_of_type);
        flush_everything();
        (* Rewrite the entire frontiers *)
-       let frontiers'' = time_it "rewrote all of the frontiers" (fun () ->
+       let frontiers'' : frontier list = time_it "rewrote all of the frontiers" (fun () ->
            send @@ FinalFrontier(best_candidate);
            sockets |> List.map ~f:receive |> List.concat)
        in
