@@ -66,15 +66,30 @@ Random shuffle (batches of 20), 1440s: list_random_shuffle_20_1440s  [DONE: solv
 	python launch.py  -k -z r4.16xlarge list_random_shuffle_20_1440s "python list.py  -t 1440 --compressor ocaml --pseudoCounts 30 --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 10 -R 7200 --storeTaskMetrics --split 0.5 --testingTimeout 1440 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10"
 
 
+Random shuffle (batches of 10), structure penalty, retraining: *list_random_shuffle_10_720s_sp_retrain
+	python launch.py  -k -z r4.16xlarge list_random_shuffle_10_720s_sp_retrain "python list.py  -t 720 --compressor ocaml --pseudoCounts 30 --aic 1.0 --structurePenalty 2.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 1800 --storeTaskMetrics --split 0.5 --testingTimeout 720 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10 --reuseRecognition"
+
+
 Random kNN (batches of 10), 720s: list_random_knn_10_720s [Done - solves 84/109]
 	python launch.py  -k -z r4.16xlarge list_random_knn_10_720s_catwong  "python list.py  -t 720 --compressor ocaml --pseudoCounts 30 --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 7200 --storeTaskMetrics --split 0.5 --testingTimeout 720 --biasOptimal --contextual --taskReranker randomkNN --taskBatchSize 10"
 
 Random kNN (batches of 10), regularized: list_random_knn_10_720s_reg [Done - solves 105/109.]
-	python launch.py  -k -z r4.16xlarge list_random_knn_10_720s_reg  "python list.py  -t 720 --compressor ocaml --pseudoCounts 30 --aic 1.0 --structurePenalty 2.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 7200 --storeTaskMetrics --split 0.5 --testingTimeout 720 --biasOptimal --contextual --taskReranker randomkNN --taskBatchSize 10 -r 0.9:
+	python launch.py  -k -z r4.16xlarge list_random_knn_10_720s_reg  "python list.py  -t 720 --compressor ocaml --pseudoCounts 30 --aic 1.0 --structurePenalty 2.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 7200 --storeTaskMetrics --split 0.5 --testingTimeout 720 --biasOptimal --contextual --taskReranker randomkNN --taskBatchSize 10 -r 0.9"
+
+
+
 
 
 TOWER:
 Full model without batching:
      python launch.py -k -z m4.16xlarge TowerDream5 "python tower.py -i 6 -t 300 --pseudoCounts 30 --tasks supervised --maximumFrontier 5 --compressor ocaml --biasOptimal --contextual --testingTimeout 600 --split 0.5 --pseudoCounts 10. --structurePenalty 1"
+
+Random shuffle (batches of 5), 60s: tower_random_shuffle_5_60s [Running, 12/17]
+	python launch.py -k -z m4.16xlarge tower_random_shuffle_5_60s "python tower.py -t 60 --compressor ocaml --pseudoCounts 30 --tasks supervised --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 300 --storeTaskMetrics --split 0.5 --testingTimeout 60 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 5"
+
+Random shuffle (batches of 10), 120s: tower_random_shuffle_10_120s [Running, 12/17]
+	python launch.py -k -z m4.16xlarge tower_random_shuffle_10_120s "python tower.py -t 120 --compressor ocaml --pseudoCounts 30 --tasks supervised --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 10 -R 300 --storeTaskMetrics --split 0.5 --testingTimeout 120 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10"
+
+
 
 REGEX: Max: your stuff here

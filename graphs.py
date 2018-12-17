@@ -1,5 +1,4 @@
 from ec import *
-from regexes import *
 import dill
 import numpy as np
 import matplotlib
@@ -74,7 +73,8 @@ def plotECResult(
         showSolveTime=True,
         showTraining=False,
         iterations=None,
-        maxP=110):
+        maxP=110,
+        showEpochs=False):
     results = []
     parameters = []
     for j, path in enumerate(resultPaths):
@@ -105,7 +105,8 @@ def plotECResult(
                 "-", "--", "-."])}
 
     f, a1 = plot.subplots(figsize=(4, 3))
-    a1.set_xlabel('Iteration', fontsize=LABELFONTSIZE)
+    xlabel = 'Epoch' if showEpochs else 'Iteration'
+    a1.set_xlabel('Epoch', fontsize=LABELFONTSIZE)
     a1.xaxis.set_major_locator(MaxNLocator(integer=True))
 
     if showSolveTime:
@@ -142,8 +143,12 @@ def plotECResult(
         else:
             ys = [100. * len(t) / result.numTestingTasks
                   for t in result.testingSearchTime[:iterations]]
+
+        xs = list(range(0, len(ys)))
+        if showEpochs:
+            xs = [ (p.taskBatchSize / (float(len(result.taskSolutions)))) * i for i in xs]
         color = recognitionToColor[p.useRecognitionModel]
-        l, = a1.plot(list(range(0, len(ys))), ys, color=color, ls='-')
+        l, = a1.plot(xs, ys, color=color, ls='-')
         
         if showSolveTime:
             if failAsTimeout:
@@ -155,7 +160,7 @@ def plotECResult(
 
             if not showTraining: times = result.testingSearchTime[:iterations]
             else: times = result.searchTimes[:iterations]
-            a2.plot(range(len(times)),
+            a2.plot(xs,
                         [mean(ts) if not timePercentile else median(ts)
                          for ts in times],
                         color=color, ls='--')
@@ -220,7 +225,7 @@ if __name__ == "__main__":
 
     import argparse
     parser = argparse.ArgumentParser(description = "")
-    parser.add_argument("checkpoints",nargs='+')
+    parser.add_argument("--checkpoints",nargs='+')
     parser.add_argument("--title","-t",type=str,
                         default="")
     parser.add_argument("--iterations","-i",
@@ -249,6 +254,9 @@ if __name__ == "__main__":
     parser.add_argument("--maxPercent","-m",
                         type=int, default=110,
                         help="Maximum percent for the percent hits graph")
+    parser.add_argument("--showEpochs",
+                        default=False, action="store_true",
+                        help='X-axis is real-valued percentage of training tasks seen, instead of iterations.')
     
     arguments = parser.parse_args()
     
@@ -262,4 +270,5 @@ if __name__ == "__main__":
                  interval=arguments.interval,
                  iterations=arguments.iterations,
                  showTraining=arguments.showTraining,
-                 maxP=arguments.maxPercent)
+                 maxP=arguments.maxPercent,
+                 showEpochs=arguments.showEpochs)

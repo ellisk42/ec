@@ -1,0 +1,11 @@
+
+#!/bin/bash
+
+
+module add openmind/singularity
+checkpoint19='experimentOutputs/list_aic=1.0_arity=3_BO=True_CO=True_ET=720_HR=0.5_it=20_MF=5_baseline=False_pc=30.0_RT=7200_RW=False_storeTask=True_L=2.0_batch=10_taskReranker=randomShuffle_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor_graph=True.pickle'
+
+srun --job-name=graphsHeldout$1 --output=data/batch_12_2_2018/graphs --ntasks=1 --mem-per-cpu=5000 --cpus-per-task 1 --time=5:00 --qos=tenenbaum \
+  singularity exec -B /om2  sklearn-container.img \
+  python graphs.py --checkpoints $checkpoint19  --showEpochs --export data/batch_12_2_2018/test.png  \
+  &
