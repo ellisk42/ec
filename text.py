@@ -65,7 +65,7 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
 def competeOnOneTask(checkpoint, task,
                      CPUs=8, timeout=3600, evaluationTimeout=0.0005):
     if checkpoint.recognitionModel is not None:
-        recognizer = result.recognitionModel
+        recognizer = checkpoint.recognitionModel
         challengeFrontiers, times, bestSearchTime = \
                 recognizer.enumerateFrontiers([task], "all-or-nothing",
                                               CPUs=CPUs,
@@ -96,6 +96,7 @@ def sygusCompetition(checkpoint, tasks):
 
     CPUs = 8
     timeout = 3600
+    tasks = tasks
 
     maxWorkers = int(numberOfCPUs()/CPUs)
     workers = Pool(maxWorkers)
@@ -103,7 +104,7 @@ def sygusCompetition(checkpoint, tasks):
     promises = []
     for t in tasks:
         promise = workers.apply_async(competeOnOneTask,
-                                      (checkpoint,task),
+                                      (checkpoint,t),
                                       {"CPUs": CPUs,
                                        "timeout": timeout})
         promises.append(promise)
@@ -119,10 +120,10 @@ def sygusCompetition(checkpoint, tasks):
         pickle.dump(searchTimes, handle)
     eprint()
 
-    hits = sum( t is not None for t in searchTimes.values )
+    hits = sum( t is not None for t in searchTimes.values() )
     total = len(searchTimes)
     percentage = 100*hits/total
-    eprint("Hits %d/%d = %f\%"%(hits, total, percentage))
+    eprint("Hits %d/%d = %f\n"%(hits, total, percentage))
     eprint()
     eprint("Exported competition results to",fn)
     
@@ -203,7 +204,7 @@ if __name__ == "__main__":
     competitionCheckpoint = arguments.pop("compete")
     if competitionCheckpoint:
         with open(competitionCheckpoint, 'rb') as handle:
-            competitionCheckpoint = dill.load(competitionCheckpoint)
+            competitionCheckpoint = dill.load(handle)
         sygusCompetition(competitionCheckpoint, challenge)
         sys.exit(0)
 
