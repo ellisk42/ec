@@ -546,7 +546,7 @@ def manualLogoTasks():
             for name in body:
                 mustTrain = False
 
-                mustTrain = mustTrain or (n == 5 and name == "empty")
+                mustTrain = mustTrain or (n == 7 and name == "empty")
                 mustTrain = mustTrain or (n == 4 and name == "dashed")
                 mustTrain = mustTrain or (n == 7 and name == "circle")
                 mustTrain = mustTrain or (n == 6 and name == "lonely circle")
@@ -560,8 +560,8 @@ def manualLogoTasks():
                 
 
                 # cap number of super easy snowflakes
-                if name == "empty" and n not in [5]: mustTrain = False
-                if name == "dashed" and n not in [7]: mustTrain = False
+                if name == "empty" and n not in [7]: mustTrain = False
+                if name == "dashed" and n not in [4]: mustTrain = False
                 
 
                 T("%d-%s snowflake"%(n,name),
