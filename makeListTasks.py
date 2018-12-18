@@ -131,7 +131,7 @@ def make_list_bootstrap_tasks():
         Task("map length", arrow(tlist(tlist(tint)), tlist(tint)),
              [((xss,), [len(xs) for xs in xss])
               for _ in range(10)
-              for xss in randomListOfLists() ])
+              for xss in [randomListOfLists()] ])
     ]
 
     # Encourages learning of unfolding
