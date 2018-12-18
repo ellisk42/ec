@@ -128,6 +128,10 @@ def make_list_bootstrap_tasks():
              [((l,), len(l))
               for _ in range(10)
               for l in [randomList()]]),
+        Task("map length", arrow(tlist(tlist(tint)), tlist(tint)),
+             [((xss,), [len(xs) for xs in xss])
+              for _ in range(10)
+              for xss in randomListOfLists() ])
     ]
 
     # Encourages learning of unfolding
@@ -329,26 +333,8 @@ def make_list_bootstrap_tasks():
               for xs in [[randint(0, 3) for _ in range(5)]]]),
     ]
 
-    # Learning mapi
-    mapIndexBootstrap = [
-        # Task("Add index", arrow(tlist(tint),tlist(tint)),
-        #      [((l,), map(lambda (i,j): i+j, enumerate(l)))
-        #       for _ in range(10)
-        #       for l in [randomList()] ]),
-        Task("subtract index", arrow(tlist(tint), tlist(tint)),
-             [((l,), [i_j[0] - i_j[1] for i_j in enumerate(l)])
-              for _ in range(10)
-              for l in [randomList()]]),
-        Task("cons index", arrow(tlist(tlist(tint)), tlist(tlist(tint))),
-             [((l,), [[i_j1[0]] + i_j1[1] for i_j1 in enumerate(l)])
-              for _ in range(10)
-              for l in [randomListOfLists()]])
-    ]
-
-    # Let's learn everything!
-    if True:
-        return lengthBootstrap + filterBootstrap + \
-            unfoldBootstrap + arrayBootstrap + foldBootstrap + mapBootstrap
+    return lengthBootstrap + filterBootstrap + \
+        unfoldBootstrap + arrayBootstrap + foldBootstrap + mapBootstrap
 
 
 def bonusListProblems():
