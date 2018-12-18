@@ -488,7 +488,7 @@ algolisp_input_vocab = [
 
 import json
 vfile = '../algolisp_io_vocab'
-with open(file, 'r') as handle:
+with open(vfile, 'r') as handle:
     v = json.load(handle)
 
 algolisp_IO_vocab = set(v)
