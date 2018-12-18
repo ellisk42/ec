@@ -99,3 +99,11 @@ Random shuffle (batches of 10), 120s: *tower_random_shuffle_10_120s [Running, 12
 
 
 REGEX: Max: your stuff here
+Best run so far (uses context free):
+python launch.py -g -z "p3.16xlarge" "regex_gpu_contextfreeBO.95HR" "python regexes.py -t 3600 --testingTimeout 1800 --tasks new --maxTasks 256 --ll_cutoff bigram --split 0.5 -k 10 --biasOptimal -r .95"
+
+Best contextual run:
+python launch.py -g -z "p3.16xlarge" "regex_gpu_contextualBO.95HR" "python regexes.py -t 3600 --testingTimeout 1800 --tasks new --maxTasks 256 --ll_cutoff bigram --split 0.5 -k 10 --contextual --biasOptimal -r .95"
+
+A task batching run
+python launch.py -g -z "p3.16xlarge" "regex_gpu_batch_contextualBO.95HR" "python regexes.py -t 720 --testingTimeout 720 --tasks new --maxTasks 256 --ll_cutoff bigram --split 0.5 -k 10 --contextual --biasOptimal -r .95 --taskReranker randomShuffle --taskBatchSize 10"
