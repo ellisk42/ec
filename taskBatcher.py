@@ -50,7 +50,7 @@ class RandomShuffleTaskBatcher:
 			assert False
 		
 		# Reshuffles tasks in a fixed way across epochs for reproducibility.
-		baseSeed = 0
+		baseSeed = 1
 		currEpoch = int(int(currIteration * taskBatchSize) / int(len(tasks)))
 
 		shuffledTasks = tasks.copy() # Since shuffle works in place.
