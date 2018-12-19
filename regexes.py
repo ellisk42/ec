@@ -267,17 +267,18 @@ if __name__ == "__main__":
 
     extractor.H = args.pop("hidden")
 
-
-    from time import gmtime, strftime
-    timestr = strftime("%m%d%H%M%S", gmtime())
-
     #stardecay = args.stardecay
     #stardecay = args.pop('stardecay')
     #decaystr = 'd' + str(stardecay)
+    import datetime
+
+    timestamp = datetime.datetime.now().isoformat()
+    outputDirectory = "experimentOutputs/regex/%s"%timestamp
+    os.system("mkdir -p %s"%outputDirectory)
 
     args.update({
         "featureExtractor": extractor,
-        "outputPrefix": "experimentOutputs/r" + primtype + timestr[-2] + 'll' + str(train_ll_cutoff) + str(test_ll_cutoff),
+        "outputPrefix": "%s/regex"%(outputDirectory),
         "evaluationTimeout": 0.005,
         "topk_use_only_likelihood": True,
         "maximumFrontier": 10,
@@ -329,5 +330,5 @@ weighted with the constants. If you look at the grammar above, this is an error!
         assert False
 
     explorationCompression(baseGrammar, train,
-                            testingTasks = test,
-                            **args)
+                           testingTasks = test,
+                           **args)
