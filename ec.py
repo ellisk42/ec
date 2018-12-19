@@ -734,6 +734,8 @@ def commandlineArguments(_=None,
                         rewriteTaskMetrics=True):
     if cuda is None:
         cuda = torch.cuda.is_available()
+    print("CUDA is available?:", torch.cuda.is_available())
+    print("using cuda?:", cuda)
     import argparse
     parser = argparse.ArgumentParser(description="")
     parser.add_argument("--resume",

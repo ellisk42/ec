@@ -107,3 +107,7 @@ python launch.py -g -z "p3.16xlarge" "regex_gpu_contextualBO.95HR" "python regex
 
 A task batching run
 python launch.py -g -z "p3.16xlarge" "regex_gpu_batch_contextualBO.95HR" "python regexes.py -t 720 --testingTimeout 720 --tasks new --maxTasks 256 --ll_cutoff bigram --split 0.5 -k 10 --contextual --biasOptimal -r .95 --taskReranker randomShuffle --taskBatchSize 10"
+
+task batchinng with rec model reuse:
+
+python launch.py -g -z "p3.16xlarge" "regex_gpu_batch_reuserec_contextualBO.95HR" "python regexes.py -t 720 --testingTimeout 720 --tasks new --maxTasks 256 --ll_cutoff bigram --split 0.5 -k 10 --contextual --biasOptimal -r .95 --taskReranker randomShuffle --taskBatchSize 10 --reuseRecognition"

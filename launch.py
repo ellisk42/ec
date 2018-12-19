@@ -345,4 +345,5 @@ d2.xlarge	4	14	30.5	3 x 2000 HDD	$0.69 per Hour
 d2.2xlarge	8	28	61	6 x 2000 HDD	$1.38 per Hour
 d2.4xlarge	16	56	122	12 x 2000 HDD	$2.76 per Hour
 d2.8xlarge	36	116	244	24 x 2000 HDD	$5.52 per Hour
+p3.16xlarge
 """

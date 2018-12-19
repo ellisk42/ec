@@ -186,7 +186,7 @@ def regex_options(parser):
 if __name__ == "__main__":
     args = commandlineArguments(
         frontierSize=None, activation='relu', iterations=10,
-        a=3, maximumFrontier=10, topK=2, pseudoCounts=10.0, #try 1 0.1 would make prior uniform
+        a=3, maximumFrontier=5, topK=2, pseudoCounts=10.0, #try 1 0.1 would make prior uniform
         helmholtzRatio=0.5, structurePenalty=1.5, #try 
         CPUs=numberOfCPUs(),
         extras=regex_options)
@@ -277,7 +277,7 @@ if __name__ == "__main__":
 
     args.update({
         "featureExtractor": extractor,
-        "outputPrefix": "experimentOutputs/regex" + primtype + timestr + 'll' + str(train_ll_cutoff) + str(test_ll_cutoff),
+        "outputPrefix": "experimentOutputs/r" + primtype + timestr[-2] + 'll' + str(train_ll_cutoff) + str(test_ll_cutoff),
         "evaluationTimeout": 0.005,
         "topk_use_only_likelihood": True,
         "maximumFrontier": 10,
