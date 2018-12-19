@@ -67,23 +67,34 @@ class RandomShuffleTaskBatcher:
 
 
 class UnsolvedTaskBatcher:
-	"""Returns tasks that have never been solved at any previous iteration. If a batch size is passed in, returns
-	   a randomly sampled task batch of the specified size."""
+	"""At a given epoch, returns only batches of the tasks that have never been solved over any previous iteration."""
 
 	def __init__(self):
-		pass
+		self.epochTasks = None
+		self.start = 0
 
 	def getTaskBatch(self, ec_result, tasks, taskBatchSize, currIteration):
-		unsolvedTasks = [t for t in tasks if ec_result.allFrontiers[t].empty]
+		if self.epochTasks is None:
+			unsolvedTasks = [t for t in tasks if ec_result.allFrontiers[t].empty]
+			# Shuffle the unsolved tasks.
+			random.Random(0).shuffle(unsolvedTasks)
+			self.epochTasks = unsolvedTasks
+			eprint("Empty unsolved epoch tasks, getting %d new unsolved tasks." % len(self.epochTasks))
 
 		if taskBatchSize is None:
-			return unsolvedTasks
-		elif taskBatchSize > len(tasks):
-			eprint("Task batch size is greater than total number of tasks, aborting.")
-			assert False
+			taskBatchSize = len(self.epochTasks)
 
-		eprint("Randomly sampling %d tasks from the unsolved %d remaining tasks." % (taskBatchSize, len(unsolvedTasks)))
-		return random.sample(unsolvedTasks, taskBatchSize)
+		end = self.start + taskBatchSize
+
+		batch = self.epochTasks[self.start:end]
+		self.start = end
+
+		if end >= len(self.epochTasks):
+			# Next time, need to start over.
+			self.epochTasks = None
+			self.start = 0
+
+		return batch
 
 def entropyRandomBatch(ec_result, tasks, taskBatchSize, randomRatio):
 	numRandom = int(randomRatio * taskBatchSize)
