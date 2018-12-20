@@ -233,6 +233,18 @@ def manualLogoTask(name, expression, proto=False, needToTrain=False, supervise =
 
     return t
 
+def dSLDemo():
+    n = 0
+    demos = []
+    def T(source):
+        demos.append(manualLogoTask(str(len(demos)), source))
+    T("(loop i 3 (move (*d 1l 3) (/a 1a 4)))")
+    T("(loop i 5 (move (*d 1l 5) (/a 1a 5)))")
+    T("(loop i infinity (move (*d epsilonDistance 5) (/a epsilonAngle 3)))")
+    T("(loop i infinity (move (*d epsilonDistance 9) (/a epsilonAngle 2)))")
+    
+    return demos
+
 def manualLogoTasks():
     tasks = []
     def T(name, source, needToTrain=False, supervise=False):
@@ -646,3 +658,9 @@ if __name__ == "__main__":
                                                          for i in range(0,len(a),w) ]))
     eprint(len(tasks),"tasks")
     eprint(sum(t.mustTrain for t in tasks),"need to be trained on")
+
+    for t in dSLDemo():
+        a = t.highresolution
+        w = int(len(a)**0.5)
+        scipy.misc.imsave('/tmp/logoDemo%s.png'%t.name, np.array([a[i:i+w]
+                                                                  for i in range(0,len(a),w) ]))
