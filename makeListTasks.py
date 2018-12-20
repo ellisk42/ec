@@ -150,10 +150,10 @@ def make_list_bootstrap_tasks():
         #      [((l,), [l[int(j/2)] for j in range(len(l)) ])
         #       for _ in range(10)
         #       for l in [ [randint(0, 9) for _ in range(randint(1,4)*2)] ] ]),
-        Task("take until 5 reached", arrow(tlist(tint),tlist(tint)),
-             [((p + [5] + s,),p)
+        Task("take until 3 reached", arrow(tlist(tint),tlist(tint)),
+             [((p + [3] + s,),p)
               for _ in range(10)
-              for p in [ [z for z in randomList()[:5] if z != 5 ]]
+              for p in [ [z for z in randomList()[:5] if z != 3 ]]
               for s in [randomList()] ]),
         Task("drop last element", arrow(tlist(tint),tlist(tint)),
              [((l,), l[:-1])
@@ -187,10 +187,19 @@ def make_list_bootstrap_tasks():
              [((n, l), l[n])
               for n in range(10)
               for l in [[randint(0, 9) for _ in range(randint(n + 1, n + 5))]]]),
-        Task("index bool", arrow(tint, tlist(tbool), tbool),
-             [((n, l), l[n])
+        Task("last n", arrow(tint, tlist(tint), tlist(tint)),
+             [((n, l), l[-n:])
               for n in range(10)
-              for l in [[flip() for _ in range(randint(n + 1, n + 5))]]])
+              for l in [[randint(0, 9) for _ in range(randint(n + 1, n + 5))]]]),
+        Task("1-index int", arrow(tint, tlist(tint), tint),
+             [((n, l), l[n - 1])
+              for n in range(1,11)
+              for l in [[randint(0, 9) for _ in range(randint(n + 1, n + 4))]]])
+        
+        # Task("index bool", arrow(tint, tlist(tbool), tbool),
+        #      [((n, l), l[n])
+        #       for n in range(10)
+        #       for l in [[flip() for _ in range(randint(n + 1, n + 5))]]])
     ]
 
     # Teaches how to slice lists, not sure if we really need this though
@@ -315,12 +324,12 @@ def make_list_bootstrap_tasks():
 
     # Learning to filter
     filterBootstrap = [
-        Task("remove empty lists",
-             arrow(tlist(tlist(tbool)), tlist(tlist(tbool))),
-             [((ls,), [l for l in ls if len(l) > 0])
-              for _ in range(10)
-              for ls in [[[flip() for _ in range(randint(0, 3))]
-                          for _ in range(4)]]]),
+        # Task("remove empty lists",
+        #      arrow(tlist(tlist(tbool)), tlist(tlist(tbool))),
+        #      [((ls,), [l for l in ls if len(l) > 0])
+        #       for _ in range(10)
+        #       for ls in [[[flip() for _ in range(randint(0, 3))]
+        #                   for _ in range(4)]]])
         # Task("remove non 0s",
         #      arrow(tlist(tint), tlist(tint)),
         #      [((xs,), filter(lambda x: x == 0, xs))
@@ -329,6 +338,11 @@ def make_list_bootstrap_tasks():
         Task("remove 0s",
              arrow(tlist(tint), tlist(tint)),
              [((xs,), [x for x in xs if x != 0])
+              for _ in range(10)
+              for xs in [[randint(0, 3) for _ in range(5)]]]),
+        Task("remove non-positives",
+             arrow(tlist(tint), tlist(tint)),
+             [((xs,), [x for x in xs if not (x > 1)])
               for _ in range(10)
               for xs in [[randint(0, 3) for _ in range(5)]]]),
     ]
