@@ -11,10 +11,11 @@ Full model without batching:
      python launch.py -k  -z x1.32xlarge DreamLogo "python logo.py -t 7200 --structurePenalty 1.5 --pseudoCounts 30.0 --biasOptimal --contextual --split 0.5 --testingTimeout 3600"
 Random shuffle (batches of 10), 720s: [DONE, solves 36/73 testing]
      python launch.py -k  -z r4.16xlarge LogoBatch "python logo.py -t 720  --structurePenalty 1.5 --pseudoCounts 30.0 --biasOptimal --contextual --split 0.5 --testingTimeout 3600  --storeTaskMetrics --taskReranker randomShuffle --taskBatchSize 10 -i 20  -R 1800 --reuseRecognition"
-Random shuffle (batches of 10), 720s: 
+Random shuffle (batches of 10), 720s:  [DONE: solves 40/73 and ends up converging to a bad DSL]
      python launch.py -k  -z x1.32xlarge LogoBatch_24m "python logo.py -t 1440  --structurePenalty 1.5 --pseudoCounts 30.0 --biasOptimal --contextual --split 0.5 --testingTimeout 3600  --storeTaskMetrics --taskReranker randomShuffle --taskBatchSize 10 -i 30  -R 1800 "
-Random shuffle (batches of 20), 30min: 
+Random shuffle (batches of 20), 30min: [DONE: solves 50/73 and still converges to a bad DSL]
      python launch.py -k  -z x1.32xlarge logo_batch_20_30m "python logo.py -t 1800  --structurePenalty 1.5 --pseudoCounts 30.0 --biasOptimal --contextual --split 0.5 --testingTimeout 600  --storeTaskMetrics --taskReranker randomShuffle --taskBatchSize 20 -i 30  -R 1800 "
+     
      
 TEXT:
 Full model without batching:
