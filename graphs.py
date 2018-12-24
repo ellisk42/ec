@@ -191,11 +191,11 @@ def plotECResult(
         plot.title(title, fontsize=TITLEFONTSIZE)
 
     if labels is not None:
-        legends.append(a1.legend(loc='lower right', fontsize=9,
-                                 #bbox_to_anchor=(1, 0.5),
-                                 handles=[mlines.Line2D([], [], color=color, ls='-',
-                                                        label=label)
-                                          for label, color in usedLabels]))
+        a1.legend(loc='lower right', fontsize=9,
+                  #bbox_to_anchor=(1, 0.5),
+                  handles=[mlines.Line2D([], [], color=color, ls='-',
+                                         label=label)
+                           for label, color in usedLabels]))
     f.tight_layout()
     if export:
         plot.savefig(export)
