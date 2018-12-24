@@ -122,7 +122,7 @@ def plotECResult(
 
     plot.xticks(range(0, n_iters), fontsize=TICKFONTSIZE)
 
-    colors = ["#D95F02", "#1B9E77"] * ["#000000"]*100
+    colors = ["#D95F02", "#1B9E77"] + ["#000000"]*100
     
     for result, p, color in zip(results, parameters, colors):
         if hasattr(p, "baseline") and p.baseline:
