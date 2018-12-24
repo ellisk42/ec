@@ -99,11 +99,7 @@ def plotECResult(
     # drawn
     timeouts = sorted(set(r.enumerationTimeout for r in parameters),
                       reverse=2)
-    timeoutToStyle = {
-        size: style for size, style in zip(
-            timeouts, [
-                "-", "--", "-."])}
-
+    
     f, a1 = plot.subplots(figsize=(4, 3))
     xlabel = 'Epoch' if showEpochs else 'Iteration'
     a1.set_xlabel('Epoch', fontsize=LABELFONTSIZE)
@@ -126,10 +122,9 @@ def plotECResult(
 
     plot.xticks(range(0, n_iters), fontsize=TICKFONTSIZE)
 
-    recognitionToColor = {False: "#1B9E77",#"teal",
-                          True: "#D95F02"}#"darkorange"}
-
-    for result, p in zip(results, parameters):
+    colors = ["#D95F02", "#1B9E77"] * ["#000000"]*100
+    
+    for result, p, color in zip(results, parameters, colors):
         if hasattr(p, "baseline") and p.baseline:
             ys = [100. * result.learningCurve[-1] /
                   len(result.taskSolutions)] * n_iters
@@ -144,7 +139,10 @@ def plotECResult(
         if showEpochs:
             if 'taskBatchSize' not in p.__dict__: p.__dict__['taskBatchSize'] = len(result.taskSolutions)
             xs = [ (p.taskBatchSize / (float(len(result.taskSolutions)))) * i for i in xs]
-        color = recognitionToColor[p.useRecognitionModel]
+        if labels:
+            usedLabels.append((labels[0], color))
+            labels = labels[1:]
+            
         l, = a1.plot(xs, ys, color=color, ls='-')
         
         if showSolveTime:
@@ -158,9 +156,9 @@ def plotECResult(
             if not showTraining: times = result.testingSearchTime[:iterations]
             else: times = result.searchTimes[:iterations]
             a2.plot(xs,
-                        [mean(ts) if not timePercentile else median(ts)
+                    [mean(ts) if not timePercentile else median(ts)
                          for ts in times],
-                        color=color, ls='--')
+                    color=color, ls='--')
             if interval:
                 a2.fill_between(range(len(times)),
                                 [percentile(ts, 0.75) if timePercentile else mean(ts) + standardDeviation(ts)
@@ -191,17 +189,15 @@ def plotECResult(
     if title is not None:
         plot.title(title, fontsize=TITLEFONTSIZE)
 
-    # if label is not None:
-    legends = []
-    if len(timeouts) > 1:
-        legends.append(a1.legend(loc='lower right', fontsize=14,
+    if labels is not None:
+        legends.append(a1.legend(loc='lower right', fontsize=9,
                                  #bbox_to_anchor=(1, 0.5),
-                                 handles=[mlines.Line2D([], [], color='black', ls=timeoutToStyle[timeout],
-                                                        label="timeout %ss" % timeout)
-                                          for timeout in timeouts]))
+                                 handles=[mlines.Line2D([], [], color=color, ls='-',
+                                                        label=label)
+                                          for label, color in usedLabels]))
     f.tight_layout()
     if export:
-        plot.savefig(export)  # , additional_artists=legends)
+        plot.savefig(export)
         eprint("Exported figure ",export)
         if export.endswith('.png'):
             os.system('convert -trim %s %s' % (export, export))
