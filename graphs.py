@@ -195,7 +195,7 @@ def plotECResult(
                   #bbox_to_anchor=(1, 0.5),
                   handles=[mlines.Line2D([], [], color=color, ls='-',
                                          label=label)
-                           for label, color in usedLabels]))
+                           for label, color in usedLabels])
     f.tight_layout()
     if export:
         plot.savefig(export)
