@@ -130,10 +130,6 @@ def plotECResult(
                           True: "#D95F02"}#"darkorange"}
 
     for result, p in zip(results, parameters):
-
-
-
-
         if hasattr(p, "baseline") and p.baseline:
             ys = [100. * result.learningCurve[-1] /
                   len(result.taskSolutions)] * n_iters
@@ -146,6 +142,7 @@ def plotECResult(
 
         xs = list(range(0, len(ys)))
         if showEpochs:
+            if 'taskBatchSize' not in p.__dict__: p.__dict__['taskBatchSize'] = len(result.taskSolutions)
             xs = [ (p.taskBatchSize / (float(len(result.taskSolutions)))) * i for i in xs]
         color = recognitionToColor[p.useRecognitionModel]
         l, = a1.plot(xs, ys, color=color, ls='-')

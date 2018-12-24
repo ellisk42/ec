@@ -1117,6 +1117,27 @@ def graphPrimitives(result, prefix, view=False):
                            
     }
 
+    def makeUnorderedGraph(fn):
+        g = Digraph()
+        g.graph_attr['rankdir'] = 'LR'
+
+        for p in primitives:
+            g.node(getName(p),
+                   label="<%s>"%simplification[p])
+        for p in primitives:
+            children = {k
+                        for _,k in p.body.walk()
+                        if k.isInvented}
+            for k in children:
+                g.edge(name[k],name[p])
+        try:
+            g.render(fn,view=view)
+            eprint("Exported primitive graph to",fn)
+        except:
+            eprint("Got some kind of error while trying to render primitive graph! Did you install graphviz/dot?")
+
+        
+
     def makeGraph(ordering, fn):
         g = Digraph()
         g.graph_attr['rankdir'] = 'RL'
@@ -1158,5 +1179,6 @@ def graphPrimitives(result, prefix, view=False):
         
         
 
-    makeGraph(depth2primitives,prefix+'depth.pdf')
+    #makeGraph(depth2primitives,prefix+'depth.pdf')
+    makeUnorderedGraph(prefix+'unordered.pdf')
     #makeGraph(age2primitives,prefix+'iter.pdf')
