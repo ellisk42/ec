@@ -1040,6 +1040,25 @@ def graphPrimitives(result, prefix, view=False):
             n += len(w)
             l.append(w)
         return " ".join(l)
+
+    nameSimplification = {
+        "logo_DIVA": '/',
+        "logo_epsA": 'ε',
+        "logo_epsL": 'ε',
+        "logo_IFTY": '∞',
+        "logo_forLoop": "for",
+        "logo_UA": "2𝜋",
+        "logo_FWRT": "move",
+        "logo_UL": "1",
+        "logo_SUBA": "-",
+        "logo_ZL": "0",
+        "logo_ZA": "0",
+        "logo_MULL": "*",
+        "logo_MULA": "*",
+        "logo_PT": "pen-up",
+        "logo_GETSET": "get/set"
+    }
+
                 
     name = {}
     simplification = {}
@@ -1052,6 +1071,9 @@ def graphPrimitives(result, prefix, view=False):
         simplification_ = p.body
         for k,childName in children.items():
             simplification_ = simplification_.substitute(k, Primitive(childName,None,None))
+        for original, simplified in nameSimplification.items():
+            simplification_ = simplification_.substitute(Primitive(original,None,None),
+                                                         Primitive(simplified,None,None))
         name[p] = "f%d"%len(name)
         simplification[p] = name[p] + '=' + lb(prettyProgram(simplification_, Lisp=True))
         depth[p] = 1 + max([depth[k] for k in children] + [0])

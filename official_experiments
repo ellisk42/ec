@@ -15,7 +15,8 @@ Random shuffle (batches of 10), 720s:  [DONE: solves 40/73 and ends up convergin
      python launch.py -k  -z x1.32xlarge LogoBatch_24m "python logo.py -t 1440  --structurePenalty 1.5 --pseudoCounts 30.0 --biasOptimal --contextual --split 0.5 --testingTimeout 3600  --storeTaskMetrics --taskReranker randomShuffle --taskBatchSize 10 -i 30  -R 1800 "
 Random shuffle (batches of 20), 30min: [DONE: solves 50/73 and still converges to a bad DSL]
      python launch.py -k  -z x1.32xlarge logo_batch_20_30m "python logo.py -t 1800  --structurePenalty 1.5 --pseudoCounts 30.0 --biasOptimal --contextual --split 0.5 --testingTimeout 600  --storeTaskMetrics --taskReranker randomShuffle --taskBatchSize 20 -i 30  -R 1800 "
-     
+Random shuffle (batches of 40), 60min: [PENDING]
+            python launch.py -k  -z x1.32xlarge logo_batch_40_60m "python logo.py -t 3600  --structurePenalty 1.5 --pseudoCounts 30.0 --biasOptimal --contextual --split 0.5 --testingTimeout 600  --storeTaskMetrics --taskReranker randomShuffle --taskBatchSize 40 -i 20  -R 1800 "
      
 TEXT:
 Full model without batching:
