@@ -58,13 +58,12 @@ def parseResultsPath(p):
                   for [k, v] in [binding.split('=')]}
     parameters['domain'] = domain
     return Bunch(parameters)
-
+               
 
 def plotECResult(
         resultPaths,
         interval=False,
         timePercentile=False,
-        colors='rgbycm',
         labels=None,
         failAsTimeout=False,
         title=None,
@@ -77,16 +76,12 @@ def plotECResult(
         showEpochs=False):
     results = []
     parameters = []
-    for j, path in enumerate(resultPaths):
+    for path in resultPaths:
         result = loadfun(path)
         print("loaded path:", path)
 
         if hasattr(result, "baselines") and result.baselines:
-            for name, res in result.baselines.items():
-                results.append(res)
-                p = parseResultsPath(path)
-                p["baseline"] = name.replace("_", " ")
-                parameters.append(p)
+            assert False, "baselines are deprecated."
         else:
             results.append(result)
             parameters.append(parseResultsPath(path))
@@ -94,31 +89,19 @@ def plotECResult(
     if testingTimeout is not None:
         for r in results:
             r.testingSearchTime = [ [t for t in ts if t <= testingTimeout ]
-                                    for ts in result.testingSearchTime ]
-    # Collect together the timeouts, which determine the style of the line
-    # drawn
-    timeouts = sorted(set(r.enumerationTimeout for r in parameters),
-                      reverse=2)
-    timeoutToStyle = {
-        size: style for size, style in zip(
-            timeouts, [
-                "-", "--", "-."])}
-
+                                    for ts in r.testingSearchTime ]
+    
     f, a1 = plot.subplots(figsize=(4, 3))
     xlabel = 'Epoch' if showEpochs else 'Iteration'
     a1.set_xlabel('Epoch', fontsize=LABELFONTSIZE)
     a1.xaxis.set_major_locator(MaxNLocator(integer=True))
 
+    a1.set_ylabel('%% %s Solved%s'%("Training" if showTraining else "Test",
+                                    " (solid)" if showSolveTime else ""),
+                  fontsize=LABELFONTSIZE)
     if showSolveTime:
-        a1.set_ylabel('%  Solved (solid)', fontsize=LABELFONTSIZE)
         a2 = a1.twinx()
         a2.set_ylabel('Solve time (dashed)', fontsize=LABELFONTSIZE)
-    else:
-        if not showTraining:
-            a1.set_ylabel('% Testing Tasks Solved', fontsize=LABELFONTSIZE)
-        else:
-            a1.set_ylabel('% Tasks Solved', fontsize=LABELFONTSIZE)
-            
 
     n_iters = max(len(result.learningCurve) for result in results)
     if iterations and n_iters > iterations:
@@ -126,29 +109,40 @@ def plotECResult(
 
     plot.xticks(range(0, n_iters), fontsize=TICKFONTSIZE)
 
-    recognitionToColor = {False: "#1B9E77",#"teal",
-                          True: "#D95F02"}#"darkorange"}
-
-    for result, p in zip(results, parameters):
-
-
-
-
+    colors = ["#D95F02", "#1B9E77", "#C9CC22"] + ["#000000"]*100
+    usedLabels = []
+    
+    for result, p, color in zip(results, parameters, colors):
+        # Check whether iterations refers to wake/sleep cycles or whether it refers to epohs
+        if iterations and showEpochs and 'taskBatchSize' in p.__dict__:
+            correctedIterations = int(iterations * len(result.taskSolutions) / p.taskBatchSize)
+        else:
+            correctedIterations = iterations
+            
         if hasattr(p, "baseline") and p.baseline:
             ys = [100. * result.learningCurve[-1] /
                   len(result.taskSolutions)] * n_iters
         elif showTraining:
             ys = [100.*t/float(len(result.taskSolutions))
-                  for t in result.learningCurve[:iterations]]
+                  for t in result.learningCurve[:correctedIterations]]
         else:
             ys = [100. * len(t) / result.numTestingTasks
-                  for t in result.testingSearchTime[:iterations]]
-
+                  for t in result.testingSearchTime[:correctedIterations]]
+            
         xs = list(range(0, len(ys)))
         if showEpochs:
-            xs = [ (p.taskBatchSize / (float(len(result.taskSolutions)))) * i for i in xs]
-        color = recognitionToColor[p.useRecognitionModel]
-        l, = a1.plot(xs, ys, color=color, ls='-')
+            if 'taskBatchSize' not in p.__dict__:
+                print("warning: Could not find batch size in result. Assuming batching was not used.")
+            else:
+                print(p.taskBatchSize, len(result.taskSolutions))
+                xs = [ (p.taskBatchSize / (float(len(result.taskSolutions)))) * i for i in xs]
+                print(len(ys))
+            print(xs)
+        if labels:
+            usedLabels.append((labels[0], color))
+            labels = labels[1:]
+            
+        a1.plot(xs, ys, color=color, ls='-')
         
         if showSolveTime:
             if failAsTimeout:
@@ -158,12 +152,12 @@ def plotECResult(
                 result.searchTimes = [ ts + [p.enumerationTimeout]*(len(result.taskSolutions) - len(ts))
                                        for ts in result.searchTimes ]
 
-            if not showTraining: times = result.testingSearchTime[:iterations]
-            else: times = result.searchTimes[:iterations]
+            if not showTraining: times = result.testingSearchTime[:correctedIterations]
+            else: times = result.searchTimes[:correctedIterations]
             a2.plot(xs,
-                        [mean(ts) if not timePercentile else median(ts)
+                    [mean(ts) if not timePercentile else median(ts)
                          for ts in times],
-                        color=color, ls='--')
+                    color=color, ls='--')
             if interval:
                 a2.fill_between(range(len(times)),
                                 [percentile(ts, 0.75) if timePercentile else mean(ts) + standardDeviation(ts)
@@ -194,17 +188,15 @@ def plotECResult(
     if title is not None:
         plot.title(title, fontsize=TITLEFONTSIZE)
 
-    # if label is not None:
-    legends = []
-    if len(timeouts) > 1:
-        legends.append(a1.legend(loc='lower right', fontsize=14,
-                                 #bbox_to_anchor=(1, 0.5),
-                                 handles=[mlines.Line2D([], [], color='black', ls=timeoutToStyle[timeout],
-                                                        label="timeout %ss" % timeout)
-                                          for timeout in timeouts]))
+    if labels is not None:
+        a1.legend(loc='lower right', fontsize=9,
+                  #bbox_to_anchor=(1, 0.5),
+                  handles=[mlines.Line2D([], [], color=color, ls='-',
+                                         label=label)
+                           for label, color in usedLabels])
     f.tight_layout()
     if export:
-        plot.savefig(export)  # , additional_artists=legends)
+        plot.savefig(export)
         eprint("Exported figure ",export)
         if export.endswith('.png'):
             os.system('convert -trim %s %s' % (export, export))
@@ -212,13 +204,6 @@ def plotECResult(
     else:
         f.show()
         
-
-def tryIntegerParse(s):
-    try:
-        return int(s)
-    except BaseException:
-        return None
-
 
 if __name__ == "__main__":
     import sys
@@ -230,7 +215,7 @@ if __name__ == "__main__":
                         default="")
     parser.add_argument("--iterations","-i",
                         type=int, default=None,
-                        help="number of iterations of EC to show")
+                        help="number of iterations/epochs of EC to show. If combined with --showEpochs this will bound the number of epochs.")
     parser.add_argument("--names","-n",
                         type=str, default="",
                         help="comma-separated list of names to put on the plot for each checkpoint")

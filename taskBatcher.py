@@ -63,7 +63,7 @@ class RandomShuffleTaskBatcher:
 		end = start + taskBatchSize
 		taskBatch = (shuffledTasks + shuffledTasksWrap)[start:end] # Wraparound nicely.
 
-		return taskBatch
+		return list(set(taskBatch))
 
 
 class UnsolvedTaskBatcher:
