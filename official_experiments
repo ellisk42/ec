@@ -121,7 +121,7 @@ Random shuffle (batches of 10), 120s: tower_random_shuffle_10_120s [Done, solves
 Random shuffle (batches of 10), 120s. retraining: tower_random_shuffle_10_120s [12/18]
 	python launch.py -k -z m4.16xlarge --ssh_key openmind tower_random_shuffle_10_120s "python tower.py -t 120 --compressor ocaml --pseudoCounts 30 --tasks supervised --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 300 --storeTaskMetrics --split 0.5 --testingTimeout 120 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10 --reuseRecognition"
 
-REGEX: Max: your stuff here
+REGEX:
 Best run so far (uses context free):
 python launch.py -g -z "p3.16xlarge" "regex_gpu_contextfreeBO.95HR" "python regexes.py -t 3600 --testingTimeout 1800 --tasks new --maxTasks 256 --ll_cutoff bigram --split 0.5 -k 10 --biasOptimal -r .95"
 
@@ -134,3 +134,26 @@ python launch.py -g -z "p3.16xlarge" "regex_gpu_batch_contextualBO.95HR" "python
 task batchinng with rec model reuse:
 
 python launch.py -g -z "p3.16xlarge" "regex_gpu_batch_reuserec_contextualBO.95HR" "python regexes.py -t 720 --testingTimeout 720 --tasks new --maxTasks 256 --ll_cutoff bigram --split 0.5 -k 10 --contextual --biasOptimal -r .95 --taskReranker randomShuffle --taskBatchSize 10 --reuseRecognition"
+
+***
+#100% helmholtz:
+python launch.py -g -z "g3.16xlarge" "regex_gpu_batch_100HR" "python regexes.py -t 720 --testingTimeout 720 --tasks new --maxTasks 256 --ll_cutoff bigram --split 0.5 -k 10 --contextual --biasOptimal -r 1 --taskReranker randomShuffle --taskBatchSize 10"
+
+#can use --seed to change subset of tasks. default is 42
+
+#Reuse vs not reuse
+python launch.py -g -z "g3.16xlarge" "regex_batch_.95HR" "python regexes.py -t 720 --testingTimeout 720 --tasks new --maxTasks 256 --ll_cutoff bigram --split 0.5 -k 10 --contextual --biasOptimal -r .95 --taskReranker randomShuffle --taskBatchSize 10"
+
+#task batchinng with rec model reuse:
+
+python launch.py -g -z "g3.16xlarge" "regex_batch_reuserec.95HR" "python regexes.py -t 720 --testingTimeout 720 --tasks new --maxTasks 256 --ll_cutoff bigram --split 0.5 -k 10 --contextual --biasOptimal -r .95 --taskReranker randomShuffle --taskBatchSize 10 --reuseRecognition"
+
+
+LONGER RUNS, NORMAL STATS
+
+python launch.py -g -z "g3.16xlarge" "regex_batch_50HR" "python regexes.py -i 30 -t 720 --testingTimeout 900 -R 1800 --tasks new --maxTasks 256 --ll_cutoff bigram --split 0.5 -k 10 --contextual --biasOptimal -r .5 --taskReranker randomShuffle --taskBatchSize 10"
+
+python launch.py -g -z "g3.16xlarge" "regex_batch_reuserec50HR" "python regexes.py -i 30 -t 720 --testingTimeout 900 -R 1800 --tasks new --maxTasks 256 --ll_cutoff bigram --split 0.5 -k 10 --contextual --biasOptimal -r .5 --taskReranker randomShuffle --taskBatchSize 10 --reuseRecognition"
+
+
+
