@@ -254,7 +254,14 @@ class ContextualGrammarNetwork(nn.Module):
 
         
         denominator = (N*z).sum(1).sum(1)
-        return numerator - denominator
+        ll = numerator - denominator
+
+        if False: # verifying that batching works correctly
+            gs = [ self(xs[b]) for b in range(B) ]
+            _l = torch.cat([ summary.logLikelihood(g) for summary,g in zip(summaries, gs) ])
+            assert torch.all((ll - _l).abs() < 0.0001)
+
+        return ll
             
         
 
@@ -548,6 +555,7 @@ class RecognitionModel(nn.Module):
         optimizer = torch.optim.Adam(self.parameters(), lr=lr, eps=1e-3, amsgrad=True)
         start = time.time()
         losses, descriptionLengths, realLosses, dreamLosses, realMDL, dreamMDL = [], [], [], [], [], []
+        totalGradientSteps = 0
         for i in range(1, steps + 1):
             if timeout and time.time() - start > timeout:
                 break
@@ -576,6 +584,7 @@ class RecognitionModel(nn.Module):
                 else:
                     loss.backward()
                     optimizer.step()
+                    totalGradientSteps += 1
                     losses.append(loss.data.item())
                     descriptionLengths.append(min(-e.logPrior for e in frontier))
                     if dreaming:
@@ -592,6 +601,8 @@ class RecognitionModel(nn.Module):
                 eprint("\tvs MDL (w/o neural net)", mean(descriptionLengths))
                 if realMDL and dreamMDL:
                     eprint("\t\t(real MDL): ", mean(realMDL), "\t(dream MDL):", mean(dreamMDL))
+                eprint("\t%d cumulative gradient steps. %f steps/sec"%(totalGradientSteps,
+                                                                       totalGradientSteps/(time.time() - start)))
                 losses, descriptionLengths, realLosses, dreamLosses, realMDL, dreamMDL = [], [], [], [], [], []
                 gc.collect()
         
