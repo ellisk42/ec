@@ -164,4 +164,3 @@ python launch.py -g -z "g3.16xlarge" "regex_batch_reuserec50HR" "python regexes.
 
 Full model with batching, 0.5 Helmholtz ratio, long recognition model train time:
 python launch.py -k -z "m4.16xlarge" "regex_batch_10_720s" "python regexes.py -t 720 --testingTimeout 600 --tasks new --maxTasks 256 --ll_cutoff bigram --split 0.5 -k 10 --contextual --biasOptimal -r .95 --taskReranker randomShuffle --taskBatchSize 10 --recognitionTimeout 3600 --reuseRecognition"
-
