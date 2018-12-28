@@ -159,7 +159,7 @@ def plotECResult(
                          for ts in times],
                     color=color, ls='--')
             if interval:
-                a2.fill_between(range(len(times)),
+                a2.fill_between(xs,
                                 [percentile(ts, 0.75) if timePercentile else mean(ts) + standardDeviation(ts)
                                  for ts in times],
                                 [percentile(ts, 0.25) if timePercentile else mean(ts) - standardDeviation(ts)
@@ -251,7 +251,7 @@ if __name__ == "__main__":
                  export=arguments.export,
                  title=arguments.title,
                  failAsTimeout=arguments.failAsTimeout,
-                 labels=arguments.names.split(","),
+                 labels=arguments.names.split(",") if arguments.names != "" else None,
                  interval=arguments.interval,
                  iterations=arguments.iterations,
                  showTraining=arguments.showTraining,
