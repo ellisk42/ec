@@ -323,6 +323,23 @@ if __name__ == "__main__":
     for j,t in enumerate(ts):
         t.exportImage("/tmp/tower_%d.png"%j,
                       drawHand=False)
+
+    keywords = ["pyramid",
+                "on top of",
+                "arch 1/2 pyramid",
+                "brickwall",
+                "staircase",
+                "bridge",
+                "aqueduct",
+                "spaced",
+                "arch stack"]
+    for n in range(100):
+        examples = []
+        for kw in keywords:
+            examples.append(random.choice(list(filter(lambda t: kw in str(t), ts))))
+
+        random.shuffle(examples)
+        SupervisedTower.exportMany("/tmp/tower9_%d.png"%n,examples)
         
         
         

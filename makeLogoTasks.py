@@ -664,3 +664,7 @@ if __name__ == "__main__":
         w = int(len(a)**0.5)
         scipy.misc.imsave('/tmp/logoDemo%s.png'%t.name, np.array([a[i:i+w]
                                                                   for i in range(0,len(a),w) ]))
+
+    tasks = [t for t in tasks if t.mustTrain ]
+    random.shuffle(tasks)
+    montageTasks(tasks[:16],"subset")
