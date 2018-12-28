@@ -386,6 +386,10 @@ class RecognitionModel(nn.Module):
         return {task: self.grammarLogProductionsOfTask(task).data.numpy()
                 for task in tasks}
 
+    def taskHiddenStates(self, tasks):
+        return {task: self._MLP(self.featureExtractor.featuresOfTask(task)).view(-1).data.numpy()
+                for task in tasks}
+
     def taskGrammarEntropies(self, tasks):
         return {task: self.grammarEntropyOfTask(task).data.numpy()
                 for task in tasks}

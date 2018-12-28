@@ -77,6 +77,22 @@ class Frontier(object):
         return Frontier(newEntries,
                         self.task)
 
+    def expectedProductionUses(self, g):
+        """Returns a vector of the expected number of times each production was used"""
+        import numpy as np
+
+        this = g.rescoreFrontier(self).normalize()
+        productions = list(sorted(g.primitives, key=str))
+        features = np.zeros(len(productions))
+        
+        for j, p in enumerate(productions):
+            for e in this:
+                w = math.exp(e.logPosterior)
+                features[j] += w * sum(child == p
+                                       for _, child in e.program.walk() )
+        return features
+            
+
     def removeZeroLikelihood(self):
         self.entries = [
             e for e in self.entries if e.logLikelihood != float('-inf')]
@@ -105,7 +121,6 @@ class Frontier(object):
                                                          logLikelihood=0., logPrior=0.)],
                                           task=self.task))
 
-    #added by max to get likelihood summary
     @property
     def bestll(self):
         best = max(self.entries,
