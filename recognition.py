@@ -940,7 +940,7 @@ class ImageFeatureExtractor(nn.Module):
         
         # Each layer of the encoder halves the dimension, except for the last layer which flattens
         outputImageDimensionality = self.resizedDimension/(2**(len(self.encoder) - 1))
-        self.outputDimensionality = z_dim*outputImageDimensionality*outputImageDimensionality
+        self.outputDimensionality = int(z_dim*outputImageDimensionality*outputImageDimensionality)
 
     def forward(self, v):
         """1 channel: v: BxWxW or v:WxW
