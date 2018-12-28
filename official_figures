@@ -1,3 +1,9 @@
 Put your plotting/figure-creating command lines here
 
-python graphs.py 
+python graphs.py --testingTimeout 600 --title "Graphics" --showEpochs --interval --failAsTimeout --checkpoints /home/ellisk/om/ec/experimentOutputs/logo/2018-12-23T03:17:36.165981/logo_aic=1.0_arity=3_BO=True_CO=True_ET=3600_HR=0.5_it=12_MF=5_baseline=False_pc=30.0_RT=1800_RR=False_RW=False_storeTask=True_L=1.5_batch=40_taskReranker=randomShuffle_K=2_topkNotMAP=False_rec=True_feat=LogoFeatureCNN_graph=True.pickle --export /tmp/logo.png
+
+python graphs.py --testingTimeout 600 --title "Text editing" --showEpochs --interval --failAsTimeout --checkpoints /home/ellisk/om/ec/experimentOutputs/text_aic=1.0_arity=3_BO=True_CO=True_ET=720_HR=0.5_it=20_MF=5_baseline=False_pc=30.0_RT=7200_RW=False_storeTask=True_L=1.0_batch=10_taskReranker=randomShuffle_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor_graph=True.pickle  --export /tmp/text.png
+
+python graphs.py --testingTimeout 600 --title "List processing" --showEpochs --interval --failAsTimeout --checkpoints /home/ellisk/om/ec/experimentOutputs/list_aic=1.0_arity=3_BO=True_CO=True_ET=720_HR=0.5_it=20_MF=5_baseline=False_pc=30.0_RT=7200_RW=False_storeTask=True_L=1.0_batch=10_taskReranker=randomShuffle_K=2_topkNotMAP=False_rec=True_feat=Learned  --export /tmp/text.png
+
+python graphs.py --testingTimeout 600 --title "Tower building" --showEpochs --interval --failAsTimeout --checkpoints /home/ellisk/om/ec/experimentOutputs/tower_aic=1.0_arity=3_BO=True_CO=True_ET=120_HR=0.5_it=20_MF=5_baseline=False_pc=30.0_RT=300_RR=True_RW=False_storeTask=True_L=1.0_batch=10_taskReranker=randomShuffle --export /tmp/towerLearningCurve_batched.png
