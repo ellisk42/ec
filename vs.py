@@ -84,7 +84,7 @@ class VersionTable():
 
                 
     def incorporate(self,p):
-        assert isinstance(p,Union) or p.wellTyped()
+        #assert isinstance(p,Union)# or p.wellTyped()
         if p.isIndex or p.isPrimitive or p.isInvented:
             pass
         elif p.isAbstraction:
@@ -501,6 +501,9 @@ class VersionTable():
         spaces = {v: self.repeatedExpansion(v,n)
                   for v in vertices }
         return spaces
+
+    def properVersionSpace(self, j, n):
+        return self.union(self.repeatedExpansion(j, n))
 
     def superVersionSpace(self, j, n):
         """Construct decorated tree and then merge version spaces with subtrees via union operator"""
@@ -1009,25 +1012,165 @@ def testTyping(p):
     import sys
     sys.exit()
     
-def testSharing():
+def testSharing(projection=2):
+    
     source = "(+ 1 1)"
-    N = 9
-    smart = []
-    dumb = []
-    for _ in range(N):
-        v = VersionTable(typed=False)
-        j = v.inversion(v.incorporate(Program.parse(source)))
-        smart.append(len(v.expressions))
-        dumb.append(len(set(v.extract(j))))
-        source = "(+ 1 %s)"%source
+    N = 4 # maximum number of refactorings
+    L = 6 # maximum size of expression
 
+    # def literalSize(v,j):
+    #     hs = []
+    #     vp = VersionTable(typed=False)
+    #     for i in v.extract(j):
+    #         hs.append(vp.incorporate(i))
+    #     return len(set(vp.reachable(hs)))
+    
+    # smart = {}
+    # dumb = {}
+    # for l in range(L):
+    #     for n in range(N):
+    #         v = VersionTable(typed=False)
+            
+    #         j = v.properVersionSpace(v.incorporate(Program.parse(source)),n)
+    #         smart[(l,n)] = len(v.reachable({j}))
+    #         dumb[(l,n)] = literalSize(v,j)
+    #         print(f"vs l={l}\tn={n} sz={smart[(l,n)]}")
+    #         print(f"db l={l}\tn={n} sz={dumb[(l,n)]}")
+    #     # increase the size of the expression
+    #     source = "(+ 1 %s)"%source
+    #     print("Increased size to",l + 1)
+
+    import numpy as np
+    distinct_programs = np.zeros((L,N))
+    version_size = np.zeros((L,N))
+    program_memory = np.zeros((L,N))
+
+    version_size[0,1] = 24
+    distinct_programs[0,1] = 8
+    program_memory[0,1] = 28
+    version_size[0,2] = 155
+    distinct_programs[0,2] = 63
+    program_memory[0,2] = 201
+    version_size[0,3] = 1126
+    distinct_programs[0,3] = 534
+    program_memory[0,3] = 1593
+    version_size[1,1] = 48
+    distinct_programs[1,1] = 24
+    program_memory[1,1] = 78
+    version_size[1,2] = 526
+    distinct_programs[1,2] = 457
+    program_memory[1,2] = 1467
+    version_size[1,3] = 6639
+    distinct_programs[1,3] = 8146
+    program_memory[1,3] = 26458
+    version_size[2,1] = 74
+    distinct_programs[2,1] = 57
+    program_memory[2,1] = 193
+    version_size[2,2] = 1095
+    distinct_programs[2,2] = 2234
+    program_memory[2,2] = 7616
+    version_size[2,3] = 19633
+    distinct_programs[2,3] = 74571
+    program_memory[2,3] = 260865
+    version_size[3,1] = 101
+    distinct_programs[3,1] = 123
+    program_memory[3,1] = 438
+    version_size[3,2] = 1751
+    distinct_programs[3,2] = 9209
+    program_memory[3,2] = 32931
+    version_size[3,3] = 38781
+    distinct_programs[3,3] = 540315
+    program_memory[3,3] = 1984171
+    version_size[4,1] = 129
+    distinct_programs[4,1] = 254
+    program_memory[4,1] = 942
+    version_size[4,2] = 2488
+    distinct_programs[4,2] = 35011
+    program_memory[4,2] = 129513
+    version_size[4,3] = 63271
+    distinct_programs[4,3] = 3477046
+    program_memory[4,3] = 13179440
+    version_size[5,1] = 158
+    distinct_programs[5,1] = 514
+    program_memory[5,1] = 1962
+    version_size[5,2] = 3308
+    distinct_programs[5,2] = 128319
+    program_memory[5,2] = 485862
+    version_size[5,3] = 93400
+    distinct_programs[5,3] = 21042591
+    program_memory[5,3] = 81433633
+
+
+    
     import matplotlib.pyplot as plot
-    plot.plot(range(N),smart)
-    plot.plot(range(N),dumb)
-    plot.legend(['vs','no vs'])
-    plot.show()
+    from matplotlib import rcParams
+    rcParams.update({'figure.autolayout': True})
+    from mpl_toolkits.mplot3d import Axes3D
+
+    if projection == 3:
+        f = plot.figure()
+        a = f.add_subplot(111, projection='3d')
+        X = np.arange(0,N)
+        Y = np.arange(0,L)
+        X,Y = np.meshgrid(X,Y)
+        Z = np.zeros((L,N))
+        for l in range(L):
+            for n in range(N):
+                Z[l,n] = smart[(l,n)]
+
+        a.plot_surface(X,
+                       Y,
+                       np.log10(Z),
+                       color='blue',
+                       alpha=0.3)
+        for l in range(L):
+            for n in range(N):
+                Z[l,n] = dumb[(l,n)]
+
+
+        a.plot_surface(X,
+                       Y,
+                       np.log10(Z),
+                       color='red',
+                       alpha=0.3)
+
+
+    else:
+        plot.figure(figsize=(3.5,3))
+        plot.tight_layout()
+        logarithmic = False
+        if logarithmic: P = plot.semilogy
+        else: P = plot.plot
+        for n in range(1, 2):
+            xs = np.array(range(L))*2 + 3
+            P(xs,
+              [version_size[l,n] for l in range(L) ],
+              'purple',
+              label=None if n > 1 else 'version space')
+            P(xs,
+              [program_memory[l,n] for l in range(L) ],
+              'green',
+              label=None if n > 1 else 'no version space')
+            if n > 1: dy = 1
+            if n == 1 and logarithmic: dy = 0.6
+            if n == 1 and not logarithmic: dy = 1
+            # plot.text(xs[-1], dy*version_size[L - 1,n], "n=%d"%n)
+            # plot.text(xs[-1], dy*program_memory[L - 1,n], "n=%d"%n)
+            
+        plot.legend()
+        plot.xlabel('Size of program being refactored')
+        plot.ylabel('Size of VS (purple) or progs (green)')
+        plot.xticks(list(xs) + [xs[-1] + 2],
+                    [ str(x) if j == 0 or j == L - 1 else ''
+                      for j,x in enumerate(list(xs) + [xs[-1] + 2])])
+        # if not logarithmic:
+        #     plot.ylim([0,100000])
+                
+
+
+    plot.savefig('/tmp/vs.eps')
     assert False
-        
+
 if __name__ == "__main__":
     
     from arithmeticPrimitives import *
