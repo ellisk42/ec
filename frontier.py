@@ -82,14 +82,15 @@ class Frontier(object):
         import numpy as np
 
         this = g.rescoreFrontier(self).normalize()
-        productions = list(sorted(g.primitives, key=str))
-        features = np.zeros(len(productions))
+        ps = list(sorted(g.primitives, key=str))
+        features = np.zeros(len(ps))
         
-        for j, p in enumerate(productions):
+        for j, p in enumerate(ps):
             for e in this:
                 w = math.exp(e.logPosterior)
                 features[j] += w * sum(child == p
                                        for _, child in e.program.walk() )
+            if not p.isInvented: features[j] *= 0.3
         return features
             
 
