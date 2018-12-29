@@ -73,6 +73,7 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
             cuda=cuda,
             H=self.H,
             bidirectional=True)
+        self.parallelTaskOfProgram = False
 
 
     def taskOfProgram(self, p, t):
