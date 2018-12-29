@@ -1,4 +1,4 @@
-from towerPrimitives import ttower, executeTower
+from towerPrimitives import ttower, executeTower, _empty_tower, TowerState
 from utilities import *
 from task import *
 
@@ -15,14 +15,15 @@ class SupervisedTower(Task):
                 eprint(program)
                 assert False
             self.original = program
-            plan = program.evaluate([])(lambda s: (s,[]))(0)[1]
+            plan = executeTower(program)
         elif isinstance(program,Program):
             self.original = program
-            plan = program.evaluate([])(lambda s: (s,[]))(0)[1]
+            plan = executeTower(program)
         else:
             plan = program
         self.original = program
-        self.hand, self.plan = program.evaluate([])(lambda s: (s,[]))(0)
+        state, self.plan = program.evaluate([])(_empty_tower)(TowerState())
+        self.hand = state.hand
         super(SupervisedTower, self).__init__(name, arrow(ttower,ttower), [],
                                               features=[])
         self.specialTask = ("supervisedTower",

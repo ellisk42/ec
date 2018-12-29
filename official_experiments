@@ -110,6 +110,12 @@ Random kNN (batches of 10), regularized: list_random_knn_10_720s_reg [Done - sol
 TOWER:
 Full model without batching: (Solves up to 51 tasks)
      python launch.py -k -z m4.16xlarge TowerDream5 "python tower.py -i 6 -t 300 --pseudoCounts 30 --tasks supervised --maximumFrontier 5 --compressor ocaml --biasOptimal --contextual --testingTimeout 600 --split 0.5 --pseudoCounts 10. --structurePenalty 1"
+     
+Full model without batching, new primitives: [RUNNING]
+     python launch.py -k -z m4.16xlarge tower_new "python tower.py -i 6 -t 3600 --pseudoCounts 30 --tasks supervised --maximumFrontier 5 --compressor ocaml --biasOptimal --contextual --testingTimeout 600 --split 0.5 --structurePenalty 1 --primitives new"
+
+Random shuffle batches of 10, new primitives: [RUNNING]
+     python launch.py -k -z m4.16xlarge tower_new_random_shuffle_10_360s "python tower.py -i 30 -t 120 --pseudoCounts 30 --tasks supervised --maximumFrontier 5 --compressor ocaml --biasOptimal --contextual --testingTimeout 600 --split 0.5 --structurePenalty 1 --primitives new"
 
 Random shuffle (batches of 5), 60s: tower_random_shuffle_5_60s [Done, solves 42/56]
 	python launch.py -k -z m4.16xlarge tower_random_shuffle_5_60s "python tower.py -t 60 --compressor ocaml --pseudoCounts 30 --tasks supervised --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 300 --storeTaskMetrics --split 0.5 --testingTimeout 60 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 5"
