@@ -642,7 +642,8 @@ class RecognitionModel(nn.Module):
             
         def updateHelmholtzTasks():
             updateCPUs = CPUs if hasattr(self.featureExtractor, 'parallelTaskOfProgram') and self.featureExtractor.parallelTaskOfProgram else 1
-            if updateCPUs > 1: eprint("Updating Helmholtz tasks with",updateCPUs,"CPUs")
+            if updateCPUs > 1: eprint("Updating Helmholtz tasks with",updateCPUs,"CPUs",
+                                      "while using",getThisMemoryUsage(),"memory")
             
             if randomHelmholtz:
                 newFrontiers = self.sampleManyHelmholtz(requests, helmholtzBatch, CPUs)
