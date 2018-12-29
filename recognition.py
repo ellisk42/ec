@@ -655,7 +655,13 @@ class RecognitionModel(nn.Module):
                 helmholtzFrontiers.clear()
                 helmholtzFrontiers.extend(newEntries)
                 return 
-                
+
+            # Save some memory by freeing up the tasks as we go through them
+            if self.featureExtractor.recomputeTasks:
+                for hi in range(max(0, helmholtzIndex[0] - helmholtzBatch,
+                                    min(helmholtzIndex[0], len(helmholtzFrontiers)))):
+                    helmholtzFrontiers[hi].clear()
+
             newTasks = \
              parallelMap(updateCPUs,
                          lambda f: f.calculateTask(),
