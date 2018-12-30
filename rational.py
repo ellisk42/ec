@@ -260,6 +260,7 @@ def demo():
         a = drawFunction(200, 5., f, resolution=32) * 255
         Image.fromarray(a).convert('RGB').save("/tmp/functions/%d.png" % j)
     assert False
+    
 
 def rational_options(p):
     p.add_argument("--smooth", action="store_true",

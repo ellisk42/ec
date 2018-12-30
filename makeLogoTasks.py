@@ -245,6 +245,25 @@ def dSLDemo():
     
     return demos
 
+def rotationalSymmetryDemo():
+    demos = []
+    def T(source):
+        demos.append(manualLogoTask(str(len(demos)), source))
+            
+    body = {"dashed": "(p (move 1d 0a)) (move 1d 0a) (p (move 1d 0a)) (move 1d 0a)",
+            "lonely circle": "(p (move (*d 1d 2) 0a)) (loop k 2 (loop i infinity (move (*d epsilonLength 2) epsilonAngle)))",
+            "square dashed": "(p (move 1d 0a)) (loop s 4 (move 1d (/a 1a 4)))",
+            "square": "(loop s 4 (move (*d 1d 2) (/a 1a 4)))",
+            "semicircle": "(loop i infinity (move (*d epsilonLength 4) epsilonAngle))"}
+    for name in body:
+        for n in [3,4,5,6,7]:
+            T("""
+              (loop j %d
+              (embed %s)
+              (move 0d (/a 1a %d)))"""%(n,body[name],n))
+    return demos
+              
+
 def manualLogoTasks():
     tasks = []
     def T(name, source, needToTrain=False, supervise=False):
@@ -668,3 +687,5 @@ if __name__ == "__main__":
     tasks = [t for t in tasks if t.mustTrain ]
     random.shuffle(tasks)
     montageTasks(tasks[:16],"subset")
+
+    montageTasks(rotationalSymmetryDemo(),"rotational")
