@@ -168,11 +168,14 @@ class ContextualGrammarNetwork_Embed(nn.Module):
                         for k, (_, t, program) in enumerate(self.grammar.productions)],
                        continuationType=self.grammar.continuationType)
 
+    def transitionMatrix(self, x):
+        return \
+            (self.embed1(x).view(self.n_grammars, self.E) @ self.embed2(x).view(self.E, len(self.grammar) + 1)).view(self.n_grammars, -1)
+
     def forward(self, x):
         assert len(x.size()) == 1, "contextual grammar doesn't currently support batching"
 
-        transitionMatrix = \
-            (self.embed1(x).view(self.n_grammars, self.E) @ self.embed2(x).view(self.E, len(self.grammar) + 1)).view(self.n_grammars, -1)
+        transitionMatrix = self.transitionMatrix(x)
         
         return ContextualGrammar(self.grammarFromVector(transitionMatrix[-1]), self.grammarFromVector(transitionMatrix[-2]),
                 {prim: [self.grammarFromVector(transitionMatrix[j]) for j in js]
@@ -489,8 +492,12 @@ class RecognitionModel(nn.Module):
         if self.contextual:
             if hasattr(self.grammarBuilder, 'variableParent'):
                 return self.grammarBuilder.variableParent.logProductions(features)
-            else:
+            elif hasattr(self.grammarBuilder, 'network'):
                 return self.grammarBuilder.network(features).view(-1)
+            elif hasattr(self.grammarBuilder, 'embed1'):
+                return self.grammarBuilder.transitionMatrix(features).view(-1)
+            else:
+                assert False
         else:
             return self.grammarBuilder.logProductions(features)
 
