@@ -9,6 +9,7 @@ python graphs.py --testingTimeout 600 --title "List processing" --showEpochs --i
 python graphs.py --testingTimeout 600 --title "Tower building" --showEpochs --interval --failAsTimeout --checkpoints /home/ellisk/om/ec/experimentOutputs/tower_aic=1.0_arity=3_BO=True_CO=True_ET=120_HR=0.5_it=20_MF=5_baseline=False_pc=30.0_RT=300_RR=True_RW=False_storeTask=True_L=1.0_batch=10_taskReranker=randomShuffle --export /tmp/towerLearningCurve_batched.png
 
 
+python graphs.py --testingTimeout 600 --title "Symbolic regression" --showEpochs --interval --checkpoints  /home/ellisk/om/ec/experimentOutputs/rational_aic=1.0_arity=3_BO=True_CO=True_ET=720_HR=0.5_it=24_MF=5_baseline=False_pc=30.0_RT=3600_RR=False_RW=False_storeTask=True_L=1.5_batch=10_taskReranker=randomShuffle_K=2_topkNotMAP=False_rec=True_feat=FeatureExtractor_graph=True.pickle --export /tmp/rationalLearningCurve_batched.png 
 
 # Visualizing program embeddings
 python taskRankGraphs.py --checkpoints /home/ellisk/om/ec/experimentOutputs/tower_aic=1.0_arity=3_BO=True_CO=True_ET=120_HR=0.5_it=20_MF=5_baseline=False_pc=30.0_RT=300_RR=True_RW=False_storeTask=True_L=1.0_batch=10_taskReranker=randomShuffle_K=2_topkNotMAP=False_rec=True_feat=TowerCNN_graph=True.pickle --labelWithImages 1 --metricsToCluster expectedProductionUses

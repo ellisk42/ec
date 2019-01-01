@@ -309,6 +309,39 @@ def makeSupervisedTasks():
         for t in everything:
             delattr(t,'original')
     return everything
+
+def dSLDemo():
+    DSL = {}
+    bricks = Program.parse("(lambda (lambda (tower_loopM $0 (lambda (lambda (moveHand 3 (reverseHand (tower_loopM $3 (lambda (lambda (moveHand 6 (3x1 $0)))) $0))))))))")
+    DSL["bricks"] = [ [bricks.runWithArguments([x,y,_empty_tower,TowerState()])[1]
+                       for x in range(5, 5 + 4) ]
+                      for y in [5,16] ]
+    dimensionality = {}
+    dimensionality["bricks"] = 2
+
+    bridge = Program.parse("(lambda (lambda (tower_loopM $0 (lambda (lambda (#(lambda (#(lambda (lambda (lambda (tower_loopM $0 (lambda (lambda (1x3 (moveHand 4 ($3 $0))))) (moveHand 2 (3x1 $2)))))) $0 (lambda (reverseHand $0)))) (moveHand 4 $0) $3))))))")
+    DSL["bridge"] = [ [bridge.runWithArguments([x,y,_empty_tower,TowerState()])[1]
+                       for x in range(4,4 + 2*4,2) ]
+                       for y in [4,9] ]
+    dimensionality["bridge"] = 2
+
+    staircase = Program.parse("(lambda (tower_loopM $0 (lambda (lambda (#(lambda (lambda (tower_loopM $1 (lambda (lambda (tower_embed (lambda (#(lambda (1x3 (moveHand 4 (1x3 (reverseHand (moveHand 2 (3x1 $0))))))) $0)) $0))) $0))) $1 (moveHand 6 $0))))))")
+    DSL["staircase"] = [ staircase.runWithArguments([n,_empty_tower,TowerState()])[1]
+                         for n in range(3,5 + 3) ]
+
+    images = {}
+    for k,v in DSL.items():
+        d = dimensionality.get(k,1)
+        if d == 1:
+            i = montageMatrix([[renderPlan(p, pretty=True, Lego=True) for p in v]])
+        elif d == 2:
+            i = montageMatrix([[renderPlan(p, pretty=True, Lego=True) for p in ps] for ps in v] )
+        else: assert False
+
+        images[k] = i
+
+    return images
+            
 if __name__ == "__main__":
     from pylab import imshow,show
     from tower_common import *
@@ -318,12 +351,16 @@ if __name__ == "__main__":
     print("maximum plan length",max(len(f.plan) for f in ts ))
     print("maximum tower length",max(towerLength(f.plan) for f in ts ))
     print("maximum tower height",max(towerHeight(simulateWithoutPhysics(f.plan)) for f in ts ))
-    SupervisedTower.showMany(ts)
     SupervisedTower.exportMany("/tmp/every_tower.png",ts)
     
     for j,t in enumerate(ts):
         t.exportImage("/tmp/tower_%d.png"%j,
                       drawHand=False)
+
+    for k,v in dSLDemo().items():
+        import scipy.misc
+        scipy.misc.imsave(f"/tmp/tower_dsl_{k}.png", v)
+
 
     keywords = ["pyramid",
                 "on top of",
