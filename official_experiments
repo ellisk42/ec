@@ -20,7 +20,10 @@ Random shuffle (batches of 40), 60min: [DONE: solves almost 90%, slightly worse 
 
 Baseline without recognition model (batches of 40), 720: [RUNNING]
             python launch.py -k  -z x1.32xlarge logo_no_recognition_batch_40_60m "python logo.py -t 3600  --structurePenalty 1.5 --pseudoCounts 30.0 --split 0.5 --testingTimeout 600 --taskReranker randomShuffle --taskBatchSize 40 -i 20  -g"
-     
+Baseline without DSL learning (batches of 40): [RUNNING]	    
+            python launch.py -k  -z x1.32xlarge logo_no_dsl_batch_40_60m "python logo.py -t 3600  --structurePenalty 1.5 --pseudoCounts 30.0 --biasOptimal --contextual --split 0.5 --testingTimeout 600  --storeTaskMetrics --taskReranker randomShuffle --taskBatchSize 40 -i 20  -R 1800 --aic 1000.0"
+
+
 TEXT:
 Full model without batching:
      python launch.py -k  -z x1.32xlarge TextDream "python text.py  -i 6 -t 7200 --pseudoCounts 30 --testingTimeout 1800 --compressor ocaml --contextual --biasOptimal -l 5 --maximumFrontier 2"
