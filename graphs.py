@@ -73,7 +73,8 @@ def plotECResult(
         showTraining=False,
         iterations=None,
         maxP=110,
-        showEpochs=False):
+        showEpochs=False,
+        epochFrequency=1):
     results = []
     parameters = []
     for path in resultPaths:
@@ -92,8 +93,7 @@ def plotECResult(
                                     for ts in r.testingSearchTime ]
     
     f, a1 = plot.subplots(figsize=(4, 3))
-    xlabel = 'Epoch' if showEpochs else 'Iteration'
-    a1.set_xlabel('Epoch', fontsize=LABELFONTSIZE)
+    a1.set_xlabel("Wake/Sleep Cycles", fontsize=LABELFONTSIZE)
     a1.xaxis.set_major_locator(MaxNLocator(integer=True))
 
     a1.set_ylabel('%% %s Solved%s'%("Training" if showTraining else "Test",
@@ -111,33 +111,36 @@ def plotECResult(
 
     colors = ["#D95F02", "#1B9E77", "#C9CC22"] + ["#000000"]*100
     usedLabels = []
-    
+
+    cyclesPerEpic = None
     for result, p, color in zip(results, parameters, colors):
         # Check whether iterations refers to wake/sleep cycles or whether it refers to epohs
-        if iterations and showEpochs and 'taskBatchSize' in p.__dict__:
-            correctedIterations = int(iterations * len(result.taskSolutions) / p.taskBatchSize)
-        else:
-            correctedIterations = iterations
+        # if iterations and showEpochs and 'taskBatchSize' in p.__dict__:
+        #     correctedIterations = int(iterations * len(result.taskSolutions) / p.taskBatchSize)
+        # else:
+        #     correctedIterations = iterations
             
         if hasattr(p, "baseline") and p.baseline:
             ys = [100. * result.learningCurve[-1] /
                   len(result.taskSolutions)] * n_iters
         elif showTraining:
             ys = [100.*t/float(len(result.taskSolutions))
-                  for t in result.learningCurve[:correctedIterations]]
+                  for t in result.learningCurve[:iterations]]
         else:
             ys = [100. * len(t) / result.numTestingTasks
-                  for t in result.testingSearchTime[:correctedIterations]]
+                  for t in result.testingSearchTime[:iterations]]
             
         xs = list(range(0, len(ys)))
         if showEpochs:
             if 'taskBatchSize' not in p.__dict__:
                 print("warning: Could not find batch size in result. Assuming batching was not used.")
+                newCyclesPerEpic = 1
             else:
-                print(p.taskBatchSize, len(result.taskSolutions))
-                xs = [ (p.taskBatchSize / (float(len(result.taskSolutions)))) * i for i in xs]
-                print(len(ys))
-            print(xs)
+                newCyclesPerEpic = (float(len(result.taskSolutions))) / p.taskBatchSize
+            if cyclesPerEpic is not None and newCyclesPerEpic != cyclesPerEpic:
+                print("You are asking to show epochs, but the checkpoints differ in terms of how many w/s cycles there are per epochs. aborting!")
+                assert False
+            cyclesPerEpic = newCyclesPerEpic
         if labels:
             usedLabels.append((labels[0], color))
             labels = labels[1:]
@@ -152,13 +155,13 @@ def plotECResult(
                 result.searchTimes = [ ts + [p.enumerationTimeout]*(len(result.taskSolutions) - len(ts))
                                        for ts in result.searchTimes ]
 
-            if not showTraining: times = result.testingSearchTime[:correctedIterations]
-            else: times = result.searchTimes[:correctedIterations]
+            if not showTraining: times = result.testingSearchTime[:iterations]
+            else: times = result.searchTimes[:iterations]
             a2.plot(xs,
                     [mean(ts) if not timePercentile else median(ts)
                          for ts in times],
                     color=color, ls='--')
-            if interval:
+            if interval and result is results[0]:
                 a2.fill_between(xs,
                                 [percentile(ts, 0.75) if timePercentile else mean(ts) + standardDeviation(ts)
                                  for ts in times],
@@ -171,17 +174,30 @@ def plotECResult(
     a1.set_yticks(range(0, maxP, 20))
     plot.yticks(range(0, maxP, 20), fontsize=TICKFONTSIZE)
 
+    cycle_label_frequency = 1
+    if n_iters >= 10: cycle_label_frequency = 2
+    if n_iters >= 20: cycle_label_frequency = 5
+    for n, label in enumerate(a1.xaxis.get_ticklabels()):
+        if n%cycle_label_frequency != 0:
+            label.set_visible(False)
+
+    if showEpochs:
+        nextEpicLabel = 1
+        while nextEpicLabel*cyclesPerEpic <= n_iters:
+            a1.annotate('Epoch %d'%nextEpicLabel if (nextEpicLabel - 1)%epochFrequency == 0 else " ",
+                        xy=(nextEpicLabel*cyclesPerEpic, 0),
+                        xytext=(nextEpicLabel*cyclesPerEpic, 20),
+                        arrowprops=dict(facecolor='black', shrink=0.05),
+                        horizontalalignment='center')
+            nextEpicLabel += 1
+            
+
     if showSolveTime:
         a2.set_ylim(ymin=0)
         starting, ending = a2.get_ylim()
         ending10 = 10*int(ending/10 + 1)
         a2.yaxis.set_ticks([ int(ending10/6)*j
                              for j in range(0, 6)]) 
-        # if False:
-        #     # [int(zz) for zz in np.arange(starting, ending, (ending - starting)/5.)])
-        #     a2.yaxis.set_ticks([20 * j for j in range(6)])
-        # else:
-        #     a2.yaxis.set_ticks([50 * j for j in range(6)])
         for tick in a2.yaxis.get_ticklabels():
             tick.set_fontsize(TICKFONTSIZE)
 
@@ -190,7 +206,6 @@ def plotECResult(
 
     if labels is not None:
         a1.legend(loc='lower right', fontsize=9,
-                  #bbox_to_anchor=(1, 0.5),
                   handles=[mlines.Line2D([], [], color=color, ls='-',
                                          label=label)
                            for label, color in usedLabels])
@@ -242,6 +257,9 @@ if __name__ == "__main__":
     parser.add_argument("--showEpochs",
                         default=False, action="store_true",
                         help='X-axis is real-valued percentage of training tasks seen, instead of iterations.')
+    parser.add_argument("--epochFrequency",
+                        default=1, type=int,
+                        help="Frequency with which to show epoch markers.")
     
     arguments = parser.parse_args()
     
@@ -256,4 +274,5 @@ if __name__ == "__main__":
                  iterations=arguments.iterations,
                  showTraining=arguments.showTraining,
                  maxP=arguments.maxPercent,
-                 showEpochs=arguments.showEpochs)
+                 showEpochs=arguments.showEpochs,
+                 epochFrequency=arguments.epochFrequency)
