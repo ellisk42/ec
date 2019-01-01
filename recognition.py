@@ -137,7 +137,7 @@ class GrammarNetwork(nn.Module):
         
 
 class ContextualGrammarNetwork_Embed(nn.Module):
-    def __init__(self, inputDimensionality, grammar, E=64):
+    def __init__(self, inputDimensionality, grammar, E=16):
         """Low-rank approximation to bigram model. Parameters is linear in number of primitives.
         E: maximum rank (embedding size)"""
         
