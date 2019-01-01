@@ -200,7 +200,7 @@ def makeSupervisedTasks():
                  for n in range(3,8) ]
     simpleLoops = [SupervisedTower("horizontal row %d, spacing %d"%(n,s),
                                    """(for j %d h (r %s))"""%(n,s))
-                   for n,s in [(4,6),(5,7)] ]+\
+                   for n,s in [(4,6),(5,7)] ] +\
                 [SupervisedTower("horizontal stack %d"%n,
                                    """(for j %d h)"""%n)
                    for n in range(5,8) ]+\
