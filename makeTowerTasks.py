@@ -6,7 +6,7 @@ import math
 
 
 class SupervisedTower(Task):
-    def __init__(self, name, program):
+    def __init__(self, name, program, mustTrain=False):
         if isinstance(program,str):
             try:
                 program = parseTower(program)
@@ -30,6 +30,7 @@ class SupervisedTower(Task):
                             {"plan": self.plan})
         self.image = None
         self.handImage = None
+        self.mustTrain = mustTrain
 
     def getImage(self, drawHand=False, pretty=False):
         from tower_common import renderPlan
@@ -175,11 +176,12 @@ def makeSupervisedTasks():
                for n in range(2,8)
                for l in range(1,6)]
     offsetArches = [SupervisedTower("bridge (%d) of arch, spaced %d"%(n,l),
-                               """
-                               (for j %d
-                                 v (r 4) v (l 2) h 
-                                (r %d))
-                               """%(n,l))
+                                    """
+                                    (for j %d
+                                    v (r 4) (l 2) h 
+                                    (r %d))
+                                    """%(n,l),
+                                    mustTrain=n == 3)
                     for n,l in [(3,7),(4,6)]]
     Josh = [SupervisedTower("Josh (%d)"%n,
                             """(for i %d
@@ -198,15 +200,11 @@ def makeSupervisedTasks():
 (embed v (r 4) v (l 2) h)) (l 6))
 """%(n))
                  for n in range(3,8) ]
-    simpleLoops = [SupervisedTower("horizontal row %d, spacing %d"%(n,s),
-                                   """(for j %d h (r %s))"""%(n,s))
-                   for n,s in [(4,6),(5,7)] ] +\
-                [SupervisedTower("horizontal stack %d"%n,
-                                   """(for j %d h)"""%n)
-                   for n in range(5,8) ]+\
-                [SupervisedTower("vertical stack %d"%n,
-                                   """(for j %d v)"""%n)
-                   for n in [5,7] ]
+    simpleLoops = [SupervisedTower("%s row %d, spacing %d"%(o,n,s),
+                                   """(for j %d %s (r %s))"""%(n,o,s),
+                                   mustTrain=True)
+                   for o,n,s in [('h',4,6), ('v',5,3)] ]
+
     pyramids = []
     pyramids += [SupervisedTower("arch pyramid %d"%n,
                                  """((for i %d (for j i (embed v (r 4) v (l 2) h)) (r 6))

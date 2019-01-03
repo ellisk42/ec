@@ -129,6 +129,9 @@ Random kNN (batches of 10), regularized: list_random_knn_10_720s_reg [Done - sol
 TOWER:
 Full model without batching: (Solves up to 51 tasks)
      python launch.py -k -z m4.16xlarge TowerDream5 "python tower.py -i 6 -t 300 --pseudoCounts 30 --tasks supervised --maximumFrontier 5 --compressor ocaml --biasOptimal --contextual --testingTimeout 600 --split 0.5 --pseudoCounts 10. --structurePenalty 1"
+
+Full model without batching and without test/train split, new primitives: [RUNNING]
+     python launch.py -k -z m4.16xlarge tower_new_everything "python tower.py -i 6 -t 300 --pseudoCounts 30 --tasks supervised --maximumFrontier 5 --compressor ocaml --biasOptimal --contextual --testingTimeout 600 --pseudoCounts 10. --structurePenalty 1 --primitives new"
      
 Full model without batching, new primitives: [Done, solves 50/56]
      python launch.py -k -z m4.16xlarge tower_new "python tower.py --recognitionTimeout 3600 -i 6 -t 3600 --pseudoCounts 30 --tasks supervised --maximumFrontier 5 --compressor ocaml --biasOptimal --contextual --testingTimeout 600 --split 0.5 --structurePenalty 1 --primitives new"
