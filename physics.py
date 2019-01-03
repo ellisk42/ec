@@ -108,12 +108,10 @@ def spring(k, n):
         v0 = v0*0.2
         p = Particle(m,x0,v0)
         trajectory = []
-        for _ in range(10):
+        for _ in range(100):
             trajectory.append(p)
-            f = -k * (p.x*p.x).sum()**0.5
-            f = f*p.x/(p.x*p.x).sum()**0.5
-            p = p.step(f,
-                       0.1)
+            f = -k * p.x
+            p = p.step(f, 0.01)
         trajectories.append(trajectory)
     return Vignette(*trajectories)
         
@@ -258,6 +256,8 @@ if __name__ == "__main__":
                            **arguments)
     for result in generator:
         pass
+
+    assert False
 
     
     def showLikelihood(e):
