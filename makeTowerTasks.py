@@ -73,9 +73,9 @@ class SupervisedTower(Task):
         show()
 
     @staticmethod
-    def exportMany(f, ts):
+    def exportMany(f, ts, shuffle=True):
         ts = list(ts)
-        random.shuffle(ts)
+        if shuffle: random.shuffle(ts)
         a = montage([renderPlan(t.plan, pretty=True, Lego=True, resolution=256)
                      for t in ts]) 
         import scipy.misc
@@ -178,11 +178,11 @@ def makeSupervisedTasks():
     offsetArches = [SupervisedTower("bridge (%d) of arch, spaced %d"%(n,l),
                                     """
                                     (for j %d
-                                    v (r 4) (l 2) h 
+                                    (embed v (r 4) v (l 2) h )
                                     (r %d))
                                     """%(n,l),
                                     mustTrain=n == 3)
-                    for n,l in [(3,7),(4,6)]]
+                    for n,l in [(3,7),(4,8)]]
     Josh = [SupervisedTower("Josh (%d)"%n,
                             """(for i %d
                             h (l 2) v (r 2) v (r 2) v (l 2) h (r 6))"""%n)
@@ -203,7 +203,7 @@ def makeSupervisedTasks():
     simpleLoops = [SupervisedTower("%s row %d, spacing %d"%(o,n,s),
                                    """(for j %d %s (r %s))"""%(n,o,s),
                                    mustTrain=True)
-                   for o,n,s in [('h',4,6), ('v',5,3)] ]
+                   for o,n,s in [('h',4,7), ('v',5,3)] ]
 
     pyramids = []
     pyramids += [SupervisedTower("arch pyramid %d"%n,
@@ -349,7 +349,7 @@ if __name__ == "__main__":
     print("maximum plan length",max(len(f.plan) for f in ts ))
     print("maximum tower length",max(towerLength(f.plan) for f in ts ))
     print("maximum tower height",max(towerHeight(simulateWithoutPhysics(f.plan)) for f in ts ))
-    SupervisedTower.exportMany("/tmp/every_tower.png",ts)
+    SupervisedTower.exportMany("/tmp/every_tower.png",ts,shuffle=False)
     
     for j,t in enumerate(ts):
         t.exportImage("/tmp/tower_%d.png"%j,
