@@ -110,9 +110,9 @@ register_special_task "physics"
       log_likelihood = (fun expression ->
           let (p,parameters) = replace_placeholders expression in
           let p = analyze_lazy_evaluation p in
-        (* Returns loss *)
-        let rec loop : 'a list -> Differentiation.variable option = function
-          | [] -> Some(~$ 0.)
+        (* Returns loss list *)
+        let rec loop : 'a list -> Differentiation.variable list option = function
+          | [] -> Some([])
           | (xs,y) :: e ->
             try
               match run_for_interval
@@ -123,7 +123,7 @@ register_special_task "physics"
                 match loop e with
                 | None -> None
                 | Some(later_loss) ->
-                  try Some(loss prediction y +& later_loss)
+                  try Some(loss prediction y :: later_loss)
                   with DifferentiableBadShape -> None
             with | UnknownPrimitive(n) -> raise (Failure ("Unknown primitive: "^n))
                  | _                   -> None
@@ -133,17 +133,19 @@ register_special_task "physics"
         | Some(l) ->
           let n = List.length examples |> Int.to_float in
           let d = List.length parameters |> Int.to_float in
-          let l = l *& (~$ (1. /. n)) in
-          let l = restarting_optimize (rprop ~lr ~decay ~grow)
+          let average_loss = (List.reduce_exn l ~f:(+&)) *& (~$ (1. /. n)) in
+          let average_loss = restarting_optimize (rprop ~lr ~decay ~grow)
               ~attempts:restarts
               ~update:0
               ~iterations:(if List.length parameters = 0 then 0 else steps)
-              parameters l
+              parameters average_loss
           in
           match lossThreshold with
-          | None -> 0. -. d*.parameterPenalty -. n *. l /. temperature
+          | None -> 0. -. d*.parameterPenalty -. n *. average_loss /. temperature
           | Some(t) ->
-            if l < t then 0. -. d*.parameterPenalty else log 0.)})
+            if List.for_all l ~f:(fun {data=Some(this_loss)} -> this_loss < t)
+            then 0. -. d*.parameterPenalty
+            else log 0.)})
           
 
      

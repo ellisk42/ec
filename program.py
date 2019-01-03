@@ -189,6 +189,29 @@ class Program(object):
             except ParseFailure: continue
         raise ParseFailure(s)
 
+    @staticmethod
+    def parseHumanReadable(s):
+        s = parseSExpression(s)
+        def p(s, environment):
+            if isinstance(s, list) and s[0] in ['lambda','\\']:
+                assert isinstance(s[1], list) and len(s) == 3
+                newEnvironment = list(reversed(s[1])) + environment
+                e = p(s[2], newEnvironment)
+                for _ in s[1]: e = Abstraction(e)
+                return e
+            if isinstance(s, list):
+                a = p(s[0], environment)
+                for x in s[1:]:
+                    a = Application(a, p(x, environment))
+                return a
+            for j,v in enumerate(environment):
+                if s == v: return Index(j)
+            if s in Primitive.GLOBALS: return Primitive.GLOBALS[s]
+            assert False
+        return p(s, [])
+                
+                
+
 
 class Application(Program):
     '''Function application'''

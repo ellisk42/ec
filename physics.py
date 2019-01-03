@@ -159,8 +159,7 @@ def gravity(g):
                 r2 = rl*rl
                 f -= g*rh*objects[i].m*objects[j].m/r2
 
-            newObjects.append(objects[i].step(f,
-                                              0.01))
+            newObjects.append(objects[i].step(f,0.1))
         objects = newObjects
         for i in range(len(objects)):
             trajectories[i].append(objects[i])
@@ -171,6 +170,8 @@ def gravity(g):
 def makeTasks(namePrefix, vignettes):
     for v in vignettes:
         assert len(v.trajectories) == len(vignettes[0].trajectories)
+        eprint(namePrefix)
+        v.visualize()
         
     outputObjects = len(v.trajectories)
     velocityExamples = []
@@ -195,8 +196,11 @@ def makeTasks(namePrefix, vignettes):
                  [])
         t.specialTask = ("physics",
                          {"parameterPenalty": 20,
+                          "maxParameters": 1,
                           "temperature": 1.,
-                          "lossThreshold": 0.005,
+                          "restarts": 1,
+                          "steps": 200,
+                          "lossThreshold": 0.00005,
                           "examples": examples})
         tasks.append(t)
     return tasks
@@ -205,7 +209,7 @@ def makeTasks(namePrefix, vignettes):
 def physicsTasks():
     tasks = makeTasks("freefall",
                    [freefallVignette()]) + \
-                   makeTasks("spring",[spring(0.3,3)]) + \
+                   makeTasks("spring",[spring(1,3)]) + \
                    makeTasks("viscous",[airResistance(0.1,3)]) + \
                    makeTasks("gravity",[gravity(2)])
     # subsample examples
@@ -216,6 +220,12 @@ def physicsTasks():
             t.specialTask[1]["examples"] = examples[0:len(examples):len(examples)//numberOfExamples]
     return tasks
 
+def groundTruthSolutions():
+    solutions = ["(lambda (o) (+v (get-velocity o) (*v REAL yhat)))",
+                 "(lambda (o) (+v (get-velocity o) (*v REAL (/v (get-velocity o) (mass o)))))",
+                 "(lambda (o) (+v (get-velocity o) (*v (/. REAL (mass o)) (get-position o))))"]
+    return [Invented(Program.parseHumanReadable(s)) for s in solutions ]
+
 def physics_options(parser):
     pass
 
@@ -225,7 +235,7 @@ if __name__ == "__main__":
                                    "sq",
                                    "yhat",
                                    "-v","+v","*v","/v","dp",
-                                   "/.","+.","*.","REAL"] ])
+                                   "/.","+.","*.","REAL"] ] + groundTruthSolutions())
     arguments = commandlineArguments(
         iterations=6,
         helmholtzRatio=0.0,
