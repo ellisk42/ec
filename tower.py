@@ -256,6 +256,7 @@ if __name__ == "__main__":
         featureExtractor=TowerCNN,
         CPUs=numberOfCPUs(),
         helmholtzRatio=0.5,
+        recognitionTimeout=3600,
         iterations=6,
         a=3,
         structurePenalty=1,

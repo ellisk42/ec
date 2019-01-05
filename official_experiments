@@ -26,7 +26,7 @@ Baseline without DSL learning (batches of 40): [RUNNING]
 
 TEXT:
 Full model without batching:
-     python launch.py -k  -z x1.32xlarge TextDream "python text.py  -i 6 -t 7200 --pseudoCounts 30 --testingTimeout 1800 --compressor ocaml --contextual --biasOptimal -l 5 --maximumFrontier 2"
+     python launch.py -k  -z x1.32xlarge TextDream "python text.py  -i 6 -t 7200 --pseudoCounts 30 --testingTimeout 1800  --contextual --biasOptimal -l 5 --maximumFrontier 2"
 
 
 Derby: (You can replace this checkpoint with a different one and it will run the Derby with it)
@@ -34,49 +34,49 @@ Derby: (You can replace this checkpoint with a different one and it will run the
 	python launch.py -k  -z c4.8xlarge --checkpoint experimentOutputs/text_aic=1.0_arity=3_BO=True_CO=True_ET=720_HR=0.5_it=20_MF=5_baseline=False_pc=30.0_RT=7200_RW=False_storeTask=True_L=1.0_batch=10_taskReranker=randomShuffle_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor.pickle  batched_derby_it20 "python text.py --compete experimentOutputs/text_aic=1.0_arity=3_BO=True_CO=True_ET=720_HR=0.5_it=20_MF=5_baseline=False_pc=30.0_RT=7200_RW=False_storeTask=True_L=1.0_batch=10_taskReranker=randomShuffle_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor.pickle"
 
 Baseline without batching, 3600s: text_baseline_3600s [Done: solves up to 80 tasks.]
-	python launch.py  -k -z r4.16xlarge text_baseline_3600s "python text.py  -t 3600 --compressor ocaml --pseudoCounts 30 --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 7 -R 7200 --storeTaskMetrics --testingTimeout 3600 --biasOptimal --contextual --taskReranker default"
+	python launch.py  -k -z r4.16xlarge text_baseline_3600s "python text.py  -t 3600  --pseudoCounts 30 --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 7 -R 7200 --storeTaskMetrics --testingTimeout 3600 --biasOptimal --contextual --taskReranker default"
 
 Baseline without batching, 7200: text_baseline_7200s	[Done: solves 87 tasks.]
-	python launch.py  -k -z r4.16xlarge text_baseline_7200s "python text.py  -t 7200 --compressor ocaml --pseudoCounts 30 --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 7 -R 7200 --storeTaskMetrics --testingTimeout 7200 --biasOptimal --contextual --taskReranker default"
+	python launch.py  -k -z r4.16xlarge text_baseline_7200s "python text.py  -t 7200  --pseudoCounts 30 --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 7 -R 7200 --storeTaskMetrics --testingTimeout 7200 --biasOptimal --contextual --taskReranker default"
 
 Baseline without recognition model (batches of 10), 720s: [RUNNING]
-	python launch.py  -k -z r4.16xlarge text_no_recognition_random_shuffle_10_720s "python text.py  -t 720 --compressor ocaml --pseudoCounts 30 --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20  --testingTimeout 600  -g  --taskReranker randomShuffle --taskBatchSize 10"
+	python launch.py  -k -z r4.16xlarge text_no_recognition_random_shuffle_10_720s "python text.py  -t 720  --pseudoCounts 30 --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20  --testingTimeout 600  -g  --taskReranker randomShuffle --taskBatchSize 10"
 
 Baseline without DSL learning (batches of 10), 720s: [RUNNING]
-	python launch.py  -k -z r4.16xlarge text_no_dsl_random_shuffle_10_720s "python text.py  -t 720 --compressor ocaml --pseudoCounts 30 --aic 1000.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 7200 --storeTaskMetrics --testingTimeout 720 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10"
+	python launch.py  -k -z r4.16xlarge text_no_dsl_random_shuffle_10_720s "python text.py  -t 720  --pseudoCounts 30 --aic 1000.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 7200 --storeTaskMetrics --testingTimeout 720 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10"
 	
 Random shuffle (batches of 10), 720s: text_random_shuffle_10_720s [DONE - solves 91.]
-	python launch.py  -k -z r4.16xlarge text_random_shuffle_10_720s "python text.py  -t 720 --compressor ocaml --pseudoCounts 30 --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 7200 --storeTaskMetrics --testingTimeout 720 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10"
+	python launch.py  -k -z r4.16xlarge text_random_shuffle_10_720s "python text.py  -t 720  --pseudoCounts 30 --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 7200 --storeTaskMetrics --testingTimeout 720 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10"
 
 Random shuffle (batches of 10), 720s, structure penalty: text_random_shuffle_10_720s_sp [Done - solves 56/108.]
-	python launch.py  -k -z r4.16xlarge text_random_shuffle_10_720s_sp "python text.py  -t 720 --compressor ocaml --pseudoCounts 30 --aic 1.0 --structurePenalty 2.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 7200 --storeTaskMetrics --testingTimeout 720 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10"
+	python launch.py  -k -z r4.16xlarge text_random_shuffle_10_720s_sp "python text.py  -t 720  --pseudoCounts 30 --aic 1.0 --structurePenalty 2.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 7200 --storeTaskMetrics --testingTimeout 720 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10"
 
 
 Random shuffle (batches of 10), 720s, more dreams: text_random_shuffle_10_720s_r [Done - solves 59/108.]
-	python launch.py  -k -z r4.16xlarge text_random_shuffle_10_720s_r "python text.py  -t 720 --compressor ocaml --pseudoCounts 30 --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 7200 --storeTaskMetrics --testingTimeout 720 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10 -r 0.9"
+	python launch.py  -k -z r4.16xlarge text_random_shuffle_10_720s_r "python text.py  -t 720  --pseudoCounts 30 --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 7200 --storeTaskMetrics --testingTimeout 720 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10 -r 0.9"
 
 
 Random shuffle_r: resuming (text_random_shuffle_10_720s_r) with more time: *text_resume_1440s
-	python launch.py  -k --ssh_key openmind -z r4.16xlarge --checkpoint experimentOutputs/text_aic=1.0_arity=3_BO=True_CO=True_ET=720_HR=0.9_it=20_MF=5_baseline=False_pc=30.0_RT=7200_RW=False_storeTask=True_L=1.0_batch=10_taskReranker=randomShuffle_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor.pickle text_resume_1440s "python text.py  -t 1440 --compressor ocaml --pseudoCounts 30 --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 31 -R 3600 --storeTaskMetrics --testingTimeout 1440 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10 -r 0.9 --resume experimentOutputs/text_aic=1.0_arity=3_BO=True_CO=True_ET=720_HR=0.9_it=20_MF=5_baseline=False_pc=30.0_RT=7200_RW=False_storeTask=True_L=1.0_batch=10_taskReranker=randomShuffle_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor.pickle"
+	python launch.py  -k --ssh_key openmind -z r4.16xlarge --checkpoint experimentOutputs/text_aic=1.0_arity=3_BO=True_CO=True_ET=720_HR=0.9_it=20_MF=5_baseline=False_pc=30.0_RT=7200_RW=False_storeTask=True_L=1.0_batch=10_taskReranker=randomShuffle_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor.pickle text_resume_1440s "python text.py  -t 1440  --pseudoCounts 30 --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 31 -R 3600 --storeTaskMetrics --testingTimeout 1440 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10 -r 0.9 --resume experimentOutputs/text_aic=1.0_arity=3_BO=True_CO=True_ET=720_HR=0.9_it=20_MF=5_baseline=False_pc=30.0_RT=7200_RW=False_storeTask=True_L=1.0_batch=10_taskReranker=randomShuffle_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor.pickle"
 
 Random shuffle_r: resuming (text_random_shuffle_10_720s_r) with more time on just unsolved: *text_resume_unsolved_1440s
-python launch.py  -k --ssh_key openmind -z r4.16xlarge --checkpoint experimentOutputs/text_aic=1.0_arity=3_BO=True_CO=True_ET=720_HR=0.9_it=20_MF=5_baseline=False_pc=30.0_RT=7200_RW=False_storeTask=True_L=1.0_batch=10_taskReranker=randomShuffle_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor.pickle text_resume_unsolved_1440s "python text.py  -t 1440 --compressor ocaml --pseudoCounts 30 --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 31 -R 3600 --storeTaskMetrics --testingTimeout 1440 --biasOptimal --contextual --taskReranker unsolved --taskBatchSize 10 -r 0.9 --resume experimentOutputs/text_aic=1.0_arity=3_BO=True_CO=True_ET=720_HR=0.9_it=20_MF=5_baseline=False_pc=30.0_RT=7200_RW=False_storeTask=True_L=1.0_batch=10_taskReranker=randomShuffle_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor.pickle"
+python launch.py  -k --ssh_key openmind -z r4.16xlarge --checkpoint experimentOutputs/text_aic=1.0_arity=3_BO=True_CO=True_ET=720_HR=0.9_it=20_MF=5_baseline=False_pc=30.0_RT=7200_RW=False_storeTask=True_L=1.0_batch=10_taskReranker=randomShuffle_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor.pickle text_resume_unsolved_1440s "python text.py  -t 1440  --pseudoCounts 30 --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 31 -R 3600 --storeTaskMetrics --testingTimeout 1440 --biasOptimal --contextual --taskReranker unsolved --taskBatchSize 10 -r 0.9 --resume experimentOutputs/text_aic=1.0_arity=3_BO=True_CO=True_ET=720_HR=0.9_it=20_MF=5_baseline=False_pc=30.0_RT=7200_RW=False_storeTask=True_L=1.0_batch=10_taskReranker=randomShuffle_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor.pickle"
 
 Random shuffle_r: resuming (text_random_shuffle_10_720s_r) with more time on just unsolved: *text_resume_unsolved_2160s
-python launch.py  -k --ssh_key openmind -z r4.16xlarge --checkpoint experimentOutputs/text_aic=1.0_arity=3_BO=True_CO=True_ET=720_HR=0.9_it=20_MF=5_baseline=False_pc=30.0_RT=7200_RW=False_storeTask=True_L=1.0_batch=10_taskReranker=randomShuffle_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor.pickle text_resume_unsolved_2160s "python text.py  -t 2160 --compressor ocaml --pseudoCounts 30 --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 31 -R 3600 --storeTaskMetrics --testingTimeout 2160 --biasOptimal --contextual --taskReranker unsolved --taskBatchSize 10 -r 0.9 --resume experimentOutputs/text_aic=1.0_arity=3_BO=True_CO=True_ET=720_HR=0.9_it=20_MF=5_baseline=False_pc=30.0_RT=7200_RW=False_storeTask=True_L=1.0_batch=10_taskReranker=randomShuffle_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor.pickle"
+python launch.py  -k --ssh_key openmind -z r4.16xlarge --checkpoint experimentOutputs/text_aic=1.0_arity=3_BO=True_CO=True_ET=720_HR=0.9_it=20_MF=5_baseline=False_pc=30.0_RT=7200_RW=False_storeTask=True_L=1.0_batch=10_taskReranker=randomShuffle_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor.pickle text_resume_unsolved_2160s "python text.py  -t 2160  --pseudoCounts 30 --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 31 -R 3600 --storeTaskMetrics --testingTimeout 2160 --biasOptimal --contextual --taskReranker unsolved --taskBatchSize 10 -r 0.9 --resume experimentOutputs/text_aic=1.0_arity=3_BO=True_CO=True_ET=720_HR=0.9_it=20_MF=5_baseline=False_pc=30.0_RT=7200_RW=False_storeTask=True_L=1.0_batch=10_taskReranker=randomShuffle_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor.pickle"
 
 
 Random shuffle (batches of 20), 1440s: text_random_shuffle_20_1440s [DONE - solves 56 tasks.]
-	python launch.py  -k -z r4.16xlarge text_random_shuffle_20_1440s "python text.py  -t 1440 --compressor ocaml --pseudoCounts 30 --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 10 -R 7200 --storeTaskMetrics --testingTimeout 1440 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 20"
+	python launch.py  -k -z r4.16xlarge text_random_shuffle_20_1440s "python text.py  -t 1440  --pseudoCounts 30 --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 10 -R 7200 --storeTaskMetrics --testingTimeout 1440 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 20"
 
 Random kNN (batches of 10), 720s: test_random_knn_10_720s [Done: solves up to 87 tasks.]
-	python launch.py  -k -z r4.16xlarge test_random_knn_10_720s "python text.py  -t 720 --compressor ocaml --pseudoCounts 30 --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 7200 --storeTaskMetrics --testingTimeout 720 --biasOptimal --contextual --taskReranker randomkNN --taskBatchSize 10"
+	python launch.py  -k -z r4.16xlarge test_random_knn_10_720s "python text.py  -t 720  --pseudoCounts 30 --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 7200 --storeTaskMetrics --testingTimeout 720 --biasOptimal --contextual --taskReranker randomkNN --taskBatchSize 10"
 
 Unsolved (ranked by entropy, batches of 10), 720s: text_unsolved_entropy_10_720s [Done - solves up to 91 tasks.]
-	python launch.py  -k -z r4.16xlarge text_unsolved_entropy_10_720s "python text.py  -t 720 --compressor ocaml --pseudoCounts 30 --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 7200 --storeTaskMetrics --testingTimeout 720 --biasOptimal --contextual --taskReranker unsolvedEntropy --taskBatchSize 10"
+	python launch.py  -k -z r4.16xlarge text_unsolved_entropy_10_720s "python text.py  -t 720  --pseudoCounts 30 --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 7200 --storeTaskMetrics --testingTimeout 720 --biasOptimal --contextual --taskReranker unsolvedEntropy --taskBatchSize 10"
 
 Curriculum (batch size 10), 720s: text_default_10_720s [Done - solves up to 91 tasks.]
-	python launch.py  -k -z r4.16xlarge text_default_10_720s "python text.py  -t 720 --compressor ocaml --pseudoCounts 30 --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 7200 --storeTaskMetrics --testingTimeout 720 --biasOptimal --contextual --taskReranker default --taskBatchSize 10"
+	python launch.py  -k -z r4.16xlarge text_default_10_720s "python text.py  -t 720  --pseudoCounts 30 --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 7200 --storeTaskMetrics --testingTimeout 720 --biasOptimal --contextual --taskReranker default --taskBatchSize 10"
 
 
 LIST:
@@ -84,43 +84,43 @@ Full model without batching:
      python launch.py -k  -z x1.32xlarge ListDream "python list.py -t 7200 --split 0.5 --testingTimeout 600 --contextual --biasOptimal -i 6 --maximumFrontier 5 --pseudoCounts 10. --structurePenalty 2"
 
 Full model without batching, 3600s timeout: list_baseline_3600 [DONE: 103/109.]
-	python launch.py  -k -z x1.32xlarge list_baseline_3600 "python list.py  -t 3600 --compressor ocaml --pseudoCounts 10 --aic 1.0 --structurePenalty 2.0 --topK 2 --arity 3 --maximumFrontier 10 -i 7 -R 3600 --storeTaskMetrics --split 0.5 --testingTimeout 3600 --biasOptimal --contextual --taskReranker default"	
+	python launch.py  -k -z x1.32xlarge list_baseline_3600 "python list.py  -t 3600  --pseudoCounts 10 --aic 1.0 --structurePenalty 2.0 --topK 2 --arity 3 --maximumFrontier 10 -i 7 -R 3600 --storeTaskMetrics --split 0.5 --testingTimeout 3600 --biasOptimal --contextual --taskReranker default"	
 
 Full model without batching, 7200s timeout: list_baseline_7200s [DONE - Solves 109/109 tasks.]
-	python launch.py  -k -z x1.32xlarge list_baseline_7200 "python list.py  -t 7200 --compressor ocaml --pseudoCounts 10 --aic 1.0 --structurePenalty 2.0 --topK 2 --arity 3 --maximumFrontier 10 -i 7 -R 3600 --storeTaskMetrics --split 0.5 --testingTimeout 7200 --biasOptimal --contextual --taskReranker default"
+	python launch.py  -k -z x1.32xlarge list_baseline_7200 "python list.py  -t 7200  --pseudoCounts 10 --aic 1.0 --structurePenalty 2.0 --topK 2 --arity 3 --maximumFrontier 10 -i 7 -R 3600 --storeTaskMetrics --split 0.5 --testingTimeout 7200 --biasOptimal --contextual --taskReranker default"
 
 Random shuffle (batches of 10), 720s: list_random_shuffle_10_720s  [Done: Solves 101/109]
-	python launch.py  -k -z r4.16xlarge list_random_shuffle_10_720s "python list.py  -t 720 --compressor ocaml --pseudoCounts 30 --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 7200 --storeTaskMetrics --split 0.5 --testingTimeout 720 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10"
+	python launch.py  -k -z r4.16xlarge list_random_shuffle_10_720s "python list.py  -t 720  --pseudoCounts 30 --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 7200 --storeTaskMetrics --split 0.5 --testingTimeout 720 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10"
 
 Baseline without DSL learning (batches of 10), 720s: [RUNNING]
-	python launch.py  -k -z r4.16xlarge list_no_dsl_random_shuffle_10_720s "python list.py  -t 720 --compressor ocaml --pseudoCounts 30 --aic 1000.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 7200 --storeTaskMetrics --split 0.5 --testingTimeout 720 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10"
+	python launch.py  -k -z r4.16xlarge list_no_dsl_random_shuffle_10_720s "python list.py  -t 720  --pseudoCounts 30 --aic 1000.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 7200 --storeTaskMetrics --split 0.5 --testingTimeout 720 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10"
 
 
 Baseline without recognition model (batches of 10), 720s: list_no_recognition_random_shuffle_10_720s  [RUNNING]
-	python launch.py  -k -z r4.16xlarge list_no_recognition_random_shuffle_10_720s "python list.py  -t 720 --compressor ocaml --pseudoCounts 30 --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 --split 0.5 --testingTimeout 600 -g  --taskReranker randomShuffle --taskBatchSize 10"
+	python launch.py  -k -z r4.16xlarge list_no_recognition_random_shuffle_10_720s "python list.py  -t 720  --pseudoCounts 30 --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 --split 0.5 --testingTimeout 600 -g  --taskReranker randomShuffle --taskBatchSize 10"
 
 Random shuffle (batches of 10), structure penalty: list_random_shuffle_10_720s_sp [Done: solves 105/109.]
-	python launch.py  -k -z r4.16xlarge list_random_shuffle_10_720s_sp "python list.py  -t 720 --compressor ocaml --pseudoCounts 30 --aic 1.0 --structurePenalty 2.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 7200 --storeTaskMetrics --split 0.5 --testingTimeout 720 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10"
+	python launch.py  -k -z r4.16xlarge list_random_shuffle_10_720s_sp "python list.py  -t 720  --pseudoCounts 30 --aic 1.0 --structurePenalty 2.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 7200 --storeTaskMetrics --split 0.5 --testingTimeout 720 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10"
 Running for replication: *list_random_shuffle_10_720s_sp_v2
-		python launch.py --ssh_key openmind -k -z r4.16xlarge list_random_shuffle_10_720s_sp_v2 "python list.py  -t 720 --compressor ocaml --pseudoCounts 30 --aic 1.0 --structurePenalty 2.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 7200 --storeTaskMetrics --split 0.5 --testingTimeout 720 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10"
+		python launch.py --ssh_key openmind -k -z r4.16xlarge list_random_shuffle_10_720s_sp_v2 "python list.py  -t 720  --pseudoCounts 30 --aic 1.0 --structurePenalty 2.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 7200 --storeTaskMetrics --split 0.5 --testingTimeout 720 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10"
 
 Random shuffle (batches of 10), more dreams: list_random_shuffle_10_720s_r [Done: solves 104/109.]
-	python launch.py  -k -z r4.16xlarge list_random_shuffle_10_720s_r "python list.py  -t 720 --compressor ocaml --pseudoCounts 30 --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 7200 --storeTaskMetrics --split 0.5 --testingTimeout 720 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10 -r 0.9"
+	python launch.py  -k -z r4.16xlarge list_random_shuffle_10_720s_r "python list.py  -t 720  --pseudoCounts 30 --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 7200 --storeTaskMetrics --split 0.5 --testingTimeout 720 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10 -r 0.9"
 
 Random shuffle (batches of 20), 1440s: list_random_shuffle_20_1440s  [DONE: solves 102/109.]
-	python launch.py  -k -z r4.16xlarge list_random_shuffle_20_1440s "python list.py  -t 1440 --compressor ocaml --pseudoCounts 30 --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 10 -R 7200 --storeTaskMetrics --split 0.5 --testingTimeout 1440 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10"
+	python launch.py  -k -z r4.16xlarge list_random_shuffle_20_1440s "python list.py  -t 1440  --pseudoCounts 30 --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 10 -R 7200 --storeTaskMetrics --split 0.5 --testingTimeout 1440 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10"
 
 
 Random shuffle (batches of 10), structure penalty, retraining: list_random_shuffle_10_720s_sp_retrain [DONE: solves 85/109].
 	python launch.py  -k -z r4.16xlarge list_random_shuffle
-	e_10_720s_sp_retrain "python list.py  -t 720 --compressor ocaml --pseudoCounts 30 --aic 1.0 --structurePenalty 2.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 1800 --storeTaskMetrics --split 0.5 --testingTimeout 720 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10 --reuseRecognition"
+	e_10_720s_sp_retrain "python list.py  -t 720  --pseudoCounts 30 --aic 1.0 --structurePenalty 2.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 1800 --storeTaskMetrics --split 0.5 --testingTimeout 720 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10 --reuseRecognition"
 
 
 Random kNN (batches of 10), 720s: list_random_knn_10_720s [Done - solves 84/109]
-	python launch.py  -k -z r4.16xlarge list_random_knn_10_720s_catwong  "python list.py  -t 720 --compressor ocaml --pseudoCounts 30 --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 7200 --storeTaskMetrics --split 0.5 --testingTimeout 720 --biasOptimal --contextual --taskReranker randomkNN --taskBatchSize 10"
+	python launch.py  -k -z r4.16xlarge list_random_knn_10_720s_catwong  "python list.py  -t 720  --pseudoCounts 30 --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 7200 --storeTaskMetrics --split 0.5 --testingTimeout 720 --biasOptimal --contextual --taskReranker randomkNN --taskBatchSize 10"
 
 Random kNN (batches of 10), regularized: list_random_knn_10_720s_reg [Done - solves 105/109.]
-	python launch.py  -k -z r4.16xlarge list_random_knn_10_720s_reg  "python list.py  -t 720 --compressor ocaml --pseudoCounts 30 --aic 1.0 --structurePenalty 2.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 7200 --storeTaskMetrics --split 0.5 --testingTimeout 720 --biasOptimal --contextual --taskReranker randomkNN --taskBatchSize 10 -r 0.9"
+	python launch.py  -k -z r4.16xlarge list_random_knn_10_720s_reg  "python list.py  -t 720 --pseudoCounts 30 --aic 1.0 --structurePenalty 2.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 7200 --storeTaskMetrics --split 0.5 --testingTimeout 720 --biasOptimal --contextual --taskReranker randomkNN --taskBatchSize 10 -r 0.9"
 
 
 
@@ -128,30 +128,35 @@ Random kNN (batches of 10), regularized: list_random_knn_10_720s_reg [Done - sol
 
 TOWER:
 Full model without batching: (Solves up to 51 tasks)
-     python launch.py -k -z m4.16xlarge TowerDream5 "python tower.py -i 6 -t 300 --pseudoCounts 30 --tasks supervised --maximumFrontier 5 --compressor ocaml --biasOptimal --contextual --testingTimeout 600 --split 0.5 --pseudoCounts 10. --structurePenalty 1"
+     python launch.py -k -z m4.16xlarge TowerDream5 "python tower.py -i 6 -t 300 --pseudoCounts 30 --tasks supervised --maximumFrontier 5  --biasOptimal --contextual --testingTimeout 600 --split 0.5 --structurePenalty 1"
 
 Full model without batching and without test/train split, new primitives: [RUNNING]
-     python launch.py -k -z m4.16xlarge tower_new_everything "python tower.py -i 6 -t 300 --pseudoCounts 30 --tasks supervised --maximumFrontier 5 --compressor ocaml --biasOptimal --contextual --pseudoCounts 10. --structurePenalty 1 --primitives new"
+     python launch.py -k -z m4.16xlarge tower_new_everything "python tower.py -i 6 -t 300 --pseudoCounts 30 --tasks supervised --maximumFrontier 5  --biasOptimal --contextual  --structurePenalty 1 --primitives new"
      
 Full model without batching, new primitives: [Done, solves 50/56]
-     python launch.py -k -z m4.16xlarge tower_new "python tower.py --recognitionTimeout 3600 -i 6 -t 3600 --pseudoCounts 30 --tasks supervised --maximumFrontier 5 --compressor ocaml --biasOptimal --contextual --testingTimeout 600 --split 0.5 --structurePenalty 1 --primitives new"
+     python launch.py -k -z m4.16xlarge tower_new "python tower.py --recognitionTimeout 3600 -i 6 -t 3600 --pseudoCounts 30 --tasks supervised --maximumFrontier 5  --biasOptimal --contextual --testingTimeout 600 --split 0.5 --structurePenalty 1 --primitives new"
 
 Random shuffle batches of 10, new primitives: [Done, solves 44/56]
-     python launch.py -k -z m4.16xlarge tower_new_random_shuffle_10_360s "python tower.py  --recognitionTimeout 3600 -i 30 -t 120 --pseudoCounts 30 --tasks supervised --maximumFrontier 5 --compressor ocaml --biasOptimal --contextual --testingTimeout 600 --split 0.5 --structurePenalty 1 --primitives new --taskReranker randomShuffle --taskBatchSize 10"
+     python launch.py -k -z m4.16xlarge tower_new_random_shuffle_10_360s "python tower.py  --recognitionTimeout 3600 -i 20 -t 120 --pseudoCounts 30 --tasks supervised --maximumFrontier 5  --biasOptimal --contextual --testingTimeout 600 --split 0.5 --structurePenalty 1 --primitives new --taskReranker randomShuffle --taskBatchSize 10"
 
 Random shuffle (batches of 5), 60s: tower_random_shuffle_5_60s [Done, solves 42/56]
-	python launch.py -k -z m4.16xlarge tower_random_shuffle_5_60s "python tower.py -t 60 --compressor ocaml --pseudoCounts 30 --tasks supervised --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 300 --storeTaskMetrics --split 0.5 --testingTimeout 60 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 5"
+	python launch.py -k -z m4.16xlarge tower_random_shuffle_5_60s "python tower.py -t 60  --pseudoCounts 30 --tasks supervised --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 300 --storeTaskMetrics --split 0.5 --testingTimeout 60 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 5"
 
 Random shuffle (batches of 5), 60s: tower_random_shuffle_5_120s [Done, solves 45/56].
-	python launch.py -k -z m4.16xlarge tower_random_shuffle_5_120s "python tower.py -t 120 --compressor ocaml --pseudoCounts 30 --tasks supervised --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 300 --storeTaskMetrics --split 0.5 --testingTimeout 120 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 5"
+	python launch.py -k -z m4.16xlarge tower_random_shuffle_5_120s "python tower.py -t 120  --pseudoCounts 30 --tasks supervised --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 300 --storeTaskMetrics --split 0.5 --testingTimeout 600 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 5"
 
 Random shuffle (batches of 10), 120s: tower_random_shuffle_10_120s [Done, solves 51/56]
-	python launch.py -k -z m4.16xlarge tower_random_shuffle_10_120s "python tower.py -t 120 --compressor ocaml --pseudoCounts 30 --tasks supervised --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 10 -R 300 --storeTaskMetrics --split 0.5 --testingTimeout 120 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10"
+	python launch.py -k -z m4.16xlarge tower_random_shuffle_10_120s "python tower.py -t 120  --pseudoCounts 30 --tasks supervised --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 --storeTaskMetrics --split 0.5 --testingTimeout 600 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10 --primitives new --recognitionTimeout 3600"
 			Re-run with new random shuffle (v2): solves 49/56.
-		
+
+Baseline without recognition model: tower_no_recognition_random_shuffle_10_120s [RUNNING]
+	python launch.py -k -z m4.16xlarge tower_no_recognition_random_shuffle_10_120s "python tower.py -t 120  --pseudoCounts 30 --tasks supervised --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 --storeTaskMetrics --split 0.5 --testingTimeout 600 --taskReranker randomShuffle --taskBatchSize 10 --primitives new -g "
+
+Baseline without DSL learning: tower_no_dsl_random_shuffle_10_120s [RUNNING]
+	python launch.py -k -z m4.16xlarge tower_no_dsl_random_shuffle_10_120s "python tower.py -t 120  --pseudoCounts 30 --tasks supervised --aic 1000.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 10 -R 300 --storeTaskMetrics --split 0.5 --testingTimeout 600 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10 --primitives new --recognitionTimeout 3600"
 
 Random shuffle (batches of 10), 120s. retraining: tower_random_shuffle_10_120s [12/18]
-	python launch.py -k -z m4.16xlarge --ssh_key openmind tower_random_shuffle_10_120s "python tower.py -t 120 --compressor ocaml --pseudoCounts 30 --tasks supervised --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 300 --storeTaskMetrics --split 0.5 --testingTimeout 120 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10 --reuseRecognition"
+	python launch.py -k -z m4.16xlarge --ssh_key openmind tower_random_shuffle_10_120s "python tower.py -t 120  --pseudoCounts 30 --tasks supervised --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 300 --storeTaskMetrics --split 0.5 --testingTimeout 600 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10 --reuseRecognition"
 
 REGEX:
 Best run so far (uses context free):
