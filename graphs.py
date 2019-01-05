@@ -58,7 +58,33 @@ def parseResultsPath(p):
                   for [k, v] in [binding.split('=')]}
     parameters['domain'] = domain
     return Bunch(parameters)
-               
+
+def showSynergyMatrix(results):
+    # For each result, compile the total set of tasks that are ever solved by that run
+    everSolved = []
+    for r in results:
+        everSolved.append({ t.name for t,f in r.allFrontiers.items() if not f.empty })
+        N = len(r.allFrontiers)
+
+    print("Of the",len(results),"checkpoints that you gave me, here is a matrix showing the overlap between the tasks solved:")
+
+    for y in range(len(results)):
+        if y == 0: print("\tck1\tck2\tck3")
+        for x in range(len(results)):
+            if x == 0: print("ck%d"%y,
+                             end="\t")
+            intersection = len(everSolved[x]&everSolved[y])
+            improvementOverBaseline = intersection/N
+            print(int(improvementOverBaseline*100 + 0.5),
+                  end="%\t")
+        print()
+
+    if len(results) == 3:
+        print("Here's the percentage of tasks that are uniquely solved by the first checkpoint:")
+        print(int(len(everSolved[0] - everSolved[1] - everSolved[2])/len(everSolved[0])*100 + 0.5),
+              end="%")
+        print()
+    
 
 def plotECResult(
         resultPaths,
@@ -111,6 +137,8 @@ def plotECResult(
 
     colors = ["#D95F02", "#1B9E77", "#662077"] + ["#000000"]*100
     usedLabels = []
+
+    showSynergyMatrix(results)
 
     cyclesPerEpic = None
     for result, p, color in zip(results, parameters, colors):
