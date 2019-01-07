@@ -26,4 +26,4 @@ python taskRankGraphs.py --checkpoints /home/ellisk/om/ec/experimentOutputs/towe
 
 python taskRankGraphs.py --checkpoints experimentOutputs/logo/2018-12-17T20:58:48.581674/logo_aic=1.0_arity=3_BO=True_CO=True_ET=7200_HR=0.5_it=7_MF=5_baseline=False_pc=30.0_RT=3600_RR=False_RW=False_storeTask=False_L=1.5_taskReranker=default_K=2_topkNotMAP=False_rec=True_feat=LogoFeatureCNN_graph=True.pickle --labelWithImages 1 --metricsToCluster expectedProductionUses
 
-### LOGO with different batch sizes
+

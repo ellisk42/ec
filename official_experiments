@@ -151,6 +151,10 @@ Full model without batching, new primitives: [Done, solves 50/56]
 Random shuffle batches of 10, new primitives: [Done, solves 44/56]
      python launch.py -k -z m4.16xlarge tower_new_random_shuffle_10_360s "python tower.py  --recognitionTimeout 3600 -i 20 -t 120 --pseudoCounts 30 --tasks supervised --maximumFrontier 5  --biasOptimal --contextual --testingTimeout 600 --split 0.5 --structurePenalty 1 --primitives new --taskReranker randomShuffle --taskBatchSize 10"
 
+Random shuffle batches of 10, 720s, new primitives: [RUNNING]
+     python launch.py -k -z m4.16xlarge tower_new_random_shuffle_10_720s "python tower.py  --recognitionTimeout 3600 -i 20 -t 720 --pseudoCounts 30 --tasks supervised --maximumFrontier 5  --biasOptimal --contextual --testingTimeout 600 --split 0.5 --structurePenalty 1 --primitives new --taskReranker randomShuffle --taskBatchSize 10"
+
+
 Random shuffle (batches of 5), 60s: tower_random_shuffle_5_60s [Done, solves 42/56]
 	python launch.py -k -z m4.16xlarge tower_random_shuffle_5_60s "python tower.py -t 60  --pseudoCounts 30 --tasks supervised --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 300 --storeTaskMetrics --split 0.5 --testingTimeout 60 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 5"
 

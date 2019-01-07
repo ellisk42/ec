@@ -189,8 +189,8 @@ def regex_options(parser):
 if __name__ == "__main__":
     args = commandlineArguments(
         frontierSize=None, activation='relu', iterations=10,
-        a=3, maximumFrontier=5, topK=2, pseudoCounts=10.0, #try 1 0.1 would make prior uniform
-        helmholtzRatio=0.5, structurePenalty=1.5, #try 
+        a=3, maximumFrontier=5, topK=2, pseudoCounts=30.0, #try 1 0.1 would make prior uniform
+        helmholtzRatio=0.5, structurePenalty=1.0, #try 
         CPUs=numberOfCPUs(),
         extras=regex_options)
 
