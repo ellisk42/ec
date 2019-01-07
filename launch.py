@@ -125,6 +125,12 @@ chmod 600 ~/.ssh/id_rsa.pub
 bash -c "while sleep %d; do %s; done" &> /tmp/test.txt & 
 UPLOADPID=$!
 """ % (ssh_key, ssh_key, UPLOADFREQUENCY, uploadCommand)
+    
+    if arguments.gpuImage:
+        script = script + """
+kill -9 $!
+python -c 'import torch; print(torch.cuda.is_available())'
+""" + script
 
     script = preamble + script
 

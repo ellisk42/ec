@@ -996,6 +996,12 @@ def addTaskMetrics(result, path):
         updateTaskSummaryMetrics(result.recognitionTaskMetrics, images, 'taskImages')
 
     updateTaskSummaryMetrics(result.recognitionTaskMetrics, result.recognitionModel.taskGrammarLogProductions(tasks), 'contextualLogProductions')
+    updateTaskSummaryMetrics(result.recognitionTaskMetrics, result.recognitionModel.taskHiddenStates(tasks), 'hiddenState')
+    g = result.grammars[-2] # the final entry in result.grammars is a grammar that we have not used yet
+    updateTaskSummaryMetrics(result.recognitionTaskMetrics, {f.task: f.expectedProductionUses(g)
+                                                             for f in result.taskSolutions.values()
+                                                             if len(f) > 0},
+                             'expectedProductionUses')
 
     #updateTaskSummaryMetrics(result.recognitionTaskMetrics, result.recognitionModel.taskGrammarLogProductions(tasks), 'task_no_parent_log_productions')
     #updateTaskSummaryMetrics(result.recognitionTaskMetrics, result.recognitionModel.taskGrammarEntropies(tasks), 'taskGrammarEntropies')

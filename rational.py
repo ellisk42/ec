@@ -37,7 +37,7 @@ def makeTask(name, f):
                                arrow(treal, treal),                                     
                                [((x,),y) for x, y in ex],
                                BIC=1.,
-                               restarts=150, steps=50,
+                               restarts=360, steps=50,
                                likelihoodThreshold=-0.05,
                                temperature=0.1,
                                maxParameters=6,
@@ -260,6 +260,7 @@ def demo():
         a = drawFunction(200, 5., f, resolution=32) * 255
         Image.fromarray(a).convert('RGB').save("/tmp/functions/%d.png" % j)
     assert False
+    
 
 def rational_options(p):
     p.add_argument("--smooth", action="store_true",

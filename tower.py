@@ -1,7 +1,7 @@
 from ec import *
 
 from tower_common import *
-from towerPrimitives import primitives, executeTower
+from towerPrimitives import primitives, new_primitives, executeTower
 from makeTowerTasks import *
 from listPrimitives import bootstrapTarget
 from utilities import *
@@ -143,6 +143,9 @@ def tower_options(parser):
                         default=None, type=str)
     parser.add_argument("--split",
                         default=1., type=float)
+    parser.add_argument("--primitives",
+                        default="old", type=str,
+                        choices=["new", "old"])
     
     
 
@@ -175,7 +178,7 @@ def visualizePrimitives(primitives, fn=None):
     from tower_common import renderPlan
     #from pylab import imshow,show
 
-    from towerPrimitives import TowerContinuation,_left,_right,_loop,_embed
+    from towerPrimitives import TowerContinuation,_left,_right,_loop,_embed,_empty_tower,TowerState
     _13 = Program.parse("1x3").value
     _31 = Program.parse("3x1").value
 
@@ -196,7 +199,7 @@ def visualizePrimitives(primitives, fn=None):
 
         def argumentChoices(t):
             if t == ttower:
-                return [lambda h: (h,[])]
+                return [_empty_tower]
             elif t == tint:
                 return list(range(5))
             elif t == arrow(ttower,ttower):
@@ -208,7 +211,7 @@ def visualizePrimitives(primitives, fn=None):
         for arguments in product(*[argumentChoices(t) for t in t.functionArguments() ]):
             t = p.evaluate([])
             for a in arguments: t = t(a)
-            t = t(0.)[1]
+            t = t(TowerState())[1]
             ts.append(t)
 
         if ts == []: continue
@@ -249,12 +252,11 @@ def visualizeSolutions(solutions, export, tasks=None):
         eprint("Tried to visualize solutions, but none to visualize.")
 
 if __name__ == "__main__":
-    g0 = Grammar.uniform(primitives, continuationType=ttower)
-
     arguments = commandlineArguments(
         featureExtractor=TowerCNN,
         CPUs=numberOfCPUs(),
         helmholtzRatio=0.5,
+        recognitionTimeout=3600,
         iterations=6,
         a=3,
         structurePenalty=1,
@@ -262,6 +264,9 @@ if __name__ == "__main__":
         topK=2,
         maximumFrontier=5,
         extras=tower_options)
+    g0 = Grammar.uniform({"new": new_primitives,
+                          "old": primitives}[arguments.pop("primitives")],
+                         continuationType=ttower)
 
     checkpoint = arguments.pop("visualize")
     if checkpoint is not None:

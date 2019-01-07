@@ -1,4 +1,4 @@
-from towerPrimitives import ttower, executeTower
+from towerPrimitives import ttower, executeTower, _empty_tower, TowerState
 from utilities import *
 from task import *
 
@@ -6,7 +6,7 @@ import math
 
 
 class SupervisedTower(Task):
-    def __init__(self, name, program):
+    def __init__(self, name, program, mustTrain=False):
         if isinstance(program,str):
             try:
                 program = parseTower(program)
@@ -15,20 +15,22 @@ class SupervisedTower(Task):
                 eprint(program)
                 assert False
             self.original = program
-            plan = program.evaluate([])(lambda s: (s,[]))(0)[1]
+            plan = executeTower(program)
         elif isinstance(program,Program):
             self.original = program
-            plan = program.evaluate([])(lambda s: (s,[]))(0)[1]
+            plan = executeTower(program)
         else:
             plan = program
         self.original = program
-        self.hand, self.plan = program.evaluate([])(lambda s: (s,[]))(0)
+        state, self.plan = program.evaluate([])(_empty_tower)(TowerState())
+        self.hand = state.hand
         super(SupervisedTower, self).__init__(name, arrow(ttower,ttower), [],
                                               features=[])
         self.specialTask = ("supervisedTower",
                             {"plan": self.plan})
         self.image = None
         self.handImage = None
+        self.mustTrain = mustTrain
 
     def getImage(self, drawHand=False, pretty=False):
         from tower_common import renderPlan
@@ -71,9 +73,9 @@ class SupervisedTower(Task):
         show()
 
     @staticmethod
-    def exportMany(f, ts):
+    def exportMany(f, ts, shuffle=True):
         ts = list(ts)
-        random.shuffle(ts)
+        if shuffle: random.shuffle(ts)
         a = montage([renderPlan(t.plan, pretty=True, Lego=True, resolution=256)
                      for t in ts]) 
         import scipy.misc
@@ -174,12 +176,13 @@ def makeSupervisedTasks():
                for n in range(2,8)
                for l in range(1,6)]
     offsetArches = [SupervisedTower("bridge (%d) of arch, spaced %d"%(n,l),
-                               """
-                               (for j %d
-                                 v (r 4) v (l 2) h 
-                                (r %d))
-                               """%(n,l))
-                    for n,l in [(3,7),(4,6)]]
+                                    """
+                                    (for j %d
+                                    (embed v (r 4) v (l 2) h )
+                                    (r %d))
+                                    """%(n,l),
+                                    mustTrain=n == 3)
+                    for n,l in [(3,7),(4,8)]]
     Josh = [SupervisedTower("Josh (%d)"%n,
                             """(for i %d
                             h (l 2) v (r 2) v (r 2) v (l 2) h (r 6))"""%n)
@@ -197,15 +200,11 @@ def makeSupervisedTasks():
 (embed v (r 4) v (l 2) h)) (l 6))
 """%(n))
                  for n in range(3,8) ]
-    simpleLoops = [SupervisedTower("horizontal row %d, spacing %d"%(n,s),
-                                   """(for j %d h (r %s))"""%(n,s))
-                   for n,s in [(4,6),(5,7)] ]+\
-                [SupervisedTower("horizontal stack %d"%n,
-                                   """(for j %d h)"""%n)
-                   for n in range(5,8) ]+\
-                [SupervisedTower("vertical stack %d"%n,
-                                   """(for j %d v)"""%n)
-                   for n in [5,7] ]
+    simpleLoops = [SupervisedTower("%s row %d, spacing %d"%(o,n,s),
+                                   """(for j %d %s (r %s))"""%(n,o,s),
+                                   mustTrain=True)
+                   for o,n,s in [('h',4,7), ('v',5,3)] ]
+
     pyramids = []
     pyramids += [SupervisedTower("arch pyramid %d"%n,
                                  """((for i %d (for j i (embed v (r 4) v (l 2) h)) (r 6))
@@ -308,6 +307,39 @@ def makeSupervisedTasks():
         for t in everything:
             delattr(t,'original')
     return everything
+
+def dSLDemo():
+    DSL = {}
+    bricks = Program.parse("(lambda (lambda (tower_loopM $0 (lambda (lambda (moveHand 3 (reverseHand (tower_loopM $3 (lambda (lambda (moveHand 6 (3x1 $0)))) $0))))))))")
+    DSL["bricks"] = [ [bricks.runWithArguments([x,y,_empty_tower,TowerState()])[1]
+                       for x in range(5, 5 + 4) ]
+                      for y in [5,16] ]
+    dimensionality = {}
+    dimensionality["bricks"] = 2
+
+    bridge = Program.parse("(lambda (lambda (tower_loopM $0 (lambda (lambda (#(lambda (#(lambda (lambda (lambda (tower_loopM $0 (lambda (lambda (1x3 (moveHand 4 ($3 $0))))) (moveHand 2 (3x1 $2)))))) $0 (lambda (reverseHand $0)))) (moveHand 4 $0) $3))))))")
+    DSL["bridge"] = [ [bridge.runWithArguments([x,y,_empty_tower,TowerState()])[1]
+                       for x in range(4,4 + 2*4,2) ]
+                       for y in [4,9] ]
+    dimensionality["bridge"] = 2
+
+    staircase = Program.parse("(lambda (tower_loopM $0 (lambda (lambda (#(lambda (lambda (tower_loopM $1 (lambda (lambda (tower_embed (lambda (#(lambda (1x3 (moveHand 4 (1x3 (reverseHand (moveHand 2 (3x1 $0))))))) $0)) $0))) $0))) $1 (moveHand 6 $0))))))")
+    DSL["staircase"] = [ staircase.runWithArguments([n,_empty_tower,TowerState()])[1]
+                         for n in range(3,5 + 3) ]
+
+    images = {}
+    for k,v in DSL.items():
+        d = dimensionality.get(k,1)
+        if d == 1:
+            i = montageMatrix([[renderPlan(p, pretty=True, Lego=True) for p in v]])
+        elif d == 2:
+            i = montageMatrix([[renderPlan(p, pretty=True, Lego=True) for p in ps] for ps in v] )
+        else: assert False
+
+        images[k] = i
+
+    return images
+            
 if __name__ == "__main__":
     from pylab import imshow,show
     from tower_common import *
@@ -317,12 +349,33 @@ if __name__ == "__main__":
     print("maximum plan length",max(len(f.plan) for f in ts ))
     print("maximum tower length",max(towerLength(f.plan) for f in ts ))
     print("maximum tower height",max(towerHeight(simulateWithoutPhysics(f.plan)) for f in ts ))
-    SupervisedTower.showMany(ts)
-    SupervisedTower.exportMany("/tmp/every_tower.png",ts)
+    SupervisedTower.exportMany("/tmp/every_tower.png",ts,shuffle=False)
     
     for j,t in enumerate(ts):
         t.exportImage("/tmp/tower_%d.png"%j,
                       drawHand=False)
+
+    for k,v in dSLDemo().items():
+        import scipy.misc
+        scipy.misc.imsave(f"/tmp/tower_dsl_{k}.png", v)
+
+
+    keywords = ["pyramid",
+                "on top of",
+                "arch 1/2 pyramid",
+                "brickwall",
+                "staircase",
+                "bridge",
+                "aqueduct",
+                "spaced",
+                "arch stack"]
+    for n in range(100):
+        examples = []
+        for kw in keywords:
+            examples.append(random.choice(list(filter(lambda t: kw in str(t), ts))))
+
+        random.shuffle(examples)
+        SupervisedTower.exportMany("/tmp/tower9_%d.png"%n,examples)
         
         
         

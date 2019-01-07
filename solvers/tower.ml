@@ -7,8 +7,14 @@ open Utils
 open Program
 open Type
 
+type tower_state = {hand_position : int;
+                    hand_orientation : int;}
+let empty_tower_state =
+  {hand_position = 0;
+   hand_orientation = 1;}
+                   
 (* ttower = state -> (state, list of blocks) *)
-type tt = int -> int * ( (int*int*int) list)
+type tt = tower_state -> tower_state * ( (int*int*int) list)
 
 let tower_sequence (a : tt) (b : tt) : tt = fun hand ->
   let hand, a' = a hand in
@@ -40,7 +46,7 @@ let block w h =
   let v : tt -> tt = fun k : tt ->
     fun hand ->
       let (hand', rest) = k hand in
-      (hand', (xOffset + hand, w, h) :: rest)
+      (hand', (xOffset + hand.hand_position, w, h) :: rest)
   in
   ignore(primitive n (ttower @> ttower) v)
 ;;
@@ -56,26 +62,26 @@ block 1 4;;
 ignore(primitive "left" (tint @> ttower @> ttower)
          (let f : int -> tt -> tt = fun (d : int) ->
              fun (k : tt) ->
-             fun (hand : int) ->
-               let hand' = hand - d in
+             fun (hand : tower_state) ->
+               let hand' = {hand with hand_position = hand.hand_position - d} in
                let (hand'', rest) = k hand' in
                (hand'', rest)
           in f));;
 ignore(primitive "right" (tint @> ttower @> ttower)
          (let f : int -> tt -> tt = fun (d : int) ->
              fun (k : tt) ->
-             fun (hand : int) ->
-               let hand' = hand + d in
+             fun (hand : tower_state) ->
+               let hand' = {hand with hand_position = hand.hand_position + d} in
                let (hand'', rest) = k hand' in
                (hand'', rest)
           in f));;
 ignore(primitive "tower_loop" (tint @> (tint @> ttower) @> ttower @> ttower)
-         (let rec f (start : int) (stop : int) (body : int -> tt) : tt = fun (hand : int) -> 
+         (let rec f (start : int) (stop : int) (body : int -> tt) : tt = fun (hand : tower_state) -> 
              if start >= stop then (hand,[]) else
                let (hand', thisIteration) = body start hand in
                let (hand'', laterIterations) = f (start+1) stop body hand' in
                (hand'', thisIteration @ laterIterations)
-          in fun (n : int) (b : int -> tt) (k : tt) : tt -> fun (hand : int) -> 
+          in fun (n : int) (b : int -> tt) (k : tt) : tt -> fun (hand : tower_state) -> 
             let (hand, body_blocks) = f 0 n b hand in
             let hand, later_blocks = k hand in
             (hand, body_blocks @ later_blocks)));;
@@ -83,10 +89,18 @@ ignore(primitive "tower_loopM" (tint @> (tint @> ttower @> ttower) @> ttower @> 
          (fun i (f : int -> tt -> tt) (z : tt) : tt -> List.fold_right (0 -- (i-1)) ~f ~init:z));;
 ignore(primitive "tower_embed" ((ttower @> ttower) @> ttower @> ttower)
          (fun (body : tt -> tt) (k : tt) : tt ->
-            fun (hand : int) ->
+            fun (hand : tower_state) ->
               let (_, bodyActions) = body empty_tower hand in
               let (hand', laterActions) = k hand in
-              (hand', bodyActions @ laterActions)));;             
+              (hand', bodyActions @ laterActions)));;
+ignore(primitive "moveHand" (tint @> ttower @> ttower)
+         (fun (d : int) (k : tt) : tt ->
+            fun (state : tower_state) ->
+              k {state with hand_position = state.hand_position + state.hand_orientation*d}));;
+ignore(primitive "reverseHand" (ttower @> ttower)
+         (fun (k : tt) : tt ->
+            fun (state : tower_state) ->
+              k {state with hand_orientation = -1*state.hand_orientation}));;
             
 
 let simulate_without_physics plan =
@@ -154,7 +168,7 @@ let evaluate_discrete_tower_program timeout p =
         try
           match run_for_interval
                   timeout
-                  (fun () -> run_lazy_analyzed_with_arguments p [fun s -> (s, [])] 0 |> snd)
+                  (fun () -> run_lazy_analyzed_with_arguments p [fun s -> (s, [])] empty_tower_state |> snd)
           with
           | Some(p) ->
             let p = center_tower p in
