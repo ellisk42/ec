@@ -67,6 +67,7 @@ class ECResult():
     # Linux does not like files that have more than 256 characters
     # So when exporting the results we abbreviate the parameters
     abbreviations = {"frontierSize": "fs",
+                     "matrixRank": "MR",
                      "reuseRecognition": "RR",
                      "recognitionTimeout": "RT",
                      "iterations": "it",
@@ -82,7 +83,6 @@ class ECResult():
                      "useRecognitionModel": "rec",
                      "useNewRecognitionModel": "newRec",
                      "likelihoodModel": "likemod",
-                     "helmholtzBatch": "HB",
                      "use_ll_cutoff": "llcut",
                      "topk_use_only_likelihood": "topkNotMAP",
                      "activation": "act",
@@ -129,6 +129,7 @@ def explorationCompression(*arguments, **keywords):
 
 def ecIterator(grammar, tasks,
                _=None,
+               matrixRank=None,
                bootstrap=None,
                solver="ocaml",
                compressor="rust",
@@ -150,7 +151,6 @@ def ecIterator(grammar, tasks,
                useNewRecognitionModel=False,
                recognitionTimeout=None,
                helmholtzRatio=0.,
-               helmholtzBatch=5000,
                featureExtractor=None,
                activation='relu',
                topK=1,
@@ -198,6 +198,9 @@ def ecIterator(grammar, tasks,
     if reuseRecognition and not useRecognitionModel:
         eprint("Reuse of recognition model weights at successive iteration only applies to recognition models, aborting")
         assert False
+    if matrixRank is not None and not contextual:
+        eprint("Matrix rank only applies to contextual recognition models, aborting")
+        assert False
 
     if testingTimeout > 0 and len(testingTasks) == 0:
         eprint("You specified a testingTimeout, but did not provide any held out testing tasks, aborting.")
@@ -219,7 +222,6 @@ def ecIterator(grammar, tasks,
             "likelihoodModel",
             "use_map_search_times",
             "activation",
-            "helmholtzBatch",
             "grammar",
             "cuda",
             "_",
@@ -238,8 +240,11 @@ def ecIterator(grammar, tasks,
             "testingTasks",
             "compressor"} and v is not None}
     if not useRecognitionModel:
-        for k in {"helmholtzRatio", "recognitionTimeout", "biasOptimal", "contextual", "reuseRecognition"}:
+        for k in {"helmholtzRatio", "recognitionTimeout", "biasOptimal",
+                  "contextual", "matrixRank", "reuseRecognition"}:
             if k in parameters: del parameters[k]
+    if useRecognitionModel and not contextual:
+        del parameters["matrixRank"]
 
     # Uses `parameters` to construct the checkpoint path
     def checkpointPath(iteration, extra=""):
@@ -486,6 +491,7 @@ def ecIterator(grammar, tasks,
                 featureExtractorObject = featureExtractor(tasks, testingTasks=testingTasks, cuda=cuda)
                 recognizer = RecognitionModel(featureExtractorObject,
                                               grammar,
+                                              rank=matrixRank,
                                               activation=activation,
                                               cuda=cuda,
                                               contextual=contextual,
@@ -721,7 +727,6 @@ def commandlineArguments(_=None,
                          recognitionTimeout=None,
                          activation='relu',
                          helmholtzRatio=1.,
-                         helmholtzBatch=5000,
                          featureExtractor=None,
                          cuda=None,
                          maximumFrontier=None,
@@ -864,13 +869,6 @@ def commandlineArguments(_=None,
         default=helmholtzRatio,
         type=float)
     parser.add_argument(
-        "--helmholtzBatch",
-        dest="helmholtzBatch",
-        help="""When training recognition models, size of the Helmholtz batch? Default %f""" %
-        helmholtzBatch,
-        default=helmholtzBatch,
-        type=float)
-    parser.add_argument(
         "-B",
         "--baselines",
         dest="onlyBaselines",
@@ -885,6 +883,11 @@ def commandlineArguments(_=None,
         "--compressor",
         default=compressor,
         choices=["pypy","rust","vs","pypy_vs","ocaml"])
+    parser.add_argument(
+        "--matrixRank",
+        help="Maximum rank of bigram transition matrix for contextual recognition model. Defaults to full rank.",
+        default=None,
+        type=int)
     parser.add_argument("--biasOptimal",
                         help="Enumerate dreams rather than sample them & bias-optimal recognition objective",
                         default=False, action="store_true")

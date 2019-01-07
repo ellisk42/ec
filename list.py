@@ -148,7 +148,7 @@ def isIntFunction(tp):
 
 
 class LearnedFeatureExtractor(RecurrentFeatureExtractor):
-    H = 16
+    H = 64
     
     special = None
 

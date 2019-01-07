@@ -136,16 +136,16 @@ class GrammarNetwork(nn.Module):
 
         
 
-class ContextualGrammarNetwork_Embed(nn.Module):
-    def __init__(self, inputDimensionality, grammar, E=16):
+class ContextualGrammarNetwork_LowRank(nn.Module):
+    def __init__(self, inputDimensionality, grammar, R=16):
         """Low-rank approximation to bigram model. Parameters is linear in number of primitives.
-        E: maximum rank (embedding size)"""
+        R: maximum rank"""
         
-        super(ContextualGrammarNetwork_Embed, self).__init__()
+        super(ContextualGrammarNetwork_LowRank, self).__init__()
 
         self.grammar = grammar
 
-        self.E = E # embedding size
+        self.R = R # embedding size
 
         # library now just contains a list of indicies which go with each primitive
         self.grammar = grammar
@@ -159,18 +159,13 @@ class ContextualGrammarNetwork_Embed(nn.Module):
         
         # We had an extra grammar for when there is no parent and for when the parent is a variable
         self.n_grammars += 2
-        self.embed1 = nn.Linear(inputDimensionality, self.E*self.n_grammars)
-        self.embed2 = nn.Linear(inputDimensionality, self.E*(len(grammar) + 1))
-
+        self.transitionMatrix = LowRank(inputDimensionality, self.n_grammars, len(grammar) + 1, R)
+        
     def grammarFromVector(self, logProductions):
         return Grammar(logProductions[-1].view(1),
                        [(logProductions[k].view(1), t, program)
                         for k, (_, t, program) in enumerate(self.grammar.productions)],
                        continuationType=self.grammar.continuationType)
-
-    def transitionMatrix(self, x):
-        return \
-            (self.embed1(x).view(self.n_grammars, self.E) @ self.embed2(x).view(self.E, len(self.grammar) + 1)).view(self.n_grammars, -1)
 
     def forward(self, x):
         assert len(x.size()) == 1, "contextual grammar doesn't currently support batching"
@@ -182,19 +177,16 @@ class ContextualGrammarNetwork_Embed(nn.Module):
                  for prim, js in self.library.items()} )
 
     def batchedLogLikelihoods(self, xs, summaries):
-        use_cuda = xs.device.type == 'cuda'
         """Takes as input BxinputDimensionality vector & B likelihood summaries;
         returns B-dimensional vector containing log likelihood of each summary"""
+        use_cuda = xs.device.type == 'cuda'
 
         B = xs.shape[0]
         G = len(self.grammar) + 1
         assert len(summaries) == B
 
-        e1 = self.embed1(xs).view(B, self.n_grammars, self.E)
-        e2 = self.embed2(xs).view(B, self.E, G)
-        
         # logProductions: Bx n_grammars x G
-        logProductions = e1 @ e2
+        logProductions = self.transitionMatrix(xs)
         # uses[b][g][p] is # uses of primitive p by summary b for parent g
         uses = np.zeros((B,self.n_grammars,len(self.grammar)+1))
         for b,summary in enumerate(summaries):
@@ -408,6 +400,7 @@ class ContextualGrammarNetwork(nn.Module):
 
 class RecognitionModel(nn.Module):
     def __init__(self,featureExtractor,grammar,hidden=[128],activation="relu",
+                 rank=None,
                  cuda=False,contextual=False,
                  previousRecognitionModel=None):
         super(RecognitionModel, self).__init__()
@@ -446,7 +439,7 @@ class RecognitionModel(nn.Module):
 
         self.contextual = contextual
         if self.contextual:
-            self.grammarBuilder = ContextualGrammarNetwork_Embed(self.outputDimensionality, grammar)
+            self.grammarBuilder = ContextualGrammarNetwork_LowRank(self.outputDimensionality, grammar, rank)                                                                   
         else:
             self.grammarBuilder = GrammarNetwork(self.outputDimensionality, grammar)
         
@@ -494,7 +487,7 @@ class RecognitionModel(nn.Module):
                 return self.grammarBuilder.variableParent.logProductions(features)
             elif hasattr(self.grammarBuilder, 'network'):
                 return self.grammarBuilder.network(features).view(-1)
-            elif hasattr(self.grammarBuilder, 'embed1'):
+            elif hasattr(self.grammarBuilder, 'transitionMatrix'):
                 return self.grammarBuilder.transitionMatrix(features).view(-1)
             else:
                 assert False
@@ -1026,7 +1019,58 @@ class RecurrentFeatureExtractor(nn.Module):
                 
             
     
+class LowRank(nn.Module):
+    """
+    Module that outputs a rank R matrix of size m by n from input of size i.
+    """
+    def __init__(self, i, m, n, r):
+        """
+        i: input dimension
+        m: output rows
+        n: output columns
+        r: maximum rank. if this is None then the output will be full-rank
+        """
+        super(LowRank, self).__init__()
 
+        self.m = m
+        self.n = n
+        
+        maximumPossibleRank = min(m, r)
+        if r is None: r = maximumPossibleRank
+        
+        if r < maximumPossibleRank:
+            self.factored = True
+            self.A = nn.Linear(i, m*r)
+            self.B = nn.Linear(i, n*r)
+            self.r = r
+        else:
+            self.factored = False
+            self.M = nn.Linear(i, m*n)
+
+    def forward(self, x):
+        sz = x.size()
+        if len(sz) == 1:
+            B = 1
+            x = x.unsqueeze(0)
+            needToSqueeze = True
+        elif len(sz) == 2:
+            B = sz[0]
+            needToSqueeze = False
+        else:
+            assert False, "LowRank expects either a 1-dimensional tensor or a 2-dimensional tensor"
+
+        if self.factored:
+            a = self.A(x).view(B, self.m, self.r)
+            b = self.B(x).view(B, self.r, self.n)
+            y = a @ b
+        else:
+            y = self.M(x).view(B, self.m, self.n)
+        if needToSqueeze:
+            y = y.squeeze(0)
+        return y
+            
+            
+            
 
 class DummyFeatureExtractor(nn.Module):
     def __init__(self, tasks):
