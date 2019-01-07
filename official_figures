@@ -11,6 +11,14 @@ python graphs.py --testingTimeout 600 --title "Tower building" --showEpochs --in
 
 python graphs.py --testingTimeout 600 --title "Symbolic regression" --showEpochs --interval --checkpoints  /home/ellisk/om/ec/experimentOutputs/rational_aic=1.0_arity=3_BO=True_CO=True_ET=720_HR=0.5_it=20_MF=5_baseline=False_pc=30.0_RT=3600_RR=False_RW=False_storeTask=True_L=1.5_batch=10_taskReranker=randomShuffle_K=2_topkNotMAP=False_rec=True_feat=FeatureExtractor_graph=True.pickle  /home/ellisk/om/ec/experimentOutputs/rational_aic=1.0_arity=3_ET=720_it=20_MF=5_baseline=False_pc=30.0_RW=False_storeTask=False_L=1.5_batch=10_taskReranker=randomShuffle_K=2_topkNotMAP=False_rec=False.pickle  --export ../ecPaper/figures/rationalLearningCurve_batch.png  -i 20 --epochFrequency 3
 
+# Comparing old and new recognition models
+python graphs.py --testingTimeout 600 --title "List, recognition model only" --interval --checkpoints /home/ellisk/om/ec/experimentOutputs/list_aic=1.0_arity=3_ET=720_it=20_MF=5_baseline=False_pc=30.0_RW=False_storeTask=False_L=1.0_batch=10_taskReranker=randomShuffle_K=2_topkNotMAP=False_rec=False.pickle /home/ellisk/om/ec/experimentOutputs/list_aic=1000.0_arity=3_BO=False_CO=False_ET=720_HR=0.5_it=20_MF=5_baseline=False_pc=30.0_RT=7200_RR=False_RW=False_storeTask=True_L=1.0_batch=10_taskReranker=randomShuffle_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor_graph=True.pickle -i 20 --export ../ecPaper/figures/list_recognition_comparison.png
+
+
+python graphs.py --testingTimeout 600 --title "Text, recognition model only" --interval --checkpoints /home/ellisk/om/ec/experimentOutputs/text_aic=1000.0_arity=3_BO=True_CO=True_ET=720_HR=0.5_it=20_MF=5_baseline=False_pc=30.0_RT=7200_RR=False_RW=False_storeTask=True_L=1.0_batch=10_taskReranker=randomShuffle_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor_graph=True.pickle /home/ellisk/om/ec/experimentOutputs/text_aic=1000.0_arity=3_BO=False_CO=False_ET=720_HR=0.5_it=20_MF=5_baseline=False_pc=30.0_RT=7200_RR=False_RW=False_storeTask=True_L=1.0_batch=10_taskReranker=randomShuffle_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor_graph=True.pickle -i 20 --export ../ecPaper/figures/text_recognition_comparison.png
+
+
+
 # Visualizing program embeddings
 python taskRankGraphs.py --checkpoints /home/ellisk/om/ec/experimentOutputs/tower_aic=1.0_arity=3_BO=True_CO=True_ET=120_HR=0.5_it=20_MF=5_baseline=False_pc=30.0_RT=300_RR=True_RW=False_storeTask=True_L=1.0_batch=10_taskReranker=randomShuffle_K=2_topkNotMAP=False_rec=True_feat=TowerCNN_graph=True.pickle --labelWithImages 1 --metricsToCluster expectedProductionUses
 
