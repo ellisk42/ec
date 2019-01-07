@@ -69,9 +69,9 @@ def showSynergyMatrix(results):
     print("Of the",len(results),"checkpoints that you gave me, here is a matrix showing the overlap between the tasks solved:")
 
     for y in range(len(results)):
-        if y == 0: print("\tck1\tck2\tck3")
+        if y == 0: print("".join( f"\tck{i + 1}" for i in range(len(results)) ))
         for x in range(len(results)):
-            if x == 0: print("ck%d"%y,
+            if x == 0: print("ck%d"%(y+1),
                              end="\t")
             intersection = len(everSolved[x]&everSolved[y])
             improvementOverBaseline = intersection/N
@@ -285,6 +285,9 @@ if __name__ == "__main__":
     parser.add_argument("--showEpochs",
                         default=False, action="store_true",
                         help='X-axis is real-valued percentage of training tasks seen, instead of iterations.')
+    parser.add_argument("--noTime",
+                        default=False, action="store_true",
+                        help='Do not show solve time.')
     parser.add_argument("--epochFrequency",
                         default=1, type=int,
                         help="Frequency with which to show epoch markers.")
@@ -302,5 +305,6 @@ if __name__ == "__main__":
                  iterations=arguments.iterations,
                  showTraining=arguments.showTraining,
                  maxP=arguments.maxPercent,
+                 showSolveTime=not arguments.noTime,
                  showEpochs=arguments.showEpochs,
                  epochFrequency=arguments.epochFrequency)
