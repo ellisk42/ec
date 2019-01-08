@@ -557,6 +557,17 @@ class Grammar(object):
     def sketchEnumeration(self,context,environment,request,sk,upperBound,
                            maximumDepth=20,
                            lowerBound=0.):
+        assert int(upperBound) == upperBound, "only supports ints for now"
+
+        for ub in range(1, int(upperBound)):
+            yield from self._sketchEnumeration(context,environment,request,sk,ub,
+                           maximumDepth=maximumDepth,
+                           lowerBound=ub-1)
+
+
+    def _sketchEnumeration(self,context,environment,request,sk,upperBound,
+                           maximumDepth=20,
+                           lowerBound=0.):
         '''Enumerates all sketch instantiations whose MDL satisfies: lowerBound <= MDL < upperBound'''
         if upperBound < 0. or maximumDepth == 1:
             return
@@ -568,7 +579,7 @@ class Grammar(object):
         elif request.isArrow():
             assert sk.isAbstraction
             v = request.arguments[0]
-            for l, newContext, b in self.sketchEnumeration(context, [v] + environment,
+            for l, newContext, b in self._sketchEnumeration(context, [v] + environment,
                                                            request.arguments[1],
                                                            sk.body,
                                                            upperBound=upperBound,
@@ -629,7 +640,7 @@ class Grammar(object):
             laterRequests = argumentRequests[1:]
             firstSketch = arguments[0]
             laterSketches = arguments[1:]
-            for argL, newContext, arg in self.sketchEnumeration(context, environment, argRequest,
+            for argL, newContext, arg in self._sketchEnumeration(context, environment, argRequest,
                                                                 firstSketch,
                                                                 upperBound=upperBound,
                                                                 lowerBound=0.,
@@ -1123,6 +1134,17 @@ if __name__ == "__main__":
     g = Grammar.uniform([k0,k1,addition, subtraction])
     p = Program.parse("(lambda (+ <HOLE> <HOLE>))")
     #p = Program.parse("(lambda (+ 1 $0))")
-    for stuff in g.sketchEnumeration(Context.EMPTY,[],arrow(tint,tint),
-                                     p, 12.):
+    i = 0
+    for stuff in g._sketchEnumeration(Context.EMPTY,[],arrow(tint,tint),
+                                     p, 8.):
         print(stuff)
+        i += 1
+    print(i)
+    print("chained:")
+
+    i = 0
+    for stuff in g.sketchEnumeration(Context.EMPTY,[],arrow(tint,tint),
+                                     p, 8.):
+        print(stuff)
+        i += 1
+    print(i)
