@@ -162,14 +162,14 @@ Random shuffle (batches of 5), 60s: tower_random_shuffle_5_120s [Done, solves 45
 	python launch.py -k -z m4.16xlarge tower_random_shuffle_5_120s "python tower.py -t 120  --pseudoCounts 30 --tasks old --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 300 --storeTaskMetrics --split 0.5 --testingTimeout 600 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 5"
 
 Random shuffle (batches of 10), 120s: tower_random_shuffle_10_120s [Done, solves 51/56]
-	python launch.py -k -z m4.16xlarge tower_random_shuffle_10_120s "python tower.py -t 120  --pseudoCounts 30 --tasks old --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 --storeTaskMetrics --split 0.5 --testingTimeout 600 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10 --primitives new --recognitionTimeout 3600"
+	python launch.py -k -z m4.16xlarge tower_random_shuffle_10_120s "python tower.py -t 120  --pseudoCounts 30 --tasks old --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 --storeTaskMetrics --split 0.5 --testingTimeout 600 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10 --primitives old --recognitionTimeout 3600"
 			Re-run with new random shuffle (v2): solves 49/56.
 
 Baseline without recognition model: tower_no_recognition_random_shuffle_10_120s [RUNNING]
-	python launch.py -k -z m4.16xlarge tower_no_recognition_random_shuffle_10_120s "python tower.py -t 120  --pseudoCounts 30 --tasks old --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 --storeTaskMetrics --split 0.5 --testingTimeout 600 --taskReranker randomShuffle --taskBatchSize 10 --primitives new -g "
+	python launch.py -k -z m4.16xlarge tower_no_recognition_random_shuffle_10_120s "python tower.py -t 120  --pseudoCounts 30 --tasks old --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 --storeTaskMetrics --split 0.5 --testingTimeout 600 --taskReranker randomShuffle --taskBatchSize 10 --primitives old -g"
 
 Baseline without DSL learning: tower_no_dsl_random_shuffle_10_120s [RUNNING]
-	python launch.py -k -z m4.16xlarge tower_no_dsl_random_shuffle_10_120s "python tower.py -t 120  --pseudoCounts 30 --tasks old --aic 1000.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 --storeTaskMetrics --split 0.5 --testingTimeout 600 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10 --primitives new --recognitionTimeout 3600"
+	python launch.py -k -z m4.16xlarge tower_no_dsl_random_shuffle_10_120s "python tower.py -t 120  --pseudoCounts 30 --tasks old --aic 1000.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 --storeTaskMetrics --split 0.5 --testingTimeout 600 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10 --primitives old --recognitionTimeout 3600"
 
 Random shuffle (batches of 10), 120s. retraining: tower_random_shuffle_10_120s [12/18]
 	python launch.py -k -z m4.16xlarge --ssh_key openmind tower_random_shuffle_10_120s "python tower.py -t 120  --pseudoCounts 30 --tasks old --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 300 --storeTaskMetrics --split 0.5 --testingTimeout 600 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10 --reuseRecognition"

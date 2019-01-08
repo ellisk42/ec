@@ -754,7 +754,12 @@ let () =
 
   let frontiers = j |> member "frontiers" |> to_list |> List.map ~f:deserialize_frontier in
   
-  let g, frontiers = compression_loop ~nc ~topK ~aic ~structurePenalty ~pseudoCounts ~arity ~topI ~bs g frontiers in
+  let g, frontiers =
+    if aic > 500. then
+      (Printf.eprintf "AIC is very large (over 500), assuming you don't actually want to do DSL learning!";
+       g, frontiers)
+    else compression_loop ~nc ~topK ~aic ~structurePenalty ~pseudoCounts ~arity ~topI ~bs g frontiers in 
+      
 
   let j = `Assoc(["DSL",serialize_grammar g;
                   "frontiers",`List(frontiers |> List.map ~f:serialize_frontier)])
