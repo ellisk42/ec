@@ -1039,7 +1039,7 @@ class LowRank(nn.Module):
         self.m = m
         self.n = n
         
-        maximumPossibleRank = min(m, r)
+        maximumPossibleRank = min(m, n)
         if r is None: r = maximumPossibleRank
         
         if r < maximumPossibleRank:
