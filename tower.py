@@ -135,8 +135,8 @@ class TowerCNN(nn.Module):
 
 def tower_options(parser):
     parser.add_argument("--tasks",
-                        choices=["supervised","everything","distant"],
-                        default="supervised")
+                        choices=["old","new"],
+                        default="old")
     parser.add_argument("--visualize",
                         default=None, type=str)
     parser.add_argument("--solutions",
@@ -284,14 +284,10 @@ if __name__ == "__main__":
         
     
     tasks = arguments.pop("tasks")
-    supervised = False
-    if tasks == "supervised":
-        supervised = True
+    if tasks == "new":
         tasks = makeSupervisedTasks()
-    elif tasks == "distant":
-        tasks = makeTasks()
-    elif tasks == "everything":
-        tasks = makeTasks() + makeSupervisedTasks()
+    elif tasks == "old":
+        tasks = makeOldSupervisedTasks()
     else: assert False
         
     test, train = testTrainSplit(tasks, arguments.pop("split"))
@@ -317,11 +313,8 @@ if __name__ == "__main__":
                      for frontier in result.taskSolutions.values() if not frontier.empty]
         try:
             fn = '%s/solutions_%d.png'%(outputDirectory,iteration)
-            if supervised:
-                visualizeSolutions(result.taskSolutions, fn,
-                                   train)
-            else:
-                assert False
+            visualizeSolutions(result.taskSolutions, fn,
+                               train)
             eprint("Exported solutions to %s\n"%fn)
             dreamOfTowers(result.grammars[-1],
                           '%s/random_%d'%(outputDirectory,iteration))           

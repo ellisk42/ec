@@ -244,7 +244,8 @@ def ecIterator(grammar, tasks,
                   "contextual", "matrixRank", "reuseRecognition"}:
             if k in parameters: del parameters[k]
     if useRecognitionModel and not contextual:
-        del parameters["matrixRank"]
+        if "matrixRank" in parameters:
+            del parameters["matrixRank"]
 
     # Uses `parameters` to construct the checkpoint path
     def checkpointPath(iteration, extra=""):
