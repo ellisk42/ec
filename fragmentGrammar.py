@@ -483,12 +483,6 @@ def ocamlInduce(g, frontiers, _=None,
     import os
     import subprocess
 
-    g0 = g
-
-    originalFrontiers = frontiers
-    t2f = {f.task: f for f in frontiers}
-    frontiers = [f for f in frontiers if not f.empty ]
-
     # This is a dirty hack!
     # Memory consumption increases with the number of CPUs
     # And early on we have a lot of stuff to compress
@@ -500,61 +494,71 @@ def ocamlInduce(g, frontiers, _=None,
             CPUs = max(1, int(CPUs/3))
     else:
         CPUs = max(1, int(CPUs/2))
-
-    message = {"arity": a,
-               "verbose": False,
-               "topK": topK,
-               "pseudoCounts": float(pseudoCounts),
-               "aic": aic,
-               "bs": bs,
-               "topI": topI,
-               "structurePenalty": float(structurePenalty),
-               "CPUs": CPUs,
-               "DSL": g.json(),
-               "frontiers": [ f.json()
-                              for f in frontiers ]}
-
-    message = json.dumps(message)
-    if True:
-        import datetime
-        timestamp = datetime.datetime.now().isoformat()
-        os.system("mkdir  -p compressionMessages")
-        fn = "compressionMessages/%s"%timestamp
-        with open(fn, "w") as f:
-            f.write(message)
-        eprint("Compression message saved to:",fn)
-
-    try:
-        process = subprocess.Popen("./compression",
-                                   stdin=subprocess.PIPE,
-                                   stdout=subprocess.PIPE)
-        response, error = process.communicate(bytes(message, encoding="utf-8"))
-        response = json.loads(response.decode("utf-8"))
-    except OSError as exc:
-        raise exc
-
     
+    while True:
+        g0 = g
 
-    g = response["DSL"]
-    g = Grammar(g["logVariable"],
-                [(l,p.infer(),p)
-                 for production in g["productions"]
-                 for l in [production["logProbability"]]
-                 for p in [Program.parse(production["expression"])] ],
-                continuationType=g0.continuationType)
-    
+        originalFrontiers = frontiers
+        t2f = {f.task: f for f in frontiers}
+        frontiers = [f for f in frontiers if not f.empty ]
+        message = {"arity": a,
+                   "verbose": False,
+                   "topK": topK,
+                   "pseudoCounts": float(pseudoCounts),
+                   "aic": aic,
+                   "bs": bs,
+                   "topI": topI,
+                   "structurePenalty": float(structurePenalty),
+                   "CPUs": CPUs,
+                   "DSL": g.json(),
+                   "iterations": 1,
+                   "frontiers": [ f.json()
+                                  for f in frontiers ]}
 
-    frontiers = {original.task:
-                 Frontier([FrontierEntry(p,
-                                         logLikelihood=e["logLikelihood"],
-                                         logPrior=g.logLikelihood(original.task.request, p))
-                           for e in new["programs"]
-                           for p in [Program.parse(e["program"])] ],
-                          task=original.task)
-                 for original, new in zip(frontiers, response["frontiers"]) }
-    frontiers = [frontiers.get(f.task, t2f[f.task])
-                 for f in originalFrontiers ]
-    return g, frontiers
+        message = json.dumps(message)
+        if True:
+            import datetime
+            timestamp = datetime.datetime.now().isoformat()
+            os.system("mkdir  -p compressionMessages")
+            fn = "compressionMessages/%s"%timestamp
+            with open(fn, "w") as f:
+                f.write(message)
+            eprint("Compression message saved to:",fn)
+
+        try:
+            process = subprocess.Popen("./compression",
+                                       stdin=subprocess.PIPE,
+                                       stdout=subprocess.PIPE)
+            response, error = process.communicate(bytes(message, encoding="utf-8"))
+            response = json.loads(response.decode("utf-8"))
+        except OSError as exc:
+            raise exc
+
+        g = response["DSL"]
+        g = Grammar(g["logVariable"],
+                    [(l,p.infer(),p)
+                     for production in g["productions"]
+                     for l in [production["logProbability"]]
+                     for p in [Program.parse(production["expression"])] ],
+                    continuationType=g0.continuationType)
+
+
+        frontiers = {original.task:
+                     Frontier([FrontierEntry(p,
+                                             logLikelihood=e["logLikelihood"],
+                                             logPrior=g.logLikelihood(original.task.request, p))
+                               for e in new["programs"]
+                               for p in [Program.parse(e["program"])] ],
+                              task=original.task)
+                     for original, new in zip(frontiers, response["frontiers"]) }
+        frontiers = [frontiers.get(f.task, t2f[f.task])
+                     for f in originalFrontiers ]
+        if len(g) > len(g0):
+            eprint("Grammar changed - running another round of consolidation.")
+            continue
+        else:
+            eprint("Finished consolidation.")
+            return g, frontiers
 
 
 def rustInduce(g0, frontiers, _=None,

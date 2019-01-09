@@ -704,7 +704,7 @@ let export_compression_checkpoint ~nc ~structurePenalty ~aic ~topK ~pseudoCounts
 
 
 let compression_loop
-    ?nc:(nc=1) ~structurePenalty ~aic ~topK ~pseudoCounts ?arity:(arity=3) ~bs ~topI g frontiers =
+    ?nc:(nc=1) ~structurePenalty ~aic ~topK ~pseudoCounts ?arity:(arity=3) ~bs ~topI ~iterations g frontiers =
 
   let find_new_primitive old_grammar new_grammar =
     new_grammar |> grammar_primitives |> List.filter ~f:(fun p ->
@@ -727,20 +727,21 @@ let compression_loop
 
   let step = if nc = 1 then compression_step else compression_step_master ~nc in 
 
-  let rec loop g frontiers = 
-    match time_it "Completed one step of memory consolidation"
-            (fun () -> step ~structurePenalty ~topK ~aic ~pseudoCounts ~arity ~bs ~topI g frontiers)
-    with
-    | None -> g, frontiers
-    | Some(g',frontiers') ->
-      illustrate_new_primitive g' (find_new_primitive g g') frontiers';
-      if !verbose_compression then
-        export_compression_checkpoint ~nc ~structurePenalty ~aic ~topK ~pseudoCounts ~arity ~bs ~topI g' frontiers';
-      flush_everything();
-      loop g' frontiers'
+  let rec loop ~iterations g frontiers =
+    if iterations < 1 then g, frontiers else 
+      match time_it "Completed one step of memory consolidation"
+              (fun () -> step ~structurePenalty ~topK ~aic ~pseudoCounts ~arity ~bs ~topI g frontiers)
+      with
+      | None -> g, frontiers
+      | Some(g',frontiers') ->
+        illustrate_new_primitive g' (find_new_primitive g g') frontiers';
+        if !verbose_compression && iterations > 1 then
+          export_compression_checkpoint ~nc ~structurePenalty ~aic ~topK ~pseudoCounts ~arity ~bs ~topI g' frontiers';
+        flush_everything();
+        loop (iterations - 1) g' frontiers'
   in
   time_it "completed ocaml compression" (fun () ->
-      loop g frontiers)
+      loop ~iterations g frontiers)
 ;;
 
   
@@ -779,13 +780,18 @@ let () =
     with _ -> 1
   in
 
+  let iterations = try
+      j |> member "iterations" |> to_int
+    with _ -> 1000
+  in
+
   let frontiers = j |> member "frontiers" |> to_list |> List.map ~f:deserialize_frontier in
   
   let g, frontiers =
     if aic > 500. then
       (Printf.eprintf "AIC is very large (over 500), assuming you don't actually want to do DSL learning!";
        g, frontiers)
-    else compression_loop ~nc ~topK ~aic ~structurePenalty ~pseudoCounts ~arity ~topI ~bs g frontiers in 
+    else compression_loop ~iterations ~nc ~topK ~aic ~structurePenalty ~pseudoCounts ~arity ~topI ~bs g frontiers in 
       
 
   let j = `Assoc(["DSL",serialize_grammar g;
