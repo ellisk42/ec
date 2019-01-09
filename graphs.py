@@ -135,7 +135,7 @@ def plotECResult(
 
     plot.xticks(range(0, n_iters), fontsize=TICKFONTSIZE)
 
-    colors = ["#D95F02", "#1B9E77", "#662077"] + ["#000000"]*100
+    colors = ["#D95F02", "#1B9E77", "#662077", "#FF0000"] + ["#000000"]*100
     usedLabels = []
 
     showSynergyMatrix(results)

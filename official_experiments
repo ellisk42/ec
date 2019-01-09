@@ -1,3 +1,7 @@
+To see the billing information broken down by instance type:
+https://console.aws.amazon.com/cost-reports/home#/custom?groupBy=InstanceType&hasBlended=false&hasAmortized=false&excludeDiscounts=true&excludeTaggedResources=false&timeRangeOption=Last12Months&granularity=Monthly&reportName=&reportType=CostUsage&isTemplate=true&startDate=2018-01-01&endDate=2018-12-31&filter=%5B%7B%22dimension%22:%22RecordType%22,%22values%22:%5B%22Refund%22,%22Credit%22%5D,%22include%22:false,%22children%22:null%7D%5D&forecastTimeRangeOption=None&usageAs=usageQuantity&chartStyle=Stack
+
+
 The hyper parameters here are not consistent. A key thing we need to
 do is make sure that we are always using the same hyper parameters, or
 if we are not, we need a good reason for it. For example, the
