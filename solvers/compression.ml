@@ -678,6 +678,31 @@ let compression_step ~structurePenalty ~aic ~pseudoCounts ?arity:(arity=3) ~bs ~
        Some(g'',frontiers''))
 ;;
 
+let export_compression_checkpoint ~nc ~structurePenalty ~aic ~topK ~pseudoCounts ?arity:(arity=3) ~bs ~topI g frontiers =
+  let timestamp = Time.now() |> Time.to_filename_string ~zone:Time.Zone.utc in
+  let fn = Printf.sprintf "compressionMessages/%s" timestamp in
+
+  let open Yojson.Basic.Util in
+  let open Yojson.Basic in
+
+  let j : json =
+    `Assoc(["DSL", serialize_grammar g;
+            "topK", `Int(topK);
+            "topI", `Int(topI);
+            "bs", `Int(bs);
+            "arity", `Int(arity);
+            "pseudoCounts", `Float(pseudoCounts);
+            "structurePenalty", `Float(structurePenalty);
+            "verbose", `Bool(true);
+            "CPUs", `Int(nc);
+            "aic", `Float(aic);
+            "frontiers", `List(frontiers |> List.map ~f:serialize_frontier)])
+  in
+  to_file fn j;
+  Printf.eprintf "Exported compression checkpoint to %s\n" fn
+;;
+
+
 let compression_loop
     ?nc:(nc=1) ~structurePenalty ~aic ~topK ~pseudoCounts ?arity:(arity=3) ~bs ~topI g frontiers =
 
@@ -709,6 +734,8 @@ let compression_loop
     | None -> g, frontiers
     | Some(g',frontiers') ->
       illustrate_new_primitive g' (find_new_primitive g g') frontiers';
+      if !verbose_compression then
+        export_compression_checkpoint ~nc ~structurePenalty ~aic ~topK ~pseudoCounts ~arity ~bs ~topI g' frontiers';
       flush_everything();
       loop g' frontiers'
   in
