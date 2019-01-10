@@ -127,10 +127,10 @@ UPLOADPID=$!
 """ % (ssh_key, ssh_key, UPLOADFREQUENCY, uploadCommand)
     
     if arguments.gpuImage:
-        script = script + """
-kill -9 $!
+        preamble += """
+source ~/.bashrc
 python -c 'import torch; print(torch.cuda.is_available())'
-""" + script
+"""
 
     script = preamble + script
 
