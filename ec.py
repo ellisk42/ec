@@ -431,15 +431,15 @@ def ecIterator(grammar, tasks,
                                                                  for f in trainFrontiers + testFrontiers
                                                                  if len(f) > 0},
                                  'frontier')
-        SUFFIX = "pickle"
+        SUFFIX = ".pickle"
         assert path.endswith(SUFFIX)
         path = path[:-len(SUFFIX)] + "_FTM=True" + SUFFIX
         with open(path, "wb") as handle: dill.dump(result, handle)
         if useRecognitionModel: ECResult.clearRecognitionModel(path)
             
         sys.exit(0)
-        
- 
+    
+    
     for j in range(resume or 0, iterations):
         if storeTaskMetrics and rewriteTaskMetrics:
             eprint("Resetting task metrics for next iteration.")
