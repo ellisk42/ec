@@ -263,6 +263,7 @@ def plotTSNE(
 	resultPaths,
 	experimentNames,
 	metricsToCluster,
+	tsneLearningRate,
 	labelWithImages,
 	export=None):
 	"""Plots TSNE clusters of the given metrics. Requires Sklearn."""
@@ -281,7 +282,7 @@ def plotTSNE(
 
 		for k, metricToCluster in enumerate(metricsToCluster):
 			print("Clustering metric: " + metricToCluster)
-			tsne = TSNE(random_state=0)
+			tsne = TSNE(random_state=0, learning_rate=tsneLearningRate)
 			taskNames, taskMetrics = [], []
 
 			print(len(recognitionTaskMetrics))
@@ -333,6 +334,7 @@ if __name__ == "__main__":
 	parser.add_argument("--exportTaskTimes", type=bool)
 	parser.add_argument("--outlierThreshold", type=float, default=None)
 	parser.add_argument("--metricsToCluster", nargs='+', type=str, default=None)
+	parser.add_argument("--tsneLearningRate", type=float, default=250.0)
 	parser.add_argument("--labelWithImages", type=bool, default=None)
 	parser.add_argument("--export","-e",
 						type=str, default='data')
@@ -357,5 +359,6 @@ if __name__ == "__main__":
 		plotTSNE(arguments.checkpoints,
 				 arguments.experimentNames,
 				 arguments.metricsToCluster,
+				 arguments.tsneLearningRate,
 				 arguments.labelWithImages,
 				 arguments.export)
