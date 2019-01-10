@@ -69,7 +69,8 @@ Random shuffle (batches of 10), 720s: list_random_shuffle_10_720s  [Done: Solves
 
 Random shuffle (batches of 10), structure penalty: list_random_shuffle_10_720s_sp [Done: solves 105/109.]
 	python launch.py  -k -z r4.16xlarge list_random_shuffle_10_720s_sp "python list.py  -t 720 --compressor ocaml --pseudoCounts 30 --aic 1.0 --structurePenalty 2.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 7200 --storeTaskMetrics --split 0.5 --testingTimeout 720 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10"
-Running for replication: *list_random_shuffle_10_720s_sp_v2
+	
+Running for replication: *list_random_shuffle_10_720s_sp_v2 [Solves 84/109?]
 		python launch.py --ssh_key openmind -k -z r4.16xlarge list_random_shuffle_10_720s_sp_v2 "python list.py  -t 720 --compressor ocaml --pseudoCounts 30 --aic 1.0 --structurePenalty 2.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 7200 --storeTaskMetrics --split 0.5 --testingTimeout 720 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10"
 
 Random shuffle (batches of 10), more dreams: list_random_shuffle_10_720s_r [Done: solves 104/109.]
@@ -109,7 +110,7 @@ Random shuffle (batches of 10), 120s: tower_random_shuffle_10_120s [Done, solves
 			Re-run with new random shuffle (v2): solves 49/56.
 		
 
-Random shuffle (batches of 10), 120s. retraining: tower_random_shuffle_10_120s [12/18]
+Random shuffle (batches of 10), 120s. retraining: *tower_random_shuffle_10_120s [12/18]
 	python launch.py -k -z m4.16xlarge --ssh_key openmind tower_random_shuffle_10_120s "python tower.py -t 120 --compressor ocaml --pseudoCounts 30 --tasks supervised --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 300 --storeTaskMetrics --split 0.5 --testingTimeout 120 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10 --reuseRecognition"
 
 REGEX: Max: your stuff here
