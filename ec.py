@@ -67,6 +67,7 @@ class ECResult():
     # Linux does not like files that have more than 256 characters
     # So when exporting the results we abbreviate the parameters
     abbreviations = {"frontierSize": "fs",
+                     "taskReranker": "TRR",
                      "matrixRank": "MR",
                      "reuseRecognition": "RR",
                      "recognitionTimeout": "RT",
@@ -86,7 +87,8 @@ class ECResult():
                      "use_ll_cutoff": "llcut",
                      "topk_use_only_likelihood": "topkNotMAP",
                      "activation": "act",
-                     "storeTaskMetrics": 'storeTask',
+                     "storeTaskMetrics": 'STM',
+                     "topkNotMAP": "tknm",
                      "rewriteTaskMetrics": "RW",
                      'taskBatchSize': 'batch'}
 
@@ -429,6 +431,9 @@ def ecIterator(grammar, tasks,
                                                                  for f in trainFrontiers + testFrontiers
                                                                  if len(f) > 0},
                                  'frontier')
+        SUFFIX = "pickle"
+        assert path.endswith(SUFFIX)
+        path = path[:-len(SUFFIX)] + "_FTM=True" + SUFFIX
         with open(path, "wb") as handle: dill.dump(result, handle)
         if useRecognitionModel: ECResult.clearRecognitionModel(path)
             
