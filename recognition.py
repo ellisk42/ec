@@ -486,8 +486,10 @@ class RecognitionModel(nn.Module):
             if hasattr(self.grammarBuilder, 'variableParent'):
                 return self.grammarBuilder.variableParent.logProductions(features)
             elif hasattr(self.grammarBuilder, 'network'):
+                eprint("Adding network.")
                 return self.grammarBuilder.network(features).view(-1)
             elif hasattr(self.grammarBuilder, 'transitionMatrix'):
+                eprint("Adding transition matrix.")
                 return self.grammarBuilder.transitionMatrix(features).view(-1)
             else:
                 assert False
