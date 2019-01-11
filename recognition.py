@@ -453,7 +453,7 @@ class RecognitionModel(nn.Module):
             self.featureExtractor.load_state_dict(previousRecognitionModel.featureExtractor.state_dict())
 
     def taskEmbeddings(self, tasks):
-        return {task: self.featureExtractor.featuresOfTask(task).data.numpy()
+        return {task: self.featureExtractor.featuresOfTask(task).data.cpu().numpy()
                 for task in tasks}
 
     def forward(self, features):
@@ -506,7 +506,7 @@ class RecognitionModel(nn.Module):
         otherLogits = torch.stack([self.grammarLogProductionsOfTask(t) for t in otherTasks])
         cos = nn.CosineSimilarity(dim=1, eps=1e-6)
         cosMatrix = cos(taskLogits, otherLogits)
-        return cosMatrix.data.numpy()
+        return cosMatrix.data.cpu().numpy()
 
     def grammarEntropyOfTask(self, task):
         """Returns the entropy of the grammar distribution from non-contextual models for a task."""
@@ -521,15 +521,15 @@ class RecognitionModel(nn.Module):
             return e(grammarLogProductionsOfTask)
 
     def taskGrammarLogProductions(self, tasks):
-        return {task: self.grammarLogProductionsOfTask(task).data.numpy()
+        return {task: self.grammarLogProductionsOfTask(task).data.cpu().numpy()
                 for task in tasks}
 
     def taskHiddenStates(self, tasks):
-        return {task: self._MLP(self.featureExtractor.featuresOfTask(task)).view(-1).data.numpy()
+        return {task: self._MLP(self.featureExtractor.featuresOfTask(task)).view(-1).data.cpu().numpy()
                 for task in tasks}
 
     def taskGrammarEntropies(self, tasks):
-        return {task: self.grammarEntropyOfTask(task).data.numpy()
+        return {task: self.grammarEntropyOfTask(task).data.cpu().numpy()
                 for task in tasks}
 
     def frontierKL(self, frontier):
@@ -917,7 +917,7 @@ class RecurrentFeatureExtractor(nn.Module):
 
     def symbolEmbeddings(self):
         return {s: self.encoder(variable([self.symbolToIndex[s]])).squeeze(
-            0).data.numpy() for s in self.lexicon if not (s in self.specialSymbols)}
+            0).data.cpu().numpy() for s in self.lexicon if not (s in self.specialSymbols)}
 
     def packExamples(self, examples):
         """IMPORTANT! xs must be sorted in decreasing order of size because pytorch is stupid"""
