@@ -259,6 +259,20 @@ def makeTowerImage(im):
 	im = np.dstack([im, alpha])
 	return im
 
+def makeRationalImage(im):
+	im = np.reshape(np.array(im),(64, 64))
+	# Make black and white.
+	black_mask = im != 0
+	white_mask = im == 0
+	im[black_mask] = 0
+	im[white_mask] = 255
+
+	alpha = np.zeros(im.shape)
+	alpha[black_mask] = 255
+	# Need to make it the opposite for alpha.
+	im = np.dstack([im, im, im, alpha])
+	return im
+
 def plotTSNE(
 	resultPaths,
 	experimentNames,
@@ -302,12 +316,15 @@ def plotTSNE(
 			if labelWithImages:
 				images = []
 				for i, task in enumerate(recognitionTaskMetrics):
-					if 'taskImages' not in recognitionTaskMetrics[task] and domain == 'tower': recognitionTaskMetrics[task]['taskImages'] = task.getImage(pretty=True) # BUG: this shouldn't be necessary
+					if 'taskImages' not in recognitionTaskMetrics[task] and domain == 'tower': recognitionTaskMetrics[task]['taskImages'] = task.getImage(pretty=True) # BUG: this shouldn't be necessaryd
+					if 'taskImages' not in recognitionTaskMetrics[task] and domain == 'rational': recognitionTaskMetrics[task]['taskImages'] = task.features
 					im = np.array(recognitionTaskMetrics[task]['taskImages'])
 					if domain == 'logo':
 						im = makeLogoImage(im)
 					elif domain == 'tower':
 						im = makeTowerImage(im)
+					elif domain == 'rational':
+						im = makeRationalImage(im)
 					images.append(im)
 
 				plotEmbeddingWithImages(clusteredTaskMetrics, 

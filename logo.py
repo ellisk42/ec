@@ -342,7 +342,6 @@ if __name__ == "__main__":
         iterations=10,
         useRecognitionModel=True,
         helmholtzRatio=0.5,
-        helmholtzBatch=500,
         featureExtractor=LogoFeatureCNN,
         maximumFrontier=5,
         CPUs=numberOfCPUs(),
