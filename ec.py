@@ -408,7 +408,7 @@ def ecIterator(grammar, tasks,
     # Check if we are just updating the full task metrics
     if addFullTaskMetrics:
         if testingTimeout is not None and testingTimeout > enumerationTimeout:
-            enumerationTimeout = testingTime
+            enumerationTimeout = testingTimeout
         if result.recognitionModel is not None:
             _enumerator = lambda *args, **kw: result.recognitionModel.enumerateFrontiers(*args, **kw)
         else: _enumerator = lambda *args, **kw: multicoreEnumeration(result.grammars[-1], *args, **kw)
