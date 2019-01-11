@@ -318,6 +318,7 @@ def plotTSNE(
 				for i, task in enumerate(recognitionTaskMetrics):
 					if 'taskImages' not in recognitionTaskMetrics[task] and domain == 'tower': recognitionTaskMetrics[task]['taskImages'] = task.getImage(pretty=True) # BUG: this shouldn't be necessaryd
 					if 'taskImages' not in recognitionTaskMetrics[task] and domain == 'rational': recognitionTaskMetrics[task]['taskImages'] = task.features
+					if 'taskImages' not in recognitionTaskMetrics[task] and domain == 'logo': recognitionTaskMetrics[task]['taskImages'] = task.highresolution
 					im = np.array(recognitionTaskMetrics[task]['taskImages'])
 					if domain == 'logo':
 						im = makeLogoImage(im)
