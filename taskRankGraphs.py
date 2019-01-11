@@ -259,6 +259,7 @@ def makeTowerImage(im):
 	im = np.dstack([im, alpha])
 	return im
 
+
 def makeRationalImage(im):
 	im = np.reshape(np.array(im),(64, 64))
 	# Make black and white.
@@ -273,13 +274,25 @@ def makeRationalImage(im):
 	im = np.dstack([im, im, im, alpha])
 	return im
 
+def printTaskExamples(taskType, task):
+	print(task.name)
+	for example in task.examples:
+		if taskType == 'text':
+			print("%s -> %s" % ("".join(example[0][0]), "".join(example[1])))
+		if taskType == 'list':
+			print("%s -> %s" % (str(example[0][0]), str(example[1])))
+		else:
+			print(example)
+	print('\n')
+
 def plotTSNE(
 	resultPaths,
 	experimentNames,
 	metricsToCluster,
 	tsneLearningRate,
 	labelWithImages,
-	export=None):
+	export=None,
+	printExamples=None):
 	"""Plots TSNE clusters of the given metrics. Requires Sklearn."""
 
 	from sklearn.manifold import TSNE
@@ -301,10 +314,15 @@ def plotTSNE(
 
 			print(len(recognitionTaskMetrics))
 
-			for task in recognitionTaskMetrics:
-				if metricToCluster in recognitionTaskMetrics[task] and recognitionTaskMetrics[task][metricToCluster] is not None:
-					taskNames.append(task.name)  
-					taskMetrics.append(recognitionTaskMetrics[task][metricToCluster])
+			for task in sorted(recognitionTaskMetrics.keys(), key=lambda task : task.name):
+				if metricToCluster in recognitionTaskMetrics[task]:
+					if printExamples:
+						printTaskExamples(printExamples, task)
+
+					if recognitionTaskMetrics[task][metricToCluster] is not None:
+						taskNames.append(task.name)  
+						taskMetrics.append(recognitionTaskMetrics[task][metricToCluster])
+
 			taskNames = np.array(taskNames)
 			taskMetrics = np.array(taskMetrics)
 			print(taskNames.shape, taskMetrics.shape)
@@ -354,6 +372,7 @@ if __name__ == "__main__":
 	parser.add_argument("--metricsToCluster", nargs='+', type=str, default=None)
 	parser.add_argument("--tsneLearningRate", type=float, default=250.0)
 	parser.add_argument("--labelWithImages", type=bool, default=None)
+	parser.add_argument('--printExamples', type=str, default=None)
 	parser.add_argument("--export","-e",
 						type=str, default='data')
 
@@ -379,4 +398,5 @@ if __name__ == "__main__":
 				 arguments.metricsToCluster,
 				 arguments.tsneLearningRate,
 				 arguments.labelWithImages,
-				 arguments.export)
+				 arguments.export,
+				 arguments.printExamples)

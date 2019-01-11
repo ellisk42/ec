@@ -4,28 +4,23 @@
 # Note: clustering requires a container with sklearn installed.
 
 module add openmind/singularity
-checkpoint0='experimentOutputs/list_aic=1.0_arity=3_BO=True_CO=True_ET=90_HR=0.5_it=1_MF=5_baseline=False_pc=30.0_RT=7200_RW=False_storeTask=True_L=1.0_batch=10_taskReranker=unsolvedRandomEntropy_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor_graph=True.pickle'
-checkpoint1='experimentOutputs/list_aic=1.0_arity=3_BO=True_CO=True_ET=90_HR=0.5_it=2_MF=5_baseline=False_pc=30.0_RT=7200_RW=False_storeTask=True_L=1.0_batch=10_taskReranker=unsolvedRandomEntropy_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor_graph=True.pickle'
-checkpoint2='experimentOutputs/list_aic=1.0_arity=3_BO=True_CO=True_ET=90_HR=0.5_it=3_MF=5_baseline=False_pc=30.0_RT=7200_RW=False_storeTask=True_L=1.0_batch=10_taskReranker=unsolvedRandomEntropy_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor_graph=True.pickle'
-checkpoint3='experimentOutputs/list_aic=1.0_arity=3_BO=True_CO=True_ET=90_HR=0.5_it=4_MF=5_baseline=False_pc=30.0_RT=7200_RW=False_storeTask=True_L=1.0_batch=10_taskReranker=unsolvedRandomEntropy_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor_graph=True.pickle'
-checkpoint4='experimentOutputs/list_aic=1.0_arity=3_BO=True_CO=True_ET=90_HR=0.5_it=5_MF=5_baseline=False_pc=30.0_RT=7200_RW=False_storeTask=True_L=1.0_batch=10_taskReranker=unsolvedRandomEntropy_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor_graph=True.pickle'
-checkpoint5='experimentOutputs/list_aic=1.0_arity=3_BO=True_CO=True_ET=90_HR=0.5_it=6_MF=5_baseline=False_pc=30.0_RT=7200_RW=False_storeTask=True_L=1.0_batch=10_taskReranker=unsolvedRandomEntropy_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor_graph=True.pickle'
-checkpoint6='experimentOutputs/list_aic=1.0_arity=3_BO=True_CO=True_ET=90_HR=0.5_it=7_MF=5_baseline=False_pc=30.0_RT=7200_RW=False_storeTask=True_L=1.0_batch=10_taskReranker=unsolvedRandomEntropy_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor_graph=True.pickle'
-checkpoint7='experimentOutputs/list_aic=1.0_arity=3_BO=True_CO=True_ET=90_HR=0.5_it=8_MF=5_baseline=False_pc=30.0_RT=7200_RW=False_storeTask=True_L=1.0_batch=10_taskReranker=unsolvedRandomEntropy_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor_graph=True.pickle'
-checkpoint8='experimentOutputs/list_aic=1.0_arity=3_BO=True_CO=True_ET=90_HR=0.5_it=9_MF=5_baseline=False_pc=30.0_RT=7200_RW=False_storeTask=True_L=1.0_batch=10_taskReranker=unsolvedRandomEntropy_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor_graph=True.pickle'
-checkpoint9='experimentOutputs/list_aic=1.0_arity=3_BO=True_CO=True_ET=90_HR=0.5_it=10_MF=5_baseline=False_pc=30.0_RT=7200_RW=False_storeTask=True_L=1.0_batch=10_taskReranker=unsolvedRandomEntropy_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor_graph=True.pickle'
-checkpoint10='experimentOutputs/list_aic=1.0_arity=3_BO=True_CO=True_ET=90_HR=0.5_it=11_MF=5_baseline=False_pc=30.0_RT=7200_RW=False_storeTask=True_L=1.0_batch=10_taskReranker=unsolvedRandomEntropy_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor_graph=True.pickle'
-checkpoint11='experimentOutputs/list_aic=1.0_arity=3_BO=True_CO=True_ET=90_HR=0.5_it=12_MF=5_baseline=False_pc=30.0_RT=7200_RW=False_storeTask=True_L=1.0_batch=10_taskReranker=unsolvedRandomEntropy_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor_graph=True.pickle'
-checkpoint12='experimentOutputs/list_aic=1.0_arity=3_BO=True_CO=True_ET=90_HR=0.5_it=13_MF=5_baseline=False_pc=30.0_RT=7200_RW=False_storeTask=True_L=1.0_batch=10_taskReranker=unsolvedRandomEntropy_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor_graph=True.pickle'
-checkpoint13='experimentOutputs/list_aic=1.0_arity=3_BO=True_CO=True_ET=90_HR=0.5_it=14_MF=5_baseline=False_pc=30.0_RT=7200_RW=False_storeTask=True_L=1.0_batch=10_taskReranker=unsolvedRandomEntropy_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor_graph=True.pickle'
-checkpoint14='experimentOutputs/list_aic=1.0_arity=3_BO=True_CO=True_ET=90_HR=0.5_it=15_MF=5_baseline=False_pc=30.0_RT=7200_RW=False_storeTask=True_L=1.0_batch=10_taskReranker=unsolvedRandomEntropy_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor_graph=True.pickle'
-checkpoint15='experimentOutputs/list_aic=1.0_arity=3_BO=True_CO=True_ET=90_HR=0.5_it=16_MF=5_baseline=False_pc=30.0_RT=7200_RW=False_storeTask=True_L=1.0_batch=10_taskReranker=unsolvedRandomEntropy_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor_graph=True.pickle'
-checkpoint16='experimentOutputs/list_aic=1.0_arity=3_BO=True_CO=True_ET=90_HR=0.5_it=17_MF=5_baseline=False_pc=30.0_RT=7200_RW=False_storeTask=True_L=1.0_batch=10_taskReranker=unsolvedRandomEntropy_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor_graph=True.pickle'
-checkpoint17='experimentOutputs/list_aic=1.0_arity=3_BO=True_CO=True_ET=90_HR=0.5_it=18_MF=5_baseline=False_pc=30.0_RT=7200_RW=False_storeTask=True_L=1.0_batch=10_taskReranker=unsolvedRandomEntropy_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor_graph=True.pickle'
-checkpoint18='experimentOutputs/list_aic=1.0_arity=3_BO=True_CO=True_ET=90_HR=0.5_it=19_MF=5_baseline=False_pc=30.0_RT=7200_RW=False_storeTask=True_L=1.0_batch=10_taskReranker=unsolvedRandomEntropy_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor_graph=True.pickle'
-srun --job-name=graphsHeldout$1 --output=data/batch_11_29_2018/list_unsolved_rand_entropy_10 --ntasks=1 --mem-per-cpu=5000 --cpus-per-task 1 --time=5:00 --qos=tenenbaum \
-  singularity exec -B /om2  sklearn-container.img \
-  python taskRankGraphs.py --checkpoints  $checkpoint0 $checkpoint1 $checkpoint2 $checkpoint3 $checkpoint4 $checkpoint5 $checkpoint6 $checkpoint7 $checkpoint8 $checkpoint9 $checkpoint10 $checkpoint11 $checkpoint12 $checkpoint13 $checkpoint14 $checkpoint15 $checkpoint16 $checkpoint17 $checkpoint18   \
-  --experimentNames  $checkpoint0 $checkpoint1 $checkpoint2 $checkpoint3 $checkpoint4 $checkpoint5 $checkpoint6 $checkpoint7 $checkpoint8 $checkpoint9 $checkpoint10 $checkpoint11 $checkpoint12 $checkpoint13 $checkpoint14 $checkpoint15 $checkpoint16 $checkpoint17 $checkpoint18 $checkpoint19  \
-  --exportTaskTimes True --export data/batch_11_29_2018/  \
-  &
+
+checkpoint1='/om2/user/zyzzyva/ec/data/expertiseFigures/addLogProductions/logo_batch_40_60m/logo_aic=1.0_arity=3_BO=True_CO=True_ET=3600_HR=0.5_it=1_MF=5_baseline=False_pc=30.0_RT=1800_RR=False_RW=False_storeTask=True_L=1.5_batch=40_taskReranker=randomShuffle_K=2_topkNotMAP=False_rec=True_feat=LogoFeatureCNN_graph=True.pickle'
+checkpoint2='/om2/user/zyzzyva/ec/data/expertiseFigures/addLogProductions/logo_batch_40_60m/logo_aic=1.0_arity=3_BO=True_CO=True_ET=3600_HR=0.5_it=2_MF=5_baseline=False_pc=30.0_RT=1800_RR=False_RW=False_storeTask=True_L=1.5_batch=40_taskReranker=randomShuffle_K=2_topkNotMAP=False_rec=True_feat=LogoFeatureCNN_graph=True.pickle'
+checkpoint5='/om2/user/zyzzyva/ec/data/expertiseFigures/addLogProductions/logo_batch_40_60m/logo_aic=1.0_arity=3_BO=True_CO=True_ET=3600_HR=0.5_it=5_MF=5_baseline=False_pc=30.0_RT=1800_RR=False_RW=False_storeTask=True_L=1.5_batch=40_taskReranker=randomShuffle_K=2_topkNotMAP=False_rec=True_feat=LogoFeatureCNN_graph=True.pickle'
+checkpoint12='/om2/user/zyzzyva/ec/data/expertiseFigures/addLogProductions/logo_batch_40_60m/logo_aic=1.0_arity=3_BO=True_CO=True_ET=3600_HR=0.5_it=12_MF=5_baseline=False_pc=30.0_RT=1800_RR=False_RW=False_storeTask=True_L=1.5_batch=40_taskReranker=randomShuffle_K=2_topkNotMAP=False_rec=True_feat=LogoFeatureCNN_graph=True.pickle'
+
+singularity exec -B /om2  sklearn-container.img \
+  python taskRankGraphs.py --checkpoints   $checkpoint1 $checkpoint2 $checkpoint5  $checkpoint12 \
+ 	--metricsToCluster contextualLogProductions --export data/expertiseFigures/logo_batch_40_60m/ --tsneLearningRate 150 --labelWithImages 1\
+
+singularity exec -B /om2  sklearn-container.img \
+  python taskRankGraphs.py --checkpoints   $checkpoint2 $checkpoint5  $checkpoint12 \
+ 	--metricsToCluster heldoutTaskLogProductions --export data/expertiseFigures/logo_batch_40_60m/ --tsneLearningRate 150  --labelWithImages 1\
+
+
+
+# singularity exec -B /om2  sklearn-container.img \
+#   python taskRankGraphs.py --checkpoints  $checkpoint13 \
+#  	--metricsToCluster heldoutTaskLogProductions --export data/expertiseFigures/text_random_shuffle_10_720s/ --tsneLearningRate 250 \
+
