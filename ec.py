@@ -1047,8 +1047,10 @@ def addTaskMetrics(result, path):
         images = {t: t.highresolution for t in tasks}
         updateTaskSummaryMetrics(result.recognitionTaskMetrics, images, 'taskImages')
 
+    updateTaskSummaryMetrics(result.recognitionTaskMetrics, result.recognitionModel.featureExtractorFeatures(tasks), 'featureExtractorFeatures')
     updateTaskSummaryMetrics(result.recognitionTaskMetrics, result.recognitionModel.taskGrammarLogProductions(tasks), 'contextualLogProductions')
     updateTaskSummaryMetrics(result.recognitionTaskMetrics, result.recognitionModel.taskHiddenStates(tasks), 'hiddenState')
+
     g = result.grammars[-2] # the final entry in result.grammars is a grammar that we have not used yet
     updateTaskSummaryMetrics(result.recognitionTaskMetrics, {f.task: f.expectedProductionUses(g)
                                                              for f in result.taskSolutions.values()

@@ -452,7 +452,7 @@ class RecognitionModel(nn.Module):
             self._MLP.load_state_dict(previousRecognitionModel._MLP.state_dict())
             self.featureExtractor.load_state_dict(previousRecognitionModel.featureExtractor.state_dict())
 
-    def taskEmbeddings(self, tasks):
+    def featureExtractorFeatures(self, tasks):
         return {task: self.featureExtractor.featuresOfTask(task).data.numpy()
                 for task in tasks}
 

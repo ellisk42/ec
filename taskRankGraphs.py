@@ -308,7 +308,7 @@ def plotTSNE(
 
 		for k, metricToCluster in enumerate(metricsToCluster):
 			print("Clustering metric: " + metricToCluster)
-			tsne = TSNE(random_state=0, learning_rate=tsneLearningRate)
+			tsne = TSNE(perplexity=10, random_state=0, learning_rate=tsneLearningRate, n_iter=2000)
 			taskNames, taskMetrics = [], []
 
 			print(len(recognitionTaskMetrics))
