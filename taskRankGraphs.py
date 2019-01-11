@@ -259,7 +259,6 @@ def makeTowerImage(im):
 	im = np.dstack([im, alpha])
 	return im
 
-
 def makeRationalImage(im):
 	im = np.reshape(np.array(im),(64, 64))
 	# Make black and white.
@@ -333,7 +332,7 @@ def plotTSNE(
 
 			if labelWithImages:
 				images = []
-				for i, task in enumerate(recognitionTaskMetrics):
+				for i, task in enumerate(sorted(recognitionTaskMetrics.keys(), key=lambda task : task.name)): # Enumerate in same order as sorted tasks.
 					if 'taskImages' not in recognitionTaskMetrics[task] and domain == 'tower': recognitionTaskMetrics[task]['taskImages'] = task.getImage(pretty=True) # BUG: this shouldn't be necessaryd
 					if 'taskImages' not in recognitionTaskMetrics[task] and domain == 'rational': recognitionTaskMetrics[task]['taskImages'] = task.features
 					if 'taskImages' not in recognitionTaskMetrics[task] and domain == 'logo': recognitionTaskMetrics[task]['taskImages'] = task.highresolution
