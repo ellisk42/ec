@@ -994,6 +994,9 @@ def commandlineArguments(_=None,
                         help="Only to be used in conjunction with --resume. Loads checkpoint, solves both testing and training tasks, stores frontiers, solve times, and task metrics, and then dies.",
                         default=False,
                         action="store_true")
+    parser.add_argument("--countParameters",
+                        help="Load a checkpoint then report how many parameters are in the recognition model.",
+                        default=None, type=str)
     parser.set_defaults(useRecognitionModel=useRecognitionModel,
                         featureExtractor=featureExtractor,
                         maximumFrontier=maximumFrontier,
@@ -1025,6 +1028,24 @@ def commandlineArguments(_=None,
 
     if v["useRecognitionModel"] and v["recognitionTimeout"] is None:
         v["recognitionTimeout"] = v["enumerationTimeout"]
+
+    if v["countParameters"]:
+        with open(v["countParameters"], "rb") as handle:
+            result = dill.load(handle)
+        eprint("The recognition model has",
+               sum(p.numel() for p in result.recognitionModel.parameters() if p.requires_grad),
+               "trainable parameters and",
+               sum(p.numel() for p in result.recognitionModel.parameters() ),
+               "total parameters.\n",
+               "The feature extractor accounts for",
+               sum(p.numel() for p in result.recognitionModel.featureExtractor.parameters() ),
+               "of those parameters.\n",
+               "The grammar builder accounts for",
+               sum(p.numel() for p in result.recognitionModel.grammarBuilder.parameters() ),
+               "of those parameters.\n")
+        sys.exit(0)
+    del v["countParameters"]
+        
         
     return v
 

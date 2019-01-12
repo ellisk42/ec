@@ -1035,7 +1035,39 @@ class ContextualGrammar:
             returnValue = Application(returnValue, x)
             
         return context, returnValue
-        
+
+    def featureVector(self, _=None, requests=None, onlyInventions=False):
+        """
+        Returns the probabilities licensed by the type system.
+        This is like the grammar productions, but with irrelevant junk removed.
+        Its intended use case is for clustering; it should be strictly better than the raw transition matrix.
+        """
+        if requests is None:
+            if self.continuationType: requests = {self.continuationType}
+            elif any( 'REAL' == str(p) for p in self.primitives ): requests = set()
+            elif any( 'STRING' == str(p) for p in self.primitives ): requests = set(tlist(tcharacter))
+            else: requests = set()
+        requests = {r.returns() for r in requests}
+        features = []
+        for l,t,p in sorted(self.noParent.productions,
+                            key=lambda z: str(z[2])):
+            if onlyInventions and not p.isInvented: continue
+            if any( canUnify(r, t.returns()) for r in requests ) or len(requests) == 0:
+                features.append(l)
+        for parent in sorted(self.primitives, key=str):
+            if onlyInventions and not parent.isInvented: continue
+            if parent not in self.library: continue
+            argumentTypes = parent.infer().functionArguments()
+            for j,g in enumerate(self.library[parent]):
+                argumentType = argumentTypes[j]
+                for l,t,p in sorted(g.productions,
+                                    key=lambda z: str(z[2])):
+                    if onlyInventions and not p.isInvented: continue
+                    if canUnify(argumentType.returns(), t.returns()):
+                        features.append(l)
+        import numpy as np
+        return np.array(features)            
+                
         
 
 

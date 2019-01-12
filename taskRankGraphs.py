@@ -273,6 +273,15 @@ def makeRationalImage(im):
 	im = np.dstack([im, im, im, alpha])
 	return im
 
+def frontierMetric(frontiers):
+	primitives = {p
+		      for f in frontiers
+		      for e in f.entries
+		      for p in [e.program]
+		      if p.isInvented}
+	g = Grammar.uniform(primitives)
+	return [f.expectedProductionUses(g) for f in frontiers]
+
 def printTaskExamples(taskType, task):
 	print(task.name)
 	for example in task.examples:
@@ -321,7 +330,9 @@ def plotTSNE(
 					if recognitionTaskMetrics[task][metricToCluster] is not None:
 						taskNames.append(task.name)  
 						taskMetrics.append(recognitionTaskMetrics[task][metricToCluster])
-
+			if metricToCluster == 'frontier':
+				taskMetrics = [f.expectedProductionUses(result.grammars[-1])
+					       for f in taskMetrics] 
 			taskNames = np.array(taskNames)
 			taskMetrics = np.array(taskMetrics)
 			print(taskNames.shape, taskMetrics.shape)

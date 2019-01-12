@@ -470,6 +470,8 @@ class RecognitionModel(nn.Module):
     def grammarLogProductionsOfTask(self, task):
         """Returns the grammar logits from non-contextual models."""
 
+        return torch.tensor(self.grammarOfTask(task).untorch().featureVector())
+
         features = self.featureExtractor.featuresOfTask(task)
         if features is None: return None
 
