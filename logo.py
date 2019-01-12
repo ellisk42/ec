@@ -21,7 +21,7 @@ import torch.nn.functional as F
 from sys import exit
 import pickle
 
-from recognition import variable
+from recognition import variable, maybe_cuda
 
 global prefix_dreams
 
