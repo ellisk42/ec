@@ -466,13 +466,13 @@ def ecIterator(grammar, tasks,
 
             else:
                 eprint("Evaluating using multicore enumeration without a recognition model.")
-                testingFrontiers, times, allTimes = multicoreEnumeration(grammar, testingTasks, likelihoodModel,
-                                                               solver=solver,
-                                                               maximumFrontier=maximumFrontier,
-                                                               enumerationTimeout=testingTimeout,
-                                                               CPUs=CPUs,
-                                                               evaluationTimeout=evaluationTimeout,
-                                                               testing=True)
+                testingFrontiers, times, testingTimes = multicoreEnumeration(grammar, testingTasks, likelihoodModel,
+                                                                             solver=solver,
+                                                                             maximumFrontier=maximumFrontier,
+                                                                             enumerationTimeout=testingTimeout,
+                                                                             CPUs=CPUs,
+                                                                             evaluationTimeout=evaluationTimeout,
+                                                                             testing=True)
             print("\n".join(f.summarize() for f in testingFrontiers))
             eprint("Hits %d/%d testing tasks" % (len(times), len(testingTasks)))
 
@@ -482,6 +482,7 @@ def ecIterator(grammar, tasks,
             updateTaskSummaryMetrics(result.recognitionTaskMetrics,
                                      {f.task: f for f in testingFrontiers if len(f) > 0 },
                                      'frontier')
+            updateTaskSummaryMetrics(result.recognitionTaskMetrics, testingTimes, 'heldoutTestingTimes')
 
             
         # If we have to also enumerate Helmholtz frontiers,
