@@ -119,6 +119,7 @@ class LogoFeatureCNN(nn.Module):
         # insert channel and batch
         v = torch.unsqueeze(v, 0)
         v = torch.unsqueeze(v, 0)
+        v = maybe_cuda(v, next(self.parameters()).is_cuda)
         window = int(self.inputImageDimension/self.resizedDimension)
         v = F.avg_pool2d(v, (window,window))
         v = self.encoder(v)
