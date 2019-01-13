@@ -217,3 +217,6 @@ python launch.py -g -z "g3.16xlarge" "regex_batch_reuserec50HR" "python regexes.
 
 Full model with batching, 0.5 Helmholtz ratio, long recognition model train time, bounded rank of 32: [RUNNING]
 python launch.py -g -z "g3.16xlarge" "regex_batch_40_1800s_r32" "python regexes.py -t 1800 --testingTimeout 1800 --tasks new --maxTasks 256 --ll_cutoff bigram --split 0.5 -k 10 --contextual --biasOptimal -r .5 --taskReranker randomShuffle --taskBatchSize 40 --recognitionTimeout 1800 --reuseRecognition --matrixRank 32"
+
+Baseline without recognition model:
+python launch.py -k -z m4.16xlarge --tail regex_no_recognition_batch_40_1800 "python regexes.py -t 1800 --testingTimeout 1800 --tasks new --maxTasks 256 --ll_cutoff bigram --split 0.5 -k 10 -g --taskReranker randomShuffle --taskBatchSize 40 -i 20"
