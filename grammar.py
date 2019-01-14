@@ -1045,7 +1045,7 @@ class ContextualGrammar:
         if requests is None:
             if self.continuationType: requests = {self.continuationType}
             elif any( 'REAL' == str(p) for p in self.primitives ): requests = set()
-            elif any( 'STRING' == str(p) for p in self.primitives ): requests = set(tlist(tcharacter))
+            elif any( 'STRING' == str(p) for p in self.primitives ): requests = {tlist(tcharacter)}
             else: requests = set()
         requests = {r.returns() for r in requests}
         features = []
