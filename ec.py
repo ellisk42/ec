@@ -1084,7 +1084,8 @@ def addTaskMetrics(result, path):
                                                              if len(f) > 0},
                              'expectedProductionUses')
     updateTaskSummaryMetrics(result.recognitionTaskMetrics,
-                             {f.task: result.recognitionModel.grammarOfTask(task).untorch().expectedUsesMonteCarlo(task.request)},
+                             {task: result.recognitionModel.grammarOfTask(task).untorch().expectedUsesMonteCarlo(task.request)
+                              for task in tasks },
                              'expectedProductionUsesMonteCarlo')
     try:
         updateTaskSummaryMetrics(result.recognitionTaskMetrics,

@@ -1043,13 +1043,14 @@ class ContextualGrammar:
         primitives = list(sorted(self.primitives, key=str))
         primitive2index = {primitive: i
                            for i, primitive in enumerate(primitives) }
-        for _ in range(10000):
-            p = self.sample(request, maxAttempts=0)
-            if p is None: continue
-            n += 1
-            for _, child in p.walk():
-                if not child.isPrimitive or not child.isInvented: continue
-                u[primitive2index[child]] += 1.0
+        with timing("calculated expected uses using Monte Carlo simulation"):
+            for _ in range(1000):
+                p = self.sample(request, maxAttempts=0)
+                if p is None: continue
+                n += 1
+                for _, child in p.walk():
+                    if not child.isInvented: continue
+                    u[primitive2index[child]] += 1.0
         return np.array(u)/n            
 
     def featureVector(self, _=None, requests=None, onlyInventions=False):
