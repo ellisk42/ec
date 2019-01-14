@@ -462,7 +462,10 @@ def ecIterator(grammar, tasks,
                     updateTaskSummaryMetrics(result.recognitionTaskMetrics, testingTimes, 'heldoutTestingTimes')
                     updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskGrammarLogProductions(testingTasks), 'heldoutTaskLogProductions')
                     updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskGrammarEntropies(testingTasks), 'heldoutTaskGrammarEntropies')
-
+                    if contextual:
+                        updateTaskSummaryMetrics(result.recognitionTaskMetrics,
+                                                 recognizer.taskGrammarStartProductions(testingTasks),
+                                                 'heldoutStartProductions')
 
             else:
                 eprint("Evaluating using multicore enumeration without a recognition model.")
@@ -566,6 +569,10 @@ def ecIterator(grammar, tasks,
                     updateTaskSummaryMetrics(result.recognitionTaskMetrics, allRecognitionTimes, 'recognitionBestTimes')
                     updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskGrammarLogProductions(wakingTaskBatch), 'taskLogProductions')
                     updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskGrammarEntropies(wakingTaskBatch), 'taskGrammarEntropies')
+                    if contextual:
+                        updateTaskSummaryMetrics(result.recognitionTaskMetrics,
+                                                 recognizer.taskGrammarStartProductions(tasks),
+                                                 'startProductions')
 
                 tasksHitBottomUp = {f.task for f in bottomupFrontiers if not f.empty}
                 #result.timesAtEachWake.append(times)
@@ -1076,6 +1083,11 @@ def addTaskMetrics(result, path):
                                                              for f in result.taskSolutions.values()
                                                              if len(f) > 0},
                              'expectedProductionUses')
+    try:
+        updateTaskSummaryMetrics(result.recognitionTaskMetrics,
+                                 recognizer.taskGrammarStartProductions(tasks),
+                                 'startProductions')
+    except: pass # can fail if we do not have a contextual model
 
     #updateTaskSummaryMetrics(result.recognitionTaskMetrics, result.recognitionModel.taskGrammarLogProductions(tasks), 'task_no_parent_log_productions')
     #updateTaskSummaryMetrics(result.recognitionTaskMetrics, result.recognitionModel.taskGrammarEntropies(tasks), 'taskGrammarEntropies')

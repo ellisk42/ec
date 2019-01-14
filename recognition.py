@@ -526,6 +526,11 @@ class RecognitionModel(nn.Module):
         return {task: self.grammarLogProductionsOfTask(task).data.cpu().numpy()
                 for task in tasks}
 
+    def taskGrammarStartProductions(self, tasks):
+        return {task: np.array([l for l,_1,_2 in g.productions ])
+                for task in tasks
+                for g in [self.grammarOfTask(task).untorch().noParent] }
+
     def taskHiddenStates(self, tasks):
         return {task: self._MLP(self.featureExtractor.featuresOfTask(task)).view(-1).data.cpu().numpy()
                 for task in tasks}
