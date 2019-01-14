@@ -1036,6 +1036,22 @@ class ContextualGrammar:
             
         return context, returnValue
 
+    def expectedUsesMonteCarlo(self, request):
+        import numpy as np
+        n = 0
+        u = [0.]*len(self.primitives)
+        primitives = list(sorted(self.primitives, key=str))
+        primitive2index = {primitive: i
+                           for i, primitive in enumerate(primitives) }
+        for _ in range(10000):
+            p = self.sample(request, maxAttempts=0)
+            if p is None: continue
+            n += 1
+            for _, child in p.walk():
+                if child.isIndex: continue
+                u[primitive2index[child]] += 1.0
+        return np.array(u)/n            
+
     def featureVector(self, _=None, requests=None, onlyInventions=False):
         """
         Returns the probabilities licensed by the type system.
