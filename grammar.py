@@ -1048,7 +1048,7 @@ class ContextualGrammar:
             if p is None: continue
             n += 1
             for _, child in p.walk():
-                if child.isIndex: continue
+                if not child.isPrimitive or not child.isInvented: continue
                 u[primitive2index[child]] += 1.0
         return np.array(u)/n            
 
