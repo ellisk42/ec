@@ -298,6 +298,7 @@ def plotTSNE(
 	experimentNames,
 	metricsToCluster,
 	tsneLearningRate,
+	tsnePerplexity,
 	labelWithImages,
 	export=None,
 	printExamples=None):
@@ -317,7 +318,7 @@ def plotTSNE(
 
 		for k, metricToCluster in enumerate(metricsToCluster):
 			print("Clustering metric: " + metricToCluster)
-			tsne = TSNE(random_state=0, learning_rate=tsneLearningRate)
+			tsne = TSNE(random_state=0, perplexity=tsnePerplexity, learning_rate=tsneLearningRate, n_iter=10000)
 			taskNames, taskMetrics = [], []
 
 			print(len(recognitionTaskMetrics))
@@ -381,6 +382,7 @@ if __name__ == "__main__":
 	parser.add_argument("--outlierThreshold", type=float, default=None)
 	parser.add_argument("--metricsToCluster", nargs='+', type=str, default=None)
 	parser.add_argument("--tsneLearningRate", type=float, default=250.0)
+	parser.add_argument("--tsnePerplexity", type=float, default=30.0)
 	parser.add_argument("--labelWithImages", type=bool, default=None)
 	parser.add_argument('--printExamples', type=str, default=None)
 	parser.add_argument("--export","-e",
@@ -407,6 +409,7 @@ if __name__ == "__main__":
 				 arguments.experimentNames,
 				 arguments.metricsToCluster,
 				 arguments.tsneLearningRate,
+				 arguments.tsnePerplexity,
 				 arguments.labelWithImages,
 				 arguments.export,
 				 arguments.printExamples)
