@@ -1085,7 +1085,7 @@ def addTaskMetrics(result, path):
                              'expectedProductionUses')
     try:
         updateTaskSummaryMetrics(result.recognitionTaskMetrics,
-                                 recognizer.taskGrammarStartProductions(tasks),
+                                 result.recognitionModel.taskGrammarStartProductions(tasks),
                                  'startProductions')
     except: pass # can fail if we do not have a contextual model
 
