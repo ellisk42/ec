@@ -90,7 +90,7 @@ class LogoFeatureCNN(nn.Module):
             )
 
         self.inputImageDimension = 128
-        self.resizedDimension = 64
+        self.resizedDimension = 128
         assert self.inputImageDimension % self.resizedDimension == 0
 
         # channels for hidden
@@ -101,11 +101,13 @@ class LogoFeatureCNN(nn.Module):
             conv_block(1, hid_dim),
             conv_block(hid_dim, hid_dim),
             conv_block(hid_dim, hid_dim),
+            conv_block(hid_dim, hid_dim),
+            conv_block(hid_dim, hid_dim),
             conv_block(hid_dim, z_dim),
             Flatten()
         )
 
-        self.outputDimensionality = 1024
+        self.outputDimensionality = 256
 
         
 
@@ -119,7 +121,7 @@ class LogoFeatureCNN(nn.Module):
         # insert channel and batch
         v = torch.unsqueeze(v, 0)
         v = torch.unsqueeze(v, 0)
-        v = maybe_cuda(v, next(self.parameters()).is_cuda)
+        v = maybe_cuda(v, next(self.parameters()).is_cuda)/256.
         window = int(self.inputImageDimension/self.resizedDimension)
         v = F.avg_pool2d(v, (window,window))
         v = self.encoder(v)

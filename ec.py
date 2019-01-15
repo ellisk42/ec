@@ -171,7 +171,8 @@ def ecIterator(grammar, tasks,
                onlyBaselines=False,
                outputPrefix=None,
                storeTaskMetrics=False,
-               rewriteTaskMetrics=True):
+               rewriteTaskMetrics=True,
+               auxiliaryLoss=False):
     if frontierSize is None and enumerationTimeout is None:
         eprint(
             "Please specify a frontier size and/or an enumeration timeout:",
@@ -245,12 +246,13 @@ def ecIterator(grammar, tasks,
             "compressor"} and v is not None}
     if not useRecognitionModel:
         for k in {"helmholtzRatio", "recognitionTimeout", "biasOptimal",
-                  "contextual", "matrixRank", "reuseRecognition"}:
+                  "contextual", "matrixRank", "reuseRecognition", "auxiliaryLoss"}:
             if k in parameters: del parameters[k]
     if useRecognitionModel and not contextual:
         if "matrixRank" in parameters:
             del parameters["matrixRank"]
-
+    if not auxiliaryLoss: del parameters['auxiliaryLoss']
+    
     # Uses `parameters` to construct the checkpoint path
     def checkpointPath(iteration, extra=""):
         parameters["iterations"] = iteration
@@ -553,7 +555,8 @@ def ecIterator(grammar, tasks,
                                  CPUs=CPUs,
                                  evaluationTimeout=evaluationTimeout,
                                  timeout=recognitionTimeout,
-                                 helmholtzRatio=thisRatio)
+                                 helmholtzRatio=thisRatio,
+                                 auxLoss=auxiliaryLoss)
                 
                 result.recognitionModel = recognizer
 
@@ -998,6 +1001,10 @@ def commandlineArguments(_=None,
         help="Creates a checkpoint with task metrics and no recognition model for graphing.",
         default=None,
         type=str)
+    parser.add_argument("--auxiliary",
+                        action="store_true", default=False,
+                        help="Add auxiliary classification loss to recognition network training",
+                        dest="auxiliaryLoss")
     parser.add_argument("--addFullTaskMetrics",
                         help="Only to be used in conjunction with --resume. Loads checkpoint, solves both testing and training tasks, stores frontiers, solve times, and task metrics, and then dies.",
                         default=False,
@@ -1083,10 +1090,11 @@ def addTaskMetrics(result, path):
                                                              for f in result.taskSolutions.values()
                                                              if len(f) > 0},
                              'expectedProductionUses')
-    updateTaskSummaryMetrics(result.recognitionTaskMetrics,
-                             {task: result.recognitionModel.grammarOfTask(task).untorch().expectedUsesMonteCarlo(task.request)
-                              for task in tasks },
-                             'expectedProductionUsesMonteCarlo')
+    if False:
+        updateTaskSummaryMetrics(result.recognitionTaskMetrics,
+                                 {task: result.recognitionModel.grammarOfTask(task).untorch().expectedUsesMonteCarlo(task.request)
+                                  for task in tasks },
+                                 'expectedProductionUsesMonteCarlo')
     try:
         updateTaskSummaryMetrics(result.recognitionTaskMetrics,
                                  result.recognitionModel.taskGrammarStartProductions(tasks),
