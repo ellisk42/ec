@@ -9,91 +9,38 @@ import sys
 from program import *
 from utilities import *
 
-rootdir = "./data/logo/"
-
-
-def fileToArray(fname):
-    r = png.Reader(filename=fname)
-    array = [[y for y in x[3::4]] for x in r.read()[2]]
-    flatten = [item for sublist in array for item in sublist]
-    return flatten
-
-
-def pretty_string(shape, size):
-    out = ""
-    nl = "\n"
-    out += "╭"
-    out += "─" * (size * 2)
-    out += "╮"
-    out += nl
-    for j in range(size):
-        out += "│"
-        for i in range(size):
-            if int(shape[j * size + (i % size)]) < 51:
-                out += "  "
-            elif int(shape[j * size + (i % size)]) < 102:
-                out += "░░"
-            elif int(shape[j * size + (i % size)]) < 153.6:
-                out += "▒▒"
-            elif int(shape[j * size + (i % size)]) < 204.8:
-                out += "▓▓"
-            else:
-                out += "██"
-        out += "│"
-        out += nl
-    out += "╰"
-    out += "─" * (size * 2)
-    out += "╯"
-    out += nl
-    return out
-
-
-def pretty_print(shape, size):
-    print((pretty_string(shape, size)))
-
-
-def allTasks():
-    return next(os.walk(rootdir))[1]
-
+def drawLogo(*programs,
+             timeout=None,
+             resolution=None,
+             pretty=False, smoothPretty=False,
+             filenames=[]):
+    message = {}
+    if pretty: message["pretty"] = pretty
+    if smoothPretty: message["smoothPretty"] = smoothPretty
+    if timeout: message["timeout"] = timeout
+    assert resolution is not None, "resolution not provided in drawLogo"
+    if isinstance(resolution, list):
+        assert len(resolution) == len(programs), "must provide a resolution for each program"
+    elif isinstance(resolution, int):
+        resolution = [resolution]*len(programs)
+    else: assert False
+    jobs = []
+    for p, size in zip(programs, resolution):
+        entry = {"program": str(p),
+                 "size": size}
+        if len(filenames) > 0:
+            entry["export"] = filenames[0]
+            filenames = filenames[1:]
+        jobs.append(entry)        
+    message["jobs"] = jobs
+    eprint(message)
+    response = jsonBinaryInvoke("./logoDrawString", message)
+    eprint(response)
+    if len(programs) == 1: return response[0]
+    return response
 
 def makeTasks(subfolders, proto):
-    problems = []
-
-    if subfolders == ['all']:
-        subfolders = allTasks()
-
-    def problem(n, examples, highresolution, needToTrain=False):
-        outputType = arrow(turtle, turtle)
-        task = Task(n,
-                    outputType,
-                    [([0], y) for _, y in examples])
-        task.mustTrain = needToTrain
-        task.proto = proto
-        task.specialTask = ("LOGO", {"proto": proto})
-        task.highresolution = highresolution
-        problems.append(task)
-
-    for subfolder in subfolders:
-        for _, subf, _ in os.walk(rootdir + subfolder):
-            for subfl in subf:
-                for _, _, files in os.walk(rootdir + subfolder + "/" + subfl):
-                    for f in files:
-                        if f.endswith("_l.png"):
-                            fullPath = rootdir + subfolder + "/" + subfl + '/' + f
-                            eprint(fullPath)
-                            img1 = fileToArray(fullPath)
-                            highresolution = fileToArray(fullPath.replace("_l.png", "_h.png"))
-                            try:
-                                problem(subfolder+"/"+subfl,
-                                        [([], img1)],
-                                        highresolution,
-                                        needToTrain=True)
-                            except FileNotFoundError:
-                                problem(subfolder+"_"+f,
-                                        [([], img1)],
-                                        highresolution,
-                                        needToTrain=True)
-    return manualLogoTasks() + problems
+    return manualLogoTasks()
 
 def parseLogo(s):
         
@@ -128,8 +75,6 @@ def parseLogo(s):
     from sexpdata import loads, Symbol
     s = loads(s)
     def command(k, environment, continuation):
-        # if k == Symbol("pu"): return Application(_pu, continuation)
-        # if k == Symbol("pd"): return Application(_pd, continuation)
         assert isinstance(k,list)
         if k[0] == Symbol("move"):
             return Application(Application(Application(_move,
@@ -210,16 +155,10 @@ def manualLogoTask(name, expression, proto=False, needToTrain=False, supervise =
         
     except: eprint("WARNING: could not calculate likelihood of manual logo",p)
 
-    [output, highresolution] = \
-            [subprocess.check_output(['./logoDrawString',
-                                      '0',
-                                      "none",
-                                      str(resolution),
-                                      str(p)],
-                                     timeout=10).decode("utf8")
-             for resolution in [28,128]]
-    shape = list(map(int, output.split(',')))
-    highresolution = list(map(float, highresolution.split(',')))
+    [output, highresolution] = drawLogo(p, p, resolution=[28,128])
+            
+    shape = list(map(int, output))
+    highresolution = list(map(float, highresolution))
     t = Task(name, arrow(turtle,turtle),
              [(([0]), shape)])
     t.mustTrain = needToTrain
@@ -664,7 +603,6 @@ if __name__ == "__main__":
     import scipy.misc
     import numpy as np
     
-    allTasks()
     if len(sys.argv) > 1:
         tasks = makeTasks(sys.argv[1:],proto=False)
     else:

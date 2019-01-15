@@ -1,16 +1,11 @@
+open Core
+
 open LogoLib
 open LogoInterpreter
 open VGWrapper
 
 open Differentiation
 open Program
-
-let npp data =
-  for i = 0 to (Bigarray.Array1.dim data) - 2 do
-    print_int (data.{i}) ; print_char ',' ;
-  done ;
-  print_int (data.{((Bigarray.Array1.dim data) - 1)}) ;
-  print_newline ()
 
 let smooth_logo_wrapper t2t k s0 =
   let e = 1./.20. in
@@ -26,17 +21,16 @@ let smooth_logo_wrapper t2t k s0 =
         let y = y1 +. f*.dy in        
         (SEGMENT(x1,y1,x,y)) :: smooth_path (SEGMENT(x,y,x2,y2))
   in       
-  (p |> List.map smooth_path |> List.concat, s)
+  (p |> List.map  ~f:smooth_path |> List.concat, s)
 
 let _ =
   let open Yojson.Basic.Util in
   let open Yojson.Basic in
+  let open Utils in
+  let open Timeout in
   let j = Yojson.Basic.from_channel Pervasives.stdin in
-  let programs = member "programs" j in
-  let programs = to_list programs in
-  let programs = List.map to_string programs in
-  let programs = List.map parse_program programs in
-
+  let jobs = to_list (member "jobs" j) in
+  
   let pretty = try
       to_bool (member "pretty" j)
     with _ -> false
@@ -45,33 +39,40 @@ let _ =
       to_bool (member "smoothPretty" j)
     with _ -> false
   in
-  let export_size = try
-    with _ -> 0
+  let timeout = try
+      to_float (member "timeout" j)
+    with _ -> 0.01
   in
-  
 
-  let sizeFile = int_of_string (Sys.argv.(1))
-  and fname    = Sys.argv.(2)
-  and size     = int_of_string (Sys.argv.(3))
-  and str      = Sys.argv.(4) in
-  let smooth_pretty = try Sys.argv.(5) = "smooth_pretty" with _ -> false in
-  let pretty = smooth_pretty || try Sys.argv.(5) = "pretty" with _ -> false in
   let b0 = Bigarray.(Array1.create int8_unsigned c_layout (8*8)) in
   Bigarray.Array1.fill b0 0 ;
-  try
-    match parse_program str with
-      | Some(p) ->
+  let results = List.map jobs ~f:(fun j ->
+      let size = to_int (member "size" j) in
+      let export = try
+          Some(to_string (member "export" j))
+        with _ -> None
+      in
+      
+      let p = to_string (member "program" j) in
+      let p = if p.[0] = '"' then String.sub p 1 (String.length p - 2) else p in
+      let p = safe_get_some (Printf.sprintf "Could not parse %s\n" p) (parse_program p) in
+      match run_for_interval timeout (fun () ->
           let p = analyze_lazy_evaluation p in
           let turtle = run_lazy_analyzed_with_arguments p [] in
           let turtle = if smooth_pretty then smooth_logo_wrapper turtle else turtle in
-          let c = (eval_turtle turtle) in
-          let bx = canvas_to_1Darray c 8 in
-          if bx = b0 then ()
-          else begin
-            if sizeFile > 0 then begin
-              output_canvas_png ~pretty c sizeFile (fname^".png") ;
-            end ;
-            if size > 0 then npp (canvas_to_1Darray c size)
-          end
-      | _ -> ()
-    with Invalid_argument _ | Failure _ | Stack_overflow -> ()
+          let c = eval_turtle turtle in
+          let array = canvas_to_1Darray c size in
+          c, array) with
+      | None -> `String("timeout")
+      | Some(c, array) ->       
+        let bx = canvas_to_1Darray c 8 in
+        if bx = b0 then `String("empty")
+        else
+          match export with
+          | Some(fn) -> (output_canvas_png ~pretty c size fn;       Printf.eprintf "EXPORT %s\None" fn;`String("exported"))
+          | None ->
+            `List(List.map (range (Bigarray.Array1.dim array)) ~f:(fun i -> `Int(array.{i})))
+    ) 
+  in
+
+  print_string (pretty_to_string (`List(results)))
