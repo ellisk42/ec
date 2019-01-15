@@ -337,6 +337,7 @@ def plotTSNE(
 			taskNames = np.array(taskNames)
 			taskMetrics = np.array(taskMetrics)
 			print(taskNames.shape, taskMetrics.shape)
+			print(sorted(list(taskNames)))
 			print("Clustering %d tasks with embeddings of shape: %s" % (len(taskMetrics), str(taskMetrics[0].shape)) )
 			
 			clusteredTaskMetrics = tsne.fit_transform(taskMetrics)
