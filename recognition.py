@@ -439,7 +439,7 @@ class RecognitionModel(nn.Module):
 
         self.contextual = contextual
         if self.contextual:
-            self.grammarBuilder = ContextualGrammarNetwork_LowRank(self.outputDimensionality, grammar, rank)                                                                   
+            self.grammarBuilder = ContextualGrammarNetwork_LowRank(self.outputDimensionality, grammar, rank)
         else:
             self.grammarBuilder = GrammarNetwork(self.outputDimensionality, grammar)
         
@@ -574,12 +574,15 @@ class RecognitionModel(nn.Module):
 
     def frontierBiasOptimal(self, frontier, auxiliary=False):
         if False:
-            g = self.grammarOfTask(frontier.task)
-            if g is None: return None
+            features = self.featureExtractor.featuresOfTask(frontier.task)
+            if features is None: return None
+            if auxiliary: al = self.auxiliaryLoss(frontier, features)
+            else: al = 0
+            g = self(features)
             summaries = [entry.program for entry in frontier]
             likelihoods = torch.cat([summary.logLikelihood(g) for summary in summaries ])
             best = likelihoods.max()
-            return -best
+            return -best, al
             
         batchSize = len(frontier.entries)
         features = self.featureExtractor.featuresOfTask(frontier.task)
@@ -622,6 +625,7 @@ class RecognitionModel(nn.Module):
             requests = [defaultRequest]
         frontiers = [frontier.topK(topK).normalize()
                      for frontier in frontiers if not frontier.empty]
+        frontiers = frontiers[:10]
 
         # Should we sample programs or use the enumerated programs?
         randomHelmholtz = len(helmholtzFrontiers) == 0
@@ -725,7 +729,7 @@ class RecognitionModel(nn.Module):
             for i in reversed(badIndices):
                 assert helmholtzFrontiers[i].task is None
                 del helmholtzFrontiers[i]
-                
+
 
         # We replace each program in the frontier with its likelihoodSummary
         # This is because calculating likelihood summaries requires juggling types

@@ -81,13 +81,14 @@ class LogoFeatureCNN(nn.Module):
 
         self.recomputeTasks = False
 
-        def conv_block(in_channels, out_channels):
+        def conv_block(in_channels, out_channels, p=True):
             return nn.Sequential(
                 nn.Conv2d(in_channels, out_channels, 3, padding=1),
                 # nn.BatchNorm2d(out_channels),
                 nn.ReLU(),
-                nn.MaxPool2d(2)
-            )
+                # nn.Conv2d(out_channels, out_channels, 3, padding=1),
+                # nn.ReLU(),
+                nn.MaxPool2d(2))
 
         self.inputImageDimension = 128
         self.resizedDimension = 128
