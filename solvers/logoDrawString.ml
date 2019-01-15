@@ -29,6 +29,27 @@ let smooth_logo_wrapper t2t k s0 =
   (p |> List.map smooth_path |> List.concat, s)
 
 let _ =
+  let open Yojson.Basic.Util in
+  let open Yojson.Basic in
+  let j = Yojson.Basic.from_channel Pervasives.stdin in
+  let programs = member "programs" j in
+  let programs = to_list programs in
+  let programs = List.map to_string programs in
+  let programs = List.map parse_program programs in
+
+  let pretty = try
+      to_bool (member "pretty" j)
+    with _ -> false
+  in
+  let smooth_pretty = try
+      to_bool (member "smoothPretty" j)
+    with _ -> false
+  in
+  let export_size = try
+    with _ -> 0
+  in
+  
+
   let sizeFile = int_of_string (Sys.argv.(1))
   and fname    = Sys.argv.(2)
   and size     = int_of_string (Sys.argv.(3))
