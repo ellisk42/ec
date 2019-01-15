@@ -625,7 +625,6 @@ class RecognitionModel(nn.Module):
             requests = [defaultRequest]
         frontiers = [frontier.topK(topK).normalize()
                      for frontier in frontiers if not frontier.empty]
-        frontiers = frontiers[:10]
 
         # Should we sample programs or use the enumerated programs?
         randomHelmholtz = len(helmholtzFrontiers) == 0
