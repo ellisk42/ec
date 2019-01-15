@@ -399,7 +399,7 @@ class ContextualGrammarNetwork(nn.Module):
         
 
 class RecognitionModel(nn.Module):
-    def __init__(self,featureExtractor,grammar,hidden=[128],activation="relu",
+    def __init__(self,featureExtractor,grammar,hidden=[64],activation="tanh",
                  rank=None,
                  cuda=False,contextual=False,
                  previousRecognitionModel=None):
