@@ -23,6 +23,8 @@ Random shuffle (batches of 20), 30min: [DONE: solves 50/73 and still converges t
      python launch.py -k  -z x1.32xlarge logo_batch_20_30m "python logo.py -t 1800  --structurePenalty 1.5 --pseudoCounts 30.0 --biasOptimal --contextual --split 0.5 --testingTimeout 600  --storeTaskMetrics --taskReranker randomShuffle --taskBatchSize 20 -i 30  -R 1800 "
 Random shuffle (batches of 40), 60min: [DONE: solves almost 90%, slightly worse than no batching]
             python launch.py -k  -z x1.32xlarge logo_batch_40_60m "python logo.py -t 3600  --structurePenalty 1.5 --pseudoCounts 30.0 --biasOptimal --contextual --split 0.5 --testingTimeout 600  --storeTaskMetrics --taskReranker randomShuffle --taskBatchSize 40 -i 20  -R 1800 "
+*old recognition*, Random shuffle (batches of 40), 60min: [RUNNING]
+            python launch.py -k  -z x1.32xlarge logo_batch_40_60m_old_recognition "python logo.py -t 3600  --structurePenalty 1.5 --pseudoCounts 30.0 --biasOptimal --contextual --split 0.5 --testingTimeout 600  --storeTaskMetrics --taskReranker randomShuffle --taskBatchSize 40 -i 20  -R 3600 "
 
 Baseline without recognition model (batches of 40), 720: [RUNNING]
             python launch.py -k  -z x1.32xlarge logo_no_recognition_batch_40_60m "python logo.py -t 3600  --structurePenalty 1.5 --pseudoCounts 30.0 --split 0.5 --testingTimeout 600 --taskReranker randomShuffle --taskBatchSize 40 -i 20  -g"
