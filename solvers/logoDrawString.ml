@@ -23,12 +23,13 @@ let smooth_logo_wrapper t2t k s0 =
   in       
   (p |> List.map  ~f:smooth_path |> List.concat, s)
 
+
 let _ =
   let open Yojson.Basic.Util in
+  let j = Yojson.Basic.from_channel Pervasives.stdin in
   let open Yojson.Basic in
   let open Utils in
   let open Timeout in
-  let j = Yojson.Basic.from_channel Pervasives.stdin in
   let jobs = to_list (member "jobs" j) in
   
   let pretty = try
@@ -49,7 +50,9 @@ let _ =
   let results = List.map jobs ~f:(fun j ->
       let size = to_int (member "size" j) in
       let export = try
-          Some(to_string (member "export" j))
+          match to_string (member "export" j) with
+          | "null" -> None
+          | e -> Some(e)
         with _ -> None
       in
       
@@ -69,7 +72,7 @@ let _ =
         if bx = b0 then `String("empty")
         else
           match export with
-          | Some(fn) -> (output_canvas_png ~pretty c size fn;       Printf.eprintf "EXPORT %s\None" fn;`String("exported"))
+          | Some(fn) -> (output_canvas_png ~pretty c size fn; `String("exported"))
           | None ->
             `List(List.map (range (Bigarray.Array1.dim array)) ~f:(fun i -> `Int(array.{i})))
     ) 

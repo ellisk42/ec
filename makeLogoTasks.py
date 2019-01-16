@@ -33,10 +33,9 @@ def drawLogo(*programs,
             filenames = filenames[1:]
         jobs.append(entry)        
     message["jobs"] = jobs
-    eprint(message)
     response = jsonBinaryInvoke("./logoDrawString", message)
-    eprint(response)
-    if len(programs) == 1: return response[0]
+    if len(programs) == 1:
+        return response[0]
     return response
 
 def makeTasks(subfolders, proto):

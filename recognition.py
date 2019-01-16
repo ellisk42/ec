@@ -675,11 +675,19 @@ class RecognitionModel(nn.Module):
                                     min(helmholtzIndex[0], len(helmholtzFrontiers)))):
                     helmholtzFrontiers[hi].clear()
 
-            newTasks = \
-             parallelMap(updateCPUs,
-                         lambda f: f.calculateTask(),
-                         helmholtzFrontiers[helmholtzIndex[0]:helmholtzIndex[0] + helmholtzBatch],
-                         seedRandom=True)
+            if hasattr(self.featureExtractor, 'tasksOfPrograms'):
+                eprint("batching task calculation")
+                newTasks = self.featureExtractor.tasksOfPrograms(
+                    [random.choice(hf.programs)
+                     for hf in helmholtzFrontiers[helmholtzIndex[0]:helmholtzIndex[0] + helmholtzBatch] ],
+                    [hf.request
+                     for hf in helmholtzFrontiers[helmholtzIndex[0]:helmholtzIndex[0] + helmholtzBatch] ])
+            else:
+                newTasks = \
+                           parallelMap(updateCPUs,
+                                       lambda f: f.calculateTask(),
+                                       helmholtzFrontiers[helmholtzIndex[0]:helmholtzIndex[0] + helmholtzBatch],
+                                       seedRandom=True)
             badIndices = []
             endingIndex = min(helmholtzIndex[0] + helmholtzBatch, len(helmholtzFrontiers))
             for i in range(helmholtzIndex[0], endingIndex):
