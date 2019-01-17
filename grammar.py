@@ -771,6 +771,13 @@ normalizers = {%s})""" % (self.constant,
             sum(count * grammar.expression2likelihood[p] for p, count in self.uses.items()) - \
             sum(count * lse([grammar.expression2likelihood[p] for p in ps])
                 for ps, count in self.normalizers.items())
+    def numerator(self, grammar):
+        return self.constant + \
+            sum(count * grammar.expression2likelihood[p] for p, count in self.uses.items())
+    def denominator(self, grammar):
+        return \
+            sum(count * lse([grammar.expression2likelihood[p] for p in ps])
+                for ps, count in self.normalizers.items())
     def toUses(self):
         from collections import Counter
         
@@ -947,6 +954,18 @@ class ContextualGrammar:
             return self.noParent.logLikelihood(owner.noParent) + \
                    self.variableParent.logLikelihood(owner.variableParent) + \
                    sum(r.logLikelihood(g)
+                       for e, rs in self.library.items()
+                       for r,g in zip(rs, owner.library[e]) )            
+        def numerator(self, owner):
+            return self.noParent.numerator(owner.noParent) + \
+                   self.variableParent.numerator(owner.variableParent) + \
+                   sum(r.numerator(g)
+                       for e, rs in self.library.items()
+                       for r,g in zip(rs, owner.library[e]) )            
+        def denominator(self, owner):
+            return self.noParent.denominator(owner.noParent) + \
+                   self.variableParent.denominator(owner.variableParent) + \
+                   sum(r.denominator(g)
                        for e, rs in self.library.items()
                        for r,g in zip(rs, owner.library[e]) )            
 

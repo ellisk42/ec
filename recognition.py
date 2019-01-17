@@ -175,12 +175,94 @@ class ContextualGrammarNetwork_LowRank(nn.Module):
         return ContextualGrammar(self.grammarFromVector(transitionMatrix[-1]), self.grammarFromVector(transitionMatrix[-2]),
                 {prim: [self.grammarFromVector(transitionMatrix[j]) for j in js]
                  for prim, js in self.library.items()} )
+        
+    def vectorizedLogLikelihoods(self, x, summaries):
+        B = len(summaries)
+        G = len(self.grammar) + 1
+
+        # Which column of the transition matrix corresponds to which primitive
+        primitiveColumn = {p: c
+                           for c, (_1,_2,p) in enumerate(self.grammar.productions) }
+        primitiveColumn[Index(0)] = G - 1
+        # Which row of the transition matrix corresponds to which context
+        contextRow = {(parent, index): r
+                      for parent, indices in self.library.items()
+                      for index, r in enumerate(indices) }
+        contextRow[(None,None)] = self.n_grammars - 1
+        contextRow[(Index(0),None)] = self.n_grammars - 2
+
+        transitionMatrix = self.transitionMatrix(x)
+
+        # uses[b][g][p] is # uses of primitive p by summary b for parent g
+        uses = np.zeros((B,self.n_grammars,len(self.grammar)+1))
+        for b,summary in enumerate(summaries):
+            for e, ss in summary.library.items():
+                for g,s in zip(self.library[e], ss):
+                    assert g < self.n_grammars - 2
+                    for p, production in enumerate(self.grammar.primitives):
+                        uses[b,g,p] = s.uses.get(production, 0.)
+                    uses[b,g,len(self.grammar)] = s.uses.get(Index(0), 0)
+                    
+            # noParent: this is the last network output
+            for p, production in enumerate(self.grammar.primitives):            
+                uses[b, self.n_grammars - 1, p] = summary.noParent.uses.get(production, 0.)
+            uses[b, self.n_grammars - 1, G - 1] = summary.noParent.uses.get(Index(0), 0.)
+
+            # variableParent: this is the penultimate network output
+            for p, production in enumerate(self.grammar.primitives):            
+                uses[b, self.n_grammars - 2, p] = summary.variableParent.uses.get(production, 0.)
+            uses[b, self.n_grammars - 2, G - 1] = summary.variableParent.uses.get(Index(0), 0.)
+
+        uses = maybe_cuda(torch.tensor(uses).float(),use_cuda)
+        numerator = uses.view(B, -1) @ transitionMatrix.view(-1)
+        
+        constant = np.zeros(B)
+        for b,summary in enumerate(summaries):
+            constant[b] += summary.noParent.constant + summary.variableParent.constant
+            for ss in summary.library.values():
+                for s in ss:
+                    constant[b] += s.constant
+            
+        numerator = numerator + maybe_cuda(torch.tensor(constant).float(),use_cuda)
+
+        # Calculate the god-awful denominator
+        # Map from (parent, index, {set-of-alternatives}) to [occurrences-in-summary-zero, occurrences-in-summary-one, ...]
+        alternativeSet = {}
+        for b,summary in enumerate(summaries):
+            for normalizer, frequency in summary.noParent.normalizers.items():
+                k = (None,None,normalizer)
+                alternativeSet[k] = alternativeSet.get(k, np.zeros(B))
+                alternativeSet[k][b] += frequency
+            for normalizer, frequency in summary.variableParent.normalizers.items():
+                k = (Index(0),None,normalizer)
+                alternativeSet[k] = alternativeSet.get(k, np.zeros(B))
+                alternativeSet[k][b] += frequency
+            for parent, ss in summary.library.items():
+                for argumentIndex, s in enumerate(ss):
+                    for normalizer, frequency in s.normalizers.items():
+                        k = (parent, argumentIndex, normalizer)
+                        alternativeSet[k] = alternativeSet.get(k, zeros(B))
+                        alternativeSet[k][b] += frequency
+
+        # Calculate each distinct normalizing constant
+        alternativeNormalizer = {}
+        for parent, index, alternatives in alternativeSet:
+            r = transitionMatrix[contextRow[(parent, index)]]
+            entries = r[ [primitiveColumn[alternative] for alternative in alternatives ]]
+            alternativeNormalizer[(parent, index, alternatives)] = torch.logsumexp(entries, dim=0)
+
+        # Concatenate the normalizers into a vector
+        normalizerKeys = list(alternativeSet.keys())
+        normalizerVector = torch.cat([ alternativeNormalizer[k] for k in normalizerKeys])
+
+        assert False, "This function is still in progress."
+        
 
     def batchedLogLikelihoods(self, xs, summaries):
         """Takes as input BxinputDimensionality vector & B likelihood summaries;
         returns B-dimensional vector containing log likelihood of each summary"""
         use_cuda = xs.device.type == 'cuda'
-
+        
         B = xs.shape[0]
         G = len(self.grammar) + 1
         assert len(summaries) == B
@@ -217,53 +299,59 @@ class ContextualGrammarNetwork_LowRank(nn.Module):
                     constant[b] += s.constant
             
         numerator += maybe_cuda(torch.tensor(constant).float(),use_cuda)
-
-        # Calculate the god-awful denominator
-        alternativeSet = set()
-        for summary in summaries:
-            for normalizer in summary.noParent.normalizers: alternativeSet.add(normalizer)
-            for normalizer in summary.variableParent.normalizers: alternativeSet.add(normalizer)
-            for ss in summary.library.values():
-                for s in ss:
-                    for normalizer in s.normalizers: alternativeSet.add(normalizer)
-        alternativeSet = list(alternativeSet)
-
-        mask = np.zeros((len(alternativeSet), G))
-        for tau in range(len(alternativeSet)):
-            for p, production in enumerate(self.grammar.primitives):
-                mask[tau,p] = 0. if production in alternativeSet[tau] else NEGATIVEINFINITY
-            mask[tau, G - 1] = 0. if Index(0) in alternativeSet[tau] else NEGATIVEINFINITY
-        mask = maybe_cuda(torch.tensor(mask).float(), use_cuda)
-
-        z = mask.repeat(self.n_grammars,1,1).repeat(B,1,1,1) + \
-            logProductions.repeat(len(alternativeSet),1,1,1).transpose(0,1).transpose(1,2)
-        z = torch.logsumexp(z, 3) # pytorch 1.0 dependency
-
-        N = np.zeros((B, self.n_grammars, len(alternativeSet)))
-        for b, summary in enumerate(summaries):
-            for e, ss in summary.library.items():
-                for g,s in zip(self.library[e], ss):
-                    assert g < self.n_grammars - 2
-                    for r, alternatives in enumerate(alternativeSet):                
-                        N[b,g,r] = s.normalizers.get(alternatives, 0.)
-            # noParent: this is the last network output
-            for r, alternatives in enumerate(alternativeSet):
-                N[b,self.n_grammars - 1,r] = summary.noParent.normalizers.get(alternatives, 0.)
-            # variableParent: this is the penultimate network output
-            for r, alternatives in enumerate(alternativeSet):
-                N[b,self.n_grammars - 2,r] = summary.variableParent.normalizers.get(alternatives, 0.)
-        N = maybe_cuda(torch.tensor(N).float(), use_cuda)
         
+        if True:
+
+            # Calculate the god-awful denominator
+            alternativeSet = set()
+            for summary in summaries:
+                for normalizer in summary.noParent.normalizers: alternativeSet.add(normalizer)
+                for normalizer in summary.variableParent.normalizers: alternativeSet.add(normalizer)
+                for ss in summary.library.values():
+                    for s in ss:
+                        for normalizer in s.normalizers: alternativeSet.add(normalizer)
+            alternativeSet = list(alternativeSet)
+
+            mask = np.zeros((len(alternativeSet), G))
+            for tau in range(len(alternativeSet)):
+                for p, production in enumerate(self.grammar.primitives):
+                    mask[tau,p] = 0. if production in alternativeSet[tau] else NEGATIVEINFINITY
+                mask[tau, G - 1] = 0. if Index(0) in alternativeSet[tau] else NEGATIVEINFINITY
+            mask = maybe_cuda(torch.tensor(mask).float(), use_cuda)
+
+            z = mask.repeat(self.n_grammars,1,1).repeat(B,1,1,1) + \
+                logProductions.repeat(len(alternativeSet),1,1,1).transpose(0,1).transpose(1,2)
+            z = torch.logsumexp(z, 3) # pytorch 1.0 dependency
+
+            N = np.zeros((B, self.n_grammars, len(alternativeSet)))
+            for b, summary in enumerate(summaries):
+                for e, ss in summary.library.items():
+                    for g,s in zip(self.library[e], ss):
+                        assert g < self.n_grammars - 2
+                        for r, alternatives in enumerate(alternativeSet):                
+                            N[b,g,r] = s.normalizers.get(alternatives, 0.)
+                # noParent: this is the last network output
+                for r, alternatives in enumerate(alternativeSet):
+                    N[b,self.n_grammars - 1,r] = summary.noParent.normalizers.get(alternatives, 0.)
+                # variableParent: this is the penultimate network output
+                for r, alternatives in enumerate(alternativeSet):
+                    N[b,self.n_grammars - 2,r] = summary.variableParent.normalizers.get(alternatives, 0.)
+            N = maybe_cuda(torch.tensor(N).float(), use_cuda)
+            denominator = (N*z).sum(1).sum(1)
+        else:
+            gs = [ self(xs[b]) for b in range(B) ]
+            denominator = torch.cat([ summary.denominator(g) for summary,g in zip(summaries, gs) ])
+            
+            
 
         
-        denominator = (N*z).sum(1).sum(1)
+        
         ll = numerator - denominator
 
         if False: # verifying that batching works correctly
             gs = [ self(xs[b]) for b in range(B) ]
             _l = torch.cat([ summary.logLikelihood(g) for summary,g in zip(summaries, gs) ])
             assert torch.all((ll - _l).abs() < 0.0001)
-
         return ll
     
 
@@ -562,25 +650,34 @@ class RecognitionModel(nn.Module):
         return {task: self.grammarEntropyOfTask(task).data.cpu().numpy()
                 for task in tasks}
 
-    def frontierKL(self, frontier, auxiliary=False):
+    def frontierKL(self, frontier, auxiliary=False, vectorized=True):
         features = self.featureExtractor.featuresOfTask(frontier.task)
         if features is None: return None
-        if auxiliary: al = self.auxiliaryLoss(frontier, features)
-        else: al = 0
-        g = self(features)
         # Monte Carlo estimate: draw a sample from the frontier
         entry = frontier.sample()
-        return - entry.program.logLikelihood(g), al
 
-    def frontierBiasOptimal(self, frontier, auxiliary=False):
-        if False:
+        if auxiliary: al = self.auxiliaryLoss(frontier, features)
+        else: al = 0
+
+        if not vectorized:
+            g = self(features)
+            return - entry.program.logLikelihood(g), al
+        else:
+            features = self._MLP(features).expand(1, features.size(-1))
+            ll = self.grammarBuilder.batchedLogLikelihoods(features, [entry.program]).view(-1)
+            return -ll, al
+            
+
+    def frontierBiasOptimal(self, frontier, auxiliary=False, vectorized=True):
+        if not vectorized:
             features = self.featureExtractor.featuresOfTask(frontier.task)
             if features is None: return None
             if auxiliary: al = self.auxiliaryLoss(frontier, features)
             else: al = 0
             g = self(features)
             summaries = [entry.program for entry in frontier]
-            likelihoods = torch.cat([summary.logLikelihood(g) for summary in summaries ])
+            likelihoods = torch.cat([entry.program.logLikelihood(g) + entry.logLikelihood
+                                     for entry in frontier ])
             best = likelihoods.max()
             return -best, al
             
@@ -593,7 +690,7 @@ class RecognitionModel(nn.Module):
         features = features.expand(batchSize, features.size(-1))  # TODO
         lls = self.grammarBuilder.batchedLogLikelihoods(features, [entry.program for entry in frontier])
         actual_ll = torch.Tensor([ entry.logLikelihood for entry in frontier])
-        lls += (actual_ll.cuda() if self.use_cuda else actual_ll)
+        lls = lls + (actual_ll.cuda() if self.use_cuda else actual_ll)
         ml = -lls.max() #Beware that inputs to max change output type
         return ml, al
 
@@ -608,7 +705,7 @@ class RecognitionModel(nn.Module):
     def train(self, frontiers, _=None, steps=None, lr=0.001, topK=5, CPUs=1,
               timeout=None, evaluationTimeout=0.001,
               helmholtzFrontiers=[], helmholtzRatio=0., helmholtzBatch=500,
-              biasOptimal=None, defaultRequest=None, auxLoss=False):
+              biasOptimal=None, defaultRequest=None, auxLoss=False, vectorized=True):
         """
         helmholtzRatio: What fraction of the training data should be forward samples from the generative model?
         helmholtzFrontiers: Frontiers from programs enumerated from generative model (optional)
@@ -766,8 +863,8 @@ class RecognitionModel(nn.Module):
                 dreaming = random.random() < helmholtzRatio
                 if dreaming: frontier = getHelmholtz()
                 self.zero_grad()
-                loss, al = self.frontierBiasOptimal(frontier, auxiliary=auxLoss) if biasOptimal \
-                           else self.frontierKL(frontier, auxiliary=auxLoss)
+                loss, al = self.frontierBiasOptimal(frontier, auxiliary=auxLoss, vectorized=vectorized) if biasOptimal \
+                           else self.frontierKL(frontier, auxiliary=auxLoss, vectorized=vectorized)
                 classificationLoss = al
                 if loss is None:
                     if not dreaming:

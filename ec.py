@@ -67,6 +67,7 @@ class ECResult():
     # Linux does not like files that have more than 256 characters
     # So when exporting the results we abbreviate the parameters
     abbreviations = {"frontierSize": "fs",
+                     "vectorized": "vec",
                      "taskReranker": "TRR",
                      "matrixRank": "MR",
                      "reuseRecognition": "RR",
@@ -156,6 +157,7 @@ def ecIterator(grammar, tasks,
                helmholtzRatio=0.,
                featureExtractor=None,
                activation='relu',
+               vectorized=True,
                topK=1,
                topk_use_only_likelihood=False,
                use_map_search_times=True,
@@ -245,7 +247,7 @@ def ecIterator(grammar, tasks,
             "testingTasks",
             "compressor"} and v is not None}
     if not useRecognitionModel:
-        for k in {"helmholtzRatio", "recognitionTimeout", "biasOptimal",
+        for k in {"helmholtzRatio", "recognitionTimeout", "biasOptimal", "vectorized",
                   "contextual", "matrixRank", "reuseRecognition", "auxiliaryLoss"}:
             if k in parameters: del parameters[k]
     if useRecognitionModel and not contextual:
@@ -522,6 +524,7 @@ def ecIterator(grammar, tasks,
 
         # Combine topDownFrontiers from this task batch with all frontiers.
         for f in topDownFrontiers:
+            if f.task not in result.allFrontiers: continue # backward compatibility with old checkpoints
             result.allFrontiers[f.task] = result.allFrontiers[f.task].combine(f).topK(maximumFrontier)
 
         eprint("Frontiers discovered top down: " + str(len(tasksHitTopDown)))
@@ -537,7 +540,7 @@ def ecIterator(grammar, tasks,
                 previousRecognitionModel = None
                 if reuseRecognition and result.recognitionModel is not None:
                     previousRecognitionModel = result.recognitionModel
-                
+
                 featureExtractorObject = featureExtractor(tasks, testingTasks=testingTasks, cuda=cuda)
                 recognizer = RecognitionModel(featureExtractorObject,
                                               grammar,
@@ -556,7 +559,8 @@ def ecIterator(grammar, tasks,
                                  evaluationTimeout=evaluationTimeout,
                                  timeout=recognitionTimeout,
                                  helmholtzRatio=thisRatio,
-                                 auxLoss=auxiliaryLoss)
+                                 auxLoss=auxiliaryLoss,
+                                 vectorized=vectorized)
                 
                 result.recognitionModel = recognizer
 
@@ -667,6 +671,7 @@ def ecIterator(grammar, tasks,
                 # Rescore the frontiers according to the generative model
                 # and then combine w/ original frontiers
                 for b in bottomupFrontiers:
+                    if b.task not in result.allFrontiers: continue # backwards compatibility with old checkpoints
                     result.allFrontiers[b.task] = result.allFrontiers[b.task].\
                                                   combine(grammar.rescoreFrontier(b)).\
                                                   topK(maximumFrontier)
@@ -871,6 +876,9 @@ def commandlineArguments(_=None,
                         maximum size of the frontier that is kept around.
                         Default: %s""" % maximumFrontier,
                         type=int)
+    parser.add_argument("-v", "--vectorized",
+                        help="""Use possibly buggy vectorized loss calculation for recognition model""",
+                        default=False, action="store_true")
     parser.add_argument("--reuseRecognition",
                         help="""Should we initialize recognition model weights to be what they were at the previous DreamCoder iteration? Default: %s""" % reuseRecognition,
                         default=reuseRecognition,
