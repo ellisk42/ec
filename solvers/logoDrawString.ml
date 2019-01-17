@@ -59,23 +59,25 @@ let _ =
       let p = to_string (member "program" j) in
       let p = if p.[0] = '"' then String.sub p 1 (String.length p - 2) else p in
       let p = safe_get_some (Printf.sprintf "Could not parse %s\n" p) (parse_program p) in
-      match run_for_interval timeout (fun () ->
-          let p = analyze_lazy_evaluation p in
-          let turtle = run_lazy_analyzed_with_arguments p [] in
-          let turtle = if smooth_pretty then smooth_logo_wrapper turtle else turtle in
-          let c = eval_turtle turtle in
-          let array = canvas_to_1Darray c size in
-          c, array) with
-      | None -> `String("timeout")
-      | Some(c, array) ->       
-        let bx = canvas_to_1Darray c 8 in
-        if bx = b0 then `String("empty")
-        else
-          match export with
-          | Some(fn) -> (output_canvas_png ~pretty c size fn; `String("exported"))
-          | None ->
-            `List(List.map (range (Bigarray.Array1.dim array)) ~f:(fun i -> `Int(array.{i})))
-    ) 
+      try
+        match run_for_interval timeout (fun () ->
+            let p = analyze_lazy_evaluation p in
+            let turtle = run_lazy_analyzed_with_arguments p [] in
+            let turtle = if smooth_pretty then smooth_logo_wrapper turtle else turtle in
+            let c = eval_turtle turtle in
+            let array = canvas_to_1Darray c size in
+            c, array) with
+        | None -> `String("timeout")
+        | Some(c, array) ->       
+          let bx = canvas_to_1Darray c 8 in
+          if bx = b0 then `String("empty")
+          else
+            match export with
+            | Some(fn) -> (output_canvas_png ~pretty c size fn; `String("exported"))
+            | None ->
+              `List(List.map (range (Bigarray.Array1.dim array)) ~f:(fun i -> `Int(array.{i})))
+      with _ -> `String("exception")
+    )
   in
 
   print_string (pretty_to_string (`List(results)))
