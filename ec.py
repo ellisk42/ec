@@ -10,7 +10,6 @@ from enumeration import *
 from grammar import *
 from fragmentGrammar import *
 from taskBatcher import *
-import baselines
 import dill
 
 
@@ -34,7 +33,6 @@ class ECResult():
                  searchTimes=None,
                  recognitionTaskTimes=None,
                  recognitionTaskMetrics=None,
-                 baselines=None,
                  numTestingTasks=None,
                  sumMaxll=None,
                  testingSumMaxll=None,
@@ -53,8 +51,6 @@ class ECResult():
         self.learningCurve = learningCurve or []
         self.grammars = grammars or []
         self.taskSolutions = taskSolutions or {}
-        # baselines is a dictionary of name -> ECResult
-        self.baselines = baselines or {}
         self.numTestingTasks = numTestingTasks
         self.sumMaxll = sumMaxll or [] #TODO name change 
         self.testingSumMaxll = testingSumMaxll or [] #TODO name change
@@ -74,8 +70,8 @@ class ECResult():
                      "recognitionTimeout": "RT",
                      "iterations": "it",
                      "maximumFrontier": "MF",
-                     "onlyBaselines": "baseline",
                      "pseudoCounts": "pc",
+                     "auxiliaryLoss": "aux",
                      "structurePenalty": "L",
                      "helmholtzRatio": "HR",
                      "biasOptimal": "BO",
@@ -170,7 +166,6 @@ def ecIterator(grammar, tasks,
                CPUs=1,
                cuda=False,
                message="",
-               onlyBaselines=False,
                outputPrefix=None,
                storeTaskMetrics=False,
                rewriteTaskMetrics=True,
@@ -263,29 +258,9 @@ def ecIterator(grammar, tasks,
                 ECResult.abbreviate(k),
                 parameters[k]) for k in sorted(
                 parameters.keys())]
-        if useRecognitionModel or useNewRecognitionModel:
-            kvs += ["feat=%s" % (featureExtractor.__name__)]
         if bootstrap:
             kvs += ["bstrap=True"]
         return "{}_{}{}.pickle".format(outputPrefix, "_".join(kvs), extra)
-
-    if onlyBaselines and not benchmark:
-        result = ECResult()
-        result.baselines = baselines.all(
-            grammar,
-            tasks,
-            CPUs=CPUs,
-            cuda=cuda,
-            featureExtractor=featureExtractor,
-            compressor=compressor,
-            **parameters)
-        if outputPrefix is not None:
-            path = checkpointPath(0, extra="_e")
-            with open(path, "wb") as f:
-                pickle.dump(result, f)
-            eprint("Exported checkpoint to", path)
-        yield result
-        return
 
     if message:
         message = " (" + message + ")"
@@ -304,7 +279,7 @@ def ecIterator(grammar, tasks,
     if resume is not None:
         try:
             resume = int(resume)
-            path = checkpointPath(resume, extra="_baselines" if onlyBaselines else "")
+            path = checkpointPath(resume)
         except ValueError:
             path = resume
         with open(path, "rb") as handle:
@@ -360,10 +335,6 @@ def ecIterator(grammar, tasks,
         else:
             benchmarkTasks = tasks
             benchmark = -benchmark
-        if len(result.baselines) == 0:
-            results = {"our algorithm": result}
-        else:
-            results = result.baselines
         for name, result in results.items():
             eprint("Starting benchmark:", name)
             benchmarkSynthesisTimes(
@@ -574,7 +545,8 @@ def ecIterator(grammar, tasks,
                 # Store the recognition metrics.
                 if storeTaskMetrics:
                     updateTaskSummaryMetrics(result.recognitionTaskMetrics, allRecognitionTimes, 'recognitionBestTimes')
-                    updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskGrammarLogProductions(wakingTaskBatch), 'taskLogProductions')
+                    updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskHiddenStates(tasks), 'hiddenState')
+                    updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskGrammarLogProductions(tasks), 'taskLogProductions')
                     updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskGrammarEntropies(wakingTaskBatch), 'taskGrammarEntropies')
                     if contextual:
                         updateTaskSummaryMetrics(result.recognitionTaskMetrics,
@@ -796,7 +768,6 @@ def commandlineArguments(_=None,
                          pseudoCounts=1.0, aic=1.0,
                          structurePenalty=0.001, a=0,
                          taskBatchSize=None, taskReranker="default",
-                         onlyBaselines=False,
                          extras=None,
                          storeTaskMetrics=False,
                         rewriteTaskMetrics=True):
@@ -934,12 +905,6 @@ def commandlineArguments(_=None,
         helmholtzRatio,
         default=helmholtzRatio,
         type=float)
-    parser.add_argument(
-        "-B",
-        "--baselines",
-        dest="onlyBaselines",
-        action="store_true",
-        help="only compute baselines")
     parser.add_argument(
         "--bootstrap",
         help="Start the learner out with a pretrained DSL. This argument should be a path to a checkpoint file.",
