@@ -652,7 +652,7 @@ class RecognitionModel(nn.Module):
 
     def frontierKL(self, frontier, auxiliary=False, vectorized=True):
         features = self.featureExtractor.featuresOfTask(frontier.task)
-        if features is None: return None
+        if features is None: return None, None
         # Monte Carlo estimate: draw a sample from the frontier
         entry = frontier.sample()
 
@@ -671,7 +671,7 @@ class RecognitionModel(nn.Module):
     def frontierBiasOptimal(self, frontier, auxiliary=False, vectorized=True):
         if not vectorized:
             features = self.featureExtractor.featuresOfTask(frontier.task)
-            if features is None: return None
+            if features is None: return None, None
             if auxiliary: al = self.auxiliaryLoss(frontier, features)
             else: al = 0
             g = self(features)
@@ -683,7 +683,7 @@ class RecognitionModel(nn.Module):
             
         batchSize = len(frontier.entries)
         features = self.featureExtractor.featuresOfTask(frontier.task)
-        if features is None: return None
+        if features is None: return None, None
         if auxiliary: al = self.auxiliaryLoss(frontier, features)
         else: al = 0
         features = self._MLP(features)
@@ -871,9 +871,9 @@ class RecognitionModel(nn.Module):
                 dreaming = random.random() < helmholtzRatio
                 if dreaming: frontier = getHelmholtz()
                 self.zero_grad()
-                loss, al = self.frontierBiasOptimal(frontier, auxiliary=auxLoss, vectorized=vectorized) if biasOptimal \
-                           else self.frontierKL(frontier, auxiliary=auxLoss, vectorized=vectorized)
-                classificationLoss = al
+                loss, classificationLoss = \
+                        self.frontierBiasOptimal(frontier, auxiliary=auxLoss, vectorized=vectorized) if biasOptimal \
+                        else self.frontierKL(frontier, auxiliary=auxLoss, vectorized=vectorized)
                 if loss is None:
                     if not dreaming:
                         eprint("ERROR: Could not extract features during experience replay.")
