@@ -25,7 +25,7 @@ from recognition import variable, maybe_cuda
 
 global prefix_dreams
 
-def dreamFromGrammar(g, directory, N=500):
+def dreamFromGrammar(g, directory, N=100):
     programs = [ p
                  for _ in range(N)
                  for p in [g.sample(arrow(turtle,turtle),
@@ -35,17 +35,17 @@ def dreamFromGrammar(g, directory, N=500):
              pretty=False, smoothPretty=False,
              resolution=512,
              filenames=[f"{directory}/{n}.png" for n in range(len(programs)) ],
-             timeout=0.5)
+             timeout=1)
     drawLogo(*programs,
              pretty=True, smoothPretty=False,
              resolution=512,
              filenames=[f"{directory}/{n}_pretty.png" for n in range(len(programs)) ],
-             timeout=0.5)
+             timeout=1)
     drawLogo(*programs,
              pretty=False, smoothPretty=True,
              resolution=512,
              filenames=[f"{directory}/{n}_smooth_pretty.png" for n in range(len(programs)) ],
-             timeout=0.5)
+             timeout=1)
     for n,p in enumerate(programs):
         with open(f"{directory}/{n}.dream","w") as handle:
             handle.write(str(p))        

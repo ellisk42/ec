@@ -291,10 +291,10 @@ def jsonBinaryInvoke(binary, message):
         response = json.loads(response.decode("utf-8"))
     except Exception as e:
         eprint("Could not parse json.")
-        eprint("The message:")
-        eprint(message)
-        eprint("The response:")
-        eprint(response.decode("utf-8"))
+        with open("/tmp/_message","w") as handle:
+            handle.write(message)
+        with open("/tmp/_response","w") as handle:
+            handle.write(response.decode("utf-8"))
         raise e
     return response
 

@@ -45,6 +45,10 @@ let _ =
     with _ -> 0.01
   in
 
+  let trim s =
+    if s.[0] = '"' then String.sub s 1 (String.length s - 2) else s
+  in 
+
   let b0 = Bigarray.(Array1.create int8_unsigned c_layout (8*8)) in
   Bigarray.Array1.fill b0 0 ;
   let results = List.map jobs ~f:(fun j ->
@@ -52,12 +56,11 @@ let _ =
       let export = try
           match to_string (member "export" j) with
           | "null" -> None
-          | e -> Some(e)
+          | e -> Some(trim e)
         with _ -> None
       in
       
-      let p = to_string (member "program" j) in
-      let p = if p.[0] = '"' then String.sub p 1 (String.length p - 2) else p in
+      let p = to_string (member "program" j) |> trim in
       let p = safe_get_some (Printf.sprintf "Could not parse %s\n" p) (parse_program p) in
       try
         match run_for_interval timeout (fun () ->
@@ -73,7 +76,8 @@ let _ =
           if bx = b0 then `String("empty")
           else
             match export with
-            | Some(fn) -> (output_canvas_png ~pretty c size fn; `String("exported"))
+            | Some(fn) -> (output_canvas_png ~pretty c size fn;
+                           `String("exported"))
             | None ->
               `List(List.map (range (Bigarray.Array1.dim array)) ~f:(fun i -> `Int(array.{i})))
       with _ -> `String("exception")

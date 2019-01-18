@@ -69,7 +69,6 @@ let list_to_image pretty l =
     List.fold_right
       (fun (path,ol,l) img ->
         let i = (ol/.maxl) +. ((ol /. maxl) *. (l /. maxl)) in
-        print_endline (Printf.sprintf "%f , " i);
         let (r,g,b) = interpolate_color (1., 0.2, 0.8) (0.2, 0.2, 1.) i in
         I.blend img (I.cut ~area:(areaPretty) path (I.const (Color.v_srgb r g b))))
       c_with_index
