@@ -285,9 +285,17 @@ def jsonBinaryInvoke(binary, message):
                                    stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE)
         response, error = process.communicate(bytes(message, encoding="utf-8"))
-        response = json.loads(response.decode("utf-8"))
     except OSError as exc:
         raise exc
+    try:
+        response = json.loads(response.decode("utf-8"))
+    except Exception as e:
+        eprint("Could not parse json.")
+        with open("/tmp/_message","w") as handle:
+            handle.write(message)
+        with open("/tmp/_response","w") as handle:
+            handle.write(response.decode("utf-8"))
+        raise e
     return response
 
     

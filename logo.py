@@ -1,7 +1,7 @@
 from ec import ecIterator, commandlineArguments
 from grammar import Grammar
 from utilities import eprint, testTrainSplit, numberOfCPUs, parallelMap
-from makeLogoTasks import makeTasks, montageTasks
+from makeLogoTasks import makeTasks, montageTasks, drawLogo
 from logoPrimitives import *
 from collections import OrderedDict
 from program import Program
@@ -25,42 +25,30 @@ from recognition import variable, maybe_cuda
 
 global prefix_dreams
 
-def renderLogoProgram(program,R=128):
-    import numpy as np
-    
-    hr = subprocess.check_output(['./logoDrawString',
-                                  '0',
-                                  "none",
-                                  str(R),
-                                  str(program)],
-                                 timeout=1).decode("utf8")
-    try:
-        hr = list(map(float, hr.split(',')))
-        return np.reshape(np.array(hr),(R,R))
-    except: return None
-
-def dreamFromGrammar(g, directory, N=500):
-    parallelMap(numberOfCPUs(), lambda x: saveDream(g.sample(arrow(turtle,turtle),
-                                                             maximumDepth=20),
-                                                    x,
-                                                    directory),
-                range(N))
-
-def saveDream(program, index, directory):
-    with open("%s/%d.dream"%(directory, index), "w") as handle:
-        handle.write(str(program))
-
-    for suffix in [[],["pretty"],["smooth_pretty"]]:
-        try:
-            subprocess.check_output(['./logoDrawString',
-                                     '512',
-                                     "%s/%d%s"%(directory, index,
-                                                suffix[0] if suffix else ""),
-                                     '0',
-                                     str(program)] + suffix,
-                                    timeout=1).decode("utf8")
-        except: continue
-        
+def dreamFromGrammar(g, directory, N=100):
+    programs = [ p
+                 for _ in range(N)
+                 for p in [g.sample(arrow(turtle,turtle),
+                                    maximumDepth=20)]
+                 if p is not None]
+    drawLogo(*programs,
+             pretty=False, smoothPretty=False,
+             resolution=512,
+             filenames=[f"{directory}/{n}.png" for n in range(len(programs)) ],
+             timeout=1)
+    drawLogo(*programs,
+             pretty=True, smoothPretty=False,
+             resolution=512,
+             filenames=[f"{directory}/{n}_pretty.png" for n in range(len(programs)) ],
+             timeout=1)
+    drawLogo(*programs,
+             pretty=False, smoothPretty=True,
+             resolution=512,
+             filenames=[f"{directory}/{n}_smooth_pretty.png" for n in range(len(programs)) ],
+             timeout=1)
+    for n,p in enumerate(programs):
+        with open(f"{directory}/{n}.dream","w") as handle:
+            handle.write(str(p))        
     
 
 class Flatten(nn.Module):
@@ -131,59 +119,20 @@ class LogoFeatureCNN(nn.Module):
     def featuresOfTask(self, t):  # Take a task and returns [features]
         return self(t.highresolution)
 
-    def taskOfProgram(self, p, t):
-        try:
-            [output, highresolution] = \
-                    [subprocess.check_output(['./logoDrawString',
-                                              '0',
-                                              "none",
-                                              str(resolution),
-                                              str(p)],
-                                             timeout=0.05).decode("utf8")
-                     for resolution in [28,self.inputImageDimension]]
-            shape = list(map(float, output.split(',')))
-            highresolution = list(map(float, highresolution.split(',')))
-            t = Task("Helm", t, [(([0]), shape)])
-            t.highresolution = highresolution
-            return t
-        except subprocess.TimeoutExpired:
-            return None
-        except subprocess.CalledProcessError:
-            return None
-        except ValueError:
-            return None
-        except OSError as exc:
-            raise exc
-
-    def renderProgram(self, p, t, index=None):
-        if not os.path.exists(self.sub):
-            os.system("mkdir -p %s"%self.sub)
-        try:
-            if index is None:
-                randomStr = ''.join(random.choice('0123456789') for _ in range(10))
+    def tasksOfPrograms(self, ps, types):
+        images = drawLogo(*ps, resolution=128)
+        if len(ps) == 1: images = [images]
+        tasks = []
+        for i in images:
+            if isinstance(i, str): tasks.append(None)
             else:
-                randomStr = str(index)
-            fname = self.sub + "/" + randomStr
-            for suffix in [[],["pretty"],["smooth_pretty"]]:
-                subprocess.check_output(['./logoDrawString',
-                                         '512',
-                                         fname + ("" if len(suffix) == 0 else suffix[0]),
-                                         '0',
-                                         str(p)] + suffix,
-                                        timeout=1).decode("utf8")
-            if os.path.isfile(fname + ".png"):
-                with open(fname + ".dream", "w") as f:
-                    f.write(str(p))
-            return None
-        except subprocess.TimeoutExpired:
-            return None
-        except subprocess.CalledProcessError:
-            return None
-        except ValueError:
-            return None
-        except OSError as exc:
-            raise exc
+                t = Task("Helm", arrow(turtle,turtle), [])
+                t.highresolution = i
+                tasks.append(t)
+        return tasks        
 
+    def taskOfProgram(self, p, t):
+        return self.tasksOfPrograms([p], None)[0]
 
 def list_options(parser):
     parser.add_argument("--proto",
@@ -213,7 +162,7 @@ def list_options(parser):
     parser.add_argument("--visualize",
                         default=None, type=str)
     parser.add_argument("--split",
-                        default=0., type=float)
+                        default=1., type=float)
 
 
 
@@ -227,23 +176,8 @@ def outputDreams(checkpoint, directory):
         directory = "/tmp/" + randomStr
     eprint(" Dreaming into",directory)
     os.system("mkdir  -p %s"%directory)
-    for n in range(500):
-        try:
-            p = g.sample(arrow(turtle, turtle),
-                         maximumDepth=8)
-            fname = directory + "/" + str(n)
-            for suffix in [[],["pretty"],["smooth_pretty"]]:
-                subprocess.check_output(['./logoDrawString',
-                                         '512',
-                                         fname + ("" if len(suffix) == 0 else suffix[0]),
-                                         '0',
-                                         str(p)] + suffix,
-                                        timeout=1).decode("utf8")
-            if os.path.isfile(fname + ".png"):
-                with open(fname + ".dream", "w") as f:
-                    f.write(str(p))
-        except: continue
-        
+    dreamFromGrammar(g, directory)
+
 def visualizePrimitives(primitives, export='/tmp/logo_primitives.png'):
     from itertools import product
     from pylab import imshow,show
@@ -318,7 +252,7 @@ def visualizePrimitives(primitives, export='/tmp/logo_primitives.png'):
             pp = p
             for a in arguments: pp = Application(pp,a)
             pp = Abstraction(pp)
-            i = renderLogoProgram(pp)
+            i = np.reshape(np.array(drawLogo(pp, resolution=128)), (128,128))
             if i is not None:
                 ts.append(i)
             
@@ -388,7 +322,7 @@ if __name__ == "__main__":
 
     test, train = testTrainSplit(tasks, args.pop("split"))
     eprint("Split tasks into %d/%d test/train" % (len(test), len(train)))
-    montageTasks(test,"test_")
+    if test: montageTasks(test,"test_")    
     montageTasks(train,"train_")
 
     if red is not []:
