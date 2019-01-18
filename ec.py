@@ -248,7 +248,7 @@ def ecIterator(grammar, tasks,
     if useRecognitionModel and not contextual:
         if "matrixRank" in parameters:
             del parameters["matrixRank"]
-    if not auxiliaryLoss: del parameters['auxiliaryLoss']
+    if not auxiliaryLoss and 'auxiliaryLoss' in parameters: del parameters['auxiliaryLoss']
     
     # Uses `parameters` to construct the checkpoint path
     def checkpointPath(iteration, extra=""):

@@ -227,7 +227,7 @@ def manualLogoTasks():
         return tasks
 
     for n,l in [(3,"1l"),
-                (4,"(/d 1d 3)"),
+                (4,"(*d 1d 3)"),
                 (5,"1l"),
                 (6,"(*d 1d 2)"),
                 (7,"1l"),
@@ -239,7 +239,7 @@ def manualLogoTasks():
           """%(n,l,n),
           needToTrain=True)
     for n,l in [(3,"(*d 1l 2)"),
-                (4,"(/d 1d 2)"),
+                (4,"(*d 1d 4)"),
                 (5,"(*d 1d 2)"),
                 (6,"1l"),
                 (7,"(*d 1d 3)"),
@@ -261,6 +261,28 @@ def manualLogoTasks():
 
     T("line segment", "(move 1d 0a)",
       needToTrain=True)
+
+    T("square slanted by 2pi/3",
+      """((move 0d (/a 1a 3))
+      (loop k 4 (move 1d (/a 1a 4))))""",
+      needToTrain=True)
+    T("semicircle slanted by 2pi/5",
+      """((move 0d (/a 1a 5))
+      (loop i infinity
+      (move (*d epsilonLength 4) epsilonAngle)))""",
+      needToTrain=True)
+    T("Greek spiral slanted by 2pi/6",
+      """((move 0d (/a 1a 6))
+      (loop i 7 (move (*l 1l i) (/a 1a 4))))""",
+      needToTrain=True)
+    T("Hook slanted by 2pi/7",
+      """((move 0d (/a 1a 7))
+      (move 1d 0a)
+      (loop i infinity
+      (move (*d epsilonLength 4) epsilonAngle)))""")
+    T("""slanted line""",
+      """((move 0d (/a 1a 8))
+      (move (*d 1l 3) 0a))""")
     
 
     for i in [6,7,8,9]:
@@ -281,7 +303,7 @@ def manualLogoTasks():
     for i in [3,5,7,9]:
         T("star %d"%i,
           """
-          (loop i %d (move (*d 1d 3) (-a (/a 1a 2) (/a (/a 1a 2) %s))))
+          (loop i %d (move (*d 1d 4) (-a (/a 1a 2) (/a (/a 1a 2) %s))))
           """%(i,i),
           needToTrain=i in [5,9])
 
@@ -568,7 +590,7 @@ def manualLogoTasks():
           (move (*d 1d %d) (/a 1a 4)))
           """%l,
           needToTrain=l in range(4))
-    for n in [4,5]:
+    for n in [5,7]:
         T("%d-concentric squares"%n,
           """
           (for i %d

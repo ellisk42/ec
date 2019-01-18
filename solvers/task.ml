@@ -121,7 +121,7 @@ register_special_task "LOGO" (fun extras ?timeout:(timeout = 0.001) name ty exam
             match
               if true then
                 (match run_recent_logo ~timeout p with
-                 | Some(bx) when (LogoLib.LogoInterpreter.fp_equal bx by 5) -> Some(0.)
+                 | Some(bx) when (LogoLib.LogoInterpreter.fp_equal bx by 0) -> Some(0.)
                  | _ -> None)
               else 
             run_for_interval
