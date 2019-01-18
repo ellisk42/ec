@@ -642,6 +642,10 @@ class RecognitionModel(nn.Module):
                 for task in tasks
                 for g in [self.grammarOfTask(task).untorch().noParent] }
 
+    def taskAuxiliaryLossLayer(self, tasks):
+        return {task: self._auxiliaryPrediction(self.featureExtractor.featuresOfTask(task)).view(-1).data.cpu().numpy()
+                for task in tasks}
+
     def taskHiddenStates(self, tasks):
         return {task: self._MLP(self.featureExtractor.featuresOfTask(task)).view(-1).data.cpu().numpy()
                 for task in tasks}

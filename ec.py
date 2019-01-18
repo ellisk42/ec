@@ -382,30 +382,31 @@ def ecIterator(grammar, tasks,
 
     # Check if we are just updating the full task metrics
     if addFullTaskMetrics:
-        if testingTimeout is not None and testingTimeout > enumerationTimeout:
-            enumerationTimeout = testingTimeout
-        if result.recognitionModel is not None:
-            _enumerator = lambda *args, **kw: result.recognitionModel.enumerateFrontiers(*args, **kw)
-        else: _enumerator = lambda *args, **kw: multicoreEnumeration(result.grammars[-1], *args, **kw)
-        enumerator = lambda *args, **kw: _enumerator(*args, likelihoodModel,
-                                                     maximumFrontier=maximumFrontier, solver=solver,
-                                                     CPUs=CPUs, evaluationTimeout=evaluationTimeout,
-                                                     **kw)
-        trainFrontiers, _, trainingTimes = enumerator(tasks, enumerationTimeout=enumerationTimeout)
-        testFrontiers, _, testingTimes = enumerator(testingTasks, enumerationTimeout=testingTimeout, testing=True)
+        # if testingTimeout is not None and testingTimeout > enumerationTimeout:
+        #     enumerationTimeout = testingTimeout
+        # if result.recognitionModel is not None:
+        #     _enumerator = lambda *args, **kw: result.recognitionModel.enumerateFrontiers(*args, **kw)
+        # else: _enumerator = lambda *args, **kw: multicoreEnumeration(result.grammars[-1], *args, **kw)
+        # enumerator = lambda *args, **kw: _enumerator(*args, likelihoodModel,
+        #                                              maximumFrontier=maximumFrontier, solver=solver,
+        #                                              CPUs=CPUs, evaluationTimeout=evaluationTimeout,
+        #                                              **kw)
+        # trainFrontiers, _, trainingTimes = enumerator(tasks, enumerationTimeout=enumerationTimeout)
+        # testFrontiers, _, testingTimes = enumerator(testingTasks, enumerationTimeout=testingTimeout, testing=True)
 
-        updateTaskSummaryMetrics(result.recognitionTaskMetrics, trainingTimes, 'recognitionBestTimes')
-        updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskGrammarLogProductions(tasks), 'taskLogProductions')
-        updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskGrammarEntropies(tasks), 'taskGrammarEntropies')
+        # updateTaskSummaryMetrics(result.recognitionTaskMetrics, trainingTimes, 'recognitionBestTimes')
+        # updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskGrammarLogProductions(tasks), 'taskLogProductions')
+        # updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskGrammarEntropies(tasks), 'taskGrammarEntropies')
         
-        updateTaskSummaryMetrics(result.recognitionTaskMetrics, testingTimes, 'heldoutTestingTimes')
+        # updateTaskSummaryMetrics(result.recognitionTaskMetrics, testingTimes, 'heldoutTestingTimes')
         updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskGrammarLogProductions(testingTasks), 'heldoutTaskLogProductions')
+        updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskAuxiliaryLossLayer(testingTasks), 'heldoutTaskAuxiliaryLayer')
         updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskGrammarEntropies(testingTasks), 'heldoutTaskGrammarEntropies')
 
-        updateTaskSummaryMetrics(result.recognitionTaskMetrics, {f.task: f
-                                                                 for f in trainFrontiers + testFrontiers
-                                                                 if len(f) > 0},
-                                 'frontier')
+        # updateTaskSummaryMetrics(result.recognitionTaskMetrics, {f.task: f
+        #                                                          for f in trainFrontiers + testFrontiers
+        #                                                          if len(f) > 0},
+        #                          'frontier')
         SUFFIX = ".pickle"
         assert path.endswith(SUFFIX)
         path = path[:-len(SUFFIX)] + "_FTM=True" + SUFFIX
@@ -1058,6 +1059,7 @@ def addTaskMetrics(result, path):
 
     updateTaskSummaryMetrics(result.recognitionTaskMetrics, result.recognitionModel.taskGrammarLogProductions(tasks), 'contextualLogProductions')
     updateTaskSummaryMetrics(result.recognitionTaskMetrics, result.recognitionModel.taskHiddenStates(tasks), 'hiddenState')
+    updateTaskSummaryMetrics(result.recognitionTaskMetrics, result.recognitionModel.taskAuxiliaryLossLayer(tasks), 'auxiliaryLossLayer')
     g = result.grammars[-2] # the final entry in result.grammars is a grammar that we have not used yet
     updateTaskSummaryMetrics(result.recognitionTaskMetrics, {f.task: f.expectedProductionUses(g)
                                                              for f in result.taskSolutions.values()
