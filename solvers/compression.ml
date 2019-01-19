@@ -728,7 +728,9 @@ let compression_loop
   let step = if nc = 1 then compression_step else compression_step_master ~nc in 
 
   let rec loop ~iterations g frontiers =
-    if iterations < 1 then g, frontiers else 
+    if iterations < 1 then
+      (Printf.eprintf "Exiting ocaml compression because of iteration bound.\n";g, frontiers)
+    else 
       match time_it "Completed one step of memory consolidation"
               (fun () -> step ~structurePenalty ~topK ~aic ~pseudoCounts ~arity ~bs ~topI g frontiers)
       with
@@ -784,6 +786,9 @@ let () =
       j |> member "iterations" |> to_int
     with _ -> 1000
   in
+  Printf.eprintf "Compression backend will run for most %d iterations\n"
+    iterations;
+  flush_everything();
 
   let frontiers = j |> member "frontiers" |> to_list |> List.map ~f:deserialize_frontier in
   
