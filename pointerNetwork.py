@@ -43,9 +43,6 @@ class LineDecoder(nn.Module):
 
         self.pointerIndex = self.wordToIndex["POINTER"]
 
-        # This really should live in the encoder
-
-
     def forward(self, input, hidden):
         input = input.unsqueeze(0)
         hidden = hidden.unsqueeze(0)        
