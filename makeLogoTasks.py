@@ -292,13 +292,21 @@ def manualLogoTasks():
           (move (*l 1l i) (/a 1a 4)))
           """%i,
           needToTrain=i in [7,8])
-    for i in [3,4,5,6]:
+    for i in [2,3,4,5]:
         T("smooth spiral %d"%i,
           """
           (loop i infinity 
           (move (*d epsilonLength i) (*a epsilonAngle %d)))
           """%i,
-          needToTrain=i in [3,6])
+          needToTrain=i in [3,5])
+
+    T("smooth spiral 4 slanted by 2pi/2",
+      """
+          ((move 0d (/a 1a 2))
+      (loop i infinity 
+          (move (*d epsilonLength i) (*a epsilonAngle 4))))
+      """,
+      needToTrain=True)
 
     for i in [3,5,7,9]:
         T("star %d"%i,
@@ -448,14 +456,9 @@ def manualLogoTasks():
           (move 1d 0a)
           (p (move %s 0a)))"""%(n,l),
           needToTrain=n == 2)
-    T("line next to circle",
+    T("line next to semicircle",
       """
       ((move 1d 0a) (p (move 1d 0a)) (loop i infinity (move epsilonLength epsilonAngle)))
-      """,
-      needToTrain=True)
-    T("circle next to line",
-      """
-      ((loop i infinity (move epsilonLength epsilonAngle)) (p (move 1d 0a)) (move 1d 0a))
       """,
       needToTrain=True)
     for n,l in [(3,"(/d 1d 2)"),
