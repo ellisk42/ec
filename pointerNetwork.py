@@ -9,9 +9,9 @@ from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 
 import numpy as np
 
-class LineEncoder(nn.Module):
+class SymbolEncoder(nn.Module):
     def __init__(self, lexicon, H=256):
-        super(LineEncoder, self).__init__()
+        super(SymbolEncoder, self).__init__()
 
         self.encoder = nn.Embedding(len(lexicon), H)
         self.lexicon = lexicon
@@ -115,9 +115,9 @@ class LineDecoder(nn.Module):
             
             
 class PointerNetwork(nn.Module):
-    def __init__(self, lexicon, H=256):
+    def __init__(self, encoder, lexicon, H=256):
         super(PointerNetwork, self).__init__()
-        self.encoder = LineEncoder(lexicon, H=H)
+        self.encoder = encoder
         self.decoder = LineDecoder(lexicon, H=H)
 
     def gradientStep(self, optimizer, inputObjects, outputSequence,
@@ -135,9 +135,17 @@ class PointerNetwork(nn.Module):
                  for s in self.decoder.sample(torch.zeros(256),
                                               self.encoder(inputObjects))         ]
         
+
+class SLCNetwork(nn.Module):
+    def __init__(self, encoder, lexicon, H=256):
+        super(SLCNetwork, self).__init__()
+        self.pn = PointerNetwork(encoder, lexicon, H=H)
+
+    
         
         
-m = PointerNetwork(["large","small"] + [str(n) for n in range(10) ])
+        
+m = PointerNetwork(SymbolEncoder([str(n) for n in range(10) ]), ["large","small"] + [str(n) for n in range(10) ])
 optimizer = torch.optim.Adam(m.parameters(), lr=0.001, eps=1e-3, amsgrad=True)
 for n in range(90000):
     x = str(random.choice(range(10)))
