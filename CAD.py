@@ -1,5 +1,5 @@
 import numpy as np
-
+from pointerNetwork import *
 
 import random
 
@@ -45,6 +45,7 @@ class CNN(nn.Module):
         self.outputDimensionality = 1024
 
     def forward(self, v):
+        if isinstance(v, list): v = np.array(v)
         if len(v.shape) == 2: squeeze = True
         v = torch.tensor(v).unsqueeze(0)
         if squeeze: v = v.unsqueeze(0)
@@ -208,6 +209,7 @@ def randomScene(resolution=64):
 
 
 if __name__ == "__main__":
+    m = SLCNetwork(CNN(), CSG.lexicon)
     import matplotlib.pyplot as plot
 
     m = CNN()

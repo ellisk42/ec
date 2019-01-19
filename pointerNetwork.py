@@ -9,6 +9,13 @@ from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 
 import numpy as np
 
+class Pointer():
+    def __init__(self, i, m=None):
+        self.i = i
+        self.m = m
+    def __str__(self): return f"P({self.i}, max={self.m})"
+    def __repr__(self): return str(self)
+    
 class SymbolEncoder(nn.Module):
     def __init__(self, lexicon, H=256):
         super(SymbolEncoder, self).__init__()
@@ -21,7 +28,7 @@ class SymbolEncoder(nn.Module):
         
 
 class LineDecoder(nn.Module):
-    def __init__(self, lexicon, H=256, layers=1):
+    def __init__(self, lexicon, H=256, encoderDimensionality=256, layers=1):
         super(LineDecoder, self).__init__()
 
         self.model = nn.GRU(H, H, layers)
@@ -37,9 +44,9 @@ class LineDecoder(nn.Module):
         self.output = nn.Sequential(nn.Linear(H, len(self.lexicon)),
                                     nn.LogSoftmax())
         
-        self.decoderToPointer = nn.Linear(H, H)
-        self.encoderToPointer = nn.Linear(H, H)
-        self.attentionSelector = nn.Linear(H, 1)
+        self.decoderToPointer = nn.Linear(H, H, bias=False)
+        self.encoderToPointer = nn.Linear(encoderDimensionality, H, bias=False)
+        self.attentionSelector = nn.Linear(H, 1, bias=False)
 
         self.pointerIndex = self.wordToIndex["POINTER"]
 
@@ -60,39 +67,47 @@ class LineDecoder(nn.Module):
         attention = self.attentionSelector(torch.tanh(_h + _o))
         return F.log_softmax(attention.squeeze(2), dim=1)        
 
-    def logLikelihood(self, initialState, target, encodedInputs):
-        symbolSequence = [self.wordToIndex[t if isinstance(t,str) else "POINTER"]
+    def logLikelihood_hidden(self, initialState, target, encodedInputs):
+        symbolSequence = [self.wordToIndex[t if not isinstance(t,Pointer) else "POINTER"]
                           for t in ["STARTING"] + target + ["ENDING"] ]
         
         # inputSequence : L x B x H
         inputSequence = self.embedding(torch.tensor(symbolSequence[:-1])).unsqueeze(1)
         outputSequence = torch.tensor(symbolSequence[1:])
 
-        h0 = initialState.unsqueeze(0).unsqueeze(0)
+        if initialState is not None: initialState = initialState.unsqueeze(0).unsqueeze(0)
 
-        o, h = self.model(inputSequence, h0)
+        o, h = self.model(inputSequence, initialState)
 
         # output sequence log likelihood, ignoring pointer values
         sll = -F.nll_loss(self.output(o.squeeze(1)), outputSequence, reduce=True, size_average=False)
 
+
         # pointer value log likelihood
         pointerTimes = [t - 1 for t,s in enumerate(symbolSequence) if self.pointerIndex == s ]
-        pointerValues = [v for v in target if isinstance(v, int) ]
-        pointerHiddens = o[torch.tensor(pointerTimes),:,:].squeeze(1)
-        
-        attention = self.pointerAttention(pointerHiddens, encodedInputs)
-        pll = -F.nll_loss(attention, torch.tensor(pointerValues),
-                          reduce=True, size_average=False)
-        return sll + pll
+        if len(pointerTimes) == 0:
+            pll = 0.
+        else:
+            pointerValues = [v.i for v in target if isinstance(v, Pointer) ]
+            pointerHiddens = o[torch.tensor(pointerTimes),:,:].squeeze(1)
+
+            attention = self.pointerAttention(pointerHiddens, encodedInputs)
+            pll = -F.nll_loss(attention, torch.tensor(pointerValues),
+                              reduce=True, size_average=False)
+        return sll + pll, h
+
+    def logLikelihood(self, initialState, target, encodedInputs):
+        return self.logLikelihood_hidden(initialState, target, encodedInputs)[0]
 
     def sample(self, initialState, encodedInputs):
         sequence = ["STARTING"]
         h = initialState
         while len(sequence) < 100:
             lastWord = sequence[-1]
-            if isinstance(lastWord,int): lastWord = "POINTER"
+            if isinstance(lastWord, Pointer): lastWord = "POINTER"
             i = self.embedding(torch.tensor(self.wordToIndex[lastWord]))
-            o,h = self.model(i.unsqueeze(0).unsqueeze(0), h.unsqueeze(0).unsqueeze(0))
+            if h is not None: h = h.unsqueeze(0).unsqueeze(0)
+            o,h = self.model(i.unsqueeze(0).unsqueeze(0), h)
             o = o.squeeze(0).squeeze(0)
             h = h.squeeze(0).squeeze(0)
 
@@ -104,12 +119,11 @@ class LineDecoder(nn.Module):
             if next_symbol == "POINTER":
                 # Sample the next pointer
                 a = self.pointerAttention(h.unsqueeze(0), encodedInputs).squeeze(0)
-                next_symbol = torch.multinomial(a.exp(),1)[0].data.item()                
+                next_symbol = Pointer(torch.multinomial(a.exp(),1)[0].data.item())
 
             sequence.append(next_symbol)
                 
-            
-        return sequence
+        return sequence[1:]
             
 
             
@@ -123,7 +137,7 @@ class PointerNetwork(nn.Module):
     def gradientStep(self, optimizer, inputObjects, outputSequence,
                      verbose=False):
         self.zero_grad()
-        l = -self.decoder.logLikelihood(torch.zeros(256), outputSequence,
+        l = -self.decoder.logLikelihood(None, outputSequence,
                                         self.encoder(inputObjects))
         l.backward()
         optimizer.step()
@@ -131,21 +145,48 @@ class PointerNetwork(nn.Module):
             print("loss",l.data.item())
 
     def sample(self, inputObjects):
-        return [ inputObjects[s] if isinstance(s,int) else s
-                 for s in self.decoder.sample(torch.zeros(256),
+        return [ inputObjects[s.i] if isinstance(s,Pointer) else s
+                 for s in self.decoder.sample(None,
                                               self.encoder(inputObjects))         ]
         
 
 class SLCNetwork(nn.Module):
     def __init__(self, encoder, lexicon, H=256):
         super(SLCNetwork, self).__init__()
-        self.pn = PointerNetwork(encoder, lexicon, H=H)
+        lexicon = lexicon + ["RETURN"]
+        self.decoder = LineDecoder(lexicon, encoderDimensionality=encoder.outputDimensionality, H=H)
+        self.encoder = encoder
+        self.spec2hidden = nn.Linear(encoder.outputDimensionality,
+                                     H)
 
-    
+    def gradientStep(self, optimizer, program, spec):
+        lines = program.toSLC()
+        trace = [l.execute()
+                 for l in program.calculateTrace()]
+
+        self.zero_grad()
+        spec = self.encoder(spec)
+        objects = self.encoder(trace)
+
+        loss = 0
+        h = self.spec2hidden(spec).unsqueeze(0).unsqueeze(0)
+        for n,line in enumerate(lines):
+            objectsInScope = objects[:n,:]
+            ll, h = self.decoder.logLikelihood_hidden(h, line, objectsInScope)
+            loss = loss - ll
+        loss = loss - self.decoder.logLikelihood(None, ["RETURN"], objects)
+
+        loss.backward()
+        optimizer.step()
+        return l.data.item()
+            
+
         
         
         
-m = PointerNetwork(SymbolEncoder([str(n) for n in range(10) ]), ["large","small"] + [str(n) for n in range(10) ])
+        
+        
+m = PointerNetwork(SymbolEncoder([str(n) for n in range(10) ]), ["large","small"])
 optimizer = torch.optim.Adam(m.parameters(), lr=0.001, eps=1e-3, amsgrad=True)
 for n in range(90000):
     x = str(random.choice(range(10)))
@@ -154,11 +195,11 @@ for n in range(90000):
     large = max(x,y)
     small = min(x,y)
     if random.choice([False,True]):
-        sequence = ["large", int(large == y), int(large == y),
-                    "small", int(small == y)]
+        sequence = ["large", Pointer(int(large == y)), Pointer(int(large == y)),
+                    "small", Pointer(int(small == y))]
     else:
-        sequence = ["small", int(small == y),
-                    "large", int(large == y)]
+        sequence = ["small", Pointer(int(small == y)),
+                    "large", Pointer(int(large == y))]
     verbose = n%50 == 0
     m.gradientStep(optimizer, [x,y], sequence, verbose=verbose)
     if verbose:
