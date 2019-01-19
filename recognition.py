@@ -712,7 +712,7 @@ class RecognitionModel(nn.Module):
         If helmholtzFrontiers is not provided then we will sample programs during training
         """
         assert (steps is not None) or (timeout is not None), \
-            "Cannot train recognition model without either a bound on the number of epochs or bound on the training time"
+            "Cannot train recognition model without either a bound on the number of gradient steps or bound on the training time"
         if steps is None: steps = 9999999
         if biasOptimal is None: biasOptimal = len(helmholtzFrontiers) > 0
         
@@ -857,8 +857,12 @@ class RecognitionModel(nn.Module):
         losses, descriptionLengths, realLosses, dreamLosses, realMDL, dreamMDL = [], [], [], [], [], []
         classificationLosses = []
         totalGradientSteps = 0
-        for i in range(1, steps + 1):
+        epochs = 9999999
+        for i in range(1, epochs + 1):
             if timeout and time.time() - start > timeout:
+                break
+
+            if totalGradientSteps > steps:
                 break
 
             if helmholtzRatio < 1.:
@@ -866,6 +870,8 @@ class RecognitionModel(nn.Module):
                 random.shuffle(permutedFrontiers)
             else:
                 permutedFrontiers = [None]
+
+            finishedSteps = False
             for frontier in permutedFrontiers:
                 # Randomly decide whether to sample from the generative model
                 dreaming = random.random() < helmholtzRatio
@@ -898,6 +904,8 @@ class RecognitionModel(nn.Module):
                     else:
                         realLosses.append(losses[-1])
                         realMDL.append(descriptionLengths[-1])
+                    if totalGradientSteps > steps:
+                        break # Stop iterating, then print epoch and loss, then break to finish.
                         
             if (i == 1 or i % 10 == 0) and losses:
                 eprint("Epoch", i, "Loss", mean(losses))
