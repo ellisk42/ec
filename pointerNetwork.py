@@ -58,14 +58,21 @@ class LineDecoder(nn.Module):
         output = output.squeeze(0)
         return self.output(output), hidden
 
-    def pointerAttention(self, hiddenStates, objectEncodings):
+    def pointerAttention(self, hiddenStates, objectEncodings, pointerBounds):
         hiddenStates = self.decoderToPointer(hiddenStates)
         objectEncodings = self.encoderToPointer(objectEncodings)
 
         _h = hiddenStates.unsqueeze(1).repeat(1, objectEncodings.size(0), 1)
         _o = objectEncodings.unsqueeze(0).repeat(hiddenStates.size(0), 1, 1)
-        attention = self.attentionSelector(torch.tanh(_h + _o))
-        return F.log_softmax(attention.squeeze(2), dim=1)        
+        attention = self.attentionSelector(torch.tanh(_h + _o)).squeeze(2)
+
+        mask = np.zeros((hiddenStates.size(0), objectEncodings.size(0)))
+
+        for p,b in enumerate(pointerBounds):
+            if b is not None:
+                mask[p, b:] = NEGATIVEINFINITY
+        
+        return F.log_softmax(attention + torch.tensor(mask).float(), dim=1)        
 
     def logLikelihood_hidden(self, initialState, target, encodedInputs):
         symbolSequence = [self.wordToIndex[t if not isinstance(t,Pointer) else "POINTER"]
@@ -89,9 +96,11 @@ class LineDecoder(nn.Module):
             pll = 0.
         else:
             pointerValues = [v.i for v in target if isinstance(v, Pointer) ]
+            pointerBounds = [v.m for v in target if isinstance(v, Pointer) ]
             pointerHiddens = o[torch.tensor(pointerTimes),:,:].squeeze(1)
 
-            attention = self.pointerAttention(pointerHiddens, encodedInputs)
+            attention = self.pointerAttention(pointerHiddens, encodedInputs,
+                                              pointerBounds)
             pll = -F.nll_loss(attention, torch.tensor(pointerValues),
                               reduce=True, size_average=False)
         return sll + pll, h
@@ -118,7 +127,7 @@ class LineDecoder(nn.Module):
                 break
             if next_symbol == "POINTER":
                 # Sample the next pointer
-                a = self.pointerAttention(h.unsqueeze(0), encodedInputs).squeeze(0)
+                a = self.pointerAttention(h.unsqueeze(0), encodedInputs, []).squeeze(0)
                 next_symbol = Pointer(torch.multinomial(a.exp(),1)[0].data.item())
 
             sequence.append(next_symbol)
@@ -186,21 +195,22 @@ class SLCNetwork(nn.Module):
         
         
         
-m = PointerNetwork(SymbolEncoder([str(n) for n in range(10) ]), ["large","small"])
-optimizer = torch.optim.Adam(m.parameters(), lr=0.001, eps=1e-3, amsgrad=True)
-for n in range(90000):
-    x = str(random.choice(range(10)))
-    y = str(random.choice(range(10)))
-    if x == y: continue
-    large = max(x,y)
-    small = min(x,y)
-    if random.choice([False,True]):
-        sequence = ["large", Pointer(int(large == y)), Pointer(int(large == y)),
-                    "small", Pointer(int(small == y))]
-    else:
-        sequence = ["small", Pointer(int(small == y)),
-                    "large", Pointer(int(large == y))]
-    verbose = n%50 == 0
-    m.gradientStep(optimizer, [x,y], sequence, verbose=verbose)
-    if verbose:
-        print([x,y],"goes to",m.sample([x,y]))
+if __name__ == "__main__":
+    m = PointerNetwork(SymbolEncoder([str(n) for n in range(10) ]), ["large","small"])
+    optimizer = torch.optim.Adam(m.parameters(), lr=0.001, eps=1e-3, amsgrad=True)
+    for n in range(90000):
+        x = str(random.choice(range(10)))
+        y = str(random.choice(range(10)))
+        if x == y: continue
+        large = max(x,y)
+        small = min(x,y)
+        if random.choice([False,True]):
+            sequence = ["large", Pointer(int(large == y)), Pointer(int(large == y)),
+                        "small", Pointer(int(small == y))]
+        else:
+            sequence = ["small", Pointer(int(small == y)),
+                        "large", Pointer(int(large == y))]
+        verbose = n%50 == 0
+        m.gradientStep(optimizer, [x,y], sequence, verbose=verbose)
+        if verbose:
+            print([x,y],"goes to",m.sample([x,y]))

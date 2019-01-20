@@ -109,7 +109,7 @@ class CSG():
         lines = self.toSLC()
         trace = []
         for l in lines:
-            l = [trace[t] if isinstance(t,int) else t for t in l ]
+            l = [trace[t.i] if isinstance(t,Pointer) else t for t in l ]
             trace.append(self.parseLine(l))
         return trace
 
@@ -123,9 +123,9 @@ class Rectangle(CSG):
 
     def _toLine(self, lines):
         key = ('r',str(self.w),str(self.h))
-        if key in lines: return lines.index(key)
+        if key in lines: return Pointer(lines.index(key), len(lines))
         lines.append(key)
-        return len(lines) - 1        
+        return Pointer(len(lines) - 1)
 
     def __contains__(self, p):
         return p[0] >= 0 and p[1] >= 0 and \
@@ -137,9 +137,9 @@ class Circle(CSG):
 
     def _toLine(self, lines):
         key = ('c',str(self.r))
-        if key in lines: return lines.index(key)
+        if key in lines: return Pointer(lines.index(key), len(lines))
         lines.append(key)
-        return len(lines) - 1
+        return Pointer(len(lines) - 1)
 
     def __contains__(self, p):
         return p[0]*p[0] + p[1]*p[1] <= self.r
@@ -151,9 +151,9 @@ class Translation(CSG):
 
     def _toLine(self, lines):
         key = ('t',str(self.v[0]),str(self.v[1]),self.child._toLine(lines))
-        if key in lines: return lines.index(key)
+        if key in lines: return Pointer(lines.index(key), len(lines))
         lines.append(key)
-        return len(lines) - 1
+        return Pointer(len(lines) - 1)
 
 
     def __contains__(self, p):
@@ -166,9 +166,9 @@ class Union(CSG):
 
     def _toLine(self, lines):
         key = ('+',self.a._toLine(lines),self.b._toLine(lines))
-        if key in lines: return lines.index(key)
+        if key in lines: return Pointer(lines.index(key))
         lines.append(key)
-        return len(lines) - 1
+        return Pointer(len(lines) - 1)
 
     def __contains__(self, p):
         return p in self.a or p in self.b
@@ -178,9 +178,9 @@ class Difference(CSG):
         self.a, self.b = a, b
     def _toLine(self, lines):
         key = ('-',self.a._toLine(lines),self.b._toLine(lines))
-        if key in lines: return lines.index(key)
+        if key in lines: return Pointer(lines.index(key))
         lines.append(key)
-        return len(lines) - 1
+        return Pointer(len(lines) - 1)
 
     def __contains__(self, a, b):
         return p in self.a and (not (p in self.b))
