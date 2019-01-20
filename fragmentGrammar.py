@@ -494,6 +494,11 @@ def ocamlInduce(g, frontiers, _=None,
             CPUs = max(1, int(CPUs/3))
     else:
         CPUs = max(1, int(CPUs/2))
+    CPUs = 2
+
+    # X X X FIXME X X X
+    # for unknown reasons doing compression all in one go works correctly and doing it with Python and the outer loop causes problems
+    iterations = 99 # maximum number of components to add at once
     
     while True:
         g0 = g
@@ -511,7 +516,7 @@ def ocamlInduce(g, frontiers, _=None,
                    "structurePenalty": float(structurePenalty),
                    "CPUs": CPUs,
                    "DSL": g.json(),
-                   "iterations": 1,
+                   "iterations": iterations,
                    "frontiers": [ f.json()
                                   for f in frontiers ]}
 
@@ -553,7 +558,7 @@ def ocamlInduce(g, frontiers, _=None,
                      for original, new in zip(frontiers, response["frontiers"]) }
         frontiers = [frontiers.get(f.task, t2f[f.task])
                      for f in originalFrontiers ]
-        if len(g) > len(g0):
+        if iterations == 1 and len(g) > len(g0):
             eprint("Grammar changed - running another round of consolidation.")
             continue
         else:
