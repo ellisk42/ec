@@ -8,6 +8,8 @@ from program import *
 from recognition import *
 from enumeration import *
 
+import os
+import datetime
 import random
 from functools import reduce
 import dill
@@ -208,9 +210,14 @@ if __name__ == "__main__":
         sygusCompetition(competitionCheckpoint, challenge)
         sys.exit(0)
 
+    timestamp = datetime.datetime.now().isoformat()
+    outputDirectory = "experimentOutputs/text/%s"%timestamp
+    os.system("mkdir -p %s"%outputDirectory)
+
+
     generator = ecIterator(baseGrammar, train,
                            testingTasks=test + challenge,
-                           outputPrefix="experimentOutputs/text",
+                           outputPrefix="%s/text"%outputDirectory,
                            evaluationTimeout=evaluationTimeout,
                            **arguments)
     if doChallenge:

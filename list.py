@@ -4,6 +4,8 @@ from collections import defaultdict
 from itertools import chain
 import json
 import math
+import os
+import datetime
 
 from ec import explorationCompression, commandlineArguments
 from utilities import eprint, numberOfCPUs, flatten, fst, testTrainSplit, POSITIVEINFINITY
@@ -350,10 +352,14 @@ if __name__ == "__main__":
         "learned": LearnedFeatureExtractor,
     }[args.pop("extractor")]
     extractor.H = args.pop("hidden")
+
+    timestamp = datetime.datetime.now().isoformat()
+    outputDirectory = "experimentOutputs/list/%s"%timestamp
+    os.system("mkdir -p %s"%outputDirectory)
     
     args.update({
         "featureExtractor": extractor,
-        "outputPrefix": "experimentOutputs/list",
+        "outputPrefix": "%s/list"%outputDirectory,
         "evaluationTimeout": 0.0005,
         "solver": "ocaml"
     })
