@@ -1072,7 +1072,7 @@ class ContextualGrammar:
                     u[primitive2index[child]] += 1.0
         return np.array(u)/n            
 
-    def featureVector(self, _=None, requests=None, onlyInventions=False):
+    def featureVector(self, _=None, requests=None, onlyInventions=True, normalize=True):
         """
         Returns the probabilities licensed by the type system.
         This is like the grammar productions, but with irrelevant junk removed.
@@ -1085,24 +1085,36 @@ class ContextualGrammar:
             else: requests = set()
         requests = {r.returns() for r in requests}
         features = []
+        logWeights = []
         for l,t,p in sorted(self.noParent.productions,
                             key=lambda z: str(z[2])):
             if onlyInventions and not p.isInvented: continue
             if any( canUnify(r, t.returns()) for r in requests ) or len(requests) == 0:
-                features.append(l)
+                logWeights.append(l)
+        features.append(logWeights)
         for parent in sorted(self.primitives, key=str):
             if onlyInventions and not parent.isInvented: continue
             if parent not in self.library: continue
             argumentTypes = parent.infer().functionArguments()
             for j,g in enumerate(self.library[parent]):
                 argumentType = argumentTypes[j]
+                logWeights = []
                 for l,t,p in sorted(g.productions,
                                     key=lambda z: str(z[2])):
                     if onlyInventions and not p.isInvented: continue
                     if canUnify(argumentType.returns(), t.returns()):
-                        features.append(l)
+                        logWeights.append(l)
+                features.append(logWeights)
+
+        if normalize:
+            features = [ [math.exp(w - z) for w in lw ]
+                         for lw in features
+                         if lw
+                         for z in [lse(lw)] ]
         import numpy as np
-        return np.array(features)            
+        return np.array([f
+                         for lw in features
+                         for f in lw])
                 
         
 

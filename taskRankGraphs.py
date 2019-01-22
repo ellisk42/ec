@@ -349,6 +349,8 @@ def plotTSNE(
 					       for f in taskMetrics] 
 			taskNames = np.array(taskNames)
 			taskMetrics = np.array(taskMetrics)
+			metricNorms = (taskMetrics*taskMetrics).sum(1)**0.5
+			taskMetrics = taskMetrics/np.reshape(metricNorms, (metricNorms.shape[0], 1))
 			print(taskNames.shape, taskMetrics.shape)
 			print("Clustering %d tasks with embeddings of shape: %s" % (len(taskMetrics), str(taskMetrics[0].shape)) )
 			
