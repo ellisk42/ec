@@ -573,6 +573,12 @@ class RecognitionModel(nn.Module):
         features = self._MLP(features)
         return self.grammarBuilder(features)
 
+    def auxiliaryPrimitiveEmbeddings(self):
+        """Returns the actual outputDimensionality weight vectors for each of the primitives."""
+        auxiliaryWeights = self._auxiliaryPrediction.weight.data.cpu().numpy()
+        primitivesDict =  {self.grammar.primitives[i] : auxiliaryWeights[i, :] for i in range(len(self.grammar.primitives))}
+        return primitivesDict
+
     def grammarOfTask(self, task):
         features = self.featureExtractor.featuresOfTask(task)
         if features is None: return None

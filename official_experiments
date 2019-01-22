@@ -95,6 +95,38 @@ Curriculum (batch size 10), 720s: text_default_10_720s [Done - solves up to 91 t
 
 
 LIST:
+1/18 Replication Runs: # Cap 10,000 gradient steps.
+
+Best full model, random shuffle (batches of 10), structure penalty, no vectorization: *list_random_shuffle_10_720s_sp_no_vec_1: replication 1. [Best 103/109]
+	python launch.py  -k -z r4.16xlarge list_random_shuffle_10_720s_sp_no_vec_1 "python list.py  -t 720  --pseudoCounts 30 --aic 1.0 --structurePenalty 2.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -RS 10000 --storeTaskMetrics --split 0.5 --testingTimeout 720 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10"
+
+	Replication 2: Done. Best 90/109.
+	python launch.py  -k -z r4.16xlarge *list_random_shuffle_10_720s_sp_no_vec_2 "python list.py  -t 720  --pseudoCounts 30 --aic 1.0 --structurePenalty 2.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -RS 10000  --storeTaskMetrics --split 0.5 --testingTimeout 720 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10"
+
+	Replication 3: *list_random_shuffle_10_720s_sp_no_vec_3 Done. Best 84/109.
+
+Best full model, random shuffle (batches of 10), structure penalty, vectorization with gradient steps capped. Best: 104/109.
+	python launch.py  -k -z r4.16xlarge list_random_shuffle_10_720s_sp_vec_1 "python list.py  -t 720  --pseudoCounts 30 --aic 1.0 --structurePenalty 2.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -RS 10000  --storeTaskMetrics --split 0.5 --testingTimeout 720 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10 --vectorized"
+
+	Done: best 103/109.
+	python launch.py  -k -z r4.16xlarge list_random_shuffle_10_720s_sp_vec_2 "python list.py  -t 720  --pseudoCounts 30 --aic 1.0 --structurePenalty 2.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -RS 10000  --storeTaskMetrics --split 0.5 --testingTimeout 720 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10 --vectorized"
+
+
+Best full model, no vectorization, auxiliary loss. Best: 88/109.
+		python launch.py  -k -z r4.16xlarge list_random_shuffle_10_720s_sp_no_vec_aux_1 "python list.py  -t 720  --pseudoCounts 30 --aic 1.0 --structurePenalty 2.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -RS 10000  --storeTaskMetrics --split 0.5 --testingTimeout 720 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10 --auxiliary"
+
+		Running one replication. Best: 104/109.
+
+Best full model, vectorization, auxiliary loss. Best: 104/109.
+		python launch.py  -k -z r4.16xlarge list_random_shuffle_10_720s_sp_vec_aux_1 "python list.py  -t 720  --pseudoCounts 30 --aic 1.0 --structurePenalty 2.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -RS 10000  --storeTaskMetrics --split 0.5 --testingTimeout 720 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10 --vectorized --auxiliary"
+
+
+Best full model, vectorization with many steps (sanity check.)
+python launch.py  -k -z r4.16xlarge list_random_shuffle_10_720s_sp_vec_many_1 "python list.py  -t 720  --pseudoCounts 30 --aic 1.0 --structurePenalty 2.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -RS 150000  --storeTaskMetrics --split 0.5 --testingTimeout 720 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10 --vectorized"
+
+python launch.py  -k -z r4.16xlarge list_random_shuffle_10_720s_sp_vec_many_2 "python list.py  -t 720  --pseudoCounts 30 --aic 1.0 --structurePenalty 2.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -RS 150000  --storeTaskMetrics --split 0.5 --testingTimeout 720 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10 --vectorized"
+
+---
 Full model without batching:
      python launch.py -k  -z x1.32xlarge ListDream "python list.py -t 7200 --split 0.5 --testingTimeout 600 --contextual --biasOptimal -i 6 --maximumFrontier 5 --pseudoCounts 10. --structurePenalty 2"
 
