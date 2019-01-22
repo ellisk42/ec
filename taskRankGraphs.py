@@ -296,7 +296,7 @@ def printTaskExamples(taskType, task):
 	print('\n')
 
 def formattedName(metricToCluster, item):
-	if metricToCluster in weightMetrics:
+	if metricToCluster in weightMetrics or isinstance(item, Program):
 		raw_name = str(item)
 	else:
 		raw_name = item.name
@@ -359,7 +359,7 @@ def plotTSNE(
 
 			if labelWithImages:
 				images = []
-				for i, task in enumerate(sorted(recognitionTaskMetrics.keys(), key=lambda task : task.name)): # Enumerate in same order as sorted tasks.
+				for i, task in enumerate(sorted(filter(lambda mt: isinstance(mt, Task), recognitionTaskMetrics.keys()), key=lambda task : task.name)): # Enumerate in same order as sorted tasks.
 					if 'taskImages' not in recognitionTaskMetrics[task] and domain == 'tower': recognitionTaskMetrics[task]['taskImages'] = task.getImage(pretty=True) # BUG: this shouldn't be necessaryd
 					if 'taskImages' not in recognitionTaskMetrics[task] and domain == 'rational': recognitionTaskMetrics[task]['taskImages'] = task.features
 					if 'taskImages' not in recognitionTaskMetrics[task] and domain == 'logo': recognitionTaskMetrics[task]['taskImages'] = task.highresolution
