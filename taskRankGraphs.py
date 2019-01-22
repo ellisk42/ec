@@ -299,7 +299,7 @@ def formattedName(metricToCluster, item):
 	if metricToCluster in weightMetrics:
 		raw_name = str(item)
 	else:
-		raw_name = task.name
+		raw_name = item.name
 
 	# Replace lambda instances.
 	raw_name = raw_name.replace(u'lambda', u'λ')
