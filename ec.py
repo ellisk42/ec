@@ -549,7 +549,7 @@ def ecIterator(grammar, tasks,
                                                                              auxLoss=auxiliaryLoss,
                                                                              vectorized=vectorized),
                                        recognizers,
-                                       seedRandom=False)
+                                       seedRandom=True)
 
                 # Enumerate frontiers for each of the recognizers.
                 eprint("Trained an ensemble of %d recognition models, now enumerating." % len(trainedRecognizers))

@@ -126,6 +126,12 @@ python launch.py  -k -z r4.16xlarge list_random_shuffle_10_720s_sp_vec_many_1 "p
 
 python launch.py  -k -z r4.16xlarge list_random_shuffle_10_720s_sp_vec_many_2 "python list.py  -t 720  --pseudoCounts 30 --aic 1.0 --structurePenalty 2.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -RS 150000  --storeTaskMetrics --split 0.5 --testingTimeout 720 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10 --vectorized"
 
+
+Best full model, vectorization with gradient steps capped, ensemble = 3.
+python launch.py  -k -z r4.16xlarge list_random_shuffle_10_720s_sp_vec_ensemble_1 "python list.py  -t 720  --pseudoCounts 30 --aic 1.0 --structurePenalty 2.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -RS 10000  --storeTaskMetrics --split 0.5 --testingTimeout 720 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10 --vectorized --ensembleSize 3"
+
+Replication: list_random_shuffle_10_720s_sp_vec_ensemble_2 
+
 ---
 Full model without batching:
      python launch.py -k  -z x1.32xlarge ListDream "python list.py -t 7200 --split 0.5 --testingTimeout 600 --contextual --biasOptimal -i 6 --maximumFrontier 5 --pseudoCounts 10. --structurePenalty 2"
