@@ -312,6 +312,7 @@ def plotTSNE(
 	resultPaths,
 	experimentNames,
 	metricsToCluster,
+	applySoftmax,
 	tsneLearningRate,
 	tsnePerplexity,
 	labelWithImages,
@@ -347,6 +348,9 @@ def plotTSNE(
 			if metricToCluster == 'frontier':
 				taskMetrics = [f.expectedProductionUses(result.grammars[-1])
 					       for f in taskMetrics] 
+
+			if applySoftmax:
+				taskMetrics = [softmax(metric) for metric in taskMetrics]
 			taskNames = np.array(taskNames)
 			taskMetrics = np.array(taskMetrics)
 			metricNorms = (taskMetrics*taskMetrics).sum(1)**0.5
@@ -400,6 +404,7 @@ if __name__ == "__main__":
 	parser.add_argument("--tsnePerplexity", type=float, default=30.0)
 	parser.add_argument("--labelWithImages", type=bool, default=None)
 	parser.add_argument('--printExamples', type=str, default=None)
+	parser.add_argument('--applySoftmax',  default=False, action="store_true")
 	parser.add_argument("--export","-e",
 						type=str, default='data')
 
@@ -423,6 +428,7 @@ if __name__ == "__main__":
 		plotTSNE(arguments.checkpoints,
 				 arguments.experimentNames,
 				 arguments.metricsToCluster,
+				 arguments.applySoftmax,
 				 arguments.tsneLearningRate,
 				 arguments.tsnePerplexity,
 				 arguments.labelWithImages,
