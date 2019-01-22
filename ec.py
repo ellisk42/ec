@@ -534,11 +534,13 @@ def ecIterator(grammar, tasks,
                 thisRatio = helmholtzRatio
                 if j == 0 and not biasOptimal: thisRatio = 0
 
+                # Create a pool of helmholtz frontiers in advance.
+                helmholtzFrontiers = helmholtzFrontiers()
                 # Train an ensemble of recognizers.
                 trainedRecognizers = parallelMap(CPUs,
                                        lambda recognizer: recognizer.train(result.allFrontiers.values(),
                                                                              biasOptimal=biasOptimal,
-                                                                             helmholtzFrontiers=helmholtzFrontiers(), 
+                                                                             helmholtzFrontiers=helmholtzFrontiers, 
                                                                              CPUs=CPUs,
                                                                              evaluationTimeout=evaluationTimeout,
                                                                              timeout=recognitionTimeout,
@@ -687,7 +689,6 @@ def ecIterator(grammar, tasks,
 
                 eprint("Frontiers discovered bottom up: " + str(len(totalTasksHitBottomUp)))
                 eprint("Total frontiers: " + str(len([f for f in result.allFrontiers.values() if not f.empty])))
-            assert False
 
         else:
             result.averageDescriptionLength.append(mean(-f.marginalLikelihood()

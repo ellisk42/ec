@@ -968,12 +968,19 @@ class RecognitionModel(nn.Module):
         flushEverything()
         frequency = N / 50
         startingSeed = random.random()
-        samples = parallelMap(
-            1,
-            lambda n: self.sampleHelmholtz(requests,
+
+        # Sequentially for ensemble training.
+        samples = [self.sampleHelmholtz(requests,
                                            statusUpdate='.' if n % frequency == 0 else None,
-                                           seed=startingSeed + n),
-            range(N))
+                                           seed=startingSeed + n) for i in range(N)]
+
+        # (cathywong) Disabled for ensemble training. 
+        # samples = parallelMap(
+        #     1,
+        #     lambda n: self.sampleHelmholtz(requests,
+        #                                    statusUpdate='.' if n % frequency == 0 else None,
+        #                                    seed=startingSeed + n),
+        #     range(N))
         eprint()
         flushEverything()
         samples = [z for z in samples if z is not None]
