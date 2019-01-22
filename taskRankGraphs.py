@@ -52,6 +52,8 @@ DeepFeatureExtractor = 'DeepFeatureExtractor'
 LearnedFeatureExtractor = 'LearnedFeatureExtractor'
 TowerFeatureExtractor = 'TowerFeatureExtractor'
 
+weightMetrics = ['auxiliaryPrimitiveEmbeddings']
+
 def parseResultsPath(p):
 	def maybe_eval(s):
 		try:
@@ -293,6 +295,19 @@ def printTaskExamples(taskType, task):
 			print(example)
 	print('\n')
 
+def formattedName(metricToCluster, item):
+	if metricToCluster in weightMetrics:
+		raw_name = str(item)
+	else:
+		raw_name = task.name
+
+	# Replace lambda instances.
+	raw_name = raw_name.replace(u'lambda', u'λ')
+	if(len(raw_name)) > 100:
+		return raw_name[:50] + "\n" + raw_name[50:]
+	else:
+		return raw_name
+
 def plotTSNE(
 	resultPaths,
 	experimentNames,
@@ -317,19 +332,17 @@ def plotTSNE(
 			experimentName = experimentNames[j]
 
 		for k, metricToCluster in enumerate(metricsToCluster):
-			print("Clustering metric: " + metricToCluster)
+			print("Clustering metric: " + metricToCluster )
 			tsne = TSNE(random_state=0, perplexity=tsnePerplexity, learning_rate=tsneLearningRate, n_iter=10000)
 			taskNames, taskMetrics = [], []
 
-			print(len(recognitionTaskMetrics))
-
-			for task in sorted(recognitionTaskMetrics.keys(), key=lambda task : task.name):
+			for task in sorted(recognitionTaskMetrics.keys(), key=lambda task : formattedName(metricToCluster, task)):
 				if metricToCluster in recognitionTaskMetrics[task]:
 					if printExamples:
 						printTaskExamples(printExamples, task)
 
 					if recognitionTaskMetrics[task][metricToCluster] is not None:
-						taskNames.append(task.name)  
+						taskNames.append(formattedName(metricToCluster, task))  
 						taskMetrics.append(recognitionTaskMetrics[task][metricToCluster])
 			if metricToCluster == 'frontier':
 				taskMetrics = [f.expectedProductionUses(result.grammars[-1])
