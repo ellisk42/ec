@@ -557,8 +557,8 @@ def ecIterator(grammar, tasks,
                 mostTasks = 0
                 bestRecognizer = None
                 totalTasksHitBottomUp = set()
-                for j, recognizer in enumerate(trainedRecognizers):
-                    eprint("Enumerating from recognizer %d of %d" % (j, len(trainedRecognizers)))
+                for recIndex, recognizer in enumerate(trainedRecognizers):
+                    eprint("Enumerating from recognizer %d of %d" % (recIndex, len(trainedRecognizers)))
                     bottomupFrontiers, times, allRecognitionTimes = recognizer.enumerateFrontiers(wakingTaskBatch, likelihoodModel,
                                                                          CPUs=CPUs,
                                                                          solver=solver,
@@ -572,10 +572,10 @@ def ecIterator(grammar, tasks,
 
                     recognizerTasksHitBottomUp = {f.task for f in bottomupFrontiers if not f.empty}
                     totalTasksHitBottomUp.update(recognizerTasksHitBottomUp)
-                    eprint("Recognizer %d solved %d/%d tasks; total tasks solved is now %d." % (j, len(recognizerTasksHitBottomUp), len(wakingTaskBatch), len(totalTasksHitBottomUp)))
+                    eprint("Recognizer %d solved %d/%d tasks; total tasks solved is now %d." % (recIndex, len(recognizerTasksHitBottomUp), len(wakingTaskBatch), len(totalTasksHitBottomUp)))
                     if len(recognizerTasksHitBottomUp) > mostTasks:
                         # TODO (cathywong): could consider keeping the one that put the highest likelihood on the solved tasks.
-                        bestRecognizer = j
+                        bestRecognizer = recIndex
                 
                 # Store the recognizer that discovers the most frontiers in the result.
                 eprint("Best recognizer: %d." % bestRecognizer)
