@@ -587,8 +587,6 @@ class RecognitionModel(nn.Module):
     def grammarLogProductionsOfTask(self, task):
         """Returns the grammar logits from non-contextual models."""
 
-        return torch.tensor(self.grammarOfTask(task).untorch().featureVector())
-
         features = self.featureExtractor.featuresOfTask(task)
         if features is None: return None
 
@@ -615,6 +613,9 @@ class RecognitionModel(nn.Module):
         else:
             return self.grammarBuilder.logProductions(features)
 
+    def grammarFeatureLogProductionsOfTask(self, task):
+        return torch.tensor(self.grammarOfTask(task).untorch().featureVector())
+
     def grammarLogProductionDistanceToTask(self, task, tasks):
         """Returns the cosine similarity of all other tasks to a given task."""
         taskLogits = self.grammarLogProductionsOfTask(task).unsqueeze(0) # Change to [1, D]
@@ -638,6 +639,10 @@ class RecognitionModel(nn.Module):
         else:
             e = Entropy()
             return e(grammarLogProductionsOfTask)
+
+    def taskGrammarFeatureLogProductions(self, tasks):
+        return {task: self.grammarFeatureLogProductionsOfTask(task).data.cpu().numpy()
+                for task in tasks}
 
     def taskGrammarLogProductions(self, tasks):
         return {task: self.grammarLogProductionsOfTask(task).data.cpu().numpy()

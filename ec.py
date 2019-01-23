@@ -1,4 +1,3 @@
-
 from utilities import eprint
 from likelihoodModel import *
 from recognition import *
@@ -394,7 +393,7 @@ def ecIterator(grammar, tasks,
         if result.recognitionModel is not None:
             _enumerator = lambda *args, **kw: result.recognitionModel.enumerateFrontiers(*args, **kw)
         else: _enumerator = lambda *args, **kw: multicoreEnumeration(result.grammars[-1], *args, **kw)
-        enumerator = lambda *args, **kw: _enumerator(*args, likelihoodModel,
+        enumerator = lambda *args, **kw: _enumerator(*args, likelihoodModel=likelihoodModel,
                                                      maximumFrontier=maximumFrontier, solver=solver,
                                                      CPUs=CPUs, evaluationTimeout=evaluationTimeout,
                                                      **kw)
@@ -1017,11 +1016,10 @@ def commandlineArguments(_=None,
         action="store_true"
         )
     parser.add_argument("--addTaskMetrics",
-                        dest="addTaskMetrics",
-                        nargs='+',
-                        help="Creates a checkpoint with task metrics and no recognition model for graphing.",
-                        default=None,
-                        type=str)
+        dest="addTaskMetrics",
+        help="Creates a checkpoint with task metrics and no recognition model for graphing.",
+        default=None,
+        type=str)
     parser.add_argument("--auxiliary",
                         action="store_true", default=False,
                         help="Add auxiliary classification loss to recognition network training",
@@ -1055,11 +1053,9 @@ def commandlineArguments(_=None,
         del v["primitive-graph"]
 
     if v["addTaskMetrics"] is not None:
-        for ck in v["addTaskMetrics"]:
-            eprint("Adding task metrics to", ck)
-            with open(ck,'rb') as handle:
-                result = dill.load(handle)
-            addTaskMetrics(result, ck)
+        with open(v["addTaskMetrics"],'rb') as handle:
+            result = dill.load(handle)
+        addTaskMetrics(result, v["addTaskMetrics"])
         sys.exit(0)
     else:
         del v["addTaskMetrics"]
@@ -1108,6 +1104,8 @@ def addTaskMetrics(result, path):
 
     updateTaskSummaryMetrics(result.recognitionTaskMetrics, result.recognitionModel.auxiliaryPrimitiveEmbeddings(), 'auxiliaryPrimitiveEmbeddings')
 
+
+    updateTaskSummaryMetrics(result.recognitionTaskMetrics, result.recognitionModel.taskGrammarFeatureLogProductions(tasks), 'grammarFeatureLogProductions')
     updateTaskSummaryMetrics(result.recognitionTaskMetrics, result.recognitionModel.taskGrammarLogProductions(tasks), 'contextualLogProductions')
     updateTaskSummaryMetrics(result.recognitionTaskMetrics, result.recognitionModel.taskHiddenStates(tasks), 'hiddenState')
     g = result.grammars[-2] # the final entry in result.grammars is a grammar that we have not used yet
