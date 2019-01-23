@@ -296,10 +296,10 @@ def printTaskExamples(taskType, task):
 	print('\n')
 
 def formattedName(metricToCluster, item):
-	if metricToCluster in weightMetrics:
+	if metricToCluster in weightMetrics or isinstance(item, Program):
 		raw_name = str(item)
 	else:
-		raw_name = task.name
+		raw_name = item.name
 
 	# Replace lambda instances.
 	raw_name = raw_name.replace(u'lambda', u'λ')
@@ -312,6 +312,7 @@ def plotTSNE(
 	resultPaths,
 	experimentNames,
 	metricsToCluster,
+	applySoftmax,
 	tsneLearningRate,
 	tsnePerplexity,
 	labelWithImages,
@@ -347,8 +348,13 @@ def plotTSNE(
 			if metricToCluster == 'frontier':
 				taskMetrics = [f.expectedProductionUses(result.grammars[-1])
 					       for f in taskMetrics] 
+
+			if applySoftmax:
+				taskMetrics = [softmax(metric) for metric in taskMetrics]
 			taskNames = np.array(taskNames)
 			taskMetrics = np.array(taskMetrics)
+			metricNorms = (taskMetrics*taskMetrics).sum(1)**0.5
+			taskMetrics = taskMetrics/np.reshape(metricNorms, (metricNorms.shape[0], 1))
 			print(taskNames.shape, taskMetrics.shape)
 			print("Clustering %d tasks with embeddings of shape: %s" % (len(taskMetrics), str(taskMetrics[0].shape)) )
 			
@@ -357,7 +363,7 @@ def plotTSNE(
 
 			if labelWithImages:
 				images = []
-				for i, task in enumerate(sorted(recognitionTaskMetrics.keys(), key=lambda task : task.name)): # Enumerate in same order as sorted tasks.
+				for i, task in enumerate(sorted(filter(lambda mt: isinstance(mt, Task), recognitionTaskMetrics.keys()), key=lambda task : task.name)): # Enumerate in same order as sorted tasks.
 					if 'taskImages' not in recognitionTaskMetrics[task] and domain == 'tower': recognitionTaskMetrics[task]['taskImages'] = task.getImage(pretty=True) # BUG: this shouldn't be necessaryd
 					if 'taskImages' not in recognitionTaskMetrics[task] and domain == 'rational': recognitionTaskMetrics[task]['taskImages'] = task.features
 					if 'taskImages' not in recognitionTaskMetrics[task] and domain == 'logo': recognitionTaskMetrics[task]['taskImages'] = task.highresolution
@@ -398,6 +404,7 @@ if __name__ == "__main__":
 	parser.add_argument("--tsnePerplexity", type=float, default=30.0)
 	parser.add_argument("--labelWithImages", type=bool, default=None)
 	parser.add_argument('--printExamples', type=str, default=None)
+	parser.add_argument('--applySoftmax',  default=False, action="store_true")
 	parser.add_argument("--export","-e",
 						type=str, default='data')
 
@@ -421,6 +428,7 @@ if __name__ == "__main__":
 		plotTSNE(arguments.checkpoints,
 				 arguments.experimentNames,
 				 arguments.metricsToCluster,
+				 arguments.applySoftmax,
 				 arguments.tsneLearningRate,
 				 arguments.tsnePerplexity,
 				 arguments.labelWithImages,

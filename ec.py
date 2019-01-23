@@ -1017,10 +1017,11 @@ def commandlineArguments(_=None,
         action="store_true"
         )
     parser.add_argument("--addTaskMetrics",
-        dest="addTaskMetrics",
-        help="Creates a checkpoint with task metrics and no recognition model for graphing.",
-        default=None,
-        type=str)
+                        dest="addTaskMetrics",
+                        nargs='+',
+                        help="Creates a checkpoint with task metrics and no recognition model for graphing.",
+                        default=None,
+                        type=str)
     parser.add_argument("--auxiliary",
                         action="store_true", default=False,
                         help="Add auxiliary classification loss to recognition network training",
@@ -1054,9 +1055,11 @@ def commandlineArguments(_=None,
         del v["primitive-graph"]
 
     if v["addTaskMetrics"] is not None:
-        with open(v["addTaskMetrics"],'rb') as handle:
-            result = dill.load(handle)
-        addTaskMetrics(result, v["addTaskMetrics"])
+        for ck in v["addTaskMetrics"]:
+            eprint("Adding task metrics to", ck)
+            with open(ck,'rb') as handle:
+                result = dill.load(handle)
+            addTaskMetrics(result, ck)
         sys.exit(0)
     else:
         del v["addTaskMetrics"]
