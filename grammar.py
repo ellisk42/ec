@@ -1055,22 +1055,31 @@ class ContextualGrammar:
             
         return context, returnValue
 
-    def expectedUsesMonteCarlo(self, request):
+    def expectedUsesMonteCarlo(self, request, debug=None):
         import numpy as np
         n = 0
         u = [0.]*len(self.primitives)
         primitives = list(sorted(self.primitives, key=str))
         primitive2index = {primitive: i
-                           for i, primitive in enumerate(primitives) }
-        with timing("calculated expected uses using Monte Carlo simulation"):
-            for _ in range(1000):
+                           for i, primitive in enumerate(primitives)
+                           if primitive.isInvented }
+        ns = 10000
+        with timing(f"calculated expected uses using Monte Carlo simulation w/ {ns} samples"):
+            for _ in range(ns):
                 p = self.sample(request, maxAttempts=0)
                 if p is None: continue
                 n += 1
+                if debug and n < 10:
+                    eprint(debug, p)
                 for _, child in p.walk():
                     if not child.isInvented: continue
                     u[primitive2index[child]] += 1.0
-        return np.array(u)/n            
+        u = np.array(u)/n
+        if debug:
+            eprint(f"Got {n} samples. Feature vector:\n{u}")
+            eprint(f"Likely used primitives: {[p for p,i in primitive2index.items() if u[i] > 0.5]}")
+            eprint(f"Likely used primitive indices: {[i for p,i in primitive2index.items() if u[i] > 0.5]}")
+        return u
 
     def featureVector(self, _=None, requests=None, onlyInventions=True, normalize=True):
         """
