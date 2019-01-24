@@ -190,7 +190,7 @@ def ecIterator(grammar, tasks,
         eprint("Warning: Recognition model needs feature extractor.",
                "Ignoring recognition model.")
         useNewRecognitionModel = False
-    if ensembleSize > 0 and not useRecognitionModel:
+    if ensembleSize > 1 and not useRecognitionModel:
         eprint("Warning: ensemble size requires using the recognition model, aborting.")
         assert False
     if benchmark is not None and resume is None:
@@ -249,7 +249,7 @@ def ecIterator(grammar, tasks,
             "compressor"} and v is not None}
     if not useRecognitionModel:
         for k in {"helmholtzRatio", "recognitionTimeout", "biasOptimal", "vectorized",
-                  "contextual", "matrixRank", "reuseRecognition", "auxiliaryLoss"}:
+                  "contextual", "matrixRank", "reuseRecognition", "auxiliaryLoss", "ensembleSize"}:
             if k in parameters: del parameters[k]
     if useRecognitionModel and not contextual:
         if "matrixRank" in parameters:
