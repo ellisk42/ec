@@ -5,6 +5,7 @@ import os
 import json
 import sys
 
+ZONE = None
 
 def user():
     import getpass
@@ -15,8 +16,18 @@ def branch():
     return subprocess.check_output(
         ['git', 'rev-parse', '--abbrev-ref', 'HEAD']).decode("utf-8").strip()
 
+def launchGoogleCloud(size, name):
+    name = name.replace('_','-').replace('.','-').lower()
+    os.system(f"gcloud compute --project tenenbaumlab disks create {name} --size 30 --zone us-east1-b --source-snapshot dreamcoder --type pd-standard")
+    output = \
+        subprocess.check_output(["/bin/bash", "-c",
+                             f"gcloud compute --project=tenenbaumlab instances create {name} --zone=us-east1-b --machine-type={size} --subnet=default --network-tier=PREMIUM --maintenance-policy=MIGRATE --service-account=150557817012-compute@developer.gserviceaccount.com --scopes=https://www.googleapis.com/auth/devstorage.read_only,https://www.googleapis.com/auth/logging.write,https://www.googleapis.com/auth/monitoring.write,https://www.googleapis.com/auth/servicecontrol,https://www.googleapis.com/auth/service.management.readonly,https://www.googleapis.com/auth/trace.append --disk=name={name},device-name={name},mode=rw,boot=yes,auto-delete=yes"])
+    global ZONE
+    ZONE = output.decode("utf-8").split("\n")[1].split()[1]
+    print(f"Launching in zone {ZONE}")
+    return name, name
 
-def launch(size="t2.micro", name=""):
+def launchAmazonCloud(size="t2.micro", name=""):
     # aws ec2 run-instances --image-id ami-835f6ae6 --instance-type "t2.micro"
     # --key-name testing --associate-public-ip-address
     o = json.loads(subprocess.check_output(["aws", "ec2", "run-instances",
@@ -51,14 +62,29 @@ def launch(size="t2.micro", name=""):
     print("Retrieved IP address of instance %s; got %s" % (instance, address))
     return instance, address
 
-
-def sendCheckpoint(address, checkpoint):
-    _c = os.path.split(checkpoint)[1]
-    print("Sending checkpoint:")
-    command = """scp -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem \
-                %s ubuntu@%s:~/%s""" % (checkpoint, address, _c)
+def scp(address, localFile, remoteFile):
+    global ZONE
+    if arguments.google:
+        command = f"gcloud compute scp --zone={ZONE} {localFile} {address}:{remoteFile}"
+    else:
+        command = f"scp -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem {localFile} ubuntu@{address}:{remoteFile}"
     print(command)
     os.system(command)
+
+def ssh(address, command, pipeIn=None):
+    global ZONE
+    if arguments.google:
+        command = f"gcloud compute ssh --zone={ZONE} {address} --command='{command}'"
+    else:
+        command = f"ssh -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem ubuntu@{address} '{command}'"
+    if pipeIn:
+        command = f"{pipeIn} | {command}"
+    print(command)
+    os.system(command)
+
+def sendCheckpoint(address, checkpoint):
+    print("Sending checkpoint:")
+    scp(address, checkpoint, f"~/{os.path.split(checkpoint)[1]}")
 
 
 def sendCommand(
@@ -93,9 +119,7 @@ git pull
 
     if resume:
         print("Sending tar file")
-        os.system("""
-            scp -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem \
-                %s ubuntu@%s:ec/""" % (resume, address))
+        scp(address, resume, "~/ec/")
         preamble += "tar xf {}\n".format(os.path.basename(resume))
     else:
         preamble += "git apply patch ; mkdir jobs\ngit submodule update --init --recursive\n"
@@ -154,9 +178,7 @@ sudo shutdown -h now
 
     # Copy over the script
     print("Copying script over to", address)
-    os.system("""
-        scp -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem \
-            %s ubuntu@%s:~/script.sh""" % (name, address))
+    scp(address, name, "~/script.sh")
 
     # delete local copy
     os.system("rm %s" % name)
@@ -164,27 +186,19 @@ sudo shutdown -h now
     # Send keys
     if upload:
         print("Uploading your ssh identity")
-        os.system("""
-            scp -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem \
-                ~/.ssh/%s ~/.ssh/%s.pub \
-                ubuntu@%s:.ssh/""" % (ssh_key, ssh_key, address))
+        scp(address, f"~/.ssh/{ssh_key}", f"~/.ssh/{ssh_key}")
+        scp(address, f"~/.ssh/{ssh_key}.pub", f"~/.ssh/{ssh_key}.pub")
 
     # Send git patch
     print("Sending git patch over to", address)
     os.system("git diff --stat")
-    os.system("""
-        (echo "Base-Ref: $(git rev-parse origin/{})" ; echo ; git diff --binary origin/{}) | \
-        ssh -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem \
-            ubuntu@{} 'cat > ~/ec/patch'
-        """.format(br, br, address))
+    ssh(address, "cat > ~/ec/patch",
+        pipeIn=f"""(echo "Base-Ref: $(git rev-parse origin/{br})" ; echo ; git diff --binary origin/{br})""")
 
     # Execute the script
     # For some reason you need to pipe the output to /dev/null in order to get
     # it to detach
-    os.system("""
-        ssh -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem \
-            ubuntu@{} 'bash ./script.sh > /dev/null 2>&1 &'
-        """.format(address))
+    ssh(address, "bash ./script.sh > /dev/null 2>&1 &")
     print("Executing script on remote host.")
 
 
@@ -219,7 +233,11 @@ def launchExperiment(
 %s > jobs/%s 2>&1
 """ % (command, job_id)
 
-    instance, address = launch(size, name=name)
+    if arguments.google:
+        name = job_id
+        instance, address = launchGoogleCloud(size, name)
+    else:
+        instance, address = launchAmazonCloud(size, name=name)
     time.sleep(120)
     if checkpoint is not None:
         sendCheckpoint(address, checkpoint)
@@ -234,14 +252,11 @@ def launchExperiment(
         shutdown,
         checkpoint=checkpoint)
     if tail:
-        os.system("""
-            ssh -o StrictHostKeyChecking=no -i ~/.ssh/testing.pem \
-                ubuntu@{0} ' \
+        ssh(address, f""" \
                     mkdir -p ec/jobs && \
-                    touch ec/jobs/{1} && \
-                    tail -f -n+0 ec/jobs/{1} \
-                '
-            """.format(address, job_id))
+                    touch ec/jobs/{job_id} && \
+                    tail -f -n+0 ec/jobs/{job_id} \
+""")
 
 
 if __name__ == "__main__":
@@ -265,6 +280,9 @@ if __name__ == "__main__":
     parser.add_argument("--checkpoint", metavar="checkpoint", type=str,
                         help="Send checkpoint file to resume checkpoint.")
     parser.add_argument('-k', "--shutdown",
+                        default=False,
+                        action="store_true")
+    parser.add_argument('-c', "--google",
                         default=False,
                         action="store_true")
     parser.add_argument('-g', "--gpuImage", default=False, action='store_true')
