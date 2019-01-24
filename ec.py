@@ -1,4 +1,3 @@
-
 from utilities import eprint
 from likelihoodModel import *
 from recognition import *
@@ -67,6 +66,7 @@ class ECResult():
                      "taskReranker": "TRR",
                      "matrixRank": "MR",
                      "reuseRecognition": "RR",
+                     "ensembleSize": "ES",
                      "recognitionTimeout": "RT",
                      "recognitionSteps": "RS",
                      "iterations": "it",
@@ -146,6 +146,7 @@ def ecIterator(grammar, tasks,
                testingTimeout=None,
                testEvery=1,
                reuseRecognition=False,
+               ensembleSize=1,
                expandFrontier=None,
                resumeFrontierSize=None,
                useRecognitionModel=True,
@@ -189,6 +190,9 @@ def ecIterator(grammar, tasks,
         eprint("Warning: Recognition model needs feature extractor.",
                "Ignoring recognition model.")
         useNewRecognitionModel = False
+    if ensembleSize > 0 and not useRecognitionModel:
+        eprint("Warning: ensemble size requires using the recognition model, aborting.")
+        assert False
     if benchmark is not None and resume is None:
         eprint("You cannot benchmark unless you are loading a checkpoint, aborting.")
         assert False
@@ -389,7 +393,7 @@ def ecIterator(grammar, tasks,
         if result.recognitionModel is not None:
             _enumerator = lambda *args, **kw: result.recognitionModel.enumerateFrontiers(*args, **kw)
         else: _enumerator = lambda *args, **kw: multicoreEnumeration(result.grammars[-1], *args, **kw)
-        enumerator = lambda *args, **kw: _enumerator(*args, likelihoodModel,
+        enumerator = lambda *args, **kw: _enumerator(*args, likelihoodModel=likelihoodModel,
                                                      maximumFrontier=maximumFrontier, solver=solver,
                                                      CPUs=CPUs, evaluationTimeout=evaluationTimeout,
                                                      **kw)
@@ -514,52 +518,80 @@ def ecIterator(grammar, tasks,
                 if reuseRecognition and result.recognitionModel is not None:
                     previousRecognitionModel = result.recognitionModel
 
-                featureExtractorObject = featureExtractor(tasks, testingTasks=testingTasks, cuda=cuda)
-                recognizer = RecognitionModel(featureExtractorObject,
+                eprint("Using an ensemble size of %d. Note that we will only store and test on the best recognition model." % ensembleSize)
+
+                featureExtractorObjects = [featureExtractor(tasks, testingTasks=testingTasks, cuda=cuda) for i in range(ensembleSize)]
+                recognizers = [RecognitionModel(featureExtractorObjects[i],
                                               grammar,
                                               rank=matrixRank,
                                               activation=activation,
                                               cuda=cuda,
                                               contextual=contextual,
-                                              previousRecognitionModel=previousRecognitionModel)
+                                              previousRecognitionModel=previousRecognitionModel,
+                                              id=i) for i in range(ensembleSize)]
                 
                 thisRatio = helmholtzRatio
                 if j == 0 and not biasOptimal: thisRatio = 0
-                recognizer.train(result.allFrontiers.values(),
-                                 biasOptimal=biasOptimal,
-                                 helmholtzFrontiers=helmholtzFrontiers(), 
-                                 CPUs=CPUs,
-                                 evaluationTimeout=evaluationTimeout,
-                                 timeout=recognitionTimeout,
-                                 steps=recognitionSteps,
-                                 helmholtzRatio=thisRatio,
-                                 auxLoss=auxiliaryLoss,
-                                 vectorized=vectorized)
-                
-                result.recognitionModel = recognizer
 
-                bottomupFrontiers, times, allRecognitionTimes = recognizer.enumerateFrontiers(wakingTaskBatch, likelihoodModel,
+                # Create a pool of helmholtz frontiers in advance.
+                helmholtzFrontiers = helmholtzFrontiers()
+                # Train an ensemble of recognizers.
+                trainedRecognizers = parallelMap(CPUs,
+                                       lambda recognizer: recognizer.train(result.allFrontiers.values(),
+                                                                             biasOptimal=biasOptimal,
+                                                                             helmholtzFrontiers=helmholtzFrontiers, 
+                                                                             CPUs=CPUs,
+                                                                             evaluationTimeout=evaluationTimeout,
+                                                                             timeout=recognitionTimeout,
+                                                                             steps=recognitionSteps,
+                                                                             helmholtzRatio=thisRatio,
+                                                                             auxLoss=auxiliaryLoss,
+                                                                             vectorized=vectorized),
+                                       recognizers,
+                                       seedRandom=True)
+
+                # Enumerate frontiers for each of the recognizers.
+                eprint("Trained an ensemble of %d recognition models, now enumerating." % len(trainedRecognizers))
+                ensembleFrontiers, ensembleTimes, ensembleRecognitionTimes = [], [], []
+                mostTasks = 0
+                bestRecognizer = None
+                totalTasksHitBottomUp = set()
+                for recIndex, recognizer in enumerate(trainedRecognizers):
+                    eprint("Enumerating from recognizer %d of %d" % (recIndex, len(trainedRecognizers)))
+                    bottomupFrontiers, times, allRecognitionTimes = recognizer.enumerateFrontiers(wakingTaskBatch, likelihoodModel,
                                                                          CPUs=CPUs,
                                                                          solver=solver,
                                                                          frontierSize=frontierSize,
                                                                          maximumFrontier=maximumFrontier,
                                                                          enumerationTimeout=enumerationTimeout,
                                                                          evaluationTimeout=evaluationTimeout)
-                # Store the recognition metrics.
+                    ensembleFrontiers.append(bottomupFrontiers)
+                    ensembleTimes.append(times)
+                    ensembleRecognitionTimes.append(allRecognitionTimes)
+
+                    recognizerTasksHitBottomUp = {f.task for f in bottomupFrontiers if not f.empty}
+                    totalTasksHitBottomUp.update(recognizerTasksHitBottomUp)
+                    eprint("Recognizer %d solved %d/%d tasks; total tasks solved is now %d." % (recIndex, len(recognizerTasksHitBottomUp), len(wakingTaskBatch), len(totalTasksHitBottomUp)))
+                    if len(recognizerTasksHitBottomUp) > mostTasks:
+                        # TODO (cathywong): could consider keeping the one that put the highest likelihood on the solved tasks.
+                        bestRecognizer = recIndex
+                
+                # Store the recognizer that discovers the most frontiers in the result.
+                eprint("Best recognizer: %d." % bestRecognizer)
+                result.recognitionModel = trainedRecognizers[bestRecognizer]
                 if storeTaskMetrics:
-                    updateTaskSummaryMetrics(result.recognitionTaskMetrics, allRecognitionTimes, 'recognitionBestTimes')
-                    updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskHiddenStates(tasks), 'hiddenState')
-                    updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskGrammarLogProductions(tasks), 'taskLogProductions')
-                    updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskGrammarEntropies(wakingTaskBatch), 'taskGrammarEntropies')
+                    updateTaskSummaryMetrics(result.recognitionTaskMetrics, ensembleRecognitionTimes[bestRecognizer], 'recognitionBestTimes')
+                    updateTaskSummaryMetrics(result.recognitionTaskMetrics, result.recognitionModel.taskHiddenStates(tasks), 'hiddenState')
+                    updateTaskSummaryMetrics(result.recognitionTaskMetrics, result.recognitionModel.taskGrammarLogProductions(tasks), 'taskLogProductions')
+                    updateTaskSummaryMetrics(result.recognitionTaskMetrics, result.recognitionModel.taskGrammarEntropies(wakingTaskBatch), 'taskGrammarEntropies')
                     if contextual:
                         updateTaskSummaryMetrics(result.recognitionTaskMetrics,
-                                                 recognizer.taskGrammarStartProductions(tasks),
+                                                 result.recognitionModel.taskGrammarStartProductions(tasks),
                                                  'startProductions')
 
-                tasksHitBottomUp = {f.task for f in bottomupFrontiers if not f.empty}
-                #result.timesAtEachWake.append(times)
-                result.hitsAtEachWake.append(len(tasksHitBottomUp))
                 
+                #result.timesAtEachWake.append(times)
+                result.hitsAtEachWake.append(len(totalTasksHitBottomUp))
 
         elif useNewRecognitionModel:  # Train a recognition model
             if len([f for f in result.allFrontiers.values() if not f.empty]) == 0:
@@ -585,7 +617,7 @@ def ecIterator(grammar, tasks,
 
 
         # Repeatedly expand the frontier until we hit something that we have not solved yet
-        solvedTasks = tasksHitTopDown | (tasksHitBottomUp if useRecognitionModel else set())
+        solvedTasks = tasksHitTopDown | (totalTasksHitBottomUp if useRecognitionModel else set())
         numberOfSolvedTasks = len(solvedTasks)
         if j > 0 and expandFrontier and numberOfSolvedTasks <= result.learningCurve[-1] and \
            result.learningCurve[-1] < len(tasks):
@@ -631,29 +663,31 @@ def ecIterator(grammar, tasks,
                     break
                 
         if useRecognitionModel or useNewRecognitionModel:
+            """ Rescore and combine the frontiers across the ensemble of recognition models."""
             if len([f for f in result.allFrontiers.values() if not f.empty]) > 0:
-                eprint("Recognition model enumeration results:")
-                eprint(Frontier.describe(bottomupFrontiers))
-                summaryStatistics("Recognition model", times)
+                eprint("Recognition model enumeration results for the best recognizer.")
+                eprint(Frontier.describe(ensembleFrontiers[bestRecognizer]))
+                summaryStatistics("Recognition model", ensembleTimes[bestRecognizer])
 
                 result.averageDescriptionLength.append(mean(-f.marginalLikelihood()
-                                                            for f in bottomupFrontiers
+                                                            for f in ensembleFrontiers[bestRecognizer]
                                                             if not f.empty))
 
-                result.sumMaxll.append( sum(math.exp(f.bestll) for f in bottomupFrontiers if not f.empty)) #TODO
+                result.sumMaxll.append( sum(math.exp(f.bestll) for f in ensembleFrontiers[bestRecognizer] if not f.empty)) #TODO
 
-                showHitMatrix(tasksHitTopDown, tasksHitBottomUp, wakingTaskBatch)
-                # Rescore the frontiers according to the generative model
+                eprint("Cumulative results for the full ensemble of %d recognizers: " % len(trainedRecognizers))
+                showHitMatrix(tasksHitTopDown, totalTasksHitBottomUp, wakingTaskBatch)
+                # Rescore all of the ensemble frontiers according to the generative model
                 # and then combine w/ original frontiers
-                for b in bottomupFrontiers:
-                    if b.task not in result.allFrontiers: continue # backwards compatibility with old checkpoints
-                    result.allFrontiers[b.task] = result.allFrontiers[b.task].\
-                                                  combine(grammar.rescoreFrontier(b)).\
-                                                  topK(maximumFrontier)
+                for bottomupFrontiers in ensembleFrontiers:
+                    for b in bottomupFrontiers:
+                        if b.task not in result.allFrontiers: continue # backwards compatibility with old checkpoints
+                        result.allFrontiers[b.task] = result.allFrontiers[b.task].\
+                                                      combine(grammar.rescoreFrontier(b)).\
+                                                      topK(maximumFrontier)
 
-                eprint("Frontiers discovered bottom up: " + str(len(tasksHitBottomUp)))
+                eprint("Frontiers discovered bottom up: " + str(len(totalTasksHitBottomUp)))
                 eprint("Total frontiers: " + str(len([f for f in result.allFrontiers.values() if not f.empty])))
-
 
         else:
             result.averageDescriptionLength.append(mean(-f.marginalLikelihood()
@@ -663,12 +697,12 @@ def ecIterator(grammar, tasks,
             result.sumMaxll.append(sum(math.exp(f.bestll) for f in result.allFrontiers.values() if not f.empty)) #TODO - i think this is right
 
         if not useNewRecognitionModel:  # This line is changed, beware
-            result.searchTimes.append(times)
-            if len(times) > 0:
-                eprint("Average search time: ", int(mean(times) + 0.5),
-                       "sec.\tmedian:", int(median(times) + 0.5),
-                       "\tmax:", int(max(times) + 0.5),
-                       "\tstandard deviation", int(standardDeviation(times) + 0.5))
+            result.searchTimes.append(ensembleTimes[bestRecognizer])
+            if len(ensembleTimes[bestRecognizer]) > 0:
+                eprint("Average search time: ", int(mean(ensembleTimes[bestRecognizer]) + 0.5),
+                       "sec.\tmedian:", int(median(ensembleTimes[bestRecognizer]) + 0.5),
+                       "\tmax:", int(max(ensembleTimes[bestRecognizer]) + 0.5),
+                       "\tstandard deviation", int(standardDeviation(ensembleTimes[bestRecognizer]) + 0.5))
 
 
         eprint("Showing the top 5 programs in each frontier:")
@@ -871,6 +905,11 @@ def commandlineArguments(_=None,
                         action="store_true",
                         help="""Enable bottom-up neural recognition model.
                         Default: %s""" % useRecognitionModel)
+    parser.add_argument("--ensembleSize",
+                        dest="ensembleSize",
+                        default=1,
+                        help="Number of recognition models to train and enumerate from at each iteration.",
+                        type=int)
     parser.add_argument("--robustfill",
                         dest="useNewRecognitionModel",
                         action="store_true",
@@ -977,11 +1016,10 @@ def commandlineArguments(_=None,
         action="store_true"
         )
     parser.add_argument("--addTaskMetrics",
-                        dest="addTaskMetrics",
-                        nargs='+',
-                        help="Creates a checkpoint with task metrics and no recognition model for graphing.",
-                        default=None,
-                        type=str)
+        dest="addTaskMetrics",
+        help="Creates a checkpoint with task metrics and no recognition model for graphing.",
+        default=None,
+        type=str)
     parser.add_argument("--auxiliary",
                         action="store_true", default=False,
                         help="Add auxiliary classification loss to recognition network training",
@@ -1015,11 +1053,9 @@ def commandlineArguments(_=None,
         del v["primitive-graph"]
 
     if v["addTaskMetrics"] is not None:
-        for ck in v["addTaskMetrics"]:
-            eprint("Adding task metrics to", ck)
-            with open(ck,'rb') as handle:
-                result = dill.load(handle)
-            addTaskMetrics(result, ck)
+        with open(v["addTaskMetrics"],'rb') as handle:
+            result = dill.load(handle)
+        addTaskMetrics(result, v["addTaskMetrics"])
         sys.exit(0)
     else:
         del v["addTaskMetrics"]
@@ -1068,6 +1104,8 @@ def addTaskMetrics(result, path):
 
     updateTaskSummaryMetrics(result.recognitionTaskMetrics, result.recognitionModel.auxiliaryPrimitiveEmbeddings(), 'auxiliaryPrimitiveEmbeddings')
 
+
+    updateTaskSummaryMetrics(result.recognitionTaskMetrics, result.recognitionModel.taskGrammarFeatureLogProductions(tasks), 'grammarFeatureLogProductions')
     updateTaskSummaryMetrics(result.recognitionTaskMetrics, result.recognitionModel.taskGrammarLogProductions(tasks), 'contextualLogProductions')
     updateTaskSummaryMetrics(result.recognitionTaskMetrics, result.recognitionModel.taskHiddenStates(tasks), 'hiddenState')
     g = result.grammars[-2] # the final entry in result.grammars is a grammar that we have not used yet

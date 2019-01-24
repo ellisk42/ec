@@ -481,17 +481,17 @@ class ContextualGrammarNetwork(nn.Module):
             assert torch.all((ll - _l).abs() < 0.0001)
 
         return ll
-            
-        
-
         
 
 class RecognitionModel(nn.Module):
     def __init__(self,featureExtractor,grammar,hidden=[64],activation="tanh",
                  rank=None,
                  cuda=False,contextual=False,
-                 previousRecognitionModel=None):
+                 previousRecognitionModel=None,
+                 id=0):
         super(RecognitionModel, self).__init__()
+        self.id = id
+        self.trained=False
         self.use_cuda = cuda
 
         self.featureExtractor = featureExtractor
@@ -587,8 +587,6 @@ class RecognitionModel(nn.Module):
     def grammarLogProductionsOfTask(self, task):
         """Returns the grammar logits from non-contextual models."""
 
-        return torch.tensor(self.grammarOfTask(task).untorch().featureVector())
-
         features = self.featureExtractor.featuresOfTask(task)
         if features is None: return None
 
@@ -615,6 +613,9 @@ class RecognitionModel(nn.Module):
         else:
             return self.grammarBuilder.logProductions(features)
 
+    def grammarFeatureLogProductionsOfTask(self, task):
+        return torch.tensor(self.grammarOfTask(task).untorch().featureVector())
+
     def grammarLogProductionDistanceToTask(self, task, tasks):
         """Returns the cosine similarity of all other tasks to a given task."""
         taskLogits = self.grammarLogProductionsOfTask(task).unsqueeze(0) # Change to [1, D]
@@ -638,6 +639,10 @@ class RecognitionModel(nn.Module):
         else:
             e = Entropy()
             return e(grammarLogProductionsOfTask)
+
+    def taskGrammarFeatureLogProductions(self, tasks):
+        return {task: self.grammarFeatureLogProductionsOfTask(task).data.cpu().numpy()
+                for task in tasks}
 
     def taskGrammarLogProductions(self, tasks):
         return {task: self.grammarLogProductionsOfTask(task).data.cpu().numpy()
@@ -825,11 +830,17 @@ class RecognitionModel(nn.Module):
                     [hf.request
                      for hf in helmholtzFrontiers[helmholtzIndex[0]:helmholtzIndex[0] + helmholtzBatch] ])
             else:
+                newTasks = [hf.calculateTask() 
+                            for hf in helmholtzFrontiers[helmholtzIndex[0]:helmholtzIndex[0] + helmholtzBatch]]
+
+                """
+                # catwong: Disabled for ensemble training.
                 newTasks = \
                            parallelMap(updateCPUs,
                                        lambda f: f.calculateTask(),
                                        helmholtzFrontiers[helmholtzIndex[0]:helmholtzIndex[0] + helmholtzBatch],
                                        seedRandom=True)
+                """
             badIndices = []
             endingIndex = min(helmholtzIndex[0] + helmholtzBatch, len(helmholtzFrontiers))
             for i in range(helmholtzIndex[0], endingIndex):
@@ -847,12 +858,12 @@ class RecognitionModel(nn.Module):
         frontiers = [self.replaceProgramsWithLikelihoodSummaries(f).normalize()
                      for f in frontiers]
 
-        eprint("Training a recognition model from %d frontiers, %d%% Helmholtz, feature extractor %s." % (
-            len(frontiers), int(helmholtzRatio * 100), self.featureExtractor.__class__.__name__))
-        eprint("Got %d Helmholtz frontiers - random Helmholtz training? : %s"%(
-            len(helmholtzFrontiers), len(helmholtzFrontiers) == 0))
-        eprint("Contextual?",self.contextual)
-        eprint("Bias optimal?",biasOptimal)
+        eprint("(ID=%d): Training a recognition model from %d frontiers, %d%% Helmholtz, feature extractor %s." % (
+            self.id, len(frontiers), int(helmholtzRatio * 100), self.featureExtractor.__class__.__name__))
+        eprint("(ID=%d): Got %d Helmholtz frontiers - random Helmholtz training? : %s"%(
+            self.id, len(helmholtzFrontiers), len(helmholtzFrontiers) == 0))
+        eprint("(ID=%d): Contextual? %s" % (self.id, str(self.contextual)))
+        eprint("(ID=%d): Bias optimal? %s" % (self.id, str(biasOptimal)))
 
         # The number of Helmholtz samples that we generate at once
         # Should only affect performance and shouldn't affect anything else
@@ -914,21 +925,23 @@ class RecognitionModel(nn.Module):
                         break # Stop iterating, then print epoch and loss, then break to finish.
                         
             if (i == 1 or i % 10 == 0) and losses:
-                eprint("Epoch", i, "Loss", mean(losses))
+                eprint("(ID=%d): " % self.id, "Epoch", i, "Loss", mean(losses))
                 if realLosses and dreamLosses:
-                    eprint("\t\t(real loss): ", mean(realLosses), "\t(dream loss):", mean(dreamLosses))
-                eprint("\tvs MDL (w/o neural net)", mean(descriptionLengths))
+                    eprint("(ID=%d): " % self.id, "\t\t(real loss): ", mean(realLosses), "\t(dream loss):", mean(dreamLosses))
+                eprint("(ID=%d): " % self.id, "\tvs MDL (w/o neural net)", mean(descriptionLengths))
                 if realMDL and dreamMDL:
                     eprint("\t\t(real MDL): ", mean(realMDL), "\t(dream MDL):", mean(dreamMDL))
-                eprint("\t%d cumulative gradient steps. %f steps/sec"%(totalGradientSteps,
+                eprint("(ID=%d): " % self.id, "\t%d cumulative gradient steps. %f steps/sec"%(totalGradientSteps,
                                                                        totalGradientSteps/(time.time() - start)))
                 if auxLoss:
-                    eprint("\t%d-way auxiliary classification loss"%len(self.grammar.primitives),sum(classificationLosses)/len(classificationLosses))
+                    eprint("(ID=%d): " % self.id, "\t%d-way auxiliary classification loss"%len(self.grammar.primitives),sum(classificationLosses)/len(classificationLosses))
                 losses, descriptionLengths, realLosses, dreamLosses, realMDL, dreamMDL = [], [], [], [], [], []
                 classificationLosses = []
                 gc.collect()
         
-        eprint("Trained recognition model in",time.time() - start,"seconds")
+        eprint("(ID=%d): " % self.id, " Trained recognition model in",time.time() - start,"seconds")
+        self.trained=True
+        return self
 
     def sampleHelmholtz(self, requests, statusUpdate=None, seed=None):
         if seed is not None:
@@ -960,12 +973,19 @@ class RecognitionModel(nn.Module):
         flushEverything()
         frequency = N / 50
         startingSeed = random.random()
-        samples = parallelMap(
-            1,
-            lambda n: self.sampleHelmholtz(requests,
+
+        # Sequentially for ensemble training.
+        samples = [self.sampleHelmholtz(requests,
                                            statusUpdate='.' if n % frequency == 0 else None,
-                                           seed=startingSeed + n),
-            range(N))
+                                           seed=startingSeed + n) for i in range(N)]
+
+        # (cathywong) Disabled for ensemble training. 
+        # samples = parallelMap(
+        #     1,
+        #     lambda n: self.sampleHelmholtz(requests,
+        #                                    statusUpdate='.' if n % frequency == 0 else None,
+        #                                    seed=startingSeed + n),
+        #     range(N))
         eprint()
         flushEverything()
         samples = [z for z in samples if z is not None]
@@ -1498,6 +1518,7 @@ class NewRecognitionModel(nn.Module):
                     # inputInformation = avgPermutedLoss - avgLoss
                     eprint("Epoch %3d Loss %2.2f" % (i, avgLoss))
                     gc.collect()
+        return self
 
     # def helmholtsNetworkInputs(self, requests, batchSize, CPUs):
     #     helmholtzSamples = self.sampleManyHelmholtz(requests, batchSize, CPUs)
