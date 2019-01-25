@@ -129,6 +129,7 @@ def explorationCompression(*arguments, **keywords):
 
 def ecIterator(grammar, tasks,
                _=None,
+               seed=0,
                addFullTaskMetrics=False,
                matrixRank=None,
                bootstrap=None,
@@ -228,6 +229,7 @@ def ecIterator(grammar, tasks,
             "useNewRecognitionModel",
             "likelihoodModel",
             "use_map_search_times",
+            "seed",
             "activation",
             "grammar",
             "cuda",
@@ -371,7 +373,7 @@ def ecIterator(grammar, tasks,
     elif taskReranker == 'random':
         taskBatcher = RandomTaskBatcher()
     elif taskReranker == 'randomShuffle':
-        taskBatcher = RandomShuffleTaskBatcher()
+        taskBatcher = RandomShuffleTaskBatcher(seed)
     elif taskReranker == 'unsolved':
         taskBatcher = UnsolvedTaskBatcher()
     elif taskReranker == 'unsolvedEntropy':
@@ -933,6 +935,11 @@ def commandlineArguments(_=None,
         default=1,
         help="Run heldout testing every X iterations."
         )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=0,
+        help="Random seed. Currently this only matters for random batching strategies.")
     parser.add_argument(
         "--activation",
         choices=[

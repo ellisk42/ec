@@ -39,8 +39,7 @@ class RandomTaskBatcher:
 class RandomShuffleTaskBatcher:
 	"""Randomly shuffles the task batch first, and then iterates through task batches of the specified size like DefaultTaskBatcher.
 	   Reshuffles across iterations - intended as benchmark comparison to test the task ordering."""
-	def __init__(self):
-		pass
+	def __init__(self, baseSeed=0): self.baseSeed = baseSeed
 
 	def getTaskBatch(self, ec_result, tasks, taskBatchSize, currIteration):
 		if taskBatchSize is None:
@@ -50,14 +49,13 @@ class RandomShuffleTaskBatcher:
 			assert False
 		
 		# Reshuffles tasks in a fixed way across epochs for reproducibility.
-		baseSeed = 0
 		currEpoch = int(int(currIteration * taskBatchSize) / int(len(tasks)))
 
 		shuffledTasks = tasks.copy() # Since shuffle works in place.
-		random.Random(baseSeed + currEpoch).shuffle(shuffledTasks)
+		random.Random(self.baseSeed + currEpoch).shuffle(shuffledTasks)
 
 		shuffledTasksWrap = tasks.copy() # Since shuffle works in place.
-		random.Random(baseSeed + currEpoch + 1).shuffle(shuffledTasksWrap)
+		random.Random(self.baseSeed + currEpoch + 1).shuffle(shuffledTasksWrap)
 
 		start = (taskBatchSize * currIteration) % len(shuffledTasks)
 		end = start + taskBatchSize

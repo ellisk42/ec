@@ -1,6 +1,17 @@
 To see the billing information broken down by instance type:
 https://console.aws.amazon.com/cost-reports/home#/custom?groupBy=InstanceType&hasBlended=false&hasAmortized=false&excludeDiscounts=true&excludeTaggedResources=false&timeRangeOption=Last12Months&granularity=Monthly&reportName=&reportType=CostUsage&isTemplate=true&startDate=2018-01-01&endDate=2018-12-31&filter=%5B%7B%22dimension%22:%22RecordType%22,%22values%22:%5B%22Refund%22,%22Credit%22%5D,%22include%22:false,%22children%22:null%7D%5D&forecastTimeRangeOption=None&usageAs=usageQuantity&chartStyle=Stack
 
+Google cloud experiments - repeated many times.
+
+Text:
+python launch.py -k  -c -z n1-highmem-64 text_ensemble "python text.py  -t 720  --pseudoCounts 30 --aic 1.0 --structurePenalty 1.5 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 3600 --storeTaskMetrics --testingTimeout 600 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10 --vectorized --auxiliary --ensembleSize 2 -RS 5000 --seed $SEED"
+python launch.py -k  -c -z n1-highmem-64 text "python text.py  -t 720  --pseudoCounts 30 --aic 1.0 --structurePenalty 1.5 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 3600 --storeTaskMetrics --testingTimeout 600 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10 --vectorized --auxiliary --ensembleSize 1 -RS 5000 --seed $SEED"
+python launch.py -k  -c -z n1-highmem-64 text_no_dsl "python text.py  -t 720  --pseudoCounts 30 --aic 1000.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 3600 --storeTaskMetrics --testingTimeout 600 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10 --vectorized --auxiliary --ensembleSize 2 -RS 5000"
+python launch.py -k  -c -z n1-highmem-64 text_no_recognition "python text.py  -t 720  --pseudoCounts 30 --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20  --storeTaskMetrics --testingTimeout 600 --taskReranker randomShuffle --taskBatchSize 10"
+List:
+
+
+
 
 The hyper parameters here are not consistent. A key thing we need to
 do is make sure that we are always using the same hyper parameters, or
