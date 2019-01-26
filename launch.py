@@ -156,6 +156,11 @@ source ~/.bashrc
 python -c 'import torch; print(torch.cuda.is_available())'
 """
 
+    preamble += """
+singularity exec container.img make clean
+singularity exec container.img make
+"""
+
     script = preamble + script
 
     if upload:
