@@ -112,7 +112,7 @@ def sygusCompetition(checkpoints, tasks):
                                           {"CPUs": CPUs,
                                            "timeout": timeout})
             promises.append(promise)
-    for promise in zip(promises, tasks):
+    for promise in promises:
         dt, task = promise.get()
         if dt is not None:
             searchTimes[task].append(dt)
