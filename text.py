@@ -98,11 +98,11 @@ def sygusCompetition(checkpoints, tasks):
     searchTimes = {t: [] for t in tasks}
 
     CPUs = int(8/len(checkpoints))
+    maxWorkers = int(numberOfCPUs()/CPUs)
     workers = Pool(maxWorkers)
     eprint(f"You gave me {len(checkpoints)} checkpoints to ensemble. Each checkpoint will get {CPUs} CPUs. Creating a pool of {maxWorkers} worker processes.")
     timeout = 3600
 
-    maxWorkers = int(numberOfCPUs()/CPUs)
 
     promises = []
     for t in tasks:
