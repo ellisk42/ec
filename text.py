@@ -83,39 +83,43 @@ def competeOnOneTask(checkpoint, task,
                                      maximumFrontier=1,
                                      enumerationTimeout=timeout,
                                      evaluationTimeout=evaluationTimeout)
-    if len(times) == 0: return None
+    if len(times) == 0: return None, task
     assert len(times) == 1
-    return times[0]
+    return times[0], task
 
         
 
-def sygusCompetition(checkpoint, tasks):
+def sygusCompetition(checkpoints, tasks):
     from pathos.multiprocessing import Pool
     import datetime
     
-    # map from task to search time. search time will be None if it is not solved
-    searchTimes = {}
+    # map from task to list of search times, one for each checkpoint.
+    # search time will be None if it is not solved
+    searchTimes = {t: [] for t in tasks}
 
-    CPUs = 8
-    timeout = 3600
-    tasks = tasks
-
+    CPUs = int(8/len(checkpoints))
     maxWorkers = int(numberOfCPUs()/CPUs)
     workers = Pool(maxWorkers)
+    eprint(f"You gave me {len(checkpoints)} checkpoints to ensemble. Each checkpoint will get {CPUs} CPUs. Creating a pool of {maxWorkers} worker processes.")
+    timeout = 3600
+
 
     promises = []
     for t in tasks:
-        promise = workers.apply_async(competeOnOneTask,
-                                      (checkpoint,t),
-                                      {"CPUs": CPUs,
-                                       "timeout": timeout})
-        promises.append(promise)
-    for promise, task in zip(promises, tasks):
-        searchTimes[task] = promise.get()
-        if searchTimes[task] is None:
-            eprint(" > competition < Did not solve %s"%task)
-        else:
-            eprint(" > competition < Solved %s in %f seconds"%(task,searchTimes[task]))
+        for checkpoint in checkpoints:
+            promise = workers.apply_async(competeOnOneTask,
+                                          (checkpoint,t),
+                                          {"CPUs": CPUs,
+                                           "timeout": timeout})
+            promises.append(promise)
+    eprint(f"Queued {len(promises)} jobs.")
+    for promise in promises:
+        dt, task = promise.get()
+        if dt is not None:
+            searchTimes[task].append(dt)
+
+    searchTimes = {t: min(ts) if len(ts) > 0 else None
+                   for t,ts in searchTimes.items()}
     
     fn = "experimentOutputs/text_competition_%s.p"%(datetime.datetime.now().isoformat())
     with open(fn,"wb") as handle:
@@ -144,9 +148,10 @@ def text_options(parser):
         help="Incorporate a random 50% of the challenge problems into the training set")
     parser.add_argument(
         "--compete",
+        nargs='+',
         default=None,
         type=str,
-        help="Do a simulated sygus competition (1hr+8cpus/problem) on the sygus tasks, restoring from a provided checkpoint")
+        help="Do a simulated sygus competition (1hr+8cpus/problem) on the sygus tasks, restoring from provided checkpoint(s). If multiple checkpoints are provided, then we ensemble the models.")
 
 if __name__ == "__main__":
     arguments = commandlineArguments(
@@ -203,11 +208,13 @@ if __name__ == "__main__":
     for t in train + test + challenge:
         t.maxParameters = 1
 
-    competitionCheckpoint = arguments.pop("compete")
-    if competitionCheckpoint:
-        with open(competitionCheckpoint, 'rb') as handle:
-            competitionCheckpoint = dill.load(handle)
-        sygusCompetition(competitionCheckpoint, challenge)
+    competitionCheckpoints = arguments.pop("compete")
+    if competitionCheckpoints:
+        checkpoints = []
+        for competitionCheckpoint in competitionCheckpoints:
+            with open(competitionCheckpoint, 'rb') as handle:
+                checkpoints.append(dill.load(handle))
+        sygusCompetition(checkpoints, challenge)
         sys.exit(0)
 
     timestamp = datetime.datetime.now().isoformat()
