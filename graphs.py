@@ -100,6 +100,7 @@ def plotECResult(
         iterations=None,
         maxP=110,
         showEpochs=False,
+        colors=None,
         epochFrequency=1):
     results = []
     parameters = []
@@ -135,7 +136,8 @@ def plotECResult(
 
     plot.xticks(range(0, n_iters), fontsize=TICKFONTSIZE)
 
-    colors = ["#D95F02", "#1B9E77", "#662077", "#FF0000"] + ["#000000"]*100
+    if colors is None:
+        colors = ["#D95F02", "#1B9E77", "#662077", "#FF0000"] + ["#000000"]*100
     usedLabels = []
 
     showSynergyMatrix(results)
@@ -254,6 +256,7 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description = "")
     parser.add_argument("--checkpoints",nargs='+')
+    parser.add_argument("--colors",nargs='+')
     parser.add_argument("--title","-t",type=str,
                         default="")
     parser.add_argument("--iterations","-i",
@@ -307,4 +310,5 @@ if __name__ == "__main__":
                  maxP=arguments.maxPercent,
                  showSolveTime=not arguments.noTime,
                  showEpochs=arguments.showEpochs,
-                 epochFrequency=arguments.epochFrequency)
+                 epochFrequency=arguments.epochFrequency,
+                 colors=arguments.colors)
