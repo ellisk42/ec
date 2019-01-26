@@ -4,12 +4,18 @@ https://console.aws.amazon.com/cost-reports/home#/custom?groupBy=InstanceType&ha
 Google cloud experiments - repeated many times.
 
 Text:
-python launch.py -k  -c -z n1-highmem-64 text_ensemble "python text.py  -t 720  --pseudoCounts 30 --aic 1.0 --structurePenalty 1.5 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 3600 --storeTaskMetrics --testingTimeout 600 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10 --vectorized --auxiliary --ensembleSize 2 -RS 5000 --seed $SEED"
-python launch.py -k  -c -z n1-highmem-64 text "python text.py  -t 720  --pseudoCounts 30 --aic 1.0 --structurePenalty 1.5 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 3600 --storeTaskMetrics --testingTimeout 600 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10 --vectorized --auxiliary --ensembleSize 1 -RS 5000 --seed $SEED"
-python launch.py -k  -c -z n1-highmem-64 text_no_dsl "python text.py  -t 720  --pseudoCounts 30 --aic 1000.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 3600 --storeTaskMetrics --testingTimeout 600 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10 --vectorized --auxiliary --ensembleSize 2 -RS 5000"
-python launch.py -k  -c -z n1-highmem-64 text_no_recognition "python text.py  -t 720  --pseudoCounts 30 --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20  --storeTaskMetrics --testingTimeout 600 --taskReranker randomShuffle --taskBatchSize 10"
-List:
+for SEED in `seq 1 5`; do python launch.py -k  -c -z n1-highmem-64 text_ensemble "python text.py  -t 720  --pseudoCounts 30 --aic 1.0 --structurePenalty 1.5 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 3600 --storeTaskMetrics --testingTimeout 600 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10 --vectorized --auxiliary --ensembleSize 2 -RS 5000 --seed $SEED" ; done
+for SEED in `seq 1 5`; do python launch.py -k  -c -z n1-highmem-64 text "python text.py  -t 720  --pseudoCounts 30 --aic 1.0 --structurePenalty 1.5 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 3600 --storeTaskMetrics --testingTimeout 600 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10 --vectorized --auxiliary --ensembleSize 1 -RS 5000 --seed $SEED" ; done
 
+for SEED in `seq 1 5`; do python launch.py -k  -c -z n1-highmem-64 text_no_dsl "python text.py  -t 720  --pseudoCounts 30 --aic 1000.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 3600 --storeTaskMetrics --testingTimeout 600 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10 --vectorized --auxiliary --ensembleSize 2 -RS 5000 --seed $SEED" ; done
+for SEED in `seq 1 5`; do python launch.py -k  -c -z n1-highmem-64 text_no_recognition "python text.py  -t 720  --pseudoCounts 30 --aic 1.0 --structurePenalty 1.0 --topK 2 --arity 3 --maximumFrontier 5 -i 20  --storeTaskMetrics --testingTimeout 600 --taskReranker randomShuffle --taskBatchSize 10 --seed $SEED" ; done
+
+List:
+for SEED in `seq 1 5`; do python launch.py -k  -c -z n1-highmem-64 list_ensemble "python list.py --split 0.5 -t 720  --pseudoCounts 30 --aic 1.0 --structurePenalty 1.5 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 3600 --storeTaskMetrics --testingTimeout 600 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10 --vectorized --auxiliary --ensembleSize 2 -RS 5000 --seed $SEED" ; done
+for SEED in `seq 1 5`; do python launch.py -k  -c -z n1-highmem-64 list "python list.py --split 0.5 -t 720  --pseudoCounts 30 --aic 1.0 --structurePenalty 1.5 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 3600 --storeTaskMetrics --testingTimeout 600 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10 --vectorized --auxiliary --ensembleSize 1 -RS 5000 --seed $SEED" ; done
+
+LOGO:
+for SEED in `seq 1 5`; do python launch.py -k  -c -z n1-highmem-64 logo_ensemble "python logo.py --split 0.5 -t 720  --pseudoCounts 30 --aic 1.0 --structurePenalty 1.5 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 3600 --storeTaskMetrics --testingTimeout 600 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10 --vectorized --auxiliary --ensembleSize 2 -RS 5000 --seed $SEED" ; done
 
 
 
