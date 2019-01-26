@@ -112,6 +112,7 @@ def sygusCompetition(checkpoints, tasks):
                                           {"CPUs": CPUs,
                                            "timeout": timeout})
             promises.append(promise)
+    eprint(f"Queued {len(promises)} jobs.")
     for promise in promises:
         dt, task = promise.get()
         if dt is not None:
