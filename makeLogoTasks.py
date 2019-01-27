@@ -154,7 +154,15 @@ def manualLogoTask(name, expression, proto=False, needToTrain=False, supervise =
         
     except: eprint("WARNING: could not calculate likelihood of manual logo",p)
 
-    [output, highresolution] = drawLogo(p, p, resolution=[28,128])
+    attempts = 0
+    while True:
+        [output, highresolution] = drawLogo(p, p, resolution=[28,128])
+        if output == "timeout" or highresolution == "timeout":
+            attempts += 1
+        else:
+            break
+    if attempts > 0:
+        eprint(f"WARNING: Took {attempts} attempts to render task {name} within timeout")
             
     shape = list(map(int, output))
     highresolution = list(map(float, highresolution))
