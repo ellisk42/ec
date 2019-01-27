@@ -18,7 +18,7 @@ def branch():
 
 def launchGoogleCloud(size, name):
     name = name.replace('_','-').replace('.','-').lower()
-    os.system(f"gcloud compute --project tenenbaumlab disks create {name} --size 30 --zone us-east1-b --source-snapshot dreamcoder --type pd-standard")
+    os.system(f"gcloud compute --project tenenbaumlab disks create {name} --size 30 --zone us-east1-b --source-snapshot dreamcoder-jan26 --type pd-standard")
     output = \
         subprocess.check_output(["/bin/bash", "-c",
                              f"gcloud compute --project=tenenbaumlab instances create {name} --zone=us-east1-b --machine-type={size} --subnet=default --network-tier=PREMIUM --maintenance-policy=MIGRATE --service-account=150557817012-compute@developer.gserviceaccount.com --scopes=https://www.googleapis.com/auth/devstorage.read_only,https://www.googleapis.com/auth/logging.write,https://www.googleapis.com/auth/monitoring.write,https://www.googleapis.com/auth/servicecontrol,https://www.googleapis.com/auth/service.management.readonly,https://www.googleapis.com/auth/trace.append --disk=name={name},device-name={name},mode=rw,boot=yes,auto-delete=yes"])
@@ -122,7 +122,10 @@ git pull
         scp(address, resume, "~/ec/")
         preamble += "tar xf {}\n".format(os.path.basename(resume))
     else:
-        preamble += "git apply patch ; mkdir jobs\ngit submodule update --init --recursive\n"
+        preamble += "git apply patch ; mkdir jobs\n"
+        if not arguments.google:
+            # Google image already has these modules loaded
+            preamble += "git submodule update --init --recursive\n"
 
     if upload:
         # This is probably a terribly insecure idea...

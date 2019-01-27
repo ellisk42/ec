@@ -171,7 +171,6 @@ def regex_options(parser):
                         nargs='*',
                         default=False,
                         help="use ll cutoff for training tasks (for probabilistic likelihood model only). default is False,")
-    parser.add_argument("--seed", type=int, default=42)
     """parser.add_argument("--stardecay",
                         type=float,
                         dest="stardecay",
@@ -230,7 +229,7 @@ if __name__ == "__main__":
     maxTasks = args.pop("maxTasks")
     if len(tasks) > maxTasks:
         eprint("Unwilling to handle {} tasks, truncating..".format(len(tasks)))
-        seed = args.pop("seed")
+        seed = 42 # previously this was hardcoded and never changed
         random.seed(seed)
         random.shuffle(tasks)
         del tasks[maxTasks:]
