@@ -269,7 +269,7 @@ def solveForTask_ocaml(_=None,
                "upperBound": upperBound,
                "budgetIncrement": budgetIncrement,
                "verbose": False,
-               "shatter": 10}
+               "shatter": 5 if len(tasks) == 1 and "turtle" in str(tasks[0].request) else 10}
 
     if hasattr(tasks[0], 'maxParameters') and tasks[0].maxParameters is not None:
         message["maxParameters"] = tasks[0].maxParameters
