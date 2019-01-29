@@ -332,6 +332,7 @@ weighted with the constants. If you look at the grammar above, this is an error!
 """)
         assert False
 
+    del args["likelihoodModel"]
     explorationCompression(baseGrammar, train,
                            testingTasks = test,
                            **args)

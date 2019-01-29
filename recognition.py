@@ -997,7 +997,6 @@ class RecognitionModel(nn.Module):
 
     def enumerateFrontiers(self,
                            tasks,
-                           likelihoodModel,
                            solver=None,
                            enumerationTimeout=None,
                            testing=False,
@@ -1011,7 +1010,7 @@ class RecognitionModel(nn.Module):
             #untorch seperately to make sure you filter out None grammars
             grammars = {task: grammar.untorch() for task, grammar in grammars.items() if grammar is not None}
 
-        return multicoreEnumeration(grammars, tasks, likelihoodModel,
+        return multicoreEnumeration(grammars, tasks,
                                     solver=solver,
                                     testing=testing,
                                     enumerationTimeout=enumerationTimeout,
@@ -1642,7 +1641,6 @@ class NewRecognitionModel(nn.Module):
 
     def enumerateFrontiers(self,
                            tasks,
-                           likelihoodModel,
                            solver=None,
                            frontierSize=None,
                            enumerationTimeout=None,
@@ -1694,7 +1692,7 @@ class NewRecognitionModel(nn.Module):
         # Can't callcompiled because program.Primitive doesn't have the right
         # globals
         x = enumerateNetwork(
-            network, tasks_features, likelihoodModel, solver=solver,
+            network, tasks_features, solver=solver,
             frontierSize=frontierSize, enumerationTimeout=enumerationTimeout,
             CPUs=CPUs, maximumFrontier=maximumFrontier,
             evaluationTimeout=evaluationTimeout)

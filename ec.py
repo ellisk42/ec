@@ -1,5 +1,4 @@
 from utilities import eprint
-from likelihoodModel import *
 from recognition import *
 from frontier import *
 from program import *
@@ -81,7 +80,6 @@ class ECResult():
                      "enumerationTimeout": "ET",
                      "useRecognitionModel": "rec",
                      "useNewRecognitionModel": "newRec",
-                     "likelihoodModel": "likemod",
                      "use_ll_cutoff": "llcut",
                      "topk_use_only_likelihood": "topkNotMAP",
                      "activation": "act",
@@ -135,11 +133,9 @@ def ecIterator(grammar, tasks,
                bootstrap=None,
                solver="ocaml",
                compressor="rust",
-               likelihoodModel="all-or-nothing",
                biasOptimal=False,
                contextual=False,
                testingTasks=[],
-               benchmark=None,
                iterations=None,
                resume=None,
                frontierSize=None,
@@ -194,9 +190,6 @@ def ecIterator(grammar, tasks,
     if ensembleSize > 1 and not useRecognitionModel:
         eprint("Warning: ensemble size requires using the recognition model, aborting.")
         assert False
-    if benchmark is not None and resume is None:
-        eprint("You cannot benchmark unless you are loading a checkpoint, aborting.")
-        assert False
     if biasOptimal and not useRecognitionModel:
         eprint("Bias optimality only applies to recognition models, aborting.")
         assert False
@@ -227,7 +220,6 @@ def ecIterator(grammar, tasks,
         v in locals().items() if k not in {
             "tasks",
             "useNewRecognitionModel",
-            "likelihoodModel",
             "use_map_search_times",
             "seed",
             "activation",
@@ -245,7 +237,6 @@ def ecIterator(grammar, tasks,
             "bootstrap",
             "addFullTaskMetrics",
             "featureExtractor",
-            "benchmark",
             "evaluationTimeout",
             "testingTasks",
             "compressor"} and v is not None}
@@ -335,38 +326,6 @@ def ecIterator(grammar, tasks,
                                           task=t) for t in tasks})
 
 
-    if benchmark is not None:
-        assert resume is not None, "Benchmarking requires resuming from checkpoint that you are benchmarking."
-        if benchmark > 0:
-            assert testingTasks != [], "Benchmarking requires held out test tasks"
-            benchmarkTasks = testingTasks
-        else:
-            benchmarkTasks = tasks
-            benchmark = -benchmark
-        for name, result in results.items():
-            eprint("Starting benchmark:", name)
-            benchmarkSynthesisTimes(
-                result,
-                benchmarkTasks,
-                timeout=benchmark,
-                CPUs=CPUs,
-                evaluationTimeout=evaluationTimeout)
-            eprint("Completed benchmark.")
-            eprint()
-        yield None
-        return
-
-    likelihoodModel = {
-        "all-or-nothing": lambda: AllOrNothingLikelihoodModel(
-            timeout=evaluationTimeout),
-        "feature-discriminator": lambda: FeatureDiscriminatorLikelihoodModel(
-            tasks,
-            featureExtractor(tasks)),
-        "euclidean": lambda: EuclideanLikelihoodModel(
-            featureExtractor(tasks)),
-        "probabilistic": lambda: ProbabilisticLikelihoodModel(
-            timeout=evaluationTimeout)}[likelihoodModel]()
-
     # Set up the task batcher.
     if taskReranker == 'default':
         taskBatcher = DefaultTaskBatcher()
@@ -395,7 +354,7 @@ def ecIterator(grammar, tasks,
         if result.recognitionModel is not None:
             _enumerator = lambda *args, **kw: result.recognitionModel.enumerateFrontiers(*args, **kw)
         else: _enumerator = lambda *args, **kw: multicoreEnumeration(result.grammars[-1], *args, **kw)
-        enumerator = lambda *args, **kw: _enumerator(*args, likelihoodModel=likelihoodModel,
+        enumerator = lambda *args, **kw: _enumerator(*args, 
                                                      maximumFrontier=maximumFrontier, solver=solver,
                                                      CPUs=CPUs, evaluationTimeout=evaluationTimeout,
                                                      **kw)
@@ -433,7 +392,7 @@ def ecIterator(grammar, tasks,
             eprint("Evaluating on held out testing tasks for iteration: %d" % (j))
             if useRecognitionModel and result.recognitionModel is not None: 
                 eprint("Evaluating using trained recognition model.")
-                testingFrontiers, times, testingTimes = result.recognitionModel.enumerateFrontiers(testingTasks, likelihoodModel,
+                testingFrontiers, times, testingTimes = result.recognitionModel.enumerateFrontiers(testingTasks, 
                                                                       CPUs=CPUs,
                                                                       solver=solver,
                                                                       maximumFrontier=maximumFrontier,
@@ -452,7 +411,7 @@ def ecIterator(grammar, tasks,
 
             else:
                 eprint("Evaluating using multicore enumeration without a recognition model.")
-                testingFrontiers, times, testingTimes = multicoreEnumeration(grammar, testingTasks, likelihoodModel,
+                testingFrontiers, times, testingTimes = multicoreEnumeration(grammar, testingTasks, 
                                                                              solver=solver,
                                                                              maximumFrontier=maximumFrontier,
                                                                              enumerationTimeout=testingTimeout,
@@ -486,7 +445,7 @@ def ecIterator(grammar, tasks,
         eprint("Using a waking task batch of size: " + str(len(wakingTaskBatch)))
 
         # WAKING UP
-        topDownFrontiers, times, allTimes = multicoreEnumeration(grammar, wakingTaskBatch, likelihoodModel,
+        topDownFrontiers, times, allTimes = multicoreEnumeration(grammar, wakingTaskBatch, 
                                                 solver=solver,
                                                 maximumFrontier=maximumFrontier,
                                                 enumerationTimeout=enumerationTimeout,
@@ -560,7 +519,7 @@ def ecIterator(grammar, tasks,
                 totalTasksHitBottomUp = set()
                 for recIndex, recognizer in enumerate(trainedRecognizers):
                     eprint("Enumerating from recognizer %d of %d" % (recIndex, len(trainedRecognizers)))
-                    bottomupFrontiers, times, allRecognitionTimes = recognizer.enumerateFrontiers(wakingTaskBatch, likelihoodModel,
+                    bottomupFrontiers, times, allRecognitionTimes = recognizer.enumerateFrontiers(wakingTaskBatch, 
                                                                          CPUs=CPUs,
                                                                          solver=solver,
                                                                          frontierSize=frontierSize,
@@ -608,7 +567,6 @@ def ecIterator(grammar, tasks,
                 eprint("done training recognition model")
                 bottomupFrontiers, times, allRecognitionTimes = result.recognitionModel.enumerateFrontiers(
                     wakingTaskBatch,
-                    likelihoodModel,
                     CPUs=CPUs,
                     solver=solver,
                     maximumFrontier=maximumFrontier,
@@ -635,14 +593,14 @@ def ecIterator(grammar, tasks,
                 eprint("Expanding enumeration timeout from %i to %i because of no progress. Focusing exclusively on %d unsolved tasks." % (timeout, timeout * expandFrontier, len(unsolved)))
                 timeout = timeout * expandFrontier
                 unsolvedFrontiers, unsolvedTimes, allUnsolvedTimes = \
-                    multicoreEnumeration(grammar, unsolved, likelihoodModel,
+                    multicoreEnumeration(grammar, unsolved, 
                                          solver=solver,
                                          maximumFrontier=maximumFrontier,
                                          enumerationTimeout=timeout,
                                          CPUs=CPUs,
                                          evaluationTimeout=evaluationTimeout)
                 if useRecognitionModel:
-                    bottomUnsolved, unsolvedTimes, allUnsolvedRecognitionTimes = recognizer.enumerateFrontiers(unsolved, likelihoodModel,
+                    bottomUnsolved, unsolvedTimes, allUnsolvedRecognitionTimes = recognizer.enumerateFrontiers(unsolved, 
                                                                                   CPUs=CPUs,
                                                                                   solver=solver,
                                                                                   frontierSize=frontierSize,
@@ -897,11 +855,6 @@ def commandlineArguments(_=None,
                         help="""Should we initialize recognition model weights to be what they were at the previous DreamCoder iteration? Default: %s""" % reuseRecognition,
                         default=reuseRecognition,
                         action="store_true")
-    parser.add_argument(
-        "--benchmark",
-        help="""Benchmark synthesis times with a timeout of this many seconds. You must use the --resume option. EC will not run but instead we were just benchmarked the synthesis times of a learned model""",
-        type=float,
-        default=None)
     parser.add_argument("--recognition",
                         dest="useRecognitionModel",
                         action="store_true",

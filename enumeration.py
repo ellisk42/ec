@@ -10,7 +10,7 @@ import traceback
 import subprocess
 import threading
 
-def multicoreEnumeration(g, tasks, likelihoodModel, _=None,
+def multicoreEnumeration(g, tasks, _=None,
                          solver=None,
                          enumerationTimeout=None,
                          CPUs=1,
@@ -25,11 +25,9 @@ def multicoreEnumeration(g, tasks, likelihoodModel, _=None,
     # library. This is because we need to be able to kill workers.
     from multiprocessing import Process, Queue
 
-    solvers = {"ocaml": solveForTask_ocaml,
-               "pypy": solveForTask_pypy,
-               "python": solveForTask_python}
+    solvers = {"ocaml": solveForTask_ocaml}
     assert solver in solvers, \
-        "You must specify a valid solver. options are ocaml, pypy, or python."
+        "You must specify a valid solver. options are ocaml *and nothing else*"
     solver = solvers[solver]
 
     if not isinstance(g, dict):
@@ -151,7 +149,6 @@ def multicoreEnumeration(g, tasks, likelihoodModel, _=None,
                                  upperBound=lowerBounds[j] + bi,
                                  budgetIncrement=bi,
                                  timeout=thisTimeout,
-                                 likelihoodModel=likelihoodModel,
                                  evaluationTimeout=evaluationTimeout,
                                  maximumFrontiers=maximumFrontiers(j),
                                  testing=testing)
@@ -239,7 +236,6 @@ def solveForTask_ocaml(_=None,
                        g=None, tasks=None,
                        lowerBound=None, upperBound=None, budgetIncrement=None,
                        timeout=None,
-                       likelihoodModel=None,  # FIXME: unused
                        testing=None, # FIXME: unused
                        evaluationTimeout=None, maximumFrontiers=None):
 
@@ -339,345 +335,10 @@ def solveForTask_ocaml(_=None,
     return frontiers, searchTimes
 
 
-def solveForTask_pypy(_=None,
-                      elapsedTime=0.,
-                      g=None, task=None,
-                      lowerBound=None, upperBound=None, budgetIncrement=None,
-                      timeout=None,
-                      likelihoodModel=None,
-                      evaluationTimeout=None, maximumFrontier=None, testing=False):
-    return callCompiled(enumerateForTasks,
-                        g, tasks, likelihoodModel,
-                        timeout=timeout,
-                        testing=testing,
-                        elapsedTime=elapsedTime,
-                        evaluationTimeout=evaluationTimeout,
-                        maximumFrontiers=maximumFrontiers,
-                        budgetIncrement=budgetIncrement,
-                        lowerBound=lowerBound, upperBound=upperBound)
-
-def solveForTask_python(_=None,
-                        elapsedTime=0.,
-                        g=None, tasks=None,
-                        lowerBound=None, upperBound=None, budgetIncrement=None,
-                        timeout=None,
-                        CPUs=1,
-                        likelihoodModel=None,
-                        evaluationTimeout=None, maximumFrontiers=None, testing=False):
-    return enumerateForTasks(g, tasks, likelihoodModel,
-                             timeout=timeout,
-                             testing=testing,
-                             elapsedTime=elapsedTime,
-                             evaluationTimeout=evaluationTimeout,
-                             maximumFrontiers=maximumFrontiers,
-                             budgetIncrement=budgetIncrement,
-                             lowerBound=lowerBound, upperBound=upperBound)
-
-
 class EnumerationTimeout(Exception):
     pass
 
-#from luke #TODO: unfixed for big master merge 
-def enumerateNetwork(network, tasks_features, likelihoodModel, solver=None,
-                       frontierSize=None,
-                       enumerationTimeout=None,
-                       CPUs=1,
-                       maximumFrontier=None,
-                       verbose=True,
-                       evaluationTimeout=None):
-    from time import time
-    
-    start = time()
-
-    chunk_size = int(math.ceil(len(tasks_features) / CPUs)) if int(math.ceil(len(tasks_features) / CPUs)) > 0 else 1
-    eprint("enumerateNetwork with", chunk_size, "tasks per cpu")
-
-    chunked_tasks_features = [tasks_features[i:i + chunk_size] for i in range(0, len(tasks_features), chunk_size)]
-    
-
-    #TODO, enumerateNetworkForTasks
-    frontierss = parallelMap(CPUs,            
-                            lambda cpu_idx__tasks_features: enumerateNetworkForTasks(cpu_idx__tasks_features[0], network, cpu_idx__tasks_features[1],
-                                                                     likelihoodModel=likelihoodModel, #this may break
-                                                                     frontierSize=frontierSize,
-                                                                     timeout=enumerationTimeout,
-                                                                     evaluationTimeout = evaluationTimeout,
-                                                                     verbose=verbose,
-                                                                     maximumFrontier=maximumFrontier),
-                            list(zip(list(range(len(chunked_tasks_features))), chunked_tasks_features)),
-                            chunksize=1)
-    frontiers = [frontier for frontiers in frontierss for frontier in frontiers] #wtf is happening
-    # if verbose:
-    #     eprint("Enumerated %d frontiers in time %f"%(len(), time() - start))
-    return frontiers
-
-#from luke #TODO: unfixed for big master merge 
-def enumerateNetworkForTasks(cpu_idx, network, tasks_features, likelihoodModel=None,
-                     verbose=False,
-                     timeout=None,
-                     evaluationTimeout=None,
-                     frontierSize=None,
-                     maximumFrontier = 10**2):
-    from pregex import pregex
-    assert likelihoodModel is not None
-    assert network is not None
-
-    assert (timeout is not None) or (frontierSize is not None), \
-        "enumerateForTask: You must provide either a timeout or a frontier size."
-    eprint("(%d)"%cpu_idx, "enumerateNetworkForTasks")
-
-    from time import time
-    def timeoutCallBack(_1,_2):
-        if verbose: eprint("timed out")
-        raise EnumerationTimeout()
-    if timeout is not None:
-        if verbose: eprint("Alarming timeout for",timeout,"for task [task undefined for now]")
-        signal.signal(signal.SIGVTALRM, timeoutCallBack)
-        signal.setitimer(signal.ITIMER_VIRTUAL, timeout)
-    
-    frontiers = []
-    for task, features in tasks_features:
-        frontier = []
-        starting = time()
-        # previousBudget = 0.
-        # budget = previousBudget + budgetIncrement
-
-        try:
-            totalNumberOfPrograms = 0
-
-            
-
-            seen_proposals = set()
-            new_proposals_scores = set()
-            numberOfPrograms = 0
-            numberOfHits = 0
-            numberOfSamples = 0
-
-            for i in range(50):
-                random.shuffle(features)
-                #inputs = [input for (input, output) in features[:4]]
-                outputs = [output for output in features[:5]] #changed from 4 to 5
-                #this line 
-                eprint("input to sample and score:")
-                eprint([outputs])
-                samples, scores = network.sampleAndScore([outputs], nRepeats=100)
-                #eprint("samples:")
-                #eprint(samples)
-                #why is this a tuple??? - it already was a tuple, so nothing is changed.
-                new_proposals_scores = [(tuple(samples[i]), scores[i]) for i in range(len(samples)) if tuple(samples[i]) not in seen_proposals]
-                seen_proposals = seen_proposals | set(x[0] for x in new_proposals_scores)
-
-                for sample, prior in new_proposals_scores:
-                    try:
-                        eprint("untokenized program:", sample)
-                        #print("sample:")
-                        #print(sample)
-
-                        numberOfSamples += 1
-                        p = untokeniseProgram(sample)
-
-                        preg = p.evaluate([])
-                        if not isinstance(preg, pregex.Pregex): continue
-
-                        eprint("regex program:", preg)
-                        #likelihood = task.logLikelihood(p, timeout=evaluationTimeout) #TODO: change this
-                        #eprint("tokenized program:", p)
-                        success, likelihood = likelihoodModel.score(p, task)
-                        #eprint("sampled an actual program")
-                    except ParseFailure: continue
-                    except RunFailure: continue #Happens during likelihood evaluation for e.g. (lambda $3)
-                    except Exception as e:
-                        eprint("Exception during evaluation:", e)
-                        continue 
-
-                    numberOfPrograms += 1
-
-                    if success:
-                        if verbose:
-                            eprint("(%d)"%cpu_idx, "Hit",task.name,"with the program", preg,"which has prior",prior, "and likelihood", likelihood, "after",time() - starting,"seconds using RobustFill model")
-                        frontier.append(FrontierEntry(program = p,
-                                                      logPrior = prior,
-                                                      logLikelihood = likelihood))
-                        numberOfHits += 1
-
-                    # If the alarm is triggered during evaluation,
-                    # it will be caught by the catchall exception handler
-                    # And so we have to time ourselves out
-                    if timeout is not None and time() - starting > timeout:
-                        signal.setitimer(signal.ITIMER_VIRTUAL, 0)
-                        raise EnumerationTimeout
-
-                
-                # previousBudget = budget
-                # budget += budgetIncrement
-                # totalNumberOfPrograms += numberOfPrograms
-                # if verbose:
-                #     eprint("\tTotal elapsed time: %d seconds. Total number of programs evaluated: %d. Task: %s."% \
-                #            (time() - starting, totalNumberOfPrograms, task))
-                # if frontierSize is not None and totalNumberOfPrograms > frontierSize: break
-        except EnumerationTimeout:
-            if verbose:
-                eprint("Timeout triggered after",time() - starting,"seconds for task",task)
-        signal.setitimer(signal.ITIMER_VIRTUAL, 0)
-
-        if verbose:
-            eprint("(%d)"%cpu_idx, "enumerated: %d about unique samples, %d total samples, %d programs, %d hits" % (len(seen_proposals), numberOfSamples, numberOfPrograms, numberOfHits))
-
-        frontier = Frontier(frontier,
-                            task = task).topK(maximumFrontier)
-        eprint(frontier.summarize())
-        
-        frontiers.append(frontier)
-
-    return frontiers
-
-def enumerateForTasks(g, tasks, likelihoodModel, _=None,
-                      verbose=False,
-                      timeout=None,
-                      elapsedTime=0.,
-                      CPUs=1,
-                      testing=False, #unused
-                      evaluationTimeout=None,
-                      lowerBound=0.,
-                      upperBound=100.,
-                      budgetIncrement=1.0, maximumFrontiers=None):
-    assert timeout is not None, \
-        "enumerateForTasks: You must provide a timeout."
-
-    from time import time
-
-    request = tasks[0].request
-    assert all(t.request == request for t in tasks), \
-        "enumerateForTasks: Expected tasks to all have the same type"
-
-    maximumFrontiers = [maximumFrontiers[t] for t in tasks]
-    # store all of the hits in a priority queue
-    # we will never maintain maximumFrontier best solutions
-    hits = [PQ() for _ in tasks]
-
-    starting = time()
-    previousBudget = lowerBound
-    budget = lowerBound + budgetIncrement
-    try:
-        totalNumberOfPrograms = 0
-        while time() < starting + timeout and \
-                any(len(h) < mf for h, mf in zip(hits, maximumFrontiers)) and \
-                budget <= upperBound:
-            numberOfPrograms = 0
-            for prior, _, p in g.enumeration(Context.EMPTY, [], request,
-                                             maximumDepth=99,
-                                             upperBound=budget,
-                                             lowerBound=previousBudget):
-                descriptionLength = -prior
-                # Shouldn't see it on this iteration
-                assert descriptionLength <= budget
-                # Should already have seen it
-                assert descriptionLength > previousBudget
-
-                numberOfPrograms += 1
-                totalNumberOfPrograms += 1
-
-                for n in range(len(tasks)):
-                    task = tasks[n]
-
-                    #Warning:changed to max's new likelihood model situation
-                    #likelihood = task.logLikelihood(p, evaluationTimeout)
-                    #if invalid(likelihood):
-                        #continue
-                    success, likelihood = likelihoodModel.score(p, task)
-                    if not success:
-                        continue
-                    
-
-                    dt = time() - starting + elapsedTime
-                    priority = -(likelihood + prior)
-                    hits[n].push(priority,
-                                 (dt, FrontierEntry(program=p,
-                                                    logLikelihood=likelihood,
-                                                    logPrior=prior)))
-                    if len(hits[n]) > maximumFrontiers[n]:
-                        hits[n].popMaximum()
-
-                if timeout is not None and time() - starting > timeout:
-                    raise EnumerationTimeout
-
-            previousBudget = budget
-            budget += budgetIncrement
-
-            if budget > upperBound:
-                break
-    except EnumerationTimeout:
-        pass
-
-    frontiers = {tasks[n]: Frontier([e for _, e in hits[n]],
-                                    task=tasks[n])
-                 for n in range(len(tasks))}
-    searchTimes = {
-        tasks[n]: None if len(hits[n]) == 0 else \
-        min(t for t,_ in hits[n]) for n in range(len(tasks))}
-
-    return frontiers, searchTimes
 
 
-def benchmarkSynthesisTimes(result,
-                            tasks,
-                            _=None,
-                            timeout=None,
-                            CPUs=None,
-                            evaluationTimeout=None):
-    if result.parameters['useRecognitionModel']:
-        assert hasattr(result, 'recognitionModel') and result.recognitionModel is not None, \
-            "Checkpoint was trained using a recognition model but it does not have a saved recognition model."
-
-    times = parallelMap(
-        CPUs,
-        lambda task: benchmarkSynthesisTime(
-            result,
-            task,
-            timeout,
-            evaluationTimeout),
-        tasks)
-    timeouts = sum(t is None for t in times)
-    successes = sum(t is not None for t in times)
-    if successes > 0:
-        average = sum(t for t in times if t is not None) / float(successes)
-        deviation = (
-            sum((t - average)**2 for t in times if t is not None) / float(successes))**0.5
-        standardError = deviation / (float(successes)**0.5)
-    eprint("BENCHMARK:")
-    eprint(
-        "Solves %d/%d = %d%%" %
-        (successes, len(tasks), int(
-            100. * successes / len(tasks))))
-    if successes > 0:
-        eprint("Synthesis time %f +/- %f sec" % (average, standardError))
 
 
-def benchmarkSynthesisTime(result, task, timeout, evaluationTimeout):
-    grammar = result.grammars[-1]
-
-    from likelihoodModel import AllOrNothingLikelihoodModel
-    likelihoodModel = AllOrNothingLikelihoodModel
-    solver = "ocaml"
-
-    if result.parameters['useRecognitionModel']:
-        _, times = result.recognitionModel.enumerateFrontiers([task],
-                                                              likelihoodModel,
-                                                              CPUs=1,
-                                                              solver=solver,
-                                                              maximumFrontier=1,
-                                                              enumerationTimeout=timeout,
-                                                              evaluationTimeout=evaluationTimeout)
-    else:
-        _, times = multicoreEnumeration(grammar, [task], likelihoodModel,
-                                        solver=solver,
-                                        maximumFrontier=1,
-                                        enumerationTimeout=timeout,
-                                        CPUs=1,
-                                        evaluationTimeout=evaluationTimeout)
-    if len(times) == 0:
-        return None
-    assert len(times) == 1
-    dt = times[0]
-    eprint("Solved", task, "in time", dt)
-    return dt
