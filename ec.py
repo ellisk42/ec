@@ -130,7 +130,6 @@ def ecIterator(grammar, tasks,
                seed=0,
                addFullTaskMetrics=False,
                matrixRank=None,
-               bootstrap=None,
                solver="ocaml",
                compressor="rust",
                biasOptimal=False,
@@ -234,7 +233,6 @@ def ecIterator(grammar, tasks,
             "outputPrefix",
             "resume",
             "resumeFrontierSize",
-            "bootstrap",
             "addFullTaskMetrics",
             "featureExtractor",
             "evaluationTimeout",
@@ -257,8 +255,6 @@ def ecIterator(grammar, tasks,
                 ECResult.abbreviate(k),
                 parameters[k]) for k in sorted(
                 parameters.keys())]
-        if bootstrap:
-            kvs += ["bstrap=True"]
         return "{}_{}{}.pickle".format(outputPrefix, "_".join(kvs), extra)
 
     if message:
@@ -290,28 +286,7 @@ def ecIterator(grammar, tasks,
         if resumeFrontierSize:
             frontierSize = resumeFrontierSize
             eprint("Set frontier size to", frontierSize)
-        if bootstrap is not None:  # Make sure that we register bootstrapped primitives
-            for p in grammar.primitives:
-                RegisterPrimitives.register(p)
     else:  # Start from scratch
-        if bootstrap is not None:
-            with open(bootstrap, "rb") as handle:
-                strapping = pickle.load(handle).grammars[-1]
-            eprint("Bootstrapping from", bootstrap)
-            eprint("Bootstrap primitives:")
-            for p in strapping.primitives:
-                eprint(p)
-                RegisterPrimitives.register(p)
-            eprint()
-            grammar = Grammar.uniform(list({p for p in grammar.primitives + strapping.primitives
-                                            if not str(p).startswith("fix")}),
-                                      continuationType=grammar.continuationType)
-            if compressor == "rust":
-                eprint(
-                    "Rust compressor is currently not compatible with bootstrapping.",
-                    "Falling back on pypy compressor.")
-                compressor = "pypy"
-
         #for graphing of testing tasks
         numTestingTasks = len(testingTasks) if len(testingTasks) != 0 else None
 
@@ -911,11 +886,6 @@ def commandlineArguments(_=None,
         helmholtzRatio,
         default=helmholtzRatio,
         type=float)
-    parser.add_argument(
-        "--bootstrap",
-        help="Start the learner out with a pretrained DSL. This argument should be a path to a checkpoint file.",
-        default=None,
-        type=str)
     parser.add_argument(
         "--compressor",
         default=compressor,
