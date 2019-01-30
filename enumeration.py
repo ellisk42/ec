@@ -11,24 +11,21 @@ import subprocess
 import threading
 
 def multicoreEnumeration(g, tasks, _=None,
-                         solver=None,
                          enumerationTimeout=None,
                          CPUs=1,
                          maximumFrontier=None,
                          verbose=True,
                          evaluationTimeout=None,
                          testing=False):
-    '''g: Either a Grammar, or a map from task to grammar.'''
+    '''g: Either a Grammar, or a map from task to grammar.
+    Returns (list-of-frontiers, map-from-task-to-search-time)'''
     from time import time
 
     # We don't use actual threads but instead use the multiprocessing
     # library. This is because we need to be able to kill workers.
     from multiprocessing import Process, Queue
 
-    solvers = {"ocaml": solveForTask_ocaml}
-    assert solver in solvers, \
-        "You must specify a valid solver. options are ocaml *and nothing else*"
-    solver = solvers[solver]
+    solver = solveForTask_ocaml
 
     if not isinstance(g, dict):
         g = {t: g for t in tasks}
@@ -203,8 +200,7 @@ def multicoreEnumeration(g, tasks, _=None,
             eprint("Unknown message result:", message.result)
             assert False
 
-    return [frontiers[t] for t in tasks], [bestSearchTime[t]
-                                           for t in tasks if bestSearchTime[t] is not None], bestSearchTime
+    return [frontiers[t] for t in tasks], bestSearchTime
 
 def wrapInThread(f):
     """
@@ -289,29 +285,6 @@ def solveForTask_ocaml(_=None,
     searchTimes = {}
     for t in tasks:
         solutions = response[t.name]
-        # Remove all entries that do not type correctly
-        # This can occur because the solver tries to infer the type
-        # Sometimes it infers a type that is too general
-        # badPrograms = [
-            # r["program"] for r in solutions if not Program.parse(
-                # r["program"]).canHaveType(
-                # t.request)]
-        # for b in badPrograms:
-            # eprint("Bad program", b, ':', t.request)
-        # solutions = [
-            # r for r in solutions if Program.parse(
-                # r["program"]).canHaveType(
-                # t.request)]
-
-        # FIXME:
-        # I have no idea why this bug occurs but sometimes the ocaml backend returns the wrong likelihood for programs with real numbers
-        # This bug should be fixed!
-        # if hasattr(t,'BIC'):
-        #     if not hasattr(t,'likelihoodThreshold') or t.likelihoodThreshold is None:
-        #         for r in solutions:
-        #             ll = -substringOccurrences("REAL", r["program"])*t.BIC*math.log(len(t.examples))
-        #             r["logLikelihood"] = ll
-
         frontier = Frontier([FrontierEntry(program=p,
                                            logLikelihood=e["logLikelihood"],
                                            logPrior=g.logLikelihood(t.request, p))

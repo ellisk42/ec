@@ -69,17 +69,15 @@ def competeOnOneTask(checkpoint, task,
     if checkpoint.recognitionModel is not None:
         recognizer = checkpoint.recognitionModel
         challengeFrontiers, times, bestSearchTime = \
-                recognizer.enumerateFrontiers([task], "all-or-nothing",
+                recognizer.enumerateFrontiers([task], 
                                               CPUs=CPUs,
-                                              solver="ocaml",
                                               maximumFrontier=1,
                                               enumerationTimeout=timeout,
                                               evaluationTimeout=evaluationTimeout)
     else:
         challengeFrontiers, times, bestSearchTimes = \
-                multicoreEnumeration(checkpoint.grammars[-1], [task], "all-or-nothing",
+                multicoreEnumeration(checkpoint.grammars[-1], [task], 
                                      CPUs=CPUs,
-                                     solver="ocaml",
                                      maximumFrontier=1,
                                      enumerationTimeout=timeout,
                                      evaluationTimeout=evaluationTimeout)
@@ -229,9 +227,8 @@ if __name__ == "__main__":
                            **arguments)
     if doChallenge:
         eprint("held out challenge problems before learning...")
-        challengeFrontiers, times = multicoreEnumeration(challengeGrammar, challenge, "all-or-nothing",
+        challengeFrontiers, times = multicoreEnumeration(challengeGrammar, challenge,
                                                          CPUs=numberOfCPUs(),
-                                                         solver="ocaml",
                                                          maximumFrontier=1,
                                                          enumerationTimeout=challengeTimeout,
                                                          evaluationTimeout=evaluationTimeout)
@@ -247,17 +244,15 @@ if __name__ == "__main__":
         if result.recognitionModel is not None:
             recognizer = result.recognitionModel
             challengeFrontiers, times = \
-                recognizer.enumerateFrontiers(challenge, "all-or-nothing",
+                recognizer.enumerateFrontiers(challenge, 
                                               CPUs=numberOfCPUs(),
-                                              solver="ocaml",
                                               maximumFrontier=1,
                                               enumerationTimeout=challengeTimeout,
                                               evaluationTimeout=evaluationTimeout)
         else:
             challengeFrontiers, times = \
-                multicoreEnumeration(result.grammars[-1], challenge, "all-or-nothing",
+                multicoreEnumeration(result.grammars[-1], challenge,
                                      CPUs=numberOfCPUs(),
-                                     solver="ocaml",
                                      maximumFrontier=1,
                                      enumerationTimeout=challengeTimeout,
                                      evaluationTimeout=evaluationTimeout)

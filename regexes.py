@@ -285,7 +285,6 @@ if __name__ == "__main__":
         "evaluationTimeout": 0.005,
         "topk_use_only_likelihood": True,
         "maximumFrontier": 10,
-        "solver": "ocaml",
         "compressor": "ocaml"
     })
     ####
