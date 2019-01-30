@@ -534,7 +534,7 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
                                   contextual=contextual,
                                   previousRecognitionModel=previousRecognitionModel,
                                   id=i) for i in range(ensembleSize)]
-    trainedRecognizers = parallelMap(CPUs,
+    trainedRecognizers = parallelMap(min(CPUs,len(recognizers)),
                                      lambda recognizer: recognizer.train(allFrontiers,
                                                                          biasOptimal=biasOptimal,
                                                                          helmholtzFrontiers=helmholtzFrontiers, 
