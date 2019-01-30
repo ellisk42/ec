@@ -48,12 +48,18 @@ def averageCurves(curves):
     curves = [{x:y for x,y in zip(xs,ys) }
               for xs,ys in curves ]
     ys = []
+    e = []
     for x in xs:
         y_ = []
         for curve in curves:
             if x in curve: y_.append(curve[x])
-        ys.append(sum(y_)/len(y_))
-    return xs,ys
+        mean = sum(y_)/len(y_)
+        variance = sum((y - mean)**2 for y in y_ )/len(y_)
+        sem = variance**0.5
+        e.append(sem)
+        ys.append(mean)
+        
+    return xs,ys,e
 
 def parseResultsPath(p):
     def maybe_eval(s):
@@ -159,7 +165,8 @@ def plotECResult(
     showSynergyMatrix(results)
 
     cyclesPerEpic = None
-    plotCommands = {} # Map from (color,line style) to (xs,ys)
+    plotCommands1 = {} # Map from (color,line style) to (xs,ys) for a1
+    plotCommands2 = {} # Map from (color,line style) to (xs,ys) for a2
     for result, p, color in zip(results, parameters, colors):
         if showTraining:
             ys = [100.*t/float(len(result.taskSolutions))
@@ -183,7 +190,7 @@ def plotECResult(
             usedLabels.append((labels[0], color))
             labels = labels[1:]
 
-        plotCommands[(color,'-')] = plotCommands.get((color,'-'),[]) + [(xs,ys)]
+        plotCommands1[(color,'-')] = plotCommands1.get((color,'-'),[]) + [(xs,ys)]
         
         if showSolveTime:
             if failAsTimeout:
@@ -195,11 +202,11 @@ def plotECResult(
 
             if not showTraining: times = result.testingSearchTime[:iterations]
             else: times = result.searchTimes[:iterations]
-            a2.plot(xs,
-                    [mean(ts) if not timePercentile else median(ts)
-                         for ts in times],
-                    color=color, ls='--')
+            ys = [mean(ts) if not timePercentile else median(ts)
+                  for ts in times]
+            plotCommands2[(color,'--')] = plotCommands2.get((color,'--'),[]) + [(xs,ys)]
             if interval and result is results[0]:
+                assert not averageColors, "FIXME"
                 a2.fill_between(xs,
                                 [percentile(ts, 0.75) if timePercentile else mean(ts) + standardDeviation(ts)
                                  for ts in times],
@@ -208,10 +215,21 @@ def plotECResult(
                                 facecolor=color, alpha=0.2)
 
     if averageColors:
-        plotCommands = {kl: averageCurves(curves)
-                        for kl, curves in plotCommands.items() }
-    for (color,ls),(xs,ys) in plotCommands.items():
-        a1.plot(xs,ys,color=color,ls=ls)
+        plotCommands1 = {kl: averageCurves(curves)
+                         for kl, curves in plotCommands1.items() }
+        plotCommands2 = {kl: averageCurves(curves)
+                         for kl, curves in plotCommands2.items() }
+        for (color,ls),(xs,ys,es) in plotCommands1.items():
+            a1.errorbar(xs,ys,yerr=es,color=color,ls=ls)
+        for (color,ls),(xs,ys,es) in plotCommands2.items():
+            a2.errorbar(xs,ys,yerr=es,color=color,ls=ls)
+    else:
+        for (color,ls),cs in plotCommands1.items():
+            for (xs,ys) in cs:            
+                a1.plot(xs,ys,color=color,ls=ls)
+        for (color,ls),cs in plotCommands2.items():
+            for (xs,ys) in cs:
+                a2.plot(xs,ys,color=color,ls=ls)
 
     a1.set_ylim(ymin=0, ymax=maxP)
     a1.yaxis.grid()
