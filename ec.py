@@ -471,7 +471,7 @@ def evaluateOnTestingTasks(result, testingTasks, grammar, _=None,
                            CPUs=None, maximumFrontier=None, enumerationTimeout=None, evaluationTimeout=None):
     if result.recognitionModel is not None:
         testingFrontiers, times = \
-         recognitionModel.enumerateFrontiers(testingTasks, 
+         result.recognitionModel.enumerateFrontiers(testingTasks, 
                                              CPUs=CPUs,
                                              maximumFrontier=maximumFrontier,
                                              enumerationTimeout=testingTimeout,
