@@ -540,7 +540,7 @@ def ecIterator(grammar, tasks,
                 # Create a pool of helmholtz frontiers in advance.
                 helmholtzFrontiers = helmholtzFrontiers()
                 # Train an ensemble of recognizers.
-                trainedRecognizers = parallelMap(CPUs,
+                trainedRecognizers = parallelMap(min(CPUs,len(recognizers)),
                                        lambda recognizer: recognizer.train(result.allFrontiers.values(),
                                                                              biasOptimal=biasOptimal,
                                                                              helmholtzFrontiers=helmholtzFrontiers, 
