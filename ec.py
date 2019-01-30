@@ -498,6 +498,7 @@ def evaluateOnTestingTasks(result, testingTasks, grammar, _=None,
     eprint("\n".join(f.summarize() for f in testingFrontiers))
     summaryStatistics("Testing tasks", times)
     eprint("Hits %d/%d testing tasks" % (len(times), len(testingTasks)))
+    result.testingSearchTime.append(times)
 
         
 def wake_generative(grammar, tasks, 
