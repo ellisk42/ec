@@ -329,4 +329,4 @@ if __name__ == "__main__":
                  showEpochs=arguments.showEpochs,
                  epochFrequency=arguments.epochFrequency,
                  colors=arguments.colors,
-                 averageColors=averageColors)
+                 averageColors=arguments.averageColors)
