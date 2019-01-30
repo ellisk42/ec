@@ -210,7 +210,7 @@ def plotECResult(
     if averageColors:
         plotCommands = {kl: averageCurves(curves)
                         for kl, curves in plotCommands.items() }
-    for (color,ls),(xs,ys) in plotCommands:
+    for (color,ls),(xs,ys) in plotCommands.items():
         a1.plot(xs,ys,color=color,ls=ls)
 
     a1.set_ylim(ymin=0, ymax=maxP)
