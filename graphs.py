@@ -40,6 +40,20 @@ DeepFeatureExtractor = 'DeepFeatureExtractor'
 LearnedFeatureExtractor = 'LearnedFeatureExtractor'
 TowerFeatureExtractor = 'TowerFeatureExtractor'
 
+def averageCurves(curves):
+    xs = {x
+          for xs,_ in curves
+          for x in xs }
+    xs = list(sorted(list(xs)))
+    curves = [{x:y for x,y in zip(xs,ys) }
+              for xs,ys in curves ]
+    ys = []
+    for x in xs:
+        y_ = []
+        for curve in curves:
+            if x in curve: y_.append(curve[x])
+        ys.append(sum(y_)/len(y_))
+    return xs,ys
 
 def parseResultsPath(p):
     def maybe_eval(s):
@@ -101,7 +115,8 @@ def plotECResult(
         maxP=110,
         showEpochs=False,
         colors=None,
-        epochFrequency=1):
+        epochFrequency=1,
+        averageColors=False):
     results = []
     parameters = []
     for path in resultPaths:
@@ -137,23 +152,16 @@ def plotECResult(
     plot.xticks(range(0, n_iters), fontsize=TICKFONTSIZE)
 
     if colors is None:
+        assert not averageColors, "If you are averaging the results from checkpoints with the same color, then you need to tell me what colors the checkpoints should be. Try passing --colors ..."
         colors = ["#D95F02", "#1B9E77", "#662077", "#FF0000"] + ["#000000"]*100
     usedLabels = []
 
     showSynergyMatrix(results)
 
     cyclesPerEpic = None
+    plotCommands = {} # Map from (color,line style) to (xs,ys)
     for result, p, color in zip(results, parameters, colors):
-        # Check whether iterations refers to wake/sleep cycles or whether it refers to epohs
-        # if iterations and showEpochs and 'taskBatchSize' in p.__dict__:
-        #     correctedIterations = int(iterations * len(result.taskSolutions) / p.taskBatchSize)
-        # else:
-        #     correctedIterations = iterations
-            
-        if hasattr(p, "baseline") and p.baseline:
-            ys = [100. * result.learningCurve[-1] /
-                  len(result.taskSolutions)] * n_iters
-        elif showTraining:
+        if showTraining:
             ys = [100.*t/float(len(result.taskSolutions))
                   for t in result.learningCurve[:iterations]]
         else:
@@ -174,8 +182,8 @@ def plotECResult(
         if labels:
             usedLabels.append((labels[0], color))
             labels = labels[1:]
-            
-        a1.plot(xs, ys, color=color, ls='-')
+
+        plotCommands[(color,'-')] = plotCommands.get((color,'-'),[]) + [(xs,ys)]
         
         if showSolveTime:
             if failAsTimeout:
@@ -198,6 +206,12 @@ def plotECResult(
                                 [percentile(ts, 0.25) if timePercentile else mean(ts) - standardDeviation(ts)
                                  for ts in times],
                                 facecolor=color, alpha=0.2)
+
+    if averageColors:
+        plotCommands = {kl: averageCurves(curves)
+                        for kl, curves in plotCommands.items() }
+    for (color,ls),(xs,ys) in plotCommands:
+        a1.plot(xs,ys,color=color,ls=ls)
 
     a1.set_ylim(ymin=0, ymax=maxP)
     a1.yaxis.grid()
@@ -294,6 +308,9 @@ if __name__ == "__main__":
     parser.add_argument("--epochFrequency",
                         default=1, type=int,
                         help="Frequency with which to show epoch markers.")
+    parser.add_argument("--averageColors",
+                        default=False, action="store_true",
+                        help="If multiple curves are assigned the same color, then we will average them")
     
     arguments = parser.parse_args()
     
@@ -311,4 +328,5 @@ if __name__ == "__main__":
                  showSolveTime=not arguments.noTime,
                  showEpochs=arguments.showEpochs,
                  epochFrequency=arguments.epochFrequency,
-                 colors=arguments.colors)
+                 colors=arguments.colors,
+                 averageColors=averageColors)
