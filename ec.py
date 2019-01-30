@@ -270,7 +270,6 @@ def ecIterator(grammar, tasks,
         resume = len(result.grammars) - 1
         eprint("Loaded checkpoint from", path)
         grammar = result.grammars[-1] if result.grammars else grammar
-        recognizer = result.recognitionModel
     else:  # Start from scratch
         #for graphing of testing tasks
         numTestingTasks = len(testingTasks) if len(testingTasks) != 0 else None
@@ -402,7 +401,7 @@ def ecIterator(grammar, tasks,
             if all( f.empty for f in result.allFrontiers.values() ): thisRatio = 1.                
 
             tasksHitBottomUp = \
-             sleep_recognition(result, grammar, wakingTaskBatch, testingTasks, result.allFrontiers.values(),
+             sleep_recognition(result, grammar, wakingTaskBatch, tasks, testingTasks, result.allFrontiers.values(),
                                ensembleSize=ensembleSize, featureExtractor=featureExtractor, 
                                activation=activation, contextual=contextual, biasOptimal=biasOptimal,
                                previousRecognitionModel=previousRecognitionModel, matrixRank=matrixRank,
@@ -470,7 +469,7 @@ def showHitMatrix(top, bottom, tasks):
 
 def evaluateOnTestingTasks(result, testingTasks, grammar, _=None,
                            CPUs=None, maximumFrontier=None, enumerationTimeout=None, evaluationTimeout=None):
-    if recognitionModel is not None:
+    if result.recognitionModel is not None:
         testingFrontiers, times = \
          recognitionModel.enumerateFrontiers(testingTasks, 
                                              CPUs=CPUs,
@@ -514,7 +513,7 @@ def wake_generative(grammar, tasks,
     summaryStatistics("Generative model", [t for t in times.values() if t is not None])
     return topDownFrontiers, times
 
-def sleep_recognition(result, grammar, tasks, testingTasks, allFrontiers, _=None,
+def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFrontiers, _=None,
                       ensembleSize=1, featureExtractor=None, matrixRank=None,
                       activation=None, contextual=True, biasOptimal=True,
                       previousRecognitionModel=None, recognitionSteps=None,
@@ -554,7 +553,7 @@ def sleep_recognition(result, grammar, tasks, testingTasks, allFrontiers, _=None
     for recIndex, recognizer in enumerate(trainedRecognizers):
         eprint("Enumerating from recognizer %d of %d" % (recIndex, len(trainedRecognizers)))
         bottomupFrontiers, allRecognitionTimes = \
-                        recognizer.enumerateFrontiers(tasks, 
+                        recognizer.enumerateFrontiers(taskBatch, 
                                                       CPUs=CPUs,
                                                       maximumFrontier=maximumFrontier,
                                                       enumerationTimeout=enumerationTimeout,
