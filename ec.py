@@ -472,18 +472,18 @@ def evaluateOnTestingTasks(result, testingTasks, grammar, _=None,
     if result.recognitionModel is not None:
         testingFrontiers, times = \
          result.recognitionModel.enumerateFrontiers(testingTasks, 
-                                             CPUs=CPUs,
-                                             maximumFrontier=maximumFrontier,
-                                             enumerationTimeout=testingTimeout,
-                                             evaluationTimeout=evaluationTimeout,
-                                             testing=True)
+                                                    CPUs=CPUs,
+                                                    maximumFrontier=maximumFrontier,
+                                                    enumerationTimeout=enumerationTimeout,
+                                                    evaluationTimeout=evaluationTimeout,
+                                                    testing=True)
         updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskGrammarLogProductions(testingTasks), 'heldoutTaskLogProductions')
         updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskGrammarEntropies(testingTasks), 'heldoutTaskGrammarEntropies')
         updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskGrammarEntropies(testingTasks), 'heldoutTaskGrammarEntropies')
     else:
         testingFrontiers, times = multicoreEnumeration(grammar, testingTasks, 
                                                        maximumFrontier=maximumFrontier,
-                                                       enumerationTimeout=testingTimeout,
+                                                       enumerationTimeout=enumerationTimeout,
                                                        CPUs=CPUs,
                                                        evaluationTimeout=evaluationTimeout,
                                                        testing=True)
