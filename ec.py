@@ -320,6 +320,7 @@ def ecIterator(grammar, tasks,
         trainFrontiers, _, trainingTimes = enumerator(tasks, enumerationTimeout=enumerationTimeout)
         testFrontiers, _, testingTimes = enumerator(testingTasks, enumerationTimeout=testingTimeout, testing=True)
 
+        recognizer = result.recognitionModel
         updateTaskSummaryMetrics(result.recognitionTaskMetrics, trainingTimes, 'recognitionBestTimes')
         updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskGrammarLogProductions(tasks), 'taskLogProductions')
         updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskGrammarEntropies(tasks), 'taskGrammarEntropies')
@@ -470,13 +471,14 @@ def showHitMatrix(top, bottom, tasks):
 def evaluateOnTestingTasks(result, testingTasks, grammar, _=None,
                            CPUs=None, maximumFrontier=None, enumerationTimeout=None, evaluationTimeout=None):
     if result.recognitionModel is not None:
+        recognizer = result.recognitionModel
         testingFrontiers, times = \
-         result.recognitionModel.enumerateFrontiers(testingTasks, 
-                                                    CPUs=CPUs,
-                                                    maximumFrontier=maximumFrontier,
-                                                    enumerationTimeout=enumerationTimeout,
-                                                    evaluationTimeout=evaluationTimeout,
-                                                    testing=True)
+         recognizer.enumerateFrontiers(testingTasks, 
+                                       CPUs=CPUs,
+                                       maximumFrontier=maximumFrontier,
+                                       enumerationTimeout=enumerationTimeout,
+                                       evaluationTimeout=evaluationTimeout,
+                                       testing=True)
         updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskGrammarLogProductions(testingTasks), 'heldoutTaskLogProductions')
         updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskGrammarEntropies(testingTasks), 'heldoutTaskGrammarEntropies')
         updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskGrammarEntropies(testingTasks), 'heldoutTaskGrammarEntropies')
