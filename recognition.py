@@ -48,7 +48,6 @@ def is_torch_not_a_number(v):
         return True
     return False
 
-
 def is_torch_invalid(v):
     """checks whether a torch variable is nan or inf"""
     if is_torch_not_a_number(v):
@@ -57,7 +56,6 @@ def is_torch_invalid(v):
     if is_torch_not_a_number(a):
         return True
     return False
-
 
 def _relu(x): return x.clamp(min=0)
 
@@ -665,8 +663,7 @@ class RecognitionModel(nn.Module):
         # Monte Carlo estimate: draw a sample from the frontier
         entry = frontier.sample()
 
-        if auxiliary: al = self.auxiliaryLoss(frontier, features)
-        else: al = 0
+        al = self.auxiliaryLoss(frontier, features if auxiliary else features.detach())
 
         if not vectorized:
             g = self(features)
@@ -681,8 +678,7 @@ class RecognitionModel(nn.Module):
         if not vectorized:
             features = self.featureExtractor.featuresOfTask(frontier.task)
             if features is None: return None, None
-            if auxiliary: al = self.auxiliaryLoss(frontier, features)
-            else: al = 0
+            al = self.auxiliaryLoss(frontier, features if auxiliary else features.detach())
             g = self(features)
             summaries = [entry.program for entry in frontier]
             likelihoods = torch.cat([entry.program.logLikelihood(g) + entry.logLikelihood
@@ -693,8 +689,7 @@ class RecognitionModel(nn.Module):
         batchSize = len(frontier.entries)
         features = self.featureExtractor.featuresOfTask(frontier.task)
         if features is None: return None, None
-        if auxiliary: al = self.auxiliaryLoss(frontier, features)
-        else: al = 0
+        al = self.auxiliaryLoss(frontier, features if auxiliary else features.detach())
         features = self._MLP(features)
         features = features.expand(batchSize, features.size(-1))  # TODO
         lls = self.grammarBuilder.batchedLogLikelihoods(features, [entry.program for entry in frontier])
@@ -865,6 +860,7 @@ class RecognitionModel(nn.Module):
             self.id, len(helmholtzFrontiers), len(helmholtzFrontiers) == 0))
         eprint("(ID=%d): Contextual? %s" % (self.id, str(self.contextual)))
         eprint("(ID=%d): Bias optimal? %s" % (self.id, str(biasOptimal)))
+        eprint(f"(ID={self.id}): Aux loss? {auxLoss} (n.b. we train a 'auxiliary' classifier anyway - this controls if gradients propagate back to the future extractor)")
 
         # The number of Helmholtz samples that we generate at once
         # Should only affect performance and shouldn't affect anything else
@@ -910,8 +906,7 @@ class RecognitionModel(nn.Module):
                     eprint("Invalid real-data loss!")
                 else:
                     (loss + classificationLoss).backward()
-                    if auxLoss:
-                        classificationLosses.append(classificationLoss.data.item())
+                    classificationLosses.append(classificationLoss.data.item())
                     optimizer.step()
                     totalGradientSteps += 1
                     losses.append(loss.data.item())
@@ -934,8 +929,7 @@ class RecognitionModel(nn.Module):
                     eprint("\t\t(real MDL): ", mean(realMDL), "\t(dream MDL):", mean(dreamMDL))
                 eprint("(ID=%d): " % self.id, "\t%d cumulative gradient steps. %f steps/sec"%(totalGradientSteps,
                                                                        totalGradientSteps/(time.time() - start)))
-                if auxLoss:
-                    eprint("(ID=%d): " % self.id, "\t%d-way auxiliary classification loss"%len(self.grammar.primitives),sum(classificationLosses)/len(classificationLosses))
+                eprint("(ID=%d): " % self.id, "\t%d-way auxiliary classification loss"%len(self.grammar.primitives),sum(classificationLosses)/len(classificationLosses))
                 losses, descriptionLengths, realLosses, dreamLosses, realMDL, dreamMDL = [], [], [], [], [], []
                 classificationLosses = []
                 gc.collect()
