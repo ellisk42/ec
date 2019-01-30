@@ -20,14 +20,24 @@ from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 
 import matplotlib
 plot.style.use('seaborn-whitegrid')
+import matplotlib.colors as colors
+import matplotlib.cm as cm
 
 import text
 from text import LearnedFeatureExtractor
 from scipy import stats
+from scipy import signal
+import itertools
 
 np.set_printoptions(threshold=np.inf) #Print full arrays for debugging
 
 from scipy.stats import entropy
+from sklearn import mixture
+from sklearn import preprocessing
+from sklearn.metrics import log_loss
+from sklearn.metrics.cluster import adjusted_rand_score
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.manifold import MDS, TSNE
 
 
 def loadfun(x):
@@ -53,6 +63,12 @@ LearnedFeatureExtractor = 'LearnedFeatureExtractor'
 TowerFeatureExtractor = 'TowerFeatureExtractor'
 
 weightMetrics = ['auxiliaryPrimitiveEmbeddings']
+metricToHeldout = {
+	'startProductions': 'heldoutStartProductions',
+	'taskAuxiliaryLossLayer' : 'heldoutAuxiliaryLossLayer',
+	'taskLogProductions' : 'heldoutTaskLogProductions',
+	'contextualLogProductions' : 'heldoutTaskLogProductions'
+}
 
 def parseResultsPath(p):
 	def maybe_eval(s):
@@ -73,9 +89,9 @@ def parseResultsPath(p):
 	parameters['domain'] = domain
 	return Bunch(parameters)
 
-def loadResult(path, export):
+def loadResult(path, export=None):
 	result = loadfun(path)
-	print("loaded path:", path)
+	# print("loaded path:", path)
 	if not hasattr(result, "recognitionTaskMetrics"):
 		print("No recognitionTaskMetrics found, aborting.")
 		assert False
@@ -85,8 +101,9 @@ def loadResult(path, export):
 	recognitionTaskMetrics = result.recognitionTaskMetrics
 
 	# Create a folder for the domain if it does not exist.
-	if not os.path.exists(os.path.join(export, domain)):
-		os.makedirs(os.path.join(export, domain))
+	if export:
+		if not os.path.exists(os.path.join(export, domain)):
+			os.makedirs(os.path.join(export, domain))
 		
 	return result, domain, iterations, recognitionTaskMetrics
 
@@ -199,12 +216,27 @@ def plotTimeMetrics(
 	return
 
 
+def scatterPlotSimilarities(x, y, exportPath, xlabel=None, ylabel=None):
+	plot.figure(figsize=(20,20))
+	plot.scatter(x, y)
+	if xlabel:
+		plot.xlabel(xlabel)
+	if ylabel:
+		plot.ylabel(ylabel)
+	plot.savefig(exportPath)
+	return
+
 
 def plotEmbeddingWithLabels(embeddings, labels, title, exportPath, xlabel=None, ylabel=None):
 	plot.figure(figsize=(20,20))
+	# Color map based on ordering of the labels.
+	cmap = matplotlib.cm.get_cmap('viridis')
+	normalize = matplotlib.colors.Normalize(vmin=0, vmax=len(labels))
+	colors = [cmap(normalize(value)) for value in range(len(labels))]
+
 	for i, label in enumerate(labels):
 		x, y = embeddings[i, 0], embeddings[i, 1]
-		plot.scatter(x,y)
+		plot.scatter(x,y, color=colors[i])
 		plot.text(x+0.02, y+0.02, label, fontsize=8)
 	plot.title(title)
 	if xlabel:
@@ -277,10 +309,10 @@ def makeRationalImage(im):
 
 def frontierMetric(frontiers):
 	primitives = {p
-		      for f in frontiers
-		      for e in f.entries
-		      for p in [e.program]
-		      if p.isInvented}
+			  for f in frontiers
+			  for e in f.entries
+			  for p in [e.program]
+			  if p.isInvented}
 	g = Grammar.uniform(primitives)
 	return [f.expectedProductionUses(g) for f in frontiers]
 
@@ -347,7 +379,7 @@ def plotTSNE(
 						taskMetrics.append(recognitionTaskMetrics[task][metricToCluster])
 			if metricToCluster == 'frontier':
 				taskMetrics = [f.expectedProductionUses(result.grammars[-1])
-					       for f in taskMetrics] 
+						   for f in taskMetrics] 
 
 			print("Clustering %d tasks with embeddings of shape: %s" % (len(taskMetrics), str(taskMetrics[0].shape)) )
 			if applySoftmax:
@@ -386,7 +418,353 @@ def plotTSNE(
 					title, 
 					os.path.join(export, domain, experimentName + metricToCluster + "_iters_" + str(iterations) + "_tsne_labels.png"))
 
+def invMap(curr_map):
+		inv_map = {}
+		for k, v in curr_map.items():
+			inv_map[v] = inv_map.get(v, [])
+			inv_map[v].append(k)
+		return inv_map
+
+def getGroundTruthStarts(groundTruthCheckpoints):
+	"""Ground truth starts: the start production for the top-ranked frontier in the test and train task solutions."""
+	def getFrontierStart(frontiers):
+		# Get the top programs
+		topEntry = sorted(frontiers.entries, key=lambda e:e.logLikelihood, reverse=True)[0]
+		p = topEntry.program
+		while p.isAbstraction: p = p.body
+		while p.isApplication: p = p.f
+		return p
+
+	frontierStarts = []
+	for j, path in enumerate(groundTruthCheckpoints):
+			result, domain, iterations, recognitionTaskMetrics = loadResult(path)
+			# Solved training tasks.
+			taskSolutions = result.taskSolutions
+			trainToStarts= {task: getFrontierStart(frontiers) for task, frontiers in taskSolutions.items() if len(frontiers) > 0}
+			startToTrains = invMap(trainToStarts)
+
+			# Solved testing tasks.
+			testToStarts={}
+			for task in sorted(recognitionTaskMetrics.keys(), key=lambda task : formattedName('frontier', task)):
+				if 'frontier'in recognitionTaskMetrics[task] and task not in trainToStarts:
+					if len(recognitionTaskMetrics[task]['frontier']) > 0:
+						testToStarts[task] = getFrontierStart(recognitionTaskMetrics[task]['frontier'])
+			startToTests = invMap(testToStarts)
+			frontierStarts.append([trainToStarts, startToTrains, testToStarts, startToTests])
+	return frontierStarts
+
+def DPGMM(metricsDict, groundTruths):
+	if len(metricsDict) < 1:
+		return (None, None, None)
+	taskMetrics = np.array([metricsDict[task] for task in metricsDict.keys()])
+	metricNorms = (taskMetrics*taskMetrics).sum(1)**0.5
+	taskMetrics = taskMetrics/np.reshape(metricNorms, (metricNorms.shape[0], 1))
+	dpgmm = mixture.BayesianGaussianMixture(n_components=len(groundTruths),
+								   covariance_type='full').fit(taskMetrics)
+	clusters = dpgmm.predict(taskMetrics)
+	taskToCluster = {}
+	for j, task in enumerate(metricsDict.keys()):
+		taskToCluster[task] = clusters[j]
+	clusterToTasks = invMap(taskToCluster)
+	return (metricsDict.keys(), clusters, taskToCluster)
+
+def getExpectedProductionUses(checkpoints, groundTruthStarts):
+	"""Extract out the predicted productions from the recognition model for the ground truth start tasks."""
+	allEPs = []
+	for j, path in enumerate(checkpoints):
+		result, domain, iterations, recognitionTaskMetrics = loadResult(path)
+		trainToStarts, startToTrains, testToStarts, startToTests = groundTruthStarts[j]
+
+		trainExpectedProductions = {}
+		testExpectedProductions = {}
+		for task in sorted(recognitionTaskMetrics.keys(), key=lambda task : formattedName('frontier', task)):
+
+			if 'expectedProductionUses'in recognitionTaskMetrics[task]:
+				trainExpectedProductions[task] = recognitionTaskMetrics[task]['expectedProductionUses']
+			elif 'frontier'in recognitionTaskMetrics[task] and task in testToStarts:
+				testExpectedProductions[task] = recognitionTaskMetrics[task]['frontier'].expectedProductionUses(result.grammars[-1])
+
+		allEPs.append([DPGMM(trainExpectedProductions, startToTrains), DPGMM(testExpectedProductions, startToTests)])
+	return allEPs
+
+
+def getSimilarities(rawMetrics, applySoftmax):
+	"""Assumes a dict from task: metric vector."""
+	if len(rawMetrics) < 1:
+		return None
+	taskMetrics = np.array(rawMetrics)
+	# metricNorms = (taskMetrics*taskMetrics).sum(1)**0.5
+	# taskMetrics = taskMetrics/np.reshape(metricNorms, (metricNorms.shape[0], 1))
+
+	sim = cosine_similarity(taskMetrics, taskMetrics)
+	np.fill_diagonal(sim, 0)
+
+	# if applySoftmax:
+	# 	# Normalize the rows of the matrix.
+	# 	sim = np.apply_along_axis(softmax, 1, sim)
+
+	# Normalize the matrix rows.
+
+	return sim
 	
+def plotHeatMap(cm, classes,
+						  title='Confusion matrix',
+						  cmap=plot.cm.Blues,
+						  exportPath=None):
+	"""
+	This function prints and plots the confusion matrix.
+	Normalization can be applied by setting `normalize=True`.
+	"""
+	plot.figure(figsize=(20,20))
+
+	plot.imshow(cm, interpolation='nearest', cmap=cmap)
+	plot.title(title)
+	tick_marks = np.arange(len(classes))
+	plot.xticks(tick_marks, classes, rotation=90, fontsize=8)
+	plot.yticks(tick_marks, classes, fontsize=8)
+
+	print("Saving to: " + exportPath)
+	plot.savefig(exportPath)
+	return
+
+
+def getClusterIntersections(allMetricClusters):
+	def getIntersections(keys, taskToClusters):
+		intersections = []
+		for (task1, task2) in itertools.combinations(keys, 2):
+			isSame = True
+			for clusterDict in taskToClusters:
+				if task1 in clusterDict and task2 in clusterDict:
+					if clusterDict[task1] != clusterDict[task2]:
+						isSame = False
+			if isSame:
+				shouldAppend=True
+				for j, intersection in enumerate(intersections):
+					if task1.name in intersection or task2.name in intersection:
+						shouldAppend=False
+						intersections[j].union((task1.name, task2.name))
+						break
+				if shouldAppend:
+					intersections.append(set((task1.name, task2.name)))
+		print(intersections)
+		assert False
+
+	(trainKeys, _, _), (testKeys, _, _) = allMetricClusters[0]
+	trainTaskToClusters = [trainDict for (trainKeys, _, trainDict), (testKeys, _, testDict) in allMetricClusters]
+	testTaskToClusters = [testDict for (trainKeys, _, trainDict), (testKeys, _, testDict) in allMetricClusters]
+	print("Train intersections:")
+	getIntersections(trainKeys, trainTaskToClusters)
+	if len(testKeys) > 0:
+		getIntersections(testKeys, testTaskToClusters)
+
+
+
+def clusteringAnalysis(
+	checkpoints,
+	groundTruthCheckpoints,
+	clusteringMetrics,
+	compareToGroundTruthStarts,
+	compareToExpectedProductionUses,
+	clusteringMethod='dpgmm',
+	min_k=1,
+	max_k=None,
+	export=None):
+	"""Clustering analysis on the results of a given metric. 
+
+	If more than one checkpoint is provided, also calculates sets of tasks that appeared in the same cluster amongst the checkpoints 
+	by the size of the set and the number of checkpoints that grouped the same set into the same cluster.
+	Exports a pickle file with the results.
+	"""
+	print("Clustering on: %d checkpoints" % len(checkpoints))
+	# Extract out the ground truth starts for the frontiers.
+	groundTruthStarts = getGroundTruthStarts(groundTruthCheckpoints)
+
+	if compareToExpectedProductionUses:
+		groundTruthEPs = getExpectedProductionUses(groundTruthCheckpoints, groundTruthStarts)
+
+	for metric in clusteringMetrics:
+		if metric in metricToHeldout:
+			heldoutMetric = metricToHeldout[metric]
+		else:
+			heldoutMetric = "None"
+		print("Clustering on metric: " + metric + " heldoutMetric: " + metricToHeldout[metric])	
+		allMetricClusters = []
+		for j, path in enumerate(checkpoints):
+			result, domain, iterations, recognitionTaskMetrics = loadResult(path)
+			trainToStarts, startToTrains, testToStarts, startToTests = groundTruthStarts[j]
+			
+			trainMetrics, testMetrics = {}, {}
+			for task in sorted(recognitionTaskMetrics.keys(), key=lambda task : formattedName('frontier', task)):
+				if metric in recognitionTaskMetrics[task] and task in trainToStarts:
+					trainMetrics[task] = recognitionTaskMetrics[task][metric]
+				elif heldoutMetric in recognitionTaskMetrics[task] and task in testToStarts:
+					testMetrics[task] = recognitionTaskMetrics[task][heldoutMetric]
+
+			if trainMetrics.keys() != trainToStarts.keys():
+				print("WARNING: TRAIN KEYS DO NOT MATCH GROUND TRUTH.")
+				print(path)
+			if testMetrics.keys() != testToStarts.keys():	
+				print("WARNING: TEST KEYS DO NOT MATCH GROUND TRUTH.")
+
+			allMetricClusters.append([DPGMM(trainMetrics, startToTrains), DPGMM(testMetrics, startToTests)])
+
+		# Compare to ground truth
+		if compareToGroundTruthStarts:
+			groundTruthStartsRITrain, groundTruthStartsRITest = [], []
+			for j, path in enumerate(checkpoints):
+				trainToStarts, startToTrains, testToStarts, startToTests = groundTruthStarts[j]
+				(_, trainLabels, _), (_, testLabels, _) = allMetricClusters[j]
+				# Convert labels to numerical labels
+				trainGroundTruthLabels = preprocessing.LabelEncoder().fit_transform([str(val) for val in trainToStarts.values()])
+				groundTruthStartsRITrain.append(adjusted_rand_score(trainGroundTruthLabels, trainLabels))
+
+				if testLabels:
+					testGroundTruthLabels = preprocessing.LabelEncoder().fit_transform([str(val) for val in testToStarts.values()])
+					groundTruthStartsRITest.append(adjusted_rand_score(testGroundTruthLabels, testLabels))
+
+			print("Comparison to ground truth starts RI train: %s" % str(groundTruthStartsRITrain))
+			print("Comparison to ground truth starts RI test: %s" % str(groundTruthStartsRITest))
+
+		# Compare to expected production
+		if compareToExpectedProductionUses:
+			groundTruthEPTrain, groundTruthEPTest = [], []
+			for j, path in enumerate(checkpoints):
+				(_, trainTrueLabels, _), (_, testTrueLabels, _) = groundTruthEPs[j]
+				(_, trainLabels, _), (_, testLabels, _) = allMetricClusters[j]
+				groundTruthEPTrain.append(adjusted_rand_score(trainTrueLabels, trainLabels))
+				if testLabels:
+					groundTruthEPTest.append(adjusted_rand_score(testTrueLabels, testLabels))
+			print("Comparison to ground truth EP RI train: %s" % str(groundTruthEPTrain))
+			print("Comparison to ground truth EP RI test: %s" % str(groundTruthEPTest))
+
+		# Compare to each other to find agreed upon sets
+		getClusterIntersections(allMetricClusters)
+
+def getMDSOrdering(expectedProductionUses):
+	embedding = MDS(random_state=0, n_components=1)
+	X_transformed = embedding.fit_transform(expectedProductionUses)
+	ordering = np.argsort(np.squeeze(X_transformed))
+	return ordering
+
+def getExpectedProductionSimilarities(checkpoints, ordering, applySoftmax):
+	allEPs = []
+	for j, path in enumerate(checkpoints):
+		result, domain, iterations, recognitionTaskMetrics = loadResult(path)
+		# Solved training tasks.
+		trainTasks = [task for task, frontiers in result.taskSolutions.items() if len(frontiers) > 0]
+		trainNames, trainExpected = [], []
+		testNames, testExpected = [], []
+		for task in sorted(recognitionTaskMetrics.keys(), key=lambda task : formattedName('frontier', task)):
+			if 'expectedProductionUses'in recognitionTaskMetrics[task]:
+				trainNames.append(formattedName('frontier', task)) 
+				trainExpected.append(recognitionTaskMetrics[task]['expectedProductionUses'])
+			elif 'frontier'in recognitionTaskMetrics[task] and task not in trainTasks:
+				testNames.append(formattedName('frontier', task)) 
+				testExpected.append(recognitionTaskMetrics[task]['frontier'].expectedProductionUses(result.grammars[-1]))
+
+		trainNames, trainExpected, testNames, testExpected = np.array(trainNames), np.array(trainExpected), np.array(testNames), np.array(testExpected)
+		if ordering == 'MDS':
+			print("Fitting an MDS ordering.")
+			# Fit an MDS to one component and use to sort.
+			trainOrdering, testOrdering = getMDSOrdering(trainExpected), getMDSOrdering(testExpected)
+			trainNames, trainExpected, testNames, testExpected = trainNames[trainOrdering], trainExpected[trainOrdering], testNames[testOrdering], testExpected[testOrdering]
+
+
+		allEPs.append([(trainNames, trainExpected, getSimilarities(trainExpected, applySoftmax)), (testNames, testExpected, getSimilarities(testExpected, applySoftmax))])
+
+		print("Found %d ground truth train and %d test." %(len(trainExpected), len(testExpected)))
+	return allEPs
+
+def getSimilarityMetrics(similarityMetric, recognitionTaskMetrics, trainNames, testNames, applySoftmax):
+	newRecognitionMetrics = {formattedName('frontier', task) : value for task, value in recognitionTaskMetrics.items()}
+	trainMetrics = [newRecognitionMetrics[taskName][similarityMetric] for taskName in trainNames if similarityMetric in newRecognitionMetrics[taskName] ] 
+	if similarityMetric in metricToHeldout:
+		heldoutMetric = metricToHeldout[similarityMetric]
+		testMetrics = [newRecognitionMetrics[taskName][heldoutMetric] for taskName in testNames if heldoutMetric in newRecognitionMetrics[taskName] ]
+	if applySoftmax:
+		trainMetrics = [softmax(trainMetric) for trainMetric in trainMetrics]
+		testMetrics = [softmax(testMetric) for testMetric in testMetrics]
+	return (trainMetrics, getSimilarities(trainMetrics, applySoftmax)), (testMetrics, getSimilarities(testMetrics, applySoftmax))
+
+def meanCorrelation(pk,qk):
+	correlations = []
+	for i in range(pk.shape[0]):
+		correlations.append(np.correlate(pk[i,], qk[i,]))
+
+	return np.mean(correlations)
+
+
+
+
+def similarityAnalysis(
+	checkpoints,
+	groundTruthCheckpoints,
+	experimentNames,
+	similarityMetrics,
+	applySoftmax,
+	similarityWithTSNE,
+	ordering=None,
+	exportPath=None):
+	"""Create similarity matrices for the given metric and compare similarities of pairs with the ground truth."""
+	groundTruthSimilarities = getExpectedProductionSimilarities(groundTruthCheckpoints, ordering, applySoftmax)
+
+	# Create similarity matrices for each of the metrics.
+	for j, path in enumerate(checkpoints):
+		result, domain, iterations, recognitionTaskMetrics = loadResult(path)
+		((trainNames, trainExpected, trainTruthSims), (testNames, testExpected, testTruthSims)) = groundTruthSimilarities[j]
+
+		for similarityMetric in similarityMetrics:
+			(trainMetrics, trainMetricSims), (testMetrics, testMetricSims) = getSimilarityMetrics(similarityMetric, recognitionTaskMetrics, trainNames, testNames, applySoftmax) 
+
+			# Save the metric similarity matrices.
+			plotHeatMap(trainMetricSims, trainNames, exportPath=os.path.join(exportPath, experimentNames[j] +"_it_%d_%s_train_similarities.png" % (iterations, similarityMetric)))
+			scatterPlotSimilarities(trainTruthSims.flatten(), trainMetricSims.flatten(), exportPath=os.path.join(exportPath, experimentNames[j] +"_it_%d_%s_train_scatter.png" % (iterations, similarityMetric)), xlabel="Expected Production Uses", ylabel=similarityMetric)
+			
+			if testMetrics:
+				plotHeatMap(testMetricSims, testNames, exportPath=os.path.join(exportPath, experimentNames[j] +"_it_%d_%s_test_similarities.png" % (iterations, similarityMetric)))
+				scatterPlotSimilarities(testTruthSims.flatten(), testMetricSims.flatten(), exportPath=os.path.join(exportPath, experimentNames[j] +"_it_%d_%s_test_scatter.png" % (iterations, similarityMetric)), xlabel="Expected Production Uses", ylabel=similarityMetric)
+
+			if similarityWithTSNE:
+				# Also do TSNE with the given ordering.
+				tsne = TSNE(random_state=0, perplexity=30, learning_rate=350, n_iter=10000)
+				clusteredTrainMetrics = tsne.fit_transform(trainMetrics)
+				plotEmbeddingWithLabels(clusteredTrainMetrics, 
+					trainNames, 
+					similarityMetric, 
+					os.path.join(exportPath, experimentNames[j] +"_it_%d_%s_train_tsne.png" % (iterations, similarityMetric)))
+				if testMetrics:
+					clusteredTestMetrics = tsne.fit_transform(testMetrics)
+					plotEmbeddingWithLabels(clusteredTestMetrics, 
+						testNames, 
+						similarityMetric, 
+						os.path.join(exportPath, experimentNames[j] +"_it_%d_%s_test_tsne.png" % (iterations, similarityMetric)))
+
+
+			from sklearn.metrics import mean_squared_error
+			print("Experiment train: %s, it=%s, metric %s, mse %f" % (experimentNames[j], iterations, similarityMetric, mean_squared_error(trainTruthSims, trainMetricSims)))
+			if testMetrics:
+				print("Experiment test: %s, it=%s, metric %s, mse %f" % (experimentNames[j], iterations, similarityMetric, mean_squared_error(testTruthSims, testMetricSims)))
+
+		# Sanity check clustering
+		if similarityWithTSNE:
+			tsne = TSNE(random_state=0, perplexity=30, learning_rate=350, n_iter=10000)
+			clusteredGTMetrics = tsne.fit_transform(trainExpected)
+			plotEmbeddingWithLabels(clusteredTrainMetrics, 
+					trainNames, 
+					"Expected Productions", 
+					os.path.join(exportPath, experimentNames[j] + "_gt_train_tsne.png"))
+			if testMetrics:
+				clusteredGTMetrics = tsne.fit_transform(testExpected)
+				plotEmbeddingWithLabels(clusteredTestMetrics, 
+						testNames, 
+						"Expected Productions", 
+						os.path.join(exportPath, experimentNames[j] + "_gt_test_tsne.png"))
+
+
+			# TODO: how to compare the two metrics.
+
+
+
 if __name__ == "__main__":
 	import sys
 
@@ -399,16 +777,51 @@ if __name__ == "__main__":
 	parser.add_argument("--times", type=str, default='recognitionBestTimes')
 	parser.add_argument("--exportTaskTimes", type=bool)
 	parser.add_argument("--outlierThreshold", type=float, default=None)
+
+	#TSNE 
 	parser.add_argument("--metricsToCluster", nargs='+', type=str, default=None)
 	parser.add_argument("--tsneLearningRate", type=float, default=250.0)
 	parser.add_argument("--tsnePerplexity", type=float, default=30.0)
 	parser.add_argument("--labelWithImages", type=bool, default=None)
 	parser.add_argument('--printExamples', type=str, default=None)
 	parser.add_argument('--applySoftmax',  default=False, action="store_true")
+
+	# Clustering analysis
+	parser.add_argument("--clusteringAnalysisMetrics", nargs='+', type=str, default=None)
+	parser.add_argument("--groundTruthCheckpoints", nargs='+', default=None)
+	parser.add_argument("--clusteringMethod", type=str, default='dpgmm')
+	parser.add_argument("--compareToGroundTruthStarts", default=False, action='store_true')
+	parser.add_argument("--compareToExpectedProductionUses", default=False, action='store_true')
+
+	# Similarity matrix analysis
+	parser.add_argument("--similarityAnalysisMetrics", nargs='+', type=str, default=None)
+	parser.add_argument("--similarityOrdering", type=str, default=None)
+	parser.add_argument("--similarityWithTSNE", default=False, action="store_true")
+
+
+
 	parser.add_argument("--export","-e",
 						type=str, default='data')
 
 	arguments = parser.parse_args()
+
+	if arguments.similarityAnalysisMetrics:
+		similarityAnalysis(arguments.checkpoints,
+							arguments.groundTruthCheckpoints,
+							arguments.experimentNames,
+							arguments.similarityAnalysisMetrics,
+							arguments.applySoftmax,
+							arguments.similarityWithTSNE,
+							ordering=arguments.similarityOrdering,
+							exportPath=arguments.export)
+
+
+	if arguments.clusteringAnalysisMetrics:
+		clusteringAnalysis(arguments.checkpoints,
+							arguments.groundTruthCheckpoints,
+							arguments.clusteringAnalysisMetrics,
+							arguments.compareToGroundTruthStarts,
+							arguments.compareToExpectedProductionUses)
 
 	if arguments.exportTaskTimes:
 		exportTaskTimes(arguments.checkpoints,
