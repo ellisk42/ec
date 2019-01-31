@@ -293,7 +293,8 @@ def manualLogoTasks():
       """((move 0d (/a 1a 7))
       (move 1d 0a)
       (loop i infinity
-      (move (*d epsilonLength 4) epsilonAngle)))""")
+      (move (*d epsilonLength 4) epsilonAngle)))""",
+      needToTrain=True)
     T("""slanted line""",
       """((move 0d (/a 1a 8))
       (move (*d 1l 3) 0a))""",
@@ -418,7 +419,7 @@ def manualLogoTasks():
               (loop i infinity
               (move (*d epsilonLength %d) epsilonAngle)))
               """%(n,n),
-          needToTrain=n in [1,4,3,6])
+          needToTrain=n in [1,4,3,5,6])
 
     for n in [5,6]:
         T("%d enclosed circles"%n,
@@ -546,24 +547,42 @@ def manualLogoTasks():
     with random_seed(42): # carefully selected for maximum entropy
         for n in [3,4,5,6,7]:
             body = {"empty": "(move 1d 0a)",
+                    "spiral": "(loop i infinity (move (*d epsilonLength i) (*a epsilonAngle 2)))",
                     "dashed": "(p (move 1d 0a)) (move 1d 0a)",
                     "circle": "(move 1d 0a) (loop k 2 (loop i infinity (move epsilonLength epsilonAngle)))",
                     "lonely circle": "(p (move 1d 0a)) (loop k 2 (loop i infinity (move epsilonLength epsilonAngle)))",
                     "square dashed": "(p (move 1d 0a)) (loop s 4 (move 1d (/a 1a 4)))",
                     "square": "(move 1d 0a) (loop s 4 (move 1d (/a 1a 4)))",
-                    "close semicircle": "(loop i infinity (move (*d epsilonLength 2) epsilonAngle))",
-                    "semicircle": "(move 1d 0a) (loop i infinity (move epsilonLength epsilonAngle))"}
+                    "close large semicircle": "(loop i infinity (move (*d epsilonLength 2) epsilonAngle))",
+                    "close semicircle": "(loop i infinity (move epsilonLength epsilonAngle))",
+                    "semicircle": "(move 1d 0a) (loop i infinity (move epsilonLength epsilonAngle))",
+                    "double dashed": "(p (move 1d 0a)) (move 1d 0a) (p (move 1d 0a)) (move 1d 0a)",
+                    "Greek": "(loop i 3 (move (*l 1l i) (/a 1a 4)))"}
             for name in body:
+                if name == "spiral" and n not in [4,5]: continue
+                if name == "square" and n not in [5,3,6,7]: continue
+                if name == "semicircle" and n not in [5,3,4,6]: continue
+                if name == "Greek" and n not in [3,5]: continue
+                if name == "double dashed" and n not in [6,4,3]: continue
+                
                 mustTrain = False
 
+                mustTrain = mustTrain or (n == 3 and name == "Greek")
                 mustTrain = mustTrain or (n == 7 and name == "empty")
+                mustTrain = mustTrain or (n == 4 and name == "close large semicircle")
                 mustTrain = mustTrain or (n == 4 and name == "dashed")
                 mustTrain = mustTrain or (n == 7 and name == "circle")
+                mustTrain = mustTrain or (n == 6 and name == "circle")
                 mustTrain = mustTrain or (n == 6 and name == "lonely circle")
                 mustTrain = mustTrain or (n == 5 and name == "square")
+                mustTrain = mustTrain or (n == 7 and name == "square")
                 mustTrain = mustTrain or (n == 5 and name == "semicircle")
                 mustTrain = mustTrain or (n == 3 and name == "square dashed")
                 mustTrain = mustTrain or (n == 6 and name == "close semicircle")
+                mustTrain = mustTrain or (n == 4 and name == "close large semicircle")
+                mustTrain = mustTrain or (n == 4 and name == "spiral")
+                mustTrain = mustTrain or (n == 6 and name == "double dashed")
+                mustTrain = mustTrain or (n == 4 and name == "double dashed")
                 #mustTrain = mustTrain or (n == 6 and name == "empty")
 
                 #mustTrain = mustTrain or (random.random() < 0.07) # calibrated to give 70 training tasks
