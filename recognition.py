@@ -636,6 +636,10 @@ class RecognitionModel(nn.Module):
             e = Entropy()
             return e(grammarLogProductionsOfTask)
 
+    def taskAuxiliaryLossLayer(self, tasks):
+        return {task: self._auxiliaryPrediction(self.featureExtractor.featuresOfTask(task)).view(-1).data.cpu().numpy()
+                for task in tasks}
+                
     def taskGrammarFeatureLogProductions(self, tasks):
         return {task: self.grammarFeatureLogProductionsOfTask(task).data.cpu().numpy()
                 for task in tasks}
