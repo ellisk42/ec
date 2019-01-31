@@ -361,7 +361,6 @@ if __name__ == "__main__":
         "featureExtractor": extractor,
         "outputPrefix": "%s/list"%outputDirectory,
         "evaluationTimeout": 0.0005,
-        "solver": "ocaml"
     })
     
 

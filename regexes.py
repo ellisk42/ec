@@ -285,7 +285,6 @@ if __name__ == "__main__":
         "evaluationTimeout": 0.005,
         "topk_use_only_likelihood": True,
         "maximumFrontier": 10,
-        "solver": "ocaml",
         "compressor": "ocaml"
     })
     ####
@@ -332,6 +331,7 @@ weighted with the constants. If you look at the grammar above, this is an error!
 """)
         assert False
 
+    del args["likelihoodModel"]
     explorationCompression(baseGrammar, train,
                            testingTasks = test,
                            **args)
