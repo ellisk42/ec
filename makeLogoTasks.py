@@ -655,9 +655,6 @@ def montageTasks(tasks, prefix=""):
     random.shuffle(arrays)
     scipy.misc.imsave('/tmp/%srandomMontage.png'%prefix, montage(arrays))
     
-    
-    
-
 if __name__ == "__main__":
     import scipy.misc
     import numpy as np

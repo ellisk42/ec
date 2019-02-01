@@ -857,10 +857,11 @@ def commandlineArguments(_=None,
         action="store_true"
         )
     parser.add_argument("--addTaskMetrics",
-        dest="addTaskMetrics",
-        help="Creates a checkpoint with task metrics and no recognition model for graphing.",
-        default=None,
-        type=str)
+                        dest="addTaskMetrics",
+                        help="Creates a checkpoint with task metrics and no recognition model for graphing.",
+                        default=None,
+                        nargs='+',
+                        type=str)
     parser.add_argument("--auxiliary",
                         action="store_true", default=False,
                         help="Add auxiliary classification loss to recognition network training",
@@ -895,9 +896,10 @@ def commandlineArguments(_=None,
         del v["primitive-graph"]
 
     if v["addTaskMetrics"] is not None:
-        with open(v["addTaskMetrics"],'rb') as handle:
-            result = dill.load(handle)
-        addTaskMetrics(result, v["addTaskMetrics"])
+        for path in v["addTaskMetrics"]:
+            with open(path,'rb') as handle:
+                result = dill.load(handle)
+            addTaskMetrics(result, path)
         sys.exit(0)
     else:
         del v["addTaskMetrics"]
@@ -927,11 +929,18 @@ def commandlineArguments(_=None,
 
 def addTaskMetrics(result, path):
     """Adds a task metrics to ECResults that were pickled without them."""
+    with torch.no_grad(): return addTaskMetrics_(result, path)
+def addTaskMetrics_(result, path):
     SUFFIX = '.pickle'
     assert path.endswith(SUFFIX)
 
     tasks = result.taskSolutions.keys()
-    eprint("Found %d tasks: " % len(tasks))
+    everyTask = set(tasks)
+    for t in result.recognitionTaskMetrics:
+        if isinstance(t, Task) and t not in everyTask: everyTask.add(t)
+
+    eprint(f"Found {len(tasks)} training tasks.")
+    eprint(f"Scrounged up {len(everyTask) - len(tasks)} testing tasks.")
     if not hasattr(result, "recognitionTaskMetrics") or result.recognitionTaskMetrics is None:
         result.recognitionTaskMetrics = {}
 
@@ -946,19 +955,26 @@ def addTaskMetrics(result, path):
 
     updateTaskSummaryMetrics(result.recognitionTaskMetrics, result.recognitionModel.auxiliaryPrimitiveEmbeddings(), 'auxiliaryPrimitiveEmbeddings')
     updateTaskSummaryMetrics(result.recognitionTaskMetrics, result.recognitionModel.taskAuxiliaryLossLayer(tasks), 'taskAuxiliaryLossLayer')
+    updateTaskSummaryMetrics(result.recognitionTaskMetrics, result.recognitionModel.taskAuxiliaryLossLayer(everyTask), 'every_auxiliaryLossLayer')
 
     updateTaskSummaryMetrics(result.recognitionTaskMetrics, result.recognitionModel.taskGrammarFeatureLogProductions(tasks), 'grammarFeatureLogProductions')
+    updateTaskSummaryMetrics(result.recognitionTaskMetrics, result.recognitionModel.taskGrammarFeatureLogProductions(everyTask), 'every_grammarFeatureLogProductions')
     updateTaskSummaryMetrics(result.recognitionTaskMetrics, result.recognitionModel.taskGrammarLogProductions(tasks), 'contextualLogProductions')
+    updateTaskSummaryMetrics(result.recognitionTaskMetrics, result.recognitionModel.taskGrammarLogProductions(everyTask), 'every_contextualLogProductions')
     updateTaskSummaryMetrics(result.recognitionTaskMetrics, result.recognitionModel.taskHiddenStates(tasks), 'hiddenState')
+    updateTaskSummaryMetrics(result.recognitionTaskMetrics, result.recognitionModel.taskHiddenStates(everyTask), 'every_hiddenState')
     g = result.grammars[-2] # the final entry in result.grammars is a grammar that we have not used yet
     updateTaskSummaryMetrics(result.recognitionTaskMetrics, {f.task: f.expectedProductionUses(g)
                                                              for f in result.taskSolutions.values()
                                                              if len(f) > 0},
                              'expectedProductionUses')
-    if True:
-        everyTask = set(tasks)
-        for t in result.recognitionTaskMetrics:
-            if isinstance(t, Task) and t not in everyTask: everyTask.add(t)
+    updateTaskSummaryMetrics(result.recognitionTaskMetrics, {f.task: f.expectedProductionUses(g)
+                                                             for t, metrics in result.recognitionTaskMetrics.items()
+                                                             if "frontier" in metrics
+                                                             for f in [metrics["frontier"]] 
+                                                             if len(f) > 0},
+                             'every_expectedProductionUses')
+    if False:
         eprint(f"About to do an expensive Monte Carlo simulation w/ {len(everyTask)} tasks")
         updateTaskSummaryMetrics(result.recognitionTaskMetrics,
                                  {task: result.recognitionModel.grammarOfTask(task).untorch().expectedUsesMonteCarlo(task.request, debug=False)
