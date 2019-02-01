@@ -1,4 +1,4 @@
-from utilities import eprint
+from utilities import eprint, montageMatrix
 from likelihoodModel import *
 from recognition import *
 from frontier import *
@@ -1122,7 +1122,7 @@ def addTaskMetrics(result, path):
                                                              for f in result.taskSolutions.values()
                                                              if len(f) > 0},
                              'expectedProductionUses')
-    if False:
+    if True:
         everyTask = set(tasks)
         for t in result.recognitionTaskMetrics:
             if isinstance(t, Task) and t not in everyTask: everyTask.add(t)

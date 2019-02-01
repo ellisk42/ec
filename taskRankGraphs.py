@@ -70,6 +70,69 @@ metricToHeldout = {
 	'contextualLogProductions' : 'heldoutTaskLogProductions'
 }
 
+listTasks={
+"add-k" : "Apply math operator",
+"append": "Extend list",
+"bool-identify": "Check condition",
+"caesar-cipher": "Caesar cipher",
+"count-k" : "Check condition",
+"drop-k" : "Other",
+"has" : "Check condition",
+"index-k" : "Index",
+"is" : "Check condition",
+"keep" : "Filter",
+"kth-":"Filter",
+"modulo-k" : "Apply math operator",
+"mult-k" : "Apply math operator",
+"prepend" : "Extend list",
+"remove" : "Filter",
+"rotate-k" : "Rotate",
+"slice-k-n": "Slice",
+"take": "Filter",
+"evens" : "Filter",
+"odds" : "Filter",
+"Misc" : "Other"
+}
+
+
+textTasks = [
+"Abbreviate separate words",
+"Abbreviate words separated by",
+"Append '",
+"Append 2 strings",
+"Append two words",
+"Drop last",
+"Extract word delimited by",
+"First letters of words",
+"Prepend",
+"Replace",
+"Take first",
+"Take last",
+"ensure suffix",
+"nth",
+"parentheses around",
+"drop first word delimited"
+]
+
+textTaskPrettyNames = [
+"Abbreviate words",
+"Abbreviate delimited words",
+"Append string",
+"Append 2 strings",
+"Append delimited words",
+"Drop characters",
+"Extract word",
+"First letters of words",
+"Prepend",
+"Replace",
+"Take first",
+"Take last",
+"Check suffix",
+"nth word",
+"Add parentheses",
+"Drop first delimited word"
+]
+
 def parseResultsPath(p):
 	def maybe_eval(s):
 		try:
@@ -227,23 +290,61 @@ def scatterPlotSimilarities(x, y, exportPath, xlabel=None, ylabel=None):
 	return
 
 
-def plotEmbeddingWithLabels(embeddings, labels, title, exportPath, xlabel=None, ylabel=None):
-	plot.figure(figsize=(20,20))
+
+def plotEmbeddingWithLabels(embeddings, labels, title, exportPath, xlabel=None, ylabel=None, colorLabeling=None):
+	plot.figure(figsize=(10,10))
 	# Color map based on ordering of the labels.
-	cmap = matplotlib.cm.get_cmap('viridis')
+	cmap = matplotlib.cm.get_cmap('tab20')
 	normalize = matplotlib.colors.Normalize(vmin=0, vmax=len(labels))
 	colors = [cmap(normalize(value)) for value in range(len(labels))]
 
+	plot.figure(figsize=(10,10))
+	plot.tick_params(axis='both', left='off', top='off', right='off', bottom='off', labelleft='off', labeltop='off', labelright='off', labelbottom='off')
+	plot.grid(False)
+
+	if colorLabeling is 'text':
+		colorLabels = textNamesToLabels(labels)
+		import matplotlib.patches as mpatches
+		patches = [mpatches.Patch(color=cmap(i), label=textTaskPrettyNames[i]) for i in range(len(textTaskPrettyNames))]
+		legend=plot.legend(handles=patches, frameon=True, loc='upper center', bbox_to_anchor=(0.5, -0.02),
+          ncol=5)
+		plot.title("Text Processing", fontsize=20)
+	if colorLabeling is 'list':
+		cmap = matplotlib.cm.get_cmap('tab10')
+		prettyNames = sorted(list(set(listTasks.values())))
+		colorLabels = listNamesToLabels(labels)
+		import matplotlib.patches as mpatches
+		patches = [mpatches.Patch(color=cmap(i), label=prettyNames[i]) for i in range(len(prettyNames))]
+		legend=plot.legend(handles=patches, frameon=True, loc='upper center', bbox_to_anchor=(0.5, -0.02),
+          ncol=4, fontsize=15)
+		plot.title("List Processing", fontsize=15)
+
+
 	for i, label in enumerate(labels):
 		x, y = embeddings[i, 0], embeddings[i, 1]
-		plot.scatter(x,y, color=colors[i])
-		plot.text(x+0.02, y+0.02, label, fontsize=8)
-	plot.title(title)
+			
+		if colorLabeling is "text" or colorLabeling is "list":
+			plot.scatter(x,y, color=cmap(colorLabels[i]), s=150, alpha=0.85)
+		else:
+			plot.scatter(x,y, color=colors[i], s=500)
+
+		if colorLabeling is "text" or colorLabeling is "list":
+			pass
+		else:
+			plot.text(x+0.02, y+0.02, label, fontsize=20)
+			plot.title(title)
 	if xlabel:
 		plot.xlabel(xlabel)
 	if ylabel:
 		plot.ylabel(ylabel)
-	plot.savefig(exportPath)
+
+
+	print("Exporting: " + exportPath)
+	if colorLabeling is "text" or colorLabeling is "list":
+		plot.savefig(exportPath, bbox_extra_artists=(legend,), bbox_inches='tight')
+	else:
+		plot.savefig(exportPath)
+
 	return
 
 def plotEmbeddingWithImages(embeddings, images, title, exportPath, xlabel=None, ylabel=None, image_zoom=1):
@@ -678,6 +779,7 @@ def getExpectedProductionSimilarities(checkpoints, ordering, applySoftmax):
 def getSimilarityMetrics(similarityMetric, recognitionTaskMetrics, trainNames, testNames, applySoftmax):
 	newRecognitionMetrics = {formattedName('frontier', task) : value for task, value in recognitionTaskMetrics.items()}
 	trainMetrics = [newRecognitionMetrics[taskName][similarityMetric] for taskName in trainNames if similarityMetric in newRecognitionMetrics[taskName] ] 
+	testMetrics = []
 	if similarityMetric in metricToHeldout:
 		heldoutMetric = metricToHeldout[similarityMetric]
 		testMetrics = [newRecognitionMetrics[taskName][heldoutMetric] for taskName in testNames if heldoutMetric in newRecognitionMetrics[taskName] ]
@@ -694,6 +796,92 @@ def meanCorrelation(pk,qk):
 	return np.mean(correlations)
 
 
+def groundTruthStartsToLabels(taskToStarts, taskNames):
+	newTaskToStarts = {formattedName('frontier', task) : str(value) for task, value in taskToStarts.items()}
+	taskStarts = [newTaskToStarts[name] for name in taskNames]
+	# Fit label encoder to the all of the starts, then encode the taskNames.
+	le = preprocessing.LabelEncoder()
+
+	le.fit(list(newTaskToStarts.values()))
+	return le.transform(taskStarts)
+
+def textNamesToLabels(textNames):
+	labels = []
+	for name in textNames:
+		foundName = False
+		for j, label in enumerate(textTasks):
+			if label in name:
+				labels.append(j)
+				foundName = True
+				break
+		if not foundName:
+			print(name)
+	return labels
+
+def listNamesToLabels(listNames):
+	labels = []
+	for name in listNames:
+		foundName = False
+		for label in listTasks.keys():
+			if label in name:
+				labels.append(listTasks[label])
+				foundName = True
+				break
+		if not foundName:
+			labels.append("Other")
+			print(name)
+
+	# Assign to list
+	prettyNames = sorted(list(set(listTasks.values())))
+
+	labels = [prettyNames.index(label) for label in labels]
+	return labels
+
+def getTopNMostSimilar(names, sims, topN):
+	sortedSims=np.dstack(np.unravel_index(np.argsort(-sims.ravel()), sims.shape)).squeeze()
+	for n in range(topN):
+		first, second = sortedSims[n]
+		print(names[first], names[second])
+
+def getTaskSimilarities(taskName, names, sims, trueSims, recognitionTaskMetrics, exportPath, topN=5):
+	names_array = np.array(names)
+	mostSimilar = []
+	for j, name in enumerate(names):
+		if taskName in name:
+			print(name)
+			mostSimilar.append(name)
+
+			top = np.argsort(-sims[j])[:topN]
+			mostSimilarNames = names_array[top]
+			print("Most similar: %s" % str(mostSimilarNames))
+			
+			print("Mean similarity here: %f " % np.mean(sims[j][top]))
+			meanTrueSimilarity = np.mean(trueSims[j][top])
+			print("Top similarity in ground truth: %f" % meanTrueSimilarity)
+
+			mostSimilar += list(mostSimilarNames)
+
+	saveImageMontage(mostSimilar, recognitionTaskMetrics, exportPath)
+
+def gallery(array, ncols=6):
+    nindex, height, width, intensity = array.shape
+    nrows = nindex//ncols
+    assert nindex == nrows*ncols
+    # want result.shape = (height*nrows, width*ncols, intensity)
+    result = (array.reshape(nrows, ncols, height, width, intensity)
+              .swapaxes(1,2)
+              .reshape(height*nrows, width*ncols, intensity))
+    return result
+
+def saveImageMontage(taskNames, recognitionTaskMetrics, exportPath):
+	newRecognitionMetrics = {formattedName('frontier', task) : value for task, value in recognitionTaskMetrics.items()}
+	images = [makeLogoImage(np.array(newRecognitionMetrics[task]['taskImages'])) for task in taskNames]
+	result = gallery(np.array(images))
+	print("Saving to: " + exportPath)
+	plot.figure(figsize=(20,20))
+	plot.axis('off')
+	plot.imshow(result) 
+	plot.savefig(exportPath)
 
 
 def similarityAnalysis(
@@ -707,61 +895,77 @@ def similarityAnalysis(
 	exportPath=None):
 	"""Create similarity matrices for the given metric and compare similarities of pairs with the ground truth."""
 	groundTruthSimilarities = getExpectedProductionSimilarities(groundTruthCheckpoints, ordering, applySoftmax)
+	groundTruthStarts = getGroundTruthStarts(groundTruthCheckpoints)
 
 	# Create similarity matrices for each of the metrics.
 	for j, path in enumerate(checkpoints):
 		result, domain, iterations, recognitionTaskMetrics = loadResult(path)
 		((trainNames, trainExpected, trainTruthSims), (testNames, testExpected, testTruthSims)) = groundTruthSimilarities[j]
+		trainToStarts, startToTrains, testToStarts, startToTests = groundTruthStarts[j]
+		# trainColorLabeling = groundTruthStartsToLabels(trainToStarts, trainNames)
+		testColorLabeling = groundTruthStartsToLabels(testToStarts, testNames)
 
 		for similarityMetric in similarityMetrics:
 			(trainMetrics, trainMetricSims), (testMetrics, testMetricSims) = getSimilarityMetrics(similarityMetric, recognitionTaskMetrics, trainNames, testNames, applySoftmax) 
 
-			# Save the metric similarity matrices.
-			plotHeatMap(trainMetricSims, trainNames, exportPath=os.path.join(exportPath, experimentNames[j] +"_it_%d_%s_train_similarities.png" % (iterations, similarityMetric)))
-			scatterPlotSimilarities(trainTruthSims.flatten(), trainMetricSims.flatten(), exportPath=os.path.join(exportPath, experimentNames[j] +"_it_%d_%s_train_scatter.png" % (iterations, similarityMetric)), xlabel="Expected Production Uses", ylabel=similarityMetric)
+			# # # Save the metric similarity matrices.
+			# plotHeatMap(trainMetricSims, trainNames, exportPath=os.path.join(exportPath, experimentNames[j] +"_it_%d_%s_train_similarities.png" % (iterations, similarityMetric)))
+			# # scatterPlotSimilarities(trainTruthSims.flatten(), trainMetricSims.flatten(), exportPath=os.path.join(exportPath, experimentNames[j] +"_it_%d_%s_train_scatter.png" % (iterations, similarityMetric)), xlabel="Expected Production Uses", ylabel=similarityMetric)
 			
-			if testMetrics:
-				plotHeatMap(testMetricSims, testNames, exportPath=os.path.join(exportPath, experimentNames[j] +"_it_%d_%s_test_similarities.png" % (iterations, similarityMetric)))
-				scatterPlotSimilarities(testTruthSims.flatten(), testMetricSims.flatten(), exportPath=os.path.join(exportPath, experimentNames[j] +"_it_%d_%s_test_scatter.png" % (iterations, similarityMetric)), xlabel="Expected Production Uses", ylabel=similarityMetric)
+			# if testMetrics:
+			# 	plotHeatMap(testMetricSims, testNames, exportPath=os.path.join(exportPath, experimentNames[j] +"_it_%d_%s_test_similarities.png" % (iterations, similarityMetric)))
+			# 	# scatterPlotSimilarities(testTruthSims.flatten(), testMetricSims.flatten(), exportPath=os.path.join(exportPath, experimentNames[j] +"_it_%d_%s_test_scatter.png" % (iterations, similarityMetric)), xlabel="Expected Production Uses", ylabel=similarityMetric)
 
 			if similarityWithTSNE:
 				# Also do TSNE with the given ordering.
-				tsne = TSNE(random_state=0, perplexity=30, learning_rate=350, n_iter=10000)
+				tsne = TSNE(random_state=0, perplexity=30, learning_rate=400, n_iter=10000)
 				clusteredTrainMetrics = tsne.fit_transform(trainMetrics)
 				plotEmbeddingWithLabels(clusteredTrainMetrics, 
 					trainNames, 
 					similarityMetric, 
-					os.path.join(exportPath, experimentNames[j] +"_it_%d_%s_train_tsne.png" % (iterations, similarityMetric)))
-				if testMetrics:
-					clusteredTestMetrics = tsne.fit_transform(testMetrics)
-					plotEmbeddingWithLabels(clusteredTestMetrics, 
-						testNames, 
-						similarityMetric, 
-						os.path.join(exportPath, experimentNames[j] +"_it_%d_%s_test_tsne.png" % (iterations, similarityMetric)))
+					os.path.join(exportPath, experimentNames[j] +"_it_%d_%s_train_tsne.png" % (iterations, similarityMetric)),
+					colorLabeling="list")
+			# 	if testMetrics:
+			# 		clusteredTestMetrics = tsne.fit_transform(testMetrics)
+			# 		plotEmbeddingWithLabels(clusteredTestMetrics, 
+			# 			testNames, 
+			# 			similarityMetric, 
+			# 			os.path.join(exportPath, experimentNames[j] +"_it_%d_%s_test_tsne.png" % (iterations, similarityMetric)),
+			# 			colorLabeling="text")
 
 
-			from sklearn.metrics import mean_squared_error
-			print("Experiment train: %s, it=%s, metric %s, mse %f" % (experimentNames[j], iterations, similarityMetric, mean_squared_error(trainTruthSims, trainMetricSims)))
-			if testMetrics:
-				print("Experiment test: %s, it=%s, metric %s, mse %f" % (experimentNames[j], iterations, similarityMetric, mean_squared_error(testTruthSims, testMetricSims)))
+			# # getTaskSimilarities('Greek spiral', trainNames, trainMetricSims, trainTruthSims, 
+			# # 	recognitionTaskMetrics,
+			# # 	exportPath=os.path.join(exportPath, experimentNames[j] +"_it_%d_%s_train_mostSimilar.png" % (iterations, similarityMetric)))
 
+
+			# from sklearn.metrics import mean_squared_error
+			# from scipy.stats import pearsonr
+			# from numpy import corrcoef
+		
+			# print("Experiment train: %s, it=%s, metric %s, mse %f, corr %s" % (experimentNames[j], iterations, similarityMetric, mean_squared_error(trainTruthSims, trainMetricSims), str(pearsonr(trainTruthSims.flatten(), trainMetricSims.flatten())) ))
+			# getTopNMostSimilar(trainNames, trainMetricSims, topN=20)
+			# if testMetrics:
+			# 	print("Experiment test: %s, it=%s, metric %s, mse %f , corr %s" % (experimentNames[j], iterations, similarityMetric, mean_squared_error(testTruthSims, testMetricSims), str(pearsonr(testTruthSims.flatten(), testMetricSims.flatten())) ))
+			# 	getTopNMostSimilar(testNames, testMetricSims, topN=20)
 		# Sanity check clustering
-		if similarityWithTSNE:
-			tsne = TSNE(random_state=0, perplexity=30, learning_rate=350, n_iter=10000)
-			clusteredGTMetrics = tsne.fit_transform(trainExpected)
-			plotEmbeddingWithLabels(clusteredTrainMetrics, 
-					trainNames, 
-					"Expected Productions", 
-					os.path.join(exportPath, experimentNames[j] + "_gt_train_tsne.png"))
-			if testMetrics:
-				clusteredGTMetrics = tsne.fit_transform(testExpected)
-				plotEmbeddingWithLabels(clusteredTestMetrics, 
-						testNames, 
-						"Expected Productions", 
-						os.path.join(exportPath, experimentNames[j] + "_gt_test_tsne.png"))
+		# if similarityWithTSNE:
+		# 	tsne = TSNE(random_state=0, perplexity=15, learning_rate=300, n_iter=10000)
+		# 	clusteredGTMetrics = tsne.fit_transform(trainExpected)
+		# 	plotEmbeddingWithLabels(clusteredGTMetrics, 
+		# 			trainNames, 
+		# 			"Expected Productions", 
+		# 			os.path.join(exportPath, experimentNames[j] + "_gt_train_tsne.png"),
+		# 			colorLabeling="list")
+		# 	if testMetrics:
+		# 		clusteredGTMetrics = tsne.fit_transform(testExpected)
+		# 		plotEmbeddingWithLabels(clusteredGTMetrics, 
+		# 				testNames, 
+		# 				"Expected Productions", 
+		# 				os.path.join(exportPath, experimentNames[j] + "_gt_test_tsne.png"),
+		# 				colorLabeling=testColorLabeling)
 
 
-			# TODO: how to compare the two metrics.
 
 
 
