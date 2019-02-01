@@ -17,7 +17,7 @@ import matplotlib.pyplot as plot
 from matplotlib.ticker import MaxNLocator
 import matplotlib.lines as mlines
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
-
+from utilities import *
 import matplotlib
 plot.style.use('seaborn-whitegrid')
 import matplotlib.colors as colors
@@ -92,6 +92,30 @@ listTasks={
 "evens" : "Filter",
 "odds" : "Filter",
 "Misc" : "Other"
+}
+
+logoTasks=[
+	("row of squares", "Square"),
+	("star 3", "Polygon"),
+	("row of ", "Translational symmetry"),
+	("sequence", "Translational symmetry"),
+	("-gon", "Polygon"),
+	("star", "Star"),
+	("square", "Square"),
+	("smooth spiral", "Spiral"),
+	("Greek", "Greek spiral"),
+	("snowflake", "Rotational symmetry"),
+	("semicircle", "Semicircle"),
+	("circle", "Circle"),
+	("Other", "Other"),
+	("2x2 grid", "Square"),
+	("flower", "Rotational symmetry")
+]
+labeledLogos = {"smooth spiral 3","smooth spiral 4",
+		"star 5", "star 7", "star 9",
+		"8-gon (/d 1d 2)", "7-gon 1l", "6-gon (*d 1d 2)",
+		"5-gon 1l", "3-gon 1l", "3-gon (*d 1l 2)",
+		"6-gon 1l", "5-gon (*d 1d 2)",
 }
 
 
@@ -347,6 +371,69 @@ def plotEmbeddingWithLabels(embeddings, labels, title, exportPath, xlabel=None, 
 
 	return
 
+def plotLabeledImages(embeddings, images, labels, title, exportPath, xlabel=None, ylabel=None, colorLabeling=None):
+	plot.figure(figsize=(10,10))
+	# Color map based on ordering of the labels.
+	cmap = matplotlib.cm.get_cmap('tab20')
+	normalize = matplotlib.colors.Normalize(vmin=0, vmax=len(labels))
+	colors = [cmap(normalize(value)) for value in range(len(labels))]
+
+	plot.figure(figsize=(10,10))
+	plot.tick_params(axis='both', left='off', top='off', right='off', bottom='off', labelleft='off', labeltop='off', labelright='off', labelbottom='off')
+	plot.grid(False)
+
+	print("warning: only works for logo")
+	cmap = matplotlib.cm.get_cmap('tab10')
+	prettyNames = sorted(list({pretty for _,pretty in logoTasks}))
+	colorLabels = logoNamesToLabels(labels)
+	import matplotlib.patches as mpatches
+	patches = [mpatches.Patch(color=cmap(i), label=prettyNames[i]) for i in range(len(prettyNames))]
+	legend=plot.legend(handles=patches, frameon=True, loc='upper center', bbox_to_anchor=(0.5, -0.02),
+  ncol=4, fontsize=15)
+	plot.title("LOGO/Turtle Graphics", fontsize=15)
+
+	def trimImage(image):
+		image = 255. - image[:,:,0]
+		while image[0,:].sum() == 0.: image = image[1:,:]
+		while image[-1,:].sum() == 0.: image = image[:-1,:]
+		while image[:,0].sum() == 0.: image = image[:,1:]
+		while image[:,-1].sum() == 0.: image = image[:,:-1]
+		return 255. - np.dstack([image]*3 + [np.zeros(image.shape)])
+	imageLabels = [] # [(x,y,image)]
+	for i, label in enumerate(labels):
+		x, y = embeddings[i, 0], embeddings[i, 1]
+			
+		plot.scatter(x,y, color=cmap(colorLabels[i]), s=150, alpha=0.85)
+
+		name = labels[i]
+		if name in labeledLogos:
+			imageLabels.append((x,y,trimImage(images[i])))
+			print("LABEL", name)
+	displacements = diffuseImagesOutward(np.array([[x,y] for x,y,_ in imageLabels ]),
+					     embeddings)
+	for index, (x,y,i) in enumerate(imageLabels):
+		dx = displacements[index][0]
+		dy = displacements[index][1]
+		
+		ab = AnnotationBbox(OffsetImage(i, zoom=0.5),
+				    (x,y),
+				    xycoords='data',
+				    xybox=(x + dx,y + dy),
+				    arrowprops=dict(arrowstyle="->"), frameon=False)
+		plot.gca().add_artist(ab)
+
+		
+	if xlabel:
+		plot.xlabel(xlabel)
+	if ylabel:
+		plot.ylabel(ylabel)
+
+
+	print("Exporting: " + exportPath)
+	plot.savefig(exportPath, bbox_extra_artists=(legend,), bbox_inches='tight')
+	
+	return
+
 def plotEmbeddingWithImages(embeddings, images, title, exportPath, xlabel=None, ylabel=None, image_zoom=1):
 	"""
 	Plots embeddings with thumbnail images.
@@ -442,15 +529,16 @@ def formattedName(metricToCluster, item):
 		return raw_name
 
 def plotTSNE(
-	resultPaths,
-	experimentNames,
-	metricsToCluster,
-	applySoftmax,
-	tsneLearningRate,
-	tsnePerplexity,
-	labelWithImages,
-	export=None,
-	printExamples=None):
+		resultPaths,
+		experimentNames,
+		metricsToCluster,
+		applySoftmax,
+		tsneLearningRate,
+		tsnePerplexity,
+		labelWithImages,
+		labelsAndImages,
+		export=None,
+		printExamples=None):
 	"""Plots TSNE clusters of the given metrics. Requires Sklearn."""
 
 	from sklearn.manifold import TSNE
@@ -494,7 +582,7 @@ def plotTSNE(
 			clusteredTaskMetrics = tsne.fit_transform(taskMetrics)
 			title = ("Metric: %s, Domain: %s, Experiment: %s, Iteration: %d" % (metricToCluster, domain, experimentName, iterations))
 
-			if labelWithImages:
+			if labelWithImages or labelsAndImages:
 				images = []
 				for i, task in enumerate(sorted(filter(lambda mt: isinstance(mt, Task), recognitionTaskMetrics.keys()), key=lambda task : task.name)): # Enumerate in same order as sorted tasks.
 					if 'taskImages' not in recognitionTaskMetrics[task] and domain == 'tower': recognitionTaskMetrics[task]['taskImages'] = task.getImage(pretty=True) # BUG: this shouldn't be necessaryd
@@ -508,11 +596,19 @@ def plotTSNE(
 					elif domain == 'rational':
 						im = makeRationalImage(im)
 					images.append(im)
-
-				plotEmbeddingWithImages(clusteredTaskMetrics, 
-					images, 
-					title, 
-					os.path.join(export, domain, experimentName + metricToCluster + "_iters_" + str(iterations) + "_tsne_images.png"))
+				if not plotTSNE:
+					plotEmbeddingWithImages(clusteredTaskMetrics, 
+						images, 
+						title, 
+						os.path.join(export, domain, experimentName + metricToCluster + "_iters_" + str(iterations) + "_tsne_images.png"))
+				else:
+					plotLabeledImages(clusteredTaskMetrics, 
+							  images,
+							  taskNames,
+							  title, 
+							  os.path.join(export, domain, experimentName + metricToCluster + "_iters_" + str(iterations) + "_tsne_labeledimages.png"),
+					)
+					
 			else:
 				plotEmbeddingWithLabels(clusteredTaskMetrics, 
 					taskNames, 
@@ -837,6 +933,24 @@ def listNamesToLabels(listNames):
 	labels = [prettyNames.index(label) for label in labels]
 	return labels
 
+def logoNamesToLabels(listNames):
+	labels = []
+	for name in listNames:
+		foundName = False
+		for label,pretty in logoTasks:
+			if label in name:
+				labels.append(pretty)
+				foundName = True
+				break
+		if not foundName:
+			labels.append("Other")
+		print("%s{0:20}%s"%(name,labels[-1]))
+	# Assign to list
+	prettyNames = sorted(list({pretty for _,pretty in logoTasks}))
+
+	labels = [prettyNames.index(label) for label in labels]
+	return labels
+
 def getTopNMostSimilar(names, sims, topN):
 	sortedSims=np.dstack(np.unravel_index(np.argsort(-sims.ravel()), sims.shape)).squeeze()
 	for n in range(topN):
@@ -987,6 +1101,7 @@ if __name__ == "__main__":
 	parser.add_argument("--tsneLearningRate", type=float, default=250.0)
 	parser.add_argument("--tsnePerplexity", type=float, default=30.0)
 	parser.add_argument("--labelWithImages", type=bool, default=None)
+	parser.add_argument("--labelsAndImages", default=False, action="store_true")
 	parser.add_argument('--printExamples', type=str, default=None)
 	parser.add_argument('--applySoftmax',  default=False, action="store_true")
 
@@ -1049,5 +1164,8 @@ if __name__ == "__main__":
 				 arguments.tsneLearningRate,
 				 arguments.tsnePerplexity,
 				 arguments.labelWithImages,
+			 arguments.labelsAndImages,
 				 arguments.export,
 				 arguments.printExamples)
+
+

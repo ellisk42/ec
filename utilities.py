@@ -803,6 +803,26 @@ def parseSExpression(s):
     raise ParseFailure(s)
 
 
+def diffuseImagesOutward(imageCoordinates, labelCoordinates,
+			 maximumRadius = 4, minimumRadius = 1):
+    import numpy as np
+    
+    n = imageCoordinates.shape[0]
+    d = (np.random.rand(n,2)*2 - 1)*(maximumRadius/2 + minimumRadius/2)
+
+    def _constrainRadii(p):
+        r = (p*p).sum()
+        if r > maximumRadius:
+            return maximumRadius*p/(r**0.5)
+        if r < minimumRadius:
+            return minimumRadius*p/(r**0.5)
+        return p
+    def constrainRadii():
+        for j in range(n):
+            d[j,:] = _constrainRadii(d[j,:])
+    constrainRadii()
+    return d
+
 if __name__ == "__main__":
     def f(n):
         if n == 0: return None
