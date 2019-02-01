@@ -95,11 +95,12 @@ listTasks={
 }
 
 logoTasks=[
+	("next to", "Other"),
 	("row of squares", "Square"),
-	("star 3", "Polygon"),
 	("row of ", "Translational symmetry"),
-	("sequence", "Translational symmetry"),
+	("sequence", "Other"),
 	("-gon", "Polygon"),
+	("star 3", "Polygon"),
 	("star", "Star"),
 	("square", "Square"),
 	("smooth spiral", "Spiral"),
@@ -112,10 +113,21 @@ logoTasks=[
 	("flower", "Rotational symmetry")
 ]
 labeledLogos = {"smooth spiral 3","smooth spiral 4",
-		"star 5", "star 7", "star 9",
-		"8-gon (/d 1d 2)", "7-gon 1l", "6-gon (*d 1d 2)",
+		"star 5", "star 7",
+		"7-gon 1l", "6-gon (*d 1d 2)",
 		"5-gon 1l", "3-gon 1l", "3-gon (*d 1l 2)",
 		"6-gon 1l", "5-gon (*d 1d 2)",
+		"6-empty snowflake",
+		"3-semicircle snowflake",
+		"right semicircle of size 6",
+		"left semicircle of size 5",
+		"Greek spiral slanted by 2pi/6", "Greek spiral 8",
+		"row of 5 dashes", "row of 6 semicircles",
+		"row of 3 circles",
+		"6-lonely circle snowflake",
+#		"5-concentric squares",
+		"staircase 5",
+		"2-semicircle sequence L=2"
 }
 
 
@@ -398,8 +410,10 @@ def plotLabeledImages(embeddings, images, labels, title, exportPath, xlabel=None
 		while image[-1,:].sum() == 0.: image = image[:-1,:]
 		while image[:,0].sum() == 0.: image = image[:,1:]
 		while image[:,-1].sum() == 0.: image = image[:,:-1]
-		return 255. - np.dstack([image]*3 + [np.zeros(image.shape)])
+		Alpha = 255*(image > 0)
+		return np.dstack([255. - image]*3 + [Alpha])
 	imageLabels = [] # [(x,y,image)]
+	initialDisplacements = []
 	for i, label in enumerate(labels):
 		x, y = embeddings[i, 0], embeddings[i, 1]
 			
@@ -408,8 +422,34 @@ def plotLabeledImages(embeddings, images, labels, title, exportPath, xlabel=None
 		name = labels[i]
 		if name in labeledLogos:
 			imageLabels.append((x,y,trimImage(images[i])))
+			if name == "star 5":
+				initialDisplacements.append([1.5,1])
+			elif name == "star 7":
+				initialDisplacements.append([0,2])
+			elif "Greek" in name and "slant" in name:
+				initialDisplacements.append([-3,0.5])
+			elif "Greek" in name:
+				initialDisplacements.append([-3,-0.95])
+			elif "semicircle of size 5" in name:
+				initialDisplacements.append([-1,1])
+			elif name == "smooth spiral 3":
+				initialDisplacements.append([0.3,-1.2])
+			elif name == "smooth spiral 4":
+				initialDisplacements.append([0.6,1.2])
+			elif name == "semicircle of size 6":
+				initialDisplacements.append([0.6,-1.2])
+			elif "empty snowflake" in name:
+				initialDisplacements.append([1.2,0])
+			elif "staircase" in name:
+				initialDisplacements.append([2,0])
+			else:
+				initialDisplacements.append([random.random()*3 - 1.5,
+							     random.random()*3 - 1.5])
+				
 			print("LABEL", name)
-	displacements = diffuseImagesOutward(np.array([[x,y] for x,y,_ in imageLabels ]),
+	displacements = np.array(initialDisplacements)
+	diffuseImagesOutward(np.array([[x,y] for x,y,_ in imageLabels ]),
+					     np.array(initialDisplacements),
 					     embeddings)
 	for index, (x,y,i) in enumerate(imageLabels):
 		dx = displacements[index][0]
