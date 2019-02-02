@@ -152,8 +152,9 @@ def plotECResult(
             r.testingSearchTime = [ [t for t in ts if t <= testingTimeout ]
                                     for ts in r.testingSearchTime ]
     
-    f, a1 = plot.subplots(figsize=(4, 3))
-    a1.set_xlabel(xLabel or "Wake/Sleep Cycles", fontsize=LABELFONTSIZE)
+    f, a1 = plot.subplots(figsize=(5, 2.5))
+    if xLabel != "":
+        a1.set_xlabel(xLabel or "Wake/Sleep Cycles", fontsize=LABELFONTSIZE)
     a1.xaxis.set_major_locator(MaxNLocator(integer=True))
 
     if onlyTime:
