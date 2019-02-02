@@ -40,6 +40,13 @@ DeepFeatureExtractor = 'DeepFeatureExtractor'
 LearnedFeatureExtractor = 'LearnedFeatureExtractor'
 TowerFeatureExtractor = 'TowerFeatureExtractor'
 
+def padSearchTimes(result, testingTimeout, enumerationTimeout):
+    result.testingSearchTime = [ ts + [testingTimeout]*(result.numTestingTasks - len(ts))
+                                     for ts in result.testingSearchTime ]
+    result.searchTimes = [ ts + [enumerationTimeout]*(len(result.taskSolutions) - len(ts))
+                               for ts in result.searchTimes ]
+
+
 def averageCurves(curves):
     xs = {x
           for xs,_ in curves
@@ -108,6 +115,8 @@ def showSynergyMatrix(results):
 
 def plotECResult(
         resultPaths,
+        onlyTime=False,
+        xLabel=None,
         interval=False,
         timePercentile=False,
         labels=None,
@@ -123,6 +132,9 @@ def plotECResult(
         colors=None,
         epochFrequency=1,
         averageColors=False):
+    assert not (onlyTime and not showSolveTime)
+    if onlyTime: assert testingTimeout
+    
     results = []
     parameters = []
     for path in resultPaths:
@@ -141,15 +153,25 @@ def plotECResult(
                                     for ts in r.testingSearchTime ]
     
     f, a1 = plot.subplots(figsize=(4, 3))
-    a1.set_xlabel("Wake/Sleep Cycles", fontsize=LABELFONTSIZE)
+    a1.set_xlabel(xLabel or "Wake/Sleep Cycles", fontsize=LABELFONTSIZE)
     a1.xaxis.set_major_locator(MaxNLocator(integer=True))
 
-    a1.set_ylabel('%% %s Solved%s'%("Training" if showTraining else "Test",
-                                    " (solid)" if showSolveTime else ""),
-                  fontsize=LABELFONTSIZE)
-    if showSolveTime:
-        a2 = a1.twinx()
-        a2.set_ylabel('Solve time (dashed)', fontsize=LABELFONTSIZE)
+    if onlyTime:
+        a1.set_ylabel('Search Time',
+                      fontsize=LABELFONTSIZE)
+        timeAxis = a1
+        solveAxis = None
+    else:
+        a1.set_ylabel('%% %s Solved%s'%("Training" if showTraining else "Test",
+                                        " (solid)" if showSolveTime else ""),
+                      fontsize=LABELFONTSIZE)
+        solveAxis = a1
+        if showSolveTime:
+            a2 = a1.twinx()
+            a2.set_ylabel('Solve time (dashed)', fontsize=LABELFONTSIZE)
+            timeAxis = a2
+        else:
+            timeAxis = None
 
     n_iters = max(len(result.learningCurve) for result in results)
     if iterations and n_iters > iterations:
@@ -165,8 +187,8 @@ def plotECResult(
     showSynergyMatrix(results)
 
     cyclesPerEpic = None
-    plotCommands1 = {} # Map from (color,line style) to (xs,ys) for a1
-    plotCommands2 = {} # Map from (color,line style) to (xs,ys) for a2
+    plotCommands_solve = {} # Map from (color,line style) to (xs,ys) for a1
+    plotCommands_time = {} # Map from (color,line style) to (xs,ys) for a2
     for result, p, color in zip(results, parameters, colors):
         if showTraining:
             ys = [100.*t/float(len(result.taskSolutions))
@@ -190,21 +212,29 @@ def plotECResult(
             usedLabels.append((labels[0], color))
             labels = labels[1:]
 
-        plotCommands1[(color,'-')] = plotCommands1.get((color,'-'),[]) + [(xs,ys)]
+        plotCommands_solve[(color,'-')] = plotCommands_solve.get((color,'-'),[]) + [(xs,ys)]
         
         if showSolveTime:
-            if failAsTimeout:
-                assert testingTimeout is not None
-                result.testingSearchTime = [ ts + [testingTimeout]*(result.numTestingTasks - len(ts))
-                                             for ts in result.testingSearchTime ]
-                result.searchTimes = [ ts + [p.enumerationTimeout]*(len(result.taskSolutions) - len(ts))
-                                       for ts in result.searchTimes ]
+            if onlyTime:
+                for style in [':','-']:
+                    if style == '-':
+                        padSearchTimes(result, testingTimeout, p.enumerationTimeout)                        
+                    if not showTraining: times = result.testingSearchTime[:iterations]
+                    else: times = result.searchTimes[:iterations]
+                    ys = [mean(ts) if not timePercentile else median(ts)
+                          for ts in times]
+                    plotCommands_time[(color,style)] = plotCommands_time.get((color,style),[]) + [(xs,ys)]
+                    padSearchTimes(result, testingTimeout, p.enumerationTimeout)                    
+            else:
+                if failAsTimeout:
+                    assert testingTimeout is not None
+                    padSearchTimes(result, testingTimeout, p.enumerationTimeout)
+                if not showTraining: times = result.testingSearchTime[:iterations]
+                else: times = result.searchTimes[:iterations]
 
-            if not showTraining: times = result.testingSearchTime[:iterations]
-            else: times = result.searchTimes[:iterations]
-            ys = [mean(ts) if not timePercentile else median(ts)
-                  for ts in times]
-            plotCommands2[(color,'--')] = plotCommands2.get((color,'--'),[]) + [(xs,ys)]
+                ys = [mean(ts) if not timePercentile else median(ts)
+                      for ts in times]
+                plotCommands_time[(color,'--')] = plotCommands_time.get((color,'--'),[]) + [(xs,ys)]
             if interval and result is results[0]:
                 assert not averageColors, "FIXME"
                 a2.fill_between(xs,
@@ -215,26 +245,31 @@ def plotECResult(
                                 facecolor=color, alpha=0.2)
 
     if averageColors:
-        plotCommands1 = {kl: averageCurves(curves)
-                         for kl, curves in plotCommands1.items() }
-        plotCommands2 = {kl: averageCurves(curves)
-                         for kl, curves in plotCommands2.items() }
-        for (color,ls),(xs,ys,es) in plotCommands1.items():
-            a1.errorbar(xs,ys,yerr=es,color=color,ls=ls)
-        for (color,ls),(xs,ys,es) in plotCommands2.items():
-            a2.errorbar(xs,ys,yerr=es,color=color,ls=ls)
+        plotCommands_solve = {kl: averageCurves(curves)
+                         for kl, curves in plotCommands_solve.items() }
+        plotCommands_time = {kl: averageCurves(curves)
+                         for kl, curves in plotCommands_time.items() }
+        if solveAxis:
+            for (color,ls),(xs,ys,es) in plotCommands_solve.items():
+                solveAxis.errorbar(xs,ys,yerr=es,color=color,ls=ls)
+        if timeAxis:
+            for (color,ls),(xs,ys,es) in plotCommands_time.items():
+                timeAxis.errorbar(xs,ys,yerr=es,color=color,ls=ls)
     else:
-        for (color,ls),cs in plotCommands1.items():
-            for (xs,ys) in cs:            
-                a1.plot(xs,ys,color=color,ls=ls)
-        for (color,ls),cs in plotCommands2.items():
-            for (xs,ys) in cs:
-                a2.plot(xs,ys,color=color,ls=ls)
+        if solveAxis:
+            for (color,ls),cs in plotCommands_solve.items():
+                for (xs,ys) in cs:            
+                    solveAxis.plot(xs,ys,color=color,ls=ls)
+        if timeAxis:
+            for (color,ls),cs in plotCommands_time.items():
+                for (xs,ys) in cs:
+                    timeAxis.plot(xs,ys,color=color,ls=ls)
 
-    a1.set_ylim(ymin=0, ymax=maxP)
-    a1.yaxis.grid()
-    a1.set_yticks(range(0, maxP, 20))
-    plot.yticks(range(0, maxP, 20), fontsize=TICKFONTSIZE)
+    if solveAxis:
+        a1.set_ylim(ymin=0, ymax=maxP)
+        a1.yaxis.grid()
+        a1.set_yticks(range(0, maxP, 20))
+        plot.yticks(range(0, maxP, 20), fontsize=TICKFONTSIZE)
 
     cycle_label_frequency = 1
     if n_iters >= 10: cycle_label_frequency = 2
@@ -255,12 +290,12 @@ def plotECResult(
             
 
     if showSolveTime:
-        a2.set_ylim(ymin=0)
-        starting, ending = a2.get_ylim()
+        timeAxis.set_ylim(ymin=0)
+        starting, ending = timeAxis.get_ylim()
         ending10 = 10*int(ending/10 + 1)
-        a2.yaxis.set_ticks([ int(ending10/6)*j
-                             for j in range(0, 6)]) 
-        for tick in a2.yaxis.get_ticklabels():
+        timeAxis.yaxis.set_ticks([ int(ending10/6)*j
+                                   for j in range(0, 6)]) 
+        for tick in timeAxis.yaxis.get_ticklabels():
             tick.set_fontsize(TICKFONTSIZE)
 
     if title is not None:
@@ -317,12 +352,16 @@ if __name__ == "__main__":
     parser.add_argument("--maxPercent","-m",
                         type=int, default=110,
                         help="Maximum percent for the percent hits graph")
+    parser.add_argument("--x-label", dest="xLabel", default=None)
     parser.add_argument("--showEpochs",
                         default=False, action="store_true",
                         help='X-axis is real-valued percentage of training tasks seen, instead of iterations.')
     parser.add_argument("--noTime",
                         default=False, action="store_true",
                         help='Do not show solve time.')
+    parser.add_argument("--onlyTime",
+                        default=False, action="store_true",
+                        help='Only shows solve time and show both failAsTimeout time and actual time')
     parser.add_argument("--epochFrequency",
                         default=1, type=int,
                         help="Frequency with which to show epoch markers.")
@@ -331,8 +370,9 @@ if __name__ == "__main__":
                         help="If multiple curves are assigned the same color, then we will average them")
     
     arguments = parser.parse_args()
-    
     plotECResult(arguments.checkpoints,
+                 onlyTime=arguments.onlyTime,
+                 xLabel=arguments.xLabel,
                  testingTimeout=arguments.testingTimeout,
                  timePercentile=arguments.percentile,
                  export=arguments.export,
