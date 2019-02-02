@@ -97,15 +97,16 @@ listTasks={
 logoTasks=[
 	("next to", "Other"),
 	("row of squares", "Square"),
+	("4-gon", "Square"),
 	("row of ", "Translational symmetry"),
 	("sequence", "Other"),
 	("-gon", "Polygon"),
 	("star 3", "Polygon"),
-	("star", "Star"),
 	("square", "Square"),
 	("smooth spiral", "Spiral"),
 	("Greek", "Greek spiral"),
 	("snowflake", "Rotational symmetry"),
+	("star", "Star"),
 	("semicircle", "Semicircle"),
 	("circle", "Circle"),
 	("Other", "Other"),
@@ -401,7 +402,7 @@ def plotLabeledImages(embeddings, images, labels, title, exportPath, xlabel=None
 	import matplotlib.patches as mpatches
 	patches = [mpatches.Patch(color=cmap(i), label=prettyNames[i]) for i in range(len(prettyNames))]
 	legend=plot.legend(handles=patches, frameon=True, loc='upper center', bbox_to_anchor=(0.5, -0.02),
-  ncol=4, fontsize=15)
+  ncol=1, fontsize=15)
 	plot.title("LOGO/Turtle Graphics", fontsize=15)
 
 	def trimImage(image):
@@ -412,54 +413,34 @@ def plotLabeledImages(embeddings, images, labels, title, exportPath, xlabel=None
 		while image[:,-1].sum() == 0.: image = image[:,:-1]
 		Alpha = 255*(image > 0)
 		return np.dstack([255. - image]*3 + [Alpha])
+	def projectColor(c,i):
+		i = 1. - i/255.
+		# image is now white on black
+		i = i[:,:,:-1]
+		for index, coefficient in enumerate(c):
+			if index < 3: i[:,:,index]*=coefficient
+		a = (i.sum(2) > 0.)*0.6
+		return np.dstack([i] + [a])
+		
 	imageLabels = [] # [(x,y,image)]
 	initialDisplacements = []
 	for i, label in enumerate(labels):
+		print(label)
 		x, y = embeddings[i, 0], embeddings[i, 1]
+
 			
-		plot.scatter(x,y, color=cmap(colorLabels[i]), s=150, alpha=0.85)
+		plot.scatter(x,y, color=cmap(colorLabels[i]), s=150, alpha=0.00001)
+		
 
 		name = labels[i]
-		if name in labeledLogos:
-			imageLabels.append((x,y,trimImage(images[i])))
-			if name == "star 5":
-				initialDisplacements.append([1.5,1])
-			elif name == "star 7":
-				initialDisplacements.append([0,2])
-			elif "Greek" in name and "slant" in name:
-				initialDisplacements.append([-3,0.5])
-			elif "Greek" in name:
-				initialDisplacements.append([-3,-0.95])
-			elif "semicircle of size 5" in name:
-				initialDisplacements.append([-1,1])
-			elif name == "smooth spiral 3":
-				initialDisplacements.append([0.3,-1.2])
-			elif name == "smooth spiral 4":
-				initialDisplacements.append([0.6,1.2])
-			elif name == "semicircle of size 6":
-				initialDisplacements.append([0.6,-1.2])
-			elif "empty snowflake" in name:
-				initialDisplacements.append([1.2,0])
-			elif "staircase" in name:
-				initialDisplacements.append([2,0])
-			else:
-				initialDisplacements.append([random.random()*3 - 1.5,
-							     random.random()*3 - 1.5])
-				
-			print("LABEL", name)
-	displacements = np.array(initialDisplacements)
-	diffuseImagesOutward(np.array([[x,y] for x,y,_ in imageLabels ]),
-					     np.array(initialDisplacements),
-					     embeddings)
-	for index, (x,y,i) in enumerate(imageLabels):
-		dx = displacements[index][0]
-		dy = displacements[index][1]
+		c = cmap(colorLabels[i])
 		
+		imageLabels.append((x,y,projectColor(c,trimImage(images[i]))))
+	for index, (x,y,i) in enumerate(imageLabels):
 		ab = AnnotationBbox(OffsetImage(i, zoom=0.5),
 				    (x,y),
 				    xycoords='data',
-				    xybox=(x + dx,y + dy),
-				    arrowprops=dict(arrowstyle="->"), frameon=False)
+				    frameon=False)
 		plot.gca().add_artist(ab)
 
 		
@@ -471,15 +452,18 @@ def plotLabeledImages(embeddings, images, labels, title, exportPath, xlabel=None
 
 	print("Exporting: " + exportPath)
 	plot.savefig(exportPath, bbox_extra_artists=(legend,), bbox_inches='tight')
+	os.system("feh %s"%exportPath)
 	
 	return
 
-def plotEmbeddingWithImages(embeddings, images, title, exportPath, xlabel=None, ylabel=None, image_zoom=1):
+
+def plotEmbeddingWithImages(embeddings, images, taskNames, title, exportPath, xlabel=None, ylabel=None, image_zoom=1):
 	"""
 	Plots embeddings with thumbnail images.
 	Reference: https://www.kaggle.com/gaborvecsei/plants-t-sne
 	"""
-	fig, ax = plot.subplots(figsize=(45,45))
+	fig, ax = plot.subplots(figsize=(10,10))
+	plot.tick_params(axis='both', left='off', top='off', right='off', bottom='off', labelleft='off', labeltop='off', labelright='off', labelbottom='off')
 	artists = []
 	for xy, i in zip(embeddings, images):
 		x0, y0 = xy
@@ -623,9 +607,9 @@ def plotTSNE(
 			title = ("Metric: %s, Domain: %s, Experiment: %s, Iteration: %d" % (metricToCluster, domain, experimentName, iterations))
 
 			if labelWithImages or labelsAndImages:
-				images = []
+				images = {}
 				for i, task in enumerate(sorted(filter(lambda mt: isinstance(mt, Task), recognitionTaskMetrics.keys()), key=lambda task : task.name)): # Enumerate in same order as sorted tasks.
-					if 'taskImages' not in recognitionTaskMetrics[task] and domain == 'tower': recognitionTaskMetrics[task]['taskImages'] = task.getImage(pretty=True) # BUG: this shouldn't be necessaryd
+					if 'taskImages' not in recognitionTaskMetrics[task] and domain == 'tower': recognitionTaskMetrics[task]['taskImages'] = task.getImage(pretty=True) # BUG: this should not be necessaryd
 					if 'taskImages' not in recognitionTaskMetrics[task] and domain == 'rational': recognitionTaskMetrics[task]['taskImages'] = task.features
 					if 'taskImages' not in recognitionTaskMetrics[task] and domain == 'logo': recognitionTaskMetrics[task]['taskImages'] = task.highresolution
 					im = np.array(recognitionTaskMetrics[task]['taskImages'])
@@ -635,15 +619,16 @@ def plotTSNE(
 						im = makeTowerImage(im)
 					elif domain == 'rational':
 						im = makeRationalImage(im)
-					images.append(im)
+					images[task.name] = im
 				if not plotTSNE:
 					plotEmbeddingWithImages(clusteredTaskMetrics, 
-						images, 
+								[images[n] for n in taskNames] ,
+                                                                taskNames,
 						title, 
 						os.path.join(export, domain, experimentName + metricToCluster + "_iters_" + str(iterations) + "_tsne_images.png"))
 				else:
 					plotLabeledImages(clusteredTaskMetrics, 
-							  images,
+							  [images[n] for n in taskNames],
 							  taskNames,
 							  title, 
 							  os.path.join(export, domain, experimentName + metricToCluster + "_iters_" + str(iterations) + "_tsne_labeledimages.png"),
