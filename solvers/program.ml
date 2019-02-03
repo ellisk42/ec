@@ -93,10 +93,13 @@ let rec compare_program p1 p2 = match (p1,p2) with
   | (Invented(_,b1),Invented(_,b2)) -> compare_program b1 b2
   | (Invented(_,_),_) -> -1
                                                
+exception UnboundVariable;;
 
 let rec infer_program_type context environment p : tContext*tp = match p with
   | Index(j) ->
-    applyContext context (List.nth_exn environment j)
+    (match List.nth environment j with
+     | None -> raise UnboundVariable
+     | Some(t) -> applyContext context t)
   | Primitive(t,_,_) -> instantiate_type context t
   | Invented(t,_) -> instantiate_type context t
   | Abstraction(b) ->
@@ -117,7 +120,7 @@ let make_invention i =
 
 
 exception UnknownPrimitive of string
-
+    
 let every_primitive : (program String.Table.t) = String.Table.create();;
 
 
@@ -774,7 +777,7 @@ let program_parser : program parsing =
             let t =
               try
                 infer_program_type empty_context [] p |> snd
-              with UnificationFailure -> begin
+              with UnificationFailure | UnboundVariable -> begin
                   Printf.printf "WARNING: Could not type check invented %s\n" (string_of_program p);
                   t0
                 end

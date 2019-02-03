@@ -215,7 +215,7 @@ type worker_command =
   | FinalFrontier of program
   | BatchedRewrite of program list
     
-let compression_worker connection ~arity ~bs ~topK g frontiers =
+let compression_worker connection ~inline ~arity ~bs ~topK g frontiers =
   let context = Zmq.Context.create() in
   let socket = Zmq.Socket.create context Zmq.Socket.req in
   Zmq.Socket.connect socket connection;
@@ -232,7 +232,7 @@ let compression_worker connection ~arity ~bs ~topK g frontiers =
   let frontier_indices : int list list = time_it ~verbose:!verbose_compression
       "(worker) calculated version spaces" (fun () ->
       !frontiers |> List.map ~f:(fun f -> f.programs |> List.map ~f:(fun (p,_) ->
-              incorporate v p |> n_step_inversion v ~n:arity))) in
+              incorporate v p |> n_step_inversion v ~inline ~n:arity))) in
   if !verbose_compression then
     Printf.eprintf "(worker) %d distinct version spaces enumerated; %d accessible vs size; vs log sizes: %s\n"
       v.i2s.ra_occupancy
@@ -298,7 +298,7 @@ let compression_worker connection ~arity ~bs ~topK g frontiers =
             ~f:(fun frontier ->
                 let programs' =
                   List.map frontier.programs ~f:(fun (originalProgram, ll) ->
-                      let index = incorporate v originalProgram |> n_step_inversion v ~n:arity in
+                      let index = incorporate v originalProgram |> n_step_inversion ~inline v ~n:arity in
                       let program =
                         minimal_inhabitant ~intersectionTable new_cost_table ~given:(Some(i)) index |> get_some
                       in 
@@ -320,7 +320,7 @@ let compression_worker connection ~arity ~bs ~topK g frontiers =
         let invention_indices : int list = inventions |> List.map ~f:(incorporate v) in
         let frontier_indices : int list list =
           !frontiers |> List.map ~f:(fun f ->
-              f.programs |> List.map ~f:(n_step_inversion v ~n:arity % incorporate v % fst))
+              f.programs |> List.map ~f:(n_step_inversion ~inline v ~n:arity % incorporate v % fst))
         in
         clear_dynamic_programming_tables v;
         let refactored = batched_refactor ~ct:(empty_cost_table v) invention_indices frontier_indices in
@@ -361,7 +361,7 @@ let compression_worker connection ~arity ~bs ~topK g frontiers =
             f.programs |> List.iter ~f:(fun (p,_) ->
                 Hashtbl.set frontier_inversions
                   ~key:(incorporate v p)
-                  ~data:(n_step_inversion v ~n:arity (incorporate v p)))));
+                  ~data:(n_step_inversion ~inline v ~n:arity (incorporate v p)))));
     clear_dynamic_programming_tables v; Gc.compact();    
     
     let i = incorporate v invention in
@@ -402,7 +402,7 @@ let compression_worker connection ~arity ~bs ~topK g frontiers =
        exit 0)
   done;;
 
-let compression_step_master ~nc ~structurePenalty ~aic ~pseudoCounts ?arity:(arity=3) ~bs ~topI ~topK g frontiers =
+let compression_step_master ~inline ~nc ~structurePenalty ~aic ~pseudoCounts ?arity:(arity=3) ~bs ~topI ~topK g frontiers =
 
   let sockets = ref [] in
   let timestamp = Time.now() |> Time.to_filename_string ~zone:Time.Zone.utc in
@@ -412,7 +412,7 @@ let compression_step_master ~nc ~structurePenalty ~aic ~pseudoCounts ?arity:(ari
     sockets := !sockets @ [address];
 
     match Unix.fork() with
-    | `In_the_child -> compression_worker address ~arity ~bs ~topK g frontiers
+    | `In_the_child -> compression_worker address ~arity ~bs ~topK ~inline g frontiers
     | _ -> ()
   in
 
@@ -552,7 +552,7 @@ let compression_step_master ~nc ~structurePenalty ~aic ~pseudoCounts ?arity:(ari
   
   
   
-let compression_step ~structurePenalty ~aic ~pseudoCounts ?arity:(arity=3) ~bs ~topI ~topK g frontiers =
+let compression_step ~inline ~structurePenalty ~aic ~pseudoCounts ?arity:(arity=3) ~bs ~topI ~topK g frontiers =
 
   let restrict frontier =
     let restriction =
@@ -577,7 +577,7 @@ let compression_step ~structurePenalty ~aic ~pseudoCounts ?arity:(arity=3) ~bs ~
   (* calculate candidates *)
   let frontier_indices : int list list = time_it "calculated version spaces" (fun () ->
       !frontiers |> List.map ~f:(fun f -> f.programs |> List.map ~f:(fun (p,_) ->
-          incorporate v p |> n_step_inversion v ~n:arity))) in
+          incorporate v p |> n_step_inversion ~inline v ~n:arity))) in
   
 
   let candidates : int list = time_it "proposed candidates" (fun () ->
@@ -620,7 +620,7 @@ let compression_step ~structurePenalty ~aic ~pseudoCounts ?arity:(arity=3) ~bs ~
             ~f:(fun frontier ->
                 let programs' =
                   List.map frontier.programs ~f:(fun (originalProgram, ll) ->
-                      let index = incorporate v originalProgram |> n_step_inversion v ~n:arity in
+                      let index = incorporate v originalProgram |> n_step_inversion v ~inline ~n:arity in
                       let program = minimal_inhabitant new_cost_table ~given:(Some(i)) index |> get_some in 
                       let program' =
                         try rewriter frontier.request program
@@ -704,7 +704,7 @@ let export_compression_checkpoint ~nc ~structurePenalty ~aic ~topK ~pseudoCounts
 
 
 let compression_loop
-    ?nc:(nc=1) ~structurePenalty ~aic ~topK ~pseudoCounts ?arity:(arity=3) ~bs ~topI ~iterations g frontiers =
+    ?nc:(nc=1) ~structurePenalty ~inline ~aic ~topK ~pseudoCounts ?arity:(arity=3) ~bs ~topI ~iterations g frontiers =
 
   let find_new_primitive old_grammar new_grammar =
     new_grammar |> grammar_primitives |> List.filter ~f:(fun p ->
@@ -732,7 +732,7 @@ let compression_loop
       (Printf.eprintf "Exiting ocaml compression because of iteration bound.\n";g, frontiers)
     else 
       match time_it "Completed one step of memory consolidation"
-              (fun () -> step ~structurePenalty ~topK ~aic ~pseudoCounts ~arity ~bs ~topI g frontiers)
+              (fun () -> step ~inline ~structurePenalty ~topK ~aic ~pseudoCounts ~arity ~bs ~topI g frontiers)
       with
       | None -> g, frontiers
       | Some(g',frontiers') ->
@@ -776,6 +776,10 @@ let () =
   verbose_compression := (try
       j |> member "verbose" |> to_bool
                           with _ -> false);
+  let inline = (try
+                  j |> member "inline" |> to_bool
+                with _ -> true)
+  in 
 
   let nc =
     try j |> member "CPUs" |> to_int
@@ -796,7 +800,7 @@ let () =
     if aic > 500. then
       (Printf.eprintf "AIC is very large (over 500), assuming you don't actually want to do DSL learning!";
        g, frontiers)
-    else compression_loop ~iterations ~nc ~topK ~aic ~structurePenalty ~pseudoCounts ~arity ~topI ~bs g frontiers in 
+    else compression_loop ~inline ~iterations ~nc ~topK ~aic ~structurePenalty ~pseudoCounts ~arity ~topI ~bs g frontiers in 
       
 
   let j = `Assoc(["DSL",serialize_grammar g;

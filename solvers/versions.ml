@@ -139,6 +139,22 @@ let rec shift_free ?c:(c=0) t ~n ~index =
       version_abstract t (shift_free ~c:(c+1) t ~n:n ~index:b)
     | TerminalSpace(_) | Universe | Void -> index
 
+let rec shift_versions ?c:(c=0) t ~n ~index =
+  (* shift_free_variables, lifted to vs *)
+  if n = 0 then index else
+    match index_table t index with
+    | Union(indices) ->
+      union t (indices |> List.map ~f:(fun i -> shift_versions ~c:c t ~n:n ~index:i))
+    | IndexSpace(i) when i < c -> index (* below cut off - bound variable *)
+    | IndexSpace(i) when i + n >= 0 -> version_index t (i + n) (* free variable *)
+    | IndexSpace(_) -> t.void
+    | ApplySpace(f,x) ->
+      version_apply t (shift_versions ~c:c t ~n:n ~index:f) (shift_versions ~c:c t ~n:n ~index:x)
+    | AbstractSpace(b) ->
+      version_abstract t (shift_versions ~c:(c+1) t ~n:n ~index:b)
+    | TerminalSpace(_) | Universe | Void -> index
+    
+
 let rec subtract t a b =
   match index_table t a, index_table t b with
   | Universe, _ -> assert (false)
@@ -190,6 +206,62 @@ let rec intersection t a b =
   | IndexSpace(i1), IndexSpace(i2) when i1 = i2 -> a
   | TerminalSpace(t1), TerminalSpace(t2) when t1 = t2 -> a
   | _ -> t.void
+
+let inline t j =
+  (* Replaces (#(\ \... B) a1 a2 ... x y z) w/ B[n > a1][n - 1 > a2]... x y z *)
+  (* Only performs this operation at the top level *)
+  let rec il (arguments : int list) (j : int) : int =
+    match index_table t j with
+    | ApplySpace(f, x) -> il (x :: arguments) f
+    | AbstractSpace(_) | IndexSpace(_) | TerminalSpace(Primitive(_,_,_)) -> t.void
+    | Union(vs) -> vs |> List.map ~f:(il arguments) |> union t
+    | TerminalSpace(Invented(_,body)) -> begin
+        let rec make_substitution used_arguments unused_arguments body = match unused_arguments, body with
+          | [], Abstraction(_) -> None
+          | [], _ -> Some((used_arguments, body))
+          | x :: xs, Abstraction(b) -> make_substitution (x :: used_arguments) xs b
+          | _ :: _, _ -> Some((used_arguments, body))
+        in
+        let rec apply_substitution ~k arguments expression = match expression with
+          | Index(i) when i < k -> version_index t i
+          (* i >= k *)
+          | Index(i) when i - k < List.length arguments ->
+            shift_versions t ~n:k ~index:(List.nth_exn arguments (i - k))
+          (* i >= k + |arguments| *)
+          | Index(i) -> version_index t (i - List.length arguments)
+          | Apply(f,x) -> version_apply t (apply_substitution ~k arguments f) (apply_substitution ~k arguments x)
+          | Abstraction(b) -> version_abstract t (apply_substitution ~k:(k+1) arguments b)
+          | Primitive(_,_,_) | Invented(_,_) -> incorporate t expression
+        in
+        match make_substitution [] arguments body with
+        | None -> t.void
+        | Some((used_arguments, body)) ->
+          let f = apply_substitution ~k:0 used_arguments body in
+          let remaining_arguments = List.drop arguments (List.length used_arguments) in
+          remaining_arguments |> List.fold_left ~init:f ~f:(version_apply t)
+      end
+    | Void | Universe | TerminalSpace(_) -> t.void
+  in
+  il [] j
+        
+let rec recursive_inlining t j =
+  (* Constructs vs of all programs that are 1 inlining step away from a program in provided vs *)
+  match index_table t j with
+  | Union(u) -> u |> List.map ~f:(recursive_inlining t) |> union t
+  | AbstractSpace(b) -> version_abstract t (recursive_inlining t b)
+  | IndexSpace(_) | Void | Universe | TerminalSpace(Primitive(_)) -> t.void
+  (* Must either be an application or an invented leaf *)
+  | _ ->
+    let top_linings = inline t j in
+    let rec inline_arguments j = match index_table t j with
+      | ApplySpace(f,x) -> version_apply t f (recursive_inlining t x)
+      | Union(u) -> u |> List.map ~f:inline_arguments |> union t
+      | AbstractSpace(_) | TerminalSpace(_) | Universe | Void | IndexSpace(_) -> t.void
+    in 
+    let argument_linings = inline_arguments j in
+    union t [top_linings; argument_linings;]
+      
+      
 
 let rec have_intersection ?table:(table=None) t a b =
   if a = b then true else
@@ -332,21 +404,24 @@ let rec log_version_size t j = match index_table t j with
   | Union(u) -> u |> List.map ~f:(log_version_size t) |> lse_list
   | _ -> 0.
 
-let rec n_step_inversion t ~n j =
-  let key = (n,j) in
+let rec n_step_inversion ?inline:(il=false) t ~n j =
+  let key = (n, j) in
   match Hashtbl.find t.n_step_table key with
   | Some(ns) -> ns
   | None -> 
     (* list of length (n+1), corresponding to 0 steps, 1, ..., n *)
+    (* Each "step" is the union of an inverse inlining step and optionally an inlining step *)
     let rec n_step ?completed:(completed=0) current : int list =
+      let step v =
+        if il then  
+          union t [recursive_inversion t v; inline t v]
+        else
+          recursive_inversion t v
+      in 
       let rest = if completed = n then [] else
-          n_step ~completed:(completed+1) (recursive_inversion t current)
+          n_step ~completed:(completed+1) (step current)            
       in
       beta_pruning t current :: rest
-      (* if completed = n then [current] else *)
-      (*   let next = recursive_inversion t current in *)
-      (*   let next = beta_pruning t next in *)
-      (*   current :: n_step ~completed:(completed+1) next *)
     in
 
     let rec visit j =
