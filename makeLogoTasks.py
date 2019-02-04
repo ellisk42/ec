@@ -559,7 +559,7 @@ def manualLogoTasks():
                     "double dashed": "(p (move 1d 0a)) (move 1d 0a) (p (move 1d 0a)) (move 1d 0a)",
                     "Greek": "(loop i 3 (move (*l 1l i) (/a 1a 4)))"}
             for name in body:
-                if name == "spiral" and n not in [4,5]: continue
+                if name == "spiral" and n not in [3,5]: continue
                 if name == "square" and n not in [5,3,6,7]: continue
                 if name == "semicircle" and n not in [5,3,4,6]: continue
                 if name == "Greek" and n not in [3,5]: continue
@@ -569,8 +569,7 @@ def manualLogoTasks():
 
                 mustTrain = mustTrain or (n == 3 and name == "Greek")
                 mustTrain = mustTrain or (n == 7 and name == "empty")
-                mustTrain = mustTrain or (n == 4 and name == "close large semicircle")
-                mustTrain = mustTrain or (n == 4 and name == "dashed")
+                mustTrain = mustTrain or (n == 5 and name == "dashed")
                 mustTrain = mustTrain or (n == 7 and name == "circle")
                 mustTrain = mustTrain or (n == 6 and name == "circle")
                 mustTrain = mustTrain or (n == 6 and name == "lonely circle")
@@ -579,18 +578,18 @@ def manualLogoTasks():
                 mustTrain = mustTrain or (n == 5 and name == "semicircle")
                 mustTrain = mustTrain or (n == 3 and name == "square dashed")
                 mustTrain = mustTrain or (n == 6 and name == "close semicircle")
-                mustTrain = mustTrain or (n == 4 and name == "close large semicircle")
-                mustTrain = mustTrain or (n == 4 and name == "spiral")
+                mustTrain = mustTrain or (n == 5 and name == "close large semicircle")
+                mustTrain = mustTrain or (n == 3 and name == "spiral")
                 mustTrain = mustTrain or (n == 6 and name == "double dashed")
-                mustTrain = mustTrain or (n == 4 and name == "double dashed")
+                mustTrain = mustTrain or (n == 3 and name == "double dashed")
                 #mustTrain = mustTrain or (n == 6 and name == "empty")
 
                 #mustTrain = mustTrain or (random.random() < 0.07) # calibrated to give 70 training tasks
                 
 
-                # cap number of super easy snowflakes
-                if name == "empty" and n not in [7]: mustTrain = False
-                if name == "dashed" and n not in [4]: mustTrain = False
+                # # cap number of super easy snowflakes
+                # if name == "empty" and n not in [7]: mustTrain = False
+                # if name == "dashed" and n not in [4]: mustTrain = False
                 
 
                 T("%d-%s snowflake"%(n,name),
