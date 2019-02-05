@@ -352,7 +352,143 @@ class ContextualGrammarNetwork_LowRank(nn.Module):
             assert torch.all((ll - _l).abs() < 0.0001)
         return ll
     
+class ContextualGrammarNetwork_Mask(nn.Module):
+    def __init__(self, inputDimensionality, grammar):
+        """Bigram model, but where the bigram transitions are unconditional.
+        Individual primitive probabilities are still conditional (predicted by neural network)
+        """
+        
+        super(ContextualGrammarNetwork_Mask, self).__init__()
 
+        self.grammar = grammar
+
+        # library now just contains a list of indicies which go with each primitive
+        self.grammar = grammar
+        self.library = {}
+        self.n_grammars = 0
+        for prim in grammar.primitives:
+            numberOfArguments = len(prim.infer().functionArguments())
+            idx_list = list(range(self.n_grammars, self.n_grammars+numberOfArguments))
+            self.library[prim] = idx_list
+            self.n_grammars += numberOfArguments
+        
+        # We had an extra grammar for when there is no parent and for when the parent is a variable
+        self.n_grammars += 2
+        self.transitionMatrix = nn.Parameter(nn.init.xavier_uniform(torch.Tensor(self.n_grammars, len(grammar) + 1)))
+        self.logProductions = nn.Linear(inputDimensionality, len(grammar)+1)
+        
+    def grammarFromVector(self, logProductions):
+        return Grammar(logProductions[-1].view(1),
+                       [(logProductions[k].view(1), t, program)
+                        for k, (_, t, program) in enumerate(self.grammar.productions)],
+                       continuationType=self.grammar.continuationType)
+
+    def forward(self, x):
+        assert len(x.size()) == 1, "contextual grammar doesn't currently support batching"
+
+        # this should broadcast
+        transitionMatrix = self.logProductions(x) + self.transitionMatrix
+        
+        return ContextualGrammar(self.grammarFromVector(transitionMatrix[-1]), self.grammarFromVector(transitionMatrix[-2]),
+                {prim: [self.grammarFromVector(transitionMatrix[j]) for j in js]
+                 for prim, js in self.library.items()} )
+        
+    def batchedLogLikelihoods(self, xs, summaries):
+        """Takes as input BxinputDimensionality vector & B likelihood summaries;
+        returns B-dimensional vector containing log likelihood of each summary"""
+        use_cuda = xs.device.type == 'cuda'
+        
+        B = xs.shape[0]
+        G = len(self.grammar) + 1
+        assert len(summaries) == B
+
+        # logProductions: Bx n_grammars x G
+        logProductions = self.transitionMatrix.unsqueeze(0).repeat(B,1,1) + \
+                         self.logProductions(xs).unsqueeze(1).repeat(1,self.n_grammars,1)
+        # uses[b][g][p] is # uses of primitive p by summary b for parent g
+        uses = np.zeros((B,self.n_grammars,len(self.grammar)+1))
+        for b,summary in enumerate(summaries):
+            for e, ss in summary.library.items():
+                for g,s in zip(self.library[e], ss):
+                    assert g < self.n_grammars - 2
+                    for p, production in enumerate(self.grammar.primitives):
+                        uses[b,g,p] = s.uses.get(production, 0.)
+                    uses[b,g,len(self.grammar)] = s.uses.get(Index(0), 0)
+                    
+            # noParent: this is the last network output
+            for p, production in enumerate(self.grammar.primitives):            
+                uses[b, self.n_grammars - 1, p] = summary.noParent.uses.get(production, 0.)
+            uses[b, self.n_grammars - 1, G - 1] = summary.noParent.uses.get(Index(0), 0.)
+
+            # variableParent: this is the penultimate network output
+            for p, production in enumerate(self.grammar.primitives):            
+                uses[b, self.n_grammars - 2, p] = summary.variableParent.uses.get(production, 0.)
+            uses[b, self.n_grammars - 2, G - 1] = summary.variableParent.uses.get(Index(0), 0.)
+            
+        numerator = (logProductions*maybe_cuda(torch.tensor(uses).float(),use_cuda)).view(B,-1).sum(1)
+
+        constant = np.zeros(B)
+        for b,summary in enumerate(summaries):
+            constant[b] += summary.noParent.constant + summary.variableParent.constant
+            for ss in summary.library.values():
+                for s in ss:
+                    constant[b] += s.constant
+            
+        numerator += maybe_cuda(torch.tensor(constant).float(),use_cuda)
+        
+        if True:
+
+            # Calculate the god-awful denominator
+            alternativeSet = set()
+            for summary in summaries:
+                for normalizer in summary.noParent.normalizers: alternativeSet.add(normalizer)
+                for normalizer in summary.variableParent.normalizers: alternativeSet.add(normalizer)
+                for ss in summary.library.values():
+                    for s in ss:
+                        for normalizer in s.normalizers: alternativeSet.add(normalizer)
+            alternativeSet = list(alternativeSet)
+
+            mask = np.zeros((len(alternativeSet), G))
+            for tau in range(len(alternativeSet)):
+                for p, production in enumerate(self.grammar.primitives):
+                    mask[tau,p] = 0. if production in alternativeSet[tau] else NEGATIVEINFINITY
+                mask[tau, G - 1] = 0. if Index(0) in alternativeSet[tau] else NEGATIVEINFINITY
+            mask = maybe_cuda(torch.tensor(mask).float(), use_cuda)
+
+            z = mask.repeat(self.n_grammars,1,1).repeat(B,1,1,1) + \
+                logProductions.repeat(len(alternativeSet),1,1,1).transpose(0,1).transpose(1,2)
+            z = torch.logsumexp(z, 3) # pytorch 1.0 dependency
+
+            N = np.zeros((B, self.n_grammars, len(alternativeSet)))
+            for b, summary in enumerate(summaries):
+                for e, ss in summary.library.items():
+                    for g,s in zip(self.library[e], ss):
+                        assert g < self.n_grammars - 2
+                        for r, alternatives in enumerate(alternativeSet):                
+                            N[b,g,r] = s.normalizers.get(alternatives, 0.)
+                # noParent: this is the last network output
+                for r, alternatives in enumerate(alternativeSet):
+                    N[b,self.n_grammars - 1,r] = summary.noParent.normalizers.get(alternatives, 0.)
+                # variableParent: this is the penultimate network output
+                for r, alternatives in enumerate(alternativeSet):
+                    N[b,self.n_grammars - 2,r] = summary.variableParent.normalizers.get(alternatives, 0.)
+            N = maybe_cuda(torch.tensor(N).float(), use_cuda)
+            denominator = (N*z).sum(1).sum(1)
+        else:
+            gs = [ self(xs[b]) for b in range(B) ]
+            denominator = torch.cat([ summary.denominator(g) for summary,g in zip(summaries, gs) ])
+            
+            
+
+        
+        
+        ll = numerator - denominator
+
+        if False: # verifying that batching works correctly
+            gs = [ self(xs[b]) for b in range(B) ]
+            _l = torch.cat([ summary.logLikelihood(g) for summary,g in zip(summaries, gs) ])
+            assert torch.all((ll - _l).abs() < 0.0001)
+        return ll
         
                 
 
@@ -483,8 +619,8 @@ class ContextualGrammarNetwork(nn.Module):
 
 class RecognitionModel(nn.Module):
     def __init__(self,featureExtractor,grammar,hidden=[64],activation="tanh",
-                 rank=None,
-                 cuda=False,contextual=False,
+                 rank=None,contextual=False,mask=False,
+                 cuda=False,
                  previousRecognitionModel=None,
                  id=0):
         super(RecognitionModel, self).__init__()
@@ -525,7 +661,10 @@ class RecognitionModel(nn.Module):
 
         self.contextual = contextual
         if self.contextual:
-            self.grammarBuilder = ContextualGrammarNetwork_LowRank(self.outputDimensionality, grammar, rank)
+            if mask:
+                self.grammarBuilder = ContextualGrammarNetwork_Mask(self.outputDimensionality, grammar)
+            else:
+                self.grammarBuilder = ContextualGrammarNetwork_LowRank(self.outputDimensionality, grammar, rank)
         else:
             self.grammarBuilder = GrammarNetwork(self.outputDimensionality, grammar)
         
