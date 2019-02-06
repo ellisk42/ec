@@ -374,8 +374,17 @@ class ContextualGrammarNetwork_Mask(nn.Module):
         
         # We had an extra grammar for when there is no parent and for when the parent is a variable
         self.n_grammars += 2
-        self.transitionMatrix = nn.Parameter(nn.init.xavier_uniform(torch.Tensor(self.n_grammars, len(grammar) + 1)))
-        self.logProductions = nn.Linear(inputDimensionality, len(grammar)+1)
+        self._transitionMatrix = nn.Parameter(nn.init.xavier_uniform(torch.Tensor(self.n_grammars, len(grammar) + 1)))
+        self._logProductions = nn.Linear(inputDimensionality, len(grammar)+1)
+
+    def transitionMatrix(self, x):
+        if len(x.shape) == 1: # not batched
+            return self._logProductions(x) + self._transitionMatrix # will broadcast
+        elif len(x.shape) == 2: # batched
+            return self._logProductions(x).unsqueeze(1).repeat(1,self.n_grammars,1) + \
+                self._transitionMatrix.unsqueeze(0).repeat(x.size(0),1,1)
+        else:
+            assert False, "unknown shape for transition matrix input"
         
     def grammarFromVector(self, logProductions):
         return Grammar(logProductions[-1].view(1),
@@ -386,8 +395,7 @@ class ContextualGrammarNetwork_Mask(nn.Module):
     def forward(self, x):
         assert len(x.size()) == 1, "contextual grammar doesn't currently support batching"
 
-        # this should broadcast
-        transitionMatrix = self.logProductions(x) + self.transitionMatrix
+        transitionMatrix = self.transitionMatrix(x)
         
         return ContextualGrammar(self.grammarFromVector(transitionMatrix[-1]), self.grammarFromVector(transitionMatrix[-2]),
                 {prim: [self.grammarFromVector(transitionMatrix[j]) for j in js]
@@ -403,8 +411,7 @@ class ContextualGrammarNetwork_Mask(nn.Module):
         assert len(summaries) == B
 
         # logProductions: Bx n_grammars x G
-        logProductions = self.transitionMatrix.unsqueeze(0).repeat(B,1,1) + \
-                         self.logProductions(xs).unsqueeze(1).repeat(1,self.n_grammars,1)
+        logProductions = self.transitionMatrix(xs)
         # uses[b][g][p] is # uses of primitive p by summary b for parent g
         uses = np.zeros((B,self.n_grammars,len(self.grammar)+1))
         for b,summary in enumerate(summaries):
