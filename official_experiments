@@ -39,6 +39,11 @@ for SEED in `seq 1 3`; do python launch.py -k  -c -z n1-highmem-64 regex_ensembl
 for SEED in `seq 1 3`; do python launch.py -k  -c -z n1-highmem-64 regex_ensemble_no_batch_2h "python regexes.py --tasks new --maxTasks 256 --ll_cutoff bigram --split 0.5 -t 7200  --pseudoCounts 30 --aic 1.0 --structurePenalty 1.5 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 3600 --storeTaskMetrics --testingTimeout 1800 --biasOptimal --contextual  --auxiliary --ensembleSize 2 -RS 5000 --seed $SEED" ; done
 for SEED in `seq 1 3`; do python launch.py -k  -c -z n1-highmem-64 regex_ensemble_no_batch_2h_unigram "python regexes.py --tasks new --maxTasks 256 --ll_cutoff bigram --split 0.5 -t 7200  --pseudoCounts 30 --aic 1.0 --structurePenalty 1.5 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 3600 --storeTaskMetrics --testingTimeout 1800 --biasOptimal  --auxiliary --ensembleSize 2 -RS 5000 --seed $SEED" ; done
 
+noRecognition:
+python launch.py -k  -c -z n1-highmem-64 test "python regexes.py --tasks new --taskReranker randomShuffle --taskBatchSize 40 --maxTasks 256 --ll_cutoff bigram --split 0.5 -t 3600  --pseudoCounts 30 --aic 1.0 --structurePenalty 1.5 --topK 2 --arity 3 --maximumFrontier 5 -i 20 --testingTimeout 1800 --seed 0 -g" 
+
+for SEED in `seq 1 2`; do python launch.py -k  -c -z n1-highmem-64 test "python regexes.py --tasks new --taskReranker randomShuffle --taskBatchSize 40 --maxTasks 256 --ll_cutoff bigram --split 0.5 -t 3600  --pseudoCounts 30 --aic 1.0 --structurePenalty 1.5 --topK 2 --arity 3 --maximumFrontier 5 -i 20 --testingTimeout 1800 --seed $SEED -g" ; done
+
 TOWER
 for SEED in `seq 1 3`; do python launch.py -c  -k -z n1-highmem-64 tower_random_shuffle_10_120s "python tower.py -t 120  --pseudoCounts 30 --tasks old --aic 1.0 --structurePenalty 1.5 --topK 2 --arity 3 --maximumFrontier 5 -i 10 --storeTaskMetrics --split 0.5 --testingTimeout 600 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10 --primitives old --recognitionTimeout 3600 --RS 5000 --seed $SEED" ; done
 
