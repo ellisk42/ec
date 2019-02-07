@@ -128,6 +128,7 @@ def explorationCompression(*arguments, **keywords):
 def ecIterator(grammar, tasks,
                _=None,
                useDSL=True,
+               mask=False,
                seed=0,
                addFullTaskMetrics=False,
                matrixRank=None,
@@ -222,13 +223,16 @@ def ecIterator(grammar, tasks,
             "testingTasks",
             "compressor"} and v is not None}
     if not useRecognitionModel:
-        for k in {"helmholtzRatio", "recognitionTimeout", "biasOptimal", 
+        for k in {"helmholtzRatio", "recognitionTimeout", "biasOptimal", "mask",
                   "contextual", "matrixRank", "reuseRecognition", "auxiliaryLoss", "ensembleSize"}:
             if k in parameters: del parameters[k]
     else: del parameters["useRecognitionModel"];
     if useRecognitionModel and not contextual:
         if "matrixRank" in parameters:
             del parameters["matrixRank"]
+        if "mask" in parameters:
+            del parameters["mask"]
+    if not mask and 'mask' in parameters: del parameters["mask"]
     if not auxiliaryLoss and 'auxiliaryLoss' in parameters: del parameters['auxiliaryLoss']
     if not useDSL:
         for k in {"structurePenalty", "pseudoCounts", "aic"}:
@@ -405,7 +409,7 @@ def ecIterator(grammar, tasks,
 
             tasksHitBottomUp = \
              sleep_recognition(result, grammar, wakingTaskBatch, tasks, testingTasks, result.allFrontiers.values(),
-                               ensembleSize=ensembleSize, featureExtractor=featureExtractor, 
+                               ensembleSize=ensembleSize, featureExtractor=featureExtractor, mask=mask,
                                activation=activation, contextual=contextual, biasOptimal=biasOptimal,
                                previousRecognitionModel=previousRecognitionModel, matrixRank=matrixRank,
                                timeout=recognitionTimeout, evaluationTimeout=evaluationTimeout,
@@ -518,7 +522,7 @@ def wake_generative(grammar, tasks,
     return topDownFrontiers, times
 
 def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFrontiers, _=None,
-                      ensembleSize=1, featureExtractor=None, matrixRank=None,
+                      ensembleSize=1, featureExtractor=None, matrixRank=None, mask=False,
                       activation=None, contextual=True, biasOptimal=True,
                       previousRecognitionModel=None, recognitionSteps=None,
                       timeout=None, enumerationTimeout=None, evaluationTimeout=None,
@@ -528,13 +532,14 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
 
     featureExtractorObjects = [featureExtractor(tasks, testingTasks=testingTasks, cuda=cuda) for i in range(ensembleSize)]
     recognizers = [RecognitionModel(featureExtractorObjects[i],
-                                  grammar,
-                                  rank=matrixRank,
-                                  activation=activation,
-                                  cuda=cuda,
-                                  contextual=contextual,
-                                  previousRecognitionModel=previousRecognitionModel,
-                                  id=i) for i in range(ensembleSize)]
+                                    grammar,
+                                    mask=mask,
+                                    rank=matrixRank,
+                                    activation=activation,
+                                    cuda=cuda,
+                                    contextual=contextual,
+                                    previousRecognitionModel=previousRecognitionModel,
+                                    id=i) for i in range(ensembleSize)]
     trainedRecognizers = parallelMap(min(CPUs,len(recognizers)),
                                      lambda recognizer: recognizer.train(allFrontiers,
                                                                          biasOptimal=biasOptimal,
@@ -806,6 +811,10 @@ def commandlineArguments(_=None,
         help="Maximum rank of bigram transition matrix for contextual recognition model. Defaults to full rank.",
         default=None,
         type=int)
+    parser.add_argument(
+        "--mask",
+        help="Unconditional bigram masking",
+        default=False, action="store_true")
     parser.add_argument("--biasOptimal",
                         help="Enumerate dreams rather than sample them & bias-optimal recognition objective",
                         default=False, action="store_true")
