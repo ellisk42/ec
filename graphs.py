@@ -210,8 +210,9 @@ def plotECResult(
                 assert False
             cyclesPerEpic = newCyclesPerEpic
         if labels:
-            usedLabels.append((labels[0], color))
-            labels = labels[1:]
+            if len(usedLabels) == 0 or usedLabels[-1][1] != color:
+                usedLabels.append((labels[0], color))
+                labels = labels[1:]
 
         plotCommands_solve[(color,'-')] = plotCommands_solve.get((color,'-'),[]) + [(xs,ys)]
         
