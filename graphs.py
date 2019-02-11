@@ -305,6 +305,7 @@ def plotECResult(
 
     if labels is not None:
         a1.legend(loc='lower right', fontsize=9,
+                  fancybox=True, shadow=True,
                   handles=[mlines.Line2D([], [], color=color, ls='-',
                                          label=label)
                            for label, color in usedLabels])

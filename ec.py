@@ -30,7 +30,6 @@ class ECResult():
                  parameters=None,
                  recognitionModel=None,
                  searchTimes=None,
-                 recognitionTaskTimes=None,
                  recognitionTaskMetrics=None,
                  numTestingTasks=None,
                  sumMaxll=None,
@@ -42,7 +41,8 @@ class ECResult():
         self.timesAtEachWake = timesAtEachWake or []
         self.testingSearchTime = testingSearchTime or []
         self.searchTimes = searchTimes or []
-        self.recognitionTaskTimes = recognitionTaskTimes or {}
+        self.trainSearchTime = {} # map from task to search time
+        self.testSearchTime = {} # map from task to search time
         self.recognitionTaskMetrics = recognitionTaskMetrics or {} 
         self.recognitionModel = recognitionModel
         self.averageDescriptionLength = averageDescriptionLength or []
@@ -354,8 +354,7 @@ def ecIterator(grammar, tasks,
             result.recognitionTaskMetrics = {}
 
         # Evaluate on held out tasks if we have them
-        if testingTimeout > 0 and ((j % testEvery == 0) or (j == iterations - 1)) and \
-           (useDSL or j > 0):
+        if testingTimeout > 0 and ((j % testEvery == 0) or (j == iterations - 1)):
             eprint("Evaluating on held out testing tasks for iteration: %d" % (j))
             evaluateOnTestingTasks(result, testingTasks, grammar,
                                    CPUs=CPUs, maximumFrontier=maximumFrontier,
@@ -381,6 +380,7 @@ def ecIterator(grammar, tasks,
                                                       enumerationTimeout=enumerationTimeout,
                                                       CPUs=CPUs,
                                                       evaluationTimeout=evaluationTimeout)
+            result.trainSearchTime = {t: tm for t, tm in times.items() if tm is not None}
         else:
             eprint("Skipping top-down enumeration because we are not using the generative model")
             topDownFrontiers, times = [], {t: None for t in wakingTaskBatch }
@@ -498,7 +498,7 @@ def evaluateOnTestingTasks(result, testingTasks, grammar, _=None,
     updateTaskSummaryMetrics(result.recognitionTaskMetrics,
                                      {f.task: f for f in testingFrontiers if len(f) > 0 },
                                      'frontier')
-
+    result.testSearchTime = {t: tm for t, tm in times.items() if tm is not None}
     times = [t for t in times.values() if t is not None ]
     eprint("\n".join(f.summarize() for f in testingFrontiers))
     summaryStatistics("Testing tasks", times)
@@ -581,6 +581,8 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
     # Store the recognizer that discovers the most frontiers in the result.
     eprint("Best recognizer: %d." % bestRecognizer)
     result.recognitionModel = trainedRecognizers[bestRecognizer]
+    result.trainSearchTime = {tk: tm for tk, tm in ensembleRecognitionTimes[bestRecognizer].items()
+                              if tm is not None}
     updateTaskSummaryMetrics(result.recognitionTaskMetrics, ensembleRecognitionTimes[bestRecognizer], 'recognitionBestTimes')
     updateTaskSummaryMetrics(result.recognitionTaskMetrics, result.recognitionModel.taskHiddenStates(tasks), 'hiddenState')
     updateTaskSummaryMetrics(result.recognitionTaskMetrics, result.recognitionModel.taskGrammarLogProductions(tasks), 'taskLogProductions')

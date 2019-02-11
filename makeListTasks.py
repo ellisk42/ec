@@ -20,6 +20,41 @@ EXCLUDES = {
     "uniq",
 }
 
+# These are tasks that are easy (solved from base DSL) and also uninteresting
+# We exclude these from the test set
+EASYLISTTASKS = {
+    "add-k with k=2",
+    "bool-identify-geq-k with k=2",
+    "bool-identify-geq-k with k=3",
+    "bool-identify-is-mod-k with k=1",
+    "bool-identify-is-prime",
+    "bool-identify-k with k=0",
+    "bool-identify-k with k=1",
+    "bool-identify-k with k=2",
+    "caesar-cipher-k-modulo-n with k=3 and n=2",
+    "drop-k with k=1",
+    "drop-k with k=2",
+    "drop-k with k=4",
+    "index-head",
+    "index-k with k=2",
+    "index-k with k=4",
+    "is-mod-k with k=1",
+    "is-odds",
+    "is-squares",
+    "pow-k with k=2",
+    "pow-k with k=3",
+    "prepend-index-k with k=3",
+    "prepend-index-k with k=5",
+    "prepend-k with k=1",
+    "prepend-k with k=2",
+    "prepend-k with k=3",
+    "remove-index-k with k=1",
+    "replace-all-with-index-k with k=2",
+    "replace-all-with-index-k with k=3",
+    "slice-k-n with k=1 and n=2",
+    "slice-k-n with k=2 and n=1",
+    "slice-k-n with k=3 and n=1",
+}
 
 def make_list_task(name, examples, **params):
     input_type = guess_type([i for (i,), _ in examples])
