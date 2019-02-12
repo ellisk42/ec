@@ -105,9 +105,9 @@ def concatPrimitives():
 
 
 def reducedConcatPrimitives():
-    return [Primitive("empty_string", arrow(tpregex, tpregex), PRC(pregex.String("")))
-            ] + [
-            Primitive("string_" + i, arrow(tpregex, tpregex), PRC(pregex.String(i))) for i in printable[:-4] if i not in disallowed_list
+    #[Primitive("empty_string", arrow(tpregex, tpregex), PRC(pregex.String("")))
+            #] + [
+    return [Primitive("string_" + i, arrow(tpregex, tpregex), PRC(pregex.String(i))) for i in printable[:-4] if i not in disallowed_list
             ] + [
         Primitive("string_" + name, arrow(tpregex, tpregex), PRC(pregex.String(char))) for char, name in disallowed
         ] + [
