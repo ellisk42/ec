@@ -5,7 +5,7 @@ from grammar import Grammar
 #from utilities import eprint, testTrainSplit, numberOfCPUs, flatten
 from utilities import eprint, numberOfCPUs, flatten, fst, testTrainSplit, POSITIVEINFINITY
 from makeRegexTasks import makeOldTasks, makeLongTasks, makeShortTasks, makeWordTasks, makeNumberTasks, makeHandPickedTasks, makeNewTasks, makeNewNumberTasks
-from regexPrimitives import basePrimitives, altPrimitives, easyWordsPrimitives, alt2Primitives, concatPrimitives
+from regexPrimitives import basePrimitives, altPrimitives, easyWordsPrimitives, alt2Primitives, concatPrimitives, reducedConcatPrimitives
 from likelihoodModel import add_cutoff_values
 #from program import *
 from recognition import RecurrentFeatureExtractor, JSONFeatureExtractor
@@ -145,7 +145,7 @@ def regex_options(parser):
     parser.add_argument("--primitives",
                         default="concat",
                         help="Which primitive set to use",
-                        choices=["base", "alt1", "easyWords", "alt2", "concat"])
+                        choices=["base", "alt1", "easyWords", "alt2", "concat", "reduced"])
     parser.add_argument("--extractor", type=str,
                         choices=["hand", "deep", "learned", "json"],
                         default="learned")  # if i switch to json it breaks
@@ -261,6 +261,7 @@ if __name__ == "__main__":
              "alt2": alt2Primitives,
              "easyWords": easyWordsPrimitives,
              "concat": concatPrimitives,
+             "reduced": reducedConcatPrimitives
              }[primtype]
 
     extractor = {

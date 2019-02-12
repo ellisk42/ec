@@ -104,6 +104,27 @@ def concatPrimitives():
     ]
 
 
+def reducedConcatPrimitives():
+    return [Primitive("empty_string", arrow(tpregex, tpregex), PRC(pregex.String("")))
+            ] + [
+            Primitive("string_" + i, arrow(tpregex, tpregex), PRC(pregex.String(i))) for i in printable[:-4] if i not in disallowed_list
+            ] + [
+        Primitive("string_" + name, arrow(tpregex, tpregex), PRC(pregex.String(char))) for char, name in disallowed
+        ] + [
+        Primitive("r_dot", arrow(tpregex, tpregex), PRC(pregex.dot)),
+        Primitive("r_d", arrow(tpregex, tpregex), PRC(pregex.d)),
+        Primitive("r_s", arrow(tpregex, tpregex), PRC(pregex.s)),
+        #Primitive("r_w", arrow(tpregex, tpregex), PRC(pregex.w)),
+        Primitive("r_l", arrow(tpregex, tpregex), PRC(pregex.l)),
+        Primitive("r_u", arrow(tpregex, tpregex), PRC(pregex.u)),
+        #todo
+        Primitive("r_kleene", arrow(arrow(tpregex, tpregex), arrow(tpregex,tpregex)), PRC(pregex.KleeneStar,1)),
+        #Primitive("r_plus", arrow(arrow(tpregex, tpregex), arrow(tpregex,tpregex)), PRC(pregex.Plus,1)),
+        #Primitive("r_maybe", arrow(arrow(tpregex, tpregex), arrow(tpregex,tpregex)), PRC(pregex.Maybe,1)),
+        Primitive("r_alt", arrow(arrow(tpregex, tpregex) , arrow(tpregex, tpregex), arrow(tpregex,tpregex)), PRC(pregex.Alt, 2)),
+    ]
+
+
 def sketchPrimitives():
     return [Primitive("string_" + i, tpregex, pregex.String(i)) for i in printable[:-4] if i not in disallowed_list
             ] + [
