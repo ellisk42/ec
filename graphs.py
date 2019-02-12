@@ -21,6 +21,11 @@ LABELFONTSIZE = 14
 matplotlib.rc('xtick', labelsize=TICKFONTSIZE)
 matplotlib.rc('ytick', labelsize=TICKFONTSIZE)
 
+def shuffled(g):
+    import random
+    g = list(g)
+    random.shuffle(g)
+    return g
 
 class Bunch(object):
     def __init__(self, d):
@@ -115,6 +120,7 @@ def showSynergyMatrix(results):
 
 def plotECResult(
         resultPaths,
+        alpha=1.,
         onlyTime=False,
         xLabel=None,
         interval=False,
@@ -259,13 +265,13 @@ def plotECResult(
                 timeAxis.errorbar(xs,ys,yerr=es,color=color,ls=ls)
     else:
         if solveAxis:
-            for (color,ls),cs in plotCommands_solve.items():
+            for (color,ls),cs in shuffled(plotCommands_solve.items()):
                 for (xs,ys) in cs:            
-                    solveAxis.plot(xs,ys,color=color,ls=ls)
+                    solveAxis.plot(xs,ys,color=color,ls=ls,alpha=alpha)
         if timeAxis:
-            for (color,ls),cs in plotCommands_time.items():
+            for (color,ls),cs in shuffled(plotCommands_time.items()):
                 for (xs,ys) in cs:
-                    timeAxis.plot(xs,ys,color=color,ls=ls)
+                    timeAxis.plot(xs,ys,color=color,ls=ls,alpha=alpha)
 
     if solveAxis:
         a1.set_ylim(ymin=0, ymax=maxP)
@@ -371,6 +377,9 @@ if __name__ == "__main__":
     parser.add_argument("--averageColors",
                         default=False, action="store_true",
                         help="If multiple curves are assigned the same color, then we will average them")
+    parser.add_argument("--alpha",
+                        default=1., type=float,
+                        help="Transparency of plotted lines")
     
     arguments = parser.parse_args()
     plotECResult(arguments.checkpoints,
@@ -390,4 +399,5 @@ if __name__ == "__main__":
                  showEpochs=arguments.showEpochs,
                  epochFrequency=arguments.epochFrequency,
                  colors=arguments.colors,
+                 alpha=arguments.alpha,
                  averageColors=arguments.averageColors)
