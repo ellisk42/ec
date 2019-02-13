@@ -11,6 +11,8 @@ from recognition import *
 
 import random
 
+import os
+import datetime
 
 def makeTask(name, f):
     xs = [x / 100. for x in range(-500, 500)]
@@ -335,9 +337,12 @@ if __name__ == "__main__":
                             eprint()
 
         assert False
+    timestamp = datetime.datetime.now().isoformat()
+    outputDirectory = "experimentOutputs/rational/%s"%timestamp
+    os.system("mkdir -p %s"%outputDirectory)
 
     explorationCompression(baseGrammar, train,
-                           outputPrefix="experimentOutputs/rational",
+                           outputPrefix="%s/rational"%outputDirectory,
                            evaluationTimeout=0.1,
                            testingTasks=test,
                            **arguments)
