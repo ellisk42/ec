@@ -116,12 +116,19 @@ git fetch
 git checkout {br}
 git pull
 """
+    #hack for non-kevin users ...
+    if user() != "ellisk":
+        cp_str = """#!/bin/bash
+cp -r ../ellisk/ec ~/ec
+"""
+        preamble = cp_str + preamble
 
     if resume:
         print("Sending tar file")
         scp(address, resume, "~/ec/")
         preamble += "tar xf {}\n".format(os.path.basename(resume))
     else:
+        preamble += "mv ~/patch ~/ec/patch\n"
         preamble += "git apply patch ; mkdir jobs\n"
         if not arguments.google:
             # Google image already has these modules loaded
@@ -136,6 +143,7 @@ git pull
         # they would then have access to every machine that you have access to
         UPLOADFREQUENCY = 60 * 3  # every 3 minutes
         if tar:
+            print("WARNING: tar depricated")
             uploadCommand = """\
 tar czf {id}.tar.gz jobs experimentOutputs compressor_* patch && \
 scp -o StrictHostKeyChecking=no \
@@ -200,7 +208,7 @@ sudo shutdown -h now
     # Send git patch
     print("Sending git patch over to", address)
     os.system("git diff --stat")
-    ssh(address, "cat > ~/ec/patch",
+    ssh(address, "cat > ~/patch",
         pipeIn=f"""(echo "Base-Ref: $(git rev-parse origin/{br})" ; echo ; git diff --binary origin/{br})""")
 
     # Execute the script

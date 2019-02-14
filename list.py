@@ -14,7 +14,7 @@ from task import Task
 from type import Context, arrow, tbool, tlist, tint, t0, UnificationFailure
 from listPrimitives import basePrimitives, primitives, McCarthyPrimitives, bootstrapTarget_extra, no_length
 from recognition import RecurrentFeatureExtractor
-from makeListTasks import make_list_bootstrap_tasks, sortBootstrap
+from makeListTasks import make_list_bootstrap_tasks, sortBootstrap, EASYLISTTASKS
 
 
 def retrieveJSONTasks(filename, features=False):
@@ -361,7 +361,6 @@ if __name__ == "__main__":
         "featureExtractor": extractor,
         "outputPrefix": "%s/list"%outputDirectory,
         "evaluationTimeout": 0.0005,
-        "solver": "ocaml"
     })
     
 
@@ -383,6 +382,8 @@ if __name__ == "__main__":
             ts.pop().mustTrain = True
 
         test, train = testTrainSplit(tasks, split)
+        test = [t for t in test
+                if t.name not in EASYLISTTASKS]
 
         eprint(
             "Alotted {} tasks for training and {} for testing".format(

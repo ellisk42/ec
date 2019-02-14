@@ -234,30 +234,36 @@ def manualLogoTasks():
               """%(d,a,s))
         return tasks
 
-    for n,l in [(3,"1l"),
-                (4,"(*d 1d 3)"),
-                (5,"1l"),
-                (6,"(*d 1d 2)"),
-                (7,"1l"),
-                (8,"(/d 1d 2)")]:
-        T("%d-gon %s"%(n,l),
-          """
-          (loop i %d
-          (move %s (/a 1a %d)))
-          """%(n,l,n),
+    def slant(n):
+        return f"(move 0d (/a 1a {n}))"
+
+    for n,l,s in [(3,"1l",8),
+                  (4,"(*d 1d 3)",None),
+                  (5,"1l",None),
+                  (6,"(*d 1d 2)",5),
+                  (7,"1l",None),
+                  (8,"(/d 1d 2)",None)]:
+        T(f"{n}-gon {l}{'' if s is None else ' slanted '+str(s)}",
+          f"""
+          ({'' if s is None else slant(s)}
+           (loop i {n}
+            (move {l} (/a 1a {n}))))
+          """,
           needToTrain=True)
-    for n,l in [(3,"(*d 1l 2)"),
-                (4,"(*d 1d 4)"),
-                (5,"(*d 1d 2)"),
-                (6,"1l"),
-                (7,"(*d 1d 3)"),
-                (8,"1l")]:
-        T("%d-gon %s"%(n,l),
-          """
-          (loop i %d
-          (move %s (/a 1a %d)))
-          """%(n,l,n),
+    for n,l,s in [(3,"(*d 1l 2)",None),
+                (4,"(*d 1d 4)",None),
+                (5,"(*d 1d 2)",None),
+                (6,"1l",None),
+                (7,"(*d 1d 3)",None),
+                (8,"1l",3)]:
+        T(f"{n}-gon {l}{'' if s is None else ' slanted '+str(s)}",
+          f"""
+          ({'' if s is None else slant(s)}
+           (loop i {n}
+            (move {l} (/a 1a {n}))))
+          """,
           needToTrain=False)
+
         
 
     T("upwards", "((move 0d (/a 1a 4)) (move 1d 0a))",
@@ -287,10 +293,12 @@ def manualLogoTasks():
       """((move 0d (/a 1a 7))
       (move 1d 0a)
       (loop i infinity
-      (move (*d epsilonLength 4) epsilonAngle)))""")
+      (move (*d epsilonLength 4) epsilonAngle)))""",
+      needToTrain=True)
     T("""slanted line""",
       """((move 0d (/a 1a 8))
-      (move (*d 1l 3) 0a))""")
+      (move (*d 1l 3) 0a))""",
+      needToTrain=True)
     
 
     for i in [6,7,8,9]:
@@ -398,10 +406,11 @@ def manualLogoTasks():
           """%n,
           needToTrain=n%2 == 0)
         T("left semicircle of size %d"%n,
-          """
-          (loop i infinity
-          (move (*d epsilonLength %d) epsilonAngle))
-          """%n,
+          f"""
+          ({'' if n != 1 else slant(8)}
+           (loop i infinity
+            (move (*d epsilonLength {n}) epsilonAngle)))
+          """,
           needToTrain=n%2 == 1)
         T("circle of size %d"%n,
               """
@@ -410,7 +419,7 @@ def manualLogoTasks():
               (loop i infinity
               (move (*d epsilonLength %d) epsilonAngle)))
               """%(n,n),
-          needToTrain=n in [1,4,3,6])
+          needToTrain=n in [1,4,3,5,6])
 
     for n in [5,6]:
         T("%d enclosed circles"%n,
@@ -538,32 +547,49 @@ def manualLogoTasks():
     with random_seed(42): # carefully selected for maximum entropy
         for n in [3,4,5,6,7]:
             body = {"empty": "(move 1d 0a)",
+                    "spiral": "(loop i infinity (move (*d epsilonLength i) (*a epsilonAngle 2)))",
                     "dashed": "(p (move 1d 0a)) (move 1d 0a)",
                     "circle": "(move 1d 0a) (loop k 2 (loop i infinity (move epsilonLength epsilonAngle)))",
                     "lonely circle": "(p (move 1d 0a)) (loop k 2 (loop i infinity (move epsilonLength epsilonAngle)))",
                     "square dashed": "(p (move 1d 0a)) (loop s 4 (move 1d (/a 1a 4)))",
                     "square": "(move 1d 0a) (loop s 4 (move 1d (/a 1a 4)))",
+                    "close large semicircle": "(loop i infinity (move (*d epsilonLength 2) epsilonAngle))",
                     "close semicircle": "(loop i infinity (move epsilonLength epsilonAngle))",
-                    "semicircle": "(move 1d 0a) (loop i infinity (move epsilonLength epsilonAngle))"}
+                    "semicircle": "(move 1d 0a) (loop i infinity (move epsilonLength epsilonAngle))",
+                    "double dashed": "(p (move 1d 0a)) (move 1d 0a) (p (move 1d 0a)) (move 1d 0a)",
+                    "Greek": "(loop i 3 (move (*l 1l i) (/a 1a 4)))"}
             for name in body:
+                if name == "spiral" and n not in [3,5]: continue
+                if name == "square" and n not in [5,3,6,7]: continue
+                if name == "semicircle" and n not in [5,3,4,6]: continue
+                if name == "Greek" and n not in [3,5]: continue
+                if name == "double dashed" and n not in [6,4,3]: continue
+                
                 mustTrain = False
 
+                mustTrain = mustTrain or (n == 3 and name == "Greek")
                 mustTrain = mustTrain or (n == 7 and name == "empty")
-                mustTrain = mustTrain or (n == 4 and name == "dashed")
+                mustTrain = mustTrain or (n == 5 and name == "dashed")
                 mustTrain = mustTrain or (n == 7 and name == "circle")
+                mustTrain = mustTrain or (n == 6 and name == "circle")
                 mustTrain = mustTrain or (n == 6 and name == "lonely circle")
                 mustTrain = mustTrain or (n == 5 and name == "square")
+                mustTrain = mustTrain or (n == 7 and name == "square")
                 mustTrain = mustTrain or (n == 5 and name == "semicircle")
                 mustTrain = mustTrain or (n == 3 and name == "square dashed")
-                mustTrain = mustTrain or (n == 4 and name == "close semicircle")
+                mustTrain = mustTrain or (n == 6 and name == "close semicircle")
+                mustTrain = mustTrain or (n == 5 and name == "close large semicircle")
+                mustTrain = mustTrain or (n == 3 and name == "spiral")
+                mustTrain = mustTrain or (n == 6 and name == "double dashed")
+                mustTrain = mustTrain or (n == 3 and name == "double dashed")
                 #mustTrain = mustTrain or (n == 6 and name == "empty")
 
-                mustTrain = mustTrain or (random.random() < 0.07) # calibrated to give 70 training tasks
+                #mustTrain = mustTrain or (random.random() < 0.07) # calibrated to give 70 training tasks
                 
 
-                # cap number of super easy snowflakes
-                if name == "empty" and n not in [7]: mustTrain = False
-                if name == "dashed" and n not in [4]: mustTrain = False
+                # # cap number of super easy snowflakes
+                # if name == "empty" and n not in [7]: mustTrain = False
+                # if name == "dashed" and n not in [4]: mustTrain = False
                 
 
                 T("%d-%s snowflake"%(n,name),
@@ -628,9 +654,6 @@ def montageTasks(tasks, prefix=""):
     random.shuffle(arrays)
     scipy.misc.imsave('/tmp/%srandomMontage.png'%prefix, montage(arrays))
     
-    
-    
-
 if __name__ == "__main__":
     import scipy.misc
     import numpy as np

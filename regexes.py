@@ -5,7 +5,7 @@ from grammar import Grammar
 #from utilities import eprint, testTrainSplit, numberOfCPUs, flatten
 from utilities import eprint, numberOfCPUs, flatten, fst, testTrainSplit, POSITIVEINFINITY
 from makeRegexTasks import makeOldTasks, makeLongTasks, makeShortTasks, makeWordTasks, makeNumberTasks, makeHandPickedTasks, makeNewTasks, makeNewNumberTasks
-from regexPrimitives import basePrimitives, altPrimitives, easyWordsPrimitives, alt2Primitives, concatPrimitives
+from regexPrimitives import basePrimitives, altPrimitives, easyWordsPrimitives, alt2Primitives, concatPrimitives, reducedConcatPrimitives
 from likelihoodModel import add_cutoff_values
 #from program import *
 from recognition import RecurrentFeatureExtractor, JSONFeatureExtractor
@@ -145,7 +145,7 @@ def regex_options(parser):
     parser.add_argument("--primitives",
                         default="concat",
                         help="Which primitive set to use",
-                        choices=["base", "alt1", "easyWords", "alt2", "concat"])
+                        choices=["base", "alt1", "easyWords", "alt2", "concat", "reduced"])
     parser.add_argument("--extractor", type=str,
                         choices=["hand", "deep", "learned", "json"],
                         default="learned")  # if i switch to json it breaks
@@ -187,7 +187,7 @@ def regex_options(parser):
 
 if __name__ == "__main__":
     args = commandlineArguments(
-        frontierSize=None, activation='relu', iterations=10,
+        activation='relu', iterations=10,
         a=3, maximumFrontier=5, topK=2, pseudoCounts=30.0, #try 1 0.1 would make prior uniform
         helmholtzRatio=0.5, structurePenalty=1.0, #try 
         CPUs=numberOfCPUs(),
@@ -261,6 +261,7 @@ if __name__ == "__main__":
              "alt2": alt2Primitives,
              "easyWords": easyWordsPrimitives,
              "concat": concatPrimitives,
+             "reduced": reducedConcatPrimitives
              }[primtype]
 
     extractor = {
@@ -285,7 +286,6 @@ if __name__ == "__main__":
         "evaluationTimeout": 0.005,
         "topk_use_only_likelihood": True,
         "maximumFrontier": 10,
-        "solver": "ocaml",
         "compressor": "ocaml"
     })
     ####
@@ -332,6 +332,7 @@ weighted with the constants. If you look at the grammar above, this is an error!
 """)
         assert False
 
+    del args["likelihoodModel"]
     explorationCompression(baseGrammar, train,
                            testingTasks = test,
                            **args)

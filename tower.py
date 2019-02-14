@@ -302,7 +302,6 @@ if __name__ == "__main__":
                            testingTasks=test,
                            outputPrefix="%s/tower"%outputDirectory,
                            evaluationTimeout=evaluationTimeout,
-                           solver="ocaml",
                            **arguments)
 
     dreamOfTowers(g0, "%s/random_0"%outputDirectory)

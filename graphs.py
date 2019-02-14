@@ -21,6 +21,11 @@ LABELFONTSIZE = 14
 matplotlib.rc('xtick', labelsize=TICKFONTSIZE)
 matplotlib.rc('ytick', labelsize=TICKFONTSIZE)
 
+def shuffled(g):
+    import random
+    g = list(g)
+    random.shuffle(g)
+    return g
 
 class Bunch(object):
     def __init__(self, d):
@@ -40,6 +45,33 @@ DeepFeatureExtractor = 'DeepFeatureExtractor'
 LearnedFeatureExtractor = 'LearnedFeatureExtractor'
 TowerFeatureExtractor = 'TowerFeatureExtractor'
 
+def padSearchTimes(result, testingTimeout, enumerationTimeout):
+    result.testingSearchTime = [ ts + [testingTimeout]*(result.numTestingTasks - len(ts))
+                                     for ts in result.testingSearchTime ]
+    result.searchTimes = [ ts + [enumerationTimeout]*(len(result.taskSolutions) - len(ts))
+                               for ts in result.searchTimes ]
+
+
+def averageCurves(curves):
+    xs = {x
+          for xs,_ in curves
+          for x in xs }
+    xs = list(sorted(list(xs)))
+    curves = [{x:y for x,y in zip(xs,ys) }
+              for xs,ys in curves ]
+    ys = []
+    e = []
+    for x in xs:
+        y_ = []
+        for curve in curves:
+            if x in curve: y_.append(curve[x])
+        mean = sum(y_)/len(y_)
+        variance = sum((y - mean)**2 for y in y_ )/len(y_)
+        sem = variance**0.5
+        e.append(sem)
+        ys.append(mean)
+        
+    return xs,ys,e
 
 def parseResultsPath(p):
     def maybe_eval(s):
@@ -85,9 +117,15 @@ def showSynergyMatrix(results):
               end="%")
         print()
     
+def matplotlib_colors():
+    from matplotlib import colors as mcolors
+    return list(dict(mcolors.BASE_COLORS, **mcolors.CSS4_COLORS).keys())
 
 def plotECResult(
         resultPaths,
+        alpha=1.,
+        onlyTime=False,
+        xLabel=None,
         interval=False,
         timePercentile=False,
         labels=None,
@@ -101,10 +139,22 @@ def plotECResult(
         maxP=110,
         showEpochs=False,
         colors=None,
-        epochFrequency=1):
+        epochFrequency=1,
+        averageColors=False):
+    assert not (onlyTime and not showSolveTime)
+    if onlyTime: assert testingTimeout
+
+    colorNames = matplotlib_colors()
+    currentColor = None
     results = []
     parameters = []
     for path in resultPaths:
+        if path in colorNames:
+            currentColor = path
+            if colors is None:
+                colors = []
+            continue
+        
         result = loadfun(path)
         print("loaded path:", path)
 
@@ -113,22 +163,35 @@ def plotECResult(
         else:
             results.append(result)
             parameters.append(parseResultsPath(path))
+            if currentColor is not None:
+                colors.append(currentColor)
 
     if testingTimeout is not None:
         for r in results:
             r.testingSearchTime = [ [t for t in ts if t <= testingTimeout ]
                                     for ts in r.testingSearchTime ]
     
-    f, a1 = plot.subplots(figsize=(4, 3))
-    a1.set_xlabel("Wake/Sleep Cycles", fontsize=LABELFONTSIZE)
+    f, a1 = plot.subplots(figsize=(5, 2.5))
+    if xLabel != "":
+        a1.set_xlabel(xLabel or "Wake/Sleep Cycles", fontsize=LABELFONTSIZE)
     a1.xaxis.set_major_locator(MaxNLocator(integer=True))
 
-    a1.set_ylabel('%% %s Solved%s'%("Training" if showTraining else "Test",
-                                    " (solid)" if showSolveTime else ""),
-                  fontsize=LABELFONTSIZE)
-    if showSolveTime:
-        a2 = a1.twinx()
-        a2.set_ylabel('Solve time (dashed)', fontsize=LABELFONTSIZE)
+    if onlyTime:
+        a1.set_ylabel('Search Time',
+                      fontsize=LABELFONTSIZE)
+        timeAxis = a1
+        solveAxis = None
+    else:
+        a1.set_ylabel('%% %s Solved%s'%("Training" if showTraining else "Test",
+                                        " (solid)" if showSolveTime else ""),
+                      fontsize=LABELFONTSIZE)
+        solveAxis = a1
+        if showSolveTime:
+            a2 = a1.twinx()
+            a2.set_ylabel('Solve time (dashed)', fontsize=LABELFONTSIZE)
+            timeAxis = a2
+        else:
+            timeAxis = None
 
     n_iters = max(len(result.learningCurve) for result in results)
     if iterations and n_iters > iterations:
@@ -137,23 +200,17 @@ def plotECResult(
     plot.xticks(range(0, n_iters), fontsize=TICKFONTSIZE)
 
     if colors is None:
+        assert not averageColors, "If you are averaging the results from checkpoints with the same color, then you need to tell me what colors the checkpoints should be. Try passing --colors ... or specifying the colors alongside --checkpoints ..."
         colors = ["#D95F02", "#1B9E77", "#662077", "#FF0000"] + ["#000000"]*100
     usedLabels = []
 
     showSynergyMatrix(results)
 
     cyclesPerEpic = None
+    plotCommands_solve = {} # Map from (color,line style) to (xs,ys) for a1
+    plotCommands_time = {} # Map from (color,line style) to (xs,ys) for a2
     for result, p, color in zip(results, parameters, colors):
-        # Check whether iterations refers to wake/sleep cycles or whether it refers to epohs
-        # if iterations and showEpochs and 'taskBatchSize' in p.__dict__:
-        #     correctedIterations = int(iterations * len(result.taskSolutions) / p.taskBatchSize)
-        # else:
-        #     correctedIterations = iterations
-            
-        if hasattr(p, "baseline") and p.baseline:
-            ys = [100. * result.learningCurve[-1] /
-                  len(result.taskSolutions)] * n_iters
-        elif showTraining:
+        if showTraining:
             ys = [100.*t/float(len(result.taskSolutions))
                   for t in result.learningCurve[:iterations]]
         else:
@@ -172,26 +229,35 @@ def plotECResult(
                 assert False
             cyclesPerEpic = newCyclesPerEpic
         if labels:
-            usedLabels.append((labels[0], color))
-            labels = labels[1:]
-            
-        a1.plot(xs, ys, color=color, ls='-')
+            if len(usedLabels) == 0 or usedLabels[-1][1] != color:
+                usedLabels.append((labels[0], color))
+                labels = labels[1:]
+
+        plotCommands_solve[(color,'-')] = plotCommands_solve.get((color,'-'),[]) + [(xs,ys)]
         
         if showSolveTime:
-            if failAsTimeout:
-                assert testingTimeout is not None
-                result.testingSearchTime = [ ts + [testingTimeout]*(result.numTestingTasks - len(ts))
-                                             for ts in result.testingSearchTime ]
-                result.searchTimes = [ ts + [p.enumerationTimeout]*(len(result.taskSolutions) - len(ts))
-                                       for ts in result.searchTimes ]
+            if onlyTime:
+                for style in [':','-']:
+                    if style == '-':
+                        padSearchTimes(result, testingTimeout, p.enumerationTimeout)                        
+                    if not showTraining: times = result.testingSearchTime[:iterations]
+                    else: times = result.searchTimes[:iterations]
+                    ys = [mean(ts) if not timePercentile else median(ts)
+                          for ts in times]
+                    plotCommands_time[(color,style)] = plotCommands_time.get((color,style),[]) + [(xs,ys)]
+                    padSearchTimes(result, testingTimeout, p.enumerationTimeout)                    
+            else:
+                if failAsTimeout:
+                    assert testingTimeout is not None
+                    padSearchTimes(result, testingTimeout, p.enumerationTimeout)
+                if not showTraining: times = result.testingSearchTime[:iterations]
+                else: times = result.searchTimes[:iterations]
 
-            if not showTraining: times = result.testingSearchTime[:iterations]
-            else: times = result.searchTimes[:iterations]
-            a2.plot(xs,
-                    [mean(ts) if not timePercentile else median(ts)
-                         for ts in times],
-                    color=color, ls='--')
+                ys = [mean(ts) if not timePercentile else median(ts)
+                      for ts in times]
+                plotCommands_time[(color,'--')] = plotCommands_time.get((color,'--'),[]) + [(xs,ys)]
             if interval and result is results[0]:
+                assert not averageColors, "FIXME"
                 a2.fill_between(xs,
                                 [percentile(ts, 0.75) if timePercentile else mean(ts) + standardDeviation(ts)
                                  for ts in times],
@@ -199,10 +265,32 @@ def plotECResult(
                                  for ts in times],
                                 facecolor=color, alpha=0.2)
 
-    a1.set_ylim(ymin=0, ymax=maxP)
-    a1.yaxis.grid()
-    a1.set_yticks(range(0, maxP, 20))
-    plot.yticks(range(0, maxP, 20), fontsize=TICKFONTSIZE)
+    if averageColors:
+        plotCommands_solve = {kl: averageCurves(curves)
+                         for kl, curves in plotCommands_solve.items() }
+        plotCommands_time = {kl: averageCurves(curves)
+                         for kl, curves in plotCommands_time.items() }
+        if solveAxis:
+            for (color,ls),(xs,ys,es) in plotCommands_solve.items():
+                solveAxis.errorbar(xs,ys,yerr=es,color=color,ls=ls)
+        if timeAxis:
+            for (color,ls),(xs,ys,es) in plotCommands_time.items():
+                timeAxis.errorbar(xs,ys,yerr=es,color=color,ls=ls)
+    else:
+        if solveAxis:
+            for (color,ls),cs in shuffled(plotCommands_solve.items()):
+                for (xs,ys) in cs:            
+                    solveAxis.plot(xs,ys,color=color,ls=ls,alpha=alpha)
+        if timeAxis:
+            for (color,ls),cs in shuffled(plotCommands_time.items()):
+                for (xs,ys) in cs:
+                    timeAxis.plot(xs,ys,color=color,ls=ls,alpha=alpha)
+
+    if solveAxis:
+        a1.set_ylim(ymin=0, ymax=maxP)
+        a1.yaxis.grid()
+        a1.set_yticks(range(0, maxP, 20))
+        plot.yticks(range(0, maxP, 20), fontsize=TICKFONTSIZE)
 
     cycle_label_frequency = 1
     if n_iters >= 10: cycle_label_frequency = 2
@@ -223,12 +311,12 @@ def plotECResult(
             
 
     if showSolveTime:
-        a2.set_ylim(ymin=0)
-        starting, ending = a2.get_ylim()
+        timeAxis.set_ylim(ymin=0)
+        starting, ending = timeAxis.get_ylim()
         ending10 = 10*int(ending/10 + 1)
-        a2.yaxis.set_ticks([ int(ending10/6)*j
-                             for j in range(0, 6)]) 
-        for tick in a2.yaxis.get_ticklabels():
+        timeAxis.yaxis.set_ticks([ int(ending10/6)*j
+                                   for j in range(0, 6)]) 
+        for tick in timeAxis.yaxis.get_ticklabels():
             tick.set_fontsize(TICKFONTSIZE)
 
     if title is not None:
@@ -236,6 +324,7 @@ def plotECResult(
 
     if labels is not None:
         a1.legend(loc='lower right', fontsize=9,
+                  fancybox=True, shadow=True,
                   handles=[mlines.Line2D([], [], color=color, ls='-',
                                          label=label)
                            for label, color in usedLabels])
@@ -285,19 +374,30 @@ if __name__ == "__main__":
     parser.add_argument("--maxPercent","-m",
                         type=int, default=110,
                         help="Maximum percent for the percent hits graph")
+    parser.add_argument("--x-label", dest="xLabel", default=None)
     parser.add_argument("--showEpochs",
                         default=False, action="store_true",
                         help='X-axis is real-valued percentage of training tasks seen, instead of iterations.')
     parser.add_argument("--noTime",
                         default=False, action="store_true",
                         help='Do not show solve time.')
+    parser.add_argument("--onlyTime",
+                        default=False, action="store_true",
+                        help='Only shows solve time and show both failAsTimeout time and actual time')
     parser.add_argument("--epochFrequency",
                         default=1, type=int,
                         help="Frequency with which to show epoch markers.")
+    parser.add_argument("--averageColors",
+                        default=False, action="store_true",
+                        help="If multiple curves are assigned the same color, then we will average them")
+    parser.add_argument("--alpha",
+                        default=1., type=float,
+                        help="Transparency of plotted lines")
     
     arguments = parser.parse_args()
-    
     plotECResult(arguments.checkpoints,
+                 onlyTime=arguments.onlyTime,
+                 xLabel=arguments.xLabel,
                  testingTimeout=arguments.testingTimeout,
                  timePercentile=arguments.percentile,
                  export=arguments.export,
@@ -311,4 +411,6 @@ if __name__ == "__main__":
                  showSolveTime=not arguments.noTime,
                  showEpochs=arguments.showEpochs,
                  epochFrequency=arguments.epochFrequency,
-                 colors=arguments.colors)
+                 colors=arguments.colors,
+                 alpha=arguments.alpha,
+                 averageColors=arguments.averageColors)
