@@ -117,6 +117,9 @@ def showSynergyMatrix(results):
               end="%")
         print()
     
+def matplotlib_colors():
+    from matplotlib import colors as mcolors
+    return list(dict(mcolors.BASE_COLORS, **mcolors.CSS4_COLORS).keys())
 
 def plotECResult(
         resultPaths,
@@ -140,10 +143,18 @@ def plotECResult(
         averageColors=False):
     assert not (onlyTime and not showSolveTime)
     if onlyTime: assert testingTimeout
-    
+
+    colorNames = matplotlib_colors()
+    currentColor = None
     results = []
     parameters = []
     for path in resultPaths:
+        if path in colorNames:
+            currentColor = path
+            if colors is None:
+                colors = []
+            continue
+        
         result = loadfun(path)
         print("loaded path:", path)
 
@@ -152,6 +163,8 @@ def plotECResult(
         else:
             results.append(result)
             parameters.append(parseResultsPath(path))
+            if currentColor is not None:
+                colors.append(currentColor)
 
     if testingTimeout is not None:
         for r in results:
@@ -187,7 +200,7 @@ def plotECResult(
     plot.xticks(range(0, n_iters), fontsize=TICKFONTSIZE)
 
     if colors is None:
-        assert not averageColors, "If you are averaging the results from checkpoints with the same color, then you need to tell me what colors the checkpoints should be. Try passing --colors ..."
+        assert not averageColors, "If you are averaging the results from checkpoints with the same color, then you need to tell me what colors the checkpoints should be. Try passing --colors ... or specifying the colors alongside --checkpoints ..."
         colors = ["#D95F02", "#1B9E77", "#662077", "#FF0000"] + ["#000000"]*100
     usedLabels = []
 

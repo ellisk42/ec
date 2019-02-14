@@ -4,6 +4,16 @@ open Program
 open Utils
 
 let _ =
+  let t = new_version_table() in
+  let p = "(#(lambda (lambda (* $2 (+ (lambda $2) $0)))) $0 2)" |> parse_program |> get_some in
+  p |> incorporate t |> inline t |> extract t |> List.iter ~f:(fun p' ->
+      Printf.printf "%s\n"
+        (string_of_program p'));
+  assert (false)
+;;
+
+
+let _ =
   List.range 0 6 |> List.iter ~f:(fun sz ->
       let p0 = List.range 0 sz |>
                List.fold_right ~init:"(+ 1 1)" ~f:(fun _ -> Printf.sprintf "(+ 1 %s)") |>

@@ -1,4 +1,4 @@
-from utilities import eprint
+from utilities import eprint, montageMatrix
 from recognition import *
 from frontier import *
 from program import *
@@ -363,9 +363,13 @@ def ecIterator(grammar, tasks,
         # do this extra sneaky in the background
         if useRecognitionModel and biasOptimal and helmholtzRatio > 0 and \
            all( str(p) != "REAL" for p in grammar.primitives ): # real numbers don't support this
-            helmholtzFrontiers = backgroundHelmholtzEnumeration(tasks, grammar, enumerationTimeout,
-                                                                evaluationTimeout=evaluationTimeout,
-                                                                special=featureExtractor.special)
+            # the DSL is fixed, so the dreams are also fixed. don't recompute them.
+            if useDSL or 'helmholtzFrontiers' not in locals():
+                helmholtzFrontiers = backgroundHelmholtzEnumeration(tasks, grammar, enumerationTimeout,
+                                                                    evaluationTimeout=evaluationTimeout,
+                                                                    special=featureExtractor.special)
+            else:
+                print("Reusing dreams from previous iteration.")
         else:
             helmholtzFrontiers = lambda: []
 
