@@ -1,4 +1,4 @@
-from utilities import eprint
+from utilities import eprint, montageMatrix
 from recognition import *
 from frontier import *
 from program import *
