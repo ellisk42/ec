@@ -384,6 +384,8 @@ if __name__ == "__main__":
         test, train = testTrainSplit(tasks, split)
         test = [t for t in test
                 if t.name not in EASYLISTTASKS]
+        test = []
+        train = train[:5]
 
         eprint(
             "Alotted {} tasks for training and {} for testing".format(
