@@ -464,17 +464,18 @@ def plotEmbeddingWithImages(embeddings, images, taskNames, title, exportPath, xl
         """
         fig, ax = plot.subplots(figsize=(10,10))
         plot.tick_params(axis='both', left='off', top='off', right='off', bottom='off', labelleft='off', labeltop='off', labelright='off', labelbottom='off')
+        plot.grid(False)
         artists = []
         for xy, i in zip(embeddings, images):
                 x0, y0 = xy
-                img = OffsetImage(i, zoom=1)
+                img = OffsetImage(i, zoom=0.5)
                 ab = AnnotationBbox(img, (x0, y0), xycoords='data', frameon=False)
                 artists.append(ax.add_artist(ab))
 
         ax.update_datalim(embeddings)
         ax.autoscale()
 
-        plot.title(title)
+        plot.title(title, fontsize=15)
         if xlabel:
                 plot.xlabel(xlabel)
         if ylabel:
@@ -552,17 +553,17 @@ def formattedName(metricToCluster, item):
         else:
                 return raw_name
 
-def plotTSNE(
-                resultPaths,
-                experimentNames,
-                metricsToCluster,
-                applySoftmax,
-                tsneLearningRate,
-                tsnePerplexity,
-                labelWithImages,
-                labelsAndImages,
-                export=None,
-                printExamples=None):
+def plotTSNE(resultPaths,
+             experimentNames,
+             metricsToCluster,
+             applySoftmax,
+             tsneLearningRate,
+             tsnePerplexity,
+             labelWithImages,
+             labelsAndImages,
+             export=None,
+             title=None,
+             printExamples=None):
         """Plots TSNE clusters of the given metrics. Requires Sklearn."""
 
         from sklearn.manifold import TSNE
@@ -604,7 +605,7 @@ def plotTSNE(
                         print(taskNames.shape, taskMetrics.shape)
                         
                         clusteredTaskMetrics = tsne.fit_transform(taskMetrics)
-                        title = ("Metric: %s, Domain: %s, Experiment: %s, Iteration: %d" % (metricToCluster, domain, experimentName, iterations))
+                        title = title or ("Metric: %s, Domain: %s, Experiment: %s, Iteration: %d" % (metricToCluster, domain, experimentName, iterations))
 
                         if labelWithImages or labelsAndImages:
                                 images = {}
@@ -620,7 +621,7 @@ def plotTSNE(
                                         elif domain == 'rational':
                                                 im = makeRationalImage(im)
                                         images[task.name] = im
-                                if not plotTSNE:
+                                if not labelsAndImages:
                                         plotEmbeddingWithImages(clusteredTaskMetrics, 
                                                                 [images[n] for n in taskNames] ,
                                                                 taskNames,
@@ -1146,6 +1147,7 @@ if __name__ == "__main__":
 
         parser.add_argument("--export","-e",
                                                 type=str, default='data')
+        parser.add_argument("--title",default=None, type=str)
 
         arguments = parser.parse_args()
 
@@ -1183,14 +1185,15 @@ if __name__ == "__main__":
 
         if arguments.metricsToCluster:
                 plotTSNE(arguments.checkpoints,
-                                 arguments.experimentNames,
-                                 arguments.metricsToCluster,
-                                 arguments.applySoftmax,
-                                 arguments.tsneLearningRate,
-                                 arguments.tsnePerplexity,
-                                 arguments.labelWithImages,
+                         arguments.experimentNames,
+                         arguments.metricsToCluster,
+                         arguments.applySoftmax,
+                         arguments.tsneLearningRate,
+                         arguments.tsnePerplexity,
+                         arguments.labelWithImages,
                          arguments.labelsAndImages,
-                                 arguments.export,
-                                 arguments.printExamples)
+                         arguments.export,
+                         printExamples=arguments.printExamples,
+                         title=arguments.title)
 
 
