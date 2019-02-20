@@ -224,6 +224,12 @@ def train_necessary(task):
 
 def list_options(parser):
     parser.add_argument(
+        "--noMap", action="store_true", default=False,
+        help="Disable built-in map primitive")
+    parser.add_argument(
+        "--noLength", action="store_true", default=False,
+        help="Disable built-in length primitive")
+    parser.add_argument(
         "--dataset",
         type=str,
         default="Lucas-old",
@@ -346,7 +352,14 @@ if __name__ == "__main__":
              "common": bootstrapTarget_extra,
              "noLength": no_length,
              "rich": primitives}[args.pop("primitives")]()
-    baseGrammar = Grammar.uniform(prims)
+    haveLength = not args.pop("noLength")
+    haveMap = not args.pop("noMap")
+    eprint(f"Including map as a primitive? {haveMap}")
+    eprint(f"Including length as a primitive? {haveLength}")
+    baseGrammar = Grammar.uniform([p
+                                   for p in prims
+                                   if (p.name != "map" or haveMap) and \
+                                   (p.name != "length" or haveLength)])
 
     extractor = {
         "learned": LearnedFeatureExtractor,
@@ -382,8 +395,9 @@ if __name__ == "__main__":
             ts.pop().mustTrain = True
 
         test, train = testTrainSplit(tasks, split)
-        test = [t for t in test
-                if t.name not in EASYLISTTASKS]
+        if False:
+            test = [t for t in test
+                    if t.name not in EASYLISTTASKS]
 
         eprint(
             "Alotted {} tasks for training and {} for testing".format(

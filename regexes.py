@@ -14,7 +14,7 @@ from type import tpregex
 import math
 import pregex as pre
 import os
-
+import dill
 
 
 class LearnedFeatureExtractor(RecurrentFeatureExtractor):

@@ -596,7 +596,12 @@ def plotTSNE(resultPaths,
                                                    for f in taskMetrics] 
 
                         print("Clustering %d tasks with embeddings of shape: %s" % (len(taskMetrics), str(taskMetrics[0].shape)) )
+                        if taskMetrics[0].shape[0] == 0:
+                                print(f"Task metrics have zero dimensionality - skipping {metricToCluster}/{iterations}")
+                                continue
+                        
                         if applySoftmax:
+                                print("Applying softmax.")
                                 taskMetrics = [softmax(metric) for metric in taskMetrics]
                         taskNames = np.array(taskNames)
                         taskMetrics = np.array(taskMetrics)
