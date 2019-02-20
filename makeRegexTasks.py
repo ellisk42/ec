@@ -232,7 +232,7 @@ def makeHandPickedTasks():
 
     return regextasks
 
-def makeNewTasks():
+def makeNewTasks(include_only=None):
 
     #load new data:
 
@@ -243,12 +243,18 @@ def makeNewTasks():
 
     tasklist = data['background'] #a list of indices
 
-
-    regextasks = [
-        Task("Data column no. " + str(i),
-            arrow(tpregex, tpregex),
-            [((), example) for example in task['train']] 
-        ) for i, task in enumerate(tasklist)]
+    if include_only:
+        regextasks = [
+            Task("Data column no. " + str(i),
+                arrow(tpregex, tpregex),
+                [((), example) for example in task['train']] 
+            ) for i, task in enumerate(tasklist) if i in include_only]
+    else:
+        regextasks = [
+            Task("Data column no. " + str(i),
+                arrow(tpregex, tpregex),
+                [((), example) for example in task['train']] 
+            ) for i, task in enumerate(tasklist)]
 
     #for i in train_list:
     #    regextasks[i].mustTrain = True
@@ -274,6 +280,13 @@ def match_col(dataset, rstring):
     return matches
 
 if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--include_only",
+                        default=None,
+                        nargs="+",
+                        type=int)
+    args = parser.parse_args()
     import sys
     def show_tasks(dataset):
         task_list = []
@@ -286,8 +299,9 @@ if __name__ == "__main__":
     task = {"number": makeNumberTasks,
     "words": makeWordTasks,
     "all": makeLongTasks,
-    "new": makeNewTasks}[sys.argv[1]]
+    "new": makeNewTasks}['new']
 
-    x = show_tasks(task())
+
+    x = show_tasks(task(args.include_only))
 
     
