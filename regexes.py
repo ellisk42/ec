@@ -229,8 +229,8 @@ if __name__ == "__main__":
     maxTasks = args.pop("maxTasks")
     if len(tasks) > maxTasks:
         eprint("Unwilling to handle {} tasks, truncating..".format(len(tasks)))
-        seed = 42 # previously this was hardcoded and never changed
-        random.seed(seed)
+        #seed = 42 # previously this was hardcoded and never changed
+        random.seed(args.seed)
         random.shuffle(tasks)
         del tasks[maxTasks:]
 
