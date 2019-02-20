@@ -65,6 +65,25 @@ def flatten(x, abort=lambda x: False):
     except TypeError:  # not iterable
         yield x
 
+def growImage(i, iterations=2):
+    import numpy as np
+    for _ in range(iterations):
+        ip = np.zeros(i.shape)
+        # assume it is monochromatic and get the color
+        c = np.array([i[:,:,j].max()
+                      for j in range(4) ])
+        # assume that the alpha channel indicates where the foreground is
+        foreground = i[:,:,3] > 0
+        foreground = foreground + \
+                     np.pad(foreground, ((0,1),(0,0)), mode='constant')[1:,:] +\
+                     np.pad(foreground, ((0,0),(0,1)), mode='constant')[:,1:] + \
+                     np.pad(foreground, ((0,0),(1,0)), mode='constant')[:,:-1] + \
+                     np.pad(foreground, ((1,0),(0,0)), mode='constant')[:-1,:]
+        ip[foreground] = c
+        i = ip
+    return ip
+                        
+                
 
 def summaryStatistics(n, times):
     if len(times) == 0:
