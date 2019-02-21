@@ -94,6 +94,17 @@ listTasks={
 "Misc" : "Other"
 }
 
+towerTasks=[
+        ("on top of", "Other"),
+        ("bridge", "Bridge"),
+        ("brick", "Brick wall"),
+        ("aqueduct", "Aqueduct"),
+        ("staircase", "Staircase"),
+        ("pyramid", "Pyramid"),
+        ("arch stack", "Other"),
+        ("arch", "Arch"),
+        ("Other", "Other"),
+]
 logoTasks=[
         ("next to", "Other"),
         ("row of squares", "Square"),
@@ -395,15 +406,23 @@ def plotLabeledImages(embeddings, images, labels, title, exportPath, xlabel=None
         plot.tick_params(axis='both', left='off', top='off', right='off', bottom='off', labelleft='off', labeltop='off', labelright='off', labelbottom='off')
         plot.grid(False)
 
-        print("warning: only works for logo")
+        print("warning: only works for logo/towers")
+        if "tower" in title:
+                plot.title("Tower Building", fontsize=15)
+                nameMapping = towerTasks
+                zoom = 0.5
+        else:
+                plot.title("LOGO/Turtle Graphics", fontsize=15)
+                nameMapping = logoTasks
+                zoom = 0.5
+
         cmap = matplotlib.cm.get_cmap('tab10')
-        prettyNames = sorted(list({pretty for _,pretty in logoTasks}))
-        colorLabels = logoNamesToLabels(labels)
+        prettyNames = sorted(list({pretty for _,pretty in nameMapping}))
+        colorLabels = logo_tower_NamesToLabels(labels, nameMapping)
         import matplotlib.patches as mpatches
         patches = [mpatches.Patch(color=cmap(i), label=prettyNames[i]) for i in range(len(prettyNames))]
         legend=plot.legend(handles=patches, frameon=True, loc='upper center', bbox_to_anchor=(0.5, -0.02),
   ncol=1, fontsize=15)
-        plot.title("LOGO/Turtle Graphics", fontsize=15)
 
         def trimImage(image):
                 image = 255. - image[:,:,0]
@@ -411,6 +430,7 @@ def plotLabeledImages(embeddings, images, labels, title, exportPath, xlabel=None
                 while image[-1,:].sum() == 0.: image = image[:-1,:]
                 while image[:,0].sum() == 0.: image = image[:,1:]
                 while image[:,-1].sum() == 0.: image = image[:,:-1]
+
                 Alpha = 255*(image > 0)
                 return np.dstack([255. - image]*3 + [Alpha])
         def projectColor(c,i):
@@ -425,19 +445,14 @@ def plotLabeledImages(embeddings, images, labels, title, exportPath, xlabel=None
         imageLabels = [] # [(x,y,image)]
         initialDisplacements = []
         for i, label in enumerate(labels):
-                print(label)
                 x, y = embeddings[i, 0], embeddings[i, 1]
-
-                        
                 plot.scatter(x,y, color=cmap(colorLabels[i]), s=150, alpha=0.00001)
-                
-
                 name = labels[i]
                 c = cmap(colorLabels[i])
                 
                 imageLabels.append((x,y,projectColor(c,trimImage(images[i]))))
         for index, (x,y,i) in enumerate(imageLabels):
-                ab = AnnotationBbox(OffsetImage(i, zoom=0.5),
+                ab = AnnotationBbox(OffsetImage(i, zoom=zoom),
                                     (x,y),
                                     xycoords='data',
                                     frameon=False)
@@ -498,12 +513,33 @@ def makeLogoImage(im):
         im = np.dstack([im, im, im, alpha])
         return im
 
-def makeTowerImage(im):
+def makeTowerImage(im, labelsAndImages):
+        # remove the floor
+        im = im[:-2,:,:]
+        if labelsAndImages:
+                # Make monochromatic
+                im[im[:,:,1] > 0] = 0
+                im[im[:,:,0] > 0] = 1
+        w = im.shape[0]
+        h = im.shape[1]
+
         # Set the black pixels to transparent.
         black_mask = im[:, :, 0] == 0
-        alpha = np.ones((256,256)) * 255
+        alpha = np.ones((w,h)) * 255
         alpha[black_mask] = 0
+        if labelsAndImages: im *= 255
         im = np.dstack([im, alpha])
+        if labelsAndImages: # trim
+                import scipy
+                w = 3
+                k = np.ones((w,w,w))/4.
+                im = growImage(im, iterations=2)
+                while im[0,:,-1].sum() == 0.: im = im[1:,:,:]
+                while im[-1,:,-1].sum() == 0.: im = im[:-1,:,:]
+                while im[:,0,-1].sum() == 0.: im = im[:,1:,:]
+                while im[:,-1,-1].sum() == 0.: im = im[:,:-1,:]
+                im[:,:,:-1] = 255 - im[:,:,:-1]
+                
         return im
 
 def makeRationalImage(im):
@@ -596,7 +632,12 @@ def plotTSNE(resultPaths,
                                                    for f in taskMetrics] 
 
                         print("Clustering %d tasks with embeddings of shape: %s" % (len(taskMetrics), str(taskMetrics[0].shape)) )
+                        if taskMetrics[0].shape[0] == 0:
+                                print(f"Task metrics have zero dimensionality - skipping {metricToCluster}/{iterations}")
+                                continue
+                        
                         if applySoftmax:
+                                print("Applying softmax.")
                                 taskMetrics = [softmax(metric) for metric in taskMetrics]
                         taskNames = np.array(taskNames)
                         taskMetrics = np.array(taskMetrics)
@@ -610,14 +651,15 @@ def plotTSNE(resultPaths,
                         if labelWithImages or labelsAndImages:
                                 images = {}
                                 for i, task in enumerate(sorted(filter(lambda mt: isinstance(mt, Task), recognitionTaskMetrics.keys()), key=lambda task : task.name)): # Enumerate in same order as sorted tasks.
-                                        if 'taskImages' not in recognitionTaskMetrics[task] and domain == 'tower': recognitionTaskMetrics[task]['taskImages'] = task.getImage(pretty=True) # BUG: this should not be necessaryd
+                                        if domain == 'tower':
+                                                recognitionTaskMetrics[task]['taskImages'] = task.getImage(pretty=not labelsAndImages)
                                         if 'taskImages' not in recognitionTaskMetrics[task] and domain == 'rational': recognitionTaskMetrics[task]['taskImages'] = task.features
                                         if 'taskImages' not in recognitionTaskMetrics[task] and domain == 'logo': recognitionTaskMetrics[task]['taskImages'] = task.highresolution
                                         im = np.array(recognitionTaskMetrics[task]['taskImages'])
                                         if domain == 'logo':
                                                 im = makeLogoImage(im)
                                         elif domain == 'tower':
-                                                im = makeTowerImage(im)
+                                                im = makeTowerImage(im, labelsAndImages)
                                         elif domain == 'rational':
                                                 im = makeRationalImage(im)
                                         images[task.name] = im
@@ -973,6 +1015,24 @@ def logoNamesToLabels(listNames):
                 print("%s{0:20}%s"%(name,labels[-1]))
         # Assign to list
         prettyNames = sorted(list({pretty for _,pretty in logoTasks}))
+
+        labels = [prettyNames.index(label) for label in labels]
+        return labels
+
+def logo_tower_NamesToLabels(listNames, nameMapping):
+        labels = []
+        for name in listNames:
+                foundName = False
+                for label,pretty in nameMapping:
+                        if label in name:
+                                labels.append(pretty)
+                                foundName = True
+                                break
+                if not foundName:
+                        labels.append("Other")
+                print("%s{0:20}%s"%(name,labels[-1]))
+        # Assign to list
+        prettyNames = sorted(list({pretty for _,pretty in nameMapping}))
 
         labels = [prettyNames.index(label) for label in labels]
         return labels

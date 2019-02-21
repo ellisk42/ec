@@ -12,17 +12,22 @@ python graphs.py -i 20 --testingTimeout 600 --export figures/text_time.png --che
 python graphs.py --x-label "" -i 20 --testingTimeout 600 --title "List processing" --export figures/list_hits.png --checkpoints teal `grep  -h 'it=20.*graph=True.pickle' jobs/list_ellisk_2019-01-25T*|head  -n 5` purple `grep  -h 'it=20.*.pickle' jobs/list_no_recognition_ellisk*|sed 's/Exported checkpoint to//g'` orange `grep  -h it=20.*graph jobs/list_no_dsl_no_ensemble_ellisk*`  --noTime
 python graphs.py -i 20 --testingTimeout 600 --export figures/list_time.png --checkpoints teal `grep  -h 'it=20.*graph=True.pickle' jobs/list_ellisk_2019-01-25T*|head  -n 5` purple `grep  -h 'it=20.*.pickle' jobs/list_no_recognition_ellisk*|sed 's/Exported checkpoint to//g'` orange `grep  -h it=20.*graph jobs/list_no_dsl_no_ensemble_ellisk*`  --onlyTime
 
+### List figures - hard testing tasks only
+python graphs.py --x-label "" -i 20 --testingTimeout 600 --title "List processing" --export figures/list_hard_hits.png --checkpoints teal `grep  -h 'it=20.*graph=True.pickle' jobs/list_hard_test_ellisk*|head  -n 5` purple `grep  -h 'it=20.*.pickle' jobs/list_hard_test_no_recognition_ellisk*|sed 's/Exported checkpoint to//g'` orange `grep  -h it=20.*graph jobs/list_hard_test_no_dsl_ellisk*`  --noTime
+python graphs.py -i 20 --testingTimeout 600 --export figures/list_hard_time.png --checkpoints  teal `grep  -h 'it=20.*graph=True.pickle' jobs/list_hard_test_ellisk*|head  -n 5` purple `grep  -h 'it=20.*.pickle' jobs/list_hard_test_no_recognition_ellisk*|sed 's/Exported checkpoint to//g'` orange `grep  -h it=20.*graph jobs/list_hard_test_no_dsl_ellisk*`   --onlyTime
+
+
 ### LOGO figures - time and hits split
 python graphs.py --checkpoints teal `grep  -h it=20.*graph jobs/logo_auxiliary_batch_40_1h*` orange `grep  -h it=13.*graph jobs/logo_no_dsl_auxiliary_batch_40_1h_ellisk_2019-02-11*` purple `grep  -h it=11.*pickle jobs/logo_no_recognition_batch_40_1h_ellisk*|sed 's/Exported checkpoint to//g'` --export figures/logo_hits.png --noTime -i 11 --x-label "" --title "LOGO Graphics"
 python graphs.py --checkpoints teal `grep  -h it=20.*graph jobs/logo_auxiliary_batch_40_1h*` orange `grep  -h it=13.*graph jobs/logo_no_dsl_auxiliary_batch_40_1h_ellisk_2019-02-11*` purple `grep  -h it=11.*pickle jobs/logo_no_recognition_batch_40_1h_ellisk*|sed 's/Exported checkpoint to//g'` --export figures/logo_time.png --onlyTime -i 11   --testingTimeout 600
 
 ### Rational figures - time and hits split
-python graphs.py --checkpoint teal `grep  -h it=11.*graph jobs/rational_batch*` orange `grep  -h it=11.*graph jobs/rational_no_dsl*` purple `grep  -h it=11.*pickle jobs/rational_noRecognition*|sed 's/Exported checkpoint to//g'` --noTime --x-label "" --title "Symbolic Regression" --export figures/rational_hits.png
-python graphs.py --checkpoint teal `grep  -h it=11.*graph jobs/rational_batch*` orange `grep  -h it=11.*graph jobs/rational_no_dsl*` purple `grep  -h it=11.*pickle jobs/rational_noRecognition*|sed 's/Exported checkpoint to//g'` --onlyTime --export figures/rational_time.png --testingTimeout 600
+python graphs.py --checkpoint teal `grep  -h it=20.*graph jobs/rational_batch*` orange `grep  -h it=20.*graph jobs/rational_no_dsl*` purple `grep  -h it=20.*pickle jobs/rational_noRecognition*|sed 's/Exported checkpoint to//g'` --noTime --x-label "" --title "Symbolic Regression" --export figures/rational_hits.png
+python graphs.py --checkpoint teal `grep  -h it=20.*graph jobs/rational_batch*` orange `grep  -h it=20.*graph jobs/rational_no_dsl*` purple `grep  -h it=20.*pickle jobs/rational_noRecognition*|sed 's/Exported checkpoint to//g'` --onlyTime --export figures/rational_time.png --testingTimeout 600
 
 ### Tower figures - time and hits split
-python graphs.py --checkpoints teal `grep  -h it=6.*graph jobs/tower_batch_40_3600_ellisk*` orange `grep  -h it=11.*graph jobs/tower_no_dsl_batch*` purple `grep  -h it=11.*pickle jobs/tower_no_recognition_batch*|sed 's/Exported checkpoint to//g'` --export figures/tower_hits.png --noTime --x-label "" --title "Tower building"
-python graphs.py --checkpoints teal `grep  -h it=6.*graph jobs/tower_batch_40_3600_ellisk*` orange `grep  -h it=11.*graph jobs/tower_no_dsl_batch*` purple `grep  -h it=11.*pickle jobs/tower_no_recognition_batch*|sed 's/Exported checkpoint to//g'` --export figures/tower_time.png --onlyTime --testingTimeout 600
+python graphs.py --checkpoints teal `grep  -h it=11.*graph jobs/tower_batch_40_3600_ellisk*` orange `grep  -h it=11.*graph jobs/tower_no_dsl_batch*` purple `grep  -h it=11.*pickle jobs/tower_no_recognition_batch*|sed 's/Exported checkpoint to//g'` --export figures/tower_hits.png --noTime --x-label "" --title "Tower building"
+python graphs.py --checkpoints teal `grep  -h it=11.*graph jobs/tower_batch_40_3600_ellisk*` orange `grep  -h it=11.*graph jobs/tower_no_dsl_batch*` purple `grep  -h it=11.*pickle jobs/tower_no_recognition_batch*|sed 's/Exported checkpoint to//g'` --export figures/tower_time.png --onlyTime --testingTimeout 600
 
 ### Regex figures - time and hits split
 
@@ -32,9 +37,9 @@ python graphs.py --checkpoints `grep  -h 'it=20.*graph=True.pickle' jobs/list_no
 python graphs.py --checkpoints  `grep  -h 'it=20.*graph=True.pickle' jobs/text_ellisk_2019-01-2*|head  -n 5` `grep  -h 'it=20.*graph=True.pickle' jobs/text_mask_ellisk_2019-02-07T11.*` `grep  -h 'it=20.*graph.*pickle'  jobs/text_no_generative_ellisk_2019-01-30T15.*`  --export figures/text_mask.png --colors orange orange orange orange orange  purple purple purple green green green --names "dc,dc+mask,dc-dsl"
 
 ### List w/ small amount of training data
-python graphs.py --testingTimeout 600 --title "List, 75/25 test/train" --export figures/list_small_train.png --checkpoints `grep  -h 'it=10.*graph.*pickle' jobs/list_small_train_ellisk*` `grep  -h 'it=10.*graph.*pickle' jobs/list_small_train_no_dsl_ellisk*` --colors orange orange orange orange purple purple purple purple purple   --names "dc,dc-dsl"
+python graphs.py --testingTimeout 600 --title "List, 75/25 test/train" --export figures/list_small_train.png --checkpoints teal `grep  -h 'it=10.*graph.*pickle' jobs/list_small_train_ellisk*` orange `grep  -h 'it=10.*graph.*pickle' jobs/list_small_train_no_dsl_ellisk*` --names "dc,dc-dsl"
 ### List w/ tiny amount of training data
-python graphs.py --testingTimeout 600 --title "List, 85/15 test/train" --export figures/list_tiny_train.png --checkpoints `grep  -h 'it=10.*graph.*pickle' jobs/list_tiny_train_ellisk*` `grep  -h 'it=10.*graph.*pickle' jobs/list_tiny_train_no_dsl_ellisk*` --colors orange orange orange purple  purple purple --names "dc,dc-dsl"
+python graphs.py --testingTimeout 600 --title "List, 85/15 test/train" --export figures/list_tiny_train.png --checkpoints teal `grep  -h 'it=10.*graph.*pickle' jobs/list_tiny_train_ellisk*` orange `grep  -h 'it=10.*graph.*pickle' jobs/list_tiny_train_no_dsl_ellisk*`  --names "dc,dc-dsl"
 ### List w/ large amount of training data
 python graphs.py --checkpoints `grep  -h 'it=20.*graph=True.pickle' jobs/list_ellisk_2019-01-25T*` `grep  -h 'it=20.*graph=True.pickle' jobs/list_no_dsl_no_ensemble_ellisk_2019-01-28T1*` `grep  -h 'it=14.*graph=True.pickle' jobs/list_no_dsl_no_ensemble_no_auxiliary_ellisk_2019-01-29T10.*` --title "List, 50/50 test/train" --export figures/list_big_train.png --colors orange orange orange orange orange purple purple purple purple purple --testingTimeout 600
 

@@ -145,6 +145,12 @@ def text_options(parser):
         default=False,
         help="Incorporate a random 50% of the challenge problems into the training set")
     parser.add_argument(
+        "--noMap", action="store_true", default=False,
+        help="Disable built-in map primitive")
+    parser.add_argument(
+        "--noLength", action="store_true", default=False,
+        help="Disable built-in length primitive")
+    parser.add_argument(
         "--compete",
         nargs='+',
         default=None,
@@ -196,7 +202,14 @@ if __name__ == "__main__":
                                                         for t in test + train + challenge
                                                         for s in t.stringConstants}))))
 
-    baseGrammar = Grammar.uniform(primitives + bootstrapTarget())
+    haveLength = not arguments.pop("noLength")
+    haveMap = not arguments.pop("noMap")
+    eprint(f"Including map as a primitive? {haveMap}")
+    eprint(f"Including length as a primitive? {haveLength}")
+    baseGrammar = Grammar.uniform(primitives + [p
+                                                for p in bootstrapTarget()
+                                                if (p.name != "map" or haveMap) and \
+                                                (p.name != "length" or haveLength)])
     challengeGrammar = baseGrammar  # Grammar.uniform(targetTextPrimitives)
 
     evaluationTimeout = 0.0005

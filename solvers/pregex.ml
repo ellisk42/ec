@@ -371,10 +371,10 @@ register_special_task "regex"
                  in
 
              	(* loop observations ) *) 
-                 let total_char_num = observations |> List.map ~f:List.length |> List.fold_right ~init:0 ~f:(+) |> Float.of_int in
+                 (* let total_char_num = observations |> List.map ~f:List.length |> List.fold_right ~init:0 ~f:(+) |> Float.of_int in *)
                  (* Printf.eprintf "total_char_num %f\n" total_char_num; *)
                  let total_ll = loop observations in
-                 let per_char_ll = total_ll /. total_char_num in
+                 (* let per_char_ll = total_ll /. total_char_num in *)
                  
                  (* let _ = if per_char_ll <> (log 0.) then 
                  (Printf.eprintf "per_char_ll %f\n" per_char_ll; 
@@ -383,7 +383,8 @@ register_special_task "regex"
                  () ) in *)
 
                  (*Printf.eprintf "ll %f\n" per_char_ll; *)
-                 per_char_ll )         
+                 (* per_char_ll *)
+              total_ll)              
       with
       | None -> log 0.
       | Some(l) -> 
