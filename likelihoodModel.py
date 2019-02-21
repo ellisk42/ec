@@ -37,7 +37,7 @@ class EuclideanLikelihoodModel:
 
 def add_cutoff_values(tasks, ll_cutoff):
     from makeRegexTasks import makeLongTasks, makeNewTasks
-    if ll_cutoff is None:
+    if ll_cutoff is None or ll_cutoff == "None":
         for task in tasks:
             task.ll_cutoff = None 
         return tasks
@@ -72,6 +72,8 @@ def add_cutoff_values(tasks, ll_cutoff):
         return tasks
     else:
         eprint("not implemented")
+        eprint("cutoff val:")
+        eprint(ll_cutoff)
         assert False
 
 def show_tasks(dataset):
@@ -155,7 +157,7 @@ def bigram_corpus_score(X, logp):
 
         task_ll += string_ll
 
-    ll = task_ll/len(X)
+    ll = task_ll#/len(X)
     return ll
 
 
