@@ -153,11 +153,11 @@ def bigram_corpus_score(X, logp):
     for x in X:
         bigram_list = [x[0]] + [x[i:i+2] for i in range(len(x)-1)] + [x[-1] + '\n']
 
-        string_ll = sum(logp.get(bigram, float('-inf')) for bigram in bigram_list)/(len(x) + 1)
+        string_ll = sum(logp.get(bigram, float('-inf')) for bigram in bigram_list) #/(len(x) + 1)
 
         task_ll += string_ll
 
-    ll = task_ll#/len(X)
+    ll = task_ll #/len(X)
     return ll
 
 
