@@ -533,7 +533,7 @@ def makeTowerImage(im, labelsAndImages):
                 import scipy
                 w = 3
                 k = np.ones((w,w,w))/4.
-                im = growImage(im, iterations=1)
+                im = growImage(im, iterations=2)
                 while im[0,:,-1].sum() == 0.: im = im[1:,:,:]
                 while im[-1,:,-1].sum() == 0.: im = im[:-1,:,:]
                 while im[:,0,-1].sum() == 0.: im = im[:,1:,:]
