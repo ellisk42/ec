@@ -95,12 +95,15 @@ listTasks={
 }
 
 towerTasks=[
+        ("spaced", "Other"),
         ("on top of", "Other"),
-        ("bridge", "Bridge"),
+        ("of arch 1", "Bridge"),
         ("brick", "Brick wall"),
-        ("aqueduct", "Aqueduct"),
+        ("bridge", "Building"),
+        ("aqueduct", "Building"),
         ("staircase", "Staircase"),
-        ("pyramid", "Pyramid"),
+        ("arch 1/2 pyramid", "Staggered Pyramid"),
+        ("arch pyramid", "Stacked Pyramid"),
         ("arch stack", "Other"),
         ("arch", "Arch"),
         ("Other", "Other"),
@@ -446,7 +449,7 @@ def plotLabeledImages(embeddings, images, labels, title, exportPath, xlabel=None
         initialDisplacements = []
         for i, label in enumerate(labels):
                 x, y = embeddings[i, 0], embeddings[i, 1]
-                plot.scatter(x,y, color=cmap(colorLabels[i]), s=150, alpha=0.00001)
+                plot.scatter(x,y, color=cmap(colorLabels[i]), s=1000, alpha=0.00001)
                 name = labels[i]
                 c = cmap(colorLabels[i])
                 
@@ -631,6 +634,10 @@ def plotTSNE(resultPaths,
                                 taskMetrics = [f.expectedProductionUses(result.grammars[-1])
                                                    for f in taskMetrics] 
 
+                        if len(taskMetrics) == 0:
+                                print(f"Got no task metrics - skipping {metricToCluster}/{iterations}")
+                                continue
+                        
                         print("Clustering %d tasks with embeddings of shape: %s" % (len(taskMetrics), str(taskMetrics[0].shape)) )
                         if taskMetrics[0].shape[0] == 0:
                                 print(f"Task metrics have zero dimensionality - skipping {metricToCluster}/{iterations}")
