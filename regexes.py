@@ -7,6 +7,8 @@ from utilities import eprint, numberOfCPUs, flatten, fst, testTrainSplit, POSITI
 from makeRegexTasks import makeOldTasks, makeLongTasks, makeShortTasks, makeWordTasks, makeNumberTasks, makeHandPickedTasks, makeNewTasks, makeNewNumberTasks
 from regexPrimitives import basePrimitives, altPrimitives, easyWordsPrimitives, alt2Primitives, concatPrimitives, reducedConcatPrimitives, strConstConcatPrimitives
 from likelihoodModel import add_cutoff_values, add_string_constants
+
+from program import Abstraction, Application
 #from program import *
 from recognition import RecurrentFeatureExtractor, JSONFeatureExtractor
 import random

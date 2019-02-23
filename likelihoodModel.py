@@ -9,7 +9,9 @@ from collections import Counter
 import math
 
 
+from groundtruthRegexes import gt_dict
 
+gt_dict = {"Data column no. "+str(num): r_str for num, r_str in gt_dict.items()}
 
 class AllOrNothingLikelihoodModel:
     def __init__(self, timeout=None):
@@ -74,11 +76,23 @@ def add_string_constants(tasks):
         task.str_const = longest_common_substr([example[1] for example in task.examples])
     return tasks
 
+def get_gt_ll(name, examples):
+    #gets groundtruth from dict
+    r_str = gt_dict[name]
+    preg = pre.create(r_str)
+    return sum( preg.match(example) for example in examples)
+
+
 def add_cutoff_values(tasks, ll_cutoff):
     from makeRegexTasks import makeLongTasks, makeNewTasks
     if ll_cutoff is None or ll_cutoff == "None":
         for task in tasks:
-            task.ll_cutoff = None 
+            task.ll_cutoff = None
+        return tasks
+    if ll_cutoff == "gt":
+        for task in tasks:
+            task.ll_cutoff = None
+            task.gt = get_gt_ll(task.name, [example[1] for example in task.examples])
         return tasks
     elif ll_cutoff == "plus":
         for task in tasks:
@@ -378,4 +392,4 @@ if __name__=="__main__":
     print(stems)
 
 
-    
+
