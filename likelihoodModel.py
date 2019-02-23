@@ -9,6 +9,8 @@ from collections import Counter
 import math
 
 
+
+
 class AllOrNothingLikelihoodModel:
     def __init__(self, timeout=None):
         self.timeout = timeout
@@ -33,7 +35,44 @@ class EuclideanLikelihoodModel:
         logLikelihood = float(-distance)  # FIXME: this is really naive
         return exp(logLikelihood) > self.successCutoff, logLikelihood
 
+def longest_common_substr(arr):
+    #array of examples 
 
+# Python 3 program to find the stem
+# of given list of words
+# function to find the stem (longest
+# common substring) from the string array
+    # Determine size of the array
+    n = len(arr)
+
+    # Take first word from array
+    # as reference
+    s = arr[0]
+    l = len(s)
+    res = ""
+    for i in range(l) :
+        for j in range( i + 1, l + 1) :
+            # generating all possible substrings
+            # of our reference string arr[0] i.e s
+            stem = s[i:j]
+            k = 1
+            for k in range(1, n):
+
+                # Check if the generated stem is
+                # common to to all words
+                if stem not in arr[k]:
+                    break
+
+                # If current substring is present in
+                # all strings and its length is greater
+                # than current result
+            if (k + 1 == n and len(res) < len(stem)): res = stem
+    return res 
+
+def add_string_constants(tasks):
+    for task in tasks:
+        task.str_const = longest_common_substr([example[1] for example in task.examples])
+    return tasks
 
 def add_cutoff_values(tasks, ll_cutoff):
     from makeRegexTasks import makeLongTasks, makeNewTasks
@@ -330,3 +369,13 @@ try:
             return likelihood > self.successCutoff, log(likelihood)
 except ImportError:
     pass
+
+
+if __name__=="__main__":
+
+    arr = ['MAM.OSBS.2014.06', 'MAM.OSBS.2013.07', 'MAM.OSBS.2013.09', 'MAM.OSBS.2014.05', 'MAM.OSBS.2014.11']
+    stems = longest_common_substr(arr)
+    print(stems)
+
+
+    

@@ -5,8 +5,8 @@ from grammar import Grammar
 #from utilities import eprint, testTrainSplit, numberOfCPUs, flatten
 from utilities import eprint, numberOfCPUs, flatten, fst, testTrainSplit, POSITIVEINFINITY
 from makeRegexTasks import makeOldTasks, makeLongTasks, makeShortTasks, makeWordTasks, makeNumberTasks, makeHandPickedTasks, makeNewTasks, makeNewNumberTasks
-from regexPrimitives import basePrimitives, altPrimitives, easyWordsPrimitives, alt2Primitives, concatPrimitives, reducedConcatPrimitives
-from likelihoodModel import add_cutoff_values
+from regexPrimitives import basePrimitives, altPrimitives, easyWordsPrimitives, alt2Primitives, concatPrimitives, reducedConcatPrimitives, strConstConcatPrimitives
+from likelihoodModel import add_cutoff_values, add_string_constants
 #from program import *
 from recognition import RecurrentFeatureExtractor, JSONFeatureExtractor
 import random
@@ -79,11 +79,43 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
     def taskOfProgram(self, p, t):
         #raise NotImplementedError
         num_examples = random.choice(self.num_examples_list)
+
+        p = p.visit(ConstantInstantiateVisitor.SINGLE)
+
         preg = p.evaluate([])(pre.String(""))
         t = Task("Helm", t, [((), preg.sample()) for _ in range(num_examples) ])
         return t
         
         #in init: loop over tasks, save lengths, 
+
+
+class ConstantInstantiateVisitor(object):
+    def __init__(self):
+        self.regexes = [
+        pregex.create(".+"),
+        pregex.create("\d+"),
+        pregex.create("\w+"),
+        pregex.create("\s+"),
+        pregex.create("\\u+"),
+        pregex.create("\l+")]
+
+    def primitive(self, e):
+        if e.name == "r_const":
+            #return Primitive("STRING", e.tp, random.choice(self.words))
+            e.value = random.choice(self.regexes).sample() #random string const
+        return e
+
+    def invented(self, e): return e.body.visit(self)
+
+    def index(self, e): return e
+
+    def application(self, e):
+        return Application(e.f.visit(self), e.x.visit(self))
+
+    def abstraction(self, e):
+        return Abstraction(e.body.visit(self))
+#TODO fix
+
 
 
 
@@ -145,7 +177,7 @@ def regex_options(parser):
     parser.add_argument("--primitives",
                         default="concat",
                         help="Which primitive set to use",
-                        choices=["base", "alt1", "easyWords", "alt2", "concat", "reduced"])
+                        choices=["base", "alt1", "easyWords", "alt2", "concat", "reduced", "strConst"])
     parser.add_argument("--extractor", type=str,
                         choices=["hand", "deep", "learned", "json"],
                         default="learned")  # if i switch to json it breaks
@@ -171,6 +203,10 @@ def regex_options(parser):
                         nargs='*',
                         default=False,
                         help="use ll cutoff for training tasks (for probabilistic likelihood model only). default is False,")
+    parser.add_argument("--use_str_const",
+                        action="store_true",
+                        help="use string constants")
+
     """parser.add_argument("--stardecay",
                         type=float,
                         dest="stardecay",
@@ -193,6 +229,9 @@ if __name__ == "__main__":
         CPUs=numberOfCPUs(),
         extras=regex_options)
 
+    #for dreaming
+    ConstantInstantiateVisitor.SINGLE = \
+        ConstantInstantiateVisitor()
 
     #parse use_ll_cutoff
     use_ll_cutoff = args.pop('use_ll_cutoff')
@@ -245,12 +284,17 @@ if __name__ == "__main__":
     test = add_cutoff_values(test, test_ll_cutoff)
     train = add_cutoff_values(train, train_ll_cutoff)
     eprint("added cutoff values to tasks, train: ", train_ll_cutoff, ", test:", test_ll_cutoff )
+
+
+    test = add_string_constants(test)
+    train = add_string_constant(train)
+    eprint("added string constants to test and train")
     
     for task in test + train:
         if len(task.examples) > maxExamples:
             task.examples = task.examples[:maxExamples]
 
-        task.specialTask = ("regex", {"cutoff": task.ll_cutoff})
+        task.specialTask = ("regex", {"cutoff": task.ll_cutoff, "str_const": task.str_const})
         task.examples = [(xs, [y for y in ys ])
                          for xs,ys in task.examples ]
 
@@ -261,7 +305,8 @@ if __name__ == "__main__":
              "alt2": alt2Primitives,
              "easyWords": easyWordsPrimitives,
              "concat": concatPrimitives,
-             "reduced": reducedConcatPrimitives
+             "reduced": reducedConcatPrimitives,
+             "strConst": strConstConcatPrimitives
              }[primtype]
 
     extractor = {
