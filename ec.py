@@ -22,6 +22,7 @@ import torch
 
 class ECResult():
     def __init__(self, _=None,
+                 frontiersOverTime=None,
                  testingSearchTime=None,
                  learningCurve=None,
                  grammars=None,
@@ -37,6 +38,7 @@ class ECResult():
                  hitsAtEachWake=None,
                  timesAtEachWake=None,
                  allFrontiers=None):
+        self.frontiersOverTime = {} # Map from task to [frontier at iteration 1, frontier at iteration 2, ...]
         self.hitsAtEachWake = hitsAtEachWake or []
         self.timesAtEachWake = timesAtEachWake or []
         self.testingSearchTime = testingSearchTime or []
@@ -58,6 +60,11 @@ class ECResult():
     def __repr__(self):
         attrs = ["{}={}".format(k, v) for k, v in self.__dict__.items()]
         return "ECResult({})".format(", ".join(attrs))
+
+    def recordFrontier(self, frontier):
+        t = frontier.task
+        if t not in self.frontiersOverTime: self.frontiersOverTime[t] = []
+        self.frontiersOverTime[t].append(frontier)
 
     # Linux does not like files that have more than 256 characters
     # So when exporting the results we abbreviate the parameters
@@ -427,6 +434,7 @@ def ecIterator(grammar, tasks,
         # Record the new topK solutions
         result.taskSolutions = {f.task: f.topK(topK)
                                 for f in result.allFrontiers.values()}
+        for f in result.allFrontiers.values(): result.recordFrontier(f)
         result.learningCurve += [
             sum(f is not None and not f.empty for f in result.taskSolutions.values())]
         updateTaskSummaryMetrics(result.recognitionTaskMetrics, {f.task: f
@@ -502,6 +510,7 @@ def evaluateOnTestingTasks(result, testingTasks, grammar, _=None,
     updateTaskSummaryMetrics(result.recognitionTaskMetrics,
                                      {f.task: f for f in testingFrontiers if len(f) > 0 },
                                      'frontier')
+    for f in testingFrontiers: result.recordFrontier(f)
     result.testSearchTime = {t: tm for t, tm in times.items() if tm is not None}
     times = [t for t in times.values() if t is not None ]
     eprint("\n".join(f.summarize() for f in testingFrontiers))
