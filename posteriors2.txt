@@ -578,49 +578,49 @@ Data column no. 193
 	 \u(\d)+\d
 	 samples:
 	 ['G806', 'R59', 'I354669', 'C3560', 'K64']
-Data column no. 752
+Data column no. 752g 
 	 ['MPAS, PA-C', 'DNP', 'F.N.P.', 'N.P.', 'FP']
 	 best Posterior:
 	 (\u)+([0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~ 	])*(\u)+(\.)*
 	 samples:
 	 ['DXVWQU', 'JTSJtA', 'GeVEKX.', 'HON\tXRGFS', 'ICF\\FSQXL..']
-Data column no. 914
+Data column no. 914g R\d\d\d\d
 	 ['R4703', 'R3552', 'R4708', 'R3452', 'R4196']
 	 best Posterior:
 	 \u(\d)+\d\d\d
 	 samples:
 	 ['X279372', 'Z97364', 'D3468', 'S7220', 'L24631']
-Data column no. 510
+Data column no. 510g P\d000\d\d\d\d
 	 ['P60004454', 'P20005286', 'P20005245', 'P20005252', 'P20004669']
 	 best Posterior:
 	 P(\d)+(0(00)+\d\d)+\d\d
 	 samples:
 	 ['P400083000009598', 'P700000940009571', 'P000000310005325', 'P8840000502', 'P90000000007552']
-Data column no. 443
+Data column no. 443g (W|L) \d-\d
 	 ['W 4-2', 'W 4-3', 'L 7-10', 'W 8-3', 'L 7-9']
 	 best Posterior:
 	 \u[0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~ 	]\d-(\d)?\d
 	 samples:
 	 ['Qk9-60', 'Bc8-96', 'Z\t7-84', 'N#5-28', 'Jd7-6']
-Data column no. 20
+Data column no. 20g MDEL\d\d?\.\d\l
 	 ['MDEL18.1a', 'MDEL1.2c', 'MDEL18.1b', 'MDEL6.2b', 'MDEL13.2b']
 	 best Posterior:
 	 \u\u\u\u(\d)+\.([abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789])+
 	 samples:
 	 ['JYMD5301.gOu', 'SHXK26.s', 'DRGO0.k', 'JRYH71.Q', 'YLVE35.zL']
-Data column no. 64
+Data column no. 64g c04p0100(\l|\d)
 	 ['c04p0100a', 'c04p01007', 'c04p01009', 'c04p0100c', 'c04p01002']
 	 best Posterior:
 	 \l\d\d\l0\d\d\d[abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789]
 	 samples:
 	 ['v08z0774c', 'i26m0117J', 'r66h0714C', 'w38s08577', 'z27i0783n']
-Data column no. 301
+Data column no. 301g (\u|\d)+(-(\u|\d)+)*
 	 ['S6E-S-216M', 'MC160', 'I5-S-157M', 'N4-S-38', 'ZEN6-NL-SS-B']
 	 best Posterior:
 	 (\u(\d)*(-(\d)*)?)+
 	 samples:
 	 ['Z5-23', 'R989-H', 'O40-', 'V', 'V42968-']
-Data column no. 664
+Data column no. 664g N\d
 	 ['N1', 'N7', 'N8', 'N5', 'N2']
 	 best Posterior:
 	 N\d
