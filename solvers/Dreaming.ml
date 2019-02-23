@@ -337,12 +337,13 @@ let regex_hash  ?timeout:(timeout=0.001) request inputs : program -> PolyList.t 
     | W -> PolyValue.Integer(3)
     | L -> PolyValue.Integer(4)
     | U -> PolyValue.Integer(5)
-  in 
+  in
+  let default_constant = build_constant_regex ['c';'o';'n';'s';'t';'9';'#';] in
   fun expression ->
     if number_of_free_parameters expression > 1 then None else 
       run_for_interval ~attempts:2 timeout
         (fun () -> 
-           let r = expression |> substitute_constant_regex ['c';'o';'n';'s';'t';'9';'#';] |>
+           let r = expression |> substitute_constant_regex default_constant |>
                    regex_of_program |> canonical_regex in
            [poly_of_regex r])
 ;;
