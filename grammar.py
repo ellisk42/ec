@@ -1060,9 +1060,11 @@ class ContextualGrammar:
         n = 0
         u = [0.]*len(self.primitives)
         primitives = list(sorted(self.primitives, key=str))
+        noInventions = all( not p.isInvented for p in primitives )
         primitive2index = {primitive: i
                            for i, primitive in enumerate(primitives)
-                           if primitive.isInvented }
+                           if primitive.isInvented or noInventions }
+        eprint(primitive2index)
         ns = 10000
         with timing(f"calculated expected uses using Monte Carlo simulation w/ {ns} samples"):
             for _ in range(ns):
@@ -1072,7 +1074,7 @@ class ContextualGrammar:
                 if debug and n < 10:
                     eprint(debug, p)
                 for _, child in p.walk():
-                    if not child.isInvented: continue
+                    if child not in primitive2index: continue
                     u[primitive2index[child]] += 1.0
         u = np.array(u)/n
         if debug:

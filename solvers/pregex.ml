@@ -297,6 +297,17 @@ ignore(primitive "r_maybe" ((tregex @> tregex) @> tregex @> tregex)
 ignore(primitive "r_alt" ((tregex @> tregex) @> (tregex @> tregex) @> tregex @> tregex)
          (fun a b k -> Concat(Alt(a empty_regex, b empty_regex),k)));;
 
+ignore(primitive "r_const" (tregex @> tregex)
+         ());;
+
+let rec substitute_constant_regex constant p = match p with
+  | Abstraction(b) -> Abstraction(substitute_constant_regex constant b)
+  | Apply(f, x) -> Apply(substitute_constant_regex constant f,
+                         substitute_constant_regex constant x)
+  | Invented(t,b) -> Invented(t, substitute_constant_regex constant b)
+  | Primitive(t,"r_const",_) ->
+    Primitive(t,"r_const", ref (fun k -> Concat(Constant(String(constant)), k)) |> magical)
+  | Index(_) | Primitive(_,_,_) -> p
 
 let disallowed_regex = Hashtbl.Poly.create ();;
 
@@ -357,9 +368,25 @@ register_special_task "regex"
     assert (task_type = tregex @> tregex);
     examples |> List.iter ~f:(fun (xs,_) -> assert (List.length xs = 0));
 
-    let observations : char list list = examples |> List.map ~f:(fun (_,y) -> y |> magical) in 
+    let observations : char list list = examples |> List.map ~f:(fun (_,y) -> y |> magical) in
+
+    let const =
+      try Some(extra |> member "str_const" |> to_string |> String.to_list)
+      with _ -> None
+    in
+    let const_cost = match const with
+      | None -> 0.
+      | Some(k) -> (List.length k |> Float.of_int) *. (log 96.)
+    in
 
     let log_likelihood expression =
+      let number_of_constants = number_of_free_parameters expression in
+      if number_of_constants > 1 || number_of_constants = 1 && is_none const then log 0. else
+        let expression = match const with
+          | Some(const) -> substitute_constant_regex const expression
+          | None -> expression
+        in
+      
       match run_for_interval timeout
               (fun () ->
                  let r : pregex = regex_of_program expression in
@@ -369,35 +396,16 @@ register_special_task "regex"
                      let this_score = preg_match r e in
                      if is_invalid this_score then log 0. else this_score +. loop es
                  in
-
-             	(* loop observations ) *) 
-                 (* let total_char_num = observations |> List.map ~f:List.length |> List.fold_right ~init:0 ~f:(+) |> Float.of_int in *)
-                 (* Printf.eprintf "total_char_num %f\n" total_char_num; *)
-                 let total_ll = loop observations in
-                 (* let per_char_ll = total_ll /. total_char_num in *)
-                 
-                 (* let _ = if per_char_ll <> (log 0.) then 
-                 (Printf.eprintf "per_char_ll %f\n" per_char_ll; 
-                 Printf.eprintf "total_char_num %f\n" total_char_num;
-                 Printf.eprintf "total_ll %f\n" total_ll;
-                 () ) in *)
-
-                 (*Printf.eprintf "ll %f\n" per_char_ll; *)
-                 (* per_char_ll *)
-              total_ll)              
+                 loop observations)
       with
       | None -> log 0.
       | Some(l) -> 
       	(let cutoff_option = extra |> member "cutoff" |> to_number_option in
-      	match cutoff_option with
-      	| None -> 
-      		(* Printf.eprintf "l %f\n" l; *)
-      		l
-      	| Some(cutoff) -> 
-      		(* let _ = if l <> (log 0.) then 
-      		(Printf.eprintf "Cutoff %f\n" cutoff;
-      		Printf.eprintf "l %f\n" l;  ()) in *)
-      		if l >= cutoff then l else log 0.)
+      	 match cutoff_option with
+         | None -> l        
+      	 | Some(cutoff) -> 
+      	  if l >= cutoff then l -. (Float.of_int number_of_constants) *. const_cost
+         else log 0.)
     in 
 
     {name; task_type; log_likelihood;} )

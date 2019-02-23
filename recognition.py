@@ -1414,7 +1414,7 @@ class LowRank(nn.Module):
             
 
 class DummyFeatureExtractor(nn.Module):
-    def __init__(self, tasks):
+    def __init__(self, tasks, testingTasks=[], cuda=False):
         super(DummyFeatureExtractor, self).__init__()
         self.outputDimensionality = 1
         self.recomputeTasks = False

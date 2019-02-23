@@ -151,6 +151,9 @@ def text_options(parser):
         "--noLength", action="store_true", default=False,
         help="Disable built-in length primitive")
     parser.add_argument(
+        "--noUnfold", action="store_true", default=False,
+        help="Disable built-in unfold primitive")
+    parser.add_argument(
         "--compete",
         nargs='+',
         default=None,
@@ -204,11 +207,14 @@ if __name__ == "__main__":
 
     haveLength = not arguments.pop("noLength")
     haveMap = not arguments.pop("noMap")
+    haveUnfold = not arguments.pop("noUnfold")
     eprint(f"Including map as a primitive? {haveMap}")
     eprint(f"Including length as a primitive? {haveLength}")
+    eprint(f"Including unfold as a primitive? {haveUnfold}")
     baseGrammar = Grammar.uniform(primitives + [p
                                                 for p in bootstrapTarget()
                                                 if (p.name != "map" or haveMap) and \
+                                                (p.name != "unfold" or haveUnfold) and \
                                                 (p.name != "length" or haveLength)])
     challengeGrammar = baseGrammar  # Grammar.uniform(targetTextPrimitives)
 

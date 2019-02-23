@@ -339,9 +339,11 @@ let regex_hash  ?timeout:(timeout=0.001) request inputs : program -> PolyList.t 
     | U -> PolyValue.Integer(5)
   in 
   fun expression ->
-    run_for_interval ~attempts:2 timeout
-      (fun () -> 
-         let r = expression |> regex_of_program |> canonical_regex in
-         [poly_of_regex r])
+    if number_of_free_parameters expression > 1 then None else 
+      run_for_interval ~attempts:2 timeout
+        (fun () -> 
+           let r = expression |> substitute_constant_regex ['c';'o';'n';'s';'t';'9';'#';] |>
+                   regex_of_program |> canonical_regex in
+           [poly_of_regex r])
 ;;
 register_special_helmholtz "regex" regex_hash;;

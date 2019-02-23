@@ -990,10 +990,10 @@ def addTaskMetrics_(result, path):
                                                              if len(f) > 0},
                              'every_expectedProductionUses')
     if False:
-        eprint(f"About to do an expensive Monte Carlo simulation w/ {len(everyTask)} tasks")
+        eprint(f"About to do an expensive Monte Carlo simulation w/ {len(tasks)} tasks")
         updateTaskSummaryMetrics(result.recognitionTaskMetrics,
                                  {task: result.recognitionModel.grammarOfTask(task).untorch().expectedUsesMonteCarlo(task.request, debug=False)
-                                  for task in everyTask },
+                                  for task in tasks },
                                  'expectedProductionUsesMonteCarlo')
     try:
         updateTaskSummaryMetrics(result.recognitionTaskMetrics,

@@ -215,6 +215,10 @@ register_special_task "differentiable"
     let lossThreshold = try Some(extras |> member "lossThreshold" |> to_float) with _ -> None in
     let clipOutput = try Some(extras |> member "clipOutput" |> to_float) with _ -> None in
     let clipLoss = try Some(extras |> member "clipLoss" |> to_float) with _ -> None in
+    let proportional = try
+        extras |> member "proportional" |> to_bool
+      with _ -> false
+    in
     
                                          
   (* Process the examples and wrap them inside of placeholders *)
@@ -232,7 +236,12 @@ register_special_task "differentiable"
          let (p,parameters) = replace_placeholders expression in
          assert (List.length parameters <= maxParameters);
         if List.length parameters > maxParameters then log 0. else 
-        let p = analyze_lazy_evaluation p in
+          let p = analyze_lazy_evaluation p in
+          (* let predictions = examples |> List.map ~f:(fun (xs,_) -> *)
+          (*     run_for_interval timeout (fun () -> run_lazy_analyzed_with_arguments p xs)) *)
+          (* in *)
+          (* if List.exists predictions ~f:is_none then 0. else *)
+          (*   let predictions = predictions |> List.map ~f:get_some in *)
         (* Returns loss *)
         let rec loop : 'a list -> Differentiation.variable option = function
           | [] -> Some(~$ 0.)
@@ -243,9 +252,6 @@ register_special_task "differentiable"
                       (fun () -> run_lazy_analyzed_with_arguments p xs) with
               | None -> None
               | Some (prediction) ->
-                (* Printf.eprintf "PREDICTION\t%s\n" *)
-                (*   (prediction |> magical |> List.map ~f:(fun v -> v.data |> get_some |> Printf.sprintf "%f;") *)
-                (*    |> join ~separator:" "); *)
                 match loop e with
                 | None -> None
                 | Some(later_loss) ->
@@ -260,12 +266,18 @@ register_special_task "differentiable"
         | Some(l) ->
           let n = List.length examples |> Int.to_float in
           let d = List.length parameters |> Int.to_float in
-          let l = l *& (~$ (1. /. n)) in
-          let l = restarting_optimize (rprop ~lr ~decay ~grow)
-              ~attempts:restarts
-              ~update:0
-              ~iterations:(if List.length parameters = 0 then 0 else steps)
-              parameters l
+          let l = if proportional && List.length parameters > 0 then begin 
+              assert (List.length parameters = 1);
+              parameters |> List.iter ~f:(fun p -> update_variable p 1.);
+              assert (false)
+            end else 
+                let l = l *& (~$ (1. /. n)) in
+                let l = restarting_optimize (rprop ~lr ~decay ~grow)
+                    ~attempts:restarts
+                    ~update:0
+                    ~iterations:(if List.length parameters = 0 then 0 else steps)
+                    parameters l
+                in l
           in
           match lossThreshold with
           | None -> 0. -. d*.parameterPenalty -. n *. l /. temperature

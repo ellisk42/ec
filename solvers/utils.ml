@@ -55,6 +55,9 @@ let fold1 f l = List.fold_right ~init:(List.hd_exn l) ~f:f (List.tl_exn l)
 let is_some = function
   | None -> false
   | _ -> true;;
+let is_none = function
+  | None -> true
+  | _ -> false;;
 let get_some = function
   | Some(x) -> x
   | _ -> raise (Failure "get_some");;

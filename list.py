@@ -227,6 +227,9 @@ def list_options(parser):
         "--noMap", action="store_true", default=False,
         help="Disable built-in map primitive")
     parser.add_argument(
+        "--noUnfold", action="store_true", default=False,
+        help="Disable built-in unfold primitive")
+    parser.add_argument(
         "--noLength", action="store_true", default=False,
         help="Disable built-in length primitive")
     parser.add_argument(
@@ -354,11 +357,14 @@ if __name__ == "__main__":
              "rich": primitives}[args.pop("primitives")]()
     haveLength = not args.pop("noLength")
     haveMap = not args.pop("noMap")
+    haveUnfold = not args.pop("noUnfold")
     eprint(f"Including map as a primitive? {haveMap}")
     eprint(f"Including length as a primitive? {haveLength}")
+    eprint(f"Including unfold as a primitive? {haveUnfold}")
     baseGrammar = Grammar.uniform([p
                                    for p in prims
                                    if (p.name != "map" or haveMap) and \
+                                   (p.name != "unfold" or haveUnfold) and \
                                    (p.name != "length" or haveLength)])
 
     extractor = {
