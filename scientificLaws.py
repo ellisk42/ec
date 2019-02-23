@@ -330,13 +330,14 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
         return [(tuple(map(t, xs)), t(y))
                 for xs, y in examples]
 
-    def __init__(self, tasks):
+    def __init__(self, tasks, examples, testingTasks=[], cuda=False):
         lexicon = {c
-                   for t in tasks
+                   for t in tasks + testingTasks
                    for xs, y in self.tokenize(t.examples)
                    for c in reduce(lambda u, v: u + v, list(xs) + [y])}
 
         super(LearnedFeatureExtractor, self).__init__(lexicon=list(lexicon),
+                                                      cuda=cuda,
                                                       H=64,
                                                       tasks=tasks,
                                                       bidirectional=True)
@@ -372,7 +373,7 @@ if __name__ == "__main__":
                            testingTasks=[],
                            **commandlineArguments(
                                compressor="ocaml",
-                               featureExtractor=LearnedFeatureExtractor,
+                               featureExtractor=DummyFeatureExtractor,
                                iterations=10,
                                CPUs=numberOfCPUs(),
                                structurePenalty=1.,

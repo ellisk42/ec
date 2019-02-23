@@ -237,7 +237,14 @@ let rprop ?lr:(lr=0.1) ?decay:(decay=0.5) ?grow:(grow=1.2) =
       previous_signs := new_signs;
       updates
     end
-    
+
+
+let proportional_optimize parameters loss_pairs =
+  parameters |> List.iter ~f:(fun p -> update_variable p 1.);
+  let prediction_variables = loss_pairs |> List.map ~f:fst in
+  prediction_variables |> List.iter ~f:zero_gradients;
+  let predictions = prediction_variables |> List.map ~f:forward in
+  assert (false) (* TODO *)
 
 let test_differentiation () =
   let x = ~$ 10.0 in
@@ -313,24 +320,52 @@ let rec placeholder_data t x =
 
 exception DifferentiableBadShape
 
-let rec polymorphic_sse ?clipOutput:(clipOutput=None) ?clipLoss:(clipLoss=None) = function
-  | TCon("vector",_,_) -> polymorphic_sse ~clipOutput ~clipLoss (tlist treal)
-  | TCon("real",_,_) -> magical (fun p y ->
-      let p = match clipOutput with
-        | None -> p
-        | Some(clip) -> clamp ~l:(-.clip) ~u:clip p
-      in
-      let l = square (p -& y) in
-      match clipLoss with
-      | None -> l
-      | Some(clip) -> clamp ~l:0. ~u:clip l)
+(* Takes as input a type *)
+(* Returns a function from (prediction, target) to [(prediction_variable, target_variable)] *)
+let rec polymorphic_loss_pairs : tp -> 'a -> 'b -> (variable*variable) list = function
+  | TCon("vector",_,_) -> polymorphic_loss_pairs (tlist treal)
+  | TCon("real",_,_) -> magical (fun p y -> [(p,y)])
   | TCon("list",[tp],_) ->
-    let e = polymorphic_sse ~clipOutput ~clipLoss tp in
+    let e = polymorphic_loss_pairs tp in
     magical (fun p y ->
         try
-          List.fold2_exn p y ~init:(~$0.) ~f:(fun a _p _y -> a +& (e _p _y))
+          List.fold2_exn p y ~init:[] ~f:(fun a _p _y -> a @ (e _p _y))
         with _ -> raise DifferentiableBadShape)
   | t -> raise (Failure ("placeholder_data: bad type "^(string_of_type t)))
+
+
+let rec polymorphic_sse ?clipOutput:(clipOutput=None) ?clipLoss:(clipLoss=None) t =
+  let get_pairs = polymorphic_loss_pairs t in
+  fun p y ->
+    let loss_pairs = get_pairs p y in
+    loss_pairs |> List.map ~f:(fun (p,y) ->
+        let p = match clipOutput with
+          | None -> p
+          | Some(clip) -> clamp ~l:(-.clip) ~u:clip p
+        in
+        let l = square (p -& y) in
+        match clipLoss with
+        | None -> l
+        | Some(clip) -> clamp ~l:0. ~u:clip l) |>
+    List.reduce_exn ~f:(+&)
+(* let rec polymorphic_sse ?clipOutput:(clipOutput=None) ?clipLoss:(clipLoss=None) = function *)
+(*   | TCon("vector",_,_) -> polymorphic_sse ~clipOutput ~clipLoss (tlist treal) *)
+(*   | TCon("real",_,_) -> magical (fun p y -> *)
+(*       let p = match clipOutput with *)
+(*         | None -> p *)
+(*         | Some(clip) -> clamp ~l:(-.clip) ~u:clip p *)
+(*       in *)
+(*       let l = square (p -& y) in *)
+(*       match clipLoss with *)
+(*       | None -> l *)
+(*       | Some(clip) -> clamp ~l:0. ~u:clip l) *)
+(*   | TCon("list",[tp],_) -> *)
+(*     let e = polymorphic_sse ~clipOutput ~clipLoss tp in *)
+(*     magical (fun p y -> *)
+(*         try *)
+(*           List.fold2_exn p y ~init:(~$0.) ~f:(fun a _p _y -> a +& (e _p _y)) *)
+(*         with _ -> raise DifferentiableBadShape) *)
+(*   | t -> raise (Failure ("placeholder_data: bad type "^(string_of_type t))) *)
   
 
 
@@ -343,7 +378,8 @@ let test_program_differentiation() =
 
   Printf.printf "%f" (update_network g);;
 
-  
+
+
 
 (* test_differentiation();; *)
 
