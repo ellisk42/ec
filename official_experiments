@@ -74,6 +74,12 @@ python launch.py --checkpoint experimentOutputs/regex/2019-02-12T21:51:03.349621
 #fixed bigram posterior
 for SEED in `seq 1 3`; do python launch.py -k  -c -z n1-highmem-64 regex_b40_mask_posterior "python regexes.py --tasks new --maxTasks 256 --ll_cutoff bigram --split 0.5 -t 3600  --pseudoCounts 30 --aic 1.0 --structurePenalty 1.5 --topK 2 --arity 3 --maximumFrontier 5 -i 10 -R 3600 --testingTimeout 1800 --biasOptimal --contextual --mask --auxiliary --taskReranker randomShuffle --taskBatchSize 40 --seed $SEED" ; done
 
+#Runs with string constants:
+for SEED in `seq 1 3`; do python launch.py -k  -c -z n1-highmem-64 regex_b40_strConst "python regexes.py --tasks new --maxTasks 256 --ll_cutoff bigram None --split 0.5 -t 3600  --pseudoCounts 30 --aic 1.0 --structurePenalty 1.5 --topK 2 --arity 3 --maximumFrontier 5 -i 10 -R 3600 --testingTimeout 1800 --biasOptimal --contextual --mask --auxiliary --taskReranker randomShuffle --taskBatchSize 40 --seed $SEED --primitives strConst --use_str_const"; done
+
+for SEED in `seq 1 3`; do python launch.py -k  -c -z n1-highmem-64 regex_b40_strConst_noTC "python regexes.py --tasks new --maxTasks 256 --ll_cutoff None --split 0.5 -t 3600  --pseudoCounts 30 --aic 1.0 --structurePenalty 1.5 --topK 2 --arity 3 --maximumFrontier 5 -i 10 -R 3600 --testingTimeout 1800 --biasOptimal --contextual --mask --auxiliary --taskReranker randomShuffle --taskBatchSize 40 --seed $SEED --primitives strConst --use_str_const"; done
+
+
 TOWER
 for SEED in `seq 1 3`; do python launch.py -c  -k -z n1-highmem-64 tower_random_shuffle_10_120s "python tower.py -t 120  --pseudoCounts 30 --tasks old --aic 1.0 --structurePenalty 1.5 --topK 2 --arity 3 --maximumFrontier 5 -i 10 --storeTaskMetrics --split 0.5 --testingTimeout 600 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10 --primitives old --recognitionTimeout 3600 -RS 5000 --seed $SEED" ; done # did not do well
 
