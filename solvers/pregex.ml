@@ -305,11 +305,19 @@ let rec substitute_constant_regex constant p = match p with
   | Apply(f, x) -> Apply(substitute_constant_regex constant f,
                          substitute_constant_regex constant x)
   | Invented(t,b) -> Invented(t, substitute_constant_regex constant b)
-  | Primitive(t,"r_const",_) ->
-    Primitive(t,"r_const", ref (fun k -> Concat(Constant(String(constant)), k)) |> magical)
+  | Primitive(t,"r_const",_) -> constant
   | Index(_) | Primitive(_,_,_) -> p
 
 let disallowed_regex = Hashtbl.Poly.create ();;
+let constant_to_regex = Hashtbl.Poly.create();;
+let build_constant_regex characters =
+  let rec loop = function
+    | [] -> Index(0)
+    | x :: xs -> Apply(Hashtbl.find_exn constant_to_regex x,
+                       loop xs)
+  in Abstraction(loop characters);;
+
+
 
 [
     ('#', "hash");
@@ -350,11 +358,15 @@ let disallowed_regex = Hashtbl.Poly.create ();;
 
 
 
-dot_ls |> List.iter ~f: (fun i -> match Hashtbl.find disallowed_regex i with
-	| None -> ignore(primitive (Printf.sprintf "string_%c" i) (tregex @> tregex)
-         (fun k -> Concat(Constant(String([i])),k)))
-	| Some(datum) -> ignore(primitive (Printf.sprintf "string_%s" datum) (tregex @> tregex)
-         (fun k -> Concat(Constant(String([i])),k)))) ;;
+dot_ls |> List.iter ~f: (fun i ->
+    let name =
+      match Hashtbl.find disallowed_regex i with
+	| None -> Printf.sprintf "string_%c" i
+	| Some(datum) -> Printf.sprintf "string_%s" datum
+    in
+    let the_primitive = primitive name (tregex @> tregex)
+        (fun k -> Concat(Constant(String([i])),k)) in 
+    Hashtbl.set constant_to_regex ~key:i ~data:the_primitive);;
 
 
 let regex_of_program expression : pregex =
@@ -371,14 +383,19 @@ register_special_task "regex"
     let observations : char list list = examples |> List.map ~f:(fun (_,y) -> y |> magical) in
 
     let const =
-      try Some(extra |> member "str_const" |> to_string |> String.to_list)
+      try
+        let k = extra |> member "str_const" |> to_string |> String.to_list in
+        if List.length k > 0 then Some(k) else None
       with _ -> None
     in
     let const_cost = match const with
       | None -> 0.
       | Some(k) -> (List.length k |> Float.of_int) *. (log 96.)
     in
-
+    let const = match const with
+      | None -> None
+      | Some(k) -> Some(build_constant_regex k)
+    in
     let log_likelihood expression =
       let number_of_constants = number_of_free_parameters expression in
       if number_of_constants > 1 || number_of_constants = 1 && is_none const then log 0. else
@@ -386,26 +403,26 @@ register_special_task "regex"
           | Some(const) -> substitute_constant_regex const expression
           | None -> expression
         in
-      
-      match run_for_interval timeout
-              (fun () ->
-                 let r : pregex = regex_of_program expression in
-                 let rec loop = function
-                   | [] -> 0.
-                   | e :: es ->
-                     let this_score = preg_match r e in
-                     if is_invalid this_score then log 0. else this_score +. loop es
-                 in
-                 loop observations)
-      with
-      | None -> log 0.
-      | Some(l) -> 
-      	(let cutoff_option = extra |> member "cutoff" |> to_number_option in
-      	 match cutoff_option with
-         | None -> l        
-      	 | Some(cutoff) -> 
-      	  if l >= cutoff then l -. (Float.of_int number_of_constants) *. const_cost
-         else log 0.)
+
+        match run_for_interval timeout
+                (fun () ->
+                   let r : pregex = regex_of_program expression in
+                   let rec loop = function
+                     | [] -> 0.
+                     | e :: es ->
+                       let this_score = preg_match r e in
+                       if is_invalid this_score then log 0. else this_score +. loop es
+                   in
+                   loop observations)
+        with
+        | None -> log 0.
+        | Some(l) -> 
+      	  (let cutoff_option = extra |> member "cutoff" |> to_number_option in
+      	   match cutoff_option with
+           | None -> l        
+      	   | Some(cutoff) -> 
+      	     if l >= cutoff then l -. (Float.of_int number_of_constants) *. const_cost
+             else log 0.)
     in 
 
     {name; task_type; log_likelihood;} )
@@ -431,3 +448,4 @@ Hash_set.Poly.create()
 String.to_list()
 ref and !
 Hash_set.mem candidates *)
+
