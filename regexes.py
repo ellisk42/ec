@@ -253,6 +253,7 @@ if __name__ == "__main__":
         task.specialTask = ("regex", {"cutoff": task.ll_cutoff})
         task.examples = [(xs, [y for y in ys ])
                          for xs,ys in task.examples ]
+        task.maxParameters = 1
 
     # from list stuff
     primtype = args.pop("primitives")

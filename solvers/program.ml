@@ -438,7 +438,7 @@ let rec number_of_real_constants = function
   | Index(_) -> 0
 
 let rec number_of_free_parameters = function
-  | Primitive(_,"REAL",_) | Primitive(_,"STRING",_) -> 1
+  | Primitive(_,"REAL",_) | Primitive(_,"STRING",_) | Primitive(_,"r_const",_) -> 1
   | Primitive(_,_,_) -> 0
   | Invented(_,b) | Abstraction(b) -> number_of_free_parameters b
   | Apply(f,x) -> number_of_free_parameters f + number_of_free_parameters x
