@@ -92,12 +92,12 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
 class ConstantInstantiateVisitor(object):
     def __init__(self):
         self.regexes = [
-        pregex.create(".+"),
-        pregex.create("\d+"),
-        pregex.create("\w+"),
-        pregex.create("\s+"),
-        pregex.create("\\u+"),
-        pregex.create("\l+")]
+        pre.create(".+"),
+        pre.create("\d+"),
+        pre.create("\w+"),
+        pre.create("\s+"),
+        pre.create("\\u+"),
+        pre.create("\l+")]
 
     def primitive(self, e):
         if e.name == "r_const":
@@ -230,8 +230,7 @@ if __name__ == "__main__":
         extras=regex_options)
 
     #for dreaming
-    ConstantInstantiateVisitor.SINGLE = \
-        ConstantInstantiateVisitor()
+
 
     #parse use_ll_cutoff
     use_ll_cutoff = args.pop('use_ll_cutoff')
@@ -286,9 +285,13 @@ if __name__ == "__main__":
     eprint("added cutoff values to tasks, train: ", train_ll_cutoff, ", test:", test_ll_cutoff )
 
 
-    test = add_string_constants(test)
-    train = add_string_constant(train)
-    eprint("added string constants to test and train")
+    if args.pop("use_str_const"):
+        assert args["primitives"] == "strConst"
+        ConstantInstantiateVisitor.SINGLE = \
+            ConstantInstantiateVisitor()
+        test = add_string_constants(test)
+        train = add_string_constants(train)
+        eprint("added string constants to test and train")
     
     for task in test + train:
         if len(task.examples) > maxExamples:

@@ -268,8 +268,7 @@ def solveForTask_ocaml(_=None,
 
     message = json.dumps(message)
     # uncomment this if you want to save the messages being sent to the solver
-    with open("message", "w") as f:
-        f.write(message)
+    
 
     try:
         process = subprocess.Popen("./solver",
@@ -279,6 +278,15 @@ def solveForTask_ocaml(_=None,
         response = json.loads(response.decode("utf-8"))
     except OSError as exc:
         raise exc
+
+    except:
+        print("response:", response)
+        print("error:", error)
+        with open("message", "w") as f:
+            f.write(message)
+        print("message,", message)
+        assert False, "MAX RAISE"
+
 
     pc = 0  # TODO
     frontiers = {}
