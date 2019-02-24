@@ -3,372 +3,434 @@
 
 TESTING ONLY:
 Data column no. 776 - MISS close
+JPCLN\d\d\d\.png
 	 ['JPCLN034.png', 'JPCLN115.png', 'JPCLN103.png', 'JPCLN049.png', 'JPCNN030.png']
 	 best Posterior:
 	 \u\uC\u\u(\d)*\.(\d)*(\l)*
 	 samples:
 	 ['TNCYW.ke', 'OMCRA.0', 'HZCDU.c', 'QMCNB7.9', 'UHCSI8.97h']
 Data column no. 922 - MISS close
+WHS\d_\d\d\d?
 	 ['WHS4_107', 'WHS7_103', 'WHS7_105', 'WHS6_116', 'WHS9_85']
 	 best Posterior:
 	 WH\u(\d)*_(\d)*
 	 samples:
 	 ['WHI1121_9', 'WHY_', 'WHH8_07214', 'WHH_', 'WHC2_']
 Data column no. 354 - HIT
+\u+
 	 ['WSW', 'NNW', 'W', 'NNE', 'E']
 	 best Posterior:
 	 (\u|(\u)\u)|(\u)
 	 samples:
 	 ['I', 'I', 'OQ', 'U', 'EP']
 Data column no. 523 - MISS
+(\u)+|\.
 	 ['CONJ', 'ADP', 'VERB', 'ADV', '.']
 	 best Posterior:
 	 (\u)*(\d(\u)*)*(\.(\d)*)|(\u)
 	 samples:
 	 ['NR.4', '4ZH.', '9LL', '8SQ.', '.']
 Data column no. 184 - HIT
+\.\d\d\d\d\d\d\d
 	 ['.1301411', '.2883103', '.1275464', '.1376095', '.2999201']
 	 best Posterior:
 	 \.(\d)*(0)*(\d)*
 	 samples:
 	 ['.249', '.08', '.20', '.0400493', '.900000']
 Data column no. 501 - MISS
+\u\d\d
 	 ['u43', 'u10', 'u16', 'u58', 'u02']
 	 best Posterior:
 	 \l(0)*(\d)*
 	 samples:
 	 ['s', 'w7', 'u77', 'c', 'z']
 Data column no. 760 - HIT
+\u\u
 	 ['PM', 'PF', 'RF', 'DM', 'GS']
 	 best Posterior:
 	 \u\u
 	 samples:
 	 ['JQ', 'GO', 'UW', 'BJ', 'DV']
 Data column no. 49 - HIT
+(\u)+\u\d
 	 ['SB1', 'OND', 'NH', 'CH', 'PSC']
 	 best Posterior:
 	 |(\u)\u\u(\d)*
 	 samples:
 	 ['FAL', 'XZ125', 'TU18', 'DVF36', 'JPL']
 Data column no. 732 - MISS
+(\u|H)R5\d\d
 	 ['SR504', 'HR530', 'HR512', 'HR559', 'HR514']
 	 best Posterior:
 	 \u\u(\d)*
 	 samples:
 	 ['RF', 'RW95', 'WS0', 'FW0', 'ZO']
 Data column no. 450 - HIT
+-\d(\.(\d)+)?
 	 ['-4.26', '-1.69', '-3.91', '-1.622', '-1']
 	 best Posterior:
 	 -(\d)*\d|(*(\d)*\.(\d)*)
 	 samples:
 	 ['-7', '-63145.0', '-35.17', '-2', '-63.2']
 Data column no. 350 - HIT
+\u\u
 	 ['MN', 'SD', 'WY', 'NE', 'MO']
 	 best Posterior:
 	 \u\u
 	 samples:
 	 ['AU', 'KP', 'NX', 'WB', 'BP']
 Data column no. 467 - MISS
+hu\d(\d|\u)(\d|\u)(\d|\u)(\d|\u)(\d|\u)
 	 ['hu48AC54', 'hu264A0A', 'hu294056', 'hu26B551', 'hu3CDB6A']
 	 best Posterior:
 	 h\l(\u)*(\d(\u)*)*
 	 samples:
 	 ['hf3G', 'hm1', 'hqD', 'hp5', 'hwE6R0']
 Data column no. 622 - HIT (barely)
+A(\d|\u)**
 	 ['AJDJ6SQUDORP6', 'A35C4777EXZZQH', 'A2C9H5QRLXXICT', 'A1JVVYYO7G56DS', 'A382RYVVZOJ8PX']
 	 best Posterior:
 	 A(\u)*(\d(\u)*)*
 	 samples:
 	 ['AU', 'AIDPZ4KP', 'AEDI4', 'ABGE84CBN4', 'A7']
 Data column no. 476 - HIT
+\u\u\u?
 	 ['JJ', 'RBR', 'EX', 'NNS', 'VBN']
 	 best Posterior:
 	 |(\u)\u\u
 	 samples:
 	 ['AB', 'FZ', 'PLM', 'OXH', 'UGS']
 Data column no. 554 - HIT
+\u\u
 	 ['CA', 'VA', 'FL', 'CO', 'KY']
 	 best Posterior:
 	 (C)|(\u)(A)|(\u)
 	 samples:
 	 ['CC', 'LA', 'CA', 'CA', 'CV']
 Data column no. 940 - MISS
+\u\u?
 	 ['IH', 'AP', 'RS', 'F', 'MX']
 	 best Posterior:
 	 |(\u)|(\u)
 	 samples:
 	 ['', 'M', 'G', 'F', 'AX']
 Data column no. 496 - HIT
+\u\u
 	 ['GA', 'PA', 'LA', 'IL', 'VA']
 	 best Posterior:
 	 (A)|(\u)(A)|(\u)
 	 samples:
 	 ['QA', 'AE', 'AA', 'NI', 'AA']
 Data column no. 369 - HIT
+\u\u\u
 	 ['PHI', 'USA', 'SCO', 'RUS', 'SVK']
 	 best Posterior:
 	 (S)|(\u)\u\u
 	 samples:
 	 ['NJO', 'SHW', 'WXZ', 'SVJ', 'YSH']
 Data column no. 596 - HIT
+\u\u\u?
 	 ['NP', 'AO', 'CP', 'SPP', 'FP']
 	 best Posterior:
 	 |(\u)\u\u
 	 samples:
 	 ['FAE', 'PU', 'YV', 'ZNY', 'AEN']
 Data column no. 720 - MISS
+\(\d\d\d\) \d\d\d-\d\d\d\d
 	 ['(715) 967-2697', '(608) 819-2220', '(920) 988-2524', '(608) 442-0253', '(262) 723-4043']
 	 best Posterior:
 	 ([0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~ 	](0)*(\d)*)*(\d)*-(\d)*\d
 	 samples:
 	 ['-5', ']4615231u000050|4673-61', 'S0p05888549-4131', 'Q00048855-075', '-8']
 Data column no. 53 - MISS
+rec-\d\d\d?-(org|dup-0)
 	 ['rec-93-org', 'rec-51-org', 'rec-321-org', 'rec-281-dup-0', 'rec-227-org'] 
 	 best Posterior:
 	 (\l)*-(\d)*\d-(\l)*(-(\d)*\d)*
 	 samples:
 	 ['a-9-j-9', 'wmt-201--60092', '-7-', '-18-z-2', 'qsk-68-maucq-716-0426-57-31-9-8-295-8708-1-985-9-1-0']
 Data column no. 150 - HIT
+N\d\d
 	 ['N22', 'N33', 'N34', 'N13', 'N23']
 	 best Posterior:
 	 N(\d)*\d
 	 samples:
 	 ['N99', 'N66', 'N0793', 'N5', 'N2']
 Data column no. 741 - HIT
+#\d\d\d
 	 ['#217', '#222', '#070', '#007', '#215']
 	 best Posterior:
 	 #(\d)*\d
 	 samples:
 	 ['#1', '#93', '#3', '#56782', '#4']
 Data column no. 18 - HIT
+A|C-\d\d\d\d\d-\d\d\d\d\d
 	 ['A-05334-58432', 'A-05333-58214', 'C-05271-37204', 'C-05276-38389', 'A-05334-58579']
 	 best Posterior:
 	 \u(\d)*-0(\d)*\d-(\d)*\d
 	 samples:
 	 ['S0-00-80', 'H3-011-7', 'E99-046-5', 'H-0329-2', 'B62-032-5']
 Data column no. 589 - MISS (close)
+A(\u|\d)++
 	 ['A1XB03X4J35ATE', 'AXPOBOA6RMCV0', 'A1K8QNLYYYX21W', 'A2QKM3JUFWBSMO', 'A1T0NW527WZT7G']
 	 best Posterior:
 	 A(\u)*(\d(\u)*)*
 	 samples:
 	 ['ARX5', 'AIM', 'A', 'A', 'A']
 Data column no. 666 -  MISS
+\(\d\d\d\) \d\d\d-\d\d\d\d
 	 ['(281) 460-9574', '(801) 473-6431', '(713) 478-4292', '(713) 591-1559', '(281) 460-2390']
 	 best Posterior:
 	 ([0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~ 	](0)*(\d)*)*(\d)*-(\d)*\d
 	 samples:
 	 ['h6(047-7088', '547-5', '-47', '-7', 'z00028:000-4']
 Data column no. 581 - MISS
+us13\u\d\d
 	 ['us13C03', 'us13C13', 'us13C11', 'us13A08', 'us13B06']
 	 best Posterior:
 	 \l\l1(\d)*\d\u(\d)*(0)*(\d)*
 	 samples:
 	 ['aq15346I0007787', 'yx17209C2050000', 'xn14D', 'sm115M041008', 'kw16N10']
 Data column no. 299 - HIT
+E07000\d\d\d
 	 ['E07000193', 'E07000170', 'E07000127', 'E07000027', 'E07000225']
 	 best Posterior:
 	 E(0)*(\d)*(0)*(\d)*
 	 samples:
 	 ['E0000074897492', 'E0672', 'E0', 'E911400', 'E01']
 Data column no. 638 - HIT
+\l\l\u\u\u\l\l\u\u\u\u
 	 ['kt831qh3476', 'vw545jd0450', 'st391cf4769', 'vx806dr5738', 'rp023xr5328']
 	 best Posterior:
 	 \l\l(\d)*\l\l(\d)*
 	 samples:
 	 ['ngez', 'qr0wa', 'yi92lh25', 'jiap753', 'fqtb450']
 Data column no. 364 - HIT
+\u\u
 	 ['DE', 'SE', 'BD', 'NA', 'CH']
 	 best Posterior:
 	 \u\u
 	 samples:
 	 ['PD', 'MG', 'ZK', 'WB', 'UY']
 Data column no. 334 - MISS (close)
+-00:\d\d:\d\d.\d
 	 ['-00:16:05.9', '-00:19:52.9', '-00:33:24.7', '-00:44:02.3', '-00:24:25.0']
 	 best Posterior:
 	 -((0)*(\d)*:)*(\d)*\.(\d)*
 	 samples:
 	 ['-.', '-0520:.', '-02::06:011:.652', '-.', '-0009:88:.']
 Data column no. 38 - MISS
+SRX89\d\d\d\d
 	 ['SRX897027', 'SRX897025', 'SRX897032', 'SRX894622', 'SRX897016']
 	 best Posterior:
 	 S\u\u(\d)*
 	 samples:
 	 ['SVU', 'SQS1', 'SBG5', 'SHH6', 'SBX1']
 Data column no. 247 - MISS
+'\d\d:\d\d:00'
 	 ["'02:13:00'", "'03:27:00'", "'09:33:00'", "'15:40:00'", "'22:24:00'"]
 	 best Posterior:
 	 ([0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~ 	](0)*(\d)*)*(\d)*
 	 samples:
 	 ['+', 'J003', '96', '934', '+v000-0000']
 Data column no. 506 - MISS (close)
+(S|H)\d\d\d\d
 	 ['S5795', 'S5552', 'S6506', 'H5529', 'H5859']
 	 best Posterior:
 	 \u(\d)*
 	 samples:
 	 ['Z', 'Q', 'F', 'M5', 'M6']
 Data column no. 891 - MISS
+(r|v)\d?
 	 ['r6', 'r1', 'r2', 'v1', 'r']
 	 best Posterior:
 	 \l(\d)*
 	 samples:
 	 ['i', 'f', 'q786', 'n3', 'c']
 Data column no. 911 - MISS (Close)
+KW-\d\d\d\d
 	 ['KW-0497', 'KW-0494', 'KW-1216', 'KW-0528', 'KW-0568']
 	 best Posterior:
 	 K\u(\d)*-(0)*(\d)*
 	 samples:
 	 ['KM-00', 'KD722-04', 'KK-02', 'KG-0583780', 'KS1-0']
 Data column no. 792 - HIT
+\d*\u*
 	 ['22G', '2', '22EXC', '9', 'BL']
 	 best Posterior:
 	 (\u)*(\d(\u)*)*
 	 samples:
 	 ['', '7NM', 'K2M2', '6', '']
 Data column no. 508 - HIT
+N000\d\d\d\d\d
 	 ['N00028139', 'N00009573', 'N00027605', 'N00024852', 'N00035483']
 	 best Posterior:
 	 N(0)*(\d)*
 	 samples:
 	 ['N0', 'N000', 'N', 'N0', 'N5']
 Data column no. 842 - HIT
+-?\d?\d\.\d\d%
 	 ['-11.50%', '14.20%', '0.70%', '33.80%', '6.70%']
 	 best Posterior:
 	 (-)*(\d)*\.(\d)*0%
 	 samples:
 	 ['8.0%', '-9.0%', '-.070%', '3.0%', '.440%']
 Data column no. 200 - HIT
+\u\u
 	 ['NY', 'IL', 'MS', 'VA', 'FL']
 	 best Posterior:
 	 \u\u
 	 samples:
 	 ['PQ', 'AN', 'BM', 'ET', 'FZ']
 Data column no. 694 - MISS
+\(\d\d\d?\)
 	 ['(210)', '(220)', '(41)', '(635)', '(38)']
 	 best Posterior:
 	 ([0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~ 	]((\d)*\d)|)*(\d)*
 	 samples:
 	 [' 1', '', '9', '4', 'l4191']
 Data column no. 210 - HIT
+(\d(\.\d)?)|(--)
 	 ['2.5', '4', '--', '1.5', '2']
 	 best Posterior:
 	 (*(\d)*\.(\d)*)|((-)*(\d)*)
 	 samples:
 	 ['276675', '42.697219', '59357.', '933', '1']
 Data column no. 298 - MISS
+DS_25(\u|\d)(\u|\d)(\u|\d)(\u|\d)(\u|\d)(\u|\d)(\u|\d)(\u|\d)
 	 ['DS_258KADVNLH', 'DS_25ROGVOIRY', 'DS_252PR5PS19', 'DS_25KIYDUYV3', 'DS_25AN1EA3PV']
 	 best Posterior:
 	 \u\u_(\d)*\u\u(\u)*(\d(\u)*)*
 	 samples:
 	 ['GS_RVU', 'CP_RSL9ZZB71', 'TE_SNZ', 'VD_21NP3EQQRQO51', 'QO_11PXDV']
 Data column no. 668 - HIT
+\u\u\u?
 	 ['Q', 'KTA', 'JA', 'TR', 'GB']
 	 best Posterior:
 	 (\u|(\u)\u)|(\u)
 	 samples:
 	 ['A', 'U', 'WE', 'J', 'T']
 Data column no. 939 - MISS
+ms0\d\d\d\d\d
 	 ['ms025846', 'ms019454', 'ms012586', 'ms008925', 'ms002850']
 	 best Posterior:
 	 m\l(0)*(\d)*
 	 samples:
 	 ['mp', 'mt59', 'mz00000', 'mt08', 'ml00993']
 Data column no. 944 - HIT
+\u\u\u?\d?
 	 ['HS2', 'FCI', 'LGD', 'RWSW', 'HS1']
 	 best Posterior:
 	 \u((S)|(\u))*(\d)*
 	 samples:
 	 ['NS', 'UQS', 'HL', 'X', 'ZSR8']
 Data column no. 731 - MISS
+ManH.0\d\d
 	 ['ManH.010', 'ManH.004', 'ManH.009', 'ManH.025', 'ManH.014']
 	 best Posterior:
 	 \u(\d)*\l\l\u(\d)*\.(\d)*0(\d)*\d
 	 samples:
 	 ['ZuoI4.06', 'E915kfC213.350612', 'TojU9.07', 'I8gsK0.406', 'WksL.029']
 Data column no. 229 - MISS
+\u+(-\u+)?
 	 ['AIUTP', 'GSE', 'SPED-ATRC', 'SPED', 'GSE-DO']
 	 best Posterior:
 	 \u((-)|(\u))*(\d)*\u\u
 	 samples:
 	 ['YDZ', 'MZM', 'Q5LT', 'G--XE', 'SEY']
 Data column no. 28 - MISS
+Y201\d/\d\d\d\d
 	 ['Y2015/1093', 'Y2013/1010', 'Y2014/1017', 'Y2015/1421', 'Y2017/1162']
 	 best Posterior:
 	 \u(\d)*1(\d)*\d/1(\d)*\d
 	 samples:
 	 ['F719533/13', 'I92215/180', 'E514/12', 'R16998219/14', 'S107971577500/1035']
 Data column no. 374 - MISS
+q00\d(_000\d)?
 	 ['q0005_0003', 'q0009_0003', 'q0002', 'q0001', 'q0009_0008']
 	 best Posterior:
 	 \l(0)*(\d)*[0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~ 	](0)*(\d)*
 	 samples:
 	 ['d00p008477352', 'q000*0', 'rn0', 'k2^0', 's06J0']
 Data column no. 819 - HIT
+\d*\l*\d*
 	 ['3626cpr1748', '3626bpb0033', '56656', 'x197', '12550pr0002']
 	 best Posterior:
 	 *(\d)*(\l)*(0)*(\d)*
 	 samples:
 	 ['809', '', '443', '5wid0042', '90']
 Data column no. 516 - MISS
+-122.3\d\d\d\d\d?
 	 ['-122.31189', '-122.317017', '-122.342205', '-122.338913', '-122.312805']
 	 best Posterior:
 	 (-1(\d)*\d)*(\d)*\.(\d)*
 	 samples:
 	 ['-155.', '-107-148-182.', '-17715.00', '-1121.565550', '.2054']
 Data column no. 417 - HIT (figure)
+\u\uT\uB
 	 ['SFTCB', 'RFTCB', 'TETXB', 'GETXB', 'PATXB']
 	 best Posterior:
 	 \u\uT\uB
 	 samples:
 	 ['PMTVB', 'GRTMB', 'GHTDB', 'PKTCB', 'RBTSB']
 Data column no. 660 - MISS
+ENGL\d\d\d
 	 ['ENGL281', 'ENGL300', 'ENGL247', 'ENGL280', 'ENG281']
 	 best Posterior:
 	 EN\u(\u\d)*(\d)*
 	 samples:
 	 ['ENDL9X4O3', 'ENU0', 'ENO', 'ENRP83', 'ENTK3']
 Data column no. 585 - HIT
+M?\u+
 	 ['MF', 'MNE', 'MENRW', 'MH', 'DPM']
 	 best Posterior:
 	 |(\u)|(\u)\u\u|(\u)
 	 samples:
 	 ['MI', 'TMRD', 'HEBI', 'FNUE', 'TMBUY']
 Data column no. 325 - MISS
+BUS M \d\d\d.*
 	 ['BUS M 277', 'BUS M 440', 'BUS M 498', 'BUS M 490R TTh', 'BUS M 490R F']
 	 best Posterior:
 	 \u\u\u( (\u)*(\d(\u)*)*)*(\d)*(\l)*
 	 samples:
 	 ['MYP6', 'FTC4653', 'NPC 96DDO 3 UW8 9WF8D 09G2Z db', 'XJK   O E32PUU25D', 'EQB ']
 Data column no. 823 - HIT
+\u\u\u
 	 ['NIC', 'MKD', 'POL', 'SWZ', 'SUR']
 	 best Posterior:
 	 (S)|(\u)\u\u
 	 samples:
 	 ['SRX', 'XNM', 'TVO', 'SYT', 'HKX']
 Data column no. 515 - MISS
+L|\u - (??)|(\d?\d\.\d lbs\.)
 	 ['L - ??', 'L - 31.0 lbs.', 'L - 10.0 lbs.', 'S - 8.6 lbs.', 'L - 25.2 lbs.']
 	 best Posterior:
 	 \u(\d)* ([0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~ 	])*
 	 samples:
 	 ['M ', 'M ', 'I ]qz', 'R F', 'C ']
 Data column no. 864 - HIT
+\u\u\u?
 	 ['SF', 'SD', 'CHI', 'HOU', 'KC']
 	 best Posterior:
 	 |(\u)\u\u
 	 samples:
 	 ['REF', 'YU', 'KU', 'LQ', 'OE']
 Data column no. 359 - MISS
+MAM.OSBS.201\d\.\d\d
 	 ['MAM.OSBS.2014.06', 'MAM.OSBS.2013.07', 'MAM.OSBS.2013.09', 'MAM.OSBS.2014.05', 'MAM.OSBS.2014.11']
 	 best Posterior:
 	 \u\u\u\.(\d)*\u\u\u\u\.(\d)*\.(\d)*
 	 samples:
 	 ['KCS.GPUK.9300.373284', 'TSK.59CXBO.1.8', 'FGC.4656HMBR..98', 'CHY.BLRI.664.97741789', 'OEF.URLY..']
 Data column no. 594
+\u*\d*( \u*\d*)
 	 ['EIRE', 'DT4 9TG', 'SW19 2HX', 'SK15 3HN', 'SP6 3LR']
 	 best Posterior:
 	 \u((\u(\d)* )|(\u))*(\d)*\u\u
 	 samples:
 	 ['A5ZZ', 'HO 5RO', 'JLR', 'YE76334 RU', 'KX4 TLSH84EE']
 Data column no. 788
+-\d(,\d\d\d\d\d\d)?
 	 ['-1,287659', '-0,890684', '-2', '-0,807021', '-2,485698']
 	 best Posterior:
 	 (-(\d)*\d)|(-(\d)*,(\d)*)
