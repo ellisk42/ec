@@ -1159,6 +1159,11 @@ def violatesSymmetry(f, x, argumentIndex):
         return argumentIndex == 1 and x == "empty"
     return False
 
+def batchLikelihood(jobs):
+    """Takes as input a set of (program, request, grammar) and returns a dictionary mapping each of these to its likelihood under the grammar"""
+    return {(program, request, grammar): grammar.logLikelihood(request, program)
+            for program, request, grammar in jobs}
+
 if __name__ == "__main__":
     from arithmeticPrimitives import *
     g = Grammar.uniform([k0,k1,addition, subtraction])

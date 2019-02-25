@@ -1,3 +1,5 @@
+from utilities import lse, callCompiled
+from grammar import batchLikelihood
 from ec import *
 import dill
 import numpy as np
@@ -51,7 +53,41 @@ def padSearchTimes(result, testingTimeout, enumerationTimeout):
     result.searchTimes = [ ts + [enumerationTimeout]*(len(result.taskSolutions) - len(ts))
                                for ts in result.searchTimes ]
 
-
+def updatePriors(result):
+    jobs = set()
+    for frontierList in result.frontiersOverTime.values():
+        for t,f in enumerate(frontierList):
+            g = result.grammars[t]
+            for e in f:
+                jobs.add((e.program,f.task.request,g))
+    print(f"About to update prior probabilities for {len(jobs)} program/grammar pairs")
+    with timing("updated prior probabilities"):
+        job2likelihood = batchLikelihood(jobs)
+        for frontierList in result.frontiersOverTime.values():
+            for t,f in enumerate(frontierList):
+                g = result.grammars[t]
+                for e in f:
+                    e.logPrior = job2likelihood[(e.program, f.task.request, g)]
+                
+    
+def getLikelihood(likelihood, result, task, iteration):
+    frontier = result.frontiersOverTime[task][iteration]
+    if likelihood == "maximum":
+        return max(e.logLikelihood for e in frontier) if len(frontier) > 0 else 0.
+    if likelihood == "task":
+        if len(frontier) > 0:
+            return lse([e.logLikelihood + e.logPrior#result.grammars[iteration].logLikelihood(frontier.task.request, e.program)
+                        for e in frontier])
+        return 0. # TODO: fix me
+    assert False
+def getTestingLikelihood(likelihood, result, iteration):
+    testingTasks = result.getTestingTasks()
+    return sum(getLikelihood(likelihood, result, task, iteration)
+               for task in testingTasks )
+def getTrainingLikelihood(likelihood, result, iteration):
+    return sum(getLikelihood(likelihood, result, task, iteration)
+               for task in result.taskSolutions.keys() )
+    
 def averageCurves(curves):
     xs = {x
           for xs,_ in curves
@@ -123,6 +159,7 @@ def matplotlib_colors():
 
 def plotECResult(
         resultPaths,
+        likelihood=None,
         alpha=1.,
         onlyTime=False,
         xLabel=None,
@@ -157,6 +194,7 @@ def plotECResult(
         
         result = loadfun(path)
         print("loaded path:", path)
+        if likelihood == "task": updatePriors(result)
 
         if hasattr(result, "baselines") and result.baselines:
             assert False, "baselines are deprecated."
@@ -182,8 +220,19 @@ def plotECResult(
         timeAxis = a1
         solveAxis = None
     else:
-        a1.set_ylabel('%% %s Solved%s'%("Training" if showTraining else "Test",
-                                        " (solid)" if showSolveTime else ""),
+        if likelihood is None:
+            ylabel = '%% %s Solved%s'%("Training" if showTraining else "Test",
+                                       " (solid)" if showSolveTime else "")
+        elif likelihood == "maximum":
+            ylabel = "log P(t|p^*)"
+        elif likelihood == "marginal":
+            ylabel = "log \\sum_p P(t|p)"
+        elif likelihood == "task":
+            ylabel = "log \\sum_p P(t|p)P(p|D)"
+        else:
+            assert False
+            
+        a1.set_ylabel(ylabel,
                       fontsize=LABELFONTSIZE)
         solveAxis = a1
         if showSolveTime:
@@ -210,12 +259,16 @@ def plotECResult(
     plotCommands_solve = {} # Map from (color,line style) to (xs,ys) for a1
     plotCommands_time = {} # Map from (color,line style) to (xs,ys) for a2
     for result, p, color in zip(results, parameters, colors):
-        if showTraining:
-            ys = [100.*t/float(len(result.taskSolutions))
-                  for t in result.learningCurve[:iterations]]
+        if likelihood is None:
+            if showTraining:
+                ys = [100.*t/float(len(result.taskSolutions))
+                      for t in result.learningCurve[:iterations]]
+            else:
+                ys = [100. * len(t) / result.numTestingTasks
+                      for t in result.testingSearchTime[:iterations]]
         else:
-            ys = [100. * len(t) / result.numTestingTasks
-                  for t in result.testingSearchTime[:iterations]]
+            ys = [(getTrainingLikelihood if showTraining else getTestingLikelihood)(likelihood, result, iteration)
+                  for iteration in range(iterations) ]
             
         xs = list(range(0, len(ys)))
         if showEpochs:
@@ -286,7 +339,7 @@ def plotECResult(
                 for (xs,ys) in cs:
                     timeAxis.plot(xs,ys,color=color,ls=ls,alpha=alpha)
 
-    if solveAxis:
+    if solveAxis and likelihood is None:
         a1.set_ylim(ymin=0, ymax=maxP)
         a1.yaxis.grid()
         a1.set_yticks(range(0, maxP, 20))
@@ -393,9 +446,16 @@ if __name__ == "__main__":
     parser.add_argument("--alpha",
                         default=1., type=float,
                         help="Transparency of plotted lines")
-    
+    parser.add_argument("--likelihood",
+                        type=str, choices=["marginal", "maximum", "task"],
+                        default=None)
+
     arguments = parser.parse_args()
+
+    if arguments.likelihood: arguments.noTime = True
+    
     plotECResult(arguments.checkpoints,
+                 likelihood=arguments.likelihood,
                  onlyTime=arguments.onlyTime,
                  xLabel=arguments.xLabel,
                  testingTimeout=arguments.testingTimeout,
