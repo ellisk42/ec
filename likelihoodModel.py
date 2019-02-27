@@ -83,7 +83,7 @@ def get_gt_ll(name, examples):
     preg = pre.create(r_str)
 
     if type(examples[0]) == list:
-        examples = [ str(example) for example in examples]
+        examples = [ "".join(example) for example in examples]
 
     s = sum( preg.match(example) for example in examples)
     if s == float("-inf"):
