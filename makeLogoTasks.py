@@ -188,7 +188,9 @@ def dSLDemo():
     T("(loop i 5 (move (*d 1l 5) (/a 1a 5)))")
     T("(loop i infinity (move (*d epsilonDistance 5) (/a epsilonAngle 3)))")
     T("(loop i infinity (move (*d epsilonDistance 9) (/a epsilonAngle 2)))")
-    
+    T("(loop i infinity (move (*d epsilonLength i) (*a epsilonAngle 3)))")
+    T("(loop i 9 (move (*d 1l i) (/a 1a 4)))")
+    T("(move 1d 0a)")
     return demos
 
 def rotationalSymmetryDemo():
@@ -676,6 +678,7 @@ if __name__ == "__main__":
         w = int(len(a)**0.5)
         scipy.misc.imsave('/tmp/logoDemo%s.png'%t.name, np.array([a[i:i+w]
                                                                   for i in range(0,len(a),w) ]))
+        os.system(f"convert /tmp/logoDemo{t.name}.png -morphology Dilate Octagon /tmp/logoDemo{t.name}_dilated.png")
 
     tasks = [t for t in tasks if t.mustTrain ]
     random.shuffle(tasks)

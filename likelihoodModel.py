@@ -79,7 +79,8 @@ def add_string_constants(tasks):
 
 def get_gt_ll(name, examples):
     #gets groundtruth from dict
-    r_str = gt_dict[name]
+    import pregex as pre
+    r_str = gt_dict[int(name.split(" ")[-1])]
     preg = pre.create(r_str)
 
     if type(examples[0]) == list:
