@@ -38,7 +38,7 @@ Data column no. 184 - HIT
 	 samples:
 	 ['.249', '.08', '.20', '.0400493', '.900000']
 Data column no. 501 - MISS
-\u\d\d
+u\d\d
 	 ['u43', 'u10', 'u16', 'u58', 'u02']
 	 best Posterior:
 	 \l(0)*(\d)*
@@ -411,7 +411,7 @@ L|\u - (??)|(\d?\d\.\d lbs\.)
 Data column no. 864
 \u+
 	 ['SF', 'SD', 'CHI', 'HOU', 'KC']
-	 best Posterior:
+	 best Posterior:	
 	 |(\u)\u\u
 	 samples:
 	 ['REF', 'YU', 'KU', 'LQ', 'OE']

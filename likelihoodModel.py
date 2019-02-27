@@ -7,6 +7,7 @@ from program import *
 from utilities import *
 from collections import Counter
 import math
+import pregex as pre
 
 
 from groundtruthRegexes import gt_dict
@@ -80,7 +81,18 @@ def get_gt_ll(name, examples):
     #gets groundtruth from dict
     r_str = gt_dict[name]
     preg = pre.create(r_str)
-    return sum( preg.match(example) for example in examples)
+
+    if type(examples[0]) == list:
+        examples = [ str(example) for example in examples]
+
+    s = sum( preg.match(example) for example in examples)
+    if s == float("-inf"):
+        print("bad for ", name)
+        print('preg:', preg)
+        print('preg sample:', [preg.sample() for i in range(3)])
+        print("exs", examples)
+        assert False 
+    return s
 
 
 def add_cutoff_values(tasks, ll_cutoff):
