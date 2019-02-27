@@ -449,7 +449,7 @@ def plotLabeledImages(embeddings, images, labels, title, exportPath, xlabel=None
         initialDisplacements = []
         for i, label in enumerate(labels):
                 x, y = embeddings[i, 0], embeddings[i, 1]
-                plot.scatter(x,y, color=cmap(colorLabels[i]), s=1000, alpha=0.00001)
+                plot.scatter(x,y, color=cmap(colorLabels[i]), s=10000, alpha=0.00001)
                 name = labels[i]
                 c = cmap(colorLabels[i])
                 

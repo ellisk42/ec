@@ -40,6 +40,7 @@ for SEED in `seq 1 5`; do python launch.py -k  -c -z n1-megamem-96 logo_no_recog
 
 Scientific laws:
 python launch.py -k  -c -z n1-highmem-64 scientific_1h "python scientificLaws.py  -t 3600 --topK 5 --arity 3 --maximumFrontier 5 -i 10 -R 3600 -RS 5000 --biasOptimal --contextual --mask  -r 0."
+python launch.py -k  -c -z n1-highmem-64 scientific_4h "python scientificLaws.py  -t 3600 --topK 5 --arity 3 --maximumFrontier 5 -i 10 -R 3600 -RS 5000 --biasOptimal --contextual --mask  -r 0."
 
 REGEX:
 Reduced Primitives:

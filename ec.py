@@ -61,6 +61,14 @@ class ECResult():
         attrs = ["{}={}".format(k, v) for k, v in self.__dict__.items()]
         return "ECResult({})".format(", ".join(attrs))
 
+    def getTestingTasks(self):
+        testing = []
+        training = self.taskSolutions.keys()
+        for t in self.recognitionTaskMetrics:
+            if isinstance(t, Task) and t not in training: testing.append(t)
+        return testing
+
+
     def recordFrontier(self, frontier):
         t = frontier.task
         if t not in self.frontiersOverTime: self.frontiersOverTime[t] = []
