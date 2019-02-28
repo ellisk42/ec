@@ -36,6 +36,10 @@ python graphs.py --checkpoints teal `grep  -h it=6.*graph jobs/regex_b40_strCons
 python graphs.py --checkpoints teal `grep  -h it=6.*graph jobs/regex_b40_strConst_7m_ellisk_2019-02-27*` --cutoff bigram --noTime --export figures/regex_7m_bigram.png
 python graphs.py --checkpoints teal `grep  -h it=6.*graph jobs/regex_b40_strConst_7m_ellisk_2019-02-27*` --likelihood maximum --noTime --export figures/regex_7m_maximum.png -i 6
 python graphs.py --checkpoints teal `grep  -h it=6.*graph jobs/regex_b40_strConst_7m_ellisk_2019-02-27*` --likelihood task --noTime --export figures/regex_7m_marginal.png -i 6
+python graphs.py --checkpoints teal `grep  -h it=4.*graph jobs/regex_b40_strConst_2m_ellisk_2019-02-*` --cutoff gt --noTime --export figures/regex_2m_gt.png
+python graphs.py --checkpoints teal `grep  -h it=4.*graph jobs/regex_b40_strConst_2m_ellisk_2019-02-*` --cutoff bigram --noTime --export figures/regex_2m_bigram.png
+python graphs.py --checkpoints teal `grep  -h it=4.*graph jobs/regex_b40_strConst_2m_ellisk_2019-02-*` --likelihood maximum --noTime --export figures/regex_2m_maximum.png -i 6
+python graphs.py --checkpoints teal `grep  -h it=4.*graph jobs/regex_b40_strConst_2m_ellisk_2019-02-*` --likelihood task --noTime --export figures/regex_2m_marginal.png -i 6
 
 
 ### Comparing masked vs full recognition model

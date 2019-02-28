@@ -83,7 +83,7 @@ def getCutOffHits(result, cutOff):
                 assert ti == 0
                 return learningCurve
             bestLikelihood = max(e.logLikelihood
-                                 for e in result.frontiersOverTime[t][iteration] )
+                                 for e in result.frontiersOverTime[t][iteration] ) if len(result.frontiersOverTime[t][iteration]) > 0 else NEGATIVEINFINITY
             if cutOff == "gt":
                 if bestLikelihood > t.gt: hs += 1
                 elif bestLikelihood == t.gt: hs += 1
