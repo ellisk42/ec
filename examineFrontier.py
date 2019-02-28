@@ -74,7 +74,7 @@ for task in tasks:
             print("\t", string)
             print("\t", "samples:")
             print("\t", [preg.sample() for i in range(5)])
-            if ll > task.gt:
+            if ll >= task.gt:
                     print(f"\t HIT, Ground truth: {task.gt}, found ll: {ll}")
             else:
                     print(f"\t MISS, Ground truth: {task.gt}, found ll: {ll}")
