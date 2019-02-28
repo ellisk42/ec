@@ -9,7 +9,7 @@
         pre.create("\\u+"),
         pre.create("\l+")
 """
-<<<<<<< HEAD
+
 gt_dict = {
     776: "JPC\\u\\u\\d+\\.png",
     922: "WHS\\d_\\d+",

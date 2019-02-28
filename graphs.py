@@ -85,7 +85,8 @@ def getCutOffHits(result, cutOff):
             bestLikelihood = max(e.logLikelihood
                                  for e in result.frontiersOverTime[t][iteration] )
             if cutOff == "gt":
-                if bestLikelihood >= t.gt: hs += 1
+                if bestLikelihood > t.gt: hs += 1
+                elif bestLikelihood == t.gt: hs += 1
             elif cutOff == "unigram" or cutOff == "bigram":
                 if bestLikelihood >= t.ll_cutoff: hs += 1
             else: assert False
@@ -475,7 +476,7 @@ if __name__ == "__main__":
                         default=1., type=float,
                         help="Transparency of plotted lines")
     parser.add_argument("--likelihood",
-                        type=str, choices=["marginal", "maximum", "task"],
+                        type=str, choices=["maximum", "task"],
                         default=None)
     parser.add_argument("--cutoff",
                         type=str, choices=["bigram","unigram","gt"],
