@@ -2,6 +2,7 @@
 import pregex as pre
 import pickle
 
+from groundtruthRegexes import *
 from regexPrimitives import *
 from program import Abstraction, Application
 
@@ -62,6 +63,7 @@ for task in tasks:
                 continue
         print(task.name)
         print("\t", ["".join(example[1]) for example in task.examples])
+        print("\tHuman written regex:",gt_dict[int(task.name.split(" ")[-1])])
         def examineProgram(entry):
             program = entry.program
             ll = entry.logLikelihood
