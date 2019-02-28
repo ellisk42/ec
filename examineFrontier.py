@@ -55,13 +55,16 @@ tasks = add_cutoff_values(tasks, "gt") #could be "unigram" or "bigram"
 
 print("TESTING ONLY:")
 #print loop?
-
+posteriorHits = 0
+likelihoodHits = 0
+totalTasks = 0
 for task in tasks:
         try:
                 frontier = checkpoint.recognitionTaskMetrics[task]['frontier']
         except KeyError:
                 continue
         print(task.name)
+        totalTasks += 1
         print("\t", ["".join(example[1]) for example in task.examples])
         print("\tHuman written regex:",gt_dict[int(task.name.split(" ")[-1])])
         def examineProgram(entry):
@@ -82,6 +85,13 @@ for task in tasks:
             
         print("\t", "best Posterior:")
         examineProgram(max(frontier.entries, key=lambda e: e.logLikelihood + e.logPrior))
+        if max(frontier.entries, key=lambda e: e.logLikelihood + e.logPrior).logLikelihood >= task.gt:
+            posteriorHits += 1
         print("\t", "best Likelihood:")
         examineProgram(max(frontier.entries, key=lambda e: e.logLikelihood))
+        if max(frontier.entries, key=lambda e: e.logLikelihood).logLikelihood >= task.gt:
+            likelihoodHits += 1
         print()
+
+print(f"Best posteriorc hits task {posteriorHits}/{totalTasks} = {posteriorHits/totalTasks}")
+print(f"Best likelihood hits task {likelihoodHits}/{totalTasks} = {likelihoodHits/totalTasks}")
