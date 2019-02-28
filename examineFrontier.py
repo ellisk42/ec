@@ -6,7 +6,7 @@ from program import Abstraction, Application
 
 class ConstantVisitor(object):
     def __init__(self, stringConst):
-    	self.const = stringConst
+        self.const = stringConst
 
     def primitive(self, e):
         if e.name == "r_const":
@@ -42,7 +42,7 @@ checkpoint_file = "/om2/user/ellisk/ec/experimentOutputs/regex/2019-02-26T14:49:
 print("started:", flush=True)
 
 with open(checkpoint_file, 'rb') as file:
-	checkpoint = pickle.load(file)
+        checkpoint = pickle.load(file)
 
 
 
@@ -55,41 +55,29 @@ print("TESTING ONLY:")
 #print loop?
 
 for task in tasks:
-	try:
-		frontier = checkpoint.recognitionTaskMetrics[task]['frontier']
-	except KeyError:
-		continue
+        try:
+                frontier = checkpoint.recognitionTaskMetrics[task]['frontier']
+        except KeyError:
+                continue
+        print(task.name)
+        print("\t", ["".join(example[1]) for example in task.examples])
+        def examineProgram(entry):
+            program = entry.program
+            ll = entry.logLikelihood
+            program = program.visit(ConstantVisitor(task.str_const))
+            preg = program.evaluate([])(pre.String(""))
+            string = preg.str().replace('[ABCDEFGHIJKLMNOPQRSTUVWXYZ]','\\u').replace("[0123456789]","\\d").replace("[abcdefghijklmnopqrstuvwxyz]","\\l")
+            print("\t", string)
+            print("\t", "samples:")
+            print("\t", [preg.sample() for i in range(5)])
+            if ll > task.gt:
+                    print(f"\t HIT, Ground truth: {task.gt}, found ll: {ll}")
+            else:
+                    print(f"\t MISS, Ground truth: {task.gt}, found ll: {ll}")
 
-	program = frontier.bestPosterior.program
-	ll = frontier.bestPosterior.logLikelihood
-
-	#deal with the visitor
-	program = program.visit(ConstantVisitor(task.str_const))
-
-
-
-	preg = program.evaluate([])(pre.String(""))
-
-
-
-	print(task.name)
-	print("\t", ["".join(example[1]) for example in task.examples])
-	print("\t", "best Posterior:")
-
-	string = preg.str().replace('[ABCDEFGHIJKLMNOPQRSTUVWXYZ]','\\u').replace("[0123456789]","\\d").replace("[abcdefghijklmnopqrstuvwxyz]","\\l")
-	print("\t", string)
-	print("\t", "samples:")
-	print("\t", [preg.sample() for i in range(5)])
-	if ll > task.gt:
-		print(f"\t HIT, Ground truth: {task.gt}, found ll: {ll}")
-	else:
-		print(f"\t MISS, Ground truth: {task.gt}, found ll: {ll}")
-
-
-
-
-
-
-
-
-
+            
+        print("\t", "best Posterior:")
+        examineProgram(max(frontier.entries, key=lambda e: e.logLikelihood + e.logPrior))
+        print("\t", "best Likelihood:")
+        examineProgram(max(frontier.entries, key=lambda e: e.logLikelihood))
+        print()
