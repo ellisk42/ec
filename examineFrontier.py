@@ -2,6 +2,7 @@
 import pregex as pre
 import pickle
 
+from regexPrimitives import *
 from program import Abstraction, Application
 
 class ConstantVisitor(object):
@@ -10,7 +11,7 @@ class ConstantVisitor(object):
 
     def primitive(self, e):
         if e.name == "r_const":
-            e.value = pre.String(self.const)
+            e.value = PRC(pre.String(self.const))
         return e
 
     def invented(self, e): return e.body.visit(self)
@@ -65,6 +66,7 @@ for task in tasks:
             program = entry.program
             ll = entry.logLikelihood
             program = program.visit(ConstantVisitor(task.str_const))
+            print(program)
             preg = program.evaluate([])(pre.String(""))
             string = preg.str().replace('[ABCDEFGHIJKLMNOPQRSTUVWXYZ]','\\u').replace("[0123456789]","\\d").replace("[abcdefghijklmnopqrstuvwxyz]","\\l")
             print("\t", string)
