@@ -4,13 +4,15 @@ import pickle
 
 from program import Abstraction, Application
 
+from regexPrimitives import PRC
+
 class ConstantVisitor(object):
     def __init__(self, stringConst):
     	self.const = stringConst
 
     def primitive(self, e):
         if e.name == "r_const":
-            e.value = pre.String(self.const)
+            e.value = PRC(pre.String(self.const))
         return e
 
     def invented(self, e): return e.body.visit(self)
@@ -36,7 +38,7 @@ checkpoint_file = "experimentOutputs/regex/2019-02-23T23:41:20.015912/regex_aic=
 checkpoint_file = "/om2/user/ellisk/ec/experimentOutputs/regex/2019-02-26T14:49:18.044767/regex_aic=1.0_arity=3_aux=True_BO=True_CO=True_ES=1_ET=3600_HR=0.5_it=6_mask=True_MF=10_pc=30.0_RT=3600_RR=False_RW=False_STM=True_L=1.5_batch=40_TRR=randomShuffle_K=2_topkNotMAP=True_graph=True.pickle"
 
 #strConst, no training cutoff
-checkpoint_file = "/om2/user/ellisk/ec/experimentOutputs/regex/2019-02-26T14:49:43.594106/regex_aic=1.0_arity=3_aux=True_BO=True_CO=True_ES=1_ET=3600_HR=0.5_it=6_mask=True_MF=10_pc=30.0_RT=3600_RR=False_RW=False_STM=True_L=1.5_batch=40_TRR=randomShuffle_K=2_topkNotMAP=True_graph=True.pickle"
+#checkpoint_file = "/om2/user/ellisk/ec/experimentOutputs/regex/2019-02-26T14:49:43.594106/regex_aic=1.0_arity=3_aux=True_BO=True_CO=True_ES=1_ET=3600_HR=0.5_it=6_mask=True_MF=10_pc=30.0_RT=3600_RR=False_RW=False_STM=True_L=1.5_batch=40_TRR=randomShuffle_K=2_topkNotMAP=True_graph=True.pickle"
 
 
 print("started:", flush=True)
@@ -80,7 +82,7 @@ for task in tasks:
 	print("\t", string)
 	print("\t", "samples:")
 	print("\t", [preg.sample() for i in range(5)])
-	if ll > task.gt:
+	if ll >= task.gt:
 		print(f"\t HIT, Ground truth: {task.gt}, found ll: {ll}")
 	else:
 		print(f"\t MISS, Ground truth: {task.gt}, found ll: {ll}")
