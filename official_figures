@@ -31,6 +31,16 @@ python graphs.py --checkpoints teal `grep  -h it=11.*graph jobs/tower_batch_40_3
 
 ### Regex figures - time and hits split
 
+### Regex figures - likelihoods
+python graphs.py --checkpoints teal `grep  -h it=6.*graph jobs/regex_b40_strConst_7m_ellisk_2019-02-27*` --cutoff gt --noTime --export figures/regex_7m_gt.png
+python graphs.py --checkpoints teal `grep  -h it=6.*graph jobs/regex_b40_strConst_7m_ellisk_2019-02-27*` --cutoff bigram --noTime --export figures/regex_7m_bigram.png
+python graphs.py --checkpoints teal `grep  -h it=6.*graph jobs/regex_b40_strConst_7m_ellisk_2019-02-27*` --likelihood maximum --noTime --export figures/regex_7m_maximum.png -i 6
+python graphs.py --checkpoints teal `grep  -h it=6.*graph jobs/regex_b40_strConst_7m_ellisk_2019-02-27*` --likelihood task --noTime --export figures/regex_7m_marginal.png -i 6
+python graphs.py --checkpoints teal `grep  -h it=4.*graph jobs/regex_b40_strConst_2m_ellisk_2019-02-*` --cutoff gt --noTime --export figures/regex_2m_gt.png
+python graphs.py --checkpoints teal `grep  -h it=4.*graph jobs/regex_b40_strConst_2m_ellisk_2019-02-*` --cutoff bigram --noTime --export figures/regex_2m_bigram.png
+python graphs.py --checkpoints teal `grep  -h it=4.*graph jobs/regex_b40_strConst_2m_ellisk_2019-02-*` --likelihood maximum --noTime --export figures/regex_2m_maximum.png -i 6
+python graphs.py --checkpoints teal `grep  -h it=4.*graph jobs/regex_b40_strConst_2m_ellisk_2019-02-*` --likelihood task --noTime --export figures/regex_2m_marginal.png -i 6
+
 
 ### Comparing masked vs full recognition model
 python graphs.py --checkpoints `grep  -h 'it=20.*graph=True.pickle' jobs/list_no_generative_mask*` `grep  -h 'it=20.*graph=True.pickle' jobs/list_no_generative_ellisk*` `grep  -h 'it=20.*graph=True.pickle' jobs/list_ellisk_2019-01-25T**` `grep -h  it=20.*graph.*pickle jobs/list_mask_ellisk_2019-02-07T11.1*` --title "List, mask RM" --export figures/list_mask.png  --names "no dsl (mask),no dsl,dc,dc (mask)" --colors green green green orange orange orange blue blue blue blue blue  red red red --noTime

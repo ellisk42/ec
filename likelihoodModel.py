@@ -79,6 +79,7 @@ def add_string_constants(tasks):
 
 def get_gt_ll(name, examples):
     #gets groundtruth from dict
+    import pregex as pre
     r_str = gt_dict[name]
     preg = pre.create(r_str)
 
@@ -217,6 +218,8 @@ def bigram_corpus_score(X, logp):
     task_ll = 0
     for x in X:
         bigram_list = [x[0]] + [x[i:i+2] for i in range(len(x)-1)] + [x[-1] + '\n']
+        bigram_list = [ ''.join(b) if isinstance(b,list) else b
+                        for b in bigram_list ]
 
         string_ll = sum(logp.get(bigram, float('-inf')) for bigram in bigram_list) #/(len(x) + 1)
 

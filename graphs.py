@@ -69,6 +69,31 @@ def updatePriors(result):
                 for e in f:
                     e.logPrior = job2likelihood[(e.program, f.task.request, g)]
                 
+def getCutOffHits(result, cutOff):
+    """Return a list of hit percentages; currently only testing tasks supported"""
+    from likelihoodModel import add_cutoff_values
+    tasks = result.getTestingTasks()
+    add_cutoff_values(tasks, cutOff)
+    learningCurve = []
+    while True:
+        iteration = len(learningCurve)
+        hs = 0
+        for ti,t in enumerate(tasks):
+            if iteration >= len(result.frontiersOverTime[t]):
+                assert ti == 0
+                return learningCurve
+            bestLikelihood = max(e.logLikelihood
+                                 for e in result.frontiersOverTime[t][iteration] ) if len(result.frontiersOverTime[t][iteration]) > 0 else NEGATIVEINFINITY
+            if cutOff == "gt":
+                if bestLikelihood > t.gt: hs += 1
+                elif bestLikelihood == t.gt: hs += 1
+            elif cutOff == "unigram" or cutOff == "bigram":
+                if bestLikelihood >= t.ll_cutoff: hs += 1
+            else: assert False
+        learningCurve.append(100.*hs/len(tasks))
+            
+        
+
     
 def getLikelihood(likelihood, result, task, iteration):
     frontier = result.frontiersOverTime[task][iteration]
@@ -159,6 +184,7 @@ def matplotlib_colors():
 
 def plotECResult(
         resultPaths,
+        cutoff=None,
         likelihood=None,
         alpha=1.,
         onlyTime=False,
@@ -264,8 +290,11 @@ def plotECResult(
                 ys = [100.*t/float(len(result.taskSolutions))
                       for t in result.learningCurve[:iterations]]
             else:
-                ys = [100. * len(t) / result.numTestingTasks
-                      for t in result.testingSearchTime[:iterations]]
+                if cutoff is None:
+                    ys = [100. * len(t) / result.numTestingTasks
+                          for t in result.testingSearchTime[:iterations]]
+                else:
+                    ys = getCutOffHits(result, cutoff)[:iterations]
         else:
             ys = [(getTrainingLikelihood if showTraining else getTestingLikelihood)(likelihood, result, iteration)
                   for iteration in range(iterations) ]
@@ -447,7 +476,10 @@ if __name__ == "__main__":
                         default=1., type=float,
                         help="Transparency of plotted lines")
     parser.add_argument("--likelihood",
-                        type=str, choices=["marginal", "maximum", "task"],
+                        type=str, choices=["maximum", "task"],
+                        default=None)
+    parser.add_argument("--cutoff",
+                        type=str, choices=["bigram","unigram","gt"],
                         default=None)
 
     arguments = parser.parse_args()
@@ -456,6 +488,7 @@ if __name__ == "__main__":
     
     plotECResult(arguments.checkpoints,
                  likelihood=arguments.likelihood,
+                 cutoff=arguments.cutoff,
                  onlyTime=arguments.onlyTime,
                  xLabel=arguments.xLabel,
                  testingTimeout=arguments.testingTimeout,
