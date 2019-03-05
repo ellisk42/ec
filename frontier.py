@@ -63,6 +63,15 @@ class Frontier(object):
     def marginalLikelihood(self):
         return lse([e.logPrior + e.logLikelihood for e in self])
 
+    def likelihoodTemperature(self,T):
+        """Divides likelihoods by T"""
+        return Frontier([ FrontierEntry(program=e.program,
+                                        logPrior=e.logPrior,
+                                        logLikelihood=e.logLikelihood/T)
+                          for e in self],
+                        task=self.task)
+                                        
+
     def normalize(self):
         z = self.marginalLikelihood()
         newEntries = [
