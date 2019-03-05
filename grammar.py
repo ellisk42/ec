@@ -1167,15 +1167,25 @@ def violatesSymmetry(f, x, argumentIndex):
 
 def batchLikelihood(jobs):
     """Takes as input a set of (program, request, grammar) and returns a dictionary mapping each of these to its likelihood under the grammar"""
-    superGrammar = Grammar.uniform(list({p for _1,_2,g in jobs for p in g.primitives}))
+    superGrammar = Grammar.uniform(list({p for _1,_2,g in jobs for p in g.primitives}),
+                                   continuationType=list(jobs)[0][-1].continuationType)
     programsAndRequests = {(program, request)
                            for program, request, grammar in jobs}
     with timing(f"Calculated {len(programsAndRequests)} likelihood summaries"):
         summary = {(program, request): superGrammar.closedLikelihoodSummary(request, program)
                    for program, request in programsAndRequests}
     with timing(f"Calculated log likelihoods from summaries"):
-        response = {(program, request, grammar): summary[(program, request)].logLikelihood_overlyGeneral(grammar)
-                    for program, request, grammar in jobs}
+        response = {}
+        for program, request, grammar in jobs:
+            fast = summary[(program, request)].logLikelihood_overlyGeneral(grammar)
+            if False: # debugging
+                slow = grammar.logLikelihood(request, program)
+                print(program)
+                eprint(grammar.closedLikelihoodSummary(request, program))
+                eprint(superGrammar.closedLikelihoodSummary(request, program))
+                print()
+                assert abs(fast - slow) < 0.0001
+            response[(program, request, grammar)] = fast
     return response
 
 if __name__ == "__main__":

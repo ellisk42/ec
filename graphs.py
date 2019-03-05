@@ -53,14 +53,32 @@ def padSearchTimes(result, testingTimeout, enumerationTimeout):
     result.searchTimes = [ ts + [enumerationTimeout]*(len(result.taskSolutions) - len(ts))
                                for ts in result.searchTimes ]
 
-def updatePriors(result):
+def updatePriors(result, path):
     jobs = set()
+    numberOfChecks = 0
+    numberOfPastChecks = 0
+    maximumChecks = 10
     for frontierList in result.frontiersOverTime.values():
         for t,f in enumerate(frontierList):
             g = result.grammars[t]
             for e in f:
                 jobs.add((e.program,f.task.request,g))
+            if numberOfChecks < maximumChecks and t > 0:
+                numberOfChecks += 1
+                if abs(g.logLikelihood(f.task.request, e.program) - e.logPrior) < 0.001:
+                    numberOfPastChecks += 1
+    if numberOfPastChecks == numberOfChecks:
+        print(f"Looks like {path} has already had its prior probabilities updated! Or does not use the neural network.")
+        if False: # debugging
+            for frontierList in result.frontiersOverTime.values():
+                for t,f in enumerate(frontierList):
+                    g = result.grammars[t]
+                    for e in f:
+                        print(t)
+                        assert g.logLikelihood(f.task.request, e.program) == e.logPrior        
+        return 
     print(f"About to update prior probabilities for {len(jobs)} program/grammar pairs")
+    print(f"WARNING: Will overwrite {path} with new prior probabilities once we are done")
     with timing("updated prior probabilities"):
         job2likelihood = batchLikelihood(jobs)
         for frontierList in result.frontiersOverTime.values():
@@ -68,6 +86,8 @@ def updatePriors(result):
                 g = result.grammars[t]
                 for e in f:
                     e.logPrior = job2likelihood[(e.program, f.task.request, g)]
+    with open(path, 'wb') as handle:
+        dill.dump(result, handle)
                 
 def getCutOffHits(result, cutOff):
     """Return a list of hit percentages; currently only testing tasks supported"""
@@ -82,8 +102,10 @@ def getCutOffHits(result, cutOff):
             if iteration >= len(result.frontiersOverTime[t]):
                 assert ti == 0
                 return learningCurve
-            bestLikelihood = max(e.logLikelihood
-                                 for e in result.frontiersOverTime[t][iteration] ) if len(result.frontiersOverTime[t][iteration]) > 0 else NEGATIVEINFINITY
+            frontier = result.frontiersOverTime[t][iteration]
+            if len(frontier) == 0: continue
+            frontier = frontier.normalize()
+            bestLikelihood = frontier.bestPosterior.logLikelihood
             if cutOff == "gt":
                 if bestLikelihood > t.gt: hs += 1
                 elif bestLikelihood == t.gt: hs += 1
@@ -99,6 +121,8 @@ def getLikelihood(likelihood, result, task, iteration):
     frontier = result.frontiersOverTime[task][iteration]
     if likelihood == "maximum":
         return max(e.logLikelihood for e in frontier) if len(frontier) > 0 else 0.
+    if likelihood == "map":
+        return frontier.bestPosterior.logLikelihood if len(frontier) > 0 else 0.
     if likelihood == "task":
         if len(frontier) > 0:
             return lse([e.logLikelihood + e.logPrior#result.grammars[iteration].logLikelihood(frontier.task.request, e.program)
@@ -220,7 +244,7 @@ def plotECResult(
         
         result = loadfun(path)
         print("loaded path:", path)
-        if likelihood == "task": updatePriors(result)
+        if likelihood == "task" or cutoff is not None: updatePriors(result, path)
 
         if hasattr(result, "baselines") and result.baselines:
             assert False, "baselines are deprecated."
