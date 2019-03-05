@@ -63,11 +63,11 @@ class Frontier(object):
     def marginalLikelihood(self):
         return lse([e.logPrior + e.logLikelihood for e in self])
 
-    def likelihoodTemperature(self,T):
-        """Divides likelihoods by T"""
+    def temperature(self,T):
+        """Divides prior by T"""
         return Frontier([ FrontierEntry(program=e.program,
-                                        logPrior=e.logPrior,
-                                        logLikelihood=e.logLikelihood/T)
+                                        logPrior=e.logPrior/T,
+                                        logLikelihood=e.logLikelihood)
                           for e in self],
                         task=self.task)
                                         
