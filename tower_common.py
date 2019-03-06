@@ -2,8 +2,7 @@ import random
 import math
 from utilities import *
 
-
-def simulateWithoutPhysics(plan):
+def simulateWithoutPhysics(plan,ordered=True):
     def overlap(b1,
                 b2):
         (x,w,h) = b1
@@ -31,17 +30,22 @@ def simulateWithoutPhysics(plan):
 
     w = []
     for p in plan: placeBlock(w,p)
-    return list(sorted(w))
+    if ordered: w = list(sorted(w))
+    return w
 
-def centerTower(t,hand=None):
+def centerTower(t,hand=None, masterPlan=None):
+
     if len(t) == 0:
         if hand is None:
             return t
         else:
             return t, hand
-    x1 = max(x for x, _, _ in t)
-    x0 = min(x for x, _, _ in t)
-    c = int((x1 - x0) / 2.0) + x0
+    def getCenter(t):
+        x1 = max(x for x, _, _ in t)
+        x0 = min(x for x, _, _ in t)
+        c = int((x1 - x0) / 2.0) + x0
+        return c
+    c = getCenter(masterPlan or t)
     t = [(x - c, w, h) for x, w, h in t]
     if hand is None:
         return t
@@ -63,6 +67,8 @@ def towerHeight(t):
 
 def renderPlan(plan, resolution=256, window=64, floorHeight=2, borderSize=1, bodyColor=(0.,1.,1.),
                borderColor=(1.,0.,0.),
+               truncate=None, randomSeed=None,
+               masterPlan=None,
                pretty=False, Lego=False,
                drawHand=None):
     import numpy as np
@@ -70,12 +76,14 @@ def renderPlan(plan, resolution=256, window=64, floorHeight=2, borderSize=1, bod
     if Lego: assert pretty
 
     if drawHand is not None and drawHand is not False:
-        plan, drawHand = centerTower(plan, drawHand)
-        drawHand = drawHand
+        plan, drawHand = centerTower(plan, drawHand,
+                                     masterPlan=masterPlan)
     else:
-        plan = centerTower(plan)
+        plan = centerTower(plan,masterPlan=masterPlan)
 
-    world = simulateWithoutPhysics(plan)
+    world = simulateWithoutPhysics(plan,
+                                   ordered=randomSeed is None)
+    if truncate is not None: world = world[:truncate]
     a = np.zeros((resolution, resolution, 3))
 
     def transform(x,y):
@@ -107,9 +115,13 @@ def renderPlan(plan, resolution=256, window=64, floorHeight=2, borderSize=1, bod
           :] = c
 
 
-
+    if randomSeed is not None:
+        randomNumbers = random.Random(randomSeed)
     def _color():
-        return random.random()*0.7 + 0.3
+        if randomSeed is None:
+            return random.random()*0.7 + 0.3
+        else:
+            return randomNumbers.random()*0.7 + 0.3
     def color():
         return (_color(),_color(),_color())
     
@@ -146,11 +158,15 @@ def renderPlan(plan, resolution=256, window=64, floorHeight=2, borderSize=1, bod
     
     a[resolution - floorHeight:,:,:] = 1.
     if drawHand is not None:
-        dh = 0.25
-        rectangle(drawHand - dh,
-                  drawHand + dh,
-                  -99999, 99999,
-                  (0,1,0))
+        if not Lego:
+            dh = 0.25
+            rectangle(drawHand - dh,
+                      drawHand + dh,
+                      -99999, 99999,
+                      (0,1,0))
+        else:
+            rectangle(drawHand - 1,drawHand + 1,
+                      43,45,(1,1,1))
 
     return a
 
