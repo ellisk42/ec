@@ -277,13 +277,13 @@ def regexHeldOutExamples(task, include_only=None):
             regextasks = [
                 Task("Data column no. " + str(i),
                     arrow(tpregex, tpregex),
-                    [((), example) for example in _task['train']] 
+                    [((), example) for example in _task['test']] 
                 ) for i, _task in enumerate(tasklist) if i in include_only]
         else:
             regextasks = [
                 Task("Data column no. " + str(i),
                     arrow(tpregex, tpregex),
-                    [((), example) for example in _task['train']] 
+                    [((), example) for example in _task['test']] 
                 ) for i, _task in enumerate(tasklist)]
 
         #for i in train_list:
@@ -291,8 +291,7 @@ def regexHeldOutExamples(task, include_only=None):
 
         REGEXTASKS = {t.name: t.examples for t in regextasks}
     fullTask = REGEXTASKS[task.name]
-    assert task.examples == fullTask[:len(task.examples)]
-    return fullTask[len(task.examples):]
+    return fullTask
         
 
 

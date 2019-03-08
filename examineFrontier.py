@@ -71,7 +71,7 @@ for task in tasks:
         totalTasks += 1
         print("\t", ["".join(example[1]) for example in task.examples])
 
-        print(regexHeldOutExamples(task)[:5])
+        print(regexHeldOutExamples(task))
         
         print("\tHuman written regex:",gt_dict[int(task.name.split(" ")[-1])])
         def examineProgram(entry):
