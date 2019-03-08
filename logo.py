@@ -26,11 +26,14 @@ from recognition import variable, maybe_cuda
 global prefix_dreams
 
 def dreamFromGrammar(g, directory, N=100):
-    programs = [ p
-                 for _ in range(N)
-                 for p in [g.sample(arrow(turtle,turtle),
-                                    maximumDepth=20)]
-                 if p is not None]
+    if isinstance(g,Grammar):
+        programs = [ p
+                     for _ in range(N)
+                     for p in [g.sample(arrow(turtle,turtle),
+                                        maximumDepth=20)]
+                     if p is not None]
+    else:
+        programs = g
     drawLogo(*programs,
              pretty=False, smoothPretty=False,
              resolution=512,
@@ -178,6 +181,27 @@ def outputDreams(checkpoint, directory):
     os.system("mkdir  -p %s"%directory)
     dreamFromGrammar(g, directory)
 
+def enumerateDreams(checkpoint, directory):
+    from recognition import backgroundHelmholtzEnumeration
+    from utilities import loadPickle,standardDeviation,mean
+    result = loadPickle(checkpoint)
+    eprint(" [+] Loaded checkpoint",checkpoint)
+    g = result.grammars[-1]
+    if directory is None: assert False, "please specify a directory"
+    eprint(" Dreaming into",directory)
+    os.system("mkdir  -p %s"%directory)
+    frontiers = backgroundHelmholtzEnumeration(makeTasks(None,None), g, 500,
+                                               evaluationTimeout=0.01,
+                                               special=LogoFeatureCNN.special)()
+    random.shuffle(frontiers)
+    frontiers = frontiers[:500]
+    md = [list(f.entries)[0].logPrior for f in frontiers]
+    eprint("MDLs",md)
+    eprint(f"average MDL {mean(md)} +/- {standardDeviation(md)}")
+    
+    dreamFromGrammar([list(f.entries)[0].program for f in frontiers],
+                     directory)
+
 def visualizePrimitives(primitives, export='/tmp/logo_primitives.png'):
     from itertools import product
     from pylab import imshow,show
@@ -300,7 +324,8 @@ if __name__ == "__main__":
     proto = args.pop("proto")
 
     if dreamCheckpoint is not None:
-        outputDreams(dreamCheckpoint, dreamDirectory)
+        #outputDreams(dreamCheckpoint, dreamDirectory)
+        enumerateDreams(dreamCheckpoint, dreamDirectory)
         sys.exit(0)        
         
     target = args.pop("target")

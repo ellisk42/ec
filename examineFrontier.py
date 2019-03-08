@@ -97,4 +97,4 @@ for task in tasks:
 
 print(f"Best posteriorc hits task {posteriorHits}/{totalTasks} = {posteriorHits/totalTasks}")
 print(f"Best likelihood hits task {likelihoodHits}/{totalTasks} = {likelihoodHits/totalTasks}")
->>>>>>> 56832f1fe9d3731ce0d8dfc524025c95f1b428d7
+

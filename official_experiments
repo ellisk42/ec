@@ -43,6 +43,7 @@ Scientific laws:
 python launch.py -k  -c -z n1-highmem-64 scientific_1h "python scientificLaws.py  -t 3600 --topK 5 --arity 3 --maximumFrontier 5 -i 10 -R 3600 -RS 5000 --biasOptimal --contextual --mask  -r 0."
 python launch.py -k  -c -z n1-highmem-64 scientific_12m_10b "python scientificLaws.py  -t 720 --taskReranker randomShuffle --taskBatchSize 10 --topK 5 --arity 3 --maximumFrontier 5 -i 10 -R 3600 -RS 5000 --biasOptimal --contextual --mask  -r 0."
 python launch.py -k  -c -z n1-highmem-64 scientific_60m_10b "python scientificLaws.py  -t 3600 --taskReranker randomShuffle --taskBatchSize 10 --topK 5 --arity 3 --maximumFrontier 5 -i 10 -R 3600 -RS 5000 --biasOptimal --contextual --mask  -r 0."
+python launch.py -k  -c -z n1-highmem-64 scientific_30m_40b "python scientificLaws.py  -t 3600 --taskReranker randomShuffle --taskBatchSize 40 --topK 5 --arity 3 --maximumFrontier 5 -i 10 -R 3600 -RS 5000 --biasOptimal --contextual --mask  -r 0."
 python launch.py -k  -c -z n1-highmem-64 scientific_4h "python scientificLaws.py  -t 3600 --topK 5 --arity 3 --maximumFrontier 5 -i 10 -R 3600 -RS 5000 --biasOptimal --contextual --mask  -r 0."
 
 

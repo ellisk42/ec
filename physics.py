@@ -250,14 +250,14 @@ if __name__ == "__main__":
 
     tasks = physicsTasks()
 
-    generator = ecIterator(g, tasks,
-                           outputPrefix="experimentOutputs/physics",
-                           evaluationTimeout=0.01,
-                           **arguments)
-    for result in generator:
-        pass
+    # generator = ecIterator(g, tasks,
+    #                        outputPrefix="experimentOutputs/physics",
+    #                        evaluationTimeout=0.01,
+    #                        **arguments)
+    # for result in generator:
+    #     pass
 
-    assert False
+    # assert False
 
     
     def showLikelihood(e):
@@ -286,7 +286,7 @@ if __name__ == "__main__":
         dt = "$%d"%(Program.parse(dv).numberOfFreeVariables)
         dv = "(*v %s %s)"%(dt,dv)
         showLikelihood(dv)
-        dv = "(+v (velocity $0) %s)"%dv
+        dv = "(+v (get-velocity $0) %s)"%dv
         showLikelihood(dv)
 
         eprint()
