@@ -59,28 +59,48 @@ let _ =
           | e -> Some(trim e)
         with _ -> None
       in
+
+      let animate = try
+          to_bool (member "animate" j)
+        with _ -> false
+      in 
       
       let p = to_string (member "program" j) |> trim in
       let p = safe_get_some (Printf.sprintf "Could not parse %s\n" p) (parse_program p) in
-      try
-        match run_for_interval timeout (fun () ->
-            let p = analyze_lazy_evaluation p in
-            let turtle = run_lazy_analyzed_with_arguments p [] in
-            let turtle = if smooth_pretty then smooth_logo_wrapper turtle else turtle in
-            let c = eval_turtle turtle in
-            let array = canvas_to_1Darray c size in
-            c, array) with
-        | None -> `String("timeout")
-        | Some(c, array) ->       
-          let bx = canvas_to_1Darray c 8 in
-          if bx = b0 then `String("empty")
-          else
-            match export with
-            | Some(fn) -> (output_canvas_png ~pretty c size fn;
-                           `String("exported"))
-            | None ->
-              `List(List.map (range (Bigarray.Array1.dim array)) ~f:(fun i -> `Int(array.{i})))
-      with _ -> `String("exception")
+      if animate then
+        match export with
+        | None -> assert (false)
+        | Some(export) -> 
+          let p = analyze_lazy_evaluation p in
+          let turtle = run_lazy_analyzed_with_arguments p [] in
+          let turtle = if smooth_pretty then smooth_logo_wrapper turtle else turtle in
+          let cs = animate_turtle turtle in
+          List.iteri cs (fun j c ->
+              output_canvas_png ~pretty c size (Printf.sprintf "%s_%09d.png" export j));
+          Sys.command (Printf.sprintf "convert -delay 1 -loop 0 %s_*.png %s.gif"
+                         export export);
+          Sys.command (Printf.sprintf "rm %s_*.png" export);
+          `String("exported")
+      else 
+        try
+          match run_for_interval timeout (fun () ->
+              let p = analyze_lazy_evaluation p in
+              let turtle = run_lazy_analyzed_with_arguments p [] in
+              let turtle = if smooth_pretty then smooth_logo_wrapper turtle else turtle in
+              let c = eval_turtle turtle in
+              let array = canvas_to_1Darray c size in
+              c, array) with
+          | None -> `String("timeout")
+          | Some(c, array) ->       
+            let bx = canvas_to_1Darray c 8 in
+            if bx = b0 then `String("empty")
+            else
+              match export with
+              | Some(fn) -> (output_canvas_png ~pretty c size fn;
+                             `String("exported"))
+              | None ->
+                `List(List.map (range (Bigarray.Array1.dim array)) ~f:(fun i -> `Int(array.{i})))
+        with _ -> `String("exception")
     )
   in
 

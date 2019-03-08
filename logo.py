@@ -1,6 +1,6 @@
 from ec import ecIterator, commandlineArguments
 from grammar import Grammar
-from utilities import eprint, testTrainSplit, numberOfCPUs, parallelMap
+from utilities import eprint, testTrainSplit, numberOfCPUs, parallelMap, loadPickle
 from makeLogoTasks import makeTasks, montageTasks, drawLogo
 from logoPrimitives import *
 from collections import OrderedDict
@@ -25,6 +25,20 @@ from recognition import variable, maybe_cuda
 
 global prefix_dreams
 
+def animateSolutions(allFrontiers):
+    programs = []
+    filenames = []
+    for n,(t,f) in enumerate(allFrontiers.items()):
+        if f.empty: continue
+
+        programs.append(f.bestPosterior.program)
+        filenames.append(f"/tmp/logo_animation_{n}")
+        
+    drawLogo(*programs, pretty=True, smoothPretty=True, resolution=128, animate=True,
+             filenames=filenames)
+        
+        
+    
 def dreamFromGrammar(g, directory, N=100):
     if isinstance(g,Grammar):
         programs = [ p
@@ -166,6 +180,8 @@ def list_options(parser):
                         default=None, type=str)
     parser.add_argument("--split",
                         default=1., type=float)
+    parser.add_argument("--animate",
+                        default=None, type=str)
 
 
 
@@ -326,7 +342,12 @@ if __name__ == "__main__":
     if dreamCheckpoint is not None:
         #outputDreams(dreamCheckpoint, dreamDirectory)
         enumerateDreams(dreamCheckpoint, dreamDirectory)
-        sys.exit(0)        
+        sys.exit(0)
+
+    animateCheckpoint = args.pop("animate")
+    if animateCheckpoint is not None:
+        animateSolutions(loadPickle(animateCheckpoint).allFrontiers)
+        sys.exit(0)
         
     target = args.pop("target")
     red = args.pop("reduce")

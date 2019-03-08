@@ -89,17 +89,24 @@ let eval_turtle ?sequence (t2t : turtle -> turtle) =
 let animate_turtle ?sequence (t2t : turtle -> turtle) =
   let p,_ = (t2t logo_NOP) (init_state ()) in
   let p = center_logo_list p in
-  let c = ref (new_canvas ()) in
-  let lineto x y = (c := (lineto !c x y))
-  and moveto x y = (c := (moveto !c x y)) in
-  let t = init_state () in
-  moveto t.x t.y ;
-  let rec eval_instruction i = match i with
-    | SEGMENT(x1,y1,x2,y2) ->
-      (moveto x1 y1; lineto x2 y2)  in
-  List.iter eval_instruction p ;
-  !c
-
+  let draw_list p = 
+    let c = ref (new_canvas ()) in
+    let lineto x y = (c := (lineto !c x y))
+    and moveto x y = (c := (moveto !c x y)) in
+    let t = init_state () in
+    moveto t.x t.y ;
+    let rec eval_instruction i = match i with
+      | SEGMENT(x1,y1,x2,y2) ->
+        (moveto x1 y1; lineto x2 y2)  in
+    List.iter eval_instruction p ;
+    !c
+  in
+  let rec map_suffixes l f = match l with
+    | [] -> []
+    | _ :: xs -> f l :: map_suffixes xs f
+  in 
+  List.rev (map_suffixes (List.rev p) draw_list)
+  
 let logo_PU : turtle =
   fun s -> ([], {s with p = false})
 
