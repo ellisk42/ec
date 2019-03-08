@@ -69,9 +69,10 @@ for task in tasks:
                 continue
         print(task.name)
         totalTasks += 1
-        print("\t", ["".join(example[1]) for example in task.examples])
+        print("\tTRAIN\t", ["".join(example[1]) for example in task.examples])
 
         testingExamples = regexHeldOutExamples(task)
+        print("\tTEST\t", [example[1] for example in testingExamples])
 
         gt_preg = gt_dict[int(task.name.split(" ")[-1])]
         print("\tHuman written regex:",gt_preg)
