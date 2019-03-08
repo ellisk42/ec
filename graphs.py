@@ -92,6 +92,7 @@ def updatePriors(result, path):
 def getCutOffHits(result, cutOff):
     """Return a list of hit percentages; currently only testing tasks supported"""
     from likelihoodModel import add_cutoff_values
+    from examineFrontier import testingRegexLikelihood
     tasks = result.getTestingTasks()
     add_cutoff_values(tasks, cutOff)
     learningCurve = []
@@ -105,28 +106,52 @@ def getCutOffHits(result, cutOff):
             frontier = result.frontiersOverTime[t][iteration]
             if len(frontier) == 0: continue
             frontier = frontier.normalize()
-            bestLikelihood = frontier.bestPosterior.logLikelihood
+            bestLikelihood = frontier.bestPosterior
             if cutOff == "gt":
-                if bestLikelihood > t.gt: hs += 1
-                elif bestLikelihood == t.gt: hs += 1
+                if arguments.testingLikelihood:
+                    p = bestLikelihood.program
+                    hs += int(testingRegexLikelihood(task, p) >= t.gt_test - 0.001)
+                else:
+                    hs += int(bestLikelihood.logLikelihood >= t.gt - 0.001)
             elif cutOff == "unigram" or cutOff == "bigram":
+                assert False, "why are you not using a ground truth cut off"
                 if bestLikelihood >= t.ll_cutoff: hs += 1
             else: assert False
         learningCurve.append(100.*hs/len(tasks))
             
         
-
-    
 def getLikelihood(likelihood, result, task, iteration):
+    from examineFrontier import testingRegexLikelihood
+
     frontier = result.frontiersOverTime[task][iteration]
+    
+    if likelihood == "marginal":
+        frontier = frontier.normalize()
+        if arguments.testingLikelihood:
+            return lse([ e.logPosterior + testingRegexLikelihood(task, e.program)
+                         for e in frontier ])
+        else:
+            return lse([ e.logPosterior + e.logLikelihood
+                         for e in frontier ])
+        
+    
     if likelihood == "maximum":
+        assert not arguments.testingLikelihood
+            
         return max(e.logLikelihood for e in frontier) if len(frontier) > 0 else 0.
-    if likelihood == "map":
-        return frontier.bestPosterior.logLikelihood if len(frontier) > 0 else 0.
+    if likelihood == "MAP":
+        if not arguments.testingLikelihood:
+            return frontier.bestPosterior.logLikelihood if len(frontier) > 0 else 0.
+        else:
+            return testingRegexLikelihood(task, frontier.bestPosterior.program)
     if likelihood == "task":
         if len(frontier) > 0:
-            return lse([e.logLikelihood + e.logPrior#result.grammars[iteration].logLikelihood(frontier.task.request, e.program)
-                        for e in frontier])
+            if arguments.testingLikelihood:
+                return lse([testingRegexLikelihood(task, e.program) + e.logPrior
+                            for e in frontier])
+            else:
+                return lse([e.logLikelihood + e.logPrior
+                            for e in frontier])
         return 0. # TODO: fix me
     assert False
 def getTestingLikelihood(likelihood, result, iteration):
@@ -244,7 +269,11 @@ def plotECResult(
         
         result = loadfun(path)
         print("loaded path:", path)
-        if likelihood == "task" or cutoff is not None: updatePriors(result, path)
+        if likelihood == "task" or cutoff is not None:
+            if arguments.goodPrior:
+                print("WARNING: Skipping prior update - you better already have updated the priors!")
+            else:
+                updatePriors(result, path)
 
         if hasattr(result, "baselines") and result.baselines:
             assert False, "baselines are deprecated."
@@ -276,9 +305,17 @@ def plotECResult(
         elif likelihood == "maximum":
             ylabel = "log P(t|p^*)"
         elif likelihood == "marginal":
-            ylabel = "log \\sum_p P(t|p)"
+            if arguments.testingLikelihood:
+                ylabel = "log \\sum_p P(test|p)P(p|train,DSL)"
+            else:
+                ylabel = "log \\sum_p P(train|p)P(p|train,DSL)"
         elif likelihood == "task":
             ylabel = "log \\sum_p P(t|p)P(p|D)"
+        elif likelihood == "MAP":
+            if arguments.testingLikelihood:
+                ylabel = "log P(train|p*)"
+            else:
+                ylabel = "log P(test|p*)"            
         else:
             assert False
             
@@ -500,11 +537,17 @@ if __name__ == "__main__":
                         default=1., type=float,
                         help="Transparency of plotted lines")
     parser.add_argument("--likelihood",
-                        type=str, choices=["maximum", "task"],
+                        type=str, choices=["maximum", "task",
+                                           "marginal", "MAP"],
                         default=None)
     parser.add_argument("--cutoff",
                         type=str, choices=["bigram","unigram","gt"],
                         default=None)
+    parser.add_argument("--testingLikelihood",
+                        default=False, action='store_true')
+    parser.add_argument("--goodPrior",
+                        default=False, action='store_true',
+                        help="Do not update priors when doing cutoffs and likelihoods")
 
     arguments = parser.parse_args()
 

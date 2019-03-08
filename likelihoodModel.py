@@ -92,7 +92,7 @@ def get_gt_ll(name, examples):
         print('preg:', preg)
         print('preg sample:', [preg.sample() for i in range(3)])
         print("exs", examples)
-        assert False 
+        #assert False 
     return s
 
 
@@ -103,9 +103,12 @@ def add_cutoff_values(tasks, ll_cutoff):
             task.ll_cutoff = None
         return tasks
     if ll_cutoff == "gt":
+        from makeRegexTasks import regexHeldOutExamples
         for task in tasks:
             task.ll_cutoff = None
             task.gt = get_gt_ll(task.name, [example[1] for example in task.examples])
+            task.gt_test = get_gt_ll(task.name,
+                                     [example[1] for example in regexHeldOutExamples(task) ])
         return tasks
     elif ll_cutoff == "plus":
         for task in tasks:
