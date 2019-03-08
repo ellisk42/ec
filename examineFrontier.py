@@ -61,6 +61,9 @@ print("TESTING ONLY:")
 #print loop?
 posteriorHits = 0
 likelihoodHits = 0
+posteriorHits_test = 0
+likelihoodHits_test = 0
+
 totalTasks = 0
 for task in tasks:
         try:
