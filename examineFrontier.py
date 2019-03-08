@@ -54,7 +54,7 @@ def testingRegexLikelihood(task, program):
     r = program.evaluate([])(pre.String(""))
 
     ll = 0.
-    for s in testing:
+    for _,s in testing:
         if (r,s) not in REGEXCACHINGTABLE:
             REGEXCACHINGTABLE[(r,s)] = r.match(s)
         ll += REGEXCACHINGTABLE[(r,s)]

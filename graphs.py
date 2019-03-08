@@ -93,11 +93,16 @@ def getCutOffHits(result, cutOff):
     """Return a list of hit percentages; currently only testing tasks supported"""
     from likelihoodModel import add_cutoff_values
     from examineFrontier import testingRegexLikelihood
-    tasks = result.getTestingTasks()
+    from groundtruthRegexes import badRegexTasks
+    
+    tasks = [t for t in result.getTestingTasks()
+             if t.name not in badRegexTasks]
+    
     add_cutoff_values(tasks, cutOff)
     learningCurve = []
     while True:
         iteration = len(learningCurve)
+        print(f"Calculating hit tasks for iteration {iteration}. We do this once per iteration and once per checkpoint so will take a while :(")
         hs = 0
         for ti,t in enumerate(tasks):
             if iteration >= len(result.frontiersOverTime[t]):
@@ -110,7 +115,7 @@ def getCutOffHits(result, cutOff):
             if cutOff == "gt":
                 if arguments.testingLikelihood:
                     p = bestLikelihood.program
-                    hs += int(testingRegexLikelihood(task, p) >= t.gt_test - 0.001)
+                    hs += int(testingRegexLikelihood(t, p) >= t.gt_test - 0.001)
                 else:
                     hs += int(bestLikelihood.logLikelihood >= t.gt - 0.001)
             elif cutOff == "unigram" or cutOff == "bigram":
@@ -127,12 +132,14 @@ def addStupidRegex(frontier, g):
     import pregex as pre
     
     if stupidProgram is None:
+        from regexPrimitives import reducedConcatPrimitives
+        reducedConcatPrimitives()
         stupidProgram = Program.parse("(lambda (r_kleene (lambda (r_dot $0)) $0))")
         stupidRegex = stupidProgram.evaluate([])(pre.String(""))
         
     if any( e.program == stupidProgram for e in frontier ): return frontier
-    lp = g.logLikelihood(frontier.tasks.request, stupidProgram)    
-    ll = sum(stupidRegex.match("".join(example)) for _,example in frontier.tasks.examples)
+    lp = g.logLikelihood(frontier.task.request, stupidProgram)    
+    ll = sum(stupidRegex.match("".join(example)) for _,example in frontier.task.examples)
     fe = FrontierEntry(logPrior=lp, logLikelihood=ll, program=stupidProgram)
     return Frontier(frontier.entries + [fe],
                     task=frontier.task).normalize()
@@ -142,7 +149,7 @@ def getLikelihood(likelihood, result, task, iteration):
 
     frontier = result.frontiersOverTime[task][iteration]
     frontier = addStupidRegex(frontier, result.grammars[iteration])
-    
+
     if likelihood == "marginal":
         if arguments.testingLikelihood:
             return lse([ e.logPosterior + testingRegexLikelihood(task, e.program)
@@ -171,7 +178,11 @@ def getLikelihood(likelihood, result, task, iteration):
     assert False
     
 def getTestingLikelihood(likelihood, result, iteration):
-    testingTasks = result.getTestingTasks()
+    from groundtruthRegexes import badRegexTasks
+    testingTasks = [t for t in result.getTestingTasks()
+                    if t.name not in badRegexTasks]
+
+    print("Getting testing likelihoods; we have to do this once per checkpoint and once per iteration so hang on to your seat!")
     return sum(getLikelihood(likelihood, result, task, iteration)
                for task in testingTasks )
 def getTrainingLikelihood(likelihood, result, iteration):
@@ -285,7 +296,7 @@ def plotECResult(
         
         result = loadfun(path)
         print("loaded path:", path)
-        if likelihood == "task" or cutoff is not None:
+        if likelihood is not None or cutoff is not None:
             if arguments.goodPrior:
                 print("WARNING: Skipping prior update - you better already have updated the priors!")
             else:
