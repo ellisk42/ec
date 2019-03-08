@@ -260,6 +260,39 @@ def makeNewTasks(include_only=None):
     #    regextasks[i].mustTrain = True
 
     return regextasks
+REGEXTASKS = None
+def regexHeldOutExamples(task, include_only=None):
+
+    #load new data:
+    global REGEXTASKS
+    if REGEXTASKS is None:
+        taskfile = "./csv_filtered_all_background_novel.p"
+
+        with open(taskfile, 'rb') as handle:
+            data = dill.load(handle)
+
+        tasklist = data['background'] #a list of indices
+
+        if include_only:
+            regextasks = [
+                Task("Data column no. " + str(i),
+                    arrow(tpregex, tpregex),
+                    [((), example) for example in _task['test']] 
+                ) for i, _task in enumerate(tasklist) if i in include_only]
+        else:
+            regextasks = [
+                Task("Data column no. " + str(i),
+                    arrow(tpregex, tpregex),
+                    [((), example) for example in _task['test']] 
+                ) for i, _task in enumerate(tasklist)]
+
+        #for i in train_list:
+        #    regextasks[i].mustTrain = True
+
+        REGEXTASKS = {t.name: t.examples for t in regextasks}
+    fullTask = REGEXTASKS[task.name]
+    return fullTask
+        
 
 
 def makeNewNumberTasks():

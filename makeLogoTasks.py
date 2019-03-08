@@ -13,7 +13,8 @@ def drawLogo(*programs,
              timeout=None,
              resolution=None,
              pretty=False, smoothPretty=False,
-             filenames=[]):
+             filenames=[],
+             animate=False):
     message = {}
     if pretty: message["pretty"] = pretty
     if smoothPretty: message["smoothPretty"] = smoothPretty
@@ -28,6 +29,7 @@ def drawLogo(*programs,
     for p, size in zip(programs, resolution):
         entry = {"program": str(p),
                  "size": size}
+        if animate: entry["animate"] = True
         if len(filenames) > 0:
             entry["export"] = filenames[0]
             filenames = filenames[1:]

@@ -276,6 +276,9 @@ def ecIterator(grammar, tasks,
 
     if addFullTaskMetrics:
         assert resume is not None, "--addFullTaskMetrics requires --resume"
+
+    def reportMemory():
+        eprint(f"Currently using this much memory: {getThisMemoryUsage()}")
     
     # Restore checkpoint
     if resume is not None:
@@ -368,6 +371,8 @@ def ecIterator(grammar, tasks,
             eprint("Resetting task metrics for next iteration.")
             result.recognitionTaskMetrics = {}
 
+        reportMemory()
+
         # Evaluate on held out tasks if we have them
         if testingTimeout > 0 and ((j % testEvery == 0) or (j == iterations - 1)):
             eprint("Evaluating on held out testing tasks for iteration: %d" % (j))
@@ -388,6 +393,8 @@ def ecIterator(grammar, tasks,
         else:
             helmholtzFrontiers = lambda: []
 
+        reportMemory()
+
         # Get waking task batch.
         wakingTaskBatch = taskBatcher.getTaskBatch(result, tasks, taskBatchSize, j)
         eprint("Using a waking task batch of size: " + str(len(wakingTaskBatch)))
@@ -406,6 +413,8 @@ def ecIterator(grammar, tasks,
 
         tasksHitTopDown = {f.task for f in topDownFrontiers if not f.empty}
         result.hitsAtEachWake.append(len(tasksHitTopDown))
+
+        reportMemory()
 
         # Combine topDownFrontiers from this task batch with all frontiers.
         for f in topDownFrontiers:
@@ -452,9 +461,11 @@ def ecIterator(grammar, tasks,
         
         # Sleep-G
         if useDSL:
+            eprint(f"Currently using this much memory: {getThisMemoryUsage()}")
             grammar = consolidate(result, grammar, topK=topK, pseudoCounts=pseudoCounts, arity=arity, aic=aic,
                                   structurePenalty=structurePenalty, compressor=compressor, CPUs=CPUs,
                                   iteration=j)
+            eprint(f"Currently using this much memory: {getThisMemoryUsage()}")
         else:
             eprint("Skipping consolidation.")
             result.grammars.append(grammar)
@@ -561,6 +572,7 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
                                     contextual=contextual,
                                     previousRecognitionModel=previousRecognitionModel,
                                     id=i) for i in range(ensembleSize)]
+    eprint(f"Currently using this much memory: {getThisMemoryUsage()}")
     trainedRecognizers = parallelMap(min(CPUs,len(recognizers)),
                                      lambda recognizer: recognizer.train(allFrontiers,
                                                                          biasOptimal=biasOptimal,
@@ -574,6 +586,7 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
                                                                          vectorized=True),
                                      recognizers,
                                      seedRandom=True)
+    eprint(f"Currently using this much memory: {getThisMemoryUsage()}")
     # Enumerate frontiers for each of the recognizers.
     eprint("Trained an ensemble of %d recognition models, now enumerating." % len(trainedRecognizers))
     ensembleFrontiers, ensembleTimes, ensembleRecognitionTimes = [], [], []
@@ -614,6 +627,7 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
                                  'startProductions')
 
     result.hitsAtEachWake.append(len(totalTasksHitBottomUp))
+    eprint(f"Currently using this much memory: {getThisMemoryUsage()}")
 
     """ Rescore and combine the frontiers across the ensemble of recognition models."""
     eprint("Recognition model enumeration results for the best recognizer.")

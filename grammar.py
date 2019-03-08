@@ -771,6 +771,12 @@ normalizers = {%s})""" % (self.constant,
             sum(count * grammar.expression2likelihood[p] for p, count in self.uses.items()) - \
             sum(count * lse([grammar.expression2likelihood[p] for p in ps])
                 for ps, count in self.normalizers.items())
+    def logLikelihood_overlyGeneral(self, grammar):
+        """Calculates log likelihood of this summary, given that the summary might refer to productions that don't occur in the grammar"""
+        return self.constant + \
+            sum(count * grammar.expression2likelihood[p] for p, count in self.uses.items()) - \
+            sum(count * lse([grammar.expression2likelihood.get(p,NEGATIVEINFINITY) for p in ps])
+                for ps, count in self.normalizers.items())        
     def numerator(self, grammar):
         return self.constant + \
             sum(count * grammar.expression2likelihood[p] for p, count in self.uses.items())
@@ -1161,8 +1167,26 @@ def violatesSymmetry(f, x, argumentIndex):
 
 def batchLikelihood(jobs):
     """Takes as input a set of (program, request, grammar) and returns a dictionary mapping each of these to its likelihood under the grammar"""
-    return {(program, request, grammar): grammar.logLikelihood(request, program)
-            for program, request, grammar in jobs}
+    superGrammar = Grammar.uniform(list({p for _1,_2,g in jobs for p in g.primitives}),
+                                   continuationType=list(jobs)[0][-1].continuationType)
+    programsAndRequests = {(program, request)
+                           for program, request, grammar in jobs}
+    with timing(f"Calculated {len(programsAndRequests)} likelihood summaries"):
+        summary = {(program, request): superGrammar.closedLikelihoodSummary(request, program)
+                   for program, request in programsAndRequests}
+    with timing(f"Calculated log likelihoods from summaries"):
+        response = {}
+        for program, request, grammar in jobs:
+            fast = summary[(program, request)].logLikelihood_overlyGeneral(grammar)
+            if False: # debugging
+                slow = grammar.logLikelihood(request, program)
+                print(program)
+                eprint(grammar.closedLikelihoodSummary(request, program))
+                eprint(superGrammar.closedLikelihoodSummary(request, program))
+                print()
+                assert abs(fast - slow) < 0.0001
+            response[(program, request, grammar)] = fast
+    return response
 
 if __name__ == "__main__":
     from arithmeticPrimitives import *

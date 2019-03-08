@@ -56,8 +56,11 @@ def makeTask(name, request, law,
              D=3,
              # Maximum absolute value of a random number
              S=20.):
+    print(name)
     e = makeTrainingData(request, law,
                          N=N, D=D, S=S)
+    print(e)
+    print()
 
     def genericType(t):
         if t.name == "real":
@@ -76,7 +79,7 @@ def makeTask(name, request, law,
 
     return DifferentiableTask(name, genericType(request), e,
                               BIC=10.,
-                              likelihoodThreshold=-0.05,
+                              likelihoodThreshold=-0.001,
                               restarts=2,
                               steps=25,
                               maxParameters=1,
@@ -109,6 +112,9 @@ def crossProduct(a, b):
 
 def vectorAddition(u, v):
     return [a + b for a, b in zip(u, v)]
+
+def vectorSubtraction(u, v):
+    return [a - b for a, b in zip(u, v) ]
 
 
 pi = 3.14  # I think this is close enough to pi
@@ -242,21 +248,27 @@ tasks = [
     makeTask("Tp=2pi(l/g)^1/2",
              arrow(tpositive, tpositive, tpositive),
              lambda m, k: 2 * pi * (m / k)**0.5),
+    makeTask("Newtonian gravitation (2 vectors)",
+             arrow(tpositive, tpositive, tvector, tvector, tvector),
+             lambda m1, m2, r1, r2: scaleVector(m1 * m2 / (norm(vectorSubtraction(r1, r2))**2), unit(vectorSubtraction(r1, r2)))),
+    makeTask("Coulomb's law (2 vectors)",
+             arrow(tpositive, tpositive, tvector, tvector, tvector),
+             lambda m1, m2, r1, r2: scaleVector(m1 * m2 / (norm(vectorSubtraction(r1, r2))**2), unit(vectorSubtraction(r1, r2)))),
     makeTask("Newtonian gravitation (vector)",
              arrow(tpositive, tpositive, tvector, tvector),
-             lambda m1, m2, r: scaleVector(5.7 * m1 * m2 / (norm(r)**2), unit(r))),
+             lambda m1, m2, r: scaleVector(m1 * m2 / (norm(r)**2), unit(r))),
     makeTask("Coulomb's law (vector)",
              arrow(tpositive, tpositive, tvector, tvector),
-             lambda m1, m2, r: scaleVector(-9.2 * m1 * m2 / (norm(r)**2), unit(r))),
+             lambda m1, m2, r: scaleVector(m1 * m2 / (norm(r)**2), unit(r))),
     makeTask("Newtonian gravitation (scalar)",
              arrow(tpositive, tpositive, tvector, treal),
-             lambda m1, m2, r: -27. * m1 * m2 / (norm(r)**2)),
+             lambda m1, m2, r: m1 * m2 / (norm(r)**2)),
     makeTask("Coulomb's law (scalar)",
              arrow(tpositive, tpositive, tvector, treal),
-             lambda m1, m2, r: -13.8 * m1 * m2 / (norm(r)**2)),
+             lambda m1, m2, r: m1 * m2 / (norm(r)**2)),
     makeTask("Hook's law",
-             arrow(tpositive, tpositive),
-             lambda x: -7.29 * x * x,
+             arrow(treal, tpositive, tpositive),
+             lambda k,x: -k * x * x,
              N=20,
              S=20),
     makeTask("Ohm's law",
@@ -281,7 +293,7 @@ tasks = [
              S=2.),
     makeTask("Plank relation",
              arrow(tpositive, tpositive),
-             lambda p: 4.7 / p,
+             lambda p: 1. / p,
              N=20,
              S=20),
     makeTask("capacitance from charge and voltage",
@@ -350,7 +362,7 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
 if __name__ == "__main__":
     bootstrapTarget()
     equationPrimitives = [
-        real,
+#        real,
         f0,
         f1,
         fpi,

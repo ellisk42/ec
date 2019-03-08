@@ -141,3 +141,32 @@ gt_dict = {
 
 
 }
+badRegexTasks = {
+    "Data column no. 922",
+    "Data column no. 184",
+    "Data column no. 467",
+    "Data column no. 476",
+    "Data column no. 150",
+    "Data column no. 299",
+    "Data column no. 334",
+    "Data column no. 493",
+    "Data column no. 891",
+    "Data column no. 792",
+    "Data column no. 765",
+    "Data column no. 944",
+    "Data column no. 374",
+    "Data column no. 660",
+    "Data column no. 188",
+    "Data column no. 920",
+    "Data column no. 330",
+    "Data column no. 396",
+    "Data column no. 680",
+    "Data column no. 769",
+    "Data column no. 308",
+    "Data column no. 375",
+    "Data column no. 474",
+    "Data column no. 79",
+    "Data column no. 871",
+    "Data column no. 729",
+    "Data column no. 664",
+}

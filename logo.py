@@ -1,6 +1,6 @@
 from ec import ecIterator, commandlineArguments
 from grammar import Grammar
-from utilities import eprint, testTrainSplit, numberOfCPUs, parallelMap
+from utilities import eprint, testTrainSplit, numberOfCPUs, parallelMap, loadPickle
 from makeLogoTasks import makeTasks, montageTasks, drawLogo
 from logoPrimitives import *
 from collections import OrderedDict
@@ -25,12 +25,29 @@ from recognition import variable, maybe_cuda
 
 global prefix_dreams
 
+def animateSolutions(allFrontiers):
+    programs = []
+    filenames = []
+    for n,(t,f) in enumerate(allFrontiers.items()):
+        if f.empty: continue
+
+        programs.append(f.bestPosterior.program)
+        filenames.append(f"/tmp/logo_animation_{n}")
+        
+    drawLogo(*programs, pretty=True, smoothPretty=True, resolution=128, animate=True,
+             filenames=filenames)
+        
+        
+    
 def dreamFromGrammar(g, directory, N=100):
-    programs = [ p
-                 for _ in range(N)
-                 for p in [g.sample(arrow(turtle,turtle),
-                                    maximumDepth=20)]
-                 if p is not None]
+    if isinstance(g,Grammar):
+        programs = [ p
+                     for _ in range(N)
+                     for p in [g.sample(arrow(turtle,turtle),
+                                        maximumDepth=20)]
+                     if p is not None]
+    else:
+        programs = g
     drawLogo(*programs,
              pretty=False, smoothPretty=False,
              resolution=512,
@@ -163,6 +180,8 @@ def list_options(parser):
                         default=None, type=str)
     parser.add_argument("--split",
                         default=1., type=float)
+    parser.add_argument("--animate",
+                        default=None, type=str)
 
 
 
@@ -177,6 +196,27 @@ def outputDreams(checkpoint, directory):
     eprint(" Dreaming into",directory)
     os.system("mkdir  -p %s"%directory)
     dreamFromGrammar(g, directory)
+
+def enumerateDreams(checkpoint, directory):
+    from recognition import backgroundHelmholtzEnumeration
+    from utilities import loadPickle,standardDeviation,mean
+    result = loadPickle(checkpoint)
+    eprint(" [+] Loaded checkpoint",checkpoint)
+    g = result.grammars[-1]
+    if directory is None: assert False, "please specify a directory"
+    eprint(" Dreaming into",directory)
+    os.system("mkdir  -p %s"%directory)
+    frontiers = backgroundHelmholtzEnumeration(makeTasks(None,None), g, 500,
+                                               evaluationTimeout=0.01,
+                                               special=LogoFeatureCNN.special)()
+    random.shuffle(frontiers)
+    frontiers = frontiers[:500]
+    md = [list(f.entries)[0].logPrior for f in frontiers]
+    eprint("MDLs",md)
+    eprint(f"average MDL {mean(md)} +/- {standardDeviation(md)}")
+    
+    dreamFromGrammar([list(f.entries)[0].program for f in frontiers],
+                     directory)
 
 def visualizePrimitives(primitives, export='/tmp/logo_primitives.png'):
     from itertools import product
@@ -300,8 +340,14 @@ if __name__ == "__main__":
     proto = args.pop("proto")
 
     if dreamCheckpoint is not None:
-        outputDreams(dreamCheckpoint, dreamDirectory)
-        sys.exit(0)        
+        #outputDreams(dreamCheckpoint, dreamDirectory)
+        enumerateDreams(dreamCheckpoint, dreamDirectory)
+        sys.exit(0)
+
+    animateCheckpoint = args.pop("animate")
+    if animateCheckpoint is not None:
+        animateSolutions(loadPickle(animateCheckpoint).allFrontiers)
+        sys.exit(0)
         
     target = args.pop("target")
     red = args.pop("reduce")

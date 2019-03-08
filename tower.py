@@ -1,7 +1,7 @@
 from ec import *
 
 from tower_common import *
-from towerPrimitives import primitives, new_primitives, executeTower
+from towerPrimitives import primitives, new_primitives, executeTower, animateTower
 from makeTowerTasks import *
 from listPrimitives import bootstrapTarget
 from utilities import *
@@ -33,7 +33,7 @@ class TowerCNN(nn.Module):
     def __init__(self, tasks, testingTasks=[], cuda=False, H=64):
         super(TowerCNN, self).__init__()
         self.CUDA = cuda
-        self.recomputeTasks = False
+        self.recomputeTasks = True
 
         self.outputDimensionality = H
         def conv_block(in_channels, out_channels):
@@ -229,6 +229,11 @@ def visualizePrimitives(primitives, fn=None):
         #    show()
     else:
         eprint("Tried to visualize primitives, but none to visualize.")
+
+def animateSolutions(checkpoint):
+    with open(checkpoint,"rb") as handle: result = dill.load(handle)
+    for n,f in enumerate(result.taskSolutions.values()):
+        animateTower(f"/tmp/tower_animation_{n}",f.bestPosterior.program)
     
 def visualizeSolutions(solutions, export, tasks=None):
     from tower_common import renderPlan
@@ -280,6 +285,7 @@ if __name__ == "__main__":
             solutions = pickle.load(handle).taskSolutions
         visualizeSolutions(solutions,
                            checkpoint + ".solutions.png")
+        animateSolutions(checkpoint)
         sys.exit(0)
         
     
@@ -307,6 +313,7 @@ if __name__ == "__main__":
     dreamOfTowers(g0, "%s/random_0"%outputDirectory)
     
     for result in generator:
+        continue
         iteration = len(result.learningCurve)
         newTowers = [tuple(centerTower(executeTower(frontier.sample().program)))
                      for frontier in result.taskSolutions.values() if not frontier.empty]
