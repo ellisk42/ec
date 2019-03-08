@@ -119,14 +119,31 @@ def getCutOffHits(result, cutOff):
             else: assert False
         learningCurve.append(100.*hs/len(tasks))
             
+stupidProgram = None
+stupidRegex = None
+def addStupidRegex(frontier, g):
+    global stupidProgram
+    global stupidRegex
+    import pregex as pre
+    
+    if stupidProgram is None:
+        stupidProgram = Program.parse("(lambda (r_kleene (lambda (r_dot $0)) $0))")
+        stupidRegex = stupidProgram.evaluate([])(pre.String(""))
         
+    if any( e.program == stupidProgram for e in frontier ): return frontier
+    lp = g.logLikelihood(frontier.tasks.request, stupidProgram)    
+    ll = sum(stupidRegex.match("".join(example)) for _,example in frontier.tasks.examples)
+    fe = FrontierEntry(logPrior=lp, logLikelihood=ll, program=stupidProgram)
+    return Frontier(frontier.entries + [fe],
+                    task=frontier.task).normalize()
+    
 def getLikelihood(likelihood, result, task, iteration):
     from examineFrontier import testingRegexLikelihood
 
     frontier = result.frontiersOverTime[task][iteration]
+    frontier = addStupidRegex(frontier, result.grammars[iteration])
     
     if likelihood == "marginal":
-        frontier = frontier.normalize()
         if arguments.testingLikelihood:
             return lse([ e.logPosterior + testingRegexLikelihood(task, e.program)
                          for e in frontier ])
@@ -145,15 +162,14 @@ def getLikelihood(likelihood, result, task, iteration):
         else:
             return testingRegexLikelihood(task, frontier.bestPosterior.program)
     if likelihood == "task":
-        if len(frontier) > 0:
-            if arguments.testingLikelihood:
-                return lse([testingRegexLikelihood(task, e.program) + e.logPrior
+        if arguments.testingLikelihood:
+            return lse([testingRegexLikelihood(task, e.program) + e.logPrior
+                        for e in frontier])
+        else:
+            return lse([e.logLikelihood + e.logPrior
                             for e in frontier])
-            else:
-                return lse([e.logLikelihood + e.logPrior
-                            for e in frontier])
-        return 0. # TODO: fix me
     assert False
+    
 def getTestingLikelihood(likelihood, result, iteration):
     testingTasks = result.getTestingTasks()
     return sum(getLikelihood(likelihood, result, task, iteration)
