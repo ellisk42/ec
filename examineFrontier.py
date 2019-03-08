@@ -71,23 +71,33 @@ for task in tasks:
         totalTasks += 1
         print("\t", ["".join(example[1]) for example in task.examples])
 
-        print(regexHeldOutExamples(task))
-        
-        print("\tHuman written regex:",gt_dict[int(task.name.split(" ")[-1])])
+        testingExamples = regexHeldOutExamples(task)
+
+        gt_preg = gt_dict[int(task.name.split(" ")[-1])]
+        print("\tHuman written regex:",gt_preg)
+        gt_preg = pre.create(gt_preg)
         def examineProgram(entry):
             program = entry.program
             ll = entry.logLikelihood
             program = program.visit(ConstantVisitor(task.str_const))
             print(program)
             preg = program.evaluate([])(pre.String(""))
+            testing_likelihood = sum(preg.match(testingString)
+                                     for _,testingString in testingExamples)
+            ground_truth_testing = sum(gt_preg.match(testingString)
+                                     for _,testingString in testingExamples)
             string = preg.str().replace('[ABCDEFGHIJKLMNOPQRSTUVWXYZ]','\\u').replace("[0123456789]","\\d").replace("[abcdefghijklmnopqrstuvwxyz]","\\l")
             print("\t", string)
             print("\t", "samples:")
             print("\t", [preg.sample() for i in range(5)])
             if ll >= task.gt:
-                    print(f"\t HIT, Ground truth: {task.gt}, found ll: {ll}")
+                    print(f"\t HIT (train), Ground truth: {task.gt}, found ll: {ll}")
             else:
-                    print(f"\t MISS, Ground truth: {task.gt}, found ll: {ll}")
+                    print(f"\t MISS (train), Ground truth: {task.gt}, found ll: {ll}")
+            if testing_likelihood >= ground_truth_testing:
+                    print(f"\t HIT (test), Ground truth: {ground_truth_testing}, found ll: {testing_likelihood}")
+            else:
+                    print(f"\t MISS (test), Ground truth: {ground_truth_testing}, found ll: {testing_likelihood}")
 
             
         print("\t", "best Posterior:")
