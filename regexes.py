@@ -288,7 +288,7 @@ if __name__ == "__main__":
 
 
     if args.pop("use_str_const"):
-        assert args["primitives"] == "strConst"
+        assert args["primitives"] == "strConst" or args["primitives"] == "reduced"
         ConstantInstantiateVisitor.SINGLE = \
             ConstantInstantiateVisitor()
         test = add_string_constants(test)

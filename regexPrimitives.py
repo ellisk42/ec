@@ -125,6 +125,7 @@ def strConstConcatPrimitives():
 
 
 def reducedConcatPrimitives():
+    #uses strConcat!!
     #[Primitive("empty_string", arrow(tpregex, tpregex), PRC(pregex.String("")))
             #] + [
     return [Primitive("string_" + i, arrow(tpregex, tpregex), PRC(pregex.String(i))) for i in printable[:-4] if i not in disallowed_list
@@ -142,6 +143,8 @@ def reducedConcatPrimitives():
         #Primitive("r_plus", arrow(arrow(tpregex, tpregex), arrow(tpregex,tpregex)), PRC(pregex.Plus,1)),
         #Primitive("r_maybe", arrow(arrow(tpregex, tpregex), arrow(tpregex,tpregex)), PRC(pregex.Maybe,1)),
         Primitive("r_alt", arrow(arrow(tpregex, tpregex) , arrow(tpregex, tpregex), arrow(tpregex,tpregex)), PRC(pregex.Alt, 2)),
+    ] + [
+    Primitive("r_const", arrow(tpregex, tpregex), None)
     ]
 
 
