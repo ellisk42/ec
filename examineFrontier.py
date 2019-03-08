@@ -6,6 +6,7 @@ from groundtruthRegexes import *
 from regexPrimitives import *
 from program import Abstraction, Application
 
+from makeRegexTasks import regexHeldOutExamples
 from regexPrimitives import PRC
 
 class ConstantVisitor(object):
@@ -53,6 +54,7 @@ with open(checkpoint_file, 'rb') as file:
 tasks = checkpoint.testSearchTime.keys() #recognitionTaskMetrics.keys()
 from likelihoodModel import add_cutoff_values
 tasks = add_cutoff_values(tasks, "gt") #could be "unigram" or "bigram"
+
 
 
 print("TESTING ONLY:")
