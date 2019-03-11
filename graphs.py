@@ -1,4 +1,5 @@
-from utilities import lse, callCompiled
+from utilities import lse, callCompiled, makeTemporaryFile
+import os
 from grammar import batchLikelihood
 from ec import *
 import dill
@@ -86,8 +87,11 @@ def updatePriors(result, path):
                 g = result.grammars[t]
                 for e in f:
                     e.logPrior = job2likelihood[(e.program, f.task.request, g)]
-    with open(path, 'wb') as handle:
+    temporary = makeTemporaryFile()
+    with open(temporary, 'wb') as handle:
         dill.dump(result, handle)
+    os.system(f"mv {temporary} {path}")
+    os.system("rm {temporary}")
                 
 def getCutOffHits(result, cutOff):
     """Return a list of hit percentages; currently only testing tasks supported"""

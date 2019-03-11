@@ -555,6 +555,11 @@ def percentile(l, p):
         return l[j]
     return 0
 
+def makeTemporaryFile(directory="/tmp"):
+    import tempfile
+    fd,p = tempfile.mkstemp(dir=directory)
+    os.close(fd)
+    return p
 
 class Stopwatch():
     def __init__(self):
