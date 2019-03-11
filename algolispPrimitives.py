@@ -494,12 +494,13 @@ def algolisp_IO_vocab():
     return set(v)
 
 def digit_enc_vocab():
-    import json
-    import string
-    vfile = 'algolisp_io_vocab_digit_enc.json'
-    with open(vfile, 'r') as handle:
-        v = json.load(handle)
-    return set(v + list(string.printable[-4])
+    # import json
+    # import string
+    # vfile = 'algolisp_io_vocab_digit_enc.json'
+    # with open(vfile, 'r') as handle:
+    #     v = json.load(handle)
+    v = [False, True, 'VARh', '6', 'LIST_END', 'VARa', 'VARl', 'VARj', '9', 'VARd', '3', 'VARe', ' ', 'VARc', 'VARb', '8', 'a', '-', 'VARg', 'b', 'VARi', 'OUTPUT', 'c', '0', 'VARk', 'VARf', '7', 'LIST_START', '2', ',', '1', '5', '4']
+    return set(v + list(string.printable[:-4])
 
 
 if __name__ == "__main__":
