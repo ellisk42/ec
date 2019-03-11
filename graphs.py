@@ -91,7 +91,7 @@ def updatePriors(result, path):
     with open(temporary, 'wb') as handle:
         dill.dump(result, handle)
     os.system(f"mv {temporary} {path}")
-    os.system("rm {temporary}")
+    os.system(f"rm {temporary}")
                 
 def getCutOffHits(result, cutOff):
     """Return a list of hit percentages; currently only testing tasks supported"""
