@@ -50,7 +50,12 @@ def _half(x): return int(x/2)
 def _negate(x): return -x
 def _square(x): return x**2
 def _triple(x): return x*3
-def _third(x): return int(x/3)
+def _third(x): 
+    try:
+        return int(x/3)
+    except OverflowError:
+        return Null
+    
 def _quad(x): return x*4
 def _quarter(x): return int(x/4)
 

@@ -486,14 +486,21 @@ algolisp_input_vocab = [
 "'s value is the biggest (inclusive), which is strictly less than maximum element of range from 1 to the element in `a` which'",
 "'s value is the highest, which is strictly less than maximum element among sequence of digits of the element in `a` which'"]
 
-
-
 def algolisp_IO_vocab():
     import json
     vfile = 'algolisp_io_vocab.json'
     with open(vfile, 'r') as handle:
         v = json.load(handle)
     return set(v)
+
+def digit_enc_vocab():
+    import json
+    import string
+    vfile = 'algolisp_io_vocab_digit_enc.json'
+    with open(vfile, 'r') as handle:
+        v = json.load(handle)
+    return set(v + list(string.printable[-4])
+
 
 if __name__ == "__main__":
     #g = Grammar.uniform(deepcoderPrimitives())
