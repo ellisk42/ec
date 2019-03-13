@@ -206,18 +206,29 @@ def enumerateDreams(checkpoint, directory):
     if directory is None: assert False, "please specify a directory"
     eprint(" Dreaming into",directory)
     os.system("mkdir  -p %s"%directory)
-    frontiers = backgroundHelmholtzEnumeration(makeTasks(None,None), g, 500,
+    frontiers = backgroundHelmholtzEnumeration(makeTasks(None,None), g, 100,
                                                evaluationTimeout=0.01,
                                                special=LogoFeatureCNN.special)()
-    random.shuffle(frontiers)
-    frontiers = frontiers[:500]
-    md = [list(f.entries)[0].logPrior for f in frontiers]
-    eprint("MDLs",md)
-    eprint(f"average MDL {mean(md)} +/- {standardDeviation(md)}")
-    
-    dreamFromGrammar([list(f.entries)[0].program for f in frontiers],
-                     directory)
+    print(f"{len(frontiers)} total frontiers.")
+    MDL = 0
+    def L(f):
+        return -list(f.entries)[0].logPrior
+    frontiers.sort(key=lambda f: -L(f))
+    while len(frontiers) > 0:
+        # get frontiers whose MDL is between [MDL,MDL + 1)
+        fs = []
+        while len(frontiers) > 0 and L(frontiers[-1]) < MDL + 1:
+            fs.append(frontiers.pop(len(frontiers) - 1))
+        if fs:
+            random.shuffle(fs)
+            print(f"{len(fs)} programs with MDL between [{MDL}, {MDL + 1})")
 
+            fs = fs[:500]
+            os.system(f"mkdir {directory}/{MDL}")
+            dreamFromGrammar([list(f.entries)[0].program for f in fs],
+                             f"{directory}/{MDL}")
+        MDL += 1
+        
 def visualizePrimitives(primitives, export='/tmp/logo_primitives.png'):
     from itertools import product
     from pylab import imshow,show

@@ -1,0 +1,1 @@
+(lambda (x) (fn4 fn3 infinity (/ 1 5) x))

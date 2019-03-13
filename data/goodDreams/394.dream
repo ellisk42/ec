@@ -1,0 +1,1 @@
+(lambda (x) (fn8 8 (lambda (y) (fn6 4 y)) x))

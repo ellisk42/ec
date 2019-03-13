@@ -1,0 +1,1 @@
+(lambda (x) (fn8 infinity (lambda (y) (fn12 4 y)) x))
