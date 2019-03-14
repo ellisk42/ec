@@ -337,11 +337,11 @@ def plotECResult(
             ylabel = "log P(t|p^*)"
         elif likelihood == "marginal":
             if arguments.testingLikelihood:
-                ylabel = "log \\sum_p P(test|p)P(p|train,DSL)"
+                ylabel = "$\\leq\\log P($test$|$train$,$model$)$"
             else:
                 ylabel = "log \\sum_p P(train|p)P(p|train,DSL)"
         elif likelihood == "task":
-            ylabel = "log \\sum_p P(t|p)P(p|D)"
+            ylabel = "$\\leq\\log P($tasks$|$DSL$)$"
         elif likelihood == "MAP":
             if arguments.testingLikelihood:
                 ylabel = "log P(train|p*)"
