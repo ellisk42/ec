@@ -67,7 +67,7 @@ def verbatim(s):
     delimiters = "|.@#"
     for d in delimiters:
         if d not in s:
-            return f"\verb{d}{s}{d}"
+            return f"\\verb{d}{s}{d}"
     assert False, f"could not turn into verbatim {s}"
 
 def verbatimTable(strings):
