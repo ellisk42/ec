@@ -62,7 +62,20 @@ def testingRegexLikelihood(task, program):
             REGEXCACHINGTABLE[(r,s)] = r.match(s)
         ll += REGEXCACHINGTABLE[(r,s)]
     return ll
-    
+
+def verbatim(s):
+    delimiters = "|.@#"
+    for d in delimiters:
+        if d not in s:
+            return f"\verb{d}{s}{d}"
+    assert False, f"could not turn into verbatim {s}"
+
+def verbatimTable(strings):
+    return """
+\begin{tabular}{l}
+    %s
+\end{tabular}
+"""%("&\n".join(verbatim(s) for s in strings))
     
 if __name__ == "__main__":
     
@@ -101,8 +114,15 @@ if __name__ == "__main__":
         testingExamples = regexHeldOutExamples(task)
         print("\tTEST\t", [example[1] for example in testingExamples])
 
+        eprint(verbatimTable(["".join(example[1]) for example in task.examples]))
+        eprint("&")
+        eprint(verbatimTable([example[1] for example in testingExamples]))
+        eprint("&")
+
         gt_preg = gt_dict[int(task.name.split(" ")[-1])]
         print("\tHuman written regex:",gt_preg)
+        eprint(verbatim(gt_preg))
+        eprint("\\\\")
         gt_preg = pre.create(gt_preg)
         def examineProgram(entry):
             program = entry.program
@@ -114,7 +134,7 @@ if __name__ == "__main__":
                          for _,testingString in testingExamples)
             ground_truth_testing = sum(gt_preg.match(testingString)
                          for _,testingString in testingExamples)
-            string = preg.str().replace('[ABCDEFGHIJKLMNOPQRSTUVWXYZ]','\\u').replace("[0123456789]","\\d").replace("[abcdefghijklmnopqrstuvwxyz]","\\l")
+            string = preg.str().replace('[ABCDEFGHIJKLMNOPQRSTUVWXYZ]','\\u').replace("[0123456789]","\\d").replace("[abcdefghijklmnopqrstuvwxyz]","\\l").replace("[0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~     ]",".")
             print("\t", string)
             print("\t", "samples:")
             print("\t", [preg.sample() for i in range(5)])
