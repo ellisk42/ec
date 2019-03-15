@@ -1,7 +1,7 @@
 #all the imports
 import pregex as pre
 import pickle
-
+from utilities import *
 from groundtruthRegexes import *
 from regexPrimitives import *
 from program import Abstraction, Application
