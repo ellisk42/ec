@@ -101,7 +101,7 @@ if __name__ == "__main__":
 
     totalTasks = 0
     for task in tasks:
-        if task.name in badRegexTasks: continue
+        #if task.name in badRegexTasks: continue
 
         try:
             frontier = checkpoint.recognitionTaskMetrics[task]['frontier']
