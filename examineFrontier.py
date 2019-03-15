@@ -43,6 +43,9 @@ checkpoint_file = "/om2/user/ellisk/ec/experimentOutputs/regex/2019-02-26T14:49:
 #strConst, no training cutoff
 #checkpoint_file = "/om2/user/ellisk/ec/experimentOutputs/regex/2019-02-26T14:49:43.594106/regex_aic=1.0_arity=3_aux=True_BO=True_CO=True_ES=1_ET=3600_HR=0.5_it=6_mask=True_MF=10_pc=30.0_RT=3600_RR=False_RW=False_STM=True_L=1.5_batch=40_TRR=randomShuffle_K=2_topkNotMAP=True_graph=True.pickle"
 
+import sys
+if len(sys.argv) > 1:
+    checkpoint_file = sys.argv[1]
 REGEXCACHINGTABLE = {}
 def testingRegexLikelihood(task, program):
     global REGEXCACHINGTABLE

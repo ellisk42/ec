@@ -79,7 +79,7 @@ def updatePriors(result, path):
                         assert g.logLikelihood(f.task.request, e.program) == e.logPrior        
         return 
     print(f"About to update prior probabilities for {len(jobs)} program/grammar pairs")
-    print(f"WARNING: Will overwrite {path} with new prior probabilities once we are done")
+    #print(f"WARNING: Will overwrite {path} with new prior probabilities once we are done")
     with timing("updated prior probabilities"):
         job2likelihood = batchLikelihood(jobs)
         for frontierList in result.frontiersOverTime.values():
@@ -87,11 +87,12 @@ def updatePriors(result, path):
                 g = result.grammars[t]
                 for e in f:
                     e.logPrior = job2likelihood[(e.program, f.task.request, g)]
-    temporary = makeTemporaryFile()
-    with open(temporary, 'wb') as handle:
-        dill.dump(result, handle)
-    os.system(f"mv {temporary} {path}")
-    os.system(f"rm {temporary}")
+    if False:
+        temporary = makeTemporaryFile()
+        with open(temporary, 'wb') as handle:
+            dill.dump(result, handle)
+        os.system(f"mv {temporary} {path}")
+        os.system(f"rm {temporary}")
                 
 def getCutOffHits(result, cutOff):
     """Return a list of hit percentages; currently only testing tasks supported"""
