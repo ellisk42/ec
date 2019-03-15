@@ -122,7 +122,6 @@ if __name__ == "__main__":
         gt_preg = gt_dict[int(task.name.split(" ")[-1])]
         print("\tHuman written regex:",gt_preg)
         eprint(verbatim(gt_preg))
-        eprint("\\\\")
         gt_preg = pre.create(gt_preg)
         def examineProgram(entry):
             program = entry.program
@@ -135,6 +134,10 @@ if __name__ == "__main__":
             ground_truth_testing = sum(gt_preg.match(testingString)
                          for _,testingString in testingExamples)
             string = preg.str().replace('[ABCDEFGHIJKLMNOPQRSTUVWXYZ]','\\u').replace("[0123456789]","\\d").replace("[abcdefghijklmnopqrstuvwxyz]","\\l").replace("[0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~     ]",".")
+            eprint("&")
+            eprint(verbatim(string))
+            eprint("&")
+            eprint(verbatimTable([preg.sample() for i in range(5)]))
             print("\t", string)
             print("\t", "samples:")
             print("\t", [preg.sample() for i in range(5)])
@@ -162,6 +165,8 @@ if __name__ == "__main__":
         likelihoodHits += int(entry.trainHit)
         likelihoodHits_test += int(entry.testHit)
         print()
+        eprint("\\\\")
+        eprint()
 
     print(f"Best posteriorc hits training task {posteriorHits}/{totalTasks} = {posteriorHits/totalTasks}")
     print(f"Best likelihood hits training task {likelihoodHits}/{totalTasks} = {likelihoodHits/totalTasks}")
