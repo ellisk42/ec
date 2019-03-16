@@ -73,7 +73,7 @@ def verbatim(s):
 
 def verbatimTable(strings, columns=1):
     if columns == 1:
-        strings = [verbatim(s) if s is not None else "\\\\hline" for s in strings]
+        strings = [verbatim(s) if s is not None else "\\\\midrule " for s in strings]
     else:
         strings = [" & ".join(verbatim(s) for s in ss)  for ss in strings]
     return """
@@ -124,13 +124,15 @@ if __name__ == "__main__":
         testingExamples = regexHeldOutExamples(task)
         print("\tTEST\t", [example[1] for example in testingExamples])
 
+        
+        gt_preg = gt_dict[int(task.name.split(" ")[-1])]
+        print("\tHuman written regex:",gt_preg)
+
         eprint(verbatimTable(["".join(example[1]) for example in task.examples] + [None] + \
+                             [gt_preg,None] + \
                              [example[1] for example in testingExamples]))
         eprint("&")
 
-        gt_preg = gt_dict[int(task.name.split(" ")[-1])]
-        print("\tHuman written regex:",gt_preg)
-        eprint(verbatim(gt_preg))
         gt_preg = pre.create(gt_preg)
         def examineProgram(entry):
             program = entry.program
