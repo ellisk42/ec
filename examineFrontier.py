@@ -73,7 +73,7 @@ def verbatim(s):
 
 def verbatimTable(strings, columns=1):
     if columns == 1:
-        strings = [verbatim(s) for s in strings]
+        strings = [verbatim(s) if s is not None else "\\\\hline" for s in strings]
     else:
         strings = [" & ".join(verbatim(s) for s in ss)  for ss in strings]
     return """
@@ -124,9 +124,8 @@ if __name__ == "__main__":
         testingExamples = regexHeldOutExamples(task)
         print("\tTEST\t", [example[1] for example in testingExamples])
 
-        eprint(verbatimTable(["".join(example[1]) for example in task.examples]))
-        eprint("&")
-        eprint(verbatimTable([example[1] for example in testingExamples]))
+        eprint(verbatimTable(["".join(example[1]) for example in task.examples] + [None] + \
+                             [example[1] for example in testingExamples]))
         eprint("&")
 
         gt_preg = gt_dict[int(task.name.split(" ")[-1])]
@@ -145,9 +144,7 @@ if __name__ == "__main__":
                          for _,testingString in testingExamples)
             string = prettyRegex(preg)
             eprint("&")
-            eprint(verbatim(string))
-            eprint("&")
-            eprint(verbatimTable([preg.sample() for i in range(5)]))
+            eprint(verbatimTable([string] + [preg.sample() for i in range(5)]))
             print("\t", string)
             print("\t", "samples:")
             print("\t", [preg.sample() for i in range(5)])
@@ -184,7 +181,6 @@ if __name__ == "__main__":
                          for p in programSamples ]
         programSamples = [prettyRegex(p)
                           for p in programSamples ]
-        print(list(zip(stringSamples, programSamples)))
         eprint("&")
         eprint(verbatimTable(list(zip(stringSamples, programSamples)),columns=2))
         
@@ -195,9 +191,11 @@ if __name__ == "__main__":
         posterior = [(e.logPosterior, e.program.visit(ConstantVisitor(task.str_const)).evaluate([])(pre.String("")))
                      for e in frontier.normalize() ]
         testingExamples = [te for _,te in testingExamples]
+        print("testingExamples",testingExamples)
         testingLikelihood = lse([lp + sum(r.match(te) for te in testingExamples)
                                  for lp,r in posterior])
         trainingExamples = ["".join(example[1]) for example in task.examples]
+        print("trainingExamples",trainingExamples)
         trainingLikelihood = lse([lp + sum(r.match(te) for te in trainingExamples)
                                  for lp,r in posterior])
 
