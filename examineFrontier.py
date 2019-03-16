@@ -77,9 +77,9 @@ def verbatimTable(strings, columns=1):
     else:
         strings = [" & ".join(verbatim(s) for s in ss)  for ss in strings]
     return """
-\begin{tabular}{%s}
+\\begin{tabular}{%s}
     %s
-\end{tabular}
+\\end{tabular}
 """%("l"*columns, "\\\\\n".join(strings))
 
 def prettyRegex(preg):
