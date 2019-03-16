@@ -1,4 +1,5 @@
 #all the imports
+import re
 import pregex as pre
 import pickle
 from utilities import *
@@ -70,12 +71,19 @@ def verbatim(s):
             return f"\\verb{d}{s}{d}"
     assert False, f"could not turn into verbatim {s}"
 
-def verbatimTable(strings):
+def verbatimTable(strings, columns=1):
+    if columns == 1:
+        strings = [verbatim(s) for s in strings]
+    else:
+        strings = [" & ".join(verbatim(s) for s in ss)  for ss in strings]
     return """
-\begin{tabular}{l}
+\begin{tabular}{%s}
     %s
 \end{tabular}
-"""%("&\n".join(verbatim(s) for s in strings))
+"""%("l"*columns, "\\\\\n".join(strings))
+
+def prettyRegex(preg):
+    return preg.str().replace('[ABCDEFGHIJKLMNOPQRSTUVWXYZ]','\\u').replace("[0123456789]","\\d").replace("[abcdefghijklmnopqrstuvwxyz]","\\l").replace("[0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~ \t]",".")
     
 if __name__ == "__main__":
     
@@ -98,6 +106,8 @@ if __name__ == "__main__":
     likelihoodHits = 0
     posteriorHits_test = 0
     likelihoodHits_test = 0
+    marginalHits = 0
+    marginalHits_test = 0
 
     totalTasks = 0
     for task in tasks:
@@ -133,7 +143,7 @@ if __name__ == "__main__":
                          for _,testingString in testingExamples)
             ground_truth_testing = sum(gt_preg.match(testingString)
                          for _,testingString in testingExamples)
-            string = preg.str().replace('[ABCDEFGHIJKLMNOPQRSTUVWXYZ]','\\u').replace("[0123456789]","\\d").replace("[abcdefghijklmnopqrstuvwxyz]","\\l").replace("[0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~     ]",".")
+            string = prettyRegex(preg)
             eprint("&")
             eprint(verbatim(string))
             eprint("&")
@@ -165,12 +175,45 @@ if __name__ == "__main__":
         likelihoodHits += int(entry.trainHit)
         likelihoodHits_test += int(entry.testHit)
         print()
+
+        print("\t","Posterior predictive samples...")
+        programSamples = [frontier.sample().program for _ in range(5)]
+        programSamples = [p.visit(ConstantVisitor(task.str_const)).evaluate([])(pre.String(""))
+                          for p in programSamples ]
+        stringSamples = [p.sample()
+                         for p in programSamples ]
+        programSamples = [prettyRegex(p)
+                          for p in programSamples ]
+        verbatimTable(list(zip(stringSamples, programSamples)))
+        
         eprint("\\\\")
+        
         eprint()
+
+        posterior = [(e.logPosterior, e.program.visit(ConstantVisitor(task.str_const)).evaluate([])(pre.String("")))
+                     for e in frontier.normalize() ]
+        testingExamples = [te for _,te in testingExamples]
+        testingLikelihood = lse([lp + sum(r.match(te) for te in testingExamples)
+                                 for lp,r in posterior])
+        trainingExamples = ["".join(example[1]) for example in task.examples]
+        trainingLikelihood = lse([lp + sum(r.match(te) for te in trainingExamples)
+                                 for lp,r in posterior])
+
+        if testingLikelihood >= sum(gt_preg.match(te) for te in testingExamples):
+            marginalHits_test += 1
+        if trainingLikelihood >= sum(gt_preg.match(te) for te in trainingExamples):
+            marginalHits += 1
+        
+
+        
+        
 
     print(f"Best posteriorc hits training task {posteriorHits}/{totalTasks} = {posteriorHits/totalTasks}")
     print(f"Best likelihood hits training task {likelihoodHits}/{totalTasks} = {likelihoodHits/totalTasks}")
 
     print(f"Best posteriorc hits testing task {posteriorHits_test}/{totalTasks} = {posteriorHits_test/totalTasks}")
     print(f"Best likelihood hits testing task {likelihoodHits_test}/{totalTasks} = {likelihoodHits_test/totalTasks}")
+
+    print(f"Posterior predictive hits training task {marginalHits}/{totalTasks} = {marginalHits/totalTasks}")
+    print(f"Posterior predictive hits testing task {marginalHits_test}/{totalTasks} = {marginalHits_test/totalTasks}")
 
