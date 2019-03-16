@@ -185,7 +185,7 @@ if __name__ == "__main__":
         programSamples = [prettyRegex(p)
                           for p in programSamples ]
         print(list(zip(stringSamples, programSamples)))
-        verbatimTable(list(zip(stringSamples, programSamples)),columns=2)
+        eprint(verbatimTable(list(zip(stringSamples, programSamples)),columns=2))
         
         eprint("\\\\")
         
