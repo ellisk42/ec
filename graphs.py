@@ -188,11 +188,19 @@ def getTestingLikelihood(likelihood, result, iteration):
                     if t.name not in badRegexTasks]
 
     print("Getting testing likelihoods; we have to do this once per checkpoint and once per iteration so hang on to your seat!")
+    from makeRegexTasks import regexHeldOutExamples
+    totalCharacters = sum( len(s)
+        for t in testingTasks
+        for _,s in regexHeldOutExamples(t))
+    print("Total number of characters in testing tasks is",totalCharacters)    
     return sum(getLikelihood(likelihood, result, task, iteration)
-               for task in testingTasks )
+               for task in testingTasks )/totalCharacters
 def getTrainingLikelihood(likelihood, result, iteration):
+    totalCharacters = sum(len(s)
+                          for task in result.taskSolutions.keys()
+                          for _,s in task.examples)
     return sum(getLikelihood(likelihood, result, task, iteration)
-               for task in result.taskSolutions.keys() )
+               for task in result.taskSolutions.keys() )/totalCharacters
     
 def averageCurves(curves):
     xs = {x
@@ -338,11 +346,11 @@ def plotECResult(
             ylabel = "log P(t|p^*)"
         elif likelihood == "marginal":
             if arguments.testingLikelihood:
-                ylabel = "$\\leq\\log P($test$|$train$,$model$)$"
+                ylabel = "$\\leq\\log $P$($test$|$train$)$"
             else:
                 ylabel = "log \\sum_p P(train|p)P(p|train,DSL)"
         elif likelihood == "task":
-            ylabel = "$\\leq\\log P($tasks$|$DSL$)$"
+            ylabel = "$\\leq\\log $P$($tasks$|$DSL$)$"
         elif likelihood == "MAP":
             if arguments.testingLikelihood:
                 ylabel = "log P(train|p*)"

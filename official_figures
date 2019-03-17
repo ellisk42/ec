@@ -26,7 +26,7 @@ python graphs.py --checkpoint teal `grep  -h it=20.*graph jobs/rational_batch*` 
 python graphs.py --checkpoint teal `grep  -h it=20.*graph jobs/rational_batch*` orange `grep  -h it=20.*graph jobs/rational_no_dsl*` purple `grep  -h it=20.*pickle jobs/rational_noRecognition*|sed 's/Exported checkpoint to//g'` --onlyTime --export figures/rational_time.png --testingTimeout 600
 
 ### Tower figures - time and hits split
-python graphs.py --checkpoints teal `grep  -h it=20.*graph jobs/tower_batch_40_3600_ellisk*` orange `grep  -h it=11.*graph jobs/tower_no_dsl_batch*` purple `grep  -h it=11.*pickle jobs/tower_no_recognition_batch*|sed 's/Exported checkpoint to//g'` --export figures/tower_hits.png --noTime --x-label "" --title "Tower building"
+python graphs.py --checkpoints teal `grep  -h it=20.*graph jobs/tower_batch_40_3600_ellisk*` orange `grep  -h it=20.*graph jobs/tower_no_dsl_batch*` purple `grep  -h it=20.*pickle jobs/tower_no_recognition_batch*|sed 's/Exported checkpoint to//g'` --export figures/tower_hits.png --noTime --x-label "" --title "Tower building"
 python graphs.py --checkpoints teal `grep  -h it=20.*graph jobs/tower_batch_40_3600_ellisk*` orange `grep  -h it=11.*graph jobs/tower_no_dsl_batch*` purple `grep  -h it=11.*pickle jobs/tower_no_recognition_batch*|sed 's/Exported checkpoint to//g'` --export figures/tower_time.png --onlyTime --testingTimeout 600
 
 ### Regex figures - time and hits split
