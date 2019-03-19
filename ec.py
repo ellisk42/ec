@@ -378,7 +378,48 @@ def ecIterator(grammar, tasks,
             eprint("Evaluating on held out testing tasks for iteration: %d" % (j))
             evaluateOnTestingTasks(result, testingTasks, grammar,
                                    CPUs=CPUs, maximumFrontier=maximumFrontier,
-                                   enumerationTimeout=testingTimeout, evaluationTimeout=evaluationTimeout)            
+                                   enumerationTimeout=testingTimeout, evaluationTimeout=evaluationTimeout)
+
+        
+        # Get waking task batch.
+        wakingTaskBatch = taskBatcher.getTaskBatch(result, tasks, taskBatchSize, j)
+        eprint("Using a waking task batch of size: " + str(len(wakingTaskBatch)))
+
+        # Wake driven by recognition weights, if we have them
+        eprint("Wake Cycle 1...")
+        if result.recognitionModel is not None:
+            firstFrontiers, firstTimes = \
+                                         wake_recognition(result, wakingTaskBatch,
+                                                          CPUs=CPUs,
+                                                          maximumFrontier=maximumFrontier,
+                                                          enumerationTimeout=enumerationTimeout,
+                                                          evaluationTimeout=evaluationTimeout)
+            firstFrontiers = [grammar.rescoreFrontier(f)
+                              for f in firstFrontiers]
+        else:
+            firstFrontiers, firstTimes = wake_generative(grammar, wakingTaskBatch,
+                                                         CPUs=CPUs,
+                                                         maximumFrontier=maximumFrontier,
+                                                         enumerationTimeout=enumerationTimeout,
+                                                         evaluationTimeout=evaluationTimeout)
+
+        result.trainSearchTime = {tk: tm for tk, tm in firstTimes.items()
+                                  if tm is not None}
+        result.searchTimes.append(firstTimes)
+        for f in firstFrontiers:
+            if f.task not in result.allFrontiers: continue # backward compatibility with old checkpoints
+            result.allFrontiers[f.task] = result.allFrontiers[f.task].combine(f).topK(maximumFrontier)
+
+        # Sleep-G
+        if useDSL:
+            eprint("Consolidation sleep cycle")
+            grammar = consolidate(result, grammar, topK=topK, pseudoCounts=pseudoCounts, arity=arity, aic=aic,
+                                  structurePenalty=structurePenalty, compressor=compressor, CPUs=CPUs,
+                                  iteration=j)
+        else:
+            eprint("Skipping consolidation.")
+            result.grammars.append(grammar)
+
         # If we have to also enumerate Helmholtz frontiers,
         # do this extra sneaky in the background
         if useRecognitionModel and biasOptimal and helmholtzRatio > 0 and \
@@ -393,61 +434,29 @@ def ecIterator(grammar, tasks,
         else:
             helmholtzFrontiers = lambda: []
 
-        reportMemory()
-
-        # Get waking task batch.
-        wakingTaskBatch = taskBatcher.getTaskBatch(result, tasks, taskBatchSize, j)
-        eprint("Using a waking task batch of size: " + str(len(wakingTaskBatch)))
-
-        # WAKING UP
-        if useDSL:
-            topDownFrontiers, times = wake_generative(grammar, wakingTaskBatch, 
-                                                      maximumFrontier=maximumFrontier,
-                                                      enumerationTimeout=enumerationTimeout,
-                                                      CPUs=CPUs,
-                                                      evaluationTimeout=evaluationTimeout)
-            result.trainSearchTime = {t: tm for t, tm in times.items() if tm is not None}
-        else:
-            eprint("Skipping top-down enumeration because we are not using the generative model")
-            topDownFrontiers, times = [], {t: None for t in wakingTaskBatch }
-
-        tasksHitTopDown = {f.task for f in topDownFrontiers if not f.empty}
-        result.hitsAtEachWake.append(len(tasksHitTopDown))
-
-        reportMemory()
-
-        # Combine topDownFrontiers from this task batch with all frontiers.
-        for f in topDownFrontiers:
-            if f.task not in result.allFrontiers: continue # backward compatibility with old checkpoints
-            result.allFrontiers[f.task] = result.allFrontiers[f.task].combine(f).topK(maximumFrontier)
-
-        eprint("Frontiers discovered top down: " + str(len(tasksHitTopDown)))
-        eprint("Total frontiers: " + str(len([f for f in result.allFrontiers.values() if not f.empty])))
-
-        # Train + use recognition model
-        if useRecognitionModel:
-            # Should we initialize the weights to be what they were before?
-            previousRecognitionModel = None
-            if reuseRecognition and result.recognitionModel is not None:
-                previousRecognitionModel = result.recognitionModel
-
-            thisRatio = helmholtzRatio
-            if j == 0 and not biasOptimal: thisRatio = 0
-            if all( f.empty for f in result.allFrontiers.values() ): thisRatio = 1.                
-
-            tasksHitBottomUp = \
-             sleep_recognition(result, grammar, wakingTaskBatch, tasks, testingTasks, result.allFrontiers.values(),
-                               ensembleSize=ensembleSize, featureExtractor=featureExtractor, mask=mask,
-                               activation=activation, contextual=contextual, biasOptimal=biasOptimal,
-                               previousRecognitionModel=previousRecognitionModel, matrixRank=matrixRank,
-                               timeout=recognitionTimeout, evaluationTimeout=evaluationTimeout,
-                               enumerationTimeout=enumerationTimeout,
-                               helmholtzRatio=thisRatio, helmholtzFrontiers=helmholtzFrontiers(),
-                               auxiliaryLoss=auxiliaryLoss, cuda=cuda, CPUs=CPUs,
-                               recognitionSteps=recognitionSteps, maximumFrontier=maximumFrontier)
-
-            showHitMatrix(tasksHitTopDown, tasksHitBottomUp, wakingTaskBatch)
+        if useRecognitionModel and useDSL:
+            eprint("Dreaming and checking if dreams solve task...")
+            # Enumerate while dreaming
+            secondFrontiers, secondTimes = wake_generative(grammar, wakingTaskBatch,
+                                                           CPUs=CPUs,
+                                                           maximumFrontier=maximumFrontier,
+                                                           enumerationTimeout=enumerationTimeout,
+                                                           evaluationTimeout=evaluationTimeout)
+            for tk,tm in secondTimes.items():
+                if tm is None: continue
+                
+                if tk not in result.trainSearchTime or tm < result.trainSearchTime[tk]:
+                    result.trainSearchTime[tk] = tm
             
+            for f in secondFrontiers:
+                if f.task not in result.allFrontiers: continue # backward compatibility with old checkpoints
+                result.allFrontiers[f.task] = result.allFrontiers[f.task].combine(f).topK(maximumFrontier)
+
+            showHitMatrix({f.task for f in firstFrontiers if not f.empty },
+                          {f.task for f in secondFrontiers if not f.empty },
+                          wakingTaskBatch)
+
+        
         # Record the new topK solutions
         result.taskSolutions = {f.task: f.topK(topK)
                                 for f in result.allFrontiers.values()}
@@ -458,18 +467,25 @@ def ecIterator(grammar, tasks,
                                                                  for f in result.allFrontiers.values()
                                                                  if len(f) > 0},
                                  'frontier')                
-        
-        # Sleep-G
-        if useDSL:
-            eprint(f"Currently using this much memory: {getThisMemoryUsage()}")
-            grammar = consolidate(result, grammar, topK=topK, pseudoCounts=pseudoCounts, arity=arity, aic=aic,
-                                  structurePenalty=structurePenalty, compressor=compressor, CPUs=CPUs,
-                                  iteration=j)
-            eprint(f"Currently using this much memory: {getThisMemoryUsage()}")
-        else:
-            eprint("Skipping consolidation.")
-            result.grammars.append(grammar)
+        if useRecognitionModel:
+            if reuseRecognition and result.recognitionModel is not None:
+                previousRecognitionModel = result.recognitionModel
+            else:
+                previousRecognitionModel = None
+            # Train a new recognition model
+            thisRatio = helmholtzRatio
+            if all( f.empty for f in result.allFrontiers.values() ): thisRatio = 1.
             
+            sleep_recognition(result, grammar, wakingTaskBatch, tasks, testingTasks, result.allFrontiers.values(),
+                              ensembleSize=ensembleSize, featureExtractor=featureExtractor, mask=mask,
+                              activation=activation, contextual=contextual, biasOptimal=biasOptimal,
+                              previousRecognitionModel=previousRecognitionModel, matrixRank=matrixRank,
+                              timeout=recognitionTimeout, evaluationTimeout=evaluationTimeout,
+                              enumerationTimeout=enumerationTimeout,
+                              helmholtzRatio=thisRatio, helmholtzFrontiers=helmholtzFrontiers(),
+                              auxiliaryLoss=auxiliaryLoss, cuda=cuda, CPUs=CPUs,
+                              recognitionSteps=recognitionSteps, maximumFrontier=maximumFrontier)
+                
         if outputPrefix is not None:
             path = checkpointPath(j + 1)
             with open(path, "wb") as handle:
@@ -553,6 +569,33 @@ def wake_generative(grammar, tasks,
     summaryStatistics("Generative model", [t for t in times.values() if t is not None])
     return topDownFrontiers, times
 
+def wake_recognition(result, tasks,
+                     maximumFrontier=None,
+                     enumerationTimeout=None,
+                     CPUs=None,
+                     evaluationTimeout=None):
+    recognitionModel = result.recognitionModel
+    frontiers, times = recognitionModel.enumerateFrontiers(tasks,
+                                                           CPUs=CPUs,
+                                                           maximumFrontier=maximumFrontier,
+                                                           enumerationTimeout=enumerationTimeout,
+                                                           evaluationTimeout=evaluationTimeout)
+    print("Recognition model enumeration results:")
+    eprint(Frontier.describe(frontiers))
+    summaryStatistics("Recognition model", [t for t in times.values() if t is not None])
+    updateTaskSummaryMetrics(result.recognitionTaskMetrics, times, 'recognitionBestTimes')
+    updateTaskSummaryMetrics(result.recognitionTaskMetrics, result.recognitionModel.taskHiddenStates(tasks), 'hiddenState')
+    updateTaskSummaryMetrics(result.recognitionTaskMetrics, result.recognitionModel.taskGrammarLogProductions(tasks), 'taskLogProductions')
+    updateTaskSummaryMetrics(result.recognitionTaskMetrics, result.recognitionModel.taskGrammarEntropies(tasks), 'taskGrammarEntropies')
+    if contextual:
+        updateTaskSummaryMetrics(result.recognitionTaskMetrics,
+                                 result.recognitionModel.taskGrammarStartProductions(tasks),
+                                 'startProductions')
+
+    return frontiers, times
+
+    
+
 def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFrontiers, _=None,
                       ensembleSize=1, featureExtractor=None, matrixRank=None, mask=False,
                       activation=None, contextual=True, biasOptimal=True,
@@ -560,6 +603,7 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
                       timeout=None, enumerationTimeout=None, evaluationTimeout=None,
                       helmholtzRatio=None, helmholtzFrontiers=None, maximumFrontier=None,
                       auxiliaryLoss=None, cuda=None, CPUs=None):
+    assert ensembleSize == 1, "Ensembles deprecated"
     eprint("Using an ensemble size of %d. Note that we will only store and test on the best recognition model." % ensembleSize)
 
     featureExtractorObjects = [featureExtractor(tasks, testingTasks=testingTasks, cuda=cuda) for i in range(ensembleSize)]
@@ -572,7 +616,6 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
                                     contextual=contextual,
                                     previousRecognitionModel=previousRecognitionModel,
                                     id=i) for i in range(ensembleSize)]
-    eprint(f"Currently using this much memory: {getThisMemoryUsage()}")
     trainedRecognizers = parallelMap(min(CPUs,len(recognizers)),
                                      lambda recognizer: recognizer.train(allFrontiers,
                                                                          biasOptimal=biasOptimal,
@@ -586,75 +629,9 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
                                                                          vectorized=True),
                                      recognizers,
                                      seedRandom=True)
-    eprint(f"Currently using this much memory: {getThisMemoryUsage()}")
-    # Enumerate frontiers for each of the recognizers.
-    eprint("Trained an ensemble of %d recognition models, now enumerating." % len(trainedRecognizers))
-    ensembleFrontiers, ensembleTimes, ensembleRecognitionTimes = [], [], []
-    mostTasks = 0
-    bestRecognizer = None
-    totalTasksHitBottomUp = set()
-    for recIndex, recognizer in enumerate(trainedRecognizers):
-        eprint("Enumerating from recognizer %d of %d" % (recIndex, len(trainedRecognizers)))
-        bottomupFrontiers, allRecognitionTimes = \
-                        recognizer.enumerateFrontiers(taskBatch, 
-                                                      CPUs=CPUs,
-                                                      maximumFrontier=maximumFrontier,
-                                                      enumerationTimeout=enumerationTimeout,
-                                                      evaluationTimeout=evaluationTimeout)
-        ensembleFrontiers.append(bottomupFrontiers)
-        ensembleTimes.append([t for t in allRecognitionTimes.values() if t is not None])
-        ensembleRecognitionTimes.append(allRecognitionTimes)
+    result.recognitionModel = trainedRecognizers[0]
 
-        recognizerTasksHitBottomUp = {f.task for f in bottomupFrontiers if not f.empty}
-        totalTasksHitBottomUp.update(recognizerTasksHitBottomUp)
-        eprint("Recognizer %d solved %d/%d tasks; total tasks solved is now %d." % (recIndex, len(recognizerTasksHitBottomUp), len(tasks), len(totalTasksHitBottomUp)))
-        if len(recognizerTasksHitBottomUp) >= mostTasks:
-            # TODO (cathywong): could consider keeping the one that put the highest likelihood on the solved tasks.
-            bestRecognizer = recIndex
-
-    # Store the recognizer that discovers the most frontiers in the result.
-    eprint("Best recognizer: %d." % bestRecognizer)
-    result.recognitionModel = trainedRecognizers[bestRecognizer]
-    result.trainSearchTime = {tk: tm for tk, tm in ensembleRecognitionTimes[bestRecognizer].items()
-                              if tm is not None}
-    updateTaskSummaryMetrics(result.recognitionTaskMetrics, ensembleRecognitionTimes[bestRecognizer], 'recognitionBestTimes')
-    updateTaskSummaryMetrics(result.recognitionTaskMetrics, result.recognitionModel.taskHiddenStates(tasks), 'hiddenState')
-    updateTaskSummaryMetrics(result.recognitionTaskMetrics, result.recognitionModel.taskGrammarLogProductions(tasks), 'taskLogProductions')
-    updateTaskSummaryMetrics(result.recognitionTaskMetrics, result.recognitionModel.taskGrammarEntropies(tasks), 'taskGrammarEntropies')
-    if contextual:
-        updateTaskSummaryMetrics(result.recognitionTaskMetrics,
-                                 result.recognitionModel.taskGrammarStartProductions(tasks),
-                                 'startProductions')
-
-    result.hitsAtEachWake.append(len(totalTasksHitBottomUp))
-    eprint(f"Currently using this much memory: {getThisMemoryUsage()}")
-
-    """ Rescore and combine the frontiers across the ensemble of recognition models."""
-    eprint("Recognition model enumeration results for the best recognizer.")
-    eprint(Frontier.describe(ensembleFrontiers[bestRecognizer]))
-    summaryStatistics("Recognition model", ensembleTimes[bestRecognizer])
-
-    eprint("Cumulative results for the full ensemble of %d recognizers: " % len(trainedRecognizers))
-    # Rescore all of the ensemble frontiers according to the generative model
-    # and then combine w/ original frontiers
-    for bottomupFrontiers in ensembleFrontiers:
-        for b in bottomupFrontiers:
-            if b.task not in result.allFrontiers: continue # backwards compatibility with old checkpoints
-            result.allFrontiers[b.task] = result.allFrontiers[b.task].\
-                                          combine(grammar.rescoreFrontier(b)).\
-                                          topK(maximumFrontier)
-
-    eprint("Frontiers discovered bottom up: " + str(len(totalTasksHitBottomUp)))
-    eprint("Total frontiers: " + str(len([f for f in result.allFrontiers.values() if not f.empty])))
-
-    result.searchTimes.append(ensembleTimes[bestRecognizer])
-    if len(ensembleTimes[bestRecognizer]) > 0:
-        eprint("Average search time: ", int(mean(ensembleTimes[bestRecognizer]) + 0.5),
-               "sec.\tmedian:", int(median(ensembleTimes[bestRecognizer]) + 0.5),
-               "\tmax:", int(max(ensembleTimes[bestRecognizer]) + 0.5),
-               "\tstandard deviation", int(standardDeviation(ensembleTimes[bestRecognizer]) + 0.5))
-    return totalTasksHitBottomUp
-
+    
 def consolidate(result, grammar, _=None, topK=None, arity=None, pseudoCounts=None, aic=None,
                 structurePenalty=None, compressor=None, CPUs=None, iteration=None):
     eprint("Showing the top 5 programs in each frontier being sent to the compressor:")
