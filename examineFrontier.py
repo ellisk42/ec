@@ -10,6 +10,81 @@ from program import Abstraction, Application
 from makeRegexTasks import regexHeldOutExamples
 from regexPrimitives import PRC
 
+import torch
+from torch.nn import Parameter
+from torch import optim
+
+import torch.nn.functional as F
+import string
+
+AUTODIFF_ITER = 100
+autodiff = True
+SMOOTHING = None #.1
+
+
+#used in rendering
+def map_fun(diff_lookup):
+    #step one: normalize 
+
+    def fun(x):
+        if type(x) is pre.CharacterClass and x.values == pre.d.values: #string.digits
+            char = string.digits
+            ps = F.softmax( diff_lookup['d'] )
+            x2 = pre.CharacterClass(char, ps=ps, normalised=True)
+            #x2 = x._replace(ps=ps, normalised=True)
+            if SMOOTHING:
+                ps = ps + SMOOTHING
+                ps = ps / torch.sum(ps)
+            return x2
+        elif type(x) is pre.CharacterClass and x.values == pre.u.values:
+            char = string.ascii_uppercase
+            ps = F.softmax( diff_lookup['u'] )
+            if SMOOTHING:
+                ps = ps + SMOOTHING
+                ps = ps / torch.sum(ps)
+            x2 = pre.CharacterClass(char, ps=ps, normalised=True)
+            return x2.map( fun )
+        elif type(x) is pre.CharacterClass and x.values == pre.l.values:
+            char = string.ascii_lowercase
+            ps = F.softmax( diff_lookup['l'] )
+            if SMOOTHING:
+                ps = ps + SMOOTHING
+                ps = ps / torch.sum(ps)
+            x2 = pre.CharacterClass(char, ps=ps, normalised=True)
+            return x2.map( fun )
+        elif type(x) is pre.CharacterClass and x.values == pre.dot.values:
+            char = string.printable[:-4]
+            ps = F.softmax( diff_lookup['.'] )
+            if SMOOTHING:
+                ps = ps + SMOOTHING
+                ps = ps / torch.sum(ps)
+            x2 = pre.CharacterClass(char, ps=ps, normalised=True)
+            return x2.map( fun )
+        elif type(x) is pre.KleeneStar:
+            p = F.sigmoid(diff_lookup['*'])
+            return pre.KleeneStar(x.val, p=p).map( fun )
+        elif type(x) is pre.CharacterClass:
+            print("x=", x)
+            print("x.name=", x.name)
+            raise NotImplementedError()
+        else:
+            #print("x", x)
+            return x.map(fun)
+        #TODO 
+
+    return fun
+
+def create_params():
+    diff_lookup = {
+    'd': Parameter(torch.zeros( len(string.digits)) ),
+    'u': Parameter(torch.zeros(len(string.ascii_uppercase) ) ),
+    'l': Parameter(torch.zeros(len(string.ascii_lowercase) ) ),
+    '.': Parameter(torch.zeros(len(string.printable[:-4]) ) ),
+    '*': Parameter(torch.zeros(1) ), #geometric
+    }
+
+    return diff_lookup.values(), diff_lookup
+
 class ConstantVisitor(object):
     def __init__(self, stringConst):
         self.const = stringConst
@@ -41,6 +116,7 @@ checkpoint_file = "experimentOutputs/regex/2019-02-23T23:41:20.015912/regex_aic=
 #strConst
 checkpoint_file = "/om2/user/ellisk/ec/experimentOutputs/regex/2019-02-26T14:49:18.044767/regex_aic=1.0_arity=3_aux=True_BO=True_CO=True_ES=1_ET=3600_HR=0.5_it=6_mask=True_MF=10_pc=30.0_RT=3600_RR=False_RW=False_STM=True_L=1.5_batch=40_TRR=randomShuffle_K=2_topkNotMAP=True_graph=True.pickle"
 
+checkpoint_file = "experimentOutputs/regex/2019-03-04T19:30:01.252339/regex_aic=1.0_arity=3_BO=True_CO=False_ES=1_ET=720_HR=0.5_it=25_MF=10_pc=30.0_RT=3600_RR=False_RW=False_STM=True_L=1.5_batch=10_TRR=randomShuffle_K=2_topkNotMAP=True_graph=True.pickle"
 #strConst, no training cutoff
 #checkpoint_file = "/om2/user/ellisk/ec/experimentOutputs/regex/2019-02-26T14:49:43.594106/regex_aic=1.0_arity=3_aux=True_BO=True_CO=True_ES=1_ET=3600_HR=0.5_it=6_mask=True_MF=10_pc=30.0_RT=3600_RR=False_RW=False_STM=True_L=1.5_batch=40_TRR=randomShuffle_K=2_topkNotMAP=True_graph=True.pickle"
 
@@ -135,19 +211,43 @@ if __name__ == "__main__":
 
         gt_preg = pre.create(gt_preg)
         def examineProgram(entry):
+            global preg
+            global diff_lookup
             program = entry.program
             ll = entry.logLikelihood
             program = program.visit(ConstantVisitor(task.str_const))
             print(program)
             preg = program.evaluate([])(pre.String(""))
+            Pstring = prettyRegex(preg)
+
+            if autodiff:
+                params, diff_lookup = create_params()  #TODO
+
+                opt = optim.Adam(params, lr=0.1)
+                for i in range(AUTODIFF_ITER):
+                    opt.zero_grad()
+                    #normalize_diff_lookup(diff_lookup) #todo, using softmax and such
+                    preg = preg.map(map_fun(diff_lookup)) #preg.map(fun)
+                    score = sum( preg.match( "".join(example[1])) for example in task.examples)
+                    (-score).backward(retain_graph=True)
+                    opt.step()
+                    # if i%10==0:
+                    #     print(i, params)
+
+                #post-optimization score
+                #normalize_diff_lookup(diff_lookup) #todo, using softmax and such
+                preg = preg.map(map_fun(diff_lookup))
+                #print("parameters:")
+                ll = sum( preg.match( "".join(example[1]))  for example in task.examples )
+
             testing_likelihood = sum(preg.match(testingString)
                          for _,testingString in testingExamples)
             ground_truth_testing = sum(gt_preg.match(testingString)
                          for _,testingString in testingExamples)
-            string = prettyRegex(preg)
+            
             eprint("&")
-            eprint(verbatimTable([string] + [preg.sample() for i in range(5)]))
-            print("\t", string)
+            eprint(verbatimTable([Pstring] + [preg.sample() for i in range(5)]))
+            print("\t", Pstring)
             print("\t", "samples:")
             print("\t", [preg.sample() for i in range(5)])
             entry.trainHit = ll >= task.gt
