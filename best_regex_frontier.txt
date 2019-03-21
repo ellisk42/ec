@@ -1,0 +1,2933 @@
+/om2/user/mnye/conda_envs/ec3/bin/python
+[33m(B[mstarted:
+bad for  Data column no. 922
+preg: WHS\d_\d+
+preg sample: ['WHS8_52', 'WHS3_2', 'WHS5_8443']
+exs ['WHS3_43', 'WHS7_134', 'MDG_0000000033', 'WHS7_139', 'WHS4_117']
+bad for  Data column no. 184
+preg: \.\d+
+preg sample: ['.1', '.1', '.859']
+exs ['9.225009E-02', '.1675194', '.1039294', '.1376776', '.128372']
+bad for  Data column no. 467
+preg: hu\d(\d|\u)+
+preg sample: ['hu48C', 'hu324', 'hu666']
+exs ['hu5CABA7', 'hu24A473', 'huFAA0CF', 'hu154164', 'hu7DE7FD']
+bad for  Data column no. 476
+preg: \u+
+preg sample: ['R', 'DTR', 'DX']
+exs ['end', 'NN', 'PRP$', 'MD', 'WDT']
+bad for  Data column no. 150
+preg: N\d\d
+preg sample: ['N95', 'N82', 'N82']
+exs ['N2', 'N42', 'N19', 'N27', 'N20']
+bad for  Data column no. 299
+preg: E07000\d\d\d
+preg sample: ['E07000386', 'E07000216', 'E07000732']
+exs ['E06000005', 'E07000196', 'E06000021', 'E07000010', 'E07000219']
+bad for  Data column no. 334
+preg: -00:\d\d:\d\d.\d
+preg sample: ['-00:95:61,7', '-00:58:9342', '-00:39:65i4']
+exs ['-00:17:28.6', '+00:03:04.8', '-00:22:06.4', '-00:10:05.6', '-00:36:31.5']
+bad for  Data column no. 493
+preg: [0\.0\d+]
+preg sample: ['[0.08]', '[0.0257]', '[0.04]']
+exs ['[0.055]', '[0.1275]', '[]', '[0.01]', '[0.005]']
+bad for  Data column no. 891
+preg: r|v\d?
+preg sample: ['v0', 'r', 'r1']
+exs ['g1', 'g3', 'i6', 'g5', 'x']
+bad for  Data column no. 792
+preg: \d*\u*
+preg sample: ['57U', '44', 'BE']
+exs ['31', '34', '3', 'N_W04', '09X']
+bad for  Data column no. 765
+preg: -?\d\.\d+( \(0\.\d+\))?
+preg sample: ['-8.2 (0.9)', '-1.1', '8.3']
+exs ['NA', '-0.186 (0.0215)', '1.11 (  0)', '0.163 (  0)', '-0.523 (0.0227)']
+bad for  Data column no. 944
+preg: \u+\d?
+preg sample: ['L', 'AQ9', 'U8']
+exs ['RSW', 'SHWT', 'WCI', 'RTWT', 'D05G']
+bad for  Data column no. 374
+preg: q000\d(_000\d)?
+preg sample: ['q0004_0007', 'q0007', 'q0007_0007']
+exs ['q0011_0002', 'q0010_0009', 'q0011_0001', 'q0007_0008', 'q0009_0014']
+bad for  Data column no. 660
+preg: ENGL?\d\d\d
+preg sample: ['ENG060', 'ENG475', 'ENGL780']
+exs ['ENGL119', '281', 'ENGL442', 'ENGL461', 'GWS281']
+bad for  Data column no. 188
+preg: cat\. \d\d
+preg sample: ['cat. 55', 'cat. 36', 'cat. 06']
+exs ['cat. 29', 'cat. 22', 'cat. 3', 'cat. 52', 'cat. 58']
+bad for  Data column no. 920
+preg: A\.\d\d
+preg sample: ['A.37', 'A.86', 'A.81']
+exs ['A.36', 'A.10', 'A.101', 'A.74', 'A.72']
+bad for  Data column no. 330
+preg: Resp\d\d
+preg sample: ['Resp44', 'Resp80', 'Resp64']
+exs ['Resp4', 'Resp43', 'Resp14', 'Resp47', 'Resp48']
+bad for  Data column no. 396
+preg: \u+( |/\u+)?
+preg sample: ['Y/DZH', 'HUOZYKY/IV', 'Y']
+exs ['PPM', 'PH', 'LB/HR', 'PSIG', 'MOL %']
+bad for  Data column no. 680
+preg: Z:-?0\.\d\d
+preg sample: ['Z:0.72', 'Z:0.82', 'Z:0.04']
+exs ['Z:1.13', 'Z:0.14', 'Z:0.95', 'Z:-0.09', 'Z:1.14']
+bad for  Data column no. 769
+preg: (\u|\l|\d|-)+\d+
+preg sample: ['1-U49', '-3', 'v5']
+exs ['H91', 'C49A', 'NC230', 'B97', 'NC362']
+bad for  Data column no. 308
+preg: \u\u\u\u
+preg sample: ['JSGK', 'KFNT', 'PRSI']
+exs ['L48H', 'CGCE', 'KGM7', 'KGL6', 'YBEX']
+bad for  Data column no. 375
+preg: P\u\.\d\d\d\d\.\d\d\d
+preg sample: ['PX.9217.061', 'PU.7044.183', 'PB.6223.395']
+exs ['AC.0500.040', 'VE.0200.020', 'LY.0600.010', 'PC.2300.080', 'CP.1700.010']
+bad for  Data column no. 474
+preg: \u+
+preg sample: ['L', 'YP', 'J']
+exs ['AMERSTD', 'L & S', 'POL SCI', 'ANTHRO', 'ESPM']
+bad for  Data column no. 79
+preg: \d+(,\d\d\d)+
+preg sample: ['0994,528,648,339,025', '5,965', '36732,152']
+exs ['36,984', '-', '39,895', '124,168', '5,833,587']
+bad for  Data column no. 871
+preg: -0.7\d+
+preg sample: ['-0u728', '-007201', '-0i783']
+exs ['.', '-0.7632', '-0.7286', '-0.7256', '-0.753']
+bad for  Data column no. 729
+preg: COMISARIA \d\d
+preg sample: ['COMISARIA 32', 'COMISARIA 80', 'COMISARIA 18']
+exs ['COMISARIA 3', 'COMISARIA 35', 'COMISARIA 10', 'COMISARIA 20', 'COMISARIA 17']
+bad for  Data column no. 664
+preg: N\d
+preg sample: ['N2', 'N7', 'N8']
+exs ['N4', 'N6', 'N9', 'N3', 'N10']
+TESTING ONLY:
+Data column no. 776
+	TRAIN	 ['JPCLN034.png', 'JPCLN115.png', 'JPCLN103.png', 'JPCLN049.png', 'JPCNN030.png']
+	TEST	 ['JPCLN060.png', 'JPCLN093.png', 'JPCNN031.png', 'JPCNN054.png', 'JPCNN066.png']
+	Human written regex: JPC\u\u\d+\.png
+	 best Posterior:
+(lambda ((lambda ((lambda (r_kleene (lambda (r_dot $0)) (r_kleene (lambda (r_const $0)) $0))) ((lambda (r_d (r_d $0))) $0))) ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) (string_g $0))))
+	 (.)*(JPCLN)*\d\d.(.)*g
+	 samples:
+	 ['JPCLN41nn3Ng', '01ng', 'JPCLNJPCLNJPCLNJPCLN01Pg', 'JPCLN11n.g', 'nJPCLNJPCLNJPCLN005pn9g']
+	 MISS (train), Ground truth: -77.51694948352468, found ll: tensor([-94.1396], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -77.51694948352468, found ll: tensor([-153.9124], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda ((lambda ((lambda (r_kleene (lambda (r_dot $0)) (r_kleene (lambda (r_const $0)) $0))) ((lambda (r_d (r_d $0))) $0))) ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) (string_p ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) $0)))))
+	 (.)*(JPCLN)*\d\d.(.)*p.(.)*
+	 samples:
+	 ['JPCLNJPCLN03.gp.', 'JPCLN035pgggJg9J', '33gp.n', 'JPCLNJPCLNJPCLNJPCLN11.gpn.', '10.pg']
+	 MISS (train), Ground truth: -77.51694948352468, found ll: tensor([-95.1746], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -77.51694948352468, found ll: tensor([-156.8211], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['JPCLN060.png', 'JPCLN093.png', 'JPCNN031.png', 'JPCNN054.png', 'JPCNN066.png']
+trainingExamples ['JPCLN034.png', 'JPCLN115.png', 'JPCLN103.png', 'JPCLN049.png', 'JPCNN030.png']
+Data column no. 922
+	TRAIN	 ['WHS4_107', 'WHS7_103', 'WHS7_105', 'WHS6_116', 'WHS9_85']
+	TEST	 ['WHS3_43', 'WHS7_134', 'MDG_0000000033', 'WHS7_139', 'WHS4_117']
+	Human written regex: WHS\d_\d+
+	 best Posterior:
+(lambda ((lambda (r_const (r_d (r_kleene (lambda (r_d $0)) $0)))) (string_underscore (r_kleene (lambda (r_d $0)) ((lambda (r_d (r_d $0))) $0)))))
+	 WHS\d(\d)*_(\d)*\d\d
+	 samples:
+	 ['WHS80_757', 'WHS83_01', 'WHS6_036', 'WHS01_14', 'WHS7_06']
+	 HIT (train), Ground truth: -53.4531772947261, found ll: tensor([-46.9445], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -inf, found ll: tensor([-inf], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda ((lambda (r_const (r_d (r_kleene (lambda (r_d $0)) $0)))) (string_underscore (r_d (r_kleene (lambda (r_d $0)) (r_d $0))))))
+	 WHS\d(\d)*_\d(\d)*\d
+	 samples:
+	 ['WHS9_36', 'WHS11_55', 'WHS11_10', 'WHS3_11', 'WHS17_77']
+	 HIT (train), Ground truth: -53.4531772947261, found ll: tensor([-46.9445], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -inf, found ll: tensor([-inf], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['WHS3_43', 'WHS7_134', 'MDG_0000000033', 'WHS7_139', 'WHS4_117']
+trainingExamples ['WHS4_107', 'WHS7_103', 'WHS7_105', 'WHS6_116', 'WHS9_85']
+Data column no. 354
+	TRAIN	 ['WSW', 'NNW', 'W', 'NNE', 'E']
+	TEST	 ['ESE', 'SSE', 'S', 'SSW', 'NE']
+	Human written regex: \u+
+	 best Posterior:
+(lambda (r_u (r_kleene (lambda (r_u $0)) $0)))
+	 \u(\u)*
+	 samples:
+	 ['WWW', 'N', 'NE', 'N', 'N']
+	 HIT (train), Ground truth: -43.46368090439571, found ll: tensor([-21.6073], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -47.41492462297713, found ll: tensor([-31.5205], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (r_u (r_kleene (lambda (r_u (string_W $0))) (r_kleene (lambda (r_u $0)) $0))))
+	 \u(\uW)*(\u)*
+	 samples:
+	 ['NNW', 'S', 'NNWN', 'WEE', 'NEW']
+	 HIT (train), Ground truth: -43.46368090439571, found ll: tensor([-19.9386], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -47.41492462297713, found ll: tensor([-30.9475], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['ESE', 'SSE', 'S', 'SSW', 'NE']
+trainingExamples ['WSW', 'NNW', 'W', 'NNE', 'E']
+Data column no. 523
+	TRAIN	 ['CONJ', 'ADP', 'VERB', 'ADV', '.']
+	TEST	 ['DET', 'ADJ', 'NUM', 'PRON', 'NOUN']
+	Human written regex: (\u)+|\.
+	 best Posterior:
+(lambda (r_alt (lambda (string_period $0)) (lambda (r_kleene (lambda (r_u $0)) ((lambda ((lambda (r_u (r_u $0))) (r_u $0))) $0))) $0))
+	 (\.)|((\u)*\u\u\u)
+	 samples:
+	 ['AVD', 'PDA', 'RDDM', '.', '.']
+	 HIT (train), Ground truth: -58.78314796293972, found ll: tensor([-40.1594], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -70.63687911868399, found ll: tensor([-71.1741], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (r_alt (lambda (string_period $0)) (lambda (r_kleene (lambda (r_u $0)) ((lambda ((lambda (r_u (r_u $0))) (r_u $0))) $0))) $0))
+	 (\.)|((\u)*\u\u\u)
+	 samples:
+	 ['.', '.', '.', 'DRAR', '.']
+	 HIT (train), Ground truth: -58.78314796293972, found ll: tensor([-40.1594], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -70.63687911868399, found ll: tensor([-71.1741], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['DET', 'ADJ', 'NUM', 'PRON', 'NOUN']
+trainingExamples ['CONJ', 'ADP', 'VERB', 'ADV', '.']
+Data column no. 184
+	TRAIN	 ['.1301411', '.2883103', '.1275464', '.1376095', '.2999201']
+	TEST	 ['9.225009E-02', '.1675194', '.1039294', '.1376776', '.128372']
+	Human written regex: \.\d+
+	 best Posterior:
+(lambda ((lambda ((lambda (r_const (r_d (r_kleene (lambda (r_d $0)) $0)))) ((lambda (r_d (r_d $0))) $0))) ((lambda ((lambda (r_d (r_d $0))) ((lambda (r_d (r_d $0))) $0))) $0)))
+	 \.\d(\d)*\d\d\d\d\d\d
+	 samples:
+	 ['.1171198', '.1315601', '.3602518', '.1011372', '.0634181']
+	 HIT (train), Ground truth: -104.85062957438967, found ll: tensor([-76.8591], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -inf, found ll: tensor([-inf], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda ((lambda (r_const ((lambda ((lambda (r_d (r_d $0))) ((lambda (r_d (r_d $0))) $0))) $0))) (r_d ((lambda (r_d (r_d $0))) $0))))
+	 \.\d\d\d\d\d\d\d
+	 samples:
+	 ['.0622394', '.1301012', '.1243010', '.9863742', '.1100797']
+	 HIT (train), Ground truth: -104.85062957438967, found ll: -76.77993774414062
+	 HIT (test), Ground truth: -inf, found ll: -inf
+
+	 Posterior predictive samples...
+testingExamples ['9.225009E-02', '.1675194', '.1039294', '.1376776', '.128372']
+trainingExamples ['.1301411', '.2883103', '.1275464', '.1376095', '.2999201']
+Data column no. 501
+	TRAIN	 ['u43', 'u10', 'u16', 'u58', 'u02']
+	TEST	 ['u46', 'u22', 'u42', 'u30', 'u36']
+	Human written regex: u\d\d
+	 best Posterior:
+(lambda ((lambda (r_const (r_d (r_kleene (lambda (r_d $0)) $0)))) $0))
+	 u\d(\d)*
+	 samples:
+	 ['u58', 'u4', 'u0', 'u1', 'u14']
+	 MISS (train), Ground truth: -23.025850929940454, found ll: tensor([-27.2043], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -23.025850929940454, found ll: tensor([-29.2711], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda ((lambda (r_const ((lambda (r_d (r_d $0))) $0))) $0))
+	 u\d\d
+	 samples:
+	 ['u20', 'u36', 'u31', 'u88', 'u21']
+	 HIT (train), Ground truth: -23.025850929940454, found ll: -20.272804260253906
+	 HIT (test), Ground truth: -23.025850929940454, found ll: -22.339649200439453
+
+	 Posterior predictive samples...
+testingExamples ['u46', 'u22', 'u42', 'u30', 'u36']
+trainingExamples ['u43', 'u10', 'u16', 'u58', 'u02']
+Data column no. 760
+	TRAIN	 ['PM', 'PF', 'RF', 'DM', 'GS']
+	TEST	 ['PE', 'PB', 'DO', 'SO', 'CT']
+	Human written regex: \u\u
+	 best Posterior:
+(lambda ((lambda (r_u (r_u $0))) $0))
+	 \u\u
+	 samples:
+	 ['MD', 'MM', 'DP', 'PF', 'SD']
+	 HIT (train), Ground truth: -32.58096538021482, found ll: -18.953296661376953
+	 MISS (test), Ground truth: -32.58096538021482, found ll: -54.06806564331055
+	 best Likelihood:
+(lambda (r_alt (lambda (string_P (r_u $0))) (lambda ((lambda (r_u (r_u $0))) $0)) $0))
+	 (P\u)|(\u\u)
+	 samples:
+	 ['DD', 'PR', 'PR', 'GS', 'FD']
+	 HIT (train), Ground truth: -32.58096538021482, found ll: -17.404130935668945
+	 MISS (test), Ground truth: -32.58096538021482, found ll: -53.62693405151367
+
+	 Posterior predictive samples...
+testingExamples ['PE', 'PB', 'DO', 'SO', 'CT']
+trainingExamples ['PM', 'PF', 'RF', 'DM', 'GS']
+Data column no. 49
+	TRAIN	 ['SB1', 'OND', 'NH', 'CH', 'PSC']
+	TEST	 ['NGH', 'USB', 'NASCC', 'EB', 'WHP']
+	Human written regex: (\u)+\u\d?
+	 best Posterior:
+(lambda ((lambda (r_kleene (lambda (r_u $0)) ((lambda (r_u (r_kleene (lambda (r_d $0)) $0))) $0))) $0))
+	 (\u)*\u(\d)*
+	 samples:
+	 ['HPS1', 'P', 'UD', 'P1', 'BN']
+	 HIT (train), Ground truth: -49.717509715971175, found ll: tensor([-36.7465], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -63.21989949730284, found ll: tensor([-75.3505], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (r_alt (lambda ((lambda (r_u (r_u $0))) (r_kleene (lambda (r_d $0)) $0))) (lambda ((lambda ((lambda (r_u (r_u $0))) (r_u $0))) $0)) $0))
+	 (\u\u(\d)*)|(\u\u\u)
+	 samples:
+	 ['BBN', 'BCC', 'CN', 'SC11', 'CSB']
+	 HIT (train), Ground truth: -49.717509715971175, found ll: tensor([-30.0962], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -63.21989949730284, found ll: tensor([-inf], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['NGH', 'USB', 'NASCC', 'EB', 'WHP']
+trainingExamples ['SB1', 'OND', 'NH', 'CH', 'PSC']
+Data column no. 732
+	TRAIN	 ['SR504', 'HR530', 'HR512', 'HR559', 'HR514']
+	TEST	 ['HR526', 'HR544', 'HR520', 'HR562', 'HR506']
+	Human written regex: \uR5\d\d
+	 best Posterior:
+(lambda (r_u ((lambda (r_const ((lambda (r_d (r_d $0))) $0))) $0)))
+	 \uR5\d\d
+	 samples:
+	 ['HR513', 'HR500', 'HR512', 'HR544', 'HR540']
+	 HIT (train), Ground truth: -39.31633362004787, found ll: -21.47345542907715
+	 HIT (test), Ground truth: -39.31633362004787, found ll: -35.396263122558594
+	 best Likelihood:
+(lambda (r_alt (lambda ((lambda (r_u (r_kleene (lambda (r_d $0)) $0))) $0)) (lambda (string_H $0)) ((lambda (r_const ((lambda (r_d (r_d $0))) $0))) $0)))
+	 (\u(\d)*)|(H)R5\d\d
+	 samples:
+	 ['HR525', 'HR525', 'HR545', 'SR542', 'HR502']
+	 HIT (train), Ground truth: -39.31633362004787, found ll: tensor([-22.3939], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -39.31633362004787, found ll: -37.668216705322266
+
+	 Posterior predictive samples...
+testingExamples ['HR526', 'HR544', 'HR520', 'HR562', 'HR506']
+trainingExamples ['SR504', 'HR530', 'HR512', 'HR559', 'HR514']
+Data column no. 450
+	TRAIN	 ['-4.26', '-1.69', '-3.91', '-1.622', '-1']
+	TEST	 ['-2.316', '-3.19', '-0.933', '-1.568', '-0.96']
+	Human written regex: -\d(\.(\d)+)?
+	 best Posterior:
+(lambda ((lambda ((lambda (r_const (r_d (r_kleene (lambda (r_d $0)) $0)))) (r_kleene (lambda ((lambda (r_dot (r_d $0))) ((lambda (r_d (r_d $0))) $0))) $0))) (r_kleene (lambda ((lambda (r_kleene (lambda (r_d $0)) (string_period ((lambda (r_d (r_d $0))) $0)))) $0)) $0)))
+	 -\d(\d)*(.\d\d\d)*((\d)*\.\d\d)*
+	 samples:
+	 ['-16', '-6.021', '-13.943.211', '-6', '-1.966']
+	 HIT (train), Ground truth: -41.94025182975587, found ll: tensor([-33.9398], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -53.923180923971834, found ll: tensor([-65.4838], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (string_dash (r_kleene (lambda ((lambda (r_kleene (lambda (r_d $0)) (string_period ((lambda (r_d (r_d $0))) $0)))) $0)) (r_kleene (lambda (r_d $0)) $0))))
+	 -((\d)*\.\d\d)*(\d)*
+	 samples:
+	 ['-', '-', '-2.99', '-.2691.69.2211.4493', '-2']
+	 HIT (train), Ground truth: -41.94025182975587, found ll: tensor([-39.7882], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -53.923180923971834, found ll: tensor([-72.9542], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['-2.316', '-3.19', '-0.933', '-1.568', '-0.96']
+trainingExamples ['-4.26', '-1.69', '-3.91', '-1.622', '-1']
+Data column no. 350
+	TRAIN	 ['MN', 'SD', 'WY', 'NE', 'MO']
+	TEST	 ['MS', 'TX', 'KY', 'NM', 'DC']
+	Human written regex: \u\u
+	 best Posterior:
+(lambda ((lambda (r_u (r_u $0))) $0))
+	 \u\u
+	 samples:
+	 ['OS', 'OO', 'NM', 'OM', 'YN']
+	 HIT (train), Ground truth: -32.58096538021482, found ll: -20.332683563232422
+	 MISS (test), Ground truth: -32.58096538021482, found ll: -42.708518981933594
+	 best Likelihood:
+(lambda ((lambda (r_u (r_u $0))) $0))
+	 \u\u
+	 samples:
+	 ['SM', 'MS', 'DS', 'WO', 'SW']
+	 HIT (train), Ground truth: -32.58096538021482, found ll: -20.332683563232422
+	 MISS (test), Ground truth: -32.58096538021482, found ll: -42.708518981933594
+
+	 Posterior predictive samples...
+testingExamples ['MS', 'TX', 'KY', 'NM', 'DC']
+trainingExamples ['MN', 'SD', 'WY', 'NE', 'MO']
+Data column no. 467
+	TRAIN	 ['hu48AC54', 'hu264A0A', 'hu294056', 'hu26B551', 'hu3CDB6A']
+	TEST	 ['hu5CABA7', 'hu24A473', 'huFAA0CF', 'hu154164', 'hu7DE7FD']
+	Human written regex: hu\d(\d|\u)+
+	 best Posterior:
+(lambda ((lambda (r_const (r_d (r_kleene (lambda (r_d $0)) $0)))) (r_kleene (lambda (r_u $0)) (r_kleene (lambda (r_d $0)) (r_kleene (lambda (r_u $0)) $0)))))
+	 hu\d(\d)*(\u)*(\d)*(\u)*
+	 samples:
+	 ['hu54', 'hu26', 'hu445ACBB', 'hu9BB3', 'hu40CDA']
+	 HIT (train), Ground truth: -112.33451482306555, found ll: tensor([-85.1324], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -inf, found ll: tensor([-inf], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda ((lambda (r_const (r_d (r_kleene (lambda (r_d $0)) $0)))) (r_kleene (lambda (r_u $0)) (r_kleene (lambda (r_d $0)) (r_d (r_kleene (lambda (r_u $0)) $0))))))
+	 hu\d(\d)*(\u)*(\d)*\d(\u)*
+	 samples:
+	 ['hu62AB64C', 'hu275', 'hu5243', 'hu9B664', 'hu52259ABCA']
+	 HIT (train), Ground truth: -112.33451482306555, found ll: tensor([-81.9450], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -inf, found ll: tensor([-inf], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['hu5CABA7', 'hu24A473', 'huFAA0CF', 'hu154164', 'hu7DE7FD']
+trainingExamples ['hu48AC54', 'hu264A0A', 'hu294056', 'hu26B551', 'hu3CDB6A']
+Data column no. 622
+	TRAIN	 ['AJDJ6SQUDORP6', 'A35C4777EXZZQH', 'A2C9H5QRLXXICT', 'A1JVVYYO7G56DS', 'A382RYVVZOJ8PX']
+	TEST	 ['A3GTTANAYUVSDY', 'AZIN9ATSFV0ZG', 'A2YO4SCWAWNYBI', 'A2Q7SZISE1RXQQ', 'AARIXIQYNH38W']
+	Human written regex: A(\d|\u)**
+	 best Posterior:
+(lambda (r_kleene (lambda ((lambda (r_kleene (lambda (r_u $0)) ((lambda (r_u (r_kleene (lambda (r_d $0)) $0))) $0))) $0)) $0))
+	 ((\u)*\u(\d)*)*
+	 samples:
+	 ['VG5OP477227DH2', 'ZCIJ757977', '', '', 'PRQAV5J']
+	 HIT (train), Ground truth: -289.4835077979257, found ll: tensor([-252.0928], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -293.43871990403125, found ll: tensor([-307.4614], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda ((lambda (r_const ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) $0))) ((lambda (r_kleene (lambda (r_d $0)) (r_kleene (lambda (r_u $0)) $0))) ((lambda ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) ((lambda ((lambda (r_u (r_u $0))) (r_u $0))) ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) $0)))) $0))))
+	 A.(.)*(\d)*(\u)*.(.)*\u\u\u.(.)*
+	 samples:
+	 ['AD6CVQOOJH', 'A7782755EZQ9LPR263k5H', 'AV87EVG1ZYO2J1', 'ASJDJCKQY9VX', 'ADJYRYJ53H']
+	 HIT (train), Ground truth: -289.4835077979257, found ll: tensor([-202.3591], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -293.43871990403125, found ll: tensor([-350.7862], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['A3GTTANAYUVSDY', 'AZIN9ATSFV0ZG', 'A2YO4SCWAWNYBI', 'A2Q7SZISE1RXQQ', 'AARIXIQYNH38W']
+trainingExamples ['AJDJ6SQUDORP6', 'A35C4777EXZZQH', 'A2C9H5QRLXXICT', 'A1JVVYYO7G56DS', 'A382RYVVZOJ8PX']
+Data column no. 476
+	TRAIN	 ['JJ', 'RBR', 'EX', 'NNS', 'VBN']
+	TEST	 ['end', 'NN', 'PRP$', 'MD', 'WDT']
+	Human written regex: \u+
+	 best Posterior:
+(lambda (r_kleene (lambda (r_u $0)) $0))
+	 (\u)*
+	 samples:
+	 ['JBVJR', 'RNRS', 'VNJXNN', 'F', 'ES']
+	 HIT (train), Ground truth: -51.36616834155856, found ll: tensor([-36.6306], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -inf, found ll: tensor([-inf], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (r_alt (lambda (r_u (r_u $0))) (lambda ((lambda ((lambda (r_u (r_u $0))) (r_u $0))) $0)) $0))
+	 (\u\u)|(\u\u\u)
+	 samples:
+	 ['BX', 'JN', 'SR', 'XSS', 'XBR']
+	 HIT (train), Ground truth: -51.36616834155856, found ll: -29.461196899414062
+	 HIT (test), Ground truth: -inf, found ll: -inf
+
+	 Posterior predictive samples...
+testingExamples ['end', 'NN', 'PRP$', 'MD', 'WDT']
+trainingExamples ['JJ', 'RBR', 'EX', 'NNS', 'VBN']
+Data column no. 554
+	TRAIN	 ['CA', 'VA', 'FL', 'CO', 'KY']
+	TEST	 ['MD', 'MI', 'CT', 'OH', 'TX']
+	Human written regex: \u\u
+	 best Posterior:
+(lambda ((lambda (r_u (r_u $0))) $0))
+	 \u\u
+	 samples:
+	 ['CA', 'LL', 'AL', 'AL', 'AA']
+	 HIT (train), Ground truth: -32.58096538021482, found ll: -20.332683563232422
+	 MISS (test), Ground truth: -32.58096538021482, found ll: -65.77201843261719
+	 best Likelihood:
+(lambda (r_u (r_u $0)))
+	 \u\u
+	 samples:
+	 ['OV', 'YA', 'AA', 'AA', 'YO']
+	 HIT (train), Ground truth: -32.58096538021482, found ll: -20.332683563232422
+	 MISS (test), Ground truth: -32.58096538021482, found ll: -65.77201843261719
+
+	 Posterior predictive samples...
+testingExamples ['MD', 'MI', 'CT', 'OH', 'TX']
+trainingExamples ['CA', 'VA', 'FL', 'CO', 'KY']
+Data column no. 940
+	TRAIN	 ['IH', 'AP', 'RS', 'F', 'MX']
+	TEST	 ['XR', 'UP', 'NM', 'PZ', 'QO']
+	Human written regex: \u\u?
+	 best Posterior:
+(lambda (r_kleene (lambda (r_u $0)) $0))
+	 (\u)*
+	 samples:
+	 ['', '', 'A', 'PI', 'AAHA']
+	 HIT (train), Ground truth: -32.788604744993066, found ll: tensor([-28.9608], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -36.04670128301455, found ll: tensor([-59.7291], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (r_alt (lambda ((lambda (r_u (r_u $0))) $0)) (lambda (string_F $0)) $0))
+	 (\u\u)|(F)
+	 samples:
+	 ['XI', 'F', 'F', 'F', 'MA']
+	 HIT (train), Ground truth: -32.788604744993066, found ll: -20.1606388092041
+	 MISS (test), Ground truth: -36.04670128301455, found ll: -52.887474060058594
+
+	 Posterior predictive samples...
+testingExamples ['XR', 'UP', 'NM', 'PZ', 'QO']
+trainingExamples ['IH', 'AP', 'RS', 'F', 'MX']
+Data column no. 496
+	TRAIN	 ['GA', 'PA', 'LA', 'IL', 'VA']
+	TEST	 ['WI', 'FL', 'CA', 'NC', 'OH']
+	Human written regex: \u\u
+	 best Posterior:
+(lambda ((lambda (r_u (r_u $0))) $0))
+	 \u\u
+	 samples:
+	 ['LA', 'AA', 'LV', 'PA', 'AL']
+	 HIT (train), Ground truth: -32.58096538021482, found ll: -16.197996139526367
+	 MISS (test), Ground truth: -32.58096538021482, found ll: -57.870086669921875
+	 best Likelihood:
+(lambda (r_kleene (lambda (r_u $0)) (r_alt (lambda (string_A $0)) (lambda $0) $0)))
+	 (\u)*(A)|
+	 samples:
+	 ['ILLV', '', 'A', 'VGA', 'A']
+	 HIT (train), Ground truth: -32.58096538021482, found ll: tensor([-20.4707], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -32.58096538021482, found ll: tensor([-69.1849], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['WI', 'FL', 'CA', 'NC', 'OH']
+trainingExamples ['GA', 'PA', 'LA', 'IL', 'VA']
+Data column no. 369
+	TRAIN	 ['PHI', 'USA', 'SCO', 'RUS', 'SVK']
+	TEST	 ['NZL', 'GER', 'CHN', 'NIR', 'ENG']
+	Human written regex: \u\u\u
+	 best Posterior:
+(lambda ((lambda ((lambda (r_u (r_u $0))) (r_u $0))) $0))
+	 \u\u\u
+	 samples:
+	 ['ISS', 'DUS', 'VRV', 'VKC', 'ASS']
+	 HIT (train), Ground truth: -48.87144807032223, found ll: -33.79325485229492
+	 MISS (test), Ground truth: -48.87144807032223, found ll: -90.40133666992188
+	 best Likelihood:
+(lambda (r_alt (lambda (string_S ((lambda (r_u (r_u $0))) $0))) (lambda ((lambda ((lambda (r_u (r_u $0))) (r_u $0))) $0)) $0))
+	 (S\u\u)|(\u\u\u)
+	 samples:
+	 ['VCS', 'SOS', 'IVU', 'SAR', 'OUP']
+	 HIT (train), Ground truth: -48.87144807032223, found ll: -34.11725997924805
+	 MISS (test), Ground truth: -48.87144807032223, found ll: -94.3702392578125
+
+	 Posterior predictive samples...
+testingExamples ['NZL', 'GER', 'CHN', 'NIR', 'ENG']
+trainingExamples ['PHI', 'USA', 'SCO', 'RUS', 'SVK']
+Data column no. 596
+	TRAIN	 ['NP', 'AO', 'CP', 'SPP', 'FP']
+	TEST	 ['TR', 'CS', 'BD', 'MAR', 'FIS']
+	Human written regex: \u+
+	 best Posterior:
+(lambda (r_u (r_u (r_kleene (lambda (r_u $0)) $0))))
+	 \u\u(\u)*
+	 samples:
+	 ['PC', 'PS', 'FF', 'PP', 'PP']
+	 HIT (train), Ground truth: -43.4636809043957, found ll: tensor([-21.1454], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -47.41492462297713, found ll: tensor([-69.2693], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (r_u (r_kleene (lambda (r_u $0)) (r_kleene (lambda (string_P $0)) $0))))
+	 \u(\u)*(P)*
+	 samples:
+	 ['SF', 'NFPPP', 'OFOSAPPP', 'C', 'F']
+	 HIT (train), Ground truth: -43.4636809043957, found ll: tensor([-21.3889], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -47.41492462297713, found ll: tensor([-74.6392], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['TR', 'CS', 'BD', 'MAR', 'FIS']
+trainingExamples ['NP', 'AO', 'CP', 'SPP', 'FP']
+Data column no. 720
+	TRAIN	 ['(715) 967-2697', '(608) 819-2220', '(920) 988-2524', '(608) 442-0253', '(262) 723-4043']
+	TEST	 ['(920) 887-4282', '(262) 930-5176', '(920) 743-7943', '(715) 485-8764', '(608) 873-5217']
+	Human written regex: \(\d\d\d\) \d\d\d-\d\d\d\d
+	 best Posterior:
+(lambda (string_right_paren (r_kleene (lambda (r_d $0)) ((lambda (r_const ((lambda ((lambda (r_d (r_d $0))) (r_d $0))) $0))) (string_dash ((lambda ((lambda (r_d (r_d $0))) ((lambda (r_d (r_d $0))) $0))) $0))))))
+	 \((\d)*\) \d\d\d-\d\d\d\d
+	 samples:
+	 ['(490) 720-2534', '() 713-0263', '(4) 228-6880', '(4) 024-0692', '() 210-5740']
+	 MISS (train), Ground truth: -115.12925464970229, found ll: tensor([-120.5666], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -115.12925464970229, found ll: tensor([-128.1440], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (string_right_paren (r_kleene (lambda (r_d $0)) ((lambda (r_const ((lambda ((lambda (r_d (r_d $0))) (r_d $0))) $0))) (string_dash ((lambda ((lambda (r_d (r_d $0))) ((lambda (r_d (r_d $0))) $0))) $0))))))
+	 \((\d)*\) \d\d\d-\d\d\d\d
+	 samples:
+	 ['() 081-6927', '() 882-6256', '(8227) 227-2922', '(4) 069-9953', '(82) 829-2962']
+	 MISS (train), Ground truth: -115.12925464970229, found ll: tensor([-120.5666], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -115.12925464970229, found ll: tensor([-128.1440], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['(920) 887-4282', '(262) 930-5176', '(920) 743-7943', '(715) 485-8764', '(608) 873-5217']
+trainingExamples ['(715) 967-2697', '(608) 819-2220', '(920) 988-2524', '(608) 442-0253', '(262) 723-4043']
+Data column no. 53
+	TRAIN	 ['rec-93-org', 'rec-51-org', 'rec-321-org', 'rec-281-dup-0', 'rec-227-org']
+	TEST	 ['rec-372-org', 'rec-39-org', 'rec-13-org', 'rec-355-org', 'rec-198-org']
+	Human written regex: rec-\d\d\d?-(org)|(dup-0)
+	 best Posterior:
+(lambda ((lambda (r_const (r_d (r_kleene (lambda (r_d $0)) $0)))) (string_dash ((lambda (r_l (r_l $0))) ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) $0)))))
+	 rec-\d(\d)*-\l\l.(.)*
+	 samples:
+	 ['rec-12-org-', 'rec-288-rr--', 'rec-2328-rr-', 'rec-88-rr0g', 'rec-9-rogg']
+	 MISS (train), Ground truth: -36.86507801452205, found ll: tensor([-57.2913], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -36.86507801452204, found ll: tensor([-51.7268], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda ((lambda (r_const (r_d (r_kleene (lambda (r_d $0)) $0)))) (string_dash ((lambda (r_l (r_l $0))) ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) $0)))))
+	 rec-\d(\d)*-\l\l.(.)*
+	 samples:
+	 ['rec-318-do)g', 'rec-1331-oug', 'rec-2-or0-g-', 'rec-311-ropgg', 'rec-885-oogg-M0']
+	 MISS (train), Ground truth: -36.86507801452205, found ll: tensor([-57.2913], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -36.86507801452204, found ll: tensor([-51.7268], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['rec-372-org', 'rec-39-org', 'rec-13-org', 'rec-355-org', 'rec-198-org']
+trainingExamples ['rec-93-org', 'rec-51-org', 'rec-321-org', 'rec-281-dup-0', 'rec-227-org']
+Data column no. 150
+	TRAIN	 ['N22', 'N33', 'N34', 'N13', 'N23']
+	TEST	 ['N2', 'N42', 'N19', 'N27', 'N20']
+	Human written regex: N\d\d
+	 best Posterior:
+(lambda (r_const ((lambda (r_d (r_d $0))) $0)))
+	 N\d\d
+	 samples:
+	 ['N31', 'N34', 'N33', 'N33', 'N32']
+	 HIT (train), Ground truth: -23.025850929940454, found ll: -11.753284454345703
+	 HIT (test), Ground truth: -inf, found ll: -inf
+	 best Likelihood:
+(lambda ((lambda (r_const ((lambda (r_d (r_d $0))) $0))) $0))
+	 N\d\d
+	 samples:
+	 ['N24', 'N21', 'N31', 'N22', 'N92']
+	 HIT (train), Ground truth: -23.025850929940454, found ll: -11.753284454345703
+	 HIT (test), Ground truth: -inf, found ll: -inf
+
+	 Posterior predictive samples...
+testingExamples ['N2', 'N42', 'N19', 'N27', 'N20']
+trainingExamples ['N22', 'N33', 'N34', 'N13', 'N23']
+Data column no. 741
+	TRAIN	 ['#217', '#222', '#070', '#007', '#215']
+	TEST	 ['#054', '#221', '#062', '#065', '#204']
+	Human written regex: #\d\d\d
+	 best Posterior:
+(lambda ((lambda (r_const ((lambda ((lambda (r_d (r_d $0))) (r_d $0))) $0))) $0))
+	 #\d\d\d
+	 samples:
+	 ['#022', '#502', '#522', '#872', '#207']
+	 HIT (train), Ground truth: -34.538776394910684, found ll: -22.43019676208496
+	 MISS (test), Ground truth: -34.538776394910684, found ll: -44.37188720703125
+	 best Likelihood:
+(lambda (string_hash ((lambda (r_d (r_d $0))) (r_d $0))))
+	 #\d\d\d
+	 samples:
+	 ['#710', '#275', '#717', '#020', '#021']
+	 HIT (train), Ground truth: -34.538776394910684, found ll: -22.43019676208496
+	 MISS (test), Ground truth: -34.538776394910684, found ll: -44.37188720703125
+
+	 Posterior predictive samples...
+testingExamples ['#054', '#221', '#062', '#065', '#204']
+trainingExamples ['#217', '#222', '#070', '#007', '#215']
+Data column no. 18
+	TRAIN	 ['A-05334-58432', 'A-05333-58214', 'C-05271-37204', 'C-05276-38389', 'A-05334-58579']
+	TEST	 ['A-05276-38355', 'A-05334-58331', 'C-05276-38616', 'C-05334-58599', 'A-05323-55341']
+	Human written regex: A|C-\d+-\d+
+	 best Posterior:
+(lambda (r_u ((lambda (r_const ((lambda ((lambda (r_d (r_d $0))) (r_d $0))) $0))) (string_dash ((lambda ((lambda (r_d (r_d $0))) (r_d $0))) ((lambda (r_d (r_d $0))) $0))))))
+	 \u-05\d\d\d-\d\d\d\d\d
+	 samples:
+	 ['A-05882-18783', 'C-05933-33521', 'A-05843-52352', 'A-05343-42587', 'A-05172-39486']
+	 HIT (train), Ground truth: -153.25234958049924, found ll: -86.60868835449219
+	 HIT (test), Ground truth: -153.25234958049924, found ll: -90.1746826171875
+	 best Likelihood:
+(lambda (r_u ((lambda (r_const ((lambda ((lambda (r_d (r_d $0))) (r_d $0))) $0))) (string_dash ((lambda ((lambda (r_d (r_d $0))) (r_d $0))) ((lambda (r_d (r_d $0))) $0))))))
+	 \u-05\d\d\d-\d\d\d\d\d
+	 samples:
+	 ['A-05235-83933', 'C-05737-33778', 'A-05394-32935', 'A-05253-91324', 'A-05272-35233']
+	 HIT (train), Ground truth: -153.25234958049924, found ll: -86.60868835449219
+	 HIT (test), Ground truth: -153.25234958049924, found ll: -90.1746826171875
+
+	 Posterior predictive samples...
+testingExamples ['A-05276-38355', 'A-05334-58331', 'C-05276-38616', 'C-05334-58599', 'A-05323-55341']
+trainingExamples ['A-05334-58432', 'A-05333-58214', 'C-05271-37204', 'C-05276-38389', 'A-05334-58579']
+Data column no. 589
+	TRAIN	 ['A1XB03X4J35ATE', 'AXPOBOA6RMCV0', 'A1K8QNLYYYX21W', 'A2QKM3JUFWBSMO', 'A1T0NW527WZT7G']
+	TEST	 ['A24LC97AU3QC7G', 'A1MUEKEQQVROE7', 'A3LC6M2EMDBBXP', 'A1K9QGO39NG7DV', 'A100Y89FZO4J0B']
+	Human written regex: A(\u|\d)++
+	 best Posterior:
+(lambda (r_kleene (lambda ((lambda (r_kleene (lambda (r_u $0)) ((lambda (r_u (r_kleene (lambda (r_d $0)) $0))) $0))) $0)) $0))
+	 ((\u)*\u(\d)*)*
+	 samples:
+	 ['', 'BAX', 'FV1172', 'YW', 'M']
+	 HIT (train), Ground truth: -281.5965245472988, found ll: tensor([-260.4001], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -283.3743811113579, found ll: tensor([-305.7537], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (r_kleene (lambda ((lambda (r_kleene (lambda (r_u $0)) ((lambda (r_u (r_kleene (lambda (r_d $0)) $0))) $0))) $0)) $0))
+	 ((\u)*\u(\d)*)*
+	 samples:
+	 ['AS0', '', 'KWBQRCJA11MGQ825KW', 'M1802207XXBASJXAEVARUB7', 'JTT0YJZ301']
+	 HIT (train), Ground truth: -281.5965245472988, found ll: tensor([-260.4001], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -283.3743811113579, found ll: tensor([-305.7537], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['A24LC97AU3QC7G', 'A1MUEKEQQVROE7', 'A3LC6M2EMDBBXP', 'A1K9QGO39NG7DV', 'A100Y89FZO4J0B']
+trainingExamples ['A1XB03X4J35ATE', 'AXPOBOA6RMCV0', 'A1K8QNLYYYX21W', 'A2QKM3JUFWBSMO', 'A1T0NW527WZT7G']
+Data column no. 666
+	TRAIN	 ['(281) 460-9574', '(801) 473-6431', '(713) 478-4292', '(713) 591-1559', '(281) 460-2390']
+	TEST	 ['(314) 800-3559', '(956) 778-2268', '(662) 687-1620', '(281) 382-0084', '(757) 784-5526']
+	Human written regex: \(\d\d\d\) \d\d\d-\d\d\d\d
+	 best Posterior:
+(lambda (string_right_paren (r_kleene (lambda (r_d $0)) ((lambda (r_const ((lambda ((lambda (r_d (r_d $0))) (r_d $0))) $0))) (string_dash ((lambda ((lambda (r_d (r_d $0))) ((lambda (r_d (r_d $0))) $0))) $0))))))
+	 \((\d)*\) \d\d\d-\d\d\d\d
+	 samples:
+	 ['(921770) 111-8023', '(2314) 481-7742', '(280214797) 957-0335', '() 780-3919', '() 109-0232']
+	 MISS (train), Ground truth: -115.12925464970229, found ll: tensor([-124.4709], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -115.12925464970229, found ll: tensor([-131.7671], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (string_right_paren (r_kleene (lambda (r_d $0)) ((lambda (r_const ((lambda ((lambda (r_d (r_d $0))) (r_d $0))) $0))) (string_dash ((lambda ((lambda (r_d (r_d $0))) ((lambda (r_d (r_d $0))) $0))) $0))))))
+	 \((\d)*\) \d\d\d-\d\d\d\d
+	 samples:
+	 ['() 951-8214', '(17) 351-4516', '(92) 417-9093', '(9) 405-3324', '() 594-9807']
+	 MISS (train), Ground truth: -115.12925464970229, found ll: tensor([-124.4709], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -115.12925464970229, found ll: tensor([-131.7671], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['(314) 800-3559', '(956) 778-2268', '(662) 687-1620', '(281) 382-0084', '(757) 784-5526']
+trainingExamples ['(281) 460-9574', '(801) 473-6431', '(713) 478-4292', '(713) 591-1559', '(281) 460-2390']
+Data column no. 581
+	TRAIN	 ['us13C03', 'us13C13', 'us13C11', 'us13A08', 'us13B06']
+	TEST	 ['us13B05', 'us13C04', 'us13A10', 'us13B10', 'us13C01']
+	Human written regex: us13\u\d\d
+	 best Posterior:
+(lambda (r_const (r_u ((lambda (r_d (r_d $0))) $0))))
+	 us13\u\d\d
+	 samples:
+	 ['us13B41', 'us13B83', 'us13C01', 'us13B01', 'us13C10']
+	 HIT (train), Ground truth: -39.31633362004787, found ll: -19.918222427368164
+	 HIT (test), Ground truth: -39.31633362004787, found ll: -29.33217430114746
+	 best Likelihood:
+(lambda (r_const (r_u ((lambda (r_d (r_d $0))) $0))))
+	 us13\u\d\d
+	 samples:
+	 ['us13C08', 'us13C11', 'us13C11', 'us13B00', 'us13C31']
+	 HIT (train), Ground truth: -39.31633362004787, found ll: -19.918222427368164
+	 HIT (test), Ground truth: -39.31633362004787, found ll: -29.33217430114746
+
+	 Posterior predictive samples...
+testingExamples ['us13B05', 'us13C04', 'us13A10', 'us13B10', 'us13C01']
+trainingExamples ['us13C03', 'us13C13', 'us13C11', 'us13A08', 'us13B06']
+Data column no. 299
+	TRAIN	 ['E07000193', 'E07000170', 'E07000127', 'E07000027', 'E07000225']
+	TEST	 ['E06000005', 'E07000196', 'E06000021', 'E07000010', 'E07000219']
+	Human written regex: E07000\d\d\d
+	 best Posterior:
+(lambda ((lambda (r_const ((lambda ((lambda (r_d (r_d $0))) (r_d $0))) $0))) $0))
+	 E07000\d\d\d
+	 samples:
+	 ['E07000119', 'E07000712', 'E07000317', 'E07000132', 'E07000122']
+	 HIT (train), Ground truth: -34.538776394910684, found ll: -27.155675888061523
+	 HIT (test), Ground truth: -inf, found ll: -inf
+	 best Likelihood:
+(lambda (r_const (r_d (r_d (r_d $0)))))
+	 E07000\d\d\d
+	 samples:
+	 ['E07000710', 'E07000372', 'E07000233', 'E07000232', 'E07000092']
+	 HIT (train), Ground truth: -34.538776394910684, found ll: -27.155675888061523
+	 HIT (test), Ground truth: -inf, found ll: -inf
+
+	 Posterior predictive samples...
+testingExamples ['E06000005', 'E07000196', 'E06000021', 'E07000010', 'E07000219']
+trainingExamples ['E07000193', 'E07000170', 'E07000127', 'E07000027', 'E07000225']
+Data column no. 638
+	TRAIN	 ['kt831qh3476', 'vw545jd0450', 'st391cf4769', 'vx806dr5738', 'rp023xr5328']
+	TEST	 ['vx793tc4890', 'qy821tc8518', 'zw345zp0788', 'bb896gq6656', 'qc288yw9773']
+	Human written regex: \l+\d+\l+\d+
+	 best Posterior:
+(lambda ((lambda (r_l (r_l $0))) ((lambda ((lambda (r_d (r_d $0))) (r_d $0))) ((lambda (r_l (r_l $0))) ((lambda ((lambda (r_d (r_d $0))) ((lambda (r_d (r_d $0))) $0))) $0)))))
+	 \l\l\d\d\d\l\l\d\d\d\d
+	 samples:
+	 ['vd304wr6583', 'cp334dd5612', 'sx383dj0454', 'vd388fr6553', 'dd741rv3588']
+	 HIT (train), Ground truth: -183.87550394601823, found ll: -129.42510986328125
+	 HIT (test), Ground truth: -183.87550394601823, found ll: -172.72467041015625
+	 best Likelihood:
+(lambda ((lambda (r_l (r_l $0))) (r_d ((lambda (r_d (r_d $0))) ((lambda (r_l (r_l $0))) ((lambda ((lambda (r_d (r_d $0))) ((lambda (r_d (r_d $0))) $0))) $0))))))
+	 \l\l\d\d\d\l\l\d\d\d\d
+	 samples:
+	 ['rh974dr3650', 'dx627kj9735', 'fv535rt8702', 'fr265tf8382', 'rp837xr6367']
+	 HIT (train), Ground truth: -183.87550394601823, found ll: -129.42510986328125
+	 HIT (test), Ground truth: -183.87550394601823, found ll: -172.72467041015625
+
+	 Posterior predictive samples...
+testingExamples ['vx793tc4890', 'qy821tc8518', 'zw345zp0788', 'bb896gq6656', 'qc288yw9773']
+trainingExamples ['kt831qh3476', 'vw545jd0450', 'st391cf4769', 'vx806dr5738', 'rp023xr5328']
+Data column no. 364
+	TRAIN	 ['DE', 'SE', 'BD', 'NA', 'CH']
+	TEST	 ['GB', 'NL', 'FR', 'UA', 'US']
+	Human written regex: \u\u
+	 best Posterior:
+(lambda ((lambda (r_u (r_u $0))) $0))
+	 \u\u
+	 samples:
+	 ['AB', 'BA', 'CA', 'SA', 'NC']
+	 HIT (train), Ground truth: -32.58096538021482, found ll: -20.332683563232422
+	 MISS (test), Ground truth: -32.58096538021482, found ll: -55.615596771240234
+	 best Likelihood:
+(lambda (r_u (r_u $0)))
+	 \u\u
+	 samples:
+	 ['AS', 'DN', 'AN', 'DD', 'EH']
+	 HIT (train), Ground truth: -32.58096538021482, found ll: -20.332683563232422
+	 MISS (test), Ground truth: -32.58096538021482, found ll: -55.615596771240234
+
+	 Posterior predictive samples...
+testingExamples ['GB', 'NL', 'FR', 'UA', 'US']
+trainingExamples ['DE', 'SE', 'BD', 'NA', 'CH']
+Data column no. 334
+	TRAIN	 ['-00:16:05.9', '-00:19:52.9', '-00:33:24.7', '-00:44:02.3', '-00:24:25.0']
+	TEST	 ['-00:17:28.6', '+00:03:04.8', '-00:22:06.4', '-00:10:05.6', '-00:36:31.5']
+	Human written regex: -00:\d\d:\d\d.\d
+	 best Posterior:
+(lambda ((lambda (r_const ((lambda (r_d (r_d $0))) $0))) ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) (r_kleene (lambda (r_d $0)) (string_period (r_kleene (lambda (r_d $0)) $0))))))
+	 -00:\d\d.(.)*(\d)*\.(\d)*
+	 samples:
+	 ['-00:34:34.4', '-00:03::::.', '-00:05e0.', '-00:91::62.4', '-00:44:::::3:73.']
+	 HIT (train), Ground truth: -80.38636828219032, found ll: tensor([-73.2511], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -inf, found ll: tensor([-inf], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda ((lambda (r_const ((lambda (r_d (r_d $0))) $0))) ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) (r_kleene (lambda (r_d $0)) (string_period (r_kleene (lambda (r_d $0)) $0))))))
+	 -00:\d\d.(.)*(\d)*\.(\d)*
+	 samples:
+	 ['-00:00::.2', '-00:22::.1', '-00:71:::60.52', '-00:24::42.054', '-00:04:0.5']
+	 HIT (train), Ground truth: -80.38636828219032, found ll: tensor([-73.2511], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -inf, found ll: tensor([-inf], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['-00:17:28.6', '+00:03:04.8', '-00:22:06.4', '-00:10:05.6', '-00:36:31.5']
+trainingExamples ['-00:16:05.9', '-00:19:52.9', '-00:33:24.7', '-00:44:02.3', '-00:24:25.0']
+Data column no. 38
+	TRAIN	 ['SRX897027', 'SRX897025', 'SRX897032', 'SRX894622', 'SRX897016']
+	TEST	 ['SRX897019', 'SRX894623', 'SRX897038', 'SRX897022', 'SRX897035']
+	Human written regex: SRX89\d+
+	 best Posterior:
+(lambda ((lambda (r_const ((lambda (r_d (r_d $0))) $0))) ((lambda (r_d (r_d $0))) $0)))
+	 SRX89\d\d\d\d
+	 samples:
+	 ['SRX890367', 'SRX890073', 'SRX890357', 'SRX893447', 'SRX896277']
+	 HIT (train), Ground truth: -59.914645471079815, found ll: -36.956722259521484
+	 HIT (test), Ground truth: -59.914645471079815, found ll: -49.233131408691406
+	 best Likelihood:
+(lambda (r_const ((lambda (r_d (r_d $0))) ((lambda (r_d (r_d $0))) $0))))
+	 SRX89\d\d\d\d
+	 samples:
+	 ['SRX890723', 'SRX892230', 'SRX892244', 'SRX896173', 'SRX890222']
+	 HIT (train), Ground truth: -59.914645471079815, found ll: -36.956722259521484
+	 HIT (test), Ground truth: -59.914645471079815, found ll: -49.233131408691406
+
+	 Posterior predictive samples...
+testingExamples ['SRX897019', 'SRX894623', 'SRX897038', 'SRX897022', 'SRX897035']
+trainingExamples ['SRX897027', 'SRX897025', 'SRX897032', 'SRX894622', 'SRX897016']
+Data column no. 493
+	TRAIN	 ['[0.0175]', '[0.035]', '[0.0475]', '[0.03]', '[0.015]']
+	TEST	 ['[0.055]', '[0.1275]', '[]', '[0.01]', '[0.005]']
+	Human written regex: [0\.0\d+]
+	 best Posterior:
+(lambda ((lambda (r_const (r_d (r_kleene (lambda (r_d $0)) $0)))) (string_right_bracket $0)))
+	 [0\.0\d(\d)*]
+	 samples:
+	 ['[0.01]', '[0.0313]', '[0.054]', '[0.015]', '[0.03]']
+	 HIT (train), Ground truth: -32.9530550090939, found ll: tensor([-24.3112], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -inf, found ll: tensor([-inf], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda ((lambda (r_const (r_d (r_kleene (lambda (r_d $0)) $0)))) (string_right_bracket $0)))
+	 [0\.0\d(\d)*]
+	 samples:
+	 ['[0.031]', '[0.07]', '[0.07]', '[0.0535]', '[0.01]']
+	 HIT (train), Ground truth: -32.9530550090939, found ll: tensor([-24.3112], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -inf, found ll: tensor([-inf], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['[0.055]', '[0.1275]', '[]', '[0.01]', '[0.005]']
+trainingExamples ['[0.0175]', '[0.035]', '[0.0475]', '[0.03]', '[0.015]']
+Data column no. 247
+	TRAIN	 ["'02:13:00'", "'03:27:00'", "'09:33:00'", "'15:40:00'", "'22:24:00'"]
+	TEST	 ["'17:07:00'", "'02:10:00'", "'05:10:00'", "'05:55:00'", "'13:05:00'"]
+	Human written regex: '\d\d:\d\d:00'
+	 best Posterior:
+(lambda ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) ((lambda ((lambda (r_d (r_d $0))) (r_const $0))) $0)))
+	 .(.)*\d\d:00'
+	 samples:
+	 [":-212:00'", "5:''03:00'", ":17:00'", "'37:00'", "::27:00'"]
+	 MISS (train), Ground truth: -46.05170185988091, found ll: tensor([-65.7744], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -46.05170185988091, found ll: tensor([-93.4199], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) ((lambda ((lambda (r_d (r_d $0))) (r_const $0))) $0)))
+	 .(.)*\d\d:00'
+	 samples:
+	 ["2224:00'", "141:00'", ":13:00'", "2322:00'", "244:00'"]
+	 MISS (train), Ground truth: -46.05170185988091, found ll: tensor([-65.7744], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -46.05170185988091, found ll: tensor([-93.4199], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ["'17:07:00'", "'02:10:00'", "'05:10:00'", "'05:55:00'", "'13:05:00'"]
+trainingExamples ["'02:13:00'", "'03:27:00'", "'09:33:00'", "'15:40:00'", "'22:24:00'"]
+Data column no. 506
+	TRAIN	 ['S5795', 'S5552', 'S6506', 'H5529', 'H5859']
+	TEST	 ['H1099', 'H5580', 'H2261', 'H8145', 'H2879']
+	Human written regex: (S|H)\d+
+	 best Posterior:
+(lambda ((lambda (r_u (r_kleene (lambda (r_d $0)) $0))) ((lambda ((lambda (r_d (r_d $0))) ((lambda (r_d (r_d $0))) $0))) $0)))
+	 \u(\d)*\d\d\d\d
+	 samples:
+	 ['H5955', 'S2554', 'H5560', 'H8556', 'H5957']
+	 HIT (train), Ground truth: -63.380381373879544, found ll: tensor([-34.4359], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -63.380381373879544, found ll: tensor([-65.2958], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda ((lambda (r_u (r_kleene (lambda (r_d $0)) $0))) ((lambda (r_const ((lambda (r_d (r_d $0))) $0))) (r_alt (lambda (r_d $0)) (lambda $0) $0))))
+	 \u(\d)*5\d\d(\d)|
+	 samples:
+	 ['H569', 'S9557', 'S525', 'S5858', 'H550']
+	 HIT (train), Ground truth: -63.380381373879544, found ll: tensor([-36.1700], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -63.380381373879544, found ll: tensor([-inf], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['H1099', 'H5580', 'H2261', 'H8145', 'H2879']
+trainingExamples ['S5795', 'S5552', 'S6506', 'H5529', 'H5859']
+Data column no. 891
+	TRAIN	 ['r6', 'r1', 'r2', 'v1', 'r']
+	TEST	 ['g1', 'g3', 'i6', 'g5', 'x']
+	Human written regex: (r|v)\d?
+	 best Posterior:
+(lambda (r_l (r_kleene (lambda (r_d $0)) $0)))
+	 \l(\d)*
+	 samples:
+	 ['v', 'r2', 'r162', 'r', 'r6']
+	 HIT (train), Ground truth: -16.141812177575634, found ll: tensor([-12.9515], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -inf, found ll: tensor([-58.7056], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (r_alt (lambda (r_l $0)) (lambda (r_l (r_d $0))) $0))
+	 (\l)|(\l\d)
+	 samples:
+	 ['r', 'r1', 'v', 'r6', 'r1']
+	 HIT (train), Ground truth: -16.141812177575634, found ll: -10.234539031982422
+	 HIT (test), Ground truth: -inf, found ll: -55.98872375488281
+
+	 Posterior predictive samples...
+testingExamples ['g1', 'g3', 'i6', 'g5', 'x']
+trainingExamples ['r6', 'r1', 'r2', 'v1', 'r']
+Data column no. 911
+	TRAIN	 ['KW-0497', 'KW-0494', 'KW-1216', 'KW-0528', 'KW-0568']
+	TEST	 ['KW-1203', 'KW-0959', 'KW-1071', 'KW-0505', 'KW-0499']
+	Human written regex: KW-\d+
+	 best Posterior:
+(lambda ((lambda (r_const ((lambda ((lambda (r_d (r_d $0))) ((lambda (r_d (r_d $0))) $0))) $0))) $0))
+	 KW-\d\d\d\d
+	 samples:
+	 ['KW-0057', 'KW-4150', 'KW-1570', 'KW-2908', 'KW-7214']
+	 HIT (train), Ground truth: -59.914645471079815, found ll: -42.78369140625
+	 HIT (test), Ground truth: -59.914645471079815, found ll: -46.491050720214844
+	 best Likelihood:
+(lambda (r_const ((lambda ((lambda (r_d (r_d $0))) ((lambda (r_d (r_d $0))) $0))) $0)))
+	 KW-\d\d\d\d
+	 samples:
+	 ['KW-9096', 'KW-1568', 'KW-9868', 'KW-0252', 'KW-1506']
+	 HIT (train), Ground truth: -59.914645471079815, found ll: -42.78369140625
+	 HIT (test), Ground truth: -59.914645471079815, found ll: -46.491050720214844
+
+	 Posterior predictive samples...
+testingExamples ['KW-1203', 'KW-0959', 'KW-1071', 'KW-0505', 'KW-0499']
+trainingExamples ['KW-0497', 'KW-0494', 'KW-1216', 'KW-0528', 'KW-0568']
+Data column no. 792
+	TRAIN	 ['22G', '2', '22EXC', '9', 'BL']
+	TEST	 ['31', '34', '3', 'N_W04', '09X']
+	Human written regex: \d*\u*
+	 best Posterior:
+(lambda (r_kleene (lambda (r_d $0)) (r_kleene (lambda (r_u $0)) $0)))
+	 (\d)*(\u)*
+	 samples:
+	 ['9L', 'LXGX', '20', '2222BG', '']
+	 HIT (train), Ground truth: -48.613327758411955, found ll: tensor([-28.7304], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -inf, found ll: tensor([-inf], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (r_alt (lambda (r_d $0)) (lambda (r_kleene (lambda (r_d $0)) (r_u (r_kleene (lambda (r_u $0)) $0)))) $0))
+	 (\d)|((\d)*\u(\u)*)
+	 samples:
+	 ['2', 'G', '9', '2', '2']
+	 HIT (train), Ground truth: -48.613327758411955, found ll: tensor([-26.0104], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -inf, found ll: tensor([-inf], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['31', '34', '3', 'N_W04', '09X']
+trainingExamples ['22G', '2', '22EXC', '9', 'BL']
+Data column no. 508
+	TRAIN	 ['N00028139', 'N00009573', 'N00027605', 'N00024852', 'N00035483']
+	TEST	 ['N00005582', 'N00033443', 'N00031129', 'N00005282', 'N00033054']
+	Human written regex: N000\d+
+	 best Posterior:
+(lambda ((lambda ((lambda (r_const ((lambda (r_d (r_d $0))) $0))) ((lambda ((lambda (r_d (r_d $0))) (r_d $0))) $0))) $0))
+	 N000\d\d\d\d\d
+	 samples:
+	 ['N00089296', 'N00070285', 'N00033822', 'N00062322', 'N00084205']
+	 HIT (train), Ground truth: -74.89330683884977, found ll: -54.995365142822266
+	 HIT (test), Ground truth: -74.89330683884977, found ll: -54.01658630371094
+	 best Likelihood:
+(lambda ((lambda (r_const ((lambda (r_d (r_d $0))) $0))) ((lambda ((lambda (r_d (r_d $0))) (r_d $0))) $0)))
+	 N000\d\d\d\d\d
+	 samples:
+	 ['N00048270', 'N00079926', 'N00053507', 'N00079222', 'N00093421']
+	 HIT (train), Ground truth: -74.89330683884977, found ll: -54.995365142822266
+	 HIT (test), Ground truth: -74.89330683884977, found ll: -54.01658630371094
+
+	 Posterior predictive samples...
+testingExamples ['N00005582', 'N00033443', 'N00031129', 'N00005282', 'N00033054']
+trainingExamples ['N00028139', 'N00009573', 'N00027605', 'N00024852', 'N00035483']
+Data column no. 842
+	TRAIN	 ['-11.50%', '14.20%', '0.70%', '33.80%', '6.70%']
+	TEST	 ['35.50%', '26.20%', '25.20%', '46.60%', '7.20%']
+	Human written regex: -?\d?\d\.\d\d%
+	 best Posterior:
+(lambda (r_kleene (lambda (string_dash $0)) ((lambda (r_kleene (lambda (r_d $0)) (string_period ((lambda (r_d (r_d $0))) $0)))) (string_percent $0))))
+	 (-)*(\d)*\.\d\d%
+	 samples:
+	 ['.71%', '.01%', '-0.48%', '-.07%', '--08.48%']
+	 MISS (train), Ground truth: -48.37800347949227, found ll: tensor([-48.3887], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -50.680588572486315, found ll: tensor([-57.7829], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (r_kleene (lambda (string_dash $0)) ((lambda (r_kleene (lambda (r_d $0)) (string_period ((lambda (r_d (r_d $0))) $0)))) (string_percent $0))))
+	 (-)*(\d)*\.\d\d%
+	 samples:
+	 ['.03%', '6.74%', '0.36%', '7.70%', '-0.01%']
+	 MISS (train), Ground truth: -48.37800347949227, found ll: tensor([-48.3887], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -50.680588572486315, found ll: tensor([-57.7829], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['35.50%', '26.20%', '25.20%', '46.60%', '7.20%']
+trainingExamples ['-11.50%', '14.20%', '0.70%', '33.80%', '6.70%']
+Data column no. 200
+	TRAIN	 ['NY', 'IL', 'MS', 'VA', 'FL']
+	TEST	 ['LA', 'WI', 'AZ', 'GA', 'TX']
+	Human written regex: \u\u
+	 best Posterior:
+(lambda ((lambda (r_u (r_u $0))) $0))
+	 \u\u
+	 samples:
+	 ['SN', 'NV', 'VN', 'LV', 'LY']
+	 HIT (train), Ground truth: -32.58096538021482, found ll: -21.71109390258789
+	 MISS (test), Ground truth: -32.58096538021482, found ll: -49.740234375
+	 best Likelihood:
+(lambda ((lambda (r_u (r_u $0))) $0))
+	 \u\u
+	 samples:
+	 ['SA', 'LL', 'FA', 'MM', 'FL']
+	 HIT (train), Ground truth: -32.58096538021482, found ll: -21.71109390258789
+	 MISS (test), Ground truth: -32.58096538021482, found ll: -49.740234375
+
+	 Posterior predictive samples...
+testingExamples ['LA', 'WI', 'AZ', 'GA', 'TX']
+trainingExamples ['NY', 'IL', 'MS', 'VA', 'FL']
+Data column no. 765
+	TRAIN	 ['-1.33 (0.465)', '-0.432 (0.0241)', '0.158 (0.0246)', '0.196 (0.0222)', '0.206 (0.0233)']
+	TEST	 ['NA', '-0.186 (0.0215)', '1.11 (  0)', '0.163 (  0)', '-0.523 (0.0227)']
+	Human written regex: -?\d\.\d+( \(0\.\d+\))?
+	 best Posterior:
+(lambda (r_kleene (lambda (string_dash $0)) ((lambda (r_kleene (lambda (r_d $0)) (string_period ((lambda (r_d (r_d $0))) $0)))) ((lambda ((lambda (r_kleene (lambda (r_dot $0)) (r_kleene (lambda (r_const $0)) $0))) ((lambda (r_d (r_d $0))) $0))) ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) $0)))))
+	 (-)*(\d)*\.\d\d(.)*( \(0\.)*\d\d.(.)*
+	 samples:
+	 ['4.22600)', '--5.10102))6', '-.02003468', '.02)305', '--0.002422)1']
+	 HIT (train), Ground truth: -117.30356229785137, found ll: tensor([-114.2984], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -inf, found ll: tensor([-inf], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (r_kleene (lambda (string_dash $0)) ((lambda (r_kleene (lambda (r_d $0)) (string_period ((lambda (r_d (r_d $0))) $0)))) ((lambda ((lambda (r_kleene (lambda (r_dot $0)) (r_kleene (lambda (r_const $0)) $0))) ((lambda (r_d (r_d $0))) $0))) ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) $0)))))
+	 (-)*(\d)*\.\d\d(.)*( \(0\.)*\d\d.(.)*
+	 samples:
+	 ['-3.33 (0. (0. (0.0035', '10.006 (0. (0.92)', '.402822)', '.31905', '.13 (0.015']
+	 HIT (train), Ground truth: -117.30356229785137, found ll: tensor([-114.2984], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -inf, found ll: tensor([-inf], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['NA', '-0.186 (0.0215)', '1.11 (  0)', '0.163 (  0)', '-0.523 (0.0227)']
+trainingExamples ['-1.33 (0.465)', '-0.432 (0.0241)', '0.158 (0.0246)', '0.196 (0.0222)', '0.206 (0.0233)']
+Data column no. 694
+	TRAIN	 ['(210)', '(220)', '(41)', '(635)', '(38)']
+	TEST	 ['(219)', '(25)', '(42)', '(6)', '(201)']
+	Human written regex: \(\d+\)
+	 best Posterior:
+(lambda ((lambda (r_const ((lambda (r_d (r_d $0))) $0))) (r_kleene (lambda (r_d $0)) (string_left_paren $0))))
+	 \(\d\d(\d)*\)
+	 samples:
+	 ['(63)', '(11)', '(213)', '(055)', '(28)']
+	 HIT (train), Ground truth: -38.94451955620188, found ll: tensor([-31.2165], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -32.9530550090939, found ll: tensor([-inf], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda ((lambda (r_const ((lambda (r_d (r_d $0))) $0))) (r_kleene (lambda (r_d $0)) (string_left_paren $0))))
+	 \(\d\d(\d)*\)
+	 samples:
+	 ['(42)', '(40)', '(44)', '(002)', '(842)']
+	 HIT (train), Ground truth: -38.94451955620188, found ll: tensor([-31.2165], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -32.9530550090939, found ll: tensor([-inf], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['(219)', '(25)', '(42)', '(6)', '(201)']
+trainingExamples ['(210)', '(220)', '(41)', '(635)', '(38)']
+Data column no. 210
+	TRAIN	 ['2.5', '4', '--', '1.5', '2']
+	TEST	 ['1', '3.5', '5', '3', '4.5']
+	Human written regex: (\d(\.\d)?)|(--)
+	 best Posterior:
+(lambda (r_kleene (lambda (string_dash $0)) (r_kleene (lambda (r_d $0)) (r_kleene (lambda ((lambda (r_dot (r_d $0))) $0)) $0))))
+	 (-)*(\d)*(.\d)*
+	 samples:
+	 ['22.441.4', '', '2', '-', '']
+	 MISS (train), Ground truth: -20.053835183003784, found ll: tensor([-22.9191], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -23.04956745655777, found ll: tensor([-34.4333], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (r_kleene (lambda (r_d $0)) (r_kleene (lambda ((lambda (r_dot (r_d $0))) $0)) (r_kleene (lambda (string_dash $0)) $0))))
+	 (\d)*(.\d)*(-)*
+	 samples:
+	 ['--', '1.5.1', '.2.2', '.2-', '5.2']
+	 MISS (train), Ground truth: -20.053835183003784, found ll: tensor([-22.9191], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -23.04956745655777, found ll: tensor([-34.4333], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['1', '3.5', '5', '3', '4.5']
+trainingExamples ['2.5', '4', '--', '1.5', '2']
+Data column no. 298
+	TRAIN	 ['DS_258KADVNLH', 'DS_25ROGVOIRY', 'DS_252PR5PS19', 'DS_25KIYDUYV3', 'DS_25AN1EA3PV']
+	TEST	 ['DS_25VTXMIN8H', 'DS_257J9CUMKG', 'DS_254F8A4M6R', 'DS_251O26B4QW', 'DS_258JLNIZ94']
+	Human written regex: DS_25(\u|\d)+
+	 best Posterior:
+(lambda ((lambda (r_const ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) $0))) (r_kleene (lambda (r_u $0)) ((lambda (r_u (r_u $0))) ((lambda (r_dot (r_u $0))) ((lambda (r_u (r_kleene (lambda (r_d $0)) $0))) $0))))))
+	 DS_25.(.)*(\u)*\u\u.\u\u(\d)*
+	 samples:
+	 ['DS_252VOO1YG1', 'DS_25NDP3RE', 'DS_253SDNAY', 'DS_25APVRDG', 'DS_2522NHVYRYD9']
+	 HIT (train), Ground truth: -178.1315444054354, found ll: tensor([-107.6566], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -172.39847573527078, found ll: tensor([-inf], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda ((lambda (r_const ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) $0))) (r_kleene (lambda (r_u $0)) ((lambda (r_u (r_u $0))) ((lambda (r_dot (r_u $0))) ((lambda (r_u (r_kleene (lambda (r_d $0)) $0))) $0))))))
+	 DS_25.(.)*(\u)*\u\u.\u\u(\d)*
+	 samples:
+	 ['DS_25UYHDURA', 'DS_2533YP5EA', 'DS_251PVYRPV1', 'DS_25NNAPVLNDS', 'DS_25U5DL5AH']
+	 HIT (train), Ground truth: -178.1315444054354, found ll: tensor([-107.6566], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -172.39847573527078, found ll: tensor([-inf], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['DS_25VTXMIN8H', 'DS_257J9CUMKG', 'DS_254F8A4M6R', 'DS_251O26B4QW', 'DS_258JLNIZ94']
+trainingExamples ['DS_258KADVNLH', 'DS_25ROGVOIRY', 'DS_252PR5PS19', 'DS_25KIYDUYV3', 'DS_25AN1EA3PV']
+Data column no. 668
+	TRAIN	 ['Q', 'KTA', 'JA', 'TR', 'GB']
+	TEST	 ['QH', 'KDC', 'QM', 'DE', 'DD']
+	Human written regex: \u+
+	 best Posterior:
+(lambda (r_kleene (lambda (r_u $0)) $0))
+	 (\u)*
+	 samples:
+	 ['', 'QJKTJAKG', 'ABKA', '', 'ATKT']
+	 HIT (train), Ground truth: -39.51243718581428, found ll: tensor([-29.8804], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -43.4636809043957, found ll: tensor([-78.7202], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (r_alt (lambda $0) (lambda (r_u $0)) (r_alt (lambda ((lambda (r_u (r_u $0))) $0)) (lambda $0) $0)))
+	 |(\u)(\u\u)|
+	 samples:
+	 ['AKQ', '', 'JA', 'A', 'TQ']
+	 HIT (train), Ground truth: -39.51243718581428, found ll: -27.2641544342041
+	 MISS (test), Ground truth: -43.4636809043957, found ll: -75.6994857788086
+
+	 Posterior predictive samples...
+testingExamples ['QH', 'KDC', 'QM', 'DE', 'DD']
+trainingExamples ['Q', 'KTA', 'JA', 'TR', 'GB']
+Data column no. 939
+	TRAIN	 ['ms025846', 'ms019454', 'ms012586', 'ms008925', 'ms002850']
+	TEST	 ['ms012952', 'ms017651', 'ms007498', 'ms015186', 'ms019618']
+	Human written regex: ms0\d+
+	 best Posterior:
+(lambda ((lambda ((lambda (r_const ((lambda (r_d (r_d $0))) $0))) ((lambda ((lambda (r_d (r_d $0))) (r_d $0))) $0))) $0))
+	 ms0\d\d\d\d\d
+	 samples:
+	 ['ms098255', 'ms008054', 'ms025001', 'ms025545', 'ms085125']
+	 HIT (train), Ground truth: -74.89330683884977, found ll: -50.6425895690918
+	 HIT (test), Ground truth: -74.89330683884977, found ll: -64.63119506835938
+	 best Likelihood:
+(lambda ((lambda (r_const ((lambda (r_d (r_d $0))) $0))) ((lambda ((lambda (r_d (r_d $0))) (r_d $0))) $0)))
+	 ms0\d\d\d\d\d
+	 samples:
+	 ['ms015128', 'ms099592', 'ms029558', 'ms029565', 'ms058808']
+	 HIT (train), Ground truth: -74.89330683884977, found ll: -50.6425895690918
+	 HIT (test), Ground truth: -74.89330683884977, found ll: -64.63119506835938
+
+	 Posterior predictive samples...
+testingExamples ['ms012952', 'ms017651', 'ms007498', 'ms015186', 'ms019618']
+trainingExamples ['ms025846', 'ms019454', 'ms012586', 'ms008925', 'ms002850']
+Data column no. 944
+	TRAIN	 ['HS2', 'FCI', 'LGD', 'RWSW', 'HS1']
+	TEST	 ['RSW', 'SHWT', 'WCI', 'RTWT', 'D05G']
+	Human written regex: \u+\d?
+	 best Posterior:
+(lambda ((lambda (r_kleene (lambda (r_u $0)) ((lambda (r_u (r_kleene (lambda (r_d $0)) $0))) $0))) $0))
+	 (\u)*\u(\d)*
+	 samples:
+	 ['S2112', 'LWH', 'CH', 'H', 'W112']
+	 HIT (train), Ground truth: -63.38831814892781, found ll: tensor([-46.9148], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -inf, found ll: tensor([-inf], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (r_kleene (lambda (r_u $0)) (r_alt (lambda ((lambda (r_u (r_u $0))) $0)) (lambda (string_S (r_d $0))) $0)))
+	 (\u)*(\u\u)|(S\d)
+	 samples:
+	 ['S1', 'HHDFIFFR', 'S1', 'DWIS1', 'SHG']
+	 HIT (train), Ground truth: -63.38831814892781, found ll: tensor([-39.5769], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -inf, found ll: tensor([-inf], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['RSW', 'SHWT', 'WCI', 'RTWT', 'D05G']
+trainingExamples ['HS2', 'FCI', 'LGD', 'RWSW', 'HS1']
+Data column no. 731
+	TRAIN	 ['ManH.010', 'ManH.004', 'ManH.009', 'ManH.025', 'ManH.014']
+	TEST	 ['ManH.016', 'ManH.023', 'ManH.027', 'ManH.021', 'ManH.015']
+	Human written regex: ManH.0\d\d
+	 best Posterior:
+(lambda ((lambda (r_const ((lambda (r_d (r_d $0))) $0))) $0))
+	 ManH\.0\d\d
+	 samples:
+	 ['ManH.004', 'ManH.004', 'ManH.040', 'ManH.041', 'ManH.019']
+	 HIT (train), Ground truth: -45.847591887279634, found ll: -16.998598098754883
+	 HIT (test), Ground truth: -45.847591887279634, found ll: -34.6999626159668
+	 best Likelihood:
+(lambda ((lambda (r_const ((lambda (r_d (r_d $0))) $0))) $0))
+	 ManH\.0\d\d
+	 samples:
+	 ['ManH.050', 'ManH.004', 'ManH.049', 'ManH.004', 'ManH.002']
+	 HIT (train), Ground truth: -45.847591887279634, found ll: -16.998598098754883
+	 HIT (test), Ground truth: -45.847591887279634, found ll: -34.6999626159668
+
+	 Posterior predictive samples...
+testingExamples ['ManH.016', 'ManH.023', 'ManH.027', 'ManH.021', 'ManH.015']
+trainingExamples ['ManH.010', 'ManH.004', 'ManH.009', 'ManH.025', 'ManH.014']
+Data column no. 229
+	TRAIN	 ['AIUTP', 'GSE', 'SPED-ATRC', 'SPED', 'GSE-DO']
+	TEST	 ['MISL', 'OCCD', 'HGCDC', 'COUN', 'ELP']
+	Human written regex: \u+(-\u+)?
+	 best Posterior:
+(lambda (r_kleene (lambda (r_u $0)) ((lambda ((lambda (r_u (r_u $0))) (r_u $0))) (r_kleene (lambda (string_dash $0)) (r_kleene (lambda (r_u $0)) $0)))))
+	 (\u)*\u\u\u(-)*(\u)*
+	 samples:
+	 ['AREE-', 'STD', 'EGPEISITU', 'SPEZ', 'DPP']
+	 HIT (train), Ground truth: -102.24682886733541, found ll: tensor([-77.3280], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -82.49061027442828, found ll: tensor([-93.2725], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (r_kleene (lambda (r_u $0)) ((lambda ((lambda (r_u (r_u $0))) (r_u $0))) (r_kleene (lambda (r_kleene (lambda (string_dash $0)) ((lambda (r_u (r_u $0))) $0))) $0))))
+	 (\u)*\u\u\u((-)*\u\u)*
+	 samples:
+	 ['RTIE', 'OCEDO', 'RSSSES', 'SST-SS', 'IOE']
+	 HIT (train), Ground truth: -102.24682886733541, found ll: tensor([-73.2007], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -82.49061027442828, found ll: tensor([-89.4136], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['MISL', 'OCCD', 'HGCDC', 'COUN', 'ELP']
+trainingExamples ['AIUTP', 'GSE', 'SPED-ATRC', 'SPED', 'GSE-DO']
+Data column no. 28
+	TRAIN	 ['Y2015/1093', 'Y2013/1010', 'Y2014/1017', 'Y2015/1421', 'Y2017/1162']
+	TEST	 ['Y2011/1011', 'Y2015/1152', 'Y2018/1096', 'Y2017/1148', 'Y2017/1206']
+	Human written regex: Y201\d/\d\d\d\d
+	 best Posterior:
+(lambda ((lambda (r_const (r_d (r_kleene (lambda (r_d $0)) $0)))) ((lambda (r_dot (string_1 $0))) ((lambda ((lambda (r_d (r_d $0))) (r_d $0))) $0))))
+	 Y201\d(\d)*.1\d\d\d
+	 samples:
+	 ['Y2010/1022', 'Y2012/1613', 'Y2013/1229', 'Y2013/1152', 'Y2011/1000']
+	 HIT (train), Ground truth: -57.56462732485113, found ll: tensor([-42.1106], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -57.56462732485113, found ll: tensor([-51.0283], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda ((lambda (r_const (r_d (r_kleene (lambda (r_d $0)) $0)))) ((lambda (r_dot (string_1 $0))) ((lambda ((lambda (r_d (r_d $0))) (r_d $0))) $0))))
+	 Y201\d(\d)*.1\d\d\d
+	 samples:
+	 ['Y2010/1006', 'Y2011/1244', 'Y2014/1941', 'Y2011/1711', 'Y2011/1352']
+	 HIT (train), Ground truth: -57.56462732485113, found ll: tensor([-42.1106], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -57.56462732485113, found ll: tensor([-51.0283], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['Y2011/1011', 'Y2015/1152', 'Y2018/1096', 'Y2017/1148', 'Y2017/1206']
+trainingExamples ['Y2015/1093', 'Y2013/1010', 'Y2014/1017', 'Y2015/1421', 'Y2017/1162']
+Data column no. 374
+	TRAIN	 ['q0005_0003', 'q0009_0003', 'q0002', 'q0001', 'q0009_0008']
+	TEST	 ['q0011_0002', 'q0010_0009', 'q0011_0001', 'q0007_0008', 'q0009_0014']
+	Human written regex: q000\d(_000\d)?
+	 best Posterior:
+(lambda ((lambda (r_const (r_d (r_kleene (lambda (r_d $0)) $0)))) (r_alt (lambda $0) (lambda ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) ((lambda (string_0 ((lambda ((lambda (r_d (r_d $0))) (r_d $0))) $0))) $0))) $0)))
+	 q000\d(\d)*|(.(.)*0\d\d\d)
+	 samples:
+	 ['q0002', 'q0000_0900', 'q0000_0920', 'q0000_0000', 'q0001_0900']
+	 MISS (train), Ground truth: -21.886416646752092, found ll: tensor([-27.1423], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -inf, found ll: tensor([-inf], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda ((lambda (r_const (r_d (r_kleene (lambda (r_d $0)) $0)))) (r_alt (lambda $0) (lambda ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) ((lambda (string_0 ((lambda ((lambda (r_d (r_d $0))) (r_d $0))) $0))) $0))) $0)))
+	 q000\d(\d)*|(.(.)*0\d\d\d)
+	 samples:
+	 ['q0000_0380', 'q0003_0085', 'q0009', 'q0000_0009', 'q0000']
+	 MISS (train), Ground truth: -21.886416646752092, found ll: tensor([-27.1423], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -inf, found ll: tensor([-inf], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['q0011_0002', 'q0010_0009', 'q0011_0001', 'q0007_0008', 'q0009_0014']
+trainingExamples ['q0005_0003', 'q0009_0003', 'q0002', 'q0001', 'q0009_0008']
+Data column no. 819
+	TRAIN	 ['3626cpr1748', '3626bpb0033', '56656', 'x197', '12550pr0002']
+	TEST	 ['x196', '3626cpr1687', '20598pat01', '3626cpr1206', '3626bpr0496']
+	Human written regex: \d*\l*\d*
+	 best Posterior:
+(lambda (r_kleene (lambda (r_d $0)) ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) ((lambda ((lambda (r_d (r_d $0))) (r_d $0))) $0))))
+	 (\d)*.(.)*\d\d\d
+	 samples:
+	 ['6096085br266', '03p00prrrppp00x0p0925', '30p0xc255', '85200r990', '3b1666245']
+	 HIT (train), Ground truth: -144.81756620291372, found ll: tensor([-107.4942], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -163.6182733507934, found ll: tensor([-inf], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (r_kleene (lambda (r_d $0)) ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) ((lambda (r_d (r_d $0))) (r_d $0)))))
+	 (\d)*.(.)*\d\d\d
+	 samples:
+	 ['c377', '681pb368', 'px1510', '0206', '9256254667660pp336']
+	 HIT (train), Ground truth: -144.81756620291372, found ll: tensor([-107.4942], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -163.6182733507934, found ll: tensor([-inf], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['x196', '3626cpr1687', '20598pat01', '3626cpr1206', '3626bpr0496']
+trainingExamples ['3626cpr1748', '3626bpb0033', '56656', 'x197', '12550pr0002']
+Data column no. 516
+	TRAIN	 ['-122.31189', '-122.317017', '-122.342205', '-122.338913', '-122.312805']
+	TEST	 ['-122.338203', '-122.330304', '-122.331777', '-122.354093', '-122.325249']
+	Human written regex: -122.3\d+
+	 best Posterior:
+(lambda ((lambda ((lambda (r_const (r_d (r_kleene (lambda (r_d $0)) $0)))) ((lambda ((lambda (r_d (r_d $0))) (r_d $0))) $0))) $0))
+	 -122\.3\d(\d)*\d\d\d
+	 samples:
+	 ['-122.35215', '-122.33082', '-122.38171', '-122.39310', '-122.30188']
+	 HIT (train), Ground truth: -94.71931552263496, found ll: tensor([-56.3145], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -97.71504779618894, found ll: tensor([-66.9147], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda ((lambda (r_const ((lambda (r_d (r_d $0))) $0))) ((lambda (r_d (r_d $0))) (r_kleene (lambda (r_d $0)) $0))))
+	 -122\.3\d\d\d\d(\d)*
+	 samples:
+	 ['-122.358913', '-122.33017', '-122.33111', '-122.31232', '-122.3011211']
+	 HIT (train), Ground truth: -94.71931552263496, found ll: tensor([-56.3145], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -97.71504779618894, found ll: tensor([-66.9146], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['-122.338203', '-122.330304', '-122.331777', '-122.354093', '-122.325249']
+trainingExamples ['-122.31189', '-122.317017', '-122.342205', '-122.338913', '-122.312805']
+Data column no. 417
+	TRAIN	 ['SFTCB', 'RFTCB', 'TETXB', 'GETXB', 'PATXB']
+	TEST	 ['JNTCB', 'MGTXB', 'JFTXB', 'KSTXB', 'HYTCB']
+	Human written regex: \u\uT\uB
+	 best Posterior:
+(lambda ((lambda (r_u (r_u $0))) ((lambda (r_const ((lambda (r_u (r_u $0))) $0))) $0)))
+	 \u\uT\u\u
+	 samples:
+	 ['PCTGT', 'FXTXF', 'RRTXR', 'ECTXX', 'PSTCX']
+	 HIT (train), Ground truth: -48.87144807032223, found ll: -44.55057144165039
+	 MISS (test), Ground truth: -48.87144807032223, found ll: -79.47460174560547
+	 best Likelihood:
+(lambda ((lambda (r_u (r_u $0))) (string_T ((lambda (r_u (r_u $0))) $0))))
+	 \u\uT\u\u
+	 samples:
+	 ['XCTBP', 'SBTXC', 'XGTPC', 'XXTBF', 'XTTXS']
+	 HIT (train), Ground truth: -48.87144807032223, found ll: -44.55057144165039
+	 MISS (test), Ground truth: -48.87144807032223, found ll: -79.47460174560547
+
+	 Posterior predictive samples...
+testingExamples ['JNTCB', 'MGTXB', 'JFTXB', 'KSTXB', 'HYTCB']
+trainingExamples ['SFTCB', 'RFTCB', 'TETXB', 'GETXB', 'PATXB']
+Data column no. 660
+	TRAIN	 ['ENGL281', 'ENGL300', 'ENGL247', 'ENGL280', 'ENG281']
+	TEST	 ['ENGL119', '281', 'ENGL442', 'ENGL461', 'GWS281']
+	Human written regex: ENGL?\d\d\d
+	 best Posterior:
+(lambda ((lambda ((lambda (r_kleene (lambda (r_dot $0)) (r_kleene (lambda (r_const $0)) $0))) ((lambda (r_d (r_d $0))) $0))) (r_d $0)))
+	 (.)*(ENGL)*\d\d\d
+	 samples:
+	 ['EENGL700', 'ENGLENGL708', '028', 'EENGL820', 'ENENGL038']
+	 MISS (train), Ground truth: -38.00451229771041, found ll: tensor([-42.0206], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -inf, found ll: tensor([-67.6864], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (r_alt (lambda ((lambda ((lambda (r_u (r_u $0))) (r_u $0))) (r_kleene (lambda (r_d $0)) $0))) (lambda ((lambda (r_const ((lambda ((lambda (r_d (r_d $0))) (r_d $0))) $0))) $0)) $0))
+	 (\u\u\u(\d)*)|(ENGL\d\d\d)
+	 samples:
+	 ['GEN1', 'ENE2124803', 'GGE402', 'ENGL884', 'ENGL241']
+	 HIT (train), Ground truth: -38.00451229771041, found ll: tensor([-36.2028], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -inf, found ll: tensor([-inf], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['ENGL119', '281', 'ENGL442', 'ENGL461', 'GWS281']
+trainingExamples ['ENGL281', 'ENGL300', 'ENGL247', 'ENGL280', 'ENG281']
+Data column no. 585
+	TRAIN	 ['MF', 'MNE', 'MENRW', 'MH', 'DPM']
+	TEST	 ['MSNE', 'MIC', 'MST', 'MLG', 'MRPWH']
+	Human written regex: M?\u+
+	 best Posterior:
+(lambda (r_kleene (lambda (r_u $0)) ((lambda (r_u (r_u $0))) $0)))
+	 (\u)*\u\u
+	 samples:
+	 ['MDWD', 'NFEMND', 'FM', 'NMRHMR', 'RWM']
+	 HIT (train), Ground truth: -46.92941680719542, found ll: tensor([-36.8580], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -54.831904244358284, found ll: tensor([-82.8109], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (r_kleene (lambda (r_u $0)) (r_const (r_kleene (lambda (r_u $0)) $0))))
+	 (\u)*M(\u)*
+	 samples:
+	 ['M', 'RMFE', 'MP', 'M', 'ERNMD']
+	 HIT (train), Ground truth: -46.92941680719542, found ll: tensor([-34.1956], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -54.831904244358284, found ll: tensor([-82.5297], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['MSNE', 'MIC', 'MST', 'MLG', 'MRPWH']
+trainingExamples ['MF', 'MNE', 'MENRW', 'MH', 'DPM']
+Data column no. 325
+	TRAIN	 ['BUS M 277', 'BUS M 440', 'BUS M 498', 'BUS M 490R TTh', 'BUS M 490R F']
+	TEST	 ['BUS M 462', 'BUS M 390 MW', 'BUS M 478A', 'BUS M 581', 'BUS M 481']
+	Human written regex: BUS M \d\d\d.*
+	 best Posterior:
+(lambda ((lambda (r_const ((lambda (r_d (r_d $0))) $0))) ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) $0)))
+	 BUS M \d\d.(.)*
+	 samples:
+	 ['BUS M 79R', 'BUS M 94ThR', 'BUS M 498 ', 'BUS M 49 0', 'BUS M 210']
+	 HIT (train), Ground truth: -80.06447527393266, found ll: tensor([-46.4897], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -59.03449378582154, found ll: tensor([-104.4715], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda ((lambda (r_const ((lambda (r_d (r_d $0))) $0))) (r_kleene (lambda (r_d $0)) ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) $0))))
+	 BUS M \d\d(\d)*.(.)*
+	 samples:
+	 ['BUS M 9447', 'BUS M 900', 'BUS M 42  T', 'BUS M 9737', 'BUS M 44TFF']
+	 HIT (train), Ground truth: -80.06447527393266, found ll: tensor([-51.8975], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -59.03449378582154, found ll: tensor([-107.8485], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['BUS M 462', 'BUS M 390 MW', 'BUS M 478A', 'BUS M 581', 'BUS M 481']
+trainingExamples ['BUS M 277', 'BUS M 440', 'BUS M 498', 'BUS M 490R TTh', 'BUS M 490R F']
+Data column no. 823
+	TRAIN	 ['NIC', 'MKD', 'POL', 'SWZ', 'SUR']
+	TEST	 ['AUS', 'ISL', 'GMB', 'NZL', 'COL']
+	Human written regex: \u\u\u
+	 best Posterior:
+(lambda ((lambda ((lambda (r_u (r_u $0))) (r_u $0))) $0))
+	 \u\u\u
+	 samples:
+	 ['DNL', 'CMN', 'ZKK', 'DUK', 'DWS']
+	 HIT (train), Ground truth: -48.87144807032223, found ll: -39.30207443237305
+	 MISS (test), Ground truth: -48.87144807032223, found ll: -54.835296630859375
+	 best Likelihood:
+(lambda (r_alt (lambda (string_S ((lambda (r_u (r_u $0))) $0))) (lambda ((lambda ((lambda (r_u (r_u $0))) (r_u $0))) $0)) $0))
+	 (S\u\u)|(\u\u\u)
+	 samples:
+	 ['UIN', 'OWM', 'WPI', 'SKR', 'SNL']
+	 HIT (train), Ground truth: -48.87144807032223, found ll: -36.871185302734375
+	 MISS (test), Ground truth: -48.87144807032223, found ll: -68.79912567138672
+
+	 Posterior predictive samples...
+testingExamples ['AUS', 'ISL', 'GMB', 'NZL', 'COL']
+trainingExamples ['NIC', 'MKD', 'POL', 'SWZ', 'SUR']
+Data column no. 515
+	TRAIN	 ['L - ??', 'L - 31.0 lbs.', 'L - 10.0 lbs.', 'S - 8.6 lbs.', 'L - 25.2 lbs.']
+	TEST	 ['L - 29.0 lbs.', 'S - 9.0 lbs.', 'L - 23.0 lbs.', 'L - 22.8 lbs.', 'S - ??']
+	Human written regex: L|\u - (\?\?)|(\d?\d\.\d lbs\.)
+	 best Posterior:
+(lambda (r_u (r_const (r_kleene (lambda ((lambda (r_dot (r_d $0))) $0)) ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) $0)))))
+	 \u - (.\d)*.(.)*
+	 samples:
+	 ['S -  ', 'L - b061s0?0 1..28', 'L - 61s2 1s1b1.2?0?0 0.0b5s0 122b5l0?030.23b..b', 'L -  2.2s210s5s110.?', 'S - .2.0b2s0.l']
+	 MISS (train), Ground truth: -38.29059308879521, found ll: tensor([-98.0277], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -41.548689626816696, found ll: tensor([-122.9347], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (r_u (r_const (r_kleene (lambda ((lambda (r_dot (r_d $0))) $0)) ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) $0))))))
+	 \u - (.\d)*.(.)*.(.)*
+	 samples:
+	 ['L - .sb', 'S - ?2.5... l .', 'L - 8 .', 'L - .2 0b2.b.', 'S - 3.l1.bb..']
+	 MISS (train), Ground truth: -38.29059308879521, found ll: tensor([-101.2083], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -41.548689626816696, found ll: tensor([-126.3282], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['L - 29.0 lbs.', 'S - 9.0 lbs.', 'L - 23.0 lbs.', 'L - 22.8 lbs.', 'S - ??']
+trainingExamples ['L - ??', 'L - 31.0 lbs.', 'L - 10.0 lbs.', 'S - 8.6 lbs.', 'L - 25.2 lbs.']
+Data column no. 864
+	TRAIN	 ['SF', 'SD', 'CHI', 'HOU', 'KC']
+	TEST	 ['BAL', 'LA', 'DEN', 'WSH', 'MIA']
+	Human written regex: \u+
+	 best Posterior:
+(lambda (r_kleene (lambda (r_u $0)) ((lambda (r_u (r_u $0))) $0)))
+	 (\u)*\u\u
+	 samples:
+	 ['CD', 'OS', 'FSU', 'IO', 'IC']
+	 HIT (train), Ground truth: -47.41492462297713, found ll: tensor([-29.9358], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -55.31741206013999, found ll: tensor([-92.8139], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (r_alt (lambda (string_S $0)) (lambda ((lambda (r_u (r_u $0))) $0)) (r_kleene (lambda (r_u $0)) $0)))
+	 (S)|(\u\u)(\u)*
+	 samples:
+	 ['SIIC', 'CUC', 'S', 'S', 'SU']
+	 HIT (train), Ground truth: -47.41492462297713, found ll: tensor([-29.9811], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -55.31741206013999, found ll: tensor([-100.9199], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['BAL', 'LA', 'DEN', 'WSH', 'MIA']
+trainingExamples ['SF', 'SD', 'CHI', 'HOU', 'KC']
+Data column no. 359
+	TRAIN	 ['MAM.OSBS.2014.06', 'MAM.OSBS.2013.07', 'MAM.OSBS.2013.09', 'MAM.OSBS.2014.05', 'MAM.OSBS.2014.11']
+	TEST	 ['MAM.OSBS.2014.08', 'MAM.OSBS.2014.09', 'MAM.OSBS.2014.07', 'MAM.OSBS.2014.10', 'MAM.OSBS.2013.08']
+	Human written regex: MAM\.OSBS\.201\d\.\d\d
+	 best Posterior:
+(lambda ((lambda (r_const (r_d (r_kleene (lambda (r_d $0)) $0)))) ((lambda (r_kleene (lambda (r_d $0)) (string_period ((lambda (r_d (r_d $0))) $0)))) $0)))
+	 MAM\.OSBS\.201\d(\d)*(\d)*\.\d\d
+	 samples:
+	 ['MAM.OSBS.2013.77', 'MAM.OSBS.2010.77', 'MAM.OSBS.2010.11', 'MAM.OSBS.2011.03', 'MAM.OSBS.20134.39']
+	 HIT (train), Ground truth: -34.538776394910684, found ll: tensor([-29.2107], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -34.538776394910684, found ll: tensor([-35.6907], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (r_const ((lambda (r_kleene (lambda (r_d $0)) (string_period ((lambda (r_d (r_d $0))) $0)))) $0)))
+	 MAM\.OSBS\.201(\d)*\.\d\d
+	 samples:
+	 ['MAM.OSBS.2010.47', 'MAM.OSBS.201.50', 'MAM.OSBS.2010.05', 'MAM.OSBS.201.30', 'MAM.OSBS.201.05']
+	 MISS (train), Ground truth: -34.538776394910684, found ll: tensor([-35.9838], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -34.538776394910684, found ll: tensor([-42.4638], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['MAM.OSBS.2014.08', 'MAM.OSBS.2014.09', 'MAM.OSBS.2014.07', 'MAM.OSBS.2014.10', 'MAM.OSBS.2013.08']
+trainingExamples ['MAM.OSBS.2014.06', 'MAM.OSBS.2013.07', 'MAM.OSBS.2013.09', 'MAM.OSBS.2014.05', 'MAM.OSBS.2014.11']
+Data column no. 594
+	TRAIN	 ['EIRE', 'DT4 9TG', 'SW19 2HX', 'SK15 3HN', 'SP6 3LR']
+	TEST	 ['HP14 4NE', 'NG1 1PU', 'ST16 1DW', 'RG8 0HL', 'LN6 0EJ']
+	Human written regex: (\u|\d)+( (\u|\d)+)*
+	 best Posterior:
+(lambda ((lambda (r_u (r_u $0))) (r_kleene (lambda (r_d $0)) (r_kleene (lambda ((lambda (r_dot (r_d $0))) $0)) ((lambda (r_u (r_u $0))) $0)))))
+	 \u\u(\d)*(.\d)*\u\u
+	 samples:
+	 ['PT 5LN', 'RR3EN', 'TN91 6 5 5DL', 'WE9XR', 'HE2 6 3 5DE']
+	 HIT (train), Ground truth: -136.0149371490063, found ll: tensor([-84.0152], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -144.08584323779408, found ll: tensor([-117.8186], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda ((lambda (r_u (r_u $0))) (r_kleene (lambda (r_kleene (lambda (r_d $0)) ((lambda (r_dot (r_d $0))) $0))) ((lambda (r_u (r_u $0))) $0))))
+	 \u\u((\d)*.\d)*\u\u
+	 samples:
+	 ['IR31 9GS', 'NT219 12 4LR', 'LR 24 33 61 3 3TS', 'SSHE', 'HTWN']
+	 HIT (train), Ground truth: -136.0149371490063, found ll: tensor([-83.2957], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -144.08584323779408, found ll: tensor([-117.7440], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['HP14 4NE', 'NG1 1PU', 'ST16 1DW', 'RG8 0HL', 'LN6 0EJ']
+trainingExamples ['EIRE', 'DT4 9TG', 'SW19 2HX', 'SK15 3HN', 'SP6 3LR']
+Data column no. 788
+	TRAIN	 ['-1,287659', '-0,890684', '-2', '-0,807021', '-2,485698']
+	TEST	 ['-1,698316', '-2,672197', '-2,86825', '-1,905426', '-1,8']
+	Human written regex: -\d(,\d+)?
+	 best Posterior:
+(lambda ((lambda ((lambda (r_const (r_d (r_kleene (lambda (r_d $0)) $0)))) (r_kleene (lambda ((lambda (r_dot (r_d $0))) ((lambda (r_d (r_d $0))) $0))) $0))) (r_kleene (lambda (r_d $0)) $0)))
+	 -\d(\d)*(.\d\d\d)*(\d)*
+	 samples:
+	 ['-02', '-08,886', '-240542', '-0', '-18']
+	 HIT (train), Ground truth: -86.87623593306571, found ll: tensor([-82.7770], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -86.87623593306573, found ll: tensor([-inf], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (string_dash (r_d (r_kleene (lambda ((lambda (r_dot (r_d $0))) ((lambda (r_d (r_d $0))) $0))) (r_kleene (lambda (r_d $0)) $0)))))
+	 -\d(.\d\d\d)*(\d)*
+	 samples:
+	 ['-2,028,8960', '-2,619,650,172,7899', '-0,802,888,245,881,171,757,088', '-202', '-2,62228']
+	 HIT (train), Ground truth: -86.87623593306571, found ll: tensor([-78.6288], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -86.87623593306573, found ll: tensor([-inf], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['-1,698316', '-2,672197', '-2,86825', '-1,905426', '-1,8']
+trainingExamples ['-1,287659', '-0,890684', '-2', '-0,807021', '-2,485698']
+Data column no. 188
+	TRAIN	 ['cat. 16', 'cat. 32', 'cat. 19', 'cat. 43', 'cat. 13']
+	TEST	 ['cat. 29', 'cat. 22', 'cat. 3', 'cat. 52', 'cat. 58']
+	Human written regex: cat\. \d\d
+	 best Posterior:
+(lambda (r_const ((lambda (r_d (r_d $0))) $0)))
+	 cat\. \d\d
+	 samples:
+	 ['cat. 16', 'cat. 99', 'cat. 12', 'cat. 93', 'cat. 63']
+	 HIT (train), Ground truth: -23.025850929940454, found ll: -16.476463317871094
+	 HIT (test), Ground truth: -inf, found ll: -inf
+	 best Likelihood:
+(lambda ((lambda (r_const ((lambda (r_d (r_d $0))) $0))) $0))
+	 cat\. \d\d
+	 samples:
+	 ['cat. 31', 'cat. 11', 'cat. 31', 'cat. 13', 'cat. 11']
+	 HIT (train), Ground truth: -23.025850929940454, found ll: -16.476463317871094
+	 HIT (test), Ground truth: -inf, found ll: -inf
+
+	 Posterior predictive samples...
+testingExamples ['cat. 29', 'cat. 22', 'cat. 3', 'cat. 52', 'cat. 58']
+trainingExamples ['cat. 16', 'cat. 32', 'cat. 19', 'cat. 43', 'cat. 13']
+Data column no. 355
+	TRAIN	 ['YlBv6gDob-Y', 'iz151VUZx_c', 'k63Hhf4zJpM', 'iCiGjZEV7VI', 'jk0kYP5djs0']
+	TEST	 ['q6pGedpPjSQ', 'uUJaqWWMn6E', 'ov-mXl5s-yU', 'ktWSfk5vRLI', 'QmvJBvPz4Uk']
+	Human written regex: .+
+	 best Posterior:
+(lambda ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) (r_l (r_kleene (lambda (r_u $0)) (r_d ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) $0))))))
+	 .(.)*\l(\u)*\d.(.)*
+	 samples:
+	 ['035sYbZg1ivPEE7ZM', 'YZbs-diGsDzP4C6j', 'HCYYzBYg1lv6jY', 'kVh5zEEP4Dg', '3z7C-oM']
+	 HIT (train), Ground truth: -289.1622454615281, found ll: tensor([-192.4325], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -289.1622454615281, found ll: tensor([-inf], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) (r_l (r_kleene (lambda (r_u $0)) (r_d ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) $0))))))
+	 .(.)*\l(\u)*\d.(.)*
+	 samples:
+	 ['hoMhfEEEP1VJ', 'xgkVE5o', 'Gi-bbYY0HoxjYj7o', 'jU6hIb--lf6i', 'bU3z6iZBgh']
+	 HIT (train), Ground truth: -289.1622454615281, found ll: tensor([-192.4325], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -289.1622454615281, found ll: tensor([-inf], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['q6pGedpPjSQ', 'uUJaqWWMn6E', 'ov-mXl5s-yU', 'ktWSfk5vRLI', 'QmvJBvPz4Uk']
+trainingExamples ['YlBv6gDob-Y', 'iz151VUZx_c', 'k63Hhf4zJpM', 'iCiGjZEV7VI', 'jk0kYP5djs0']
+Data column no. 799
+	TRAIN	 ['D12', 'C50', 'E36', 'C65', 'C54']
+	TEST	 ['C75', 'F28', 'C70', 'D23', 'G14']
+	Human written regex: \u\d\d
+	 best Posterior:
+(lambda (r_u ((lambda (r_d (r_d $0))) $0)))
+	 \u\d\d
+	 samples:
+	 ['D55', 'C25', 'E11', 'C31', 'D65']
+	 HIT (train), Ground truth: -39.31633362004787, found ll: -23.193241119384766
+	 MISS (test), Ground truth: -39.31633362004787, found ll: -53.204246520996094
+	 best Likelihood:
+(lambda (r_alt (lambda (string_C $0)) (lambda ((lambda (r_u (r_kleene (lambda (r_d $0)) $0))) $0)) ((lambda (r_d (r_d $0))) $0)))
+	 (C)|(\u(\d)*)\d\d
+	 samples:
+	 ['C50', 'C21', 'D21', 'E12', 'C65']
+	 HIT (train), Ground truth: -39.31633362004787, found ll: tensor([-23.2864], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -39.31633362004787, found ll: tensor([-54.7750], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['C75', 'F28', 'C70', 'D23', 'G14']
+trainingExamples ['D12', 'C50', 'E36', 'C65', 'C54']
+Data column no. 902
+	TRAIN	 ['C32', 'R15', 'S07', 'F23', 'F11']
+	TEST	 ['L18', 'C25', 'L05', 'P18', 'R27']
+	Human written regex: \u\d\d
+	 best Posterior:
+(lambda (r_u ((lambda (r_d (r_d $0))) $0)))
+	 \u\d\d
+	 samples:
+	 ['F02', 'F22', 'C32', 'F21', 'R30']
+	 HIT (train), Ground truth: -39.31633362004787, found ll: -23.716163635253906
+	 MISS (test), Ground truth: -39.31633362004787, found ll: -54.59261703491211
+	 best Likelihood:
+(lambda (r_u ((lambda (r_d (r_d $0))) $0)))
+	 \u\d\d
+	 samples:
+	 ['F21', 'R31', 'R11', 'R15', 'F01']
+	 HIT (train), Ground truth: -39.31633362004787, found ll: -23.716163635253906
+	 MISS (test), Ground truth: -39.31633362004787, found ll: -54.59261703491211
+
+	 Posterior predictive samples...
+testingExamples ['L18', 'C25', 'L05', 'P18', 'R27']
+trainingExamples ['C32', 'R15', 'S07', 'F23', 'F11']
+Data column no. 920
+	TRAIN	 ['A.17', 'A.12', 'A.73', 'A.63', 'A.35']
+	TEST	 ['A.36', 'A.10', 'A.101', 'A.74', 'A.72']
+	Human written regex: A\.\d\d
+	 best Posterior:
+(lambda ((lambda (r_const (r_d (r_kleene (lambda (r_d $0)) $0)))) $0))
+	 A\.\d(\d)*
+	 samples:
+	 ['A.31', 'A.37', 'A.5', 'A.3', 'A.726']
+	 MISS (train), Ground truth: -23.025850929940454, found ll: tensor([-23.9301], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -inf, found ll: tensor([-42.1579], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda ((lambda (r_const ((lambda (r_d (r_d $0))) $0))) $0))
+	 A\.\d\d
+	 samples:
+	 ['A.37', 'A.13', 'A.53', 'A.37', 'A.13']
+	 HIT (train), Ground truth: -23.025850929940454, found ll: -16.998600006103516
+	 HIT (test), Ground truth: -inf, found ll: -inf
+
+	 Posterior predictive samples...
+testingExamples ['A.36', 'A.10', 'A.101', 'A.74', 'A.72']
+trainingExamples ['A.17', 'A.12', 'A.73', 'A.63', 'A.35']
+Data column no. 330
+	TRAIN	 ['Resp19', 'Resp44', 'Resp17', 'Resp20', 'Resp28']
+	TEST	 ['Resp4', 'Resp43', 'Resp14', 'Resp47', 'Resp48']
+	Human written regex: Resp\d\d
+	 best Posterior:
+(lambda ((lambda (r_const ((lambda (r_d (r_d $0))) $0))) $0))
+	 Resp\d\d
+	 samples:
+	 ['Resp21', 'Resp19', 'Resp77', 'Resp89', 'Resp47']
+	 HIT (train), Ground truth: -23.025850929940454, found ll: -18.895910263061523
+	 HIT (test), Ground truth: -inf, found ll: -inf
+	 best Likelihood:
+(lambda ((lambda (r_const ((lambda (r_d (r_d $0))) $0))) $0))
+	 Resp\d\d
+	 samples:
+	 ['Resp27', 'Resp42', 'Resp84', 'Resp74', 'Resp47']
+	 HIT (train), Ground truth: -23.025850929940454, found ll: -18.895910263061523
+	 HIT (test), Ground truth: -inf, found ll: -inf
+
+	 Posterior predictive samples...
+testingExamples ['Resp4', 'Resp43', 'Resp14', 'Resp47', 'Resp48']
+trainingExamples ['Resp19', 'Resp44', 'Resp17', 'Resp20', 'Resp28']
+Data column no. 396
+	TRAIN	 ['DEG F', 'LBMOL/HR', 'MMBTU/HR', 'PSI', 'PSIA']
+	TEST	 ['PPM', 'PH', 'LB/HR', 'PSIG', 'MOL %']
+	Human written regex: \u+(( |/)\u+)?
+	 best Posterior:
+(lambda (r_kleene (lambda (r_u $0)) ((lambda (r_dot (r_u $0))) (r_kleene (lambda (r_u $0)) $0))))
+	 (\u)*.\u(\u)*
+	 samples:
+	 ['PGRET', 'SRT/MIS', '/MBR', '/ER', 'BOPL']
+	 HIT (train), Ground truth: -104.32627040901525, found ll: tensor([-84.2193], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -inf, found ll: tensor([-inf], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (r_kleene (lambda (r_u $0)) (r_alt (lambda $0) (lambda ((lambda ((lambda (r_u (r_u $0))) (r_u $0))) (string_slash $0))) ((lambda (r_dot (r_u $0))) $0))))
+	 (\u)*|(\u\u\u/).\u
+	 samples:
+	 ['HL', 'IG', 'OTMMIB', 'HF', 'MST']
+	 HIT (train), Ground truth: -104.32627040901525, found ll: tensor([-74.9456], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -inf, found ll: tensor([-inf], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['PPM', 'PH', 'LB/HR', 'PSIG', 'MOL %']
+trainingExamples ['DEG F', 'LBMOL/HR', 'MMBTU/HR', 'PSI', 'PSIA']
+Data column no. 393
+	TRAIN	 ['US $ 2.95', 'US $ 2.99', 'US $ 0.60', 'US $ 2.50', 'US $ 1.95']
+	TEST	 ['US $ 3.50', 'US $ 2.25', 'US $ 1.99', 'US $ 1.00', 'US $ 0.75']
+	Human written regex: US $ \d\.\d\d
+	 best Posterior:
+(lambda (r_const ((lambda (r_kleene (lambda (r_d $0)) (string_period ((lambda (r_d (r_d $0))) $0)))) $0)))
+	 US $ (\d)*\.\d\d
+	 samples:
+	 ['US $ .29', 'US $ .52', 'US $ .25', 'US $ .22', 'US $ 29.00']
+	 HIT (train), Ground truth: -34.538776394910684, found ll: tensor([-32.1882], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -34.538776394910684, found ll: tensor([-43.0894], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (r_const (r_d ((lambda (r_kleene (lambda (r_d $0)) (string_period ((lambda (r_d (r_d $0))) $0)))) $0))))
+	 US $ \d(\d)*\.\d\d
+	 samples:
+	 ['US $ 0.59', 'US $ 9.19', 'US $ 2.50', 'US $ 0.22', 'US $ 6.52']
+	 HIT (train), Ground truth: -34.538776394910684, found ll: tensor([-25.3359], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -34.538776394910684, found ll: tensor([-36.2371], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['US $ 3.50', 'US $ 2.25', 'US $ 1.99', 'US $ 1.00', 'US $ 0.75']
+trainingExamples ['US $ 2.95', 'US $ 2.99', 'US $ 0.60', 'US $ 2.50', 'US $ 1.95']
+Data column no. 680
+	TRAIN	 ['Z:-0.53', 'Z:-0.61', 'Z:0.17', 'Z:0.32', 'Z:-0.16']
+	TEST	 ['Z:1.13', 'Z:0.14', 'Z:0.95', 'Z:-0.09', 'Z:1.14']
+	Human written regex: Z:-?0\.\d\d
+	 best Posterior:
+(lambda (r_const (r_kleene (lambda (string_dash $0)) ((lambda (r_kleene (lambda (r_d $0)) (string_period ((lambda (r_d (r_d $0))) $0)))) $0))))
+	 Z:(-)*(\d)*\.\d\d
+	 samples:
+	 ['Z:--.00', 'Z:--0.30', 'Z:1.51', 'Z:4206.65', 'Z:-.01']
+	 MISS (train), Ground truth: -26.491586832740182, found ll: tensor([-38.9314], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -inf, found ll: tensor([-54.3900], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (r_const (r_kleene (lambda (string_dash $0)) (string_0 ((lambda (r_kleene (lambda (r_d $0)) (string_period ((lambda (r_d (r_d $0))) $0)))) $0)))))
+	 Z:(-)*0(\d)*\.\d\d
+	 samples:
+	 ['Z:-0.61', 'Z:0.16', 'Z:0.16', 'Z:-062.25', 'Z:0.13']
+	 HIT (train), Ground truth: -26.491586832740182, found ll: tensor([-24.0213], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -inf, found ll: tensor([-inf], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['Z:1.13', 'Z:0.14', 'Z:0.95', 'Z:-0.09', 'Z:1.14']
+trainingExamples ['Z:-0.53', 'Z:-0.61', 'Z:0.17', 'Z:0.32', 'Z:-0.16']
+Data column no. 744
+	TRAIN	 ['t1_cvk5ckb', 't1_cvjpwo5', 't1_cvjq9vq', 't1_cvkds8m', 't1_cvk5fd5']
+	TEST	 ['t1_cvjpo3j', 't1_cvjpjxk', 't1_cvjq15y', 't1_cvjrtvs', 't1_cvk7s7w']
+	Human written regex: t1_cv(\l|\d)+
+	 best Posterior:
+(lambda ((lambda (r_const ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) $0))) (r_l ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) $0))))
+	 t1_cv.(.)*\l.(.)*
+	 samples:
+	 ['t1_cvbk@dk5', 't1_cvc5dm', 't1_cvko9f9qo', 't1_cvwkkf959', 't1_cvcqd5']
+	 HIT (train), Ground truth: -110.37670380836968, found ll: tensor([-70.5184], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -111.33221525339711, found ll: tensor([-126.7993], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda ((lambda (r_const ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) $0))) ((lambda (r_l (r_l $0))) (r_kleene (lambda ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) $0)) $0))))
+	 t1_cv.(.)*\l\l(.(.)*)*
+	 samples:
+	 ['t1_cvjk8odvco', 't1_cvkkd', 't1_cv5okk9', 't1_cvc55q5ws', 't1_cvmqv']
+	 HIT (train), Ground truth: -110.37670380836968, found ll: tensor([-68.0682], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -111.33221525339711, found ll: tensor([-inf], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['t1_cvjpo3j', 't1_cvjpjxk', 't1_cvjq15y', 't1_cvjrtvs', 't1_cvk7s7w']
+trainingExamples ['t1_cvk5ckb', 't1_cvjpwo5', 't1_cvjq9vq', 't1_cvkds8m', 't1_cvk5fd5']
+Data column no. 461
+	TRAIN	 ['OldRC7', 'HSP1', 'RC16', 'BARD11', 'YM2']
+	TEST	 ['BRP11', 'KBH7', 'BRP10', 'LVA3', 'NSP7']
+	Human written regex: (\u|\l)+\d+
+	 best Posterior:
+(lambda (r_u ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) (r_d $0))))
+	 \u.(.)*\d
+	 samples:
+	 ['BClD1', 'RSA1M1', 'OC1', 'OSrPC7', 'OS2']
+	 HIT (train), Ground truth: -95.28038030113989, found ll: tensor([-52.8064], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -90.63598940199851, found ll: tensor([-99.0944], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (r_u (r_alt (lambda ((lambda (r_l (r_l $0))) (r_u $0))) (lambda $0) ((lambda (r_kleene (lambda (r_u $0)) ((lambda (r_u (r_kleene (lambda (r_d $0)) $0))) $0))) $0))))
+	 \u(\l\l\u)|(\u)*\u(\d)*
+	 samples:
+	 ['YldMD1', 'RldCOPYDA', 'RldYMBY6', 'CD', 'RY1']
+	 HIT (train), Ground truth: -95.28038030113989, found ll: tensor([-59.2266], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -90.63598940199851, found ll: tensor([-95.5924], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['BRP11', 'KBH7', 'BRP10', 'LVA3', 'NSP7']
+trainingExamples ['OldRC7', 'HSP1', 'RC16', 'BARD11', 'YM2']
+Data column no. 631
+	TRAIN	 ['$6.5100', '$12.7100', '$6.6500', '$39.5800', '$6.5000']
+	TEST	 ['$13.1000', '$13.2400', '$34.6200', '$12.6900', '$13.1400']
+	Human written regex: $\d+\.\d+
+	 best Posterior:
+(lambda (string_dollar (r_kleene (lambda (r_d $0)) (string_period ((lambda ((lambda (r_d (r_d $0))) (r_const $0))) $0)))))
+	 $(\d)*\.\d\d00
+	 samples:
+	 ['$65571595.6800', '$1.1100', '$6.6500', '$.9000', '$216.6500']
+	 HIT (train), Ground truth: -80.88477138595775, found ll: tensor([-41.9635], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -89.87196820661971, found ll: tensor([-67.1948], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (string_dollar (r_kleene (lambda (r_d $0)) (string_period ((lambda ((lambda (r_d (r_d $0))) (r_const $0))) $0)))))
+	 $(\d)*\.\d\d00
+	 samples:
+	 ['$16.7500', '$.1600', '$.6600', '$6.9600', '$.5100']
+	 HIT (train), Ground truth: -80.88477138595775, found ll: tensor([-41.9635], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -89.87196820661971, found ll: tensor([-67.1948], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['$13.1000', '$13.2400', '$34.6200', '$12.6900', '$13.1400']
+trainingExamples ['$6.5100', '$12.7100', '$6.6500', '$39.5800', '$6.5000']
+Data column no. 195
+	TRAIN	 ['OLE10026', 'OLE2380894', 'OLE1000174542', '1227', '1216']
+	TEST	 ['OLE1000092502', 'OLE111', 'OLE1000009196', 'OLE1000082147', 'OLE1000064676']
+	Human written regex: (OLE)?\d+
+	 best Posterior:
+(lambda (r_kleene (lambda (r_u $0)) ((lambda ((lambda (r_d (r_d $0))) ((lambda (r_d (r_d $0))) $0))) (r_kleene (lambda (r_d $0)) $0))))
+	 (\u)*\d\d\d\d(\d)*
+	 samples:
+	 ['86702', 'OLEL3341', 'E141980', '3627101', 'L70071710']
+	 HIT (train), Ground truth: -93.33770410941945, found ll: tensor([-91.0070], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -132.28222366562133, found ll: tensor([-inf], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (r_alt (lambda $0) (lambda (string_O ((lambda ((lambda (r_kleene (lambda (r_dot $0)) (r_kleene (lambda (r_const $0)) $0))) (r_kleene (lambda (r_d $0)) $0))) $0))) ((lambda ((lambda (r_d (r_d $0))) ((lambda (r_d (r_d $0))) $0))) $0)))
+	 |(O(.)*(2)*(\d)*)\d\d\d\d
+	 samples:
+	 ['O22222209106', '2020', 'OL22222241020', 'OL22222222218721', '0201']
+	 HIT (train), Ground truth: -93.33770410941945, found ll: tensor([-84.7210], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -132.28222366562133, found ll: tensor([-inf], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['OLE1000092502', 'OLE111', 'OLE1000009196', 'OLE1000082147', 'OLE1000064676']
+trainingExamples ['OLE10026', 'OLE2380894', 'OLE1000174542', '1227', '1216']
+Data column no. 693
+	TRAIN	 ['I', 'F', 'G', 'C', 'J']
+	TEST	 ['B', 'E', 'K', 'D', 'H']
+	Human written regex: \u
+	 best Posterior:
+(lambda (r_u $0))
+	 \u
+	 samples:
+	 ['F', 'F', 'F', 'C', 'C']
+	 HIT (train), Ground truth: -16.29048269010741, found ll: -8.095972061157227
+	 MISS (test), Ground truth: -16.29048269010741, found ll: -38.39603042602539
+	 best Likelihood:
+(lambda (r_u $0))
+	 \u
+	 samples:
+	 ['I', 'I', 'J', 'G', 'C']
+	 HIT (train), Ground truth: -16.29048269010741, found ll: -8.095972061157227
+	 MISS (test), Ground truth: -16.29048269010741, found ll: -38.39603042602539
+
+	 Posterior predictive samples...
+testingExamples ['B', 'E', 'K', 'D', 'H']
+trainingExamples ['I', 'F', 'G', 'C', 'J']
+Data column no. 577
+	TRAIN	 ['EFO_0001656', 'EFO_0000572', 'EFO_0001654', 'EFO_0005135', 'EFO_0002897']
+	TEST	 ['EFO_0001266', 'EFO_0000826', 'EFO_0003168', 'EFO_0004017', 'EFO_0001040']
+	Human written regex: EFO_000\d+
+	 best Posterior:
+(lambda ((lambda (r_const ((lambda ((lambda (r_d (r_d $0))) (r_d $0))) $0))) (r_d $0)))
+	 EFO_000\d\d\d\d
+	 samples:
+	 ['EFO_0001256', 'EFO_0008529', 'EFO_0005561', 'EFO_0007256', 'EFO_0002175']
+	 HIT (train), Ground truth: -59.914645471079815, found ll: -42.503211975097656
+	 HIT (test), Ground truth: -59.914645471079815, found ll: -49.06474685668945
+	 best Likelihood:
+(lambda (r_const ((lambda (r_d (r_d $0))) ((lambda (r_d (r_d $0))) $0))))
+	 EFO_000\d\d\d\d
+	 samples:
+	 ['EFO_0005426', 'EFO_0006563', 'EFO_0009689', 'EFO_0002576', 'EFO_0003527']
+	 HIT (train), Ground truth: -59.914645471079815, found ll: -42.503211975097656
+	 HIT (test), Ground truth: -59.914645471079815, found ll: -49.06474685668945
+
+	 Posterior predictive samples...
+testingExamples ['EFO_0001266', 'EFO_0000826', 'EFO_0003168', 'EFO_0004017', 'EFO_0001040']
+trainingExamples ['EFO_0001656', 'EFO_0000572', 'EFO_0001654', 'EFO_0005135', 'EFO_0002897']
+Data column no. 392
+	TRAIN	 ['$42,644.00', '$65,602.00', '$120,232.00', '$49,474.00', '$20,000.00']
+	TEST	 ['$56,767.00', '$70,091.00', '$58,995.00', '$78,487.00', '$62,669.00']
+	Human written regex: $\d+(,\d\d\d)*\.00
+	 best Posterior:
+(lambda (string_dollar (r_kleene (lambda (r_d $0)) (r_kleene (lambda ((lambda (r_dot (r_d $0))) $0)) ((lambda ((lambda (r_d (r_d $0))) (r_const $0))) $0)))))
+	 $(\d)*(.\d)*\d\d\.00
+	 samples:
+	 ['$,426.00', '$7,0,4,149.00', '$05.00', '$6542040263042,2,6,4,4,004.00', '$2,022.00']
+	 HIT (train), Ground truth: -74.42330320960404, found ll: tensor([-66.6456], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -71.42757093605005, found ll: tensor([-94.6079], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (string_dollar (r_kleene (lambda (r_d $0)) (r_kleene (lambda ((lambda (r_dot (r_d $0))) $0)) ((lambda ((lambda (r_d (r_d $0))) (r_const $0))) $0)))))
+	 $(\d)*(.\d)*\d\d\.00
+	 samples:
+	 ['$,426.00', '$22.00', '$422.00', '$22426.00', '$450060,4,400.00']
+	 HIT (train), Ground truth: -74.42330320960404, found ll: tensor([-66.6456], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -71.42757093605005, found ll: tensor([-94.6079], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['$56,767.00', '$70,091.00', '$58,995.00', '$78,487.00', '$62,669.00']
+trainingExamples ['$42,644.00', '$65,602.00', '$120,232.00', '$49,474.00', '$20,000.00']
+Data column no. 688
+	TRAIN	 ['HARIJAN TOLI', 'MAJHARIA', 'MUSHWER TOLI', 'HARIJAN TOLA', 'PATKHOULI']
+	TEST	 ['DIWAN TOLI', 'MASAHI', 'HARPUR', 'MUSHER TOLI', 'AMOLWA']
+	Human written regex: \u+( \u+)*
+	 best Posterior:
+(lambda ((lambda ((lambda (r_u (r_u $0))) (r_u $0))) (r_kleene (lambda (r_u $0)) ((lambda (r_dot (r_u $0))) ((lambda ((lambda (r_u (r_u $0))) (r_u $0))) $0)))))
+	 \u\u\u(\u)*.\u\u\u\u
+	 samples:
+	 ['IMSKTIH AWAO', 'EPH IAOJ', 'RNN LAHL', 'JOR LMAO', 'IWHL TJAL']
+	 HIT (train), Ground truth: -203.10736337355098, found ll: tensor([-136.7014], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -151.04804785143244, found ll: tensor([-inf], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda ((lambda ((lambda (r_u (r_u $0))) (r_u $0))) (r_kleene (lambda (r_u $0)) ((lambda (r_dot (r_u $0))) ((lambda ((lambda (r_u (r_u $0))) (r_u $0))) $0)))))
+	 \u\u\u(\u)*.\u\u\u\u
+	 samples:
+	 ['AAATHAOLN', 'LLHITHLHUA', 'AMM EJJL', 'MHJRNJ JIIJ', 'HTJO MASO']
+	 HIT (train), Ground truth: -203.10736337355098, found ll: tensor([-136.7014], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -151.04804785143244, found ll: tensor([-inf], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['DIWAN TOLI', 'MASAHI', 'HARPUR', 'MUSHER TOLI', 'AMOLWA']
+trainingExamples ['HARIJAN TOLI', 'MAJHARIA', 'MUSHWER TOLI', 'HARIJAN TOLA', 'PATKHOULI']
+Data column no. 816
+	TRAIN	 ['XEU', 'DEM', 'ITL', 'CHF', 'ESP']
+	TEST	 ['FRF', 'ZAR', 'CAD', 'USD', 'AUD']
+	Human written regex: \u\u\u
+	 best Posterior:
+(lambda ((lambda ((lambda (r_u (r_u $0))) (r_u $0))) $0))
+	 \u\u\u
+	 samples:
+	 ['FFH', 'PSP', 'EME', 'FLC', 'DCP']
+	 HIT (train), Ground truth: -48.87144807032223, found ll: -37.40678405761719
+	 MISS (test), Ground truth: -48.87144807032223, found ll: -71.08402252197266
+	 best Likelihood:
+(lambda ((lambda (r_u (r_u $0))) (r_u $0)))
+	 \u\u\u
+	 samples:
+	 ['ESX', 'TSH', 'PEP', 'EEF', 'HEF']
+	 HIT (train), Ground truth: -48.87144807032223, found ll: -37.40678405761719
+	 MISS (test), Ground truth: -48.87144807032223, found ll: -71.08402252197266
+
+	 Posterior predictive samples...
+testingExamples ['FRF', 'ZAR', 'CAD', 'USD', 'AUD']
+trainingExamples ['XEU', 'DEM', 'ITL', 'CHF', 'ESP']
+Data column no. 489
+	TRAIN	 ['UKC1', 'UKL2', 'UKG3', 'UKL1', 'UKM3']
+	TEST	 ['UKE4', 'UKF1', 'UKI1', 'UKG2', 'UKC2']
+	Human written regex: UK\u\d
+	 best Posterior:
+(lambda (r_const ((lambda (r_u (r_kleene (lambda (r_d $0)) $0))) $0)))
+	 UK\u(\d)*
+	 samples:
+	 ['UKL', 'UKG', 'UKM1', 'UKL', 'UKC']
+	 HIT (train), Ground truth: -27.803408155077637, found ll: tensor([-18.9631], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -27.803408155077637, found ll: tensor([-44.7677], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (r_const (r_u (r_d $0))))
+	 UK\u\d
+	 samples:
+	 ['UKC3', 'UKL3', 'UKL2', 'UKM1', 'UKG1']
+	 HIT (train), Ground truth: -27.803408155077637, found ll: -12.03166675567627
+	 MISS (test), Ground truth: -27.803408155077637, found ll: -37.836177825927734
+
+	 Posterior predictive samples...
+testingExamples ['UKE4', 'UKF1', 'UKI1', 'UKG2', 'UKC2']
+trainingExamples ['UKC1', 'UKL2', 'UKG3', 'UKL1', 'UKM3']
+Data column no. 251
+	TRAIN	 ['sri', 'gci', 'mgl', 'aut', 'rsa']
+	TEST	 ['slo', 'syr', 'mar', 'lux', 'est']
+	Human written regex: \l\l\l
+	 best Posterior:
+(lambda (r_l ((lambda (r_l (r_l $0))) $0)))
+	 \l\l\l
+	 samples:
+	 ['rgr', 'rsa', 'aig', 'rrm', 'ttt']
+	 HIT (train), Ground truth: -48.87144807032223, found ll: -33.78947448730469
+	 MISS (test), Ground truth: -48.87144807032223, found ll: -56.83507537841797
+	 best Likelihood:
+(lambda (r_l ((lambda (r_l (r_l $0))) $0)))
+	 \l\l\l
+	 samples:
+	 ['igg', 'amc', 'ias', 'taa', 'rlg']
+	 HIT (train), Ground truth: -48.87144807032223, found ll: -33.78947448730469
+	 MISS (test), Ground truth: -48.87144807032223, found ll: -56.83507537841797
+
+	 Posterior predictive samples...
+testingExamples ['slo', 'syr', 'mar', 'lux', 'est']
+trainingExamples ['sri', 'gci', 'mgl', 'aut', 'rsa']
+Data column no. 653
+	TRAIN	 ['C15605276', 'C35998515', 'C11206768', 'C18899260', 'C44659230']
+	TEST	 ['C13575104', 'C19537329', 'C99047219', 'C45423422', 'C43634821']
+	Human written regex: C\d+
+	 best Posterior:
+(lambda ((lambda ((lambda (r_const ((lambda (r_d (r_d $0))) $0))) ((lambda ((lambda (r_d (r_d $0))) (r_d $0))) $0))) ((lambda ((lambda (r_d (r_d $0))) (r_d $0))) $0)))
+	 C\d\d\d\d\d\d\d\d
+	 samples:
+	 ['C10157280', 'C37995011', 'C09635617', 'C80865511', 'C73263005']
+	 HIT (train), Ground truth: -119.82929094215962, found ll: -89.16533660888672
+	 HIT (test), Ground truth: -119.82929094215962, found ll: -98.88618469238281
+	 best Likelihood:
+(lambda ((lambda ((lambda (r_const ((lambda (r_d (r_d $0))) $0))) ((lambda ((lambda (r_d (r_d $0))) (r_d $0))) $0))) ((lambda (r_d (r_d $0))) (r_d $0))))
+	 C\d\d\d\d\d\d\d\d
+	 samples:
+	 ['C09966916', 'C61695288', 'C16159172', 'C42369683', 'C11915766']
+	 HIT (train), Ground truth: -119.82929094215962, found ll: -89.16533660888672
+	 HIT (test), Ground truth: -119.82929094215962, found ll: -98.88618469238281
+
+	 Posterior predictive samples...
+testingExamples ['C13575104', 'C19537329', 'C99047219', 'C45423422', 'C43634821']
+trainingExamples ['C15605276', 'C35998515', 'C11206768', 'C18899260', 'C44659230']
+Data column no. 769
+	TRAIN	 ['Tx303', '81-1', 'N192', 'H100', 'NC298']
+	TEST	 ['H91', 'C49A', 'NC230', 'B97', 'NC362']
+	Human written regex: (\u|\l|\d|-)+\d+
+	 best Posterior:
+(lambda ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) (r_kleene (lambda (r_d $0)) $0)))
+	 .(.)*(\d)*
+	 samples:
+	 ['H0', 'H01', '-NN-CN1-81-8NC893113', 'T01', 'N-']
+	 HIT (train), Ground truth: -81.81324284543737, found ll: tensor([-58.9569], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -inf, found ll: tensor([-91.7994], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (r_kleene (lambda (r_u $0)) (r_kleene (lambda ((lambda (r_dot (r_d $0))) $0)) ((lambda (r_d (r_d $0))) (r_kleene (lambda (string_dash $0)) (r_kleene (lambda (r_d $0)) $0))))))
+	 (\u)*(.\d)*\d\d(-)*(\d)*
+	 samples:
+	 ['Nx931', '32-', '19', 'x1382', '80']
+	 HIT (train), Ground truth: -81.81324284543737, found ll: tensor([-53.1948], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -inf, found ll: tensor([-inf], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['H91', 'C49A', 'NC230', 'B97', 'NC362']
+trainingExamples ['Tx303', '81-1', 'N192', 'H100', 'NC298']
+Data column no. 991
+	TRAIN	 ['Q2-2019', 'Q3-2018', 'Q3-2019', 'Q4-2018', 'Q3-2017']
+	TEST	 ['Q1-2019', 'Q1-2017', 'Q4-2017', 'Q4-2019', 'Q2-2017']
+	Human written regex: Q\d-201\d
+	 best Posterior:
+(lambda (string_Q ((lambda (r_kleene (lambda (r_d $0)) ((lambda (r_const (r_d (r_kleene (lambda (r_d $0)) $0)))) $0))) $0)))
+	 Q(\d)*-201\d(\d)*
+	 samples:
+	 ['Q88-20137', 'Q7-20133', 'Q-2014833', 'Q3-2013', 'Q-2012']
+	 MISS (train), Ground truth: -23.025850929940454, found ll: tensor([-26.5463], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -23.025850929940454, found ll: tensor([-40.3578], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (string_Q ((lambda (r_kleene (lambda (r_d $0)) ((lambda (r_const (r_d (r_kleene (lambda (r_d $0)) $0)))) $0))) $0)))
+	 Q(\d)*-201\d(\d)*
+	 samples:
+	 ['Q-2012', 'Q4-2013', 'Q-2018', 'Q-20137', 'Q-2018']
+	 MISS (train), Ground truth: -23.025850929940454, found ll: tensor([-26.5463], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -23.025850929940454, found ll: tensor([-40.3578], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['Q1-2019', 'Q1-2017', 'Q4-2017', 'Q4-2019', 'Q2-2017']
+trainingExamples ['Q2-2019', 'Q3-2018', 'Q3-2019', 'Q4-2018', 'Q3-2017']
+Data column no. 342
+	TRAIN	 ['SS0339', 'FM0225', 'FM2500', 'FM0001', 'SL0304']
+	TEST	 ['SH0094', 'US0084', 'US0259', 'SH0204', 'SH0147']
+	Human written regex: \u\u\d\d\d\d
+	 best Posterior:
+(lambda ((lambda (r_u (r_u $0))) ((lambda ((lambda (r_d (r_d $0))) ((lambda (r_d (r_d $0))) $0))) $0)))
+	 \u\u\d\d\d\d
+	 samples:
+	 ['SS0030', 'MF1040', 'FM2920', 'ML4003', 'SL0503']
+	 HIT (train), Ground truth: -78.63266724009573, found ll: -45.509098052978516
+	 MISS (test), Ground truth: -78.63266724009573, found ll: -90.4334945678711
+	 best Likelihood:
+(lambda ((lambda (r_u (r_u $0))) (r_alt (lambda ((lambda (string_0 ((lambda ((lambda (r_d (r_d $0))) (r_d $0))) $0))) $0)) (lambda ((lambda (r_d (r_d $0))) ((lambda (r_d (string_0 $0))) $0))) $0)))
+	 \u\u(0\d\d\d)|(\d\d\d0)
+	 samples:
+	 ['MS0103', 'ML0225', 'MF0090', 'FM0995', 'FF3230']
+	 HIT (train), Ground truth: -78.63266724009573, found ll: -43.87245178222656
+	 MISS (test), Ground truth: -78.63266724009573, found ll: -88.97858428955078
+
+	 Posterior predictive samples...
+testingExamples ['SH0094', 'US0084', 'US0259', 'SH0204', 'SH0147']
+trainingExamples ['SS0339', 'FM0225', 'FM2500', 'FM0001', 'SL0304']
+Data column no. 308
+	TRAIN	 ['IHYP', 'YBEZ', 'YBEU', 'IHYS', 'YBFV']
+	TEST	 ['L48H', 'CGCE', 'KGM7', 'KGL6', 'YBEX']
+	Human written regex: \u\u\u\u
+	 best Posterior:
+(lambda ((lambda (r_u (r_u $0))) ((lambda (r_u (r_u $0))) $0)))
+	 \u\u\u\u
+	 samples:
+	 ['IBBP', 'ZHBH', 'IYVV', 'HYYE', 'YYBE']
+	 HIT (train), Ground truth: -65.16193076042964, found ll: -44.550559997558594
+	 HIT (test), Ground truth: -inf, found ll: -inf
+	 best Likelihood:
+(lambda (r_u (r_alt (lambda ((lambda (string_H (r_u $0))) $0)) (lambda ((lambda (r_u (r_u $0))) $0)) (r_u $0))))
+	 \u(H\u)|(\u\u)\u
+	 samples:
+	 ['YYPI', 'EYUS', 'BHYE', 'EYEB', 'IHBB']
+	 HIT (train), Ground truth: -65.16193076042964, found ll: -41.513023376464844
+	 HIT (test), Ground truth: -inf, found ll: -inf
+
+	 Posterior predictive samples...
+testingExamples ['L48H', 'CGCE', 'KGM7', 'KGL6', 'YBEX']
+trainingExamples ['IHYP', 'YBEZ', 'YBEU', 'IHYS', 'YBFV']
+Data column no. 136
+	TRAIN	 ['IMPC_ACS_030_001', 'IMPC_ACS_039_001', 'IMPC_ACS_013_001', 'IMPC_ACS_032_001', 'IMPC_CBC_037_001']
+	TEST	 ['IMPC_OFD_025_001', 'IMPC_GRS_013_001', 'IMPC_IPG_006_001', 'IMPC_ACS_031_001', 'IMPC_CBC_043_001']
+	Human written regex: IMPC_\u\u\u_\d\d\d_\d\d\d
+	 best Posterior:
+(lambda ((lambda ((lambda (r_kleene (lambda (r_dot $0)) (r_kleene (lambda (r_const $0)) $0))) ((lambda (r_d (r_d $0))) $0))) (string_underscore ((lambda (r_d (string_0 $0))) (r_d $0)))))
+	 (.)*(IMPC_ACS_0)*\d\d_\d0\d
+	 samples:
+	 ['IMPC_ACS_0IMPC_ACS_0IMPC_ACS_0IMPC_ACS_0IMPC_ACS_0IMPC_ACS_011_009', 'I_C23_000', 'ICPIMPC_ACS_011_301', 'CIMPC_ACS_031_003', 'IMPC_ACS_032_003']
+	 HIT (train), Ground truth: -117.94900086014363, found ll: tensor([-65.2753], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -117.94900086014363, found ll: tensor([-198.5859], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda ((lambda ((lambda (r_kleene (lambda (r_dot $0)) (r_kleene (lambda (r_const $0)) $0))) ((lambda (r_d (r_d $0))) $0))) (string_underscore ((lambda (r_d (string_0 $0))) (r_d $0)))))
+	 (.)*(IMPC_ACS_0)*\d\d_\d0\d
+	 samples:
+	 ['CIMPC_ACS_0IMPC_ACS_0IMPC_ACS_0IMPC_ACS_0IMPC_ACS_013_903', 'IB_31_100', 'CCC_0001_101', '0_0CP03_003', 'BIMPC_ACS_039_009']
+	 HIT (train), Ground truth: -117.94900086014363, found ll: tensor([-65.2753], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -117.94900086014363, found ll: tensor([-198.5859], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['IMPC_OFD_025_001', 'IMPC_GRS_013_001', 'IMPC_IPG_006_001', 'IMPC_ACS_031_001', 'IMPC_CBC_043_001']
+trainingExamples ['IMPC_ACS_030_001', 'IMPC_ACS_039_001', 'IMPC_ACS_013_001', 'IMPC_ACS_032_001', 'IMPC_CBC_037_001']
+Data column no. 327
+	TRAIN	 ['#79', '#101', '#94/2', '#4/2/95/2', '#8/110/3-2']
+	TEST	 ['#7/110/3-2', '#59', '#3/82/3-2', '#5/3/83/5-2', '#111']
+	Human written regex: #\d+((/|-)\d+)*
+	 best Posterior:
+(lambda ((lambda (r_kleene (lambda (r_d $0)) ((lambda (r_const (r_d (r_kleene (lambda (r_d $0)) $0)))) $0))) (r_kleene (lambda ((lambda (r_dot (r_d $0))) $0)) (r_kleene (lambda (r_d $0)) (r_kleene (lambda ((lambda (r_dot (r_d $0))) $0)) $0)))))
+	 (\d)*#\d(\d)*(.\d)*(\d)*(.\d)*
+	 samples:
+	 ['#19/2', '33401#51/8/1', '#1', '3#1222197-3/2/5p5', '#3/208/2']
+	 HIT (train), Ground truth: -70.08870962816478, found ll: tensor([-67.2964], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -83.23478953218643, found ll: tensor([-86.2439], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda ((lambda (r_kleene (lambda (r_d $0)) ((lambda (r_const (r_d (r_kleene (lambda (r_d $0)) $0)))) $0))) (r_kleene (lambda ((lambda (r_dot (r_d $0))) $0)) (r_kleene (lambda (r_d $0)) (r_kleene (lambda ((lambda (r_dot (r_d $0))) $0)) $0)))))
+	 (\d)*#\d(\d)*(.\d)*(\d)*(.\d)*
+	 samples:
+	 ['#01/1/1-9', '#9249', '31#5124', '27#78909/0/8/0/4', '1#2/4/29/1']
+	 HIT (train), Ground truth: -70.08870962816478, found ll: tensor([-67.2964], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -83.23478953218643, found ll: tensor([-86.2439], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['#7/110/3-2', '#59', '#3/82/3-2', '#5/3/83/5-2', '#111']
+trainingExamples ['#79', '#101', '#94/2', '#4/2/95/2', '#8/110/3-2']
+Data column no. 981
+	TRAIN	 ['GBP', 'CNY', 'EUR', 'RON', 'CAD']
+	TEST	 ['AUD', 'INR', 'SEK', 'JPY', 'USD']
+	Human written regex: \u\u\u
+	 best Posterior:
+(lambda ((lambda ((lambda (r_u (r_u $0))) (r_u $0))) $0))
+	 \u\u\u
+	 samples:
+	 ['GAG', 'ROO', 'CYB', 'YNR', 'ERD']
+	 HIT (train), Ground truth: -48.87144807032223, found ll: -36.546974182128906
+	 MISS (test), Ground truth: -48.87144807032223, found ll: -64.81635284423828
+	 best Likelihood:
+(lambda (r_alt (lambda (string_C ((lambda (r_u (r_u $0))) $0))) (lambda ((lambda ((lambda (r_u (r_u $0))) (r_u $0))) $0)) $0))
+	 (C\u\u)|(\u\u\u)
+	 samples:
+	 ['UNA', 'CNA', 'CPU', 'NAN', 'CDY']
+	 HIT (train), Ground truth: -48.87144807032223, found ll: -34.11725997924805
+	 MISS (test), Ground truth: -48.87144807032223, found ll: -66.8116455078125
+
+	 Posterior predictive samples...
+testingExamples ['AUD', 'INR', 'SEK', 'JPY', 'USD']
+trainingExamples ['GBP', 'CNY', 'EUR', 'RON', 'CAD']
+Data column no. 892
+	TRAIN	 ['akejr;ekr', 'a;kfv;qkev', 'alsf v;er', 'rads', 'sd']
+	TEST	 ['jbq;ekrq;', 'svdsgv', '234', 'adv;etv', 'afndv ;qkev q']
+	Human written regex: (.|\l)*
+	 best Posterior:
+(lambda (r_kleene (lambda (r_l ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) $0))) ((lambda (r_l (r_l $0))) $0)))
+	 (\l.(.)*)*\l\l
+	 samples:
+	 ['eaX fkarq', 'vd', 'se', 'aa', 'sfsv']
+	 HIT (train), Ground truth: -167.90628474083815, found ll: tensor([-86.9666], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -191.70885495118904, found ll: tensor([-inf], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (r_kleene (lambda (r_l ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) $0))) ((lambda (r_l (r_l $0))) $0)))
+	 (\l.(.)*)*\l\l
+	 samples:
+	 ['rr', 'qk', 'rv', 'qv', 'aaaer']
+	 HIT (train), Ground truth: -167.90628474083815, found ll: tensor([-86.9666], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -191.70885495118904, found ll: tensor([-inf], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['jbq;ekrq;', 'svdsgv', '234', 'adv;etv', 'afndv ;qkev q']
+trainingExamples ['akejr;ekr', 'a;kfv;qkev', 'alsf v;er', 'rads', 'sd']
+Data column no. 375
+	TRAIN	 ['PC.2300.040', 'PE.0500.010', 'PE.0300.010', 'PC.2000.190', 'PC.1500.010']
+	TEST	 ['AC.0500.040', 'VE.0200.020', 'LY.0600.010', 'PC.2300.080', 'CP.1700.010']
+	Human written regex: P\u\.\d\d\d\d\.\d\d\d
+	 best Posterior:
+(lambda ((lambda (r_u (r_u $0))) ((lambda (r_kleene (lambda (r_d $0)) (string_period ((lambda (r_d (r_d $0))) $0)))) ((lambda ((lambda (r_const (r_d (r_kleene (lambda (r_d $0)) $0)))) ((lambda (r_d (r_d $0))) $0))) $0))))
+	 \u\u(\d)*\.\d\d00\.\d(\d)*\d\d
+	 samples:
+	 ['EP.3200.010', 'PP.0000.132', 'CC.0200.000', 'PP.0000.140', 'PP.2000.011']
+	 HIT (train), Ground truth: -96.880960944899, found ll: tensor([-49.1588], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -inf, found ll: tensor([-86.2808], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda ((lambda (r_u (r_u $0))) ((lambda (r_kleene (lambda (r_d $0)) (string_period ((lambda (r_d (r_d $0))) $0)))) ((lambda ((lambda (r_const (r_d (r_kleene (lambda (r_d $0)) $0)))) ((lambda (r_d (r_d $0))) $0))) $0))))
+	 \u\u(\d)*\.\d\d00\.\d(\d)*\d\d
+	 samples:
+	 ['CC.1300.001', 'CP.5000.030', 'PE.0000.501', 'EC.1500.201', 'PP.0000.204']
+	 HIT (train), Ground truth: -96.880960944899, found ll: tensor([-49.1588], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -inf, found ll: tensor([-86.2808], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['AC.0500.040', 'VE.0200.020', 'LY.0600.010', 'PC.2300.080', 'CP.1700.010']
+trainingExamples ['PC.2300.040', 'PE.0500.010', 'PE.0300.010', 'PC.2000.190', 'PC.1500.010']
+Data column no. 499
+	TRAIN	 ['A00031832', 'A00038616', 'A00034074', 'A00037081', 'A00028150']
+	TEST	 ['A00021039', 'A00039655', 'A00039257', 'A00031145', 'A00039607']
+	Human written regex: A000\d+
+	 best Posterior:
+(lambda (r_alt (lambda ((lambda (r_const ((lambda ((lambda (r_d (r_d $0))) ((lambda (r_d (r_d $0))) $0))) $0))) $0)) (lambda ((lambda (r_u (r_kleene (lambda (r_d $0)) $0))) $0)) $0))
+	 (A0003\d\d\d\d)|(\u(\d)*)
+	 samples:
+	 ['A8202', 'A00030470', 'A00035084', 'A088888', 'A06000458']
+	 HIT (train), Ground truth: -74.89330683884977, found ll: tensor([-55.5547], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -74.89330683884977, found ll: tensor([-77.3357], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (r_alt (lambda ((lambda (r_const ((lambda ((lambda (r_d (r_d $0))) ((lambda (r_d (r_d $0))) $0))) $0))) $0)) (lambda (string_A (r_kleene (lambda (r_d $0)) $0))) $0))
+	 (A0003\d\d\d\d)|(A(\d)*)
+	 samples:
+	 ['A0', 'A', 'A617608605', 'A00030088', 'A05026000180008872']
+	 HIT (train), Ground truth: -74.89330683884977, found ll: tensor([-55.5383], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -74.89330683884977, found ll: tensor([-77.3192], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['A00021039', 'A00039655', 'A00039257', 'A00031145', 'A00039607']
+trainingExamples ['A00031832', 'A00038616', 'A00034074', 'A00037081', 'A00028150']
+Data column no. 474
+	TRAIN	 ['EPS', 'UGIS', 'ASAMST', 'RHETOR', 'EDUC']
+	TEST	 ['AMERSTD', 'L & S', 'POL SCI', 'ANTHRO', 'ESPM']
+	Human written regex: \u+
+	 best Posterior:
+(lambda (r_kleene (lambda (r_u $0)) ((lambda ((lambda (r_u (r_u $0))) (r_u $0))) $0)))
+	 (\u)*\u\u\u
+	 samples:
+	 ['ATAGTDEER', 'SSTRTI', 'IUPAACS', 'SRTOSE', 'IED']
+	 HIT (train), Ground truth: -90.87860552737283, found ll: tensor([-66.5086], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -inf, found ll: tensor([-inf], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda ((lambda (r_u (r_u $0))) (r_alt (lambda ((lambda (r_u (r_u $0))) (r_alt (lambda ((lambda (r_u (r_u $0))) $0)) (lambda $0) $0))) (lambda (string_S $0)) $0)))
+	 \u\u(\u\u(\u\u)|)|(S)
+	 samples:
+	 ['CCRU', 'EPDT', 'DUS', 'GMRG', 'SAEA']
+	 HIT (train), Ground truth: -90.87860552737283, found ll: -62.21257781982422
+	 HIT (test), Ground truth: -inf, found ll: -inf
+
+	 Posterior predictive samples...
+testingExamples ['AMERSTD', 'L & S', 'POL SCI', 'ANTHRO', 'ESPM']
+trainingExamples ['EPS', 'UGIS', 'ASAMST', 'RHETOR', 'EDUC']
+Data column no. 50
+	TRAIN	 ['V06873', 'V06904', 'V06914', 'V06892', 'V06921']
+	TEST	 ['V06899', 'V06916', 'V06886', 'V06878', 'V06890']
+	Human written regex: V06\d+
+	 best Posterior:
+(lambda ((lambda (r_const ((lambda ((lambda (r_d (r_d $0))) (r_d $0))) $0))) $0))
+	 V06\d\d\d
+	 samples:
+	 ['V06288', 'V06148', 'V06917', 'V06311', 'V06212']
+	 HIT (train), Ground truth: -44.93598410330986, found ll: -29.57179069519043
+	 HIT (test), Ground truth: -44.93598410330986, found ll: -38.02333068847656
+	 best Likelihood:
+(lambda ((lambda (r_const ((lambda ((lambda (r_d (r_d $0))) (r_d $0))) $0))) $0))
+	 V06\d\d\d
+	 samples:
+	 ['V06388', 'V06983', 'V06292', 'V06092', 'V06193']
+	 HIT (train), Ground truth: -44.93598410330986, found ll: -29.57179069519043
+	 HIT (test), Ground truth: -44.93598410330986, found ll: -38.02333068847656
+
+	 Posterior predictive samples...
+testingExamples ['V06899', 'V06916', 'V06886', 'V06878', 'V06890']
+trainingExamples ['V06873', 'V06904', 'V06914', 'V06892', 'V06921']
+Data column no. 381
+	TRAIN	 ['F053830644', 'F053858396', '4052189334', 'F053799626', 'F053841887']
+	TEST	 ['F053818771', '4052189176', 'F053852090', 'F053859122', 'F053823308']
+	Human written regex: F?\d+
+	 best Posterior:
+(lambda ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) ((lambda (r_const ((lambda ((lambda (r_d (r_d $0))) (r_d $0))) $0))) ((lambda ((lambda (r_d (r_d $0))) ((lambda (r_d (r_d $0))) $0))) $0))))
+	 .(.)*05\d\d\d\d\d\d\d
+	 samples:
+	 ['4058418303', '4056865318', '4053449840', 'Y058833081', 'F059850878']
+	 HIT (train), Ground truth: -141.26942048628328, found ll: tensor([-76.0685], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -141.26942048628328, found ll: tensor([-86.4409], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (r_alt (lambda (r_kleene (lambda (r_d $0)) $0)) (lambda (r_u $0)) ((lambda (r_const ((lambda ((lambda (r_d (r_d $0))) (r_d $0))) $0))) ((lambda ((lambda (r_d (r_d $0))) ((lambda (r_d (r_d $0))) $0))) $0))))
+	 ((\d)*)|(\u)05\d\d\d\d\d\d\d
+	 samples:
+	 ['F051419224', '056444781', '053936243', '68836053347464', 'F053296998']
+	 HIT (train), Ground truth: -141.26942048628328, found ll: tensor([-80.3713], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -141.26942048628328, found ll: tensor([-91.6619], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['F053818771', '4052189176', 'F053852090', 'F053859122', 'F053823308']
+trainingExamples ['F053830644', 'F053858396', '4052189334', 'F053799626', 'F053841887']
+Data column no. 883
+	TRAIN	 ['-79.5034323', '-79.29815396', '-79.50463054', '-79.24852584', '-79.28102863']
+	TEST	 ['-79.40948687', '-79.21697343', '-79.29675842', '-79.5440321', '-79.34727006']
+	Human written regex: -79.\d+
+	 best Posterior:
+(lambda ((lambda ((lambda (r_const (r_d (r_kleene (lambda (r_d $0)) $0)))) ((lambda (r_d (r_d $0))) $0))) ((lambda ((lambda (r_d (r_d $0))) ((lambda (r_d (r_d $0))) $0))) $0)))
+	 -79\.\d(\d)*\d\d\d\d\d\d
+	 samples:
+	 ['-79.156023288', '-79.0095822430', '-79.9938953', '-79.56083453', '-79.383164006']
+	 HIT (train), Ground truth: -139.65529962594482, found ll: tensor([-89.1629], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -139.6552996259448, found ll: tensor([-113.9158], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (r_const ((lambda ((lambda (r_d (r_d $0))) (r_d $0))) ((lambda ((lambda (r_d (r_d $0))) ((lambda (r_d (r_d $0))) $0))) (r_kleene (lambda (r_d $0)) $0)))))
+	 -79\.\d\d\d\d\d\d\d(\d)*
+	 samples:
+	 ['-79.3406005', '-79.1330406', '-79.33222530', '-79.2580882', '-79.5854884']
+	 HIT (train), Ground truth: -139.65529962594482, found ll: tensor([-89.1629], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -139.6552996259448, found ll: tensor([-113.9158], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['-79.40948687', '-79.21697343', '-79.29675842', '-79.5440321', '-79.34727006']
+trainingExamples ['-79.5034323', '-79.29815396', '-79.50463054', '-79.24852584', '-79.28102863']
+Data column no. 173
+	TRAIN	 ['als15', 'Ssv15', 'eb1613', 'sg3415', 'dt2315']
+	TEST	 ['yg5615', 'Dl3715', 'EM2815', 'go114', 'Hb915']
+	Human written regex: (\u|\l)+\d+
+	 best Posterior:
+(lambda ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) ((lambda (r_const (r_d (r_kleene (lambda (r_d $0)) $0)))) $0)))
+	 .(.)*1\d(\d)*
+	 samples:
+	 ['e115536', 'tSs1553', 's2edb2155', 'ssa151', '3lebdd4veSg113']
+	 HIT (train), Ground truth: -103.66440716656031, found ll: tensor([-63.7501], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -100.36708991538556, found ll: tensor([-139.7718], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (r_kleene (lambda (r_u $0)) ((lambda (r_l (r_l $0))) ((lambda ((lambda (r_kleene (lambda (r_dot $0)) (r_kleene (lambda (r_const $0)) $0))) (r_kleene (lambda (r_d $0)) $0))) (r_d $0)))))
+	 (\u)*\l\l(.)*(1)*(\d)*\d
+	 samples:
+	 ['dgss11', 'db501', 'llss555', 'ge52', 'ss5']
+	 HIT (train), Ground truth: -103.66440716656031, found ll: tensor([-65.1438], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -100.36708991538556, found ll: tensor([-inf], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['yg5615', 'Dl3715', 'EM2815', 'go114', 'Hb915']
+trainingExamples ['als15', 'Ssv15', 'eb1613', 'sg3415', 'dt2315']
+Data column no. 147
+	TRAIN	 ['POL-BRA', 'BUL-POL', 'POL-ARG', 'RUS-IRI', 'BRA-FRA']
+	TEST	 ['BUL-ARG', 'SRB-ITA', 'KOR-NED', 'IRI-GER', 'GER-RUS']
+	Human written regex: \u\u\u-\u\u\u
+	 best Posterior:
+(lambda ((lambda ((lambda (r_u (r_u $0))) (r_u $0))) (r_const ((lambda ((lambda (r_u (r_u $0))) (r_u $0))) $0))))
+	 \u\u\u-\u\u\u
+	 samples:
+	 ['IPR-BLR', 'LRP-IAI', 'RRG-UOR', 'LRB-PAA', 'RAU-PLL']
+	 HIT (train), Ground truth: -97.74289614064446, found ll: -67.7335433959961
+	 MISS (test), Ground truth: -97.74289614064446, found ll: -109.00973510742188
+	 best Likelihood:
+(lambda ((lambda ((lambda (r_u (r_u $0))) (r_u $0))) (r_const ((lambda ((lambda (r_u (r_u $0))) (r_u $0))) $0))))
+	 \u\u\u-\u\u\u
+	 samples:
+	 ['BAA-RLL', 'UPL-OOA', 'UAL-RLR', 'LFB-LPB', 'AOI-RFB']
+	 HIT (train), Ground truth: -97.74289614064446, found ll: -67.7335433959961
+	 MISS (test), Ground truth: -97.74289614064446, found ll: -109.00973510742188
+
+	 Posterior predictive samples...
+testingExamples ['BUL-ARG', 'SRB-ITA', 'KOR-NED', 'IRI-GER', 'GER-RUS']
+trainingExamples ['POL-BRA', 'BUL-POL', 'POL-ARG', 'RUS-IRI', 'BRA-FRA']
+Data column no. 419
+	TRAIN	 ['IL', 'MO', 'PA', 'MI', 'IA']
+	TEST	 ['AL', 'IN', 'CA', 'DC', 'MS']
+	Human written regex: \u\u
+	 best Posterior:
+(lambda ((lambda (r_u (r_u $0))) $0))
+	 \u\u
+	 samples:
+	 ['AO', 'MI', 'LI', 'MA', 'LM']
+	 HIT (train), Ground truth: -32.58096538021482, found ll: -17.054250717163086
+	 MISS (test), Ground truth: -32.58096538021482, found ll: -46.58150100708008
+	 best Likelihood:
+(lambda (r_u (r_u $0)))
+	 \u\u
+	 samples:
+	 ['MA', 'IA', 'LP', 'LM', 'II']
+	 HIT (train), Ground truth: -32.58096538021482, found ll: -17.054250717163086
+	 MISS (test), Ground truth: -32.58096538021482, found ll: -46.58150100708008
+
+	 Posterior predictive samples...
+testingExamples ['AL', 'IN', 'CA', 'DC', 'MS']
+trainingExamples ['IL', 'MO', 'PA', 'MI', 'IA']
+Data column no. 961
+	TRAIN	 ['0.5453040485', '1.1706019576', '0.1258506529', '0.3415773243', '-0.095009156']
+	TEST	 ['-0.455099117', '1.4648765223', '0.2878761938', '1.2823425934', '6.1876327613']
+	Human written regex: -?\d\.\d*
+	 best Posterior:
+(lambda (r_kleene (lambda (string_dash $0)) ((lambda (r_kleene (lambda (r_d $0)) (string_period ((lambda (r_d (r_d $0))) $0)))) (r_kleene (lambda (r_d $0)) ((lambda ((lambda (r_d (r_d $0))) ((lambda (r_d (r_d $0))) $0))) $0)))))
+	 (-)*(\d)*\.\d\d(\d)*\d\d\d\d
+	 samples:
+	 ['-------.594791', '--0.065501', '----631.0750099155', '.788474406', '-45.5309019']
+	 HIT (train), Ground truth: -165.23527867471523, found ll: tensor([-143.3624], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -165.23527867471526, found ll: tensor([-162.2791], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (r_kleene (lambda (string_dash $0)) ((lambda (r_kleene (lambda (r_d $0)) (string_period ((lambda (r_d (r_d $0))) $0)))) ((lambda ((lambda (r_kleene (lambda (r_dot $0)) (r_kleene (lambda (r_const $0)) $0))) ((lambda (r_d (r_d $0))) $0))) ((lambda ((lambda (r_d (r_d $0))) ((lambda (r_d (r_d $0))) $0))) (r_d $0))))))
+	 (-)*(\d)*\.\d\d(.)*(0)*\d\d\d\d\d\d\d
+	 samples:
+	 ['.9351075100', '-.5553381490', '.5704642010', '.11105101050', '0.7650293503']
+	 HIT (train), Ground truth: -165.23527867471523, found ll: tensor([-130.6945], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -165.23527867471526, found ll: tensor([-177.0596], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['-0.455099117', '1.4648765223', '0.2878761938', '1.2823425934', '6.1876327613']
+trainingExamples ['0.5453040485', '1.1706019576', '0.1258506529', '0.3415773243', '-0.095009156']
+Data column no. 148
+	TRAIN	 ['Q65', 'Q57', 'Q71', 'Q48', 'Q49']
+	TEST	 ['Q68', 'Q64', 'Q47', 'Q58', 'Q46']
+	Human written regex: Q\d\d
+	 best Posterior:
+(lambda ((lambda (r_const ((lambda (r_d (r_d $0))) $0))) $0))
+	 Q\d\d
+	 samples:
+	 ['Q66', 'Q74', 'Q77', 'Q18', 'Q55']
+	 HIT (train), Ground truth: -23.025850929940454, found ll: -18.895910263061523
+	 HIT (test), Ground truth: -23.025850929940454, found ll: -19.584741592407227
+	 best Likelihood:
+(lambda (string_Q ((lambda (r_d (r_d $0))) $0)))
+	 Q\d\d
+	 samples:
+	 ['Q59', 'Q91', 'Q56', 'Q47', 'Q11']
+	 HIT (train), Ground truth: -23.025850929940454, found ll: -18.895910263061523
+	 HIT (test), Ground truth: -23.025850929940454, found ll: -19.584741592407227
+
+	 Posterior predictive samples...
+testingExamples ['Q68', 'Q64', 'Q47', 'Q58', 'Q46']
+trainingExamples ['Q65', 'Q57', 'Q71', 'Q48', 'Q49']
+Data column no. 975
+	TRAIN	 ['4FF7DE80F4192276', '8F23E84FDD8DF9D0', '4807686BED3992FB', '53735C581B1DC0C0', '74236837A4AFD042']
+	TEST	 ['2257DD17485E53DF', 'F9AED5486FD85258', 'EB9B653A49B15F67', '2D827450737DD778', '2C2DD9A93B415A54']
+	Human written regex: (\d|\u)+
+	 best Posterior:
+(lambda (r_kleene (lambda (r_d $0)) (r_kleene (lambda ((lambda (r_u (r_kleene (lambda (r_d $0)) $0))) $0)) $0)))
+	 (\d)*(\u(\d)*)*
+	 samples:
+	 ['946F858081981IF2', '', '083765D23705F7DB42F', '843', '']
+	 HIT (train), Ground truth: -320.90916534485575, found ll: tensor([-237.2053], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -319.9536538998282, found ll: tensor([-245.0527], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (r_kleene (lambda (r_d $0)) (r_kleene (lambda ((lambda (r_u (r_kleene (lambda (r_d $0)) $0))) $0)) $0)))
+	 (\d)*(\u(\d)*)*
+	 samples:
+	 ['', '2800DD78', '8', '056B', 'F']
+	 HIT (train), Ground truth: -320.90916534485575, found ll: tensor([-237.2053], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -319.9536538998282, found ll: tensor([-245.0527], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['2257DD17485E53DF', 'F9AED5486FD85258', 'EB9B653A49B15F67', '2D827450737DD778', '2C2DD9A93B415A54']
+trainingExamples ['4FF7DE80F4192276', '8F23E84FDD8DF9D0', '4807686BED3992FB', '53735C581B1DC0C0', '74236837A4AFD042']
+Data column no. 79
+	TRAIN	 ['6,820', '155,515', '117,127', '57,185', '6,617,103']
+	TEST	 ['36,984', '-', '39,895', '124,168', '5,833,587']
+	Human written regex: \d+(,\d\d\d)+
+	 best Posterior:
+(lambda ((lambda (r_kleene (lambda (r_d $0)) ((lambda (r_const (r_d (r_kleene (lambda (r_d $0)) $0)))) $0))) ((lambda (r_d (r_d $0))) (r_kleene (lambda ((lambda (r_dot (r_d $0))) ((lambda (r_d (r_d $0))) $0))) $0))))
+	 (\d)*,\d(\d)*\d\d(.\d\d\d)*
+	 samples:
+	 [',167', '01,106', ',8147,116', ',505', ',265']
+	 HIT (train), Ground truth: -75.5627374927924, found ll: tensor([-70.7392], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -inf, found ll: tensor([-inf], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (r_kleene (lambda (r_d $0)) (r_kleene (lambda ((lambda (r_const ((lambda ((lambda (r_d (r_d $0))) (r_d $0))) $0))) $0)) $0)))
+	 (\d)*(,\d\d\d)*
+	 samples:
+	 ['', '', ',158,162,185,162', '11578511881', '1']
+	 HIT (train), Ground truth: -75.5627374927924, found ll: tensor([-70.3284], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -inf, found ll: tensor([-inf], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['36,984', '-', '39,895', '124,168', '5,833,587']
+trainingExamples ['6,820', '155,515', '117,127', '57,185', '6,617,103']
+Data column no. 775
+	TRAIN	 ['Oct 23 2013', 'Jul 12 2010', 'Sep 17 2012', 'Jun 1 2001', 'Nov 1 2004']
+	TEST	 ['Oct 10 2007', 'Mar 15 2016', 'Nov 10 2011', 'Oct 27 2005', 'Jul 9 2015']
+	Human written regex: \u\l\l \d+ \d\d\d\d
+	 best Posterior:
+(lambda (r_u ((lambda (r_l (r_l $0))) (string_space (r_kleene (lambda (r_d $0)) ((lambda (r_const (r_d (r_kleene (lambda (r_d $0)) $0)))) $0))))))
+	 \u\l\l (\d)* 20\d(\d)*
+	 samples:
+	 ['Jpv  201', 'Suu 623 200', 'Jlo 24 20141', 'Joc  20413', 'Opp 0 20001']
+	 HIT (train), Ground truth: -118.88900811863508, found ll: tensor([-71.6866], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -121.88474039218909, found ll: tensor([-116.5059], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (r_u ((lambda (r_l (r_l $0))) (string_space (r_kleene (lambda (r_d $0)) ((lambda (r_const (r_d (r_kleene (lambda (r_d $0)) $0)))) $0))))))
+	 \u\l\l (\d)* 20\d(\d)*
+	 samples:
+	 ['Occ 02 2060', 'Snu 121 201231724', 'Juu 1 2010', 'Slc 310 2010', 'Oup 31 204']
+	 HIT (train), Ground truth: -118.88900811863508, found ll: tensor([-71.6866], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -121.88474039218909, found ll: tensor([-116.5059], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['Oct 10 2007', 'Mar 15 2016', 'Nov 10 2011', 'Oct 27 2005', 'Jul 9 2015']
+trainingExamples ['Oct 23 2013', 'Jul 12 2010', 'Sep 17 2012', 'Jun 1 2001', 'Nov 1 2004']
+Data column no. 774
+	TRAIN	 ['FOS21001', 'FOS20606', 'FOS102', 'FOS20803', 'FOS20801']
+	TEST	 ['FOS20904', 'FOS1013', 'FOS108', 'FOS140', 'FOS20910']
+	Human written regex: FOS\d\d+
+	 best Posterior:
+(lambda ((lambda (r_const (r_d (r_kleene (lambda (r_d $0)) $0)))) $0))
+	 FOS\d(\d)*
+	 samples:
+	 ['FOS08', 'FOS800', 'FOS022', 'FOS0080', 'FOS026202022']
+	 HIT (train), Ground truth: -65.43610638894206, found ll: tensor([-48.1394], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -56.4489095682801, found ll: tensor([-61.9069], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda ((lambda (r_const ((lambda (r_d (r_d $0))) $0))) (r_alt (lambda ((lambda (r_d (string_0 $0))) $0)) (lambda $0) (r_d $0))))
+	 FOS\d\d(\d0)|\d
+	 samples:
+	 ['FOS82202', 'FOS021', 'FOS16106', 'FOS03000', 'FOS321']
+	 HIT (train), Ground truth: -65.43610638894206, found ll: -35.08456039428711
+	 MISS (test), Ground truth: -56.4489095682801, found ll: -inf
+
+	 Posterior predictive samples...
+testingExamples ['FOS20904', 'FOS1013', 'FOS108', 'FOS140', 'FOS20910']
+trainingExamples ['FOS21001', 'FOS20606', 'FOS102', 'FOS20803', 'FOS20801']
+Data column no. 561
+	TRAIN	 ['QWVvx22%{-', 'Enrzla5^?@', 'FMBmr96#^[', 'JTfvw6,({/', 'Oh44>#?*%)']
+	TEST	 ['Yuaz4>!_$,', 'FZfyve60#[', 'CNWNdt076-', 'JZrvo644_$', 'HFqrq6|{}]']
+	Human written regex: .+
+	 best Posterior:
+(lambda (r_kleene (lambda (r_u $0)) (r_kleene (lambda ((lambda (r_l (r_l $0))) $0)) (r_kleene (lambda ((lambda (r_dot (r_d $0))) $0)) ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) $0)))))
+	 (\u)*(\l\l)*(.\d)*.(.)*
+	 samples:
+	 ['Brl{4?2(546#4-49?', 'BTJa@', 'FTOEETVvmlz%5^6#6(2%#%', 'Bwmlmxvvlvlrzzn^{4(', 'MVvrfnvr,2>#']
+	 HIT (train), Ground truth: -262.8747686013891, found ll: tensor([-159.9539], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -262.8747686013891, found ll: tensor([-326.7688], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (r_kleene (lambda (r_u $0)) (r_kleene (lambda ((lambda (r_l (r_l $0))) $0)) (r_kleene (lambda ((lambda (r_dot (r_d $0))) $0)) ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) $0)))))
+	 (\u)*(\l\l)*(.\d)*.(.)*
+	 samples:
+	 ['rlfmnm^426w6>', 'E22>4{29>a', 'Vmrrmfmvvmr#9?(9h', '{6/2^>%', 'Q%644{2,']
+	 HIT (train), Ground truth: -262.8747686013891, found ll: tensor([-159.9539], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -262.8747686013891, found ll: tensor([-326.7688], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['Yuaz4>!_$,', 'FZfyve60#[', 'CNWNdt076-', 'JZrvo644_$', 'HFqrq6|{}]']
+trainingExamples ['QWVvx22%{-', 'Enrzla5^?@', 'FMBmr96#^[', 'JTfvw6,({/', 'Oh44>#?*%)']
+Data column no. 509
+	TRAIN	 ['S0000214', 'S0000509', 'S0000411', 'S0000915', 'S0001042']
+	TEST	 ['S0001802', 'S0000685', 'S0000892', 'S0001472', 'S0000249']
+	Human written regex: S000\d+
+	 best Posterior:
+(lambda (r_alt (lambda ((lambda (r_const ((lambda (r_d (r_d $0))) $0))) $0)) (lambda ((lambda (r_u (r_kleene (lambda (r_d $0)) $0))) $0)) (r_d $0)))
+	 (S0000\d\d)|(\u(\d)*)\d
+	 samples:
+	 ['S0000402', 'S0000200', 'S0000010', 'S0000115', 'S5491444']
+	 HIT (train), Ground truth: -59.914645471079815, found ll: tensor([-38.8257], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -59.914645471079815, found ll: tensor([-75.2328], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (r_alt (lambda ((lambda (r_const ((lambda (r_d (r_d $0))) $0))) $0)) (lambda ((lambda (r_u (r_kleene (lambda (r_d $0)) $0))) $0)) (r_d $0)))
+	 (S0000\d\d)|(\u(\d)*)\d
+	 samples:
+	 ['S0000911', 'S0000009', 'S0150411', 'S9121', 'S0000519']
+	 HIT (train), Ground truth: -59.914645471079815, found ll: tensor([-38.8257], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -59.914645471079815, found ll: tensor([-75.2328], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['S0001802', 'S0000685', 'S0000892', 'S0001472', 'S0000249']
+trainingExamples ['S0000214', 'S0000509', 'S0000411', 'S0000915', 'S0001042']
+Data column no. 494
+	TRAIN	 ['S19000768', 'S19000884', 'S19000755', 'S19001103', 'S19000824']
+	TEST	 ['S19000776', 'S19000932', 'S19000981', 'S19001048', 'S19001110']
+	Human written regex: S1900\d+
+	 best Posterior:
+(lambda ((lambda (r_const ((lambda ((lambda (r_d (r_d $0))) ((lambda (r_d (r_d $0))) $0))) $0))) $0))
+	 S1900\d\d\d\d
+	 samples:
+	 ['S19000832', 'S19008845', 'S19000082', 'S19000450', 'S19003045']
+	 HIT (train), Ground truth: -59.914645471079815, found ll: -40.81409454345703
+	 HIT (test), Ground truth: -59.914645471079815, found ll: -50.1807746887207
+	 best Likelihood:
+(lambda (r_const ((lambda (r_d (r_d $0))) ((lambda (r_d (r_d $0))) $0))))
+	 S1900\d\d\d\d
+	 samples:
+	 ['S19000330', 'S19008800', 'S19000005', 'S19003018', 'S19008010']
+	 HIT (train), Ground truth: -59.914645471079815, found ll: -40.81409454345703
+	 HIT (test), Ground truth: -59.914645471079815, found ll: -50.1807746887207
+
+	 Posterior predictive samples...
+testingExamples ['S19000776', 'S19000932', 'S19000981', 'S19001048', 'S19001110']
+trainingExamples ['S19000768', 'S19000884', 'S19000755', 'S19001103', 'S19000824']
+Data column no. 119
+	TRAIN	 ['$31,800', '$35,400', '$37,200', '$24,000', '$31,200']
+	TEST	 ['$46,200', '$33,000', '$29,400', '$20,400', '$37,800']
+	Human written regex: $\d\d(,\d\d\d)+
+	 best Posterior:
+(lambda (string_dollar ((lambda (r_d (r_d $0))) (r_kleene (lambda ((lambda (r_dot (r_d $0))) $0)) ((lambda (r_kleene (lambda (r_dot $0)) (r_kleene (lambda (r_const $0)) $0))) $0)))))
+	 $\d\d(.\d)*(.)*(00)*
+	 samples:
+	 ['$38,1,0000', '$83', '$05,3,000000000000', '$53000000', '$13,7']
+	 HIT (train), Ground truth: -61.03036322765086, found ll: tensor([-45.9834], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -61.03036322765086, found ll: tensor([-55.6393], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (string_dollar ((lambda (r_d (r_d $0))) (r_kleene (lambda ((lambda (r_dot (r_d $0))) $0)) ((lambda (r_kleene (lambda (r_dot $0)) (r_kleene (lambda (r_const $0)) $0))) $0)))))
+	 $\d\d(.\d)*(.)*(00)*
+	 samples:
+	 ['$22,1', '$27,,,00', '$410000', '$33,,', '$27']
+	 HIT (train), Ground truth: -61.03036322765086, found ll: tensor([-45.9834], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -61.03036322765086, found ll: tensor([-55.6393], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['$46,200', '$33,000', '$29,400', '$20,400', '$37,800']
+trainingExamples ['$31,800', '$35,400', '$37,200', '$24,000', '$31,200']
+Data column no. 29
+	TRAIN	 ['nIqsz', 'Pwek1', 'bTFer', '6h7Fs', 'fg6ac']
+	TEST	 ['sh6vJ', 'hs2Yo', 'kC8TK', 'R0KY2', 'vE3us']
+	Human written regex: (\u|\l|\d)+
+	 best Posterior:
+(lambda ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) $0))
+	 .(.)*
+	 samples:
+	 ['Pg', 'sq', 'aI', 'FsPehf', 'FPerf']
+	 HIT (train), Ground truth: -122.42435440112868, found ll: tensor([-87.6776], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -120.51333151107383, found ll: tensor([-187.9846], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) (r_l ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) $0))))
+	 .(.)*\l.(.)*
+	 samples:
+	 ['qecqbe', '1Psc7', '6ez6s', 'ehF', '7wF']
+	 HIT (train), Ground truth: -122.42435440112868, found ll: tensor([-79.3059], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -120.51333151107383, found ll: tensor([-inf], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['sh6vJ', 'hs2Yo', 'kC8TK', 'R0KY2', 'vE3us']
+trainingExamples ['nIqsz', 'Pwek1', 'bTFer', '6h7Fs', 'fg6ac']
+Data column no. 121
+	TRAIN	 ['(66)28X8007', '2816/180406', '28X8007', '4912/130100', '28X8007.25']
+	TEST	 ['28X8007.65', '4910/110100', '2812/130406', '28X8007.14', '28X8007.16']
+	Human written regex: (\d|\u|\.|/|\(|\))+
+	 best Posterior:
+(lambda (r_kleene (lambda (r_d $0)) ((lambda (r_kleene (lambda (r_dot $0)) (r_kleene (lambda (r_const $0)) $0))) (r_kleene (lambda (r_d $0)) ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) (r_kleene (lambda (r_d $0)) ((lambda (r_d (r_d $0))) $0)))))))
+	 (\d)*(.)*(2)*(\d)*.(.)*(\d)*\d\d
+	 samples:
+	 ['18)X66(22X658', '71862228X)80', '22.100', '4788262707', '(20X70']
+	 HIT (train), Ground truth: -230.72819600921437, found ll: tensor([-130.7293], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -240.30317949477845, found ll: tensor([-149.2460], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (r_kleene (lambda (r_d $0)) ((lambda (r_kleene (lambda (r_dot $0)) (r_kleene (lambda (r_const $0)) $0))) (r_kleene (lambda (r_d $0)) ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) (r_kleene (lambda (r_d $0)) ((lambda (r_d (r_d $0))) $0)))))))
+	 (\d)*(.)*(2)*(\d)*.(.)*(\d)*\d\d
+	 samples:
+	 ['6222(7108408', '988192227800X45', '16X222X01481', '/5.6X78', '//6X.0035']
+	 HIT (train), Ground truth: -230.72819600921437, found ll: tensor([-130.7293], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -240.30317949477845, found ll: tensor([-149.2460], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['28X8007.65', '4910/110100', '2812/130406', '28X8007.14', '28X8007.16']
+trainingExamples ['(66)28X8007', '2816/180406', '28X8007', '4912/130100', '28X8007.25']
+Data column no. 61
+	TRAIN	 ['R 340.18', 'R 995.25', 'R 383.50', 'R 530.10', 'R 194.94']
+	TEST	 ['R 116.94', 'R 936.00', 'R 310.70', 'R 474.24', 'R 648.70']
+	Human written regex: R \d\d\d.\d\d
+	 best Posterior:
+(lambda ((lambda (r_const ((lambda (r_d (r_d $0))) $0))) ((lambda (r_kleene (lambda (r_d $0)) (string_period ((lambda (r_d (r_d $0))) $0)))) $0)))
+	 R \d\d(\d)*\.\d\d
+	 samples:
+	 ['R 93.19', 'R 541.84', 'R 5159532114319.54', 'R 084.19', 'R 54.91']
+	 HIT (train), Ground truth: -80.38636828219032, found ll: tensor([-57.3061], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -80.38636828219032, found ll: tensor([-86.4171], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda ((lambda (r_const ((lambda ((lambda (r_d (r_d $0))) (r_d $0))) $0))) (string_period ((lambda (r_d (r_d $0))) $0))))
+	 R \d\d\d\.\d\d
+	 samples:
+	 ['R 030.50', 'R 844.23', 'R 454.59', 'R 109.31', 'R 535.05']
+	 HIT (train), Ground truth: -80.38636828219032, found ll: -50.37462615966797
+	 HIT (test), Ground truth: -80.38636828219032, found ll: -79.48564910888672
+
+	 Posterior predictive samples...
+testingExamples ['R 116.94', 'R 936.00', 'R 310.70', 'R 474.24', 'R 648.70']
+trainingExamples ['R 340.18', 'R 995.25', 'R 383.50', 'R 530.10', 'R 194.94']
+Data column no. 871
+	TRAIN	 ['-0.7302', '-0.7414', '-0.7348', '-0.7274', '-0.729']
+	TEST	 ['.', '-0.7632', '-0.7286', '-0.7256', '-0.753']
+	Human written regex: -0.7\d+
+	 best Posterior:
+(lambda ((lambda (r_const ((lambda (r_d (r_d $0))) $0))) (r_kleene (lambda (r_d $0)) $0)))
+	 -0\.7\d\d(\d)*
+	 samples:
+	 ['-0.744', '-0.748', '-0.782', '-0.742', '-0.7139']
+	 HIT (train), Ground truth: -64.76199278709504, found ll: tensor([-32.9464], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -inf, found ll: tensor([-inf], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (r_const ((lambda (r_d (r_d $0))) (r_kleene (lambda (r_d $0)) $0))))
+	 -0\.7\d\d(\d)*
+	 samples:
+	 ['-0.77437', '-0.733', '-0.744', '-0.74371', '-0.711']
+	 HIT (train), Ground truth: -64.76199278709504, found ll: tensor([-32.9464], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -inf, found ll: tensor([-inf], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['.', '-0.7632', '-0.7286', '-0.7256', '-0.753']
+trainingExamples ['-0.7302', '-0.7414', '-0.7348', '-0.7274', '-0.729']
+Data column no. 639
+	TRAIN	 ['TAS37818', 'VIC30431', 'TAS37825', 'VIC30433', 'GA4']
+	TEST	 ['SA0062407', 'WA100146691', 'TAS37819', 'GA1', 'NSW39502']
+	Human written regex: \u+?\d+
+	 best Posterior:
+(lambda ((lambda (r_kleene (lambda (r_u $0)) ((lambda (r_u (r_kleene (lambda (r_d $0)) $0))) $0))) $0))
+	 (\u)*\u(\d)*
+	 samples:
+	 ['VVSTVGAAAGVCACI37', 'C2', 'SVTSTIGAIASCCVIAA835', 'AAACS3', 'LSTA08']
+	 HIT (train), Ground truth: -121.69352570757351, found ll: tensor([-88.9594], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -131.7654319117346, found ll: tensor([-150.0445], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda ((lambda (r_kleene (lambda (r_u $0)) ((lambda (r_u (r_kleene (lambda (r_d $0)) $0))) $0))) (r_kleene (lambda ((lambda (r_const (r_d (r_kleene (lambda (r_d $0)) $0)))) $0)) $0)))
+	 (\u)*\u(\d)*(3\d(\d)*)*
+	 samples:
+	 ['C385737', 'A37', 'AS53534030877', 'AT', 'S302']
+	 HIT (train), Ground truth: -121.69352570757351, found ll: tensor([-87.8391], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -131.7654319117346, found ll: tensor([-151.8445], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['SA0062407', 'WA100146691', 'TAS37819', 'GA1', 'NSW39502']
+trainingExamples ['TAS37818', 'VIC30431', 'TAS37825', 'VIC30433', 'GA4']
+Data column no. 729
+	TRAIN	 ['COMISARIA 52', 'COMISARIA 11', 'COMISARIA 51', 'COMISARIA 40', 'COMISARIA 14']
+	TEST	 ['COMISARIA 3', 'COMISARIA 35', 'COMISARIA 10', 'COMISARIA 20', 'COMISARIA 17']
+	Human written regex: COMISARIA \d\d
+	 best Posterior:
+(lambda ((lambda (r_const ((lambda (r_d (r_d $0))) $0))) $0))
+	 COMISARIA \d\d
+	 samples:
+	 ['COMISARIA 50', 'COMISARIA 12', 'COMISARIA 15', 'COMISARIA 45', 'COMISARIA 21']
+	 HIT (train), Ground truth: -23.025850929940454, found ll: -14.763433456420898
+	 HIT (test), Ground truth: -inf, found ll: -inf
+	 best Likelihood:
+(lambda ((lambda (r_const ((lambda (r_d (r_d $0))) $0))) $0))
+	 COMISARIA \d\d
+	 samples:
+	 ['COMISARIA 91', 'COMISARIA 04', 'COMISARIA 14', 'COMISARIA 51', 'COMISARIA 41']
+	 HIT (train), Ground truth: -23.025850929940454, found ll: -14.763433456420898
+	 HIT (test), Ground truth: -inf, found ll: -inf
+
+	 Posterior predictive samples...
+testingExamples ['COMISARIA 3', 'COMISARIA 35', 'COMISARIA 10', 'COMISARIA 20', 'COMISARIA 17']
+trainingExamples ['COMISARIA 52', 'COMISARIA 11', 'COMISARIA 51', 'COMISARIA 40', 'COMISARIA 14']
+Data column no. 193
+	TRAIN	 ['K60', 'N18', 'R59', 'D12', 'I84']
+	TEST	 ['I20', 'A04', 'M13', 'S82', 'A90']
+	Human written regex: \u\d\d
+	 best Posterior:
+(lambda (r_u ((lambda (r_d (r_d $0))) $0)))
+	 \u\d\d
+	 samples:
+	 ['I54', 'I10', 'K61', 'I22', 'R88']
+	 HIT (train), Ground truth: -39.31633362004787, found ll: -28.368778228759766
+	 MISS (test), Ground truth: -39.31633362004787, found ll: -58.61676025390625
+	 best Likelihood:
+(lambda (r_u ((lambda (r_d (r_d $0))) $0)))
+	 \u\d\d
+	 samples:
+	 ['N08', 'I20', 'I88', 'D06', 'R84']
+	 HIT (train), Ground truth: -39.31633362004787, found ll: -28.368778228759766
+	 MISS (test), Ground truth: -39.31633362004787, found ll: -58.61676025390625
+
+	 Posterior predictive samples...
+testingExamples ['I20', 'A04', 'M13', 'S82', 'A90']
+trainingExamples ['K60', 'N18', 'R59', 'D12', 'I84']
+Data column no. 752
+	TRAIN	 ['MPAS, PA-C', 'DNP', 'F.N.P.', 'N.P.', 'FP']
+	TEST	 ['M.D.', 'CNP', 'PA-C', 'FNP', 'Dr.']
+	Human written regex: (.*|\u\.?)+
+	 best Posterior:
+(lambda (r_kleene (lambda (r_u $0)) ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) $0)))
+	 (\u)*.(.)*
+	 samples:
+	 ['AS..-C  P', 'NA,C.P.', 'FSNPCPP.PP', 'DAPA-', 'M.']
+	 HIT (train), Ground truth: -108.72292323953079, found ll: tensor([-64.6970], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -79.79045431425679, found ll: tensor([-61.5572], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (r_kleene (lambda (r_u $0)) (r_kleene (lambda ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) ((lambda (r_const ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) $0))) $0))) $0)))
+	 (\u)*(.(.)*P.(.)*)*
+	 samples:
+	 ['', ', CP-NN.PC', 'FN', 'S', '.A.PA, P.']
+	 HIT (train), Ground truth: -108.72292323953079, found ll: tensor([-63.0511], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -79.79045431425679, found ll: tensor([-inf], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['M.D.', 'CNP', 'PA-C', 'FNP', 'Dr.']
+trainingExamples ['MPAS, PA-C', 'DNP', 'F.N.P.', 'N.P.', 'FP']
+Data column no. 17
+	TRAIN	 ['$5.70', '$3.40', '$2.80', '$5.40', '$3.70']
+	TEST	 ['$3.60', '$4.20', '$3.00', '$5.60', '$0.00']
+	Human written regex: $\d.\d\d
+	 best Posterior:
+(lambda ((lambda ((lambda (r_const (r_d (r_kleene (lambda (r_d $0)) $0)))) (r_kleene (lambda ((lambda (r_dot (r_d $0))) ((lambda (r_d (r_d $0))) $0))) $0))) (string_period ((lambda (r_d (string_0 $0))) $0))))
+	 $\d(\d)*(.\d\d\d)*\.\d0
+	 samples:
+	 ['$3.70', '$7.40', '$5.20', '$5.50', '$5.20']
+	 HIT (train), Ground truth: -57.36051735224986, found ll: tensor([-17.6771], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -57.36051735224986, found ll: tensor([-43.7116], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (string_dollar (r_d (string_period ((lambda (r_d (string_0 $0))) $0)))))
+	 $\d\.\d0
+	 samples:
+	 ['$3.80', '$5.30', '$8.50', '$4.50', '$5.70']
+	 HIT (train), Ground truth: -57.36051735224986, found ll: -17.518768310546875
+	 HIT (test), Ground truth: -57.36051735224986, found ll: -43.55323791503906
+
+	 Posterior predictive samples...
+testingExamples ['$3.60', '$4.20', '$3.00', '$5.60', '$0.00']
+trainingExamples ['$5.70', '$3.40', '$2.80', '$5.40', '$3.70']
+Data column no. 914
+	TRAIN	 ['R4703', 'R3552', 'R4708', 'R3452', 'R4196']
+	TEST	 ['R3650', 'R4707', 'R3547', 'R3574', 'R3604']
+	Human written regex: R\d\d\d\d
+	 best Posterior:
+(lambda ((lambda (r_const ((lambda ((lambda (r_d (r_d $0))) ((lambda (r_d (r_d $0))) $0))) $0))) $0))
+	 R\d\d\d\d
+	 samples:
+	 ['R8505', 'R3754', 'R5457', 'R3446', 'R9403']
+	 HIT (train), Ground truth: -46.05170185988091, found ll: -43.61894989013672
+	 HIT (test), Ground truth: -46.05170185988091, found ll: -41.82044219970703
+	 best Likelihood:
+(lambda (r_const ((lambda (r_d (r_d $0))) ((lambda (r_d (r_d $0))) $0))))
+	 R\d\d\d\d
+	 samples:
+	 ['R7328', 'R4211', 'R0365', 'R4531', 'R5533']
+	 HIT (train), Ground truth: -46.05170185988091, found ll: -43.61894989013672
+	 HIT (test), Ground truth: -46.05170185988091, found ll: -41.82044219970703
+
+	 Posterior predictive samples...
+testingExamples ['R3650', 'R4707', 'R3547', 'R3574', 'R3604']
+trainingExamples ['R4703', 'R3552', 'R4708', 'R3452', 'R4196']
+Data column no. 510
+	TRAIN	 ['P60004454', 'P20005286', 'P20005245', 'P20005252', 'P20004669']
+	TEST	 ['P80003353', 'P80005572', 'P20004263', 'P20002903', 'P20004479']
+	Human written regex: P\d000\d\d\d\d
+	 best Posterior:
+(lambda (string_P (r_kleene (lambda (r_d $0)) ((lambda (r_const ((lambda ((lambda (r_d (r_d $0))) ((lambda (r_d (r_d $0))) $0))) $0))) $0))))
+	 P(\d)*000\d\d\d\d
+	 samples:
+	 ['P20005554', 'P0002256', 'P80002224', 'P65468450004653', 'P0005622']
+	 HIT (train), Ground truth: -57.56462732485113, found ll: tensor([-46.5581], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -57.56462732485113, found ll: tensor([-90.7360], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (string_P (r_d ((lambda (r_const ((lambda ((lambda (r_d (r_d $0))) ((lambda (r_d (r_d $0))) $0))) $0))) $0))))
+	 P\d000\d\d\d\d
+	 samples:
+	 ['P50002266', 'P50006544', 'P60005242', 'P90005226', 'P20005444']
+	 HIT (train), Ground truth: -57.56462732485113, found ll: -39.62659454345703
+	 MISS (test), Ground truth: -57.56462732485113, found ll: -83.80448913574219
+
+	 Posterior predictive samples...
+testingExamples ['P80003353', 'P80005572', 'P20004263', 'P20002903', 'P20004479']
+trainingExamples ['P60004454', 'P20005286', 'P20005245', 'P20005252', 'P20004669']
+Data column no. 443
+	TRAIN	 ['W 4-2', 'W 4-3', 'L 7-10', 'W 8-3', 'L 7-9']
+	TEST	 ['L 5-6', 'L 0-6', 'W 6-2', 'L 2-7', 'L 3-5']
+	Human written regex: (W|L) \d-\d+
+	 best Posterior:
+(lambda (r_u (r_const (r_kleene (lambda (r_d $0)) (string_dash (r_kleene (lambda (r_d $0)) $0))))))
+	 \u (\d)*-(\d)*
+	 samples:
+	 ['L 1-', 'L 97-4', 'L 07-', 'L -', 'W -8333']
+	 MISS (train), Ground truth: -32.9530550090939, found ll: tensor([-40.2093], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -29.957322735539908, found ll: tensor([-62.7938], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (r_u (r_const (r_kleene (lambda (r_d $0)) (string_dash (r_kleene (lambda (r_d $0)) $0))))))
+	 \u (\d)*-(\d)*
+	 samples:
+	 ['L -3', 'L 4-3', 'W -', 'L 7-2', 'W 3-93']
+	 MISS (train), Ground truth: -32.9530550090939, found ll: tensor([-40.2093], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -29.957322735539908, found ll: tensor([-62.7938], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['L 5-6', 'L 0-6', 'W 6-2', 'L 2-7', 'L 3-5']
+trainingExamples ['W 4-2', 'W 4-3', 'L 7-10', 'W 8-3', 'L 7-9']
+Data column no. 20
+	TRAIN	 ['MDEL18.1a', 'MDEL1.2c', 'MDEL18.1b', 'MDEL6.2b', 'MDEL13.2b']
+	TEST	 ['MDEL1.2d', 'MDEL13.2c', 'MDEL1.2e', 'MDEL6.2d', 'MDEL7.1a']
+	Human written regex: MDEL\d\d?\.\d\l
+	 best Posterior:
+(lambda ((lambda (r_kleene (lambda (r_d $0)) ((lambda (r_const (r_d (r_kleene (lambda (r_d $0)) $0)))) $0))) (string_period ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) $0))))
+	 (\d)*MDEL\d(\d)*\..(.)*
+	 samples:
+	 ['MDEL83.22', '8MDEL1.b21', '6MDEL6.2', '18MDEL1.b', '1MDEL1.11']
+	 HIT (train), Ground truth: -49.68982480182973, found ll: tensor([-39.8305], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -45.084654615841636, found ll: tensor([-62.8408], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda ((lambda (r_kleene (lambda (r_d $0)) ((lambda (r_const (r_d (r_kleene (lambda (r_d $0)) $0)))) $0))) (string_period ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) $0))))
+	 (\d)*MDEL\d(\d)*\..(.)*
+	 samples:
+	 ['6MDEL8.N', '8MDEL3.2', 'MDEL3.1', '18MDEL1.b', 'MDEL1.1']
+	 HIT (train), Ground truth: -49.68982480182973, found ll: tensor([-39.8305], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -45.084654615841636, found ll: tensor([-62.8408], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['MDEL1.2d', 'MDEL13.2c', 'MDEL1.2e', 'MDEL6.2d', 'MDEL7.1a']
+trainingExamples ['MDEL18.1a', 'MDEL1.2c', 'MDEL18.1b', 'MDEL6.2b', 'MDEL13.2b']
+Data column no. 64
+	TRAIN	 ['c04p0100a', 'c04p01007', 'c04p01009', 'c04p0100c', 'c04p01002']
+	TEST	 ['c04p01003', 'c04p0100o', 'c04p0100e', 'c04p0100m', 'c04p0100f']
+	Human written regex: c04p0100(\l|\d)
+	 best Posterior:
+(lambda ((lambda (r_const ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) $0))) $0))
+	 c04p0100.(.)*
+	 samples:
+	 ['c04p01009', 'c04p0100c', 'c04p01002', 'c04p01002', 'c04p0100c']
+	 HIT (train), Ground truth: -16.88968425782483, found ll: tensor([-8.2028], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -18.800707147879702, found ll: tensor([-43.5733], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda (r_const (r_alt (lambda (r_kleene (lambda (r_d $0)) $0)) (lambda ((lambda (r_dot (r_kleene (lambda (r_dot $0)) $0))) $0)) $0)))
+	 c04p0100((\d)*)|(.(.)*)
+	 samples:
+	 ['c04p01007', 'c04p010027', 'c04p0100S', 'c04p010079', 'c04p0100c']
+	 HIT (train), Ground truth: -16.88968425782483, found ll: tensor([-13.5004], grad_fn=<AddBackward0>)
+	 MISS (test), Ground truth: -18.800707147879702, found ll: tensor([-47.7567], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['c04p01003', 'c04p0100o', 'c04p0100e', 'c04p0100m', 'c04p0100f']
+trainingExamples ['c04p0100a', 'c04p01007', 'c04p01009', 'c04p0100c', 'c04p01002']
+Data column no. 301
+	TRAIN	 ['S6E-S-216M', 'MC160', 'I5-S-157M', 'N4-S-38', 'ZEN6-NL-SS-B']
+	TEST	 ['S5-S-270', 'N4-S-295', 'N920-NL-SS-B', 'S5-S-263M', 'S6E-S-215M']
+	Human written regex: (\u|\d)+(-(\u|\d)+)*
+	 best Posterior:
+(lambda ((lambda (r_kleene (lambda (r_u $0)) ((lambda (r_u (r_kleene (lambda (r_d $0)) $0))) $0))) (r_kleene (lambda (r_kleene (lambda (string_dash $0)) ((lambda (r_kleene (lambda (r_d $0)) (r_kleene (lambda (r_u $0)) $0))) $0))) $0)))
+	 (\u)*\u(\d)*((-)*(\d)*(\u)*)*
+	 samples:
+	 ['SIM-M', 'Z', 'ZISELIS---CESMLL', 'N1----N----1IZCI', 'MS21M']
+	 HIT (train), Ground truth: -153.28067942323435, found ll: tensor([-132.2112], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -160.13370980252725, found ll: tensor([-152.5108], grad_fn=<AddBackward0>)
+	 best Likelihood:
+(lambda ((lambda (r_kleene (lambda (r_u $0)) ((lambda (r_u (r_kleene (lambda (r_d $0)) $0))) $0))) (r_kleene (lambda (r_kleene (lambda (string_dash $0)) ((lambda (r_kleene (lambda (r_d $0)) (r_kleene (lambda (r_u $0)) $0))) $0))) $0)))
+	 (\u)*\u(\d)*((-)*(\d)*(\u)*)*
+	 samples:
+	 ['S', 'SS0', 'S1', 'S', 'S--5676--416MM--67066LSNSMCSSSDS614863531']
+	 HIT (train), Ground truth: -153.28067942323435, found ll: tensor([-132.2112], grad_fn=<AddBackward0>)
+	 HIT (test), Ground truth: -160.13370980252725, found ll: tensor([-152.5108], grad_fn=<AddBackward0>)
+
+	 Posterior predictive samples...
+testingExamples ['S5-S-270', 'N4-S-295', 'N920-NL-SS-B', 'S5-S-263M', 'S6E-S-215M']
+trainingExamples ['S6E-S-216M', 'MC160', 'I5-S-157M', 'N4-S-38', 'ZEN6-NL-SS-B']
+Data column no. 664
+	TRAIN	 ['N1', 'N7', 'N8', 'N5', 'N2']
+	TEST	 ['N4', 'N6', 'N9', 'N3', 'N10']
+	Human written regex: N\d
+	 best Posterior:
+(lambda (r_const (r_d $0)))
+	 N\d
+	 samples:
+	 ['N1', 'N7', 'N2', 'N1', 'N1']
+	 HIT (train), Ground truth: -11.512925464970227, found ll: -8.07069206237793
+	 HIT (test), Ground truth: -inf, found ll: -inf
+	 best Likelihood:
+(lambda (r_const (r_d $0)))
+	 N\d
+	 samples:
+	 ['N7', 'N7', 'N1', 'N7', 'N8']
+	 HIT (train), Ground truth: -11.512925464970227, found ll: -8.07069206237793
+	 HIT (test), Ground truth: -inf, found ll: -inf
+
+	 Posterior predictive samples...
+testingExamples ['N4', 'N6', 'N9', 'N3', 'N10']
+trainingExamples ['N1', 'N7', 'N8', 'N5', 'N2']
+Best posteriorc hits training task 113/128 = 0.8828125
+Best likelihood hits training task 116/128 = 0.90625
+Best posteriorc hits testing task 57/128 = 0.4453125
+Best likelihood hits testing task 57/128 = 0.4453125
+Posterior predictive hits training task 47/128 = 0.3671875
+Posterior predictive hits testing task 64/128 = 0.5
