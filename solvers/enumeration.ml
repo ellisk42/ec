@@ -238,6 +238,7 @@ let best_first_enumeration ?lower_bound:(lower_bound=None)
 
   (!completed,
    Heap.to_list pq)
+              
 
       
 (* Depth first enumeration *)
@@ -246,6 +247,24 @@ let enumeration_timed_out() = Unix.time() > !enumeration_timeout;;
 let set_enumeration_timeout dt =
   enumeration_timeout := Unix.time() +. dt;;
 
+let stack_enumeration (cg : contextual_grammar) state ~lower_bound ~upper_bound ~maxFreeParameters k =
+  let stack = ref [state] in
+
+  let rec loop () =
+    if enumeration_timed_out() then () else
+      match !stack with
+      | [] -> ()
+      | x :: xs ->
+        stack := xs;
+        let children = state_successors ~maxFreeParameters cg x in
+        children |> List.iter ~f:(fun child ->
+            if state_finished child then
+              (if lower_bound <= child.cost && child.cost < upper_bound then k (child.skeleton) (child.context) (child.cost))
+            else
+              (if child.cost < upper_bound then stack := child :: !stack));
+        loop()
+  in
+  loop ()
 
 let rec enumerate_programs' (cg : contextual_grammar) (g: grammar) (context: tContext) (request: tp) (environment: tp list)
     (lower_bound: float) (upper_bound: float)
@@ -420,7 +439,8 @@ let multicore_enumeration ?extraQuiet:(extraQuiet=false) ?final:(final=fun () ->
   let strip_context p _ l = k p l in
 
   let continuation s =
-    dfs_around_skeleton cg ~lower_bound:lb ~upper_bound:ub ~maxFreeParameters:maxFreeParameters s strip_context
+    (* dfs_around_skeleton cg ~lower_bound:lb ~upper_bound:ub ~maxFreeParameters:maxFreeParameters s strip_context *)
+    stack_enumeration cg ~lower_bound:lb ~upper_bound:ub ~maxFreeParameters:maxFreeParameters s strip_context
   in
 
   let fringe = fringe |>
