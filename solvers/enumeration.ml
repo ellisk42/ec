@@ -387,8 +387,9 @@ let dfs_around_skeleton cg ~maxFreeParameters ~lower_bound ~upper_bound state k 
       let environment = List.drop environment (List.length environment - abstraction_depth) in
       fun context l u mfp k ->             
         let (context, t) = applyContext context t in
-        (* Printf.printf "Enumerating around type %s mfp = %d\n"
-         *   (string_of_type t) (mfp); *)
+        Printf.printf "Enumerating around type %s mfp = %d\n"
+          (string_of_type t) (mfp);
+        flush_everything();
         enumerate_programs' ~parent:parent cg g context t environment l u ~maxFreeParameters:mfp k
     | _ -> assert false
   in 
