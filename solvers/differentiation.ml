@@ -6,6 +6,7 @@ open Utils
     
 type variable = {mutable gradient : float option;
                  mutable data : float option;
+                 volatile : bool; (* whether this depends on something which is a function of learned parameters *)
                  arguments : variable list;
                  forwardProcedure : float list -> float;
                  backwardProcedure : float list -> float list;
@@ -20,6 +21,7 @@ let make_variable forward backward arguments =
   let initial_value = forward values in
   let s = {gradient = None;
            arguments = arguments;
+           volatile = List.exists arguments ~f:(fun a -> a.volatile);
            descendents = [];
            forwardProcedure = forward;
            backwardProcedure = backward;
@@ -27,7 +29,8 @@ let make_variable forward backward arguments =
   in
   let initial_partials = backward values in
   List.iter2_exn initial_partials arguments ~f:(fun p a ->
-      a.descendents <- (s,p)::a.descendents);
+      if a.volatile then
+        a.descendents <- (s,p)::a.descendents);
   s
 
 let make_binary_variable forward backward a b =
@@ -51,6 +54,7 @@ let make_unitary_variable forward backward a =
 let (~$) x =
   let rec s = {gradient = None;
                arguments = [];
+               volatile = false;
                descendents = [];
                data = Some(x);
                forwardProcedure = (fun _ -> s.data |> get_some);
@@ -62,6 +66,7 @@ let placeholder () =
   let rec s = {gradient = None;
                arguments = [];
                descendents = [];
+               volatile = true;
                data = None;
                forwardProcedure = (fun _ -> s.data |> get_some);
                backwardProcedure = (fun _ -> []);
@@ -72,6 +77,7 @@ let random_variable ?mean:(mean = 0.) ?standard_deviation:(standard_deviation = 
   let rec s = {gradient = None;
                arguments = [];
                descendents = [];
+               volatile = true;
                data = Some(normal standard_deviation mean);
                forwardProcedure = (fun _ -> s.data |> get_some);
                backwardProcedure = (fun _ -> []);
