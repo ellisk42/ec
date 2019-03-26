@@ -390,6 +390,7 @@ let enumerate_for_tasks (g: contextual_grammar) ?verbose:(verbose = true)
   let lower_bound = ref lowerBound in
 
   let startTime = Time.now () in
+  let number_enumerated = ref 0 in
 
   while not (enumeration_timed_out()) &&
           List.exists (range nt) ~f:(fun j -> Heap.length hits.(j) < maximumFrontier.(j))
@@ -403,6 +404,9 @@ let enumerate_for_tasks (g: contextual_grammar) ?verbose:(verbose = true)
           (!lower_bound) (!lower_bound +. budgetIncrement)
           ~final:(fun () -> [Array.map ~f:Heap.to_list hits])
           (fun p logPrior ->
+             incr number_enumerated;
+             if power_of 10 !number_enumerated then
+               (Printf.eprintf "Enumerated %d\n" (!number_enumerated); flush_everything());
              let mdl = 0.-.logPrior in
 
              assert( !lower_bound <= mdl);
