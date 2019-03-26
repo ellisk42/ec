@@ -406,7 +406,9 @@ let enumerate_for_tasks (g: contextual_grammar) ?verbose:(verbose = true)
           (fun p logPrior ->
              incr number_enumerated;
              if power_of 10 !number_enumerated then
-               (Printf.eprintf "Enumerated %d\n" (!number_enumerated); flush_everything());
+               (Printf.eprintf "Enumerated %d - %f programs per second\n"
+                  (!number_enumerated)
+               ((!number_enumerated |> Float.of_int)/.(Time.diff (Time.now()) startTime |> Time.Span.to_ms)); flush_everything());
              let mdl = 0.-.logPrior in
 
              assert( !lower_bound <= mdl);

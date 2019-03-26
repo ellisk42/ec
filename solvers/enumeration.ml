@@ -259,7 +259,7 @@ let stack_enumeration (cg : contextual_grammar) state ~lower_bound ~upper_bound 
         let children = state_successors ~maxFreeParameters cg x in
         children |> List.iter ~f:(fun child ->
             if state_finished child then
-              (if lower_bound <= child.cost && child.cost < upper_bound then k (child.skeleton) (child.context) (child.cost))
+              (if lower_bound <= child.cost && child.cost < upper_bound then k (child.skeleton) (child.context) (0.-.child.cost))
             else
               (if child.cost < upper_bound then stack := child :: !stack));
         loop()
