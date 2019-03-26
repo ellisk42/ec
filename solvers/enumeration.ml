@@ -249,6 +249,7 @@ let set_enumeration_timeout dt =
 
 let stack_enumeration (cg : contextual_grammar) state ~lower_bound ~upper_bound ~maxFreeParameters k =
   let stack = ref [state] in
+  let stack_size = ref 0 in
 
   let rec loop () =
     if enumeration_timed_out() then () else
@@ -256,12 +257,17 @@ let stack_enumeration (cg : contextual_grammar) state ~lower_bound ~upper_bound 
       | [] -> ()
       | x :: xs ->
         stack := xs;
+        decr stack_size;
         let children = state_successors ~maxFreeParameters cg x in
         children |> List.iter ~f:(fun child ->
             if state_finished child then
               (if lower_bound <= child.cost && child.cost < upper_bound then k (child.skeleton) (child.context) (0.-.child.cost))
             else
-              (if child.cost < upper_bound then stack := child :: !stack));
+              (if child.cost < upper_bound then
+                 (stack := child :: !stack; incr stack_size;
+                  (if power_of 10 !stack_size then (Printf.eprintf "stack size %d\n" !stack_size; flush_everything()))
+                 )));
+        
         loop()
   in
   loop ()
