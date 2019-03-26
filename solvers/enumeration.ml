@@ -266,8 +266,8 @@ let stack_enumeration (cg : contextual_grammar) state ~lower_bound ~upper_bound 
             else
               (if child.cost < upper_bound then
                  (stack := child :: !stack; incr stack_size;
-                  (if power_of 10 !stack_size && !stack_size > !biggest_update then
-                     (biggest_update := !stack_size; Printf.eprintf "stack size %d\n" !stack_size; flush_everything()))
+                  (if power_of 2 !stack_size && !stack_size > !biggest_update then
+                     (assert (List.length !stack = !stack_size); biggest_update := !stack_size; Printf.eprintf "stack size %d\n" !stack_size; flush_everything()))
                  )));
         
         loop()
