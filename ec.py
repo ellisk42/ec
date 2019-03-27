@@ -865,6 +865,7 @@ def commandlineArguments(_=None,
                         type=str)
     parser.add_argument("--primitive-graph",
                         dest="primitive-graph",
+                        nargs='+',
                         help="Displays a dependency graph of the learned primitives",
                         default=None,
                         type=str)
@@ -934,9 +935,10 @@ def commandlineArguments(_=None,
         del v["clear-recognition"]
         
     if v["primitive-graph"] is not None:
-        with open(v["primitive-graph"],'rb') as handle:
-            result = dill.load(handle)
-        graphPrimitives(result,v["primitive-graph"],view=True)
+        for n,pg in enumerate(v["primitive-graph"]):
+            with open(pg,'rb') as handle:
+                result = dill.load(handle)
+            graphPrimitives(result,f"figures/deepProgramLearning/{n}",view=True)
         sys.exit(0)
     else:
         del v["primitive-graph"]
