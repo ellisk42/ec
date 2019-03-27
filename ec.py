@@ -935,10 +935,11 @@ def commandlineArguments(_=None,
         del v["clear-recognition"]
         
     if v["primitive-graph"] is not None:
+        
         for n,pg in enumerate(v["primitive-graph"]):
             with open(pg,'rb') as handle:
                 result = dill.load(handle)
-            graphPrimitives(result,f"figures/deepProgramLearning/{n}",view=True)
+            graphPrimitives(result,f"figures/deepProgramLearning/{sys.argv[0]}{n}",view=True)
         sys.exit(0)
     else:
         del v["primitive-graph"]
