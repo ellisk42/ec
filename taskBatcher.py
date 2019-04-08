@@ -64,35 +64,22 @@ class RandomShuffleTaskBatcher:
                 return list(set(taskBatch))
 
 class UnsolvedTaskBatcher:
-        """At a given epoch, returns only batches of the tasks that have never been solved over any previous iteration."""
+        """At a given epoch, returns only batches of the tasks that have not been solved at least twice"""
 
         def __init__(self):
-                self.epochTasks = None
+                self.timesSolved = {} # map from task to times that we have solved it
                 self.start = 0
 
         def getTaskBatch(self, ec_result, tasks, taskBatchSize, currIteration):
-                if self.epochTasks is None:
-                        unsolvedTasks = [t for t in tasks if ec_result.allFrontiers[t].empty]
-                        # Shuffle the unsolved tasks.
-                        random.Random(0).shuffle(unsolvedTasks)
-                        self.epochTasks = unsolvedTasks
-                        eprint("Empty unsolved epoch tasks, getting %d new unsolved tasks." % len(self.epochTasks))
+                assert taskBatchSize is None, "This batching strategy does not support batch sizes"
 
-                if taskBatchSize is None:
-                        taskBatchSize = len(self.epochTasks)
-
-                end = self.start + taskBatchSize
-
-                batch = self.epochTasks[self.start:end]
-                self.start = end
-
-                if end >= len(self.epochTasks):
-                        # Next time, need to start over.
-                        self.epochTasks = None
-                        self.start = 0
-
-                return batch
-
+                for t,f in ec_result.allFrontiers.items():
+                        if f.empty:
+                                self.timesSolved[t] = max(0, self.timesSolved.get(t,0))
+                        else:
+                                self.timesSolved[t] = 1 + self.timesSolved.get(t, 0)
+                return [t for t in tasks if self.timesSolved.get(t,0) < 2 ]
+        
 def entropyRandomBatch(ec_result, tasks, taskBatchSize, randomRatio):
         numRandom = int(randomRatio * taskBatchSize)
         numEntropy = taskBatchSize - numRandom

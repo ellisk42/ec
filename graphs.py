@@ -461,13 +461,15 @@ def plotECResult(
                 timeAxis.errorbar(xs,ys,yerr=es,color=color,ls=ls)
     else:
         if solveAxis:
-            for (color,ls),cs in shuffled(plotCommands_solve.items()):
-                for (xs,ys) in cs:            
-                    solveAxis.plot(xs,ys,color=color,ls=ls,alpha=alpha)
+            for (color,ls,xs,ys) in shuffled([ (color,ls,xs,ys)
+                                            for (color,ls),cs in plotCommands_solve.items()
+                                            for xs,ys in cs]):
+                solveAxis.plot(xs,ys,color=color,ls=ls,alpha=alpha)
         if timeAxis:
-            for (color,ls),cs in shuffled(plotCommands_time.items()):
-                for (xs,ys) in cs:
-                    timeAxis.plot(xs,ys,color=color,ls=ls,alpha=alpha)
+            for (color,ls,xs,ys) in shuffled([ (color,ls,xs,ys)
+                                               for (color,ls),cs in plotCommands_time.items()
+                                               for xs,ys in cs]):
+                timeAxis.plot(xs,ys,color=color,ls=ls,alpha=alpha)
 
     if solveAxis and likelihood is None:
         a1.set_ylim(ymin=0, ymax=maxP)
