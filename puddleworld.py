@@ -3,9 +3,17 @@ Puddleworld.
 Tasks are (gridworld, text instruction) -> goal coordinate.
 Credit: https://github.com/JannerM/spatial-reasoning 
 """
+import datetime
+import os
+import random
+
 from ec import explorationCompression, commandlineArguments, Task, ecIterator
-from makePuddleworldTasks import makeLocalTasks, makeGlobalTasks
+from grammar import Grammar
 from utilities import eprint, numberOfCPUs
+
+from puddleworldPrimitives import primitives
+from makePuddleworldTasks import makeLocalTasks, makeGlobalTasks
+
 
 def puddleworld_options(parser):
 	parser.add_argument(
@@ -20,6 +28,10 @@ def puddleworld_options(parser):
 		default=False,
 		help='Include global navigation tasks.'
 		)
+	parser.add_argument("--random-seed", 
+		type=int, 
+		default=0
+		)
 
 if __name__ == "__main__":
 	args = commandlineArguments(
@@ -29,11 +41,22 @@ if __name__ == "__main__":
 		CPUs=numberOfCPUs(),
 		extras=puddleworld_options)
 
+	# Set up.
+	random.seed(args.pop("random_seed"))
+	timestamp = datetime.datetime.now().isoformat()
+	outputDirectory = "experimentOutputs/puddleworld/%s"%timestamp
+	os.system("mkdir -p %s"%outputDirectory)
+
+
+	# Make tasks.
 	doLocal, doGlobal = args.pop('local'), args.pop('global')
-	eprint("Using local tasks: %r, Using global tasks: %r" % (doLocal, doGlobal))
-
-	localTrain, localTest = makeLocalTasks() if doLocal else []
-	globalTrain, globalTest = makeGlobalTasks() if doGlobal else []
+	localTrain, localTest = makeLocalTasks() if doLocal else [], []
+	globalTrain, globalTest = makeGlobalTasks() if doGlobal else [], []
+	eprint("Using local tasks: %d train, %d test" % (len(localTrain), len(localTest)))
+	eprint("Using global tasks: %d train, %d test" % (len(globalTrain), len(globalTest)))
 		
+	# Make starting grammar.
+	baseGrammar = Grammar.uniform(primitives)
 
+	# Train.
 	assert False

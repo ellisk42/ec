@@ -1,4 +1,4 @@
-
+from pyccg.logic import TypeSystem, Ontology, Expression
 
 class UnificationFailure(Exception):
     pass
