@@ -1,3 +1,4 @@
+import inspect
 import signal
 import random
 import time
@@ -45,6 +46,17 @@ class Bunch(object):
     def __getitem__(self, key):
         return self.__dict__[key]
 
+def curry(fn):
+    """Curries a function. Hacky way to return a curried version of functions with arbitrary #s of args. """
+    def make_curry_fn(signature):
+        """Redefines a currying function with the appropriate arguments. Hacky."""
+        tmp_curry = 'def tmp_curry(f): return ' 
+        tmp_curry += " ".join(['lambda %s: ' % argname for argname in signature.parameters])
+        tmp_curry += 'f'
+        tmp_curry += str(signature)
+        return tmp_curry
+    exec(make_curry_fn(inspect.signature(fn)), globals())
+    return tmp_curry(fn)
 
 def hashable(v):
     """Determine whether `v` can be hashed."""
