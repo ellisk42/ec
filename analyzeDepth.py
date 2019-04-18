@@ -11,8 +11,11 @@ import matplotlib.pyplot as plot
 import matplotlib.patches as mpatches
 import os
 
-MARKERONE = 'o'
-MARKERTWO = 'X'
+MARKERONE = '*'
+MARKERTWO = 'v'
+
+FONTSIZE = 18
+TICKFONTSIZE = 14
 
 def primitiveDepth(e):
     if isinstance(e,Invented):
@@ -65,8 +68,8 @@ if __name__ == "__main__":
     
 
     for mode in ["MAX","MEAN","SIZE"]:
-        plot.figure()
-        colors = 'rgbcym'
+        plot.figure(figsize=(4,4))
+        colors = ["purple","orange","teal","darkgoldenrod","maroon"]
 
         X = []
         Y = []
@@ -98,16 +101,18 @@ if __name__ == "__main__":
             legend.append((domain, colors[0]))
             colors = colors[1:]
 
-        plot.ylabel("% Testing Tasks Solved")
+        plot.ylabel("% Testing Tasks Solved",
+                    fontsize=FONTSIZE)
         plot.xlabel({"MAX": "Maximum library depth",
                      "MEAN": "Average library depth",
-                     "SIZE": "Library size"}[mode])
+                     "SIZE": "Library size"}[mode],
+                    fontsize=FONTSIZE)
+        plot.xticks(fontsize=TICKFONTSIZE)
+        plot.yticks(fontsize=TICKFONTSIZE)
         if mode in {"MAX","SIZE"}:
             plot.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
         r,p = pearsonr(X,Y)
         print(mode,r,p)
-
-        
 
         plot.legend(fancybox=True, shadow=True,
                     handles=[mpatches.Patch(color=color, 
@@ -116,6 +121,11 @@ if __name__ == "__main__":
                     [mlines.Line2D([], [], color='k', marker=marker, ls='None',
                                    label=label)
                      for marker, label in [(MARKERONE,"Full model"),
-                                           (MARKERTWO,"No Rec")]])
+                                           (MARKERTWO,"No Rec")]],
+                    bbox_to_anchor=(1,0.5),
+                    loc='center left')
+
         
-        plot.savefig(f"figures/depthVersusAccuracy_{mode}.png")
+        
+        plot.savefig(f"figures/depthVersusAccuracy_{mode}.png",
+                     bbox_inches='tight')

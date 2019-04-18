@@ -131,7 +131,7 @@ python tower.py  --primitive-graph experimentOutputs/towers/2019-02-12T22:26:56.
 python logo.py --primitive-graph `grep  -h it=20.*graph jobs/logo_batch_50*` # batching
 
 python list.py --primitive-graph `grep  -h it=20.*graph jobs/list_hard_test_ellisk*` # batching
-python list.py --primitive-graph /om2/user/zyzzyva/ec/experimentOutputs/list_aic=1.0_arity=3_BO=True_CO=True_ET=7200_HR=0.5_it=7_MF=10_baseline=False_pc=10.0_RT=3600_RW=False_storeTask=True_L=2.0_taskReranker=default_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor_graph=True.pickle # no batching
+python list.py --primitive-graph experimentOutputs/list_aic=1.0_arity=4_ET=11640_expandFrontier=4.0_it=4_MF=5_baseline=False_pc=30.0_RW=False_storeTask=False_L=1.0_taskReranker=default_K=2_topkNotMAP=False_rec=False.pickle `grep  -h it=20.*graph jobs/list_hard_test_ellisk*` /om2/user/zyzzyva/ec/experimentOutputs/list_aic=1.0_arity=3_BO=True_CO=True_ET=7200_HR=0.5_it=7_MF=10_baseline=False_pc=10.0_RT=3600_RW=False_storeTask=True_L=2.0_taskReranker=default_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor_graph=True.pickle # both batching and not batching and then McCarthy
 
 python text.py --primitive-graph `grep  -h it=20.*graph jobs/text_ellisk_2019-01-2*`
 
