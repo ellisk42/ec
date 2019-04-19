@@ -76,11 +76,12 @@ class SupervisedTower(Task):
         show()
 
     @staticmethod
-    def exportMany(f, ts, shuffle=True):
+    def exportMany(f, ts, shuffle=True, columns=None):
         ts = list(ts)
         if shuffle: random.shuffle(ts)
         a = montage([renderPlan(t.plan, pretty=True, Lego=True, resolution=256)
-                     for t in ts]) 
+                     for t in ts],
+                    columns=columns)        
         import scipy.misc
         scipy.misc.imsave(f, a)
         
@@ -528,14 +529,19 @@ if __name__ == "__main__":
                 "bridge",
                 "aqueduct",
                 "spaced",
+                "spaced",
                 "arch stack"]
     for n in range(100):
         examples = []
         for kw in keywords:
-            examples.append(random.choice(list(filter(lambda t: kw in str(t), ts))))
+            if kw == "on top of":
+                examples = examples + list(filter(lambda t: kw in str(t), ts))
+            else:
+                examples.append(random.choice(list(filter(lambda t: kw in str(t), ts))))
 
         random.shuffle(examples)
-        SupervisedTower.exportMany("/tmp/tower9_%d.png"%n,examples)
+        SupervisedTower.exportMany("/tmp/tower10_%d.png"%n,examples,
+                                   columns=int(len(examples)/2))
         
         
         

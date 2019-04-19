@@ -657,7 +657,7 @@ def manualLogoTasks():
           needToTrain=n == 5)
     return tasks
 
-def montageTasks(tasks, prefix=""):
+def montageTasks(tasks, prefix="", columns=None):
     import numpy as np
     
     w = 128
@@ -668,7 +668,7 @@ def montageTasks(tasks, prefix=""):
     arrays = [np.array([a[i:i + w]
                         for i in range(0, len(a), w) ])
               for a in arrays]
-    i = montage(arrays)
+    i = montage(arrays, columns=columns)
 
     import scipy.misc
     scipy.misc.imsave('/tmp/%smontage.png'%prefix, i)
@@ -701,6 +701,6 @@ if __name__ == "__main__":
 
     tasks = [t for t in tasks if t.mustTrain ]
     random.shuffle(tasks)
-    montageTasks(tasks[:16],"subset")
+    montageTasks(tasks[:16*3],"subset",columns=16)
 
     montageTasks(rotationalSymmetryDemo(),"rotational")
