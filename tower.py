@@ -297,7 +297,8 @@ if __name__ == "__main__":
     if checkpoint is not None:
         with open(checkpoint,'rb') as handle:
             g = pickle.load(handle).grammars[-1]
-        dreamOfTowers(g,"/tmp/tower_dreams")
+        os.system("mkdir  -p data/tower_dreams")
+        dreamOfTowers(g,"data/tower_dreams",montage=False)
         sys.exit(0)
         
     
