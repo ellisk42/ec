@@ -704,3 +704,21 @@ if __name__ == "__main__":
     montageTasks(tasks[:16*3],"subset",columns=16)
 
     montageTasks(rotationalSymmetryDemo(),"rotational")
+
+    from grammar import *
+    from logoPrimitives import *
+
+    g0 = Grammar.uniform(primitives, continuationType=turtle)
+    eprint("dreaming into /tmp/dreams_0...")
+    N = 1000
+    programs = [ p
+                     for _ in range(N)
+                     for p in [g0.sample(arrow(turtle,turtle),
+                                         maximumDepth=20)]
+                     if p is not None]
+    os.system("mkdir  -p /tmp/dreams_0")
+    drawLogo(*programs, pretty=True, smoothPretty=False,
+             resolution=512,
+             filenames=[f"/tmp/dreams_0/{n}_pretty.png"
+                        for n in range(len(programs)) ],
+             timeout=1)

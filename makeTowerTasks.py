@@ -520,6 +520,14 @@ if __name__ == "__main__":
         import scipy.misc
         scipy.misc.imsave(f"/tmp/tower_dsl_{k}.png", v)
 
+    exampleTowers = [103,104,105,93,73,
+                     50,67,35,43,106]
+    SupervisedTower.exportMany("/tmp/tower_montage.png",
+                               [ts[n] for n in exampleTowers ],
+                               columns=5,
+                               shuffle=False)
+    assert False
+
 
     keywords = ["pyramid",
                 "on top of",
