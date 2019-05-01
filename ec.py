@@ -147,6 +147,7 @@ def ecIterator(grammar, tasks,
                seed=0,
                addFullTaskMetrics=False,
                matrixRank=None,
+               solver='ocaml',
                compressor="rust",
                biasOptimal=False,
                contextual=False,
@@ -338,6 +339,7 @@ def ecIterator(grammar, tasks,
         enumerator = lambda *args, **kw: _enumerator(*args, 
                                                      maximumFrontier=maximumFrontier, 
                                                      CPUs=CPUs, evaluationTimeout=evaluationTimeout,
+                                                     solver=solver,
                                                      **kw)
         trainFrontiers, _, trainingTimes = enumerator(tasks, enumerationTimeout=enumerationTimeout)
         testFrontiers, _, testingTimes = enumerator(testingTasks, enumerationTimeout=testingTimeout, testing=True)
@@ -378,6 +380,7 @@ def ecIterator(grammar, tasks,
             eprint("Evaluating on held out testing tasks for iteration: %d" % (j))
             evaluateOnTestingTasks(result, testingTasks, grammar,
                                    CPUs=CPUs, maximumFrontier=maximumFrontier,
+                                   solver=solver,
                                    enumerationTimeout=testingTimeout, evaluationTimeout=evaluationTimeout)            
         # If we have to also enumerate Helmholtz frontiers,
         # do this extra sneaky in the background
@@ -401,7 +404,8 @@ def ecIterator(grammar, tasks,
 
         # WAKING UP
         if useDSL:
-            topDownFrontiers, times = wake_generative(grammar, wakingTaskBatch, 
+            topDownFrontiers, times = wake_generative(grammar, wakingTaskBatch,
+                                                      solver=solver,
                                                       maximumFrontier=maximumFrontier,
                                                       enumerationTimeout=enumerationTimeout,
                                                       CPUs=CPUs,
@@ -443,7 +447,7 @@ def ecIterator(grammar, tasks,
                                timeout=recognitionTimeout, evaluationTimeout=evaluationTimeout,
                                enumerationTimeout=enumerationTimeout,
                                helmholtzRatio=thisRatio, helmholtzFrontiers=helmholtzFrontiers(),
-                               auxiliaryLoss=auxiliaryLoss, cuda=cuda, CPUs=CPUs,
+                               auxiliaryLoss=auxiliaryLoss, cuda=cuda, CPUs=CPUs, solver=solver,
                                recognitionSteps=recognitionSteps, maximumFrontier=maximumFrontier)
 
             showHitMatrix(tasksHitTopDown, tasksHitBottomUp, wakingTaskBatch)
@@ -505,12 +509,13 @@ def showHitMatrix(top, bottom, tasks):
                                              len(top & bottom)))
 
 def evaluateOnTestingTasks(result, testingTasks, grammar, _=None,
-                           CPUs=None, maximumFrontier=None, enumerationTimeout=None, evaluationTimeout=None):
+                           CPUs=None, solver=None, maximumFrontier=None, enumerationTimeout=None, evaluationTimeout=None):
     if result.recognitionModel is not None:
         recognizer = result.recognitionModel
         testingFrontiers, times = \
          recognizer.enumerateFrontiers(testingTasks, 
                                        CPUs=CPUs,
+                                       solver=solver,
                                        maximumFrontier=maximumFrontier,
                                        enumerationTimeout=enumerationTimeout,
                                        evaluationTimeout=evaluationTimeout,
@@ -520,6 +525,7 @@ def evaluateOnTestingTasks(result, testingTasks, grammar, _=None,
         updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskGrammarEntropies(testingTasks), 'heldoutTaskGrammarEntropies')
     else:
         testingFrontiers, times = multicoreEnumeration(grammar, testingTasks, 
+                                                       solver=solver,
                                                        maximumFrontier=maximumFrontier,
                                                        enumerationTimeout=enumerationTimeout,
                                                        CPUs=CPUs,
@@ -542,11 +548,13 @@ def wake_generative(grammar, tasks,
                     maximumFrontier=None,
                     enumerationTimeout=None,
                     CPUs=None,
+                    solver=None,
                     evaluationTimeout=None):
     topDownFrontiers, times = multicoreEnumeration(grammar, tasks, 
                                                    maximumFrontier=maximumFrontier,
                                                    enumerationTimeout=enumerationTimeout,
                                                    CPUs=CPUs,
+                                                   solver=solver,
                                                    evaluationTimeout=evaluationTimeout)
     eprint("Generative model enumeration results:")
     eprint(Frontier.describe(topDownFrontiers))
@@ -559,7 +567,7 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
                       previousRecognitionModel=None, recognitionSteps=None,
                       timeout=None, enumerationTimeout=None, evaluationTimeout=None,
                       helmholtzRatio=None, helmholtzFrontiers=None, maximumFrontier=None,
-                      auxiliaryLoss=None, cuda=None, CPUs=None):
+                      auxiliaryLoss=None, cuda=None, CPUs=None, solver=None):
     eprint("Using an ensemble size of %d. Note that we will only store and test on the best recognition model." % ensembleSize)
 
     featureExtractorObjects = [featureExtractor(tasks, testingTasks=testingTasks, cuda=cuda) for i in range(ensembleSize)]
@@ -590,7 +598,7 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
     # Enumerate frontiers for each of the recognizers.
     eprint("Trained an ensemble of %d recognition models, now enumerating." % len(trainedRecognizers))
     ensembleFrontiers, ensembleTimes, ensembleRecognitionTimes = [], [], []
-    mostTasks = 0
+    mostTasks = 0+14049668622
     bestRecognizer = None
     totalTasksHitBottomUp = set()
     for recIndex, recognizer in enumerate(trainedRecognizers):
@@ -600,7 +608,8 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
                                                       CPUs=CPUs,
                                                       maximumFrontier=maximumFrontier,
                                                       enumerationTimeout=enumerationTimeout,
-                                                      evaluationTimeout=evaluationTimeout)
+                                                      evaluationTimeout=evaluationTimeout,
+                                                      solver=solver)
         ensembleFrontiers.append(bottomupFrontiers)
         ensembleTimes.append([t for t in allRecognitionTimes.values() if t is not None])
         ensembleRecognitionTimes.append(allRecognitionTimes)
@@ -701,6 +710,7 @@ def commandlineArguments(_=None,
                          topK=1,
                          reuseRecognition=False,
                          CPUs=1,
+                         solver='ocaml',
                          compressor="ocaml",
                          useRecognitionModel=True,
                          recognitionTimeout=None,
@@ -831,6 +841,16 @@ def commandlineArguments(_=None,
         help="""Activation function for neural recognition model.
                         Default: %s""" %
         activation)
+    parser.add_argument(
+        "--solver",
+        choices=[
+            "ocaml",
+            "pypy",
+            "python"],
+        default=solver,
+        help="""Solver for enumeration.
+                        Default: %s""" %
+        solver)
     parser.add_argument(
         "-r",
         "--Helmholtz",

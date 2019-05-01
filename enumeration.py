@@ -1,4 +1,5 @@
 from utilities import eprint
+from likelihoodModel import AllOrNothingLikelihoodModel
 from frontier import *
 from task import *
 from type import *
@@ -13,6 +14,7 @@ import threading
 
 def multicoreEnumeration(g, tasks, _=None,
                          enumerationTimeout=None,
+                         solver='ocaml',
                          CPUs=1,
                          maximumFrontier=None,
                          verbose=True,
@@ -26,7 +28,17 @@ def multicoreEnumeration(g, tasks, _=None,
     # library. This is because we need to be able to kill workers.
     from multiprocessing import Process, Queue
 
-    solver = solveForTask_ocaml
+    solvers = {"ocaml": solveForTask_ocaml,   
+               "pypy": solveForTask_pypy,   
+               "python": solveForTask_python}   
+    assert solver in solvers, "You must specify a valid solver. options are ocaml, pypy, or python." 
+
+    likelihoodModel = None
+    if solver == 'pypy' or solver == 'python':
+      # Use an all or nothing likelihood model.
+      likelihoodModel = AllOrNothingLikelihoodModel(timeout=evaluationTimeout) 
+      
+    solver = solvers[solver]
 
     if not isinstance(g, dict):
         g = {t: g for t in tasks}
@@ -149,7 +161,8 @@ def multicoreEnumeration(g, tasks, _=None,
                                  timeout=thisTimeout,
                                  evaluationTimeout=evaluationTimeout,
                                  maximumFrontiers=maximumFrontiers(j),
-                                 testing=testing)
+                                 testing=testing,
+                                 likelihoodModel=likelihoodModel)
                 id2CPUs[nextID] = allocation[j]
                 id2job[nextID] = j
                 nextID += 1
@@ -234,6 +247,7 @@ def solveForTask_ocaml(_=None,
                        lowerBound=None, upperBound=None, budgetIncrement=None,
                        timeout=None,
                        testing=None, # FIXME: unused
+                       likelihoodModel=None,
                        evaluationTimeout=None, maximumFrontiers=None):
 
     import json
@@ -318,9 +332,130 @@ def solveForTask_ocaml(_=None,
 
     return frontiers, searchTimes
 
+def solveForTask_pypy(_=None,
+                      elapsedTime=0.,
+                      g=None, task=None,
+                      lowerBound=None, upperBound=None, budgetIncrement=None,
+                      timeout=None,
+                      likelihoodModel=None,
+                      evaluationTimeout=None, maximumFrontier=None, testing=False):
+    return callCompiled(enumerateForTasks,
+                        g, tasks, likelihoodModel,
+                        timeout=timeout,
+                        testing=testing,
+                        elapsedTime=elapsedTime,
+                        evaluationTimeout=evaluationTimeout,
+                        maximumFrontiers=maximumFrontiers,
+                        budgetIncrement=budgetIncrement,
+                        lowerBound=lowerBound, upperBound=upperBound)
+
+def solveForTask_python(_=None,
+                        elapsedTime=0.,
+                        g=None, tasks=None,
+                        lowerBound=None, upperBound=None, budgetIncrement=None,
+                        timeout=None,
+                        CPUs=1,
+                        likelihoodModel=None,
+                        evaluationTimeout=None, maximumFrontiers=None, testing=False):
+    return enumerateForTasks(g, tasks, likelihoodModel,
+                             timeout=timeout,
+                             testing=testing,
+                             elapsedTime=elapsedTime,
+                             evaluationTimeout=evaluationTimeout,
+                             maximumFrontiers=maximumFrontiers,
+                             budgetIncrement=budgetIncrement,
+                             lowerBound=lowerBound, upperBound=upperBound)
+
 
 class EnumerationTimeout(Exception):
     pass
+
+def enumerateForTasks(g, tasks, likelihoodModel, _=None,
+                      verbose=False,
+                      timeout=None,
+                      elapsedTime=0.,
+                      CPUs=1,
+                      testing=False, #unused
+                      evaluationTimeout=None,
+                      lowerBound=0.,
+                      upperBound=100.,
+                      budgetIncrement=1.0, maximumFrontiers=None):
+    assert timeout is not None, \
+        "enumerateForTasks: You must provide a timeout."
+
+    from time import time
+
+    request = tasks[0].request
+    assert all(t.request == request for t in tasks), \
+        "enumerateForTasks: Expected tasks to all have the same type"
+
+    maximumFrontiers = [maximumFrontiers[t] for t in tasks]
+    # store all of the hits in a priority queue
+    # we will never maintain maximumFrontier best solutions
+    hits = [PQ() for _ in tasks]
+
+    starting = time()
+    previousBudget = lowerBound
+    budget = lowerBound + budgetIncrement
+    try:
+        totalNumberOfPrograms = 0
+        while time() < starting + timeout and \
+                any(len(h) < mf for h, mf in zip(hits, maximumFrontiers)) and \
+                budget <= upperBound:
+            numberOfPrograms = 0
+            for prior, _, p in g.enumeration(Context.EMPTY, [], request,
+                                             maximumDepth=99,
+                                             upperBound=budget,
+                                             lowerBound=previousBudget):
+                descriptionLength = -prior
+                # Shouldn't see it on this iteration
+                assert descriptionLength <= budget
+                # Should already have seen it
+                assert descriptionLength > previousBudget
+
+                numberOfPrograms += 1
+                totalNumberOfPrograms += 1
+
+                for n in range(len(tasks)):
+                    task = tasks[n]
+
+                    #Warning:changed to max's new likelihood model situation
+                    #likelihood = task.logLikelihood(p, evaluationTimeout)
+                    #if invalid(likelihood):
+                        #continue
+                    success, likelihood = likelihoodModel.score(p, task)
+                    if not success:
+                        continue
+                    
+
+                    dt = time() - starting + elapsedTime
+                    priority = -(likelihood + prior)
+                    hits[n].push(priority,
+                                 (dt, FrontierEntry(program=p,
+                                                    logLikelihood=likelihood,
+                                                    logPrior=prior)))
+                    if len(hits[n]) > maximumFrontiers[n]:
+                        hits[n].popMaximum()
+
+                if timeout is not None and time() - starting > timeout:
+                    raise EnumerationTimeout
+
+            previousBudget = budget
+            budget += budgetIncrement
+
+            if budget > upperBound:
+                break
+    except EnumerationTimeout:
+        pass
+
+    frontiers = {tasks[n]: Frontier([e for _, e in hits[n]],
+                                    task=tasks[n])
+                 for n in range(len(tasks))}
+    searchTimes = {
+        tasks[n]: None if len(hits[n]) == 0 else \
+        min(t for t,_ in hits[n]) for n in range(len(tasks))}
+
+    return frontiers, searchTimes
 
 
 
