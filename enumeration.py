@@ -6,6 +6,7 @@ from program import *
 from grammar import *
 
 import gc
+import os
 import traceback
 import subprocess
 import threading
@@ -271,7 +272,9 @@ def solveForTask_ocaml(_=None,
     
 
     try:
-        process = subprocess.Popen("./solver",
+        dir = os.path.dirname(__file__)
+        solver_file = os.path.join(dir, 'solver')
+        process = subprocess.Popen(solver_file,
                                    stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE)
         response, error = process.communicate(bytes(message, encoding="utf-8"))
