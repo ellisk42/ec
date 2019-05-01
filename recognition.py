@@ -1144,6 +1144,7 @@ class RecognitionModel(nn.Module):
                            tasks,
                            enumerationTimeout=None,
                            testing=False,
+                           solver=None,
                            CPUs=1,
                            frontierSize=None,
                            maximumFrontier=None,
@@ -1156,6 +1157,7 @@ class RecognitionModel(nn.Module):
 
         return multicoreEnumeration(grammars, tasks,
                                     testing=testing,
+                                    solver=solver,
                                     enumerationTimeout=enumerationTimeout,
                                     CPUs=CPUs, maximumFrontier=maximumFrontier,
                                     evaluationTimeout=evaluationTimeout)
