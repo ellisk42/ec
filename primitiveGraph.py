@@ -34,12 +34,17 @@ def graphPrimitives(result, prefix, view=False):
         return " ".join(l)
 
     nameSimplification = {
+        "fix1": 'Y',
+        "tower_loopM": "for",
+        "tower_embed": "get/set",
+        "moveHand": "move",
+        "reverseHand": "reverse",
         "logo_DIVA": '/',
         "logo_epsA": 'ε',
         "logo_epsL": 'ε',
         "logo_IFTY": '∞',
         "logo_forLoop": "for",
-        "logo_UA": "2𝜋",
+        "logo_UA": "2π",
         "logo_FWRT": "move",
         "logo_UL": "1",
         "logo_SUBA": "-",
@@ -145,7 +150,7 @@ def graphPrimitives(result, prefix, view=False):
         for o in sorted(ordering.keys()):
             with g.subgraph(name='cluster_%d'%o) as sg:
                 sg.graph_attr['rank'] = 'same'
-                sg.attr(label='Depth %d'%o)
+                #sg.attr(label='Depth %d'%o)
                 for p in ordering[o]:
                     if str(p) in englishDescriptions:
                         thisLabel = '<<font face="boldfontname"><u>%s</u></font><br />%s>'%(englishDescriptions[str(p)],simplification[p])
@@ -161,16 +166,17 @@ def graphPrimitives(result, prefix, view=False):
                             for _,k in p.body.walk()
                             if k.isInvented}
                 for k in children:
-                    g.edge(name[p],name[k])
+                    g.edge(name[k],name[p])
 
+        eprint("Exporting primitive graph to",fn)
         try:
             g.render(fn,view=view)
-            eprint("Exported primitive graph to",fn)
-        except:
+        except Exception as e:
             eprint("Got some kind of error while trying to render primitive graph! Did you install graphviz/dot?")
+            print(e)
         
         
 
-    #makeGraph(depth2primitives,prefix+'depth.pdf')
+    makeGraph(depth2primitives,prefix+'depth.pdf')
     makeUnorderedGraph(prefix+'unordered.pdf')
     #makeGraph(age2primitives,prefix+'iter.pdf')

@@ -143,13 +143,15 @@ def tower_options(parser):
                         default=None, type=str)
     parser.add_argument("--split",
                         default=1., type=float)
+    parser.add_argument("--dream",
+                        default=None, type=str)
     parser.add_argument("--primitives",
                         default="old", type=str,
                         choices=["new", "old"])
     
     
 
-def dreamOfTowers(grammar, prefix, N=250):
+def dreamOfTowers(grammar, prefix, N=250, montage=True):
     from tower_common import renderPlan
     
     request = arrow(ttower,ttower)
@@ -166,9 +168,13 @@ def dreamOfTowers(grammar, prefix, N=250):
 
     # Only visualize if it has something to visualize.
     if len(matrix) > 0:
-        matrix = montage(matrix)
         import scipy.misc
-        scipy.misc.imsave('%s.png'%prefix, matrix)
+        if montage:
+            matrix = montage(matrix)
+            scipy.misc.imsave('%s.png'%prefix, matrix)
+        else:
+            for n,i in enumerate(matrix):
+                scipy.misc.imsave(f'{prefix}/{n}.png', i)
     else:
         eprint("Tried to visualize dreams, but none to visualize.")
 
@@ -286,6 +292,13 @@ if __name__ == "__main__":
         visualizeSolutions(solutions,
                            checkpoint + ".solutions.png")
         animateSolutions(checkpoint)
+        sys.exit(0)
+    checkpoint = arguments.pop("dream")
+    if checkpoint is not None:
+        with open(checkpoint,'rb') as handle:
+            g = pickle.load(handle).grammars[-1]
+        os.system("mkdir  -p data/tower_dreams")
+        dreamOfTowers(g,"data/tower_dreams",montage=False)
         sys.exit(0)
         
     

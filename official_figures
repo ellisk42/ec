@@ -18,7 +18,7 @@ python graphs.py -i 20 --testingTimeout 600 --export figures/list_hard_time.png 
 
 
 ### LOGO figures - time and hits split
-python graphs.py --checkpoints teal `grep  -h it=20.*graph jobs/logo_auxiliary_batch_40_1h*` orange `grep  -h it=13.*graph jobs/logo_no_dsl_auxiliary_batch_40_1h_ellisk_2019-02-11*` purple `grep  -h it=11.*pickle jobs/logo_no_recognition_batch_40_1h_ellisk*|sed 's/Exported checkpoint to//g'` --export figures/logo_hits.png --noTime -i 11 --x-label "" --title "LOGO Graphics"
+python graphs.py --checkpoints teal `grep  -h it=20.*graph jobs/logo_batch_50_1h_ell*` orange `grep  -h it=20.*graph jobs/logo_no_dsl_auxiliary_batch_50_1h*` purple `grep  -h it=20.*pickle jobs/logo_no_recognition_batch_50_1h*|sed 's/Exported checkpoint to//g'` --export figures/logo_hits.png --noTime -i 20 --x-label "" --title "LOGO Graphics"
 python graphs.py --checkpoints teal `grep  -h it=20.*graph jobs/logo_auxiliary_batch_40_1h*` orange `grep  -h it=13.*graph jobs/logo_no_dsl_auxiliary_batch_40_1h_ellisk_2019-02-11*` purple `grep  -h it=11.*pickle jobs/logo_no_recognition_batch_40_1h_ellisk*|sed 's/Exported checkpoint to//g'` --export figures/logo_time.png --onlyTime -i 11   --testingTimeout 600
 
 ### Rational figures - time and hits split
@@ -26,8 +26,8 @@ python graphs.py --checkpoint teal `grep  -h it=20.*graph jobs/rational_batch*` 
 python graphs.py --checkpoint teal `grep  -h it=20.*graph jobs/rational_batch*` orange `grep  -h it=20.*graph jobs/rational_no_dsl*` purple `grep  -h it=20.*pickle jobs/rational_noRecognition*|sed 's/Exported checkpoint to//g'` --onlyTime --export figures/rational_time.png --testingTimeout 600
 
 ### Tower figures - time and hits split
-python graphs.py --checkpoints teal `grep  -h it=20.*graph jobs/tower_batch_40_3600_ellisk*` orange `grep  -h it=20.*graph jobs/tower_no_dsl_batch*` purple `grep  -h it=20.*pickle jobs/tower_no_recognition_batch*|sed 's/Exported checkpoint to//g'` --export figures/tower_hits.png --noTime --x-label "" --title "Tower building"
-python graphs.py --checkpoints teal `grep  -h it=20.*graph jobs/tower_batch_40_3600_ellisk*` orange `grep  -h it=11.*graph jobs/tower_no_dsl_batch*` purple `grep  -h it=11.*pickle jobs/tower_no_recognition_batch*|sed 's/Exported checkpoint to//g'` --export figures/tower_time.png --onlyTime --testingTimeout 600
+python graphs.py --checkpoints teal `grep  -h it=20.*graph jobs/tower_batch_50_3600*` orange `grep  -h it=20.*graph jobs/tower_no_dsl_batch_50_3600*` purple `grep  -h it=20.*pickle jobs/tower_no_recognition_batch_50_3600*|sed 's/Exported checkpoint to//g'` --export figures/tower_hits.png --noTime --x-label "" --title "Tower building"
+python graphs.py --checkpoints teal `grep  -h it=20.*graph jobs/tower_batch_50_3600*` orange `grep  -h it=20.*graph jobs/tower_no_dsl_batch_50_3600*` purple `grep  -h it=20.*pickle jobs/tower_no_recognition_batch_50_3600*|sed 's/Exported checkpoint to//g'` --export figures/tower_time.png --onlyTime --testingTimeout 600
 
 ### Regex figures - time and hits split
 
@@ -123,3 +123,25 @@ python taskRankGraphs.py --checkpoints /home/ellisk/om/ec/experimentOutputs/rati
 
 # Visualizing confusion matrices
 ./container.img python synergyStatistics.py /home/ellisk/om/ec/experimentOutputs/rational_aic=1.0_arity=3_BO=True_CO=True_ET=120_HR=0.5_it=20_MF=5_baseline=False_pc=30.0_RT=3600_RR=False_RW=False_storeTask=True_L=1.0_batch=10_taskReranker=randomShuffle_K=2_topkNotMAP=False_rec=True_feat=FeatureExtractor_graph=True.pickle /home/ellisk/om/ec/experimentOutputs/rational_aic=1.0_arity=3_ET=120_it=20_MF=5_baseline=False_pc=30.0_RW=False_STM=True_L=1.0_batch=10_TRR=randomShuffle_K=2_topkNotMAP=False_rec=False.pickle /home/ellisk/om/ec/experimentOutputs/rational_aic=1000.0_arity=3_BO=True_CO=True_ET=120_HR=0.5_it=14_MF=5_baseline=False_pc=30.0_RT=3600_RR=False_RW=False_storeTask=True_L=30.0_batch=10_taskReranker=randomShuffle_K=2_topkNotMAP=False_rec=True_feat=FeatureExtractor_graph=True.pickle
+
+### ~deep program learning~
+python tower.py  --primitive-graph `grep -h  it=20.*graph jobs/tower_batch_40_3600_ellisk_2019-0*` # batching
+python tower.py  --primitive-graph experimentOutputs/towers/2019-02-12T22:26:56.272150/tower_aic=1.0_arity=3_BO=True_CO=True_ES=1_ET=3600_HR=0.5_it=10_MF=5_pc=30.0_RS=5000_RT=3600_RR=False_RW=False_STM=True_L=1.5_TRR=default_K=2_topkNotMAP=False_graph=True.pickle # no batching
+
+python logo.py --primitive-graph `grep  -h it=20.*graph jobs/logo_batch_50*` # batching
+
+python list.py --primitive-graph `grep  -h it=20.*graph jobs/list_hard_test_ellisk*` # batching
+python list.py --primitive-graph experimentOutputs/list_aic=1.0_arity=4_ET=11640_expandFrontier=4.0_it=4_MF=5_baseline=False_pc=30.0_RW=False_storeTask=False_L=1.0_taskReranker=default_K=2_topkNotMAP=False_rec=False.pickle `grep  -h it=20.*graph jobs/list_hard_test_ellisk*` /om2/user/zyzzyva/ec/experimentOutputs/list_aic=1.0_arity=3_BO=True_CO=True_ET=7200_HR=0.5_it=7_MF=10_baseline=False_pc=10.0_RT=3600_RW=False_storeTask=True_L=2.0_taskReranker=default_K=2_topkNotMAP=False_rec=True_feat=LearnedFeatureExtractor_graph=True.pickle # both batching and not batching and then McCarthy
+
+python text.py --primitive-graph `grep  -h it=20.*graph jobs/text_ellisk_2019-01-2*`
+
+python rational.py --primitive-graph `grep  -h it=20.*graph jobs/rational_batch*`
+
+python regexes.py --primitive-graph `grep  -h it=20.*graph jobs/regex_b40_str_red_12m_mnye_2019-03*`
+
+python scientificLaws.py --primitive-graph `grep  -h it=.*graph jobs/scientific_unsolved_4h*`
+
+python list.py --primitive-graph experimentOutputs/list_aic=1.0_arity=4_ET=11640_expandFrontier=4.0_it=4_MF=5_baseline=False_pc=30.0_RW=False_storeTask=False_L=1.0_taskReranker=default_K=2_topkNotMAP=False_rec=False.pickle
+
+# this will show you the correlation between depth and accuracy
+python analyzeDepth.py  --recognition `grep -h  it=20.*graph jobs/tower_batch_50_3600*` `grep  -h it=20.*graph jobs/logo_batch_50*` `grep  -h it=20.*graph jobs/list_hard_test_ellisk*` `grep  -h it=20.*graph jobs/text_ellisk_2019-01-2*` `grep  -h it=20.*graph jobs/rational_batch*`  --generative `grep  -h 'it=20.*.pickle' jobs/text_no_recognition_ellisk*|sed 's/Exported checkpoint to//g'` `grep  -h 'it=20.*.pickle' jobs/list_hard_test_no_recognition_ellisk*|sed 's/Exported checkpoint to//g'` `grep  -h it=20.*pickle jobs/logo_no_recognition_batch_50_1h*|sed 's/Exported checkpoint to//g'` `grep  -h it=20.*pickle jobs/rational_noRecognition*|sed 's/Exported checkpoint to//g'` `grep  -h it=20.*pickle jobs/tower_no_recognition_batch_50_3600*|sed 's/Exported checkpoint to//g'`

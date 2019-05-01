@@ -775,9 +775,8 @@ def tuplify(x):
     return x
 
 # image montage!
-def makeNiceArray(l):
-    n = len(l)**0.5
-    n = int(n)
+def makeNiceArray(l, columns=None):
+    n = columns or int(len(l)**0.5)
     a = []
     while l:
         a.append(l[:n])
@@ -794,8 +793,8 @@ def montageMatrix(matrix):
     arrays = [np.concatenate(ts + [np.zeros(size, dtype=tp)] * (m - len(ts)), axis=1) for ts in arrays]
     arrays = np.concatenate(arrays, axis=0)
     return arrays
-def montage(arrays):
-    return montageMatrix(makeNiceArray(arrays))
+def montage(arrays, columns=None):
+    return montageMatrix(makeNiceArray(arrays, columns=columns))
 
 def showArrayAsImage(a):
     from pylab import imshow,show
