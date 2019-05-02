@@ -143,6 +143,7 @@ def explorationCompression(*arguments, **keywords):
 def ecIterator(grammar, tasks,
                _=None,
                useDSL=True,
+               noConsolidation=False,
                mask=False,
                seed=0,
                addFullTaskMetrics=False,
@@ -464,7 +465,7 @@ def ecIterator(grammar, tasks,
                                  'frontier')                
         
         # Sleep-G
-        if useDSL:
+        if useDSL and not(noConsolidation):
             eprint(f"Currently using this much memory: {getThisMemoryUsage()}")
             grammar = consolidate(result, grammar, topK=topK, pseudoCounts=pseudoCounts, arity=arity, aic=aic,
                                   structurePenalty=structurePenalty, compressor=compressor, CPUs=CPUs,
@@ -813,6 +814,10 @@ def commandlineArguments(_=None,
                         dest="useDSL",
                         action="store_false",
                         help="""Disable DSL enumeration and updating.""")
+    parser.add_argument("--no-consolidation",
+                        dest="noConsolidation",
+                        action="store_true",
+                        help="""Disable DSL updating.""")
     parser.add_argument(
         "--testingTimeout",
         type=int,
