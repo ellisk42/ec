@@ -26,7 +26,7 @@ def multicoreEnumeration(g, tasks, _=None,
 
     # We don't use actual threads but instead use the multiprocessing
     # library. This is because we need to be able to kill workers.
-    from multiprocessing import Process, Queue
+    from multiprocess import Process, Queue
 
     solvers = {"ocaml": solveForTask_ocaml,   
                "pypy": solveForTask_pypy,   
@@ -403,6 +403,7 @@ def enumerateForTasks(g, tasks, likelihoodModel, _=None,
                 any(len(h) < mf for h, mf in zip(hits, maximumFrontiers)) and \
                 budget <= upperBound:
             numberOfPrograms = 0
+
             for prior, _, p in g.enumeration(Context.EMPTY, [], request,
                                              maximumDepth=99,
                                              upperBound=budget,
@@ -426,8 +427,7 @@ def enumerateForTasks(g, tasks, likelihoodModel, _=None,
                     success, likelihood = likelihoodModel.score(p, task)
                     if not success:
                         continue
-                    
-
+                        
                     dt = time() - starting + elapsedTime
                     priority = -(likelihood + prior)
                     hits[n].push(priority,
@@ -447,7 +447,6 @@ def enumerateForTasks(g, tasks, likelihoodModel, _=None,
                 break
     except EnumerationTimeout:
         pass
-
     frontiers = {tasks[n]: Frontier([e for _, e in hits[n]],
                                     task=tasks[n])
                  for n in range(len(tasks))}

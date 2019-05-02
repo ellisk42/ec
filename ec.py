@@ -598,7 +598,7 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
     # Enumerate frontiers for each of the recognizers.
     eprint("Trained an ensemble of %d recognition models, now enumerating." % len(trainedRecognizers))
     ensembleFrontiers, ensembleTimes, ensembleRecognitionTimes = [], [], []
-    mostTasks = 0+14049668622
+    mostTasks = 0
     bestRecognizer = None
     totalTasksHitBottomUp = set()
     for recIndex, recognizer in enumerate(trainedRecognizers):
