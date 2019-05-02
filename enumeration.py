@@ -26,7 +26,10 @@ def multicoreEnumeration(g, tasks, _=None,
 
     # We don't use actual threads but instead use the multiprocessing
     # library. This is because we need to be able to kill workers.
-    from multiprocess import Process, Queue
+    from multiprocessing import Process, Queue
+
+    # everything that gets sent between processes will be dilled
+    import dill
 
     solvers = {"ocaml": solveForTask_ocaml,   
                "pypy": solveForTask_pypy,   
@@ -176,7 +179,7 @@ def multicoreEnumeration(g, tasks, _=None,
             break
 
         # Wait to get a response
-        message = Bunch(q.get())
+        message = Bunch(dill.loads(q.get()))
 
         if message.result == "failure":
             eprint("PANIC! Exception in child worker:", message.exception)
@@ -221,21 +224,21 @@ def wrapInThread(f):
     Returns a function that is designed to be run in a thread/threadlike process.
     Result will be either put into the q
     """
-
+    import dill
     def _f(*a, **k):
         q = k.pop("q")
         ID = k.pop("ID")
 
         try:
             r = f(*a, **k)
-            q.put({"result": "success",
-                   "ID": ID,
-                   "value": r})
+            q.put(dill.dumps({"result": "success",
+                              "ID": ID,
+                              "value": r}))
         except Exception as e:
-            q.put({"result": "failure",
-                   "exception": e,
-                   "stacktrace": traceback.format_exc(),
-                   "ID": ID})
+            q.put(dill.dumps({"result": "failure",
+                              "exception": e,
+                              "stacktrace": traceback.format_exc(),
+                              "ID": ID}))
             return
     return _f
 
