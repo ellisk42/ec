@@ -69,7 +69,7 @@ if __name__ == "__main__":
 
     for mode in ["MAX","MEAN","SIZE"]:
         plot.figure(figsize=(4,4))
-        colors = ["purple","orange","teal","darkgoldenrod","maroon"]
+        colors = ["red","green","blue","purple","cyan"]
 
         X = []
         Y = []
