@@ -1,0 +1,17 @@
+B /container/.opam/4.06.1+flambda/lib/bytes
+B /container/.opam/4.06.1+flambda/lib/cairo2
+B /container/.opam/4.06.1+flambda/lib/gg
+B /container/.opam/4.06.1+flambda/lib/ocaml
+B /container/.opam/4.06.1+flambda/lib/result
+B /container/.opam/4.06.1+flambda/lib/uchar
+B /container/.opam/4.06.1+flambda/lib/vg
+B ../_build/default/logoLib/.logoLib.objs
+S /container/.opam/4.06.1+flambda/lib/bytes
+S /container/.opam/4.06.1+flambda/lib/cairo2
+S /container/.opam/4.06.1+flambda/lib/gg
+S /container/.opam/4.06.1+flambda/lib/ocaml
+S /container/.opam/4.06.1+flambda/lib/result
+S /container/.opam/4.06.1+flambda/lib/uchar
+S /container/.opam/4.06.1+flambda/lib/vg
+S .
+FLG -open LogoLib -w -40
