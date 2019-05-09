@@ -335,6 +335,8 @@ class CompiledTimeout(Exception):
 
 
 def callCompiled(f, *arguments, **keywordArguments):
+    import dill
+
     pypyArgs = []
     profile = keywordArguments.pop('profile', None)
     if profile:
@@ -344,7 +346,10 @@ def callCompiled(f, *arguments, **keywordArguments):
 
     timeout = keywordArguments.pop('compiledTimeout', None)
 
-    p = subprocess.Popen(['pypy3'] + pypyArgs + ['compiledDriver.py'],
+    # Use absolute paths.
+    dir = os.path.dirname(__file__)
+    compiled_driver_file = os.path.join(dir, 'compiledDriver.py')
+    p = subprocess.Popen(['pypy3'] + pypyArgs + [compiled_driver_file],
                          stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
 
@@ -357,7 +362,7 @@ def callCompiled(f, *arguments, **keywordArguments):
         "keywordArguments": keywordArguments,
     }
     start = time.time()
-    pickle.dump(request, p.stdin)
+    dill.dump(request, p.stdin)
 
     #p.stdin.write(request)
     p.stdin.flush()
@@ -372,7 +377,7 @@ def callCompiled(f, *arguments, **keywordArguments):
                 dt))
 
     if timeout is None:
-        success, result = pickle.load(p.stdout)
+        success, result = dill.load(p.stdout)
     else:
         eprint("Running with timeout", timeout)
 
@@ -380,7 +385,7 @@ def callCompiled(f, *arguments, **keywordArguments):
         signal.signal(signal.SIGALRM, timeoutCallBack)
         signal.alarm(int(math.ceil(timeout)))
         try:
-            success, result = pickle.load(p.stdout)
+            success, result = dill.load(p.stdout)
             signal.alarm(0)
         except CompiledTimeout:
             # Kill the process

@@ -1,7 +1,3 @@
-try:
-    from pyccg.logic import TypeSystem, Ontology, Expression
-except ModuleNotFoundError: pass
-
 class UnificationFailure(Exception):
     pass
 

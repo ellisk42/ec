@@ -986,3 +986,41 @@ let test_string () =
   Printf.printf "%s\n" y
 ;;
 
+(* Puddleworld primitive and type definitions for compression namespace purposes. Function definitions are irrelevant.*)
+(* Puddleworld Type Definitions *)
+(* let t_object_p = make_ground "t_object_p";;
+let t_boolean_p = make_ground "t_boolean_p";;
+let t_action_p = make_ground "t_action_p";;
+let t_direction_p = make_ground "t_direction_p";;
+let t_int_p = make_ground "t_int_p";;
+let t_model_p = make_ground "t_model_p";;
+(* Puddleworld Primitive Definitions *)
+ignore(primitive "true_p" (t_boolean_p) (fun x -> x);;)
+ignore(primitive "left_p" (t_direction_p) (fun x -> x);;)
+ignore(primitive "right_p" (t_direction_p) (fun x -> x);;)
+ignore(primitive "up_p" (t_direction_p) (fun x -> x);;)
+ignore(primitive "down_p" (t_direction_p) (fun x -> x);;)
+ignore(primitive "1_p" (t_int_p) (fun x -> x);;)
+ignore(primitive "2_p" (t_int_p) (fun x -> x);;)
+
+ignore(primitive "move_p" (t_object_p @> t_action_p) (fun x -> x);;)
+ignore(primitive "relate_p" (t_object_p @> t_object_p @> t_direction_p @> t_boolean_p) (fun x -> x);;)
+ignore(primitive "relate_n_p" (t_object_p @> t_object_p @> t_direction_p @> t_int_p @> t_boolean_p) (fun x -> x);;)
+ignore(primitive "in_half_p" (t_object_p @> t_direction_p @> t_boolean_p) (fun x -> x);;)
+ignore(primitive "apply_p" ((t_object_p @> t_boolean_p) @> t_object_p @> t_boolean_p) (fun x -> x);;)
+ignore(primitive "and__p" (t_boolean_p @> t_boolean_p @> t_boolean_p) (fun x -> x);;)
+ignore(primitive "max_in_dir_p" (t_object_p @> t_direction_p @> t_boolean_p) (fun x -> x);;)
+ignore(primitive "is_edge_p" (t_object_p @> t_boolean_p) (fun x -> x);;)
+ignore(primitive "grass_p" (t_object_p @> t_boolean_p) (fun x -> x);;)
+ignore(primitive "puddle_p" (t_object_p @> t_boolean_p) (fun x -> x);;)
+ignore(primitive "star_p" (t_object_p @> t_boolean_p) (fun x -> x);;)
+ignore(primitive "circle_p" (t_object_p @> t_boolean_p) (fun x -> x);;)
+ignore(primitive "triangle_p" (t_object_p @> t_boolean_p) (fun x -> x);;)
+ignore(primitive "heart_p" (t_object_p @> t_boolean_p) (fun x -> x);;)
+ignore(primitive "spade_p" (t_object_p @> t_boolean_p) (fun x -> x);;)
+ignore(primitive "diamond_p" (t_object_p @> t_boolean_p) (fun x -> x);;)
+ignore(primitive "rock_p" (t_object_p @> t_boolean_p) (fun x -> x);;)
+ignore(primitive "tree_p" (t_object_p @> t_boolean_p) (fun x -> x);;)
+ignore(primitive "house_p" (t_object_p @> t_boolean_p) (fun x -> x);;)
+ignore(primitive "horse_p" (t_object_p @> t_boolean_p) (fun x -> x);;)
+ignore(primitive "ec_unique_p" (t_model_p @> (t_object_p @> t_boolean_p) @> t_object_p) (fun x -> x);;) *)
