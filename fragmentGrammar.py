@@ -531,7 +531,10 @@ def ocamlInduce(g, frontiers, _=None,
             eprint("Compression message saved to:",fn)
 
         try:
-            process = subprocess.Popen("./compression",
+            # Get relative path
+            dir = os.path.dirname(__file__)
+            compressor_file = os.path.join(dir, 'compression')
+            process = subprocess.Popen(compressor_file,
                                        stdin=subprocess.PIPE,
                                        stdout=subprocess.PIPE)
             response, error = process.communicate(bytes(message, encoding="utf-8"))

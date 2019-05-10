@@ -26,7 +26,12 @@ def multicoreEnumeration(g, tasks, _=None,
 
     # We don't use actual threads but instead use the multiprocessing
     # library. This is because we need to be able to kill workers.
+    #from multiprocess import Process, Queue
+
     from multiprocessing import Process, Queue
+
+     # everything that gets sent between processes will be dilled
+    import dill
 
     solvers = {"ocaml": solveForTask_ocaml,   
                "pypy": solveForTask_pypy,   
@@ -176,7 +181,7 @@ def multicoreEnumeration(g, tasks, _=None,
             break
 
         # Wait to get a response
-        message = Bunch(q.get())
+        message = Bunch(dill.loads(q.get()))
 
         if message.result == "failure":
             eprint("PANIC! Exception in child worker:", message.exception)
@@ -221,6 +226,7 @@ def wrapInThread(f):
     Returns a function that is designed to be run in a thread/threadlike process.
     Result will be either put into the q
     """
+    import dill
 
     def _f(*a, **k):
         q = k.pop("q")
@@ -228,14 +234,14 @@ def wrapInThread(f):
 
         try:
             r = f(*a, **k)
-            q.put({"result": "success",
+            q.put(dill.dumps({"result": "success",
                    "ID": ID,
-                   "value": r})
+                   "value": r}))
         except Exception as e:
-            q.put({"result": "failure",
+            q.put(dill.dumps({"result": "failure",
                    "exception": e,
                    "stacktrace": traceback.format_exc(),
-                   "ID": ID})
+                   "ID": ID}))
             return
     return _f
 
@@ -403,6 +409,7 @@ def enumerateForTasks(g, tasks, likelihoodModel, _=None,
                 any(len(h) < mf for h, mf in zip(hits, maximumFrontiers)) and \
                 budget <= upperBound:
             numberOfPrograms = 0
+
             for prior, _, p in g.enumeration(Context.EMPTY, [], request,
                                              maximumDepth=99,
                                              upperBound=budget,
@@ -426,8 +433,7 @@ def enumerateForTasks(g, tasks, likelihoodModel, _=None,
                     success, likelihood = likelihoodModel.score(p, task)
                     if not success:
                         continue
-                    
-
+                        
                     dt = time() - starting + elapsedTime
                     priority = -(likelihood + prior)
                     hits[n].push(priority,
@@ -447,7 +453,6 @@ def enumerateForTasks(g, tasks, likelihoodModel, _=None,
                 break
     except EnumerationTimeout:
         pass
-
     frontiers = {tasks[n]: Frontier([e for _, e in hits[n]],
                                     task=tasks[n])
                  for n in range(len(tasks))}
