@@ -344,7 +344,7 @@ class ContextualGrammarNetwork_LowRank(nn.Module):
 
         
         
-        ll = numerator - denominator
+        ll = numerator - denominator 
 
         if False: # verifying that batching works correctly
             gs = [ self(xs[b]) for b in range(B) ]
@@ -1319,7 +1319,11 @@ class RecurrentFeatureExtractor(nn.Module):
         return e
 
     def featuresOfTask(self, t):
-        f = self(t.examples)
+        if hasattr(self, 'useFeatures'):
+            f = self(t.features)
+        else:
+            # Featurize the examples directly.
+            f = self(t.examples)
         return f
 
     def taskOfProgram(self, p, tp):
