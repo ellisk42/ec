@@ -29,6 +29,13 @@ class Grammar(object):
         self.expression2likelihood = dict((p, l) for l, _, p in productions)
         self.expression2likelihood[Index(0)] = self.logVariable
 
+    def randomWeights(self, r):
+        """returns a new grammar with random weights drawn from r. calls `r` w/ old weight"""
+        return Grammar(logVariable=r(self.logVariable),
+                       productions=[(r(l),t,p)
+                                    for l,t,p in self.productions ],
+                       continuationType=self.continuationType)
+
     def __setstate__(self, state):
         """
         Legacy support for loading grammar objects without the imperative type filled in
@@ -912,6 +919,12 @@ class ContextualGrammar:
                                  {e: [g.untorch() for g in gs ]
                                   for e,gs in self.library.items() })
 
+    def randomWeights(self, r):
+        """returns a new grammar with random weights drawn from r. calls `r` w/ old weight"""
+        return ContextualGrammar(self.noParent.randomWeights(r),
+                                 self.variableParent.randomWeights(r),
+                                 {e: [g.randomWeights(r) for g in gs]
+                                  for e,gs in self.library.items() })
     def __str__(self):
         lines = ["No parent:",str(self.noParent),"",
                  "Variable parent:",str(self.variableParent),"",
@@ -1132,6 +1145,90 @@ class ContextualGrammar:
         return np.array([f
                          for lw in features
                          for f in lw])
+
+    def enumeration(self,context,environment,request,upperBound,
+                    parent=None, parentIndex=None,
+                    maximumDepth=20,
+                    lowerBound=0.):
+        '''Enumerates all programs whose MDL satisfies: lowerBound <= MDL < upperBound'''
+        if upperBound < 0 or maximumDepth == 1:
+            return
+
+        if request.isArrow():
+            v = request.arguments[0]
+            for l, newContext, b in self.enumeration(context, [v] + environment,
+                                                     request.arguments[1],
+                                                     parent=parent, parentIndex=parent,
+                                                     upperBound=upperBound,
+                                                     lowerBound=lowerBound,
+                                                     maximumDepth=maximumDepth):
+                yield l, newContext, Abstraction(b)
+        else:
+            if parent is None: g = self.noParent
+            elif parent.isIndex: g = self.variableParent
+            else: g = self.library[parent][parentIndex]
+
+            candidates = g.buildCandidates(request, context, environment,
+                                           normalize=True)
+
+            for l, t, p, newContext in candidates:
+                mdl = -l
+                if not (mdl < upperBound):
+                    continue
+
+                xs = t.functionArguments()
+                for aL, aK, application in\
+                    self.enumerateApplication(newContext, environment, p, xs,
+                                              parent=p,
+                                              upperBound=upperBound + l,
+                                              lowerBound=lowerBound + l,
+                                              maximumDepth=maximumDepth - 1):
+                    yield aL + l, aK, application
+
+    def enumerateApplication(self, context, environment,
+                             function, argumentRequests,
+                             # Upper bound on the description length of all of
+                             # the arguments
+                             upperBound,
+                             # Lower bound on the description length of all of
+                             # the arguments
+                             lowerBound=0.,
+                             maximumDepth=20,
+                             parent=None, 
+                             originalFunction=None,
+                             argumentIndex=0):
+        assert parent is not None
+        if upperBound < 0. or maximumDepth == 1:
+            return
+        if originalFunction is None:
+            originalFunction = function
+
+        if argumentRequests == []:
+            if lowerBound <= 0. and 0. < upperBound:
+                yield 0., context, function
+            else:
+                return
+        else:
+            argRequest = argumentRequests[0].apply(context)
+            laterRequests = argumentRequests[1:]
+            for argL, newContext, arg in self.enumeration(context, environment, argRequest,
+                                                          parent=parent, parentIndex=argumentIndex,
+                                                          upperBound=upperBound,
+                                                          lowerBound=0.,
+                                                          maximumDepth=maximumDepth):
+                if violatesSymmetry(originalFunction, arg, argumentIndex):
+                    continue
+
+                newFunction = Application(function, arg)
+                for resultL, resultK, result in self.enumerateApplication(newContext, environment, newFunction,
+                                                                          laterRequests,
+                                                                          parent=parent,
+                                                                          upperBound=upperBound + argL,
+                                                                          lowerBound=lowerBound + argL,
+                                                                          maximumDepth=maximumDepth,
+                                                                          originalFunction=originalFunction,
+                                                                          argumentIndex=argumentIndex + 1):
+                    yield resultL + argL, resultK, result
                 
         
 
@@ -1190,9 +1287,13 @@ def batchLikelihood(jobs):
 
 if __name__ == "__main__":
     from arithmeticPrimitives import *
-    g = Grammar.uniform([k0,k1,addition, subtraction])
-    p = Program.parse("(lambda (+ <HOLE> <HOLE>))")
+    g = ContextualGrammar.fromGrammar(Grammar.uniform([k0,k1,addition, subtraction]))
+    g = g.randomWeights(lambda *a: random.random())
     #p = Program.parse("(lambda (+ 1 $0))")
-    for stuff in g.sketchEnumeration(Context.EMPTY,[],arrow(tint,tint),
-                                     p, 12.):
-        print(stuff)
+    request = arrow(tint,tint)
+    for ll,_,p in g.enumeration(Context.EMPTY,[],request,
+                               12.):
+        ll_ = g.logLikelihood(request,p)
+        print(ll,p,ll_)
+        d = abs(ll - ll_)
+        assert d < 0.0001

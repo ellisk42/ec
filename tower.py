@@ -316,6 +316,9 @@ if __name__ == "__main__":
     outputDirectory = "experimentOutputs/towers/%s"%timestamp
     os.system("mkdir -p %s"%outputDirectory)
 
+    os.system("mkdir  -p data/tower_dreams_initial")
+    dreamOfTowers(g0,"data/tower_dreams_initial",montage=False)
+
     evaluationTimeout = 0.005
     generator = ecIterator(g0, train,
                            testingTasks=test,
