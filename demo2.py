@@ -52,7 +52,7 @@ if __name__ == "__main__":
     # Create list of primitives
 
     primitives = [
-        Primitive("incr", arrow(tint, tint, tint), _incr),
+        Primitive("incr", arrow(tint, tint), _incr),
     ]
 
     # Create grammar
