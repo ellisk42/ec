@@ -1,7 +1,7 @@
 """
 Usage:
 
-    singularity exec container.img python demo.py -t 20 -RS 10
+    singularity exec container.img python demo2.py -t 20 -RS 10
 """
 
 import datetime
@@ -12,29 +12,14 @@ from ec import commandlineArguments, ecIterator
 from grammar import Grammar
 from program import Primitive
 from task import Task
-from type import t0, arrow, tint
+from type import arrow, tint
 from utilities import numberOfCPUs
 
-# input/output types
-
-# primitives
-def _and(x): return lambda y: x and y
-def _eq(x): return lambda y: x == y
-def _gt(x): return lambda y: x > y
-def _if(x): return lambda t: lambda f: t if x else f
-def _not(x): return not x
-def _or(x): return lambda y: x or y
-
-def _addition(x): return lambda y: x + y
-def _subtraction(x): return lambda y: x - y
-def _addition(x): return lambda y: x + y
-def _subtraction(x): return lambda y: x - y
-
-def _plus1(x): return lambda x: x + 1
-def _plus2(x): return lambda x: x + 2
+# Primitives
+def _incr(x): return lambda x: x + 1
 
 
-def plusN(n):
+def addN(n):
     x = random.choice(range(500))
     return {"i": x, "o": x + n}
 
@@ -49,7 +34,8 @@ def get_tint_task(item):
 
 if __name__ == "__main__":
 
-    # options copied from list.py
+    # Options more or less copied from list.py
+
     args = commandlineArguments(
         enumerationTimeout=10, activation='tanh',
         iterations=10, recognitionTimeout=3600,
@@ -63,55 +49,61 @@ if __name__ == "__main__":
     outprefix = outdir + timestamp
     args.update({"outputPrefix": outprefix})
 
-    # create list of primitives copied from listPrimitives.py
+    # Create list of primitives
+
     primitives = [
-        Primitive("+1", arrow(tint, tint, tint), _plus1),
-        Primitive("+2", arrow(tint, tint, tint), _plus2),
+        Primitive("incr", arrow(tint, tint, tint), _incr),
     ]
 
-    # create grammar
+    # Create grammar
+
     grammar = Grammar.uniform(primitives)
 
-    def plus1(): return plusN(1)
-    def plus2(): return plusN(2)
-    def plus3(): return plusN(3)
-    def plus5(): return plusN(5)
-    def plus8(): return plusN(8)
-    def plus13(): return plusN(13)
-    def plus21(): return plusN(21)
+    def add1(): return addN(1)
+    def add2(): return addN(2)
+    def add3(): return addN(3)
+    def add5(): return addN(5)
+    def add8(): return addN(8)
+    def add13(): return addN(13)
+    def add21(): return addN(21)
 
-    plus1_examples = [plus1() for _ in range(500)]
-    plus2_examples = [plus2() for _ in range(500)]
-    plus3_examples = [plus3() for _ in range(500)]
-    plus5_examples = [plus5() for _ in range(500)]
-    plus8_examples = [plus8() for _ in range(500)]
-    plus13_examples = [plus13() for _ in range(500)]
-    plus21_examples = [plus21() for _ in range(500)]
+    add1_examples = [add1() for _ in range(500)]
+    add2_examples = [add2() for _ in range(500)]
+    add3_examples = [add3() for _ in range(500)]
+    add5_examples = [add5() for _ in range(500)]
+    add8_examples = [add8() for _ in range(500)]
+    add13_examples = [add13() for _ in range(500)]
+    add21_examples = [add21() for _ in range(500)]
+
+    # Training data
 
     training_examples = [
-        {"name": "plus1", "examples": plus1_examples},
-        {"name": "plus2", "examples": plus2_examples},
-        {"name": "plus3", "examples": plus3_examples},
-        {"name": "plus5", "examples": plus5_examples},
-        {"name": "plus8", "examples": plus8_examples},
-        {"name": "plus13", "examples": plus13_examples},
-        {"name": "plus21", "examples": plus21_examples},
+        {"name": "add1", "examples": add1_examples},
+        {"name": "add2", "examples": add2_examples},
+        {"name": "add3", "examples": add3_examples},
+        {"name": "add5", "examples": add5_examples},
+        {"name": "add8", "examples": add8_examples},
+        {"name": "add13", "examples": add13_examples},
+        {"name": "add21", "examples": add21_examples},
     ]
     training_tasks = [get_tint_task(item) for item in training_examples]
 
-    def plus9(): return plusN(9)
-    def plus19(): return plusN(19)
+    # Testing data
 
-    plus9_examples = [plus9() for _ in range(500)]
-    plus19_examples = [plus19() for _ in range(500)]
+    def add9(): return addN(9)
+    def add19(): return addN(19)
+
+    add9_examples = [add9() for _ in range(500)]
+    add19_examples = [add19() for _ in range(500)]
 
     testing_examples = [
-        {"name": "plus9", "examples": plus9_examples},
-        {"name": "plus19", "examples": plus9_examples},
+        {"name": "add9", "examples": add9_examples},
+        {"name": "add19", "examples": add9_examples},
     ]
     testing_tasks = [get_tint_task(item) for item in testing_examples]
 
     # EC iterate
+
     generator = ecIterator(grammar,
                            training_tasks,
                            testingTasks=testing_tasks,
