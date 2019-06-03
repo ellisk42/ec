@@ -124,7 +124,6 @@ if __name__ == "__main__":
     # EC iterate
     generator = ecIterator(grammar, train,
                            testingTasks=test,
-                           outputPrefix=outprefix,
                            **args)
     for i, _ in enumerate(generator):
         print('ecIterator count {}'.format(i))
