@@ -2,7 +2,7 @@
 
 from task import Task
 from type import arrow
-from logoPrimitives import turtle
+from lib.primitives.logoPrimitives import turtle
 import png
 import os
 import sys
@@ -144,7 +144,7 @@ def parseLogo(s):
 
 def manualLogoTask(name, expression, proto=False, needToTrain=False, supervise = False):
     p = parseLogo(expression)
-    from logoPrimitives import primitives
+    from lib.primitives.logoPrimitives import primitives
     from grammar import Grammar
     g = Grammar.uniform(primitives, continuationType=turtle)
     gp = Grammar.uniform(primitives)
@@ -706,7 +706,7 @@ if __name__ == "__main__":
     montageTasks(rotationalSymmetryDemo(),"rotational")
 
     from grammar import *
-    from logoPrimitives import *
+    from lib.primitives.logoPrimitives import *
 
     g0 = Grammar.uniform(primitives, continuationType=turtle)
     eprint("dreaming into /tmp/dreams_0...")

@@ -1,8 +1,8 @@
 from ec import ecIterator, commandlineArguments
 from grammar import Grammar
-from utilities import eprint, testTrainSplit, numberOfCPUs, parallelMap, loadPickle
+from utilities import eprint, testTrainSplit, numberOfCPUs, loadPickle
 from makeLogoTasks import makeTasks, montageTasks, drawLogo
-from logoPrimitives import *
+from lib.primitives.logoPrimitives import *
 from collections import OrderedDict
 from program import Program
 from task import Task
@@ -18,7 +18,6 @@ import subprocess
 import os
 import torch.nn as nn
 import torch.nn.functional as F
-from sys import exit
 import pickle
 
 from recognition import variable, maybe_cuda
@@ -199,7 +198,7 @@ def outputDreams(checkpoint, directory):
 
 def enumerateDreams(checkpoint, directory):
     from recognition import backgroundHelmholtzEnumeration
-    from utilities import loadPickle,standardDeviation,mean
+    from utilities import loadPickle
     result = loadPickle(checkpoint)
     eprint(" [+] Loaded checkpoint",checkpoint)
     g = result.grammars[-1]
@@ -231,8 +230,7 @@ def enumerateDreams(checkpoint, directory):
         
 def visualizePrimitives(primitives, export='/tmp/logo_primitives.png'):
     from itertools import product
-    from pylab import imshow,show
-    from program import Index,Abstraction,Application,Primitive
+    from program import Index,Abstraction,Application
     from utilities import montageMatrix,makeNiceArray
     from type import tint
     import scipy.misc

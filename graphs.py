@@ -1,9 +1,5 @@
-from utilities import lse, callCompiled, makeTemporaryFile
-import os
-from grammar import batchLikelihood
 from ec import *
 import dill
-import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plot
@@ -137,7 +133,7 @@ def addStupidRegex(frontier, g):
     import pregex as pre
     
     if stupidProgram is None:
-        from regexPrimitives import reducedConcatPrimitives
+        from lib.primitives.regexPrimitives import reducedConcatPrimitives
         reducedConcatPrimitives()
         stupidProgram = Program.parse("(lambda (r_kleene (lambda (r_dot $0)) $0))")
         stupidRegex = stupidProgram.evaluate([])(pre.String(""))
@@ -525,7 +521,6 @@ def plotECResult(
         
 
 if __name__ == "__main__":
-    import sys
 
     import argparse
     parser = argparse.ArgumentParser(description = "")

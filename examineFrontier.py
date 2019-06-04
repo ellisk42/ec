@@ -1,14 +1,11 @@
 #all the imports
-import re
 import pregex as pre
-import pickle
 from utilities import *
 from groundtruthRegexes import *
-from regexPrimitives import *
 from program import Abstraction, Application
 
 from makeRegexTasks import regexHeldOutExamples
-from regexPrimitives import PRC
+from lib.primitives.regexPrimitives import PRC
 
 import torch
 from torch.nn import Parameter

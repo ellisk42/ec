@@ -3,9 +3,9 @@
 from ec import explorationCompression, commandlineArguments, Task
 from grammar import Grammar
 #from utilities import eprint, testTrainSplit, numberOfCPUs, flatten
-from utilities import eprint, numberOfCPUs, flatten, fst, testTrainSplit, POSITIVEINFINITY
+from utilities import eprint, numberOfCPUs, flatten, testTrainSplit, POSITIVEINFINITY
 from makeRegexTasks import makeOldTasks, makeLongTasks, makeShortTasks, makeWordTasks, makeNumberTasks, makeHandPickedTasks, makeNewTasks, makeNewNumberTasks
-from regexPrimitives import basePrimitives, altPrimitives, easyWordsPrimitives, alt2Primitives, concatPrimitives, reducedConcatPrimitives, strConstConcatPrimitives
+from lib.primitives.regexPrimitives import basePrimitives, altPrimitives, easyWordsPrimitives, alt2Primitives, concatPrimitives, reducedConcatPrimitives, strConstConcatPrimitives
 from likelihoodModel import add_cutoff_values, add_string_constants
 
 from program import Abstraction, Application
@@ -16,7 +16,6 @@ from type import tpregex
 import math
 import pregex as pre
 import os
-import dill
 
 
 class LearnedFeatureExtractor(RecurrentFeatureExtractor):
