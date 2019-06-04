@@ -10,9 +10,15 @@ New primitive requires rebuild of OCaml binaries:
 
 Usage:
 
+    singularity exec container.img python demo3.py -t 10
+
+Usage w/out bottom-up neural recognition model:
+
+    singularity exec container.img python demo3.py -t 10 -g
+
+Usage with incredibly low DSL acceptance threshold:
+
     singularity exec container.img python demo3.py -t 1 -g -l -1000000 --aic -1000000
-
-
 """
 
 import datetime
