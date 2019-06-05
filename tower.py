@@ -8,7 +8,7 @@ from lib.utilities import *
 import os
 import datetime
 
-from recognition import variable
+from lib.recognition import variable
 import torch.nn as nn
 import torch.nn.functional as F
 

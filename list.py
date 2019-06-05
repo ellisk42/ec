@@ -11,7 +11,7 @@ from grammar import Grammar
 from lib.task import Task
 from lib.type import Context, arrow, tbool, tlist, tint, t0, UnificationFailure
 from lib.domains.list.listPrimitives import basePrimitives, primitives, McCarthyPrimitives, bootstrapTarget_extra, no_length
-from recognition import RecurrentFeatureExtractor
+from lib.recognition import RecurrentFeatureExtractor
 from lib.domains.list.makeListTasks import make_list_bootstrap_tasks, sortBootstrap
 
 

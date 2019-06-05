@@ -2,7 +2,7 @@ from lib.ec import commandlineArguments, ecIterator
 from lib.domains.text.makeTextTasks import makeTasks, loadPBETasks
 from lib.domains.text.textPrimitives import primitives
 from lib.domains.list.listPrimitives import bootstrapTarget
-from recognition import *
+from lib.recognition import *
 from enumeration import *
 
 import os

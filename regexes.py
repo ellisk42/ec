@@ -10,7 +10,7 @@ from likelihoodModel import add_cutoff_values, add_string_constants
 
 from lib.program import Abstraction, Application
 #from program import *
-from recognition import RecurrentFeatureExtractor, JSONFeatureExtractor
+from lib.recognition import RecurrentFeatureExtractor, JSONFeatureExtractor
 import random
 from lib.type import tpregex
 import math

@@ -1,4 +1,4 @@
-from recognition import *
+from lib.recognition import *
 from grammar import *
 
 if __name__ == "__main__":

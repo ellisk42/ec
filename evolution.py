@@ -1,7 +1,4 @@
-from lib.domains.arithmetic.arithmeticPrimitives import *
-from lib.domains.list.listPrimitives import *
-
-from recognition import *
+from lib.recognition import *
 
 
 def extract_scaler(v):

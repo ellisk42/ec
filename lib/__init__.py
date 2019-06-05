@@ -27,6 +27,7 @@ from lib import ec
 from lib import frontier
 from lib import program
 from lib import primitiveGraph
+from lib import recognition
 from lib import task
 from lib import taskBatcher
 from lib import type
@@ -49,6 +50,7 @@ from lib.domains.text import makeTextTasks
 sys.modules['ec'] = ec
 sys.modules['frontier'] = frontier
 sys.modules['program'] = program
+sys.modules['recognition'] = recognition
 sys.modules['task'] = task
 sys.modules['taskBatcher'] = taskBatcher
 sys.modules['type'] = type

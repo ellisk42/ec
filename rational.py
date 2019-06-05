@@ -1,5 +1,5 @@
 from lib.ec import explorationCompression, commandlineArguments
-from recognition import *
+from lib.recognition import *
 
 import random
 

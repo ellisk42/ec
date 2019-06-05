@@ -1,6 +1,6 @@
 from lib.ec import explorationCompression, commandlineArguments
 from lib.domains.list.listPrimitives import bootstrapTarget
-from recognition import *
+from lib.recognition import *
 from functools import reduce
 
 tvector = baseType("vector")

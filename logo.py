@@ -19,7 +19,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import pickle
 
-from recognition import variable, maybe_cuda
+from lib.recognition import variable, maybe_cuda
 
 global prefix_dreams
 
@@ -196,7 +196,7 @@ def outputDreams(checkpoint, directory):
     dreamFromGrammar(g, directory)
 
 def enumerateDreams(checkpoint, directory):
-    from recognition import backgroundHelmholtzEnumeration
+    from lib.recognition import backgroundHelmholtzEnumeration
     from lib.utilities import loadPickle
     result = loadPickle(checkpoint)
     eprint(" [+] Loaded checkpoint",checkpoint)

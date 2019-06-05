@@ -1,4 +1,4 @@
-from recognition import *
+from lib.recognition import *
 from enumeration import *
 from fragmentGrammar import *
 from lib.taskBatcher import *
