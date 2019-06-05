@@ -1,6 +1,15 @@
 # coding: utf8
 
-from lib.utilities import *
+import os
+import random
+import sys
+
+from lib.domains.logo.logoPrimitives import primitives, turtle
+from lib.task import Task
+from lib.program import Abstraction, Application, Index, Program
+from lib.type import arrow
+from lib.utilities import eprint, jsonBinaryInvoke, random_seed, montage
+from grammar import Grammar
 
 
 def drawLogo(*programs,
@@ -698,9 +707,6 @@ if __name__ == "__main__":
     montageTasks(tasks[:16*3],"subset",columns=16)
 
     montageTasks(rotationalSymmetryDemo(),"rotational")
-
-    from grammar import *
-    from lib.domains.logo.logoPrimitives import *
 
     g0 = Grammar.uniform(primitives, continuationType=turtle)
     eprint("dreaming into /tmp/dreams_0...")
