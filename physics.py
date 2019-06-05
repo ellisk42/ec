@@ -1,7 +1,6 @@
-from ec import *
+from lib.ec import *
 
 from grammar import *
-from lib.domains.arithmetic.arithmeticPrimitives import *
 from program import *
 
 import numpy as np

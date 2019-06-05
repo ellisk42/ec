@@ -1,5 +1,6 @@
 import sys
 
+from lib import ec
 from lib import task
 from lib.domains.misc import algolispPrimitives, deepcoderPrimitives
 from lib.domains.misc import RobustFillPrimitives
@@ -24,6 +25,7 @@ from lib import primitiveGraph
 
 # Required for backwards-compatibility with old pickle files
 # from before the EC codebase refactor:
+sys.modules['ec'] = ec
 sys.modules['task'] = task
 sys.modules['algolispPrimitives'] = algolispPrimitives
 sys.modules['RobustFillPrimitives'] = RobustFillPrimitives

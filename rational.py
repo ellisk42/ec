@@ -1,5 +1,4 @@
-from ec import explorationCompression, commandlineArguments
-from lib.domains.arithmetic.arithmeticPrimitives import real_addition, real_multiplication, real, real_division
+from lib.ec import explorationCompression, commandlineArguments
 from recognition import *
 
 import random

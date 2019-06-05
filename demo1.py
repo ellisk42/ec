@@ -1,7 +1,7 @@
 import datetime
 import os
 
-from ec import commandlineArguments, ecIterator
+from lib.ec import commandlineArguments, ecIterator
 from grammar import Grammar
 from program import Primitive
 from lib.task import Task

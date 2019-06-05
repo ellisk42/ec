@@ -8,14 +8,12 @@ Usage: Example script is in taskRankGraphs.
 Note: this requires a container with sklearn installed. A sample container is available in /om2/user/zyzzyva/ec/sklearn-container.img
 """
 
-from ec import *
+from lib.ec import *
 import dill
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plot
-from matplotlib.ticker import MaxNLocator
-import matplotlib.lines as mlines
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 from utilities import *
 import matplotlib
@@ -23,10 +21,6 @@ plot.style.use('seaborn-whitegrid')
 import matplotlib.colors as colors
 import matplotlib.cm as cm
 
-import text
-from text import LearnedFeatureExtractor
-from scipy import stats
-from scipy import signal
 import itertools
 
 np.set_printoptions(threshold=np.inf) #Print full arrays for debugging
@@ -34,7 +28,6 @@ np.set_printoptions(threshold=np.inf) #Print full arrays for debugging
 from scipy.stats import entropy
 from sklearn import mixture
 from sklearn import preprocessing
-from sklearn.metrics import log_loss
 from sklearn.metrics.cluster import adjusted_rand_score
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.manifold import MDS, TSNE
@@ -533,7 +526,6 @@ def makeTowerImage(im, labelsAndImages):
         if labelsAndImages: im *= 255
         im = np.dstack([im, alpha])
         if labelsAndImages: # trim
-                import scipy
                 w = 3
                 k = np.ones((w,w,w))/4.
                 im = growImage(im, iterations=2)
@@ -1177,7 +1169,6 @@ def similarityAnalysis(
 
 
 if __name__ == "__main__":
-        import sys
 
         import argparse
 

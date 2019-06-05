@@ -7,7 +7,7 @@ import datetime
 import os
 import random
 
-from ec import commandlineArguments
+from lib.ec import commandlineArguments
 from grammar import Grammar
 from utilities import eprint, numberOfCPUs
 

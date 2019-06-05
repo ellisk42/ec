@@ -1,5 +1,4 @@
-from ec import explorationCompression, commandlineArguments
-from lib.domains.arithmetic.arithmeticPrimitives import real_addition, real_multiplication, real_power, real_subtraction, f0, f1, fpi, real_division
+from lib.ec import explorationCompression, commandlineArguments
 from lib.domains.list.listPrimitives import bootstrapTarget
 from recognition import *
 from functools import reduce

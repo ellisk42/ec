@@ -5,7 +5,7 @@ import math
 import os
 import datetime
 
-from ec import explorationCompression, commandlineArguments
+from lib.ec import explorationCompression, commandlineArguments
 from utilities import eprint, numberOfCPUs, flatten, testTrainSplit
 from grammar import Grammar
 from lib.task import Task

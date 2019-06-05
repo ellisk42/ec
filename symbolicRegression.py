@@ -1,5 +1,4 @@
-from ec import explorationCompression, commandlineArguments
-from lib.domains.arithmetic.arithmeticPrimitives import addition, multiplication, real
+from lib.ec import explorationCompression, commandlineArguments
 from recognition import *
 
 primitives = [addition, multiplication, real]

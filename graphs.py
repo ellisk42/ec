@@ -1,4 +1,4 @@
-from ec import *
+from lib.ec import *
 import dill
 import matplotlib
 matplotlib.use('Agg')

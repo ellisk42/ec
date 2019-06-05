@@ -1,6 +1,6 @@
 # analog of list.py for regex tasks. Responsible for actually running the task.
 
-from ec import explorationCompression, commandlineArguments, Task
+from lib.ec import explorationCompression, commandlineArguments, Task
 from grammar import Grammar
 #from utilities import eprint, testTrainSplit, numberOfCPUs, flatten
 from utilities import eprint, numberOfCPUs, flatten, testTrainSplit, POSITIVEINFINITY
