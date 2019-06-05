@@ -120,7 +120,7 @@ def executeTower(p, timeout=None):
 
 def animateTower(exportPrefix, p):
     print(exportPrefix, p)
-    from tower_common import renderPlan
+    from lib.domains.tower.tower_common import renderPlan
     state,actions = p.evaluate([])(_empty_tower)(TowerState(history=[]))
     print(actions)
     trajectory = state.history + [state]

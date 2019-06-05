@@ -873,7 +873,7 @@ def induceGrammar_Beta(g0, frontiers, _=None,
                        structurePenalty=1.,
                        CPUs=1):
     """grammar induction using only version spaces"""
-    from fragmentUtilities import primitiveSize
+    from lib.fragmentUtilities import primitiveSize
     import gc
     
     originalFrontiers = frontiers
@@ -1171,7 +1171,7 @@ if __name__ == "__main__":
     
     from lib.domains.arithmetic.arithmeticPrimitives import *
     from lib.domains.list.listPrimitives import *
-    from fragmentGrammar import *
+    from lib.fragmentGrammar import *
     bootstrapTarget_extra()
     McCarthyPrimitives()
     testSharing()

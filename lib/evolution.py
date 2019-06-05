@@ -603,7 +603,7 @@ if False:
             solutions.append(thisSequence)
 
     from lib.utilities import *
-    from tower_common import fastRendererPlan
+    from lib.domains.tower.tower_common import fastRendererPlan
     m = montageMatrix([[fastRendererPlan(t.plan,pretty=True,Lego=True)
                         for t in ts]
                        for ts in solutions])

@@ -2,7 +2,7 @@ from lib.ec import *
 
 from lib.domains.tower.towerPrimitives import primitives, new_primitives, animateTower
 from lib.domains.tower.makeTowerTasks import *
-from tower_common import renderPlan, towerLength, centerTower
+from lib.domains.tower.tower_common import renderPlan, towerLength, centerTower
 from lib.utilities import *
 
 import os

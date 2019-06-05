@@ -104,7 +104,7 @@ if __name__ == "__main__":
         (* $0 (+ REAL
         (* $0 REAL)))))))))""")
         eprint(e)
-        from fragmentGrammar import *
+        from lib.fragmentGrammar import *
         f = FragmentGrammar.uniform(
             baseGrammar.primitives + [Program.parse("(+ REAL $0)")])
 

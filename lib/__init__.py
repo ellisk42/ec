@@ -24,6 +24,10 @@ For more info, see this StackOverflow answer: https://stackoverflow.com/a/212191
 import sys
 
 from lib import ec
+from lib import enumeration
+from lib import evolution
+from lib import fragmentGrammar
+from lib import fragmentUtilities
 from lib import frontier
 from lib import program
 from lib import primitiveGraph
@@ -32,11 +36,13 @@ from lib import task
 from lib import taskBatcher
 from lib import type
 from lib import utilities
+from lib import vs
 from lib.domains.misc import algolispPrimitives, deepcoderPrimitives
 from lib.domains.misc import RobustFillPrimitives
 from lib.domains.misc import napsPrimitives
 from lib.domains.tower import makeTowerTasks
 from lib.domains.tower import towerPrimitives
+from lib.domains.tower import tower_common
 from lib.domains.regex import regexPrimitives
 from lib.domains.regex import makeRegexTasks
 from lib.domains.logo import logoPrimitives
@@ -48,6 +54,10 @@ from lib.domains.text import textPrimitives
 from lib.domains.text import makeTextTasks
 
 sys.modules['ec'] = ec
+sys.modules['enumeration'] = enumeration
+sys.modules['evolution'] = evolution
+sys.modules['fragmentGrammar'] = fragmentGrammar
+sys.modules['fragmentUtilities'] = fragmentUtilities
 sys.modules['frontier'] = frontier
 sys.modules['program'] = program
 sys.modules['recognition'] = recognition
@@ -55,11 +65,13 @@ sys.modules['task'] = task
 sys.modules['taskBatcher'] = taskBatcher
 sys.modules['type'] = type
 sys.modules['utilities'] = utilities
+sys.modules['vs'] = vs
 sys.modules['algolispPrimitives'] = algolispPrimitives
 sys.modules['RobustFillPrimitives'] = RobustFillPrimitives
 sys.modules['napsPrimitives'] = napsPrimitives
 sys.modules['makeTowerTasks'] = makeTowerTasks
 sys.modules['towerPrimitives'] = towerPrimitives
+sys.modules['tower_common'] = tower_common
 sys.modules['regexPrimitives'] = regexPrimitives
 sys.modules['makeRegexTasks'] = makeRegexTasks
 sys.modules['deepcoderPrimitives'] = deepcoderPrimitives

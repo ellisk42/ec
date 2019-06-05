@@ -1,6 +1,6 @@
 from lib.recognition import *
 from lib.enumeration import *
-from fragmentGrammar import *
+from lib.fragmentGrammar import *
 from lib.taskBatcher import *
 from lib.primitiveGraph import graphPrimitives
 import dill

@@ -1,4 +1,4 @@
-from fragmentUtilities import *
+from lib.fragmentUtilities import *
 from lib.grammar import *
 from lib.program import *
 
@@ -431,7 +431,7 @@ class FragmentGrammar(object):
 
 
 def induceGrammar(*args, **kwargs):
-    from vs import induceGrammar_Beta
+    from lib.vs import induceGrammar_Beta
     if sum(not f.empty for f in args[1]) == 0:
         eprint("No nonempty frontiers, exiting grammar induction early.")
         return args[0], args[1]

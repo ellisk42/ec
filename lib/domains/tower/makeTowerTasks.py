@@ -30,7 +30,7 @@ class SupervisedTower(Task):
         self.mustTrain = mustTrain
 
     def getImage(self, drawHand=False, pretty=False):
-        from tower_common import renderPlan
+        from lib.domains.tower.tower_common import renderPlan
 
         if not drawHand:
             if not pretty:
@@ -57,7 +57,7 @@ class SupervisedTower(Task):
 
 
     def animate(self):
-        from tower_common import renderPlan
+        from lib.domains.tower.tower_common import renderPlan
         from pylab import imshow,show
         a = renderPlan(self.plan)
         imshow(a)
@@ -84,7 +84,7 @@ class SupervisedTower(Task):
         
 
     def exportImage(self, f, pretty=True, Lego=True, drawHand=False):
-        from tower_common import renderPlan
+        from lib.domains.tower.tower_common import renderPlan
         a = renderPlan(t.plan,
                        pretty=pretty, Lego=Lego,
                        drawHand=t.hand if drawHand else None)
@@ -92,7 +92,7 @@ class SupervisedTower(Task):
         scipy.misc.imsave(f, a)
 
     def logLikelihood(self, e, timeout=None):
-        from tower_common import centerTower
+        from lib.domains.tower.tower_common import centerTower
         def k():
             plan = e.evaluate([])(lambda s: (s,[]))(0)[1]
             if centerTower(plan) == centerTower(self.plan): return 0.
@@ -498,7 +498,7 @@ def dSLDemo():
             
 if __name__ == "__main__":
     from pylab import imshow,show
-    from tower_common import *
+    from lib.domains.tower.tower_common import *
     
     ts = makeSupervisedTasks()
     print(len(ts),"total tasks")
