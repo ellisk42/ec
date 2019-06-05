@@ -371,6 +371,7 @@ let primitive9 = primitive "9" tint 9;;
 let primitive20 = primitive "ifty" tint 20;;
 let primitive_addition = primitive "+" (tint @> tint @> tint) (fun x y -> x + y);;
 let primitive_increment = primitive "incr" (tint @> tint) (fun x -> 1+x);;
+let primitive_increment2 = primitive "incr2" (tint @> tint) (fun x -> 2+x);;
 let primitive_decrement = primitive "decr" (tint @> tint) (fun x -> x - 1);;
 let primitive_subtraction = primitive "-" (tint @> tint @> tint) (-);;
 let primitive_negation = primitive "negate" (tint @> tint) (fun x -> 0-x);;
