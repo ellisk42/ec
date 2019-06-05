@@ -1,5 +1,5 @@
 from likelihoodModel import AllOrNothingLikelihoodModel
-from grammar import *
+from lib.grammar import *
 
 import os
 import traceback

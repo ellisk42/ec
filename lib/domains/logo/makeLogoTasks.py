@@ -9,7 +9,7 @@ from lib.task import Task
 from lib.program import Abstraction, Application, Index, Program
 from lib.type import arrow
 from lib.utilities import eprint, jsonBinaryInvoke, random_seed, montage
-from grammar import Grammar
+from lib.grammar import Grammar
 
 
 def drawLogo(*programs,
@@ -148,7 +148,7 @@ def parseLogo(s):
 def manualLogoTask(name, expression, proto=False, needToTrain=False, supervise = False):
     p = parseLogo(expression)
     from lib.domains.logo.logoPrimitives import primitives
-    from grammar import Grammar
+    from lib.grammar import Grammar
     g = Grammar.uniform(primitives, continuationType=turtle)
     gp = Grammar.uniform(primitives)
     try:

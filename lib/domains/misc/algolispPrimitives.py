@@ -1,6 +1,6 @@
 #napsPrimitives.py
 from lib.program import Primitive, Program
-from grammar import Grammar
+from lib.grammar import Grammar
 from lib.type import tlist, arrow, baseType #, t0, t1, t2
 
 #from functools import reduce

@@ -1,7 +1,7 @@
 # analog of list.py for regex tasks. Responsible for actually running the task.
 
 from lib.ec import explorationCompression, commandlineArguments, Task
-from grammar import Grammar
+from lib.grammar import Grammar
 #from lib.utilities import eprint, testTrainSplit, numberOfCPUs, flatten
 from lib.utilities import eprint, numberOfCPUs, flatten, testTrainSplit, POSITIVEINFINITY
 from lib.domains.regex.makeRegexTasks import makeOldTasks, makeLongTasks, makeShortTasks, makeWordTasks, makeNumberTasks, makeHandPickedTasks, makeNewTasks, makeNewNumberTasks

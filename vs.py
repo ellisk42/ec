@@ -1,5 +1,4 @@
-from lib.type import *
-from grammar import *
+from lib.grammar import *
 
 epsilon = 0.001
 

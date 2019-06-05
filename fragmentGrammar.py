@@ -1,5 +1,5 @@
 from fragmentUtilities import *
-from grammar import *
+from lib.grammar import *
 from lib.program import *
 
 from itertools import chain

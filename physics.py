@@ -1,6 +1,6 @@
 from lib.ec import *
 
-from grammar import *
+from lib.grammar import *
 from lib.program import *
 
 import numpy as np

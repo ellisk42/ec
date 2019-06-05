@@ -1,5 +1,5 @@
 from lib.recognition import *
-from grammar import *
+from lib.grammar import *
 
 if __name__ == "__main__":
     trainingTimeout = 600

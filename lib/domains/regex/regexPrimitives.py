@@ -1,5 +1,5 @@
 from lib.program import Primitive
-from grammar import Grammar
+from lib.grammar import Grammar
 from lib.type import arrow, tpregex
 from string import printable
 from pregex import pregex

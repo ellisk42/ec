@@ -1,5 +1,5 @@
 from lib.ec import ecIterator, commandlineArguments
-from grammar import Grammar
+from lib.grammar import Grammar
 from lib.utilities import eprint, testTrainSplit, numberOfCPUs, loadPickle
 from lib.domains.logo.makeLogoTasks import makeTasks, montageTasks, drawLogo
 from lib.domains.logo.logoPrimitives import *

@@ -1,5 +1,5 @@
 from lib.enumeration import *
-from grammar import *
+from lib.grammar import *
 # luke
 
 

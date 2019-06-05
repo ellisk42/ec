@@ -2,7 +2,7 @@ import datetime
 import os
 
 from lib.ec import commandlineArguments, ecIterator
-from grammar import Grammar
+from lib.grammar import Grammar
 from lib.program import Primitive
 from lib.task import Task
 from lib.type import t0, arrow, tlist, tint, tbool

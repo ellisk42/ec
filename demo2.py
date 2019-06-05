@@ -9,7 +9,7 @@ import os
 import random
 
 from lib.ec import commandlineArguments, ecIterator
-from grammar import Grammar
+from lib.grammar import Grammar
 from lib.program import Primitive
 from lib.task import Task
 from lib.type import arrow, tint

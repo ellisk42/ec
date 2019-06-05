@@ -1,7 +1,7 @@
 #RobustFillPrimitives
 
 from lib.program import Primitive, prettyProgram
-from grammar import Grammar
+from lib.grammar import Grammar
 from lib.type import tint, arrow, baseType #, t0, t1, t2
 
 from string import printable

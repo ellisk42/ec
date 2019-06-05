@@ -1,5 +1,5 @@
 from lib.program import Primitive, Program
-from grammar import Grammar
+from lib.grammar import Grammar
 from lib.type import tlist, tint, tbool, arrow, t0, t1, t2
 
 import math
