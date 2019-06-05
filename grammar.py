@@ -1,11 +1,9 @@
 from collections import defaultdict
 
-import json
-
-from frontier import *
-from program import *
-from type import *
-from utilities import *
+from lib.frontier import *
+from lib.program import *
+from lib.type import *
+from lib.utilities import *
 
 import time
 
@@ -619,7 +617,6 @@ class Grammar(object):
                     yield resultL + argL, resultK, result
 
     def sketchLogLikelihood(self, request, full, sk, context=Context.EMPTY, environment=[]):
-        import torch
         """
         calculates mdl of full program 'full' from sketch 'sk'
         """

@@ -32,10 +32,10 @@ import random
 
 from lib.ec import commandlineArguments, ecIterator
 from grammar import Grammar
-from program import Primitive
+from lib.program import Primitive
 from lib.task import Task
-from type import arrow, tint
-from utilities import numberOfCPUs
+from lib.type import arrow, tint
+from lib.utilities import numberOfCPUs
 
 # Primitives
 def _incr(x): return lambda x: x + 1

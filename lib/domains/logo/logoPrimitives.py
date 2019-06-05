@@ -1,7 +1,5 @@
-from program import Primitive, Program
-from lib.domains.list.listPrimitives import _map, _unfold, _range, _index, _fold, _if, _addition, _subtraction, _cons, _car, _cdr, _isEmpty, bootstrapTarget
-from lib.domains.arithmetic.arithmeticPrimitives import addition
-from type import arrow, baseType, t0, t1, tint, tlist, tbool
+from lib.program import Primitive, Program
+from lib.type import arrow, baseType, tint
 
 turtle = baseType("turtle")
 tstate = baseType("tstate")

@@ -1,11 +1,11 @@
 from lib.ec import *
 
 from grammar import *
-from program import *
+from lib.program import *
 
 import numpy as np
 
-from type import *
+from lib.type import *
 
 tobject = baseType("object")
 tvector = baseType("vector")

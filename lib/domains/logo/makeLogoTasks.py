@@ -1,10 +1,6 @@
 # coding: utf8
 
-from lib.domains.logo.logoPrimitives import turtle
-from lib.task import Task
-from program import Abstraction, Application, Index, Program
-from type import arrow
-from utilities import *
+from lib.utilities import *
 
 
 def drawLogo(*programs,

@@ -1,4 +1,4 @@
-from program import *
+from lib.program import *
 
 def graphPrimitives(result, prefix, view=False):
     try:

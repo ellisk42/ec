@@ -1,5 +1,5 @@
-from program import *
-from type import *
+from lib.program import *
+from lib.type import *
 
 
 def _addition(x): return lambda y: x + y

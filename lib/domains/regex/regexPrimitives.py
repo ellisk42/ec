@@ -1,10 +1,9 @@
-from program import Primitive, Program
+from lib.program import Primitive
 from grammar import Grammar
-from type import tlist, tint, tbool, arrow, t0, t1, t2, tpregex
+from lib.type import arrow, tpregex
 from string import printable
 from pregex import pregex
 
-import math
 
 # evaluation to regular regex form. then I can unflatten using Luke's stuff.
 
@@ -344,7 +343,7 @@ def matchEmpericalNoLetterPrimitives(corpus):
 
 if __name__=='__main__':
     concatPrimitives()
-    from program import Program
+    from lib.program import Program
 
     p=Program.parse("(lambda (r_kleene (lambda (r_maybe (lambda (string_x $0)) $0)) $0))")
     print(p)

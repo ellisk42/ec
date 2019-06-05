@@ -1,9 +1,7 @@
-from utilities import *
-from program import *
+from lib.utilities import *
+from lib.program import *
 
 from scipy.stats.stats import pearsonr
-
-import numpy as np
 
 from matplotlib.ticker import MaxNLocator
 import matplotlib.lines as mlines

@@ -9,7 +9,7 @@ import random
 
 from lib.ec import commandlineArguments
 from grammar import Grammar
-from utilities import eprint, numberOfCPUs
+from lib.utilities import eprint, numberOfCPUs
 
 from lib.domains.puddleworld.puddleworldPrimitives import primitives
 from lib.domains.puddleworld.makePuddleworldTasks import makeLocalTasks, makeGlobalTasks

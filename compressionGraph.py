@@ -1,6 +1,4 @@
-from program import *
-
-from utilities import *
+from lib.utilities import *
 
 DEBUG = False
 

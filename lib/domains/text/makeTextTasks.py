@@ -1,6 +1,6 @@
 from lib.task import *
-from type import *
-from utilities import *
+from lib.type import *
+from lib.utilities import *
 
 import random
 

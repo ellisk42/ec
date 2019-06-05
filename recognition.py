@@ -1,28 +1,21 @@
 from enumeration import *
-from fragmentGrammar import *
 from grammar import *
-from heapq import *
-from utilities import eprint
+from lib.utilities import eprint
 # luke
-from program import tokeniseProgram, untokeniseProgram, ParseFailure
 
 
 import time
 import gc
-from multiprocessing import Pool
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.optim as optimization
 from torch.autograd import Variable
-from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
+from torch.nn.utils.rnn import pack_padded_sequence
 
 import numpy as np
 # luke
 import json
-import string
-import copy
 
 
 def variable(x, volatile=False, cuda=False):

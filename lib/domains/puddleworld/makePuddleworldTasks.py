@@ -5,7 +5,7 @@ Credit: tasks are taken from: https://github.com/JannerM/spatial-reasoning
 """
 from lib.domains.puddleworld.puddleworldPrimitives import *
 from lib.task import *
-from type import *
+from lib.type import *
 
 OBJECT_NAMES = ["NULL", "puddle", "star", "circle", "triangle", "heart", "spade", "diamond", "rock", "tree", "house", "horse"]
 

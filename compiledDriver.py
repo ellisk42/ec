@@ -3,7 +3,7 @@ import time
 import traceback
 import pickle as pickle
 
-from utilities import eprint
+from lib.utilities import eprint
 
 if __name__ == "__main__":
     sys.setrecursionlimit(10000)

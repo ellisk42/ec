@@ -1,6 +1,6 @@
-from program import Primitive, Program
+from lib.program import Primitive, Program
 from grammar import Grammar
-from type import tlist, tint, tbool, arrow, t0, t1, t2
+from lib.type import tlist, tint, tbool, arrow, t0, t1, t2
 
 import math
 from functools import reduce
@@ -398,7 +398,6 @@ def McCarthyPrimitives():
 
 if __name__ == "__main__":
     bootstrapTarget()
-    import pickle
     g = Grammar.uniform(McCarthyPrimitives())
     # with open("/home/ellisk/om/ec/experimentOutputs/list_aic=1.0_arity=3_ET=1800_expandFrontier=2.0_it=4_likelihoodModel=all-or-nothing_MF=5_baseline=False_pc=10.0_L=1.0_K=5_rec=False.pickle", "rb") as handle:
     #     b = pickle.load(handle).grammars[-1]

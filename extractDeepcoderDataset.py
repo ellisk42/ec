@@ -2,10 +2,10 @@ import sys
 import json
 import pickle as pickle
 
-from utilities import eprint, hashable
+from lib.utilities import eprint, hashable
 from lib.domains.list.makeListTasks import list_features
 from lib.task import Task
-from type import guess_type, arrow
+from lib.type import guess_type, arrow
 
 
 def extractTasks(dataset):

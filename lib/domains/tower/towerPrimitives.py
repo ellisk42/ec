@@ -1,8 +1,5 @@
-from program import *
+from lib.program import *
 
-from lib.domains.arithmetic.arithmeticPrimitives import *
-
-from functools import reduce
 
 class TowerState:
     def __init__(self, hand=0, orientation=1, history=None):

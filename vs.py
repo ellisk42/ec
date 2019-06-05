@@ -1,6 +1,4 @@
-from program import *
-from type import *
-from frontier import *
+from lib.type import *
 from grammar import *
 
 epsilon = 0.001
@@ -1105,7 +1103,6 @@ def testSharing(projection=2):
     import matplotlib.pyplot as plot
     from matplotlib import rcParams
     rcParams.update({'figure.autolayout': True})
-    from mpl_toolkits.mplot3d import Axes3D
 
     if projection == 3:
         f = plot.figure()

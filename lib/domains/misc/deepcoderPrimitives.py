@@ -1,9 +1,7 @@
-from program import Primitive, Program, prettyProgram
+from lib.program import Primitive, prettyProgram
 from grammar import Grammar
-from type import tlist, tint, tbool, arrow, baseType #, t0, t1, t2
+from lib.type import tlist, tint, arrow, baseType #, t0, t1, t2
 
-
-import math
 #from functools import reduce
 
 

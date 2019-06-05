@@ -1,6 +1,6 @@
 import random
 import math
-from utilities import *
+from lib.utilities import *
 
 def simulateWithoutPhysics(plan,ordered=True):
     def overlap(b1,

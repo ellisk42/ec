@@ -1,6 +1,6 @@
 from lib.task import Task, EvaluationTimeout
 import gc
-from utilities import *
+from lib.utilities import *
 from collections import Counter
 import math
 

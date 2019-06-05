@@ -1,12 +1,12 @@
 from lib.ec import ecIterator, commandlineArguments
 from grammar import Grammar
-from utilities import eprint, testTrainSplit, numberOfCPUs, loadPickle
+from lib.utilities import eprint, testTrainSplit, numberOfCPUs, loadPickle
 from lib.domains.logo.makeLogoTasks import makeTasks, montageTasks, drawLogo
 from lib.domains.logo.logoPrimitives import *
 from collections import OrderedDict
-from program import Program
+from lib.program import Program
 from lib.task import Task
-from type import arrow
+from lib.type import arrow
 
 import datetime
 import random as random
@@ -184,7 +184,7 @@ def list_options(parser):
 
 
 def outputDreams(checkpoint, directory):
-    from utilities import loadPickle
+    from lib.utilities import loadPickle
     result = loadPickle(checkpoint)
     eprint(" [+] Loaded checkpoint",checkpoint)
     g = result.grammars[-1]
@@ -197,7 +197,7 @@ def outputDreams(checkpoint, directory):
 
 def enumerateDreams(checkpoint, directory):
     from recognition import backgroundHelmholtzEnumeration
-    from utilities import loadPickle
+    from lib.utilities import loadPickle
     result = loadPickle(checkpoint)
     eprint(" [+] Loaded checkpoint",checkpoint)
     g = result.grammars[-1]
@@ -229,9 +229,9 @@ def enumerateDreams(checkpoint, directory):
         
 def visualizePrimitives(primitives, export='/tmp/logo_primitives.png'):
     from itertools import product
-    from program import Index,Abstraction,Application
-    from utilities import montageMatrix,makeNiceArray
-    from type import tint
+    from lib.program import Index,Abstraction,Application
+    from lib.utilities import montageMatrix,makeNiceArray
+    from lib.type import tint
     import scipy.misc
     from lib.domains.logo.makeLogoTasks import parseLogo
 

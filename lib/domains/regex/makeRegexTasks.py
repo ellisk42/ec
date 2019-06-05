@@ -1,4 +1,4 @@
-from type import tpregex, arrow
+from lib.type import tpregex, arrow
 from lib.task import Task
 from pregex import pregex
 import json

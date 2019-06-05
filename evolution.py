@@ -605,7 +605,7 @@ if False:
         if thisSequence:
             solutions.append(thisSequence)
 
-    from utilities import *
+    from lib.utilities import *
     from tower_common import fastRendererPlan
     m = montageMatrix([[fastRendererPlan(t.plan,pretty=True,Lego=True)
                         for t in ts]

@@ -1,6 +1,6 @@
-from type import *
-from program import *
-from frontier import *
+from lib.type import *
+from lib.program import *
+from lib.frontier import *
 
 from collections import Counter
 

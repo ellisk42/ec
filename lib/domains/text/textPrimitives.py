@@ -1,4 +1,4 @@
-from program import *
+from lib.program import *
 from lib.domains.text.makeTextTasks import delimiters
 
 

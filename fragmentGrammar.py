@@ -1,6 +1,6 @@
 from fragmentUtilities import *
 from grammar import *
-from program import *
+from lib.program import *
 
 from itertools import chain
 import time

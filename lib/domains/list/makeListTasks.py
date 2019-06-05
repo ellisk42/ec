@@ -1,8 +1,8 @@
 
 
-from type import *
+from lib.type import *
 from lib.task import Task
-from utilities import eprint, hashable
+from lib.utilities import eprint, hashable
 
 from random import randint, random, seed
 from itertools import product

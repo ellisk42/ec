@@ -1,8 +1,8 @@
 #all the imports
 import pregex as pre
-from utilities import *
+from lib.utilities import *
 from groundtruthRegexes import *
-from program import Abstraction, Application
+from lib.program import Abstraction, Application
 
 from lib.domains.regex.makeRegexTasks import regexHeldOutExamples
 from lib.domains.regex.regexPrimitives import PRC

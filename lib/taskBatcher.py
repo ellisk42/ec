@@ -1,4 +1,4 @@
-from utilities import eprint
+from lib.utilities import eprint
 import random
 import numpy as np
 

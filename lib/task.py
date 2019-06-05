@@ -1,8 +1,7 @@
-from program import *
-from utilities import *
+from lib.program import *
+from lib.utilities import *
 from differentiation import *
 
-import random
 import signal
 
 

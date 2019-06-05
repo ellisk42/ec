@@ -15,7 +15,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plot
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
-from utilities import *
+from lib.utilities import *
 import matplotlib
 plot.style.use('seaborn-whitegrid')
 import matplotlib.colors as colors

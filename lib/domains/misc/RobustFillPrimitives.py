@@ -1,14 +1,13 @@
 #RobustFillPrimitives
 
-from program import Primitive, Program, prettyProgram
+from lib.program import Primitive, prettyProgram
 from grammar import Grammar
-from type import tlist, tint, tbool, arrow, baseType #, t0, t1, t2
+from lib.type import tint, arrow, baseType #, t0, t1, t2
 
-import math
 from string import printable
 import re
 from collections import defaultdict
-from utilities import timing
+
 #from functools import reduce
 
 
