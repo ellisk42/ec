@@ -8,7 +8,7 @@ New primitive requires rebuild of OCaml binaries:
     make clean
     make
 
-Usage:
+Training Usage:
 
     singularity exec container.img python demo3.py -t 10
 
@@ -19,6 +19,11 @@ Usage w/out bottom-up neural recognition model:
 Usage with incredibly low DSL acceptance threshold:
 
     singularity exec container.img python demo3.py -t 1 -g -l -1000000 --aic -1000000
+
+Testing Usage:
+
+    singularity exec container.img python demo3.py -t 2 --testingTimeout 2
+
 """
 
 import datetime
