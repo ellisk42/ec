@@ -7,12 +7,12 @@ import datetime
 import os
 import random
 
-from ec import explorationCompression, commandlineArguments, Task, ecIterator
+from ec import commandlineArguments
 from grammar import Grammar
 from utilities import eprint, numberOfCPUs
 
 from puddleworldPrimitives import primitives
-from makePuddleworldTasks import makeLocalTasks, makeGlobalTasks
+from lib.tasks.makePuddleworldTasks import makeLocalTasks, makeGlobalTasks
 
 
 def puddleworld_options(parser):

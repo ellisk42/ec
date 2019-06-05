@@ -1,19 +1,13 @@
 from ec import *
 
-from tower_common import *
 from towerPrimitives import primitives, new_primitives, executeTower, animateTower
-from makeTowerTasks import *
-from listPrimitives import bootstrapTarget
+from lib.tasks.makeTowerTasks import *
 from utilities import *
 
 import os
-import random
-import time
 import datetime
 
 from recognition import variable
-import torch
-import torchvision
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -184,7 +178,7 @@ def visualizePrimitives(primitives, fn=None):
     from tower_common import renderPlan
     #from pylab import imshow,show
 
-    from towerPrimitives import TowerContinuation,_left,_right,_loop,_embed,_empty_tower,TowerState
+    from towerPrimitives import _left,_right,_loop,_embed,_empty_tower,TowerState
     _13 = Program.parse("1x3").value
     _31 = Program.parse("3x1").value
 

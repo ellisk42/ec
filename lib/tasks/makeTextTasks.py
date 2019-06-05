@@ -1,4 +1,4 @@
-from task import *
+from lib.tasks.task import *
 from type import *
 from utilities import *
 
@@ -361,7 +361,6 @@ def guessConstantStrings(task):
 
 
 if __name__ == "__main__":
-    import sys
     challenge, _ = loadPBETasks()
 
     tasks = makeTasks()

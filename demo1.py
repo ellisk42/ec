@@ -1,11 +1,10 @@
 import datetime
 import os
-import random
 
 from ec import commandlineArguments, ecIterator
 from grammar import Grammar
 from program import Primitive
-from task import Task
+from lib.tasks.task import Task
 from type import t0, arrow, tlist, tint, tbool
 from utilities import numberOfCPUs
 

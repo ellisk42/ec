@@ -3,8 +3,8 @@ import json
 import pickle as pickle
 
 from utilities import eprint, hashable
-from makeListTasks import list_features
-from task import Task
+from lib.tasks.makeListTasks import list_features
+from lib.tasks.task import Task
 from type import guess_type, arrow
 
 

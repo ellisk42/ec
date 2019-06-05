@@ -3,7 +3,7 @@ from fragmentGrammar import *
 from grammar import Grammar
 from arithmeticPrimitives import real_addition, real_multiplication, real_power, real_subtraction, real, f0, f1, fpi, real_division
 from listPrimitives import bootstrapTarget
-from task import DifferentiableTask, squaredErrorLoss, l1loss, Task
+from lib.tasks.task import DifferentiableTask, squaredErrorLoss, l1loss, Task
 from type import tint, arrow
 from utilities import *
 from program import *

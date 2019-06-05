@@ -184,7 +184,7 @@ def getTestingLikelihood(likelihood, result, iteration):
                     if t.name not in badRegexTasks]
 
     print("Getting testing likelihoods; we have to do this once per checkpoint and once per iteration so hang on to your seat!")
-    from makeRegexTasks import regexHeldOutExamples
+    from lib.tasks.makeRegexTasks import regexHeldOutExamples
     totalCharacters = sum( len(s)
         for t in testingTasks
         for _,s in regexHeldOutExamples(t))

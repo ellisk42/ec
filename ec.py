@@ -1,21 +1,13 @@
-from utilities import eprint, montageMatrix
 from recognition import *
-from frontier import *
-from program import *
-from type import *
-from task import *
 from enumeration import *
-from grammar import *
 from fragmentGrammar import *
 from taskBatcher import *
-from primitiveGraph import graphPrimitives
+from lib.primitives.primitiveGraph import graphPrimitives
 import dill
 
 
 import os
 import datetime
-
-import pickle as pickle
 
 import torch
 

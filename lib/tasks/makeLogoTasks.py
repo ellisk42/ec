@@ -1,12 +1,5 @@
 # coding: utf8
 
-from task import Task
-from type import arrow
-from lib.primitives.logoPrimitives import turtle
-import png
-import os
-import sys
-from program import *
 from utilities import *
 
 def drawLogo(*programs,

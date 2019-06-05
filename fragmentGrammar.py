@@ -1,6 +1,6 @@
 from utilities import *
 
-from task import *
+from lib.tasks.task import *
 from fragmentUtilities import *
 from frontier import *
 from grammar import *

@@ -1,14 +1,8 @@
-from utilities import eprint, exp, log, timing, valid
-from task import Task, EvaluationTimeout
-import random
+from lib.tasks.task import Task, EvaluationTimeout
 import gc
-import signal
-from program import *
 from utilities import *
 from collections import Counter
 import math
-import pregex as pre
-
 
 from groundtruthRegexes import gt_dict
 
@@ -97,13 +91,13 @@ def get_gt_ll(name, examples):
 
 
 def add_cutoff_values(tasks, ll_cutoff):
-    from makeRegexTasks import makeLongTasks, makeNewTasks
+    from lib.tasks.makeRegexTasks import makeNewTasks
     if ll_cutoff is None or ll_cutoff == "None":
         for task in tasks:
             task.ll_cutoff = None
         return tasks
     if ll_cutoff == "gt":
-        from makeRegexTasks import regexHeldOutExamples
+        from lib.tasks.makeRegexTasks import regexHeldOutExamples
         for task in tasks:
             task.ll_cutoff = None
             task.gt = get_gt_ll(task.name, [example[1] for example in task.examples])

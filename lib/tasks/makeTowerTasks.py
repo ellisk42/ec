@@ -1,8 +1,6 @@
 from towerPrimitives import ttower, executeTower, _empty_tower, TowerState
 from utilities import *
-from task import *
-
-import math
+from lib.tasks.task import *
 
 
 class SupervisedTower(Task):
@@ -159,7 +157,6 @@ def parseTower(s):
 
     
 def makeSupervisedTasks():
-    from towerPrimitives import _left,_right,_loop,_embed
     arches = [SupervisedTower("arch leg %d"%n,
                               "((for i %d v) (r 4) (for i %d v) (l 2) h)"%(n,n))
               for n in range(1,9)
@@ -313,7 +310,6 @@ def makeSupervisedTasks():
     return everything
 
 def makeOldSupervisedTasks():
-    from towerPrimitives import _left,_right,_loop,_embed
     arches = [SupervisedTower("arch leg %d"%n,
                               "((for i %d v) (r 4) (for i %d v) (l 2) h)"%(n,n))
               for n in range(1,9)

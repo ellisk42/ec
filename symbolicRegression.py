@@ -1,7 +1,7 @@
 from ec import explorationCompression, commandlineArguments, Program
 from grammar import Grammar
 from arithmeticPrimitives import addition, multiplication, real
-from task import DifferentiableTask, squaredErrorLoss, l1loss, Task
+from lib.tasks.task import DifferentiableTask, squaredErrorLoss, l1loss, Task
 from type import tint, arrow
 from utilities import *
 from program import *

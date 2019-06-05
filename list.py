@@ -1,20 +1,18 @@
-import pickle as pickle
 import random
 from collections import defaultdict
-from itertools import chain
 import json
 import math
 import os
 import datetime
 
 from ec import explorationCompression, commandlineArguments
-from utilities import eprint, numberOfCPUs, flatten, fst, testTrainSplit, POSITIVEINFINITY
+from utilities import eprint, numberOfCPUs, flatten, testTrainSplit
 from grammar import Grammar
-from task import Task
+from lib.tasks.task import Task
 from type import Context, arrow, tbool, tlist, tint, t0, UnificationFailure
 from listPrimitives import basePrimitives, primitives, McCarthyPrimitives, bootstrapTarget_extra, no_length
 from recognition import RecurrentFeatureExtractor
-from makeListTasks import make_list_bootstrap_tasks, sortBootstrap, EASYLISTTASKS
+from lib.tasks.makeListTasks import make_list_bootstrap_tasks, sortBootstrap
 
 
 def retrieveJSONTasks(filename, features=False):

@@ -1,12 +1,11 @@
 
 
 from type import *
-from task import Task
+from lib.tasks.task import Task
 from utilities import eprint, hashable
 
 from random import randint, random, seed
 from itertools import product
-from functools import reduce
 
 # Excluded routines either impossible or astronomically improbable
 # I'm cutting these off at ~20 nats in learned grammars.

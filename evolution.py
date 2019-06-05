@@ -1,14 +1,8 @@
-from program import *
-from grammar import *
-
-
 from arithmeticPrimitives import *
-from utilities import *
 from listPrimitives import *
 
 from recognition import *
 
-import torch.nn.functional as F
 
 def extract_scaler(v):
     v = v.view(-1)
@@ -563,7 +557,7 @@ def evolutionaryTrajectories(task, seed):
     return table[None]        
 
 from towerPrimitives import *
-from makeTowerTasks import *
+from lib.tasks.makeTowerTasks import *
 from tower import TowerCNN
 g = Grammar.uniform(primitives)
 tasks = makeSupervisedTasks()#[:3]

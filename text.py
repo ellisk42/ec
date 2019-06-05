@@ -1,10 +1,7 @@
-from ec import explorationCompression, commandlineArguments, Task, ecIterator
-from grammar import Grammar
-from utilities import eprint, testTrainSplit, numberOfCPUs, median, standardDeviation, mean
-from makeTextTasks import makeTasks, delimiters, loadPBETasks
-from textPrimitives import primitives, targetTextPrimitives
+from ec import commandlineArguments, ecIterator
+from lib.tasks.makeTextTasks import makeTasks, loadPBETasks
+from textPrimitives import primitives
 from listPrimitives import bootstrapTarget
-from program import *
 from recognition import *
 from enumeration import *
 

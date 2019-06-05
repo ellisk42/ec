@@ -1,7 +1,6 @@
 from type import tpregex, arrow
-from task import Task
+from lib.tasks.task import Task
 from pregex import pregex
-import pickle
 import json
 import dill
 from string import printable
@@ -320,7 +319,8 @@ if __name__ == "__main__":
                         nargs="+",
                         type=int)
     args = parser.parse_args()
-    import sys
+
+
     def show_tasks(dataset):
         task_list = []
         for task in dataset:
