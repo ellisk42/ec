@@ -556,7 +556,7 @@ def evolutionaryTrajectories(task, seed):
 
     return table[None]        
 
-from towerPrimitives import *
+from lib.domains.tower.towerPrimitives import *
 from lib.domains.tower.makeTowerTasks import *
 from tower import TowerCNN
 g = Grammar.uniform(primitives)

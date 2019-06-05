@@ -114,6 +114,7 @@ class TowerCNN(nn.Module):
 
     def taskOfProgram(self, p, t,
                       lenient=False):
+        from tower_common import towerLength
         try:
             pl = executeTower(p,0.05)
             if pl is None or (not lenient and len(pl) == 0): return None
@@ -146,7 +147,7 @@ def tower_options(parser):
     
 
 def dreamOfTowers(grammar, prefix, N=250, montage=True):
-    from tower_common import renderPlan
+    from tower_common import renderPlan, towerLength
     
     request = arrow(ttower,ttower)
     randomTowers = [tuple(centerTower(t))
@@ -178,7 +179,7 @@ def visualizePrimitives(primitives, fn=None):
     from tower_common import renderPlan
     #from pylab import imshow,show
 
-    from towerPrimitives import _left,_right,_loop,_embed,_empty_tower,TowerState
+    from lib.domains.tower.towerPrimitives import _left,_right,_loop,_embed,_empty_tower,TowerState
     _13 = Program.parse("1x3").value
     _31 = Program.parse("3x1").value
 
