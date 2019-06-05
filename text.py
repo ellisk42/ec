@@ -1,7 +1,7 @@
 from ec import commandlineArguments, ecIterator
-from lib.tasks.makeTextTasks import makeTasks, loadPBETasks
-from textPrimitives import primitives
-from listPrimitives import bootstrapTarget
+from lib.domains.text.makeTextTasks import makeTasks, loadPBETasks
+from lib.domains.text.textPrimitives import primitives
+from lib.domains.list.listPrimitives import bootstrapTarget
 from recognition import *
 from enumeration import *
 

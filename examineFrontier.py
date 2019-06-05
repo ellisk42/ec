@@ -4,8 +4,8 @@ from utilities import *
 from groundtruthRegexes import *
 from program import Abstraction, Application
 
-from lib.tasks.makeRegexTasks import regexHeldOutExamples
-from lib.primitives.regexPrimitives import PRC
+from lib.domains.regex.makeRegexTasks import regexHeldOutExamples
+from lib.domains.regex.regexPrimitives import PRC
 
 import torch
 from torch.nn import Parameter
@@ -123,7 +123,7 @@ if len(sys.argv) > 1:
 REGEXCACHINGTABLE = {}
 def testingRegexLikelihood(task, program):
     global REGEXCACHINGTABLE
-    from lib.tasks.makeRegexTasks import regexHeldOutExamples
+    from lib.domains.regex.makeRegexTasks import regexHeldOutExamples
     import pregex as pre
     
     testing = regexHeldOutExamples(task)

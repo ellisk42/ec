@@ -1,6 +1,5 @@
-from towerPrimitives import ttower, executeTower, _empty_tower, TowerState
-from utilities import *
-from lib.tasks.task import *
+from lib.domains.tower.towerPrimitives import ttower, executeTower, _empty_tower, TowerState
+from lib.task import *
 
 
 class SupervisedTower(Task):

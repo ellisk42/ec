@@ -1,5 +1,5 @@
 from type import tpregex, arrow
-from lib.tasks.task import Task
+from lib.task import Task
 from pregex import pregex
 import json
 import dill

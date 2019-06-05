@@ -4,7 +4,7 @@ import os
 from ec import commandlineArguments, ecIterator
 from grammar import Grammar
 from program import Primitive
-from lib.tasks.task import Task
+from lib.task import Task
 from type import t0, arrow, tlist, tint, tbool
 from utilities import numberOfCPUs
 
@@ -37,7 +37,7 @@ if __name__ == "__main__":
     outprefix = outdir + timestamp
     args.update({"outputPrefix": outprefix})
 
-    # create list of primitives copied from listPrimitives.py
+    # create list of primitives copied from lib.domains.list.listPrimitives.py
     primitives = [
         # learned primitives
         Primitive("length", arrow(tlist(t0), tint), len),

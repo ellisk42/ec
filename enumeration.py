@@ -1,16 +1,10 @@
-from utilities import eprint
 from likelihoodModel import AllOrNothingLikelihoodModel
-from frontier import *
-from lib.tasks.task import *
-from type import *
-from program import *
 from grammar import *
 
-import gc
 import os
 import traceback
 import subprocess
-import threading
+
 
 def multicoreEnumeration(g, tasks, _=None,
                          enumerationTimeout=None,
@@ -22,13 +16,12 @@ def multicoreEnumeration(g, tasks, _=None,
                          testing=False):
     '''g: Either a Grammar, or a map from task to grammar.
     Returns (list-of-frontiers, map-from-task-to-search-time)'''
-    from time import time
 
     # We don't use actual threads but instead use the multiprocessing
     # library. This is because we need to be able to kill workers.
     #from multiprocess import Process, Queue
 
-    from multiprocessing import Process, Queue
+    from multiprocessing import Queue
 
      # everything that gets sent between processes will be dilled
     import dill

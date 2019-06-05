@@ -1286,7 +1286,7 @@ def batchLikelihood(jobs):
     return response
 
 if __name__ == "__main__":
-    from arithmeticPrimitives import *
+    from lib.domains.arithmetic.arithmeticPrimitives import *
     g = ContextualGrammar.fromGrammar(Grammar.uniform([k0,k1,addition, subtraction]))
     g = g.randomWeights(lambda *a: random.random())
     #p = Program.parse("(lambda (+ 1 $0))")

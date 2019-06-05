@@ -1,7 +1,7 @@
 from ec import *
 
-from towerPrimitives import primitives, new_primitives, executeTower, animateTower
-from lib.tasks.makeTowerTasks import *
+from lib.domains.tower.towerPrimitives import primitives, new_primitives, executeTower, animateTower
+from lib.domains.tower.makeTowerTasks import *
 from utilities import *
 
 import os

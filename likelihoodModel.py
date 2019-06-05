@@ -1,4 +1,4 @@
-from lib.tasks.task import Task, EvaluationTimeout
+from lib.task import Task, EvaluationTimeout
 import gc
 from utilities import *
 from collections import Counter
@@ -91,13 +91,13 @@ def get_gt_ll(name, examples):
 
 
 def add_cutoff_values(tasks, ll_cutoff):
-    from lib.tasks.makeRegexTasks import makeNewTasks
+    from lib.domains.regex.makeRegexTasks import makeNewTasks
     if ll_cutoff is None or ll_cutoff == "None":
         for task in tasks:
             task.ll_cutoff = None
         return tasks
     if ll_cutoff == "gt":
-        from lib.tasks.makeRegexTasks import regexHeldOutExamples
+        from lib.domains.regex.makeRegexTasks import regexHeldOutExamples
         for task in tasks:
             task.ll_cutoff = None
             task.gt = get_gt_ll(task.name, [example[1] for example in task.examples])

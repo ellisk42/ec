@@ -1,7 +1,7 @@
 from program import *
 from recognition import *
 from grammar import *
-from arithmeticPrimitives import *
+from lib.domains.arithmetic.arithmeticPrimitives import *
 
 if __name__ == "__main__":
     trainingTimeout = 600

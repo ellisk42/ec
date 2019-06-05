@@ -1,5 +1,5 @@
 from program import *
-from lib.tasks.makeTextTasks import delimiters
+from lib.domains.text.makeTextTasks import delimiters
 
 
 def _increment(x): return x + 1

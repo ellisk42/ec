@@ -1,10 +1,5 @@
-from ec import explorationCompression, commandlineArguments, Program
-from grammar import Grammar
-from arithmeticPrimitives import addition, multiplication, real
-from lib.tasks.task import DifferentiableTask, squaredErrorLoss, l1loss, Task
-from type import tint, arrow
-from utilities import *
-from program import *
+from ec import explorationCompression, commandlineArguments
+from lib.domains.arithmetic.arithmeticPrimitives import addition, multiplication, real
 from recognition import *
 
 primitives = [addition, multiplication, real]

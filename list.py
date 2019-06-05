@@ -8,11 +8,11 @@ import datetime
 from ec import explorationCompression, commandlineArguments
 from utilities import eprint, numberOfCPUs, flatten, testTrainSplit
 from grammar import Grammar
-from lib.tasks.task import Task
+from lib.task import Task
 from type import Context, arrow, tbool, tlist, tint, t0, UnificationFailure
-from listPrimitives import basePrimitives, primitives, McCarthyPrimitives, bootstrapTarget_extra, no_length
+from lib.domains.list.listPrimitives import basePrimitives, primitives, McCarthyPrimitives, bootstrapTarget_extra, no_length
 from recognition import RecurrentFeatureExtractor
-from lib.tasks.makeListTasks import make_list_bootstrap_tasks, sortBootstrap
+from lib.domains.list.makeListTasks import make_list_bootstrap_tasks, sortBootstrap
 
 
 def retrieveJSONTasks(filename, features=False):

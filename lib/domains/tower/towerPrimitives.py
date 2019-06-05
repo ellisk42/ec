@@ -1,6 +1,6 @@
 from program import *
 
-from arithmeticPrimitives import *
+from lib.domains.arithmetic.arithmeticPrimitives import *
 
 from functools import reduce
 

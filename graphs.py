@@ -133,7 +133,7 @@ def addStupidRegex(frontier, g):
     import pregex as pre
     
     if stupidProgram is None:
-        from lib.primitives.regexPrimitives import reducedConcatPrimitives
+        from lib.domains.regex.regexPrimitives import reducedConcatPrimitives
         reducedConcatPrimitives()
         stupidProgram = Program.parse("(lambda (r_kleene (lambda (r_dot $0)) $0))")
         stupidRegex = stupidProgram.evaluate([])(pre.String(""))
@@ -184,7 +184,7 @@ def getTestingLikelihood(likelihood, result, iteration):
                     if t.name not in badRegexTasks]
 
     print("Getting testing likelihoods; we have to do this once per checkpoint and once per iteration so hang on to your seat!")
-    from lib.tasks.makeRegexTasks import regexHeldOutExamples
+    from lib.domains.regex.makeRegexTasks import regexHeldOutExamples
     totalCharacters = sum( len(s)
         for t in testingTasks
         for _,s in regexHeldOutExamples(t))

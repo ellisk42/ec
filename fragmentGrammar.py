@@ -1,13 +1,6 @@
-from utilities import *
-
-from lib.tasks.task import *
 from fragmentUtilities import *
-from frontier import *
 from grammar import *
 from program import *
-
-
-import gc
 
 from itertools import chain
 import time
@@ -575,7 +568,6 @@ def rustInduce(g0, frontiers, _=None,
                topk_use_only_likelihood=False,
                vs=False):
     import json
-    import os
     import subprocess
 
     def finite_logp(l): return l if l != float("-inf") else -1000

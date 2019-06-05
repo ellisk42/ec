@@ -11,7 +11,7 @@ import random
 from ec import commandlineArguments, ecIterator
 from grammar import Grammar
 from program import Primitive
-from lib.tasks.task import Task
+from lib.task import Task
 from type import arrow, tint
 from utilities import numberOfCPUs
 

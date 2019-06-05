@@ -1,4 +1,4 @@
-from lib.tasks.task import *
+from lib.task import *
 from type import *
 from utilities import *
 

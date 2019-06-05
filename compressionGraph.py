@@ -1071,8 +1071,8 @@ def possibleBodies(v,e,n=0):
 
 
 if __name__ == "__main__":
-    from arithmeticPrimitives import *
-    from listPrimitives import *
+    from lib.domains.arithmetic.arithmeticPrimitives import *
+    from lib.domains.list.listPrimitives import *
     from grammar import *
     bootstrapTarget_extra()
     p1 = Program.parse("(lambda (fold empty $0 (lambda (lambda (cons (- $0) $1)))))")

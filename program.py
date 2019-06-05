@@ -1177,6 +1177,6 @@ def untokeniseProgram(l):
     return Program.parse(s)
 
 if __name__ == "__main__":
-    from arithmeticPrimitives import *
+    from lib.domains.arithmetic.arithmeticPrimitives import *
     e = Program.parse("(#(lambda (?? (+ 1 $0))) (lambda (?? (+ 1 $0))) (lambda (?? (+ 1 $0))) - * (+ +))")
     eprint(e)

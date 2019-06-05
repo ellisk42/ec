@@ -1586,7 +1586,7 @@ def backgroundHelmholtzEnumeration(tasks, g, timeout, _=None,
     return get
             
 if __name__ == "__main__":
-    from arithmeticPrimitives import *
+    from lib.domains.arithmetic.arithmeticPrimitives import *
     g = Grammar.uniform([k1,k0,addition,subtraction,multiplication])
     frontiers = helmholtzEnumeration(g,
                          arrow(tint,tint),

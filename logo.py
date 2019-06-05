@@ -1,11 +1,11 @@
 from ec import ecIterator, commandlineArguments
 from grammar import Grammar
 from utilities import eprint, testTrainSplit, numberOfCPUs, loadPickle
-from lib.tasks.makeLogoTasks import makeTasks, montageTasks, drawLogo
-from lib.primitives.logoPrimitives import *
+from lib.domains.logo.makeLogoTasks import makeTasks, montageTasks, drawLogo
+from lib.domains.logo.logoPrimitives import *
 from collections import OrderedDict
 from program import Program
-from lib.tasks.task import Task
+from lib.task import Task
 from type import arrow
 
 import datetime
@@ -233,7 +233,7 @@ def visualizePrimitives(primitives, export='/tmp/logo_primitives.png'):
     from utilities import montageMatrix,makeNiceArray
     from type import tint
     import scipy.misc
-    from lib.tasks.makeLogoTasks import parseLogo
+    from lib.domains.logo.makeLogoTasks import parseLogo
 
     angles = [Program.parse(a)
               for a in ["logo_ZA",

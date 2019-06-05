@@ -1,5 +1,5 @@
-from arithmeticPrimitives import *
-from listPrimitives import *
+from lib.domains.arithmetic.arithmeticPrimitives import *
+from lib.domains.list.listPrimitives import *
 
 from recognition import *
 
@@ -557,7 +557,7 @@ def evolutionaryTrajectories(task, seed):
     return table[None]        
 
 from towerPrimitives import *
-from lib.tasks.makeTowerTasks import *
+from lib.domains.tower.makeTowerTasks import *
 from tower import TowerCNN
 g = Grammar.uniform(primitives)
 tasks = makeSupervisedTasks()#[:3]

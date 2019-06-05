@@ -1,5 +1,5 @@
 from utilities import *
-from lib.tasks.task import Task
+from lib.task import Task
 
 
 class FrontierEntry(object):

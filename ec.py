@@ -2,7 +2,7 @@ from recognition import *
 from enumeration import *
 from fragmentGrammar import *
 from taskBatcher import *
-from lib.primitives.primitiveGraph import graphPrimitives
+from lib.primitiveGraph import graphPrimitives
 import dill
 
 

@@ -1,6 +1,6 @@
 from program import Primitive, Program
-from listPrimitives import _map, _unfold, _range, _index, _fold, _if, _addition, _subtraction, _cons, _car, _cdr, _isEmpty, bootstrapTarget
-from arithmeticPrimitives import addition
+from lib.domains.list.listPrimitives import _map, _unfold, _range, _index, _fold, _if, _addition, _subtraction, _cons, _car, _cdr, _isEmpty, bootstrapTarget
+from lib.domains.arithmetic.arithmeticPrimitives import addition
 from type import arrow, baseType, t0, t1, tint, tlist, tbool
 
 turtle = baseType("turtle")

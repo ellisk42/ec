@@ -1173,8 +1173,8 @@ def testSharing(projection=2):
 
 if __name__ == "__main__":
     
-    from arithmeticPrimitives import *
-    from listPrimitives import *
+    from lib.domains.arithmetic.arithmeticPrimitives import *
+    from lib.domains.list.listPrimitives import *
     from fragmentGrammar import *
     bootstrapTarget_extra()
     McCarthyPrimitives()

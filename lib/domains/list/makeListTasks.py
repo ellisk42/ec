@@ -1,7 +1,7 @@
 
 
 from type import *
-from lib.tasks.task import Task
+from lib.task import Task
 from utilities import eprint, hashable
 
 from random import randint, random, seed
