@@ -1,7 +1,7 @@
 from recognition import *
 from enumeration import *
 from fragmentGrammar import *
-from taskBatcher import *
+from lib.taskBatcher import *
 from lib.primitiveGraph import graphPrimitives
 import dill
 
