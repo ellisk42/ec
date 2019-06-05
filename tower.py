@@ -163,7 +163,7 @@ def dreamOfTowers(grammar, prefix, N=250, montage=True):
     if len(matrix) > 0:
         import scipy.misc
         if montage:
-            matrix = montage(matrix)
+            matrix = montageMatrix(matrix)
             scipy.misc.imsave('%s.png'%prefix, matrix)
         else:
             for n,i in enumerate(matrix):
