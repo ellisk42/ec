@@ -2,6 +2,7 @@ from ec import *
 
 from lib.domains.tower.towerPrimitives import primitives, new_primitives, executeTower, animateTower
 from lib.domains.tower.makeTowerTasks import *
+from tower_common import renderPlan, towerLength, centerTower
 from utilities import *
 
 import os
@@ -114,7 +115,6 @@ class TowerCNN(nn.Module):
 
     def taskOfProgram(self, p, t,
                       lenient=False):
-        from tower_common import towerLength
         try:
             pl = executeTower(p,0.05)
             if pl is None or (not lenient and len(pl) == 0): return None
@@ -147,8 +147,6 @@ def tower_options(parser):
     
 
 def dreamOfTowers(grammar, prefix, N=250, montage=True):
-    from tower_common import renderPlan, towerLength
-    
     request = arrow(ttower,ttower)
     randomTowers = [tuple(centerTower(t))
                     for _ in range(N)
@@ -176,7 +174,6 @@ def dreamOfTowers(grammar, prefix, N=250, montage=True):
     
 def visualizePrimitives(primitives, fn=None):
     from itertools import product
-    from tower_common import renderPlan
     #from pylab import imshow,show
 
     from lib.domains.tower.towerPrimitives import _left,_right,_loop,_embed,_empty_tower,TowerState
@@ -237,7 +234,6 @@ def animateSolutions(checkpoint):
         animateTower(f"/tmp/tower_animation_{n}",f.bestPosterior.program)
     
 def visualizeSolutions(solutions, export, tasks=None):
-    from tower_common import renderPlan
 
     if tasks is None:
         tasks = list(solutions.keys())
