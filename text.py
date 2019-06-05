@@ -3,7 +3,7 @@ from lib.domains.text.makeTextTasks import makeTasks, loadPBETasks
 from lib.domains.text.textPrimitives import primitives
 from lib.domains.list.listPrimitives import bootstrapTarget
 from lib.recognition import *
-from enumeration import *
+from lib.enumeration import *
 
 import os
 import datetime
