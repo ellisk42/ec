@@ -1,6 +1,5 @@
 from lib.program import *
-from lib.utilities import *
-from differentiation import *
+from lib.differentiation import *
 
 import signal
 

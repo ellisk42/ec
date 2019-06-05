@@ -23,6 +23,7 @@ For more info, see this StackOverflow answer: https://stackoverflow.com/a/212191
 """
 import sys
 
+from lib import differentiation
 from lib import ec
 from lib import enumeration
 from lib import evolution
@@ -53,6 +54,7 @@ from lib.domains.arithmetic import arithmeticPrimitives
 from lib.domains.text import textPrimitives
 from lib.domains.text import makeTextTasks
 
+sys.modules['differentiation'] = differentiation
 sys.modules['ec'] = ec
 sys.modules['enumeration'] = enumeration
 sys.modules['evolution'] = evolution
