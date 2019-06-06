@@ -1,3 +1,5 @@
+import binutil
+
 from lib.ec import *
 
 from lib.grammar import *
