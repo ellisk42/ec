@@ -1,3 +1,5 @@
+import binutil  # required to import from lib modules
+
 from lib.ec import commandlineArguments, ecIterator
 from lib.domains.text.makeTextTasks import makeTasks, loadPBETasks
 from lib.domains.text.textPrimitives import primitives
