@@ -1,5 +1,7 @@
 # analog of list.py for regex tasks. Responsible for actually running the task.
 
+import binutil  # required to import from lib modules
+
 from lib.ec import explorationCompression, commandlineArguments, Task
 from lib.grammar import Grammar
 #from lib.utilities import eprint, testTrainSplit, numberOfCPUs, flatten
