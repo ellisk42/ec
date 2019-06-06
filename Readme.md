@@ -161,7 +161,7 @@ This section includes additional information, such as the steps to rebuild the O
 
 ### Creating new domains
 
-To create new domains of problems to solve, a number of things must be done. Follow the steps in [Creating New Domains](./docs/new-domains.md) to get started.
+To create new domains of problems to solve, a number of things must be done. Follow the steps in [Creating New Domains](./docs/creating-new-domains.md) to get started.
 
 Note that after a new domain is created, if any of the OCaml code has been edited it is required that you rebuild the OCaml binaries. See [Building the OCaml binaries](#building-the-ocaml-binaries) for more info.
 
