@@ -278,7 +278,7 @@ python bin/incr.py -t 2 --testingTimeout 2
 
 So within a singularity container for 2 iterations (`-i 2`):
 ```
-singularity exec container.img python bin/demo3.py -t 2 --testingTimeout 2 -i 2
+singularity exec container.img python bin/incr.py -t 2 --testingTimeout 2 -i 2
 ```
 
 Our script is incredibly simple so we should not expect to see much improvement over the course of the iterations. The program may be solved during the first iteration.
