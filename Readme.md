@@ -1,3 +1,18 @@
+# Table of contents
+1. [Overview](#overview)
+2. [Getting Started](#getting-started)
+    1. [Getting the code](#getting-the-code)
+    2. [Running using singularity](#running-using-singularity)
+    3. [Running tasks from the commandline](#running-tasks-from-the-commandline)
+    4. [Understanding console output](#understanding-console-output)
+    5. [Graphing the results](#graphing-the-results)
+3. [Additional Information](#additional-information)
+    1. [Installing Python dependencies](#installing-python-dependencies)
+    2. [Building the OCaml binaries](#building-the-ocaml-binaries)
+    3. [Build rust compressor](#build-rust-compressor)
+    4. [PyPy](#pypy)
+4. [`protonet-networks`](#protonet-networks)
+    
 # Overview
 
 DreamCoder is a wake-sleep algorithm that finds programs to solve a given set of tasks in a particular domain.
@@ -19,7 +34,7 @@ If you’ve already cloned the repo and did not clone the submodules, run:
 git submodule update --recursive --init
 ```
 
-### Running using singularity
+### Running using Singularity
 
 If you don't want to manually install all the of the software dependencies locally you can instead use a singularity container. To build the container, you can use the recipe `singularity` in the repository, and run the following from the root directory of the repository (tested using singularity version 2.5):
 ```
@@ -62,7 +77,7 @@ This runs with an enumeration timeout and recognition timeout of 20 seconds (sin
 
 See more examples of commands in the `docs/official_experiments` file.
 
-### Understanding program output
+### Understanding console output
 
 The first output of the DreamCoder scripts - after some commandline debugging statements - is typically output from launching tasks, and will appear as follows:
 ```
@@ -128,6 +143,15 @@ This script has a number of other options which can be viewed via the `--help` c
 
 See the "Installing Python dependencies" section below if the `bin/graphs.py` script is complaining about missing dependencies.
 
+Also the following error occurs if in some cases:
+```
+feh ERROR: Can't open X display. It *is* running, yeah?
+```
+If you see that error, you can run this in your terminal before running `graphs.py` to fix the issue:
+```
+export DISPLAY=:0
+```
+
 ## Additional Information
 
 This section includes additional information, such as the steps to rebuild the OCaml binaries, or extend DreamCoder to solve new problems in new domains.
@@ -150,11 +174,17 @@ brew install feh
 brew install imagemagick
 ```
 
-### Build solver
+### Building the OCaml binaries
 
-Currently in order to build the solver on a fresh opam switch I needed the
-following packages (anecdotal data from Arch x64, assuming you have `opam`):
+If you introduce new primitives for new domains of tasks, or modify the OCaml codebase (in `solvers/`) for any reason, you will need to rebuild the OCaml binaries before rerunning the Python scripts.
 
+To rebuild the OCaml binaires, run the following from the root of the repo:
+```
+make clean
+make
+```
+
+If you are not running within the singularity container, you will need to install the OCaml libraries dependencies first. Currently, in order to build the solver on a fresh opam switch, the following packages (anecdotal data from Arch x64, assuming you have `opam`) are required:
 ```bash
 opam update                 # Seriously, do that one
 opam switch 4.06.1+flambda  # caml.inria.fr/pub/docs/manual-ocaml/flambda.html
