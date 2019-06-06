@@ -1,7 +1,7 @@
 import datetime
 import os
 
-import binutil
+import binutil  # required to import from lib modules
 
 from lib.ec import commandlineArguments, ecIterator
 from lib.grammar import Grammar

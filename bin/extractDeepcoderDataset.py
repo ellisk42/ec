@@ -2,7 +2,7 @@ import sys
 import json
 import pickle as pickle
 
-import binutil
+import binutil  # required to import from lib modules
 
 from lib.utilities import eprint, hashable
 from lib.domains.list.makeListTasks import list_features

@@ -1,4 +1,4 @@
-import binutil
+import binutil  # required to import from lib modules
 
 from lib.utilities import *
 from lib.program import *

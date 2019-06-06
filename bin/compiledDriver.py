@@ -3,7 +3,7 @@ import time
 import traceback
 import pickle as pickle
 
-import binutil
+import binutil  # required to import from lib modules
 
 from lib.utilities import eprint
 

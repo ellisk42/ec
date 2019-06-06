@@ -5,7 +5,7 @@ import math
 import os
 import datetime
 
-import binutil
+import binutil  # required to import from lib modules
 
 from lib.ec import explorationCompression, commandlineArguments
 from lib.utilities import eprint, numberOfCPUs, flatten, testTrainSplit
