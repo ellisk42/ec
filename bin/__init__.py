@@ -39,6 +39,7 @@ from bin import examineFrontier
 from bin import extractDeepcoderDataset
 from bin import graphs
 from bin import launch
+from bin import list
 
 sys.modules['analyzeDepth'] = analyzeDepth
 sys.modules['compiledDriver'] = compiledDriver
@@ -48,3 +49,4 @@ sys.modules['examineFrontier'] = examineFrontier
 sys.modules['extractDeepcoderDataset'] = extractDeepcoderDataset
 sys.modules['graphs'] = graphs
 sys.modules['launch'] = launch
+sys.modules['list'] = list

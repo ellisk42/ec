@@ -5,6 +5,8 @@ import math
 import os
 import datetime
 
+import binutil
+
 from lib.ec import explorationCompression, commandlineArguments
 from lib.utilities import eprint, numberOfCPUs, flatten, testTrainSplit
 from lib.grammar import Grammar
