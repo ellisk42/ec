@@ -1,3 +1,5 @@
+import binutil  # required to import from lib modules
+
 from lib.recognition import *
 from lib.grammar import *
 

@@ -49,6 +49,7 @@ from bin import rational
 from bin import regexes
 from bin import scientificLaws
 from bin import symbolicRegression
+from bin import symmetryBreaking
 
 sys.modules['analyzeDepth'] = analyzeDepth
 sys.modules['compiledDriver'] = compiledDriver
@@ -68,3 +69,4 @@ sys.modules['rational'] = rational
 sys.modules['regexes'] = regexes
 sys.modules['scientificLaws'] = scientificLaws
 sys.modules['symbolicRegression'] = symbolicRegression
+sys.modules['symmetryBreaking'] = symmetryBreaking
