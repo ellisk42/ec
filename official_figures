@@ -135,7 +135,7 @@ python list.py --primitive-graph experimentOutputs/list_aic=1.0_arity=4_ET=11640
 
 python text.py --primitive-graph `grep  -h it=20.*graph jobs/text_ellisk_2019-01-2*`
 
-python rational.py --primitive-graph `grep  -h it=20.*graph jobs/rational_batch*`
+python bin/rational.py --primitive-graph `grep  -h it=20.*graph jobs/rational_batch*`
 
 python regexes.py --primitive-graph `grep  -h it=20.*graph jobs/regex_b40_str_red_12m_mnye_2019-03*`
 
