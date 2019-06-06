@@ -1,19 +1,22 @@
-from lib.type import tpregex, arrow
-from lib.task import Task
-from pregex import pregex
-import json
 import dill
+import os
+import json
 from string import printable
+
+from pregex import pregex
+
+from lib.task import Task
+from lib.type import tpregex, arrow
+from lib.utilities import get_root_dir
 
 
 def makeOldTasks():
     # a series of tasks
 
-    taskfile = './data_filtered.json'
+    taskfile = os.path.join(get_root_dir(), 'data', 'data_filtered.json')
     #task_list = pickle.load(open(taskfile, 'rb'))
 
-
-    with open('./data_filtered.json') as f:
+    with open(taskfile) as f:
         file_contents = f.read()
     task_list = json.loads(file_contents)
 
