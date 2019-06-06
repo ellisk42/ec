@@ -41,6 +41,7 @@ from bin import graphs
 from bin import launch
 from bin import list
 from bin import logo
+from bin import logReports
 
 sys.modules['analyzeDepth'] = analyzeDepth
 sys.modules['compiledDriver'] = compiledDriver
@@ -52,3 +53,4 @@ sys.modules['graphs'] = graphs
 sys.modules['launch'] = launch
 sys.modules['list'] = list
 sys.modules['logo'] = logo
+sys.modules['logReports'] = logReports
