@@ -26,10 +26,10 @@ import sys
 from lib import differentiation
 from lib import ec
 from lib import enumeration
-from lib import evolution
 from lib import fragmentGrammar
 from lib import fragmentUtilities
 from lib import frontier
+from lib import grammar
 from lib import program
 from lib import primitiveGraph
 from lib import recognition
@@ -57,10 +57,10 @@ from lib.domains.text import makeTextTasks
 sys.modules['differentiation'] = differentiation
 sys.modules['ec'] = ec
 sys.modules['enumeration'] = enumeration
-sys.modules['evolution'] = evolution
 sys.modules['fragmentGrammar'] = fragmentGrammar
 sys.modules['fragmentUtilities'] = fragmentUtilities
 sys.modules['frontier'] = frontier
+sys.modules['grammar'] = grammar
 sys.modules['program'] = program
 sys.modules['recognition'] = recognition
 sys.modules['task'] = task
