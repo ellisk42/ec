@@ -6,7 +6,7 @@ from lib.grammar import Grammar
 from lib.utilities import eprint, numberOfCPUs, flatten, testTrainSplit, POSITIVEINFINITY
 from lib.domains.regex.makeRegexTasks import makeOldTasks, makeLongTasks, makeShortTasks, makeWordTasks, makeNumberTasks, makeHandPickedTasks, makeNewTasks, makeNewNumberTasks
 from lib.domains.regex.regexPrimitives import basePrimitives, altPrimitives, easyWordsPrimitives, alt2Primitives, concatPrimitives, reducedConcatPrimitives, strConstConcatPrimitives
-from likelihoodModel import add_cutoff_values, add_string_constants
+from lib.likelihoodModel import add_cutoff_values, add_string_constants
 
 from lib.program import Abstraction, Application
 #from program import *

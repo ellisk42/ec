@@ -92,7 +92,7 @@ def updatePriors(result, path):
                 
 def getCutOffHits(result, cutOff):
     """Return a list of hit percentages; currently only testing tasks supported"""
-    from likelihoodModel import add_cutoff_values
+    from lib.likelihoodModel import add_cutoff_values
     from examineFrontier import testingRegexLikelihood
     from lib.domains.regex.groundtruthRegexes import badRegexTasks
     

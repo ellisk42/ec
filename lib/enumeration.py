@@ -1,4 +1,4 @@
-from likelihoodModel import AllOrNothingLikelihoodModel
+from lib.likelihoodModel import AllOrNothingLikelihoodModel
 from lib.grammar import *
 from lib.utilities import get_root_dir
 

@@ -168,7 +168,7 @@ if __name__ == "__main__":
 
 
     tasks = checkpoint.testSearchTime.keys() #recognitionTaskMetrics.keys()
-    from likelihoodModel import add_cutoff_values
+    from lib.likelihoodModel import add_cutoff_values
     tasks = add_cutoff_values(tasks, "gt") #could be "unigram" or "bigram"
 
 

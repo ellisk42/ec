@@ -32,6 +32,7 @@ from lib import fragmentGrammar
 from lib import fragmentUtilities
 from lib import frontier
 from lib import grammar
+from lib import likelihoodModel
 from lib import program
 from lib import primitiveGraph
 from lib import recognition
@@ -64,6 +65,7 @@ sys.modules['fragmentGrammar'] = fragmentGrammar
 sys.modules['fragmentUtilities'] = fragmentUtilities
 sys.modules['frontier'] = frontier
 sys.modules['grammar'] = grammar
+sys.modules['likelihoodModel'] = likelihoodModel
 sys.modules['program'] = program
 sys.modules['recognition'] = recognition
 sys.modules['task'] = task
