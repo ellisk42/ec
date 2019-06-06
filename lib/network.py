@@ -1,13 +1,11 @@
 from __future__ import print_function
-import sys
 
 import torch
 import torch.nn as nn
-from torch.nn.parameter import Parameter
-from torch.autograd import Variable
-from torch import optim
 import torch.nn.functional as F
-import random
+from torch.autograd import Variable
+from torch.nn.parameter import Parameter
+
 
 # UPGRADING TO INPUT -> OUTPUT -> TARGET
 # Todo:
