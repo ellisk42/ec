@@ -1,3 +1,5 @@
+import binutil
+
 from lib.recognition import *
 
 

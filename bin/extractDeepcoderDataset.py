@@ -2,6 +2,8 @@ import sys
 import json
 import pickle as pickle
 
+import binutil
+
 from lib.utilities import eprint, hashable
 from lib.domains.list.makeListTasks import list_features
 from lib.task import Task

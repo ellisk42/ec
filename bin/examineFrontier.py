@@ -1,5 +1,8 @@
 #all the imports
 import pregex as pre
+
+import binutil
+
 from lib.utilities import *
 from lib.domains.regex.groundtruthRegexes import *
 from lib.program import Abstraction, Application

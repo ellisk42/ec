@@ -1,3 +1,5 @@
+import binutil
+
 from lib.utilities import *
 
 DEBUG = False

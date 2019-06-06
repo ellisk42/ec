@@ -37,6 +37,7 @@ from bin import compressionGraph
 from bin import evolution
 from bin import examineFrontier
 from bin import extractDeepcoderDataset
+from bin import graphs
 
 sys.modules['analyzeDepth'] = analyzeDepth
 sys.modules['compiledDriver'] = compiledDriver
@@ -44,3 +45,4 @@ sys.modules['compressionGraph'] = compressionGraph
 sys.modules['evolution'] = evolution
 sys.modules['examineFrontier'] = examineFrontier
 sys.modules['extractDeepcoderDataset'] = extractDeepcoderDataset
+sys.modules['graphs'] = graphs

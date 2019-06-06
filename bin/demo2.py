@@ -8,6 +8,8 @@ import datetime
 import os
 import random
 
+import binutil
+
 from lib.ec import commandlineArguments, ecIterator
 from lib.grammar import Grammar
 from lib.program import Primitive

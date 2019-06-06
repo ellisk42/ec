@@ -1,3 +1,5 @@
+import binutil
+
 from lib.ec import *
 import dill
 import matplotlib
@@ -8,6 +10,8 @@ import matplotlib.lines as mlines
 
 import matplotlib
 #from test_unpickle import loadfun
+
+
 def loadfun(x):
     with open(x, 'rb') as handle:
         result = dill.load(handle)
