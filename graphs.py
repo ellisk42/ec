@@ -93,7 +93,7 @@ def updatePriors(result, path):
 def getCutOffHits(result, cutOff):
     """Return a list of hit percentages; currently only testing tasks supported"""
     from lib.likelihoodModel import add_cutoff_values
-    from examineFrontier import testingRegexLikelihood
+    from bin.examineFrontier import testingRegexLikelihood
     from lib.domains.regex.groundtruthRegexes import badRegexTasks
     
     tasks = [t for t in result.getTestingTasks()
@@ -146,7 +146,7 @@ def addStupidRegex(frontier, g):
                     task=frontier.task).normalize()
     
 def getLikelihood(likelihood, result, task, iteration):
-    from examineFrontier import testingRegexLikelihood
+    from bin.examineFrontier import testingRegexLikelihood
 
     frontier = result.frontiersOverTime[task][iteration]
     frontier = addStupidRegex(frontier, result.grammars[iteration])

@@ -357,7 +357,7 @@ def callCompiled(f, *arguments, **keywordArguments):
     timeout = keywordArguments.pop('compiledTimeout', None)
 
     # Use absolute paths.
-    compiled_driver_file = os.path.join(get_root_dir(), 'compiledDriver.py')
+    compiled_driver_file = os.path.join(get_root_dir(), 'bin', 'compiledDriver.py')
     p = subprocess.Popen(['pypy3'] + pypyArgs + [compiled_driver_file],
                          stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
