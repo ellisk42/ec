@@ -47,6 +47,7 @@ from bin import puddleworld
 from bin import python_server
 from bin import rational
 from bin import regexes
+from bin import scientificLaws
 
 sys.modules['analyzeDepth'] = analyzeDepth
 sys.modules['compiledDriver'] = compiledDriver
@@ -64,3 +65,4 @@ sys.modules['puddleworld'] = puddleworld
 sys.modules['python_server'] = python_server
 sys.modules['rational'] = rational
 sys.modules['regexes'] = regexes
+sys.modules['scientificLaws'] = scientificLaws

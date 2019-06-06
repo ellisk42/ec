@@ -1,3 +1,5 @@
+import binutil  # required to import from lib modules
+
 from lib.ec import explorationCompression, commandlineArguments
 from lib.domains.list.listPrimitives import bootstrapTarget
 from lib.recognition import *
