@@ -1,6 +1,7 @@
 from lib.fragmentUtilities import *
 from lib.grammar import *
 from lib.program import *
+from lib.utilities import get_root_dir
 
 from itertools import chain
 import time
@@ -525,8 +526,7 @@ def ocamlInduce(g, frontiers, _=None,
 
         try:
             # Get relative path
-            dir = os.path.dirname(__file__)
-            compressor_file = os.path.join(dir, 'compression')
+            compressor_file = os.path.join(get_root_dir(), 'compression')
             process = subprocess.Popen(compressor_file,
                                        stdin=subprocess.PIPE,
                                        stdout=subprocess.PIPE)

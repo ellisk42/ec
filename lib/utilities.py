@@ -334,6 +334,16 @@ class CompiledTimeout(Exception):
     pass
 
 
+def get_root_dir():
+    """
+    Returns the absolute path to the root directory of the repository as a string.
+
+    This method is primarily used in order to locate the binaries at the root of the
+    repository.
+    """
+    return os.path.join(os.path.dirname(__file__), os.pardir)
+
+
 def callCompiled(f, *arguments, **keywordArguments):
     import dill
 
@@ -347,8 +357,7 @@ def callCompiled(f, *arguments, **keywordArguments):
     timeout = keywordArguments.pop('compiledTimeout', None)
 
     # Use absolute paths.
-    dir = os.path.dirname(__file__)
-    compiled_driver_file = os.path.join(dir, 'compiledDriver.py')
+    compiled_driver_file = os.path.join(get_root_dir(), 'compiledDriver.py')
     p = subprocess.Popen(['pypy3'] + pypyArgs + [compiled_driver_file],
                          stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
@@ -884,4 +893,3 @@ if __name__ == "__main__":
     z = f(22)
     eprint(getMemoryUsageFraction().percent)
     eprint(getThisMemoryUsage())
-    

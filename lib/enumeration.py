@@ -1,5 +1,6 @@
 from likelihoodModel import AllOrNothingLikelihoodModel
 from lib.grammar import *
+from lib.utilities import get_root_dir
 
 import os
 import traceback
@@ -285,9 +286,7 @@ def solveForTask_ocaml(_=None,
     
 
     try:
-        this_dir = os.path.dirname(__file__)
-        root_dir = os.path.join(this_dir, os.pardir)
-        solver_file = os.path.join(root_dir, 'solver')
+        solver_file = os.path.join(get_root_dir(), 'solver')
         process = subprocess.Popen(solver_file,
                                    stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE)
