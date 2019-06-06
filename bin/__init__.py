@@ -50,6 +50,7 @@ from bin import regexes
 from bin import scientificLaws
 from bin import symbolicRegression
 from bin import symmetryBreaking
+from bin import taskRankGraphs
 
 sys.modules['analyzeDepth'] = analyzeDepth
 sys.modules['compiledDriver'] = compiledDriver
@@ -70,3 +71,4 @@ sys.modules['regexes'] = regexes
 sys.modules['scientificLaws'] = scientificLaws
 sys.modules['symbolicRegression'] = symbolicRegression
 sys.modules['symmetryBreaking'] = symmetryBreaking
+sys.modules['taskRankGraphs'] = taskRankGraphs
