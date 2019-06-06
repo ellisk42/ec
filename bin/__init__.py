@@ -48,6 +48,7 @@ from bin import python_server
 from bin import rational
 from bin import regexes
 from bin import scientificLaws
+from bin import symbolicRegression
 
 sys.modules['analyzeDepth'] = analyzeDepth
 sys.modules['compiledDriver'] = compiledDriver
@@ -66,3 +67,4 @@ sys.modules['python_server'] = python_server
 sys.modules['rational'] = rational
 sys.modules['regexes'] = regexes
 sys.modules['scientificLaws'] = scientificLaws
+sys.modules['symbolicRegression'] = symbolicRegression

@@ -1,3 +1,5 @@
+import binutil  # required to import from lib modules
+
 from lib.ec import explorationCompression, commandlineArguments
 from lib.recognition import *
 
