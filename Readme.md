@@ -7,10 +7,11 @@
     4. [Understanding console output](#understanding-console-output)
     5. [Graphing the results](#graphing-the-results)
 3. [Additional Information](#additional-information)
-    1. [Installing Python dependencies](#installing-python-dependencies)
-    2. [Building the OCaml binaries](#building-the-ocaml-binaries)
-    3. [Build rust compressor](#build-rust-compressor)
-    4. [PyPy](#pypy)
+    1. [Creating new domains](#creating-new-domains)
+    2. [Installing Python dependencies](#installing-python-dependencies)
+    3. [Building the OCaml binaries](#building-the-ocaml-binaries)
+    4. [Build rust compressor](#build-rust-compressor)
+    5. [PyPy](#pypy)
 4. [`protonet-networks`](#protonet-networks)
     
 # Overview
@@ -141,7 +142,7 @@ Here's an example of the output:
 
 This script has a number of other options which can be viewed via the `--help` command.
 
-See the "Installing Python dependencies" section below if the `bin/graphs.py` script is complaining about missing dependencies.
+See the [Installing Python dependencies](#installing-python-dependencies) section below if the `bin/graphs.py` script is complaining about missing dependencies.
 
 Also the following error occurs if in some cases:
 ```
@@ -155,6 +156,12 @@ export DISPLAY=:0
 ## Additional Information
 
 This section includes additional information, such as the steps to rebuild the OCaml binaries, or extend DreamCoder to solve new problems in new domains.
+
+### Creating new domains
+
+To create new domains of problems to solve, a number of things must be done. Follow the steps in [Creating New Domains](./docs/new-domains.md) to get started.
+
+Note that after a new domain is created, if any of the OCaml code has been edited it is required that you rebuild the OCaml binaries. See [Building the OCaml binaries](#building-the-ocaml-binaries) for more info.
 
 ### Installing Python dependencies
 
