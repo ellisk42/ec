@@ -1,7 +1,7 @@
 #all the imports
 import pregex as pre
 from lib.utilities import *
-from groundtruthRegexes import *
+from lib.domains.regex.groundtruthRegexes import *
 from lib.program import Abstraction, Application
 
 from lib.domains.regex.makeRegexTasks import regexHeldOutExamples

@@ -4,7 +4,7 @@ from lib.utilities import *
 from collections import Counter
 import math
 
-from groundtruthRegexes import gt_dict
+from lib.domains.regex.groundtruthRegexes import gt_dict
 
 gt_dict = {"Data column no. "+str(num): r_str for num, r_str in gt_dict.items()}
 

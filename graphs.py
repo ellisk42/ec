@@ -94,7 +94,7 @@ def getCutOffHits(result, cutOff):
     """Return a list of hit percentages; currently only testing tasks supported"""
     from likelihoodModel import add_cutoff_values
     from examineFrontier import testingRegexLikelihood
-    from groundtruthRegexes import badRegexTasks
+    from lib.domains.regex.groundtruthRegexes import badRegexTasks
     
     tasks = [t for t in result.getTestingTasks()
              if t.name not in badRegexTasks]
@@ -179,7 +179,7 @@ def getLikelihood(likelihood, result, task, iteration):
     assert False
     
 def getTestingLikelihood(likelihood, result, iteration):
-    from groundtruthRegexes import badRegexTasks
+    from lib.domains.regex.groundtruthRegexes import badRegexTasks
     testingTasks = [t for t in result.getTestingTasks()
                     if t.name not in badRegexTasks]
 

@@ -6,7 +6,9 @@ Module mapping details:
 TODO: remove module mapping code when backwards-compatibility is no longer required.
 
 The below module mapping is required for backwards-compatibility with old pickle files
-generated from before the EC codebase refactor.
+generated from before the EC codebase refactor. New files added to the codebase do not
+need to be added to the mapping, but if the existing modules are moved, then this the
+mapping needs to be updated to reflect the move or rename.
 
 The mapping uses the following pattern:
 
@@ -44,6 +46,7 @@ from lib.domains.misc import napsPrimitives
 from lib.domains.tower import makeTowerTasks
 from lib.domains.tower import towerPrimitives
 from lib.domains.tower import tower_common
+from lib.domains.regex import groundtruthRegexes
 from lib.domains.regex import regexPrimitives
 from lib.domains.regex import makeRegexTasks
 from lib.domains.logo import logoPrimitives
@@ -74,6 +77,7 @@ sys.modules['napsPrimitives'] = napsPrimitives
 sys.modules['makeTowerTasks'] = makeTowerTasks
 sys.modules['towerPrimitives'] = towerPrimitives
 sys.modules['tower_common'] = tower_common
+sys.modules['groundtruthRegexes'] = groundtruthRegexes
 sys.modules['regexPrimitives'] = regexPrimitives
 sys.modules['makeRegexTasks'] = makeRegexTasks
 sys.modules['deepcoderPrimitives'] = deepcoderPrimitives
