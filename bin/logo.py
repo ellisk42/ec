@@ -1,3 +1,5 @@
+import binutil
+
 from lib.ec import ecIterator, commandlineArguments
 from lib.grammar import Grammar
 from lib.utilities import eprint, testTrainSplit, numberOfCPUs, loadPickle
