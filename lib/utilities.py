@@ -344,6 +344,13 @@ def get_root_dir():
     return os.path.join(os.path.dirname(__file__), os.pardir)
 
 
+def get_data_dir():
+    """
+    Returns the absolute path to the data directory of the repository as a string.
+    """
+    return os.path.join(get_root_dir(), 'data')
+
+
 def callCompiled(f, *arguments, **keywordArguments):
     import dill
 

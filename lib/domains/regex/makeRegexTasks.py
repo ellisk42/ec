@@ -7,13 +7,13 @@ from pregex import pregex
 
 from lib.task import Task
 from lib.type import tpregex, arrow
-from lib.utilities import get_root_dir
+from lib.utilities import get_data_dir
 
 
 def makeOldTasks():
     # a series of tasks
 
-    taskfile = os.path.join(get_root_dir(), 'data', 'data_filtered.json')
+    taskfile = os.path.join(get_data_dir(), 'data_filtered.json')
     #task_list = pickle.load(open(taskfile, 'rb'))
 
     with open(taskfile) as f:
@@ -49,7 +49,7 @@ def makeShortTasks():
 
     #load new data:
 
-    taskfile = "./regex_data_csv_900.p"
+    taskfile = os.path.join(get_data_dir(), "regex_data_csv_900.p")
 
     with open(taskfile, 'rb') as handle:
         data = dill.load(handle)
@@ -70,7 +70,7 @@ def makeLongTasks():
 
     #load new data:
 
-    taskfile = "./regex_data_csv_900.p"
+    taskfile = os.path.join(get_data_dir(), "regex_data_csv_900.p")
 
     with open(taskfile, 'rb') as handle:
         data = dill.load(handle)
@@ -91,7 +91,7 @@ def makeWordTasks():
 
     #load new data:
 
-    taskfile = "./regex_data_csv_900.p"
+    taskfile = os.path.join(get_data_dir(), "regex_data_csv_900.p")
 
     with open(taskfile, 'rb') as handle:
         data = dill.load(handle)
@@ -142,7 +142,7 @@ def makeNumberTasks():
 
     #load new data:
 
-    taskfile = "./regex_data_csv_900.p"
+    taskfile = os.path.join(get_data_dir(), "regex_data_csv_900.p")
 
     with open(taskfile, 'rb') as handle:
         data = dill.load(handle)
@@ -197,7 +197,7 @@ def makeHandPickedTasks():
 
     #load new data:
 
-    taskfile = "./regex_data_csv_900.p"
+    taskfile = os.path.join(get_data_dir(), "regex_data_csv_900.p")
 
     with open(taskfile, 'rb') as handle:
         data = dill.load(handle)
@@ -238,7 +238,7 @@ def makeNewTasks(include_only=None):
 
     #load new data:
 
-    taskfile = "./csv_filtered_all_background_novel.p"
+    taskfile = os.path.join(get_data_dir(), "csv_filtered_all_background_novel.p")
 
     with open(taskfile, 'rb') as handle:
         data = dill.load(handle)
@@ -268,7 +268,7 @@ def regexHeldOutExamples(task, include_only=None):
     #load new data:
     global REGEXTASKS
     if REGEXTASKS is None:
-        taskfile = "./csv_filtered_all_background_novel.p"
+        taskfile = os.path.join(get_data_dir(), "csv_filtered_all_background_novel.p")
 
         with open(taskfile, 'rb') as handle:
             data = dill.load(handle)
