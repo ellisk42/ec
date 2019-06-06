@@ -52,6 +52,7 @@ from bin import symbolicRegression
 from bin import symmetryBreaking
 from bin import taskRankGraphs
 from bin import text
+from bin import tower
 
 sys.modules['analyzeDepth'] = analyzeDepth
 sys.modules['compiledDriver'] = compiledDriver
@@ -74,3 +75,4 @@ sys.modules['symbolicRegression'] = symbolicRegression
 sys.modules['symmetryBreaking'] = symmetryBreaking
 sys.modules['taskRankGraphs'] = taskRankGraphs
 sys.modules['text'] = text
+sys.modules['text'] = tower

@@ -1,3 +1,5 @@
+import binutil  # required to import from lib modules
+
 from lib.ec import *
 
 from lib.domains.tower.towerPrimitives import primitives, new_primitives, animateTower

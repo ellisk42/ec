@@ -557,7 +557,7 @@ def evolutionaryTrajectories(task, seed):
 
 from lib.domains.tower.towerPrimitives import *
 from lib.domains.tower.makeTowerTasks import *
-from tower import TowerCNN
+from bin.tower import TowerCNN
 g = Grammar.uniform(primitives)
 tasks = makeSupervisedTasks()#[:3]
 
