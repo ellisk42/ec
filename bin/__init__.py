@@ -43,6 +43,7 @@ from bin import list
 from bin import logo
 from bin import logReports
 from bin import physics
+from bin import puddleworld
 
 sys.modules['analyzeDepth'] = analyzeDepth
 sys.modules['compiledDriver'] = compiledDriver
@@ -56,3 +57,4 @@ sys.modules['list'] = list
 sys.modules['logo'] = logo
 sys.modules['logReports'] = logReports
 sys.modules['physics'] = physics
+sys.modules['puddleworld'] = puddleworld
