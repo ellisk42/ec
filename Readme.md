@@ -76,6 +76,8 @@ python text.py -t 20 -RS 5000
 ```
 This runs with an enumeration timeout and recognition timeout of 20 seconds (since recognition timeout defaults to enumeration timeout if `-R` is not provided) and 5000 recognition steps.
 
+Use the `--testingTimeout` flag to ensure the testing tasks are run. Otherwise, they will be skipped.
+
 See more examples of commands in the `docs/official_experiments` file.
 
 ### Understanding console output
