@@ -239,7 +239,7 @@ code from [this repository](https://github.com/jakesnell/prototypical-networks),
 
 > Code for the NIPS 2017 paper [Prototypical Networks for Few-shot Learning](http://papers.nips.cc/paper/6996-prototypical-networks-for-few-shot-learning.pdf)
 
-If you use that part of the code, please cite their paper paper, and check out
+If you use that part of the code, please cite their paper, and check out
 what they did:
 
 ```bibtex

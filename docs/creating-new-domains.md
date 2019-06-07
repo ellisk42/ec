@@ -19,7 +19,7 @@ To create new domains of problems to solve, a number of things must be done. Fol
 
 Select an appropriate domain to train the DreamCoder algorithm to solve tasks within.
 
-In our example below, the domain will be adding positive integers, with the tasks involving different adding different numbers. It's a trivial, toy example to demonstrate the different components of the codebase that you need to get started.
+In our example below, the domain will be adding positive integers, with the tasks involving addition of different numbers. It's a trivial, toy example to demonstrate the different components of the codebase that you need to get started.
 
 # Create a Domain Script
 
@@ -70,7 +70,7 @@ Next, lets begin to define our domain.
 
 We will create a list of primitives for our toy example next.
 
-Each member of our list must be an instances of `Primitive` where each primitive has a unique name that binds it to its corresponding OCaml code (discussed later), a type imported from `lib/type.py`, and a lambda function: `Primitive(name, type, func)`.
+Each member of our list must be an instance of the `Primitive` class where each primitive has a unique name that binds it to its corresponding OCaml code (discussed later), a type imported from `lib/type.py`, and a lambda function: `Primitive(name, type, func)`.
 ```python
 def _incr(x): return lambda x: x + 1
 def _incr2(x): return lambda x: x + 2
@@ -109,7 +109,7 @@ See the README at the root of the repo (specifically the "Building the OCaml bin
 
 Now that we have defined our primitives and grammar, we can create some training and testing tasks in our domain.
 
-First off, lets define a helper function that will add some number `N` to an input number:
+First off, lets define a helper function that will add some number `N` to a pseudo-random number:
 ```python
 def addN(n):
     x = random.choice(range(500))
@@ -170,7 +170,7 @@ for i, _ in enumerate(generator):
     print('ecIterator count {}'.format(i))
 ```
 
-This will iterate over the wake and sleep cycles for our tasks
+This will iterate over the wake and sleep cycles for our tasks.
 
 ### Final script
 
@@ -281,9 +281,9 @@ So within a singularity container for 2 iterations (`-i 2`):
 singularity exec container.img python bin/incr.py -t 2 --testingTimeout 2 -i 2
 ```
 
-Our script is incredibly simple so we should not expect to see much improvement over the course of the iterations. The program may be solved during the first iteration.
+Our script is a trivial example so we should not expect to see much improvement over the course of the iterations. The program should be solved during the first iteration.
 
-The training tasks are straightforward, so we should expect to see something like the following indicating that the algorithm discovered a solution using the primitives for each task:
+The training tasks are straightforward, so we should expect to see something like the console output showing that the algorithm found a solution for each task:
 ```
 Generative model enumeration results:
 HIT add1 w/ (lambda (incr $0)) ; log prior = -2.197225 ; log likelihood = 0.000000
@@ -291,11 +291,11 @@ HIT add2 w/ (lambda (incr2 $0)) ; log prior = -2.197225 ; log likelihood = 0.000
 HIT add3 w/ (lambda (incr (incr2 $0))) ; log prior = -3.295837 ; log likelihood = 0.000000
 ```
 
-In the program output we should expect to see that at some point the algorithm solved the testing task as well:
+The console output should show that at some point the algorithm solved the testing task as well:
 ```
 HIT add4 w/ (lambda (incr2 (incr2 $0))) ; log prior = -3.295837 ; log likelihood = 0.000000
 ```
 
 For more complicated examples, where the tasks are not all immediately solved in the first iteration, loss should drop with each iteration as the algorithm improves.
 
-For more information about running scripts, see "Running tasks from the commandline". Also read about graphing the results when testing more complicated domains.
+For more information about running scripts, in the README.md, see "Running tasks from the commandline". Also read about graphing the results when testing more complicated domains.
