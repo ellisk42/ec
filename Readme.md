@@ -26,7 +26,7 @@ This section will provide the basic information necessary to run DreamCoder.
 
 ### Getting the code
 
-To get up and running clone the code base and its submodules.
+Clone the codebase and its submodules.
 
 The codebase has several git submodule dependencies.
 
