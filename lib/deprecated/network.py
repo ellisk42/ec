@@ -1,6 +1,6 @@
 """
 Deprecated network.py module. This file only exists to support backwards-compatibility
-with old pickle files. See bin/__init__.py for more information.
+with old pickle files. See lib/__init__.py for more information.
 """
 
 from __future__ import print_function
