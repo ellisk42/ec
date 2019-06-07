@@ -8,7 +8,10 @@ Usage: Example script is in taskRankGraphs.
 Note: this requires a container with sklearn installed. A sample container is available in /om2/user/zyzzyva/ec/sklearn-container.img
 """
 
-import binutil  # required to import from lib modules
+try:
+    import binutil  # required to import from lib modules
+except ModuleNotFoundError:
+    import bin.binutil  # alt import if called as module
 
 from lib.ec import *
 import dill
