@@ -145,10 +145,9 @@ def tower_options(parser):
     parser.add_argument("--primitives",
                         default="old", type=str,
                         choices=["new", "old"])
-    
-    
 
-def dreamOfTowers(grammar, prefix, N=250, montage=True):
+
+def dreamOfTowers(grammar, prefix, N=250, make_montage=True):
     request = arrow(ttower,ttower)
     randomTowers = [tuple(centerTower(t))
                     for _ in range(N)
@@ -164,8 +163,8 @@ def dreamOfTowers(grammar, prefix, N=250, montage=True):
     # Only visualize if it has something to visualize.
     if len(matrix) > 0:
         import scipy.misc
-        if montage:
-            matrix = montageMatrix(matrix)
+        if make_montage:
+            matrix = montage(matrix)
             scipy.misc.imsave('%s.png'%prefix, matrix)
         else:
             for n,i in enumerate(matrix):
@@ -291,7 +290,7 @@ if __name__ == "__main__":
         with open(checkpoint,'rb') as handle:
             g = pickle.load(handle).grammars[-1]
         os.system("mkdir  -p data/tower_dreams")
-        dreamOfTowers(g,"data/tower_dreams",montage=False)
+        dreamOfTowers(g, "data/tower_dreams", make_montage=False)
         sys.exit(0)
         
     
@@ -310,7 +309,7 @@ if __name__ == "__main__":
     os.system("mkdir -p %s"%outputDirectory)
 
     os.system("mkdir  -p data/tower_dreams_initial")
-    dreamOfTowers(g0,"data/tower_dreams_initial",montage=False)
+    dreamOfTowers(g0, "data/tower_dreams_initial", make_montage=False)
 
     evaluationTimeout = 0.005
     generator = ecIterator(g0, train,
