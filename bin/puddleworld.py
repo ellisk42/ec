@@ -7,7 +7,10 @@ import datetime
 import os
 import random
 
-import binutil  # required to import from lib modules
+try:
+    import binutil  # required to import from lib modules
+except ModuleNotFoundError:
+    import bin.binutil  # alt import if called as module
 
 from lib.ec import commandlineArguments
 from lib.grammar import Grammar

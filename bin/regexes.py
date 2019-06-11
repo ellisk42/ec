@@ -1,6 +1,9 @@
 # analog of list.py for regex tasks. Responsible for actually running the task.
 
-import binutil  # required to import from lib modules
+try:
+    import binutil  # required to import from lib modules
+except ModuleNotFoundError:
+    import bin.binutil  # alt import if called as module
 
 from lib.ec import explorationCompression, commandlineArguments, Task
 from lib.grammar import Grammar

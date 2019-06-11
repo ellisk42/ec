@@ -5,7 +5,10 @@ import math
 import os
 import datetime
 
-import binutil  # required to import from lib modules
+try:
+    import binutil  # required to import from lib modules
+except ModuleNotFoundError:
+    import bin.binutil  # alt import if called as module
 
 from lib.ec import explorationCompression, commandlineArguments
 from lib.utilities import eprint, numberOfCPUs, flatten, testTrainSplit

@@ -33,10 +33,7 @@ import sys
 
 from bin import analyzeDepth
 from bin import compiledDriver
-from bin import compressionGraph
-from bin import evolution
 from bin import examineFrontier
-from bin import extractDeepcoderDataset
 from bin import graphs
 from bin import launch
 from bin import list
@@ -44,15 +41,14 @@ from bin import logo
 from bin import logReports
 from bin import physics
 from bin import puddleworld
-from bin import python_server
 from bin import rational
 from bin import regexes
 from bin import scientificLaws
-from bin import symbolicRegression
 from bin import symmetryBreaking
 from bin import taskRankGraphs
 from bin import text
 from bin import tower
+from bin.deprecated import compressionGraph, evolution, extractDeepcoderDataset, python_server, symbolicRegression
 
 sys.modules['analyzeDepth'] = analyzeDepth
 sys.modules['compiledDriver'] = compiledDriver
