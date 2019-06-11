@@ -1,10 +1,9 @@
-#all the imports
-import pregex as pre
-
 try:
     import binutil  # required to import from lib modules
 except ModuleNotFoundError:
     import bin.binutil  # alt import if called as module
+
+import pregex as pre
 
 from lib.utilities import *
 from lib.domains.regex.groundtruthRegexes import *

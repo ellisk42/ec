@@ -1,14 +1,22 @@
-from lib.task import DifferentiableTask, squaredErrorLoss
+from functools import reduce
 
 try:
     import binutil  # required to import from lib modules
 except ModuleNotFoundError:
     import bin.binutil  # alt import if called as module
 
-from lib.ec import explorationCompression, commandlineArguments
+from bin.rational import RandomParameterization
+from lib.domains.arithmetic.arithmeticPrimitives import (
+    f0, f1, fpi, real_power, real_subtraction, real_addition,
+    real_division, real_multiplication)
 from lib.domains.list.listPrimitives import bootstrapTarget
-from lib.recognition import *
-from functools import reduce
+from lib.ec import explorationCompression, commandlineArguments
+from lib.grammar import Grammar
+from lib.program import Program
+from lib.recognition import RecurrentFeatureExtractor, DummyFeatureExtractor
+from lib.task import DifferentiableTask, squaredErrorLoss
+from lib.type import baseType, tlist, arrow
+from lib.utilities import eprint, numberOfCPUs
 
 tvector = baseType("vector")
 treal = baseType("real")

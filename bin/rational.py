@@ -1,15 +1,21 @@
+import datetime
+import os
+import random
+
 try:
     import binutil  # required to import from lib modules
 except ModuleNotFoundError:
     import bin.binutil  # alt import if called as module
 
 from lib.ec import explorationCompression, commandlineArguments
-from lib.recognition import *
+from lib.domains.arithmetic.arithmeticPrimitives import real, real_division, real_addition, real_multiplication
+from lib.grammar import Grammar
+from lib.program import Primitive, Abstraction, Application
+from lib.recognition import ImageFeatureExtractor
+from lib.task import DifferentiableTask, squaredErrorLoss
+from lib.type import arrow, treal
+from lib.utilities import testTrainSplit, eprint, numberOfCPUs
 
-import random
-
-import os
-import datetime
 
 def makeTask(name, f):
     xs = [x / 100. for x in range(-500, 500)]
@@ -33,7 +39,7 @@ def makeTask(name, f):
         ex = list(zip(inputs, outputs))
         ex = ex[::int(len(ex) / N)][:N]
         t = DifferentiableTask(name,
-                               arrow(treal, treal),                                     
+                               arrow(treal, treal),
                                [((x,),y) for x, y in ex],
                                BIC=1.,
                                restarts=360, steps=50,
