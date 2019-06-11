@@ -21,4 +21,4 @@ import sys
 
 repo_root = os.path.join(os.path.dirname(__file__), os.path.pardir)
 sys.path.append(repo_root)
-sys.path.append(repo_root, 'pregex')
+sys.path.append(os.path.join(repo_root, 'pregex'))
