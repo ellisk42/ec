@@ -7,8 +7,8 @@
 *.bbl
 *.blg
 *.p
-*.py~
 *.pyc
+*~
 __pycache__
 _build
 experimentOutputs
@@ -25,3 +25,5 @@ data/taskRankGraphs
 message
 sklearn-container.img
 .idea/
+venv/
+tests/out/
