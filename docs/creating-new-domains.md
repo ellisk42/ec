@@ -37,14 +37,14 @@ import datetime
 import os
 import random
 
-import binutil  # required to import from lib modules
+import binutil  # required to import from eclib modules
 
-from lib.ec import commandlineArguments, ecIterator
-from lib.grammar import Grammar
-from lib.program import Primitive
-from lib.task import Task
-from lib.type import arrow, tint
-from lib.utilities import numberOfCPUs
+from eclib.ec import commandlineArguments, ecIterator
+from eclib.grammar import Grammar
+from eclib.program import Primitive
+from eclib.task import Task
+from eclib.type import arrow, tint
+from eclib.utilities import numberOfCPUs
 ```
 The `import binutil` is a funky workaround for the directory structure of this repo. You can safely ignore it for now.
 
@@ -180,14 +180,14 @@ import datetime
 import os
 import random
 
-import binutil  # required to import from lib modules
+import binutil  # required to import from eclib modules
 
-from lib.ec import commandlineArguments, ecIterator
-from lib.grammar import Grammar
-from lib.program import Primitive
-from lib.task import Task
-from lib.type import arrow, tint
-from lib.utilities import numberOfCPUs
+from eclib.ec import commandlineArguments, ecIterator
+from eclib.grammar import Grammar
+from eclib.program import Primitive
+from eclib.task import Task
+from eclib.type import arrow, tint
+from eclib.utilities import numberOfCPUs
 
 # Primitives
 def _incr(x): return lambda x: x + 1

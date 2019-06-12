@@ -9,7 +9,7 @@ Note: this requires a container with sklearn installed. A sample container is av
 """
 
 try:
-    import binutil  # required to import from lib modules
+    import binutil  # required to import from eclib modules
 except ModuleNotFoundError:
     import bin.binutil  # alt import if called as module
 

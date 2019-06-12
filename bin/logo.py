@@ -1,6 +1,6 @@
 
 try:
-    import binutil  # required to import from lib modules
+    import binutil  # required to import from eclib modules
 except ModuleNotFoundError:
     import bin.binutil  # alt import if called as module
 
