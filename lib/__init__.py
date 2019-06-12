@@ -55,9 +55,11 @@ from lib.domains.logo import logoPrimitives
 from lib.domains.logo import makeLogoTasks
 from lib.domains.list import listPrimitives
 from lib.domains.list import makeListTasks
+from lib.domains.list import main as list_main
 from lib.domains.arithmetic import arithmeticPrimitives
 from lib.domains.text import textPrimitives
 from lib.domains.text import makeTextTasks
+from lib.domains.text import main as text_main
 
 sys.modules['differentiation'] = differentiation
 sys.modules['ec'] = ec
@@ -89,7 +91,9 @@ sys.modules['logoPrimitives'] = logoPrimitives
 sys.modules['makeLogoTasks'] = makeLogoTasks
 sys.modules['listPrimitives'] = listPrimitives
 sys.modules['makeListTasks'] = makeListTasks
+sys.modules['list'] = list_main
 sys.modules['arithmeticPrimitives'] = arithmeticPrimitives
 sys.modules['textPrimitives'] = textPrimitives
 sys.modules['makeTextTasks'] = makeTextTasks
+sys.modules['text'] = text_main
 sys.modules['primitiveGraph'] = primitiveGraph

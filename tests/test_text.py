@@ -1,16 +1,18 @@
 import unittest
 
 
-class TestTextScript(unittest.TestCase):
+class TestTextMain(unittest.TestCase):
 
     def test_imports(self):
         try:
-            from bin.text import (
+            from lib.domains.text.main import (
                 ConstantInstantiateVisitor,
                 LearnedFeatureExtractor,
                 competeOnOneTask,
                 sygusCompetition,
-                text_options)
+                text_options,
+                main
+            )
         except Exception:
             self.fail('Unable to import text module')
 

@@ -36,7 +36,6 @@ from bin import compiledDriver
 from bin import examineFrontier
 from bin import graphs
 from bin import launch
-from bin import list
 from bin import logo
 from bin import logReports
 from bin import physics
@@ -46,7 +45,6 @@ from bin import regexes
 from bin import scientificLaws
 from bin import symmetryBreaking
 from bin import taskRankGraphs
-from bin import text
 from bin.deprecated import compressionGraph, evolution, extractDeepcoderDataset, python_server, symbolicRegression
 
 sys.modules['analyzeDepth'] = analyzeDepth
@@ -57,7 +55,6 @@ sys.modules['examineFrontier'] = examineFrontier
 sys.modules['extractDeepcoderDataset'] = extractDeepcoderDataset
 sys.modules['graphs'] = graphs
 sys.modules['launch'] = launch
-sys.modules['list'] = list
 sys.modules['logo'] = logo
 sys.modules['logReports'] = logReports
 sys.modules['physics'] = physics
@@ -69,4 +66,3 @@ sys.modules['scientificLaws'] = scientificLaws
 sys.modules['symbolicRegression'] = symbolicRegression
 sys.modules['symmetryBreaking'] = symmetryBreaking
 sys.modules['taskRankGraphs'] = taskRankGraphs
-sys.modules['text'] = text

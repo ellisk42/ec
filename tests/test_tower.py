@@ -10,7 +10,9 @@ class TestTowerMain(unittest.TestCase):
                 TowerCNN,
                 tower_options,
                 dreamOfTowers,
-                visualizePrimitives)
+                visualizePrimitives,
+                main
+            )
         except Exception:
             self.fail('Unable to import tower module')
 
