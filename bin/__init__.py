@@ -47,7 +47,6 @@ from bin import scientificLaws
 from bin import symmetryBreaking
 from bin import taskRankGraphs
 from bin import text
-from bin import tower
 from bin.deprecated import compressionGraph, evolution, extractDeepcoderDataset, python_server, symbolicRegression
 
 sys.modules['analyzeDepth'] = analyzeDepth
@@ -71,4 +70,3 @@ sys.modules['symbolicRegression'] = symbolicRegression
 sys.modules['symmetryBreaking'] = symmetryBreaking
 sys.modules['taskRankGraphs'] = taskRankGraphs
 sys.modules['text'] = text
-sys.modules['text'] = tower

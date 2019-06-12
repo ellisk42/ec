@@ -47,6 +47,7 @@ from lib.domains.misc import napsPrimitives
 from lib.domains.tower import makeTowerTasks
 from lib.domains.tower import towerPrimitives
 from lib.domains.tower import tower_common
+from lib.domains.tower import main as tower_main
 from lib.domains.regex import groundtruthRegexes
 from lib.domains.regex import regexPrimitives
 from lib.domains.regex import makeRegexTasks
@@ -79,6 +80,7 @@ sys.modules['napsPrimitives'] = napsPrimitives
 sys.modules['makeTowerTasks'] = makeTowerTasks
 sys.modules['towerPrimitives'] = towerPrimitives
 sys.modules['tower_common'] = tower_common
+sys.modules['tower'] = tower_main
 sys.modules['groundtruthRegexes'] = groundtruthRegexes
 sys.modules['regexPrimitives'] = regexPrimitives
 sys.modules['makeRegexTasks'] = makeRegexTasks

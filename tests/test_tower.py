@@ -1,11 +1,11 @@
 import unittest
 
 
-class TestTowerScript(unittest.TestCase):
+class TestTowerMain(unittest.TestCase):
 
     def test_imports(self):
         try:
-            from bin.tower import (
+            from lib.domains.tower.main import (
                 Flatten,
                 TowerCNN,
                 tower_options,
