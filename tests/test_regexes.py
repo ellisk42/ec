@@ -5,7 +5,7 @@ class TestRegexesMain(unittest.TestCase):
 
     def test_imports(self):
         try:
-            from lib.domains.regex.main import (
+            from eclib.domains.regex.main import (
                 LearnedFeatureExtractor,
                 ConstantInstantiateVisitor,
                 MyJSONFeatureExtractor,

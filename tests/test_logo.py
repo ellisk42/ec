@@ -5,7 +5,7 @@ class TestLogoMain(unittest.TestCase):
 
     def test_imports(self):
         try:
-            from lib.domains.logo.main import (
+            from eclib.domains.logo.main import (
                 animateSolutions,
                 dreamFromGrammar,
                 list_options,
