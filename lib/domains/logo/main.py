@@ -8,6 +8,7 @@ import subprocess
 import sys
 import time
 
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -228,7 +229,7 @@ def enumerateDreams(checkpoint, directory):
             dreamFromGrammar([list(f.entries)[0].program for f in fs],
                              f"{directory}/{MDL}")
         MDL += 1
-        
+
 def visualizePrimitives(primitives, export='/tmp/logo_primitives.png'):
     from itertools import product
     from lib.program import Index,Abstraction,Application
@@ -320,12 +321,17 @@ def visualizePrimitives(primitives, export='/tmp/logo_primitives.png'):
     matrix = montageMatrix(matrix)
     scipy.misc.imsave(export, matrix)
 
-        
+
 def main(args):
     """
     Takes the return value of the `commandlineArguments()` function as input and
     trains/tests the model on LOGO tasks.
     """
+
+    # The below global statement is required since primitives is modified within main().
+    # TODO(lcary): use a function call to retrieve and declare primitives instead.
+    global primitives
+
     visualizeCheckpoint = args.pop("visualize")
     if visualizeCheckpoint is not None:
         with open(visualizeCheckpoint,'rb') as handle:
