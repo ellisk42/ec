@@ -41,7 +41,6 @@ from bin import logReports
 from bin import physics
 from bin import puddleworld
 from bin import rational
-from bin import regexes
 from bin import scientificLaws
 from bin import symmetryBreaking
 from bin import taskRankGraphs
@@ -61,7 +60,6 @@ sys.modules['physics'] = physics
 sys.modules['puddleworld'] = puddleworld
 sys.modules['python_server'] = python_server
 sys.modules['rational'] = rational
-sys.modules['regexes'] = regexes
 sys.modules['scientificLaws'] = scientificLaws
 sys.modules['symbolicRegression'] = symbolicRegression
 sys.modules['symmetryBreaking'] = symmetryBreaking

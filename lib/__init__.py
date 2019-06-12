@@ -51,6 +51,7 @@ from lib.domains.tower import main as tower_main
 from lib.domains.regex import groundtruthRegexes
 from lib.domains.regex import regexPrimitives
 from lib.domains.regex import makeRegexTasks
+from lib.domains.regex import main as regex_main
 from lib.domains.logo import logoPrimitives
 from lib.domains.logo import makeLogoTasks
 from lib.domains.list import listPrimitives
@@ -86,6 +87,7 @@ sys.modules['tower'] = tower_main
 sys.modules['groundtruthRegexes'] = groundtruthRegexes
 sys.modules['regexPrimitives'] = regexPrimitives
 sys.modules['makeRegexTasks'] = makeRegexTasks
+sys.modules['regexes'] = regex_main
 sys.modules['deepcoderPrimitives'] = deepcoderPrimitives
 sys.modules['logoPrimitives'] = logoPrimitives
 sys.modules['makeLogoTasks'] = makeLogoTasks

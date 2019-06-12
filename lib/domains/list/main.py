@@ -5,8 +5,8 @@ import math
 import os
 import datetime
 
-from lib.ec import explorationCompression, commandlineArguments
-from lib.utilities import eprint, numberOfCPUs, flatten, testTrainSplit
+from lib.ec import explorationCompression
+from lib.utilities import eprint, flatten, testTrainSplit
 from lib.grammar import Grammar
 from lib.task import Task
 from lib.type import Context, arrow, tbool, tlist, tint, t0, UnificationFailure
