@@ -3,8 +3,8 @@ try:
 except ModuleNotFoundError:
     import bin.binutil  # alt import if called as module
 
-from lib.recognition import *
-from lib.grammar import *
+from eclib.recognition import *
+from eclib.grammar import *
 
 if __name__ == "__main__":
     trainingTimeout = 600

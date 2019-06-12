@@ -3,14 +3,14 @@ try:
 except ModuleNotFoundError:
     import bin.binutil  # alt import if called as module
 
-from lib.ec import *
+from eclib.ec import *
 
-from lib.grammar import *
-from lib.program import *
+from eclib.grammar import *
+from eclib.program import *
 
 import numpy as np
 
-from lib.type import *
+from eclib.type import *
 
 tobject = baseType("object")
 tvector = baseType("vector")

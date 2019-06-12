@@ -7,14 +7,14 @@ try:
 except ModuleNotFoundError:
     import bin.binutil  # alt import if called as module
 
-from lib.ec import explorationCompression, commandlineArguments
-from lib.domains.arithmetic.arithmeticPrimitives import real, real_division, real_addition, real_multiplication
-from lib.grammar import Grammar
-from lib.program import Primitive, Abstraction, Application
-from lib.recognition import ImageFeatureExtractor
-from lib.task import DifferentiableTask, squaredErrorLoss
-from lib.type import arrow, treal
-from lib.utilities import testTrainSplit, eprint, numberOfCPUs
+from eclib.ec import explorationCompression, commandlineArguments
+from eclib.domains.arithmetic.arithmeticPrimitives import real, real_division, real_addition, real_multiplication
+from eclib.grammar import Grammar
+from eclib.program import Primitive, Abstraction, Application
+from eclib.recognition import ImageFeatureExtractor
+from eclib.task import DifferentiableTask, squaredErrorLoss
+from eclib.type import arrow, treal
+from eclib.utilities import testTrainSplit, eprint, numberOfCPUs
 
 
 def makeTask(name, f):

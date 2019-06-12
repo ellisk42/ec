@@ -3,9 +3,9 @@ try:
 except ModuleNotFoundError:
     import bin.binutil  # alt import if called as module
 
-from lib.domains.regex.main import main, regex_options
-from lib.ec import commandlineArguments
-from lib.utilities import numberOfCPUs
+from eclib.domains.regex.main import main, regex_options
+from eclib.ec import commandlineArguments
+from eclib.utilities import numberOfCPUs
 
 
 if __name__ == '__main__':

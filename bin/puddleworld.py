@@ -12,12 +12,12 @@ try:
 except ModuleNotFoundError:
     import bin.binutil  # alt import if called as module
 
-from lib.ec import commandlineArguments
-from lib.grammar import Grammar
-from lib.utilities import eprint, numberOfCPUs
+from eclib.ec import commandlineArguments
+from eclib.grammar import Grammar
+from eclib.utilities import eprint, numberOfCPUs
 
-from lib.domains.puddleworld.puddleworldPrimitives import primitives
-from lib.domains.puddleworld.makePuddleworldTasks import makeLocalTasks, makeGlobalTasks
+from eclib.domains.puddleworld.puddleworldPrimitives import primitives
+from eclib.domains.puddleworld.makePuddleworldTasks import makeLocalTasks, makeGlobalTasks
 
 
 def puddleworld_options(parser):

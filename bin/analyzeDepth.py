@@ -3,8 +3,8 @@ try:
 except ModuleNotFoundError:
     import bin.binutil  # alt import if called as module
 
-from lib.utilities import *
-from lib.program import *
+from eclib.utilities import *
+from eclib.program import *
 
 from scipy.stats.stats import pearsonr
 

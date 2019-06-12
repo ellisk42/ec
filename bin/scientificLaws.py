@@ -6,17 +6,17 @@ except ModuleNotFoundError:
     import bin.binutil  # alt import if called as module
 
 from bin.rational import RandomParameterization
-from lib.domains.arithmetic.arithmeticPrimitives import (
+from eclib.domains.arithmetic.arithmeticPrimitives import (
     f0, f1, fpi, real_power, real_subtraction, real_addition,
     real_division, real_multiplication)
-from lib.domains.list.listPrimitives import bootstrapTarget
-from lib.ec import explorationCompression, commandlineArguments
-from lib.grammar import Grammar
-from lib.program import Program
-from lib.recognition import RecurrentFeatureExtractor, DummyFeatureExtractor
-from lib.task import DifferentiableTask, squaredErrorLoss
-from lib.type import baseType, tlist, arrow
-from lib.utilities import eprint, numberOfCPUs
+from eclib.domains.list.listPrimitives import bootstrapTarget
+from eclib.ec import explorationCompression, commandlineArguments
+from eclib.grammar import Grammar
+from eclib.program import Program
+from eclib.recognition import RecurrentFeatureExtractor, DummyFeatureExtractor
+from eclib.task import DifferentiableTask, squaredErrorLoss
+from eclib.type import baseType, tlist, arrow
+from eclib.utilities import eprint, numberOfCPUs
 
 tvector = baseType("vector")
 treal = baseType("real")

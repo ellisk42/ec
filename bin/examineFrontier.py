@@ -5,12 +5,12 @@ except ModuleNotFoundError:
 
 import pregex as pre
 
-from lib.utilities import *
-from lib.domains.regex.groundtruthRegexes import *
-from lib.program import Abstraction, Application
+from eclib.utilities import *
+from eclib.domains.regex.groundtruthRegexes import *
+from eclib.program import Abstraction, Application
 
-from lib.domains.regex.makeRegexTasks import regexHeldOutExamples
-from lib.domains.regex.regexPrimitives import PRC
+from eclib.domains.regex.makeRegexTasks import regexHeldOutExamples
+from eclib.domains.regex.regexPrimitives import PRC
 
 import torch
 from torch.nn import Parameter
@@ -128,7 +128,7 @@ if len(sys.argv) > 1:
 REGEXCACHINGTABLE = {}
 def testingRegexLikelihood(task, program):
     global REGEXCACHINGTABLE
-    from lib.domains.regex.makeRegexTasks import regexHeldOutExamples
+    from eclib.domains.regex.makeRegexTasks import regexHeldOutExamples
     import pregex as pre
     
     testing = regexHeldOutExamples(task)
@@ -173,7 +173,7 @@ if __name__ == "__main__":
 
 
     tasks = checkpoint.testSearchTime.keys() #recognitionTaskMetrics.keys()
-    from lib.likelihoodModel import add_cutoff_values
+    from eclib.likelihoodModel import add_cutoff_values
     tasks = add_cutoff_values(tasks, "gt") #could be "unigram" or "bigram"
 
 
