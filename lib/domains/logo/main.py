@@ -23,8 +23,6 @@ from lib.task import Task
 from lib.type import arrow
 from lib.utilities import eprint, testTrainSplit, loadPickle
 
-global prefix_dreams
-
 
 def animateSolutions(allFrontiers):
     programs = []
@@ -327,6 +325,10 @@ def main(args):
     Takes the return value of the `commandlineArguments()` function as input and
     trains/tests the model on LOGO tasks.
     """
+
+    # The below legacy global statement is required since prefix_dreams is used by LogoFeatureCNN.
+    # TODO(lcary): use argument passing instead of global variables.
+    global prefix_dreams
 
     # The below global statement is required since primitives is modified within main().
     # TODO(lcary): use a function call to retrieve and declare primitives instead.
