@@ -3,8 +3,22 @@ try:
 except ModuleNotFoundError:
     import bin.binutil  # alt import if called as module
 
-from lib.domains.tower.main import main
+from lib.domains.tower.main import main, TowerCNN, tower_options
+from lib.ec import commandlineArguments
+from lib.utilities import numberOfCPUs
 
 
 if __name__ == '__main__':
-    main()
+    arguments = commandlineArguments(
+        featureExtractor=TowerCNN,
+        CPUs=numberOfCPUs(),
+        helmholtzRatio=0.5,
+        recognitionTimeout=3600,
+        iterations=6,
+        a=3,
+        structurePenalty=1,
+        pseudoCounts=10,
+        topK=2,
+        maximumFrontier=5,
+        extras=tower_options)
+    main(arguments)

@@ -1,8 +1,3 @@
-try:
-    import binutil  # required to import from lib modules
-except ModuleNotFoundError:
-    import bin.binutil  # alt import if called as module
-
 from lib.ec import *
 
 from lib.domains.tower.towerPrimitives import primitives, new_primitives, animateTower
@@ -258,19 +253,11 @@ def visualizeSolutions(solutions, export, tasks=None):
         eprint("Tried to visualize solutions, but none to visualize.")
 
 
-def main():
-    arguments = commandlineArguments(
-        featureExtractor=TowerCNN,
-        CPUs=numberOfCPUs(),
-        helmholtzRatio=0.5,
-        recognitionTimeout=3600,
-        iterations=6,
-        a=3,
-        structurePenalty=1,
-        pseudoCounts=10,
-        topK=2,
-        maximumFrontier=5,
-        extras=tower_options)
+def main(arguments):
+    """
+    Takes the return value of the `commandlineArguments()` function as input and
+    trains/tests the model on a set of tower-building tasks.
+    """
     g0 = Grammar.uniform({"new": new_primitives,
                           "old": primitives}[arguments.pop("primitives")],
                          continuationType=ttower)
