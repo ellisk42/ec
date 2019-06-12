@@ -36,7 +36,6 @@ from bin import compiledDriver
 from bin import examineFrontier
 from bin import graphs
 from bin import launch
-from bin import logo
 from bin import logReports
 from bin import physics
 from bin import puddleworld
@@ -54,7 +53,6 @@ sys.modules['examineFrontier'] = examineFrontier
 sys.modules['extractDeepcoderDataset'] = extractDeepcoderDataset
 sys.modules['graphs'] = graphs
 sys.modules['launch'] = launch
-sys.modules['logo'] = logo
 sys.modules['logReports'] = logReports
 sys.modules['physics'] = physics
 sys.modules['puddleworld'] = puddleworld

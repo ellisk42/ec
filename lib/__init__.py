@@ -54,6 +54,7 @@ from lib.domains.regex import makeRegexTasks
 from lib.domains.regex import main as regex_main
 from lib.domains.logo import logoPrimitives
 from lib.domains.logo import makeLogoTasks
+from lib.domains.logo import main as logo_main
 from lib.domains.list import listPrimitives
 from lib.domains.list import makeListTasks
 from lib.domains.list import main as list_main
@@ -91,6 +92,7 @@ sys.modules['regexes'] = regex_main
 sys.modules['deepcoderPrimitives'] = deepcoderPrimitives
 sys.modules['logoPrimitives'] = logoPrimitives
 sys.modules['makeLogoTasks'] = makeLogoTasks
+sys.modules['logo'] = logo_main
 sys.modules['listPrimitives'] = listPrimitives
 sys.modules['makeListTasks'] = makeListTasks
 sys.modules['list'] = list_main
