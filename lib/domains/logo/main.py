@@ -13,7 +13,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from lib.domains.logo.makeLogoTasks import makeTasks, montageTasks, drawLogo
-from lib.domains.logo.logoPrimitives import *
+from lib.domains.logo.logoPrimitives import primitives, turtle, tangle, tlength
 from lib.ec import ecIterator
 from lib.grammar import Grammar
 from lib.program import Program
