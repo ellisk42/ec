@@ -70,7 +70,7 @@ Next, lets begin to define our domain.
 
 We will create a list of primitives for our toy example next.
 
-Each member of our list must be an instance of the `Primitive` class where each primitive has a unique name that binds it to its corresponding OCaml code (discussed later), a type imported from `lib/type.py`, and a lambda function: `Primitive(name, type, func)`.
+Each member of our list must be an instance of the `Primitive` class where each primitive has a unique name that binds it to its corresponding OCaml code (discussed later), a type imported from `eclib/type.py`, and a lambda function: `Primitive(name, type, func)`.
 ```python
 def _incr(x): return lambda x: x + 1
 def _incr2(x): return lambda x: x + 2
