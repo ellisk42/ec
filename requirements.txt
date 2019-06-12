@@ -1,5 +1,5 @@
 Box2D-kengz==2.3.3
-cairocffi===file-.cairocffi-VERSION
+cairocffi==1.0.2
 certifi==2019.3.9
 cffi==1.12.3
 chardet==3.0.4
