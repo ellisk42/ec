@@ -1,11 +1,11 @@
 import unittest
 
 
-class TestLogoScript(unittest.TestCase):
+class TestLogoMain(unittest.TestCase):
 
     def test_imports(self):
         try:
-            from bin.logo import (
+            from lib.domains.logo.main import (
                 animateSolutions,
                 dreamFromGrammar,
                 list_options,
@@ -13,7 +13,9 @@ class TestLogoScript(unittest.TestCase):
                 enumerateDreams,
                 visualizePrimitives,
                 Flatten,
-                LogoFeatureCNN)
+                LogoFeatureCNN,
+                main
+            )
         except Exception:
             self.fail('Unable to import logo module')
 

@@ -47,16 +47,21 @@ from lib.domains.misc import napsPrimitives
 from lib.domains.tower import makeTowerTasks
 from lib.domains.tower import towerPrimitives
 from lib.domains.tower import tower_common
+from lib.domains.tower import main as tower_main
 from lib.domains.regex import groundtruthRegexes
 from lib.domains.regex import regexPrimitives
 from lib.domains.regex import makeRegexTasks
+from lib.domains.regex import main as regex_main
 from lib.domains.logo import logoPrimitives
 from lib.domains.logo import makeLogoTasks
+from lib.domains.logo import main as logo_main
 from lib.domains.list import listPrimitives
 from lib.domains.list import makeListTasks
+from lib.domains.list import main as list_main
 from lib.domains.arithmetic import arithmeticPrimitives
 from lib.domains.text import textPrimitives
 from lib.domains.text import makeTextTasks
+from lib.domains.text import main as text_main
 
 sys.modules['differentiation'] = differentiation
 sys.modules['ec'] = ec
@@ -79,15 +84,20 @@ sys.modules['napsPrimitives'] = napsPrimitives
 sys.modules['makeTowerTasks'] = makeTowerTasks
 sys.modules['towerPrimitives'] = towerPrimitives
 sys.modules['tower_common'] = tower_common
+sys.modules['tower'] = tower_main
 sys.modules['groundtruthRegexes'] = groundtruthRegexes
 sys.modules['regexPrimitives'] = regexPrimitives
 sys.modules['makeRegexTasks'] = makeRegexTasks
+sys.modules['regexes'] = regex_main
 sys.modules['deepcoderPrimitives'] = deepcoderPrimitives
 sys.modules['logoPrimitives'] = logoPrimitives
 sys.modules['makeLogoTasks'] = makeLogoTasks
+sys.modules['logo'] = logo_main
 sys.modules['listPrimitives'] = listPrimitives
 sys.modules['makeListTasks'] = makeListTasks
+sys.modules['list'] = list_main
 sys.modules['arithmeticPrimitives'] = arithmeticPrimitives
 sys.modules['textPrimitives'] = textPrimitives
 sys.modules['makeTextTasks'] = makeTextTasks
+sys.modules['text'] = text_main
 sys.modules['primitiveGraph'] = primitiveGraph

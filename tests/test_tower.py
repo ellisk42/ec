@@ -1,16 +1,18 @@
 import unittest
 
 
-class TestTowerScript(unittest.TestCase):
+class TestTowerMain(unittest.TestCase):
 
     def test_imports(self):
         try:
-            from bin.tower import (
+            from lib.domains.tower.main import (
                 Flatten,
                 TowerCNN,
                 tower_options,
                 dreamOfTowers,
-                visualizePrimitives)
+                visualizePrimitives,
+                main
+            )
         except Exception:
             self.fail('Unable to import tower module')
 

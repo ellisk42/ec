@@ -1,15 +1,17 @@
 import unittest
 
 
-class TestRegexesScript(unittest.TestCase):
+class TestRegexesMain(unittest.TestCase):
 
     def test_imports(self):
         try:
-            from bin.regexes import (
+            from lib.domains.regex.main import (
                 LearnedFeatureExtractor,
                 ConstantInstantiateVisitor,
                 MyJSONFeatureExtractor,
-                regex_options)
+                regex_options,
+                main
+            )
         except Exception:
             self.fail('Unable to import regexes module')
 

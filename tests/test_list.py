@@ -1,18 +1,20 @@
 import unittest
 
 
-class TestListScript(unittest.TestCase):
+class TestListMain(unittest.TestCase):
 
     def test_imports(self):
         try:
-            from bin.list import (
+            from lib.domains.list.main import (
                 retrieveJSONTasks,
                 list_features,
                 isListFunction,
                 isIntFunction,
                 train_necessary,
                 list_options,
-                LearnedFeatureExtractor)
+                LearnedFeatureExtractor,
+                main
+            )
         except Exception:
             self.fail('Unable to import list module')
 
