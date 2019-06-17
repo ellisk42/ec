@@ -38,7 +38,6 @@ from bin import graphs
 from bin import launch
 from bin import logReports
 from bin import physics
-from bin import puddleworld
 from bin import rational
 from bin import scientificLaws
 from bin import symmetryBreaking
@@ -55,7 +54,6 @@ sys.modules['graphs'] = graphs
 sys.modules['launch'] = launch
 sys.modules['logReports'] = logReports
 sys.modules['physics'] = physics
-sys.modules['puddleworld'] = puddleworld
 sys.modules['python_server'] = python_server
 sys.modules['rational'] = rational
 sys.modules['scientificLaws'] = scientificLaws
