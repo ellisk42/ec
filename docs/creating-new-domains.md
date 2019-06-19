@@ -37,7 +37,7 @@ import datetime
 import os
 import random
 
-import binutil  dreamcoder
+import binutil
 
 from dreamcoder.ec import commandlineArguments, ecIterator
 from dreamcoder.grammar import Grammar
