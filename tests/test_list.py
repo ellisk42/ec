@@ -5,7 +5,7 @@ class TestListMain(unittest.TestCase):
 
     def test_imports(self):
         try:
-            from eclib.domains.list.main import (
+            from dreamcoder.domains.list.main import (
                 retrieveJSONTasks,
                 list_features,
                 isListFunction,

@@ -1,9 +1,9 @@
 try:
-    import binutil  # required to import from eclib modules
+    import binutil  # required to import from dreamcoder modules
 except ModuleNotFoundError:
     import bin.binutil  # alt import if called as module
 
-from eclib.ec import *
+from dreamcoder.ec import *
 import dill
 import matplotlib
 matplotlib.use('Agg')
@@ -99,9 +99,9 @@ def updatePriors(result, path):
                 
 def getCutOffHits(result, cutOff):
     """Return a list of hit percentages; currently only testing tasks supported"""
-    from eclib.likelihoodModel import add_cutoff_values
+    from dreamcoder.likelihoodModel import add_cutoff_values
     from bin.examineFrontier import testingRegexLikelihood
-    from eclib.domains.regex.groundtruthRegexes import badRegexTasks
+    from dreamcoder.domains.regex.groundtruthRegexes import badRegexTasks
     
     tasks = [t for t in result.getTestingTasks()
              if t.name not in badRegexTasks]
@@ -140,7 +140,7 @@ def addStupidRegex(frontier, g):
     import pregex as pre
     
     if stupidProgram is None:
-        from eclib.domains.regex.regexPrimitives import reducedConcatPrimitives
+        from dreamcoder.domains.regex.regexPrimitives import reducedConcatPrimitives
         reducedConcatPrimitives()
         stupidProgram = Program.parse("(lambda (r_kleene (lambda (r_dot $0)) $0))")
         stupidRegex = stupidProgram.evaluate([])(pre.String(""))
@@ -186,12 +186,12 @@ def getLikelihood(likelihood, result, task, iteration):
     assert False
     
 def getTestingLikelihood(likelihood, result, iteration):
-    from eclib.domains.regex.groundtruthRegexes import badRegexTasks
+    from dreamcoder.domains.regex.groundtruthRegexes import badRegexTasks
     testingTasks = [t for t in result.getTestingTasks()
                     if t.name not in badRegexTasks]
 
     print("Getting testing likelihoods; we have to do this once per checkpoint and once per iteration so hang on to your seat!")
-    from eclib.domains.regex.makeRegexTasks import regexHeldOutExamples
+    from dreamcoder.domains.regex.makeRegexTasks import regexHeldOutExamples
     totalCharacters = sum( len(s)
         for t in testingTasks
         for _,s in regexHeldOutExamples(t))

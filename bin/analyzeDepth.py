@@ -1,10 +1,10 @@
 try:
-    import binutil  # required to import from eclib modules
+    import binutil  # required to import from dreamcoder modules
 except ModuleNotFoundError:
     import bin.binutil  # alt import if called as module
 
-from eclib.utilities import *
-from eclib.program import *
+from dreamcoder.utilities import *
+from dreamcoder.program import *
 
 from scipy.stats.stats import pearsonr
 

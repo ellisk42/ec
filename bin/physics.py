@@ -1,16 +1,16 @@
 try:
-    import binutil  # required to import from eclib modules
+    import binutil  # required to import from dreamcoder modules
 except ModuleNotFoundError:
     import bin.binutil  # alt import if called as module
 
-from eclib.ec import *
+from dreamcoder.ec import *
 
-from eclib.grammar import *
-from eclib.program import *
+from dreamcoder.grammar import *
+from dreamcoder.program import *
 
 import numpy as np
 
-from eclib.type import *
+from dreamcoder.type import *
 
 tobject = baseType("object")
 tvector = baseType("vector")

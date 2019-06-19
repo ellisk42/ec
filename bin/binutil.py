@@ -1,13 +1,13 @@
 """
 The below `sys.path.append` code will add the root directory to sys.path in order to
-correctly import files from the 'eclib' Python package.
+correctly import files from the 'dreamcoder' Python package.
 
 Additionally, some bin scripts depend on the pregex code.
 
 This sys.path manipulation is required in order to preserve the same style of running
 commands as has been used in the past for this project (mainly, running most experiments
 from a large array of scripts that depend on methods and classes defined under other
-modules now in the 'eclib' package). A better approach would be to have a single entry
+modules now in the 'dreamcoder' package). A better approach would be to have a single entry
 point Python script at the root of the repository which ensures that imports between
 sibling folders work correctly.
 
