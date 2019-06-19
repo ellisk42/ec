@@ -1,16 +1,16 @@
 try:
-    import binutil  # required to import from eclib modules
+    import binutil  # required to import from dreamcoder modules
 except ModuleNotFoundError:
     import bin.binutil  # alt import if called as module
 
 import pregex as pre
 
-from eclib.utilities import *
-from eclib.domains.regex.groundtruthRegexes import *
-from eclib.program import Abstraction, Application
+from dreamcoder.utilities import *
+from dreamcoder.domains.regex.groundtruthRegexes import *
+from dreamcoder.program import Abstraction, Application
 
-from eclib.domains.regex.makeRegexTasks import regexHeldOutExamples
-from eclib.domains.regex.regexPrimitives import PRC
+from dreamcoder.domains.regex.makeRegexTasks import regexHeldOutExamples
+from dreamcoder.domains.regex.regexPrimitives import PRC
 
 import torch
 from torch.nn import Parameter
@@ -128,7 +128,7 @@ if len(sys.argv) > 1:
 REGEXCACHINGTABLE = {}
 def testingRegexLikelihood(task, program):
     global REGEXCACHINGTABLE
-    from eclib.domains.regex.makeRegexTasks import regexHeldOutExamples
+    from dreamcoder.domains.regex.makeRegexTasks import regexHeldOutExamples
     import pregex as pre
     
     testing = regexHeldOutExamples(task)
@@ -173,7 +173,7 @@ if __name__ == "__main__":
 
 
     tasks = checkpoint.testSearchTime.keys() #recognitionTaskMetrics.keys()
-    from eclib.likelihoodModel import add_cutoff_values
+    from dreamcoder.likelihoodModel import add_cutoff_values
     tasks = add_cutoff_values(tasks, "gt") #could be "unigram" or "bigram"
 
 

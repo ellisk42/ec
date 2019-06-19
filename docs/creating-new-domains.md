@@ -37,14 +37,14 @@ import datetime
 import os
 import random
 
-import binutil  # required to import from eclib modules
+import binutil  dreamcoder
 
-from eclib.ec import commandlineArguments, ecIterator
-from eclib.grammar import Grammar
-from eclib.program import Primitive
-from eclib.task import Task
-from eclib.type import arrow, tint
-from eclib.utilities import numberOfCPUs
+from dreamcoder.ec import commandlineArguments, ecIterator
+from dreamcoder.grammar import Grammar
+from dreamcoder.program import Primitive
+from dreamcoder.task import Task
+from dreamcoder.type import arrow, tint
+from dreamcoder.utilities import numberOfCPUs
 ```
 The `import binutil` is a funky workaround for the directory structure of this repo. You can safely ignore it for now.
 
@@ -70,7 +70,7 @@ Next, lets begin to define our domain.
 
 We will create a list of primitives for our toy example next.
 
-Each member of our list must be an instance of the `Primitive` class where each primitive has a unique name that binds it to its corresponding OCaml code (discussed later), a type imported from `eclib/type.py`, and a lambda function: `Primitive(name, type, func)`.
+Each member of our list must be an instance of the `Primitive` class where each primitive has a unique name that binds it to its corresponding OCaml code (discussed later), a type imported from `dreamcoder/type.py`, and a lambda function: `Primitive(name, type, func)`.
 ```python
 def _incr(x): return lambda x: x + 1
 def _incr2(x): return lambda x: x + 2
@@ -180,14 +180,14 @@ import datetime
 import os
 import random
 
-import binutil  # required to import from eclib modules
+import binutil  # required to import from dreamcoder modules
 
-from eclib.ec import commandlineArguments, ecIterator
-from eclib.grammar import Grammar
-from eclib.program import Primitive
-from eclib.task import Task
-from eclib.type import arrow, tint
-from eclib.utilities import numberOfCPUs
+from dreamcoder.ec import commandlineArguments, ecIterator
+from dreamcoder.grammar import Grammar
+from dreamcoder.program import Primitive
+from dreamcoder.task import Task
+from dreamcoder.type import arrow, tint
+from dreamcoder.utilities import numberOfCPUs
 
 # Primitives
 def _incr(x): return lambda x: x + 1

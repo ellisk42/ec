@@ -5,7 +5,7 @@ class TestTextMain(unittest.TestCase):
 
     def test_imports(self):
         try:
-            from eclib.domains.text.main import (
+            from dreamcoder.domains.text.main import (
                 ConstantInstantiateVisitor,
                 LearnedFeatureExtractor,
                 competeOnOneTask,

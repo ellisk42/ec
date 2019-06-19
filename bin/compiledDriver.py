@@ -4,11 +4,11 @@ import traceback
 import pickle as pickle
 
 try:
-    import binutil  # required to import from eclib modules
+    import binutil  # required to import from dreamcoder modules
 except ModuleNotFoundError:
     import bin.binutil  # alt import if called as module
 
-from eclib.utilities import eprint
+from dreamcoder.utilities import eprint
 
 if __name__ == "__main__":
     sys.setrecursionlimit(10000)

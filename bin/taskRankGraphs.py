@@ -9,18 +9,18 @@ Note: this requires a container with sklearn installed. A sample container is av
 """
 
 try:
-    import binutil  # required to import from eclib modules
+    import binutil  # required to import from dreamcoder modules
 except ModuleNotFoundError:
     import bin.binutil  # alt import if called as module
 
-from eclib.ec import *
+from dreamcoder.ec import *
 import dill
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plot
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
-from eclib.utilities import *
+from dreamcoder.utilities import *
 import matplotlib
 plot.style.use('seaborn-whitegrid')
 import matplotlib.colors as colors

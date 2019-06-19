@@ -1,22 +1,22 @@
 from functools import reduce
 
 try:
-    import binutil  # required to import from eclib modules
+    import binutil  # required to import from dreamcoder modules
 except ModuleNotFoundError:
     import bin.binutil  # alt import if called as module
 
 from bin.rational import RandomParameterization
-from eclib.domains.arithmetic.arithmeticPrimitives import (
+from dreamcoder.domains.arithmetic.arithmeticPrimitives import (
     f0, f1, fpi, real_power, real_subtraction, real_addition,
     real_division, real_multiplication)
-from eclib.domains.list.listPrimitives import bootstrapTarget
-from eclib.ec import explorationCompression, commandlineArguments
-from eclib.grammar import Grammar
-from eclib.program import Program
-from eclib.recognition import RecurrentFeatureExtractor, DummyFeatureExtractor
-from eclib.task import DifferentiableTask, squaredErrorLoss
-from eclib.type import baseType, tlist, arrow
-from eclib.utilities import eprint, numberOfCPUs
+from dreamcoder.domains.list.listPrimitives import bootstrapTarget
+from dreamcoder.ec import explorationCompression, commandlineArguments
+from dreamcoder.grammar import Grammar
+from dreamcoder.program import Program
+from dreamcoder.recognition import RecurrentFeatureExtractor, DummyFeatureExtractor
+from dreamcoder.task import DifferentiableTask, squaredErrorLoss
+from dreamcoder.type import baseType, tlist, arrow
+from dreamcoder.utilities import eprint, numberOfCPUs
 
 tvector = baseType("vector")
 treal = baseType("real")

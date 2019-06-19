@@ -1,11 +1,11 @@
 try:
-    import binutil  # required to import from eclib modules
+    import binutil  # required to import from dreamcoder modules
 except ModuleNotFoundError:
     import bin.binutil  # alt import if called as module
 
-from eclib.domains.regex.main import main, regex_options
-from eclib.ec import commandlineArguments
-from eclib.utilities import numberOfCPUs
+from dreamcoder.domains.regex.main import main, regex_options
+from dreamcoder.ec import commandlineArguments
+from dreamcoder.utilities import numberOfCPUs
 
 
 if __name__ == '__main__':

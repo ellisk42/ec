@@ -5,7 +5,7 @@ class TestTowerMain(unittest.TestCase):
 
     def test_imports(self):
         try:
-            from eclib.domains.tower.main import (
+            from dreamcoder.domains.tower.main import (
                 Flatten,
                 TowerCNN,
                 tower_options,
