@@ -174,9 +174,9 @@ def make_list_bootstrap_tasks():
         Task("countdown", arrow(tint, tlist(tint)),
              [((n,), list(range(n + 1, 1, -1)))
               for n in range(10)]),
-        # Task("weird count", arrow(tint, tlist(tint)),
-        #      [((n,), list(range(-n,0,-1)))
-        #       for n in range(-10,0) ]),
+        Task("weird count", arrow(tint, tlist(tint)),
+             [((n,), list(range(-n,0,-1)))
+              for n in range(-10,0) ]),
         Task("take every other", arrow(tlist(tint),tlist(tint)),
              [((l,), [x for j,x in enumerate(l) if j%2 == 0])
               for _ in range(10)
