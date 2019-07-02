@@ -407,20 +407,13 @@ def ecIterator(grammar, tasks,
 
         # WAKING UP
         if useDSL:
-            if custom_wake_generative is not None:
-                topDownFrontiers, times = custom_wake_generative(grammar, wakingTaskBatch,
-                                                          solver=solver,
-                                                          maximumFrontier=maximumFrontier,
-                                                          enumerationTimeout=enumerationTimeout,
-                                                          CPUs=CPUs,
-                                                          evaluationTimeout=evaluationTimeout)
-            else:
-                topDownFrontiers, times = wake_generative(grammar, wakingTaskBatch,
-                                                          solver=solver,
-                                                          maximumFrontier=maximumFrontier,
-                                                          enumerationTimeout=enumerationTimeout,
-                                                          CPUs=CPUs,
-                                                          evaluationTimeout=evaluationTimeout)
+            wake_generative = custom_wake_generative if custom_wake_generative is not None else default_wake_generative
+            topDownFrontiers, times = wake_generative(grammar, wakingTaskBatch,
+                                                      solver=solver,
+                                                      maximumFrontier=maximumFrontier,
+                                                      enumerationTimeout=enumerationTimeout,
+                                                      CPUs=CPUs,
+                                                      evaluationTimeout=evaluationTimeout)
             result.trainSearchTime = {t: tm for t, tm in times.items() if tm is not None}
         else:
             eprint("Skipping top-down enumeration because we are not using the generative model")
@@ -555,7 +548,7 @@ def evaluateOnTestingTasks(result, testingTasks, grammar, _=None,
     result.testingSearchTime.append(times)
 
         
-def wake_generative(grammar, tasks, 
+def default_wake_generative(grammar, tasks, 
                     maximumFrontier=None,
                     enumerationTimeout=None,
                     CPUs=None,
