@@ -11,6 +11,9 @@ from dreamcoder.utilities import get_data_dir
 
 JSON_FILE = os.path.join(get_data_dir(), "more_list_tasks.json")
 
+Integer = 'int'
+ListOfInts = 'list-of-int'
+
 
 class SkipExample(Exception):
     """ Raise to skip an example for a given input. """
@@ -56,7 +59,6 @@ class TaskGenerator(ABC):
     name = None
     input_type = None
     output_type = None
-    num_examples = 20
 
     def __init__(self):
         assert self.name is not None
@@ -91,6 +93,11 @@ class TaskGenerator(ABC):
 
 
 class ShuffledRangeTask(TaskGenerator, ABC):
+    """
+    A ShuffledRangeTask has the following optional knobs as class attributes:
+      - num_examples (int): number of examples to create
+    """
+    num_examples = 20
 
     def make_examples(self):
         examples = [self.example([n]) for n in range(self.num_examples)]
@@ -99,10 +106,19 @@ class ShuffledRangeTask(TaskGenerator, ABC):
 
 
 class RandomListTask(TaskGenerator, ABC):
+    """
+    A RandomListTask has the following optional knobs as class attributes:
+      - min_val (int): minimum value in random list created
+      - max_val (int): maximum value in random list created
+      - min_len (int): minimum length of random list created
+      - max_len (int): maximum length of random list created
+      - num_examples (int): number of random lists to create
+    """
     min_val = 0
     max_val = 9
     min_len = 2
     max_len = 7
+    num_examples = 20
 
     def random_list(self):
         list_range = range(random.randint(self.min_len, self.max_len))
@@ -127,12 +143,12 @@ class RepeatN(ShuffledRangeTask):
 
     Examples:
 
-        (2) -> (2 2)
-        (5) -> (5 5 5 5 5)
+        (2) - (2 2)
+        (5) - (5 5 5 5 5)
     """
     name = 'repeat_n_n_times'
-    input_type = 'list-of-int'
-    output_type = 'list-of-int'
+    input_type = ListOfInts
+    output_type = ListOfInts
 
     def func(self, x):
         x0 = x[0]
@@ -150,8 +166,8 @@ class CountDown(ShuffledRangeTask):
 
     """
     name = 'count_down_from_n'
-    input_type = 'list-of-int'
-    output_type = 'list-of-int'
+    input_type = ListOfInts
+    output_type = ListOfInts
 
     def func(self, x):
         return list(reversed([n for n in range(1, x[0] + 1)]))
@@ -169,8 +185,8 @@ class LastElement(RandomListTask):
 
     """
     name = 'last_element_of_list'
-    input_type = 'list-of-int'
-    output_type = 'int'
+    input_type = ListOfInts
+    output_type = Integer
 
     def func(self, x):
         return x[-1]
@@ -190,8 +206,8 @@ class HeadthElement(RandomListTask):
 
     """
     name = 'headth_element_of_tail'
-    input_type = 'list-of-int'
-    output_type = 'int'
+    input_type = ListOfInts
+    output_type = Integer
 
     def func(self, x):
         head = x[0]
@@ -216,13 +232,131 @@ class CountHead(RandomListTask):
 
     """
     name = 'count_head_in_tail'
-    input_type = 'list-of-int'
-    output_type = 'int'
+    input_type = ListOfInts
+    output_type = Integer
+    num_examples = 40  # fails under 20 examples, trying a higher limit
 
     def func(self, x):
         head = x[0]
         tail = x[1:]
         return sum(1 for n in tail if n == head)
+
+
+# TODO: what about zeroes?
+class FlattenMapRange(RandomListTask):
+    """
+    Routine #6 from master list.
+
+    Examples:
+
+        (2 5 4) - (1 2 1 2 3 4 5 1 2 3 4)
+        (3 2) - (1 2 3 1 2)
+
+    """
+    name = 'flatten_map_range'
+    input_type = ListOfInts
+    output_type = ListOfInts
+
+    def func(self, x):
+        return [i for j in list(map(lambda n: range(1, n + 1), x)) for i in j]
+
+
+class FlattenMapRangeReversed(RandomListTask):
+    """
+    Routine #6a from master list.
+
+    Examples:
+
+        (2 5 4) - (2 1 5 4 3 2 1 4 3 2 1)
+        (3 2) - (3 2 1 2 1)
+
+    """
+    name = 'flatten_map_range_reversed'
+    input_type = ListOfInts
+    output_type = ListOfInts
+
+    def func(self, x):
+        return [i for j in list(map(lambda n: reversed(range(1, n + 1)), x)) for i in j]
+
+
+class FlattenMapRangeSeries(RandomListTask):
+    """
+    Routine #6b from master list.
+
+    Examples:
+
+        (4 8 1 3) - (4 5 6 7 8 7 6 5 4 3 2 1 2 3)
+        (9 7 7 7 3 4 4 2 6) - (9 8 7 7 7 6 5 4 3 4 4 3 2 3 4 5 6)
+        (3 2 1 2) - (3 2 1 2)
+        (4 1 2 5) - (4 3 2 1 2 3 4 5)
+
+    """
+    name = 'flatten_map_range_series'
+    input_type = ListOfInts
+    output_type = ListOfInts
+
+    def func(self, x):
+        if len(x) <= 1:
+            return x
+        pairs = [(x[a], x[a + 1]) for a in range(len(x) - 1)]
+
+        output = []
+
+        for index, p in enumerate(pairs):
+            p0, p1 = p
+            if p0 > p1:
+                l = range(p0, (p1 - 1), -1)
+            elif p0 < p1:
+                l = range(p0, (p1 + 1))
+            else:
+                l = [p0]
+            if index != 0 and len(l) > 1:
+                # avoid duplicating the same number
+                l = l[1:]
+            output.extend(l)
+
+        return output
+
+
+class FlattenMapRangeHead(RandomListTask):
+    """
+    Routine #6c from master list.
+
+    Examples:
+
+        (4 8 1 3) - (4 5 6 7 8 1 3)
+        (5 1 9 7 7 3 4 4 2 6) - (5 1 5 6 7 8 9 5 6 7 5 6 7 3 4 4 2 5 6)
+        (1 3 6 2) - (1 2 3 1 2 3 4 5 6 1 2)
+        (3 1 2 9) - (3 1 2 3 4 5 6 7 8 9)
+        (4 8 1 7) - (4 5 6 7 8 1 4 5 6 7)
+        (3 1 9 7 3 4 4 2 6) - (3 1 3 4 5 6 7 8 9 3 4 5 6 7 3 3 4 3 4 2 3 4 5 6)
+        (7 1 2 9) - (7 1 2 7 8 9)
+
+
+    """
+    name = 'flatten_map_range_head'
+    input_type = ListOfInts
+    output_type = ListOfInts
+
+    def func(self, x):
+        if len(x) <= 1:
+            return x
+
+        head = x[0]
+        tail = x[1:]
+        output = []
+
+        for index, val in enumerate(tail):
+            if head < val:
+                l = range(head, (val + 1))
+            else:
+                if index == 0:
+                    l = [head, val]
+                else:
+                    l = [val]
+            output.extend(l)
+
+        return output
 
 
 def create_more_list_tasks():
@@ -231,11 +365,17 @@ def create_more_list_tasks():
         CountDown(),
         LastElement(),
         HeadthElement(),
-        CountHead(),
+        CountHead(),  # needs more examples!
+        FlattenMapRange(),
+        FlattenMapRangeReversed(),
+        FlattenMapRangeSeries(),
+        FlattenMapRangeHead(),
     ]
-
+    names = []
     data = []
     for t in tasks:
+        assert t.name not in names, f'Multiple tasks with the same name ({t.name}) exist!'
+        names.append(t.name)
         data.append(t.json())
 
     with open(JSON_FILE, 'w') as f:
