@@ -241,7 +241,9 @@ def list_options(parser):
             "Lucas-old",
             "Lucas-depth1",
             "Lucas-depth2",
-            "Lucas-depth3"])
+            "Lucas-depth3",
+            "more-list-tasks",
+        ])
     parser.add_argument("--maxTasks", type=int,
                         default=None,
                         help="truncate tasks to fit within this boundary")
