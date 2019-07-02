@@ -181,7 +181,8 @@ def ecIterator(grammar, tasks,
                outputPrefix=None,
                storeTaskMetrics=False,
                rewriteTaskMetrics=True,
-               auxiliaryLoss=False):
+               auxiliaryLoss=False,
+               custom_wake_generative=None):
     if enumerationTimeout is None:
         eprint(
             "Please specify an enumeration timeout:",
@@ -405,12 +406,20 @@ def ecIterator(grammar, tasks,
 
         # WAKING UP
         if useDSL:
-            topDownFrontiers, times = wake_generative(grammar, wakingTaskBatch,
-                                                      solver=solver,
-                                                      maximumFrontier=maximumFrontier,
-                                                      enumerationTimeout=enumerationTimeout,
-                                                      CPUs=CPUs,
-                                                      evaluationTimeout=evaluationTimeout)
+            if custom_wake_generative is not None:
+                topDownFrontiers, times = custom_wake_generative(grammar, wakingTaskBatch,
+                                                          solver=solver,
+                                                          maximumFrontier=maximumFrontier,
+                                                          enumerationTimeout=enumerationTimeout,
+                                                          CPUs=CPUs,
+                                                          evaluationTimeout=evaluationTimeout)
+            else:
+                topDownFrontiers, times = wake_generative(grammar, wakingTaskBatch,
+                                                          solver=solver,
+                                                          maximumFrontier=maximumFrontier,
+                                                          enumerationTimeout=enumerationTimeout,
+                                                          CPUs=CPUs,
+                                                          evaluationTimeout=evaluationTimeout)
             result.trainSearchTime = {t: tm for t, tm in times.items() if tm is not None}
         else:
             eprint("Skipping top-down enumeration because we are not using the generative model")
