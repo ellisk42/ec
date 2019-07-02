@@ -628,6 +628,49 @@ class CountNumbersAndSort(RandomListTask):
         return [i for k, v in sorted(c.items()) for i in [k, v]]
 
 
+class SortIncreasing(RandomListTask):
+    """
+    Original list sorted in increasing order, preserving repeats.
+
+    Routine #19 from master list.
+
+    Examples:
+
+        (3 9 3 8 2 7) - (2 3 3 7 8 9)
+        (8 8 1 3) - (1 3 8 8)
+        (7 3 1 4 4 1 1 9 7 1 7 1) - (1 1 1 1 1 3 4 4 7 7 7 9)
+
+    """
+    name = 'sort_incr'
+    input_type = ListOfInts
+    output_type = ListOfInts
+
+    def func(self, x):
+        return list(sorted(x))
+
+
+class SortAndDedupe(RandomListTask):
+    """
+    Original list sorted in increasing order, without repeats.
+
+    Routine #20 from master list.
+
+    Examples:
+
+        (3 9 3 8 2 7) - (2 3 7 8 9)
+        (8 8 1 3) - (1 3 8)
+        (7 3 1 4 4 1 1 9 7 1 7 1) - (1 3 4 7 9)
+
+
+    """
+    name = 'sort_and_dedupe'
+    input_type = ListOfInts
+    output_type = ListOfInts
+
+    def func(self, x):
+        return list(sorted(set(x)))
+
+
 def create_more_list_tasks():
     tasks = [
         RepeatN(),
@@ -651,6 +694,8 @@ def create_more_list_tasks():
         Reverse(),
         ReverseAndAddNtoNthElement(),
         CountNumbersAndSort(),
+        SortIncreasing(),
+        SortAndDedupe(),
     ]
     names = []
     data = []
