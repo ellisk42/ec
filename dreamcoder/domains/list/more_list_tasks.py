@@ -6,6 +6,7 @@ from abc import ABC, abstractmethod
 import json
 import os
 import random
+from collections import Counter, OrderedDict
 
 from dreamcoder.utilities import get_data_dir
 
@@ -431,7 +432,7 @@ class CumulativeSum(RandomListTask):
 
 class FlattenMapRepeatN(RandomListTask):
     """
-    Routine #8 from master list.
+    Routine #10 from master list.
 
     Examples:
 
@@ -445,6 +446,186 @@ class FlattenMapRepeatN(RandomListTask):
 
     def func(self, x):
         return [i for i in x for _ in range(i)]
+
+
+class Insert1s(RandomListTask):
+    """
+    Routine #11 from master list.
+
+    Examples:
+
+        (6 2 7) - (6 1 2 1 7 1)
+        (8 8 1 3) - ( 8 1 8 1 1 1 3 1)
+
+    """
+    name = 'insert_1_after_each_element'
+    input_type = ListOfInts
+    output_type = ListOfInts
+
+    def func(self, x):
+        return [j for i in x for j in [i, 1]]
+
+
+class InsertIndex(RandomListTask):
+    """
+    Routine #12 from master list.
+
+    Examples:
+
+        (6 2 7) - (6 1 2 2 7 3)
+        (8 8 1 3) - ( 8 1 8 2 1 3 3 4)
+
+    """
+    name = 'insert_index_after_each_element'
+    input_type = ListOfInts
+    output_type = ListOfInts
+
+    def func(self, x):
+        return [j for i, n in enumerate(x, start=1) for j in [n, i]]
+
+
+class CountRunLengths(RandomListTask):
+    """
+    Replace each run of identical elements with the element and the length of the run.
+
+    Routine #13 from master list.
+
+    Examples:
+
+        (8 8 1 3) - (8 2 1 1 3 1)
+        (9 7 7 7 3 4 4 1 1 1 1 1) - (9 1 7 3 3 1 4 2 1 5)
+
+    """
+    name = 'count_run_lengths'
+    input_type = ListOfInts
+    output_type = ListOfInts
+
+    class OrderedCounter(Counter, OrderedDict):
+        """Counter that remembers the order elements are first encountered"""
+
+    def func(self, x):
+        c = self.OrderedCounter()
+        for n in x:
+            c[n] += 1
+        return [i for k,v in c.items() for i in [k, v]]
+
+
+class IndexCounter(RandomListTask):
+    """
+    For the list xs, create a list, ys, with as many elements
+    as the largest element in the list, then set ys[i] to be
+    equal to the number of elements in xs equal to i.
+
+    Routine #14 from master list.
+
+    Examples:
+
+        (8 8 1 3) - (1 0 1 0 0 0 0 2)
+        (9 7 7 7 3 4 4 1 1 1 1 1) - (5 0 1 2 0 0 0 3 0 1)
+        (3 2 1 2) - (1 2 1)
+        (4 1 2 2 2 1) - (2 3 0 1)
+
+    """
+    name = 'index_counter'
+    input_type = ListOfInts
+    output_type = ListOfInts
+    min_val = 1  # set min val to 1 since examples don't cover 0
+
+    def func(self, x):
+        output = [0 for _ in range(max(x))]
+        for n in x:
+            output[n - 1] += 1
+        return output
+
+
+class AddNtoNthElement(RandomListTask):
+    """
+    Add n to the nth element, starting from 0.
+
+    Routine #15 from master list.
+
+    Examples:
+
+        (6 2 7) - (6 3 9)
+        (8 8 1 3) - (8 9 3 6)
+        (3 9 3 8 1 7) - (3 10 5 11 5 12)
+
+    """
+    name = 'add_n_to_nth_element'
+    input_type = ListOfInts
+    output_type = ListOfInts
+
+    def func(self, x):
+        return [n + index for index, n in enumerate(x)]
+
+
+class Reverse(RandomListTask):
+    """
+    Reverse the list.
+
+    Routine #16 from master list.
+
+    Examples:
+
+        (3 9 2 1 8 8) - (8 8 1 2 9 3)
+        (2 7 9 1) - (1 9 7 2)
+        (6 3 1 8 6 9 2 7) - (7 6 9 6 8 1 3 6)
+        (4 9 5 2 2 3 9) - (9 3 2 2 5 9 4)
+
+    """
+    name = 'reverse'
+    input_type = ListOfInts
+    output_type = ListOfInts
+
+    def func(self, x):
+        return list(reversed(x))
+
+
+class ReverseAndAddNtoNthElement(RandomListTask):
+    """
+    Reverse the list, then add n to the nth element starting from 0.
+
+    Routine #17 from master list.
+
+    Examples:
+
+        (6 2 7) - (7 3 8)
+        (8 8 1 3) - (3 2 10 11)
+        (3 9 3 8 2 7) - (7 3 10 6 13 8)
+
+    """
+    name = 'reverse_and_add_n_to_nth_element'
+    input_type = ListOfInts
+    output_type = ListOfInts
+
+    def func(self, x):
+        return [n + index for index, n in enumerate(list(reversed(x)))]
+
+
+class CountNumbersAndSort(RandomListTask):
+    """
+    A flattened list of pairs (k n_k) specifying each distinct number k
+    in the original list, followed by the number of times n_k that number k
+    appears in the original list, in increasing order k.
+
+    Routine #18 from master list.
+
+    Examples:
+
+        (3 9 3 8 2 7) - (2 1 3 2 7 1 8 1 9 1)
+        (8 8 1 3) - (1 1 3 1 8 2)
+        (7 3 1 4 4 1 1 9 7 1 7 1) - (1 5 3 1 4 2 7 3 9 1)
+
+    """
+    name = 'count_numbers_and_sort_by_number'
+    input_type = ListOfInts
+    output_type = ListOfInts
+
+    def func(self, x):
+        c = Counter()
+        for n in x:
+            c[n] += 1
+        return [i for k, v in sorted(c.items()) for i in [k, v]]
 
 
 def create_more_list_tasks():
@@ -462,7 +643,14 @@ def create_more_list_tasks():
         CumulativeProduct(),
         CumulativeSum(),
         FlattenMapRepeatN(),
-
+        Insert1s(),
+        InsertIndex(),
+        CountRunLengths(),
+        IndexCounter(),
+        AddNtoNthElement(),
+        Reverse(),
+        ReverseAndAddNtoNthElement(),
+        CountNumbersAndSort(),
     ]
     names = []
     data = []
