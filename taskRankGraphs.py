@@ -343,13 +343,13 @@ def scatterPlotSimilarities(x, y, exportPath, xlabel=None, ylabel=None):
 
 
 def plotEmbeddingWithLabels(embeddings, labels, title, exportPath, xlabel=None, ylabel=None, colorLabeling=None):
-        plot.figure(figsize=(10,10))
+        plot.figure(figsize=(100,100))
         # Color map based on ordering of the labels.
         cmap = matplotlib.cm.get_cmap('tab20')
         normalize = matplotlib.colors.Normalize(vmin=0, vmax=len(labels))
         colors = [cmap(normalize(value)) for value in range(len(labels))]
 
-        plot.figure(figsize=(10,10))
+        plot.figure(figsize=(100,100))
         plot.tick_params(axis='both', left='off', top='off', right='off', bottom='off', labelleft='off', labeltop='off', labelright='off', labelbottom='off')
         plot.grid(False)
 
@@ -377,12 +377,12 @@ def plotEmbeddingWithLabels(embeddings, labels, title, exportPath, xlabel=None, 
                 if colorLabeling is "text" or colorLabeling is "list":
                         plot.scatter(x,y, color=cmap(colorLabels[i]), s=150, alpha=0.85)
                 else:
-                        plot.scatter(x,y, color=colors[i], s=500)
+                        plot.scatter(x,y, color=colors[i], s=10)
 
                 if colorLabeling is "text" or colorLabeling is "list":
                         pass
                 else:
-                        plot.text(x+0.02, y+0.02, label, fontsize=20)
+                        plot.text(x+0.02, y+0.02, label, fontsize=30, alpha=0.5)
                         plot.title(title)
         if xlabel:
                 plot.xlabel(xlabel)
