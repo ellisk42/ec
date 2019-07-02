@@ -234,7 +234,7 @@ class CountHead(RandomListTask):
     name = 'count_head_in_tail'
     input_type = ListOfInts
     output_type = Integer
-    num_examples = 40  # fails under 20 examples, trying a higher limit
+    num_examples = 100  # fails under 20 examples, trying a higher limit
 
     def func(self, x):
         head = x[0]
@@ -256,6 +256,7 @@ class FlattenMapRange(RandomListTask):
     name = 'flatten_map_range'
     input_type = ListOfInts
     output_type = ListOfInts
+    num_examples = 100  # fails under 20 examples
 
     def func(self, x):
         return [i for j in list(map(lambda n: range(1, n + 1), x)) for i in j]
@@ -274,6 +275,7 @@ class FlattenMapRangeReversed(RandomListTask):
     name = 'flatten_map_range_reversed'
     input_type = ListOfInts
     output_type = ListOfInts
+    num_examples = 100  # fails under 20 examples
 
     def func(self, x):
         return [i for j in list(map(lambda n: reversed(range(1, n + 1)), x)) for i in j]
@@ -294,6 +296,7 @@ class FlattenMapRangeSeries(RandomListTask):
     name = 'flatten_map_range_series'
     input_type = ListOfInts
     output_type = ListOfInts
+    num_examples = 100  # fails under 20 examples
 
     def func(self, x):
         if len(x) <= 1:
@@ -337,6 +340,7 @@ class FlattenMapRangeHead(RandomListTask):
     name = 'flatten_map_range_head'
     input_type = ListOfInts
     output_type = ListOfInts
+    num_examples = 100  # fails under 20 examples
 
     def func(self, x):
         if len(x) <= 1:
@@ -359,6 +363,90 @@ class FlattenMapRangeHead(RandomListTask):
         return output
 
 
+class Minus2Series(RandomListTask):
+    """
+    Routine #7 from master list.
+
+    Examples:
+
+        (6) - (6 4 2)
+        (9) - (9 7 5 3 1)
+        (18) - (18 16 14 12 10 8 6 4 2)
+
+    """
+    name = 'minus_2_series'
+    input_type = ListOfInts
+    output_type = ListOfInts
+
+    def func(self, x):
+        n = x[0]
+        if n in [0, 1, 2]:
+            return [n]
+        return list(range(n, 0, -2))
+
+
+class CumulativeProduct(RandomListTask):
+    """
+    Routine #8 from master list.
+
+    Examples:
+
+        (2 5 8 1 2) - (2 10 80 80 160)
+
+    """
+    name = 'cumulative_product'
+    input_type = ListOfInts
+    output_type = ListOfInts
+
+    def func(self, x):
+        last = 1
+        output = []
+        for n in x:
+            last = n * last
+            output.append(last)
+        return output
+
+
+class CumulativeSum(RandomListTask):
+    """
+    Routine #9 from master list.
+
+    Examples:
+
+        (2 5 8 1 2) - (2 7 15 16 18)
+
+    """
+    name = 'cumulative_sum'
+    input_type = ListOfInts
+    output_type = ListOfInts
+
+    def func(self, x):
+        last = 0
+        output = []
+        for n in x:
+            last = n + last
+            output.append(last)
+        return output
+
+
+class FlattenMapRepeatN(RandomListTask):
+    """
+    Routine #8 from master list.
+
+    Examples:
+
+        (3 1 6) - (3 3 3 1 6 6 6 6 6 6)
+
+    """
+    name = 'flatten_map_repeat_n_n_times'
+    input_type = ListOfInts
+    output_type = ListOfInts
+    num_examples = 100  # fails under 20 examples
+
+    def func(self, x):
+        return [i for i in x for _ in range(i)]
+
+
 def create_more_list_tasks():
     tasks = [
         RepeatN(),
@@ -370,6 +458,11 @@ def create_more_list_tasks():
         FlattenMapRangeReversed(),
         FlattenMapRangeSeries(),
         FlattenMapRangeHead(),
+        Minus2Series(),
+        CumulativeProduct(),
+        CumulativeSum(),
+        FlattenMapRepeatN(),
+
     ]
     names = []
     data = []
