@@ -239,7 +239,8 @@ def ecIterator(grammar, tasks,
             "featureExtractor",
             "evaluationTimeout",
             "testingTasks",
-            "compressor"} and v is not None}
+            "compressor",
+            "custom_wake_generative"} and v is not None}
     if not useRecognitionModel:
         for k in {"helmholtzRatio", "recognitionTimeout", "biasOptimal", "mask",
                   "contextual", "matrixRank", "reuseRecognition", "auxiliaryLoss", "ensembleSize"}:
