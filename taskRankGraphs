@@ -11,16 +11,16 @@ checkpoint5='/om2/user/zyzzyva/ec/data/expertiseFigures/addLogProductions/logo_b
 checkpoint12='/om2/user/zyzzyva/ec/data/expertiseFigures/addLogProductions/logo_batch_40_60m/logo_aic=1.0_arity=3_BO=True_CO=True_ET=3600_HR=0.5_it=12_MF=5_baseline=False_pc=30.0_RT=1800_RR=False_RW=False_storeTask=True_L=1.5_batch=40_taskReranker=randomShuffle_K=2_topkNotMAP=False_rec=True_feat=LogoFeatureCNN_graph=True.pickle'
 
 singularity exec -B /om2  sklearn-container.img \
-  python taskRankGraphs.py --checkpoints   $checkpoint1 $checkpoint2 $checkpoint5  $checkpoint12 \
+  python bin/taskRankGraphs.py --checkpoints   $checkpoint1 $checkpoint2 $checkpoint5  $checkpoint12 \
  	--metricsToCluster contextualLogProductions --export data/expertiseFigures/logo_batch_40_60m/ --tsneLearningRate 150 --labelWithImages 1\
 
 singularity exec -B /om2  sklearn-container.img \
-  python taskRankGraphs.py --checkpoints   $checkpoint2 $checkpoint5  $checkpoint12 \
+  python bin/taskRankGraphs.py --checkpoints   $checkpoint2 $checkpoint5  $checkpoint12 \
  	--metricsToCluster heldoutTaskLogProductions --export data/expertiseFigures/logo_batch_40_60m/ --tsneLearningRate 150  --labelWithImages 1\
 
 
 
 # singularity exec -B /om2  sklearn-container.img \
-#   python taskRankGraphs.py --checkpoints  $checkpoint13 \
+#   python bin/taskRankGraphs.py --checkpoints  $checkpoint13 \
 #  	--metricsToCluster heldoutTaskLogProductions --export data/expertiseFigures/text_random_shuffle_10_720s/ --tsneLearningRate 250 \
 
