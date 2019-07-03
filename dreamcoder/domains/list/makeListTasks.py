@@ -137,8 +137,8 @@ def make_list_bootstrap_tasks():
     def randomSuffix():
         return [randint(0, 9) for _ in range(randint(1, 4))]
 
-    def randomList(minimum=0):
-        return [randint(minimum, 9) for _ in range(randint(4, 7))]
+    def randomList(minimum=0, minimumLength=4, maximumLength=6):
+        return [randint(minimum, 9) for _ in range(randint(minimumLength, maximumLength))]
 
     def randomListOfLists():
         return [randomSuffix() for _ in range(randint(2, 4))]
@@ -221,10 +221,10 @@ def make_list_bootstrap_tasks():
              [((n, l), l[n])
               for n in range(10)
               for l in [[randint(0, 9) for _ in range(randint(n + 1, n + 5))]]]),
-        Task("last n", arrow(tint, tlist(tint), tlist(tint)),
-             [((n, l), l[-n:])
-              for n in range(10)
-              for l in [[randint(0, 9) for _ in range(randint(n + 1, n + 5))]]]),
+        # Task("last n", arrow(tint, tlist(tint), tlist(tint)),
+        #      [((n, l), l[-n:])
+        #       for n in range(10)
+        #       for l in [[randint(0, 9) for _ in range(randint(n + 1, n + 5))]]]),
         Task("1-index int", arrow(tint, tlist(tint), tint),
              [((n, l), l[n - 1])
               for n in range(1,11)
@@ -332,12 +332,12 @@ def make_list_bootstrap_tasks():
         Task("zip plus", arrow(tlist(tint),tlist(tint),tlist(tint)),
              [((l1,l2),list(map(lambda x,y: x+y,l1,l2)))
               for _ in range(10)
-              for l1 in [randomList()]
+              for l1 in [randomList(minimumLength=2, maximumLength=4)]
               for l2 in [[ randint(0,9) for _ in range(len(l1)) ]]]),
         Task("zip minus", arrow(tlist(tint),tlist(tint),tlist(tint)),
              [((l1,l2),list(map(lambda x,y: x-y,l1,l2)))
               for _ in range(10)
-              for l1 in [randomList()]
+              for l1 in [randomList(minimumLength=2, maximumLength=4)]
               for l2 in [[ randint(0,9) for _ in range(len(l1)) ]]]),
         # Task("zip eq?", arrow(tlist(tint), tlist(tint), tlist(tbool)),
         #      [((l1, l2), list(map(lambda x, y: x == y, l1, l2)))
