@@ -1,4 +1,0 @@
-  File "puddleworld.py", line 38
-    doLocal, doGlobal = arguments.pop('local'), arguments.pop('global')
-    ^
-IndentationError: unexpected indent
