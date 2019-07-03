@@ -208,9 +208,9 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
 
 
 def train_necessary(task):
-    if t.name in {"head", "is-primes", "len", "pop", "repeat-many", "tail", "keep primes", "keep squares"}:
+    if task.name in {"head", "is-primes", "len", "pop", "repeat-many", "tail", "keep primes", "keep squares"}:
         return True
-    if any(t.name.startswith(x) for x in {
+    if any(task.name.startswith(x) for x in {
         "add-k", "append-k", "bool-identify-geq-k", "count-k", "drop-k",
         "empty", "evens", "has-k", "index-k", "is-mod-k", "kth-largest",
         "kth-smallest", "modulo-k", "mult-k", "remove-index-k",
