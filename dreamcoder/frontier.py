@@ -35,9 +35,17 @@ class Frontier(object):
     def json(self):
         return {"request": self.task.request.json(),
                 "task": str(self.task),
-                "programs": [{"program": str(e.program),
-                              "logLikelihood": e.logLikelihood}
-                             for e in self ]}
+                "programs": [
+                    {"program": str(e.program),
+                     "logLikelihood": e.logLikelihood,
+                     # TODO(lcary): debug only, remove before merging to master
+                     # shows up on console output for top 5 programs per task, sums to 1:
+                     "logPosterior": e.logPosterior,
+                     # probability of program given DSL
+                     "logPrior": e.logPrior,
+                     }
+                    for e in self
+                ]}
 
     DUMMYFRONTIERCOUNTER = 0
 
