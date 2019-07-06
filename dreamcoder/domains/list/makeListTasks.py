@@ -178,8 +178,8 @@ def make_list_bootstrap_tasks():
               for n in range(-10,0) ]),
         Task("take every other", arrow(tlist(tint),tlist(tint)),
              [((l,), [x for j,x in enumerate(l) if j%2 == 0])
-              for _ in range(10)
-              for l in [ [randint(0, 9) for _ in range(randint(1,4)*2)] ] ]),
+              for _ in range(9)
+              for l in [ [randint(0, 9) for _ in range(randint(1,4)*2)] ] ] + [(([],),[])]),
         # Task("stutter every other", arrow(tlist(tint),tlist(tint)),
         #      [((l,), [l[int(j/2)] for j in range(len(l)) ])
         #       for _ in range(10)
