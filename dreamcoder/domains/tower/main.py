@@ -300,6 +300,15 @@ def main(arguments):
     test, train = testTrainSplit(tasks, arguments.pop("split"))
     eprint("Split %d/%d test/train" % (len(test), len(train)))
 
+    # Make a montage for the paper
+    shuffledTrain = list(train)
+    shuffledTest = list(test)
+    random.shuffle(shuffledTrain)
+    shuffledTrain = shuffledTrain + [None]*(60 - len(shuffledTrain))
+    random.shuffle(shuffledTest)
+    shuffledTest = shuffledTest + [None]*(60 - len(shuffledTest))
+    SupervisedTower.exportMany("/tmp/every_tower.png",shuffledTrain + shuffledTest, shuffle=False, columns=10)
+
     timestamp = datetime.datetime.now().isoformat()
     outputDirectory = "experimentOutputs/towers/%s"%timestamp
     os.system("mkdir -p %s"%outputDirectory)

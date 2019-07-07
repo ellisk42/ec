@@ -660,7 +660,7 @@ def manualLogoTasks():
           needToTrain=n == 5)
     return tasks
 
-def montageTasks(tasks, prefix="", columns=None):
+def montageTasks(tasks, prefix="", columns=None, testTrain=False):
     import numpy as np
     
     w = 128
@@ -668,17 +668,27 @@ def montageTasks(tasks, prefix="", columns=None):
     for a in arrays:
         assert len(a) == w*w
 
+    if testTrain:
+        arrays = [a for a,t in zip(arrays, tasks) if t.mustTrain ] + [a for a,t in zip(arrays, tasks) if not t.mustTrain ]
+        
     arrays = [np.array([a[i:i + w]
                         for i in range(0, len(a), w) ])
               for a in arrays]
     i = montage(arrays, columns=columns)
 
-    import scipy.misc
+    import scipy.misc        
     scipy.misc.imsave('/tmp/%smontage.png'%prefix, i)
-    random.shuffle(arrays)
-    scipy.misc.imsave('/tmp/%srandomMontage.png'%prefix, montage(arrays))
-    
-if __name__ == "__main__":
+    if testTrain:
+        trainingTasks = arrays[:sum(t.mustTrain for t in tasks)]
+        testingTasks = arrays[sum(t.mustTrain for t in tasks):]
+        random.shuffle(trainingTasks)
+        random.shuffle(testingTasks)
+        arrays = trainingTasks + testingTasks
+    else:
+        random.shuffle(arrays)
+    scipy.misc.imsave('/tmp/%srandomMontage.png'%prefix, montage(arrays, columns=columns))
+
+def demoLogoTasks():
     import scipy.misc
     import numpy as np
     
@@ -686,7 +696,7 @@ if __name__ == "__main__":
         tasks = makeTasks(sys.argv[1:],proto=False)
     else:
         tasks = makeTasks(['all'],proto=False)
-    montageTasks(tasks)
+    montageTasks(tasks,columns=16,testTrain=True)
     for n,t in enumerate(tasks):
         a = t.highresolution
         w = int(len(a)**0.5)
