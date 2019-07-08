@@ -149,8 +149,8 @@ class Frontier(object):
         if self.empty:
             return "MISS " + self.task.name
         best = self.bestPosterior
-        return "HIT %s w/ %s ; log prior = %f ; log likelihood = %f" % (
-            self.task.name, best.program, best.logPrior, best.logLikelihood)
+        return "HIT %s w/ %s ; size = %s, log prior = %f ; log likelihood = %f" % (
+            self.task.name, best.program, str(best.program.size()), best.logPrior, best.logLikelihood)
 
     def summarizeFull(self):
         if self.empty:
