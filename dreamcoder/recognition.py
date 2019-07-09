@@ -810,7 +810,7 @@ class RecognitionModel(nn.Module):
             g = self(features)
             return - entry.program.logLikelihood(g), al
         else:
-            features = self._MLP(features).expand(1, features.size(-1))
+            features = self._MLP(features).expand(1, self.outputDimensionality)
             ll = self.grammarBuilder.batchedLogLikelihoods(features, [entry.program]).view(-1)
             return -ll, al
             
@@ -1251,13 +1251,14 @@ class RecurrentFeatureExtractor(nn.Module):
         """IMPORTANT! xs must be sorted in decreasing order of size because pytorch is stupid"""
         es = []
         sizes = []
+        has_outputs = any([len(y) > 0 for xs, y in examples])
         for xs, y in examples:
             e = [self.startingIndex]
             for x in xs:
                 for s in x:
                     e.append(self.symbolToIndex[s])
-                e.append(self.endOfInputIndex)
-            e.append(self.startOfOutputIndex)
+                if has_outputs: e.append(self.endOfInputIndex)
+            if has_outputs: e.append(self.startOfOutputIndex)
             for s in y:
                 e.append(self.symbolToIndex[s])
             e.append(self.endingIndex)
@@ -1283,7 +1284,9 @@ class RecurrentFeatureExtractor(nn.Module):
     def examplesEncoding(self, examples):
         examples = sorted(examples, key=lambda xs_y: sum(
             len(z) + 1 for z in xs_y[0]) + len(xs_y[1]), reverse=True)
+
         x, sizes = self.packExamples(examples)
+
         outputs, hidden = self.model(x)
         # outputs, sizes = pad_packed_sequence(outputs)
         # I don't know whether to return the final output or the final hidden
@@ -1300,6 +1303,7 @@ class RecurrentFeatureExtractor(nn.Module):
             random.shuffle(tokenized)
             tokenized = tokenized[:self.MAXINPUTS]
         e = self.examplesEncoding(tokenized)
+
         # max pool
         # e,_ = e.max(dim = 0)
 
