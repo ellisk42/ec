@@ -173,7 +173,8 @@ def ecIterator(grammar, tasks,
                outputPrefix=None,
                storeTaskMetrics=False,
                rewriteTaskMetrics=True,
-               auxiliaryLoss=False):
+               auxiliaryLoss=False,
+               custom_wake_generative=None):
     if enumerationTimeout is None:
         eprint(
             "Please specify an enumeration timeout:",
@@ -230,7 +231,8 @@ def ecIterator(grammar, tasks,
             "featureExtractor",
             "evaluationTimeout",
             "testingTasks",
-            "compressor"} and v is not None}
+            "compressor",
+            "custom_wake_generative"} and v is not None}
     if not useRecognitionModel:
         for k in {"helmholtzRatio", "recognitionTimeout", "biasOptimal", "mask",
                   "contextual", "matrixRank", "reuseRecognition", "auxiliaryLoss", "ensembleSize"}:
@@ -397,6 +399,7 @@ def ecIterator(grammar, tasks,
 
         # WAKING UP
         if useDSL:
+            wake_generative = custom_wake_generative if custom_wake_generative is not None else default_wake_generative
             topDownFrontiers, times = wake_generative(grammar, wakingTaskBatch,
                                                       solver=solver,
                                                       maximumFrontier=maximumFrontier,
@@ -537,7 +540,7 @@ def evaluateOnTestingTasks(result, testingTasks, grammar, _=None,
     result.testingSearchTime.append(times)
 
         
-def wake_generative(grammar, tasks, 
+def default_wake_generative(grammar, tasks, 
                     maximumFrontier=None,
                     enumerationTimeout=None,
                     CPUs=None,
