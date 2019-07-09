@@ -1,4 +1,5 @@
 from dreamcoder.domains.tower.towerPrimitives import ttower, executeTower, _empty_tower, TowerState
+from dreamcoder.domains.tower.tower_common import renderPlan
 from dreamcoder.task import *
 
 
@@ -30,8 +31,6 @@ class SupervisedTower(Task):
         self.mustTrain = mustTrain
 
     def getImage(self, drawHand=False, pretty=False):
-        from dreamcoder.domains.tower.tower_common import renderPlan
-
         if not drawHand:
             if not pretty:
                 if self.image is not None: return self.image
@@ -57,7 +56,6 @@ class SupervisedTower(Task):
 
 
     def animate(self):
-        from dreamcoder.domains.tower.tower_common import renderPlan
         from pylab import imshow,show
         a = renderPlan(self.plan)
         imshow(a)
@@ -74,7 +72,6 @@ class SupervisedTower(Task):
 
     @staticmethod
     def exportMany(f, ts, shuffle=True, columns=None):
-        from dreamcoder.domains.tower.tower_common import renderPlan
         import numpy as np
         
         ts = list(ts)
@@ -90,8 +87,7 @@ class SupervisedTower(Task):
         
 
     def exportImage(self, f, pretty=True, Lego=True, drawHand=False):
-        from dreamcoder.domains.tower.tower_common import renderPlan
-        a = renderPlan(t.plan,
+        a = renderPlan(self.plan,
                        pretty=pretty, Lego=Lego,
                        drawHand=t.hand if drawHand else None)
         import scipy.misc
@@ -473,9 +469,9 @@ def makeOldSupervisedTasks():
 def dSLDemo():
     DSL = {}
     bricks = Program.parse("(lambda (lambda (tower_loopM $0 (lambda (lambda (moveHand 3 (reverseHand (tower_loopM $3 (lambda (lambda (moveHand 6 (3x1 $0)))) $0))))))))")
-    DSL["bricks"] = [ [bricks.runWithArguments([x,y,_empty_tower,TowerState()])[1]
-                       for x in range(5, 5 + 4) ]
-                      for y in [5,16] ]
+    DSL["bricks"] = [ [bricks.runWithArguments([x,y + 4,_empty_tower,TowerState()])[1]
+                       for y in range(6, 6 + 3*4, 3) ]
+                      for x in [3,8] ]
     dimensionality = {}
     dimensionality["bricks"] = 2
 
@@ -487,7 +483,15 @@ def dSLDemo():
 
     staircase = Program.parse("(lambda (tower_loopM $0 (lambda (lambda (#(lambda (lambda (tower_loopM $1 (lambda (lambda (tower_embed (lambda (#(lambda (1x3 (moveHand 4 (1x3 (reverseHand (moveHand 2 (3x1 $0))))))) $0)) $0))) $0))) $1 (moveHand 6 $0))))))")
     DSL["staircase"] = [ staircase.runWithArguments([n,_empty_tower,TowerState()])[1]
-                         for n in range(3,5 + 3) ]
+                         for n in range(4,5 + 3) ]
+
+    pyramid = Program.parse("(lambda (tower_loopM $0 (lambda (lambda (moveHand 6 (tower_embed (lambda (reverseHand ((lambda (lambda (tower_loopM $1 (lambda (lambda (moveHand $2 (1x3 (moveHand 2 (tower_embed (lambda (moveHand 2 (1x3 $0))) (3x1 $0)))))))))) $2 1 $0))) $0))))))")
+    DSL["pyramid"] = [ pyramid.runWithArguments([n,_empty_tower,TowerState()])[1]
+                       for n in range(4,5 + 3) ]
+
+    towerArch = Program.parse("(lambda (lambda ((lambda ((lambda (lambda (lambda (tower_loopM $0 (lambda (lambda (1x3 (moveHand 4 ($3 $0))))) (moveHand 2 (3x1 $2)))))) $0 (lambda (reverseHand (1x3 $0))))) $0 $1)))")
+    DSL["towerArch"] = [ towerArch.runWithArguments([n,_empty_tower,TowerState()])[1]
+                       for n in range(4,5 + 3) ]
 
     images = {}
     for k,v in DSL.items():
