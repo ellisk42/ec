@@ -174,7 +174,8 @@ def ecIterator(grammar, tasks,
                storeTaskMetrics=False,
                rewriteTaskMetrics=True,
                auxiliaryLoss=False,
-               custom_wake_generative=None):
+               custom_wake_generative=None,
+               custom_task_batcher=None):
     if enumerationTimeout is None:
         eprint(
             "Please specify an enumeration timeout:",
@@ -232,7 +233,8 @@ def ecIterator(grammar, tasks,
             "evaluationTimeout",
             "testingTasks",
             "compressor",
-            "custom_wake_generative"} and v is not None}
+            "custom_wake_generative",
+            "custom_task_batcher"} and v is not None}
     if not useRecognitionModel:
         for k in {"helmholtzRatio", "recognitionTimeout", "biasOptimal", "mask",
                   "contextual", "matrixRank", "reuseRecognition", "auxiliaryLoss", "ensembleSize"}:
@@ -394,7 +396,7 @@ def ecIterator(grammar, tasks,
         reportMemory()
 
         # Get waking task batch.
-        wakingTaskBatch = taskBatcher.getTaskBatch(result, tasks, taskBatchSize, j)
+        wakingTaskBatch = taskBatcher.getTaskBatch(result, tasks, taskBatchSize, j) if custom_task_batcher is None else custom_task_batcher(result, tasks, taskBatchSize, j)
         eprint("Using a waking task batch of size: " + str(len(wakingTaskBatch)))
 
         # WAKING UP
