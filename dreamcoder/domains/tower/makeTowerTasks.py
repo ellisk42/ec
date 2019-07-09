@@ -74,9 +74,15 @@ class SupervisedTower(Task):
 
     @staticmethod
     def exportMany(f, ts, shuffle=True, columns=None):
+        from dreamcoder.domains.tower.tower_common import renderPlan
+        import numpy as np
+        
         ts = list(ts)
-        if shuffle: random.shuffle(ts)
-        a = montage([renderPlan(t.plan, pretty=True, Lego=True, resolution=256)
+        if shuffle:
+            assert all( t is not None for t in ts  )
+            random.shuffle(ts)
+        a = montage([renderPlan(t.plan, pretty=True, Lego=True, resolution=256) if t is not None \
+                     else np.zeros((256,256,3))
                      for t in ts],
                     columns=columns)        
         import scipy.misc
