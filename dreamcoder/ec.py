@@ -407,7 +407,8 @@ def ecIterator(grammar, tasks,
                                                       maximumFrontier=maximumFrontier,
                                                       enumerationTimeout=enumerationTimeout,
                                                       CPUs=CPUs,
-                                                      evaluationTimeout=evaluationTimeout)
+                                                      evaluationTimeout=evaluationTimeout,
+                                                      result=result)
             result.trainSearchTime = {t: tm for t, tm in times.items() if tm is not None}
         else:
             eprint("Skipping top-down enumeration because we are not using the generative model")
@@ -547,7 +548,8 @@ def default_wake_generative(grammar, tasks,
                     enumerationTimeout=None,
                     CPUs=None,
                     solver=None,
-                    evaluationTimeout=None):
+                    evaluationTimeout=None,
+                    result=None):
     topDownFrontiers, times = multicoreEnumeration(grammar, tasks, 
                                                    maximumFrontier=maximumFrontier,
                                                    enumerationTimeout=enumerationTimeout,
