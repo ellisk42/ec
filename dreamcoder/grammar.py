@@ -1155,7 +1155,7 @@ class ContextualGrammar:
             v = request.arguments[0]
             for l, newContext, b in self.enumeration(context, [v] + environment,
                                                      request.arguments[1],
-                                                     parent=parent, parentIndex=parent,
+                                                     parent=parent, parentIndex=parentIndex,
                                                      upperBound=upperBound,
                                                      lowerBound=lowerBound,
                                                      maximumDepth=maximumDepth):
