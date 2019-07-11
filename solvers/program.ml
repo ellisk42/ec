@@ -27,6 +27,14 @@ let is_base_primitive = function
   |Primitive(_,_,_) -> true
   |_ -> false
 
+let is_abstraction = function
+  | Abstraction(_) -> true
+  | _ -> false
+
+let rec recursively_get_abstraction_body = function
+  | Abstraction(b) -> recursively_get_abstraction_body b
+  | e -> e
+
 let program_children = function
   | Abstraction(b) -> [b]
   | Apply(m,n) -> [m;n]
