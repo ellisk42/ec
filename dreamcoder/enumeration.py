@@ -14,7 +14,8 @@ def multicoreEnumeration(g, tasks, _=None,
                          maximumFrontier=None,
                          verbose=True,
                          evaluationTimeout=None,
-                         testing=False):
+                         testing=False,
+                         task_reweighting=None):
     '''g: Either a Grammar, or a map from task to grammar.
     Returns (list-of-frontiers, map-from-task-to-search-time)'''
 
@@ -48,12 +49,14 @@ def multicoreEnumeration(g, tasks, _=None,
     # If these are the same then we can enumerate for multiple tasks simultaneously
     # If we are evaluating testing tasks:
     # Make sure that each job corresponds to exactly one task
+    if task_reweighting is None:
+      task_reweighting = defaultdict(float)
     jobs = {}
     for i, t in enumerate(tasks):
         if testing:
             k = (task2grammar[t], t.request, i)
         else:
-            k = (task2grammar[t], t.request)
+            k = (task2grammar[t], t.request, 0, task_reweighting[t]) 
         jobs[k] = jobs.get(k, []) + [t]
 
     disableParallelism = len(jobs) == 1
@@ -89,7 +92,9 @@ def multicoreEnumeration(g, tasks, _=None,
 
     def maximumFrontiers(j):
         tasks = jobs[j]
-        return {t: maximumFrontier - numberOfHits(frontiers[t]) for t in tasks}
+        task_reweighting = j[3] if len(j) > 3 else 0.0
+        task_max_frontier = maximumFrontier * (1 + int(task_reweighting))
+        return {t: task_max_frontier - numberOfHits(frontiers[t]) for t in tasks}
 
     def allocateCPUs(n, tasks):
         allocation = {t: 0 for t in tasks}
@@ -144,8 +149,11 @@ def multicoreEnumeration(g, tasks, _=None,
                 if allocation[j] == 0:
                     continue
                 g, request = j[:2]
+
+                task_reweighting = j[3] if len(j) > 3 else 0.0
+
                 bi = budgetIncrement(lowerBounds[j])
-                thisTimeout = enumerationTimeout - stopwatches[j].elapsed
+                thisTimeout = enumerationTimeout * (1 + task_reweighting) - stopwatches[j].elapsed
                 eprint("(python) Launching %s (%d tasks) w/ %d CPUs. %f <= MDL < %f. Timeout %f." %
                        (request, len(jobs[j]), allocation[j], lowerBounds[j], lowerBounds[j] + bi, thisTimeout))
                 stopwatches[j].start()
