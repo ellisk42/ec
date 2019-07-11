@@ -991,7 +991,7 @@ let test_zip_recursion () =
   let p = analyze_lazy_evaluation p in
   run_lazy_analyzed_with_arguments p [[1;2;3;];[0;4;6;]] |> List.map ~f:Int.to_string |> String.concat ~sep:"; " |> Printf.printf "%s\n"
 ;;
-test_zip_recursion();;
+(* test_zip_recursion();; *)
 
 (* Puddleworld primitive and type definitions for compression namespace purposes. Function definitions are irrelevant.*)
 (* Puddleworld Type Definitions *)
