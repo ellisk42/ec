@@ -145,8 +145,9 @@ def parseLogo(s):
     except: return Abstraction(block(s, [], Index(0)))
 
 
-def manualLogoTask(name, expression, proto=False, needToTrain=False, supervise = False):
-    p = parseLogo(expression)
+def manualLogoTask(name, expression, proto=False, needToTrain=False,
+                   supervise=False, lambdaCalculus=False):
+    p = Program.parse(expression) if lambdaCalculus else parseLogo(expression)
     from dreamcoder.domains.logo.logoPrimitives import primitives
     from dreamcoder.grammar import Grammar
     g = Grammar.uniform(primitives, continuationType=turtle)
@@ -188,7 +189,27 @@ def dSLDemo():
     n = 0
     demos = []
     def T(source):
-        demos.append(manualLogoTask(str(len(demos)), source))
+        demos.append(manualLogoTask(str(len(demos)), source,
+                                    lambdaCalculus="lambda" in source))
+    # this looks like polygons - verify and include
+    T("(#(lambda (lambda (#(lambda (lambda (#(lambda (lambda (lambda (logo_forLoop $0 (lambda (lambda (logo_FWRT $4 $3 $0))))))) $1 $0 logo_IFTY))) $1 (logo_DIVA logo_UA $0)))) (logo_MULL logo_UL 4) 3)")
+    T("(#(lambda (lambda (#(lambda (lambda (#(lambda (lambda (lambda (logo_forLoop $0 (lambda (lambda (logo_FWRT $4 $3 $0))))))) $1 $0 logo_IFTY))) $1 (logo_DIVA logo_UA $0)))) (logo_MULL logo_UL 6) 4)")
+    T("(#(lambda (lambda (#(lambda (lambda (#(lambda (lambda (lambda (logo_forLoop $0 (lambda (lambda (logo_FWRT $4 $3 $0))))))) $1 $0 logo_IFTY))) $1 (logo_DIVA logo_UA $0)))) (logo_MULL logo_UL 5) 5)")
+    T("(#(lambda (lambda (#(lambda (lambda (#(lambda (lambda (lambda (logo_forLoop $0 (lambda (lambda (logo_FWRT $4 $3 $0))))))) $1 $0 logo_IFTY))) $1 (logo_DIVA logo_UA $0)))) (logo_MULL logo_UL 3) 6)")
+    T("(#(lambda (lambda (#(lambda (lambda (#(lambda (lambda (lambda (logo_forLoop $0 (lambda (lambda (logo_FWRT $4 $3 $0))))))) $1 $0 logo_IFTY))) $1 (logo_DIVA logo_UA $0)))) (logo_MULL logo_UL 2) 7)")
+
+    # Spirals!
+    for spiralSize in [1,2,3,4,5]:
+        T(f"((lambda (logo_forLoop logo_IFTY (lambda (lambda (logo_FWRT (logo_MULL logo_epsL $1) (logo_MULA logo_epsA $2) $0))))) {spiralSize})")
+    for spiralSize in [5,6,7,8,9]:
+        #T(f"(lambda (#(lambda (logo_forLoop $0 (lambda (lambda (#(lambda (logo_FWRT (logo_MULL logo_UL $0) (logo_DIVA logo_UA 4))) $1 $0))))) {spiralSize} $0))")
+        T("(loop i " + str(spiralSize) + " (move (*d 1l i) (/a 1a 4)))")# (#(lambda (logo_forLoop $0 (lambda (lambda (#(lambda (logo_FWRT (logo_MULL logo_UL $0) (logo_DIVA logo_UA 4))) $1 $0))))) {spiralSize} $0))")
+
+    # CIRCLES
+    #(lambda (#(lambda (logo_forLoop 6 (lambda (lambda (#(lambda (lambda (logo_forLoop logo_IFTY (lambda (lambda (logo_FWRT $2 $3 $0)))))) logo_epsA (logo_MULL logo_epsL $2) $0))))) 6 $0))
+    for circleSize in [1,3,5,7,9]:
+        T(f"(lambda (#(lambda (logo_forLoop 6 (lambda (lambda (#(lambda (lambda (logo_forLoop logo_IFTY (lambda (lambda (logo_FWRT $2 $3 $0)))))) logo_epsA (logo_MULL logo_epsL $2) $0))))) {circleSize} $0))")
+    
     T("(loop i 3 (move (*d 1l 3) (/a 1a 4)))")
     T("(loop i 5 (move (*d 1l 5) (/a 1a 5)))")
     T("(loop i infinity (move (*d epsilonDistance 5) (/a epsilonAngle 3)))")

@@ -67,16 +67,22 @@ let inside_outside ~pseudoCounts g (frontiers : frontier list) =
 let grammar_induction_score ~aic ~structurePenalty ~pseudoCounts frontiers g =
   let g,ll = inside_outside ~pseudoCounts g frontiers in
 
-    let production_size = function
-      | Primitive(_,_,_) -> 1
-      | Invented(_,e) -> program_size e
-      | _ -> raise (Failure "Element of grammar is neither primitive nor invented")
-    in 
+  let production_size = function
+    | Primitive(_,_,_) -> 1
+    | Invented(_,e) -> begin 
+        (* Ignore illusory fix1/abstraction, it does not contribute to searching cost *)
+        let e = recursively_get_abstraction_body e in
+        match e with
+        | Apply(Apply(Primitive(_,"fix1",_),i),b) -> (assert (is_index i); program_size b)
+        | _ -> program_size e
+      end
+    | _ -> raise (Failure "Element of grammar is neither primitive nor invented")
+  in 
 
-    (g,
-     ll-. aic*.(List.length g.library |> Float.of_int) -.
-     structurePenalty*.(g.library |> List.map ~f:(fun (p,_,_,_) ->
-         production_size p) |> sum |> Float.of_int))
+  (g,
+   ll-. aic*.(List.length g.library |> Float.of_int) -.
+   structurePenalty*.(g.library |> List.map ~f:(fun (p,_,_,_) ->
+       production_size p) |> sum |> Float.of_int))
 
   
 
