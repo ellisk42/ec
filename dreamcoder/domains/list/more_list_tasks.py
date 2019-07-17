@@ -671,6 +671,28 @@ class SortAndDedupe(RandomListTask):
         return list(sorted(set(x)))
 
 
+class Length(RandomListTask):
+    """
+    Length of list.
+
+    Routine not from master list.
+
+    Examples:
+
+        (3 9 3 8 2 7) - 6
+        (8 8 1 3) - 4
+        (7 3 1 4 4 1 1 9 7 1 7 1) - 12
+
+
+    """
+    name = 'length'
+    input_type = ListOfInts
+    output_type = Integer
+
+    def func(self, x):
+        return len(x)
+
+
 def create_more_list_tasks():
     tasks = [
         RepeatN(),
@@ -696,6 +718,7 @@ def create_more_list_tasks():
         CountNumbersAndSort(),
         SortIncreasing(),
         SortAndDedupe(),
+        Length(),
     ]
     names = []
     data = []
