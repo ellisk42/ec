@@ -263,6 +263,8 @@ def main(arguments):
     # TODO(lcary): use a function call to retrieve and declare primitives instead.
     global primitives
 
+    import scipy.misc
+
     g0 = Grammar.uniform({"new": new_primitives,
                           "old": primitives}[arguments.pop("primitives")],
                          continuationType=ttower)
@@ -299,6 +301,21 @@ def main(arguments):
         
     test, train = testTrainSplit(tasks, arguments.pop("split"))
     eprint("Split %d/%d test/train" % (len(test), len(train)))
+
+    # Make a montage for the paper
+    shuffledTrain = list(train)
+    shuffledTest = list(test)
+    random.shuffle(shuffledTrain)
+    shuffledTrain = shuffledTrain + [None]*(60 - len(shuffledTrain))
+    random.shuffle(shuffledTest)
+    shuffledTest = shuffledTest + [None]*(60 - len(shuffledTest))
+    SupervisedTower.exportMany("/tmp/every_tower.png",shuffledTrain + shuffledTest, shuffle=False, columns=10)
+    for j,task in enumerate(tasks):
+        task.exportImage(f"/tmp/tower_task_{j}.png")
+    for k,v in dSLDemo().items():
+        scipy.misc.imsave(f"/tmp/tower_dsl_{k}.png", v)
+        os.system(f"convert /tmp/tower_dsl_{k}.png -channel RGB -negate /tmp/tower_dsl_{k}.png")
+        
 
     timestamp = datetime.datetime.now().isoformat()
     outputDirectory = "experimentOutputs/towers/%s"%timestamp
