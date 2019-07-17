@@ -1,3 +1,5 @@
+import json
+
 from dreamcoder.likelihoodModel import AllOrNothingLikelihoodModel
 from dreamcoder.grammar import *
 from dreamcoder.utilities import get_root_dir
@@ -393,6 +395,14 @@ def enumerateForTasks(g, tasks, likelihoodModel, _=None,
     # we will never maintain maximumFrontier best solutions
     hits = [PQ() for _ in tasks]
 
+    os.makedirs('messages', exist_ok=True)
+    def write_json_data(filename, jdata):
+        with open(filename, 'w') as f:
+            json.dump(jdata, f, indent=2)
+    def read_json_data(filename):
+        with open(filename) as f:
+            return json.load(f)
+
     starting = time()
     previousBudget = lowerBound
     budget = lowerBound + budgetIncrement
@@ -424,6 +434,10 @@ def enumerateForTasks(g, tasks, likelihoodModel, _=None,
                     #if invalid(likelihood):
                         #continue
                     success, likelihood = likelihoodModel.score(p, task)
+                    print('likelihoodModel.score(p, task)')
+                    print('p: ', str(p))
+                    print('task: ', str(task), ' --> ', str(task.examples))
+                    print('success, likelihood: ', success, likelihood)
                     if not success:
                         continue
                         
@@ -453,9 +467,24 @@ def enumerateForTasks(g, tasks, likelihoodModel, _=None,
         tasks[n]: None if len(hits[n]) == 0 else \
         min(t for t,_ in hits[n]) for n in range(len(tasks))}
 
+    filename = os.path.join('messages', 'enum_result_{}_{}.json'.format(os.getpid(), time()))
+    getentries = lambda f: [{
+        'logPosterior': e.logPosterior,
+        'program': str(e.program),
+        'logPrior': e.logPrior,
+        'logLikelihood': e.logLikelihood,
+    } for e in f.entries]
+    json_frontiers = [{k.name: getentries(v)} for (k, v) in frontiers.items()]
+    write_json_data(filename, {
+        'g.logVariable': g.logVariable,
+        'g.productions': [str(p) for p in g.productions],
+        'elapsedTime': elapsedTime,
+        'lowerBound': lowerBound,
+        'upperBound': upperBound,
+        'frontiers': json_frontiers,
+        # 'searchTimes': (searchTimes),
+        'request': str(request)
+    })
+    print('wrote ', filename)
+
     return frontiers, searchTimes
-
-
-
-
-
