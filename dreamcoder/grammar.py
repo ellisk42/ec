@@ -142,6 +142,7 @@ class Grammar(object):
                     continue
                 candidates.append((l, t, p, newContext))
             except UnificationFailure:
+                print('UnificationFailure for program ({}),\trequest ({}),\tcontext ({})'.format(p, request, context))
                 continue
         for j, t in enumerate(environment):
             try:
@@ -151,6 +152,7 @@ class Grammar(object):
                     continue
                 variableCandidates.append((t, Index(j), newContext))
             except UnificationFailure:
+                print('UnificationFailure for variable (t{}),\trequest ({}),\tcontext ({})'.format(j, request, context))
                 continue
 
         if self.continuationType == request:

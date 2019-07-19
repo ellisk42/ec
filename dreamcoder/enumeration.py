@@ -1,3 +1,4 @@
+import datetime
 import json
 
 from dreamcoder.likelihoodModel import AllOrNothingLikelihoodModel
@@ -384,6 +385,20 @@ def enumerateForTasks(g, tasks, likelihoodModel, _=None,
     assert timeout is not None, \
         "enumerateForTasks: You must provide a timeout."
 
+
+    def taskMessage(t):
+        m = {
+            "examples": [{"inputs": list(xs), "output": y} for xs, y in t.examples],
+            "name": t.name,
+            "request": t.request.json(),
+            "maximumFrontier": 10
+        }
+        if hasattr(t, "specialTask"):
+            special, extra = t.specialTask
+            m["specialTask"] = special
+            m["extras"] = extra
+        return m
+
     from time import time
 
     request = tasks[0].request
@@ -413,10 +428,38 @@ def enumerateForTasks(g, tasks, likelihoodModel, _=None,
                 budget <= upperBound:
             numberOfPrograms = 0
 
+            message = {
+                "DSL": g.json(),
+                "tasks": [taskMessage(t) for t in tasks],
+                "programTimeout": evaluationTimeout,
+                "nc": CPUs,
+                "timeout": timeout,
+                "lowerBound": lowerBound,
+                "upperBound": upperBound,
+                "budgetIncrement": budgetIncrement,
+                "verbose": False,
+                "shatter": 5 if len(tasks) == 1 and "turtle" in str(tasks[0].request) else 10}
+
+            if hasattr(tasks[0], 'maxParameters') and tasks[0].maxParameters is not None:
+                message["maxParameters"] = tasks[0].maxParameters
+
+            message = json.dumps(message)
+            message_dir = os.path.join(get_root_dir(), 'messages')
+            os.makedirs(message_dir, exist_ok=True)
+            pid = os.getpid()
+            ts = datetime.datetime.now().strftime('%Y%m%d_T%H%M%S')
+            message_name = 'request_enumeration_PID{}_{}.json'.format(pid, ts)
+            message_file = os.path.join(message_dir, message_name)
+            with open(message_file, "w") as f:
+                f.write(message)
+            print('wrote ', os.path.abspath(message_file))
+
+            print('budget: ', budget, 'previousBudget: ', previousBudget)
             for prior, _, p in g.enumeration(Context.EMPTY, [], request,
                                              maximumDepth=99,
                                              upperBound=budget,
                                              lowerBound=previousBudget):
+                print("=> Result( ", prior, " ", p, " ", _, " )")
                 descriptionLength = -prior
                 # Shouldn't see it on this iteration
                 assert descriptionLength <= budget
@@ -434,10 +477,10 @@ def enumerateForTasks(g, tasks, likelihoodModel, _=None,
                     #if invalid(likelihood):
                         #continue
                     success, likelihood = likelihoodModel.score(p, task)
-                    print('likelihoodModel.score(p, task)')
-                    print('p: ', str(p))
-                    print('task: ', str(task), ' --> ', str(task.examples))
-                    print('success, likelihood: ', success, likelihood)
+                    # print('likelihoodModel.score(p, task)')
+                    # print('p: ', str(p))
+                    # print('task: ', str(task), ' --> ', str(task.examples))
+                    # print('success, likelihood: ', success, likelihood)
                     if not success:
                         continue
                         
@@ -485,6 +528,10 @@ def enumerateForTasks(g, tasks, likelihoodModel, _=None,
         # 'searchTimes': (searchTimes),
         'request': str(request)
     })
-    print('wrote ', filename)
+
+    if any(v for i in json_frontiers for v in i.values()):
+        print('wrote ', filename)
+        print('   ^contains {} solution(s)'.format(
+            sum(len(v) for i in json_frontiers for v in i.values())))
 
     return frontiers, searchTimes
