@@ -1153,6 +1153,12 @@ class RecognitionModel(nn.Module):
                                     CPUs=CPUs, maximumFrontier=maximumFrontier,
                                     evaluationTimeout=evaluationTimeout)
 
+    def interpolateTasks(self, t1, t2):
+        """Calculates Grammar(Average(FeatureExtractor(t1),FeatureExtractor(t2)))"""
+        f1 = self._MLP(self.featureExtractor.featuresOfTask(t1))
+        f2 = self._MLP(self.featureExtractor.featuresOfTask(t2))
+        return self.grammarBuilder(f1/2. + f2/2.).untorch()
+
 
 class RecurrentFeatureExtractor(nn.Module):
     def __init__(self, _=None,

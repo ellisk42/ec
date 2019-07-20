@@ -13,7 +13,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-
 class Flatten(nn.Module):
     def __init__(self):
         super(Flatten, self).__init__()
@@ -127,7 +126,6 @@ class TowerCNN(nn.Module):
 
 
 
-
 def tower_options(parser):
     parser.add_argument("--tasks",
                         choices=["old","new"],
@@ -139,6 +137,8 @@ def tower_options(parser):
     parser.add_argument("--split",
                         default=1., type=float)
     parser.add_argument("--dream",
+                        default=None, type=str)
+    parser.add_argument("--interpolate",
                         default=None, type=str)
     parser.add_argument("--primitives",
                         default="old", type=str,
@@ -170,6 +170,26 @@ def dreamOfTowers(grammar, prefix, N=250, make_montage=True):
     else:
         eprint("Tried to visualize dreams, but none to visualize.")
 
+def interpolateTasks(tasks, rm):
+    interpolationMatrix = []
+    progress = 0
+    for n in range(len(tasks)):
+        for m in range(n,len(tasks)):
+            t1 = tasks[n]
+            t2 = tasks[m]
+            if t1.request != t2.request: continue
+            g = rm.interpolateTasks(t1, t2)
+            interpolations = [g.sample(t1.request)
+                              for _ in range(10) ]
+            interpolations = [rm.featureExtractor.taskOfProgram(i,t1.request)
+                              for i in interpolations]
+            interpolationMatrix.append([t1,t2] + interpolations)
+            progress += 1
+            print(f"{progress}/{len(tasks)*len(tasks)}")
+    interpolationMatrix = [[t.getImage(pretty=True) for t in ts ]
+                           for ts in interpolationMatrix ]
+    image = montageMatrix(interpolationMatrix)
+    scipy.misc.imsave("/tmp/towerInterpolate.png", image)
     
 def visualizePrimitives(primitives, fn=None):
     from itertools import product
@@ -290,6 +310,7 @@ def main(arguments):
         os.system("mkdir  -p data/tower_dreams")
         dreamOfTowers(g, "data/tower_dreams", make_montage=False)
         sys.exit(0)
+    interpolate = arguments.pop("interpolate")        
         
     
     tasks = arguments.pop("tasks")
@@ -301,6 +322,12 @@ def main(arguments):
         
     test, train = testTrainSplit(tasks, arguments.pop("split"))
     eprint("Split %d/%d test/train" % (len(test), len(train)))
+
+    if interpolate is not None:
+        with open(interpolate,'rb') as handle:
+            rm = pickle.load(handle).recognitionModel
+        interpolateTasks(train, rm)
+        sys.exit(0)
 
     # Make a montage for the paper
     shuffledTrain = list(train)

@@ -3,10 +3,9 @@ try:
 except ModuleNotFoundError:
     import bin.binutil  # alt import if called as module
 
-from dreamcoder.domains.tower.main import main, TowerCNN, tower_options
+from dreamcoder.domains.tower.main import main, tower_options, TowerCNN
 from dreamcoder.ec import commandlineArguments
 from dreamcoder.utilities import numberOfCPUs
-
 
 if __name__ == '__main__':
     arguments = commandlineArguments(
