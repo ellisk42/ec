@@ -1003,6 +1003,7 @@ def commandlineArguments(_=None,
 def addTaskMetrics(result, path):
     """Adds a task metrics to ECResults that were pickled without them."""
     with torch.no_grad(): return addTaskMetrics_(result, path)
+
 def addTaskMetrics_(result, path):
     SUFFIX = '.pickle'
     assert path.endswith(SUFFIX)
