@@ -1090,6 +1090,51 @@ class ContextualGrammar:
             eprint(f"Likely used primitive indices: {[i for p,i in primitive2index.items() if u[i] > 0.5]}")
         return u
 
+    def entropyMonteCarlo(self, request, n_samples):
+        return self.MonteCarloStatistics(request, n_samples).entropy
+
+    def MonteCarloStatistics(self, request, n_samples=10000):
+        """Repeatedly draws `n_samples` programs from this grammar and returns a structure with the following fields:
+        .entropy: E[-\log P(program | G)]
+        .unigrams: Map from primitive to average number of times it occurred in samples
+        .bigrams: Map from (parent, parent index, child) to average number of times that occurred in samples"""
+        negativeLogProbabilities = []
+        primitiveFrequencies = {}
+        transitionFrequencies = {}
+        with timing(f"calculated program statistics using Monte Carlo simulation w/ {n_samples} samples"):
+            for _ in range(n_samples):
+                p = self.sample(request, maxAttempts=0)
+                if p is None: continue
+
+                likelihoodSummary = self.closedLikelihoodSummary(request, p)
+                negativeLogProbabilities.append(-likelihoodSummary.logLikelihood(self))
+
+                # Record the transitions
+                likelihoodSummary.variableParent
+                parentAndSummaries = list(likelihoodSummary.library.items())
+                parentAndSummaries.append((None,[likelihoodSummary.noParent]))
+                parentAndSummaries.append((Index(0),[likelihoodSummary.variableParent]))
+                for parent, ls in parentAndSummaries:
+                    for childIndex, l in enumerate(ls):
+                        for primitive, count in l.uses.items():
+                            primitiveFrequencies[primitive] = primitiveFrequencies.get(primitive,0) + 1
+                            transitionKey = (parent, childIndex)
+                            transitionFrequencies[transitionKey] = transitionFrequencies.get(transitionKey,0) + 1
+        # normalize everything
+        N = len(negativeLogProbabilities)
+        primitiveFrequencies = {p:f/N for p,f in primitiveFrequencies.items() }
+        transitionFrequencies = {p:f/N for p,f in transitionFrequencies.items() }
+        return Bunch({"entropy": sum(negativeLogProbabilities)/N,
+                      "unigrams": primitiveFrequencies,
+                      "bigrams": transitionFrequencies})
+                    
+                    
+                        
+                
+
+                
+        
+    
     def featureVector(self, _=None, requests=None, onlyInventions=True, normalize=True):
         """
         Returns the probabilities licensed by the type system.
