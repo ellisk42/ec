@@ -85,8 +85,9 @@ def loadResult(path, export):
 	recognitionTaskMetrics = result.recognitionTaskMetrics
 
 	# Create a folder for the domain if it does not exist.
-	if not os.path.exists(os.path.join(export, domain)):
-		os.makedirs(os.path.join(export, domain))
+	if export is not None:
+		if not os.path.exists(os.path.join(export, domain)):
+			os.makedirs(os.path.join(export, domain))
 		
 	return result, domain, iterations, recognitionTaskMetrics
 

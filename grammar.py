@@ -1088,7 +1088,7 @@ class ContextualGrammar:
             eprint(f"Got {n} samples. Feature vector:\n{u}, Bigram vector: \n{bigram_u}")
             eprint(f"Likely used primitives: {[p for p,i in primitive2index.items() if u[i] > 0.5]}")
             eprint(f"Likely used primitive indices: {[i for p,i in primitive2index.items() if u[i] > 0.5]}")
-        return u
+        return (u, bigram_u)
 
     def featureVector(self, _=None, requests=None, onlyInventions=True, normalize=True):
         """
