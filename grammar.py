@@ -1097,7 +1097,11 @@ class ContextualGrammar:
         """Repeatedly draws `n_samples` programs from this grammar and returns a structure with the following fields:
         .entropy: E[-\log P(program | G)]
         .unigrams: Map from primitive to average number of times it occurred in samples
-        .bigrams: Map from (parent, parent index, child) to average number of times that occurred in samples"""
+        .unigramVector: vector form of above
+        .bigrams: Map from (parent, parent index, child) to average number of times that occurred in samples
+        .transitionMatrix: vector form of the above"""
+        import numpy as np
+        
         negativeLogProbabilities = []
         primitiveFrequencies = {}
         transitionFrequencies = {}
@@ -1124,9 +1128,25 @@ class ContextualGrammar:
         N = len(negativeLogProbabilities)
         primitiveFrequencies = {p:f/N for p,f in primitiveFrequencies.items() }
         transitionFrequencies = {p:f/N for p,f in transitionFrequencies.items() }
+        primitiveKeys = list(sorted(primitives)) + [Index(0)]
+        primitiveVector = np.array([primitiveFrequencies.get(p,0.)
+                                    for p in primitiveKeys ])
+        transitionKeys = [(None,0,p)
+                          for p in primitiveKeys ]
+        transitionKeys.extend([(Index(0),0,p)
+                               for p in primitiveKeys ])
+        transitionKeys.extend([(parent, childIndex, child)
+                               for parent in primitiveKeys
+                               for child in primitiveKeys
+                               for childIndex in range(len(self.library[parent])) ])
+        transitionKeys.sort()
+        transitionMatrix = np.array([transitionFrequencies.get(tk,0.)
+                                     for tk in transitionKeys]) 
         return Bunch({"entropy": sum(negativeLogProbabilities)/N,
                       "unigrams": primitiveFrequencies,
-                      "bigrams": transitionFrequencies})
+                      "unigramVector": primitiveVector,
+                      "bigrams": transitionFrequencies,
+                      "transitionMatrix": transitionMatrix})
                     
                     
                         
