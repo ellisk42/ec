@@ -1128,7 +1128,7 @@ class ContextualGrammar:
         N = len(negativeLogProbabilities)
         primitiveFrequencies = {p:f/N for p,f in primitiveFrequencies.items() }
         transitionFrequencies = {p:f/N for p,f in transitionFrequencies.items() }
-        primitiveKeys = list(sorted(primitives)) + [Index(0)]
+        primitiveKeys = list(sorted(self.primitives)) + [Index(0)]
         primitiveVector = np.array([primitiveFrequencies.get(p,0.)
                                     for p in primitiveKeys ])
         transitionKeys = [(None,0,p)
