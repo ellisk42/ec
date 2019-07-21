@@ -1128,7 +1128,7 @@ class ContextualGrammar:
         N = len(negativeLogProbabilities)
         primitiveFrequencies = {p:f/N for p,f in primitiveFrequencies.items() }
         transitionFrequencies = {p:f/N for p,f in transitionFrequencies.items() }
-        primitiveKeys = list(sorted(self.primitives)) + [Index(0)]
+        primitiveKeys = list(sorted(self.primitives,key=str)) + [Index(0 )]
         primitiveVector = np.array([primitiveFrequencies.get(p,0.)
                                     for p in primitiveKeys ])
         transitionKeys = [(None,0,p)
@@ -1139,7 +1139,7 @@ class ContextualGrammar:
                                for parent in primitiveKeys
                                for child in primitiveKeys
                                for childIndex in range(len(self.library[parent])) ])
-        transitionKeys.sort()
+        transitionKeys.sort(key=str)
         transitionMatrix = np.array([transitionFrequencies.get(tk,0.)
                                      for tk in transitionKeys]) 
         return Bunch({"entropy": sum(negativeLogProbabilities)/N,
