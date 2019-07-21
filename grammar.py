@@ -1138,8 +1138,10 @@ class ContextualGrammar:
         transitionKeys.extend([(parent, childIndex, child)
                                for parent in primitiveKeys
                                for child in primitiveKeys
-                               for childIndex in range(len(self.library[parent])) ])
+                               for childIndex in range(len(self.library.get(parent,[1]))) ])
         transitionKeys.sort(key=str)
+        print(transitionKeys)
+        assert False
         transitionMatrix = np.array([transitionFrequencies.get(tk,0.)
                                      for tk in transitionKeys]) 
         return Bunch({"entropy": sum(negativeLogProbabilities)/N,
