@@ -1027,6 +1027,12 @@ def commandlineArguments(_=None,
         help="Creates a checkpoint with task metrics and no recognition model for graphing.",
         default=None,
         type=str)
+    parser.add_argument('--addTaskMetricsIters',
+        dest='addTaskMetricsIters',
+        help='Which iterations to add task metrics to.',
+        nargs='*',
+        type=int,
+        default=None)
     parser.add_argument("--auxiliary",
                         action="store_true", default=False,
                         help="Add auxiliary classification loss to recognition network training",
@@ -1060,12 +1066,41 @@ def commandlineArguments(_=None,
         del v["primitive-graph"]
 
     if v["addTaskMetrics"] is not None:
-        with open(v["addTaskMetrics"],'rb') as handle:
-            result = dill.load(handle)
-        addTaskMetrics(result, v["addTaskMetrics"])
-        sys.exit(0)
+        # Can either be a file or a list of directories to get checkpoints from.
+        if v["addTaskMetrics"].endswith('.txt'):
+            with open(v["addTaskMetrics"],'r') as f:
+                checkpoints_dirs = [line.strip() for line in f.readlines()]
+            print("Found %d checkpoint directories." % len(checkpoints_dirs))
+
+            checkpoints = []
+            checkpoint_iters = v['addTaskMetricsIters']
+            for checkpoint_dir in checkpoints_dirs:
+                all_files = [str(f) for f in os.listdir(checkpoint_dir)]
+
+                all_checkpoints = [c for c in all_files if c.endswith('.pickle') and not 'graph=True' in c]
+                checkpoints_for_iters = [os.path.join(checkpoint_dir, c) for c in all_checkpoints if int(c.split('it=')[1].split('_')[0]) in checkpoint_iters]
+                if not len(checkpoint_iters) == len(checkpoint_iters):
+                    print("Could not find checkpoints for iters %s in checkpoint_dir %s" % (str(checkpoint_iters), checkpoint_dir))
+                else:
+                    checkpoints += checkpoints_for_iters
+            
+            for checkpoint in checkpoints:
+                with open(checkpoint,'rb') as handle:
+                    result = dill.load(handle)
+                    print("Loaded checkpoint %s" % checkpoint)
+                    heldout_tasks = [t for t in result.recognitionTaskMetrics if 'heldoutTaskLogProductions' in result.recognitionTaskMetrics[t]]
+                    print("Found %d heldout tasks." % len(heldout_tasks))
+                addTaskMetrics(result, checkpoint)
+
+            sys.exit(0)
+        else:
+            with open(v["addTaskMetrics"],'rb') as handle:
+                result = dill.load(handle)
+            addTaskMetrics(result, v["addTaskMetrics"])
+            sys.exit(0)
     else:
         del v["addTaskMetrics"]
+        if v['addTaskMetricsIters'] is not None: del v['addTaskMetricsIters']
 
     if v["useRecognitionModel"] and v["recognitionTimeout"] is None:
         v["recognitionTimeout"] = v["enumerationTimeout"]
@@ -1096,17 +1131,21 @@ def addTaskMetrics(result, path):
     assert path.endswith(SUFFIX)
 
     tasks = result.taskSolutions.keys()
-    eprint("Found %d tasks: " % len(tasks))
+    everyTask = set(tasks)
+    for t in result.recognitionTaskMetrics.keys():
+        if isinstance(t, Task) and t not in everyTask: everyTask.add(t)
+
+    eprint("Found %d solved tasks: " % len(tasks))
     if not hasattr(result, "recognitionTaskMetrics") or result.recognitionTaskMetrics is None:
         result.recognitionTaskMetrics = {}
 
-    # If task has images, store them.
+    # If task has images, store them for every task.
     if hasattr(list(tasks)[0], 'getImage'):
-        images = {t: t.getImage(pretty=True) for t in tasks}
+        images = {t: t.getImage(pretty=True) for t in everyTask}
         updateTaskSummaryMetrics(result.recognitionTaskMetrics, images, 'taskImages')
 
     if hasattr(list(tasks)[0], 'highresolution'):
-        images = {t: t.highresolution for t in tasks}
+        images = {t: t.highresolution for t in everyTask}
         updateTaskSummaryMetrics(result.recognitionTaskMetrics, images, 'taskImages')
 
     updateTaskSummaryMetrics(result.recognitionTaskMetrics, result.recognitionModel.auxiliaryPrimitiveEmbeddings(), 'auxiliaryPrimitiveEmbeddings')
@@ -1121,13 +1160,10 @@ def addTaskMetrics(result, path):
                                                              if len(f) > 0},
                              'expectedProductionUses')
     if True:
-        everyTask = set(tasks)
-        for t in result.recognitionTaskMetrics:
-            if isinstance(t, Task) and t not in everyTask: everyTask.add(t)
         eprint(f"About to do an expensive Monte Carlo simulation w/ {len(everyTask)} tasks")
         updateTaskSummaryMetrics(result.recognitionTaskMetrics,
                                  {task: result.recognitionModel.grammarOfTask(task).untorch().expectedUsesMonteCarlo(task.request, debug=False)
-                                  for task in everyTask },
+                                  for task in list(everyTask)},
                                  'expectedProductionUsesMonteCarlo')
     try:
         updateTaskSummaryMetrics(result.recognitionTaskMetrics,
@@ -1140,7 +1176,7 @@ def addTaskMetrics(result, path):
 
     result.recognitionModel = None
         
-    clearedPath = path[:-len(SUFFIX)] + "_graph=True" + SUFFIX
+    clearedPath = path[:-len(SUFFIX)] + "_graph=True_addedMetrics=True" + SUFFIX
     with open(clearedPath,'wb') as handle:
         result = dill.dump(result, handle)
     eprint(" [+] Cleared recognition model from:")
