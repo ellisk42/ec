@@ -1162,7 +1162,7 @@ def addTaskMetrics(result, path):
     if True:
         eprint(f"About to do an expensive Monte Carlo simulation w/ {len(everyTask)} tasks")
         updateTaskSummaryMetrics(result.recognitionTaskMetrics,
-                                 {task: result.recognitionModel.grammarOfTask(task).untorch().MonteCarloStatistics(task.request, n_samples=5)
+                                 {task: result.recognitionModel.grammarOfTask(task).untorch().MonteCarloStatistics(task.request, n_samples=1000)
                                   for task in list(everyTask)},
                                  'MonteCarloStatistics')
     try:
