@@ -1057,12 +1057,14 @@ class ContextualGrammar:
 
     def expectedUsesMonteCarlo(self, request, debug=None):
         import numpy as np
+        debug = False
         n = 0
         u = [0.]*len(self.primitives)
+        bigram_u = np.zeros((len(self.primitives) + 1,  len(self.primitives) + 1))
         primitives = list(sorted(self.primitives, key=str))
         primitive2index = {primitive: i
                            for i, primitive in enumerate(primitives)
-                           if primitive.isInvented }
+                            }
         ns = 10000
         with timing(f"calculated expected uses using Monte Carlo simulation w/ {ns} samples"):
             for _ in range(ns):
@@ -1071,12 +1073,19 @@ class ContextualGrammar:
                 n += 1
                 if debug and n < 10:
                     eprint(debug, p)
+
+                parent_index = 0 # 1-index the bigram matrix to account for noParent.
                 for _, child in p.walk():
-                    if not child.isInvented: continue
-                    u[primitive2index[child]] += 1.0
+                    #if not child.isInvented: continue
+                    if not child in primitive2index: continue
+                    child_index = primitive2index[child]
+                    u[child_index] += 1.0
+                    bigram_u[parent_index][child_index+1] += 1.0
+                    parent_index = child_index
         u = np.array(u)/n
+        bigram_u = np.array(bigram_u) / n
         if debug:
-            eprint(f"Got {n} samples. Feature vector:\n{u}")
+            eprint(f"Got {n} samples. Feature vector:\n{u}, Bigram vector: \n{bigram_u}")
             eprint(f"Likely used primitives: {[p for p,i in primitive2index.items() if u[i] > 0.5]}")
             eprint(f"Likely used primitive indices: {[i for p,i in primitive2index.items() if u[i] > 0.5]}")
         return u
