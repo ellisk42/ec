@@ -52,7 +52,7 @@ python bin/launch.py -k  -c -z n1-highmem-64 McCarthy_unsolved_16h_tk5 "python  
 Scientific laws:
 python bin/launch.py -k  -c -z n1-highmem-64 scientific_1h "python bin/scientificLaws.py  -t 3600 --topK 5 --arity 3 --maximumFrontier 5 -i 10 -R 3600 -RS 5000 --biasOptimal --contextual --mask  -r 0."
 python bin/launch.py -k  -c -z n1-highmem-64 scientific_unsolved_1h "python bin/scientificLaws.py  -t 3600 --topK 5 --arity 3 --maximumFrontier 5 -i 10 -R 3600 -RS 5000 --biasOptimal --contextual --mask  -r 0. --taskReranker unsolved"
-python bin/launch.py -k  -c -z n1-highmem-64 scientific_unsolved_4h "python bin/scientificLaws.py  -t 14400 --topK 5 --arity 3 --maximumFrontier 5 -i 20 -R 30 -RS 5000 --biasOptimal --contextual --mask  -r 0. --taskReranker unsolved"
+for SEED in `seq 1 5`; do python bin/launch.py -k  -c -z n1-highmem-64 scientific_unsolved_4h "python bin/scientificLaws.py  -t 14400 --topK 5 --arity 3 --maximumFrontier 5 -i 20 -R 30 -RS 5000 --biasOptimal --contextual --mask  -r 0. --taskReranker unsolved"; done
 python bin/launch.py -k  -c -z n1-highmem-64 scientific_unsolved_8h "python bin/scientificLaws.py  -t 28800 --topK 5 --arity 3 --maximumFrontier 5 -i 20 -g  --taskReranker unsolved"
 python bin/launch.py -k  -c -z n1-highmem-64 scientific_12m_10b "python bin/scientificLaws.py  -t 720 --taskReranker randomShuffle --taskBatchSize 10 --topK 5 --arity 3 --maximumFrontier 5 -i 10 -R 3600 -RS 5000 --biasOptimal --contextual --mask  -r 0."
 python bin/launch.py -k  -c -z n1-highmem-64 scientific_60m_10b "python bin/scientificLaws.py  -t 3600 --taskReranker randomShuffle --taskBatchSize 10 --topK 5 --arity 3 --maximumFrontier 5 -i 10 -R 3600 -RS 5000 --biasOptimal --contextual --mask  -r 0."
