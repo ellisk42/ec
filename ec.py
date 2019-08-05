@@ -268,6 +268,7 @@ def ecIterator(grammar, tasks,
                 parameters.keys())]
         if bootstrap:
             kvs += ["bstrap=True"]
+        kvs += ['retrain=True']
         return "{}_{}{}.pickle".format(outputPrefix, "_".join(kvs), extra)
 
     if message:
@@ -427,50 +428,7 @@ def ecIterator(grammar, tasks,
         if storeTaskMetrics and rewriteTaskMetrics:
             eprint("Resetting task metrics for next iteration.")
             result.recognitionTaskMetrics = {}
-
-        # Evaluate on held out tasks if we have them
-        if testingTimeout > 0 and ((j % testEvery == 0) or (j == iterations - 1)):
-            eprint("Evaluating on held out testing tasks for iteration: %d" % (j))
-            if useRecognitionModel and result.recognitionModel is not None: 
-                eprint("Evaluating using trained recognition model.")
-                testingFrontiers, times, testingTimes = result.recognitionModel.enumerateFrontiers(testingTasks, likelihoodModel,
-                                                                      CPUs=CPUs,
-                                                                      solver=solver,
-                                                                      maximumFrontier=maximumFrontier,
-                                                                      enumerationTimeout=testingTimeout,
-                                                                      evaluationTimeout=evaluationTimeout,
-                                                                      testing=True)
-
-                if storeTaskMetrics:
-                    updateTaskSummaryMetrics(result.recognitionTaskMetrics, testingTimes, 'heldoutTestingTimes')
-                    updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskGrammarLogProductions(testingTasks), 'heldoutTaskLogProductions')
-                    updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskGrammarEntropies(testingTasks), 'heldoutTaskGrammarEntropies')
-                    if contextual:
-                        updateTaskSummaryMetrics(result.recognitionTaskMetrics,
-                                                 recognizer.taskGrammarStartProductions(testingTasks),
-                                                 'heldoutStartProductions')
-
-            else:
-                eprint("Evaluating using multicore enumeration without a recognition model.")
-                testingFrontiers, times, testingTimes = multicoreEnumeration(grammar, testingTasks, likelihoodModel,
-                                                                             solver=solver,
-                                                                             maximumFrontier=maximumFrontier,
-                                                                             enumerationTimeout=testingTimeout,
-                                                                             CPUs=CPUs,
-                                                                             evaluationTimeout=evaluationTimeout,
-                                                                             testing=True)
-            print("\n".join(f.summarize() for f in testingFrontiers))
-            eprint("Hits %d/%d testing tasks" % (len(times), len(testingTasks)))
-
-            summaryStatistics("Testing tasks", times)
-            result.testingSearchTime.append(times)
-            result.testingSumMaxll.append(sum(math.exp(f.bestll) for f in testingFrontiers if not f.empty) )
-            updateTaskSummaryMetrics(result.recognitionTaskMetrics,
-                                     {f.task: f for f in testingFrontiers if len(f) > 0 },
-                                     'frontier')
-            updateTaskSummaryMetrics(result.recognitionTaskMetrics, testingTimes, 'heldoutTestingTimes')
-
-            
+     
         # If we have to also enumerate Helmholtz frontiers,
         # do this extra sneaky in the background
         if useRecognitionModel and biasOptimal and helmholtzRatio > 0 and \
@@ -535,8 +493,10 @@ def ecIterator(grammar, tasks,
                 thisRatio = helmholtzRatio
                 if j == 0 and not biasOptimal: thisRatio = 0
 
+                print("Now making frontiers....")
                 # Create a pool of helmholtz frontiers in advance.
                 helmholtzFrontiers = helmholtzFrontiers()
+                print("Now training....")
                 # Train an ensemble of recognizers.
                 trainedRecognizers = parallelMap(CPUs,
                                        lambda recognizer: recognizer.train(result.allFrontiers.values(),
@@ -556,7 +516,7 @@ def ecIterator(grammar, tasks,
                 eprint("Trained an ensemble of %d recognition models, now enumerating." % len(trainedRecognizers))
                 ensembleFrontiers, ensembleTimes, ensembleRecognitionTimes = [], [], []
                 mostTasks = 0
-                bestRecognizer = None
+                bestRecognizer = 0
                 totalTasksHitBottomUp = set()
                 for recIndex, recognizer in enumerate(trainedRecognizers):
                     eprint("Enumerating from recognizer %d of %d" % (recIndex, len(trainedRecognizers)))
@@ -728,28 +688,71 @@ def ecIterator(grammar, tasks,
         
         # Sleep-G
         # First check if we have supervision at the program level for any task that was not solved
-        needToSupervise = {f.task for f in result.allFrontiers.values()
-                           if f.task.supervision is not None and f.empty}
-        compressionFrontiers = [f.replaceWithSupervised(grammar) if f.task in needToSupervise else f
-                                for f in result.allFrontiers.values() ]
+        # needToSupervise = {f.task for f in result.allFrontiers.values()
+        #                    if f.task.supervision is not None and f.empty}
+        # compressionFrontiers = [f.replaceWithSupervised(grammar) if f.task in needToSupervise else f
+        #                         for f in result.allFrontiers.values() ]
 
-        if len([f for f in compressionFrontiers if not f.empty]) == 0:
-            eprint("No compression frontiers; not inducing a grammar this iteration.")
-        else:
-            grammar, compressionFrontiers = induceGrammar(grammar, compressionFrontiers,
-                                                          topK=topK,
-                                                          pseudoCounts=pseudoCounts, a=arity,
-                                                          aic=aic, structurePenalty=structurePenalty,
-                                                          topk_use_only_likelihood=topk_use_only_likelihood,
-                                                          backend=compressor, CPUs=CPUs, iteration=j)
-            # Store compression frontiers in the result.
-            for c in compressionFrontiers:
-                result.allFrontiers[c.task] = c.topK(0) if c in needToSupervise else c
+        # if len([f for f in compressionFrontiers if not f.empty]) == 0:
+        #     eprint("No compression frontiers; not inducing a grammar this iteration.")
+        # else:
+        #     grammar, compressionFrontiers = induceGrammar(grammar, compressionFrontiers,
+        #                                                   topK=topK,
+        #                                                   pseudoCounts=pseudoCounts, a=arity,
+        #                                                   aic=aic, structurePenalty=structurePenalty,
+        #                                                   topk_use_only_likelihood=topk_use_only_likelihood,
+        #                                                   backend=compressor, CPUs=CPUs, iteration=j)
+        #     # Store compression frontiers in the result.
+        #     for c in compressionFrontiers:
+        #         result.allFrontiers[c.task] = c.topK(0) if c in needToSupervise else c
 
 
-        result.grammars.append(grammar)
-        eprint("Grammar after iteration %d:" % (j + 1))
-        eprint(grammar)
+        # result.grammars.append(grammar)
+        # eprint("Grammar after iteration %d:" % (j + 1))
+        # eprint(grammar)
+
+        # Evaluate on held out tasks if we have them
+        if testingTimeout > 0 and ((j % testEvery == 0) or (j == iterations - 1)):
+            eprint("Evaluating on held out testing tasks for iteration: %d" % (j))
+            if useRecognitionModel and result.recognitionModel is not None: 
+                eprint("Evaluating using trained recognition model.")
+                testingFrontiers, times, testingTimes = result.recognitionModel.enumerateFrontiers(testingTasks, likelihoodModel,
+                                                                      CPUs=CPUs,
+                                                                      solver=solver,
+                                                                      maximumFrontier=maximumFrontier,
+                                                                      enumerationTimeout=testingTimeout,
+                                                                      evaluationTimeout=evaluationTimeout,
+                                                                      testing=True)
+
+                if storeTaskMetrics:
+                    updateTaskSummaryMetrics(result.recognitionTaskMetrics, testingTimes, 'heldoutTestingTimes')
+                    updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskGrammarLogProductions(testingTasks), 'heldoutTaskLogProductions')
+                    updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskGrammarEntropies(testingTasks), 'heldoutTaskGrammarEntropies')
+                    updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskLLPredictions(testingTasks), 'heldoutTaskLLPredictions')
+                    if contextual:
+                        updateTaskSummaryMetrics(result.recognitionTaskMetrics,
+                                                 recognizer.taskGrammarStartProductions(testingTasks),
+                                                 'heldoutStartProductions')
+
+            else:
+                eprint("Evaluating using multicore enumeration without a recognition model.")
+                testingFrontiers, times, testingTimes = multicoreEnumeration(grammar, testingTasks, likelihoodModel,
+                                                                             solver=solver,
+                                                                             maximumFrontier=maximumFrontier,
+                                                                             enumerationTimeout=testingTimeout,
+                                                                             CPUs=CPUs,
+                                                                             evaluationTimeout=evaluationTimeout,
+                                                                             testing=True)
+            print("\n".join(f.summarize() for f in testingFrontiers))
+            eprint("Hits %d/%d testing tasks" % (len(times), len(testingTasks)))
+
+            summaryStatistics("Testing tasks", times)
+            result.testingSearchTime.append(times)
+            result.testingSumMaxll.append(sum(math.exp(f.bestll) for f in testingFrontiers if not f.empty) )
+            updateTaskSummaryMetrics(result.recognitionTaskMetrics,
+                                     {f.task: f for f in testingFrontiers if len(f) > 0 },
+                                     'frontier')
+            updateTaskSummaryMetrics(result.recognitionTaskMetrics, testingTimes, 'heldoutTestingTimes')
 
         
         if outputPrefix is not None:
@@ -1100,7 +1103,7 @@ def commandlineArguments(_=None,
             sys.exit(0)
     else:
         del v["addTaskMetrics"]
-        if v['addTaskMetricsIters'] is not None: del v['addTaskMetricsIters']
+        del v['addTaskMetricsIters']
 
     if v["useRecognitionModel"] and v["recognitionTimeout"] is None:
         v["recognitionTimeout"] = v["enumerationTimeout"]

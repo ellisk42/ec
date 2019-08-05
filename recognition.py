@@ -538,6 +538,9 @@ class RecognitionModel(nn.Module):
                                               len(self.grammar.primitives))
         self._auxiliaryLoss = nn.BCEWithLogitsLoss()
 
+        self._auxiliaryLLPrediction = nn.Linear(self.outputDimensionality, 1)
+        self._auxiliaryLLLoss = nn.SmoothL1Loss()
+
         if cuda: self.cuda()
 
         if previousRecognitionModel:
@@ -562,6 +565,14 @@ class RecognitionModel(nn.Module):
         if self.use_cuda: u = u.cuda()
         al = self._auxiliaryLoss(self._auxiliaryPrediction(features), u)
         return al
+
+    def auxiliaryLossPredictActualLL(self, frontier, features):
+        # Try to predict directly from features of the task how difficult the actual log likelihood will be.
+        # Predict the actual best log likelihood.
+        actual_ll = torch.Tensor([frontier.bestll])
+        # Predicted lls.
+        predicted_ll = self._auxiliaryPrediction(features)
+        return self._auxiliaryLLLoss(actual_ll, predicted_ll)
             
     def taskEmbeddings(self, tasks):
         return {task: self.featureExtractor.featuresOfTask(task).data.cpu().numpy()
@@ -661,6 +672,10 @@ class RecognitionModel(nn.Module):
         return {task: self.grammarEntropyOfTask(task).data.cpu().numpy()
                 for task in tasks}
 
+    def taskLLPredictions(self, tasks):
+        return {task: self._auxiliaryLLPrediction(self._MLP(self.featureExtractor.featuresOfTask(task))).data.cpu().numpy()
+                for task in tasks}
+
     def frontierKL(self, frontier, auxiliary=False, vectorized=True):
         features = self.featureExtractor.featuresOfTask(frontier.task)
         if features is None: return None, None
@@ -676,13 +691,16 @@ class RecognitionModel(nn.Module):
         else:
             features = self._MLP(features).expand(1, features.size(-1))
             ll = self.grammarBuilder.batchedLogLikelihoods(features, [entry.program]).view(-1)
-            return -ll, al
+            return -ll, al, None
             
 
     def frontierBiasOptimal(self, frontier, auxiliary=False, vectorized=True):
+        auxiliaryLL = True #Added by Cathy.
+
         if not vectorized:
+            print("Not vectorized")
             features = self.featureExtractor.featuresOfTask(frontier.task)
-            if features is None: return None, None
+            if features is None: return None, None, None
             if auxiliary: al = self.auxiliaryLoss(frontier, features)
             else: al = 0
             g = self(features)
@@ -690,20 +708,21 @@ class RecognitionModel(nn.Module):
             likelihoods = torch.cat([entry.program.logLikelihood(g) + entry.logLikelihood
                                      for entry in frontier ])
             best = likelihoods.max()
-            return -best, al
+            return -best, al, None
             
         batchSize = len(frontier.entries)
         features = self.featureExtractor.featuresOfTask(frontier.task)
-        if features is None: return None, None
+        if features is None: return None, None, None
         if auxiliary: al = self.auxiliaryLoss(frontier, features)
         else: al = 0
         features = self._MLP(features)
+        auxiliary_ll_loss = self.auxiliaryLossPredictActualLL(frontier, features)
         features = features.expand(batchSize, features.size(-1))  # TODO
         lls = self.grammarBuilder.batchedLogLikelihoods(features, [entry.program for entry in frontier])
         actual_ll = torch.Tensor([ entry.logLikelihood for entry in frontier])
         lls = lls + (actual_ll.cuda() if self.use_cuda else actual_ll)
         ml = -lls.max() #Beware that inputs to max change output type
-        return ml, al
+        return ml, al, auxiliary_ll_loss
 
     def replaceProgramsWithLikelihoodSummaries(self, frontier):
         return Frontier(
@@ -722,6 +741,7 @@ class RecognitionModel(nn.Module):
         helmholtzFrontiers: Frontiers from programs enumerated from generative model (optional)
         If helmholtzFrontiers is not provided then we will sample programs during training
         """
+        print("Training recognition model.....")
         assert (steps is not None) or (timeout is not None), \
             "Cannot train recognition model without either a bound on the number of gradient steps or bound on the training time"
         if steps is None: steps = 9999999
@@ -873,6 +893,7 @@ class RecognitionModel(nn.Module):
         start = time.time()
         losses, descriptionLengths, realLosses, dreamLosses, realMDL, dreamMDL = [], [], [], [], [], []
         classificationLosses = []
+        auxLLLosses = []
         totalGradientSteps = 0
         epochs = 9999999
         for i in range(1, epochs + 1):
@@ -894,7 +915,7 @@ class RecognitionModel(nn.Module):
                 dreaming = random.random() < helmholtzRatio
                 if dreaming: frontier = getHelmholtz()
                 self.zero_grad()
-                loss, classificationLoss = \
+                loss, classificationLoss, auxLLLoss = \
                         self.frontierBiasOptimal(frontier, auxiliary=auxLoss, vectorized=vectorized) if biasOptimal \
                         else self.frontierKL(frontier, auxiliary=auxLoss, vectorized=vectorized)
                 if loss is None:
@@ -908,13 +929,14 @@ class RecognitionModel(nn.Module):
                 if is_torch_invalid(loss):
                     eprint("Invalid real-data loss!")
                 else:
-                    (loss + classificationLoss).backward()
+                    (loss + classificationLoss + auxLLLoss).backward()
                     if auxLoss:
                         classificationLosses.append(classificationLoss.data.item())
                     optimizer.step()
                     totalGradientSteps += 1
                     losses.append(loss.data.item())
                     descriptionLengths.append(min(-e.logPrior for e in frontier))
+                    auxLLLosses.append(auxLLLoss.data.item())
                     if dreaming:
                         dreamLosses.append(losses[-1])
                         dreamMDL.append(descriptionLengths[-1])
@@ -933,6 +955,8 @@ class RecognitionModel(nn.Module):
                     eprint("\t\t(real MDL): ", mean(realMDL), "\t(dream MDL):", mean(dreamMDL))
                 eprint("(ID=%d): " % self.id, "\t%d cumulative gradient steps. %f steps/sec"%(totalGradientSteps,
                                                                        totalGradientSteps/(time.time() - start)))
+                if auxLLLosses:
+                    eprint("(ID=%d): " % self.id, "\t\t(auxiliary LL prediction loss): ", mean(auxLLLosses))
                 if auxLoss:
                     eprint("(ID=%d): " % self.id, "\t%d-way auxiliary classification loss"%len(self.grammar.primitives),sum(classificationLosses)/len(classificationLosses))
                 losses, descriptionLengths, realLosses, dreamLosses, realMDL, dreamMDL = [], [], [], [], [], []
