@@ -197,7 +197,7 @@ def outputDreams(checkpoint, directory):
     dreamFromGrammar(g, directory)
 
 def enumerateDreams(checkpoint, directory):
-    from dreamcoder.recognition import backgroundHelmholtzEnumeration
+    from dreamcoder.dreaming import backgroundHelmholtzEnumeration
     from dreamcoder.utilities import loadPickle
     result = loadPickle(checkpoint)
     eprint(" [+] Loaded checkpoint",checkpoint)

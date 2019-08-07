@@ -1,15 +1,14 @@
+import datetime
+
+import dill
+
+from dreamcoder.compression import induceGrammar
 from dreamcoder.recognition import *
 from dreamcoder.enumeration import *
 from dreamcoder.fragmentGrammar import *
 from dreamcoder.taskBatcher import *
 from dreamcoder.primitiveGraph import graphPrimitives
-import dill
-
-
-import os
-import datetime
-
-import torch
+from dreamcoder.dreaming import backgroundHelmholtzEnumeration
 
 
 class ECResult():
