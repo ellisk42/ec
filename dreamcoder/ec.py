@@ -1,9 +1,8 @@
 import datetime
-import os
 
 import dill
-import torch
 
+from dreamcoder.compression import induceGrammar
 from dreamcoder.recognition import *
 from dreamcoder.enumeration import *
 from dreamcoder.fragmentGrammar import *
