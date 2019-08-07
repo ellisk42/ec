@@ -3,12 +3,17 @@ try:
 except ModuleNotFoundError:
     import bin.binutil  # alt import if called as module
 
-from dreamcoder.recognition import *
-from dreamcoder.grammar import *
+from dreamcoder.dreaming import backgroundHelmholtzEnumeration
+from dreamcoder.grammar import Grammar
+from dreamcoder.program import Program
+from dreamcoder.recognition import DummyFeatureExtractor, RecognitionModel
+from dreamcoder.task import Task
+from dreamcoder.type import arrow, tint
+from dreamcoder.utilities import eprint
 
-if __name__ == "__main__":
+
+def main():
     trainingTimeout = 600
-    enumerationTimeout = 60
     rt = arrow(tint,tint)
     g = Grammar.uniform([Program.parse(p)
                          for p in ["1","0","+"] ])
@@ -38,3 +43,7 @@ if __name__ == "__main__":
     eprint("Samples from generative model:")
     for _ in range(N):
         eprint(g.sample(rt, maximumDepth=20))
+
+
+if __name__ == "__main__":
+    main()
