@@ -14,6 +14,9 @@ import matplotlib.lines as mlines
 import matplotlib
 #from test_unpickle import loadfun
 
+# Required import for unpickling older checkpoints:
+from dreamcoder.domains.tower.main import TowerCNN
+
 
 def loadfun(x):
     with open(x, 'rb') as handle:
