@@ -723,6 +723,9 @@ def demoLogoTasks():
         w = int(len(a)**0.5)
         scipy.misc.imsave('/tmp/logo%d.png'%n, np.array([a[i:i+w]
                                                          for i in range(0,len(a),w) ]))
+        logo_safe_name = t.name.replace("=","_").replace(' ','_').replace('/','_').replace("-","_") + ".png"
+        #os.system(f"convert /tmp/logo{n}.png -morphology Dilate Octagon /tmp/{logo_safe_name}")
+        os.system(f"convert /tmp/logo{n}.png -channel RGB -negate /tmp/{logo_safe_name}")
     eprint(len(tasks),"tasks")
     eprint(sum(t.mustTrain for t in tasks),"need to be trained on")
 
