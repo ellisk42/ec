@@ -154,7 +154,7 @@ def prettyFunction(f, export):
     figure = plot.figure()
     plot.plot(np.arange(-dx, dx, 0.05),
               [0.5*f(x/2) for x in np.arange(-dx, dx, 0.05)],
-              linewidth=10,
+              linewidth=15,
               color='c')
     plot.ylim([-dx,dx])
     plot.gca().set_xticklabels([])
