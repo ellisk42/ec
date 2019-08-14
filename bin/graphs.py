@@ -3,7 +3,7 @@ try:
 except ModuleNotFoundError:
     import bin.binutil  # alt import if called as module
 
-from dreamcoder.ec import *
+from dreamcoder.dreamcoder import *
 import dill
 import matplotlib
 matplotlib.use('Agg')

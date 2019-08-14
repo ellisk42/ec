@@ -5,7 +5,7 @@ class TestEcModule(unittest.TestCase):
 
     def test_imports(self):
         try:
-            from dreamcoder.ec import (
+            from dreamcoder.dreamcoder import (
                 commandlineArguments,
                 ECResult,
                 ecIterator,

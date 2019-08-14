@@ -4,7 +4,7 @@ except ModuleNotFoundError:
     import bin.binutil  # alt import if called as module
 
 from dreamcoder.domains.tower.main import main, TowerCNN, tower_options
-from dreamcoder.ec import commandlineArguments
+from dreamcoder.dreamcoder import commandlineArguments
 from dreamcoder.utilities import numberOfCPUs
 
 

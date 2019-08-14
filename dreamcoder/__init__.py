@@ -26,7 +26,7 @@ For more info, see this StackOverflow answer: https://stackoverflow.com/a/212191
 import sys
 
 from dreamcoder import differentiation
-from dreamcoder import ec
+from dreamcoder import dreamcoder
 from dreamcoder import enumeration
 from dreamcoder import fragmentGrammar
 from dreamcoder import fragmentUtilities
@@ -64,7 +64,7 @@ from dreamcoder.domains.text import makeTextTasks
 from dreamcoder.domains.text import main as text_main
 
 sys.modules['differentiation'] = differentiation
-sys.modules['ec'] = ec
+sys.modules['ec'] = dreamcoder
 sys.modules['enumeration'] = enumeration
 sys.modules['fragmentGrammar'] = fragmentGrammar
 sys.modules['fragmentUtilities'] = fragmentUtilities

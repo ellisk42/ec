@@ -2,7 +2,7 @@
 
 from dreamcoder.domains.regex.makeRegexTasks import makeOldTasks, makeLongTasks, makeShortTasks, makeWordTasks, makeNumberTasks, makeHandPickedTasks, makeNewTasks, makeNewNumberTasks
 from dreamcoder.domains.regex.regexPrimitives import basePrimitives, altPrimitives, easyWordsPrimitives, alt2Primitives, concatPrimitives, reducedConcatPrimitives, strConstConcatPrimitives
-from dreamcoder.ec import explorationCompression, Task
+from dreamcoder.dreamcoder import explorationCompression, Task
 from dreamcoder.grammar import Grammar
 from dreamcoder.likelihoodModel import add_cutoff_values, add_string_constants
 from dreamcoder.program import Abstraction, Application

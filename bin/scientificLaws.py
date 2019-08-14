@@ -10,7 +10,7 @@ from dreamcoder.domains.arithmetic.arithmeticPrimitives import (
     f0, f1, fpi, real_power, real_subtraction, real_addition,
     real_division, real_multiplication)
 from dreamcoder.domains.list.listPrimitives import bootstrapTarget
-from dreamcoder.ec import explorationCompression, commandlineArguments
+from dreamcoder.dreamcoder import explorationCompression, commandlineArguments
 from dreamcoder.grammar import Grammar
 from dreamcoder.program import Program
 from dreamcoder.recognition import RecurrentFeatureExtractor, DummyFeatureExtractor

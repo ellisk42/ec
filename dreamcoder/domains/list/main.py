@@ -5,7 +5,7 @@ import math
 import os
 import datetime
 
-from dreamcoder.ec import explorationCompression
+from dreamcoder.dreamcoder import explorationCompression
 from dreamcoder.utilities import eprint, flatten, testTrainSplit
 from dreamcoder.grammar import Grammar
 from dreamcoder.task import Task

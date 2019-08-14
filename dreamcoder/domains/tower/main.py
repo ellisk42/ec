@@ -1,4 +1,4 @@
-from dreamcoder.ec import *
+from dreamcoder.dreamcoder import *
 
 from dreamcoder.domains.tower.towerPrimitives import primitives, new_primitives, animateTower
 from dreamcoder.domains.tower.makeTowerTasks import *
