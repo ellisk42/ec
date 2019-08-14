@@ -157,7 +157,7 @@ class Program(object):
             if e in Primitive.GLOBALS: return Primitive.GLOBALS[e]
             if e == '??' or e == '?': return FragmentVariable.single
             if e == '<HOLE>': return Hole.single
-            raise ParseFailure(s)
+            raise ParseFailure((s,e))
         return p(s)
 
     @staticmethod

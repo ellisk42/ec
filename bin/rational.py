@@ -140,6 +140,35 @@ def randomPower():
 
     return name, f
 
+def prettyFunction(f, export):
+    import numpy as np
+    n = 200
+    dx = 10.
+
+    import matplotlib
+    #matplotlib.use('Agg')
+
+    import matplotlib.pyplot as plot
+    from scipy.misc import imresize
+
+    figure = plot.figure()
+    plot.plot(np.arange(-dx, dx, 0.05),
+              [0.5*f(x/2) for x in np.arange(-dx, dx, 0.05)],
+              linewidth=15,
+              color='c')
+    plot.ylim([-dx,dx])
+    plot.gca().set_xticklabels([])
+    plot.gca().set_yticklabels([])
+    for tic in plot.gca().xaxis.get_major_ticks():
+        tic.tick1On = tic.tick2On = False
+#    plot.xlabel([])
+    #plot.yticks([])
+    #plot.axis('off')
+    plot.grid(color='k',linewidth=2)
+    plot.savefig(export)
+    print(export)
+    plot.close(figure)
+
 
 def drawFunction(n, dx, f, resolution=64):
     import numpy as np
@@ -258,14 +287,17 @@ class FeatureExtractor(ImageFeatureExtractor):
 def demo():
     from PIL import Image
 
+    os.system("mkdir  -p /tmp/rational_demo")
+
     for j, t in enumerate(makeTasks()):  # range(100):
         name, f = t.name, t.f
 
+        prettyFunction(f, f"/tmp/rational_demo/{name.replace('/','$')}.png")
         print(j, "\n", name)
-        a = drawFunction(200, 5., f, resolution=32) * 255
-        Image.fromarray(a).convert('RGB').save("/tmp/functions/%d.png" % j)
+        # a = drawFunction(200, 5., f, resolution=32) * 255
+        # Image.fromarray(a).convert('RGB').save("/tmp/functions/%d.png" % j)
     assert False
-    
+#demo()    
 
 def rational_options(p):
     p.add_argument("--smooth", action="store_true",
