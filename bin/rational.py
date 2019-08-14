@@ -7,7 +7,7 @@ try:
 except ModuleNotFoundError:
     import bin.binutil  # alt import if called as module
 
-from dreamcoder.ec import explorationCompression, commandlineArguments
+from dreamcoder.dreamcoder import explorationCompression, commandlineArguments
 from dreamcoder.domains.arithmetic.arithmeticPrimitives import real, real_division, real_addition, real_multiplication
 from dreamcoder.grammar import Grammar
 from dreamcoder.program import Primitive, Abstraction, Application

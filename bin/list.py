@@ -5,7 +5,7 @@ except ModuleNotFoundError:
     import bin.binutil  # alt import if called as module
 
 from dreamcoder.domains.list.main import main, list_options
-from dreamcoder.ec import commandlineArguments
+from dreamcoder.dreamcoder import commandlineArguments
 from dreamcoder.utilities import numberOfCPUs
 
 

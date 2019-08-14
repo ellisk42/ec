@@ -3,7 +3,7 @@ try:
 except ModuleNotFoundError:
     import bin.binutil  # alt import if called as module
 
-from dreamcoder.ec import *
+from dreamcoder.dreamcoder import *
 
 from dreamcoder.grammar import *
 from dreamcoder.program import *

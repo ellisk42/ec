@@ -15,7 +15,7 @@ import torch.nn.functional as F
 
 from dreamcoder.domains.logo.makeLogoTasks import makeTasks, montageTasks, drawLogo
 from dreamcoder.domains.logo.logoPrimitives import primitives, turtle, tangle, tlength
-from dreamcoder.ec import ecIterator
+from dreamcoder.dreamcoder import ecIterator
 from dreamcoder.grammar import Grammar
 from dreamcoder.program import Program
 from dreamcoder.recognition import variable, maybe_cuda

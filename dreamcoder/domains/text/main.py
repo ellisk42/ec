@@ -1,4 +1,4 @@
-from dreamcoder.ec import ecIterator
+from dreamcoder.dreamcoder import ecIterator
 from dreamcoder.domains.text.makeTextTasks import makeTasks, loadPBETasks
 from dreamcoder.domains.text.textPrimitives import primitives
 from dreamcoder.domains.list.listPrimitives import bootstrapTarget
