@@ -106,6 +106,8 @@ def makeTasks():
             return [preprocess(z) for z in x]
         if isinstance(x, str):
             return [c for c in x]
+        if isinstance(x, bool):
+            return x
         assert False
 
     def problem(n, examples, needToTrain=False):
@@ -179,13 +181,26 @@ def makeTasks():
                  for e in [randomWord()]],
                 needToTrain=True)
 
-    for n in range(len(delimiters)):
-        problem("First letters of words (%s)" % ("I" * (1 + n)),
-                [((x,), "".join(map(lambda z: z[0], x.split(' '))))
-                 for _ in range(NUMBEROFEXAMPLES)
-                 for x in [randomWords(' ')]
-                 ],
-                needToTrain=True)
+    # for n in range(len(delimiters)):
+    #     problem("First letters of words (%s)" % ("I" * (1 + n)),
+    #             [((x,), "".join(map(lambda z: z[0], x.split(' '))))
+    #              for _ in range(NUMBEROFEXAMPLES)
+    #              for x in [randomWords(' ')]
+    #              ],
+    #             needToTrain=True)
+    for n in range(3):
+        problem("starts with prefix (%s)" % ("I"*(n + 1)),
+                [((x,y), y.startswith(x))
+                 for _ in range(NUMBEROFEXAMPLES*10)
+                 for x in [randomWord()]
+                 for y in [x + randomWord() if random.choice([True,False]) else randomWord()]])
+        problem("contains substring (%s)" % ("I"*(n + 1)),
+                [((x,y), x in y)
+                 for _ in range(NUMBEROFEXAMPLES*10)
+                 for x in [randomWord()]
+                 for y in [randomWord() + x + randomWord() if random.choice([True,False]) else randomWord() + randomWord() + randomWord()]])
+        
+        
     for d in delimiters:
         problem("Take first character and append '%s'" % d,
                 [((x,), x[0] + d)
@@ -278,7 +293,8 @@ def loadPBETasks(directory="PBE_Strings_Track"):
     Processes sygus benchmarks into task objects
     For these benchmarks, all of the constant strings are given to us.
     In a sense this is cheating (nb: the production release of flashfill does something equivalent to this "cheating")
-    Returns (tasksWithoutCheating, tasksWithCheating)
+    Returns (tasksWithoutCheating, tasksWithCheating).
+    NB: Results in paper are done without "cheating"
     """
     import os
     from sexpdata import loads, Symbol
@@ -302,11 +318,13 @@ def loadPBETasks(directory="PBE_Strings_Track"):
             continue
         with open(directory + "/" + f, "r") as handle:
             message = "(%s)" % (handle.read())
+
         expression = loads(message)
 
         constants = []
         name = f
         examples = []
+        declarative = False
         for e in expression:
             if len(e) == 0:
                 continue
@@ -319,8 +337,13 @@ def loadPBETasks(directory="PBE_Strings_Track"):
                 output = e[2]
                 examples.append((inputs, output))
             elif e[0] == Symbol('synth-fun'):
-                assert e[1] == Symbol('f')
-                constants += findStrings(e)
+                if e[1] == Symbol('f'):
+                    constants += findStrings(e)
+                else:
+                    declarative = True
+                    break
+        if declarative: continue
+        
         examples = list({(tuple(xs), y) for xs, y in examples})
 
         task = Task(name, arrow(*[tstr] * (len(examples[0][0]) + 1)),
@@ -337,20 +360,24 @@ def loadPBETasks(directory="PBE_Strings_Track"):
 
 
 def guessConstantStrings(task):
-    examples = task.examples
-    guesses = {}
-    N = 10
-    T = 2
-    for n in range(min(N, len(examples))):
-        for m in range(n + 1, min(N, len(examples))):
-            y1 = examples[n][1]
-            y2 = examples[m][1]
-            l = ''.join(lcs(y1, y2))
-            if len(l) > 2:
-                guesses[l] = guesses.get(l, 0) + 1
+    if task.request.returns() == tlist(tcharacter):
+        examples = task.examples
+        guesses = {}
+        N = 10
+        T = 2
+        for n in range(min(N, len(examples))):
+            for m in range(n + 1, min(N, len(examples))):
+                y1 = examples[n][1]
+                y2 = examples[m][1]
+                l = ''.join(lcs(y1, y2))
+                if len(l) > 2:
+                    guesses[l] = guesses.get(l, 0) + 1
 
-    task.stringConstants = [g for g, f in guesses.items()
-                            if f >= T]
+        task.stringConstants = [g for g, f in guesses.items()
+                                if f >= T]
+    else:
+        task.stringConstants = []
+                    
 
     task.BIC = 1.
     task.maxParameters = 1
@@ -361,10 +388,11 @@ def guessConstantStrings(task):
 
 
 if __name__ == "__main__":
-    challenge, _ = loadPBETasks()
+    challenge, _ = loadPBETasks("data/sygus")
 
     tasks = makeTasks()
     print(len(tasks), "synthetic tasks")
+    tasks = []
     for t in tasks + challenge:
         print(t.name)
         for xs, y in t.examples:

@@ -142,6 +142,11 @@ def text_options(parser):
         default=False,
         help="Incorporate a random 50% of the challenge problems into the training set")
     parser.add_argument(
+        "--latest",
+        action="store_true",
+        default=False,
+        help="evaluate on latest sygus problems rather than problems used in ec2 paper")
+    parser.add_argument(
         "--noMap", action="store_true", default=False,
         help="Disable built-in map primitive")
     parser.add_argument(
@@ -174,7 +179,8 @@ def main(arguments):
     test, train = testTrainSplit(tasks, 1.)
     eprint("Split tasks into %d/%d test/train" % (len(test), len(train)))
 
-    challenge, challengeCheating = loadPBETasks()
+    latest = arguments.pop("latest")
+    challenge, challengeCheating = loadPBETasks("data/sygus" if latest else "PBE_Strings_Track")
     eprint("Got %d challenge PBE tasks" % len(challenge))
 
     if arguments.pop('trainChallenge'):
