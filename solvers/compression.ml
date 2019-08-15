@@ -18,6 +18,9 @@ open Versions
 
 let verbose_compression = ref false;;
 
+(* If this is true, then we collect and report data on the sizes of the version spaces, for each program, and also for each round of inverse beta *)
+let collect_data = ref false;;
+
 let restrict ~topK g frontier =
   let restriction =
     frontier.programs |> List.map ~f:(fun (p,ll) ->
@@ -782,6 +785,12 @@ let () =
   verbose_compression := (try
       j |> member "verbose" |> to_bool
                           with _ -> false);
+
+  collect_data := (try
+                     j |> member "collect_data" |> to_bool
+                   with _ -> false) ;
+  if !collect_data then verbose_compression := true;
+  
   let inline = (try
                   j |> member "inline" |> to_bool
                 with _ -> true)

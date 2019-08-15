@@ -404,7 +404,7 @@ let rec log_version_size t j = match index_table t j with
   | Union(u) -> u |> List.map ~f:(log_version_size t) |> lse_list
   | _ -> 0.
 
-let rec n_step_inversion ?inline:(il=false) t ~n j =
+let rec n_step_inversion ?collect_data:(collect_data=None) ?inline:(il=false) t ~n j =
   let key = (n, j) in
   match Hashtbl.find t.n_step_table key with
   | Some(ns) -> ns
@@ -415,10 +415,10 @@ let rec n_step_inversion ?inline:(il=false) t ~n j =
       let step v =
         if il then
           let i = inline t v in
-          if completed = 0 && v = j then
-            extract t i |> List.iter ~f:(fun expansion ->
-                Printf.eprintf "%s\t%s\n"
-                  (extract t current |> List.hd_exn |> string_of_program) (string_of_program expansion));
+          (* if completed = 0 && v = j then *)
+          (*   extract t i |> List.iter ~f:(fun expansion -> *)
+          (*       Printf.eprintf "%s\t%s\n" *)
+          (*         (extract t current |> List.hd_exn |> string_of_program) (string_of_program expansion)); *)
           union t [recursive_inversion t v; i]
         else
           recursive_inversion t v
