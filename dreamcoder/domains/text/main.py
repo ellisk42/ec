@@ -36,14 +36,16 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
     special = 'string'
     
     def tokenize(self, examples):
-        return examples
+        def tokenize_example(xs,y):
+            if not isinstance(y, list): y = [y]
+            return xs,y
+        return [tokenize_example(*e) for e in examples]
 
     def __init__(self, tasks, testingTasks=[], cuda=False):
         lexicon = {c
                    for t in tasks + testingTasks
                    for xs, y in self.tokenize(t.examples)
                    for c in reduce(lambda u, v: u + v, list(xs) + [y])}
-
         self.recomputeTasks = True
 
         super(LearnedFeatureExtractor, self).__init__(lexicon=list(lexicon),
@@ -232,7 +234,6 @@ def main(arguments):
     timestamp = datetime.datetime.now().isoformat()
     outputDirectory = "experimentOutputs/text/%s"%timestamp
     os.system("mkdir -p %s"%outputDirectory)
-
 
     generator = ecIterator(baseGrammar, train,
                            testingTasks=test + challenge,
