@@ -33,7 +33,7 @@ described below.
 Data Types and Modules
 ----------------------
 
-![dreamcoder-data.svg](./dreamcoder-data.svg "Figure 1.0 - Data Diagram")
+![dreamcoder-data.pdf](./dreamcoder-data.pdf "Figure 1.0 - Data Diagram")
 
 The primary data types, modules, and their relationships are depicted in 
 the above figure. Data classes are shared between Python and OCaml, since 
@@ -83,7 +83,7 @@ This web of relationships between the modules and data of the system is describe
 Program Workflow
 ----------------
 
-![dreamcoder-sequential.svg](./dreamcoder-sequential.svg "Figure 1.1 - Sequential Diagram")
+![dreamcoder-sequential.pdf](./dreamcoder-sequential.pdf "Figure 1.1 - Sequential Diagram")
 
 DreamCoder's workflow is outlined in the above figure. This 
 figure is a sequential diagram of each of the major steps that occur during 
