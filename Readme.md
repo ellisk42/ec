@@ -12,7 +12,8 @@
     3. [Building the OCaml binaries](#building-the-ocaml-binaries)
     4. [Build rust compressor](#build-rust-compressor)
     5. [PyPy](#pypy)
-4. [`protonet-networks`](#protonet-networks)
+4. [Software Architecture](#software-architecture)
+5. [`protonet-networks`](#protonet-networks)
     
 # Overview
 
@@ -229,6 +230,10 @@ pypy3 -m pip install --user vmprof
 pypy3 -m pip install --user dill
 pypy3 -m pip install --user psutil
 ```
+
+## Software Architecture
+
+To better understand how dreamcoder works under the hood, see the [Software Architecture](./docs/software-architecture.md) document.
 
 ## `protonet-networks`
 
