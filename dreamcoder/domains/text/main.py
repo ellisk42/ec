@@ -36,14 +36,16 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
     special = 'string'
     
     def tokenize(self, examples):
-        return examples
+        def tokenize_example(xs,y):
+            if not isinstance(y, list): y = [y]
+            return xs,y
+        return [tokenize_example(*e) for e in examples]
 
     def __init__(self, tasks, testingTasks=[], cuda=False):
         lexicon = {c
                    for t in tasks + testingTasks
                    for xs, y in self.tokenize(t.examples)
                    for c in reduce(lambda u, v: u + v, list(xs) + [y])}
-
         self.recomputeTasks = True
 
         super(LearnedFeatureExtractor, self).__init__(lexicon=list(lexicon),
@@ -137,10 +139,20 @@ def text_options(parser):
         default=False,
         help="Evaluate model after/before each iteration on sygus")
     parser.add_argument(
+        "--showTasks",
+        action="store_true",
+        default=False,
+        help="show the training test and challenge tasks and then exit")
+    parser.add_argument(
         "--trainChallenge",
         action="store_true",
         default=False,
         help="Incorporate a random 50% of the challenge problems into the training set")
+    parser.add_argument(
+        "--latest",
+        action="store_true",
+        default=False,
+        help="evaluate on latest sygus problems rather than problems used in ec2 paper")
     parser.add_argument(
         "--noMap", action="store_true", default=False,
         help="Disable built-in map primitive")
@@ -174,7 +186,8 @@ def main(arguments):
     test, train = testTrainSplit(tasks, 1.)
     eprint("Split tasks into %d/%d test/train" % (len(test), len(train)))
 
-    challenge, challengeCheating = loadPBETasks()
+    latest = arguments.pop("latest")
+    challenge, challengeCheating = loadPBETasks("data/sygus" if latest else "PBE_Strings_Track")
     eprint("Got %d challenge PBE tasks" % len(challenge))
 
     if arguments.pop('trainChallenge'):
@@ -212,7 +225,21 @@ def main(arguments):
     challengeTimeout = 10 * 60
 
     for t in train + test + challenge:
-        t.maxParameters = 1
+        t.maxParameters = 2
+
+    if arguments.pop("showTasks"):
+        for source, ts in [("train",tasks),("test",test),("challenge",challenge)]:
+            print(source,"tasks:")
+            for t in ts:
+                print(t.name)
+                for xs, y in t.examples:
+                    xs = ['"' + "".join(x) + '"' for x in xs]
+                    y = "".join(y) if isinstance(y,list) else y
+                    print('f(%s) = "%s"' % (", ".join(xs), y))
+                print("\t{%s}" % (t.stringConstants))
+            print()
+        sys.exit(0)
+
 
     competitionCheckpoints = arguments.pop("compete")
     if competitionCheckpoints:
@@ -226,7 +253,6 @@ def main(arguments):
     timestamp = datetime.datetime.now().isoformat()
     outputDirectory = "experimentOutputs/text/%s"%timestamp
     os.system("mkdir -p %s"%outputDirectory)
-
 
     generator = ecIterator(baseGrammar, train,
                            testingTasks=test + challenge,
