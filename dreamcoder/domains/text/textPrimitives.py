@@ -1,6 +1,7 @@
 from dreamcoder.program import *
 from dreamcoder.domains.text.makeTextTasks import delimiters
 
+def _isUpper(x): return x.isupper()
 
 def _increment(x): return x + 1
 
@@ -58,6 +59,7 @@ specialCharacters = {' ': 'SPACE',
 
 primitives = [
     Primitive("char-eq?", arrow(tcharacter, tcharacter, tboolean), _eq),
+    Primitive("char-upper?", arrow(tcharacter, tboolean), _isUpper),
     Primitive("STRING", tstr, None)
 ] + [Primitive("'%s'" % d, tcharacter, d) for d in delimiters if d not in specialCharacters] + \
     [Primitive(name, tcharacter, value) for value, name in specialCharacters.items()]

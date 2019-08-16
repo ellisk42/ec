@@ -139,6 +139,11 @@ def text_options(parser):
         default=False,
         help="Evaluate model after/before each iteration on sygus")
     parser.add_argument(
+        "--showTasks",
+        action="store_true",
+        default=False,
+        help="show the training test and challenge tasks and then exit")
+    parser.add_argument(
         "--trainChallenge",
         action="store_true",
         default=False,
@@ -220,7 +225,21 @@ def main(arguments):
     challengeTimeout = 10 * 60
 
     for t in train + test + challenge:
-        t.maxParameters = 1
+        t.maxParameters = 2
+
+    if arguments.pop("showTasks"):
+        for source, ts in [("train",tasks),("test",test),("challenge",challenge)]:
+            print(source,"tasks:")
+            for t in ts:
+                print(t.name)
+                for xs, y in t.examples:
+                    xs = ['"' + "".join(x) + '"' for x in xs]
+                    y = "".join(y) if isinstance(y,list) else y
+                    print('f(%s) = "%s"' % (", ".join(xs), y))
+                print("\t{%s}" % (t.stringConstants))
+            print()
+        sys.exit(0)
+
 
     competitionCheckpoints = arguments.pop("compete")
     if competitionCheckpoints:
