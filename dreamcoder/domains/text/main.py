@@ -134,11 +134,6 @@ def sygusCompetition(checkpoints, tasks):
 
 def text_options(parser):
     parser.add_argument(
-        "--doChallenge",
-        action="store_true",
-        default=False,
-        help="Evaluate model after/before each iteration on sygus")
-    parser.add_argument(
         "--showTasks",
         action="store_true",
         default=False,
@@ -148,6 +143,11 @@ def text_options(parser):
         action="store_true",
         default=False,
         help="Incorporate a random 50% of the challenge problems into the training set")
+    parser.add_argument(
+        "--onlyChallenge",
+        action="store_true",
+        default=False,
+        help="Only train on challenge problems and have testing problems.")
     parser.add_argument(
         "--latest",
         action="store_true",
@@ -175,7 +175,6 @@ def main(arguments):
     Takes the return value of the `commandlineArguments()` function as input and
     trains/tests the model on manipulating sequences of text.
     """
-    doChallenge = arguments.pop('doChallenge')
 
     tasks = makeTasks()
     eprint("Generated", len(tasks), "tasks")
@@ -200,6 +199,12 @@ def main(arguments):
             "We will evaluate on the held out challenge problems.",
             "This makes a total of %d training problems." %
             len(train))
+
+    if arguments.pop('onlyChallenge'):
+        train = challenge
+        test = []
+        challenge = []
+        eprint("Training only on sygus problems.")
         
 
     ConstantInstantiateVisitor.SINGLE = \
@@ -259,37 +264,5 @@ def main(arguments):
                            outputPrefix="%s/text"%outputDirectory,
                            evaluationTimeout=evaluationTimeout,
                            **arguments)
-    if doChallenge:
-        eprint("held out challenge problems before learning...")
-        challengeFrontiers, times = multicoreEnumeration(challengeGrammar, challenge,
-                                                         CPUs=numberOfCPUs(),
-                                                         maximumFrontier=1,
-                                                         enumerationTimeout=challengeTimeout,
-                                                         evaluationTimeout=evaluationTimeout)
-        eprint(Frontier.describe(challengeFrontiers))
-        summaryStatistics("Challenge problem search time", times)
-        eprint("done evaluating challenge problems before learning")
-
     for result in generator:
-        if not doChallenge:
-            continue
-
-        eprint("Evaluating on challenge problems...")
-        if result.recognitionModel is not None:
-            recognizer = result.recognitionModel
-            challengeFrontiers, times = \
-                recognizer.enumerateFrontiers(challenge, 
-                                              CPUs=numberOfCPUs(),
-                                              maximumFrontier=1,
-                                              enumerationTimeout=challengeTimeout,
-                                              evaluationTimeout=evaluationTimeout)
-        else:
-            challengeFrontiers, times = \
-                multicoreEnumeration(result.grammars[-1], challenge,
-                                     CPUs=numberOfCPUs(),
-                                     maximumFrontier=1,
-                                     enumerationTimeout=challengeTimeout,
-                                     evaluationTimeout=evaluationTimeout)
-        eprint("Challenge problem enumeration results:")
-        eprint(Frontier.describe(challengeFrontiers))
-        summaryStatistics("Challenge problem search time", times)
+        pass
