@@ -297,7 +297,7 @@ let rec have_intersection ?table:(table=None) t a b =
         Hashtbl.set table' ~key:(a,b) ~data:i;
         i
 
-let factored_substitution = ref true;;
+let factored_substitution = ref false;;
 
 let rec substitutions t ?n:(n=0) index =
   match Hashtbl.find t.substitution_table (index,n) with
