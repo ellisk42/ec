@@ -297,7 +297,7 @@ let rec have_intersection ?table:(table=None) t a b =
         Hashtbl.set table' ~key:(a,b) ~data:i;
         i
 
-let factored_substitution = ref false;;
+let factored_substitution = ref true;;
 
 let rec substitutions t ?n:(n=0) index =
   match Hashtbl.find t.substitution_table (index,n) with
@@ -461,43 +461,52 @@ let rec n_step_inversion ?inline:(il=false) t ~n j =
     Hashtbl.set t.n_step_table key ns;
     ns
 
-let n_step_inversion ?inline:(il=false) t ~n j =
-  let clear_all_caches() = 
-    clear_dynamic_programming_tables t;
-    for j = 0 to (t.recursive_inversion_table.ra_occupancy - 1) do
-      set_resizable t.recursive_inversion_table j None
-    done
-  in
-  clear_all_caches();
+(* let n_step_inversion ?inline:(il=false) t ~n j = *)
+(*   let clear_all_caches() =  *)
+(*     clear_dynamic_programming_tables t; *)
+(*     for j = 0 to (t.recursive_inversion_table.ra_occupancy - 1) do *)
+(*       set_resizable t.recursive_inversion_table j None *)
+(*     done *)
+(*   in *)
+(*   clear_all_caches(); *)
 
-  factored_substitution := false;
+(*   factored_substitution := false; *)
 
-  let ground_truth = n_step_inversion ~inline:il t ~n j in
+(*   let ground_truth = n_step_inversion ~inline:il t ~n j in *)
 
-  clear_all_caches();
-  factored_substitution := true;
+(*   clear_all_caches(); *)
+(*   factored_substitution := true; *)
 
-  let faster = n_step_inversion ~inline:il t ~n j in
+(*   let faster = n_step_inversion ~inline:il t ~n j in *)
 
-  clear_all_caches();
-  factored_substitution := false;
+(*   clear_all_caches(); *)
+(*   factored_substitution := false; *)
 
-  let correct = extract t ground_truth |> List.map ~f:string_of_program |> String.Set.of_list in
-  let hopeful = extract t faster |> List.map ~f:string_of_program |> String.Set.of_list in
+(*   let correct = extract t ground_truth |> List.map ~f:string_of_program |> String.Set.of_list in *)
+(*   let hopeful = extract t faster |> List.map ~f:string_of_program |> String.Set.of_list in *)
 
-  let missing = Set.diff correct hopeful in
-  let extraneous = Set.diff hopeful correct in
+(*   let missing = Set.diff correct hopeful in *)
+(*   let extraneous = Set.diff hopeful correct in *)
 
-  if Set.length missing > 0 || Set.length extraneous > 0 then begin
-    Printf.eprintf "FATAL: When inverting %s\n" (extract t j |> List.hd_exn |> string_of_program);
-    Printf.eprintf "The following programs are correct inversions that were not in the fast versions:\n";
-    missing |> Set.iter ~f:(Printf.eprintf "%s\n");
-    Printf.eprintf "The following programs are incorrect inversions that were nonetheless generated:\n";
-    extraneous |> Set.iter ~f:(Printf.eprintf "%s\n");
-    assert (false)
-  end;
+(*   if Set.length missing > 0 || Set.length extraneous > 0 then begin *)
+(*     let target_of_inversion = extract t j |> List.hd_exn in *)
+(*     (\* False alarms *\) *)
+(*     if Set.length missing = 0 && Set.for_all extraneous  ~f:(fun p -> *)
+(*         let p = parse_program p |> get_some |> beta_normal_form in *)
+(*         program_equal p target_of_inversion) then () *)
+(*     else begin  *)
+(*       Printf.eprintf "FATAL: When inverting %s\n" (target_of_inversion |> string_of_program); *)
+(*       Printf.eprintf "The following programs are correct inversions that were not in the fast versions:\n"; *)
+(*       missing |> Set.iter ~f:(Printf.eprintf "%s\n"); *)
+(*       Printf.eprintf "The following programs are incorrect inversions that were nonetheless generated:\n"; *)
+(*       extraneous |> Set.iter ~f:(fun p -> Printf.eprintf "%s\n" p; *)
+(*                                   let p = parse_program p |> get_some |> beta_normal_form in *)
+(*                                   Printf.eprintf "\t--> %s\n" (string_of_program p)); *)
+(*       assert (false) *)
+(*     end *)
+(*   end; *)
 
-  ground_truth
+(*   ground_truth *)
   
   
 
