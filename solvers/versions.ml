@@ -404,7 +404,7 @@ let rec log_version_size t j = match index_table t j with
   | Union(u) -> u |> List.map ~f:(log_version_size t) |> lse_list
   | _ -> 0.
 
-let rec n_step_inversion ?collect_data:(collect_data=None) ?inline:(il=false) t ~n j =
+let rec n_step_inversion ?inline:(il=false) t ~n j =
   let key = (n, j) in
   match Hashtbl.find t.n_step_table key with
   | Some(ns) -> ns
