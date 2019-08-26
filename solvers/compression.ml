@@ -806,8 +806,9 @@ let () =
                           with _ -> false);
 
   factored_substitution := (try
-                       j |> member "factored_apply" |> to_bool
-                     with _ -> false);
+                              j |> member "factored_apply" |> to_bool
+                            with _ -> false);
+  if !factored_substitution then Printf.eprintf "Using experimental new factored representation of application version space.\n";
 
   collect_data := (try
                      j |> member "collect_data" |> to_bool
