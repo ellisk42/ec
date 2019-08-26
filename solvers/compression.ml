@@ -782,6 +782,11 @@ let () =
   verbose_compression := (try
       j |> member "verbose" |> to_bool
                           with _ -> false);
+
+  factored_substitution := (try
+                       j |> member "factored_apply" |> to_bool
+                     with _ -> false);
+  
   let inline = (try
                   j |> member "inline" |> to_bool
                 with _ -> true)
