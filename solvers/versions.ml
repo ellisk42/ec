@@ -415,10 +415,10 @@ let rec n_step_inversion ?inline:(il=false) t ~n j =
       let step v =
         if il then
           let i = inline t v in
-          if completed = 0 && v = j then
-            extract t i |> List.iter ~f:(fun expansion ->
-                Printf.eprintf "%s\t%s\n"
-                  (extract t current |> List.hd_exn |> string_of_program) (string_of_program expansion));
+          (* if completed = 0 && v = j then *)
+          (*   extract t i |> List.iter ~f:(fun expansion -> *)
+          (*       Printf.eprintf "%s\t%s\n" *)
+          (*         (extract t current |> List.hd_exn |> string_of_program) (string_of_program expansion)); *)
           union t [recursive_inversion t v; i]
         else
           recursive_inversion t v
