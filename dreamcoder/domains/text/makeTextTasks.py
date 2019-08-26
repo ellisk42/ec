@@ -43,7 +43,7 @@ def randomCharacter():
     return random.choice(characters)
 
 
-def randomWord(minimum=1):
+def randomWord(minimum=1, predicate=None):
     global WORDS
     if WORDS is None:
         tasks, cheating = loadPBETasks()
@@ -70,11 +70,14 @@ def randomWord(minimum=1):
 
     # a disproportionately large fraction of the words have length three
     # the purpose of this is to decrease the number of 3-length words we have
-    if random.random() > 0.7:
-        return random.choice([w for w in WORDS if len(w) >= minimum])
-    else:
-        return random.choice(
-            [w for w in WORDS if len(w) >= minimum and len(w) != 3])
+    while True:
+        if random.random() > 0.7:
+            candidate = random.choice([w for w in WORDS if len(w) >= minimum])
+        else:
+            candidate = random.choice(
+                [w for w in WORDS if len(w) >= minimum and len(w) != 3])
+        if predicate is None or predicate(candidate):
+            return candidate
 
 
 def randomWords(ds, minimum=1, lb=2, ub=4):
@@ -189,19 +192,25 @@ def makeTasks():
     #              ],
     #             needToTrain=True)
     for n in range(3):
-        problem("starts with prefix (%s)" % ("I"*(n + 1)),
-                [((x,y), y.startswith(x))
+        problem("equality (%s)" % ("I"*(n + 1)),
+                [((x,y), y == x)
                  for _ in range(NUMBEROFEXAMPLES*10)
                  for x in [randomWord()]
-                 for y in [x + randomWord() if random.choice([True,False]) else randomWord()]])
-        problem("contains substring (%s)" % ("I"*(n + 1)),
-                [((x,y), x in y)
+                 for y in [x if random.choice([True,False]) else randomWord()]])
+        problem("has suffix (%s)" % ("I"*(n + 1)),
+                [((x,y), x.endswith(y))
                  for _ in range(NUMBEROFEXAMPLES*10)
-                 for x in [randomWord()]
-                 for y in [randomWord() + x + randomWord() if random.choice([True,False]) else randomWord() + randomWord() + randomWord()]])
+                 for y in [randomWord()]
+                 for x in [randomWord() + randomWord() if random.choice([True,False]) else randomWord() + y]])
+
+    problem("remove final capitalized word",
+            [((prefix + suffix,), prefix)
+             for _ in range(NUMBEROFEXAMPLES*10)
+             for prefix in [randomWords(" ")]
+             for suffix in ["" if random.random() > 0.5 else " "+randomWord(predicate=lambda rw: rw[-1].isupper())] ])
         
         
-    for d in delimiters:
+    for d in delimiters[:-1]:
         problem("Take first character and append '%s'" % d,
                 [((x,), x[0] + d)
                  for _ in range(NUMBEROFEXAMPLES)
@@ -380,7 +389,7 @@ def guessConstantStrings(task):
                     
 
     task.BIC = 1.
-    task.maxParameters = 1
+    task.maxParameters = 2
 
     task.specialTask = ("stringConstant",
                         {"maxParameters": task.maxParameters,

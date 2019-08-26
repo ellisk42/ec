@@ -331,6 +331,8 @@ let primitive_uppercase = primitive "caseUpper" (tcharacter @> tcharacter) Char.
 (* let primitive_uppercase = primitive "strip" (tstring @> tstring) (fun s -> String.strip s);; *)
 let primitive_lowercase = primitive "caseLower" (tcharacter @> tcharacter) Char.lowercase;;
 let primitive_character_equal = primitive "char-eq?" (tcharacter @> tcharacter @> tboolean) Char.equal;;
+let primitive_character_equal = primitive "char-upper?" (tcharacter @> tboolean) Char.is_uppercase;;
+let primitive_character_equal = primitive "str-eq?" (tlist tcharacter @> tlist tcharacter @> tboolean) (fun x y -> x = y);;
 (* let primitive_capitalize = primitive "caseCapitalize" (tstring @> tstring) String.capitalize;;
  * let primitive_concatenate = primitive "concatenate" (tstring @> tstring @> tstring) ( ^ );; *)
 let primitive_constant_strings = [primitive "','" tcharacter ',';
