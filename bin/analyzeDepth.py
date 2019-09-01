@@ -15,7 +15,7 @@ import matplotlib.patches as mpatches
 import os
 
 MARKERONE = '*'
-MARKERTWO = 'v'
+MARKERTWO = '+'
 
 FONTSIZE = 18
 TICKFONTSIZE = 14
@@ -71,7 +71,7 @@ if __name__ == "__main__":
     
 
     for mode in ["MAX","MEAN","SIZE"]:
-        plot.figure(figsize=(4,4))
+        plot.figure(figsize=(2.5,2.5))
         colors = ["red","green","blue","purple","cyan"]
 
         X = []
@@ -94,7 +94,7 @@ if __name__ == "__main__":
                 Y.append(ys[-1])
 
             print(mode,pearsonr(xs,ys))
-            plot.scatter(xs,ys,color=c,marker=style)
+            plot.scatter(xs,[100*y for y in ys],color=c,marker=style)
                 
 
         legend = []
@@ -104,31 +104,55 @@ if __name__ == "__main__":
             legend.append((domain, colors[0]))
             colors = colors[1:]
 
-        plot.ylabel("% Testing Tasks Solved",
+        plot.ylabel("% Test Solved",
                     fontsize=FONTSIZE)
-        plot.xlabel({"MAX": "Maximum library depth",
-                     "MEAN": "Average library depth",
+        plot.xlabel({"MAX": "Max depth",
+                     "MEAN": "Avg. depth",
                      "SIZE": "Library size"}[mode],
                     fontsize=FONTSIZE)
         plot.xticks(fontsize=TICKFONTSIZE)
         plot.yticks(fontsize=TICKFONTSIZE)
-        if mode in {"MAX","SIZE"}:
+        if mode in {"MAX"}: #"SIZE"
             plot.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
         r,p = pearsonr(X,Y)
         print(mode,r,p)
 
-        plot.legend(fancybox=True, shadow=True,
-                    handles=[mpatches.Patch(color=color, 
-                                            label=label)
-                               for label, color in legend] + \
-                    [mlines.Line2D([], [], color='k', marker=marker, ls='None',
-                                   label=label)
-                     for marker, label in [(MARKERONE,"Full model"),
-                                           (MARKERTWO,"No Rec")]],
-                    bbox_to_anchor=(1,0.5),
-                    loc='center left')
+        handles = [mlines.Line2D([], [], color='k', marker=marker, ls='None',
+                                 label=label)
+                         for marker, label in [(MARKERONE,"Full model"),
+                                               (MARKERTWO,"No Rec")]]
+        handles.extend([mlines.Line2D([],[],color=color,marker='o',ls='None',label=label)
+                        #mpatches.Patch(color=color, label=label)
+                        for label, color in legend])
+
+
+        if mode == "MAX":
+            plot.legend(#fancybox=True, shadow=True,
+                        handles=handles,# [mpatches.Patch(color=color, 
+                        #                         label=label)
+                        #            for label, color in legend] + \
+                        # [mlines.Line2D([], [], color='k', marker=marker, ls='None',
+                        #                label=label)
+                        #  for marker, label in [(MARKERONE,"Full model"),
+                        #                        (MARKERTWO,"No Rec")]]
+                handletextpad=0.05,
+                        bbox_to_anchor=(1,0.5),
+                        loc='center left')
 
         
         
-        plot.savefig(f"figures/depthVersusAccuracy_{mode}.png",
+        plot.savefig(f"figures/depthVersusAccuracy_mainPaper_{mode}.eps",
                      bbox_inches='tight')
+        plot.figure()
+        legend = plot.legend(#fancybox=True, shadow=True,
+                             handles=handles,
+            handletextpad=0.05,
+                             bbox_to_anchor=(1,0.5),
+                             loc='center',
+                             ncol=1)
+        f = legend.figure
+        f.canvas.draw()
+        bb = legend.get_window_extent().transformed(f.dpi_scale_trans.inverted())        
+        f.savefig("figures/depthVersusAccuracy_mainPaper_legend.eps",
+                  bbox_inches=bb)
+
