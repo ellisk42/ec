@@ -41,7 +41,8 @@ class Union(Program):
     def __iter__(self): return iter(self.elements)
 
 class VersionTable():
-    def __init__(self, typed=True, identity=True):
+    def __init__(self, typed=True, identity=True, factored=False):
+        self.factored = factored
         self.identity = identity
         self.typed = typed
         self.debug = False
@@ -68,6 +69,52 @@ class VersionTable():
 
     def clearOverlapTable(self):
         self.overlapTable = {}
+
+    def visualize(self, j):
+        from graphviz import Digraph
+        g = Digraph()
+
+        visited = set()
+        def walk(i):
+            if i in visited: return
+
+            if i == self.universe:
+                g.node(str(i), 'universe')
+            elif i == self.empty:
+                g.node(str(i), 'nil')
+            else:
+                l = self.expressions[i]
+                if l.isIndex or l.isPrimitive or l.isInvented:
+                    g.node(str(i), str(l))
+                elif l.isAbstraction:
+                    g.node(str(i), "lambda")
+                    walk(l.body)
+                    g.edge(str(i), str(l.body))
+                elif l.isApplication:
+                    g.node(str(i), "@")
+                    walk(l.f)
+                    walk(l.x)
+                    g.edge(str(i), str(l.f), label='f')
+                    g.edge(str(i), str(l.x), label='x')
+                elif l.isUnion:
+                    g.node(str(i), "U")
+                    for c in l:
+                        walk(c)
+                        g.edge(str(i), str(c))
+                else:
+                    assert False
+            visited.add(i)
+        walk(j)
+        g.render(view=True)
+
+    def branchingFactor(self,j):
+        l = self.expressions[j]
+        if l.isApplication: return max(self.branchingFactor(l.f),
+                                       self.branchingFactor(l.x))
+        if l.isUnion: return max([len(l.elements)] + [self.branchingFactor(e) for e in l ])
+        if l.isAbstraction: return self.branchingFactor(l.body)
+        return 0
+            
         
     def intention(self,j, isFunction=False):
         l = self.expressions[j]
@@ -369,7 +416,7 @@ class VersionTable():
         elif l.isAbstraction:
             for v,b in self._substitutions(l.body, n + 1).items():
                 m[v] = self.abstract(b)
-        elif l.isApplication:
+        elif l.isApplication and not self.factored:
             newMapping = {}
             fm = self._substitutions(l.f,n)
             xm = self._substitutions(l.x,n)
@@ -402,6 +449,27 @@ class VersionTable():
                 newMapping[v] = self.union(newMapping[v])
             newMapping.update(m)
             m = newMapping
+            # print(f"substitutions: |{len(fm)}|x|{len(xm)}| = {len(m)}\t{len(m) <= len(fm)+len(xm)}")
+        elif l.isApplication and self.factored:
+            newMapping = {}
+            fm = self._substitutions(l.f,n)
+            xm = self._substitutions(l.x,n)
+            for v1,f in fm.items():
+                if self.typed: v1,nType1 = v1
+                for v2,x in xm.items():
+                    if self.typed: v2,nType2 = v2
+                    v = self.intersection(v1,v2)
+                    if v == self.empty: continue
+                    if v in newMapping:
+                        newMapping[v] = ({f} | newMapping[v][0],
+                                         {x} | newMapping[v][1])
+                    else:
+                        newMapping[v] = ({f},{x})
+            for v,(fs,xs) in newMapping.items():
+                fs = self.union(list(fs))
+                xs = self.union(list(xs))
+                m[v] = self.apply(fs,xs)
+            # print(f"substitutions: |{len(fm)}|x|{len(xm)}| = {len(m)}\t{len(m) <= len(fm)+len(xm)}")
         elif l.isUnion:
             newMapping = {}
             for e in l:

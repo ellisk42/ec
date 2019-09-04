@@ -77,7 +77,6 @@ def ocamlInduce(g, frontiers, _=None,
         t2f = {f.task: f for f in frontiers}
         frontiers = [f for f in frontiers if not f.empty]
         message = {"arity": a,
-                   "verbose": False,
                    "topK": topK,
                    "pseudoCounts": float(pseudoCounts),
                    "aic": aic,
