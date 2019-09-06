@@ -69,7 +69,6 @@ class Curried:
 
     def __call__(self, x):
         arguments = self.arguments + [x]
-        print(arguments)
         if len(arguments) == self.arity:
             return self.f(*arguments)
         else:
