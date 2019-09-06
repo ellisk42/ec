@@ -58,6 +58,33 @@ def curry(fn):
     exec(make_curry_fn(inspect.signature(fn)), globals())
     return tmp_curry(fn)
 
+class Curried:
+    def __init__(self, f, arguments=None, arity=None):
+        if arity is None:
+            arity = len(inspect.getargspec(f)[0])
+        self.f = f
+        self.arity = arity
+        if arguments is None: arguments = []
+        self.arguments = arguments
+
+    def __call__(self, x):
+        arguments = self.arguments + [x]
+        print(arguments)
+        if len(arguments) == self.arity:
+            return self.f(*arguments)
+        else:
+            return Curried(self.f, arguments=arguments, arity=self.arity)
+
+    def __str__(self):
+        if len(self.arguments) == 0:
+            return f"Curried({self.f}/{self.arity})"
+        else:
+            return f"Curried({self.f}/{self.arity}, {', '.join(map(str,self.arguments))})"
+
+    def __repr__(self):
+        return str(self)
+            
+
 def hashable(v):
     """Determine whether `v` can be hashed."""
     try:

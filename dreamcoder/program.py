@@ -1144,7 +1144,8 @@ class EtaLongVisitor(object):
         #     f"Types are not preserved by ETA expansion: {e} : {e.infer().canonical()} vs {el} : {el.infer().canonical()}"
         return el
         
-        
+
+
         
 
 # from luke

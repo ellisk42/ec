@@ -2,7 +2,7 @@ from dreamcoder.program import *
 from dreamcoder.type import *
 
 
-def _addition(x): return lambda y: x + y
+def _addition(x,y): return x + y
 
 
 def _subtraction(x): return lambda y: x - y
@@ -19,7 +19,7 @@ real_subtraction = Primitive("-.",
                              _subtraction)
 addition = Primitive("+",
                      arrow(tint, arrow(tint, tint)),
-                     _addition)
+                     Curried(_addition))
 real_addition = Primitive("+.",
                           arrow(treal, treal, treal),
                           _addition)
