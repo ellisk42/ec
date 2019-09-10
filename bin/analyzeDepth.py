@@ -18,6 +18,7 @@ MARKERONE = '*'
 MARKERTWO = '+'
 
 FONTSIZE = 18
+LEGENDSIZE = 12
 TICKFONTSIZE = 14
 
 def primitiveDepth(e):
@@ -55,6 +56,7 @@ if __name__ == "__main__":
                         help="List of checkpoints that use the full model.")
     parser.add_argument("--generative", nargs='+', default=[],
                         help="List of checkpoints that use the no-recognition lesion.")
+    parser.add_argument("--legend",default=[],nargs='+')
     arguments = parser.parse_args()
 
 
@@ -71,7 +73,7 @@ if __name__ == "__main__":
     
 
     for mode in ["MAX","MEAN","SIZE"]:
-        plot.figure(figsize=(2.5,2.5))
+        plot.figure(figsize=(4,2.5))
         colors = ["red","green","blue","purple","cyan"]
 
         X = []
@@ -121,32 +123,29 @@ if __name__ == "__main__":
                                  label=label)
                          for marker, label in [(MARKERONE,"Full model"),
                                                (MARKERTWO,"No Rec")]]
+        if arguments.legend: handles = []
         handles.extend([mlines.Line2D([],[],color=color,marker='o',ls='None',label=label)
                         #mpatches.Patch(color=color, label=label)
                         for label, color in legend])
 
 
-        if mode == "MAX":
-            plot.legend(#fancybox=True, shadow=True,
-                        handles=handles,# [mpatches.Patch(color=color, 
-                        #                         label=label)
-                        #            for label, color in legend] + \
-                        # [mlines.Line2D([], [], color='k', marker=marker, ls='None',
-                        #                label=label)
-                        #  for marker, label in [(MARKERONE,"Full model"),
-                        #                        (MARKERTWO,"No Rec")]]
-                handletextpad=0.05,
-                        bbox_to_anchor=(1,0.5),
-                        loc='center left')
+        if mode in arguments.legend:
+            plot.legend(handles=handles,
+                        fontsize=LEGENDSIZE,
+                        borderpad=0.,
+                        handletextpad=0.05,
+#                        bbox_to_anchor=(1,0.5),
+                        labelspacing=0.1,
+                        loc='best')
+#                        loc='lower right')
 
         
         
         plot.savefig(f"figures/depthVersusAccuracy_mainPaper_{mode}.eps",
                      bbox_inches='tight')
         plot.figure()
-        legend = plot.legend(#fancybox=True, shadow=True,
-                             handles=handles,
-            handletextpad=0.05,
+        legend = plot.legend(handles=handles,
+                             handletextpad=0.05,
                              bbox_to_anchor=(1,0.5),
                              loc='center',
                              ncol=1)
