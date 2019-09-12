@@ -11,9 +11,5 @@ from dreamcoder.type import arrow
 
 def dreamFromGrammar(g, directory, N=50):
 	request = arrow(taxes, taxes)
-    programs = [ p
-                 for _ in range(N)
-                 for p in [g.sample(request,
-                                    maximumDepth=20)]
-                 if p is not None]
-    drawDrawings(*programs, filenames)
+	programs = [ p for _ in range(N) for p in [g.sample(request, maximumDepth=20)] if p is not None]
+	drawDrawings(*programs, filenames)
