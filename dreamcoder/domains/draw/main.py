@@ -18,3 +18,5 @@ def dreamFromGrammar(g=g0, directory = "", N=50):
 	return programs
 	# drawDrawings(*programs, filenames)
 
+def main(arguments):
+        dreamFromGrammar()
