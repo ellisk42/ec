@@ -13,7 +13,7 @@ import numpy as np
 
 
 NBINS = 10 # for discretizing continious params
-XYLIM = 5 # size of canvas.
+XYLIM = 5. # size of canvas.
 
 # ========== base types
 tdummy = baseType("tdummy")
@@ -36,12 +36,22 @@ trep = baseType("trep")
 
 def _blankAxes():
 	# initialize canvas
-	fig = plt.figure(edgecolor='w')
-	ax = plt.axes()
-	#     center = [0,0]
-	plt.xlim([-XYLIM, XYLIM])
-	plt.ylim([-XYLIM, XYLIM])
-	ax.set_aspect("equal")
+	legacyFormat=False
+	if legacyFormat:
+		fig = plt.figure(edgecolor="w")
+		ax = plt.axes()
+		ax.axis("off")
+		#     center = [0,0]
+		plt.xlim([-XYLIM, XYLIM])
+		plt.ylim([-XYLIM, XYLIM])
+		ax.set_aspect("equal")
+	else:
+		# new version, good for making pixels, centered, etc.
+		fig = plt.figure(figsize=(3,3), edgecolor="w")
+		ax = fig.add_axes([-0.03, -0.03, 1.06, 1.06]) # outside bounds, since edge is sometimes weird.
+		ax.axis("off")
+		ax.set_xlim(-XYLIM, XYLIM)
+		ax.set_ylim(-XYLIM, XYLIM)
 	return ax
 
 def _line(dummy):
