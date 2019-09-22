@@ -1,5 +1,5 @@
 # from dreamcoder.domains.draw.makeDrawTasks import drawDrawings
-from dreamcoder.domains.draw.drawPrimitives import primitives, taxes, tartist, tangle, tscale, tdist
+from dreamcoder.domains.draw.drawPrimitives import primitives, taxes, tartist, tangle, tscale, tdist, _blankAxes
 
 # from dreamcoder.dreamcoder import ecIterator
 from dreamcoder.grammar import Grammar
@@ -19,4 +19,8 @@ def dreamFromGrammar(g=g0, directory = "", N=50):
 	# drawDrawings(*programs, filenames)
 
 def main(arguments):
-        dreamFromGrammar()
+        ps = dreamFromGrammar()
+        for n,p in enumerate(ps):
+                print(n,p)
+                a = p.evaluate([])(_blankAxes())
+                a.savefig(f"/tmp/draw{n}.png")

@@ -19,6 +19,5 @@ if __name__ == '__main__':
         structurePenalty=1,
         pseudoCounts=10,
         topK=2,
-        maximumFrontier=5,
-        extras=tower_options)
+        maximumFrontier=5)
     main(arguments)
