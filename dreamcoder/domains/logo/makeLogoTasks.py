@@ -38,7 +38,6 @@ def drawLogo(*programs,
             filenames = filenames[1:]
         jobs.append(entry)        
     message["jobs"] = jobs
-    print(message)
     response = jsonBinaryInvoke("./logoDrawString", message)
     if len(programs) == 1:
         return response[0]
@@ -716,8 +715,7 @@ def demoLogoTasks():
 
     g0 = Grammar.uniform(primitives, continuationType=turtle)
     eprint("dreaming into /tmp/dreams_0...")
-    N = 200
-    random.seed(0)
+    N = 1000
     programs = [ p
                      for _ in range(N)
                      for p in [g0.sample(arrow(turtle,turtle),
@@ -725,16 +723,13 @@ def demoLogoTasks():
                      if p is not None]
     os.system("mkdir  -p /tmp/dreams_0")
     for n,p in enumerate(programs):
-        if n != 103: continue
-        
         with open(f"/tmp/dreams_0/{n}.dream","w") as handle:
             handle.write(str(p))
-    drawLogo(programs[103], pretty=True, smoothPretty=False,
+    drawLogo(*programs, pretty=True, smoothPretty=False,
              resolution=512,
              filenames=[f"/tmp/dreams_0/{n}_pretty.png"
                         for n in range(len(programs)) ],
              timeout=1)
-    assert False
     
     if len(sys.argv) > 1:
         tasks = makeTasks(sys.argv[1:],proto=False)
