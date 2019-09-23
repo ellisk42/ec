@@ -1,5 +1,5 @@
 from dreamcoder.domains.draw.drawPrimitives import *
-from dreamcoder.domains.draw.drawPrimitives import _line, _circle
+# from dreamcoder.domains.draw.drawPrimitives import _line, _circle, 
 # from dreamcoder.dreamcoder import ecIterator
 from dreamcoder.grammar import Grammar
 from dreamcoder.program import Program
@@ -7,6 +7,7 @@ from dreamcoder.program import Program
 from dreamcoder.task import Task
 from dreamcoder.type import arrow
 from dreamcoder.utilities import *
+import math
 
 
 class SupervisedDraw(Task):
@@ -41,7 +42,8 @@ def makeSupervisedTasks(): # TODO, LT, make these tasks.
     # everything = arches + simpleLoops + Bridges + archesStacks + aqueducts + offsetArches + pyramids + bricks + staircase2 + staircase1 + compositions
     alltasks = []
 
-    programs = [_line + _circle
+    programs = [_line + _circle,
+    _repeat(_line+_tform(_circle, _makeAffine(x=1.)), 3, _makeAffine(theta=math.pi/2))
     ]
     for i, p in enumerate(programs):
         name = "task{}".format(i)
