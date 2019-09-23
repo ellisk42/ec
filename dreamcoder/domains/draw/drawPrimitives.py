@@ -1,6 +1,7 @@
 # =========== [NEWER VERSION, NOT USING MATPLOTLIB]
 import math
 import numpy as np
+import matplotlib
 from matplotlib import pyplot as plt
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from scipy.ndimage import gaussian_filter as gf
@@ -12,6 +13,7 @@ from dreamcoder.utilities import Curried
 from dreamcoder.grammar import Grammar
 from dreamcoder.type import baseType, arrow
 
+matplotlib.use('TkAgg')
 
 # ============= TRANSFORMATIONS
 def _makeAffine(s=1., theta=0., x=0., y=0., order="trs"):
@@ -81,8 +83,7 @@ def _repeat(p, N, T):
 
 def _connect(p1, p2):
     #  takes two primitives and makes a new one
-    p1.extend(p2)
-    return p1
+    return p1 + p2
 
 
 # ========== STROKES 
@@ -131,6 +132,8 @@ def fig2pixel(p, plotPxl=False, smoothing=0.):
 
     width, height = fig.get_size_inches() * fig.get_dpi()
     print("dpi: {}".format(fig.get_dpi()))
+    # import pdb
+    # pdb.set_trace()
     img = np.frombuffer(fig.canvas.tostring_rgb(), dtype='uint8').reshape(int(height), int(width), 3)
     img = color.rgb2gray(img)
 
@@ -153,6 +156,8 @@ def loss(p1, p2, plotPxl=False, smoothing=2):
 
 	return np.linalg.norm(img2-img1)
 
+def loss_pxl(img1, img2):
+    return np.linalg.norm(img2-img1)
 
 
 # ======= DEFINE ALL PRIMITIVES
