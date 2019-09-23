@@ -9,6 +9,7 @@ from dreamcoder.task import Task
 from dreamcoder.type import arrow
 # from dreamcoder.utilities import eprint, testTrainSplit, loadPickle
 import datetime
+import os
 
 g0 = Grammar.uniform(primitives)
 
@@ -37,6 +38,8 @@ def main(arguments):
 	timestamp = datetime.datetime.now().isoformat()
 	outputDirectory = "experimentOutputs/draw/%s"%timestamp
 	evaluationTimeout = 0.001 # seconds, how long allowed
+
+	os.system(f"mkdir -p {outputDirectory}")
 
 	generator = ecIterator(g0, train,
 					outputPrefix="%s/draw"%outputDirectory,

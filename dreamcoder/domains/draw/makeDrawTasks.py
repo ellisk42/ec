@@ -1,5 +1,5 @@
 from dreamcoder.domains.draw.drawPrimitives import *
-# from dreamcoder.domains.draw.drawPrimitives import _line, _circle, 
+from dreamcoder.domains.draw.drawPrimitives import _tform, _line, _circle, _repeat, _makeAffine
 # from dreamcoder.dreamcoder import ecIterator
 from dreamcoder.grammar import Grammar
 from dreamcoder.program import Program
