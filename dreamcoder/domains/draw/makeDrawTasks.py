@@ -16,21 +16,34 @@ class SupervisedDraw(Task):
                                               features=[]) # TODO: LT, needs this, i.e., a request. 
 
         self.strokes = program # list of np arrays.
-        self.rendered_strokes = fig2pixel(program)
+        self.rendered_strokes = prog2pxl(program)
 
 
     def logLikelihood(self, e, timeout=None): # TODO, LT, given expression, calculates distance.
         # from dreamcoder.domains.tower.tower_common import centerTower
-        p1 = self.rendered_strokes
-        p2 = fig2pixel(e.evaluate([]))
+        if False:
+            p1 = self.rendered_strokes
+            p2 = fig2pixel(e.evaluate([]))
 
-        # l = loss(p1, p2, smoothing=2) 
-        l = loss_pxl(p1, p2)
+            # l = loss(p1, p2, smoothing=2) 
+            l = loss_pxl(p1, p2)
 
-        if l>0.1:
-            return NEGATIVEINFINITY
+            if l>0.1:
+                return NEGATIVEINFINITY
+            else:
+                return 0.0
         else:
-            return 0.0
+            print("doing it!")
+            p1 = self.rendered_strokes
+            p2 = prog2pxl(e.evaluate([]))
+
+            # l = loss(p1, p2, smoothing=2) 
+            l = loss_pxl(p1, p2)
+
+            if l>0.1:
+                return NEGATIVEINFINITY
+            else:
+                return 0.0
 
     
 def makeSupervisedTasks(): # TODO, LT, make these tasks.

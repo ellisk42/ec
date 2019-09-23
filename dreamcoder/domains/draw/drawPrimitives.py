@@ -7,6 +7,7 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from scipy.ndimage import gaussian_filter as gf
 from skimage import color
 from scipy.ndimage import gaussian_filter as gf
+import cairo
 
 from dreamcoder.program import Primitive, Program
 from dreamcoder.utilities import Curried
@@ -14,6 +15,8 @@ from dreamcoder.grammar import Grammar
 from dreamcoder.type import baseType, arrow
 
 matplotlib.use('TkAgg')
+
+XYLIM = 6. # i.e., -3 to 3.
 
 # ============= TRANSFORMATIONS
 def _makeAffine(s=1., theta=0., x=0., y=0., order="trs"):
@@ -122,7 +125,7 @@ def plotOnAxes(p, ax):
 	return ax
 
 
-def fig2pixel(p, plotPxl=False, smoothing=0.):
+def __fig2pixel(p, plotPxl=False, smoothing=0.):
 #	smoothing is std of gaussian 2d filter. set to 0 to not smooth.
 # 	https://stackoverflow.com/questions/43363388/how-to-save-a-greyscale-matplotlib-plot-to-numpy-array
     ax = plot(p)
@@ -131,7 +134,7 @@ def fig2pixel(p, plotPxl=False, smoothing=0.):
     ax.axis("off")
 
     width, height = fig.get_size_inches() * fig.get_dpi()
-    print("dpi: {}".format(fig.get_dpi()))
+    # print("dpi: {}".format(fig.get_dpi()))
     # import pdb
     # pdb.set_trace()
     img = np.frombuffer(fig.canvas.tostring_rgb(), dtype='uint8').reshape(int(height), int(width), 3)
@@ -148,13 +151,54 @@ def fig2pixel(p, plotPxl=False, smoothing=0.):
 
     return img
 
-def loss(p1, p2, plotPxl=False, smoothing=2):
-	# loss function (compare two images)
+def __loss(p1, p2, plotPxl=False, smoothing=2):
+    # loss function (compare two images)
 
-	img1 = fig2pixel(p1, plotPxl=plotPxl, smoothing=smoothing)
-	img2 = fig2pixel(p2, plotPxl=plotPxl, smoothing=smoothing)
+    img1 = __fig2pixel(p1, plotPxl=plotPxl, smoothing=smoothing)
+    img2 = __fig2pixel(p2, plotPxl=plotPxl, smoothing=smoothing)
 
-	return np.linalg.norm(img2-img1)
+    return np.linalg.norm(img2-img1)
+
+def prog2pxl(p, WHdraw = 6):
+    # takes a list of np array and outputs one pixel image
+    # WHdraw, the size of drawing canvas (e.g. 6, if is xlim -3 to 3)
+    
+    # 1) create canvas
+    WH = 100
+    scale = WH/WHdraw
+    data = np.zeros((WH, WH), dtype=np.uint8)
+    surface = cairo.ImageSurface.create_for_data(data, cairo.Format.A8, WH-2, WH-2)
+
+    # 2) create context
+    context = cairo.Context(surface)
+    # context.set_line_width(STROKESIZE)
+    context.set_source_rgb(256,256,256)
+
+    # 3) add each primitive
+    for pp in p:
+        pthis = pp
+        
+        pthis= pthis + WHdraw/2 # -- center
+        pthis = pthis*scale # -- scale so that coordinates match
+
+        for ppp in pthis:
+            context.line_to(ppp[0], ppp[1])
+        context.stroke() # this draws and also clears context.
+
+
+    # 4) render
+#     data = np.flip(data, 0)/255.0
+    # data = data/255.0
+    # surface.write_to_png("/tmp/test.png")
+#     from matplotlib import pyplot as plt
+#     plt.figure(figsize=(3,3))
+#     # plt.xlim(-3,3)
+#     # plt.ylim(-3,3)
+#     plt.imshow(data, vmin=0, vmax=1, cmap="gray")
+#     plt.savefig("/tmp/test.svg")
+
+    return np.flip(data, 0)/255.0
+
 
 def loss_pxl(img1, img2):
     return np.linalg.norm(img2-img1)
