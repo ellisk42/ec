@@ -1,6 +1,5 @@
 # from dreamcoder.domains.draw.makeDrawTasks import drawDrawings
-from dreamcoder.domains.draw.drawPrimitives import primitives, taxes, tartist, tangle, tscale, tdist, _blankAxes
-
+from dreamcoder.domains.draw.drawPrimitives import tstroke, tangle, tscale, tdist, ttrorder, ttransmat, trep, primitives, savefig
 # from dreamcoder.dreamcoder import ecIterator
 from dreamcoder.grammar import Grammar
 # from dreamcoder.program import Program
@@ -11,16 +10,18 @@ from dreamcoder.type import arrow
 
 g0 = Grammar.uniform(primitives)
 
-def dreamFromGrammar(g=g0, directory = "", N=50):
+def dreamFromGrammar(g=g0, directory = "", N=25):
 	# request = taxes # arrow9turtle turtle) just for logl.
-	request = arrow(taxes, taxes) # arrow9turtle turtle) just for logl.
-	programs = [ p for _ in range(N) for p in [g.sample(request, maximumDepth=20)] if p is not None]
+	# request = arrow(taxes, taxes) # arrow9turtle turtle) just for logl.
+	request = tstroke # arrow9turtle turtle) just for logl.
+	programs = [ p for _ in range(N) for p in [g.sample(request, maximumDepth=15)] if p is not None]
 	return programs
 	# drawDrawings(*programs, filenames)
 
-def main(arguments):
-        ps = dreamFromGrammar()
+def main(N=25):
+        ps = dreamFromGrammar(N=N)
         for n,p in enumerate(ps):
                 print(n,p)
-                a = p.evaluate([])(_blankAxes())
-                a.savefig(f"/tmp/draw{n}.png")
+                a = p.evaluate([])
+                savefig(a, f"/tmp/draw{n}.png")
+                # a.savefig(f"/tmp/draw{n}.png")
