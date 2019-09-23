@@ -7,7 +7,6 @@ from scipy.ndimage import gaussian_filter as gf
 from skimage import color
 from scipy.ndimage import gaussian_filter as gf
 
-# ===== [NEWER VERSION OF OLD VERSION, USING MPL. MIGHT BE BROKEN]
 from dreamcoder.program import Primitive, Program
 from dreamcoder.utilities import Curried
 from dreamcoder.grammar import Grammar
@@ -90,7 +89,8 @@ def _connect(p1, p2):
 _line = [np.array([(0., 0.), (1., 0.)])] # --- unit line, from 0 to 1
 _circle = [np.array([(0.5*math.cos(theta), 0.5*math.sin(theta)) for theta in np.linspace(0., 2.*math.pi, num=30)])] # --- circle, centered at 0, diameter 1
 
-# ============= FOR USE OUTSIDE OF DREAMCODER.
+
+# ============= NOT PRIMITIVES.
 def transform(p, s=1., theta=0., x=0., y=0., order="trs"):
             # order is one of the 6 ways you can permutate the three transformation primitives. 
             # write as a string (e.g. "trs" means scale, then rotate, then tranlate.)
