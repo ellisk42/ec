@@ -641,14 +641,14 @@ let logo_IFTY = primitive "logo_IFTY" (tint) (20)
 let logo_IFTY = primitive "logo_epsL" (tlength) (0.05)
 let logo_IFTY = primitive "logo_epsA" (tangle) (0.025)
 
-let logo_IFTY = primitive "line"
-                          (turtle @> turtle)
-                          (fun z ->
-                            LogoLib.LogoInterpreter.logo_SEQ
-                              (LogoLib.LogoInterpreter.logo_SEQ
-                                (LogoLib.LogoInterpreter.logo_FW 1.)
-                                (LogoLib.LogoInterpreter.logo_RT 0.))
-                              z)
+(* let logo_IFTY = primitive "line" *)
+(*                           (turtle @> turtle) *)
+(*                           (fun z -> *)
+(*                             LogoLib.LogoInterpreter.logo_SEQ *)
+(*                               (LogoLib.LogoInterpreter.logo_SEQ *)
+(*                                 (LogoLib.LogoInterpreter.logo_FW 1.) *)
+(*                                 (LogoLib.LogoInterpreter.logo_RT 0.)) *)
+(*                               z) *)
 
 let logo_DIVA = primitive "logo_DIVA"
                           (tangle @> tint @> tangle)
