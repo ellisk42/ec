@@ -37,11 +37,15 @@ p1 = [
 	Primitive("connect", arrow(tstroke, tstroke, tstroke), Curried(_connect)),
 	Primitive("repeat", arrow(tstroke, trep, ttransmat, tstroke), Curried(_repeat))
 ]
-p2 = [Primitive("scale{}".format(i), tscale, j) for i, j in enumerate(np.linspace(1.0, 4.0, 7))]
-p3 = [Primitive("dist{}".format(i), tdist, j) for i, j in enumerate(np.linspace(-4, 4, 9))]
+# p2 = [Primitive("scale{}".format(i), tscale, j) for i, j in enumerate(np.linspace(1.0, 4.0, 7))]
+p2 = [Primitive("scale{}".format(i), tscale, j) for i, j in enumerate(SCALES)] 
+# p3 = [Primitive("dist{}".format(i), tdist, j) for i, j in enumerate(np.linspace(-4, 4, 9))]
+p3 = [Primitive("dist{}".format(i), tdist, j) for i, j in enumerate(DISTS)]
 NANGLE = 8
-p4 = [Primitive("angle{}".format(i), tangle, j*2*math.pi/NANGLE) for i, j in enumerate(range(NANGLE))]
-p5 = [Primitive("angle{}".format(i), tangle, (j+1)*2*math.pi/3) for j,i in enumerate(range(NANGLE, NANGLE+2))]
+# p4 = [Primitive("angle{}".format(i), tangle, j*2*math.pi/NANGLE) for i, j in enumerate(range(NANGLE))]
+p4 = [Primitive("angle{}".format(i), tangle, j) for i, j in enumerate(THETAS)]
+# p5 = [Primitive("angle{}".format(i), tangle, (j+1)*2*math.pi/3) for j,i in enumerate(range(NANGLE, NANGLE+2))]
+p5 = []
 p6 = [Primitive(j, ttrorder, j) for j in ["trs", "tsr", "rts", "rst", "srt", "str"]]
 p7 = [Primitive("rep{}".format(i), trep, j) for i, j in enumerate(range(7))]
 

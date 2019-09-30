@@ -9,6 +9,9 @@ from dreamcoder.type import arrow
 from dreamcoder.utilities import *
 import math
 
+import pickle
+import numpy as np
+
 
 class SupervisedDraw(Task):
     def __init__(self, name, program):
@@ -33,7 +36,7 @@ class SupervisedDraw(Task):
             else:
                 return 0.0
         else:
-            print("doing it!")
+            # print("doing it!")
             p1 = self.rendered_strokes
             p2 = prog2pxl(e.evaluate([]))
 
@@ -56,10 +59,16 @@ def makeSupervisedTasks(): # TODO, LT, make these tasks.
     alltasks = []
 
     programs = [_line + _circle,
-    _circle + _line,
     _line + _tform(_line, _makeAffine(x=2.)) + _tform(_circle, _makeAffine(x=-1.)),
-    _repeat(_line+_tform(_circle, _makeAffine(x=1.)), 3, _makeAffine(theta=math.pi/2))
+    _repeat(_line+_tform(_circle, _makeAffine(x=1.)), 3, _makeAffine(theta=math.pi/2)),
     ]
+
+    # -- add some programs used in behaivor
+    libname = "S6"
+    with open("{}.pkl".format(libname), 'rb') as fp:
+        P = pickle.load(fp)
+    programs.extend(P[:18])
+
     for i, p in enumerate(programs):
         name = "task{}".format(i)
         alltasks.append(SupervisedDraw(name, p))
