@@ -413,7 +413,7 @@ def plotLabeledImages(embeddings, images, labels, title, exportPath, xlabel=None
         if arguments.programColors:
             nameMapping = PROGRAM_CLUSTERING            
 
-        cmap = matplotlib.cm.get_cmap('tab20')
+               
         prettyNames = sorted(list({pretty for _,pretty in nameMapping}))
         colorLabels = logo_tower_NamesToLabels(labels, nameMapping)
         # remove tasks for which we do not have a label
@@ -421,9 +421,19 @@ def plotLabeledImages(embeddings, images, labels, title, exportPath, xlabel=None
         labels = [l for ti,l in enumerate(labels) if colorLabels[ti] is not None ]
         images = [i for ti,i in enumerate(images) if colorLabels[ti] is not None ]
         colorLabels = [cl for ti,cl in enumerate(colorLabels) if colorLabels[ti] is not None ]
+
+        if len(prettyNames) <= 10:
+            cmap = matplotlib.cm.get_cmap('tab10')
+            colors = [cmap(i) for i in range(len(prettyNames)) ]
+        elif len(prettyNames) <= 20:
+            cmap = matplotlib.cm.get_cmap('tab20')
+            colors = [cmap(i) for i in (list(range(0,22,2))+list(range(1,22,2)))[:len(prettyNames)] ]
+        else:
+            assert False, "I don't know what colormap to use when you have more than twenty clusters!"
+            
         
         import matplotlib.patches as mpatches
-        patches = [mpatches.Patch(color=cmap(i), label=prettyNames[i]) for i in range(len(prettyNames))]
+        patches = [mpatches.Patch(color=colors[i], label=prettyNames[i]) for i in range(len(prettyNames))]
         legend=plot.legend(handles=patches, frameon=True, loc='upper center', bbox_to_anchor=(0.5, -0.02),
   ncol=1, fontsize=15)
 
@@ -449,9 +459,9 @@ def plotLabeledImages(embeddings, images, labels, title, exportPath, xlabel=None
         initialDisplacements = []
         for i, label in enumerate(labels):
                 x, y = embeddings[i, 0], embeddings[i, 1]
-                plot.scatter(x,y, color=cmap(colorLabels[i]), s=10000, alpha=0.00001)
+                plot.scatter(x,y, color=cmap(colorLabels[i]/cmap.N), s=10000, alpha=0.00001)
                 name = labels[i]
-                c = cmap(colorLabels[i])
+                c = colors[colorLabels[i]]
                 
                 imageLabels.append((x,y,projectColor(c,trimImage(images[i]))))
         for index, (x,y,i) in enumerate(imageLabels):
@@ -470,7 +480,7 @@ def plotLabeledImages(embeddings, images, labels, title, exportPath, xlabel=None
 
         print("Exporting: " + exportPath)
         plot.savefig(exportPath, bbox_extra_artists=(legend,), bbox_inches='tight')
-        os.system("feh %s"%exportPath)
+        #os.system("feh %s"%exportPath)
         
         return
 
@@ -591,6 +601,16 @@ def formattedName(metricToCluster, item):
         else:
                 return raw_name
 
+def random_restart_tsne(X, perplexity, lr, restarts=30):
+    with timing(f"did {restarts} random restarts"):
+        best = None
+        for _ in range(restarts):
+            tsne = TSNE(random_state=0, perplexity=perplexity, learning_rate=lr, n_iter=10000)
+            projection = tsne.fit_transform(X)
+            if best is None or best[0] > tsne.kl_divergence_:
+                best = (tsne.kl_divergence_, projection)
+    return best[1]
+
 def plotTSNE(resultPaths,
              experimentNames,
              metricsToCluster,
@@ -618,7 +638,6 @@ def plotTSNE(resultPaths,
 
                 for k, metricToCluster in enumerate(metricsToCluster):
                         print("Clustering metric: " + metricToCluster )
-                        tsne = TSNE(random_state=0, perplexity=tsnePerplexity, learning_rate=tsneLearningRate, n_iter=10000)
                         taskNames, taskMetrics = [], []
 
                         for task in sorted(recognitionTaskMetrics.keys(), key=lambda task : formattedName(metricToCluster, task)):
@@ -651,7 +670,10 @@ def plotTSNE(resultPaths,
                         taskMetrics = taskMetrics/np.reshape(metricNorms, (metricNorms.shape[0], 1))
                         print(taskNames.shape, taskMetrics.shape)
                         
-                        clusteredTaskMetrics = tsne.fit_transform(taskMetrics)
+                        clusteredTaskMetrics = random_restart_tsne(taskMetrics,
+                                                                   perplexity=tsnePerplexity,
+                                                                   lr=tsneLearningRate,
+                                                                   restarts=10)
                         title = title or ("Metric: %s, Domain: %s, Experiment: %s, Iteration: %d" % (metricToCluster, domain, experimentName, iterations))
 
                         if labelWithImages or labelsAndImages:
@@ -1037,7 +1059,7 @@ def logo_tower_NamesToLabels(listNames, nameMapping):
                 break
         if not foundName:
             labels.append("Other")
-        print("%s\t%s"%(name,labels[-1]))
+        #print("%s\t%s"%(name,labels[-1]))
     # Assign to list
     prettyNames = sorted(list({pretty for _,pretty in nameMapping}))
 
@@ -1182,7 +1204,6 @@ def clusterPrograms(checkpoint, distanceThreshold=3.):
     n = 0
     for t,metrics in checkpoint.recognitionTaskMetrics.items():
         if not isinstance(t,Task): continue
-        print(metrics.keys())
         n += 1
     g = checkpoint.grammars[-1]
 
