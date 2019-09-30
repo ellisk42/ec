@@ -36,7 +36,7 @@ from sklearn import preprocessing
 from sklearn.metrics.cluster import adjusted_rand_score
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.manifold import MDS, TSNE
-
+from sklearn.cluster import AgglomerativeClustering
 
 def loadfun(x):
         with open(x, 'rb') as handle:
@@ -398,12 +398,6 @@ def plotEmbeddingWithLabels(embeddings, labels, title, exportPath, xlabel=None, 
 
 def plotLabeledImages(embeddings, images, labels, title, exportPath, xlabel=None, ylabel=None, colorLabeling=None):
         plot.figure(figsize=(10,10))
-        # Color map based on ordering of the labels.
-        cmap = matplotlib.cm.get_cmap('tab20')
-        normalize = matplotlib.colors.Normalize(vmin=0, vmax=len(labels))
-        colors = [cmap(normalize(value)) for value in range(len(labels))]
-
-        plot.figure(figsize=(10,10))
         plot.tick_params(axis='both', left='off', top='off', right='off', bottom='off', labelleft='off', labeltop='off', labelright='off', labelbottom='off')
         plot.grid(False)
 
@@ -416,10 +410,18 @@ def plotLabeledImages(embeddings, images, labels, title, exportPath, xlabel=None
                 plot.title("LOGO/Turtle Graphics", fontsize=15)
                 nameMapping = logoTasks
                 zoom = 0.5
+        if arguments.programColors:
+            nameMapping = PROGRAM_CLUSTERING            
 
-        cmap = matplotlib.cm.get_cmap('tab10')
+        cmap = matplotlib.cm.get_cmap('tab20')
         prettyNames = sorted(list({pretty for _,pretty in nameMapping}))
         colorLabels = logo_tower_NamesToLabels(labels, nameMapping)
+        # remove tasks for which we do not have a label
+        embeddings = np.array([embeddings[ti] for ti in range(embeddings.shape[0]) if colorLabels[ti] is not None ])
+        labels = [l for ti,l in enumerate(labels) if colorLabels[ti] is not None ]
+        images = [i for ti,i in enumerate(images) if colorLabels[ti] is not None ]
+        colorLabels = [cl for ti,cl in enumerate(colorLabels) if colorLabels[ti] is not None ]
+        
         import matplotlib.patches as mpatches
         patches = [mpatches.Patch(color=cmap(i), label=prettyNames[i]) for i in range(len(prettyNames))]
         legend=plot.legend(handles=patches, frameon=True, loc='upper center', bbox_to_anchor=(0.5, -0.02),
@@ -1024,22 +1026,24 @@ def logoNamesToLabels(listNames):
         return labels
 
 def logo_tower_NamesToLabels(listNames, nameMapping):
-        labels = []
-        for name in listNames:
-                foundName = False
-                for label,pretty in nameMapping:
-                        if label in name:
-                                labels.append(pretty)
-                                foundName = True
-                                break
-                if not foundName:
-                        labels.append("Other")
-                print("%s{0:20}%s"%(name,labels[-1]))
-        # Assign to list
-        prettyNames = sorted(list({pretty for _,pretty in nameMapping}))
+    labels = []
+    for name in listNames:
+        foundName = False
+        for label,pretty in nameMapping:
+            if (arguments.programColors is None and label in name) or \
+               (arguments.programColors is not None and label == name):
+                labels.append(pretty)
+                foundName = True
+                break
+        if not foundName:
+            labels.append("Other")
+        print("%s\t%s"%(name,labels[-1]))
+    # Assign to list
+    prettyNames = sorted(list({pretty for _,pretty in nameMapping}))
 
-        labels = [prettyNames.index(label) for label in labels]
-        return labels
+    labels = [prettyNames.index(label) if label in prettyNames else None
+              for label in labels]
+    return labels
 
 def getTopNMostSimilar(names, sims, topN):
         sortedSims=np.dstack(np.unravel_index(np.argsort(-sims.ravel()), sims.shape)).squeeze()
@@ -1170,8 +1174,34 @@ def similarityAnalysis(
                 #                               colorLabeling=testColorLabeling)
 
 
+PROGRAM_CLUSTERING = None
+def clusterPrograms(checkpoint, distanceThreshold=3.):
+    global PROGRAM_CLUSTERING
+    PROGRAM_CLUSTERING = []
+    checkpoint = loadfun(checkpoint)
+    n = 0
+    for t,metrics in checkpoint.recognitionTaskMetrics.items():
+        if not isinstance(t,Task): continue
+        print(metrics.keys())
+        n += 1
+    g = checkpoint.grammars[-1]
 
+    data = [(t.name, metrics['frontier'].expectedProductionUses(g))
+            for t,metrics in checkpoint.recognitionTaskMetrics.items()
+            if isinstance(t,Task) and 'frontier' in metrics]
 
+    names = [n for n,_ in data ]
+    X = np.array([x for _,x in data ])
+    clustering = AgglomerativeClustering(linkage = "ward", n_clusters = None, distance_threshold = distanceThreshold).fit(X)
+    clusters = {}
+    for label, name in zip(clustering.labels_,names):
+        clusters[label] = clusters.get(label,[]) + [name]
+        PROGRAM_CLUSTERING.append((name, label))
+    print("Discovered",len(clusters),"distinct clusters in program space")
+            
+        
+
+    
 
 if __name__ == "__main__":
 
@@ -1206,13 +1236,19 @@ if __name__ == "__main__":
         parser.add_argument("--similarityOrdering", type=str, default=None)
         parser.add_argument("--similarityWithTSNE", default=False, action="store_true")
 
-
+        # agglomerate clustering of program features
+        parser.add_argument("--programColors", type=str, default=None,
+                            help="Get ground truth coloring by clustering program back-of-word features from this checkpoint")
+        parser.add_argument("--distanceThreshold", type=float, default=3.)
 
         parser.add_argument("--export","-e",
                                                 type=str, default='data')
         parser.add_argument("--title",default=None, type=str)
 
         arguments = parser.parse_args()
+
+        if arguments.programColors:
+            clusterPrograms(arguments.programColors, arguments.distanceThreshold)
 
         if arguments.similarityAnalysisMetrics:
                 similarityAnalysis(arguments.checkpoints,
