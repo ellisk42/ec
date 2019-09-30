@@ -64,7 +64,7 @@ def makeSupervisedTasks(): # TODO, LT, make these tasks.
     ]
 
     # -- add some programs used in behaivor
-    libname = "S6"
+    libname = "/dreamcoder/domains/draw/S6"
     with open("{}.pkl".format(libname), 'rb') as fp:
         P = pickle.load(fp)
     programs.extend(P[:18])
