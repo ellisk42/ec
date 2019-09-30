@@ -23,7 +23,7 @@ class SupervisedTower(Task):
         state, self.plan = program.evaluate([])(_empty_tower)(TowerState())
         self.hand = state.hand
         super(SupervisedTower, self).__init__(name, arrow(ttower,ttower), [],
-                                              features=[])
+                                              features=[]) # TODO: LT, needs this, i.e., a request. 
         self.specialTask = ("supervisedTower",
                             {"plan": self.plan})
         self.image = None
@@ -93,7 +93,7 @@ class SupervisedTower(Task):
         import scipy.misc
         scipy.misc.imsave(f, a)
 
-    def logLikelihood(self, e, timeout=None):
+    def logLikelihood(self, e, timeout=None): # TODO, LT, given expression, calculates distance.
         from dreamcoder.domains.tower.tower_common import centerTower
         def k():
             plan = e.evaluate([])(lambda s: (s,[]))(0)[1]
@@ -157,7 +157,7 @@ def parseTower(s):
     except: return Abstraction(block(s, [], Index(0)))
 
     
-def makeSupervisedTasks():
+def makeSupervisedTasks(): # TODO, LT, make these tasks.
     arches = [SupervisedTower("arch leg %d"%n,
                               "((for i %d v) (r 4) (for i %d v) (l 2) h)"%(n,n))
               for n in range(1,9)

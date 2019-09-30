@@ -30,7 +30,7 @@ let circle_p = fun (c,(ox,oy)) x y ->
 let rec convert_canvas c = match c with
   | [] -> (P.sub (Gg.P2.v 0. 0.) P.empty)
   | (t,x,y)::r ->
-      let cc = convert_canvas r in
+    let cc = convert_canvas r in
       (match t with
       | MOVE -> moveto_np cc x y
       | LINE -> lineto_np cc x y
@@ -59,8 +59,9 @@ let list_to_image pretty l =
   let rec build_c c aux = match c with
     | [] -> [],aux
     | (x,l)::r ->
-        let (r',a2) = (build_c r (aux +. l)) in
-        ((x,aux,l)::r',a2)
+      let l = if l = l then l else 0. in
+      let (r',a2) = (build_c r (aux +. l)) in
+      ((x,aux,l)::r',a2)
   in
   if pretty then begin
     let (c,(_,_)) = convert_canvas_pretty l in
