@@ -21,6 +21,7 @@ DISTS = [-2., -1.5, -1., -0.5, 0, 0.5, 1., 1.5, 2.] + [(1/2)*(1)*(1/tan(pi/n)) f
 THETAS = [j*(2*pi/8) for j in range(8)]
 
 
+
 # ============= TRANSFORMATIONS
 def _makeAffine(s=1., theta=0., x=0., y=0., order="trs"):
     
@@ -130,6 +131,7 @@ def plot(p):
 def plotOnAxes(p, ax):
 	ax.set_xlim(-XYLIM,XYLIM)
 	ax.set_ylim(-XYLIM,XYLIM)
+
 	[ax.plot(x[:,0], x[:,1], "-k") for x in p]
 	return ax
 
@@ -168,7 +170,8 @@ def __loss(p1, p2, plotPxl=False, smoothing=2):
 
     return np.linalg.norm(img2-img1)
 
-def prog2pxl(p, WHdraw = 8):
+
+def prog2pxl(p, WHdraw = 6):
     # takes a list of np array and outputs one pixel image
     # WHdraw, the size of drawing canvas (e.g. 6, if is xlim -3 to 3)
     
