@@ -54,6 +54,7 @@ open Core
     export PATH="/usr/local/conda/bin:$PATH"
 
     conda install -y  numpy dill pyzmq matplotlib scipy protobuf scikit-learn
+    conda install -yc conda-forge scikit-image
     conda install pytorch torchvision -c pytorch
     pip install dill sexpdata pygame pycairo cairocffi psutil pypng Box2D-kengz graphviz frozendict pathos
 
