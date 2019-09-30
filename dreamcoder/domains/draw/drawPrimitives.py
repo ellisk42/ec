@@ -14,8 +14,8 @@ from dreamcoder.utilities import Curried
 from dreamcoder.grammar import Grammar
 from dreamcoder.type import baseType, arrow
 
-from primitives import *
-from primitives import _makeAffine, _tform, _reflect, _repeat, _connect
+from dreamcoder.domains.draw.primitives import *
+from dreamcoder.domains.draw.primitives import _makeAffine, _tform, _reflect, _repeat, _connect, _line, _circle
 
 matplotlib.use('TkAgg')
 

@@ -171,7 +171,7 @@ def __loss(p1, p2, plotPxl=False, smoothing=2):
     return np.linalg.norm(img2-img1)
 
 
-def prog2pxl(p, WHdraw = 6):
+def prog2pxl(p, WHdraw = 2*XYLIM):
     # takes a list of np array and outputs one pixel image
     # WHdraw, the size of drawing canvas (e.g. 6, if is xlim -3 to 3)
     
