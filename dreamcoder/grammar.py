@@ -90,8 +90,8 @@ class Grammar(object):
 
     def json(self):
         j = {"logVariable": self.logVariable,
-             "productions": [{"expression": str(p), "logProbability": l}
-                             for l, _, p in self.productions]}
+             "productions": [{"expression": str(p), "logProbability": l, "type": t.json()}
+                             for l, t, p in self.productions]}
         if self.continuationType is not None:
             j["continuationType"] = self.continuationType.json()
         return j

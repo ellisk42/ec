@@ -792,7 +792,7 @@ let () =
     else 
       Yojson.Basic.from_channel Pervasives.stdin
   in
-  let g = j |> member "DSL" |> deserialize_grammar |> strip_grammar in
+  let g = j |> member "DSL" |> deserialize_grammar ~unknown_primitives:true |> strip_grammar in
   let topK = j |> member "topK" |> to_int in
   let topI = j |> member "topI" |> to_int in
   let bs = j |> member "bs" |> to_int in
