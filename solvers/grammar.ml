@@ -283,9 +283,16 @@ let make_dummy_contextual g =
 
 
 
-let deserialize_grammar g =
+let deserialize_grammar ?unknown_primitives:(unknown_primitives=false) g =
   let open Yojson.Basic.Util in
   let logVariable = g |> member "logVariable" |> to_float in
+  if unknown_primitives then begin
+    g |> member "productions" |> to_list |> List.iter ~f:(fun p ->
+        let source = p |> member "expression" |> to_string in
+        if source.[0] = '#' || Hashtbl.mem every_primitive source then () else
+          let tp = p |> member "type" |> deserialize_type in
+          Hashtbl.set every_primitive source (Primitive(tp, source, unit_reference)))
+  end;
   let productions = g |> member "productions" |> to_list |> List.map ~f:(fun p ->
     let source = p |> member "expression" |> to_string in
     let e = parse_program source |> safe_get_some ("Error parsing: "^source) in
