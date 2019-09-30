@@ -57,7 +57,7 @@ def makeSupervisedTasks(): # TODO, LT, make these tasks.
 
     programs = [_line + _circle,
     _circle + _line,
-    _line + _tform(_line, _makeAffine(x=2.)) + t_form(_circle, _makeAffine(x=-1.))
+    _line + _tform(_line, _makeAffine(x=2.)) + t_form(_circle, _makeAffine(x=-1.)),
     _repeat(_line+_tform(_circle, _makeAffine(x=1.)), 3, _makeAffine(theta=math.pi/2))
     ]
     for i, p in enumerate(programs):
