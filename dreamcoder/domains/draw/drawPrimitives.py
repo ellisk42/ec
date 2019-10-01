@@ -32,8 +32,7 @@ trep = baseType("trep")
 def _givemeback(thing):
 	return thing
 
-Primitive("None", tmaybe(t0), None)
-Primitive("Some", arrow(t0, tmaybe(t0)), _givemeback)
+p0 = [Primitive("None", tmaybe(t0), None), Primitive("Some", arrow(t0, tmaybe(t0)), _givemeback)]
 
 
 p1 = [
@@ -60,7 +59,7 @@ p7 = [Primitive("rep{}".format(i), trep, j) for i, j in enumerate(range(7))]
 
 
 
-primitives = p1 + p2 + p3 + p4 + p5 + p6 + p7
+primitives = p0 + p1 + p2 + p3 + p4 + p5 + p6 + p7
 
 
 
