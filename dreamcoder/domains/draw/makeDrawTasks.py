@@ -67,7 +67,7 @@ def makeSupervisedTasks(): # TODO, LT, make these tasks.
     _tform(_line, _makeAffine(x=1.0, theta=pi/2)),
     _tform(_line, _makeAffine(x=1.5)),
     _tform(_circle, _makeAffine(x=1.5)),
-    _repeat(_line, 2, _makeAffine(y=0.5)),
+    _repeat(_line, 2, _makeAffine(x=1.0)),
     _line + _tform(_line, _makeAffine(x=2.)) + _tform(_circle, _makeAffine(x=-1.)),
     _repeat(_line+_tform(_circle, _makeAffine(x=1.)), 3, _makeAffine(theta=math.pi/2)),
     ]
