@@ -33,7 +33,7 @@ def _givemeback(thing):
 	return thing
 
 Primitive("None", tmaybe(t0), None)
-Primitive("Some", arrow(t0, maybe(t0)), _givemeback)
+Primitive("Some", arrow(t0, tmaybe(t0)), _givemeback)
 
 
 p1 = [

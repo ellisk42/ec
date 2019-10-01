@@ -41,7 +41,7 @@ class SupervisedDraw(Task):
             # p2 = prog2pxl(e.evaluate([]))
 
             if not hasattr(e, "rendering"):
-                e.rendering = e.evaluate([])
+                e.rendering = prog2pxl(e.evaluate([]))
 
             # l = loss(p1, p2, smoothing=2) 
             l = loss_pxl(self.rendered_strokes, e.rendering)
