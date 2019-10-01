@@ -8,6 +8,7 @@ from dreamcoder.task import Task
 from dreamcoder.type import arrow
 from dreamcoder.utilities import *
 import math
+from math import pi
 
 import pickle
 import numpy as np
@@ -62,6 +63,9 @@ def makeSupervisedTasks(): # TODO, LT, make these tasks.
     alltasks = []
 
     programs = [_line + _circle,
+    _tform(_line, _makeAffine(x=1.0)),
+    _tform(_line, _makeAffine(x=1.0, theta=pi/2)),
+    _repeat(_line, 2, _makeAffine(y=0.5)),
     _line + _tform(_line, _makeAffine(x=2.)) + _tform(_circle, _makeAffine(x=-1.)),
     _repeat(_line+_tform(_circle, _makeAffine(x=1.)), 3, _makeAffine(theta=math.pi/2)),
     ]
