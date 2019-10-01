@@ -37,11 +37,14 @@ class SupervisedDraw(Task):
                 return 0.0
         else:
             # print("doing it!")
-            p1 = self.rendered_strokes
-            p2 = prog2pxl(e.evaluate([]))
+            # p1 = 
+            # p2 = prog2pxl(e.evaluate([]))
+
+            if not hasattr(e, "rendering"):
+                e.rendering = e.evaluate([])
 
             # l = loss(p1, p2, smoothing=2) 
-            l = loss_pxl(p1, p2)
+            l = loss_pxl(self.rendered_strokes, e.rendering)
 
             if l>0.1:
                 return NEGATIVEINFINITY
@@ -64,7 +67,7 @@ def makeSupervisedTasks(): # TODO, LT, make these tasks.
     ]
 
     # -- add some programs used in behaivor
-    libname = "/dreamcoder/domains/draw/S6"
+    libname = "dreamcoder/domains/draw/S6"
     with open("{}.pkl".format(libname), 'rb') as fp:
         P = pickle.load(fp)
     programs.extend(P[:18])

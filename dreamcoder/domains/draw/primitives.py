@@ -25,6 +25,17 @@ THETAS = [j*(2*pi/8) for j in range(8)] + [-2*pi/6] + [-2*pi/12]
 # ============= TRANSFORMATIONS
 def _makeAffine(s=1., theta=0., x=0., y=0., order="trs"):
     
+    if s is None:
+        s=1.
+    if theta is None:
+        theta=0.
+    if x is None:
+        x=0.
+    if y is None:
+        y=0
+    if order is None:
+        order="trs"
+        
     def R(theta):
         T = np.array([[math.cos(theta), -math.sin(theta), 0.], [math.sin(theta), math.cos(theta), 0.], [0.,0.,1.]])
         return T

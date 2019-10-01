@@ -12,7 +12,7 @@ import cairo
 from dreamcoder.program import Primitive, Program
 from dreamcoder.utilities import Curried
 from dreamcoder.grammar import Grammar
-from dreamcoder.type import baseType, arrow
+from dreamcoder.type import baseType, arrow, tmaybe, t0, t1, t2
 
 from dreamcoder.domains.draw.primitives import *
 from dreamcoder.domains.draw.primitives import _makeAffine, _tform, _reflect, _repeat, _connect, _line, _circle
@@ -28,10 +28,18 @@ ttrorder = baseType("ttorder")
 ttransmat = baseType("ttransmat")
 trep = baseType("trep")
 
+
+def _givemeback(thing):
+	return thing
+
+Primitive("None", tmaybe(t0), None)
+Primitive("Some", arrow(t0, maybe(t0)), _givemeback)
+
+
 p1 = [
 	Primitive("line", tstroke, _line), 
 	Primitive("circle", tstroke, _circle),
-	Primitive("transmat", arrow(tscale, tangle, tdist, tdist, ttrorder, ttransmat), Curried(_makeAffine)),
+	Primitive("transmat", arrow(tmaybe(tscale), tmaybe(tangle), tmaybe(tdist), tmaybe(tdist), tmaybe(ttrorder), ttransmat), Curried(_makeAffine)),
 	Primitive("transform", arrow(tstroke, ttransmat, tstroke), Curried(_tform)),
 	Primitive("reflect", arrow(tstroke, tangle, tstroke), Curried(_reflect)), 
 	Primitive("connect", arrow(tstroke, tstroke, tstroke), Curried(_connect)),
@@ -48,6 +56,9 @@ p4 = [Primitive("angle{}".format(i), tangle, j) for i, j in enumerate(THETAS)]
 p5 = []
 p6 = [Primitive(j, ttrorder, j) for j in ["trs", "tsr", "rts", "rst", "srt", "str"]]
 p7 = [Primitive("rep{}".format(i), trep, j) for i, j in enumerate(range(7))]
+
+
+
 
 primitives = p1 + p2 + p3 + p4 + p5 + p6 + p7
 
