@@ -116,14 +116,19 @@ logoTasks=[
         ("star 3", "Polygon"),
         ("square", "Square"),
         ("smooth spiral", "Spiral"),
-        ("Greek", "Greek spiral"),
-        ("snowflake", "Rotational symmetry"),
+    ("spiral snowflake", "Spiral"),
+        ("Greek", "Spiral"),
+    ("double dashed", "Crosshair"),
+        ("-dashed snowflake", "Crosshair"),
+    ("circle flower", "Circle"),
+    ("flower", "Flower"),
+    ("leaf iteration 2.2", "Flower"),
+        ("snowflake", "Radial symmetry (other)"),
         ("star", "Star"),
         ("semicircle", "Semicircle"),
         ("circle", "Circle"),
         ("Other", "Other"),
-        ("2x2 grid", "Square"),
-        ("flower", "Rotational symmetry")
+        ("2x2 grid", "Square")
 ]
 labeledLogos = {"smooth spiral 3","smooth spiral 4",
                 "star 5", "star 7",
@@ -634,7 +639,7 @@ def plotTSNE(resultPaths,
                 if experimentNames is None:
                         experimentName = "none"
                 else:
-                        experimentName = experimentNames[j]
+                        experimentName = experimentNames[j%len(experimentNames)]
 
                 for k, metricToCluster in enumerate(metricsToCluster):
                         print("Clustering metric: " + metricToCluster )
@@ -1059,7 +1064,7 @@ def logo_tower_NamesToLabels(listNames, nameMapping):
                 break
         if not foundName:
             labels.append("Other")
-        #print("%s\t%s"%(name,labels[-1]))
+        print("%s\t%s"%(name,labels[-1]))
     # Assign to list
     prettyNames = sorted(list({pretty for _,pretty in nameMapping}))
 
