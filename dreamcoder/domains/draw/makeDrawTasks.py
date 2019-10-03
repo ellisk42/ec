@@ -1,5 +1,5 @@
 from dreamcoder.domains.draw.drawPrimitives import *
-from dreamcoder.domains.draw.drawPrimitives import _tform, _line, _circle, _repeat, _makeAffine
+from dreamcoder.domains.draw.drawPrimitives import _tform, _line, _circle, _repeat, _makeAffine, _reflect
 # from dreamcoder.dreamcoder import ecIterator
 from dreamcoder.grammar import Grammar
 from dreamcoder.program import Program
@@ -17,11 +17,20 @@ import numpy as np
 class SupervisedDraw(Task):
     def __init__(self, name, program):
         super(SupervisedDraw, self).__init__(name, tstroke, [],
-                                              features=[]) # TODO: LT, needs this, i.e., a request. 
+                                              features=[]) # TODO: LT, needs this, i.e., a request.
+
+        # compute the trajectory, which is a list of lines
+        trajectory = []
+        for segments in program:
+            for i in range(segments.shape[0] - 1):
+                p1 = segments[i][0], segments[i][1]
+                p2 = segments[i+1][0], segments[i+1][1]
+                trajectory.append([p1,p2])
+        self.specialTask = ("draw",
+                            {"trajectory": trajectory})
 
         self.strokes = program # list of np arrays.
         self.rendered_strokes = prog2pxl(program)
-
 
     def logLikelihood(self, e, timeout=None): # TODO, LT, given expression, calculates distance.
         # from dreamcoder.domains.tower.tower_common import centerTower

@@ -187,7 +187,7 @@ def prog2pxl(p, WHdraw = 2*XYLIM):
     # WHdraw, the size of drawing canvas (e.g. 6, if is xlim -3 to 3)
     
     # 1) create canvas
-    WH = 100
+    WH = 128
     scale = WH/WHdraw
     data = np.zeros((WH, WH), dtype=np.uint8)
     surface = cairo.ImageSurface.create_for_data(data, cairo.Format.A8, WH-2, WH-2)

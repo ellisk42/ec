@@ -19,6 +19,6 @@ if __name__ == '__main__':
         structurePenalty=1,
         pseudoCounts=10,
         topK=2,
-        maximumFrontier=5, 
-        solver="python")
+        maximumFrontier=5,
+        solver="ocaml")
     main(arguments)

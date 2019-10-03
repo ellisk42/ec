@@ -1,15 +1,30 @@
 # from dreamcoder.domains.draw.makeDrawTasks import drawDrawings
 from dreamcoder.domains.draw.drawPrimitives import *
-from dreamcoder.domains.draw.makeDrawTasks import makeSupervisedTasks
+from dreamcoder.domains.draw.makeDrawTasks import makeSupervisedTasks, SupervisedDraw
 from dreamcoder.dreamcoder import ecIterator
 from dreamcoder.grammar import Grammar
 # from dreamcoder.program import Program
 # from dreamcoder.recognition import variable, maybe_cuda
 from dreamcoder.task import Task
 from dreamcoder.type import arrow
+from dreamcoder.recognition import ImageFeatureExtractor
 # from dreamcoder.utilities import eprint, testTrainSplit, loadPickle
 import datetime
 import os
+
+class DrawCNN(ImageFeatureExtractor):
+        special = "draw"
+        def __init__(self, tasks, testingTasks=[], cuda=False):
+                super(DrawCNN, self).__init__(inputImageDimension=128,
+                                              resizedDimension=64,
+                                              cuda=cuda,
+                                              channels=1)
+                print("output dimensionality",self.outputDimensionality)
+        def taskOfProgram(self, p, t):
+                return SupervisedDraw("dream", p.evaluate([]))
+
+        def featuresOfTask(self, t):
+                return self(t.rendered_strokes)
 
 g0 = Grammar.uniform(primitives)
 
@@ -40,12 +55,11 @@ def main(arguments):
 	evaluationTimeout = 0.001 # seconds, how long allowed
 
 	os.system(f"mkdir -p {outputDirectory}")
-
+	arguments["featureExtractor"] = DrawCNN
 	generator = ecIterator(g0, train,
-					outputPrefix="%s/draw"%outputDirectory,
-					evaluationTimeout=evaluationTimeout,
-					**arguments) # 
+                               outputPrefix="%s/draw"%outputDirectory,
+			       evaluationTimeout=evaluationTimeout,
+                               **arguments) # 
 
 	for result in generator:
-		print("hello")
 		continue

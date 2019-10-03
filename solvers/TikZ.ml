@@ -44,7 +44,7 @@ let tintercept = make_ground "intercept";;
 let tcoefficient = make_ground "coefficient";;
 let tcoordinate = make_ground "coordinate";;
 
-let primitive_circle = primitive "circle"
+let primitive_circle = primitive "TikZcircle"
     (tcoordinate @> ttrace)
     (fun v -> [Circle(v)])
 let primitive_rectangle = primitive "rectangle"
@@ -61,7 +61,7 @@ let primitive_loop = primitive "loop"
        let body = (0--(n-1)) |> List.map ~f:body |> List.concat in
        let boundary = match boundary with
          | None -> []
-         | Some(b) -> (0--(n-2)) |> List.map ~f:b |> List.concat 
+         | Some(b) -> (0--(n-2)) |> List.map ~f:b |> List.concat
        in
        boundary@body);;
 let primitive_union = primitive "trace-union" (ttrace @> ttrace @> ttrace) (@);;

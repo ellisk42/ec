@@ -527,10 +527,10 @@ let primitive_define = primitive
                         "define"
                         (tvar @> tprogram)
                         GeomLib.Plumbing.define
-let primitive_repeat = primitive
-                        "repeat"
-                        (tmaybe tvar @> tprogram @> tprogram)
-                        GeomLib.Plumbing.repeat
+(* let primitive_repeat = primitive *)
+(*                         "repeat" *)
+(*                         (tmaybe tvar @> tprogram @> tprogram) *)
+(*                         GeomLib.Plumbing.repeat *)
 let primitive_line= primitive
                         "basic_line"
                          tprogram

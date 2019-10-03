@@ -1,5 +1,6 @@
 open Core
 
+open Draw
 open Pregex
 open Program
 open Enumeration
@@ -316,6 +317,20 @@ let logo_hash ?timeout:(timeout=0.001) request inputs : program -> PolyList.t op
       let j = PolyValue.List(range (28*28) |> List.map ~f:(fun i -> PolyValue.Integer(a.{i}))) in
       Some([j]);;
 register_special_helmholtz "LOGO" logo_hash;;
+
+let draw_hash ?timeout:(timeout=0.001) request inputs : program -> PolyList.t option =
+  let open Yojson.Basic.Util in
+
+  assert (request = tstroke);
+  
+  fun program ->
+    let pixels = run_recent_draw ~attempts:2 ~timeout:timeout ~resolution:28 program in
+    match pixels with
+    | None -> None
+    | Some(a) ->
+      let j = PolyValue.List(range (28*28) |> List.map ~f:(fun i -> PolyValue.Integer(a.{i}))) in
+      Some([j]);;
+register_special_helmholtz "draw" draw_hash;;
 
 let regex_hash  ?timeout:(timeout=0.001) request inputs : program -> PolyList.t option =
   let open Yojson.Basic.Util in

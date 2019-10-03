@@ -1442,9 +1442,11 @@ class Flatten(nn.Module):
         return x.view(x.size(0), -1)
 
 class ImageFeatureExtractor(nn.Module):
-    def __init__(self, inputImageDimension, resizedDimension=None,
+    def __init__(self, inputImageDimension, resizedDimension=None, cuda=False,
                  channels=1):
         super(ImageFeatureExtractor, self).__init__()
+
+        self.cuda = cuda
         
         self.resizedDimension = resizedDimension or inputImageDimension
         self.inputImageDimension = inputImageDimension
@@ -1474,6 +1476,8 @@ class ImageFeatureExtractor(nn.Module):
         outputImageDimensionality = self.resizedDimension/(2**(len(self.encoder) - 1))
         self.outputDimensionality = int(z_dim*outputImageDimensionality*outputImageDimensionality)
 
+        if cuda: self.cuda()
+
     def forward(self, v):
         """1 channel: v: BxWxW or v:WxW
         > 1 channel: v: BxCxWxW or v:CxWxW"""
@@ -1495,8 +1499,10 @@ class ImageFeatureExtractor(nn.Module):
             else: assert False                
 
         if insertBatch: variabled = torch.unsqueeze(variabled, 0)
-        
-        y = self.encoder(variabled)
+
+        if self.cuda: variabled = variabled.cuda()
+        window = int(self.inputImageDimension/self.resizedDimension)
+        y = self.encoder(F.avg_pool2d(variabled, (window,window)))
         if insertBatch: y = y[0,:]
         return y
 

@@ -1,5 +1,6 @@
 open Core
 
+open Draw
 open Physics
 open Pregex
 open Tower
