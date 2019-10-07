@@ -75,13 +75,14 @@ def makeSupervisedTasks(): # TODO, LT, make these tasks.
 	if True:
 		# to test each primitive and rule
 		programs = [
+		_tform(_line, _makeAffine(x=0.25)),
 		_line + _circle + _tform(_circle, _makeAffine(x=1.0)),
 		_tform(_line, _makeAffine(x=1.0)),
 		_tform(_line, _makeAffine(x=1.0, theta=pi/2)),
 		_tform(_line, _makeAffine(x=1.0, s=2.0)),
 		_tform(_line, _makeAffine(x=1.0, s=0.5, order="rst")),
 		_repeat(_line, 2, _makeAffine(x=1.0)),
-		_repeat(connect(_tform(_circle, _makeAffine(s=1.5)), _line), 2, _makeAffine(theta=pi/2))		
+		_repeat(_connect(_tform(_circle, _makeAffine(s=1.5)), _line), 2, _makeAffine(theta=pi/2))		
 		]
 
 	if False:
