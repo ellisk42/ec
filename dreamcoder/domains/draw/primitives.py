@@ -110,7 +110,8 @@ _line = [np.array([(0., 0.), (1., 0.)])] # --- unit line, from 0 to 1
 _circle = [np.array([(0.5*math.cos(theta), 0.5*math.sin(theta)) for theta in np.linspace(0., 2.*math.pi, num=30)])] # --- circle, centered at 0, diameter 1
 
 # --- regular polygons
-if False:
+def polygon(N=3):
+    # e.g, if N 3, then this is shortcut to make triangle. could be done entirely with rest of primitives in library. 
     N = range(3,7)
     y = [(1/2)*(1)*(1/tan(pi/n)) for n in N]
     [plot(repeat(transform(line, x=-0.5, y=y[i]), n, makeAffine(theta=2*pi/n))) for i,n in enumerate(N)]
