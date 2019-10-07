@@ -2,8 +2,6 @@
 import math
 import numpy as np
 import matplotlib
-from matplotlib import pyplot as plt
-from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from scipy.ndimage import gaussian_filter as gf
 from skimage import color
 from scipy.ndimage import gaussian_filter as gf
@@ -11,7 +9,10 @@ import cairo
 from math import tan
 from math import pi
 
-matplotlib.use('TkAgg')
+if False:
+    from matplotlib import pyplot as plt
+    from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+    matplotlib.use('TkAgg')
 
 XYLIM = 3. # i.e., -3 to 3.
 
