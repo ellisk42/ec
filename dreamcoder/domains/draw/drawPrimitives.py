@@ -1,9 +1,7 @@
 # =========== [NEWER VERSION, NOT USING MATPLOTLIB]
 import math
 import numpy as np
-import matplotlib
-from matplotlib import pyplot as plt
-from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+# import matplotlibplt
 from scipy.ndimage import gaussian_filter as gf
 from skimage import color
 from scipy.ndimage import gaussian_filter as gf
@@ -16,8 +14,6 @@ from dreamcoder.type import baseType, arrow, tmaybe, t0, t1, t2
 
 from dreamcoder.domains.draw.primitives import *
 from dreamcoder.domains.draw.primitives import _makeAffine, _tform, _reflect, _repeat, _connect, _line, _circle
-
-matplotlib.use('TkAgg')
 
 # ======= DEFINE ALL PRIMITIVES
 tstroke = baseType("tstroke")
