@@ -71,20 +71,20 @@ def makeSupervisedTasks(): # TODO, LT, make these tasks.
     # everything = arches + simpleLoops + Bridges + archesStacks + aqueducts + offsetArches + pyramids + bricks + staircase2 + staircase1 + compositions
     alltasks = []
 
-    # programs = [_line + _circle,
-    # _tform(_line, _makeAffine(x=1.0)),
-    # _tform(_line, _makeAffine(x=1.0, theta=pi/2)),
-    # _tform(_line, _makeAffine(x=1.5)),
-    # _tform(_line, _makeAffine(x=0.5)),
-    # _tform(_line, _makeAffine(x=2.0)),
-    # _tform(_circle, _makeAffine(x=1.5)),
-    # _repeat(_line, 2, _makeAffine(x=1.0)),
-    # _tform(_line, _makeAffine(x=2.)) + _tform(_circle, _makeAffine(x=1.)),
-    # _line + _tform(_line, _makeAffine(x=2.)) + _tform(_circle, _makeAffine(x=1.)),
-    # _repeat(_line+_tform(_circle, _makeAffine(x=1.)), 3, _makeAffine(theta=math.pi/2)),
-    # ]
+    programs = [_line + _circle,
+    _tform(_line, _makeAffine(x=1.0)),
+    _tform(_line, _makeAffine(x=1.0, theta=pi/2)),
+    _tform(_line, _makeAffine(x=1.5)),
+    _tform(_line, _makeAffine(x=0.5)),
+    _tform(_line, _makeAffine(x=2.0)),
+    _tform(_circle, _makeAffine(x=1.5)),
+    _repeat(_line, 2, _makeAffine(x=1.0)),
+    _tform(_line, _makeAffine(x=2.)) + _tform(_circle, _makeAffine(x=1.)),
+    _line + _tform(_line, _makeAffine(x=2.)) + _tform(_circle, _makeAffine(x=1.)),
+    _repeat(_line+_tform(_circle, _makeAffine(x=1.)), 3, _makeAffine(theta=math.pi/2)),
+    ]
 
-    programs = []
+    # programs = []
 
     # -- add some programs used in behaivor
     if False:
@@ -94,10 +94,11 @@ def makeSupervisedTasks(): # TODO, LT, make these tasks.
         programs.extend(P[:50])
 
     # -- add some programs used in behavior
-    libname = "dreamcoder/domains/draw/S8"
-    with open("{}.pkl".format(libname), 'rb') as fp:
-        P = pickle.load(fp)
-    programs.extend(P[:10])
+    if False:
+        libname = "dreamcoder/domains/draw/S8"
+        with open("{}.pkl".format(libname), 'rb') as fp:
+            P = pickle.load(fp)
+        programs.extend(P[:10])
 
 
     for i, p in enumerate(programs):
