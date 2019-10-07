@@ -72,7 +72,7 @@ def makeSupervisedTasks(): # TODO, LT, make these tasks.
 	alltasks = []
 	programs = []
 
-	if True:
+	if False:
 		# to test each primitive and rule
 		programs = [
 		_tform(_line, _makeAffine(x=0.25)),
@@ -106,7 +106,7 @@ def makeSupervisedTasks(): # TODO, LT, make these tasks.
 			P = pickle.load(fp)
 		programs.extend(P[:50])
 
-	if False:
+	if True:
 		libname = "dreamcoder/domains/draw/trainprogs/S8"
 		with open("{}.pkl".format(libname), 'rb') as fp:
 			P = pickle.load(fp)

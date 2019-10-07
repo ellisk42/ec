@@ -112,9 +112,9 @@ _circle = [np.array([(0.5*math.cos(theta), 0.5*math.sin(theta)) for theta in np.
 # --- regular polygons
 def polygon(N=3):
     # e.g, if N 3, then this is shortcut to make triangle. could be done entirely with rest of primitives in library. 
-    N = range(3,7)
+    # N = range(3,7)
     y = [(1/2)*(1)*(1/tan(pi/n)) for n in N]
-    [plot(repeat(transform(line, x=-0.5, y=y[i]), n, makeAffine(theta=2*pi/n))) for i,n in enumerate(N)]
+    return repeat(transform(line, x=-0.5, y=y), N, makeAffine(theta=2*pi/N))
 
 # ============= NOT PRIMITIVES.
 def transform(p, s=1., theta=0., x=0., y=0., order="trs"):
