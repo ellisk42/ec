@@ -18,7 +18,7 @@ XYLIM = 3. # i.e., -3 to 3.
 
 SCALES = [0.5, 1., 1.25, 1.5, 2., 2.5, 3]
 NPOLY = range(3,7) # range of regular polyogns allowed.
-DISTS = [-2., -1.5, -1., -0.5, 0, 0.5, 1., 1.5, 2.] + [(1/2)*(1)*(1/tan(pi/n)) for n in range(3, 7)] # for making regular polygons
+DISTS = [-2., -1.5, -1., -0.5, -0.25, 0, 0.25, 0.5, 1., 1.5, 2.] + [(1/2)*(1)*(1/tan(pi/n)) for n in range(3, 7)] # for making regular polygons
 THETAS = [j*(2*pi/8) for j in range(8)] + [-2*pi/6] + [-2*pi/12]
 
 
