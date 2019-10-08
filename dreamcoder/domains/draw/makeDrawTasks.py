@@ -109,6 +109,7 @@ def makeSupervisedTasks(): # TODO, LT, make these tasks.
 	if True:
 		ll = transform(_line, theta=pi/2, s=4, y=-2.),
 		programs.extend([
+			_line,
 			transform(_line, s=4),
 			transform(_line, y=-2.),
 			transform(_line, theta=pi/2),
