@@ -107,7 +107,7 @@ def makeSupervisedTasks(): # TODO, LT, make these tasks.
 		programs.extend(P[:50])
 
 	if True:
-		ll = transform(_line, theta=pi/2, s=4, y=-2.),
+		ll = transform(_line, theta=pi/2, s=4, y=-2.)
 		programs.extend([
 			_line,
 			ll,
@@ -115,7 +115,7 @@ def makeSupervisedTasks(): # TODO, LT, make these tasks.
 			transform(_line, y=-2.),
 			transform(_line, theta=pi/2),
 			transform(_line, theta=pi/2, y=-2.),
-			transform(_line, theta=pi/2, s=4, y=-2.)]			
+			transform(_line, theta=pi/2, s=4, y=-2.)]
 			)
 		for p in programs:
 			print(p)
