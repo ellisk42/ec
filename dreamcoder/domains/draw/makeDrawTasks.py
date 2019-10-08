@@ -110,13 +110,12 @@ def makeSupervisedTasks(): # TODO, LT, make these tasks.
 		ll = transform(_line, theta=pi/2, s=4, y=-2.),
 		programs.extend([
 			_line,
+			ll,
 			transform(_line, s=4),
 			transform(_line, y=-2.),
 			transform(_line, theta=pi/2),
 			transform(_line, theta=pi/2, y=-2.),
-			transform(_line, theta=pi/2, s=4, y=-2.),
-			ll,
-			_connect(ll, transform(ll, x=1))]			
+			transform(_line, theta=pi/2, s=4, y=-2.)]			
 			)
 		libname = "dreamcoder/domains/draw/trainprogs/S8_shaping"
 		with open("{}.pkl".format(libname), 'rb') as fp:
