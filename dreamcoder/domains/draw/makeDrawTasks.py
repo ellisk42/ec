@@ -124,7 +124,7 @@ def makeSupervisedTasks(): # TODO, LT, make these tasks.
 			print(p)
 			print('--')
 
-	if True:
+	if False:
 		libname = "dreamcoder/domains/draw/trainprogs/S8_shaping"
 		with open("{}.pkl".format(libname), 'rb') as fp:
 			P = pickle.load(fp)
@@ -135,7 +135,7 @@ def makeSupervisedTasks(): # TODO, LT, make these tasks.
 			P = pickle.load(fp)
 		programs.extend(P)
 
-	if False:
+	if True:
 		libname = "dreamcoder/domains/draw/trainprogs/S9_shaping"
 		with open("{}.pkl".format(libname), 'rb') as fp:
 			P = pickle.load(fp)
