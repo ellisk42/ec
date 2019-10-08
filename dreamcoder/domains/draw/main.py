@@ -47,7 +47,9 @@ def main_dummy(N=25):
 
 def main(arguments):
 	g0 = Grammar.uniform(primitives)
-
+  print("Primitives:")
+  print(primitives)
+  
 	train = makeSupervisedTasks()
 
 	timestamp = datetime.datetime.now().isoformat()
