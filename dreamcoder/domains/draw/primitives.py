@@ -27,7 +27,8 @@ elif PRIMVERSION=="S8_9":
     SCALES = [2., 4.]
     NPOLY = range(3,7) # range of regular polyogns allowed.
     DISTS = [-2.5, -2., -1.5, -1., -0.5, -0.25, 0, 0.25, 0.5, 1., 1.5, 2., 2.5, 3]
-    THETAS = [pi/2]
+    # THETAS = [pi/2]
+    THETAS = [j*(2*pi/8) for j in range(8)]
     ORDERS = ["rts", "trs"]
 
 
