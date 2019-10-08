@@ -124,7 +124,7 @@ def makeSupervisedTasks(): # TODO, LT, make these tasks.
 		for p in programs:
 			print(p)
 			print('--')
-			
+
 		libname = "dreamcoder/domains/draw/trainprogs/S8_shaping"
 		with open("{}.pkl".format(libname), 'rb') as fp:
 			P = pickle.load(fp)
