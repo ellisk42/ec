@@ -13,18 +13,18 @@ import datetime
 import os
 
 class DrawCNN(ImageFeatureExtractor):
-        special = "draw"
-        def __init__(self, tasks, testingTasks=[], cuda=False):
-                super(DrawCNN, self).__init__(inputImageDimension=128,
-                                              resizedDimension=64,
-                                              cuda=cuda,
-                                              channels=1)
-                print("output dimensionality",self.outputDimensionality)
-        def taskOfProgram(self, p, t):
-                return SupervisedDraw("dream", p.evaluate([]))
+				special = "draw"
+				def __init__(self, tasks, testingTasks=[], cuda=False):
+								super(DrawCNN, self).__init__(inputImageDimension=128,
+																							resizedDimension=64,
+																							cuda=cuda,
+																							channels=1)
+								print("output dimensionality",self.outputDimensionality)
+				def taskOfProgram(self, p, t):
+								return SupervisedDraw("dream", p.evaluate([]))
 
-        def featuresOfTask(self, t):
-                return self(t.rendered_strokes)
+				def featuresOfTask(self, t):
+								return self(t.rendered_strokes)
 
 g0 = Grammar.uniform(primitives)
 
@@ -37,19 +37,19 @@ def dreamFromGrammar(g=g0, directory = "", N=25):
 	# drawDrawings(*programs, filenames)
 
 def main_dummy(N=25):
-        ps = dreamFromGrammar(N=N)
-        for n,p in enumerate(ps):
-                print(n,p)
-                a = p.evaluate([])
-                savefig(a, f"/tmp/draw{n}.png")
-                # a.savefig(f"/tmp/draw{n}.png")
+				ps = dreamFromGrammar(N=N)
+				for n,p in enumerate(ps):
+								print(n,p)
+								a = p.evaluate([])
+								savefig(a, f"/tmp/draw{n}.png")
+								# a.savefig(f"/tmp/draw{n}.png")
 
 
 def main(arguments):
 	g0 = Grammar.uniform(primitives)
-  print("Primitives:")
-  print(primitives)
-  
+	print("Primitives:")
+	print(primitives)
+	
 	train = makeSupervisedTasks()
 
 	timestamp = datetime.datetime.now().isoformat()
@@ -59,9 +59,9 @@ def main(arguments):
 	os.system(f"mkdir -p {outputDirectory}")
 	arguments["featureExtractor"] = DrawCNN
 	generator = ecIterator(g0, train,
-                               outputPrefix="%s/draw"%outputDirectory,
-			       evaluationTimeout=evaluationTimeout,
-                               **arguments) # 
+															 outputPrefix="%s/draw"%outputDirectory,
+						 evaluationTimeout=evaluationTimeout,
+															 **arguments) # 
 
 	for result in generator:
 		continue
