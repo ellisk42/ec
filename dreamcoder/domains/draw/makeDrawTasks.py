@@ -111,7 +111,6 @@ def makeSupervisedTasks(): # TODO, LT, make these tasks.
 		ll = transform(_line, theta=pi/2, s=4, y=-2.)
 		programs.extend([
 			_line,
-			transform(_line, s=0.5),
 			transform(_circle, s=2),
 			transform(_circle, theta=pi/2),
 			transform(_line, theta=pi/2),
@@ -125,16 +124,18 @@ def makeSupervisedTasks(): # TODO, LT, make these tasks.
 			print(p)
 			print('--')
 
+	if True:
 		libname = "dreamcoder/domains/draw/trainprogs/S8_shaping"
 		with open("{}.pkl".format(libname), 'rb') as fp:
 			P = pickle.load(fp)
 		programs.extend(P)
 
-	if True:
 		libname = "dreamcoder/domains/draw/trainprogs/S8"
 		with open("{}.pkl".format(libname), 'rb') as fp:
 			P = pickle.load(fp)
 		programs.extend(P)
+
+	
 
 	for i, p in enumerate(programs):
 		name = "task{}".format(i)
