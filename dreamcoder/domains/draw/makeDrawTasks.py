@@ -56,6 +56,7 @@ class SupervisedDraw(Task):
 			# l = loss(p1, p2, smoothing=2) 
 			l = loss_pxl(self.rendered_strokes, e.rendering)
 
+			print(l)
 			if l>0.1:
 				return NEGATIVEINFINITY
 			else:
