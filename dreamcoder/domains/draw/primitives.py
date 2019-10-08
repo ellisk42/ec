@@ -9,8 +9,8 @@ import cairo
 from math import tan
 from math import pi
 
+from matplotlib import pyplot as plt
 if False:
-    from matplotlib import pyplot as plt
     from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
     matplotlib.use('TkAgg')
 
