@@ -1446,7 +1446,7 @@ class ImageFeatureExtractor(nn.Module):
                  channels=1):
         super(ImageFeatureExtractor, self).__init__()
 
-        self.cuda = cuda
+        self.use_cuda = cuda
         
         self.resizedDimension = resizedDimension or inputImageDimension
         self.inputImageDimension = inputImageDimension
@@ -1476,7 +1476,7 @@ class ImageFeatureExtractor(nn.Module):
         outputImageDimensionality = self.resizedDimension/(2**(len(self.encoder) - 1))
         self.outputDimensionality = int(z_dim*outputImageDimensionality*outputImageDimensionality)
 
-        # if cuda: self.cuda()
+        if cuda: self.cuda()
 
     def forward(self, v):
         """1 channel: v: BxWxW or v:WxW
@@ -1500,7 +1500,7 @@ class ImageFeatureExtractor(nn.Module):
 
         if insertBatch: variabled = torch.unsqueeze(variabled, 0)
 
-        if self.cuda: variabled = variabled.cuda()
+        if self.use_cuda: variabled = variabled.cuda()
         window = int(self.inputImageDimension/self.resizedDimension)
         y = self.encoder(F.avg_pool2d(variabled, (window,window)))
         if insertBatch: y = y[0,:]

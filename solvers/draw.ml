@@ -115,8 +115,22 @@ ignore(primitive "transform" (tstroke @> tmatrix @> tstroke) transform);;
 ignore(primitive "None" (tmaybe t0) None);;
 ignore(primitive "Some" (t0 @> tmaybe t0) (fun x -> Some(x)));;
 
-
+(* 
 ([-2.; -1.5; -1.; -0.5; -0.25; 0.; 0.25; 0.5; 1.; 1.5; 2.]@
+ (List.range ~stop:`exclusive 3 7 |> List.map ~f:(fun n ->
+      let n = Float.of_int n in
+    0.5/.(tan (pi/.n)))))|> List.iteri ~f:(fun i d ->
+    ignore(primitive (Printf.sprintf "dist%d" i) tdistance d));;
+[0.5; 1.; 1.25; 1.5; 2.; 2.5; 3.; 4.] |> List.iteri ~f:(fun i d ->
+    ignore(primitive (Printf.sprintf "scale%d" i) tscale d));;
+["trs"; "tsr"; "rts"; "rst"; "srt"; "str"] |> List.iter ~f:(fun o ->
+    ignore(primitive o torder o));;
+[0;1;2;3;4;5;6;] |> List.iter ~f:(fun n ->
+    ignore(primitive (Printf.sprintf "rep%d" n) trep n));;
+((List.range ~stop:`exclusive 0 8 |> List.map ~f:(fun j -> (Float.of_int j)*.2.*.pi/.8.)) @ [-.2.*.pi/.6.;-.2.*.pi/.12.]) |> List.iteri ~f:(fun i t ->
+    ignore(primitive (Printf.sprintf "angle%d" i) tangle t));; *)
+
+([-2.5; -2.; -1.5; -1.; -0.5; -0.25; 0.; 0.25; 0.5; 1.; 1.5; 2.; 2.5; 3.]@
  (List.range ~stop:`exclusive 3 7 |> List.map ~f:(fun n ->
       let n = Float.of_int n in
     0.5/.(tan (pi/.n)))))|> List.iteri ~f:(fun i d ->
