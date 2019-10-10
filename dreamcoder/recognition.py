@@ -1476,7 +1476,7 @@ class ImageFeatureExtractor(nn.Module):
         outputImageDimensionality = self.resizedDimension/(2**(len(self.encoder) - 1))
         self.outputDimensionality = int(z_dim*outputImageDimensionality*outputImageDimensionality)
 
-        if cuda: self.cuda()
+        # if cuda: self.cuda()
 
     def forward(self, v):
         """1 channel: v: BxWxW or v:WxW
