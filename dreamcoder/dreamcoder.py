@@ -173,7 +173,9 @@ def ecIterator(grammar, tasks,
                storeTaskMetrics=False,
                rewriteTaskMetrics=True,
                auxiliaryLoss=False,
-               custom_wake_generative=None):
+               custom_wake_generative=None,
+               trainset="S8full",
+               doshaping=True):
     if enumerationTimeout is None:
         eprint(
             "Please specify an enumeration timeout:",
