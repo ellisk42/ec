@@ -68,8 +68,8 @@ def makeSupervisedTasks(trainset="S8full", doshaping="True"): # TODO, LT, make t
 	#                           "((for i %d v) (r 4) (for i %d v) (l 2) h)"%(n,n))
 	#           for n in range(1,9)
 	# ]
-					 
- 	print("DRAW TASK training set: {}".format(trainset))
+
+	print("DRAW TASK training set: {}".format(trainset))
 	# everything = arches + simpleLoops + Bridges + archesStacks + aqueducts + offsetArches + pyramids + bricks + staircase2 + staircase1 + compositions
 	alltasks = []
 	programs = []
@@ -145,7 +145,7 @@ def makeSupervisedTasks(trainset="S8full", doshaping="True"): # TODO, LT, make t
 			P = pickle.load(fp)
 		programs.extend(P)
 
-	if trainset==["S9full", "S9"]
+	if trainset in ["S9full", "S9"]:
 		libname = "dreamcoder/domains/draw/trainprogs/S9"
 		with open("{}.pkl".format(libname), 'rb') as fp:
 			P = pickle.load(fp)
