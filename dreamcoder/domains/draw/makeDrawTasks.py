@@ -70,6 +70,7 @@ def makeSupervisedTasks(trainset="S8full", doshaping="True"): # TODO, LT, make t
 	# ]
 
 	print("DRAW TASK training set: {}".format(trainset))
+	print("DO SHAPING: {}".format(doshaping))
 	# everything = arches + simpleLoops + Bridges + archesStacks + aqueducts + offsetArches + pyramids + bricks + staircase2 + staircase1 + compositions
 	alltasks = []
 	programs = []
@@ -123,9 +124,6 @@ def makeSupervisedTasks(trainset="S8full", doshaping="True"): # TODO, LT, make t
 			transform(_line, theta=pi/2, y=-2.),
 			transform(_line, theta=pi/2, s=4, y=-2.)]
 			)
-		for p in programs:
-			print(p)
-			print('--')
 
 	if trainset=="S8full":
 		libname = "dreamcoder/domains/draw/trainprogs/S8_shaping"
