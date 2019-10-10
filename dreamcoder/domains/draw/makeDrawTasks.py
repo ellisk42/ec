@@ -63,12 +63,13 @@ class SupervisedDraw(Task):
 				return 0.0
 
 	
-def makeSupervisedTasks(): # TODO, LT, make these tasks.
+def makeSupervisedTasks(trainset="S8full", doshaping="True"): # TODO, LT, make these tasks.
 	# arches = [SupervisedTower("arch leg %d"%n,
 	#                           "((for i %d v) (r 4) (for i %d v) (l 2) h)"%(n,n))
 	#           for n in range(1,9)
 	# ]
 					 
+ 	print("DRAW TASK training set: {}".format(trainset))
 	# everything = arches + simpleLoops + Bridges + archesStacks + aqueducts + offsetArches + pyramids + bricks + staircase2 + staircase1 + compositions
 	alltasks = []
 	programs = []
@@ -107,7 +108,9 @@ def makeSupervisedTasks(): # TODO, LT, make these tasks.
 			P = pickle.load(fp)
 		programs.extend(P[:50])
 
-	if True:
+	# ===== train on basic stimuli like lines
+	if doshaping:
+		print("INCLUDING SHAPING STIMULI")
 		ll = transform(_line, theta=pi/2, s=4, y=-2.)
 		programs.extend([
 			_line,
@@ -124,23 +127,25 @@ def makeSupervisedTasks(): # TODO, LT, make these tasks.
 			print(p)
 			print('--')
 
-	if False:
+	if trainset=="S8full":
 		libname = "dreamcoder/domains/draw/trainprogs/S8_shaping"
 		with open("{}.pkl".format(libname), 'rb') as fp:
 			P = pickle.load(fp)
 		programs.extend(P)
 
+	if trainset in ["S8full", "S8"]:
 		libname = "dreamcoder/domains/draw/trainprogs/S8"
 		with open("{}.pkl".format(libname), 'rb') as fp:
 			P = pickle.load(fp)
 		programs.extend(P)
 
-	if True:
+	if trainset=="S9full":
 		libname = "dreamcoder/domains/draw/trainprogs/S9_shaping"
 		with open("{}.pkl".format(libname), 'rb') as fp:
 			P = pickle.load(fp)
 		programs.extend(P)
 
+	if trainset==["S9full", "S9"]
 		libname = "dreamcoder/domains/draw/trainprogs/S9"
 		with open("{}.pkl".format(libname), 'rb') as fp:
 			P = pickle.load(fp)

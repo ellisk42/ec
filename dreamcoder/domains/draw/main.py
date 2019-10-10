@@ -50,7 +50,7 @@ def main(arguments):
 	print("Primitives:")
 	print(primitives)
 	
-	train = makeSupervisedTasks()
+	train = makeSupervisedTasks(trainset=arguments["trainset"], doshaping=arguments["doshaping"])
 
 	timestamp = datetime.datetime.now().isoformat()
 	outputDirectory = "experimentOutputs/draw/%s"%timestamp

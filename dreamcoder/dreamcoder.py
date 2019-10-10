@@ -939,6 +939,18 @@ def commandlineArguments(_=None,
     parser.add_argument("--countParameters",
                         help="Load a checkpoint then report how many parameters are in the recognition model.",
                         default=None, type=str)
+    parser.add_argument("--trainset",
+        dest="trainset",
+        help="for draw tasks, which training set to use",
+        type=str,
+        default="S8")
+    parser.add_argument("--doshaping",
+        dest="doshaping",
+        help="for draw tasks, whether to include a nunch of shaping stimuli (e.g., some lines and stuff)",
+        default=False,
+        action="store_true")
+
+
     parser.set_defaults(useRecognitionModel=useRecognitionModel,
                         useDSL=True,
                         featureExtractor=featureExtractor,
