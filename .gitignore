@@ -29,3 +29,4 @@ sklearn-container.img
 venv/
 tests/out/
 .DS_Store
+slurm*
