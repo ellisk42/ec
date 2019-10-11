@@ -72,7 +72,6 @@ def makeSupervisedTasks(trainset="S8full", doshaping="True"): # TODO, LT, make t
 	print("DRAW TASK training set: {}".format(trainset))
 	print("DO SHAPING: {}".format(doshaping))
 	# everything = arches + simpleLoops + Bridges + archesStacks + aqueducts + offsetArches + pyramids + bricks + staircase2 + staircase1 + compositions
-	alltasks = []
 	programs = []
 
 	if False:
@@ -114,9 +113,6 @@ def makeSupervisedTasks(trainset="S8full", doshaping="True"): # TODO, LT, make t
 		print("INCLUDING SHAPING STIMULI")
 		ll = transform(_line, theta=pi/2, s=4, y=-2.)
 		programs.extend([
-			_line,
-			transform(_circle, s=2),
-			transform(_circle, theta=pi/2),
 			transform(_line, theta=pi/2),
 			transform(_line, s=4),
 			transform(_line, y=-2.),
@@ -149,10 +145,44 @@ def makeSupervisedTasks(trainset="S8full", doshaping="True"): # TODO, LT, make t
 			P = pickle.load(fp)
 		programs.extend(P)
 
+	if trainset=="S8_nojitter":
+		libname = "dreamcoder/domains/draw/trainprogs/S8_nojitter"
+		with open("{}.pkl".format(libname), 'rb') as fp:
+			P = pickle.load(fp)
+		programs.extend(P)
 
+	if trainset=="S9_nojitter":
+		libname = "dreamcoder/domains/draw/trainprogs/S9_nojitter"
+		with open("{}.pkl".format(libname), 'rb') as fp:
+			P = pickle.load(fp)
+		programs.extend(P)
+
+
+	alltasks = []
 	for i, p in enumerate(programs):
 		name = "task{}".format(i)
 		alltasks.append(SupervisedDraw(name, p))
 
-	return alltasks
+	# ==== make test tasks?
+	programs_test = []
+	testtasks = []
+	if trainset in ["S8full", "S8", "S9full", "S9", "S8_nojitter", "S9_nojitter"]:
+		
+		libname = "dreamcoder/domains/draw/trainprogs/S8_test"
+		with open("{}.pkl".format(libname), 'rb') as fp:
+			P = pickle.load(fp)
+		programs_test.extend(P)	
+
+		libname = "dreamcoder/domains/draw/trainprogs/S9_test"
+		with open("{}.pkl".format(libname), 'rb') as fp:
+			P = pickle.load(fp)
+		programs_test.extend(P)	
+
+		testtasks = []
+		for i, p in enumerate(programs_test):
+			name = "task{}".format(i)
+			testtasks.append(SupervisedDraw(name, p))
+
+
+	return alltasks, testtasks
 

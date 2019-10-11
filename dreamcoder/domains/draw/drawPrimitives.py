@@ -50,7 +50,7 @@ p4 = [Primitive("angle{}".format(i), tangle, j) for i, j in enumerate(THETAS)]
 # p5 = [Primitive("angle{}".format(i), tangle, (j+1)*2*math.pi/3) for j,i in enumerate(range(NANGLE, NANGLE+2))]
 p5 = []
 p6 = [Primitive(j, ttrorder, j) for j in ORDERS]
-p7 = [Primitive("rep{}".format(i), trep, j) for i, j in enumerate(range(7))]
+p7 = [Primitive("rep{}".format(i), trep, j+1) for i, j in enumerate(range(7))]
 
 
 

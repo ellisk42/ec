@@ -50,7 +50,7 @@ def main(arguments):
 	print("Primitives:")
 	print(primitives)
 	
-	train = makeSupervisedTasks(trainset=arguments["trainset"], doshaping=arguments["doshaping"])
+	train, test = makeSupervisedTasks(trainset=arguments["trainset"], doshaping=arguments["doshaping"])
 
 	timestamp = datetime.datetime.now().isoformat()
 	outputDirectory = "experimentOutputs/draw/%s"%timestamp
@@ -58,10 +58,16 @@ def main(arguments):
 
 	os.system(f"mkdir -p {outputDirectory}")
 	arguments["featureExtractor"] = DrawCNN
-	generator = ecIterator(g0, train,
-															 outputPrefix="%s/draw"%outputDirectory,
-						 evaluationTimeout=evaluationTimeout,
-															 **arguments) # 
+	if test:
+		generator = ecIterator(g0, train, testingTasks=test,
+			outputPrefix="%s/draw"%outputDirectory,
+			evaluationTimeout=evaluationTimeout,
+			**arguments) # 
+	else:
+		generator = ecIterator(g0, train,
+			outputPrefix="%s/draw"%outputDirectory,
+			evaluationTimeout=evaluationTimeout,
+			**arguments) # 
 
 	for result in generator:
 		continue
