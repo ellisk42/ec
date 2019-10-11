@@ -149,12 +149,23 @@ def makeSupervisedTasks(trainset="S8full", doshaping="True"): # TODO, LT, make t
 		programs.extend(P)
 
 	if trainset=="S8_nojitter":
+		libname = "dreamcoder/domains/draw/trainprogs/S8_nojitter_shaping"
+		with open("{}.pkl".format(libname), 'rb') as fp:
+			P = pickle.load(fp)
+		programs.extend(P)
+
 		libname = "dreamcoder/domains/draw/trainprogs/S8_nojitter"
 		with open("{}.pkl".format(libname), 'rb') as fp:
 			P = pickle.load(fp)
 		programs.extend(P)
 
+
 	if trainset=="S9_nojitter":
+		libname = "dreamcoder/domains/draw/trainprogs/S9_nojitter_shaping"
+		with open("{}.pkl".format(libname), 'rb') as fp:
+			P = pickle.load(fp)
+		programs.extend(P)
+
 		libname = "dreamcoder/domains/draw/trainprogs/S9_nojitter"
 		with open("{}.pkl".format(libname), 'rb') as fp:
 			P = pickle.load(fp)
