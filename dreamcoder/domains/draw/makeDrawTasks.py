@@ -113,6 +113,9 @@ def makeSupervisedTasks(trainset="S8full", doshaping="True"): # TODO, LT, make t
 		print("INCLUDING SHAPING STIMULI")
 		ll = transform(_line, theta=pi/2, s=4, y=-2.)
 		programs.extend([
+			_line,
+			transform(_circle, s=2.),
+			transform(_circle, theta=pi/2),
 			transform(_line, theta=pi/2),
 			transform(_line, s=4),
 			transform(_line, y=-2.),
@@ -178,7 +181,17 @@ def makeSupervisedTasks(trainset="S8full", doshaping="True"): # TODO, LT, make t
 			P = pickle.load(fp)
 		programs_test.extend(P)	
 
-		testtasks = []
+		libname = "dreamcoder/domains/draw/trainprogs/S8_nojitter_test"
+		with open("{}.pkl".format(libname), 'rb') as fp:
+			P = pickle.load(fp)
+		programs_test.extend(P)	
+
+		libname = "dreamcoder/domains/draw/trainprogs/S9_nojitter_test"
+		with open("{}.pkl".format(libname), 'rb') as fp:
+			P = pickle.load(fp)
+		programs_test.extend(P)	
+
+	if programs_test:
 		for i, p in enumerate(programs_test):
 			name = "task{}".format(i)
 			testtasks.append(SupervisedDraw(name, p))
