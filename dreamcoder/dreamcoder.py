@@ -133,6 +133,7 @@ def explorationCompression(*arguments, **keywords):
 
 def ecIterator(grammar, tasks,
                _=None,
+               playful=False,
                useDSL=True,
                noConsolidation=False,
                mask=False,
@@ -233,7 +234,7 @@ def ecIterator(grammar, tasks,
             "compressor",
             "custom_wake_generative"} and v is not None}
     if not useRecognitionModel:
-        for k in {"helmholtzRatio", "recognitionTimeout", "biasOptimal", "mask",
+        for k in {"helmholtzRatio", "recognitionTimeout", "biasOptimal", "mask", "playful",
                   "contextual", "matrixRank", "reuseRecognition", "auxiliaryLoss", "ensembleSize"}:
             if k in parameters: del parameters[k]
     else: del parameters["useRecognitionModel"];
@@ -244,6 +245,7 @@ def ecIterator(grammar, tasks,
             del parameters["mask"]
     if not mask and 'mask' in parameters: del parameters["mask"]
     if not auxiliaryLoss and 'auxiliaryLoss' in parameters: del parameters['auxiliaryLoss']
+    if not playful and 'playful' in parameters: del parameters['playful']
     if not useDSL:
         for k in {"structurePenalty", "pseudoCounts", "aic"}:
             del parameters[k]
@@ -440,7 +442,7 @@ def ecIterator(grammar, tasks,
                                activation=activation, contextual=contextual, biasOptimal=biasOptimal,
                                previousRecognitionModel=previousRecognitionModel, matrixRank=matrixRank,
                                timeout=recognitionTimeout, evaluationTimeout=evaluationTimeout,
-                               enumerationTimeout=enumerationTimeout,
+                               enumerationTimeout=enumerationTimeout, playful=playful,
                                helmholtzRatio=thisRatio, helmholtzFrontiers=helmholtzFrontiers(),
                                auxiliaryLoss=auxiliaryLoss, cuda=cuda, CPUs=CPUs, solver=solver,
                                recognitionSteps=recognitionSteps, maximumFrontier=maximumFrontier)
@@ -558,7 +560,7 @@ def default_wake_generative(grammar, tasks,
 
 def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFrontiers, _=None,
                       ensembleSize=1, featureExtractor=None, matrixRank=None, mask=False,
-                      activation=None, contextual=True, biasOptimal=True,
+                      activation=None, contextual=True, biasOptimal=True, playful=False,
                       previousRecognitionModel=None, recognitionSteps=None,
                       timeout=None, enumerationTimeout=None, evaluationTimeout=None,
                       helmholtzRatio=None, helmholtzFrontiers=None, maximumFrontier=None,
@@ -572,6 +574,7 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
                                     rank=matrixRank,
                                     activation=activation,
                                     cuda=cuda,
+                                    playful=playful,
                                     contextual=contextual,
                                     previousRecognitionModel=previousRecognitionModel,
                                     id=i) for i in range(ensembleSize)]
@@ -932,6 +935,9 @@ def commandlineArguments(_=None,
                         action="store_true", default=False,
                         help="Add auxiliary classification loss to recognition network training",
                         dest="auxiliaryLoss")
+    parser.add_argument("--playful",
+                        action="store_true", default=False,
+                        help="Add playful losses to recognition network training")
     parser.add_argument("--addFullTaskMetrics",
                         help="Only to be used in conjunction with --resume. Loads checkpoint, solves both testing and training tasks, stores frontiers, solve times, and task metrics, and then dies.",
                         default=False,

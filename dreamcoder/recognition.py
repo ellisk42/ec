@@ -617,7 +617,7 @@ class ContextualGrammarNetwork(nn.Module):
 
 class RecognitionModel(nn.Module):
     def __init__(self,featureExtractor,grammar,hidden=[64],activation="tanh",
-                 rank=None,contextual=False,mask=False,
+                 rank=None,contextual=False,mask=False,playful=False,
                  cuda=False,
                  previousRecognitionModel=None,
                  id=0):
@@ -625,6 +625,7 @@ class RecognitionModel(nn.Module):
         self.id = id
         self.trained=False
         self.use_cuda = cuda
+        self.playful = playful
 
         self.featureExtractor = featureExtractor
         # Sanity check - make sure that all of the parameters of the
@@ -673,6 +674,12 @@ class RecognitionModel(nn.Module):
                                               len(self.grammar.primitives))
         self._auxiliaryLoss = nn.BCEWithLogitsLoss()
 
+        self._descriptionLengthPrediction = nn.Sequential(
+            nn.Linear(self.featureExtractor.outputDimensionality, 128),
+            nn.ReLU(),
+            nn.Linear(128,1),
+            nn.Softplus())
+
         if cuda: self.cuda()
 
         if previousRecognitionModel:
@@ -697,6 +704,13 @@ class RecognitionModel(nn.Module):
         if self.use_cuda: u = u.cuda()
         al = self._auxiliaryLoss(self._auxiliaryPrediction(features), u)
         return al
+
+    def descriptionLengthLoss(self, MDL, features):
+        # if we are not learning to generate our own tasks then do not back propagate into main trunk of recognition model
+        # this is primarily for backwards compatibility,
+        # because we want "not playing" to be the same as vanilla dreamcoder
+        if not self.playful: features = features.detach()
+        return (self._descriptionLengthPrediction(features) - MDL.detach())**2        
             
     def taskEmbeddings(self, tasks):
         return {task: self.featureExtractor.featuresOfTask(task).data.cpu().numpy()
@@ -800,7 +814,7 @@ class RecognitionModel(nn.Module):
 
     def frontierKL(self, frontier, auxiliary=False, vectorized=True):
         features = self.featureExtractor.featuresOfTask(frontier.task)
-        if features is None: return None, None
+        if features is None: return None, None, None
         # Monte Carlo estimate: draw a sample from the frontier
         entry = frontier.sample()
 
@@ -808,36 +822,40 @@ class RecognitionModel(nn.Module):
 
         if not vectorized:
             g = self(features)
-            return - entry.program.logLikelihood(g), al
+            MDL = -entry.program.logLikelihood(g)
+            return MDL, al, self.descriptionLengthLoss(MDL, features)
         else:
-            features = self._MLP(features).expand(1, features.size(-1))
-            ll = self.grammarBuilder.batchedLogLikelihoods(features, [entry.program]).view(-1)
-            return -ll, al
-            
+            features2 = self._MLP(features)
+            features2 = features2.expand(1, features2.size(-1))
+            ll = self.grammarBuilder.batchedLogLikelihoods(features2, [entry.program]).view(-1)
+            MDL = -ll
+            return MDL, al, self.descriptionLengthLoss(MDL, features)            
 
     def frontierBiasOptimal(self, frontier, auxiliary=False, vectorized=True):
         if not vectorized:
             features = self.featureExtractor.featuresOfTask(frontier.task)
-            if features is None: return None, None
+            if features is None: return None, None, None
             al = self.auxiliaryLoss(frontier, features if auxiliary else features.detach())
             g = self(features)
             summaries = [entry.program for entry in frontier]
             likelihoods = torch.cat([entry.program.logLikelihood(g) + entry.logLikelihood
                                      for entry in frontier ])
             best = likelihoods.max()
-            return -best, al
+            dl = self.descriptionLengthLoss(-best, features)
+            return -best, al, dl
             
         batchSize = len(frontier.entries)
         features = self.featureExtractor.featuresOfTask(frontier.task)
-        if features is None: return None, None
+        if features is None: return None, None, None
         al = self.auxiliaryLoss(frontier, features if auxiliary else features.detach())
-        features = self._MLP(features)
-        features = features.expand(batchSize, features.size(-1))  # TODO
-        lls = self.grammarBuilder.batchedLogLikelihoods(features, [entry.program for entry in frontier])
+        features2 = self._MLP(features)
+        features2 = features2.expand(batchSize, features2.size(-1))  # TODO
+        lls = self.grammarBuilder.batchedLogLikelihoods(features2, [entry.program for entry in frontier])
         actual_ll = torch.Tensor([ entry.logLikelihood for entry in frontier])
         lls = lls + (actual_ll.cuda() if self.use_cuda else actual_ll)
         ml = -lls.max() #Beware that inputs to max change output type
-        return ml, al
+        dl = self.descriptionLengthLoss(ml, features)
+        return ml, al, dl
 
     def replaceProgramsWithLikelihoodSummaries(self, frontier):
         return Frontier(
@@ -1002,6 +1020,7 @@ class RecognitionModel(nn.Module):
         eprint("(ID=%d): Contextual? %s" % (self.id, str(self.contextual)))
         eprint("(ID=%d): Bias optimal? %s" % (self.id, str(biasOptimal)))
         eprint(f"(ID={self.id}): Aux loss? {auxLoss} (n.b. we train a 'auxiliary' classifier anyway - this controls if gradients propagate back to the future extractor)")
+        eprint(f"(ID={self.id}): playful losses? {self.playful} (n.b. we train a 'difficulty' classifier anyway - this controls if gradients propagate back to the future extractor)")
 
         # The number of Helmholtz samples that we generate at once
         # Should only affect performance and shouldn't affect anything else
@@ -1011,6 +1030,7 @@ class RecognitionModel(nn.Module):
         start = time.time()
         losses, descriptionLengths, realLosses, dreamLosses, realMDL, dreamMDL = [], [], [], [], [], []
         classificationLosses = []
+        difficultyLosses = []
         totalGradientSteps = 0
         epochs = 9999999
         for i in range(1, epochs + 1):
@@ -1032,7 +1052,7 @@ class RecognitionModel(nn.Module):
                 dreaming = random.random() < helmholtzRatio
                 if dreaming: frontier = getHelmholtz()
                 self.zero_grad()
-                loss, classificationLoss = \
+                loss, classificationLoss, difficultyLoss = \
                         self.frontierBiasOptimal(frontier, auxiliary=auxLoss, vectorized=vectorized) if biasOptimal \
                         else self.frontierKL(frontier, auxiliary=auxLoss, vectorized=vectorized)
                 if loss is None:
@@ -1046,11 +1066,12 @@ class RecognitionModel(nn.Module):
                 if is_torch_invalid(loss):
                     eprint("Invalid real-data loss!")
                 else:
-                    (loss + classificationLoss).backward()
+                    (loss + classificationLoss + difficultyLoss).backward()
                     classificationLosses.append(classificationLoss.data.item())
+                    difficultyLosses.append(difficultyLoss.data.item())
+                    losses.append(loss.data.item())
                     optimizer.step()
                     totalGradientSteps += 1
-                    losses.append(loss.data.item())
                     descriptionLengths.append(min(-e.logPrior for e in frontier))
                     if dreaming:
                         dreamLosses.append(losses[-1])
@@ -1068,16 +1089,36 @@ class RecognitionModel(nn.Module):
                 eprint("(ID=%d): " % self.id, "\tvs MDL (w/o neural net)", mean(descriptionLengths))
                 if realMDL and dreamMDL:
                     eprint("\t\t(real MDL): ", mean(realMDL), "\t(dream MDL):", mean(dreamMDL))
+                eprint("(ID=%d): " % self.id, "\tDifficulty loss:", mean(difficultyLosses))
                 eprint("(ID=%d): " % self.id, "\t%d cumulative gradient steps. %f steps/sec"%(totalGradientSteps,
                                                                        totalGradientSteps/(time.time() - start)))
                 eprint("(ID=%d): " % self.id, "\t%d-way auxiliary classification loss"%len(self.grammar.primitives),sum(classificationLosses)/len(classificationLosses))
                 losses, descriptionLengths, realLosses, dreamLosses, realMDL, dreamMDL = [], [], [], [], [], []
                 classificationLosses = []
+                difficultyLosses = []
                 gc.collect()
         
         eprint("(ID=%d): " % self.id, " Trained recognition model in",time.time() - start,"seconds")
         self.trained=True
+
+        if self.playful: self.showPlayTasks(frontiers + [getHelmholtz() for _ in range(100) ])
+        
         return self
+
+    def showPlayTasks(self, frontiers):
+        with torch.no_grad():
+            for f in frontiers:
+                eprint(f.task.name)
+                eprint("True description length under generative model:",
+                       min(-(e.logPrior+e.logLikelihood) for e in f))
+                MDL, _, difficultyLoss = \
+                        self.frontierBiasOptimal(f, auxiliary=False, vectorized=True)
+                predictedDifficulty = self._descriptionLengthPrediction(self.featureExtractor.featuresOfTask(f.task))
+                eprint("True description length under recognition model:", MDL.data.item())
+                eprint("Predicted difficulty:", predictedDifficulty)
+                eprint()
+                       
+            
 
     def sampleHelmholtz(self, requests, statusUpdate=None, seed=None):
         if seed is not None:
