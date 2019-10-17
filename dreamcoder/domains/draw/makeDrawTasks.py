@@ -204,7 +204,7 @@ def makeSupervisedTasks(trainset="S8full", doshaping="True"): # TODO, LT, make t
 
 	if programs_test:
 		for i, p in enumerate(programs_test):
-			name = "task{}".format(i)
+			name = "test{}".format(i)
 			testtasks.append(SupervisedDraw(name, p))
 
 
