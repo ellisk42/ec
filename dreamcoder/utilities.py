@@ -736,6 +736,28 @@ class PQ(object):
 
     def __len__(self): return len(self.h)
 
+class ParetoFrontier():
+    def __init__(self):
+        self.scoreToObject = {}
+        self.objectToScore = {}
+
+    def add(self, o, v):
+        thingsWeDominate = []
+        for vp,op in self.scoreToObject.items():
+            # are we just strictly worse than vp
+            if all( us <= them for us, them in zip(v,vp) ): return False
+            if all( us > them for us, them in zip(v,vp) ):
+                thingsWeDominate.append((vp,op))
+
+        # no one dominates us! remove everything that we dominate.
+        for vp,op in thingsWeDominate:
+            del self.scoreToObject[vp]
+            del self.objectToScore[op]
+        
+        self.scoreToObject[v] = o
+        self.objectToScore[o] = v
+
+
 class UnionFind:
     class Class:
         def __init__(self, x):

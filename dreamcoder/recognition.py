@@ -1101,22 +1101,39 @@ class RecognitionModel(nn.Module):
         eprint("(ID=%d): " % self.id, " Trained recognition model in",time.time() - start,"seconds")
         self.trained=True
 
-        if self.playful: self.showPlayTasks(frontiers + [getHelmholtz() for _ in range(100) ])
+        if self.playful: self.showPlayTasks([getHelmholtz() for _ in range(500) ])
         
         return self
 
     def showPlayTasks(self, frontiers):
+        surprisinglyEasy = ParetoFrontier()
+        surprisinglyHard = ParetoFrontier()
         with torch.no_grad():
-            for f in frontiers:
+            for fi,f in enumerate(frontiers):
                 eprint(f.task.name)
+                trueDescriptionLength = min(-(e.logPrior+e.logLikelihood) for e in f)
                 eprint("True description length under generative model:",
-                       min(-(e.logPrior+e.logLikelihood) for e in f))
+                       trueDescriptionLength)
                 MDL, _, difficultyLoss = \
                         self.frontierBiasOptimal(f, auxiliary=False, vectorized=True)
                 predictedDifficulty = self._descriptionLengthPrediction(self.featureExtractor.featuresOfTask(f.task))
                 eprint("True description length under recognition model:", MDL.data.item())
                 eprint("Predicted difficulty:", predictedDifficulty)
                 eprint()
+
+                # find things which are surprisingly easy for the recognition model
+                surprisinglyEasy.add((fi,f.task), (-MDL,trueDescriptionLength))
+                surprisinglyHard.add((fi,f.task), (MDL,-trueDescriptionLength))
+
+        import os
+        os.system("mkdir /tmp/surprisinglyEasy")
+        os.system("mkdir /tmp/surprisinglyHard")
+        for i,(_,t) in enumerate(surprisinglyEasy.objectToScore):
+            t.exportImage(f"/tmp/surprisinglyEasy/{i}.png")
+        for i,(_,t) in enumerate(surprisinglyHard.objectToScore):
+            t.exportImage(f"/tmp/surprisinglyHard/{i}.png")
+        assert False
+                
                        
             
 
