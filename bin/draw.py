@@ -16,8 +16,8 @@ if __name__ == '__main__':
         recognitionTimeout=3600,
         iterations=6,
         a=3,
-        structurePenalty=1,
-        pseudoCounts=10,
+        structurePenalty=1.5,
+        pseudoCounts=30,
         topK=2,
         maximumFrontier=5,
         solver="ocaml")
