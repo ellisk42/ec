@@ -12,6 +12,7 @@ from itertools import permutations
 from dreamcoder.program import Primitive, Application, Abstraction
 from dreamcoder.type import t0
 from matplotlib import pyplot as plt
+import imageio
 if False:
         from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
         matplotlib.use('TkAgg')
@@ -50,7 +51,7 @@ class Chunk():
                 for x in l: assert isinstance(x, (np.ndarray, np.generic, Chunk))
                 self.l = l
 
-        def applyMatrix(self, m):
+        def applyMatrix(self, m): # applies to everything within chunk, including recursive.
                 return Chunk([x.applyMatrix(m) for x in self.l ])
         
         def __eq__(self, other): return str(self) == str(other)
@@ -58,7 +59,7 @@ class Chunk():
         def __hash__(self): return hash(str(self))
         def __str__(self): return f"Chunk({self.l})"
         def __repr__(self): return str(self)
-        def flatten(self):
+        def flatten(self): # returns [[a], [b], ...], where each element is a single "stroke"
                 return [y
                         for x in self.l
                         for y in ([x] if isinstance(x, (np.ndarray, np.generic)) else x.flatten()) ]
@@ -106,12 +107,15 @@ class Parse():
                 if fn is None:
                         return image
                 else:
-                        scipy.misc.imsave(fn, image)
+                        # scipy.misc.imsave(fn, image)
+                        imageio.imwrite(fn, image)
         @staticmethod
         def animate_all(parses, fn):
                 import scipy.misc
                 images = [parse.animate(None) for parse in parses ]
-                scipy.misc.imsave(fn, np.concatenate(images,0))
+                # scipy.misc.imsave(fn, np.concatenate(images,0))
+                imageio.imwrite(fn, np.concatenate(images,0))
+
 
         @staticmethod
         def ofProgram(p):
@@ -191,6 +195,7 @@ def _tform_wrapper(p, T):
                 return {Parse([Chunk(_tform(parse.l,T))]) for parse in p}
         else:
                 return _tform(p,T)
+                
 def _tform(p, T, i=1):
         """Applies the transformation T to the object p for the number of iterations i.
         p can be a list, numpy, Parse, or Chunk."""
