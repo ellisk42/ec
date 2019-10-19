@@ -126,6 +126,24 @@ class VersionTable():
                                    for e in l )
         assert False
 
+    def walk(self,j):
+        """yields every subversion space of j"""
+        visited = set()
+        def r(n):
+            if n in visited: return
+            visited.add(n)
+            l = self.expressions[n]
+            yield l
+            if l.isApplication:
+                yield from r(l.f)
+                yield from r(l.x)
+            if l.isAbstraction:
+                yield from r(l.body)
+            if l.isUnion:
+                for e in l:
+                    yield from r(e)
+        yield from r(j)
+
                 
     def incorporate(self,p):
         #assert isinstance(p,Union)# or p.wellTyped()
