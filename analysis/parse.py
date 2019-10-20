@@ -3,6 +3,7 @@
 
 import sys
 sys.path.insert(0, "/Users/lucastian/Dropbox/CODE/Python/Tenenbaum/ec/")
+sys.path.insert(0, "/om/user/lyt/ec")
 # print(sys.path)
 from dreamcoder.domains.draw.drawPrimitives import *
 from dreamcoder.domains.draw.primitives import _repeat, _line, _makeAffine, _circle,_connect
