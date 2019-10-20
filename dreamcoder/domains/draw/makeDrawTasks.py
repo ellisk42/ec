@@ -63,7 +63,7 @@ class SupervisedDraw(Task):
 				return 0.0
 
 	
-def makeSupervisedTasks(trainset="S8full", doshaping="True"): # TODO, LT, make these tasks.
+def makeSupervisedTasks(trainset="S8full", doshaping="True", userealnames=True): # TODO, LT, make these tasks.
 	# arches = [SupervisedTower("arch leg %d"%n,
 	#                           "((for i %d v) (r 4) (for i %d v) (l 2) h)"%(n,n))
 	#           for n in range(1,9)
@@ -73,7 +73,7 @@ def makeSupervisedTasks(trainset="S8full", doshaping="True"): # TODO, LT, make t
 	print("DO SHAPING: {}".format(doshaping))
 	# everything = arches + simpleLoops + Bridges + archesStacks + aqueducts + offsetArches + pyramids + bricks + staircase2 + staircase1 + compositions
 	programs = []
-
+	programnames = []
 	if False:
 		# to test each primitive and rule
 		programs = [
@@ -123,41 +123,49 @@ def makeSupervisedTasks(trainset="S8full", doshaping="True"): # TODO, LT, make t
 			transform(_line, theta=pi/2, y=-2.),
 			transform(_line, theta=pi/2, s=4, y=-2.)]
 			)
+		programnames.extend(["shaping_{}".format(n) for n in range(9)])
+
 
 	if trainset=="S8full":
 		libname = "dreamcoder/domains/draw/trainprogs/S8_shaping"
 		with open("{}.pkl".format(libname), 'rb') as fp:
 			P = pickle.load(fp)
 		programs.extend(P)
+		assert 1==2 # note: have to add programnames
 
 	if trainset in ["S8full", "S8"]:
 		libname = "dreamcoder/domains/draw/trainprogs/S8"
 		with open("{}.pkl".format(libname), 'rb') as fp:
 			P = pickle.load(fp)
 		programs.extend(P)
+		assert 1==2 # note: have to add programnames
 
 	if trainset=="S9full":
 		libname = "dreamcoder/domains/draw/trainprogs/S9_shaping"
 		with open("{}.pkl".format(libname), 'rb') as fp:
 			P = pickle.load(fp)
 		programs.extend(P)
+		assert 1==2 # note: have to add programnames
 
 	if trainset in ["S9full", "S9"]:
 		libname = "dreamcoder/domains/draw/trainprogs/S9"
 		with open("{}.pkl".format(libname), 'rb') as fp:
 			P = pickle.load(fp)
 		programs.extend(P)
+		assert 1==2 # note: have to add programnames
 
 	if trainset=="S8_nojitter":
 		libname = "dreamcoder/domains/draw/trainprogs/S8_nojitter_shaping"
 		with open("{}.pkl".format(libname), 'rb') as fp:
 			P = pickle.load(fp)
 		programs.extend(P)
+		programnames.extend(["S8_nojitter_shaping_{}".format(n) for n in range(len(P))])
 
 		libname = "dreamcoder/domains/draw/trainprogs/S8_nojitter"
 		with open("{}.pkl".format(libname), 'rb') as fp:
 			P = pickle.load(fp)
 		programs.extend(P)
+		programnames.extend(["S8_nojitter_{}".format(n) for n in range(len(P))])
 
 
 	if trainset=="S9_nojitter":
@@ -165,20 +173,30 @@ def makeSupervisedTasks(trainset="S8full", doshaping="True"): # TODO, LT, make t
 		with open("{}.pkl".format(libname), 'rb') as fp:
 			P = pickle.load(fp)
 		programs.extend(P)
+		programnames.extend(["S9_nojitter_shaping_{}".format(n) for n in range(len(P))])
 
 		libname = "dreamcoder/domains/draw/trainprogs/S9_nojitter"
 		with open("{}.pkl".format(libname), 'rb') as fp:
 			P = pickle.load(fp)
 		programs.extend(P)
+		programnames.extend(["S9_nojitter_{}".format(n) for n in range(len(P))])
 
+	# ===== make programs
+	if userealnames:
+		assert len(programs) == len(programnames)
+		names = programnames
+	else:
+		names = ["task{}".format(i) for i in range(len(programs))]
 
 	alltasks = []
-	for i, p in enumerate(programs):
-		name = "task{}".format(i)
+	for name, p in zip(names, programs):
+	# for i, p in enumerate(programs):
+		# name = "task{}".format(i)
 		alltasks.append(SupervisedDraw(name, p))
 
 	# ==== make test tasks?
 	programs_test = []
+	programs_test_names = []
 	testtasks = []
 	if trainset in ["S8full", "S8", "S9full", "S9", "S8_nojitter", "S9_nojitter"]:
 		
@@ -186,27 +204,39 @@ def makeSupervisedTasks(trainset="S8full", doshaping="True"): # TODO, LT, make t
 		with open("{}.pkl".format(libname), 'rb') as fp:
 			P = pickle.load(fp)
 		programs_test.extend(P)	
+		programs_test_names.extend(["S8_{}".format(n) for n in [0, 2, 59, 65, 94]])
 
 		libname = "dreamcoder/domains/draw/trainprogs/S9_test"
 		with open("{}.pkl".format(libname), 'rb') as fp:
 			P = pickle.load(fp)
 		programs_test.extend(P)	
+		programs_test_names.extend(["S9_{}".format(n) for n in [14, 15, 17, 18, 29, 43, 55, 59, 61, 86, 96, 99, 140]])
 
 		libname = "dreamcoder/domains/draw/trainprogs/S8_nojitter_test"
 		with open("{}.pkl".format(libname), 'rb') as fp:
 			P = pickle.load(fp)
 		programs_test.extend(P)	
+		programs_test_names.extend(["S8_nojitter_{}".format(n) for n in [69, 73, 134, 137, 139]])
 
 		libname = "dreamcoder/domains/draw/trainprogs/S9_nojitter_test"
 		with open("{}.pkl".format(libname), 'rb') as fp:
 			P = pickle.load(fp)
 		programs_test.extend(P)	
+		programs_test_names.extend(["S9_nojitter_{}".format(n) for n in [56, 59, 76, 80, 108, 112, 135, 139, 144, 147]])
+
 
 	if programs_test:
-		for i, p in enumerate(programs_test):
-			name = "test{}".format(i)
+		if userealnames:
+			assert len(programs_test) == len(programs_test_names)
+			names = programs_test_names
+		else:
+			names = ["test{}".format(i) for i in range(len(programs_test))]
+
+		for name, p in zip(names, programs_test):
+		# for i, p in enumerate(programs_test):
+			# name = "test{}".format(i)
 			testtasks.append(SupervisedDraw(name, p))
 
-
-	return alltasks, testtasks
+	
+	return alltasks, testtasks, programnames, programs_test_names
 
