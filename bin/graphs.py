@@ -155,11 +155,12 @@ def addStupidRegex(frontier, g):
     return Frontier(frontier.entries + [fe],
                     task=frontier.task).normalize()
     
-def getLikelihood(likelihood, result, task, iteration):
+def getLikelihood(likelihood, result, task, iteration, dostupidregex=True):
     from bin.examineFrontier import testingRegexLikelihood
 
     frontier = result.frontiersOverTime[task][iteration]
-    frontier = addStupidRegex(frontier, result.grammars[iteration])
+    if dostupidregex:
+        frontier = addStupidRegex(frontier, result.grammars[iteration])
 
     if likelihood == "marginal":
         if arguments.testingLikelihood:
