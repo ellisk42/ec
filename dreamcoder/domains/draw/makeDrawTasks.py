@@ -125,7 +125,6 @@ def makeSupervisedTasks(trainset="S8full", doshaping="True", userealnames=True):
 			)
 		programnames.extend(["shaping_{}".format(n) for n in range(9)])
 
-
 	if trainset=="S8full":
 		libname = "dreamcoder/domains/draw/trainprogs/S8_shaping"
 		with open("{}.pkl".format(libname), 'rb') as fp:
@@ -188,6 +187,7 @@ def makeSupervisedTasks(trainset="S8full", doshaping="True", userealnames=True):
 		programs.extend(P)
 		programnames.extend(["task".format(n) for n in range(len(P))])
 
+	print(programnames)
 
 	# ===== make programs
 	if userealnames:
@@ -195,7 +195,7 @@ def makeSupervisedTasks(trainset="S8full", doshaping="True", userealnames=True):
 		names = programnames
 	else:
 		names = ["task{}".format(i) for i in range(len(programs))]
-
+	print(programnames)
 	alltasks = []
 	for name, p in zip(names, programs):
 	# for i, p in enumerate(programs):
