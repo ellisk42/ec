@@ -13,4 +13,6 @@
 #bash run.sh S8.2.1 10000 20 python bin/draw.py -t 720 --biasOptimal --contextual -R 1800 --trainset=S8_nojitter --doshaping --testingTimeout 600
 # bash run.sh S8.2.2 20000 20 python bin/draw.py -t 600 --biasOptimal --contextual -R 1200 --trainset=S8_nojitter --doshaping --testingTimeout 600
 
-bash run.sh S10 10000 20 python bin/draw.py -t 720 --biasOptimal --contextual -R 1800 --trainset=S10
+#bash run.sh S10 10000 20 python bin/draw.py -i 10 -t 720 --biasOptimal --contextual -R 1800 --trainset=S10
+#bash run.sh S10shaping 10000 20 python bin/draw.py -i 10 -t 720 --biasOptimal --contextual -R 1800 --trainset=S10 --doshaping
+bash run.sh ignore 10000 20 python bin/draw.py -i 10 -t 1440 --biasOptimal --contextual -R 1800 --trainset=S10 --doshaping

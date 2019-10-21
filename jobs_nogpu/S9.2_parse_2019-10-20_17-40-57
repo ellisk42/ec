@@ -1,0 +1,5 @@
+[33mWARNING:[0m seccomp requested but not enabled, seccomp library is missing or too old
+Traceback (most recent call last):
+  File "analysis/parse.py", line 7, in <module>
+    from dreamcoder.domains.draw.drawPrimitives import *
+ModuleNotFoundError: No module named 'dreamcoder'
