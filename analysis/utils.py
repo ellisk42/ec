@@ -70,7 +70,7 @@ def loadCheckpoint(trainset="S9_nojitter", userealnames=True):
         
         
     ###### FIRST, load the correct checkpoint
-    F = glob.glob("experimentOutputs/draw/{}/*.pickle".format(exptdir))
+    F = glob.glob("experimentOutputs/draw/{}/draw*.pickle".format(exptdir))
     iters = []
     for f in F:
         g = f.find("_graph")
@@ -113,3 +113,12 @@ def loadCheckpoint(trainset="S9_nojitter", userealnames=True):
     savedir = "experimentOutputs/draw/{}".format(exptdir)
     return result, tasks, testtasks, programnames, program_test_names, behaviorexpt, savedir 
 
+
+def getTask(stimname, tasks, programnames, testtasks, program_test_names):
+    # search thru train, then through test tasks, outputs the task object and whether is train or test
+    for task, name in zip(tasks, programnames):
+        if name==stimname:
+            return task, "train"
+    for task, name in zip(testtasks, program_test_names):
+        if name==stimname:
+            return task, "test"

@@ -181,6 +181,14 @@ def makeSupervisedTasks(trainset="S8full", doshaping="True", userealnames=True):
 		programs.extend(P)
 		programnames.extend(["S9_nojitter_{}".format(n) for n in range(len(P))])
 
+	if trainset=="S10":
+		libname = "dreamcoder/domains/draw/trainprogs/S10"
+		with open("{}.pkl".format(libname), 'rb') as fp:
+			P = pickle.load(fp)
+		programs.extend(P)
+		programnames.extend(["task".format(n) for n in range(len(P))])
+
+
 	# ===== make programs
 	if userealnames:
 		assert len(programs) == len(programnames)

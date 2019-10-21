@@ -28,6 +28,8 @@ def getAndSaveParses(experiment="S9.2"):
 
     # === for each program, get the best posteiror and then all parses of that. 
     for t, name in zip(tasks, programnames):
+        if name in ["shaping_1", "shaping_4", "shaping_8"]:
+            continue
         print("Parsing {} ...".format(name))
         fname = "{}/parses_{}.pickle".format(savedir, name)
         if result.frontiersOverTime[t][-1].empty:

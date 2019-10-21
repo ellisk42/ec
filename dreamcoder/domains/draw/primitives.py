@@ -1,4 +1,7 @@
+
 # =========== [NEWER VERSION, NOT USING MATPLOTLIB]
+import sys
+sys.path.append("/Users/lucastian/tenen/ec")
 import math
 import numpy as np
 import matplotlib
@@ -66,6 +69,11 @@ class Chunk():
 
         @staticmethod
         def invention(parses):
+                # print("---")
+                # print(parses)
+                # for p in parses:
+                #     print(p)
+                # print("-----")
                 return {Parse([Chunk(parse.l)])
                         for parse in parses}
 # This should *never* the added to the library!
@@ -121,6 +129,11 @@ class Parse():
         def ofProgram(p):
                 """Takes a program and returns its set-of-parses"""
                 """Does not currently correctly handle chunking of inventions"""
+                # if p.isApplication:
+                #     import pdb
+                #     pdb.set_trace()
+                print(p)
+
                 def chunky(q):
                         if q.isApplication or q.isInvented:
                                 f,xs = q.applicationParse()
@@ -132,6 +145,8 @@ class Parse():
                                                 return_value = Application(return_value,x)
                                         return Application(_chunky_primitive,return_value)
                                 else:
+                                        # import pdb
+                                        # pdb.set_trace()
                                         return_value = chunky(f)
                                         for x in chunky_arguments:
                                                 return_value = Application(return_value,x)
