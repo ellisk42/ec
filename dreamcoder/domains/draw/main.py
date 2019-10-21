@@ -48,16 +48,17 @@ def main_dummy(N=25):
                                 
 def main(arguments):
         g0 = Grammar.uniform(primitives)
-        #p = Program.parse("(repeat line 4 ")
-        p = Program.parse("(connect line #(connect (transform line (transmat None (Some angle2) None None None)) circle))")
-        #p = _repeat(_connect(_line,_circle), 3, _makeAffine(x=1.0))
-        Parse.animate_all(Parse.ofProgram(p), "/tmp/parses.png")
-        for i in range(50):
-                                        p = g0.sample(tstroke, maximumDepth=10)
-                                        if p is None: continue
-                                        Parse.animate_all(Parse.ofProgram(p), f"/tmp/parses{i}.png")
-        print("Primitives:")
-        print(primitives)
+        if False:
+            #p = Program.parse("(repeat line 4 ")
+            p = Program.parse("(connect line #(connect (transform line (transmat None (Some angle2) None None None)) circle))")
+            #p = _repeat(_connect(_line,_circle), 3, _makeAffine(x=1.0))
+            Parse.animate_all(Parse.ofProgram(p), "/tmp/parses.png")
+            for i in range(50):
+                                            p = g0.sample(tstroke, maximumDepth=10)
+                                            if p is None: continue
+                                            Parse.animate_all(Parse.ofProgram(p), f"/tmp/parses{i}.png")
+            print("Primitives:")
+            print(primitives)
         
         train, test = makeSupervisedTasks(trainset=arguments["trainset"], doshaping=arguments["doshaping"])[:2]
 
