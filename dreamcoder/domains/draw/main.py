@@ -48,9 +48,11 @@ def main_dummy(N=25):
                                 
 def main(arguments):
         g0 = Grammar.uniform(primitives)
-        if False:
+        if True:
             #p = Program.parse("(repeat line 4 ")
-            p = Program.parse("(connect line #(connect (transform line (transmat None (Some angle2) None None None)) circle))")
+            p = Program.parse("(transform circle #(transmat (Some scale4) None None None None))")
+            p.evaluate([])
+            print(p.infer())
             #p = _repeat(_connect(_line,_circle), 3, _makeAffine(x=1.0))
             Parse.animate_all(Parse.ofProgram(p), "/tmp/parses.png")
             for i in range(50):
