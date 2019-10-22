@@ -193,7 +193,8 @@ def makeSupervisedTasks(trainset="S8full", doshaping="True", userealnames=True):
 		names = programnames
 	else:
 		names = ["task{}".format(i) for i in range(len(programs))]
-	print(programnames)
+	print("training task names:")
+	print(names)
 	alltasks = []
 	for name, p in zip(names, programs):
 	# for i, p in enumerate(programs):
@@ -242,7 +243,8 @@ def makeSupervisedTasks(trainset="S8full", doshaping="True", userealnames=True):
 		# for i, p in enumerate(programs_test):
 			# name = "test{}".format(i)
 			testtasks.append(SupervisedDraw(name, p))
-
+	print("test tasks:")
+	print(names)
 	
 	return alltasks, testtasks, programnames, programs_test_names
 
