@@ -57,7 +57,14 @@ def loadCheckpoint(trainset="S9_nojitter", userealnames=True):
         jobname = "S9_nojitter_2019-10-13_23-25-52"
         exptdir = "2019-10-14T08:33:57.806621"
         taskset = "S9_nojitter"
-        
+
+    elif trainset=="S8.2.2":
+        userealnames=False
+        doshaping = True
+        jobname = "S8.2.2_2019-10-20_14-08-46"
+        exptdir = "2019-10-20T14:09:07.358291"
+        taskset = "S8_nojitter"
+        behaviorexpt = "2.3"
     elif trainset=="S9.2":
         userealnames=False
         doshaping = True
