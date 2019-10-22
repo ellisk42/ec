@@ -99,13 +99,18 @@ def parses2datflat(programs, stimname="", condition=""):
 
 
 # ==== do segmentation
-import sys
-sys.path.append("/Users/lucastian/tenen/TENENBAUM/drawgood/experiments")
-import segmentation as dgseg
-import utils as dgutils
-import plotsDatFlat as dgpflat
-import plotsSingleSubj as dgpsing
-import preprocess as dgprep
+if __name__=="__main__":
+    IMPORT_DRAWGOOD=False
+else:
+    IMPORT_DRAWGOOD=True
+if IMPORT_DRAWGOOD:
+    import sys
+    sys.path.append("/Users/lucastian/tenen/TENENBAUM/drawgood/experiments")
+    import segmentation as dgseg
+    import utils as dgutils
+    import plotsDatFlat as dgpflat
+    import plotsSingleSubj as dgpsing
+    import preprocess as dgprep
 
 
 if __name__=="__main__":

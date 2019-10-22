@@ -16,6 +16,8 @@ from dreamcoder.program import Primitive, Application, Abstraction, Index
 from dreamcoder.type import t0,arrow,baseType
 from matplotlib import pyplot as plt
 import imageio
+import random
+
 if False:
         from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
         matplotlib.use('TkAgg')

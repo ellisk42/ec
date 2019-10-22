@@ -48,7 +48,7 @@ def main_dummy(N=25):
                                 
 def main(arguments):
         g0 = Grammar.uniform(primitives)
-        if True:
+        if False:
             #p = Program.parse("(repeat line 4 ")
             p = Program.parse("(transform circle #(transmat (Some scale4) None None None None))")
             p.evaluate([])
