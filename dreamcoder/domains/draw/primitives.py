@@ -12,8 +12,8 @@ import cairo
 from math import tan
 from math import pi
 from itertools import permutations
-from dreamcoder.program import Primitive, Application, Abstraction
-from dreamcoder.type import t0
+from dreamcoder.program import Primitive, Application, Abstraction, Index
+from dreamcoder.type import t0,arrow,baseType
 from matplotlib import pyplot as plt
 import imageio
 if False:
@@ -77,7 +77,7 @@ class Chunk():
                 return {Parse([Chunk(parse.l)])
                         for parse in parses}
 # This should *never* the added to the library!
-_chunky_primitive = Primitive("CHUNK_INVENTION", t0, Chunk.invention)
+_chunky_primitive = Primitive("CHUNK_INVENTION", arrow(baseType("tstroke"),baseType("tstroke")), Chunk.invention)
 
 
 class Parse():
@@ -128,22 +128,40 @@ class Parse():
         @staticmethod
         def ofProgram(p):
                 """Takes a program and returns its set-of-parses"""
-                """Does not currently correctly handle chunking of inventions"""
                 # if p.isApplication:
                 #     import pdb
                 #     pdb.set_trace()
-                print(p)
 
                 def chunky(q):
                         if q.isApplication or q.isInvented:
                                 f,xs = q.applicationParse()
                                 chunky_arguments = [chunky(x) for x in xs ]
                                 if f.isInvented and str(f.tp.returns()) == "tstroke":
-                                        chunky_body = chunky(f.body)
+                                        numberExpands = len(f.tp.functionArguments()) - len(xs)
+                                        return_value = chunky(f.body)
+                                        for x in chunky_arguments:
+                                                if numberExpands > 0: x = x.shift(numberExpands)
+                                                return_value = Application(return_value,x)
+                                        for i in range(numberExpands - 1,-1,-1):
+                                                return_value = Application(return_value, Index(i))
+                                        return_value = Application(_chunky_primitive,return_value)
+                                        for _ in range(numberExpands):
+                                                return_value = Abstraction(return_value)
+                                        # print(return_value)
+                                        # print("this is our type")
+                                        # try:
+                                        #         print(return_value.infer())
+                                        # except:
+                                        #         print("total failure to get a type")
+                                        #         print(q)
+                                        #         print(q.infer())
+                                        #         assert False
+                                        return return_value
+                                elif f.isInvented:
                                         return_value = chunky(f.body)
                                         for x in chunky_arguments:
                                                 return_value = Application(return_value,x)
-                                        return Application(_chunky_primitive,return_value)
+                                        return return_value
                                 else:
                                         # import pdb
                                         # pdb.set_trace()
@@ -155,7 +173,9 @@ class Parse():
                                 return Abstraction(chunky(q.body))
                         if q.isIndex or q.isPrimitive: return q                                        
                 set_parsing(True)
-                parses = chunky(p).evaluate([])
+                p = chunky(p)
+                print(p)
+                parses = p.evaluate([])
                 set_parsing(False)
                 return parses
                 
