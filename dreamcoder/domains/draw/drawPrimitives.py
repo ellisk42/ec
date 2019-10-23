@@ -58,4 +58,22 @@ p7 = [Primitive("rep{}".format(i), trep, j+1) for i, j in enumerate(range(7))]
 primitives = p0 + p1 + p2 + p3 + p4 + p5 + p6 + p7
 
 
+print("Primitives:")
+
+for p in primitives:
+	print("{} = {}".format(p.name, p.evaluate([])))
+
+primitives_to_remove = [] + \
+["scale{}".format(i) for i in [0, 1, 2, 3, 4, 5, 6]] + \
+["dist{}".format(i) for i in [0, 2, 5, 7, 10, 12, 13, 14, 15, 16, 17]] + \
+["angle{}".format(i) for i in [0, 1,3,5,7,8,9]] + \
+["tsr", "srt", "str", "rts", "rst"] + \
+["rep{}".format(i) for i in [4,5,6]]
+print(primitives_to_remove)
+
+primitives = [p for p in primitives if p.name not in primitives_to_remove]
+
+print("Primtives, after pruning:")
+for p in primitives:
+	print("{} = {}".format(p.name, p.evaluate([])))
 

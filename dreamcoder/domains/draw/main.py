@@ -1,5 +1,6 @@
 # from dreamcoder.domains.draw.makeDrawTasks import drawDrawings
 from dreamcoder.domains.draw.drawPrimitives import *
+from dreamcoder.domains.draw.drawPrimitives import primitives
 from dreamcoder.domains.draw.primitives import _repeat, _line, _makeAffine, _circle,_connect
 from dreamcoder.domains.draw.makeDrawTasks import makeSupervisedTasks, SupervisedDraw
 from dreamcoder.dreamcoder import ecIterator
@@ -12,6 +13,7 @@ from dreamcoder.recognition import ImageFeatureExtractor
 # from dreamcoder.utilities import eprint, testTrainSplit, loadPickle
 import datetime
 import os
+
 
 class DrawCNN(ImageFeatureExtractor):
     special = "draw"
