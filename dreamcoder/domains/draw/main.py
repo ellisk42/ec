@@ -86,6 +86,7 @@ def main(arguments):
                         evaluationTimeout=evaluationTimeout,
                         **arguments) # 
         else:
+                print("NO TESTING TASKS INCLUDED")
                 generator = ecIterator(g0, train,
                         outputPrefix="%s/draw"%outputDirectory,
                         evaluationTimeout=evaluationTimeout,
