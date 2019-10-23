@@ -80,7 +80,7 @@ def main(arguments):
 
         os.system(f"mkdir -p {outputDirectory}")
         arguments["featureExtractor"] = DrawCNN
-        if test:
+        if arguments["skiptesting"]==False and len(test)>0:
                 generator = ecIterator(g0, train, testingTasks=test,
                         outputPrefix="%s/draw"%outputDirectory,
                         evaluationTimeout=evaluationTimeout,

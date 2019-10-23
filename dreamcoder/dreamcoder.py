@@ -957,6 +957,11 @@ def commandlineArguments(_=None,
         help="for draw tasks, whether to prune primtives. must have defined in drawPrimitives how to prune for this trainset",
         default=False,
         action="store_true")
+    parser.add_argument("--skiptesting",
+        dest="skiptesting",
+        help="for draw tasks, whether to include test stimhli. will also need to define test stimuli in. makeDrawTasks"
+        default=False,
+        action="store_true")
 
 
     parser.set_defaults(useRecognitionModel=useRecognitionModel,
