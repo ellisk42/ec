@@ -175,7 +175,8 @@ def ecIterator(grammar, tasks,
                auxiliaryLoss=False,
                custom_wake_generative=None,
                trainset="S8full",
-               doshaping=True):
+               doshaping=False, 
+               dopruning=False):
     if enumerationTimeout is None:
         eprint(
             "Please specify an enumeration timeout:",
@@ -949,6 +950,11 @@ def commandlineArguments(_=None,
     parser.add_argument("--doshaping",
         dest="doshaping",
         help="for draw tasks, whether to include a nunch of shaping stimuli (e.g., some lines and stuff)",
+        default=False,
+        action="store_true")
+    parser.add_argument("--dopruning",
+        dest="dopruning",
+        help="for draw tasks, whether to prune primtives. must have defined in drawPrimitives how to prune for this trainset",
         default=False,
         action="store_true")
 

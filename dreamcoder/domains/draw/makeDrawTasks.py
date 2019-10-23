@@ -69,6 +69,7 @@ def makeSupervisedTasks(trainset="S8full", doshaping="True", userealnames=True):
 	#           for n in range(1,9)
 	# ]
 
+
 	print("DRAW TASK training set: {}".format(trainset))
 	print("DO SHAPING: {}".format(doshaping))
 	# everything = arches + simpleLoops + Bridges + archesStacks + aqueducts + offsetArches + pyramids + bricks + staircase2 + staircase1 + compositions
