@@ -554,7 +554,7 @@ type cost_table = {function_cost : ((float*(int list)) option) ra;
 let empty_cost_table t = {function_cost = empty_resizable();
                           argument_cost = empty_resizable();
                           cost_table_parent = t;}
-let rec minimum_cost_inhabitants ?given:(given=None) ?canBeLambda:(canBeLambda=true) t j : float*(int list) =
+let rec minimum_cost_inhabitants ?max_size:(max_size=0) ?given:(given=None) ?canBeLambda:(canBeLambda=true) t j : float*(int list) =
   let caching_table = if canBeLambda then t.argument_cost else t.function_cost in
   ensure_resizable_length caching_table (j + 1) None;
   
@@ -569,24 +569,25 @@ let rec minimum_cost_inhabitants ?given:(given=None) ?canBeLambda:(canBeLambda=t
       | Universe | Void -> assert false
       | IndexSpace(_) | TerminalSpace(_) -> (1., [j])
       | Union(u) ->
-        let children = u |> List.map ~f:(minimum_cost_inhabitants ~given ~canBeLambda t) in
+        let children = u |> List.map ~f:(minimum_cost_inhabitants ~given ~canBeLambda ~max_size t) in
         let c = children |> List.map ~f:(fun (cost,_) -> cost) |> fold1 min in
         if is_invalid c then (c,[]) else
           let children = children |> List.filter ~f:(fun (cost,_) -> cost = c) in
           (c, children |> List.concat_map ~f:(fun (_,p) -> p))
       | AbstractSpace(b) when canBeLambda ->
-        let cost, children = minimum_cost_inhabitants ~given ~canBeLambda:true t b in
+        let cost, children = minimum_cost_inhabitants ~max_size ~given ~canBeLambda:true t b in
         (cost+.epsilon_cost, children |> List.map ~f:(version_abstract t.cost_table_parent))
       | AbstractSpace(b) -> (Float.infinity,[])
       | ApplySpace(f,x) ->
-        let fc, fs = minimum_cost_inhabitants ~given ~canBeLambda:false t f in
-        let xc, xs = minimum_cost_inhabitants ~given ~canBeLambda:true t x in
+        let fc, fs = minimum_cost_inhabitants ~max_size ~given ~canBeLambda:false t f in
+        let xc, xs = minimum_cost_inhabitants ~max_size ~given ~canBeLambda:true t x in
         if is_invalid fc || is_invalid xc then (Float.infinity,[]) else
           (fc+.xc+.epsilon_cost,
           fs |> List.map ~f:(fun f' -> xs |> List.map ~f:(fun x' -> version_apply t.cost_table_parent f' x')) |> List.concat)
     in
     let cost, indices = c in
     let indices = indices |> List.dedup_and_sort ~compare:(-) in
+    let indices = if max_size = 0 then indices else List.take indices max_size in
     let c = (cost, indices) in
     set_resizable caching_table j (Some(c));
     c

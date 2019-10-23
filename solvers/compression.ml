@@ -279,7 +279,7 @@ let compression_worker connection ~inline ~arity ~bs ~topK g frontiers =
       (fun () ->
       let reachable : int list list = frontier_indices |> List.map ~f:(reachable_versions v) in
       let inhabitants : int list list = reachable |> List.map ~f:(fun indices ->
-          List.concat_map ~f:(snd % minimum_cost_inhabitants cost_table) indices |>
+          List.concat_map ~f:(snd % minimum_cost_inhabitants ~max_size:2 cost_table) indices |>
           List.dedup_and_sort ~compare:(-) |> 
           List.map ~f:(List.hd_exn % extract v) |>
           List.filter ~f:nontrivial |>
