@@ -31,15 +31,24 @@ def getAndSaveParses(experiment="S9.2"):
         if name in ["shaping_1", "shaping_4", "shaping_8"]:
             continue
         print("Parsing {} ...".format(name))
-        fname = "{}/parses_{}.pickle".format(savedir, name)
+
         if result.frontiersOverTime[t][-1].empty:
             parses =[]
         else:
             p = result.frontiersOverTime[t][-1].bestPosterior.program
             parses = getParses(p)
             # parses = [1,2,3]
+        
+        # 1) save parse object
+        fname = "{}/parses_{}.pickle".format(savedir, name)
         with open(fname, "wb") as f:
             pickle.dump(parses, f)
+
+        # 2) save flattened parses
+        fname = "{}/parsesflat_{}.pickle".format(savedir, name)
+        with open(fname, "wb") as f:
+            pickle.dump(parses.flatten(), f)
+
         print("saved to :{}".format(fname))
 
     # === for each task and testtask

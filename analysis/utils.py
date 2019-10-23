@@ -6,11 +6,12 @@ import dreamcoder.domains.draw.primitives as P
 import os
 import glob
 import sys
+import pickle
 sys.path.append("../")
 
 
 ## ====== collect dreamcoder results and parse results
-def loadCheckpoint(trainset="S9_nojitter", userealnames=True):
+def loadCheckpoint(trainset="S9_nojitter", userealnames=True, loadparse=False):
     # userealnames = True, then names tasks by their stim names (eg., S8_2), otherwise names as train0, train1, ...
     ##### METADATA
     behaviorexpt = ""
@@ -110,6 +111,35 @@ def loadCheckpoint(trainset="S9_nojitter", userealnames=True):
 
     tasks, testtasks, programnames, program_test_names = loadTasks(taskset, doshaping)
 
+    ######  LOAD PARSES IF EXIST
+    def loadParses():
+        import os
+        F = glob.glob("experimentOutputs/draw/{}/parses_*.pickle".format(exptdir))
+        parses = []
+        for f in F:
+            print("loading parse {}".format(f))
+            if os.path.getsize(f)==0:
+                print("skipping parse - size 0")
+                continue
+
+            name = f[f.find("parses")+7:f.find(".pickle")]
+
+            with open(f, "rb") as ff:
+                parse = pickle.load(ff)
+            parses.append({
+                "name":name,
+                "parse":parse
+                })  
+        return parses        
+
+    if loadparse:
+        parses = loadParses()
+        if len(parses)>0:
+            print("FOUND {} pre-computed parses!".format(len(parses)))
+    else:
+        print("not loading parses")
+        parses = []
+
     print("Num dreamcoder tasks {}".format(len(result.taskSolutions)))
     print("n supervised tasks {}".format(len(tasks)))
     assert len(result.taskSolutions)==len(tasks)
@@ -118,7 +148,7 @@ def loadCheckpoint(trainset="S9_nojitter", userealnames=True):
     assert len(result.getTestingTasks())==len(testtasks)
 
     savedir = "experimentOutputs/draw/{}".format(exptdir)
-    return result, tasks, testtasks, programnames, program_test_names, behaviorexpt, savedir 
+    return result, tasks, testtasks, programnames, program_test_names, behaviorexpt, savedir, parses
 
 
 def getTask(stimname, tasks, programnames, testtasks, program_test_names):
@@ -129,3 +159,4 @@ def getTask(stimname, tasks, programnames, testtasks, program_test_names):
     for task, name in zip(testtasks, program_test_names):
         if name==stimname:
             return task, "test"
+
