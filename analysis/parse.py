@@ -24,7 +24,7 @@ def getParses(dreamcoder_program):
 
 
 def getAndSaveParses(experiment="S9.2"):
-    result, tasks, testtasks, programnames, program_test_names, behaviorexpt, savedir = loadCheckpoint(trainset=experiment)[:8]
+    result, tasks, testtasks, programnames, program_test_names, behaviorexpt, savedir = loadCheckpoint(trainset=experiment)[:7]
 
     # === for each program, get the best posteiror and then all parses of that. 
     for t, name in zip(tasks, programnames):
@@ -47,7 +47,7 @@ def getAndSaveParses(experiment="S9.2"):
         # 2) save flattened parses
         fname = "{}/parsesflat_{}.pickle".format(savedir, name)
         with open(fname, "wb") as f:
-            pickle.dump(parses.flatten(), f)
+            pickle.dump([p.flatten() for p in parses], f)
 
         print("saved to :{}".format(fname))
 
