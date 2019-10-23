@@ -26,10 +26,11 @@ XYLIM = 3. # i.e., -3 to 3.
 
 PRIMVERSION="full"
 assert PRIMVERSION=="full" # do not change , since ocaml code requires names to match.
+
 if PRIMVERSION=="full":
         SCALES = [0.5, 1., 1.25, 1.5, 2., 2.5, 3., 4.]
         NPOLY = range(3,7) # range of regular polyogns allowed.
-        DISTS = [-2.5, -2., -1.5, -1., -0.5, -0.25, 0, 0.25, 0.5, 1., 1.5, 2., 2.5, 3.] + [0.5/tan(pi/n) for n in range(3, 7)] + [-1.75, -0.65, 0.45, 1.55, 1.1]# for making regular polygons
+        DISTS = [-2.5, -2., -1.5, -1., -0.5, -0.25, 0, 0.25, 0.5, 1., 1.5, 2., 2.5, 3.] + [-1.75, -0.65, 0.45, 1.55, 1.1] + [0.5/tan(pi/n) for n in range(3, 7)]# for making regular polygons
         THETAS = [j*(2*pi/8) for j in range(8)] + [-2*pi/6] + [-2*pi/12]
         ORDERS = ["trs", "tsr", "rts", "rst", "srt", "str"]
 elif PRIMVERSION=="S8_9":

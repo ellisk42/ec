@@ -57,7 +57,6 @@ p7 = [Primitive("rep{}".format(i), trep, j+1) for i, j in enumerate(range(7))]
 
 primitives = p0 + p1 + p2 + p3 + p4 + p5 + p6 + p7
 
-
 print("Primitives:")
 
 for p in primitives:
@@ -76,4 +75,8 @@ primitives = [p for p in primitives if p.name not in primitives_to_remove]
 print("Primtives, after pruning:")
 for p in primitives:
 	print("{} = {}".format(p.name, p.evaluate([])))
+
+# def getPrimitives(trainset="", prune=False):
+# 	if prune:
+
 
