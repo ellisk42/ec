@@ -959,7 +959,7 @@ def commandlineArguments(_=None,
         action="store_true")
     parser.add_argument("--skiptesting",
         dest="skiptesting",
-        help="for draw tasks, whether to include test stimhli. will also need to define test stimuli in. makeDrawTasks"
+        help="for draw tasks, whether to include test stimhli. will also need to define test stimuli in. makeDrawTasks",
         default=False,
         action="store_true")
 
