@@ -191,7 +191,10 @@ def makeSupervisedTasks(trainset="S8full", doshaping="True", userealnames=True):
 		programnames.extend(["task{}".format(n) for n in range(len(P))])
 
 
-	def addPrograms(lib, programs, programnames):
+	def addPrograms(lib, programs, programnames, nameprefix=[]):
+		if not nameprefix:
+			nameprefix=lib
+			# note: assumes that name prefix is lib. here tell it otherwise.
 
 		# ========= 1) SHAPING:
 		# ---- get programs
@@ -203,7 +206,7 @@ def makeSupervisedTasks(trainset="S8full", doshaping="True", userealnames=True):
 		# ---- get program names
 		with open("{}_stimnum.pkl".format(libname), 'rb') as fp:
 			stimnum = pickle.load(fp)
-		names = ["{}_{}".format(lib, s) for s in stimnum]
+		names = ["{}_{}".format(nameprefix, s) for s in stimnum]
 		programnames.extend(names)
 
 		return programs, programnames
@@ -277,6 +280,8 @@ def makeSupervisedTasks(trainset="S8full", doshaping="True", userealnames=True):
 
 	if trainset in ["S12", "S13"]:
 		programs_test, programs_test_names = addPrograms("S12_13_test", programs_test, programs_test_names)
+		programs_test, programs_test_names = addPrograms("S12_test", programs_test, programs_test_names, nameprefix="S12")
+		programs_test, programs_test_names = addPrograms("S13_test", programs_test, programs_test_names, nameprefix="S13")
 
 
 	if programs_test:
