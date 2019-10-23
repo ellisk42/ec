@@ -6,3 +6,7 @@ def plotNumSolved(result):
 	plt.xlabel("wake step")
 	plt.ylabel('tasks solved')
 	plt.plot(result.hitsAtEachWake, '-ok')
+
+
+
+def 

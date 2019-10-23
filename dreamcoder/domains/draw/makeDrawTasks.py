@@ -108,6 +108,7 @@ def makeSupervisedTasks(trainset="S8full", doshaping="True", userealnames=True):
 			P = pickle.load(fp)
 		programs.extend(P[:50])
 
+
 	# ===== train on basic stimuli like lines
 	if doshaping:
 		print("INCLUDING SHAPING STIMULI")
@@ -125,6 +126,8 @@ def makeSupervisedTasks(trainset="S8full", doshaping="True", userealnames=True):
 			)
 		programnames.extend(["shaping_{}".format(n) for n in range(9)])
 
+	##############################################
+	################# TRAINING SETS
 	if trainset=="S8full":
 		libname = "dreamcoder/domains/draw/trainprogs/S8_shaping"
 		with open("{}.pkl".format(libname), 'rb') as fp:
@@ -187,6 +190,44 @@ def makeSupervisedTasks(trainset="S8full", doshaping="True", userealnames=True):
 		programs.extend(P)
 		programnames.extend(["task{}".format(n) for n in range(len(P))])
 
+
+	def addPrograms(lib, programs, programnames):
+
+		# ========= 1) SHAPING:
+		# ---- get programs
+		libname = "dreamcoder/domains/draw/trainprogs/{}".format(lib)
+		with open("{}.pkl".format(libname), 'rb') as fp:
+			P = pickle.load(fp)
+		programs.extend(P)
+
+		# ---- get program names
+		with open("{}_stimnum.pkl".format(libname), 'rb') as fp:
+			stimnum = pickle.load(fp)
+		names = ["{}_{}".format(lib, s) for s in stimnum]
+		programnames.extend(names)
+
+		return programs, programnames
+
+	if trainset in ["S12", "S13"]:
+
+		programs, programnames = addPrograms("S12_13_shaping", programs, programnames)
+		programs, programnames = addPrograms(trainset, programs, programnames)
+
+		# lib = trainset
+		# # ---- get programs
+		# libname = "dreamcoder/domains/draw/trainprogs/{}".format(lib)
+		# with open("{}.pkl".format(libname), 'rb') as fp:
+		# 	P = pickle.load(fp)
+		# programs.extend(P)
+
+		# # ---- get program names
+		# libname = "dreamcoder/domains/draw/trainprogs/{}".format(lib)
+		# with open("{}_stimnum.pkl".format(libname), 'rb') as fp:
+		# 	stimnum = pickle.load(fp)
+		# names = ["{}_{}".format(libname, s) for s in stimnum]
+		# programnames.extend(names)
+
+
 	# ===== make programs
 	if userealnames:
 		assert len(programs) == len(programnames)
@@ -201,7 +242,10 @@ def makeSupervisedTasks(trainset="S8full", doshaping="True", userealnames=True):
 		# name = "task{}".format(i)
 		alltasks.append(SupervisedDraw(name, p))
 
-	# ==== make test tasks?
+
+
+	##############################################
+	################# make test tasks?
 	programs_test = []
 	programs_test_names = []
 	testtasks = []
@@ -230,6 +274,9 @@ def makeSupervisedTasks(trainset="S8full", doshaping="True", userealnames=True):
 			P = pickle.load(fp)
 		programs_test.extend(P)	
 		programs_test_names.extend(["S9_nojitter_{}".format(n) for n in [56, 59, 76, 80, 108, 112, 135, 139, 144, 147]])
+
+	if trainset in ["S12", "S13"]:
+		programs_test, programs_test_names = addPrograms("S12_13_test", programs_test, programs_test_names)
 
 
 	if programs_test:
