@@ -1,0 +1,5 @@
+[33mWARNING:[0m seccomp requested but not enabled, seccomp library is missing or too old
+Traceback (most recent call last):
+  File "analysis/parse.py", line 104, in <module>
+    import segmentation as dgseg
+ModuleNotFoundError: No module named 'segmentation'
