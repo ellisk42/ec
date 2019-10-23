@@ -1126,13 +1126,15 @@ class RecognitionModel(nn.Module):
                 surprisinglyHard.add((fi,f.task), (MDL,-trueDescriptionLength))
 
         import os
-        os.system("mkdir /tmp/surprisinglyEasy")
-        os.system("mkdir /tmp/surprisinglyHard")
+        import datetime
+        timestamp = datetime.datetime.now().isoformat()
+        eprint(f"Exporting playful to experimentOutputs/towers/surprisingly*/{timestamp}")
+        os.system("mkdir -p  experimentOutputs/towers/surprisinglyEasy/%s"%timestamp)
+        os.system("mkdir -p  experimentOutputs/towers/surprisinglyHard/%s"%timestamp)
         for i,(_,t) in enumerate(surprisinglyEasy.objectToScore):
-            t.exportImage(f"/tmp/surprisinglyEasy/{i}.png")
+            t.exportImage(f"experimentOutputs/towers/surprisinglyEasy/{timestamp}/{i}.png")
         for i,(_,t) in enumerate(surprisinglyHard.objectToScore):
-            t.exportImage(f"/tmp/surprisinglyHard/{i}.png")
-        assert False
+            t.exportImage(f"experimentOutputs/towers/surprisinglyHard/{timestamp}/{i}.png")
                 
                        
             
