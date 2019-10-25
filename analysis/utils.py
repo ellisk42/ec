@@ -114,7 +114,7 @@ def loadCheckpoint(trainset="S9_nojitter", userealnames=True, loadparse=False):
     ######  LOAD PARSES IF EXIST
     def loadParses():
         import os
-        F = glob.glob("experimentOutputs/draw/{}/parses_*.pickle".format(exptdir))
+        F = glob.glob("experimentOutputs/draw/{}/parsesflat_*.pickle".format(exptdir))
         parses = []
         for f in F:
             print("loading parse {}".format(f))
@@ -122,7 +122,7 @@ def loadCheckpoint(trainset="S9_nojitter", userealnames=True, loadparse=False):
                 print("skipping parse - size 0")
                 continue
 
-            name = f[f.find("parses")+7:f.find(".pickle")]
+            name = f[f.find("parses")+11:f.find(".pickle")]
 
             with open(f, "rb") as ff:
                 parse = pickle.load(ff)
@@ -148,15 +148,124 @@ def loadCheckpoint(trainset="S9_nojitter", userealnames=True, loadparse=False):
     assert len(result.getTestingTasks())==len(testtasks)
 
     savedir = "experimentOutputs/draw/{}".format(exptdir)
-    return result, tasks, testtasks, programnames, program_test_names, behaviorexpt, savedir, parses
+    analysavedir = "analysis/saved/DAT_ec{}_dg{}".format(trainset, behaviorexpt)
+
+    # ==== output a dict
+    DAT = {
+    "trainset":trainset,
+    "result": result,
+    "tasks": tasks,
+    "testtasks":testtasks,
+    "programnames": programnames,
+    "programnames_test": program_test_names,
+    "behaviorexpt": behaviorexpt,
+    "savedir": savedir,
+    "parses": parses,
+    "analysavedir":analysavedir
+    }
+
+    loadBehavior(DAT)
+    print("Loaded behavior also")
 
 
-def getTask(stimname, tasks, programnames, testtasks, program_test_names):
+    # === update savedirs
+    DATupdateSaveDirs(DAT)
+
+    return DAT
+
+
+########### HELPER FUNCTIONS FOR DAT
+def DATupdateSaveDirs(DAT):
+    import os
+    """dirs for saving processed stimuli"""
+    
+    # -- datsegs:
+    sdir = "{}/datsegs_ec".format(DAT["analysavedir"])
+    os.makedirs(sdir, exist_ok=True)
+    DAT["savedir_datsegs"] = sdir
+
+
+def DATloadDatFlat(DAT, stimname):
+    # helper function to load datflat
+    fname = "{}/{}.pickle".format(DAT["datflatsavedir"], stimname)
+    with open(fname, "rb") as f:
+        datflat_ec = pickle.load(f)
+    return datflat_ec
+
+def DATsaveDatFlat(DAT, datflat, stimname):
+    fname = "{}/{}.pickle".format(DAT["datflatsavedir"], stimname)
+    with open(fname, "wb") as f:
+        pickle.dump(datflat, f)
+    
+
+def DATloadDatSeg(DAT, stimname):
+    # helper function to load datflat
+    fname = "{}/{}.pickle".format(DAT["savedir_datsegs"], stimname)
+    with open(fname, "rb") as f:
+        datseg = pickle.load(f)
+    return datseg
+
+
+def DATsaveDatSeg(DAT, datseg, stimname):
+    fname = "{}/{}.pickle".format(DAT["savedir_datsegs"], stimname)
+    with open(fname, "wb") as f:
+        pickle.dump(datseg, f)
+
+
+def loadBehavior(DAT):
+    fname = "../TENENBAUM/drawgood/experiments/data/datall_{}.pickle".format(DAT["behaviorexpt"])
+    with open(fname, "rb") as f:
+        datall_drawgood = pickle.load(f)   
+    DAT["datall_human"] = datall_drawgood 
+
+def DATloadBehavior(DAT):
+    loadBehavior(DAT)
+
+
+def getTask(stimname, DAT):
     # search thru train, then through test tasks, outputs the task object and whether is train or test
-    for task, name in zip(tasks, programnames):
+    for task, name in zip(DAT["tasks"], DAT["programnames"]):
         if name==stimname:
             return task, "train"
-    for task, name in zip(testtasks, program_test_names):
+    for task, name in zip(DAT["testtasks"], DAT["programnames_test"]):
         if name==stimname:
             return task, "test"
+
+
+def DATgetTask(stimname, DAT):
+    return(getTask(stimname, DAT))
+
+
+def DATgetSolvedStim(DAT, removeshaping=True):
+    import re
+    """gets stims that have parses"""
+    stimnames = [P["name"] for P in DAT["parses"]]
+
+    if removeshaping:
+        # then throw out shaping that did not get for humans:
+        print("REMOVING SHAPING STIMULI (THOSE HUMANS DID NOT GET) [wil even remove things like S9_shaping_5]")
+
+        def isShaping(name):
+            # ouptuts true if is shaping
+            # looks for something like S[], where [] is any numner. if can't fin then this is shaping.
+            if False:
+                # old version, not good since it thinks that things like S9_shaping_5 are not shaping
+                if re.search("S[0-9]+_", name): # like S99_, must followed by underscore
+                    # then is a real task
+                    return False
+                else:
+                    print("removing, since I think is shaping: {}".format(name))
+                    return True 
+            else:
+                if re.search("shaping", name): 
+                    print("removing, since I think is shaping: {}".format(name))
+                    # then is shaping
+                    return True
+                else:
+                    return False 
+
+
+        stimnames = [s for s in stimnames if not isShaping(s)]
+
+    return stimnames
 
