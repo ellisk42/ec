@@ -1110,16 +1110,16 @@ class RecognitionModel(nn.Module):
         surprisinglyHard = ParetoFrontier()
         with torch.no_grad():
             for fi,f in enumerate(frontiers):
-                eprint(f.task.name)
+                # eprint(f.task.name)
                 trueDescriptionLength = min(-(e.logPrior+e.logLikelihood) for e in f)
-                eprint("True description length under generative model:",
-                       trueDescriptionLength)
+                # eprint("True description length under generative model:",
+                #        trueDescriptionLength)
                 MDL, _, difficultyLoss = \
                         self.frontierBiasOptimal(f, auxiliary=False, vectorized=True)
                 predictedDifficulty = self._descriptionLengthPrediction(self.featureExtractor.featuresOfTask(f.task))
-                eprint("True description length under recognition model:", MDL.data.item())
-                eprint("Predicted difficulty:", predictedDifficulty)
-                eprint()
+                # eprint("True description length under recognition model:", MDL.data.item())
+                # eprint("Predicted difficulty:", predictedDifficulty)
+                # eprint()
 
                 solution = f.bestPosterior.program
                 f.task.rename(str(solution))
@@ -1139,7 +1139,7 @@ class RecognitionModel(nn.Module):
         for i,t in enumerate(surprisinglyHard.objectToScore):
             t.exportImage(f"experimentOutputs/towers/surprisinglyHard/{timestamp}/{i}.png")
 
-        self.surprisinglyHard = surprisinglyHard.objectToScore.keys()
+        self.surprisinglyHard = list(surprisinglyHard.objectToScore.keys())
 
     def sampleHelmholtz(self, requests, statusUpdate=None, seed=None):
         if seed is not None:

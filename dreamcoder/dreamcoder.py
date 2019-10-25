@@ -458,7 +458,16 @@ def ecIterator(grammar, tasks,
         updateTaskSummaryMetrics(result.recognitionTaskMetrics, {f.task: f
                                                                  for f in result.allFrontiers.values()
                                                                  if len(f) > 0},
-                                 'frontier')                
+                                 'frontier')
+
+        if playful:
+            randomPlayfulTasks = random.sample(result.recognitionModel.surprisinglyHard,
+                                               k=j)
+            eprint(f"Adding {len(randomPlayfulTasks)} playful tasks to the set of problems to solve.")
+            tasks.extend(randomPlayfulTasks)
+            for newTask in randomPlayfulTasks:
+                result.allFrontiers[newTask] = Frontier([],task=newTask)
+                result.taskSolutions[newTask] = Frontier([],task=newTask)
         
         # Sleep-G
         if useDSL and not(noConsolidation):
