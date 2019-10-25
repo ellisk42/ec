@@ -1,13 +1,16 @@
-from bin.graphs import *
+
+from bin.graphs import loadfun
+print("GGGG")
 import matplotlib.pyplot as plt
 from math import ceil
 # === 4) Load tools to work with tasks libraries
-import dreamcoder.domains.draw.primitives as P
+# import dreamcoder.domains.draw.primitives as P
 import os
 import glob
 import sys
 import pickle
 sys.path.append("../")
+print("GGGG")
 
 
 ## ====== collect dreamcoder results and parse results
@@ -99,7 +102,9 @@ def loadCheckpoint(trainset="S9_nojitter", userealnames=True, loadparse=False):
     checkpoint = F[ind[0]]
     checkpoint = checkpoint.split("/")[-1]
     f = "experimentOutputs/draw/{}/{}".format(exptdir, checkpoint)
+    print("GGGGdd")
     result = loadfun(f)
+    print("GGGGeee")
 
     ####### LOADING TASKS 
     def loadTasks(taskset, doshaping):
@@ -184,6 +189,12 @@ def DATupdateSaveDirs(DAT):
     os.makedirs(sdir, exist_ok=True)
     DAT["savedir_datsegs"] = sdir
 
+    # -- datflat
+    sdir = "{}/datflat_ec".format(DAT["analysavedir"])
+    os.makedirs(sdir, exist_ok=True)
+    DAT["datflatsavedir"] = sdir
+
+
 
 def DATloadDatFlat(DAT, stimname):
     # helper function to load datflat
@@ -213,10 +224,16 @@ def DATsaveDatSeg(DAT, datseg, stimname):
 
 
 def loadBehavior(DAT):
-    fname = "../TENENBAUM/drawgood/experiments/data/datall_{}.pickle".format(DAT["behaviorexpt"])
-    with open(fname, "rb") as f:
-        datall_drawgood = pickle.load(f)   
-    DAT["datall_human"] = datall_drawgood 
+    try:
+        fname = "../TENENBAUM/drawgood/experiments/data/datall_{}.pickle".format(DAT["behaviorexpt"])
+        with open(fname, "rb") as f:
+            datall_drawgood = pickle.load(f)   
+        DAT["datall_human"] = datall_drawgood 
+    except:
+        fname = "/home/lucast4/drawgood/experiments/data/datall_{}.pickle".format(DAT["behaviorexpt"])
+        with open(fname, "rb") as f:
+            datall_drawgood = pickle.load(f)   
+        DAT["datall_human"] = datall_drawgood 
 
 def DATloadBehavior(DAT):
     loadBehavior(DAT)
