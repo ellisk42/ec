@@ -2,11 +2,14 @@
 ## will integrate with behaviral data to do modeln
 
 import sys
+
 sys.path.insert(0, "/Users/lucastian/Dropbox/CODE/Python/Tenenbaum/ec/")
 sys.path.insert(0, "/om/user/lyt/ec")
+sys.path.insert(0, "/home/lucast4/dc")
 # print(sys.path)
-from dreamcoder.domains.draw.drawPrimitives import *
-from dreamcoder.domains.draw.primitives import _repeat, _line, _makeAffine, _circle,_connect
+from dreamcoder.domains.draw.drawPrimitives import Program
+from dreamcoder.domains.draw.drawPrimitives import Parse
+# from dreamcoder.domains.draw.primitives import _repeat, _line, _makeAffine, _circle,_connect
 from dreamcoder.domains.draw.makeDrawTasks import makeSupervisedTasks, SupervisedDraw
 from dreamcoder.dreamcoder import ecIterator
 from dreamcoder.grammar import Grammar

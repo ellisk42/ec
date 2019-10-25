@@ -1,13 +1,19 @@
 # ===== for a given dreamcoder exeriment, script to preprocess all parses
+import sys
 
-
+sys.path.insert(0, "/Users/lucastian/Dropbox/CODE/Python/Tenenbaum/ec/")
+sys.path.insert(0, "/om/user/lyt/ec")
+sys.path.insert(0, "/home/lucast4/dc")
+# print("ADAS1")
 from analysis.utils import loadCheckpoint, DATgetSolvedStim, DATloadDatFlat, DATsaveDatSeg
+# print("ADAS2")
 from analysis.parse import parses2datflatAllSave
 # from analysis.analy import *
+# print("ADAS3")
 
 # == import things from drawgood.
-import sys
 sys.path.insert(0, "/Users/lucastian/tenen/TENENBAUM/drawgood/experiments")
+sys.path.insert(0, "/home/lucast4/drawgood/experiments")
 from segmentation import getSegmentation
 # import utils as dgutils
 # import plotsDatFlat as dgpflat
@@ -21,6 +27,7 @@ from segmentation import getSegmentation
 
 if __name__=="__main__":
 	ECTRAIN = sys.argv[1]
+	print(ECTRAIN)
 	REMOVELL=True	# if true, removes vertical bars from analyses.
 	# ECTRAIN = "S8.2.2"
 	# ECTRAIN = "S9.2"
