@@ -278,7 +278,7 @@ let tower_hash ?timeout:(timeout=0.001) request inputs : program -> PolyList.t o
     let l = List.length arrangement in
     let w = blocks_extent arrangement in
     let h = tower_height arrangement in
-    if l = 0 || l > 100 || w > 360 || h > 250 then None else
+    if l = 0 || l > 100 || w > 54 || h >= 60 then None else
       let j = PolyValue.List(arrangement |> List.map ~f:(fun (a,b,c,d) ->
           PolyValue.List([PolyValue.Integer(a);
                           PolyValue.Integer(b);

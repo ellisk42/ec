@@ -27,6 +27,11 @@ class Task(object):
                        for xs, _ in examples), \
                 "(for task %s) FATAL: Number of arguments varies." % name
 
+    def rename(self,n):
+        """DESTRUCTIVELY modifies the task to have a new name"""
+        self.name = n
+        return self
+
     def __str__(self):
         if self.supervision is None:
             return self.name

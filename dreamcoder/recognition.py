@@ -1121,9 +1121,12 @@ class RecognitionModel(nn.Module):
                 eprint("Predicted difficulty:", predictedDifficulty)
                 eprint()
 
+                solution = f.bestPosterior.program
+                f.task.rename(str(solution))
+
                 # find things which are surprisingly easy for the recognition model
-                surprisinglyEasy.add((fi,f.task), (-MDL,trueDescriptionLength))
-                surprisinglyHard.add((fi,f.task), (MDL,-trueDescriptionLength))
+                surprisinglyEasy.add(f.task, (-MDL,trueDescriptionLength))
+                surprisinglyHard.add(f.task, (MDL,-trueDescriptionLength))
 
         import os
         import datetime
@@ -1131,13 +1134,12 @@ class RecognitionModel(nn.Module):
         eprint(f"Exporting playful to experimentOutputs/towers/surprisingly*/{timestamp}")
         os.system("mkdir -p  experimentOutputs/towers/surprisinglyEasy/%s"%timestamp)
         os.system("mkdir -p  experimentOutputs/towers/surprisinglyHard/%s"%timestamp)
-        for i,(_,t) in enumerate(surprisinglyEasy.objectToScore):
+        for i,t in enumerate(surprisinglyEasy.objectToScore):
             t.exportImage(f"experimentOutputs/towers/surprisinglyEasy/{timestamp}/{i}.png")
-        for i,(_,t) in enumerate(surprisinglyHard.objectToScore):
+        for i,t in enumerate(surprisinglyHard.objectToScore):
             t.exportImage(f"experimentOutputs/towers/surprisinglyHard/{timestamp}/{i}.png")
-                
-                       
-            
+
+        self.surprisinglyHard = surprisinglyHard.objectToScore.keys()
 
     def sampleHelmholtz(self, requests, statusUpdate=None, seed=None):
         if seed is not None:

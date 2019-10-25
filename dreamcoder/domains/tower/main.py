@@ -2,7 +2,7 @@ from dreamcoder.dreamcoder import *
 
 from dreamcoder.domains.tower.towerPrimitives import primitives, new_primitives, animateTower
 from dreamcoder.domains.tower.makeTowerTasks import *
-from dreamcoder.domains.tower.tower_common import renderPlan, towerLength, centerTower
+from dreamcoder.domains.tower.tower_common import renderPlan, towerLength, centerTower, towerHeight, simulateWithoutPhysics
 from dreamcoder.utilities import *
 
 import os
