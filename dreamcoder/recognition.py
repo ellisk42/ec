@@ -866,7 +866,7 @@ class RecognitionModel(nn.Module):
             task=frontier.task)
 
     def train(self, frontiers, _=None, steps=None, lr=0.001, topK=5, CPUs=1,
-              timeout=None, evaluationTimeout=0.001,
+              timeout=None, evaluationTimeout=0.001, iteration=None,
               helmholtzFrontiers=[], helmholtzRatio=0., helmholtzBatch=500,
               biasOptimal=None, defaultRequest=None, auxLoss=False, vectorized=True):
         """
@@ -1101,11 +1101,12 @@ class RecognitionModel(nn.Module):
         eprint("(ID=%d): " % self.id, " Trained recognition model in",time.time() - start,"seconds")
         self.trained=True
 
-        if self.playful: self.showPlayTasks([getHelmholtz() for _ in range(500) ])
+        if self.playful: self.showPlayTasks([getHelmholtz() for _ in range(500) ],
+                                            iteration=iteration)
         
         return self
 
-    def showPlayTasks(self, frontiers):
+    def showPlayTasks(self, frontiers, iteration):
         surprisinglyEasy = ParetoFrontier()
         surprisinglyHard = ParetoFrontier()
         with torch.no_grad():
@@ -1121,25 +1122,13 @@ class RecognitionModel(nn.Module):
                 # eprint("Predicted difficulty:", predictedDifficulty)
                 # eprint()
 
-                solution = f.bestPosterior.program
-                f.task.rename(str(solution))
+                f.task.rename(f"playful/{iteration}/{fi}")
 
                 # find things which are surprisingly easy for the recognition model
                 surprisinglyEasy.add(f.task, (-MDL,trueDescriptionLength))
                 surprisinglyHard.add(f.task, (MDL,-trueDescriptionLength))
 
-        import os
-        import datetime
-        timestamp = datetime.datetime.now().isoformat()
-        eprint(f"Exporting playful to experimentOutputs/towers/surprisingly*/{timestamp}")
-        os.system("mkdir -p  experimentOutputs/towers/surprisinglyEasy/%s"%timestamp)
-        os.system("mkdir -p  experimentOutputs/towers/surprisinglyHard/%s"%timestamp)
-        for i,t in enumerate(surprisinglyEasy.objectToScore):
-            t.exportImage(f"experimentOutputs/towers/surprisinglyEasy/{timestamp}/{i}.png")
-        for i,t in enumerate(surprisinglyHard.objectToScore):
-            t.exportImage(f"experimentOutputs/towers/surprisinglyHard/{timestamp}/{i}.png")
-
-        self.surprisinglyHard = list(surprisinglyHard.objectToScore.keys())
+        self.surprisinglyHard = [o for s,o in sorted(surprisinglyHard.scoreToObject.items())]
 
     def sampleHelmholtz(self, requests, statusUpdate=None, seed=None):
         if seed is not None:

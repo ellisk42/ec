@@ -334,8 +334,18 @@ def main(arguments):
     dreamOfTowers(g0, "%s/random_0"%outputDirectory)
     
     for result in generator:
+        if arguments["playful"]:
+            iteration = len(result.learningCurve)
+            if iteration > 1:
+                playDirectory = f"{outputDirectory}/play{iteration}"
+                eprint(f"Exporting playful to {playDirectory}")
+                os.system(f"mkdir  -p {playDirectory}")
+                for ti,t in enumerate(result.recognitionModel.surprisinglyHard):
+                    t.exportImage(f"{playDirectory}/{ti}.png")
+                
+            
         continue
-        iteration = len(result.learningCurve)
+        
         newTowers = [tuple(centerTower(executeTower(frontier.sample().program)))
                      for frontier in result.taskSolutions.values() if not frontier.empty]
         try:
