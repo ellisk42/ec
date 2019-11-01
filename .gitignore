@@ -10,6 +10,8 @@
 *.pyc
 *~
 lucas
+analysis/saved/
+analysis/output/
 __pycache__
 _build
 experimentOutputs

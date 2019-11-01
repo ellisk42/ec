@@ -2,17 +2,19 @@
 ## will integrate with behaviral data to do modeln
 
 import sys
+
 sys.path.insert(0, "/Users/lucastian/Dropbox/CODE/Python/Tenenbaum/ec/")
 sys.path.insert(0, "/om/user/lyt/ec")
+sys.path.insert(0, "/home/lucast4/dc")
 # print(sys.path)
-from dreamcoder.domains.draw.drawPrimitives import *
-from dreamcoder.domains.draw.primitives import _repeat, _line, _makeAffine, _circle,_connect
+from dreamcoder.domains.draw.drawPrimitives import Program
+from dreamcoder.domains.draw.drawPrimitives import Parse
+# from dreamcoder.domains.draw.primitives import _repeat, _line, _makeAffine, _circle,_connect
 from dreamcoder.domains.draw.makeDrawTasks import makeSupervisedTasks, SupervisedDraw
 from dreamcoder.dreamcoder import ecIterator
 from dreamcoder.grammar import Grammar
 import numpy as np
 from analysis.utils import *
-
 
 
 def getParses(dreamcoder_program):
@@ -24,7 +26,24 @@ def getParses(dreamcoder_program):
 
 
 def getAndSaveParses(experiment="S9.2"):
-    result, tasks, testtasks, programnames, program_test_names, behaviorexpt, savedir = loadCheckpoint(trainset=experiment)[:7]
+    # DAT = loadCheckpoint(trainset=experiment)
+    # for key in DAT.keys():
+    #     key =
+
+    # result, tasks, testtasks, programnames, program_test_names, behaviorexpt, savedir = loadCheckpoint(trainset=experiment)[:7]
+
+    DAT = loadCheckpoint(trainset=experiment, loadparse=False, suppressPrint=True)
+    
+    result=DAT["result"]
+    tasks=DAT["tasks"]
+    testtasks=DAT["testtasks"]
+    programnames=DAT["programnames"]
+    program_test_names=DAT["programnames_test"]
+    behaviorexpt=DAT["behaviorexpt"]
+    savedir=DAT["savedir"]
+
+
+
 
     # === for each program, get the best posteiror and then all parses of that. 
     for t, name in zip(tasks, programnames):
@@ -86,8 +105,9 @@ def parses2datflat(programs, stimname="", condition=""):
     # this datflat can then be treated just like a human subject's data.
 
     datflat = []
+    print("getting datflat for {}".format(stimname))
     for i, prog in enumerate(programs):
-        print("prog {}".format(i))
+        # print("prog {}".format(i))
         if isinstance(prog, Parse):
             prog = prog.flatten()
         # append fake timestamps, so that prog become a strokes list:
@@ -98,13 +118,44 @@ def parses2datflat(programs, stimname="", condition=""):
             "parsenum": i, # this is unique to dreamcoder; each program has multiple parses
             "trialstrokes":strokes,
             "trialonset": 0,
-            "stimname": stimname, # TODO, replace with actual stim name
+            "stimname": stimname, 
             "trialprimitives":[],
             "trialcircleparams":[],
-            "condition":"",
+            "condition":condition
         })
     return datflat
 
+
+def parses2datflatAll(DAT):
+    # === this gets all into one datflat (i.e., stim x parses)
+    datflat_ec = []
+    for P in DAT["parses"]:
+        # print(P)
+        stimname = P["name"]
+        parses = P["parse"]
+        
+        datflat_ec.extend(parses2datflat(parses, stimname=stimname, condition=DAT["trainset"]))
+    return datflat_ec
+
+
+def parses2datflatAllSave(DAT):
+    if "datflatsavedir" not in DAT.keys():
+        savedir = "{}/datflat_ec".format(DAT["analysavedir"])
+        DAT["datflatsavedir"] = savedir
+    savedir = DAT["datflatsavedir"]
+    os.makedirs(savedir, exist_ok=True)
+    print(savedir)
+    for P in DAT["parses"]:
+
+        stimname = P["name"]
+        parses = P["parse"]
+        print(stimname)
+        
+        datflat_ec = parses2datflat(parses, stimname=stimname, condition=DAT["trainset"])
+        
+        savename = "{}/{}.pickle".format(savedir, stimname)
+        with open(savename, "wb") as f:
+            pickle.dump(datflat_ec, f)
 
 
 # ==== do segmentation
@@ -112,6 +163,8 @@ if __name__=="__main__":
     IMPORT_DRAWGOOD=False
 else:
     IMPORT_DRAWGOOD=True
+
+IMPORT_DRAWGOOD = False
 if IMPORT_DRAWGOOD:
     import sys
     sys.path.append("/Users/lucastian/tenen/TENENBAUM/drawgood/experiments")
@@ -120,11 +173,41 @@ if IMPORT_DRAWGOOD:
     import plotsDatFlat as dgpflat
     import plotsSingleSubj as dgpsing
     import preprocess as dgprep
-
+    import modelAnaly as dgmodel
 
 if __name__=="__main__":
     import sys
     experiment = sys.argv[1]
-    print(experiment)
-    print(type(experiment))
-    getAndSaveParses(experiment=experiment)
+    if len(sys.argv)>2:
+        doparse = sys.argv[2]
+    else:
+        doparse = 1
+
+    REMOVELL = True    
+
+    # === Get all parses, if desired
+    if doparse==1:
+        print("getting all parses (may take a while")
+        getAndSaveParses(experiment=experiment)
+    else:
+        print("skipping parse as requested")
+
+    # === get datflat
+    print("GETTING DATFLAT (computing and then saving")
+    DAT = loadCheckpoint(trainset=experiment, loadparse=True, suppressPrint=True)
+    parses2datflatAllSave(DAT)
+
+    # === get datseg
+    # -- for each stim, load datflat, do segmentation, save...
+    print("GETTING DATSEGS (computing and then saving)")
+    stims = DATgetSolvedStim(DAT, intersectDrawgood=True)
+    for s in stims:
+        # print("getting datsegs for {}".format(s))
+        # load datflat
+        datflat = DATloadDatFlat(DAT, s)
+        
+        # 1) get datseg
+        datseg = getSegmentation(datflat, unique_codes=True, dosplits=True, removebadstrokes=True, removeLongVertLine=REMOVELL) 
+            
+        # save datflat
+        DATsaveDatSeg(DAT, datseg, s)

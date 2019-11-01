@@ -1,7 +1,9 @@
 # =========== [NEWER VERSION, NOT USING MATPLOTLIB]
+print("HERE")
 import math
 import numpy as np
 # import matplotlibplt
+
 from scipy.ndimage import gaussian_filter as gf
 from skimage import color
 from scipy.ndimage import gaussian_filter as gf
