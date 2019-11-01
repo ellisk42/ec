@@ -30,7 +30,19 @@ def getAndSaveParses(experiment="S9.2"):
     # for key in DAT.keys():
     #     key =
 
-    result, tasks, testtasks, programnames, program_test_names, behaviorexpt, savedir = loadCheckpoint(trainset=experiment)[:7]
+    # result, tasks, testtasks, programnames, program_test_names, behaviorexpt, savedir = loadCheckpoint(trainset=experiment)[:7]
+
+    DAT = loadCheckpoint(trainset=experiment, loadparse=False, suppressPrint=True)
+    
+    result=DAT["result"]
+    tasks=DAT["tasks"]
+    testtasks=DAT["testtasks"]
+    programnames=DAT["programnames"]
+    program_test_names=DAT["programnames_test"]
+    behaviorexpt=DAT["behaviorexpt"]
+    savedir=DAT["savedir"]
+
+
 
 
     # === for each program, get the best posteiror and then all parses of that. 
@@ -127,7 +139,10 @@ def parses2datflatAll(DAT):
 
 
 def parses2datflatAllSave(DAT):
-    savedir = "{}/datflat_ec".format(DAT["analysavedir"])
+    if "datflatsavedir" not in DAT.keys():
+        savedir = "{}/datflat_ec".format(DAT["analysavedir"])
+        DAT["datflatsavedir"] = savedir
+    savedir = DAT["datflatsavedir"]
     os.makedirs(savedir, exist_ok=True)
     print(savedir)
     for P in DAT["parses"]:
@@ -141,7 +156,6 @@ def parses2datflatAllSave(DAT):
         savename = "{}/{}.pickle".format(savedir, stimname)
         with open(savename, "wb") as f:
             pickle.dump(datflat_ec, f)
-    DAT["datflatsavedir"] = savedir
 
 
 # ==== do segmentation
@@ -159,12 +173,41 @@ if IMPORT_DRAWGOOD:
     import plotsDatFlat as dgpflat
     import plotsSingleSubj as dgpsing
     import preprocess as dgprep
-    import modelAnalyadsfads as dgmodel
-
+    import modelAnaly as dgmodel
 
 if __name__=="__main__":
     import sys
     experiment = sys.argv[1]
-    print(experiment)
-    print(type(experiment))
-    getAndSaveParses(experiment=experiment)
+    if len(sys.argv)>2:
+        doparse = sys.argv[2]
+    else:
+        doparse = 1
+
+    REMOVELL = True    
+
+    # === Get all parses, if desired
+    if doparse==1:
+        print("getting all parses (may take a while")
+        getAndSaveParses(experiment=experiment)
+    else:
+        print("skipping parse as requested")
+
+    # === get datflat
+    print("GETTING DATFLAT (computing and then saving")
+    DAT = loadCheckpoint(trainset=experiment, loadparse=True, suppressPrint=True)
+    parses2datflatAllSave(DAT)
+
+    # === get datseg
+    # -- for each stim, load datflat, do segmentation, save...
+    print("GETTING DATSEGS (computing and then saving)")
+    stims = DATgetSolvedStim(DAT, intersectDrawgood=True)
+    for s in stims:
+        # print("getting datsegs for {}".format(s))
+        # load datflat
+        datflat = DATloadDatFlat(DAT, s)
+        
+        # 1) get datseg
+        datseg = getSegmentation(datflat, unique_codes=True, dosplits=True, removebadstrokes=True, removeLongVertLine=REMOVELL) 
+            
+        # save datflat
+        DATsaveDatSeg(DAT, datseg, s)

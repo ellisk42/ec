@@ -27,7 +27,8 @@ class SupervisedDraw(Task):
 				p2 = segments[i+1][0], segments[i+1][1]
 				trajectory.append([p1,p2])
 		self.specialTask = ("draw",
-							{"trajectory": trajectory})
+							{"trajectory": trajectory,
+                                                         "bounded_cost": True})
 
 		self.strokes = program # list of np arrays.
 		self.rendered_strokes = prog2pxl(program)

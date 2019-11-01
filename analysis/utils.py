@@ -1,6 +1,5 @@
 
 from bin.graphs import loadfun
-print("GGGG")
 import matplotlib.pyplot as plt
 from math import ceil
 # === 4) Load tools to work with tasks libraries
@@ -10,11 +9,19 @@ import glob
 import sys
 import pickle
 sys.path.append("../")
-print("GGGG")
+
+# from analysis.getModelHumanDists import DATloadDrawgoodData
+sys.path.insert(0, "/Users/lucastian/tenen/TENENBAUM/drawgood/experiments")
+sys.path.insert(0, "/home/lucast4/drawgood/experiments")
+# from modelAnaly import distModelHumanAllStims
+from segmentation import getSegmentation
+from preprocess import getFlatData
+
+REMOVELL = True # remove vertical long line?
 
 
 ## ====== collect dreamcoder results and parse results
-def loadCheckpoint(trainset="S9_nojitter", userealnames=True, loadparse=False):
+def loadCheckpoint(trainset="S9_nojitter", userealnames=True, loadparse=False, suppressPrint=False):
     # userealnames = True, then names tasks by their stim names (eg., S8_2), otherwise names as train0, train1, ...
     ##### METADATA
     behaviorexpt = ""
@@ -91,9 +98,10 @@ def loadCheckpoint(trainset="S9_nojitter", userealnames=True, loadparse=False):
             a = f.find("_it")
             b = f.find("_MF")
             iters.append(int(f[a+4:b]))
-        print(f)
-        print(iters[-1])
-        print('----')
+        if not suppressPrint:
+            print(f)
+            print(iters[-1])
+            print('----')
 
     # --- find the file with highest iteration
     # print(max(iters))
@@ -122,7 +130,8 @@ def loadCheckpoint(trainset="S9_nojitter", userealnames=True, loadparse=False):
         F = glob.glob("experimentOutputs/draw/{}/parsesflat_*.pickle".format(exptdir))
         parses = []
         for f in F:
-            print("loading parse {}".format(f))
+            if not suppressPrint:
+                print("loading parse {}".format(f))
             if os.path.getsize(f)==0:
                 print("skipping parse - size 0")
                 continue
@@ -142,7 +151,7 @@ def loadCheckpoint(trainset="S9_nojitter", userealnames=True, loadparse=False):
         if len(parses)>0:
             print("FOUND {} pre-computed parses!".format(len(parses)))
     else:
-        print("not loading parses")
+        print("not loading parses [NONE FOUND]")
         parses = []
 
     print("Num dreamcoder tasks {}".format(len(result.taskSolutions)))
@@ -194,6 +203,10 @@ def DATupdateSaveDirs(DAT):
     os.makedirs(sdir, exist_ok=True)
     DAT["datflatsavedir"] = sdir
 
+    # -- model - human distance
+    sdir = "{}/modelhudist".format(DAT["analysavedir"])
+    os.makedirs(sdir, exist_ok=True)
+    DAT["savedir_modelhudist"] = sdir
 
 
 def DATloadDatFlat(DAT, stimname):
@@ -216,6 +229,10 @@ def DATloadDatSeg(DAT, stimname):
         datseg = pickle.load(f)
     return datseg
 
+def DATsaveDatSeg(DAT, datseg, stimname):
+    fname = "{}/{}.pickle".format(DAT["savedir_datsegs"], stimname)
+    with open(fname, "wb") as f:
+        pickle.dump(datseg, f)
 
 def DATsaveDatSeg(DAT, datseg, stimname):
     fname = "{}/{}.pickle".format(DAT["savedir_datsegs"], stimname)
@@ -249,14 +266,35 @@ def getTask(stimname, DAT):
             return task, "test"
 
 
+def DATsaveModelHuDist(DAT, stim, human, dists):
+    sdir = DAT["savedir_modelhudist"]
+    fname = "{}/{}_{}.pickle".format(sdir, stim, human)
+    with open(fname, "wb") as f:
+        pickle.dump(dists, f)
+
+def DATloadModelHuDist(DAT, stim, human):
+    sdir = DAT["savedir_modelhudist"]
+    fname = "{}/{}_{}.pickle".format(sdir, stim, human)
+    with open(fname, "rb") as f:
+        dists = pickle.load(f)
+    return dists
+
+
 def DATgetTask(stimname, DAT):
     return(getTask(stimname, DAT))
 
 
-def DATgetSolvedStim(DAT, removeshaping=True):
+################# DRAWGOOD HELPER -  things that help with applying drawgood
+def DATloadDrawgoodData(DAT, dosegmentation=True):
+    DAT["datflat_hu"] = getFlatData(DAT["datall_human"])
+    if dosegmentation:
+        DAT["datseg_hu"] = getSegmentation(DAT["datflat_hu"], unique_codes=True, dosplits=True, removeLongVertLine=REMOVELL)                                      
+    return DAT
+
+def DATgetSolvedStim(DAT, removeshaping=True, intersectDrawgood=False):
     import re
     """gets stims that have parses"""
-    stimnames = [P["name"] for P in DAT["parses"]]
+    stimnames = [P["name"] for P in DAT["parses"] if len(P["parse"])>0]
 
     if removeshaping:
         # then throw out shaping that did not get for humans:
@@ -283,6 +321,14 @@ def DATgetSolvedStim(DAT, removeshaping=True):
 
 
         stimnames = [s for s in stimnames if not isShaping(s)]
+    if intersectDrawgood:
+        # then only keep if it is part of stim present in the drawgood stimuli
+        DAT = DATloadDrawgoodData(DAT, dosegmentation=False)
+        stimDG = set([d["stimname"][:d["stimname"].find(".png")] for d in DAT["datflat_hu"]])
+        print(stimDG)
+        # print(stimnames[0])
+        stimnames = [s for s in stimnames if s in stimDG]
 
     return stimnames
+
 

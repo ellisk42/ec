@@ -24,7 +24,6 @@ from segmentation import getSegmentation
 
 
 
-
 if __name__=="__main__":
 	ECTRAIN = sys.argv[1]
 	print(ECTRAIN)
@@ -52,7 +51,6 @@ if __name__=="__main__":
 	    datflat = DATloadDatFlat(DAT, s)	    # load datflat
 	    datseg = getSegmentation(datflat, unique_codes=True, dosplits=True, removebadstrokes=True, removeLongVertLine=REMOVELL) # get datseg
 	    DATsaveDatSeg(DAT, datseg, s) # save datflat
-
 
 
 	# # Human

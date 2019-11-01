@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 name: ec
+=======
+name: ecgood
+>>>>>>> 497d732fba6d408731ab49d1eefba1c75b766684
 channels:
   - defaults
   - conda-forge
@@ -35,5 +39,9 @@ dependencies:
   - scikit-image
   - pycairo
   - librsvg
+<<<<<<< HEAD
 prefix: /Users/lucastian/anaconda3/envs/ec
 
+=======
+prefix: /bluejay4/anaconda3/envs/ecgood
+>>>>>>> 497d732fba6d408731ab49d1eefba1c75b766684
