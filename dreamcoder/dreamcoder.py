@@ -951,7 +951,7 @@ def commandlineArguments(_=None,
         dest="trainset",
         help="for draw tasks, which training set to use",
         type=str,
-        default="S8")
+        default="S12")
     parser.add_argument("--doshaping",
         dest="doshaping",
         help="for draw tasks, whether to include a nunch of shaping stimuli (e.g., some lines and stuff)",

@@ -218,20 +218,6 @@ def makeSupervisedTasks(trainset="S8full", doshaping="True", userealnames=True):
 		programs, programnames = addPrograms("S12_13_shaping", programs, programnames)
 		programs, programnames = addPrograms(trainset, programs, programnames)
 
-		# lib = trainset
-		# # ---- get programs
-		# libname = "dreamcoder/domains/draw/trainprogs/{}".format(lib)
-		# with open("{}.pkl".format(libname), 'rb') as fp:
-		# 	P = pickle.load(fp)
-		# programs.extend(P)
-
-		# # ---- get program names
-		# libname = "dreamcoder/domains/draw/trainprogs/{}".format(lib)
-		# with open("{}_stimnum.pkl".format(libname), 'rb') as fp:
-		# 	stimnum = pickle.load(fp)
-		# names = ["{}_{}".format(libname, s) for s in stimnum]
-		# programnames.extend(names)
-
 
 	# ===== make programs
 	if userealnames:
