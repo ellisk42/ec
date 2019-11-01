@@ -47,7 +47,83 @@ def main_dummy(N=25):
         savefig(a, f"/tmp/draw{n}.png")
         # a.savefig(f"/tmp/draw{n}.png")
                                     
-                                
+                       
+from dreamcoder.domains.draw.drawPrimitives import *
+import dreamcoder.domains.draw.primitives as PP
+from dreamcoder.type import arrow
+from itertools import product
+
+
+def visualizePrimitives(primitives, export="/tmp/draw_primitives"):
+    from math import ceil
+    matrix = []
+    print("ONLY PLOTS INVENTED PRIMITIVES")
+    print("FILLS ARGUMENT HOLES WITH A HANDFUL OF VALUES")
+    for i, p in enumerate(primitives):
+        print("--- prim {}".format(i))
+        if not p.isInvented: continue
+        t = p.tp
+        # print(p,":",p.tp)
+        if t.returns() != tstroke:
+            print("\t(does not return a tstroke)")
+            continue
+
+        def argumentChoices(t):
+            if t in [tmaybe(tangle), tangle]:
+                return [j*(2*pi/4) for j in range(4)]
+            elif t == tstroke:
+                return [PP._line, PP._circle, PP.polygon(3)]
+            elif t in [tmaybe(tscale), tscale]:
+                return [2., 4.]
+            elif t in [tmaybe(tdist), tdist]:
+                return [-2., -1., 0, 1., 2.]
+            elif t == ttrorder:
+                return PP.ORDERS
+            elif t== trep:
+                return [j+1 for i, j in enumerate(range(7))]
+            else: return []
+
+        ts = [] # holds all cases for this primitive
+        print(t.functionArguments())
+        print([argumentChoices(t) for t in t.functionArguments() ])
+        for arguments in product(*[argumentChoices(t) for t in t.functionArguments() ]):
+            t = p.evaluate([])
+            for a in arguments: t = t(a)
+            ts.append(t)
+            
+        matrix.append(ts)
+    
+
+    # ==== make and save plot
+    def save(ts, j):
+        n = len(ts)
+        ncol = 6
+        nrow = ceil(n+1/6)
+        fig = plt.figure(figsize=(ncol*2, nrow*2))
+        for ii, nn in enumerate(ts):
+            ax = plt.subplot(nrow, ncol, ii+1)
+            PP.plotOnAxes(nn, ax)
+            plt.title("prim {}".format(j))
+        fig.savefig("{}_p{}.png".format(export, j))
+        
+    for j, ts in enumerate(matrix):
+        save(ts, j)
+        
+#     # Only visualize if it has something to visualize.
+#     if len(matrix) > 0:
+#         matrix = montageMatrix(matrix)
+#         # imshow(matrix)
+        
+#         import scipy.misc
+#         scipy.misc.imsave(fn, matrix)
+#         #    show()
+#     else:
+#         eprint("Tried to visualize primitives, but none to visualize.")
+
+    return matrix
+
+
+
 def main(arguments):
         if arguments["dopruning"]:
             print("PRUNING PRIMITIES, using trainset {}".format(arguments["trainset"]))

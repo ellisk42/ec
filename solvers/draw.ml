@@ -17,6 +17,8 @@ let tmatrix = make_ground "ttransmat";;
 let trep = make_ground "trep";;
 let torder = make_ground "ttorder";;
 
+exception OutsideOfCanvas;;
+
 
 type coordinate = float*float
 
@@ -170,23 +172,39 @@ ignore(primitive "repeat" (tstroke @> trep @> tmatrix @> tstroke)
 
 
 let render_canvas ?length:(length=6.) (dr : drawing_routine)  =
-  let desired_size = 9. in (* the backend expects a 9x9 render *)
-  let rec make_canvas = function
-    | [] -> new_canvas()
-    | Line((x1,y1),(x2,y2)) :: rest ->
-      let x1 = (x1+.length/.2.)*.desired_size/.length in
-      let y1 = (y1+.length/.2.)*.desired_size/.length in
-      let x2 = (x2+.length/.2.)*.desired_size/.length in
-      let y2 = (y2+.length/.2.)*.desired_size/.length in
-      let suffix = make_canvas rest in
-      lineto (moveto suffix x1 y1) x2 y2
-    (* | Circle({x;y;r}) :: rest -> *)
-    (*   circle (make_canvas rest) x y *)
-  in 
-  make_canvas dr;;
+  try
+    let desired_size = 9. in (* the backend expects a 9x9 render *)
+    let check c =
+      if c < 0. || c > desired_size then raise OutsideOfCanvas
+    in 
+    let rec make_canvas = function
+      | [] -> new_canvas()
+      | Line((x1,y1),(x2,y2)) :: rest ->
+        let x1 = (x1+.length/.2.)*.desired_size/.length in
+        let y1 = (y1+.length/.2.)*.desired_size/.length in
+        let x2 = (x2+.length/.2.)*.desired_size/.length in
+        let y2 = (y2+.length/.2.)*.desired_size/.length in
+        check x1; check x2; check y1; check y2;
+        let suffix = make_canvas rest in
+        lineto (moveto suffix x1 y1) x2 y2
+        (* | Circle({x;y;r}) :: rest -> *)
+        (*   circle (make_canvas rest) x y *)
+    in 
+    Some(make_canvas dr)
+  with OutsideOfCanvas -> None;;
+
+let drawing_cost (dr : drawing_routine) : float =
+  dr |> List.fold_left ~init:0. ~f:(fun cost_so_far k ->
+      match k with
+      | Line((x,y),(x',y')) ->
+        let dx = x-.x' in
+        let dy = y-.y' in
+        let d2 = dx*.dx+.dy*.dy in
+        sqrt d2 +. cost_so_far);;
+      
 
 
-let recent_draw_program : (program*((int, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t option)) option ref = ref None;;
+let recent_draw_program : (program*((((int, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t)*float) option)) option ref = ref None;;
 let run_recent_draw ?attempts:(attempts=1) ~timeout ~resolution p =
   match !recent_draw_program with
   | Some(p',y) when program_equal p p' -> y
@@ -196,8 +214,15 @@ let run_recent_draw ?attempts:(attempts=1) ~timeout ~resolution p =
         (fun () ->
            let p = analyze_lazy_evaluation p in
            let x = run_lazy_analyzed_with_arguments p [] in
-           let c = (render_canvas x) in
-           canvas_to_1Darray c resolution)
+           let length = drawing_cost x in 
+           match render_canvas x with
+           | Some(c) -> Some((length, canvas_to_1Darray c resolution))
+           | None -> None)
+    in
+    let y = match y with
+      | Some(Some((l,y'))) -> Some((y',l))
+      | Some(None) -> None (* outside of canvas *)
+      | None -> None (* timeout *)
     in
     recent_draw_program := Some(p,y);
     y
@@ -214,9 +239,22 @@ register_special_task "draw" (fun  extras ?timeout:(timeout = 0.001) name ty exa
                (x2 |> to_float, y2 |> to_float)))
     in
 
+    let bounded_cost = try
+        extras |> member "bounded_cost" |> to_bool
+      with _ -> false
+    in
+
     let resolution = 28 in
-    
-    let spec = canvas_to_1Darray (render_canvas spec) resolution in
+
+    let spec_cost = drawing_cost spec in
+
+    let spec = match render_canvas spec with
+      | None ->
+        Printf.eprintf "FATAL: task %s draws outside of canvas\n" name;
+        assert (false)
+      | Some(spec') -> spec'
+    in
+    let spec = canvas_to_1Darray spec resolution in
     
     {name = name;
      task_type = ty;
@@ -224,6 +262,8 @@ register_special_task "draw" (fun  extras ?timeout:(timeout = 0.001) name ty exa
        (fun program ->
           let yh = run_recent_draw ~timeout ~resolution program in 
           match yh with
-          | Some(yh) when (LogoLib.LogoInterpreter.fp_equal spec yh 5) -> 0.
+          | Some(yh,l) when (LogoLib.LogoInterpreter.fp_equal spec yh 5) &&
+            ((not bounded_cost) || l <= spec_cost*.1.1)->
+            0.
           | _ -> log 0.)})
 
