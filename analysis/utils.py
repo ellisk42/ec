@@ -9,7 +9,6 @@ import glob
 import sys
 import pickle
 sys.path.append("../")
-print("GGGG")
 
 # from analysis.getModelHumanDists import DATloadDrawgoodData
 sys.path.insert(0, "/Users/lucastian/tenen/TENENBAUM/drawgood/experiments")
