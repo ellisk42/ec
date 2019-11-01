@@ -1,0 +1,2 @@
+[33mWARNING:[0m seccomp requested but not enabled, seccomp library is missing or too old
+*** stack smashing detected ***: <unknown> terminated

@@ -1,0 +1,57 @@
+[33mWARNING:[0m seccomp requested but not enabled, seccomp library is missing or too old
+S8.2.2
+<class 'str'>
+experimentOutputs/draw/2019-10-20T14:09:07.358291/draw_aic=1.0_arity=3_BO=True_CO=True_doshaping=True_ES=1_ET=600_HR=0.5_it=2_MF=5_noConsolidation=False_pc=30_RT=1200_RR=False_RW=False_solver=ocaml_STM=True_L=1.5_TRR=default_K=2_topkNotMAP=False_trainset=S8_nojitter_graph=True.pickle
+2
+----
+experimentOutputs/draw/2019-10-20T14:09:07.358291/draw_aic=1.0_arity=3_BO=True_CO=True_doshaping=True_ES=1_ET=600_HR=0.5_it=1_MF=5_noConsolidation=False_pc=30_RT=1200_RR=False_RW=False_solver=ocaml_STM=True_L=1.5_TRR=default_K=2_topkNotMAP=False_trainset=S8_nojitter_graph=True.pickle
+1
+----
+experimentOutputs/draw/2019-10-20T14:09:07.358291/draw_aic=1.0_arity=3_BO=True_CO=True_doshaping=True_ES=1_ET=600_HR=0.5_it=6_MF=5_noConsolidation=False_pc=30_RT=1200_RR=False_RW=False_solver=ocaml_STM=True_L=1.5_TRR=default_K=2_topkNotMAP=False_trainset=S8_nojitter.pickle
+0
+----
+experimentOutputs/draw/2019-10-20T14:09:07.358291/draw_aic=1.0_arity=3_BO=True_CO=True_doshaping=True_ES=1_ET=600_HR=0.5_it=5_MF=5_noConsolidation=False_pc=30_RT=1200_RR=False_RW=False_solver=ocaml_STM=True_L=1.5_TRR=default_K=2_topkNotMAP=False_trainset=S8_nojitter_graph=True.pickle
+5
+----
+experimentOutputs/draw/2019-10-20T14:09:07.358291/draw_aic=1.0_arity=3_BO=True_CO=True_doshaping=True_ES=1_ET=600_HR=0.5_it=2_MF=5_noConsolidation=False_pc=30_RT=1200_RR=False_RW=False_solver=ocaml_STM=True_L=1.5_TRR=default_K=2_topkNotMAP=False_trainset=S8_nojitter.pickle
+0
+----
+experimentOutputs/draw/2019-10-20T14:09:07.358291/draw_aic=1.0_arity=3_BO=True_CO=True_doshaping=True_ES=1_ET=600_HR=0.5_it=3_MF=5_noConsolidation=False_pc=30_RT=1200_RR=False_RW=False_solver=ocaml_STM=True_L=1.5_TRR=default_K=2_topkNotMAP=False_trainset=S8_nojitter.pickle
+0
+----
+experimentOutputs/draw/2019-10-20T14:09:07.358291/draw_aic=1.0_arity=3_BO=True_CO=True_doshaping=True_ES=1_ET=600_HR=0.5_it=4_MF=5_noConsolidation=False_pc=30_RT=1200_RR=False_RW=False_solver=ocaml_STM=True_L=1.5_TRR=default_K=2_topkNotMAP=False_trainset=S8_nojitter_graph=True.pickle
+4
+----
+experimentOutputs/draw/2019-10-20T14:09:07.358291/draw_aic=1.0_arity=3_BO=True_CO=True_doshaping=True_ES=1_ET=600_HR=0.5_it=5_MF=5_noConsolidation=False_pc=30_RT=1200_RR=False_RW=False_solver=ocaml_STM=True_L=1.5_TRR=default_K=2_topkNotMAP=False_trainset=S8_nojitter.pickle
+0
+----
+experimentOutputs/draw/2019-10-20T14:09:07.358291/draw_aic=1.0_arity=3_BO=True_CO=True_doshaping=True_ES=1_ET=600_HR=0.5_it=3_MF=5_noConsolidation=False_pc=30_RT=1200_RR=False_RW=False_solver=ocaml_STM=True_L=1.5_TRR=default_K=2_topkNotMAP=False_trainset=S8_nojitter_graph=True.pickle
+3
+----
+experimentOutputs/draw/2019-10-20T14:09:07.358291/draw_aic=1.0_arity=3_BO=True_CO=True_doshaping=True_ES=1_ET=600_HR=0.5_it=6_MF=5_noConsolidation=False_pc=30_RT=1200_RR=False_RW=False_solver=ocaml_STM=True_L=1.5_TRR=default_K=2_topkNotMAP=False_trainset=S8_nojitter_graph=True.pickle
+6
+----
+experimentOutputs/draw/2019-10-20T14:09:07.358291/draw_aic=1.0_arity=3_BO=True_CO=True_doshaping=True_ES=1_ET=600_HR=0.5_it=1_MF=5_noConsolidation=False_pc=30_RT=1200_RR=False_RW=False_solver=ocaml_STM=True_L=1.5_TRR=default_K=2_topkNotMAP=False_trainset=S8_nojitter.pickle
+0
+----
+experimentOutputs/draw/2019-10-20T14:09:07.358291/draw_aic=1.0_arity=3_BO=True_CO=True_doshaping=True_ES=1_ET=600_HR=0.5_it=4_MF=5_noConsolidation=False_pc=30_RT=1200_RR=False_RW=False_solver=ocaml_STM=True_L=1.5_TRR=default_K=2_topkNotMAP=False_trainset=S8_nojitter.pickle
+0
+----
+DRAW TASK training set: S8_nojitter
+DO SHAPING: True
+INCLUDING SHAPING STIMULI
+training task names:
+['task0', 'task1', 'task2', 'task3', 'task4', 'task5', 'task6', 'task7', 'task8', 'task9', 'task10', 'task11', 'task12', 'task13', 'task14', 'task15', 'task16', 'task17', 'task18', 'task19', 'task20', 'task21', 'task22', 'task23', 'task24', 'task25', 'task26', 'task27', 'task28', 'task29', 'task30', 'task31', 'task32', 'task33', 'task34', 'task35', 'task36', 'task37', 'task38', 'task39', 'task40', 'task41', 'task42', 'task43', 'task44', 'task45', 'task46', 'task47', 'task48', 'task49', 'task50', 'task51', 'task52', 'task53', 'task54', 'task55', 'task56', 'task57', 'task58', 'task59', 'task60', 'task61', 'task62', 'task63', 'task64', 'task65', 'task66', 'task67', 'task68', 'task69', 'task70', 'task71', 'task72', 'task73', 'task74', 'task75', 'task76', 'task77', 'task78', 'task79', 'task80', 'task81', 'task82', 'task83', 'task84', 'task85', 'task86', 'task87', 'task88', 'task89', 'task90', 'task91', 'task92', 'task93', 'task94', 'task95', 'task96', 'task97']
+test tasks:
+['test0', 'test1', 'test2', 'test3', 'test4', 'test5', 'test6', 'test7', 'test8', 'test9', 'test10', 'test11', 'test12', 'test13', 'test14', 'test15', 'test16', 'test17', 'test18', 'test19', 'test20', 'test21', 'test22', 'test23', 'test24', 'test25', 'test26', 'test27', 'test28', 'test29', 'test30', 'test31', 'test32']
+not loading parses
+Num dreamcoder tasks 98
+n supervised tasks 98
+Num dreamcoder TEST tasks 33
+n supervised TEST tasks 33
+Traceback (most recent call last):
+  File "analysis/parse.py", line 130, in <module>
+    getAndSaveParses(experiment=experiment)
+  File "analysis/parse.py", line 27, in getAndSaveParses
+    result, tasks, testtasks, programnames, program_test_names, behaviorexpt, savedir = loadCheckpoint(trainset=experiment)[:8]
+ValueError: too many values to unpack (expected 7)
