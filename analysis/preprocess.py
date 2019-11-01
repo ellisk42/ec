@@ -53,3 +53,8 @@ if __name__=="__main__":
 	    DATsaveDatSeg(DAT, datseg, s) # save datflat
 
 
+	# # Human
+	# DATFLAT["datseg_hu"] = dgseg.getSegmentation(DAT["datflat_hu"], unique_codes=True, dosplits=True, removeLongVertLine=REMOVELL)                                      
+
+	# # 3) Load human data
+	# DAT["datflat_hu"] = dgprep.getFlatData(DAT["datall_human"])

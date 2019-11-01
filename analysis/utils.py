@@ -9,6 +9,7 @@ import glob
 import sys
 import pickle
 sys.path.append("../")
+print("GGGG")
 
 # from analysis.getModelHumanDists import DATloadDrawgoodData
 sys.path.insert(0, "/Users/lucastian/tenen/TENENBAUM/drawgood/experiments")
@@ -110,7 +111,9 @@ def loadCheckpoint(trainset="S9_nojitter", userealnames=True, loadparse=False, s
     checkpoint = F[ind[0]]
     checkpoint = checkpoint.split("/")[-1]
     f = "experimentOutputs/draw/{}/{}".format(exptdir, checkpoint)
+    print("GGGGdd")
     result = loadfun(f)
+    print("GGGGeee")
 
     ####### LOADING TASKS 
     def loadTasks(taskset, doshaping):
@@ -207,8 +210,6 @@ def DATupdateSaveDirs(DAT):
     DAT["savedir_modelhudist"] = sdir
 
 
-
-
 def DATloadDatFlat(DAT, stimname):
     # helper function to load datflat
     fname = "{}/{}.pickle".format(DAT["datflatsavedir"], stimname)
@@ -229,6 +230,10 @@ def DATloadDatSeg(DAT, stimname):
         datseg = pickle.load(f)
     return datseg
 
+def DATsaveDatSeg(DAT, datseg, stimname):
+    fname = "{}/{}.pickle".format(DAT["savedir_datsegs"], stimname)
+    with open(fname, "wb") as f:
+        pickle.dump(datseg, f)
 
 def DATsaveDatSeg(DAT, datseg, stimname):
     fname = "{}/{}.pickle".format(DAT["savedir_datsegs"], stimname)

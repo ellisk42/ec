@@ -44,6 +44,7 @@ def getAndSaveParses(experiment="S9.2"):
 
 
 
+
     # === for each program, get the best posteiror and then all parses of that. 
     for t, name in zip(tasks, programnames):
         if name in ["shaping_1", "shaping_4", "shaping_8"]:
@@ -155,7 +156,6 @@ def parses2datflatAllSave(DAT):
         savename = "{}/{}.pickle".format(savedir, stimname)
         with open(savename, "wb") as f:
             pickle.dump(datflat_ec, f)
-    
 
 
 # ==== do segmentation
@@ -174,7 +174,6 @@ if IMPORT_DRAWGOOD:
     import plotsSingleSubj as dgpsing
     import preprocess as dgprep
     import modelAnaly as dgmodel
-
 
 if __name__=="__main__":
     import sys
