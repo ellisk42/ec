@@ -51,7 +51,6 @@ class SplitTaskBatcher:
             return taskBatch
 
 
-
 class DefaultTaskBatcher:
         """Iterates through task batches of the specified size. Defaults to all tasks if taskBatchSize is None."""
 
