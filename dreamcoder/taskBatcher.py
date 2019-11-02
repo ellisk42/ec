@@ -36,7 +36,9 @@ class SplitTaskBatcher:
             assert len(taskSplit)>0
 
             # -- get end from taskSplit. use all tasks if either taskSplit doesnt have for this iter, or specifies too many tasks.
-            if currIteration>len(taskSplit) or taskSplit[currIteration]>len(tasks):
+            if currIteration>len(taskSplit):
+                end = len(tasks)
+            elif taskSplit[currIteration]>len(tasks):
                 end = len(tasks)
             else:
                 end = taskSplit[currIteration]
