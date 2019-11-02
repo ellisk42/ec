@@ -2,6 +2,54 @@ from dreamcoder.utilities import eprint
 import random
 import numpy as np
 
+class SplitTaskBatcher:
+        """Explicitly state how many tasks to do on each iteration. i.e., if taskSplit is [[10,2], [35,2]], then will do
+        first 10 for 2 iter, then first 35 for 2 iter, then all for the rest iters"""
+
+        def __init__(self):
+                pass
+
+        # old version, not easy to pass in list of integers as arugmnet?
+        # def getTaskBatch(self, ec_result, tasks, taskSplit, iterations, currIteration):
+        #         for split in taskSplit:
+        #             if split[0]>len(tasks):
+        #                 eprint("Task batch size is greater than total number of tasks, aborting.")
+        #                 assert False
+
+        #         taskSplit.insert([0, 0])
+        #         taskSplit.append([len(tasks), iterations+1])
+
+        #         for s1, s2 in zip(taskSplit[:-1], taskSplit[1:]):
+        #             assert s2[1]>s1[1], "epochs must be in inceasing order..."
+        #                 if s1[1]<=currIteration and s2[1]>currIteration:
+        #                     start = 0
+        #                     end = s2[0]
+        #                     break
+
+        #         # start = (taskBatchSize * currIteration) % len(tasks)
+        #         # end = start + taskBatchSize
+        #         taskBatch = tasks[start:end] # Handle wraparound.
+        #         return taskBatch
+
+        def getTaskBatch(self, ec_result, tasks, taskSplit, currIteration):
+            # e.g, taskSplit = [10,10,10, 50], would do first 10 for 3 iteraions, then 50, then all tasks.
+            assert len(taskSplit)>0
+
+            # -- get end from taskSplit. use all tasks if either taskSplit doesnt have for this iter, or specifies too many tasks.
+            if currIteration>len(taskSplit) or taskSplit[currIteration]>len(tasks):
+                end = len(tasks)
+            else:
+                end = taskSplit[currIteration]
+
+            start = 0
+            taskBatch = tasks[start:end]
+
+            print("SplitTaskBatcher getting tasks:")
+            print([start, end])
+            return taskBatch
+
+
+
 class DefaultTaskBatcher:
         """Iterates through task batches of the specified size. Defaults to all tasks if taskBatchSize is None."""
 

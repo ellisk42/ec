@@ -168,6 +168,7 @@ def ecIterator(grammar, tasks,
                pseudoCounts=1.0, aic=1.0,
                structurePenalty=0.001, arity=0,
                evaluationTimeout=1.0,  # seconds
+               taskSplit = None,
                taskBatchSize=None,
                taskReranker='default',
                CPUs=1,
@@ -313,6 +314,8 @@ def ecIterator(grammar, tasks,
     # Set up the task batcher.
     if taskReranker == 'default':
         taskBatcher = DefaultTaskBatcher()
+    elif taskReranker == "split":
+        taskBatcher = SplitTaskBatcher()
     elif taskReranker == 'random':
         taskBatcher = RandomTaskBatcher()
     elif taskReranker == 'randomShuffle':
@@ -401,7 +404,11 @@ def ecIterator(grammar, tasks,
         reportMemory()
 
         # Get waking task batch.
-        wakingTaskBatch = taskBatcher.getTaskBatch(result, tasks, taskBatchSize, j)
+        if taskReranker=="split":
+            wakingTaskBatch = taskBatcher.getTaskBatch(result, tasks, taskSplit, j)
+        else:
+            wakingTaskBatch = taskBatcher.getTaskBatch(result, tasks, taskBatchSize, j)
+
         eprint("Using a waking task batch of size: " + str(len(wakingTaskBatch)))
 
         # WAKING UP
@@ -903,6 +910,12 @@ def commandlineArguments(_=None,
         default=None,
         type=int)
     parser.add_argument(
+        "--taskSplit",
+        dest="taskSplit",
+        help="sequence of integers for num of tasks to do on each iteration (e..g, 10,10,10,50)",
+        default=None,
+        type=str)
+    parser.add_argument(
         "--taskReranker",
         dest="taskReranker",
         help="Reranking function used to order the tasks we train on during waking.",
@@ -914,7 +927,8 @@ def commandlineArguments(_=None,
             "unsolvedEntropy",
             "unsolvedRandomEntropy",
             "randomkNN",
-            "randomLowEntropykNN"],
+            "randomLowEntropykNN",
+            "split"],
         default=taskReranker,
         type=str)
     parser.add_argument(
@@ -1021,7 +1035,11 @@ def commandlineArguments(_=None,
                "of those parameters.\n")
         sys.exit(0)
     del v["countParameters"]
-        
+
+    if v["taskSplit"] is not None:
+        v["taskSplit"] = v["taskSplit"].split(',')
+        v["taskSplit"] = [int(x) for x in v["taskSplit"]]
+        print("taskSplit = {}".format(v["taskSplit"]))
         
     return v
 

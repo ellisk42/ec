@@ -161,7 +161,9 @@ def main(arguments):
         # ==== remove bad shaping tasks
         train = [t for t in train if t.name not in ["shaping_4", "shaping_6"]]
         print("------")
-        print("removed shaping_4 and shaping_6 from shaping tasks")
+        print("removed shaping_4 and shaping_6 from shaping tasks (goes outside canvas, ocaml code doesnt allow")
+        print("new tasks:")
+        print([t.name for t in train])
 
         timestamp = datetime.datetime.now().isoformat()
         outputDirectory = "experimentOutputs/draw/%s"%timestamp
