@@ -72,7 +72,7 @@ def getPrimitives(trainset="", prune=False, primitives=primitives):
 			# ------- list of primtiives to remove
 			primitives_to_remove = [] + \
 			["scale{}".format(i) for i in [0, 1, 2, 3, 4, 5, 6]] + \
-			["dist{}".format(i) for i in [0, 2, 5, 7, 10, 12, 13, 14, 15, 16, 17]] + \
+			["dist{}".format(i) for i in [0, 2, 5, 7, 10, 12, 13, 19, 20, 21, 22]] + \
 			["angle{}".format(i) for i in [0, 1,3,5,7,8,9]] + \
 			["tsr", "srt", "str", "rts", "rst"] + \
 			["rep{}".format(i) for i in [4,5,6]]

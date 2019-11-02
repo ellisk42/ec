@@ -2,6 +2,27 @@ from dreamcoder.utilities import eprint
 import random
 import numpy as np
 
+class SplitBatcher:
+        """arbitrarity split tasks into K batches, and tell it how many iterations to spend on set k before adding set k+1
+        e.g. if taskStages = [[10,2], [25,2]], then will do first 10 for 2 iteration (stage 0), then do first 35 for
+        another 2 iterations (stage 1), then do all tasks until end"""
+        
+        def __init__(self):
+                pass
+
+        def getTaskBatch(self, ec_result, tasks, taskBatchSize, currIteration):
+                if taskBatchSize is None:
+                        taskBatchSize = len(tasks)
+                elif taskBatchSize > len(tasks):
+                        eprint("Task batch size is greater than total number of tasks, aborting.")
+                        assert False
+                
+
+                start = (taskBatchSize * currIteration) % len(tasks)
+                end = start + taskBatchSize
+                taskBatch = (tasks + tasks)[start:end] # Handle wraparound.
+                return taskBatch
+
 class DefaultTaskBatcher:
         """Iterates through task batches of the specified size. Defaults to all tasks if taskBatchSize is None."""
 
