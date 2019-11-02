@@ -160,7 +160,8 @@ def main(arguments):
 
         # ==== remove bad shaping tasks
         train = [t for t in train if t.name not in ["shaping_4", "shaping_6"]]
-
+        print("------")
+        print("removed shaping_4 and shaping_6 from shaping tasks")
 
         timestamp = datetime.datetime.now().isoformat()
         outputDirectory = "experimentOutputs/draw/%s"%timestamp

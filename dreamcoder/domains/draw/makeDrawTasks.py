@@ -126,7 +126,7 @@ def makeSupervisedTasks(trainset="S8full", doshaping="True", userealnames=True):
 			transform(_line, theta=pi/2, y=-2.),
 			transform(_line, theta=pi/2, s=4, y=-2.)]
 			)
-		programnames.extend(["shaping_{}".format(n) for n in range(7)])
+		programnames.extend(["shaping_{}".format(n) for n in range(9)])
 
 	##############################################
 	################# TRAINING SETS
