@@ -10,8 +10,6 @@ from analysis.utils import *
 from analysis.graphs import plotNumSolved
 from analysis.graphs import plotAllTasks
 from dreamcoder.domains.draw.main import visualizePrimitives
-import pandas as pd
-import seaborn as sns
 import matplotlib.pyplot as plt
 from analysis.getModelHumanDists import *
 import random
@@ -79,10 +77,11 @@ def summarize(ECTRAIN, SUMMARY_SAVEDIR = "", comparetohuman=True):
     NPARSE = 10 # how many random parses to take for plotting for programs.
     
     # 1) load data 
-    DAT = loadCheckpoint(trainset=ECTRAIN, loadparse=False, suppressPrint=True)
+    DAT = loadCheckpoint(trainset=ECTRAIN, loadparse=False, suppressPrint=True, loadbehavior=False)
 
     if len(SUMMARY_SAVEDIR)==0:
-        SUMMARY_SAVEDIR = "{}/summary".format(DAT["analysavedir"])
+        SUMMARY_SAVEDIR = DAT["summarysavedir"]
+        # SUMMARY_SAVEDIR = "{}/summary".format(DAT["analysavedir"])
         import os
         os.makedirs(SUMMARY_SAVEDIR, exist_ok=True)
 
@@ -91,17 +90,24 @@ def summarize(ECTRAIN, SUMMARY_SAVEDIR = "", comparetohuman=True):
     fig.savefig("{}/{}_numsolved.png".format(SUMMARY_SAVEDIR, DAT["trainset"]))
     print("2: plotted n solved timecourse")
 
-    # 3) print all primitives
+    # 3) print all primitives (and save)
     P = DAT["result"].grammars[-1].primitives
-    visualizePrimitives(P, export="{}/{}_primitives_".format(SUMMARY_SAVEDIR, DAT["trainset"]))
+    _, stringlist = visualizePrimitives(P, export="{}/{}_primitives_".format(SUMMARY_SAVEDIR, DAT["trainset"]))
+    fname = "{}/{}_primitives.txt".format(SUMMARY_SAVEDIR, DAT["trainset"])
+    with open(fname, "w") as f:
+        for s in stringlist:
+            print(s)
+            f.write(s+"\n")
     print("3: save figure of all invented primtiives")
 
     # 4) Plot all tasks (GROUND TRUTH), AND INDICATE IF SOLVED
     fig = plotAllTasks(DAT, trainortest="train")
     fig.savefig("{}/{}_alltasks_train.png".format(SUMMARY_SAVEDIR, DAT["trainset"]))
 
-    fig = plotAllTasks(DAT, trainortest="test")
-    fig.savefig("{}/{}_alltasks_test.png".format(SUMMARY_SAVEDIR, DAT["trainset"]))
+    if len(DAT["testtasks"])>0:
+        fig = plotAllTasks(DAT, trainortest="test")
+        fig.savefig("{}/{}_alltasks_test.png".format(SUMMARY_SAVEDIR, DAT["trainset"]))
+
     print("4: saved figure of all tasks (solvbd and unsolved)")
     plt.close('all')
 
@@ -112,15 +118,20 @@ def summarize(ECTRAIN, SUMMARY_SAVEDIR = "", comparetohuman=True):
         for s in stringlist:
             f.write(s+"\n")
 
-    stringlist = printAllTasksSolutions(DAT, trainortest="test")
-    fname = "{}/{}_solutions_test.txt".format(SUMMARY_SAVEDIR, DAT["trainset"])
-    with open(fname, "w") as f:
-        for s in stringlist:
-            f.write(s+"\n")
+    if len(DAT["testtasks"])>0:
+        stringlist = printAllTasksSolutions(DAT, trainortest="test")
+        fname = "{}/{}_solutions_test.txt".format(SUMMARY_SAVEDIR, DAT["trainset"])
+        with open(fname, "w") as f:
+            for s in stringlist:
+                f.write(s+"\n")
+
     print("5: saved text file of all task solutions (best posteiro program)")
 
-
+    print("comapretohuman")
+    print(comparetohuman)
     if comparetohuman:
+        import pandas as pd
+        import seaborn as sns
         print("COMPARING TO HUMAN - SHOULD ALREADY HAVE PREPROCESSED DATA")
         DAT = loadCheckpoint(trainset=ECTRAIN, loadparse=True, suppressPrint=True)
         DAT = DATloadDrawgoodData(DAT, dosegmentation=True)
@@ -181,7 +192,17 @@ def summarize(ECTRAIN, SUMMARY_SAVEDIR = "", comparetohuman=True):
             plt.close('all')
 
 if __name__=="__main__":
+    # e..g, python analysis/summarize.py "S12.1" 0
     ECTRAIN = sys.argv[1]
-    summarize(ECTRAIN, SUMMARY_SAVEDIR = "", comparetohuman=True)
+    if len(sys.argv)>2:
+        if int(sys.argv[2])==1:
+            comparetohuman=True
+        elif int(sys.argv[2])==0:
+            comparetohuman=False
+        else:
+            raise
+    else:
+        comparetohuman=True
+    summarize(ECTRAIN, SUMMARY_SAVEDIR = "", comparetohuman=comparetohuman)
 
 

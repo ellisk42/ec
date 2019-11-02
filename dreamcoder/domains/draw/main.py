@@ -59,33 +59,41 @@ def visualizePrimitives(primitives, export="/tmp/draw_primitives"):
     matrix = []
     print("ONLY PLOTS INVENTED PRIMITIVES")
     print("FILLS ARGUMENT HOLES WITH A HANDFUL OF VALUES")
+    stringlist = [] # to collect primitives
     for i, p in enumerate(primitives):
-        print("--- prim {}".format(i))
+        # print("--- prim {}".format(i))
+        stringlist.append("--- prim {}".format(i))
         if not p.isInvented: continue
         t = p.tp
         # print(p,":",p.tp)
         if t.returns() != tstroke:
-            print("\t(does not return a tstroke)")
+            # print("\t(does not return a tstroke)")
+            stringlist.append("\t(does not return a tstroke)")
             continue
 
         def argumentChoices(t):
             if t in [tmaybe(tangle), tangle]:
                 return [j*(2*pi/4) for j in range(4)]
-            elif t == tstroke:
+            elif t in [tmaybe(tstroke), tstroke]:
                 return [PP._line, PP._circle, PP.polygon(3)]
             elif t in [tmaybe(tscale), tscale]:
                 return [2., 4.]
             elif t in [tmaybe(tdist), tdist]:
                 return [-2., -1., 0, 1., 2.]
-            elif t == ttrorder:
+            elif t in [ttrorder, tmaybe(ttrorder)]:
                 return PP.ORDERS
-            elif t== trep:
+            elif t in [tmaybe(trep), trep]:
                 return [j+1 for i, j in enumerate(range(7))]
+            elif t == arrow(tmaybe(ttrorder), ttransmat):
+                return [[PP.ORDERS[0], _makeAffine()]]
             else: return []
 
         ts = [] # holds all cases for this primitive
-        print(t.functionArguments())
-        print([argumentChoices(t) for t in t.functionArguments() ])
+        # print(t.functionArguments())
+        # print([argumentChoices(t) for t in t.functionArguments() ])
+        stringlist.append(str(t.functionArguments()))
+        stringlist.extend([str(argumentChoices(t)) for t in t.functionArguments() ])
+
         for arguments in product(*[argumentChoices(t) for t in t.functionArguments() ]):
             t = p.evaluate([])
             for a in arguments: t = t(a)
@@ -120,7 +128,9 @@ def visualizePrimitives(primitives, export="/tmp/draw_primitives"):
 #     else:
 #         eprint("Tried to visualize primitives, but none to visualize.")
 
-    return matrix
+    for s in stringlist:
+        print(s)
+    return matrix, stringlist
 
 
 
@@ -148,6 +158,8 @@ def main(arguments):
         
         train, test = makeSupervisedTasks(trainset=arguments["trainset"], doshaping=arguments["doshaping"])[:2]
 
+        # ==== remove bad shaping tasks
+        train = [t for t in train if t.name not in ["shaping_4", "shaping_6"]]
 
 
         timestamp = datetime.datetime.now().isoformat()

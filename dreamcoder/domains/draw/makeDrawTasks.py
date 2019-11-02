@@ -120,9 +120,9 @@ def makeSupervisedTasks(trainset="S8full", doshaping="True", userealnames=True):
 			transform(_circle, s=2.),
 			transform(_circle, theta=pi/2),
 			transform(_line, theta=pi/2),
-#			transform(_line, s=4),
+			transform(_line, s=4),
 			transform(_line, y=-2.),
-			#transform(_line, theta=pi/2, s=4.),
+			transform(_line, theta=pi/2, s=4.),
 			transform(_line, theta=pi/2, y=-2.),
 			transform(_line, theta=pi/2, s=4, y=-2.)]
 			)
