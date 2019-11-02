@@ -25,6 +25,19 @@ module add openmind/singularity
 #bash run.sh S12 10000 20 python bin/draw.py -i 6 -t 720 --biasOptimal --contextual -R 1800 --trainset=S12 --testingTimeout 600 --dopruning
 #bash run.sh S13 10000 20 python bin/draw.py -i 6 -t 720 --biasOptimal --contextual -R 1800 --trainset=S13 --testingTimeout 600 --dopruning
 
-bash run.sh S12notest 15000 20 python bin/draw.py -i 6 -t 600 --biasOptimal --contextual -R 1200 --trainset=S12 --dopruning --skiptesting
-bash run.sh S13notest 15000 20 python bin/draw.py -i 6 -t 600 --biasOptimal --contextual -R 1200 --trainset=S13 --dopruning --skiptesting
+#bash run.sh S12notest 15000 20 python bin/draw.py -i 6 -t 600 --biasOptimal --contextual -R 1200 --trainset=S12 --dopruning --skiptesting
+#bash run.sh S13notest 15000 20 python bin/draw.py -i 6 -t 600 --biasOptimal --contextual -R 1200 --trainset=S13 --dopruning --skiptesting
+
+#bash run.sh S12.1 5000 20 python bin/draw.py -i 40 -t 600 --biasOptimal --contextual -R 1200 --trainset=S12 --dopruning --skiptesting --taskReranker default --taskBatchSize 8 -a 2
+#bash run.sh S13.1 5000 20 python bin/draw.py -i 40 -t 600 --biasOptimal --contextual -R 1200 --trainset=S13 --dopruning --skiptesting --taskReranker default --taskBatchSize 8 -a 2
+#bash run.sh S9.2stagingnoshape 5000 20 python bin/draw.py -i 40 -t 720 --biasOptimal --contextual -R 800 --trainset=S9_nojitter --skiptesting --taskReranker default --taskBatchSize 8 -a 2
+
+#bash run.sh S12.2 14000 20 python bin/draw.py -i 10 -t 1000 --biasOptimal --contextual -R 1800 --trainset=S12 --dopruning --skiptesting -a 2
+#bash run.sh S13.2 14000 20 python bin/draw.py -i 10 -t 1000 --biasOptimal --contextual -R 1800 --trainset=S13 --dopruning --skiptesting -a 2
+
+bash run.sh S12.3 15000 20 python bin/draw.py -i 10 -t 2400 --biasOptimal --contextual -R 1800 --trainset=S12 --dopruning --skiptesting -a 2
+#bash run.sh S12.3fullprim 15000 20 python bin/draw.py -i 10 -t 1000 --biasOptimal --contextual -R 1800 --trainset=S12 --skiptesting -a 2
+bash run.sh S12.3shape 10000 20 python bin/draw.py -i 10 -t 1000 --biasOptimal --contextual -R 1800 --trainset=S12 --skiptesting -a 2 --doshaping
+bash run.sh S9.2replicate 10000 20 python bin/draw.py -t 720 --biasOptimal --contextual -R 1800 --trainset=S9_nojitter --doshaping --skiptesting -a 2
+
 

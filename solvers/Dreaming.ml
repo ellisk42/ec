@@ -116,11 +116,20 @@ let helmholtz_enumeration (behavior_hash : program -> (PolyList.t*float) option)
     | Some((l',extra_cost',_))
       when extra_cost > extra_cost' || (extra_cost = extra_cost' && l' < l)
       -> ()
+    (* we are the same cost but less likely *)
+    | Some((l',extra_cost',ps'))
+      when extra_cost = extra_cost' && l < l'
+      -> ()
+    (* we cannot be a different cost or of the other conditions would've fired *)
+    (* so we're the same cost, but also we know that we are not less likely *)
+    (* also we cannot be more likely or the first condition would have held *)
     | Some((l',extra_cost',ps')) ->
       (* If our extra costs were different, than either of the above conditions would have triggered *)
       (* therefore we have the same extra cost *)
       assert (extra_cost = extra_cost');
       (* Given that the above holds, we also know that l' = l *)
+      if not (l = l') then Printf.eprintf "costs:\t%f\t%flikelihood:\t%f\t%f\n"
+          extra_cost extra_cost' l l';
       assert (l = l');
       Hashtbl.set behavior_to_programs ~key ~data:(l, extra_cost, ps @ ps' |> List.dedup_and_sort ~compare:compare_program)
   in
