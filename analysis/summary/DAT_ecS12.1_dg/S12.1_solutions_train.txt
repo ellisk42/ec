@@ -1,0 +1,94 @@
+===== 0 - S12_13_shaping_0 - S12_13_shaping_0:
+HIT S12_13_shaping_0 w/ (#(lambda (reflect (#(lambda (lambda (transform (transform $1 (#(lambda (transmat None None (Some $0) None)) dist19 $0)) (#(lambda (transmat None None (Some $0) None)) dist22 $0)))) ($0 (#(lambda (transmat None None (Some $0) None)) dist18)) (Some trs)) angle6)) (lambda (transform (#(lambda (lambda (transform line (transmat (Some scale7) (Some angle2) $1 (Some dist1) $0)))) (Some dist4) (Some trs)) ($0 (Some trs))))) ; log prior = -13.385339 ; log likelihood = 0.000000
+===== 1 - S12_13_shaping_1 - S12_13_shaping_1:
+HIT S12_13_shaping_1 w/ (#(lambda (#(lambda (reflect (#(lambda (lambda (transform (transform $1 (#(lambda (transmat None None (Some $0) None)) dist19 $0)) (#(lambda (transmat None None (Some $0) None)) dist22 $0)))) ($0 (#(lambda (transmat None None (Some $0) None)) dist18)) (Some trs)) angle6)) (lambda (repeat (#(lambda (lambda (transform line (transmat (Some scale7) (Some angle2) $1 (Some dist1) $0)))) (Some dist4) $1) rep1 ($0 $1))))) (Some trs)) ; log prior = -3.325935 ; log likelihood = 0.000000
+===== 2 - S12_13_shaping_2 - S12_13_shaping_2:
+HIT S12_13_shaping_2 w/ (#(lambda (#(lambda (connect (#(lambda (#(lambda (reflect (#(lambda (lambda (transform (transform $1 (#(lambda (transmat None None (Some $0) None)) dist19 $0)) (#(lambda (transmat None None (Some $0) None)) dist22 $0)))) ($0 (#(lambda (transmat None None (Some $0) None)) dist18)) (Some trs)) angle6)) (lambda (repeat (#(lambda (lambda (transform line (transmat (Some scale7) (Some angle2) $1 (Some dist1) $0)))) (Some dist4) $1) rep1 ($0 $1))))) (Some trs)) (transform (#(lambda (reflect (#(lambda (lambda (transform (transform $1 (#(lambda (transmat None None (Some $0) None)) dist19 $0)) (#(lambda (transmat None None (Some $0) None)) dist22 $0)))) ($0 (#(lambda (transmat None None (Some $0) None)) dist18)) (Some trs)) angle6)) ($0 (#(lambda (reflect (#(lambda (lambda (transform (transform $1 (#(lambda (transmat None None (Some $0) None)) dist19 $0)) (#(lambda (transmat None None (Some $0) None)) dist22 $0)))) ($0 (#(lambda (transmat None None (Some $0) None)) dist18)) (Some trs)) angle6)) (lambda (#(lambda (lambda (transform line (transmat (Some scale7) (Some angle2) $1 (Some dist1) $0)))) (Some dist21) (Some trs)))))) (#(lambda (transmat None None (Some $0) None)) dist22 (Some trs))))) (lambda (lambda (transform $1 ($0 $2)))))) (Some trs)) ; log prior = -3.294187 ; log likelihood = 0.000000
+===== 3 - S12_13_shaping_3 - S12_13_shaping_3:
+HIT S12_13_shaping_3 w/ (#(lambda (connect (#(lambda (#(lambda (reflect (#(lambda (lambda (transform (transform $1 (#(lambda (transmat None None (Some $0) None)) dist19 $0)) (#(lambda (transmat None None (Some $0) None)) dist22 $0)))) ($0 (#(lambda (transmat None None (Some $0) None)) dist18)) (Some trs)) angle6)) (lambda (repeat (#(lambda (lambda (transform line (transmat (Some scale7) (Some angle2) $1 (Some dist1) $0)))) (Some dist4) $1) rep1 ($0 $1))))) (Some trs)) (transform (#(lambda (reflect (#(lambda (lambda (transform (transform $1 (#(lambda (transmat None None (Some $0) None)) dist19 $0)) (#(lambda (transmat None None (Some $0) None)) dist22 $0)))) ($0 (#(lambda (transmat None None (Some $0) None)) dist18)) (Some trs)) angle6)) ($0 (#(lambda (reflect (#(lambda (lambda (transform (transform $1 (#(lambda (transmat None None (Some $0) None)) dist19 $0)) (#(lambda (transmat None None (Some $0) None)) dist22 $0)))) ($0 (#(lambda (transmat None None (Some $0) None)) dist18)) (Some trs)) angle6)) (lambda (#(lambda (lambda (transform line (transmat (Some scale7) (Some angle2) $1 (Some dist1) $0)))) (Some dist21) (Some trs)))))) (#(lambda (transmat None None (Some $0) None)) dist22 (Some trs))))) (lambda (lambda (repeat $1 rep1 ($0 (Some trs)))))) ; log prior = -10.775355 ; log likelihood = 0.000000
+===== 4 - S12_13_shaping_4 - S12_13_shaping_4:
+HIT S12_13_shaping_4 w/ (#(lambda (lambda (transform line (transmat (Some scale7) (Some angle2) $1 (Some dist1) $0)))) None (Some trs)) ; log prior = -4.010686 ; log likelihood = 0.000000
+===== 5 - S12_13_shaping_5 - S12_13_shaping_5:
+HIT S12_13_shaping_5 w/ (transform #(reflect line angle6) (#(lambda (transmat None None (Some $0) None)) dist8 (Some trs))) ; log prior = -9.064531 ; log likelihood = 0.000000
+===== 6 - S12_13_shaping_6 - S12_13_shaping_6:
+HIT S12_13_shaping_6 w/ (#(lambda (lambda (#(lambda (reflect (#(lambda (lambda (transform (transform $1 (#(lambda (transmat None None (Some $0) None)) dist19 $0)) (#(lambda (transmat None None (Some $0) None)) dist22 $0)))) ($0 (#(lambda (transmat None None (Some $0) None)) dist18)) (Some trs)) angle6)) (lambda (transform (reflect (repeat line $1 ($0 $2)) angle6) ($0 $2)))))) (Some trs) rep0) ; log prior = -4.635964 ; log likelihood = 0.000000
+===== 7 - S12_13_shaping_7 - S12_13_shaping_7:
+HIT S12_13_shaping_7 w/ (#(lambda (lambda (#(lambda (reflect (#(lambda (lambda (transform (transform $1 (#(lambda (transmat None None (Some $0) None)) dist19 $0)) (#(lambda (transmat None None (Some $0) None)) dist22 $0)))) ($0 (#(lambda (transmat None None (Some $0) None)) dist18)) (Some trs)) angle6)) (lambda (transform (reflect (repeat line $1 ($0 $2)) angle6) ($0 $2)))))) (Some trs) rep1) ; log prior = -4.573673 ; log likelihood = 0.000000
+===== 8 - S12_13_shaping_8 - S12_13_shaping_8:
+HIT S12_13_shaping_8 w/ (#(lambda (lambda (#(lambda (reflect (#(lambda (lambda (transform (transform $1 (#(lambda (transmat None None (Some $0) None)) dist19 $0)) (#(lambda (transmat None None (Some $0) None)) dist22 $0)))) ($0 (#(lambda (transmat None None (Some $0) None)) dist18)) (Some trs)) angle6)) (lambda (transform (reflect (repeat line $1 ($0 $2)) angle6) ($0 $2)))))) (Some trs) rep2) ; log prior = -4.635845 ; log likelihood = 0.000000
+===== 9 - S12_13_shaping_9 - S12_13_shaping_9:
+HIT S12_13_shaping_9 w/ (#(lambda (lambda (#(lambda (reflect (#(lambda (lambda (transform (transform $1 (#(lambda (transmat None None (Some $0) None)) dist19 $0)) (#(lambda (transmat None None (Some $0) None)) dist22 $0)))) ($0 (#(lambda (transmat None None (Some $0) None)) dist18)) (Some trs)) angle6)) (lambda (transform (reflect (repeat line $1 ($0 $2)) angle6) ($0 $2)))))) (Some trs) rep3) ; log prior = -4.635845 ; log likelihood = 0.000000
+===== 10 - S12_13_shaping_10 - S12_13_shaping_10:
+HIT S12_13_shaping_10 w/ (#(lambda (reflect (#(lambda (lambda (transform (transform $1 (#(lambda (transmat None None (Some $0) None)) dist19 $0)) (#(lambda (transmat None None (Some $0) None)) dist22 $0)))) ($0 (#(lambda (transmat None None (Some $0) None)) dist18)) (Some trs)) angle6)) (lambda #(reflect line angle6))) ; log prior = -5.192299 ; log likelihood = 0.000000
+===== 11 - S12_1 - S12_1:
+MISS S12_1
+===== 12 - S12_5 - S12_5:
+MISS S12_5
+===== 13 - S12_8 - S12_8:
+MISS S12_8
+===== 14 - S12_10 - S12_10:
+MISS S12_10
+===== 15 - S12_32 - S12_32:
+MISS S12_32
+===== 16 - S12_34 - S12_34:
+MISS S12_34
+===== 17 - S12_38 - S12_38:
+MISS S12_38
+===== 18 - S12_20 - S12_20:
+MISS S12_20
+===== 19 - S12_39 - S12_39:
+HIT S12_39 w/ (connect (repeat (#(lambda (reflect (#(lambda (lambda (transform (transform $1 (#(lambda (transmat None None (Some $0) None)) dist19 $0)) (#(lambda (transmat None None (Some $0) None)) dist22 $0)))) ($0 (#(lambda (transmat None None (Some $0) None)) dist18)) (Some trs)) angle6)) (lambda #(reflect line angle6))) rep1 (transmat None None None (Some dist9) (Some trs))) (#(lambda (#(lambda (connect (#(lambda (#(lambda (reflect (#(lambda (lambda (transform (transform $1 (#(lambda (transmat None None (Some $0) None)) dist19 $0)) (#(lambda (transmat None None (Some $0) None)) dist22 $0)))) ($0 (#(lambda (transmat None None (Some $0) None)) dist18)) (Some trs)) angle6)) (lambda (repeat (#(lambda (lambda (transform line (transmat (Some scale7) (Some angle2) $1 (Some dist1) $0)))) (Some dist4) $1) rep1 ($0 $1))))) (Some trs)) (transform (#(lambda (reflect (#(lambda (lambda (transform (transform $1 (#(lambda (transmat None None (Some $0) None)) dist19 $0)) (#(lambda (transmat None None (Some $0) None)) dist22 $0)))) ($0 (#(lambda (transmat None None (Some $0) None)) dist18)) (Some trs)) angle6)) ($0 (#(lambda (reflect (#(lambda (lambda (transform (transform $1 (#(lambda (transmat None None (Some $0) None)) dist19 $0)) (#(lambda (transmat None None (Some $0) None)) dist22 $0)))) ($0 (#(lambda (transmat None None (Some $0) None)) dist18)) (Some trs)) angle6)) (lambda (#(lambda (lambda (transform line (transmat (Some scale7) (Some angle2) $1 (Some dist1) $0)))) (Some dist21) (Some trs)))))) (#(lambda (transmat None None (Some $0) None)) dist22 (Some trs))))) (lambda (lambda (transform $1 ($0 $2)))))) (Some trs))) ; log prior = -21.751851 ; log likelihood = 0.000000
+===== 20 - S12_57 - S12_57:
+MISS S12_57
+===== 21 - S12_79 - S12_79:
+MISS S12_79
+===== 22 - S12_113 - S12_113:
+MISS S12_113
+===== 23 - S12_124 - S12_124:
+MISS S12_124
+===== 24 - S12_126 - S12_126:
+MISS S12_126
+===== 25 - S12_133 - S12_133:
+MISS S12_133
+===== 26 - S12_147 - S12_147:
+MISS S12_147
+===== 27 - S12_155 - S12_155:
+MISS S12_155
+===== 28 - S12_163 - S12_163:
+MISS S12_163
+===== 29 - S12_200 - S12_200:
+MISS S12_200
+===== 30 - S12_214 - S12_214:
+MISS S12_214
+===== 31 - S12_31 - S12_31:
+MISS S12_31
+===== 32 - S12_52 - S12_52:
+MISS S12_52
+===== 33 - S12_55 - S12_55:
+MISS S12_55
+===== 34 - S12_70 - S12_70:
+MISS S12_70
+===== 35 - S12_129 - S12_129:
+MISS S12_129
+===== 36 - S12_139 - S12_139:
+MISS S12_139
+===== 37 - S12_141 - S12_141:
+MISS S12_141
+===== 38 - S12_148 - S12_148:
+MISS S12_148
+===== 39 - S12_207 - S12_207:
+MISS S12_207
+===== 40 - S12_222 - S12_222:
+MISS S12_222
+===== 41 - S12_224 - S12_224:
+MISS S12_224
+===== 42 - S12_229 - S12_229:
+MISS S12_229
+===== 43 - S12_233 - S12_233:
+MISS S12_233
+===== 44 - S12_235 - S12_235:
+MISS S12_235
+===== 45 - S12_243 - S12_243:
+MISS S12_243
+===== 46 - S12_246 - S12_246:
+MISS S12_246

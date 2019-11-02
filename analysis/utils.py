@@ -21,7 +21,7 @@ REMOVELL = True # remove vertical long line?
 
 
 ## ====== collect dreamcoder results and parse results
-def loadCheckpoint(trainset="S9_nojitter", userealnames=True, loadparse=False, suppressPrint=False):
+def loadCheckpoint(trainset="S9_nojitter", userealnames=True, loadparse=False, suppressPrint=False, loadbehavior=True):
     # userealnames = True, then names tasks by their stim names (eg., S8_2), otherwise names as train0, train1, ...
     ##### METADATA
     behaviorexpt = ""
@@ -83,9 +83,17 @@ def loadCheckpoint(trainset="S9_nojitter", userealnames=True, loadparse=False, s
         exptdir = "2019-10-17T20:01:17.912264"
         taskset = "S9_nojitter"
         behaviorexpt = "2.3"
+
+    elif trainset=="S12.1":
+        userealnames=True
+        doshaping = False
+        # jobname = "S12.1_2019-11-01_10-49-52" # not actually used.
+        exptdir = "2019-11-01T10:51:04.566148"
+        taskset = "S12" 
+        behaviorexpt = ""
     else:
         print("PROBLEM did not find traiin set! ")
-        
+
         
     ###### FIRST, load the correct checkpoint
     F = glob.glob("experimentOutputs/draw/{}/draw*.pickle".format(exptdir))
@@ -159,10 +167,16 @@ def loadCheckpoint(trainset="S9_nojitter", userealnames=True, loadparse=False, s
     assert len(result.taskSolutions)==len(tasks)
     print("Num dreamcoder TEST tasks {}".format(len(result.getTestingTasks())))
     print("n supervised TEST tasks {}".format(len(testtasks)))
-    assert len(result.getTestingTasks())==len(testtasks)
+    if len(result.getTestingTasks())==0:
+        # then assume no testing, remove all test tasks
+        testtasks=[]
+    else:
+        # make sure numbers 
+        assert len(result.getTestingTasks())==len(testtasks)
 
     savedir = "experimentOutputs/draw/{}".format(exptdir)
     analysavedir = "analysis/saved/DAT_ec{}_dg{}".format(trainset, behaviorexpt)
+    summarysavedir = "analysis/summary/DAT_ec{}_dg{}".format(trainset, behaviorexpt)
 
     # ==== output a dict
     DAT = {
@@ -175,11 +189,13 @@ def loadCheckpoint(trainset="S9_nojitter", userealnames=True, loadparse=False, s
     "behaviorexpt": behaviorexpt,
     "savedir": savedir,
     "parses": parses,
-    "analysavedir":analysavedir
+    "analysavedir":analysavedir,
+    "summarysavedir":summarysavedir
     }
 
-    loadBehavior(DAT)
-    print("Loaded behavior also")
+    if loadbehavior:
+        loadBehavior(DAT)
+        print("Loaded behavior also")
 
 
     # === update savedirs
