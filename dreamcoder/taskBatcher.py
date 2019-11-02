@@ -38,10 +38,10 @@ class SplitTaskBatcher:
             # -- get end from taskSplit. use all tasks if either taskSplit doesnt have for this iter, or specifies too many tasks.
             if currIteration>len(taskSplit):
                 end = len(tasks)
-            elif taskSplit[currIteration]>len(tasks):
+            elif taskSplit[currIteration-1]>len(tasks):
                 end = len(tasks)
             else:
-                end = taskSplit[currIteration]
+                end = taskSplit[currIteration-1]
 
             start = 0
             taskBatch = tasks[start:end]
