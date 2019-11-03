@@ -59,7 +59,7 @@ p7 = [Primitive("rep{}".format(i), trep, j+1) for i, j in enumerate(range(7))]
 
 primitives = p0 + p1 + p2 + p3 + p4 + p5 + p6 + p7
 
-def getPrimitives(trainset="", prune=False, primitives=primitives):
+def getPrimitives(trainset="", prune=False, primitives=primitives, fullpruning=True):
 	if prune:
 		assert len(trainset)>0, "Have to tell me which trainset to use for primtives"
 		# -- then only keep a subset of primtiives
@@ -73,9 +73,15 @@ def getPrimitives(trainset="", prune=False, primitives=primitives):
 			primitives_to_remove = [] + \
 			["scale{}".format(i) for i in [0, 1, 2, 3, 4, 5, 6]] + \
 			["dist{}".format(i) for i in [0, 2, 5, 7, 10, 12, 13, 19, 20, 21, 22]] + \
-			["angle{}".format(i) for i in [0, 1,3,5,7,8,9]] + \
+			["angle{}".format(i) for i in [1,3,5,7,8,9]] + \
 			["tsr", "srt", "str", "rts", "rst"] + \
 			["rep{}".format(i) for i in [4,5,6]]
+			
+			if fullpruning:
+				# then really careful remove anything not useful
+				# partly motivated by seeing what DC actually uses given the partial pruning above.
+				primitives_to_remove.extend(["dist8", "reflect", "angle4", "angle6"])
+
 			print("removing these primitives:")
 			print(primitives_to_remove)
 
