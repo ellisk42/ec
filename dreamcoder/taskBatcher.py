@@ -34,15 +34,16 @@ class SplitTaskBatcher:
         def getTaskBatch(self, ec_result, tasks, taskSplit, currIteration):
             # e.g, taskSplit = [10,10,10, 50], would do first 10 for 3 iteraions, then 50, then all tasks.
             assert len(taskSplit)>0
-            assert currIteration>0, "should index from 1..."
+            # assert currIteration>0, "should index from 1..."
+            print("currIteration: {}".format(currIteration))
 
             # -- get end from taskSplit. use all tasks if either taskSplit doesnt have for this iter, or specifies too many tasks.
-            if currIteration>len(taskSplit):
+            if currIteration>=len(taskSplit):
                 end = len(tasks)
-            elif taskSplit[currIteration-1]>len(tasks):
+            elif taskSplit[currIteration]>len(tasks):
                 end = len(tasks)
             else:
-                end = taskSplit[currIteration-1]
+                end = taskSplit[currIteration]
 
             start = 0
             taskBatch = tasks[start:end]
