@@ -35,34 +35,10 @@ module add openmind/singularity
 #bash run.sh S12.2 14000 20 python bin/draw.py -i 10 -t 1000 --biasOptimal --contextual -R 1800 --trainset=S12 --dopruning --skiptesting -a 2
 #bash run.sh S13.2 14000 20 python bin/draw.py -i 10 -t 1000 --biasOptimal --contextual -R 1800 --trainset=S13 --dopruning --skiptesting -a 2
 
-#bash run.sh S12.3 15000 20 python bin/draw.py -i 10 -t 2400 --biasOptimal --contextual -R 1800 --trainset=S12 --dopruning --skiptesting -a 2
+bash run.sh S12.3 15000 20 python bin/draw.py -i 10 -t 2400 --biasOptimal --contextual -R 1800 --trainset=S12 --dopruning --skiptesting -a 2
 #bash run.sh S12.3fullprim 15000 20 python bin/draw.py -i 10 -t 1000 --biasOptimal --contextual -R 1800 --trainset=S12 --skiptesting -a 2
-#bash run.sh S12.3shape 10000 20 python bin/draw.py -i 10 -t 1000 --biasOptimal --contextual -R 1800 --trainset=S12 --skiptesting -a 2 --doshaping
-#bash run.sh S9.2replicate 10000 20 python bin/draw.py -t 720 --biasOptimal --contextual -R 1800 --trainset=S9_nojitter --doshaping --skiptesting -a 2
+bash run.sh S12.3shape 10000 20 python bin/draw.py -i 10 -t 1000 --biasOptimal --contextual -R 1800 --trainset=S12 --skiptesting -a 2 --doshaping
+bash run.sh S9.2replicate 10000 20 python bin/draw.py -t 720 --biasOptimal --contextual -R 1800 --trainset=S9_nojitter --doshaping --skiptesting -a 2
 
-#bash run.sh S12.4 5000 20 python bin/draw.py -i 10 -t 10 --biasOptimal --contextual -R 10 --trainset=S12 --dopruning --skiptesting -a 2 --taskReranker split --taskSplit 11,11,20
-
-#bash run.sh S12.3.1 10000 20 python bin/draw.py -i 10 -t 1440 --biasOptimal --contextual -R 1800 --trainset=S12 --dopruning --skiptesting -a 2
-#bash run.sh S12.5.1 10000 20 python bin/draw.py -i 20 -t 450 --biasOptimal --contextual -R 450 --trainset=S12 --dopruning --skiptesting -a 2 --taskReranker split --taskSplit 10,17,30
-#bash run.sh S12.5.2 10000 20 python bin/draw.py -i 20 -t 450 --biasOptimal --contextual -R 450 --trainset=S12 --skiptesting -a 2 --taskReranker split --taskSplit 10,17,30 
-
-#bash run.sh S12.6.1 12000 20 python bin/draw.py -i 20 -t 1800 --biasOptimal --contextual -R 1800 --trainset=S12 --dopruning --skiptesting -a 2 --taskReranker split --taskSplit 0,11,31
-#bash run.sh S12.6.2 20000 20 python bin/draw.py -i 20 -t 3600 --biasOptimal --contextual -R 2400 --trainset=S12 --dopruning --skiptesting -a 2 --taskReranker split --taskSplit 0,11,31
-
-#bash run.sh S12.5.3 10000 20 python bin/draw.py -i 20 -t 450 --biasOptimal --contextual -R 450 --trainset=S12 --dopruning --skiptesting -a 2 --taskReranker split --taskSplit 10,17,30
-#bash run.sh S12.5.4 10000 20 python bin/draw.py -i 20 -t 450 --biasOptimal --contextual -R 450 --trainset=S12 --dopruning --skiptesting -a 2 --taskReranker split --taskSplit 10,17,30
-#bash run.sh S12.5.5 10000 20 python bin/draw.py -i 20 -t 450 --biasOptimal --contextual -R 450 --trainset=S12 --dopruning --skiptesting -a 2 --taskReranker split --taskSplit 10,17,30
-
-#bash run.sh S12.7 15000 20 python bin/draw.py -i 20 -t 3600 --biasOptimal --contextual -R 2400 --trainset=S12 --dopruning --skiptesting -a 2 --taskReranker split --taskSplit 10,17,30
-#bash run.sh S12.8 10000 20 python bin/draw.py -i 20 -t 1440 --biasOptimal --contextual -R 1800 --trainset=S12 --dopruning --skiptesting -a 2 --taskReranker split --taskSplit 10,17,30
-#bash run.sh S13.8 10000 20 python bin/draw.py -i 20 -t 1440 --biasOptimal --contextual -R 1800 --trainset=S13 --dopruning --skiptesting -a 2 --taskReranker split --taskSplit 10,17,30
-
-#bash run.sh S12.9 15000 20 python bin/draw.py -i 20 -t 3600 --biasOptimal --contextual -R 2400 --trainset=S12 --dopruning --testingTimeout 720 -a 2 --taskReranker split --taskSplit 10,30
-#bash run.sh S13.9 15000 20 python bin/draw.py -i 20 -t 3600 --biasOptimal --contextual -R 2400 --trainset=S13 --dopruning --testingTimeout 720 -a 2 --taskReranker split --taskSplit 10,30
-
-#bash run.sh S12.5.6 5000 20 python bin/draw.py -i 20 -t 450 --biasOptimal --contextual -R 450 --trainset=S12 --dopruning --skiptesting -a 2 --taskReranker unsolved
-
-#bash run.sh S12.8.1 5000 20 python bin/draw.py -i 20 -t 1440 --biasOptimal --contextual -R 1800 --trainset=S12 --dopruning --skiptesting -a 2 --taskReranker unsolved
-
-bash run.sh S12.8.2 5000 20 python bin/draw.py -i 20 -t 1440 --biasOptimal --contextual -R 1800 --trainset=S12 --dopruning --skiptesting -a 2 --taskReranker default --taskBatchSize 11
+bash run.sh S12.4 10000 20 python bin/draw.py -i 10 -t 720 --biasOptimal --contextual -R 1800 --trainset=S12 --dopruning --skiptesting -a 2
 
