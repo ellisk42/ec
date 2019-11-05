@@ -81,6 +81,7 @@ def getPrimitives(trainset="", prune=False, primitives=primitives, fullpruning=T
 				# then really careful remove anything not useful
 				# partly motivated by seeing what DC actually uses given the partial pruning above.
 				primitives_to_remove.extend(["dist11", "dist8", "reflect", "angle4", "angle6"])
+				primitives_to_remove.extend(["dist11", "dist8", "angle4", "angle6"])
 
 			print("removing these primitives:")
 			print(primitives_to_remove)
