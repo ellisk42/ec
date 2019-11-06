@@ -1,0 +1,817 @@
+--- prim 0
+#(lambda (#(#(lambda (#(lambda (lambda (connect (transform $0 $1)))) (#(lambda (transmat None None (Some $0) None None)) $0) circle)) dist17) (#(lambda (#(lambda (lambda (connect (transform $0 $1)))) #(#(lambda (transmat None None (Some $0) None None)) dist18) (#(lambda (#(lambda (transform (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist14)) (#(lambda (transmat None None (Some $0) None None)) dist4))) (repeat line $0 #(#(lambda (transmat None None (Some $0) None None)) dist18)))) rep1) (#(lambda (#(lambda (lambda (connect (transform $0 $1)))) (#(lambda (transmat None None (Some $0) None None)) $0) circle)) dist14 $0))) $0)))
+[tstroke]
+[[array([[0., 0.],
+       [1., 0.]])], [array([[ 5.00000000e-01,  0.00000000e+00],
+       [ 4.88310278e-01,  1.07485220e-01],
+       [ 4.53787710e-01,  2.09944551e-01],
+       [ 3.98046533e-01,  3.02587108e-01],
+       [ 3.23693142e-01,  3.81081028e-01],
+       [ 2.34204220e-01,  4.41756022e-01],
+       [ 1.33764169e-01,  4.81774996e-01],
+       [ 2.70694543e-02,  4.99266707e-01],
+       [-8.08909983e-02,  4.93413261e-01],
+       [-1.85069078e-01,  4.64488360e-01],
+       [-2.80593533e-01,  4.13844499e-01],
+       [-3.62997746e-01,  3.43849729e-01],
+       [-4.28428588e-01,  2.57776929e-01],
+       [-4.73826586e-01,  1.59650765e-01],
+       [-4.97068979e-01,  5.40595092e-02],
+       [-4.97068979e-01, -5.40595092e-02],
+       [-4.73826586e-01, -1.59650765e-01],
+       [-4.28428588e-01, -2.57776929e-01],
+       [-3.62997746e-01, -3.43849729e-01],
+       [-2.80593533e-01, -4.13844499e-01],
+       [-1.85069078e-01, -4.64488360e-01],
+       [-8.08909983e-02, -4.93413261e-01],
+       [ 2.70694543e-02, -4.99266707e-01],
+       [ 1.33764169e-01, -4.81774996e-01],
+       [ 2.34204220e-01, -4.41756022e-01],
+       [ 3.23693142e-01, -3.81081028e-01],
+       [ 3.98046533e-01, -3.02587108e-01],
+       [ 4.53787710e-01, -2.09944551e-01],
+       [ 4.88310278e-01, -1.07485220e-01],
+       [ 5.00000000e-01, -1.22464680e-16]])], [array([[-0.5       ,  0.28867513],
+       [ 0.5       ,  0.28867513]]), array([[-2.22044605e-16, -5.77350269e-01],
+       [-5.00000000e-01,  2.88675135e-01]]), array([[ 5.00000000e-01,  2.88675135e-01],
+       [-1.66533454e-16, -5.77350269e-01]])]]
+--- prim 1
+#(lambda (#(#(lambda (#(lambda (lambda (connect (transform $0 $1)))) (#(lambda (transmat None None (Some $0) None None)) $0) circle)) dist17) (#(lambda (connect $0 (#(lambda (#(lambda (transform (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist14)) (#(lambda (transmat None None (Some $0) None None)) dist4))) (repeat line $0 #(#(lambda (transmat None None (Some $0) None None)) dist18)))) rep2))) $0)))
+[tstroke]
+[[array([[0., 0.],
+       [1., 0.]])], [array([[ 5.00000000e-01,  0.00000000e+00],
+       [ 4.88310278e-01,  1.07485220e-01],
+       [ 4.53787710e-01,  2.09944551e-01],
+       [ 3.98046533e-01,  3.02587108e-01],
+       [ 3.23693142e-01,  3.81081028e-01],
+       [ 2.34204220e-01,  4.41756022e-01],
+       [ 1.33764169e-01,  4.81774996e-01],
+       [ 2.70694543e-02,  4.99266707e-01],
+       [-8.08909983e-02,  4.93413261e-01],
+       [-1.85069078e-01,  4.64488360e-01],
+       [-2.80593533e-01,  4.13844499e-01],
+       [-3.62997746e-01,  3.43849729e-01],
+       [-4.28428588e-01,  2.57776929e-01],
+       [-4.73826586e-01,  1.59650765e-01],
+       [-4.97068979e-01,  5.40595092e-02],
+       [-4.97068979e-01, -5.40595092e-02],
+       [-4.73826586e-01, -1.59650765e-01],
+       [-4.28428588e-01, -2.57776929e-01],
+       [-3.62997746e-01, -3.43849729e-01],
+       [-2.80593533e-01, -4.13844499e-01],
+       [-1.85069078e-01, -4.64488360e-01],
+       [-8.08909983e-02, -4.93413261e-01],
+       [ 2.70694543e-02, -4.99266707e-01],
+       [ 1.33764169e-01, -4.81774996e-01],
+       [ 2.34204220e-01, -4.41756022e-01],
+       [ 3.23693142e-01, -3.81081028e-01],
+       [ 3.98046533e-01, -3.02587108e-01],
+       [ 4.53787710e-01, -2.09944551e-01],
+       [ 4.88310278e-01, -1.07485220e-01],
+       [ 5.00000000e-01, -1.22464680e-16]])], [array([[-0.5       ,  0.28867513],
+       [ 0.5       ,  0.28867513]]), array([[-2.22044605e-16, -5.77350269e-01],
+       [-5.00000000e-01,  2.88675135e-01]]), array([[ 5.00000000e-01,  2.88675135e-01],
+       [-1.66533454e-16, -5.77350269e-01]])]]
+--- prim 2
+#(#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) (Some trs)))))) (Some dist17) circle (#(lambda (lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) (Some trs)))))) (Some dist14) circle (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) (Some trs)))))) (Some dist18) (#(lambda (#(lambda (transform (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist14)) (#(lambda (transmat None None (Some $0) None None)) dist4))) (repeat line $0 #(#(lambda (transmat None None (Some $0) None None)) dist18)))) $0) $1)))) (#(lambda (lambda (#(lambda (lambda (connect (transform $0 $1)))) (#(transmat None None None (Some dist9)) (Some trs)) (#(lambda (lambda (#(lambda (#(lambda (lambda (connect (transform $0 $1)))) (#(lambda (transmat None None (Some $0) None None)) $0) circle)) dist14 (#(lambda (lambda (connect (transform $0 $1)))) $1 (#(lambda (#(lambda (transform (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist14)) (#(lambda (transmat None None (Some $0) None None)) dist4))) (repeat line $0 #(#(lambda (transmat None None (Some $0) None None)) dist18)))) rep0) $0)))) #(#(lambda (transmat None None (Some $0) None None)) dist18) (transform $0 #(#(lambda (transmat None None (Some $0) None None)) dist18))) (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $0) $1 #(#(lambda (transmat None None (Some $0) None None)) dist18)))) $1 scale7)))) rep3 ($0 #(#(lambda (#(lambda (lambda (connect (transform $0 $1)))) (#(lambda (transmat None None (Some $0) None None)) $0) circle)) dist15 (#(lambda (#(lambda (transform (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist14)) (#(lambda (transmat None None (Some $0) None None)) dist4))) (repeat line $0 #(#(lambda (transmat None None (Some $0) None None)) dist18)))) rep0)))) rep1))) (lambda (transform $0 #(#(lambda (transmat None None (Some $0) None None)) dist18))))
+[]
+--- prim 3
+#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) (Some trs)))))) (Some dist17) circle (#(lambda (lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) (Some trs)))))) (Some dist14) circle (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) (Some trs)))))) (Some dist18) (#(lambda (#(lambda (transform (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist14)) (#(lambda (transmat None None (Some $0) None None)) dist4))) (repeat line $0 #(#(lambda (transmat None None (Some $0) None None)) dist18)))) $0) $1)))) (#(lambda (lambda (#(lambda (lambda (connect (transform $0 $1)))) (#(transmat None None None (Some dist9)) (Some trs)) (#(lambda (lambda (#(lambda (#(lambda (lambda (connect (transform $0 $1)))) (#(lambda (transmat None None (Some $0) None None)) $0) circle)) dist14 (#(lambda (lambda (connect (transform $0 $1)))) $1 (#(lambda (#(lambda (transform (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist14)) (#(lambda (transmat None None (Some $0) None None)) dist4))) (repeat line $0 #(#(lambda (transmat None None (Some $0) None None)) dist18)))) rep0) $0)))) #(#(lambda (transmat None None (Some $0) None None)) dist18) (transform $0 #(#(lambda (transmat None None (Some $0) None None)) dist18))) (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $0) $1 #(#(lambda (transmat None None (Some $0) None None)) dist18)))) $1 scale7)))) rep3 ($0 #(#(lambda (#(lambda (lambda (connect (transform $0 $1)))) (#(lambda (transmat None None (Some $0) None None)) $0) circle)) dist15 (#(lambda (#(lambda (transform (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist14)) (#(lambda (transmat None None (Some $0) None None)) dist4))) (repeat line $0 #(#(lambda (transmat None None (Some $0) None None)) dist18)))) rep0)))) rep1)))
+[tstroke -> tstroke]
+[]
+--- prim 4
+#(lambda (connect $0 (#(lambda (#(lambda (transform (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist14)) (#(lambda (transmat None None (Some $0) None None)) dist4))) (repeat line $0 #(#(lambda (transmat None None (Some $0) None None)) dist18)))) rep2)))
+[tstroke]
+[[array([[0., 0.],
+       [1., 0.]])], [array([[ 5.00000000e-01,  0.00000000e+00],
+       [ 4.88310278e-01,  1.07485220e-01],
+       [ 4.53787710e-01,  2.09944551e-01],
+       [ 3.98046533e-01,  3.02587108e-01],
+       [ 3.23693142e-01,  3.81081028e-01],
+       [ 2.34204220e-01,  4.41756022e-01],
+       [ 1.33764169e-01,  4.81774996e-01],
+       [ 2.70694543e-02,  4.99266707e-01],
+       [-8.08909983e-02,  4.93413261e-01],
+       [-1.85069078e-01,  4.64488360e-01],
+       [-2.80593533e-01,  4.13844499e-01],
+       [-3.62997746e-01,  3.43849729e-01],
+       [-4.28428588e-01,  2.57776929e-01],
+       [-4.73826586e-01,  1.59650765e-01],
+       [-4.97068979e-01,  5.40595092e-02],
+       [-4.97068979e-01, -5.40595092e-02],
+       [-4.73826586e-01, -1.59650765e-01],
+       [-4.28428588e-01, -2.57776929e-01],
+       [-3.62997746e-01, -3.43849729e-01],
+       [-2.80593533e-01, -4.13844499e-01],
+       [-1.85069078e-01, -4.64488360e-01],
+       [-8.08909983e-02, -4.93413261e-01],
+       [ 2.70694543e-02, -4.99266707e-01],
+       [ 1.33764169e-01, -4.81774996e-01],
+       [ 2.34204220e-01, -4.41756022e-01],
+       [ 3.23693142e-01, -3.81081028e-01],
+       [ 3.98046533e-01, -3.02587108e-01],
+       [ 4.53787710e-01, -2.09944551e-01],
+       [ 4.88310278e-01, -1.07485220e-01],
+       [ 5.00000000e-01, -1.22464680e-16]])], [array([[-0.5       ,  0.28867513],
+       [ 0.5       ,  0.28867513]]), array([[-2.22044605e-16, -5.77350269e-01],
+       [-5.00000000e-01,  2.88675135e-01]]), array([[ 5.00000000e-01,  2.88675135e-01],
+       [-1.66533454e-16, -5.77350269e-01]])]]
+--- prim 5
+#(lambda (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) (Some trs)))))) (Some dist16) circle) (#(lambda (lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) (Some trs)))))) (Some dist14) circle (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) (Some trs)))))) (Some dist18) (#(lambda (#(lambda (transform (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist14)) (#(lambda (transmat None None (Some $0) None None)) dist4))) (repeat line $0 #(#(lambda (transmat None None (Some $0) None None)) dist18)))) $0) $1)))) (#(lambda (lambda (#(lambda (lambda (connect (transform $0 $1)))) (#(transmat None None None (Some dist9)) (Some trs)) (#(lambda (lambda (#(lambda (#(lambda (lambda (connect (transform $0 $1)))) (#(lambda (transmat None None (Some $0) None None)) $0) circle)) dist14 (#(lambda (lambda (connect (transform $0 $1)))) $1 (#(lambda (#(lambda (transform (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist14)) (#(lambda (transmat None None (Some $0) None None)) dist4))) (repeat line $0 #(#(lambda (transmat None None (Some $0) None None)) dist18)))) rep0) $0)))) #(#(lambda (transmat None None (Some $0) None None)) dist18) (transform $0 #(#(lambda (transmat None None (Some $0) None None)) dist18))) (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $0) $1 #(#(lambda (transmat None None (Some $0) None None)) dist18)))) $1 scale7)))) rep2 $0) rep0)))
+[tstroke]
+[[array([[0., 0.],
+       [1., 0.]])], [array([[ 5.00000000e-01,  0.00000000e+00],
+       [ 4.88310278e-01,  1.07485220e-01],
+       [ 4.53787710e-01,  2.09944551e-01],
+       [ 3.98046533e-01,  3.02587108e-01],
+       [ 3.23693142e-01,  3.81081028e-01],
+       [ 2.34204220e-01,  4.41756022e-01],
+       [ 1.33764169e-01,  4.81774996e-01],
+       [ 2.70694543e-02,  4.99266707e-01],
+       [-8.08909983e-02,  4.93413261e-01],
+       [-1.85069078e-01,  4.64488360e-01],
+       [-2.80593533e-01,  4.13844499e-01],
+       [-3.62997746e-01,  3.43849729e-01],
+       [-4.28428588e-01,  2.57776929e-01],
+       [-4.73826586e-01,  1.59650765e-01],
+       [-4.97068979e-01,  5.40595092e-02],
+       [-4.97068979e-01, -5.40595092e-02],
+       [-4.73826586e-01, -1.59650765e-01],
+       [-4.28428588e-01, -2.57776929e-01],
+       [-3.62997746e-01, -3.43849729e-01],
+       [-2.80593533e-01, -4.13844499e-01],
+       [-1.85069078e-01, -4.64488360e-01],
+       [-8.08909983e-02, -4.93413261e-01],
+       [ 2.70694543e-02, -4.99266707e-01],
+       [ 1.33764169e-01, -4.81774996e-01],
+       [ 2.34204220e-01, -4.41756022e-01],
+       [ 3.23693142e-01, -3.81081028e-01],
+       [ 3.98046533e-01, -3.02587108e-01],
+       [ 4.53787710e-01, -2.09944551e-01],
+       [ 4.88310278e-01, -1.07485220e-01],
+       [ 5.00000000e-01, -1.22464680e-16]])], [array([[-0.5       ,  0.28867513],
+       [ 0.5       ,  0.28867513]]), array([[-2.22044605e-16, -5.77350269e-01],
+       [-5.00000000e-01,  2.88675135e-01]]), array([[ 5.00000000e-01,  2.88675135e-01],
+       [-1.66533454e-16, -5.77350269e-01]])]]
+--- prim 6
+#(#(lambda (lambda (#(lambda (lambda (connect (transform $0 $1)))) (#(transmat None None None (Some dist9)) (Some trs)) (#(lambda (lambda (#(lambda (#(lambda (lambda (connect (transform $0 $1)))) (#(lambda (transmat None None (Some $0) None None)) $0) circle)) dist14 (#(lambda (lambda (connect (transform $0 $1)))) $1 (#(lambda (#(lambda (transform (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist14)) (#(lambda (transmat None None (Some $0) None None)) dist4))) (repeat line $0 #(#(lambda (transmat None None (Some $0) None None)) dist18)))) rep0) $0)))) #(#(lambda (transmat None None (Some $0) None None)) dist18) (transform $0 #(#(lambda (transmat None None (Some $0) None None)) dist18))) (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $0) $1 #(#(lambda (transmat None None (Some $0) None None)) dist18)))) $1 scale7)))) rep3 (#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) (Some trs)))))) None (#(lambda (#(lambda (transform (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist14)) (#(lambda (transmat None None (Some $0) None None)) dist4))) (repeat line $0 #(#(lambda (transmat None None (Some $0) None None)) dist18)))) $0))) rep1 #(#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) (Some trs)))))) (Some dist16) circle) (transform #(#(lambda (#(lambda (lambda (connect (transform $0 $1)))) (#(lambda (transmat None None (Some $0) None None)) $0) circle)) dist15 (#(lambda (#(lambda (transform (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist14)) (#(lambda (transmat None None (Some $0) None None)) dist4))) (repeat line $0 #(#(lambda (transmat None None (Some $0) None None)) dist18)))) rep0)) #(#(lambda (transmat None None (Some $0) None None)) dist18)))))
+[]
+--- prim 7
+#(lambda (lambda (#(lambda (lambda (#(lambda (#(lambda (lambda (connect (transform $0 $1)))) (#(lambda (transmat None None (Some $0) None None)) $0) circle)) dist14 (#(lambda (lambda (connect (transform $0 $1)))) $1 (#(lambda (#(lambda (transform (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist14)) (#(lambda (transmat None None (Some $0) None None)) dist4))) (repeat line $0 #(#(lambda (transmat None None (Some $0) None None)) dist18)))) rep0) $0)))) #(#(lambda (transmat None None (Some $0) None None)) dist18) (#(lambda (lambda (connect (transform $0 $1)))) #(#(lambda (transmat None None (Some $0) None None)) dist18) $0 (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1)))))
+[tscale, tstroke]
+[2.0, 4.0]
+[[array([[0., 0.],
+       [1., 0.]])], [array([[ 5.00000000e-01,  0.00000000e+00],
+       [ 4.88310278e-01,  1.07485220e-01],
+       [ 4.53787710e-01,  2.09944551e-01],
+       [ 3.98046533e-01,  3.02587108e-01],
+       [ 3.23693142e-01,  3.81081028e-01],
+       [ 2.34204220e-01,  4.41756022e-01],
+       [ 1.33764169e-01,  4.81774996e-01],
+       [ 2.70694543e-02,  4.99266707e-01],
+       [-8.08909983e-02,  4.93413261e-01],
+       [-1.85069078e-01,  4.64488360e-01],
+       [-2.80593533e-01,  4.13844499e-01],
+       [-3.62997746e-01,  3.43849729e-01],
+       [-4.28428588e-01,  2.57776929e-01],
+       [-4.73826586e-01,  1.59650765e-01],
+       [-4.97068979e-01,  5.40595092e-02],
+       [-4.97068979e-01, -5.40595092e-02],
+       [-4.73826586e-01, -1.59650765e-01],
+       [-4.28428588e-01, -2.57776929e-01],
+       [-3.62997746e-01, -3.43849729e-01],
+       [-2.80593533e-01, -4.13844499e-01],
+       [-1.85069078e-01, -4.64488360e-01],
+       [-8.08909983e-02, -4.93413261e-01],
+       [ 2.70694543e-02, -4.99266707e-01],
+       [ 1.33764169e-01, -4.81774996e-01],
+       [ 2.34204220e-01, -4.41756022e-01],
+       [ 3.23693142e-01, -3.81081028e-01],
+       [ 3.98046533e-01, -3.02587108e-01],
+       [ 4.53787710e-01, -2.09944551e-01],
+       [ 4.88310278e-01, -1.07485220e-01],
+       [ 5.00000000e-01, -1.22464680e-16]])], [array([[-0.5       ,  0.28867513],
+       [ 0.5       ,  0.28867513]]), array([[-2.22044605e-16, -5.77350269e-01],
+       [-5.00000000e-01,  2.88675135e-01]]), array([[ 5.00000000e-01,  2.88675135e-01],
+       [-1.66533454e-16, -5.77350269e-01]])]]
+--- prim 8
+#(#(lambda (#(lambda (lambda (connect (transform $0 $1)))) (#(lambda (transmat None None (Some $0) None None)) $0) circle)) dist16)
+[tstroke]
+[[array([[0., 0.],
+       [1., 0.]])], [array([[ 5.00000000e-01,  0.00000000e+00],
+       [ 4.88310278e-01,  1.07485220e-01],
+       [ 4.53787710e-01,  2.09944551e-01],
+       [ 3.98046533e-01,  3.02587108e-01],
+       [ 3.23693142e-01,  3.81081028e-01],
+       [ 2.34204220e-01,  4.41756022e-01],
+       [ 1.33764169e-01,  4.81774996e-01],
+       [ 2.70694543e-02,  4.99266707e-01],
+       [-8.08909983e-02,  4.93413261e-01],
+       [-1.85069078e-01,  4.64488360e-01],
+       [-2.80593533e-01,  4.13844499e-01],
+       [-3.62997746e-01,  3.43849729e-01],
+       [-4.28428588e-01,  2.57776929e-01],
+       [-4.73826586e-01,  1.59650765e-01],
+       [-4.97068979e-01,  5.40595092e-02],
+       [-4.97068979e-01, -5.40595092e-02],
+       [-4.73826586e-01, -1.59650765e-01],
+       [-4.28428588e-01, -2.57776929e-01],
+       [-3.62997746e-01, -3.43849729e-01],
+       [-2.80593533e-01, -4.13844499e-01],
+       [-1.85069078e-01, -4.64488360e-01],
+       [-8.08909983e-02, -4.93413261e-01],
+       [ 2.70694543e-02, -4.99266707e-01],
+       [ 1.33764169e-01, -4.81774996e-01],
+       [ 2.34204220e-01, -4.41756022e-01],
+       [ 3.23693142e-01, -3.81081028e-01],
+       [ 3.98046533e-01, -3.02587108e-01],
+       [ 4.53787710e-01, -2.09944551e-01],
+       [ 4.88310278e-01, -1.07485220e-01],
+       [ 5.00000000e-01, -1.22464680e-16]])], [array([[-0.5       ,  0.28867513],
+       [ 0.5       ,  0.28867513]]), array([[-2.22044605e-16, -5.77350269e-01],
+       [-5.00000000e-01,  2.88675135e-01]]), array([[ 5.00000000e-01,  2.88675135e-01],
+       [-1.66533454e-16, -5.77350269e-01]])]]
+--- prim 9
+#(#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) (Some trs)))))) (Some dist16) circle) (transform #(#(lambda (#(lambda (lambda (connect (transform $0 $1)))) (#(lambda (transmat None None (Some $0) None None)) $0) circle)) dist15 (#(lambda (#(lambda (transform (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist14)) (#(lambda (transmat None None (Some $0) None None)) dist4))) (repeat line $0 #(#(lambda (transmat None None (Some $0) None None)) dist18)))) rep0)) #(#(lambda (transmat None None (Some $0) None None)) dist18)))
+[]
+--- prim 10
+#(#(lambda (#(lambda (lambda (connect (transform $0 $1)))) (#(lambda (transmat None None (Some $0) None None)) $0) circle)) dist17)
+[tstroke]
+[[array([[0., 0.],
+       [1., 0.]])], [array([[ 5.00000000e-01,  0.00000000e+00],
+       [ 4.88310278e-01,  1.07485220e-01],
+       [ 4.53787710e-01,  2.09944551e-01],
+       [ 3.98046533e-01,  3.02587108e-01],
+       [ 3.23693142e-01,  3.81081028e-01],
+       [ 2.34204220e-01,  4.41756022e-01],
+       [ 1.33764169e-01,  4.81774996e-01],
+       [ 2.70694543e-02,  4.99266707e-01],
+       [-8.08909983e-02,  4.93413261e-01],
+       [-1.85069078e-01,  4.64488360e-01],
+       [-2.80593533e-01,  4.13844499e-01],
+       [-3.62997746e-01,  3.43849729e-01],
+       [-4.28428588e-01,  2.57776929e-01],
+       [-4.73826586e-01,  1.59650765e-01],
+       [-4.97068979e-01,  5.40595092e-02],
+       [-4.97068979e-01, -5.40595092e-02],
+       [-4.73826586e-01, -1.59650765e-01],
+       [-4.28428588e-01, -2.57776929e-01],
+       [-3.62997746e-01, -3.43849729e-01],
+       [-2.80593533e-01, -4.13844499e-01],
+       [-1.85069078e-01, -4.64488360e-01],
+       [-8.08909983e-02, -4.93413261e-01],
+       [ 2.70694543e-02, -4.99266707e-01],
+       [ 1.33764169e-01, -4.81774996e-01],
+       [ 2.34204220e-01, -4.41756022e-01],
+       [ 3.23693142e-01, -3.81081028e-01],
+       [ 3.98046533e-01, -3.02587108e-01],
+       [ 4.53787710e-01, -2.09944551e-01],
+       [ 4.88310278e-01, -1.07485220e-01],
+       [ 5.00000000e-01, -1.22464680e-16]])], [array([[-0.5       ,  0.28867513],
+       [ 0.5       ,  0.28867513]]), array([[-2.22044605e-16, -5.77350269e-01],
+       [-5.00000000e-01,  2.88675135e-01]]), array([[ 5.00000000e-01,  2.88675135e-01],
+       [-1.66533454e-16, -5.77350269e-01]])]]
+--- prim 11
+#(#(lambda (lambda (#(lambda (lambda (connect (transform $0 $1)))) (#(transmat None None None (Some dist9)) (Some trs)) (#(lambda (lambda (#(lambda (#(lambda (lambda (connect (transform $0 $1)))) (#(lambda (transmat None None (Some $0) None None)) $0) circle)) dist14 (#(lambda (lambda (connect (transform $0 $1)))) $1 (#(lambda (#(lambda (transform (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist14)) (#(lambda (transmat None None (Some $0) None None)) dist4))) (repeat line $0 #(#(lambda (transmat None None (Some $0) None None)) dist18)))) rep0) $0)))) #(#(lambda (transmat None None (Some $0) None None)) dist18) (transform $0 #(#(lambda (transmat None None (Some $0) None None)) dist18))) (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $0) $1 #(#(lambda (transmat None None (Some $0) None None)) dist18)))) $1 scale7)))) rep1 (#(lambda (#(lambda (transform (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist14)) (#(lambda (transmat None None (Some $0) None None)) dist4))) (repeat line $0 #(#(lambda (transmat None None (Some $0) None None)) dist18)))) rep0))
+[]
+--- prim 12
+#(lambda (lambda (#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) (Some trs)))))) None (#(lambda (#(lambda (transform (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist14)) (#(lambda (transmat None None (Some $0) None None)) dist4))) (repeat line $0 #(#(lambda (transmat None None (Some $0) None None)) dist18)))) $0))) $1 (#(lambda (lambda (#(lambda (lambda (connect (transform $0 $1)))) (#(transmat None None None (Some dist9)) (Some trs)) (#(lambda (lambda (#(lambda (#(lambda (lambda (connect (transform $0 $1)))) (#(lambda (transmat None None (Some $0) None None)) $0) circle)) dist14 (#(lambda (lambda (connect (transform $0 $1)))) $1 (#(lambda (#(lambda (transform (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist14)) (#(lambda (transmat None None (Some $0) None None)) dist4))) (repeat line $0 #(#(lambda (transmat None None (Some $0) None None)) dist18)))) rep0) $0)))) #(#(lambda (transmat None None (Some $0) None None)) dist18) (transform $0 #(#(lambda (transmat None None (Some $0) None None)) dist18))) (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $0) $1 #(#(lambda (transmat None None (Some $0) None None)) dist18)))) $1 scale7)))) $0 #(#(lambda (#(lambda (lambda (connect (transform $0 $1)))) (#(lambda (transmat None None (Some $0) None None)) $0) circle)) dist15 (#(lambda (#(lambda (transform (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist14)) (#(lambda (transmat None None (Some $0) None None)) dist4))) (repeat line $0 #(#(lambda (transmat None None (Some $0) None None)) dist18)))) rep0))))))
+[trep, trep]
+[1, 2, 3, 4, 5, 6, 7]
+[1, 2, 3, 4, 5, 6, 7]
+--- prim 13
+#(#(lambda (#(lambda (lambda (connect (transform $0 $1)))) (#(lambda (transmat None None (Some $0) None None)) $0) circle)) dist15 (#(lambda (#(lambda (transform (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist14)) (#(lambda (transmat None None (Some $0) None None)) dist4))) (repeat line $0 #(#(lambda (transmat None None (Some $0) None None)) dist18)))) rep0))
+[]
+--- prim 14
+#(lambda (lambda (#(lambda (lambda (connect (transform $0 $1)))) (#(transmat None None None (Some dist9)) (Some trs)) (#(lambda (lambda (#(lambda (#(lambda (lambda (connect (transform $0 $1)))) (#(lambda (transmat None None (Some $0) None None)) $0) circle)) dist14 (#(lambda (lambda (connect (transform $0 $1)))) $1 (#(lambda (#(lambda (transform (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist14)) (#(lambda (transmat None None (Some $0) None None)) dist4))) (repeat line $0 #(#(lambda (transmat None None (Some $0) None None)) dist18)))) rep0) $0)))) #(#(lambda (transmat None None (Some $0) None None)) dist18) (transform $0 #(#(lambda (transmat None None (Some $0) None None)) dist18))) (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $0) $1 #(#(lambda (transmat None None (Some $0) None None)) dist18)))) $1 scale7))))
+[trep, tstroke]
+[1, 2, 3, 4, 5, 6, 7]
+[[array([[0., 0.],
+       [1., 0.]])], [array([[ 5.00000000e-01,  0.00000000e+00],
+       [ 4.88310278e-01,  1.07485220e-01],
+       [ 4.53787710e-01,  2.09944551e-01],
+       [ 3.98046533e-01,  3.02587108e-01],
+       [ 3.23693142e-01,  3.81081028e-01],
+       [ 2.34204220e-01,  4.41756022e-01],
+       [ 1.33764169e-01,  4.81774996e-01],
+       [ 2.70694543e-02,  4.99266707e-01],
+       [-8.08909983e-02,  4.93413261e-01],
+       [-1.85069078e-01,  4.64488360e-01],
+       [-2.80593533e-01,  4.13844499e-01],
+       [-3.62997746e-01,  3.43849729e-01],
+       [-4.28428588e-01,  2.57776929e-01],
+       [-4.73826586e-01,  1.59650765e-01],
+       [-4.97068979e-01,  5.40595092e-02],
+       [-4.97068979e-01, -5.40595092e-02],
+       [-4.73826586e-01, -1.59650765e-01],
+       [-4.28428588e-01, -2.57776929e-01],
+       [-3.62997746e-01, -3.43849729e-01],
+       [-2.80593533e-01, -4.13844499e-01],
+       [-1.85069078e-01, -4.64488360e-01],
+       [-8.08909983e-02, -4.93413261e-01],
+       [ 2.70694543e-02, -4.99266707e-01],
+       [ 1.33764169e-01, -4.81774996e-01],
+       [ 2.34204220e-01, -4.41756022e-01],
+       [ 3.23693142e-01, -3.81081028e-01],
+       [ 3.98046533e-01, -3.02587108e-01],
+       [ 4.53787710e-01, -2.09944551e-01],
+       [ 4.88310278e-01, -1.07485220e-01],
+       [ 5.00000000e-01, -1.22464680e-16]])], [array([[-0.5       ,  0.28867513],
+       [ 0.5       ,  0.28867513]]), array([[-2.22044605e-16, -5.77350269e-01],
+       [-5.00000000e-01,  2.88675135e-01]]), array([[ 5.00000000e-01,  2.88675135e-01],
+       [-1.66533454e-16, -5.77350269e-01]])]]
+--- prim 15
+#(lambda (#(lambda (lambda (connect (transform $0 $1)))) #(#(lambda (transmat None None (Some $0) None None)) dist18) ($0 (transform (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $0) $1 #(#(lambda (transmat None None (Some $0) None None)) dist18)))) rep1 scale7))) (#(lambda (lambda (#(lambda (lambda (connect (transform $0 $1)))) $1 (#(lambda (#(lambda (transform (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist14)) (#(lambda (transmat None None (Some $0) None None)) dist4))) (repeat line $0 #(#(lambda (transmat None None (Some $0) None None)) dist18)))) rep0) (#(lambda (lambda (connect (transform $0 $1)))) (transmat None None (Some dist15) (Some dist9) (Some $0)) circle (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $0) $1 #(#(lambda (transmat None None (Some $0) None None)) dist18)))) rep1 scale7))))) (#(transmat None None None (Some dist9)) (Some trs)) trs)))
+[(ttransmat -> tstroke) -> tstroke]
+[]
+--- prim 16
+#(lambda (#(lambda (lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) (Some trs)))))) (Some dist14) circle (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) (Some trs)))))) (Some dist18) (#(lambda (#(lambda (transform (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist14)) (#(lambda (transmat None None (Some $0) None None)) dist4))) (repeat line $0 #(#(lambda (transmat None None (Some $0) None None)) dist18)))) $0) $1)))) (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $0) $1 #(#(lambda (transmat None None (Some $0) None None)) dist18)))) rep3 $0)))
+[tscale, trep]
+[2.0, 4.0]
+[1, 2, 3, 4, 5, 6, 7]
+--- prim 17
+#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) (Some trs)))))) None (#(lambda (#(lambda (transform (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist14)) (#(lambda (transmat None None (Some $0) None None)) dist4))) (repeat line $0 #(#(lambda (transmat None None (Some $0) None None)) dist18)))) $0)))
+[trep, tstroke]
+[1, 2, 3, 4, 5, 6, 7]
+[[array([[0., 0.],
+       [1., 0.]])], [array([[ 5.00000000e-01,  0.00000000e+00],
+       [ 4.88310278e-01,  1.07485220e-01],
+       [ 4.53787710e-01,  2.09944551e-01],
+       [ 3.98046533e-01,  3.02587108e-01],
+       [ 3.23693142e-01,  3.81081028e-01],
+       [ 2.34204220e-01,  4.41756022e-01],
+       [ 1.33764169e-01,  4.81774996e-01],
+       [ 2.70694543e-02,  4.99266707e-01],
+       [-8.08909983e-02,  4.93413261e-01],
+       [-1.85069078e-01,  4.64488360e-01],
+       [-2.80593533e-01,  4.13844499e-01],
+       [-3.62997746e-01,  3.43849729e-01],
+       [-4.28428588e-01,  2.57776929e-01],
+       [-4.73826586e-01,  1.59650765e-01],
+       [-4.97068979e-01,  5.40595092e-02],
+       [-4.97068979e-01, -5.40595092e-02],
+       [-4.73826586e-01, -1.59650765e-01],
+       [-4.28428588e-01, -2.57776929e-01],
+       [-3.62997746e-01, -3.43849729e-01],
+       [-2.80593533e-01, -4.13844499e-01],
+       [-1.85069078e-01, -4.64488360e-01],
+       [-8.08909983e-02, -4.93413261e-01],
+       [ 2.70694543e-02, -4.99266707e-01],
+       [ 1.33764169e-01, -4.81774996e-01],
+       [ 2.34204220e-01, -4.41756022e-01],
+       [ 3.23693142e-01, -3.81081028e-01],
+       [ 3.98046533e-01, -3.02587108e-01],
+       [ 4.53787710e-01, -2.09944551e-01],
+       [ 4.88310278e-01, -1.07485220e-01],
+       [ 5.00000000e-01, -1.22464680e-16]])], [array([[-0.5       ,  0.28867513],
+       [ 0.5       ,  0.28867513]]), array([[-2.22044605e-16, -5.77350269e-01],
+       [-5.00000000e-01,  2.88675135e-01]]), array([[ 5.00000000e-01,  2.88675135e-01],
+       [-1.66533454e-16, -5.77350269e-01]])]]
+--- prim 18
+#(lambda (lambda (#(lambda (#(lambda (lambda (connect (transform $0 $1)))) (#(lambda (transmat None None (Some $0) None None)) $0) circle)) dist14 (#(lambda (lambda (connect (transform $0 $1)))) $1 (#(lambda (#(lambda (transform (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist14)) (#(lambda (transmat None None (Some $0) None None)) dist4))) (repeat line $0 #(#(lambda (transmat None None (Some $0) None None)) dist18)))) rep0) $0))))
+[ttransmat, tstroke]
+[]
+[[array([[0., 0.],
+       [1., 0.]])], [array([[ 5.00000000e-01,  0.00000000e+00],
+       [ 4.88310278e-01,  1.07485220e-01],
+       [ 4.53787710e-01,  2.09944551e-01],
+       [ 3.98046533e-01,  3.02587108e-01],
+       [ 3.23693142e-01,  3.81081028e-01],
+       [ 2.34204220e-01,  4.41756022e-01],
+       [ 1.33764169e-01,  4.81774996e-01],
+       [ 2.70694543e-02,  4.99266707e-01],
+       [-8.08909983e-02,  4.93413261e-01],
+       [-1.85069078e-01,  4.64488360e-01],
+       [-2.80593533e-01,  4.13844499e-01],
+       [-3.62997746e-01,  3.43849729e-01],
+       [-4.28428588e-01,  2.57776929e-01],
+       [-4.73826586e-01,  1.59650765e-01],
+       [-4.97068979e-01,  5.40595092e-02],
+       [-4.97068979e-01, -5.40595092e-02],
+       [-4.73826586e-01, -1.59650765e-01],
+       [-4.28428588e-01, -2.57776929e-01],
+       [-3.62997746e-01, -3.43849729e-01],
+       [-2.80593533e-01, -4.13844499e-01],
+       [-1.85069078e-01, -4.64488360e-01],
+       [-8.08909983e-02, -4.93413261e-01],
+       [ 2.70694543e-02, -4.99266707e-01],
+       [ 1.33764169e-01, -4.81774996e-01],
+       [ 2.34204220e-01, -4.41756022e-01],
+       [ 3.23693142e-01, -3.81081028e-01],
+       [ 3.98046533e-01, -3.02587108e-01],
+       [ 4.53787710e-01, -2.09944551e-01],
+       [ 4.88310278e-01, -1.07485220e-01],
+       [ 5.00000000e-01, -1.22464680e-16]])], [array([[-0.5       ,  0.28867513],
+       [ 0.5       ,  0.28867513]]), array([[-2.22044605e-16, -5.77350269e-01],
+       [-5.00000000e-01,  2.88675135e-01]]), array([[ 5.00000000e-01,  2.88675135e-01],
+       [-1.66533454e-16, -5.77350269e-01]])]]
+--- prim 19
+#(lambda (#(lambda (lambda (connect (transform $0 $1)))) #(#(lambda (transmat None None (Some $0) None None)) dist18) (#(lambda (#(lambda (transform (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist14)) (#(lambda (transmat None None (Some $0) None None)) dist4))) (repeat line $0 #(#(lambda (transmat None None (Some $0) None None)) dist18)))) rep1) (#(lambda (#(lambda (lambda (connect (transform $0 $1)))) (#(lambda (transmat None None (Some $0) None None)) $0) circle)) dist14 $0)))
+[tstroke]
+[[array([[0., 0.],
+       [1., 0.]])], [array([[ 5.00000000e-01,  0.00000000e+00],
+       [ 4.88310278e-01,  1.07485220e-01],
+       [ 4.53787710e-01,  2.09944551e-01],
+       [ 3.98046533e-01,  3.02587108e-01],
+       [ 3.23693142e-01,  3.81081028e-01],
+       [ 2.34204220e-01,  4.41756022e-01],
+       [ 1.33764169e-01,  4.81774996e-01],
+       [ 2.70694543e-02,  4.99266707e-01],
+       [-8.08909983e-02,  4.93413261e-01],
+       [-1.85069078e-01,  4.64488360e-01],
+       [-2.80593533e-01,  4.13844499e-01],
+       [-3.62997746e-01,  3.43849729e-01],
+       [-4.28428588e-01,  2.57776929e-01],
+       [-4.73826586e-01,  1.59650765e-01],
+       [-4.97068979e-01,  5.40595092e-02],
+       [-4.97068979e-01, -5.40595092e-02],
+       [-4.73826586e-01, -1.59650765e-01],
+       [-4.28428588e-01, -2.57776929e-01],
+       [-3.62997746e-01, -3.43849729e-01],
+       [-2.80593533e-01, -4.13844499e-01],
+       [-1.85069078e-01, -4.64488360e-01],
+       [-8.08909983e-02, -4.93413261e-01],
+       [ 2.70694543e-02, -4.99266707e-01],
+       [ 1.33764169e-01, -4.81774996e-01],
+       [ 2.34204220e-01, -4.41756022e-01],
+       [ 3.23693142e-01, -3.81081028e-01],
+       [ 3.98046533e-01, -3.02587108e-01],
+       [ 4.53787710e-01, -2.09944551e-01],
+       [ 4.88310278e-01, -1.07485220e-01],
+       [ 5.00000000e-01, -1.22464680e-16]])], [array([[-0.5       ,  0.28867513],
+       [ 0.5       ,  0.28867513]]), array([[-2.22044605e-16, -5.77350269e-01],
+       [-5.00000000e-01,  2.88675135e-01]]), array([[ 5.00000000e-01,  2.88675135e-01],
+       [-1.66533454e-16, -5.77350269e-01]])]]
+--- prim 20
+#(transmat None None None (Some dist9))
+	(does not return a tstroke)
+--- prim 21
+#(lambda (#(lambda (lambda (connect (transform $0 $1)))) (#(lambda (transmat None None (Some $0) None None)) $0) circle))
+[tdist, tstroke]
+[-2.0, -1.0, 0, 1.0, 2.0]
+[[array([[0., 0.],
+       [1., 0.]])], [array([[ 5.00000000e-01,  0.00000000e+00],
+       [ 4.88310278e-01,  1.07485220e-01],
+       [ 4.53787710e-01,  2.09944551e-01],
+       [ 3.98046533e-01,  3.02587108e-01],
+       [ 3.23693142e-01,  3.81081028e-01],
+       [ 2.34204220e-01,  4.41756022e-01],
+       [ 1.33764169e-01,  4.81774996e-01],
+       [ 2.70694543e-02,  4.99266707e-01],
+       [-8.08909983e-02,  4.93413261e-01],
+       [-1.85069078e-01,  4.64488360e-01],
+       [-2.80593533e-01,  4.13844499e-01],
+       [-3.62997746e-01,  3.43849729e-01],
+       [-4.28428588e-01,  2.57776929e-01],
+       [-4.73826586e-01,  1.59650765e-01],
+       [-4.97068979e-01,  5.40595092e-02],
+       [-4.97068979e-01, -5.40595092e-02],
+       [-4.73826586e-01, -1.59650765e-01],
+       [-4.28428588e-01, -2.57776929e-01],
+       [-3.62997746e-01, -3.43849729e-01],
+       [-2.80593533e-01, -4.13844499e-01],
+       [-1.85069078e-01, -4.64488360e-01],
+       [-8.08909983e-02, -4.93413261e-01],
+       [ 2.70694543e-02, -4.99266707e-01],
+       [ 1.33764169e-01, -4.81774996e-01],
+       [ 2.34204220e-01, -4.41756022e-01],
+       [ 3.23693142e-01, -3.81081028e-01],
+       [ 3.98046533e-01, -3.02587108e-01],
+       [ 4.53787710e-01, -2.09944551e-01],
+       [ 4.88310278e-01, -1.07485220e-01],
+       [ 5.00000000e-01, -1.22464680e-16]])], [array([[-0.5       ,  0.28867513],
+       [ 0.5       ,  0.28867513]]), array([[-2.22044605e-16, -5.77350269e-01],
+       [-5.00000000e-01,  2.88675135e-01]]), array([[ 5.00000000e-01,  2.88675135e-01],
+       [-1.66533454e-16, -5.77350269e-01]])]]
+--- prim 22
+#(lambda (lambda (#(lambda (lambda (connect (transform $0 $1)))) $1 (#(lambda (#(lambda (transform (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist14)) (#(lambda (transmat None None (Some $0) None None)) dist4))) (repeat line $0 #(#(lambda (transmat None None (Some $0) None None)) dist18)))) rep0) (#(lambda (lambda (connect (transform $0 $1)))) (transmat None None (Some dist15) (Some dist9) (Some $0)) circle (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $0) $1 #(#(lambda (transmat None None (Some $0) None None)) dist18)))) rep1 scale7)))))
+[ttransmat, ttorder]
+[]
+['trs', 'tsr', 'rts', 'rst', 'srt', 'str']
+--- prim 23
+#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) (Some trs)))))) (Some dist16) circle)
+[tstroke]
+[[array([[0., 0.],
+       [1., 0.]])], [array([[ 5.00000000e-01,  0.00000000e+00],
+       [ 4.88310278e-01,  1.07485220e-01],
+       [ 4.53787710e-01,  2.09944551e-01],
+       [ 3.98046533e-01,  3.02587108e-01],
+       [ 3.23693142e-01,  3.81081028e-01],
+       [ 2.34204220e-01,  4.41756022e-01],
+       [ 1.33764169e-01,  4.81774996e-01],
+       [ 2.70694543e-02,  4.99266707e-01],
+       [-8.08909983e-02,  4.93413261e-01],
+       [-1.85069078e-01,  4.64488360e-01],
+       [-2.80593533e-01,  4.13844499e-01],
+       [-3.62997746e-01,  3.43849729e-01],
+       [-4.28428588e-01,  2.57776929e-01],
+       [-4.73826586e-01,  1.59650765e-01],
+       [-4.97068979e-01,  5.40595092e-02],
+       [-4.97068979e-01, -5.40595092e-02],
+       [-4.73826586e-01, -1.59650765e-01],
+       [-4.28428588e-01, -2.57776929e-01],
+       [-3.62997746e-01, -3.43849729e-01],
+       [-2.80593533e-01, -4.13844499e-01],
+       [-1.85069078e-01, -4.64488360e-01],
+       [-8.08909983e-02, -4.93413261e-01],
+       [ 2.70694543e-02, -4.99266707e-01],
+       [ 1.33764169e-01, -4.81774996e-01],
+       [ 2.34204220e-01, -4.41756022e-01],
+       [ 3.23693142e-01, -3.81081028e-01],
+       [ 3.98046533e-01, -3.02587108e-01],
+       [ 4.53787710e-01, -2.09944551e-01],
+       [ 4.88310278e-01, -1.07485220e-01],
+       [ 5.00000000e-01, -1.22464680e-16]])], [array([[-0.5       ,  0.28867513],
+       [ 0.5       ,  0.28867513]]), array([[-2.22044605e-16, -5.77350269e-01],
+       [-5.00000000e-01,  2.88675135e-01]]), array([[ 5.00000000e-01,  2.88675135e-01],
+       [-1.66533454e-16, -5.77350269e-01]])]]
+--- prim 24
+#(lambda (lambda (connect (transform $0 $1))))
+[ttransmat, tstroke, tstroke]
+[]
+[[array([[0., 0.],
+       [1., 0.]])], [array([[ 5.00000000e-01,  0.00000000e+00],
+       [ 4.88310278e-01,  1.07485220e-01],
+       [ 4.53787710e-01,  2.09944551e-01],
+       [ 3.98046533e-01,  3.02587108e-01],
+       [ 3.23693142e-01,  3.81081028e-01],
+       [ 2.34204220e-01,  4.41756022e-01],
+       [ 1.33764169e-01,  4.81774996e-01],
+       [ 2.70694543e-02,  4.99266707e-01],
+       [-8.08909983e-02,  4.93413261e-01],
+       [-1.85069078e-01,  4.64488360e-01],
+       [-2.80593533e-01,  4.13844499e-01],
+       [-3.62997746e-01,  3.43849729e-01],
+       [-4.28428588e-01,  2.57776929e-01],
+       [-4.73826586e-01,  1.59650765e-01],
+       [-4.97068979e-01,  5.40595092e-02],
+       [-4.97068979e-01, -5.40595092e-02],
+       [-4.73826586e-01, -1.59650765e-01],
+       [-4.28428588e-01, -2.57776929e-01],
+       [-3.62997746e-01, -3.43849729e-01],
+       [-2.80593533e-01, -4.13844499e-01],
+       [-1.85069078e-01, -4.64488360e-01],
+       [-8.08909983e-02, -4.93413261e-01],
+       [ 2.70694543e-02, -4.99266707e-01],
+       [ 1.33764169e-01, -4.81774996e-01],
+       [ 2.34204220e-01, -4.41756022e-01],
+       [ 3.23693142e-01, -3.81081028e-01],
+       [ 3.98046533e-01, -3.02587108e-01],
+       [ 4.53787710e-01, -2.09944551e-01],
+       [ 4.88310278e-01, -1.07485220e-01],
+       [ 5.00000000e-01, -1.22464680e-16]])], [array([[-0.5       ,  0.28867513],
+       [ 0.5       ,  0.28867513]]), array([[-2.22044605e-16, -5.77350269e-01],
+       [-5.00000000e-01,  2.88675135e-01]]), array([[ 5.00000000e-01,  2.88675135e-01],
+       [-1.66533454e-16, -5.77350269e-01]])]]
+[[array([[0., 0.],
+       [1., 0.]])], [array([[ 5.00000000e-01,  0.00000000e+00],
+       [ 4.88310278e-01,  1.07485220e-01],
+       [ 4.53787710e-01,  2.09944551e-01],
+       [ 3.98046533e-01,  3.02587108e-01],
+       [ 3.23693142e-01,  3.81081028e-01],
+       [ 2.34204220e-01,  4.41756022e-01],
+       [ 1.33764169e-01,  4.81774996e-01],
+       [ 2.70694543e-02,  4.99266707e-01],
+       [-8.08909983e-02,  4.93413261e-01],
+       [-1.85069078e-01,  4.64488360e-01],
+       [-2.80593533e-01,  4.13844499e-01],
+       [-3.62997746e-01,  3.43849729e-01],
+       [-4.28428588e-01,  2.57776929e-01],
+       [-4.73826586e-01,  1.59650765e-01],
+       [-4.97068979e-01,  5.40595092e-02],
+       [-4.97068979e-01, -5.40595092e-02],
+       [-4.73826586e-01, -1.59650765e-01],
+       [-4.28428588e-01, -2.57776929e-01],
+       [-3.62997746e-01, -3.43849729e-01],
+       [-2.80593533e-01, -4.13844499e-01],
+       [-1.85069078e-01, -4.64488360e-01],
+       [-8.08909983e-02, -4.93413261e-01],
+       [ 2.70694543e-02, -4.99266707e-01],
+       [ 1.33764169e-01, -4.81774996e-01],
+       [ 2.34204220e-01, -4.41756022e-01],
+       [ 3.23693142e-01, -3.81081028e-01],
+       [ 3.98046533e-01, -3.02587108e-01],
+       [ 4.53787710e-01, -2.09944551e-01],
+       [ 4.88310278e-01, -1.07485220e-01],
+       [ 5.00000000e-01, -1.22464680e-16]])], [array([[-0.5       ,  0.28867513],
+       [ 0.5       ,  0.28867513]]), array([[-2.22044605e-16, -5.77350269e-01],
+       [-5.00000000e-01,  2.88675135e-01]]), array([[ 5.00000000e-01,  2.88675135e-01],
+       [-1.66533454e-16, -5.77350269e-01]])]]
+--- prim 25
+#(lambda (lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) (Some trs)))))) (Some dist14) circle (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) (Some trs)))))) (Some dist18) (#(lambda (#(lambda (transform (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist14)) (#(lambda (transmat None None (Some $0) None None)) dist4))) (repeat line $0 #(#(lambda (transmat None None (Some $0) None None)) dist18)))) $0) $1))))
+[tstroke, trep]
+[[array([[0., 0.],
+       [1., 0.]])], [array([[ 5.00000000e-01,  0.00000000e+00],
+       [ 4.88310278e-01,  1.07485220e-01],
+       [ 4.53787710e-01,  2.09944551e-01],
+       [ 3.98046533e-01,  3.02587108e-01],
+       [ 3.23693142e-01,  3.81081028e-01],
+       [ 2.34204220e-01,  4.41756022e-01],
+       [ 1.33764169e-01,  4.81774996e-01],
+       [ 2.70694543e-02,  4.99266707e-01],
+       [-8.08909983e-02,  4.93413261e-01],
+       [-1.85069078e-01,  4.64488360e-01],
+       [-2.80593533e-01,  4.13844499e-01],
+       [-3.62997746e-01,  3.43849729e-01],
+       [-4.28428588e-01,  2.57776929e-01],
+       [-4.73826586e-01,  1.59650765e-01],
+       [-4.97068979e-01,  5.40595092e-02],
+       [-4.97068979e-01, -5.40595092e-02],
+       [-4.73826586e-01, -1.59650765e-01],
+       [-4.28428588e-01, -2.57776929e-01],
+       [-3.62997746e-01, -3.43849729e-01],
+       [-2.80593533e-01, -4.13844499e-01],
+       [-1.85069078e-01, -4.64488360e-01],
+       [-8.08909983e-02, -4.93413261e-01],
+       [ 2.70694543e-02, -4.99266707e-01],
+       [ 1.33764169e-01, -4.81774996e-01],
+       [ 2.34204220e-01, -4.41756022e-01],
+       [ 3.23693142e-01, -3.81081028e-01],
+       [ 3.98046533e-01, -3.02587108e-01],
+       [ 4.53787710e-01, -2.09944551e-01],
+       [ 4.88310278e-01, -1.07485220e-01],
+       [ 5.00000000e-01, -1.22464680e-16]])], [array([[-0.5       ,  0.28867513],
+       [ 0.5       ,  0.28867513]]), array([[-2.22044605e-16, -5.77350269e-01],
+       [-5.00000000e-01,  2.88675135e-01]]), array([[ 5.00000000e-01,  2.88675135e-01],
+       [-1.66533454e-16, -5.77350269e-01]])]]
+[1, 2, 3, 4, 5, 6, 7]
+--- prim 26
+#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) (Some trs))))))
+[maybe(tdist), tstroke, tstroke]
+[-2.0, -1.0, 0, 1.0, 2.0]
+[[array([[0., 0.],
+       [1., 0.]])], [array([[ 5.00000000e-01,  0.00000000e+00],
+       [ 4.88310278e-01,  1.07485220e-01],
+       [ 4.53787710e-01,  2.09944551e-01],
+       [ 3.98046533e-01,  3.02587108e-01],
+       [ 3.23693142e-01,  3.81081028e-01],
+       [ 2.34204220e-01,  4.41756022e-01],
+       [ 1.33764169e-01,  4.81774996e-01],
+       [ 2.70694543e-02,  4.99266707e-01],
+       [-8.08909983e-02,  4.93413261e-01],
+       [-1.85069078e-01,  4.64488360e-01],
+       [-2.80593533e-01,  4.13844499e-01],
+       [-3.62997746e-01,  3.43849729e-01],
+       [-4.28428588e-01,  2.57776929e-01],
+       [-4.73826586e-01,  1.59650765e-01],
+       [-4.97068979e-01,  5.40595092e-02],
+       [-4.97068979e-01, -5.40595092e-02],
+       [-4.73826586e-01, -1.59650765e-01],
+       [-4.28428588e-01, -2.57776929e-01],
+       [-3.62997746e-01, -3.43849729e-01],
+       [-2.80593533e-01, -4.13844499e-01],
+       [-1.85069078e-01, -4.64488360e-01],
+       [-8.08909983e-02, -4.93413261e-01],
+       [ 2.70694543e-02, -4.99266707e-01],
+       [ 1.33764169e-01, -4.81774996e-01],
+       [ 2.34204220e-01, -4.41756022e-01],
+       [ 3.23693142e-01, -3.81081028e-01],
+       [ 3.98046533e-01, -3.02587108e-01],
+       [ 4.53787710e-01, -2.09944551e-01],
+       [ 4.88310278e-01, -1.07485220e-01],
+       [ 5.00000000e-01, -1.22464680e-16]])], [array([[-0.5       ,  0.28867513],
+       [ 0.5       ,  0.28867513]]), array([[-2.22044605e-16, -5.77350269e-01],
+       [-5.00000000e-01,  2.88675135e-01]]), array([[ 5.00000000e-01,  2.88675135e-01],
+       [-1.66533454e-16, -5.77350269e-01]])]]
+[[array([[0., 0.],
+       [1., 0.]])], [array([[ 5.00000000e-01,  0.00000000e+00],
+       [ 4.88310278e-01,  1.07485220e-01],
+       [ 4.53787710e-01,  2.09944551e-01],
+       [ 3.98046533e-01,  3.02587108e-01],
+       [ 3.23693142e-01,  3.81081028e-01],
+       [ 2.34204220e-01,  4.41756022e-01],
+       [ 1.33764169e-01,  4.81774996e-01],
+       [ 2.70694543e-02,  4.99266707e-01],
+       [-8.08909983e-02,  4.93413261e-01],
+       [-1.85069078e-01,  4.64488360e-01],
+       [-2.80593533e-01,  4.13844499e-01],
+       [-3.62997746e-01,  3.43849729e-01],
+       [-4.28428588e-01,  2.57776929e-01],
+       [-4.73826586e-01,  1.59650765e-01],
+       [-4.97068979e-01,  5.40595092e-02],
+       [-4.97068979e-01, -5.40595092e-02],
+       [-4.73826586e-01, -1.59650765e-01],
+       [-4.28428588e-01, -2.57776929e-01],
+       [-3.62997746e-01, -3.43849729e-01],
+       [-2.80593533e-01, -4.13844499e-01],
+       [-1.85069078e-01, -4.64488360e-01],
+       [-8.08909983e-02, -4.93413261e-01],
+       [ 2.70694543e-02, -4.99266707e-01],
+       [ 1.33764169e-01, -4.81774996e-01],
+       [ 2.34204220e-01, -4.41756022e-01],
+       [ 3.23693142e-01, -3.81081028e-01],
+       [ 3.98046533e-01, -3.02587108e-01],
+       [ 4.53787710e-01, -2.09944551e-01],
+       [ 4.88310278e-01, -1.07485220e-01],
+       [ 5.00000000e-01, -1.22464680e-16]])], [array([[-0.5       ,  0.28867513],
+       [ 0.5       ,  0.28867513]]), array([[-2.22044605e-16, -5.77350269e-01],
+       [-5.00000000e-01,  2.88675135e-01]]), array([[ 5.00000000e-01,  2.88675135e-01],
+       [-1.66533454e-16, -5.77350269e-01]])]]
+--- prim 27
+#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $0) $1 #(#(lambda (transmat None None (Some $0) None None)) dist18))))
+[trep, tscale]
+[1, 2, 3, 4, 5, 6, 7]
+[2.0, 4.0]
+--- prim 28
+#(lambda (#(lambda (transform (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist14)) (#(lambda (transmat None None (Some $0) None None)) dist4))) (repeat line $0 #(#(lambda (transmat None None (Some $0) None None)) dist18))))
+[trep]
+[1, 2, 3, 4, 5, 6, 7]
+--- prim 29
+#(#(lambda (transmat None None (Some $0) None None)) dist18)
+	(does not return a tstroke)
+--- prim 30
+#(lambda (transform (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist14)) (#(lambda (transmat None None (Some $0) None None)) dist4)))
+[tstroke]
+[[array([[0., 0.],
+       [1., 0.]])], [array([[ 5.00000000e-01,  0.00000000e+00],
+       [ 4.88310278e-01,  1.07485220e-01],
+       [ 4.53787710e-01,  2.09944551e-01],
+       [ 3.98046533e-01,  3.02587108e-01],
+       [ 3.23693142e-01,  3.81081028e-01],
+       [ 2.34204220e-01,  4.41756022e-01],
+       [ 1.33764169e-01,  4.81774996e-01],
+       [ 2.70694543e-02,  4.99266707e-01],
+       [-8.08909983e-02,  4.93413261e-01],
+       [-1.85069078e-01,  4.64488360e-01],
+       [-2.80593533e-01,  4.13844499e-01],
+       [-3.62997746e-01,  3.43849729e-01],
+       [-4.28428588e-01,  2.57776929e-01],
+       [-4.73826586e-01,  1.59650765e-01],
+       [-4.97068979e-01,  5.40595092e-02],
+       [-4.97068979e-01, -5.40595092e-02],
+       [-4.73826586e-01, -1.59650765e-01],
+       [-4.28428588e-01, -2.57776929e-01],
+       [-3.62997746e-01, -3.43849729e-01],
+       [-2.80593533e-01, -4.13844499e-01],
+       [-1.85069078e-01, -4.64488360e-01],
+       [-8.08909983e-02, -4.93413261e-01],
+       [ 2.70694543e-02, -4.99266707e-01],
+       [ 1.33764169e-01, -4.81774996e-01],
+       [ 2.34204220e-01, -4.41756022e-01],
+       [ 3.23693142e-01, -3.81081028e-01],
+       [ 3.98046533e-01, -3.02587108e-01],
+       [ 4.53787710e-01, -2.09944551e-01],
+       [ 4.88310278e-01, -1.07485220e-01],
+       [ 5.00000000e-01, -1.22464680e-16]])], [array([[-0.5       ,  0.28867513],
+       [ 0.5       ,  0.28867513]]), array([[-2.22044605e-16, -5.77350269e-01],
+       [-5.00000000e-01,  2.88675135e-01]]), array([[ 5.00000000e-01,  2.88675135e-01],
+       [-1.66533454e-16, -5.77350269e-01]])]]
+--- prim 31
+#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None)))
+[tscale]
+[2.0, 4.0]
+--- prim 32
+#(lambda (transmat None None (Some $0) None None))
+	(does not return a tstroke)
+--- prim 33
+None
+--- prim 34
+Some
+--- prim 35
+line
+--- prim 36
+circle
+--- prim 37
+transmat
+--- prim 38
+transform
+--- prim 39
+connect
+--- prim 40
+repeat
+--- prim 41
+scale7
+--- prim 42
+dist1
+--- prim 43
+dist3
+--- prim 44
+dist4
+--- prim 45
+dist6
+--- prim 46
+dist9
+--- prim 47
+dist14
+--- prim 48
+dist15
+--- prim 49
+dist16
+--- prim 50
+dist17
+--- prim 51
+dist18
+--- prim 52
+angle0
+--- prim 53
+angle2
+--- prim 54
+trs
+--- prim 55
+rep0
+--- prim 56
+rep1
+--- prim 57
+rep2
+--- prim 58
+rep3

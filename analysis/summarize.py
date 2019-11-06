@@ -87,7 +87,7 @@ def summarize(ECTRAIN, SUMMARY_SAVEDIR = "", comparetohuman=True):
 
     # 2) number task solved
     fig = plotNumSolved(DAT["result"])
-    fig.savefig("{}/{}_numsolved.png".format(SUMMARY_SAVEDIR, DAT["trainset"]))
+    fig.savefig("{}/{}_numsolved.pdf".format(SUMMARY_SAVEDIR, DAT["trainset"]))
     print("2: plotted n solved timecourse")
 
     # 3) print all primitives (and save)
@@ -102,11 +102,11 @@ def summarize(ECTRAIN, SUMMARY_SAVEDIR = "", comparetohuman=True):
 
     # 4) Plot all tasks (GROUND TRUTH), AND INDICATE IF SOLVED
     fig = plotAllTasks(DAT, trainortest="train")
-    fig.savefig("{}/{}_alltasks_train.png".format(SUMMARY_SAVEDIR, DAT["trainset"]))
+    fig.savefig("{}/{}_alltasks_train.pdf".format(SUMMARY_SAVEDIR, DAT["trainset"]))
 
     if len(DAT["testtasks"])>0:
         fig = plotAllTasks(DAT, trainortest="test")
-        fig.savefig("{}/{}_alltasks_test.png".format(SUMMARY_SAVEDIR, DAT["trainset"]))
+        fig.savefig("{}/{}_alltasks_test.pdf".format(SUMMARY_SAVEDIR, DAT["trainset"]))
 
     print("4: saved figure of all tasks (solvbd and unsolved)")
     plt.close('all')
@@ -147,7 +147,7 @@ def summarize(ECTRAIN, SUMMARY_SAVEDIR = "", comparetohuman=True):
 
             # 1) For human, plot drawings for this stim
             if "png" not in stim:
-                dflat_hu = dgseg.filterDat(DAT["datflat_hu"], stimlist=[stim + ".png"])
+                dflat_hu = dgseg.filterDat(DAT["datflat_hu"], stimlist=[stim + ".pdf"])
             else:
                 dflat_hu = dgseg.filterDat(DAT["datflat_hu"], stimlist=[stim])
             if len(dflat_hu)==0:
@@ -178,7 +178,7 @@ def summarize(ECTRAIN, SUMMARY_SAVEDIR = "", comparetohuman=True):
                 
             plt.figure(figsize=(40, 10))
             ax = sns.stripplot(x="human", y="dist", hue="modelrend", data=pd.DataFrame(dists), jitter=0.17, dodge=True, alpha=0.8, size=8)
-            plt.savefig("{}/{}_hu{}_model{}_distances_randomparses.png".format(SUMMARY_SAVEDIR, stim, DAT["behaviorexpt"], DAT["trainset"]))
+            plt.savefig("{}/{}_hu{}_model{}_distances_randomparses.pdf".format(SUMMARY_SAVEDIR, stim, DAT["behaviorexpt"], DAT["trainset"]))
             plt.close('all')
 
             # --- all parses for this stimulus
@@ -187,7 +187,7 @@ def summarize(ECTRAIN, SUMMARY_SAVEDIR = "", comparetohuman=True):
             dat = pd.DataFrame(dists)
             ax = sns.violinplot(x="human", y="dist", data=dat, inner="quartile")
             ax = sns.stripplot(x="human", y="dist", data=dat, jitter=0.17, dodge=True, alpha=0.3, size=8)
-            plt.savefig("{}/{}_hu{}_model{}_distances_allparses.png".format(SUMMARY_SAVEDIR, stim, DAT["behaviorexpt"], DAT["trainset"]))
+            plt.savefig("{}/{}_hu{}_model{}_distances_allparses.pdf".format(SUMMARY_SAVEDIR, stim, DAT["behaviorexpt"], DAT["trainset"]))
             print("3: Plotted all string edit distances for both random parses and all parses")
             plt.close('all')
 

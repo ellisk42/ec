@@ -1,0 +1,36 @@
+===== 0 - S12_13_test_1 - S12_13_test_1:
+MISS S12_13_test_1
+===== 1 - S12_13_test_2 - S12_13_test_2:
+MISS S12_13_test_2
+===== 2 - S12_13_test_4 - S12_13_test_4:
+MISS S12_13_test_4
+===== 3 - S12_13_test_5 - S12_13_test_5:
+MISS S12_13_test_5
+===== 4 - S12_13_test_6 - S12_13_test_6:
+MISS S12_13_test_6
+===== 5 - S12_13_test_7 - S12_13_test_7:
+MISS S12_13_test_7
+===== 6 - S12_13_test_8 - S12_13_test_8:
+MISS S12_13_test_8
+===== 7 - S12_13_test_9 - S12_13_test_9:
+MISS S12_13_test_9
+===== 8 - S12_13_test_10 - S12_13_test_10:
+MISS S12_13_test_10
+===== 9 - S12_13_test_11 - S12_13_test_11:
+MISS S12_13_test_11
+===== 10 - S12_13_test_12 - S12_13_test_12:
+MISS S12_13_test_12
+===== 11 - S12_132 - S12_132:
+HIT S12_132 w/ (#(#(lambda (lambda (connect (transform circle (#(lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist15) trs (#(lambda (lambda (connect $0 (transform (#(lambda (transform (#(lambda (lambda (transform (repeat $0 $1 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist14)))) $0 line) (#(lambda (transmat None None (Some $0) None None)) dist4))) rep0) (#(lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None))))) (Some trs) (#(lambda (lambda (connect (#(lambda (repeat #(transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18))) $0) (reflect $1 angle0)))) (#(#(lambda (lambda (connect (transform circle (#(lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist15) trs (#(lambda (lambda (#(lambda (lambda (connect (transform circle (#(lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist14 $0 (reflect $1 angle0)))) (#(lambda (transform (#(lambda (lambda (transform (repeat $0 $1 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist14)))) $0 line) (#(lambda (transmat None None (Some $0) None None)) dist4))) rep1) trs)) rep3))) ; log prior = -9.602981 ; log likelihood = 0.000000
+===== 12 - S12_201 - S12_201:
+MISS S12_201
+===== 13 - S12_220 - S12_220:
+MISS S12_220
+===== 14 - S12_247 - S12_247:
+MISS S12_247
+===== 15 - S13_182 - S13_182:
+MISS S13_182
+===== 16 - S13_217 - S13_217:
+MISS S13_217
+===== 17 - S13_219 - S13_219:
+MISS S13_219
