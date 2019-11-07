@@ -26,7 +26,7 @@ import preprocess as dgprep
 import modelAnaly as dgmodel
 
 
-REMOVELL=True # remove vertical line?
+REMOVELL=False # remove vertical line?
 
 def printAllTasksSolutions(DAT, trainortest="train"):
     print("NOTE: whether is solved is by checking the last iteration")
