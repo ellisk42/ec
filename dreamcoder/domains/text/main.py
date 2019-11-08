@@ -12,6 +12,7 @@ from functools import reduce
 import dill
 
 
+
 class ConstantInstantiateVisitor(object):
     def __init__(self, words):
         self.words = words
@@ -31,6 +32,9 @@ class ConstantInstantiateVisitor(object):
     def abstraction(self, e):
         return Abstraction(e.body.visit(self))
 
+
+ConstantInstantiateVisitor.SINGLE = \
+    ConstantInstantiateVisitor(list(('a','b')))
 
 class LearnedFeatureExtractor(RecurrentFeatureExtractor):
     special = 'string'
