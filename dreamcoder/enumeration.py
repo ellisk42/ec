@@ -73,6 +73,9 @@ def multicoreEnumeration(g, tasks, _=None,
     # For each job we keep track of how long we have been working on it
     stopwatches = {t: Stopwatch() for t in jobs}
 
+    # Map from task to how many programs we enumerated for that task
+    taskToNumberOfPrograms = {t: 0 for t in tasks }
+
     def numberOfHits(f):
         return sum(e.logLikelihood > -0.01 for e in f)
 
@@ -186,13 +189,15 @@ def multicoreEnumeration(g, tasks, _=None,
             activeCPUs -= id2CPUs[message.ID]
             stopwatches[id2job[message.ID]].stop()
 
-            newFrontiers, searchTimes = message.value
+            newFrontiers, searchTimes, pc = message.value
             for t, f in newFrontiers.items():
                 oldBest = None if len(
                     frontiers[t]) == 0 else frontiers[t].bestPosterior
                 frontiers[t] = frontiers[t].combine(f)
                 newBest = None if len(
                     frontiers[t]) == 0 else frontiers[t].bestPosterior
+
+                taskToNumberOfPrograms[t] += pc
 
                 dt = searchTimes[t]
                 if dt is not None:
@@ -212,6 +217,9 @@ def multicoreEnumeration(g, tasks, _=None,
         else:
             eprint("Unknown message result:", message.result)
             assert False
+
+    eprint("We enumerated this many programs, for each task:\n\t",
+           list(taskToNumberOfPrograms.values()))
 
     return [frontiers[t] for t in tasks], bestSearchTime
 
@@ -304,7 +312,7 @@ def solveForTask_ocaml(_=None,
         assert False, "MAX RAISE"
 
 
-    pc = 0  # TODO
+    pc = response.get("number_enumerated",0)  # TODO
     frontiers = {}
     searchTimes = {}
     for t in tasks:
@@ -329,7 +337,7 @@ def solveForTask_ocaml(_=None,
                 (e["logLikelihood"] + e["logPrior"],
                  e["time"]) for e in solutions)[1] + elapsedTime
 
-    return frontiers, searchTimes
+    return frontiers, searchTimes, pc
 
 def solveForTask_pypy(_=None,
                       elapsedTime=0.,
@@ -453,7 +461,7 @@ def enumerateForTasks(g, tasks, likelihoodModel, _=None,
         tasks[n]: None if len(hits[n]) == 0 else \
         min(t for t,_ in hits[n]) for n in range(len(tasks))}
 
-    return frontiers, searchTimes
+    return frontiers, searchTimes, totalNumberOfPrograms
 
 
 
