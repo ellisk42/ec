@@ -85,6 +85,8 @@ def summarize(ECTRAIN, SUMMARY_SAVEDIR = "", comparetohuman=True):
         import os
         os.makedirs(SUMMARY_SAVEDIR, exist_ok=True)
 
+
+    ################################################################
     # 2) number task solved
     fig = plotNumSolved(DAT["result"])
     fig.savefig("{}/{}_numsolved.pdf".format(SUMMARY_SAVEDIR, DAT["trainset"]))
@@ -145,19 +147,6 @@ def summarize(ECTRAIN, SUMMARY_SAVEDIR = "", comparetohuman=True):
             # DIAGNOSTICS
             print(stim)
 
-            # 1) For human, plot drawings for this stim
-            if "png" not in stim:
-                dflat_hu = dgseg.filterDat(DAT["datflat_hu"], stimlist=[stim + ".pdf"])
-            else:
-                dflat_hu = dgseg.filterDat(DAT["datflat_hu"], stimlist=[stim])
-            if len(dflat_hu)==0:
-                print("WHY NO DATA")
-                print(dflat_hu)
-                raise
-            plotMultDrawingPrograms(dflat_hu, SUMMARY_SAVEDIR, ishuman=True, removeLL=REMOVELL)
-            print("1: plotted drawing steps for Humans")
-            plt.close('all')
-
             # 2) For model, plot random subset of parses drawings for thsi stim
             dflat = DATloadDatFlat(DAT, stim)
             dflat = dgseg.filterDat(dflat, stimlist=[stim])
@@ -168,6 +157,19 @@ def summarize(ECTRAIN, SUMMARY_SAVEDIR = "", comparetohuman=True):
             print("2: plotted drawing for {} random parses for model".format(NPARSE))
             plt.close('all')
     
+            # 1) For human, plot drawings for this stim
+            if "png" not in stim:
+                dflat_hu = dgseg.filterDat(DAT["datflat_hu"], stimlist=[stim + ".png"])
+            else:
+                dflat_hu = dgseg.filterDat(DAT["datflat_hu"], stimlist=[stim])
+            if len(dflat_hu)==0:
+                print("WHY NO DATA")
+                print(dflat_hu)
+                raise
+            plotMultDrawingPrograms(dflat_hu, SUMMARY_SAVEDIR, ishuman=True, removeLL=REMOVELL)
+            print("1: plotted drawing steps for Humans")
+            plt.close('all')
+
             # 3) Plot string edit distances between human and model
             # only the plotted parses (x the humans)
             # --- just the parses plotted
