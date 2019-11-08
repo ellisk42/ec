@@ -354,9 +354,9 @@ def plotECResult(
             if arguments.testingLikelihood:
                 ylabel = "$\\leq\\log $P$($test$|$train$)$"
             else:
-                ylabel = "log \\sum_p P(train|p)P(p|train,DSL)"
+                ylabel = "log \\sum_p P(train|p)P(p|train,Lib)"
         elif likelihood == "task":
-            ylabel = "$\\leq\\log $P$($tasks$|$DSL$)$"
+            ylabel = "$\\leq\\log $P$($tasks$|$Lib$)$"
         elif likelihood == "MAP":
             if arguments.testingLikelihood:
                 ylabel = "log P(train|p*)"
