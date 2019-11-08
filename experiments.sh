@@ -64,5 +64,9 @@ module add openmind/singularity
 
 #bash run.sh S12.8.1 5000 20 python bin/draw.py -i 20 -t 1440 --biasOptimal --contextual -R 1800 --trainset=S12 --dopruning --skiptesting -a 2 --taskReranker unsolved
 
-bash run.sh S12.8.2 5000 20 python bin/draw.py -i 20 -t 1440 --biasOptimal --contextual -R 1800 --trainset=S12 --dopruning --skiptesting -a 2 --taskReranker default --taskBatchSize 11
+#bash run.sh S12.8.2 5000 20 python bin/draw.py -i 20 -t 1440 --biasOptimal --contextual -R 1800 --trainset=S12 --dopruning --skiptesting -a 2 --taskReranker default --taskBatchSize 11
+
+bash run.sh S12.10 8000 20 python bin/draw.py -i 20 -t 3600 --biasOptimal --contextual -R 2400 --trainset=S12 --dopruning --testingTimeout 1440 -a 2 --taskReranker unsolved
+bash run.sh S13.10 8000 20 python bin/draw.py -i 20 -t 3600 --biasOptimal --contextual -R 2400 --trainset=S13 --dopruning --testingTimeout 1440 -a 2 --taskReranker unsolved
+
 
