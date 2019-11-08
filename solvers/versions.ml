@@ -297,6 +297,8 @@ let rec have_intersection ?table:(table=None) t a b =
         Hashtbl.set table' ~key:(a,b) ~data:i;
         i
 
+let factored_substitution = ref false;;
+
 let rec substitutions t ?n:(n=0) index =
   match Hashtbl.find t.substitution_table (index,n) with
   | Some(s) -> s
@@ -324,7 +326,23 @@ let rec substitutions t ?n:(n=0) index =
         new_mapping |> Hashtbl.iteri ~f:(fun ~key ~data ->
             Hashtbl.set m ~key ~data:(union t data))          
 
-      | ApplySpace(f, x) ->
+      | ApplySpace(f, x) when !factored_substitution ->
+        let new_mapping = Hashtbl.Poly.create() in
+        let fm = substitutions t ~n f in
+        let xm = substitutions t ~n x in
+
+        fm |> Hashtbl.iteri ~f:(fun ~key:v1 ~data:f ->
+            xm |> Hashtbl.iteri ~f:(fun ~key:v2 ~data:x ->
+                if have_intersection t v1 v2 then                   
+                  Hashtbl.update new_mapping (intersection t v1 v2) ~f:(function
+                      | None -> ([f],[x])
+                      | Some(fs,xs) -> (f :: fs, x :: xs))));
+        new_mapping |> Hashtbl.iteri ~f:(fun ~key ~data:(fs,xs) ->
+            let fs = union t fs in
+            let xs = union t xs in
+            Hashtbl.set m ~key ~data:(version_apply t fs xs))
+
+      | ApplySpace(f, x) ->         
         let new_mapping = Hashtbl.Poly.create() in
         let fm = substitutions t ~n f in
         let xm = substitutions t ~n x in
@@ -415,10 +433,10 @@ let rec n_step_inversion ?inline:(il=false) t ~n j =
       let step v =
         if il then
           let i = inline t v in
-          if completed = 0 && v = j then
-            extract t i |> List.iter ~f:(fun expansion ->
-                Printf.eprintf "%s\t%s\n"
-                  (extract t current |> List.hd_exn |> string_of_program) (string_of_program expansion));
+          (* if completed = 0 && v = j then *)
+          (*   extract t i |> List.iter ~f:(fun expansion -> *)
+          (*       Printf.eprintf "%s\t%s\n" *)
+          (*         (extract t current |> List.hd_exn |> string_of_program) (string_of_program expansion)); *)
           union t [recursive_inversion t v; i]
         else
           recursive_inversion t v
@@ -443,6 +461,54 @@ let rec n_step_inversion ?inline:(il=false) t ~n j =
     Hashtbl.set t.n_step_table key ns;
     ns
 
+(* let n_step_inversion ?inline:(il=false) t ~n j = *)
+(*   let clear_all_caches() =  *)
+(*     clear_dynamic_programming_tables t; *)
+(*     for j = 0 to (t.recursive_inversion_table.ra_occupancy - 1) do *)
+(*       set_resizable t.recursive_inversion_table j None *)
+(*     done *)
+(*   in *)
+(*   clear_all_caches(); *)
+
+(*   factored_substitution := false; *)
+
+(*   let ground_truth = n_step_inversion ~inline:il t ~n j in *)
+
+(*   clear_all_caches(); *)
+(*   factored_substitution := true; *)
+
+(*   let faster = n_step_inversion ~inline:il t ~n j in *)
+
+(*   clear_all_caches(); *)
+(*   factored_substitution := false; *)
+
+(*   let correct = extract t ground_truth |> List.map ~f:string_of_program |> String.Set.of_list in *)
+(*   let hopeful = extract t faster |> List.map ~f:string_of_program |> String.Set.of_list in *)
+
+(*   let missing = Set.diff correct hopeful in *)
+(*   let extraneous = Set.diff hopeful correct in *)
+
+(*   if Set.length missing > 0 || Set.length extraneous > 0 then begin *)
+(*     let target_of_inversion = extract t j |> List.hd_exn in *)
+(*     (\* False alarms *\) *)
+(*     if Set.length missing = 0 && Set.for_all extraneous  ~f:(fun p -> *)
+(*         let p = parse_program p |> get_some |> beta_normal_form in *)
+(*         program_equal p target_of_inversion) then () *)
+(*     else begin  *)
+(*       Printf.eprintf "FATAL: When inverting %s\n" (target_of_inversion |> string_of_program); *)
+(*       Printf.eprintf "The following programs are correct inversions that were not in the fast versions:\n"; *)
+(*       missing |> Set.iter ~f:(Printf.eprintf "%s\n"); *)
+(*       Printf.eprintf "The following programs are incorrect inversions that were nonetheless generated:\n"; *)
+(*       extraneous |> Set.iter ~f:(fun p -> Printf.eprintf "%s\n" p; *)
+(*                                   let p = parse_program p |> get_some |> beta_normal_form in *)
+(*                                   Printf.eprintf "\t--> %s\n" (string_of_program p)); *)
+(*       assert (false) *)
+(*     end *)
+(*   end; *)
+
+(*   ground_truth *)
+  
+  
 
 let reachable_versions t indices : int list =
   let visited = Hash_set.Poly.create() in
@@ -737,5 +803,3 @@ let batched_refactor ~ct (candidates : int list) (frontier_indices : (int list) 
       frontier_indices |> List.map ~f:(fun f ->
           f |> List.map ~f:(fun j ->
               refactor ~canBeLambda:true i j)))
-            
-                              

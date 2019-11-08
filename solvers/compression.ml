@@ -18,6 +18,9 @@ open Versions
 
 let verbose_compression = ref false;;
 
+(* If this is true, then we collect and report data on the sizes of the version spaces, for each program, and also for each round of inverse beta *)
+let collect_data = ref false;;
+
 let restrict ~topK g frontier =
   let restriction =
     frontier.programs |> List.map ~f:(fun (p,ll) ->
@@ -67,16 +70,22 @@ let inside_outside ~pseudoCounts g (frontiers : frontier list) =
 let grammar_induction_score ~aic ~structurePenalty ~pseudoCounts frontiers g =
   let g,ll = inside_outside ~pseudoCounts g frontiers in
 
-    let production_size = function
-      | Primitive(_,_,_) -> 1
-      | Invented(_,e) -> program_size e
-      | _ -> raise (Failure "Element of grammar is neither primitive nor invented")
-    in 
+  let production_size = function
+    | Primitive(_,_,_) -> 1
+    | Invented(_,e) -> begin 
+        (* Ignore illusory fix1/abstraction, it does not contribute to searching cost *)
+        let e = recursively_get_abstraction_body e in
+        match e with
+        | Apply(Apply(Primitive(_,"fix1",_),i),b) -> (assert (is_index i); program_size b)
+        | _ -> program_size e
+      end
+    | _ -> raise (Failure "Element of grammar is neither primitive nor invented")
+  in 
 
-    (g,
-     ll-. aic*.(List.length g.library |> Float.of_int) -.
-     structurePenalty*.(g.library |> List.map ~f:(fun (p,_,_,_) ->
-         production_size p) |> sum |> Float.of_int))
+  (g,
+   ll-. aic*.(List.length g.library |> Float.of_int) -.
+   structurePenalty*.(g.library |> List.map ~f:(fun (p,_,_,_) ->
+       production_size p) |> sum |> Float.of_int))
 
   
 
@@ -233,6 +242,25 @@ let compression_worker connection ~inline ~arity ~bs ~topK g frontiers =
       "(worker) calculated version spaces" (fun () ->
       !frontiers |> List.map ~f:(fun f -> f.programs |> List.map ~f:(fun (p,_) ->
               incorporate v p |> n_step_inversion v ~inline ~n:arity))) in
+  if !collect_data then begin
+    List.iter2_exn !frontiers frontier_indices ~f:(fun frontier indices ->
+        List.iter2_exn (frontier.programs) indices ~f:(fun (p,_) index ->
+            let rec program_size = function
+              | Apply(f,x) -> 1 + program_size f + program_size x
+              | Abstraction(b) -> 1 + program_size b
+              | Index(_) | Invented(_,_) | Primitive(_,_,_) -> 1
+            in
+            let rec program_height = function
+              | Apply(f,x) -> 1 + (max (program_height f) (program_height x))
+              | Abstraction(b) -> 1 + program_height b
+              | Index(_) | Invented(_,_) | Primitive(_,_,_) -> 1
+            in
+            Printf.eprintf "DATA\t%s\tsize=%d\theight=%d\t|vs|=%d\t|[vs]|=%f\n" (string_of_program p)
+              (program_size p) (program_height p)
+              (reachable_versions v [index] |> List.length)
+              (log_version_size v index)
+          ))
+  end;
   if !verbose_compression then
     Printf.eprintf "(worker) %d distinct version spaces enumerated; %d accessible vs size; vs log sizes: %s\n"
       v.i2s.ra_occupancy
@@ -776,6 +804,18 @@ let () =
   verbose_compression := (try
       j |> member "verbose" |> to_bool
                           with _ -> false);
+
+  factored_substitution := (try
+                              j |> member "factored_apply" |> to_bool
+                            with _ -> false);
+  if !factored_substitution then Printf.eprintf "Using experimental new factored representation of application version space.\n";
+
+  collect_data := (try
+                     j |> member "collect_data" |> to_bool
+                   with _ -> false) ;
+  if !collect_data then verbose_compression := true;
+
+  
   let inline = (try
                   j |> member "inline" |> to_bool
                 with _ -> true)

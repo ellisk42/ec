@@ -27,6 +27,14 @@ let is_base_primitive = function
   |Primitive(_,_,_) -> true
   |_ -> false
 
+let is_abstraction = function
+  | Abstraction(_) -> true
+  | _ -> false
+
+let rec recursively_get_abstraction_body = function
+  | Abstraction(b) -> recursively_get_abstraction_body b
+  | e -> e
+
 let program_children = function
   | Abstraction(b) -> [b]
   | Apply(m,n) -> [m;n]
@@ -323,6 +331,8 @@ let primitive_uppercase = primitive "caseUpper" (tcharacter @> tcharacter) Char.
 (* let primitive_uppercase = primitive "strip" (tstring @> tstring) (fun s -> String.strip s);; *)
 let primitive_lowercase = primitive "caseLower" (tcharacter @> tcharacter) Char.lowercase;;
 let primitive_character_equal = primitive "char-eq?" (tcharacter @> tcharacter @> tboolean) Char.equal;;
+let primitive_character_equal = primitive "char-upper?" (tcharacter @> tboolean) Char.is_uppercase;;
+let primitive_character_equal = primitive "str-eq?" (tlist tcharacter @> tlist tcharacter @> tboolean) (fun x y -> x = y);;
 (* let primitive_capitalize = primitive "caseCapitalize" (tstring @> tstring) String.capitalize;;
  * let primitive_concatenate = primitive "concatenate" (tstring @> tstring @> tstring) ( ^ );; *)
 let primitive_constant_strings = [primitive "','" tcharacter ',';
@@ -986,3 +996,49 @@ let test_string () =
   Printf.printf "%s\n" y
 ;;
 
+let test_zip_recursion () =
+  let p = parse_program "(lambda (lambda (#(lambda (lambda (#(lambda (lambda (lambda (fix1 $2 (lambda (lambda (if (empty? $0) $2 ($3 ($1 (cdr $0)) (car $0))))))))) $0 (lambda (lambda (cons ($3 $0) $1))) empty))) (lambda (+ (#(lambda (lambda (car (#(lambda (lambda (lambda (fix1 $2 (lambda (lambda (if (empty? $0) $2 ($3 ($1 (cdr $0)) (car $0))))))))) (#(#(lambda (lambda (lambda (#(lambda (lambda (lambda (lambda (fix1 $3 (lambda (lambda (if ($2 $0) empty (cons ($3 $0) ($1 ($4 $0))))))))))) $1 (lambda ($3 $0 1)) (lambda $0) (lambda (eq? $0 $1)))))) (lambda (lambda (+ $1 $0))) 0) $1) (lambda (lambda (cdr $1))) $0)))) $0 $2) (#(lambda (lambda (car (#(lambda (lambda (lambda (fix1 $2 (lambda (lambda (if (empty? $0) $2 ($3 ($1 (cdr $0)) (car $0))))))))) (#(#(lambda (lambda (lambda (#(lambda (lambda (lambda (lambda (fix1 $3 (lambda (lambda (if ($2 $0) empty (cons ($3 $0) ($1 ($4 $0))))))))))) $1 (lambda ($3 $0 1)) (lambda $0) (lambda (eq? $0 $1)))))) (lambda (lambda (+ $1 $0))) 0) $1) (lambda (lambda (cdr $1))) $0)))) $0 $1))) (#(#(lambda (lambda (lambda (#(lambda (lambda (lambda (lambda (fix1 $3 (lambda (lambda (if ($2 $0) empty (cons ($3 $0) ($1 ($4 $0))))))))))) $1 (lambda ($3 $0 1)) (lambda $0) (lambda (eq? $0 $1)))))) (lambda (lambda (+ $1 $0))) 0) (#(lambda (#(lambda (lambda (lambda (fix1 $2 (lambda (lambda (if (empty? $0) $2 ($3 ($1 (cdr $0)) (car $0))))))))) $0 (lambda (lambda (+ 1 $1))) 0)) $0)))))" |> get_some in
+  let p = analyze_lazy_evaluation p in
+  run_lazy_analyzed_with_arguments p [[1;2;3;];[0;4;6;]] |> List.map ~f:Int.to_string |> String.concat ~sep:"; " |> Printf.printf "%s\n"
+;;
+(* test_zip_recursion();; *)
+
+(* Puddleworld primitive and type definitions for compression namespace purposes. Function definitions are irrelevant.*)
+(* Puddleworld Type Definitions *)
+let t_object_p = make_ground "t_object_p";;
+let t_boolean_p = make_ground "t_boolean_p";;
+let t_action_p = make_ground "t_action_p";;
+let t_direction_p = make_ground "t_direction_p";;
+let t_int_p = make_ground "t_int_p";;
+let t_model_p = make_ground "t_model_p";;
+
+(* Puddleworld Primitive Definitions *)
+
+ignore(primitive "true_p" (t_boolean_p) (fun x -> x));;
+ignore(primitive "left_p" (t_direction_p) (fun x -> x));;
+ignore(primitive "right_p" (t_direction_p) (fun x -> x));;
+ignore(primitive "up_p" (t_direction_p) (fun x -> x));;
+ignore(primitive "down_p" (t_direction_p) (fun x -> x));;
+ignore(primitive "1_p" (t_int_p) (fun x -> x));;
+ignore(primitive "2_p" (t_int_p) (fun x -> x));;
+ignore(primitive "move_p" (t_object_p @> t_action_p) (fun x -> x));;
+ignore(primitive "relate_p" (t_object_p @> t_object_p @> t_direction_p @> t_boolean_p) (fun x -> x));;
+ignore(primitive "relate_n_p" (t_object_p @> t_object_p @> t_direction_p @> t_int_p @> t_boolean_p) (fun x -> x));;
+ignore(primitive "in_half_p" (t_object_p @> t_direction_p @> t_boolean_p) (fun x -> x));;
+ignore(primitive "apply_p" ((t_object_p @> t_boolean_p) @> t_object_p @> t_boolean_p) (fun x -> x));;
+ignore(primitive "and__p" (t_boolean_p @> t_boolean_p @> t_boolean_p) (fun x -> x));;
+ignore(primitive "max_in_dir_p" (t_object_p @> t_direction_p @> t_boolean_p) (fun x -> x));;
+ignore(primitive "is_edge_p" (t_object_p @> t_boolean_p) (fun x -> x));;
+ignore(primitive "grass_p" (t_object_p @> t_boolean_p) (fun x -> x));;
+ignore(primitive "puddle_p" (t_object_p @> t_boolean_p) (fun x -> x));;
+ignore(primitive "star_p" (t_object_p @> t_boolean_p) (fun x -> x));;
+ignore(primitive "circle_p" (t_object_p @> t_boolean_p) (fun x -> x));;
+ignore(primitive "triangle_p" (t_object_p @> t_boolean_p) (fun x -> x));;
+ignore(primitive "heart_p" (t_object_p @> t_boolean_p) (fun x -> x));;
+ignore(primitive "spade_p" (t_object_p @> t_boolean_p) (fun x -> x));;
+ignore(primitive "diamond_p" (t_object_p @> t_boolean_p) (fun x -> x));;
+ignore(primitive "rock_p" (t_object_p @> t_boolean_p) (fun x -> x));;
+ignore(primitive "tree_p" (t_object_p @> t_boolean_p) (fun x -> x));;
+ignore(primitive "house_p" (t_object_p @> t_boolean_p) (fun x -> x));;
+ignore(primitive "horse_p" (t_object_p @> t_boolean_p) (fun x -> x));;
+ignore(primitive "ec_unique_p" (t_model_p @> (t_object_p @> t_boolean_p) @> t_object_p) (fun x -> x));;
