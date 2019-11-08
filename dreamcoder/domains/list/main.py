@@ -12,7 +12,7 @@ from dreamcoder.task import Task
 from dreamcoder.type import Context, arrow, tbool, tlist, tint, t0, UnificationFailure
 from dreamcoder.domains.list.listPrimitives import basePrimitives, primitives, McCarthyPrimitives, bootstrapTarget_extra, no_length
 from dreamcoder.recognition import RecurrentFeatureExtractor
-from dreamcoder.domains.list.makeListTasks import make_list_bootstrap_tasks, sortBootstrap
+from dreamcoder.domains.list.makeListTasks import make_list_bootstrap_tasks, sortBootstrap, EASYLISTTASKS
 
 
 def retrieveJSONTasks(filename, features=False):
@@ -206,7 +206,7 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
             bidirectional=True)
 
 
-def train_necessary(task):
+def train_necessary(t):
     if t.name in {"head", "is-primes", "len", "pop", "repeat-many", "tail", "keep primes", "keep squares"}:
         return True
     if any(t.name.startswith(x) for x in {
@@ -396,7 +396,7 @@ def main(args):
             ts.pop().mustTrain = True
 
         test, train = testTrainSplit(tasks, split)
-        if False:
+        if True:
             test = [t for t in test
                     if t.name not in EASYLISTTASKS]
 
