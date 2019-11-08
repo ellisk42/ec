@@ -63,6 +63,7 @@ def visualizePrimitives(primitives, export="/tmp/draw_primitives"):
     for i, p in enumerate(primitives):
         # print("--- prim {}".format(i))
         stringlist.append("--- prim {}".format(i))
+        stringlist.append(str(p))
         if not p.isInvented: continue
         t = p.tp
         # print(p,":",p.tp)
@@ -112,7 +113,7 @@ def visualizePrimitives(primitives, export="/tmp/draw_primitives"):
             ax = plt.subplot(nrow, ncol, ii+1)
             PP.plotOnAxes(nn, ax)
             plt.title("prim {}".format(j))
-        fig.savefig("{}_p{}.png".format(export, j))
+        fig.savefig("{}_p{}.pdf".format(export, j))
         
     for j, ts in enumerate(matrix):
         save(ts, j)

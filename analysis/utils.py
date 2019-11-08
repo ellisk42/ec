@@ -91,6 +91,49 @@ def loadCheckpoint(trainset="S9_nojitter", userealnames=True, loadparse=False, s
         exptdir = "2019-11-01T10:51:04.566148"
         taskset = "S12" 
         behaviorexpt = ""
+
+    elif trainset=="S12.6.1":
+        userealnames=True
+        doshaping = False
+        exptdir = "2019-11-03T02:44:46.586584"
+        taskset = "S12" 
+        behaviorexpt = ""
+
+    elif trainset=="S12.6.2":
+        userealnames=True
+        doshaping = False
+        exptdir = "2019-11-03T02:44:47.777239"
+        taskset = "S12" 
+        behaviorexpt = ""
+
+    elif trainset=="S13.9":
+        userealnames=True
+        doshaping = False
+        exptdir = "2019-11-04T11:55:48.745857"
+        taskset = "S13" 
+        behaviorexpt = ""
+
+    elif trainset=="S12.8.1":
+        userealnames=True
+        doshaping = False
+        exptdir = "2019-11-04T15:49:42.313470"
+        taskset = "S12" 
+        behaviorexpt = ""
+
+    elif trainset=="S12.10":
+        userealnames=True
+        doshaping = False
+        exptdir = "2019-11-05T10:59:39.638549"
+        taskset = "S12" 
+        behaviorexpt = ""
+
+    elif trainset=="S13.10":
+        userealnames=True
+        doshaping = False
+        exptdir = "2019-11-05T10:59:39.800347"
+        taskset = "S13" 
+        behaviorexpt = ""
+
     else:
         print("PROBLEM did not find traiin set! ")
 
