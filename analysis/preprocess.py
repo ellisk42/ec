@@ -27,7 +27,7 @@ from segmentation import getSegmentation
 if __name__=="__main__":
 	ECTRAIN = sys.argv[1]
 	print(ECTRAIN)
-	REMOVELL=True	# if true, removes vertical bars from analyses.
+	REMOVELL=False	# if true, removes vertical bars from analyses.
 	# ECTRAIN = "S8.2.2"
 	# ECTRAIN = "S9.2"
 

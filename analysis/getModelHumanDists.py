@@ -22,7 +22,7 @@ import modelAnaly as dgmodel
 
 
 
-REMOVELL = True # remove vertical long line?
+REMOVELL = False # remove vertical long line?
 
 
 
@@ -79,7 +79,7 @@ if __name__=="__main__":
     ECTRAIN = sys.argv[1]
     # ECTRAIN = "S8.2.2"
     # ECTRAIN = "S9.2"
-    REMOVELL = True # this must match with preprocessing of model
+    REMOVELL = False # this must match with preprocessing of model
 
 
     # load DAT

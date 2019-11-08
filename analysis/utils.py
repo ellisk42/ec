@@ -17,7 +17,7 @@ sys.path.insert(0, "/home/lucast4/drawgood/experiments")
 from segmentation import getSegmentation
 from preprocess import getFlatData
 
-REMOVELL = True # remove vertical long line?
+REMOVELL = False # remove vertical long line?
 
 
 ## ====== collect dreamcoder results and parse results
@@ -125,17 +125,18 @@ def loadCheckpoint(trainset="S9_nojitter", userealnames=True, loadparse=False, s
         doshaping = False
         exptdir = "2019-11-05T10:59:39.638549"
         taskset = "S12" 
-        behaviorexpt = ""
+        behaviorexpt = "2.4"
 
     elif trainset=="S13.10":
         userealnames=True
         doshaping = False
         exptdir = "2019-11-05T10:59:39.800347"
         taskset = "S13" 
-        behaviorexpt = ""
+        behaviorexpt = "2.4"
 
     else:
         print("PROBLEM did not find traiin set! ")
+        assert False
 
         
     ###### FIRST, load the correct checkpoint

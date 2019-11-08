@@ -183,7 +183,7 @@ if __name__=="__main__":
     else:
         doparse = 1
 
-    REMOVELL = True    
+    REMOVELL = False    
 
     # === Get all parses, if desired
     if doparse==1:
