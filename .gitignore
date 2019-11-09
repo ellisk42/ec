@@ -9,6 +9,7 @@
 *.p
 *.pyc
 *~
+solvers/.merlin
 lucas
 analysis/saved/
 analysis/output/

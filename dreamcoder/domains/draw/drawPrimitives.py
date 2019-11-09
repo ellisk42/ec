@@ -55,8 +55,6 @@ p6 = [Primitive(j, ttrorder, j) for j in ORDERS]
 p7 = [Primitive("rep{}".format(i), trep, j+1) for i, j in enumerate(range(7))]
 
 
-
-
 primitives = p0 + p1 + p2 + p3 + p4 + p5 + p6 + p7
 
 def getPrimitives(trainset="", prune=False, primitives=primitives, fullpruning=True):
