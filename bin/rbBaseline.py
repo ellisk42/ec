@@ -25,7 +25,7 @@ from dreamcoder.domains.list.main import retrieveJSONTasks
 import dreamcoder.domains.list.main as List
 
 
-BATCHSIZE = 2
+BATCHSIZE = 32
 #import other stuff
 
 
