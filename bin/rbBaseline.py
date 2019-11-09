@@ -74,13 +74,10 @@ def getDatum():
         tsk = random.choice(tasks)
         tp = tsk.request
         p = g.sample(tp)
-        print("sample program",p)
         task = fe.taskOfProgram(p, tp)
         if task is None: continue
-        print("sample examples",task.examples)
 
         ex = makeExamples(task)
-        print("converted examples into",ex)
         if ex is None: continue
         
         return ex, stringify(str(p))
