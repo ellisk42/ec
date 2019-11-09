@@ -10,13 +10,20 @@ import time
 from dreamcoder.grammar import Grammar
 from dreamcoder.domains.text.makeTextTasks import *
 from dreamcoder.domains.text.main import LearnedFeatureExtractor
+from dreamcoder.task import Task
+from dreamcoder.type import Context, arrow, tbool, tlist, tint, t0, UnificationFailure
 
 #text:
-from dreamcoder.domains.text.textPrimitives import primitives
+import dreamcoder.domains.text.textPrimitives as text_primitives
 from dreamcoder.domains.list.listPrimitives import bootstrapTarget
 from string import printable
 
+<<<<<<< HEAD
 import torch
+=======
+from dreamcoder.domains.list.makeListTasks import make_list_bootstrap_tasks, sortBootstrap, EASYLISTTASKS
+from dreamcoder.domains.list.main import retrieveJSONTasks
+>>>>>>> list
 
 BATCHSIZE = 32
 #import other stuff
@@ -24,8 +31,8 @@ input_vocabularies = [list(printable[:-4]) + ['EOE'], list(printable[:-4])]
 
 extras = ['(', ')', 'lambda'] + ['$'+str(i) for i in range(10)]
 
-g = Grammar.uniform(primitives + [p for p in bootstrapTarget()])
-target_vocabulary = [str(p) for p in g.primitives] + extras
+
+
 
 def stringify(line):
     lst = []
@@ -68,6 +75,80 @@ def getDatum():
 
 
 if __name__=='__main__':
+    import argparse
+    parser = argparse.ArgumentParser(description = "")
+    parser.add_argument("--domain",'-d',default="text")
+    
+    arguments = parser.parse_args()
+
+    if arguments.domain == "text":
+        g = Grammar.uniform(text_primitives.primitives + [p for p in bootstrapTarget()])
+    elif arguments.domain == "list":
+        tasks = retrieveJSONTasks("data/list_tasks.json") + sortBootstrap()
+        tasks.extend([
+            Task("remove empty lists",
+                 arrow(tlist(tlist(tbool)), tlist(tlist(tbool))),
+                 [((ls,), list(filter(lambda l: len(l) > 0, ls)))
+                  for _ in range(15)
+                  for ls in [[[random.random() < 0.5 for _ in range(random.randint(0, 3))]
+                              for _ in range(4)]]]),
+            Task("keep squares",
+                 arrow(tlist(tint), tlist(tint)),
+                 [((xs,), list(filter(lambda x: int(math.sqrt(x)) ** 2 == x,
+                                      xs)))
+                  for _ in range(15)
+                  for xs in [[random.choice([0, 1, 4, 9, 16, 25])
+                              if random.random() < 0.5
+                              else random.randint(0, 9)
+                              for _ in range(7)]]]),
+            Task("keep primes",
+                 arrow(tlist(tint), tlist(tint)),
+                 [((xs,), list(filter(lambda x: x in {2, 3, 5, 7, 11, 13, 17,
+                                                      19, 23, 29, 31, 37}, xs)))
+                  for _ in range(15)
+                  for xs in [[random.choice([2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37])
+                              if random.random() < 0.5
+                              else random.randint(0, 9)
+                              for _ in range(7)]]]),
+        ])
+        for i in range(4):
+            tasks.extend([
+                Task("keep eq %s" % i,
+                     arrow(tlist(tint), tlist(tint)),
+                     [((xs,), list(filter(lambda x: x == i, xs)))
+                      for _ in range(15)
+                      for xs in [[random.randint(0, 6) for _ in range(5)]]]),
+                Task("remove eq %s" % i,
+                     arrow(tlist(tint), tlist(tint)),
+                     [((xs,), list(filter(lambda x: x != i, xs)))
+                      for _ in range(15)
+                      for xs in [[random.randint(0, 6) for _ in range(5)]]]),
+                Task("keep gt %s" % i,
+                     arrow(tlist(tint), tlist(tint)),
+                     [((xs,), list(filter(lambda x: x > i, xs)))
+                      for _ in range(15)
+                      for xs in [[random.randint(0, 6) for _ in range(5)]]]),
+                Task("remove gt %s" % i,
+                     arrow(tlist(tint), tlist(tint)),
+                     [((xs,), list(filter(lambda x: not x > i, xs)))
+                      for _ in range(15)
+                      for xs in [[random.randint(0, 6) for _ in range(5)]]])
+            ])
+
+        def isIdentityTask(t):
+            return all( len(xs) == 1 and xs[0] == y for xs, y in t.examples  )
+        eprint("Removed", sum(isIdentityTask(t) for t in tasks), "tasks that were just the identity function")
+        tasks = [t for t in tasks if not isIdentityTask(t) ]
+        test, train = testTrainSplit(tasks, .5)
+        test = [t for t in test
+                if t.name not in EASYLISTTASKS]
+        g = Grammar.uniform(bootstrapTarget_extra)
+
+        
+        
+
+    target_vocabulary = [str(p) for p in g.primitives] + extras
+    
     m = SyntaxCheckingRobustFill(input_vocabularies=input_vocabularies,
                                 target_vocabulary=target_vocabulary)
     if torch.cuda.is_available():
