@@ -1,7 +1,7 @@
 # analog of list.py for regex tasks. Responsible for actually running the task.
 
 from dreamcoder.domains.regex.makeRegexTasks import makeOldTasks, makeLongTasks, makeShortTasks, makeWordTasks, makeNumberTasks, makeHandPickedTasks, makeNewTasks, makeNewNumberTasks
-from dreamcoder.domains.regex.regexPrimitives import basePrimitives, altPrimitives, easyWordsPrimitives, alt2Primitives, concatPrimitives, reducedConcatPrimitives, strConstConcatPrimitives
+from dreamcoder.domains.regex.regexPrimitives import basePrimitives, altPrimitives, easyWordsPrimitives, alt2Primitives, concatPrimitives, reducedConcatPrimitives, strConstConcatPrimitives, PRC
 from dreamcoder.dreamcoder import explorationCompression, Task
 from dreamcoder.grammar import Grammar
 from dreamcoder.likelihoodModel import add_cutoff_values, add_string_constants
@@ -21,38 +21,25 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
     special = 'regex'
 
     def tokenize(self, examples):
-        def sanitize(l): return [z if z in self.lexicon else "?"
-                                 for z_ in l
-                                 for z in (z_ if isinstance(z_, list) else [z_])]
-
         tokenized = []
         for xs, y in examples:
-            if isinstance(y, list):
-                y = ["LIST_START"] + y + ["LIST_END"]
-            else:
-                y = [y]
-            y = sanitize(y)
-            if len(y) > self.maximumLength:
+            assert isinstance(y,str)
+            y = [c for c in y ]
+            assert all( xisinstance(str) for x in xs)
+            xs = [[c for c in x ] for x in xs ]
+            if any( c not in self.lexicon
+                    for w in [y] + xs 
+                    for c in w ):
                 return None
-
-            serializedInputs = []
-            for xi, x in enumerate(xs):
-                if isinstance(x, list):
-                    x = ["LIST_START"] + x + ["LIST_END"]
-                else:
-                    x = [x]
-                x = sanitize(x)
-                if len(x) > self.maximumLength:
-                    return None
-                serializedInputs.append(x)
-
-            tokenized.append((tuple(serializedInputs), y))
-
+            tokenized.append((tuple(xs),y))
         return tokenized
 
     def __init__(self, tasks, testingTasks=[], cuda=False):
-        self.lexicon = set(flatten((t.examples for t in tasks + testingTasks), abort=lambda x: isinstance(
-            x, str))).union({"LIST_START", "LIST_END", "?"})
+        self.lexicon = { c
+                         for t in tasks + testingTasks
+                         for xs,y in  t.examples
+                         for l in [y] + list(xs)
+                         for c in l } 
 
         self.num_examples_list = [len(t.examples) for t in tasks]
 
@@ -101,7 +88,9 @@ class ConstantInstantiateVisitor(object):
     def primitive(self, e):
         if e.name == "r_const":
             #return Primitive("STRING", e.tp, random.choice(self.words))
-            e.value = random.choice(self.regexes).sample() #random string const
+            s = random.choice(self.regexes).sample()
+            s = pre.String(s)
+            e.value = PRC(s,arity=0) #random string const
         return e
 
     def invented(self, e): return e.body.visit(self)

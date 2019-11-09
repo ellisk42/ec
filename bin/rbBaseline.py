@@ -12,6 +12,7 @@ from dreamcoder.domains.text.makeTextTasks import *
 import dreamcoder.domains.text.main as Text 
 from dreamcoder.task import Task
 from dreamcoder.type import Context, arrow, tbool, tlist, tint, t0, UnificationFailure
+from dreamcoder.type import tpregex
 
 #text:
 import dreamcoder.domains.text.textPrimitives as text_primitives
@@ -30,6 +31,11 @@ import dreamcoder.domains.logo.main as LOGO
 import dreamcoder.domains.logo.logoPrimitives
 from dreamcoder.domains.logo.logoPrimitives import turtle
 
+from pregex import pregex
+from dreamcoder.domains.regex.makeRegexTasks import makeOldTasks, makeLongTasks, makeShortTasks, makeWordTasks, makeNumberTasks, makeHandPickedTasks, makeNewTasks, makeNewNumberTasks
+from dreamcoder.domains.regex.regexPrimitives import reducedConcatPrimitives
+import dreamcoder.domains.regex.main as Regex
+Regex.ConstantInstantiateVisitor.SINGLE = Regex.ConstantInstantiateVisitor()
 
 BATCHSIZE = 32
 #import other stuff
@@ -71,12 +77,17 @@ def getDatum():
         task = fe.taskOfProgram(p, tp)
         if task is None: continue
 
-        return makeExamples(task), stringify(str(p))
+        ex = makeExamples(task)
+        if ex is None: continue
+        
+        return ex, stringify(str(p))
 
 def makeExamples(task):
     if hasattr(fe,'tokenize'):
         examples = []
-        for xs,y in fe.tokenize(task.examples):
+        tokens = fe.tokenize(task.examples)
+        if tokens is None: return None
+        for xs,y in tokens:
             i = []
             for x in xs:
                 i.extend(x)
@@ -96,6 +107,13 @@ if __name__=='__main__':
         input_vocabularies = [list(printable[:-4]) + ['EOE'], list(printable[:-4])]
         fe = Text.LearnedFeatureExtractor(tasks=tasks,
                                           testingTasks=loadPBETasks("PBE_Strings_Track")[0])
+    elif arguments.domain == "regex":
+        g = Grammar.uniform(reducedConcatPrimitives(),
+                            continuationType=tpregex)
+        tasks = makeNewTasks()
+        fe = Regex.LearnedFeatureExtractor(tasks)
+        input_vocabularies = [list(printable[:-4]) + ['EOE'], list(printable[:-4])]
+        
     elif arguments.domain == "tower":
         g = Grammar.uniform(new_primitives, continuationType=ttower)
         fe = Tower.TowerCNN([])
