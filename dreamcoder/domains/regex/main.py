@@ -1,7 +1,7 @@
 # analog of list.py for regex tasks. Responsible for actually running the task.
 
 from dreamcoder.domains.regex.makeRegexTasks import makeOldTasks, makeLongTasks, makeShortTasks, makeWordTasks, makeNumberTasks, makeHandPickedTasks, makeNewTasks, makeNewNumberTasks
-from dreamcoder.domains.regex.regexPrimitives import basePrimitives, altPrimitives, easyWordsPrimitives, alt2Primitives, concatPrimitives, reducedConcatPrimitives, strConstConcatPrimitives
+from dreamcoder.domains.regex.regexPrimitives import basePrimitives, altPrimitives, easyWordsPrimitives, alt2Primitives, concatPrimitives, reducedConcatPrimitives, strConstConcatPrimitives, PRC
 from dreamcoder.dreamcoder import explorationCompression, Task
 from dreamcoder.grammar import Grammar
 from dreamcoder.likelihoodModel import add_cutoff_values, add_string_constants
@@ -101,7 +101,9 @@ class ConstantInstantiateVisitor(object):
     def primitive(self, e):
         if e.name == "r_const":
             #return Primitive("STRING", e.tp, random.choice(self.words))
-            e.value = random.choice(self.regexes).sample() #random string const
+            s = random.choice(self.regexes).sample() #random string const
+            s = pre.String(s)
+            e.value = PRC(s,arity=0)
         return e
 
     def invented(self, e): return e.body.visit(self)
