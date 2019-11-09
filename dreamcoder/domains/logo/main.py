@@ -81,8 +81,6 @@ class LogoFeatureCNN(nn.Module):
     def __init__(self, tasks, testingTasks=[], cuda=False, H=64):
         super(LogoFeatureCNN, self).__init__()
 
-        self.sub = prefix_dreams + str(int(time.time()))
-
         self.recomputeTasks = False
 
         def conv_block(in_channels, out_channels, p=True):

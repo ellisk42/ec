@@ -24,6 +24,12 @@ from dreamcoder.domains.list.makeListTasks import make_list_bootstrap_tasks, sor
 from dreamcoder.domains.list.main import retrieveJSONTasks
 import dreamcoder.domains.list.main as List
 
+import dreamcoder.domains.tower.main as Tower
+from dreamcoder.domains.tower.towerPrimitives import new_primitives, ttower
+import dreamcoder.domains.logo.main as LOGO
+import dreamcoder.domains.logo.logoPrimitives
+from dreamcoder.domains.logo.logoPrimitives import turtle
+
 
 BATCHSIZE = 32
 #import other stuff
@@ -90,6 +96,13 @@ if __name__=='__main__':
         input_vocabularies = [list(printable[:-4]) + ['EOE'], list(printable[:-4])]
         fe = Text.LearnedFeatureExtractor(tasks=tasks,
                                           testingTasks=loadPBETasks("PBE_Strings_Track")[0])
+    elif arguments.domain == "tower":
+        g = Grammar.uniform(new_primitives, continuationType=ttower)
+        fe = Tower.TowerCNN([])
+    elif arguments.domain == "logo":
+        g = Grammar.uniform(dreamcoder.domains.logo.logoPrimitives.primitives,
+                            continuationType=turtle)
+        fe = LOGO.LogoFeatureCNN([])
     elif arguments.domain == "list":
         tasks = retrieveJSONTasks("data/list_tasks.json") + sortBootstrap()
         tasks.extend([
