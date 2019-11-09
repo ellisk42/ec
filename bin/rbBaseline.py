@@ -18,12 +18,11 @@ import dreamcoder.domains.text.textPrimitives as text_primitives
 from dreamcoder.domains.list.listPrimitives import bootstrapTarget
 from string import printable
 
-<<<<<<< HEAD
 import torch
-=======
+
 from dreamcoder.domains.list.makeListTasks import make_list_bootstrap_tasks, sortBootstrap, EASYLISTTASKS
 from dreamcoder.domains.list.main import retrieveJSONTasks
->>>>>>> list
+
 
 BATCHSIZE = 32
 #import other stuff
