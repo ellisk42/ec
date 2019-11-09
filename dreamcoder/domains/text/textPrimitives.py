@@ -59,7 +59,6 @@ specialCharacters = {' ': 'SPACE',
 
 primitives = [
     Primitive("char-eq?", arrow(tcharacter, tcharacter, tboolean), _eq),
-    Primitive("char-upper?", arrow(tcharacter, tboolean), _isUpper),
     Primitive("STRING", tstr, None)
 ] + [Primitive("'%s'" % d, tcharacter, d) for d in delimiters if d not in specialCharacters] + \
     [Primitive(name, tcharacter, value) for value, name in specialCharacters.items()]
