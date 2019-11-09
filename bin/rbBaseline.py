@@ -118,7 +118,7 @@ if __name__=='__main__':
                             continuationType=tpregex)
         tasks = makeNewTasks()
         fe = Regex.LearnedFeatureExtractor(tasks)
-        input_vocabularies = [list(printable[:-4]) + ['EOE',"LIST_END","LIST_START"], list(printable[:-4]) + ["LIST_END","LIST_START"]]
+        input_vocabularies = [["dummy"], list(printable) + ["LIST_END","LIST_START"]]
         
     elif arguments.domain == "tower":
         g = Grammar.uniform(new_primitives, continuationType=ttower)
