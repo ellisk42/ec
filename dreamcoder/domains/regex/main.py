@@ -82,7 +82,7 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
         p = p.visit(ConstantInstantiateVisitor.SINGLE)
 
         preg = p.evaluate([])(pre.String(""))
-        t = Task("Helm", t, [((), preg.sample()) for _ in range(num_examples) ])
+        t = Task("Helm", t, [((), list(preg.sample())) for _ in range(num_examples) ])
         return t
         
         #in init: loop over tasks, save lengths, 
