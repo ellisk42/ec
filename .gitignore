@@ -1,3 +1,6 @@
+solvers/.merlin
+solvers/geomLib/.merlin
+solvers/logoLib/.merlin
 *.aux
 *.out
 *.fdb_latexmk

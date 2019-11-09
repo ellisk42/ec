@@ -139,6 +139,7 @@ def ecIterator(grammar, tasks,
                _=None,
                useDSL=True,
                noConsolidation=False,
+               parallelTest=False,
                mask=False,
                seed=0,
                addFullTaskMetrics=False,
@@ -227,6 +228,7 @@ def ecIterator(grammar, tasks,
             "activation",
             "grammar",
             "cuda",
+            "parallelTesting",
             "_",
             "testingTimeout",
             "testEvery",
@@ -388,7 +390,7 @@ def ecIterator(grammar, tasks,
             eprint("Evaluating on held out testing tasks for iteration: %d" % (j))
             evaluateOnTestingTasks(result, testingTasks, grammar,
                                    CPUs=CPUs, maximumFrontier=maximumFrontier,
-                                   solver=solver,
+                                   solver=solver, parallelTest=parallelTest,
                                    enumerationTimeout=testingTimeout, evaluationTimeout=evaluationTimeout)            
         # If we have to also enumerate Helmholtz frontiers,
         # do this extra sneaky in the background
@@ -521,7 +523,7 @@ def showHitMatrix(top, bottom, tasks):
                                              len(top & bottomMiss),
                                              len(top & bottom)))
 
-def evaluateOnTestingTasks(result, testingTasks, grammar, _=None,
+def evaluateOnTestingTasks(result, testingTasks, grammar, _=None, parallelTest=False,
                            CPUs=None, solver=None, maximumFrontier=None, enumerationTimeout=None, evaluationTimeout=None):
     if result.recognitionModel is not None:
         recognizer = result.recognitionModel
@@ -532,7 +534,7 @@ def evaluateOnTestingTasks(result, testingTasks, grammar, _=None,
                                        maximumFrontier=maximumFrontier,
                                        enumerationTimeout=enumerationTimeout,
                                        evaluationTimeout=evaluationTimeout,
-                                       testing=True)
+                                       testing=not parallelTest)
         updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskGrammarLogProductions(testingTasks), 'heldoutTaskLogProductions')
         updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskGrammarEntropies(testingTasks), 'heldoutTaskGrammarEntropies')
         updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskGrammarEntropies(testingTasks), 'heldoutTaskGrammarEntropies')
@@ -543,7 +545,7 @@ def evaluateOnTestingTasks(result, testingTasks, grammar, _=None,
                                                        enumerationTimeout=enumerationTimeout,
                                                        CPUs=CPUs,
                                                        evaluationTimeout=evaluationTimeout,
-                                                       testing=True)
+                                                       testing=not parallelTest)
     updateTaskSummaryMetrics(result.recognitionTaskMetrics, times, 'heldoutTestingTimes')
     updateTaskSummaryMetrics(result.recognitionTaskMetrics,
                                      {f.task: f for f in testingFrontiers if len(f) > 0 },
@@ -957,6 +959,9 @@ def commandlineArguments(_=None,
                         action="store_true", default=False,
                         help="Add auxiliary classification loss to recognition network training",
                         dest="auxiliaryLoss")
+    parser.add_argument("--parallelTest",
+                        action="store_true", default=False,
+                        help="Use multiple cores during testing for each task.")
     parser.add_argument("--addFullTaskMetrics",
                         help="Only to be used in conjunction with --resume. Loads checkpoint, solves both testing and training tasks, stores frontiers, solve times, and task metrics, and then dies.",
                         default=False,
