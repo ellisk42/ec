@@ -25,6 +25,7 @@ class SketchState:
         return SketchState(hand=(self.hand[0], self.hand[1]+n*1), history=self.history if self.history is None else self.history + [self])
     def down(self, n):
         return SketchState(hand=(self.hand[0], self.hand[1]-n*1), history=self.history if self.history is None else self.history + [self])
+
     def draw(self, b):
         """draws something at current pen location"""
         if self.history is None: return self
@@ -59,24 +60,23 @@ def _up(d):
 def _down(d):
     return lambda k: lambda s: k(s.down(d))
 
-# def _simpleLoop(n):
-#     def f(start, body, k):
-#         if start >= n: return k
-#         return body(start)(f(start + 1, body, k))
-#     return lambda b: lambda k: f(0,b,k)
-# def _embed(body):
-#     def f(k):
-#         def g(hand):
-#             bodyHand, bodyActions = body(_empty_tower)(hand)
-#             # Record history if we are doing that
-#             if hand.history is not None:
-#                 hand = TowerState(hand=hand.hand,
-#                                   orientation=hand.orientation,
-#                                   history=bodyHand.history)
-#             hand, laterActions = k(hand)
-#             return hand, bodyActions + laterActions
-#         return g
-#     return f
+def _simpleLoop(n):
+    def f(start, body, k):
+        if start >= n: return k
+        return body(start)(f(start + 1, body, k))
+    return lambda b: lambda k: f(0,b,k)
+def _embed(body):
+    def f(k):
+        def g(hand):
+            bodyHand, bodyActions = body(_empty_sketch)(hand)
+            # Record history if we are doing that
+            if hand.history is not None:
+                hand = SketchState(hand=hand.hand,
+                                  history=bodyHand.history)
+            hand, laterActions = k(hand)
+            return hand, bodyActions + laterActions
+        return g
+    return f
 
 class SketchContinuation(object):
     def __init__(self, part):
@@ -105,6 +105,8 @@ Primitive("r", arrow(tint, tsketch, tsketch), _right),
 Primitive("u", arrow(tint, tsketch, tsketch), _up),
 Primitive("d", arrow(tint, tsketch, tsketch), _down)]
 
+primitives.append(Primitive("loop", arrow(tint, arrow(tint, tsketch, tsketch), tsketch, tsketch), _simpleLoop))
+# primitives.append(Primitive("embed", arrow(arrow(tsketch,tsketch), tsketch, tsketch), _embed))
 
 def parseSketch(s):
     """s is a language useful for humans to write down programs. i.e., not using lambda calcuclus.
