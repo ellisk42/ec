@@ -184,33 +184,15 @@ def makeTasks():
                  for e in [randomWord()]],
                 needToTrain=True)
 
-    # for n in range(len(delimiters)):
-    #     problem("First letters of words (%s)" % ("I" * (1 + n)),
-    #             [((x,), "".join(map(lambda z: z[0], x.split(' '))))
-    #              for _ in range(NUMBEROFEXAMPLES)
-    #              for x in [randomWords(' ')]
-    #              ],
-    #             needToTrain=True)
-    for n in range(3):
-        problem("equality (%s)" % ("I"*(n + 1)),
-                [((x,y), y == x)
-                 for _ in range(NUMBEROFEXAMPLES*10)
-                 for x in [randomWord()]
-                 for y in [x if random.choice([True,False]) else randomWord()]])
-        problem("has suffix (%s)" % ("I"*(n + 1)),
-                [((x,y), x.endswith(y))
-                 for _ in range(NUMBEROFEXAMPLES*10)
-                 for y in [randomWord()]
-                 for x in [randomWord() + randomWord() if random.choice([True,False]) else randomWord() + y]])
-
-    problem("remove final capitalized word",
-            [((prefix + suffix,), prefix)
-             for _ in range(NUMBEROFEXAMPLES*10)
-             for prefix in [randomWords(" ")]
-             for suffix in ["" if random.random() > 0.5 else " "+randomWord(predicate=lambda rw: rw[-1].isupper())] ])
+    for n in range(len(delimiters)):
+        problem("First letters of words (%s)" % ("I" * (1 + n)),
+                [((x,), "".join(map(lambda z: z[0], x.split(' '))))
+                 for _ in range(NUMBEROFEXAMPLES)
+                 for x in [randomWords(' ')]
+                 ],
+                needToTrain=True)
         
-        
-    for d in delimiters[:-1]:
+    for d in delimiters:
         problem("Take first character and append '%s'" % d,
                 [((x,), x[0] + d)
                  for _ in range(NUMBEROFEXAMPLES)
@@ -389,7 +371,7 @@ def guessConstantStrings(task):
                     
 
     task.BIC = 1.
-    task.maxParameters = 2
+    task.maxParameters = 1
 
     task.specialTask = ("stringConstant",
                         {"maxParameters": task.maxParameters,

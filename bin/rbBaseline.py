@@ -9,24 +9,25 @@ import time
 
 from dreamcoder.grammar import Grammar
 from dreamcoder.domains.text.makeTextTasks import *
-from dreamcoder.domains.text.main import LearnedFeatureExtractor, ConstantInstantiateVisitor
+import dreamcoder.domains.text.main as Text 
 from dreamcoder.task import Task
 from dreamcoder.type import Context, arrow, tbool, tlist, tint, t0, UnificationFailure
 
 #text:
 import dreamcoder.domains.text.textPrimitives as text_primitives
-from dreamcoder.domains.list.listPrimitives import bootstrapTarget
+from dreamcoder.domains.list.listPrimitives import bootstrapTarget,bootstrapTarget_extra
 from string import printable
 
 import torch
 
 from dreamcoder.domains.list.makeListTasks import make_list_bootstrap_tasks, sortBootstrap, EASYLISTTASKS
 from dreamcoder.domains.list.main import retrieveJSONTasks
+import dreamcoder.domains.list.main as List
 
 
-BATCHSIZE = 32
+BATCHSIZE = 2
 #import other stuff
-input_vocabularies = [list(printable[:-4]) + ['EOE'], list(printable[:-4])]
+
 
 extras = ['(', ')', 'lambda'] + ['$'+str(i) for i in range(10)]
 
@@ -54,23 +55,25 @@ def stringify(line):
 
 tasks = makeTasks()
 
-fe = LearnedFeatureExtractor(tasks=tasks)
+
 
 def getDatum():
-    tsk = random.choice(tasks)
-    tp = tsk.request
-    if 'bool' in str(tp): return getDatum()
-    p = g.sample(tp) #TODO
-    task = fe.taskOfProgram(p, tp)  
-    examples = []
-    for ex in tsk.examples:
-        I, o = ex
-        i = []
-        for inp in I:
-            i.extend(inp)
-            i.append('EOE')
-        examples.append((i, o))
-    return examples, stringify(str(p))
+    while True:
+        tsk = random.choice(tasks)
+        tp = tsk.request
+        p = g.sample(tp) #TODO
+        task = fe.taskOfProgram(p, tp)
+        if task is None: continue
+
+        examples = []
+        for ex in task.examples:
+            I, o = ex
+            i = []
+            for inp in I:
+                i.extend(inp)
+                i.append('EOE')
+            examples.append((i, o))
+        return examples, stringify(str(p))
 
 
 if __name__=='__main__':
@@ -82,6 +85,9 @@ if __name__=='__main__':
 
     if arguments.domain == "text":
         g = Grammar.uniform(text_primitives.primitives + [p for p in bootstrapTarget()])
+        input_vocabularies = [list(printable[:-4]) + ['EOE'], list(printable[:-4])]
+        fe = Text.LearnedFeatureExtractor(tasks=tasks,
+                                          testingTasks=loadPBETasks("PBE_Strings_Track")[0])
     elif arguments.domain == "list":
         tasks = retrieveJSONTasks("data/list_tasks.json") + sortBootstrap()
         tasks.extend([
@@ -133,6 +139,7 @@ if __name__=='__main__':
                       for _ in range(15)
                       for xs in [[random.randint(0, 6) for _ in range(5)]]])
             ])
+            fe = List.LearnedFeatureExtractor(tasks)
 
         def isIdentityTask(t):
             return all( len(xs) == 1 and xs[0] == y for xs, y in t.examples  )
@@ -141,7 +148,8 @@ if __name__=='__main__':
         test, train = testTrainSplit(tasks, .5)
         test = [t for t in test
                 if t.name not in EASYLISTTASKS]
-        g = Grammar.uniform(bootstrapTarget_extra)
+        g = Grammar.uniform(bootstrapTarget_extra())
+        input_vocabularies = [fe.lexicon + ['EOE'], fe.lexicon]
 
         
         
