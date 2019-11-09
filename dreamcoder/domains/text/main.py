@@ -32,9 +32,15 @@ class ConstantInstantiateVisitor(object):
     def abstraction(self, e):
         return Abstraction(e.body.visit(self))
 
+    @staticmethod
+    def initialize():
+        everyPossibleTask = makeTasks() + loadPBETasks("PBE_Strings_Track")[0]
+        ConstantInstantiateVisitor.SINGLE = \
+        ConstantInstantiateVisitor(list(map(list, list({tuple([c for c in s])
+                                                        for t in everyPossibleTask
+                                                        for s in t.stringConstants}))))
+ConstantInstantiateVisitor.initialize()
 
-ConstantInstantiateVisitor.SINGLE = \
-    ConstantInstantiateVisitor(list(('a','b')))
 
 class LearnedFeatureExtractor(RecurrentFeatureExtractor):
     special = 'string'
@@ -210,11 +216,6 @@ def main(arguments):
         challenge = []
         eprint("Training only on sygus problems.")
         
-
-    ConstantInstantiateVisitor.SINGLE = \
-        ConstantInstantiateVisitor(list(map(list, list({tuple([c for c in s])
-                                                        for t in test + train + challenge
-                                                        for s in t.stringConstants}))))
 
     haveLength = not arguments.pop("noLength")
     haveMap = not arguments.pop("noMap")

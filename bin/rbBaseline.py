@@ -9,7 +9,7 @@ import time
 
 from dreamcoder.grammar import Grammar
 from dreamcoder.domains.text.makeTextTasks import *
-from dreamcoder.domains.text.main import LearnedFeatureExtractor
+from dreamcoder.domains.text.main import LearnedFeatureExtractor, ConstantInstantiateVisitor
 from dreamcoder.task import Task
 from dreamcoder.type import Context, arrow, tbool, tlist, tint, t0, UnificationFailure
 
