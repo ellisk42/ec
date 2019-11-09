@@ -61,20 +61,22 @@ def getDatum():
     while True:
         tsk = random.choice(tasks)
         tp = tsk.request
-        p = g.sample(tp) #TODO
+        p = g.sample(tp)
         task = fe.taskOfProgram(p, tp)
         if task is None: continue
 
-        examples = []
-        for ex in task.examples:
-            I, o = ex
-            i = []
-            for inp in I:
-                i.extend(inp)
-                i.append('EOE')
-            examples.append((i, o))
-        return examples, stringify(str(p))
+        return makeExamples(task), stringify(str(p))
 
+def makeExamples(task):
+    if hasattr(fe,'tokenize'):
+        examples = []
+        for xs,y in fe.tokenize(task.examples):
+            i = []
+            for x in xs:
+                i.extend(x)
+                i.append('EOE')
+            examples.append((i,y))
+        return examples
 
 if __name__=='__main__':
     import argparse
