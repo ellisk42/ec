@@ -16,6 +16,7 @@ from dreamcoder.domains.text.textPrimitives import primitives
 from dreamcoder.domains.list.listPrimitives import bootstrapTarget
 from string import printable
 
+import torch
 
 BATCHSIZE = 32
 #import other stuff
@@ -52,12 +53,10 @@ fe = LearnedFeatureExtractor(tasks=tasks)
 def getDatum():
     tsk = random.choice(tasks)
     tp = tsk.request
+    if 'bool' in str(tp): return getDatum()
     p = g.sample(tp) #TODO
     task = fe.taskOfProgram(p, tp)  
-
-
     examples = []
-
     for ex in tsk.examples:
         I, o = ex
         i = []
@@ -65,15 +64,17 @@ def getDatum():
             i.extend(inp)
             i.append('EOE')
         examples.append((i, o))
-
-    import pdb; pdb.set_trace()
-    return tsk.examples, stringify(str(p))
+    return examples, stringify(str(p))
 
 
 if __name__=='__main__':
     m = SyntaxCheckingRobustFill(input_vocabularies=input_vocabularies,
                                 target_vocabulary=target_vocabulary)
-
+    if torch.cuda.is_available():
+        print("CUDAfying net...")
+        m.cuda()
+    else:
+        print("Not using CUDA")
 
 
     start=time.time()
@@ -81,10 +82,10 @@ if __name__=='__main__':
     for i in range(max_n_iterations):
         batch = [getDatum() for _ in range(BATCHSIZE)]
         inputs, targets = zip(*batch)
-
+        #import pdb; pdb.set_trace()
         score = m.optimiser_step(inputs, targets)
 
-        if i%10==0: print("Iteration %d/%d" % (i, max_n_iterations), "Score %3.3f" % score, "(%3.3f seconds per iteration)" % ((time.time()-start)/(i+1)))
+        if i%2==0: print(f"Iteration {i}/{max_n_iterations}, Score {score}, ({(time.time()-start)/(i+1)} seconds per iteration)") 
 
 
 

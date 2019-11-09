@@ -453,7 +453,6 @@ class SyntaxCheckingRobustFill(nn.Module):
                 if self.n_encoders == 1:
                     inputs = [x[j] for x in inputsss]
                 else: inputs = [x[j][i] for x in inputsss]
-
                 maxlen = max(len(s) for s in inputs)
                 t = self._ones(maxlen+1, len(inputs)).long()*self.v_inputs[i]
                 for k in range(len(inputs)):
