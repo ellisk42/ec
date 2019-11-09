@@ -1,7 +1,18 @@
 To see the billing information broken down by instance type:
 https://console.aws.amazon.com/cost-reports/home#/custom?groupBy=InstanceType&hasBlended=false&hasAmortized=false&excludeDiscounts=true&excludeTaggedResources=false&timeRangeOption=Last12Months&granularity=Monthly&reportName=&reportType=CostUsage&isTemplate=true&startDate=2018-01-01&endDate=2018-12-31&filter=%5B%7B%22dimension%22:%22RecordType%22,%22values%22:%5B%22Refund%22,%22Credit%22%5D,%22include%22:false,%22children%22:null%7D%5D&forecastTimeRangeOption=None&usageAs=usageQuantity&chartStyle=Stack
 
+Enumeration baseline:
+python bin/launch.py -k  -c -z n1-standard-64 baseline_enumeration_text "python bin/text.py -g   -t 1  --pseudoCounts 30 --aic 1.0 --structurePenalty 1.5 --topK 2 --arity 0 --maximumFrontier 5 -i 1  --storeTaskMetrics --testingTimeout 86400 --taskReranker randomShuffle --taskBatchSize 10"
+python bin/launch.py -k  -c -z n1-standard-64 baseline_enumeration_list "python bin/list.py  -g --split 0.5 -t 1  --pseudoCounts 30 --aic 1.0 --structurePenalty 1.5 --topK 2 --arity 0 --maximumFrontier 5 -i 1 -R 3600 --storeTaskMetrics --testingTimeout 86400 --taskReranker randomShuffle --taskBatchSize 10 "
+python bin/launch.py -k  -c -z n1-standard-96 baseline_enumeration_logo "python bin/logo.py -g  --split 0.5 -t 1  --pseudoCounts 30 --aic 1.0 --structurePenalty 1.5 --topK 2 --arity 0 --maximumFrontier 5 -i 1  --storeTaskMetrics --testingTimeout 86400  --taskReranker randomShuffle --taskBatchSize 50 "
+python bin/launch.py -c  -k -z n1-highmem-64 baseline_enumeration_tower "python bin/tower.py -g  -t 1  --pseudoCounts 30 --tasks new --aic 1.0 --structurePenalty 1.5 --topK 2 --arity 0 --maximumFrontier 5 -i 1 --storeTaskMetrics --split 0.5 --testingTimeout 86400  --taskReranker randomShuffle --taskBatchSize 50 --primitives new  "
+python bin/launch.py -k  -c -z n1-standard-64 baseline_enumeration_regex "python bin/regexes.py --tasks new --maxTasks 256 --ll_cutoff bigram None --split 0.5 -t 1  --pseudoCounts 30 --aic 1.0 --structurePenalty 1.5 --topK 2 --arity 0 --maximumFrontier 5 -i 1 -R 3600 --testingTimeout 86400 --auxiliary --taskReranker randomShuffle --taskBatchSize 10 --seed $SEED --primitives strConst --use_str_const --primitives reduced -g"
+python bin/launch.py -k  -c -z n1-standard-64 baseline_enumeration_rational "python bin/rational.py --arity 0 --storeTaskMetrics --taskReranker randomShuffle --taskBatchSize 10 -g  -i 1 --structurePenalty 1.0 --pseudoCounts 30.0  -t 1  --testingTimeout 86400"
+
 Google cloud experiments - repeated many times.
+
+
+
 
 Text:
 for SEED in `seq 1 5`; do python bin/launch.py -k  -c -z n1-highmem-64 text "python bin/text.py  -t 720  --pseudoCounts 30 --aic 1.0 --structurePenalty 1.5 --topK 2 --arity 3 --maximumFrontier 5 -i 20 -R 3600 --storeTaskMetrics --testingTimeout 600 --biasOptimal --contextual --taskReranker randomShuffle --taskBatchSize 10  --auxiliary --ensembleSize 1 -RS 5000 --seed $SEED" ; done
