@@ -74,15 +74,21 @@ def getDatum():
         tsk = random.choice(tasks)
         tp = tsk.request
         p = g.sample(tp)
+        print("sample program",p)
         task = fe.taskOfProgram(p, tp)
         if task is None: continue
+        print("sample examples",task.examples)
 
         ex = makeExamples(task)
+        print("converted examples into",ex)
         if ex is None: continue
         
         return ex, stringify(str(p))
 
 def makeExamples(task):
+    if arguments.domain == "regex":
+        return [([],y)
+                for xs,y in task.examples ]
     if hasattr(fe,'tokenize'):
         examples = []
         tokens = fe.tokenize(task.examples)
@@ -112,7 +118,7 @@ if __name__=='__main__':
                             continuationType=tpregex)
         tasks = makeNewTasks()
         fe = Regex.LearnedFeatureExtractor(tasks)
-        input_vocabularies = [list(printable[:-4]) + ['EOE'], list(printable[:-4])]
+        input_vocabularies = [list(printable[:-4]) + ['EOE',"LIST_END","LIST_START"], list(printable[:-4]) + ["LIST_END","LIST_START"]]
         
     elif arguments.domain == "tower":
         g = Grammar.uniform(new_primitives, continuationType=ttower)

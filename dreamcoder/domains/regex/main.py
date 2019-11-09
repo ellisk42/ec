@@ -21,25 +21,38 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
     special = 'regex'
 
     def tokenize(self, examples):
+        def sanitize(l): return [z if z in self.lexicon else "?"
+                                 for z_ in l
+                                 for z in (z_ if isinstance(z_, list) else [z_])]
+
         tokenized = []
         for xs, y in examples:
-            assert isinstance(y,str)
-            y = [c for c in y ]
-            assert all( xisinstance(str) for x in xs)
-            xs = [[c for c in x ] for x in xs ]
-            if any( c not in self.lexicon
-                    for w in [y] + xs 
-                    for c in w ):
+            if isinstance(y, list):
+                y = ["LIST_START"] + y + ["LIST_END"]
+            else:
+                y = [y]
+            y = sanitize(y)
+            if len(y) > self.maximumLength:
                 return None
-            tokenized.append((tuple(xs),y))
+
+            serializedInputs = []
+            for xi, x in enumerate(xs):
+                if isinstance(x, list):
+                    x = ["LIST_START"] + x + ["LIST_END"]
+                else:
+                    x = [x]
+                x = sanitize(x)
+                if len(x) > self.maximumLength:
+                    return None
+                serializedInputs.append(x)
+
+            tokenized.append((tuple(serializedInputs), y))
+
         return tokenized
 
     def __init__(self, tasks, testingTasks=[], cuda=False):
-        self.lexicon = { c
-                         for t in tasks + testingTasks
-                         for xs,y in  t.examples
-                         for l in [y] + list(xs)
-                         for c in l } 
+        self.lexicon = set(flatten((t.examples for t in tasks + testingTasks), abort=lambda x: isinstance(
+            x, str))).union({"LIST_START", "LIST_END", "?"})
 
         self.num_examples_list = [len(t.examples) for t in tasks]
 
@@ -69,7 +82,7 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
         p = p.visit(ConstantInstantiateVisitor.SINGLE)
 
         preg = p.evaluate([])(pre.String(""))
-        t = Task("Helm", t, [((), preg.sample()) for _ in range(num_examples) ])
+        t = Task("Helm", t, [((), list(preg.sample())) for _ in range(num_examples) ])
         return t
         
         #in init: loop over tasks, save lengths, 
@@ -88,9 +101,9 @@ class ConstantInstantiateVisitor(object):
     def primitive(self, e):
         if e.name == "r_const":
             #return Primitive("STRING", e.tp, random.choice(self.words))
-            s = random.choice(self.regexes).sample()
+            s = random.choice(self.regexes).sample() #random string const
             s = pre.String(s)
-            e.value = PRC(s,arity=0) #random string const
+            e.value = PRC(s,arity=0)
         return e
 
     def invented(self, e): return e.body.visit(self)
