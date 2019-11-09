@@ -14,6 +14,10 @@ from dreamcoder.task import Task
 from dreamcoder.type import Context, arrow, tbool, tlist, tint, t0, UnificationFailure
 from dreamcoder.type import tpregex
 
+from dreamcoder.domains.arithmetic.arithmeticPrimitives import real, real_division, real_addition, real_multiplication
+
+from rational import RandomParameterization, FeatureExtractor
+
 #text:
 import dreamcoder.domains.text.textPrimitives as text_primitives
 from dreamcoder.domains.list.listPrimitives import bootstrapTarget,bootstrapTarget_extra
@@ -124,6 +128,9 @@ if __name__=='__main__':
         g = Grammar.uniform(dreamcoder.domains.logo.logoPrimitives.primitives,
                             continuationType=turtle)
         fe = LOGO.LogoFeatureCNN([])
+    elif arguments.domain == "rational":
+        g = Grammar.uniform([real, real_division, real_addition, real_multiplication])
+        fe = FeatureExtractor([])
     elif arguments.domain == "list":
         tasks = retrieveJSONTasks("data/list_tasks.json") + sortBootstrap()
         tasks.extend([
