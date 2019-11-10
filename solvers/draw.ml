@@ -243,6 +243,10 @@ register_special_task "draw" (fun  extras ?timeout:(timeout = 0.001) name ty exa
         extras |> member "bounded_cost" |> to_bool
       with _ -> false
     in
+    let l2 = try
+        Some(extras |> member "l2" |> to_float)
+      with _ -> None
+    in
 
     let resolution = 28 in
 
@@ -260,10 +264,18 @@ register_special_task "draw" (fun  extras ?timeout:(timeout = 0.001) name ty exa
      task_type = ty;
      log_likelihood =
        (fun program ->
-          let yh = run_recent_draw ~timeout ~resolution program in 
+          let yh = run_recent_draw ~timeout ~resolution program in
           match yh with
-          | Some(yh,l) when (LogoLib.LogoInterpreter.fp_equal spec yh 5) &&
-            ((not bounded_cost) || l <= spec_cost*.1.1)->
-            0.
-          | _ -> log 0.)})
-
+          | None -> log 0.
+          | Some(yh,l) -> begin
+              match l2 with
+              | None ->
+                if (LogoLib.LogoInterpreter.fp_equal spec yh 5) &&
+                   ((not bounded_cost) || l <= spec_cost*.1.1)
+                then 0.
+                else log 0.
+              | Some(coefficient) ->
+                let d = (LogoLib.LogoInterpreter.distance spec yh) -. 50. in
+                (0.-.coefficient)*.d
+            end)
+    })
