@@ -159,6 +159,12 @@ def main(arguments):
         
         train, test = makeSupervisedTasks(trainset=arguments["trainset"], doshaping=arguments["doshaping"])[:2]
 
+        # For the testing tasks we are going to use Euclidean distance as a likelihood function
+        # The likelihood is -5*(Euclidean distance over all pixels)
+        # Change the number five below to make it something else.
+        for t in test:
+            t.specialTask[1]["l2"] = 5.
+
         # ==== remove bad shaping tasks
         train = [t for t in train if t.name not in ["shaping_4", "shaping_6"]]
         print("------")
