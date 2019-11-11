@@ -14,8 +14,6 @@ sys.path.append("../")
 sys.path.insert(0, "/Users/lucastian/tenen/TENENBAUM/drawgood/experiments")
 sys.path.insert(0, "/home/lucast4/drawgood/experiments")
 # from modelAnaly import distModelHumanAllStims
-from segmentation import getSegmentation
-from preprocess import getFlatData
 
 REMOVELL = False # remove vertical long line?
 
@@ -361,6 +359,8 @@ def DATgetTask(stimname, DAT):
 
 ################# DRAWGOOD HELPER -  things that help with applying drawgood
 def DATloadDrawgoodData(DAT, dosegmentation=True):
+    from segmentation import getSegmentation
+    from preprocess import getFlatData
     DAT["datflat_hu"] = getFlatData(DAT["datall_human"])
     if dosegmentation:
         DAT["datseg_hu"] = getSegmentation(DAT["datflat_hu"], unique_codes=True, dosplits=True, removeLongVertLine=REMOVELL)                                      
