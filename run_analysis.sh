@@ -47,29 +47,30 @@ if false; then
     echo "2) getting parses for ${EC_EXPT}:"
     echo "python analysis/parse.py $EC_EXPT > $outthis"
     python analysis/parse.py $EC_EXPT > $outthis
+
+    outthis=$out"_ecgetparses_"$EC_EXPT
+    echo "2) getting parses for ${EC_EXPT}:"
+    echo "python analysis/parse.py $EC_EXPT > $outthis"
+    python analysis/parse.py $EC_EXPT > $outthis
 fi
-outthis=$out"_ecgetparses_"$EC_EXPT
-echo "2) getting parses for ${EC_EXPT}:"
-echo "python analysis/parse.py $EC_EXPT > $outthis"
-python analysis/parse.py $EC_EXPT > $outthis
 
 # 3) process model parses (--> datflat --> datseg)
 outthis=$out"_ecgetdatflatseg_"$EC_EXPT
-echo "3) getting datflat/datseg for ${EC_EXPT}:"
+echo "3) parsing and getting datflat/datseg for ${EC_EXPT}:"
 echo "python analysis/parse.py $EC_EXPT 0 > $outthis"
-python analysis/parse.py $EC_EXPT 0 > $outthis
+python analysis/parse.py $EC_EXPT
 
 # 4) get human-model distances
 outthis=$out"_ecmodelhumandists_"$EC_EXPT
 echo "4) getting modelHumanDists for ${EC_EXPT}:"
 echo "python analysis/getModelHumanDists.py $EC_EXPT > $outthis"
-python analysis/getModelHumanDists.py $EC_EXPT > $outthis
+python analysis/getModelHumanDists.py $EC_EXPT
 
 # 5) plot summaries to things
 outthis=$out"_ecsummarize_"$EC_EXPT
 echo "5) summarizing ${EC_EXPT}:"
 echo "python analysis/summarize.py $EC_EXPT > $outthis"
-python analysis/summarize.py $EC_EXPT > $outthis
+python analysis/summarize.py $EC_EXPT
 
 # === DONE
 echo "DONE!"

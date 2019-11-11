@@ -15,7 +15,7 @@ solvers/logoLib/.merlin
 solvers/.merlin
 lucas
 analysis/saved/*
-analysis/output/*
+analysis/outputs/*
 __pycache__
 _build
 experimentOutputs

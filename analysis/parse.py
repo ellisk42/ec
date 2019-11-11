@@ -25,7 +25,21 @@ def getParses(dreamcoder_program):
     return parses
 
 
+
+def getLatestFrontierProgram(result, task):
+    """gives the most recent (latest iteration) 
+    solutions (generally is the last one)
+    Outputs the bestposterior program
+    Works for both test or train tasks"""
+    frontiers = result.frontiersOverTime[task]
+    for f in reversed(frontiers):
+        if not f.empty:
+            return f.bestPosterior.program # this is the most recent frontier not empty
+    return []
+
 def getAndSaveParses(experiment="S9.2"):
+    """ gets the most recent, and the bestPosterior program
+    gets all parses """
     # DAT = loadCheckpoint(trainset=experiment)
     # for key in DAT.keys():
     #     key =
@@ -42,33 +56,47 @@ def getAndSaveParses(experiment="S9.2"):
     behaviorexpt=DAT["behaviorexpt"]
     savedir=DAT["savedir"]
 
+    def saveparses(T, P):
+        # === for each program, get the best posteiror and then all parses of that. 
+        for t, name in zip(T, P):
+            if name in ["shaping_1", "shaping_4", "shaping_8"]:
+                continue
+            print("Parsing {} ...".format(name))
 
+            # Get bestPosterior solution (most recent, and best posterior)
+            p = getLatestFrontierProgram(result, t)
+            if isinstance(p, list):
+                assert len(p)==0, "i thought a list means did not find a solution..."
+                # then no solution
+                parses = []
+            else:
+                # then get parses
+                parses = getParses(p)
+            # if result.frontiersOverTime[t][-1].empty:
+            #     parses =[]
+            # else:
+            #     p = result.frontiersOverTime[t][-1].bestPosterior.program
+            #     parses = getParses(p)
+            #     # parses = [1,2,3]
+            
+            # 1) save parse object
+            fname = "{}/parses_{}.pickle".format(savedir, name)
+            with open(fname, "wb") as f:
+                pickle.dump(parses, f)
 
+            # 2) save flattened parses
+            fname = "{}/parsesflat_{}.pickle".format(savedir, name)
+            with open(fname, "wb") as f:
+                pickle.dump([p.flatten() for p in parses], f)
 
-    # === for each program, get the best posteiror and then all parses of that. 
-    for t, name in zip(tasks, programnames):
-        if name in ["shaping_1", "shaping_4", "shaping_8"]:
-            continue
-        print("Parsing {} ...".format(name))
+            print("saved to :{}".format(fname))
 
-        if result.frontiersOverTime[t][-1].empty:
-            parses =[]
-        else:
-            p = result.frontiersOverTime[t][-1].bestPosterior.program
-            parses = getParses(p)
-            # parses = [1,2,3]
-        
-        # 1) save parse object
-        fname = "{}/parses_{}.pickle".format(savedir, name)
-        with open(fname, "wb") as f:
-            pickle.dump(parses, f)
+    # ========= DO TRAIING TASKS
+    saveparses(T=tasks, P=programnames)
 
-        # 2) save flattened parses
-        fname = "{}/parsesflat_{}.pickle".format(savedir, name)
-        with open(fname, "wb") as f:
-            pickle.dump([p.flatten() for p in parses], f)
-
-        print("saved to :{}".format(fname))
+    # ========= DO TEST TASKS
+    if len(testtasks)>0:
+        saveparses(T=testtasks, P=program_test_names)
 
     # === for each task and testtask
     return result, tasks, testtasks, programnames, program_test_names, behaviorexpt
@@ -146,7 +174,6 @@ def parses2datflatAllSave(DAT):
     os.makedirs(savedir, exist_ok=True)
     print(savedir)
     for P in DAT["parses"]:
-
         stimname = P["name"]
         parses = P["parse"]
         print(stimname)

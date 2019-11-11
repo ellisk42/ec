@@ -134,6 +134,19 @@ def loadCheckpoint(trainset="S9_nojitter", userealnames=True, loadparse=False, s
         taskset = "S13" 
         behaviorexpt = "2.4"
 
+    elif trainset=="S12.10.test4":
+        userealnames=True
+        doshaping = False
+        exptdir = "2019-11-10T22:47:09.031267"
+        taskset = "S12" 
+        behaviorexpt = "2.4"
+    elif trainset=="S13.10.test4":
+        userealnames=True
+        doshaping = False
+        exptdir = "2019-11-10T22:47:09.086994"
+        taskset = "S13" 
+        behaviorexpt = "2.4"
+
     else:
         print("PROBLEM did not find traiin set! ")
         assert False
@@ -360,7 +373,7 @@ def DATgetSolvedStim(DAT, removeshaping=True, intersectDrawgood=False):
 
     if removeshaping:
         # then throw out shaping that did not get for humans:
-        print("REMOVING SHAPING STIMULI (THOSE HUMANS DID NOT GET) [wil even remove things like S9_shaping_5]")
+        print("REMOVING SHAPING STIMULI (THOSE HUMANS WERE NOT GIVEN) [wil even remove things like S9_shaping_5]")
 
         def isShaping(name):
             # ouptuts true if is shaping

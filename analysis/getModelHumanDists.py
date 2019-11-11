@@ -89,7 +89,7 @@ def filterDistances(distances, stimlist=[], humans=[], models=[], modelrend=[]):
         models = set(d["model"] for d in distances)
     skipmodelrend=False
     if len(modelrend)==0:
-        if "modelrend" in distances[0].keys:
+        if "modelrend" in distances[0].keys():
             modelrend = set(d["modelrend"] for d in distances)
         else:
             skipmodelrend=True
@@ -126,7 +126,7 @@ def aggregateDistances(ECTRAIN):
     df = aggregMean(pd.DataFrame(distances), ["stim", "human", "model", "modelrend"], values=["dist"], nonnumercols=["sequence_human", "sequence_model"])
 
     # 2) save, aggregate over distance measures
-    print("=== DOING AGGREGATE MEDIANS")
+    print("=== DOING AGGREGATE")
     distances_agg = df.to_dict("records")
     humanlist = set(df["human"])
     stimlist = set(df["stim"])
@@ -147,8 +147,10 @@ def aggregateDistances(ECTRAIN):
 
 
     # 3) aggregate over parses by taking median
-    print("=== DOING AGGREGATE MEDIANS")
+    print("=== DOING MEDIANS")
     df = aggreg(df, group=["stim", "human", "model"], values=["dist"], aggmethod=["median"])
+    df["dist"]=df["dist_median"]
+    df = df.drop(columns=["dist_median"])
     distances_median = df.to_dict("records")
     suff="medianparse"
     for d in distances_median:
@@ -175,7 +177,6 @@ if __name__=="__main__":
     # ECTRAIN = "S8.2.2"
     # ECTRAIN = "S9.2"
     REMOVELL = False # this must match with preprocessing of model
-
 
     # load DAT
     DAT = loadCheckpoint(trainset=ECTRAIN, loadparse=True, suppressPrint=True)
@@ -241,14 +242,6 @@ if __name__=="__main__":
         for seqkind in ["codes_unique", "codes", "row", "col"]:
             seqgetter_hu, seqgetter_ec = getSeqGetters(labelkind=seqkind)
 
-            # def seqgetter_hu(stim):
-            #     sequence_human = [d["codes_unique"] for d in dseg]
-            #     return sequence_human
-            
-            # def seqgetter_ec(stim):
-            #     return [[d["codes_unique"] for d in dat] for dat in datseg_ec]
-            
-            # DATloadDatSeg(DAT, stim)
             dflat = DATloadDatFlat(DAT, stimthis)
             modelparsenums = [d["parsenum"] for d in dflat]
 
