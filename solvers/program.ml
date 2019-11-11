@@ -378,6 +378,8 @@ let primitive6 = primitive "6" tint 6;;
 let primitive7 = primitive "7" tint 7;;
 let primitive8 = primitive "8" tint 8;;
 let primitive9 = primitive "9" tint 9;;
+(10--100) |> List.iter ~f:(fun n ->
+    ignore(primitive (Printf.sprintf "%d" n) tint n));;
 let primitive20 = primitive "ifty" tint 20;;
 let primitive_addition = primitive "+" (tint @> tint @> tint) (fun x y -> x + y);;
 let primitive_increment = primitive "incr" (tint @> tint) (fun x -> 1+x);;
@@ -1042,3 +1044,18 @@ ignore(primitive "tree_p" (t_object_p @> t_boolean_p) (fun x -> x));;
 ignore(primitive "house_p" (t_object_p @> t_boolean_p) (fun x -> x));;
 ignore(primitive "horse_p" (t_object_p @> t_boolean_p) (fun x -> x));;
 ignore(primitive "ec_unique_p" (t_model_p @> (t_object_p @> t_boolean_p) @> t_object_p) (fun x -> x));;
+
+
+ignore(primitive "cons_int" (tint @> (tlist tint) @> (tlist tint))
+         (fun x l -> x :: l));;
+ignore(primitive "cdr_int" (tlist tint @> tlist tint)
+         (fun xs -> List.tl_exn xs));;
+ignore(primitive "car_int" (tlist tint @> tint)
+         (fun xs -> List.hd_exn xs));;
+ignore(primitive "empty_int" (tlist tint) []);;
+ignore(primitive "empty?_int" (tlist tint @> tboolean)
+         (function
+           | [] -> true
+           | _ -> false));;
+
+

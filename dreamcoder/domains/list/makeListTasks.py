@@ -7,6 +7,22 @@ from dreamcoder.utilities import eprint, hashable
 from random import randint, random, seed
 from itertools import product
 
+def joshTasks():
+    import os
+    ts = []
+    import json
+    directory = "data/wave1"
+    for fn in os.listdir(directory):
+        with open(f"{directory}/{fn}") as handle:
+            data = json.load(handle)
+            ts.append(Task(data["name"],
+                           arrow(tlist(tint),tlist(tint)),
+                           [((e["i"],),e["o"])
+                            for e in data["data"] ]))
+    return ts
+        
+        
+
 # Excluded routines either impossible or astronomically improbable
 # I'm cutting these off at ~20 nats in learned grammars.
 EXCLUDES = {

@@ -10,9 +10,9 @@ from dreamcoder.utilities import eprint, flatten, testTrainSplit
 from dreamcoder.grammar import Grammar
 from dreamcoder.task import Task
 from dreamcoder.type import Context, arrow, tbool, tlist, tint, t0, UnificationFailure
-from dreamcoder.domains.list.listPrimitives import basePrimitives, primitives, McCarthyPrimitives, bootstrapTarget_extra, no_length
+from dreamcoder.domains.list.listPrimitives import basePrimitives, primitives, McCarthyPrimitives, bootstrapTarget_extra, no_length, josh_primitives
 from dreamcoder.recognition import RecurrentFeatureExtractor
-from dreamcoder.domains.list.makeListTasks import make_list_bootstrap_tasks, sortBootstrap
+from dreamcoder.domains.list.makeListTasks import make_list_bootstrap_tasks, sortBootstrap, joshTasks
 
 
 def retrieveJSONTasks(filename, features=False):
@@ -235,6 +235,7 @@ def list_options(parser):
         type=str,
         default="Lucas-old",
         choices=[
+            "Josh",
             "bootstrap",
             "sorting",
             "Lucas-old",
@@ -247,7 +248,7 @@ def list_options(parser):
     parser.add_argument("--primitives",
                         default="common",
                         help="Which primitive set to use",
-                        choices=["McCarthy", "base", "rich", "common", "noLength"])
+                        choices=["McCarthy", "base", "rich", "common", "noLength", "Josh"])
     parser.add_argument("--extractor", type=str,
                         choices=["hand", "deep", "learned"],
                         default="learned")
@@ -271,6 +272,7 @@ def main(args):
     tasks = {
         "Lucas-old": lambda: retrieveJSONTasks("data/list_tasks.json") + sortBootstrap(),
         "bootstrap": make_list_bootstrap_tasks,
+        "Josh": joshTasks,
         "sorting": sortBootstrap,
         "Lucas-depth1": lambda: retrieveJSONTasks("data/list_tasks2.json")[:105],
         "Lucas-depth2": lambda: retrieveJSONTasks("data/list_tasks2.json")[:4928],
@@ -349,6 +351,7 @@ def main(args):
              "McCarthy": McCarthyPrimitives,
              "common": bootstrapTarget_extra,
              "noLength": no_length,
+             "Josh": josh_primitives,
              "rich": primitives}[args.pop("primitives")]()
     haveLength = not args.pop("noLength")
     haveMap = not args.pop("noMap")
