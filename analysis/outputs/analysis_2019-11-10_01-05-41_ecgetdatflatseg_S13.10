@@ -1,0 +1,24 @@
+HERE
+skipping parse as requested
+GETTING DATFLAT (computing and then saving
+GGGGdd
+GGGGeee
+DRAW TASK training set: S13
+DO SHAPING: False
+training task names:
+['S12_13_shaping_0', 'S12_13_shaping_1', 'S12_13_shaping_2', 'S12_13_shaping_3', 'S12_13_shaping_4', 'S12_13_shaping_5', 'S12_13_shaping_6', 'S12_13_shaping_7', 'S12_13_shaping_8', 'S12_13_shaping_9', 'S12_13_shaping_10', 'S13_1', 'S13_2', 'S13_10', 'S13_27', 'S13_77', 'S13_78', 'S13_106', 'S13_32', 'S13_49', 'S13_97', 'S13_153', 'S13_160', 'S13_161', 'S13_166', 'S13_169', 'S13_170', 'S13_186', 'S13_189', 'S13_232', 'S13_238', 'S13_89', 'S13_91', 'S13_147', 'S13_150', 'S13_172', 'S13_180', 'S13_183', 'S13_187', 'S13_199', 'S13_205', 'S13_230', 'S13_239', 'S13_243', 'S13_252', 'S13_257', 'S13_265']
+test tasks:
+['S12_13_test_1', 'S12_13_test_2', 'S12_13_test_4', 'S12_13_test_5', 'S12_13_test_6', 'S12_13_test_7', 'S12_13_test_8', 'S12_13_test_9', 'S12_13_test_10', 'S12_13_test_11', 'S12_13_test_12', 'S12_132', 'S12_201', 'S12_220', 'S12_247', 'S13_182', 'S13_217', 'S13_219']
+FOUND 47 pre-computed parses!
+Num dreamcoder tasks 47
+n supervised tasks 47
+Num dreamcoder TEST tasks 18
+n supervised TEST tasks 18
+Loaded behavior also
+analysis/saved/DAT_ecS13.10_dg2.4/datflat_ec
+S12_13_shaping_1
+getting datflat for S12_13_shaping_1
+S13_183
+getting datflat for S13_183
+S13_230
+getting datflat for S13_230

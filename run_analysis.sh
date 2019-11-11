@@ -12,6 +12,7 @@ out="${CURRDIR}/analysis/outputs/analysis_$(date +%Y-%m-%d_%H-%M-%S)"
 echo "Outputing to ${out}"
 echo "Should be using conda envt: ecgood"
 
+##################################33
 # 1) rules based analysis of behavior
 
 if false; then
@@ -31,22 +32,22 @@ if false; then
     python "$DGDIR"/modelRules.py $DG_EXPT > $outthis
 fi
 
-# # 2) get parses
-# if false; then
-#     # NOTE: have to enter the correct task names in makeDrawTasks before can run.
-#     # NOTE, copy S8.2./2 below
-#     EC_EXPT=S8fixedprim
-#     outthis=$out"_ecgetparses_"$EC_EXPT
-#     echo "2) getting parses for ${EC_EXPT}:"
-#     echo "python analysis/parse.py $EC_EXPT > $outthis"
-#     python analysis/parse.py $EC_EXPT > $outthis
+# 2) get parses
+if false; then
+    # NOTE: have to enter the correct task names in makeDrawTasks before can run.
+    # NOTE, copy S8.2./2 below
+    EC_EXPT=S8fixedprim
+    outthis=$out"_ecgetparses_"$EC_EXPT
+    echo "2) getting parses for ${EC_EXPT}:"
+    echo "python analysis/parse.py $EC_EXPT > $outthis"
+    python analysis/parse.py $EC_EXPT > $outthis
 
-#     EC_EXPT=S9fixedprim
-#     outthis=$out"_ecgetparses_"$EC_EXPT
-#     echo "2) getting parses for ${EC_EXPT}:"
-#     echo "python analysis/parse.py $EC_EXPT > $outthis"
-#     python analysis/parse.py $EC_EXPT > $outthis
-# fi
+    EC_EXPT=S9fixedprim
+    outthis=$out"_ecgetparses_"$EC_EXPT
+    echo "2) getting parses for ${EC_EXPT}:"
+    echo "python analysis/parse.py $EC_EXPT > $outthis"
+    python analysis/parse.py $EC_EXPT > $outthis
+fi
 outthis=$out"_ecgetparses_"$EC_EXPT
 echo "2) getting parses for ${EC_EXPT}:"
 echo "python analysis/parse.py $EC_EXPT > $outthis"

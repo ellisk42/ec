@@ -326,15 +326,17 @@ def getTask(stimname, DAT):
             return task, "test"
 
 
-def DATsaveModelHuDist(DAT, stim, human, dists):
+def DATsaveModelHuDist(DAT, stim, human, dists, suffix=''):
     sdir = DAT["savedir_modelhudist"]
-    fname = "{}/{}_{}.pickle".format(sdir, stim, human)
+    fname = "{}/{}_{}_{}.pickle".format(sdir, stim, human, suffix)
     with open(fname, "wb") as f:
         pickle.dump(dists, f)
 
-def DATloadModelHuDist(DAT, stim, human):
+def DATloadModelHuDist(DAT, stim, human, suffix=''):
     sdir = DAT["savedir_modelhudist"]
-    fname = "{}/{}_{}.pickle".format(sdir, stim, human)
+    if len(suffix)>0:
+        suffix="_"+suffix
+    fname = "{}/{}_{}{}.pickle".format(sdir, stim, human, suffix)
     with open(fname, "rb") as f:
         dists = pickle.load(f)
     return dists

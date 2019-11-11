@@ -75,7 +75,8 @@ def summarize(ECTRAIN, SUMMARY_SAVEDIR = "", comparetohuman=True):
     # For a given slice of human/model/stim, plot all string distances
     # ECTRAIN = "S9.2"
     NPARSE = 10 # how many random parses to take for plotting for programs.
-    
+    useAggregateDistance = True
+
     # 1) load data 
     DAT = loadCheckpoint(trainset=ECTRAIN, loadparse=False, suppressPrint=True, loadbehavior=False)
 
@@ -138,6 +139,15 @@ def summarize(ECTRAIN, SUMMARY_SAVEDIR = "", comparetohuman=True):
         DAT = loadCheckpoint(trainset=ECTRAIN, loadparse=True, suppressPrint=True)
         DAT = DATloadDrawgoodData(DAT, dosegmentation=True)
         distances = loadDistances(ECTRAIN)
+        distances_medianparse = loadDistances(ECTRAIN, "medianparse")
+        distances_aggregate = loadDistances(ECTRAIN, "aggregate")
+
+        if useAggregateDistance:
+            distances=distances_aggregate
+            label = "allparses_agg"
+        else:
+            label = "allparses"
+
 
         # ==== PLOT DISTANCES FOR DIFFERENT SLICES OF MODEL/HUMAN/STIM
         stimlist = DATgetSolvedStim(DAT, intersectDrawgood=True)
@@ -172,6 +182,7 @@ def summarize(ECTRAIN, SUMMARY_SAVEDIR = "", comparetohuman=True):
 
             # 3) Plot string edit distances between human and model
             # only the plotted parses (x the humans)
+
             # --- just the parses plotted
             modelrends = [d["parsenum"] for d in dflat]
             dists = filterDistances(distances, stimlist=[stim], modelrend=modelrends)
@@ -183,6 +194,7 @@ def summarize(ECTRAIN, SUMMARY_SAVEDIR = "", comparetohuman=True):
             plt.savefig("{}/{}_hu{}_model{}_distances_randomparses.pdf".format(SUMMARY_SAVEDIR, stim, DAT["behaviorexpt"], DAT["trainset"]))
             plt.close('all')
 
+
             # --- all parses for this stimulus
             dists = filterDistances(distances, stimlist=[stim])
             plt.figure(figsize=(40, 10))
@@ -192,6 +204,22 @@ def summarize(ECTRAIN, SUMMARY_SAVEDIR = "", comparetohuman=True):
             plt.savefig("{}/{}_hu{}_model{}_distances_allparses.pdf".format(SUMMARY_SAVEDIR, stim, DAT["behaviorexpt"], DAT["trainset"]))
             print("3: Plotted all string edit distances for both random parses and all parses")
             plt.close('all')
+
+
+            # --- aggregate, median over all parses (after aggregating)
+            # import pdb
+            # pdb.set_trace()
+            dists = filterDistances(distances_medianparse, stimlist=[stim])
+            plt.figure(figsize=(40, 10))
+            dat = pd.DataFrame(dists)
+            ax = sns.violinplot(x="human", y="dist", data=dat, inner="quartile")
+            ax = sns.stripplot(x="human", y="dist", data=dat, jitter=0.17, dodge=True, alpha=0.3, size=8)
+            plt.savefig("{}/{}_hu{}_model{}_distances_medianparse.pdf".format(SUMMARY_SAVEDIR, stim, DAT["behaviorexpt"], DAT["trainset"]))
+            print("4: Plotted all string edit distances aggregating over meausres, then taking median over parses")
+            plt.close('all')
+
+
+
 
 if __name__=="__main__":
     # e..g, python analysis/summarize.py "S12.1" 0
@@ -205,6 +233,7 @@ if __name__=="__main__":
             raise
     else:
         comparetohuman=True
+
     summarize(ECTRAIN, SUMMARY_SAVEDIR = "", comparetohuman=comparetohuman)
 
 

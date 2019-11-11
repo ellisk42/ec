@@ -1,0 +1,20 @@
+(lambda (vline x y z) (connect vline (connect (transform x .... (connect y (connect z)))))
+
+Program.parseHumanReadable("(lambda (connect x y z) (connect x (connect y (connect z))))")
+(lambda (lambda (lambda (lambda ($3 $2 ($3 $1 ($3 $0)))))))
+
+p = Invented(Program.parseHR(...))
+
+
+
+g = Grammar.uniform(primitives+[p])
+
+
+1. run on test tasks
+2. run on traiing?
+
+======================
+getting prior score.
+
+
+

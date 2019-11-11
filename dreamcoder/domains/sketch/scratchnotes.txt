@@ -1,0 +1,111 @@
+>>> from dreamcoder.program import *
+>>> Program.parse("(lambda $0)")
+(lambda $0)
+>>> x = Program.parse("(lambda $0)")
+>>> x.tolisp()
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+AttributeError: 'Abstraction' object has no attribute 'tolisp'
+>>> dir(x)
+['__class__', '__delattr__', '__dict__', '__dir__', '__doc__', '__eq__', '__format__', '__ge__', '__getattribute__', '__getstate__', '__gt__', '__hash__', '__init__', '__init_subclass__', '__le__', '__lt__', '__module__', '__ne__', '__new__', '__reduce__', '__reduce_ex__', '__repr__', '__setattr__', '__setstate__', '__sizeof__', '__str__', '__subclasshook__', '__weakref__', '_parse', 'annotateTypes', 'applicationParse', 'applicationParses', 'betaNormalForm', 'betaReduce', 'body', 'canHaveType', 'clone', 'closed', 'evaluate', 'freeVariables', 'hashCode', 'infer', 'inferType', 'isAbstraction', 'isApplication', 'isBetaLong', 'isHole', 'isIndex', 'isInvented', 'isPrimitive', 'isUnion', 'numberOfFreeVariables', 'parse', 'parseConstant', 'parseHumanReadable', 'runWithArguments', 'shift', 'show', 'size', 'substitute', 'uncurry', 'visit', 'walk', 'walkUncurried', 'wellTyped']
+>>> prettyProgram(x)
+'λx.x'
+>>> prettyProgram(x, Lisp=True)
+'(λ (x) x)'
+>>> y = Program.parse("#(#(lambda (lambda (connect (transform circle (#(lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist16 trs")
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+  File "/home/lucast4/dc/dreamcoder/program.py", line 142, in parse
+    s = parseSExpression(s)
+  File "/home/lucast4/dc/dreamcoder/utilities.py", line 882, in parseSExpression
+    e,n = p(0)
+  File "/home/lucast4/dc/dreamcoder/utilities.py", line 862, in p
+    e,n = p(n + 1)
+  File "/home/lucast4/dc/dreamcoder/utilities.py", line 870, in p
+    while n <= len(s) and s[n].isspace(): n += 1
+IndexError: string index out of range
+>>> y = Program.parse("#(#(lambda (lambda (connect (transform circle (#(lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist16 trs)")
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+  File "/home/lucast4/dc/dreamcoder/program.py", line 161, in parse
+    return p(s)
+  File "/home/lucast4/dc/dreamcoder/program.py", line 147, in p
+    return Invented(p(e[1]))
+  File "/home/lucast4/dc/dreamcoder/program.py", line 151, in p
+    f = p(e[0])
+  File "/home/lucast4/dc/dreamcoder/program.py", line 147, in p
+    return Invented(p(e[1]))
+  File "/home/lucast4/dc/dreamcoder/program.py", line 150, in p
+    return Abstraction(p(e[1]))                    
+  File "/home/lucast4/dc/dreamcoder/program.py", line 150, in p
+    return Abstraction(p(e[1]))                    
+  File "/home/lucast4/dc/dreamcoder/program.py", line 151, in p
+    f = p(e[0])
+  File "/home/lucast4/dc/dreamcoder/program.py", line 160, in p
+    raise ParseFailure((s,e))
+dreamcoder.utilities.ParseFailure: (['#', [['#', ['lambda', ['lambda', ['connect', ['transform', 'circle', [['#', ['lambda', ['lambda', ['transmat', 'None', 'None', '$0', ['Some', 'dist9'], '$1']]]], ['Some', '$0'], ['Some', '$1']]]]]]], 'dist16', 'trs']], 'connect')
+>>> x = Program.parse("#(lambda $0)")
+>>> prettyProgram(Program.parse("#(lambda $0)"))'λx.x'
+>>> prettyProgram(Program.parse("#(lambda $0)"), Lisp=True)
+'(λ (x) x)'
+>>> prettyProgram(Program.parse("(lambda (#(lambda $0) $0))"), Lisp=True)
+'(λ (x) ((λ (y) y) x))'
+>>>     [A
+KeyboardInterrupt
+>>> ram(Program.parse("(lambda (#(lambda $0) $0))"), Lisp=True)
+[1]+  Stopped                 python
+(ecgood) lucast4@bluejay:~/dc$ python
+Python 3.7.4 (default, Aug 13 2019, 20:35:49) 
+[GCC 7.3.0] :: Anaconda, Inc. on linux
+Type "help", "copyright", "credits" or "license" for more information.
+>>> -0.25*np.sum(params**2)
+KeyboardInterrupt
+>>> from dreamcoder.program import *
+>>> Program.parseHumanReadable("(lambda $0)")
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+  File "/home/lucast4/dc/dreamcoder/program.py", line 211, in parseHumanReadable
+    return p(s, [])
+  File "/home/lucast4/dc/dreamcoder/program.py", line 197, in p
+    assert isinstance(s[1], list) and len(s) == 3
+AssertionError
+>>> Program.parseHumanReadable("(λ (x) x)")
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+  File "/home/lucast4/dc/dreamcoder/program.py", line 211, in parseHumanReadable
+    return p(s, [])
+  File "/home/lucast4/dc/dreamcoder/program.py", line 203, in p
+    a = p(s[0], environment)
+  File "/home/lucast4/dc/dreamcoder/program.py", line 210, in p
+    assert False
+AssertionError
+>>> Program.parseHumanReadable("(lambda (x) x)")
+(lambda $0)
+>>> Program.parseHumanReadable("#(lambda (x) x)")
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+  File "/home/lucast4/dc/dreamcoder/program.py", line 211, in parseHumanReadable
+    return p(s, [])
+  File "/home/lucast4/dc/dreamcoder/program.py", line 203, in p
+    a = p(s[0], environment)
+  File "/home/lucast4/dc/dreamcoder/program.py", line 210, in p
+    assert False
+AssertionError
+>>> Program.parseHumanReadable("(lambda (x y z) (connect x (connect y (connect z))))")
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+  File "/home/lucast4/dc/dreamcoder/program.py", line 211, in parseHumanReadable
+    return p(s, [])
+  File "/home/lucast4/dc/dreamcoder/program.py", line 199, in p
+    e = p(s[2], newEnvironment)
+  File "/home/lucast4/dc/dreamcoder/program.py", line 203, in p
+    a = p(s[0], environment)
+  File "/home/lucast4/dc/dreamcoder/program.py", line 210, in p
+    assert False
+AssertionError
+>>> Program.parseHumanReadable("(lambda (connect x y z) (connect x (connect y (connect z))))")
+(lambda (lambda (lambda (lambda ($3 $2 ($3 $1 ($3 $0)))))))
+>>> quit
+Use quit() or Ctrl-D (i.e. EOF) to exit
+>>> quit()
+(ecgood) lucast4@bluejay:~/dc$ 

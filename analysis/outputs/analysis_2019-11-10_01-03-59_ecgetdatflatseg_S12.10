@@ -1,0 +1,241 @@
+HERE
+skipping parse as requested
+GETTING DATFLAT (computing and then saving
+GGGGdd
+GGGGeee
+DRAW TASK training set: S12
+DO SHAPING: False
+training task names:
+['S12_13_shaping_0', 'S12_13_shaping_1', 'S12_13_shaping_2', 'S12_13_shaping_3', 'S12_13_shaping_4', 'S12_13_shaping_5', 'S12_13_shaping_6', 'S12_13_shaping_7', 'S12_13_shaping_8', 'S12_13_shaping_9', 'S12_13_shaping_10', 'S12_1', 'S12_5', 'S12_8', 'S12_10', 'S12_32', 'S12_34', 'S12_38', 'S12_20', 'S12_39', 'S12_57', 'S12_79', 'S12_113', 'S12_124', 'S12_126', 'S12_133', 'S12_147', 'S12_155', 'S12_163', 'S12_200', 'S12_214', 'S12_31', 'S12_52', 'S12_55', 'S12_70', 'S12_129', 'S12_139', 'S12_141', 'S12_148', 'S12_207', 'S12_222', 'S12_224', 'S12_229', 'S12_233', 'S12_235', 'S12_243', 'S12_246']
+test tasks:
+['S12_13_test_1', 'S12_13_test_2', 'S12_13_test_4', 'S12_13_test_5', 'S12_13_test_6', 'S12_13_test_7', 'S12_13_test_8', 'S12_13_test_9', 'S12_13_test_10', 'S12_13_test_11', 'S12_13_test_12', 'S12_132', 'S12_201', 'S12_220', 'S12_247', 'S13_182', 'S13_217', 'S13_219']
+FOUND 47 pre-computed parses!
+Num dreamcoder tasks 47
+n supervised tasks 47
+Num dreamcoder TEST tasks 18
+n supervised TEST tasks 18
+Loaded behavior also
+analysis/saved/DAT_ecS12.10_dg2.4/datflat_ec
+S12_13_shaping_1
+getting datflat for S12_13_shaping_1
+S12_79
+getting datflat for S12_79
+S12_200
+getting datflat for S12_200
+S12_126
+getting datflat for S12_126
+S12_233
+getting datflat for S12_233
+S12_246
+getting datflat for S12_246
+S12_147
+getting datflat for S12_147
+S12_57
+getting datflat for S12_57
+S12_139
+getting datflat for S12_139
+S12_124
+getting datflat for S12_124
+S12_207
+getting datflat for S12_207
+S12_34
+getting datflat for S12_34
+S12_10
+getting datflat for S12_10
+S12_214
+getting datflat for S12_214
+S12_129
+getting datflat for S12_129
+S12_13_shaping_7
+getting datflat for S12_13_shaping_7
+S12_13_shaping_8
+getting datflat for S12_13_shaping_8
+S12_38
+getting datflat for S12_38
+S12_31
+getting datflat for S12_31
+S12_55
+getting datflat for S12_55
+S12_141
+getting datflat for S12_141
+S12_32
+getting datflat for S12_32
+S12_155
+getting datflat for S12_155
+S12_39
+getting datflat for S12_39
+S12_224
+getting datflat for S12_224
+S12_235
+getting datflat for S12_235
+S12_5
+getting datflat for S12_5
+S12_8
+getting datflat for S12_8
+S12_1
+getting datflat for S12_1
+S12_13_shaping_9
+getting datflat for S12_13_shaping_9
+S12_113
+getting datflat for S12_113
+S12_243
+getting datflat for S12_243
+S12_70
+getting datflat for S12_70
+S12_148
+getting datflat for S12_148
+S12_13_shaping_3
+getting datflat for S12_13_shaping_3
+S12_222
+getting datflat for S12_222
+S12_13_shaping_2
+getting datflat for S12_13_shaping_2
+S12_13_shaping_0
+getting datflat for S12_13_shaping_0
+S12_13_shaping_10
+getting datflat for S12_13_shaping_10
+S12_20
+getting datflat for S12_20
+S12_13_shaping_5
+getting datflat for S12_13_shaping_5
+S12_229
+getting datflat for S12_229
+S12_52
+getting datflat for S12_52
+S12_13_shaping_4
+getting datflat for S12_13_shaping_4
+S12_163
+getting datflat for S12_163
+S12_133
+getting datflat for S12_133
+S12_13_shaping_6
+getting datflat for S12_13_shaping_6
+GETTING DATSEGS (computing and then saving)
+REMOVING SHAPING STIMULI (THOSE HUMANS DID NOT GET) [wil even remove things like S9_shaping_5]
+removing, since I think is shaping: S12_13_shaping_1
+removing, since I think is shaping: S12_13_shaping_7
+removing, since I think is shaping: S12_13_shaping_8
+removing, since I think is shaping: S12_13_shaping_9
+removing, since I think is shaping: S12_13_shaping_3
+removing, since I think is shaping: S12_13_shaping_2
+removing, since I think is shaping: S12_13_shaping_0
+removing, since I think is shaping: S12_13_shaping_10
+removing, since I think is shaping: S12_13_shaping_5
+removing, since I think is shaping: S12_13_shaping_4
+removing, since I think is shaping: S12_13_shaping_6
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_8.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_1.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_5.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_38.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_10.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_32.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_34.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_79.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_57.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_124.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_126.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_214.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_163.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_200.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_113.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_133.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_147.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_39.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_155.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_20.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_148.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S13_217.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_52.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_246.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_13_test_5.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_220.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_243.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_132.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_139.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_31.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_235.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_13_test_6.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_229.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_70.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_13_test_11.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_141.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_224.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_13_test_4.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_13_test_10.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_13_test_2.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S13_219.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_13_test_8.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_207.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_129.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_201.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_13_test_1.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_247.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_55.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_13_test_7.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S13_182.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_13_test_12.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_233.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_13_test_9.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_222.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_106.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_1.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_10.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_78.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_27.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_77.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_2.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_186.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_170.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_97.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_161.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_153.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_238.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_169.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_32.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_189.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_232.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_166.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_49.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_160.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_205.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_172.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_265.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_182.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_132.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_13_test_2.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_187.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_13_test_5.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_13_test_6.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_91.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_199.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_230.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_220.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_89.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_257.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_13_test_4.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_201.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_13_test_10.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_150.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_239.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_13_test_7.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_217.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_183.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_180.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_247.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_13_test_1.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_147.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_243.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_219.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_13_test_9.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_13_test_11.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_13_test_8.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_252.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_13_test_12.png
+EMPTY - skiping this ind for extracting datflat
+CLEANING UP, skipping: A1PF01FF85HUY4 - S13_170.png
+CLEANING UP, skipping: A1PF01FF85HUY4 - S13_182.png
+CLEANING UP, skipping: A1PF01FF85HUY4 - S13_172.png
+CLEANING UP, skipping: A1PF01FF85HUY4 - S13_180.png
+CLEANING UP, skipping: A1PF01FF85HUY4 - S12_13_test_10.png
+CLEANING UP, skipping: A2P53AN2M8IWFP - S13_27.png
+{'S12_55', 'S12_10', 'S13_183', 'S12_34', 'S13_169', 'S12_200', 'S13_170', 'S12_70', 'S13_91', 'S13_78', 'S13_1', 'S13_32', 'S12_141', 'S13_89', 'S12_243', 'S13_161', 'S12_147', 'S13_77', 'S12_13_test_1', 'S13_230', 'S12_233', 'S12_129', 'S12_214', 'S13_265', 'S13_219', 'S13_252', 'S13_189', 'S12_13_test_5', 'S13_172', 'S13_97', 'S12_132', 'S13_106', 'S13_205', 'S13_199', 'S12_163', 'S12_13_test_9', 'S12_13_test_11', 'S13_150', 'S12_79', 'S12_235', 'S12_13_test_7', 'S12_224', 'S13_257', 'S12_13_test_4', 'S12_222', 'S12_155', 'S12_148', 'S13_147', 'S12_139', 'S13_166', 'S13_186', 'S12_52', 'S12_220', 'S12_13_test_8', 'S12_207', 'S12_126', 'S13_10', 'S12_32', 'S12_39', 'S13_239', 'S13_2', 'S13_238', 'S12_1', 'S12_246', 'S13_217', 'S12_13_test_12', 'S13_180', 'S12_229', 'S12_8', 'S12_13_test_10', 'S13_153', 'S12_38', 'S13_160', 'S12_20', 'S13_182', 'S12_124', 'S12_201', 'S12_5', 'S13_27', 'S12_13_test_6', 'S12_113', 'S12_247', 'S13_187', 'S13_243', 'S12_57', 'S12_31', 'S12_13_test_2', 'S13_232', 'S13_49', 'S12_133'}

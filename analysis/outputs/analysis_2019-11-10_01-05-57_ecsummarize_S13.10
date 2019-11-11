@@ -1,0 +1,2039 @@
+HERE
+GGGGdd
+GGGGeee
+DRAW TASK training set: S13
+DO SHAPING: False
+training task names:
+['S12_13_shaping_0', 'S12_13_shaping_1', 'S12_13_shaping_2', 'S12_13_shaping_3', 'S12_13_shaping_4', 'S12_13_shaping_5', 'S12_13_shaping_6', 'S12_13_shaping_7', 'S12_13_shaping_8', 'S12_13_shaping_9', 'S12_13_shaping_10', 'S13_1', 'S13_2', 'S13_10', 'S13_27', 'S13_77', 'S13_78', 'S13_106', 'S13_32', 'S13_49', 'S13_97', 'S13_153', 'S13_160', 'S13_161', 'S13_166', 'S13_169', 'S13_170', 'S13_186', 'S13_189', 'S13_232', 'S13_238', 'S13_89', 'S13_91', 'S13_147', 'S13_150', 'S13_172', 'S13_180', 'S13_183', 'S13_187', 'S13_199', 'S13_205', 'S13_230', 'S13_239', 'S13_243', 'S13_252', 'S13_257', 'S13_265']
+test tasks:
+['S12_13_test_1', 'S12_13_test_2', 'S12_13_test_4', 'S12_13_test_5', 'S12_13_test_6', 'S12_13_test_7', 'S12_13_test_8', 'S12_13_test_9', 'S12_13_test_10', 'S12_13_test_11', 'S12_13_test_12', 'S12_132', 'S12_201', 'S12_220', 'S12_247', 'S13_182', 'S13_217', 'S13_219']
+not loading parses [NONE FOUND]
+Num dreamcoder tasks 47
+n supervised tasks 47
+Num dreamcoder TEST tasks 18
+n supervised TEST tasks 18
+2: plotted n solved timecourse
+ONLY PLOTS INVENTED PRIMITIVES
+FILLS ARGUMENT HOLES WITH A HANDFUL OF VALUES
+--- prim 0
+#(lambda (reflect (#(lambda (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) None (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist16 rep1 (#(lambda (transmat None None (Some $0) None None)) dist18)) $0))) $0) angle0))
+[tstroke]
+[[array([[0., 0.],
+       [1., 0.]])], [array([[ 5.00000000e-01,  0.00000000e+00],
+       [ 4.88310278e-01,  1.07485220e-01],
+       [ 4.53787710e-01,  2.09944551e-01],
+       [ 3.98046533e-01,  3.02587108e-01],
+       [ 3.23693142e-01,  3.81081028e-01],
+       [ 2.34204220e-01,  4.41756022e-01],
+       [ 1.33764169e-01,  4.81774996e-01],
+       [ 2.70694543e-02,  4.99266707e-01],
+       [-8.08909983e-02,  4.93413261e-01],
+       [-1.85069078e-01,  4.64488360e-01],
+       [-2.80593533e-01,  4.13844499e-01],
+       [-3.62997746e-01,  3.43849729e-01],
+       [-4.28428588e-01,  2.57776929e-01],
+       [-4.73826586e-01,  1.59650765e-01],
+       [-4.97068979e-01,  5.40595092e-02],
+       [-4.97068979e-01, -5.40595092e-02],
+       [-4.73826586e-01, -1.59650765e-01],
+       [-4.28428588e-01, -2.57776929e-01],
+       [-3.62997746e-01, -3.43849729e-01],
+       [-2.80593533e-01, -4.13844499e-01],
+       [-1.85069078e-01, -4.64488360e-01],
+       [-8.08909983e-02, -4.93413261e-01],
+       [ 2.70694543e-02, -4.99266707e-01],
+       [ 1.33764169e-01, -4.81774996e-01],
+       [ 2.34204220e-01, -4.41756022e-01],
+       [ 3.23693142e-01, -3.81081028e-01],
+       [ 3.98046533e-01, -3.02587108e-01],
+       [ 4.53787710e-01, -2.09944551e-01],
+       [ 4.88310278e-01, -1.07485220e-01],
+       [ 5.00000000e-01, -1.22464680e-16]])], [array([[-0.5       ,  0.28867513],
+       [ 0.5       ,  0.28867513]]), array([[-2.22044605e-16, -5.77350269e-01],
+       [-5.00000000e-01,  2.88675135e-01]]), array([[ 5.00000000e-01,  2.88675135e-01],
+       [-1.66533454e-16, -5.77350269e-01]])]]
+--- prim 1
+#(lambda (lambda (#(lambda (lambda (connect $1 (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist18))))) (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) $1 rep3) (#(connect (transform circle (#(lambda (transmat None None (Some $0) None None)) dist14))) $0))))
+[tscale, tstroke]
+[2.0, 4.0]
+[[array([[0., 0.],
+       [1., 0.]])], [array([[ 5.00000000e-01,  0.00000000e+00],
+       [ 4.88310278e-01,  1.07485220e-01],
+       [ 4.53787710e-01,  2.09944551e-01],
+       [ 3.98046533e-01,  3.02587108e-01],
+       [ 3.23693142e-01,  3.81081028e-01],
+       [ 2.34204220e-01,  4.41756022e-01],
+       [ 1.33764169e-01,  4.81774996e-01],
+       [ 2.70694543e-02,  4.99266707e-01],
+       [-8.08909983e-02,  4.93413261e-01],
+       [-1.85069078e-01,  4.64488360e-01],
+       [-2.80593533e-01,  4.13844499e-01],
+       [-3.62997746e-01,  3.43849729e-01],
+       [-4.28428588e-01,  2.57776929e-01],
+       [-4.73826586e-01,  1.59650765e-01],
+       [-4.97068979e-01,  5.40595092e-02],
+       [-4.97068979e-01, -5.40595092e-02],
+       [-4.73826586e-01, -1.59650765e-01],
+       [-4.28428588e-01, -2.57776929e-01],
+       [-3.62997746e-01, -3.43849729e-01],
+       [-2.80593533e-01, -4.13844499e-01],
+       [-1.85069078e-01, -4.64488360e-01],
+       [-8.08909983e-02, -4.93413261e-01],
+       [ 2.70694543e-02, -4.99266707e-01],
+       [ 1.33764169e-01, -4.81774996e-01],
+       [ 2.34204220e-01, -4.41756022e-01],
+       [ 3.23693142e-01, -3.81081028e-01],
+       [ 3.98046533e-01, -3.02587108e-01],
+       [ 4.53787710e-01, -2.09944551e-01],
+       [ 4.88310278e-01, -1.07485220e-01],
+       [ 5.00000000e-01, -1.22464680e-16]])], [array([[-0.5       ,  0.28867513],
+       [ 0.5       ,  0.28867513]]), array([[-2.22044605e-16, -5.77350269e-01],
+       [-5.00000000e-01,  2.88675135e-01]]), array([[ 5.00000000e-01,  2.88675135e-01],
+       [-1.66533454e-16, -5.77350269e-01]])]]
+--- prim 2
+#(lambda (lambda (connect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 $1) (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist16 rep1 $0))))
+[trep, ttransmat]
+[1, 2, 3, 4, 5, 6, 7]
+[]
+--- prim 3
+#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) $0 (#(connect (transform circle (#(lambda (transmat None None (Some $0) None None)) dist14))) #(transform (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) rep0) (#(lambda (transmat None None (Some $0) None None)) dist18)))))
+[maybe(tdist), tstroke]
+[-2.0, -1.0, 0, 1.0, 2.0]
+[[array([[0., 0.],
+       [1., 0.]])], [array([[ 5.00000000e-01,  0.00000000e+00],
+       [ 4.88310278e-01,  1.07485220e-01],
+       [ 4.53787710e-01,  2.09944551e-01],
+       [ 3.98046533e-01,  3.02587108e-01],
+       [ 3.23693142e-01,  3.81081028e-01],
+       [ 2.34204220e-01,  4.41756022e-01],
+       [ 1.33764169e-01,  4.81774996e-01],
+       [ 2.70694543e-02,  4.99266707e-01],
+       [-8.08909983e-02,  4.93413261e-01],
+       [-1.85069078e-01,  4.64488360e-01],
+       [-2.80593533e-01,  4.13844499e-01],
+       [-3.62997746e-01,  3.43849729e-01],
+       [-4.28428588e-01,  2.57776929e-01],
+       [-4.73826586e-01,  1.59650765e-01],
+       [-4.97068979e-01,  5.40595092e-02],
+       [-4.97068979e-01, -5.40595092e-02],
+       [-4.73826586e-01, -1.59650765e-01],
+       [-4.28428588e-01, -2.57776929e-01],
+       [-3.62997746e-01, -3.43849729e-01],
+       [-2.80593533e-01, -4.13844499e-01],
+       [-1.85069078e-01, -4.64488360e-01],
+       [-8.08909983e-02, -4.93413261e-01],
+       [ 2.70694543e-02, -4.99266707e-01],
+       [ 1.33764169e-01, -4.81774996e-01],
+       [ 2.34204220e-01, -4.41756022e-01],
+       [ 3.23693142e-01, -3.81081028e-01],
+       [ 3.98046533e-01, -3.02587108e-01],
+       [ 4.53787710e-01, -2.09944551e-01],
+       [ 4.88310278e-01, -1.07485220e-01],
+       [ 5.00000000e-01, -1.22464680e-16]])], [array([[-0.5       ,  0.28867513],
+       [ 0.5       ,  0.28867513]]), array([[-2.22044605e-16, -5.77350269e-01],
+       [-5.00000000e-01,  2.88675135e-01]]), array([[ 5.00000000e-01,  2.88675135e-01],
+       [-1.66533454e-16, -5.77350269e-01]])]]
+--- prim 4
+#(lambda (lambda (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) $0 (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) $0 $1))))
+[tstroke, maybe(tdist)]
+[[array([[0., 0.],
+       [1., 0.]])], [array([[ 5.00000000e-01,  0.00000000e+00],
+       [ 4.88310278e-01,  1.07485220e-01],
+       [ 4.53787710e-01,  2.09944551e-01],
+       [ 3.98046533e-01,  3.02587108e-01],
+       [ 3.23693142e-01,  3.81081028e-01],
+       [ 2.34204220e-01,  4.41756022e-01],
+       [ 1.33764169e-01,  4.81774996e-01],
+       [ 2.70694543e-02,  4.99266707e-01],
+       [-8.08909983e-02,  4.93413261e-01],
+       [-1.85069078e-01,  4.64488360e-01],
+       [-2.80593533e-01,  4.13844499e-01],
+       [-3.62997746e-01,  3.43849729e-01],
+       [-4.28428588e-01,  2.57776929e-01],
+       [-4.73826586e-01,  1.59650765e-01],
+       [-4.97068979e-01,  5.40595092e-02],
+       [-4.97068979e-01, -5.40595092e-02],
+       [-4.73826586e-01, -1.59650765e-01],
+       [-4.28428588e-01, -2.57776929e-01],
+       [-3.62997746e-01, -3.43849729e-01],
+       [-2.80593533e-01, -4.13844499e-01],
+       [-1.85069078e-01, -4.64488360e-01],
+       [-8.08909983e-02, -4.93413261e-01],
+       [ 2.70694543e-02, -4.99266707e-01],
+       [ 1.33764169e-01, -4.81774996e-01],
+       [ 2.34204220e-01, -4.41756022e-01],
+       [ 3.23693142e-01, -3.81081028e-01],
+       [ 3.98046533e-01, -3.02587108e-01],
+       [ 4.53787710e-01, -2.09944551e-01],
+       [ 4.88310278e-01, -1.07485220e-01],
+       [ 5.00000000e-01, -1.22464680e-16]])], [array([[-0.5       ,  0.28867513],
+       [ 0.5       ,  0.28867513]]), array([[-2.22044605e-16, -5.77350269e-01],
+       [-5.00000000e-01,  2.88675135e-01]]), array([[ 5.00000000e-01,  2.88675135e-01],
+       [-1.66533454e-16, -5.77350269e-01]])]]
+[-2.0, -1.0, 0, 1.0, 2.0]
+--- prim 5
+#(lambda (lambda (connect $1 (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))))
+[tstroke, tstroke]
+[[array([[0., 0.],
+       [1., 0.]])], [array([[ 5.00000000e-01,  0.00000000e+00],
+       [ 4.88310278e-01,  1.07485220e-01],
+       [ 4.53787710e-01,  2.09944551e-01],
+       [ 3.98046533e-01,  3.02587108e-01],
+       [ 3.23693142e-01,  3.81081028e-01],
+       [ 2.34204220e-01,  4.41756022e-01],
+       [ 1.33764169e-01,  4.81774996e-01],
+       [ 2.70694543e-02,  4.99266707e-01],
+       [-8.08909983e-02,  4.93413261e-01],
+       [-1.85069078e-01,  4.64488360e-01],
+       [-2.80593533e-01,  4.13844499e-01],
+       [-3.62997746e-01,  3.43849729e-01],
+       [-4.28428588e-01,  2.57776929e-01],
+       [-4.73826586e-01,  1.59650765e-01],
+       [-4.97068979e-01,  5.40595092e-02],
+       [-4.97068979e-01, -5.40595092e-02],
+       [-4.73826586e-01, -1.59650765e-01],
+       [-4.28428588e-01, -2.57776929e-01],
+       [-3.62997746e-01, -3.43849729e-01],
+       [-2.80593533e-01, -4.13844499e-01],
+       [-1.85069078e-01, -4.64488360e-01],
+       [-8.08909983e-02, -4.93413261e-01],
+       [ 2.70694543e-02, -4.99266707e-01],
+       [ 1.33764169e-01, -4.81774996e-01],
+       [ 2.34204220e-01, -4.41756022e-01],
+       [ 3.23693142e-01, -3.81081028e-01],
+       [ 3.98046533e-01, -3.02587108e-01],
+       [ 4.53787710e-01, -2.09944551e-01],
+       [ 4.88310278e-01, -1.07485220e-01],
+       [ 5.00000000e-01, -1.22464680e-16]])], [array([[-0.5       ,  0.28867513],
+       [ 0.5       ,  0.28867513]]), array([[-2.22044605e-16, -5.77350269e-01],
+       [-5.00000000e-01,  2.88675135e-01]]), array([[ 5.00000000e-01,  2.88675135e-01],
+       [-1.66533454e-16, -5.77350269e-01]])]]
+[[array([[0., 0.],
+       [1., 0.]])], [array([[ 5.00000000e-01,  0.00000000e+00],
+       [ 4.88310278e-01,  1.07485220e-01],
+       [ 4.53787710e-01,  2.09944551e-01],
+       [ 3.98046533e-01,  3.02587108e-01],
+       [ 3.23693142e-01,  3.81081028e-01],
+       [ 2.34204220e-01,  4.41756022e-01],
+       [ 1.33764169e-01,  4.81774996e-01],
+       [ 2.70694543e-02,  4.99266707e-01],
+       [-8.08909983e-02,  4.93413261e-01],
+       [-1.85069078e-01,  4.64488360e-01],
+       [-2.80593533e-01,  4.13844499e-01],
+       [-3.62997746e-01,  3.43849729e-01],
+       [-4.28428588e-01,  2.57776929e-01],
+       [-4.73826586e-01,  1.59650765e-01],
+       [-4.97068979e-01,  5.40595092e-02],
+       [-4.97068979e-01, -5.40595092e-02],
+       [-4.73826586e-01, -1.59650765e-01],
+       [-4.28428588e-01, -2.57776929e-01],
+       [-3.62997746e-01, -3.43849729e-01],
+       [-2.80593533e-01, -4.13844499e-01],
+       [-1.85069078e-01, -4.64488360e-01],
+       [-8.08909983e-02, -4.93413261e-01],
+       [ 2.70694543e-02, -4.99266707e-01],
+       [ 1.33764169e-01, -4.81774996e-01],
+       [ 2.34204220e-01, -4.41756022e-01],
+       [ 3.23693142e-01, -3.81081028e-01],
+       [ 3.98046533e-01, -3.02587108e-01],
+       [ 4.53787710e-01, -2.09944551e-01],
+       [ 4.88310278e-01, -1.07485220e-01],
+       [ 5.00000000e-01, -1.22464680e-16]])], [array([[-0.5       ,  0.28867513],
+       [ 0.5       ,  0.28867513]]), array([[-2.22044605e-16, -5.77350269e-01],
+       [-5.00000000e-01,  2.88675135e-01]]), array([[ 5.00000000e-01,  2.88675135e-01],
+       [-1.66533454e-16, -5.77350269e-01]])]]
+--- prim 6
+#(#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist17 rep2 (#(lambda (transmat None None (Some $0) None None)) dist6))
+[]
+--- prim 7
+#(lambda (lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) None (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (#(lambda (reflect (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) $0 (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) None $0)) angle0)) (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 $1)))))
+[trep, trep]
+[1, 2, 3, 4, 5, 6, 7]
+[1, 2, 3, 4, 5, 6, 7]
+--- prim 8
+#(lambda (lambda (#(connect (transform circle (#(lambda (transmat None None (Some $0) None None)) dist14))) (connect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) $0 $1) (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (#(lambda (transmat None None (Some $0) None None)) dist18))))))
+[trep, tscale]
+[1, 2, 3, 4, 5, 6, 7]
+[2.0, 4.0]
+--- prim 9
+#(lambda (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) None (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist16 rep1 (#(lambda (transmat None None (Some $0) None None)) dist18)) $0)))
+[tstroke]
+[[array([[0., 0.],
+       [1., 0.]])], [array([[ 5.00000000e-01,  0.00000000e+00],
+       [ 4.88310278e-01,  1.07485220e-01],
+       [ 4.53787710e-01,  2.09944551e-01],
+       [ 3.98046533e-01,  3.02587108e-01],
+       [ 3.23693142e-01,  3.81081028e-01],
+       [ 2.34204220e-01,  4.41756022e-01],
+       [ 1.33764169e-01,  4.81774996e-01],
+       [ 2.70694543e-02,  4.99266707e-01],
+       [-8.08909983e-02,  4.93413261e-01],
+       [-1.85069078e-01,  4.64488360e-01],
+       [-2.80593533e-01,  4.13844499e-01],
+       [-3.62997746e-01,  3.43849729e-01],
+       [-4.28428588e-01,  2.57776929e-01],
+       [-4.73826586e-01,  1.59650765e-01],
+       [-4.97068979e-01,  5.40595092e-02],
+       [-4.97068979e-01, -5.40595092e-02],
+       [-4.73826586e-01, -1.59650765e-01],
+       [-4.28428588e-01, -2.57776929e-01],
+       [-3.62997746e-01, -3.43849729e-01],
+       [-2.80593533e-01, -4.13844499e-01],
+       [-1.85069078e-01, -4.64488360e-01],
+       [-8.08909983e-02, -4.93413261e-01],
+       [ 2.70694543e-02, -4.99266707e-01],
+       [ 1.33764169e-01, -4.81774996e-01],
+       [ 2.34204220e-01, -4.41756022e-01],
+       [ 3.23693142e-01, -3.81081028e-01],
+       [ 3.98046533e-01, -3.02587108e-01],
+       [ 4.53787710e-01, -2.09944551e-01],
+       [ 4.88310278e-01, -1.07485220e-01],
+       [ 5.00000000e-01, -1.22464680e-16]])], [array([[-0.5       ,  0.28867513],
+       [ 0.5       ,  0.28867513]]), array([[-2.22044605e-16, -5.77350269e-01],
+       [-5.00000000e-01,  2.88675135e-01]]), array([[ 5.00000000e-01,  2.88675135e-01],
+       [-1.66533454e-16, -5.77350269e-01]])]]
+--- prim 10
+#(lambda (reflect (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) $0 (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) None $0)) angle0))
+[tstroke]
+[[array([[0., 0.],
+       [1., 0.]])], [array([[ 5.00000000e-01,  0.00000000e+00],
+       [ 4.88310278e-01,  1.07485220e-01],
+       [ 4.53787710e-01,  2.09944551e-01],
+       [ 3.98046533e-01,  3.02587108e-01],
+       [ 3.23693142e-01,  3.81081028e-01],
+       [ 2.34204220e-01,  4.41756022e-01],
+       [ 1.33764169e-01,  4.81774996e-01],
+       [ 2.70694543e-02,  4.99266707e-01],
+       [-8.08909983e-02,  4.93413261e-01],
+       [-1.85069078e-01,  4.64488360e-01],
+       [-2.80593533e-01,  4.13844499e-01],
+       [-3.62997746e-01,  3.43849729e-01],
+       [-4.28428588e-01,  2.57776929e-01],
+       [-4.73826586e-01,  1.59650765e-01],
+       [-4.97068979e-01,  5.40595092e-02],
+       [-4.97068979e-01, -5.40595092e-02],
+       [-4.73826586e-01, -1.59650765e-01],
+       [-4.28428588e-01, -2.57776929e-01],
+       [-3.62997746e-01, -3.43849729e-01],
+       [-2.80593533e-01, -4.13844499e-01],
+       [-1.85069078e-01, -4.64488360e-01],
+       [-8.08909983e-02, -4.93413261e-01],
+       [ 2.70694543e-02, -4.99266707e-01],
+       [ 1.33764169e-01, -4.81774996e-01],
+       [ 2.34204220e-01, -4.41756022e-01],
+       [ 3.23693142e-01, -3.81081028e-01],
+       [ 3.98046533e-01, -3.02587108e-01],
+       [ 4.53787710e-01, -2.09944551e-01],
+       [ 4.88310278e-01, -1.07485220e-01],
+       [ 5.00000000e-01, -1.22464680e-16]])], [array([[-0.5       ,  0.28867513],
+       [ 0.5       ,  0.28867513]]), array([[-2.22044605e-16, -5.77350269e-01],
+       [-5.00000000e-01,  2.88675135e-01]]), array([[ 5.00000000e-01,  2.88675135e-01],
+       [-1.66533454e-16, -5.77350269e-01]])]]
+--- prim 11
+#(lambda (lambda (connect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 $0) (repeat (#(connect (transform circle (#(lambda (transmat None None (Some $0) None None)) dist14))) #(transform (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) rep0) (#(lambda (transmat None None (Some $0) None None)) dist18))) rep1 (transmat None None $1 (Some dist9) None)))))
+[maybe(tdist), trep]
+[-2.0, -1.0, 0, 1.0, 2.0]
+[1, 2, 3, 4, 5, 6, 7]
+--- prim 12
+#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) $0 (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (#(lambda (transmat None None (Some $0) None None)) dist18))))
+[maybe(tdist), tstroke]
+[-2.0, -1.0, 0, 1.0, 2.0]
+[[array([[0., 0.],
+       [1., 0.]])], [array([[ 5.00000000e-01,  0.00000000e+00],
+       [ 4.88310278e-01,  1.07485220e-01],
+       [ 4.53787710e-01,  2.09944551e-01],
+       [ 3.98046533e-01,  3.02587108e-01],
+       [ 3.23693142e-01,  3.81081028e-01],
+       [ 2.34204220e-01,  4.41756022e-01],
+       [ 1.33764169e-01,  4.81774996e-01],
+       [ 2.70694543e-02,  4.99266707e-01],
+       [-8.08909983e-02,  4.93413261e-01],
+       [-1.85069078e-01,  4.64488360e-01],
+       [-2.80593533e-01,  4.13844499e-01],
+       [-3.62997746e-01,  3.43849729e-01],
+       [-4.28428588e-01,  2.57776929e-01],
+       [-4.73826586e-01,  1.59650765e-01],
+       [-4.97068979e-01,  5.40595092e-02],
+       [-4.97068979e-01, -5.40595092e-02],
+       [-4.73826586e-01, -1.59650765e-01],
+       [-4.28428588e-01, -2.57776929e-01],
+       [-3.62997746e-01, -3.43849729e-01],
+       [-2.80593533e-01, -4.13844499e-01],
+       [-1.85069078e-01, -4.64488360e-01],
+       [-8.08909983e-02, -4.93413261e-01],
+       [ 2.70694543e-02, -4.99266707e-01],
+       [ 1.33764169e-01, -4.81774996e-01],
+       [ 2.34204220e-01, -4.41756022e-01],
+       [ 3.23693142e-01, -3.81081028e-01],
+       [ 3.98046533e-01, -3.02587108e-01],
+       [ 4.53787710e-01, -2.09944551e-01],
+       [ 4.88310278e-01, -1.07485220e-01],
+       [ 5.00000000e-01, -1.22464680e-16]])], [array([[-0.5       ,  0.28867513],
+       [ 0.5       ,  0.28867513]]), array([[-2.22044605e-16, -5.77350269e-01],
+       [-5.00000000e-01,  2.88675135e-01]]), array([[ 5.00000000e-01,  2.88675135e-01],
+       [-1.66533454e-16, -5.77350269e-01]])]]
+--- prim 13
+#(transform (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) rep0) (#(lambda (transmat None None (Some $0) None None)) dist18))
+[]
+--- prim 14
+#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle)
+[tstroke]
+[[array([[0., 0.],
+       [1., 0.]])], [array([[ 5.00000000e-01,  0.00000000e+00],
+       [ 4.88310278e-01,  1.07485220e-01],
+       [ 4.53787710e-01,  2.09944551e-01],
+       [ 3.98046533e-01,  3.02587108e-01],
+       [ 3.23693142e-01,  3.81081028e-01],
+       [ 2.34204220e-01,  4.41756022e-01],
+       [ 1.33764169e-01,  4.81774996e-01],
+       [ 2.70694543e-02,  4.99266707e-01],
+       [-8.08909983e-02,  4.93413261e-01],
+       [-1.85069078e-01,  4.64488360e-01],
+       [-2.80593533e-01,  4.13844499e-01],
+       [-3.62997746e-01,  3.43849729e-01],
+       [-4.28428588e-01,  2.57776929e-01],
+       [-4.73826586e-01,  1.59650765e-01],
+       [-4.97068979e-01,  5.40595092e-02],
+       [-4.97068979e-01, -5.40595092e-02],
+       [-4.73826586e-01, -1.59650765e-01],
+       [-4.28428588e-01, -2.57776929e-01],
+       [-3.62997746e-01, -3.43849729e-01],
+       [-2.80593533e-01, -4.13844499e-01],
+       [-1.85069078e-01, -4.64488360e-01],
+       [-8.08909983e-02, -4.93413261e-01],
+       [ 2.70694543e-02, -4.99266707e-01],
+       [ 1.33764169e-01, -4.81774996e-01],
+       [ 2.34204220e-01, -4.41756022e-01],
+       [ 3.23693142e-01, -3.81081028e-01],
+       [ 3.98046533e-01, -3.02587108e-01],
+       [ 4.53787710e-01, -2.09944551e-01],
+       [ 4.88310278e-01, -1.07485220e-01],
+       [ 5.00000000e-01, -1.22464680e-16]])], [array([[-0.5       ,  0.28867513],
+       [ 0.5       ,  0.28867513]]), array([[-2.22044605e-16, -5.77350269e-01],
+       [-5.00000000e-01,  2.88675135e-01]]), array([[ 5.00000000e-01,  2.88675135e-01],
+       [-1.66533454e-16, -5.77350269e-01]])]]
+--- prim 15
+#(#(lambda (connect (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (transmat None None None (Some $0) None)))) dist9)
+[tstroke]
+[[array([[0., 0.],
+       [1., 0.]])], [array([[ 5.00000000e-01,  0.00000000e+00],
+       [ 4.88310278e-01,  1.07485220e-01],
+       [ 4.53787710e-01,  2.09944551e-01],
+       [ 3.98046533e-01,  3.02587108e-01],
+       [ 3.23693142e-01,  3.81081028e-01],
+       [ 2.34204220e-01,  4.41756022e-01],
+       [ 1.33764169e-01,  4.81774996e-01],
+       [ 2.70694543e-02,  4.99266707e-01],
+       [-8.08909983e-02,  4.93413261e-01],
+       [-1.85069078e-01,  4.64488360e-01],
+       [-2.80593533e-01,  4.13844499e-01],
+       [-3.62997746e-01,  3.43849729e-01],
+       [-4.28428588e-01,  2.57776929e-01],
+       [-4.73826586e-01,  1.59650765e-01],
+       [-4.97068979e-01,  5.40595092e-02],
+       [-4.97068979e-01, -5.40595092e-02],
+       [-4.73826586e-01, -1.59650765e-01],
+       [-4.28428588e-01, -2.57776929e-01],
+       [-3.62997746e-01, -3.43849729e-01],
+       [-2.80593533e-01, -4.13844499e-01],
+       [-1.85069078e-01, -4.64488360e-01],
+       [-8.08909983e-02, -4.93413261e-01],
+       [ 2.70694543e-02, -4.99266707e-01],
+       [ 1.33764169e-01, -4.81774996e-01],
+       [ 2.34204220e-01, -4.41756022e-01],
+       [ 3.23693142e-01, -3.81081028e-01],
+       [ 3.98046533e-01, -3.02587108e-01],
+       [ 4.53787710e-01, -2.09944551e-01],
+       [ 4.88310278e-01, -1.07485220e-01],
+       [ 5.00000000e-01, -1.22464680e-16]])], [array([[-0.5       ,  0.28867513],
+       [ 0.5       ,  0.28867513]]), array([[-2.22044605e-16, -5.77350269e-01],
+       [-5.00000000e-01,  2.88675135e-01]]), array([[ 5.00000000e-01,  2.88675135e-01],
+       [-1.66533454e-16, -5.77350269e-01]])]]
+--- prim 16
+#(lambda (#(connect (transform circle (#(lambda (transmat None None (Some $0) None None)) dist14))) (connect (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist16 rep1 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) $0 rep3))))
+[tscale]
+[2.0, 4.0]
+--- prim 17
+#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None)))))
+[maybe(tdist), tstroke, tstroke]
+[-2.0, -1.0, 0, 1.0, 2.0]
+[[array([[0., 0.],
+       [1., 0.]])], [array([[ 5.00000000e-01,  0.00000000e+00],
+       [ 4.88310278e-01,  1.07485220e-01],
+       [ 4.53787710e-01,  2.09944551e-01],
+       [ 3.98046533e-01,  3.02587108e-01],
+       [ 3.23693142e-01,  3.81081028e-01],
+       [ 2.34204220e-01,  4.41756022e-01],
+       [ 1.33764169e-01,  4.81774996e-01],
+       [ 2.70694543e-02,  4.99266707e-01],
+       [-8.08909983e-02,  4.93413261e-01],
+       [-1.85069078e-01,  4.64488360e-01],
+       [-2.80593533e-01,  4.13844499e-01],
+       [-3.62997746e-01,  3.43849729e-01],
+       [-4.28428588e-01,  2.57776929e-01],
+       [-4.73826586e-01,  1.59650765e-01],
+       [-4.97068979e-01,  5.40595092e-02],
+       [-4.97068979e-01, -5.40595092e-02],
+       [-4.73826586e-01, -1.59650765e-01],
+       [-4.28428588e-01, -2.57776929e-01],
+       [-3.62997746e-01, -3.43849729e-01],
+       [-2.80593533e-01, -4.13844499e-01],
+       [-1.85069078e-01, -4.64488360e-01],
+       [-8.08909983e-02, -4.93413261e-01],
+       [ 2.70694543e-02, -4.99266707e-01],
+       [ 1.33764169e-01, -4.81774996e-01],
+       [ 2.34204220e-01, -4.41756022e-01],
+       [ 3.23693142e-01, -3.81081028e-01],
+       [ 3.98046533e-01, -3.02587108e-01],
+       [ 4.53787710e-01, -2.09944551e-01],
+       [ 4.88310278e-01, -1.07485220e-01],
+       [ 5.00000000e-01, -1.22464680e-16]])], [array([[-0.5       ,  0.28867513],
+       [ 0.5       ,  0.28867513]]), array([[-2.22044605e-16, -5.77350269e-01],
+       [-5.00000000e-01,  2.88675135e-01]]), array([[ 5.00000000e-01,  2.88675135e-01],
+       [-1.66533454e-16, -5.77350269e-01]])]]
+[[array([[0., 0.],
+       [1., 0.]])], [array([[ 5.00000000e-01,  0.00000000e+00],
+       [ 4.88310278e-01,  1.07485220e-01],
+       [ 4.53787710e-01,  2.09944551e-01],
+       [ 3.98046533e-01,  3.02587108e-01],
+       [ 3.23693142e-01,  3.81081028e-01],
+       [ 2.34204220e-01,  4.41756022e-01],
+       [ 1.33764169e-01,  4.81774996e-01],
+       [ 2.70694543e-02,  4.99266707e-01],
+       [-8.08909983e-02,  4.93413261e-01],
+       [-1.85069078e-01,  4.64488360e-01],
+       [-2.80593533e-01,  4.13844499e-01],
+       [-3.62997746e-01,  3.43849729e-01],
+       [-4.28428588e-01,  2.57776929e-01],
+       [-4.73826586e-01,  1.59650765e-01],
+       [-4.97068979e-01,  5.40595092e-02],
+       [-4.97068979e-01, -5.40595092e-02],
+       [-4.73826586e-01, -1.59650765e-01],
+       [-4.28428588e-01, -2.57776929e-01],
+       [-3.62997746e-01, -3.43849729e-01],
+       [-2.80593533e-01, -4.13844499e-01],
+       [-1.85069078e-01, -4.64488360e-01],
+       [-8.08909983e-02, -4.93413261e-01],
+       [ 2.70694543e-02, -4.99266707e-01],
+       [ 1.33764169e-01, -4.81774996e-01],
+       [ 2.34204220e-01, -4.41756022e-01],
+       [ 3.23693142e-01, -3.81081028e-01],
+       [ 3.98046533e-01, -3.02587108e-01],
+       [ 4.53787710e-01, -2.09944551e-01],
+       [ 4.88310278e-01, -1.07485220e-01],
+       [ 5.00000000e-01, -1.22464680e-16]])], [array([[-0.5       ,  0.28867513],
+       [ 0.5       ,  0.28867513]]), array([[-2.22044605e-16, -5.77350269e-01],
+       [-5.00000000e-01,  2.88675135e-01]]), array([[ 5.00000000e-01,  2.88675135e-01],
+       [-1.66533454e-16, -5.77350269e-01]])]]
+--- prim 18
+#(connect (transform circle (#(lambda (transmat None None (Some $0) None None)) dist14)))
+[tstroke]
+[[array([[0., 0.],
+       [1., 0.]])], [array([[ 5.00000000e-01,  0.00000000e+00],
+       [ 4.88310278e-01,  1.07485220e-01],
+       [ 4.53787710e-01,  2.09944551e-01],
+       [ 3.98046533e-01,  3.02587108e-01],
+       [ 3.23693142e-01,  3.81081028e-01],
+       [ 2.34204220e-01,  4.41756022e-01],
+       [ 1.33764169e-01,  4.81774996e-01],
+       [ 2.70694543e-02,  4.99266707e-01],
+       [-8.08909983e-02,  4.93413261e-01],
+       [-1.85069078e-01,  4.64488360e-01],
+       [-2.80593533e-01,  4.13844499e-01],
+       [-3.62997746e-01,  3.43849729e-01],
+       [-4.28428588e-01,  2.57776929e-01],
+       [-4.73826586e-01,  1.59650765e-01],
+       [-4.97068979e-01,  5.40595092e-02],
+       [-4.97068979e-01, -5.40595092e-02],
+       [-4.73826586e-01, -1.59650765e-01],
+       [-4.28428588e-01, -2.57776929e-01],
+       [-3.62997746e-01, -3.43849729e-01],
+       [-2.80593533e-01, -4.13844499e-01],
+       [-1.85069078e-01, -4.64488360e-01],
+       [-8.08909983e-02, -4.93413261e-01],
+       [ 2.70694543e-02, -4.99266707e-01],
+       [ 1.33764169e-01, -4.81774996e-01],
+       [ 2.34204220e-01, -4.41756022e-01],
+       [ 3.23693142e-01, -3.81081028e-01],
+       [ 3.98046533e-01, -3.02587108e-01],
+       [ 4.53787710e-01, -2.09944551e-01],
+       [ 4.88310278e-01, -1.07485220e-01],
+       [ 5.00000000e-01, -1.22464680e-16]])], [array([[-0.5       ,  0.28867513],
+       [ 0.5       ,  0.28867513]]), array([[-2.22044605e-16, -5.77350269e-01],
+       [-5.00000000e-01,  2.88675135e-01]]), array([[ 5.00000000e-01,  2.88675135e-01],
+       [-1.66533454e-16, -5.77350269e-01]])]]
+--- prim 19
+#(lambda (connect (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (transmat None None None (Some $0) None))))
+[tdist, tstroke]
+[-2.0, -1.0, 0, 1.0, 2.0]
+[[array([[0., 0.],
+       [1., 0.]])], [array([[ 5.00000000e-01,  0.00000000e+00],
+       [ 4.88310278e-01,  1.07485220e-01],
+       [ 4.53787710e-01,  2.09944551e-01],
+       [ 3.98046533e-01,  3.02587108e-01],
+       [ 3.23693142e-01,  3.81081028e-01],
+       [ 2.34204220e-01,  4.41756022e-01],
+       [ 1.33764169e-01,  4.81774996e-01],
+       [ 2.70694543e-02,  4.99266707e-01],
+       [-8.08909983e-02,  4.93413261e-01],
+       [-1.85069078e-01,  4.64488360e-01],
+       [-2.80593533e-01,  4.13844499e-01],
+       [-3.62997746e-01,  3.43849729e-01],
+       [-4.28428588e-01,  2.57776929e-01],
+       [-4.73826586e-01,  1.59650765e-01],
+       [-4.97068979e-01,  5.40595092e-02],
+       [-4.97068979e-01, -5.40595092e-02],
+       [-4.73826586e-01, -1.59650765e-01],
+       [-4.28428588e-01, -2.57776929e-01],
+       [-3.62997746e-01, -3.43849729e-01],
+       [-2.80593533e-01, -4.13844499e-01],
+       [-1.85069078e-01, -4.64488360e-01],
+       [-8.08909983e-02, -4.93413261e-01],
+       [ 2.70694543e-02, -4.99266707e-01],
+       [ 1.33764169e-01, -4.81774996e-01],
+       [ 2.34204220e-01, -4.41756022e-01],
+       [ 3.23693142e-01, -3.81081028e-01],
+       [ 3.98046533e-01, -3.02587108e-01],
+       [ 4.53787710e-01, -2.09944551e-01],
+       [ 4.88310278e-01, -1.07485220e-01],
+       [ 5.00000000e-01, -1.22464680e-16]])], [array([[-0.5       ,  0.28867513],
+       [ 0.5       ,  0.28867513]]), array([[-2.22044605e-16, -5.77350269e-01],
+       [-5.00000000e-01,  2.88675135e-01]]), array([[ 5.00000000e-01,  2.88675135e-01],
+       [-1.66533454e-16, -5.77350269e-01]])]]
+--- prim 20
+#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1))))))
+[tdist, trep, ttransmat]
+[-2.0, -1.0, 0, 1.0, 2.0]
+[1, 2, 3, 4, 5, 6, 7]
+[]
+--- prim 21
+#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18))))
+[tscale, trep]
+[2.0, 4.0]
+[1, 2, 3, 4, 5, 6, 7]
+--- prim 22
+#(transform line (#(lambda (transmat None None (Some $0) None None)) dist4))
+[]
+--- prim 23
+#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4)))
+[trep]
+[1, 2, 3, 4, 5, 6, 7]
+--- prim 24
+#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None)))
+[tscale]
+[2.0, 4.0]
+--- prim 25
+#(lambda (transmat None None (Some $0) None None))
+	(does not return a tstroke)
+--- prim 26
+None
+--- prim 27
+Some
+--- prim 28
+line
+--- prim 29
+circle
+--- prim 30
+transmat
+--- prim 31
+transform
+--- prim 32
+reflect
+--- prim 33
+connect
+--- prim 34
+repeat
+--- prim 35
+scale7
+--- prim 36
+dist1
+--- prim 37
+dist3
+--- prim 38
+dist4
+--- prim 39
+dist6
+--- prim 40
+dist9
+--- prim 41
+dist14
+--- prim 42
+dist15
+--- prim 43
+dist16
+--- prim 44
+dist17
+--- prim 45
+dist18
+--- prim 46
+angle0
+--- prim 47
+angle2
+--- prim 48
+trs
+--- prim 49
+rep0
+--- prim 50
+rep1
+--- prim 51
+rep2
+--- prim 52
+rep3
+--- prim 0
+#(lambda (reflect (#(lambda (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) None (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist16 rep1 (#(lambda (transmat None None (Some $0) None None)) dist18)) $0))) $0) angle0))
+[tstroke]
+[[array([[0., 0.],
+       [1., 0.]])], [array([[ 5.00000000e-01,  0.00000000e+00],
+       [ 4.88310278e-01,  1.07485220e-01],
+       [ 4.53787710e-01,  2.09944551e-01],
+       [ 3.98046533e-01,  3.02587108e-01],
+       [ 3.23693142e-01,  3.81081028e-01],
+       [ 2.34204220e-01,  4.41756022e-01],
+       [ 1.33764169e-01,  4.81774996e-01],
+       [ 2.70694543e-02,  4.99266707e-01],
+       [-8.08909983e-02,  4.93413261e-01],
+       [-1.85069078e-01,  4.64488360e-01],
+       [-2.80593533e-01,  4.13844499e-01],
+       [-3.62997746e-01,  3.43849729e-01],
+       [-4.28428588e-01,  2.57776929e-01],
+       [-4.73826586e-01,  1.59650765e-01],
+       [-4.97068979e-01,  5.40595092e-02],
+       [-4.97068979e-01, -5.40595092e-02],
+       [-4.73826586e-01, -1.59650765e-01],
+       [-4.28428588e-01, -2.57776929e-01],
+       [-3.62997746e-01, -3.43849729e-01],
+       [-2.80593533e-01, -4.13844499e-01],
+       [-1.85069078e-01, -4.64488360e-01],
+       [-8.08909983e-02, -4.93413261e-01],
+       [ 2.70694543e-02, -4.99266707e-01],
+       [ 1.33764169e-01, -4.81774996e-01],
+       [ 2.34204220e-01, -4.41756022e-01],
+       [ 3.23693142e-01, -3.81081028e-01],
+       [ 3.98046533e-01, -3.02587108e-01],
+       [ 4.53787710e-01, -2.09944551e-01],
+       [ 4.88310278e-01, -1.07485220e-01],
+       [ 5.00000000e-01, -1.22464680e-16]])], [array([[-0.5       ,  0.28867513],
+       [ 0.5       ,  0.28867513]]), array([[-2.22044605e-16, -5.77350269e-01],
+       [-5.00000000e-01,  2.88675135e-01]]), array([[ 5.00000000e-01,  2.88675135e-01],
+       [-1.66533454e-16, -5.77350269e-01]])]]
+--- prim 1
+#(lambda (lambda (#(lambda (lambda (connect $1 (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist18))))) (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) $1 rep3) (#(connect (transform circle (#(lambda (transmat None None (Some $0) None None)) dist14))) $0))))
+[tscale, tstroke]
+[2.0, 4.0]
+[[array([[0., 0.],
+       [1., 0.]])], [array([[ 5.00000000e-01,  0.00000000e+00],
+       [ 4.88310278e-01,  1.07485220e-01],
+       [ 4.53787710e-01,  2.09944551e-01],
+       [ 3.98046533e-01,  3.02587108e-01],
+       [ 3.23693142e-01,  3.81081028e-01],
+       [ 2.34204220e-01,  4.41756022e-01],
+       [ 1.33764169e-01,  4.81774996e-01],
+       [ 2.70694543e-02,  4.99266707e-01],
+       [-8.08909983e-02,  4.93413261e-01],
+       [-1.85069078e-01,  4.64488360e-01],
+       [-2.80593533e-01,  4.13844499e-01],
+       [-3.62997746e-01,  3.43849729e-01],
+       [-4.28428588e-01,  2.57776929e-01],
+       [-4.73826586e-01,  1.59650765e-01],
+       [-4.97068979e-01,  5.40595092e-02],
+       [-4.97068979e-01, -5.40595092e-02],
+       [-4.73826586e-01, -1.59650765e-01],
+       [-4.28428588e-01, -2.57776929e-01],
+       [-3.62997746e-01, -3.43849729e-01],
+       [-2.80593533e-01, -4.13844499e-01],
+       [-1.85069078e-01, -4.64488360e-01],
+       [-8.08909983e-02, -4.93413261e-01],
+       [ 2.70694543e-02, -4.99266707e-01],
+       [ 1.33764169e-01, -4.81774996e-01],
+       [ 2.34204220e-01, -4.41756022e-01],
+       [ 3.23693142e-01, -3.81081028e-01],
+       [ 3.98046533e-01, -3.02587108e-01],
+       [ 4.53787710e-01, -2.09944551e-01],
+       [ 4.88310278e-01, -1.07485220e-01],
+       [ 5.00000000e-01, -1.22464680e-16]])], [array([[-0.5       ,  0.28867513],
+       [ 0.5       ,  0.28867513]]), array([[-2.22044605e-16, -5.77350269e-01],
+       [-5.00000000e-01,  2.88675135e-01]]), array([[ 5.00000000e-01,  2.88675135e-01],
+       [-1.66533454e-16, -5.77350269e-01]])]]
+--- prim 2
+#(lambda (lambda (connect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 $1) (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist16 rep1 $0))))
+[trep, ttransmat]
+[1, 2, 3, 4, 5, 6, 7]
+[]
+--- prim 3
+#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) $0 (#(connect (transform circle (#(lambda (transmat None None (Some $0) None None)) dist14))) #(transform (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) rep0) (#(lambda (transmat None None (Some $0) None None)) dist18)))))
+[maybe(tdist), tstroke]
+[-2.0, -1.0, 0, 1.0, 2.0]
+[[array([[0., 0.],
+       [1., 0.]])], [array([[ 5.00000000e-01,  0.00000000e+00],
+       [ 4.88310278e-01,  1.07485220e-01],
+       [ 4.53787710e-01,  2.09944551e-01],
+       [ 3.98046533e-01,  3.02587108e-01],
+       [ 3.23693142e-01,  3.81081028e-01],
+       [ 2.34204220e-01,  4.41756022e-01],
+       [ 1.33764169e-01,  4.81774996e-01],
+       [ 2.70694543e-02,  4.99266707e-01],
+       [-8.08909983e-02,  4.93413261e-01],
+       [-1.85069078e-01,  4.64488360e-01],
+       [-2.80593533e-01,  4.13844499e-01],
+       [-3.62997746e-01,  3.43849729e-01],
+       [-4.28428588e-01,  2.57776929e-01],
+       [-4.73826586e-01,  1.59650765e-01],
+       [-4.97068979e-01,  5.40595092e-02],
+       [-4.97068979e-01, -5.40595092e-02],
+       [-4.73826586e-01, -1.59650765e-01],
+       [-4.28428588e-01, -2.57776929e-01],
+       [-3.62997746e-01, -3.43849729e-01],
+       [-2.80593533e-01, -4.13844499e-01],
+       [-1.85069078e-01, -4.64488360e-01],
+       [-8.08909983e-02, -4.93413261e-01],
+       [ 2.70694543e-02, -4.99266707e-01],
+       [ 1.33764169e-01, -4.81774996e-01],
+       [ 2.34204220e-01, -4.41756022e-01],
+       [ 3.23693142e-01, -3.81081028e-01],
+       [ 3.98046533e-01, -3.02587108e-01],
+       [ 4.53787710e-01, -2.09944551e-01],
+       [ 4.88310278e-01, -1.07485220e-01],
+       [ 5.00000000e-01, -1.22464680e-16]])], [array([[-0.5       ,  0.28867513],
+       [ 0.5       ,  0.28867513]]), array([[-2.22044605e-16, -5.77350269e-01],
+       [-5.00000000e-01,  2.88675135e-01]]), array([[ 5.00000000e-01,  2.88675135e-01],
+       [-1.66533454e-16, -5.77350269e-01]])]]
+--- prim 4
+#(lambda (lambda (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) $0 (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) $0 $1))))
+[tstroke, maybe(tdist)]
+[[array([[0., 0.],
+       [1., 0.]])], [array([[ 5.00000000e-01,  0.00000000e+00],
+       [ 4.88310278e-01,  1.07485220e-01],
+       [ 4.53787710e-01,  2.09944551e-01],
+       [ 3.98046533e-01,  3.02587108e-01],
+       [ 3.23693142e-01,  3.81081028e-01],
+       [ 2.34204220e-01,  4.41756022e-01],
+       [ 1.33764169e-01,  4.81774996e-01],
+       [ 2.70694543e-02,  4.99266707e-01],
+       [-8.08909983e-02,  4.93413261e-01],
+       [-1.85069078e-01,  4.64488360e-01],
+       [-2.80593533e-01,  4.13844499e-01],
+       [-3.62997746e-01,  3.43849729e-01],
+       [-4.28428588e-01,  2.57776929e-01],
+       [-4.73826586e-01,  1.59650765e-01],
+       [-4.97068979e-01,  5.40595092e-02],
+       [-4.97068979e-01, -5.40595092e-02],
+       [-4.73826586e-01, -1.59650765e-01],
+       [-4.28428588e-01, -2.57776929e-01],
+       [-3.62997746e-01, -3.43849729e-01],
+       [-2.80593533e-01, -4.13844499e-01],
+       [-1.85069078e-01, -4.64488360e-01],
+       [-8.08909983e-02, -4.93413261e-01],
+       [ 2.70694543e-02, -4.99266707e-01],
+       [ 1.33764169e-01, -4.81774996e-01],
+       [ 2.34204220e-01, -4.41756022e-01],
+       [ 3.23693142e-01, -3.81081028e-01],
+       [ 3.98046533e-01, -3.02587108e-01],
+       [ 4.53787710e-01, -2.09944551e-01],
+       [ 4.88310278e-01, -1.07485220e-01],
+       [ 5.00000000e-01, -1.22464680e-16]])], [array([[-0.5       ,  0.28867513],
+       [ 0.5       ,  0.28867513]]), array([[-2.22044605e-16, -5.77350269e-01],
+       [-5.00000000e-01,  2.88675135e-01]]), array([[ 5.00000000e-01,  2.88675135e-01],
+       [-1.66533454e-16, -5.77350269e-01]])]]
+[-2.0, -1.0, 0, 1.0, 2.0]
+--- prim 5
+#(lambda (lambda (connect $1 (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))))
+[tstroke, tstroke]
+[[array([[0., 0.],
+       [1., 0.]])], [array([[ 5.00000000e-01,  0.00000000e+00],
+       [ 4.88310278e-01,  1.07485220e-01],
+       [ 4.53787710e-01,  2.09944551e-01],
+       [ 3.98046533e-01,  3.02587108e-01],
+       [ 3.23693142e-01,  3.81081028e-01],
+       [ 2.34204220e-01,  4.41756022e-01],
+       [ 1.33764169e-01,  4.81774996e-01],
+       [ 2.70694543e-02,  4.99266707e-01],
+       [-8.08909983e-02,  4.93413261e-01],
+       [-1.85069078e-01,  4.64488360e-01],
+       [-2.80593533e-01,  4.13844499e-01],
+       [-3.62997746e-01,  3.43849729e-01],
+       [-4.28428588e-01,  2.57776929e-01],
+       [-4.73826586e-01,  1.59650765e-01],
+       [-4.97068979e-01,  5.40595092e-02],
+       [-4.97068979e-01, -5.40595092e-02],
+       [-4.73826586e-01, -1.59650765e-01],
+       [-4.28428588e-01, -2.57776929e-01],
+       [-3.62997746e-01, -3.43849729e-01],
+       [-2.80593533e-01, -4.13844499e-01],
+       [-1.85069078e-01, -4.64488360e-01],
+       [-8.08909983e-02, -4.93413261e-01],
+       [ 2.70694543e-02, -4.99266707e-01],
+       [ 1.33764169e-01, -4.81774996e-01],
+       [ 2.34204220e-01, -4.41756022e-01],
+       [ 3.23693142e-01, -3.81081028e-01],
+       [ 3.98046533e-01, -3.02587108e-01],
+       [ 4.53787710e-01, -2.09944551e-01],
+       [ 4.88310278e-01, -1.07485220e-01],
+       [ 5.00000000e-01, -1.22464680e-16]])], [array([[-0.5       ,  0.28867513],
+       [ 0.5       ,  0.28867513]]), array([[-2.22044605e-16, -5.77350269e-01],
+       [-5.00000000e-01,  2.88675135e-01]]), array([[ 5.00000000e-01,  2.88675135e-01],
+       [-1.66533454e-16, -5.77350269e-01]])]]
+[[array([[0., 0.],
+       [1., 0.]])], [array([[ 5.00000000e-01,  0.00000000e+00],
+       [ 4.88310278e-01,  1.07485220e-01],
+       [ 4.53787710e-01,  2.09944551e-01],
+       [ 3.98046533e-01,  3.02587108e-01],
+       [ 3.23693142e-01,  3.81081028e-01],
+       [ 2.34204220e-01,  4.41756022e-01],
+       [ 1.33764169e-01,  4.81774996e-01],
+       [ 2.70694543e-02,  4.99266707e-01],
+       [-8.08909983e-02,  4.93413261e-01],
+       [-1.85069078e-01,  4.64488360e-01],
+       [-2.80593533e-01,  4.13844499e-01],
+       [-3.62997746e-01,  3.43849729e-01],
+       [-4.28428588e-01,  2.57776929e-01],
+       [-4.73826586e-01,  1.59650765e-01],
+       [-4.97068979e-01,  5.40595092e-02],
+       [-4.97068979e-01, -5.40595092e-02],
+       [-4.73826586e-01, -1.59650765e-01],
+       [-4.28428588e-01, -2.57776929e-01],
+       [-3.62997746e-01, -3.43849729e-01],
+       [-2.80593533e-01, -4.13844499e-01],
+       [-1.85069078e-01, -4.64488360e-01],
+       [-8.08909983e-02, -4.93413261e-01],
+       [ 2.70694543e-02, -4.99266707e-01],
+       [ 1.33764169e-01, -4.81774996e-01],
+       [ 2.34204220e-01, -4.41756022e-01],
+       [ 3.23693142e-01, -3.81081028e-01],
+       [ 3.98046533e-01, -3.02587108e-01],
+       [ 4.53787710e-01, -2.09944551e-01],
+       [ 4.88310278e-01, -1.07485220e-01],
+       [ 5.00000000e-01, -1.22464680e-16]])], [array([[-0.5       ,  0.28867513],
+       [ 0.5       ,  0.28867513]]), array([[-2.22044605e-16, -5.77350269e-01],
+       [-5.00000000e-01,  2.88675135e-01]]), array([[ 5.00000000e-01,  2.88675135e-01],
+       [-1.66533454e-16, -5.77350269e-01]])]]
+--- prim 6
+#(#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist17 rep2 (#(lambda (transmat None None (Some $0) None None)) dist6))
+[]
+--- prim 7
+#(lambda (lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) None (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (#(lambda (reflect (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) $0 (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) None $0)) angle0)) (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 $1)))))
+[trep, trep]
+[1, 2, 3, 4, 5, 6, 7]
+[1, 2, 3, 4, 5, 6, 7]
+--- prim 8
+#(lambda (lambda (#(connect (transform circle (#(lambda (transmat None None (Some $0) None None)) dist14))) (connect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) $0 $1) (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (#(lambda (transmat None None (Some $0) None None)) dist18))))))
+[trep, tscale]
+[1, 2, 3, 4, 5, 6, 7]
+[2.0, 4.0]
+--- prim 9
+#(lambda (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) None (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist16 rep1 (#(lambda (transmat None None (Some $0) None None)) dist18)) $0)))
+[tstroke]
+[[array([[0., 0.],
+       [1., 0.]])], [array([[ 5.00000000e-01,  0.00000000e+00],
+       [ 4.88310278e-01,  1.07485220e-01],
+       [ 4.53787710e-01,  2.09944551e-01],
+       [ 3.98046533e-01,  3.02587108e-01],
+       [ 3.23693142e-01,  3.81081028e-01],
+       [ 2.34204220e-01,  4.41756022e-01],
+       [ 1.33764169e-01,  4.81774996e-01],
+       [ 2.70694543e-02,  4.99266707e-01],
+       [-8.08909983e-02,  4.93413261e-01],
+       [-1.85069078e-01,  4.64488360e-01],
+       [-2.80593533e-01,  4.13844499e-01],
+       [-3.62997746e-01,  3.43849729e-01],
+       [-4.28428588e-01,  2.57776929e-01],
+       [-4.73826586e-01,  1.59650765e-01],
+       [-4.97068979e-01,  5.40595092e-02],
+       [-4.97068979e-01, -5.40595092e-02],
+       [-4.73826586e-01, -1.59650765e-01],
+       [-4.28428588e-01, -2.57776929e-01],
+       [-3.62997746e-01, -3.43849729e-01],
+       [-2.80593533e-01, -4.13844499e-01],
+       [-1.85069078e-01, -4.64488360e-01],
+       [-8.08909983e-02, -4.93413261e-01],
+       [ 2.70694543e-02, -4.99266707e-01],
+       [ 1.33764169e-01, -4.81774996e-01],
+       [ 2.34204220e-01, -4.41756022e-01],
+       [ 3.23693142e-01, -3.81081028e-01],
+       [ 3.98046533e-01, -3.02587108e-01],
+       [ 4.53787710e-01, -2.09944551e-01],
+       [ 4.88310278e-01, -1.07485220e-01],
+       [ 5.00000000e-01, -1.22464680e-16]])], [array([[-0.5       ,  0.28867513],
+       [ 0.5       ,  0.28867513]]), array([[-2.22044605e-16, -5.77350269e-01],
+       [-5.00000000e-01,  2.88675135e-01]]), array([[ 5.00000000e-01,  2.88675135e-01],
+       [-1.66533454e-16, -5.77350269e-01]])]]
+--- prim 10
+#(lambda (reflect (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) $0 (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) None $0)) angle0))
+[tstroke]
+[[array([[0., 0.],
+       [1., 0.]])], [array([[ 5.00000000e-01,  0.00000000e+00],
+       [ 4.88310278e-01,  1.07485220e-01],
+       [ 4.53787710e-01,  2.09944551e-01],
+       [ 3.98046533e-01,  3.02587108e-01],
+       [ 3.23693142e-01,  3.81081028e-01],
+       [ 2.34204220e-01,  4.41756022e-01],
+       [ 1.33764169e-01,  4.81774996e-01],
+       [ 2.70694543e-02,  4.99266707e-01],
+       [-8.08909983e-02,  4.93413261e-01],
+       [-1.85069078e-01,  4.64488360e-01],
+       [-2.80593533e-01,  4.13844499e-01],
+       [-3.62997746e-01,  3.43849729e-01],
+       [-4.28428588e-01,  2.57776929e-01],
+       [-4.73826586e-01,  1.59650765e-01],
+       [-4.97068979e-01,  5.40595092e-02],
+       [-4.97068979e-01, -5.40595092e-02],
+       [-4.73826586e-01, -1.59650765e-01],
+       [-4.28428588e-01, -2.57776929e-01],
+       [-3.62997746e-01, -3.43849729e-01],
+       [-2.80593533e-01, -4.13844499e-01],
+       [-1.85069078e-01, -4.64488360e-01],
+       [-8.08909983e-02, -4.93413261e-01],
+       [ 2.70694543e-02, -4.99266707e-01],
+       [ 1.33764169e-01, -4.81774996e-01],
+       [ 2.34204220e-01, -4.41756022e-01],
+       [ 3.23693142e-01, -3.81081028e-01],
+       [ 3.98046533e-01, -3.02587108e-01],
+       [ 4.53787710e-01, -2.09944551e-01],
+       [ 4.88310278e-01, -1.07485220e-01],
+       [ 5.00000000e-01, -1.22464680e-16]])], [array([[-0.5       ,  0.28867513],
+       [ 0.5       ,  0.28867513]]), array([[-2.22044605e-16, -5.77350269e-01],
+       [-5.00000000e-01,  2.88675135e-01]]), array([[ 5.00000000e-01,  2.88675135e-01],
+       [-1.66533454e-16, -5.77350269e-01]])]]
+--- prim 11
+#(lambda (lambda (connect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 $0) (repeat (#(connect (transform circle (#(lambda (transmat None None (Some $0) None None)) dist14))) #(transform (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) rep0) (#(lambda (transmat None None (Some $0) None None)) dist18))) rep1 (transmat None None $1 (Some dist9) None)))))
+[maybe(tdist), trep]
+[-2.0, -1.0, 0, 1.0, 2.0]
+[1, 2, 3, 4, 5, 6, 7]
+--- prim 12
+#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) $0 (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (#(lambda (transmat None None (Some $0) None None)) dist18))))
+[maybe(tdist), tstroke]
+[-2.0, -1.0, 0, 1.0, 2.0]
+[[array([[0., 0.],
+       [1., 0.]])], [array([[ 5.00000000e-01,  0.00000000e+00],
+       [ 4.88310278e-01,  1.07485220e-01],
+       [ 4.53787710e-01,  2.09944551e-01],
+       [ 3.98046533e-01,  3.02587108e-01],
+       [ 3.23693142e-01,  3.81081028e-01],
+       [ 2.34204220e-01,  4.41756022e-01],
+       [ 1.33764169e-01,  4.81774996e-01],
+       [ 2.70694543e-02,  4.99266707e-01],
+       [-8.08909983e-02,  4.93413261e-01],
+       [-1.85069078e-01,  4.64488360e-01],
+       [-2.80593533e-01,  4.13844499e-01],
+       [-3.62997746e-01,  3.43849729e-01],
+       [-4.28428588e-01,  2.57776929e-01],
+       [-4.73826586e-01,  1.59650765e-01],
+       [-4.97068979e-01,  5.40595092e-02],
+       [-4.97068979e-01, -5.40595092e-02],
+       [-4.73826586e-01, -1.59650765e-01],
+       [-4.28428588e-01, -2.57776929e-01],
+       [-3.62997746e-01, -3.43849729e-01],
+       [-2.80593533e-01, -4.13844499e-01],
+       [-1.85069078e-01, -4.64488360e-01],
+       [-8.08909983e-02, -4.93413261e-01],
+       [ 2.70694543e-02, -4.99266707e-01],
+       [ 1.33764169e-01, -4.81774996e-01],
+       [ 2.34204220e-01, -4.41756022e-01],
+       [ 3.23693142e-01, -3.81081028e-01],
+       [ 3.98046533e-01, -3.02587108e-01],
+       [ 4.53787710e-01, -2.09944551e-01],
+       [ 4.88310278e-01, -1.07485220e-01],
+       [ 5.00000000e-01, -1.22464680e-16]])], [array([[-0.5       ,  0.28867513],
+       [ 0.5       ,  0.28867513]]), array([[-2.22044605e-16, -5.77350269e-01],
+       [-5.00000000e-01,  2.88675135e-01]]), array([[ 5.00000000e-01,  2.88675135e-01],
+       [-1.66533454e-16, -5.77350269e-01]])]]
+--- prim 13
+#(transform (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) rep0) (#(lambda (transmat None None (Some $0) None None)) dist18))
+[]
+--- prim 14
+#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle)
+[tstroke]
+[[array([[0., 0.],
+       [1., 0.]])], [array([[ 5.00000000e-01,  0.00000000e+00],
+       [ 4.88310278e-01,  1.07485220e-01],
+       [ 4.53787710e-01,  2.09944551e-01],
+       [ 3.98046533e-01,  3.02587108e-01],
+       [ 3.23693142e-01,  3.81081028e-01],
+       [ 2.34204220e-01,  4.41756022e-01],
+       [ 1.33764169e-01,  4.81774996e-01],
+       [ 2.70694543e-02,  4.99266707e-01],
+       [-8.08909983e-02,  4.93413261e-01],
+       [-1.85069078e-01,  4.64488360e-01],
+       [-2.80593533e-01,  4.13844499e-01],
+       [-3.62997746e-01,  3.43849729e-01],
+       [-4.28428588e-01,  2.57776929e-01],
+       [-4.73826586e-01,  1.59650765e-01],
+       [-4.97068979e-01,  5.40595092e-02],
+       [-4.97068979e-01, -5.40595092e-02],
+       [-4.73826586e-01, -1.59650765e-01],
+       [-4.28428588e-01, -2.57776929e-01],
+       [-3.62997746e-01, -3.43849729e-01],
+       [-2.80593533e-01, -4.13844499e-01],
+       [-1.85069078e-01, -4.64488360e-01],
+       [-8.08909983e-02, -4.93413261e-01],
+       [ 2.70694543e-02, -4.99266707e-01],
+       [ 1.33764169e-01, -4.81774996e-01],
+       [ 2.34204220e-01, -4.41756022e-01],
+       [ 3.23693142e-01, -3.81081028e-01],
+       [ 3.98046533e-01, -3.02587108e-01],
+       [ 4.53787710e-01, -2.09944551e-01],
+       [ 4.88310278e-01, -1.07485220e-01],
+       [ 5.00000000e-01, -1.22464680e-16]])], [array([[-0.5       ,  0.28867513],
+       [ 0.5       ,  0.28867513]]), array([[-2.22044605e-16, -5.77350269e-01],
+       [-5.00000000e-01,  2.88675135e-01]]), array([[ 5.00000000e-01,  2.88675135e-01],
+       [-1.66533454e-16, -5.77350269e-01]])]]
+--- prim 15
+#(#(lambda (connect (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (transmat None None None (Some $0) None)))) dist9)
+[tstroke]
+[[array([[0., 0.],
+       [1., 0.]])], [array([[ 5.00000000e-01,  0.00000000e+00],
+       [ 4.88310278e-01,  1.07485220e-01],
+       [ 4.53787710e-01,  2.09944551e-01],
+       [ 3.98046533e-01,  3.02587108e-01],
+       [ 3.23693142e-01,  3.81081028e-01],
+       [ 2.34204220e-01,  4.41756022e-01],
+       [ 1.33764169e-01,  4.81774996e-01],
+       [ 2.70694543e-02,  4.99266707e-01],
+       [-8.08909983e-02,  4.93413261e-01],
+       [-1.85069078e-01,  4.64488360e-01],
+       [-2.80593533e-01,  4.13844499e-01],
+       [-3.62997746e-01,  3.43849729e-01],
+       [-4.28428588e-01,  2.57776929e-01],
+       [-4.73826586e-01,  1.59650765e-01],
+       [-4.97068979e-01,  5.40595092e-02],
+       [-4.97068979e-01, -5.40595092e-02],
+       [-4.73826586e-01, -1.59650765e-01],
+       [-4.28428588e-01, -2.57776929e-01],
+       [-3.62997746e-01, -3.43849729e-01],
+       [-2.80593533e-01, -4.13844499e-01],
+       [-1.85069078e-01, -4.64488360e-01],
+       [-8.08909983e-02, -4.93413261e-01],
+       [ 2.70694543e-02, -4.99266707e-01],
+       [ 1.33764169e-01, -4.81774996e-01],
+       [ 2.34204220e-01, -4.41756022e-01],
+       [ 3.23693142e-01, -3.81081028e-01],
+       [ 3.98046533e-01, -3.02587108e-01],
+       [ 4.53787710e-01, -2.09944551e-01],
+       [ 4.88310278e-01, -1.07485220e-01],
+       [ 5.00000000e-01, -1.22464680e-16]])], [array([[-0.5       ,  0.28867513],
+       [ 0.5       ,  0.28867513]]), array([[-2.22044605e-16, -5.77350269e-01],
+       [-5.00000000e-01,  2.88675135e-01]]), array([[ 5.00000000e-01,  2.88675135e-01],
+       [-1.66533454e-16, -5.77350269e-01]])]]
+--- prim 16
+#(lambda (#(connect (transform circle (#(lambda (transmat None None (Some $0) None None)) dist14))) (connect (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist16 rep1 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) $0 rep3))))
+[tscale]
+[2.0, 4.0]
+--- prim 17
+#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None)))))
+[maybe(tdist), tstroke, tstroke]
+[-2.0, -1.0, 0, 1.0, 2.0]
+[[array([[0., 0.],
+       [1., 0.]])], [array([[ 5.00000000e-01,  0.00000000e+00],
+       [ 4.88310278e-01,  1.07485220e-01],
+       [ 4.53787710e-01,  2.09944551e-01],
+       [ 3.98046533e-01,  3.02587108e-01],
+       [ 3.23693142e-01,  3.81081028e-01],
+       [ 2.34204220e-01,  4.41756022e-01],
+       [ 1.33764169e-01,  4.81774996e-01],
+       [ 2.70694543e-02,  4.99266707e-01],
+       [-8.08909983e-02,  4.93413261e-01],
+       [-1.85069078e-01,  4.64488360e-01],
+       [-2.80593533e-01,  4.13844499e-01],
+       [-3.62997746e-01,  3.43849729e-01],
+       [-4.28428588e-01,  2.57776929e-01],
+       [-4.73826586e-01,  1.59650765e-01],
+       [-4.97068979e-01,  5.40595092e-02],
+       [-4.97068979e-01, -5.40595092e-02],
+       [-4.73826586e-01, -1.59650765e-01],
+       [-4.28428588e-01, -2.57776929e-01],
+       [-3.62997746e-01, -3.43849729e-01],
+       [-2.80593533e-01, -4.13844499e-01],
+       [-1.85069078e-01, -4.64488360e-01],
+       [-8.08909983e-02, -4.93413261e-01],
+       [ 2.70694543e-02, -4.99266707e-01],
+       [ 1.33764169e-01, -4.81774996e-01],
+       [ 2.34204220e-01, -4.41756022e-01],
+       [ 3.23693142e-01, -3.81081028e-01],
+       [ 3.98046533e-01, -3.02587108e-01],
+       [ 4.53787710e-01, -2.09944551e-01],
+       [ 4.88310278e-01, -1.07485220e-01],
+       [ 5.00000000e-01, -1.22464680e-16]])], [array([[-0.5       ,  0.28867513],
+       [ 0.5       ,  0.28867513]]), array([[-2.22044605e-16, -5.77350269e-01],
+       [-5.00000000e-01,  2.88675135e-01]]), array([[ 5.00000000e-01,  2.88675135e-01],
+       [-1.66533454e-16, -5.77350269e-01]])]]
+[[array([[0., 0.],
+       [1., 0.]])], [array([[ 5.00000000e-01,  0.00000000e+00],
+       [ 4.88310278e-01,  1.07485220e-01],
+       [ 4.53787710e-01,  2.09944551e-01],
+       [ 3.98046533e-01,  3.02587108e-01],
+       [ 3.23693142e-01,  3.81081028e-01],
+       [ 2.34204220e-01,  4.41756022e-01],
+       [ 1.33764169e-01,  4.81774996e-01],
+       [ 2.70694543e-02,  4.99266707e-01],
+       [-8.08909983e-02,  4.93413261e-01],
+       [-1.85069078e-01,  4.64488360e-01],
+       [-2.80593533e-01,  4.13844499e-01],
+       [-3.62997746e-01,  3.43849729e-01],
+       [-4.28428588e-01,  2.57776929e-01],
+       [-4.73826586e-01,  1.59650765e-01],
+       [-4.97068979e-01,  5.40595092e-02],
+       [-4.97068979e-01, -5.40595092e-02],
+       [-4.73826586e-01, -1.59650765e-01],
+       [-4.28428588e-01, -2.57776929e-01],
+       [-3.62997746e-01, -3.43849729e-01],
+       [-2.80593533e-01, -4.13844499e-01],
+       [-1.85069078e-01, -4.64488360e-01],
+       [-8.08909983e-02, -4.93413261e-01],
+       [ 2.70694543e-02, -4.99266707e-01],
+       [ 1.33764169e-01, -4.81774996e-01],
+       [ 2.34204220e-01, -4.41756022e-01],
+       [ 3.23693142e-01, -3.81081028e-01],
+       [ 3.98046533e-01, -3.02587108e-01],
+       [ 4.53787710e-01, -2.09944551e-01],
+       [ 4.88310278e-01, -1.07485220e-01],
+       [ 5.00000000e-01, -1.22464680e-16]])], [array([[-0.5       ,  0.28867513],
+       [ 0.5       ,  0.28867513]]), array([[-2.22044605e-16, -5.77350269e-01],
+       [-5.00000000e-01,  2.88675135e-01]]), array([[ 5.00000000e-01,  2.88675135e-01],
+       [-1.66533454e-16, -5.77350269e-01]])]]
+--- prim 18
+#(connect (transform circle (#(lambda (transmat None None (Some $0) None None)) dist14)))
+[tstroke]
+[[array([[0., 0.],
+       [1., 0.]])], [array([[ 5.00000000e-01,  0.00000000e+00],
+       [ 4.88310278e-01,  1.07485220e-01],
+       [ 4.53787710e-01,  2.09944551e-01],
+       [ 3.98046533e-01,  3.02587108e-01],
+       [ 3.23693142e-01,  3.81081028e-01],
+       [ 2.34204220e-01,  4.41756022e-01],
+       [ 1.33764169e-01,  4.81774996e-01],
+       [ 2.70694543e-02,  4.99266707e-01],
+       [-8.08909983e-02,  4.93413261e-01],
+       [-1.85069078e-01,  4.64488360e-01],
+       [-2.80593533e-01,  4.13844499e-01],
+       [-3.62997746e-01,  3.43849729e-01],
+       [-4.28428588e-01,  2.57776929e-01],
+       [-4.73826586e-01,  1.59650765e-01],
+       [-4.97068979e-01,  5.40595092e-02],
+       [-4.97068979e-01, -5.40595092e-02],
+       [-4.73826586e-01, -1.59650765e-01],
+       [-4.28428588e-01, -2.57776929e-01],
+       [-3.62997746e-01, -3.43849729e-01],
+       [-2.80593533e-01, -4.13844499e-01],
+       [-1.85069078e-01, -4.64488360e-01],
+       [-8.08909983e-02, -4.93413261e-01],
+       [ 2.70694543e-02, -4.99266707e-01],
+       [ 1.33764169e-01, -4.81774996e-01],
+       [ 2.34204220e-01, -4.41756022e-01],
+       [ 3.23693142e-01, -3.81081028e-01],
+       [ 3.98046533e-01, -3.02587108e-01],
+       [ 4.53787710e-01, -2.09944551e-01],
+       [ 4.88310278e-01, -1.07485220e-01],
+       [ 5.00000000e-01, -1.22464680e-16]])], [array([[-0.5       ,  0.28867513],
+       [ 0.5       ,  0.28867513]]), array([[-2.22044605e-16, -5.77350269e-01],
+       [-5.00000000e-01,  2.88675135e-01]]), array([[ 5.00000000e-01,  2.88675135e-01],
+       [-1.66533454e-16, -5.77350269e-01]])]]
+--- prim 19
+#(lambda (connect (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (transmat None None None (Some $0) None))))
+[tdist, tstroke]
+[-2.0, -1.0, 0, 1.0, 2.0]
+[[array([[0., 0.],
+       [1., 0.]])], [array([[ 5.00000000e-01,  0.00000000e+00],
+       [ 4.88310278e-01,  1.07485220e-01],
+       [ 4.53787710e-01,  2.09944551e-01],
+       [ 3.98046533e-01,  3.02587108e-01],
+       [ 3.23693142e-01,  3.81081028e-01],
+       [ 2.34204220e-01,  4.41756022e-01],
+       [ 1.33764169e-01,  4.81774996e-01],
+       [ 2.70694543e-02,  4.99266707e-01],
+       [-8.08909983e-02,  4.93413261e-01],
+       [-1.85069078e-01,  4.64488360e-01],
+       [-2.80593533e-01,  4.13844499e-01],
+       [-3.62997746e-01,  3.43849729e-01],
+       [-4.28428588e-01,  2.57776929e-01],
+       [-4.73826586e-01,  1.59650765e-01],
+       [-4.97068979e-01,  5.40595092e-02],
+       [-4.97068979e-01, -5.40595092e-02],
+       [-4.73826586e-01, -1.59650765e-01],
+       [-4.28428588e-01, -2.57776929e-01],
+       [-3.62997746e-01, -3.43849729e-01],
+       [-2.80593533e-01, -4.13844499e-01],
+       [-1.85069078e-01, -4.64488360e-01],
+       [-8.08909983e-02, -4.93413261e-01],
+       [ 2.70694543e-02, -4.99266707e-01],
+       [ 1.33764169e-01, -4.81774996e-01],
+       [ 2.34204220e-01, -4.41756022e-01],
+       [ 3.23693142e-01, -3.81081028e-01],
+       [ 3.98046533e-01, -3.02587108e-01],
+       [ 4.53787710e-01, -2.09944551e-01],
+       [ 4.88310278e-01, -1.07485220e-01],
+       [ 5.00000000e-01, -1.22464680e-16]])], [array([[-0.5       ,  0.28867513],
+       [ 0.5       ,  0.28867513]]), array([[-2.22044605e-16, -5.77350269e-01],
+       [-5.00000000e-01,  2.88675135e-01]]), array([[ 5.00000000e-01,  2.88675135e-01],
+       [-1.66533454e-16, -5.77350269e-01]])]]
+--- prim 20
+#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1))))))
+[tdist, trep, ttransmat]
+[-2.0, -1.0, 0, 1.0, 2.0]
+[1, 2, 3, 4, 5, 6, 7]
+[]
+--- prim 21
+#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18))))
+[tscale, trep]
+[2.0, 4.0]
+[1, 2, 3, 4, 5, 6, 7]
+--- prim 22
+#(transform line (#(lambda (transmat None None (Some $0) None None)) dist4))
+[]
+--- prim 23
+#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4)))
+[trep]
+[1, 2, 3, 4, 5, 6, 7]
+--- prim 24
+#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None)))
+[tscale]
+[2.0, 4.0]
+--- prim 25
+#(lambda (transmat None None (Some $0) None None))
+	(does not return a tstroke)
+--- prim 26
+None
+--- prim 27
+Some
+--- prim 28
+line
+--- prim 29
+circle
+--- prim 30
+transmat
+--- prim 31
+transform
+--- prim 32
+reflect
+--- prim 33
+connect
+--- prim 34
+repeat
+--- prim 35
+scale7
+--- prim 36
+dist1
+--- prim 37
+dist3
+--- prim 38
+dist4
+--- prim 39
+dist6
+--- prim 40
+dist9
+--- prim 41
+dist14
+--- prim 42
+dist15
+--- prim 43
+dist16
+--- prim 44
+dist17
+--- prim 45
+dist18
+--- prim 46
+angle0
+--- prim 47
+angle2
+--- prim 48
+trs
+--- prim 49
+rep0
+--- prim 50
+rep1
+--- prim 51
+rep2
+--- prim 52
+rep3
+3: save figure of all invented primtiives
+NOTE: whether is solved is by checking the last iteration
+NOTE: whether is solved is by checking the last iteration
+4: saved figure of all tasks (solvbd and unsolved)
+NOTE: whether is solved is by checking the last iteration
+===== 0 - S12_13_shaping_0 - S12_13_shaping_0:
+HIT S12_13_shaping_0 w/ (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) scale7) ; log prior = -3.493825 ; log likelihood = 0.000000
+===== 1 - S12_13_shaping_1 - S12_13_shaping_1:
+HIT S12_13_shaping_1 w/ (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) ; log prior = -4.399099 ; log likelihood = 0.000000
+===== 2 - S12_13_shaping_2 - S12_13_shaping_2:
+HIT S12_13_shaping_2 w/ (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep2) ; log prior = -4.465611 ; log likelihood = 0.000000
+===== 3 - S12_13_shaping_3 - S12_13_shaping_3:
+HIT S12_13_shaping_3 w/ (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep3) ; log prior = -4.307802 ; log likelihood = 0.000000
+===== 4 - S12_13_shaping_4 - S12_13_shaping_4:
+HIT S12_13_shaping_4 w/ (transform #(transform line (#(lambda (transmat None None (Some $0) None None)) dist4)) (transmat (Some scale7) (Some angle2) None None None)) ; log prior = -11.834270 ; log likelihood = 0.000000
+===== 5 - S12_13_shaping_5 - S12_13_shaping_5:
+HIT S12_13_shaping_5 w/ #(transform line (#(lambda (transmat None None (Some $0) None None)) dist4)) ; log prior = -3.486674 ; log likelihood = 0.000000
+===== 6 - S12_13_shaping_6 - S12_13_shaping_6:
+HIT S12_13_shaping_6 w/ (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) rep0) ; log prior = -4.919888 ; log likelihood = 0.000000
+===== 7 - S12_13_shaping_7 - S12_13_shaping_7:
+HIT S12_13_shaping_7 w/ (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) rep1) ; log prior = -4.677776 ; log likelihood = 0.000000
+===== 8 - S12_13_shaping_8 - S12_13_shaping_8:
+HIT S12_13_shaping_8 w/ (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) rep2) ; log prior = -4.744287 ; log likelihood = 0.000000
+===== 9 - S12_13_shaping_9 - S12_13_shaping_9:
+HIT S12_13_shaping_9 w/ (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) rep3) ; log prior = -4.586479 ; log likelihood = 0.000000
+===== 10 - S12_13_shaping_10 - S12_13_shaping_10:
+HIT S12_13_shaping_10 w/ #(transform (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) rep0) (#(lambda (transmat None None (Some $0) None None)) dist18)) ; log prior = -3.329909 ; log likelihood = 0.000000
+===== 11 - S13_1 - S13_1:
+HIT S13_1 w/ (#(#(lambda (connect (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (transmat None None None (Some $0) None)))) dist9) (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1)) ; log prior = -7.756716 ; log likelihood = 0.000000
+===== 12 - S13_2 - S13_2:
+HIT S13_2 w/ (#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) $0 (#(connect (transform circle (#(lambda (transmat None None (Some $0) None None)) dist14))) #(transform (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) rep0) (#(lambda (transmat None None (Some $0) None None)) dist18))))) None (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1)) ; log prior = -8.449733 ; log likelihood = 0.000000
+===== 13 - S13_10 - S13_10:
+HIT S13_10 w/ (#(#(lambda (connect (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (transmat None None None (Some $0) None)))) dist9) (connect #(transform (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) rep0) (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(connect (transform circle (#(lambda (transmat None None (Some $0) None None)) dist14))) (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1)))) ; log prior = -17.997135 ; log likelihood = 0.000000
+===== 14 - S13_27 - S13_27:
+HIT S13_27 w/ (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) None (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) rep0) (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1)) ; log prior = -13.266257 ; log likelihood = 0.000000
+===== 15 - S13_77 - S13_77:
+HIT S13_77 w/ (#(lambda (lambda (#(connect (transform circle (#(lambda (transmat None None (Some $0) None None)) dist14))) (connect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) $0 $1) (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (#(lambda (transmat None None (Some $0) None None)) dist18)))))) rep2 scale7) ; log prior = -4.864848 ; log likelihood = 0.000000
+===== 16 - S13_78 - S13_78:
+HIT S13_78 w/ (#(lambda (lambda (connect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 $1) (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist16 rep1 $0)))) rep2 (transmat None None None (Some dist3) None)) ; log prior = -11.046983 ; log likelihood = 0.000000
+===== 17 - S13_106 - S13_106:
+HIT S13_106 w/ (#(lambda (lambda (connect $1 (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist18))))) (reflect (#(lambda (lambda (connect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 $0) (repeat (#(connect (transform circle (#(lambda (transmat None None (Some $0) None None)) dist14))) #(transform (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) rep0) (#(lambda (transmat None None (Some $0) None None)) dist18))) rep1 (transmat None None $1 (Some dist9) None))))) None rep2) angle0) #(transform (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) rep0) (#(lambda (transmat None None (Some $0) None None)) dist18))) ; log prior = -16.215611 ; log likelihood = 0.000000
+===== 18 - S13_32 - S13_32:
+HIT S13_32 w/ (#(lambda (lambda (connect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 $0) (repeat (#(connect (transform circle (#(lambda (transmat None None (Some $0) None None)) dist14))) #(transform (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) rep0) (#(lambda (transmat None None (Some $0) None None)) dist18))) rep1 (transmat None None $1 (Some dist9) None))))) None rep1) ; log prior = -5.291747 ; log likelihood = 0.000000
+===== 19 - S13_49 - S13_49:
+HIT S13_49 w/ (#(#(lambda (connect (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (transmat None None None (Some $0) None)))) dist9) (#(lambda (connect (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (transmat None None None (Some $0) None)))) dist3 (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1))) ; log prior = -13.582630 ; log likelihood = 0.000000
+===== 20 - S13_97 - S13_97:
+HIT S13_97 w/ (#(lambda (lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) None (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (#(lambda (reflect (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) $0 (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) None $0)) angle0)) (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 $1))))) rep2 rep1) ; log prior = -6.194044 ; log likelihood = 0.000000
+===== 21 - S13_153 - S13_153:
+HIT S13_153 w/ (#(#(lambda (connect (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (transmat None None None (Some $0) None)))) dist9) (#(lambda (#(connect (transform circle (#(lambda (transmat None None (Some $0) None None)) dist14))) (connect (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist16 rep1 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) $0 rep3)))) scale7)) ; log prior = -6.825864 ; log likelihood = 0.000000
+===== 22 - S13_160 - S13_160:
+HIT S13_160 w/ (#(lambda (lambda (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) $0 (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) $0 $1)))) (reflect (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) None #(#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist17 rep2 (#(lambda (transmat None None (Some $0) None None)) dist6)) (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep3)) angle0) None) ; log prior = -19.783200 ; log likelihood = 0.000000
+===== 23 - S13_161 - S13_161:
+HIT S13_161 w/ (connect (reflect (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep3)) angle0) (repeat (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist16 rep1 (#(lambda (transmat None None (Some $0) None None)) dist18)) rep1 (transmat None None None (Some dist9) None))) ; log prior = -36.069122 ; log likelihood = 0.000000
+===== 24 - S13_166 - S13_166:
+HIT S13_166 w/ (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist18) (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) rep2) (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep3))) ; log prior = -18.775323 ; log likelihood = 0.000000
+===== 25 - S13_169 - S13_169:
+HIT S13_169 w/ (#(lambda (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) None (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist16 rep1 (#(lambda (transmat None None (Some $0) None None)) dist18)) $0))) (#(lambda (lambda (connect $1 (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist18))))) (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) scale7) (#(lambda (lambda (#(connect (transform circle (#(lambda (transmat None None (Some $0) None None)) dist14))) (connect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) $0 $1) (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (#(lambda (transmat None None (Some $0) None None)) dist18)))))) rep2 scale7))) ; log prior = -15.222321 ; log likelihood = 0.000000
+===== 26 - S13_170 - S13_170:
+HIT S13_170 w/ (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) None (#(lambda (reflect (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) $0 (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) None $0)) angle0)) #(transform (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) rep0) (#(lambda (transmat None None (Some $0) None None)) dist18))) (#(lambda (lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) None (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (#(lambda (reflect (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) $0 (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) None $0)) angle0)) (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 $1))))) rep3 rep3)) ; log prior = -16.587551 ; log likelihood = 0.000000
+===== 27 - S13_186 - S13_186:
+HIT S13_186 w/ (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) None #(transform (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) rep0) (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (lambda (connect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 $1) (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist16 rep1 $0)))) rep3 (#(lambda (transmat None None (Some $0) None None)) dist6)))) ; log prior = -18.452330 ; log likelihood = 0.000000
+===== 28 - S13_189 - S13_189:
+HIT S13_189 w/ (#(lambda (lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) None (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (#(lambda (reflect (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) $0 (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) None $0)) angle0)) (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 $1))))) rep3 rep0) ; log prior = -6.278348 ; log likelihood = 0.000000
+===== 29 - S13_232 - S13_232:
+HIT S13_232 w/ (#(lambda (reflect (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) $0 (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) None $0)) angle0)) (#(lambda (lambda (connect $1 (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist18))))) (#(lambda (reflect (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) $0 (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) None $0)) angle0)) (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep3)) (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) ; log prior = -24.560891 ; log likelihood = 0.000000
+===== 30 - S13_238 - S13_238:
+HIT S13_238 w/ (#(#(lambda (connect (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (transmat None None None (Some $0) None)))) dist9) (#(lambda (lambda (#(lambda (lambda (connect $1 (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist18))))) (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) $1 rep3) (#(connect (transform circle (#(lambda (transmat None None (Some $0) None None)) dist14))) $0)))) scale7 (repeat #(transform (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) rep0) (#(lambda (transmat None None (Some $0) None None)) dist18)) rep1 (#(lambda (transmat None None (Some $0) None None)) dist18)))) ; log prior = -17.678601 ; log likelihood = 0.000000
+===== 31 - S13_89 - S13_89:
+HIT S13_89 w/ (#(lambda (lambda (connect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 $0) (repeat (#(connect (transform circle (#(lambda (transmat None None (Some $0) None None)) dist14))) #(transform (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) rep0) (#(lambda (transmat None None (Some $0) None None)) dist18))) rep1 (transmat None None $1 (Some dist9) None))))) (Some dist18) rep2) ; log prior = -7.673958 ; log likelihood = 0.000000
+===== 32 - S13_91 - S13_91:
+HIT S13_91 w/ (#(lambda (reflect (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) $0 (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) None $0)) angle0)) (#(lambda (reflect (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) $0 (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) None $0)) angle0)) (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep2))) ; log prior = -11.196483 ; log likelihood = 0.000000
+===== 33 - S13_147 - S13_147:
+HIT S13_147 w/ (#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) $0 (#(connect (transform circle (#(lambda (transmat None None (Some $0) None None)) dist14))) #(transform (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) rep0) (#(lambda (transmat None None (Some $0) None None)) dist18))))) (Some dist18) (#(lambda (lambda (connect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 $0) (repeat (#(connect (transform circle (#(lambda (transmat None None (Some $0) None None)) dist14))) #(transform (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) rep0) (#(lambda (transmat None None (Some $0) None None)) dist18))) rep1 (transmat None None $1 (Some dist9) None))))) (Some dist18) rep2)) ; log prior = -14.040291 ; log likelihood = 0.000000
+===== 34 - S13_150 - S13_150:
+HIT S13_150 w/ (#(lambda (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) None (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist16 rep1 (#(lambda (transmat None None (Some $0) None None)) dist18)) $0))) (#(lambda (reflect (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) $0 (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) None $0)) angle0)) (#(lambda (lambda (#(lambda (lambda (connect $1 (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist18))))) (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) $1 rep3) (#(connect (transform circle (#(lambda (transmat None None (Some $0) None None)) dist14))) $0)))) scale7 #(transform (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) rep0) (#(lambda (transmat None None (Some $0) None None)) dist18))))) ; log prior = -13.626152 ; log likelihood = 0.000000
+===== 35 - S13_172 - S13_172:
+HIT S13_172 w/ (#(lambda (reflect (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) $0 (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) None $0)) angle0)) (connect #(#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist17 rep2 (#(lambda (transmat None None (Some $0) None None)) dist6)) (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep3))) ; log prior = -14.492541 ; log likelihood = 0.000000
+===== 36 - S13_180 - S13_180:
+HIT S13_180 w/ (#(#(lambda (connect (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (transmat None None None (Some $0) None)))) dist9) (connect (#(lambda (lambda (connect $1 (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist18))))) #(#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist17 rep2 (#(lambda (transmat None None (Some $0) None None)) dist6)) (#(lambda (lambda (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) $0 (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) $0 $1)))) #(transform (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) rep0) (#(lambda (transmat None None (Some $0) None None)) dist18)) None)) (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep3))) ; log prior = -25.225732 ; log likelihood = 0.000000
+===== 37 - S13_183 - S13_183:
+HIT S13_183 w/ (#(lambda (lambda (connect $1 (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist18))))) (#(lambda (reflect (#(lambda (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) None (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist16 rep1 (#(lambda (transmat None None (Some $0) None None)) dist18)) $0))) $0) angle0)) (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep3)) (#(lambda (lambda (connect $1 (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist18))))) #(transform (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) rep0) (#(lambda (transmat None None (Some $0) None None)) dist18)) #(transform (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) rep0) (#(lambda (transmat None None (Some $0) None None)) dist18)))) ; log prior = -21.254005 ; log likelihood = 0.000000
+===== 38 - S13_187 - S13_187:
+HIT S13_187 w/ (#(lambda (reflect (#(lambda (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) None (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist16 rep1 (#(lambda (transmat None None (Some $0) None None)) dist18)) $0))) $0) angle0)) (#(lambda (reflect (#(lambda (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) None (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist16 rep1 (#(lambda (transmat None None (Some $0) None None)) dist18)) $0))) $0) angle0)) (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep3))) ; log prior = -11.182915 ; log likelihood = 0.000000
+===== 39 - S13_199 - S13_199:
+HIT S13_199 w/ (#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) $0 (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) None (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) None (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) rep1) (#(lambda (lambda (#(connect (transform circle (#(lambda (transmat None None (Some $0) None None)) dist14))) (connect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) $0 $1) (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (#(lambda (transmat None None (Some $0) None None)) dist18)))))) rep3 scale7))) ; log prior = -17.342067 ; log likelihood = 0.000000
+===== 40 - S13_205 - S13_205:
+HIT S13_205 w/ (#(lambda (lambda (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) $0 (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) $0 $1)))) (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep3) None) ; log prior = -8.294489 ; log likelihood = 0.000000
+===== 41 - S13_230 - S13_230:
+HIT S13_230 w/ (#(lambda (lambda (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) $0 (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) $0 $1)))) (#(lambda (reflect (#(lambda (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) None (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist16 rep1 (#(lambda (transmat None None (Some $0) None None)) dist18)) $0))) $0) angle0)) (#(lambda (lambda (connect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 $0) (repeat (#(connect (transform circle (#(lambda (transmat None None (Some $0) None None)) dist14))) #(transform (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) rep0) (#(lambda (transmat None None (Some $0) None None)) dist18))) rep1 (transmat None None $1 (Some dist9) None))))) None rep3)) (Some dist18)) ; log prior = -14.940393 ; log likelihood = 0.000000
+===== 42 - S13_239 - S13_239:
+HIT S13_239 w/ (#(lambda (lambda (connect $1 (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist18))))) (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) scale7) (#(lambda (lambda (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) $0 (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) $0 $1)))) (#(lambda (lambda (connect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 $0) (repeat (#(connect (transform circle (#(lambda (transmat None None (Some $0) None None)) dist14))) #(transform (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) rep0) (#(lambda (transmat None None (Some $0) None None)) dist18))) rep1 (transmat None None $1 (Some dist9) None))))) None rep2) None)) ; log prior = -16.263185 ; log likelihood = 0.000000
+===== 43 - S13_243 - S13_243:
+HIT S13_243 w/ (#(lambda (#(connect (transform circle (#(lambda (transmat None None (Some $0) None None)) dist14))) (connect (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist16 rep1 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) $0 rep3)))) scale7) ; log prior = -3.468248 ; log likelihood = 0.000000
+===== 44 - S13_252 - S13_252:
+HIT S13_252 w/ (#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) $0 (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) None (connect #(#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist17 rep2 (#(lambda (transmat None None (Some $0) None None)) dist6)) (#(lambda (lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) None (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (#(lambda (reflect (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) $0 (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) None $0)) angle0)) (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 $1))))) rep3 rep1))) ; log prior = -16.865521 ; log likelihood = 0.000000
+===== 45 - S13_257 - S13_257:
+HIT S13_257 w/ (#(#(lambda (connect (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (transmat None None None (Some $0) None)))) dist9) (#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) $0 (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) (Some dist18) (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep3))) ; log prior = -13.991101 ; log likelihood = 0.000000
+===== 46 - S13_265 - S13_265:
+HIT S13_265 w/ (#(lambda (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) None (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist16 rep1 (#(lambda (transmat None None (Some $0) None None)) dist18)) $0))) (#(lambda (reflect (#(lambda (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) None (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist16 rep1 (#(lambda (transmat None None (Some $0) None None)) dist18)) $0))) $0) angle0)) (#(lambda (#(connect (transform circle (#(lambda (transmat None None (Some $0) None None)) dist14))) (connect (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist16 rep1 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) $0 rep3)))) scale7))) ; log prior = -10.345038 ; log likelihood = 0.000000
+NOTE: whether is solved is by checking the last iteration
+===== 0 - S12_13_test_1 - S12_13_test_1:
+HIT S12_13_test_1 w/ (#(lambda (lambda (connect $1 (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist18))))) (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) scale7) (#(lambda (lambda (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) $0 (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) $0 $1)))) (#(lambda (lambda (#(connect (transform circle (#(lambda (transmat None None (Some $0) None None)) dist14))) (connect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) $0 $1) (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (#(lambda (transmat None None (Some $0) None None)) dist18)))))) rep2 scale7) None)) ; log prior = -7.255459 ; log likelihood = 0.000000
+===== 1 - S12_13_test_2 - S12_13_test_2:
+HIT S12_13_test_2 w/ (#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) $0 (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) (Some dist18) (#(lambda (reflect (#(lambda (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) None (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist16 rep1 (#(lambda (transmat None None (Some $0) None None)) dist18)) $0))) $0) angle0)) (#(lambda (lambda (connect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 $0) (repeat (#(connect (transform circle (#(lambda (transmat None None (Some $0) None None)) dist14))) #(transform (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) rep0) (#(lambda (transmat None None (Some $0) None None)) dist18))) rep1 (transmat None None $1 (Some dist9) None))))) (Some dist18) rep3))) ; log prior = -8.722809 ; log likelihood = 0.000000
+===== 2 - S12_13_test_4 - S12_13_test_4:
+MISS S12_13_test_4
+===== 3 - S12_13_test_5 - S12_13_test_5:
+MISS S12_13_test_5
+===== 4 - S12_13_test_6 - S12_13_test_6:
+MISS S12_13_test_6
+===== 5 - S12_13_test_7 - S12_13_test_7:
+HIT S12_13_test_7 w/ (#(lambda (lambda (#(lambda (lambda (connect $1 (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist18))))) (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) $1 rep3) (#(connect (transform circle (#(lambda (transmat None None (Some $0) None None)) dist14))) $0)))) scale7 (reflect (#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) $0 (#(connect (transform circle (#(lambda (transmat None None (Some $0) None None)) dist14))) #(transform (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) rep0) (#(lambda (transmat None None (Some $0) None None)) dist18))))) None (repeat #(transform (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) rep0) (#(lambda (transmat None None (Some $0) None None)) dist18)) rep1 (#(lambda (transmat None None (Some $0) None None)) dist18))) angle0)) ; log prior = -14.770309 ; log likelihood = 0.000000
+===== 6 - S12_13_test_8 - S12_13_test_8:
+MISS S12_13_test_8
+===== 7 - S12_13_test_9 - S12_13_test_9:
+HIT S12_13_test_9 w/ (#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) $0 (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) None (#(lambda (lambda (#(lambda (lambda (connect $1 (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist18))))) (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) $1 rep3) (#(connect (transform circle (#(lambda (transmat None None (Some $0) None None)) dist14))) $0)))) scale7 (reflect (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (#(lambda (transmat None None (Some $0) None None)) dist18))) angle0))) ; log prior = -15.782606 ; log likelihood = 0.000000
+===== 8 - S12_13_test_10 - S12_13_test_10:
+HIT S12_13_test_10 w/ (#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) $0 (#(connect (transform circle (#(lambda (transmat None None (Some $0) None None)) dist14))) #(transform (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) rep0) (#(lambda (transmat None None (Some $0) None None)) dist18))))) None (reflect (#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) $0 (#(connect (transform circle (#(lambda (transmat None None (Some $0) None None)) dist14))) #(transform (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) rep0) (#(lambda (transmat None None (Some $0) None None)) dist18))))) None (#(lambda (connect (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (transmat None None None (Some $0) None)))) dist6 (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep3))) angle0)) ; log prior = -15.719431 ; log likelihood = 0.000000
+===== 9 - S12_13_test_11 - S12_13_test_11:
+MISS S12_13_test_11
+===== 10 - S12_13_test_12 - S12_13_test_12:
+MISS S12_13_test_12
+===== 11 - S12_132 - S12_132:
+HIT S12_132 w/ (#(#(lambda (connect (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (transmat None None None (Some $0) None)))) dist9) (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (connect (#(lambda (lambda (connect $1 (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist18))))) (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) rep0) (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) rep0))) (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep3)))) ; log prior = -15.590663 ; log likelihood = 0.000000
+===== 12 - S12_201 - S12_201:
+MISS S12_201
+===== 13 - S12_220 - S12_220:
+MISS S12_220
+===== 14 - S12_247 - S12_247:
+MISS S12_247
+===== 15 - S13_182 - S13_182:
+HIT S13_182 w/ (#(#(lambda (connect (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (transmat None None None (Some $0) None)))) dist9) (#(lambda (lambda (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) $0 (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) $0 $1)))) (#(lambda (lambda (#(lambda (lambda (connect $1 (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist18))))) (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) $1 rep3) (#(connect (transform circle (#(lambda (transmat None None (Some $0) None None)) dist14))) $0)))) scale7 (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (#(lambda (transmat None None (Some $0) None None)) dist18))) None)) ; log prior = -6.656330 ; log likelihood = 0.000000
+===== 16 - S13_217 - S13_217:
+HIT S13_217 w/ (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) None #(transform (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) rep0) (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (reflect (#(lambda (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) None (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist16 rep1 (#(lambda (transmat None None (Some $0) None None)) dist18)) $0))) $0) angle0)) (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) None #(transform (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) rep0) (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (lambda (#(connect (transform circle (#(lambda (transmat None None (Some $0) None None)) dist14))) (connect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) $0 $1) (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (#(lambda (transmat None None (Some $0) None None)) dist18)))))) rep3 scale7)))) ; log prior = -11.789512 ; log likelihood = 0.000000
+===== 17 - S13_219 - S13_219:
+HIT S13_219 w/ (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist18) (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) rep2) (#(lambda (lambda (connect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 $0) (repeat (#(connect (transform circle (#(lambda (transmat None None (Some $0) None None)) dist14))) #(transform (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) rep0) (#(lambda (transmat None None (Some $0) None None)) dist18))) rep1 (transmat None None $1 (Some dist9) None))))) None rep3))) ; log prior = -4.652688 ; log likelihood = 0.000000
+5: saved text file of all task solutions (best posteiro program)
+comapretohuman
+True
+COMPARING TO HUMAN - SHOULD ALREADY HAVE PREPROCESSED DATA
+GGGGdd
+GGGGeee
+DRAW TASK training set: S13
+DO SHAPING: False
+training task names:
+['S12_13_shaping_0', 'S12_13_shaping_1', 'S12_13_shaping_2', 'S12_13_shaping_3', 'S12_13_shaping_4', 'S12_13_shaping_5', 'S12_13_shaping_6', 'S12_13_shaping_7', 'S12_13_shaping_8', 'S12_13_shaping_9', 'S12_13_shaping_10', 'S13_1', 'S13_2', 'S13_10', 'S13_27', 'S13_77', 'S13_78', 'S13_106', 'S13_32', 'S13_49', 'S13_97', 'S13_153', 'S13_160', 'S13_161', 'S13_166', 'S13_169', 'S13_170', 'S13_186', 'S13_189', 'S13_232', 'S13_238', 'S13_89', 'S13_91', 'S13_147', 'S13_150', 'S13_172', 'S13_180', 'S13_183', 'S13_187', 'S13_199', 'S13_205', 'S13_230', 'S13_239', 'S13_243', 'S13_252', 'S13_257', 'S13_265']
+test tasks:
+['S12_13_test_1', 'S12_13_test_2', 'S12_13_test_4', 'S12_13_test_5', 'S12_13_test_6', 'S12_13_test_7', 'S12_13_test_8', 'S12_13_test_9', 'S12_13_test_10', 'S12_13_test_11', 'S12_13_test_12', 'S12_132', 'S12_201', 'S12_220', 'S12_247', 'S13_182', 'S13_217', 'S13_219']
+FOUND 47 pre-computed parses!
+Num dreamcoder tasks 47
+n supervised tasks 47
+Num dreamcoder TEST tasks 18
+n supervised TEST tasks 18
+Loaded behavior also
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_8.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_1.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_5.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_38.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_10.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_32.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_34.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_79.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_57.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_124.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_126.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_214.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_163.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_200.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_113.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_133.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_147.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_39.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_155.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_20.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_148.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S13_217.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_52.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_246.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_13_test_5.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_220.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_243.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_132.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_139.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_31.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_235.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_13_test_6.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_229.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_70.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_13_test_11.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_141.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_224.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_13_test_4.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_13_test_10.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_13_test_2.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S13_219.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_13_test_8.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_207.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_129.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_201.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_13_test_1.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_247.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_55.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_13_test_7.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S13_182.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_13_test_12.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_233.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_13_test_9.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_222.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_106.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_1.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_10.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_78.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_27.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_77.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_2.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_186.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_170.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_97.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_161.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_153.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_238.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_169.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_32.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_189.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_232.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_166.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_49.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_160.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_205.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_172.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_265.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_182.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_132.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_13_test_2.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_187.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_13_test_5.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_13_test_6.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_91.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_199.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_230.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_220.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_89.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_257.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_13_test_4.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_201.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_13_test_10.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_150.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_239.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_13_test_7.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_217.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_183.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_180.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_247.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_13_test_1.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_147.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_243.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_219.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_13_test_9.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_13_test_11.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_13_test_8.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_252.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_13_test_12.png
+EMPTY - skiping this ind for extracting datflat
+CLEANING UP, skipping: A1PF01FF85HUY4 - S13_170.png
+CLEANING UP, skipping: A1PF01FF85HUY4 - S13_182.png
+CLEANING UP, skipping: A1PF01FF85HUY4 - S13_172.png
+CLEANING UP, skipping: A1PF01FF85HUY4 - S13_180.png
+CLEANING UP, skipping: A1PF01FF85HUY4 - S12_13_test_10.png
+CLEANING UP, skipping: A2P53AN2M8IWFP - S13_27.png
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+GGGGdd
+GGGGeee
+DRAW TASK training set: S13
+DO SHAPING: False
+training task names:
+['S12_13_shaping_0', 'S12_13_shaping_1', 'S12_13_shaping_2', 'S12_13_shaping_3', 'S12_13_shaping_4', 'S12_13_shaping_5', 'S12_13_shaping_6', 'S12_13_shaping_7', 'S12_13_shaping_8', 'S12_13_shaping_9', 'S12_13_shaping_10', 'S13_1', 'S13_2', 'S13_10', 'S13_27', 'S13_77', 'S13_78', 'S13_106', 'S13_32', 'S13_49', 'S13_97', 'S13_153', 'S13_160', 'S13_161', 'S13_166', 'S13_169', 'S13_170', 'S13_186', 'S13_189', 'S13_232', 'S13_238', 'S13_89', 'S13_91', 'S13_147', 'S13_150', 'S13_172', 'S13_180', 'S13_183', 'S13_187', 'S13_199', 'S13_205', 'S13_230', 'S13_239', 'S13_243', 'S13_252', 'S13_257', 'S13_265']
+test tasks:
+['S12_13_test_1', 'S12_13_test_2', 'S12_13_test_4', 'S12_13_test_5', 'S12_13_test_6', 'S12_13_test_7', 'S12_13_test_8', 'S12_13_test_9', 'S12_13_test_10', 'S12_13_test_11', 'S12_13_test_12', 'S12_132', 'S12_201', 'S12_220', 'S12_247', 'S13_182', 'S13_217', 'S13_219']
+FOUND 47 pre-computed parses!
+Num dreamcoder tasks 47
+n supervised tasks 47
+Num dreamcoder TEST tasks 18
+n supervised TEST tasks 18
+Loaded behavior also
+REMOVING SHAPING STIMULI (THOSE HUMANS DID NOT GET) [wil even remove things like S9_shaping_5]
+removing, since I think is shaping: S12_13_shaping_1
+removing, since I think is shaping: S12_13_shaping_7
+removing, since I think is shaping: S12_13_shaping_8
+removing, since I think is shaping: S12_13_shaping_9
+removing, since I think is shaping: S12_13_shaping_3
+removing, since I think is shaping: S12_13_shaping_2
+removing, since I think is shaping: S12_13_shaping_0
+removing, since I think is shaping: S12_13_shaping_10
+removing, since I think is shaping: S12_13_shaping_5
+removing, since I think is shaping: S12_13_shaping_4
+removing, since I think is shaping: S12_13_shaping_6
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_8.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_1.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_5.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_38.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_10.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_32.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_34.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_79.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_57.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_124.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_126.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_214.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_163.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_200.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_113.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_133.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_147.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_39.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_155.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_20.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_148.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S13_217.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_52.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_246.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_13_test_5.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_220.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_243.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_132.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_139.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_31.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_235.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_13_test_6.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_229.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_70.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_13_test_11.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_141.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_224.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_13_test_4.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_13_test_10.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_13_test_2.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S13_219.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_13_test_8.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_207.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_129.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_201.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_13_test_1.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_247.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_55.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_13_test_7.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S13_182.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_13_test_12.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_233.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_13_test_9.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_222.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_106.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_1.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_10.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_78.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_27.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_77.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_2.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_186.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_170.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_97.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_161.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_153.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_238.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_169.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_32.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_189.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_232.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_166.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_49.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_160.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_205.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_172.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_265.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_182.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_132.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_13_test_2.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_187.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_13_test_5.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_13_test_6.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_91.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_199.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_230.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_220.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_89.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_257.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_13_test_4.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_201.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_13_test_10.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_150.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_239.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_13_test_7.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_217.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_183.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_180.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_247.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_13_test_1.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_147.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_243.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_219.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_13_test_9.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_13_test_11.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_13_test_8.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_252.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_13_test_12.png
+EMPTY - skiping this ind for extracting datflat
+CLEANING UP, skipping: A1PF01FF85HUY4 - S13_170.png
+CLEANING UP, skipping: A1PF01FF85HUY4 - S13_182.png
+CLEANING UP, skipping: A1PF01FF85HUY4 - S13_172.png
+CLEANING UP, skipping: A1PF01FF85HUY4 - S13_180.png
+CLEANING UP, skipping: A1PF01FF85HUY4 - S12_13_test_10.png
+CLEANING UP, skipping: A2P53AN2M8IWFP - S13_27.png
+{'S12_8', 'S13_1', 'S12_141', 'S13_32', 'S13_182', 'S12_133', 'S13_97', 'S12_10', 'S12_13_test_1', 'S12_32', 'S12_13_test_4', 'S13_106', 'S13_77', 'S12_233', 'S13_78', 'S12_124', 'S12_39', 'S13_243', 'S12_214', 'S12_155', 'S13_252', 'S12_163', 'S12_222', 'S12_224', 'S13_265', 'S12_126', 'S12_13_test_5', 'S13_153', 'S13_205', 'S13_187', 'S12_13_test_10', 'S12_246', 'S13_183', 'S12_13_test_2', 'S12_13_test_7', 'S12_247', 'S13_232', 'S12_13_test_9', 'S12_220', 'S12_38', 'S12_13_test_8', 'S13_257', 'S12_139', 'S12_1', 'S13_238', 'S12_207', 'S12_235', 'S12_70', 'S12_129', 'S13_186', 'S13_239', 'S13_147', 'S12_13_test_12', 'S13_27', 'S13_91', 'S12_55', 'S12_52', 'S12_5', 'S12_20', 'S13_160', 'S13_89', 'S13_189', 'S12_148', 'S13_217', 'S13_10', 'S13_2', 'S12_113', 'S13_169', 'S13_166', 'S12_13_test_6', 'S13_150', 'S13_180', 'S12_147', 'S12_201', 'S13_161', 'S12_229', 'S12_132', 'S13_230', 'S12_57', 'S13_170', 'S13_49', 'S12_34', 'S12_200', 'S12_13_test_11', 'S12_31', 'S13_172', 'S12_243', 'S13_219', 'S13_199', 'S12_79'}
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_8.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_1.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_5.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_38.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_10.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_32.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_34.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_79.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_57.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_124.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_126.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_214.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_163.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_200.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_113.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_133.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_147.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_39.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_155.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_20.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_148.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S13_217.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_52.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_246.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_13_test_5.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_220.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_243.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_132.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_139.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_31.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_235.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_13_test_6.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_229.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_70.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_13_test_11.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_141.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_224.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_13_test_4.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_13_test_10.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_13_test_2.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S13_219.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_13_test_8.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_207.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_129.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_201.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_13_test_1.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_247.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_55.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_13_test_7.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S13_182.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_13_test_12.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_233.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_13_test_9.png
+CLEANING UP, skipping: A28J7H4TH29DC3 - S12_222.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_106.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_1.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_10.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_78.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_27.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_77.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_2.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_186.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_170.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_97.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_161.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_153.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_238.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_169.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_32.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_189.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_232.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_166.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_49.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_160.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_205.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_172.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_265.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_182.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_132.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_13_test_2.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_187.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_13_test_5.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_13_test_6.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_91.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_199.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_230.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_220.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_89.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_257.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_13_test_4.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_201.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_13_test_10.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_150.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_239.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_13_test_7.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_217.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_183.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_180.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_247.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_13_test_1.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_147.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_243.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_219.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_13_test_9.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_13_test_11.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_13_test_8.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S13_252.png
+CLEANING UP, skipping: A2CHDWKAYZ3P3E - S12_13_test_12.png
+EMPTY - skiping this ind for extracting datflat
+CLEANING UP, skipping: A1PF01FF85HUY4 - S13_170.png
+CLEANING UP, skipping: A1PF01FF85HUY4 - S13_182.png
+CLEANING UP, skipping: A1PF01FF85HUY4 - S13_172.png
+CLEANING UP, skipping: A1PF01FF85HUY4 - S13_180.png
+CLEANING UP, skipping: A1PF01FF85HUY4 - S12_13_test_10.png
+CLEANING UP, skipping: A2P53AN2M8IWFP - S13_27.png
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+SKIPPIG STROKE, is bad...
+getting S13_2, A39GADIK8RLMVC
+{'workerID': 'A39GADIK8RLMVC', 'workernum': 1, 'condition': 1, 'stimname': 'S13_2.png', 'trialonset': 1571858730294, 'trialstrokes': [[(103.5111083984375, -75.150390625, 1571858731238), (103.5111083984375, -75.64154052734375, 1571858731275), (103.5111083984375, -76.13265991210938, 1571858731287), (103.5111083984375, -78.58828735351562, 1571858731303), (109.00640869140625, -106.09130859375, 1571858731320), (119.04129028320312, -158.150634765625, 1571858731336), (126.92584228515625, -203.33419799804688, 1571858731353), (130.98764038085938, -243.11541748046875, 1571858731370), (130.98764038085938, -270.618408203125, 1571858731387), (129.79299926757812, -290.754638671875, 1571858731404), (128.12051391601562, -302.54156494140625, 1571858731420), (125.25335693359375, -312.36407470703125, 1571858731436)], [(136.48294067382812, -241.15093994140625, 1571858731623), (136.00506591796875, -241.15093994140625, 1571858731637), (135.04934692382812, -241.15093994140625, 1571858731654), (132.42111206054688, -242.13311767578125, 1571858731670), (129.07620239257812, -244.09765625, 1571858731686), (125.01443481445312, -246.55328369140625, 1571858731703), (111.87350463867188, -258.34033203125, 1571858731720), (98.01577758789062, -273.07403564453125, 1571858731737), (91.56478881835938, -290.263427734375, 1571858731753), (89.89230346679688, -305.48834228515625, 1571858731770), (92.28158569335938, -316.29315185546875, 1571858731787), (100.1661376953125, -323.6600341796875, 1571858731803), (112.82925415039062, -327.589111328125, 1571858731820), (128.12051391601562, -329.0623779296875, 1571858731837), (141.73922729492188, -324.15118408203125, 1571858731854), (152.25201416015625, -314.81976318359375, 1571858731871), (155.83587646484375, -307.94403076171875, 1571858731887), (160.37548828125, -286.33447265625, 1571858731903), (156.31378173828125, -275.52972412109375, 1571858731920), (149.14593505859375, -270.1273193359375, 1571858731937), (144.8453369140625, -267.1805419921875, 1571858731954), (135.76608276367188, -264.72491455078125, 1571858731971), (130.98764038085938, -263.2515869140625, 1571858731987)], [(185.22378540039062, -70.23916625976562, 1571858732152), (185.22378540039062, -69.25692749023438, 1571858732171), (185.22378540039062, -69.748046875, 1571858732187), (185.22378540039062, -72.69479370117188, 1571858732204), (185.46270751953125, -83.99066162109375, 1571858732221), (188.0909423828125, -121.80734252929688, 1571858732238), (191.9136962890625, -184.18032836914062, 1571858732254), (195.01980590820312, -227.89056396484375, 1571858732271), (196.93115234375, -263.2515869140625, 1571858732288), (197.64794921875, -297.13916015625, 1571858732304), (197.17007446289062, -324.64227294921875, 1571858732321), (195.01980590820312, -340.84942626953125, 1571858732338), (194.06405639648438, -347.23394775390625, 1571858732354)], [(133.85467529296875, -289.7723388671875, 1571858732599), (133.85467529296875, -289.28118896484375, 1571858732605), (134.0936279296875, -288.29901123046875, 1571858732622), (135.28823852539062, -287.31671142578125, 1571858732639), (138.1553955078125, -286.33447265625, 1571858732655), (144.36749267578125, -285.84332275390625, 1571858732672), (189.04656982421875, -289.28118896484375, 1571858732689), (217.00091552734375, -290.263427734375, 1571858732705), (238.0264892578125, -293.70135498046875, 1571858732722)]], 'trialprimitives': ['line', 'circle', 'line', 'line'], 'trialcircleparams': [[], [], [], []]}
+> /home/lucast4/dc/analysis/getModelHumanDists.py(71)loadDistances()
+-> distances.extend(DATloadModelHuDist(DAT, stim, hum, suf))
+(Pdb) (Pdb) --KeyboardInterrupt--
+(Pdb) --KeyboardInterrupt--
+(Pdb) --KeyboardInterrupt--
+(Pdb) --KeyboardInterrupt--
+(Pdb) (Pdb) --KeyboardInterrupt--
+(Pdb) --KeyboardInterrupt--
+(Pdb) --KeyboardInterrupt--
+(Pdb) (Pdb) (Pdb) 
