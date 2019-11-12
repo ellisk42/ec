@@ -138,6 +138,8 @@ def aggregateDistances(ECTRAIN):
     #             d = filterDistances(distances_agg, stimlist=[stim], humans=[human], models=[model])
     #             assert len(d)>0
     #             DATsaveModelHuDist(DAT, stim, human, d, "aggregate")
+
+    # --- Below is just for saving.
     for human in humanlist:
         for stim in stimlist:
             d = filterDistances(distances_agg, stimlist=[stim], humans=[human])
@@ -164,6 +166,7 @@ def aggregateDistances(ECTRAIN):
         #     import pdb
         #     pdb.set_trace()
         DATsaveModelHuDist(DAT, d["stim"], d["human"], [d], suff)
+
 
 
 

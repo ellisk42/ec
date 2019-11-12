@@ -131,57 +131,62 @@ class Parse():
 
         @staticmethod
         def ofProgram(p):
-                """Takes a program and returns its set-of-parses"""
-                # if p.isApplication:
-                #     import pdb
-                #     pdb.set_trace()
-
-                def chunky(q):
-                        if q.isApplication or q.isInvented:
-                                f,xs = q.applicationParse()
-                                chunky_arguments = [chunky(x) for x in xs ]
-                                if f.isInvented and str(f.tp.returns()) == "tstroke":
-                                        numberExpands = len(f.tp.functionArguments()) - len(xs)
-                                        return_value = chunky(f.body)
-                                        for x in chunky_arguments:
-                                                if numberExpands > 0: x = x.shift(numberExpands)
-                                                return_value = Application(return_value,x)
-                                        for i in range(numberExpands - 1,-1,-1):
-                                                return_value = Application(return_value, Index(i))
-                                        return_value = Application(_chunky_primitive,return_value)
-                                        for _ in range(numberExpands):
-                                                return_value = Abstraction(return_value)
-                                        # print(return_value)
-                                        # print("this is our type")
-                                        # try:
-                                        #         print(return_value.infer())
-                                        # except:
-                                        #         print("total failure to get a type")
-                                        #         print(q)
-                                        #         print(q.infer())
-                                        #         assert False
-                                        return return_value
-                                elif f.isInvented:
-                                        return_value = chunky(f.body)
-                                        for x in chunky_arguments:
-                                                return_value = Application(return_value,x)
-                                        return return_value
-                                else:
-                                        # import pdb
-                                        # pdb.set_trace()
-                                        return_value = chunky(f)
-                                        for x in chunky_arguments:
-                                                return_value = Application(return_value,x)
-                                        return return_value
-                        if q.isAbstraction:
-                                return Abstraction(chunky(q.body))
-                        if q.isIndex or q.isPrimitive: return q                                        
-                set_parsing(True)
-                p = chunky(p)
-                print(p)
-                parses = p.evaluate([])
-                set_parsing(False)
-                return parses
+            """Takes a program and returns its set-of-parses"""
+            from datetime import datetime
+            # now = datetime.now()
+            # if p.isApplication:
+            #     import pdb
+            #     pdb.set_trace()
+            def chunky(q):
+                    # print(datetime.now())
+                    # counter+=1
+                    # print(counter)
+                    if q.isApplication or q.isInvented:
+                            f,xs = q.applicationParse()
+                            chunky_arguments = [chunky(x) for x in xs ]
+                            if f.isInvented and str(f.tp.returns()) == "tstroke":
+                                    numberExpands = len(f.tp.functionArguments()) - len(xs)
+                                    return_value = chunky(f.body)
+                                    for x in chunky_arguments:
+                                            if numberExpands > 0: x = x.shift(numberExpands)
+                                            return_value = Application(return_value,x)
+                                    for i in range(numberExpands - 1,-1,-1):
+                                            return_value = Application(return_value, Index(i))
+                                    return_value = Application(_chunky_primitive,return_value)
+                                    for _ in range(numberExpands):
+                                            return_value = Abstraction(return_value)
+                                    # print(return_value)
+                                    # print("this is our type")
+                                    # try:
+                                    #         print(return_value.infer())
+                                    # except:
+                                    #         print("total failure to get a type")
+                                    #         print(q)
+                                    #         print(q.infer())
+                                    #         assert False
+                                    return return_value
+                            elif f.isInvented:
+                                    return_value = chunky(f.body)
+                                    for x in chunky_arguments:
+                                            return_value = Application(return_value,x)
+                                    return return_value
+                            else:
+                                    # import pdb
+                                    # pdb.set_trace()
+                                    return_value = chunky(f)
+                                    for x in chunky_arguments:
+                                            return_value = Application(return_value,x)
+                                    return return_value
+                    if q.isAbstraction:
+                            return Abstraction(chunky(q.body))
+                    if q.isIndex or q.isPrimitive: return q                                        
+            set_parsing(True)
+            # counter=0
+            p = chunky(p)
+            print(p)
+            parses = p.evaluate([])
+            set_parsing(False)
+            return parses
                 
                 
 

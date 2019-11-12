@@ -21,6 +21,9 @@ def getParses(dreamcoder_program):
     """ e.g., dreamcoder_program = result.allFrontiers[tasks[i]].bestPosterior.program"""
     # extracts all parses for a given program object
     print("getting parse...")
+    # if len(str(dreamcoder_program))>150:
+    # import pdb
+    # pdb.set_trace()
     parses = Parse.ofProgram(Program.parse(str(dreamcoder_program)))
     return parses
 
@@ -37,7 +40,7 @@ def getLatestFrontierProgram(result, task):
             return f.bestPosterior.program # this is the most recent frontier not empty
     return []
 
-def getAndSaveParses(experiment="S9.2"):
+def getAndSaveParses(experiment="S9.2", debug=False, skipthingsthatcrash=False):
     """ gets the most recent, and the bestPosterior program
     gets all parses """
     # DAT = loadCheckpoint(trainset=experiment)
@@ -46,7 +49,8 @@ def getAndSaveParses(experiment="S9.2"):
 
     # result, tasks, testtasks, programnames, program_test_names, behaviorexpt, savedir = loadCheckpoint(trainset=experiment)[:7]
 
-    DAT = loadCheckpoint(trainset=experiment, loadparse=False, suppressPrint=True)
+    DAT = loadCheckpoint(trainset=experiment, 
+        loadparse=False, suppressPrint=True, loadbehavior=False)
     
     result=DAT["result"]
     tasks=DAT["tasks"]
@@ -62,6 +66,16 @@ def getAndSaveParses(experiment="S9.2"):
             if name in ["shaping_1", "shaping_4", "shaping_8"]:
                 continue
             print("Parsing {} ...".format(name))
+
+            if debug:
+                # for some reason crashes... was trying to figure out why.
+                if name!="S12_235":
+                    print(name)
+                    continue
+            if skipthingsthatcrash:
+                if name=="S12_235":
+                    print("SKIPPING - {} - since CRASHES...".format(name))
+                    continue
 
             # Get bestPosterior solution (most recent, and best posterior)
             p = getLatestFrontierProgram(result, t)
