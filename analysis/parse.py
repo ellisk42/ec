@@ -275,5 +275,5 @@ if __name__=="__main__":
     if doparse in [0,1,2]:
         # === get RAndom per:mutations
         print("GETTING RANDOM PERMUTATIONS")
-        getAndSaveRandomParses(DAT, Nperm=1000):
+        getAndSaveRandomParses(DAT, Nperm=1000)
     
