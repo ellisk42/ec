@@ -46,7 +46,7 @@ def getAndSaveParses(experiment="S9.2"):
 
     # result, tasks, testtasks, programnames, program_test_names, behaviorexpt, savedir = loadCheckpoint(trainset=experiment)[:7]
 
-    DAT = loadCheckpoint(trainset=experiment, loadparse=False, suppressPrint=True)
+    DAT = loadCheckpoint(trainset=experiment, loadparse=False, suppressPrint=True, loadbehavior=False)
     
     result=DAT["result"]
     tasks=DAT["tasks"]

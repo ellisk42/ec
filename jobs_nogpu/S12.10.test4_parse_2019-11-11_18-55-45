@@ -1,0 +1,8 @@
+[33mWARNING:[0m seccomp requested but not enabled, seccomp library is missing or too old
+HERE
+Traceback (most recent call last):
+  File "analysis/parse.py", line 17, in <module>
+    from analysis.utils import *
+  File "/om/user/lyt/ec/analysis/utils.py", line 17, in <module>
+    from segmentation import getSegmentation
+ModuleNotFoundError: No module named 'segmentation'
