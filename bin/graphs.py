@@ -530,7 +530,7 @@ def plotECResult(
                   handles=[mlines.Line2D([], [], color=color, ls='-',
                                          label=label)
                            for label, color in usedLabels])
-    f.tight_layout()
+    #f.tight_layout()
     if export:
         plot.savefig(export)
         eprint("Exported figure ",export)
