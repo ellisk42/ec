@@ -476,8 +476,11 @@ def plotECResult(
                 name = arguments.baselines[2*n]
                 bl = arguments.baselines[2*n + 1]
                 print(name,bl)
-                solveAxis.plot([0,iterations - 1],[float(bl)]*2,
-                               color='k')
+                plot.hlines(float(bl),-0.5,iterations,
+                            colors='k')
+
+                # solveAxis.plot([0,iterations - 1],[float(bl)]*2,
+                #                color='k')
         if timeAxis:
             for (color,ls,xs,ys) in shuffled([ (color,ls,xs,ys)
                                                for (color,ls),cs in plotCommands_time.items()
