@@ -181,13 +181,13 @@ if __name__=="__main__":
     # ECTRAIN = "S9.2"
     REMOVELL = False # this must match with preprocessing of model
 
+    PAREVERSIONLIST = ["parse", "random"] # parse is kevin ellis code. random is random permutation.
+
     # load DAT
     DAT = loadCheckpoint(trainset=ECTRAIN, loadparse=True, suppressPrint=True)
     print("Loaded checkpoint DAT, for {}".format(ECTRAIN))
-
     # get list of stimuli
     stimlist = DATgetSolvedStim(DAT, removeshaping=True)
-
     # Extract segmented data for humans
     DAT["datflat_hu"] = getFlatData(DAT["datall_human"])
     DAT["datseg_hu"] = getSegmentation(DAT["datflat_hu"], unique_codes=True, dosplits=True, removeLongVertLine=REMOVELL)                                      
@@ -195,11 +195,9 @@ if __name__=="__main__":
     # for each human, get data structure containing all distances
     # distances = []
     for i, (dflat, dseg) in enumerate(zip(DAT["datflat_hu"], DAT["datseg_hu"])):
-            
         stimthis = dflat["stimname"]
         stimthis = stimthis[:stimthis.find(".png")]
         humanname = dflat["workerID"]
-
         print("getting {} of stim x subject, out of {}, ({})({})".format(i, len(DAT["datflat_hu"]), stimthis, humanname))
         
         # skip if doesn't have modeling data
@@ -207,7 +205,18 @@ if __name__=="__main__":
             print("SKIPPED, not in stimlist that model got")
             continue
 
-        datseg_ec = DATloadDatSeg(DAT, stimthis)
+        # --- load datseg model data for this stim.
+        if parseversion=="parse":
+            datseg_ec = DATloadDatSeg(DAT, stimthis)
+            dflat = DATloadDatFlat(DAT, stimthis)    
+            modelparsenums = [d["parsenum"] for d in dflat]
+            modelname=ECTRAIN
+        elif parseversion=="random":
+            datseg_ec = DATloadDatSeg(DAT, "{}_randomperm".format(stimthis))
+            modelparsenums = list(range(len(datseg_ec)))
+            modelname="{}_randomperm"
+        else:
+            assert False, "dont unerstand..."
 
         def getSeqGetters(labelkind="codes_unique"):
             if labelkind=="codes_unique":
@@ -245,10 +254,7 @@ if __name__=="__main__":
         for seqkind in ["codes_unique", "codes", "row", "col"]:
             seqgetter_hu, seqgetter_ec = getSeqGetters(labelkind=seqkind)
 
-            dflat = DATloadDatFlat(DAT, stimthis)
-            modelparsenums = [d["parsenum"] for d in dflat]
-
-            distances = distModelHumanAllStims([stimthis], seqgetter_ec, seqgetter_hu, modelname = ECTRAIN, humanname = humanname, distancelabel=seqkind, modelrends=modelparsenums)
+            distances = distModelHumanAllStims([stimthis], seqgetter_ec, seqgetter_hu, modelname = modelname, humanname = humanname, distancelabel=seqkind, modelrends=modelparsenums)
             DATsaveModelHuDist(DAT, stimthis, humanname, distances, seqkind)
 
     # ==== aggregate all distance measures, and get medians across parases.

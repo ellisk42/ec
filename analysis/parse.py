@@ -197,6 +197,22 @@ def parses2datflatAllSave(DAT):
         with open(savename, "wb") as f:
             pickle.dump(datflat_ec, f)
 
+def getAndSaveRandomParses(DAT, Nperm=1000):
+    """gets N random permutations.
+    Have to first get parses before run this"""
+    from pythonlib.tools.listtools import permuteRand
+
+    # ==== for each stimulus (solved), get N random permutations 
+    stimlist = DATgetSolvedStim(DAT, intersectDrawgood=True)
+    for stim in stimlist:
+        # get datsegs for this stim (and just keep the first parse)
+        datseg_single = DATloadDatSeg(DAT, stim)[0]
+        # collect N permutations
+        datseg_randomperms = permuteRand(datseg_single, Nperm, includeOrig=False, not_enough_ok=True)
+        # save
+        DATsaveDatSeg(DAT, datseg_randomperms, "{}_randomperms".format(stim))
+        print("saved {}".format("{}_randomperms".format(stim)))
+
 
 # ==== do segmentation
 if __name__=="__main__":
@@ -217,37 +233,47 @@ if IMPORT_DRAWGOOD:
 
 if __name__=="__main__":
     import sys
+    # 1) experiment name
     experiment = sys.argv[1]
+    # 2) do parse? {2}=only get random perm {1, empty}=yes, {0}=no
     if len(sys.argv)>2:
         doparse = sys.argv[2]
     else:
         doparse = 1
 
+    skipthingsthatcrash=True
     REMOVELL = False    
 
-    # === Get all parses, if desired
-    if doparse==1:
-        print("getting all parses (may take a while")
-        getAndSaveParses(experiment=experiment)
-    else:
-        print("skipping parse as requested")
+    if doparse in [0,1]:
+        # === Get all parses, if desired
+        if doparse==1:
+            print("getting all parses (may take a while")
+            getAndSaveParses(experiment=experiment, skipthingsthatcrash=skipthingsthatcrash)
+        else:
+            print("skipping parse as requested")
 
-    # === get datflat
-    print("GETTING DATFLAT (computing and then saving")
-    DAT = loadCheckpoint(trainset=experiment, loadparse=True, suppressPrint=True)
-    parses2datflatAllSave(DAT)
+        # === get datflat
+        print("GETTING DATFLAT (computing and then saving")
+        DAT = loadCheckpoint(trainset=experiment, loadparse=True, suppressPrint=True)
+        parses2datflatAllSave(DAT)
 
-    # === get datseg
-    # -- for each stim, load datflat, do segmentation, save...
-    print("GETTING DATSEGS (computing and then saving)")
-    stims = DATgetSolvedStim(DAT, intersectDrawgood=True)
-    for s in stims:
-        # print("getting datsegs for {}".format(s))
-        # load datflat
-        datflat = DATloadDatFlat(DAT, s)
-        
-        # 1) get datseg
-        datseg = getSegmentation(datflat, unique_codes=True, dosplits=True, removebadstrokes=True, removeLongVertLine=REMOVELL) 
+        # === get datseg
+        # -- for each stim, load datflat, do segmentation, save...
+        print("GETTING DATSEGS (computing and then saving)")
+        stims = DATgetSolvedStim(DAT, intersectDrawgood=True)
+        for s in stims:
+            # print("getting datsegs for {}".format(s))
+            # load datflat
+            datflat = DATloadDatFlat(DAT, s)
             
-        # save datflat
-        DATsaveDatSeg(DAT, datseg, s)
+            # 1) get datseg
+            datseg = getSegmentation(datflat, unique_codes=True, dosplits=True, removebadstrokes=True, removeLongVertLine=REMOVELL) 
+                
+            # save datflat
+            DATsaveDatSeg(DAT, datseg, s)
+
+    if doparse in [0,1,2]:
+        # === get RAndom per:mutations
+        print("GETTING RANDOM PERMUTATIONS")
+        getAndSaveRandomParses(DAT, Nperm=1000):
+    

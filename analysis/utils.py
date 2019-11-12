@@ -217,6 +217,7 @@ def loadCheckpoint(trainset="S9_nojitter", userealnames=True, loadparse=False, s
         print("not loading parses [NONE FOUND]")
         parses = []
 
+
     print("Num dreamcoder tasks {}".format(len(result.taskSolutions)))
     print("n supervised tasks {}".format(len(tasks)))
     assert len(result.taskSolutions)==len(tasks)
@@ -245,7 +246,8 @@ def loadCheckpoint(trainset="S9_nojitter", userealnames=True, loadparse=False, s
     "savedir": savedir,
     "parses": parses,
     "analysavedir":analysavedir,
-    "summarysavedir":summarysavedir
+    "summarysavedir":summarysavedir,
+    "loadparse":loadparse
     }
 
     if loadbehavior:
@@ -369,6 +371,7 @@ def DATloadDrawgoodData(DAT, dosegmentation=True):
 def DATgetSolvedStim(DAT, removeshaping=True, intersectDrawgood=False):
     import re
     """gets stims that have parses"""
+    assert DAT["loadparse"], print("no parses found - you have to load parses first")
     stimnames = [P["name"] for P in DAT["parses"] if len(P["parse"])>0]
 
     if removeshaping:
