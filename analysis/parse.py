@@ -235,7 +235,6 @@ if IMPORT_DRAWGOOD:
 
 if __name__=="__main__":
     import sys
-    from segmentation import getSegmentation
 
     # 1) experiment name
     experiment = sys.argv[1]
@@ -250,11 +249,11 @@ if __name__=="__main__":
 
     if doparse in [0,1]:
         # === Get all parses, if desired
-        # if doparse==1:
-        #     print("getting all parses (may take a while")
-        #     getAndSaveParses(experiment=experiment, skipthingsthatcrash=skipthingsthatcrash)
-        # else:
-        #     print("skipping parse as requested")
+        if doparse==1:
+            print("getting all parses (may take a while")
+            getAndSaveParses(experiment=experiment, skipthingsthatcrash=skipthingsthatcrash)
+        else:
+            print("skipping parse as requested")
 
         # === get datflat
         print("GETTING DATFLAT (computing and then saving")
@@ -262,7 +261,9 @@ if __name__=="__main__":
         parses2datflatAllSave(DAT)
 
         # === get datseg
-        # -- for each stim, load datflat, do segmentation, save...
+        # -- for each stim, load datflat, do segmentation, save..
+        from segmentation import getSegmentation
+
         print("GETTING DATSEGS (computing and then saving)")
         stims = DATgetSolvedStim(DAT, intersectDrawgood=True)
         for s in stims:
