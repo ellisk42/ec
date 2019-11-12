@@ -523,6 +523,7 @@ def plotECResult(
         for n in range(len(arguments.baselines)//2):
             name = arguments.baselines[2*n]
             bl = arguments.baselines[2*n + 1]
+            print(name,bl)
             solveAxis.plot([0,iterations],[bl,bl],
                            color='k')
 
