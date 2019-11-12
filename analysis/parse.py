@@ -59,7 +59,7 @@ def getAndSaveParses(experiment="S9.2", debug=False, skipthingsthatcrash=False):
     behaviorexpt=DAT["behaviorexpt"]
     savedir=DAT["savedir"]
 
-    def saveparses(T, P, skipthingsthatcrash):
+    def saveparses(T, P, skipthingsthatcrash=False):
         # === for each program, get the best posteiror and then all parses of that. 
         for t, name in zip(T, P):
             if name in ["shaping_1", "shaping_4", "shaping_8"]:

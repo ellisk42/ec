@@ -11,8 +11,9 @@ echo "Should be using conda envt: ecgood"
 # 5) plot summaries to things
 # EXPTLIST=(S9.2 S8.2.2)
 # EXPTLIST=(S12.6.1 S12.6.2 S13.9 S12.8.1)
-EXPTLIST=(S12.10 S13.10)
-COMPARETOHUMAN=0
+# EXPTLIST=(S12.10 S13.10)
+EXPTLIST=(S12.10)
+COMPARETOHUMAN=1
 for EC_EXPT in ${EXPTLIST[@]}
 do
     outthis=$out"_ecsummarize_"$EC_EXPT
