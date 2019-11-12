@@ -524,7 +524,7 @@ def plotECResult(
             name = arguments.baselines[2*n]
             bl = arguments.baselines[2*n + 1]
             print(name,bl)
-            solveAxis.plot([0,iterations],[bl,bl],
+            solveAxis.plot([0,iterations - 1],[bl,bl],
                            color='k')
 
     f.tight_layout()
