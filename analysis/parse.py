@@ -59,7 +59,7 @@ def getAndSaveParses(experiment="S9.2", debug=False, skipthingsthatcrash=False):
     behaviorexpt=DAT["behaviorexpt"]
     savedir=DAT["savedir"]
 
-    def saveparses(T, P):
+    def saveparses(T, P, skipthingsthatcrash):
         # === for each program, get the best posteiror and then all parses of that. 
         for t, name in zip(T, P):
             if name in ["shaping_1", "shaping_4", "shaping_8"]:
@@ -71,6 +71,8 @@ def getAndSaveParses(experiment="S9.2", debug=False, skipthingsthatcrash=False):
                 if name!="S12_235":
                     print(name)
                     continue
+            print(skipthingsthatcrash)
+            print(name)
             if skipthingsthatcrash:
                 if name in ["S12_235", "S12_243", "S12_13_test_1"]:
                     print("SKIPPING - {} - since CRASHES...".format(name))
@@ -105,11 +107,11 @@ def getAndSaveParses(experiment="S9.2", debug=False, skipthingsthatcrash=False):
             print("saved to :{}".format(fname))
 
     # ========= DO TRAIING TASKS
-    saveparses(T=tasks, P=programnames)
+    saveparses(T=tasks, P=programnames, skipthingsthatcrash=skipthingsthatcrash)
 
     # ========= DO TEST TASKS
     if len(testtasks)>0:
-        saveparses(T=testtasks, P=program_test_names)
+        saveparses(T=testtasks, P=program_test_names, skipthingsthatcrash=skipthingsthatcrash)
 
     # === for each task and testtask
     return result, tasks, testtasks, programnames, program_test_names, behaviorexpt
