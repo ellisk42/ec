@@ -471,6 +471,13 @@ def plotECResult(
                                             for (color,ls),cs in plotCommands_solve.items()
                                             for xs,ys in cs]):
                 solveAxis.plot(xs,ys,color=color,ls=ls,alpha=alpha)
+        if arguments.baselines:
+            for n in range(len(arguments.baselines)//2):
+                name = arguments.baselines[2*n]
+                bl = arguments.baselines[2*n + 1]
+                print(name,bl)
+                solveAxis.plot([0,iterations - 1],[float(bl)]*2,
+                               color='k')
         if timeAxis:
             for (color,ls,xs,ys) in shuffled([ (color,ls,xs,ys)
                                                for (color,ls),cs in plotCommands_time.items()
@@ -519,14 +526,6 @@ def plotECResult(
                   handles=[mlines.Line2D([], [], color=color, ls='-',
                                          label=label)
                            for label, color in usedLabels])
-    if arguments.baselines:
-        for n in range(len(arguments.baselines)//2):
-            name = arguments.baselines[2*n]
-            bl = arguments.baselines[2*n + 1]
-            print(name,bl)
-            solveAxis.plot([0,iterations - 1],[bl,bl],
-                           color='k')
-
     f.tight_layout()
     if export:
         plot.savefig(export)
