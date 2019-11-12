@@ -5,6 +5,7 @@ except ModuleNotFoundError:
 
 
 from syntax_robustfill import SyntaxCheckingRobustFill
+from image_robustfill import Image_RobustFill
 import time
 
 from dreamcoder.grammar import Grammar
@@ -41,7 +42,7 @@ from dreamcoder.domains.regex.regexPrimitives import reducedConcatPrimitives
 import dreamcoder.domains.regex.main as Regex
 Regex.ConstantInstantiateVisitor.SINGLE = Regex.ConstantInstantiateVisitor()
 
-BATCHSIZE = 32
+BATCHSIZE = 2
 #import other stuff
 
 
@@ -77,7 +78,7 @@ def getDatum():
     while True:
         tsk = random.choice(tasks)
         tp = tsk.request
-        p = g.sample(tp)
+        p = g.sample(tp, maximumDepth=3)
         task = fe.taskOfProgram(p, tp)
         if task is None: continue
 
@@ -87,6 +88,9 @@ def getDatum():
         return ex, stringify(str(p))
 
 def makeExamples(task):
+    if arguments.domain == 'tower':
+        return task.getImage()
+
     if arguments.domain == "regex":
         return [([],y)
                 for xs,y in task.examples ]
@@ -199,8 +203,13 @@ if __name__=='__main__':
 
     target_vocabulary = [str(p) for p in g.primitives] + extras
     
-    m = SyntaxCheckingRobustFill(input_vocabularies=input_vocabularies,
+    if arguments.domain in ['tower', 'rational', 'logo']:
+        m = Image_RobustFill(target_vocabulary=target_vocabulary)
+    else:
+        m = SyntaxCheckingRobustFill(input_vocabularies=input_vocabularies,
                                 target_vocabulary=target_vocabulary)
+
+
     if torch.cuda.is_available():
         print("CUDAfying net...")
         m.cuda()
@@ -210,10 +219,10 @@ if __name__=='__main__':
 
     start=time.time()
     max_n_iterations = 10000000000
+    batch = [getDatum() for _ in range(BATCHSIZE)]
     for i in range(max_n_iterations):
-        batch = [getDatum() for _ in range(BATCHSIZE)]
+        #batch = [getDatum() for _ in range(BATCHSIZE)]
         inputs, targets = zip(*batch)
-        #import pdb; pdb.set_trace()
         score = m.optimiser_step(inputs, targets)
 
         if i%2==0: print(f"Iteration {i}/{max_n_iterations}, Score {score}, ({(time.time()-start)/(i+1)} seconds per iteration)") 
