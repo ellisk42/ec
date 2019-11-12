@@ -477,7 +477,7 @@ def plotECResult(
                 bl = arguments.baselines[2*n + 1]
                 print(name,bl)
                 plot.axhline(float(bl),-0.5,iterations,
-                             color='k',lw=2)
+                             color='k',lw=3.5)
 
                 # solveAxis.plot([0,iterations - 1],[float(bl)]*2,
                 #                color='k')
