@@ -519,6 +519,13 @@ def plotECResult(
                   handles=[mlines.Line2D([], [], color=color, ls='-',
                                          label=label)
                            for label, color in usedLabels])
+    if arguments.baselines:
+        for n in range(len(arguments.baselines)//2):
+            name = arguments.baselines[2*n]
+            bl = arguments.baselines[2*n + 1]
+            solveAxis.plot([0,iterations],[bl,bl],
+                           color='k')
+
     f.tight_layout()
     if export:
         plot.savefig(export)
@@ -595,6 +602,9 @@ if __name__ == "__main__":
     parser.add_argument("--goodPrior",
                         default=False, action='store_true',
                         help="Do not update priors when doing cutoffs and likelihoods")
+    parser.add_argument("--baselines",
+                        default=[],nargs='+')
+
 
     arguments = parser.parse_args()
 
