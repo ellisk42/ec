@@ -28,7 +28,7 @@ REMOVELL = False # remove vertical long line?
 
 
 ########################## STUFF TO DO AFTER SAVING DISTANCES
-def loadDistances(ECTRAIN, ver="multiple"):
+def loadDistances(ECTRAIN, ver="multiple", modelkind="parse"):
     # For a given slice of human/model/stim, plot all string distances
     # ACTUALLY: loads all into one list of dicts
     if ver=="legacy":
@@ -68,7 +68,10 @@ def loadDistances(ECTRAIN, ver="multiple"):
                 # print(d)
                 # import pdb
                 # pdb.set_trace()
-                d = DATloadModelHuDist(DAT, stim, hum, suf)
+                if modelkind=="parse":
+                    d = DATloadModelHuDist(DAT, stim, hum, suf)
+                elif modelkind=="randomperm":
+                    d = DATloadModelHuDist(DAT, "{}_randomperm".format(stim), hum, suf)
                 if isinstance(d, dict):
                     distances.append(d)    
                 elif isinstance(d, list):
@@ -112,14 +115,20 @@ def updateWithPosNegControls(ECTRAIN):
     pass
 
 
-import sys
-sys.path.append("..")
 import pandas as pd
 from pythonlib.tools.pandastools import *
-def aggregateDistances(ECTRAIN):
+def aggregateDistances(ECTRAIN, modelkindlist=["parse", "randomperm"]):
     """if many distances calcualted (e.g., using codes, codes_unique..., (1) extracrts, and aggregates, fefault is to take mean. (2) saves all back as "aggregat", then (3) takes median over all parses tp summarize"""
     print("NOTE: nonnumercols below assumes that codes_unique will be the first thin encountered, and therefore will be extracted in aggregationp.. this likely depend on the order of the distances kinds used in calcualting huamn-model distances. Is only important if use these codes later, e.g., if taking min over reversed sequences.")
-    distances = loadDistances(ECTRAIN)
+    
+    # modelkind=="parse":
+    # modelkind=="randomperm"
+    # ======== LOAD ALL MODELS AND COMBINE IN THIS ANALYSIS. Is fine since diff models are flagged with diff values for "model" key.
+    distances_all = []
+    for modelkind in modelkindlist:
+        distances_all.append(loadDistances(ECTRAIN, modelkind=modelkind))
+    distances = [d for dist in distances_all for d in dist] # fglatten
+
     DAT = loadCheckpoint(trainset=ECTRAIN, loadparse=True, suppressPrint=True)
 
     # 1) aggregate over distances, get some sort of aggregated mean
@@ -131,14 +140,7 @@ def aggregateDistances(ECTRAIN):
     humanlist = set(df["human"])
     stimlist = set(df["stim"])
     modellist = set(df["model"])
-
-    # for human in humanlist:
-    #     for stim in stimlist:
-    #         for model in modellist:
-    #             d = filterDistances(distances_agg, stimlist=[stim], humans=[human], models=[model])
-    #             assert len(d)>0
-    #             DATsaveModelHuDist(DAT, stim, human, d, "aggregate")
-
+    assert len(modellist)==1, ""
     # --- Below is just for saving.
     for human in humanlist:
         for stim in stimlist:
@@ -180,8 +182,7 @@ if __name__=="__main__":
     # ECTRAIN = "S8.2.2"
     # ECTRAIN = "S9.2"
     REMOVELL = False # this must match with preprocessing of model
-
-    PAREVERSIONLIST = ["parse", "random"] # parse is kevin ellis code. random is random permutation.
+    PARSEVERSIONLIST = ["parse", "randomperm"] # parse is kevin ellis code. random is random permutation.
 
     # load DAT
     DAT = loadCheckpoint(trainset=ECTRAIN, loadparse=True, suppressPrint=True)
@@ -205,57 +206,58 @@ if __name__=="__main__":
             print("SKIPPED, not in stimlist that model got")
             continue
 
-        # --- load datseg model data for this stim.
-        if parseversion=="parse":
-            datseg_ec = DATloadDatSeg(DAT, stimthis)
-            dflat = DATloadDatFlat(DAT, stimthis)    
-            modelparsenums = [d["parsenum"] for d in dflat]
-            modelname=ECTRAIN
-        elif parseversion=="random":
-            datseg_ec = DATloadDatSeg(DAT, "{}_randomperm".format(stimthis))
-            modelparsenums = list(range(len(datseg_ec)))
-            modelname="{}_randomperm"
-        else:
-            assert False, "dont unerstand..."
+        for parseversion in PARSEVERSIONLIST:
+            # --- load datseg model data for this stim.
+            if parseversion=="parse":
+                datseg_ec = DATloadDatSeg(DAT, stimthis)
+                dflat = DATloadDatFlat(DAT, stimthis)    
+                modelparsenums = [d["parsenum"] for d in dflat]
+                modelname=ECTRAIN
+            elif parseversion=="randomperm":
+                datseg_ec = DATloadDatSeg(DAT, "{}_randomperm".format(stimthis))
+                modelparsenums = list(range(len(datseg_ec)))
+                modelname="{}_randomperm"
+            else:
+                assert False, "dont unerstand..."
 
-        def getSeqGetters(labelkind="codes_unique"):
-            if labelkind=="codes_unique":
-                def seqgetter_hu(stim):
-                    sequence = [d["codes_unique"] for d in dseg]
-                    return sequence
-                def seqgetter_ec(stim):
-                    sequence = [[d["codes_unique"] for d in dat] for dat in datseg_ec]
-                    return sequence    
-            elif labelkind=="codes":
-                def seqgetter_hu(stim):
-                    sequence = [d["codes"] for d in dseg]
-                    return sequence
-                def seqgetter_ec(stim):
-                    sequence = [[d["codes"] for d in dat] for dat in datseg_ec]
-                    return sequence
-            elif labelkind=="col":
-                def seqgetter_hu(stim):
-                    sequence = [codeUniqueFeatures(d["codes_unique"])[1] for d in dseg]
-                    return sequence
-                def seqgetter_ec(stim):
-                    sequence = [[codeUniqueFeatures(d["codes_unique"])[1] for d in dat] for dat in datseg_ec]
-                    return sequence
-            elif labelkind=="row":
-                def seqgetter_hu(stim):
-                    sequence = [d["row"] for d in dseg]
-                    return sequence
-                def seqgetter_ec(stim):
-                    sequence = [[d["row"] for d in dat] for dat in datseg_ec]
-                    return sequence    
-            return seqgetter_hu, seqgetter_ec
+            def getSeqGetters(labelkind="codes_unique"):
+                if labelkind=="codes_unique":
+                    def seqgetter_hu(stim):
+                        sequence = [d["codes_unique"] for d in dseg]
+                        return sequence
+                    def seqgetter_ec(stim):
+                        sequence = [[d["codes_unique"] for d in dat] for dat in datseg_ec]
+                        return sequence    
+                elif labelkind=="codes":
+                    def seqgetter_hu(stim):
+                        sequence = [d["codes"] for d in dseg]
+                        return sequence
+                    def seqgetter_ec(stim):
+                        sequence = [[d["codes"] for d in dat] for dat in datseg_ec]
+                        return sequence
+                elif labelkind=="col":
+                    def seqgetter_hu(stim):
+                        sequence = [codeUniqueFeatures(d["codes_unique"])[1] for d in dseg]
+                        return sequence
+                    def seqgetter_ec(stim):
+                        sequence = [[codeUniqueFeatures(d["codes_unique"])[1] for d in dat] for dat in datseg_ec]
+                        return sequence
+                elif labelkind=="row":
+                    def seqgetter_hu(stim):
+                        sequence = [d["row"] for d in dseg]
+                        return sequence
+                    def seqgetter_ec(stim):
+                        sequence = [[d["row"] for d in dat] for dat in datseg_ec]
+                        return sequence    
+                return seqgetter_hu, seqgetter_ec
 
 
-        # =========== go thru each type of sequence
-        for seqkind in ["codes_unique", "codes", "row", "col"]:
-            seqgetter_hu, seqgetter_ec = getSeqGetters(labelkind=seqkind)
+            # =========== go thru each type of sequence
+            for seqkind in ["codes_unique", "codes", "row", "col"]:
+                seqgetter_hu, seqgetter_ec = getSeqGetters(labelkind=seqkind)
 
-            distances = distModelHumanAllStims([stimthis], seqgetter_ec, seqgetter_hu, modelname = modelname, humanname = humanname, distancelabel=seqkind, modelrends=modelparsenums)
-            DATsaveModelHuDist(DAT, stimthis, humanname, distances, seqkind)
+                distances = distModelHumanAllStims([stimthis], seqgetter_ec, seqgetter_hu, modelname = modelname, humanname = humanname, distancelabel=seqkind, modelrends=modelparsenums)
+                DATsaveModelHuDist(DAT, stimthis, humanname, distances, seqkind)
 
     # ==== aggregate all distance measures, and get medians across parases.
-    aggregateDistances(ECTRAIN)
+    aggregateDistances(ECTRAIN, modelkindlist=PARSEVERSIONLIST)

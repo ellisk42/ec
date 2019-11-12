@@ -72,7 +72,7 @@ def getAndSaveParses(experiment="S9.2", debug=False, skipthingsthatcrash=False):
                     print(name)
                     continue
             if skipthingsthatcrash:
-                if name=="S12_235":
+                if name in ["S12_235", "S12_243"]:
                     print("SKIPPING - {} - since CRASHES...".format(name))
                     continue
 
@@ -207,11 +207,12 @@ def getAndSaveRandomParses(DAT, Nperm=1000):
     for stim in stimlist:
         # get datsegs for this stim (and just keep the first parse)
         datseg_single = DATloadDatSeg(DAT, stim)[0]
-        # collect N permutations
-        datseg_randomperms = permuteRand(datseg_single, Nperm, includeOrig=False, not_enough_ok=True)
+        # collect N permutation
+        print(type(permuteRand))
+        datseg_randomperm = permuteRand(datseg_single, Nperm, includeOrig=False, not_enough_ok=True)
         # save
-        DATsaveDatSeg(DAT, datseg_randomperms, "{}_randomperms".format(stim))
-        print("saved {}".format("{}_randomperms".format(stim)))
+        DATsaveDatSeg(DAT, datseg_randomperm, "{}_randomperm".format(stim))
+        print("saved {}".format("{}_randomperm".format(stim)))
 
 
 # ==== do segmentation
@@ -237,7 +238,7 @@ if __name__=="__main__":
     experiment = sys.argv[1]
     # 2) do parse? {2}=only get random perm {1, empty}=yes, {0}=no
     if len(sys.argv)>2:
-        doparse = sys.argv[2]
+        doparse = int(sys.argv[2])
     else:
         doparse = 1
 
@@ -275,5 +276,6 @@ if __name__=="__main__":
     if doparse in [0,1,2]:
         # === get RAndom per:mutations
         print("GETTING RANDOM PERMUTATIONS")
+        DAT = loadCheckpoint(trainset=experiment, loadparse=True, suppressPrint=True)
         getAndSaveRandomParses(DAT, Nperm=1000)
     
