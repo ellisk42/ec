@@ -74,7 +74,7 @@ def printAllTasksSolutions(DAT, trainortest="train"):
 def summarize(ECTRAIN, SUMMARY_SAVEDIR = "", comparetohuman=True):
     # For a given slice of human/model/stim, plot all string distances
     # ECTRAIN = "S9.2"
-    NPARSE = 10 # how many random parses to take for plotting for programs.
+    NPARSE = 10 # how many random parses to take for plotting for program
     useAggregateDistance = True
 
     # 1) load data 
@@ -139,8 +139,8 @@ def summarize(ECTRAIN, SUMMARY_SAVEDIR = "", comparetohuman=True):
         DAT = loadCheckpoint(trainset=ECTRAIN, loadparse=True, suppressPrint=True)
         DAT = DATloadDrawgoodData(DAT, dosegmentation=True)
         distances = loadDistances(ECTRAIN)
-        distances_medianparse = loadDistances(ECTRAIN, "medianparse")
-        distances_aggregate = loadDistances(ECTRAIN, "aggregate")
+        distances_medianparse = loadDistances(ECTRAIN, ver="medianparse")
+        distances_aggregate = loadDistances(ECTRAIN, ver="aggregate")
 
         if useAggregateDistance:
             distances=distances_aggregate
@@ -167,6 +167,7 @@ def summarize(ECTRAIN, SUMMARY_SAVEDIR = "", comparetohuman=True):
             print("2: plotted drawing for {} random parses for model".format(NPARSE))
             plt.close('all')
     
+
             # 1) For human, plot drawings for this stim
             if "png" not in stim:
                 dflat_hu = dgseg.filterDat(DAT["datflat_hu"], stimlist=[stim + ".png"])
@@ -180,9 +181,9 @@ def summarize(ECTRAIN, SUMMARY_SAVEDIR = "", comparetohuman=True):
             print("1: plotted drawing steps for Humans")
             plt.close('all')
 
+
             # 3) Plot string edit distances between human and model
             # only the plotted parses (x the humans)
-
             # --- just the parses plotted
             modelrends = [d["parsenum"] for d in dflat]
             dists = filterDistances(distances, stimlist=[stim], modelrend=modelrends)

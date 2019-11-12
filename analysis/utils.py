@@ -233,7 +233,11 @@ def loadCheckpoint(trainset="S9_nojitter", userealnames=True, loadparse=False, s
     savedir = "experimentOutputs/draw/{}".format(exptdir)
     analysavedir = "analysis/saved/DAT_ec{}_dg{}".format(trainset, behaviorexpt)
     summarysavedir = "analysis/summary/DAT_ec{}_dg{}".format(trainset, behaviorexpt)
+    summaryfigsavedir = "analysis/summaryfigs/DAT_ec{}_dg{}".format(trainset, behaviorexpt)
 
+    import os
+    os.makedirs(summaryfigsavedir, exist_ok=True)
+    
     # ==== output a dict
     DAT = {
     "trainset":trainset,
@@ -350,8 +354,12 @@ def DATloadModelHuDist(DAT, stim, human, suffix=''):
     if len(suffix)>0:
         suffix="_"+suffix
     fname = "{}/{}_{}{}.pickle".format(sdir, stim, human, suffix)
-    with open(fname, "rb") as f:
-        dists = pickle.load(f)
+    try:
+        with open(fname, "rb") as f:
+            dists = pickle.load(f)
+    except:
+        print("skipped loading: can't find {}".format(fname))
+        dists = []
     return dists
 
 

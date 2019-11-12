@@ -72,7 +72,7 @@ def getAndSaveParses(experiment="S9.2", debug=False, skipthingsthatcrash=False):
                     print(name)
                     continue
             if skipthingsthatcrash:
-                if name in ["S12_235", "S12_243"]:
+                if name in ["S12_235", "S12_243", "S12_13_test_1"]:
                     print("SKIPPING - {} - since CRASHES...".format(name))
                     continue
 
@@ -231,9 +231,12 @@ if IMPORT_DRAWGOOD:
     import plotsSingleSubj as dgpsing
     import preprocess as dgprep
     import modelAnaly as dgmodel
+    from segmentation import getSegmentation
 
 if __name__=="__main__":
     import sys
+    from segmentation import getSegmentation
+
     # 1) experiment name
     experiment = sys.argv[1]
     # 2) do parse? {2}=only get random perm {1, empty}=yes, {0}=no
@@ -247,11 +250,11 @@ if __name__=="__main__":
 
     if doparse in [0,1]:
         # === Get all parses, if desired
-        if doparse==1:
-            print("getting all parses (may take a while")
-            getAndSaveParses(experiment=experiment, skipthingsthatcrash=skipthingsthatcrash)
-        else:
-            print("skipping parse as requested")
+        # if doparse==1:
+        #     print("getting all parses (may take a while")
+        #     getAndSaveParses(experiment=experiment, skipthingsthatcrash=skipthingsthatcrash)
+        # else:
+        #     print("skipping parse as requested")
 
         # === get datflat
         print("GETTING DATFLAT (computing and then saving")
@@ -263,7 +266,7 @@ if __name__=="__main__":
         print("GETTING DATSEGS (computing and then saving)")
         stims = DATgetSolvedStim(DAT, intersectDrawgood=True)
         for s in stims:
-            # print("getting datsegs for {}".format(s))
+            print("getting datsegs for {}".format(s))
             # load datflat
             datflat = DATloadDatFlat(DAT, s)
             
