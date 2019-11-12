@@ -31,6 +31,7 @@ from dreamcoder.domains.list.main import retrieveJSONTasks
 import dreamcoder.domains.list.main as List
 
 import dreamcoder.domains.tower.main as Tower
+import dreamcoder.domains.tower.makeTowerTasks
 from dreamcoder.domains.tower.towerPrimitives import new_primitives, ttower
 import dreamcoder.domains.logo.main as LOGO
 import dreamcoder.domains.logo.logoPrimitives
@@ -127,6 +128,7 @@ if __name__=='__main__':
         
     elif arguments.domain == "tower":
         g = Grammar.uniform(new_primitives, continuationType=ttower)
+        tasks = dreamcoder.domains.tower.makeTowerTasks.makeSupervisedTasks()
         fe = Tower.TowerCNN([])
     elif arguments.domain == "logo":
         g = Grammar.uniform(dreamcoder.domains.logo.logoPrimitives.primitives,
