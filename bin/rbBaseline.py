@@ -48,9 +48,8 @@ Regex.ConstantInstantiateVisitor.SINGLE = Regex.ConstantInstantiateVisitor()
 import scipy
 import numpy as np
 
-BATCHSIZE = 32
-#import other stuff
 
+#import other stuff
 
 extras = ['(', ')', 'lambda'] + ['$'+str(i) for i in range(10)]
 
@@ -130,26 +129,31 @@ if __name__=='__main__':
         input_vocabularies = [list(printable[:-4]) + ['EOE'], list(printable[:-4])]
         fe = Text.LearnedFeatureExtractor(tasks=tasks,
                                           testingTasks=loadPBETasks("PBE_Strings_Track")[0])
+
+        BATCHSIZE = 32
     elif arguments.domain == "regex":
         g = Grammar.uniform(reducedConcatPrimitives(),
                             continuationType=tpregex)
         tasks = makeNewTasks()
         fe = Regex.LearnedFeatureExtractor(tasks)
         input_vocabularies = [["dummy"], list(printable) + ["LIST_END","LIST_START"]]
-        
+        BATCHSIZE = 256
     elif arguments.domain == "tower":
         g = Grammar.uniform(new_primitives, continuationType=ttower)
         tasks = dreamcoder.domains.tower.makeTowerTasks.makeSupervisedTasks()
         fe = Tower.TowerCNN([])
+        BATCHSIZE = 256
     elif arguments.domain == "logo":
         g = Grammar.uniform(dreamcoder.domains.logo.logoPrimitives.primitives,
                             continuationType=turtle)
         fe = LOGO.LogoFeatureCNN([])
+        BATCHSIZE = 256
     elif arguments.domain == "rational":
         tasks = rational.makeTasks()
         g = Grammar.uniform([real, real_division, real_addition, real_multiplication])
         fe = FeatureExtractor([])
     elif arguments.domain == "list":
+        BATCHSIZE = 32
         tasks = retrieveJSONTasks("data/list_tasks.json") + sortBootstrap()
         tasks.extend([
             Task("remove empty lists",
@@ -239,9 +243,9 @@ if __name__=='__main__':
         inputs, targets = zip(*batch)
         score = m.optimiser_step(inputs, targets)
 
-        if i%10==0: print(f"Iteration {i}/{max_n_iterations}, Score {score}, ({(time.time()-start)/(i+1)} seconds per iteration)", flush=True) 
+        if i%30==0: print(f"Iteration {i}/{max_n_iterations}, Score {score}, ({(time.time()-start)/(i+1)} seconds per iteration)", flush=True) 
 
-        if i%30==0:
+        if i%100==0:
             PATH = f"{arguments.domain}_robustfill_baseline.p"
             torch.save(m, PATH)
             print("saved at", PATH)
