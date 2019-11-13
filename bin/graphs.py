@@ -477,9 +477,9 @@ def plotECResult(
                 bl = arguments.baselines[2*n + 1]
                 print(name,bl)
                 plot.axhline(float(bl),-0.5,iterations,
-                             color='k',lw=3.5)
-                solveAxis.text(iterations, bl, name, ha='left', va='center', fontweight='bold')
-            plot.subplots_adjust(right=0.8)
+                             color='k',lw=3)
+                solveAxis.text(iterations, float(bl), name, ha='left', va='center', fontweight='bold')
+            plot.subplots_adjust(right=0.9)
                 # solveAxis.plot([0,iterations - 1],[float(bl)]*2,
                 #                color='k')
         if timeAxis:
@@ -530,7 +530,7 @@ def plotECResult(
                   handles=[mlines.Line2D([], [], color=color, ls='-',
                                          label=label)
                            for label, color in usedLabels])
-    #f.tight_layout()
+    f.tight_layout()
     if export:
         plot.savefig(export)
         eprint("Exported figure ",export)
