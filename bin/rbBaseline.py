@@ -48,7 +48,7 @@ Regex.ConstantInstantiateVisitor.SINGLE = Regex.ConstantInstantiateVisitor()
 import scipy
 import numpy as np
 
-BATCHSIZE = 2
+BATCHSIZE = 32
 #import other stuff
 
 
@@ -87,7 +87,7 @@ def getDatum():
         p = g.sample(tp, maximumDepth=3)
         task = fe.taskOfProgram(p, tp)
         if task is None:
-            print("no taskkkk")
+            #print("no taskkkk")
             continue
         ex = makeExamples(task)
         if ex is None: continue
@@ -233,14 +233,18 @@ if __name__=='__main__':
 
     start=time.time()
     max_n_iterations = 10000000000
-    batch = [getDatum() for _ in range(BATCHSIZE)]
+    #batch = [getDatum() for _ in range(BATCHSIZE)]
     for i in range(max_n_iterations):
-        #batch = [getDatum() for _ in range(BATCHSIZE)]
+        batch = [getDatum() for _ in range(BATCHSIZE)]
         inputs, targets = zip(*batch)
         score = m.optimiser_step(inputs, targets)
 
-        if i%2==0: print(f"Iteration {i}/{max_n_iterations}, Score {score}, ({(time.time()-start)/(i+1)} seconds per iteration)") 
+        if i%10==0: print(f"Iteration {i}/{max_n_iterations}, Score {score}, ({(time.time()-start)/(i+1)} seconds per iteration)", flush=True) 
 
+        if i%30==0:
+            PATH = f"{arguments.domain}_robustfill_baseline.p"
+            torch.save(m, PATH)
+            print("saved at", PATH)
 
 
 
