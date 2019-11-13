@@ -143,7 +143,10 @@ class Image_RobustFill(nn.Module):
 
     def score(self, batch_inputs, batch_target, autograd=False):
         #inputs = self._inputsToTensors(batch_inputs)
-        inputs = [[ torch.stack(tuple(torch.tensor(b) for b in batch_inputs), dim=0).float().cuda() ]]
+        inputs = torch.stack(tuple(torch.tensor(b) for b in batch_inputs), dim=0).float()
+        if next(self.parameters()).is_cuda:
+            inputs = inputs.cuda()
+        inputs = [[inputs]]
         #print("INPUTS SHAPE", inputs[0][0].shape)
         target = self._targetToTensor(batch_target)
         _, score = self._run(inputs, target=target, mode="score")

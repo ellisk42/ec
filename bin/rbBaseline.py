@@ -104,7 +104,11 @@ def makeExamples(task):
     if arguments.domain == 'rational':
         return scipy.misc.imresize(np.array([task.features]*3),(256,256)).transpose(2,0,1)
     if arguments.domain == 'logo':
-        assert 0
+        i = np.array([float(xx)/256. for xx in task.highresolution])
+        i = i.reshape((128,128))
+        i = scipy.misc.imresize(np.array([i]*3),(256,256)).transpose(2,0,1)
+        return i
+    
     if hasattr(fe,'tokenize'):
         examples = []
         tokens = fe.tokenize(task.examples)
@@ -146,6 +150,7 @@ if __name__=='__main__':
     elif arguments.domain == "logo":
         g = Grammar.uniform(dreamcoder.domains.logo.logoPrimitives.primitives,
                             continuationType=turtle)
+        tasks = dreamcoder.domains.logo.makeLogoTasks.makeTasks(['all'],proto=False)
         fe = LOGO.LogoFeatureCNN([])
         BATCHSIZE = 256
     elif arguments.domain == "rational":
