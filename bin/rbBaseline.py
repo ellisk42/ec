@@ -19,6 +19,7 @@ from dreamcoder.domains.arithmetic.arithmeticPrimitives import real, real_divisi
 
 from rational import RandomParameterization, FeatureExtractor
 
+import rational
 #text:
 import dreamcoder.domains.text.textPrimitives as text_primitives
 from dreamcoder.domains.list.listPrimitives import bootstrapTarget,bootstrapTarget_extra
@@ -42,6 +43,10 @@ from dreamcoder.domains.regex.makeRegexTasks import makeOldTasks, makeLongTasks,
 from dreamcoder.domains.regex.regexPrimitives import reducedConcatPrimitives
 import dreamcoder.domains.regex.main as Regex
 Regex.ConstantInstantiateVisitor.SINGLE = Regex.ConstantInstantiateVisitor()
+
+
+import scipy
+import numpy as np
 
 BATCHSIZE = 2
 #import other stuff
@@ -81,8 +86,9 @@ def getDatum():
         tp = tsk.request
         p = g.sample(tp, maximumDepth=3)
         task = fe.taskOfProgram(p, tp)
-        if task is None: continue
-
+        if task is None:
+            print("no taskkkk")
+            continue
         ex = makeExamples(task)
         if ex is None: continue
         
@@ -90,11 +96,16 @@ def getDatum():
 
 def makeExamples(task):
     if arguments.domain == 'tower':
-        return task.getImage()
+        return task.getImage().transpose(2,0,1)
 
     if arguments.domain == "regex":
         return [([],y)
                 for xs,y in task.examples ]
+
+    if arguments.domain == 'rational':
+        return scipy.misc.imresize(np.array([task.features]*3),(256,256)).transpose(2,0,1)
+    if arguments.domain == 'logo':
+        assert 0
     if hasattr(fe,'tokenize'):
         examples = []
         tokens = fe.tokenize(task.examples)
@@ -135,6 +146,7 @@ if __name__=='__main__':
                             continuationType=turtle)
         fe = LOGO.LogoFeatureCNN([])
     elif arguments.domain == "rational":
+        tasks = rational.makeTasks()
         g = Grammar.uniform([real, real_division, real_addition, real_multiplication])
         fe = FeatureExtractor([])
     elif arguments.domain == "list":
