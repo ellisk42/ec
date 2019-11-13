@@ -478,7 +478,7 @@ def plotECResult(
                 print(name,bl)
                 plot.axhline(float(bl),-0.5,iterations,
                              color='k',lw=3.5)
-                plot.text(iterations, bl, name, ha='left', va='center', fontweight='bold')
+                solveAxis.text(iterations, bl, name, ha='left', va='center', fontweight='bold')
             plot.subplots_adjust(right=0.8)
                 # solveAxis.plot([0,iterations - 1],[float(bl)]*2,
                 #                color='k')
