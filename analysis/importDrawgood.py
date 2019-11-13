@@ -8,4 +8,5 @@ import plotsDatFlat as dgpflat
 import plotsSingleSubj as dgpsing
 import preprocess as dgprep
 import modelAnaly as dgmodel
+import modelPlanning as dgplan
 import exptMetaDat as dgexpt

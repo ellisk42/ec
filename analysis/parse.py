@@ -246,7 +246,7 @@ if __name__=="__main__":
     else:
         doparse = 1
 
-    skipthingsthatcrash=True
+    skipthingsthatcrash=False
     REMOVELL = False    
 
     if doparse in [0,1]:

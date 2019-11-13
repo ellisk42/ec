@@ -40,6 +40,8 @@ def loadDistances(ECTRAIN, ver="multiple", modelkind="parse"):
         suffixes = ["aggregate"]
     elif ver=="medianparse":
         suffixes = ["medianparse"]
+    elif ver in ["codes_unique", "codes", "row", "col"]:
+        suffixes = [ver]
     else:
         assert False, "what version?"
 

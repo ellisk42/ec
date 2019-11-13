@@ -148,6 +148,8 @@ def summarize(ECTRAIN, SUMMARY_SAVEDIR = "", comparetohuman=True):
         else:
             label = "allparses"
 
+        # remove all things like randomperms
+        distances = [d for d in distances if d["model"]==ECTRAIN]
 
         # ==== PLOT DISTANCES FOR DIFFERENT SLICES OF MODEL/HUMAN/STIM
         stimlist = DATgetSolvedStim(DAT, intersectDrawgood=True)
