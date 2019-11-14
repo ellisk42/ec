@@ -150,9 +150,13 @@ def summarize(ECTRAIN, SUMMARY_SAVEDIR = "", comparetohuman=True):
 
         # remove all things like randomperms
         distances = [d for d in distances if d["model"]==ECTRAIN]
+        print(len(distances))
+        print(len(distances_aggregate))
+        print(len(distances_medianparse))
+        assert len(distances)>0, "huh?"
 
         # ==== PLOT DISTANCES FOR DIFFERENT SLICES OF MODEL/HUMAN/STIM
-        stimlist = DATgetSolvedStim(DAT, intersectDrawgood=True)
+        stimlist = DATgetSolvedStim(DAT, intersectDrawgood=True, onlyifhasdatflat=True)
         print("Going one by one thru the stimuli that were both solved by dc and done by humans: {}".format(stimlist))
         for stim in stimlist:
 
@@ -188,6 +192,9 @@ def summarize(ECTRAIN, SUMMARY_SAVEDIR = "", comparetohuman=True):
             # only the plotted parses (x the humans)
             # --- just the parses plotted
             modelrends = [d["parsenum"] for d in dflat]
+            if "stim" not in distances[0].keys():
+                import pdb
+                pdb.set_trace()
             dists = filterDistances(distances, stimlist=[stim], modelrend=modelrends)
             if len(dists)==0:
                 print("MISSING DATA!!")

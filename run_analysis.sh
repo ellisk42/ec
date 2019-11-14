@@ -5,6 +5,7 @@
 # EC_EXPT=S9.2
 EC_EXPT=$1
 echo $EC_EXPT
+DOPARSE=false # false, skip parsing (i.e, alreadyd one), true, then do
 
 CURRDIR=$(pwd)
 # out=/tmp/analysis/outputs/"$DG_EXPT"_$(date +%Y-%m-%d_%H-%M-%S)
@@ -54,11 +55,18 @@ if false; then
     python analysis/parse.py $EC_EXPT > $outthis
 fi
 
-# 3) process model parses (--> datflat --> datseg)
+if $DOPARSE; then
+    # 3) process model parses (--> datflat --> datseg)
+    outthis=$out"_ecgetparses_"$EC_EXPT
+    echo "3) parsing for ${EC_EXPT}:"
+    # echo "python analysis/parse.py $EC_EXPT > $outthis"
+    python analysis/parse.py $EC_EXPT
+fi
+
 outthis=$out"_ecgetdatflatseg_"$EC_EXPT
-echo "3) parsing and getting datflat/datseg for ${EC_EXPT}:"
-echo "python analysis/parse.py $EC_EXPT 0 > $outthis"
-python analysis/parse.py $EC_EXPT
+echo "3) getting datflat/datseg for ${EC_EXPT}:"
+# echo "python analysis/parseProcess.py $EC_EXPT > $outthis"
+python analysis/parseProcess.py $EC_EXPT
 
 # 4) get human-model distances
 outthis=$out"_ecmodelhumandists_"$EC_EXPT

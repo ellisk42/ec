@@ -289,9 +289,14 @@ def DATupdateSaveDirs(DAT):
 def DATloadDatFlat(DAT, stimname):
     # helper function to load datflat
     fname = "{}/{}.pickle".format(DAT["datflatsavedir"], stimname)
-    with open(fname, "rb") as f:
-        datflat_ec = pickle.load(f)
-    return datflat_ec
+    from os import path
+    if path.exists(fname):
+        with open(fname, "rb") as f:
+            datflat_ec = pickle.load(f)
+        return datflat_ec
+    else:
+        print("CANT FIND FILE: {}".format(fname))
+        return []
 
 def DATsaveDatFlat(DAT, datflat, stimname):
     fname = "{}/{}.pickle".format(DAT["datflatsavedir"], stimname)
@@ -376,7 +381,8 @@ def DATloadDrawgoodData(DAT, dosegmentation=True):
         DAT["datseg_hu"] = getSegmentation(DAT["datflat_hu"], unique_codes=True, dosplits=True, removeLongVertLine=REMOVELL)                                      
     return DAT
 
-def DATgetSolvedStim(DAT, removeshaping=True, intersectDrawgood=False):
+def DATgetSolvedStim(DAT, removeshaping=True, intersectDrawgood=False, 
+    onlyifhasdatflat=False):
     import re
     """gets stims that have parses"""
     assert DAT["loadparse"], print("no parses found - you have to load parses first")
@@ -414,7 +420,15 @@ def DATgetSolvedStim(DAT, removeshaping=True, intersectDrawgood=False):
         print(stimDG)
         # print(stimnames[0])
         stimnames = [s for s in stimnames if s in stimDG]
+    if onlyifhasdatflat:
+        # -- check if they have datflat
+        from os import path
+        def check(stim):
+            fname = "{}/{}.pickle".format(DAT["datflatsavedir"], stim)
+            return path.exists(fname)            
 
+        stimnames = [stim for stim in stimnames if check(stim)]
+        
     return stimnames
 
 

@@ -49,7 +49,7 @@ def loadDistances(ECTRAIN, ver="multiple", modelkind="parse"):
     DAT = loadCheckpoint(trainset=ECTRAIN, loadparse=True, suppressPrint=True)
 
     # load each stim/human
-    stimlist = DATgetSolvedStim(DAT, intersectDrawgood=True)
+    stimlist = DATgetSolvedStim(DAT, intersectDrawgood=True, onlyifhasdatflat=True)
     DAT = DATloadDrawgoodData(DAT, dosegmentation=True)
     humans = set([d["workerID"] for d in DAT["datflat_hu"]])
 
@@ -57,7 +57,6 @@ def loadDistances(ECTRAIN, ver="multiple", modelkind="parse"):
     # for stim, hum in zip(stimlist, humans):
     #     print({"getting {}, {}".format(stim, hum)})
     #     distances.extend(DATloadModelHuDist(DAT, stim, hum))
-
 
     distances = []
     for suf in suffixes:
@@ -193,7 +192,7 @@ if __name__=="__main__":
         DAT = loadCheckpoint(trainset=ECTRAIN, loadparse=True, suppressPrint=True)
         print("Loaded checkpoint DAT, for {}".format(ECTRAIN))
         # get list of stimuli
-        stimlist = DATgetSolvedStim(DAT, removeshaping=True)
+        stimlist = DATgetSolvedStim(DAT, removeshaping=True, onlyifhasdatflat=True)
         # Extract segmented data for humans
         DAT["datflat_hu"] = getFlatData(DAT["datall_human"])
         DAT["datseg_hu"] = getSegmentation(DAT["datflat_hu"], unique_codes=True, dosplits=True, removeLongVertLine=REMOVELL)                                      

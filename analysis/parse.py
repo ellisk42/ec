@@ -139,7 +139,7 @@ def program2strokes(program):
 
 
 """Given a list of flattened program (i.e, list of numpy) converts to datflat"""
-def parses2datflat(programs, stimname="", condition=""):
+def parses2datflat(programs, stimname="", condition="", randomsubsample=[]):
     # ideally stimname is the name of stim for all parses (i.e progs)
     # ideally condition indicates what the training schedule was.
 
@@ -148,7 +148,18 @@ def parses2datflat(programs, stimname="", condition=""):
     # this datflat can then be treated just like a human subject's data.
 
     datflat = []
+    from pythonlib.tools.listtools import permuteRand
     print("getting datflat for {}".format(stimname))
+
+    if isinstance(randomsubsample, int)>0:
+        # takes a random subsample of all programs, without repalcement
+        if len(programs)>randomsubsample:
+            import random
+            print("(parses --> datflat) doing random subsample of {}{} from {} to {}".format(stimname, condition, len(programs), randomsubsample))
+            programs = random.sample(programs, randomsubsample)
+    else: assert isinstance(randomsubsample, list), "expect either int or empty list..."
+
+
     for i, prog in enumerate(programs):
         # print("prog {}".format(i))
         if isinstance(prog, Parse):
@@ -169,19 +180,19 @@ def parses2datflat(programs, stimname="", condition=""):
     return datflat
 
 
-def parses2datflatAll(DAT):
+def parses2datflatAll(DAT, randomsubsample=[]):
     # === this gets all into one datflat (i.e., stim x parses)
     datflat_ec = []
     for P in DAT["parses"]:
         # print(P)
         stimname = P["name"]
         parses = P["parse"]
-        
-        datflat_ec.extend(parses2datflat(parses, stimname=stimname, condition=DAT["trainset"]))
+        datflat_ec.extend(parses2datflat(parses, stimname=stimname, condition=DAT["trainset"], randomsubsample=randomsubsample))
     return datflat_ec
 
 
-def parses2datflatAllSave(DAT):
+def parses2datflatAllSave(DAT, randomsubsample=[]):
+    print("NOTE: will skip if find that has already beeen done")
     if "datflatsavedir" not in DAT.keys():
         savedir = "{}/datflat_ec".format(DAT["analysavedir"])
         DAT["datflatsavedir"] = savedir
@@ -193,19 +204,23 @@ def parses2datflatAllSave(DAT):
         parses = P["parse"]
         print(stimname)
         
-        datflat_ec = parses2datflat(parses, stimname=stimname, condition=DAT["trainset"])
-        
+        from os import path
         savename = "{}/{}.pickle".format(savedir, stimname)
-        with open(savename, "wb") as f:
-            pickle.dump(datflat_ec, f)
+
+        if not path.exists(savename):
+            datflat_ec = parses2datflat(parses, stimname=stimname, condition=DAT["trainset"], randomsubsample=randomsubsample)    
+            with open(savename, "wb") as f:
+                pickle.dump(datflat_ec, f)
+        else:
+            print("SKIPPING {} since already done!".format(savename))
 
 def getAndSaveRandomParses(DAT, Nperm=1000):
-    """gets N random permutations.
+    """gets N random permutations. uses the sequence, and ignores the actual aprses
     Have to first get parses before run this"""
     from pythonlib.tools.listtools import permuteRand
 
     # ==== for each stimulus (solved), get N random permutations 
-    stimlist = DATgetSolvedStim(DAT, intersectDrawgood=True)
+    stimlist = DATgetSolvedStim(DAT, intersectDrawgood=True, onlyifhasdatflat=True)
     for stim in stimlist:
         # get datsegs for this stim (and just keep the first parse)
         datseg_single = DATloadDatSeg(DAT, stim)[0]
@@ -216,6 +231,14 @@ def getAndSaveRandomParses(DAT, Nperm=1000):
         DATsaveDatSeg(DAT, datseg_randomperm, "{}_randomperm".format(stim))
         print("saved {}".format("{}_randomperm".format(stim)))
 
+
+
+def updateParsesMirrorSymmetry(DAT):
+    """update set of parses so that has mirror symmetry"""    
+    # load parses
+
+    # for each parse get 
+    pass
 
 # ==== do segmentation
 if __name__=="__main__":
@@ -241,47 +264,42 @@ if __name__=="__main__":
     # 1) experiment name
     experiment = sys.argv[1]
     # 2) do parse? {2}=only get random perm {1, empty}=yes, {0}=no
-    if len(sys.argv)>2:
-        doparse = int(sys.argv[2])
-    else:
-        doparse = 1
+    # if len(sys.argv)>2:
+    #     doparse = int(sys.argv[2])
+    # else:
+    #     doparse = 1
 
     skipthingsthatcrash=False
     REMOVELL = False    
 
-    if doparse in [0,1]:
-        # === Get all parses, if desired
-        if doparse==1:
-            print("getting all parses (may take a while")
-            getAndSaveParses(experiment=experiment, skipthingsthatcrash=skipthingsthatcrash)
-        else:
-            print("skipping parse as requested")
+    print("getting all parses (may take a while")
+    getAndSaveParses(experiment=experiment, skipthingsthatcrash=skipthingsthatcrash)
 
-        # === get datflat
-        print("GETTING DATFLAT (computing and then saving")
-        DAT = loadCheckpoint(trainset=experiment, loadparse=True, suppressPrint=True)
-        parses2datflatAllSave(DAT)
+    #     # === get datflat
+    #     print("GETTING DATFLAT (computing and then saving")
+    #     DAT = loadCheckpoint(trainset=experiment, loadparse=True, suppressPrint=True)
+    #     parses2datflatAllSave(DAT)
 
-        # === get datseg
-        # -- for each stim, load datflat, do segmentation, save..
-        from segmentation import getSegmentation
+    #     # === get datseg
+    #     # -- for each stim, load datflat, do segmentation, save..
+    #     from segmentation import getSegmentation
 
-        print("GETTING DATSEGS (computing and then saving)")
-        stims = DATgetSolvedStim(DAT, intersectDrawgood=True)
-        for s in stims:
-            print("getting datsegs for {}".format(s))
-            # load datflat
-            datflat = DATloadDatFlat(DAT, s)
+    #     print("GETTING DATSEGS (computing and then saving)")
+    #     stims = DATgetSolvedStim(DAT, intersectDrawgood=True)
+    #     for s in stims:
+    #         print("getting datsegs for {}".format(s))
+    #         # load datflat
+    #         datflat = DATloadDatFlat(DAT, s)
             
-            # 1) get datseg
-            datseg = getSegmentation(datflat, unique_codes=True, dosplits=True, removebadstrokes=True, removeLongVertLine=REMOVELL) 
+    #         # 1) get datseg
+    #         datseg = getSegmentation(datflat, unique_codes=True, dosplits=True, removebadstrokes=True, removeLongVertLine=REMOVELL) 
                 
-            # save datflat
-            DATsaveDatSeg(DAT, datseg, s)
+    #         # save datflat
+    #         DATsaveDatSeg(DAT, datseg, s)
 
-    if doparse in [0,1,2]:
-        # === get RAndom per:mutations
-        print("GETTING RANDOM PERMUTATIONS")
-        DAT = loadCheckpoint(trainset=experiment, loadparse=True, suppressPrint=True)
-        getAndSaveRandomParses(DAT, Nperm=1000)
-    
+    # if doparse in [0,1,2]:
+    #     # === get RAndom per:mutations
+    #     print("GETTING RANDOM PERMUTATIONS")
+    #     DAT = loadCheckpoint(trainset=experiment, loadparse=True, suppressPrint=True)
+    #     getAndSaveRandomParses(DAT, Nperm=1000)
+    # 
