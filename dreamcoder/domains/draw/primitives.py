@@ -66,7 +66,7 @@ class Chunk():
         def __ne__(self, other): return not (self == other)
         def __hash__(self):
                 if self._h is None:
-                       self._h = hash(tuple(hash(x) if isinstance(x,Chunk) else hash(x.tostring())))
+                       self._h = hash(tuple(hash(x) if isinstance(x,Chunk) else hash(x.tostring()) for x in self.l))
                 return self._h
         def __str__(self): return f"Chunk({self.l})"
         def __repr__(self): return str(self)
