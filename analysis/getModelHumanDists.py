@@ -50,7 +50,7 @@ def loadDistances(ECTRAIN, ver="multiple", modelkind="parse"):
 
     # load each stim/human
     stimlist = DATgetSolvedStim(DAT, intersectDrawgood=True, onlyifhasdatflat=True)
-    DAT = DATloadDrawgoodData(DAT, dosegmentation=True)
+    DAT = DATloadDrawgoodData(DAT, dosegmentation=False)
     humans = set([d["workerID"] for d in DAT["datflat_hu"]])
 
     # distances = []
@@ -65,7 +65,7 @@ def loadDistances(ECTRAIN, ver="multiple", modelkind="parse"):
             stim = stim[:stim.find(".png")]
             if stim in stimlist: # then model sucecsffuly found soolution
                 hum = d["workerID"]
-                print("getting {}, {}".format(stim, hum))
+                print("(loadDistances) getting {}, {}".format(stim, hum))
                 # print(d)
                 # import pdb
                 # pdb.set_trace()
@@ -128,16 +128,19 @@ def aggregateDistances(ECTRAIN, modelkindlist=["parse", "randomperm"]):
     # ======== LOAD ALL MODELS AND COMBINE IN THIS ANALYSIS. Is fine since diff models are flagged with diff values for "model" key.
     distances_all = []
     for modelkind in modelkindlist:
+        print("====Loading distances for modelkind {}".format(modelkind))
         distances_all.append(loadDistances(ECTRAIN, modelkind=modelkind))
     distances = [d for dist in distances_all for d in dist] # fglatten
 
-    DAT = loadCheckpoint(trainset=ECTRAIN, loadparse=True, suppressPrint=True)
+    print("===Loading EC dat")
+    DAT = loadCheckpoint(trainset=ECTRAIN, loadparse=False, suppressPrint=True)
 
     # 1) aggregate over distances, get some sort of aggregated mean
+    print("====aggregating data, taking average over all distance types")
     df = aggregMean(pd.DataFrame(distances), ["stim", "human", "model", "modelrend"], values=["dist"], nonnumercols=["sequence_human", "sequence_model"])
 
     # 2) save, aggregate over distance measures
-    print("=== DOING AGGREGATE")
+    print("=== Saving AGGREGATE")
     distances_agg = df.to_dict("records")
     humanlist = set(df["human"])
     stimlist = set(df["stim"])
@@ -145,6 +148,7 @@ def aggregateDistances(ECTRAIN, modelkindlist=["parse", "randomperm"]):
     # --- Below is just for saving.
     for human in humanlist:
         for stim in stimlist:
+            print("(aggregateDistances) {}, {}".format(human, stim))
             d = filterDistances(distances_agg, stimlist=[stim], humans=[human])
             if len(d)>0:
                 DATsaveModelHuDist(DAT, stim, human, d, "aggregate")
@@ -152,23 +156,24 @@ def aggregateDistances(ECTRAIN, modelkindlist=["parse", "randomperm"]):
 
 
     # 3) aggregate over parses by taking median
-    print("=== DOING MEDIANS")
-    df = aggreg(df, group=["stim", "human", "model"], values=["dist"], aggmethod=["median"])
-    df["dist"]=df["dist_median"]
-    df = df.drop(columns=["dist_median"])
-    distances_median = df.to_dict("records")
-    suff="medianparse"
-    for d in distances_median:
-        # print("---")
-        # print(d)
-        # try:
-        #     if len(d["stim"])==0:
-        #         import pdb
-        #         pdb.set_trace()
-        # except:
-        #     import pdb
-        #     pdb.set_trace()
-        DATsaveModelHuDist(DAT, d["stim"], d["human"], [d], suff)
+    if False:
+        print("=== DOING MEDIANS")
+        df = aggreg(df, group=["stim", "human", "model"], values=["dist"], aggmethod=["median"])
+        df["dist"]=df["dist_median"]
+        df = df.drop(columns=["dist_median"])
+        distances_median = df.to_dict("records")
+        suff="medianparse"
+        for d in distances_median:
+            # print("---")
+            # print(d)
+            # try:
+            #     if len(d["stim"])==0:
+            #         import pdb
+            #         pdb.set_trace()
+            # except:
+            #     import pdb
+            #     pdb.set_trace()
+            DATsaveModelHuDist(DAT, d["stim"], d["human"], [d], suff)
 
 
 

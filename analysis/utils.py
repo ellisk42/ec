@@ -266,6 +266,13 @@ def loadCheckpoint(trainset="S9_nojitter", userealnames=True, loadparse=False, s
 
 
 ########### HELPER FUNCTIONS FOR DAT
+def DATgetWorkerList(DAT):
+    from analysis.importDrawgood import dgutils
+    assert "datall_human" in DAT.keys(), "need to first load behavior."
+    humanlist = dgutils.getWorkers(DAT["datall_human"])
+    return humanlist
+    
+
 def DATupdateSaveDirs(DAT):
     import os
     """dirs for saving processed stimuli"""
@@ -380,6 +387,8 @@ def DATloadDrawgoodData(DAT, dosegmentation=True):
     if dosegmentation:
         DAT["datseg_hu"] = getSegmentation(DAT["datflat_hu"], unique_codes=True, dosplits=True, removeLongVertLine=REMOVELL)                                      
     return DAT
+
+
 
 def DATgetSolvedStim(DAT, removeshaping=True, intersectDrawgood=False, 
     onlyifhasdatflat=False):
