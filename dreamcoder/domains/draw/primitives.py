@@ -57,13 +57,17 @@ class Chunk():
                 assert isinstance(l, list)
                 for x in l: assert isinstance(x, (np.ndarray, np.generic, Chunk))
                 self.l = l
+                self._h = None
 
         def applyMatrix(self, m): # applies to everything within chunk, including recursive.
                 return Chunk([x.applyMatrix(m) for x in self.l ])
         
-        def __eq__(self, other): return str(self) == str(other)
+        def __eq__(self, other): return hash(self) == str(other) and str(self) == str(other)
         def __ne__(self, other): return not (self == other)
-        def __hash__(self): return hash(str(self))
+        def __hash__(self):
+                if self._h is None:
+                       self._h = hash(tuple(hash(x) if isinstance(x,Chunk) else hash(x.tostring())))
+                return self._h
         def __str__(self): return f"Chunk({self.l})"
         def __repr__(self): return str(self)
         def flatten(self): # returns [[a], [b], ...], where each element is a single "stroke"
@@ -89,6 +93,7 @@ class Parse():
                 assert isinstance(l, list)
                 for x in l: assert isinstance(x, (np.ndarray, np.generic, Chunk))
                 self.l = l
+                self._h = None
 
         def applyMatrix(self, m):
                 newList = []
@@ -99,9 +104,12 @@ class Parse():
                                 newList.append(_tform(x,m))
                 return Parse(newList)
 
-        def __eq__(self, other): return str(self) == str(other)
+        def __eq__(self, other): return hash(self) == hash(other) and str(self) == str(other)
         def __ne__(self, other): return not (self == other)
-        def __hash__(self): return hash(str(self))
+        def __hash__(self):
+                if self._h is None:
+                        self._h = hash(tuple(hash(x) if isinstance(x,Chunk) else hash(x.tostring()) for x in self.l ))
+                return self._h
         def __repr__(self): return str(self)
         def __str__(self): return f"Parse({self.l})"
 
