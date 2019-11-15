@@ -361,8 +361,12 @@ def DATsaveModelHuDist(DAT, stim, human, dists, suffix=''):
     with open(fname, "wb") as f:
         pickle.dump(dists, f)
 
-def DATloadModelHuDist(DAT, stim, human, suffix=''):
-    sdir = DAT["savedir_modelhudist"]
+def DATloadModelHuDist(DAT, stim, human, suffix='', use_withplannerscore=False):
+    if use_withplannerscore:
+        # these are the same, but appending planner RL model scores.
+        sdir = DAT["savedir_modelhudist"] + "_withplannerscore"
+    else:
+        sdir = DAT["savedir_modelhudist"]
     if len(suffix)>0:
         suffix="_"+suffix
     fname = "{}/{}_{}{}.pickle".format(sdir, stim, human, suffix)

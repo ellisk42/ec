@@ -28,9 +28,9 @@ REMOVELL = False # remove vertical long line?
 
 
 ########################## STUFF TO DO AFTER SAVING DISTANCES
-def loadDistances(ECTRAIN, ver="multiple", modelkind="parse"):
-    # For a given slice of human/model/stim, plot all string distances
-    # ACTUALLY: loads all into one list of dicts
+def loadDistances(ECTRAIN, ver="multiple", modelkind="parse", 
+    use_withplannerscore=False):
+    # ACTUALLY: loads all distances (for a given EC training) into one list of dicts
     if ver=="legacy":
         suffixes = [""]
     elif ver=="multiple":
@@ -70,9 +70,9 @@ def loadDistances(ECTRAIN, ver="multiple", modelkind="parse"):
                 # import pdb
                 # pdb.set_trace()
                 if modelkind=="parse":
-                    d = DATloadModelHuDist(DAT, stim, hum, suf)
+                    d = DATloadModelHuDist(DAT, stim, hum, suf, use_withplannerscore)
                 elif modelkind=="randomperm":
-                    d = DATloadModelHuDist(DAT, "{}_randomperm".format(stim), hum, suf)
+                    d = DATloadModelHuDist(DAT, "{}_randomperm".format(stim), hum, suf, use_withplannerscore)
                 if isinstance(d, dict):
                     distances.append(d)    
                 elif isinstance(d, list):
@@ -265,11 +265,19 @@ if __name__=="__main__":
                 for seqkind in ["codes_unique", "codes", "row", "col"]:
                     seqgetter_hu, seqgetter_ec = getSeqGetters(labelkind=seqkind)
 
-                    distances = distModelHumanAllStims([stimthis], seqgetter_ec, seqgetter_hu, modelname = modelname, humanname = humanname, distancelabel=seqkind, modelrends=modelparsenums)
                     if parseversion=="parse":
                         stimname = stimthis
                     else:
                         stimname = "{}_{}".format(stimthis, parseversion)
+
+                    fname = "{}/{}_{}_{}.pickle".format(DAT["savedir_modelhudist"], stimname, humanname, seqkind)
+                    from os import path
+                    if path.exists(fname):
+                        print("SKIPPING {}, since foudna laready saved file".format(fname))
+                        continue
+
+                    distances = distModelHumanAllStims([stimthis], seqgetter_ec, seqgetter_hu, modelname = modelname, humanname = humanname, distancelabel=seqkind, modelrends=modelparsenums)
+
                     DATsaveModelHuDist(DAT, stimname, humanname, distances, seqkind)
 
     # ==== aggregate all distance measures, and get medians across parases.
