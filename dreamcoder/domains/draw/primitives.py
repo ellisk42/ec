@@ -452,3 +452,14 @@ def prog2pxl(p, WHdraw = 2*XYLIM):
 
 def loss_pxl(img1, img2):
         return np.linalg.norm(img2-img1)
+
+def program_ink(p):
+        # takes a list of np array and outputs the amount of ink used
+        cost = 0
+        for a in p:
+                for n in range(a.shape[0] - 1):
+                        u = a[n]
+                        v = a[n + 1]
+                        cost += ((u - v)*(u - v)).sum()**0.5
+        return cost
+                        
