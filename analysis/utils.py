@@ -184,7 +184,7 @@ def loadCheckpoint(trainset="S9_nojitter", userealnames=True, loadparse=False, s
         tasks, testtasks, programnames, program_test_names = makeSupervisedTasks(trainset=taskset, doshaping=doshaping, userealnames=userealnames)
         return tasks, testtasks, programnames, program_test_names
 
-
+    print("loading Dreamcoder tasks")
     tasks, testtasks, programnames, program_test_names = loadTasks(taskset, doshaping)
 
     ######  LOAD PARSES IF EXIST
@@ -210,11 +210,12 @@ def loadCheckpoint(trainset="S9_nojitter", userealnames=True, loadparse=False, s
         return parses        
 
     if loadparse:
+        print("Loading parses")
         parses = loadParses()
         if len(parses)>0:
             print("FOUND {} pre-computed parses!".format(len(parses)))
     else:
-        print("not loading parses [NONE FOUND]")
+        print("not loading parses")
         parses = []
 
 
@@ -255,8 +256,9 @@ def loadCheckpoint(trainset="S9_nojitter", userealnames=True, loadparse=False, s
     }
 
     if loadbehavior:
+        print("Loading behavior")
         loadBehavior(DAT)
-        print("Loaded behavior also")
+        # print("Loaded behavior also")
 
 
     # === update savedirs
@@ -387,8 +389,10 @@ def DATgetTask(stimname, DAT):
 def DATloadDrawgoodData(DAT, dosegmentation=True):
     from segmentation import getSegmentation
     from preprocess import getFlatData
+    print("Loading human datflat data")
     DAT["datflat_hu"] = getFlatData(DAT["datall_human"])
     if dosegmentation:
+        print("Doing segmentation")
         DAT["datseg_hu"] = getSegmentation(DAT["datflat_hu"], unique_codes=True, dosplits=True, removeLongVertLine=REMOVELL)                                      
     return DAT
 

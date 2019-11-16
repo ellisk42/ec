@@ -138,22 +138,8 @@ def summarize(ECTRAIN, SUMMARY_SAVEDIR = "", comparetohuman=True):
         print("COMPARING TO HUMAN - SHOULD ALREADY HAVE PREPROCESSED DATA")
         DAT = loadCheckpoint(trainset=ECTRAIN, loadparse=True, suppressPrint=True)
         DAT = DATloadDrawgoodData(DAT, dosegmentation=True)
-        distances = loadDistances(ECTRAIN)
-        distances_medianparse = loadDistances(ECTRAIN, ver="medianparse")
-        distances_aggregate = loadDistances(ECTRAIN, ver="aggregate")
+        
 
-        if useAggregateDistance:
-            distances=distances_aggregate
-            label = "allparses_agg"
-        else:
-            label = "allparses"
-
-        # remove all things like randomperms
-        distances = [d for d in distances if d["model"]==ECTRAIN]
-        print(len(distances))
-        print(len(distances_aggregate))
-        print(len(distances_medianparse))
-        assert len(distances)>0, "huh?"
 
         # ==== PLOT DISTANCES FOR DIFFERENT SLICES OF MODEL/HUMAN/STIM
         stimlist = DATgetSolvedStim(DAT, intersectDrawgood=True, onlyifhasdatflat=True)
@@ -187,10 +173,31 @@ def summarize(ECTRAIN, SUMMARY_SAVEDIR = "", comparetohuman=True):
             print("1: plotted drawing steps for Humans")
             plt.close('all')
 
+        distances = loadDistances(ECTRAIN)
+        distances_medianparse = loadDistances(ECTRAIN, ver="medianparse")
+        distances_aggregate = loadDistances(ECTRAIN, ver="aggregate")
 
+        if useAggregateDistance:
+            distances=distances_aggregate
+            label = "allparses_agg"
+        else:
+            label = "allparses"
+
+        # remove all things like randomperms
+        distances = [d for d in distances if d["model"]==ECTRAIN]
+        print(len(distances))
+        print(len(distances_aggregate))
+        print(len(distances_medianparse))
+        assert len(distances)>0, "huh?"
+
+        for stim in stimlist:
             # 3) Plot string edit distances between human and model
             # only the plotted parses (x the humans)
             # --- just the parses plotted
+            dflat = DATloadDatFlat(DAT, stim)
+            dflat = dgseg.filterDat(dflat, stimlist=[stim])
+            if len(dflat)>NPARSE:
+                dflat = random.sample(dflat, NPARSE)
             modelrends = [d["parsenum"] for d in dflat]
             if "stim" not in distances[0].keys():
                 import pdb

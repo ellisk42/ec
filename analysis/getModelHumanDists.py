@@ -123,6 +123,7 @@ def aggregateDistances(ECTRAIN, modelkindlist=["parse", "randomperm"]):
     print("NOTE: nonnumercols below assumes that codes_unique will be the first thin encountered, and therefore will be extracted in aggregationp.. this likely depend on the order of the distances kinds used in calcualting huamn-model distances. Is only important if use these codes later, e.g., if taking min over reversed sequences.")
     """combines modelkindlist into one aggregate and one medianparse"""
     
+    print("---- DOING aggregateDistances")
     # modelkind=="parse":
     # modelkind=="randomperm"
     # ======== LOAD ALL MODELS AND COMBINE IN THIS ANALYSIS. Is fine since diff models are flagged with diff values for "model" key.
@@ -185,6 +186,12 @@ if __name__=="__main__":
 
     # === INPUT ARGUMENTS
     ECTRAIN = sys.argv[1]
+    
+    if int(sys.argv[2])==1:
+        get_aggregate=True
+    else:
+        get_aggregate=False
+
     # ECTRAIN = "S8.2.2"
     # ECTRAIN = "S9.2"
     REMOVELL = False # this must match with preprocessing of model
@@ -192,7 +199,8 @@ if __name__=="__main__":
     # PARSEVERSIONLIST = ["randomperm"] # parse is kevin ellis code. random is random permutation.
 
 
-    if True:
+
+    if not get_aggregate:
         # load DAT
         DAT = loadCheckpoint(trainset=ECTRAIN, loadparse=True, suppressPrint=True)
         print("Loaded checkpoint DAT, for {}".format(ECTRAIN))
@@ -279,6 +287,6 @@ if __name__=="__main__":
                     distances = distModelHumanAllStims([stimthis], seqgetter_ec, seqgetter_hu, modelname = modelname, humanname = humanname, distancelabel=seqkind, modelrends=modelparsenums)
 
                     DATsaveModelHuDist(DAT, stimname, humanname, distances, seqkind)
-
-    # ==== aggregate all distance measures, and get medians across parases.
-    aggregateDistances(ECTRAIN, modelkindlist=PARSEVERSIONLIST)
+    else:
+        # ==== aggregate all distance measures, and get medians across parases.
+        aggregateDistances(ECTRAIN, modelkindlist=PARSEVERSIONLIST)
