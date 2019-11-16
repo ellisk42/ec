@@ -143,6 +143,12 @@ def main(arguments):
         primitives = getPrimitives(trainset=arguments["trainset"], prune=arguments["dopruning"])
         g0 = Grammar.uniform(primitives)
 
+        print("As an example, here's the amount of ink used by a line, a circle, and  connected to a circle:")
+        print(program_ink(_line))
+        print(program_ink(_circle))
+        print(program_ink(_circle + _line))
+        print()
+
         if False:
             #p = Program.parse("(repeat line 4 ")
             p = Program.parse("(transform circle #(transmat (Some scale4) None None None None))")
