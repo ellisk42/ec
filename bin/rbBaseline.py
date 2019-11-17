@@ -27,6 +27,9 @@ from string import printable
 
 import torch
 
+# from dreamcoder.domains.list.listPrimitives import josh_primitives
+# from dreamcoder.domains.list.makeListTasks import joshTasks
+
 from dreamcoder.domains.list.makeListTasks import make_list_bootstrap_tasks, sortBootstrap, EASYLISTTASKS
 from dreamcoder.domains.list.main import retrieveJSONTasks
 import dreamcoder.domains.list.main as List
@@ -245,6 +248,15 @@ if __name__=='__main__':
         test = [t for t in test
                 if t.name not in EASYLISTTASKS]
         g = Grammar.uniform(bootstrapTarget_extra())
+        input_vocabularies = [fe.lexicon + ['EOE'], fe.lexicon]
+
+    elif arguments.domain == "josh":
+        tasks = joshTasks()
+        fe = List.LearnedFeatureExtractor(tasks)
+        # test, train = testTrainSplit(tasks, .5)
+        # test = [t for t in test
+        #         if t.name not in EASYLISTTASKS]
+        g = Grammar.uniform(josh_primitives())
         input_vocabularies = [fe.lexicon + ['EOE'], fe.lexicon]
 
     if not arguments.test:
