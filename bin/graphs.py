@@ -470,7 +470,6 @@ def plotECResult(
             for (color,ls,xs,ys) in shuffled([ (color,ls,xs,ys)
                                             for (color,ls),cs in plotCommands_solve.items()
                                             for xs,ys in cs]):
-                print(plotCommands_solve)
                 solveAxis.plot(xs,ys,color=color,ls=ls,alpha=alpha)
         if arguments.baselines:
             for n in range(len(arguments.baselines)//2):
