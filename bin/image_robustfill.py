@@ -158,7 +158,10 @@ class Image_RobustFill(nn.Module):
     def sample(self, batch_inputs=None, n_samples=None):
         assert batch_inputs is not None or n_samples is not None
         #inputs = self._inputsToTensors(batch_inputs)
-        inputs = [[batch_inputs]]
+        inputs = torch.stack(tuple(torch.tensor(b) for b in batch_inputs), dim=0).float()
+        if next(self.parameters()).is_cuda:
+            inputs = inputs.cuda()
+        inputs = [[inputs]]
 
         target, score = self._run(inputs, mode="sample", n_samples=n_samples)
         target = self._tensorToOutput(target)

@@ -44,11 +44,10 @@ from dreamcoder.domains.regex.regexPrimitives import reducedConcatPrimitives
 import dreamcoder.domains.regex.main as Regex
 Regex.ConstantInstantiateVisitor.SINGLE = Regex.ConstantInstantiateVisitor()
 
-
-import scipy
+from scipy.misc import imresize
 import numpy as np
 
-
+from dreamcoder.utilities import ParseFailure
 #import other stuff
 
 extras = ['(', ')', 'lambda'] + ['$'+str(i) for i in range(10)]
@@ -83,7 +82,7 @@ def getDatum():
     while True:
         tsk = random.choice(tasks)
         tp = tsk.request
-        p = g.sample(tp, maximumDepth=3)
+        p = g.sample(tp, maximumDepth=6)
         task = fe.taskOfProgram(p, tp)
         if task is None:
             #print("no taskkkk")
@@ -102,12 +101,11 @@ def makeExamples(task):
                 for xs,y in task.examples ]
 
     if arguments.domain == 'rational':
-        return scipy.misc.imresize(np.array([task.features]*3),(256,256)).transpose(2,0,1)
+        return imresize(np.array([task.features]*3),(256,256)).transpose(2,0,1)
     if arguments.domain == 'logo':
         i = np.array([float(xx)/256. for xx in task.highresolution])
         i = i.reshape((128,128))
-        i = scipy.misc.imresize(np.array([i]*3),(256,256)).transpose(2,0,1)
-        return i
+        return imresize(np.array([i]*3),(256,256)).transpose(2,0,1)
     
     if hasattr(fe,'tokenize'):
         examples = []
@@ -121,11 +119,38 @@ def makeExamples(task):
             examples.append((i,y))
         return examples
 
+def test_task(m, task, timeout):
+    start = time.time()
+    failed_cands = set()
+
+    print(task.examples)
+    while time.time() - start < timeout:
+        query = makeExamples(task)
+        import pdb; pdb.set_trace()
+        candidates = m.sample([query]*BATCHSIZE) #i think this works
+        print('len failed', len(failed_cands))
+        for cand in candidates:
+            try:
+                p = Program.parse(" ".join(cand))
+                print(p)
+            except ParseFailure: continue
+            except IndexError: continue
+            if p not in failed_cands:
+                ll = task.logLikelihood(p, timeout=10)
+                print(ll)
+                if ll > float('-inf'): return True
+                else: failed_cands.add(p)
+
+    return False
+
+
+
 if __name__=='__main__':
     import argparse
     parser = argparse.ArgumentParser(description = "")
     parser.add_argument("--domain",'-d',default="text")
-    
+    parser.add_argument("--test", type=str, default=False)
+    parser.add_argument("--timeout", type=float, default=1200)
     arguments = parser.parse_args()
 
     if arguments.domain == "text":
@@ -134,31 +159,32 @@ if __name__=='__main__':
         fe = Text.LearnedFeatureExtractor(tasks=tasks,
                                           testingTasks=loadPBETasks("PBE_Strings_Track")[0])
 
-        BATCHSIZE = 32
+        BATCHSIZE = 16
     elif arguments.domain == "regex":
         g = Grammar.uniform(reducedConcatPrimitives(),
                             continuationType=tpregex)
         tasks = makeNewTasks()
         fe = Regex.LearnedFeatureExtractor(tasks)
         input_vocabularies = [["dummy"], list(printable) + ["LIST_END","LIST_START"]]
-        BATCHSIZE = 256
+        BATCHSIZE = 64
     elif arguments.domain == "tower":
         g = Grammar.uniform(new_primitives, continuationType=ttower)
         tasks = dreamcoder.domains.tower.makeTowerTasks.makeSupervisedTasks()
         fe = Tower.TowerCNN([])
-        BATCHSIZE = 256
+        BATCHSIZE = 64
     elif arguments.domain == "logo":
         g = Grammar.uniform(dreamcoder.domains.logo.logoPrimitives.primitives,
                             continuationType=turtle)
         tasks = dreamcoder.domains.logo.makeLogoTasks.makeTasks(['all'],proto=False)
         fe = LOGO.LogoFeatureCNN([])
-        BATCHSIZE = 256
+        BATCHSIZE = 64
     elif arguments.domain == "rational":
         tasks = rational.makeTasks()
         g = Grammar.uniform([real, real_division, real_addition, real_multiplication])
         fe = FeatureExtractor([])
+        BATCHSIZE = 64
     elif arguments.domain == "list":
-        BATCHSIZE = 32
+        BATCHSIZE = 16
         tasks = retrieveJSONTasks("data/list_tasks.json") + sortBootstrap()
         tasks.extend([
             Task("remove empty lists",
@@ -221,39 +247,64 @@ if __name__=='__main__':
         g = Grammar.uniform(bootstrapTarget_extra())
         input_vocabularies = [fe.lexicon + ['EOE'], fe.lexicon]
 
+    if not arguments.test:
+
+        target_vocabulary = [str(p) for p in g.primitives] + extras
         
-        
+        if arguments.domain in ['tower', 'rational', 'logo']:
+            m = Image_RobustFill(target_vocabulary=target_vocabulary)
+        else:
+            m = SyntaxCheckingRobustFill(input_vocabularies=input_vocabularies,
+                                    target_vocabulary=target_vocabulary)
 
-    target_vocabulary = [str(p) for p in g.primitives] + extras
-    
-    if arguments.domain in ['tower', 'rational', 'logo']:
-        m = Image_RobustFill(target_vocabulary=target_vocabulary)
+
+        if torch.cuda.is_available():
+            print("CUDAfying net...")
+            m.cuda()
+        else:
+            print("Not using CUDA")
+
+
+        start=time.time()
+        max_n_iterations = 10000000000
+        #batch = [getDatum() for _ in range(BATCHSIZE)]
+        for i in range(max_n_iterations):
+            batch = [getDatum() for _ in range(BATCHSIZE)]
+            inputs, targets = zip(*batch)
+            score = m.optimiser_step(inputs, targets)
+
+            if i%10==0: print(f"Iteration {i}/{max_n_iterations}, Score {score}, ({(time.time()-start)/(i+1)} seconds per iteration)", flush=True) 
+
+            if i%100==0:
+                PATH = f"{arguments.domain}_robustfill_baseline_6.p"
+                torch.save(m, PATH)
+                print("saved at", PATH)
+
     else:
-        m = SyntaxCheckingRobustFill(input_vocabularies=input_vocabularies,
-                                target_vocabulary=target_vocabulary)
+        path = arguments.test
+
+        m = torch.load(path)
+        m.max_length=50
+        print("domain: ", arguments.domain)
+        print('testing model:')
+        print(path)
+
+        #assumes tasks are the testing tasks
+
+        n_tasks = len(tasks)
+        print(n_tasks, "tasks")
+        n_hits = 0
+        for i, task in enumerate(tasks):
+            hit = test_task(m, task, arguments.timeout)
+            print("for task ",i, ", hit=", hit)
+            if hit: n_hits += 1
+
+        print("final score:")
+        print(n_hits/float(n_tasks))
 
 
-    if torch.cuda.is_available():
-        print("CUDAfying net...")
-        m.cuda()
-    else:
-        print("Not using CUDA")
 
 
-    start=time.time()
-    max_n_iterations = 10000000000
-    #batch = [getDatum() for _ in range(BATCHSIZE)]
-    for i in range(max_n_iterations):
-        batch = [getDatum() for _ in range(BATCHSIZE)]
-        inputs, targets = zip(*batch)
-        score = m.optimiser_step(inputs, targets)
-
-        if i%30==0: print(f"Iteration {i}/{max_n_iterations}, Score {score}, ({(time.time()-start)/(i+1)} seconds per iteration)", flush=True) 
-
-        if i%100==0:
-            PATH = f"{arguments.domain}_robustfill_baseline.p"
-            torch.save(m, PATH)
-            print("saved at", PATH)
 
 
 

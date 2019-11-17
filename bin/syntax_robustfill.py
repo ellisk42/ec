@@ -457,7 +457,9 @@ class SyntaxCheckingRobustFill(nn.Module):
                 t = self._ones(maxlen+1, len(inputs)).long()*self.v_inputs[i]
                 for k in range(len(inputs)):
                     s = inputs[k]
-                    if len(s)>0: t[:len(s), k] = torch.LongTensor([self.input_vocabularies_index[i][x] for x in s])
+                    try:
+                        if len(s)>0: t[:len(s), k] = torch.LongTensor([self.input_vocabularies_index[i][x] for x in s])
+                    except KeyError: import pdb; pdb.set_trace()
                 tensors[i].append(t)
         return tensors
 
