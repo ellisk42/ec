@@ -470,15 +470,17 @@ def plotECResult(
             for (color,ls,xs,ys) in shuffled([ (color,ls,xs,ys)
                                             for (color,ls),cs in plotCommands_solve.items()
                                             for xs,ys in cs]):
+                print(plotCommands_solve)
                 solveAxis.plot(xs,ys,color=color,ls=ls,alpha=alpha)
         if arguments.baselines:
             for n in range(len(arguments.baselines)//2):
                 name = arguments.baselines[2*n]
                 bl = arguments.baselines[2*n + 1]
-                print(name,bl)
-                plot.axhline(float(bl),-0.5,iterations,
+                print("baseline",name,bl)
+                bl = float(bl)
+                plot.axhline(bl,-0.5,iterations,
                              color='k',lw=3)
-                solveAxis.text(iterations, float(bl), name, ha='left', va='center', fontweight='bold')
+                solveAxis.text(iterations, bl, name, ha='left', va='center', fontweight='bold')
             plot.subplots_adjust(right=0.9)
                 # solveAxis.plot([0,iterations - 1],[float(bl)]*2,
                 #                color='k')
@@ -608,9 +610,18 @@ if __name__ == "__main__":
                         help="Do not update priors when doing cutoffs and likelihoods")
     parser.add_argument("--baselines",
                         default=[],nargs='+')
+    parser.add_argument("--palette","-c",
+                        default=False, action='store_true')
 
 
     arguments = parser.parse_args()
+
+    if arguments.palette:
+        # taken from https://learnui.design/tools/data-color-picker.html
+        mapping = dict(zip(["teal","yellow","purple","cyan"],
+                           ["#003f5c","#7a5195","#ef5675","#ffa600"]))
+        arguments.checkpoints = [mapping.get(ck,ck)
+                                 for ck in arguments.checkpoints ]
 
     if arguments.likelihood: arguments.noTime = True
     
