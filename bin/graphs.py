@@ -307,7 +307,7 @@ def plotECResult(
     results = []
     parameters = []
     for path in resultPaths:
-        if path in colorNames:
+        if path in colorNames or path[0] == '#':
             currentColor = path
             if colors is None:
                 colors = []
@@ -618,7 +618,7 @@ if __name__ == "__main__":
 
     if arguments.palette:
         # taken from https://learnui.design/tools/data-color-picker.html
-        mapping = dict(zip(["teal","yellow","purple","cyan"],
+        mapping = dict(zip(["teal","orange","purple","cyan"],
                            ["#003f5c","#7a5195","#ef5675","#ffa600"]))
         arguments.checkpoints = [mapping.get(ck,ck)
                                  for ck in arguments.checkpoints ]
