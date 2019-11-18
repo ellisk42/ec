@@ -139,7 +139,7 @@ def getAndSaveParses(experiment="S9.2", debug=False, skipthingsthatcrash=False, 
                 flatparses = random.sample(flatparses, nrand_flat_parses)
 
             with open(fname, "wb") as f:
-                pickle.dump([flatparses, f, pickle.HIGHEST_PROTOCOL)
+                pickle.dump(flatparses, f, pickle.HIGHEST_PROTOCOL)
 
             print("saved to :{}".format(fname))
 
