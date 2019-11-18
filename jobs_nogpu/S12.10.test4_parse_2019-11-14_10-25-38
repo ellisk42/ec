@@ -1,0 +1,49 @@
+[33mWARNING:[0m seccomp requested but not enabled, seccomp library is missing or too old
+HERE
+getting all parses (may take a while
+GGGGdd
+GGGGeee
+DRAW TASK training set: S12
+DO SHAPING: False
+training task names:
+['S12_13_shaping_0', 'S12_13_shaping_1', 'S12_13_shaping_2', 'S12_13_shaping_3', 'S12_13_shaping_4', 'S12_13_shaping_5', 'S12_13_shaping_6', 'S12_13_shaping_7', 'S12_13_shaping_8', 'S12_13_shaping_9', 'S12_13_shaping_10', 'S12_1', 'S12_5', 'S12_8', 'S12_10', 'S12_32', 'S12_34', 'S12_38', 'S12_20', 'S12_39', 'S12_57', 'S12_79', 'S12_113', 'S12_124', 'S12_126', 'S12_133', 'S12_147', 'S12_155', 'S12_163', 'S12_200', 'S12_214', 'S12_31', 'S12_52', 'S12_55', 'S12_70', 'S12_129', 'S12_139', 'S12_141', 'S12_148', 'S12_207', 'S12_222', 'S12_224', 'S12_229', 'S12_233', 'S12_235', 'S12_243', 'S12_246']
+test tasks:
+['S12_13_test_1', 'S12_13_test_2', 'S12_13_test_4', 'S12_13_test_5', 'S12_13_test_6', 'S12_13_test_7', 'S12_13_test_8', 'S12_13_test_9', 'S12_13_test_10', 'S12_13_test_11', 'S12_13_test_12', 'S12_132', 'S12_201', 'S12_220', 'S12_247', 'S13_182', 'S13_217', 'S13_219']
+not loading parses [NONE FOUND]
+Num dreamcoder tasks 47
+n supervised tasks 47
+Num dreamcoder TEST tasks 18
+n supervised TEST tasks 18
+Parsing S12_13_shaping_0 ...
+False
+S12_13_shaping_0
+getting parse...
+(CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None)))
+Traceback (most recent call last):
+  File "analysis/parse.py", line 276, in <module>
+    getAndSaveParses(experiment=experiment, skipthingsthatcrash=skipthingsthatcrash)
+  File "analysis/parse.py", line 110, in getAndSaveParses
+    saveparses(T=tasks, P=programnames, skipthingsthatcrash=skipthingsthatcrash)
+  File "analysis/parse.py", line 89, in saveparses
+    parses = getParses(p)
+  File "analysis/parse.py", line 27, in getParses
+    parses = Parse.ofProgram(Program.parse(str(dreamcoder_program)))
+  File "/om/user/lyt/ec/dreamcoder/domains/draw/primitives.py", line 195, in ofProgram
+    parses = p.evaluate([])
+  File "/om/user/lyt/ec/dreamcoder/program.py", line 332, in evaluate
+    return self.f.evaluate(environment)(self.x.evaluate(environment))
+  File "/om/user/lyt/ec/dreamcoder/program.py", line 332, in evaluate
+    return self.f.evaluate(environment)(self.x.evaluate(environment))
+  File "/om/user/lyt/ec/dreamcoder/utilities.py", line 73, in __call__
+    return self.f(*arguments)
+  File "/om/user/lyt/ec/dreamcoder/domains/draw/primitives.py", line 247, in _tform_wrapper
+    return {Parse([Chunk(_tform(parse.l,T))]) for parse in p}
+  File "/om/user/lyt/ec/dreamcoder/domains/draw/primitives.py", line 247, in <setcomp>
+    return {Parse([Chunk(_tform(parse.l,T))]) for parse in p}
+  File "/om/user/lyt/ec/dreamcoder/domains/draw/primitives.py", line 111, in __hash__
+    self._h = hash(tuple(hash(x) if isinstance(x,Chunk) else hash(x.tostring()) for x in self.l ))
+  File "/om/user/lyt/ec/dreamcoder/domains/draw/primitives.py", line 111, in <genexpr>
+    self._h = hash(tuple(hash(x) if isinstance(x,Chunk) else hash(x.tostring()) for x in self.l ))
+  File "/om/user/lyt/ec/dreamcoder/domains/draw/primitives.py", line 69, in __hash__
+    self._h = hash(tuple(hash(x) if isinstance(x,Chunk) else hash(x.tostring())))
+NameError: name 'x' is not defined

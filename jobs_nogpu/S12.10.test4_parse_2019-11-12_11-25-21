@@ -1,0 +1,6 @@
+[33mWARNING:[0m seccomp requested but not enabled, seccomp library is missing or too old
+HERE
+Traceback (most recent call last):
+  File "analysis/parse.py", line 238, in <module>
+    from segmentation import getSegmentation
+ModuleNotFoundError: No module named 'segmentation'
