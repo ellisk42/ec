@@ -618,7 +618,7 @@ if __name__ == "__main__":
     if arguments.palette:
         # taken from https://learnui.design/tools/data-color-picker.html
         mapping = dict(zip(["teal","orange","purple","cyan"],
-                           ["#003f5c","#ffa600","#ef5675","#7a5195"]))
+                           ["#003f5c","#ffa600","purple","#ef5675"]))
         arguments.checkpoints = [mapping.get(ck,ck)
                                  for ck in arguments.checkpoints ]
 
