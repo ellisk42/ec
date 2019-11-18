@@ -10,6 +10,7 @@ from analysis.utils import *
 from analysis.graphs import plotNumSolved
 from analysis.graphs import plotAllTasks
 from dreamcoder.domains.draw.main import visualizePrimitives
+from dreamcoder.domains.draw.primitives import program_ink
 import matplotlib.pyplot as plt
 from analysis.getModelHumanDists import *
 import random
@@ -235,6 +236,94 @@ def summarize(ECTRAIN, SUMMARY_SAVEDIR = "", comparetohuman=True):
             print("4: Plotted all string edit distances aggregating over meausres, then taking median over parses")
             plt.close('all')
 
+
+
+
+from analysis.utils import *
+from dreamcoder.domains.draw.primitives import program_ink
+from analysis.importDrawgood import *
+
+# print likelihoods of all frontiers
+
+def summarizeFrontiers(ECTRAIN, k=20):
+    """Plots top k frontiers, and save to text their scores and ink used.
+    Also plots the ground truth task.
+    Currently only does for test tasks but easy to modify to also do all trainign tasks.
+    - check the amount of ink used by solutions vs. the ground truth programs"""    # ECTRAIN = "S12.10.test4"
+
+    def F(stim, DAT, k):
+        # find the program solution
+        result = DAT["result"]
+        t = DATgetTask(stim, DAT)[0]
+        sdir = DAT["summarysavedir"]
+        SDIR = "{}/frontiers".format(sdir)
+        import os 
+        os.makedirs(SDIR, exist_ok=True)
+        print(SDIR)    
+        
+        # == plot best posterireo
+        if False:
+            p = result.frontiersOverTime[t][-1].bestPosterior.program.evaluate([])
+            fig = dgutils.plotDrawingSteps(p)
+            plt.title("ink {}".format(program_ink(p)))
+        
+
+        # == plot for all top k frontiers.
+        def summarizeTopKFrontiers(k, frontiers, first_plot_best_post=True, skip_print_prog=False):
+
+            frontiers = frontiers.topK(k)
+
+            def print_f(f, skip_print_prog):
+                if not skip_print_prog:
+                    print(f.program)
+                print("posterior: {}".format(f.logPosterior))
+                print("likelihood: {}".format(f.logLikelihood))
+                print("prior: {}".format(f.logPrior))
+                print("ink used: {}".format(program_ink(f.program.evaluate([]))))
+                print("---")
+                return "post {}, ll {}, prior {}, ink {}".format(f.logPosterior, f.logLikelihood, f.logPrior, program_ink(f.program.evaluate([])))
+            
+            string_list = []
+            if first_plot_best_post:
+                st = print_f(frontiers.bestPosterior, skip_print_prog)
+                fig = dgutils.plotDrawingSteps(frontiers.bestPosterior.program.evaluate([]))
+    #             plt.title(st)
+                fig.savefig("{}/{}_bestPost.pdf".format(SDIR, stim))
+                string_list.append(st)
+                
+                
+            for i, f in enumerate(frontiers.entries):
+                st = print_f(f, skip_print_prog)
+                fig = dgutils.plotDrawingSteps(f.program.evaluate([]))
+    #             plt.title(st)
+                fig.savefig("{}/{}_top_{}.pdf".format(SDIR, stim, i))
+                string_list.append(st)
+            
+            fstring = "{}/{}_description.txt".format(SDIR, stim)
+            with open(fstring, 'w') as f:
+                for s in string_list:
+                    f.write("{}\n".format(s))
+
+        frontiers = result.frontiersOverTime[t][-1] # last timepoijnt
+    #     print(frontiers)
+        summarizeTopKFrontiers(k, frontiers, first_plot_best_post=False, skip_print_prog=True)
+
+
+        # print all the likelihoods in sorted order
+        print(sorted([f.logLikelihood for f in frontiers.entries]))
+        
+        # plot drawing steps for both ground truth and extracted program
+        print(program_ink(t.strokes))
+        fig = dgutils.plotDrawingSteps(t.strokes)
+        plt.title("ink {}".format(program_ink(t.strokes)))
+        fig.savefig("{}/{}_truth.pdf".format(SDIR, stim))
+        
+        plt.close(fig)
+        
+    DAT = loadCheckpoint(ECTRAIN, loadparse=False)
+    for stim in [t.name for t in DAT["testtasks"]]:
+    #     stim = "S12_13_test_4"
+        F(stim, DAT, k)
 
 
 

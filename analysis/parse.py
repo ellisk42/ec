@@ -28,6 +28,29 @@ def getParses(dreamcoder_program):
     return parses
 
 
+def getBestFrontierProgram(result, task, lastKIter=4):
+    """ gets best solution for a given task, restricting to 
+    solutions from lastKIter before last iter, to last iter.
+    ranks based on ll, then ink, then prior. 
+    lastKIter counts from the largest iter for which there exists a solution,
+    e.g., if you think that last 4 iterationsm might be bad, then
+    make lastKIter>4"""
+    from analysis.utils import _getAndRankAllFrontiers
+    
+    # stim = task.name
+    # print("ASDas")
+    # print(result.keys())
+    frontiers_over_time = _getAndRankAllFrontiers(result, task)
+
+    if len(frontiers_over_time)==0:
+        print("did not find any programs across all frontiers and all iterations")
+        return []
+    else:
+        last_iter = max([f["iteration"] for f in frontiers_over_time])
+        frontiers_over_time = [f for f in frontiers_over_time if f["iteration"]>(last_iter-lastKIter)]
+        frontier_to_take = frontiers_over_time[0]
+        return frontier_to_take["frontier"].program
+
 
 def getLatestFrontierProgram(result, task):
     """gives the most recent (latest iteration) 
@@ -40,9 +63,12 @@ def getLatestFrontierProgram(result, task):
             return f.bestPosterior.program # this is the most recent frontier not empty
     return []
 
-def getAndSaveParses(experiment="S9.2", debug=False, skipthingsthatcrash=False):
+def getAndSaveParses(experiment="S9.2", debug=False, skipthingsthatcrash=False, useFindBestProgram=True, nrand_flat_parses=10000):
     """ gets the most recent, and the bestPosterior program
-    gets all parses """
+    gets all parses
+    useFindBestProgram, means find best likelihood, lowest ink,
+    over last few iterations. 
+    nrand_flat_parses, will subsample randomly from parses to make the flat parses that saved. put [] to save all."""
     # DAT = loadCheckpoint(trainset=experiment)
     # for key in DAT.keys():
     #     key =
@@ -79,7 +105,13 @@ def getAndSaveParses(experiment="S9.2", debug=False, skipthingsthatcrash=False):
                     continue
 
             # Get bestPosterior solution (most recent, and best posterior)
-            p = getLatestFrontierProgram(result, t)
+            if useFindBestProgram:
+                # then goes thru multipel itetatyions to find best
+                p = getBestFrontierProgram(result, t)
+            else:
+                # then uses last iterations best program
+                p = getLatestFrontierProgram(result, t)
+
             if isinstance(p, list):
                 assert len(p)==0, "i thought a list means did not find a solution..."
                 # then no solution
@@ -97,12 +129,17 @@ def getAndSaveParses(experiment="S9.2", debug=False, skipthingsthatcrash=False):
             # 1) save parse object
             fname = "{}/parses_{}.pickle".format(savedir, name)
             with open(fname, "wb") as f:
-                pickle.dump(parses, f)
+                pickle.dump(parses, f, pickle.HIGHEST_PROTOCOL)
 
             # 2) save flattened parses
             fname = "{}/parsesflat_{}.pickle".format(savedir, name)
+            flatparses = [p.flatten() for p in parses]
+            if isinstance(nrand_flat_parses, int):
+                import random
+                flatparses = random.sample(flatparses, nrand_flat_parses)
+
             with open(fname, "wb") as f:
-                pickle.dump([p.flatten() for p in parses], f)
+                pickle.dump([flatparses, f, pickle.HIGHEST_PROTOCOL)
 
             print("saved to :{}".format(fname))
 

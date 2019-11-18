@@ -1,0 +1,802 @@
+[
+    {
+        "iteration": 2,
+        "frontier": "FrontierEntry(program=(#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1), logPrior=-3.6168671375691677, logLikelihood=0.0",
+        "prior": -3.6168671375691677,
+        "post": -3.6168671375691677,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 1,
+        "frontier": "FrontierEntry(program=(#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1), logPrior=-3.623691830880875, logLikelihood=0.0",
+        "prior": -3.623691830880875,
+        "post": -3.623691830880875,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 4,
+        "frontier": "FrontierEntry(program=(#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1), logPrior=-3.8878428629533937, logLikelihood=0.0",
+        "prior": -3.8878428629533937,
+        "post": -3.8878428629533937,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 3,
+        "frontier": "FrontierEntry(program=(#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1), logPrior=-3.9495486509171047, logLikelihood=0.0",
+        "prior": -3.9495486509171047,
+        "post": -3.9495486509171047,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 6,
+        "frontier": "FrontierEntry(program=(#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1), logPrior=-4.39909940486272, logLikelihood=0.0",
+        "prior": -4.39909940486272,
+        "post": -4.39909940486272,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 7,
+        "frontier": "FrontierEntry(program=(#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1), logPrior=-4.39909940486272, logLikelihood=0.0",
+        "prior": -4.39909940486272,
+        "post": -4.39909940486272,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 8,
+        "frontier": "FrontierEntry(program=(#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1), logPrior=-4.39909940486272, logLikelihood=0.0",
+        "prior": -4.39909940486272,
+        "post": -4.39909940486272,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 9,
+        "frontier": "FrontierEntry(program=(#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1), logPrior=-4.39909940486272, logLikelihood=0.0",
+        "prior": -4.39909940486272,
+        "post": -4.39909940486272,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 10,
+        "frontier": "FrontierEntry(program=(#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1), logPrior=-4.39909940486272, logLikelihood=0.0",
+        "prior": -4.39909940486272,
+        "post": -4.39909940486272,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 11,
+        "frontier": "FrontierEntry(program=(#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1), logPrior=-4.39909940486272, logLikelihood=0.0",
+        "prior": -4.39909940486272,
+        "post": -4.39909940486272,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 12,
+        "frontier": "FrontierEntry(program=(#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1), logPrior=-4.39909940486272, logLikelihood=0.0",
+        "prior": -4.39909940486272,
+        "post": -4.39909940486272,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 13,
+        "frontier": "FrontierEntry(program=(#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1), logPrior=-4.39909940486272, logLikelihood=0.0",
+        "prior": -4.39909940486272,
+        "post": -4.39909940486272,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 14,
+        "frontier": "FrontierEntry(program=(#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1), logPrior=-4.39909940486272, logLikelihood=0.0",
+        "prior": -4.39909940486272,
+        "post": -4.39909940486272,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 15,
+        "frontier": "FrontierEntry(program=(#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1), logPrior=-4.39909940486272, logLikelihood=0.0",
+        "prior": -4.39909940486272,
+        "post": -4.39909940486272,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 16,
+        "frontier": "FrontierEntry(program=(#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1), logPrior=-4.39909940486272, logLikelihood=0.0",
+        "prior": -4.39909940486272,
+        "post": -4.39909940486272,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 17,
+        "frontier": "FrontierEntry(program=(#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1), logPrior=-4.39909940486272, logLikelihood=0.0",
+        "prior": -4.39909940486272,
+        "post": -4.39909940486272,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 18,
+        "frontier": "FrontierEntry(program=(#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1), logPrior=-4.39909940486272, logLikelihood=0.0",
+        "prior": -4.39909940486272,
+        "post": -4.39909940486272,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 19,
+        "frontier": "FrontierEntry(program=(#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1), logPrior=-4.399099404862721, logLikelihood=0.0",
+        "prior": -4.399099404862721,
+        "post": -4.399099404862721,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 5,
+        "frontier": "FrontierEntry(program=(#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1), logPrior=-4.403339446532341, logLikelihood=0.0",
+        "prior": -4.403339446532341,
+        "post": -4.403339446532341,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 1,
+        "frontier": "FrontierEntry(program=(reflect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) angle0), logPrior=-6.67852540413797, logLikelihood=0.0",
+        "prior": -6.67852540413797,
+        "post": -6.67852540413797,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 2,
+        "frontier": "FrontierEntry(program=(reflect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) angle0), logPrior=-6.765802702426705, logLikelihood=0.0",
+        "prior": -6.765802702426705,
+        "post": -6.765802702426705,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 4,
+        "frontier": "FrontierEntry(program=(reflect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) angle0), logPrior=-7.535962494479293, logLikelihood=0.0",
+        "prior": -7.535962494479293,
+        "post": -7.535962494479293,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 3,
+        "frontier": "FrontierEntry(program=(reflect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) angle0), logPrior=-7.6110640962713445, logLikelihood=0.0",
+        "prior": -7.6110640962713445,
+        "post": -7.6110640962713445,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 5,
+        "frontier": "FrontierEntry(program=(reflect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) angle0), logPrior=-8.37715290415486, logLikelihood=0.0",
+        "prior": -8.37715290415486,
+        "post": -8.37715290415486,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 6,
+        "frontier": "FrontierEntry(program=(reflect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) angle0), logPrior=-8.502127715105155, logLikelihood=0.0",
+        "prior": -8.502127715105155,
+        "post": -8.502127715105155,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 7,
+        "frontier": "FrontierEntry(program=(reflect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) angle0), logPrior=-8.502127715105155, logLikelihood=0.0",
+        "prior": -8.502127715105155,
+        "post": -8.502127715105155,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 8,
+        "frontier": "FrontierEntry(program=(reflect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) angle0), logPrior=-8.502127715105155, logLikelihood=0.0",
+        "prior": -8.502127715105155,
+        "post": -8.502127715105155,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 9,
+        "frontier": "FrontierEntry(program=(reflect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) angle0), logPrior=-8.502127715105155, logLikelihood=0.0",
+        "prior": -8.502127715105155,
+        "post": -8.502127715105155,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 10,
+        "frontier": "FrontierEntry(program=(reflect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) angle0), logPrior=-8.502127715105155, logLikelihood=0.0",
+        "prior": -8.502127715105155,
+        "post": -8.502127715105155,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 11,
+        "frontier": "FrontierEntry(program=(reflect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) angle0), logPrior=-8.502127715105155, logLikelihood=0.0",
+        "prior": -8.502127715105155,
+        "post": -8.502127715105155,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 12,
+        "frontier": "FrontierEntry(program=(reflect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) angle0), logPrior=-8.502127715105155, logLikelihood=0.0",
+        "prior": -8.502127715105155,
+        "post": -8.502127715105155,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 13,
+        "frontier": "FrontierEntry(program=(reflect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) angle0), logPrior=-8.502127715105155, logLikelihood=0.0",
+        "prior": -8.502127715105155,
+        "post": -8.502127715105155,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 14,
+        "frontier": "FrontierEntry(program=(reflect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) angle0), logPrior=-8.502127715105155, logLikelihood=0.0",
+        "prior": -8.502127715105155,
+        "post": -8.502127715105155,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 15,
+        "frontier": "FrontierEntry(program=(reflect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) angle0), logPrior=-8.502127715105155, logLikelihood=0.0",
+        "prior": -8.502127715105155,
+        "post": -8.502127715105155,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 16,
+        "frontier": "FrontierEntry(program=(reflect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) angle0), logPrior=-8.502127715105155, logLikelihood=0.0",
+        "prior": -8.502127715105155,
+        "post": -8.502127715105155,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 17,
+        "frontier": "FrontierEntry(program=(reflect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) angle0), logPrior=-8.502127715105155, logLikelihood=0.0",
+        "prior": -8.502127715105155,
+        "post": -8.502127715105155,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 18,
+        "frontier": "FrontierEntry(program=(reflect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) angle0), logPrior=-8.502127715105155, logLikelihood=0.0",
+        "prior": -8.502127715105155,
+        "post": -8.502127715105155,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 19,
+        "frontier": "FrontierEntry(program=(reflect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) angle0), logPrior=-8.502127715105155, logLikelihood=0.0",
+        "prior": -8.502127715105155,
+        "post": -8.502127715105155,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 1,
+        "frontier": "FrontierEntry(program=(transform (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) (#(lambda (transmat None None (Some $0) None None)) dist6)), logPrior=-8.865335967668106, logLikelihood=0.0",
+        "prior": -8.865335967668106,
+        "post": -8.865335967668106,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 1,
+        "frontier": "FrontierEntry(program=(repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) scale7) rep1 (#(lambda (transmat None None (Some $0) None None)) dist18)), logPrior=-9.026497563742726, logLikelihood=0.0",
+        "prior": -9.026497563742726,
+        "post": -9.026497563742726,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 2,
+        "frontier": "FrontierEntry(program=(transform (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) (#(lambda (transmat None None (Some $0) None None)) dist6)), logPrior=-9.04285258494052, logLikelihood=0.0",
+        "prior": -9.04285258494052,
+        "post": -9.04285258494052,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 2,
+        "frontier": "FrontierEntry(program=(repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) scale7) rep1 (#(lambda (transmat None None (Some $0) None None)) dist18)), logPrior=-9.296129992895477, logLikelihood=0.0",
+        "prior": -9.296129992895477,
+        "post": -9.296129992895477,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 1,
+        "frontier": "FrontierEntry(program=(reflect (reflect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) angle2) angle2), logPrior=-9.672145391656944, logLikelihood=0.0",
+        "prior": -9.672145391656944,
+        "post": -9.672145391656944,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 4,
+        "frontier": "FrontierEntry(program=(transform (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) (#(lambda (transmat None None (Some $0) None None)) dist6)), logPrior=-9.854885767709275, logLikelihood=0.0",
+        "prior": -9.854885767709275,
+        "post": -9.854885767709275,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 2,
+        "frontier": "FrontierEntry(program=(reflect (reflect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) angle2) angle2), logPrior=-9.8781313898666, logLikelihood=0.0",
+        "prior": -9.8781313898666,
+        "post": -9.8781313898666,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 3,
+        "frontier": "FrontierEntry(program=(transform (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) (#(lambda (transmat None None (Some $0) None None)) dist6)), logPrior=-9.912575998855365, logLikelihood=0.0",
+        "prior": -9.912575998855365,
+        "post": -9.912575998855365,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 4,
+        "frontier": "FrontierEntry(program=(repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) scale7) rep1 (#(lambda (transmat None None (Some $0) None None)) dist18)), logPrior=-10.136431038413921, logLikelihood=0.0",
+        "prior": -10.136431038413921,
+        "post": -10.136431038413921,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 3,
+        "frontier": "FrontierEntry(program=(repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) scale7) rep1 (#(lambda (transmat None None (Some $0) None None)) dist18)), logPrior=-10.169414839289391, logLikelihood=0.0",
+        "prior": -10.169414839289391,
+        "post": -10.169414839289391,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 18,
+        "frontier": "FrontierEntry(program=(#(lambda (lambda (connect $1 (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist18))))) (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) scale7) (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) scale7)), logPrior=-10.412063719780342, logLikelihood=0.0",
+        "prior": -10.412063719780342,
+        "post": -10.412063719780342,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 19,
+        "frontier": "FrontierEntry(program=(#(lambda (lambda (connect $1 (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist18))))) (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) scale7) (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) scale7)), logPrior=-10.412063719780342, logLikelihood=0.0",
+        "prior": -10.412063719780342,
+        "post": -10.412063719780342,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 6,
+        "frontier": "FrontierEntry(program=(transform (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) (#(lambda (transmat None None (Some $0) None None)) dist6)), logPrior=-10.863941750815307, logLikelihood=0.0",
+        "prior": -10.863941750815307,
+        "post": -10.863941750815307,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 7,
+        "frontier": "FrontierEntry(program=(transform (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) (#(lambda (transmat None None (Some $0) None None)) dist6)), logPrior=-10.863941750815307, logLikelihood=0.0",
+        "prior": -10.863941750815307,
+        "post": -10.863941750815307,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 8,
+        "frontier": "FrontierEntry(program=(transform (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) (#(lambda (transmat None None (Some $0) None None)) dist6)), logPrior=-10.863941750815307, logLikelihood=0.0",
+        "prior": -10.863941750815307,
+        "post": -10.863941750815307,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 9,
+        "frontier": "FrontierEntry(program=(transform (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) (#(lambda (transmat None None (Some $0) None None)) dist6)), logPrior=-10.863941750815307, logLikelihood=0.0",
+        "prior": -10.863941750815307,
+        "post": -10.863941750815307,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 10,
+        "frontier": "FrontierEntry(program=(transform (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) (#(lambda (transmat None None (Some $0) None None)) dist6)), logPrior=-10.863941750815307, logLikelihood=0.0",
+        "prior": -10.863941750815307,
+        "post": -10.863941750815307,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 11,
+        "frontier": "FrontierEntry(program=(transform (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) (#(lambda (transmat None None (Some $0) None None)) dist6)), logPrior=-10.863941750815307, logLikelihood=0.0",
+        "prior": -10.863941750815307,
+        "post": -10.863941750815307,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 12,
+        "frontier": "FrontierEntry(program=(transform (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) (#(lambda (transmat None None (Some $0) None None)) dist6)), logPrior=-10.863941750815307, logLikelihood=0.0",
+        "prior": -10.863941750815307,
+        "post": -10.863941750815307,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 13,
+        "frontier": "FrontierEntry(program=(transform (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) (#(lambda (transmat None None (Some $0) None None)) dist6)), logPrior=-10.863941750815307, logLikelihood=0.0",
+        "prior": -10.863941750815307,
+        "post": -10.863941750815307,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 14,
+        "frontier": "FrontierEntry(program=(transform (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) (#(lambda (transmat None None (Some $0) None None)) dist6)), logPrior=-10.863941750815307, logLikelihood=0.0",
+        "prior": -10.863941750815307,
+        "post": -10.863941750815307,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 15,
+        "frontier": "FrontierEntry(program=(transform (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) (#(lambda (transmat None None (Some $0) None None)) dist6)), logPrior=-10.863941750815307, logLikelihood=0.0",
+        "prior": -10.863941750815307,
+        "post": -10.863941750815307,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 16,
+        "frontier": "FrontierEntry(program=(transform (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) (#(lambda (transmat None None (Some $0) None None)) dist6)), logPrior=-10.863941750815307, logLikelihood=0.0",
+        "prior": -10.863941750815307,
+        "post": -10.863941750815307,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 17,
+        "frontier": "FrontierEntry(program=(transform (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) (#(lambda (transmat None None (Some $0) None None)) dist6)), logPrior=-10.863941750815307, logLikelihood=0.0",
+        "prior": -10.863941750815307,
+        "post": -10.863941750815307,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 18,
+        "frontier": "FrontierEntry(program=(transform (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) (#(lambda (transmat None None (Some $0) None None)) dist6)), logPrior=-10.863941750815307, logLikelihood=0.0",
+        "prior": -10.863941750815307,
+        "post": -10.863941750815307,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 19,
+        "frontier": "FrontierEntry(program=(transform (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) (#(lambda (transmat None None (Some $0) None None)) dist6)), logPrior=-10.863941750815309, logLikelihood=0.0",
+        "prior": -10.863941750815309,
+        "post": -10.863941750815309,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 5,
+        "frontier": "FrontierEntry(program=(transform (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) (#(lambda (transmat None None (Some $0) None None)) dist6)), logPrior=-10.87926662138786, logLikelihood=0.0",
+        "prior": -10.87926662138786,
+        "post": -10.87926662138786,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 6,
+        "frontier": "FrontierEntry(program=(repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) scale7) rep1 (#(lambda (transmat None None (Some $0) None None)) dist18)), logPrior=-10.99332744533629, logLikelihood=0.0",
+        "prior": -10.99332744533629,
+        "post": -10.99332744533629,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 7,
+        "frontier": "FrontierEntry(program=(repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) scale7) rep1 (#(lambda (transmat None None (Some $0) None None)) dist18)), logPrior=-10.99332744533629, logLikelihood=0.0",
+        "prior": -10.99332744533629,
+        "post": -10.99332744533629,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 8,
+        "frontier": "FrontierEntry(program=(repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) scale7) rep1 (#(lambda (transmat None None (Some $0) None None)) dist18)), logPrior=-10.99332744533629, logLikelihood=0.0",
+        "prior": -10.99332744533629,
+        "post": -10.99332744533629,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 9,
+        "frontier": "FrontierEntry(program=(repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) scale7) rep1 (#(lambda (transmat None None (Some $0) None None)) dist18)), logPrior=-10.99332744533629, logLikelihood=0.0",
+        "prior": -10.99332744533629,
+        "post": -10.99332744533629,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 10,
+        "frontier": "FrontierEntry(program=(repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) scale7) rep1 (#(lambda (transmat None None (Some $0) None None)) dist18)), logPrior=-10.99332744533629, logLikelihood=0.0",
+        "prior": -10.99332744533629,
+        "post": -10.99332744533629,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 11,
+        "frontier": "FrontierEntry(program=(repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) scale7) rep1 (#(lambda (transmat None None (Some $0) None None)) dist18)), logPrior=-10.99332744533629, logLikelihood=0.0",
+        "prior": -10.99332744533629,
+        "post": -10.99332744533629,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 12,
+        "frontier": "FrontierEntry(program=(repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) scale7) rep1 (#(lambda (transmat None None (Some $0) None None)) dist18)), logPrior=-10.99332744533629, logLikelihood=0.0",
+        "prior": -10.99332744533629,
+        "post": -10.99332744533629,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 13,
+        "frontier": "FrontierEntry(program=(repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) scale7) rep1 (#(lambda (transmat None None (Some $0) None None)) dist18)), logPrior=-10.99332744533629, logLikelihood=0.0",
+        "prior": -10.99332744533629,
+        "post": -10.99332744533629,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 14,
+        "frontier": "FrontierEntry(program=(repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) scale7) rep1 (#(lambda (transmat None None (Some $0) None None)) dist18)), logPrior=-10.99332744533629, logLikelihood=0.0",
+        "prior": -10.99332744533629,
+        "post": -10.99332744533629,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 15,
+        "frontier": "FrontierEntry(program=(repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) scale7) rep1 (#(lambda (transmat None None (Some $0) None None)) dist18)), logPrior=-10.99332744533629, logLikelihood=0.0",
+        "prior": -10.99332744533629,
+        "post": -10.99332744533629,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 16,
+        "frontier": "FrontierEntry(program=(repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) scale7) rep1 (#(lambda (transmat None None (Some $0) None None)) dist18)), logPrior=-10.99332744533629, logLikelihood=0.0",
+        "prior": -10.99332744533629,
+        "post": -10.99332744533629,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 17,
+        "frontier": "FrontierEntry(program=(repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) scale7) rep1 (#(lambda (transmat None None (Some $0) None None)) dist18)), logPrior=-10.99332744533629, logLikelihood=0.0",
+        "prior": -10.99332744533629,
+        "post": -10.99332744533629,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 18,
+        "frontier": "FrontierEntry(program=(repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) scale7) rep1 (#(lambda (transmat None None (Some $0) None None)) dist18)), logPrior=-10.99332744533629, logLikelihood=0.0",
+        "prior": -10.99332744533629,
+        "post": -10.99332744533629,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 19,
+        "frontier": "FrontierEntry(program=(repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) scale7) rep1 (#(lambda (transmat None None (Some $0) None None)) dist18)), logPrior=-10.99332744533629, logLikelihood=0.0",
+        "prior": -10.99332744533629,
+        "post": -10.99332744533629,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 5,
+        "frontier": "FrontierEntry(program=(repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) scale7) rep1 (#(lambda (transmat None None (Some $0) None None)) dist18)), logPrior=-11.022624296969898, logLikelihood=0.0",
+        "prior": -11.022624296969898,
+        "post": -11.022624296969898,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 3,
+        "frontier": "FrontierEntry(program=(reflect (reflect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) angle2) angle2), logPrior=-11.226904731180008, logLikelihood=0.0",
+        "prior": -11.226904731180008,
+        "post": -11.226904731180008,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 4,
+        "frontier": "FrontierEntry(program=(reflect (reflect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) angle2) angle2), logPrior=-11.398136437941318, logLikelihood=0.0",
+        "prior": -11.398136437941318,
+        "post": -11.398136437941318,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 5,
+        "frontier": "FrontierEntry(program=(reflect (reflect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) angle2) angle2), logPrior=-12.62396868334419, logLikelihood=0.0",
+        "prior": -12.62396868334419,
+        "post": -12.62396868334419,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 6,
+        "frontier": "FrontierEntry(program=(reflect (reflect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) angle2) angle2), logPrior=-12.771318480602392, logLikelihood=0.0",
+        "prior": -12.771318480602392,
+        "post": -12.771318480602392,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 7,
+        "frontier": "FrontierEntry(program=(reflect (reflect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) angle2) angle2), logPrior=-12.771318480602392, logLikelihood=0.0",
+        "prior": -12.771318480602392,
+        "post": -12.771318480602392,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 8,
+        "frontier": "FrontierEntry(program=(reflect (reflect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) angle2) angle2), logPrior=-12.771318480602392, logLikelihood=0.0",
+        "prior": -12.771318480602392,
+        "post": -12.771318480602392,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 9,
+        "frontier": "FrontierEntry(program=(reflect (reflect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) angle2) angle2), logPrior=-12.771318480602392, logLikelihood=0.0",
+        "prior": -12.771318480602392,
+        "post": -12.771318480602392,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 10,
+        "frontier": "FrontierEntry(program=(reflect (reflect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) angle2) angle2), logPrior=-12.771318480602392, logLikelihood=0.0",
+        "prior": -12.771318480602392,
+        "post": -12.771318480602392,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 11,
+        "frontier": "FrontierEntry(program=(reflect (reflect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) angle2) angle2), logPrior=-12.771318480602392, logLikelihood=0.0",
+        "prior": -12.771318480602392,
+        "post": -12.771318480602392,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 12,
+        "frontier": "FrontierEntry(program=(reflect (reflect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) angle2) angle2), logPrior=-12.771318480602392, logLikelihood=0.0",
+        "prior": -12.771318480602392,
+        "post": -12.771318480602392,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 13,
+        "frontier": "FrontierEntry(program=(reflect (reflect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) angle2) angle2), logPrior=-12.771318480602392, logLikelihood=0.0",
+        "prior": -12.771318480602392,
+        "post": -12.771318480602392,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 14,
+        "frontier": "FrontierEntry(program=(reflect (reflect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) angle2) angle2), logPrior=-12.771318480602392, logLikelihood=0.0",
+        "prior": -12.771318480602392,
+        "post": -12.771318480602392,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 15,
+        "frontier": "FrontierEntry(program=(reflect (reflect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) angle2) angle2), logPrior=-12.771318480602392, logLikelihood=0.0",
+        "prior": -12.771318480602392,
+        "post": -12.771318480602392,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 16,
+        "frontier": "FrontierEntry(program=(reflect (reflect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) angle2) angle2), logPrior=-12.771318480602392, logLikelihood=0.0",
+        "prior": -12.771318480602392,
+        "post": -12.771318480602392,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 17,
+        "frontier": "FrontierEntry(program=(reflect (reflect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 rep1) angle2) angle2), logPrior=-12.771318480602392, logLikelihood=0.0",
+        "prior": -12.771318480602392,
+        "post": -12.771318480602392,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 0,
+        "frontier": "FrontierEntry(program=(repeat (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) (Some trs))) rep1 (transmat None None (Some dist18) None (Some trs))), logPrior=-21.293947033945592, logLikelihood=0.0",
+        "prior": -21.293947033945592,
+        "post": -21.293947033945592,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 0,
+        "frontier": "FrontierEntry(program=(repeat (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) (Some trs))) rep1 (transmat None None (Some dist18) None None)), logPrior=-21.293947033945592, logLikelihood=0.0",
+        "prior": -21.293947033945592,
+        "post": -21.293947033945592,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 0,
+        "frontier": "FrontierEntry(program=(repeat (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None)) rep1 (transmat None None (Some dist18) None (Some trs))), logPrior=-21.293947033945592, logLikelihood=0.0",
+        "prior": -21.293947033945592,
+        "post": -21.293947033945592,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 0,
+        "frontier": "FrontierEntry(program=(repeat (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None)) rep1 (transmat None None (Some dist18) None None)), logPrior=-21.293947033945592, logLikelihood=0.0",
+        "prior": -21.293947033945592,
+        "post": -21.293947033945592,
+        "ll": 0.0,
+        "ink": 8.0
+    },
+    {
+        "iteration": 0,
+        "frontier": "FrontierEntry(program=(repeat (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None)) rep1 (transmat None (Some angle0) (Some dist18) None None)), logPrior=-21.987094214505536, logLikelihood=0.0",
+        "prior": -21.987094214505536,
+        "post": -21.987094214505536,
+        "ll": 0.0,
+        "ink": 8.0
+    }
+]

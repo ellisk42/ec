@@ -6,17 +6,20 @@ Also updated a few functions. To merge with modelAnalyses, should add ability he
 
 
 
+
 # ===== load multiple models and concatenate
 import sys
 sys.path.insert(0, "/Users/lucastian/Dropbox/CODE/Python/Tenenbaum/ec/")
 sys.path.insert(0, "/om/user/lyt/ec")
 sys.path.insert(0, "/home/lucast4/dc")
+from analysis.importDrawgood import dgplan
+addLabel = dgplan.addLabel
+# from analysis.modelPlanning import addLabel
 from pythonlib.tools.dicttools import printOverviewKeyValues
 from analysis.importDrawgood import *
 from analysis.parse import *
 from analysis.getModelHumanDists import *
 import os
-
 
 def loadMultDCHumanDistances(ECTRAINlist, modelkind_list, ver, use_withplannerscore=False):
     """loads mutlpel and contatenates into a heirarchical list"""
@@ -24,8 +27,12 @@ def loadMultDCHumanDistances(ECTRAINlist, modelkind_list, ver, use_withplannersc
     # planner score appended. This is gotten from modelParsesGet...py
 #     modelkind_list = ["parse", "randomperm"]
     # ver="codes_unique"
+
+    # 1) load all experimetn dta
+    DAT_all, workerlist, SAVEDIR = loadMultDCdata(ECTRAINlist)
+    
     distances_all = []
-    for ECTRAIN in ECTRAINlist:
+    for DAT in DAT_all:
         for modelkind in modelkind_list:
             if ver=="aggregate" and modelkind=="randomperm":
                 if not use_withplannerscore:
@@ -35,12 +42,39 @@ def loadMultDCHumanDistances(ECTRAINlist, modelkind_list, ver, use_withplannersc
                     # just a hack, since I mistakenly saved random
                     # perm as a separate file after appending the distances. so should load it now.
                     assert True
-            distances = loadDistances(ECTRAIN, ver=ver, modelkind=modelkind, use_withplannerscore=use_withplannerscore)
+            distances = loadDistances2(DAT, ver=ver, modelkind=modelkind, use_withplannerscore=use_withplannerscore)
+            # distances = loadDistances(ECTRAIN, ver=ver, modelkind=modelkind, use_withplannerscore=use_withplannerscore)
             distances_all.append(distances)
     
     # Combine all models into one flat list of dicts
     distances_flat = [d for distances in distances_all for d in distances]
-    return distances_flat
+    return distances_flat, DAT_all, workerlist, SAVEDIR
+
+
+
+# def loadMultDCHumanDistances(ECTRAINlist, modelkind_list, ver, use_withplannerscore=False):
+#     """loads mutlpel and contatenates into a heirarchical list"""
+#     # use_withplannerscore, if True, then loads the version that already has
+#     # planner score appended. This is gotten from modelParsesGet...py
+# #     modelkind_list = ["parse", "randomperm"]
+#     # ver="codes_unique"
+#     distances_all = []
+#     for ECTRAIN in ECTRAINlist:
+#         for modelkind in modelkind_list:
+#             if ver=="aggregate" and modelkind=="randomperm":
+#                 if not use_withplannerscore:
+#                     print("then skip, this doesn't exist, since aggregation code combines randomperm and parse into one summary dict")
+#                     continue
+#                 else:
+#                     # just a hack, since I mistakenly saved random
+#                     # perm as a separate file after appending the distances. so should load it now.
+#                     assert True
+#             distances = loadDistances(ECTRAIN, ver=ver, modelkind=modelkind, use_withplannerscore=use_withplannerscore)
+#             distances_all.append(distances)
+    
+#     # Combine all models into one flat list of dicts
+#     distances_flat = [d for distances in distances_all for d in distances]
+#     return distances_flat
 
     
 def loadMultDCdata(ECTRAINlist):
@@ -76,7 +110,7 @@ def addWorkerCond(distances_flat, workerlist):
     # include expt condition for each worker
     for d in distances_flat:
         W = [w["condition"] for w in workerlist if w["workerID"]==d["human"]]
-        assert all(x == W[0] for x in W), "why different conditions?"
+        # assert all(x == W[0] for x in W), "why different conditions?"
         assert len(W)>0, "did not load the correct behaviroal expt"
         d["human_cond"]=W[0]
 
@@ -108,6 +142,9 @@ def getParamValues(params, params_list, workerID=[]):
     assert len(paramvals)==len(params_list)
     return np.array(paramvals)
     
+
+############################# combining with planner
+
 
 if __name__=="__main__":
     # NOTE: This is not advised, since this takes a really long time, since

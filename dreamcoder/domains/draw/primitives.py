@@ -455,6 +455,8 @@ def loss_pxl(img1, img2):
 
 def program_ink(p):
         # takes a list of np array and outputs the amount of ink used
+        # import pdb
+        # pdb.set_trace()
         cost = 0
         for a in p:
                 for n in range(a.shape[0] - 1):
