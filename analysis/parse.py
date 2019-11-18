@@ -136,7 +136,8 @@ def getAndSaveParses(experiment="S9.2", debug=False, skipthingsthatcrash=False, 
             flatparses = [p.flatten() for p in parses]
             if isinstance(nrand_flat_parses, int):
                 import random
-                flatparses = random.sample(flatparses, nrand_flat_parses)
+                if len(flatparses)>nrand_flat_parses:
+                    flatparses = random.sample(flatparses, nrand_flat_parses)
 
             with open(fname, "wb") as f:
                 pickle.dump(flatparses, f, pickle.HIGHEST_PROTOCOL)
