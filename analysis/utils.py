@@ -145,12 +145,26 @@ def loadCheckpoint(trainset="S9_nojitter", userealnames=True, loadparse=False, s
         taskset = "S13" 
         behaviorexpt = "2.4"
 
+    elif trainset=="S12.10.test5":
+        userealnames=True
+        doshaping = False
+        exptdir = "2019-11-16T19:03:45.745355"
+        taskset = "S12" 
+        behaviorexpt = "2.4"
+    elif trainset=="S13.10.test5":
+        userealnames=True
+        doshaping = False
+        exptdir = "2019-11-16T19:03:45.006020"
+        taskset = "S13" 
+        behaviorexpt = "2.4"
+    
     else:
         print("PROBLEM did not find traiin set! ")
         assert False
 
         
     ###### FIRST, load the correct checkpoint
+    print("Loading dreamcoder checkpoint")
     F = glob.glob("experimentOutputs/draw/{}/draw*.pickle".format(exptdir))
     iters = []
     for f in F:
@@ -173,18 +187,16 @@ def loadCheckpoint(trainset="S9_nojitter", userealnames=True, loadparse=False, s
     checkpoint = F[ind[0]]
     checkpoint = checkpoint.split("/")[-1]
     f = "experimentOutputs/draw/{}/{}".format(exptdir, checkpoint)
-    print("GGGGdd")
     result = loadfun(f)
-    print("GGGGeee")
 
     ####### LOADING TASKS 
     def loadTasks(taskset, doshaping):
+        print("Loading dreamcoder tasks")
         # == 2) Load tasks
         from dreamcoder.domains.draw.makeDrawTasks import makeSupervisedTasks
         tasks, testtasks, programnames, program_test_names = makeSupervisedTasks(trainset=taskset, doshaping=doshaping, userealnames=userealnames)
         return tasks, testtasks, programnames, program_test_names
 
-    print("loading Dreamcoder tasks")
     tasks, testtasks, programnames, program_test_names = loadTasks(taskset, doshaping)
 
     ######  LOAD PARSES IF EXIST
@@ -252,8 +264,10 @@ def loadCheckpoint(trainset="S9_nojitter", userealnames=True, loadparse=False, s
     "parses": parses,
     "analysavedir":analysavedir,
     "summarysavedir":summarysavedir,
-    "loadparse":loadparse
+    "loadparse":loadparse,
     }
+
+    DAT["taskresultdict"] = getTaskResults(DAT)
 
     if loadbehavior:
         print("Loading behavior")
@@ -268,6 +282,100 @@ def loadCheckpoint(trainset="S9_nojitter", userealnames=True, loadparse=False, s
 
 
 ########### HELPER FUNCTIONS FOR DAT
+from dreamcoder.domains.draw.primitives import program_ink
+def _getAndRankAllFrontiers(results, task, SDIR=[], usell=True, K=10):
+    """gets the K best programs (for each iteration) and combines across all iterations
+    sorts by likelihood (decreasing)"""
+    # t = DATgetTask(stim, DAT)[0]
+    # results = DAT["result"]
+
+    # 1) Collect all frontiers (top K each iteration) over all iterations.
+    frontiers_over_time = []
+    # print(type(results))
+    # print(results.keys())
+    # print(results.frontiersOverTime[task])
+    for i, frontiers_thisiter in enumerate(results.frontiersOverTime[task]):
+        print(frontiers_thisiter)
+        if frontiers_thisiter.empty:
+            print("emopt")
+            continue
+
+        frontierprogs = frontiers_thisiter.topK(K)
+        for f in frontierprogs.entries:
+            frontiers_over_time.append({
+                "iteration":i,
+                "frontier":f
+            })
+    
+    # for each frontier get scores and ink
+    for f in frontiers_over_time:
+        # collect scores and ink used
+        f["prior"] = f["frontier"].logPrior
+        f["post"] = f["frontier"].logPosterior
+        f["ll"] = f["frontier"].logLikelihood
+        f["ink"] = program_ink(f["frontier"].program.evaluate([]))
+        
+    # sort by ll, then ink, then prior
+    frontiers_over_time = sorted(frontiers_over_time, key=lambda x: (-x["ll"], x["ink"], -x["prior"]))
+
+    
+    # save as text
+    def save(frontiers_over_time, path):
+        import copy
+        import json
+        
+        # first make copy that is stringified
+        frontiers_over_time_string=copy.deepcopy(frontiers_over_time)
+        for f in frontiers_over_time_string:
+            f["frontier"]=str(f["frontier"])
+        # save
+        with open(path, "w") as f:
+            json.dump(frontiers_over_time_string, f, indent=4)  
+    
+    if isinstance(SDIR, list):
+        assert len(SDIR)==0, "should be empty"
+        print("(getAndRankAllFrontiers) skipping saving, did not tell me a sdir")
+    else:
+        save(frontiers_over_time, "{}/{}.txt".format(SDIR, stim))
+
+    return frontiers_over_time
+
+def getAndRankAllFrontiers(DAT):
+    """just wrapper that calls for each stim in test and training"""
+    SDIR = "{}/frontiers_across_iter".format(DAT["summarysavedir"])
+    import os
+    os.makedirs(SDIR, exist_ok=True)
+    stimlist = DAT["taskresultdict"]
+    results = DAT["result"]
+
+    for stim in stimlist:
+        task = DATgetTask(stim, DAT)[0]
+        frontiers_over_time = _getAndRankAllFrontiers(results, task, SDIR)
+
+
+def getTaskResults(DAT):
+    from analysis.parse import getLatestFrontierProgram
+    """summary dict of each task and whether was solved (at any interation)"""
+    # first get all stime
+    stimnames = [t.name for t in DAT["tasks"]]
+    stimnames.extend([t.name for t in DAT["testtasks"]])
+
+    # solved?
+    def solved(stim):
+        solution = getLatestFrontierProgram(DAT["result"], DATgetTask(stim, DAT)[0])
+        if isinstance(solution, list):
+            assert len(solution)==0
+            return False
+        else:
+            return True
+
+    taskresultdict = {}
+    for s in stimnames:
+        # print("{} - {}".format(s, solved(s)))
+        taskresultdict[s]=solved(s)
+    return taskresultdict
+
+
 def DATgetWorkerList(DAT):
     from analysis.importDrawgood import dgutils
     assert "datall_human" in DAT.keys(), "need to first load behavior."
@@ -402,8 +510,15 @@ def DATgetSolvedStim(DAT, removeshaping=True, intersectDrawgood=False,
     onlyifhasdatflat=False):
     import re
     """gets stims that have parses"""
-    assert DAT["loadparse"], print("no parses found - you have to load parses first")
-    stimnames = [P["name"] for P in DAT["parses"] if len(P["parse"])>0]
+
+    # gets solved stim.
+    stimnames = []
+    for tname, solved in DAT["taskresultdict"].items():
+        if solved:
+            stimnames.append(tname)
+
+    # assert DAT["loadparse"], print("no parses found - you have to load parses first")
+    # stimnames = [P["name"] for P in DAT["parses"] if len(P["parse"])>0]
 
     if removeshaping:
         # then throw out shaping that did not get for humans:
@@ -428,7 +543,6 @@ def DATgetSolvedStim(DAT, removeshaping=True, intersectDrawgood=False,
                 else:
                     return False 
 
-
         stimnames = [s for s in stimnames if not isShaping(s)]
     if intersectDrawgood:
         # then only keep if it is part of stim present in the drawgood stimuli
@@ -443,7 +557,6 @@ def DATgetSolvedStim(DAT, removeshaping=True, intersectDrawgood=False,
         def check(stim):
             fname = "{}/{}.pickle".format(DAT["datflatsavedir"], stim)
             return path.exists(fname)            
-
         stimnames = [stim for stim in stimnames if check(stim)]
         
     return stimnames

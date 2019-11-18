@@ -28,7 +28,63 @@ REMOVELL = False # remove vertical long line?
 
 
 ########################## STUFF TO DO AFTER SAVING DISTANCES
-def loadDistances(ECTRAIN, ver="multiple", modelkind="parse", 
+
+def loadDistances(ECTRAIN, ver="multiple", modelkind="parse",      use_withplannerscore=False):
+    DAT = loadCheckpoint(ECTRAIN)
+    return loadDistances2(DAT, ver, modelkind,use_withplannerscore)
+
+# def loadDistances(ECTRAIN, ver="multiple", modelkind="parse", 
+#     use_withplannerscore=False):
+#     # ACTUALLY: loads all distances (for a given EC training) into one list of dicts
+#     if ver=="legacy":
+#         suffixes = [""]
+#     elif ver=="multiple":
+#         # now calculating amny different distnaces
+#         suffixes = ["codes_unique", "codes", "row", "col"]
+#     elif ver=="aggregate":
+#         suffixes = ["aggregate"]
+#     elif ver=="medianparse":
+#         suffixes = ["medianparse"]
+#     elif ver in ["codes_unique", "codes", "row", "col"]:
+#         suffixes = [ver]
+#     else:
+#         assert False, "what version?"
+
+#     # load model
+#     DAT = loadCheckpoint(trainset=ECTRAIN, loadparse=True, suppressPrint=True)
+
+#     # load each stim/human
+#     stimlist = DATgetSolvedStim(DAT, intersectDrawgood=True, onlyifhasdatflat=True)
+#     DAT = DATloadDrawgoodData(DAT, dosegmentation=False)
+#     humans = set([d["workerID"] for d in DAT["datflat_hu"]])
+
+#     # distances = []
+#     # for stim, hum in zip(stimlist, humans):
+#     #     print({"getting {}, {}".format(stim, hum)})
+#     #     distances.extend(DATloadModelHuDist(DAT, stim, hum))
+
+#     distances = []
+#     for suf in suffixes:
+#         for d in DAT["datflat_hu"]:
+#             stim = d["stimname"]
+#             stim = stim[:stim.find(".png")]
+#             if stim in stimlist: # then model sucecsffuly found soolution
+#                 hum = d["workerID"]
+#                 print("(loadDistances) getting {}, {}".format(stim, hum))
+#                 # print(d)
+#                 # import pdb
+#                 # pdb.set_trace()
+#                 if modelkind=="parse":
+#                     d = DATloadModelHuDist(DAT, stim, hum, suf, use_withplannerscore)
+#                 elif modelkind=="randomperm":
+#                     d = DATloadModelHuDist(DAT, "{}_randomperm".format(stim), hum, suf, use_withplannerscore)
+#                 if isinstance(d, dict):
+#                     distances.append(d)    
+#                 elif isinstance(d, list):
+#                     distances.extend(d)
+#     return distances
+
+def loadDistances2(DAT, ver="multiple", modelkind="parse", 
     use_withplannerscore=False):
     # ACTUALLY: loads all distances (for a given EC training) into one list of dicts
     if ver=="legacy":
@@ -46,12 +102,14 @@ def loadDistances(ECTRAIN, ver="multiple", modelkind="parse",
         assert False, "what version?"
 
     # load model
-    DAT = loadCheckpoint(trainset=ECTRAIN, loadparse=True, suppressPrint=True)
+    # DAT = loadCheckpoint(trainset=ECTRAIN, loadparse=True, suppressPrint=True)
 
     # load each stim/human
     stimlist = DATgetSolvedStim(DAT, intersectDrawgood=True, onlyifhasdatflat=True)
-    DAT = DATloadDrawgoodData(DAT, dosegmentation=False)
-    humans = set([d["workerID"] for d in DAT["datflat_hu"]])
+    # DAT = DATloadDrawgoodData(DAT, dosegmentation=False)
+    humans = dgutils.getWorkers(DAT["datall_human"])
+    humans = [d["workerID"] for d in humans]
+    # humans = set([d["workerID"] for d in DAT["datflat_hu"]])
 
     # distances = []
     # for stim, hum in zip(stimlist, humans):
@@ -60,12 +118,13 @@ def loadDistances(ECTRAIN, ver="multiple", modelkind="parse",
 
     distances = []
     for suf in suffixes:
-        for d in DAT["datflat_hu"]:
-            stim = d["stimname"]
-            stim = stim[:stim.find(".png")]
-            if stim in stimlist: # then model sucecsffuly found soolution
-                hum = d["workerID"]
-                print("(loadDistances) getting {}, {}".format(stim, hum))
+        for stim in stimlist:
+        # for d in DAT["datflat_hu"]:
+        #     stim = d["stimname"]
+        #     stim = stim[:stim.find(".png")]
+            # if stim in stimlist: # then model sucecsffuly found soolution
+            for hum in humans:
+                print("(loadDistances) getting {}, {}, {}".format(suf, stim, hum))
                 # print(d)
                 # import pdb
                 # pdb.set_trace()
