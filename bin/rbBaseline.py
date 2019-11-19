@@ -129,18 +129,19 @@ def test_task(m, task, timeout):
     print(task.examples)
     while time.time() - start < timeout:
         query = makeExamples(task)
-        import pdb; pdb.set_trace()
+        #import pdb; pdb.set_trace()
         candidates = m.sample([query]*BATCHSIZE) #i think this works
-        print('len failed', len(failed_cands))
+        #print('len failed', len(failed_cands))
         for cand in candidates:
             try:
                 p = Program.parse(" ".join(cand))
-                print(p)
+                #print(p)
             except ParseFailure: continue
             except IndexError: continue
+            except AssertionError: continue
             if p not in failed_cands:
                 ll = task.logLikelihood(p, timeout=10)
-                print(ll)
+                #print(ll)
                 if ll > float('-inf'): return True
                 else: failed_cands.add(p)
 
