@@ -309,7 +309,7 @@ if __name__=='__main__':
         n_hits = 0
         for i, task in enumerate(tasks):
             hit = test_task(m, task, arguments.timeout)
-            print("for task ",i, ", hit=", hit)
+            print("for task ",i, ", hit=", hit, flush=True)
             if hit: n_hits += 1
 
         print("final score:")
