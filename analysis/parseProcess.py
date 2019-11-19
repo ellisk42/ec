@@ -16,8 +16,8 @@ if __name__=="__main__":
 
     ############################### INPUT PARAMS
     experiment = sys.argv[1]
-    subsampleparses=10000 # parse-->datflat, subsample randomly with replacement.
-    randomparses = 1000
+    subsampleparses=10000 # parse-->datflat, subsample randomly without replacement.
+    randomparses = 2000
 
     ################################ HARD PARAMS
     REMOVELL = False    

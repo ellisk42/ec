@@ -1,3 +1,4 @@
+analysis/tmp
 .ipynb_checkpoints/*
 solvers/.merlin
 solvers/geomLib/.merlin

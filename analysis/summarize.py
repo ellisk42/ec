@@ -6,6 +6,7 @@ sys.path.insert(0, "/om/user/lyt/ec")
 sys.path.insert(0, "/home/lucast4/dc")
 
 from analysis.getModelHumanDists import loadDistances, filterDistances
+from analysis.parse import getBestFrontierProgram
 from analysis.utils import *
 from analysis.graphs import plotNumSolved
 from analysis.graphs import plotAllTasks
@@ -44,15 +45,18 @@ def printAllTasksSolutions(DAT, trainortest="train"):
     for i, (t, name) in enumerate(zip(tasks, tasknames)):
         print("===== {} - {} - {}:".format(i, t.name, name))
         stringlist.append("===== {} - {} - {}:".format(i, t.name, name))
-            
-        if len(DAT["result"].frontiersOverTime[t][-1])>0:
-            solved=True
-        else:
-            solved=False
+        
+        solved = DAT['taskresultdict'][name]
+        # if len(DAT["result"].frontiersOverTime[t][-1])>0:
+        #     solved=True
+        # else:
+        #     solved=False
 
         if solved:
 #             ll = result.frontiersOverTime[t][-1].bestPosterior.logLikelihood
-            summary = DAT["result"].frontiersOverTime[t][-1].summarize()
+            frontier = getBestFrontierProgram(DAT["result"], t, lastKIter=10, returnfrontier=True)
+            summary = f"HIT: ll={frontier.logLikelihood}, post={frontier.logPosterior}, prior={frontier.logPrior}: {frontier.program}"
+            # summary = DAT["result"].frontiersOverTime[t][-1].summarize()
         
             if False:
                 # print each in fritnier.
@@ -152,13 +156,14 @@ def summarize(ECTRAIN, SUMMARY_SAVEDIR = "", comparetohuman=True):
 
             # 2) For model, plot random subset of parses drawings for thsi stim
             dflat = DATloadDatFlat(DAT, stim)
-            dflat = dgseg.filterDat(dflat, stimlist=[stim])
-            if len(dflat)>NPARSE:
-                dflat = random.sample(dflat, NPARSE)
-            assert dflat is not None, "should have data since, only selected tasks that were sovled... whats going on."         
-            plotMultDrawingPrograms(dflat, SUMMARY_SAVEDIR, ishuman=False, removeLL=REMOVELL)
-            print("2: plotted drawing for {} random parses for model".format(NPARSE))
-            plt.close('all')
+            if len(dflat)>0:
+                dflat = dgseg.filterDat(dflat, stimlist=[stim])
+                if len(dflat)>NPARSE:
+                    dflat = random.sample(dflat, NPARSE)
+                assert dflat is not None, "should have data since, only selected tasks that were sovled... whats going on."         
+                plotMultDrawingPrograms(dflat, SUMMARY_SAVEDIR, ishuman=False, removeLL=REMOVELL)
+                print("2: plotted drawing for {} random parses for model".format(NPARSE))
+                plt.close('all')
     
 
             # 1) For human, plot drawings for this stim
@@ -174,9 +179,9 @@ def summarize(ECTRAIN, SUMMARY_SAVEDIR = "", comparetohuman=True):
             print("1: plotted drawing steps for Humans")
             plt.close('all')
 
-        distances = loadDistances(ECTRAIN)
+        distances = loadDistances(ECTRAIN, use_withplannerscore=False)
         distances_medianparse = loadDistances(ECTRAIN, ver="medianparse")
-        distances_aggregate = loadDistances(ECTRAIN, ver="aggregate")
+        distances_aggregate = loadDistances(ECTRAIN, ver="aggregate", use_withplannerscore=False)
 
         if useAggregateDistance:
             distances=distances_aggregate
@@ -200,9 +205,6 @@ def summarize(ECTRAIN, SUMMARY_SAVEDIR = "", comparetohuman=True):
             if len(dflat)>NPARSE:
                 dflat = random.sample(dflat, NPARSE)
             modelrends = [d["parsenum"] for d in dflat]
-            if "stim" not in distances[0].keys():
-                import pdb
-                pdb.set_trace()
             dists = filterDistances(distances, stimlist=[stim], modelrend=modelrends)
             if len(dists)==0:
                 print("MISSING DATA!!")
@@ -227,14 +229,15 @@ def summarize(ECTRAIN, SUMMARY_SAVEDIR = "", comparetohuman=True):
             # --- aggregate, median over all parses (after aggregating)
             # import pdb
             # pdb.set_trace()
-            dists = filterDistances(distances_medianparse, stimlist=[stim])
-            plt.figure(figsize=(40, 10))
-            dat = pd.DataFrame(dists)
-            ax = sns.violinplot(x="human", y="dist", data=dat, inner="quartile")
-            ax = sns.stripplot(x="human", y="dist", data=dat, jitter=0.17, dodge=True, alpha=0.3, size=8)
-            plt.savefig("{}/{}_hu{}_model{}_distances_medianparse.pdf".format(SUMMARY_SAVEDIR, stim, DAT["behaviorexpt"], DAT["trainset"]))
-            print("4: Plotted all string edit distances aggregating over meausres, then taking median over parses")
-            plt.close('all')
+            if len(distances_medianparse)>0:
+                dists = filterDistances(distances_medianparse, stimlist=[stim])
+                plt.figure(figsize=(40, 10))
+                dat = pd.DataFrame(dists)
+                ax = sns.violinplot(x="human", y="dist", data=dat, inner="quartile")
+                ax = sns.stripplot(x="human", y="dist", data=dat, jitter=0.17, dodge=True, alpha=0.3, size=8)
+                plt.savefig("{}/{}_hu{}_model{}_distances_medianparse.pdf".format(SUMMARY_SAVEDIR, stim, DAT["behaviorexpt"], DAT["trainset"]))
+                print("4: Plotted all string edit distances aggregating over meausres, then taking median over parses")
+                plt.close('all')
 
 
 

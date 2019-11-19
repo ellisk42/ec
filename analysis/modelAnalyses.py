@@ -21,7 +21,8 @@ from analysis.parse import *
 from analysis.getModelHumanDists import *
 import os
 
-def loadMultDCHumanDistances(ECTRAINlist, modelkind_list, ver, use_withplannerscore=False):
+def loadMultDCHumanDistances(ECTRAINlist, modelkind_list, ver, use_withplannerscore=False, 
+    planner_agg_version = "common"):
     """loads mutlpel and contatenates into a heirarchical list"""
     # use_withplannerscore, if True, then loads the version that already has
     # planner score appended. This is gotten from modelParsesGet...py
@@ -43,12 +44,51 @@ def loadMultDCHumanDistances(ECTRAINlist, modelkind_list, ver, use_withplannersc
                     # perm as a separate file after appending the distances. so should load it now.
                     assert True
             distances = loadDistances2(DAT, ver=ver, modelkind=modelkind, use_withplannerscore=use_withplannerscore)
+
+
+
             # distances = loadDistances(ECTRAIN, ver=ver, modelkind=modelkind, use_withplannerscore=use_withplannerscore)
             distances_all.append(distances)
     
     # Combine all models into one flat list of dicts
     distances_flat = [d for distances in distances_all for d in distances]
     return distances_flat, DAT_all, workerlist, SAVEDIR
+
+def loadMultDCHumanDistancesSave(ECTRAINlist=["S12.10.test5", "S13.10.test5"], SAVEDIR="analysis/tmp",
+    modelkind_list=["parse", "randomperm"], ver="aggregate", use_withplannerscore=True):
+    """wrapper that loads converst to dataframe then saves"""
+
+    # 1) load distances
+    distances_flat, DAT_all, workerlist, _ = loadMultDCHumanDistances(
+    ECTRAINlist, modelkind_list, ver, use_withplannerscore)
+
+    # 3) conver to pandas
+    import pandas as pd
+    print("converting list of dicts to pandas dataframe")
+    df = pd.DataFrame(distances_flat)
+    df_params_workers = pd.DataFrame(workerlist)
+
+    # ==== merging dataframes
+    print("merging data with workers RL params")
+
+    df_params_workers = df_params_workers.groupby("workerID").mean().reset_index().rename(columns={"workerID":"human"})
+    df = df.merge(df_params_workers.loc[:, ["human", "condition"]], on="human")
+    df = df.rename(columns={"condition":"human_cond"})
+
+    # save
+    SAVEDIR = "{}/{}".format(SAVEDIR, "-".join(ECTRAINlist))
+    print("saving at:")
+    print(SAVEDIR)
+    import os
+    os.makedirs(SAVEDIR, exist_ok=True)
+    print("saving distances_flat")
+    df.to_pickle(f"{SAVEDIR}/distances_flat.pickle")
+    print("saving params")
+    df_params_workers.to_pickle(f"{SAVEDIR}/distances_params.pickle")
+    import pickle
+    print("saving DATall")
+    with open("{}/DAT_all.pickle".format(SAVEDIR), "wb") as f:
+        pickle.dump(DAT_all, f)
 
 
 
@@ -91,9 +131,12 @@ def loadMultDCdata(ECTRAINlist):
     workerlist = [ww for w in workerlist_all for ww in w]
 
     # make savedir
-    SAVEDIR = "analysis/summaryfigs/acrossexpt/ec{}_{}-dg{}_{}".format(
-        DAT_all[0]["trainset"], DAT_all[1]["trainset"], DAT_all[0]["behaviorexpt"], DAT_all[1]["behaviorexpt"])
-    os.makedirs(SAVEDIR, exist_ok=True)
+    if len(DAT_all)>1:
+        SAVEDIR = "analysis/summaryfigs/acrossexpt/ec{}_{}-dg{}_{}".format(
+            DAT_all[0]["trainset"], DAT_all[1]["trainset"], DAT_all[0]["behaviorexpt"], DAT_all[1]["behaviorexpt"])
+        os.makedirs(SAVEDIR, exist_ok=True)
+    else:
+        SAVEDIR = None
     
     return DAT_all, workerlist, SAVEDIR
 
