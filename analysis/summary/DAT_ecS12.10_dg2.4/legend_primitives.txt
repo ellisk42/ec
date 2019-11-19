@@ -1,0 +1,47 @@
+dist9
+0.28
+
+dist4
+-0.5
+
+dist18
+1.1
+
+dist15
+-0.65
+
+scale7
+4.0
+
+angle2
+1.57
+
+dist14
+-1.75
+
+dist1
+-2.0
+
+Some
+
+
+None
+N
+
+#(lambda (lambda (transmat N N $0 ( 0.28) $1)))
+#[MOVE IN X BY [] AND UP BY 0.28]
+
+#(lambda (transmat N N ( $0) N N))
+#[MOVE X $0]
+
+#(transform line (transmat ( 4.0) ( 1.57) ( -1.75) ( -2.0) N))
+#[VERTLINE LEFT]
+
+#(transform line (#[MOVE X $0] -0.5))
+HORIZLINE
+
+#(lambda (lambda (transform (repeat $0 $1 (#[MOVE X $0] 1.1)) (#[MOVE X $0] -1.75))))
+#[PRIM REPEAT TO RIGHT]
+
+#(lambda (repeat #[VERTLINE LEFT] $0 (#[MOVE X $0] 1.1)))
+#[GRATING]
