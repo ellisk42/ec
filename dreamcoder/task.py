@@ -181,8 +181,14 @@ class DifferentiableTask(Task):
                    for xs, y in self.examples) / float(len(self.examples))
         if isinstance(loss, DN):
             try:
-                loss = loss.resilientBackPropagation(
-                    parameters, lr=0.05, steps=500, update=None)
+                loss = loss.restartingOptimize(
+                    parameters,
+                    lr=self.specialTask[1]["lr"],
+                    steps=self.specialTask[1]["steps"],
+                    decay=self.specialTask[1]["decay"],
+                    grow=self.specialTask[1]["grow"],
+                    attempts=self.specialTask[1]["restarts"],
+                    update=None)
             except InvalidLoss:
                 loss = POSITIVEINFINITY
 
@@ -212,7 +218,7 @@ class PlaceholderVisitor(object):
 
     def primitive(self, e):
         if e.name == 'REAL':
-            placeholder = Placeholder.named("REAL_", 0.)
+            placeholder = Placeholder.named("REAL_", random.random())
             self.parameters.append(placeholder)
             return Primitive(e.name, e.tp, placeholder)
         return e

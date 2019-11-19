@@ -119,9 +119,9 @@ class DN(object):
 
     def __neg__(self): return Negation(self)
 
-    def __div__(self, o): return Division(self, Placeholder.maybe(o))
+    def __truediv__(self, o): return Division(self, Placeholder.maybe(o))
 
-    def __rdiv__(self, o): return Division(Placeholder.maybe(o), self)
+    def __rtruediv__(self, o): return Division(Placeholder.maybe(o), self)
 
     def numericallyVerifyGradients(self, parameters):
         calculatedGradients = [p.derivative for p in parameters]
@@ -159,21 +159,24 @@ class DN(object):
         return self.data
 
     def restartingOptimize(self, parameters, _=None, attempts=1,
-                           s=1.,
+                           s=1., decay=0.5, grow=0.1,
                            lr=0.1, steps=10**3, update=None):
         ls = []
         for _ in range(attempts):
             for p in parameters:
-                p.data = normal(m=0., s=s)
+                p.data = random.random()*10 - 5
             ls.append(
                 self.resilientBackPropagation(
-                    parameters, lr=lr, steps=steps))
+                    parameters, lr=lr, steps=steps,
+                    decay=decay, grow=grow))
         return min(ls)
 
     def resilientBackPropagation(
             self,
             parameters,
             _=None,
+            decay=0.5,
+            grow=1.2,
             lr=0.1,
             steps=10**3,
             update=None):
@@ -196,9 +199,9 @@ class DN(object):
                     p.data += lr[i]
                 if previousSign[i] is not None:
                     if previousSign[i] == newSigns[i]:
-                        lr[i] *= 1.2
+                        lr[i] *= grow
                     else:
-                        lr[i] *= 0.5
+                        lr[i] *= decay
             previousSign = newSigns
 
         return self.data

@@ -10,7 +10,7 @@ except ModuleNotFoundError:
 from dreamcoder.dreamcoder import explorationCompression, commandlineArguments
 from dreamcoder.domains.arithmetic.arithmeticPrimitives import real, real_division, real_addition, real_multiplication
 from dreamcoder.grammar import Grammar
-from dreamcoder.program import Primitive, Abstraction, Application
+from dreamcoder.program import Primitive, Abstraction, Application, Program
 from dreamcoder.recognition import ImageFeatureExtractor
 from dreamcoder.task import DifferentiableTask, squaredErrorLoss
 from dreamcoder.type import arrow, treal
