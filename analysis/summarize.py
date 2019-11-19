@@ -6,10 +6,12 @@ sys.path.insert(0, "/om/user/lyt/ec")
 sys.path.insert(0, "/home/lucast4/dc")
 
 from analysis.getModelHumanDists import loadDistances, filterDistances
+from analysis.parse import getBestFrontierProgram
 from analysis.utils import *
 from analysis.graphs import plotNumSolved
 from analysis.graphs import plotAllTasks
 from dreamcoder.domains.draw.main import visualizePrimitives
+from dreamcoder.domains.draw.primitives import program_ink
 import matplotlib.pyplot as plt
 from analysis.getModelHumanDists import *
 import random
@@ -43,15 +45,18 @@ def printAllTasksSolutions(DAT, trainortest="train"):
     for i, (t, name) in enumerate(zip(tasks, tasknames)):
         print("===== {} - {} - {}:".format(i, t.name, name))
         stringlist.append("===== {} - {} - {}:".format(i, t.name, name))
-            
-        if len(DAT["result"].frontiersOverTime[t][-1])>0:
-            solved=True
-        else:
-            solved=False
+        
+        solved = DAT['taskresultdict'][name]
+        # if len(DAT["result"].frontiersOverTime[t][-1])>0:
+        #     solved=True
+        # else:
+        #     solved=False
 
         if solved:
 #             ll = result.frontiersOverTime[t][-1].bestPosterior.logLikelihood
-            summary = DAT["result"].frontiersOverTime[t][-1].summarize()
+            frontier = getBestFrontierProgram(DAT["result"], t, lastKIter=10, returnfrontier=True)
+            summary = f"HIT: ll={frontier.logLikelihood}, post={frontier.logPosterior}, prior={frontier.logPrior}: {frontier.program}"
+            # summary = DAT["result"].frontiersOverTime[t][-1].summarize()
         
             if False:
                 # print each in fritnier.
@@ -151,13 +156,14 @@ def summarize(ECTRAIN, SUMMARY_SAVEDIR = "", comparetohuman=True):
 
             # 2) For model, plot random subset of parses drawings for thsi stim
             dflat = DATloadDatFlat(DAT, stim)
-            dflat = dgseg.filterDat(dflat, stimlist=[stim])
-            if len(dflat)>NPARSE:
-                dflat = random.sample(dflat, NPARSE)
-            assert dflat is not None, "should have data since, only selected tasks that were sovled... whats going on."         
-            plotMultDrawingPrograms(dflat, SUMMARY_SAVEDIR, ishuman=False, removeLL=REMOVELL)
-            print("2: plotted drawing for {} random parses for model".format(NPARSE))
-            plt.close('all')
+            if len(dflat)>0:
+                dflat = dgseg.filterDat(dflat, stimlist=[stim])
+                if len(dflat)>NPARSE:
+                    dflat = random.sample(dflat, NPARSE)
+                assert dflat is not None, "should have data since, only selected tasks that were sovled... whats going on."         
+                plotMultDrawingPrograms(dflat, SUMMARY_SAVEDIR, ishuman=False, removeLL=REMOVELL)
+                print("2: plotted drawing for {} random parses for model".format(NPARSE))
+                plt.close('all')
     
 
             # 1) For human, plot drawings for this stim
@@ -173,9 +179,9 @@ def summarize(ECTRAIN, SUMMARY_SAVEDIR = "", comparetohuman=True):
             print("1: plotted drawing steps for Humans")
             plt.close('all')
 
-        distances = loadDistances(ECTRAIN)
+        distances = loadDistances(ECTRAIN, use_withplannerscore=False)
         distances_medianparse = loadDistances(ECTRAIN, ver="medianparse")
-        distances_aggregate = loadDistances(ECTRAIN, ver="aggregate")
+        distances_aggregate = loadDistances(ECTRAIN, ver="aggregate", use_withplannerscore=False)
 
         if useAggregateDistance:
             distances=distances_aggregate
@@ -199,9 +205,6 @@ def summarize(ECTRAIN, SUMMARY_SAVEDIR = "", comparetohuman=True):
             if len(dflat)>NPARSE:
                 dflat = random.sample(dflat, NPARSE)
             modelrends = [d["parsenum"] for d in dflat]
-            if "stim" not in distances[0].keys():
-                import pdb
-                pdb.set_trace()
             dists = filterDistances(distances, stimlist=[stim], modelrend=modelrends)
             if len(dists)==0:
                 print("MISSING DATA!!")
@@ -226,15 +229,104 @@ def summarize(ECTRAIN, SUMMARY_SAVEDIR = "", comparetohuman=True):
             # --- aggregate, median over all parses (after aggregating)
             # import pdb
             # pdb.set_trace()
-            dists = filterDistances(distances_medianparse, stimlist=[stim])
-            plt.figure(figsize=(40, 10))
-            dat = pd.DataFrame(dists)
-            ax = sns.violinplot(x="human", y="dist", data=dat, inner="quartile")
-            ax = sns.stripplot(x="human", y="dist", data=dat, jitter=0.17, dodge=True, alpha=0.3, size=8)
-            plt.savefig("{}/{}_hu{}_model{}_distances_medianparse.pdf".format(SUMMARY_SAVEDIR, stim, DAT["behaviorexpt"], DAT["trainset"]))
-            print("4: Plotted all string edit distances aggregating over meausres, then taking median over parses")
-            plt.close('all')
+            if len(distances_medianparse)>0:
+                dists = filterDistances(distances_medianparse, stimlist=[stim])
+                plt.figure(figsize=(40, 10))
+                dat = pd.DataFrame(dists)
+                ax = sns.violinplot(x="human", y="dist", data=dat, inner="quartile")
+                ax = sns.stripplot(x="human", y="dist", data=dat, jitter=0.17, dodge=True, alpha=0.3, size=8)
+                plt.savefig("{}/{}_hu{}_model{}_distances_medianparse.pdf".format(SUMMARY_SAVEDIR, stim, DAT["behaviorexpt"], DAT["trainset"]))
+                print("4: Plotted all string edit distances aggregating over meausres, then taking median over parses")
+                plt.close('all')
 
+
+
+
+from analysis.utils import *
+from dreamcoder.domains.draw.primitives import program_ink
+from analysis.importDrawgood import *
+
+# print likelihoods of all frontiers
+
+def summarizeFrontiers(ECTRAIN, k=20):
+    """Plots top k frontiers, and save to text their scores and ink used.
+    Also plots the ground truth task.
+    Currently only does for test tasks but easy to modify to also do all trainign tasks.
+    - check the amount of ink used by solutions vs. the ground truth programs"""    # ECTRAIN = "S12.10.test4"
+
+    def F(stim, DAT, k):
+        # find the program solution
+        result = DAT["result"]
+        t = DATgetTask(stim, DAT)[0]
+        sdir = DAT["summarysavedir"]
+        SDIR = "{}/frontiers".format(sdir)
+        import os 
+        os.makedirs(SDIR, exist_ok=True)
+        print(SDIR)    
+        
+        # == plot best posterireo
+        if False:
+            p = result.frontiersOverTime[t][-1].bestPosterior.program.evaluate([])
+            fig = dgutils.plotDrawingSteps(p)
+            plt.title("ink {}".format(program_ink(p)))
+        
+
+        # == plot for all top k frontiers.
+        def summarizeTopKFrontiers(k, frontiers, first_plot_best_post=True, skip_print_prog=False):
+
+            frontiers = frontiers.topK(k)
+
+            def print_f(f, skip_print_prog):
+                if not skip_print_prog:
+                    print(f.program)
+                print("posterior: {}".format(f.logPosterior))
+                print("likelihood: {}".format(f.logLikelihood))
+                print("prior: {}".format(f.logPrior))
+                print("ink used: {}".format(program_ink(f.program.evaluate([]))))
+                print("---")
+                return "post {}, ll {}, prior {}, ink {}".format(f.logPosterior, f.logLikelihood, f.logPrior, program_ink(f.program.evaluate([])))
+            
+            string_list = []
+            if first_plot_best_post:
+                st = print_f(frontiers.bestPosterior, skip_print_prog)
+                fig = dgutils.plotDrawingSteps(frontiers.bestPosterior.program.evaluate([]))
+    #             plt.title(st)
+                fig.savefig("{}/{}_bestPost.pdf".format(SDIR, stim))
+                string_list.append(st)
+                
+                
+            for i, f in enumerate(frontiers.entries):
+                st = print_f(f, skip_print_prog)
+                fig = dgutils.plotDrawingSteps(f.program.evaluate([]))
+    #             plt.title(st)
+                fig.savefig("{}/{}_top_{}.pdf".format(SDIR, stim, i))
+                string_list.append(st)
+            
+            fstring = "{}/{}_description.txt".format(SDIR, stim)
+            with open(fstring, 'w') as f:
+                for s in string_list:
+                    f.write("{}\n".format(s))
+
+        frontiers = result.frontiersOverTime[t][-1] # last timepoijnt
+    #     print(frontiers)
+        summarizeTopKFrontiers(k, frontiers, first_plot_best_post=False, skip_print_prog=True)
+
+
+        # print all the likelihoods in sorted order
+        print(sorted([f.logLikelihood for f in frontiers.entries]))
+        
+        # plot drawing steps for both ground truth and extracted program
+        print(program_ink(t.strokes))
+        fig = dgutils.plotDrawingSteps(t.strokes)
+        plt.title("ink {}".format(program_ink(t.strokes)))
+        fig.savefig("{}/{}_truth.pdf".format(SDIR, stim))
+        
+        plt.close(fig)
+        
+    DAT = loadCheckpoint(ECTRAIN, loadparse=False)
+    for stim in [t.name for t in DAT["testtasks"]]:
+    #     stim = "S12_13_test_4"
+        F(stim, DAT, k)
 
 
 
