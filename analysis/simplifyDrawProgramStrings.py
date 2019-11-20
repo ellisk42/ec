@@ -2,28 +2,25 @@
 """Should incorporate this into summary script"""
 
 ## loading checkpoint files
-
-%load_ext autoreload
-%autoreload 2
+import sys
+sys.path.insert(0, "/Users/lucastian/Dropbox/CODE/Python/Tenenbaum/ec/")
+sys.path.insert(0, "/om/user/lyt/ec")
+sys.path.insert(0, "/home/lucast4/dc")
 
 from analysis.utils import *
 from analysis.parse import *
 from analysis.analy import *
 from analysis.graphs import *
+from dreamcoder.domains.draw import drawPrimitives as DP
 
 # ==== LOAD DREAMCODER
-ECTRAIN = "S12.10.test4"
+ECTRAIN = sys.argv[1]
+# ECTRAIN = "S12.10.test5"
+
+
+
+#################################################
 DAT = loadCheckpoint(trainset=ECTRAIN, loadparse=False, loadbehavior=False)
-
-# === 4) Load tools to work with tasks libraries
-%load_ext autoreload
-%autoreload 2
-
-from analysis.utils import *
-from analysis.parse import *
-from analysis.analy import *
-from analysis.graphs import *
-import dreamcoder.domains.draw.primitives as P
 
 
 # GET PRIMITIVES TO RENAME
@@ -87,7 +84,7 @@ for i, p in enumerate(P):
     
     
 # --- save
-fname = "{}/{}_solutions_simple.txt".format(DAT["summarysavedir"], testortrain)
+fname = "{}/primitives_simple.txt".format(DAT["summarysavedir"], )
 print(fname)
 stringall = []
 # ==== go thru all primitives and replace if possible
@@ -96,7 +93,7 @@ for i, p in enumerate(P):
     pp = str(p)
        
     stringall.append(i)
-    stringall.append(t.name)
+    # stringall.append(t.name)
     stringall.append(pp)
     stringall.append(" ")
     for key in primcodes.keys():
@@ -114,33 +111,34 @@ with open(fname, "w") as f:
 #     t = DATgetTask(stim, DAT)
 #     result.frontiersOverTime(t)[-1]
 #     raise
-    
-testortrain = "train"
-if testortrain=="train":
-    tasks = DAT["tasks"]
-else:
-    tasks = DAT["testtasks"]
-    
-# --- save
-fname = "{}/{}_solutions_{}_simple.txt".format(DAT["summarysavedir"], DAT["trainset"], testortrain)
-# fname = "/tmp/test.txt"
-print(fname)
-stringall = []
-for i, t in enumerate(tasks):
-    if result.frontiersOverTime[t][-1].empty:
-        continue
+
+for testortrain in ["train", "test"]:
+    # testortrain = "train"
+    if testortrain=="train":
+        tasks = DAT["tasks"]
+    else:
+        tasks = DAT["testtasks"]
         
-    pp = str(result.frontiersOverTime[t][-1].bestPosterior.program)
-    
-    stringall.append(i)
-    stringall.append(t.name)
-    stringall.append(pp)
-    stringall.append(" ")
-    for key in primcodes.keys():
-        pp = pp.replace(key, primcodes[key])
-    stringall.append(pp)
-    stringall.append('-------')
-with open(fname, "w") as f:
-    for s in stringall:
-        print(s)
-        f.write(str(s)+"\n")
+    # --- save
+    fname = "{}/{}_solutions_{}_simple.txt".format(DAT["summarysavedir"], DAT["trainset"], testortrain)
+    # fname = "/tmp/test.txt"
+    print(fname)
+    stringall = []
+    for i, t in enumerate(tasks):
+        if result.frontiersOverTime[t][-1].empty:
+            continue
+            
+        pp = str(result.frontiersOverTime[t][-1].bestPosterior.program)
+        
+        stringall.append(i)
+        stringall.append(t.name)
+        stringall.append(pp)
+        stringall.append(" ")
+        for key in primcodes.keys():
+            pp = pp.replace(key, primcodes[key])
+        stringall.append(pp)
+        stringall.append('-------')
+    with open(fname, "w") as f:
+        for s in stringall:
+            print(s)
+            f.write(str(s)+"\n")

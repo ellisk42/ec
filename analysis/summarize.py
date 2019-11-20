@@ -261,7 +261,7 @@ def summarize(ECTRAIN, SUMMARY_SAVEDIR = "", comparetohuman=True):
             dat = pd.DataFrame(dists)
             ax = sns.violinplot(x="human", y="dist", data=dat, inner="quartile")
             sns.stripplot(ax=ax, x="human", y="dist", data=dat, jitter=0.17, dodge=True, alpha=0.3, size=8)
-            ax.set_xticklabels(labels=ax.get_ticklabels(), rotation=45)
+            ax.set_xticklabels(labels=ax.get_xticklabels(), rotation=45)
             plt.savefig("{}/{}_hu{}_model{}_distances_allparses.pdf".format(SUMMARY_SAVEDIR, stim, DAT["behaviorexpt"], DAT["trainset"]))
             print("3: Plotted all string edit distances for both random parses and all parses")
             plt.close('all')
