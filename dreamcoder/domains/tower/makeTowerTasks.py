@@ -95,13 +95,9 @@ class SupervisedTower(Task):
 
     def logLikelihood(self, e, timeout=None):
         from dreamcoder.domains.tower.tower_common import centerTower
-        def k():
-            plan = e.evaluate([])(lambda s: (s,[]))(0)[1]
-            if centerTower(plan) == centerTower(self.plan): return 0.
-            return NEGATIVEINFINITY
-        try: return runWithTimeout(k, timeout)
-        except RunWithTimeout: return NEGATIVEINFINITY        
-        
+        yh = executeTower(e, timeout)
+        if yh is not None and centerTower(yh) == centerTower(self.plan): return 0.
+        return NEGATIVEINFINITY
 
     
 
