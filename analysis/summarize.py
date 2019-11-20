@@ -54,7 +54,7 @@ def printAllTasksSolutions(DAT, trainortest="train"):
 
         if solved:
 #             ll = result.frontiersOverTime[t][-1].bestPosterior.logLikelihood
-            frontier = getBestFrontierProgram(DAT["result"], t, lastKIter=10, returnfrontier=True)
+            frontier = getBestFrontierProgram(DAT["result"], t, lastKIter=15, returnfrontier=True)
             summary = f"HIT: ll={frontier.logLikelihood}, post={frontier.logPosterior}, prior={frontier.logPrior}: {frontier.program}"
             # summary = DAT["result"].frontiersOverTime[t][-1].summarize()
         
@@ -82,8 +82,14 @@ def summarize(ECTRAIN, SUMMARY_SAVEDIR = "", comparetohuman=True):
     NPARSE = 10 # how many random parses to take for plotting for program
     useAggregateDistance = True
 
+
+    # if False:
     # 1) load data 
-    DAT = loadCheckpoint(trainset=ECTRAIN, loadparse=False, suppressPrint=True, loadbehavior=False)
+    if comparetohuman:
+        loadbehavior=True
+    else:
+        loadbehavior=False
+    DAT = loadCheckpoint(trainset=ECTRAIN, loadparse=False, suppressPrint=True, loadbehavior=loadbehavior)
 
     if len(SUMMARY_SAVEDIR)==0:
         SUMMARY_SAVEDIR = DAT["summarysavedir"]
@@ -141,10 +147,28 @@ def summarize(ECTRAIN, SUMMARY_SAVEDIR = "", comparetohuman=True):
         import pandas as pd
         import seaborn as sns
         print("COMPARING TO HUMAN - SHOULD ALREADY HAVE PREPROCESSED DATA")
-        DAT = loadCheckpoint(trainset=ECTRAIN, loadparse=True, suppressPrint=True)
+        # DAT = loadCheckpoint(trainset=ECTRAIN, loadparse=False, suppressPrint=True)
         DAT = DATloadDrawgoodData(DAT, dosegmentation=True)
         
 
+        # distances = loadDistances(ECTRAIN, use_withplannerscore=False)
+        # distances_medianparse = loadDistances(ECTRAIN, ver="medianparse")
+        # distances_aggregate = loadDistances(ECTRAIN, ver="aggregate", use_withplannerscore=False)
+
+        if useAggregateDistance:
+            distances = loadDistances(ECTRAIN, ver="aggregate", use_withplannerscore=False)
+            # distances=distances_aggregate
+            label = "allparses_agg"
+        else:
+            distances = loadDistances(ECTRAIN, use_withplannerscore=False)
+            label = "allparses"
+
+        # remove all things like randomperms
+        distances = [d for d in distances if d["model"]==ECTRAIN]
+        print(len(distances))
+        # print(len(distances_aggregate))
+        # print(len(distances_medianparse))
+        assert len(distances)>0, "huh?"
 
         # ==== PLOT DISTANCES FOR DIFFERENT SLICES OF MODEL/HUMAN/STIM
         stimlist = DATgetSolvedStim(DAT, intersectDrawgood=True, onlyifhasdatflat=True)
@@ -164,6 +188,22 @@ def summarize(ECTRAIN, SUMMARY_SAVEDIR = "", comparetohuman=True):
                 plotMultDrawingPrograms(dflat, SUMMARY_SAVEDIR, ishuman=False, removeLL=REMOVELL)
                 print("2: plotted drawing for {} random parses for model".format(NPARSE))
                 plt.close('all')
+
+                modelrends = [d["parsenum"] for d in dflat]
+                dists = filterDistances(distances, stimlist=[stim], modelrend=modelrends)
+                if len(dists)==0:
+                    print("MISSING DATA!!")
+                    
+                # plt.figure(figsize=(40, 10))
+
+                ax = sns.catplot(x="human", y="dist", hue="modelrend", data=pd.DataFrame(dists), 
+                    jitter=0.17, dodge=False, alpha=0.5, height=5, aspect=10/5)
+                # ax = sns.stripplot(x="human", y="dist", hue="modelrend", data=pd.DataFrame(dists), jitter=0.17, dodge=False, alpha=0.8, size=8)
+                from modelPlanning import addLabel
+                addLabel(ax)
+                ax.savefig("{}/{}_hu{}_model{}_distances_randomparses.pdf".format(SUMMARY_SAVEDIR, stim, DAT["behaviorexpt"], DAT["trainset"]))
+                plt.close('all')
+
     
 
             # 1) For human, plot drawings for this stim
@@ -179,40 +219,40 @@ def summarize(ECTRAIN, SUMMARY_SAVEDIR = "", comparetohuman=True):
             print("1: plotted drawing steps for Humans")
             plt.close('all')
 
-        distances = loadDistances(ECTRAIN, use_withplannerscore=False)
-        distances_medianparse = loadDistances(ECTRAIN, ver="medianparse")
-        distances_aggregate = loadDistances(ECTRAIN, ver="aggregate", use_withplannerscore=False)
+        # distances = loadDistances(ECTRAIN, use_withplannerscore=False)
+        # distances_medianparse = loadDistances(ECTRAIN, ver="medianparse")
+        # distances_aggregate = loadDistances(ECTRAIN, ver="aggregate", use_withplannerscore=False)
 
-        if useAggregateDistance:
-            distances=distances_aggregate
-            label = "allparses_agg"
-        else:
-            label = "allparses"
+        # if useAggregateDistance:
+        #     distances=distances_aggregate
+        #     label = "allparses_agg"
+        # else:
+        #     label = "allparses"
 
-        # remove all things like randomperms
-        distances = [d for d in distances if d["model"]==ECTRAIN]
-        print(len(distances))
-        print(len(distances_aggregate))
-        print(len(distances_medianparse))
-        assert len(distances)>0, "huh?"
+        # # remove all things like randomperms
+        # distances = [d for d in distances if d["model"]==ECTRAIN]
+        # print(len(distances))
+        # print(len(distances_aggregate))
+        # print(len(distances_medianparse))
+        # assert len(distances)>0, "huh?"
 
-        for stim in stimlist:
+        # for stim in stimlist:
             # 3) Plot string edit distances between human and model
             # only the plotted parses (x the humans)
             # --- just the parses plotted
-            dflat = DATloadDatFlat(DAT, stim)
-            dflat = dgseg.filterDat(dflat, stimlist=[stim])
-            if len(dflat)>NPARSE:
-                dflat = random.sample(dflat, NPARSE)
-            modelrends = [d["parsenum"] for d in dflat]
-            dists = filterDistances(distances, stimlist=[stim], modelrend=modelrends)
-            if len(dists)==0:
-                print("MISSING DATA!!")
+            # dflat = DATloadDatFlat(DAT, stim)
+            # dflat = dgseg.filterDat(dflat, stimlist=[stim])
+            # if len(dflat)>NPARSE:
+            #     dflat = random.sample(dflat, NPARSE)
+            # modelrends = [d["parsenum"] for d in dflat]
+            # dists = filterDistances(distances, stimlist=[stim], modelrend=modelrends)
+            # if len(dists)==0:
+            #     print("MISSING DATA!!")
                 
-            plt.figure(figsize=(40, 10))
-            ax = sns.stripplot(x="human", y="dist", hue="modelrend", data=pd.DataFrame(dists), jitter=0.17, dodge=True, alpha=0.8, size=8)
-            plt.savefig("{}/{}_hu{}_model{}_distances_randomparses.pdf".format(SUMMARY_SAVEDIR, stim, DAT["behaviorexpt"], DAT["trainset"]))
-            plt.close('all')
+            # plt.figure(figsize=(40, 10))
+            # ax = sns.stripplot(x="human", y="dist", hue="modelrend", data=pd.DataFrame(dists), jitter=0.17, dodge=True, alpha=0.8, size=8)
+            # plt.savefig("{}/{}_hu{}_model{}_distances_randomparses.pdf".format(SUMMARY_SAVEDIR, stim, DAT["behaviorexpt"], DAT["trainset"]))
+            # plt.close('all')
 
 
             # --- all parses for this stimulus
@@ -220,7 +260,8 @@ def summarize(ECTRAIN, SUMMARY_SAVEDIR = "", comparetohuman=True):
             plt.figure(figsize=(40, 10))
             dat = pd.DataFrame(dists)
             ax = sns.violinplot(x="human", y="dist", data=dat, inner="quartile")
-            ax = sns.stripplot(x="human", y="dist", data=dat, jitter=0.17, dodge=True, alpha=0.3, size=8)
+            sns.stripplot(ax=ax, x="human", y="dist", data=dat, jitter=0.17, dodge=True, alpha=0.3, size=8)
+            ax.set_xticklabels(labels=ax.get_ticklabels(), rotation=45)
             plt.savefig("{}/{}_hu{}_model{}_distances_allparses.pdf".format(SUMMARY_SAVEDIR, stim, DAT["behaviorexpt"], DAT["trainset"]))
             print("3: Plotted all string edit distances for both random parses and all parses")
             plt.close('all')
@@ -229,15 +270,23 @@ def summarize(ECTRAIN, SUMMARY_SAVEDIR = "", comparetohuman=True):
             # --- aggregate, median over all parses (after aggregating)
             # import pdb
             # pdb.set_trace()
-            if len(distances_medianparse)>0:
-                dists = filterDistances(distances_medianparse, stimlist=[stim])
-                plt.figure(figsize=(40, 10))
-                dat = pd.DataFrame(dists)
-                ax = sns.violinplot(x="human", y="dist", data=dat, inner="quartile")
-                ax = sns.stripplot(x="human", y="dist", data=dat, jitter=0.17, dodge=True, alpha=0.3, size=8)
-                plt.savefig("{}/{}_hu{}_model{}_distances_medianparse.pdf".format(SUMMARY_SAVEDIR, stim, DAT["behaviorexpt"], DAT["trainset"]))
-                print("4: Plotted all string edit distances aggregating over meausres, then taking median over parses")
-                plt.close('all')
+            try:
+                if len(distances_medianparse)>0:
+                    dists = filterDistances(distances_medianparse, stimlist=[stim])
+                    plt.figure(figsize=(40, 10))
+                    dat = pd.DataFrame(dists)
+                    ax = sns.violinplot(x="human", y="dist", data=dat, inner="quartile")
+                    ax = sns.stripplot(x="human", y="dist", data=dat, jitter=0.17, dodge=True, alpha=0.3, size=8)
+                    plt.savefig("{}/{}_hu{}_model{}_distances_medianparse.pdf".format(SUMMARY_SAVEDIR, stim, DAT["behaviorexpt"], DAT["trainset"]))
+                    print("4: Plotted all string edit distances aggregating over meausres, then taking median over parses")
+                    plt.close('all')
+            except:
+                print("skippint miedian parse.")
+
+            ############# SUMMARIZE FRONTRIERS
+            if False:
+                # currently skip since this just takes last timepoint, not all
+                summarizeFrontiers()
 
 
 
