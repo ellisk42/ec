@@ -4,6 +4,7 @@ except ModuleNotFoundError:
     import bin.binutil  # alt import if called as module
 
 
+from json.decoder import JSONDecodeError
 from syntax_robustfill import SyntaxCheckingRobustFill
 from image_robustfill import Image_RobustFill
 import time
@@ -40,6 +41,7 @@ from dreamcoder.domains.tower.towerPrimitives import new_primitives, ttower
 import dreamcoder.domains.logo.main as LOGO
 import dreamcoder.domains.logo.logoPrimitives
 from dreamcoder.domains.logo.logoPrimitives import turtle
+from dreamcoder.domains.logo.makeLogoTasks import drawLogo
 
 from pregex import pregex
 from dreamcoder.domains.regex.makeRegexTasks import makeOldTasks, makeLongTasks, makeShortTasks, makeWordTasks, makeNumberTasks, makeHandPickedTasks, makeNewTasks, makeNewNumberTasks
@@ -76,8 +78,6 @@ def stringify(line):
     return lst
 
 #print(stringify("(foo (bar)) (foo fooo)"))
-
-tasks = makeTasks()
 
 
 
@@ -143,11 +143,14 @@ def test_task(m, task, timeout):
                 if arguments.domain != 'logo':
                     ll = task.logLikelihood(p, timeout=10 if arguments.domain != 'rational' else None)
                 else:
-                    yh = drawLogo(p, timeout=1., resolution=28)
-                    yh = list(map(int,yh))
-                    if yh == p.examples[0][1]:
-                        ll = 0.
-                    else:
+                    try:
+                        yh = drawLogo(p, timeout=1., resolution=28)
+                        if isinstance(yh,list) and list(map(int,yh)) == p.examples[0][1]:
+                            ll = 0.
+                        else:
+                            ll = float('-inf')
+                    except JSONDecodeError:
+                        eprint("WARNING: Could not decode json. If this occurs occasionally it might be because the neural network is producing invalid code. Otherwise, if this occurs frequently, then this is a bug.")
                         ll = float('-inf')
                         
                 #print(ll)
@@ -167,28 +170,41 @@ if __name__=='__main__':
     arguments = parser.parse_args()
 
     if arguments.domain == "text":
+        tasks = makeTasks()
         g = Grammar.uniform(text_primitives.primitives + [p for p in bootstrapTarget()])
         input_vocabularies = [list(printable[:-4]) + ['EOE'], list(printable[:-4])]
+        test = loadPBETasks("PBE_Strings_Track")[0]
         fe = Text.LearnedFeatureExtractor(tasks=tasks,
-                                          testingTasks=loadPBETasks("PBE_Strings_Track")[0])
+                                          testingTasks=test)
 
         BATCHSIZE = 16
+        
     elif arguments.domain == "regex":
         g = Grammar.uniform(reducedConcatPrimitives(),
                             continuationType=tpregex)
         tasks = makeNewTasks()
         fe = Regex.LearnedFeatureExtractor(tasks)
+        
+        eprint("Unwilling to handle {} tasks, truncating..".format(len(tasks)))
+        seed = 42 # previously this was hardcoded and never changed
+        random.seed(seed)
+        random.shuffle(tasks)
+        del tasks[maxTasks:]    
+        test, _ = testTrainSplit(tasks, 0.5)
+        
         input_vocabularies = [["dummy"], list(printable) + ["LIST_END","LIST_START"]]
         BATCHSIZE = 64
     elif arguments.domain == "tower":
         g = Grammar.uniform(new_primitives, continuationType=ttower)
         tasks = dreamcoder.domains.tower.makeTowerTasks.makeSupervisedTasks()
+        test, _ = testTrainSplit(tasks, 0.5)
         fe = Tower.TowerCNN([])
         BATCHSIZE = 64
     elif arguments.domain == "logo":
         g = Grammar.uniform(dreamcoder.domains.logo.logoPrimitives.primitives,
                             continuationType=turtle)
         tasks = dreamcoder.domains.logo.makeLogoTasks.makeTasks(['all'],proto=False)
+        test, _ = testTrainSplit(tasks, 0.5)
         fe = LOGO.LogoFeatureCNN([])
         BATCHSIZE = 64
     elif arguments.domain == "rational":
@@ -196,6 +212,10 @@ if __name__=='__main__':
         for t in tasks:
             t.features = drawFunction(200,10.,t.f)
             delattr(t, 'f')
+        test, _ = testTrainSplit(tasks, 100)
+        random.seed(42)
+        random.shuffle(test)
+        test = test[:100]
         g = Grammar.uniform([real, real_division, real_addition, real_multiplication])
         fe = FeatureExtractor([])
         BATCHSIZE = 64
@@ -314,12 +334,12 @@ if __name__=='__main__':
         print('testing model:')
         print(path)
 
-        #assumes tasks are the testing tasks
+        #assumes `test` is a list of the testing tasks
 
-        n_tasks = len(tasks)
-        print(n_tasks, "tasks")
+        n_tasks = len(test)
+        print(n_tasks, "testing tasks")
         n_hits = 0
-        for i, task in enumerate(tasks):
+        for i, task in enumerate(test):
             hit = test_task(m, task, arguments.timeout)
             print("for task ",i, ", hit=", hit, flush=True)
             if hit: n_hits += 1
