@@ -17,7 +17,7 @@ from dreamcoder.type import tpregex
 
 from dreamcoder.domains.arithmetic.arithmeticPrimitives import real, real_division, real_addition, real_multiplication
 
-from rational import RandomParameterization, FeatureExtractor
+from rational import RandomParameterization, FeatureExtractor, drawFunction
 
 import rational
 #text:
@@ -141,7 +141,7 @@ def test_task(m, task, timeout):
             except AssertionError: continue
             if p not in failed_cands:
                 if arguments.domain != 'logo':
-                    ll = task.logLikelihood(p, timeout=10)
+                    ll = task.logLikelihood(p, timeout=10 if arguments.domain != 'rational' else None)
                 else:
                     yh = drawLogo(p, timeout=1., resolution=28)
                     yh = list(map(int,yh))
@@ -163,7 +163,7 @@ if __name__=='__main__':
     parser = argparse.ArgumentParser(description = "")
     parser.add_argument("--domain",'-d',default="text")
     parser.add_argument("--test", type=str, default=False)
-    parser.add_argument("--timeout", type=float, default=1200)
+    parser.add_argument("--timeout", type=float, default=600)
     arguments = parser.parse_args()
 
     if arguments.domain == "text":
@@ -193,6 +193,9 @@ if __name__=='__main__':
         BATCHSIZE = 64
     elif arguments.domain == "rational":
         tasks = rational.makeTasks()
+        for t in tasks:
+            t.features = drawFunction(200,10.,t.f)
+            delattr(t, 'f')
         g = Grammar.uniform([real, real_division, real_addition, real_multiplication])
         fe = FeatureExtractor([])
         BATCHSIZE = 64

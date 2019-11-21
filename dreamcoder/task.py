@@ -175,10 +175,11 @@ class DifferentiableTask(Task):
         if self.maxParameters is not None and len(
                 parameters) > self.maxParameters:
             return NEGATIVEINFINITY
-        f = e.evaluate([])
-
-        loss = sum(self.loss(self.predict(f, xs), y)
-                   for xs, y in self.examples) / float(len(self.examples))
+        try:
+            f = e.evaluate([])
+            loss = sum(self.loss(self.predict(f, xs), y)
+                       for xs, y in self.examples) / float(len(self.examples))
+        except: return NEGATIVEINFINITY # exception while predicting on examples
         if isinstance(loss, DN):
             try:
                 loss = loss.restartingOptimize(
