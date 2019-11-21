@@ -104,7 +104,6 @@ def makeExamples(task):
                 for xs,y in task.examples ]
 
     if arguments.domain == 'rational':
-        import pdb; pdb.set_trace()
         return imresize(np.array([task.features]*3),(256,256)).transpose(2,0,1)
     if arguments.domain == 'logo':
         i = np.array([float(xx)/256. for xx in task.highresolution])
@@ -142,20 +141,25 @@ def test_task(m, task, timeout):
             except AssertionError: continue
             if p not in failed_cands:
                 if arguments.domain != 'logo':
-                    ll = task.logLikelihood(p, timeout=10 if arguments.domain != 'rational' else 0.1)
+                    ll = task.logLikelihood(p, timeout=0.1 if arguments.domain != 'rational' else None)
                 else:
                     try:
                         yh = drawLogo(p, timeout=1., resolution=28)
-                        if isinstance(yh,list) and list(map(int,yh)) == p.examples[0][1]:
+                        if isinstance(yh,list) and list(map(int,yh)) == task.examples[0][1]:
                             ll = 0.
                         else:
                             ll = float('-inf')
+                        #print("no warning, we are cool.jpeg")
                     except JSONDecodeError:
                         eprint("WARNING: Could not decode json. If this occurs occasionally it might be because the neural network is producing invalid code. Otherwise, if this occurs frequently, then this is a bug.")
                         ll = float('-inf')
                         
                 #print(ll)
-                if ll > float('-inf'): return True
+                if ll > float('-inf'):
+                    print(p)
+                    print(task.name)
+                    return True
+
                 else: failed_cands.add(p)
 
     return False
