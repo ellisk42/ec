@@ -104,6 +104,7 @@ def makeExamples(task):
                 for xs,y in task.examples ]
 
     if arguments.domain == 'rational':
+        import pdb; pdb.set_trace()
         return imresize(np.array([task.features]*3),(256,256)).transpose(2,0,1)
     if arguments.domain == 'logo':
         i = np.array([float(xx)/256. for xx in task.highresolution])
@@ -140,7 +141,7 @@ def test_task(m, task, timeout):
             except IndexError: continue
             except AssertionError: continue
             if p not in failed_cands:
-                ll = task.logLikelihood(p, timeout=10)
+                ll = task.logLikelihood(p, timeout=10 if arguments.domain =='rational' else 0.1)
                 #print(ll)
                 if ll > float('-inf'): return True
                 else: failed_cands.add(p)
