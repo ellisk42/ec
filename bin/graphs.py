@@ -229,6 +229,26 @@ def averageCurves(curves):
         
     return xs,ys,e
 
+def medianCurves(curves):
+    xs = {x
+          for xs,_ in curves
+          for x in xs }
+    xs = list(sorted(list(xs)))
+    curves = [{x:y for x,y in zip(xs,ys) }
+              for xs,ys in curves ]
+    ys = []
+    tops = []
+    bottoms = []
+    for x in xs:
+        y_ = []
+        for curve in curves:
+            if x in curve: y_.append(curve[x])
+        ys.append(percentile(y_,0.5))
+        tops.append(percentile(y_,0.75))
+        bottoms.append(percentile(y_,0.25))
+        
+    return xs,ys,tops,bottoms
+
 def parseResultsPath(p):
     def maybe_eval(s):
         try:
@@ -465,6 +485,15 @@ def plotECResult(
         if timeAxis:
             for (color,ls),(xs,ys,es) in plotCommands_time.items():
                 timeAxis.errorbar(xs,ys,yerr=es,color=color,ls=ls)
+    elif arguments.median:
+        assert not timeAxis, "time not currently supported with median"
+        assert solveAxis, "median only applies for solved tasks, not timing. use --percentile"
+        plotCommands_solve = {kl: medianCurves(curves)
+                              for kl, curves in plotCommands_solve.items() }
+        
+        for (color,ls),(xs,ys,ts,bs) in plotCommands_solve.items():
+            solveAxis.plot(xs,ys,color=color,ls=ls)
+            solveAxis.fill_between(xs,bs,ts,facecolor=color,alpha=0.2)        
     else:
         if solveAxis:
             for (color,ls,xs,ys) in shuffled([ (color,ls,xs,ys)
@@ -611,6 +640,9 @@ if __name__ == "__main__":
                         default=[],nargs='+')
     parser.add_argument("--palette","-c",
                         default=False, action='store_true')
+    parser.add_argument("--median",
+                        default=False, action='store_true',
+                        help="Plots the median and 25/75 percentile of hits over time")
 
 
     arguments = parser.parse_args()
@@ -623,6 +655,8 @@ if __name__ == "__main__":
                                  for ck in arguments.checkpoints ]
 
     if arguments.likelihood: arguments.noTime = True
+
+    assert not (arguments.median and arguments.averageColors), "cannot average colors and also take the median of the colors"
     
     plotECResult(arguments.checkpoints,
                  likelihood=arguments.likelihood,
