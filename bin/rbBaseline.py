@@ -140,7 +140,16 @@ def test_task(m, task, timeout):
             except IndexError: continue
             except AssertionError: continue
             if p not in failed_cands:
-                ll = task.logLikelihood(p, timeout=10)
+                if arguments.domain != 'logo':
+                    ll = task.logLikelihood(p, timeout=10)
+                else:
+                    yh = drawLogo(p, timeout=1., resolution=28)
+                    yh = list(map(int,yh))
+                    if yh == p.examples[0][1]:
+                        ll = 0.
+                    else:
+                        ll = float('-inf')
+                        
                 #print(ll)
                 if ll > float('-inf'): return True
                 else: failed_cands.add(p)
