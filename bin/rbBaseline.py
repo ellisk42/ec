@@ -13,6 +13,7 @@ from dreamcoder.grammar import Grammar
 from dreamcoder.domains.text.makeTextTasks import *
 import dreamcoder.domains.text.main as Text
 from dreamcoder.task import Task
+from dreamcoder.frontier import Frontier
 from dreamcoder.type import Context, arrow, tbool, tlist, tint, t0, UnificationFailure
 from dreamcoder.type import tpregex
 
@@ -52,7 +53,7 @@ Regex.ConstantInstantiateVisitor.SINGLE = Regex.ConstantInstantiateVisitor()
 from scipy.misc import imresize
 import numpy as np
 
-from dreamcoder.utilities import ParseFailure
+from dreamcoder.utilities import ParseFailure,lse
 #import other stuff
 
 extras = ['(', ')', 'lambda'] + ['$'+str(i) for i in range(10)]
@@ -127,6 +128,8 @@ def test_task(m, task, timeout):
     failed_cands = set()
 
     print(task.examples)
+
+    frontier = []
     
     while time.time() - start < timeout:
         query = makeExamples(task)
@@ -150,7 +153,29 @@ def test_task(m, task, timeout):
                                                              sample=False)
                         ll = min(task.logLikelihood(pp, timeout=0.1 if arguments.domain != 'rational' else None)
                                  for pp in p.visit(ci))
-                if arguments.domain != 'logo':
+                if arguments.domain == 'regex':
+                    # regex is handled specially
+                    # we just collect all of the candidates and then marginalize over them
+                    # but we have to make sure that each candidate is well typed and well formed
+                    ll = float('-inf')
+                    if not p.canHaveType(task.request): p = None
+                    else:
+                        try:
+                            regex = p.evaluate([])(pre.String(""))
+                            dataLikelihood = sum(regex.match("".join(y))
+                                                 for _,y in task.examples )
+                            logPrior = g.logLikelihood(task.request,p)
+                            frontier.append(FrontierEntry(p,
+                                                          logPrior=logPrior,
+                                                          logLikelihood=dataLikelihood))
+                            print("sampled program",p,
+                                  "which translates into regex",regex,
+                                  "and which assigns the following likelihood to the test data",
+                                  dataLikelihood,
+                                  "and which has prior probability",logPrior)
+                        except: p = None
+                            
+                elif arguments.domain != 'logo':
                     ll = task.logLikelihood(p, timeout=0.1 if arguments.domain != 'rational' else None)
                 else:
                     try:
@@ -170,9 +195,19 @@ def test_task(m, task, timeout):
                     print(task.name)
                     return True
 
-                else: failed_cands.add(p)
+                elif p is not None: failed_cands.add(p)
 
-    return False
+    if arguments.domain != 'regex':
+        return False
+
+    # calculate that thing that we have to for regex
+    frontier = Frontier(frontier,
+                        task)
+    from graphs import addStupidRegex
+    frontier = addStupidRegex(frontier,g)
+    from examineFrontier import testingRegexLikelihood
+    return lse([ e.logPosterior + testingRegexLikelihood(task, e.program)
+                 for e in frontier ])
 
 
 
@@ -351,16 +386,34 @@ if __name__=='__main__':
 
         #assumes `test` is a list of the testing tasks
 
+        if arguments.domain == 'regex':
+            from dreamcoder.domains.regex.groundtruthRegexes import badRegexTasks
+            test = [t for t in test
+                    if t.name not in badRegexTasks]
+        
         n_tasks = len(test)
         print(n_tasks, "testing tasks")
         n_hits = 0
+        total_likelihood = 0
         for i, task in enumerate(test):
             hit = test_task(m, task, arguments.timeout)
+            if arguments.domain == 'regex':
+                total_likelihood += hit
+            else:
+                if hit: n_hits += 1
             print("for task ",i, ", hit=", hit, flush=True)
-            if hit: n_hits += 1
+            
 
-        print("final score:")
-        print(n_hits/float(n_tasks))
+        if arguments.domain == 'regex':
+            from dreamcoder.domains.regex.makeRegexTasks import regexHeldOutExamples
+            totalCharacters = sum( len(s)
+                                   for t in test 
+                                   for _,s in regexHeldOutExamples(t))
+            print("average likelihood of held out examples (normalized per character)",
+                  total_likelihood/totalCharacters)
+        else:
+            print("final score:")
+            print(n_hits/float(n_tasks))
 
 
 
