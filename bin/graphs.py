@@ -481,7 +481,11 @@ def plotECResult(
                          for kl, curves in plotCommands_time.items() }
         if solveAxis:
             for (color,ls),(xs,ys,es) in plotCommands_solve.items():
-                solveAxis.errorbar(xs,ys,yerr=es,color=color,ls=ls)
+                solveAxis.plot(xs,ys,color=color,ls=ls)
+                solveAxis.fill_between(xs,
+                                       [y - e for y,e in zip(ys,es)],
+                                       [y + e for y,e in zip(ys,es)],
+                                       facecolor=color,alpha=0.4)        
         if timeAxis:
             for (color,ls),(xs,ys,es) in plotCommands_time.items():
                 timeAxis.errorbar(xs,ys,yerr=es,color=color,ls=ls)
