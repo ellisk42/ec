@@ -500,16 +500,6 @@ def plotECResult(
                                             for (color,ls),cs in plotCommands_solve.items()
                                             for xs,ys in cs]):
                 solveAxis.plot(xs,ys,color=color,ls=ls,alpha=alpha)
-        if arguments.baselines:
-            for n in range(len(arguments.baselines)//2):
-                name = arguments.baselines[2*n]
-                bl = arguments.baselines[2*n + 1]
-                print("baseline",name,bl)
-                bl = float(bl)
-                plot.axhline(bl,-0.5,iterations,
-                             color='k',lw=3)
-                solveAxis.text(iterations, bl, name, ha='left', va='center', fontweight='bold')
-            plot.subplots_adjust(right=0.9)
                 # solveAxis.plot([0,iterations - 1],[float(bl)]*2,
                 #                color='k')
         if timeAxis:
@@ -517,6 +507,17 @@ def plotECResult(
                                                for (color,ls),cs in plotCommands_time.items()
                                                for xs,ys in cs]):
                 timeAxis.plot(xs,ys,color=color,ls=ls,alpha=alpha)
+
+    if arguments.baselines:
+        for n in range(len(arguments.baselines)//2):
+            name = arguments.baselines[2*n]
+            bl = arguments.baselines[2*n + 1]
+            print("baseline",name,bl)
+            bl = float(bl)
+            plot.axhline(bl,-0.5,iterations,
+                         color='k',lw=3)
+            solveAxis.text(iterations, bl, name, ha='left', va='center', fontweight='bold')
+        plot.subplots_adjust(right=0.9)
 
     if solveAxis and likelihood is None:
         a1.set_ylim(ymin=0, ymax=maxP)
