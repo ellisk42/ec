@@ -14,23 +14,36 @@ import dill
 
 
 class ConstantInstantiateVisitor(object):
-    def __init__(self, words):
+    def __init__(self, words, sample=True):
+        self.sample = sample
         self.words = words
 
     def primitive(self, e):
+        if self.sample:
+            if e.name == "STRING":
+                return Primitive("STRING", e.tp, random.choice(self.words))
+            return e
         if e.name == "STRING":
-            return Primitive("STRING", e.tp, random.choice(self.words))
-        return e
+            return [Primitive("STRING", e.tp, w) for w in random.choice(self.words)] 
+        return [e]
 
     def invented(self, e): return e.body.visit(self)
 
-    def index(self, e): return e
+    def index(self, e):
+        if self.sample: return e
+        return [e]
 
     def application(self, e):
-        return Application(e.f.visit(self), e.x.visit(self))
+        if self.sample:
+            return Application(e.f.visit(self), e.x.visit(self))
+        return [Application(f, x)
+                for f in e.f.visit(self)
+                for x in e.x.visit(self)]
 
     def abstraction(self, e):
-        return Abstraction(e.body.visit(self))
+        if self.sample:
+            return Abstraction(e.body.visit(self))
+        return [Abstraction(b) for b in e.body.visit(self)] 
 
     @staticmethod
     def initialize():

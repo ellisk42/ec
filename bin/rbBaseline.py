@@ -11,7 +11,7 @@ import time
 
 from dreamcoder.grammar import Grammar
 from dreamcoder.domains.text.makeTextTasks import *
-import dreamcoder.domains.text.main as Text 
+import dreamcoder.domains.text.main as Text
 from dreamcoder.task import Task
 from dreamcoder.type import Context, arrow, tbool, tlist, tint, t0, UnificationFailure
 from dreamcoder.type import tpregex
@@ -127,6 +127,7 @@ def test_task(m, task, timeout):
     failed_cands = set()
 
     print(task.examples)
+    
     while time.time() - start < timeout:
         query = makeExamples(task)
         #import pdb; pdb.set_trace()
@@ -135,11 +136,20 @@ def test_task(m, task, timeout):
         for cand in candidates:
             try:
                 p = Program.parse(" ".join(cand))
-                #print(p)
+                print(p)
             except ParseFailure: continue
             except IndexError: continue
             except AssertionError: continue
             if p not in failed_cands:
+                if "STRING" in str(p):
+                    assert arguments.domain == 'text'
+                    if len(task.stringConstants) == 0: ll = float('-inf')
+                    else:
+                        ci = Text.ConstantInstantiateVisitor([[cc for cc in sc ]
+                                                              for sc in task.stringConstants],
+                                                             sample=False)
+                        ll = min(task.logLikelihood(pp, timeout=0.1 if arguments.domain != 'rational' else None)
+                                 for pp in p.visit(ci))
                 if arguments.domain != 'logo':
                     ll = task.logLikelihood(p, timeout=0.1 if arguments.domain != 'rational' else None)
                 else:
