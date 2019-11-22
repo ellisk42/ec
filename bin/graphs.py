@@ -493,7 +493,7 @@ def plotECResult(
         
         for (color,ls),(xs,ys,ts,bs) in plotCommands_solve.items():
             solveAxis.plot(xs,ys,color=color,ls=ls)
-            solveAxis.fill_between(xs,bs,ts,facecolor=color,alpha=0.2)        
+            solveAxis.fill_between(xs,bs,ts,facecolor=color,alpha=0.4)        
     else:
         if solveAxis:
             for (color,ls,xs,ys) in shuffled([ (color,ls,xs,ys)
@@ -513,6 +513,7 @@ def plotECResult(
             name = arguments.baselines[2*n]
             bl = arguments.baselines[2*n + 1]
             print("baseline",name,bl)
+            name = name.replace(',','\n')
             bl = float(bl)
             plot.axhline(bl,-0.5,iterations,
                          color='k',lw=3)
