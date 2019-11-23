@@ -45,7 +45,8 @@ from dreamcoder.domains.logo.logoPrimitives import turtle
 from dreamcoder.domains.logo.makeLogoTasks import drawLogo
 
 from pregex import pregex
-from dreamcoder.domains.regex.makeRegexTasks import makeOldTasks, makeLongTasks, makeShortTasks, makeWordTasks, makeNumberTasks, makeHandPickedTasks, makeNewTasks, makeNewNumberTasks
+from dreamcoder.domains.regex.makeRegexTasks import makeOldTasks, makeLongTasks, makeShortTasks, makeWordTasks, makeNumberTasks, makeHandPickedTasks, makeNewTasks, makeNewNumberTasks #, add_string_constants
+from dreamcoder.likelihoodModel import add_string_constants
 from dreamcoder.domains.regex.regexPrimitives import reducedConcatPrimitives
 import dreamcoder.domains.regex.main as Regex
 Regex.ConstantInstantiateVisitor.SINGLE = Regex.ConstantInstantiateVisitor()
@@ -160,6 +161,8 @@ def test_task(m, task, timeout):
                     ll = float('-inf')
                     if not p.canHaveType(task.request): p = None
                     else:
+                        from examineFrontier import ConstantVisitor
+                        p = p.visit(ConstantVisitor(task.str_const))
                         try:
                             regex = p.evaluate([])(pre.String(""))
                             dataLikelihood = sum(regex.match("".join(y))
@@ -242,6 +245,8 @@ if __name__=='__main__':
         random.shuffle(tasks)
         del tasks[maxTasks:]    
         test, _ = testTrainSplit(tasks, 0.5)
+        test = add_string_constants(test)
+
         
         input_vocabularies = [["dummy"], list(printable) + ["LIST_END","LIST_START"]]
         BATCHSIZE = 64
