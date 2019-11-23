@@ -171,11 +171,11 @@ def test_task(m, task, timeout):
                             frontier.append(FrontierEntry(p,
                                                           logPrior=logPrior,
                                                           logLikelihood=dataLikelihood))
-                            print("sampled program",p,
-                                  "which translates into regex",regex,
-                                  "and which assigns the following likelihood to the test data",
-                                  dataLikelihood,
-                                  "and which has prior probability",logPrior)
+                            #print("sampled program",p,
+                            #      "which translates into regex",regex,
+                            #      "and which assigns the following likelihood to the test data",
+                            #      dataLikelihood,
+                            #      "and which has prior probability",logPrior)
                         except: p = None
                             
                 elif arguments.domain != 'logo':
