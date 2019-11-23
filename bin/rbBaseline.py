@@ -13,7 +13,7 @@ from dreamcoder.grammar import Grammar
 from dreamcoder.domains.text.makeTextTasks import *
 import dreamcoder.domains.text.main as Text
 from dreamcoder.task import Task
-from dreamcoder.frontier import Frontier
+from dreamcoder.frontier import Frontier,FrontierEntry
 from dreamcoder.type import Context, arrow, tbool, tlist, tint, t0, UnificationFailure
 from dreamcoder.type import tpregex
 
@@ -45,7 +45,9 @@ from dreamcoder.domains.logo.logoPrimitives import turtle
 from dreamcoder.domains.logo.makeLogoTasks import drawLogo
 
 from pregex import pregex
-from dreamcoder.domains.regex.makeRegexTasks import makeOldTasks, makeLongTasks, makeShortTasks, makeWordTasks, makeNumberTasks, makeHandPickedTasks, makeNewTasks, makeNewNumberTasks
+import pregex as pre
+from dreamcoder.domains.regex.makeRegexTasks import makeOldTasks, makeLongTasks, makeShortTasks, makeWordTasks, makeNumberTasks, makeHandPickedTasks, makeNewTasks, makeNewNumberTasks #, add_string_constants
+from dreamcoder.likelihoodModel import add_string_constants
 from dreamcoder.domains.regex.regexPrimitives import reducedConcatPrimitives
 import dreamcoder.domains.regex.main as Regex
 Regex.ConstantInstantiateVisitor.SINGLE = Regex.ConstantInstantiateVisitor()
@@ -139,7 +141,6 @@ def test_task(m, task, timeout):
         for cand in candidates:
             try:
                 p = Program.parse(" ".join(cand))
-                #print(p)
             except ParseFailure: continue
             except IndexError: continue
             except AssertionError: continue
@@ -160,6 +161,8 @@ def test_task(m, task, timeout):
                     ll = float('-inf')
                     if not p.canHaveType(task.request): p = None
                     else:
+                        from examineFrontier import ConstantVisitor
+                        p = p.visit(ConstantVisitor(task.str_const))
                         try:
                             regex = p.evaluate([])(pre.String(""))
                             dataLikelihood = sum(regex.match("".join(y))
@@ -206,6 +209,8 @@ def test_task(m, task, timeout):
     from graphs import addStupidRegex
     frontier = addStupidRegex(frontier,g)
     from examineFrontier import testingRegexLikelihood
+    print("for this task I think that the following is the map estimate:\n",
+          frontier.topK(1))
     return lse([ e.logPosterior + testingRegexLikelihood(task, e.program)
                  for e in frontier ])
 
@@ -237,11 +242,13 @@ if __name__=='__main__':
         
         eprint("Unwilling to handle {} tasks, truncating..".format(len(tasks)))
         seed = 42 # previously this was hardcoded and never changed
+        maxTasks = 256
         random.seed(seed)
         random.shuffle(tasks)
         maxTasks = 256
         del tasks[maxTasks:]    
         test, _ = testTrainSplit(tasks, 0.5)
+        test = add_string_constants(test)
         
         input_vocabularies = [["dummy"], list(printable) + ["LIST_END","LIST_START"]]
         BATCHSIZE = 64
