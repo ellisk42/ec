@@ -237,6 +237,7 @@ if __name__=='__main__':
         
         eprint("Unwilling to handle {} tasks, truncating..".format(len(tasks)))
         seed = 42 # previously this was hardcoded and never changed
+        maxTasks = 256
         random.seed(seed)
         random.shuffle(tasks)
         del tasks[maxTasks:]    
