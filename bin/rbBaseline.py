@@ -209,6 +209,8 @@ def test_task(m, task, timeout):
     from graphs import addStupidRegex
     frontier = addStupidRegex(frontier,g)
     from examineFrontier import testingRegexLikelihood
+    print("for this task I think that the following is the map estimate:\n",
+          frontier.topK(1))
     return lse([ e.logPosterior + testingRegexLikelihood(task, e.program)
                  for e in frontier ])
 
