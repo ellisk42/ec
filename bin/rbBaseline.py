@@ -13,7 +13,7 @@ from dreamcoder.grammar import Grammar
 from dreamcoder.domains.text.makeTextTasks import *
 import dreamcoder.domains.text.main as Text
 from dreamcoder.task import Task
-from dreamcoder.frontier import Frontier
+from dreamcoder.frontier import Frontier,FrontierEntry
 from dreamcoder.type import Context, arrow, tbool, tlist, tint, t0, UnificationFailure
 from dreamcoder.type import tpregex
 
@@ -45,6 +45,7 @@ from dreamcoder.domains.logo.logoPrimitives import turtle
 from dreamcoder.domains.logo.makeLogoTasks import drawLogo
 
 from pregex import pregex
+import pregex as pre
 from dreamcoder.domains.regex.makeRegexTasks import makeOldTasks, makeLongTasks, makeShortTasks, makeWordTasks, makeNumberTasks, makeHandPickedTasks, makeNewTasks, makeNewNumberTasks #, add_string_constants
 from dreamcoder.likelihoodModel import add_string_constants
 from dreamcoder.domains.regex.regexPrimitives import reducedConcatPrimitives
@@ -140,7 +141,6 @@ def test_task(m, task, timeout):
         for cand in candidates:
             try:
                 p = Program.parse(" ".join(cand))
-                print(p)
             except ParseFailure: continue
             except IndexError: continue
             except AssertionError: continue
@@ -248,7 +248,6 @@ if __name__=='__main__':
         del tasks[maxTasks:]    
         test, _ = testTrainSplit(tasks, 0.5)
         test = add_string_constants(test)
-
         
         input_vocabularies = [["dummy"], list(printable) + ["LIST_END","LIST_START"]]
         BATCHSIZE = 64
