@@ -139,7 +139,7 @@ def test_task(m, task, timeout):
         for cand in candidates:
             try:
                 p = Program.parse(" ".join(cand))
-                print(p)
+                #print(p)
             except ParseFailure: continue
             except IndexError: continue
             except AssertionError: continue
@@ -191,8 +191,8 @@ def test_task(m, task, timeout):
                         
                 #print(ll)
                 if ll > float('-inf'):
-                    print(p)
-                    print(task.name)
+                    #print(p)
+                    #print(task.name)
                     return True
 
                 elif p is not None: failed_cands.add(p)
@@ -239,6 +239,7 @@ if __name__=='__main__':
         seed = 42 # previously this was hardcoded and never changed
         random.seed(seed)
         random.shuffle(tasks)
+        maxTasks = 256
         del tasks[maxTasks:]    
         test, _ = testTrainSplit(tasks, 0.5)
         
