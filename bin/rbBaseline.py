@@ -81,7 +81,7 @@ tasks = makeTasks()
 
 
 
-def getDatum():
+def getDatum(n_ex):
     while True:
         tsk = random.choice(tasks)
         tp = tsk.request
@@ -90,9 +90,11 @@ def getDatum():
         if task is None:
             #print("no taskkkk")
             continue
+
+        del task.examples[n_ex:]
+        #print(len(task.examples))
         ex = makeExamples(task)
         if ex is None: continue
-        
         return ex, stringify(str(p))
 
 def makeExamples(task):
@@ -122,32 +124,46 @@ def makeExamples(task):
             examples.append((i,y))
         return examples
 
-def test_task(m, task, timeout):
+def test_task(m, task, i, timeout):
     start = time.time()
-    failed_cands = set()
+    #failed_cands = set()
 
     #print(task.examples)
     while time.time() - start < timeout:
-        query = makeExamples(task)
-        #import pdb; pdb.set_trace()
-        candidates = m.sample([query]*BATCHSIZE) #i think this works
-        #print('len failed', len(failed_cands))
-        for cand in candidates:
-            try:
-                p = Program.parse(" ".join(cand))
-                #print(p)
-            except ParseFailure: continue
-            except IndexError: continue
-            except AssertionError: continue
-            if p not in failed_cands:
-                ll = task.logLikelihood(p, timeout=10)
-                #print(ll)
-                if ll > float('-inf'): 
-                  print("found program:")
-                  print(p)
-                  return True
-                else: failed_cands.add(p)
+        
+        allExamples = task.examples
+        
+        for i_run in range(10):
+            task.examples = [random.choice( [ex for ex in allExamples])]
+            for i_N in range(20):
+                test_example = random.choice( [ex for ex in allExamples if ex not in task.examples])
+                query = makeExamples(task)
 
+                t = time.time()
+                hit = False
+                while time.time() - t < timeout and not hit:
+                    candidates = m.sample([query]*BATCHSIZE) #i think this works
+                    for cand in candidates:
+                        try:
+                            p = Program.parse(" ".join(cand))
+                            #print(p)
+                        except ParseFailure: continue
+                        except IndexError: continue
+                        except AssertionError: continue
+                        #if p not in failed_cands:
+                        ll = task.logLikelihood(p, timeout=1)
+                        #print(ll)
+                        if ll > float('-inf'): 
+                            #print("found program:")
+                            #print(p)
+                            pred_out = p.apply(test_example[0]) 
+                            correct = pred_out == test_example[1]
+                            print(f"i_run: {i_run}, i_N: {i_N}, task ID: {i}, test input: {test_example[0]}, test output: {test_example[1]}, prediction: {pred_out}, correct: {correct}" )
+                            hit = True
+                            break
+                if not hit:
+                    print(f"i_run: {i_run}, i_N: {i_N}, task ID: {i}, test input: {test_example[0]}, test output: {test_example[1]}, prediction: None, correct: False" )
+                task.examples.append(test_example)
     return False
 
 
@@ -286,7 +302,8 @@ if __name__=='__main__':
         max_n_iterations = 10000000000
         #batch = [getDatum() for _ in range(BATCHSIZE)]
         for i in range(max_n_iterations):
-            batch = [getDatum() for _ in range(BATCHSIZE)]
+            n_ex = random.choice(range(1,22))
+            batch = [getDatum(n_ex) for _ in range(BATCHSIZE)]
             inputs, targets = zip(*batch)
             score = m.optimiser_step(inputs, targets)
 
@@ -312,12 +329,12 @@ if __name__=='__main__':
         print(n_tasks, "tasks")
         n_hits = 0
         for i, task in enumerate(tasks):
-            hit = test_task(m, task, arguments.timeout)
-            print("for task ",i, ", hit=", hit)
-            if hit: n_hits += 1
+            test_task(m, task, i, arguments.timeout)
+            #print("for task ",i, ", hit=", hit)
+            #if hit: n_hits += 1
 
-        print("final score:")
-        print(n_hits/float(n_tasks))
+        #print("final score:")
+        #print(n_hits/float(n_tasks))
 
 
 
