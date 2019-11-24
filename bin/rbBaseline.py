@@ -305,7 +305,9 @@ if __name__=='__main__':
             n_ex = random.choice(range(1,22))
             batch = [getDatum(n_ex) for _ in range(BATCHSIZE)]
             inputs, targets = zip(*batch)
-            score = m.optimiser_step(inputs, targets)
+            try:
+                score = m.optimiser_step(inputs, targets)
+            except KeyError: continue
 
             if i%10==0: print(f"Iteration {i}/{max_n_iterations}, Score {score}, ({(time.time()-start)/(i+1)} seconds per iteration)", flush=True) 
 
