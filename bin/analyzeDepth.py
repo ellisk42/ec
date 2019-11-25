@@ -38,6 +38,12 @@ def loadCheckpoint(r):
               "list": "List",
               "rational": "Regression"}[domain]
     result = loadPickle(r)
+
+    if arguments.every:
+        hits = [len(tst)/result.numTestingTasks for tst in result.testingSearchTime]
+        depths = [ [primitiveDepth(e) for e in g.primitives ] for g in result.grammars]
+        return domain,list(zip(range(999),hits,depth))
+    
     g = result.grammars[-1]
     ds = [primitiveDepth(e) for e in g.primitives ]
 
@@ -56,8 +62,55 @@ if __name__ == "__main__":
                         help="List of checkpoints that use the full model.")
     parser.add_argument("--generative", nargs='+', default=[],
                         help="List of checkpoints that use the no-recognition lesion.")
+    parser.add_argument("--every", default=False, action='store_true')
     parser.add_argument("--legend",default=[],nargs='+')
     arguments = parser.parse_args()
+
+    if arguments.every:
+        fullResults = {}
+        for r in arguments.recognition:
+            domain, data = loadCheckpoint(r)
+            fullResults[domain] = fullResults.get(domain,[]) + data
+
+        lesionResults = {}
+        for r in arguments.generative:
+            domain, data = loadCheckpoint(r)
+            lesionResults[domain] = lesionResults.get(domain,[]) + data
+
+        for mode in ["MEAN","SIZE"]:
+            # points and their colors
+            X = []
+            Y = []
+            C = []
+            for results in [fullResults,lesionResults]:
+                for domain, data in results:
+                    for i,y,d in data:
+                        Y.append(y) # fraction of solved tasks
+                        if mode == "MEAN":
+                            x = sum(d)/len(d)
+                        elif mode == "SIZE":
+                            x = sum(d_ > 1 for d_ in d)
+                        else:
+                            assert False
+                        X.append(x)
+
+                        if result is fullResults:
+                            c = (1.,0.,i/20.)
+                        elif result is lesionResults:
+                            c = (0.,1.,i/20.)
+                        C.append(c)
+
+            plot.figure(figsize=(4,2.5))
+            plot.scatter(X,Y,color=C,alpha=0.5)
+            plot.savefig(f"figures/depthVersusAccuracy_revision_{mode}.png")
+        sys.exit()
+
+                
+                            
+
+                
+
+
 
 
     fullResults = {}
