@@ -96,7 +96,7 @@ if __name__ == "__main__":
 
                         factor = (i+7)/(20+7)
                         if results is fullResults:
-                            c = (factor,0.,0.)
+                            c = (factor,0.,1.)
                         elif results is lesionResults:
                             c = (0.,factor,0.)
                         C.append(c)
