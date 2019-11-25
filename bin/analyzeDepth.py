@@ -42,7 +42,7 @@ def loadCheckpoint(r):
     if arguments.every:
         hits = [len(tst)/result.numTestingTasks for tst in result.testingSearchTime]
         depths = [ [primitiveDepth(e) for e in g.primitives ] for g in result.grammars]
-        return domain,list(zip(range(999),hits,depth))
+        return domain,list(zip(range(999),hits,depths))
     
     g = result.grammars[-1]
     ds = [primitiveDepth(e) for e in g.primitives ]
