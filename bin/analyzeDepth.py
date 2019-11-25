@@ -103,6 +103,16 @@ if __name__ == "__main__":
 
             plot.figure(figsize=(4,2.5))
             plot.scatter(X,Y,color=C,alpha=0.5)
+            plot.ylabel("% Test Solved",
+                    fontsize=FONTSIZE)
+            plot.xlabel({"MAX": "Max depth",
+                         "MEAN": "Avg. depth",
+                         "SIZE": "Library size"}[mode],
+                        fontsize=FONTSIZE)
+            plot.xticks(fontsize=TICKFONTSIZE)
+            plot.yticks(fontsize=TICKFONTSIZE)
+            plot.gca().spines['right'].set_visible(False)
+            plot.gca().spines['top'].set_visible(False)        
             plot.savefig(f"figures/depthVersusAccuracy_revision_{mode}.png")
         sys.exit()
 
