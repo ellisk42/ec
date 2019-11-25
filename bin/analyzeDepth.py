@@ -94,7 +94,7 @@ if __name__ == "__main__":
                             assert False
                         X.append(x)
 
-                        factor = (i+7)/(20+7).
+                        factor = (i+7)/(20+7)
                         if results is fullResults:
                             c = (factor,0.,0.)
                         elif results is lesionResults:
