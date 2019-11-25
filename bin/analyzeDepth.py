@@ -94,10 +94,11 @@ if __name__ == "__main__":
                             assert False
                         X.append(x)
 
+                        factor = (i+7)/(20+7).
                         if results is fullResults:
-                            c = (1.,0.,i/20.)
+                            c = (factor,0.,0.)
                         elif results is lesionResults:
-                            c = (0.,1.,i/20.)
+                            c = (0.,factor,0.)
                         C.append(c)
 
             plot.figure(figsize=(4,2.5))
