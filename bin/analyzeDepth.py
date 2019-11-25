@@ -83,7 +83,7 @@ if __name__ == "__main__":
             Y = []
             C = []
             for results in [fullResults,lesionResults]:
-                for domain, data in results:
+                for domain, data in results.items():
                     for i,y,d in data:
                         Y.append(y) # fraction of solved tasks
                         if mode == "MEAN":
