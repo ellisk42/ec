@@ -94,9 +94,9 @@ if __name__ == "__main__":
                             assert False
                         X.append(x)
 
-                        if result is fullResults:
+                        if results is fullResults:
                             c = (1.,0.,i/20.)
-                        elif result is lesionResults:
+                        elif results is lesionResults:
                             c = (0.,1.,i/20.)
                         C.append(c)
 
