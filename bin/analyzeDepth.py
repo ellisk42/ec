@@ -113,7 +113,8 @@ if __name__ == "__main__":
             plot.yticks(fontsize=TICKFONTSIZE)
             plot.gca().spines['right'].set_visible(False)
             plot.gca().spines['top'].set_visible(False)        
-            plot.savefig(f"figures/depthVersusAccuracy_revision_{mode}.png")
+            plot.savefig(f"figures/depthVersusAccuracy_revision_{mode}.png",
+            bbox_inches='tight')
         sys.exit()
 
                 
