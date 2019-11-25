@@ -115,6 +115,9 @@ if __name__ == "__main__":
             plot.gca().spines['top'].set_visible(False)        
             plot.savefig(f"figures/depthVersusAccuracy_revision_{mode}.png",
             bbox_inches='tight')
+
+            r,p = pearsonr(X,Y)
+            print(mode,r,p)
         sys.exit()
 
                 
