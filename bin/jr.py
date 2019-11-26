@@ -25,9 +25,9 @@ from dreamcoder.domains.list.listPrimitives import basePrimitives, primitives, M
 from dreamcoder.recognition import RecurrentFeatureExtractor
 from dreamcoder.domains.list.makeListTasks import make_list_bootstrap_tasks, sortBootstrap, EASYLISTTASKS, joshTasks
 
-tasks = joshTasks()[:1]
+tasks = joshTasks()
 
-timeout = 5
+timeout = 600
 
 """
 
