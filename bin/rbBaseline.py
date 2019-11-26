@@ -211,6 +211,9 @@ def test_task(m, task, timeout):
     from examineFrontier import testingRegexLikelihood
     print("for this task I think that the following is the map estimate:\n",
           frontier.topK(1))
+    if arguments.taskLikelihood:
+        return lse([ e.logPrior + e.logLikelihood
+                     for e in frontier ])
     return lse([ e.logPosterior + testingRegexLikelihood(task, e.program)
                  for e in frontier ])
 
@@ -220,6 +223,7 @@ if __name__=='__main__':
     import argparse
     parser = argparse.ArgumentParser(description = "")
     parser.add_argument("--domain",'-d',default="text")
+    parser.add_argument("--taskLikelihood",default=False,action='store_true')
     parser.add_argument("--test", type=str, default=False)
     parser.add_argument("--timeout", type=float, default=600)
     arguments = parser.parse_args()
@@ -417,8 +421,12 @@ if __name__=='__main__':
             totalCharacters = sum( len(s)
                                    for t in test 
                                    for _,s in regexHeldOutExamples(t))
-            print("average likelihood of held out examples (normalized per character)",
-                  total_likelihood/totalCharacters)
+            if arguments.taskLikelihood:
+                print("average marginal likelihood of held out task (normalized per character)",
+                      total_likelihood/totalCharacters)
+            else:
+                print("average likelihood of held out examples (normalized per character)",
+                      total_likelihood/totalCharacters)
         else:
             print("final score:")
             print(n_hits/float(n_tasks))
