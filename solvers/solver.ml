@@ -117,11 +117,12 @@ let load_problems channel =
    maxParameters,
    nc,timeout,verbose)
 
-let export_frontiers tf solutions : string =
+let export_frontiers number_enumerated tf solutions : string =
   let open Yojson.Basic.Util in
   let open Yojson.Basic in
   let serialization : Yojson.Basic.json =
-    `Assoc(List.map2_exn tf solutions ~f:(fun (t,_) ss ->
+    `Assoc(("number_enumerated",`Int(number_enumerated)) ::
+           List.map2_exn tf solutions ~f:(fun (t,_) ss ->
         (t.name, `List(ss |> List.map ~f:(fun s ->
              `Assoc([("program", `String(s.hit_program));
                      ("time", `Float(s.hit_time));
@@ -138,11 +139,11 @@ let _ =
        mfp,
      nc,timeout, verbose) =
     load_problems Pervasives.stdin in
-  let solutions =
+  let solutions, number_enumerated =
     enumerate_for_tasks ~maxFreeParameters:mfp ~lowerBound:lowerBound ~upperBound:upperBound ~budgetIncrement:budgetIncrement
     ~verbose:verbose ~nc:nc ~timeout:timeout g tf
   in
-  export_frontiers tf solutions |> print_string ;;
+  export_frontiers number_enumerated tf solutions |> print_string ;;
 
 (* let tune_differentiation () = *)
 (*   let (tf,g, *)

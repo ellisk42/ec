@@ -365,8 +365,8 @@ let enumerate_for_tasks (g: contextual_grammar) ?verbose:(verbose = true)
     ~timeout
     (* tasks and maximum frontier sizes *)
     (tf: (task*int) list)
-  (* Returns, for each task, (program,logPrior,) *)
-     : hit_result list list
+  (* Returns, for each task, (program,logPrior) as well as the total number of enumerated programs *)
+     : (hit_result list list)*int
   =
 
   set_enumeration_timeout timeout;
@@ -390,19 +390,28 @@ let enumerate_for_tasks (g: contextual_grammar) ?verbose:(verbose = true)
   let lower_bound = ref lowerBound in
 
   let startTime = Time.now () in
+  
+  let total_number_of_enumerated_programs = ref 0 in
 
   while not (enumeration_timed_out()) &&
           List.exists (range nt) ~f:(fun j -> Heap.length hits.(j) < maximumFrontier.(j))
        && !lower_bound +. budgetIncrement <= upperBound
-    do
+  do
+    let number_of_enumerated_programs = ref 0 in
       let final_results =
         (* Returns a list of "final results" *)
         (* Each final result is [Array.map ~f:Heap.to_list hits] *)
         (* We flatten it to get a list of arrays of heaps *)
         enumerate_programs ~maxFreeParameters:maxFreeParameters ~nc:nc g request
           (!lower_bound) (!lower_bound +. budgetIncrement)
-          ~final:(fun () -> [Array.map ~f:Heap.to_list hits])
+          ~final:(fun () ->
+              (* Printf.eprintf "%d\n" !number_of_enumerated_programs; flush_everything(); *)
+              [(Array.map ~f:Heap.to_list hits, !number_of_enumerated_programs)])
+
           (fun p logPrior ->
+             incr number_of_enumerated_programs;
+             incr total_number_of_enumerated_programs;
+
              let mdl = 0.-.logPrior in
 
              assert( !lower_bound <= mdl);
@@ -429,7 +438,9 @@ let enumerate_for_tasks (g: contextual_grammar) ?verbose:(verbose = true)
 
       if nc > 1 then
         (* merge the results from each of the parallel processes *)
-        final_results |> List.iter ~f:(fun array_of_heaps ->
+        final_results |> List.iter ~f:(fun (array_of_heaps, number_enumerated_here) ->
+            total_number_of_enumerated_programs := !total_number_of_enumerated_programs +
+                                                   number_enumerated_here;
             range nt |> List.iter ~f:(fun j ->
                 let new_heap = array_of_heaps.(j) in
                 let old_heap = hits.(j) in
@@ -444,5 +455,8 @@ let enumerate_for_tasks (g: contextual_grammar) ?verbose:(verbose = true)
 
     done ;
 
-    hits |> Array.to_list |> List.map ~f:Heap.to_list
+  (hits |> Array.to_list |> List.map ~f:Heap.to_list,
+   !total_number_of_enumerated_programs)
+ 
+
 
