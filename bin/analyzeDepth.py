@@ -101,15 +101,26 @@ if __name__ == "__main__":
                             x = sum(d_ > 1 for d_ in d)
                         elif mode == "MAX":
                             x = max(d)
+                            # jitter
+                            adjustment = random.random()
+                            adjustment -= 0.5
+                            adjustment*=0.5
+                            x += adjustment
                         else:
                             assert False
                         X.append(x)
 
                         factor = (i+7)/(20+7)
                         if results is fullResults:
-                            c = (factor,0.,1.)
+                            #003f5c
+                            c = (0.,
+                                 factor*63./256.,
+                                 factor*92./256.)
                         elif results is lesionResults:
-                            c = (0.,factor,0.)
+                            # "#ef5675"
+                            c = (factor*239./256.,
+                                 factor*86./256.,
+                                 factor*117./256.)
                         C.append(c)
 
             plot.figure(figsize=(4,2.5))
