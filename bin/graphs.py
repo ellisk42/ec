@@ -521,7 +521,8 @@ def plotECResult(
             bl = float(bl)
             plot.axhline(bl,-0.5,iterations,
                          color='k',lw=3)
-            solveAxis.text(iterations, bl, name, ha='left', va='center', fontweight='bold')
+            solveAxis.text(iterations, bl, name, ha='left', va='center', fontweight='bold',
+                           fontsize=LABELFONTSIZE)
         plot.subplots_adjust(right=0.9)
 
     if solveAxis and likelihood is None:
