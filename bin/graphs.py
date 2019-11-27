@@ -524,9 +524,11 @@ def plotECResult(
             bl = float(bl)
             if name.startswith('style'):
                 name = name[len('style'):]
+                name = name.split('!')
                 color = name[0]
                 if len(name) > 1:
-                    style = name[1:]
+                    style = name
+                    assert len(name) == 2
                 else:
                     style = '-'
                 plot.axhline(bl,-0.5,iterations,
