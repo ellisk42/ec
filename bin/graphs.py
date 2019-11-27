@@ -522,10 +522,23 @@ def plotECResult(
             print("baseline",name,bl)
             name = name.replace(',','\n')
             bl = float(bl)
-            plot.axhline(bl,-0.5,iterations,
-                         color='k',lw=3)
-            solveAxis.text(iterations, bl, name, ha='left', va='center', fontweight='bold',
-                           fontsize=TICKFONTSIZE)
+            if name.startswith('style'):
+                name = name[len('style'):]
+                color = name[0]
+                if len(name) > 1:
+                    style = name[1:]
+                else:
+                    style = '-'
+                plot.axhline(bl,-0.5,iterations,
+                             color=color,lw=3,
+                             linestyle=style,
+                             zorder=-1.)
+            else:
+                plot.axhline(bl,-0.5,iterations,
+                             color='k',lw=3,
+                             zorder=-1.)
+                solveAxis.text(iterations, bl, name, ha='left', va='center', fontweight='bold',
+                               fontsize=TICKFONTSIZE)
         plot.subplots_adjust(right=0.9)
 
     if solveAxis and likelihood is None:
