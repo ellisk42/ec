@@ -354,7 +354,7 @@ def plotECResult(
             r.testingSearchTime = [ [t for t in ts if t <= testingTimeout ]
                                     for ts in r.testingSearchTime ]
     
-    f, a1 = plot.subplots(figsize=(5, 2.5))
+    f, a1 = plot.subplots(figsize=(arguments.width, arguments.height))
     if xLabel != "":
         a1.set_xlabel(xLabel or "Wake/Sleep Cycles", fontsize=LABELFONTSIZE)
     a1.xaxis.set_major_locator(MaxNLocator(integer=True))
@@ -649,6 +649,8 @@ if __name__ == "__main__":
     parser.add_argument("--median",
                         default=False, action='store_true',
                         help="Plots the median and 25/75 percentile of hits over time")
+    parser.add_argument("--width",'-w',default=5,type=float)
+    parser.add_argument("--height",'-h',default=2.5,type=float)
 
 
     arguments = parser.parse_args()
