@@ -86,7 +86,7 @@ if __name__ == "__main__":
             domain, data = loadCheckpoint(r)
             lesionResults[domain] = lesionResults.get(domain,[]) + data
 
-        for mode in ["MEAN","SIZE"]:
+        for mode in ["MEAN","SIZE","MAX"]:
             # points and their colors
             X = []
             Y = []
@@ -99,6 +99,8 @@ if __name__ == "__main__":
                             x = sum(d)/len(d)
                         elif mode == "SIZE":
                             x = sum(d_ > 1 for d_ in d)
+                        elif mode == "MAX":
+                            x = max(d)
                         else:
                             assert False
                         X.append(x)
