@@ -481,11 +481,12 @@ def plotECResult(
                          for kl, curves in plotCommands_time.items() }
         if solveAxis:
             for (color,ls),(xs,ys,es) in plotCommands_solve.items():
-                solveAxis.plot(xs,ys,color=color,ls=ls)
                 solveAxis.fill_between(xs,
                                        [y - e for y,e in zip(ys,es)],
                                        [y + e for y,e in zip(ys,es)],
-                                       facecolor=color,alpha=0.4)        
+                                       facecolor=color,alpha=0.4)
+            for (color,ls),(xs,ys,es) in plotCommands_solve.items():
+                solveAxis.plot(xs,ys,color=color,ls=ls)
         if timeAxis:
             for (color,ls),(xs,ys,es) in plotCommands_time.items():
                 timeAxis.errorbar(xs,ys,yerr=es,color=color,ls=ls)
@@ -496,8 +497,10 @@ def plotECResult(
                               for kl, curves in plotCommands_solve.items() }
         
         for (color,ls),(xs,ys,ts,bs) in plotCommands_solve.items():
+            solveAxis.fill_between(xs,bs,ts,facecolor=color,alpha=0.4)
+        for (color,ls),(xs,ys,ts,bs) in plotCommands_solve.items():
             solveAxis.plot(xs,ys,color=color,ls=ls)
-            solveAxis.fill_between(xs,bs,ts,facecolor=color,alpha=0.4)        
+            
     else:
         if solveAxis:
             for (color,ls,xs,ys) in shuffled([ (color,ls,xs,ys)
@@ -659,7 +662,7 @@ if __name__ == "__main__":
     if arguments.palette:
         # taken from https://learnui.design/tools/data-color-picker.html
         mapping = dict(zip(["teal","orange","purple","cyan"],
-                           ["#003f5c","#ffa600","purple","#ef5675"]))
+                           ["#003f5c","#ffa600","#7a5195","#ef5675"]))
         arguments.checkpoints = [mapping.get(ck,ck)
                                  for ck in arguments.checkpoints ]
 
