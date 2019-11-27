@@ -365,7 +365,9 @@ def plotECResult(
         timeAxis = a1
         solveAxis = None
     else:
-        if likelihood is None:
+        if arguments.ylabel is not None:
+            ylabel = arguments.ylabel
+        elif likelihood is None:
             ylabel = '%% %s Solved%s'%("Training" if showTraining else "Test",
                                        " (solid)" if showSolveTime else "")
         elif likelihood == "maximum":
@@ -631,6 +633,7 @@ if __name__ == "__main__":
                         type=int, default=110,
                         help="Maximum percent for the percent hits graph")
     parser.add_argument("--x-label", dest="xLabel", default=None)
+    parser.add_argument("--y-label", dest="ylabel", default=None)
     parser.add_argument("--showEpochs",
                         default=False, action="store_true",
                         help='X-axis is real-valued percentage of training tasks seen, instead of iterations.')
