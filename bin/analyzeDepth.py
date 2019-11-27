@@ -13,6 +13,7 @@ import matplotlib.lines as mlines
 import matplotlib.pyplot as plot
 import matplotlib.patches as mpatches
 import os
+import random
 
 MARKERONE = '*'
 MARKERTWO = '+'
@@ -20,6 +21,14 @@ MARKERTWO = '+'
 FONTSIZE = 18
 LEGENDSIZE = 12
 TICKFONTSIZE = 14
+
+def alignedPermutation(*parallel):
+    n = len(parallel[0])
+    assert all( len(p) == n for p in parallel )
+    p = list(range(n))
+    random.shuffle(p)
+    return tuple([x[i] for i in p ]
+                 for x in parallel )
 
 def primitiveDepth(e):
     if isinstance(e,Invented):
@@ -102,6 +111,7 @@ if __name__ == "__main__":
                         C.append(c)
 
             plot.figure(figsize=(4,2.5))
+            X,Y,C = alignedPermutation(X,Y,C)
             plot.scatter(X,Y,color=C,alpha=0.5)
             plot.ylabel("% Test Solved",
                     fontsize=FONTSIZE)
