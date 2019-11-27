@@ -527,7 +527,7 @@ def plotECResult(
                 name = name.split('!')
                 color = name[0]
                 if len(name) > 1:
-                    style = name
+                    style = name[1]
                     assert len(name) == 2
                 else:
                     style = '-'
