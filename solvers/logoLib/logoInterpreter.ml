@@ -159,6 +159,10 @@ let turtle_to_array turtle resolution =
   let et,_ = eval_turtle turtle in
   canvas_to_1Darray et resolution
 
+let turtle_to_array_and_cost turtle resolution =
+  let et,cost = eval_turtle turtle in
+  (canvas_to_1Darray et resolution, cost)
+
 
 let turtle_to_both turtle resolution filename =
   let c,_ = eval_turtle turtle in

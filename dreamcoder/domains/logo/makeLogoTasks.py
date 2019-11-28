@@ -182,7 +182,6 @@ def manualLogoTask(name, expression, proto=False, needToTrain=False,
     output = output[0]
     assert highresolution[1] == cost
     highresolution = highresolution[0]
-    print("DATA",sum(highresolution),",",cost)
             
     shape = list(map(int, output))
     highresolution = list(map(float, highresolution))
@@ -191,6 +190,7 @@ def manualLogoTask(name, expression, proto=False, needToTrain=False,
     t.mustTrain = needToTrain
     t.proto = proto
     t.specialTask = ("LOGO", {"proto": proto})
+    t.specialTask[1]["cost"] = cost*1.05
 
     t.highresolution = highresolution
 
