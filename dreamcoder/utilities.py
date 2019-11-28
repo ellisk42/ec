@@ -11,6 +11,15 @@ import pickle as pickle
 from itertools import chain
 import heapq
 
+import hashlib
+
+def computeMD5hash(my_string):
+    #https://stackoverflow.com/questions/13259691/convert-string-to-md5
+    m = hashlib.md5()
+    m.update(my_string.encode('utf-8'))
+    return m.hexdigest()
+
+
 class Thunk(object):
     # A class for lazy evaluation
     def __init__(self, thing):
@@ -568,6 +577,10 @@ def loadPickle(f):
     with open(f, 'rb') as handle:
         d = pickle.load(handle)
     return d
+
+def dumpPickle(o,f):
+    with open(f, 'wb') as handle:
+        pickle.dump(o,handle)
 
 
 def fst(l):
