@@ -87,11 +87,11 @@ let _ =
               let p = analyze_lazy_evaluation p in
               let turtle = run_lazy_analyzed_with_arguments p [] in
               let turtle = if smooth_pretty then smooth_logo_wrapper turtle else turtle in
-              let c = eval_turtle turtle in
+              let c,cost = eval_turtle turtle in
               let array = canvas_to_1Darray c size in
-              c, array) with
+              c, array, cost) with
           | None -> `String("timeout")
-          | Some(c, array) ->       
+          | Some(c, array, cost) ->       
             let bx = canvas_to_1Darray c 8 in
             if bx = b0 then `String("empty")
             else
@@ -99,7 +99,9 @@ let _ =
               | Some(fn) -> (output_canvas_png ~pretty c size fn;
                              `String("exported"))
               | None ->
-                `List(List.map (range (Bigarray.Array1.dim array)) ~f:(fun i -> `Int(array.{i})))
+                `Assoc([
+                    ("cost",`Float(cost));
+                    ("pixels",`List(List.map (range (Bigarray.Array1.dim array)) ~f:(fun i -> `Int(array.{i}))))])
         with _ -> `String("exception")
     )
   in

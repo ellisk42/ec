@@ -17,7 +17,8 @@ def drawLogo(*programs,
              resolution=None,
              pretty=False, smoothPretty=False,
              filenames=[],
-             animate=False):
+             animate=False,
+             cost=False):
     message = {}
     if pretty: message["pretty"] = pretty
     if smoothPretty: message["smoothPretty"] = smoothPretty
@@ -39,7 +40,14 @@ def drawLogo(*programs,
         jobs.append(entry)        
     message["jobs"] = jobs
     response = jsonBinaryInvoke("./logoDrawString", message)
-    if len(programs) == 1:
+    if cost:
+        # include the cost and return tuples of (pixels, cost)
+        response = [programResponse if isinstance(programResponse,str) else (programResponse["pixels"], programResponse["cost"])
+                    for programResponse in response ]
+    else:
+        response = [programResponse if isinstance(programResponse,str) else programResponse["pixels"]
+                    for programResponse in response ]
+    if len(programs) == 1:            
         return response[0]
     return response
 
@@ -162,13 +170,19 @@ def manualLogoTask(name, expression, proto=False, needToTrain=False,
 
     attempts = 0
     while True:
-        [output, highresolution] = drawLogo(p, p, resolution=[28,128])
+        [output, highresolution] = drawLogo(p, p, resolution=[28,128], cost=True)
         if output == "timeout" or highresolution == "timeout":
             attempts += 1
         else:
             break
     if attempts > 0:
         eprint(f"WARNING: Took {attempts} attempts to render task {name} within timeout")
+
+    cost = output[1]
+    output = output[0]
+    assert highresolution[1] == cost
+    highresolution = highresolution[0]
+    print("DATA",sum(highresolution),",",cost)
             
     shape = list(map(int, output))
     highresolution = list(map(float, highresolution))
