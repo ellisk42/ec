@@ -49,8 +49,8 @@ def loadCheckpoint(r):
     result = loadPickle(r)
 
     if arguments.every:
-        hits = [len(tst)/result.numTestingTasks for tst in result.testingSearchTime]
-        depths = [ [primitiveDepth(e) for e in g.primitives ] for g in result.grammars]
+        hits = [len(tst)/result.numTestingTasks for tst in result.testingSearchTime][1:]
+        depths = [ [primitiveDepth(e) for e in g.primitives ] for g in result.grammars][1:]
         return domain,list(zip(range(999),hits,depths))
     
     g = result.grammars[-1]
@@ -114,13 +114,13 @@ if __name__ == "__main__":
                         if results is fullResults:
                             #003f5c
                             c = (0.,
-                                 factor*63./256.,
-                                 factor*92./256.)
+                                 factor*63./92.,
+                                 factor*92./92.)
                         elif results is lesionResults:
                             # "#ef5675"
-                            c = (factor*239./256.,
-                                 factor*86./256.,
-                                 factor*117./256.)
+                            c = (factor*239./239.,
+                                 factor*86./239.,
+                                 factor*117./239.)
                         C.append(c)
 
             plot.figure(figsize=(4,2.5))
