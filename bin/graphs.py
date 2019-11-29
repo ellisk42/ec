@@ -148,7 +148,7 @@ def addStupidRegex(frontier, g):
         stupidProgram = Program.parse("(lambda (r_kleene (lambda (r_dot $0)) $0))")
         stupidRegex = stupidProgram.evaluate([])(pre.String(""))
         
-    if any( e.program == stupidProgram for e in frontier ): return frontier
+    if any( e.program == stupidProgram for e in frontier ): return frontier.normalize()
     lp = g.logLikelihood(frontier.task.request, stupidProgram)    
     ll = sum(stupidRegex.match("".join(example)) for _,example in frontier.task.examples)
     fe = FrontierEntry(logPrior=lp, logLikelihood=ll, program=stupidProgram)
