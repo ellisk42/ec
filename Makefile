@@ -7,10 +7,8 @@ all:
 	  jbuilder build logoDrawString.exe && \
 	  jbuilder build protonet-tester.exe && \
 	  jbuilder build compression.exe && \
-	  jbuilder build evolution.exe && \
 	  cp _build/default/compression.exe ../compression && \
 	  cp _build/default/versionDemo.exe ../versionDemo && \
-	  cp _build/default/evolution.exe ../evolution && \
 	  cp _build/default/solver.exe ../solver && \
 	  cp _build/default/helmholtz.exe ../helmholtz && \
 	  cp _build/default/protonet-tester.exe ../protonet-tester && \
