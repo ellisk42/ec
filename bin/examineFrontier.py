@@ -132,8 +132,11 @@ def testingRegexLikelihood(task, program):
     import pregex as pre
     
     testing = regexHeldOutExamples(task)
-    program = program.visit(ConstantVisitor(task.str_const))
-    r = program.evaluate([])(pre.String(""))
+    if isinstance(program, Program):
+        program = program.visit(ConstantVisitor(task.str_const))
+        r = program.evaluate([])(pre.String(""))
+    else:
+        r = program # assume that we were given a pregex
 
     ll = 0.
     for _,s in testing:

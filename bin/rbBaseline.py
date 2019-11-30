@@ -132,6 +132,8 @@ def test_task(m, task, timeout):
     print(task.examples)
 
     frontier = []
+
+    sampleFrequency = {}
     
     while time.time() - start < timeout:
         query = makeExamples(task)
@@ -165,12 +167,16 @@ def test_task(m, task, timeout):
                         p = p.visit(ConstantVisitor(task.str_const))
                         try:
                             regex = p.evaluate([])(pre.String(""))
-                            dataLikelihood = sum(regex.match("".join(y))
-                                                 for _,y in task.examples )
-                            logPrior = g.logLikelihood(task.request,p)
-                            frontier.append(FrontierEntry(p,
-                                                          logPrior=logPrior,
-                                                          logLikelihood=dataLikelihood))
+                            if arguments.sampleLikelihood:
+                                sampleFrequency[regex] = 1 + sampleFrequency.get(regex)
+                                p = None
+                            else:
+                                dataLikelihood = sum(regex.match("".join(y))
+                                                     for _,y in task.examples )
+                                logPrior = g.logLikelihood(task.request,p)
+                                frontier.append(FrontierEntry(p,
+                                                              logPrior=logPrior,
+                                                              logLikelihood=dataLikelihood))
                             #print("sampled program",p,
                             #      "which translates into regex",regex,
                             #      "and which assigns the following likelihood to the test data",
@@ -203,12 +209,15 @@ def test_task(m, task, timeout):
     if arguments.domain != 'regex':
         return False
 
+    from examineFrontier import testingRegexLikelihood
+    if arguments.sampleLikelihood:
+        return lse([ math.log(frequency) + testingRegexLikelihood(task, regex)
+                     for regex, frequency in sampleFrequency.items() ])
     # calculate that thing that we have to for regex
     frontier = Frontier(frontier,
                         task)
     from graphs import addStupidRegex
     frontier = addStupidRegex(frontier,g)
-    from examineFrontier import testingRegexLikelihood
     print("for this task I think that the following is the map estimate:\n",
           frontier.topK(1))
     if arguments.taskLikelihood:
@@ -224,6 +233,7 @@ if __name__=='__main__':
     parser = argparse.ArgumentParser(description = "")
     parser.add_argument("--domain",'-d',default="text")
     parser.add_argument("--taskLikelihood",default=False,action='store_true')
+    parser.add_argument("--sampleLikelihood",default=False,action='store_true')
     parser.add_argument("--test", type=str, default=False)
     parser.add_argument("--timeout", type=float, default=600)
     arguments = parser.parse_args()
