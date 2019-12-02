@@ -25,9 +25,6 @@ from dreamcoder.domains.list.listPrimitives import basePrimitives, primitives, M
 from dreamcoder.recognition import RecurrentFeatureExtractor
 from dreamcoder.domains.list.makeListTasks import make_list_bootstrap_tasks, sortBootstrap, EASYLISTTASKS, joshTasks
 
-tasks = joshTasks()
-
-timeout = 600
 
 """
 
@@ -53,52 +50,66 @@ Thanks!
 Josh
 """
 
-g = Grammar.uniform(josh_primitives())
-for t in tasks:
-    t.allExamples = t.examples
-    t.testingExamples = t.examples
-    t.examples = []
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser(description = "")
+    parser.add_argument("--w","-w",default=1,type=int)
+    parser.add_argument("--timeout","-t",default=600,type=float)
+    parser.add_argument("--CPUs",default=numberOfCPUs(),type=int)
+    arguments = parser.parse_args()
 
-for r in range(10):
-    # create empty training set
-    for t in tasks: t.examples = []
+    tasks = joshTasks(arguments.w)
 
-    for n in range(9):
-        frontiers, times = multicoreEnumeration(g,tasks,solver="ocaml",maximumFrontier=1,
-                                                enumerationTimeout=timeout,CPUs=min(numberOfCPUs(),len(tasks)),
-                                                evaluationTimeout=0.001,
-                                                testing=True)
-        frontiers = {f.task: f for f in frontiers}
-        eprint("evaluating on held out examples")
-        for ti,t in enumerate(tasks):
-            testingExample = random.choice([e for e in t.allExamples
-                                            if e not in t.examples])
-            eprint(t)
-            eprint("trained on")
-            eprint(t.examples)
-            eprint("evaluated on")
-            eprint(testingExample)
-            X = str(testingExample[0][0]).replace(",","").replace("[","(").replace("]",")")
-            Y = str(testingExample[1]).replace(",","").replace("[","(").replace("]",")")
+    timeout = arguments.timeout
 
-            if len(frontiers[t]):
-                p = frontiers[t].topK(1).entries[0].program
-                eprint("best program",p)
-                yh = p.evaluate([])(testingExample[0][0])
-                eprint("gives the prediction")
-                eprint(yh)
-                correct = yh == testingExample[1]
-                eprint("is this correct?",correct)
-                yh = str(yh).replace(",","").replace("[","(").replace("]",")")
+    g = Grammar.uniform(josh_primitives(arguments.w))
+    for t in tasks:
+        t.allExamples = t.examples
+        t.testingExamples = t.examples
+        t.examples = []
 
-                print(f"CSV{r},{n},{ti},{X},{Y},{yh},{int(correct)}")
-            else:
-                eprint("could not find any program")
-                print(f"CSV{r},{n},{ti},{X},{Y},,0")
+    for r in range(10):
+        # create empty training set
+        for t in tasks: t.examples = []
 
-            t.examples.append(testingExample)
-            
-        
-        
+        for n in range(9):
+            frontiers, times = multicoreEnumeration(g,tasks,solver="ocaml",maximumFrontier=1,
+                                                    enumerationTimeout=timeout,CPUs=arguments.CPUs,
+                                                    evaluationTimeout=0.001,
+                                                    testing=True)
+            frontiers = {f.task: f for f in frontiers}
+            eprint("evaluating on held out examples")
+            for ti,t in enumerate(tasks):
+                testingExample = random.choice([e for e in t.allExamples
+                                                if e not in t.examples])
+                eprint(t)
+                eprint("trained on")
+                eprint(t.examples)
+                eprint("evaluated on")
+                eprint(testingExample)
+                X = str(testingExample[0][0]).replace(",","").replace("[","(").replace("]",")")
+                Y = str(testingExample[1]).replace(",","").replace("[","(").replace("]",")")
+
+                if len(frontiers[t]):
+                    p = frontiers[t].topK(1).entries[0].program
+                    eprint("best program",p)
+                    try:
+                        yh = p.evaluate([])(testingExample[0][0])
+                    except: yh = ""
+                    eprint("gives the prediction")
+                    eprint(yh)
+                    correct = yh == testingExample[1]
+                    eprint("is this correct?",correct)
+                    yh = str(yh).replace(",","").replace("[","(").replace("]",")")
+
+                    print(f"CSV{r},{n},{ti},{X},{Y},{yh},{int(correct)}")
+                else:
+                    eprint("could not find any program")
+                    print(f"CSV{r},{n},{ti},{X},{Y},,0")
+
+                t.examples.append(testingExample)
+
+
+
 
 

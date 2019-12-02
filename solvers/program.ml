@@ -1057,5 +1057,9 @@ ignore(primitive "empty?_int" (tlist tint @> tboolean)
          (function
            | [] -> true
            | _ -> false));;
-
-
+ignore(primitive "-n" (tint @> tint @> tint)
+         (fun x y ->
+            if x < 0 || y < 0 then raise (Failure "nan") else x - y));;
+ignore(primitive "+n" (tint @> tint @> tint)
+         (fun x y ->
+            if x < 0 || y < 0 then raise (Failure "nan") else x + y));;

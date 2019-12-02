@@ -7,12 +7,19 @@ from dreamcoder.utilities import eprint, hashable
 from random import randint, random, seed
 from itertools import product
 
-def joshTasks():
+def joshTasks(w):
     import os
     ts = []
     import json
-    directory = "data/wave1"
+    if w == 1:
+        directory = "data/wave1"
+    elif w == 2:
+        directory = "data/wave2"
+    else:
+        assert False
     for fn in os.listdir(directory):
+        if not fn.endswith(".json"):continue
+        
         with open(f"{directory}/{fn}") as handle:
             data = json.load(handle)
             ts.append(Task(data["name"],

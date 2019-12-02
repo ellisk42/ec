@@ -5,6 +5,17 @@ from dreamcoder.type import tlist, tint, tbool, arrow, t0, t1, t2
 import math
 from functools import reduce
 
+def _plusNatural(x):
+    def g(y):
+        if g < 0 or x < 0: raise ValueError()
+        return x + y
+    return g
+def _minusNatural(x):
+    def g(y):
+        if g < 0 or x < 0: raise ValueError()
+        return x - y
+    return g
+        
 
 def _flatten(l): return [x for xs in l for x in xs]
 
@@ -372,17 +383,33 @@ def no_length():
     ]
 
 
-def josh_primitives():
-    return [
-        Primitive("empty_int", tlist(tint), []),
-        Primitive("cons_int", arrow(tint, tlist(tint), tlist(tint)), _cons),
-        Primitive("car_int", arrow(tlist(tint), tint), _car),
-        Primitive("cdr_int", arrow(tlist(tint), tlist(tint)), _cdr),
-        Primitive("empty?_int", arrow(tlist(tint), tbool), _isEmpty),
-        Primitive("if", arrow(tbool, t0, t0, t0), _if),
-        Primitive("eq?", arrow(tint, tint, tbool), _eq),
-        primitiveRecursion1
+def josh_primitives(w):
+    if w == 1:
+        return [
+            Primitive("empty_int", tlist(tint), []),
+            Primitive("cons_int", arrow(tint, tlist(tint), tlist(tint)), _cons),
+            Primitive("car_int", arrow(tlist(tint), tint), _car),
+            Primitive("cdr_int", arrow(tlist(tint), tlist(tint)), _cdr),
+            Primitive("empty?_int", arrow(tlist(tint), tbool), _isEmpty),
+            Primitive("if", arrow(tbool, t0, t0, t0), _if),
+            Primitive("eq?", arrow(tint, tint, tbool), _eq),
+            primitiveRecursion1
         ] + [Primitive(str(j), tint, j) for j in range(100)]
+    elif w == 2:
+        return [
+            Primitive("empty_int", tlist(tint), []),
+            Primitive("cons_int", arrow(tint, tlist(tint), tlist(tint)), _cons),
+            Primitive("car_int", arrow(tlist(tint), tint), _car),
+            Primitive("cdr_int", arrow(tlist(tint), tlist(tint)), _cdr),
+            Primitive("empty?_int", arrow(tlist(tint), tbool), _isEmpty),
+            Primitive("if", arrow(tbool, t0, t0, t0), _if),
+            Primitive("eq?", arrow(tint, tint, tbool), _eq),
+            Primitive("-n", arrow(tint,tint,tint), _minusNatural),
+            Primitive("+n", arrow(tint,tint,tint), _plusNatural),
+            Primitive("gt?", arrow(tint,tint,tint), _gt),
+            primitiveRecursion1
+        ] + [Primitive(str(j), tint, j) for j in range(10)]
+
 
 def McCarthyPrimitives():
     "These are < primitives provided by 1959 lisp as introduced by McCarthy"
