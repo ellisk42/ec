@@ -72,7 +72,7 @@ if __name__ == "__main__":
         # create empty training set
         for t in tasks: t.examples = []
 
-        for n in range(9):
+        for n in range(20):
             frontiers, times = multicoreEnumeration(g,tasks,solver="ocaml",maximumFrontier=1,
                                                     enumerationTimeout=timeout,CPUs=arguments.CPUs,
                                                     evaluationTimeout=0.001,
