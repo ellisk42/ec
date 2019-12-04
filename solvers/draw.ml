@@ -69,7 +69,7 @@ let scale_matrix s =
 type drawing_routine = shape list;;
 
 ignore(primitive "connect" (tstroke @> tstroke @> tstroke) (@));;
-ignore(primitive "emptystroke" tstroke [Line((0.,0.))]);;
+ignore(primitive "emptystroke" tstroke []);;
 ignore(primitive "line" tstroke [Line((0.,0.),(1.,0.))]);;
 ignore(primitive "circle" tstroke (
     (* Python creates 30 equally spaced vertices around the circle *)
