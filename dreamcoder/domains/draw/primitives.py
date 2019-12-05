@@ -403,20 +403,20 @@ def savefig(p, fname="tmp.png"):
         ax.get_figure().savefig(fname)
         print("saved: {}".format(fname))
 
-def plot(p):
+def plot(p, color="k"):
         fig = plt.figure(figsize=(XYLIM,XYLIM))
         ax = fig.add_axes([-0.03, -0.03, 1.06, 1.06])
         ax.set_xlim(-XYLIM,XYLIM)
         ax.set_ylim(-XYLIM,XYLIM)
-        [ax.plot(x[:,0], x[:,1], "-k") for x in p]
+        [ax.plot(x[:,0], x[:,1], "-", color=color) for x in p]
         return ax
 
 
-def plotOnAxes(p, ax):
+def plotOnAxes(p, ax, color="k'"):
         ax.set_xlim(-XYLIM,XYLIM)
         ax.set_ylim(-XYLIM,XYLIM)
         # ax.axis("equal")
-        [ax.plot(x[:,0], x[:,1], "-k") for x in p]
+        [ax.plot(x[:,0], x[:,1], "-", color=color) for x in p]
         return ax
 
 
