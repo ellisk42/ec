@@ -147,7 +147,7 @@ def main(arguments):
         else:
             print("NOT DOING PRUNING")
         primitives = getPrimitives(trainset=arguments["trainset"], prune=arguments["dopruning"])
-        g0 = Grammar.uniform(primitives)
+        g0 = Grammar.uniform(primitives, continuationType="tstroke")
 
         print("As an example, here's the amount of ink used by a line, a circle, and  connected to a circle:")
         print(program_ink(_line))
