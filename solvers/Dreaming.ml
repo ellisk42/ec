@@ -353,7 +353,7 @@ register_special_helmholtz "LOGO" logo_hash;;
 let draw_hash ?timeout:(timeout=0.001) request inputs : program -> (PolyList.t*float) option =
   let open Yojson.Basic.Util in
 
-  assert (request = tstroke);
+  assert (request = tstroke || request = (tstroke @> tstroke));
   
   fun program ->
     let pixels = run_recent_draw ~attempts:2 ~timeout:timeout ~resolution:28 program in

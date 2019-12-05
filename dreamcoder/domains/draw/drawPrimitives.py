@@ -16,6 +16,7 @@ from dreamcoder.type import baseType, arrow, tmaybe, t0, t1, t2
 
 from dreamcoder.domains.draw.primitives import *
 from dreamcoder.domains.draw.primitives import _makeAffine, _tform, _reflect, _repeat, _connect, _line, _circle, _tform_wrapper, _reflect_wrapper, _emptystroke
+from dreamcoder.domains.draw.primitives import _lineC, _circleC, _finishC, _repeatC, _transformC, _reflectC, _emptystrokeC
 
 # ======= DEFINE ALL PRIMITIVES
 tstroke = baseType("tstroke")
@@ -32,17 +33,33 @@ def _givemeback(thing):
 
 p0 = [Primitive("None", tmaybe(t0), None), Primitive("Some", arrow(t0, tmaybe(t0)), _givemeback)]
 
+if False:
 
-p1 = [
-	Primitive("emptystroke", tstroke, _emptystroke),
-	Primitive("line", tstroke, _line), 
-	Primitive("circle", tstroke, _circle),
-	Primitive("transmat", arrow(tmaybe(tscale), tmaybe(tangle), tmaybe(tdist), tmaybe(tdist), tmaybe(ttrorder), ttransmat), Curried(_makeAffine)),
-	Primitive("transform", arrow(tstroke, ttransmat, tstroke), Curried(_tform_wrapper)),
-	Primitive("reflect", arrow(tstroke, tangle, tstroke), Curried(_reflect_wrapper)), 
-	Primitive("connect", arrow(tstroke, tstroke, tstroke), Curried(_connect)),
-	Primitive("repeat", arrow(tstroke, trep, ttransmat, tstroke), Curried(_repeat))
-]
+	p1 = [
+		Primitive("emptystroke", tstroke, _emptystroke),
+		Primitive("line", tstroke, _line), 
+		Primitive("circle", tstroke, _circle),
+		Primitive("transmat", arrow(tmaybe(tscale), tmaybe(tangle), tmaybe(tdist), tmaybe(tdist), tmaybe(ttrorder), ttransmat), Curried(_makeAffine)),
+		Primitive("transform", arrow(tstroke, ttransmat, tstroke), Curried(_tform_wrapper)),
+		Primitive("reflect", arrow(tstroke, tangle, tstroke), Curried(_reflect_wrapper)), 
+		Primitive("connect", arrow(tstroke, tstroke, tstroke), Curried(_connect)),
+		Primitive("repeat", arrow(tstroke, trep, ttransmat, tstroke), Curried(_repeat))
+	]
+
+else:
+	# new version , with contiuation
+	p1 = [
+		Primitive("emptystrokeC", arrow(tstroke, tstroke), _emptystrokeC),
+		Primitive("lineC", arrow(tstroke, tstroke), _lineC), 
+		Primitive("circleC", arrow(tstroke, tstroke), _circleC),
+		Primitive("transmat", arrow(tmaybe(tscale), tmaybe(tangle), tmaybe(tdist), tmaybe(tdist), tmaybe(ttrorder), ttransmat), Curried(_makeAffine)),
+		Primitive("transformC", arrow(arrow(tstroke, tstroke), ttransmat, tstroke, tstroke), Curried(_transformC)),
+		Primitive("reflectC", arrow(arrow(tstroke, tstroke), tangle, tstroke, tstroke), Curried(_reflectC)),
+		Primitive("repeatC", arrow(arrow(tstroke, tstroke), trep, ttransmat, tstroke, tstroke), Curried(_repeatC))
+	]
+
+
+
 # p2 = [Primitive("scale{}".format(i), tscale, j) for i, j in enumerate(np.linspace(1.0, 4.0, 7))]
 p2 = [Primitive("scale{}".format(i), tscale, j) for i, j in enumerate(SCALES)] 
 # p3 = [Primitive("dist{}".format(i), tdist, j) for i, j in enumerate(np.linspace(-4, 4, 9))]

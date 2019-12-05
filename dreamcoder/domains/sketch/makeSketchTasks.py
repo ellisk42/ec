@@ -13,24 +13,20 @@ class SupervisedSketch(Task):
     def __init__(self, name, program):
         super(SupervisedSketch, self).__init__(name, arrow(tsketch,tsketch), []) # TODO: LT, needs this, i.e., a request. 
         if isinstance(program,str):
+            program = par
             try:
                 program = parseSketch(program)
             except:
                 eprint("Parse failure:")
                 eprint(program)
                 assert False
-            self.original = program
-            plan = executeSketch(program)
-        elif isinstance(program,Program):
-            self.original = program
-            plan = executeSketch(program)
-        else:
-            plan = program
         self.original = program
-        state, self.plan = program.evaluate([])(_empty_sketch)(SketchState())
-        self.hand = state.hand
+        self.hand, self.trace = executeSketch(program)
+        # hand, self.trace = program.evaluate([])(_empty_sketch)(SketchState())
+        # self.hand = state.hand
+        # self.hand = hand
         self.specialTask = ("sketch",
-                            {"plan": self.plan})
+                            {"trace": self.trace})
         self.image = None
         self.handImage = None
 
@@ -98,11 +94,157 @@ class SupervisedSketch(Task):
     #     scipy.misc.imsave(f, a)
 
     def logLikelihood(self, e, timeout=None): # TODO, LT, given expression, calculates distance.
-        # from dreamcoder.domains.tower.tower_common import centerTower
-        # def k():
-        #     plan = e.evaluate([])(lambda s: (s,[]))(0)[1]
-        #     if centerTower(plan) == centerTower(self.plan): return 0.
-        #     return NEGATIVEINFINITY
-        # try: return runWithTimeout(k, timeout)
-        # except RunWithTimeout: return NEGATIVEINFINITY        
-        pass
+        def simpleTrace(prog):
+            """ gets trace and simplifies"""
+            trace = p.evaluate([])(T._empty_sketch)(SketchState(hand=starthand, history=[]))[1]
+            # any LL convert to multiple 
+            # TODO: didnt do anything. should convert LL to little lines. Before do that should figure out whether to 
+            # allow rotation of horizontal to vert line...
+
+        def loss(prog1, prog2):
+            """compares prog1 and prog2"""
+            trace1 = prog1.evaluate([])(T._empty_sketch)(SketchState(hand=HANDSTARTPOS, history=[]))[1]
+            trace2 = prog2.evaluate([])(T._empty_sketch)(SketchState(hand=HANDSTARTPOS, history=[]))[1]
+            
+            if set(trace1)==set(trace2):
+                return 0.0
+            else:
+                return NEGATIVEINFINITY
+
+        trace = e.evaluate([])(_empty_sketch)(SketchState(hand=HANDSTARTPOS, history=[]))[1]
+
+        if set(self.trace)==set(trace):
+            return 0.0
+        else:
+            return NEGATIVEINFINITY
+
+
+def makeSupervisedTasks(trainset="S8full", doshaping=False): # TODO, LT, make these tasks.
+
+    print("DRAW TASK training set: {}".format(trainset))
+
+    programs = []
+    programnames = []
+
+    # ===== train on basic stimuli like lines
+    if doshaping:
+        print("INCLUDING SHAPING STIMULI")
+        ll = transform(_line, theta=pi/2, s=4, y=-2.)
+        programs.extend([
+            _line,
+            transform(_circle, s=2.),
+            transform(_circle, theta=pi/2),
+            transform(_line, theta=pi/2),
+            transform(_line, s=4),
+            transform(_line, y=-2.),
+            transform(_line, theta=pi/2, s=4.),
+            transform(_line, theta=pi/2, y=-2.),
+            transform(_line, theta=pi/2, s=4, y=-2.)]
+            )
+        programnames.extend(["shaping_{}".format(n) for n in range(9)])
+
+    ##############################################
+    ################# TRAINING SETS
+    if trainset=="S8_nojitter":
+        libname = "dreamcoder/domains/draw/trainprogs/S8_nojitter_shaping"
+        with open("{}.pkl".format(libname), 'rb') as fp:
+            P = pickle.load(fp)
+        programs.extend(P)
+        programnames.extend(["S8_nojitter_shaping_{}".format(n) for n in range(len(P))])
+
+        libname = "dreamcoder/domains/draw/trainprogs/S8_nojitter"
+        with open("{}.pkl".format(libname), 'rb') as fp:
+            P = pickle.load(fp)
+        programs.extend(P)
+        programnames.extend(["S8_nojitter_{}".format(n) for n in range(len(P))])
+
+
+    def addPrograms(lib, programs, programnames, nameprefix=[]):
+        if not nameprefix:
+            nameprefix=lib
+            # note: assumes that name prefix is lib. here tell it otherwise.
+
+        # ========= 1) SHAPING:
+        # ---- get programs
+        libname = "dreamcoder/domains/draw/trainprogs/{}".format(lib)
+        with open("{}.pkl".format(libname), 'rb') as fp:
+            P = pickle.load(fp)
+        programs.extend(P)
+
+        # ---- get program names
+        with open("{}_stimnum.pkl".format(libname), 'rb') as fp:
+            stimnum = pickle.load(fp)
+        names = ["{}_{}".format(nameprefix, s) for s in stimnum]
+        programnames.extend(names)
+
+        return programs, programnames
+
+    if trainset in ["S12", "S13"]:
+
+        programs, programnames = addPrograms("S12_13_shaping", programs, programnames)
+        programs, programnames = addPrograms(trainset, programs, programnames)
+
+
+    # ===== make programs
+    if userealnames:
+        assert len(programs) == len(programnames)
+        names = programnames
+    else:
+        names = ["task{}".format(i) for i in range(len(programs))]
+    print("training task names:")
+    print(names)
+    alltasks = []
+    for name, p in zip(names, programs):
+    # for i, p in enumerate(programs):
+        # name = "task{}".format(i)
+        alltasks.append(SupervisedDraw(name, p))
+
+
+
+    ##############################################
+    ################# make test tasks?
+    programs_test = []
+    programs_test_names = []
+    testtasks = []
+    if trainset in ["S8full", "S8", "S9full", "S9", "S8_nojitter", "S9_nojitter"]:
+        
+        libname = "dreamcoder/domains/draw/trainprogs/S8_test"
+        with open("{}.pkl".format(libname), 'rb') as fp:
+            P = pickle.load(fp)
+        programs_test.extend(P) 
+        programs_test_names.extend(["S8_{}".format(n) for n in [0, 2, 59, 65, 94]])
+
+        libname = "dreamcoder/domains/draw/trainprogs/S9_test"
+        with open("{}.pkl".format(libname), 'rb') as fp:
+            P = pickle.load(fp)
+        programs_test.extend(P) 
+        programs_test_names.extend(["S9_{}".format(n) for n in [14, 15, 17, 18, 29, 43, 55, 59, 61, 86, 96, 99, 140]])
+
+        libname = "dreamcoder/domains/draw/trainprogs/S8_nojitter_test"
+        with open("{}.pkl".format(libname), 'rb') as fp:
+            P = pickle.load(fp)
+        programs_test.extend(P) 
+        programs_test_names.extend(["S8_nojitter_{}".format(n) for n in [69, 73, 134, 137, 139]])
+
+        libname = "dreamcoder/domains/draw/trainprogs/S9_nojitter_test"
+        with open("{}.pkl".format(libname), 'rb') as fp:
+            P = pickle.load(fp)
+        programs_test.extend(P) 
+        programs_test_names.extend(["S9_nojitter_{}".format(n) for n in [56, 59, 76, 80, 108, 112, 135, 139, 144, 147]])
+
+    if programs_test:
+        if userealnames:
+            assert len(programs_test) == len(programs_test_names)
+            names = programs_test_names
+        else:
+            names = ["test{}".format(i) for i in range(len(programs_test))]
+
+        for name, p in zip(names, programs_test):
+        # for i, p in enumerate(programs_test):
+            # name = "test{}".format(i)
+            testtasks.append(SupervisedDraw(name, p))
+    print("test tasks:")
+    print(names)
+    
+    return alltasks, testtasks, programnames, programs_test_names
+

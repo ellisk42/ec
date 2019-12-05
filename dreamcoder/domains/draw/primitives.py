@@ -333,7 +333,8 @@ def _connect(p1, p2):
 # ========== STROKES 
 _line = [np.array([(0., 0.), (1., 0.)])] # --- unit line, from 0 to 1
 _circle = [np.array([(0.5*math.cos(theta), 0.5*math.sin(theta)) for theta in np.linspace(0., 2.*math.pi, num=30)])] # --- circle, centered at 0, diameter 1
-_emptystroke = [np.array([(0., 0.)])] # ---
+# _emptystroke = [np.array([(0., 0.)])] # ---
+_emptystroke = [] # ---
 
 # --- regular polygons
 def polygon(N=3):
@@ -341,6 +342,54 @@ def polygon(N=3):
     # N = range(3,7)
     y = 0.5/tan(pi/N)
     return _repeat(transform(_line, x=-0.5, y=y), N, _makeAffine(theta=2*pi/N))
+
+
+
+## ============================= NEW VERSION, USING CONTINUATION INSTEAD OF CONNECT
+def _lineC(k):
+    """takes something (k) and connects line to it"""
+    return _connect(_line, k)
+    # return lambda k: _connect(_line, k)
+
+    # return lambda k: lambda s: k(_connect(s, _line))
+
+def _circleC(k):
+    """takes something (k) and connects circle to it"""
+    return _connect(_circle, k)
+    # return lambda k: _connect(_circle, k)
+
+def _emptystrokeC(k):  
+    return _connect(_emptystroke, k)
+    # return lambda k: _connect(_emptystroke, k)
+
+def _finishC():
+    """attaches empty stroke to finalize"""
+    return lambda k: k(_emptystroke)
+
+def _repeatC(s, N, T):
+    """as intermediate step grounds s to numbers, does repeat to it, 
+    then returns a function that connects the repeated thing to the 
+    next thing"""
+    # return lambda k: _connect(_repeat(s(_emptystroke), N, T), k)
+    return lambda k: _connect(_repeat(s(_emptystroke), N, T), k)
+
+def _transformC(s,T):
+    return lambda k: _connect(_tform_wrapper(s(_emptystroke), T), k)
+
+def _reflectC(s, theta):
+    return lambda k: _connect(_reflect(s(_emptystroke), theta), k)    
+
+
+# def _repeatC(N, T):
+#     return lambda k: lambda s: k(_repeat(s(_emptystroke), N, T))
+
+# def _repeatC(k, N, T):
+#     """returns a function that can take in the next in continuation"""
+#     return lambda s: _connect(_repeat(k(_emptystroke), N, T), s)
+
+
+
+
 
 # ============= NOT PRIMITIVES.
 def transform(p, s=1., theta=0., x=0., y=0., order="trs"):
@@ -358,20 +407,20 @@ def savefig(p, fname="tmp.png"):
         ax.get_figure().savefig(fname)
         print("saved: {}".format(fname))
 
-def plot(p):
+def plot(p, color="k"):
         fig = plt.figure(figsize=(XYLIM,XYLIM))
         ax = fig.add_axes([-0.03, -0.03, 1.06, 1.06])
         ax.set_xlim(-XYLIM,XYLIM)
         ax.set_ylim(-XYLIM,XYLIM)
-        [ax.plot(x[:,0], x[:,1], "-k") for x in p]
+        [ax.plot(x[:,0], x[:,1], "-", color=color) for x in p]
         return ax
 
 
-def plotOnAxes(p, ax):
+def plotOnAxes(p, ax, color="k'"):
         ax.set_xlim(-XYLIM,XYLIM)
         ax.set_ylim(-XYLIM,XYLIM)
         # ax.axis("equal")
-        [ax.plot(x[:,0], x[:,1], "-k") for x in p]
+        [ax.plot(x[:,0], x[:,1], "-", color=color) for x in p]
         return ax
 
 

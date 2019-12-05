@@ -70,8 +70,10 @@ type drawing_routine = shape list;;
 
 ignore(primitive "connect" (tstroke @> tstroke @> tstroke) (@));;
 ignore(primitive "emptystroke" tstroke []);;
+ignore(primitive "emptystrokeC" (tstroke @> tstroke) (fun s -> s));;
 ignore(primitive "line" tstroke [Line((0.,0.),(1.,0.))]);;
-ignore(primitive "circle" tstroke (
+ignore(primitive "lineC" (tstroke @> tstroke) (fun s -> (Line((0.,0.),(1.,0.))) :: s));;
+let circle_strokes = (
     (* Python creates 30 equally spaced vertices around the circle *)
     List.range ~start:`inclusive ~stop:`exclusive
       0 29 |> 
@@ -80,8 +82,9 @@ ignore(primitive "circle" tstroke (
         let t' = 2.*.pi*.(Float.of_int (i+1))/.29. in
         let p1 = (0.5*.cos t, 0.5*.sin t) in
         let p2 = (0.5*.cos t', 0.5*.sin t') in
-        Line(p1,p2))));;
-    
+        Line(p1,p2)));;
+ignore(primitive "circle" tstroke circle_strokes);;
+ignore(primitive "circleC" (tstroke @> tstroke) (fun s -> s @ circle_strokes));;
 ignore(primitive "transmat" (tmaybe tscale @> tmaybe tangle @> tmaybe tdistance @> tmaybe tdistance @> tmaybe torder @> tmatrix)
          (fun scale angle d1 d2 o -> 
             let scale = match scale with
@@ -115,6 +118,9 @@ let transform s m = s |> List.map ~f:(fun s -> match s with
     | Line(u,v) -> Line(m *& u, m*& v));;
 
 ignore(primitive "transform" (tstroke @> tmatrix @> tstroke) transform);;
+ignore(primitive "transformC" ((tstroke @> tstroke) @> tmatrix @> tstroke @> tstroke)
+         (fun s m k ->
+            transform (s []) m @ k));;
 ignore(primitive "None" (tmaybe t0) None);;
 ignore(primitive "Some" (t0 @> tmaybe t0) (fun x -> Some(x)));;
 
@@ -148,25 +154,33 @@ ignore(primitive "Some" (t0 @> tmaybe t0) (fun x -> Some(x)));;
     ignore(primitive (Printf.sprintf "angle%d" i) tangle t));;
 
 
+let reflect_implementation =
+  (fun p t ->
+     let t' = t -. pi/.2. in
+     let first_rotation = rotate_matrix (-.t') in
+     let second_rotation = rotate_matrix t' in
+     let reflect = [| [|-1.;0.;0.;|];
+                      [|0.;1.;0.;|];
+                      [|0.;0.;1.;|]|]
+     in
+     let m = second_rotation @@ reflect @@ first_rotation in
+     transform p m);;
 ignore(primitive "reflect" (tstroke @> tangle @> tstroke)
-         (fun p t ->
-            let t' = t -. pi/.2. in
-            let first_rotation = rotate_matrix (-.t') in
-            let second_rotation = rotate_matrix t' in
-            let reflect = [| [|-1.;0.;0.;|];
-                             [|0.;1.;0.;|];
-                             [|0.;0.;1.;|]|]
-            in
-            let m = second_rotation @@ reflect @@ first_rotation in
-            transform p m));;
-       
-       
-ignore(primitive "repeat" (tstroke @> trep @> tmatrix @> tstroke)
-         (fun p n m ->
+         reflect_implementation);;
+ignore(primitive "reflectC" ((tstroke @> tstroke) @> tangle @> tstroke @> tstroke)
+         (fun s a k ->
+            reflect_implementation (s []) a @ k));;       
+
+let repeat_implementation = (fun p n m ->
             List.fold_right (List.range ~stop:`exclusive 0 n) ~init:[p]
               ~f:(fun _ (s :: ss) ->
                   transform s m :: s :: ss) |>
-            List.concat));;
+            List.concat);;
+ignore(primitive "repeat" (tstroke @> trep @> tmatrix @> tstroke)
+         repeat_implementation);;
+ignore(primitive "repeatC" ((tstroke @> tstroke) @> trep @> tmatrix @> tstroke @> tstroke)
+         (fun s r m k ->
+            repeat_implementation (s []) r m @ k));;
 
    
                                     
@@ -207,6 +221,12 @@ let drawing_cost (dr : drawing_routine) : float =
 
 let recent_draw_program : (program*((((int, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t)*float) option)) option ref = ref None;;
 let run_recent_draw ?attempts:(attempts=1) ~timeout ~resolution p =
+  (* this allows us to handle both continuation passing and also not continuation passing *)
+  let p = match p with
+    | Abstraction(_) -> Apply(p,primitive_empty)
+    | _ -> p
+  in
+  
   match !recent_draw_program with
   | Some(p',y) when program_equal p p' -> y
   | _ ->
@@ -260,7 +280,7 @@ register_special_task "draw" (fun  extras ?timeout:(timeout = 0.001) name ty exa
       | Some(spec') -> spec'
     in
     let spec = canvas_to_1Darray spec resolution in
-    
+
     {name = name;
      task_type = ty;
      log_likelihood =

@@ -24,17 +24,23 @@ class DrawCNN(ImageFeatureExtractor):
                                             channels=1)
         print("output dimensionality",self.outputDimensionality)
     def taskOfProgram(self, p, t):
-        return SupervisedDraw("dream", p.evaluate([]))
+        if t.isArrow:
+            # continuation passing
+            i = p.evaluate([])([])
+        else:
+            i = p.evaluate([])
+        return SupervisedDraw("dream", i)
 
     def featuresOfTask(self, t):
         return self(t.rendered_strokes)
 
-g0 = Grammar.uniform(primitives)
+g0 = Grammar.uniform(primitives, continuationType=tstroke)
 
 def dreamFromGrammar(g=g0, directory = "", N=25):
    # request = taxes # arrow9turtle turtle) just for logl.
    # request = arrow(taxes, taxes) # arrow9turtle turtle) just for logl.
    request = tstroke # arrow9turtle turtle) just for logl.
+   request = arrow(tstroke, tstroke)
    programs = [ p for _ in range(N) for p in [g.sample(request, maximumDepth=15)] if p is not None]
    return programs
    # drawDrawings(*programs, filenames)
@@ -141,7 +147,7 @@ def main(arguments):
         else:
             print("NOT DOING PRUNING")
         primitives = getPrimitives(trainset=arguments["trainset"], prune=arguments["dopruning"])
-        g0 = Grammar.uniform(primitives)
+        g0 = Grammar.uniform(primitives, continuationType="tstroke")
 
         print("As an example, here's the amount of ink used by a line, a circle, and  connected to a circle:")
         print(program_ink(_line))

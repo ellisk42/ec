@@ -7,8 +7,12 @@ from dreamcoder.grammar import Grammar
 import os
 import datetime
 
+def SketchCNN():
+    pass
 
-def dreamOfSketches(grammar=Grammar.uniform(primitives), N=50, make_montage=True):
+g0 = Grammar.uniform(primitives, continuationType=tsketch)
+
+def dreamOfSketches(grammar=g0, N=50, make_montage=True):
     request = arrow(tsketch, tsketch)
     programs = [p for _ in range(N) for p in [grammar.sample(request, maximumDepth=15)] if p is not None]
 
@@ -35,3 +39,34 @@ def dreamOfSketches(grammar=Grammar.uniform(primitives), N=50, make_montage=True
     # else:
     #     eprint("Tried to visualize dreams, but none to visualize.")
     return programs
+
+
+def main(arguments):
+        g0 = Grammar.uniform(primitives)
+
+        train, test = makeSupervisedTasks(trainset=arguments["trainset"])[:2]
+
+        # ==== remove bad shaping tasks
+        timestamp = datetime.datetime.now().isoformat()
+        outputDirectory = "experimentOutputs/sketch/%s"%timestamp
+        evaluationTimeout = 0.001 # seconds, how long allowed
+
+        os.system(f"mkdir -p {outputDirectory}")
+
+        if False:
+            arguments["featureExtractor"] = SketchCNN
+
+        if arguments["skiptesting"]==False and len(test)>0:
+                generator = ecIterator(g0, train, testingTasks=test,
+                        outputPrefix="%s/sketch"%outputDirectory,
+                        evaluationTimeout=evaluationTimeout,
+                        **arguments) # 
+        else:
+                print("NO TESTING TASKS INCLUDED")
+                generator = ecIterator(g0, train,
+                        outputPrefix="%s/sketch"%outputDirectory,
+                        evaluationTimeout=evaluationTimeout,
+                        **arguments) # 
+
+        for result in generator:
+                continue
