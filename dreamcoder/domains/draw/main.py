@@ -29,7 +29,7 @@ class DrawCNN(ImageFeatureExtractor):
     def featuresOfTask(self, t):
         return self(t.rendered_strokes)
 
-g0 = Grammar.uniform(primitives)
+g0 = Grammar.uniform(primitives, continuationType=tstroke)
 
 def dreamFromGrammar(g=g0, directory = "", N=25):
    # request = taxes # arrow9turtle turtle) just for logl.

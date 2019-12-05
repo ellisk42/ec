@@ -346,17 +346,21 @@ def polygon(N=3):
 
 
 ## ============================= NEW VERSION, USING CONTINUATION INSTEAD OF CONNECT
-def _lineC():
+def _lineC(k):
     """takes something (k) and connects line to it"""
-    return lambda k: _connect(_line, k)
+    return _connect(_line, k)
+    # return lambda k: _connect(_line, k)
+
     # return lambda k: lambda s: k(_connect(s, _line))
 
-def _circleC():
+def _circleC(k):
     """takes something (k) and connects circle to it"""
-    return lambda k: _connect(_circle, k)
+    return _connect(_circle, k)
+    # return lambda k: _connect(_circle, k)
 
-def _emptystrokeC():
-    return lambda k: _connect(_emptystroke, k)
+def _emptystrokeC(k):  
+    return _connect(_emptystroke, k)
+    # return lambda k: _connect(_emptystroke, k)
 
 def _finishC():
     """attaches empty stroke to finalize"""
@@ -372,8 +376,8 @@ def _repeatC(s, N, T):
 def _transformC(s,T):
     return lambda k: _connect(_tform_wrapper(s(_emptystroke), T), k)
 
-def _reflectC(theta):
-    return lambda s: lambda k: _connect(_reflect(s, theta), k)    
+def _reflectC(s, theta):
+    return lambda k: _connect(_reflect(s(_emptystroke), theta), k)    
 
 
 # def _repeatC(N, T):
