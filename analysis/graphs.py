@@ -32,10 +32,12 @@ def plotAllTasks(DAT, trainortest="train"):
         ax = plt.subplot(nrow, ncol, i+1)
         P.plotOnAxes(t.strokes, ax)
 
-        if len(DAT["result"].frontiersOverTime[t][-1])>0:
-            solved=True
-        else:
-            solved=False
+        solved = DAT["taskresultdict"][name]
+            # 
+        # if len(DAT["result"].frontiersOverTime[t][-1])>0:
+        #     solved=True
+        # else:
+        #     solved=False
 
         if solved:
             c = "b"

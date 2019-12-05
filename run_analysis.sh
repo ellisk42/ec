@@ -6,8 +6,8 @@
 EC_EXPT=$1
 echo $EC_EXPT
 DOPARSE=false # false, skip parsing (i.e, alreadyd one), true, then do
-DOSEG=false
-
+DOSEG=true
+# plannerscorever=test5
 CURRDIR=$(pwd)
 # out=/tmp/analysis/outputs/"$DG_EXPT"_$(date +%Y-%m-%d_%H-%M-%S)
 out="${CURRDIR}/analysis/outputs/analysis_$(date +%Y-%m-%d_%H-%M-%S)"
@@ -75,13 +75,25 @@ fi
 outthis=$out"_ecmodelhumandists_"$EC_EXPT
 echo "4) getting modelHumanDists for ${EC_EXPT}:"
 echo "python analysis/getModelHumanDists.py $EC_EXPT > $outthis"
-python analysis/getModelHumanDists.py $EC_EXPT
+python analysis/getModelHumanDists.py $EC_EXPT 0 > outthis
+python analysis/getModelHumanDists.py $EC_EXPT 1 >> outthis
+
+# # 5) next to datseg, extract planner scores for the exact same parses
+# outthis=$out"_ecparsegetplannerscore_"$EC_EXPT
+# echo "4) getting parsePlannerScores (save by datseg) for ${EC_EXPT}:"
+# echo "python analysis/parsesGetPlannerScores.py $EC_EXPT > $outthis"
+# python analysis/parsesGetPlannerScores.py $EC_EXPT > outthis
+
+# # 6) combines steps 4 and 5 into one combined summary dict.
+# outthis=$out"_ecmodelparsecombine_"$EC_EXPT
+# echo "python analysis/parsesGetPlannerScores.py $EC_EXPT > $outthis"
+# python analysis/modelParsesGetPlannerScores.py plannerscorever > outthis
 
 # 5) plot summaries to things
 outthis=$out"_ecsummarize_"$EC_EXPT
 echo "5) summarizing ${EC_EXPT}:"
 echo "python analysis/summarize.py $EC_EXPT > $outthis"
-python analysis/summarize.py $EC_EXPT
+python analysis/summarize.py $EC_EXPT > outthis
 
 # === DONE
 echo "DONE!"

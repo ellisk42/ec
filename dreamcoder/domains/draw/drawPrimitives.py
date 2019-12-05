@@ -15,7 +15,7 @@ from dreamcoder.grammar import Grammar
 from dreamcoder.type import baseType, arrow, tmaybe, t0, t1, t2
 
 from dreamcoder.domains.draw.primitives import *
-from dreamcoder.domains.draw.primitives import _makeAffine, _tform, _reflect, _repeat, _connect, _line, _circle, _tform_wrapper, _reflect_wrapper
+from dreamcoder.domains.draw.primitives import _makeAffine, _tform, _reflect, _repeat, _connect, _line, _circle, _tform_wrapper, _reflect_wrapper, _emptystroke
 
 # ======= DEFINE ALL PRIMITIVES
 tstroke = baseType("tstroke")
@@ -34,6 +34,7 @@ p0 = [Primitive("None", tmaybe(t0), None), Primitive("Some", arrow(t0, tmaybe(t0
 
 
 p1 = [
+	Primitive("emptystroke", tstroke, _emptystroke),
 	Primitive("line", tstroke, _line), 
 	Primitive("circle", tstroke, _circle),
 	Primitive("transmat", arrow(tmaybe(tscale), tmaybe(tangle), tmaybe(tdist), tmaybe(tdist), tmaybe(ttrorder), ttransmat), Curried(_makeAffine)),

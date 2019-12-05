@@ -1,0 +1,318 @@
+0
+S13_265
+#(lambda (reflect (#(lambda (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) None (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist16 rep1 (#(lambda (transmat None None (Some $0) None None)) dist18)) $0))) $0) angle0))
+ 
+#(lambda (reflect (#(lambda (#[CIRCLE -1.75, -1] (#[$P $X -1] N (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#[MOVE X $0] -1.75)) $0 (#[MOVE X $0] 1.1)) (#[MOVE X $0] -0.5))) $0) (transform circle (#[MOVE X $0] $1)))))) 0.45 2 (#[MOVE X $0] 1.1)) $0))) $0) 0.0))
+-------
+1
+S13_265
+#(lambda (lambda (#(lambda (lambda (connect $1 (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist18))))) (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) $1 rep3) (#(connect (transform circle (#(lambda (transmat None None (Some $0) None None)) dist14))) $0))))
+ 
+#[$P + $P at X1.1 + 4GRATING, variable height + CIRCLE at -1.75,0]
+-------
+2
+S13_265
+#(lambda (lambda (connect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 $1) (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist16 rep1 $0))))
+ 
+#(lambda (lambda (connect (#[REP VLINE $S -1.75,-2 by X 1.1 $R] 4.0 $1) (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#[MOVE X $0] -1.75)) $0 (#[MOVE X $0] 1.1)) (#[MOVE X $0] -0.5))) $0) (transform circle (#[MOVE X $0] $1)))))) 0.45 2 $0))))
+-------
+3
+S13_265
+#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) $0 (#(connect (transform circle (#(lambda (transmat None None (Some $0) None None)) dist14))) #(transform (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) rep0) (#(lambda (transmat None None (Some $0) None None)) dist18)))))
+ 
+#(lambda (#[$P $X -1] $0 (#[CIRCLE + $P -1.75,0] [REP HLINE MOVE START -1.75 BY X1.1 + $P at X-0.5 and $P at X1.1])))
+-------
+4
+S13_265
+#(lambda (lambda (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) $0 (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) $0 $1))))
+ 
+#(lambda (lambda (#[CIRCLE -1.75, -1] (#(lambda (#[$P $X -1] $0 (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#[MOVE X $0] -1.75)) $0 (#[MOVE X $0] 1.1)) (#[MOVE X $0] -0.5))) $0) (transform circle (#[MOVE X $0] $1)))))) -0.65 1 (#[MOVE X $0] 1.1)))) $0 $1))))
+-------
+5
+S13_265
+#(lambda (lambda (connect $1 (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))))
+ 
+#[$P + $P at X1.1]
+-------
+6
+S13_265
+#(#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist17 rep2 (#(lambda (transmat None None (Some $0) None None)) dist6))
+ 
+#(#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#[MOVE X $0] -1.75)) $0 (#[MOVE X $0] 1.1)) (#[MOVE X $0] -0.5))) $0) (transform circle (#[MOVE X $0] $1)))))) 1.55 3 (#[MOVE X $0] 0))
+-------
+7
+S13_265
+#(lambda (lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) None (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (#(lambda (reflect (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) $0 (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) None $0)) angle0)) (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 $1)))))
+ 
+#(lambda (lambda (#[$P $X -1] N (#(lambda (transform (repeat (transform line (#[MOVE X $0] -1.75)) $0 (#[MOVE X $0] 1.1)) (#[MOVE X $0] -0.5))) $0) (#(lambda (reflect (#[CIRCLE -1.75, -1] (#(lambda (#[$P $X -1] $0 (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#[MOVE X $0] -1.75)) $0 (#[MOVE X $0] 1.1)) (#[MOVE X $0] -0.5))) $0) (transform circle (#[MOVE X $0] $1)))))) -0.65 1 (#[MOVE X $0] 1.1)))) N $0)) 0.0)) (#[REP VLINE $S -1.75,-2 by X 1.1 $R] 4.0 $1)))))
+-------
+8
+S13_265
+#(lambda (lambda (#(connect (transform circle (#(lambda (transmat None None (Some $0) None None)) dist14))) (connect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) $0 $1) (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (#(lambda (transmat None None (Some $0) None None)) dist18))))))
+ 
+#(lambda (lambda (#[CIRCLE + $P -1.75,0] (connect (#[REP VLINE $S -1.75,-2 by X 1.1 $R] $0 $1) (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#[MOVE X $0] -1.75)) $0 (#[MOVE X $0] 1.1)) (#[MOVE X $0] -0.5))) $0) (transform circle (#[MOVE X $0] $1)))))) -0.65 1 (#[MOVE X $0] 1.1))))))
+-------
+9
+S13_265
+#(lambda (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) None (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist16 rep1 (#(lambda (transmat None None (Some $0) None None)) dist18)) $0)))
+ 
+#(lambda (#[CIRCLE -1.75, -1] (#[$P $X -1] N (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#[MOVE X $0] -1.75)) $0 (#[MOVE X $0] 1.1)) (#[MOVE X $0] -0.5))) $0) (transform circle (#[MOVE X $0] $1)))))) 0.45 2 (#[MOVE X $0] 1.1)) $0)))
+-------
+10
+S13_265
+#(lambda (reflect (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) $0 (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) None $0)) angle0))
+ 
+#(lambda (reflect (#[CIRCLE -1.75, -1] (#(lambda (#[$P $X -1] $0 (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#[MOVE X $0] -1.75)) $0 (#[MOVE X $0] 1.1)) (#[MOVE X $0] -0.5))) $0) (transform circle (#[MOVE X $0] $1)))))) -0.65 1 (#[MOVE X $0] 1.1)))) N $0)) 0.0))
+-------
+11
+S13_265
+#(lambda (lambda (connect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 $0) (repeat (#(connect (transform circle (#(lambda (transmat None None (Some $0) None None)) dist14))) #(transform (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) rep0) (#(lambda (transmat None None (Some $0) None None)) dist18))) rep1 (transmat None None $1 (Some dist9) None)))))
+ 
+#(lambda (lambda (connect (#[REP VLINE $S -1.75,-2 by X 1.1 $R] 4.0 $0) (repeat (#[CIRCLE + $P -1.75,0] [REP HLINE MOVE START -1.75 BY X1.1 + $P at X-0.5 and $P at X1.1]) 2 (transmat N N $1 ( 1.0) N)))))
+-------
+12
+S13_265
+#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) $0 (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (#(lambda (transmat None None (Some $0) None None)) dist18))))
+ 
+#(lambda (#[$P $X -1] $0 (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#[MOVE X $0] -1.75)) $0 (#[MOVE X $0] 1.1)) (#[MOVE X $0] -0.5))) $0) (transform circle (#[MOVE X $0] $1)))))) -0.65 1 (#[MOVE X $0] 1.1))))
+-------
+13
+S13_265
+#(transform (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) rep0) (#(lambda (transmat None None (Some $0) None None)) dist18))
+ 
+[REP HLINE MOVE START -1.75 BY X1.1 + $P at X-0.5 and $P at X1.1]
+-------
+14
+S13_265
+#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle)
+ 
+#[CIRCLE -1.75, -1]
+-------
+15
+S13_265
+#(#(lambda (connect (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (transmat None None None (Some $0) None)))) dist9)
+ 
+#(#(lambda (connect (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#[MOVE X $0] -1.75)) $0 (#[MOVE X $0] 1.1)) (#[MOVE X $0] -0.5))) $0) (transform circle (#[MOVE X $0] $1)))))) -0.65 1 (transmat N N N ( $0) N)))) 1.0)
+-------
+16
+S13_265
+#(lambda (#(connect (transform circle (#(lambda (transmat None None (Some $0) None None)) dist14))) (connect (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist16 rep1 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) $0 rep3))))
+ 
+#(lambda (#[CIRCLE + $P -1.75,0] (connect (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#[MOVE X $0] -1.75)) $0 (#[MOVE X $0] 1.1)) (#[MOVE X $0] -0.5))) $0) (transform circle (#[MOVE X $0] $1)))))) 0.45 2 (#[MOVE X $0] 1.1)) (#[REP VLINE $S -1.75,-2 by X 1.1 $R] $0 4))))
+-------
+17
+S13_265
+#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None)))))
+ 
+#[$P $X -1]
+-------
+18
+S13_265
+#(connect (transform circle (#(lambda (transmat None None (Some $0) None None)) dist14)))
+ 
+#[CIRCLE + $P -1.75,0]
+-------
+19
+S13_265
+#(lambda (connect (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (transmat None None None (Some $0) None))))
+ 
+#(lambda (connect (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#[MOVE X $0] -1.75)) $0 (#[MOVE X $0] 1.1)) (#[MOVE X $0] -0.5))) $0) (transform circle (#[MOVE X $0] $1)))))) -0.65 1 (transmat N N N ( $0) N))))
+-------
+20
+S13_265
+#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1))))))
+ 
+#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#[MOVE X $0] -1.75)) $0 (#[MOVE X $0] 1.1)) (#[MOVE X $0] -0.5))) $0) (transform circle (#[MOVE X $0] $1))))))
+-------
+21
+S13_265
+#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18))))
+ 
+#[REP VLINE $S -1.75,-2 by X 1.1 $R]
+-------
+22
+S13_265
+#(transform line (#(lambda (transmat None None (Some $0) None None)) dist4))
+ 
+#[HORIZLINE]
+-------
+23
+S13_265
+#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4)))
+ 
+#(lambda (transform (repeat (transform line (#[MOVE X $0] -1.75)) $0 (#[MOVE X $0] 1.1)) (#[MOVE X $0] -0.5)))
+-------
+24
+S13_265
+#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None)))
+ 
+#[VLINE $S at -1.75,-2]
+-------
+25
+S13_265
+#(lambda (transmat None None (Some $0) None None))
+ 
+#[MOVE X $0]
+-------
+26
+S13_265
+None
+ 
+N
+-------
+27
+S13_265
+Some
+ 
+
+-------
+28
+S13_265
+line
+ 
+line
+-------
+29
+S13_265
+circle
+ 
+circle
+-------
+30
+S13_265
+transmat
+ 
+transmat
+-------
+31
+S13_265
+transform
+ 
+transform
+-------
+32
+S13_265
+reflect
+ 
+reflect
+-------
+33
+S13_265
+connect
+ 
+connect
+-------
+34
+S13_265
+repeat
+ 
+repeat
+-------
+35
+S13_265
+scale7
+ 
+4.0
+-------
+36
+S13_265
+dist1
+ 
+-2.0
+-------
+37
+S13_265
+dist3
+ 
+-1.0
+-------
+38
+S13_265
+dist4
+ 
+-0.5
+-------
+39
+S13_265
+dist6
+ 
+0
+-------
+40
+S13_265
+dist9
+ 
+1.0
+-------
+41
+S13_265
+dist14
+ 
+-1.75
+-------
+42
+S13_265
+dist15
+ 
+-0.65
+-------
+43
+S13_265
+dist16
+ 
+0.45
+-------
+44
+S13_265
+dist17
+ 
+1.55
+-------
+45
+S13_265
+dist18
+ 
+1.1
+-------
+46
+S13_265
+angle0
+ 
+0.0
+-------
+47
+S13_265
+angle2
+ 
+1.570
+-------
+48
+S13_265
+trs
+ 
+trs
+-------
+49
+S13_265
+rep0
+ 
+1
+-------
+50
+S13_265
+rep1
+ 
+2
+-------
+51
+S13_265
+rep2
+ 
+3
+-------
+52
+S13_265
+rep3
+ 
+4
+-------

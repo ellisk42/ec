@@ -29,7 +29,7 @@ REMOVELL = False # remove vertical long line?
 
 ########################## STUFF TO DO AFTER SAVING DISTANCES
 
-def loadDistances(ECTRAIN, ver="multiple", modelkind="parse",      use_withplannerscore=False):
+def loadDistances(ECTRAIN, ver="multiple", modelkind="parse", use_withplannerscore=False):
     DAT = loadCheckpoint(ECTRAIN)
     return loadDistances2(DAT, ver, modelkind,use_withplannerscore)
 
@@ -124,7 +124,7 @@ def loadDistances2(DAT, ver="multiple", modelkind="parse",
         #     stim = stim[:stim.find(".png")]
             # if stim in stimlist: # then model sucecsffuly found soolution
             for hum in humans:
-                print("(loadDistances) getting {}, {}, {}".format(suf, stim, hum))
+                # print("(loadDistances) getting {}, {}, {}".format(suf, stim, hum))
                 # print(d)
                 # import pdb
                 # pdb.set_trace()
@@ -261,7 +261,7 @@ if __name__=="__main__":
 
     if not get_aggregate:
         # load DAT
-        DAT = loadCheckpoint(trainset=ECTRAIN, loadparse=True, suppressPrint=True)
+        DAT = loadCheckpoint(trainset=ECTRAIN, loadparse=False, suppressPrint=True)
         print("Loaded checkpoint DAT, for {}".format(ECTRAIN))
         # get list of stimuli
         stimlist = DATgetSolvedStim(DAT, removeshaping=True, onlyifhasdatflat=True)
@@ -286,8 +286,8 @@ if __name__=="__main__":
                 # --- load datseg model data for this stim.
                 if parseversion=="parse":
                     datseg_ec = DATloadDatSeg(DAT, stimthis)
-                    dflat = DATloadDatFlat(DAT, stimthis)    
-                    modelparsenums = [d["parsenum"] for d in dflat]
+                    DF = DATloadDatFlat(DAT, stimthis)    
+                    modelparsenums = [d["parsenum"] for d in DF]
                     modelname=ECTRAIN
                 elif parseversion=="randomperm":
                     datseg_ec = DATloadDatSeg(DAT, "{}_randomperm".format(stimthis))
@@ -299,32 +299,28 @@ if __name__=="__main__":
                 def getSeqGetters(labelkind="codes_unique"):
                     if labelkind=="codes_unique":
                         def seqgetter_hu(stim):
-                            sequence = [d["codes_unique"] for d in dseg]
-                            return sequence
+                            return [d["codes_unique"] for d in dseg]
                         def seqgetter_ec(stim):
-                            sequence = [[d["codes_unique"] for d in dat] for dat in datseg_ec]
-                            return sequence    
+                            return [[d["codes_unique"] for d in dat] for dat in datseg_ec]
+                            
                     elif labelkind=="codes":
                         def seqgetter_hu(stim):
-                            sequence = [d["codes"] for d in dseg]
-                            return sequence
+                            return [d["codes"] for d in dseg]
                         def seqgetter_ec(stim):
-                            sequence = [[d["codes"] for d in dat] for dat in datseg_ec]
-                            return sequence
+                            return [[d["codes"] for d in dat] for dat in datseg_ec]
+
                     elif labelkind=="col":
                         def seqgetter_hu(stim):
-                            sequence = [codeUniqueFeatures(d["codes_unique"])[1] for d in dseg]
-                            return sequence
+                            return [codeUniqueFeatures(d["codes_unique"])[1] for d in dseg]
                         def seqgetter_ec(stim):
-                            sequence = [[codeUniqueFeatures(d["codes_unique"])[1] for d in dat] for dat in datseg_ec]
-                            return sequence
+                            return [[codeUniqueFeatures(d["codes_unique"])[1] for d in dat] for dat in datseg_ec]
+
                     elif labelkind=="row":
                         def seqgetter_hu(stim):
-                            sequence = [d["row"] for d in dseg]
-                            return sequence
+                            return [d["row"] for d in dseg]
                         def seqgetter_ec(stim):
-                            sequence = [[d["row"] for d in dat] for dat in datseg_ec]
-                            return sequence    
+                            return [[d["row"] for d in dat] for dat in datseg_ec]
+
                     return seqgetter_hu, seqgetter_ec
 
 
@@ -338,6 +334,7 @@ if __name__=="__main__":
                         stimname = "{}_{}".format(stimthis, parseversion)
 
                     fname = "{}/{}_{}_{}.pickle".format(DAT["savedir_modelhudist"], stimname, humanname, seqkind)
+                    
                     from os import path
                     if path.exists(fname):
                         print("SKIPPING {}, since foudna laready saved file".format(fname))

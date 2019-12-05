@@ -295,9 +295,9 @@ def _getAndRankAllFrontiers(results, task, SDIR=[], usell=True, K=10):
     # print(results.keys())
     # print(results.frontiersOverTime[task])
     for i, frontiers_thisiter in enumerate(results.frontiersOverTime[task]):
-        print(frontiers_thisiter)
+        # print(frontiers_thisiter)
         if frontiers_thisiter.empty:
-            print("emopt")
+            # print("emopt")
             continue
 
         frontierprogs = frontiers_thisiter.topK(K)
@@ -334,7 +334,7 @@ def _getAndRankAllFrontiers(results, task, SDIR=[], usell=True, K=10):
     
     if isinstance(SDIR, list):
         assert len(SDIR)==0, "should be empty"
-        print("(getAndRankAllFrontiers) skipping saving, did not tell me a sdir")
+        # print("(getAndRankAllFrontiers) skipping saving, did not tell me a sdir")
     else:
         save(frontiers_over_time, "{}/{}.txt".format(SDIR, stim))
 
@@ -354,7 +354,7 @@ def getAndRankAllFrontiers(DAT):
 
 
 def getTaskResults(DAT):
-    from analysis.parse import getLatestFrontierProgram
+    from analysis.parse import getLatestFrontierProgram, getBestFrontierProgram
     """summary dict of each task and whether was solved (at any interation)"""
     # first get all stime
     stimnames = [t.name for t in DAT["tasks"]]
@@ -362,7 +362,8 @@ def getTaskResults(DAT):
 
     # solved?
     def solved(stim):
-        solution = getLatestFrontierProgram(DAT["result"], DATgetTask(stim, DAT)[0])
+        solution = getBestFrontierProgram(DAT["result"], DATgetTask(stim, DAT)[0], lastKIter=50)
+        # solution = getLatestFrontierProgram(DAT["result"], DATgetTask(stim, DAT)[0])
         if isinstance(solution, list):
             assert len(solution)==0
             return False

@@ -14,9 +14,13 @@ from analysis.importDrawgood import dgutils
 # 3) Load planner scores
 def DATloadPlannerScore(DAT, stimname, planver):
     fname = "{}/{}_planscores_{}.pickle".format(DAT["savedir_datsegs"], stimname, planver)
-    with open(fname, "rb") as f:
-        scores = pickle.load(f)
-    return scores
+    from os import path
+    if path.exists(fname):
+        with open(fname, "rb") as f:
+            scores = pickle.load(f)
+        return scores
+    else:
+        return None
 
 # from analysis.model
 import sys
@@ -26,6 +30,8 @@ elif sys.argv[1]=="12":
     ECTRAIN_list = ["S12.10.test4"]
 elif sys.argv[1]=="13":
     ECTRAIN_list = ["S13.10.test4"]
+elif sys.argv[1]=="test5":
+    ECTRAIN_list = ["S12.10.test5", "S13.10.test5"]
 
 #ECTRAIN_list = ["S13.10.test4"]
 modelver_list = ["parse", "randomperm"]
@@ -33,11 +39,14 @@ planver_list = ["motor", "motorplusVH", "full"]
 distver ="aggregate"
 convert_to_prob=True # across parses for this stim x human x DCmodel x modelver x planner
 
-debug_allow_skip_if_dists_and_seg_dont_match=True
+debug_allow_skip_if_dists_and_seg_dont_match=False
 
 for ECTRAIN in ECTRAIN_list:
-    
-    DAT = loadCheckpoint(ECTRAIN, loadparse=True, loadbehavior=True)
+
+    planver_list_this = [f"{p}_{ECTRAIN}" for p in planver_list] + planver_list
+    print(f"planverlist for this ectrain is: {planver_list_this}")
+
+    DAT = loadCheckpoint(ECTRAIN, loadparse=False, loadbehavior=True)
     SDIR = "{}/modelhudist_withplannerscore".format(DAT["analysavedir"])
     import os
     os.makedirs(SDIR, exist_ok=True)
@@ -75,10 +84,15 @@ for ECTRAIN in ECTRAIN_list:
                 datsegs = DATloadDatSeg(DAT, stimname)
 
                 # 3) load planner score
-                for planver in planver_list:
+                for planver in planver_list_this:
                     print("Getting palnner score for: {} (model), {}, {}, {} (modelver), {} (plannerver)".format(ECTRAIN, stim, human, modelver, planver))
 
                     scores = DATloadPlannerScore(DAT, stimname, planver)
+                    if scores is None:
+                        print("skipping, since did not find previously saved planscores. this is not unexpectexed")
+                        # then files doesnt exist
+                        continue
+
                     if convert_to_prob:
                         scoressum = logsumexp(scores)
                         scores = np.exp([s-scoressum for s in scores])
@@ -87,10 +101,10 @@ for ECTRAIN in ECTRAIN_list:
                     # if len(dists)!=len(datsegs):
                     #     import pdb
                     #     pdb.set_trace()
-                    print(dists[0])
-                    print(len(dists))
-                    print(len(datsegs))
-                    print(len(scores))
+                    # print(dists[0])
+                    # print(len(dists))
+                    # print(len(datsegs))
+                    # print(len(scores))
 
                     assert len(dists)==len(datsegs)
                     assert len(datsegs)==len(scores)

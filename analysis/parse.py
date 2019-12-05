@@ -28,7 +28,7 @@ def getParses(dreamcoder_program):
     return parses
 
 
-def getBestFrontierProgram(result, task, lastKIter=4):
+def getBestFrontierProgram(result, task, lastKIter=4, returnfrontier=False):
     """ gets best solution for a given task, restricting to 
     solutions from lastKIter before last iter, to last iter.
     ranks based on ll, then ink, then prior. 
@@ -49,7 +49,10 @@ def getBestFrontierProgram(result, task, lastKIter=4):
         last_iter = max([f["iteration"] for f in frontiers_over_time])
         frontiers_over_time = [f for f in frontiers_over_time if f["iteration"]>(last_iter-lastKIter)]
         frontier_to_take = frontiers_over_time[0]
-        return frontier_to_take["frontier"].program
+        if returnfrontier:
+            return frontier_to_take["frontier"]
+        else:
+            return frontier_to_take["frontier"].program
 
 
 def getLatestFrontierProgram(result, task):

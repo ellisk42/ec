@@ -1,0 +1,265 @@
+0
+#(lambda (reflect (#(lambda (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) None (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist16 rep1 (#(lambda (transmat None None (Some $0) None None)) dist18)) $0))) $0) angle0))
+ 
+#(lambda (reflect (#(lambda (#(#(lambda (lambda (connect (transform $0 (transmat N N $1 ( -1.0) N))))) ( -1.75) circle) (#(lambda (lambda (connect (transform $0 (transmat N N $1 ( -1.0) N))))) N (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat N N ( $0) N N)) -1.75)) $0 (#(lambda (transmat N N ( $0) N N)) 1.1)) (#(lambda (transmat N N ( $0) N N)) -0.5))) $0) (transform circle (#(lambda (transmat N N ( $0) N N)) $1)))))) 0.45 2 (#(lambda (transmat N N ( $0) N N)) 1.1)) $0))) $0) 0.0))
+-------
+1
+#(lambda (lambda (#(lambda (lambda (connect $1 (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist18))))) (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) $1 rep3) (#(connect (transform circle (#(lambda (transmat None None (Some $0) None None)) dist14))) $0))))
+ 
+#(lambda (lambda (#(lambda (lambda (connect $1 (transform $0 (#(lambda (transmat N N ( $0) N N)) 1.1))))) (#(lambda (lambda (repeat (#(lambda (transform line (transmat ( $0) ( 1.570) ( -1.75) ( -2.0) N))) $1) $0 (#(lambda (transmat N N ( $0) N N)) 1.1)))) $1 4) (#(connect (transform circle (#(lambda (transmat N N ( $0) N N)) -1.75))) $0))))
+-------
+2
+#(lambda (lambda (connect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 $1) (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist16 rep1 $0))))
+ 
+#(lambda (lambda (connect (#(lambda (lambda (repeat (#(lambda (transform line (transmat ( $0) ( 1.570) ( -1.75) ( -2.0) N))) $1) $0 (#(lambda (transmat N N ( $0) N N)) 1.1)))) 4.0 $1) (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat N N ( $0) N N)) -1.75)) $0 (#(lambda (transmat N N ( $0) N N)) 1.1)) (#(lambda (transmat N N ( $0) N N)) -0.5))) $0) (transform circle (#(lambda (transmat N N ( $0) N N)) $1)))))) 0.45 2 $0))))
+-------
+3
+#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) $0 (#(connect (transform circle (#(lambda (transmat None None (Some $0) None None)) dist14))) #(transform (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) rep0) (#(lambda (transmat None None (Some $0) None None)) dist18)))))
+ 
+#(lambda (#(lambda (lambda (connect (transform $0 (transmat N N $1 ( -1.0) N))))) $0 (#(connect (transform circle (#(lambda (transmat N N ( $0) N N)) -1.75))) #(transform (#(lambda (transform (repeat (transform line (#(lambda (transmat N N ( $0) N N)) -1.75)) $0 (#(lambda (transmat N N ( $0) N N)) 1.1)) (#(lambda (transmat N N ( $0) N N)) -0.5))) 1) (#(lambda (transmat N N ( $0) N N)) 1.1)))))
+-------
+4
+#(lambda (lambda (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) $0 (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) $0 $1))))
+ 
+#(lambda (lambda (#(#(lambda (lambda (connect (transform $0 (transmat N N $1 ( -1.0) N))))) ( -1.75) circle) (#(lambda (#(lambda (lambda (connect (transform $0 (transmat N N $1 ( -1.0) N))))) $0 (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat N N ( $0) N N)) -1.75)) $0 (#(lambda (transmat N N ( $0) N N)) 1.1)) (#(lambda (transmat N N ( $0) N N)) -0.5))) $0) (transform circle (#(lambda (transmat N N ( $0) N N)) $1)))))) -0.65 1 (#(lambda (transmat N N ( $0) N N)) 1.1)))) $0 $1))))
+-------
+5
+#(lambda (lambda (connect $1 (transform $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))))
+ 
+#(lambda (lambda (connect $1 (transform $0 (#(lambda (transmat N N ( $0) N N)) 1.1)))))
+-------
+6
+#(#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist17 rep2 (#(lambda (transmat None None (Some $0) None None)) dist6))
+ 
+#(#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat N N ( $0) N N)) -1.75)) $0 (#(lambda (transmat N N ( $0) N N)) 1.1)) (#(lambda (transmat N N ( $0) N N)) -0.5))) $0) (transform circle (#(lambda (transmat N N ( $0) N N)) $1)))))) 1.55 3 (#(lambda (transmat N N ( $0) N N)) 0))
+-------
+7
+#(lambda (lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) None (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (#(lambda (reflect (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) $0 (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) None $0)) angle0)) (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 $1)))))
+ 
+#(lambda (lambda (#(lambda (lambda (connect (transform $0 (transmat N N $1 ( -1.0) N))))) N (#(lambda (transform (repeat (transform line (#(lambda (transmat N N ( $0) N N)) -1.75)) $0 (#(lambda (transmat N N ( $0) N N)) 1.1)) (#(lambda (transmat N N ( $0) N N)) -0.5))) $0) (#(lambda (reflect (#(#(lambda (lambda (connect (transform $0 (transmat N N $1 ( -1.0) N))))) ( -1.75) circle) (#(lambda (#(lambda (lambda (connect (transform $0 (transmat N N $1 ( -1.0) N))))) $0 (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat N N ( $0) N N)) -1.75)) $0 (#(lambda (transmat N N ( $0) N N)) 1.1)) (#(lambda (transmat N N ( $0) N N)) -0.5))) $0) (transform circle (#(lambda (transmat N N ( $0) N N)) $1)))))) -0.65 1 (#(lambda (transmat N N ( $0) N N)) 1.1)))) N $0)) 0.0)) (#(lambda (lambda (repeat (#(lambda (transform line (transmat ( $0) ( 1.570) ( -1.75) ( -2.0) N))) $1) $0 (#(lambda (transmat N N ( $0) N N)) 1.1)))) 4.0 $1)))))
+-------
+8
+#(lambda (lambda (#(connect (transform circle (#(lambda (transmat None None (Some $0) None None)) dist14))) (connect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) $0 $1) (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (#(lambda (transmat None None (Some $0) None None)) dist18))))))
+ 
+#(lambda (lambda (#(connect (transform circle (#(lambda (transmat N N ( $0) N N)) -1.75))) (connect (#(lambda (lambda (repeat (#(lambda (transform line (transmat ( $0) ( 1.570) ( -1.75) ( -2.0) N))) $1) $0 (#(lambda (transmat N N ( $0) N N)) 1.1)))) $0 $1) (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat N N ( $0) N N)) -1.75)) $0 (#(lambda (transmat N N ( $0) N N)) 1.1)) (#(lambda (transmat N N ( $0) N N)) -0.5))) $0) (transform circle (#(lambda (transmat N N ( $0) N N)) $1)))))) -0.65 1 (#(lambda (transmat N N ( $0) N N)) 1.1))))))
+-------
+9
+#(lambda (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) None (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist16 rep1 (#(lambda (transmat None None (Some $0) None None)) dist18)) $0)))
+ 
+#(lambda (#(#(lambda (lambda (connect (transform $0 (transmat N N $1 ( -1.0) N))))) ( -1.75) circle) (#(lambda (lambda (connect (transform $0 (transmat N N $1 ( -1.0) N))))) N (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat N N ( $0) N N)) -1.75)) $0 (#(lambda (transmat N N ( $0) N N)) 1.1)) (#(lambda (transmat N N ( $0) N N)) -0.5))) $0) (transform circle (#(lambda (transmat N N ( $0) N N)) $1)))))) 0.45 2 (#(lambda (transmat N N ( $0) N N)) 1.1)) $0)))
+-------
+10
+#(lambda (reflect (#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle) (#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) $0 (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) None $0)) angle0))
+ 
+#(lambda (reflect (#(#(lambda (lambda (connect (transform $0 (transmat N N $1 ( -1.0) N))))) ( -1.75) circle) (#(lambda (#(lambda (lambda (connect (transform $0 (transmat N N $1 ( -1.0) N))))) $0 (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat N N ( $0) N N)) -1.75)) $0 (#(lambda (transmat N N ( $0) N N)) 1.1)) (#(lambda (transmat N N ( $0) N N)) -0.5))) $0) (transform circle (#(lambda (transmat N N ( $0) N N)) $1)))))) -0.65 1 (#(lambda (transmat N N ( $0) N N)) 1.1)))) N $0)) 0.0))
+-------
+11
+#(lambda (lambda (connect (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) scale7 $0) (repeat (#(connect (transform circle (#(lambda (transmat None None (Some $0) None None)) dist14))) #(transform (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) rep0) (#(lambda (transmat None None (Some $0) None None)) dist18))) rep1 (transmat None None $1 (Some dist9) None)))))
+ 
+#(lambda (lambda (connect (#(lambda (lambda (repeat (#(lambda (transform line (transmat ( $0) ( 1.570) ( -1.75) ( -2.0) N))) $1) $0 (#(lambda (transmat N N ( $0) N N)) 1.1)))) 4.0 $0) (repeat (#(connect (transform circle (#(lambda (transmat N N ( $0) N N)) -1.75))) #(transform (#(lambda (transform (repeat (transform line (#(lambda (transmat N N ( $0) N N)) -1.75)) $0 (#(lambda (transmat N N ( $0) N N)) 1.1)) (#(lambda (transmat N N ( $0) N N)) -0.5))) 1) (#(lambda (transmat N N ( $0) N N)) 1.1))) 2 (transmat N N $1 ( 1.0) N)))))
+-------
+12
+#(lambda (#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) $0 (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (#(lambda (transmat None None (Some $0) None None)) dist18))))
+ 
+#(lambda (#(lambda (lambda (connect (transform $0 (transmat N N $1 ( -1.0) N))))) $0 (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat N N ( $0) N N)) -1.75)) $0 (#(lambda (transmat N N ( $0) N N)) 1.1)) (#(lambda (transmat N N ( $0) N N)) -0.5))) $0) (transform circle (#(lambda (transmat N N ( $0) N N)) $1)))))) -0.65 1 (#(lambda (transmat N N ( $0) N N)) 1.1))))
+-------
+13
+#(transform (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) rep0) (#(lambda (transmat None None (Some $0) None None)) dist18))
+ 
+#(transform (#(lambda (transform (repeat (transform line (#(lambda (transmat N N ( $0) N N)) -1.75)) $0 (#(lambda (transmat N N ( $0) N N)) 1.1)) (#(lambda (transmat N N ( $0) N N)) -0.5))) 1) (#(lambda (transmat N N ( $0) N N)) 1.1))
+-------
+14
+#(#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None))))) (Some dist14) circle)
+ 
+#(#(lambda (lambda (connect (transform $0 (transmat N N $1 ( -1.0) N))))) ( -1.75) circle)
+-------
+15
+#(#(lambda (connect (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (transmat None None None (Some $0) None)))) dist9)
+ 
+#(#(lambda (connect (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat N N ( $0) N N)) -1.75)) $0 (#(lambda (transmat N N ( $0) N N)) 1.1)) (#(lambda (transmat N N ( $0) N N)) -0.5))) $0) (transform circle (#(lambda (transmat N N ( $0) N N)) $1)))))) -0.65 1 (transmat N N N ( $0) N)))) 1.0)
+-------
+16
+#(lambda (#(connect (transform circle (#(lambda (transmat None None (Some $0) None None)) dist14))) (connect (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist16 rep1 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)))) $0 rep3))))
+ 
+#(lambda (#(connect (transform circle (#(lambda (transmat N N ( $0) N N)) -1.75))) (connect (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat N N ( $0) N N)) -1.75)) $0 (#(lambda (transmat N N ( $0) N N)) 1.1)) (#(lambda (transmat N N ( $0) N N)) -0.5))) $0) (transform circle (#(lambda (transmat N N ( $0) N N)) $1)))))) 0.45 2 (#(lambda (transmat N N ( $0) N N)) 1.1)) (#(lambda (lambda (repeat (#(lambda (transform line (transmat ( $0) ( 1.570) ( -1.75) ( -2.0) N))) $1) $0 (#(lambda (transmat N N ( $0) N N)) 1.1)))) $0 4))))
+-------
+17
+#(lambda (lambda (connect (transform $0 (transmat None None $1 (Some dist3) None)))))
+ 
+#(lambda (lambda (connect (transform $0 (transmat N N $1 ( -1.0) N)))))
+-------
+18
+#(connect (transform circle (#(lambda (transmat None None (Some $0) None None)) dist14)))
+ 
+#(connect (transform circle (#(lambda (transmat N N ( $0) N N)) -1.75)))
+-------
+19
+#(lambda (connect (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1)))))) dist15 rep0 (transmat None None None (Some $0) None))))
+ 
+#(lambda (connect (#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat N N ( $0) N N)) -1.75)) $0 (#(lambda (transmat N N ( $0) N N)) 1.1)) (#(lambda (transmat N N ( $0) N N)) -0.5))) $0) (transform circle (#(lambda (transmat N N ( $0) N N)) $1)))))) -0.65 1 (transmat N N N ( $0) N))))
+-------
+20
+#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4))) $0) (transform circle (#(lambda (transmat None None (Some $0) None None)) $1))))))
+ 
+#(lambda (lambda (transform (connect (#(lambda (transform (repeat (transform line (#(lambda (transmat N N ( $0) N N)) -1.75)) $0 (#(lambda (transmat N N ( $0) N N)) 1.1)) (#(lambda (transmat N N ( $0) N N)) -0.5))) $0) (transform circle (#(lambda (transmat N N ( $0) N N)) $1))))))
+-------
+21
+#(lambda (lambda (repeat (#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None))) $1) $0 (#(lambda (transmat None None (Some $0) None None)) dist18))))
+ 
+#(lambda (lambda (repeat (#(lambda (transform line (transmat ( $0) ( 1.570) ( -1.75) ( -2.0) N))) $1) $0 (#(lambda (transmat N N ( $0) N N)) 1.1))))
+-------
+22
+#(transform line (#(lambda (transmat None None (Some $0) None None)) dist4))
+ 
+#(transform line (#(lambda (transmat N N ( $0) N N)) -0.5))
+-------
+23
+#(lambda (transform (repeat (transform line (#(lambda (transmat None None (Some $0) None None)) dist14)) $0 (#(lambda (transmat None None (Some $0) None None)) dist18)) (#(lambda (transmat None None (Some $0) None None)) dist4)))
+ 
+#(lambda (transform (repeat (transform line (#(lambda (transmat N N ( $0) N N)) -1.75)) $0 (#(lambda (transmat N N ( $0) N N)) 1.1)) (#(lambda (transmat N N ( $0) N N)) -0.5)))
+-------
+24
+#(lambda (transform line (transmat (Some $0) (Some angle2) (Some dist14) (Some dist1) None)))
+ 
+#(lambda (transform line (transmat ( $0) ( 1.570) ( -1.75) ( -2.0) N)))
+-------
+25
+#(lambda (transmat None None (Some $0) None None))
+ 
+#(lambda (transmat N N ( $0) N N))
+-------
+26
+None
+ 
+N
+-------
+27
+Some
+ 
+
+-------
+28
+line
+ 
+line
+-------
+29
+circle
+ 
+circle
+-------
+30
+transmat
+ 
+transmat
+-------
+31
+transform
+ 
+transform
+-------
+32
+reflect
+ 
+reflect
+-------
+33
+connect
+ 
+connect
+-------
+34
+repeat
+ 
+repeat
+-------
+35
+scale7
+ 
+4.0
+-------
+36
+dist1
+ 
+-2.0
+-------
+37
+dist3
+ 
+-1.0
+-------
+38
+dist4
+ 
+-0.5
+-------
+39
+dist6
+ 
+0
+-------
+40
+dist9
+ 
+1.0
+-------
+41
+dist14
+ 
+-1.75
+-------
+42
+dist15
+ 
+-0.65
+-------
+43
+dist16
+ 
+0.45
+-------
+44
+dist17
+ 
+1.55
+-------
+45
+dist18
+ 
+1.1
+-------
+46
+angle0
+ 
+0.0
+-------
+47
+angle2
+ 
+1.570
+-------
+48
+trs
+ 
+trs
+-------
+49
+rep0
+ 
+1
+-------
+50
+rep1
+ 
+2
+-------
+51
+rep2
+ 
+3
+-------
+52
+rep3
+ 
+4
+-------
