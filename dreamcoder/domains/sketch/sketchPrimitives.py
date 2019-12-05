@@ -219,15 +219,25 @@ def renderPlan(sketch):
 
     drawsteps = []
     strokes = []
-    longlinelen = 3
+    longlinelen = 4
+    xunit = 1.1 
+    yunit = 1
 
-    for i,j in zip(sketch.history[:-1], sketch.history[1:]):
+    # --- convert x and y to correct units
+    history = []
+    for h in sketch.history:
+        x = h[0][0]*xunit
+        y = h[0][1]*yunit
+        history.append(((x, y), h[1]))
+    print(history)
+
+    for i,j in zip(history[:-1], history[1:]):
         # -- draw a line between these points
         # print(i)
         # print(j)
 
         # 1) append stroke
-        drawsteps.append(np.array([i[0], j[0]])) 
+        drawsteps.append(np.array([[ii*xunit for ii in i[0]], [jj*yunit for jj in j[0]]])) 
         
         # 2) append prim objects
         if len(j[1])>0:

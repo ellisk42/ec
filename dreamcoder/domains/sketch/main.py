@@ -10,7 +10,9 @@ import datetime
 def SketchCNN():
     pass
 
-def dreamOfSketches(grammar=Grammar.uniform(primitives), N=50, make_montage=True):
+g0 = Grammar.uniform(primitives, continuationType=tsketch)
+
+def dreamOfSketches(grammar=g0, N=50, make_montage=True):
     request = arrow(tsketch, tsketch)
     programs = [p for _ in range(N) for p in [grammar.sample(request, maximumDepth=15)] if p is not None]
 

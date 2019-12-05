@@ -16,7 +16,7 @@ import numpy as np
 
 class SupervisedDraw(Task):
 	def __init__(self, name, program):
-		super(SupervisedDraw, self).__init__(name, tstroke, [],
+		super(SupervisedDraw, self).__init__(name, arrow(tstroke, tstroke), [],
 											  features=[]) # TODO: LT, needs this, i.e., a request.
 
 		# compute the trajectory, which is a list of lines
@@ -35,6 +35,7 @@ class SupervisedDraw(Task):
 
 	def logLikelihood(self, e, timeout=None): # TODO, LT, given expression, calculates distance.
 		# from dreamcoder.domains.tower.tower_common import centerTower
+		assert False, "not using this I thought"
 		if False:
 			p1 = self.rendered_strokes
 			p2 = fig2pixel(e.evaluate([]))
