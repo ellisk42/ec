@@ -24,7 +24,12 @@ class DrawCNN(ImageFeatureExtractor):
                                             channels=1)
         print("output dimensionality",self.outputDimensionality)
     def taskOfProgram(self, p, t):
-        return SupervisedDraw("dream", p.evaluate([]))
+        if t.isArrow:
+            # continuation passing
+            i = p.evaluate([])([])
+        else:
+            i = p.evaluate([])
+        return SupervisedDraw("dream", i)
 
     def featuresOfTask(self, t):
         return self(t.rendered_strokes)
