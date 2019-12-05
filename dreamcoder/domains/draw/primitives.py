@@ -362,15 +362,15 @@ def _finishC():
     """attaches empty stroke to finalize"""
     return lambda k: k(_emptystroke)
 
-def _repeatC(N, T):
+def _repeatC(s, N, T):
     """as intermediate step grounds s to numbers, does repeat to it, 
     then returns a function that connects the repeated thing to the 
     next thing"""
     # return lambda k: _connect(_repeat(s(_emptystroke), N, T), k)
-    return lambda s: lambda k: _connect(_repeat(s, N, T), k)
+    return lambda k: _connect(_repeat(s(_emptystroke), N, T), k)
 
-def _transformC(T):
-    return lambda s: lambda k: _connect(_tform_wrapper(s, T), k)
+def _transformC(s,T):
+    return lambda k: _connect(_tform_wrapper(s(_emptystroke), T), k)
 
 def _reflectC(theta):
     return lambda s: lambda k: _connect(_reflect(s, theta), k)    

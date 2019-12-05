@@ -53,9 +53,9 @@ else:
 		Primitive("lineC", arrow(tstroke, tstroke), _lineC), 
 		Primitive("circleC", arrow(tstroke, tstroke), _circleC),
 		Primitive("transmat", arrow(tmaybe(tscale), tmaybe(tangle), tmaybe(tdist), tmaybe(tdist), tmaybe(ttrorder), ttransmat), Curried(_makeAffine)),
-		Primitive("transformC", arrow(tstroke, tstroke, ttransmat, tstroke, tstroke), _transformC),
-		Primitive("reflectC", arrow(tstroke, tstroke, tangle, tstroke, tstroke), _reflectC),
-		Primitive("repeatC", arrow(tstroke, tstroke, trep, ttransmat, tstroke, tstroke), Curried(_repeatC))
+		Primitive("transformC", arrow(arrow(tstroke, tstroke), ttransmat, tstroke, tstroke), Curried(_transformC)),
+		Primitive("reflectC", arrow(arrow(tstroke, tstroke), tangle, tstroke, tstroke), Curried(_reflectC)),
+		Primitive("repeatC", arrow(arrow(tstroke, tstroke), trep, ttransmat, tstroke, tstroke), Curried(_repeatC))
 	]
 
 
