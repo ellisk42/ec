@@ -35,6 +35,7 @@ def dreamFromGrammar(g=g0, directory = "", N=25):
    # request = taxes # arrow9turtle turtle) just for logl.
    # request = arrow(taxes, taxes) # arrow9turtle turtle) just for logl.
    request = tstroke # arrow9turtle turtle) just for logl.
+   request = arrow(tstroke, tstroke)
    programs = [ p for _ in range(N) for p in [g.sample(request, maximumDepth=15)] if p is not None]
    return programs
    # drawDrawings(*programs, filenames)
