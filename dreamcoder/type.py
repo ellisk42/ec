@@ -25,6 +25,11 @@ class TypeConstructor(Type):
         self.arguments = arguments
         self.isPolymorphic = any(a.isPolymorphic for a in arguments)
 
+    def makeDummyMonomorphic(self, mapping=None):
+        mapping = mapping if mapping is not None else {}
+        return TypeConstructor(self.name,
+                               [ a.makeDummyMonomorphic(mapping) for a in self.arguments ])
+
     def __eq__(self, other):
         return isinstance(other, TypeConstructor) and \
             self.name == other.name and \
@@ -124,6 +129,13 @@ class TypeVariable(Type):
         assert isinstance(j, int)
         self.v = j
         self.isPolymorphic = True
+
+    def makeDummyMonomorphic(self, mapping=None):
+        mapping = mapping if mapping is not None else {}
+        if self.v  not in mapping:
+            mapping[self.v] = TypeConstructor(f"dummy_type_{len(mapping)}", [])
+        return mapping[self.v]
+        
 
     def __eq__(self, other):
         return isinstance(other, TypeVariable) and self.v == other.v
