@@ -112,7 +112,7 @@ register_special_task "LOGO" (fun extras ?timeout:(timeout = 0.001) name ty exam
       (fun p ->
         try
           match run_recent_logo ~timeout p with
-          | Some(bx,cost) when cost <= cost_bound && (LogoLib.LogoInterpreter.fp_equal bx by 0) -> 0.
+          | Some(bx,cost) when (*cost <= cost_bound && *) (LogoLib.LogoInterpreter.fp_equal bx by 0) -> 0.-.cost
           | _ -> log 0.
            with (* We have to be a bit careful with exceptions if the
               * synthesized program generated an exception, then we just
