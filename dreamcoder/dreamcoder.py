@@ -527,7 +527,7 @@ def evaluateOnTestingTasks(result, testingTasks, grammar, _=None, parallelTest=F
                            CPUs=None, solver=None, maximumFrontier=None, enumerationTimeout=None, evaluationTimeout=None):
     if result.recognitionModel is not None:
         recognizer = result.recognitionModel
-        testingFrontiers, times = \
+        testingFrontiers, times, _ = \
          recognizer.enumerateFrontiers(testingTasks, 
                                        CPUs=CPUs,
                                        solver=solver,
@@ -539,13 +539,13 @@ def evaluateOnTestingTasks(result, testingTasks, grammar, _=None, parallelTest=F
         updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskGrammarEntropies(testingTasks), 'heldoutTaskGrammarEntropies')
         updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskGrammarEntropies(testingTasks), 'heldoutTaskGrammarEntropies')
     else:
-        testingFrontiers, times = multicoreEnumeration(grammar, testingTasks, 
-                                                       solver=solver,
-                                                       maximumFrontier=maximumFrontier,
-                                                       enumerationTimeout=enumerationTimeout,
-                                                       CPUs=CPUs,
-                                                       evaluationTimeout=evaluationTimeout,
-                                                       testing=not parallelTest)
+        testingFrontiers, times, _ = multicoreEnumeration(grammar, testingTasks, 
+                                                          solver=solver,
+                                                          maximumFrontier=maximumFrontier,
+                                                          enumerationTimeout=enumerationTimeout,
+                                                          CPUs=CPUs,
+                                                          evaluationTimeout=evaluationTimeout,
+                                                          testing=not parallelTest)
     updateTaskSummaryMetrics(result.recognitionTaskMetrics, times, 'heldoutTestingTimes')
     updateTaskSummaryMetrics(result.recognitionTaskMetrics,
                                      {f.task: f for f in testingFrontiers if len(f) > 0 },
@@ -565,12 +565,12 @@ def default_wake_generative(grammar, tasks,
                     CPUs=None,
                     solver=None,
                     evaluationTimeout=None):
-    topDownFrontiers, times = multicoreEnumeration(grammar, tasks, 
-                                                   maximumFrontier=maximumFrontier,
-                                                   enumerationTimeout=enumerationTimeout,
-                                                   CPUs=CPUs,
-                                                   solver=solver,
-                                                   evaluationTimeout=evaluationTimeout)
+    topDownFrontiers, times, _ = multicoreEnumeration(grammar, tasks, 
+                                                      maximumFrontier=maximumFrontier,
+                                                      enumerationTimeout=enumerationTimeout,
+                                                      CPUs=CPUs,
+                                                      solver=solver,
+                                                      evaluationTimeout=evaluationTimeout)
     eprint("Generative model enumeration results:")
     eprint(Frontier.describe(topDownFrontiers))
     summaryStatistics("Generative model", [t for t in times.values() if t is not None])
@@ -618,7 +618,7 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
     totalTasksHitBottomUp = set()
     for recIndex, recognizer in enumerate(trainedRecognizers):
         eprint("Enumerating from recognizer %d of %d" % (recIndex, len(trainedRecognizers)))
-        bottomupFrontiers, allRecognitionTimes = \
+        bottomupFrontiers, allRecognitionTimes, _ = \
                         recognizer.enumerateFrontiers(taskBatch, 
                                                       CPUs=CPUs,
                                                       maximumFrontier=maximumFrontier,

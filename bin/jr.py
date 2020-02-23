@@ -8,6 +8,7 @@ from dreamcoder.domains.list.main import main, list_options
 from dreamcoder.dreamcoder import commandlineArguments
 from dreamcoder.utilities import numberOfCPUs
 
+import sys
 import random
 from collections import defaultdict
 import json
@@ -59,24 +60,73 @@ if __name__ == "__main__":
     arguments = parser.parse_args()
 
     tasks = joshTasks(arguments.w)
+    
 
     timeout = arguments.timeout
 
-    g = Grammar.uniform(josh_primitives(arguments.w))
+    if arguments.w == 3:
+        gs = [Grammar.uniform(pt)
+              for pt in josh_primitives(arguments.w) ]
+    else:
+        g = Grammar.uniform(josh_primitives(arguments.w))
     for t in tasks:
         t.allExamples = t.examples
         t.testingExamples = t.examples
         t.examples = []
+
+    tasks = tasks
+
+    if arguments.w == 3:
+        taskToGrammar = {t: gs[int(int(t.name.split("_")[0]) >= 81)]
+                         for t in tasks }
+        for trial in range(11):
+            frontiers, times, pcs = multicoreEnumeration(taskToGrammar,tasks,solver="ocaml",maximumFrontier=1,
+                                                         enumerationTimeout=timeout,CPUs=arguments.CPUs,
+                                                         evaluationTimeout=0.001,
+                                                         testing=True)
+            frontiers = {f.task: f for f in frontiers}
+            eprint("evaluating on held out examples")
+            for ti,t in enumerate(tasks):
+                testingExample = t.allExamples[trial]
+                eprint(t)
+                eprint("trained on")
+                eprint(t.examples)
+                eprint("evaluated on")
+                eprint(testingExample)
+                X = str(testingExample[0][0]).replace(",","").replace("[","(").replace("]",")")
+                Y = str(testingExample[1]).replace(",","").replace("[","(").replace("]",")")
+
+                if len(frontiers[t]):
+                    p = frontiers[t].topK(1).entries[0].program
+                    eprint("best program",p)
+                    try:
+                        yh = p.evaluate([])(testingExample[0][0])
+                    except: yh = ""
+                    eprint("gives the prediction")
+                    eprint(yh)
+                    correct = yh == testingExample[1]
+                    eprint("is this correct?",correct)
+                    yh = str(yh).replace(",","").replace("[","(").replace("]",")")
+
+                    p = str(p).replace("fix1","fix").replace("gt?",">").replace("-n99","-").replace("-n9","-").replace("+n99","+").replace("+n9","+").replace("car","head").replace("cdr","tail").replace("empty?","is_empty").replace("eq?","is_equal")
+                    print(f"CSVc{t.name.split('_')[0]},1,{t.name.split('_')[1]},{trial},\"{p}\",{times[t]},{pcs[t]}")
+                else:
+                    print(f"CSVc{t.name.split('_')[0]},1,{t.name.split('_')[1]},{trial},\"(lambda $0)\",0,1")
+                    eprint("could not find any program")
+
+                t.examples.append(testingExample)
+            
+        sys.exit(0)
 
     for r in range(10):
         # create empty training set
         for t in tasks: t.examples = []
 
         for n in range(20):
-            frontiers, times = multicoreEnumeration(g,tasks,solver="ocaml",maximumFrontier=1,
-                                                    enumerationTimeout=timeout,CPUs=arguments.CPUs,
-                                                    evaluationTimeout=0.001,
-                                                    testing=True)
+            frontiers, times, pcs = multicoreEnumeration(g,tasks,solver="ocaml",maximumFrontier=1,
+                                                         enumerationTimeout=timeout,CPUs=arguments.CPUs,
+                                                         evaluationTimeout=0.001,
+                                                         testing=True)
             frontiers = {f.task: f for f in frontiers}
             eprint("evaluating on held out examples")
             for ti,t in enumerate(tasks):

@@ -1063,3 +1063,15 @@ ignore(primitive "-n" (tint @> tint @> tint)
 ignore(primitive "+n" (tint @> tint @> tint)
          (fun x y ->
             if x < 0 || y < 0 then raise (Failure "nan") else x + y));;
+ignore(primitive "-n99" (tint @> tint @> tint)
+         (fun x y ->
+            if x < 0 || y < 0 || x > 99 || y > 99 then raise (Failure "nan") else x - y));;
+ignore(primitive "+n99" (tint @> tint @> tint)
+         (fun x y ->
+            if x < 0 || y < 0 || x > 99 || y > 99 then raise (Failure "nan") else x + y));;
+ignore(primitive "-n9" (tint @> tint @> tint)
+         (fun x y ->
+            if x < 0 || y < 0 || x > 9 || y > 9 then raise (Failure "nan") else x - y));;
+ignore(primitive "+n9" (tint @> tint @> tint)
+         (fun x y ->
+            if x < 0 || y < 0 || x > 9 || y > 9 then raise (Failure "nan") else x + y));;

@@ -15,6 +15,8 @@ def joshTasks(w):
         directory = "data/wave1"
     elif w == 2:
         directory = "data/wave2"
+    elif w == 3:
+        directory = "data/wave3/json"
     else:
         assert False
     for fn in os.listdir(directory):
@@ -22,11 +24,12 @@ def joshTasks(w):
         
         with open(f"{directory}/{fn}") as handle:
             data = json.load(handle)
-            ts.append(Task(data["name"],
+            
+            ts.append(Task(data.get("name",fn.split(".")[0][1:]),
                            arrow(tlist(tint),tlist(tint)),
                            [((e["i"],),e["o"])
                             for e in data["data"] ]))
-    return ts
+    return list(sorted(ts,key=lambda t: t.name))
         
         
 

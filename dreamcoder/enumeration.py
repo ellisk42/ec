@@ -16,7 +16,7 @@ def multicoreEnumeration(g, tasks, _=None,
                          evaluationTimeout=None,
                          testing=False):
     '''g: Either a Grammar, or a map from task to grammar.
-    Returns (list-of-frontiers, map-from-task-to-search-time)'''
+    Returns (list-of-frontiers, map-from-task-to-search-time, map-from-task-to-number-enumerated)'''
 
     # We don't use actual threads but instead use the multiprocessing
     # library. This is because we need to be able to kill workers.
@@ -219,11 +219,7 @@ def multicoreEnumeration(g, tasks, _=None,
             eprint("Unknown message result:", message.result)
             assert False
 
-        eprint("We enumerated this many programs, for each task:\n\t",
-               list(taskToNumberOfPrograms.values()))
-
-
-    return [frontiers[t] for t in tasks], bestSearchTime
+    return [frontiers[t] for t in tasks], bestSearchTime, taskToNumberOfPrograms
 
 def wrapInThread(f):
     """
