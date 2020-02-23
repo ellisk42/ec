@@ -194,109 +194,15 @@ if __name__=='__main__':
 
     assert arguments.domain == "josh"
 
-    if arguments.domain == "text":
-        g = Grammar.uniform(text_primitives.primitives + [p for p in bootstrapTarget()])
-        input_vocabularies = [list(printable[:-4]) + ['EOE'], list(printable[:-4])]
-        fe = Text.LearnedFeatureExtractor(tasks=tasks,
-                                          testingTasks=loadPBETasks("PBE_Strings_Track")[0])
-
-        BATCHSIZE = 16
-    elif arguments.domain == "regex":
-        g = Grammar.uniform(reducedConcatPrimitives(),
-                            continuationType=tpregex)
-        tasks = makeNewTasks()
-        fe = Regex.LearnedFeatureExtractor(tasks)
-        input_vocabularies = [["dummy"], list(printable) + ["LIST_END","LIST_START"]]
-        BATCHSIZE = 64
-    elif arguments.domain == "tower":
-        g = Grammar.uniform(new_primitives, continuationType=ttower)
-        tasks = dreamcoder.domains.tower.makeTowerTasks.makeSupervisedTasks()
-        fe = Tower.TowerCNN([])
-        BATCHSIZE = 64
-    elif arguments.domain == "logo":
-        g = Grammar.uniform(dreamcoder.domains.logo.logoPrimitives.primitives,
-                            continuationType=turtle)
-        tasks = dreamcoder.domains.logo.makeLogoTasks.makeTasks(['all'],proto=False)
-        fe = LOGO.LogoFeatureCNN([])
-        BATCHSIZE = 64
-    elif arguments.domain == "rational":
-        tasks = rational.makeTasks()
-        g = Grammar.uniform([real, real_division, real_addition, real_multiplication])
-        fe = FeatureExtractor([])
-        BATCHSIZE = 64
-    elif arguments.domain == "list":
-        BATCHSIZE = 16
-        tasks = retrieveJSONTasks("data/list_tasks.json") + sortBootstrap()
-        tasks.extend([
-            Task("remove empty lists",
-                 arrow(tlist(tlist(tbool)), tlist(tlist(tbool))),
-                 [((ls,), list(filter(lambda l: len(l) > 0, ls)))
-                  for _ in range(15)
-                  for ls in [[[random.random() < 0.5 for _ in range(random.randint(0, 3))]
-                              for _ in range(4)]]]),
-            Task("keep squares",
-                 arrow(tlist(tint), tlist(tint)),
-                 [((xs,), list(filter(lambda x: int(math.sqrt(x)) ** 2 == x,
-                                      xs)))
-                  for _ in range(15)
-                  for xs in [[random.choice([0, 1, 4, 9, 16, 25])
-                              if random.random() < 0.5
-                              else random.randint(0, 9)
-                              for _ in range(7)]]]),
-            Task("keep primes",
-                 arrow(tlist(tint), tlist(tint)),
-                 [((xs,), list(filter(lambda x: x in {2, 3, 5, 7, 11, 13, 17,
-                                                      19, 23, 29, 31, 37}, xs)))
-                  for _ in range(15)
-                  for xs in [[random.choice([2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37])
-                              if random.random() < 0.5
-                              else random.randint(0, 9)
-                              for _ in range(7)]]]),
-        ])
-        for i in range(4):
-            tasks.extend([
-                Task("keep eq %s" % i,
-                     arrow(tlist(tint), tlist(tint)),
-                     [((xs,), list(filter(lambda x: x == i, xs)))
-                      for _ in range(15)
-                      for xs in [[random.randint(0, 6) for _ in range(5)]]]),
-                Task("remove eq %s" % i,
-                     arrow(tlist(tint), tlist(tint)),
-                     [((xs,), list(filter(lambda x: x != i, xs)))
-                      for _ in range(15)
-                      for xs in [[random.randint(0, 6) for _ in range(5)]]]),
-                Task("keep gt %s" % i,
-                     arrow(tlist(tint), tlist(tint)),
-                     [((xs,), list(filter(lambda x: x > i, xs)))
-                      for _ in range(15)
-                      for xs in [[random.randint(0, 6) for _ in range(5)]]]),
-                Task("remove gt %s" % i,
-                     arrow(tlist(tint), tlist(tint)),
-                     [((xs,), list(filter(lambda x: not x > i, xs)))
-                      for _ in range(15)
-                      for xs in [[random.randint(0, 6) for _ in range(5)]]])
-            ])
-            fe = List.LearnedFeatureExtractor(tasks)
-
-        def isIdentityTask(t):
-            return all( len(xs) == 1 and xs[0] == y for xs, y in t.examples  )
-        eprint("Removed", sum(isIdentityTask(t) for t in tasks), "tasks that were just the identity function")
-        tasks = [t for t in tasks if not isIdentityTask(t) ]
-        test, train = testTrainSplit(tasks, .5)
-        test = [t for t in test
-                if t.name not in EASYLISTTASKS]
-        g = Grammar.uniform(bootstrapTarget_extra())
-        input_vocabularies = [fe.lexicon + ['EOE'], fe.lexicon]
-
-    elif arguments.domain == "josh":
-        BATCHSIZE = 16
-        tasks = joshTasks(arguments.w)
-        fe = List.LearnedFeatureExtractor(tasks)
-        # test, train = testTrainSplit(tasks, .5)
-        # test = [t for t in test
-        #         if t.name not in EASYLISTTASKS]
-        g = Grammar.uniform(josh_primitives(arguments.w))
-        input_vocabularies = [fe.lexicon + ['EOE'], fe.lexicon]
+    BATCHSIZE = 16
+    tasks = joshTasks(arguments.w)
+    fe = List.LearnedFeatureExtractor(tasks)
+    # test, train = testTrainSplit(tasks, .5)
+    # test = [t for t in test
+    #         if t.name not in EASYLISTTASKS]
+    g = Grammar.uniform(josh_primitives(arguments.w))
+    input_vocabularies = [fe.lexicon + ['EOE'], fe.lexicon]
+    
 
     if not arguments.test:
 
