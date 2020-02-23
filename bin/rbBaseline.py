@@ -135,7 +135,9 @@ def test_task(m, task, i, timeout):
         
         for i_run in range(10):
             task.examples = [random.choice( [ex for ex in allExamples])]
-            for i_N in range(20):
+            print(f"i_run: {i_run}, i_N: 0, task ID: {i}, test input: {task.examples[0][0]}, test output: {task.examples[0][1]}, prediction: None, correct: False", flush=True )
+
+            for i_N in range(1,20):
                 test_example = random.choice( [ex for ex in allExamples if ex not in task.examples])
                 query = makeExamples(task)
 
@@ -155,14 +157,27 @@ def test_task(m, task, i, timeout):
                         #print(ll)
                         if ll > float('-inf'): 
                             #print("found program:")
-                            #print(p)
-                            pred_out = p.apply(test_example[0]) 
+                            #print(p, flush=True)
+                            #print(ll)
+                            try:
+                                #pred_out = p.apply(test_example[0]) 
+                                #pred_out = p.evaluate([])(test_example[0])
+                                prog = p.evaluate([])
+                                #import pdb; pdb.set_trace()
+                                pred_out = prog(test_example[0][0])
+                            except AttributeError as e:
+                                print(e)
+                                continue
+                            except IndexError:
+                                continue
+                            except:
+                                continue
                             correct = pred_out == test_example[1]
-                            print(f"i_run: {i_run}, i_N: {i_N}, task ID: {i}, test input: {test_example[0]}, test output: {test_example[1]}, prediction: {pred_out}, correct: {correct}" )
+                            print(f"i_run: {i_run}, i_N: {i_N}, task ID: {i}, test input: {test_example[0]}, test output: {test_example[1]}, prediction: {pred_out}, correct: {correct}" , flush=True)
                             hit = True
                             break
                 if not hit:
-                    print(f"i_run: {i_run}, i_N: {i_N}, task ID: {i}, test input: {test_example[0]}, test output: {test_example[1]}, prediction: None, correct: False" )
+                    print(f"i_run: {i_run}, i_N: {i_N}, task ID: {i}, test input: {test_example[0]}, test output: {test_example[1]}, prediction: None, correct: False", flush=True )
                 task.examples.append(test_example)
     return False
 
@@ -171,10 +186,13 @@ def test_task(m, task, i, timeout):
 if __name__=='__main__':
     import argparse
     parser = argparse.ArgumentParser(description = "")
-    parser.add_argument("--domain",'-d',default="text")
+    parser.add_argument("--domain",'-d',default="josh")
     parser.add_argument("--test", type=str, default=False)
     parser.add_argument("--timeout", type=float, default=1200)
+    parser.add_argument("-w", type=int)
     arguments = parser.parse_args()
+
+    assert arguments.domain == "josh"
 
     if arguments.domain == "text":
         g = Grammar.uniform(text_primitives.primitives + [p for p in bootstrapTarget()])
@@ -272,12 +290,12 @@ if __name__=='__main__':
 
     elif arguments.domain == "josh":
         BATCHSIZE = 16
-        tasks = joshTasks()
+        tasks = joshTasks(arguments.w)
         fe = List.LearnedFeatureExtractor(tasks)
         # test, train = testTrainSplit(tasks, .5)
         # test = [t for t in test
         #         if t.name not in EASYLISTTASKS]
-        g = Grammar.uniform(josh_primitives())
+        g = Grammar.uniform(josh_primitives(arguments.w))
         input_vocabularies = [fe.lexicon + ['EOE'], fe.lexicon]
 
     if not arguments.test:
@@ -312,7 +330,7 @@ if __name__=='__main__':
             if i%10==0: print(f"Iteration {i}/{max_n_iterations}, Score {score}, ({(time.time()-start)/(i+1)} seconds per iteration)", flush=True) 
 
             if i%100==0:
-                PATH = f"{arguments.domain}_robustfill_baseline_6.p"
+                PATH = f"{arguments.domain}_wave_{arguments.w}_robustfill_baseline_6.p"
                 torch.save(m, PATH)
                 print("saved at", PATH)
 
