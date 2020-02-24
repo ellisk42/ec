@@ -186,7 +186,7 @@ if __name__=='__main__':
     parser.add_argument("--test", type=str, default=False)
     parser.add_argument("--timeout", type=float, default=1200)
     parser.add_argument("-w", type=int)
-    parser.add_argument("--dsl", type=str, default='9') #'9' or '99'
+    parser.add_argument("--type", type=str, default='9') #'9' or '99'
     arguments = parser.parse_args()
 
     assert arguments.domain == "josh"
