@@ -97,21 +97,7 @@ def getDatum(n_ex):
         if ex is None: continue
         return ex, stringify(str(p))
 
-def makeExamples(task):
-    if arguments.domain == 'tower':
-        return task.getImage().transpose(2,0,1)
-
-    if arguments.domain == "regex":
-        return [([],y)
-                for xs,y in task.examples ]
-
-    if arguments.domain == 'rational':
-        return imresize(np.array([task.features]*3),(256,256)).transpose(2,0,1)
-    if arguments.domain == 'logo':
-        i = np.array([float(xx)/256. for xx in task.highresolution])
-        i = i.reshape((128,128))
-        return imresize(np.array([i]*3),(256,256)).transpose(2,0,1)
-    
+def makeExamples(task):    
     if hasattr(fe,'tokenize'):
         examples = []
         tokens = fe.tokenize(task.examples)
@@ -133,19 +119,24 @@ def test_task(m, task, i, timeout):
         
         allExamples = task.examples
         
-        for i_run in range(10):
-            task.examples = [random.choice( [ex for ex in allExamples])]
-            print(f"i_run: {i_run}, i_N: 0, task ID: {i}, test input: {task.examples[0][0]}, test output: {task.examples[0][1]}, prediction: None, correct: False", flush=True )
+        for i_run in range(5):
+            task.examples = allExamples[0]
 
-            for i_N in range(1,20):
-                test_example = random.choice( [ex for ex in allExamples if ex not in task.examples])
+            #print(f"i_run: {i_run}, i_N: 0, task ID: {i}, test input: {task.examples[0][0]}, test output: {task.examples[0][1]}, prediction: None, correct: False", flush=True )
+            print(f"CSVc{task.name.split('_')[0]},{i_run},{task.name.split('_')[1]},{trial},\"(lambda $0)\",0,0")
+            #for i_N in range(1,10):
+            for trial in range(1,10):
+                #test_example = random.choice( [ex for ex in allExamples if ex not in task.examples])
+                test_example = allExamples[i]
                 query = makeExamples(task)
 
+                n_cands = -1
                 t = time.time()
                 hit = False
                 while time.time() - t < timeout and not hit:
                     candidates = m.sample([query]*BATCHSIZE) #i think this works
                     for cand in candidates:
+                        n_cands += 1
                         try:
                             p = Program.parse(" ".join(cand))
                             #print(p)
@@ -160,8 +151,6 @@ def test_task(m, task, i, timeout):
                             #print(p, flush=True)
                             #print(ll)
                             try:
-                                #pred_out = p.apply(test_example[0]) 
-                                #pred_out = p.evaluate([])(test_example[0])
                                 prog = p.evaluate([])
                                 #import pdb; pdb.set_trace()
                                 pred_out = prog(test_example[0][0])
@@ -173,11 +162,18 @@ def test_task(m, task, i, timeout):
                             except:
                                 continue
                             correct = pred_out == test_example[1]
-                            print(f"i_run: {i_run}, i_N: {i_N}, task ID: {i}, test input: {test_example[0]}, test output: {test_example[1]}, prediction: {pred_out}, correct: {correct}" , flush=True)
+
+                            #print(f"i_run: {i_run}, i_N: {i_N}, task ID: {i}, test input: {test_example[0]}, test output: {test_example[1]}, prediction: {pred_out}, correct: {correct}" , flush=True)
+
+                            searchTime = time.time() - t
+                            prettyP = str(p).replace("fix1","fix").replace("gt?",">").replace("-n99","-").replace("-n9","-").replace("+n99","+").replace("+n9","+").replace("car","head").replace("cdr","tail").replace("empty?","is_empty").replace("eq?","is_equal")
+                            print(f"CSVc{task.name.split('_')[0]},{i_run},{task.name.split('_')[1]},{trial},\"{prettyP}\",{searchTime},{n_cands}")
                             hit = True
                             break
+                        
                 if not hit:
-                    print(f"i_run: {i_run}, i_N: {i_N}, task ID: {i}, test input: {test_example[0]}, test output: {test_example[1]}, prediction: None, correct: False", flush=True )
+                    print(f"CSVc{task.name.split('_')[0]},{i_run},{task.name.split('_')[1]},{trial},\"(lambda $0)\",0,0")
+                    #print(f"i_run: {i_run}, i_N: {i_N}, task ID: {i}, test input: {test_example[0]}, test output: {test_example[1]}, prediction: None, correct: False", flush=True )
                 task.examples.append(test_example)
     return False
 
@@ -190,30 +186,40 @@ if __name__=='__main__':
     parser.add_argument("--test", type=str, default=False)
     parser.add_argument("--timeout", type=float, default=1200)
     parser.add_argument("-w", type=int)
+    parser.add_argument("--dsl", type=str, default='9') #'9' or '99'
     arguments = parser.parse_args()
 
     assert arguments.domain == "josh"
+    assert arguments.w == 3
 
     BATCHSIZE = 16
-    tasks = joshTasks(arguments.w)
-    fe = List.LearnedFeatureExtractor(tasks)
-    # test, train = testTrainSplit(tasks, .5)
-    # test = [t for t in test
-    #         if t.name not in EASYLISTTASKS]
-    g = Grammar.uniform(josh_primitives(arguments.w))
-    input_vocabularies = [fe.lexicon + ['EOE'], fe.lexicon]
-    
 
     if not arguments.test:
+        #TRAINING CODE:
+
+
+        tasks = joshTasks(arguments.w)
+
+        if arguments.type == '9':
+            tasks = [t for t in tasks if int(int(t.name.split("_")[0]) < 81)]
+            p = josh_primitives(arguments.w)[0]
+            g = Grammar.uniform(p)
+
+        elif arguments.type == '99':
+            tasks = [t for t in tasks if int(int(t.name.split("_")[0]) >= 81)] 
+            p = josh_primitives(arguments.w)[1]
+            g = Grammar.uniform(p)
+
+        else: assert False
+
+        fe = List.LearnedFeatureExtractor(tasks)
+
+        input_vocabularies = [fe.lexicon + ['EOE'], fe.lexicon]
 
         target_vocabulary = [str(p) for p in g.primitives] + extras
         
-        if arguments.domain in ['tower', 'rational', 'logo']:
-            m = Image_RobustFill(target_vocabulary=target_vocabulary)
-        else:
-            m = SyntaxCheckingRobustFill(input_vocabularies=input_vocabularies,
+        m = SyntaxCheckingRobustFill(input_vocabularies=input_vocabularies,
                                     target_vocabulary=target_vocabulary)
-
 
         if torch.cuda.is_available():
             print("CUDAfying net...")
@@ -224,9 +230,8 @@ if __name__=='__main__':
 
         start=time.time()
         max_n_iterations = 10000000000
-        #batch = [getDatum() for _ in range(BATCHSIZE)]
         for i in range(max_n_iterations):
-            n_ex = random.choice(range(1,22))
+            n_ex = random.choice(range(1,11))
             batch = [getDatum(n_ex) for _ in range(BATCHSIZE)]
             inputs, targets = zip(*batch)
             try:
@@ -236,26 +241,28 @@ if __name__=='__main__':
             if i%10==0: print(f"Iteration {i}/{max_n_iterations}, Score {score}, ({(time.time()-start)/(i+1)} seconds per iteration)", flush=True) 
 
             if i%100==0:
-                PATH = f"{arguments.domain}_wave_{arguments.w}_robustfill_baseline_6.p"
+                PATH = f"{arguments.domain}_wave_{arguments.w}.p_g={arguments.type}"
                 torch.save(m, PATH)
                 print("saved at", PATH)
 
     else:
         path = arguments.test
 
-        m = torch.load(path)
-        m.max_length=50
-        print("domain: ", arguments.domain)
+        m9 = torch.load(path+"_g=9")
+        m99 = torch.load(path+"_g=99")
+        m9.max_length=50
+        m99.max_length=50
         print('testing model:')
         print(path)
 
         #assumes tasks are the testing tasks
-
+        taskToModel = {t: m99 if int(int(t.name.split("_")[0]) >= 81) else m9
+                         for t in tasks }
         n_tasks = len(tasks)
         print(n_tasks, "tasks")
         n_hits = 0
         for i, task in enumerate(tasks):
-            test_task(m, task, i, arguments.timeout)
+            test_task(taskToModel[task], task, i, arguments.timeout)
             #print("for task ",i, ", hit=", hit)
             #if hit: n_hits += 1
 
