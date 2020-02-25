@@ -16,27 +16,111 @@ import torch.nn.functional as F
 from dreamcoder.domains.logo.makeLogoTasks import makeTasks, montageTasks, drawLogo
 from dreamcoder.domains.logo.logoPrimitives import primitives, turtle, tangle, tlength
 from dreamcoder.dreamcoder import ecIterator
-from dreamcoder.grammar import Grammar
-from dreamcoder.program import Program
+from dreamcoder.grammar import Grammar, ContextualGrammar
+from dreamcoder.program import Program, Index
 from dreamcoder.recognition import variable, maybe_cuda
 from dreamcoder.task import Task
 from dreamcoder.type import arrow
 from dreamcoder.utilities import eprint, testTrainSplit, loadPickle
 
 
-def animateSolutions(allFrontiers):
+def animateSolutions(allFrontiers, animate, checkpoint=None):
     programs = []
     filenames = []
-    for n,(t,f) in enumerate(allFrontiers.items()):
+    sorted_frontiers = sorted(allFrontiers.items(), key=lambda f: f[0].name)
+    for n,(t,f) in sorted_frontiers:
         if f.empty: continue
 
         programs.append(f.bestPosterior.program)
-        filenames.append(f"/tmp/logo_animation_{n}")
-        
-    drawLogo(*programs, pretty=True, smoothPretty=True, resolution=128, animate=True,
+        # Write them into the checkpoint dir
+        if checkpoint is None: 
+            outputDir = '/tmp'
+        else:
+            import os.path as osp
+            outputDir = osp.join(osp.dirname(checkpoint), 'solutions')
+        filenames.append(osp.join(outputDir, f'logo_animation_{n}'))
+    
+    drawLogo(*programs, pretty=True, smoothPretty=True, resolution=128, animate=animate,
              filenames=filenames)
-        
-        
+
+def get_unigram_uses(grammar, programs):
+    """Note that this only returns a summary of unigrams actually used in the programs."""
+    from itertools import chain
+    closed_summaries = [grammar.closedLikelihoodSummary(request, program) for (request, program) in programs]
+    all_primitives = set(chain(*[list(ls.uses.keys()) for ls in closed_summaries]))
+    primitives_to_idx = {p : i for (i, p) in enumerate(sorted(all_primitives, key=lambda p:str(p)))}
+    
+    unigram_uses = []
+    for ls in closed_summaries:
+        uses = [ls.uses[p] if p in ls.uses else 0.0 for p in primitives_to_idx]
+        unigram_uses.append(uses)
+    
+    primitives_to_idx = {str(p) : i for (p, i) in primitives_to_idx.items()}
+    return primitives_to_idx, uses
+
+def get_bigram_uses(contextual_grammar, grammar, programs):
+    """This returns an overapproximated transition matrix of counts, similar to that 
+    used by the recognition model."""
+    closed_summaries = [contextual_grammar.closedLikelihoodSummary(request, program) for (request, program) in programs]
+    bigram_uses = []
+    
+    library = {}
+    n_grammars = 0
+    for prim in grammar.primitives:
+        numberOfArguments = len(prim.infer().functionArguments())
+        idx_list = list(range(n_grammars, n_grammars+numberOfArguments))
+        library[prim] = idx_list
+        n_grammars += numberOfArguments
+    # Extra grammar for when there is no parent and for when the parent is a variable
+    n_grammars += 2
+    G = len(grammar) + 1
+    for summary in closed_summaries:
+        uses = np.zeros((n_grammars,len(grammar)+1))
+        for e, ss in summary.library.items():
+            for g,s in zip(library[e], ss):
+                assert g < n_grammars - 2
+                for p, production in enumerate(grammar.primitives):
+                    uses[g,p] = s.uses.get(production, 0.)
+                uses[g,len(grammar)] = s.uses.get(Index(0), 0)
+                
+        # noParent: this is the last network output
+        for p, production in enumerate(grammar.primitives):            
+            uses[n_grammars - 1, p] = summary.noParent.uses.get(production, 0.)
+        uses[n_grammars - 1, G - 1] = summary.noParent.uses.get(Index(0), 0.)
+
+        # variableParent: this is the penultimate network output
+        for p, production in enumerate(grammar.primitives):            
+            uses[n_grammars - 2, p] = summary.variableParent.uses.get(production, 0.)
+        uses[n_grammars - 2, G - 1] = summary.variableParent.uses.get(Index(0), 0.)
+    bigram_uses.append((list(np.ravel(uses)), uses.shape))
+    
+    library = {str(p) : i for (p, i) in library.items()}
+    return library, bigram_uses
+    
+def solutionPrimitiveCounts(allFrontiers, grammar, checkpoint):
+    sorted_frontiers = sorted(allFrontiers.items(), key=lambda f: f[0].name)
+    sorted_frontiers = [(t, f) for (t, f) in sorted_frontiers if not f.empty]
+    frontiers_to_idx = {t.name : i for (i, (t, f)) in enumerate(sorted_frontiers)}
+    
+    from collections import defaultdict
+    counts = {n : defaultdict() for n in range(len(allFrontiers))}
+    g, contextual_g = grammar[-1], ContextualGrammar.fromGrammar(grammar[-1])
+    best_programs = [(f.task.request, f.bestPosterior.program) for n,(t,f) in enumerate(sorted_frontiers)]
+    unigram_to_idx, unigram_uses = get_unigram_uses(g, best_programs)
+    bigram_to_idx, bigram_uses = get_bigram_uses(contextual_g, g, best_programs)
+    
+    object = {
+        'frontiers_to_idx' : frontiers_to_idx,
+        'unigram_to_idx' : unigram_to_idx,
+        'bigram_to_idx' : bigram_to_idx,
+        'unigram_uses' : unigram_uses,
+        'bigram_uses' : bigram_uses
+    }
+    import json
+    import os.path as osp
+    outputDir = osp.join(osp.dirname(checkpoint), 'solutions')
+    with open(osp.join(outputDir, 'primitive_counts.json'), 'w') as f:
+        json.dump(object, f)
     
 def dreamFromGrammar(g, directory, N=100):
     if isinstance(g,Grammar):
@@ -180,6 +264,10 @@ def list_options(parser):
     parser.add_argument("--split",
                         default=1., type=float)
     parser.add_argument("--animate",
+                        default=None, type=str)
+    parser.add_argument("--visualizeSolutions",
+                        default=None, type=str)
+    parser.add_argument("--solutionPrimitiveCounts",
                         default=None, type=str)
 
 
@@ -353,7 +441,18 @@ def main(args):
 
     animateCheckpoint = args.pop("animate")
     if animateCheckpoint is not None:
-        animateSolutions(loadPickle(animateCheckpoint).allFrontiers)
+        animateSolutions(loadPickle(animateCheckpoint).allFrontiers, animate=True)
+        sys.exit(0)
+    
+    visualizeCheckpoint = args.pop("visualizeSolutions")
+    if visualizeCheckpoint is not None:
+        animateSolutions(loadPickle(visualizeCheckpoint).allFrontiers, animate=False, checkpoint=visualizeCheckpoint)
+        sys.exit(0)
+    
+    solutionCheckpoint = args.pop("solutionPrimitiveCounts")
+    if solutionCheckpoint is not None:
+        checkpoint = loadPickle(solutionCheckpoint)
+        solutionPrimitiveCounts(checkpoint.allFrontiers, checkpoint.grammars, solutionCheckpoint)
         sys.exit(0)
         
     target = args.pop("target")

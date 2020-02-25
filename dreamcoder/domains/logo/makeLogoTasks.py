@@ -39,6 +39,7 @@ def drawLogo(*programs,
         jobs.append(entry)        
     message["jobs"] = jobs
     response = jsonBinaryInvoke("./logoDrawString", message)
+
     if len(programs) == 1:
         return response[0]
     return response

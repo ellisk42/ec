@@ -3,7 +3,7 @@ import os
 import json
 from string import printable
 
-from pregex import pregex
+# from pregex import pregex
 
 from dreamcoder.task import Task
 from dreamcoder.type import tpregex, arrow
