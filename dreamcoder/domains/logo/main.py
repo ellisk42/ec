@@ -56,7 +56,7 @@ def get_unigram_uses(grammar, programs):
         unigram_uses.append(uses)
     
     primitives_to_idx = {str(p) : i for (p, i) in primitives_to_idx.items()}
-    return primitives_to_idx, uses
+    return primitives_to_idx, unigram_uses
 
 def get_bigram_uses(contextual_grammar, grammar, programs):
     """This returns an overapproximated transition matrix of counts, similar to that 
@@ -92,12 +92,15 @@ def get_bigram_uses(contextual_grammar, grammar, programs):
         for p, production in enumerate(grammar.primitives):            
             uses[n_grammars - 2, p] = summary.variableParent.uses.get(production, 0.)
         uses[n_grammars - 2, G - 1] = summary.variableParent.uses.get(Index(0), 0.)
-    bigram_uses.append((list(np.ravel(uses)), uses.shape))
+        bigram_uses.append((list(np.ravel(uses)), uses.shape))
     
     library = {str(p) : i for (p, i) in library.items()}
     return library, bigram_uses
     
 def solutionPrimitiveCounts(allFrontiers, grammar, checkpoint):
+    # TODO: @CathyWong: should print the checkpoint iter somewhere
+    # TODO: cluster on non-invented (rewritten); rewrite in several other older grammars? (how do)= -- maybe just original.
+    
     sorted_frontiers = sorted(allFrontiers.items(), key=lambda f: f[0].name)
     sorted_frontiers = [(t, f) for (t, f) in sorted_frontiers if not f.empty]
     frontiers_to_idx = {t.name : i for (i, (t, f)) in enumerate(sorted_frontiers)}
@@ -105,22 +108,33 @@ def solutionPrimitiveCounts(allFrontiers, grammar, checkpoint):
     from collections import defaultdict
     counts = {n : defaultdict() for n in range(len(allFrontiers))}
     g, contextual_g = grammar[-1], ContextualGrammar.fromGrammar(grammar[-1])
-    best_programs = [(f.task.request, f.bestPosterior.program) for n,(t,f) in enumerate(sorted_frontiers)]
-    unigram_to_idx, unigram_uses = get_unigram_uses(g, best_programs)
-    bigram_to_idx, bigram_uses = get_bigram_uses(contextual_g, g, best_programs)
     
-    object = {
-        'frontiers_to_idx' : frontiers_to_idx,
-        'unigram_to_idx' : unigram_to_idx,
-        'bigram_to_idx' : bigram_to_idx,
-        'unigram_uses' : unigram_uses,
-        'bigram_uses' : bigram_uses
-    }
+    
+    best_programs = [(f.task.request, f.bestPosterior.program) for n,(t,f) in enumerate(sorted_frontiers)]
+    
+    # Rewrite in initial DSL.
+    beta_normal = [(r, p.betaNormalForm()) for (r, p) in best_programs]
+
+    object = {}
+    for (name, programs) in zip(['final_dsl', 'beta_normal'], [best_programs, beta_normal]):
+    
+        unigram_to_idx, unigram_uses = get_unigram_uses(g, programs)
+        bigram_to_idx, bigram_uses = get_bigram_uses(contextual_g, g, programs)
+        metrics = {
+            'frontiers_to_idx' : frontiers_to_idx,
+            'unigram_to_idx' : unigram_to_idx,
+            'bigram_to_idx' : bigram_to_idx,
+            'unigram_uses' : unigram_uses,
+            'bigram_uses' : bigram_uses
+        }
+        object[name] = metrics
     import json
     import os.path as osp
     outputDir = osp.join(osp.dirname(checkpoint), 'solutions')
     with open(osp.join(outputDir, 'primitive_counts.json'), 'w') as f:
         json.dump(object, f)
+    with open(osp.join(outputDir, 'primitive_counts.json'), 'r') as f:
+        json.load(f)
     
 def dreamFromGrammar(g, directory, N=100):
     if isinstance(g,Grammar):
