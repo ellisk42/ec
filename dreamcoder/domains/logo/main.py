@@ -13,7 +13,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from dreamcoder.domains.logo.makeLogoTasks import makeTasks, montageTasks, drawLogo
+from dreamcoder.domains.logo.makeLogoTasks import makeTasks, montageTasks, drawLogo, manualLogoTasks
 from dreamcoder.domains.logo.logoPrimitives import primitives, turtle, tangle, tlength
 from dreamcoder.dreamcoder import ecIterator
 from dreamcoder.grammar import Grammar, ContextualGrammar
@@ -23,6 +23,19 @@ from dreamcoder.task import Task
 from dreamcoder.type import arrow
 from dreamcoder.utilities import eprint, testTrainSplit, loadPickle
 
+def saveVisualizedTasks(tasks, visualizeTasks):
+    # Store the high resolution tasks.
+    import imageio
+    import os.path as osp
+    for n, t in enumerate(tasks):
+        logo_safe_name = t.name.replace("=","_").replace(' ','_').replace('/','_').replace("-","_").replace(")","_").replace("(","_")
+        logo_name = 'logo_{}_name_{}.png'.format(n, logo_safe_name)
+        a = t.highresolution
+        w = int(len(a)**0.5)
+        img = np.array([a[i:i+w]for i in range(0,len(a),w)])
+        img_name = osp.join(visualizeTasks, logo_name)
+        imageio.imwrite(img_name, img)
+        os.system(f"convert {img_name} -channel RGB -negate {img_name}")
 
 def animateSolutions(allFrontiers, animate, checkpoint=None):
     programs = []
@@ -281,6 +294,8 @@ def list_options(parser):
                         default=None, type=str)
     parser.add_argument("--visualizeSolutions",
                         default=None, type=str)
+    parser.add_argument("--visualizeTasks",
+                        default=None, type=str)
     parser.add_argument("--solutionPrimitiveCounts",
                         default=None, type=str)
 
@@ -468,6 +483,12 @@ def main(args):
         checkpoint = loadPickle(solutionCheckpoint)
         solutionPrimitiveCounts(checkpoint.allFrontiers, checkpoint.grammars, solutionCheckpoint)
         sys.exit(0)
+    
+    visualizeTasks = args.pop("visualizeTasks")
+    if visualizeTasks is not None:
+        tasks = manualLogoTasks(resolution=[28,1024])
+        saveVisualizedTasks(tasks, visualizeTasks)
+        sys.exit(0)
         
     target = args.pop("target")
     red = args.pop("reduce")
@@ -484,7 +505,6 @@ def main(args):
     subprocess.Popen(["python","./protonet_server.py"])
     time.sleep(3)
     os.chdir("..")
-
 
     test, train = testTrainSplit(tasks, args.pop("split"))
     eprint("Split tasks into %d/%d test/train" % (len(test), len(train)))

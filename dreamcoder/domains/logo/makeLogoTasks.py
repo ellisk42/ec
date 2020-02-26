@@ -147,7 +147,7 @@ def parseLogo(s):
 
 
 def manualLogoTask(name, expression, proto=False, needToTrain=False,
-                   supervise=False, lambdaCalculus=False):
+                   supervise=False, lambdaCalculus=False, resolution=[28,128]):
     p = Program.parse(expression) if lambdaCalculus else parseLogo(expression)
     from dreamcoder.domains.logo.logoPrimitives import primitives
     from dreamcoder.grammar import Grammar
@@ -256,11 +256,11 @@ def rotationalSymmetryDemo():
     return demos
               
 
-def manualLogoTasks():
+def manualLogoTasks(resolution=[28,128]):
     tasks = []
     def T(name, source, needToTrain=False, supervise=False):
         tasks.append(manualLogoTask(name, source, supervise=supervise,
-                                    needToTrain=needToTrain))
+                                    needToTrain=needToTrain, resolution=resolution))
     if False:
         for d,a,s in [('1l','0a','(loop i infinity (move epsilonLength epsilonAngle))'),
                       ('epsilonLength','0a','(loop i infinity (move epsilonLength epsilonAngle))'),
