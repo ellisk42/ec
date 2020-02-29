@@ -19,6 +19,7 @@ import datetime
 from dreamcoder.dreamcoder import explorationCompression
 from dreamcoder.utilities import eprint, flatten, testTrainSplit
 from dreamcoder.grammar import Grammar
+from dreamcoder.dreaming import *
 from dreamcoder.task import Task
 from dreamcoder.enumeration import multicoreEnumeration
 from dreamcoder.type import Context, arrow, tbool, tlist, tint, t0, UnificationFailure
@@ -26,6 +27,8 @@ from dreamcoder.domains.list.listPrimitives import basePrimitives, primitives, M
 from dreamcoder.recognition import RecurrentFeatureExtractor
 from dreamcoder.domains.list.makeListTasks import make_list_bootstrap_tasks, sortBootstrap, EASYLISTTASKS, joshTasks
 
+def editProgramText(pt):
+    return pt.replace("fix1","fix").replace("gt?",">").replace("-n99","-").replace("-n9","-").replace("+n99","+").replace("+n9","+").replace("car","head").replace("cdr","tail").replace("empty?","is_empty").replace("eq?","is_equal")
 
 """
 
@@ -55,6 +58,7 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description = "")
     parser.add_argument("--w","-w",default=1,type=int)
+    parser.add_argument("--dream","-d",default=False,action='store_true')
     parser.add_argument("--timeout","-t",default=600,type=float)
     parser.add_argument("--CPUs",default=numberOfCPUs(),type=int)
     arguments = parser.parse_args()
@@ -73,6 +77,24 @@ if __name__ == "__main__":
         t.allExamples = t.examples
         t.testingExamples = t.examples
         t.examples = []
+
+    if arguments.dream:
+        assert arguments.w >= 3
+
+        promises = []
+        for g in gs:
+            promise = backgroundHelmholtzEnumeration(tasks,g,arguments.timeout,evaluationTimeout=0.001,special="unique")
+            promises.append(promise)
+        for pi,p in enumerate(promises):
+            frontiers = p()
+            random.shuffle(frontiers)
+            frontiers = frontiers[:10000]
+            with open(f"samples{pi}.csv","w") as handle:
+                for f in frontiers:
+                    for e in f:
+                        handle.write(f"{editProgramText(str(e.program))}\n")
+            
+        sys.exit(0)
 
     tasks = tasks
 
@@ -108,7 +130,7 @@ if __name__ == "__main__":
                     eprint("is this correct?",correct)
                     yh = str(yh).replace(",","").replace("[","(").replace("]",")")
 
-                    p = str(p).replace("fix1","fix").replace("gt?",">").replace("-n99","-").replace("-n9","-").replace("+n99","+").replace("+n9","+").replace("car","head").replace("cdr","tail").replace("empty?","is_empty").replace("eq?","is_equal")
+                    p = editProgramText(str(p))
                     print(f"CSVc{t.name.split('_')[0]},1,{t.name.split('_')[1]},{trial},\"{p}\",{times[t]},{pcs[t]}")
                 else:
                     print(f"CSVc{t.name.split('_')[0]},1,{t.name.split('_')[1]},{trial},\"(lambda $0)\",0,1")

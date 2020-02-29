@@ -395,3 +395,8 @@ let regex_hash  ?timeout:(timeout=0.001) request inputs : program -> (PolyList.t
            ([poly_of_regex r],0.))
 ;;
 register_special_helmholtz "regex" regex_hash;;
+
+let unique_hash  ?timeout:(timeout=0.001) request inputs : program -> (PolyList.t*float) option =
+  fun program -> Some([string_of_program program |> String.to_list |> List.map ~f:(fun c -> PolyValue.Character(c)) |> PolyValue.List],0.);;
+register_special_helmholtz "unique" unique_hash;;
+
