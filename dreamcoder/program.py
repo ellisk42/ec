@@ -160,6 +160,29 @@ class Program(object):
             raise ParseFailure((s,e))
         return p(s)
 
+    @property
+    def hasHoles(self):
+
+        class HoleVisitor:
+            def __init__(self):
+                pass
+            def application(self, e):
+                return e.f.visit(self) or e.x.visit(self) #is the first part necessary?
+            def index(self, e):
+                return False
+            def abstraction(self, e):
+                return e.body.visit(self)
+            def primitive(self, e):
+                return False
+            def invented(self, e):
+                return False
+            def hole(self, e):
+                return True
+                
+        h = HoleVisitor()
+        return self.visit(h)
+
+
     @staticmethod
     def _parse(s,n):
         while n < len(s) and s[n].isspace():
@@ -838,6 +861,12 @@ class Hole(Program):
                                   '<HOLE>')
         return Hole.single, n
 
+    def visit(self,
+              visitor,
+              *arguments,
+              **keywords): return visitor.hole(self,
+                                                *arguments,
+                                                **keywords)
 
 Hole.single = Hole()
 

@@ -1436,22 +1436,22 @@ class RecognitionModel(nn.Module):
         from enumeration import enumerateForTasks
         #print("RECOGNITIONMODEL", recognitionModel)
 
-        # return self.solver.infer(g, tasks, likelihoodModel, 
-        #                             timeout=timeout,
-        #                             elapsedTime=elapsedTime,
-        #                             CPUs=CPUs,
-        #                             testing=testing,
-        #                             evaluationTimeout=evaluationTimeout,
-        #                             maximumFrontiers=maximumFrontiers)  
+        return self.solver.infer(g, tasks, likelihoodModel, 
+                                    timeout=timeout,
+                                    elapsedTime=elapsedTime,
+                                    CPUs=CPUs,
+                                    testing=testing,
+                                    evaluationTimeout=evaluationTimeout,
+                                    maximumFrontiers=maximumFrontiers)  
 
-        return self.enumerateForTasksValue(g, tasks, likelihoodModel,
-                                 timeout=timeout,
-                                 testing=testing,
-                                 elapsedTime=elapsedTime,
-                                 evaluationTimeout=evaluationTimeout,
-                                 maximumFrontiers=maximumFrontiers,
-                                 budgetIncrement=budgetIncrement,
-                                 lowerBound=lowerBound, upperBound=upperBound)
+        # return self.enumerateForTasksValue(g, tasks, likelihoodModel,
+        #                          timeout=timeout,
+        #                          testing=testing,
+        #                          elapsedTime=elapsedTime,
+        #                          evaluationTimeout=evaluationTimeout,
+        #                          maximumFrontiers=maximumFrontiers,
+        #                          budgetIncrement=budgetIncrement,
+        #                          lowerBound=lowerBound, upperBound=upperBound)
 
 
     def enumerateForTasksValue(self, g, tasks, likelihoodModel, _=None,

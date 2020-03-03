@@ -649,6 +649,89 @@ class Grammar(object):
 
                     yield resultL + argL, resultK, result
 
+
+
+    def sampleFromSketch(self,context,environment,request,sk,
+                           maximumDepth=20,
+                           sampleHoleProb=0):
+        '''Enumerates all sketch instantiations whose MDL satisfies: lowerBound <= MDL < upperBound'''
+
+        if sk.isHole:
+            return self._sample(request, context, environment,
+                                        maximumDepth=maximumDepth,
+                                        sampleHoleProb=sampleHoleProb) 
+
+
+        elif request.isArrow():
+            assert sk.isAbstraction
+            v = request.arguments[0]
+            newContext, expr = self.sampleFromSketch(context, [v] + environment,
+                                                       request.arguments[1],
+                                                       sk.body,
+                                                       maximumDepth=maximumDepth,
+                                                       sampleHoleProb=sampleHoleProb)
+            return newContext, Abstraction(expr)
+
+        else:
+            f, xs = sk.applicationParse()
+            if f.isIndex:
+                ft = environment[f.i].apply(context)
+            elif f.isInvented or f.isPrimitive:
+                context, ft = f.tp.instantiate(context)
+            elif f.isAbstraction:
+                assert False, "sketch is not in beta longform"
+            elif f.isHole:
+                assert False, "hole as function not yet supported"
+            elif f.isApplication:
+                assert False, "should never happen - bug in applicationParse"
+            else: assert False
+
+            try: context = context.unify(ft.returns(), request)                
+            except UnificationFailure:
+                print("Exception: sketch is ill-typed")
+                return #so that we can continue evaluating
+                # raise SketchEnumerationFailure() #"sketch is ill-typed"
+            ft = ft.apply(context)
+            argumentRequests = ft.functionArguments()
+
+            assert len(argumentRequests) == len(xs)
+
+            return self.sampleFromSketchApplication(context, environment,
+                                              f, xs, argumentRequests,
+                                              maximumDepth=maximumDepth - 1,
+                                              sampleHoleProb=sampleHoleProb)
+
+    def sampleFromSketchApplication(self, context, environment,
+                          function, arguments, argumentRequests,
+                          maximumDepth=20,
+                          sampleHoleProb=0
+                          #should we smaple holes
+                          ):
+
+        if argumentRequests == []:
+            # if lowerBound <= 0. and 0. < upperBound:
+            #     yield 0., context, function
+            # else:
+            #     return
+            return context, function #I hope this is right ... 
+        else:
+            argRequest = argumentRequests[0].apply(context)
+            laterRequests = argumentRequests[1:]
+            firstSketch = arguments[0]
+            laterSketches = arguments[1:]
+            newContext, arg = self.sampleFromSketch(context, environment, argRequest,
+                                                                firstSketch,
+                                                                maximumDepth=maximumDepth,
+                                                                sampleHoleProb=sampleHoleProb)
+
+            newFunction = Application(function, arg)
+            resultK, result = self.sampleFromSketchApplication(newContext, environment, newFunction,
+                                                                       laterSketches, laterRequests,
+                                                                       maximumDepth=maximumDepth,
+                                                                       sampleHoleProb=sampleHoleProb)
+
+            return resultK, result
+
     def sketchLogLikelihood(self, request, full, sk, context=Context.EMPTY, environment=[]):
         """
         calculates mdl of full program 'full' from sketch 'sk'
