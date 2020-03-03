@@ -184,13 +184,16 @@ class Grammar(object):
             return candidates
 
 
-    def sample(self, request, maximumDepth=6, maxAttempts=None):
+    def sample(self, request, maximumDepth=6, maxAttempts=None, sampleHoleProb=0):
+        """
+        sample a hole with prob sampleHoleProb
+        """
         attempts = 0
 
         while True:
             try:
                 _, e = self._sample(
-                    request, Context.EMPTY, [], maximumDepth=maximumDepth)
+                    request, Context.EMPTY, [], maximumDepth=maximumDepth, sampleHoleProb=sampleHoleProb)
                 return e
             except NoCandidates:
                 if maxAttempts is not None:
@@ -199,12 +202,20 @@ class Grammar(object):
                         return None
                 continue
 
-    def _sample(self, request, context, environment, maximumDepth):
+    def _sample(self, request, context, environment, maximumDepth, sampleHoleProb=0):
+        """
+        sample a hole with prob sampleHoleProb
+
+        """
         if request.isArrow():
             context, expression = self._sample(
                 request.arguments[1], context, [
-                    request.arguments[0]] + environment, maximumDepth)
+                    request.arguments[0]] + environment, maximumDepth,
+                    sampleHoleProb=sampleHoleProb)
             return context, Abstraction(expression)
+
+        if sampleHoleProb and random.random() < sampleHoleProb:
+            return context, Hole()
 
         candidates = self.buildCandidates(request, context, environment,
                                           normalize=True,
@@ -223,7 +234,7 @@ class Grammar(object):
 
         for x in xs:
             x = x.apply(context)
-            context, x = self._sample(x, context, environment, maximumDepth - 1)
+            context, x = self._sample(x, context, environment, maximumDepth - 1, sampleHoleProb=sampleHoleProb)
             returnValue = Application(returnValue, x)
 
         return context, returnValue
@@ -454,7 +465,8 @@ class Grammar(object):
 
     def enumeration(self,context,environment,request,upperBound,
                     maximumDepth=20,
-                    lowerBound=0.):
+                    lowerBound=0.,
+                    enumerateHoles=False):
         '''Enumerates all programs whose MDL satisfies: lowerBound <= MDL < upperBound'''
         if upperBound < 0 or maximumDepth == 1:
             return
@@ -465,10 +477,15 @@ class Grammar(object):
                                                      request.arguments[1],
                                                      upperBound=upperBound,
                                                      lowerBound=lowerBound,
-                                                     maximumDepth=maximumDepth):
+                                                     maximumDepth=maximumDepth,
+                                                     enumerateHoles=enumerateHoles):
                 yield l, newContext, Abstraction(b)
 
         else:
+            
+            if enumerateHoles:
+                yield 0., context, Hole()
+
             candidates = self.buildCandidates(request, context, environment,
                                               normalize=True)
 
@@ -482,7 +499,8 @@ class Grammar(object):
                     self.enumerateApplication(newContext, environment, p, xs,
                                               upperBound=upperBound + l,
                                               lowerBound=lowerBound + l,
-                                              maximumDepth=maximumDepth - 1):
+                                              maximumDepth=maximumDepth - 1,
+                                              enumerateHoles=enumerateHoles):
                     yield aL + l, aK, application
 
     def enumerateApplication(self, context, environment,
@@ -495,7 +513,8 @@ class Grammar(object):
                              lowerBound=0.,
                              maximumDepth=20,
                              originalFunction=None,
-                             argumentIndex=0):
+                             argumentIndex=0,
+                             enumerateHoles=False):
         if upperBound < 0. or maximumDepth == 1:
             return
         if originalFunction is None:
@@ -512,7 +531,8 @@ class Grammar(object):
             for argL, newContext, arg in self.enumeration(context, environment, argRequest,
                                                           upperBound=upperBound,
                                                           lowerBound=0.,
-                                                          maximumDepth=maximumDepth):
+                                                          maximumDepth=maximumDepth,
+                                                          enumerateHoles=enumerateHoles):
                 if violatesSymmetry(originalFunction, arg, argumentIndex):
                     continue
 
@@ -523,12 +543,15 @@ class Grammar(object):
                                                                           lowerBound=lowerBound + argL,
                                                                           maximumDepth=maximumDepth,
                                                                           originalFunction=originalFunction,
-                                                                          argumentIndex=argumentIndex + 1):
+                                                                          argumentIndex=argumentIndex + 1,
+                                                                          enumerateHoles=enumerateHoles):
                     yield resultL + argL, resultK, result
+
 
     def sketchEnumeration(self,context,environment,request,sk,upperBound,
                            maximumDepth=20,
-                           lowerBound=0.):
+                           lowerBound=0.,
+                           enumerateHoles=False):
         '''Enumerates all sketch instantiations whose MDL satisfies: lowerBound <= MDL < upperBound'''
         if upperBound < 0. or maximumDepth == 1:
             return
@@ -536,7 +559,10 @@ class Grammar(object):
         if sk.isHole:
             yield from self.enumeration(context, environment, request, upperBound,
                                         maximumDepth=maximumDepth,
-                                        lowerBound=lowerBound)
+                                        lowerBound=lowerBound, 
+                                        enumerateHoles=enumerateHoles) 
+
+
         elif request.isArrow():
             assert sk.isAbstraction
             v = request.arguments[0]
@@ -545,7 +571,8 @@ class Grammar(object):
                                                            sk.body,
                                                            upperBound=upperBound,
                                                            lowerBound=lowerBound,
-                                                           maximumDepth=maximumDepth):
+                                                           maximumDepth=maximumDepth,
+                                                           enumerateHoles=enumerateHoles):
                 yield l, newContext, Abstraction(b)
 
         else:
@@ -576,7 +603,8 @@ class Grammar(object):
                                               f, xs, argumentRequests,
                                               upperBound=upperBound,
                                               lowerBound=lowerBound,
-                                              maximumDepth=maximumDepth - 1)
+                                              maximumDepth=maximumDepth - 1,
+                                              enumerateHoles=enumerateHoles)
 
 
     def sketchApplication(self, context, environment,
@@ -587,7 +615,10 @@ class Grammar(object):
                           # Lower bound on the description length of all of
                           # the arguments
                           lowerBound=0.,
-                          maximumDepth=20):
+                          maximumDepth=20,
+                          enumerateHoles=False
+                          #should we enumerate sketches
+                          ):
         if upperBound < 0. or maximumDepth == 1:
             return
 
@@ -605,14 +636,16 @@ class Grammar(object):
                                                                 firstSketch,
                                                                 upperBound=upperBound,
                                                                 lowerBound=0.,
-                                                                maximumDepth=maximumDepth):
+                                                                maximumDepth=maximumDepth,
+                                                                enumerateHoles=enumerateHoles):
 
                 newFunction = Application(function, arg)
                 for resultL, resultK, result in self.sketchApplication(newContext, environment, newFunction,
                                                                        laterSketches, laterRequests,
                                                                        upperBound=upperBound + argL,
                                                                        lowerBound=lowerBound + argL,
-                                                                       maximumDepth=maximumDepth):
+                                                                       maximumDepth=maximumDepth,
+                                                                       enumerateHoles=enumerateHoles):
 
                     yield resultL + argL, resultK, result
 
@@ -1161,6 +1194,7 @@ class ContextualGrammar:
                                                      maximumDepth=maximumDepth):
                 yield l, newContext, Abstraction(b)
         else:
+            #yield hole #ahh 
             if parent is None: g = self.noParent
             elif parent.isIndex: g = self.variableParent
             else: g = self.library[parent][parentIndex]
@@ -1283,14 +1317,21 @@ def batchLikelihood(jobs):
     return response
 
 if __name__ == "__main__":
+    try:
+        import binutil  # required to import from dreamcoder modules
+    except ModuleNotFoundError:
+        import bin.binutil  # alt import if called as module
+
     from dreamcoder.domains.arithmetic.arithmeticPrimitives import *
     g = ContextualGrammar.fromGrammar(Grammar.uniform([k0,k1,addition, subtraction]))
     g = g.randomWeights(lambda *a: random.random())
     #p = Program.parse("(lambda (+ 1 $0))")
     request = arrow(tint,tint)
-    for ll,_,p in g.enumeration(Context.EMPTY,[],request,
+    for ll,_,p in g.enumerationWithHoles(Context.EMPTY,[],request,
                                12.):
         ll_ = g.logLikelihood(request,p)
         print(ll,p,ll_)
         d = abs(ll - ll_)
         assert d < 0.0001
+
+

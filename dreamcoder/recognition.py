@@ -1,5 +1,6 @@
 from dreamcoder.enumeration import *
 from dreamcoder.grammar import *
+from dreamcoder.SMC import SMC
 # luke
 from dreamcoder.likelihoodModel import AllOrNothingLikelihoodModel
 
@@ -620,11 +621,14 @@ class RecognitionModel(nn.Module):
                  rank=None,contextual=False,mask=False,
                  cuda=False,
                  previousRecognitionModel=None,
-                 id=0):
+                 id=0,
+                 useValue=False,
+                 valueHead=None):
         super(RecognitionModel, self).__init__()
         self.id = id
         self.trained=False
         self.use_cuda = cuda
+        self.useValue = useValue
 
         self.featureExtractor = featureExtractor
         # Sanity check - make sure that all of the parameters of the
@@ -678,7 +682,20 @@ class RecognitionModel(nn.Module):
         if previousRecognitionModel:
             self._MLP.load_state_dict(previousRecognitionModel._MLP.state_dict())
             self.featureExtractor.load_state_dict(previousRecognitionModel.featureExtractor.state_dict())
-            
+
+        # value function
+        if valueHead: assert useValue
+        if useValue:
+            assert valueHead
+            self.valueHead = valueHead
+            # Sanity check - make sure that all of the parameters of the
+            # feature extractor were added to our parameters as well
+            if hasattr(self.valueHead, 'parameters'):
+                for parameter in self.valueHead.parameters():
+                    assert any(myParameter is parameter for myParameter in self.parameters())
+
+            self.solver = SMC(self) #Can have many versions of this
+
     def auxiliaryLoss(self, frontier, features):
         # Compute a vector of uses
         ls = frontier.bestPosterior.program
@@ -856,6 +873,10 @@ class RecognitionModel(nn.Module):
         helmholtzFrontiers: Frontiers from programs enumerated from generative model (optional)
         If helmholtzFrontiers is not provided then we will sample programs during training
         """
+        if self.useValue:
+            print("WARNING: value training not implemented yet")
+            #assert False, "not yet implemented"
+
         assert (steps is not None) or (timeout is not None), \
             "Cannot train recognition model without either a bound on the number of gradient steps or bound on the training time"
         if steps is None: steps = 9999999
@@ -895,9 +916,6 @@ class RecognitionModel(nn.Module):
                              task=self.task)
                 return f
         
-            
-            
-
         # Should we recompute tasks on the fly from Helmholtz?  This
         # should be done if the task is stochastic, or if there are
         # different kinds of inputs on which it could be run. For
@@ -1035,6 +1053,14 @@ class RecognitionModel(nn.Module):
                 loss, classificationLoss = \
                         self.frontierBiasOptimal(frontier, auxiliary=auxLoss, vectorized=vectorized) if biasOptimal \
                         else self.frontierKL(frontier, auxiliary=auxLoss, vectorized=vectorized)
+
+                if self.useValue:
+                    #valueHeadLoss = self.valueHead.valueLossFromFrontier(frontier)
+                    print("DEACTIVATED VALUE LOSS TRAINING FOR NOW")
+                    valueHeadLoss = 0
+                else:
+                    valueHeadLoss = 0
+
                 if loss is None:
                     if not dreaming:
                         eprint("ERROR: Could not extract features during experience replay.")
@@ -1046,7 +1072,7 @@ class RecognitionModel(nn.Module):
                 if is_torch_invalid(loss):
                     eprint("Invalid real-data loss!")
                 else:
-                    (loss + classificationLoss).backward()
+                    (loss + classificationLoss + valueHeadLoss).backward()
                     classificationLosses.append(classificationLoss.data.item())
                     optimizer.step()
                     totalGradientSteps += 1
@@ -1060,7 +1086,9 @@ class RecognitionModel(nn.Module):
                         realMDL.append(descriptionLengths[-1])
                     if totalGradientSteps > steps:
                         break # Stop iterating, then print epoch and loss, then break to finish.
-                        
+           
+
+
             if (i == 1 or i % 10 == 0) and losses:
                 eprint("(ID=%d): " % self.id, "Epoch", i, "Loss", mean(losses))
                 if realLosses and dreamLosses:
@@ -1146,14 +1174,28 @@ class RecognitionModel(nn.Module):
             #untorch seperately to make sure you filter out None grammars
             grammars = {task: grammar.untorch() for task, grammar in grammars.items() if grammar is not None}
 
+        #if solver=='python':  # TODO
+        if self.useValue:
 
-        if True:  #TODO
-            return self.maxEnumeration(grammars, tasks,
+            solver = 'python'
+
+            # please refactor
+            self.cpu()
+            self.use_cuda = False
+            self.featureExtractor.use_cuda = False
+            self.valueHead.use_cuda = False
+
+            x = self.valueEnumeration(grammars, tasks,
                                         testing=testing,
                                         solver=solver,
                                         enumerationTimeout=enumerationTimeout,
                                         CPUs=CPUs, maximumFrontier=maximumFrontier,
                                         evaluationTimeout=evaluationTimeout)
+            self.cuda()
+            self.use_cuda = True
+            self.featureExtractor.use_cuda = True
+            self.valueHead.use_cuda = True
+            return x
 
         return multicoreEnumeration(grammars, tasks,
                                     testing=testing,
@@ -1162,9 +1204,7 @@ class RecognitionModel(nn.Module):
                                     CPUs=CPUs, maximumFrontier=maximumFrontier,
                                     evaluationTimeout=evaluationTimeout)
 
-
-
-    def maxEnumeration(self, g, tasks, _=None,
+    def valueEnumeration(self, g, tasks, _=None,
                              enumerationTimeout=None,
                              solver='ocaml',
                              CPUs=1,
@@ -1172,13 +1212,18 @@ class RecognitionModel(nn.Module):
                              verbose=True,
                              evaluationTimeout=None,
                              testing=False):
+
+        #TODO this probably shouldn't care about depth or something ...
         '''g: Either a Grammar, or a map from task to grammar.
-        Returns (list-of-frontiers, map-from-task-to-search-time)'''
+        Returns (list-of-frontiers, map-from-task-to-search-time)
+        was copied from enumeration.multicoreEnuemration and adapted for values
+        '''
 
         # We don't use actual threads but instead use the multiprocessing
         # library. This is because we need to be able to kill workers.
         #from multiprocess import Process, Queue
-        print("SLKJFDSOKALSJD:LJSD")
+        
+
         from multiprocessing import Queue
 
          # everything that gets sent between processes will be dilled
@@ -1277,10 +1322,8 @@ class RecognitionModel(nn.Module):
 
         # Workers put their messages in here
         q = Queue()
-
         # How many CPUs are we using?
         activeCPUs = 0
-
         # How many CPUs was each job allocated?
         id2CPUs = {}
         # What job was each ID working on?
@@ -1392,7 +1435,16 @@ class RecognitionModel(nn.Module):
                             evaluationTimeout=None, maximumFrontiers=None, testing=False):
         from enumeration import enumerateForTasks
         #print("RECOGNITIONMODEL", recognitionModel)
-        return enumerateForTasks(g, tasks, likelihoodModel,
+
+        # return self.solver.infer(g, tasks, likelihoodModel, 
+        #                             timeout=timeout,
+        #                             elapsedTime=elapsedTime,
+        #                             CPUs=CPUs,
+        #                             testing=testing,
+        #                             evaluationTimeout=evaluationTimeout,
+        #                             maximumFrontiers=maximumFrontiers)  
+
+        return self.enumerateForTasksValue(g, tasks, likelihoodModel,
                                  timeout=timeout,
                                  testing=testing,
                                  elapsedTime=elapsedTime,
@@ -1402,104 +1454,39 @@ class RecognitionModel(nn.Module):
                                  lowerBound=lowerBound, upperBound=upperBound)
 
 
-    def sampleWithValue(self, g, tasks, _=None,
-                         enumerationTimeout=None,
-                         solver='ocaml',
-                         CPUs=1,
-                         maximumFrontier=None,
-                         verbose=True,
-                         evaluationTimeout=None,
-                         testing=False):
-        '''g: Either a Grammar, or a map from task to grammar.
-        Returns (list-of-frontiers, map-from-task-to-search-time)
-
-        Max: for now this is entirely single core, just to get the concept ... can hack it back later 
-        '''
-
-
-        likelihoodModel = AllOrNothingLikelihoodModel(timeout=evaluationTimeout) 
-
-        task2grammar = g
-
-        # If we are not evaluating on held out testing tasks:
-        # Bin the tasks by request type and grammar
-        # If these are the same then we can enumerate for multiple tasks simultaneously
-        # If we are evaluating testing tasks:
-        # Make sure that each job corresponds to exactly one task
-        jobs = {}
-        for i, t in enumerate(tasks):
-            if testing:
-                k = (task2grammar[t], t.request, i)
-            else:
-                k = (task2grammar[t], t.request)
-            jobs[k] = jobs.get(k, []) + [t]
-
-        # Map from task to the shortest time to find a program solving it
-        bestSearchTime = {t: None for t in task2grammar}
-
-        lowerBounds = {k: 0. for k in jobs}
-
-        frontiers = {t: Frontier([], task=t) for t in task2grammar}
-
-        # For each job we keep track of how long we have been working on it
-        stopwatches = {t: Stopwatch() for t in jobs}
-
-        # Map from task to how many programs we enumerated for that task
-        taskToNumberOfPrograms = {t: 0 for t in tasks }
-
-
-        frontiers, searchTimes, totalNumberOfPrograms = self.enumerateForTasksValue(g, tasks, likelihoodModel,
-                                                                 timeout=timeout,
-                                                                 testing=testing,
-                                                                 elapsedTime=elapsedTime,
-                                                                 evaluationTimeout=evaluationTimeout,
-                                                                 maximumFrontiers=maximumFrontiers,
-                                                                 budgetIncrement=budgetIncrement,
-                                                                 lowerBound=lowerBound, upperBound=upperBound)
-
-        newFrontiers, searchTimes, pc = message.value
-        for t, f in newFrontiers.items():
-            oldBest = None if len(
-                frontiers[t]) == 0 else frontiers[t].bestPosterior
-            frontiers[t] = frontiers[t].combine(f)
-            newBest = None if len(
-                frontiers[t]) == 0 else frontiers[t].bestPosterior
-
-            taskToNumberOfPrograms[t] += pc
-
-            dt = searchTimes[t]
-            if dt is not None:
-                if bestSearchTime[t] is None:
-                    bestSearchTime[t] = dt
-                else:
-                    # newBest & oldBest should both be defined
-                    assert oldBest is not None
-                    assert newBest is not None
-                    newScore = newBest.logPrior + newBest.logLikelihood
-                    oldScore = oldBest.logPrior + oldBest.logLikelihood
-
-                    if newScore > oldScore:
-                        bestSearchTime[t] = dt
-                    elif newScore == oldScore:
-                        bestSearchTime[t] = min(bestSearchTime[t], dt)
-
-        eprint("We enumerated this many programs, for each task:\n\t",
-                list(taskToNumberOfPrograms.values()))
-        return [frontiers[t] for t in tasks], bestSearchTime
-
-
-
-
     def enumerateForTasksValue(self, g, tasks, likelihoodModel, _=None,
-                          verbose=False,
-                          timeout=None,
-                          elapsedTime=0.,
-                          CPUs=1,
-                          testing=False, #unused
-                          evaluationTimeout=None,
-                          lowerBound=0.,
-                          upperBound=100.,
-                          budgetIncrement=1.0, maximumFrontiers=None):
+                              verbose=False,
+                              timeout=None,
+                              elapsedTime=0.,
+                              CPUs=1,
+                              testing=False, #unused
+                              evaluationTimeout=None,
+                              lowerBound=0.,
+                              upperBound=100.,
+                              budgetIncrement=1.0, maximumFrontiers=None):
+        """
+        this was copied from enumeration.enumerateForTasks
+        this happens within the parallel call
+
+        TODO:
+        - [ ] implement value function
+        - [ ] deal with bug of 
+        - [ ] make algorithm reasonable
+        - [ ] deal with depth budgeting and time budgeting
+        - [ ] make algorithm reasonable
+        - [ ] write the sketch fns I need
+        - [ ] train value fnct
+
+        """
+        # print("DOING MY VALUE ENUM")
+        # print(next(self.parameters()).is_cuda)
+
+        # _ = {task: self.grammarOfTask(task)
+        #                 for task in tasks}
+
+        budgetIncrement = 100
+        upperBound = 200
+
         assert timeout is not None, \
             "enumerateForTasks: You must provide a timeout."
 
@@ -1524,47 +1511,58 @@ class RecognitionModel(nn.Module):
                     budget <= upperBound:
                 numberOfPrograms = 0
 
-                for prior, _, p in g.enumeration(Context.EMPTY, [], request,
-                                                 maximumDepth=99,
-                                                 upperBound=budget,
-                                                 lowerBound=previousBudget):
-                    descriptionLength = -prior
-                    # Shouldn't see it on this iteration
-                    assert descriptionLength <= budget
-                    # Should already have seen it
-                    assert descriptionLength > previousBudget
+                candidateSketches = [[] for _ in tasks]
 
-                    numberOfPrograms += 1
-                    totalNumberOfPrograms += 1
+                for n, task in enumerate(tasks):
+                    for _ in range(5):
+                        sketch = g.sample(request, maximumDepth=8, sampleHoleProb=0.3)
+                        #val = self.valueHead.computeValue(sketch, task) #TODO
+                        val = 0
+                        candidateSketches[n].append( (val, sketch ))
 
-                    for n in range(len(tasks)):
-                        task = tasks[n]
+                    #candidateSketches[n] = sorted(candidateSketches[n], key=lam) #ugh, will fix this later 
 
-                        #Warning:changed to max's new likelihood model situation
-                        #likelihood = task.logLikelihood(p, evaluationTimeout)
-                        #if invalid(likelihood):
-                            #continue
-                        success, likelihood = likelihoodModel.score(p, task)
-                        if not success:
-                            continue
-                            
-                        dt = time() - starting + elapsedTime
-                        priority = -(likelihood + prior)
-                        hits[n].push(priority,
-                                     (dt, FrontierEntry(program=p,
-                                                        logLikelihood=likelihood,
-                                                        logPrior=prior)))
-                        if len(hits[n]) > maximumFrontiers[n]:
-                            hits[n].popMaximum()
+                    for prior, _, p in g.sketchEnumeration(Context.EMPTY, [], request, sketch,
+                                                     maximumDepth=6,
+                                                     upperBound=6,
+                                                     lowerBound=previousBudget):
+                        # descriptionLength = -prior
+                        # # Shouldn't see it on this iteration
+                        # assert descriptionLength <= budget
+                        # # Should already have seen it
+                        # assert descriptionLength > previousBudget
 
-                    if timeout is not None and time() - starting > timeout:
-                        raise EnumerationTimeout
+                        numberOfPrograms += 1
+                        totalNumberOfPrograms += 1
 
-                previousBudget = budget
-                budget += budgetIncrement
+                        for n in range(len(tasks)):
+                            task = tasks[n]
 
-                if budget > upperBound:
-                    break
+                            #Warning:changed to max's new likelihood model situation
+                            #likelihood = task.logLikelihood(p, evaluationTimeout)
+                            #if invalid(likelihood):
+                                #continue
+                            success, likelihood = likelihoodModel.score(p, task)
+                            if not success:
+                                continue
+                                
+                            dt = time() - starting + elapsedTime
+                            priority = -(likelihood + prior)
+                            hits[n].push(priority,
+                                         (dt, FrontierEntry(program=p,
+                                                            logLikelihood=likelihood,
+                                                            logPrior=prior)))
+                            if len(hits[n]) > maximumFrontiers[n]:
+                                hits[n].popMaximum()
+
+                        if timeout is not None and time() - starting > timeout:
+                            raise EnumerationTimeout
+
+                # previousBudget = budget
+                # budget += budgetIncrement
+
+                # if budget > upperBound:
+                #     break
         except EnumerationTimeout:
             pass
         frontiers = {tasks[n]: Frontier([e for _, e in hits[n]],
@@ -1576,11 +1574,7 @@ class RecognitionModel(nn.Module):
 
         return frontiers, searchTimes, totalNumberOfPrograms
 
-
-
-
-
-###########
+########################################################################################
 class RecurrentFeatureExtractor(nn.Module):
     def __init__(self, _=None,
                  tasks=None,

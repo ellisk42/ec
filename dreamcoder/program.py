@@ -952,6 +952,10 @@ class Mutator:
         yield from e.visit(self, tp, [])
 
     def logLikelihood(self, tp, e, env):
+        # print("call to mutator.ll")
+        # print("tp:", tp)
+        # print("e:", e)
+        # print("env:", env)
         summary = None
         try:
             _, summary = self.grammar.likelihoodSummary(Context.EMPTY, env,

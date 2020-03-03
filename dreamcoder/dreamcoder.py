@@ -10,6 +10,7 @@ from dreamcoder.taskBatcher import *
 from dreamcoder.primitiveGraph import graphPrimitives
 from dreamcoder.dreaming import backgroundHelmholtzEnumeration
 
+from dreamcoder.valueHead import SimpleRNNValueHead, AbstractREPLValueHead
 
 class ECResult():
     def __init__(self, _=None,
@@ -173,7 +174,8 @@ def ecIterator(grammar, tasks,
                storeTaskMetrics=False,
                rewriteTaskMetrics=True,
                auxiliaryLoss=False,
-               custom_wake_generative=None):
+               custom_wake_generative=None,
+               useValue=False):
     if enumerationTimeout is None:
         eprint(
             "Please specify an enumeration timeout:",
@@ -443,7 +445,7 @@ def ecIterator(grammar, tasks,
                                enumerationTimeout=enumerationTimeout,
                                helmholtzRatio=thisRatio, helmholtzFrontiers=helmholtzFrontiers(),
                                auxiliaryLoss=auxiliaryLoss, cuda=cuda, CPUs=CPUs, solver=solver,
-                               recognitionSteps=recognitionSteps, maximumFrontier=maximumFrontier)
+                               recognitionSteps=recognitionSteps, maximumFrontier=maximumFrontier, useValue=useValue)
 
             showHitMatrix(tasksHitTopDown, tasksHitBottomUp, wakingTaskBatch)
             
@@ -562,10 +564,19 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
                       previousRecognitionModel=None, recognitionSteps=None,
                       timeout=None, enumerationTimeout=None, evaluationTimeout=None,
                       helmholtzRatio=None, helmholtzFrontiers=None, maximumFrontier=None,
-                      auxiliaryLoss=None, cuda=None, CPUs=None, solver=None):
+                      auxiliaryLoss=None, cuda=None, CPUs=None, solver=None, useValue=False):
     eprint("Using an ensemble size of %d. Note that we will only store and test on the best recognition model." % ensembleSize)
 
     featureExtractorObjects = [featureExtractor(tasks, testingTasks=testingTasks, cuda=cuda) for i in range(ensembleSize)]
+
+    if useValue:
+        assert ensembleSize == 1
+        valueHead = SimpleRNNValueHead(grammar, featureExtractorObjects[0]) #init correctly
+    elif False:
+        valueHead = AbstractREPLValueHead()
+    else:
+        valueHead = None
+
     recognizers = [RecognitionModel(featureExtractorObjects[i],
                                     grammar,
                                     mask=mask,
@@ -574,7 +585,9 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
                                     cuda=cuda,
                                     contextual=contextual,
                                     previousRecognitionModel=previousRecognitionModel,
-                                    id=i) for i in range(ensembleSize)]
+                                    id=i,
+                                    useValue=useValue,
+                                    valueHead=valueHead) for i in range(ensembleSize)]
     eprint(f"Currently using this much memory: {getThisMemoryUsage()}")
     trainedRecognizers = parallelMap(min(CPUs,len(recognizers)),
                                      lambda recognizer: recognizer.train(allFrontiers,
@@ -845,7 +858,8 @@ def commandlineArguments(_=None,
         choices=[
             "ocaml",
             "pypy",
-            "python"],
+            "python",
+            "valueEnum"],
         default=solver,
         help="""Solver for enumeration.
                         Default: %s""" %
@@ -939,6 +953,8 @@ def commandlineArguments(_=None,
     parser.add_argument("--countParameters",
                         help="Load a checkpoint then report how many parameters are in the recognition model.",
                         default=None, type=str)
+    parser.add_argument("--useValue", action='store_true', 
+                        help="use value-based search")
     parser.set_defaults(useRecognitionModel=useRecognitionModel,
                         useDSL=True,
                         featureExtractor=featureExtractor,
