@@ -100,6 +100,7 @@ def getDatum(n_ex):
 def makeExamples(task):    
     if hasattr(fe,'tokenize'):
         examples = []
+        #print(task.examples)
         tokens = fe.tokenize(task.examples)
         if tokens is None: return None
         for xs,y in tokens:
@@ -118,16 +119,16 @@ def test_task(m, task, i, timeout):
     while time.time() - start < timeout:
         
         allExamples = task.examples
-        
         for i_run in range(5):
-            task.examples = allExamples[0]
+
 
             #print(f"i_run: {i_run}, i_N: 0, task ID: {i}, test input: {task.examples[0][0]}, test output: {task.examples[0][1]}, prediction: None, correct: False", flush=True )
-            print(f"CSVc{task.name.split('_')[0]},{i_run},{task.name.split('_')[1]},{trial},\"(lambda $0)\",0,0")
-            #for i_N in range(1,10):
-            for trial in range(1,10):
+            print(f"\"CSVc{task.name.split('_')[0]}\",{i_run},{task.name.split('_')[1]},{1},\"(lambda $0)\",0,0")
+            
+            task.examples = [allExamples[0]]
+            for trial in range(1,11):
                 #test_example = random.choice( [ex for ex in allExamples if ex not in task.examples])
-                test_example = allExamples[i]
+                test_example = allExamples[trial]
                 query = makeExamples(task)
 
                 n_cands = -1
@@ -143,6 +144,11 @@ def test_task(m, task, i, timeout):
                         except ParseFailure: continue
                         except IndexError: continue
                         except AssertionError: continue
+
+                        #samples.csv:
+                        prettyP = str(p).replace("fix1","fix").replace("gt?",">").replace("-n99","-").replace("-n9","-").replace("+n99","+").replace("+n9","+").replace("car","head").replace("cdr","tail").replace("empty?","is_empty").replace("eq?","is_equal")
+                        eprint(f"\"CSVc{task.name.split('_')[0]}\",{i_run},{task.name.split('_')[1]},{trial+1},\"{prettyP}\",{time.time() - t},{n_cands}")
+
                         #if p not in failed_cands:
                         ll = task.logLikelihood(p, timeout=1)
                         #print(ll)
@@ -166,13 +172,13 @@ def test_task(m, task, i, timeout):
                             #print(f"i_run: {i_run}, i_N: {i_N}, task ID: {i}, test input: {test_example[0]}, test output: {test_example[1]}, prediction: {pred_out}, correct: {correct}" , flush=True)
 
                             searchTime = time.time() - t
-                            prettyP = str(p).replace("fix1","fix").replace("gt?",">").replace("-n99","-").replace("-n9","-").replace("+n99","+").replace("+n9","+").replace("car","head").replace("cdr","tail").replace("empty?","is_empty").replace("eq?","is_equal")
-                            print(f"CSVc{task.name.split('_')[0]},{i_run},{task.name.split('_')[1]},{trial},\"{prettyP}\",{searchTime},{n_cands}")
+                            
+                            print(f"\"CSVc{task.name.split('_')[0]}\",{i_run},{task.name.split('_')[1]},{trial},\"{prettyP}\",{searchTime},{n_cands}")
                             hit = True
                             break
                         
                 if not hit:
-                    print(f"CSVc{task.name.split('_')[0]},{i_run},{task.name.split('_')[1]},{trial},\"(lambda $0)\",0,0")
+                    print(f"\"CSVc{task.name.split('_')[0]}\",{i_run},{task.name.split('_')[1]},{trial+1},\"(lambda $0)\",0,0", flush=True)
                     #print(f"i_run: {i_run}, i_N: {i_N}, task ID: {i}, test input: {test_example[0]}, test output: {test_example[1]}, prediction: None, correct: False", flush=True )
                 task.examples.append(test_example)
     return False
@@ -187,6 +193,7 @@ if __name__=='__main__':
     parser.add_argument("--timeout", type=float, default=1200)
     parser.add_argument("-w", type=int)
     parser.add_argument("--type", type=str, default='9') #'9' or '99'
+    parser.add_argument("--tasks", type=int, default=0)
     arguments = parser.parse_args()
 
     assert arguments.domain == "josh"
@@ -194,11 +201,12 @@ if __name__=='__main__':
 
     BATCHSIZE = 16
 
+    tasks = joshTasks(arguments.w)
+    fe = List.LearnedFeatureExtractor(tasks)
+
     if not arguments.test:
         #TRAINING CODE:
 
-
-        tasks = joshTasks(arguments.w)
 
         if arguments.type == '9':
             tasks = [t for t in tasks if int(int(t.name.split("_")[0]) < 81)]
@@ -212,7 +220,7 @@ if __name__=='__main__':
 
         else: assert False
 
-        fe = List.LearnedFeatureExtractor(tasks)
+
 
         input_vocabularies = [fe.lexicon + ['EOE'], fe.lexicon]
 
@@ -248,21 +256,30 @@ if __name__=='__main__':
     else:
         path = arguments.test
 
-        m9 = torch.load(path+"_g=9")
-        m99 = torch.load(path+"_g=99")
+
+        #TO batch, we are going to 
+
+        m9 = torch.load(path+"_g=9", map_location=lambda storage, loc: storage)
+        m99 = torch.load(path+"_g=99", map_location=lambda storage, loc: storage)
         m9.max_length=50
         m99.max_length=50
         print('testing model:')
         print(path)
 
         #assumes tasks are the testing tasks
-        taskToModel = {t: m99 if int(int(t.name.split("_")[0]) >= 81) else m9
+        taskToModel = {t: m99 if (int(t.name.split("_")[0]) >= 81) else m9
                          for t in tasks }
         n_tasks = len(tasks)
         print(n_tasks, "tasks")
         n_hits = 0
-        for i, task in enumerate(tasks):
+
+        start = arguments.tasks
+
+        for i in range(start, start + 10):
+        #for i, task in enumerate(tasks):
+            task = tasks[i]
             test_task(taskToModel[task], task, i, arguments.timeout)
+
             #print("for task ",i, ", hit=", hit)
             #if hit: n_hits += 1
 
