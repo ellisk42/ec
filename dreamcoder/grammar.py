@@ -124,7 +124,8 @@ class Grammar(object):
                         # Should we return probabilities vs log probabilities?
                         returnProbabilities=False,
                         # Must be a leaf (have no arguments)?
-                        mustBeLeaf=False):
+                        mustBeLeaf=False,
+                        excludeProd=[]):
         """Primitives that are candidates for being used given a requested type
         If returnTable is false (default): returns [((log)likelihood, tp, primitive, context)]
         if returntable is true: returns {primitive: ((log)likelihood, tp, context)}"""
@@ -135,6 +136,7 @@ class Grammar(object):
         variableCandidates = []
         for l, t, p in self.productions:
             try:
+                if p in excludeProd: continue #excluding primitives of my choice
                 newContext, t = t.instantiate(context)
                 newContext = newContext.unify(t.returns(), request)
                 t = t.apply(newContext)
@@ -144,6 +146,7 @@ class Grammar(object):
             except UnificationFailure:
                 continue
         for j, t in enumerate(environment):
+            if j in excludeProd: continue
             try:
                 newContext = context.unify(t.returns(), request)
                 t = t.apply(newContext)
@@ -235,6 +238,46 @@ class Grammar(object):
         for x in xs:
             x = x.apply(context)
             context, x = self._sample(x, context, environment, maximumDepth - 1, sampleHoleProb=sampleHoleProb)
+            returnValue = Application(returnValue, x)
+
+        return context, returnValue
+
+
+
+    def _sampleOneStep(self, request, context, environment, mustBeLeaf=False, forceHole=False, excludeProd=[]):
+        """
+        sample a hole with prob sampleHoleProb
+        We use the depth param to figure out if the next one deep should be all holes
+        this could use a big refactor
+        """
+        if request.isArrow():
+            context, expression = self._sampleOneStep(
+                request.arguments[1], context, [
+                    request.arguments[0]] + environment, mustBeLeaf,
+                    forceHole=False) #is this right?
+            return context, Abstraction(expression) #should I be putting it into beta-normal form??
+
+        if forceHole:
+            return context, Hole()
+
+        candidates = self.buildCandidates(request, context, environment,
+                                          normalize=True,
+                                          returnProbabilities=True,
+                                          # Force it to terminate in a
+                                          # leaf; a primitive with no
+                                          # function arguments
+                                          mustBeLeaf=mustBeLeaf, 
+                                          excludePrim=excludeProd) #TODO
+
+        newType, chosenPrimitive, context = sampleDistribution(candidates)
+
+        # Sample the arguments
+        xs = newType.functionArguments()
+        returnValue = chosenPrimitive
+
+        for x in xs:
+            x = x.apply(context)
+            context, x = self._sampleOneStep(x, context, environment, mustBeLeaf=False, forceHole=True)
             returnValue = Application(returnValue, x)
 
         return context, returnValue
@@ -650,22 +693,49 @@ class Grammar(object):
                     yield resultL + argL, resultK, result
 
 
+    def sampleFromSketch(self, request, sk, maximumDepth=6, maxAttempts=None, sampleHoleProb=0):
+        attempts = 0 
+        while True:
+            try:
+                _, e = self._sampleFromSketch(Context.EMPTY, [], request, sk,
+                            maximumDepth=maximumDepth, sampleHoleProb=sampleHoleProb)
+                return e
+            except NoCandidates:
+                if maxAttempts is not None:
+                    attempts += 1
+                    if attempts > maxAttempts:
+                        return None
+                continue
 
-    def sampleFromSketch(self,context,environment,request,sk,
+            except SketchEnumerationFailure:
+                # print("YOUVE GOT MAIL")
+                # print(sk)
+                # print(request)
+                # assert 0
+                if maxAttempts is not None:
+                    attempts += 1
+                    if attempts > maxAttempts:
+                        return None
+                continue
+
+
+
+
+
+    def _sampleFromSketch(self,context,environment,request,sk,
                            maximumDepth=20,
                            sampleHoleProb=0):
-        '''Enumerates all sketch instantiations whose MDL satisfies: lowerBound <= MDL < upperBound'''
+        '''samples sketches from sketches'''
 
         if sk.isHole:
             return self._sample(request, context, environment,
                                         maximumDepth=maximumDepth,
                                         sampleHoleProb=sampleHoleProb) 
 
-
         elif request.isArrow():
             assert sk.isAbstraction
             v = request.arguments[0]
-            newContext, expr = self.sampleFromSketch(context, [v] + environment,
+            newContext, expr = self._sampleFromSketch(context, [v] + environment,
                                                        request.arguments[1],
                                                        sk.body,
                                                        maximumDepth=maximumDepth,
@@ -689,8 +759,12 @@ class Grammar(object):
             try: context = context.unify(ft.returns(), request)                
             except UnificationFailure:
                 print("Exception: sketch is ill-typed")
-                return #so that we can continue evaluating
-                # raise SketchEnumerationFailure() #"sketch is ill-typed"
+                # print(request)
+                # print(context)
+                # print(ft.returns())
+                # print(xs)
+                #assert False #so that we can continue evaluating
+                raise SketchEnumerationFailure() #"sketch is ill-typed"
             ft = ft.apply(context)
             argumentRequests = ft.functionArguments()
 
@@ -698,7 +772,9 @@ class Grammar(object):
 
             return self.sampleFromSketchApplication(context, environment,
                                               f, xs, argumentRequests,
-                                              maximumDepth=maximumDepth - 1,
+                                              #If i change following line,
+                                              #could make my life easier 
+                                              maximumDepth=maximumDepth - 1, 
                                               sampleHoleProb=sampleHoleProb)
 
     def sampleFromSketchApplication(self, context, environment,
@@ -713,13 +789,14 @@ class Grammar(object):
             #     yield 0., context, function
             # else:
             #     return
-            return context, function #I hope this is right ... 
+            return context, function #I hope this is right ...
+
         else:
             argRequest = argumentRequests[0].apply(context)
             laterRequests = argumentRequests[1:]
             firstSketch = arguments[0]
             laterSketches = arguments[1:]
-            newContext, arg = self.sampleFromSketch(context, environment, argRequest,
+            newContext, arg = self._sampleFromSketch(context, environment, argRequest,
                                                                 firstSketch,
                                                                 maximumDepth=maximumDepth,
                                                                 sampleHoleProb=sampleHoleProb)

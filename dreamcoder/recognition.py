@@ -873,10 +873,6 @@ class RecognitionModel(nn.Module):
         helmholtzFrontiers: Frontiers from programs enumerated from generative model (optional)
         If helmholtzFrontiers is not provided then we will sample programs during training
         """
-        if self.useValue:
-            print("WARNING: value training not implemented yet")
-            #assert False, "not yet implemented"
-
         assert (steps is not None) or (timeout is not None), \
             "Cannot train recognition model without either a bound on the number of gradient steps or bound on the training time"
         if steps is None: steps = 9999999
@@ -1055,9 +1051,10 @@ class RecognitionModel(nn.Module):
                         else self.frontierKL(frontier, auxiliary=auxLoss, vectorized=vectorized)
 
                 if self.useValue:
-                    #valueHeadLoss = self.valueHead.valueLossFromFrontier(frontier)
-                    print("DEACTIVATED VALUE LOSS TRAINING FOR NOW")
-                    valueHeadLoss = 0
+                    #TODO gramamr issue here... need a grammar object but none exist in this context
+                    valueHeadLoss = self.valueHead.valueLossFromFrontier(frontier) 
+                    # print("DEACTIVATED VALUE LOSS TRAINING FOR NOW")
+                    # valueHeadLoss = 0
                 else:
                     valueHeadLoss = 0
 
