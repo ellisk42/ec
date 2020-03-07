@@ -254,7 +254,7 @@ class Grammar(object):
             context, expression = self._sampleOneStep(
                 request.arguments[1], context, [
                     request.arguments[0]] + environment, mustBeLeaf,
-                    forceHole=False) #is this right?
+                    forceHole=forceHole) #is this right?
             return context, Abstraction(expression) #should I be putting it into beta-normal form??
 
         if forceHole:
@@ -267,7 +267,7 @@ class Grammar(object):
                                           # leaf; a primitive with no
                                           # function arguments
                                           mustBeLeaf=mustBeLeaf, 
-                                          excludePrim=excludeProd) #TODO
+                                          excludeProd=excludeProd) #TODO
 
         newType, chosenPrimitive, context = sampleDistribution(candidates)
 
