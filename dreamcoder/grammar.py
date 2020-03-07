@@ -868,7 +868,9 @@ class Grammar(object):
             sk_laterSketches = sk_arguments[1:]
             full_laterSketches = full_arguments[1:]
 
-            argL, newContext = self.sketchLogLikelihood(argRequest, full_firstSketch, sk_firstSketch, context=context, environment=environment)
+            argL, newContext = self.sketchLogLikelihood(argRequest, full_firstSketch, sk_firstSketch,
+                                                        context=context,
+                                                        environment=environment)
 
             #finish this...
             sk_newFunction = Application(sk_function, sk_firstSketch)  # is this redundant? maybe 
