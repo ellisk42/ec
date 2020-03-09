@@ -856,10 +856,10 @@ class RecognitionModel(nn.Module):
         ml = -lls.max() #Beware that inputs to max change output type
         return ml, al
 
-    def replaceProgramsWithLikelihoodSummaries(self, frontier):
+    def replaceProgramsWithLikelihoodSummaries(self, frontier, keepExpr=False):
         return Frontier(
             [FrontierEntry(
-                program=self.grammar.closedLikelihoodSummary(frontier.task.request, e.program),
+                program=self.grammar.closedLikelihoodSummary(frontier.task.request, e.program, keepExpr=keepExpr),
                 logLikelihood=e.logLikelihood,
                 logPrior=e.logPrior) for e in frontier],
             task=frontier.task)
@@ -896,7 +896,9 @@ class RecognitionModel(nn.Module):
                 self.request = frontier.task.request
                 self.task = None
                 self.programs = [e.program for e in frontier]
-                self.frontier = Thunk(lambda: owner.replaceProgramsWithLikelihoodSummaries(frontier))
+                #MAX CHANGED:
+                self.frontier = Thunk(lambda: owner.replaceProgramsWithLikelihoodSummaries(frontier, keepExpr=owner.useValue))
+                #self.frontier = frontier
                 self.owner = owner
 
             def clear(self): self.task = None
@@ -908,8 +910,11 @@ class RecognitionModel(nn.Module):
 
             def makeFrontier(self):
                 assert self.task is not None
+                #MAX CHANGED
                 f = Frontier(self.frontier.force().entries,
                              task=self.task)
+                # f = Frontier(self.frontier.entries,
+                #              task=self.task)
                 return f
         
         # Should we recompute tasks on the fly from Helmholtz?  This
@@ -1052,7 +1057,7 @@ class RecognitionModel(nn.Module):
 
                 if self.useValue:
                     #TODO gramamr issue here... need a grammar object but none exist in this context
-                    valueHeadLoss = self.valueHead.valueLossFromFrontier(frontier) 
+                    valueHeadLoss = self.valueHead.valueLossFromFrontier(frontier, self.grammar) 
                     # print("DEACTIVATED VALUE LOSS TRAINING FOR NOW")
                     # valueHeadLoss = 0
                 else:

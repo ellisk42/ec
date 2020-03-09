@@ -422,7 +422,7 @@ class Grammar(object):
             else:
                 action()
 
-    def closedLikelihoodSummary(self, request, expression, silent=False):
+    def closedLikelihoodSummary(self, request, expression, silent=False, keepExpr=False):
         try:
             context, summary = self.likelihoodSummary(Context.EMPTY, [], request, expression, silent=silent)
         except GrammarFailure as e:
@@ -433,6 +433,8 @@ class Grammar(object):
                 pickle.dump((e, self, request, expression), handle)
             assert False
 
+        #for value fn training
+        if keepExpr: summary._fullProg = expression
         return summary
 
     def logLikelihood(self, request, expression):

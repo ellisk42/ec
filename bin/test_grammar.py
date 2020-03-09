@@ -15,7 +15,7 @@ from dreamcoder.zipper import *
 bootstrapTarget()
 g = Grammar.uniform([k0,k1,addition, subtraction, Program.parse('cons'), 
     Program.parse('car'), Program.parse('cdr'), Program.parse('empty'),
-    Program.parse('fold')])
+    Program.parse('fold'), Program.parse('empty?')])
 #g = g.randomWeights(lambda *a: random.random())
 #p = Program.parse("(lambda (+ 1 $0))")
 request = arrow(tint,tint)
@@ -83,13 +83,16 @@ def test_sampleOneStep():
 def test_holeFinder():
 
     #p = Program.parse('(lambda (fold <HOLE> 0 (lambda (lambda (+ $1 $0)) )))')
-    for i in range(1):
+    for i in range(100):
         expr = g.sample( request, sampleHoleProb=.2)
-        print("\t", expr )
+        
 
 
-    print([(subtree.path, subtree.env) for subtree in findHolesEnum(request, expr)])
-    print([(subtree.path, subtree.env) for subtree in findHoles(expr, request)])
+    expr = Program.parse('(empty? (cons <HOLE> <HOLE>))')
+    print("\t", expr )
+
+    print([(subtree.path, subtree.tp, subtree.env) for subtree in findHolesEnum(tbool, expr)])
+    #print([(subtree.path, subtree.env) for subtree in findHoles(expr, request)])
 
 def test_sampleSingleStep():
 
@@ -101,7 +104,17 @@ def test_sampleSingleStep():
         nxt, zippers = sampleSingleStep(g, nxt, request, holeZippers=zippers)
         print(nxt)
 
+def test_SingleStep1():
 
+    #request = tbool
+    #expr = Program.parse('(empty? (cons <HOLE> <HOLE>))')
+    expr = Program.parse('(lambda (fold <HOLE> 0 (lambda (lambda (+ $1 $0)) )))')
+
+    nxt, zippers = sampleSingleStep(g, expr, request)
+
+    print(nxt)
+    #print([(subtree.path, subtree.tp, subtree.env) for subtree in zippers])
+    print(zippers)
 
 
 
@@ -123,4 +136,5 @@ if __name__=='__main__':
     #test_holeFinder()
     #full = test_getTrace()
     #test_sampleOneStep()
-    test_sampleSingleStep()
+    #test_sampleSingleStep()
+    test_SingleStep1()
