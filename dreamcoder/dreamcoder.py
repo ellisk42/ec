@@ -9,7 +9,8 @@ from dreamcoder.fragmentGrammar import *
 from dreamcoder.taskBatcher import *
 from dreamcoder.primitiveGraph import graphPrimitives
 from dreamcoder.dreaming import backgroundHelmholtzEnumeration
-
+from dreamcoder.parser import *
+from dreamcoder.languageUtilities import *
 
 class ECResult():
     def __init__(self, _=None,
@@ -28,7 +29,8 @@ class ECResult():
                  testingSumMaxll=None,
                  hitsAtEachWake=None,
                  timesAtEachWake=None,
-                 allFrontiers=None):
+                 allFrontiers=None,
+                 allLanguage=None):
         self.frontiersOverTime = {} # Map from task to [frontier at iteration 1, frontier at iteration 2, ...]
         self.hitsAtEachWake = hitsAtEachWake or []
         self.timesAtEachWake = timesAtEachWake or []
@@ -47,6 +49,7 @@ class ECResult():
         self.sumMaxll = sumMaxll or [] #TODO name change 
         self.testingSumMaxll = testingSumMaxll or [] #TODO name change
         self.allFrontiers = allFrontiers or {}
+        self.allLanguage = allLanguage or {}
 
     def __repr__(self):
         attrs = ["{}={}".format(k, v) for k, v in self.__dict__.items()]
@@ -173,7 +176,11 @@ def ecIterator(grammar, tasks,
                storeTaskMetrics=False,
                rewriteTaskMetrics=True,
                auxiliaryLoss=False,
-               custom_wake_generative=None):
+               custom_wake_generative=None,
+               interactive=False,
+               parser=None,
+               interactiveTasks=None,
+               languageDataset=None):
     if enumerationTimeout is None:
         eprint(
             "Please specify an enumeration timeout:",
@@ -299,7 +306,9 @@ def ecIterator(grammar, tasks,
                           recognitionModel=None, numTestingTasks=numTestingTasks,
                           allFrontiers={
                               t: Frontier([],
-                                          task=t) for t in tasks})
+                                          task=t) for t in tasks},
+                          allLanguage={
+                              t: [] for t in tasks})
 
 
     # Set up the task batcher.
@@ -319,8 +328,16 @@ def ecIterator(grammar, tasks,
         taskBatcher = RandomkNNTaskBatcher()
     elif taskReranker == 'randomLowEntropykNN':
         taskBatcher = RandomLowEntropykNNTaskBatcher()
+    elif taskReranker == 'curriculum':
+        taskBatcher = CurriculumTaskBatcher()
     else:
         eprint("Invalid task reranker: " + taskReranker + ", aborting.")
+        assert False
+    
+    if parser == 'loglinear':
+        parserModel = LogLinearTreegramParser
+    else:
+        eprint("Invalid parser: " + parser + ", aborting.")
         assert False
 
     # Check if we are just updating the full task metrics
@@ -361,6 +378,10 @@ def ecIterator(grammar, tasks,
             
         sys.exit(0)
     
+    # Preload language dataset if avaiable.
+    if languageDataset is not None:
+        result.allLanguage = languageForTasks(languageDataset, result.allLanguage)
+        eprint("Loaded language dataset from ", languageDataset)
     
     for j in range(resume or 0, iterations):
         if storeTaskMetrics and rewriteTaskMetrics:
@@ -458,6 +479,19 @@ def ecIterator(grammar, tasks,
                                                                  if len(f) > 0},
                                  'frontier')                
         
+        # Interactive mode.
+        if interactive or languageDataset:
+            default_wake_language(grammar, wakingTaskBatch,
+                                    maximumFrontier=maximumFrontier,
+                                    enumerationTimeout=enumerationTimeout,
+                                    CPUs=CPUs,
+                                    solver=solver,
+                                    parser=parserModel,
+                                    interactiveTasks=interactiveTasks,
+                                    evaluationTimeout=evaluationTimeout,
+                                    currentResult=result,
+                                    interactive=interactive)
+                                    
         # Sleep-G
         if useDSL and not(noConsolidation):
             eprint(f"Currently using this much memory: {getThisMemoryUsage()}")
@@ -538,6 +572,42 @@ def evaluateOnTestingTasks(result, testingTasks, grammar, _=None,
     eprint("Hits %d/%d testing tasks" % (len(times), len(testingTasks)))
     result.testingSearchTime.append(times)
 
+def default_wake_language(grammar, tasks, 
+                    maximumFrontier=None,
+                    enumerationTimeout=None,
+                    CPUs=None,
+                    solver=None,
+                    parser=None,
+                    interactiveTasks=None,
+                    evaluationTimeout=None,
+                    currentResult=None,
+                    get_language_fn=None,
+                    interactive=None,
+                    language_featurizer=None,
+                    program_featurizer=None):
+    # Get interactive descriptions for all solutions.
+    if get_language_fn is not None:
+        solutions = [f for f in currentResult.allFrontiers.values() if not f.empty]
+        solutions_language = get_language_fn(solutions)
+        for t in solutions_language:
+            currentResult.allLanguage[t].append(solutions_language[t])
+    # Retrain the parser.
+    parser_model = parser(grammar, 
+                          currentResult.allLanguage,
+                          currentResult.allFrontiers,
+                          language_featurizer=language_featurizer)
+    parser_model.train()
+    
+    if interactive:
+        eprint("Not yet implemented: interactive mode.")
+        assert False
+    else:
+        # Enumerative search using the retrained parser.
+        eprint("Not yet implemented: interactive mode.")
+        assert False
+
+    return currentResult
+    
         
 def default_wake_generative(grammar, tasks, 
                     maximumFrontier=None,
@@ -906,7 +976,8 @@ def commandlineArguments(_=None,
             "unsolvedEntropy",
             "unsolvedRandomEntropy",
             "randomkNN",
-            "randomLowEntropykNN"],
+            "randomLowEntropykNN",
+            "curriculum"],
         default=taskReranker,
         type=str)
     parser.add_argument(
@@ -939,6 +1010,26 @@ def commandlineArguments(_=None,
     parser.add_argument("--countParameters",
                         help="Load a checkpoint then report how many parameters are in the recognition model.",
                         default=None, type=str)
+    parser.add_argument("--interactive",
+                        action="store_true", default=False,
+                        dest='interactive',
+                        help="Add an interactive wake generative cycle.")
+    parser.add_argument("--languageDataset",
+                        help="Path of a language dataset containing task names and existing language that we will use to train a parser.",
+                        default=None,
+                        type=str)
+    parser.add_argument("--interactiveTasks",
+                        dest="interactiveTasks",
+                        help="Reranking function used to order the tasks we train on during waking.",
+                        choices=["random"],
+                        default='random',
+                        type=str)
+    parser.add_argument("--parser",
+                        dest="parser",
+                        help="Semantic parser for interactive mode.",
+                        choices=["loglinear"],
+                        default='loglinear',
+                        type=str)
     parser.set_defaults(useRecognitionModel=useRecognitionModel,
                         useDSL=True,
                         featureExtractor=featureExtractor,

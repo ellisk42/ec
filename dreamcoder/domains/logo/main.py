@@ -299,8 +299,6 @@ def list_options(parser):
     parser.add_argument("--solutionPrimitiveCounts",
                         default=None, type=str)
 
-
-
 def outputDreams(checkpoint, directory):
     from dreamcoder.utilities import loadPickle
     result = loadPickle(checkpoint)

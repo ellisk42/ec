@@ -157,9 +157,12 @@ def manualLogoTask(name, expression, proto=False, needToTrain=False,
         l = g.logLikelihood(arrow(turtle,turtle),p)
         lp = gp.logLikelihood(arrow(turtle,turtle),p)
         assert l >= lp
+        groundTruthLogLikelihood = -l
         eprint(name,-l,"nats")
         
-    except: eprint("WARNING: could not calculate likelihood of manual logo",p)
+    except: 
+        groundTruthLogLikelihood = 10000
+        eprint("WARNING: could not calculate likelihood of manual logo",p)
 
     attempts = 0
     while True:
@@ -178,6 +181,7 @@ def manualLogoTask(name, expression, proto=False, needToTrain=False,
     t.mustTrain = needToTrain
     t.proto = proto
     t.specialTask = ("LOGO", {"proto": proto})
+    t.groundTruthLogLikelihood = groundTruthLogLikelihood 
 
     t.highresolution = highresolution
 
@@ -698,8 +702,8 @@ def montageTasks(tasks, prefix="", columns=None, testTrain=False):
               for a in arrays]
     i = montage(arrays, columns=columns)
 
-    import scipy.misc        
-    scipy.misc.imsave('/tmp/%smontage.png'%prefix, i)
+    import imageio     
+    imageio.imwrite('/tmp/%smontage.png'%prefix, i)
     if testTrain:
         trainingTasks = arrays[:sum(t.mustTrain for t in tasks)]
         testingTasks = arrays[sum(t.mustTrain for t in tasks):]
@@ -708,7 +712,7 @@ def montageTasks(tasks, prefix="", columns=None, testTrain=False):
         arrays = trainingTasks + testingTasks
     else:
         random.shuffle(arrays)
-    scipy.misc.imsave('/tmp/%srandomMontage.png'%prefix, montage(arrays, columns=columns))
+    imageio.imwrite('/tmp/%srandomMontage.png'%prefix, montage(arrays, columns=columns))
 
 def demoLogoTasks():
     import scipy.misc
