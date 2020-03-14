@@ -1011,7 +1011,7 @@ class RecognitionModel(nn.Module):
         # We replace each program in the frontier with its likelihoodSummary
         # This is because calculating likelihood summaries requires juggling types
         # And type stuff is expensive!
-        frontiers = [self.replaceProgramsWithLikelihoodSummaries(f).normalize()
+        frontiers = [self.replaceProgramsWithLikelihoodSummaries(f, keepExpr=self.useValue).normalize()
                      for f in frontiers]
 
         eprint("(ID=%d): Training a recognition model from %d frontiers, %d%% Helmholtz, feature extractor %s." % (
@@ -1030,6 +1030,9 @@ class RecognitionModel(nn.Module):
         start = time.time()
         losses, descriptionLengths, realLosses, dreamLosses, realMDL, dreamMDL = [], [], [], [], [], []
         classificationLosses = []
+        valueHeadLosses = []
+        realValueLosses = []
+        dreamValueLosses = []
         totalGradientSteps = 0
         epochs = 9999999
         for i in range(1, epochs + 1):
@@ -1076,6 +1079,7 @@ class RecognitionModel(nn.Module):
                 else:
                     (loss + classificationLoss + valueHeadLoss).backward()
                     classificationLosses.append(classificationLoss.data.item())
+                    valueHeadLosses.append (valueHeadLoss.data.item())
                     optimizer.step()
                     totalGradientSteps += 1
                     losses.append(loss.data.item())
@@ -1083,9 +1087,11 @@ class RecognitionModel(nn.Module):
                     if dreaming:
                         dreamLosses.append(losses[-1])
                         dreamMDL.append(descriptionLengths[-1])
+                        dreamValueLosses.append(valueHeadLosses[-1])
                     else:
                         realLosses.append(losses[-1])
                         realMDL.append(descriptionLengths[-1])
+                        realValueLosses.append(valueHeadLosses[-1])
                     if totalGradientSteps > steps:
                         break # Stop iterating, then print epoch and loss, then break to finish.
            
@@ -1101,8 +1107,15 @@ class RecognitionModel(nn.Module):
                 eprint("(ID=%d): " % self.id, "\t%d cumulative gradient steps. %f steps/sec"%(totalGradientSteps,
                                                                        totalGradientSteps/(time.time() - start)))
                 eprint("(ID=%d): " % self.id, "\t%d-way auxiliary classification loss"%len(self.grammar.primitives),sum(classificationLosses)/len(classificationLosses))
+                if self.useValue:
+                    eprint("(ID=%d): " % self.id, "\tvalue loss:", mean(valueHeadLosses))
+                    eprint("(ID=%d): " % self.id, "\t\t(real value loss):", mean(realValueLosses))
+                    eprint("(ID=%d): " % self.id, "\t\t(dream value loss):", mean(dreamValueLosses))
                 losses, descriptionLengths, realLosses, dreamLosses, realMDL, dreamMDL = [], [], [], [], [], []
                 classificationLosses = []
+                valueHeadLosses = []
+                realValueLosses = []
+                dreamValueLosses = []
                 gc.collect()
         
         eprint("(ID=%d): " % self.id, " Trained recognition model in",time.time() - start,"seconds")
