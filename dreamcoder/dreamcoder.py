@@ -571,9 +571,10 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
 
     if useValue:
         assert ensembleSize == 1
-        valueHead = SimpleRNNValueHead(grammar, featureExtractorObjects[0]) #init correctly
+        valueHead = AbstractREPLValueHead(grammar, featureExtractorObjects[0])
     elif False:
-        valueHead = AbstractREPLValueHead()
+        assert ensembleSize == 1
+        valueHead = SimpleRNNValueHead(grammar, featureExtractorObjects[0]) #init correctly
     else:
         valueHead = None
 

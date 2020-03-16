@@ -98,6 +98,8 @@ class SMC(Solver):
         self.maximumFrontiers = [maximumFrontiers[t] for t in tasks]
         # store all of the hits in a priority queue
         # we will never maintain maximumFrontier best solutions
+
+        self.allHits = set()
         hits = [PQ() for _ in tasks]
         numberOfParticles = self.initialParticles #TODO
         allObjects = set()
@@ -180,7 +182,10 @@ class SMC(Solver):
                 for p in samples:
                     # SHOULD I Resample with or without the finished ones? if not, then i lose particles along the way
                     #print("HIT THE COMPUTE VALUE LINE")
-                    p.distance = self.owner.valueHead.computeValue(p.trajectory, task) #memoize by registering tasks or something
+                    if p.finished:
+                        p.distance = 0. if p.trajectory in self.allHits else 10^10
+                    else:
+                        p.distance = self.owner.valueHead.computeValue(p.trajectory, task) #memoize by registering tasks or something
 
                 # Resample
                 logWeights = [math.log(p.frequency) - p.distance*self.criticCoefficient 
@@ -230,7 +235,10 @@ class SMC(Solver):
                 #continue
             success, likelihood = likelihoodModel.score(p, task)
             if not success:
-                continue  
+                continue
+
+            self.allHits.add(p)
+
             dt = time.time() - starting + elapsedTime
             priority = -(likelihood + prior)
             hits[n].push(priority,

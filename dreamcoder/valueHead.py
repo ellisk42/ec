@@ -148,9 +148,6 @@ class SimpleRNNValueHead(BaseValueHead):
         given a frontier, should sample a postive trace and a negative trace
         and then train value head on those
         """
-        #TODO
-
-
         features = self.featureExtractor.featuresOfTask(frontier.task)
         if features is None: return None, None
         features = features.unsqueeze(0)
@@ -169,7 +166,6 @@ class SimpleRNNValueHead(BaseValueHead):
         nTot = nPos + nNeg
 
         sketchEncodings = self._encodeSketches(posTrace + negTrace)
-        #import pdb; pdb.set_trace()
 
         # copy features a bunch
         distance = self._distance(torch.cat([sketchEncodings, features.expand(nTot, -1)], dim=1)).squeeze(1)
@@ -183,41 +179,130 @@ class SimpleRNNValueHead(BaseValueHead):
         return loss
 
 
+class NMN(nn.Module):
+    def __init__(self, prim, H=128):
+        super(NMN, self).__init__()
+        self.operator = prim
+    
+        nArgs = len(prim.tp.functionArguments()) #is this right??
+        self.nArgs = nArgs
+        if nArgs > 0: #TODO
+            #can just do a stack I think ...
+            #if nArgs == 1:
+            self.params = nn.Sequential(nn.Linear(nArgs*H, H), nn.ReLU())
+            # elif nArgs == 2:
+            #     self.params = nn.Sequential(nn.Linear(2*H, H), nn.ReLU())
+            # else:
+            #     assert False, "more than two inputs not supported"
+
+        else:
+            self.params = nn.Parameter(torch.randn(H))
+        
+    def forward(self, *args):
+        if self.nArgs == 0:
+            return self.params
+        else:
+            inp = torch.cat(args, 0) #TODO i think this is correct dim
+            out = self.params(inp)
+            return out
+
+
 class AbstractREPLValueHead(BaseValueHead):
 
-    def __init__(dsl):
-        pass 
+    def __init__(self, g, featureExtractor, H=64): #should be 512 or something
+                #specEncoder can be None, meaning you dont use the spec at all to encode objects
+        super(AbstractREPLValueHead, self).__init__()
+        self.use_cuda = torch.cuda.is_available() #FIX THIS
 
+        self.H = H
+
+        assert featureExtractor.outputDimensionality == H
+
+        self._distance = nn.Sequential(
+                nn.Linear(featureExtractor.outputDimensionality + H, H),
+                nn.ReLU(),
+                nn.Linear(H, 1),
+                nn.Softplus())
+        self.featureExtractor = featureExtractor
+
+        self.fn_modules = nn.ModuleDict()
+        for _, _, prim in g.productions:
+            if not prim.isPrimitive: continue #This should be totally fine i think...
+            self.fn_modules[prim.name] = NMN(prim, H)
+
+        if self.use_cuda:
+            self.cuda()
         #call the thing which converts 
 
     def computeValue(self, sketch, task):
-        pass
 
-        sketch = self._convertSketch(sketch)
+        #get output representation
+        try:
+            p = sketch.abstractEval(self, [])
+        except IndexError:
+            print("INDEX ERROR SKETCH", sketch, flush=True)
+            assert 0
+            return 10^10
 
-    def _convertSketch(self, sketch):
-        pass
+        outVectors = []
+        evalVectors = []
+        for xs, y in task.examples: #TODO
+            
+            outVectors.append( self.convertToVector(y))
 
-    def abstractREPL(self, sketch, task):
-        pass 
+            try:
+                if len(xs)==0:
+                    res = p()
+                else:
+                    res = p
+                    for x in xs:
+                        res = res(x) #TODO for no args
+            except Exception as e:
+                print(" ERROR SKETCH", sketch, flush=True)
+                print(e)
+                for ex in task.examples:
+                    print(ex)
+                assert 0
+                #return 10^10
 
-    def trainAbstractREPL():
-        pass
+            res = self.convertToVector(res) #TODO
+            evalVectors.append(res ) #TODO must be redone for multiple inputs I think
 
+        #compare outVectors to evalVectors
+        evalVectors = torch.stack(evalVectors, dim=0)
+        outVectors =  torch.stack(outVectors, dim=0)
+        dist = self._distance(torch.cat([evalVectors, outVectors], dim=1)).mean(0).data.item() #TODO
+        return dist #Or something ...
 
+    def convertToVector(self, value):
+        if type(value) == torch.Tensor:
+            return value
 
-"""
-object for 
+        #A placeholder:
+        return torch.zeros(self.H)
 
-make a value head object
-you can have different types of valueHeads
-the api is:
+    def applyModule(self, primitive, abstractArgs):
+        return self.fn_modules[primitive.name](*abstractArgs)
 
+    def encodeHole(self, hole, env):
+        """
+        todo: 
+        - [ ] encode type
+        """
+        assert hole.isHole
+        #encode the env stack
+        #encode the type??
+        #env will have information about
 
-def computeValue(self, sketch, task)
+        #Placeholder:
+        return torch.zeros(self.H)
 
-def computeLoss(self, posSketch, negSketch, task):
-"""
+    def valueLossFromFrontier(self, frontier, g):
+        """
+        given a frontier, should sample a postive trace and a negative trace
+        and then train value head on those
+        """
+        return torch.zeros(1).cuda()
 
 if __name__ == '__main__':
     try:
@@ -227,7 +312,7 @@ if __name__ == '__main__':
 
 
     from dreamcoder.domains.arithmetic.arithmeticPrimitives import *
-    g = ContextualGrammar.fromGrammar(Grammar.uniform([k0,k1,addition, subtraction]))
+    g = Grammar.uniform([k0,k1,addition, subtraction])
     g = g.randomWeights(lambda *a: random.random())
     #p = Program.parse("(lambda (+ 1 $0))")
 

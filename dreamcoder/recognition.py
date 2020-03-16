@@ -1079,7 +1079,7 @@ class RecognitionModel(nn.Module):
                 else:
                     (loss + classificationLoss + valueHeadLoss).backward()
                     classificationLosses.append(classificationLoss.data.item())
-                    valueHeadLosses.append (valueHeadLoss.data.item())
+                    valueHeadLosses.append (valueHeadLoss.data.item() if self.useValue else 0)
                     optimizer.step()
                     totalGradientSteps += 1
                     losses.append(loss.data.item())

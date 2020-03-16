@@ -5,6 +5,7 @@ from dreamcoder.utilities import *
 
 from time import time
 import math
+import torch
 
 
 class InferenceFailure(Exception):
@@ -354,6 +355,15 @@ class Application(Program):
         else:
             return self.f.evaluate(environment)(self.x.evaluate(environment))
 
+    def abstractEval(self, valueHead, environment):
+        if self.isConditional:
+            if self.branch.abstractEval(valueHead, environment):
+                return self.trueBranch.abstractEval(valueHead, environment)
+            else:
+                return self.falseBranch.abstractEval(valueHead, environment)
+        else:
+            return self.f.abstractEval(valueHead, environment)(self.x.abstractEval(valueHead, environment))
+
     def inferType(self, context, environment, freeVariables):
         (context, ft) = self.f.inferType(context, environment, freeVariables)
         (context, xt) = self.x.inferType(context, environment, freeVariables)
@@ -441,6 +451,9 @@ class Index(Program):
                                                 **keywords)
 
     def evaluate(self, environment):
+        return environment[self.i]
+
+    def abstractEval(self, valueHead, environment):
         return environment[self.i]
 
     def inferType(self, context, environment, freeVariables):
@@ -563,6 +576,9 @@ class Abstraction(Program):
     def evaluate(self, environment):
         return lambda x: self.body.evaluate([x] + environment)
 
+    def abstractEval(self, valueHead, environment):
+        return lambda x: self.body.abstractEval(valueHead, [x] + environment)
+
     def betaReduce(self):
         b = self.body.betaReduce()
         if b is None: return None
@@ -639,13 +655,54 @@ class Primitive(Program):
     def annotateTypes(self, context, environment):
         self.annotatedType = self.tp.instantiateMutable(context)
 
-    def evaluate(self, environment): 
+    def evaluate(self, environment):
+        return self.value
 
         def abstractEvalAndReCurry(*args):
             #abstraction condition:
             if Hole() in args: #TODO condition
+                #print("proping hole")
+                #print(self.name)
                 ret = Hole()
                 return ret
+            # if vector in args: #TODO
+            #     abstractArgs = []
+            #     for arg in args:
+            #         abstractArgs.append (valueHead.convertToVector(arg)) #TODO
+
+            #     return valueHead.applyModule(self, abstractArgs) #TODO
+
+            #concrete condition:
+            else:
+                ret = self.value
+                for arg in args:
+                    ret = ret(arg)
+                return ret
+
+        def uncurry(args, n):
+            if n == 0:
+                return abstractEvalAndReCurry(*args)
+            else:  
+                return lambda x: uncurry(args+[x], n-1) #ORDER?
+
+        L = len(self.tp.functionArguments())
+        return uncurry([], L)
+        #return self.value
+
+    def abstractEval(self, valueHead, environment):
+        def abstractEvalAndReCurry(*args):
+            #abstraction condition:
+            # if Hole() in args: #TODO condition
+            #     ret = Hole()
+            #     return ret
+
+            if any(type(arg) == torch.Tensor for arg in args): #TODO
+                abstractArgs = []
+                for arg in args:
+                    abstractArgs.append (valueHead.convertToVector(arg)) #TODO
+
+                return valueHead.applyModule(self, abstractArgs) #TODO
+
             #concrete condition:
             else:
                 ret = self.value
@@ -659,10 +716,10 @@ class Primitive(Program):
             else:  
                 return lambda x: uncurry([x]+args, n-1)
 
-        L = len(self.tp.functionArguments)
+        L = len(self.tp.functionArguments())
         return uncurry([], L)
 
-        #return self.value
+        #
 
     def betaReduce(self): return None
 
@@ -751,6 +808,8 @@ class Invented(Program):
         self.annotatedType = self.tp.instantiateMutable(context)
 
     def evaluate(self, e): return self.body.evaluate([])
+
+    def abstractEval(self, valueHead, e): return self.body.abstractEval(valueHead, [])
 
     def betaReduce(self): return self.body
 
@@ -860,7 +919,13 @@ class Hole(Program):
     def __hash__(self): return 42
 
     def evaluate(self, e):
-        raise Exception('Attempt to evaluate hole')
+        print("HOLE ENV", e)
+        return self
+        #raise Exception('Attempt to evaluate hole')
+
+    def abstractEval(self, valueHead, e):
+        return valueHead.encodeHole(self, e) #is this right?
+        #return self #TODO
 
     def betaReduce(self):
         raise Exception('Attempt to beta reduce hole')

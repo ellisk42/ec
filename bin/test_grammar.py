@@ -16,6 +16,7 @@ bootstrapTarget()
 g = Grammar.uniform([k0,k1,addition, subtraction, Program.parse('cons'), 
     Program.parse('car'), Program.parse('cdr'), Program.parse('empty'),
     Program.parse('fold'), Program.parse('empty?')])
+
 #g = g.randomWeights(lambda *a: random.random())
 #p = Program.parse("(lambda (+ 1 $0))")
 request = arrow(tint,tint)
@@ -129,6 +130,22 @@ def test_SingleStep1():
 #     #if i==7: break
 #     i+=1
 
+def test_abstractHoles():
+
+    #g = Grammar.uniform([k0,k1,addition, subtraction])
+    expr = g.sample( request, sampleHoleProb=.2)
+    expr = Program.parse('(lambda (map (lambda <HOLE>) $0))')
+    expr = Program.parse('(lambda (map (lambda (+ $0 1)) (map (lambda <HOLE>) $0)))')
+    #expr = Program.parse('(lambda (map (lambda (+ $0 1)) (map (lambda <HOLE>) $0)))')
+
+
+
+    #expr = Program.parse('(lambda (map (lambda 3) $0))')
+    print("expr:", expr)
+
+    p = expr.evaluate([])
+    print("eval:", p([4,3]))
+
 if __name__=='__main__':
     #findError()
     #testSampleWithHoles()
@@ -137,4 +154,9 @@ if __name__=='__main__':
     #full = test_getTrace()
     #test_sampleOneStep()
     #test_sampleSingleStep()
-    test_SingleStep1()
+    #test_SingleStep1()
+    test_abstractHoles()
+
+    from dreamcoder.domains.list.makeListTasks import make_list_bootstrap_tasks
+    tasks = make_list_bootstrap_tasks()
+    task = tasks[0]
