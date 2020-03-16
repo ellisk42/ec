@@ -714,7 +714,7 @@ class Primitive(Program):
             if n == 0:
                 return abstractEvalAndReCurry(*args)
             else:  
-                return lambda x: uncurry([x]+args, n-1)
+                return lambda x: uncurry(args+[x], n-1)
 
         L = len(self.tp.functionArguments())
         return uncurry([], L)
