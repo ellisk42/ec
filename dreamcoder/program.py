@@ -639,7 +639,30 @@ class Primitive(Program):
     def annotateTypes(self, context, environment):
         self.annotatedType = self.tp.instantiateMutable(context)
 
-    def evaluate(self, environment): return self.value
+    def evaluate(self, environment): 
+
+        def abstractEvalAndReCurry(*args):
+            #abstraction condition:
+            if Hole() in args: #TODO condition
+                ret = Hole()
+                return ret
+            #concrete condition:
+            else:
+                ret = self.value
+                for arg in args:
+                    ret = ret(arg)
+                return ret
+
+        def uncurry(args, n):
+            if n == 0:
+                return abstractEvalAndReCurry(*args)
+            else:  
+                return lambda x: uncurry([x]+args, n-1)
+
+        L = len(self.tp.functionArguments)
+        return uncurry([], L)
+
+        #return self.value
 
     def betaReduce(self): return None
 
