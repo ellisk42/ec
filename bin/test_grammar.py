@@ -135,7 +135,7 @@ def test_abstractHoles():
     #g = Grammar.uniform([k0,k1,addition, subtraction])
     expr = g.sample( request, sampleHoleProb=.2)
     expr = Program.parse('(lambda (map (lambda <HOLE>) $0))')
-    expr = Program.parse('(lambda (map (lambda (+ $0 1)) (map (lambda <HOLE>) $0)))')
+    expr = Program.parse('(lambda (map (lambda (+ $0 17111)) (map (lambda <HOLE>) $0)))')
     #expr = Program.parse('(lambda (map (lambda (+ $0 1)) (map (lambda <HOLE>) $0)))')
 
 

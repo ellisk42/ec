@@ -199,6 +199,7 @@ class NMN(nn.Module):
             self.params = nn.Parameter(torch.randn(H))
         
     def forward(self, *args):
+        print(self.operator.name)
         if self.nArgs == 0:
             return self.params
         else:
@@ -240,16 +241,14 @@ class AbstractREPLValueHead(BaseValueHead):
         try:
             p = sketch.abstractEval(self, [])
         except IndexError:
-            print("INDEX ERROR SKETCH", sketch, flush=True)
-            assert 0
+            #print("INDEX ERROR SKETCH", sketch, flush=True)
+            #assert 0
             return 10^10
 
         outVectors = []
         evalVectors = []
-        for xs, y in task.examples: #TODO
-            
+        for xs, y in task.examples: #TODO 
             outVectors.append( self.convertToVector(y))
-
             try:
                 if len(xs)==0:
                     res = p()
@@ -258,13 +257,15 @@ class AbstractREPLValueHead(BaseValueHead):
                     for x in xs:
                         res = res(x) #TODO for no args
             except Exception as e:
-                print(" ERROR SKETCH", sketch, flush=True)
-                print(e)
-                for ex in task.examples:
-                    print(ex)
-                assert 0
-                #return 10^10
-
+                # print(" ERROR SKETCH", sketch, flush=True) 
+                # print(e)
+                # for ex in task.examples:
+                #     print(ex)
+                #assert 0
+                return 10^10
+            print("sketch", sketch)
+            #print("RESULT VECTOR SHAPE",res.shape)
+            print("RESULT VECTOR", res)
             res = self.convertToVector(res) #TODO
             evalVectors.append(res ) #TODO must be redone for multiple inputs I think
 
