@@ -133,18 +133,37 @@ def test_SingleStep1():
 def test_abstractHoles():
 
     #g = Grammar.uniform([k0,k1,addition, subtraction])
+    bootstrapTarget_extra()
     expr = g.sample( request, sampleHoleProb=.2)
     expr = Program.parse('(lambda (map (lambda <HOLE>) $0))')
-    expr = Program.parse('(lambda (map (lambda (+ $0 17111)) (map (lambda <HOLE>) $0)))')
+    #expr = Program.parse('(lambda (map (lambda (+ $0 17111)) (map (lambda <HOLE>) $0)))')
     #expr = Program.parse('(lambda (map (lambda (+ $0 1)) (map (lambda <HOLE>) $0)))')
-
-
+    expr = Program.parse('(lambda (map (lambda (is-square $0)) $0))')
 
     #expr = Program.parse('(lambda (map (lambda 3) $0))')
     print("expr:", expr)
 
     p = expr.evaluate([])
-    print("eval:", p([4,3]))
+    print("eval:", p([4,3,1]))
+
+
+def test_abstractREPL():
+    from dreamcoder.domains.list.makeListTasks import make_list_bootstrap_tasks
+    from dreamcoder.domains.list.main import LearnedFeatureExtractor
+    tasks = make_list_bootstrap_tasks()
+    cuda = True
+
+    featureExtractor = LearnedFeatureExtractor(tasks, testingTasks=tasks[-3:], cuda=cuda)
+    valueHead = AbstractREPLValueHead(g, featureExtractor, H=64)
+
+    sketch = Program.parse('(lambda (map (lambda <HOLE>) $0))')
+    #print(tasks[2])
+    task = tasks[2]
+    task.examples = task.examples[:1] 
+    print(task.examples)
+    valueHead.computeValue(sketch, task)
+
+
 
 if __name__=='__main__':
     #findError()
@@ -156,7 +175,9 @@ if __name__=='__main__':
     #test_sampleSingleStep()
     #test_SingleStep1()
     test_abstractHoles()
-
+    #test_abstractREPL()
+    bootstrapTarget_extra()
     from dreamcoder.domains.list.makeListTasks import make_list_bootstrap_tasks
+    from dreamcoder.domains.list.main import LearnedFeatureExtractor
     tasks = make_list_bootstrap_tasks()
-    task = tasks[0]
+    expr = Program.parse('(lambda (map (lambda (is-square $0)) $0))')

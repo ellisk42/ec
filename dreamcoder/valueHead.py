@@ -8,6 +8,7 @@ from dreamcoder.program import Hole
 from dreamcoder.grammar import *
 from dreamcoder.zipper import *
 import random
+import time
 
 def binary_cross_entropy(y,t, epsilon=10**-10, average=True):
     """y: tensor of size B, elements <= 0. each element is a log probability.
@@ -107,19 +108,13 @@ class SimpleRNNValueHead(BaseValueHead):
     def _encodeSketches(self, sketches):
         #don't use spec, just there for the API
         assert type(sketches) == list
-
         #idk if obj is a list of objs... presuably it ususaly is 
         tokens_list = [ stringify(str(sketch)) for sketch in sketches]
-
         symbolSequence_list = [[self.wordToIndex[t] for t in tokens] for tokens in tokens_list]
-
         inputSequences = [torch.tensor(ss) for ss in symbolSequence_list] #this is impossible
-
         if self.use_cuda: #TODO
             inputSequences = [s.cuda() for s in inputSequences]
-
         inputSequences = [self.embedding(ss) for ss in inputSequences]
-
         # import pdb; pdb.set_trace()
         idxs, inputSequence = zip(*sorted(enumerate(inputSequences), key=lambda x: -len(x[1])  ) )
         try:
@@ -133,7 +128,6 @@ class SimpleRNNValueHead(BaseValueHead):
         h = h[:, unperm_idx, :]
         h = h.squeeze(0)
         #o = o.squeeze(1)
-
         objectEncodings = h
         return objectEncodings
 
@@ -199,7 +193,7 @@ class NMN(nn.Module):
             self.params = nn.Parameter(torch.randn(H))
         
     def forward(self, *args):
-        print(self.operator.name)
+        #print(self.operator.name)
         if self.nArgs == 0:
             return self.params
         else:
@@ -227,83 +221,158 @@ class AbstractREPLValueHead(BaseValueHead):
         self.featureExtractor = featureExtractor
 
         self.fn_modules = nn.ModuleDict()
+        self.holeParam = nn.Sequential(nn.Linear(1*H, H), nn.ReLU())
         for _, _, prim in g.productions:
             if not prim.isPrimitive: continue #This should be totally fine i think...
             self.fn_modules[prim.name] = NMN(prim, H)
+
+        self.RNNhead = SimpleRNNValueHead(g, featureExtractor, H=self.H)
 
         if self.use_cuda:
             self.cuda()
         #call the thing which converts 
 
-    def computeValue(self, sketch, task):
+    def cuda(self, device=None):
+        self.RNNhead.use_cuda = True
+        super(AbstractREPLValueHead, self).cuda(device=device)
 
+    def cpu(self):
+        self.RNNhead.use_cuda = False
+        super(AbstractREPLValueHead, self).cpu()
+
+    def _computeOutputVectors(self, task):
         #get output representation
+        outVectors = []
+        for xs, y in task.examples: #TODO 
+            outVectors.append( self.convertToVector(y) )
+        outVectors = torch.stack(outVectors, dim=0)
+        return outVectors
+
+    def _computeValue(self, sketch, task, outVectors=None):
+        """TODO: [x] hash things like outputVector representation
+        """
+        if outVectors is None:
+            outVectors = self._computeOutputVectors(task)
+
         try:
             p = sketch.abstractEval(self, [])
         except IndexError:
-            #print("INDEX ERROR SKETCH", sketch, flush=True)
-            #assert 0
-            return 10^10
-
-        outVectors = []
+            if self.use_cuda:
+                return torch.tensor([float(10^10)]).cuda() #TODO
+            return torch.tensor([float(10^10)]) #TODO
         evalVectors = []
         for xs, y in task.examples: #TODO 
-            outVectors.append( self.convertToVector(y))
             try:
                 if len(xs)==0:
                     res = p()
                 else:
                     res = p
                     for x in xs:
-                        res = res(x) #TODO for no args
-            except Exception as e:
-                # print(" ERROR SKETCH", sketch, flush=True) 
-                # print(e)
-                # for ex in task.examples:
-                #     print(ex)
-                #assert 0
-                return 10^10
-            print("sketch", sketch)
-            #print("RESULT VECTOR SHAPE",res.shape)
-            print("RESULT VECTOR", res)
+                        res = res(x) 
+            except IndexError as e:
+                print("caught exception")
+                print("res", res)
+                print("sketch", sketch)
+                if self.use_cuda:
+                    return torch.tensor([float(10^10)]).cuda() #TODO
+                return torch.tensor([float(10^10)]) #TODO
+            except Exception:
+                print("caught exception")
+                print("res", res)
+                print("sketch", sketch)
+                print("IO", xs, y)
+                assert 0
             res = self.convertToVector(res) #TODO
-            evalVectors.append(res ) #TODO must be redone for multiple inputs I think
-
+            evalVectors.append(res ) 
         #compare outVectors to evalVectors
         evalVectors = torch.stack(evalVectors, dim=0)
-        outVectors =  torch.stack(outVectors, dim=0)
-        dist = self._distance(torch.cat([evalVectors, outVectors], dim=1)).mean(0).data.item() #TODO
-        return dist #Or something ...
+        distance = self._distance(torch.cat([evalVectors, outVectors], dim=1)).mean(0) #TODO
+        return distance #Or something ...
+
+    def computeValue(self, sketch, task):
+        return self._computeValue(sketch, task).data.item()
 
     def convertToVector(self, value):
-        if type(value) == torch.Tensor:
+        """This is the only thing which is domain dependent. Using value for list domain currently
+        could use featureExtractor
+        incorporate holes by feeding them into featureExtractor as output"""
+        if isinstance(value, torch.Tensor):
             return value
 
-        #A placeholder:
-        return torch.zeros(self.H)
+        if isinstance(value, Program):
+            vec = self.RNNhead._encodeSketches([value]).squeeze(0)
+            return vec
+
+        #if value in self.g.productions.values: then use module???
+        y = value
+        pseudoExamples = [ (() , y) ]
+        return self.featureExtractor(pseudoExamples)
 
     def applyModule(self, primitive, abstractArgs):
         return self.fn_modules[primitive.name](*abstractArgs)
 
     def encodeHole(self, hole, env):
-        """
-        todo: 
-        - [ ] encode type
-        """
-        assert hole.isHole
-        #encode the env stack
-        #encode the type??
-        #env will have information about
+        """todo: 
+        - [ ] encode type"""
+        assert hole.isHole        
+        stackOfVectors = [self.convertToVector(val) for val in env]
+        environmentVector = self._encodeStack(stackOfVectors)
+        return self.holeParam(environmentVector)
 
-        #Placeholder:
-        return torch.zeros(self.H)
+    def _encodeStack(self, stackOfVectors):
+        """TODO: maybe use something more sophisticated"""
+        return self.convertToVector(stackOfVectors)
 
     def valueLossFromFrontier(self, frontier, g):
         """
         given a frontier, should sample a postive trace and a negative trace
         and then train value head on those
+        TODO: [ ] only a single call to the distance fn
         """
-        return torch.zeros(1).cuda()
+        #print("new frontier")
+        #t = time.time()
+        # Monte Carlo estimate: draw a sample from the frontier
+        entry = frontier.sample()
+        task = frontier.task
+        tp = frontier.task.request
+        fullProg = entry.program._fullProg
+        posTrace, negTrace =  getTracesFromProg(fullProg, frontier.task.request, g)
+
+        #discard negative sketches which overlap with positive
+        negTrace = [sk for sk in negTrace if (sk not in posTrace) ]
+
+        # compute outVectors: 
+        outVectors = self._computeOutputVectors(task)
+
+        distances = []
+        targets = []
+        for sk in posTrace:
+            try:
+                distance = self._computeValue(sk, task, outVectors=outVectors)
+            except computeValueError:
+                continue #TODO
+            distances.append(distance)
+            targets.append(1.0)
+
+        for sk in negTrace:
+            try:
+                distance = self._computeValue(sk, task, outVectors=outVectors)
+            except computeValueError:
+                continue #TODO
+            distances.append(distance)
+            targets.append(0.0)
+
+        targets = torch.tensor(targets)
+        if self.use_cuda:
+            targets = targets.cuda()
+        distance = torch.stack( distances, dim=0 )
+        loss = binary_cross_entropy(-distance, targets, average=False) #average?
+        #print(f"time in fn: {time.time() - t}")
+        return loss
+
+
+
+
 
 if __name__ == '__main__':
     try:

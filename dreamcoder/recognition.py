@@ -1077,7 +1077,9 @@ class RecognitionModel(nn.Module):
                 if is_torch_invalid(loss):
                     eprint("Invalid real-data loss!")
                 else:
+                    #ttt = time.time()
                     (loss + classificationLoss + valueHeadLoss).backward()
+                    #print(f"tot backward time: {time.time() - ttt}")
                     classificationLosses.append(classificationLoss.data.item())
                     valueHeadLosses.append (valueHeadLoss.data.item() if self.useValue else 0)
                     optimizer.step()
@@ -1199,6 +1201,7 @@ class RecognitionModel(nn.Module):
             self.use_cuda = False
             self.featureExtractor.use_cuda = False
             self.valueHead.use_cuda = False
+            self.valueHead.cpu()
 
             x = self.valueEnumeration(grammars, tasks,
                                         testing=testing,
@@ -1210,6 +1213,7 @@ class RecognitionModel(nn.Module):
             self.use_cuda = True
             self.featureExtractor.use_cuda = True
             self.valueHead.use_cuda = True
+            self.valueHead.cuda()
             return x
 
         return multicoreEnumeration(grammars, tasks,
@@ -1590,6 +1594,48 @@ class RecognitionModel(nn.Module):
         return frontiers, searchTimes, totalNumberOfPrograms
 
 ########################################################################################
+class OptionalVectorEmbedding(nn.Module):
+    """
+    combines embedding and variable, but works when one of the inputs is a list with vectors instead
+    """
+    def __init__(self, length, H):
+        self.length = length
+        super(OptionalVectorEmbedding, self).__init__()
+        self.encoder = nn.Embedding(length+1, H)
+        self.vals = set(range(length))
+
+    def forward(self, x, volatile=False, cuda=False):
+        #could be list of ints, or list of lists of ints
+        #list of lists:
+        if isinstance(x, list) and isinstance(x[0], list):
+            stack = []
+            for i in range(len(x)):
+                for j in range(len(x[0])):
+                    if x[i][j] not in self.vals:
+                        assert isinstance(x[i][j], torch.Tensor)
+                        stack.append( ( (i,j), x[i][j] ) ) 
+                        x[i][j] = self.length
+            emb = self.encoder( variable(x, volatile=volatile, cuda=cuda) )
+            for (i, j), vector in stack:
+                emb[i, j, :] = vector
+            return emb
+
+        elif isinstance(x, list) and isinstance(x[0], int):
+            stack = []
+            for i in range(len(x)):
+                if x[i] not in self.vals:
+                    assert isinstance(x[i], torch.Tensor)
+                    stack.append( ( i, x[i] ) ) 
+                    x[i] = self.length
+
+            emb = self.encoder( variable(x, volatile=volatile, cuda=cuda) )
+            for i, vector in stack:
+                emb[i, :] = vector
+            return emb
+
+        else:
+            return self.encoder( variable(x, volatile=volatile, cuda=cuda) )
+    
 class RecurrentFeatureExtractor(nn.Module):
     def __init__(self, _=None,
                  tasks=None,
@@ -1644,7 +1690,9 @@ class RecurrentFeatureExtractor(nn.Module):
             "ENDOFINPUT"  # delimits the ending of an input - we might have multiple inputs
         ]
         lexicon += self.specialSymbols
-        encoder = nn.Embedding(len(lexicon), H)
+
+        #encoder = nn.Embedding(len(lexicon), H)
+        encoder = OptionalVectorEmbedding(len(lexicon), H)
         self.encoder = encoder
 
         self.H = H
@@ -1680,7 +1728,7 @@ class RecurrentFeatureExtractor(nn.Module):
     def tokenize(self, x): return x
 
     def symbolEmbeddings(self):
-        return {s: self.encoder(variable([self.symbolToIndex[s]])).squeeze(
+        return {s: self.encoder([self.symbolToIndex.get(s,s)]).squeeze(
             0).data.cpu().numpy() for s in self.lexicon if not (s in self.specialSymbols)}
 
     def packExamples(self, examples):
@@ -1691,11 +1739,11 @@ class RecurrentFeatureExtractor(nn.Module):
             e = [self.startingIndex]
             for x in xs:
                 for s in x:
-                    e.append(self.symbolToIndex[s])
+                    e.append(self.symbolToIndex.get(s,s))
                 e.append(self.endOfInputIndex)
             e.append(self.startOfOutputIndex)
             for s in y:
-                e.append(self.symbolToIndex[s])
+                e.append(self.symbolToIndex.get(s,s))
             e.append(self.endingIndex)
             if es != []:
                 assert len(e) <= len(es[-1]), \
@@ -1708,8 +1756,9 @@ class RecurrentFeatureExtractor(nn.Module):
         for j, e in enumerate(es):
             es[j] += [self.endingIndex] * (m - len(e))
 
-        x = variable(es, cuda=self.use_cuda)
-        x = self.encoder(x)
+        #x = variable(es, cuda=self.use_cuda)
+        #x = self.encoder(x)
+        x = self.encoder(es, cuda=self.use_cuda)
         # x: (batch size, maximum length, E)
         x = x.permute(1, 0, 2)
         # x: TxBxE

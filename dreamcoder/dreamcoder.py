@@ -569,10 +569,10 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
 
     featureExtractorObjects = [featureExtractor(tasks, testingTasks=testingTasks, cuda=cuda) for i in range(ensembleSize)]
 
-    if useValue:
+    if useValue == "AbstractREPL":
         assert ensembleSize == 1
         valueHead = AbstractREPLValueHead(grammar, featureExtractorObjects[0])
-    elif False:
+    elif useValue == "RNN":
         assert ensembleSize == 1
         valueHead = SimpleRNNValueHead(grammar, featureExtractorObjects[0]) #init correctly
     else:
@@ -954,7 +954,9 @@ def commandlineArguments(_=None,
     parser.add_argument("--countParameters",
                         help="Load a checkpoint then report how many parameters are in the recognition model.",
                         default=None, type=str)
-    parser.add_argument("--useValue", action='store_true', 
+    parser.add_argument("--useValue", type=str,
+                        default=False,
+                        choices=["RNN", "AbstractREPL"],
                         help="use value-based search")
     parser.set_defaults(useRecognitionModel=useRecognitionModel,
                         useDSL=True,

@@ -347,6 +347,7 @@ class Application(Program):
             return "(%s %s)" % (self.f.show(True), self.x.show(False))
 
     def evaluate(self, environment):
+
         if self.isConditional:
             if self.branch.evaluate(environment):
                 return self.trueBranch.evaluate(environment)
@@ -355,14 +356,21 @@ class Application(Program):
         else:
             return self.f.evaluate(environment)(self.x.evaluate(environment))
 
-    def abstractEval(self, valueHead, environment):
-        if self.isConditional:
-            if self.branch.abstractEval(valueHead, environment):
-                return self.trueBranch.abstractEval(valueHead, environment)
-            else:
-                return self.falseBranch.abstractEval(valueHead, environment)
-        else:
-            return self.f.abstractEval(valueHead, environment)(self.x.abstractEval(valueHead, environment))
+    def abstractEval(self, valueHead, environment, parse=None):
+        #parse = self.applicationParse()
+
+        if parse is None:
+            parse = self.applicationParse()
+
+        return self.f.abstractEval(valueHead, environment, parse=parse)(self.x.abstractEval(valueHead, environment))
+
+        # if self.isConditional:
+        #     if self.branch.abstractEval(valueHead, environment):
+        #         return self.trueBranch.abstractEval(valueHead, environment)
+        #     else:
+        #         return self.falseBranch.abstractEval(valueHead, environment)
+        # else:
+        #     return self.f.abstractEval(valueHead, environment)(self.x.abstractEval(valueHead, environment))
 
     def inferType(self, context, environment, freeVariables):
         (context, ft) = self.f.inferType(context, environment, freeVariables)
@@ -451,6 +459,7 @@ class Index(Program):
                                                 **keywords)
 
     def evaluate(self, environment):
+        #print("env of index:", environment)
         return environment[self.i]
 
     def abstractEval(self, valueHead, environment):
@@ -656,53 +665,48 @@ class Primitive(Program):
         self.annotatedType = self.tp.instantiateMutable(context)
 
     def evaluate(self, environment):
+        # if parse:
+        #     f, xs = parse
+        #     print("self", self)
+        #     print("f", f)
+        #     print("xs", xs)
+
         return self.value
 
         def abstractEvalAndReCurry(*args):
             #abstraction condition:
             if Hole() in args: #TODO condition
-                #print("proping hole")
-                #print(self.name)
                 ret = Hole()
                 return ret
-            # if vector in args: #TODO
-            #     abstractArgs = []
-            #     for arg in args:
-            #         abstractArgs.append (valueHead.convertToVector(arg)) #TODO
-
-            #     return valueHead.applyModule(self, abstractArgs) #TODO
-
-            #concrete condition:
             else:
                 ret = self.value
                 for arg in args:
                     ret = ret(arg)
                 return ret
-
         def uncurry(args, n):
             if n == 0:
                 return abstractEvalAndReCurry(*args)
             else:  
                 return lambda x: uncurry(args+[x], n-1) #ORDER?
-
         L = len(self.tp.functionArguments())
         return uncurry([], L)
         #return self.value
 
-    def abstractEval(self, valueHead, environment):
+    def abstractEval(self, valueHead, environment, parse=None):
+        if parse:
+            f, xs = parse
+
         def abstractEvalAndReCurry(*args):
-            #abstraction condition:
-            # if Hole() in args: #TODO condition
-            #     ret = Hole()
-            #     return ret
-
-            if any(type(arg) == torch.Tensor for arg in args): #TODO
+            #abstract condition
+            if any(type(arg) == torch.Tensor for arg in args) or self.name == 'unfold': #TODO STOPGAP
+                x_tps = self.tp.functionArguments()
                 abstractArgs = []
-                for arg in args:
-                    abstractArgs.append (valueHead.convertToVector(arg)) #TODO
-
+                for i, arg in enumerate(args):
+                    if parse and x_tps[i].isArrow(): #if the argument is a lambda:
+                        abstractArgs.append (valueHead.convertToVector(xs[i]))
+                    else:
+                        abstractArgs.append (valueHead.convertToVector(arg)) #TODO
                 return valueHead.applyModule(self, abstractArgs) #TODO
-
             #concrete condition:
             else:
                 ret = self.value

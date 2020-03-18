@@ -185,7 +185,7 @@ def _find(x):
     return _inner
 
 
-def _unfold(x): return lambda p: lambda h: lambda n: __unfold(p, f, n, x)
+def _unfold(x): return lambda p: lambda f: lambda n: __unfold(p, f, n, x)
 
 
 def __unfold(p, f, n, x, recursion_limit=50):

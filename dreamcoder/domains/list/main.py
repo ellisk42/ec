@@ -4,6 +4,7 @@ import json
 import math
 import os
 import datetime
+import torch
 
 from dreamcoder.dreamcoder import explorationCompression
 from dreamcoder.utilities import eprint, flatten, testTrainSplit
@@ -153,9 +154,27 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
     special = None
 
     def tokenize(self, examples):
-        def sanitize(l): return [z if z in self.lexicon else "?"
-                                 for z_ in l
-                                 for z in (z_ if isinstance(z_, list) else [z_])]
+        def sanitize(l): 
+            #print("L LIST", l)
+            ret = []
+            for z_ in l:
+                for z in (z_ if isinstance(z_, list) else [z_]):
+                    # print("Z", z)
+                    # print(self.lexicon)
+                    # print(type(self.lexicon))
+                    # print(z in self.lexicon)
+                    if (z in self.lexicon) or isinstance(z, torch.Tensor):
+                        ret.append(z)
+                    else:
+                        print (f"WARNING: the following token was not tokenized: {z}")
+                        assert 0
+                        ret.append("?")
+                    #ret.append(z if  else "?")
+            return ret
+
+            #return [z if ((z in self.lexicon) or isinstance(z, torch.Tensor)) else "?" #for hole vectors
+                                 #for z_ in l
+                                 #for z in (z_ if isinstance(z_, list) else [z_])]
 
         tokenized = []
         for xs, y in examples:
@@ -205,6 +224,7 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
             H=self.H,
             bidirectional=True)
 
+        self.lexicon = set(self.lexicon)
 
 def train_necessary(t):
     if t.name in {"head", "is-primes", "len", "pop", "repeat-many", "tail", "keep primes", "keep squares"}:
