@@ -1060,6 +1060,16 @@ class RecognitionModel(nn.Module):
 
                 if self.useValue:
                     #TODO gramamr issue here... need a grammar object but none exist in this context
+                    import dill
+                    with open('testFrontier.pickle', 'rb') as h:
+                        lst = dill.load(h)
+                    if type(lst) == tuple: lst = []
+
+                    lst.append((frontier,self.grammar))
+                    with open('testFrontier.pickle', 'wb') as h:
+                        dill.dump(lst, h)
+                    if len(lst) >= 10: assert 0
+
                     valueHeadLoss = self.valueHead.valueLossFromFrontier(frontier, self.grammar) 
                     # print("DEACTIVATED VALUE LOSS TRAINING FOR NOW")
                     # valueHeadLoss = 0

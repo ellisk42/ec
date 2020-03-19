@@ -167,7 +167,7 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
                         ret.append(z)
                     else:
                         print (f"WARNING: the following token was not tokenized: {z}")
-                        assert 0
+                        #assert 0
                         ret.append("?")
                     #ret.append(z if  else "?")
             return ret

@@ -332,6 +332,7 @@ class AbstractREPLValueHead(BaseValueHead):
         #print("new frontier")
         #t = time.time()
         # Monte Carlo estimate: draw a sample from the frontier
+
         entry = frontier.sample()
         task = frontier.task
         tp = frontier.task.request

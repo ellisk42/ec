@@ -163,6 +163,39 @@ def test_abstractREPL():
     print(task.examples)
     valueHead.computeValue(sketch, task)
 
+def test_trainAbstractREPL():
+    from dreamcoder.domains.list.makeListTasks import make_list_bootstrap_tasks
+    from dreamcoder.domains.list.main import LearnedFeatureExtractor
+    tasks = make_list_bootstrap_tasks()
+    cuda = True
+
+    import dill
+    with open('testFrontier.pickle', 'rb') as h:
+        lst = dill.load(h)
+
+    for i, (frontier, g) in enumerate(lst):
+        print(i)
+        print(frontier.task.examples)
+        print(frontier.sample().program._fullProg)
+
+    frontier, g = lst[3]
+
+    featureExtractor = LearnedFeatureExtractor(tasks, testingTasks=tasks[-3:], cuda=cuda)
+    valueHead = AbstractREPLValueHead(g, featureExtractor, H=64)
+    #valueHead = SimpleRNNValueHead(g, featureExtractor, H=64)
+
+    print(frontier.task.examples)
+    print(frontier.sample().program._fullProg)
+    optimizer = torch.optim.Adam(valueHead.parameters(), lr=0.001, eps=1e-3, amsgrad=True)
+
+    for i in range(100):
+        valueHead.zero_grad()
+        loss = valueHead.valueLossFromFrontier(frontier, g)
+        print(loss.data.item())
+        loss.backward()
+        optimizer.step()
+
+
 
 
 if __name__=='__main__':
@@ -174,10 +207,11 @@ if __name__=='__main__':
     #test_sampleOneStep()
     #test_sampleSingleStep()
     #test_SingleStep1()
-    test_abstractHoles()
+    #test_abstractHoles()
     #test_abstractREPL()
-    bootstrapTarget_extra()
-    from dreamcoder.domains.list.makeListTasks import make_list_bootstrap_tasks
-    from dreamcoder.domains.list.main import LearnedFeatureExtractor
-    tasks = make_list_bootstrap_tasks()
-    expr = Program.parse('(lambda (map (lambda (is-square $0)) $0))')
+    test_trainAbstractREPL()
+    # bootstrapTarget_extra()
+    # from dreamcoder.domains.list.makeListTasks import make_list_bootstrap_tasks
+    # from dreamcoder.domains.list.main import LearnedFeatureExtractor
+    # tasks = make_list_bootstrap_tasks()
+    # expr = Program.parse('(lambda (map (lambda (is-square $0)) $0))')
