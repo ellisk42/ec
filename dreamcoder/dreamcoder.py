@@ -587,6 +587,7 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
                                     contextual=contextual,
                                     previousRecognitionModel=previousRecognitionModel,
                                     id=i,
+                                    hidden=[featureExtractorObjects[0].outputDimensionality],
                                     useValue=useValue,
                                     valueHead=valueHead) for i in range(ensembleSize)]
     eprint(f"Currently using this much memory: {getThisMemoryUsage()}")

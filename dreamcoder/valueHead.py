@@ -10,12 +10,16 @@ from dreamcoder.zipper import *
 import random
 import time
 
+class computeValueError(Exception):
+    pass
+
 def binary_cross_entropy(y,t, epsilon=10**-10, average=True):
     """y: tensor of size B, elements <= 0. each element is a log probability.
     t: tensor of size B, elements in [0,1]. intended target.
     returns: 1/B * - \sum_b t*y + (1 - t)*(log(1 - e^y + epsilon))"""
 
     B = y.size(0)
+    assert len(y.size()) == 1
     log_yes_probability = y
     log_no_probability = torch.log(1 - y.exp() + epsilon)
     assert torch.ByteTensor.all(log_yes_probability <= 0.)
@@ -168,6 +172,7 @@ class SimpleRNNValueHead(BaseValueHead):
         targets = torch.tensor(targets)
         if self.use_cuda:
             targets = targets.cuda()
+        #import pdb; pdb.set_trace()
 
         loss = binary_cross_entropy(-distance, targets, average=False) #average?
         return loss
@@ -204,14 +209,14 @@ class NMN(nn.Module):
 
 class AbstractREPLValueHead(BaseValueHead):
 
-    def __init__(self, g, featureExtractor, H=64): #should be 512 or something
+    def __init__(self, g, featureExtractor, H=512): #should be 512 or something
                 #specEncoder can be None, meaning you dont use the spec at all to encode objects
         super(AbstractREPLValueHead, self).__init__()
         self.use_cuda = torch.cuda.is_available() #FIX THIS
 
         self.H = H
 
-        assert featureExtractor.outputDimensionality == H
+        assert featureExtractor.outputDimensionality == H, f"{featureExtractor.outputDimensionality} vs {H}"
 
         self._distance = nn.Sequential(
                 nn.Linear(featureExtractor.outputDimensionality + H, H),
@@ -226,18 +231,18 @@ class AbstractREPLValueHead(BaseValueHead):
             if not prim.isPrimitive: continue #This should be totally fine i think...
             self.fn_modules[prim.name] = NMN(prim, H)
 
-        self.RNNhead = SimpleRNNValueHead(g, featureExtractor, H=self.H)
+        self.RNNHead = SimpleRNNValueHead(g, featureExtractor, H=self.H)
 
         if self.use_cuda:
             self.cuda()
         #call the thing which converts 
 
     def cuda(self, device=None):
-        self.RNNhead.use_cuda = True
+        self.RNNHead.use_cuda = True
         super(AbstractREPLValueHead, self).cuda(device=device)
 
     def cpu(self):
-        self.RNNhead.use_cuda = False
+        self.RNNHead.use_cuda = False
         super(AbstractREPLValueHead, self).cpu()
 
     def _computeOutputVectors(self, task):
@@ -258,8 +263,8 @@ class AbstractREPLValueHead(BaseValueHead):
             p = sketch.abstractEval(self, [])
         except IndexError:
             if self.use_cuda:
-                return torch.tensor([float(10^10)]).cuda() #TODO
-            return torch.tensor([float(10^10)]) #TODO
+                return torch.tensor([float(10**10)]).cuda() #TODO
+            return torch.tensor([float(10**10)]) #TODO
         evalVectors = []
         for xs, y in task.examples: #TODO 
             try:
@@ -274,8 +279,8 @@ class AbstractREPLValueHead(BaseValueHead):
                 print("res", res)
                 print("sketch", sketch)
                 if self.use_cuda:
-                    return torch.tensor([float(10^10)]).cuda() #TODO
-                return torch.tensor([float(10^10)]) #TODO
+                    return torch.tensor([float(10**10)]).cuda() #TODO
+                return torch.tensor([float(10**10)]) #TODO
             except Exception:
                 print("caught exception")
                 print("res", res)
@@ -290,7 +295,10 @@ class AbstractREPLValueHead(BaseValueHead):
         return distance #Or something ...
 
     def computeValue(self, sketch, task):
-        return self._computeValue(sketch, task).data.item()
+        try:
+            return self._computeValue(sketch, task).data.item()
+        except computeValueError:
+            return float(10**10)
 
     def convertToVector(self, value):
         """This is the only thing which is domain dependent. Using value for list domain currently
@@ -300,13 +308,16 @@ class AbstractREPLValueHead(BaseValueHead):
             return value
 
         if isinstance(value, Program):
-            vec = self.RNNhead._encodeSketches([value]).squeeze(0)
+            vec = self.RNNHead._encodeSketches([value]).squeeze(0)
             return vec
 
         #if value in self.g.productions.values: then use module???
         y = value
         pseudoExamples = [ (() , y) ]
-        return self.featureExtractor(pseudoExamples)
+        vec = self.featureExtractor(pseudoExamples)
+        if vec is None:
+            raise computeValueError
+        return vec
 
     def applyModule(self, primitive, abstractArgs):
         return self.fn_modules[primitive.name](*abstractArgs)
@@ -350,6 +361,8 @@ class AbstractREPLValueHead(BaseValueHead):
         for sk in posTrace:
             try:
                 distance = self._computeValue(sk, task, outVectors=outVectors)
+                #print("pos sk", sk)
+                #print("distance", distance.data.item())
             except computeValueError:
                 continue #TODO
             distances.append(distance)
@@ -358,6 +371,8 @@ class AbstractREPLValueHead(BaseValueHead):
         for sk in negTrace:
             try:
                 distance = self._computeValue(sk, task, outVectors=outVectors)
+                #print("neg sk", sk)
+                #print("distance", distance.data.item())
             except computeValueError:
                 continue #TODO
             distances.append(distance)
@@ -366,14 +381,12 @@ class AbstractREPLValueHead(BaseValueHead):
         targets = torch.tensor(targets)
         if self.use_cuda:
             targets = targets.cuda()
-        distance = torch.stack( distances, dim=0 )
+        distance = torch.stack( distances, dim=0 ).squeeze(1)
+        #import pdb; pdb.set_trace()
+        #print(distance)
         loss = binary_cross_entropy(-distance, targets, average=False) #average?
         #print(f"time in fn: {time.time() - t}")
         return loss
-
-
-
-
 
 if __name__ == '__main__':
     try:

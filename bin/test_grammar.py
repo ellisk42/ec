@@ -169,16 +169,19 @@ def test_trainAbstractREPL():
     tasks = make_list_bootstrap_tasks()
     cuda = True
 
+    TASKID = 3
+
     import dill
     with open('testFrontier.pickle', 'rb') as h:
         lst = dill.load(h)
 
-    for i, (frontier, g) in enumerate(lst):
-        print(i)
-        print(frontier.task.examples)
-        print(frontier.sample().program._fullProg)
+    # for i, (frontier, g) in enumerate(lst):
+    #     if i == TASKID:
+    #         print(i)
+    #         print(frontier.task.examples)
+    #         print(frontier.sample().program._fullProg)
 
-    frontier, g = lst[3]
+    frontier, g = lst[TASKID]
 
     featureExtractor = LearnedFeatureExtractor(tasks, testingTasks=tasks[-3:], cuda=cuda)
     valueHead = AbstractREPLValueHead(g, featureExtractor, H=64)
@@ -188,9 +191,12 @@ def test_trainAbstractREPL():
     print(frontier.sample().program._fullProg)
     optimizer = torch.optim.Adam(valueHead.parameters(), lr=0.001, eps=1e-3, amsgrad=True)
 
-    for i in range(100):
+    for i in range(400):
         valueHead.zero_grad()
-        loss = valueHead.valueLossFromFrontier(frontier, g)
+
+        
+        losses = [valueHead.valueLossFromFrontier(frontier, g) for frontier, g in lst]
+        loss = sum(losses)
         print(loss.data.item())
         loss.backward()
         optimizer.step()
