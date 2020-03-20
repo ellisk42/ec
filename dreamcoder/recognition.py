@@ -1302,6 +1302,7 @@ class RecognitionModel(nn.Module):
 
         frontiers = {t: Frontier([], task=t) for t in task2grammar}
 
+        reportedSolutions = {t: [] for t in task2grammar}
         # For each job we keep track of how long we have been working on it
         stopwatches = {t: Stopwatch() for t in jobs}
 
@@ -1419,7 +1420,7 @@ class RecognitionModel(nn.Module):
                 activeCPUs -= id2CPUs[message.ID]
                 stopwatches[id2job[message.ID]].stop()
 
-                newFrontiers, searchTimes, pc = message.value
+                newFrontiers, searchTimes, pc, newReportedSolutions = message.value #TODO add searchResults here
                 for t, f in newFrontiers.items():
                     oldBest = None if len(
                         frontiers[t]) == 0 else frontiers[t].bestPosterior
@@ -1444,6 +1445,8 @@ class RecognitionModel(nn.Module):
                                 bestSearchTime[t] = dt
                             elif newScore == oldScore:
                                 bestSearchTime[t] = min(bestSearchTime[t], dt)
+
+                    reportedSolutions[t].extend(newReportedSolutions[t])
             else:
                 eprint("Unknown message result:", message.result)
                 assert False
@@ -1451,7 +1454,7 @@ class RecognitionModel(nn.Module):
         eprint("We enumerated this many programs, for each task:\n\t",
                list(taskToNumberOfPrograms.values()))
 
-        return [frontiers[t] for t in tasks], bestSearchTime
+        return [frontiers[t] for t in tasks], bestSearchTime, reportedSolutions
 
 
     def solveForTask_python(self, _=None, recognitionModel=None,

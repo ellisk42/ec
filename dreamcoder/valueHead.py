@@ -261,7 +261,7 @@ class AbstractREPLValueHead(BaseValueHead):
 
         try:
             p = sketch.abstractEval(self, [])
-        except IndexError:
+        except (IndexError, ZeroDivisionError, computeValueError, RuntimeError):
             if self.use_cuda:
                 return torch.tensor([float(10**10)]).cuda() #TODO
             return torch.tensor([float(10**10)]) #TODO
@@ -274,16 +274,17 @@ class AbstractREPLValueHead(BaseValueHead):
                     res = p
                     for x in xs:
                         res = res(x) 
-            except IndexError as e:
+            except (IndexError, ZeroDivisionError, computeValueError, RuntimeError) as e:
                 print("caught exception")
-                print("res", res)
+                #print("res", res)
                 print("sketch", sketch)
+                print(e)
                 if self.use_cuda:
                     return torch.tensor([float(10**10)]).cuda() #TODO
                 return torch.tensor([float(10**10)]) #TODO
             except Exception:
                 print("caught exception")
-                print("res", res)
+                #print("res", res)
                 print("sketch", sketch)
                 print("IO", xs, y)
                 assert 0
@@ -297,7 +298,7 @@ class AbstractREPLValueHead(BaseValueHead):
     def computeValue(self, sketch, task):
         try:
             return self._computeValue(sketch, task).data.item()
-        except computeValueError:
+        except (computeValueError, RuntimeError):
             return float(10**10)
 
     def convertToVector(self, value):
@@ -316,6 +317,7 @@ class AbstractREPLValueHead(BaseValueHead):
         pseudoExamples = [ (() , y) ]
         vec = self.featureExtractor(pseudoExamples)
         if vec is None:
+            print("vec is none... possibly too long?")
             raise computeValueError
         return vec
 
@@ -334,7 +336,7 @@ class AbstractREPLValueHead(BaseValueHead):
         """TODO: maybe use something more sophisticated"""
         return self.convertToVector(stackOfVectors)
 
-    def valueLossFromFrontier(self, frontier, g):
+    def _valueLossFromFrontier(self, frontier, g):
         """
         given a frontier, should sample a postive trace and a negative trace
         and then train value head on those
@@ -363,7 +365,7 @@ class AbstractREPLValueHead(BaseValueHead):
                 distance = self._computeValue(sk, task, outVectors=outVectors)
                 #print("pos sk", sk)
                 #print("distance", distance.data.item())
-            except computeValueError:
+            except (computeValueError, RuntimeError):
                 continue #TODO
             distances.append(distance)
             targets.append(1.0)
@@ -373,7 +375,7 @@ class AbstractREPLValueHead(BaseValueHead):
                 distance = self._computeValue(sk, task, outVectors=outVectors)
                 #print("neg sk", sk)
                 #print("distance", distance.data.item())
-            except computeValueError:
+            except (computeValueError, RuntimeError):
                 continue #TODO
             distances.append(distance)
             targets.append(0.0)
@@ -381,12 +383,19 @@ class AbstractREPLValueHead(BaseValueHead):
         targets = torch.tensor(targets)
         if self.use_cuda:
             targets = targets.cuda()
+
         distance = torch.stack( distances, dim=0 ).squeeze(1)
         #import pdb; pdb.set_trace()
         #print(distance)
         loss = binary_cross_entropy(-distance, targets, average=False) #average?
         #print(f"time in fn: {time.time() - t}")
         return loss
+
+    def valueLossFromFrontier(self, frontier, g):
+        try:
+            return self._valueLossFromFrontier(frontier, g)
+        except RuntimeError:
+            return torch.tensor([0.]).cuda()
 
 if __name__ == '__main__':
     try:

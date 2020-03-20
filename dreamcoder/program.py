@@ -364,13 +364,13 @@ class Application(Program):
 
         return self.f.abstractEval(valueHead, environment, parse=parse)(self.x.abstractEval(valueHead, environment))
 
-        # if self.isConditional:
-        #     if self.branch.abstractEval(valueHead, environment):
-        #         return self.trueBranch.abstractEval(valueHead, environment)
-        #     else:
-        #         return self.falseBranch.abstractEval(valueHead, environment)
-        # else:
-        #     return self.f.abstractEval(valueHead, environment)(self.x.abstractEval(valueHead, environment))
+        if self.isConditional and not self.branch.hasHoles:
+            if self.branch.abstractEval(valueHead, environment):
+                return self.trueBranch.abstractEval(valueHead, environment)
+            else:
+                return self.falseBranch.abstractEval(valueHead, environment)
+        else:
+            return self.f.abstractEval(valueHead, environment, parse=pars)(self.x.abstractEval(valueHead, environment))
 
     def inferType(self, context, environment, freeVariables):
         (context, ft) = self.f.inferType(context, environment, freeVariables)
@@ -813,7 +813,10 @@ class Invented(Program):
 
     def evaluate(self, e): return self.body.evaluate([])
 
-    def abstractEval(self, valueHead, e): return self.body.abstractEval(valueHead, [])
+    def abstractEval(self, valueHead, e, parse=None): 
+        #Hopefully don't need parse 
+        return self.body.abstractEval(valueHead, [])
+
 
     def betaReduce(self): return self.body
 

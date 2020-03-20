@@ -16,6 +16,8 @@ class ECResult():
     def __init__(self, _=None,
                  frontiersOverTime=None,
                  testingSearchTime=None,
+                 testingSearchStats=None,
+                 searchStats=None,
                  learningCurve=None,
                  grammars=None,
                  taskSolutions=None,
@@ -34,6 +36,8 @@ class ECResult():
         self.hitsAtEachWake = hitsAtEachWake or []
         self.timesAtEachWake = timesAtEachWake or []
         self.testingSearchTime = testingSearchTime or []
+        self.testingSearchStats = testingSearchStats or []
+        self.searchStats = searchStats or []
         self.searchTimes = searchTimes or []
         self.trainSearchTime = {} # map from task to search time
         self.testSearchTime = {} # map from task to search time
@@ -364,6 +368,34 @@ def ecIterator(grammar, tasks,
         sys.exit(0)
     
     
+    if singleRoundValueCompute: #TODO name
+        if testingTimeout is not None and testingTimeout > enumerationTimeout:
+            enumerationTimeout = testingTimeout
+        if result.recognitionModel is not None:
+            _enumerator = lambda *args, **kw: result.recognitionModel.enumerateFrontiers(*args, **kw)
+        else: _enumerator = lambda *args, **kw: multicoreEnumeration(result.grammars[-1], *args, **kw)
+        enumerator = lambda *args, **kw: _enumerator(*args, 
+                                                     maximumFrontier=maximumFrontier, 
+                                                     CPUs=CPUs, evaluationTimeout=evaluationTimeout,
+                                                     solver=solver,
+                                                     **kw)
+
+        trainFrontiers, _, trainingTimes, searchStats = enumerator(tasks, enumerationTimeout=enumerationTimeout)
+        testFrontiers, _, testingTimes, testingSearchStats = enumerator(testingTasks, enumerationTimeout=testingTimeout, testing=True)
+
+        #todo: idk if append is correct here
+        result.searchStats.append(searchStats)
+        result.testingSearchStats.append(testingSearchStats)
+
+        SUFFIX = ".pickle"
+        assert path.endswith(SUFFIX)
+        path = path[:-len(SUFFIX)] + "_FTM=True" + SUFFIX
+        with open(path, "wb") as handle: dill.dump(result, handle)
+        if useRecognitionModel: ECResult.clearRecognitionModel(path)
+            
+        sys.exit(0)
+
+
     for j in range(resume or 0, iterations):
         if storeTaskMetrics and rewriteTaskMetrics:
             eprint("Resetting task metrics for next iteration.")
@@ -509,7 +541,7 @@ def evaluateOnTestingTasks(result, testingTasks, grammar, _=None,
                            CPUs=None, solver=None, maximumFrontier=None, enumerationTimeout=None, evaluationTimeout=None):
     if result.recognitionModel is not None:
         recognizer = result.recognitionModel
-        testingFrontiers, times = \
+        testingFrontiers, times, reportedSolutions = \
          recognizer.enumerateFrontiers(testingTasks, 
                                        CPUs=CPUs,
                                        solver=solver,
@@ -521,7 +553,7 @@ def evaluateOnTestingTasks(result, testingTasks, grammar, _=None,
         updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskGrammarEntropies(testingTasks), 'heldoutTaskGrammarEntropies')
         updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskGrammarEntropies(testingTasks), 'heldoutTaskGrammarEntropies')
     else:
-        testingFrontiers, times = multicoreEnumeration(grammar, testingTasks, 
+        testingFrontiers, times, reportedSolutions = multicoreEnumeration(grammar, testingTasks, 
                                                        solver=solver,
                                                        maximumFrontier=maximumFrontier,
                                                        enumerationTimeout=enumerationTimeout,
@@ -539,6 +571,8 @@ def evaluateOnTestingTasks(result, testingTasks, grammar, _=None,
     summaryStatistics("Testing tasks", times)
     eprint("Hits %d/%d testing tasks" % (len(times), len(testingTasks)))
     result.testingSearchTime.append(times)
+    #max added for search comparison
+    result.testingSearchStats.append(reportedSolutions)
 
         
 def default_wake_generative(grammar, tasks, 
@@ -613,7 +647,7 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
     totalTasksHitBottomUp = set()
     for recIndex, recognizer in enumerate(trainedRecognizers):
         eprint("Enumerating from recognizer %d of %d" % (recIndex, len(trainedRecognizers)))
-        bottomupFrontiers, allRecognitionTimes = \
+        bottomupFrontiers, allRecognitionTimes, searchStats = \
                         recognizer.enumerateFrontiers(taskBatch, 
                                                       CPUs=CPUs,
                                                       maximumFrontier=maximumFrontier,
@@ -623,6 +657,8 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
         ensembleFrontiers.append(bottomupFrontiers)
         ensembleTimes.append([t for t in allRecognitionTimes.values() if t is not None])
         ensembleRecognitionTimes.append(allRecognitionTimes)
+
+        ensembleSearchStats.append(searchStats)
 
         recognizerTasksHitBottomUp = {f.task for f in bottomupFrontiers if not f.empty}
         totalTasksHitBottomUp.update(recognizerTasksHitBottomUp)
@@ -667,6 +703,8 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
     eprint("Total frontiers: " + str(len([f for f in result.allFrontiers.values() if not f.empty])))
 
     result.searchTimes.append(ensembleTimes[bestRecognizer])
+    result.searchStats.append(ensembleSearchStats[bestRecognizer])
+
     if len(ensembleTimes[bestRecognizer]) > 0:
         eprint("Average search time: ", int(mean(ensembleTimes[bestRecognizer]) + 0.5),
                "sec.\tmedian:", int(median(ensembleTimes[bestRecognizer]) + 0.5),

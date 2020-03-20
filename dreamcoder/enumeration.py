@@ -6,6 +6,8 @@ import os
 import traceback
 import subprocess
 
+from SMC import SearchResult
+
 
 def multicoreEnumeration(g, tasks, _=None,
                          enumerationTimeout=None,
@@ -70,6 +72,7 @@ def multicoreEnumeration(g, tasks, _=None,
 
     frontiers = {t: Frontier([], task=t) for t in task2grammar}
 
+    reportedSolutions = {t: [] for t in task2grammar}
     # For each job we keep track of how long we have been working on it
     stopwatches = {t: Stopwatch() for t in jobs}
 
@@ -189,7 +192,7 @@ def multicoreEnumeration(g, tasks, _=None,
             activeCPUs -= id2CPUs[message.ID]
             stopwatches[id2job[message.ID]].stop()
 
-            newFrontiers, searchTimes, pc = message.value
+            newFrontiers, searchTimes, pc, newReportedSolutions = message.value
             for t, f in newFrontiers.items():
                 oldBest = None if len(
                     frontiers[t]) == 0 else frontiers[t].bestPosterior
@@ -214,6 +217,8 @@ def multicoreEnumeration(g, tasks, _=None,
                             bestSearchTime[t] = dt
                         elif newScore == oldScore:
                             bestSearchTime[t] = min(bestSearchTime[t], dt)
+
+                reportedSolutions[t].extend(newReportedSolutions[t])
         else:
             eprint("Unknown message result:", message.result)
             assert False
@@ -221,7 +226,7 @@ def multicoreEnumeration(g, tasks, _=None,
     eprint("We enumerated this many programs, for each task:\n\t",
            list(taskToNumberOfPrograms.values()))
 
-    return [frontiers[t] for t in tasks], bestSearchTime
+    return [frontiers[t] for t in tasks], bestSearchTime, reportedSolutions
 
 def wrapInThread(f):
     """
@@ -401,6 +406,8 @@ def enumerateForTasks(g, tasks, likelihoodModel, _=None,
     # we will never maintain maximumFrontier best solutions
     hits = [PQ() for _ in tasks]
 
+    reportedSolutions = {t: [] for t in tasks}
+
     starting = time()
     previousBudget = lowerBound
     budget = lowerBound + budgetIncrement
@@ -444,6 +451,9 @@ def enumerateForTasks(g, tasks, likelihoodModel, _=None,
                     if len(hits[n]) > maximumFrontiers[n]:
                         hits[n].popMaximum()
 
+                    reportedSolutions[task].append(SearchResult(p, -priority, dt,
+                                                       totalNumberOfPrograms))
+
                 if timeout is not None and time() - starting > timeout:
                     raise EnumerationTimeout
 
@@ -461,7 +471,7 @@ def enumerateForTasks(g, tasks, likelihoodModel, _=None,
         tasks[n]: None if len(hits[n]) == 0 else \
         min(t for t,_ in hits[n]) for n in range(len(tasks))}
 
-    return frontiers, searchTimes, totalNumberOfPrograms
+    return frontiers, searchTimes, totalNumberOfPrograms, reportedSolutions
 
 
 

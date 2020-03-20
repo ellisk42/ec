@@ -12,6 +12,13 @@ import time
 
 import numpy as np
 
+class SearchResult:
+    def __init__(self, program, loss, time, evaluations):
+        self.evaluations = evaluations
+        self.program = program
+        self.loss = loss
+        self.time = time
+
 class Solver():
     def __init__():
         pass
@@ -101,6 +108,9 @@ class SMC(Solver):
 
         self.allHits = set()
         hits = [PQ() for _ in tasks]
+
+        self.reportedSolutions = {t: [] for t in tasks}
+
         numberOfParticles = self.initialParticles #TODO
         allObjects = set()
         
@@ -220,7 +230,7 @@ class SMC(Solver):
             tasks[n]: None if len(hits[n]) == 0 else \
             min(t for t,_ in hits[n]) for n in range(len(tasks))}
 
-        return frontiers, searchTimes, totalNumberOfPrograms
+        return frontiers, searchTimes, totalNumberOfPrograms, self.reportedSolutions
 
     def _report(self, p, request, g, tasks, likelihoodModel, hits, starting, elapsedTime, totalNumberOfPrograms):
         totalNumberOfPrograms += 1
@@ -248,5 +258,8 @@ class SMC(Solver):
 
             if len(hits[n]) > self.maximumFrontiers[n]:
                 hits[n].popMaximum()
+
+            self.reportedSolutions[task].append(SearchResult(p, -priority, dt,
+                                                       totalNumberOfPrograms))
 
         return totalNumberOfPrograms
