@@ -390,11 +390,11 @@ def ecIterator(grammar, tasks,
             print("Loading model to resume or skip training...")
             try:
                 resumeTrainingModel = torch.load(open(recModelPath, 'rb'))
+                recognitionSteps = recognitionSteps - resumeTrainingModel.gradientStepsTaken
+                if skipTraining: steps = -1
             except FileNotFoundError:
                 print("no previous model found")
                 resumeTrainingModel = None
-            recognitionSteps = recognitionSteps - resumeTrainingModel.gradientStepsTaken
-            if skipTraining: steps = -1
         else:
             resumeTrainingModel = None 
 
