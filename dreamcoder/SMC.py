@@ -201,7 +201,9 @@ class SMC(Solver):
                 logWeights = [math.log(p.frequency) - p.distance*self.criticCoefficient 
                               for p in samples] # TODO
                 ps = [ math.exp(lw - max(logWeights)) for lw in logWeights ]
-                ps = [p/sum(ps) for p in ps]
+                ps = np.array(ps)
+                ps = ps /np.sum(ps)
+                #TODO error
                 sampleFrequencies = np.random.multinomial(numberOfParticles, ps)
 
                 population = []

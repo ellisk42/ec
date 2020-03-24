@@ -361,8 +361,14 @@ class Application(Program):
 
         if parse is None:
             parse = self.applicationParse()
-
-        return self.f.abstractEval(valueHead, environment, parse=parse)(self.x.abstractEval(valueHead, environment))
+        try:
+            return self.f.abstractEval(valueHead, environment, parse=parse)(self.x.abstractEval(valueHead, environment))
+        except TypeError:
+            print("Got that type error")
+            print("f:", self.f)
+            print("type of f:", type(self.f))
+            print("parse:", parse[0], parse[1])
+            assert 0
 
         if self.isConditional and not self.branch.hasHoles:
             if self.branch.abstractEval(valueHead, environment):
@@ -462,7 +468,10 @@ class Index(Program):
         #print("env of index:", environment)
         return environment[self.i]
 
-    def abstractEval(self, valueHead, environment):
+    def abstractEval(self, valueHead, environment, parse=None):
+        if parse:
+            assert parse[0] == self
+            print('you hit a parse')
         return environment[self.i]
 
     def inferType(self, context, environment, freeVariables):
