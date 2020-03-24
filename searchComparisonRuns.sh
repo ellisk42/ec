@@ -12,3 +12,10 @@ salt=0
 sbatch -e listREPL${salt}.out -o listREPL${salt}.out execute_multicore.sh python bin/list.py --split 0.5 -t ${time} -RS ${recSteps} --solver 'python'  -c ${ncores} --useValue AbstractREPL -i 8 -H 512 --resume experimentOutputs/listCathyTestREPL.pickle --singleRoundValueEval &
 
 #sbatch -e listRNN${salt}.out -o listRNN${salt}.out execute_multicore.sh python bin/list.py --split 0.5 -t ${time} -RS ${recSteps} --solver 'python'  -c ${ncores} --useValue RNN -i 8 -H 512 --resume experimentOutputs/listCathyTestRNN.pickle --singleRoundValueEval &
+
+
+
+# messing about:
+'experimentOutputs/listCathyTestIT=1.pickle'
+
+python bin/list.py --split 0.5 -t ${time} -RS ${recSteps} --solver 'python'  -c ${ncores} --useValue AbstractREPL -i 8 -H 512 --resume 'experimentOutputs/listCathyTestIT=1.pickle' --singleRoundValueEval

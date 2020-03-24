@@ -468,9 +468,9 @@ class Index(Program):
         #print("env of index:", environment)
         return environment[self.i]
 
-    def abstractEval(self, valueHead, environment, parse=None):
-        if parse:
-            assert parse[0] == self
+    def abstractEval(self, valueHead, environment):
+        #if parse:
+            #assert parse[0] == self
             #print('you hit a parse')
         return environment[self.i]
 

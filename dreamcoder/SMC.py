@@ -204,7 +204,13 @@ class SMC(Solver):
                 ps = np.array(ps)
                 ps = ps/(np.sum(ps) + 1e-15)
                 #TODO error
-                sampleFrequencies = np.random.multinomial(numberOfParticles, ps)
+                try:
+                    sampleFrequencies = np.random.multinomial(numberOfParticles, ps)
+                except ValueError:
+                    print("logweights")
+                    print(logWeights)
+                    print("probs")
+                    print(ps)
 
                 population = []
 
