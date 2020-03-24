@@ -6,7 +6,7 @@ import os
 import traceback
 import subprocess
 
-from SMC import SearchResult
+from dreamcoder.SMC import SearchResult
 
 
 def multicoreEnumeration(g, tasks, _=None,

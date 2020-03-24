@@ -621,6 +621,7 @@ class RecognitionModel(nn.Module):
                  rank=None,contextual=False,mask=False,
                  cuda=False,
                  previousRecognitionModel=None,
+                 resumeTrainingModel=None,
                  id=0,
                  useValue=False,
                  valueHead=None):
@@ -679,7 +680,7 @@ class RecognitionModel(nn.Module):
 
         if cuda: self.cuda()
 
-        if previousRecognitionModel:
+        if previousRecognitionModel: #should work recursively for all parts 
             self._MLP.load_state_dict(previousRecognitionModel._MLP.state_dict())
             self.featureExtractor.load_state_dict(previousRecognitionModel.featureExtractor.state_dict())
 
@@ -695,6 +696,13 @@ class RecognitionModel(nn.Module):
                     assert any(myParameter is parameter for myParameter in self.parameters())
 
             self.solver = SMC(self) #Can have many versions of this
+
+            if previousRecognitionModel:
+                self.valueHead.load_state_dict(previousRecognitionModel.valueHead.state_dict())
+
+        if resumeTrainingModel:
+            self.load_state_dict(resumeTrainingModel.state_dict())
+
 
     def auxiliaryLoss(self, frontier, features):
         # Compute a vector of uses
@@ -867,7 +875,8 @@ class RecognitionModel(nn.Module):
     def train(self, frontiers, _=None, steps=None, lr=0.001, topK=5, CPUs=1,
               timeout=None, evaluationTimeout=0.001,
               helmholtzFrontiers=[], helmholtzRatio=0., helmholtzBatch=500,
-              biasOptimal=None, defaultRequest=None, auxLoss=False, vectorized=True):
+              biasOptimal=None, defaultRequest=None, auxLoss=False, vectorized=True,
+              saveIter=None, savePath=None):
         """
         helmholtzRatio: What fraction of the training data should be forward samples from the generative model?
         helmholtzFrontiers: Frontiers from programs enumerated from generative model (optional)
@@ -1129,6 +1138,13 @@ class RecognitionModel(nn.Module):
                 realValueLosses = []
                 dreamValueLosses = []
                 gc.collect()
+
+            if saveIter and i % saveIter == 0:
+                self.gradientStepsTaken = totalGradientSteps
+                with open(savePath, 'wb') as h:
+                    torch.save(self, h)
+                print(f"rec model saved at {savePath}")
+
         
         eprint("(ID=%d): " % self.id, " Trained recognition model in",time.time() - start,"seconds")
         self.trained=True
