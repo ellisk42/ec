@@ -471,7 +471,7 @@ class Index(Program):
     def abstractEval(self, valueHead, environment, parse=None):
         if parse:
             assert parse[0] == self
-            print('you hit a parse')
+            #print('you hit a parse')
         return environment[self.i]
 
     def inferType(self, context, environment, freeVariables):

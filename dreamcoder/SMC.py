@@ -202,7 +202,7 @@ class SMC(Solver):
                               for p in samples] # TODO
                 ps = [ math.exp(lw - max(logWeights)) for lw in logWeights ]
                 ps = np.array(ps)
-                ps = ps /np.sum(ps)
+                ps = ps/(np.sum(ps) + 1e-15)
                 #TODO error
                 sampleFrequencies = np.random.multinomial(numberOfParticles, ps)
 
