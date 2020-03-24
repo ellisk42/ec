@@ -373,7 +373,7 @@ def ecIterator(grammar, tasks,
     
     
     if singleRoundValueEval:
-        resumeTraining = True #toggle for resume from checkpoint
+        resumeTraining = False #toggle for resume from checkpoint
         skipTraining = False #toggle for skip training because it's finished
 
         recModelPath = path + '_RecModelOnly'
