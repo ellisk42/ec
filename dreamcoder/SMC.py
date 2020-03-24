@@ -188,6 +188,7 @@ class SMC(Solver):
                 samples = [Particle(t, skToZippers[t], frequency, finished=finished)
                            for (t, finished), frequency in sampleFrequency.items() ]
                 
+                if len(samples) == 0: break
                 # Computed value
                 for p in samples:
                     # SHOULD I Resample with or without the finished ones? if not, then i lose particles along the way
@@ -200,8 +201,6 @@ class SMC(Solver):
                 # Resample
                 logWeights = [math.log(p.frequency) - p.distance*self.criticCoefficient 
                               for p in samples] # TODO
-
-                #if logWeights == []: break
 
                 ps = [ math.exp(lw - max(logWeights)) for lw in logWeights ]
                 ps = np.array(ps)

@@ -6,13 +6,13 @@ time=300
 recSteps=10000
 ncores=36
 salt=IT1
+resume=experimentOutputs/listBaseIT=1 #experimentOutputs/listCathyTestEnum
 
-sbatch -e listEnum${salt}.out -o listEnum${salt}.out execute_multicore.sh python bin/list.py --split 0.5 -t ${time} -RS ${recSteps} --solver 'python'  -c ${ncores} -i 2 -H 512 --resume experimentOutputs/listCathyTestEnum.pickle --singleRoundValueEval &
+sbatch -e listEnum${salt}.out -o listEnum${salt}.out execute_multicore.sh python bin/list.py --split 0.5 -t ${time} -RS ${recSteps} --solver 'python'  -c ${ncores} -i 2 -H 512 --resume ${resume}Enum.pickle --singleRoundValueEval &
 
-sbatch -e listREPL${salt}.out -o listREPL${salt}.out execute_multicore.sh python bin/list.py --split 0.5 -t ${time} -RS ${recSteps} --solver 'python'  -c ${ncores} --useValue AbstractREPL -i 2 -H 512 --resume experimentOutputs/listCathyTestREPL.pickle --singleRoundValueEval &
+sbatch -e listREPL${salt}.out -o listREPL${salt}.out execute_multicore.sh python bin/list.py --split 0.5 -t ${time} -RS ${recSteps} --solver 'python'  -c ${ncores} --useValue AbstractREPL -i 2 -H 512 --resume ${resume}REPL.pickle --singleRoundValueEval &
 
-sbatch -e listRNN${salt}.out -o listRNN${salt}.out execute_multicore.sh python bin/list.py --split 0.5 -t ${time} -RS ${recSteps} --solver 'python'  -c ${ncores} --useValue RNN -i 2 -H 512 --resume experimentOutputs/listCathyTestRNN.pickle --singleRoundValueEval &
-
+sbatch -e listRNN${salt}.out -o listRNN${salt}.out execute_multicore.sh python bin/list.py --split 0.5 -t ${time} -RS ${recSteps} --solver 'python'  -c ${ncores} --useValue RNN -i 2 -H 512 --resume ${resume}RNN.pickle --singleRoundValueEval &
 
 
 # messing about:
