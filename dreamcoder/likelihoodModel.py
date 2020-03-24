@@ -13,8 +13,11 @@ class AllOrNothingLikelihoodModel:
         self.timeout = timeout
 
     def score(self, program, task):
-        logLikelihood = task.logLikelihood(program, self.timeout)
-        return valid(logLikelihood), logLikelihood
+        try:
+            logLikelihood = task.logLikelihood(program, self.timeout)
+            return valid(logLikelihood), logLikelihood
+        except EvaluationTimeout:
+            return False, NEGATIVEINFINITY
 
 
 class EuclideanLikelihoodModel:
