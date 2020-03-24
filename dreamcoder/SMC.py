@@ -193,13 +193,16 @@ class SMC(Solver):
                     # SHOULD I Resample with or without the finished ones? if not, then i lose particles along the way
                     #print("HIT THE COMPUTE VALUE LINE")
                     if p.finished:
-                        p.distance = 0. if p.trajectory in self.allHits else 10^10
+                        p.distance = 0. if p.trajectory in self.allHits else 10**10
                     else:
                         p.distance = self.owner.valueHead.computeValue(p.trajectory, task) #memoize by registering tasks or something
 
                 # Resample
                 logWeights = [math.log(p.frequency) - p.distance*self.criticCoefficient 
                               for p in samples] # TODO
+
+                #if logWeights == []: break
+
                 ps = [ math.exp(lw - max(logWeights)) for lw in logWeights ]
                 ps = np.array(ps)
                 ps = ps/(np.sum(ps) + 1e-15)
@@ -211,6 +214,7 @@ class SMC(Solver):
                     print(logWeights)
                     print("probs")
                     print(ps)
+                    assert 0
 
                 population = []
 
