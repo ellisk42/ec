@@ -261,7 +261,7 @@ class AbstractREPLValueHead(BaseValueHead):
 
         try:
             p = sketch.abstractEval(self, [])
-        except (IndexError, ZeroDivisionError, computeValueError, RuntimeError):
+        except (ValueError, IndexError, ZeroDivisionError, computeValueError, RuntimeError):
             if self.use_cuda:
                 return torch.tensor([float(10**10)]).cuda() #TODO
             return torch.tensor([float(10**10)]) #TODO
@@ -274,7 +274,7 @@ class AbstractREPLValueHead(BaseValueHead):
                     res = p
                     for x in xs:
                         res = res(x) 
-            except (IndexError, ZeroDivisionError, computeValueError, RuntimeError) as e:
+            except (ValueError, IndexError, ZeroDivisionError, computeValueError, RuntimeError) as e:
                 print("caught exception")
                 #print("res", res)
                 print("sketch", sketch)

@@ -78,11 +78,18 @@ if __name__ == '__main__':
 
     paths = [('experimentOutputs/listCathyTestEnum_SRE=True_graph=True.pickle', 'Enum' ),
         ('experimentOutputs/listCathyTestRNN_SRE=True_graph=True.pickle', 'RNN')]
-    #paths = [('experimentOutputs/listCathyTestIT=1.pickle', 'mock')]
+
+    paths = [('experimentOutputs/listCathyTestEnum_SRE=True_graph=True.pickle', 'Enum' ),
+        ('experimentOutputs/listCathyTestRNN_SRE=True_graph=True.pickle', 'RNN')]
+
+    paths = [('experimentOutputs/experimentOutputs/listBaseIT=1Enum.pickle', 'Enum'),
+        ('experimentOutputs/experimentOutputs/listBaseIT=1RNN.pickle', 'RNN'),
+        ('experimentOutputs/experimentOutputs/listBaseIT=1REPL.pickle', 'REPL')]
 
     # paths = [('experimentOutputs/experimentOutputs/listCathyTestEnum.pickle', 'Enum')
     #           ('experimentOutputs/listCathyTestRNN.pickle', 'RNN')
     #           ('experimentOutputs/listCathyTestREPL.pickle', 'Abstract REPL') ]
+
 
     timeout=300
     outputDirectory = 'plots'
@@ -94,6 +101,8 @@ if __name__ == '__main__':
         for path in paths:
             with open(path, 'rb') as h:
                 r = dill.load(h)
+            #assert 0
+
             #import pdb; pdb.set_trace()
             res = r.searchStats[-1] if mode=='train' else r.testingSearchStats[-1]
             testResults.append( list(res.values()) )
