@@ -10,7 +10,7 @@ from dreamcoder.taskBatcher import *
 from dreamcoder.primitiveGraph import graphPrimitives
 from dreamcoder.dreaming import backgroundHelmholtzEnumeration
 
-from dreamcoder.valueHead import SimpleRNNValueHead, AbstractREPLValueHead
+from dreamcoder.valueHead import SimpleRNNValueHead, AbstractREPLValueHead, SampleDummyValueHead
 
 class ECResult():
     def __init__(self, _=None,
@@ -660,12 +660,15 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
 
     featureExtractorObjects = [featureExtractor(tasks, testingTasks=testingTasks, cuda=cuda) for i in range(ensembleSize)]
 
-    if useValue == "AbstractREPL":
+    if useValue:
         assert ensembleSize == 1
-        valueHead = AbstractREPLValueHead(grammar, featureExtractorObjects[0])
-    elif useValue == "RNN":
-        assert ensembleSize == 1
-        valueHead = SimpleRNNValueHead(grammar, featureExtractorObjects[0]) #init correctly
+        if useValue == "AbstractREPL":
+            valueHead = AbstractREPLValueHead(grammar, featureExtractorObjects[0])
+        elif useValue == "RNN":
+            valueHead = SimpleRNNValueHead(grammar, featureExtractorObjects[0]) #init correctly
+        elif useValue == "Sample":
+            valueHead = SampleDummyValueHead()
+        else: assert False
     else:
         valueHead = None
 
