@@ -1,4 +1,10 @@
+"""
+Defines featurizers and parsers for conditioning on language.
+"""
+from dreamcoder.enumeration import *
 from dreamcoder.grammar import *
+from dreamcoder.recognition import *
+from dreamcoder.utilities import *
 
 import torch
 import torch.nn as nn
@@ -9,14 +15,17 @@ import num2words
 
 from sklearn.feature_extraction import DictVectorizer
 
-class NgramFeaturizer():
+class NgramFeaturizer(nn.Module):
     """
     Tokenizes and extracts n-gram and skip-gram features from text.
+    
     n: maximum length of any n-grams, including skips.
     skip_n: maximum skip distance, which will be calculated on bigrams only.
     Default is: unigrams, bigrams, trigrams, skip-trigrams.
     """
     def __init__(self, max_n=3, skip_n=1, canonicalize_numbers=True, tokenizer_fn=None):
+        super(NgramFeaturizer, self).__init__()
+        
         self.max_n = max_n
         self.skip_n = skip_n
         self.canonicalize_numbers = True
@@ -24,6 +33,7 @@ class NgramFeaturizer():
         if self.tokenizer_fn is None:
             from nltk.tokenize import word_tokenize
             self.tokenizer_fn = word_tokenize
+        self.language_dict_vectorizer = None
     
     def canonicalize_number_token(self, t):
         from num2words import num2words
@@ -64,32 +74,75 @@ class NgramFeaturizer():
         for s in sentences:
             features += self.featurize(s) 
         return features
+    
+    def fit_language_features(self, sorted_keys, language_data):
+        """
+        Featurizes language_data dict from { sorted keys : sentences }
+        Sets self.language_dict_vectorizer; self.featurized_language_data
+        :ret: 
+            language_dict_vectorizer: dict vectorizer over language_data
+            featurized_language_data: {key : torch feature vector}
+        """
+        key_features = [self.featurize_sentences(language_data[t]) for t in sorted_keys]
+        self.language_dict_vectorizer = DictVectorizer(sparse=False)
+        vectorized_features = self.language_dict_vectorizer.fit_transform(key_features)
         
-class LogLinearTreegramParser():
+        self.featurized_language_data = {
+            k : variable(torch.from_numpy(vectorized_features[i])).float()
+            for (i, k) in enumerate(sorted_keys)
+        }
+        
+        n_features = len(self.language_dict_vectorizer.get_feature_names())
+        eprint("Fitting language data: {} features from {} tasks".format(n_features, len(language_data)))
+        return self.language_dict_vectorizer, self.featurized_language_data
+        
+    @property
+    def outputDimensionality(self): 
+        """Required to work with recognition model"""
+        return len(self.language_dict_vectorizer.get_feature_names())
+    
+    def featuresOfTask(self, t):
+        """Required to work with recognition model"""
+        assert self.language_dict_vectorizer is not None
+        if t not in self.featurized_language_data: return None
+        return self.featurized_language_data[t]
+
+        
+class LogLinearBigramTransitionParser(nn.Module):
     """
-    Log-linear tree-gram prediction model.
-    Predicts P(z | language) by indirectly learning a log-linear mapping from language features to  program treegrams, allowing for fast forward-enumeration of programs | language.
+    Log-linear tree-bigram transition model.
+    
+    Predicts P(primitive | bigram, sentence for each bigram), in the style of the existing ContextualGrammarNetwork.
+    During enumeration, produces a full ContextualGrammar that can be used directly for enumeration.
     """
     
     def __init__(self, grammar, 
                 language_data,
                 frontiers,
-                language_featurizer):
+                language_featurizer,
+                max_epochs=10,
+                cuda=False):
+        super(LogLinearBigramTransitionParser, self).__init__()        
+        self.use_cuda = cuda
+        
         self.language_data = language_data
-        self.featurized_language_data = None
-        self.frontiers = frontiers
-        self.frontier_likelihood_summaries = None
         self.language_featurizer = language_featurizer
         if self.language_featurizer is None:
             self.language_featurizer = NgramFeaturizer()
-        self.contextual_grammar = None
+        self.featurized_language_data = None
         self.language_dict_vectorizer = None
         
-        # TODO: just initialize a contextual recognition model to calculate the likelihoods?
-        # TODO: consider if we can just hijack more of the recognition model
-        # (including training) with just a different feature extractor middle.
-        self.grammar = ContextualGrammar.fromGrammar(grammar)
-        self.program_feature_library = None, None
+        self.unigram_grammar = grammar
+        self.bigram_grammar = ContextualGrammar.fromGrammar(grammar)
+        
+        self.frontiers = frontiers
+        self.frontier_likelihoods = None
+        # Linear network: inputs are Bxn_features vector; outputs are a Bxn_bigrams dimensional vector.
+        # Theta = n_features x n_bigrams parameters.
+        self.log_linear_bigram_network = None
+        self.max_epochs = max_epochs
+        
+        if cuda: self.cuda()
     
     def fit_language_features(self):
         """
@@ -97,44 +150,109 @@ class LogLinearTreegramParser():
         
         self.language_dict_vectorizer: dict vectorizer over self.language_data
         self.featurized_language_data: {t : sparse feature vector}
+        self.linear_bigram_network: initialized to a linear network over all bigrams in the dimensionality of the # of language features.
         """
-        sorted_tasks = sorted(self.language_data.keys(), key=lambda t:t.name)
-        task_features = [self.language_featurizer.featurize_sentences(self.language_data[t]) for t in sorted_tasks]
         
-        self.language_dict_vectorizer = DictVectorizer()
-        vectorized_features = self.language_dict_vectorizer.fit_transform(task_features)
-        self.featurized_language_data = {
-            t : vectorized_features[i]
-            for (i, t) in enumerate(sorted_tasks)
+        sorted_tasks = sorted(self.language_data.keys(), key=lambda t:t.name)
+        
+        self.language_dict_vectorizer, self.featurized_language_data =    self.language_featurizer.fit_language_features(sorted_tasks, self.language_data)
+        
+        self.n_features = len(self.language_dict_vectorizer.get_feature_names())
+        
+        self.log_linear_bigram_network = ContextualGrammarNetwork(inputDimensionality=self.n_features, grammar=self.unigram_grammar)
+                
+    def fit_program_features(self):
+        """
+        Precalculates bigram likelihood summaries for tasks where we have language data.
+        """
+        def replaceProgramsWithBigramLikelihoodSummaries(frontier):
+            return Frontier(
+                [FrontierEntry(
+                    program=self.bigram_grammar.closedLikelihoodSummary(frontier.task.request, e.program),
+                    logLikelihood=e.logLikelihood,
+                    logPrior=e.logPrior) for e in frontier],
+                task=frontier.task)
+        
+        assert self.featurized_language_data is not None
+        self.frontier_likelihoods = {
+            task : replaceProgramsWithBigramLikelihoodSummaries(f).normalize()
+            for (task, f) in self.frontiers.items() if task in self.featurized_language_data and not f.empty
         }
     
-    def replaceProgramsWithLikelihoodSummaries(self, frontier):
-        return Frontier(
-            [FrontierEntry(
-                program=self.grammar.closedLikelihoodSummary(frontier.task.request, e.program),
-                logLikelihood=e.logLikelihood,
-                logPrior=e.logPrior) for e in frontier],
-            task=frontier.task)
-            
-    def fit_program_features(self):
-        # Calculate likelihood summaries.
-        self.frontier_likelihood_summaries = [self.replaceProgramsWithLikelihoodSummaries(f).normalize()
-                     for f in self.frontiers]
-                     
-        # Initialize the 
+    def loss_bias_optimal(self, frontier_likelihood):
+        batch_size = len(frontier_likelihood.entries)
+        if frontier_likelihood.task not in self.featurized_language_data:
+            return None
+        language_features = self.featurized_language_data[frontier_likelihood.task]
+        language_features.detach()
+        language_features = language_features.expand(batch_size, language_features.size(-1))
         
-        # Replace solutions with their likelihood summaries.
-        # TODO: use the ContextualGrammarNetwork to produce the batched / vectorized log likelihoods for a set of programs.
+        lls = self.log_linear_bigram_network.batchedLogLikelihoods(language_features, [entry.program for entry in frontier_likelihood])
+        actual_ll = torch.Tensor([ entry.logLikelihood for entry in frontier_likelihood])
+        lls = lls + (actual_ll.cuda() if self.use_cuda else actual_ll)
+        ml = -lls.max()
+        return ml
+        
+    def train_epoch(self):
+        assert self.featurized_language_data is not None
+        assert self.frontier_likelihoods is not None
+        start = time.time()
+        epoch_losses = []
+        self.zero_grad()
+        
+        shuffled_tasks = list(self.frontier_likelihoods.keys())
+        random.shuffle(shuffled_tasks)
+        for task in shuffled_tasks:
+            frontier_likelihood = self.frontier_likelihoods[task] 
+            ll_loss = self.loss_bias_optimal(frontier_likelihood)
+            loss = ll_loss
+            loss.backward()
+            self.optimizer.step()
+            epoch_losses.append(ll_loss.data.item())
+        gc.collect()
+        epoch_time = time.time() - start
+        return mean(epoch_losses), epoch_time
+
+    def train(self, lr=0.001):
+        self.fit_language_features() # Precalculate the language features for every task.
+        self.fit_program_features() # Precalculate the outputs.
+        
+        eprint("Fitting parser model: {}".format(self.__class__.__name__))
+        eprint("Fitting to {} frontiers with language data.".format(len(self.frontier_likelihoods)))
+        self.optimizer = torch.optim.SGD(self.parameters(), lr=lr)
+        
+        for epoch_i in range(1, self.max_epochs + 1):
+            epoch_loss, time = self.train_epoch()
+            eprint("Epoch: {}: Loss: {}, t = {} secs".format(epoch_i, epoch_loss, time))
+        
+        return self
     
+    def contextual_grammar_for_task(self, task):
+        if task not in self.featurized_language_data:
+            return None
         
-    def train(self):
-        # Featurize the language for every task.
-        self.fit_language_features()
-        import pdb; pdb.set_trace()
-        self.fit_program_features()
+        language_features = self.featurized_language_data[task]
+        return self.log_linear_bigram_network(language_features)
         
-        # Fit a linear 
-    
-    def enumerate(self):
+    def enumerateFrontiers(self, 
+                  tasks=None,
+                  testing=False,
+                  enumerationTimeout=None,
+                  solver=None,
+                  CPUs=1,
+                  maximumFrontier=None, 
+                  evaluationTimeout=None):
         """:ret: bigram grammar for contextual enumeration."""
-        pass
+        
+        with timing("Evaluated language-based transition model"):
+            grammars = {task: self.contextual_grammar_for_task(task)
+                        for task in tasks}
+            #untorch seperately to make sure you filter out None grammars
+            grammars = {task: grammar.untorch() for task, grammar in grammars.items() if grammar is not None}
+
+        return multicoreEnumeration(grammars, tasks,
+                                    testing=testing,
+                                    solver=solver,
+                                    enumerationTimeout=enumerationTimeout,
+                                    CPUs=CPUs, maximumFrontier=maximumFrontier,
+                                    evaluationTimeout=evaluationTimeout)

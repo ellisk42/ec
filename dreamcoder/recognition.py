@@ -487,8 +487,7 @@ class ContextualGrammarNetwork_Mask(nn.Module):
             _l = torch.cat([ summary.logLikelihood(g) for summary,g in zip(summaries, gs) ])
             assert torch.all((ll - _l).abs() < 0.0001)
         return ll
-        
-                
+            
 
 class ContextualGrammarNetwork(nn.Module):
     """Like GrammarNetwork but ~contextual~"""
@@ -613,7 +612,6 @@ class ContextualGrammarNetwork(nn.Module):
             assert torch.all((ll - _l).abs() < 0.0001)
 
         return ll
-        
 
 class RecognitionModel(nn.Module):
     def __init__(self,featureExtractor,grammar,hidden=[64],activation="tanh",

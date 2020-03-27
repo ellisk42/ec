@@ -209,7 +209,7 @@ def ecIterator(grammar, tasks,
     if matrixRank is not None and not contextual:
         eprint("Matrix rank only applies to contextual recognition models, aborting")
         assert False
-    assert useDSL or useRecognitionModel, "You specified that you didn't want to use the DSL AND you don't want to use the recognition model. Figure out what you want to use."
+    assert useDSL or useRecognitionModel or languageDataset or interactive, "You specified that you didn't want to use the DSL AND you don't want to use the recognition model. Figure out what you want to use."
     if testingTimeout > 0 and len(testingTasks) == 0:
         eprint("You specified a testingTimeout, but did not provide any held out testing tasks, aborting.")
         assert False
@@ -334,8 +334,8 @@ def ecIterator(grammar, tasks,
         eprint("Invalid task reranker: " + taskReranker + ", aborting.")
         assert False
     
-    if parser == 'loglinear':
-        parserModel = LogLinearTreegramParser
+    if parser == 'loglinear_conditionalgrammar':
+        parserModel = LogLinearBigramTransitionParser
     else:
         eprint("Invalid parser: " + parser + ", aborting.")
         assert False
@@ -481,7 +481,7 @@ def ecIterator(grammar, tasks,
         
         # Interactive mode.
         if interactive or languageDataset:
-            default_wake_language(grammar, wakingTaskBatch,
+            tasks_hit_parser = default_wake_language(grammar, wakingTaskBatch,
                                     maximumFrontier=maximumFrontier,
                                     enumerationTimeout=enumerationTimeout,
                                     CPUs=CPUs,
@@ -491,7 +491,19 @@ def ecIterator(grammar, tasks,
                                     evaluationTimeout=evaluationTimeout,
                                     currentResult=result,
                                     interactive=interactive)
-                                    
+            for task in tasks_hit_parser:
+                if task not in result.allFrontiers: continue
+                result.allFrontiers[task] = result.allFrontiers[task].\
+                                            combine(grammar.rescoreFrontier(tasks_hit_parser[task])).\
+                                            topK(maximumFrontier)
+            
+            eprint("Frontiers discovered with parser: " + str(len(tasks_hit_parser)))
+            eprint("Total frontiers: " + str(len([f for f in result.allFrontiers.values() if not f.empty])))
+            eprint(Frontier.describe([f for f in tasks_hit_parser.values() if not f.empty]))
+            showHitMatrix(tasksHitTopDown, set(tasks_hit_parser.keys()), wakingTaskBatch)
+            
+            import pdb; pdb.set_trace() # TODO: cathy -- make sure that result object is modified
+                            
         # Sleep-G
         if useDSL and not(noConsolidation):
             eprint(f"Currently using this much memory: {getThisMemoryUsage()}")
@@ -603,10 +615,16 @@ def default_wake_language(grammar, tasks,
         assert False
     else:
         # Enumerative search using the retrained parser.
-        eprint("Not yet implemented: interactive mode.")
-        assert False
-
-    return currentResult
+        eprint("Enumerating from the trained parser.")
+        enumerated_frontiers, recognition_times = parser_model.enumerateFrontiers(tasks=tasks, 
+                                                        enumerationTimeout=enumerationTimeout,
+                                                        solver=solver,
+                                                        CPUs=CPUs,
+                                                        maximumFrontier=maximumFrontier,
+                                                        evaluationTimeout=evaluationTimeout)
+        tasks_hit = {f.task : f for f in enumerated_frontiers if not f.empty}
+        currentResult.parser = parser_model
+        return tasks_hit
     
         
 def default_wake_generative(grammar, tasks, 
@@ -1027,8 +1045,8 @@ def commandlineArguments(_=None,
     parser.add_argument("--parser",
                         dest="parser",
                         help="Semantic parser for interactive mode.",
-                        choices=["loglinear"],
-                        default='loglinear',
+                        choices=["loglinear_conditionalgrammar"],
+                        default='loglinear_conditionalgrammar',
                         type=str)
     parser.set_defaults(useRecognitionModel=useRecognitionModel,
                         useDSL=True,

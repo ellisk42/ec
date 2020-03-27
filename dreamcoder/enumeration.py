@@ -309,7 +309,10 @@ def solveForTask_ocaml(_=None,
         with open("message", "w") as f:
             f.write(message)
         print("message,", message)
-        assert False, "MAX RAISE"
+        # Don't fail on errors
+        # assert False, "MAX RAISE"
+        print("ERROR in enumeration, returning empty frontiers for tasks.")
+        response = {t.name : [] for t in tasks} # Empty response 
 
 
     pc = response.get("number_enumerated",0)  # TODO
