@@ -428,12 +428,16 @@ def plotECResult(
 
             if likelihood is None:
                 if showTraining:
-                    ys = [100.*t/float(len(result.taskSolutions))
-                          for t in result.learningCurve[:iterations]]
+                    if numTasks:
+                        ys = [t for t in result.learningCurve[:iterations]]
+                    else:
+                        ys = [100.*t/float(len(result.taskSolutions)) for t in result.learningCurve[:iterations]]
                 else:
                     if cutoff is None:
-                        ys = [100. * len(t) / result.numTestingTasks
-                              for t in result.testingSearchTime[:iterations]]
+                        if numTasks:
+                            ys = [len(t) for t in result.testingSearchTime[:iterations]]
+                        else:
+                            ys = [100. * len(t) / result.numTestingTasks for t in result.testingSearchTime[:iterations]]
                     else:
                         ys = getCutOffHits(result, cutoff)[:iterations]
             else:
@@ -675,6 +679,9 @@ if __name__ == "__main__":
     parser.add_argument("--caching",
                         default=False, action='store_true',
                         help="try to cashe the calculation of the curves on disk")
+    parser.add_argument("--numTasks",
+                        default=False, action='store_true',
+                        help="only show the number of tasks instead of percentile")
 
 
 
@@ -713,4 +720,5 @@ if __name__ == "__main__":
                  epochFrequency=arguments.epochFrequency,
                  colors=arguments.colors,
                  alpha=arguments.alpha,
-                 averageColors=arguments.averageColors)
+                 averageColors=arguments.averageColors,
+                 numTasks=arguments.numTasks)
