@@ -15,6 +15,66 @@ import num2words
 
 from sklearn.feature_extraction import DictVectorizer
 
+class TokenRecurrentFeatureExtractor(RecurrentFeatureExtractor):
+    """
+    GRU Feature extractor over pre-tokenized language data.
+    """
+    def __init__(self, tasks, testingTasks, cuda, language_data,
+                canonicalize_numbers=True, tokenizer_fn=None,
+                H=64,
+                bidirectional=True,
+                max_inputs=5):
+        self.canonicalize_numbers = canonicalize_numbers
+        self.tokenizer_fn = tokenizer_fn
+        if self.tokenizer_fn is None:
+            from nltk.tokenize import word_tokenize
+            self.tokenizer_fn = word_tokenize
+        self.language_data = language_data
+        self.tokenized_tasks = dict()
+        self.useTask = True
+        self.MAXINPUTS = max_inputs
+        super(TokenRecurrentFeatureExtractor, self).__init__(lexicon=self.build_lexicon(),
+                                                             H=H,
+                                                             tasks=tasks,
+                                                             bidirectional=True,
+                                                             cuda=cuda)
+        self.trained = True
+
+    def canonicalize_number_token(self, t):
+        from num2words import num2words
+        try:
+            t = num2words(int(t), to='cardinal')
+        except:
+            pass
+        return t
+    
+    def tokenize(self, task):
+        if task in self.tokenized_tasks:
+            return self.tokenized_tasks[task]
+        if task not in self.language_data:
+            return None
+        
+        tokens = []
+        for sentence in self.language_data[task]:
+            sentence_tokens = self.tokenizer_fn(sentence)
+            if self.canonicalize_numbers:
+                sentence_tokens = [self.canonicalize_number_token(t) for t in sentence_tokens]
+            tokens.append(sentence_tokens) # Feature extractor examples are usually inputs and outputs
+        self.tokenized_tasks[task] = [ 
+                                        [tokens, []]
+                                     ]
+        return self.tokenized_tasks[task] # Feature extractor examples are usually lists of (xs, y) sets.
+
+                
+    def build_lexicon(self):
+        lexicon = set()
+        for task in self.language_data:
+            tokens = self.tokenize(task)[0][0]
+            for sentence_tokens in tokens:
+                lexicon.update(set(sentence_tokens))
+        eprint("Built a lexicon of {} words".format(len(lexicon)))
+        return list(lexicon)
+    
 class NgramFeaturizer(nn.Module):
     """
     Tokenizes and extracts n-gram and skip-gram features from text.
@@ -23,17 +83,26 @@ class NgramFeaturizer(nn.Module):
     skip_n: maximum skip distance, which will be calculated on bigrams only.
     Default is: unigrams, bigrams, trigrams, skip-trigrams.
     """
-    def __init__(self, max_n=3, skip_n=1, canonicalize_numbers=True, tokenizer_fn=None):
+    def __init__(self, tasks, testingTasks, cuda, language_data,
+    max_n=3, skip_n=1, canonicalize_numbers=True, tokenizer_fn=None):
         super(NgramFeaturizer, self).__init__()
+        self.trained = False
         
         self.max_n = max_n
         self.skip_n = skip_n
-        self.canonicalize_numbers = True
+        self.canonicalize_numbers = canonicalize_numbers
         self.tokenizer_fn = tokenizer_fn
         if self.tokenizer_fn is None:
             from nltk.tokenize import word_tokenize
             self.tokenizer_fn = word_tokenize
         self.language_dict_vectorizer = None
+        
+        # Initialize the vectorizer. Fits to all task n-grams.
+        self.language_data = language_data
+        self.sorted_tasks = sorted(self.language_data.keys(), key=lambda t:t.name)
+        self.fit_language_features(self.sorted_tasks, self.language_data)
+        
+        if cuda: self.cuda()
     
     def canonicalize_number_token(self, t):
         from num2words import num2words
@@ -93,7 +162,9 @@ class NgramFeaturizer(nn.Module):
         }
         
         n_features = len(self.language_dict_vectorizer.get_feature_names())
-        eprint("Fitting language data: {} features from {} tasks".format(n_features, len(language_data)))
+        eprint("Fitting language data with n-gram features: {} features from {} tasks".format(n_features, len(language_data)))
+        
+        self.trained = True
         return self.language_dict_vectorizer, self.featurized_language_data
         
     @property
@@ -119,19 +190,18 @@ class LogLinearBigramTransitionParser(nn.Module):
     def __init__(self, grammar, 
                 language_data,
                 frontiers,
-                language_featurizer,
-                max_epochs=10,
+                language_feature_extractor,
+                tasks,
+                testingTasks,
                 cuda=False):
         super(LogLinearBigramTransitionParser, self).__init__()        
         self.use_cuda = cuda
-        
         self.language_data = language_data
-        self.language_featurizer = language_featurizer
-        if self.language_featurizer is None:
-            self.language_featurizer = NgramFeaturizer()
-        self.featurized_language_data = None
-        self.language_dict_vectorizer = None
         
+        if language_feature_extractor is None:
+            language_feature_extractor = NgramFeaturizer
+        self.language_featurizer = language_feature_extractor(tasks, testingTasks, cuda, language_data)
+
         self.unigram_grammar = grammar
         self.bigram_grammar = ContextualGrammar.fromGrammar(grammar)
         
@@ -139,27 +209,9 @@ class LogLinearBigramTransitionParser(nn.Module):
         self.frontier_likelihoods = None
         # Linear network: inputs are Bxn_features vector; outputs are a Bxn_bigrams dimensional vector.
         # Theta = n_features x n_bigrams parameters.
-        self.log_linear_bigram_network = None
-        self.max_epochs = max_epochs
+        self.log_linear_bigram_network = ContextualGrammarNetwork(inputDimensionality=self.language_featurizer.outputDimensionality, grammar=self.unigram_grammar)
         
-        if cuda: self.cuda()
-    
-    def fit_language_features(self):
-        """
-        Featurizes self.language_data and fits the dict vectorizer.
-        
-        self.language_dict_vectorizer: dict vectorizer over self.language_data
-        self.featurized_language_data: {t : sparse feature vector}
-        self.linear_bigram_network: initialized to a linear network over all bigrams in the dimensionality of the # of language features.
-        """
-        
-        sorted_tasks = sorted(self.language_data.keys(), key=lambda t:t.name)
-        
-        self.language_dict_vectorizer, self.featurized_language_data =    self.language_featurizer.fit_language_features(sorted_tasks, self.language_data)
-        
-        self.n_features = len(self.language_dict_vectorizer.get_feature_names())
-        
-        self.log_linear_bigram_network = ContextualGrammarNetwork(inputDimensionality=self.n_features, grammar=self.unigram_grammar)
+        if self.use_cuda: self.cuda()
                 
     def fit_program_features(self):
         """
@@ -173,17 +225,17 @@ class LogLinearBigramTransitionParser(nn.Module):
                     logPrior=e.logPrior) for e in frontier],
                 task=frontier.task)
         
-        assert self.featurized_language_data is not None
         self.frontier_likelihoods = {
             task : replaceProgramsWithBigramLikelihoodSummaries(f).normalize()
-            for (task, f) in self.frontiers.items() if task in self.featurized_language_data and not f.empty
+            for (task, f) in self.frontiers.items() if not f.empty
         }
     
     def loss_bias_optimal(self, frontier_likelihood):
         batch_size = len(frontier_likelihood.entries)
-        if frontier_likelihood.task not in self.featurized_language_data:
+        language_features = self.language_featurizer.featuresOfTask(frontier_likelihood.task)
+        if language_features is None:
             return None
-        language_features = self.featurized_language_data[frontier_likelihood.task]
+
         language_features.detach()
         language_features = language_features.expand(batch_size, language_features.size(-1))
         
@@ -194,8 +246,8 @@ class LogLinearBigramTransitionParser(nn.Module):
         return ml
         
     def train_epoch(self):
-        assert self.featurized_language_data is not None
         assert self.frontier_likelihoods is not None
+        assert self.language_featurizer.trained == True
         start = time.time()
         epoch_losses = []
         self.zero_grad()
@@ -213,25 +265,25 @@ class LogLinearBigramTransitionParser(nn.Module):
         epoch_time = time.time() - start
         return mean(epoch_losses), epoch_time
 
-    def train(self, lr=0.001):
-        self.fit_language_features() # Precalculate the language features for every task.
-        self.fit_program_features() # Precalculate the outputs.
+    def train(self, epochs=None, lr=0.001):
+        self.fit_program_features() # Precalculate the likelihood outputs.
         
         eprint("Fitting parser model: {}".format(self.__class__.__name__))
         eprint("Fitting to {} frontiers with language data.".format(len(self.frontier_likelihoods)))
+        eprint("Fitting for {} epochs.".format(epochs))
         self.optimizer = torch.optim.SGD(self.parameters(), lr=lr)
         
-        for epoch_i in range(1, self.max_epochs + 1):
+        for epoch_i in range(1, epochs + 1):
             epoch_loss, time = self.train_epoch()
             eprint("Epoch: {}: Loss: {}, t = {} secs".format(epoch_i, epoch_loss, time))
         
         return self
     
     def contextual_grammar_for_task(self, task):
-        if task not in self.featurized_language_data:
+        language_features = self.language_featurizer.featuresOfTask(task)
+        if language_features is None:
             return None
-        
-        language_features = self.featurized_language_data[task]
+    
         return self.log_linear_bigram_network(language_features)
         
     def enumerateFrontiers(self, 

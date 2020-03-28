@@ -848,15 +848,18 @@ class RecognitionModel(nn.Module):
     def train(self, frontiers, _=None, steps=None, lr=0.001, topK=5, CPUs=1,
               timeout=None, evaluationTimeout=0.001,
               helmholtzFrontiers=[], helmholtzRatio=0., helmholtzBatch=500,
-              biasOptimal=None, defaultRequest=None, auxLoss=False, vectorized=True):
+              biasOptimal=None, defaultRequest=None, auxLoss=False, vectorized=True,
+              epochs=None):
         """
         helmholtzRatio: What fraction of the training data should be forward samples from the generative model?
         helmholtzFrontiers: Frontiers from programs enumerated from generative model (optional)
         If helmholtzFrontiers is not provided then we will sample programs during training
         """
-        assert (steps is not None) or (timeout is not None), \
-            "Cannot train recognition model without either a bound on the number of gradient steps or bound on the training time"
+        assert (steps is not None) or (timeout is not None)  or (epochs is not None), \
+            "Cannot train recognition model without either a bound on the number of gradient steps, bound on the training time, or number of epochs"
         if steps is None: steps = 9999999
+        if epochs is None: epochs = 9999999
+        if timeout is None: timeout = 9999999
         if biasOptimal is None: biasOptimal = len(helmholtzFrontiers) > 0
         
         requests = [frontier.task.request for frontier in frontiers]
@@ -1010,7 +1013,6 @@ class RecognitionModel(nn.Module):
         losses, descriptionLengths, realLosses, dreamLosses, realMDL, dreamMDL = [], [], [], [], [], []
         classificationLosses = []
         totalGradientSteps = 0
-        epochs = 9999999
         for i in range(1, epochs + 1):
             if timeout and time.time() - start > timeout:
                 break
@@ -1310,6 +1312,8 @@ class RecurrentFeatureExtractor(nn.Module):
     def featuresOfTask(self, t):
         if hasattr(self, 'useFeatures'):
             f = self(t.features)
+        elif hasattr(self, 'useTask'):
+            f = self(t)
         else:
             # Featurize the examples directly.
             f = self(t.examples)
