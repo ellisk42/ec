@@ -318,7 +318,8 @@ def plotECResult(
         showEpochs=False,
         colors=None,
         epochFrequency=1,
-        averageColors=False):
+        averageColors=False,
+        numTasks=False):
     assert not (onlyTime and not showSolveTime)
     if onlyTime: assert testingTimeout
 
