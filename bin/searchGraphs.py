@@ -57,7 +57,7 @@ def plotTestResults(testResults, timeout, defaultLoss=None,
     plot.ylabel('Average Loss')
     if mode =='fractionHit': plot.ylim(bottom=0.)
     for n in range(len(testResults)):
-        xs = list(range(max(r.evaluations for tr in testResults[n] for r in tr ) + 1))
+        xs = list(range(max([0]+[r.evaluations for tr in testResults[n] for r in tr] ) + 1))
         xs = list(range(200))
         if mode =='fractionHit':
             plot.plot(xs, [fractionHit(n,lambda r: r.evaluations <= x) for x in xs],
@@ -74,17 +74,17 @@ def plotTestResults(testResults, timeout, defaultLoss=None,
 
 if __name__ == '__main__':
 
-    paths = [('experimentOutputs/listCathyTestGraph_SRE=True_graph=True.pickle', 'mock' )]
+    ID = "listBaseIT=1" #"listBaseIT=1Long"
+
+    nameSalt = "zoomed"
+    #paths = [('experimentOutputs/listCathyTestGraph_SRE=True_graph=True.pickle', 'mock' )]
 
     paths = [('experimentOutputs/listCathyTestEnum_SRE=True_graph=True.pickle', 'Enum' ),
         ('experimentOutputs/listCathyTestRNN_SRE=True_graph=True.pickle', 'RNN')]
 
-    paths = [('experimentOutputs/listCathyTestEnum_SRE=True_graph=True.pickle', 'Enum' ),
-        ('experimentOutputs/listCathyTestRNN_SRE=True_graph=True.pickle', 'RNN')]
-
-    paths = [('experimentOutputs/experimentOutputs/listBaseIT=1Enum.pickle', 'Enum'),
-        ('experimentOutputs/experimentOutputs/listBaseIT=1RNN.pickle', 'RNN'),
-        ('experimentOutputs/experimentOutputs/listBaseIT=1REPL.pickle', 'REPL')]
+    paths = [(f'experimentOutputs/{ID}Enum_SRE=True_graph=True.pickle', 'Enum'),
+        (f'experimentOutputs/{ID}RNN_SRE=True_graph=True.pickle', 'RNN'),
+        (f'experimentOutputs/{ID}REPL_SRE=True_graph=True.pickle', 'REPL')]
 
     # paths = [('experimentOutputs/experimentOutputs/listCathyTestEnum.pickle', 'Enum')
     #           ('experimentOutputs/listCathyTestRNN.pickle', 'RNN')
@@ -102,7 +102,6 @@ if __name__ == '__main__':
             with open(path, 'rb') as h:
                 r = dill.load(h)
             #assert 0
-
             #import pdb; pdb.set_trace()
             res = r.searchStats[-1] if mode=='train' else r.testingSearchStats[-1]
             testResults.append( list(res.values()) )
@@ -110,5 +109,5 @@ if __name__ == '__main__':
         plotTestResults(testResults, timeout,
                         defaultLoss=1.,
                         names=names,
-                        export=f"{outputDirectory}/{mode}_curve.png",
+                        export=f"{outputDirectory}/{nameSalt}{ID}{mode}_curve.png",
                         mode='fractionHit')

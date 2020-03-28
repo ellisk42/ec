@@ -70,15 +70,22 @@ def stringify(line):
 class BaseValueHead(nn.Module):
     def __init__(self):
         super(BaseValueHead, self).__init__()
-
     def computeValue(self, sketch, task):
         assert False, "not implemented"
-
-    # def computeValueLoss(task, positiveSketch, negativeSketch):
-    #     assert False, "not implemented"
-
     def valueLossFromFrontier(frontier, g):
         assert False, "not implemented"
+
+class SampleDummyValueHead(BaseValueHead):
+    def __init__(self):
+        super(BaseValueHead, self).__init__()
+        self.use_cuda = torch.cuda.is_available()
+    def computeValue(self, sketch, task):
+        return 0.
+    def valueLossFromFrontier(frontier, g):
+        if self.use_cuda:
+            return torch.tensor([0.]).cuda()
+        else: 
+            return torch.tensor([0.])
 
 class SimpleRNNValueHead(BaseValueHead):
 
