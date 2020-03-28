@@ -4,7 +4,7 @@ base_language_dataset = "data/logo/language/307FVKVSYSP6M7F60SONLCHBLTN74V_3_4_2
 num_iterations=10
 featureExtractors = ["ngram", "recurrent"]
 
-singularity_base_command = "srun --job-name=logo_language_{} --output=job/{} --ntasks=1 --mem-per-cpu=5000 --gres=gpu --cpus-per-task 48 --time=10000:00 --qos=tenenbaum singularity exec -B /om2  --nv ../dev_container.img "
+singularity_base_command = "srun --job-name=logo_language_{} --output=jobs/{} --ntasks=1 --mem-per-cpu=5000 --gres=gpu --cpus-per-task 15 --time=10000:00 --qos=tenenbaum --partition=tenenbaum singularity exec -B /om2  --nv ../dev-container.img "
 
 base_parameters = "--enumerationTimeout 3600 --testingTimeout 3600 --split 0.5 --recognitionEpochs 10 --biasOptimal --contextual --Helmholtz 0 --iterations {}".format(num_iterations)
 
