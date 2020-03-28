@@ -260,43 +260,47 @@ class AbstractREPLValueHead(BaseValueHead):
         outVectors = torch.stack(outVectors, dim=0)
         return outVectors
 
+    def _computeSketchRepresentation(self, sketch, xs, p=None):
+        if p is None:
+            p = self._getInitialSketchRep(sketch)
+        try:
+            res = p
+            for x in xs:
+                res = res(x) 
+        except (ValueError, IndexError, ZeroDivisionError, computeValueError, RuntimeError) as e:
+            print("caught exception")
+            print("sketch", sketch)
+            print(e)
+            raise computeValueError
+        except Exception:
+            print("caught exception")
+            print("sketch", sketch)
+            print("IO", xs)
+            assert 0
+        res = self.convertToVector(res) #TODO
+        return res
+
+    def _getInitialSketchRep(self, sketch):
+        try:
+            return sketch.abstractEval(self, [])
+        except (ValueError, IndexError, ZeroDivisionError, computeValueError, RuntimeError):
+            print("caught exception")
+            print("sketch", sketch)
+            print(e)
+            raise computeValueError
+
     def _computeValue(self, sketch, task, outVectors=None):
         """TODO: [x] hash things like outputVector representation
         """
         if outVectors is None:
             outVectors = self._computeOutputVectors(task)
+            
+        p = self._getInitialSketchRep(sketch)
 
-        try:
-            p = sketch.abstractEval(self, [])
-        except (ValueError, IndexError, ZeroDivisionError, computeValueError, RuntimeError):
-            if self.use_cuda:
-                return torch.tensor([float(10**10)]).cuda() #TODO
-            return torch.tensor([float(10**10)]) #TODO
         evalVectors = []
         for xs, y in task.examples: #TODO 
-            try:
-                if len(xs)==0:
-                    res = p()
-                else:
-                    res = p
-                    for x in xs:
-                        res = res(x) 
-            except (ValueError, IndexError, ZeroDivisionError, computeValueError, RuntimeError) as e:
-                print("caught exception")
-                #print("res", res)
-                print("sketch", sketch)
-                print(e)
-                if self.use_cuda:
-                    return torch.tensor([float(10**10)]).cuda() #TODO
-                return torch.tensor([float(10**10)]) #TODO
-            except Exception:
-                print("caught exception")
-                #print("res", res)
-                print("sketch", sketch)
-                print("IO", xs, y)
-                assert 0
-            res = self.convertToVector(res) #TODO
-            evalVectors.append(res ) 
+            evalVectors.append( self._computeSketchRepresentation(sketch, xs, p=p) )
+
         #compare outVectors to evalVectors
         evalVectors = torch.stack(evalVectors, dim=0)
         distance = self._distance(torch.cat([evalVectors, outVectors], dim=1)).mean(0) #TODO
@@ -324,7 +328,7 @@ class AbstractREPLValueHead(BaseValueHead):
         pseudoExamples = [ (() , y) ]
         vec = self.featureExtractor(pseudoExamples)
         if vec is None:
-            print("vec is none... possibly too long?")
+            print("ERROR: vec is none... possibly too long?")
             raise computeValueError
         return vec
 
@@ -370,8 +374,6 @@ class AbstractREPLValueHead(BaseValueHead):
         for sk in posTrace:
             try:
                 distance = self._computeValue(sk, task, outVectors=outVectors)
-                #print("pos sk", sk)
-                #print("distance", distance.data.item())
             except (computeValueError, RuntimeError):
                 continue #TODO
             distances.append(distance)
@@ -380,8 +382,6 @@ class AbstractREPLValueHead(BaseValueHead):
         for sk in negTrace:
             try:
                 distance = self._computeValue(sk, task, outVectors=outVectors)
-                #print("neg sk", sk)
-                #print("distance", distance.data.item())
             except (computeValueError, RuntimeError):
                 continue #TODO
             distances.append(distance)
