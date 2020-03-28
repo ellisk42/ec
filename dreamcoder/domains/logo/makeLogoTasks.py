@@ -701,18 +701,30 @@ def montageTasks(tasks, prefix="", columns=None, testTrain=False):
                         for i in range(0, len(a), w) ])
               for a in arrays]
     i = montage(arrays, columns=columns)
-
-    import imageio     
-    imageio.imwrite('/tmp/%smontage.png'%prefix, i)
-    if testTrain:
-        trainingTasks = arrays[:sum(t.mustTrain for t in tasks)]
-        testingTasks = arrays[sum(t.mustTrain for t in tasks):]
-        random.shuffle(trainingTasks)
-        random.shuffle(testingTasks)
-        arrays = trainingTasks + testingTasks
-    else:
-        random.shuffle(arrays)
-    imageio.imwrite('/tmp/%srandomMontage.png'%prefix, montage(arrays, columns=columns))
+    try:
+        import imageio     
+        imageio.imwrite('/tmp/%smontage.png'%prefix, i)
+        if testTrain:
+            trainingTasks = arrays[:sum(t.mustTrain for t in tasks)]
+            testingTasks = arrays[sum(t.mustTrain for t in tasks):]
+            random.shuffle(trainingTasks)
+            random.shuffle(testingTasks)
+            arrays = trainingTasks + testingTasks
+        else:
+            random.shuffle(arrays)
+        imageio.imwrite('/tmp/%srandomMontage.png'%prefix, montage(arrays, columns=columns))
+    except:
+        import scipy.misc        
+        scipy.misc.imsave('/tmp/%smontage.png'%prefix, i)
+        if testTrain:
+            trainingTasks = arrays[:sum(t.mustTrain for t in tasks)]
+            testingTasks = arrays[sum(t.mustTrain for t in tasks):]
+            random.shuffle(trainingTasks)
+            random.shuffle(testingTasks)
+            arrays = trainingTasks + testingTasks
+        else:
+            random.shuffle(arrays)
+        scipy.misc.imsave('/tmp/%srandomMontage.png'%prefix, montage(arrays, columns=columns))
 
 def demoLogoTasks():
     import scipy.misc
