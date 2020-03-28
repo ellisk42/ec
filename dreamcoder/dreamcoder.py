@@ -97,7 +97,9 @@ class ECResult():
                      "storeTaskMetrics": 'STM',
                      "topkNotMAP": "tknm",
                      "rewriteTaskMetrics": "RW",
-                     'taskBatchSize': 'batch'}
+                     'taskBatchSize': 'batch',
+                     'languageFeatureExtractor' : 'lang_ft',
+                     'noConsolidation': 'no_dsl'}
 
     @staticmethod
     def abbreviate(parameter): return ECResult.abbreviations.get(parameter, parameter)
@@ -244,7 +246,9 @@ def ecIterator(grammar, tasks,
             "evaluationTimeout",
             "testingTasks",
             "compressor",
-            "custom_wake_generative"} and v is not None}
+            "custom_wake_generative",
+            "interactive",
+            "interactiveTasks"} and v is not None}
     if not useRecognitionModel:
         for k in {"helmholtzRatio", "recognitionTimeout", "biasOptimal", "mask",
                   "contextual", "matrixRank", "reuseRecognition", "auxiliaryLoss", "ensembleSize"}:
@@ -261,6 +265,9 @@ def ecIterator(grammar, tasks,
         for k in {"structurePenalty", "pseudoCounts", "aic"}:
             del parameters[k]
     else: del parameters["useDSL"]
+    
+    if languageDataset:
+        parameters["languageDataset"] = os.path.basename(languageDataset).split(".")[0]
     
     # Uses `parameters` to construct the checkpoint path
     def checkpointPath(iteration, extra=""):
@@ -340,15 +347,15 @@ def ecIterator(grammar, tasks,
         eprint("Invalid task reranker: " + taskReranker + ", aborting.")
         assert False
     
-    if parser == 'loglinear_conditionalgrammar':
+    if parser == 'loglinear':
         parserModel = LogLinearBigramTransitionParser
     else:
         eprint("Invalid parser: " + parser + ", aborting.")
         assert False
     
-    if languageFeatureExtractor == 'ngram_featurizer':
+    if languageFeatureExtractor == 'ngram':
         languageFeatureExtractor = NgramFeaturizer
-    elif languageFeatureExtractor == 'recurrent_featurizer':
+    elif languageFeatureExtractor == 'recurrent':
         languageFeatureExtractor = TokenRecurrentFeatureExtractor
     else:
         eprint("Invalid language featurizer: " + parser + ", aborting.")
@@ -394,6 +401,7 @@ def ecIterator(grammar, tasks,
     
     # Preload language dataset if avaiable.
     if languageDataset is not None:
+        result.languageDatasetPath = languageDataset # Store for laters
         result.allLanguage = languageForTasks(languageDataset, result.allLanguage)
         eprint("Loaded language dataset from ", languageDataset)
     
@@ -1086,14 +1094,14 @@ def commandlineArguments(_=None,
     parser.add_argument("--parser",
                         dest="parser",
                         help="Semantic parser for interactive mode.",
-                        choices=["loglinear_conditionalgrammar"],
-                        default='loglinear_conditionalgrammar',
+                        choices=["loglinear"],
+                        default='loglinear',
                         type=str)
     parser.add_argument("--languageFeatureExtractor",
                         dest="languageFeatureExtractor",
                         help="Use an additional language-conditioned featurizer.",
-                        choices=["ngram_featurizer",
-                                "recurrent_featurizer"],
+                        choices=["ngram",
+                                "recurrent"],
                         default=None,
                         type=str)                
     parser.set_defaults(useRecognitionModel=useRecognitionModel,
