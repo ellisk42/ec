@@ -206,11 +206,9 @@ def ecIterator(grammar, tasks,
         eprint("Warning: ensemble size requires using the recognition model, aborting.")
         assert False
     if biasOptimal and not useRecognitionModel:
-        eprint("Bias optimality only applies to recognition models, aborting.")
-        assert False
+        eprint("Warning: Bias optimality only applies to recognition models, aborting.")
     if contextual and not useRecognitionModel:
-        eprint("Contextual only applies to recognition models, aborting")
-        assert False
+        eprint("Warning: Contextual only applies to recognition models, aborting")
     if reuseRecognition and not useRecognitionModel:
         eprint("Reuse of recognition model weights at successive iteration only applies to recognition models, aborting")
         assert False
