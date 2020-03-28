@@ -364,8 +364,12 @@ def plotECResult(
         if arguments.ylabel is not None:
             ylabel = arguments.ylabel
         elif likelihood is None:
-            ylabel = '%% %s Solved%s'%("Training" if showTraining else "Test",
-                                       " (solid)" if showSolveTime else "")
+            if numTasks:
+                ylabel = 'Num: %s Solved%s'%("Training" if showTraining else "Test",
+                                           " (solid)" if showSolveTime else "")
+            else: 
+                ylabel = '%% %s Solved%s'%("Training" if showTraining else "Test",
+                                           " (solid)" if showSolveTime else "")
         elif likelihood == "maximum":
             ylabel = "log P(t|p^*)"
         elif likelihood == "marginal":
