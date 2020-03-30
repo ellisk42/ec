@@ -33,9 +33,7 @@ def binary_cross_entropy(y,t, epsilon=10**-10, average=True):
 
 def sketchesFromProgram(e, tp, g):
     singleHoleSks = list( sk for sk, _ in g.enumerateHoles(tp, e, k=10))
-    """
-    really bad code for getting two holes
-    """
+    """really bad code for getting two holes"""
     sketches = []
     for expr in singleHoleSks:
         for sk, _ in g.enumerateHoles(tp, expr, k=10):
@@ -194,13 +192,7 @@ class NMN(nn.Module):
         self.nArgs = nArgs
         if nArgs > 0: #TODO
             #can just do a stack I think ...
-            #if nArgs == 1:
             self.params = nn.Sequential(nn.Linear(nArgs*H, H), nn.ReLU())
-            # elif nArgs == 2:
-            #     self.params = nn.Sequential(nn.Linear(2*H, H), nn.ReLU())
-            # else:
-            #     assert False, "more than two inputs not supported"
-
         else:
             self.params = nn.Parameter(torch.randn(H))
         
@@ -260,43 +252,47 @@ class AbstractREPLValueHead(BaseValueHead):
         outVectors = torch.stack(outVectors, dim=0)
         return outVectors
 
+    def _computeSketchRepresentation(self, sketch, xs, p=None):
+        if p is None:
+            p = self._getInitialSketchRep(sketch)
+        try:
+            res = p
+            for x in xs:
+                res = res(x) 
+        except (ValueError, IndexError, ZeroDivisionError, computeValueError, RuntimeError) as e:
+            print("caught exception")
+            print("sketch", sketch)
+            print(e)
+            raise computeValueError
+        except Exception:
+            print("caught exception")
+            print("sketch", sketch)
+            print("IO", xs)
+            assert 0
+        res = self.convertToVector(res) #TODO
+        return res
+
+    def _getInitialSketchRep(self, sketch):
+        try:
+            return sketch.abstractEval(self, [])
+        except (ValueError, IndexError, ZeroDivisionError, computeValueError, RuntimeError):
+            print("caught exception")
+            print("sketch", sketch)
+            print(e)
+            raise computeValueError
+
     def _computeValue(self, sketch, task, outVectors=None):
         """TODO: [x] hash things like outputVector representation
         """
         if outVectors is None:
             outVectors = self._computeOutputVectors(task)
+            
+        p = self._getInitialSketchRep(sketch)
 
-        try:
-            p = sketch.abstractEval(self, [])
-        except (ValueError, IndexError, ZeroDivisionError, computeValueError, RuntimeError):
-            if self.use_cuda:
-                return torch.tensor([float(10**10)]).cuda() #TODO
-            return torch.tensor([float(10**10)]) #TODO
         evalVectors = []
         for xs, y in task.examples: #TODO 
-            try:
-                if len(xs)==0:
-                    res = p()
-                else:
-                    res = p
-                    for x in xs:
-                        res = res(x) 
-            except (ValueError, IndexError, ZeroDivisionError, computeValueError, RuntimeError) as e:
-                print("caught exception")
-                #print("res", res)
-                print("sketch", sketch)
-                print(e)
-                if self.use_cuda:
-                    return torch.tensor([float(10**10)]).cuda() #TODO
-                return torch.tensor([float(10**10)]) #TODO
-            except Exception:
-                print("caught exception")
-                #print("res", res)
-                print("sketch", sketch)
-                print("IO", xs, y)
-                assert 0
-            res = self.convertToVector(res) #TODO
-            evalVectors.append(res ) 
+            evalVectors.append( self._computeSketchRepresentation(sketch, xs, p=p) )
+
         #compare outVectors to evalVectors
         evalVectors = torch.stack(evalVectors, dim=0)
         distance = self._distance(torch.cat([evalVectors, outVectors], dim=1)).mean(0) #TODO
@@ -316,15 +312,14 @@ class AbstractREPLValueHead(BaseValueHead):
             return value
 
         if isinstance(value, Program):
-            vec = self.RNNHead._encodeSketches([value]).squeeze(0)
-            return vec
+            return self.RNNHead._encodeSketches([value]).squeeze(0)
 
         #if value in self.g.productions.values: then use module???
         y = value
         pseudoExamples = [ (() , y) ]
         vec = self.featureExtractor(pseudoExamples)
         if vec is None:
-            print("vec is none... possibly too long?")
+            print("ERROR: vec is none... possibly too long?")
             raise computeValueError
         return vec
 
@@ -335,8 +330,8 @@ class AbstractREPLValueHead(BaseValueHead):
         """todo: 
         - [ ] encode type"""
         assert hole.isHole        
-        stackOfVectors = [self.convertToVector(val) for val in env]
-        environmentVector = self._encodeStack(stackOfVectors)
+        stackOfEnvVectors = [self.convertToVector(val) for val in env]
+        environmentVector = self._encodeStack(stackOfEnvVectors)
         return self.holeParam(environmentVector)
 
     def _encodeStack(self, stackOfVectors):
@@ -349,10 +344,7 @@ class AbstractREPLValueHead(BaseValueHead):
         and then train value head on those
         TODO: [ ] only a single call to the distance fn
         """
-        #print("new frontier")
-        #t = time.time()
         # Monte Carlo estimate: draw a sample from the frontier
-
         entry = frontier.sample()
         task = frontier.task
         tp = frontier.task.request
@@ -370,8 +362,6 @@ class AbstractREPLValueHead(BaseValueHead):
         for sk in posTrace:
             try:
                 distance = self._computeValue(sk, task, outVectors=outVectors)
-                #print("pos sk", sk)
-                #print("distance", distance.data.item())
             except (computeValueError, RuntimeError):
                 continue #TODO
             distances.append(distance)
@@ -380,8 +370,6 @@ class AbstractREPLValueHead(BaseValueHead):
         for sk in negTrace:
             try:
                 distance = self._computeValue(sk, task, outVectors=outVectors)
-                #print("neg sk", sk)
-                #print("distance", distance.data.item())
             except (computeValueError, RuntimeError):
                 continue #TODO
             distances.append(distance)
@@ -392,10 +380,7 @@ class AbstractREPLValueHead(BaseValueHead):
             targets = targets.cuda()
 
         distance = torch.stack( distances, dim=0 ).squeeze(1)
-        #import pdb; pdb.set_trace()
-        #print(distance)
         loss = binary_cross_entropy(-distance, targets, average=False) #average?
-        #print(f"time in fn: {time.time() - t}")
         return loss
 
     def valueLossFromFrontier(self, frontier, g):
@@ -409,7 +394,6 @@ if __name__ == '__main__':
         import binutil  # required to import from dreamcoder modules
     except ModuleNotFoundError:
         import bin.binutil  # alt import if called as module
-
 
     from dreamcoder.domains.arithmetic.arithmeticPrimitives import *
     g = Grammar.uniform([k0,k1,addition, subtraction])

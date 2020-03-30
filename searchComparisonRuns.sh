@@ -25,3 +25,5 @@ sbatch -e listRNN${salt}.out -o listRNN${salt}.out execute_multicore.sh python b
 #switch to master, then use multiple cpus and run:
 #nohup python bin/list.py --split 0.5 -t 1200 --solver 'ocaml' -c 20 -i 1 --no-recognition --no-consolidation &> base_run.txt &
 #then cp to experimentOutputs/listBaseIT=1.pickle
+
+#sbatch -e listSampleCathy.out -o listSampleCathy.out execute_multicore.sh python bin/list.py --split 0.5 -t 300 -RS 2000 --solver 'python'  -c 20 --useValue Sample -i 2 -H 512 --resume listCathyTestSample.pickle --singleRoundValueEval &
