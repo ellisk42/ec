@@ -79,7 +79,7 @@ class SampleDummyValueHead(BaseValueHead):
         self.use_cuda = torch.cuda.is_available()
     def computeValue(self, sketch, task):
         return 0.
-    def valueLossFromFrontier(frontier, g):
+    def valueLossFromFrontier(self, frontier, g):
         if self.use_cuda:
             return torch.tensor([0.]).cuda()
         else: 
