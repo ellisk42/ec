@@ -203,7 +203,7 @@ class LearnedFeatureExtractor(RecurrentFeatureExtractor):
 
     def __init__(self, tasks, testingTasks=[], cuda=False):
         self.lexicon = set(flatten((t.examples for t in tasks + testingTasks), abort=lambda x: isinstance(
-            x, str))).union({"LIST_START", "LIST_END", "?"}).union({range(-64, 64)})
+            x, str))).union({"LIST_START", "LIST_END", "?"}).union(set(range(-64, 64)))
 
         # Calculate the maximum length
         self.maximumLength = float('inf') # Believe it or not this is actually important to have here
