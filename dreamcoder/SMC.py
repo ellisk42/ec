@@ -141,6 +141,7 @@ class SMC(Solver):
                             newObject, newZippers = sampleSingleStep(g, p.trajectory,
                                                     request, holeZippers=p.zippers,
                                                     maximumDepth=self.maxDepth)
+                            print("Didn't get nocand error", flush=True)
                         except NoCandidates:
                             print(f"NoCand error on particle: {p}")
                             break
@@ -194,7 +195,7 @@ class SMC(Solver):
                     # SHOULD I Resample with or without the finished ones? if not, then i lose particles along the way
                     #print("HIT THE COMPUTE VALUE LINE")
                     if p.finished:
-                        p.distance = 0. if p.trajectory in self.allHits else 10**10
+                        p.distance = 0. if p.trajectory in self.allHits else 10**10 #huh?
                     else:
                         p.distance = self.owner.valueHead.computeValue(p.trajectory, task) #memoize by registering tasks or something
 

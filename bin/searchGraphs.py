@@ -57,7 +57,7 @@ def plotTestResults(testResults, timeout, defaultLoss=None,
     plot.ylabel('Average Loss')
     if mode =='fractionHit': plot.ylim(bottom=0.)
     for n in range(len(testResults)):
-        xs = list(range(max([0]+[r.evaluations for tr in testResults[n] for r in tr] ) + 1))
+        #xs = list(range(max([0]+[r.evaluations for tr in testResults[n] for r in tr] ) + 1))
         xs = list(range(200))
         if mode =='fractionHit':
             plot.plot(xs, [fractionHit(n,lambda r: r.evaluations <= x) for x in xs],
@@ -79,8 +79,11 @@ if __name__ == '__main__':
     nameSalt = "zoomed"
     #paths = [('experimentOutputs/listCathyTestGraph_SRE=True_graph=True.pickle', 'mock' )]
 
+    #ID = 'cathy'
+    nameSalt = 'zoomed'
     paths = [('experimentOutputs/listCathyTestEnum_SRE=True_graph=True.pickle', 'Enum' ),
-        ('experimentOutputs/listCathyTestRNN_SRE=True_graph=True.pickle', 'RNN')]
+        ('experimentOutputs/listCathyTestRNN_SRE=True_graph=True.pickle', 'RNN'),
+        ('experimentOutputs/listCathyTestSample_SRE=True_graph=True.pickle', 'Sample')]
 
     paths = [(f'experimentOutputs/{ID}Enum_SRE=True_graph=True.pickle', 'Enum'),
         (f'experimentOutputs/{ID}RNN_SRE=True_graph=True.pickle', 'RNN'),
@@ -101,7 +104,7 @@ if __name__ == '__main__':
         for path in paths:
             with open(path, 'rb') as h:
                 r = dill.load(h)
-            #assert 0
+            assert 0
             #import pdb; pdb.set_trace()
             res = r.searchStats[-1] if mode=='train' else r.testingSearchStats[-1]
             testResults.append( list(res.values()) )
