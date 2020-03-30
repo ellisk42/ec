@@ -33,9 +33,7 @@ def binary_cross_entropy(y,t, epsilon=10**-10, average=True):
 
 def sketchesFromProgram(e, tp, g):
     singleHoleSks = list( sk for sk, _ in g.enumerateHoles(tp, e, k=10))
-    """
-    really bad code for getting two holes
-    """
+    """really bad code for getting two holes"""
     sketches = []
     for expr in singleHoleSks:
         for sk, _ in g.enumerateHoles(tp, expr, k=10):
@@ -194,13 +192,7 @@ class NMN(nn.Module):
         self.nArgs = nArgs
         if nArgs > 0: #TODO
             #can just do a stack I think ...
-            #if nArgs == 1:
             self.params = nn.Sequential(nn.Linear(nArgs*H, H), nn.ReLU())
-            # elif nArgs == 2:
-            #     self.params = nn.Sequential(nn.Linear(2*H, H), nn.ReLU())
-            # else:
-            #     assert False, "more than two inputs not supported"
-
         else:
             self.params = nn.Parameter(torch.randn(H))
         
@@ -320,8 +312,7 @@ class AbstractREPLValueHead(BaseValueHead):
             return value
 
         if isinstance(value, Program):
-            vec = self.RNNHead._encodeSketches([value]).squeeze(0)
-            return vec
+            return self.RNNHead._encodeSketches([value]).squeeze(0)
 
         #if value in self.g.productions.values: then use module???
         y = value
@@ -339,8 +330,8 @@ class AbstractREPLValueHead(BaseValueHead):
         """todo: 
         - [ ] encode type"""
         assert hole.isHole        
-        stackOfVectors = [self.convertToVector(val) for val in env]
-        environmentVector = self._encodeStack(stackOfVectors)
+        stackOfEnvVectors = [self.convertToVector(val) for val in env]
+        environmentVector = self._encodeStack(stackOfEnvVectors)
         return self.holeParam(environmentVector)
 
     def _encodeStack(self, stackOfVectors):
@@ -353,10 +344,7 @@ class AbstractREPLValueHead(BaseValueHead):
         and then train value head on those
         TODO: [ ] only a single call to the distance fn
         """
-        #print("new frontier")
-        #t = time.time()
         # Monte Carlo estimate: draw a sample from the frontier
-
         entry = frontier.sample()
         task = frontier.task
         tp = frontier.task.request
@@ -392,10 +380,7 @@ class AbstractREPLValueHead(BaseValueHead):
             targets = targets.cuda()
 
         distance = torch.stack( distances, dim=0 ).squeeze(1)
-        #import pdb; pdb.set_trace()
-        #print(distance)
         loss = binary_cross_entropy(-distance, targets, average=False) #average?
-        #print(f"time in fn: {time.time() - t}")
         return loss
 
     def valueLossFromFrontier(self, frontier, g):
@@ -409,7 +394,6 @@ if __name__ == '__main__':
         import binutil  # required to import from dreamcoder modules
     except ModuleNotFoundError:
         import bin.binutil  # alt import if called as module
-
 
     from dreamcoder.domains.arithmetic.arithmeticPrimitives import *
     g = Grammar.uniform([k0,k1,addition, subtraction])

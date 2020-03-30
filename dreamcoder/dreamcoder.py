@@ -1065,7 +1065,7 @@ def commandlineArguments(_=None,
                         default=None, type=str)
     parser.add_argument("--useValue", type=str,
                         default=False,
-                        choices=["RNN", "AbstractREPL"],
+                        choices=["RNN", "AbstractREPL", "Sample"],
                         help="use value-based search")
     parser.add_argument("--singleRoundValueEval",
                         action='store_true',
