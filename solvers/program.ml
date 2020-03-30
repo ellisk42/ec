@@ -477,6 +477,8 @@ let primitive_and = primitive "and" (tboolean @> tboolean @> tboolean) (fun x y 
 let primitive_nand = primitive "nand" (tboolean @> tboolean @> tboolean) (fun x y -> not (x && y));;
 let primitive_or = primitive "or" (tboolean @> tboolean @> tboolean) (fun x y -> x || y);;
 let primitive_greater_than = primitive "gt?" (tint @> tint @> tboolean) (fun (x: int) (y: int) -> x > y);;
+let primitive_sum = primitive "sum" (tlist tint @> tint) (fun l -> List.fold_right ~f:(+) ~init:0 l);;
+
 
 ignore(primitive "take-word" (tcharacter @> tstring @> tstring) (fun c s ->
     List.take_while s ~f:(fun c' -> not (c = c'))));;
