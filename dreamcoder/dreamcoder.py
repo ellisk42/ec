@@ -180,7 +180,9 @@ def ecIterator(grammar, tasks,
                auxiliaryLoss=False,
                custom_wake_generative=None,
                useValue=False,
-               singleRoundValueEval=False):
+               singleRoundValueEval=False,
+               resumeTraining=True,
+               skipTraining=False):
     if enumerationTimeout is None:
         eprint(
             "Please specify an enumeration timeout:",
@@ -373,8 +375,8 @@ def ecIterator(grammar, tasks,
     
     
     if singleRoundValueEval:
-        resumeTraining = True #toggle for resume from checkpoint, ints will go to specific checkpoint
-        skipTraining = False #toggle for skip training because it's finished
+        resumeTraining = args.resumeTraining #toggle for resume from checkpoint, ints will go to specific checkpoint
+        skipTraining = args.skipTraining #toggle for skip training because it's finished
 
         recModelPath = path + '_RecModelOnly'
         if type(resumeTraining) == int: recModelPath += str(resumeTraining)
@@ -1071,6 +1073,12 @@ def commandlineArguments(_=None,
     parser.add_argument("--singleRoundValueEval",
                         action='store_true',
                         help="do one eval")
+    parser.add_argument("--resumeTraining", #TODO need this to be an int or something
+                        action='store_true',
+                        help="resume training")
+    parser.add_argument("--skipTraining",
+                        action='store_true',
+                        help="skip Training")
     parser.set_defaults(useRecognitionModel=useRecognitionModel,
                         useDSL=True,
                         featureExtractor=featureExtractor,
