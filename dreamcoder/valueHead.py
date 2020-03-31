@@ -92,7 +92,7 @@ class SimpleRNNValueHead(BaseValueHead):
         super(SimpleRNNValueHead, self).__init__()
         self.use_cuda = torch.cuda.is_available() #FIX THIS
 
-        extras = ['(', ')', 'lambda', '<HOLE>', '#'] + ['$'+str(i) for i in range(10)] 
+        extras = ['(', ')', 'lambda', '<HOLE>', '#'] + ['$'+str(i) for i in range(15)] 
 
         self.lexicon = [str(p) for p in g.primitives] + extras
         self.embedding = nn.Embedding(len(self.lexicon), H)

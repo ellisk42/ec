@@ -4,20 +4,23 @@
 
 time=300
 recSteps=480000 #repl is roughly 10k/hour (0.33 steps/sec)
-ncores=36
+ncores=8
 salt=richPrimsR1
 #resume=experimentOutputs/listBaseIT=1 #experimentOutputs/listCathyTestEnum
 #resume=experimentOutputs/listCathyTest
 resume=experimentOutputs/listRichPrimsR1
 
 cp ${resume}.pickle ${resume}Sample.pickle
-sbatch -e listSample${salt}.out -o listSample${salt}.out execute_multicore.sh python bin/list.py -r 1 --primitives rich --split 0.5 -t ${time} -RS ${recSteps} --solver 'python'  -c ${ncores} --useValue Sample -i 2 -H 512 --resume ${resume}Sample.pickle --singleRoundValueEval &
+#Train:
+sbatch -e listSample${salt}.out -o listSample${salt}.out execute_gpu_new.sh python bin/list.py -r 1 --primitives rich --split 0.5 -t ${time} -RS ${recSteps} --solver 'python'  -c ${ncores} --useValue Sample -i 2 -H 512 --resume ${resume}Sample.pickle --singleRoundValueEval &
 
 cp ${resume}.pickle ${resume}REPL.pickle
-sbatch -e listREPL${salt}.out -o listREPL${salt}.out execute_multicore.sh python bin/list.py -r 1 --primitives rich --split 0.5 -t ${time} -RS ${recSteps} --solver 'python'  -c ${ncores} --useValue AbstractREPL -i 2 -H 512 --resume ${resume}REPL.pickle --singleRoundValueEval &
+#Train:
+sbatch -e listREPL${salt}.out -o listREPL${salt}.out execute_gpu_new.sh python bin/list.py -r 1 --primitives rich --split 0.5 -t ${time} -RS ${recSteps} --solver 'python'  -c ${ncores} --useValue AbstractREPL -i 2 -H 512 --resume ${resume}REPL.pickle --singleRoundValueEval &
 
 cp ${resume}.pickle ${resume}RNN.pickle
-sbatch -e listRNN${salt}.out -o listRNN${salt}.out execute_multicore.sh python bin/list.py -r 1 --primitives rich --split 0.5 -t ${time} -RS ${recSteps} --solver 'python'  -c ${ncores} --useValue RNN -i 2 -H 512 --resume ${resume}RNN.pickle --singleRoundValueEval &
+#Train:
+sbatch -e listRNN${salt}.out -o listRNN${salt}.out execute_gpu_new.sh python bin/list.py -r 1 --primitives rich --split 0.5 -t ${time} -RS ${recSteps} --solver 'python'  -c ${ncores} --useValue RNN -i 2 -H 512 --resume ${resume}RNN.pickle --singleRoundValueEval &
 
 
 # messing about:
