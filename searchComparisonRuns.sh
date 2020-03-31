@@ -12,14 +12,14 @@ resume=experimentOutputs/listRichPrimsR1
 
 cp ${resume}.pickle ${resume}Sample.pickle
 #Train:
-sbatch -e listSample${salt}.out -o listSample${salt}.out execute_gpu_new.sh python bin/list.py -r 1 --primitives rich --split 0.5 -t ${time} -RS ${recSteps} --solver 'python'  -c ${ncores} --useValue Sample -i 2 -H 512 --resume ${resume}Sample.pickle --singleRoundValueEval &
+sbatch -e listSample${salt}.out -o listSample${salt}.out execute_gpu_new.sh python bin/list.py --recognitionTimeout 216000 --resumeTraining -r 1 --primitives rich --split 0.5 -t ${time} -RS ${recSteps} --solver 'python'  -c ${ncores} --useValue Sample -i 2 -H 512 --resume ${resume}Sample.pickle --singleRoundValueEval &
 
 cp ${resume}.pickle ${resume}REPL.pickle
 #Train:
-sbatch -e listREPL${salt}.out -o listREPL${salt}.out execute_gpu_new.sh python bin/list.py -r 1 --primitives rich --split 0.5 -t ${time} -RS ${recSteps} --solver 'python'  -c ${ncores} --useValue AbstractREPL -i 2 -H 512 --resume ${resume}REPL.pickle --singleRoundValueEval &
+sbatch -e listREPL${salt}.out -o listREPL${salt}.out execute_gpu_new.sh python bin/list.py --recognitionTimeout 216000 --resumeTraining -r 1 --primitives rich --split 0.5 -t ${time} -RS ${recSteps} --solver 'python'  -c ${ncores} --useValue AbstractREPL -i 2 -H 512 --resume ${resume}REPL.pickle --singleRoundValueEval &
 
 cp ${resume}.pickle ${resume}RNN.pickle
 #Train:
-sbatch -e listRNN${salt}.out -o listRNN${salt}.out execute_gpu_new.sh python bin/list.py -r 1 --primitives rich --split 0.5 -t ${time} -RS ${recSteps} --solver 'python'  -c ${ncores} --useValue RNN -i 2 -H 512 --resume ${resume}RNN.pickle --singleRoundValueEval &
+sbatch -e listRNN${salt}.out -o listRNN${salt}.out execute_gpu_new.sh python bin/list.py --recognitionTimeout 216000 --resumeTraining -r 1 --primitives rich --split 0.5 -t ${time} -RS ${recSteps} --solver 'python'  -c ${ncores} --useValue RNN -i 2 -H 512 --resume ${resume}RNN.pickle --singleRoundValueEval &
 
 #omitted --resumeTraining for this run
