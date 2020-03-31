@@ -1045,6 +1045,7 @@ class RecognitionModel(nn.Module):
         realValueLosses = []
         dreamValueLosses = []
         totalGradientSteps = self.gradientStepsTaken
+        startingGradientSteps = self.gradientStepsTaken
         epochs = 9999999
         for i in range(1, epochs + 1):
             if timeout and time.time() - start > timeout:
@@ -1137,7 +1138,7 @@ class RecognitionModel(nn.Module):
                 if realMDL and dreamMDL:
                     eprint("\t\t(real MDL): ", mean(realMDL), "\t(dream MDL):", mean(dreamMDL))
                 eprint("(ID=%d): " % self.id, "\t%d cumulative gradient steps. %f steps/sec"%(totalGradientSteps,
-                                                                       totalGradientSteps/(time.time() - start)))
+                                                                       (totalGradientSteps - startingGradientSteps)/(time.time() - start)))
                 eprint("(ID=%d): " % self.id, "\t%d-way auxiliary classification loss"%len(self.grammar.primitives),sum(classificationLosses)/len(classificationLosses))
                 if self.useValue:
                     eprint("(ID=%d): " % self.id, "\tvalue loss:", mean(valueHeadLosses))
