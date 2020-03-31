@@ -141,7 +141,6 @@ class SMC(Solver):
                             newObject, newZippers = sampleSingleStep(g, p.trajectory,
                                                     request, holeZippers=p.zippers,
                                                     maximumDepth=self.maxDepth)
-                            print("Didn't get nocand error", flush=True)
                         except NoCandidates:
                             print(f"NoCand error on particle: {p}")
                             break
