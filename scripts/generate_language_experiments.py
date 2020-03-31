@@ -6,10 +6,11 @@ featureExtractors = ["ngram", "recurrent"]
 
 singularity_base_command = "srun --job-name=logo_language_{} --output=jobs/{} --ntasks=1 --mem-per-cpu=5000 --gres=gpu --cpus-per-task 15 --time=10000:00 --qos=tenenbaum --partition=tenenbaum singularity exec -B /om2  --nv ../dev-container.img "
 
-base_parameters = "--enumerationTimeout 3600 --testingTimeout 3600 --split 0.5 --recognitionEpochs 10 --biasOptimal --contextual --Helmholtz 0 --iterations {}".format(num_iterations)
+base_parameters = "--no-cuda --enumerationTimeout 3600 --testingTimeout 3600 --split 0.5 --recognitionEpochs 10 --biasOptimal --contextual --Helmholtz 0 --iterations {}".format(num_iterations)
 
 ### Experiments
 experiment_commands = []
+jobs = []
 job = 0
 # Log linear parser
 base_command = "python bin/logo.py --parser loglinear --useWakeLanguage  --no-recognition --recognitionEpochs 10 "
@@ -17,6 +18,7 @@ base_command = "python bin/logo.py --parser loglinear --useWakeLanguage  --no-re
 for featureExtractor in featureExtractors:
     for language_gen in range(0, 4+1):
         job_name = "logo_language_log_linear_{}_gen_{}".format(featureExtractor, language_gen)
+        jobs.append(job_name)
         
         languageDataset = base_language_dataset.format(language_gen)
         
@@ -30,6 +32,7 @@ base_command = "python bin/logo.py --recognitionEpochs 10 "
 for featureExtractor in featureExtractors:
     for language_gen in range(0, 4+1):
         job_name = "logo_language_nn_{}_gen_{}".format(featureExtractor, language_gen)
+        jobs.append(job_name)
         
         languageDataset = base_language_dataset.format(language_gen)
         singularity = singularity_base_command.format(job, job_name)
@@ -37,6 +40,18 @@ for featureExtractor in featureExtractors:
         experiment_commands.append(command)
         job += 1
 
-for command in experiment_commands:
-    print(command + "")
+if False:
+    # print the jobs.
+    print('#!/bin/bash')
+    print("module add openmind/singularity")
+    for command in experiment_commands:
+        print(command + "")
+if True:
+    for job_name in jobs:
+        print("echo 'Job: jobs/{} '".format(job_name))
+        print("echo 'Training tasks:' ".format(job_name))
+        print("grep 'total hit tasks' jobs/{}".format(job_name))
+        print("echo 'Testing tasks:' ".format(job_name))
+        print("grep 'testing tasks' jobs/{}".format(job_name))
+
         

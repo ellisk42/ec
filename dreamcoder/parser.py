@@ -176,7 +176,10 @@ class NgramFeaturizer(nn.Module):
         """Required to work with recognition model"""
         assert self.language_dict_vectorizer is not None
         if t not in self.featurized_language_data: return None
-        return self.featurized_language_data[t]
+        features = self.featurized_language_data[t]
+        if self.cuda:
+            features = features.cuda()
+        return features
 
         
 class LogLinearBigramTransitionParser(nn.Module):
