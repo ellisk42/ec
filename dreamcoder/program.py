@@ -368,7 +368,8 @@ class Application(Program):
             print("f:", self.f)
             print("type of f:", type(self.f))
             print("parse:", parse[0], parse[1])
-            assert 0
+            from valueHead import computeValueError
+            raise computeValueError
 
         if self.isConditional and not self.branch.hasHoles:
             if self.branch.abstractEval(valueHead, environment):
