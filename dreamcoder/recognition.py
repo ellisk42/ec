@@ -1124,7 +1124,7 @@ class RecognitionModel(nn.Module):
                     with open(savePath, 'wb') as h:
                         torch.save(self, h)
                     print(f"rec model saved at {savePath}")
-                    if totalGradientSteps % 10000 == 0:
+                    if totalGradientSteps % 1000 == 0:
                         with open(savePath+str(totalGradientSteps), 'wb') as h:
                             torch.save(self, h)
                         print(f"rec model saved at {savePath+str(totalGradientSteps)}")     
