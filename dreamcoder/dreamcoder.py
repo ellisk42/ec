@@ -373,10 +373,12 @@ def ecIterator(grammar, tasks,
     
     
     if singleRoundValueEval:
-        resumeTraining = True #toggle for resume from checkpoint
+        resumeTraining = True #toggle for resume from checkpoint, ints will go to specific checkpoint
         skipTraining = False #toggle for skip training because it's finished
 
         recModelPath = path + '_RecModelOnly'
+        if type(resumeTraining) == int: recModelPath += str(resumeTraining)
+
         print("use value?", useValue)
         grammar = grammar #TODO make grammar non-contextual 
         
@@ -390,7 +392,6 @@ def ecIterator(grammar, tasks,
             print("Loading model to resume or skip training...")
             try:
                 resumeTrainingModel = torch.load(open(recModelPath, 'rb'))
-                recognitionSteps = recognitionSteps - resumeTrainingModel.gradientStepsTaken
                 if skipTraining: steps = -1
             except FileNotFoundError:
                 print("no previous model found")
@@ -408,7 +409,7 @@ def ecIterator(grammar, tasks,
                                helmholtzRatio=thisRatio, helmholtzFrontiers=[],
                                auxiliaryLoss=auxiliaryLoss, cuda=cuda, CPUs=CPUs, solver=solver,
                                recognitionSteps=recognitionSteps, maximumFrontier=maximumFrontier, useValue=useValue, 
-                               trainOnly=True, saveIter=10, savePath=recModelPath, resumeTrainingModel=resumeTrainingModel)
+                               trainOnly=True, saveIter=1000, savePath=recModelPath, resumeTrainingModel=resumeTrainingModel)
 
         #testing
         if testingTimeout == 0:

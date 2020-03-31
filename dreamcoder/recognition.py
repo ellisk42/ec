@@ -702,7 +702,9 @@ class RecognitionModel(nn.Module):
 
         if resumeTrainingModel:
             self.load_state_dict(resumeTrainingModel.state_dict())
-
+            self.gradientStepsTaken = resumeTrainingModel.gradientStepsTaken
+        else:
+            self.gradientStepsTaken = 0
 
     def auxiliaryLoss(self, frontier, features):
         # Compute a vector of uses
@@ -1042,7 +1044,7 @@ class RecognitionModel(nn.Module):
         valueHeadLosses = []
         realValueLosses = []
         dreamValueLosses = []
-        totalGradientSteps = 0
+        totalGradientSteps = self.gradientStepsTaken
         epochs = 9999999
         for i in range(1, epochs + 1):
             if timeout and time.time() - start > timeout:
@@ -1115,7 +1117,16 @@ class RecognitionModel(nn.Module):
                         realValueLosses.append(valueHeadLosses[-1])
                     if totalGradientSteps > steps:
                         break # Stop iterating, then print epoch and loss, then break to finish.
-           
+            
+                if saveIter and totalGradientSteps % saveIter == 0:
+                    self.gradientStepsTaken = totalGradientSteps
+                    with open(savePath, 'wb') as h:
+                        torch.save(self, h)
+                    print(f"rec model saved at {savePath}")
+                    if totalGradientSteps % 10000 == 0:
+                        with open(savePath+str(totalGradientSteps), 'wb') as h:
+                            torch.save(self, h)
+                        print(f"rec model saved at {savePath+str(totalGradientSteps)}")     
 
 
             if (i == 1 or i % 10 == 0) and losses:
@@ -1139,11 +1150,7 @@ class RecognitionModel(nn.Module):
                 dreamValueLosses = []
                 gc.collect()
 
-            if saveIter and i % saveIter == 0:
-                self.gradientStepsTaken = totalGradientSteps
-                with open(savePath, 'wb') as h:
-                    torch.save(self, h)
-                print(f"rec model saved at {savePath}")
+
 
         
         eprint("(ID=%d): " % self.id, " Trained recognition model in",time.time() - start,"seconds")
