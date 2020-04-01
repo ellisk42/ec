@@ -293,7 +293,7 @@ def primitives():
         # these are achievable with above primitives, but unlikely
         #Primitive("flatten", arrow(tlist(tlist(t0)), tlist(t0)), _flatten),
         # (lambda (reduce (lambda (lambda (++ $1 $0))) empty $0))
-        Primitive("sum", arrow(tlist(tint), tint), lambda x: sum(x)),
+        Primitive("sum", arrow(tlist(tint), tint), sum ),
         # (lambda (lambda (reduce (lambda (lambda (+ $0 $1))) 0 $0)))
         Primitive("reverse", arrow(tlist(t0), tlist(t0)), _reverse),
         # (lambda (reduce (lambda (lambda (++ (singleton $0) $1))) empty $0))

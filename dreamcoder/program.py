@@ -368,7 +368,7 @@ class Application(Program):
             print("f:", self.f)
             print("type of f:", type(self.f))
             print("parse:", parse[0], parse[1])
-            from valueHead import computeValueError
+            from dreamcoder.valueHead import computeValueError
             raise computeValueError
 
         if self.isConditional and not self.branch.hasHoles:
@@ -706,9 +706,13 @@ class Primitive(Program):
         if parse:
             f, xs = parse
 
+        exceptionList = ['all', 'any', 'filter', 'sort']
+
         def abstractEvalAndReCurry(*args):
             #abstract condition
-            if any(type(arg) == torch.Tensor for arg in args) or self.name == 'unfold': #TODO STOPGAP
+            if any(type(arg) == torch.Tensor for arg in args) or self.name == 'unfold' \
+            or ( self.name in exceptionList and any( tp.isArrow and x.hasHoles \
+                    for tp, x in zip(self.tp.functionArguments(), xs )) ): #TODO STOPGAP
                 x_tps = self.tp.functionArguments()
                 abstractArgs = []
                 for i, arg in enumerate(args):
