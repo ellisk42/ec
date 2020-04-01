@@ -74,13 +74,13 @@ def plotTestResults(testResults, timeout, defaultLoss=None,
 
 if __name__ == '__main__':
 
-    ID = "listBaseIT=1" #"listBaseIT=1Long"
+    ID = 'listRichPrims' #R1 #"listBaseIT=1" #"listBaseIT=1Long"
 
     nameSalt = "zoomed"
     #paths = [('experimentOutputs/listCathyTestGraph_SRE=True_graph=True.pickle', 'mock' )]
 
     #ID = 'cathy'
-    nameSalt = 'zoomed'
+    #nameSalt = 'zoomed'
     paths = [('experimentOutputs/listCathyTestEnum_SRE=True_graph=True.pickle', 'Enum' ),
         ('experimentOutputs/listCathyTestRNN_SRE=True_graph=True.pickle', 'RNN'),
         ('experimentOutputs/listCathyTestSample_SRE=True_graph=True.pickle', 'Sample')]
@@ -93,6 +93,9 @@ if __name__ == '__main__':
     #           ('experimentOutputs/listCathyTestRNN.pickle', 'RNN')
     #           ('experimentOutputs/listCathyTestREPL.pickle', 'Abstract REPL') ]
 
+    paths = [(f'experimentOutputs/{ID}Sample_SRE=True_graph=True.pickle', 'Enum'),
+        (f'experimentOutputs/{ID}RNN_SRE=True_graph=True.pickle', 'RNN'),
+        (f'experimentOutputs/{ID}REPL_SRE=True_graph=True.pickle', 'REPL')]
 
     timeout=300
     outputDirectory = 'plots'

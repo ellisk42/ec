@@ -5,10 +5,10 @@
 time=300
 recSteps=480000 #repl is roughly 1k/hour (0.33 steps/sec)
 ncores=8
-salt=richPrimsR1
+salt=richPrimsR1long
 #resume=experimentOutputs/listBaseIT=1 #experimentOutputs/listCathyTestEnum
 #resume=experimentOutputs/listCathyTest
-resume=experimentOutputs/listRichPrimsR1
+resume=experimentOutputs/listRichPrimsR1long
 
 cp ${resume}.pickle ${resume}Sample.pickle
 #Train:
