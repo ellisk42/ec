@@ -275,7 +275,7 @@ class AbstractREPLValueHead(BaseValueHead):
     def _getInitialSketchRep(self, sketch):
         try:
             return sketch.abstractEval(self, [])
-        except (ValueError, IndexError, ZeroDivisionError, computeValueError, RuntimeError):
+        except (ValueError, IndexError, ZeroDivisionError, computeValueError, RuntimeError) as e:
             print("caught exception")
             print("sketch", sketch)
             print(e)

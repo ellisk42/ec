@@ -1047,6 +1047,7 @@ class RecognitionModel(nn.Module):
         totalGradientSteps = self.gradientStepsTaken
         startingGradientSteps = self.gradientStepsTaken
         epochs = 9999999
+        n_runtimeErrors = 0
         for i in range(1, epochs + 1):
             if timeout and time.time() - start > timeout:
                 break
@@ -1100,7 +1101,15 @@ class RecognitionModel(nn.Module):
                     eprint("Invalid real-data loss!")
                 else:
                     #ttt = time.time()
-                    (loss + classificationLoss + valueHeadLoss).backward()
+                    try:
+                        (loss + classificationLoss + valueHeadLoss).backward()
+                        n_runtimeErrors = 0
+                    except RuntimeError as e:
+                        print("WARNING: had a runtime error on backwards step")
+                        print(e)
+                        n_runtimeErrors += 1
+                        if n_runtimeErrors > 5: assert False, "CUDA DIED..."
+                        continue
                     #print(f"tot backward time: {time.time() - ttt}")
                     classificationLosses.append(classificationLoss.data.item())
                     valueHeadLosses.append (valueHeadLoss.data.item() if self.useValue else 0)
