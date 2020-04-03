@@ -70,7 +70,7 @@ class BaseValueHead(nn.Module):
         super(BaseValueHead, self).__init__()
     def computeValue(self, sketch, task):
         assert False, "not implemented"
-    def valueLossFromFrontier(frontier, g):
+    def valueLossFromFrontier(self, frontier, g):
         assert False, "not implemented"
 
 class SampleDummyValueHead(BaseValueHead):
