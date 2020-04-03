@@ -684,6 +684,7 @@ class RecognitionModel(nn.Module):
             self._MLP.load_state_dict(previousRecognitionModel._MLP.state_dict())
             self.featureExtractor.load_state_dict(previousRecognitionModel.featureExtractor.state_dict())
 
+        self.filterMotifs = [] #TODO
         # value function
         if valueHead: assert useValue
         if useValue:
@@ -1052,7 +1053,7 @@ class RecognitionModel(nn.Module):
             if timeout and time.time() - start > timeout:
                 break
 
-            if totalGradientSteps > steps:
+            if totalGradientSteps >= steps:
                 break
 
             if helmholtzRatio < 1.:
@@ -1072,20 +1073,7 @@ class RecognitionModel(nn.Module):
                         else self.frontierKL(frontier, auxiliary=auxLoss, vectorized=vectorized)
 
                 if self.useValue:
-                    #TODO gramamr issue here... need a grammar object but none exist in this context
-                    # import dill
-                    # with open('testFrontier.pickle', 'rb') as h:
-                    #     lst = dill.load(h)
-                    # if type(lst) == tuple: lst = []
-
-                    # lst.append((frontier,self.grammar))
-                    # with open('testFrontier.pickle', 'wb') as h:
-                    #     dill.dump(lst, h)
-                    # if len(lst) >= 10: assert 0
-
                     valueHeadLoss = self.valueHead.valueLossFromFrontier(frontier, self.grammar) 
-                    # print("DEACTIVATED VALUE LOSS TRAINING FOR NOW")
-                    # valueHeadLoss = 0
                 else:
                     valueHeadLoss = 0
 
@@ -1175,7 +1163,13 @@ class RecognitionModel(nn.Module):
         program = self.generativeModel.sample(request, maximumDepth=6, maxAttempts=100)
         if program is None:
             return None
-        task = self.featureExtractor.taskOfProgram(program, request)
+
+        if self.filterMotifs:
+            for _, expr in program.walkUncurried():
+                if any( f(expr) for f in self.filterMotifs):
+                    return None
+
+        task = self.featureExtractor.taskOfProgram(program, request) 
 
         if statusUpdate is not None:
             flushEverything()
@@ -1295,7 +1289,7 @@ class RecognitionModel(nn.Module):
                    #  "ocaml": solveForTask_ocaml,   
                    # "pypy": solveForTask_pypy,   
                    "python": self.solveForTask_python}   
-        assert solver in solvers, "You must specify a valid solver. options are ocaml, pypy, or python." 
+        assert solver in solvers, "You must specify a valid solver. only python is valid for value." 
 
         likelihoodModel = None
         if solver == 'pypy' or solver == 'python':
@@ -1530,6 +1524,7 @@ class RecognitionModel(nn.Module):
                               upperBound=100.,
                               budgetIncrement=1.0, maximumFrontiers=None):
         """
+        DEPRICATED
         this was copied from enumeration.enumerateForTasks
         this happens within the parallel call
 
