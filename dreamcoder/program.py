@@ -207,7 +207,7 @@ class Program(object):
             for j,v in enumerate(environment):
                 if s == v: return Index(j)
             if s in Primitive.GLOBALS: return Primitive.GLOBALS[s]
-            assert False
+            assert False, f"could not parse {s}"
         return p(s, [])
                 
                 

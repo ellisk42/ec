@@ -64,10 +64,10 @@ let supervised_task ?timeout:(timeout = 0.001) name ty examples =
 let task_handler = Hashtbl.Poly.create();;
 let register_special_task name handler = Hashtbl.set task_handler name handler;;
 
-let recent_logo_program : (program*((int, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t option)) option ref = ref None;;
+let recent_logo_program : (program*((((int, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t)*float) option)) option ref = ref None;;
 let run_recent_logo ~timeout program =
   match !recent_logo_program with
-  | Some(program', bx) when program_equal program program' -> bx
+  | Some(program', bxcost) when program_equal program program' -> bxcost
   | _ ->
     let bx = run_for_interval timeout
                  (fun () ->
@@ -79,7 +79,7 @@ let run_recent_logo ~timeout program =
                     else match CachingTable.find p2i l with
                       | Some(bx) -> Some(bx)
                       | None -> 
-                        let bx = LogoLib.LogoInterpreter.turtle_to_array x 28 in
+                        let bx = LogoLib.LogoInterpreter.turtle_to_array_and_cost x 28 in
                         CachingTable.set p2i l bx;
                         Some(bx))
     in
@@ -95,11 +95,12 @@ let run_recent_logo ~timeout program =
 
 register_special_task "LOGO" (fun extras ?timeout:(timeout = 0.001) name ty examples ->
     let open Yojson.Basic.Util in
-    let proto =
+
+    let cost_bound =
       try
-        extras |> member "proto" |> to_bool
-      with _ -> (Printf.eprintf "proto parameter not set! FATAL"; exit 1)                
-    in
+        extras |> member "cost" |> to_float
+      with _ -> 9999999999999.
+    in 
 
   let by = match examples with
       | [([0],y)] ->
@@ -109,83 +110,20 @@ register_special_task "LOGO" (fun extras ?timeout:(timeout = 0.001) name ty exam
     task_type = ty ;
     log_likelihood =
       (fun p ->
-        let s_inout =
-          if proto then
-            Some(
-              open_connection
-                (ADDR_UNIX("./prototypical-networks/protonet_socket"))
-                )
-          else None in
-
-        let log_likelihood = (try begin
-            match
-              if true then
-                (match run_recent_logo ~timeout p with
-                 | Some(bx) when (LogoLib.LogoInterpreter.fp_equal bx by 0) -> Some(0.)
-                 | _ -> None)
-              else 
-            run_for_interval
-              timeout
-              (fun () ->
-                let x = run_lazy_analyzed_with_arguments (analyze_lazy_evaluation p) [] in
-                let l = LogoLib.LogoInterpreter.turtle_to_list x in
-                let bx =
-                  match CachingTable.find p2i l with
-                  | Some(x) -> x
-                  | _ ->
-                    let bx = LogoLib.LogoInterpreter.turtle_to_array x 28 in
-                    CachingTable.set p2i l bx ;
-                    bx
-                in
-                if proto then begin
-                  let s_in, s_out = match s_inout with
-                    | Some(x,y) -> x, y
-                    | _ -> failwith "NOOOOO, don't dooo that !!!"
-                  in
-                  let bytes_version = Bytes.create (28 * 28) in
-                  for i = 0 to (28 * 28) - 1 do
-                    Bytes.set bytes_version i (char_of_int (bx.{i}))
-                  done ;
-                  let img = Bytes.to_string bytes_version in
-                  output_binary_int s_out (String.length name) ;
-                  output_string s_out name ;
-                  output_binary_int s_out (String.length img) ;
-                  output_string s_out img ;
-                  flush s_out ;
-                  let l = input_binary_int s_in in
-                  float_of_string (really_input_string s_in l)
-                end
-                else begin
-                  if (LogoLib.LogoInterpreter.fp_equal bx by 5) then 0.0
-                  else log 0.0
-                end)
-          with
-            | Some(x) -> x
-            | _ -> log 0.0
-        end
-        with (* We have to be a bit careful with exceptions if the
+        try
+          match run_recent_logo ~timeout p with
+          | Some(bx,cost) when (*cost <= cost_bound && *) (LogoLib.LogoInterpreter.fp_equal bx by 0) -> (0.-.cost)*.10.
+          | _ -> log 0.
+           with (* We have to be a bit careful with exceptions if the
               * synthesized program generated an exception, then we just
               * terminate w/ false but if the enumeration timeout was
               * triggered during program evaluation, we need to pass the
               * exception on
               *)
-          | UnknownPrimitive(n) -> raise (Failure ("Unknown primitive: "^n))
-          | EnumerationTimeout  -> raise EnumerationTimeout
-          | _                   -> log 0.0) in
-        if proto then begin
-          let s_in, s_out = match s_inout with
-            | Some(x,y) -> x, y
-            | _ -> failwith "NOOOOO, don't dooo that !!!"
-          in
-          output_binary_int s_out (String.length "DONE") ;
-          output_string s_out "DONE" ;
-          flush s_out ;
-          shutdown_connection s_in ;
-          close_in s_in ;
-          (-. (100. *. log_likelihood))
-        end else log_likelihood)
+           | UnknownPrimitive(n) -> raise (Failure ("Unknown primitive: "^n))
+           | EnumerationTimeout  -> raise EnumerationTimeout
+           | _                   -> log 0.0)
   });;
-
 
 
 register_special_task "differentiable"

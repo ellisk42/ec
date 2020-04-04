@@ -80,11 +80,15 @@ let eval_turtle ?sequence (t2t : turtle -> turtle) =
   and moveto x y = (c := (moveto !c x y)) in
   let t = init_state () in
   moveto t.x t.y ;
+  let total_cost = ref 0. in
   let rec eval_instruction i = match i with
     | SEGMENT(x1,y1,x2,y2) ->
-      (moveto x1 y1; lineto x2 y2)  in
+      (total_cost := !total_cost +. (sqrt ((x1-.x2)*.(x1-.x2) +. (y1-.y2)*.(y1-.y2)));
+       moveto x1 y1;
+       lineto x2 y2)
+  in
   List.iter eval_instruction p ;
-  !c
+  !c,!total_cost
 
 let animate_turtle ?sequence (t2t : turtle -> turtle) =
   let p,_ = (t2t logo_NOP) (init_state ()) in
@@ -148,14 +152,20 @@ let turtle_to_list turtle =
   let l,_ = (turtle logo_NOP) (init_state ()) in l |> center_logo_list
 
 let turtle_to_png turtle resolution filename =
-  output_canvas_png (eval_turtle turtle) resolution filename
+  let et,_ = eval_turtle turtle in
+  output_canvas_png et resolution filename
 
 let turtle_to_array turtle resolution =
-  canvas_to_1Darray (eval_turtle turtle) resolution
+  let et,_ = eval_turtle turtle in
+  canvas_to_1Darray et resolution
+
+let turtle_to_array_and_cost turtle resolution =
+  let et,cost = eval_turtle turtle in
+  (canvas_to_1Darray et resolution, cost)
 
 
 let turtle_to_both turtle resolution filename =
-  let c = (eval_turtle turtle) in
+  let c,_ = eval_turtle turtle in
   output_canvas_png c resolution filename ;
   canvas_to_1Darray c resolution
 
