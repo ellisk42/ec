@@ -861,7 +861,7 @@ def commandlineArguments(_=None,
     parser.add_argument(
         "--compressor",
         default=compressor,
-        choices=["pypy","rust","vs","pypy_vs","ocaml"])
+        choices=["pypy","rust","vs","pypy_vs","ocaml","memorize"])
     parser.add_argument(
         "--matrixRank",
         help="Maximum rank of bigram transition matrix for contextual recognition model. Defaults to full rank.",

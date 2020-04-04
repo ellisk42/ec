@@ -39,10 +39,37 @@ def induceGrammar(*args, **kwargs):
             kwargs['topI'] = 300
             kwargs['bs'] = 1000000
             g, newFrontiers = ocamlInduce(*args, **kwargs)
+        elif backend == "memorize":
+            g, newFrontiers = memorizeInduce(*args, **kwargs)
         else:
             assert False, "unknown compressor"
     return g, newFrontiers
 
+def memorizeInduce(g, frontiers, **kwargs):
+    existingInventions = {p.uncurry()
+                          for p in g.primitives }
+    programs = {f.bestPosterior.program for f in frontiers if not f.empty}
+    newInventions = programs - existingInventions
+    newGrammar = Grammar.uniform([p for p in g.primitives] + \
+                                 [Invented(ni) for ni in newInventions])
+    
+    # rewrite in terms of new primitives
+    def substitute(p):
+        nonlocal newInventions
+        if p in newInventions: return Invented(p).uncurry()
+        return p
+    newFrontiers = [Frontier([FrontierEntry(program=np,
+                                            logPrior=newGrammar.logLikelihood(f.task.request, np),
+                                            logLikelihood=e.logLikelihood)
+                           for e in f
+                           for np in [substitute(e.program)] ],
+                             task=f.task)
+                 for f in frontiers ]
+    return newGrammar, newFrontiers
+    
+    
+        
+    
 
 def pypyInduce(*args, **kwargs):
     kwargs.pop('iteration')
