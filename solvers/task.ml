@@ -145,6 +145,7 @@ register_special_task "differentiable"
     let temperature = maybe_float "temperature" 1. in
     let parameterPenalty = maybe_float "parameterPenalty" 0. in
     let maxParameters = maybe_int "maxParameters" 99 in
+    let actualParameters = maybe_int "maxParameters" 99 in
     let restarts = maybe_int "restarts" 300 in
     let steps = maybe_int "steps" 50 in
     let lr = maybe_float "lr" 0.5 in
@@ -173,7 +174,7 @@ register_special_task "differentiable"
       (fun expression ->
          let (p,parameters) = replace_placeholders expression in
          assert (List.length parameters <= maxParameters);
-        if List.length parameters > maxParameters then log 0. else 
+        if List.length parameters > maxParameters || List.length parameters > actualParameters then log 0. else 
           let p = analyze_lazy_evaluation p in
           (* let predictions = examples |> List.map ~f:(fun (xs,_) -> *)
           (*     run_for_interval timeout (fun () -> run_lazy_analyzed_with_arguments p xs)) *)

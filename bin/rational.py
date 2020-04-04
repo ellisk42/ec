@@ -17,7 +17,7 @@ from dreamcoder.type import arrow, treal
 from dreamcoder.utilities import testTrainSplit, eprint, numberOfCPUs
 
 
-def makeTask(name, f):
+def makeTask(name, f, actualParameters):
     xs = [x / 100. for x in range(-500, 500)]
 
     maximum = 10
@@ -45,6 +45,7 @@ def makeTask(name, f):
                                restarts=360, steps=50,
                                likelihoodThreshold=-0.05,
                                temperature=0.1,
+                               actualParameters=actualParameters,
                                maxParameters=6,
                                loss=squaredErrorLoss)
         t.f = f
@@ -115,7 +116,8 @@ def randomFactored(order):
 def randomRational():
     no = random.choice([0, 1])
     nn, n = randomPolynomial(no)
-    dn, d = randomFactored(random.choice([1, 2]))
+    nf = random.choice([1, 2])
+    dn, d = randomFactored(nf)
 
     def f(x): return n(x) / d(x)
 
@@ -124,7 +126,7 @@ def randomRational():
     else:
         name = "(%s)/[%s]" % (nn, dn)
 
-    return name, f
+    return name, f, no + 1 + nf
 
 
 def randomPower():
@@ -210,33 +212,33 @@ def makeTasks():
     ts = []
     while len(ts) < tasksPerType:
         n, f = randomOffset()
-        if makeTask(n, f) is None:
+        if makeTask(n, f, 1) is None:
             continue
-        ts.append(makeTask(n, f))
+        ts.append(makeTask(n, f, 1))
     tasks += ts
 
     for o in range(1, 5):
         ts = []
         while len(ts) < tasksPerType:
             n, f = randomPolynomial(o)
-            if makeTask(n, f) is None:
+            if makeTask(n, f, o + 1) is None:
                 continue
-            ts.append(makeTask(n, f))
+            ts.append(makeTask(n, f, o + 1))
         tasks += ts
     ts = []
     while len(ts) < tasksPerType * 3:
-        n, f = randomRational()
-        if makeTask(n, f) is None:
+        n, f, df = randomRational()
+        if makeTask(n, f, df) is None:
             continue
-        ts.append(makeTask(n, f))
+        ts.append(makeTask(n, f, df))
     tasks += ts
 
     ts = []
     while len(ts) < tasksPerType:
         n, f = randomPower()
-        if makeTask(n, f) is None:
+        if makeTask(n, f, 1) is None:
             continue
-        ts.append(makeTask(n, f))
+        ts.append(makeTask(n, f, 1))
     tasks += ts
     return tasks
 
@@ -276,7 +278,7 @@ class FeatureExtractor(ImageFeatureExtractor):
         p = p.visit(RandomParameterization.single)
 
         def f(x): return p.runWithArguments([x])
-        t = makeTask(str(p), f)
+        t = makeTask(str(p), f, None)
         if t is None:
             return None
         t.features = drawFunction(200, 5., t.f)

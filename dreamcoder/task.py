@@ -140,10 +140,11 @@ class DifferentiableTask(Task):
 
     def __init__(self, name, request, examples, _=None,
                  features=None, BIC=1., loss=None, likelihoodThreshold=None,
-                 steps=50, restarts=300, lr=0.5, decay=0.5, grow=1.2,
+                 steps=50, restarts=300, lr=0.5, decay=0.5, grow=1.2, actualParameters=None,
                  temperature=1., maxParameters=None, clipLoss=None, clipOutput=None):
         assert loss is not None
         self.temperature = temperature
+        self.actualParameters = actualParameters
         self.maxParameters = maxParameters
         self.loss = loss
         self.BIC = BIC
@@ -156,6 +157,7 @@ class DifferentiableTask(Task):
                      "lossThreshold": -likelihoodThreshold}
         if clipLoss is not None: arguments['clipLoss'] = float(clipLoss)
         if clipOutput is not None: arguments['clipOutput'] = float(clipOutput)
+        if actualParameters is not None: arguments['actualParameters'] = int(actualParameters)
         
         self.specialTask = ("differentiable",
                             arguments)
@@ -174,6 +176,9 @@ class DifferentiableTask(Task):
         e, parameters = PlaceholderVisitor.execute(e)
         if self.maxParameters is not None and len(
                 parameters) > self.maxParameters:
+            return NEGATIVEINFINITY
+        if self.actualParameters is not None and len(
+                parameters) > self.actualParameters:
             return NEGATIVEINFINITY
         f = e.evaluate([])
 

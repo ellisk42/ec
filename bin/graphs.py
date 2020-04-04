@@ -148,7 +148,7 @@ def addStupidRegex(frontier, g):
         stupidProgram = Program.parse("(lambda (r_kleene (lambda (r_dot $0)) $0))")
         stupidRegex = stupidProgram.evaluate([])(pre.String(""))
         
-    if any( e.program == stupidProgram for e in frontier ): return frontier
+    if any( e.program == stupidProgram for e in frontier ): return frontier.normalize()
     lp = g.logLikelihood(frontier.task.request, stupidProgram)    
     ll = sum(stupidRegex.match("".join(example)) for _,example in frontier.task.examples)
     fe = FrontierEntry(logPrior=lp, logLikelihood=ll, program=stupidProgram)
@@ -322,6 +322,13 @@ def plotECResult(
     assert not (onlyTime and not showSolveTime)
     if onlyTime: assert testingTimeout
 
+    # we create a special key for caching
+    # we concatenate this with the checkpoint name
+    # and that gives us a magic filename where we will get the data
+    cachingKey = (cutoff, likelihood, iterations, showTraining)
+
+
+    # make a parallel list of colors
     colorNames = matplotlib_colors()
     currentColor = None
     results = []
@@ -333,26 +340,14 @@ def plotECResult(
                 colors = []
             continue
         
-        result = loadfun(path)
-        print("loaded path:", path)
-        if likelihood is not None or cutoff is not None:
-            if arguments.goodPrior:
-                print("WARNING: Skipping prior update - you better already have updated the priors!")
-            else:
-                updatePriors(result, path)
+        result = path
+        print("will be loading path:", path)
 
-        if hasattr(result, "baselines") and result.baselines:
-            assert False, "baselines are deprecated."
-        else:
-            results.append(result)
-            parameters.append(parseResultsPath(path))
-            if currentColor is not None:
-                colors.append(currentColor)
+        results.append(result)
+        parameters.append(parseResultsPath(path))
+        if currentColor is not None:
+            colors.append(currentColor)
 
-    if testingTimeout is not None:
-        for r in results:
-            r.testingSearchTime = [ [t for t in ts if t <= testingTimeout ]
-                                    for ts in r.testingSearchTime ]
     
     f, a1 = plot.subplots(figsize=(arguments.width, arguments.height))
     if xLabel != "":
@@ -397,9 +392,8 @@ def plotECResult(
         else:
             timeAxis = None
 
-    n_iters = max(len(result.learningCurve) for result in results)
-    if iterations and n_iters > iterations:
-        n_iters = iterations
+    assert iterations is not None, "you must specify number of iterations on commandline. ` -i <some number>`"
+    n_iters = iterations
 
     plot.xticks(range(0, n_iters), fontsize=TICKFONTSIZE)
 
@@ -408,37 +402,51 @@ def plotECResult(
         colors = ["#D95F02", "#1B9E77", "#662077", "#FF0000"] + ["#000000"]*100
     usedLabels = []
 
-    showSynergyMatrix(results)
+    #showSynergyMatrix(results)
 
     cyclesPerEpic = None
     plotCommands_solve = {} # Map from (color,line style) to (xs,ys) for a1
     plotCommands_time = {} # Map from (color,line style) to (xs,ys) for a2
     for result, p, color in zip(results, parameters, colors):
-        if likelihood is None:
-            if showTraining:
-                ys = [100.*t/float(len(result.taskSolutions))
-                      for t in result.learningCurve[:iterations]]
-            else:
-                if cutoff is None:
-                    ys = [100. * len(t) / result.numTestingTasks
-                          for t in result.testingSearchTime[:iterations]]
-                else:
-                    ys = getCutOffHits(result, cutoff)[:iterations]
+        path = result
+        print("loading path:",result)
+        cachingFileKey = "data/." + "gc_" + str(computeMD5hash(str((path,cachingKey))))
+        if arguments.caching and os.path.exists(cachingFileKey):
+            print("just kidding I found a cache file:")
+            print(cachingFileKey)
+            ys = loadPickle(cachingFileKey)
         else:
-            ys = [(getTrainingLikelihood if showTraining else getTestingLikelihood)(likelihood, result, iteration)
-                  for iteration in range(iterations) ]
+            result = loadfun(result)
+            if likelihood is not None or cutoff is not None:
+                if arguments.goodPrior:
+                    print("WARNING: Skipping prior update - you better already have updated the priors!")
+                else:
+                    updatePriors(result, path)
+            if testingTimeout is not None:
+                result.testingSearchTime = [ [t for t in ts if t <= testingTimeout ]
+                                             for ts in result.testingSearchTime ]
+
+            if likelihood is None:
+                if showTraining:
+                    ys = [100.*t/float(len(result.taskSolutions))
+                          for t in result.learningCurve[:iterations]]
+                else:
+                    if cutoff is None:
+                        ys = [100. * len(t) / result.numTestingTasks
+                              for t in result.testingSearchTime[:iterations]]
+                    else:
+                        ys = getCutOffHits(result, cutoff)[:iterations]
+            else:
+                ys = [(getTrainingLikelihood if showTraining else getTestingLikelihood)(likelihood, result, iteration)
+                      for iteration in range(iterations) ]
+
+        if arguments.caching and not os.path.exists(cachingFileKey):
+            print("Updating cache")
+            dumpPickle(ys,cachingFileKey)
             
         xs = list(range(0, len(ys)))
         if showEpochs:
-            if 'taskBatchSize' not in p.__dict__:
-                print("warning: Could not find batch size in result. Assuming batching was not used.")
-                newCyclesPerEpic = 1
-            else:
-                newCyclesPerEpic = (float(len(result.taskSolutions))) / p.taskBatchSize
-            if cyclesPerEpic is not None and newCyclesPerEpic != cyclesPerEpic:
-                print("You are asking to show epochs, but the checkpoints differ in terms of how many w/s cycles there are per epochs. aborting!")
-                assert False
-            cyclesPerEpic = newCyclesPerEpic
+            assert False, "showEpochs deprecated"
         if labels:
             if len(usedLabels) == 0 or usedLabels[-1][1] != color:
                 usedLabels.append((labels[0], color))
@@ -558,16 +566,7 @@ def plotECResult(
         if n%cycle_label_frequency != 0:
             label.set_visible(False)
 
-    if showEpochs:
-        nextEpicLabel = 1
-        while nextEpicLabel*cyclesPerEpic <= n_iters:
-            a1.annotate('Epoch %d'%nextEpicLabel if (nextEpicLabel - 1)%epochFrequency == 0 else " ",
-                        xy=(nextEpicLabel*cyclesPerEpic, 0),
-                        xytext=(nextEpicLabel*cyclesPerEpic, 20),
-                        arrowprops=dict(facecolor='black', shrink=0.05),
-                        horizontalalignment='center')
-            nextEpicLabel += 1
-            
+    if showEpochs: assert False
 
     if showSolveTime:
         timeAxis.set_ylim(ymin=0)
@@ -673,6 +672,10 @@ if __name__ == "__main__":
                         help="Plots the median and 25/75 percentile of hits over time")
     parser.add_argument("--width",'-w',default=5,type=float)
     parser.add_argument("--height",'-H',default=2.5,type=float)
+    parser.add_argument("--caching",
+                        default=False, action='store_true',
+                        help="try to cashe the calculation of the curves on disk")
+
 
 
     arguments = parser.parse_args()
