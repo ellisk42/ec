@@ -9,6 +9,8 @@ from dreamcoder.grammar import *
 from dreamcoder.zipper import *
 import random
 import time
+from dreamcoder.domains.tower.towerPrimitives import TowerState, _empty_tower
+from dreamcoder.domains.tower.tower_common import renderPlan
 
 class computeValueError(Exception):
     pass
@@ -388,6 +390,99 @@ class AbstractREPLValueHead(BaseValueHead):
             return self._valueLossFromFrontier(frontier, g)
         except RuntimeError:
             return torch.tensor([0.]).cuda()
+
+
+class TowerREPLValueHead(AbstractREPLValueHead):
+    def __init__(self, g, featureExtractor, H=512): #should be 512 or something
+                #specEncoder can be None, meaning you dont use the spec at all to encode objects
+        super(TowerREPLValueHead, self).__init__(g, featureExtractor, H=H)
+
+    def convertToVector(self, value):
+        if isistance(value, torch.Tensor):
+            return value
+
+        if isinstance(value, Program):
+            return self.RNNHead._encodeSketches([value]).squeeze(0)
+
+        if isinstance(value, int):
+            return self.fn_modules[str(value)]() #this should work?
+
+        if isinstance(value, TowerState): #is this right?
+            state = value
+            plan = [tup for tup in value.history if isinstance(tup, tuple)] #filters out states, leaving only actions
+            hand = state.hand
+            image = renderPlan(plan, drawHand=hand, pretty=False)
+            return self.featureExtractor(image) #also encode orientation info !!!
+
+####
+    def encodeHole(self, hole, env):
+        assert hole.isHole
+        assert env == [_empty_tower]
+        #stackOfEnvVectors = [self.convertToVector(val) for val in env]
+        #environmentVector = self._encodeStack(stackOfEnvVectors)
+        #return self.holeParam(environmentVector)
+        out = torch.Tensor(H)
+        if self.use_cuda: out = out.cuda()
+        return self.holeParam(out)
+
+    def _encodeStack(self, stackOfVectors):
+        #return self.convertToVector(stackOfVectors)
+        pass 
+
+    def encodeTowerHole(self, hole, env, state):
+        stateVec = convertToVector(state)
+        assert env == [_empty_tower]
+        return self.holeParam(stateVec) #TODO may need to change all of this up
+
+    def _computeOutputVectors(self, task):
+        outVectors = [self.featureExtractor.featuresOfTask(task)]
+        outVectors = torch.stack(outVectors, dim=0)
+        return outVectors
+####
+
+    def _computeSketchRepresentation(self, sketch, xs, p=None):
+        if p is None:
+            p = self._getInitialSketchRep(sketch)
+        try:
+            res = p(_empty_tower)(TowerState(history=[])) 
+        except (ValueError, IndexError, ZeroDivisionError, computeValueError, RuntimeError) as e:
+            print("caught exception")
+            print("sketch", sketch)
+            #print(e)
+            raise computeValueError
+        except Exception:
+            print("caught exception")
+            print("sketch", sketch)
+            #print("IO", xs)
+            assert 0
+        res = self.convertToVector(res) #TODO
+        return res
+
+    def _getInitialSketchRep(self, sketch):
+        try:
+            return sketch.abstractEval(self, [])
+        except (ValueError, IndexError, ZeroDivisionError, computeValueError, RuntimeError) as e:
+            print("caught exception")
+            print("sketch", sketch)
+            print(e)
+            raise computeValueError
+
+    def _computeValue(self, sketch, task, outVectors=None):
+        """TODO: [x] hash things like outputVector representation
+        """
+        if outVectors is None:
+            outVectors = _computeOutputVectors(task)
+
+        p = self._getInitialSketchRep(sketch)
+
+        evalVectors = [self._computeSketchRepresentation(sketch, xs, p=p)]
+        evalVectors = torch.stack(evalVectors, dim=0)
+
+        distance = self._distance(torch.cat([evalVectors, outVectors], dim=1)).mean(0) #TODO
+        return distance #Or something ...
+
+
+
 
 if __name__ == '__main__':
     try:

@@ -7,8 +7,6 @@ recSteps=480000 #repl is roughly 1k/hour (0.33 steps/sec)
 ncores=8
 salt=richPrimsR1
 helmRatio=1
-#resume=experimentOutputs/listBaseIT=1 #experimentOutputs/listCathyTestEnum
-#resume=experimentOutputs/listCathyTest
 resume=experimentOutputs/listRichPrimsR1
 
 cp ${resume}.pickle ${resume}Sample.pickle
@@ -17,7 +15,7 @@ sbatch -e listSample${salt}.out -o listSample${salt}.out execute_gpu_new.sh pyth
 
 cp ${resume}.pickle ${resume}REPL.pickle
 #Train:
-om-repeat sbatch -e listREPL${salt}.out -o listREPL${salt}.out -p tenenbaum --time=3600 --mem=64G --cpus-per-task=8 --gres=gpu:QUADRORTX6000:1 python bin/list.py --recognitionTimeout 216000 --resumeTraining -r ${helmRatio} --primitives rich --split 0.5 -t ${time} -RS ${recSteps} --solver 'python'  -c ${ncores} --useValue AbstractREPL -i 2 -H 512 --resume ${resume}REPL.pickle --singleRoundValueEval)
+om-repeat sbatch -e listREPL${salt}.out -o listREPL${salt}.out -p tenenbaum --time=3600 --mem=64G --cpus-per-task=8 --gres=gpu:QUADRORTX6000:1 python bin/list.py --recognitionTimeout 216000 --resumeTraining -r ${helmRatio} --primitives rich --split 0.5 -t ${time} -RS ${recSteps} --solver 'python'  -c ${ncores} --useValue AbstractREPL -i 2 -H 512 --resume ${resume}REPL.pickle --singleRoundValueEval
 
 cp ${resume}.pickle ${resume}RNN.pickle
 #Train:

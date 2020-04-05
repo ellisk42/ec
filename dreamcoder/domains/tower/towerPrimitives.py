@@ -70,15 +70,32 @@ def _reverseHand(k):
     return lambda s: k(s.reverse())
     
 class TowerContinuation(object):
-    def __init__(self, x, w, h):
+    def __init__(self, x, w, h, name):
         self.x = x
         self.w = w*2
         self.h = h*2
+        self.name = name
+        self.valueHead = None
+
     def __call__(self, k):
         def f(hand):
             thisAction = [(self.x + hand.hand,self.w,self.h)]
             hand = hand.recordBlock(thisAction[0])
-            hand, rest = k(hand)
+
+            """output = k(hand)
+            if output == Hole():
+                return Hole()"""
+            
+            output = k(hand)
+
+            if output == Hole():
+                return Hole(tp=ttower)
+
+            if type(output) == torch.Tensor:
+                return output #Which is correct??
+                #return self.valueHead.applyModule(self.name, [output])
+
+            hand, rest = output
             return hand, thisAction + rest
         return f
 
@@ -98,7 +115,7 @@ ttower = baseType("tower")
 common_primitives = [
     Primitive("tower_loopM", arrow(tint, arrow(tint, ttower, ttower), ttower, ttower), _simpleLoop),
     Primitive("tower_embed", arrow(arrow(ttower,ttower), ttower, ttower), _embed),
-] + [Primitive(name, arrow(ttower,ttower), TowerContinuation(0, w, h))
+] + [Primitive(name, arrow(ttower,ttower), TowerContinuation(0, w, h, name))
      for name, (w, h) in blocks.items()] + \
          [Primitive(str(j), tint, j) for j in range(1,9) ]
 primitives = common_primitives + [

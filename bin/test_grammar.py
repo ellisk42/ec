@@ -10,7 +10,7 @@ from dreamcoder.program import Program
 from dreamcoder.valueHead import *
 from dreamcoder.zipper import *
 
-
+from dreamcoder.domains.tower.towerPrimitives import *
 
 bootstrapTarget()
 g = Grammar.uniform([k0,k1,addition, subtraction, Program.parse('cons'), 
@@ -201,6 +201,41 @@ def test_trainAbstractREPL():
         loss.backward()
         optimizer.step()
 
+def test_abstractHolesTower():
+
+    #g = Grammar.uniform([k0,k1,addition, subtraction])
+    # bootstrapTarget_extra()
+
+    #expr = g.sample( request, sampleHoleProb=.2)
+    #expr = Program.parse('(lambda (map (lambda <HOLE>) $0))')
+    #expr = Program.parse('(lambda (map (lambda (+ $0 17111)) (map (lambda <HOLE>) $0)))')
+    #expr = Program.parse('(lambda (map (lambda (+ $0 1)) (map (lambda <HOLE>) $0)))')
+    # expr = Program.parse('(lambda (map (lambda (is-square $0)) $0))')
+    
+
+    def _empty_tower(h): return (h,[])
+
+    
+    expr = Program.parse('(lambda (tower_loopM <HOLE> (lambda (lambda (moveHand 3 (3x1 $0)))) <TowerHOLE>)) ') 
+    #expr = Program.parse('(lambda (tower_loopM 3 (lambda (lambda (moveHand 3 (3x1 $0)))) <TowerHOLE>)) ') 
+
+    #expr = Program.parse('(lambda (tower_loopM 3 (lambda (lambda <TowerHOLE>)) <TowerHOLE>)) ') 
+    #expr = Program.parse('(lambda (3x1 (1x3 $0) ))') 
+
+    #expr = Program.parse('(lambda (3x1 (1x3 <TowerHOLE>) ))') 
+    expr = Program.parse('(lambda (1x3 (moveHand <HOLE> (reverseHand <TowerHOLE>))) )') 
+    expr = Program.parse('(lambda (1x3 (moveHand <HOLE> (reverseHand <TowerHOLE>))) )') 
+    #expr = Program.parse('(lambda (<TowerHOLE>) )') 
+
+    #animateTower('test', expr)
+
+    print(expr.body.applicationParse())
+
+    print("expr:", expr)
+
+    x = expr.evaluateHolesDebug([])(_empty_tower)(TowerState(history=[])) #can initialize tower state with 
+    print(x)
+    
 
 
 
@@ -215,9 +250,10 @@ if __name__=='__main__':
     #test_SingleStep1()
     #test_abstractHoles()
     #test_abstractREPL()
-    test_trainAbstractREPL()
+    # test_trainAbstractREPL()
     # bootstrapTarget_extra()
     # from dreamcoder.domains.list.makeListTasks import make_list_bootstrap_tasks
     # from dreamcoder.domains.list.main import LearnedFeatureExtractor
     # tasks = make_list_bootstrap_tasks()
     # expr = Program.parse('(lambda (map (lambda (is-square $0)) $0))')
+    test_abstractHolesTower()

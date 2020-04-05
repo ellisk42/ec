@@ -423,7 +423,7 @@ def baseHoleOfType(tp):
     if tp.isArrow():
         expr = baseHoleOfType(tp.arguments[1])
         return Abstraction(expr)
-    return Hole()
+    return Hole(tp=tp)
 
 ######
 #TOP LEVEL - do in terms of args 
