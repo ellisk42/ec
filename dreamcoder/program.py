@@ -381,8 +381,8 @@ class Application(Program):
             print("f:", self.f)
             print("type of f:", type(self.f))
             print("parse:", parse[0], parse[1])
-            from dreamcoder.valueHead import computeValueError
-            raise computeValueError
+            #from dreamcoder.valueHead import computeValueError
+            #raise computeValueError
 
         if self.isConditional and not self.branch.hasHoles:
             if self.branch.abstractEval(valueHead, environment):
@@ -390,7 +390,7 @@ class Application(Program):
             else:
                 return self.falseBranch.abstractEval(valueHead, environment)
         else:
-            return self.f.abstractEval(valueHead, environment, parse=pars)(self.x.abstractEval(valueHead, environment))
+            return self.f.abstractEval(valueHead, environment, parse=parse)(self.x.abstractEval(valueHead, environment))
 
     def inferType(self, context, environment, freeVariables):
         (context, ft) = self.f.inferType(context, environment, freeVariables)
@@ -951,7 +951,9 @@ class Hole(Program):
     def __init__(self, tp=None):
         self.tp = tp
 
-    def show(self, isFunction): return "<HOLE>"
+    def show(self, isFunction): 
+        #return f"<HOLE:{self.tp}>"
+        return "<HOLE>"
 
     @property
     def isHole(self): return True
@@ -987,7 +989,7 @@ class Hole(Program):
     def abstractEval(self, valueHead, e):
         from dreamcoder.domains.tower.towerPrimitives import ttower #speed 
         if self.tp == ttower:
-            def returnVal(state, e):
+            def returnVal(e):
                 env = e
                 return lambda state: valueHead.encodeTowerHole(self, env, state)
             return returnVal(e)

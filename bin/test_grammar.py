@@ -226,18 +226,29 @@ def test_abstractHolesTower():
     expr = Program.parse('(lambda (1x3 (moveHand <HOLE> (reverseHand <TowerHOLE>))) )') 
     expr = Program.parse('(lambda (1x3 (moveHand <HOLE> (reverseHand <TowerHOLE>))) )') 
     #expr = Program.parse('(lambda (<TowerHOLE>) )') 
-
+    expr = Program.parse('(lambda (tower_loopM <HOLE> (lambda (lambda <TowerHOLE>)) <TowerHOLE>))')
     #animateTower('test', expr)
-
-    print(expr.body.applicationParse())
-
-    print("expr:", expr)
 
     x = expr.evaluateHolesDebug([])(_empty_tower)(TowerState(history=[])) #can initialize tower state with 
     print(x)
     
 
+def test_abstractHolesTowerValue():
 
+
+    def _empty_tower(h): return (h,[])
+
+    
+    expr = Program.parse('(lambda (tower_loopM <HOLE> (lambda (lambda (moveHand 3 (3x1 $0)))) <TowerHOLE>)) ') 
+ 
+    expr = Program.parse('(lambda (1x3 (moveHand <HOLE> (reverseHand <TowerHOLE>))) )') 
+    expr = Program.parse('(lambda (1x3 (moveHand <HOLE> (reverseHand <TowerHOLE>))) )') 
+    #expr = Program.parse('(lambda (<TowerHOLE>) )') 
+    expr = Program.parse('(lambda (tower_loopM <HOLE> (lambda (lambda <TowerHOLE>)) <TowerHOLE>))')
+    #animateTower('test', expr)
+        
+    x = expr.evaluateHolesDebug([])(_empty_tower)(TowerState(history=[])) #can initialize tower state with 
+    print(x)
 
 if __name__=='__main__':
     #findError()

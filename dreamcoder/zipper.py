@@ -302,10 +302,12 @@ class OneStepFollower:
     def application(self, e):
         if self.path==[]:
             f, xs = e.applicationParse()
+            x_tps = f.tp.functionArguments()
             self.prod = f
             returnVal = f
-            for x in xs: #this may be very bad ...
-                x_tp = x.infer()
+            for i, x in enumerate(xs):
+                #x_tp = x.infer() #i think this is the problem?
+                x_tp = x_tps[i]
                 xHole = baseHoleOfType(x_tp)
                 #xHole = g.sample(x_tp, sampleHoleProb=1.0) #need grammar for bad reason
                 returnVal = Application(returnVal, xHole)

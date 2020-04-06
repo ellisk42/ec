@@ -203,6 +203,9 @@ class NMN(nn.Module):
         if self.nArgs == 0:
             return self.params
         else:
+            print("MODULE Args", args)
+            print(self.operator)
+            print(self.nArgs)
             inp = torch.cat(args, 0) #TODO i think this is correct dim
             out = self.params(inp)
             return out
@@ -398,22 +401,26 @@ class TowerREPLValueHead(AbstractREPLValueHead):
         super(TowerREPLValueHead, self).__init__(g, featureExtractor, H=H)
 
     def convertToVector(self, value):
-        if isistance(value, torch.Tensor):
+        if isinstance(value, torch.Tensor):
             return value
 
-        if isinstance(value, Program):
+        elif isinstance(value, Program):
+            print("I did this")
             return self.RNNHead._encodeSketches([value]).squeeze(0)
 
-        if isinstance(value, int):
+        elif isinstance(value, int):
             return self.fn_modules[str(value)]() #this should work?
 
-        if isinstance(value, TowerState): #is this right?
+        elif isinstance(value, TowerState): #is this right?
             state = value
             plan = [tup for tup in value.history if isinstance(tup, tuple)] #filters out states, leaving only actions
             hand = state.hand
             image = renderPlan(plan, drawHand=hand, pretty=False)
             return self.featureExtractor(image) #also encode orientation info !!!
 
+        else:
+            #return value
+            assert False, f"uncaught object {value} of type {type(value)}"
 ####
     def encodeHole(self, hole, env):
         assert hole.isHole
@@ -421,7 +428,7 @@ class TowerREPLValueHead(AbstractREPLValueHead):
         #stackOfEnvVectors = [self.convertToVector(val) for val in env]
         #environmentVector = self._encodeStack(stackOfEnvVectors)
         #return self.holeParam(environmentVector)
-        out = torch.Tensor(H)
+        out = torch.Tensor(self.H)
         if self.use_cuda: out = out.cuda()
         return self.holeParam(out)
 
@@ -440,15 +447,19 @@ class TowerREPLValueHead(AbstractREPLValueHead):
         return outVectors
 ####
 
-    def _computeSketchRepresentation(self, sketch, xs, p=None):
+    def _computeSketchRepresentation(self, sketch, p=None):
         if p is None:
             p = self._getInitialSketchRep(sketch)
         try:
-            res = p(_empty_tower)(TowerState(history=[])) 
+            res = p(_empty_tower)
+            print("type res", type(res))            
+            res = res(TowerState(history=[])) 
+            print("HIT THIS LINE")
+
         except (ValueError, IndexError, ZeroDivisionError, computeValueError, RuntimeError) as e:
             print("caught exception")
             print("sketch", sketch)
-            #print(e)
+            print(e)
             raise computeValueError
         except Exception:
             print("caught exception")
@@ -475,7 +486,7 @@ class TowerREPLValueHead(AbstractREPLValueHead):
 
         p = self._getInitialSketchRep(sketch)
 
-        evalVectors = [self._computeSketchRepresentation(sketch, xs, p=p)]
+        evalVectors = [self._computeSketchRepresentation(sketch, p=p)]
         evalVectors = torch.stack(evalVectors, dim=0)
 
         distance = self._distance(torch.cat([evalVectors, outVectors], dim=1)).mean(0) #TODO

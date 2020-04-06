@@ -10,7 +10,7 @@ from dreamcoder.taskBatcher import *
 from dreamcoder.primitiveGraph import graphPrimitives
 from dreamcoder.dreaming import backgroundHelmholtzEnumeration
 
-from dreamcoder.valueHead import SimpleRNNValueHead, AbstractREPLValueHead, SampleDummyValueHead
+from dreamcoder.valueHead import SimpleRNNValueHead, AbstractREPLValueHead, SampleDummyValueHead, TowerREPLValueHead
 
 class ECResult():
     def __init__(self, _=None,
@@ -671,6 +671,10 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
             valueHead = SimpleRNNValueHead(grammar, featureExtractorObjects[0]) #init correctly
         elif useValue == "Sample":
             valueHead = SampleDummyValueHead()
+        elif useValue == "TowerREPL":
+            valueHead = TowerREPLValueHead(grammar, 
+                            featureExtractorObjects[0], 
+                            H=featureExtractorObjects[0].outputDimensionality)
         else: assert False
     else:
         valueHead = None
@@ -1068,7 +1072,7 @@ def commandlineArguments(_=None,
                         default=None, type=str)
     parser.add_argument("--useValue", type=str,
                         default=False,
-                        choices=["RNN", "AbstractREPL", "Sample"],
+                        choices=["RNN", "AbstractREPL", "Sample", "TowerREPL"],
                         help="use value-based search")
     parser.add_argument("--singleRoundValueEval",
                         action='store_true',
