@@ -9,7 +9,7 @@
 *.p
 *.pyc
 *~
-figures/*
+figures/
 __pycache__
 _build
 experimentOutputs

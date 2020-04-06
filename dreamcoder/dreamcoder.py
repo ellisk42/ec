@@ -9,7 +9,8 @@ from dreamcoder.fragmentGrammar import *
 from dreamcoder.taskBatcher import *
 from dreamcoder.primitiveGraph import graphPrimitives
 from dreamcoder.dreaming import backgroundHelmholtzEnumeration
-
+from dreamcoder.parser import *
+from dreamcoder.languageUtilities import *
 
 class ECResult():
     def __init__(self, _=None,
@@ -28,7 +29,8 @@ class ECResult():
                  testingSumMaxll=None,
                  hitsAtEachWake=None,
                  timesAtEachWake=None,
-                 allFrontiers=None):
+                 allFrontiers=None,
+                 allLanguage=None):
         self.frontiersOverTime = {} # Map from task to [frontier at iteration 1, frontier at iteration 2, ...]
         self.hitsAtEachWake = hitsAtEachWake or []
         self.timesAtEachWake = timesAtEachWake or []
@@ -47,6 +49,7 @@ class ECResult():
         self.sumMaxll = sumMaxll or [] #TODO name change 
         self.testingSumMaxll = testingSumMaxll or [] #TODO name change
         self.allFrontiers = allFrontiers or {}
+        self.allLanguage = allLanguage or {}
 
     def __repr__(self):
         attrs = ["{}={}".format(k, v) for k, v in self.__dict__.items()]
@@ -75,6 +78,8 @@ class ECResult():
                      "ensembleSize": "ES",
                      "recognitionTimeout": "RT",
                      "recognitionSteps": "RS",
+                     "recognitionEpochs": "RE",
+                     'useWakeLanguage' : "LANG",
                      "iterations": "it",
                      "maximumFrontier": "MF",
                      "pseudoCounts": "pc",
@@ -92,7 +97,9 @@ class ECResult():
                      "storeTaskMetrics": 'STM',
                      "topkNotMAP": "tknm",
                      "rewriteTaskMetrics": "RW",
-                     'taskBatchSize': 'batch'}
+                     'taskBatchSize': 'batch',
+                     'languageFeatureExtractor' : 'lang_ft',
+                     'noConsolidation': 'no_dsl'}
 
     @staticmethod
     def abbreviate(parameter): return ECResult.abbreviations.get(parameter, parameter)
@@ -110,6 +117,7 @@ class ECResult():
             result = dill.load(handle)
         
         result.recognitionModel = None
+        result.parser = None
         
         clearedPath = path[:-len(SUFFIX)] + "_graph=True" + SUFFIX
         with open(clearedPath,'wb') as handle:
@@ -154,8 +162,10 @@ def ecIterator(grammar, tasks,
                useRecognitionModel=True,
                recognitionTimeout=None,
                recognitionSteps=None,
+               recognitionEpochs=None,
                helmholtzRatio=0.,
                featureExtractor=None,
+               languageFeatureExtractor=None,
                activation='relu',
                topK=1,
                topk_use_only_likelihood=False,
@@ -173,7 +183,12 @@ def ecIterator(grammar, tasks,
                storeTaskMetrics=False,
                rewriteTaskMetrics=True,
                auxiliaryLoss=False,
-               custom_wake_generative=None):
+               custom_wake_generative=None,
+               interactive=False,
+               parser=None,
+               interactiveTasks=None,
+               languageDataset=None,
+               useWakeLanguage=False):
     if enumerationTimeout is None:
         eprint(
             "Please specify an enumeration timeout:",
@@ -183,7 +198,7 @@ def ecIterator(grammar, tasks,
         eprint(
             "Please specify a iteration count: explorationCompression(..., iterations = ...)")
         assert False
-    if useRecognitionModel and featureExtractor is None:
+    if useRecognitionModel and (featureExtractor is None and languageFeatureExtractor is None):
         eprint("Warning: Recognition model needs feature extractor.",
                "Ignoring recognition model.")
         useRecognitionModel = False
@@ -191,18 +206,16 @@ def ecIterator(grammar, tasks,
         eprint("Warning: ensemble size requires using the recognition model, aborting.")
         assert False
     if biasOptimal and not useRecognitionModel:
-        eprint("Bias optimality only applies to recognition models, aborting.")
-        assert False
+        eprint("Warning: Bias optimality only applies to recognition models, aborting.")
     if contextual and not useRecognitionModel:
-        eprint("Contextual only applies to recognition models, aborting")
-        assert False
+        eprint("Warning: Contextual only applies to recognition models, aborting")
     if reuseRecognition and not useRecognitionModel:
         eprint("Reuse of recognition model weights at successive iteration only applies to recognition models, aborting")
         assert False
     if matrixRank is not None and not contextual:
         eprint("Matrix rank only applies to contextual recognition models, aborting")
         assert False
-    assert useDSL or useRecognitionModel, "You specified that you didn't want to use the DSL AND you don't want to use the recognition model. Figure out what you want to use."
+    assert useDSL or useRecognitionModel or languageDataset or interactive, "You specified that you didn't want to use the DSL AND you don't want to use the recognition model. Figure out what you want to use."
     if testingTimeout > 0 and len(testingTasks) == 0:
         eprint("You specified a testingTimeout, but did not provide any held out testing tasks, aborting.")
         assert False
@@ -231,7 +244,9 @@ def ecIterator(grammar, tasks,
             "evaluationTimeout",
             "testingTasks",
             "compressor",
-            "custom_wake_generative"} and v is not None}
+            "custom_wake_generative",
+            "interactive",
+            "interactiveTasks"} and v is not None}
     if not useRecognitionModel:
         for k in {"helmholtzRatio", "recognitionTimeout", "biasOptimal", "mask",
                   "contextual", "matrixRank", "reuseRecognition", "auxiliaryLoss", "ensembleSize"}:
@@ -248,6 +263,9 @@ def ecIterator(grammar, tasks,
         for k in {"structurePenalty", "pseudoCounts", "aic"}:
             del parameters[k]
     else: del parameters["useDSL"]
+    
+    if languageDataset:
+        parameters["languageDataset"] = os.path.basename(languageDataset).split(".")[0]
     
     # Uses `parameters` to construct the checkpoint path
     def checkpointPath(iteration, extra=""):
@@ -299,7 +317,9 @@ def ecIterator(grammar, tasks,
                           recognitionModel=None, numTestingTasks=numTestingTasks,
                           allFrontiers={
                               t: Frontier([],
-                                          task=t) for t in tasks})
+                                          task=t) for t in tasks},
+                          allLanguage={
+                              t: [] for t in tasks})
 
 
     # Set up the task batcher.
@@ -319,8 +339,24 @@ def ecIterator(grammar, tasks,
         taskBatcher = RandomkNNTaskBatcher()
     elif taskReranker == 'randomLowEntropykNN':
         taskBatcher = RandomLowEntropykNNTaskBatcher()
+    elif taskReranker == 'curriculum':
+        taskBatcher = CurriculumTaskBatcher()
     else:
         eprint("Invalid task reranker: " + taskReranker + ", aborting.")
+        assert False
+    
+    if parser == 'loglinear':
+        parserModel = LogLinearBigramTransitionParser
+    else:
+        eprint("Invalid parser: " + parser + ", aborting.")
+        assert False
+    
+    if languageFeatureExtractor == 'ngram':
+        languageFeatureExtractor = NgramFeaturizer
+    elif languageFeatureExtractor == 'recurrent':
+        languageFeatureExtractor = TokenRecurrentFeatureExtractor
+    else:
+        eprint("Invalid language featurizer: " + parser + ", aborting.")
         assert False
 
     # Check if we are just updating the full task metrics
@@ -361,6 +397,11 @@ def ecIterator(grammar, tasks,
             
         sys.exit(0)
     
+    # Preload language dataset if avaiable.
+    if languageDataset is not None:
+        result.languageDatasetPath = languageDataset # Store for laters
+        result.allLanguage = languageForTasks(languageDataset, result.allLanguage)
+        eprint("Loaded language dataset from ", languageDataset)
     
     for j in range(resume or 0, iterations):
         if storeTaskMetrics and rewriteTaskMetrics:
@@ -436,14 +477,17 @@ def ecIterator(grammar, tasks,
 
             tasksHitBottomUp = \
              sleep_recognition(result, grammar, wakingTaskBatch, tasks, testingTasks, result.allFrontiers.values(),
-                               ensembleSize=ensembleSize, featureExtractor=featureExtractor, mask=mask,
+                               ensembleSize=ensembleSize, featureExtractor=featureExtractor, 
+                               languageFeatureExtractor=languageFeatureExtractor,
+                               mask=mask,
                                activation=activation, contextual=contextual, biasOptimal=biasOptimal,
                                previousRecognitionModel=previousRecognitionModel, matrixRank=matrixRank,
                                timeout=recognitionTimeout, evaluationTimeout=evaluationTimeout,
                                enumerationTimeout=enumerationTimeout,
                                helmholtzRatio=thisRatio, helmholtzFrontiers=helmholtzFrontiers(),
                                auxiliaryLoss=auxiliaryLoss, cuda=cuda, CPUs=CPUs, solver=solver,
-                               recognitionSteps=recognitionSteps, maximumFrontier=maximumFrontier)
+                               recognitionSteps=recognitionSteps, maximumFrontier=maximumFrontier,
+                               recognitionEpochs=recognitionEpochs)
 
             showHitMatrix(tasksHitTopDown, tasksHitBottomUp, wakingTaskBatch)
             
@@ -458,6 +502,34 @@ def ecIterator(grammar, tasks,
                                                                  if len(f) > 0},
                                  'frontier')                
         
+        # Interactive mode.
+        if interactive or useWakeLanguage:
+            tasks_hit_parser = default_wake_language(grammar, wakingTaskBatch,
+                                    testingTasks=testingTasks,
+                                    maximumFrontier=maximumFrontier,
+                                    enumerationTimeout=enumerationTimeout,
+                                    CPUs=CPUs,
+                                    solver=solver,
+                                    parser=parserModel,
+                                    interactiveTasks=interactiveTasks,
+                                    evaluationTimeout=evaluationTimeout,
+                                    currentResult=result,
+                                    interactive=interactive,
+                                    languageFeatureExtractor=languageFeatureExtractor,
+                                    cuda=cuda,
+                                    epochs=recognitionEpochs)
+                                    
+            for task in tasks_hit_parser:
+                if task not in result.allFrontiers: continue
+                result.allFrontiers[task] = result.allFrontiers[task].\
+                                            combine(grammar.rescoreFrontier(tasks_hit_parser[task])).\
+                                            topK(maximumFrontier)
+            
+            eprint("Frontiers discovered with parser: " + str(len(tasks_hit_parser)))
+            eprint("Total frontiers: " + str(len([f for f in result.allFrontiers.values() if not f.empty])))
+            eprint(Frontier.describe([f for f in tasks_hit_parser.values() if not f.empty]))
+            showHitMatrix(tasksHitTopDown, set(tasks_hit_parser.keys()), wakingTaskBatch)
+            
         # Sleep-G
         if useDSL and not(noConsolidation):
             eprint(f"Currently using this much memory: {getThisMemoryUsage()}")
@@ -538,6 +610,54 @@ def evaluateOnTestingTasks(result, testingTasks, grammar, _=None,
     eprint("Hits %d/%d testing tasks" % (len(times), len(testingTasks)))
     result.testingSearchTime.append(times)
 
+def default_wake_language(grammar, tasks, 
+                    testingTasks,
+                    maximumFrontier=None,
+                    enumerationTimeout=None,
+                    CPUs=None,
+                    solver=None,
+                    parser=None,
+                    interactiveTasks=None,
+                    evaluationTimeout=None,
+                    currentResult=None,
+                    get_language_fn=None,
+                    interactive=None,
+                    languageFeatureExtractor=None,
+                    program_featurizer=None,
+                    epochs=None,
+                    cuda=False):
+    # Get interactive descriptions for all solutions.
+    if get_language_fn is not None:
+        solutions = [f for f in currentResult.allFrontiers.values() if not f.empty]
+        solutions_language = get_language_fn(solutions)
+        for t in solutions_language:
+            currentResult.allLanguage[t].append(solutions_language[t])
+    # Retrain the parser.
+    parser_model = parser(grammar, 
+                          language_data=currentResult.allLanguage,
+                          frontiers=currentResult.allFrontiers,
+                          tasks=tasks,
+                          testingTasks=testingTasks,
+                          cuda=cuda,
+                          language_feature_extractor=languageFeatureExtractor)
+    parser_model.train(epochs=epochs)
+    
+    if interactive:
+        eprint("Not yet implemented: interactive mode.")
+        assert False
+    else:
+        # Enumerative search using the retrained parser.
+        eprint("Enumerating from the trained parser.")
+        enumerated_frontiers, recognition_times = parser_model.enumerateFrontiers(tasks=tasks, 
+                                        enumerationTimeout=enumerationTimeout,
+                                        solver=solver,
+                                        CPUs=CPUs,
+                                        maximumFrontier=maximumFrontier,
+                                        evaluationTimeout=evaluationTimeout)
+        tasks_hit = {f.task : f for f in enumerated_frontiers if not f.empty}
+        currentResult.parser = parser_model
+        return tasks_hit
+    
         
 def default_wake_generative(grammar, tasks, 
                     maximumFrontier=None,
@@ -562,10 +682,16 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
                       previousRecognitionModel=None, recognitionSteps=None,
                       timeout=None, enumerationTimeout=None, evaluationTimeout=None,
                       helmholtzRatio=None, helmholtzFrontiers=None, maximumFrontier=None,
-                      auxiliaryLoss=None, cuda=None, CPUs=None, solver=None):
-    eprint("Using an ensemble size of %d. Note that we will only store and test on the best recognition model." % ensembleSize)
-
-    featureExtractorObjects = [featureExtractor(tasks, testingTasks=testingTasks, cuda=cuda) for i in range(ensembleSize)]
+                      auxiliaryLoss=None, cuda=None, CPUs=None, solver=None,
+                      languageFeatureExtractor=None,
+                      recognitionEpochs=None):
+    
+    if languageFeatureExtractor is not None:
+        eprint("Using external language data to initialize the feature extractors.")
+        featureExtractorObjects = [languageFeatureExtractor(tasks, testingTasks=testingTasks, cuda=cuda, language_data=result.allLanguage) for i in range(ensembleSize)]
+    else:
+        eprint("Using an ensemble size of %d. Note that we will only store and test on the best recognition model." % ensembleSize)
+        featureExtractorObjects = [featureExtractor(tasks, testingTasks=testingTasks, cuda=cuda) for i in range(ensembleSize)]
     recognizers = [RecognitionModel(featureExtractorObjects[i],
                                     grammar,
                                     mask=mask,
@@ -586,7 +712,8 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
                                                                          steps=recognitionSteps,
                                                                          helmholtzRatio=helmholtzRatio,
                                                                          auxLoss=auxiliaryLoss,
-                                                                         vectorized=True),
+                                                                         vectorized=True,
+                                                                         epochs=recognitionEpochs),
                                      recognizers,
                                      seedRandom=True)
     eprint(f"Currently using this much memory: {getThisMemoryUsage()}")
@@ -744,7 +871,11 @@ def commandlineArguments(_=None,
                         type=int)
     parser.add_argument("-RS", "--recognitionSteps",
                         default=None,
-                        help="Number of gradient steps to train the recognition model. Can be specified instead of train time.",
+                        help="Number of gradient steps to train the recognition model. Can be specified instead of train time or epochs.",
+                        type=int)
+    parser.add_argument("-RE", "--recognitionEpochs",
+                        default=None,
+                        help="Number of epochs to train the recognition model. Can be specified instead of train time or gradient steps.",
                         type=int)
     parser.add_argument(
         "-k",
@@ -906,7 +1037,8 @@ def commandlineArguments(_=None,
             "unsolvedEntropy",
             "unsolvedRandomEntropy",
             "randomkNN",
-            "randomLowEntropykNN"],
+            "randomLowEntropykNN",
+            "curriculum"],
         default=taskReranker,
         type=str)
     parser.add_argument(
@@ -939,6 +1071,37 @@ def commandlineArguments(_=None,
     parser.add_argument("--countParameters",
                         help="Load a checkpoint then report how many parameters are in the recognition model.",
                         default=None, type=str)
+    parser.add_argument("--interactive",
+                        action="store_true", default=False,
+                        dest='interactive',
+                        help="Add an interactive wake generative cycle.")
+    parser.add_argument("--languageDataset",
+                        help="Path of a language dataset containing task names and existing language that we will use to train a parser.",
+                        default=None,
+                        type=str)
+    parser.add_argument("--useWakeLanguage",
+                        help="Search with language parser.",
+                        default=False,
+                        action="store_true")
+    parser.add_argument("--interactiveTasks",
+                        dest="interactiveTasks",
+                        help="Reranking function used to order the tasks we train on during waking.",
+                        choices=["random"],
+                        default='random',
+                        type=str)
+    parser.add_argument("--parser",
+                        dest="parser",
+                        help="Semantic parser for interactive mode.",
+                        choices=["loglinear"],
+                        default='loglinear',
+                        type=str)
+    parser.add_argument("--languageFeatureExtractor",
+                        dest="languageFeatureExtractor",
+                        help="Use an additional language-conditioned featurizer.",
+                        choices=["ngram",
+                                "recurrent"],
+                        default=None,
+                        type=str)                
     parser.set_defaults(useRecognitionModel=useRecognitionModel,
                         useDSL=True,
                         featureExtractor=featureExtractor,
