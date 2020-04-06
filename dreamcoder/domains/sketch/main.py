@@ -3,12 +3,30 @@ from dreamcoder.domains.sketch.sketchPrimitives import *
 from dreamcoder.domains.sketch.makeSketchTasks import *
 from dreamcoder.utilities import *
 from dreamcoder.grammar import Grammar
+from dreamcoder.recognition import ImageFeatureExtractor
 
 import os
 import datetime
 
-def SketchCNN():
-    pass
+
+class SketchCNN(ImageFeatureExtractor):
+    special = "sketch"
+    def __init__(self, tasks, testingTasks=[], cuda=False):
+        super(SketchCNN, self).__init__(inputImageDimension=128,
+                                            resizedDimension=64,
+                                            cuda=cuda,
+                                            channels=1)
+        print("output dimensionality",self.outputDimensionality)
+    # def taskOfProgram(self, p, t):
+    #     if t.isArrow:
+    #         # continuation passing
+    #         i = p.evaluate([])([])
+    #     else:
+    #         i = p.evaluate([])
+    #     return SupervisedSketch("dream", i)
+
+    def featuresOfTask(self, t):
+        return self(t.rendered_image)
 
 g0 = Grammar.uniform(primitives, continuationType=tsketch)
 

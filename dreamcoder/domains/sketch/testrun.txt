@@ -1,0 +1,224 @@
+(ecgood) lucast4@ltbonobo:/data1/code/python/ec$ python bin/sketch.py -i 10 -t 720 --skiptesting
+CUDA is available?: True
+using cuda?: True
+SKETCH TASK, getting 20 tasks for training set: practice_shaping
+NO TESTING TASKS INCLUDED
+Warning: Recognition model needs feature extractor. Ignoring recognition model.
+Running EC on ltbonobo @ 2020-04-06 00:14:14.719863 with 8 CPUs and parameters:
+	 noConsolidation  =  False
+	 parallelTest  =  False
+	 iterations  =  10
+	 enumerationTimeout  =  720
+	 useRecognitionModel  =  False
+	 topk_use_only_likelihood  =  False
+	 pseudoCounts  =  30
+	 aic  =  1.0
+	 structurePenalty  =  1.5
+	 arity  =  3
+	 taskReranker  =  default
+	 storeTaskMetrics  =  True
+	 rewriteTaskMetrics  =  False
+	 trainset  =  S12
+	 doshaping  =  False
+	 dopruning  =  False
+	 skiptesting  =  True
+	 maximumFrontier  =  5
+	 solver  =  python
+	 topK  =  2
+	 evaluationTimeout  =  0.001
+	 cuda  =  True
+
+Currently using this much memory: 192901120
+Currently using this much memory: 192901120
+Using a waking task batch of size: 20
+Disabling parallelism on the Python side because we only have one job.
+If you are using ocaml, there could still be parallelism.
+(python) Launching sketch -> sketch (20 tasks) w/ 8 CPUs. 0.000000 <= MDL < 1.500000. Timeout 720.000000.
+(python) Launching sketch -> sketch (20 tasks) w/ 8 CPUs. 1.500000 <= MDL < 3.000000. Timeout 719.991800.
+(python) Launching sketch -> sketch (20 tasks) w/ 8 CPUs. 3.000000 <= MDL < 4.500000. Timeout 719.983952.
+(python) Launching sketch -> sketch (20 tasks) w/ 8 CPUs. 4.500000 <= MDL < 6.000000. Timeout 719.976173.
+(python) Launching sketch -> sketch (20 tasks) w/ 8 CPUs. 6.000000 <= MDL < 7.500000. Timeout 719.960193.
+(python) Launching sketch -> sketch (20 tasks) w/ 8 CPUs. 7.500000 <= MDL < 9.000000. Timeout 719.930587.
+(python) Launching sketch -> sketch (18 tasks) w/ 8 CPUs. 9.000000 <= MDL < 10.500000. Timeout 719.839310.
+(python) Launching sketch -> sketch (18 tasks) w/ 8 CPUs. 10.500000 <= MDL < 12.000000. Timeout 719.503665.
+(python) Launching sketch -> sketch (18 tasks) w/ 8 CPUs. 12.000000 <= MDL < 13.500000. Timeout 717.153623.
+(python) Launching sketch -> sketch (18 tasks) w/ 8 CPUs. 13.500000 <= MDL < 15.000000. Timeout 708.812403.
+(python) Launching sketch -> sketch (17 tasks) w/ 8 CPUs. 15.000000 <= MDL < 16.500000. Timeout 678.646156.
+(python) Launching sketch -> sketch (17 tasks) w/ 8 CPUs. 16.500000 <= MDL < 18.000000. Timeout 550.360738.
+Generative model enumeration results:
+HIT task0 w/ (lambda (LL $0)) ; log prior = -4.795791 ; log likelihood = 0.000000
+HIT task1 w/ (lambda (LL (r 1 (LL $0)))) ; log prior = -10.690193 ; log likelihood = 0.000000
+HIT task2 w/ (lambda (loop 3 (lambda (lambda (LL (r 1 $0)))) $0)) ; log prior = -15.167530 ; log likelihood = 0.000000
+HIT task3 w/ (lambda (LL (loop 3 (lambda (lambda (r 1 (LL $0)))) $0))) ; log prior = -17.565425 ; log likelihood = 0.000000
+HIT task4 w/ (lambda (LL $0)) ; log prior = -4.795791 ; log likelihood = 0.000000
+MISS task5
+HIT task6 w/ (lambda (loop 3 (lambda (lambda (d 1 (C $0)))) $0)) ; log prior = -15.167530 ; log likelihood = 0.000000
+HIT task7 w/ (lambda (loop 3 (lambda (lambda (d 1 (L $0)))) $0)) ; log prior = -15.167530 ; log likelihood = 0.000000
+HIT task8 w/ (lambda (loop 3 (lambda (lambda (d 1 (L $0)))) $0)) ; log prior = -15.167530 ; log likelihood = 0.000000
+HIT task9 w/ (lambda (loop 3 (lambda (lambda (d 1 (L $0)))) $0)) ; log prior = -15.167530 ; log likelihood = 0.000000
+HIT task10 w/ (lambda (loop 3 (lambda (lambda (d 1 (L $0)))) $0)) ; log prior = -15.167530 ; log likelihood = 0.000000
+MISS task11
+HIT task12 w/ (lambda (loop 3 (lambda (lambda (d 1 (L $0)))) $0)) ; log prior = -15.167530 ; log likelihood = 0.000000
+HIT task13 w/ (lambda (loop 3 (lambda (lambda (d 1 (L $0)))) $0)) ; log prior = -15.167530 ; log likelihood = 0.000000
+HIT task14 w/ (lambda (loop 3 (lambda (lambda (d 1 (C $0)))) $0)) ; log prior = -15.167530 ; log likelihood = 0.000000
+MISS task15
+MISS task16
+HIT task17 w/ (lambda (loop 3 (lambda (lambda (d 1 (C $0)))) $0)) ; log prior = -15.167530 ; log likelihood = 0.000000
+HIT task18 w/ (lambda (loop 3 (lambda (lambda (d 1 (L $0)))) $0)) ; log prior = -15.167530 ; log likelihood = 0.000000
+HIT task19 w/ (lambda (loop 3 (lambda (lambda (d 1 (L $0)))) $0)) ; log prior = -15.167530 ; log likelihood = 0.000000
+Hits 16/20 tasks
+Average description length of a program solving a task: 13.741098 nats
+Generative model average:  145 sec.	median: 154 	max: 483 	standard deviation 105
+Currently using this much memory: 193933312
+Frontiers discovered top down: 16
+Total frontiers: 16
+Currently using this much memory: 194211840
+Showing the top 5 programs in each frontier being sent to the compressor:
+task0
+-0.17	(lambda (LL $0))
+-2.56	(lambda (LL (LL $0)))
+-3.66	(lambda (LL (d 1 $0)))
+-3.66	(lambda (LL (d 2 $0)))
+-3.66	(lambda (LL (d 3 $0)))
+
+task1
+-0.22	(lambda (LL (r 1 (LL $0))))
+-2.61	(lambda (LL (LL (r 1 (LL $0)))))
+-2.61	(lambda (LL (r 1 (LL (LL $0)))))
+-3.71	(lambda (LL (r 3 (l 2 (LL $0)))))
+-3.71	(lambda (r 1 (LL (l 1 (LL $0)))))
+
+task2
+-0.51	(lambda (loop 3 (lambda (lambda (LL (r 1 $0)))) $0))
+-1.93	(lambda (LL (r 1 (LL (r 1 (LL $0))))))
+-1.93	(lambda (LL (r 2 (LL (l 1 (LL $0))))))
+-2.91	(lambda (LL (loop 2 (lambda (lambda (r 1 (LL $0)))) $0)))
+-2.91	(lambda (LL (loop 3 (lambda (lambda (LL (r 1 $0)))) $0)))
+
+task3
+0.00	(lambda (LL (loop 3 (lambda (lambda (r 1 (LL $0)))) $0)))
+
+task4
+-0.17	(lambda (LL $0))
+-2.56	(lambda (LL (LL $0)))
+-3.66	(lambda (LL (d 1 $0)))
+-3.66	(lambda (LL (d 2 $0)))
+-3.66	(lambda (LL (d 3 $0)))
+
+task6
+0.00	(lambda (loop 3 (lambda (lambda (d 1 (C $0)))) $0))
+
+task7
+0.00	(lambda (loop 3 (lambda (lambda (d 1 (L $0)))) $0))
+
+task8
+0.00	(lambda (loop 3 (lambda (lambda (d 1 (L $0)))) $0))
+
+task9
+0.00	(lambda (loop 3 (lambda (lambda (d 1 (L $0)))) $0))
+
+task10
+0.00	(lambda (loop 3 (lambda (lambda (d 1 (L $0)))) $0))
+
+task12
+0.00	(lambda (loop 3 (lambda (lambda (d 1 (L $0)))) $0))
+
+task13
+0.00	(lambda (loop 3 (lambda (lambda (d 1 (L $0)))) $0))
+
+task14
+0.00	(lambda (loop 3 (lambda (lambda (d 1 (C $0)))) $0))
+
+task17
+0.00	(lambda (loop 3 (lambda (lambda (d 1 (C $0)))) $0))
+
+task18
+0.00	(lambda (loop 3 (lambda (lambda (d 1 (L $0)))) $0))
+
+task19
+0.00	(lambda (loop 3 (lambda (lambda (d 1 (L $0)))) $0))
+
+Compression message saved to: compressionMessages/2020-04-06T00:26:14.746058
+Compression backend will run for most 99 iterations
+Total number of candidates: 7915
+Constructed version spaces and coalesced candidates in 2.03118s.
+Trimmed down the beam, have only 300 best candidates
+Rewrote topK in 2.70023s.
+Initial score: -227.853380
+Scored candidates in 161.008ms.
+Improved score to -169.772482 (dScore=58.080898) w/ new primitive
+	#(loop 3 (lambda (lambda (d 1 (L $0))))) : sketch -> sketch
+rewrote all of the frontiers in 3.06832s.
+Completed one step of memory consolidation in 8.35618s.
+New primitive is used 8 times in the best programs in each of the frontiers.
+Here is where it is used:
+  (lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) $0))
+  (lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) $0))
+  (lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) $0))
+  (lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) $0))
+  (lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) $0))
+  (lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) $0))
+  (lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) $0))
+  (lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) $0))
+Total number of candidates: 6106
+Constructed version spaces and coalesced candidates in 1.665s.
+Trimmed down the beam, have only 300 best candidates
+Rewrote topK in 2.17617s.
+Initial score: -169.758302
+Scored candidates in 118.131ms.
+Improved score to -153.347786 (dScore=16.410515) w/ new primitive
+	#(loop 3 (lambda (lambda (d 1 (C $0))))) : sketch -> sketch
+rewrote all of the frontiers in 2.84068s.
+Completed one step of memory consolidation in 7.14146s.
+New primitive is used 3 times in the best programs in each of the frontiers.
+Here is where it is used:
+  (lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0))
+  (lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0))
+  (lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0))
+Total number of candidates: 2870
+Constructed version spaces and coalesced candidates in 1.26012s.
+Trimmed down the beam, have only 300 best candidates
+Rewrote topK in 1.76689s.
+Initial score: -153.312384
+Scored candidates in 102.095ms.
+Improved score to -150.910104 (dScore=2.402280) w/ new primitive
+	#(lambda (r 1 (LL $0))) : sketch -> sketch
+rewrote all of the frontiers in 2.67379s.
+Completed one step of memory consolidation in 6.04168s.
+New primitive is used 3 times in the best programs in each of the frontiers.
+Here is where it is used:
+  (lambda (LL (#(lambda (r 1 (LL $0))) $0)))
+  (lambda (LL (#(lambda (r 1 (LL $0))) (#(lambda (r 1 (LL $0))) $0))))
+  (lambda (LL (loop 3 (lambda (lambda (#(lambda (r 1 (LL $0))) $0))) $0)))
+Total number of candidates: 1327
+Constructed version spaces and coalesced candidates in 337.044ms.
+Trimmed down the beam, have only 297 best candidates
+Rewrote topK in 491.676ms.
+Initial score: -150.889153
+Scored candidates in 103.812ms.
+No improvement possible.
+Completed one step of memory consolidation in 992.916ms.
+completed ocaml compression in 22.5336s.
+Finished consolidation.
+Induced a grammar in 42.9 seconds
+Grammar after iteration 1:
+-0.375505	t0	$_
+0.000000	(sketch -> sketch) -> sketch -> sketch	embed
+-0.003911	int	3
+-0.036046	int	1
+-0.036281	int	2
+-0.662634	sketch -> sketch	LL
+-0.791379	int -> (int -> sketch -> sketch) -> sketch -> sketch	loop
+-0.820781	int -> sketch -> sketch	d
+-0.824144	int -> sketch -> sketch	l
+-0.824651	int -> sketch -> sketch	r
+-0.824827	sketch -> sketch	E
+-0.824827	sketch -> sketch	C
+-0.824827	sketch -> sketch	L
+-0.824827	int -> sketch -> sketch	u
+-0.588438	sketch -> sketch	#(loop 3 (lambda (lambda (d 1 (L $0)))))
+-0.700437	sketch -> sketch	#(lambda (r 1 (LL $0)))
+-0.729517	sketch -> sketch	#(loop 3 (lambda (lambda (d 1 (C $0)))))
+Currently using this much memory: 194215936
+Exported checkpoint to experimentOutputs/sketch/2020-04-06T00:14:14.716262/sketch_aic=1.0_arity=3_dp=False_doshaping=False_ET=720_it=1_MF=5_noConsol=False_parallelTest=False_pc=30_RW=False_st=True_solver=python_STM=True_L=1.5_TRR=default_K=2_topkNotMAP=False_tset=S12_rec=False.pickle
+You are missing the graphviz library - cannot graph primitives!

@@ -27,8 +27,9 @@ class SupervisedSketch(Task):
         # self.hand = hand
         self.specialTask = ("sketch",
                             {"trace": self.trace})
-        self.image = None
-        self.handImage = None
+        self.rendered_image = renderProgram(program)
+        # self.image = None
+        # self.handImage = None
 
     # def getImage(self, drawHand=False, pretty=False):
     #     if not drawHand:
@@ -198,6 +199,7 @@ def getTasks(taskset, N):
 
         # ==== make tasks
         Tasks = [SupervisedSketch(f"task{i}", p()) for i in range(N)]
+
     else:
         assert False, "not yet codede other tasks..."
 
