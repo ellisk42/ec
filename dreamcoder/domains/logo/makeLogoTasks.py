@@ -1,8 +1,12 @@
 # coding: utf8
 
+import json
 import os
 import random
 import sys
+import dill
+import numpy as np
+from collections import defaultdict
 
 from dreamcoder.domains.logo.logoPrimitives import primitives, turtle
 from dreamcoder.task import Task
@@ -147,7 +151,8 @@ def parseLogo(s):
 
 
 def manualLogoTask(name, expression, proto=False, needToTrain=False,
-                   supervise=False, lambdaCalculus=False, resolution=[28,128]):
+                   supervise=False, lambdaCalculus=False, resolution=[28,128],
+                   language=None):
     p = Program.parse(expression) if lambdaCalculus else parseLogo(expression)
     from dreamcoder.domains.logo.logoPrimitives import primitives
     from dreamcoder.grammar import Grammar
@@ -183,6 +188,8 @@ def manualLogoTask(name, expression, proto=False, needToTrain=False,
 
     if supervise:
         t.supervisedSolution = p
+    
+    t.language = [language]
 
     return t
 
@@ -254,7 +261,404 @@ def rotationalSymmetryDemo():
               (embed %s)
               (move 0d (/a 1a %d)))"""%(n,body[name],n))
     return demos
-              
+
+def generateLogoDataset(task_dataset, task_dataset_dir, language_dataset, language_dataset_dir):
+    """task_dataset: [logo_classic | "logo_unlimited_1300",
+    "logo_unlimited_500",
+    "logo_unlimited_200"]
+        task_dataset_dir: dataset will be saved to {task_dataset_dir}/{task_dataset}/{train | test}. Generates numbered pickle files for each task. 
+        Images are saved to {task_dataset_dir}/{task_dataset}/{images}.
+        language_dataset_dir: language dataset will be saved to {language_dataset_dir}/{language_dataset}.
+    """
+    print(f"Generating logo task sdataset: [{task_dataset}] and saving to: [{task_dataset_dir}]")
+    if language_dataset is not None:
+        print(f"Generating logo dataset language and saving to: [{language_dataset}]")
+    
+    language_data = None
+    if task_dataset == 'logo_classic':
+        if language_dataset is not None:
+            print("Error: no language defined for logo_classic dataset.")
+            assert False
+        tasks = makeTasks()
+    elif task_dataset == 'logo_unlimited_1300':
+        tasks = makeLogoUnlimitedTasks(n_tasks=1300)
+    elif task_dataset == 'logo_unlimited_500':
+        tasks = makeLogoUnlimitedTasks(n_tasks=500)
+    elif task_dataset == 'logo_unlimited_200':
+        tasks = makeLogoUnlimitedTasks(n_tasks=200)
+    
+    writeLogoDataset(tasks, task_dataset, task_dataset_dir)
+    if language_dataset is not None:
+        writeLanguageDataset(tasks, language_dataset, language_dataset_dir)
+
+def writeLogoDataset(tasks, task_dataset, task_dataset_dir):
+    print(f"Writing n={len(tasks)} to {task_dataset_dir}/{task_dataset}")
+    from pathlib import Path
+    dataset_path = os.path.join(task_dataset_dir, task_dataset)
+    image_path = os.path.join(dataset_path, 'images')
+    Path(image_path).mkdir(parents=True, exist_ok=True)
+
+    train_tasks = [t for t in tasks if t.mustTrain]
+    test_tasks = [t for t in tasks if not t.mustTrain]
+    print(f"Writing n=[{len(train_tasks)} train and n=[{len(test_tasks)}] test.")
+    for split, tasks in [("train", train_tasks), ("test", test_tasks)]:
+        split_path = os.path.join(dataset_path, split)
+        Path(split_path).mkdir(parents=True, exist_ok=True)
+        for i, task in enumerate(tasks):
+            task_path = os.path.join(split_path, f"{i}.p")
+            with open(task_path, 'wb') as f:
+                dill.dump(task, f)
+    
+    for split, tasks in [("train", train_tasks), ("test", test_tasks)]:
+        split_path = os.path.join(image_path, split)
+        Path(split_path).mkdir(parents=True, exist_ok=True)
+        saveVisualizedTasks(tasks, split_path)   
+
+def loadLogoDataset(task_dataset, task_dataset_dir):
+    dataset_path = os.path.join(task_dataset_dir, task_dataset)
+    tasks = {"train": [], "test": []}
+    for split in ("train", "test"):
+        split_path = os.path.join(dataset_path, split)
+        task_files = [os.path.join(split_path, t) for t in os.listdir(split_path) if '.p' in t]
+        for task_file in task_files:
+            with open(task_file, 'rb') as f:
+                tasks[split].append(dill.load(f))
+    return tasks["train"], tasks["test"]
+        
+    
+def writeLanguageDataset(tasks, language_dataset, language_dataset_dir):
+    """
+    Writes synthetic language to a dict of {task_name : [language]}
+    """
+    
+    # TODO: just make this part of the task.
+    print(f"Writing synthetic language to {language_dataset_dir}/{language_dataset}")
+    from pathlib import Path
+    dataset_path = os.path.join(language_dataset_dir, language_dataset)
+    
+    # Write a vocabulary.
+    vocabulary = set()
+    for t in tasks:
+        for sentence in t.language:
+            vocabulary.update(sentence.split())
+    print(f"Writing a synthetic vocabulary of len=[{len(vocabulary)}]")
+    
+    # Write the language data.
+    train_tasks = [t for t in tasks if t.mustTrain]
+    test_tasks = [t for t in tasks if not t.mustTrain]
+    for split, tasks in [("train", train_tasks), ("test", test_tasks)]:
+        split_path = os.path.join(dataset_path, split)
+        Path(split_path).mkdir(parents=True, exist_ok=True)
+        language_data = {
+            t.name : t.language
+            for t in tasks
+        }
+        with open(os.path.join(split_path, 'language_synthetic.json'), 'w') as f:
+            json.dump(language_data, f)
+        with open(os.path.join(split_path, 'language_synthetic_vocab.json'), 'w') as f:
+            json.dump(sorted(list(vocabulary)), f)
+            
+def saveVisualizedTasks(tasks, visualizeTasks):
+    # Store the high resolution tasks.
+    import imageio
+    import os.path as osp
+    for n, t in enumerate(tasks):
+        logo_safe_name = t.name.replace("=","_").replace(' ','_').replace('/','_').replace("-","_").replace(")","_").replace("(","_")
+        logo_name = 'logo_{}_name_{}.png'.format(n, logo_safe_name)
+        a = t.highresolution
+        w = int(len(a)**0.5)
+        img = np.array([a[i:i+w]for i in range(0,len(a),w)])
+        img_name = osp.join(visualizeTasks, logo_name)
+        imageio.imwrite(img_name, img)
+        os.system(f"convert {img_name} -channel RGB -negate {img_name}")
+    
+def makeLogoUnlimitedTasks(resolution=[28,128], n_tasks=None):
+    """
+    Generates logo_unlimited tasks.
+        n_tasks = bounds the number of compositional tasks.
+        Compositional tasks will be split across train and test.
+    """
+    # TODO: return train and test splits.
+    tasks = defaultdict(list)
+    def T(name, source, needToTrain=False, supervise=False, language=None, template_name=None):
+        tasks[template_name].append(manualLogoTask(name, source, supervise=supervise,
+        needToTrain=needToTrain, resolution=resolution,
+        language=language))
+    
+    # Language constants for synthetic language grammar.
+    LANGUAGE_CONSTANTS = {
+        'size': {1 : "small", 2: "medium", 5 : "large"},
+        'separation' : {1: 'short', 2: "medium", 5: 'long'}
+    }
+    
+    #### Base shape primitives. All in training set.
+    snowflake_bodies = {
+        'ngon' : {},
+        'circles' : {},
+        'line' : {}
+    }
+    snowflake_small_bodies = set() # Smallest shapes
+    
+    def slant(n):
+        return f"(move 0d (/a 1a {n}))"
+    
+    # N-gon base shapes. 
+    # {small  | medium } {n} gon
+    language = None
+    for n in range(3,10):
+        for length in [1, 2]: 
+            l = f"(*d 1l {length})"
+            body = f"""
+            (loop i {n}
+              (move {l} (/a 1a {n})))
+            """
+            size = LANGUAGE_CONSTANTS['size'][length]
+            if n == 3:
+                shape_name = 'triangle'
+            elif n == 4:
+                shape_name = 'square'
+            else:
+                shape_name = f"{n} gon"
+            name = f"{size} {shape_name}"  
+            T(name, body, needToTrain=True, language=name, template_name='base')
+            if length == 1 or (length == 2 and n < 6):
+                snowflake_bodies['ngon'][name] = body
+            if length == 1 and n < 6:
+                snowflake_small_bodies.add(name)
+    # Circle and semi-circle base shapes. 
+    # {small  | medium | large} {semicircle | circle}
+    for n in [1,2,5]:
+        circles = [
+            (f'{LANGUAGE_CONSTANTS["size"][n]} semicircle', 
+            f"(loop i infinity (move (*d epsilonLength {n}) epsilonAngle))"),
+            (f'{LANGUAGE_CONSTANTS["size"][n]} circle',
+            """
+            (loop i infinity
+            (move (*d epsilonLength %d) epsilonAngle))
+            (loop i infinity
+            (move (*d epsilonLength %d) epsilonAngle))
+            """%(n,n)
+            )
+        ]
+        for (name, body) in circles:
+            full_body = f"({body})"
+            T(name,full_body,needToTrain=True, language=name, template_name='base')
+            if n <=2:
+                snowflake_bodies['circles'][name] = body
+                snowflake_small_bodies.add(name)
+    
+    # Line segment base shapes. 
+    name = "line"
+    body = "(move 1d 0a)"
+    T(name, body, needToTrain=True, language=name, template_name='base')
+    snowflake_bodies['line'][name] = body
+    snowflake_small_bodies.add(name)
+    
+    ### Template 1: 'separated by a space', 'connected by a line'
+    # Build base shapes next to other shapes
+    for body_type_name in snowflake_bodies:
+        for body_base_name, body_base in snowflake_bodies[body_type_name].items():
+            for body_type_name_2 in snowflake_bodies:
+                for body_base_name_2, body_base_2 in snowflake_bodies[body_type_name_2].items():
+                    for dash_dist in [1, 5]:
+                        sep_name = LANGUAGE_CONSTANTS['separation'][dash_dist]
+                        name = f"{body_base_name} separated by {sep_name} space from {body_base_name_2}"
+                        T(name,
+                          f"""
+                          ({body_base}
+                          (p (move (*d 1d {dash_dist}) 0a))
+                          {body_base_2})
+                          """,
+                          needToTrain=False, 
+                          language=name,
+                          template_name='separated by distance')
+                    for dash_dist in [5]:
+                        ep_name = LANGUAGE_CONSTANTS['separation'][dash_dist]
+                        name = f"{body_base_name} connected by {sep_name} line to {body_base_name_2}"
+                        T(name,
+                          f"""
+                          ({body_base}
+                          (move (*d 1d {dash_dist}) 0a)
+                          {body_base_2})
+                          """,
+                          needToTrain=False,
+                          language=name,
+                          template_name='connected_by_a_line')
+    
+    #### Template 2: 'In a row'
+    for body_type_name in snowflake_bodies:
+        for body_base_name, body_base in snowflake_bodies[body_type_name].items():
+            if body_base_name in snowflake_small_bodies:
+                for n in [3,4,5,6]:
+                    name = f"row of {n} {body_base_name} s"
+                    row = f"""
+                    (loop j {n}
+                    (embed {body_base})
+                    (p (move 1d 0a)))"""
+                    T(name, row, needToTrain=False, language=name,
+                    template_name='in_a_row')
+    
+    # # Build snowflakes
+    for rotations in [3,5,6,7,8]:
+        for body_type_name in snowflake_bodies:
+            for body_base_name, body_base in snowflake_bodies[body_type_name].items():
+                # Template 3: snowflakes with an 'arm' connecting them to the center
+                # Snowflakes with an 'arm' connecting them to the center.
+                for arm_length in [1, 2]:
+                    body = f"(move (*d 1d {arm_length}) 0a) {body_base}"
+                    name = f"{rotations} sided snowflake with a {LANGUAGE_CONSTANTS['separation'][arm_length]} line and  {body_base_name} as arms"
+                    T(name,
+                      """
+                      (loop j %d
+                      (embed %s)
+                      (move 0d (/a 1a %d)))"""%(rotations,body,rotations),
+                      needToTrain=False,
+                      template_name="snowflake line shape arms",
+                      language=name)
+    
+                # Snowflakes with distance from the center.
+                for dash_dist in [1, 2]:
+                    name = f"{rotations} sided snowflake with a {LANGUAGE_CONSTANTS['separation'][dash_dist]} space and {body_base_name} as arms"
+                    body = f"(p (move (*d 1d {dash_dist}) 0a)) {body_base}"
+                    T(name,
+                      """
+                      (loop j %d
+                      (embed %s)
+                      (move 0d (/a 1a %d)))"""%(rotations,body,rotations),
+                      template_name="snowflake space shape arms",
+                      needToTrain=False,
+                      language=name)
+                # Snowflakes with a dash, line, then a shape.
+                if body_base_name in snowflake_small_bodies:
+                    name = f"{rotations} sided snowflake with a short space and short line and {body_base_name} as arms"
+    
+                    body = f"(p (move 1d 0a)) (move 1d 0a) (p (move 1d 0a)) {body_base}"
+                    T(name,
+                      """
+                      (loop j %d
+                      (embed %s)
+                      (move 0d (/a 1a %d)))"""%(rotations,body,rotations),
+                      needToTrain=False,
+                      language=name,
+                      template_name="snowflake space line shape arms")
+                    # Cross product of two shapes.
+                    for body_type_name_2 in snowflake_bodies:
+                        for body_base_name_2, base_2 in snowflake_bodies[body_type_name_2].items():
+                            if body_base_name_2 in snowflake_small_bodies:
+                                if body_type_name_2 == 'ngon' and '1l' in body_base_name_2: continue # Too hard to distinguish
+                                body = f"(p (move 1d 0a)) {body_base}  (p (move 1d 0a)) {base_2}"
+    
+                                name = f"{rotations} sided snowflake with a {body_base_name} and a short line and a {body_base_2} as arms"
+    
+                                T(name,
+                                """
+                                (loop j %d
+                                (embed %s)
+                                (move 0d (/a 1a %d)))"""%(rotations,body,rotations),
+                                needToTrain=False,
+                                language=name,
+                                template_name="snowflake two shape arms")
+    
+    ### Miscellaneous other tasks.
+    name = "vertical short line"
+    T(name, "((move 0d (/a 1a 4)) (move 1d 0a))",
+      needToTrain=True, template_name='base', language=name)
+    
+    for i in [6,7,8,9]:
+        name = f"greek spiral with {i} turns"
+        T(name,
+          """
+          (loop i %d
+          (move (*l 1l i) (/a 1a 4)))
+          """%i,
+          needToTrain=False,
+          template_name="greek spiral",
+          language=name)
+    for i in [5,7,9]:
+        name = f"{i} pointed star"
+        T("misc_star %d"%i,
+          """
+          (loop i %d (move (*d 1d 4) (-a (/a 1a 2) (/a (/a 1a 2) %s))))
+          """%(i,i),
+          needToTrain=False,
+          template_name="star",
+          language=name)
+    for n in [4,5,6,7,8,9]:
+        name = f"{n} concentric squares"
+        T(name,
+          """
+          (for i %d
+          (embed (loop j 4 (move (*d 1d i) (/a 1a 4)))))
+          """%n,
+          needToTrain=False,
+          language=name,
+          template_name='concentric squares')
+    for n in [3,4,5,6,7,8,9]:
+        name = f"{n} concentric circles"
+        T("%d concentric circles"%n,
+          """
+          (loop j %d
+          (loop i infinity
+          (move (*d epsilonLength j) epsilonAngle))
+          (loop i infinity
+          (move (*d epsilonLength j) epsilonAngle)))"""%n,
+          needToTrain=False,
+          language=name,
+          template_name='concentric circles')
+    for n in [3,4,5,6,7,8]:
+        name = f"{n} stepped staircase"
+        T("misc_staircase %d"%n,
+          """
+          (loop i %d
+          (move 1d (/a 1a 4))
+          (move 1d (/a 1a 4))
+          (move 0d (/a 1a 2)))
+          """%n,
+          needToTrain=False,
+          language=name,
+          template_name='staircase')
+    for n in [3,4,5]:#range(1,5):
+        name = f"{n} stepped zigzag"
+        T("misc_diagonal_zigzag %d"%n,
+          """
+          ((move 0d (/a 1a 8))
+          (loop i %d
+          (move 1d (/a 1a 4)) 
+          (move 1d (+a (/a 1a 2) (/a 1a 4)))))
+          """%n,
+         needToTrain=False,
+         language=name,
+         template_name='zigzag')
+    
+    # All base tasks.
+    # If less than 3, choose 60
+    # Otherwise, choose some fraction until we reach the limit.
+    with random_seed(42): 
+        train_tasks, test_tasks = [], []
+        for template_name in tasks:
+            template_tasks = tasks[template_name]
+            if template_name == 'base':
+                train_tasks += template_tasks
+            else:
+                if len(template_tasks) <= 3:
+                    random.shuffle(template_tasks)
+                    train_tasks += template_tasks[:-1]
+                    test_tasks += [template_tasks[-1]]
+                else:
+                    if len(template_tasks) <= 10:
+                        num_tasks = 6
+                    else:
+                        num_tasks = int((n_tasks / 1300.0) * len(template_tasks))
+                        print(f"Taking {num_tasks}/{len(template_tasks)} from {template_name}")
+                    random.shuffle(template_tasks)
+                    dataset_tasks = template_tasks[:num_tasks]
+                    train_tasks += dataset_tasks[:int(len(dataset_tasks)/2)]
+                    test_tasks += dataset_tasks[int(len(dataset_tasks)/2):]
+        for test_task in test_tasks:
+            test_task.mustTrain = False
+        for train_task in train_tasks:
+            train_task.mustTrain = True
+        return train_tasks + test_tasks
 
 def manualLogoTasks(resolution=[28,128]):
     tasks = []
@@ -309,7 +713,6 @@ def manualLogoTasks(resolution=[28,128]):
             (move {l} (/a 1a {n}))))
           """,
           needToTrain=False)
-
         
 
     T("upwards", "((move 0d (/a 1a 4)) (move 1d 0a))",
@@ -413,6 +816,7 @@ def manualLogoTasks(resolution=[28,128]):
           (move 0d (/a 1a %d)))
           """%(n,n),
           needToTrain=n in range(3,5))        
+
 
     for n in [5,6]:
         T("staircase %d"%n,

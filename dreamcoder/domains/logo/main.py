@@ -13,7 +13,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from dreamcoder.domains.logo.makeLogoTasks import makeTasks, montageTasks, drawLogo, manualLogoTasks
+from dreamcoder.domains.logo.makeLogoTasks import makeTasks, montageTasks, drawLogo, manualLogoTasks, makeLogoUnlimitedTasks, generateLogoDataset, loadLogoDataset
 from dreamcoder.domains.logo.logoPrimitives import primitives, turtle, tangle, tlength
 from dreamcoder.dreamcoder import ecIterator
 from dreamcoder.grammar import Grammar, ContextualGrammar
@@ -122,7 +122,6 @@ def solutionPrimitiveCounts(allFrontiers, grammar, checkpoint):
     counts = {n : defaultdict() for n in range(len(allFrontiers))}
     g, contextual_g = grammar[-1], ContextualGrammar.fromGrammar(grammar[-1])
     
-    
     best_programs = [(f.task.request, f.bestPosterior.program) for n,(t,f) in enumerate(sorted_frontiers)]
     
     # Rewrite in initial DSL.
@@ -226,8 +225,6 @@ class LogoFeatureCNN(nn.Module):
         self.outputDimensionality = 256
 
         
-
-
     def forward(self, v):
         assert len(v) == self.inputImageDimension*self.inputImageDimension
         floatOnlyTask = list(map(float, v))
@@ -270,6 +267,13 @@ def list_options(parser):
                         default=[],
                         action='append',
                         help="Which tasks should this try to solve")
+    parser.add_argument("--task_dataset", type=str,
+                        choices=[
+                            "logo_unlimited_1300",
+                            "logo_unlimited_500",
+                            "logo_unlimited_200"],
+                        default=None,
+                        help="Load pre-generated task datasets.")
     parser.add_argument("--reduce", type=str,
                         default=[],
                         action='append',
@@ -296,10 +300,29 @@ def list_options(parser):
                         default=None, type=str)
     parser.add_argument("--visualizeTasks",
                         default=None, type=str)
+    parser.add_argument("--visualizePlay",
+                        default=None, type=str)
     parser.add_argument("--solutionPrimitiveCounts",
                         default=None, type=str)
-
-
+    parser.add_argument("--taskDatasetDir",
+                        default="data/logo/tasks")
+    parser.add_argument("--languageDatasetDir",
+                        default="data/logo/language")
+    parser.add_argument("--generateTaskDataset",
+                        choices=[
+                            "logo_classic",
+                            "logo_unlimited_1300",
+                            "logo_unlimited_500",
+                            "logo_unlimited_200"],
+                        default=None,
+                        help="Generates pre-cached dataset and stores it under the top-level path.")
+    parser.add_argument("--generateLanguageDataset",
+                        choices=[
+                            "logo_unlimited_1300",
+                            "logo_unlimited_500",
+                            "logo_unlimited_200"],
+                        default=None,
+                        help="Generates language dataset and stores it under the top-level path.")
 
 def outputDreams(checkpoint, directory):
     from dreamcoder.utilities import loadPickle
@@ -489,28 +512,56 @@ def main(args):
         tasks = manualLogoTasks(resolution=[28,1024])
         saveVisualizedTasks(tasks, visualizeTasks)
         sys.exit(0)
-        
+    
+    visualizePlay = args.pop("visualizePlay")
+    if visualizePlay is not None:
+        tasks = makeLogoUnlimitedTasks(resolution=[28,1024])
+        saveVisualizedTasks(tasks, visualizePlay)
+        sys.exit(0)
+    
+    ### Dataset generation.
+    generateTaskDataset = args.pop("generateTaskDataset")
+    generateLanguageDataset = args.pop("generateLanguageDataset")
+    if generateLanguageDataset is not None and generateTaskDataset is None:
+        print("Error: cannot generate language without generating task dataset.")
+        assert False
+    if generateLanguageDataset is not None and not (generateTaskDataset == generateLanguageDataset):
+        print("Error: task and language datasets must be the same.")
+    if generateTaskDataset is not None:
+        generateLogoDataset(task_dataset=generateTaskDataset,
+                            task_dataset_dir=args.pop("taskDatasetDir"),
+                            language_dataset=generateLanguageDataset,
+                            language_dataset_dir=args.pop("languageDatasetDir"))
+        assert False
+    
     target = args.pop("target")
-    red = args.pop("reduce")
     save = args.pop("save")
     prefix = args.pop("prefix")
-    prefix_dreams = prefix + "/dreams/" + ('_'.join(target)) + "/"
-    prefix_pickles = prefix + "/logo." + ('.'.join(target))
-    if not os.path.exists(prefix_dreams):
-        os.makedirs(prefix_dreams)
-    tasks = makeTasks(target, proto)
-    eprint("Generated", len(tasks), "tasks")
+    split = args.pop("split")
+    
+    task_dataset = args.pop("task_dataset")
+    task_dataset_dir=args.pop("taskDatasetDir")
+    if task_dataset:
+        test, train = loadLogoDataset(task_dataset=task_dataset, task_dataset_dir=task_dataset_dir)
+        eprint(f"Loaded dataset [{task_dataset}]: [{len(train)}] train and [{len(test)}] test tasks.")
+    else: 
+        prefix_dreams = prefix + "/dreams/" + ('_'.join(target)) + "/"
+        prefix_pickles = prefix + "/logo." + ('.'.join(target))
+        if not os.path.exists(prefix_dreams):
+            os.makedirs(prefix_dreams)
+        tasks = makeTasks(target, proto)
+        eprint("Generated", len(tasks), "tasks")
+        os.chdir("prototypical-networks")
+        subprocess.Popen(["python","./protonet_server.py"])
+        time.sleep(3)
+        os.chdir("..")
 
-    os.chdir("prototypical-networks")
-    subprocess.Popen(["python","./protonet_server.py"])
-    time.sleep(3)
-    os.chdir("..")
-
-    test, train = testTrainSplit(tasks, args.pop("split"))
-    eprint("Split tasks into %d/%d test/train" % (len(test), len(train)))
-    if test: montageTasks(test,"test_")    
-    montageTasks(train,"train_")
-
+        test, train = testTrainSplit(tasks, split)
+        eprint("Split tasks into %d/%d test/train" % (len(test), len(train)))
+        if test: montageTasks(test,"test_")    
+        montageTasks(train,"train_")
+    
+    red = args.pop("reduce")
     if red is not []:
         for reducing in red:
             try:

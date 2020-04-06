@@ -9,6 +9,7 @@
 *.p
 *.pyc
 *~
+figures/*
 __pycache__
 _build
 experimentOutputs
@@ -19,7 +20,8 @@ rust_compressor/target
 compressionMessages/
 container.img
 launchers/
-data/*
+data/cogsci_2019/*
+!data/logo/
 !data/puddleworld/
 data/taskRankGraphs
 message
