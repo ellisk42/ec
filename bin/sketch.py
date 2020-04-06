@@ -10,7 +10,7 @@ from dreamcoder.utilities import numberOfCPUs
 
 if __name__ == '__main__':
     arguments = commandlineArguments(
-        featureExtractor=None,
+        featureExtractor=SketchCNN,
         CPUs=numberOfCPUs(),
         helmholtzRatio=0.5,
         recognitionTimeout=3600,
