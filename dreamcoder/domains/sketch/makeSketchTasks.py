@@ -111,7 +111,8 @@ class SupervisedSketch(Task):
             else:
                 return NEGATIVEINFINITY
 
-        trace = e.evaluate([])(_empty_sketch)(SketchState(hand=HANDSTARTPOS, history=[]))[1]
+        # trace = e.evaluate([])(_empty_sketch)(SketchState(hand=HANDSTARTPOS, history=[]))[1]
+        trace = executeSketch(e)[1] # identical to above.
 
         if set(self.trace)==set(trace):
             return 0.0
@@ -119,132 +120,85 @@ class SupervisedSketch(Task):
             return NEGATIVEINFINITY
 
 
-def makeSupervisedTasks(trainset="S8full", doshaping=False): # TODO, LT, make these tasks.
+def makeSupervisedTasks(trainset=["practice"], Nset=[]):
+    """give a list of sets, and will output one
+    long list of tasks, in the order given in trainset.
+    -Nset is list of sample sizes. if empty will default to 
+    20 tasks per trainset"""
+    if not Nset:
+        Nset = [20 for _ in range(len(trainset))]
 
-    print("DRAW TASK training set: {}".format(trainset))
+    Tasks = []
+    for tset, N in zip(trainset, Nset):
+        print(f"SKETCH TASK, getting {N} tasks for training set: {tset}")
+        Tasks.extend(getTasks(tset, N))
 
-    programs = []
-    programnames = []
-
-    # ===== train on basic stimuli like lines
-    if doshaping:
-        print("INCLUDING SHAPING STIMULI")
-        ll = transform(_line, theta=pi/2, s=4, y=-2.)
-        programs.extend([
-            _line,
-            transform(_circle, s=2.),
-            transform(_circle, theta=pi/2),
-            transform(_line, theta=pi/2),
-            transform(_line, s=4),
-            transform(_line, y=-2.),
-            transform(_line, theta=pi/2, s=4.),
-            transform(_line, theta=pi/2, y=-2.),
-            transform(_line, theta=pi/2, s=4, y=-2.)]
-            )
-        programnames.extend(["shaping_{}".format(n) for n in range(9)])
-
-    ##############################################
-    ################# TRAINING SETS
-    if trainset=="S8_nojitter":
-        libname = "dreamcoder/domains/draw/trainprogs/S8_nojitter_shaping"
-        with open("{}.pkl".format(libname), 'rb') as fp:
-            P = pickle.load(fp)
-        programs.extend(P)
-        programnames.extend(["S8_nojitter_shaping_{}".format(n) for n in range(len(P))])
-
-        libname = "dreamcoder/domains/draw/trainprogs/S8_nojitter"
-        with open("{}.pkl".format(libname), 'rb') as fp:
-            P = pickle.load(fp)
-        programs.extend(P)
-        programnames.extend(["S8_nojitter_{}".format(n) for n in range(len(P))])
+    return Tasks
 
 
-    def addPrograms(lib, programs, programnames, nameprefix=[]):
-        if not nameprefix:
-            nameprefix=lib
-            # note: assumes that name prefix is lib. here tell it otherwise.
+## ============= TASK LIBRARY - DEVELOPING CODE.
 
-        # ========= 1) SHAPING:
-        # ---- get programs
-        libname = "dreamcoder/domains/draw/trainprogs/{}".format(lib)
-        with open("{}.pkl".format(libname), 'rb') as fp:
-            P = pickle.load(fp)
-        programs.extend(P)
+def getTasks(taskset, N):
+    """
+    get list of Tasks, defined by Task sets (like what I called "lbiraries" for draw DSL)
+    you can always input N, but it only matters for some tasksets
+    that allow to give variable sampel size 
+    """
+    def grid(N):
+        G = f"(loop {N} (lambda (i k) (LL (r 1 k))) k)"
+        return G
 
-        # ---- get program names
-        with open("{}_stimnum.pkl".format(libname), 'rb') as fp:
-            stimnum = pickle.load(fp)
-        names = ["{}_{}".format(nameprefix, s) for s in stimnum]
-        programnames.extend(names)
+    if taskset=="practice_shaping":
+        ## ====== SIMPLE SHAPING TASKS
+        programs = []
 
-        return programs, programnames
-
-    if trainset in ["S12", "S13"]:
-
-        programs, programnames = addPrograms("S12_13_shaping", programs, programnames)
-        programs, programnames = addPrograms(trainset, programs, programnames)
-
-
-    # ===== make programs
-    if userealnames:
-        assert len(programs) == len(programnames)
-        names = programnames
-    else:
-        names = ["task{}".format(i) for i in range(len(programs))]
-    print("training task names:")
-    print(names)
-    alltasks = []
-    for name, p in zip(names, programs):
-    # for i, p in enumerate(programs):
-        # name = "task{}".format(i)
-        alltasks.append(SupervisedDraw(name, p))
-
-
-
-    ##############################################
-    ################# make test tasks?
-    programs_test = []
-    programs_test_names = []
-    testtasks = []
-    if trainset in ["S8full", "S8", "S9full", "S9", "S8_nojitter", "S9_nojitter"]:
+        # =========== 1) add grids (1 to 4)
+        programs = [progFromHumanString(f"(lambda (k) (embed (lambda (k) {grid(n+1)}) (k)))") for n in range(4)]
         
-        libname = "dreamcoder/domains/draw/trainprogs/S8_test"
-        with open("{}.pkl".format(libname), 'rb') as fp:
-            P = pickle.load(fp)
-        programs_test.extend(P) 
-        programs_test_names.extend(["S8_{}".format(n) for n in [0, 2, 59, 65, 94]])
+        # =========== 2) as sanity check, add long veritcal line (should be identical to grid1, even though program much shoerter - CHECK)
+        programs.append(progFromHumanString("(lambda (k) (LL k))"))
 
-        libname = "dreamcoder/domains/draw/trainprogs/S9_test"
-        with open("{}.pkl".format(libname), 'rb') as fp:
-            P = pickle.load(fp)
-        programs_test.extend(P) 
-        programs_test_names.extend(["S9_{}".format(n) for n in [14, 15, 17, 18, 29, 43, 55, 59, 61, 86, 96, 99, 140]])
+        # =========== 3 add all the vertical skewer types
+        def vertSampler2():
+            V = lambda p1, p2, p3: f"lambda (k) (d 1 ({p1} (d 1 ({p2} (d 1 ({p3} k))))))"
 
-        libname = "dreamcoder/domains/draw/trainprogs/S8_nojitter_test"
-        with open("{}.pkl".format(libname), 'rb') as fp:
-            P = pickle.load(fp)
-        programs_test.extend(P) 
-        programs_test_names.extend(["S8_nojitter_{}".format(n) for n in [69, 73, 134, 137, 139]])
+            v1 = V("L", "L", "L")
+            v2 = V("C", "C", "C")
+            import random 
+            prand = lambda: random.sample(["L", "C", "E"], 1)[0]
+            v3 = lambda: V(prand(), prand(), prand())
+            v = lambda: random.sample([v1, v2, v3()], 1)[0]
+            return v
 
-        libname = "dreamcoder/domains/draw/trainprogs/S9_nojitter_test"
-        with open("{}.pkl".format(libname), 'rb') as fp:
-            P = pickle.load(fp)
-        programs_test.extend(P) 
-        programs_test_names.extend(["S9_nojitter_{}".format(n) for n in [56, 59, 76, 80, 108, 112, 135, 139, 144, 147]])
+        v = vertSampler2()
+        programs.extend([progFromHumanString(f"({v()})") for _ in range(15)])
 
-    if programs_test:
-        if userealnames:
-            assert len(programs_test) == len(programs_test_names)
-            names = programs_test_names
-        else:
-            names = ["test{}".format(i) for i in range(len(programs_test))]
+        # ============= CONVERT ALL TO TASKS
+        Tasks = [SupervisedSketch(f"task{i}", p) for i, p in enumerate(programs)]
 
-        for name, p in zip(names, programs_test):
-        # for i, p in enumerate(programs_test):
-            # name = "test{}".format(i)
-            testtasks.append(SupervisedDraw(name, p))
-    print("test tasks:")
-    print(names)
-    
-    return alltasks, testtasks, programnames, programs_test_names
 
+    elif taskset=="practice":
+        ## VERTICALLY STRUCTURED, WITH 4 GRID LINES
+        grid = "(loop 4 (lambda (i k) (LL (r 1 k))) k)"
+
+        def vertSampler():
+            V = lambda p1, p2, p3: f"embed (lambda (k) (d 1 ({p1} (d 1 ({p2} (d 1 ({p3} k)))))))"
+            
+            v1 = V("L", "L", "L")
+            v2 = V("C", "C", "C")
+            import random 
+            prand = lambda: random.sample(["L", "C", "E"], 1)[0]
+            v3 = lambda: V(prand(), prand(), prand())
+            v = lambda: random.sample([v1, v2, v3()], 1)[0]
+            return v
+
+        v = vertSampler()
+        p = lambda: Program.parseHumanReadable(f"(lambda (k) (embed (lambda (k) {grid(4)}) ({v()} (r 1 ({v()} (r 1 ({v()} (r 1 ({v()} k)))))))))")
+        ## make a library of horizontal things
+
+        # ==== make tasks
+        Tasks = [SupervisedSketch(f"task{i}", p()) for i in range(N)]
+    else:
+        assert False, "not yet codede other tasks..."
+
+    return Tasks

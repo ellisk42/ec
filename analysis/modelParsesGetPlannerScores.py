@@ -1,5 +1,5 @@
 """for human/dreamcoder saved distances, append the planner score for each
-dreamcoder parse. saves a new set of pickle files in a n ew folder."""
+dreamcoder parse. saves a new set of pickle files in a n ew folder. """
 import sys
 sys.path.insert(0, "/Users/lucastian/Dropbox/CODE/Python/Tenenbaum/ec/")
 sys.path.insert(0, "/om/user/lyt/ec")
@@ -13,6 +13,8 @@ from analysis.importDrawgood import dgutils
 
 # 3) Load planner scores
 def DATloadPlannerScore(DAT, stimname, planver):
+    """ loads presaved planner score for this stimulus, from
+    parsesGetPlannerScores"""
     fname = "{}/{}_planscores_{}.pickle".format(DAT["savedir_datsegs"], stimname, planver)
     from os import path
     if path.exists(fname):

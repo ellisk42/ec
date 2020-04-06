@@ -111,6 +111,7 @@ class SketchContinuation(object):
         return f
 
 parts = {
+    "E":"E",
     "C":"C",
     "L":"L",
     "LL":"LL"
@@ -248,6 +249,8 @@ def renderPlan(sketch):
                 strokes.extend(P.transform(P._line, x=j[0][0]-0.5, y=j[0][1]))
             elif j[1]=="C":
                 strokes.extend(P.transform(P._circle, x=j[0][0], y=j[0][1]))
+            elif j[1]=="E":
+                strokes.extend(P._emptystroke)
             else:
                 assert False, "need to know how to render this code"
                     
@@ -258,7 +261,13 @@ def renderPlan(sketch):
     ax = P.plotOnAxes(strokes, ax, 'r')
 
 
+def renderProgram(p):
+    """ takes program objcet and renders"""
+    renderPlan(executeSketch(p)[0])
 
+def progFromHumanString(s):
+    """output a program given a human readible string"""
+    return Program.parseHumanReadable(s)
 
 
 ###################################

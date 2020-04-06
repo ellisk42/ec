@@ -1,5 +1,7 @@
-## updated, scoring datsegs, before gotten distances
-# saves a new file next to each datseg pickle file.
+## for each dc model datsegs (i.e. parses, before comapring to huamns), scores those parses
+# using different planner models. Currently agnostically takes params over all planmner models
+# that are in a given directory, so this could average over 3-param models, 4-param models, etc.
+# then saves, next to datsegs, a score for each datsets.
 
 import sys
 sys.path.insert(0, "/Users/lucastian/Dropbox/CODE/Python/Tenenbaum/ec/")
@@ -54,10 +56,12 @@ if planner_agg_version=="common":
     planner_objects = {}
     for planver, params_list in PLANVERDICT.items():
         # 5) Get Planner using mean data across subjects
+        # NOTE: this avearges over all planner models..
         print("Settuing up a planner object using previously fit params")
         planner = Planner(paramslist=params_list, handparams=getParamValues(params, params_list))
         print("--- Got params {} for {}, for planver {}".format(getParamValues(params, params_list), params_list, planver))
         planner_objects[planver]=planner
+
 elif planner_agg_version=="bycondition":
     # - get worker list
     from analysis.importDrawgood import dgutils

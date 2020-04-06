@@ -1,3 +1,5 @@
+## for hand building generative model (e.g., the ground truth model)
+
 (lambda (vline x y z) (connect vline (connect (transform x .... (connect y (connect z)))))
 
 Program.parseHumanReadable("(lambda (connect x y z) (connect x (connect y (connect z))))")
