@@ -1,7 +1,42 @@
-def languageForTasks(languageDataset, taskDict):
+
+def languageForTasks(languageDataset, languageDatasetDir, taskDict):
     """
-    Loads a languageDataset : {task_paths : list of [sentence, other_data] tuples}
-    :ret: {t : list of sentences for each task.}
+    Loads a language dataset from {languageDatasetDir}/{languageDataset}.
+    taskDict: {Task : []}
+    
+    If not using the backward compatible languageForPathNameTasks, this assumes there are {train, test} splits, and loads a separate vocabulary for each one.
+    taskDict fully determines all the tasks we will load, and does not obey train/test splits.
+    Returns {Task : list of sentences for each task, for the tasks in the taskDict.}
+    
+    """
+    import os
+    import json
+    if 'path' in languageDataset:
+        return languageForPathNameTasks(languageDataset, languageDatasetDir, taskDict)
+    
+    vocabularies = {"train": None, "test": None}
+    from pathlib import Path
+    dataset_path = os.path.join(languageDatasetDir, languageDataset)
+    for split in ("train", "test"):
+        split_path = os.path.join(dataset_path, split)
+        with open(os.path.join(split_path, "language.json"), 'rb') as f:
+            languageData = json.load(f)
+            for t in taskDict:
+                if t.name in languageData:
+                    taskDict[t] = languageData[t.name]
+        with open(os.path.join(split_path, "vocab.json"), 'rb') as f:
+            vocabularies[split] = json.load(f)
+    
+    print("Found language for {}/{} tasks".format(len([t for t in taskDict if len(taskDict[t]) > 0]), len(taskDict)))
+    print(f"Found vocabularies of n=[{len(vocabularies['train'])}] for train and n=[{len(vocabularies['test'])}] for test.")
+    
+    return taskDict, vocabularies
+    
+    
+
+def languageForPathNameTasks(languageDataset, taskDict):
+    """
+    Backwards compatability with language datasets that were keyed by a stimuli path name.
     """
     import json
     import os.path as osp
@@ -12,8 +47,8 @@ def languageForTasks(languageDataset, taskDict):
     def extract_task_name(task_path):
         return osp.basename(task_path).split('name_')[-1].split('.')[0]
     languageDataset = {
-        extract_task_name(task_path) : [data[0] for data in language_data]
-        for (task_path, language_data) in languageDataset.items()
+        extract_task_name(task_path) : [data[0] for data in languageData]
+        for (task_path, languageData) in languageDataset.items()
     }
     
     def task_to_safe_name(task_name): 
@@ -35,6 +70,6 @@ def languageForTasks(languageDataset, taskDict):
         language_for_task = languageDataset[task_safe_name] if task_safe_name in languageDataset else []
         languageForTasks[t] = language_for_task
     print("Found language for {}/{} tasks".format(len([t for t in languageForTasks if len(languageForTasks[t]) > 0]), len(languageForTasks)))
-    return languageForTasks
+    return languageForTasks, None
         
     

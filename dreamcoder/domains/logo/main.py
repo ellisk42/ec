@@ -267,7 +267,7 @@ def list_options(parser):
                         default=[],
                         action='append',
                         help="Which tasks should this try to solve")
-    parser.add_argument("--task_dataset", type=str,
+    parser.add_argument("--taskDataset", type=str,
                         choices=[
                             "logo_unlimited_1300",
                             "logo_unlimited_500",
@@ -539,10 +539,10 @@ def main(args):
     prefix = args.pop("prefix")
     split = args.pop("split")
     
-    task_dataset = args.pop("task_dataset")
+    task_dataset = args["taskDataset"]
     task_dataset_dir=args.pop("taskDatasetDir")
     if task_dataset:
-        test, train = loadLogoDataset(task_dataset=task_dataset, task_dataset_dir=task_dataset_dir)
+        train, test = loadLogoDataset(task_dataset=task_dataset, task_dataset_dir=task_dataset_dir)
         eprint(f"Loaded dataset [{task_dataset}]: [{len(train)}] train and [{len(test)}] test tasks.")
     else: 
         prefix_dreams = prefix + "/dreams/" + ('_'.join(target)) + "/"

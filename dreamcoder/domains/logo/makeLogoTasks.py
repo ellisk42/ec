@@ -304,7 +304,7 @@ def writeLogoDataset(tasks, task_dataset, task_dataset_dir):
 
     train_tasks = [t for t in tasks if t.mustTrain]
     test_tasks = [t for t in tasks if not t.mustTrain]
-    print(f"Writing n=[{len(train_tasks)} train and n=[{len(test_tasks)}] test.")
+    print(f"Writing n=[{len(train_tasks)}] train and n=[{len(test_tasks)}] test.")
     for split, tasks in [("train", train_tasks), ("test", test_tasks)]:
         split_path = os.path.join(dataset_path, split)
         Path(split_path).mkdir(parents=True, exist_ok=True)
@@ -336,9 +336,9 @@ def writeLanguageDataset(tasks, language_dataset, language_dataset_dir):
     """
     
     # TODO: just make this part of the task.
-    print(f"Writing synthetic language to {language_dataset_dir}/{language_dataset}")
+    print(f"Writing synthetic language to {language_dataset_dir}/{language_dataset}/synthetic")
     from pathlib import Path
-    dataset_path = os.path.join(language_dataset_dir, language_dataset)
+    dataset_path = os.path.join(language_dataset_dir, language_dataset, 'synthetic')
     
     # Write a vocabulary.
     vocabulary = set()
@@ -357,9 +357,9 @@ def writeLanguageDataset(tasks, language_dataset, language_dataset_dir):
             t.name : t.language
             for t in tasks
         }
-        with open(os.path.join(split_path, 'language_synthetic.json'), 'w') as f:
+        with open(os.path.join(split_path, 'language.json'), 'w') as f:
             json.dump(language_data, f)
-        with open(os.path.join(split_path, 'language_synthetic_vocab.json'), 'w') as f:
+        with open(os.path.join(split_path, 'vocab.json'), 'w') as f:
             json.dump(sorted(list(vocabulary)), f)
             
 def saveVisualizedTasks(tasks, visualizeTasks):
@@ -376,7 +376,7 @@ def saveVisualizedTasks(tasks, visualizeTasks):
         imageio.imwrite(img_name, img)
         os.system(f"convert {img_name} -channel RGB -negate {img_name}")
     
-def makeLogoUnlimitedTasks(resolution=[28,128], n_tasks=None):
+def makeLogoUnlimitedTasks(resolution=[28,128], n_tasks=None, split=0.75):
     """
     Generates logo_unlimited tasks.
         n_tasks = bounds the number of compositional tasks.
@@ -384,6 +384,7 @@ def makeLogoUnlimitedTasks(resolution=[28,128], n_tasks=None):
     """
     # TODO: return train and test splits.
     tasks = defaultdict(list)
+    
     def T(name, source, needToTrain=False, supervise=False, language=None, template_name=None):
         tasks[template_name].append(manualLogoTask(name, source, supervise=supervise,
         needToTrain=needToTrain, resolution=resolution,
@@ -391,8 +392,8 @@ def makeLogoUnlimitedTasks(resolution=[28,128], n_tasks=None):
     
     # Language constants for synthetic language grammar.
     LANGUAGE_CONSTANTS = {
-        'size': {1 : "small", 2: "medium", 5 : "large"},
-        'separation' : {1: 'short', 2: "medium", 5: 'long'}
+        'size': {1 : "small", 2: "medium", 5 : "big"},
+        'separation' : {1: "short", 2: "medium", 5: 'big'}
     }
     
     #### Base shape primitives. All in training set.
@@ -452,7 +453,7 @@ def makeLogoUnlimitedTasks(resolution=[28,128], n_tasks=None):
                 snowflake_small_bodies.add(name)
     
     # Line segment base shapes. 
-    name = "line"
+    name = "short line"
     body = "(move 1d 0a)"
     T(name, body, needToTrain=True, language=name, template_name='base')
     snowflake_bodies['line'][name] = body
@@ -464,9 +465,14 @@ def makeLogoUnlimitedTasks(resolution=[28,128], n_tasks=None):
         for body_base_name, body_base in snowflake_bodies[body_type_name].items():
             for body_type_name_2 in snowflake_bodies:
                 for body_base_name_2, body_base_2 in snowflake_bodies[body_type_name_2].items():
-                    for dash_dist in [1, 5]:
-                        sep_name = LANGUAGE_CONSTANTS['separation'][dash_dist]
-                        name = f"{body_base_name} separated by {sep_name} space from {body_base_name_2}"
+                    if body_base_name not in snowflake_small_bodies and body_base_name_2 not in snowflake_small_bodies: pass
+                    for dash_dist in [2, 5]:
+                        if dash_dist <= 2:
+                            # Sometimes these overlap
+                            name = f"{body_base_name} next to a {body_base_name_2}"
+                        else:
+                            sep_name = LANGUAGE_CONSTANTS['separation'][dash_dist]
+                            name = f"{body_base_name} separated by {sep_name} space from {body_base_name_2}"
                         T(name,
                           f"""
                           ({body_base}
@@ -476,8 +482,8 @@ def makeLogoUnlimitedTasks(resolution=[28,128], n_tasks=None):
                           needToTrain=False, 
                           language=name,
                           template_name='separated by distance')
-                    for dash_dist in [5]:
-                        ep_name = LANGUAGE_CONSTANTS['separation'][dash_dist]
+                    for dash_dist in [2, 5]:
+                        sep_name = LANGUAGE_CONSTANTS['separation'][dash_dist]
                         name = f"{body_base_name} connected by {sep_name} line to {body_base_name_2}"
                         T(name,
                           f"""
@@ -510,7 +516,7 @@ def makeLogoUnlimitedTasks(resolution=[28,128], n_tasks=None):
                 # Snowflakes with an 'arm' connecting them to the center.
                 for arm_length in [1, 2]:
                     body = f"(move (*d 1d {arm_length}) 0a) {body_base}"
-                    name = f"{rotations} sided snowflake with a {LANGUAGE_CONSTANTS['separation'][arm_length]} line and  {body_base_name} as arms"
+                    name = f"{rotations} sided snowflake with a {LANGUAGE_CONSTANTS['separation'][arm_length]} line and {body_base_name} as arms"
                     T(name,
                       """
                       (loop j %d
@@ -534,7 +540,7 @@ def makeLogoUnlimitedTasks(resolution=[28,128], n_tasks=None):
                       language=name)
                 # Snowflakes with a dash, line, then a shape.
                 if body_base_name in snowflake_small_bodies:
-                    name = f"{rotations} sided snowflake with a short space and short line and {body_base_name} as arms"
+                    name = f"{rotations} sided snowflake with a short space and short line and short space and {body_base_name} as arms"
     
                     body = f"(p (move 1d 0a)) (move 1d 0a) (p (move 1d 0a)) {body_base}"
                     T(name,
@@ -551,8 +557,11 @@ def makeLogoUnlimitedTasks(resolution=[28,128], n_tasks=None):
                             if body_base_name_2 in snowflake_small_bodies:
                                 if body_type_name_2 == 'ngon' and '1l' in body_base_name_2: continue # Too hard to distinguish
                                 body = f"(p (move 1d 0a)) {body_base}  (p (move 1d 0a)) {base_2}"
-    
-                                name = f"{rotations} sided snowflake with a {body_base_name} and a short line and a {body_base_2} as arms"
+                                
+                                if body_base_name == body_base_name_2:
+                                    name = f"{rotations} sided snowflake with 2 {body_base_name} s as arms"
+                                else:
+                                    name = f"{rotations} sided snowflake with a {body_base_name} and a {body_base_name_2} as arms"
     
                                 T(name,
                                 """
@@ -568,8 +577,9 @@ def makeLogoUnlimitedTasks(resolution=[28,128], n_tasks=None):
     T(name, "((move 0d (/a 1a 4)) (move 1d 0a))",
       needToTrain=True, template_name='base', language=name)
     
+    # Note the off by one in the loop
     for i in [6,7,8,9]:
-        name = f"greek spiral with {i} turns"
+        name = f"greek spiral with {i-1} turns"
         T(name,
           """
           (loop i %d
@@ -578,17 +588,20 @@ def makeLogoUnlimitedTasks(resolution=[28,128], n_tasks=None):
           needToTrain=False,
           template_name="greek spiral",
           language=name)
+    
     for i in [5,7,9]:
         name = f"{i} pointed star"
-        T("misc_star %d"%i,
+        T(name,
           """
           (loop i %d (move (*d 1d 4) (-a (/a 1a 2) (/a (/a 1a 2) %s))))
           """%(i,i),
           needToTrain=False,
           template_name="star",
           language=name)
+    
+    # Note that there is an off by one in the number of circles actually drawn
     for n in [4,5,6,7,8,9]:
-        name = f"{n} concentric squares"
+        name = f"{n-1} concentric squares"
         T(name,
           """
           (for i %d
@@ -597,9 +610,11 @@ def makeLogoUnlimitedTasks(resolution=[28,128], n_tasks=None):
           needToTrain=False,
           language=name,
           template_name='concentric squares')
+    
+    # Note that there is an off by one in the number of circles actually drawn
     for n in [3,4,5,6,7,8,9]:
-        name = f"{n} concentric circles"
-        T("%d concentric circles"%n,
+        name = f"{n-1} concentric circles"
+        T(name,
           """
           (loop j %d
           (loop i infinity
@@ -611,7 +626,7 @@ def makeLogoUnlimitedTasks(resolution=[28,128], n_tasks=None):
           template_name='concentric circles')
     for n in [3,4,5,6,7,8]:
         name = f"{n} stepped staircase"
-        T("misc_staircase %d"%n,
+        T(name,
           """
           (loop i %d
           (move 1d (/a 1a 4))
@@ -623,7 +638,7 @@ def makeLogoUnlimitedTasks(resolution=[28,128], n_tasks=None):
           template_name='staircase')
     for n in [3,4,5]:#range(1,5):
         name = f"{n} stepped zigzag"
-        T("misc_diagonal_zigzag %d"%n,
+        T(name,
           """
           ((move 0d (/a 1a 8))
           (loop i %d
@@ -638,26 +653,50 @@ def makeLogoUnlimitedTasks(resolution=[28,128], n_tasks=None):
     # If less than 3, choose 60
     # Otherwise, choose some fraction until we reach the limit.
     with random_seed(42): 
+        total_tasks = sum(len(tasks[template_name]) for template_name in tasks)
+        
+        # First, get all the tasks that we need to train on.
+        must_train_templates = ["base"] + [template_name for template_name in tasks if len(tasks[template_name]) <= 10]
+        other_templates = [template_name for template_name in tasks if template_name not in must_train_templates]
+        
         train_tasks, test_tasks = [], []
-        for template_name in tasks:
+        for template_name in must_train_templates:
             template_tasks = tasks[template_name]
             if template_name == 'base':
                 train_tasks += template_tasks
             else:
                 if len(template_tasks) <= 3:
-                    random.shuffle(template_tasks)
-                    train_tasks += template_tasks[:-1]
-                    test_tasks += [template_tasks[-1]]
-                else:
-                    if len(template_tasks) <= 10:
-                        num_tasks = 6
-                    else:
-                        num_tasks = int((n_tasks / 1300.0) * len(template_tasks))
-                        print(f"Taking {num_tasks}/{len(template_tasks)} from {template_name}")
-                    random.shuffle(template_tasks)
-                    dataset_tasks = template_tasks[:num_tasks]
-                    train_tasks += dataset_tasks[:int(len(dataset_tasks)/2)]
-                    test_tasks += dataset_tasks[int(len(dataset_tasks)/2):]
+                    num_tasks = len(template_tasks) - 1
+                if len(template_tasks) <= 10:
+                    num_tasks = 6
+                random.shuffle(template_tasks)
+                dataset_tasks = template_tasks[:num_tasks]
+                train_tasks += dataset_tasks[:int(len(dataset_tasks)/2)]
+                test_tasks += dataset_tasks[int(len(dataset_tasks)/2):]
+        
+                
+        percentage_train = ((n_tasks / 2) - len(train_tasks)) / float(total_tasks)
+        percentage_test = ((n_tasks / 2) - len(test_tasks)) / float(total_tasks)
+        remaining_train_tasks, remaining_test_tasks = [], []
+        for template_name in other_templates:
+            template_tasks = tasks[template_name]
+            # Allocate train and testing tasks separately
+            num_train_tasks = int(percentage_train * len(template_tasks)) + 1
+            num_test_tasks = int(percentage_test * len(template_tasks)) + 1
+            print(f"Taking {num_train_tasks}/{len(template_tasks)} train and {num_test_tasks}/{len(template_tasks)} test from {template_name}")
+            random.shuffle(template_tasks)
+            remaining_train_tasks += template_tasks[:num_train_tasks]
+            remaining_test_tasks += template_tasks[num_train_tasks:num_train_tasks+num_test_tasks]
+        
+        # Truncate tasks as necessary.
+        print(f"Generated n={len(train_tasks + remaining_train_tasks)} train tasks, truncating to {n_tasks/2}")
+        print(f"Generated n={len(test_tasks + remaining_test_tasks)} test tasks, truncating to {n_tasks/2}")
+        random.shuffle(remaining_train_tasks)
+        random.shuffle(remaining_test_tasks)
+        train_tasks = train_tasks + remaining_train_tasks
+        test_tasks = test_tasks + remaining_test_tasks
+        train_tasks, test_tasks = train_tasks[:int(n_tasks/2)], test_tasks[:int(n_tasks/2)]
+        
         for test_task in test_tasks:
             test_task.mustTrain = False
         for train_task in train_tasks:

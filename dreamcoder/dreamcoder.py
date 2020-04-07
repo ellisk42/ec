@@ -30,7 +30,7 @@ class ECResult():
                  hitsAtEachWake=None,
                  timesAtEachWake=None,
                  allFrontiers=None,
-                 allLanguage=None):
+                 taskLanguage=None):
         self.frontiersOverTime = {} # Map from task to [frontier at iteration 1, frontier at iteration 2, ...]
         self.hitsAtEachWake = hitsAtEachWake or []
         self.timesAtEachWake = timesAtEachWake or []
@@ -49,7 +49,7 @@ class ECResult():
         self.sumMaxll = sumMaxll or [] #TODO name change 
         self.testingSumMaxll = testingSumMaxll or [] #TODO name change
         self.allFrontiers = allFrontiers or {}
-        self.allLanguage = allLanguage or {}
+        self.taskLanguage = taskLanguage or {} # Maps from task names to language.
 
     def __repr__(self):
         attrs = ["{}={}".format(k, v) for k, v in self.__dict__.items()]
@@ -187,7 +187,9 @@ def ecIterator(grammar, tasks,
                interactive=False,
                parser=None,
                interactiveTasks=None,
+               taskDataset=None,
                languageDataset=None,
+               languageDatasetDir=None,
                useWakeLanguage=False):
     if enumerationTimeout is None:
         eprint(
@@ -225,6 +227,7 @@ def ecIterator(grammar, tasks,
     parameters = {
         k: v for k,
         v in locals().items() if k not in {
+            "languageDatasetDir",
             "tasks",
             "use_map_search_times",
             "seed",
@@ -267,6 +270,7 @@ def ecIterator(grammar, tasks,
     if languageDataset:
         parameters["languageDataset"] = os.path.basename(languageDataset).split(".")[0]
     
+    
     # Uses `parameters` to construct the checkpoint path
     def checkpointPath(iteration, extra=""):
         parameters["iterations"] = iteration
@@ -276,7 +280,9 @@ def ecIterator(grammar, tasks,
                 parameters[k]) for k in sorted(
                 parameters.keys())]
         return "{}_{}{}.pickle".format(outputPrefix, "_".join(kvs), extra)
-
+    
+    print(f"Checkpoints will be written to [{checkpointPath('iter')}]")
+    
     if message:
         message = " (" + message + ")"
     eprint("Running EC%s on %s @ %s with %d CPUs and parameters:" %
@@ -318,8 +324,8 @@ def ecIterator(grammar, tasks,
                           allFrontiers={
                               t: Frontier([],
                                           task=t) for t in tasks},
-                          allLanguage={
-                              t: [] for t in tasks})
+                          taskLanguage={
+                              t: [] for t in tasks + testingTasks})
 
 
     # Set up the task batcher.
@@ -351,13 +357,14 @@ def ecIterator(grammar, tasks,
         eprint("Invalid parser: " + parser + ", aborting.")
         assert False
     
-    if languageFeatureExtractor == 'ngram':
-        languageFeatureExtractor = NgramFeaturizer
-    elif languageFeatureExtractor == 'recurrent':
-        languageFeatureExtractor = TokenRecurrentFeatureExtractor
-    else:
-        eprint("Invalid language featurizer: " + parser + ", aborting.")
-        assert False
+    if languageFeatureExtractor is not None:
+        if languageFeatureExtractor == 'ngram':
+            languageFeatureExtractor = NgramFeaturizer
+        elif languageFeatureExtractor == 'recurrent':
+            languageFeatureExtractor = TokenRecurrentFeatureExtractor
+        else:
+            eprint("Invalid language featurizer: " + languageFeatureExtractor + ", aborting.")
+            assert False
 
     # Check if we are just updating the full task metrics
     if addFullTaskMetrics:
@@ -399,8 +406,10 @@ def ecIterator(grammar, tasks,
     
     # Preload language dataset if avaiable.
     if languageDataset is not None:
-        result.languageDatasetPath = languageDataset # Store for laters
-        result.allLanguage = languageForTasks(languageDataset, result.allLanguage)
+        result.languageDatasetPath = languageDatasetDir
+        # TODO: figure out how to specify which tasks to load for.
+        # May need to separately specify train and test.
+        result.taskLanguage, result.vocabularies = languageForTasks(languageDataset, languageDatasetDir, result.taskLanguage)
         eprint("Loaded language dataset from ", languageDataset)
     
     for j in range(resume or 0, iterations):
@@ -577,6 +586,8 @@ def showHitMatrix(top, bottom, tasks):
 
 def evaluateOnTestingTasks(result, testingTasks, grammar, _=None,
                            CPUs=None, solver=None, maximumFrontier=None, enumerationTimeout=None, evaluationTimeout=None):
+    # TD
+    
     if result.recognitionModel is not None:
         recognizer = result.recognitionModel
         testingFrontiers, times = \
@@ -631,10 +642,10 @@ def default_wake_language(grammar, tasks,
         solutions = [f for f in currentResult.allFrontiers.values() if not f.empty]
         solutions_language = get_language_fn(solutions)
         for t in solutions_language:
-            currentResult.allLanguage[t].append(solutions_language[t])
+            currentResult.taskLanguage[t].append(solutions_language[t])
     # Retrain the parser.
     parser_model = parser(grammar, 
-                          language_data=currentResult.allLanguage,
+                          language_data=currentResult.taskLanguage,
                           frontiers=currentResult.allFrontiers,
                           tasks=tasks,
                           testingTasks=testingTasks,
@@ -688,7 +699,7 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
     
     if languageFeatureExtractor is not None:
         eprint("Using external language data to initialize the feature extractors.")
-        featureExtractorObjects = [languageFeatureExtractor(tasks, testingTasks=testingTasks, cuda=cuda, language_data=result.allLanguage) for i in range(ensembleSize)]
+        featureExtractorObjects = [languageFeatureExtractor(tasks, testingTasks=testingTasks, cuda=cuda, language_data=result.taskLanguage) for i in range(ensembleSize)]
     else:
         eprint("Using an ensemble size of %d. Note that we will only store and test on the best recognition model." % ensembleSize)
         featureExtractorObjects = [featureExtractor(tasks, testingTasks=testingTasks, cuda=cuda) for i in range(ensembleSize)]
@@ -1075,14 +1086,15 @@ def commandlineArguments(_=None,
                         action="store_true", default=False,
                         dest='interactive',
                         help="Add an interactive wake generative cycle.")
-    parser.add_argument("--languageDataset",
-                        help="Path of a language dataset containing task names and existing language that we will use to train a parser.",
-                        default=None,
-                        type=str)
     parser.add_argument("--useWakeLanguage",
                         help="Search with language parser.",
                         default=False,
                         action="store_true")
+    parser.add_argument("--languageDataset",
+                        dest="languageDataset",
+                        help="Language dataset for tasks.",
+                        default=None,
+                        type=str)
     parser.add_argument("--interactiveTasks",
                         dest="interactiveTasks",
                         help="Reranking function used to order the tasks we train on during waking.",
