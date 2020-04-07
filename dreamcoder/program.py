@@ -726,11 +726,37 @@ class Primitive(Program):
 
         exceptionList = ['all', 'any', 'filter', 'sort']
 
+        from dreamcoder.domains.tower.towerPrimitives import TowerState
         def abstractEvalAndReCurry(*args):
             #abstract condition
+
+            if self.name == 'tower_embed' and (xs[0].hasHoles):
+                print("WE ARE HERE")
+                fn, k = args
+                #return lambda x: fn(x) and lambda x: k(x)
+
+                return lambda prev: k ( valueHead.applyModule(self, [valueHead.convertToVector(prev), valueHead.convertToVector( fn(prev) (TowerState(history=[]))   )  ] ) ) #TODO double prev?
+
+
+
             if any(type(arg) == torch.Tensor for arg in args) or self.name == 'unfold' \
             or ( self.name in exceptionList and any( tp.isArrow and x.hasHoles \
                     for tp, x in zip(self.tp.functionArguments(), xs )) ): #TODO STOPGAP
+
+                if self.name == 'moveHand':
+                    return lambda x: args[1] ( valueHead.applyModule(self, [args[0], valueHead.convertToVector(x)]) ) #something like that??
+
+                elif self.name == 'tower_loopM':
+                    blankVec = torch.ones(valueHead.H)
+                    if valueHead.use_cuda: blankVec = blankVec.cuda()
+                    return lambda x: args[2] ( valueHead.applyModule(self, [blankVec, args[0], valueHead.convertToVector ( args[1](args[0]) (x) (TowerState(history=[])) ) ]  )) #TODO double prev?
+
+                elif self.name == 'tower_embed':
+                    assert False
+                    blankVec = torch.ones(valueHead.H)
+                    if valueHead.use_cuda: blankVec = blankVec.cuda()
+                    return lambda x: args[1] (valueHead.applyModule(self, [blankVec, valueHead.convertToVector( args[0] (x) ) ] )) #need another arg
+
                 x_tps = self.tp.functionArguments()
                 abstractArgs = []
                 for i, arg in enumerate(args):
@@ -739,6 +765,8 @@ class Primitive(Program):
                     else:
                         abstractArgs.append (valueHead.convertToVector(arg)) #TODO
                 return valueHead.applyModule(self, abstractArgs) #TODO
+
+
             #concrete condition:
             else:
                 ret = self.value

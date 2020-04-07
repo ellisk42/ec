@@ -234,21 +234,58 @@ def test_abstractHolesTower():
     
 
 def test_abstractHolesTowerValue():
+    from dreamcoder.domains.tower.towerPrimitives import primitives, new_primitives, animateTower
+    from dreamcoder.domains.tower.main import TowerCNN
+    from dreamcoder.domains.tower.makeTowerTasks import makeSupervisedTasks
+    from dreamcoder.valueHead import TowerREPLValueHead
 
+
+    g = Grammar.uniform(new_primitives,
+                         continuationType=ttower)
+    tasks = makeSupervisedTasks()
 
     def _empty_tower(h): return (h,[])
 
     
     expr = Program.parse('(lambda (tower_loopM <HOLE> (lambda (lambda (moveHand 3 (3x1 $0)))) <TowerHOLE>)) ') 
- 
     expr = Program.parse('(lambda (1x3 (moveHand <HOLE> (reverseHand <TowerHOLE>))) )') 
     expr = Program.parse('(lambda (1x3 (moveHand <HOLE> (reverseHand <TowerHOLE>))) )') 
     #expr = Program.parse('(lambda (<TowerHOLE>) )') 
     expr = Program.parse('(lambda (tower_loopM <HOLE> (lambda (lambda <TowerHOLE>)) <TowerHOLE>))')
     #animateTower('test', expr)
-        
-    x = expr.evaluateHolesDebug([])(_empty_tower)(TowerState(history=[])) #can initialize tower state with 
+    #expr = Program.parse('(lambda (<TowerHOLE>) )') 
+    expr = Program.parse('(lambda (3x1 (1x3 <TowerHOLE>) ))') 
+
+    expr = Program.parse('(lambda (reverseHand (1x3 <TowerHOLE>) ))') 
+    expr = Program.parse('(lambda (tower_loopM <HOLE> (lambda (lambda <TowerHOLE>)) <TowerHOLE>))')
+
+    
+    expr = Program.parse('(lambda (tower_loopM 1 (lambda (lambda <TowerHOLE>)) <TowerHOLE>))')
+
+
+    expr = Program.parse('(lambda (tower_embed (lambda (moveHand 1 (1x3 $0))) $0 ) )')
+    #print(executeTower(expr))
+    #animateTower('test', expr)
+    #assert 0
+    expr = Program.parse('(lambda (tower_embed (lambda (moveHand 1 (1x3 <TowerHOLE>))) <TowerHOLE> ) )')
+    #expr = Program.parse('(lambda (tower_loopM <HOLE> (lambda (lambda <TowerHOLE>)) <TowerHOLE>))')
+    #print(executeTower(expr))
+
+    #expr = Program.parse('(lambda (moveHand <HOLE> <TowerHOLE>))')
+
+    #print(expr.evaluateHolesDebug([])(_empty_tower)(TowerState(history=[])))
+
+
+    featureExtractor = TowerCNN(tasks, testingTasks=tasks[-3:], cuda=True)
+    valueHead = TowerREPLValueHead(g, featureExtractor, H=1024)
+
+    x = valueHead.computeValue(expr, tasks[1])
+
+    # x = expr.evaluateHolesDebug([])(_empty_tower)(TowerState(history=[])) #can initialize tower state with 
     print(x)
+
+
+
 
 if __name__=='__main__':
     #findError()
@@ -267,4 +304,5 @@ if __name__=='__main__':
     # from dreamcoder.domains.list.main import LearnedFeatureExtractor
     # tasks = make_list_bootstrap_tasks()
     # expr = Program.parse('(lambda (map (lambda (is-square $0)) $0))')
-    test_abstractHolesTower()
+    # test_abstractHolesTower()
+    test_abstractHolesTowerValue()

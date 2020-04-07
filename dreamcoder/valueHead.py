@@ -428,7 +428,7 @@ class TowerREPLValueHead(AbstractREPLValueHead):
         #stackOfEnvVectors = [self.convertToVector(val) for val in env]
         #environmentVector = self._encodeStack(stackOfEnvVectors)
         #return self.holeParam(environmentVector)
-        out = torch.Tensor(self.H)
+        out = torch.ones(self.H)
         if self.use_cuda: out = out.cuda()
         return self.holeParam(out)
 
@@ -437,8 +437,9 @@ class TowerREPLValueHead(AbstractREPLValueHead):
         pass 
 
     def encodeTowerHole(self, hole, env, state):
-        stateVec = convertToVector(state)
-        assert env == [_empty_tower]
+        stateVec = self.convertToVector(state)
+        #assert env == [_empty_tower], f"env for this tower hole: {env}"
+        print("WARNING: env of tower hole not encoded. ENV:", env)
         return self.holeParam(stateVec) #TODO may need to change all of this up
 
     def _computeOutputVectors(self, task):
@@ -460,6 +461,7 @@ class TowerREPLValueHead(AbstractREPLValueHead):
             print("caught exception")
             print("sketch", sketch)
             print(e)
+            assert False
             raise computeValueError
         except Exception:
             print("caught exception")
@@ -482,7 +484,7 @@ class TowerREPLValueHead(AbstractREPLValueHead):
         """TODO: [x] hash things like outputVector representation
         """
         if outVectors is None:
-            outVectors = _computeOutputVectors(task)
+            outVectors = self._computeOutputVectors(task)
 
         p = self._getInitialSketchRep(sketch)
 

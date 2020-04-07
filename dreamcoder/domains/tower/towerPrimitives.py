@@ -60,7 +60,14 @@ def _embed(body):
                 hand = TowerState(hand=hand.hand,
                                   orientation=hand.orientation,
                                   history=bodyHand.history)
-            hand, laterActions = k(hand)
+            output = k(hand)
+            #print("EMBED TYPE", type(output))
+            if Hole() == output:
+                return Hole(tp=ttower)
+            if type(output) == torch.Tensor:
+                return output #Which is correct??
+
+            hand, laterActions = output
             return hand, bodyActions + laterActions
         return g
     return f
@@ -88,7 +95,7 @@ class TowerContinuation(object):
             
             output = k(hand)
 
-            if output == Hole():
+            if Hole() == output:
                 return Hole(tp=ttower)
 
             if type(output) == torch.Tensor:
