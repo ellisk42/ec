@@ -203,9 +203,8 @@ class NMN(nn.Module):
         if self.nArgs == 0:
             return self.params
         else:
-            print("MODULE Args", args)
             print(self.operator)
-            print(self.nArgs)
+            print("MODULE Args", args)
             inp = torch.cat(args, 0) #TODO i think this is correct dim
             out = self.params(inp)
             return out
@@ -418,13 +417,20 @@ class TowerREPLValueHead(AbstractREPLValueHead):
             image = renderPlan(plan, drawHand=hand, pretty=False)
             return self.featureExtractor(image) #also encode orientation info !!!
 
+        elif isinstance(value, tuple) and isinstance(value[0], TowerState):
+            return self.convertToVector(value[0])
+
         else:
             #return value
-            assert False, f"uncaught object {value} of type {type(value)}"
+            print(f"uncaught object {value} of type {type(value)}")
+            raise computeValueError
 ####
     def encodeHole(self, hole, env):
         assert hole.isHole
-        assert env == [_empty_tower]
+        if not env == [_empty_tower]:
+            print(f"WARNING: env for this non-tower hole: {env}")
+            #raise computeValueError
+
         #stackOfEnvVectors = [self.convertToVector(val) for val in env]
         #environmentVector = self._encodeStack(stackOfEnvVectors)
         #return self.holeParam(environmentVector)

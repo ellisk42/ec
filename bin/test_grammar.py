@@ -267,14 +267,15 @@ def test_abstractHolesTowerValue():
     #print(executeTower(expr))
     #animateTower('test', expr)
     #assert 0
-    expr = Program.parse('(lambda (tower_embed (lambda (moveHand 1 (1x3 $0))) <TowerHOLE> ) )')
+    #expr = Program.parse('(lambda (1x3 (tower_embed (lambda (1x3 $0 )) <TowerHOLE> )) )')
     #expr = Program.parse('(lambda (tower_loopM <HOLE> (lambda (lambda <TowerHOLE>)) <TowerHOLE>))')
     #print(executeTower(expr))
 
-    #expr = Program.parse('(lambda (moveHand <HOLE> <TowerHOLE>))')
+    #expr = Program.parse('(lambda (tower_loopM <HOLE> (lambda (lambda (1x3 $0))) <TowerHOLE>))')
 
     #print(expr.evaluateHolesDebug([])(_empty_tower)(TowerState(history=[])))
 
+    expr = Program.parse('(lambda (tower_loopM 5 (lambda (lambda <TowerHOLE>)) (3x1 <TowerHOLE>)))')
 
     featureExtractor = TowerCNN(tasks, testingTasks=tasks[-3:], cuda=True)
     valueHead = TowerREPLValueHead(g, featureExtractor, H=1024)
