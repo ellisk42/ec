@@ -246,24 +246,24 @@ def test_abstractHolesTowerValue():
 
     def _empty_tower(h): return (h,[])
 
-    
-    expr = Program.parse('(lambda (tower_loopM <HOLE> (lambda (lambda (moveHand 3 (3x1 $0)))) <TowerHOLE>)) ') 
-    expr = Program.parse('(lambda (1x3 (moveHand <HOLE> (reverseHand <TowerHOLE>))) )') 
-    expr = Program.parse('(lambda (1x3 (moveHand <HOLE> (reverseHand <TowerHOLE>))) )') 
+    exprs = []
+
+    exprs.append (Program.parse('(lambda (tower_loopM <HOLE> (lambda (lambda (moveHand 3 (3x1 $0)))) <TowerHOLE>)) ') )
+    exprs.append (Program.parse('(lambda (1x3 (moveHand <HOLE> (reverseHand <TowerHOLE>))) )') )
     #expr = Program.parse('(lambda (<TowerHOLE>) )') 
-    expr = Program.parse('(lambda (tower_loopM <HOLE> (lambda (lambda <TowerHOLE>)) <TowerHOLE>))')
+    exprs.append (Program.parse('(lambda (tower_loopM <HOLE> (lambda (lambda <TowerHOLE>)) <TowerHOLE>))'))
     #animateTower('test', expr)
     #expr = Program.parse('(lambda (<TowerHOLE>) )') 
-    expr = Program.parse('(lambda (3x1 (1x3 <TowerHOLE>) ))') 
+    exprs.append (Program.parse('(lambda (3x1 (1x3 <TowerHOLE>) ))') )
 
-    expr = Program.parse('(lambda (reverseHand (1x3 <TowerHOLE>) ))') 
-    expr = Program.parse('(lambda (tower_loopM <HOLE> (lambda (lambda <TowerHOLE>)) <TowerHOLE>))')
+    exprs.append (Program.parse('(lambda (reverseHand (1x3 <TowerHOLE>) ))') )
+    exprs.append (Program.parse('(lambda (tower_loopM <HOLE> (lambda (lambda <TowerHOLE>)) <TowerHOLE>))'))
 
     
-    expr = Program.parse('(lambda (tower_loopM 1 (lambda (lambda <TowerHOLE>)) <TowerHOLE>))')
+    exprs.append (Program.parse('(lambda (tower_loopM 1 (lambda (lambda <TowerHOLE>)) <TowerHOLE>))'))
 
 
-    expr = Program.parse('(lambda (tower_embed (lambda (moveHand 1 (1x3 $0))) $0 ) )')
+    exprs.append (Program.parse('(lambda (tower_embed (lambda (moveHand 1 (1x3 $0))) $0 ) )'))
     #print(executeTower(expr))
     #animateTower('test', expr)
     #assert 0
@@ -271,20 +271,19 @@ def test_abstractHolesTowerValue():
     #expr = Program.parse('(lambda (tower_loopM <HOLE> (lambda (lambda <TowerHOLE>)) <TowerHOLE>))')
     #print(executeTower(expr))
 
-    #expr = Program.parse('(lambda (tower_loopM <HOLE> (lambda (lambda (1x3 $0))) <TowerHOLE>))')
+    exprs.append (Program.parse('(lambda (tower_loopM <HOLE> (lambda (lambda (1x3 $0))) <TowerHOLE>))'))
 
     #print(expr.evaluateHolesDebug([])(_empty_tower)(TowerState(history=[])))
 
-    expr = Program.parse('(lambda (tower_loopM 5 (lambda (lambda <TowerHOLE>)) (3x1 <TowerHOLE>)))')
+    #expr = Program.parse('(lambda (tower_loopM 5 (lambda (lambda <TowerHOLE>)) (3x1 <TowerHOLE>)))')
 
     featureExtractor = TowerCNN(tasks, testingTasks=tasks[-3:], cuda=True)
     valueHead = TowerREPLValueHead(g, featureExtractor, H=1024)
 
-    x = valueHead.computeValue(expr, tasks[1])
-
+    for expr in exprs:
+        x = valueHead.computeValue(expr, tasks[1])
     # x = expr.evaluateHolesDebug([])(_empty_tower)(TowerState(history=[])) #can initialize tower state with 
-    print(x)
-
+        print(x)
 
 
 

@@ -778,6 +778,18 @@ class Primitive(Program):
                 return f
 
 
+            if self.name == 'reverseHand':
+                print("WAAHHHHHH")
+                def f(prev):
+                    if isinstance(prev, TowerState):
+                        return self.value(args[0]) (prev)
+                    else:
+                        return valueHead.applyModule(self, [valueHead.convertToVector(prev) ] )
+
+                return f
+
+
+
             if any(type(arg) == torch.Tensor for arg in args) or self.name == 'unfold' \
             or ( self.name in exceptionList and any( tp.isArrow and x.hasHoles \
                     for tp, x in zip(self.tp.functionArguments(), xs )) ): #TODO STOPGAP
