@@ -267,7 +267,7 @@ def test_abstractHolesTowerValue():
     #print(executeTower(expr))
     #animateTower('test', expr)
     #assert 0
-    expr = Program.parse('(lambda (tower_embed (lambda (moveHand 1 (1x3 <TowerHOLE>))) <TowerHOLE> ) )')
+    expr = Program.parse('(lambda (tower_embed (lambda (moveHand 1 (1x3 $0))) <TowerHOLE> ) )')
     #expr = Program.parse('(lambda (tower_loopM <HOLE> (lambda (lambda <TowerHOLE>)) <TowerHOLE>))')
     #print(executeTower(expr))
 

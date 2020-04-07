@@ -730,12 +730,16 @@ class Primitive(Program):
         def abstractEvalAndReCurry(*args):
             #abstract condition
 
+            # if self.name == 'tower_embed':
+            #     fn, k = args
+            #     return lambda prev: k( print("AHHHHHHHHH", fn (TowerState(history=[])) (prev)   ))
+
             if self.name == 'tower_embed' and (xs[0].hasHoles):
                 print("WE ARE HERE")
                 fn, k = args
                 #return lambda x: fn(x) and lambda x: k(x)
 
-                return lambda prev: k ( valueHead.applyModule(self, [valueHead.convertToVector(prev), valueHead.convertToVector( fn(prev) (TowerState(history=[]))   )  ] ) ) #TODO double prev?
+                return lambda prev: k ( valueHead.applyModule(self, [valueHead.convertToVector(prev), valueHead.convertToVector( fn(prev) (TowerState(history=[]))   )  ] ) ) #TODO order??
 
 
 
@@ -749,7 +753,7 @@ class Primitive(Program):
                 elif self.name == 'tower_loopM':
                     blankVec = torch.ones(valueHead.H)
                     if valueHead.use_cuda: blankVec = blankVec.cuda()
-                    return lambda x: args[2] ( valueHead.applyModule(self, [blankVec, args[0], valueHead.convertToVector ( args[1](args[0]) (x) (TowerState(history=[])) ) ]  )) #TODO double prev?
+                    return lambda x: args[2] ( valueHead.applyModule(self, [blankVec, args[0], valueHead.convertToVector ( args[1](args[0]) (x) (TowerState(history=[])) ) ]  )) #TODO order??
 
                 elif self.name == 'tower_embed':
                     assert False
