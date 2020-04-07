@@ -63,6 +63,11 @@ primitives = [
 ] + [Primitive("'%s'" % d, tcharacter, d) for d in delimiters if d not in specialCharacters] + \
     [Primitive(name, tcharacter, value) for value, name in specialCharacters.items()]
 
+re2_characters = [chr(ord('a') + j) for j in range(26)] 
+re2_primitives = [
+    Primitive("char-eq?", arrow(tcharacter, tcharacter, tboolean), _eq),
+    Primitive("STRING", tstr, None),
+] + [Primitive("'%s'" % c, tcharacter, c) for c in re2_characters]
 
 def _cons(x): return lambda y: [x] + y
 

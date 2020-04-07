@@ -254,7 +254,8 @@ def main(arguments):
                 checkpoints.append(dill.load(handle))
         sygusCompetition(checkpoints, challenge)
         sys.exit(0)
-
+        
+    import pdb; pdb.set_trace()
     timestamp = datetime.datetime.now().isoformat()
     outputDirectory = "experimentOutputs/text/%s"%timestamp
     os.system("mkdir -p %s"%outputDirectory)
