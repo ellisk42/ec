@@ -731,17 +731,27 @@ class Primitive(Program):
 
             from dreamcoder.domains.tower.towerPrimitives import _empty_tower, blocks
 
-            if self.name == 'tower_embed' and (xs[0].hasHoles):
-                fn, k = args
-                return lambda prev: k ( valueHead.applyModule(self, [valueHead.convertToVector(prev), valueHead.convertToVector( fn( _empty_tower) ( prev)   )  ] ) ) #TODO order??
-
-            if self.name == 'tower_loopM' and (xs[0].hasHoles or xs[1].hasHoles):
+            if self.name == 'tower_embed' :
                 def f(prev):
-                    aa = valueHead.convertToVector(prev)
-                    bb = valueHead.convertToVector(args[0]) 
-                    cc_in =  args[1] (args[0]) ( _empty_tower ) (prev) 
-                    cc = valueHead.convertToVector (cc_in[0] if isinstance(cc_in, tuple) else cc_in) 
-                    return args[2] ( valueHead.applyModule(self, [aa, bb, cc ]  ))
+                    fn, k = args
+                    if isinstance(prev, TowerState) and not (xs[0].hasHoles):
+                        return self.value( fn ) (k) (prev)
+                    else:
+                        return k ( valueHead.applyModule(self, [valueHead.convertToVector(prev), valueHead.convertToVector( fn( _empty_tower) ( prev)   )  ] ) ) #TODO order??
+                return f
+                #return lambda prev: k ( valueHead.applyModule(self, [valueHead.convertToVector(prev), valueHead.convertToVector( fn( _empty_tower) ( prev)   )  ] ) ) #TODO order??
+
+            if self.name == 'tower_loopM' :
+                def f(prev):
+                    i, fn, k = args
+                    if isinstance(prev, TowerState) and not (xs[0].hasHoles or xs[1].hasHoles) and isinstance(i, int):
+                        return self.value(i)(fn)(k)(prev)
+                    else:
+                        aa = valueHead.convertToVector(prev)
+                        bb = valueHead.convertToVector(args[0]) 
+                        cc_in =  args[1] (args[0]) ( _empty_tower ) (prev) 
+                        cc = valueHead.convertToVector (cc_in[0] if isinstance(cc_in, tuple) else cc_in) 
+                        return args[2] ( valueHead.applyModule(self, [aa, bb, cc ]  ))
                 return f
 
             if self.name in blocks.keys():
@@ -749,7 +759,7 @@ class Primitive(Program):
                     if isinstance(prev, TowerState):
                         return self.value( args[0] ) (prev)
                     else:
-                        return valueHead.applyModule(self, [valueHead.convertToVector(prev)])
+                        return args[0] (valueHead.applyModule(self, [valueHead.convertToVector(prev)]))
                 return f
 
             if self.name == 'reverseHand':
@@ -757,15 +767,26 @@ class Primitive(Program):
                     if isinstance(prev, TowerState):
                         return self.value(args[0]) (prev)
                     else:
-                        return valueHead.applyModule(self, [valueHead.convertToVector(prev) ] )
+                        return args[0] (valueHead.applyModule(self, [valueHead.convertToVector(prev) ] ))
                 return f
+
+            if self.name == 'moveHand': #TODO might need to move this up
+                def f(prev):
+                    i, k = args
+                    if isinstance(prev, TowerState) and not xs[0].hasHoles and isinstance(i, int):
+                        return self.value(args[0])(args[1])(prev)
+                    else:
+                        return k(valueHead.applyModule(self, [valueHead.convertToVector(args[0]), valueHead.convertToVector(prev)]))
+                return f
+
+
 
             if any(type(arg) == torch.Tensor for arg in args) or self.name == 'unfold' \
             or ( self.name in exceptionList and any( tp.isArrow and x.hasHoles \
                     for tp, x in zip(self.tp.functionArguments(), xs )) ): #TODO STOPGAP
 
-                if self.name == 'moveHand': #TODO might need to move this up
-                    return lambda x: args[1] ( valueHead.applyModule(self, [args[0], valueHead.convertToVector(x)]) ) #something like that??
+                # if self.name == 'moveHand': #TODO might need to move this up
+                #     return lambda x: args[1] ( valueHead.applyModule(self, [args[0], valueHead.convertToVector(x)]) ) #something like that??
 
                 x_tps = self.tp.functionArguments()
                 abstractArgs = []

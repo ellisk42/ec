@@ -92,6 +92,10 @@ class TowerContinuation(object):
             """output = k(hand)
             if output == Hole():
                 return Hole()"""
+            # print("some info")
+            # print(k)
+            # print(self)
+            # print(type(hand))
             output = k(hand)
 
             if Hole() == output:

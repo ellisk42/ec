@@ -420,6 +420,9 @@ class TowerREPLValueHead(AbstractREPLValueHead):
             state = value
             plan = [tup for tup in value.history if isinstance(tup, tuple)] #filters out states, leaving only actions
             hand = state.hand
+            # print(hand)
+            # print(state)
+            # print(plan)
             image = renderPlan(plan, drawHand=hand, pretty=False)
             return self.featureExtractor(image) #also encode orientation info !!!
 
@@ -432,9 +435,13 @@ class TowerREPLValueHead(AbstractREPLValueHead):
         elif isinstance(value, int):
             return self.fn_modules[str(value)]()
 
+        elif isinstance(value, tuple) and len(value) == 2 and isinstance(value[0], torch.Tensor):
+            return value[0]
+
         else:
             #return value
             print(f"uncaught object {value} of type {type(value)}")
+            assert False
             raise computeValueError
 ####
     def encodeHole(self, hole, env):
@@ -491,13 +498,13 @@ class TowerREPLValueHead(AbstractREPLValueHead):
 ####
 
     def _computeSketchRepresentation(self, sketch, p=None):
-        print(sketch)
-        assert "$1" not in str(sketch), f"{sketch}"
+        #print(sketch)
+        #assert "$1" not in str(sketch), f"{sketch}"
         if p is None:
             p = self._getInitialSketchRep(sketch)
         try:
             res = p(_empty_tower)          
-            res = res(TowerState(history=[])) 
+            res = res(TowerState(history=[]))
 
         except (ValueError, IndexError, ZeroDivisionError, computeValueError, RuntimeError) as e:
             print("caught exception")
@@ -510,6 +517,12 @@ class TowerREPLValueHead(AbstractREPLValueHead):
             print("sketch", sketch)
             #print("IO", xs)
             assert 0
+
+        if isinstance(res, tuple):
+            assert len(res) == 2, f"bad res type, res is: {res}"
+            #assert res[1] == [], f"bad res type, res is: {res}"
+            res = res[0]
+
         res = self.convertToVector(res) #TODO
         return res
 
