@@ -734,10 +734,13 @@ class Primitive(Program):
             if self.name == 'tower_embed' :
                 def f(prev):
                     fn, k = args
-                    if isinstance(prev, TowerState) and not (xs[0].hasHoles):
+                    first_arg = fn( _empty_tower) ( prev )
+                    if isinstance(prev, TowerState) and not (xs[0].hasHoles) and not isinstance(first_arg, torch.Tensor): #and  fn( _empty_tower) ( prev )  not a tensor
                         return self.value( fn ) (k) (prev)
                     else:
-                        return k ( valueHead.applyModule(self, [valueHead.convertToVector(prev), valueHead.convertToVector( fn( _empty_tower) ( prev)   )  ] ) ) #TODO order??
+                        ae = valueHead.convertToVector(prev)
+                        be = valueHead.convertToVector( first_arg )
+                        return k ( valueHead.applyModule(self, [ae, be ] ) ) #TODO order??
                 return f
                 #return lambda prev: k ( valueHead.applyModule(self, [valueHead.convertToVector(prev), valueHead.convertToVector( fn( _empty_tower) ( prev)   )  ] ) ) #TODO order??
 

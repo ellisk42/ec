@@ -162,11 +162,23 @@ def animateTower(exportPrefix, p):
             if isinstance(state, TowerState):
                 h = state.hand
         return h
+    def od(n):
+        o = 1
+        for state in trajectory[:n]:
+            if isinstance(state, TowerState):
+                o = state.orientation
+        print(o)
+        return o
+    # animation = [renderPlan([b for b in trajectory[:n] if not isinstance(b, TowerState)],
+    #                         pretty=True, Lego=True,
+    #                         drawHand=hd(n),
+    #                         masterPlan=actions,
+    #                         randomSeed=hash(exportPrefix))
     animation = [renderPlan([b for b in trajectory[:n] if not isinstance(b, TowerState)],
-                            pretty=True, Lego=True,
+                            pretty=False,
                             drawHand=hd(n),
-                            masterPlan=actions,
-                            randomSeed=hash(exportPrefix))
+                            drawHandOrientation=od(n)
+                            )
                  for n in range(0,len(trajectory) + 1)]
     import scipy.misc
     import random

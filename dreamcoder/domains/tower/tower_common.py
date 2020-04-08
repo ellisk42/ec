@@ -70,10 +70,12 @@ def renderPlan(plan, resolution=256, window=64, floorHeight=2, borderSize=1, bod
                truncate=None, randomSeed=None,
                masterPlan=None,
                pretty=False, Lego=False,
-               drawHand=None):
+               drawHand=None,
+               drawHandOrientation=None):
     import numpy as np
 
     if Lego: assert pretty
+    if drawHandOrientation is not None: assert not pretty
 
     if drawHand is not None and drawHand is not False:
         plan, drawHand = centerTower(plan, drawHand,
@@ -165,8 +167,17 @@ def renderPlan(plan, resolution=256, window=64, floorHeight=2, borderSize=1, bod
                       -99999, 99999,
                       (0,1,0))
         else:
-            rectangle(drawHand - 1,drawHand + 1,
-                      43,45,(1,1,1))
+            if drawHandOrientation is not None:
+                rectangle(drawHand - 1,drawHand + 1,
+                      43,45,(1, (1 + 1*drawHandOrientation)/2.  ,1))
+            else:
+                rectangle(drawHand - 1,drawHand + 1,
+                          43,45,(1,1,1))
+
+            # if drawHandOrientation is not None:
+            #     rectangle(drawHand - 1,drawHand + 1,
+            #           43,45,(1,1*drawHandOrientation,1))
+
 
     return a
 
