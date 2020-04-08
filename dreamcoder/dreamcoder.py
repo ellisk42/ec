@@ -96,7 +96,11 @@ class ECResult():
                      "skiptesting":"st",
                      "trainset":"tset",
                      "dopruning":"dp",
-                     "noConsolidation":"noConsol"}
+                     "noConsolidation":"nCons",
+                     "doshaping":"shp",
+                     "arity":"ar",
+                     "parallelTest":"parTes"
+                     }
 
     @staticmethod
     def abbreviate(parameter): return ECResult.abbreviations.get(parameter, parameter)

@@ -111,6 +111,7 @@ class SketchContinuation(object):
         return f
 
 parts = {
+    "E":"E",
     "C":"C",
     "L":"L",
     "LL":"LL"
@@ -150,8 +151,8 @@ def parseSketch(s):
         from sexpdata import loads, Symbol
         s = loads(s)
         def command(k, environment, continuation):
-            print(k)
-            print(len(k))
+            # print(k)
+            # print(len(k))
             if k == Symbol("C"):
                 return Application(_circle, continuation)
             if k == Symbol("L"):
@@ -211,7 +212,7 @@ def executeSketch(p, timeout=None):
         assert False
 
 
-def renderPlan(sketch):
+def renderPlan(sketch, plot_on=False):
     """go from plan (e.g, ((0,0), circle)...) to rendering (pixels)"""
     from dreamcoder.domains.draw import primitives as P
     import numpy as np
@@ -229,7 +230,7 @@ def renderPlan(sketch):
         x = h[0][0]*xunit
         y = h[0][1]*yunit
         history.append(((x, y), h[1]))
-    print(history)
+    # print(history)
 
     for i,j in zip(history[:-1], history[1:]):
         # -- draw a line between these points
@@ -248,17 +249,28 @@ def renderPlan(sketch):
                 strokes.extend(P.transform(P._line, x=j[0][0]-0.5, y=j[0][1]))
             elif j[1]=="C":
                 strokes.extend(P.transform(P._circle, x=j[0][0], y=j[0][1]))
+            elif j[1]=="E":
+                strokes.extend(P._emptystroke)
             else:
                 assert False, "need to know how to render this code"
                     
     # print(drawsteps)
     # print(strokes)
     # drawsteps.extend(strokes)
-    ax = P.plot(drawsteps, [0.7, 0.7, 0.7])
-    ax = P.plotOnAxes(strokes, ax, 'r')
+    if plot_on:
+        ax = P.plot(drawsteps, [0.7, 0.7, 0.7])
+        ax = P.plotOnAxes(strokes, ax, 'r')
+    im = P.prog2pxl(strokes)
+    return im
 
+def renderProgram(p, plot_on=False):
+    """ takes program objcet and renders"""
+    im = renderPlan(executeSketch(p)[0], plot_on=plot_on)
+    return im
 
-
+def progFromHumanString(s):
+    """output a program given a human readible string"""
+    return Program.parseHumanReadable(s)
 
 
 ###################################

@@ -7,7 +7,6 @@ import numpy as np
 import matplotlib
 from scipy.ndimage import gaussian_filter as gf
 from skimage import color
-from scipy.ndimage import gaussian_filter as gf
 import cairo
 from math import tan
 from math import pi
@@ -407,27 +406,27 @@ def savefig(p, fname="tmp.png"):
         ax.get_figure().savefig(fname)
         print("saved: {}".format(fname))
 
-def plot(p, color="k"):
-        fig = plt.figure(figsize=(XYLIM,XYLIM))
+def plot(p, color="k", LIMITS=XYLIM):
+        fig = plt.figure(figsize=(LIMITS,LIMITS))
         ax = fig.add_axes([-0.03, -0.03, 1.06, 1.06])
-        ax.set_xlim(-XYLIM,XYLIM)
-        ax.set_ylim(-XYLIM,XYLIM)
+        ax.set_xlim(-LIMITS,LIMITS)
+        ax.set_ylim(-LIMITS,LIMITS)
         [ax.plot(x[:,0], x[:,1], "-", color=color) for x in p]
         return ax
 
 
-def plotOnAxes(p, ax, color="k'"):
-        ax.set_xlim(-XYLIM,XYLIM)
-        ax.set_ylim(-XYLIM,XYLIM)
+def plotOnAxes(p, ax, color="k'", LIMITS=XYLIM):
+        ax.set_xlim(-LIMITS, LIMITS)
+        ax.set_ylim(-LIMITS, LIMITS)
         # ax.axis("equal")
         [ax.plot(x[:,0], x[:,1], "-", color=color) for x in p]
         return ax
 
 
-def __fig2pixel(p, plotPxl=False, smoothing=0.):
+def __fig2pixel(p, plotPxl=False, smoothing=0., LIMITS=XYLIM):
 #       smoothing is std of gaussian 2d filter. set to 0 to not smooth.
 #       https://stackoverflow.com/questions/43363388/how-to-save-a-greyscale-matplotlib-plot-to-numpy-array
-        ax = plot(p)
+        ax = plot(p, LIMITS=LIMITS)
         fig = ax.get_figure()
         fig.canvas.draw()
         ax.axis("off")
@@ -440,7 +439,7 @@ def __fig2pixel(p, plotPxl=False, smoothing=0.):
         img = color.rgb2gray(img)
 
         if smoothing>0:
-                img = gf(img, smoothing)
+                img = gf(img, smoothing, truncate=5)
                 
         if plotPxl:
                 # - show the figure
@@ -459,12 +458,13 @@ def __loss(p1, p2, plotPxl=False, smoothing=2):
         return np.linalg.norm(img2-img1)
 
 
-def prog2pxl(p, WHdraw = 2*XYLIM):
+def prog2pxl(p, WHdraw = 2*XYLIM, WH=128, smoothing=0):
         # takes a list of np array and outputs one pixel image
         # WHdraw, the size of drawing canvas (e.g. 6, if is xlim -3 to 3)
         
         # 1) create canvas
-        WH = 128
+        # WH = 128
+        assert WH%4==0, "empirically if not mod 4 then looks weird.."
         scale = WH/WHdraw
         data = np.zeros((WH, WH), dtype=np.uint8)
         surface = cairo.ImageSurface.create_for_data(data, cairo.Format.A8, WH-2, WH-2)
@@ -497,7 +497,11 @@ def prog2pxl(p, WHdraw = 2*XYLIM):
 #     plt.imshow(data, vmin=0, vmax=1, cmap="gray")
 #     plt.savefig("/tmp/test.svg")
 
-        return np.flip(data, 0)/255.0
+        if smoothing>0:
+            # return np.flip(data, 0)/255.0
+            return gf(np.flip(data, 0)/255.0, smoothing, truncate=5)
+        else:
+            return np.flip(data, 0)/255.0
 
 
 def loss_pxl(img1, img2):

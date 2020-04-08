@@ -16,6 +16,7 @@ from preprocess import getFlatData
 
 import segmentation as dgseg
 import utils as dgutils
+
 import plotsDatFlat as dgpflat
 import plotsSingleSubj as dgpsing
 import preprocess as dgprep

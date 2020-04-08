@@ -810,7 +810,13 @@ class RecognitionModel(nn.Module):
             g = self(features)
             return - entry.program.logLikelihood(g), al
         else:
-            features = self._MLP(features).expand(1, features.size(-1))
+            if False:
+                features = self._MLP(features).expand(1, features.size(-1))
+            else:
+                features = self._MLP(features)
+                features = features.expand(1, features.size(-1))
+
+
             ll = self.grammarBuilder.batchedLogLikelihoods(features, [entry.program]).view(-1)
             return -ll, al
             

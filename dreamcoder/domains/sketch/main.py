@@ -1,14 +1,27 @@
 from dreamcoder.dreamcoder import *
 from dreamcoder.domains.sketch.sketchPrimitives import *
-from dreamcoder.domains.sketch.sketchPrimitives import tsketch
+from dreamcoder.domains.sketch.makeSketchTasks import *
 from dreamcoder.utilities import *
 from dreamcoder.grammar import Grammar
+from dreamcoder.recognition import ImageFeatureExtractor
 
 import os
 import datetime
 
-def SketchCNN():
-    pass
+
+class SketchCNN(ImageFeatureExtractor):
+    special = "sketch"
+    def __init__(self, tasks, testingTasks=[], cuda=False):
+        super(SketchCNN, self).__init__(inputImageDimension=128,
+                                            resizedDimension=64,
+                                            cuda=cuda,
+                                            channels=1)
+        print("output dimensionality",self.outputDimensionality)
+    def taskOfProgram(self, p, t):
+        return SupervisedSketch("dream", p)
+
+    def featuresOfTask(self, t):
+        return self(t.rendered_image)
 
 g0 = Grammar.uniform(primitives, continuationType=tsketch)
 
@@ -44,9 +57,9 @@ def dreamOfSketches(grammar=g0, N=50, make_montage=True):
 def main(arguments):
         g0 = Grammar.uniform(primitives)
 
-        train, test = makeSupervisedTasks(trainset=arguments["trainset"])[:2]
+        # TasksTrain = makeSupervisedTasks(trainset=arguments["trainset"])[:2]
+        TasksTrain = makeSupervisedTasks(trainset=["practice_shaping", "practice"], Nset=[20, 30])
 
-        # ==== remove bad shaping tasks
         timestamp = datetime.datetime.now().isoformat()
         outputDirectory = "experimentOutputs/sketch/%s"%timestamp
         evaluationTimeout = 0.001 # seconds, how long allowed
@@ -57,13 +70,13 @@ def main(arguments):
             arguments["featureExtractor"] = SketchCNN
 
         if arguments["skiptesting"]==False and len(test)>0:
-                generator = ecIterator(g0, train, testingTasks=test,
+                generator = ecIterator(g0, TasksTrain, testingTasks=test,
                         outputPrefix="%s/sketch"%outputDirectory,
                         evaluationTimeout=evaluationTimeout,
                         **arguments) # 
         else:
                 print("NO TESTING TASKS INCLUDED")
-                generator = ecIterator(g0, train,
+                generator = ecIterator(g0, TasksTrain,
                         outputPrefix="%s/sketch"%outputDirectory,
                         evaluationTimeout=evaluationTimeout,
                         **arguments) # 

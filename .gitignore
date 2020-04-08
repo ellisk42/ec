@@ -19,6 +19,7 @@ solvers/.merlin
 lucas
 analysis/saved/*
 analysis/outputs/*
+analysis/summaryfigs/acrossexpt/*
 __pycache__
 _build
 experimentOutputs
