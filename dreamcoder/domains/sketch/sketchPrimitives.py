@@ -151,8 +151,8 @@ def parseSketch(s):
         from sexpdata import loads, Symbol
         s = loads(s)
         def command(k, environment, continuation):
-            print(k)
-            print(len(k))
+            # print(k)
+            # print(len(k))
             if k == Symbol("C"):
                 return Application(_circle, continuation)
             if k == Symbol("L"):
@@ -230,7 +230,7 @@ def renderPlan(sketch, plot_on=True):
         x = h[0][0]*xunit
         y = h[0][1]*yunit
         history.append(((x, y), h[1]))
-    print(history)
+    # print(history)
 
     for i,j in zip(history[:-1], history[1:]):
         # -- draw a line between these points

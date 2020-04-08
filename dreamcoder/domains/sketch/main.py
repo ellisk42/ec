@@ -17,13 +17,8 @@ class SketchCNN(ImageFeatureExtractor):
                                             cuda=cuda,
                                             channels=1)
         print("output dimensionality",self.outputDimensionality)
-    # def taskOfProgram(self, p, t):
-    #     if t.isArrow:
-    #         # continuation passing
-    #         i = p.evaluate([])([])
-    #     else:
-    #         i = p.evaluate([])
-    #     return SupervisedSketch("dream", i)
+    def taskOfProgram(self, p, t):
+        return SupervisedSketch("dream", p)
 
     def featuresOfTask(self, t):
         return self(t.rendered_image)
@@ -63,7 +58,7 @@ def main(arguments):
         g0 = Grammar.uniform(primitives)
 
         # TasksTrain = makeSupervisedTasks(trainset=arguments["trainset"])[:2]
-        TasksTrain = makeSupervisedTasks(trainset=["practice_shaping", "practice"], Nset=[20])
+        TasksTrain = makeSupervisedTasks(trainset=["practice_shaping", "practice"], Nset=[20, 30])
 
         timestamp = datetime.datetime.now().isoformat()
         outputDirectory = "experimentOutputs/sketch/%s"%timestamp

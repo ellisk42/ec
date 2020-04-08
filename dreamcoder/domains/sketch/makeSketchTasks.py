@@ -126,8 +126,11 @@ def makeSupervisedTasks(trainset=["practice"], Nset=[]):
     long list of tasks, in the order given in trainset.
     -Nset is list of sample sizes. if empty will default to 
     20 tasks per trainset"""
+    assert isinstance(Nset, list)
     if not Nset:
         Nset = [20 for _ in range(len(trainset))]
+    elif len(Nset)!=len(trainset):
+        Nset = [Nset[0] for _ in range(len(trainset))]
 
     Tasks = []
     for tset, N in zip(trainset, Nset):
@@ -180,7 +183,10 @@ def getTasks(taskset, N):
 
     elif taskset=="practice":
         ## VERTICALLY STRUCTURED, WITH 4 GRID LINES
-        grid = "(loop 4 (lambda (i k) (LL (r 1 k))) k)"
+        def grid(N):
+            G = f"(loop {N} (lambda (i k) (LL (r 1 k))) k)"
+            return G
+        grid = lambda N:f"(loop {N} (lambda (i k) (LL (r 1 k))) k)"
 
         def vertSampler():
             V = lambda p1, p2, p3: f"embed (lambda (k) (d 1 ({p1} (d 1 ({p2} (d 1 ({p3} k)))))))"
@@ -194,11 +200,19 @@ def getTasks(taskset, N):
             return v
 
         v = vertSampler()
-        p = lambda: Program.parseHumanReadable(f"(lambda (k) (embed (lambda (k) {grid(4)}) ({v()} (r 1 ({v()} (r 1 ({v()} (r 1 ({v()} k)))))))))")
+        p4 = lambda: Program.parseHumanReadable(f"(lambda (k) (embed (lambda (k) {grid(4)}) ({v()} (r 1 ({v()} (r 1 ({v()} (r 1 ({v()} k)))))))))")
+        p3 = lambda: Program.parseHumanReadable(f"(lambda (k) (embed (lambda (k) {grid(3)}) ({v()} (r 1 ({v()} (r 1 ({v()} k)))))))")
+        p2 = lambda: Program.parseHumanReadable(f"(lambda (k) (embed (lambda (k) {grid(2)}) ({v()} (r 1 ({v()} k)))))")
+        p1 = lambda: Program.parseHumanReadable(f"(lambda (k) (embed (lambda (k) {grid(1)}) ({v()} k)))")
         ## make a library of horizontal things
 
         # ==== make tasks
-        Tasks = [SupervisedSketch(f"task{i}", p()) for i in range(N)]
+        Nsub = int(np.floor(N/4))
+        Tasks = []
+        Tasks.extend([SupervisedSketch(f"task{i}", p1()) for i in range(Nsub)])
+        Tasks.extend([SupervisedSketch(f"task{i}", p2()) for i in range(Nsub)])
+        Tasks.extend([SupervisedSketch(f"task{i}", p3()) for i in range(Nsub)])
+        Tasks.extend([SupervisedSketch(f"task{i}", p4()) for i in range(N-3*Nsub)])
 
     else:
         assert False, "not yet codede other tasks..."
