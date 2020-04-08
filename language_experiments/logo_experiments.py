@@ -52,7 +52,8 @@ if EC_BASELINES:
             command = singularity + base_command + base_parameters + " &"
             experiment_commands.append(command)
             job += 1
-
+#### Outputs
+PRINT_LOG_SCRIPT = True
 PRINT_JOBS = True
 if PRINT_JOBS:
     # print the jobs.
@@ -60,3 +61,11 @@ if PRINT_JOBS:
     print("module add openmind/singularity")
     for command in experiment_commands:
         print(command + "")
+        
+if PRINT_LOG_SCRIPT:
+    for job_name in jobs:
+        print("echo 'Job: jobs/{} '".format(job_name))
+        print("echo 'Training tasks:' ".format(job_name))
+        print("grep 'total hit tasks' jobs/{}".format(job_name))
+        print("echo 'Testing tasks:' ".format(job_name))
+        print("grep 'testing tasks' jobs/{}".format(job_name))

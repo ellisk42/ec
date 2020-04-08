@@ -99,7 +99,7 @@ class ECResult():
                      "rewriteTaskMetrics": "RW",
                      'taskBatchSize': 'batch',
                      'languageFeatureExtractor' : 'lang_ft',
-                     'noConsolidation': 'no_dsl'}
+                     'solidation': 'no_dsl'}
 
     @staticmethod
     def abbreviate(parameter): return ECResult.abbreviations.get(parameter, parameter)
@@ -142,7 +142,7 @@ def explorationCompression(*arguments, **keywords):
 def ecIterator(grammar, tasks,
                _=None,
                useDSL=True,
-               noConsolidation=False,
+               solidation=False,
                mask=False,
                seed=0,
                addFullTaskMetrics=False,
@@ -540,7 +540,7 @@ def ecIterator(grammar, tasks,
             showHitMatrix(tasksHitTopDown, set(tasks_hit_parser.keys()), wakingTaskBatch)
             
         # Sleep-G
-        if useDSL and not(noConsolidation):
+        if useDSL and not(solidation):
             eprint(f"Currently using this much memory: {getThisMemoryUsage()}")
             grammar = consolidate(result, grammar, topK=topK, pseudoCounts=pseudoCounts, arity=arity, aic=aic,
                                   structurePenalty=structurePenalty, compressor=compressor, CPUs=CPUs,
