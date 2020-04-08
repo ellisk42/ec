@@ -8,7 +8,7 @@ job = 0
 EC_BASELINES = True
 if EC_BASELINES:
         for enumerationTimeout in [720, 1800]:
-            job_name = "re2_ec_learned_feature_compression"
+            job_name = "re2_ec_learned_feature_compression_et_{}".format(enumerationTimeout)
             jobs.append(job_name)
             
             num_iterations = 5
