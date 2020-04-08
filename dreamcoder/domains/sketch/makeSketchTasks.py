@@ -178,7 +178,7 @@ def getTasks(taskset, N):
         programs.extend([progFromHumanString(f"({v()})") for _ in range(15)])
 
         # ============= CONVERT ALL TO TASKS
-        Tasks = [SupervisedSketch(f"task{i}", p) for i, p in enumerate(programs)]
+        Tasks = [SupervisedSketch(f"{taskset}_{i}", p) for i, p in enumerate(programs)]
 
 
     elif taskset=="practice":
@@ -209,10 +209,10 @@ def getTasks(taskset, N):
         # ==== make tasks
         Nsub = int(np.floor(N/4))
         Tasks = []
-        Tasks.extend([SupervisedSketch(f"task{i}", p1()) for i in range(Nsub)])
-        Tasks.extend([SupervisedSketch(f"task{i}", p2()) for i in range(Nsub)])
-        Tasks.extend([SupervisedSketch(f"task{i}", p3()) for i in range(Nsub)])
-        Tasks.extend([SupervisedSketch(f"task{i}", p4()) for i in range(N-3*Nsub)])
+        Tasks.extend([SupervisedSketch(f"{taskset}1_{i}", p1()) for i in range(Nsub)])
+        Tasks.extend([SupervisedSketch(f"{taskset}2_{i}", p2()) for i in range(Nsub)])
+        Tasks.extend([SupervisedSketch(f"{taskset}3_{i}", p3()) for i in range(Nsub)])
+        Tasks.extend([SupervisedSketch(f"{taskset}4_{i}", p4()) for i in range(N-3*Nsub)])
 
     else:
         assert False, "not yet codede other tasks..."

@@ -212,7 +212,7 @@ def executeSketch(p, timeout=None):
         assert False
 
 
-def renderPlan(sketch, plot_on=True):
+def renderPlan(sketch, plot_on=False):
     """go from plan (e.g, ((0,0), circle)...) to rendering (pixels)"""
     from dreamcoder.domains.draw import primitives as P
     import numpy as np
@@ -263,9 +263,9 @@ def renderPlan(sketch, plot_on=True):
     im = P.prog2pxl(strokes)
     return im
 
-def renderProgram(p):
+def renderProgram(p, plot_on=False):
     """ takes program objcet and renders"""
-    im = renderPlan(executeSketch(p)[0])
+    im = renderPlan(executeSketch(p)[0], plot_on=plot_on)
     return im
 
 def progFromHumanString(s):
