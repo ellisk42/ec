@@ -18,7 +18,13 @@ all:
 	    ../logoDrawString && \
 	  ln -s ../../logoDrawString \
 	    ../data/geom/logoDrawString
-
+			
+copy:
+				cp ../ec_language/ec_language/solver .
+				cp ../ec_language/ec_language/compression .
+				cp ../ec_language/ec_language/helmholtz .
+				cp ../ec_language/ec_language/logoDrawString .
+				cp ../ec_language/ec_language/data/geom/logoDrawString data/geom/logoDrawString
 clean:
 	cd solvers && jbuilder clean
 	rm -f solver

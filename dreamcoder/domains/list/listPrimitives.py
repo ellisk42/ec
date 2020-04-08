@@ -348,6 +348,12 @@ def bootstrapTarget():
         Primitive("empty?", arrow(tlist(t0), tbool), _isEmpty),
     ] + [Primitive(str(j), tint, j) for j in range(2)]
 
+def re2_ListPrimitives():
+    return bootstrapTarget() + [
+        Primitive("not", arrow(tbool, tbool), _not),
+        Primitive("and", arrow(tbool, tbool, tbool), _and),
+        Primitive("or", arrow(tbool, tbool, tbool), _or),
+    ]
 
 def bootstrapTarget_extra():
     """This is the bootstrap target plus list domain specific stuff"""
