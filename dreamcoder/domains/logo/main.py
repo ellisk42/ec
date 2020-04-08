@@ -272,7 +272,7 @@ def list_options(parser):
                             "logo_unlimited_1300",
                             "logo_unlimited_500",
                             "logo_unlimited_200"],
-                        default=None,
+                        default="logo_unlimited_200",
                         help="Load pre-generated task datasets.")
     parser.add_argument("--reduce", type=str,
                         default=[],
@@ -323,6 +323,8 @@ def list_options(parser):
                             "logo_unlimited_200"],
                         default=None,
                         help="Generates language dataset and stores it under the top-level path.")
+    parser.add_argument("--iterations_as_epochs",
+                        default=True)
 
 def outputDreams(checkpoint, directory):
     from dreamcoder.utilities import loadPickle
@@ -538,17 +540,17 @@ def main(args):
     save = args.pop("save")
     prefix = args.pop("prefix")
     split = args.pop("split")
+    prefix_dreams = prefix + "/dreams/" + ('_'.join(target)) + "/"
+    prefix_pickles = prefix + "/logo." + ('.'.join(target))
+    if not os.path.exists(prefix_dreams):
+        os.makedirs(prefix_dreams)
     
-    task_dataset = args["taskDataset"]
+    task_dataset = args.pop("taskDataset")
     task_dataset_dir=args.pop("taskDatasetDir")
     if task_dataset:
         train, test = loadLogoDataset(task_dataset=task_dataset, task_dataset_dir=task_dataset_dir)
         eprint(f"Loaded dataset [{task_dataset}]: [{len(train)}] train and [{len(test)}] test tasks.")
     else: 
-        prefix_dreams = prefix + "/dreams/" + ('_'.join(target)) + "/"
-        prefix_pickles = prefix + "/logo." + ('.'.join(target))
-        if not os.path.exists(prefix_dreams):
-            os.makedirs(prefix_dreams)
         tasks = makeTasks(target, proto)
         eprint("Generated", len(tasks), "tasks")
         os.chdir("prototypical-networks")
@@ -587,8 +589,14 @@ def main(args):
     outputDirectory = "experimentOutputs/logo/%s"%timestamp
     os.system("mkdir -p %s"%outputDirectory)
 
+    use_epochs = args.pop("iterations_as_epochs")
+    if use_epochs:
+        eprint("Using iterations as epochs")
+        args["iterations"] *= int(len(train) / args["taskBatchSize"]) 
+        eprint(f"Now running for n={args['iterations']} iterations.")
 
     generator = ecIterator(baseGrammar, train,
+                           taskDataset=task_dataset,
                            testingTasks=test,
                            outputPrefix="%s/logo"%outputDirectory,
                            evaluationTimeout=0.01,
