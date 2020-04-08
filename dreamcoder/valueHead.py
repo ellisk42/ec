@@ -351,7 +351,26 @@ class AbstractREPLValueHead(BaseValueHead):
         task = frontier.task
         tp = frontier.task.request
         fullProg = entry.program._fullProg
-        posTrace, negTrace =  getTracesFromProg(fullProg, frontier.task.request, g)
+
+        #for bugs
+        if frontier in self.mem:
+            posTrace, negTrace = self.mem[frontier]
+
+        else:
+            posTrace, negTrace =  getTracesFromProg(fullProg, frontier.task.request, g)
+            self.mem[frontier] = posTrace, negTrace
+            print("POS:")
+            for pos in posTrace: print(pos)
+            print("NEG:")
+            for neg in negTrace: print(neg)
+
+            for frontier in self.mem:
+                    posT , _ = self.mem[frontier]
+                    for pos in posT:
+                        if any(pos == neg for _, negt in self.mem.values() for neg in negt):
+                            print("interference:")
+                            print(pos)
+
 
         #discard negative sketches which overlap with positive
         negTrace = [sk for sk in negTrace if (sk not in posTrace) ]
@@ -406,6 +425,8 @@ class TowerREPLValueHead(AbstractREPLValueHead):
         if self.use_cuda:
             self.cuda()
 
+        self.mem = {}
+
     def convertToVector(self, value):
         if isinstance(value, torch.Tensor):
             return value
@@ -423,7 +444,7 @@ class TowerREPLValueHead(AbstractREPLValueHead):
             # print(hand)
             # print(state)
             # print(plan)
-            image = renderPlan(plan, drawHand=hand, pretty=False)
+            image = renderPlan(plan, drawHand=hand, pretty=False, drawHandOrientation=state.orientation)
             return self.featureExtractor(image) #also encode orientation info !!!
 
         elif isinstance(value, tuple) and isinstance(value[0], TowerState):

@@ -167,6 +167,7 @@ def animateTower(exportPrefix, p):
                             drawHand=hd(n),
                             masterPlan=actions,
                             randomSeed=hash(exportPrefix))
+
                  for n in range(0,len(trajectory) + 1)]
     import scipy.misc
     import random

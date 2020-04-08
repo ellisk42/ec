@@ -203,26 +203,8 @@ def test_trainAbstractREPL():
 
 def test_abstractHolesTower():
 
-    #g = Grammar.uniform([k0,k1,addition, subtraction])
-    # bootstrapTarget_extra()
-
-    #expr = g.sample( request, sampleHoleProb=.2)
-    #expr = Program.parse('(lambda (map (lambda <HOLE>) $0))')
-    #expr = Program.parse('(lambda (map (lambda (+ $0 17111)) (map (lambda <HOLE>) $0)))')
-    #expr = Program.parse('(lambda (map (lambda (+ $0 1)) (map (lambda <HOLE>) $0)))')
-    # expr = Program.parse('(lambda (map (lambda (is-square $0)) $0))')
-    
 
     def _empty_tower(h): return (h,[])
-
-    
-    expr = Program.parse('(lambda (tower_loopM <HOLE> (lambda (lambda (moveHand 3 (3x1 $0)))) <TowerHOLE>)) ') 
-    #expr = Program.parse('(lambda (tower_loopM 3 (lambda (lambda (moveHand 3 (3x1 $0)))) <TowerHOLE>)) ') 
-
-    #expr = Program.parse('(lambda (tower_loopM 3 (lambda (lambda <TowerHOLE>)) <TowerHOLE>)) ') 
-    #expr = Program.parse('(lambda (3x1 (1x3 $0) ))') 
-
-    #expr = Program.parse('(lambda (3x1 (1x3 <TowerHOLE>) ))') 
     expr = Program.parse('(lambda (1x3 (moveHand <HOLE> (reverseHand <TowerHOLE>))) )') 
     expr = Program.parse('(lambda (1x3 (moveHand <HOLE> (reverseHand <TowerHOLE>))) )') 
     #expr = Program.parse('(lambda (<TowerHOLE>) )') 
@@ -239,7 +221,6 @@ def test_abstractHolesTowerValue():
     from dreamcoder.domains.tower.makeTowerTasks import makeSupervisedTasks
     from dreamcoder.valueHead import TowerREPLValueHead
 
-
     g = Grammar.uniform(new_primitives,
                          continuationType=ttower)
     tasks = makeSupervisedTasks()
@@ -247,7 +228,6 @@ def test_abstractHolesTowerValue():
     def _empty_tower(h): return (h,[])
 
     exprs = []
-
     exprs.append (Program.parse('(lambda (tower_loopM <HOLE> (lambda (lambda (moveHand 3 (3x1 $0)))) <TowerHOLE>)) ') )
     exprs.append (Program.parse('(lambda (1x3 (moveHand <HOLE> (reverseHand <TowerHOLE>))) )') )
     #expr = Program.parse('(lambda (<TowerHOLE>) )') 
@@ -255,26 +235,15 @@ def test_abstractHolesTowerValue():
     #animateTower('test', expr)
     #expr = Program.parse('(lambda (<TowerHOLE>) )') 
     exprs.append (Program.parse('(lambda (3x1 (1x3 <TowerHOLE>) ))') )
-
     exprs.append (Program.parse('(lambda (reverseHand (1x3 <TowerHOLE>) ))') )
     exprs.append (Program.parse('(lambda (tower_loopM <HOLE> (lambda (lambda <TowerHOLE>)) <TowerHOLE>))'))
-
-    
     exprs.append (Program.parse('(lambda (tower_loopM 1 (lambda (lambda <TowerHOLE>)) <TowerHOLE>))'))
-
-
     exprs.append (Program.parse('(lambda (tower_embed (lambda (moveHand 1 (1x3 $0))) $0 ) )'))
-    #print(executeTower(expr))
-    #animateTower('test', expr)
-    #assert 0
     #expr = Program.parse('(lambda (1x3 (tower_embed (lambda (1x3 $0 )) <TowerHOLE> )) )')
     #expr = Program.parse('(lambda (tower_loopM <HOLE> (lambda (lambda <TowerHOLE>)) <TowerHOLE>))')
     #print(executeTower(expr))
-
     exprs.append (Program.parse('(lambda (tower_loopM <HOLE> (lambda (lambda (1x3 $0))) <TowerHOLE>))'))
-
     #print(expr.evaluateHolesDebug([])(_empty_tower)(TowerState(history=[])))
-
     #expr = Program.parse('(lambda (tower_loopM 5 (lambda (lambda <TowerHOLE>)) (3x1 <TowerHOLE>)))')
 
     featureExtractor = TowerCNN(tasks, testingTasks=tasks[-3:], cuda=True)
@@ -285,7 +254,63 @@ def test_abstractHolesTowerValue():
     # x = expr.evaluateHolesDebug([])(_empty_tower)(TowerState(history=[])) #can initialize tower state with 
         print(x)
 
+def test_TowerREPLValueConvergence():
 
+    from dreamcoder.domains.tower.towerPrimitives import primitives, new_primitives, animateTower
+    from dreamcoder.domains.tower.main import TowerCNN
+    from dreamcoder.domains.tower.makeTowerTasks import makeSupervisedTasks
+    from dreamcoder.valueHead import TowerREPLValueHead
+
+    g = Grammar.uniform(new_primitives,
+                         continuationType=ttower)
+    tasks = makeSupervisedTasks()
+
+    import dill
+    with open('testTowerFrontiers.pickle', 'rb') as h:
+        lst = dill.load(h)
+
+    #import pdb; pdb.set_trace()
+
+    # for i, frontier in enumerate(lst):
+    #     animateTower(f'front{i}', frontier.entries[0].program._fullProg)
+
+
+
+    animateTower('test1', Program.parse('(lambda (reverseHand (1x3 (1x3 $0))))'))
+    animateTower('test2', Program.parse('(lambda  (1x3 (1x3 $0)) )'))
+    assert 0
+
+    def _empty_tower(h): return (h,[])
+
+    def saveState(path, prog):
+        import scipy.misc
+        state, _ = executeTower(prog)
+        plan = [tup for tup in state.history if isinstance(tup, tuple)]
+        hand = state.hand
+        image = renderPlan(plan, drawHand=hand, pretty=False, drawHandOrientation=state.orientation)
+        scipy.misc.imsave(path, image)
+
+    saveState("test1.png", Program.parse('(lambda (reverseHand (1x3 (1x3 $0))))') )
+    saveState("test2.png", Program.parse('(lambda  (1x3 (1x3 $0)) )'))
+
+    exprs = []
+    exprs.append (Program.parse('(lambda (tower_loopM <HOLE> (lambda (lambda (1x3 $0))) <TowerHOLE>))'))
+
+
+    featureExtractor = TowerCNN(tasks, testingTasks=tasks[-3:], cuda=True)
+    valueHead = TowerREPLValueHead(g, featureExtractor, H=1024)
+    optimizer = torch.optim.Adam(valueHead.parameters(), lr=0.001, eps=1e-3, amsgrad=True)
+
+
+    for i in range(400):
+        valueHead.zero_grad()
+        
+        losses = [valueHead.valueLossFromFrontier(frontier, g) for frontier in lst[1:] ]#+ lst[2:]]
+        #looks like 
+        loss = sum(losses)
+        print(loss.data.item())
+        loss.backward()
+        optimizer.step()
 
 if __name__=='__main__':
     #findError()
@@ -305,4 +330,5 @@ if __name__=='__main__':
     # tasks = make_list_bootstrap_tasks()
     # expr = Program.parse('(lambda (map (lambda (is-square $0)) $0))')
     # test_abstractHolesTower()
-    test_abstractHolesTowerValue()
+    # test_abstractHolesTowerValue()
+    test_TowerREPLValueConvergence()
