@@ -162,23 +162,23 @@ def renderPlan(plan, resolution=256, window=64, floorHeight=2, borderSize=1, bod
     if drawHand is not None:
         if not Lego:
             dh = 0.25
-            rectangle(drawHand - dh,
-                      drawHand + dh,
-                      -99999, 99999,
-                      (0,1,0))
-        else:
+
             if drawHandOrientation is not None:
-                rectangle(drawHand - 1,drawHand + 1,
-                      43,45,(1, (1 + 1*drawHandOrientation)/2.  ,1))
+                rectangle(drawHand - dh,
+                          drawHand + dh,
+                          -99999, 99999,
+                          ((1 + 1*drawHandOrientation)/2. , 1, 0))
+
             else:
-                rectangle(drawHand - 1,drawHand + 1,
-                          43,45,(1,1,1))
+                rectangle(drawHand - dh,
+                          drawHand + dh,
+                          -99999, 99999,
+                          (0,1,0))
+        else:
 
-            # if drawHandOrientation is not None:
-            #     rectangle(drawHand - 1,drawHand + 1,
-            #           43,45,(1,1*drawHandOrientation,1))
-
-
+            rectangle(drawHand - 1,drawHand + 1,
+                      43,45,(1,1,1))
+            
     return a
 
 

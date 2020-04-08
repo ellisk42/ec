@@ -300,6 +300,39 @@ def test_TowerREPLValueConvergence():
         loss.backward()
         optimizer.step()
 
+    def _empty_tower(h): return (h,[])
+
+    def saveState(path, prog):
+        import scipy.misc
+        state, actions = prog.evaluate([])(_empty_tower)(TowerState(history=[]))
+        plan = [tup for tup in state.history if isinstance(tup, tuple)]
+        hand = state.hand
+        image = renderPlan(plan, drawHand=hand, pretty=False, drawHandOrientation=state.orientation)
+        scipy.misc.imsave(path, image)
+
+    saveState("test1.png", Program.parse('(lambda (reverseHand (1x3 (1x3 $0))))') )
+    saveState("test2.png", Program.parse('(lambda  (1x3 (1x3 $0)) )'))
+
+
+    exprs = []
+    exprs.append (Program.parse('(lambda (tower_loopM <HOLE> (lambda (lambda (1x3 $0))) <TowerHOLE>))'))
+
+
+    featureExtractor = TowerCNN(tasks, testingTasks=tasks[-3:], cuda=False)
+    valueHead = TowerREPLValueHead(g, featureExtractor, H=1024)
+    optimizer = torch.optim.Adam(valueHead.parameters(), lr=0.001, eps=1e-3, amsgrad=True)
+
+
+    for i in range(400):
+        valueHead.zero_grad()
+        
+        losses = [valueHead.valueLossFromFrontier(frontier, g) for frontier in lst ]#+ lst[2:]]
+        #looks like 
+        loss = sum(losses)
+        print(loss.data.item())
+        loss.backward()
+        optimizer.step()
+
 if __name__=='__main__':
     #findError()
     #testSampleWithHoles()
