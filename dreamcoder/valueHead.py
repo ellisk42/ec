@@ -203,8 +203,6 @@ class NMN(nn.Module):
         if self.nArgs == 0:
             return self.params
         else:
-            print(self.operator)
-            print("MODULE Args", args)
             inp = torch.cat(args, 0) #TODO i think this is correct dim
             out = self.params(inp)
             return out
@@ -399,12 +397,20 @@ class TowerREPLValueHead(AbstractREPLValueHead):
                 #specEncoder can be None, meaning you dont use the spec at all to encode objects
         super(TowerREPLValueHead, self).__init__(g, featureExtractor, H=H)
 
+        self.envEncoder = nn.GRU(H,H,1)
+
+        self.empty_towerVec = nn.Parameter(torch.randn(H))
+
+        self.towerHole = nn.Sequential(nn.Linear(2*H, H), nn.ReLU())
+
+        if self.use_cuda:
+            self.cuda()
+
     def convertToVector(self, value):
         if isinstance(value, torch.Tensor):
             return value
 
         elif isinstance(value, Program):
-            print("I did this")
             return self.RNNHead._encodeSketches([value]).squeeze(0)
 
         elif isinstance(value, int):
@@ -420,6 +426,12 @@ class TowerREPLValueHead(AbstractREPLValueHead):
         elif isinstance(value, tuple) and isinstance(value[0], TowerState):
             return self.convertToVector(value[0])
 
+        elif value is _empty_tower:
+            return self.empty_towerVec
+
+        elif isinstance(value, int):
+            return self.fn_modules[str(value)]()
+
         else:
             #return value
             print(f"uncaught object {value} of type {type(value)}")
@@ -427,26 +439,50 @@ class TowerREPLValueHead(AbstractREPLValueHead):
 ####
     def encodeHole(self, hole, env):
         assert hole.isHole
-        if not env == [_empty_tower]:
-            print(f"WARNING: env for this non-tower hole: {env}")
+        #env = [e for e in env if not ( callable(e) and e is _empty_tower) ]
+        #if not env == []:
+            #print(f"WARNING: env for this non-tower hole: {env}")
             #raise computeValueError
-
+        #if len(env) > 1: assert False
         #stackOfEnvVectors = [self.convertToVector(val) for val in env]
         #environmentVector = self._encodeStack(stackOfEnvVectors)
         #return self.holeParam(environmentVector)
-        out = torch.ones(self.H)
-        if self.use_cuda: out = out.cuda()
-        return self.holeParam(out)
+        env = [self.convertToVector(e) for e in env]
+        envEncoding = self._encodeStack(env)
+        return self.holeParam(envEncoding)
 
     def _encodeStack(self, stackOfVectors):
         #return self.convertToVector(stackOfVectors)
-        pass 
+        #TODO  self.envEncoder
+
+        #inputSequences = [self.embedding(ss) for ss in inputSequences]
+
+        inputSequences = [ torch.stack(stackOfVectors) ]
+        idxs, inputSequence = zip(*sorted(enumerate(inputSequences), key=lambda x: -len(x[1])  ) )
+        try:
+            packed_inputSequence = torch.nn.utils.rnn.pack_sequence(inputSequence)
+        except ValueError:
+            print("padding issues, not in correct order")
+            import pdb; pdb.set_trace()
+
+        _,h = self.envEncoder(packed_inputSequence) #dims
+        unperm_idx, _ = zip(*sorted(enumerate(idxs), key = lambda x: x[1]))
+        h = h[:, unperm_idx, :]
+        h = h.squeeze(0)
+        #o = o.squeeze(1)
+        objectEncodings = h
+        return objectEncodings.squeeze(0)
 
     def encodeTowerHole(self, hole, env, state):
         stateVec = self.convertToVector(state)
         #assert env == [_empty_tower], f"env for this tower hole: {env}"
-        print("WARNING: env of tower hole not encoded. ENV:", env)
-        return self.holeParam(stateVec) #TODO may need to change all of this up
+        #env = [e for e in env if not ( callable(e) and e is _empty_tower) ]
+        #print("WARNING: env of tower hole not encoded. ENV:", env)
+        env = [self.convertToVector(e) for e in env]
+        envEncoding = self._encodeStack(env)
+        #if len(env) > 1: assert False
+        return self.towerHole( torch.cat([stateVec, envEncoding], 0))
+        #return self.holeParam(stateVec) #TODO may need to change all of this up
 
     def _computeOutputVectors(self, task):
         outVectors = [self.featureExtractor.featuresOfTask(task)]
@@ -455,13 +491,13 @@ class TowerREPLValueHead(AbstractREPLValueHead):
 ####
 
     def _computeSketchRepresentation(self, sketch, p=None):
+        print(sketch)
+        assert "$1" not in str(sketch), f"{sketch}"
         if p is None:
             p = self._getInitialSketchRep(sketch)
         try:
-            res = p(_empty_tower)
-            print("type res", type(res))            
+            res = p(_empty_tower)          
             res = res(TowerState(history=[])) 
-            print("HIT THIS LINE")
 
         except (ValueError, IndexError, ZeroDivisionError, computeValueError, RuntimeError) as e:
             print("caught exception")

@@ -97,7 +97,12 @@ class ECResult():
                      "storeTaskMetrics": 'STM',
                      "topkNotMAP": "tknm",
                      "rewriteTaskMetrics": "RW",
-                     'taskBatchSize': 'batch'}
+                     'taskBatchSize': 'batch',
+                     "singleRoundValueEval" : "SRVE",
+                     "skipTraining" : "sTr",
+                     "resumeTraining" : "resTrain",
+                     "useValue": "useVal",
+                     "noConsolidation" : "noCons"}
 
     @staticmethod
     def abbreviate(parameter): return ECResult.abbreviations.get(parameter, parameter)

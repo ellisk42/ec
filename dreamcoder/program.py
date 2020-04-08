@@ -728,76 +728,44 @@ class Primitive(Program):
 
         from dreamcoder.domains.tower.towerPrimitives import TowerState
         def abstractEvalAndReCurry(*args):
-            #abstract condition
 
-            # if self.name == 'tower_embed':
-            #     fn, k = args
-            #     return lambda prev: k( print("AHHHHHHHHH", fn (TowerState(history=[])) (prev)   ))
             from dreamcoder.domains.tower.towerPrimitives import _empty_tower, blocks
 
-
             if self.name == 'tower_embed' and (xs[0].hasHoles):
-                print("WE ARE HERE")
                 fn, k = args
-                #return lambda x: fn(x) and lambda x: k(x)
                 return lambda prev: k ( valueHead.applyModule(self, [valueHead.convertToVector(prev), valueHead.convertToVector( fn( _empty_tower) ( prev)   )  ] ) ) #TODO order??
 
             if self.name == 'tower_loopM' and (xs[0].hasHoles or xs[1].hasHoles):
-
-                #i, fn, k = args
-                print("TRIGGERED")
                 def f(prev):
                     aa = valueHead.convertToVector(prev)
                     bb = valueHead.convertToVector(args[0]) 
-                    print("go")
-                    print(xs[1])
-                    print(xs[0])
-                    print(prev)
                     cc_in =  args[1] (args[0]) ( _empty_tower ) (prev) 
-                    print("CCIN", cc_in)
-                    #import pdb; pdb.set_trace()
-                    # if concrete, cc_in is tuple of state, action and we only need action.
-                    # if abstract, cc_in is a tensor
                     cc = valueHead.convertToVector (cc_in[0] if isinstance(cc_in, tuple) else cc_in) 
                     return args[2] ( valueHead.applyModule(self, [aa, bb, cc ]  ))
-                return f#lambda prev: args[2] ( valueHead.applyModule(self, [aa, bb, cc ]  )) #TODO order??
-
-            if self.name in blocks.keys():
-               
-                def f(prev):
-                    #print(args)
-                    if isinstance(prev, TowerState):
-                        #print(prev.history)
-                        #import pdb; pdb.set_trace()
-                        return self.value( args[0] ) (prev)
-                        #return prev ( self.value(args[0]) ) #is that right????
-                    else:
-                        print("Type prev:", type(prev))
-                        return valueHead.applyModule(self, [valueHead.convertToVector(prev)])
-
                 return f
 
+            if self.name in blocks.keys():
+                def f(prev):
+                    if isinstance(prev, TowerState):
+                        return self.value( args[0] ) (prev)
+                    else:
+                        return valueHead.applyModule(self, [valueHead.convertToVector(prev)])
+                return f
 
             if self.name == 'reverseHand':
-                print("WAAHHHHHH")
                 def f(prev):
                     if isinstance(prev, TowerState):
                         return self.value(args[0]) (prev)
                     else:
                         return valueHead.applyModule(self, [valueHead.convertToVector(prev) ] )
-
                 return f
-
-
 
             if any(type(arg) == torch.Tensor for arg in args) or self.name == 'unfold' \
             or ( self.name in exceptionList and any( tp.isArrow and x.hasHoles \
                     for tp, x in zip(self.tp.functionArguments(), xs )) ): #TODO STOPGAP
 
-                if self.name == 'moveHand':
+                if self.name == 'moveHand': #TODO might need to move this up
                     return lambda x: args[1] ( valueHead.applyModule(self, [args[0], valueHead.convertToVector(x)]) ) #something like that??
-
-
 
                 x_tps = self.tp.functionArguments()
                 abstractArgs = []
@@ -807,7 +775,6 @@ class Primitive(Program):
                     else:
                         abstractArgs.append (valueHead.convertToVector(arg)) #TODO
                 return valueHead.applyModule(self, abstractArgs) #TODO
-
 
             #concrete condition:
             else:
@@ -824,8 +791,6 @@ class Primitive(Program):
 
         L = len(self.tp.functionArguments())
         return uncurry([], L)
-
-        #
 
     def betaReduce(self): return None
 
