@@ -1,0 +1,1953 @@
+RAN THIS:
+bash run.sh practice 10000 20 python bin/sketch.py -i 10 -t 1800 --contextual -R 2400 --skiptesting --taskReranker unsolved
+
+
+PANIC! Exception in child worker: 
+Traceback (most recent call last):
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 210, in executeSketch
+    timeout=timeout)
+  File "/om/user/lyt/ec/bin/../dreamcoder/utilities.py", line 686, in runWithTimeout
+    if timeout is None: return k()
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 209, in <lambda>
+    return runWithTimeout(lambda : p.evaluate([])(_empty_sketch)(SketchState(history=[])),
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  [Previous line repeated 2 more times]
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  [Previous line repeated 1 more time]
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  [Previous line repeated 1 more time]
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  [Previous line repeated 2 more times]
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  [Previous line repeated 1 more time]
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  [Previous line repeated 1 more time]
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  [Previous line repeated 2 more times]
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  [Previous line repeated 1 more time]
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  [Previous line repeated 1 more time]
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  [Previous line repeated 3 more times]
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  [Previous line repeated 1 more time]
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  [Previous line repeated 1 more time]
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  [Previous line repeated 2 more times]
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  [Previous line repeated 1 more time]
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  [Previous line repeated 1 more time]
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 40, in down
+    return SketchState(hand=newhand, history=self.history if self.history is None else self.history + [(newhand, "")])
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 17, in __init__
+    if history is None or (isinstance(history, list) and len(history)>=1):
+RecursionError: maximum recursion depth exceeded while calling a Python object
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/om/user/lyt/ec/bin/../dreamcoder/enumeration.py", line 230, in _f
+    r = f(*a, **k)
+  File "/om/user/lyt/ec/bin/../dreamcoder/enumeration.py", line 366, in solveForTask_python
+    lowerBound=lowerBound, upperBound=upperBound)
+  File "/om/user/lyt/ec/bin/../dreamcoder/enumeration.py", line 426, in enumerateForTasks
+    success, likelihood = likelihoodModel.score(p, task)
+  File "/om/user/lyt/ec/bin/../dreamcoder/likelihoodModel.py", line 16, in score
+    logLikelihood = task.logLikelihood(program, self.timeout)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/makeSketchTasks.py", line 116, in logLikelihood
+    trace = executeSketch(e)[1] # identical to above.
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 212, in executeSketch
+    assert False
+AssertionError

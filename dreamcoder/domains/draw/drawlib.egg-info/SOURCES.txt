@@ -1,0 +1,5 @@
+setup.py
+drawlib.egg-info/PKG-INFO
+drawlib.egg-info/SOURCES.txt
+drawlib.egg-info/dependency_links.txt
+drawlib.egg-info/top_level.txt

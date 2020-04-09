@@ -1,0 +1,1000 @@
+   2  cat jobs/S12.6.2_2019-11-03_02-44-28 | grep hit
+    3  cat experiments.sh
+    4  squeue -u lyt
+    5  cat jobs/S12.5.4_2019-11-03_17-03-17 | grep hit
+    6  tail -n 50 jobs/S12.5.4_2019-11-03_17-03-17
+    7  cat jobs/S12.5.5_2019-11-03_17-45-16 | grep hit
+    8  cat jobs/S12.5.5_2019-11-03_17-45-16
+    9  cat jobs/S12.5.5_2019-11-03_17-45-16 | less
+   10  cat jobs/S12.5.5_2019-11-03_17-45-16 | grep hit
+   11  cat jobs/S12.5.4_2019-11-03_17-03-17 | grep hit
+   12  cat jobs/S12.5.4_2019-11-03_17-03-17 | less
+   13  cat jobs/S12.5.4_2019-11-03_17-03-17 | grep dist11
+   14  cat jobs/S12.5.4_2019-11-03_17-03-17 | grep dist1
+   15  nano experiments.sh
+   16  cat jobs/S12.5.5_2019-11-03_17-45-16 | grep dist11
+   17  cat jobs/S12.5.5_2019-11-03_17-45-16 | grep dist1
+   18  cat experiments.sh
+   19  cat jobs/S12.5.1_2019-11-02_19-53-06 | grep hit
+   20  cat jobs/S12.5.1_2019-11-02_19-53-06 | less
+   21  ls
+   22  squeue -u lyt
+   23  scancel 15157654
+   24  nano experiments.sh
+   25  cat experiments.sh
+   26  cat jobs/S12.5.5_2019-11-03_17-45-16 | grep -A 50 "result:"
+   27  cat jobs/S12.5.5_2019-11-03_17-45-16 | grep -A 50 results:
+   28  cat jobs/S12.5.5_2019-11-03_17-45-16 | grep -A 50 primitives
+   29  cat jobs/S12.5.5_2019-11-03_17-45-16 | grep -A 50 result:
+   30  cat jobs/S12.5.5_2019-11-03_17-45-16 | grep -A 50 results:
+   31  q
+   32  cat experiments.sh
+   33  nano experiments.sh
+   34  cat experiments.sh
+   35  nano experiments.sh
+   36  squeue -u lyt
+   37  bash experiments.sh
+   38  /cm/shared/admin/bin/slurm-qos-usage tenenbaum
+   39  cat experiments.sh
+   40  squeue -u lyt
+   41  cat jobs/S13.8_2019-11-04_01-29-25 
+   42  squeue -u lyt
+   43  cd /om/user/lyt/ec
+   44  cat jobs/S12.6.2_2019-11-03_02-44-28 | grep hit
+   45  tail -n 50 jobs/S12.6.2_2019-11-03_02-44-28
+   46  tail -n 500 jobs/S12.6.2_2019-11-03_02-44-28
+   47  squeue -u lyt
+   48  cat jobs/S12.7_2019-11-04_01-29-25 | grep hit
+   49  cat jobs/S12.7_2019-11-04_01-29-25 | tail -n 100
+   50  cat jobs/S12.7_2019-11-04_01-29-25 | tail -n 500
+   51  cat jobs/S12.7_2019-11-04_01-29-25 | grep hit
+   52  cat jobs/S12.6.2_2019-11-03_02-44-28 | grep hit
+   53  cat jobs/S12.7_2019-11-04_01-29-25 | grep hit
+   54  cat jobs/S12.8_2019-11-04_01-29-25 | grep hit
+   55  cat jobs/S12.6.2_2019-11-03_02-44-28 | grep hit
+   56  cat jobs/S13.8_2019-11-04_01-29-25 | grep hit
+   57  nano experiments.sh
+   58  squeue -u lyt
+   59  cat jobs/S12.6.2_2019-11-03_02-44-28 | grep hit
+   60  squeue -u lyt
+   61  pwd
+   62  squeue -u lyt
+   63  cat jobs/S12.7_2019-11-04_01-29-25 | grep hit
+   64  cat jobs/S12.6.2_2019-11-03_02-44-28 | grep hit
+   65  cat jobs/S12.8_2019-11-04_01-29-25 | grep hit
+   66  cat jobs/S13.8_2019-11-04_01-29-25 | grep hit
+   67  squeue -u lyt
+   68  pwd
+   69  squeue -u lyt
+   70  exit
+   71  cd /om/user/lyt/ec
+   72  ls
+   73  pwd
+   74  squeue -u lyt
+   75  scancel 15154177
+   76  cat jobs/S12.6.2_2019-11-03_02-44-28 | grep hit
+   77  squeue -u lyt
+   78  scancel 15158840
+   79  squeue -u lyt
+   80  cat experiments.sh
+   81  nano experiments.sh
+   82  cat experiments.sh
+   83  nano experiments.sh
+   84  bash experiments.sh
+   85  cat experiments.sh
+   86  nano experiments.sh
+   87  bash experiments.sh
+   88  /cm/shared/admin/bin/slurm-qos-usage tenenbaum
+   89  cat jobs/S12.5.6_2019-11-04_12-00-05 
+   90  nano experiments.sh
+   91  squeue -u lyt
+   92  /cm/shared/admin/bin/slurm-qos-usage tenenbaum
+   93  nano experiments.sh
+   94  bash experiments.sh
+   95  /cm/shared/admin/bin/slurm-qos-usage tenenbaum
+   96  squeue -u lyt
+   97  cat jobs/S12.8.1_2019-11-04_15-49-12 
+   98  cat jobs/S12.8.1_2019-11-04_15-49-12 | grep hits
+   99  cat jobs/S12.8.1_2019-11-04_15-49-12 | grep hit
+  100  squeue -u lyt
+  101  cat jobs/S12.9_2019-11-04_11-55-33 | tail -n 100
+  102  cat jobs/S12.9_2019-11-04_11-55-33 | grep hit
+  103  cat jobs/S13.9_2019-11-04_11-55-33 | grep hit
+  104  cat jobs/S13.9_2019-11-04_11-55-33 | tail -n 100
+  105  squeue -u lyt
+  106  cat jobs/S12.8_2019-11-04_01-29-25 _ grep hit
+  107  cat jobs/S12.8_2019-11-04_01-29-2 | grep hit
+  108  cat jobs/S12.8_2019-11-04_01-29-25 | grep hit
+  109  cat experiments.sh
+  110  cat jobs/S12.8_2019-11-04_01-29-25 | grep hit
+  111  cat jobs/S13.8_2019-11-04_01-29-25 | grep hit
+  112  squeue -u lyt
+  113  scancel 15158842
+  114  scancel 15158841
+  115  squeue -u lyt
+  116  cat experiments.sh
+  117  cat jobs/S12.7_2019-11-04_01-29-25 | grep hit
+  118  cat jobs/S12.6.2_2019-11-03_02-44-28 | grep hit
+  119  cat experiments.sh
+  120  squeue -u lyt
+  121  cat jobs/S12.8.1_2019-11-04_15-49-12 | grep hit
+  122  cat jobs/S12.9_2019-11-04_11-55-33 | grep hit
+  123  cat jobs/S12.9_2019-11-04_11-55-33 | grep -A 50 results:
+  124  cat jobs/S12.9_2019-11-04_11-55-33 | grep Hits
+  125  cat experiments.sh
+  126  cat jobs/S12.8.1_2019-11-04_15-49-12 | grep hit
+  127  cat jobs/S12.8.1_2019-11-04_15-49-12 | grep Hit
+  128  cat jobs/S12.8.1_2019-11-04_15-49-12 | grep Hits
+  129  cat experiments.sh
+  130  l
+  131  cat experiments.sh
+  132  nano experiments.sh
+  133  cat experiments.sh
+  134  bash experiments.sh
+  135  squeue -u lyt
+  136  cd /om/user/lyt
+  137  cd ec
+  138  cat jobs/S12.9_2019-11-04_11-55-33 | grep hit
+  139  cat experiments.sh
+  140  cat jobs/S12.9_2019-11-04_11-55-33 | grep hit
+  141  cat jobs/S12.6.2_2019-11-03_02-44-28 | grep hit
+  142  cat jobs/S13.9_2019-11-04_11-55-33 grep hit
+  143  cat jobs/S13.9_2019-11-04_11-55-33 | grep hit
+  144  squeue -u lyt
+  145  cat jobs/S12.8.1_2019-11-04_15-49-12 | grep hit
+  146  cat experiments.sh
+  147  cat jobs/S12.8.2_2019-11-04_17-42-18 | grep hit
+  148  cat jobs/S12.8.2_2019-11-04_17-42-18 | grep -A 50 results:
+  149  cat jobs/S12.8.2_2019-11-04_17-42-18 | grep -A 100 results:
+  150  cat jobs/S12.8.2_2019-11-04_17-42-18 | grep ht
+  151  cat jobs/S12.8.2_2019-11-04_17-42-18 | grep hit
+  152  /cm/shared/admin/bin/slurm-qos-usage tenenbaum
+  153  squeue -u lyt
+  154  squeue -u lyt
+  155  cd /om/user/lyt
+  156  ls
+  157  cd ec
+  158  c
+  159  pwd
+  160  cat jobs/S12.1_2019-11-01_01-23-39 
+  161  cat jobs/S13.1_2019-11-01_01-23-39 
+  162  cat jobs/S9.2staging_2019-11-01_01-33-42 
+  163  ls
+  164  pwd
+  165  squeue -u lyt
+  166  cat jobs/S12.1_2019-11-01_10-
+  167  cat jobs/S12.1_2019-11-01_10-49-52 
+  168  cat jobs/S12.1_2019-11-01_10-49-52 | less
+  169  cat jobs/S13.1_2019-11-01_10-49-52 | less
+  170  cat experiments.sh 
+  171  ls
+  172  pwd
+  173  squeue -u lyt
+  174  cat jobs/S12.3_2019-11-02_11-25-43 
+  175  cat jobs/S12.3_2019-11-02_11-25-43 | less
+  176  cat jobs/S12.3_2019-11-02_11-25-43
+  177  cat jobs/S12.3_2019-11-02_11-25-43 | less
+  178  ls
+  179  cat jobs/S12.3_2019-11-02_11-25-43 | grep hit
+  180  ls
+  181  squeue -u lyt
+  182  scancel 15150916
+  183  ls
+  184  nano experiments.sh
+  185  bash experiments.sh
+  186  cat jobs/S12.3shape_2019-11-02_11-25-43 
+  187  cat jobs/S12.3shape_2019-11-02_11-25-43 | grep hit
+  188  nano experiments.sh
+  189  bash experiments.sh
+  190  cat jobs/S9.2replicate_2019-11-02_11-25-43 
+  191  cat jobs/S9.2replicate_2019-11-02_11-25-43 | hit
+  192  cat jobs/S9.2replicate_2019-11-02_11-25-43 | hits
+  193  cat jobs/S9.2replicate_2019-11-02_11-25-43 | grep hit
+  194  cat jobs/S9.2replicate_2019-11-02_11-25-43 | grep hits
+  195  cat jobs/S12.3shape_2019-11-02_16-03-14 
+  196  cat jobs/S12.3shape_2019-11-02_11-25-43 
+  197  cat jobs/S12.3shape_2019-11-02_11-25-43 | grep hit
+  198  nano experiments.sh
+  199  cat jobs/S12.4_2019-11-02_12-29-32 
+  200  cat jobs/S12.4_2019-11-02_12-29-32 | grep hit
+  201  cat jobs/S12.4_2019-11-02_12-29-32 | grep tasks
+  202  cat jobs/S12.4_2019-11-02_12-29-32 | grep batch
+  203  ls
+  204  git pull
+  205  squeue -u lyt
+  206  scancel 15150934
+  207  squeue -u lyt
+  208  cat jobs/S12.3.1_2019-11-02_16-03-14 
+  209  cat jobs/S12.3.1_2019-11-02_16-00-57 
+  210  squeue -u lyt
+  211  scancel 15151762
+  212  squeue -u lyt
+  213  nano experiments.sh
+  214  bash experiments.sh
+  215  /cm/shared/admin/bin/slurm-qos-usage tenenbaum
+  216  squeue -u lyt
+  217  cat jobs/S9.2replicate_2019-11-02_11-25-43 
+  218  cat jobs/S9.2replicate_2019-11-02_11-25-43 | grep hit
+  219  cat jobs/S12.5.1_2019-11-02_16-24-48 
+  220  ls
+  221  squeue -u lyt
+  222  scancel scancel -u lyt
+  223  scancel -u lyt
+  224  ls
+  225  git pull
+  226  nano experiments.sh
+  227  bash experiments.sh
+  228  squeu
+  229  squeue -u lyt
+  230  cat jobs/S12.5.1_2019-11-02_16-43-07 
+  231  cat jobs/S12.5.2_2019-11-02_16-43-07 
+  232  cat jobs/S12.5.2_2019-11-02_16-43-07 | less
+  233  cat jobs/S12.3.1_2019-11-02_16-43-07 | less
+  234  cat jobs/S12.3.1_2019-11-02_16-43-07 
+  235  cat jobs/S12.3.1_2019-11-02_16-43-07 | grep hit
+  236  cat jobs/S12.3.1_2019-11-02_16-43-07
+  237  cat jobs/S12.3.1_2019-11-02_16-43-07 | less
+  238  cat jobs/S12.5.1_2019-11-02_16-43-07  | less
+  239  nano experiments.sh
+  240  squeue -u lyt
+  241  scancel 15151860
+  242  scancel 15151861
+  243  nan
+  244  nano experiments.sh
+  245  bash experiments.sh
+  246  squ
+  247  squeue -u lyt
+  248  cat jobs/S12.5.1_2019-11-02_17-24-02 
+  249  cat jobs/S12.5.1_2019-11-02_17-24-02 | grep iter
+  250  git pull
+  251  cat jobs/S12.5.1_2019-11-02_17-24-02 | less
+  252  cat jobs/S12.5.2_2019-11-02_17-24-02 | less
+  253  nano experiments.sh
+  254  bash experiments.sh
+  255  cat jobs
+  256  cat jobs/S12.3.1_2019-11-02_16-43-07 
+  257  cat jobs/S12.3.1_2019-11-02_16-43-07 | less
+  258  cat jobs/S12.5.1_2019-11-02_19-53-06 | less
+  259  tail -N 100 jobs/S12.5.1_2019-11-02_19-53-06
+  260  tail -N 100 jobs/S12.5.1_2019-11-02_19-53-06 
+  261  cat -N 100 jobs/S12.5.1_2019-11-02_19-53-06 | tail
+  262  cat -N 100 jobs/S12.5.1_2019-11-02_19-53-06
+  263  cat jobs/S12.5.1_2019-11-02_19-53-06
+  264  cat jobs/S12.5.1_2019-11-02_19-53-06 | grep hit
+  265  cat jobs/S12.5.1_2019-11-02_19-53-06
+  266  cat jobs/S12.5.2_2019-11-02_19-53-06 
+  267  cat jobs/S12.5.1_2019-11-02_19-53-06 
+  268  cat jobs/S12.3.1_2019-11-02_16-43-07 
+  269  cat jobs/S12.3.1_2019-11-02_16-43-07 | grep hit
+  270  cat jobs/S12.5.1_2019-11-02_19-53-06 | grep hit
+  271  cat jobs/S12.5.1_2019-11-02_19-53-06 | grep hit
+  272  pwd
+  273  squeue -u lyt
+  274  cat jobs/S12.3.1_2019-11-02_16-43-07 
+  275  cat jobs/S12.3.1_2019-11-02_16-43-07 | grep hit
+  276  cat jobs/S12.3.1_2019-11-02_16-43-07 | grep -A 50 results
+  277  cat jobs/S12.3.1_2019-11-02_16-43-07 | grep -A 50 result
+  278  cat jobs/S12.3.1_2019-11-02_16-43-07 | grep -A 50 model
+  279  cat jobs/S12.3.1_2019-11-02_16-43-07 | grep -B 50 MISS
+  280  cat jobs/S12.3.1_2019-11-02_16-43-07 | less
+  281  cat jobs/S12.3.1_2019-11-02_16-43-07 | grep -A 50 results:
+  282  cat jobs/S12.5.1_2019-11-02_19-53-06 
+  283  cat jobs/S12.5.1_2019-11-02_19-53-06 | grep hit
+  284  cat jobs/S12.5.1_2019-11-02_19-53-06 | grep -A 50 results:
+  285  cat jobs/S12.5.2_2019-11-02_19-53-06 | grep hit
+  286  cat jobs/S12.6.1_2019-11-03_02-44-28 
+  287  cat jobs/S12.6.1_2019-11-03_02-44-28 | grep hit
+  288  nano experiments.sh
+  289  cat jobs/S12.6.2_2019-11-03_02-44-28 | grep hit
+  290  cat jobs/S12.6.2_2019-11-03_02-44-28
+  291  cat jobs/S12.6.2_2019-11-03_02-44-28 | less
+  292  cat jobs/S12.5.1_2019-11-02_19-53-06 | less
+  293  cat jobs/S12.5.1_2019-11-02_19-53-06 | grep hit
+  294  ls
+  295  cat jobs/S12.6.1_2019-11-03_02-44-28 | grep hit
+  296  q
+  297  ls
+  298  cat jobs/S12.5.1_2019-11-02_19-53-06 | grep hit
+  299  ls
+  300  cat jobs/S12.6.1_2019-11-03_02-44-28 | grep hit
+  301  cat jobs/S12.6.1_2019-11-03_02-44-28
+  302  cat jobs/S12.6.2_2019-11-03_02-44-28 
+  303  cat jobs/S12.6.2_2019-11-03_02-44-28 | grep dist
+  304  cat jobs/S12.6.2_2019-11-03_02-44-28 | grep angle
+  305  cat jobs/S12.6.2_2019-11-03_02-44-28 | grep rep
+  306  cat jobs/S12.6.2_2019-11-03_02-44-28 | grep scale
+  307  cat jobs/S12.5.2_2019-11-02_19-53-06 | grep dist
+  308  cat jobs/S12.5.2_2019-11-02_19-53-06 | grep angle
+  309  cat jobs/S12.5.2_2019-11-02_19-53-06 | grep scale
+  310  cat jobs/S12.6.1_2019-11-03_02-44-28 | less
+  311  cat jobs/S12.6.1_2019-11-03_02-44-28 | les
+  312  cat jobs/S12.6.1_2019-11-03_02-44-28 | less
+  313  cat jobs/S12.6.2_2019-11-03_02-44-28 | grep dist16
+  314  cat jobs/S12.6.2_2019-11-03_02-44-28 | grep dist17
+  315  cat jobs/S12.6.2_2019-11-03_02-44-28 | grep dist8
+  316  cat jobs/S12.6.2_2019-11-03_02-44-28 | grep dist6
+  317  cat jobs/S12.6.2_2019-11-03_02-44-28 | less
+  318  cat jobs/S12.6.2_2019-11-03_02-44-28 | grep dist4
+  319  cat jobs/S12.6.2_2019-11-03_02-44-28 | grep dist6
+  320  cat jobs/S12.6.2_2019-11-03_02-44-28 | grep None
+  321  cat jobs/S12.6.2_2019-11-03_02-44-28 | less
+  322  ls
+  323  git pull
+  324  ls
+  325  nano experiments.sh
+  326  squeue -u lyt
+  327  bash experiments.sh
+  328  cat jobs/S12.5.3_2019-11-03_16-49-52 | less
+  329  cat jobs/S12.6.2_2019-11-03_02-44-28 | grep dist1
+  330  cat jobs/S12.6.2_2019-11-03_02-44-28 | grep dist1 
+  331  cat jobs/S12.6.2_2019-11-03_02-44-28 | grep "dist1"
+  332  cat jobs/S12.6.2_2019-11-03_02-44-28 | grep dist1
+  333  ls
+  334  git pull
+  335  ls
+  336  nano experiments.sh
+  337  /cm/shared/admin/bin/slurm-qos-usage tenenbaum
+  338  nano experiments.sh
+  339  bash experiments.sh
+  340  cat jobs/S12.5.3_2019-11-03_16-49-52 
+  341  squeue -u lyt
+  342  git pull
+  343  bash experiments.sh
+  344  git pull
+  345  nano experiments.sh
+  346  bash experiments.sh
+  347  cat jobs/S12.5.4_2019-11-03_17-03-17 
+  348  cat jobs/S12.5.3_2019-11-03_17-04-40 
+  349  squeue -u lyt
+  350  scancel 15157501
+  351  squeue -u lyt
+  352  git pull
+  353  nano experiments.sh
+  354  bash experiments.sh
+  355  cat jobs/S12.5.3_2019-11-03_17-07-43 
+  356  cat jobs/S12.5.4_2019-11-03_17-03-17 
+  357  cat jobs/S12.5.4_2019-11-03_17-03-17 | less
+  358  cat jobs/S12.5.3_2019-11-03_17-04-40 | less
+  359  cat jobs/S12.5.3_2019-11-03_17-07-43 | less
+  360  cat jobs/S12.5.4_2019-11-03_17-03-17 | less
+  361  cat jobs/S12.5.3_2019-11-03_17-07-43 | less
+  362  cat jobs/S12.6.2_2019-11-03_02-44-28 | grep dist11
+  363  cat jobs/S12.6.2_2019-11-03_02-44-28 | less
+  364  squeue -u lyt
+  365  scancel 15157518
+  366  q
+  367  nano experiments.sh
+  368  bash experiments.sh
+  369  cat jobs/S12.5.4_2019-11-03_17-03-17 | less
+  370  cat jobs/S12.5.5_2019-11-03_17-27-40 
+  371  cat jobs/S12.5.5_2019-11-03_17-27-40 | less
+  372  squeue -u lyt
+  373  scancel 15157595
+  374  git pull
+  375  nano experiments.sh
+  376  bash experiments.sh
+  377  squeue -u lyt
+  378  cat jobs/S12.5.5_2019-11-03_17-45-16 
+  379  cat jobs/S12.5.5_2019-11-03_17-45-16 | less
+  380  cat jobs/S12.5.4_2019-11-03_17-03-17 | less
+  381  cat jobs/S12.5.4_2019-11-03_17-03-17 | grep hit
+  382  cat jobs/S12.5.1_2019-11-02_19-53-06 | grep hit
+  383  cat jobs/S12.6.1_2019-11-03_02-44-28 | grep hit
+  384  cat jobs/S12.6.2_2019-11-03_02-44-28 | grep hit
+  385  q
+  386  ls
+  387  squeue -u lyt
+  388  cat jobs/S12.8_2019-11-04_01-29-25 | grep hit
+  389  cat jobs/S13.8_2019-11-04_01-29-25 | grep hit
+  390  cat experiments.sh
+  391  cat jobs/S12.9_2019-11-04_11-55-33 | grep hit
+  392  cat jobs/S12.9_2019-11-04_11-55-33
+  393  cat jobs/S12.9_2019-11-04_11-55-33 | grep results:
+  394  cat jobs/S12.9_2019-11-04_11-55-33 | grep -A 50 results:
+  395  cat jobs/S13.9_2019-11-04_11-55-33 | grep hit
+  396  cat jobs/S13.9_2019-11-04_11-55-33 | grep -A 50 result:
+  397  cat jobs/S13.9_2019-11-04_11-55-33 | grep -A 50 results:
+  398  cat jobs/S12.5.6_2019-11-04_12-02-00 | grep hit
+  399  cat jobs/S12.5.6_2019-11-04_12-02-00 | grep -A 100 results:
+  400  cat experiments.sh
+  401  cat jobs/S12.5.6_2019-11-04_12-02-00 | grep hits
+  402  cat jobs/S12.5.6_2019-11-04_12-02-00 | grep hit
+  403  squeue -u lyt
+  404  scancel 15166219
+  405  nano experiments.sh
+  406  bash experiments.sh
+  407  pwd
+  408  squeue -u lyt
+  409  ls
+  410  cat jobs/S12.9_2019-11-04_11-55-33 | grep hit
+  411  cat jobs/S13.9_2019-11-04_11-55-33 | grep hit
+  412  cat jobs/S13.9_2019-11-04_11-55-33 | grep -A 50 results:
+  413  cat jobs/S13.9_2019-11-04_11-55-33 | grep results:
+  414  cat jobs/S13.9_2019-11-04_11-55-33 | grep test:
+  415  cat jobs/S13.9_2019-11-04_11-55-33 | grep test
+  416  cat jobs/S13.9_2019-11-04_11-55-33 | grep testig
+  417  cat jobs/S13.9_2019-11-04_11-55-33 | grep testing
+  418  cat jobs/S12.9_2019-11-04_11-55-33 | grep testing
+  419  squeue -u lyt
+  420  cat jobs/S12.8.1_2019-11-04_15-49-12 | grep hit
+  421  cat experiments.sh
+  422  cat jobs/S12.8.2_2019-11-04_17-42-18 | grep hit
+  423  cat jobs/S12.8.2_2019-11-04_17-42-18 | grep -A 50 results:
+  424  cat jobs/S12.8.2_2019-11-04_17-42-18 | grep hits
+  425  cat jobs/S12.8.2_2019-11-04_17-42-18 | grep hit
+  426  cat experiments.sh
+  427  cat jobs/S12.8_2019-11-04_01-29-25 | grep hit
+  428  cat jobs/S12.9_2019-11-04_11-55-33 | grep hit
+  429  cat experiments.sh
+  430  ls jobs
+  431  cat jobs/S12.8.1_2019-11-04_15-49-12 | grep hit
+  432  cat jobs/S12.6.2_2019-11-03_02-44-28 | grep hit
+  433  cat jobs/S12.9_2019-11-04_11-55-33 | grep hit
+  434  nano experiments.sh
+  435  cat jobs/S12.9_2019-11-04_11-55-33 | grep hit
+  436  cat jobs/S12.6.2_2019-11-03_02-44-28 | grep dist11
+  437  cat jobs/S12.9_2019-11-04_11-55-33 | grep dist1
+  438  cat jobs/S12.6.2_2019-11-03_02-44-28 | grep dist8
+  439  cat jobs/S12.6.2_2019-11-03_02-44-28 | grep dist6
+  440  cat jobs/S12.6.2_2019-11-03_02-44-28 | grep dist4
+  441  cat jobs/S12.6.2_2019-11-03_02-44-28 | grep "dist4 ="
+  442  cat jobs/S12.6.2_2019-11-03_02-44-28 | grep dist4
+  443  cat jobs/S12.6.2_2019-11-03_02-44-28 | grep dist6
+  444  cat jobs/S12.6.2_2019-11-03_02-44-28 | grep dist8
+  445  cat jobs/S12.6.2_2019-11-03_02-44-28 | grep dist18=
+  446  cat jobs/S12.6.2_2019-11-03_02-44-28 | grep "dist18 ="
+  447  cat jobs/S12.6.2_2019-11-03_02-44-28 | grep "dist8 ="
+  448  cat jobs/S12.6.2_2019-11-03_02-44-28 | grep "dist14 ="
+  449  cat jobs/S12.9_2019-11-04_11-55-33 | grep dist4
+  450  cat jobs/S12.9_2019-11-04_11-55-33 | grep "dist4 ="
+  451  cat jobs/S12.9_2019-11-04_11-55-33 | grep dist4
+  452  cat jobs/S12.6.2_2019-11-03_02-44-28 | reflect
+  453  cat jobs/S12.6.2_2019-11-03_02-44-28 | grep reflect
+  454  cat jobs/S12.6.2_2019-11-03_02-44-28 | grep angle4
+  455  cat jobs/S12.6.2_2019-11-03_02-44-28 | grep angle0
+  456  cat jobs/S12.6.2_2019-11-03_02-44-28 | grep angle6
+  457  cat jobs/S12.6.2_2019-11-03_02-44-28 | grep "dist4 ="
+  458  cat jobs/S12.6.2_2019-11-03_02-44-28 | grep "angle0 ="
+  459  cat jobs/S12.6.2_2019-11-03_02-44-28 | grep angle0
+  460  pwd
+  461  git status
+  462  git add .
+  463  git commit -m "experiment list"
+  464  git pull
+  465  ls
+  466  git push
+  467  ls
+  468  cat jobs/S12.9_2019-11-04_11-55-33 | grep hit
+  469  cat jobs/S13.9_2019-11-04_11-55-33 | grep hit
+  470  cat jobs/S13.9_2019-11-04_11-55-33 | grep test
+  471  squeue -u lyt
+  472  scancel 15165925
+  473  cat jobs/S12.8.1_2019-11-04_15-49-12 | grep hit
+  474  cat jobs/S12.8.2_2019-11-04_17-42-18 | grep hit
+  475  squeue -u lyt
+  476  scancel 15174472
+  477  nano experiments.sh
+  478  /cm/shared/admin/bin/slurm-qos-usage tenenbaum
+  479  nano experiments.sh
+  480  bash experiments.sh
+  481  squeue -u lyt
+  482  scancel 15178021
+  483  scancel 15178022
+  484  nano experiments.sh
+  485  bash experiments.sh
+  486  squeue -u lyt
+  487  cat jobs/S13.9_2019-11-04_11-55-33 | grep hit
+  488  cat jobs/S12.10_2019-11-05_10-53-27 
+  489  cat jobs/S12.10_2019-11-05_10-53-27 | les
+  490  cat jobs/S12.10_2019-11-05_10-53-27 | less
+  491  squeue -u lyt
+  492  scancel 15178115
+  493  scancel 15178114
+  494  git pull
+  495  cat dreamcoder/domains/draw/drawPrimitives.py | less
+  496  nano dreamcoder/domains/draw/drawPrimitives.py | less
+  497  ls
+  498  cd /om/user/lyt/ec
+  499  ls
+  500  squeue -u lyt
+  501  cat jobs/S12.10_2019-11-05_10-59-33 | grep hit
+  502  cat jobs/S13.10_2019-11-05_10-59-33 | grep hit
+  503  /cm/shared/admin/bin/slurm-qos-usage tenenbaum
+  504  cat experiments.sh
+  505  l
+  506  cd /om/user/lyt/ec
+  507  ls
+  508  cat jobs/S12.6.1_2019-11-03_02-44-28 | dist3
+  509  cat jobs/S12.6.1_2019-11-03_02-44-28 | less
+  510  ls
+  511  squeue -u lyt
+  512  cat jobs/S12.10_2019-11-05_10-59-33 | grep hit
+  513  cat jobs/S12.10_2019-11-05_10-59-33 | grep Hits
+  514  cat jobs/S13.10_2019-11-05_10-59-33 | grep hits
+  515  cat jobs/S13.10_2019-11-05_10-59-33 | grep hit
+  516  cat jobs/S13.10_2019-11-05_10-59-33 | grep Hits
+  517  cat jobs/S13.10_2019-11-05_10-59-33 | tail -n 100
+  518  cat jobs/S12.10_2019-11-05_10-59-33 | grep Hits
+  519  cat jobs/S12.10_2019-11-05_10-59-33 | grep hit
+  520  cat jobs/S12.10_2019-11-05_10-59-33 | tail -n 50
+  521  cat jobs/S12.10_2019-11-05_10-59-33 | grep Hits
+  522  cat jobs/S12.10_2019-11-05_10-59-33 | less
+  523  squeue -u lyt
+  524  cd /om/user/lyt/ec
+  525  cat jobs/S12.10_2019-11-05_10-59-33 | grep hit
+  526  cat jobs/S12.10_2019-11-05_10-59-33 | grep Hits
+  527  cat jobs/S12.10_2019-11-05_10-59-33 | tail -n 100
+  528  cat jobs/S13.10_2019-11-05_10-59-33 | grep Hits
+  529  exit
+  530  cd /om/user/lyt
+  531  cd ec
+  532  ls
+  533  squeue -u lyt
+  534  nano dreamcoder/domains/draw/drawPrimitives.py 
+  535  git status
+  536  nano dreamcoder/domains/draw/drawPrimitives.py 
+  537  cat experiments.sh
+  538  bash experiments.sh
+  539  cat jobs/S12.10_2019-11-05_10-59-33 | less
+  540  pwd
+  541  squeue -u lyt
+  542  ls
+  543  pwd
+  544  cat jobs/S13.9_2019-11-04_11-55-33 
+  545  cat jobs/S13.9_2019-11-04_11-55-33 | grep hit
+  546  cat jobs/S13.9_2019-11-04_11-55-33 | grep test
+  547  cat jobs/S13.9_2019-11-04_11-55-33 | grep HITS
+  548  cat jobs/S13.9_2019-11-04_11-55-33 | grep Hits
+  549  squeue -u lyt
+  550  scence 15165924
+  551  scancel 15165924
+  552  cat jobs/S12.8.1_2019-11-04_15-49-12 | grep hot
+  553  cat jobs/S12.8.1_2019-11-04_15-49-12 | grep hit
+  554  squeue -u lyt
+  555  scancel 15172331
+  556  cat jobs/S12.10_2019-11-05_10-5
+  557  cat jobs/S12.10_2019-11-05_10-59-33 | grep ht
+  558  cat jobs/S12.10_2019-11-05_10-59-33 | grep hit
+  559  cat jobs/S12.10_2019-11-05_10-59-33 | grep Hits
+  560  cat jobs/S13.10_2019-11-05_10-59-33 | grep hit
+  561  cat jobs/S13.9_2019-11-04_11-55-33 | grep hit
+  562  cat jobs/S12.10_2019-11-05_10-59-33 | grep hit
+  563  cat jobs/S12.10_2019-11-05_10-59-33 | grep Hits
+  564  cd /om/user/lyt
+  565  cd ec
+  566  ls
+  567  ls -l
+  568  squeue -u lyt
+  569  cat jobs/S12.10.test4_2019-11-10_22-46-49 | grep Hits
+  570  cat jobs/S13.10.test4_2019-11-10_22-46-49 | grep Hits
+  571  scancel -u lyt
+  572  exit
+  573  ls
+  574  squeue -u lyt
+  575  ls
+  576  cd /om/user/lyt/ec
+  577  ls
+  578  git status
+  579  git add .
+  580  git commit -m "experiments list"
+  581  git pus
+  582  git push
+  583  git pull
+  584  git push
+  585  git pull
+  586  ls
+  587  cat experiments.sh
+  588  bash experiments.sh
+  589  cat jobs/S12.10.test_2019-11-07_23-06-06 
+  590  ls experimentOutputs/draw/2019-11-07T23\:06\:19.145488/
+  591  ls experimentOutputs/draw/2019-11-07T23\:06\:19.145488/cat experiments.sh
+  592  cat experiments.sh
+  593  ls experimentOutputs/draw/2019-11-07T23\:06\:19.145488/cat experiments.sh
+  594  cat jobs/S12.10.test_2019-11-07_23-06-06 
+  595  git pull
+  596  bash experiments.sh
+  597  cat jobs/S12.10.test_2019-11-07_23-13-22 
+  598  nano experiments.sh
+  599  bash experiments.sh
+  600  cat jobs/S12.10.test_2019-11-07_23-14-43 
+  601  nano experiments.sh
+  602  scancel -u lyt
+  603  nano experiments.sh
+  604  y
+  605  bash experiments.sh
+  606  squeue -u lyt
+  607  scancel -u luyt
+  608  scancel -u lyt
+  609  cat jobs/S13.10.test_2019-11-07_23-20-49 
+  610  nano experiments.sh
+  611  bash experiments.sh
+  612  cat jobs/S12.10.test_2019-11-07_23-24-53 
+  613  cat jobs/S12.10.test_2019-11-07_23-24-53 | less
+  614  cat jobs/S13.10.test_2019-11-07_23-24-53 | less
+  615  ls
+  616  nano .gitignore
+  617  pwd
+  618  sublime .
+  619  squeue -u lyt
+  620  cat jobs/S13.10.test_2019-11-07_23-24-53 | grep Hits
+  621  cat jobs/S12.10.test_2019-11-07_23-24-53 
+  622  cat jobs/S12.10.test_2019-11-07_23-24-53 | grep Hits
+  623  scancel -u lyt
+  624  nano experiments.sh
+  625  gti add .
+  626  git add .
+  627  git commit -m "testing 12.10, 13.10"
+  628  git push
+  629  git pull
+  630  bash experiments.sh
+  631  squeue -u lyt
+  632  pwd
+  633  ls
+  634  pwd
+  635  squeue -u lyt
+  636  cat jobs/S12.10.test2_2019-11-08_10-32-03 | grep Hits
+  637  cat jobs/S13.10.test2_2019-11-08_10-32-03 | grep Hits
+  638  cat jobs/S12.10.test2_2019-11-08_10-32-03 
+  639  cat jobs/S12.10.test2_2019-11-08_10-32-03 | grep Hits
+  640  ls
+  641  git status
+  642  git pull
+  643  cat jobs/S12.10.test2_2019-11-08_10-32-03 | grep Hits
+  644  git pull
+  645  scancel -u lyt
+  646  cat experiments.sh
+  647  bash experiments.sh
+  648  squeue -u lyt
+  649  cat jobs/S12.10.test3_2019-11-09_17-29-52 | grep Hits
+  650  scancel -u lyt
+  651  cat jobs/S13.10.test3_2019-11-09_17-29-52 | grep Hits
+  652  ls
+  653  git pull
+  654  ls
+  655  atom
+  656  vim
+  657  ls
+  658  nano experiments.sh
+  659  bash experiments.sh
+  660  ca
+  661  cat jobs/S12.10.test4_2019-11-10_22-46-49 
+  662  cat jobs/S12.10.test4_2019-11-10_22-46-49 | less
+  663  cat jobs/S12.10.test3_2019-11-09_17-29-52 | less
+  664  ls
+  665  pwd
+  666  git pull
+  667  nano run_parse.sh 
+  668  bash run_parse.sh 
+  669  cat jobs_nogpu/S12.10.test4_parse_2019-11-11_18-50-45 
+  670  module add openmind/singularity
+  671  bash run_parse.sh 
+  672  cat jobs_nogpu/S12.10.test4_parse_2019-11-11_18-51-33 
+  673  git pull
+  674  bash run_parse.sh 
+  675  squeue -u lyt
+  676  cat jobs_nogpu/S12.10.test4_parse_2019-11-11_18-5
+  677  cat jobs_nogpu/S12.10.test4_parse_2019-11-11_18-55-45 
+  678  git stash
+  679  git pull
+  680  nano run_parse.sh 
+  681  bash run_parse.sh 
+  682  cat job
+  683  cat jobs_nogpu/S12.10.test4_parse_2019-11-11_18-57-30 
+  684  nano analysis/parse.py 
+  685  bash run_parse.sh 
+  686  cat jobs_nogpu/S12.10.test4_parse_2019-11-11_19-00-09 
+  687  git status
+  688  git add .
+  689  git commit -m "parse.py can run on openmind"
+  690  git push
+  691  cat jobs_nogpu/S12.10.test4_parse_2019-11-11_19-00-09 
+  692  squeue -u lyt
+  693  scancel -u lyt
+  694  git pull
+  695  nano experiments.sh
+  696  nano run_parse.sh 
+  697  bash run_parse.sh 
+  698  cat jobs_nogpu/S12.10.test4_parse_2019-11-11_22-36-34 
+  699  git pull
+  700  bash run_parse.sh 
+  701  cat jobs/S12.10.test4_2019-11-10_22-46-49 
+  702  cat jobs_nogpu/S12.10.test4_parse_2019-11-11_22-37-23
+  703  scancel -u lyt
+  704  git pull
+  705  bash run_parse.sh 
+  706  cat jobs_nogpu/S12.10.test4_parse_2019-11-11_
+  707  cat jobs_nogpu/S12.10.test4_parse_2019-11-11_23-56-04 
+  708  git pull
+  709  bash run_parse.sh 
+  710  cat jobs_nogpu/S12.10.test4_parse_2019-11-11_23-5
+  711  cat jobs_nogpu/S12.10.test4_parse_2019-11-11_23-57-01 
+  712  bash run_parse.sh 
+  713  cat jobs_nogpu/S12.10.test4_parse_2019-11-11_23-57-01 
+  714  scancel -u lyt
+  715  git pull
+  716  bash run_parse.sh 
+  717  cat jobs_nogpu/S12.10.test4_parse_2019-11-12_00-3
+  718  cat jobs_nogpu/S12.10.test4_parse_2019-11-12_00-37-41 
+  719  nano run_parse.sh 
+  720  bash run_parse.sh 
+  721  cat jobs_nogpu/S12.10.test4_parse_2019-11-12_00-37-41 
+  722  squeue -u lyt
+  723  scancel 15329685
+  724  nano run_parse.sh 
+  725  bash run_parse.sh 
+  726  cat jobs_nogpu/S12.10.test4_parse_2019-11-12_00-37-41 
+  727  ls -l experimentOutputs/draw/2019-11-10T22\:47\:09.031267/
+  728  cat jobs_nogpu/S12.10.test4_parse_2019-11-12_01-02-15 
+  729  cat jobs_nogpu/S12.10.test4_parse_2019-11-12_00-56-41 
+  730  cat jobs_nogpu/S12.10.test4_parse_2019-11-12_00-37-41 
+  731  squeue -u lyt
+  732  cat jobs_nogpu/S12.10.test4_parse_2019-11-12_00-37-41 
+  733  cat jobs_nogpu/S12.10.test4_parse_2019-11-12_00-56-41 
+  734  cat jobs_nogpu/S12.10.test4_parse_2019-11-12_01-02-15 
+  735  cat jobs_nogpu/S12.10.test4_parse_2019-11-12_00-56-41 
+  736  cat jobs_nogpu/S12.10.test4_parse_2019-11-12_00-37-41 
+  737  ls
+  738  git pull
+  739  scancel -u lyt
+  740  bash run_parse.sh 
+  741  cat jobs_nogpu/S12.10.test4_parse_2019-11-12_11-25-21 
+  742  git pull
+  743  bash run_parse.sh 
+  744  cat jobs_nogpu/S12.10.test4_parse_2019-11-12_11-32-14 
+  745  git pull
+  746  nano analysis/parse.py 
+  747  cat jobs_nogpu/S12.10.test4_parse_2019-11-12_11-32-14 
+  748  squeue -u lyt
+  749  scancel -u lyt
+  750  bash run_parse.sh 
+  751  cat jobs_nogpu/S12.10.test4_parse_2019-11-12_17-32-19 
+  752  git pull
+  753  scancel -u lyt
+  754  bash run_parse.sh 
+  755  cat jobs_nogpu/S12.10.test4_parse_2019-11-12_17-44-51 
+  756  git pull
+  757  cat run_parse.sh 
+  758  nano run_parse.sh 
+  759  scancel -u lyt
+  760  bash run_parse.sh 
+  761  cat jobs_nogpu/S12.10.test4_parse_2019-11-12_18-38-34 
+  762  nano analysis/parse.py 
+  763  bash run_parse.sh 
+  764  cat jobs_nogpu/S12.10.test4_parse_2019-11-12_19-09-38 
+  765  cat jobs_nogpu/S12.10.test4_parse_2019-11-12_18-38-34 
+  766  cat jobs_nogpu/S12.10.test4_parse_2019-11-12_11-32-14 
+  767  exit
+  768  squeue -u ly
+  769  squeue -u lyt
+  770  cd /om/user/lyt
+  771  ls
+  772  cd ec
+  773  ls
+  774  cat jobs_nogpu/S12.10.test4_parse_2019-11-12_19-09-38 
+  775  exit]
+  776  exit
+  777  cd /om/user/lyt/
+  778  ls
+  779  cd ec
+  780  ls
+  781  squeue -u lyt
+  782  cat jobs_nogpu/S12.10.test4_parse_2019-11-12_19-09-38 
+  783  cd /om/user/lyt
+  784  ls
+  785  cd ec
+  786  git pull
+  787  git status
+  788  git stash analysis/parse.py
+  789  git stash
+  790  git pull
+  791  nano run_parse.sh 
+  792  cat analysis/parse.py 
+  793  bash run_parse.sh 
+  794  cat jobs_nogpu/S12.10.test4_parse_2019-11-14_10-23-38 
+  795  nano run_parse.sh 
+  796  bash run_parse.sh 
+  797  squeue -u lyt
+  798  cat jobs_nogpu/S12.10.test4_parse_2019-11-14_10-25-38 
+  799  git pull
+  800  bash run_parse.sh 
+  801  cat jobs_nogpu/S12.10.test4_parse_2019-11-14_10-25-38 
+  802  git pull
+  803  cat dreamcoder/domains/draw/primitives.py 
+  804  bash run_parse.sh 
+  805  cat jobs_nogpu/S12.10.test4_parse_2019-11-14_10-32-59 
+  806  squeue -u lyt
+  807  ls
+  808  cd /om/user/lyt
+  809  ls
+  810  cd ev
+  811  cd ec
+  812  ls
+  813  cat jobs_nogpu/S12.10.test4_parse_2019-11-12_19-09-38 
+  814  ls
+  815  cat jobs_nogpu/S12.10.test4_parse_2019-11-12_19-09-38
+  816  cd /om/user/lyt
+  817  ls
+  818  squeue -u lyt
+  819  cd ec
+  820  ls
+  821  cat jobs_nogpu/S12.10.test4_parse_2019-11-14_10-32-59 
+  822  cd /om/user/lyt
+  823  cd ec
+  824  ls
+  825  cat jobs/S12.10.test4_2019-11-10_22-46-49 | less
+  826  ls
+  827  cd /om/user/
+  828  kls
+  829  ls
+  830  cd lyt
+  831  ls
+  832  cd ec
+  833  ls
+  834  ls -l
+  835  git pull
+  836  \
+  837  ls
+  838  python
+  839  ;s
+  840  ls
+  841  nano experiments.sh
+  842  bash experiments.sh
+  843  cat jobs/S12.10.test5_2019-11-16_19-03-36 
+  844  cat jobs/S12.10.test5_2019-11-16_19-03-36 | less
+  845  1
+  846  squeue -u lyt
+  847  exit
+  848  ls
+  849  cd /om/user/lyt
+  850  ls
+  851  cd ec
+  852  ls
+  853  cat jobs/S12.10.test4_2019-11-10_22-46-49 
+  854  cat jobs/S12.10.test4_2019-11-10_22-46-49 | less
+  855  ls
+  856  cat jobs/S13.10.test4_2019-11-10_22-46-49 | less
+  857  ls
+  858  cat jobs/S12.10.test5_2019-11-16_19-03-36 | grep 2019-11-16
+  859  cat jobs/S13.10.test5_2019-11-16_19-03-36 | grep 2019-11-16
+  860  \
+  861  git status
+  862  git add .
+  863  git commit -m "prasing experimestn added"
+  864  git pull
+  865  ls
+  866  nano run_parse.sh 
+  867  bash run_parse.sh 
+  868  cat jobs_nogpu/S12.10.test5_parse_2019-11-17_20-08-54 
+  869  git pull
+  870  bash run_parse.sh 
+  871  squeue -u lyt
+  872  cat jobs_nogpu/S12.10.test5_parse_2019-11-17_20-0
+  873  cat jobs_nogpu/S12.10.test5_parse_2019-11-17_20-09-47 
+  874  scancel -u lyt
+  875  git pull
+  876  bash run_parse.sh 
+  877  cat jobs_nogpu/S12.10.test5_parse_2019-11-17_20-11-10 
+  878  cat jobs_nogpu/S13.10.test5_parse_2019-11-17_20-11-10 
+  879  squeue -ul yt
+  880  squeue -u lyt
+  881  QUIT
+  882  quit
+  883  pwd
+  884  exit
+  885  ls
+  886  cd /om/user/lyt
+  887  ls
+  888  cd ec
+  889  ls
+  890  squeue -u lyt
+  891  scancel -u lyt
+  892  cat jobs/S12.10.test5_2019-11-16_19-03-36 
+  893  cat jobs/S12.10.test5_2019-11-16_19-03-36 | less
+  894  cat jobs/S12.10.test5_2019-11-16_19-03-36 | grep Hits
+  895  cat jobs/S12.10.test5_2019-11-16_19-03-36 | less
+  896  cat jobs/S13.10.test5_2019-11-16_19-03-36 | less
+  897  cat jobs/S13.10.test4_2019-11-10_22-46-49 | grep hit
+  898  cat jobs/S13.10.test4_2019-11-10_22-46-49 | grep Hits
+  899  cat jobs/S13.10.test4_2019-11-10_22-46-49 | grep iter
+  900  cat jobs/S13.10.test5_2019-11-16_19-03-36 | grep iter
+  901  cat jobs/S12.10.test4_2019-11-10_22-46-49 | grep iter
+  902  exit
+  903  ls
+  904  cd /om/user/lyt
+  905  ls
+  906  cd ec
+  907  ls
+  908  git status
+  909  git commit -am "minor"
+  910  git pull
+  911  ls
+  912  nano dreamcoder/domains/draw/drawPrimitives.py 
+  913  git checkout -b
+  914  git checkout -b drawbetter
+  915  git pull origin drawbetter
+  916  nano experiments.sh
+  917  bash experiments.sh
+  918  cat jobs/S12.11.1_2019-12-05_18-52-59 
+  919  pwd
+  920  ls
+  921  git pull origin drawbetter
+  922  bash experiments.sh
+  923  pwd
+  924  cat jobs/S12.11.1_2019-12-05_18-59-33 
+  925  cat jobs/S12.11.1_2019-12-05_18-59-33 | less
+  926  cat jobs/S12.11.1_2019-12-05_18-59-33 | grep Hit
+  927  cat jobs/S12.11.2_2019-12-05_18-59-33 
+  928  cat jobs/S12.11.2_2019-12-05_18-59-33 | grep Hits
+  929  cat jobs/S12.11.3_2019-12-05_18-59-33 | grep Hits
+  930  cat jobs/S12.10.test_2019-11-07_23-24-53 | grep Hits
+  931  cat jobs/S12.11.3_2019-12-05_18-59-33 | grep hits
+  932  cat jobs/S12.11.3_2019-12-05_18-59-33 | grep hit
+  933  cat jobs/S12.11.3_2019-12-05_18-59-33 | grep hi
+  934  cat jobs/S12.11.3_2019-12-05_18-59-33 | grep hit
+  935  cat jobs/S12.10.test_2019-11-07_23-24-53 | grep Hits
+  936  cat jobs/S12.10.test_2019-11-07_23-24-53 | grep hit
+  937  cat jobs/S12.10.test_2019-11-07_23-24-53 | grep 
+  938  cat jobs/S12.10.test_2019-11-07_23-24-53 | less
+  939  cat jobs/S12.10.test_2019-11-07_23-24-53 | grep Hits
+  940  cat jobs/S12.11.3_2019-12-05_18-59-33 | grep hit
+  941  cat jobs/S12.2_2019-11-02_02-21-23 
+  942  squeue -u lyt
+  943  cat jobs/S12.11.2_2019-12-05_18-59-33 
+  944  cat jobs/S12.11.2_2019-12-05_18-59-33 | less
+  945  cat jobs/S12.11.2_2019-12-05_18-59-33 | grep HITS
+  946  cat jobs/S12.11.2_2019-12-05_18-59-33 | grep HIT
+  947  cat jobs/S12.11.3_2019-12-05_18-59-33 | grep HIT
+  948  cat jobs/S12.11.3_2019-12-05_18-59-33 | les
+  949  cat jobs/S12.11.3_2019-12-05_18-59-33 | less
+  950  scancel -u lyt
+  951  b
+  952  nano experiments.sh
+  953  bash experiments.sh
+  954  squeue -u lyt
+  955  pwd
+  956  cat jobs/S12.11.4_2019-12-06_00-24-14 
+  957  cat jobs/S12.11.4_2019-12-06_00-24-14 | grep Hits
+  958  cat jobs/S13.11.4_2019-12-06_00-24-14 | grep Hits
+  959  pwd
+  960  cat jobs/S13.11.4_2019-12-06_00-24-14 | grep Hits
+  961  cat jobs/S12.11.4_2019-12-06_00-24-14 | grep Hits
+  962  nano experiments.sh
+  963  cat jobs/S13.11.4_2019-12-06_00-24-14 | grep Hits
+  964  cat jobs/S13.11.4_2019-12-06_00-24-14 | less
+  965  cat jobs/S13.11.4_2019-12-06_00-24-14 | grep results:
+  966  cat jobs/S13.11.4_2019-12-06_00-24-14 | grep -N 50 results:
+  967  cat jobs/S13.11.4_2019-12-06_00-24-14 | grep -A 50 results:
+  968  cat jobs/S13.11.4_2019-12-06_00-24-14 | grep -A 50 results: |less
+  969  cat jobs/S13.11.4_2019-12-06_00-24-14 | grep -A 500 results: |less
+  970  cat jobs/S13.11.4_2019-12-06_00-24-14 | grep HIT | less
+  971  cat jobs/S13.11.4_2019-12-06_00-24-14 | grep dist4
+  972  cat jobs/S13.11.4_2019-12-06_00-24-14 | grep dist4=
+  973  cat jobs/S13.11.4_2019-12-06_00-24-14 | grep dist4:
+  974  cat jobs/S13.11.4_2019-12-06_00-24-14 | less
+  975  ls
+  976  nano experiments.sh
+  977  cat jobs/S13.10.test_2019-11-07_23-24-53 | grep 'HIT S13_205'
+  978  cat jobs/S13.11.4_2019-12-06_00-24-14 | grep 'HIT S13_205'
+  979  cat jobs/S13.11.4_2019-12-06_00-24-14 | grep hit
+  980  cat jobs/S13.11.4_2019-12-06_00-24-14 | grep Hits
+  981  cat jobs/S12.11.4_2019-12-06_00-24-14 | grep Hits
+  982  nano experiments.sh
+  983  scancel -u lyt
+  984  bash experiments.sh
+  985  cat jobs/S12.11.5_2019-12-07_12-31-32 
+  986  cat jobs/S13.11.5_2019-12-07_12-31-32 
+  987  squeue -u lt
+  988  squeue -u lyt
+  989  git status
+  990  exit
+  991  ls
+  992  pwd
+  993  cd ..
+  994  cd /om/user/lyt/
+  995  ls
+  996  exit
+  997  ls
+  998  exit
+  999  ls
+ 1000  cd /om/user/lyt/
+ 1001  history
