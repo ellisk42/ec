@@ -209,6 +209,7 @@ def executeSketch(p, timeout=None):
         return runWithTimeout(lambda : p.evaluate([])(_empty_sketch)(SketchState(history=[])), 
             timeout=timeout)
     except:
+        print(p)
         assert False
 
 
