@@ -2,8 +2,8 @@ from dreamcoder.domains.re2.makeRe2Tasks import loadRe2Dataset
 from dreamcoder.dreamcoder import ecIterator
 from dreamcoder.utilities import *
 from dreamcoder.domains.text.main import ConstantInstantiateVisitor
-from dreamcoder.domains.text.textPrimitives import re2_primitives
-from dreamcoder.domains.list.listPrimitives import re2_ListPrimitives
+from dreamcoder.domains.text.textPrimitives import re2_primitives, primitives, re2_4_letter, re2_6_letter
+from dreamcoder.domains.list.listPrimitives import re2_ListPrimitives, bootstrapTarget
 from dreamcoder.recognition import *
 from dreamcoder.enumeration import *
 
@@ -16,7 +16,9 @@ def re2_options(parser):
                         choices=[
                             "re2_3000",
                             "re2_1000",
-                            "re2_500"],
+                            "re2_500",
+                            "re2_500_aesr",
+                            "re2_500_aesdrt"],
                         default="re2_3000",
                         help="Load pre-generated task datasets.")
     parser.add_argument("--taskDatasetDir",
@@ -25,6 +27,13 @@ def re2_options(parser):
                         default="data/re2/language")
     parser.add_argument("--iterations_as_epochs",
                         default=True)
+    parser.add_argument("--primitives",
+                        choices=[
+                            "re2_primitives",
+                            "re2_4_letter",
+                            "re2_6_letter"],
+                        default="re2_primitives",
+                        help="Which primitive set to use, which may restrict the number of characters we allow.")
 
 def main(args):
     """
@@ -37,13 +46,23 @@ def main(args):
     eprint(f"Loaded dataset [{task_dataset}]: [{len(train)}] train and [{len(test)}] test tasks.")
 
     use_epochs = args.pop("iterations_as_epochs")
-    if use_epochs:
+    if use_epochs and args["taskBatchSize"] is not None:
         eprint("Using iterations as epochs")
         args["iterations"] *= int(len(train) / args["taskBatchSize"]) 
         eprint(f"Now running for n={args['iterations']} iterations.")
     
-    baseGrammar = Grammar.uniform(re2_primitives +  re2_ListPrimitives())
+    which_prims = args.pop("primitives")
+    if which_prims == 're2_primitives':
+        primitives = re2_primitives
+    elif which_prims == 're2_4_letter':
+        primitives = re2_4_letter
+    else:
+        primitives = re2_6_letter
     
+    baseGrammar = Grammar.uniform(primitives + re2_ListPrimitives())
+    print("Using base grammar:")
+    print(baseGrammar)
+
     timestamp = datetime.datetime.now().isoformat()
     outputDirectory = "experimentOutputs/re2/%s"%timestamp
     os.system("mkdir -p %s"%outputDirectory)

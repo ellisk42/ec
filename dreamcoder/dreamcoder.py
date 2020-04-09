@@ -92,18 +92,25 @@ class ECResult():
                      "enumerationTimeout": "ET",
                      "useRecognitionModel": "rec",
                      "use_ll_cutoff": "llcut",
-                     "topk_use_only_likelihood": "topkNotMAP",
+                     "topk_use_only_likelihood": "topLL",
                      "activation": "act",
                      "storeTaskMetrics": 'STM',
                      "topkNotMAP": "tknm",
                      "rewriteTaskMetrics": "RW",
                      'taskBatchSize': 'batch',
                      'languageFeatureExtractor' : 'lang_ft',
-                     'solidation': 'no_dsl'}
+                     'noConsolidation': 'no_dsl'}
 
     @staticmethod
     def abbreviate(parameter): return ECResult.abbreviations.get(parameter, parameter)
-
+    
+    @staticmethod
+    def abbreviate_value(value): 
+        if type(value) == bool:
+            return str(value)[0]
+        else:
+            return value
+            
     @staticmethod
     def parameterOfAbbreviation(abbreviation):
         return ECResult.abbreviationToParameter.get(abbreviation, abbreviation)
@@ -142,7 +149,7 @@ def explorationCompression(*arguments, **keywords):
 def ecIterator(grammar, tasks,
                _=None,
                useDSL=True,
-               solidation=False,
+               noConsolidation=False,
                mask=False,
                seed=0,
                addFullTaskMetrics=False,
@@ -277,11 +284,13 @@ def ecIterator(grammar, tasks,
         kvs = [
             "{}={}".format(
                 ECResult.abbreviate(k),
-                parameters[k]) for k in sorted(
+                ECResult.abbreviate_value(parameters[k])) for k in sorted(
                 parameters.keys())]
         return "{}_{}{}.pickle".format(outputPrefix, "_".join(kvs), extra)
     
     print(f"Checkpoints will be written to [{checkpointPath('iter')}]")
+    print(f"Checkpoint path len = [{len(checkpointPath('iter'))}]")
+    assert(len(checkpointPath('iter')) < 256)
     
     if message:
         message = " (" + message + ")"
@@ -540,7 +549,7 @@ def ecIterator(grammar, tasks,
             showHitMatrix(tasksHitTopDown, set(tasks_hit_parser.keys()), wakingTaskBatch)
             
         # Sleep-G
-        if useDSL and not(solidation):
+        if useDSL and not(noConsolidation):
             eprint(f"Currently using this much memory: {getThisMemoryUsage()}")
             grammar = consolidate(result, grammar, topK=topK, pseudoCounts=pseudoCounts, arity=arity, aic=aic,
                                   structurePenalty=structurePenalty, compressor=compressor, CPUs=CPUs,

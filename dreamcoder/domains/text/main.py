@@ -185,6 +185,14 @@ def main(arguments):
     test, train = testTrainSplit(tasks, 1.)
     eprint("Split tasks into %d/%d test/train" % (len(test), len(train)))
 
+    
+    train = [t for t in train if "Replace ',' w/ '.'" in t.name]
+    train[0].examples = [
+        (x, [c if c != '.' else 'a' for c in y])
+        for (x, y) in train[0].examples
+    ]
+
+
     latest = arguments.pop("latest")
     challenge, challengeCheating = loadPBETasks("data/sygus" if latest else "PBE_Strings_Track")
     eprint("Got %d challenge PBE tasks" % len(challenge))
@@ -224,6 +232,7 @@ def main(arguments):
                                                 (p.name != "unfold" or haveUnfold) and \
                                                 (p.name != "length" or haveLength)])
     challengeGrammar = baseGrammar  # Grammar.uniform(targetTextPrimitives)
+    # import pdb; pdb.set_trace()
 
     evaluationTimeout = 0.0005
     # We will spend 10 minutes on each challenge problem
@@ -255,7 +264,7 @@ def main(arguments):
         sygusCompetition(checkpoints, challenge)
         sys.exit(0)
         
-    import pdb; pdb.set_trace()
+
     timestamp = datetime.datetime.now().isoformat()
     outputDirectory = "experimentOutputs/text/%s"%timestamp
     os.system("mkdir -p %s"%outputDirectory)
