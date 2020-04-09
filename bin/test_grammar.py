@@ -265,6 +265,8 @@ def test_TowerREPLValueConvergence():
                          continuationType=ttower)
     tasks = makeSupervisedTasks()
 
+    def _empty_tower(h): return (h,[])
+
     import dill
     with open('testTowerFrontiers.pickle', 'rb') as h:
         lst = dill.load(h)
@@ -273,34 +275,6 @@ def test_TowerREPLValueConvergence():
 
     # for i, frontier in enumerate(lst):
     #     animateTower(f'front{i}', frontier.entries[0].program._fullProg)
-
-    animateTower('test1', Program.parse('(lambda (reverseHand (1x3 (1x3 $0))))'))
-    animateTower('test2', Program.parse('(lambda  (1x3 (1x3 $0)) )'))
-    assert 0
-
-    def _empty_tower(h): return (h,[])
-
-    exprs = []
-    exprs.append (Program.parse('(lambda (tower_loopM <HOLE> (lambda (lambda (1x3 $0))) <TowerHOLE>))'))
-
-
-    featureExtractor = TowerCNN(tasks, testingTasks=tasks[-3:], cuda=True)
-    valueHead = TowerREPLValueHead(g, featureExtractor, H=1024)
-    optimizer = torch.optim.Adam(valueHead.parameters(), lr=0.001, eps=1e-3, amsgrad=True)
-
-
-
-    for i in range(400):
-        valueHead.zero_grad()
-        
-        losses = [valueHead.valueLossFromFrontier(frontier, g) for frontier in lst[1:] ]#+ lst[2:]]
-        #looks like 
-        loss = sum(losses)
-        print(loss.data.item())
-        loss.backward()
-        optimizer.step()
-
-    def _empty_tower(h): return (h,[])
 
     def saveState(path, prog):
         import scipy.misc
@@ -313,25 +287,26 @@ def test_TowerREPLValueConvergence():
     saveState("test1.png", Program.parse('(lambda (reverseHand (1x3 (1x3 $0))))') )
     saveState("test2.png", Program.parse('(lambda  (1x3 (1x3 $0)) )'))
 
-
-    exprs = []
-    exprs.append (Program.parse('(lambda (tower_loopM <HOLE> (lambda (lambda (1x3 $0))) <TowerHOLE>))'))
-
-
-    featureExtractor = TowerCNN(tasks, testingTasks=tasks[-3:], cuda=False)
+    featureExtractor = TowerCNN(tasks, testingTasks=tasks[-3:], cuda=True)
     valueHead = TowerREPLValueHead(g, featureExtractor, H=1024)
     optimizer = torch.optim.Adam(valueHead.parameters(), lr=0.001, eps=1e-3, amsgrad=True)
 
 
-    for i in range(400):
+    for i in range(5000):
         valueHead.zero_grad()
         
         losses = [valueHead.valueLossFromFrontier(frontier, g) for frontier in lst ]#+ lst[2:]]
         #looks like 
         loss = sum(losses)
         print(loss.data.item())
+        if not loss.requires_grad:
+            print("error on loss")
+            continue
         loss.backward()
         optimizer.step()
+
+
+
 
 if __name__=='__main__':
     #findError()

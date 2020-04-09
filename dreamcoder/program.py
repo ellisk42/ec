@@ -735,6 +735,7 @@ class Primitive(Program):
                 def f(prev):
                     fn, k = args
                     first_arg = fn( _empty_tower) ( prev )
+                    #print("first_arg", first_arg)
                     if isinstance(prev, TowerState) and not (xs[0].hasHoles) and not isinstance(first_arg, torch.Tensor): #and  fn( _empty_tower) ( prev )  not a tensor
                         return self.value( fn ) (k) (prev)
                     else:

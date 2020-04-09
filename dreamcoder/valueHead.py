@@ -352,24 +352,24 @@ class AbstractREPLValueHead(BaseValueHead):
         tp = frontier.task.request
         fullProg = entry.program._fullProg
 
-        #for bugs
-        if frontier in self.mem:
-            posTrace, negTrace = self.mem[frontier]
+        ###for bugs:
+        # if frontier in self.mem:
+        #     posTrace, negTrace = self.mem[frontier]
 
-        else:
-            posTrace, negTrace =  getTracesFromProg(fullProg, frontier.task.request, g)
-            self.mem[frontier] = posTrace, negTrace
-            print("POS:")
-            for pos in posTrace: print(pos)
-            print("NEG:")
-            for neg in negTrace: print(neg)
+        # else:
+        posTrace, negTrace =  getTracesFromProg(fullProg, frontier.task.request, g)
+            # self.mem[frontier] = posTrace, negTrace
+            # print("POS:")
+            # for pos in posTrace: print(pos)
+            # print("NEG:")
+            # for neg in negTrace: print(neg)
 
-            for frontier in self.mem:
-                    posT , _ = self.mem[frontier]
-                    for pos in posT:
-                        if any(pos == neg for _, negt in self.mem.values() for neg in negt):
-                            print("interference:")
-                            print(pos)
+            # for frontier in self.mem:
+            #         posT , _ = self.mem[frontier]
+            #         for pos in posT:
+            #             if any(pos == neg for _, negt in self.mem.values() for neg in negt):
+            #                 print("interference:")
+            #                 print(pos)
 
 
         #discard negative sketches which overlap with positive
@@ -407,7 +407,9 @@ class AbstractREPLValueHead(BaseValueHead):
     def valueLossFromFrontier(self, frontier, g):
         try:
             return self._valueLossFromFrontier(frontier, g)
-        except RuntimeError:
+        except RuntimeError as e:
+            print("runtime Error")
+            assert 0
             return torch.tensor([0.]).cuda()
 
 
