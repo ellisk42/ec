@@ -9,6 +9,8 @@ from dreamcoder.grammar import *
 from dreamcoder.zipper import *
 import random
 import time
+from dreamcoder.domains.tower.towerPrimitives import TowerState, _empty_tower
+from dreamcoder.domains.tower.tower_common import renderPlan
 
 class computeValueError(Exception):
     pass
@@ -349,7 +351,26 @@ class AbstractREPLValueHead(BaseValueHead):
         task = frontier.task
         tp = frontier.task.request
         fullProg = entry.program._fullProg
+
+        ###for bugs:
+        # if frontier in self.mem:
+        #     posTrace, negTrace = self.mem[frontier]
+
+        # else:
         posTrace, negTrace =  getTracesFromProg(fullProg, frontier.task.request, g)
+            # self.mem[frontier] = posTrace, negTrace
+            # print("POS:")
+            # for pos in posTrace: print(pos)
+            # print("NEG:")
+            # for neg in negTrace: print(neg)
+
+            # for frontier in self.mem:
+            #         posT , _ = self.mem[frontier]
+            #         for pos in posT:
+            #             if any(pos == neg for _, negt in self.mem.values() for neg in negt):
+            #                 print("interference:")
+            #                 print(pos)
+
 
         #discard negative sketches which overlap with positive
         negTrace = [sk for sk in negTrace if (sk not in posTrace) ]
@@ -386,8 +407,173 @@ class AbstractREPLValueHead(BaseValueHead):
     def valueLossFromFrontier(self, frontier, g):
         try:
             return self._valueLossFromFrontier(frontier, g)
-        except RuntimeError:
+        except RuntimeError as e:
+            print("runtime Error")
+            assert 0
             return torch.tensor([0.]).cuda()
+
+
+class TowerREPLValueHead(AbstractREPLValueHead):
+    def __init__(self, g, featureExtractor, H=512): #should be 512 or something
+                #specEncoder can be None, meaning you dont use the spec at all to encode objects
+        super(TowerREPLValueHead, self).__init__(g, featureExtractor, H=H)
+
+        self.envEncoder = nn.GRU(H,H,1)
+
+        self.empty_towerVec = nn.Parameter(torch.randn(H))
+
+        self.towerHole = nn.Sequential(nn.Linear(2*H, H), nn.ReLU())
+
+        if self.use_cuda:
+            self.cuda()
+
+        self.mem = {}
+
+    def convertToVector(self, value):
+        if isinstance(value, torch.Tensor):
+            return value
+
+        elif isinstance(value, Program):
+            return self.RNNHead._encodeSketches([value]).squeeze(0)
+
+        elif isinstance(value, int):
+            return self.fn_modules[str(value)]() #this should work?
+
+        elif isinstance(value, TowerState): #is this right?
+            state = value
+            plan = [tup for tup in value.history if isinstance(tup, tuple)] #filters out states, leaving only actions
+            hand = state.hand
+            # print(hand)
+            # print(state)
+            # print(plan)
+            image = renderPlan(plan, drawHand=hand, pretty=False, drawHandOrientation=state.orientation)
+            return self.featureExtractor(image) #also encode orientation info !!!
+
+        elif isinstance(value, tuple) and isinstance(value[0], TowerState):
+            return self.convertToVector(value[0])
+
+        elif value is _empty_tower:
+            return self.empty_towerVec
+
+        elif isinstance(value, int):
+            return self.fn_modules[str(value)]()
+
+        elif isinstance(value, tuple) and len(value) == 2 and isinstance(value[0], torch.Tensor):
+            return value[0]
+
+        else:
+            #return value
+            print(f"uncaught object {value} of type {type(value)}")
+            assert False
+            raise computeValueError
+####
+    def encodeHole(self, hole, env):
+        assert hole.isHole
+        #env = [e for e in env if not ( callable(e) and e is _empty_tower) ]
+        #if not env == []:
+            #print(f"WARNING: env for this non-tower hole: {env}")
+            #raise computeValueError
+        #if len(env) > 1: assert False
+        #stackOfEnvVectors = [self.convertToVector(val) for val in env]
+        #environmentVector = self._encodeStack(stackOfEnvVectors)
+        #return self.holeParam(environmentVector)
+        env = [self.convertToVector(e) for e in env]
+        envEncoding = self._encodeStack(env)
+        return self.holeParam(envEncoding)
+
+    def _encodeStack(self, stackOfVectors):
+        #return self.convertToVector(stackOfVectors)
+        #TODO  self.envEncoder
+
+        #inputSequences = [self.embedding(ss) for ss in inputSequences]
+
+        inputSequences = [ torch.stack(stackOfVectors) ]
+        idxs, inputSequence = zip(*sorted(enumerate(inputSequences), key=lambda x: -len(x[1])  ) )
+        try:
+            packed_inputSequence = torch.nn.utils.rnn.pack_sequence(inputSequence)
+        except ValueError:
+            print("padding issues, not in correct order")
+            import pdb; pdb.set_trace()
+
+        _,h = self.envEncoder(packed_inputSequence) #dims
+        unperm_idx, _ = zip(*sorted(enumerate(idxs), key = lambda x: x[1]))
+        h = h[:, unperm_idx, :]
+        h = h.squeeze(0)
+        #o = o.squeeze(1)
+        objectEncodings = h
+        return objectEncodings.squeeze(0)
+
+    def encodeTowerHole(self, hole, env, state):
+        stateVec = self.convertToVector(state)
+        #assert env == [_empty_tower], f"env for this tower hole: {env}"
+        #env = [e for e in env if not ( callable(e) and e is _empty_tower) ]
+        #print("WARNING: env of tower hole not encoded. ENV:", env)
+        env = [self.convertToVector(e) for e in env]
+        envEncoding = self._encodeStack(env)
+        #if len(env) > 1: assert False
+        return self.towerHole( torch.cat([stateVec, envEncoding], 0))
+        #return self.holeParam(stateVec) #TODO may need to change all of this up
+
+    def _computeOutputVectors(self, task):
+        outVectors = [self.featureExtractor.featuresOfTask(task)]
+        outVectors = torch.stack(outVectors, dim=0)
+        return outVectors
+####
+
+    def _computeSketchRepresentation(self, sketch, p=None):
+        #print(sketch)
+        #assert "$1" not in str(sketch), f"{sketch}"
+        if p is None:
+            p = self._getInitialSketchRep(sketch)
+        try:
+            res = p(_empty_tower)          
+            res = res(TowerState(history=[]))
+
+        except (ValueError, IndexError, ZeroDivisionError, computeValueError, RuntimeError) as e:
+            print("caught exception")
+            print("sketch", sketch)
+            print(e)
+            assert False
+            raise computeValueError
+        except Exception:
+            print("caught exception")
+            print("sketch", sketch)
+            #print("IO", xs)
+            assert 0
+
+        if isinstance(res, tuple):
+            assert len(res) == 2, f"bad res type, res is: {res}"
+            #assert res[1] == [], f"bad res type, res is: {res}"
+            res = res[0]
+
+        res = self.convertToVector(res) #TODO
+        return res
+
+    def _getInitialSketchRep(self, sketch):
+        try:
+            return sketch.abstractEval(self, [])
+        except (ValueError, IndexError, ZeroDivisionError, computeValueError, RuntimeError) as e:
+            print("caught exception")
+            print("sketch", sketch)
+            print(e)
+            raise computeValueError
+
+    def _computeValue(self, sketch, task, outVectors=None):
+        """TODO: [x] hash things like outputVector representation
+        """
+        if outVectors is None:
+            outVectors = self._computeOutputVectors(task)
+
+        p = self._getInitialSketchRep(sketch)
+
+        evalVectors = [self._computeSketchRepresentation(sketch, p=p)]
+        evalVectors = torch.stack(evalVectors, dim=0)
+
+        distance = self._distance(torch.cat([evalVectors, outVectors], dim=1)).mean(0) #TODO
+        return distance #Or something ...
+
+
+
 
 if __name__ == '__main__':
     try:

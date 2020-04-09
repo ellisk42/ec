@@ -1062,6 +1062,11 @@ class RecognitionModel(nn.Module):
             else:
                 permutedFrontiers = [None]
 
+            # import dill
+            # with open('testTowerFrontiers.pickle', 'wb') as h:
+            #     dill.dump(permutedFrontiers, h)
+            # assert 0
+
             finishedSteps = False
             for frontier in permutedFrontiers:
                 # Randomly decide whether to sample from the generative model

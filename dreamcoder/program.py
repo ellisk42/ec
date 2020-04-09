@@ -158,6 +158,9 @@ class Program(object):
             if e in Primitive.GLOBALS: return Primitive.GLOBALS[e]
             if e == '??' or e == '?': return FragmentVariable.single
             if e == '<HOLE>': return Hole.single
+            if e == '<TowerHOLE>':
+                from dreamcoder.domains.tower.towerPrimitives import ttower
+                return Hole(tp=ttower)
             raise ParseFailure((s,e))
         return p(s)
 
@@ -356,6 +359,16 @@ class Application(Program):
         else:
             return self.f.evaluate(environment)(self.x.evaluate(environment))
 
+    def evaluateHolesDebug(self, environment):
+        if self.isConditional:
+            if self.branch.evaluateHolesDebug(environment):
+                return self.trueBranch.evaluateHolesDebug(environment)
+            else:
+                return self.falseBranch.evaluateHolesDebug(environment)
+        else:
+            return self.f.evaluateHolesDebug(environment)(self.x.evaluateHolesDebug(environment))
+
+
     def abstractEval(self, valueHead, environment, parse=None):
         #parse = self.applicationParse()
 
@@ -368,8 +381,8 @@ class Application(Program):
             print("f:", self.f)
             print("type of f:", type(self.f))
             print("parse:", parse[0], parse[1])
-            from dreamcoder.valueHead import computeValueError
-            raise computeValueError
+            #from dreamcoder.valueHead import computeValueError
+            #raise computeValueError
 
         if self.isConditional and not self.branch.hasHoles:
             if self.branch.abstractEval(valueHead, environment):
@@ -377,7 +390,7 @@ class Application(Program):
             else:
                 return self.falseBranch.abstractEval(valueHead, environment)
         else:
-            return self.f.abstractEval(valueHead, environment, parse=pars)(self.x.abstractEval(valueHead, environment))
+            return self.f.abstractEval(valueHead, environment, parse=parse)(self.x.abstractEval(valueHead, environment))
 
     def inferType(self, context, environment, freeVariables):
         (context, ft) = self.f.inferType(context, environment, freeVariables)
@@ -466,7 +479,10 @@ class Index(Program):
                                                 **keywords)
 
     def evaluate(self, environment):
-        #print("env of index:", environment)
+        return environment[self.i]
+
+    def evaluateHolesDebug(self, environment):
+        #print("env of index:", env)
         return environment[self.i]
 
     def abstractEval(self, valueHead, environment):
@@ -595,6 +611,9 @@ class Abstraction(Program):
     def evaluate(self, environment):
         return lambda x: self.body.evaluate([x] + environment)
 
+    def evaluateHolesDebug(self, environment):
+        return lambda x: self.body.evaluateHolesDebug([x] + environment)
+
     def abstractEval(self, valueHead, environment):
         return lambda x: self.body.abstractEval(valueHead, [x] + environment)
 
@@ -675,21 +694,20 @@ class Primitive(Program):
         self.annotatedType = self.tp.instantiateMutable(context)
 
     def evaluate(self, environment):
-        # if parse:
-        #     f, xs = parse
-        #     print("self", self)
-        #     print("f", f)
-        #     print("xs", xs)
-
         return self.value
+
+    def evaluateHolesDebug(self, environment):
 
         def abstractEvalAndReCurry(*args):
             #abstraction condition:
-            if Hole() in args: #TODO condition
-                ret = Hole()
+            if any(arg == Hole() for arg in args): #TODO condition
+                ret = Hole(tp=self.tp.returns()).evaluateHolesDebug(environment) #idk if this is right
                 return ret
             else:
                 ret = self.value
+                # from towerPrimitives import blocks
+                # if self.name in blocks.keys():
+                #     ret.valueHead = valueHead
                 for arg in args:
                     ret = ret(arg)
                 return ret
@@ -708,11 +726,72 @@ class Primitive(Program):
 
         exceptionList = ['all', 'any', 'filter', 'sort']
 
+        from dreamcoder.domains.tower.towerPrimitives import TowerState
         def abstractEvalAndReCurry(*args):
-            #abstract condition
+
+            from dreamcoder.domains.tower.towerPrimitives import _empty_tower, blocks
+
+            if self.name == 'tower_embed' :
+                def f(prev):
+                    fn, k = args
+                    first_arg = fn( _empty_tower) ( prev )
+                    #print("first_arg", first_arg)
+                    if isinstance(prev, TowerState) and not (xs[0].hasHoles) and not isinstance(first_arg, torch.Tensor): #and  fn( _empty_tower) ( prev )  not a tensor
+                        return self.value( fn ) (k) (prev)
+                    else:
+                        ae = valueHead.convertToVector(prev)
+                        be = valueHead.convertToVector( first_arg )
+                        return k ( valueHead.applyModule(self, [ae, be ] ) ) #TODO order??
+                return f
+                #return lambda prev: k ( valueHead.applyModule(self, [valueHead.convertToVector(prev), valueHead.convertToVector( fn( _empty_tower) ( prev)   )  ] ) ) #TODO order??
+
+            if self.name == 'tower_loopM' :
+                def f(prev):
+                    i, fn, k = args
+                    if isinstance(prev, TowerState) and not (xs[0].hasHoles or xs[1].hasHoles) and isinstance(i, int):
+                        return self.value(i)(fn)(k)(prev)
+                    else:
+                        aa = valueHead.convertToVector(prev)
+                        bb = valueHead.convertToVector(args[0]) 
+                        cc_in =  args[1] (args[0]) ( _empty_tower ) (prev) 
+                        cc = valueHead.convertToVector (cc_in[0] if isinstance(cc_in, tuple) else cc_in) 
+                        return args[2] ( valueHead.applyModule(self, [aa, bb, cc ]  ))
+                return f
+
+            if self.name in blocks.keys():
+                def f(prev):
+                    if isinstance(prev, TowerState):
+                        return self.value( args[0] ) (prev)
+                    else:
+                        return args[0] (valueHead.applyModule(self, [valueHead.convertToVector(prev)]))
+                return f
+
+            if self.name == 'reverseHand':
+                def f(prev):
+                    if isinstance(prev, TowerState):
+                        return self.value(args[0]) (prev)
+                    else:
+                        return args[0] (valueHead.applyModule(self, [valueHead.convertToVector(prev) ] ))
+                return f
+
+            if self.name == 'moveHand': #TODO might need to move this up
+                def f(prev):
+                    i, k = args
+                    if isinstance(prev, TowerState) and not xs[0].hasHoles and isinstance(i, int):
+                        return self.value(args[0])(args[1])(prev)
+                    else:
+                        return k(valueHead.applyModule(self, [valueHead.convertToVector(args[0]), valueHead.convertToVector(prev)]))
+                return f
+
+
+
             if any(type(arg) == torch.Tensor for arg in args) or self.name == 'unfold' \
             or ( self.name in exceptionList and any( tp.isArrow and x.hasHoles \
                     for tp, x in zip(self.tp.functionArguments(), xs )) ): #TODO STOPGAP
+
+                # if self.name == 'moveHand': #TODO might need to move this up
+                #     return lambda x: args[1] ( valueHead.applyModule(self, [args[0], valueHead.convertToVector(x)]) ) #something like that??
+
                 x_tps = self.tp.functionArguments()
                 abstractArgs = []
                 for i, arg in enumerate(args):
@@ -721,6 +800,7 @@ class Primitive(Program):
                     else:
                         abstractArgs.append (valueHead.convertToVector(arg)) #TODO
                 return valueHead.applyModule(self, abstractArgs) #TODO
+
             #concrete condition:
             else:
                 ret = self.value
@@ -736,8 +816,6 @@ class Primitive(Program):
 
         L = len(self.tp.functionArguments())
         return uncurry([], L)
-
-        #
 
     def betaReduce(self): return None
 
@@ -826,6 +904,8 @@ class Invented(Program):
         self.annotatedType = self.tp.instantiateMutable(context)
 
     def evaluate(self, e): return self.body.evaluate([])
+
+    def evaluateHolesDebug(self, e): return self.body.evaluateHolesDebug([])
 
     def abstractEval(self, valueHead, e, parse=None): 
         #Hopefully don't need parse 
@@ -928,9 +1008,12 @@ FragmentVariable.single = FragmentVariable()
 
 
 class Hole(Program):
-    def __init__(self): pass
+    def __init__(self, tp=None):
+        self.tp = tp
 
-    def show(self, isFunction): return "<HOLE>"
+    def show(self, isFunction): 
+        #return f"<HOLE:{self.tp}>"
+        return "<HOLE>"
 
     @property
     def isHole(self): return True
@@ -940,13 +1023,40 @@ class Hole(Program):
     def __hash__(self): return 42
 
     def evaluate(self, e):
+        raise Exception('Attempt to evaluate hole')
+
+    def evaluateHolesDebug(self, e):
+        #print("HOLE ENV", e)
+        #return self
+        """if hole is type tTower, then we return something like:
+        return lambda state: encodeHole(self, e, state)"""    
+        from dreamcoder.domains.tower.towerPrimitives import ttower #speed 
+        if self.tp == ttower:
+            print("TRIGGERED")
+            def returnVal(e):
+                env = e
+                print("HOLE ENV Tower", env)
+                print("hole env is _empty_tower ?")
+                #print("STATE", state)
+                #print("state hist", state.history)
+                return lambda state: self
+            return returnVal(e)
+
         print("HOLE ENV", e)
         return self
-        #raise Exception('Attempt to evaluate hole')
+
 
     def abstractEval(self, valueHead, e):
+        from dreamcoder.domains.tower.towerPrimitives import ttower #speed 
+        if self.tp == ttower:
+            def returnVal(e):
+                env = e
+                return lambda state: valueHead.encodeTowerHole(self, env, state)
+            return returnVal(e)
+
         return valueHead.encodeHole(self, e) #is this right?
-        #return self #TODO
+        """if hole is type tTower, then we return something like:
+        lambda state: encodeHole(self, e, state)"""
 
     def betaReduce(self):
         raise Exception('Attempt to beta reduce hole')
@@ -976,6 +1086,11 @@ class Hole(Program):
               **keywords): return visitor.hole(self,
                                                 *arguments,
                                                 **keywords)
+
+    def __call__(self, x):
+        assert False, f"tried to call a hole with input {x} of type {type(x)}"
+        #print("called val", type(x))
+        #assert False
 
 Hole.single = Hole()
 

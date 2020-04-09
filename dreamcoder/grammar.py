@@ -258,7 +258,7 @@ class Grammar(object):
             return context, Abstraction(expression) #should I be putting it into beta-normal form??
 
         if forceHole:
-            return context, Hole()
+            return context, Hole(tp=request)
 
         candidates = self.buildCandidates(request, context, environment,
                                           normalize=True,
