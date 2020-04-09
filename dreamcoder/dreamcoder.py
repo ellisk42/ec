@@ -72,7 +72,6 @@ class ECResult():
     # So when exporting the results we abbreviate the parameters
     abbreviations = {"frontierSize": "fs",
                      "useDSL": "DSL",
-                     "taskReranker": "TRR",
                      "matrixRank": "MR",
                      "reuseRecognition": "RR",
                      "ensembleSize": "ES",
@@ -234,6 +233,7 @@ def ecIterator(grammar, tasks,
     parameters = {
         k: v for k,
         v in locals().items() if k not in {
+            "taskReranker",
             "languageDatasetDir",
             "tasks",
             "use_map_search_times",
@@ -256,7 +256,9 @@ def ecIterator(grammar, tasks,
             "compressor",
             "custom_wake_generative",
             "interactive",
-            "interactiveTasks"} and v is not None}
+            "interactiveTasks",
+            "parser",
+            "solver"} and v is not None}
     if not useRecognitionModel:
         for k in {"helmholtzRatio", "recognitionTimeout", "biasOptimal", "mask",
                   "contextual", "matrixRank", "reuseRecognition", "auxiliaryLoss", "ensembleSize"}:
