@@ -326,7 +326,9 @@ def loadLogoDataset(task_dataset, task_dataset_dir):
         task_files = [os.path.join(split_path, t) for t in os.listdir(split_path) if '.p' in t]
         for task_file in task_files:
             with open(task_file, 'rb') as f:
-                tasks[split].append(dill.load(f))
+                t = dill.load(f)
+                t.nearest_name = None
+                tasks[split].append(t)
     return tasks["train"], tasks["test"]
         
     

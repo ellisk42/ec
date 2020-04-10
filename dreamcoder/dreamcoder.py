@@ -227,14 +227,14 @@ def ecIterator(grammar, tasks,
         eprint("You specified a testingTimeout, but did not provide any held out testing tasks, aborting.")
         assert False
     
-    models = [recognition_0, recognition_1]
-    n_models = len([m for m in models if len(m) > 0])
-    if len(recognitionEpochs) == 1 and len(recognitionEpochs) < n_models:
-        recognitionEpochs = recognitionEpochs * n_models
+    model_inputs = [recognition_0, recognition_1]
+    n_models = len([m for m in model_inputs if len(m) > 0])
+    if len(recognitionEpochs) == 1 and len(recognitionEpochs) < len(model_inputs):
+        recognitionEpochs = recognitionEpochs * len(model_inputs)
     def print_recognition_model_summary():
         eprint("-------------------Recognition Model Summary-------------------")
         eprint(f"Found n=[{n_models}] recognition models.")
-        for i, model in enumerate(models):
+        for i, model in enumerate(model_inputs):
             if len(model) < 1: continue
             eprint(f"Model {i}: {model}")
             if "examples" in model:
@@ -242,7 +242,12 @@ def ecIterator(grammar, tasks,
             if "language" in model:
                 eprint(f"Language encoder: {language_encoder}")
                 eprint(f"Language dataset: {languageDataset}")
-            eprint(f"Epochs: [{recognitionEpochs[i]}]; contextual: {contextual}")
+            if recognitionEpochs is not None:
+                eprint(f"Epochs: [{recognitionEpochs[i]}]; contextual: {contextual}")
+            elif recognitionSteps is not None:
+                eprint(f"Steps: [{recognitionSteps}]; contextual: {contextual}")
+            elif recognitionTimeout is not None:
+                eprint(f"Timeout: [{recognitionTimeout}]; contextual: {contextual}")
             if i > 0:
                 eprint(f"Use n={helmholtz_nearest_language} nearest language examples for Helmholtz")
                 eprint(f"Finetune from examples: {finetune_1}")
@@ -309,7 +314,7 @@ def ecIterator(grammar, tasks,
     def checkpointPath(iteration, extra=""):
         # Exclude from path, but not from saving in parameters.
         exclude_from_path = [
-            "models",
+            "model_inputs",
             "language_encoder",
             "recognition_0",
             "recognition_1",
@@ -317,6 +322,7 @@ def ecIterator(grammar, tasks,
             "taskDataset",
             "finetune_1",
             "recognitionEpochs",
+            "languageDataset"
         ]
         parameters["iterations"] = iteration
         checkpoint_params = [k for k in sorted(parameters.keys()) if k not in exclude_from_path]
@@ -551,7 +557,7 @@ def ecIterator(grammar, tasks,
                                language_encoder=language_encoder,
                                recognitionEpochs=recognitionEpochs[recognition_iteration],
                                recognition_iteration=recognition_iteration,
-                               recognition_inputs=models[recognition_iteration],
+                               recognition_inputs=model_inputs[recognition_iteration],
                                finetune_from_example_encoder=finetune_1,
                                language_data=None,
                                language_lexicon=None)
@@ -582,7 +588,7 @@ def ecIterator(grammar, tasks,
                                ensembleSize=ensembleSize, 
                                mask=mask,
                                activation=activation, contextual=contextual, biasOptimal=biasOptimal,
-                               previousRecognitionModel=previousRecognitionModel, matrixRank=matrixRank,
+                               previousRecognitionModel=None, matrixRank=matrixRank,
                                timeout=recognitionTimeout, evaluationTimeout=evaluationTimeout,
                                enumerationTimeout=enumerationTimeout,
                                helmholtzRatio=thisRatio, helmholtzFrontiers=helmholtzFrontiers(),
@@ -592,7 +598,7 @@ def ecIterator(grammar, tasks,
                                language_encoder=language_encoder,
                                recognitionEpochs=recognitionEpochs[recognition_iteration],
                                recognition_iteration=recognition_iteration,
-                               recognition_inputs=models[recognition_iteration],
+                               recognition_inputs=model_inputs[recognition_iteration],
                                finetune_from_example_encoder=finetune_1,
                                language_data=result.taskLanguage,
                                language_lexicon=result.vocabularies["train"],
@@ -802,18 +808,24 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
                       language_lexicon=None,
                       helmholtz_nearest_language=0):
     eprint(f"Recognition iteration [{recognition_iteration}]. Training using: {[recognition_inputs]}")
+    # Exit if language only and we have no frontiers to train on.
+    n_frontiers = len([f for f in allFrontiers if not f.empty])
+    if not 'examples' in recognition_inputs and 'language' in recognition_inputs and n_frontiers < 1:
+        result.models += [None]
+        eprint(f"! No non-empty language frontiers to train on. Skipping language-only enumeration.")
+        result.hitsAtEachWake.append(0)
+        return set()
+    
     example_encoders, language_encoders = [None] * ensembleSize, [None] * ensembleSize
     pretrained_model = None
     if 'examples' in recognition_inputs:
+        example_encoders = [featureExtractor(tasks, testingTasks=testingTasks, cuda=cuda) for i in range(ensembleSize)]
         if recognition_iteration > 0 and finetune_from_example_encoder:
             eprint("Finetuning from the previous iteration's example encoder and model.")
             pretrained_model = result.models[recognition_iteration - 1]
             assert(pretrained_model.featureExtractor is not None)
-        else:
-            example_encoders = [featureExtractor(tasks, testingTasks=testingTasks, cuda=cuda) for i in range(ensembleSize)]
     if 'language' in recognition_inputs:
         language_encoders = [language_encoder(tasks, testingTasks=testingTasks, cuda=cuda, language_data=language_data, lexicon=language_lexicon) for i in range(ensembleSize)]
-    
     if recognition_iteration > 0 and helmholtz_nearest_language > 0:
         nearest_encoder = result.models[recognition_iteration - 1]
         nearest_tasks = tasks
@@ -821,13 +833,6 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
     else:
         nearest_encoder, nearest_tasks = None, None
         helmholtz_nearest_language = 0
-
-    # if language_encoder is not None:
-    #     eprint("Using external language data to initialize the feature extractors.")
-    #     featureExtractorObjects = [language_encoder(tasks, testingTasks=testingTasks, cuda=cuda, language_data=result.taskLanguage) for i in range(ensembleSize)]
-    # else:
-    #     eprint("Using an ensemble size of %d. Note that we will only store and test on the best recognition model." % ensembleSize)
-    #     featureExtractorObjects = [featureExtractor(tasks, testingTasks=testingTasks, cuda=cuda) for i in range(ensembleSize)]
         
     recognizers = [RecognitionModel(example_encoder=example_encoders[i],
                                     language_encoder=language_encoders[i],
@@ -1032,7 +1037,7 @@ def commandlineArguments(_=None,
                         default=None,
                         type=str)
     parser.add_argument("-RE", "--recognitionEpochs",
-                        default=[100],
+                        default=[None],
                         nargs="*",
                         help="List of number of epochs to train the recognition model at each round. Can be specified instead of train time or gradient steps.",
                         type=int)

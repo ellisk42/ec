@@ -748,7 +748,7 @@ class RecognitionModel(nn.Module):
         return al
             
     def taskEmbeddings(self, tasks):
-        return {task: self.featureExtractor.featuresOfTask(task).data.cpu().numpy()
+        return {task: self.encode_features(task).data.cpu().numpy()
                 for task in tasks}
     
     def encode_features_batch_for_lookup(self, tasks):
@@ -979,7 +979,11 @@ class RecognitionModel(nn.Module):
             requests = [defaultRequest]
         frontiers = [frontier.topK(topK).normalize()
                      for frontier in frontiers if not frontier.empty]
-        if len(frontiers) == 0:
+
+        if self.featureExtractor is None:
+            eprint("No feature extractor; no Helmholtz.")
+            helmholtzRatio = 0.
+        elif len(frontiers) == 0:
             eprint("You didn't give me any nonempty replay frontiers to learn from. Going to learn from 100% Helmholtz samples")
             helmholtzRatio = 1.
             
@@ -1015,7 +1019,7 @@ class RecognitionModel(nn.Module):
         # example, lists and strings need this; towers and graphics do
         # not. There is no harm in recomputed the tasks, it just
         # wastes time.
-        if not hasattr(self.featureExtractor, 'recomputeTasks'):
+        if not hasattr(self.featureExtractor, 'recomputeTasks') and (not self.featureExtractor is None):
             self.featureExtractor.recomputeTasks = True
         helmholtzFrontiers = [HelmholtzEntry(f, self)
                               for f in helmholtzFrontiers]
