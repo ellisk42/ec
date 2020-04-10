@@ -592,8 +592,12 @@ def main(args):
     use_epochs = args.pop("iterations_as_epochs")
     if use_epochs and (args["taskBatchSize"] is not None):
         eprint("Using iterations as epochs over full training set.")
-        args["iterations"] *= int(len(train) / args["taskBatchSize"]) 
-        eprint(f"Now running for n={args['iterations']} iterations.")
+        multiplier = (int(len(train) / args["taskBatchSize"]))
+        original_iterations = int(args["iterations"])
+        args["iterations"] = original_iterations * multiplier
+        
+        eprint(f'Now running for n={args["iterations"]} iterations.')
+        import pdb; pdb.set_trace()
 
     generator = ecIterator(baseGrammar, train,
                            taskDataset=task_dataset,
