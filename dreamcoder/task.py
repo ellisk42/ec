@@ -21,6 +21,7 @@ class Task(object):
         self.features = features
         self.request = request
         self.name = name
+        self.nearest_name = None # Nearest task for kNN featurization. 
         self.examples = examples
         if len(self.examples) > 0:
             assert all(len(xs) == len(examples[0][0])

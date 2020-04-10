@@ -590,8 +590,8 @@ def main(args):
     os.system("mkdir -p %s"%outputDirectory)
 
     use_epochs = args.pop("iterations_as_epochs")
-    if use_epochs:
-        eprint("Using iterations as epochs")
+    if use_epochs and (args["taskBatchSize"] is not None):
+        eprint("Using iterations as epochs over full training set.")
         args["iterations"] *= int(len(train) / args["taskBatchSize"]) 
         eprint(f"Now running for n={args['iterations']} iterations.")
 

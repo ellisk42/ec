@@ -16,7 +16,7 @@ if __name__ == '__main__':
         a=3,
         topK=2,
         iterations=10,
-        useRecognitionModel=True,
+        recognition_0=["examples"],
         helmholtzRatio=0.5,
         featureExtractor=LogoFeatureCNN,
         maximumFrontier=5,

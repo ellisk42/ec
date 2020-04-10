@@ -56,7 +56,7 @@ for enumerationTimeout in [1800, 3600]:
     job += 1
     
 #### Outputs
-PRINT_LOG_SCRIPT = True
+PRINT_LOG_SCRIPT = False
 PRINT_JOBS = True
 if PRINT_JOBS and not PRINT_LOG_SCRIPT:
     # print the jobs.

@@ -2,11 +2,11 @@
 def languageForTasks(languageDataset, languageDatasetDir, taskDict):
     """
     Loads a language dataset from {languageDatasetDir}/{languageDataset}.
-    taskDict: {Task : []}
+    taskDict: {task_name : []}
     
     If not using the backward compatible languageForPathNameTasks, this assumes there are {train, test} splits, and loads a separate vocabulary for each one.
     taskDict fully determines all the tasks we will load, and does not obey train/test splits.
-    Returns {Task : list of sentences for each task, for the tasks in the taskDict.}
+    Returns {task_name : list of sentences for each task, for the tasks in the taskDict.}
     
     """
     import os
@@ -21,9 +21,9 @@ def languageForTasks(languageDataset, languageDatasetDir, taskDict):
         split_path = os.path.join(dataset_path, split)
         with open(os.path.join(split_path, "language.json"), 'rb') as f:
             languageData = json.load(f)
-            for t in taskDict:
-                if t.name in languageData:
-                    taskDict[t] = languageData[t.name]
+            for t_name in taskDict:
+                if t_name in languageData:
+                    taskDict[t_name] = languageData[t_name]
         with open(os.path.join(split_path, "vocab.json"), 'rb') as f:
             vocabularies[split] = json.load(f)
     
@@ -32,8 +32,6 @@ def languageForTasks(languageDataset, languageDatasetDir, taskDict):
     
     return taskDict, vocabularies
     
-    
-
 def languageForPathNameTasks(languageDataset, taskDict):
     """
     Backwards compatability with language datasets that were keyed by a stimuli path name.
@@ -58,13 +56,13 @@ def languageForPathNameTasks(languageDataset, taskDict):
     from collections import defaultdict
     task_safe_names = defaultdict(list)
     for t in taskDict:
-        task_safe_names[task_to_safe_name(t.name)].append(t.name)
+        task_safe_names[task_to_safe_name(task_name )].append(task_name)
         
     languageForTasks = {}
     for t in taskDict:
-        task_safe_name = task_to_safe_name(t.name)
+        task_safe_name = task_to_safe_name(task_name)
         if task_safe_name not in languageDataset or len(languageDataset[task_safe_name]) < 1:
-            print("Missing language for : {}".format(t.name))
+            print("Missing language for : {}".format(task_name))
         if len(task_safe_names[task_safe_name]) > 1:
             print("Collision: safe-name: {}, names: {}".format(task_safe_name, task_safe_name[task_safe_name]))
         language_for_task = languageDataset[task_safe_name] if task_safe_name in languageDataset else []

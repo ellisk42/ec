@@ -614,22 +614,59 @@ class ContextualGrammarNetwork(nn.Module):
         return ll
 
 class RecognitionModel(nn.Module):
-    def __init__(self,featureExtractor,grammar,hidden=[64],activation="tanh",
-                 rank=None,contextual=False,mask=False,
-                 cuda=False,
-                 previousRecognitionModel=None,
-                 id=0):
+    def __init__(self,
+                example_encoder=None,
+                language_encoder=None,
+                grammar=None,
+                hidden=[64],
+                activation="tanh",
+                rank=None,contextual=False,mask=False,
+                cuda=False,
+                pretrained_model=None,
+                nearest_encoder=None,
+                nearest_tasks=None,
+                helmholtz_nearest_language=0,
+                id=0):
         super(RecognitionModel, self).__init__()
         self.id = id
         self.trained=False
         self.use_cuda = cuda
-
-        self.featureExtractor = featureExtractor
+        
+        self.featureExtractor = example_encoder
+        self.language_encoder = language_encoder
+        
+        # Encode tasks to lookup nearest language for Helmholtz
+        self.encoded_tasks = None # n_tasks x n_features
+        self.nearest_tasks = None # Sorted list of tasks.
+        self.nearest_encoder = None
+        self.helmholtz_nearest_language = helmholtz_nearest_language
+        if self.helmholtz_nearest_language > 0:
+            self.init_helmholtz_nearest_language(
+                nearest_encoder=nearest_encoder,
+                nearest_tasks=nearest_tasks
+            )
+        self.fresh_helmholtz_name = 0 # Fresh names for all Helmholtz entries.
+        
         # Sanity check - make sure that all of the parameters of the
         # feature extractor were added to our parameters as well
-        if hasattr(featureExtractor, 'parameters'):
-            for parameter in featureExtractor.parameters():
-                assert any(myParameter is parameter for myParameter in self.parameters())
+        self.feature_dimensions = 0
+        if self.featureExtractor is not None:
+            if hasattr(example_encoder, 'parameters'):
+                for parameter in example_encoder.parameters():
+                    assert any(myParameter is parameter for myParameter in self.parameters())
+            self.feature_dimensions += self.featureExtractor.outputDimensionality
+        if self.language_encoder is not None:
+            if hasattr(language_encoder, 'parameters'):
+                for parameter in language_encoder.parameters():
+                    assert any(myParameter is parameter for myParameter in self.parameters())
+            self.feature_dimensions += self.language_encoder.outputDimensionality
+
+        if pretrained_model is not None:
+            # Initialize the example encoder and freeze its weights.
+            self.featureExtractor.load_state_dict(pretrained_model.featureExtractor.state_dict())
+            for param in self.featureExtractor.parameters():
+                param.requires_grad = False
+            # Note that we do *not* reuse the pretrained MLP.
 
         # Build the multilayer perceptron that is sandwiched between the feature extractor and the grammar
         if activation == "sigmoid":
@@ -640,10 +677,11 @@ class RecognitionModel(nn.Module):
             activation = nn.Tanh
         else:
             raise Exception('Unknown activation function ' + str(activation))
+            
         self._MLP = nn.Sequential(*[ layer
                                      for j in range(len(hidden))
                                      for layer in [
-                                             nn.Linear(([featureExtractor.outputDimensionality] + hidden)[j],
+                                             nn.Linear(([self.feature_dimensions] + hidden)[j],
                                                        hidden[j]),
                                              activation()]])
 
@@ -653,7 +691,7 @@ class RecognitionModel(nn.Module):
             self.outputDimensionality = self._MLP[-2].out_features
             assert self.outputDimensionality == hidden[-1]
         else:
-            self.outputDimensionality = self.featureExtractor.outputDimensionality
+            self.outputDimensionality = self.feature_dimensions
 
         self.contextual = contextual
         if self.contextual:
@@ -667,16 +705,29 @@ class RecognitionModel(nn.Module):
         self.grammar = ContextualGrammar.fromGrammar(grammar) if contextual else grammar
         self.generativeModel = grammar
         
-        self._auxiliaryPrediction = nn.Linear(self.featureExtractor.outputDimensionality, 
-                                              len(self.grammar.primitives))
+        self._auxiliaryPrediction = nn.Linear(self.feature_dimensions, len(self.grammar.primitives))
         self._auxiliaryLoss = nn.BCEWithLogitsLoss()
 
         if cuda: self.cuda()
+    
+    def get_fresh_helmholtz_name(self):
+        self.fresh_helmholtz_name += 1
+        return self.fresh_helmholtz_name
+        
+    def init_helmholtz_nearest_language(self,
+                                        nearest_encoder,
+                                        nearest_tasks):
+        """Encode training tasks for kNN featurization of Helmholtz."""
+        if self.helmholtz_nearest_language > 1:
+            print("Unimplemented: more than 1 nearest neighbor.")
+            assert False
+        eprint(f"Using n={self.helmholtz_nearest_language} nearest language labels to label Helmholtz.")
+        self.nearest_tasks = sorted(nearest_tasks, key=lambda t : t.name)
+        # Naively just attempt to encode all of the tasks at once.
+        self.encoded_tasks = nearest_encoder.encode_features_batch_for_lookup(self.nearest_tasks)
+        self.nearest_encoder = nearest_encoder
+        self.nearest_encoder.requires_grad = False
 
-        if previousRecognitionModel:
-            self._MLP.load_state_dict(previousRecognitionModel._MLP.state_dict())
-            self.featureExtractor.load_state_dict(previousRecognitionModel.featureExtractor.state_dict())
-            
     def auxiliaryLoss(self, frontier, features):
         # Compute a vector of uses
         ls = frontier.bestPosterior.program
@@ -699,10 +750,39 @@ class RecognitionModel(nn.Module):
     def taskEmbeddings(self, tasks):
         return {task: self.featureExtractor.featuresOfTask(task).data.cpu().numpy()
                 for task in tasks}
+    
+    def encode_features_batch_for_lookup(self, tasks):
+        """Encodes sorted batch of tasks, returns n_tasks x n_encoding_dim tensor."""
+        print(f"Encoding batch of n={len(tasks)} tasks for lookup only.")
+        start = time.time()
+        # Naive implementation: encoding them all one by one.
+        encoded = torch.stack([
+            self.encode_features(task).detach()
+            for task in tasks
+        ], dim=0)
+        eprint(f"Finished encoding batch of n={len(tasks)} tasks in {time.time() - start} seconds.")
+        return encoded
+        
+    def encode_features(self, task):
+        """
+        Forwards task through the feature layers and concatenates the outputs.
+        """
+        features = []
+        if self.featureExtractor is not None:
+            example_features = self.featureExtractor.featuresOfTask(task)
+            if example_features is not None:
+                features += [example_features]
+        if self.language_encoder is not None:
+            language_features = self.language_encoder.featuresOfTask(task)
+            if language_features is not None:
+                features += [language_features]
+        if len(features) < 1: return None
+        concatenated = torch.cat(features)
+        return concatenated
 
     def forward(self, features):
-        """returns either a Grammar or a ContextualGrammar
-        Takes as input the output of featureExtractor.featuresOfTask"""
+        """returns either a Grammar or a ContextualGrammar.
+        Takes as input the concatenation of all of its feature extractor features."""
         features = self._MLP(features)
         return self.grammarBuilder(features)
 
@@ -713,14 +793,13 @@ class RecognitionModel(nn.Module):
         return primitivesDict
 
     def grammarOfTask(self, task):
-        features = self.featureExtractor.featuresOfTask(task)
+        features = self.encode_features(task)
         if features is None: return None
         return self(features)
 
     def grammarLogProductionsOfTask(self, task):
         """Returns the grammar logits from non-contextual models."""
-
-        features = self.featureExtractor.featuresOfTask(task)
+        features = self.encode_features(task)
         if features is None: return None
 
         if hasattr(self, 'hiddenLayers'):
@@ -772,7 +851,7 @@ class RecognitionModel(nn.Module):
             return e(grammarLogProductionsOfTask)
 
     def taskAuxiliaryLossLayer(self, tasks):
-        return {task: self._auxiliaryPrediction(self.featureExtractor.featuresOfTask(task)).view(-1).data.cpu().numpy()
+        return {task: self._auxiliaryPrediction(self.encode_features(task)).view(-1).data.cpu().numpy()
                 for task in tasks}
                 
     def taskGrammarFeatureLogProductions(self, tasks):
@@ -789,7 +868,7 @@ class RecognitionModel(nn.Module):
                 for g in [self.grammarOfTask(task).untorch().noParent] }
 
     def taskHiddenStates(self, tasks):
-        return {task: self._MLP(self.featureExtractor.featuresOfTask(task)).view(-1).data.cpu().numpy()
+        return {task: self._MLP(self.encode_features(task)).view(-1).data.cpu().numpy()
                 for task in tasks}
 
     def taskGrammarEntropies(self, tasks):
@@ -797,7 +876,7 @@ class RecognitionModel(nn.Module):
                 for task in tasks}
 
     def frontierKL(self, frontier, auxiliary=False, vectorized=True):
-        features = self.featureExtractor.featuresOfTask(frontier.task)
+        features = self.encode_features(frontier.task)
         if features is None: return None, None
         # Monte Carlo estimate: draw a sample from the frontier
         entry = frontier.sample()
@@ -815,7 +894,7 @@ class RecognitionModel(nn.Module):
 
     def frontierBiasOptimal(self, frontier, auxiliary=False, vectorized=True):
         if not vectorized:
-            features = self.featureExtractor.featuresOfTask(frontier.task)
+            features = self.encode_features(frontier.task)
             if features is None: return None, None
             al = self.auxiliaryLoss(frontier, features if auxiliary else features.detach())
             g = self(features)
@@ -826,7 +905,7 @@ class RecognitionModel(nn.Module):
             return -best, al
             
         batchSize = len(frontier.entries)
-        features = self.featureExtractor.featuresOfTask(frontier.task)
+        features = self.encode_features(frontier.task)
         if features is None: return None, None
         al = self.auxiliaryLoss(frontier, features if auxiliary else features.detach())
         features = self._MLP(features)
@@ -844,6 +923,38 @@ class RecognitionModel(nn.Module):
                 logLikelihood=e.logLikelihood,
                 logPrior=e.logPrior) for e in frontier],
             task=frontier.task)
+    
+    def pairwise_cosine_similarity(self, a, b, eps=1e-8):
+        """
+        added eps for numerical stability
+        """
+        a_n, b_n = a.norm(dim=1)[:, None], b.norm(dim=1)[:, None]
+        a_norm = a / torch.max(a_n, eps * torch.ones_like(a_n))
+        b_norm = b / torch.max(b_n, eps * torch.ones_like(b_n))
+        sim_mt = torch.mm(a_norm, b_norm.transpose(0, 1))
+        return sim_mt
+    
+    def update_helmholtz_language(self, helmholtz_entries):
+        """
+        Updates nearest_name attribute on Helmholtz entries with name
+        of nearest training task.
+        """
+        if self.helmholtz_nearest_language < 1:
+            return
+        elif len(self.encoded_tasks) < 0:
+            return
+        else:
+            non_empty_helmholtz_entries = [e for e in helmholtz_entries if e.task is not None]
+            helmholtz_tasks = [e.task for e in non_empty_helmholtz_entries]
+            eprint(f"Updating language with nearest neighbors for {len(helmholtz_tasks)}/{len(helmholtz_entries)} Helmholtz entries.")
+            encoded_helmholtz = self.nearest_encoder.encode_features_batch_for_lookup(helmholtz_tasks)
+            # Find nearest between encoded helmholtz and encoded tasks.
+            sim_matrix = self.pairwise_cosine_similarity(encoded_helmholtz, self.encoded_tasks)
+            max_similarity = torch.argmax(sim_matrix, 1)
+            # Update names of all the helmholtz tasks
+            for ind, e in enumerate(non_empty_helmholtz_entries):
+                nearest_ind = max_similarity[ind]
+                e.task.nearest_name = self.nearest_tasks[nearest_ind].name
 
     def train(self, frontiers, _=None, steps=None, lr=0.001, topK=5, CPUs=1,
               timeout=None, evaluationTimeout=0.001,
@@ -871,12 +982,13 @@ class RecognitionModel(nn.Module):
         if len(frontiers) == 0:
             eprint("You didn't give me any nonempty replay frontiers to learn from. Going to learn from 100% Helmholtz samples")
             helmholtzRatio = 1.
-
+            
         # Should we sample programs or use the enumerated programs?
         randomHelmholtz = len(helmholtzFrontiers) == 0
         
         class HelmholtzEntry:
             def __init__(self, frontier, owner):
+                frontier.task.name += f"{owner.get_fresh_helmholtz_name()}"
                 self.request = frontier.task.request
                 self.task = None
                 self.programs = [e.program for e in frontier]
@@ -888,7 +1000,8 @@ class RecognitionModel(nn.Module):
             def calculateTask(self):
                 assert self.task is None
                 p = random.choice(self.programs)
-                return self.owner.featureExtractor.taskOfProgram(p, self.request)
+                task = self.owner.featureExtractor.taskOfProgram(p, self.request)
+                task.name += f"{self.owner.get_fresh_helmholtz_name()}"
 
             def makeFrontier(self):
                 assert self.task is not None
@@ -896,9 +1009,6 @@ class RecognitionModel(nn.Module):
                              task=self.task)
                 return f
         
-            
-            
-
         # Should we recompute tasks on the fly from Helmholtz?  This
         # should be done if the task is stochastic, or if there are
         # different kinds of inputs on which it could be run. For
@@ -909,6 +1019,8 @@ class RecognitionModel(nn.Module):
             self.featureExtractor.recomputeTasks = True
         helmholtzFrontiers = [HelmholtzEntry(f, self)
                               for f in helmholtzFrontiers]
+        if len(helmholtzFrontiers) > 0:
+            self.update_helmholtz_language(helmholtzFrontiers)
         random.shuffle(helmholtzFrontiers)
         
         helmholtzIndex = [0]
@@ -937,7 +1049,7 @@ class RecognitionModel(nn.Module):
                     return getHelmholtz() # because we just cleared everything
             assert f.task is not None
             return f.makeFrontier()
-            
+
         def updateHelmholtzTasks():
             updateCPUs = CPUs if hasattr(self.featureExtractor, 'parallelTaskOfProgram') and self.featureExtractor.parallelTaskOfProgram else 1
             if updateCPUs > 1: eprint("Updating Helmholtz tasks with",updateCPUs,"CPUs",
@@ -952,6 +1064,7 @@ class RecognitionModel(nn.Module):
                     newEntries.append(e)
                 helmholtzFrontiers.clear()
                 helmholtzFrontiers.extend(newEntries)
+                self.update_helmholtz_language(helmholtzFrontiers)
                 return 
 
             # Save some memory by freeing up the tasks as we go through them
@@ -988,7 +1101,7 @@ class RecognitionModel(nn.Module):
             for i in reversed(badIndices):
                 assert helmholtzFrontiers[i].task is None
                 del helmholtzFrontiers[i]
-
+            self.update_helmholtz_language(helmholtzFrontiers)
 
         # We replace each program in the frontier with its likelihoodSummary
         # This is because calculating likelihood summaries requires juggling types
@@ -996,8 +1109,13 @@ class RecognitionModel(nn.Module):
         frontiers = [self.replaceProgramsWithLikelihoodSummaries(f).normalize()
                      for f in frontiers]
 
-        eprint("(ID=%d): Training a recognition model from %d frontiers, %d%% Helmholtz, feature extractor %s." % (
-            self.id, len(frontiers), int(helmholtzRatio * 100), self.featureExtractor.__class__.__name__))
+        feature_extractor_names = [
+            str(encoder.__class__.__name__) for encoder in (self.featureExtractor, self.language_encoder)
+            if encoder is not None
+        ]
+        eprint("(ID=%d): Training a recognition model from %d frontiers, %d%% Helmholtz" % (
+            self.id, len(frontiers), int(helmholtzRatio * 100)))
+        eprint(f"Feature extractors: [{feature_extractor_names}]")
         eprint("(ID=%d): Got %d Helmholtz frontiers - random Helmholtz training? : %s"%(
             self.id, len(helmholtzFrontiers), len(helmholtzFrontiers) == 0))
         eprint("(ID=%d): Contextual? %s" % (self.id, str(self.contextual)))
@@ -1030,7 +1148,8 @@ class RecognitionModel(nn.Module):
             for frontier in permutedFrontiers:
                 # Randomly decide whether to sample from the generative model
                 dreaming = random.random() < helmholtzRatio
-                if dreaming: frontier = getHelmholtz()
+                if dreaming: 
+                    frontier = getHelmholtz()
                 self.zero_grad()
                 loss, classificationLoss = \
                         self.frontierBiasOptimal(frontier, auxiliary=auxLoss, vectorized=vectorized) if biasOptimal \
