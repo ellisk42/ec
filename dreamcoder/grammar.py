@@ -454,7 +454,7 @@ class Grammar(object):
 
     def enumeration(self,context,environment,request,upperBound,
                     maximumDepth=20,
-                    lowerBound=0.):
+                    lowerBound=0., usedPrims={}):
         '''Enumerates all programs whose MDL satisfies: lowerBound <= MDL < upperBound'''
         if upperBound < 0 or maximumDepth == 1:
             return
@@ -495,7 +495,7 @@ class Grammar(object):
                              lowerBound=0.,
                              maximumDepth=20,
                              originalFunction=None,
-                             argumentIndex=0):
+                             argumentIndex=0, usedPrims={}):
         if upperBound < 0. or maximumDepth == 1:
             return
         if originalFunction is None:
