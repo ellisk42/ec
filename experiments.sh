@@ -77,5 +77,19 @@ module add openmind/singularity
 #bash run.sh S12.10.test3 10000 20 python bin/draw.py -i 25 -t 10 --biasOptimal --contextual -R 2400 --trainset=S12 --dopruning --testingTimeout 28800 -a 2 --taskReranker unsolved --resume experimentOutputs/draw/2019-11-05T10:59:39.638549/draw_aic=1.0_arity=2_BO=True_CO=True_dp=True_doshaping=False_ES=1_ET=3600_HR=0.5_it=14_MF=5_noConsol=False_pc=30_RT=2400_RR=False_RW=False_st=False_solver=ocaml_STM=True_L=1.5_TRR=unsolved_K=2_topkNotMAP=False_tset=S12.pickle
 #bash run.sh S13.10.test3 10000 20 python bin/draw.py -i 25 -t 10 --biasOptimal --contextual -R 2400 --trainset=S13 --dopruning --testingTimeout 28800 -a 2 --taskReranker unsolved --resume experimentOutputs/draw/2019-11-05T10:59:39.800347/draw_aic=1.0_arity=2_BO=True_CO=True_dp=True_doshaping=False_ES=1_ET=3600_HR=0.5_it=18_MF=5_noConsol=False_pc=30_RT=2400_RR=False_RW=False_st=False_solver=ocaml_STM=True_L=1.5_TRR=unsolved_K=2_topkNotMAP=False_tset=S13.pickle
 
-bash run.sh S12.10.test5 10000 20 python bin/draw.py -i 25 -t 10 --parallelTest --biasOptimal --contextual -R 2400 --trainset=S12 --dopruning --testingTimeout 28800 -a 2 --taskReranker unsolved --resume experimentOutputs/draw/2019-11-05T10:59:39.638549/draw_aic=1.0_arity=2_BO=True_CO=True_dp=True_doshaping=False_ES=1_ET=3600_HR=0.5_it=14_MF=5_noConsol=False_pc=30_RT=2400_RR=False_RW=False_st=False_solver=ocaml_STM=True_L=1.5_TRR=unsolved_K=2_topkNotMAP=False_tset=S12.pickle
-bash run.sh S13.10.test5 10000 20 python bin/draw.py -i 25 -t 10 --parallelTest --biasOptimal --contextual -R 2400 --trainset=S13 --dopruning --testingTimeout 28800 -a 2 --taskReranker unsolved --resume experimentOutputs/draw/2019-11-05T10:59:39.800347/draw_aic=1.0_arity=2_BO=True_CO=True_dp=True_doshaping=False_ES=1_ET=3600_HR=0.5_it=18_MF=5_noConsol=False_pc=30_RT=2400_RR=False_RW=False_st=False_solver=ocaml_STM=True_L=1.5_TRR=unsolved_K=2_topkNotMAP=False_tset=S13.pickle
+#bash run.sh S12.10.test5 10000 20 python bin/draw.py -i 25 -t 10 --parallelTest --biasOptimal --contextual -R 2400 --trainset=S12 --dopruning --testingTimeout 28800 -a 2 --taskReranker unsolved --resume experimentOutputs/draw/2019-11-05T10:59:39.638549/draw_aic=1.0_arity=2_BO=True_CO=True_dp=True_doshaping=False_ES=1_ET=3600_HR=0.5_it=14_MF=5_noConsol=False_pc=30_RT=2400_RR=False_RW=False_st=False_solver=ocaml_STM=True_L=1.5_TRR=unsolved_K=2_topkNotMAP=False_tset=S12.pickle
+#bash run.sh S13.10.test5 10000 20 python bin/draw.py -i 25 -t 10 --parallelTest --biasOptimal --contextual -R 2400 --trainset=S13 --dopruning --testingTimeout 28800 -a 2 --taskReranker unsolved --resume experimentOutputs/draw/2019-11-05T10:59:39.800347/draw_aic=1.0_arity=2_BO=True_CO=True_dp=True_doshaping=False_ES=1_ET=3600_HR=0.5_it=18_MF=5_noConsol=False_pc=30_RT=2400_RR=False_RW=False_st=False_solver=ocaml_STM=True_L=1.5_TRR=unsolved_K=2_topkNotMAP=False_tset=S13.pickle
+
+
+
+############## drawbetter dsl
+#bash run.sh S12.11.1 8000 20 python bin/draw.py -i 20 -t 600 --biasOptimal --contextual -R 1200 --trainset=S12 --dopruning --skiptesting -a 2 --taskReranker unsolved
+#bash run.sh S12.11.2 8000 20 python bin/draw.py -i 20 -t 1200 --biasOptimal --contextual -R 1200 --trainset=S12 --dopruning --skiptesting -a 2 --taskReranker unsolved
+#bash run.sh S12.11.3 8000 20 python bin/draw.py -i 20 -t 2400 --biasOptimal --contextual -R 1200 --trainset=S12 --dopruning --skiptesting -a 2 --taskReranker unsolved
+#bash run.sh S12.11.4 10000 20 python bin/draw.py -i 20 -t 3600 --biasOptimal --contextual -R 2400 --trainset=S12 --dopruning --skiptesting -a 2 --taskReranker unsolved
+#bash run.sh S13.11.4 10000 20 python bin/draw.py -i 20 -t 3600 --biasOptimal --contextual -R 2400 --trainset=S13 --dopruning --skiptesting -a 2 --taskReranker unsolved
+
+bash run.sh S12.11.5 10000 20 python bin/draw.py -i 20 -t 4200 --biasOptimal --contextual -R 2400 --trainset=S12 --dopruning --skiptesting -a 3 --taskReranker unsolved
+bash run.sh S13.11.5 10000 20 python bin/draw.py -i 20 -t 4200 --biasOptimal --contextual -R 2400 --trainset=S13 --dopruning --skiptesting -a 3 --taskReranker unsolved
+
+
