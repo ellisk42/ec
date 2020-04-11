@@ -205,12 +205,8 @@ def executeSketch(p, timeout=None):
     to start with. think of this as: stuff to the left defines a function that goes from 
     sketch to sketch, so it needs one arguemnt (a sketch)."""
     # go from program object to action sequence and plan
-    try:
-        return runWithTimeout(lambda : p.evaluate([])(_empty_sketch)(SketchState(history=[])), 
-            timeout=timeout)
-    except:
-        print(p)
-        assert False
+    return runWithTimeout(lambda : p.evaluate([])(_empty_sketch)(SketchState(history=[])), 
+        timeout=timeout)
 
 
 def renderPlan(sketch, plot_on=False):
