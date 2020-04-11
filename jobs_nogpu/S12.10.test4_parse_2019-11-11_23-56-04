@@ -1,0 +1,5 @@
+[33mWARNING:[0m seccomp requested but not enabled, seccomp library is missing or too old
+  File "analysis/parse.py", line 278
+    getAndSaveRandomParses(DAT, Nperm=1000):
+                                           ^
+SyntaxError: invalid syntax

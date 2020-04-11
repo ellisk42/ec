@@ -1,0 +1,5 @@
+[33mWARNING:[0m seccomp requested but not enabled, seccomp library is missing or too old
+  File "analysis/parse.py", line 142
+    pickle.dump([flatparses, f, pickle.HIGHEST_PROTOCOL)
+                                                       ^
+SyntaxError: invalid syntax

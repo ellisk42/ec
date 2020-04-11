@@ -1,0 +1,419 @@
+[33mWARNING:[0m seccomp requested but not enabled, seccomp library is missing or too old
+HERE
+getting all parses (may take a while
+GGGGdd
+GGGGeee
+DRAW TASK training set: S12
+DO SHAPING: False
+training task names:
+['S12_13_shaping_0', 'S12_13_shaping_1', 'S12_13_shaping_2', 'S12_13_shaping_3', 'S12_13_shaping_4', 'S12_13_shaping_5', 'S12_13_shaping_6', 'S12_13_shaping_7', 'S12_13_shaping_8', 'S12_13_shaping_9', 'S12_13_shaping_10', 'S12_1', 'S12_5', 'S12_8', 'S12_10', 'S12_32', 'S12_34', 'S12_38', 'S12_20', 'S12_39', 'S12_57', 'S12_79', 'S12_113', 'S12_124', 'S12_126', 'S12_133', 'S12_147', 'S12_155', 'S12_163', 'S12_200', 'S12_214', 'S12_31', 'S12_52', 'S12_55', 'S12_70', 'S12_129', 'S12_139', 'S12_141', 'S12_148', 'S12_207', 'S12_222', 'S12_224', 'S12_229', 'S12_233', 'S12_235', 'S12_243', 'S12_246']
+test tasks:
+['S12_13_test_1', 'S12_13_test_2', 'S12_13_test_4', 'S12_13_test_5', 'S12_13_test_6', 'S12_13_test_7', 'S12_13_test_8', 'S12_13_test_9', 'S12_13_test_10', 'S12_13_test_11', 'S12_13_test_12', 'S12_132', 'S12_201', 'S12_220', 'S12_247', 'S13_182', 'S13_217', 'S13_219']
+not loading parses [NONE FOUND]
+Num dreamcoder tasks 47
+n supervised tasks 47
+Num dreamcoder TEST tasks 18
+n supervised TEST tasks 18
+Parsing S12_13_shaping_0 ...
+True
+S12_13_shaping_0
+getting parse...
+(CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None)))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_13_shaping_0.pickle
+Parsing S12_13_shaping_1 ...
+True
+S12_13_shaping_1
+getting parse...
+(CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) rep1))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_13_shaping_1.pickle
+Parsing S12_13_shaping_2 ...
+True
+S12_13_shaping_2
+getting parse...
+(CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) rep2))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_13_shaping_2.pickle
+Parsing S12_13_shaping_3 ...
+True
+S12_13_shaping_3
+getting parse...
+(CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) rep3))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_13_shaping_3.pickle
+Parsing S12_13_shaping_4 ...
+True
+S12_13_shaping_4
+getting parse...
+(CHUNK_INVENTION ((lambda (lambda (transform (reflect (repeat (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) $0 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None)) angle0)))) (Some trs) rep0 (transmat (Some scale7) (Some angle2) None None (Some trs))))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_13_shaping_4.pickle
+Parsing S12_13_shaping_5 ...
+True
+S12_13_shaping_5
+getting parse...
+(CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4)))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_13_shaping_5.pickle
+Parsing S12_13_shaping_6 ...
+True
+S12_13_shaping_6
+getting parse...
+(CHUNK_INVENTION ((lambda (transform (CHUNK_INVENTION ((lambda (lambda (transform (repeat $0 $1 ((lambda (transmat None None (Some $0) None None)) dist18)) ((lambda (transmat None None (Some $0) None None)) dist14)))) $0 line)) ((lambda (transmat None None (Some $0) None None)) dist4))) rep0))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_13_shaping_6.pickle
+Parsing S12_13_shaping_7 ...
+True
+S12_13_shaping_7
+getting parse...
+(CHUNK_INVENTION ((lambda (transform (CHUNK_INVENTION ((lambda (lambda (transform (repeat $0 $1 ((lambda (transmat None None (Some $0) None None)) dist18)) ((lambda (transmat None None (Some $0) None None)) dist14)))) $0 line)) ((lambda (transmat None None (Some $0) None None)) dist4))) rep1))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_13_shaping_7.pickle
+Parsing S12_13_shaping_8 ...
+True
+S12_13_shaping_8
+getting parse...
+(CHUNK_INVENTION ((lambda (transform (CHUNK_INVENTION ((lambda (lambda (transform (repeat $0 $1 ((lambda (transmat None None (Some $0) None None)) dist18)) ((lambda (transmat None None (Some $0) None None)) dist14)))) $0 line)) ((lambda (transmat None None (Some $0) None None)) dist4))) rep2))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_13_shaping_8.pickle
+Parsing S12_13_shaping_9 ...
+True
+S12_13_shaping_9
+getting parse...
+(CHUNK_INVENTION ((lambda (transform (CHUNK_INVENTION ((lambda (lambda (transform (repeat $0 $1 ((lambda (transmat None None (Some $0) None None)) dist18)) ((lambda (transmat None None (Some $0) None None)) dist14)))) $0 line)) ((lambda (transmat None None (Some $0) None None)) dist4))) rep3))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_13_shaping_9.pickle
+Parsing S12_13_shaping_10 ...
+True
+S12_13_shaping_10
+getting parse...
+(CHUNK_INVENTION (transform (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) ((lambda (transmat None None (Some $0) None None)) dist15)))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_13_shaping_10.pickle
+Parsing S12_1 ...
+True
+S12_1
+getting parse...
+(CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist14 $0 (reflect $1 angle0))))) (CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (lambda (transform (repeat $0 $1 ((lambda (transmat None None (Some $0) None None)) dist18)) ((lambda (transmat None None (Some $0) None None)) dist14)))) rep0 (connect (transform (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) (transmat None None None (Some dist9) $0)) circle))) (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) $1))))) rep1 (Some trs))) trs))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_1.pickle
+Parsing S12_5 ...
+True
+S12_5
+getting parse...
+(CHUNK_INVENTION ((lambda (CHUNK_INVENTION ((lambda (lambda (connect $0 (transform (CHUNK_INVENTION ((lambda (transform (CHUNK_INVENTION ((lambda (lambda (transform (repeat $0 $1 ((lambda (transmat None None (Some $0) None None)) dist18)) ((lambda (transmat None None (Some $0) None None)) dist14)))) $0 line)) ((lambda (transmat None None (Some $0) None None)) dist4))) rep0)) ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None))))) (Some trs) (reflect $0 angle0)))) (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist14 $0 (reflect $1 angle0))))) (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) rep1)) trs))))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_5.pickle
+Parsing S12_8 ...
+True
+S12_8
+getting parse...
+(CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist15 $1 $0)))) trs (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) rep1))))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_8.pickle
+Parsing S12_10 ...
+True
+S12_10
+getting parse...
+(CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (lambda (transform (repeat $0 $1 ((lambda (transmat None None (Some $0) None None)) dist18)) ((lambda (transmat None None (Some $0) None None)) dist14)))) rep0 (connect (transform (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) (transmat None None None (Some dist9) $0)) circle))) (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) $1))))) rep1 (Some trs)))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_10.pickle
+Parsing S12_32 ...
+True
+S12_32
+getting parse...
+(CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (lambda (transform (repeat $0 $1 ((lambda (transmat None None (Some $0) None None)) dist18)) ((lambda (transmat None None (Some $0) None None)) dist14)))) rep0 (connect (transform (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) (transmat None None None (Some dist9) $0)) circle))) (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) $1))))) rep2 (Some trs)))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_32.pickle
+Parsing S12_34 ...
+True
+S12_34
+getting parse...
+(CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) $0)) (reflect $1 angle0)))) (CHUNK_INVENTION ((lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist16 trs $0))) (CHUNK_INVENTION ((lambda (reflect (CHUNK_INVENTION ((lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist16 trs $0))) (CHUNK_INVENTION ((lambda (lambda (transform (reflect (repeat (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) $0 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None)) angle0)))) (Some trs) $0 ((lambda (transmat None None (Some $0) None None)) dist16))))) angle0)) rep0)))) rep2))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_34.pickle
+Parsing S12_38 ...
+True
+S12_38
+getting parse...
+(CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist15 $1 $0)))) trs (CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) $0)) (reflect $1 angle0)))) (CHUNK_INVENTION (repeat (CHUNK_INVENTION (transform (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) ((lambda (transmat None None (Some $0) None None)) dist15))) rep1 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some trs) None))) rep2))))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_38.pickle
+Parsing S12_20 ...
+True
+S12_20
+getting parse...
+(CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) rep1)) (repeat (reflect $0 angle0) rep1 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None))))) (Some trs) (CHUNK_INVENTION (repeat (CHUNK_INVENTION (transform (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) ((lambda (transmat None None (Some $0) None None)) dist15))) rep1 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some trs) None)))))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_20.pickle
+Parsing S12_39 ...
+True
+S12_39
+getting parse...
+(CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) $0)) (reflect $1 angle0)))) (CHUNK_INVENTION ((lambda (lambda (transform (reflect (repeat (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) $0 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None)) angle0)))) (Some trs) rep1 ((lambda (transmat None None (Some $0) None None)) dist15))) rep2))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_39.pickle
+Parsing S12_57 ...
+True
+S12_57
+getting parse...
+(CHUNK_INVENTION ((lambda (CHUNK_INVENTION ((lambda (lambda (connect $0 (transform (CHUNK_INVENTION ((lambda (transform (CHUNK_INVENTION ((lambda (lambda (transform (repeat $0 $1 ((lambda (transmat None None (Some $0) None None)) dist18)) ((lambda (transmat None None (Some $0) None None)) dist14)))) $0 line)) ((lambda (transmat None None (Some $0) None None)) dist4))) rep0)) ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None))))) (Some trs) (reflect $0 angle0)))) (CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (lambda (transform (repeat $0 $1 ((lambda (transmat None None (Some $0) None None)) dist18)) ((lambda (transmat None None (Some $0) None None)) dist14)))) rep0 (connect (transform (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) (transmat None None None (Some dist9) $0)) circle))) (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) $1))))) rep3 (Some trs)))))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_57.pickle
+Parsing S12_79 ...
+True
+S12_79
+getting parse...
+(CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) rep1)) (repeat (reflect $0 angle0) rep1 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None))))) (Some trs) (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist15 $1 $0)))) trs (CHUNK_INVENTION ((lambda (transform (CHUNK_INVENTION ((lambda (lambda (transform (repeat $0 $1 ((lambda (transmat None None (Some $0) None None)) dist18)) ((lambda (transmat None None (Some $0) None None)) dist14)))) $0 line)) ((lambda (transmat None None (Some $0) None None)) dist4))) rep0))))))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_79.pickle
+Parsing S12_113 ...
+True
+S12_113
+getting parse...
+(CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist16 trs $0))) (connect (CHUNK_INVENTION ((lambda (lambda (transform (reflect (repeat (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) $0 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None)) angle0)))) (Some trs) $1 ((lambda (transmat None None (Some $0) None None)) dist16))) $0))))) rep1 (CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (lambda (transform (repeat $0 $1 ((lambda (transmat None None (Some $0) None None)) dist18)) ((lambda (transmat None None (Some $0) None None)) dist14)))) rep0 (connect (transform (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) (transmat None None None (Some dist9) $0)) circle))) (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) $1))))) rep2 (Some trs)))))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_113.pickle
+Parsing S12_124 ...
+True
+S12_124
+getting parse...
+(connect (CHUNK_INVENTION ((lambda (CHUNK_INVENTION ((lambda (lambda (connect $0 (transform (CHUNK_INVENTION ((lambda (transform (CHUNK_INVENTION ((lambda (lambda (transform (repeat $0 $1 ((lambda (transmat None None (Some $0) None None)) dist18)) ((lambda (transmat None None (Some $0) None None)) dist14)))) $0 line)) ((lambda (transmat None None (Some $0) None None)) dist4))) rep0)) ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None))))) (Some trs) (reflect $0 angle0)))) (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist14 $0 (reflect $1 angle0))))) (CHUNK_INVENTION ((lambda (lambda (transform (reflect (repeat (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) $0 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None)) angle0)))) (Some trs) rep0 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some trs) (Some dist16)))) trs)))) (CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) $0)) (reflect $1 angle0)))) (CHUNK_INVENTION ((lambda (lambda (transform (reflect (repeat (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) $0 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None)) angle0)))) (Some trs) rep0 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some trs) (Some dist16)))) rep2)))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_124.pickle
+Parsing S12_126 ...
+True
+S12_126
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_126.pickle
+Parsing S12_133 ...
+True
+S12_133
+getting parse...
+(CHUNK_INVENTION ((lambda (CHUNK_INVENTION ((lambda (lambda (connect $0 (transform (CHUNK_INVENTION ((lambda (transform (CHUNK_INVENTION ((lambda (lambda (transform (repeat $0 $1 ((lambda (transmat None None (Some $0) None None)) dist18)) ((lambda (transmat None None (Some $0) None None)) dist14)))) $0 line)) ((lambda (transmat None None (Some $0) None None)) dist4))) rep0)) ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None))))) (Some trs) (reflect $0 angle0)))) (connect (transform (CHUNK_INVENTION ((lambda (reflect (CHUNK_INVENTION ((lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist16 trs $0))) (CHUNK_INVENTION ((lambda (lambda (transform (reflect (repeat (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) $0 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None)) angle0)))) (Some trs) $0 ((lambda (transmat None None (Some $0) None None)) dist16))))) angle0)) rep0)) ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some trs) None)) (CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (lambda (transform (repeat $0 $1 ((lambda (transmat None None (Some $0) None None)) dist18)) ((lambda (transmat None None (Some $0) None None)) dist14)))) rep0 (connect (transform (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) (transmat None None None (Some dist9) $0)) circle))) (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) $1))))) rep3 (Some trs))))))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_133.pickle
+Parsing S12_147 ...
+True
+S12_147
+getting parse...
+(CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) $0)) (reflect $1 angle0)))) (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist17 $1 $0)) rep3)))) trs (connect (CHUNK_INVENTION ((lambda (CHUNK_INVENTION ((lambda (lambda (connect $0 (transform (CHUNK_INVENTION ((lambda (transform (CHUNK_INVENTION ((lambda (lambda (transform (repeat $0 $1 ((lambda (transmat None None (Some $0) None None)) dist18)) ((lambda (transmat None None (Some $0) None None)) dist14)))) $0 line)) ((lambda (transmat None None (Some $0) None None)) dist4))) rep0)) ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None))))) (Some $0) (transform circle ((lambda (transmat None None (Some $0) None None)) dist17))))) trs)) (CHUNK_INVENTION ((lambda (transform (CHUNK_INVENTION ((lambda (lambda (transform (repeat $0 $1 ((lambda (transmat None None (Some $0) None None)) dist18)) ((lambda (transmat None None (Some $0) None None)) dist14)))) $0 line)) ((lambda (transmat None None (Some $0) None None)) dist4))) rep0)))))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_147.pickle
+Parsing S12_155 ...
+True
+S12_155
+getting parse...
+(connect (transform (reflect (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist15 $1 $0)))) trs (CHUNK_INVENTION (transform (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) ((lambda (transmat None None (Some $0) None None)) dist15))))) angle0) ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some trs) None)) (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) $0)) (reflect $1 angle0)))) (CHUNK_INVENTION ((lambda (lambda (transform (reflect (repeat (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) $0 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None)) angle0)))) $1 $0 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 (Some dist16)))) rep3)))) (Some trs) rep2)))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_155.pickle
+Parsing S12_163 ...
+True
+S12_163
+getting parse...
+(connect (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) $0)) (reflect $1 angle0)))) (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist17 $1 $0)) rep3)))) trs (CHUNK_INVENTION ((lambda (lambda (transform (reflect (repeat (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) $0 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None)) angle0)))) (Some trs) rep1 ((lambda (transmat None None (Some $0) None None)) dist17))))) (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist14 $0 (reflect $1 angle0))))) (CHUNK_INVENTION ((lambda (transform (CHUNK_INVENTION ((lambda (lambda (transform (repeat $0 $1 ((lambda (transmat None None (Some $0) None None)) dist18)) ((lambda (transmat None None (Some $0) None None)) dist14)))) $0 line)) ((lambda (transmat None None (Some $0) None None)) dist4))) rep0)) trs)))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_163.pickle
+Parsing S12_200 ...
+True
+S12_200
+getting parse...
+(CHUNK_INVENTION ((lambda (lambda (connect $0 (transform (CHUNK_INVENTION ((lambda (transform (CHUNK_INVENTION ((lambda (lambda (transform (repeat $0 $1 ((lambda (transmat None None (Some $0) None None)) dist18)) ((lambda (transmat None None (Some $0) None None)) dist14)))) $0 line)) ((lambda (transmat None None (Some $0) None None)) dist4))) rep0)) ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None))))) (Some trs) (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist17 trs (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) $0)) (reflect $1 angle0)))) (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist17 $1 $0)) rep3)))) trs (CHUNK_INVENTION ((lambda (reflect (CHUNK_INVENTION ((lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist16 trs $0))) (CHUNK_INVENTION ((lambda (lambda (transform (reflect (repeat (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) $0 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None)) angle0)))) (Some trs) $0 ((lambda (transmat None None (Some $0) None None)) dist16))))) angle0)) rep1))))))))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_200.pickle
+Parsing S12_214 ...
+True
+S12_214
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_214.pickle
+Parsing S12_31 ...
+True
+S12_31
+getting parse...
+(CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist14 $0 (reflect $1 angle0))))) (CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (lambda (transform (repeat $0 $1 ((lambda (transmat None None (Some $0) None None)) dist18)) ((lambda (transmat None None (Some $0) None None)) dist14)))) rep0 (connect (transform (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) (transmat None None None (Some dist9) $0)) circle))) (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) $1))))) rep2 (Some trs))) trs))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_31.pickle
+Parsing S12_52 ...
+True
+S12_52
+getting parse...
+(CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) $0)) (reflect $1 angle0)))) (CHUNK_INVENTION ((lambda (lambda (transform (reflect (repeat (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) $0 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None)) angle0)))) (Some trs) rep2 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some trs) (Some dist17)))) rep3))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_52.pickle
+Parsing S12_55 ...
+True
+S12_55
+getting parse...
+(CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) $0)) (reflect $1 angle0)))) (CHUNK_INVENTION ((lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist16 trs $0))) (reflect (transform (CHUNK_INVENTION ((lambda (reflect (CHUNK_INVENTION ((lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist16 trs $0))) (CHUNK_INVENTION ((lambda (lambda (transform (reflect (repeat (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) $0 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None)) angle0)))) (Some trs) $0 ((lambda (transmat None None (Some $0) None None)) dist16))))) angle0)) rep0)) ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some trs) None)) angle0))) rep3))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_55.pickle
+Parsing S12_70 ...
+True
+S12_70
+getting parse...
+(CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) $0)) (reflect $1 angle0)))) (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist17 $1 $0)) rep3)))) trs (CHUNK_INVENTION ((lambda (lambda (transform (reflect (repeat (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) $0 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None)) angle0)))) (Some trs) rep1 ((lambda (transmat None None (Some $0) None None)) dist17)))))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_70.pickle
+Parsing S12_129 ...
+True
+S12_129
+getting parse...
+(CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist14 $0 (reflect $1 angle0))))) (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist14 $0 (reflect $1 angle0))))) (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) $0)) (reflect $1 angle0)))) (CHUNK_INVENTION ((lambda (lambda (transform (reflect (repeat (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) $0 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None)) angle0)))) $1 $0 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 (Some dist16)))) rep3)))) (Some trs) rep1)) trs)) trs))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_129.pickle
+Parsing S12_139 ...
+True
+S12_139
+getting parse...
+(CHUNK_INVENTION ((lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist16 trs $0))) (connect (CHUNK_INVENTION ((lambda (CHUNK_INVENTION ((lambda (lambda (connect $0 (transform (CHUNK_INVENTION ((lambda (transform (CHUNK_INVENTION ((lambda (lambda (transform (repeat $0 $1 ((lambda (transmat None None (Some $0) None None)) dist18)) ((lambda (transmat None None (Some $0) None None)) dist14)))) $0 line)) ((lambda (transmat None None (Some $0) None None)) dist4))) rep0)) ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None))))) (Some trs) (reflect $0 angle0)))) (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist14 $0 (reflect $1 angle0))))) (transform circle ((lambda (transmat None None (Some $0) None None)) dist16)) trs)))) (CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (lambda (transform (repeat $0 $1 ((lambda (transmat None None (Some $0) None None)) dist18)) ((lambda (transmat None None (Some $0) None None)) dist14)))) rep0 (connect (transform (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) (transmat None None None (Some dist9) $0)) circle))) (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) $1))))) rep3 (Some trs))))))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_139.pickle
+Parsing S12_141 ...
+True
+S12_141
+getting parse...
+(CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) $0)) (reflect $1 angle0)))) (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist17 $1 $0)) rep3)))) trs (CHUNK_INVENTION ((lambda (CHUNK_INVENTION ((lambda (lambda (connect $0 (transform (CHUNK_INVENTION ((lambda (transform (CHUNK_INVENTION ((lambda (lambda (transform (repeat $0 $1 ((lambda (transmat None None (Some $0) None None)) dist18)) ((lambda (transmat None None (Some $0) None None)) dist14)))) $0 line)) ((lambda (transmat None None (Some $0) None None)) dist4))) rep0)) ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None))))) (Some trs) (reflect $0 angle0)))) (CHUNK_INVENTION ((lambda (CHUNK_INVENTION ((lambda (lambda (connect $0 (transform (CHUNK_INVENTION ((lambda (transform (CHUNK_INVENTION ((lambda (lambda (transform (repeat $0 $1 ((lambda (transmat None None (Some $0) None None)) dist18)) ((lambda (transmat None None (Some $0) None None)) dist14)))) $0 line)) ((lambda (transmat None None (Some $0) None None)) dist4))) rep0)) ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None))))) (Some $0) (transform circle ((lambda (transmat None None (Some $0) None None)) dist17))))) trs))))))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_141.pickle
+Parsing S12_148 ...
+True
+S12_148
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_148.pickle
+Parsing S12_207 ...
+True
+S12_207
+getting parse...
+(CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) $0)) (reflect $1 angle0)))) (transform (CHUNK_INVENTION ((lambda (CHUNK_INVENTION ((lambda (lambda (connect $0 (transform (CHUNK_INVENTION ((lambda (transform (CHUNK_INVENTION ((lambda (lambda (transform (repeat $0 $1 ((lambda (transmat None None (Some $0) None None)) dist18)) ((lambda (transmat None None (Some $0) None None)) dist14)))) $0 line)) ((lambda (transmat None None (Some $0) None None)) dist4))) rep0)) ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None))))) (Some trs) (reflect $0 angle0)))) (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist16 trs $0))) (connect (CHUNK_INVENTION ((lambda (lambda (transform (reflect (repeat (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) $0 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None)) angle0)))) (Some trs) $1 ((lambda (transmat None None (Some $0) None None)) dist16))) $0))))) rep1 (CHUNK_INVENTION ((lambda (lambda (transform (reflect (repeat (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) $0 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None)) angle0)))) (Some trs) rep0 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some trs) (Some dist15)))))))) ((lambda (transmat None None (Some $0) None None)) dist18)) rep3))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_207.pickle
+Parsing S12_222 ...
+True
+S12_222
+getting parse...
+(connect (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist14 $0 (reflect $1 angle0))))) (CHUNK_INVENTION ((lambda (CHUNK_INVENTION ((lambda (lambda (connect $0 (transform (CHUNK_INVENTION ((lambda (transform (CHUNK_INVENTION ((lambda (lambda (transform (repeat $0 $1 ((lambda (transmat None None (Some $0) None None)) dist18)) ((lambda (transmat None None (Some $0) None None)) dist14)))) $0 line)) ((lambda (transmat None None (Some $0) None None)) dist4))) rep0)) ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None))))) (Some trs) (reflect $0 angle0)))) (connect (CHUNK_INVENTION ((lambda (lambda (transform (reflect (repeat (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) $0 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None)) angle0)))) (Some trs) rep0 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some trs) (Some dist17)))) (CHUNK_INVENTION ((lambda (transform (CHUNK_INVENTION ((lambda (lambda (transform (repeat $0 $1 ((lambda (transmat None None (Some $0) None None)) dist18)) ((lambda (transmat None None (Some $0) None None)) dist14)))) $0 line)) ((lambda (transmat None None (Some $0) None None)) dist4))) rep0))))) trs)) (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) $0)) (reflect $1 angle0)))) (CHUNK_INVENTION ((lambda (lambda (transform (reflect (repeat (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) $0 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None)) angle0)))) $1 $0 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 (Some dist16)))) rep3)))) (Some trs) rep0)))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_222.pickle
+Parsing S12_224 ...
+True
+S12_224
+getting parse...
+(CHUNK_INVENTION ((lambda (lambda (connect $0 (transform (CHUNK_INVENTION ((lambda (transform (CHUNK_INVENTION ((lambda (lambda (transform (repeat $0 $1 ((lambda (transmat None None (Some $0) None None)) dist18)) ((lambda (transmat None None (Some $0) None None)) dist14)))) $0 line)) ((lambda (transmat None None (Some $0) None None)) dist4))) rep0)) ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None))))) (Some trs) (CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) $0)) (reflect $1 angle0)))) (connect (CHUNK_INVENTION ((lambda (transform (CHUNK_INVENTION ((lambda (lambda (transform (repeat $0 $1 ((lambda (transmat None None (Some $0) None None)) dist18)) ((lambda (transmat None None (Some $0) None None)) dist14)))) $0 line)) ((lambda (transmat None None (Some $0) None None)) dist4))) rep0)) (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist16 trs $0))) (connect (CHUNK_INVENTION ((lambda (lambda (transform (reflect (repeat (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) $0 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None)) angle0)))) (Some trs) $1 ((lambda (transmat None None (Some $0) None None)) dist16))) $0))))) rep1 (CHUNK_INVENTION ((lambda (CHUNK_INVENTION ((lambda (lambda (connect $0 (transform (CHUNK_INVENTION ((lambda (transform (CHUNK_INVENTION ((lambda (lambda (transform (repeat $0 $1 ((lambda (transmat None None (Some $0) None None)) dist18)) ((lambda (transmat None None (Some $0) None None)) dist14)))) $0 line)) ((lambda (transmat None None (Some $0) None None)) dist4))) rep0)) ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None))))) (Some $0) (transform circle ((lambda (transmat None None (Some $0) None None)) dist17))))) trs))))) rep3))))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_224.pickle
+Parsing S12_229 ...
+True
+S12_229
+SKIPPING - S12_229 - since CRASHES...
+Parsing S12_233 ...
+True
+S12_233
+getting parse...
+(CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) $0)) (reflect $1 angle0)))) (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist17 $1 $0)) rep3)))) trs (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist14 $0 (reflect $1 angle0))))) (transform (reflect (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist17 trs (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist14 $0 (reflect $1 angle0))))) (CHUNK_INVENTION ((lambda (lambda (transform (reflect (repeat (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) $0 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None)) angle0)))) (Some trs) rep2 ((lambda (transmat None None (Some $0) None None)) dist16))) trs)))) angle0) ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some trs) None)) trs))))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_233.pickle
+Parsing S12_235 ...
+True
+S12_235
+SKIPPING - S12_235 - since CRASHES...
+Parsing S12_243 ...
+True
+S12_243
+SKIPPING - S12_243 - since CRASHES...
+Parsing S12_246 ...
+True
+S12_246
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_246.pickle
+Parsing S12_13_test_1 ...
+True
+S12_13_test_1
+SKIPPING - S12_13_test_1 - since CRASHES...
+Parsing S12_13_test_2 ...
+True
+S12_13_test_2
+getting parse...
+(CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist14 $0 (reflect $1 angle0))))) (connect (CHUNK_INVENTION (transform (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) ((lambda (transmat None None (Some $0) None None)) dist15))) (CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) $0)) (reflect $1 angle0)))) (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist14 $0 (reflect $1 angle0))))) (connect (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist15 $1 $0)))) trs (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) $0)) (reflect $1 angle0)))) (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist17 $1 $0)) rep3)))) trs (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) $0)) (reflect $1 angle0)))) (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist17 $1 $0)) rep3)))) trs (CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (lambda (transform (repeat $0 $1 ((lambda (transmat None None (Some $0) None None)) dist18)) ((lambda (transmat None None (Some $0) None None)) dist14)))) rep0 (connect (transform (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) (transmat None None None (Some dist9) $0)) circle))) (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) $1))))) rep1 (Some trs))))))))) (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) $0)) (reflect $1 angle0)))) (CHUNK_INVENTION ((lambda (lambda (transform (reflect (repeat (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) $0 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None)) angle0)))) $1 $0 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 (Some dist16)))) rep3)))) (Some trs) rep2))) trs)) rep1))) trs))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_13_test_2.pickle
+Parsing S12_13_test_4 ...
+True
+S12_13_test_4
+getting parse...
+(CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) $0)) (reflect $1 angle0)))) (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist17 $1 $0)) rep3)))) trs (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist15 $1 $0)))) trs (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) $0)) (reflect $1 angle0)))) (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist17 $1 $0)) rep3)))) trs (CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) rep1)) (repeat (reflect $0 angle0) rep1 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None))))) (Some trs) (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist15 $1 $0)))) trs line))))))))))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_13_test_4.pickle
+Parsing S12_13_test_5 ...
+True
+S12_13_test_5
+getting parse...
+(CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist14 $0 (reflect $1 angle0))))) (CHUNK_INVENTION ((lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist16 trs $0))) (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist14 $0 (reflect $1 angle0))))) (connect (CHUNK_INVENTION ((lambda (CHUNK_INVENTION ((lambda (lambda (connect $0 (transform (CHUNK_INVENTION ((lambda (transform (CHUNK_INVENTION ((lambda (lambda (transform (repeat $0 $1 ((lambda (transmat None None (Some $0) None None)) dist18)) ((lambda (transmat None None (Some $0) None None)) dist14)))) $0 line)) ((lambda (transmat None None (Some $0) None None)) dist4))) rep0)) ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None))))) (Some trs) (reflect $0 angle0)))) (CHUNK_INVENTION ((lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist16 trs $0))) (CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) rep1)) (repeat (reflect $0 angle0) rep1 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None))))) (Some trs) (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist14 $0 (reflect $1 angle0))))) (CHUNK_INVENTION (transform (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) ((lambda (transmat None None (Some $0) None None)) dist15))) trs)))))))) (CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (lambda (transform (repeat $0 $1 ((lambda (transmat None None (Some $0) None None)) dist18)) ((lambda (transmat None None (Some $0) None None)) dist14)))) rep0 (connect (transform (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) (transmat None None None (Some dist9) $0)) circle))) (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) $1))))) rep3 (Some trs)))) trs)))) trs))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_13_test_5.pickle
+Parsing S12_13_test_6 ...
+True
+S12_13_test_6
+getting parse...
+(connect (transform (CHUNK_INVENTION ((lambda (reflect (CHUNK_INVENTION ((lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist16 trs $0))) (CHUNK_INVENTION ((lambda (lambda (transform (reflect (repeat (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) $0 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None)) angle0)))) (Some trs) $0 ((lambda (transmat None None (Some $0) None None)) dist16))))) angle0)) rep0)) ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some trs) None)) (CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) $0)) (reflect $1 angle0)))) (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist14 $0 (reflect $1 angle0))))) (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist14 $0 (reflect $1 angle0))))) (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist14 $0 (reflect $1 angle0))))) (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) $0)) (reflect $1 angle0)))) (CHUNK_INVENTION ((lambda (lambda (transform (reflect (repeat (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) $0 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None)) angle0)))) $1 $0 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 (Some dist16)))) rep3)))) (Some trs) rep0)) trs)) trs)) trs)) rep3)))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_13_test_6.pickle
+Parsing S12_13_test_7 ...
+True
+S12_13_test_7
+getting parse...
+(CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist15 $1 $0)))) trs (CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) $0)) (reflect $1 angle0)))) (CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) rep1)) (repeat (reflect $0 angle0) rep1 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None))))) (Some trs) (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist15 $1 $0)))) trs line)))) rep3))))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_13_test_7.pickle
+Parsing S12_13_test_8 ...
+True
+S12_13_test_8
+getting parse...
+(CHUNK_INVENTION ((lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist16 trs $0))) (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist14 $0 (reflect $1 angle0))))) (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist14 $0 (reflect $1 angle0))))) (CHUNK_INVENTION ((lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist16 trs $0))) (connect (CHUNK_INVENTION ((lambda (CHUNK_INVENTION ((lambda (lambda (connect $0 (transform (CHUNK_INVENTION ((lambda (transform (CHUNK_INVENTION ((lambda (lambda (transform (repeat $0 $1 ((lambda (transmat None None (Some $0) None None)) dist18)) ((lambda (transmat None None (Some $0) None None)) dist14)))) $0 line)) ((lambda (transmat None None (Some $0) None None)) dist4))) rep0)) ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None))))) (Some trs) (reflect $0 angle0)))) (CHUNK_INVENTION ((lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist16 trs $0))) (CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) rep1)) (repeat (reflect $0 angle0) rep1 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None))))) (Some trs) (CHUNK_INVENTION ((lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist16 trs $0))) (CHUNK_INVENTION (transform (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) ((lambda (transmat None None (Some $0) None None)) dist15))))))))))) (CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (lambda (transform (repeat $0 $1 ((lambda (transmat None None (Some $0) None None)) dist18)) ((lambda (transmat None None (Some $0) None None)) dist14)))) rep0 (connect (transform (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) (transmat None None None (Some dist9) $0)) circle))) (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) $1))))) rep3 (Some trs)))))) trs)) trs))))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_13_test_8.pickle
+Parsing S12_13_test_9 ...
+True
+S12_13_test_9
+getting parse...
+(connect (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist15 $1 $0)))) trs (CHUNK_INVENTION ((lambda (CHUNK_INVENTION ((lambda (lambda (connect $0 (transform (CHUNK_INVENTION ((lambda (transform (CHUNK_INVENTION ((lambda (lambda (transform (repeat $0 $1 ((lambda (transmat None None (Some $0) None None)) dist18)) ((lambda (transmat None None (Some $0) None None)) dist14)))) $0 line)) ((lambda (transmat None None (Some $0) None None)) dist4))) rep0)) ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None))))) (Some $0) (transform circle ((lambda (transmat None None (Some $0) None None)) dist17))))) trs)))) (CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) $0)) (reflect $1 angle0)))) (CHUNK_INVENTION ((lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist16 trs $0))) (CHUNK_INVENTION (repeat (CHUNK_INVENTION (transform (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) ((lambda (transmat None None (Some $0) None None)) dist15))) rep1 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some trs) None))))) rep3)))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_13_test_9.pickle
+Parsing S12_13_test_10 ...
+True
+S12_13_test_10
+getting parse...
+(CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist14 $0 (reflect $1 angle0))))) (connect (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist15 $1 $0)))) trs (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist14 $0 (reflect $1 angle0))))) (CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) rep1)) (repeat (reflect $0 angle0) rep1 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None))))) (Some trs) (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist15 $1 $0)))) trs (CHUNK_INVENTION (transform (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) ((lambda (transmat None None (Some $0) None None)) dist15))))))) trs)))) (CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) $0)) (reflect $1 angle0)))) (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist14 $0 (reflect $1 angle0))))) (CHUNK_INVENTION ((lambda (transform (CHUNK_INVENTION ((lambda (lambda (transform (repeat $0 $1 ((lambda (transmat None None (Some $0) None None)) dist18)) ((lambda (transmat None None (Some $0) None None)) dist14)))) $0 line)) ((lambda (transmat None None (Some $0) None None)) dist4))) rep1)) trs)) rep3))) trs))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_13_test_10.pickle
+Parsing S12_13_test_11 ...
+True
+S12_13_test_11
+getting parse...
+(CHUNK_INVENTION ((lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist16 trs $0))) (reflect (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist15 $1 $0)))) trs (CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) $0)) (reflect $1 angle0)))) (transform circle ((lambda (transmat None None (Some $0) None None)) dist16)) rep3)))) angle0)))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_13_test_11.pickle
+Parsing S12_13_test_12 ...
+True
+S12_13_test_12
+getting parse...
+(CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist15 $1 $0)))) trs (CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) $0)) (reflect $1 angle0)))) (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist15 $1 $0)))) trs (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) $0)) (reflect $1 angle0)))) (CHUNK_INVENTION ((lambda (lambda (transform (reflect (repeat (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) $0 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None)) angle0)))) $1 $0 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 (Some dist16)))) rep3)))) (Some trs) rep0)))) rep2))))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_13_test_12.pickle
+Parsing S12_132 ...
+True
+S12_132
+getting parse...
+(CHUNK_INVENTION ((lambda (CHUNK_INVENTION ((lambda (lambda (connect $0 (transform (CHUNK_INVENTION ((lambda (transform (CHUNK_INVENTION ((lambda (lambda (transform (repeat $0 $1 ((lambda (transmat None None (Some $0) None None)) dist18)) ((lambda (transmat None None (Some $0) None None)) dist14)))) $0 line)) ((lambda (transmat None None (Some $0) None None)) dist4))) rep0)) ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None))))) (Some trs) (reflect $0 angle0)))) (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist15 $1 $0)))) trs (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist14 $0 (reflect $1 angle0))))) (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist15 $1 $0)))) trs (CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) $0)) (reflect $1 angle0)))) (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist15 $1 $0)))) trs (CHUNK_INVENTION ((lambda (transform (CHUNK_INVENTION ((lambda (lambda (transform (repeat $0 $1 ((lambda (transmat None None (Some $0) None None)) dist18)) ((lambda (transmat None None (Some $0) None None)) dist14)))) $0 line)) ((lambda (transmat None None (Some $0) None None)) dist4))) rep1)))) rep3)))) trs))))))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_132.pickle
+Parsing S12_201 ...
+True
+S12_201
+getting parse...
+(CHUNK_INVENTION ((lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist16 trs $0))) (connect (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) (CHUNK_INVENTION ((lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist16 trs $0))) (connect (CHUNK_INVENTION ((lambda (lambda (transform (reflect (repeat (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) $0 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None)) angle0)))) (Some trs) rep2 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some trs) (Some dist17)))) (CHUNK_INVENTION ((lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist16 trs $0))) (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist14 $0 (reflect $1 angle0))))) (CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) $0)) (reflect $1 angle0)))) line rep3)) trs))))))))))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_201.pickle
+Parsing S12_220 ...
+True
+S12_220
+getting parse...
+(CHUNK_INVENTION ((lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist16 trs $0))) (connect (CHUNK_INVENTION ((lambda (CHUNK_INVENTION ((lambda (lambda (connect $0 (transform (CHUNK_INVENTION ((lambda (transform (CHUNK_INVENTION ((lambda (lambda (transform (repeat $0 $1 ((lambda (transmat None None (Some $0) None None)) dist18)) ((lambda (transmat None None (Some $0) None None)) dist14)))) $0 line)) ((lambda (transmat None None (Some $0) None None)) dist4))) rep0)) ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None))))) (Some trs) (reflect $0 angle0)))) (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist14 $0 (reflect $1 angle0))))) (CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) rep1)) (repeat (reflect $0 angle0) rep1 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None))))) (Some trs) (CHUNK_INVENTION (repeat (CHUNK_INVENTION (transform (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) ((lambda (transmat None None (Some $0) None None)) dist15))) rep1 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some trs) None))))) trs)))) (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) $0)) (reflect $1 angle0)))) (CHUNK_INVENTION ((lambda (lambda (transform (reflect (repeat (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) $0 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None)) angle0)))) $1 $0 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 (Some dist16)))) rep3)))) (Some trs) rep0)))))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_220.pickle
+Parsing S12_247 ...
+True
+S12_247
+getting parse...
+(CHUNK_INVENTION ((lambda (CHUNK_INVENTION ((lambda (lambda (connect $0 (transform (CHUNK_INVENTION ((lambda (transform (CHUNK_INVENTION ((lambda (lambda (transform (repeat $0 $1 ((lambda (transmat None None (Some $0) None None)) dist18)) ((lambda (transmat None None (Some $0) None None)) dist14)))) $0 line)) ((lambda (transmat None None (Some $0) None None)) dist4))) rep0)) ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None))))) (Some trs) (reflect $0 angle0)))) (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist15 $1 $0)))) trs (CHUNK_INVENTION ((lambda (CHUNK_INVENTION ((lambda (lambda (connect $0 (transform (CHUNK_INVENTION ((lambda (transform (CHUNK_INVENTION ((lambda (lambda (transform (repeat $0 $1 ((lambda (transmat None None (Some $0) None None)) dist18)) ((lambda (transmat None None (Some $0) None None)) dist14)))) $0 line)) ((lambda (transmat None None (Some $0) None None)) dist4))) rep0)) ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None))))) (Some trs) (reflect $0 angle0)))) (connect (CHUNK_INVENTION ((lambda (transform (CHUNK_INVENTION ((lambda (lambda (transform (repeat $0 $1 ((lambda (transmat None None (Some $0) None None)) dist18)) ((lambda (transmat None None (Some $0) None None)) dist14)))) $0 line)) ((lambda (transmat None None (Some $0) None None)) dist4))) rep2)) (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) $0)) (reflect $1 angle0)))) (CHUNK_INVENTION ((lambda (lambda (transform (reflect (repeat (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) $0 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None)) angle0)))) $1 $0 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 (Some dist16)))) rep3)))) (Some trs) rep2)))))))))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S12_247.pickle
+Parsing S13_182 ...
+True
+S13_182
+getting parse...
+(connect (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist15 $1 $0)))) trs (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))))) (CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) $0)) (reflect $1 angle0)))) (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist16 trs $0))) (connect (CHUNK_INVENTION ((lambda (lambda (transform (reflect (repeat (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) $0 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None)) angle0)))) (Some trs) $1 ((lambda (transmat None None (Some $0) None None)) dist16))) $0))))) rep0 (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist14 $0 (reflect $1 angle0))))) (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist15 $1 $0)))) trs (CHUNK_INVENTION ((lambda (CHUNK_INVENTION ((lambda (lambda (connect $0 (transform (CHUNK_INVENTION ((lambda (transform (CHUNK_INVENTION ((lambda (lambda (transform (repeat $0 $1 ((lambda (transmat None None (Some $0) None None)) dist18)) ((lambda (transmat None None (Some $0) None None)) dist14)))) $0 line)) ((lambda (transmat None None (Some $0) None None)) dist4))) rep0)) ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None))))) (Some $0) (transform circle ((lambda (transmat None None (Some $0) None None)) dist17))))) trs)))) trs)))) rep3)))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S13_182.pickle
+Parsing S13_217 ...
+True
+S13_217
+getting parse...
+(CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist14 $0 (reflect $1 angle0))))) (connect (transform circle ((lambda (transmat None None (Some $0) None None)) dist16)) (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) $0)) (reflect $1 angle0)))) (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist17 $1 $0)) rep3)))) trs (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist14 $0 (reflect $1 angle0))))) (CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) rep1)) (repeat (reflect $0 angle0) rep1 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None))))) (Some trs) (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist14 $0 (reflect $1 angle0))))) (CHUNK_INVENTION (transform (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) ((lambda (transmat None None (Some $0) None None)) dist15))) trs)))) trs))))) trs))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S13_217.pickle
+Parsing S13_219 ...
+True
+S13_219
+getting parse...
+(CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist14 $0 (reflect $1 angle0))))) (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist14 $0 (reflect $1 angle0))))) (connect (CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) rep1)) (repeat (reflect $0 angle0) rep1 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None))))) (Some trs) (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (transform circle ((lambda (lambda (transmat None None $0 (Some dist9) $1))) (Some $0) (Some $1)))))) dist14 $0 (reflect $1 angle0))))) (CHUNK_INVENTION (transform (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) ((lambda (transmat None None (Some $0) None None)) dist15))) trs)))) (CHUNK_INVENTION ((lambda (lambda (CHUNK_INVENTION ((lambda (lambda (connect (CHUNK_INVENTION ((lambda (repeat (CHUNK_INVENTION (transform line (transmat (Some scale7) (Some angle2) (Some dist14) (Some dist1) None))) $0 ((lambda (transmat None None (Some $0) None None)) dist18))) $0)) (reflect $1 angle0)))) (CHUNK_INVENTION ((lambda (lambda (transform (reflect (repeat (CHUNK_INVENTION (transform line ((lambda (transmat None None (Some $0) None None)) dist4))) $0 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 None)) angle0)))) $1 $0 ((lambda (lambda (transmat None None $0 (Some dist9) $1))) $1 (Some dist16)))) rep3)))) (Some trs) rep0))) trs)) trs))
+saved to :experimentOutputs/draw/2019-11-10T22:47:09.031267/parsesflat_S13_219.pickle
+GETTING DATFLAT (computing and then saving
+GGGGdd
+GGGGeee
+DRAW TASK training set: S12
+DO SHAPING: False
+training task names:
+['S12_13_shaping_0', 'S12_13_shaping_1', 'S12_13_shaping_2', 'S12_13_shaping_3', 'S12_13_shaping_4', 'S12_13_shaping_5', 'S12_13_shaping_6', 'S12_13_shaping_7', 'S12_13_shaping_8', 'S12_13_shaping_9', 'S12_13_shaping_10', 'S12_1', 'S12_5', 'S12_8', 'S12_10', 'S12_32', 'S12_34', 'S12_38', 'S12_20', 'S12_39', 'S12_57', 'S12_79', 'S12_113', 'S12_124', 'S12_126', 'S12_133', 'S12_147', 'S12_155', 'S12_163', 'S12_200', 'S12_214', 'S12_31', 'S12_52', 'S12_55', 'S12_70', 'S12_129', 'S12_139', 'S12_141', 'S12_148', 'S12_207', 'S12_222', 'S12_224', 'S12_229', 'S12_233', 'S12_235', 'S12_243', 'S12_246']
+test tasks:
+['S12_13_test_1', 'S12_13_test_2', 'S12_13_test_4', 'S12_13_test_5', 'S12_13_test_6', 'S12_13_test_7', 'S12_13_test_8', 'S12_13_test_9', 'S12_13_test_10', 'S12_13_test_11', 'S12_13_test_12', 'S12_132', 'S12_201', 'S12_220', 'S12_247', 'S13_182', 'S13_217', 'S13_219']
+FOUND 65 pre-computed parses!
+Num dreamcoder tasks 47
+n supervised tasks 47
+Num dreamcoder TEST tasks 18
+n supervised TEST tasks 18
+Traceback (most recent call last):
+  File "/om/user/lyt/ec/analysis/utils.py", line 323, in loadBehavior
+    with open(fname, "rb") as f:
+FileNotFoundError: [Errno 2] No such file or directory: '../TENENBAUM/drawgood/experiments/data/datall_2.4.pickle'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "analysis/parse.py", line 262, in <module>
+    DAT = loadCheckpoint(trainset=experiment, loadparse=True, suppressPrint=True)
+  File "/om/user/lyt/ec/analysis/utils.py", line 258, in loadCheckpoint
+    loadBehavior(DAT)
+  File "/om/user/lyt/ec/analysis/utils.py", line 328, in loadBehavior
+    with open(fname, "rb") as f:
+FileNotFoundError: [Errno 2] No such file or directory: '/home/lucast4/drawgood/experiments/data/datall_2.4.pickle'
