@@ -24,3 +24,8 @@ sbatch -e towersRNN${salt}.out -o towersRNN${salt}.out execute_gpu_new.sh python
 #omitted --resumeTraining for this run
 
 #experimentOutputs/towers/2020-04-09T09:43:51.288294/tower_aic=1.0_arity=3_BO=False_CO=False_ES=1_ET=2_HR=0.5_it=2_MF=5_noCons=True_pc=10_RS=1000_RT=3600_resTrain=False_RR=False_RW=False_SRVE=False_sTr=False_solver=python_STM=True_L=1_TRR=default_K=2_topkNotMAP=False_useVal=TowerREPL_graph=True.pickle
+
+# sketch (lambda (tower_loopM 5 (lambda (lambda (tower_loopM 7 (lambda (lambda (tower_loopM 6 (lambda (lambda (tower_embed (lambd│········
+#      a (tower_embed (lambda $0) $0)) (reverseHand $0)))) (tower_embed (lambda (tower_loopM 5 (lambda (lambda $0)) $0)) (tower_loopM │········
+#      7 (lambda (lambda $0)) $0))))) $0))) (tower_loopM <HOLE> (lambda (lambda (1x3 <HOLE>))) <HOLE>)))                              │········
+#  206 maximum recursion depth exceeded                                                               
