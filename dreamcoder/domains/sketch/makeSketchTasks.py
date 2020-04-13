@@ -113,7 +113,10 @@ class SupervisedSketch(Task):
                 return NEGATIVEINFINITY
 
         # trace = e.evaluate([])(_empty_sketch)(SketchState(hand=HANDSTARTPOS, history=[]))[1]
-        trace = executeSketch(e, timeout=0.05)[1] # identical to above.
+        try:
+            trace = executeSketch(e, timeout=0.05)[1] # identical to above.
+        except RunWithTimeout:
+            return NEGATIVEINFINITY
 
         if set(self.trace)==set(trace):
             return 0.0

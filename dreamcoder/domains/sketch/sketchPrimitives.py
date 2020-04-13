@@ -1,5 +1,5 @@
 from dreamcoder.program import *
-
+from dreamcoder.utilities import *
 
 """NOTE: in lambda calculus represented as sequence from left to right, e.g., (lambda (l 2 (C (d 1 $0))) means
 go left 2, then circle then down 1. This is represented as a binary tree starting from top-left to bottom right.
@@ -205,9 +205,14 @@ def executeSketch(p, timeout=None):
     to start with. think of this as: stuff to the left defines a function that goes from 
     sketch to sketch, so it needs one arguemnt (a sketch)."""
     # go from program object to action sequence and plan
-    return runWithTimeout(lambda : p.evaluate([])(_empty_sketch)(SketchState(history=[])), 
-        timeout=timeout)
-
+    try:
+        return runWithTimeout(lambda : p.evaluate([])(_empty_sketch)(SketchState(history=[])), 
+            timeout=timeout)
+    except RunWithTimeout:
+        raise RunWithTimeout()
+    except:
+        print("this program causes exceptions",p)
+        assert False
 
 def renderPlan(sketch, plot_on=False):
     """go from plan (e.g, ((0,0), circle)...) to rendering (pixels)"""
