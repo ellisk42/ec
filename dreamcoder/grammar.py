@@ -454,19 +454,23 @@ class Grammar(object):
 
     def enumeration(self,context,environment,request,upperBound,
                     maximumDepth=20,
-                    lowerBound=0., usedPrims={}):
+                    lowerBound=0.,
+                    uniquePrims=False,
+                    usedPrims=[]):
         '''Enumerates all programs whose MDL satisfies: lowerBound <= MDL < upperBound'''
         if upperBound < 0 or maximumDepth == 1:
             return
 
         if request.isArrow():
             v = request.arguments[0]
-            for l, newContext, b in self.enumeration(context, [v] + environment,
+            for l, newContext, b, newUsedPrims in self.enumeration(context, [v] + environment,
                                                      request.arguments[1],
                                                      upperBound=upperBound,
                                                      lowerBound=lowerBound,
-                                                     maximumDepth=maximumDepth):
-                yield l, newContext, Abstraction(b)
+                                                     maximumDepth=maximumDepth,
+                                                     uniquePrims=uniquePrims,
+                                                     usedPrims=usedPrims):
+                yield l, newContext, Abstraction(b), newUsedPrims
 
         else:
             candidates = self.buildCandidates(request, context, environment,
@@ -478,12 +482,14 @@ class Grammar(object):
                     continue
 
                 xs = t.functionArguments()
-                for aL, aK, application in\
+                for aL, aK, application, newUsedPrims in\
                     self.enumerateApplication(newContext, environment, p, xs,
                                               upperBound=upperBound + l,
                                               lowerBound=lowerBound + l,
-                                              maximumDepth=maximumDepth - 1):
-                    yield aL + l, aK, application
+                                              maximumDepth=maximumDepth - 1,
+                                              uniquePrims=uniquePrims,
+                                              usedPrims=usedPrims):
+                    yield aL + l, aK, application, newUsedPrims
 
     def enumerateApplication(self, context, environment,
                              function, argumentRequests,
@@ -495,7 +501,9 @@ class Grammar(object):
                              lowerBound=0.,
                              maximumDepth=20,
                              originalFunction=None,
-                             argumentIndex=0, usedPrims={}):
+                             argumentIndex=0,
+                             uniquePrims=False,
+                             usedPrims=[]):
         if upperBound < 0. or maximumDepth == 1:
             return
         if originalFunction is None:
@@ -503,28 +511,45 @@ class Grammar(object):
 
         if argumentRequests == []:
             if lowerBound <= 0. and 0. < upperBound:
-                yield 0., context, function
+                if uniquePrims:
+                    from scanPrimitives import tRHSToken, tLHSToken
+                    if function.isPrimitive and function.tp in [tRHSToken, tLHSToken]:
+                        #print("HIT IT", function, usedPrims)
+                        if function not in usedPrims:
+                            #print("HIT IT", function, usedPrims)
+                            yield 0., context, function, usedPrims + [function]
+                            #else, do nothing
+                        #else:
+                            #print("DDDDDDDDDDDDHIT IT", function, usedPrims)
+                    else:
+                        yield 0., context, function, usedPrims
+                else:
+                    yield 0., context, function, usedPrims
             else:
                 return
         else:
             argRequest = argumentRequests[0].apply(context)
             laterRequests = argumentRequests[1:]
-            for argL, newContext, arg in self.enumeration(context, environment, argRequest,
+            for argL, newContext, arg, newUsedPrims in self.enumeration(context, environment, argRequest,
                                                           upperBound=upperBound,
                                                           lowerBound=0.,
-                                                          maximumDepth=maximumDepth):
+                                                          maximumDepth=maximumDepth,
+                                                          uniquePrims=uniquePrims,
+                                                          usedPrims=usedPrims):
                 if violatesSymmetry(originalFunction, arg, argumentIndex):
                     continue
 
                 newFunction = Application(function, arg)
-                for resultL, resultK, result in self.enumerateApplication(newContext, environment, newFunction,
+                for resultL, resultK, result, newUsedPrims2 in self.enumerateApplication(newContext, environment, newFunction,
                                                                           laterRequests,
                                                                           upperBound=upperBound + argL,
                                                                           lowerBound=lowerBound + argL,
                                                                           maximumDepth=maximumDepth,
                                                                           originalFunction=originalFunction,
-                                                                          argumentIndex=argumentIndex + 1):
-                    yield resultL + argL, resultK, result
+                                                                          argumentIndex=argumentIndex + 1,
+                                                                          uniquePrims=uniquePrims,
+                                                                          usedPrims=newUsedPrims):
+                    yield resultL + argL, resultK, result, newUsedPrims2
 
     def sketchEnumeration(self,context,environment,request,sk,upperBound,
                            maximumDepth=20,
