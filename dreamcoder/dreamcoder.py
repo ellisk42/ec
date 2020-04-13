@@ -389,9 +389,15 @@ def ecIterator(grammar, tasks,
         print("use value?", useValue)
         grammar = grammar #TODO make grammar non-contextual 
         
-        print("using old training and testing tasks")
+        print("using old training and testing tasks from result pickle")
+        oldTasks, oldTestingTasks = tasks, testingTasks
         tasks = list(result.taskSolutions.keys())
         testingTasks = result.getTestingTasks()
+        if len(testingTasks) == 0:
+            print("no testing tasks saved in result pickle , so re-finding from the loaded tasks..")
+            allTasks = set(oldTasks + oldTestingTasks)
+            testingTasks = list( allTasks.difference( set(tasks) ) )
+            print("num testing tasks:", len(testingTasks))
 
         #training 
         wakingTaskBatch = None
