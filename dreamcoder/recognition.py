@@ -1242,7 +1242,7 @@ class RecognitionModel(nn.Module):
             self.cpu()
             self.use_cuda = False
             self.featureExtractor.use_cuda = False
-            self.featureExtracture.CUDA = False #for towers
+            self.featureExtractor.CUDA = False #for towers
             self.valueHead.use_cuda = False
             self.valueHead.cpu()
 
@@ -1255,7 +1255,7 @@ class RecognitionModel(nn.Module):
             self.cuda()
             self.use_cuda = True
             self.featureExtractor.use_cuda = True
-            self.featureExtracture.CUDA = True #for towers
+            self.featureExtractor.CUDA = True #for towers
             self.valueHead.use_cuda = True
             self.valueHead.cuda()
             return x
