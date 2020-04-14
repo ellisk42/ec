@@ -1,0 +1,973 @@
+CUDA is available?: True
+using cuda?: True
+SKETCH TASK, getting 20 tasks for training set: practice_shaping
+SKETCH TASK, getting 30 tasks for training set: practice
+NO TESTING TASKS INCLUDED
+Running EC on node080 @ 2020-04-11 17:31:57.364845 with 80 CPUs and parameters:
+	 noConsolidation  =  False
+	 parallelTest  =  False
+	 iterations  =  10
+	 enumerationTimeout  =  1800
+	 useRecognitionModel  =  False
+	 topk_use_only_likelihood  =  False
+	 pseudoCounts  =  30
+	 aic  =  1.0
+	 structurePenalty  =  1.5
+	 arity  =  3
+	 taskReranker  =  unsolved
+	 storeTaskMetrics  =  True
+	 rewriteTaskMetrics  =  False
+	 trainset  =  S12
+	 doshaping  =  False
+	 dopruning  =  False
+	 skiptesting  =  True
+	 maximumFrontier  =  5
+	 solver  =  python
+	 topK  =  2
+	 evaluationTimeout  =  0.001
+	 cuda  =  True
+
+Currently using this much memory: 188424192
+Currently using this much memory: 188424192
+Using a waking task batch of size: 50
+Disabling parallelism on the Python side because we only have one job.
+If you are using ocaml, there could still be parallelism.
+(python) Launching sketch -> sketch (50 tasks) w/ 80 CPUs. 0.000000 <= MDL < 1.500000. Timeout 1800.000000.
+(python) Launching sketch -> sketch (50 tasks) w/ 80 CPUs. 1.500000 <= MDL < 3.000000. Timeout 1799.900227.
+(python) Launching sketch -> sketch (50 tasks) w/ 80 CPUs. 3.000000 <= MDL < 4.500000. Timeout 1799.824808.
+(python) Launching sketch -> sketch (50 tasks) w/ 80 CPUs. 4.500000 <= MDL < 6.000000. Timeout 1799.732316.
+(python) Launching sketch -> sketch (50 tasks) w/ 80 CPUs. 6.000000 <= MDL < 7.500000. Timeout 1799.648800.
+(python) Launching sketch -> sketch (50 tasks) w/ 80 CPUs. 7.500000 <= MDL < 9.000000. Timeout 1799.546381.
+(python) Launching sketch -> sketch (48 tasks) w/ 80 CPUs. 9.000000 <= MDL < 10.500000. Timeout 1799.275233.
+(python) Launching sketch -> sketch (48 tasks) w/ 80 CPUs. 10.500000 <= MDL < 12.000000. Timeout 1798.511092.
+(python) Launching sketch -> sketch (48 tasks) w/ 80 CPUs. 12.000000 <= MDL < 13.500000. Timeout 1792.660647.
+(python) Launching sketch -> sketch (48 tasks) w/ 80 CPUs. 13.500000 <= MDL < 15.000000. Timeout 1776.730938.
+(python) Launching sketch -> sketch (47 tasks) w/ 80 CPUs. 15.000000 <= MDL < 16.500000. Timeout 1716.871075.
+(python) Launching sketch -> sketch (47 tasks) w/ 80 CPUs. 16.500000 <= MDL < 18.000000. Timeout 1462.091519.
+Generative model enumeration results:
+HIT practice_shaping_0 w/ (lambda (LL $0)) ; log prior = -4.795791 ; log likelihood = 0.000000
+HIT practice_shaping_1 w/ (lambda (LL (r 1 (LL $0)))) ; log prior = -10.690193 ; log likelihood = 0.000000
+HIT practice_shaping_2 w/ (lambda (loop 3 (lambda (lambda (LL (r 1 $0)))) $0)) ; log prior = -15.167530 ; log likelihood = 0.000000
+HIT practice_shaping_3 w/ (lambda (LL (loop 3 (lambda (lambda (r 1 (LL $0)))) $0))) ; log prior = -17.565425 ; log likelihood = 0.000000
+HIT practice_shaping_4 w/ (lambda (LL $0)) ; log prior = -4.795791 ; log likelihood = 0.000000
+HIT practice_shaping_5 w/ (lambda (loop 3 (lambda (lambda (d 1 (L $0)))) $0)) ; log prior = -15.167530 ; log likelihood = 0.000000
+HIT practice_shaping_6 w/ (lambda (loop 3 (lambda (lambda (d 1 (L $0)))) $0)) ; log prior = -15.167530 ; log likelihood = 0.000000
+HIT practice_shaping_7 w/ (lambda (loop 3 (lambda (lambda (d 1 (C $0)))) $0)) ; log prior = -15.167530 ; log likelihood = 0.000000
+HIT practice_shaping_8 w/ (lambda (loop 3 (lambda (lambda (d 1 (C $0)))) $0)) ; log prior = -15.167530 ; log likelihood = 0.000000
+HIT practice_shaping_9 w/ (lambda (loop 3 (lambda (lambda (d 1 (C $0)))) $0)) ; log prior = -15.167530 ; log likelihood = 0.000000
+MISS practice_shaping_10
+HIT practice_shaping_11 w/ (lambda (loop 3 (lambda (lambda (d 1 (C $0)))) $0)) ; log prior = -15.167530 ; log likelihood = 0.000000
+HIT practice_shaping_12 w/ (lambda (loop 3 (lambda (lambda (d 1 (C $0)))) $0)) ; log prior = -15.167530 ; log likelihood = 0.000000
+MISS practice_shaping_13
+HIT practice_shaping_14 w/ (lambda (loop 3 (lambda (lambda (d 1 (L $0)))) $0)) ; log prior = -15.167530 ; log likelihood = 0.000000
+HIT practice_shaping_15 w/ (lambda (loop 3 (lambda (lambda (d 1 (L $0)))) $0)) ; log prior = -15.167530 ; log likelihood = 0.000000
+HIT practice_shaping_16 w/ (lambda (loop 3 (lambda (lambda (d 1 (C $0)))) $0)) ; log prior = -15.167530 ; log likelihood = 0.000000
+HIT practice_shaping_17 w/ (lambda (loop 3 (lambda (lambda (d 1 (C $0)))) $0)) ; log prior = -15.167530 ; log likelihood = 0.000000
+HIT practice_shaping_18 w/ (lambda (loop 3 (lambda (lambda (d 1 (L $0)))) $0)) ; log prior = -15.167530 ; log likelihood = 0.000000
+HIT practice_shaping_19 w/ (lambda (loop 3 (lambda (lambda (d 1 (C $0)))) $0)) ; log prior = -15.167530 ; log likelihood = 0.000000
+HIT practice1_0 w/ (lambda (LL (loop 3 (lambda (lambda (d 1 (L $0)))) $0))) ; log prior = -17.565425 ; log likelihood = 0.000000
+HIT practice1_1 w/ (lambda (LL (loop 3 (lambda (lambda (d 1 (C $0)))) $0))) ; log prior = -17.565425 ; log likelihood = 0.000000
+HIT practice1_2 w/ (lambda (LL (loop 3 (lambda (lambda (d 1 (C $0)))) $0))) ; log prior = -17.565425 ; log likelihood = 0.000000
+HIT practice1_3 w/ (lambda (LL (loop 3 (lambda (lambda (d 1 (C $0)))) $0))) ; log prior = -17.565425 ; log likelihood = 0.000000
+HIT practice1_4 w/ (lambda (LL (loop 3 (lambda (lambda (d 1 (C $0)))) $0))) ; log prior = -17.565425 ; log likelihood = 0.000000
+MISS practice1_5
+HIT practice1_6 w/ (lambda (LL (loop 3 (lambda (lambda (d 1 (L $0)))) $0))) ; log prior = -17.565425 ; log likelihood = 0.000000
+MISS practice2_0
+MISS practice2_1
+MISS practice2_2
+MISS practice2_3
+MISS practice2_4
+MISS practice2_5
+MISS practice2_6
+MISS practice3_0
+MISS practice3_1
+MISS practice3_2
+MISS practice3_3
+MISS practice3_4
+MISS practice3_5
+MISS practice3_6
+MISS practice4_0
+MISS practice4_1
+MISS practice4_2
+MISS practice4_3
+MISS practice4_4
+MISS practice4_5
+MISS practice4_6
+MISS practice4_7
+MISS practice4_8
+Hits 24/50 tasks
+Average description length of a program solving a task: 14.816049 nats
+Generative model average:  480 sec.	median: 311 	max: 1023 	standard deviation 362
+Currently using this much memory: 199864320
+Frontiers discovered top down: 24
+Total frontiers: 24
+Currently using this much memory: 199864320
+Showing the top 5 programs in each frontier being sent to the compressor:
+practice_shaping_0
+-0.17	(lambda (LL $0))
+-2.56	(lambda (LL (LL $0)))
+-3.66	(lambda (LL (d 1 $0)))
+-3.66	(lambda (LL (d 2 $0)))
+-3.66	(lambda (LL (d 3 $0)))
+
+practice_shaping_1
+-0.22	(lambda (LL (r 1 (LL $0))))
+-2.61	(lambda (LL (LL (r 1 (LL $0)))))
+-2.61	(lambda (LL (r 1 (LL (LL $0)))))
+-3.71	(lambda (LL (r 3 (l 2 (LL $0)))))
+-3.71	(lambda (r 1 (LL (l 1 (LL $0)))))
+
+practice_shaping_2
+-0.51	(lambda (loop 3 (lambda (lambda (LL (r 1 $0)))) $0))
+-1.93	(lambda (LL (r 1 (LL (r 1 (LL $0))))))
+-1.93	(lambda (LL (r 2 (LL (l 1 (LL $0))))))
+-2.91	(lambda (loop 2 (lambda (lambda (LL (r 1 $0)))) (LL $0)))
+-2.91	(lambda (loop 3 (lambda (lambda (LL (LL (r 1 $0))))) $0))
+
+practice_shaping_3
+-1.10	(lambda (LL (loop 3 (lambda (lambda (r 1 (LL $0)))) $0)))
+-1.10	(lambda (loop 3 (lambda (lambda (LL (r 1 $0)))) (LL $0)))
+-1.10	(lambda (loop 3 (lambda (lambda (LL (r 1 (LL $0))))) $0))
+
+practice_shaping_4
+-0.17	(lambda (LL $0))
+-2.56	(lambda (LL (LL $0)))
+-3.66	(lambda (LL (d 1 $0)))
+-3.66	(lambda (LL (d 2 $0)))
+-3.66	(lambda (LL (d 3 $0)))
+
+practice_shaping_5
+-0.17	(lambda (loop 3 (lambda (lambda (d 1 (L $0)))) $0))
+-2.56	(lambda (loop 3 (lambda (lambda (d 1 (L $0)))) (L $0)))
+-2.56	(lambda (loop 3 (lambda (lambda (d 1 (L (L $0))))) $0))
+
+practice_shaping_6
+-0.17	(lambda (loop 3 (lambda (lambda (d 1 (L $0)))) $0))
+-2.56	(lambda (loop 3 (lambda (lambda (d 1 (L $0)))) (L $0)))
+-2.56	(lambda (loop 3 (lambda (lambda (d 1 (L (L $0))))) $0))
+
+practice_shaping_7
+-0.17	(lambda (loop 3 (lambda (lambda (d 1 (C $0)))) $0))
+-2.56	(lambda (loop 3 (lambda (lambda (d 1 (C $0)))) (C $0)))
+-2.56	(lambda (loop 3 (lambda (lambda (d 1 (C (C $0))))) $0))
+
+practice_shaping_8
+-0.17	(lambda (loop 3 (lambda (lambda (d 1 (C $0)))) $0))
+-2.56	(lambda (loop 3 (lambda (lambda (d 1 (C $0)))) (C $0)))
+-2.56	(lambda (loop 3 (lambda (lambda (d 1 (C (C $0))))) $0))
+
+practice_shaping_9
+-0.17	(lambda (loop 3 (lambda (lambda (d 1 (C $0)))) $0))
+-2.56	(lambda (loop 3 (lambda (lambda (d 1 (C $0)))) (C $0)))
+-2.56	(lambda (loop 3 (lambda (lambda (d 1 (C (C $0))))) $0))
+
+practice_shaping_11
+-0.17	(lambda (loop 3 (lambda (lambda (d 1 (C $0)))) $0))
+-2.56	(lambda (loop 3 (lambda (lambda (d 1 (C $0)))) (C $0)))
+-2.56	(lambda (loop 3 (lambda (lambda (d 1 (C (C $0))))) $0))
+
+practice_shaping_12
+-0.17	(lambda (loop 3 (lambda (lambda (d 1 (C $0)))) $0))
+-2.56	(lambda (loop 3 (lambda (lambda (d 1 (C $0)))) (C $0)))
+-2.56	(lambda (loop 3 (lambda (lambda (d 1 (C (C $0))))) $0))
+
+practice_shaping_14
+-0.17	(lambda (loop 3 (lambda (lambda (d 1 (L $0)))) $0))
+-2.56	(lambda (loop 3 (lambda (lambda (d 1 (L $0)))) (L $0)))
+-2.56	(lambda (loop 3 (lambda (lambda (d 1 (L (L $0))))) $0))
+
+practice_shaping_15
+-0.17	(lambda (loop 3 (lambda (lambda (d 1 (L $0)))) $0))
+-2.56	(lambda (loop 3 (lambda (lambda (d 1 (L $0)))) (L $0)))
+-2.56	(lambda (loop 3 (lambda (lambda (d 1 (L (L $0))))) $0))
+
+practice_shaping_16
+-0.17	(lambda (loop 3 (lambda (lambda (d 1 (C $0)))) $0))
+-2.56	(lambda (loop 3 (lambda (lambda (d 1 (C $0)))) (C $0)))
+-2.56	(lambda (loop 3 (lambda (lambda (d 1 (C (C $0))))) $0))
+
+practice_shaping_17
+-0.17	(lambda (loop 3 (lambda (lambda (d 1 (C $0)))) $0))
+-2.56	(lambda (loop 3 (lambda (lambda (d 1 (C $0)))) (C $0)))
+-2.56	(lambda (loop 3 (lambda (lambda (d 1 (C (C $0))))) $0))
+
+practice_shaping_18
+-0.17	(lambda (loop 3 (lambda (lambda (d 1 (L $0)))) $0))
+-2.56	(lambda (loop 3 (lambda (lambda (d 1 (L $0)))) (L $0)))
+-2.56	(lambda (loop 3 (lambda (lambda (d 1 (L (L $0))))) $0))
+
+practice_shaping_19
+-0.17	(lambda (loop 3 (lambda (lambda (d 1 (C $0)))) $0))
+-2.56	(lambda (loop 3 (lambda (lambda (d 1 (C $0)))) (C $0)))
+-2.56	(lambda (loop 3 (lambda (lambda (d 1 (C (C $0))))) $0))
+
+practice1_0
+0.00	(lambda (LL (loop 3 (lambda (lambda (d 1 (L $0)))) $0)))
+
+practice1_1
+0.00	(lambda (LL (loop 3 (lambda (lambda (d 1 (C $0)))) $0)))
+
+practice1_2
+0.00	(lambda (LL (loop 3 (lambda (lambda (d 1 (C $0)))) $0)))
+
+practice1_3
+0.00	(lambda (LL (loop 3 (lambda (lambda (d 1 (C $0)))) $0)))
+
+practice1_4
+0.00	(lambda (LL (loop 3 (lambda (lambda (d 1 (C $0)))) $0)))
+
+practice1_6
+0.00	(lambda (LL (loop 3 (lambda (lambda (d 1 (L $0)))) $0)))
+
+Compression message saved to: compressionMessages/2020-04-11T18:02:00.965435
+Compression backend will run for most 99 iterations
+Total number of candidates: 24830
+Constructed version spaces and coalesced candidates in 5.33054s.
+Trimmed down the beam, have only 300 best candidates
+Rewrote topK in 6.04154s.
+Initial score: -337.872606
+Scored candidates in 773.95ms.
+Improved score to -251.034675 (dScore=86.837931) w/ new primitive
+	#(loop 3 (lambda (lambda (d 1 (C $0))))) : sketch -> sketch
+rewrote all of the frontiers in 5.93578s.
+Completed one step of memory consolidation in 19.1216s.
+New primitive is used 12 times in the best programs in each of the frontiers.
+Here is where it is used:
+  (lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0))
+  (lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0))
+  (lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0))
+  (lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0))
+  (lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0))
+  (lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0))
+  (lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0))
+  (lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0))
+  (lambda (LL (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0)))
+  (lambda (LL (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0)))
+  (lambda (LL (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0)))
+  (lambda (LL (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0)))
+Total number of candidates: 17477
+Constructed version spaces and coalesced candidates in 3.88438s.
+Trimmed down the beam, have only 300 best candidates
+Rewrote topK in 4.10739s.
+Initial score: -251.036036
+Scored candidates in 592.784ms.
+Improved score to -197.866307 (dScore=53.169729) w/ new primitive
+	#(loop 3 (lambda (lambda (d 1 (L $0))))) : sketch -> sketch
+rewrote all of the frontiers in 5.53821s.
+Completed one step of memory consolidation in 14.9352s.
+New primitive is used 7 times in the best programs in each of the frontiers.
+Here is where it is used:
+  (lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) $0))
+  (lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) $0))
+  (lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) $0))
+  (lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) $0))
+  (lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) $0))
+  (lambda (LL (#(loop 3 (lambda (lambda (d 1 (L $0))))) $0)))
+  (lambda (LL (#(loop 3 (lambda (lambda (d 1 (L $0))))) $0)))
+Total number of candidates: 5037
+Constructed version spaces and coalesced candidates in 2.54917s.
+Trimmed down the beam, have only 300 best candidates
+Rewrote topK in 2.87214s.
+Initial score: -197.834342
+Scored candidates in 548.065ms.
+Improved score to -193.287006 (dScore=4.547336) w/ new primitive
+	#(loop 3 (lambda (lambda (LL (r 1 $0))))) : sketch -> sketch
+rewrote all of the frontiers in 5.05117s.
+Completed one step of memory consolidation in 11.5066s.
+New primitive is used 2 times in the best programs in each of the frontiers.
+Here is where it is used:
+  (lambda (#(loop 3 (lambda (lambda (LL (r 1 $0))))) $0))
+  (lambda (#(loop 3 (lambda (lambda (LL (r 1 $0))))) (LL $0)))
+Total number of candidates: 2744
+Constructed version spaces and coalesced candidates in 1.84048s.
+Trimmed down the beam, have only 298 best candidates
+Rewrote topK in 1.93127s.
+Initial score: -193.295101
+Scored candidates in 547.087ms.
+No improvement possible.
+Completed one step of memory consolidation in 4.621s.
+completed ocaml compression in 50.1989s.
+Finished consolidation.
+Induced a grammar in 51.2 seconds
+Grammar after iteration 1:
+-0.491583	t0	$_
+0.000000	(sketch -> sketch) -> sketch -> sketch	embed
+-0.003574	int	1
+-0.035823	int	3
+-0.035826	int	2
+-0.759503	sketch -> sketch	LL
+-1.046578	int -> sketch -> sketch	r
+-1.062568	sketch -> sketch	C
+-1.068882	sketch -> sketch	L
+-1.075523	int -> sketch -> sketch	d
+-1.078171	int -> sketch -> sketch	l
+-1.079368	int -> (int -> sketch -> sketch) -> sketch -> sketch	loop
+-1.079371	sketch -> sketch	E
+-1.079371	int -> sketch -> sketch	u
+-0.742899	sketch -> sketch	#(loop 3 (lambda (lambda (d 1 (C $0)))))
+-0.869650	sketch -> sketch	#(loop 3 (lambda (lambda (d 1 (L $0)))))
+-1.014835	sketch -> sketch	#(loop 3 (lambda (lambda (LL (r 1 $0)))))
+Currently using this much memory: 199888896
+Exported checkpoint to experimentOutputs/sketch/2020-04-11T17:31:57.284832/sketch_aic=1.0_ar=3_dp=False_shp=False_ET=1800_it=1_MF=5_nCons=False_parTes=False_pc=30_RW=False_st=True_solver=python_STM=True_L=1.5_TRR=unsolved_K=2_topkNotMAP=False_tset=S12_rec=False.pickle
+WARNING: Do not have an English description of:
+ #(loop 3 (lambda (lambda (d 1 (C $0)))))
+
+WARNING: Do not have an English description of:
+ #(loop 3 (lambda (lambda (LL (r 1 $0)))))
+
+WARNING: Do not have an English description of:
+ #(loop 3 (lambda (lambda (d 1 (L $0)))))
+
+Exporting primitive graph to experimentOutputs/sketch/2020-04-11T17:31:57.284832/sketch_primitives_0_depth.pdf
+Exported primitive graph to experimentOutputs/sketch/2020-04-11T17:31:57.284832/sketch_primitives_0_unordered.pdf
+Currently using this much memory: 209424384
+Currently using this much memory: 209424384
+Using a waking task batch of size: 50
+Disabling parallelism on the Python side because we only have one job.
+If you are using ocaml, there could still be parallelism.
+(python) Launching sketch -> sketch (50 tasks) w/ 80 CPUs. 0.000000 <= MDL < 1.500000. Timeout 1800.000000.
+(python) Launching sketch -> sketch (50 tasks) w/ 80 CPUs. 1.500000 <= MDL < 3.000000. Timeout 1799.880122.
+(python) Launching sketch -> sketch (50 tasks) w/ 80 CPUs. 3.000000 <= MDL < 4.500000. Timeout 1799.738996.
+(python) Launching sketch -> sketch (50 tasks) w/ 80 CPUs. 4.500000 <= MDL < 6.000000. Timeout 1799.635140.
+(python) Launching sketch -> sketch (50 tasks) w/ 80 CPUs. 6.000000 <= MDL < 7.500000. Timeout 1799.514233.
+(python) Launching sketch -> sketch (50 tasks) w/ 80 CPUs. 7.500000 <= MDL < 9.000000. Timeout 1799.341836.
+(python) Launching sketch -> sketch (35 tasks) w/ 80 CPUs. 9.000000 <= MDL < 10.500000. Timeout 1798.948554.
+(python) Launching sketch -> sketch (34 tasks) w/ 80 CPUs. 10.500000 <= MDL < 12.000000. Timeout 1797.908415.
+(python) Launching sketch -> sketch (27 tasks) w/ 80 CPUs. 12.000000 <= MDL < 13.500000. Timeout 1793.351339.
+(python) Launching sketch -> sketch (27 tasks) w/ 80 CPUs. 13.500000 <= MDL < 15.000000. Timeout 1777.745403.
+(python) Launching sketch -> sketch (27 tasks) w/ 80 CPUs. 15.000000 <= MDL < 16.500000. Timeout 1710.766110.
+(python) Launching sketch -> sketch (26 tasks) w/ 80 CPUs. 16.500000 <= MDL < 18.000000. Timeout 1430.625848.
+(python) Launching sketch -> sketch (26 tasks) w/ 80 CPUs. 18.000000 <= MDL < 19.500000. Timeout 210.907433.
+Generative model enumeration results:
+HIT practice_shaping_0 w/ (lambda (LL $0)) ; log prior = -4.860343 ; log likelihood = 0.000000
+HIT practice_shaping_1 w/ (lambda (LL (r 1 (LL $0)))) ; log prior = -11.352909 ; log likelihood = 0.000000
+HIT practice_shaping_2 w/ (lambda (#(loop 3 (lambda (lambda (LL (r 1 $0))))) $0)) ; log prior = -5.115674 ; log likelihood = 0.000000
+HIT practice_shaping_3 w/ (lambda (#(loop 3 (lambda (lambda (LL (r 1 $0))))) (LL $0))) ; log prior = -7.679806 ; log likelihood = 0.000000
+HIT practice_shaping_4 w/ (lambda (LL $0)) ; log prior = -4.860343 ; log likelihood = 0.000000
+HIT practice_shaping_5 w/ (lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) $0)) ; log prior = -4.970490 ; log likelihood = 0.000000
+HIT practice_shaping_6 w/ (lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) $0)) ; log prior = -4.970490 ; log likelihood = 0.000000
+HIT practice_shaping_7 w/ (lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0)) ; log prior = -4.843738 ; log likelihood = 0.000000
+HIT practice_shaping_8 w/ (lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0)) ; log prior = -4.843738 ; log likelihood = 0.000000
+HIT practice_shaping_9 w/ (lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0)) ; log prior = -4.843738 ; log likelihood = 0.000000
+MISS practice_shaping_10
+HIT practice_shaping_11 w/ (lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0)) ; log prior = -4.843738 ; log likelihood = 0.000000
+HIT practice_shaping_12 w/ (lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0)) ; log prior = -4.843738 ; log likelihood = 0.000000
+MISS practice_shaping_13
+HIT practice_shaping_14 w/ (lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) $0)) ; log prior = -4.970490 ; log likelihood = 0.000000
+HIT practice_shaping_15 w/ (lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) $0)) ; log prior = -4.970490 ; log likelihood = 0.000000
+HIT practice_shaping_16 w/ (lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0)) ; log prior = -4.843738 ; log likelihood = 0.000000
+HIT practice_shaping_17 w/ (lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0)) ; log prior = -4.843738 ; log likelihood = 0.000000
+HIT practice_shaping_18 w/ (lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) $0)) ; log prior = -4.970490 ; log likelihood = 0.000000
+HIT practice_shaping_19 w/ (lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0)) ; log prior = -4.843738 ; log likelihood = 0.000000
+HIT practice1_0 w/ (lambda (LL (#(loop 3 (lambda (lambda (d 1 (L $0))))) $0))) ; log prior = -7.534622 ; log likelihood = 0.000000
+HIT practice1_1 w/ (lambda (LL (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0))) ; log prior = -7.407870 ; log likelihood = 0.000000
+HIT practice1_2 w/ (lambda (LL (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0))) ; log prior = -7.407870 ; log likelihood = 0.000000
+HIT practice1_3 w/ (lambda (LL (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0))) ; log prior = -7.407870 ; log likelihood = 0.000000
+HIT practice1_4 w/ (lambda (LL (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0))) ; log prior = -7.407870 ; log likelihood = 0.000000
+MISS practice1_5
+HIT practice1_6 w/ (lambda (LL (#(loop 3 (lambda (lambda (d 1 (L $0))))) $0))) ; log prior = -7.534622 ; log likelihood = 0.000000
+MISS practice2_0
+MISS practice2_1
+MISS practice2_2
+MISS practice2_3
+MISS practice2_4
+MISS practice2_5
+MISS practice2_6
+MISS practice3_0
+MISS practice3_1
+MISS practice3_2
+MISS practice3_3
+MISS practice3_4
+MISS practice3_5
+MISS practice3_6
+MISS practice4_0
+MISS practice4_1
+MISS practice4_2
+MISS practice4_3
+MISS practice4_4
+MISS practice4_5
+MISS practice4_6
+MISS practice4_7
+MISS practice4_8
+Hits 24/50 tasks
+Average description length of a program solving a task: 5.923840 nats
+Generative model average:  1 sec.	median: 0 	max: 5 	standard deviation 1
+Currently using this much memory: 200847360
+Frontiers discovered top down: 24
+Total frontiers: 24
+Currently using this much memory: 200847360
+Showing the top 5 programs in each frontier being sent to the compressor:
+practice_shaping_0
+-0.13	(lambda (LL $0))
+-2.69	(lambda (LL (LL $0)))
+-4.05	(lambda (LL (r 1 $0)))
+-4.08	(lambda (LL (d 1 $0)))
+-4.09	(lambda (LL (l 1 $0)))
+
+practice_shaping_1
+-0.18	(lambda (LL (r 1 (LL $0))))
+-2.74	(lambda (LL (LL (r 1 (LL $0)))))
+-2.74	(lambda (LL (r 1 (LL (LL $0)))))
+-4.10	(lambda (LL (r 1 (LL (r 1 $0)))))
+-4.13	(lambda (LL (r 1 (LL (d 1 $0)))))
+
+practice_shaping_2
+-0.13	(lambda (#(loop 3 (lambda (lambda (LL (r 1 $0))))) $0))
+-2.69	(lambda (LL (#(loop 3 (lambda (lambda (LL (r 1 $0))))) $0)))
+-4.05	(lambda (#(loop 3 (lambda (lambda (LL (r 1 $0))))) (r 1 $0)))
+-4.08	(lambda (#(loop 3 (lambda (lambda (LL (r 1 $0))))) (d 1 $0)))
+-4.09	(lambda (#(loop 3 (lambda (lambda (LL (r 1 $0))))) (l 1 $0)))
+
+practice_shaping_3
+-0.18	(lambda (#(loop 3 (lambda (lambda (LL (r 1 $0))))) (LL $0)))
+-2.74	(lambda (#(loop 3 (lambda (lambda (LL (r 1 $0))))) (LL (LL $0))))
+-2.74	(lambda (LL (#(loop 3 (lambda (lambda (LL (r 1 $0))))) (LL $0))))
+-4.11	(lambda (#(loop 3 (lambda (lambda (LL (r 1 $0))))) (LL (r 1 $0))))
+-4.11	(lambda (LL (r 1 (#(loop 3 (lambda (lambda (LL (r 1 $0))))) $0))))
+
+practice_shaping_4
+-0.13	(lambda (LL $0))
+-2.69	(lambda (LL (LL $0)))
+-4.05	(lambda (LL (r 1 $0)))
+-4.08	(lambda (LL (d 1 $0)))
+-4.09	(lambda (LL (l 1 $0)))
+
+practice_shaping_5
+-0.11	(lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) $0))
+-2.98	(lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) (L $0)))
+-4.04	(lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) (r 1 $0)))
+-4.07	(lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) (d 1 $0)))
+-4.07	(lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) (l 1 $0)))
+
+practice_shaping_6
+-0.11	(lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) $0))
+-2.98	(lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) (L $0)))
+-4.04	(lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) (r 1 $0)))
+-4.07	(lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) (d 1 $0)))
+-4.07	(lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) (l 1 $0)))
+
+practice_shaping_7
+-0.11	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0))
+-2.98	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (C $0)))
+-4.04	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (r 1 $0)))
+-4.07	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (d 1 $0)))
+-4.07	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (l 1 $0)))
+
+practice_shaping_8
+-0.11	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0))
+-2.98	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (C $0)))
+-4.04	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (r 1 $0)))
+-4.07	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (d 1 $0)))
+-4.07	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (l 1 $0)))
+
+practice_shaping_9
+-0.11	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0))
+-2.98	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (C $0)))
+-4.04	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (r 1 $0)))
+-4.07	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (d 1 $0)))
+-4.07	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (l 1 $0)))
+
+practice_shaping_11
+-0.11	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0))
+-2.98	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (C $0)))
+-4.04	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (r 1 $0)))
+-4.07	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (d 1 $0)))
+-4.07	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (l 1 $0)))
+
+practice_shaping_12
+-0.11	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0))
+-2.98	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (C $0)))
+-4.04	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (r 1 $0)))
+-4.07	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (d 1 $0)))
+-4.07	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (l 1 $0)))
+
+practice_shaping_14
+-0.11	(lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) $0))
+-2.98	(lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) (L $0)))
+-4.04	(lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) (r 1 $0)))
+-4.07	(lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) (d 1 $0)))
+-4.07	(lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) (l 1 $0)))
+
+practice_shaping_15
+-0.11	(lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) $0))
+-2.98	(lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) (L $0)))
+-4.04	(lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) (r 1 $0)))
+-4.07	(lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) (d 1 $0)))
+-4.07	(lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) (l 1 $0)))
+
+practice_shaping_16
+-0.11	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0))
+-2.98	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (C $0)))
+-4.04	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (r 1 $0)))
+-4.07	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (d 1 $0)))
+-4.07	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (l 1 $0)))
+
+practice_shaping_17
+-0.11	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0))
+-2.98	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (C $0)))
+-4.04	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (r 1 $0)))
+-4.07	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (d 1 $0)))
+-4.07	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (l 1 $0)))
+
+practice_shaping_18
+-0.11	(lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) $0))
+-2.98	(lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) (L $0)))
+-4.04	(lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) (r 1 $0)))
+-4.07	(lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) (d 1 $0)))
+-4.07	(lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) (l 1 $0)))
+
+practice_shaping_19
+-0.11	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0))
+-2.98	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (C $0)))
+-4.04	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (r 1 $0)))
+-4.07	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (d 1 $0)))
+-4.07	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (l 1 $0)))
+
+practice1_0
+-0.16	(lambda (LL (#(loop 3 (lambda (lambda (d 1 (L $0))))) $0)))
+-2.72	(lambda (LL (LL (#(loop 3 (lambda (lambda (d 1 (L $0))))) $0))))
+-3.03	(lambda (LL (#(loop 3 (lambda (lambda (d 1 (L $0))))) (L $0))))
+-4.09	(lambda (LL (#(loop 3 (lambda (lambda (d 1 (L $0))))) (r 1 $0))))
+-4.12	(lambda (LL (#(loop 3 (lambda (lambda (d 1 (L $0))))) (d 1 $0))))
+
+practice1_1
+-0.16	(lambda (LL (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0)))
+-2.72	(lambda (LL (LL (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0))))
+-3.03	(lambda (LL (#(loop 3 (lambda (lambda (d 1 (C $0))))) (C $0))))
+-4.09	(lambda (LL (#(loop 3 (lambda (lambda (d 1 (C $0))))) (r 1 $0))))
+-4.12	(lambda (LL (#(loop 3 (lambda (lambda (d 1 (C $0))))) (d 1 $0))))
+
+practice1_2
+-0.16	(lambda (LL (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0)))
+-2.72	(lambda (LL (LL (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0))))
+-3.03	(lambda (LL (#(loop 3 (lambda (lambda (d 1 (C $0))))) (C $0))))
+-4.09	(lambda (LL (#(loop 3 (lambda (lambda (d 1 (C $0))))) (r 1 $0))))
+-4.12	(lambda (LL (#(loop 3 (lambda (lambda (d 1 (C $0))))) (d 1 $0))))
+
+practice1_3
+-0.16	(lambda (LL (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0)))
+-2.72	(lambda (LL (LL (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0))))
+-3.03	(lambda (LL (#(loop 3 (lambda (lambda (d 1 (C $0))))) (C $0))))
+-4.09	(lambda (LL (#(loop 3 (lambda (lambda (d 1 (C $0))))) (r 1 $0))))
+-4.12	(lambda (LL (#(loop 3 (lambda (lambda (d 1 (C $0))))) (d 1 $0))))
+
+practice1_4
+-0.16	(lambda (LL (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0)))
+-2.72	(lambda (LL (LL (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0))))
+-3.03	(lambda (LL (#(loop 3 (lambda (lambda (d 1 (C $0))))) (C $0))))
+-4.09	(lambda (LL (#(loop 3 (lambda (lambda (d 1 (C $0))))) (r 1 $0))))
+-4.12	(lambda (LL (#(loop 3 (lambda (lambda (d 1 (C $0))))) (d 1 $0))))
+
+practice1_6
+-0.16	(lambda (LL (#(loop 3 (lambda (lambda (d 1 (L $0))))) $0)))
+-2.72	(lambda (LL (LL (#(loop 3 (lambda (lambda (d 1 (L $0))))) $0))))
+-3.03	(lambda (LL (#(loop 3 (lambda (lambda (d 1 (L $0))))) (L $0))))
+-4.09	(lambda (LL (#(loop 3 (lambda (lambda (d 1 (L $0))))) (r 1 $0))))
+-4.12	(lambda (LL (#(loop 3 (lambda (lambda (d 1 (L $0))))) (d 1 $0))))
+
+Compression message saved to: compressionMessages/2020-04-11T18:32:52.854692
+Compression backend will run for most 99 iterations
+Total number of candidates: 1852
+Constructed version spaces and coalesced candidates in 618.525ms.
+Trimmed down the beam, have only 298 best candidates
+Rewrote topK in 745.816ms.
+Initial score: -192.485344
+Scored candidates in 578.712ms.
+No improvement possible.
+Completed one step of memory consolidation in 2.10026s.
+completed ocaml compression in 2.10027s.
+Finished consolidation.
+Induced a grammar in 2.8 seconds
+Grammar after iteration 2:
+-0.491583	t0	$_
+0.000000	(sketch -> sketch) -> sketch -> sketch	embed
+-0.003574	int	1
+-0.035823	int	3
+-0.035826	int	2
+-0.759503	sketch -> sketch	LL
+-1.046578	int -> sketch -> sketch	r
+-1.062568	sketch -> sketch	C
+-1.068882	sketch -> sketch	L
+-1.075523	int -> sketch -> sketch	d
+-1.078171	int -> sketch -> sketch	l
+-1.079368	int -> (int -> sketch -> sketch) -> sketch -> sketch	loop
+-1.079371	sketch -> sketch	E
+-1.079371	int -> sketch -> sketch	u
+-0.742899	sketch -> sketch	#(loop 3 (lambda (lambda (d 1 (C $0)))))
+-0.869650	sketch -> sketch	#(loop 3 (lambda (lambda (d 1 (L $0)))))
+-1.014835	sketch -> sketch	#(loop 3 (lambda (lambda (LL (r 1 $0)))))
+Currently using this much memory: 200851456
+Exported checkpoint to experimentOutputs/sketch/2020-04-11T17:31:57.284832/sketch_aic=1.0_ar=3_dp=False_shp=False_ET=1800_it=2_MF=5_nCons=False_parTes=False_pc=30_RW=False_st=True_solver=python_STM=True_L=1.5_TRR=unsolved_K=2_topkNotMAP=False_tset=S12_rec=False.pickle
+WARNING: Do not have an English description of:
+ #(loop 3 (lambda (lambda (d 1 (C $0)))))
+
+WARNING: Do not have an English description of:
+ #(loop 3 (lambda (lambda (LL (r 1 $0)))))
+
+WARNING: Do not have an English description of:
+ #(loop 3 (lambda (lambda (d 1 (L $0)))))
+
+Exporting primitive graph to experimentOutputs/sketch/2020-04-11T17:31:57.284832/sketch_primitives_1_depth.pdf
+Exported primitive graph to experimentOutputs/sketch/2020-04-11T17:31:57.284832/sketch_primitives_1_unordered.pdf
+Currently using this much memory: 210444288
+Currently using this much memory: 210444288
+Using a waking task batch of size: 26
+Disabling parallelism on the Python side because we only have one job.
+If you are using ocaml, there could still be parallelism.
+(python) Launching sketch -> sketch (26 tasks) w/ 80 CPUs. 0.000000 <= MDL < 1.500000. Timeout 1800.000000.
+(python) Launching sketch -> sketch (26 tasks) w/ 80 CPUs. 1.500000 <= MDL < 3.000000. Timeout 1799.919265.
+(python) Launching sketch -> sketch (26 tasks) w/ 80 CPUs. 3.000000 <= MDL < 4.500000. Timeout 1799.852936.
+(python) Launching sketch -> sketch (26 tasks) w/ 80 CPUs. 4.500000 <= MDL < 6.000000. Timeout 1799.744539.
+(python) Launching sketch -> sketch (26 tasks) w/ 80 CPUs. 6.000000 <= MDL < 7.500000. Timeout 1799.662371.
+(python) Launching sketch -> sketch (26 tasks) w/ 80 CPUs. 7.500000 <= MDL < 9.000000. Timeout 1799.537201.
+(python) Launching sketch -> sketch (26 tasks) w/ 80 CPUs. 9.000000 <= MDL < 10.500000. Timeout 1799.177751.
+(python) Launching sketch -> sketch (26 tasks) w/ 80 CPUs. 10.500000 <= MDL < 12.000000. Timeout 1798.253196.
+(python) Launching sketch -> sketch (26 tasks) w/ 80 CPUs. 12.000000 <= MDL < 13.500000. Timeout 1793.984941.
+(python) Launching sketch -> sketch (26 tasks) w/ 80 CPUs. 13.500000 <= MDL < 15.000000. Timeout 1777.732988.
+(python) Launching sketch -> sketch (26 tasks) w/ 80 CPUs. 15.000000 <= MDL < 16.500000. Timeout 1707.699653.
+(python) Launching sketch -> sketch (26 tasks) w/ 80 CPUs. 16.500000 <= MDL < 18.000000. Timeout 1410.428054.
+(python) Launching sketch -> sketch (26 tasks) w/ 80 CPUs. 18.000000 <= MDL < 19.500000. Timeout 194.595535.
+Generative model enumeration results:
+MISS practice_shaping_10
+MISS practice_shaping_13
+MISS practice1_5
+MISS practice2_0
+MISS practice2_1
+MISS practice2_2
+MISS practice2_3
+MISS practice2_4
+MISS practice2_5
+MISS practice2_6
+MISS practice3_0
+MISS practice3_1
+MISS practice3_2
+MISS practice3_3
+MISS practice3_4
+MISS practice3_5
+MISS practice3_6
+MISS practice4_0
+MISS practice4_1
+MISS practice4_2
+MISS practice4_3
+MISS practice4_4
+MISS practice4_5
+MISS practice4_6
+MISS practice4_7
+MISS practice4_8
+Hits 0/26 tasks
+Average description length of a program solving a task: 0.000000 nats
+Generative model no successful times to report statistics on!
+Currently using this much memory: 213164032
+Frontiers discovered top down: 0
+Total frontiers: 24
+Currently using this much memory: 213164032
+Showing the top 5 programs in each frontier being sent to the compressor:
+practice_shaping_0
+-0.13	(lambda (LL $0))
+-2.69	(lambda (LL (LL $0)))
+-4.05	(lambda (LL (r 1 $0)))
+-4.08	(lambda (LL (d 1 $0)))
+-4.09	(lambda (LL (l 1 $0)))
+
+practice_shaping_1
+-0.18	(lambda (LL (r 1 (LL $0))))
+-2.74	(lambda (LL (LL (r 1 (LL $0)))))
+-2.74	(lambda (LL (r 1 (LL (LL $0)))))
+-4.10	(lambda (LL (r 1 (LL (r 1 $0)))))
+-4.13	(lambda (LL (r 1 (LL (d 1 $0)))))
+
+practice_shaping_2
+-0.13	(lambda (#(loop 3 (lambda (lambda (LL (r 1 $0))))) $0))
+-2.69	(lambda (LL (#(loop 3 (lambda (lambda (LL (r 1 $0))))) $0)))
+-4.05	(lambda (#(loop 3 (lambda (lambda (LL (r 1 $0))))) (r 1 $0)))
+-4.08	(lambda (#(loop 3 (lambda (lambda (LL (r 1 $0))))) (d 1 $0)))
+-4.09	(lambda (#(loop 3 (lambda (lambda (LL (r 1 $0))))) (l 1 $0)))
+
+practice_shaping_3
+-0.18	(lambda (#(loop 3 (lambda (lambda (LL (r 1 $0))))) (LL $0)))
+-2.74	(lambda (#(loop 3 (lambda (lambda (LL (r 1 $0))))) (LL (LL $0))))
+-2.74	(lambda (LL (#(loop 3 (lambda (lambda (LL (r 1 $0))))) (LL $0))))
+-4.11	(lambda (#(loop 3 (lambda (lambda (LL (r 1 $0))))) (LL (r 1 $0))))
+-4.11	(lambda (LL (r 1 (#(loop 3 (lambda (lambda (LL (r 1 $0))))) $0))))
+
+practice_shaping_4
+-0.13	(lambda (LL $0))
+-2.69	(lambda (LL (LL $0)))
+-4.05	(lambda (LL (r 1 $0)))
+-4.08	(lambda (LL (d 1 $0)))
+-4.09	(lambda (LL (l 1 $0)))
+
+practice_shaping_5
+-0.11	(lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) $0))
+-2.98	(lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) (L $0)))
+-4.04	(lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) (r 1 $0)))
+-4.07	(lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) (d 1 $0)))
+-4.07	(lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) (l 1 $0)))
+
+practice_shaping_6
+-0.11	(lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) $0))
+-2.98	(lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) (L $0)))
+-4.04	(lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) (r 1 $0)))
+-4.07	(lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) (d 1 $0)))
+-4.07	(lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) (l 1 $0)))
+
+practice_shaping_7
+-0.11	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0))
+-2.98	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (C $0)))
+-4.04	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (r 1 $0)))
+-4.07	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (d 1 $0)))
+-4.07	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (l 1 $0)))
+
+practice_shaping_8
+-0.11	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0))
+-2.98	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (C $0)))
+-4.04	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (r 1 $0)))
+-4.07	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (d 1 $0)))
+-4.07	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (l 1 $0)))
+
+practice_shaping_9
+-0.11	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0))
+-2.98	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (C $0)))
+-4.04	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (r 1 $0)))
+-4.07	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (d 1 $0)))
+-4.07	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (l 1 $0)))
+
+practice_shaping_11
+-0.11	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0))
+-2.98	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (C $0)))
+-4.04	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (r 1 $0)))
+-4.07	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (d 1 $0)))
+-4.07	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (l 1 $0)))
+
+practice_shaping_12
+-0.11	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0))
+-2.98	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (C $0)))
+-4.04	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (r 1 $0)))
+-4.07	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (d 1 $0)))
+-4.07	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (l 1 $0)))
+
+practice_shaping_14
+-0.11	(lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) $0))
+-2.98	(lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) (L $0)))
+-4.04	(lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) (r 1 $0)))
+-4.07	(lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) (d 1 $0)))
+-4.07	(lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) (l 1 $0)))
+
+practice_shaping_15
+-0.11	(lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) $0))
+-2.98	(lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) (L $0)))
+-4.04	(lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) (r 1 $0)))
+-4.07	(lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) (d 1 $0)))
+-4.07	(lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) (l 1 $0)))
+
+practice_shaping_16
+-0.11	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0))
+-2.98	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (C $0)))
+-4.04	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (r 1 $0)))
+-4.07	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (d 1 $0)))
+-4.07	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (l 1 $0)))
+
+practice_shaping_17
+-0.11	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0))
+-2.98	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (C $0)))
+-4.04	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (r 1 $0)))
+-4.07	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (d 1 $0)))
+-4.07	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (l 1 $0)))
+
+practice_shaping_18
+-0.11	(lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) $0))
+-2.98	(lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) (L $0)))
+-4.04	(lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) (r 1 $0)))
+-4.07	(lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) (d 1 $0)))
+-4.07	(lambda (#(loop 3 (lambda (lambda (d 1 (L $0))))) (l 1 $0)))
+
+practice_shaping_19
+-0.11	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0))
+-2.98	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (C $0)))
+-4.04	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (r 1 $0)))
+-4.07	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (d 1 $0)))
+-4.07	(lambda (#(loop 3 (lambda (lambda (d 1 (C $0))))) (l 1 $0)))
+
+practice1_0
+-0.16	(lambda (LL (#(loop 3 (lambda (lambda (d 1 (L $0))))) $0)))
+-2.72	(lambda (LL (LL (#(loop 3 (lambda (lambda (d 1 (L $0))))) $0))))
+-3.03	(lambda (LL (#(loop 3 (lambda (lambda (d 1 (L $0))))) (L $0))))
+-4.09	(lambda (LL (#(loop 3 (lambda (lambda (d 1 (L $0))))) (r 1 $0))))
+-4.12	(lambda (LL (#(loop 3 (lambda (lambda (d 1 (L $0))))) (d 1 $0))))
+
+practice1_1
+-0.16	(lambda (LL (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0)))
+-2.72	(lambda (LL (LL (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0))))
+-3.03	(lambda (LL (#(loop 3 (lambda (lambda (d 1 (C $0))))) (C $0))))
+-4.09	(lambda (LL (#(loop 3 (lambda (lambda (d 1 (C $0))))) (r 1 $0))))
+-4.12	(lambda (LL (#(loop 3 (lambda (lambda (d 1 (C $0))))) (d 1 $0))))
+
+practice1_2
+-0.16	(lambda (LL (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0)))
+-2.72	(lambda (LL (LL (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0))))
+-3.03	(lambda (LL (#(loop 3 (lambda (lambda (d 1 (C $0))))) (C $0))))
+-4.09	(lambda (LL (#(loop 3 (lambda (lambda (d 1 (C $0))))) (r 1 $0))))
+-4.12	(lambda (LL (#(loop 3 (lambda (lambda (d 1 (C $0))))) (d 1 $0))))
+
+practice1_3
+-0.16	(lambda (LL (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0)))
+-2.72	(lambda (LL (LL (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0))))
+-3.03	(lambda (LL (#(loop 3 (lambda (lambda (d 1 (C $0))))) (C $0))))
+-4.09	(lambda (LL (#(loop 3 (lambda (lambda (d 1 (C $0))))) (r 1 $0))))
+-4.12	(lambda (LL (#(loop 3 (lambda (lambda (d 1 (C $0))))) (d 1 $0))))
+
+practice1_4
+-0.16	(lambda (LL (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0)))
+-2.72	(lambda (LL (LL (#(loop 3 (lambda (lambda (d 1 (C $0))))) $0))))
+-3.03	(lambda (LL (#(loop 3 (lambda (lambda (d 1 (C $0))))) (C $0))))
+-4.09	(lambda (LL (#(loop 3 (lambda (lambda (d 1 (C $0))))) (r 1 $0))))
+-4.12	(lambda (LL (#(loop 3 (lambda (lambda (d 1 (C $0))))) (d 1 $0))))
+
+practice1_6
+-0.16	(lambda (LL (#(loop 3 (lambda (lambda (d 1 (L $0))))) $0)))
+-2.72	(lambda (LL (LL (#(loop 3 (lambda (lambda (d 1 (L $0))))) $0))))
+-3.03	(lambda (LL (#(loop 3 (lambda (lambda (d 1 (L $0))))) (L $0))))
+-4.09	(lambda (LL (#(loop 3 (lambda (lambda (d 1 (L $0))))) (r 1 $0))))
+-4.12	(lambda (LL (#(loop 3 (lambda (lambda (d 1 (L $0))))) (d 1 $0))))
+
+Compression message saved to: compressionMessages/2020-04-11T19:02:56.070252
+Compression backend will run for most 99 iterations
+Total number of candidates: 1852
+Constructed version spaces and coalesced candidates in 656.439ms.
+Trimmed down the beam, have only 298 best candidates
+Rewrote topK in 821.158ms.
+Initial score: -192.485344
+Scored candidates in 609.569ms.
+No improvement possible.
+Completed one step of memory consolidation in 2.25919s.
+completed ocaml compression in 2.2592s.
+Finished consolidation.
+Induced a grammar in 2.5 seconds
+Grammar after iteration 3:
+-0.491583	t0	$_
+0.000000	(sketch -> sketch) -> sketch -> sketch	embed
+-0.003574	int	1
+-0.035823	int	3
+-0.035826	int	2
+-0.759503	sketch -> sketch	LL
+-1.046578	int -> sketch -> sketch	r
+-1.062568	sketch -> sketch	C
+-1.068882	sketch -> sketch	L
+-1.075523	int -> sketch -> sketch	d
+-1.078171	int -> sketch -> sketch	l
+-1.079368	int -> (int -> sketch -> sketch) -> sketch -> sketch	loop
+-1.079371	sketch -> sketch	E
+-1.079371	int -> sketch -> sketch	u
+-0.742899	sketch -> sketch	#(loop 3 (lambda (lambda (d 1 (C $0)))))
+-0.869650	sketch -> sketch	#(loop 3 (lambda (lambda (d 1 (L $0)))))
+-1.014835	sketch -> sketch	#(loop 3 (lambda (lambda (LL (r 1 $0)))))
+Currently using this much memory: 213164032
+Exported checkpoint to experimentOutputs/sketch/2020-04-11T17:31:57.284832/sketch_aic=1.0_ar=3_dp=False_shp=False_ET=1800_it=3_MF=5_nCons=False_parTes=False_pc=30_RW=False_st=True_solver=python_STM=True_L=1.5_TRR=unsolved_K=2_topkNotMAP=False_tset=S12_rec=False.pickle
+WARNING: Do not have an English description of:
+ #(loop 3 (lambda (lambda (d 1 (C $0)))))
+
+WARNING: Do not have an English description of:
+ #(loop 3 (lambda (lambda (LL (r 1 $0)))))
+
+WARNING: Do not have an English description of:
+ #(loop 3 (lambda (lambda (d 1 (L $0)))))
+
+Exporting primitive graph to experimentOutputs/sketch/2020-04-11T17:31:57.284832/sketch_primitives_2_depth.pdf
+Exported primitive graph to experimentOutputs/sketch/2020-04-11T17:31:57.284832/sketch_primitives_2_unordered.pdf
+Currently using this much memory: 214007808
+Currently using this much memory: 214007808
+Using a waking task batch of size: 26
+Disabling parallelism on the Python side because we only have one job.
+If you are using ocaml, there could still be parallelism.
+(python) Launching sketch -> sketch (26 tasks) w/ 80 CPUs. 0.000000 <= MDL < 1.500000. Timeout 1800.000000.
+(python) Launching sketch -> sketch (26 tasks) w/ 80 CPUs. 1.500000 <= MDL < 3.000000. Timeout 1799.931977.
+(python) Launching sketch -> sketch (26 tasks) w/ 80 CPUs. 3.000000 <= MDL < 4.500000. Timeout 1799.863633.
+(python) Launching sketch -> sketch (26 tasks) w/ 80 CPUs. 4.500000 <= MDL < 6.000000. Timeout 1799.797717.
+(python) Launching sketch -> sketch (26 tasks) w/ 80 CPUs. 6.000000 <= MDL < 7.500000. Timeout 1799.715497.
+(python) Launching sketch -> sketch (26 tasks) w/ 80 CPUs. 7.500000 <= MDL < 9.000000. Timeout 1799.619678.
+(python) Launching sketch -> sketch (26 tasks) w/ 80 CPUs. 9.000000 <= MDL < 10.500000. Timeout 1799.375103.
+(python) Launching sketch -> sketch (26 tasks) w/ 80 CPUs. 10.500000 <= MDL < 12.000000. Timeout 1798.473063.
+(python) Launching sketch -> sketch (26 tasks) w/ 80 CPUs. 12.000000 <= MDL < 13.500000. Timeout 1794.604246.
+(python) Launching sketch -> sketch (26 tasks) w/ 80 CPUs. 13.500000 <= MDL < 15.000000. Timeout 1779.077971.
+(python) Launching sketch -> sketch (26 tasks) w/ 80 CPUs. 15.000000 <= MDL < 16.500000. Timeout 1713.881328.
+PANIC! Exception in child worker: 
+Traceback (most recent call last):
+  File "/om/user/lyt/ec/bin/../dreamcoder/utilities.py", line 693, in runWithTimeout
+    result = k()
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 208, in <lambda>
+    return runWithTimeout(lambda : p.evaluate([])(_empty_sketch)(SketchState(history=[])),
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 71, in <lambda>
+    return lambda k: lambda s: k(s.right(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 71, in <lambda>
+    return lambda k: lambda s: k(s.right(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 109, in f
+    sketch, rest = k(sketch)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 71, in <lambda>
+    return lambda k: lambda s: k(s.right(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 75, in <lambda>
+    return lambda k: lambda s: k(s.down(d))
+  File "/om/user/lyt/ec/bin/../dreamcoder/utilities.py", line 688, in timeoutCallBack
+    raise RunWithTimeout()
+dreamcoder.utilities.RunWithTimeout
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/om/user/lyt/ec/bin/../dreamcoder/enumeration.py", line 230, in _f
+    r = f(*a, **k)
+  File "/om/user/lyt/ec/bin/../dreamcoder/enumeration.py", line 366, in solveForTask_python
+    lowerBound=lowerBound, upperBound=upperBound)
+  File "/om/user/lyt/ec/bin/../dreamcoder/enumeration.py", line 426, in enumerateForTasks
+    success, likelihood = likelihoodModel.score(p, task)
+  File "/om/user/lyt/ec/bin/../dreamcoder/likelihoodModel.py", line 16, in score
+    logLikelihood = task.logLikelihood(program, self.timeout)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/makeSketchTasks.py", line 116, in logLikelihood
+    trace = executeSketch(e, timeout=0.05)[1] # identical to above.
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/sketchPrimitives.py", line 209, in executeSketch
+    timeout=timeout)
+  File "/om/user/lyt/ec/bin/../dreamcoder/utilities.py", line 700, in runWithTimeout
+    raise RunWithTimeout()
+dreamcoder.utilities.RunWithTimeout
+
+Traceback (most recent call last):
+  File "bin/sketch.py", line 24, in <module>
+    main(arguments)
+  File "/om/user/lyt/ec/bin/../dreamcoder/domains/sketch/main.py", line 84, in main
+    for result in generator:
+  File "/om/user/lyt/ec/bin/../dreamcoder/dreamcoder.py", line 431, in ecIterator
+    evaluationTimeout=evaluationTimeout)
+  File "/om/user/lyt/ec/bin/../dreamcoder/dreamcoder.py", line 577, in default_wake_generative
+    evaluationTimeout=evaluationTimeout)
+  File "/om/user/lyt/ec/bin/../dreamcoder/enumeration.py", line 183, in multicoreEnumeration
+    assert False
+AssertionError

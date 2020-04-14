@@ -117,6 +117,9 @@ class SupervisedSketch(Task):
             trace = executeSketch(e, timeout=0.05)[1] # identical to above.
         except RunWithTimeout:
             return NEGATIVEINFINITY
+        except RecursionError:
+            return NEGATIVEINFINITY
+            
 
         if set(self.trace)==set(trace):
             return 0.0

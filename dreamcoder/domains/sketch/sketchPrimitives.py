@@ -210,7 +210,11 @@ def executeSketch(p, timeout=None):
             timeout=timeout)
     except RunWithTimeout:
         raise RunWithTimeout()
-    except:
+    except RecursionError:
+        raise
+    except Exception as inst:
+        print(type(inst))
+        print(inst)
         print("this program causes exceptions",p)
         assert False
 
