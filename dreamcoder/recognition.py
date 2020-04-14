@@ -917,11 +917,17 @@ class RecognitionModel(nn.Module):
         return ml, al
 
     def replaceProgramsWithLikelihoodSummaries(self, frontier):
-        return Frontier(
-            [FrontierEntry(
+        def make_entry(e):
+            if e.tokens is None:
+                e.tokens = e.program.left_order_tokens(show_vars=False)
+            return FrontierEntry(
                 program=self.grammar.closedLikelihoodSummary(frontier.task.request, e.program),
                 logLikelihood=e.logLikelihood,
-                logPrior=e.logPrior) for e in frontier],
+                logPrior=e.logPrior,
+                tokens=e.tokens,
+                test=e.program)
+        return Frontier(
+            [make_entry(e) for e in frontier],
             task=frontier.task)
     
     def pairwise_cosine_similarity(self, a, b, eps=1e-8):
@@ -1248,6 +1254,7 @@ class RecognitionModel(nn.Module):
         eprint()
         flushEverything()
         samples = [z for z in samples if z is not None]
+        import pdb; pdb.set_trace()
         eprint()
         eprint("Got %d/%d valid samples." % (len(samples), N))
         flushEverything()
@@ -1324,6 +1331,7 @@ class RecurrentFeatureExtractor(nn.Module):
         self.parallelTaskOfProgram = True
         
         assert lexicon
+        lexicon = sorted(lexicon)
         self.specialSymbols = [
             "STARTING",  # start of entire sequence
             "ENDING",  # ending of entire sequence
@@ -1347,6 +1355,10 @@ class RecurrentFeatureExtractor(nn.Module):
         self.symbolToIndex = {
             symbol: index for index,
             symbol in enumerate(lexicon)}
+        self.indexToSymbol = {
+            index : symbol for index,
+            symbol in enumerate(lexicon)
+        }
         self.startingIndex = self.symbolToIndex["STARTING"]
         self.endingIndex = self.symbolToIndex["ENDING"]
         self.startOfOutputIndex = self.symbolToIndex["STARTOFOUTPUT"]
@@ -1365,7 +1377,7 @@ class RecurrentFeatureExtractor(nn.Module):
     # modify examples before forward (to turn them into iterables of lexicon)
     # you should override this if needed
     def tokenize(self, x): return x
-
+        
     def symbolEmbeddings(self):
         return {s: self.encoder(variable([self.symbolToIndex[s]])).squeeze(
             0).data.cpu().numpy() for s in self.lexicon if not (s in self.specialSymbols)}

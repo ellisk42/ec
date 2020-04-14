@@ -26,6 +26,12 @@ class Grammar(object):
 
         self.expression2likelihood = dict((p, l) for l, _, p in productions)
         self.expression2likelihood[Index(0)] = self.logVariable
+        self.vocab = {
+            str(p) : i
+            for i, p in enumerate(
+                [p for (_, _, p) in sorted(productions, key=lambda prod: str(prod[-1]))] 
+                + ["VAR"])
+        }
 
     def randomWeights(self, r):
         """returns a new grammar with random weights drawn from r. calls `r` w/ old weight"""

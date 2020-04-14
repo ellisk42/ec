@@ -116,7 +116,7 @@ let load_problems channel =
    maxParameters,
    nc,timeout,verbose)
 
-let export_frontiers number_enumerated tf solutions : string =
+let export_frontiers number_enumerated tf solutions: string =
   let open Yojson.Basic.Util in
   let open Yojson.Basic in
   let serialization : Yojson.Basic.json =
@@ -126,7 +126,8 @@ let export_frontiers number_enumerated tf solutions : string =
              `Assoc([("program", `String(s.hit_program));
                      ("time", `Float(s.hit_time));
                      ("logLikelihood", `Float(s.hit_likelihood));
-                     ("logPrior", `Float(s.hit_prior))]))))))
+                     ("logPrior", `Float(s.hit_prior));
+                     ("tokens", `String(s.hit_tokens))]))))))
   in pretty_to_string serialization
 ;;
 

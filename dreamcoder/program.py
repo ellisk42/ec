@@ -73,6 +73,23 @@ class Program(object):
             "FATAL: uncurry has a bug. %s : %s, but uncurried to %s : %s" % (self, self.infer(),
                                                                              e, e.infer())
         return e
+        
+    def left_order_tokens(self, show_vars=False):
+        def t(show_vars, tokens, p):
+            if p.isIndex:
+                if show_vars: return tokens + ["VAR"]
+                else: return tokens
+            elif p.isAbstraction:
+                return tokens + t(show_vars, [], p.body)
+            elif p.isApplication:
+                return tokens + t(show_vars, [], p.f) + t(show_vars, [], p.x)
+            elif p.isInvented:
+                return tokens + [str(p)]
+            elif p.isPrimitive:
+                return tokens + [str(p)]
+            else:
+                assert False
+        return t(show_vars, [], self)
 
     def wellTyped(self):
         try:
@@ -209,8 +226,7 @@ class Program(object):
             if s in Primitive.GLOBALS: return Primitive.GLOBALS[s]
             assert False
         return p(s, [])
-                
-                
+
 
 
 class Application(Program):

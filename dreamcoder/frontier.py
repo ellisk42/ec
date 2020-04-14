@@ -9,11 +9,18 @@ class FrontierEntry(object):
             _=None,
             logPrior=None,
             logLikelihood=None,
-            logPosterior=None):
+            logPosterior=None,
+            tokens=None,
+            test=None):
         self.logPosterior = logPrior + logLikelihood if logPosterior is None else logPosterior
         self.program = program
         self.logPrior = logPrior
         self.logLikelihood = logLikelihood
+        if tokens is None:
+            if program is None: tokens = []
+            else:
+                tokens = self.program.left_order_tokens(show_vars=False)
+        self.tokens = tokens
 
     def __repr__(self):
         return "FrontierEntry(program={self.program}, logPrior={self.logPrior}, logLikelihood={self.logLikelihood}".format(
@@ -81,7 +88,8 @@ class Frontier(object):
                 logLikelihood=e.logLikelihood,
                 logPosterior=e.logPrior +
                 e.logLikelihood -
-                z) for e in self]
+                z,
+                tokens=e.tokens) for e in self]
         newEntries.sort(key=lambda e: e.logPosterior, reverse=True)
         return Frontier(newEntries,
                         self.task)

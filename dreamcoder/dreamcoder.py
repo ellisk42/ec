@@ -11,6 +11,7 @@ from dreamcoder.primitiveGraph import graphPrimitives
 from dreamcoder.dreaming import backgroundHelmholtzEnumeration
 from dreamcoder.parser import *
 from dreamcoder.languageUtilities import *
+from dreamcoder.translation import *
 
 class ECResult():
     def __init__(self, _=None,
@@ -468,6 +469,8 @@ def ecIterator(grammar, tasks,
         result.taskLanguage, result.vocabularies = languageForTasks(languageDataset, languageDatasetDir, result.taskLanguage)
         eprint("Loaded language dataset from ", languageDataset)
     
+    
+    ######## Test Evaluation and background Helmholtz enumeration.
     for j in range(resume or 0, iterations):
         if storeTaskMetrics and rewriteTaskMetrics:
             eprint("Resetting task metrics for next iteration.")
@@ -497,8 +500,7 @@ def ecIterator(grammar, tasks,
             helmholtzFrontiers = lambda: []
 
         reportMemory()
-
-        # Get waking task batch.
+        
         wakingTaskBatch = taskBatcher.getTaskBatch(result, tasks, taskBatchSize, j)
         eprint("Using a waking task batch of size: " + str(len(wakingTaskBatch)))
 
@@ -528,7 +530,7 @@ def ecIterator(grammar, tasks,
 
         eprint("Frontiers discovered top down: " + str(len(tasksHitTopDown)))
         eprint("Total frontiers: " + str(len([f for f in result.allFrontiers.values() if not f.empty])))
-
+        
         #### Recognition model round 0. No language.
         result.models = [] # Reset the list of models at each iteration.
         if len(recognition_0) > 0:
@@ -574,6 +576,14 @@ def ecIterator(grammar, tasks,
                                                                  for f in result.allFrontiers.values()
                                                                  if len(f) > 0},
                                  'frontier')
+        
+        ### Induce synchronous grammar for generative model with language.
+        if "language" in recognition_1:
+            induce_synchronous_grammar(frontiers=result.allFrontiers.values(), 
+                            tasks=tasks, testingTasks=testingTasks, grammar=grammar, 
+                            language_encoder=language_encoder, 
+                            language_data=result.taskLanguage,
+                            language_lexicon=result.vocabularies["train"])
         
         #### Recognition model round 1. With language.
         # Optionally tries to relabel Helmholtz with the nearest language.
@@ -792,6 +802,15 @@ def default_wake_generative(grammar, tasks,
     summaryStatistics("Generative model", [t for t in times.values() if t is not None])
     return topDownFrontiers, times
 
+def induce_synchronous_grammar(frontiers, tasks, testingTasks, grammar, 
+                    language_encoder=None, language_data=None, language_lexicon=None):
+    encoder = language_encoder(tasks, testingTasks=testingTasks, cuda=False, language_data=language_data, lexicon=language_lexicon)
+    n_frontiers = len([f for f in allFrontiers if not f.empty])
+    eprint(f"Inducing synchronous grammar. Using n=[{len(n_frontiers)} frontiers.]")
+    if n_frontiers == 0:    
+        return
+    smt_alignment(tasks, frontiers, grammar, encoder)
+
 def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFrontiers, _=None,
                       ensembleSize=1, featureExtractor=None, matrixRank=None, mask=False,
                       activation=None, contextual=True, biasOptimal=True,
@@ -833,7 +852,7 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
     else:
         nearest_encoder, nearest_tasks = None, None
         helmholtz_nearest_language = 0
-        
+    
     recognizers = [RecognitionModel(example_encoder=example_encoders[i],
                                     language_encoder=language_encoders[i],
                                     grammar=grammar,
@@ -984,7 +1003,7 @@ def commandlineArguments(_=None,
                          CPUs=1,
                          solver='ocaml',
                          compressor="ocaml",
-                         recognition_0=True,
+                         recognition_0=["examples"],
                          recognitionTimeout=None,
                          activation='relu',
                          helmholtzRatio=1.,

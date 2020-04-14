@@ -355,7 +355,8 @@ let score_programs_for_task (f:frontier) (t:task) : frontier =
 type hit_result = {hit_program: string;
                    hit_likelihood: float;
                    hit_prior: float;
-                   hit_time: float;}
+                   hit_time: float;
+                   hit_tokens: string;}
 
 let enumerate_for_tasks (g: contextual_grammar) ?verbose:(verbose = true)
     ~maxFreeParameters
@@ -426,7 +427,8 @@ let enumerate_for_tasks (g: contextual_grammar) ?verbose:(verbose = true)
                      {hit_program = string_of_program p;
                       hit_prior = logPrior;
                       hit_likelihood = logLikelihood;
-                      hit_time = dt;} ;
+                      hit_time = dt;
+                      hit_tokens = string_of_tokens false p} ;
                    while Heap.length hits.(j) > maximumFrontier.(j) do
                      Heap.remove_top hits.(j)
                    done;

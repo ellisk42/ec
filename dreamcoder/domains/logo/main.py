@@ -597,7 +597,6 @@ def main(args):
         args["iterations"] = original_iterations * multiplier
         
         eprint(f'Now running for n={args["iterations"]} iterations.')
-        import pdb; pdb.set_trace()
 
     generator = ecIterator(baseGrammar, train,
                            taskDataset=task_dataset,

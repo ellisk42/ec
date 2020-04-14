@@ -73,7 +73,20 @@ class TokenRecurrentFeatureExtractor(RecurrentFeatureExtractor):
                                         [tokens, []]
                                      ]
         return self.tokenized_tasks[use_task_name] # Feature extractor examples are usually lists of (xs, y) sets.
-
+    
+    def numeric_tokenize(self, task):
+        tokenized = []
+        for (sentences, _) in self.tokenize(task):
+            for tokens in sentences:
+                tokenized.append([self.symbolToIndex[token] for token in tokens])
+        return tokenized
+        
+    def to_symbols(self, numeric_tokens):
+        return [self.indexToSymbol[n] for n in numeric_tokens]
+    
+    def to_symbols_batch(self, numeric_token_batch):
+        return [self.to_symbols(tokens) for tokens in numeric_token_batch]
+    
     def build_lexicon(self, lexicon):
         if lexicon is not None:
             eprint("Received a lexicon of {} words; adding UNK".format(len(lexicon)))

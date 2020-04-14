@@ -73,6 +73,18 @@ let rec show_program (is_function : bool) = function
 
 let string_of_program = show_program false
 
+let rec left_order_tokens (show_vars : bool) tokens = function
+  | Index(j) -> 
+    if show_vars then tokens @ ["VAR"]
+    else tokens @ []
+  | Abstraction(body) -> tokens @ (left_order_tokens show_vars [] body)
+  | Apply(p,q) -> 
+    tokens @ (left_order_tokens show_vars [] p) @ (left_order_tokens show_vars [] q)
+  | Invented (_, i) -> tokens @ [ "#"^show_program false i]
+  | Primitive (_, n, _) -> tokens @ [n]
+
+let string_of_tokens (show_vars : bool) p = 
+  String.concat ~sep:" " ((left_order_tokens show_vars []) p)
 
 let primitive_name = function | Primitive(_,n,_) -> n
                               | e -> raise (Failure ("primitive_name: "^string_of_program e^"not a primitive"))

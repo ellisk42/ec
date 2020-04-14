@@ -2,7 +2,7 @@ from dreamcoder.domains.re2.makeRe2Tasks import loadRe2Dataset
 from dreamcoder.dreamcoder import ecIterator
 from dreamcoder.utilities import *
 from dreamcoder.domains.text.main import ConstantInstantiateVisitor
-from dreamcoder.domains.text.textPrimitives import re2_primitives, primitives, re2_4_letter, re2_6_letter
+from dreamcoder.domains.text.textPrimitives import re2_primitives, primitives, re2_4_letter, re2_6_letter, re2_characters
 from dreamcoder.domains.list.listPrimitives import re2_ListPrimitives, bootstrapTarget
 from dreamcoder.recognition import *
 from dreamcoder.enumeration import *
@@ -34,6 +34,8 @@ def re2_options(parser):
                             "re2_6_letter"],
                         default="re2_primitives",
                         help="Which primitive set to use, which may restrict the number of characters we allow.")
+    parser.add_argument("--allow_language_strings",
+                        default=False)
 
 def main(args):
     """
@@ -67,10 +69,15 @@ def main(args):
     outputDirectory = "experimentOutputs/re2/%s"%timestamp
     os.system("mkdir -p %s"%outputDirectory)
     
+    # TODO (@Cathy Wong): allow this to include sequences specified in the language.
+    allow_language_strings = args.pop("allow_language_strings")
+    eprint(f"Allowing language constants: [{allow_language_strings}]")
+    if allow_language_strings:
+        eprint("Not yet implemented!")
+        assert False
+    words = re2_characters
     ConstantInstantiateVisitor.SINGLE = \
-        ConstantInstantiateVisitor(list(map(list, list({tuple([c for c in s])
-                                                        for t in test + train
-                                                        for s in t.stringConstants}))))
+        ConstantInstantiateVisitor(words)
     evaluationTimeout = 0.0005
     
     generator = ecIterator(baseGrammar, train,

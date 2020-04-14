@@ -15,7 +15,8 @@ from dreamcoder.utilities import tuplify, timing, eprint, get_root_dir, mean
 
 
 def helmholtzEnumeration(g, request, inputs, timeout, _=None,
-                         special=None, evaluationTimeout=None):
+                         special=None, evaluationTimeout=None,
+                         use_vars_in_tokenized=False):
     """Returns json (as text)"""
     message = {"request": request.json(),
                "timeout": timeout,
@@ -23,6 +24,7 @@ def helmholtzEnumeration(g, request, inputs, timeout, _=None,
                "extras": inputs}
     if evaluationTimeout: message["evaluationTimeout"] = evaluationTimeout
     if special: message["special"] = special
+    if use_vars_in_tokenized: message["use_vars_in_tokenized"] = use_vars_in_tokenized
     message = json.dumps(message)
     with open('/tmp/hm', 'w') as handle:
         handle.write(message)
@@ -38,7 +40,8 @@ def helmholtzEnumeration(g, request, inputs, timeout, _=None,
 
 
 def backgroundHelmholtzEnumeration(tasks, g, timeout, _=None,
-                                   special=None, evaluationTimeout=None):
+                                   special=None, evaluationTimeout=None,
+                                   use_vars_in_tokenized=False):
     requests = list({t.request for t in tasks})
     inputs = {r: list({tuplify(xs)
                        for t in tasks if t.request == r
@@ -48,7 +51,8 @@ def backgroundHelmholtzEnumeration(tasks, g, timeout, _=None,
     promises = [workers.apply_async(helmholtzEnumeration,
                                     args=(g, r, inputs[r], float(timeout)),
                                     kwds={'special': special,
-                                          'evaluationTimeout': evaluationTimeout})
+                                          'evaluationTimeout': evaluationTimeout,
+                                          'use_vars_in_tokenized' : use_vars_in_tokenized})
                 for r in requests]
 
     def get():
@@ -60,8 +64,9 @@ def backgroundHelmholtzEnumeration(tasks, g, timeout, _=None,
                 for b, entry in enumerate(response):
                     frontiers.append(Frontier([FrontierEntry(program=Program.parse(p),
                                                              logPrior=entry["ll"],
-                                                             logLikelihood=0.)
-                                               for p in entry["programs"]],
+                                                             logLikelihood=0.,
+                                                             tokens=tokens.split())
+                                               for p, tokens in zip(entry["programs"], entry["tokens"])],
                                               task=Task(str(b),
                                                         request,
                                                         [])))
