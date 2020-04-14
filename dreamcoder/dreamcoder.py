@@ -172,6 +172,8 @@ def ecIterator(grammar, tasks,
                # Recognition parameters.
                recognition_0=["examples"],
                recognition_1=[],
+               # SMT parameters.
+               moses_dir=None,
                finetune_1=False,
                helmholtz_nearest_language=0,
                language_encoder=None,
@@ -323,7 +325,8 @@ def ecIterator(grammar, tasks,
             "taskDataset",
             "finetune_1",
             "recognitionEpochs",
-            "languageDataset"
+            "languageDataset",
+            "moses_dir"
         ]
         parameters["iterations"] = iteration
         checkpoint_params = [k for k in sorted(parameters.keys()) if k not in exclude_from_path]
@@ -579,11 +582,13 @@ def ecIterator(grammar, tasks,
         
         ### Induce synchronous grammar for generative model with language.
         if "language" in recognition_1:
-            induce_synchronous_grammar(frontiers=result.allFrontiers.values(), 
+            induce_synchronous_grammar(frontiers=result.allFrontiers.values(),
                             tasks=tasks, testingTasks=testingTasks, grammar=grammar, 
                             language_encoder=language_encoder, 
                             language_data=result.taskLanguage,
-                            language_lexicon=result.vocabularies["train"])
+                            language_lexicon=result.vocabularies["train"],
+                            output_prefix=outputPrefix,
+                            moses_dir=moses_dir)
         
         #### Recognition model round 1. With language.
         # Optionally tries to relabel Helmholtz with the nearest language.
@@ -803,13 +808,16 @@ def default_wake_generative(grammar, tasks,
     return topDownFrontiers, times
 
 def induce_synchronous_grammar(frontiers, tasks, testingTasks, grammar, 
-                    language_encoder=None, language_data=None, language_lexicon=None):
+                    language_encoder=None, language_data=None, language_lexicon=None,
+                    output_prefix=None,
+                    moses_dir=None):    
     encoder = language_encoder(tasks, testingTasks=testingTasks, cuda=False, language_data=language_data, lexicon=language_lexicon)
-    n_frontiers = len([f for f in allFrontiers if not f.empty])
-    eprint(f"Inducing synchronous grammar. Using n=[{len(n_frontiers)} frontiers.]")
+    n_frontiers = len([f for f in frontiers if not f.empty])
+    eprint(f"Inducing synchronous grammar. Using n=[{n_frontiers} frontiers],")
     if n_frontiers == 0:    
         return
-    smt_alignment(tasks, frontiers, grammar, encoder)
+    corpus_dir = os.path.split(os.path.dirname(output_prefix))[0] # Remove timestamp and type prefix on checkpoint
+    smt_alignment(tasks, frontiers, grammar, encoder, corpus_dir, moses_dir)
 
 def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFrontiers, _=None,
                       ensembleSize=1, featureExtractor=None, matrixRank=None, mask=False,
@@ -1088,8 +1096,12 @@ def commandlineArguments(_=None,
         help="""Activation function for neural recognition model.
                         Default: %s""" %
         activation)
-                        
     
+    ### SMT generative model training.
+    parser.add_argument("--moses_dir",
+        default="../moses_compiled",
+        help="Location of top-level Moses SMT directory for machine translation.")
+
     ### Algorithm training details.
     parser.add_argument("--resume",
                         help="Resumes EC algorithm from checkpoint. You can either pass in the path of a checkpoint, or you can pass in the iteration to resume from, in which case it will try to figure out the path.",
