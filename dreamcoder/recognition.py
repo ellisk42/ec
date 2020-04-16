@@ -1254,7 +1254,6 @@ class RecognitionModel(nn.Module):
         eprint()
         flushEverything()
         samples = [z for z in samples if z is not None]
-        import pdb; pdb.set_trace()
         eprint()
         eprint("Got %d/%d valid samples." % (len(samples), N))
         flushEverything()
@@ -1339,7 +1338,7 @@ class RecurrentFeatureExtractor(nn.Module):
             "ENDOFINPUT"  # delimits the ending of an input - we might have multiple inputs
         ]
         lexicon += self.specialSymbols
-        encoder = nn.Embedding(len(lexicon), H)
+        encoder = nn.Embedding(len(lexicon)+1, H) # Allow 1 indexed.
         self.encoder = encoder
 
         self.H = H
@@ -1352,11 +1351,12 @@ class RecurrentFeatureExtractor(nn.Module):
 
         self.use_cuda = cuda
         self.lexicon = lexicon
+        # Note: 1 indexed!
         self.symbolToIndex = {
-            symbol: index for index,
+            symbol: index+1 for index,
             symbol in enumerate(lexicon)}
         self.indexToSymbol = {
-            index : symbol for index,
+            index+1 : symbol for index,
             symbol in enumerate(lexicon)
         }
         self.startingIndex = self.symbolToIndex["STARTING"]
@@ -1408,7 +1408,9 @@ class RecurrentFeatureExtractor(nn.Module):
             es[j] += [self.endingIndex] * (m - len(e))
 
         x = variable(es, cuda=self.use_cuda)
+
         x = self.encoder(x)
+
         # x: (batch size, maximum length, E)
         x = x.permute(1, 0, 2)
         # x: TxBxE

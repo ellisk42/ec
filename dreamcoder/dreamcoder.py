@@ -32,7 +32,8 @@ class ECResult():
                  hitsAtEachWake=None,
                  timesAtEachWake=None,
                  allFrontiers=None,
-                 taskLanguage=None):
+                 taskLanguage=None,
+                 tasksAttempted=None,):
         self.frontiersOverTime = {} # Map from task to [frontier at iteration 1, frontier at iteration 2, ...]
         self.hitsAtEachWake = hitsAtEachWake or []
         self.timesAtEachWake = timesAtEachWake or []
@@ -53,6 +54,7 @@ class ECResult():
         self.allFrontiers = allFrontiers or {}
         self.taskLanguage = taskLanguage or {} # Maps from task names to language.
         self.models = models or [] # List of recognition models.
+        self.tasksAttempted = tasksAttempted or set() # Tasks we have attempted so far.
 
     def __repr__(self):
         attrs = ["{}={}".format(k, v) for k, v in self.__dict__.items()]
@@ -64,7 +66,6 @@ class ECResult():
         for t in self.recognitionTaskMetrics:
             if isinstance(t, Task) and t not in training: testing.append(t)
         return testing
-
 
     def recordFrontier(self, frontier):
         t = frontier.task
@@ -368,10 +369,11 @@ def ecIterator(grammar, tasks,
         resume = len(result.grammars) - 1
         eprint("Loaded checkpoint from", path)
         grammar = result.grammars[-1] if result.grammars else grammar
+        # Backward compatability if we weren't tracking attempted tasks.
+        if not hasattr(result, 'tasksAttempted'): result.tasksAttempted = set()
     else:  # Start from scratch
         #for graphing of testing tasks
         numTestingTasks = len(testingTasks) if len(testingTasks) != 0 else None
-
         result = ECResult(parameters=parameters,            
                           grammars=[grammar],
                           taskSolutions={
@@ -384,8 +386,8 @@ def ecIterator(grammar, tasks,
                               t: Frontier([],
                                           task=t) for t in tasks},
                           taskLanguage={
-                              t.name: [] for t in tasks + testingTasks})
-
+                              t.name: [] for t in tasks + testingTasks},
+                          tasksAttempted=set())
 
     # Set up the task batcher.
     if taskReranker == 'default':
@@ -509,6 +511,7 @@ def ecIterator(grammar, tasks,
 
         # WAKING UP
         if useDSL:
+            result.tasksAttempted.update(wakingTaskBatch)
             wake_generative = custom_wake_generative if custom_wake_generative is not None else default_wake_generative
             topDownFrontiers, times = wake_generative(grammar, wakingTaskBatch,
                                                       solver=solver,
@@ -537,6 +540,7 @@ def ecIterator(grammar, tasks,
         #### Recognition model round 0. No language.
         result.models = [] # Reset the list of models at each iteration.
         if len(recognition_0) > 0:
+            result.tasksAttempted.update(wakingTaskBatch)
             recognition_iteration = 0
             # Should we initialize the weights to be what they were before?
             previousRecognitionModel = None
@@ -583,7 +587,8 @@ def ecIterator(grammar, tasks,
         ### Induce synchronous grammar for generative model with language.
         if "language" in recognition_1:
             induce_synchronous_grammar(frontiers=result.allFrontiers.values(),
-                            tasks=tasks, testingTasks=testingTasks, grammar=grammar, 
+                            tasks=tasks, testingTasks=testingTasks, tasksAttempted=result.tasksAttempted,
+                            grammar=grammar, 
                             language_encoder=language_encoder, 
                             language_data=result.taskLanguage,
                             language_lexicon=result.vocabularies["train"],
@@ -593,6 +598,7 @@ def ecIterator(grammar, tasks,
         #### Recognition model round 1. With language.
         # Optionally tries to relabel Helmholtz with the nearest language.
         if len(recognition_1) > 0:
+            result.tasksAttempted.update(wakingTaskBatch)
             recognition_iteration = 1
             thisRatio = helmholtzRatio
             if j == 0 and not biasOptimal: thisRatio = 0
@@ -807,7 +813,7 @@ def default_wake_generative(grammar, tasks,
     summaryStatistics("Generative model", [t for t in times.values() if t is not None])
     return topDownFrontiers, times
 
-def induce_synchronous_grammar(frontiers, tasks, testingTasks, grammar, 
+def induce_synchronous_grammar(frontiers, tasks, testingTasks, tasksAttempted, grammar, 
                     language_encoder=None, language_data=None, language_lexicon=None,
                     output_prefix=None,
                     moses_dir=None):    
@@ -817,7 +823,7 @@ def induce_synchronous_grammar(frontiers, tasks, testingTasks, grammar,
     if n_frontiers == 0:    
         return
     corpus_dir = os.path.split(os.path.dirname(output_prefix))[0] # Remove timestamp and type prefix on checkpoint
-    smt_alignment(tasks, frontiers, grammar, encoder, corpus_dir, moses_dir)
+    smt_alignment(tasks, tasksAttempted, frontiers, grammar, encoder, corpus_dir, moses_dir)
 
 def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFrontiers, _=None,
                       ensembleSize=1, featureExtractor=None, matrixRank=None, mask=False,

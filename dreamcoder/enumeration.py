@@ -326,7 +326,7 @@ def solveForTask_ocaml(_=None,
                                            logPrior=g.logLikelihood(t.request, p))
                              for e in solutions
                              for p in [Program.parse(e["program"])]],
-                            tasksubpro=t)
+                            task=t)
         frontiers[t] = frontier
         if frontier.empty:
             searchTimes[t] = None
