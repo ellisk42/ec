@@ -2,13 +2,15 @@
 import itertools
 import os
 import subprocess
-from collections import Counter
+from collections import Counter, defaultdict
 from pathlib import Path
 from dreamcoder.utilities import *
 
-
+# Relative to moses_dir
 MOSES_SCRIPT = 'scripts/training/train-model.perl'
 MOSES_TOOLS = 'training-tools'
+LM_TOOL = 'bin/lmplz' 
+DECODER_TOOL = "bin/moses"
 
 def frontier_to_tokens(frontier, grammar):
     """:ret List of numeric token lists for each program 'sentence'."""
@@ -142,31 +144,104 @@ def moses_translation_tables(corpus_dir, moses_dir, output_dir=None, phrase_leng
     moses_cmd = f"{moses_script} --f ml --e nl --mgiza --root-dir {output_dir} --external-bin-dir {tools_loc} --corpus-dir {corpus_dir} --corpus {corpus} --do-steps 4 --no-lexical-weighting".split()
     subprocess.run(moses_cmd, check=True)
     
-def generate_decoder_config(corpus_dir, moses_dir, output_dir=None, phrase_length=None):
+    # IBM Model 1 lexical decoding -- directly convert this into a phrase table.
+    translation_table_loc = os.path.join(output_dir, 'model', 'lex.e2f')
+    phrase_table_loc = os.path.abspath(os.path.join(output_dir, 'model', 'phrase-table'))
+    with open(phrase_table_loc, 'w') as f:
+        delimiter_cmd = ["sed", "s/ / ||| /g", f"{translation_table_loc}"]
+        subprocess.run(delimiter_cmd, check=True, stdout=f)
+    return phrase_table_loc
+
+def train_natural_language_model(corpus_dir, moses_dir, output_dir=None, n_grams=3):
+    # Train the language model on the full training data.
     corpus = os.path.join(corpus_dir, "corpus")
-    if phrase_length == None:
-        raise Exception('Phrase tables.')
+    lm_filename = os.path.abspath(os.path.join(output_dir, f"lm-nl-o-{n_grams}.arpa"))
+    lm_tool = os.path.join(moses_dir, LM_TOOL)
+    lm_cmd = f"{lm_tool} -o {n_grams} --discount_fallback --text {corpus}.nl --arpa {lm_filename}".split()
+    subprocess.check_output(lm_cmd.split())
+    return {"factor" : 0,
+            "filename": lm_filename,
+            "order" : n_grams}
+            
+def generate_decoder_config(corpus_dir, moses_dir, output_dir, lm_config, phrase_table):
+    corpus = os.path.join(corpus_dir, "corpus")
+    lm_cmd = f"{lm_config['factor']}:{lm_config['order']}:{lm_config['filename']}"
     
     eprint("Running default moses.")
     moses_script = os.path.join(moses_dir, MOSES_SCRIPT)
-    moses_cmd = f"{moses_script} --f ml --e nl --mgiza --root-dir {output_dir} --external-bin-dir {tools_loc} --corpus-dir {corpus_dir} --corpus {corpus} --first-step 5 --last-step 9 --max-phrase-length {phrase_length}".split()
+    tools_loc = os.path.join(moses_dir, MOSES_TOOLS)
+    moses_cmd = f"{moses_script} --f ml --e nl --mgiza --root-dir {output_dir} --external-bin-dir {tools_loc} --corpus-dir {corpus_dir} --corpus {corpus} --lm {lm_cmd} --first-step 5 --last-step 9 --max-phrase-length 7".split()
     subprocess.run(moses_cmd, check=True)
 
-def smt_alignment(tasks, tasks_attempted, frontiers, grammar, language_encoder, output_prefix, moses_dir, n_pseudo=0, output_dir=None, phrase_length=1):
-    corpus_dir = os.path.join(output_prefix, "corpus_tmp")
+def translate_frontiers_to_nl(frontiers):
+    pass
+
+def decode_programs(program_tokens, output_dir, output_suffix, corpus_dir, moses_dir, n_best):
+    """:ret: idx_to_translations: {index of program : [list of translation tokens]}"""
+    eprint(f"Translating n=[{len(program_tokens)}] using n_best={n_best}")
+    tmp_program_file = os.path.abspath(os.path.join(output_dir, 'tmp_program_file'))
+    with open(tmp_program_file, 'w') as f:
+        for tokens in program_tokens:
+            f.write(' '.join(tokens) + "\n")
+
+    corpus = os.path.join(corpus_dir, "corpus")
+    tmp_nbest_file = os.path.abspath(os.path.join(output_dir, 'tmp_nbest_file'))
+    decoder_config = os.path.abspath(os.path.join(corpus_dir, "model", "moses.ini"))
+    decoder_loc = os.path.join(moses_dir, DECODER_TOOL)
+    decoder_cmd = f"{decoder_loc} --config {decoder_config} --input-file {tmp_program_file} "
+    decoder_cmd += f"--drop-unknown --phrase-drop-allowed -v 0 --n-best-list {tmp_nbest_file} {n_best}"
+ 
+    subprocess.check_output(decoder_cmd.split()) # Suppress output
+
+    delimiter = ' ||| '
+    with open(tmp_nbest_file, 'r') as f:
+        lines = [l.strip() for l in f.readlines() if delimiter in l]
+    idx_to_translations = defaultdict(list)
+    for l in lines:
+        split_l = l.split(delimiter)
+        idx, tokens = int(split_l[0]), split_l[1].split()
+        idx_to_translations[idx].append(tokens)
+        
+    if output_suffix is not None:
+        output = os.path.join(output_dir, output_suffix)
+        with open(output, 'w') as f:
+            for idx, p in enumerate(program_tokens):
+                f.write(f"{idx} ||| {' '.join(p)}\n")
+                for tokens in idx_to_translations[idx]:
+                    f.write(f"{idx} ||| {' '.join(tokens)}\n")
+    os.remove(tmp_nbest_file)
+    os.remove(tmp_program_file)
+    return idx_to_translations
+
+def smt_alignment(tasks, tasks_attempted, frontiers, grammar, language_encoder, corpus_dir, moses_dir, n_pseudo=0, output_dir=None, phrase_length=1):
     Path(corpus_dir).mkdir(parents=True, exist_ok=True)
     if output_dir is None: output_dir = corpus_dir
-    
-    count_dicts, encountered_nl = write_sentence_aligned(tasks, frontiers, grammar, language_encoder, corpus_dir, moses_dir)
-    unaligned_counts = count_unaligned_words(tasks, tasks_attempted, frontiers, grammar, language_encoder, encountered_nl)
-    write_smt_vocab(grammar, language_encoder, corpus_dir, count_dicts)
-    initial_ibm_alignment(corpus_dir, moses_dir, output_dir=output_dir, max_ibm_model=4)
-    
-    if n_pseudo > 0:
-        add_pseudoalignments(corpus_dir, n_pseudo, unaligned_counts, grammar, output_dir=None)
-    moses_translation_tables(corpus_dir, moses_dir, output_dir=output_dir)
-    generate_decoder_config(corpus_dir, moses_dir, output_dir=output_dir, phrase_length=phrase_length)
+    # 
+    # count_dicts, encountered_nl = write_sentence_aligned(tasks, frontiers, grammar, language_encoder, corpus_dir, moses_dir)
+    # unaligned_counts = count_unaligned_words(tasks, tasks_attempted, frontiers, grammar, language_encoder, encountered_nl)
+    # write_smt_vocab(grammar, language_encoder, corpus_dir, count_dicts)
+    # initial_ibm_alignment(corpus_dir, moses_dir, output_dir=output_dir, max_ibm_model=4)
+    # if n_pseudo > 0:
+    #     add_pseudoalignments(corpus_dir, n_pseudo, unaligned_counts, grammar, output_dir=None)
+    # phrase_table_loc = moses_translation_tables(corpus_dir, moses_dir, output_dir=output_dir)
+    # lm_config = train_natural_language_model(corpus_dir, moses_dir, output_dir=output_dir, n_grams=3)
+    # generate_decoder_config(corpus_dir, moses_dir, output_dir=output_dir, lm_config=lm_config, phrase_table=phrase_table_loc)
 
+    # Test decoder:
+    test_token_path = os.path.join(corpus_dir, 'corpus.ml')
+    test_tokens = []
+    with open(test_token_path, 'r') as f:
+        lines = [l.strip() for l in f.readlines()]
+        test_tokens = [l.split() for l in lines]
+    idx_to_translations = decode_programs(test_tokens, output_dir, "test_output.out", corpus_dir, moses_dir, n_best=5)
+    import pdb; pdb.set_trace()
+    
     assert False
     # Return the appropriate table locations, or read into memory.
+    return {
+        "corpus_dir" : corpus_dir,
+        "moses_dir" : moses_dir,
+        "output_dir" : output_dir
+    }
+    
     

@@ -5,6 +5,7 @@ from dreamcoder.enumeration import *
 from dreamcoder.grammar import *
 from dreamcoder.recognition import *
 from dreamcoder.utilities import *
+from dreamcoder.translation import *
 
 import torch
 import torch.nn as nn
@@ -24,7 +25,8 @@ class TokenRecurrentFeatureExtractor(RecurrentFeatureExtractor):
                 H=64,
                 bidirectional=True,
                 max_inputs=5,
-                lexicon=None):
+                lexicon=None,
+                smt_translation_info=None):
         self.canonicalize_numbers = canonicalize_numbers
         self.tokenizer_fn = tokenizer_fn
         if self.tokenizer_fn is None:
@@ -35,6 +37,11 @@ class TokenRecurrentFeatureExtractor(RecurrentFeatureExtractor):
         self.useTask = True
         self.MAXINPUTS = max_inputs
         self.UNK = "UNK"
+        self.tokenized_helmholtz = {}
+        
+        # Location of directories to access and translate sets of programs.
+        self.smt_translator_info = smt_translation_info 
+        
         super(TokenRecurrentFeatureExtractor, self).__init__(lexicon=self.build_lexicon(lexicon),
                                                              H=H,
                                                              tasks=tasks,
@@ -55,9 +62,12 @@ class TokenRecurrentFeatureExtractor(RecurrentFeatureExtractor):
         use_task_name = task.name
         if task.name in self.tokenized_tasks:
             return self.tokenized_tasks[task.name]
+        elif task.name in self.tokenized_helmholtz:
+            return self.tokenized_helmholtz[task.name]
+        
         elif task.nearest_name is not None and task.nearest_name in self.tokenized_tasks:
             # Returns tokens for the nearest task
-            return self.tokenized_tasks[task.nearest_name]
+            return self.tokenized_tasks[task.nearest_name] 
         elif task.name not in self.language_data:
             if task.nearest_name not in self.language_data:
                 self.language_data[task] = [self.UNK]
@@ -100,6 +110,13 @@ class TokenRecurrentFeatureExtractor(RecurrentFeatureExtractor):
                 lexicon.update(set(sentence_tokens))
         eprint("Built a lexicon of {} words, including UNK".format(len(lexicon)))
         return list(lexicon)
+    
+    def tokenize_helmholtz(helmholtz_frontiers):
+        task_to_tokens = translate_frontiers_to_nl(helmholtz_frontiers)
+        self.tokenize_helmholtz = {f.task : [ 
+                                            [task_to_tokens[f.task], []]
+                                            ] for f in helmholtz_frontiers
+                                }
     
 class NgramFeaturizer(nn.Module):
     """

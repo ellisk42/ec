@@ -207,7 +207,8 @@ def ecIterator(grammar, tasks,
                interactiveTasks=None,
                taskDataset=None,
                languageDatasetDir=None,
-               useWakeLanguage=False):
+               useWakeLanguage=False,
+               debug=False):
     if enumerationTimeout is None:
         eprint(
             "Please specify an enumeration timeout:",
@@ -327,7 +328,8 @@ def ecIterator(grammar, tasks,
             "finetune_1",
             "recognitionEpochs",
             "languageDataset",
-            "moses_dir"
+            "moses_dir",
+            "debug"
         ]
         parameters["iterations"] = iteration
         checkpoint_params = [k for k in sorted(parameters.keys()) if k not in exclude_from_path]
@@ -586,7 +588,7 @@ def ecIterator(grammar, tasks,
         
         ### Induce synchronous grammar for generative model with language.
         if "language" in recognition_1:
-            induce_synchronous_grammar(frontiers=result.allFrontiers.values(),
+            translation_info = induce_synchronous_grammar(frontiers=result.allFrontiers.values(),
                             tasks=tasks, testingTasks=testingTasks, tasksAttempted=result.tasksAttempted,
                             grammar=grammar, 
                             language_encoder=language_encoder, 
@@ -623,7 +625,8 @@ def ecIterator(grammar, tasks,
                                finetune_from_example_encoder=finetune_1,
                                language_data=result.taskLanguage,
                                language_lexicon=result.vocabularies["train"],
-                               helmholtz_nearest_language=helmholtz_nearest_language)
+                               helmholtz_nearest_language=helmholtz_nearest_language,
+                               helmholtz_translation_info=translation_info)
 
             showHitMatrix(tasksHitTopDown, tasks_hit_recognition_1, wakingTaskBatch)
             
@@ -816,14 +819,21 @@ def default_wake_generative(grammar, tasks,
 def induce_synchronous_grammar(frontiers, tasks, testingTasks, tasksAttempted, grammar, 
                     language_encoder=None, language_data=None, language_lexicon=None,
                     output_prefix=None,
-                    moses_dir=None):    
+                    moses_dir=None,
+                    debug=None,
+                    iteration=None):    
     encoder = language_encoder(tasks, testingTasks=testingTasks, cuda=False, language_data=language_data, lexicon=language_lexicon)
     n_frontiers = len([f for f in frontiers if not f.empty])
     eprint(f"Inducing synchronous grammar. Using n=[{n_frontiers} frontiers],")
     if n_frontiers == 0:    
         return
-    corpus_dir = os.path.split(os.path.dirname(output_prefix))[0] # Remove timestamp and type prefix on checkpoint
-    smt_alignment(tasks, tasksAttempted, frontiers, grammar, encoder, corpus_dir, moses_dir)
+    if debug:
+        corpus_dir = os.path.split(os.path.dirname(output_prefix))[0] # Remove timestamp and type prefix on checkpoint
+        corpus_dir = os.path.join(corpus_dir, 'corpus_tmp')
+    else:
+        corpus_dir = os.path.join(output_prefix, f'moses_corpus_{iteration}')
+    alignment_outputs = smt_alignment(tasks, tasksAttempted, frontiers, grammar, encoder, corpus_dir, moses_dir)
+    return alignment_outputs
 
 def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFrontiers, _=None,
                       ensembleSize=1, featureExtractor=None, matrixRank=None, mask=False,
@@ -839,7 +849,8 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
                       finetune_from_example_encoder=False,
                       language_data=None,
                       language_lexicon=None,
-                      helmholtz_nearest_language=0):
+                      helmholtz_nearest_language=0,
+                      helmholtz_translation_info=None):
     eprint(f"Recognition iteration [{recognition_iteration}]. Training using: {[recognition_inputs]}")
     # Exit if language only and we have no frontiers to train on.
     n_frontiers = len([f for f in allFrontiers if not f.empty])
@@ -877,6 +888,7 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
                                     contextual=contextual,
                                     pretrained_model=pretrained_model,
                                     helmholtz_nearest_language=helmholtz_nearest_language,
+                                    helmholtz_translations=helmholtz_translation_info,
                                     nearest_encoder=nearest_encoder,
                                     nearest_tasks=nearest_tasks,
                                     id=i) for i in range(ensembleSize)]
@@ -1109,6 +1121,10 @@ def commandlineArguments(_=None,
         help="Location of top-level Moses SMT directory for machine translation.")
 
     ### Algorithm training details.
+    parser.add_argument("--debug",
+                        action="store_true",
+                        dest="debug",
+                        help="""General purpose debug flag.""")
     parser.add_argument("--resume",
                         help="Resumes EC algorithm from checkpoint. You can either pass in the path of a checkpoint, or you can pass in the iteration to resume from, in which case it will try to figure out the path.",
                         default=None,

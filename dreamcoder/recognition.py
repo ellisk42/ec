@@ -626,6 +626,7 @@ class RecognitionModel(nn.Module):
                 nearest_encoder=None,
                 nearest_tasks=None,
                 helmholtz_nearest_language=0,
+                helmholtz_translations=False,
                 id=0):
         super(RecognitionModel, self).__init__()
         self.id = id
