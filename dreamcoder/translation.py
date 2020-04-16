@@ -150,6 +150,7 @@ def moses_translation_tables(corpus_dir, moses_dir, output_dir=None, phrase_leng
     moses_cmd = f"{moses_script_old} --f ml --e nl --mgiza --root-dir {output_dir} --external-bin-dir {tools_loc} --corpus-dir {corpus_dir} --corpus {corpus} --do-steps 5 --max-phrase-length {phrase_length} --no-lexical-weighting".split()
     subprocess.run(moses_cmd, check=True)
     # If all else fails: manually write phrase tables?
+    # Try a combination of both; augment phrase table with lexicalized
 
     
 def smt_alignment(tasks, tasks_attempted, frontiers, grammar, language_encoder, output_prefix, moses_dir, n_pseudo=0, output_dir=None, phrase_length=1):
