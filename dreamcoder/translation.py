@@ -139,19 +139,18 @@ def moses_translation_tables(corpus_dir, moses_dir, output_dir=None, phrase_leng
     # Note that foreign = ml and english = nl
     moses_script = os.path.join(moses_dir, MOSES_SCRIPT)
     tools_loc = os.path.join(moses_dir, MOSES_TOOLS)
-    moses_cmd = f"{moses_script} --f ml --e nl --mgiza --root-dir {output_dir} --external-bin-dir {tools_loc} --corpus-dir {corpus_dir} --corpus {corpus} --do-steps 4 --max-phrase-length {phrase_length} --no-lexical-weighting".split()
+    moses_cmd = f"{moses_script} --f ml --e nl --mgiza --root-dir {output_dir} --external-bin-dir {tools_loc} --corpus-dir {corpus_dir} --corpus {corpus} --do-steps 4 --no-lexical-weighting".split()
     subprocess.run(moses_cmd, check=True)
     
-    # Try max 
-    phrase_length=7
-    moses_script_old = os.path.join(moses_dir, MOSES_SCRIPT_OLD)
-    eprint("Building phrase translation tables....")
-    moses_cmd = f"{moses_script} --f ml --e nl --mgiza --root-dir {output_dir} --external-bin-dir {tools_loc} --corpus-dir {corpus_dir} --corpus {corpus} --do-steps 5 --max-phrase-length {phrase_length} --no-lexical-weighting".split()
+def generate_decoder_config(corpus_dir, moses_dir, output_dir=None, phrase_length=None):
+    corpus = os.path.join(corpus_dir, "corpus")
+    if phrase_length == None:
+        raise Exception('Phrase tables.')
+    
+    eprint("Running default moses.")
+    moses_cmd = f"{moses_script} --f ml --e nl --mgiza --root-dir {output_dir} --external-bin-dir {tools_loc} --corpus-dir {corpus_dir} --corpus {corpus} --first-step 5 --last-step 9 --max-phrase-length {phrase_length}".split()
     subprocess.run(moses_cmd, check=True)
-    # If all else fails: manually write phrase tables?
-    # Try a combination of both; augment phrase table with lexicalized
 
-    
 def smt_alignment(tasks, tasks_attempted, frontiers, grammar, language_encoder, output_prefix, moses_dir, n_pseudo=0, output_dir=None, phrase_length=1):
     corpus_dir = os.path.join(output_prefix, "corpus_tmp")
     Path(corpus_dir).mkdir(parents=True, exist_ok=True)
@@ -164,7 +163,8 @@ def smt_alignment(tasks, tasks_attempted, frontiers, grammar, language_encoder, 
     
     if n_pseudo > 0:
         add_pseudoalignments(corpus_dir, n_pseudo, unaligned_counts, grammar, output_dir=None)
-    moses_translation_tables(corpus_dir, moses_dir, output_dir=output_dir, phrase_length=phrase_length)
+    moses_translation_tables(corpus_dir, moses_dir, output_dir=output_dir)
+    generate_decoder_config(corpus_dir, moses_dir, output_dir=output_dir, phrase_length=phrase_length)
 
     assert False
     # Return the appropriate table locations, or read into memory.
