@@ -7,7 +7,7 @@ from pathlib import Path
 from dreamcoder.utilities import *
 
 
-MOSES_SCRIPT = 'moses/scripts/training/train-model.perl'
+MOSES_SCRIPT = 'scripts/training/train-model.perl'
 MOSES_TOOLS = 'training-tools'
 
 def frontier_to_tokens(frontier, grammar):
