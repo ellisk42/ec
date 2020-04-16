@@ -1078,7 +1078,31 @@ class RecognitionModel(nn.Module):
                         else self.frontierKL(frontier, auxiliary=auxLoss, vectorized=vectorized)
 
                 if self.useValue:
-                    valueHeadLoss = self.valueHead.valueLossFromFrontier(frontier, self.grammar) 
+
+
+
+                    # try:
+                    #     def timeoutCallBack(_1, _2): raise EvaluationTimeout()
+                    #     signal.signal(signal.SIGVTALRM, timeoutCallBack)
+                    #     signal.setitimer(signal.ITIMER_VIRTUAL, timeout)   
+
+                    f = lambda: self.valueHead.valueLossFromFrontier(frontier, self.grammar) 
+                    try:
+                        valueHeadLoss = runWithTimeout(f, 30)
+                    except RunWithTimeout:
+                        print("Timed out while evaluating")
+                        valueHeadLoss = torch.tensor([0.])
+                        if self.use_cuda: valueHeadLoss = valueHeadLoss.cuda()
+    
+                    #valueHeadLoss = self.valueHead.valueLossFromFrontier(frontier, self.grammar) 
+
+                    # except EvaluationTimeout:
+                    #     print("Timed out while evaluating")
+                    #     valueHeadLoss = 0
+                    # finally:
+                    #     signal.signal(signal.SIGVTALRM, lambda *_: None)
+                    #     signal.setitimer(signal.ITIMER_VIRTUAL, 0)
+                    
                 else:
                     valueHeadLoss = 0
 
@@ -1145,7 +1169,7 @@ class RecognitionModel(nn.Module):
                 if self.useValue:
                     eprint("(ID=%d): " % self.id, "\tvalue loss:", mean(valueHeadLosses))
                     eprint("(ID=%d): " % self.id, "\t\t(real value loss):", mean(realValueLosses))
-                    eprint("(ID=%d): " % self.id, "\t\t(dream value loss):", mean(dreamValueLosses))
+                    eprint("(ID=%d): " % self.id, "\t\t(dream value loss):", mean(dreamValueLosses), flush=True)
                 losses, descriptionLengths, realLosses, dreamLosses, realMDL, dreamMDL = [], [], [], [], [], []
                 classificationLosses = []
                 valueHeadLosses = []
@@ -1230,6 +1254,7 @@ class RecognitionModel(nn.Module):
         with timing("Evaluated recognition model"):
             grammars = {task: self.grammarOfTask(task)
                         for task in tasks}
+            import pdb; pdb.set_trace()
             #untorch seperately to make sure you filter out None grammars
             grammars = {task: grammar.untorch() for task, grammar in grammars.items() if grammar is not None}
 

@@ -380,6 +380,7 @@ def ecIterator(grammar, tasks,
     
     
     if singleRoundValueEval:
+        random.seed(seed)
         resumeTraining = resumeTraining #toggle for resume from checkpoint, ints will go to specific checkpoint
         skipTraining = skipTraining #toggle for skip training because it's finished
 
@@ -388,7 +389,9 @@ def ecIterator(grammar, tasks,
 
         print("use value?", useValue)
         grammar = grammar #TODO make grammar non-contextual 
-        
+
+        #import pdb; pdb.set_trace()
+            
         print("using old training and testing tasks from result pickle")
         oldTasks, oldTestingTasks = tasks, testingTasks
         tasks = list(result.taskSolutions.keys())

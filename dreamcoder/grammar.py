@@ -1221,12 +1221,15 @@ class ContextualGrammar:
                                                          context, environment, argumentType, argument)
             thisSummary.join(newSummary)
 
+
         return context, thisSummary
 
-    def closedLikelihoodSummary(self, request, expression):
-        return self.likelihoodSummary(None,None,
+    def closedLikelihoodSummary(self, request, expression, keepExpr=False):
+        ls = self.likelihoodSummary(None,None,
                                       Context.EMPTY,[],
                                       request, expression)[1]
+        if keepExpr: ls._fullProg = expression 
+        return ls
 
     def logLikelihood(self, request, expression):
         return self.closedLikelihoodSummary(request, expression).logLikelihood(self)

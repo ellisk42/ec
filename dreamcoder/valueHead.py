@@ -7,6 +7,7 @@ from torch.nn.utils.rnn import pack_padded_sequence
 from dreamcoder.program import Hole
 from dreamcoder.grammar import *
 from dreamcoder.zipper import *
+from dreamcoder.utilities import RunWithTimeout
 import random
 import time
 from dreamcoder.domains.tower.towerPrimitives import TowerState, _empty_tower
@@ -266,6 +267,10 @@ class AbstractREPLValueHead(BaseValueHead):
             print("sketch", sketch)
             print(e)
             raise computeValueError
+        except RunWithTimeout:
+            print("timeout on sketch:")
+            print(sketch)
+            raise RunWithTimeout()
         except Exception:
             print("caught exception")
             print("sketch", sketch)
@@ -393,6 +398,11 @@ class AbstractREPLValueHead(BaseValueHead):
                 distance = self._computeValue(sk, task, outVectors=outVectors)
             except (computeValueError, RuntimeError):
                 continue #TODO
+
+            if distance == float('nan'):
+                print(sk)
+                print(task)
+                assert False
             distances.append(distance)
             targets.append(0.0)
 
@@ -401,7 +411,16 @@ class AbstractREPLValueHead(BaseValueHead):
             targets = targets.cuda()
 
         distance = torch.stack( distances, dim=0 ).squeeze(1)
-        loss = binary_cross_entropy(-distance, targets, average=False) #average?
+        try:        
+            loss = binary_cross_entropy(-distance, targets, average=False) #average?
+        except AssertionError:
+            print("assertion ERROR")
+            print("distance:")
+            print(distance)
+            print("targets:")
+            print(targets)
+            assert 0
+
         return loss
 
     def valueLossFromFrontier(self, frontier, g):
@@ -529,12 +548,21 @@ class TowerREPLValueHead(AbstractREPLValueHead):
             res = p(_empty_tower)          
             res = res(TowerState(history=[]))
 
+        except RecursionError as e:
+            print("caught exception")
+            print("sketch", sketch)
+            print(e)
+            raise computeValueError
         except (ValueError, IndexError, ZeroDivisionError, computeValueError, RuntimeError) as e:
             print("caught exception")
             print("sketch", sketch)
             print(e)
             assert False
             raise computeValueError
+        except RunWithTimeout:
+            print("timeout on sketch:")
+            print(sketch)
+            raise RunWithTimeout()
         except Exception:
             print("caught exception")
             print("sketch", sketch)
