@@ -43,7 +43,7 @@ From: ubuntu
 #thread;;
 #require "core.top";;
 #require "core.syntax";;
-open Core
+open Core;;
 " >> /container/.ocamlinit
     echo 'eval `opam config env`' >> /container/.bashrc  
 

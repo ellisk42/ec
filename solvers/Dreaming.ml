@@ -324,6 +324,8 @@ let logo_hash ?timeout:(timeout=0.001) request inputs : program -> (PolyList.t*f
   let open Yojson.Basic.Util in
 
   assert (request = (turtle @> turtle));
+  (* disgusting hack *)
+  let costMatters = 1 = (inputs |> to_list |> List.hd_exn |> to_list |> List.hd_exn |> to_int) in
   
   let table = Hashtbl.Poly.create() in
 
@@ -346,6 +348,7 @@ let logo_hash ?timeout:(timeout=0.001) request inputs : program -> (PolyList.t*f
     | Some(None) -> None (* escaped the canvas *)
     | Some(Some(a,cost)) ->
       let j = PolyValue.List(range (28*28) |> List.map ~f:(fun i -> PolyValue.Integer(a.{i}))) in
+      let cost = if costMatters then cost else 0. in
       Some([j],cost);;
 register_special_helmholtz "LOGO" logo_hash;;
 

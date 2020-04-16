@@ -177,6 +177,8 @@ def list_options(parser):
                         help="Directory in which to dream from --dreamCheckpoint")
     parser.add_argument("--visualize",
                         default=None, type=str)
+    parser.add_argument("--cost", default=False, action='store_true',
+                        help="Impose a smooth cost on using ink")
     parser.add_argument("--split",
                         default=1., type=float)
     parser.add_argument("--animate",
@@ -366,6 +368,12 @@ def main(args):
         os.makedirs(prefix_dreams)
     tasks = makeTasks(target, proto)
     eprint("Generated", len(tasks), "tasks")
+
+    costMatters = args.pop("cost")
+    for t in tasks:
+        t.specialTask[1]["costMatters"] = costMatters
+        # disgusting hack - include whether cost matters in the dummy input
+        if costMatters: t.examples = [(([1]), t.examples[0][1])]
 
     os.chdir("prototypical-networks")
     subprocess.Popen(["python","./protonet_server.py"])

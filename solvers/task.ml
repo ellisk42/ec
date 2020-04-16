@@ -96,34 +96,37 @@ let run_recent_logo ~timeout program =
 register_special_task "LOGO" (fun extras ?timeout:(timeout = 0.001) name ty examples ->
     let open Yojson.Basic.Util in
 
-    let cost_bound =
+    let cost_matters =
       try
-        extras |> member "cost" |> to_float
-      with _ -> 9999999999999.
+        extras |> member "costMatters" |> to_bool
+      with _ -> assert false
     in 
 
-  let by = match examples with
+    let by = match examples with
       | [([0],y)] ->
-          Bigarray.(Array1.of_array int8_unsigned c_layout (Array.of_list y))
+        Bigarray.(Array1.of_array int8_unsigned c_layout (Array.of_list y))
+      | [([1],y)] ->
+        Bigarray.(Array1.of_array int8_unsigned c_layout (Array.of_list y))
       | _ -> failwith "not a turtle task" in
-  { name = name    ;
-    task_type = ty ;
-    log_likelihood =
-      (fun p ->
-        try
-          match run_recent_logo ~timeout p with
-          | Some(bx,cost) when (*cost <= cost_bound && *) (LogoLib.LogoInterpreter.fp_equal bx by 0) -> (0.-.cost)*.10.
-          | _ -> log 0.
+    { name = name    ;
+      task_type = ty ;
+      log_likelihood =
+        (fun p ->
+           try
+             match run_recent_logo ~timeout p with
+             | Some(bx,cost) when (LogoLib.LogoInterpreter.fp_equal bx by 0) ->
+               (if cost_matters then (0.-.cost)*.10. else 0.)
+             | _ -> log 0.
            with (* We have to be a bit careful with exceptions if the
-              * synthesized program generated an exception, then we just
-              * terminate w/ false but if the enumeration timeout was
-              * triggered during program evaluation, we need to pass the
-              * exception on
-              *)
+                 * synthesized program generated an exception, then we just
+                 * terminate w/ false but if the enumeration timeout was
+                 * triggered during program evaluation, we need to pass the
+                 * exception on
+                *)
            | UnknownPrimitive(n) -> raise (Failure ("Unknown primitive: "^n))
            | EnumerationTimeout  -> raise EnumerationTimeout
            | _                   -> log 0.0)
-  });;
+    });;
 
 
 register_special_task "differentiable"
