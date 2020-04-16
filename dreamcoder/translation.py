@@ -148,6 +148,7 @@ def generate_decoder_config(corpus_dir, moses_dir, output_dir=None, phrase_lengt
         raise Exception('Phrase tables.')
     
     eprint("Running default moses.")
+    moses_script = os.path.join(moses_dir, MOSES_SCRIPT)
     moses_cmd = f"{moses_script} --f ml --e nl --mgiza --root-dir {output_dir} --external-bin-dir {tools_loc} --corpus-dir {corpus_dir} --corpus {corpus} --first-step 5 --last-step 9 --max-phrase-length {phrase_length}".split()
     subprocess.run(moses_cmd, check=True)
 
