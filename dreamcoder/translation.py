@@ -8,8 +8,7 @@ from dreamcoder.utilities import *
 
 
 MOSES_SCRIPT = 'moses/scripts/training/train-model.perl'
-MOSES_SCRIPT_OLD = 'moses/scripts/training/train-model-2-1.perl'
-MOSES_TOOLS = 'bin/training-tools'
+MOSES_TOOLS = 'training-tools'
 
 def frontier_to_tokens(frontier, grammar):
     """:ret List of numeric token lists for each program 'sentence'."""
@@ -147,7 +146,7 @@ def moses_translation_tables(corpus_dir, moses_dir, output_dir=None, phrase_leng
     phrase_length=7
     moses_script_old = os.path.join(moses_dir, MOSES_SCRIPT_OLD)
     eprint("Building phrase translation tables....")
-    moses_cmd = f"{moses_script_old} --f ml --e nl --mgiza --root-dir {output_dir} --external-bin-dir {tools_loc} --corpus-dir {corpus_dir} --corpus {corpus} --do-steps 5 --max-phrase-length {phrase_length} --no-lexical-weighting".split()
+    moses_cmd = f"{moses_script} --f ml --e nl --mgiza --root-dir {output_dir} --external-bin-dir {tools_loc} --corpus-dir {corpus_dir} --corpus {corpus} --do-steps 5 --max-phrase-length {phrase_length} --no-lexical-weighting".split()
     subprocess.run(moses_cmd, check=True)
     # If all else fails: manually write phrase tables?
     # Try a combination of both; augment phrase table with lexicalized
