@@ -595,7 +595,9 @@ def ecIterator(grammar, tasks,
                             language_data=result.taskLanguage,
                             language_lexicon=result.vocabularies["train"],
                             output_prefix=outputPrefix,
-                            moses_dir=moses_dir)
+                            moses_dir=moses_dir,
+                            debug=debug,
+                            iteration=j)
         
         #### Recognition model round 1. With language.
         # Optionally tries to relabel Helmholtz with the nearest language.
@@ -828,6 +830,7 @@ def induce_synchronous_grammar(frontiers, tasks, testingTasks, tasksAttempted, g
     if n_frontiers == 0:    
         return
     if debug:
+        eprint("Running in debug mode, writing corpus files to tmp.")
         corpus_dir = os.path.split(os.path.dirname(output_prefix))[0] # Remove timestamp and type prefix on checkpoint
         corpus_dir = os.path.join(corpus_dir, 'corpus_tmp')
     else:
@@ -869,7 +872,7 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
             pretrained_model = result.models[recognition_iteration - 1]
             assert(pretrained_model.featureExtractor is not None)
     if 'language' in recognition_inputs:
-        language_encoders = [language_encoder(tasks, testingTasks=testingTasks, cuda=cuda, language_data=language_data, lexicon=language_lexicon) for i in range(ensembleSize)]
+        language_encoders = [language_encoder(tasks, testingTasks=testingTasks, cuda=cuda, language_data=language_data, lexicon=language_lexicon, smt_translation_info=helmholtz_translation_info) for i in range(ensembleSize)]
     if recognition_iteration > 0 and helmholtz_nearest_language > 0:
         nearest_encoder = result.models[recognition_iteration - 1]
         nearest_tasks = tasks

@@ -26,7 +26,8 @@ class TokenRecurrentFeatureExtractor(RecurrentFeatureExtractor):
                 bidirectional=True,
                 max_inputs=5,
                 lexicon=None,
-                smt_translation_info=None):
+                smt_translation_info=None,
+                n_best=5):
         self.canonicalize_numbers = canonicalize_numbers
         self.tokenizer_fn = tokenizer_fn
         if self.tokenizer_fn is None:
@@ -38,6 +39,7 @@ class TokenRecurrentFeatureExtractor(RecurrentFeatureExtractor):
         self.MAXINPUTS = max_inputs
         self.UNK = "UNK"
         self.tokenized_helmholtz = {}
+        self.n_best = 5
         
         # Location of directories to access and translate sets of programs.
         self.smt_translator_info = smt_translation_info 
@@ -69,6 +71,7 @@ class TokenRecurrentFeatureExtractor(RecurrentFeatureExtractor):
             # Returns tokens for the nearest task
             return self.tokenized_tasks[task.nearest_name] 
         elif task.name not in self.language_data:
+            print("Not found! ",  task.name)
             if task.nearest_name not in self.language_data:
                 self.language_data[task] = [self.UNK]
             else:
@@ -111,12 +114,13 @@ class TokenRecurrentFeatureExtractor(RecurrentFeatureExtractor):
         eprint("Built a lexicon of {} words, including UNK".format(len(lexicon)))
         return list(lexicon)
     
-    def tokenize_helmholtz(helmholtz_frontiers):
-        task_to_tokens = translate_frontiers_to_nl(helmholtz_frontiers)
-        self.tokenize_helmholtz = {f.task : [ 
-                                            [task_to_tokens[f.task], []]
-                                            ] for f in helmholtz_frontiers
-                                }
+    def update_with_tokenized_helmholtz(self, helmholtz_frontiers):
+        eprint(f"[TokenRecurrentFeatureExtractor] Received n={len(helmholtz_frontiers)} Helmholtz frontiers; resetting Helmholtz tokens.")
+        task_to_tokens = translate_frontiers_to_nl(helmholtz_frontiers, self.smt_translator_info, self.n_best, verbose=False)
+        self.tokenized_helmholtz = {f.task.name : [
+                                    [task_to_tokens[f.task], []] 
+                                    ] for f in helmholtz_frontiers
+                                   }
     
 class NgramFeaturizer(nn.Module):
     """

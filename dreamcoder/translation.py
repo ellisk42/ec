@@ -173,8 +173,29 @@ def generate_decoder_config(corpus_dir, moses_dir, output_dir, lm_config, phrase
     moses_cmd = f"{moses_script} --f ml --e nl --mgiza --root-dir {output_dir} --external-bin-dir {tools_loc} --corpus-dir {corpus_dir} --corpus {corpus} --lm {lm_cmd} --first-step 5 --last-step 9 --max-phrase-length 7".split()
     subprocess.run(moses_cmd, check=True)
 
-def translate_frontiers_to_nl(frontiers):
-    pass
+def translate_frontiers_to_nl(frontiers, translation_info, n_best, verbose):
+    # Frontiers contain multiple programs
+    if len(frontiers) < 1: return []
+    program_idx_to_task = {}
+    program_tokens = []
+    isHelmholtz = frontiers[0].__class__.__name__ == 'HelmholtzEntry' 
+    idx = 0
+    for f in frontiers:
+        if isHelmholtz:
+            for t in f.program_tokens:
+                program_idx_to_task[idx] = f.task
+                program_tokens.append(t)
+                idx += 1
+        else:
+            for e in f.entries:
+                program_idx_to_task[idx] = f.task
+                program_tokens.append(e.tokens)
+                idx += 1
+    idx_to_translations = decode_programs(program_tokens, translation_info["output_dir"], None,  translation_info['corpus_dir'], translation_info['moses_dir'], n_best)
+    task_to_tokens = defaultdict(list)
+    for idx in idx_to_translations:
+        task_to_tokens[program_idx_to_task[idx]] += idx_to_translations[idx]
+    return task_to_tokens
 
 def decode_programs(program_tokens, output_dir, output_suffix, corpus_dir, moses_dir, n_best):
     """:ret: idx_to_translations: {index of program : [list of translation tokens]}"""
@@ -227,16 +248,6 @@ def smt_alignment(tasks, tasks_attempted, frontiers, grammar, language_encoder, 
     # lm_config = train_natural_language_model(corpus_dir, moses_dir, output_dir=output_dir, n_grams=3)
     # generate_decoder_config(corpus_dir, moses_dir, output_dir=output_dir, lm_config=lm_config, phrase_table=phrase_table_loc)
 
-    # Test decoder:
-    test_token_path = os.path.join(corpus_dir, 'corpus.ml')
-    test_tokens = []
-    with open(test_token_path, 'r') as f:
-        lines = [l.strip() for l in f.readlines()]
-        test_tokens = [l.split() for l in lines]
-    idx_to_translations = decode_programs(test_tokens, output_dir, "test_output.out", corpus_dir, moses_dir, n_best=5)
-    import pdb; pdb.set_trace()
-    
-    assert False
     # Return the appropriate table locations, or read into memory.
     return {
         "corpus_dir" : corpus_dir,

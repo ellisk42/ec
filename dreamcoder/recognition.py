@@ -636,6 +636,8 @@ class RecognitionModel(nn.Module):
         self.featureExtractor = example_encoder
         self.language_encoder = language_encoder
         
+        # Use the language encoder to get Helmholtz translations.
+        self.helmholtz_translations = helmholtz_translations
         # Encode tasks to lookup nearest language for Helmholtz
         self.encoded_tasks = None # n_tasks x n_features
         self.nearest_tasks = None # Sorted list of tasks.
@@ -943,10 +945,17 @@ class RecognitionModel(nn.Module):
     
     def update_helmholtz_language(self, helmholtz_entries):
         """
-        Updates nearest_name attribute on Helmholtz entries with name
-        of nearest training task.
+        If self.helmholtz_translations: 
+            Updates the language encoder with language for the Helmholtz entries.
+        If self.helmholtz_nearest_language: 
+            Updates nearest_name attribute on Helmholtz entries with name
+            of nearest training task.
         """
-        if self.helmholtz_nearest_language < 1:
+        if self.helmholtz_translations:
+            non_empty_helmholtz_entries = [e for e in helmholtz_entries if e.task is not None]
+            self.language_encoder.update_with_tokenized_helmholtz(non_empty_helmholtz_entries)
+            return
+        elif self.helmholtz_nearest_language < 1:
             return
         elif len(self.encoded_tasks) < 0:
             return
@@ -1003,6 +1012,7 @@ class RecognitionModel(nn.Module):
                 self.request = frontier.task.request
                 self.task = None
                 self.programs = [e.program for e in frontier]
+                self.program_tokens = [e.tokens for e in frontier]
                 self.frontier = Thunk(lambda: owner.replaceProgramsWithLikelihoodSummaries(frontier))
                 self.owner = owner
 
@@ -1013,6 +1023,7 @@ class RecognitionModel(nn.Module):
                 p = random.choice(self.programs)
                 task = self.owner.featureExtractor.taskOfProgram(p, self.request)
                 task.name += f"{self.owner.get_fresh_helmholtz_name()}"
+                return task
 
             def makeFrontier(self):
                 assert self.task is not None
@@ -1068,6 +1079,7 @@ class RecognitionModel(nn.Module):
             
             if randomHelmholtz:
                 newFrontiers = self.sampleManyHelmholtz(requests, helmholtzBatch, CPUs)
+                import pdb; pdb.set_trace()
                 newEntries = []
                 for f in newFrontiers:
                     e = HelmholtzEntry(f,self)
@@ -1471,7 +1483,8 @@ class RecurrentFeatureExtractor(nn.Module):
             examples = []
             while True:
                 # TIMEOUT! this must not be a very good program
-                if time.time() - startTime > self.helmholtzTimeout: return None
+                if time.time() - startTime > self.helmholtzTimeout: 
+                    return None
 
                 # Grab some random inputs
                 xs = [randomInput(t) for t in tp.functionArguments()]
