@@ -485,10 +485,10 @@ class Index(Program):
         #print("env of index:", env)
         return environment[self.i]
 
-    def abstractEval(self, valueHead, environment):
-        #if parse:
-            #assert parse[0] == self
-            #print('you hit a parse')
+    def abstractEval(self, valueHead, environment, parse=None):
+        if parse:
+            assert parse[0] == self
+            print('you hit a parse')
         return environment[self.i]
 
     def inferType(self, context, environment, freeVariables):
@@ -1059,13 +1059,21 @@ class Hole(Program):
         lambda state: encodeHole(self, e, state)"""
 
     def betaReduce(self):
-        raise Exception('Attempt to beta reduce hole')
+        return None
+        #raise Exception('Attempt to beta reduce hole')
 
     def inferType(self, context, environment, freeVariables):
         return context.makeVariable()
 
     def shift(self, offset, depth=0):
-        raise Exception('Attempt to shift fragment variable')
+        return self
+        #raise Exception('Attempt to shift Hole')
+
+    def substitute(self, old, new):
+        if self == old and self.tp == old.tp: #this may cause some typing problems?
+            return new
+        else:
+            return self
 
     def walk(self, surroundingAbstractions=0): yield surroundingAbstractions, self
 

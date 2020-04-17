@@ -294,6 +294,7 @@ class AbstractREPLValueHead(BaseValueHead):
         if outVectors is None:
             outVectors = self._computeOutputVectors(task)
             
+        sketch = sketch.betaNormalForm()
         p = self._getInitialSketchRep(sketch)
 
         evalVectors = []
@@ -592,6 +593,7 @@ class TowerREPLValueHead(AbstractREPLValueHead):
         if outVectors is None:
             outVectors = self._computeOutputVectors(task)
 
+        sketch = sketch.betaNormalForm()
         p = self._getInitialSketchRep(sketch)
 
         evalVectors = [self._computeSketchRepresentation(sketch, p=p)]

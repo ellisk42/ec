@@ -8,7 +8,7 @@ recSteps=240000 #list repl is roughly 1k/hour (0.33 steps/sec)
 ncores=8
 salt=towers 
 helmRatio=0.5
-resume=experimentOutputs/towers1debug
+resume=experimentOutputs/towers1debugContextual
 
 cp ${resume}.pickle ${resume}Sample.pickle
 #Train:
@@ -18,7 +18,7 @@ cp ${resume}.pickle ${resume}Sample.pickle
 
 cp ${resume}.pickle ${resume}REPL.pickle
 #Train:
-cmd="python bin/tower.py --testingTimeout ${testingTime} --recognitionTimeout 216000 --resumeTraining -r ${helmRatio} --primitives new --split 0.5 -t ${time} -RS ${recSteps} --solver python  -c ${ncores} --useValue TowerREPL -i 2  --resume ${resume}REPL.pickle --singleRoundValueEval --seed 5"
+cmd="python -i bin/tower.py --contextual --testingTimeout ${testingTime} --recognitionTimeout 216000 --resumeTraining -r ${helmRatio} --primitives new --split 0.5 -t ${time} -RS ${recSteps} --solver python  -c ${ncores} --useValue TowerREPL -i 2  --resume ${resume}REPL.pickle --singleRoundValueEval --seed 8"
 #om-repeat sbatch -e towersREPL${salt}.out -o towersREPL${salt}.out -p tenenbaum --time=3600 --mem=64G --cpus-per-task=8 --gres=gpu:QUADRORTX6000:1 ${cmd}
 eval "${cmd}"
 

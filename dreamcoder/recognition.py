@@ -1084,7 +1084,7 @@ class RecognitionModel(nn.Module):
                     # try:
                     #     def timeoutCallBack(_1, _2): raise EvaluationTimeout()
                     #     signal.signal(signal.SIGVTALRM, timeoutCallBack)
-                    #     signal.setitimer(signal.ITIMER_VIRTUAL, timeout)   
+                    #     signal.setitimer(signal.ITIMER_VIRTUAL, timeout)  
 
                     f = lambda: self.valueHead.valueLossFromFrontier(frontier, self.grammar) 
                     try:
