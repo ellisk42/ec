@@ -21,6 +21,7 @@ compressionMessages/
 container.img
 launchers/
 data/cogsci_2019/*
+!data/geom/tasks
 !data/logo/
 !data/puddleworld/
 data/taskRankGraphs
