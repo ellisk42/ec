@@ -273,6 +273,7 @@ class Application(Program):
 
         # Perform substitution
         b = self.f.body
+        if b.hasHoles: return None
         v = self.x
         return b.substitute(Index(0), v.shift(1)).shift(-1)
 
@@ -614,7 +615,7 @@ class Abstraction(Program):
     def evaluateHolesDebug(self, environment):
         return lambda x: self.body.evaluateHolesDebug([x] + environment)
 
-    def abstractEval(self, valueHead, environment):
+    def abstractEval(self, valueHead, environment, parse=None):
         return lambda x: self.body.abstractEval(valueHead, [x] + environment)
 
     def betaReduce(self):

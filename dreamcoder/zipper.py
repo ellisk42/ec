@@ -398,11 +398,76 @@ class HoleVisitor:
         return [HoleZipper([], context, env)]
 
 
+class ParentFinder:
+    """
+    as written, given a path and expression, it does something
+    """
+    def __init__(self):
+        pass
+
+    def invented(self, e, parentInfo):
+        assert False, "you shouldnt be here"
+        #assert False
+        #assert self.path == []
+        #self.prod = e
+        #return parentInfo
+    def primitive(self, e, parentInfo):
+        assert False, "you shouldnt be here"
+        #assert self.path == []
+        #self.prod = e
+        #return parentInfo
+    def index(self, e, parentInfo):
+        assert False, "you shouldnt be here"
+        #assert self.path == []
+        #self.prod = e
+        #return parentInfo
+
+    def application(self, e, parentInfo):
+        if self.path==[]:
+            assert False, "you shouldnt be here"
+        step = self.path.pop() #why am I popping?
+        if step == 'f':
+            return e.f.visit(self, parentInfo)
+        else:
+            assert step == 'x'
+            f, xs = e.applicationParse()
+            parentInfo = (f, len(xs) - 1 )
+            #self.history.append(lambda expr: Application(e.f, expr))
+            return e.x.visit(self, parentInfo)
+
+    def abstraction(self, e, parentInfo):
+        if self.path==[]:
+            assert False, "you shouldnt be here"
+            #return parentInfo
+        step = self.path.pop()
+        assert step == 'body'
+        #self.history.append(lambda expr: Abstraction(expr))
+        return e.body.visit(self, parentInfo)
+
+    def hole(self, e, parentInfo):
+        return parentInfo
+        
+    def execute(self, sketch, path):
+        self.path = list(reversed(path))
+        parentInfo = sketch.visit(self, (None, None)) #should return actual program
+        self.path = []
+        return parentInfo
+
 def sampleOneStepFromHole(zipper, sk, tp, g, maximumDepth):
 
     mustBeLeaf = len([ t for t in zipper.path if t != 'body' ] ) >= maximumDepth
     
-    newContext, newSubtree = g._sampleOneStep(zipper.tp, zipper.context, zipper.env, mustBeLeaf)
+    if isinstance(g, ContextualGrammar):
+        parent, parentIndex = ParentFinder().execute(sk, zipper.path)
+        newContext, newSubtree = g._sampleOneStep(
+                            parent, parentIndex,
+                            zipper.context,
+                            zipper.env,
+                            zipper.tp,
+                            mustBeLeaf=mustBeLeaf)
+
+    else:
+        newContext, newSubtree = g._sampleOneStep(zipper.tp, zipper.context, zipper.env, mustBeLeaf)
 
     newSk = NewExprPlacer().execute(sk, zipper.path, newSubtree)
     newZippers = findHoles(newSk, tp) #TODO type inference, redoing computation, can use newContext
