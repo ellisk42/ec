@@ -13,7 +13,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from dreamcoder.domains.logo.makeLogoTasks import makeTasks, montageTasks, drawLogo, manualLogoTasks, makeLogoUnlimitedTasks, generateLogoDataset, loadLogoDataset
+from dreamcoder.domains.logo.makeLogoTasks import makeTasks, montageTasks, drawLogo, manualLogoTasks, makeLogoUnlimitedTasks, generateLogoDataset, loadLogoDataset, sampleSupervised
 from dreamcoder.domains.logo.logoPrimitives import primitives, turtle, tangle, tlength
 from dreamcoder.dreamcoder import ecIterator
 from dreamcoder.grammar import Grammar, ContextualGrammar
@@ -272,7 +272,7 @@ def list_options(parser):
                             "logo_unlimited_1300",
                             "logo_unlimited_500",
                             "logo_unlimited_200"],
-                        default="logo_unlimited_200",
+                        default=None,
                         help="Load pre-generated task datasets.")
     parser.add_argument("--reduce", type=str,
                         default=[],
@@ -311,20 +311,22 @@ def list_options(parser):
     parser.add_argument("--generateTaskDataset",
                         choices=[
                             "logo_classic",
-                            "logo_unlimited_1300",
+                            "logo_unlimited_1000",
                             "logo_unlimited_500",
                             "logo_unlimited_200"],
                         default=None,
                         help="Generates pre-cached dataset and stores it under the top-level path.")
     parser.add_argument("--generateLanguageDataset",
                         choices=[
-                            "logo_unlimited_1300",
+                            "logo_unlimited_1000",
                             "logo_unlimited_500",
                             "logo_unlimited_200"],
                         default=None,
                         help="Generates language dataset and stores it under the top-level path.")
     parser.add_argument("--iterations_as_epochs",
                         default=True)
+    parser.add_argument("--sample_n_supervised",
+                        default=0, type=int)
 
 def outputDreams(checkpoint, directory):
     from dreamcoder.utilities import loadPickle
@@ -545,14 +547,20 @@ def main(args):
     if not os.path.exists(prefix_dreams):
         os.makedirs(prefix_dreams)
     
+    sample_n_supervised = args.pop("sample_n_supervised")
     task_dataset = args.pop("taskDataset")
     task_dataset_dir=args.pop("taskDatasetDir")
     if task_dataset:
         train, test = loadLogoDataset(task_dataset=task_dataset, task_dataset_dir=task_dataset_dir)
         eprint(f"Loaded dataset [{task_dataset}]: [{len(train)}] train and [{len(test)}] test tasks.")
+        if sample_n_supervised > 0:
+            eprint(f"Sampling n={sample_n_supervised} supervised tasks.")
+            train = sampleSupervised(train, sample_n_supervised)
+        
     else: 
         tasks = makeTasks(target, proto)
         eprint("Generated", len(tasks), "tasks")
+        import pdb; pdb.set_trace()
         os.chdir("prototypical-networks")
         subprocess.Popen(["python","./protonet_server.py"])
         time.sleep(3)

@@ -1,17 +1,11 @@
-B /home/ubuntu/.opam/4.06.1+flambda/lib/bytes
-B /home/ubuntu/.opam/4.06.1+flambda/lib/cairo2
-B /home/ubuntu/.opam/4.06.1+flambda/lib/gg
-B /home/ubuntu/.opam/4.06.1+flambda/lib/ocaml
-B /home/ubuntu/.opam/4.06.1+flambda/lib/result
-B /home/ubuntu/.opam/4.06.1+flambda/lib/uchar
-B /home/ubuntu/.opam/4.06.1+flambda/lib/vg
 B ../_build/default/geomLib/.geomLib.objs
-S /home/ubuntu/.opam/4.06.1+flambda/lib/bytes
-S /home/ubuntu/.opam/4.06.1+flambda/lib/cairo2
-S /home/ubuntu/.opam/4.06.1+flambda/lib/gg
-S /home/ubuntu/.opam/4.06.1+flambda/lib/ocaml
-S /home/ubuntu/.opam/4.06.1+flambda/lib/result
-S /home/ubuntu/.opam/4.06.1+flambda/lib/uchar
-S /home/ubuntu/.opam/4.06.1+flambda/lib/vg
-S .
+B /Users/catwong/.opam/4.06.1+flambda/lib/cairo2
+B /Users/catwong/.opam/4.06.1+flambda/lib/gg
+B /Users/catwong/.opam/4.06.1+flambda/lib/ocaml
+B /Users/catwong/.opam/4.06.1+flambda/lib/vg
 FLG -open GeomLib -w -40
+S .
+S /Users/catwong/.opam/4.06.1+flambda/lib/cairo2
+S /Users/catwong/.opam/4.06.1+flambda/lib/gg
+S /Users/catwong/.opam/4.06.1+flambda/lib/ocaml
+S /Users/catwong/.opam/4.06.1+flambda/lib/vg

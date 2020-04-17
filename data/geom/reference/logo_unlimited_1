@@ -1,0 +1,8 @@
+CUDA is available?: False
+using cuda?: False
+Generating logo task sdataset: [logo_unlimited_100] and saving to: [data/logo/tasks]
+Generating logo dataset language and saving to: [logo_unlimited_100]
+> /Users/catwong/Desktop/zyzzyva/code/ec/dreamcoder/domains/logo/makeLogoTasks.py(681)makeLogoUnlimitedTasks()
+-> with random_seed(42):
+(Pdb) (Pdb) --KeyboardInterrupt--
+(Pdb) 

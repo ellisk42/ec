@@ -152,6 +152,10 @@ class Frontier(object):
     @staticmethod
     def makeEmpty(task):
         return Frontier([], task=task)
+    
+    def makeFrontierFromSupervised(task):
+        return Frontier([FrontierEntry(task.groundTruthProgram,
+                                     logLikelihood=0., logPrior=0.)], task=task)
 
     def summarize(self):
         if self.empty:

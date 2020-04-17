@@ -27,7 +27,8 @@ class Task(object):
             assert all(len(xs) == len(examples[0][0])
                        for xs, _ in examples), \
                 "(for task %s) FATAL: Number of arguments varies." % name
-
+        self.use_supervised = False
+        
     def __str__(self):
         if self.supervision is None:
             return self.name
@@ -62,6 +63,12 @@ class Task(object):
     def supervision(self):
         if not hasattr(self, 'supervisedSolution'): return None
         return self.supervisedSolution
+    
+    @property
+    def add_as_supervised(self):
+        if not hasattr(self, 'use_supervised'): return False
+        else:
+            return self.use_supervised
 
     def check(self, e, timeout=None):
         if timeout is not None:

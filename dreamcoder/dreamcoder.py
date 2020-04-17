@@ -476,6 +476,12 @@ def ecIterator(grammar, tasks,
         result.taskLanguage, result.vocabularies = languageForTasks(languageDataset, languageDatasetDir, result.taskLanguage)
         eprint("Loaded language dataset from ", languageDataset)
     
+    # Preload any supervision if available into the all frontiers.
+    print(f"Found n={len([t for t in tasks if t.add_as_supervised])} supervised tasks; initializing frontiers.")
+    for t in tasks:
+        if t.add_as_supervised:
+            result.allFrontiers[t] = result.allFrontiers[t].combine(Frontier.makeFrontierFromSupervised(t)).topK(maximumFrontier)
+    import pdb; pdb.set_trace()
     
     ######## Test Evaluation and background Helmholtz enumeration.
     for j in range(resume or 0, iterations):
