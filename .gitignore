@@ -14,14 +14,13 @@ __pycache__
 _build
 experimentOutputs
 jobs
-data/geom/**/*.png
 rust_compressor/target
 *.cost
 compressionMessages/
 container.img
 launchers/
 data/cogsci_2019/*
-!data/geom/tasks
+!data/geom/
 !data/logo/
 !data/puddleworld/
 data/taskRankGraphs
