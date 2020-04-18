@@ -14,6 +14,7 @@ __pycache__
 _build
 experimentOutputs
 jobs
+data/
 data/geom/**/*.png
 rust_compressor/target
 *.cost
