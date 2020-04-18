@@ -57,7 +57,7 @@ specialCharacters = {' ': 'SPACE',
                      ')': 'RPAREN',
                      '(': 'LPAREN'}
 
-re2_characters = [chr(ord('a') + j) for j in range(5)] 
+re2_characters = [chr(ord('a') + j) for j in range(26)] 
 re2_primitives = [
     Primitive("char-eq?", arrow(tcharacter, tcharacter, tboolean), _eq),
     Primitive("STRING", tstr, None),

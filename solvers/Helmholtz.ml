@@ -38,7 +38,10 @@ let run_job channel =
     try deserialize_grammar g |> make_dummy_contextual
     with _ -> deserialize_contextual_grammar g
   in
-
+  let show_vars = 
+    try j |> member "use_vars_in_tokenized" |> to_bool
+    with _ -> false
+  in
   let k =
     try Some(j |> member "special" |> to_string)
     with _ -> None
@@ -52,7 +55,7 @@ let run_job channel =
 
   helmholtz_enumeration ~nc:nc (k ~timeout:evaluationTimeout request (j |> member "extras")) g request ~timeout ~maximumSize
 
-let output_job ?maxExamples:(maxExamples=50000) result =
+let output_job ?maxExamples:(maxExamples=50000) ?show_vars:(show_vars=false) result =
   let open Yojson.Basic.Util in
   (* let result = Hashtbl.to_alist result in *)
   let results =
@@ -65,7 +68,9 @@ let output_job ?maxExamples:(maxExamples=50000) result =
     `List(results |> List.map ~f:(fun (behavior, (l,ps)) ->
         `Assoc([(* "behavior", behavior; *)
                 "ll", `Float(l);
-                "programs", `List(ps |> List.map ~f:(fun p -> `String(p |> string_of_program)))])))
+                "programs", `List(ps |> List.map ~f:(fun p -> `String(p |> string_of_program)));  
+                "tokens", `List(ps |> List.map ~f:(fun p -> `String(p |> string_of_tokens show_vars)));
+                ])))
   in 
   message
 

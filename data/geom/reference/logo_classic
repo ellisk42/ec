@@ -1,0 +1,160 @@
+3-gon 1l slanted 8 26.330403178644698 nats
+4-gon (*d 1d 3) 20.9161563450896 nats
+5-gon 1l 16.8218117828675 nats
+6-gon (*d 1d 2) slanted 5 30.424747740866795 nats
+7-gon 1l 16.8218117828675 nats
+8-gon (/d 1d 2) 20.9161563450896 nats
+3-gon (*d 1l 2) 20.9161563450896 nats
+4-gon (*d 1d 4) 20.9161563450896 nats
+5-gon (*d 1d 2) 20.9161563450896 nats
+6-gon 1l 16.8218117828675 nats
+7-gon (*d 1d 3) 20.9161563450896 nats
+8-gon 1l slanted 3 26.330403178644698 nats
+upwards 16.282815282134813 nats
+right angle 20.29014846736728 nats
+right angle epsilon 16.282815282134813 nats
+line segment 6.774223886357614 nats
+square slanted by 2pi/3 26.330403178644698 nats
+semicircle slanted by 2pi/5 25.993930942023486 nats
+Greek spiral slanted by 2pi/6 30.424747740866795 nats
+Hook slanted by 2pi/7 31.158716915947 nats
+slanted line 20.29014846736728 nats
+Greek spiral 6 20.9161563450896 nats
+Greek spiral 7 20.9161563450896 nats
+Greek spiral 8 20.9161563450896 nats
+Greek spiral 9 20.9161563450896 nats
+smooth spiral 2 20.9161563450896 nats
+smooth spiral 3 20.9161563450896 nats
+smooth spiral 4 20.9161563450896 nats
+smooth spiral 5 20.9161563450896 nats
+smooth spiral 4 slanted by 2pi/2 30.424747740866795 nats
+star 3 33.669610240886854 nats
+star 5 33.669610240886854 nats
+star 7 33.669610240886854 nats
+star 9 33.669610240886854 nats
+leaf iteration 1.1 16.8218117828675 nats
+leaf iteration 1.2 26.330403178644698 nats
+leaf iteration 2.1 32.121197030290524 nats
+leaf iteration 2.2 41.629788426067734 nats
+flower 3 47.42058227771356 nats
+flower 4 47.42058227771356 nats
+flower 5 47.42058227771356 nats
+flower 6 47.42058227771356 nats
+flower 7 47.42058227771356 nats
+staircase 5 36.01301732840115 nats
+staircase 6 36.01301732840115 nats
+blocks zigzag 1 62.25389429507586 nats
+blocks zigzag 2 62.25389429507586 nats
+blocks zigzag 3 62.25389429507586 nats
+blocks zigzag 4 62.25389429507586 nats
+blocks zigzag 5 62.25389429507586 nats
+diagonal zigzag 3 44.248643048365466 nats
+diagonal zigzag 4 44.248643048365466 nats
+right semicircle of size 1 20.37715984435691 nats
+left semicircle of size 1 25.993930942023486 nats
+circle of size 1 31.361241180058474 nats
+right semicircle of size 2 20.37715984435691 nats
+left semicircle of size 2 16.485339546246284 nats
+circle of size 2 31.361241180058474 nats
+right semicircle of size 3 20.37715984435691 nats
+left semicircle of size 3 16.485339546246284 nats
+circle of size 3 31.361241180058474 nats
+right semicircle of size 4 20.37715984435691 nats
+left semicircle of size 4 16.485339546246284 nats
+circle of size 4 31.361241180058474 nats
+right semicircle of size 5 20.37715984435691 nats
+left semicircle of size 5 16.485339546246284 nats
+circle of size 5 31.361241180058474 nats
+right semicircle of size 6 20.37715984435691 nats
+left semicircle of size 6 16.485339546246284 nats
+circle of size 6 31.361241180058474 nats
+5 enclosed circles 38.53832939282418 nats
+6 enclosed circles 38.53832939282418 nats
+4-circle flower l=2 49.96651362933933 nats
+5-circle flower l=3 49.96651362933933 nats
+6-circle flower l=4 49.96651362933933 nats
+3-circle flower l=1 49.96651362933933 nats
+3-semicircle sequence L=1 41.043855329814924 nats
+2-semicircle sequence L=2 41.043855329814924 nats
+1-semicircle sequence L=3 41.043855329814924 nats
+2-semicircle sequence L=1 41.043855329814924 nats
+1-semicircle sequence L=2 41.043855329814924 nats
+1-semicircle sequence L=1 41.043855329814924 nats
+row of 2 circles 35.4010975569965 nats
+row of 3 circles 35.4010975569965 nats
+row of 2 lines 20.7746567828159 nats
+row of 3 lines 20.7746567828159 nats
+line next to semicircle 25.93944275673941 nats
+3 dashed lines of size (/d 1d 2) 24.869001345038004 nats
+4 dashed lines of size (/d 1d 3) 24.869001345038004 nats
+broken circle 31.556213854405982 nats
+circle next to semicircle 42.33777092599607 nats
+semicircle next to square 35.9870306532493 nats
+circle next to square 46.76858772483938 nats
+circle next to line 36.7209998283295 nats
+line next to circle 41.88578580225301 nats
+row of 4 dashes 33.589135380450934 nats
+row of 5 dashes 33.589135380450934 nats
+row of 5 semicircles 29.6973150823403 nats
+row of 6 semicircles 29.6973150823403 nats
+3-empty snowflake 25.205473581659213 nats
+3-spiral snowflake 40.127564597940776 nats
+3-dashed snowflake 33.589135380450934 nats
+3-circle snowflake 41.777824504895136 nats
+3-lonely circle snowflake 44.99670032976333 nats
+3-square dashed snowflake 43.723734653950444 nats
+3-square snowflake 40.50485882908225 nats
+3-close large semicircle snowflake 35.00360061853751 nats
+3-close semicircle snowflake 30.90925605631541 nats
+3-semicircle snowflake 36.074042030238935 nats
+3-double dashed snowflake 47.137583153166155 nats
+3-Greek snowflake 40.127564597940776 nats
+4-empty snowflake 25.205473581659213 nats
+4-dashed snowflake 33.589135380450934 nats
+4-circle snowflake 41.777824504895136 nats
+4-lonely circle snowflake 44.99670032976333 nats
+4-square dashed snowflake 43.723734653950444 nats
+4-close large semicircle snowflake 35.00360061853751 nats
+4-close semicircle snowflake 30.90925605631541 nats
+4-semicircle snowflake 36.074042030238935 nats
+4-double dashed snowflake 47.137583153166155 nats
+5-empty snowflake 25.205473581659213 nats
+5-spiral snowflake 40.127564597940776 nats
+5-dashed snowflake 33.589135380450934 nats
+5-circle snowflake 41.777824504895136 nats
+5-lonely circle snowflake 44.99670032976333 nats
+5-square dashed snowflake 43.723734653950444 nats
+5-square snowflake 40.50485882908225 nats
+5-close large semicircle snowflake 35.00360061853751 nats
+5-close semicircle snowflake 30.90925605631541 nats
+5-semicircle snowflake 36.074042030238935 nats
+5-Greek snowflake 40.127564597940776 nats
+6-empty snowflake 25.205473581659213 nats
+6-dashed snowflake 33.589135380450934 nats
+6-circle snowflake 41.777824504895136 nats
+6-lonely circle snowflake 44.99670032976333 nats
+6-square dashed snowflake 43.723734653950444 nats
+6-square snowflake 40.50485882908225 nats
+6-close large semicircle snowflake 35.00360061853751 nats
+6-close semicircle snowflake 30.90925605631541 nats
+6-semicircle snowflake 36.074042030238935 nats
+6-double dashed snowflake 47.137583153166155 nats
+7-empty snowflake 25.205473581659213 nats
+7-dashed snowflake 33.589135380450934 nats
+7-circle snowflake 41.777824504895136 nats
+7-lonely circle snowflake 44.99670032976333 nats
+7-square dashed snowflake 43.723734653950444 nats
+7-square snowflake 40.50485882908225 nats
+7-close large semicircle snowflake 35.00360061853751 nats
+7-close semicircle snowflake 30.90925605631541 nats
+3-row of squares 30.90925605631541 nats
+4-row of squares 30.90925605631541 nats
+2x2 grid 62.91494019948409 nats
+slanted squares 44.761652873946296 nats
+square of size 1 20.9161563450896 nats
+square of size 2 20.9161563450896 nats
+square of size 3 20.9161563450896 nats
+square of size 4 20.9161563450896 nats
+square of size 5 20.9161563450896 nats
+5-concentric squares 30.531961825173944 nats
+7-concentric squares 30.531961825173944 nats

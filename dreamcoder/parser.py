@@ -5,6 +5,7 @@ from dreamcoder.enumeration import *
 from dreamcoder.grammar import *
 from dreamcoder.recognition import *
 from dreamcoder.utilities import *
+from dreamcoder.translation import *
 
 import torch
 import torch.nn as nn
@@ -20,10 +21,13 @@ class TokenRecurrentFeatureExtractor(RecurrentFeatureExtractor):
     GRU Feature extractor over pre-tokenized language data.
     """
     def __init__(self, tasks, testingTasks, cuda, language_data,
-                canonicalize_numbers=True, tokenizer_fn=None,
+                canonicalize_numbers=False, tokenizer_fn=None,
                 H=64,
                 bidirectional=True,
-                max_inputs=5):
+                max_inputs=5,
+                lexicon=None,
+                smt_translation_info=None,
+                n_best=5):
         self.canonicalize_numbers = canonicalize_numbers
         self.tokenizer_fn = tokenizer_fn
         if self.tokenizer_fn is None:
@@ -33,7 +37,14 @@ class TokenRecurrentFeatureExtractor(RecurrentFeatureExtractor):
         self.tokenized_tasks = dict()
         self.useTask = True
         self.MAXINPUTS = max_inputs
-        super(TokenRecurrentFeatureExtractor, self).__init__(lexicon=self.build_lexicon(),
+        self.UNK = "UNK"
+        self.tokenized_helmholtz = {}
+        self.n_best = 5
+        
+        # Location of directories to access and translate sets of programs.
+        self.smt_translator_info = smt_translation_info 
+        
+        super(TokenRecurrentFeatureExtractor, self).__init__(lexicon=self.build_lexicon(lexicon),
                                                              H=H,
                                                              tasks=tasks,
                                                              bidirectional=True,
@@ -49,31 +60,67 @@ class TokenRecurrentFeatureExtractor(RecurrentFeatureExtractor):
         return t
     
     def tokenize(self, task):
-        if task in self.tokenized_tasks:
-            return self.tokenized_tasks[task]
-        if task not in self.language_data:
-            return None
+        # Returns tokens for the task or the nearest task.
+        use_task_name = task.name
+        if task.name in self.tokenized_tasks:
+            return self.tokenized_tasks[task.name]
+        elif task.name in self.tokenized_helmholtz:
+            return self.tokenized_helmholtz[task.name]
         
+        elif task.nearest_name is not None and task.nearest_name in self.tokenized_tasks:
+            # Returns tokens for the nearest task
+            return self.tokenized_tasks[task.nearest_name] 
+        elif task.name not in self.language_data:
+            print("Not found! ",  task.name)
+            if task.nearest_name not in self.language_data:
+                self.language_data[task] = [self.UNK]
+            else:
+                use_task_name = task.nearest_name
         tokens = []
-        for sentence in self.language_data[task]:
+        for sentence in self.language_data[use_task_name]:
             sentence_tokens = self.tokenizer_fn(sentence)
             if self.canonicalize_numbers:
                 sentence_tokens = [self.canonicalize_number_token(t) for t in sentence_tokens]
             tokens.append(sentence_tokens) # Feature extractor examples are usually inputs and outputs
-        self.tokenized_tasks[task] = [ 
+        self.tokenized_tasks[use_task_name] = [ 
                                         [tokens, []]
                                      ]
-        return self.tokenized_tasks[task] # Feature extractor examples are usually lists of (xs, y) sets.
-
-                
-    def build_lexicon(self):
-        lexicon = set()
+        return self.tokenized_tasks[use_task_name] # Feature extractor examples are usually lists of (xs, y) sets.
+    
+    def tokenize_for_smt(self, task):
+        human_readable = []
+        numeric_tokenized = []
+        for (sentences, _) in self.tokenize(task):
+            for tokens in sentences:
+                human_readable.append(tokens)
+                numeric_tokenized.append([self.symbolToIndex[token] for token in tokens])
+        return human_readable, numeric_tokenized
+        
+    def to_symbols(self, numeric_tokens):
+        return [self.indexToSymbol[n] for n in numeric_tokens]
+    
+    def to_symbols_batch(self, numeric_token_batch):
+        return [self.to_symbols(tokens) for tokens in numeric_token_batch]
+    
+    def build_lexicon(self, lexicon):
+        if lexicon is not None:
+            eprint("Received a lexicon of {} words; adding UNK".format(len(lexicon)))
+            return lexicon + [self.UNK]
+        lexicon = set([self.UNK])
         for task in self.language_data:
             tokens = self.tokenize(task)[0][0]
             for sentence_tokens in tokens:
                 lexicon.update(set(sentence_tokens))
-        eprint("Built a lexicon of {} words".format(len(lexicon)))
+        eprint("Built a lexicon of {} words, including UNK".format(len(lexicon)))
         return list(lexicon)
+    
+    def update_with_tokenized_helmholtz(self, helmholtz_frontiers):
+        eprint(f"[TokenRecurrentFeatureExtractor] Received n={len(helmholtz_frontiers)} Helmholtz frontiers; resetting Helmholtz tokens.")
+        task_to_tokens = translate_frontiers_to_nl(helmholtz_frontiers, self.smt_translator_info, self.n_best, verbose=False)
+        self.tokenized_helmholtz = {f.task.name : [
+                                    [task_to_tokens[f.task], []] 
+                                    ] for f in helmholtz_frontiers
+                                   }
     
 class NgramFeaturizer(nn.Module):
     """
