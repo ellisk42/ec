@@ -229,7 +229,11 @@ class AbstractREPLValueHead(BaseValueHead):
 
         self.fn_modules = nn.ModuleDict()
         self.holeParam = nn.Sequential(nn.Linear(1*H, H), nn.ReLU())
+        from dreamcoder.program import Primitive
+        from dreamcoder.type import tint
+        zero = Primitive('0', tint, 0)
         for _, _, prim in g.productions:
+            self.fn_modules['0'] = NMN(zero, H)
             if not prim.isPrimitive: continue #This should be totally fine i think...
             self.fn_modules[prim.name] = NMN(prim, H)
 
