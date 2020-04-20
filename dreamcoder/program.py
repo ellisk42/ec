@@ -1032,8 +1032,8 @@ class Hole(Program):
         self.tp = tp
 
     def show(self, isFunction): 
-        return f"<HOLE:{self.tp}>"
-        #return "<HOLE>"
+        #return f"<HOLE:{self.tp}>"
+        return "<HOLE>"
 
     @property
     def isHole(self): return True

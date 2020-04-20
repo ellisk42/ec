@@ -549,9 +549,10 @@ class TowerREPLValueHead(AbstractREPLValueHead):
             res = p(_empty_tower)          
             res = res(TowerState(history=[]))
 
-        except RecursionError as e:
+        except (RecursionError, AttributeError) as e:
             print("caught exception")
             print("sketch", sketch)
+            print("oldSketch", oldSketch)
             print(e)
             raise computeValueError
         except (ValueError, IndexError, ZeroDivisionError, computeValueError, RuntimeError) as e:
