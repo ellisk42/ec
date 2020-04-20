@@ -109,11 +109,12 @@ enumerationTimeout = 1800
 num_iterations = 12
 task_batch_size = 40
 test_every = 3
+recognition_timeout = 1800
 for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000']:
     for sample_n_supervised in [0, 10]:
         job_name = f"logo_2_ec_cnn_compression_et_{enumerationTimeout}_supervised_{sample_n_supervised}"
         jobs.append(job_name)
-        base_parameters = f" --enumerationTimeout {enumerationTimeout} --testingTimeout {enumerationTimeout}  --iterations {num_iterations} --biasOptimal --contextual --taskBatchSize {task_batch_size} --testEvery {test_every} --no-cuda --recognitionTimeout 1800 --recognition_0 examples --Helmholtz 0.5"
+        base_parameters = f" --enumerationTimeout {enumerationTimeout} --testingTimeout {enumerationTimeout}  --iterations {num_iterations} --biasOptimal --contextual --taskBatchSize {task_batch_size} --testEvery {test_every} --no-cuda --recognitionTimeout {recognition_timeout} --recognition_0 examples --Helmholtz 0.5"
         exp_parameters = f" --taskDataset {dataset} --sample_n_supervised {sample_n_supervised}"
         singularity = singularity_base_command.format(job, job_name)
         command = singularity + base_command + base_parameters + exp_parameters + " &"
@@ -122,11 +123,11 @@ for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000
         job +=1
 #### Generate Helmholtz generative model experiments.
 RUN_HELMHOLTZ_GENERATIVE_MODEL = True
-enumerationTimeout = 1
+enumerationTimeout = 1800
 num_iterations = 12
 task_batch_size = 40
 test_every = 3
-recognition_timeout = 1
+recognition_timeout = 1800
 for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000']:
     for sample_n_supervised in [0, 10]:
         for phrase_length in [1, 3, 7]:
