@@ -175,6 +175,7 @@ def ecIterator(grammar, tasks,
                recognition_1=[],
                # SMT parameters.
                moses_dir=None,
+               smt_phrase_length=None,
                finetune_1=False,
                helmholtz_nearest_language=0,
                language_encoder=None,
@@ -329,7 +330,8 @@ def ecIterator(grammar, tasks,
             "recognitionEpochs",
             "languageDataset",
             "moses_dir",
-            "debug"
+            "debug",
+            "smt_phrase_length"
         ]
         parameters["iterations"] = iteration
         checkpoint_params = [k for k in sorted(parameters.keys()) if k not in exclude_from_path]
@@ -481,7 +483,6 @@ def ecIterator(grammar, tasks,
     for t in tasks:
         if t.add_as_supervised:
             result.allFrontiers[t] = result.allFrontiers[t].combine(Frontier.makeFrontierFromSupervised(t)).topK(maximumFrontier)
-    import pdb; pdb.set_trace()
     
     ######## Test Evaluation and background Helmholtz enumeration.
     for j in range(resume or 0, iterations):
@@ -602,6 +603,7 @@ def ecIterator(grammar, tasks,
                             language_lexicon=result.vocabularies["train"],
                             output_prefix=outputPrefix,
                             moses_dir=moses_dir,
+                            max_phrase_length=smt_phrase_length,
                             debug=debug,
                             iteration=j)
         
@@ -828,6 +830,7 @@ def induce_synchronous_grammar(frontiers, tasks, testingTasks, tasksAttempted, g
                     language_encoder=None, language_data=None, language_lexicon=None,
                     output_prefix=None,
                     moses_dir=None,
+                    max_phrase_length=None,
                     debug=None,
                     iteration=None):    
     encoder = language_encoder(tasks, testingTasks=testingTasks, cuda=False, language_data=language_data, lexicon=language_lexicon)
@@ -841,7 +844,7 @@ def induce_synchronous_grammar(frontiers, tasks, testingTasks, tasksAttempted, g
         corpus_dir = os.path.join(corpus_dir, 'corpus_tmp')
     else:
         corpus_dir = os.path.join(output_prefix, f'moses_corpus_{iteration}')
-    alignment_outputs = smt_alignment(tasks, tasksAttempted, frontiers, grammar, encoder, corpus_dir, moses_dir)
+    alignment_outputs = smt_alignment(tasks, tasksAttempted, frontiers, grammar, encoder, corpus_dir, moses_dir, phrase_length=max_phrase_length)
     return alignment_outputs
 
 def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFrontiers, _=None,
@@ -1128,6 +1131,10 @@ def commandlineArguments(_=None,
     parser.add_argument("--moses_dir",
         default="../moses_compiled",
         help="Location of top-level Moses SMT directory for machine translation.")
+    parser.add_argument("--smt_phrase_length",
+        default=5,
+        type=int,
+        help="Maximum phrase length when learning Moses phrase model.")
 
     ### Algorithm training details.
     parser.add_argument("--debug",
