@@ -153,6 +153,7 @@ def moses_translation_tables(corpus_dir, moses_dir, output_dir=None, phrase_leng
     return phrase_table_loc
 
 def train_natural_language_model(corpus_dir, moses_dir, output_dir=None, n_grams=3):
+    eprint(f"Training language model using order=[{n_grams}]")
     # Train the language model on the full training data.
     corpus = os.path.join(corpus_dir, "corpus")
     lm_filename = os.path.abspath(os.path.join(output_dir, f"lm-nl-o-{n_grams}.arpa"))
