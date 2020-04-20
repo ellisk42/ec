@@ -254,7 +254,8 @@ class Grammar(object):
             context, expression = self._sampleOneStep(
                 request.arguments[1], context, [
                     request.arguments[0]] + environment, mustBeLeaf,
-                    forceHole=forceHole) #is this right?
+                    forceHole=forceHole) #is this right? #should there be an excludeProd here???s
+            assert False, 'should there be an excludeHole?'
             return context, Abstraction(expression) #should I be putting it into beta-normal form??
 
         if forceHole:
@@ -1221,12 +1222,15 @@ class ContextualGrammar:
                                                          context, environment, argumentType, argument)
             thisSummary.join(newSummary)
 
+
         return context, thisSummary
 
-    def closedLikelihoodSummary(self, request, expression):
-        return self.likelihoodSummary(None,None,
+    def closedLikelihoodSummary(self, request, expression, keepExpr=False):
+        ls = self.likelihoodSummary(None,None,
                                       Context.EMPTY,[],
                                       request, expression)[1]
+        if keepExpr: ls._fullProg = expression 
+        return ls
 
     def logLikelihood(self, request, expression):
         return self.closedLikelihoodSummary(request, expression).logLikelihood(self)
@@ -1264,6 +1268,44 @@ class ContextualGrammar:
         for j,x in enumerate(xs):
             x = x.apply(context)
             context, x = self._sample(chosenPrimitive, j, context, environment, x, maximumDepth - 1)
+            returnValue = Application(returnValue, x)
+            
+        return context, returnValue
+
+    def _sampleOneStep(self, parent, parentIndex, context, environment, request,
+                       mustBeLeaf=False, forceHole=False, excludeProd=[]):
+        """
+        sample a hole with prob sampleHoleProb
+        We use the depth param to figure out if the next one deep should be all holes
+        this could use a big refactor
+        """
+        if request.isArrow():
+            context, body = self._sampleOneStep(parent, parentIndex, context,
+                                         [request.arguments[0]] + environment,
+                                         request.arguments[1],
+                                         mustBeLeaf=mustBeLeaf,
+                                         forceHole=forceHole,
+                                         excludeProd=excludeProd) #TODO keep exclueProd??
+            return context, Abstraction(body)
+        if forceHole:
+            return context, Hole(tp=request)
+
+        if parent is None: g = self.noParent
+        elif parent.isIndex: g = self.variableParent
+        else: g = self.library[parent][parentIndex]
+        candidates = g.buildCandidates(request, context, environment,
+                                       normalize=True, returnProbabilities=True,
+                                       mustBeLeaf=mustBeLeaf,
+                                       excludeProd=excludeProd)
+        newType, chosenPrimitive, context = sampleDistribution(candidates)
+
+        xs = newType.functionArguments()
+        returnValue = chosenPrimitive
+
+        for j,x in enumerate(xs):
+            x = x.apply(context)
+            context, x = self._sampleOneStep(chosenPrimitive, j, context, environment, x, 
+                                             mustBeLeaf=False, forceHole=True)
             returnValue = Application(returnValue, x)
             
         return context, returnValue

@@ -5,6 +5,7 @@ except ModuleNotFoundError:
 from dreamcoder.type import *
 from dreamcoder.program import *
 
+from dreamcoder.grammar import ContextualGrammar
 from collections import namedtuple
 Subtree = namedtuple("subtree", ['path', 'tp', 'env', 'context'])
 
@@ -285,21 +286,21 @@ class OneStepFollower:
     #         expr = h(expr)
     #     return expr
 
-    def invented(self, e):
+    def invented(self, e, parentInfo):
         #assert False
         assert self.path == []
         self.prod = e
-        return e
-    def primitive(self, e):
+        return e, parentInfo
+    def primitive(self, e, parentInfo):
         assert self.path == []
         self.prod = e
-        return e
-    def index(self, e):
+        return e, parentInfo
+    def index(self, e, parentInfo):
         assert self.path == []
         self.prod = e
-        return e
+        return e, parentInfo
 
-    def application(self, e):
+    def application(self, e, parentInfo):
         if self.path==[]:
             f, xs = e.applicationParse()
             x_tps = f.tp.functionArguments()
@@ -312,32 +313,38 @@ class OneStepFollower:
                 #xHole = g.sample(x_tp, sampleHoleProb=1.0) #need grammar for bad reason
                 returnVal = Application(returnVal, xHole)
 
-            return returnVal
+            return returnVal, parentInfo
 
         step = self.path.pop() #why am I popping?
         if step == 'f':
+            #f, xs = e.applicationParse()
             #self.history.append(lambda expr: Application(expr, e.x))
-            return e.f.visit(self)
+            return e.f.visit(self, parentInfo)
         else:
             assert step == 'x'
-            #self.history.append(lambda expr: Application(e.f, expr))
-            return e.x.visit(self)
 
-    def abstraction(self, e):
+            f, xs = e.applicationParse()
+            parentInfo = (f, len(xs) - 1 )
+            #self.history.append(lambda expr: Application(e.f, expr))
+            return e.x.visit(self, parentInfo)
+
+    def abstraction(self, e, parentInfo):
         if self.path==[]:
-            return Abstraction(e.body.visit(self))
+            ret = Abstraction(e.body.visit(self, parentInfo)[0])
+            assert e.body.visit(self, parentInfo)[1] == parentInfo
+            return ret, parentInfo
 
         step = self.path.pop()
         assert step == 'body'
         #self.history.append(lambda expr: Abstraction(expr))
-        return e.body.visit(self)
+        return e.body.visit(self, parentInfo)
 
-    def hole(self, e):
+    def hole(self, e, parentInfo):
         assert False, "you shouldnt be here"
 
     def execute(self, full, path):
         self.path = list(reversed(path))
-        ret = full.visit(self) #should return actual program
+        ret, parentInfo = full.visit(self, (None, None)) #should return actual program
         self.path = []
 
         if self.prod.isIndex:
@@ -345,7 +352,7 @@ class OneStepFollower:
         else:
             excludeProd = [self.prod]
 
-        return ret, excludeProd
+        return ret, excludeProd, parentInfo
 
 
 class HoleZipper():
@@ -391,11 +398,76 @@ class HoleVisitor:
         return [HoleZipper([], context, env)]
 
 
+class ParentFinder:
+    """
+    as written, given a path and expression, it does something
+    """
+    def __init__(self):
+        pass
+
+    def invented(self, e, parentInfo):
+        assert False, "you shouldnt be here"
+        #assert False
+        #assert self.path == []
+        #self.prod = e
+        #return parentInfo
+    def primitive(self, e, parentInfo):
+        assert False, "you shouldnt be here"
+        #assert self.path == []
+        #self.prod = e
+        #return parentInfo
+    def index(self, e, parentInfo):
+        assert False, "you shouldnt be here"
+        #assert self.path == []
+        #self.prod = e
+        #return parentInfo
+
+    def application(self, e, parentInfo):
+        if self.path==[]:
+            assert False, "you shouldnt be here"
+        step = self.path.pop() #why am I popping?
+        if step == 'f':
+            return e.f.visit(self, parentInfo)
+        else:
+            assert step == 'x'
+            f, xs = e.applicationParse()
+            parentInfo = (f, len(xs) - 1 )
+            #self.history.append(lambda expr: Application(e.f, expr))
+            return e.x.visit(self, parentInfo)
+
+    def abstraction(self, e, parentInfo):
+        if self.path==[]:
+            assert False, "you shouldnt be here"
+            #return parentInfo
+        step = self.path.pop()
+        assert step == 'body'
+        #self.history.append(lambda expr: Abstraction(expr))
+        return e.body.visit(self, parentInfo)
+
+    def hole(self, e, parentInfo):
+        return parentInfo
+        
+    def execute(self, sketch, path):
+        self.path = list(reversed(path))
+        parentInfo = sketch.visit(self, (None, None)) #should return actual program
+        self.path = []
+        return parentInfo
+
 def sampleOneStepFromHole(zipper, sk, tp, g, maximumDepth):
 
     mustBeLeaf = len([ t for t in zipper.path if t != 'body' ] ) >= maximumDepth
     
-    newContext, newSubtree = g._sampleOneStep(zipper.tp, zipper.context, zipper.env, mustBeLeaf)
+    if isinstance(g, ContextualGrammar):
+        parent, parentIndex = ParentFinder().execute(sk, zipper.path)
+        newContext, newSubtree = g._sampleOneStep(
+                            parent, parentIndex,
+                            zipper.context,
+                            zipper.env,
+                            zipper.tp,
+                            mustBeLeaf=mustBeLeaf)
+
+    else:
+        newContext, newSubtree = g._sampleOneStep(zipper.tp, zipper.context, zipper.env, mustBeLeaf)
 
     newSk = NewExprPlacer().execute(sk, zipper.path, newSubtree)
     newZippers = findHoles(newSk, tp) #TODO type inference, redoing computation, can use newContext
@@ -404,20 +476,32 @@ def sampleOneStepFromHole(zipper, sk, tp, g, maximumDepth):
 
 def followPathOneStep(zipper, last, full, tp):
     #implement with visitor
-    nextNode, excludeProd = OneStepFollower().execute(full, zipper.path) #TODO
+    nextNode, excludeProd, parentInfo = OneStepFollower().execute(full, zipper.path) #TODO
     newSk = NewExprPlacer().execute(last, zipper.path, nextNode)
 
-    return newSk, excludeProd
+    return newSk, excludeProd, parentInfo
 
-def sampleWrongOneStep(zipper, last, full, tp, g, excludeProd=[]):
+def sampleWrongOneStep(zipper, last, full, tp, g, excludeProd=[], parentInfo=None):
     """
     follow the full program down the zipper, and then sample a token that isn't the one in full
     excludePrim will have prims and have integers for indices
     """
-    _, wrongSubtree = g._sampleOneStep(zipper.tp,
+
+    if isinstance(g, ContextualGrammar):
+        parent, parentIndex = parentInfo
+        _, wrongSubtree = g._sampleOneStep(
+                            parent, parentIndex,
+                            zipper.context,
+                            zipper.env,
+                            zipper.tp,
+                            excludeProd=excludeProd)
+
+    else:
+        _, wrongSubtree = g._sampleOneStep(zipper.tp,
                                     zipper.context,
                                     zipper.env, 
                                     excludeProd=excludeProd)
+
     negEx = NewExprPlacer().execute(last, zipper.path, wrongSubtree)
     return negEx
 
@@ -458,11 +542,11 @@ def getTracesFromProg(full, tp, g, onlyPos=False):
     while zippers:
         zipper = random.choice(zippers)
 
-        newLast, excludeProd = followPathOneStep(zipper, last, full, tp) #TODO
+        newLast, excludeProd, parentInfo = followPathOneStep(zipper, last, full, tp) #TODO
         trace.append(newLast)  
 
         if not onlyPos:
-            negLast = sampleWrongOneStep(zipper, last, full, tp, g, excludeProd=excludeProd ) #TODO
+            negLast = sampleWrongOneStep(zipper, last, full, tp, g, excludeProd=excludeProd, parentInfo=parentInfo) #TODO
             negTrace.append(negLast)
 
         last = newLast
