@@ -14,13 +14,13 @@ DECODER_TOOL = "bin/moses"
 
 def frontier_to_tokens(frontier, grammar):
     """:ret List of numeric token lists for each program 'sentence'."""
-    human_readable = [entry.tokens for entry in frontier.entries]
-    numeric = [[grammar.vocab[t] for t in tokens] for tokens in human_readable]
+    human_readable = [grammar.escape_tokens(entry.tokens) for entry in frontier.entries]
+    numeric = [[grammar.escaped_vocab[t] for t in grammar.escape_tokens(tokens)] for tokens in human_readable]
     return human_readable, numeric
 
 def write_smt_vocab(grammar, language_encoder, corpus_dir, count_dicts):
     eprint(f"Writing ML and NL vocabs to {corpus_dir}.")
-    ml_vocab = grammar.vocab.items()
+    ml_vocab = grammar.escaped_vocab.items()
     nl_vocab = language_encoder.symbolToIndex.items()
     
     # Format: INDEX      TOKEN     COUNT    
@@ -130,7 +130,7 @@ def initial_ibm_alignment(corpus_dir, moses_dir, output_dir=None, max_ibm_model=
 def add_pseudoalignments(corpus_dir, n_pseudo, unaligned_counts, grammar, output_dir=None):
     # TODO: add pseudoalignments for the rebalancing case, or define how to handle OOV.
     raise Exception('Unimplemented: Pseudo alignments.')
-    ml_vocab = grammar.vocab.values()
+    ml_vocab = grammar.escaped_vocab.values()
     align_file = os.path.join(output_dir, "model/aligned.grow-diag-final")
     with open(align_file, "a+") as f:
         f.write(pseudoalignments)
@@ -153,7 +153,6 @@ def moses_translation_tables(corpus_dir, moses_dir, output_dir=None, phrase_leng
     return phrase_table_loc
 
 def train_natural_language_model(tasks, language_encoder, corpus_dir, moses_dir, output_dir=None, n_grams=3):
-    eprint(f"Training language model using order=[{n_grams}]")
     # Write the full set of task to train the language model.
     nl_all_task_corpus = ""
     for task in tasks:
@@ -197,7 +196,7 @@ def generate_decoder_config(corpus_dir, moses_dir, output_dir, lm_config, phrase
         with open(decoder_config, 'w') as f:
             f.write(moses_config_text)
 
-def translate_frontiers_to_nl(frontiers, translation_info, n_best, verbose):
+def translate_frontiers_to_nl(frontiers, grammar, translation_info, n_best, verbose):
     # Frontiers contain multiple programs
     if len(frontiers) < 1: return []
     program_idx_to_task = {}
@@ -215,19 +214,19 @@ def translate_frontiers_to_nl(frontiers, translation_info, n_best, verbose):
                 program_idx_to_task[idx] = f.task
                 program_tokens.append(e.tokens)
                 idx += 1
-    idx_to_translations = decode_programs(program_tokens, translation_info["output_dir"], "helmholtz_translations",  translation_info['corpus_dir'], translation_info['moses_dir'], n_best)
+    idx_to_translations = decode_programs(program_tokens, grammar, translation_info["output_dir"], "helmholtz_translations",  translation_info['corpus_dir'], translation_info['moses_dir'], n_best)
     task_to_tokens = defaultdict(list)
     for idx in idx_to_translations:
         task_to_tokens[program_idx_to_task[idx]] += idx_to_translations[idx]
     return task_to_tokens
 
-def decode_programs(program_tokens, output_dir, output_suffix, corpus_dir, moses_dir, n_best):
+def decode_programs(program_tokens,  grammar, output_dir, output_suffix, corpus_dir, moses_dir, n_best):
     """:ret: idx_to_translations: {index of program : [list of translation tokens]}"""
     eprint(f"Translating n=[{len(program_tokens)}] using n_best={n_best}")
     tmp_program_file = os.path.abspath(os.path.join(output_dir, 'tmp_program_file'))
     with open(tmp_program_file, 'w') as f:
         for tokens in program_tokens:
-            f.write(' '.join(tokens) + "\n")
+            f.write(' '.join(grammar.escape_tokens(tokens)) + "\n")
 
     corpus = os.path.join(corpus_dir, "corpus")
     tmp_nbest_file = os.path.abspath(os.path.join(output_dir, 'tmp_nbest_file'))

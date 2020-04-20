@@ -1,4 +1,4 @@
-singularity_base_command = "srun --job-name=logo_language_{} --output=jobs/{} --ntasks=1 --mem-per-cpu=20000 --gres=gpu --cpus-per-task 24 --time=10000:00 --qos=tenenbaum --partition=tenenbaum singularity exec -B /om2  --nv ../dev-container.img "
+singularity_base_command = "srun --job-name=logo_language_{} --output=jobs/{} --ntasks=1 --mem-per-cpu=20000 --gres=gpu --cpus-per-task 20 --time=10000:00 --qos=tenenbaum --partition=tenenbaum singularity exec -B /om2  --nv ../dev-container.img "
 
 experiment_commands = []
 jobs = []
@@ -104,7 +104,7 @@ if RUN_LANGUAGE_SEARCH_BASELINE:
 job += 1
 
 #### Generates EC baselines with updated LOGO dataset and supervision
-RUN_EC_BASELINES_LOGO_2 = True
+RUN_EC_BASELINES_LOGO_2 = False
 enumerationTimeout = 1800
 num_iterations = 12
 task_batch_size = 40
@@ -123,6 +123,7 @@ for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000
         job +=1
 #### Generate Helmholtz generative model experiments.
 RUN_HELMHOLTZ_GENERATIVE_MODEL = True
+EXPS = [('logo_unlimited_200', 0, 5), ('logo_unlimited_1000', 0, 5)]
 enumerationTimeout = 1800
 num_iterations = 12
 task_batch_size = 40
@@ -130,15 +131,17 @@ test_every = 3
 recognition_timeout = 1800
 for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000']:
     for sample_n_supervised in [0, 10]:
-        for phrase_length in [7,3,1]:
-            job_name = f"logo_2_ec_cnn_gru_ghelm_compression_et_{enumerationTimeout}_supervised_{sample_n_supervised}_{dataset}"
+        for phrase_length in [5,3,1]:
+            exp = (dataset, sample_n_supervised, phrase_length)
+            job_name = f"logo_2_ec_cnn_gru_ghelm_compression_et_{enumerationTimeout}_supervised_{sample_n_supervised}_{dataset}_pl_{phrase_length}"
             jobs.append(job_name)
             base_parameters = f" --enumerationTimeout {enumerationTimeout} --testingTimeout {enumerationTimeout}  --iterations {num_iterations} --biasOptimal --contextual --taskBatchSize {task_batch_size} --testEvery {test_every} --no-cuda --recognitionTimeout {recognition_timeout} --recognition_0 --recognition_1 examples language --Helmholtz 0.5 --synchronous_grammar"
             exp_parameters = f" --taskDataset {dataset} --language_encoder recurrent --languageDataset {dataset}/synthetic --sample_n_supervised {sample_n_supervised} --moses_dir ./moses_compiled --smt_phrase_length {phrase_length}"
             singularity = singularity_base_command.format(job, job_name)
             command = singularity + base_command + base_parameters + exp_parameters + " &"
             if RUN_HELMHOLTZ_GENERATIVE_MODEL:
-                experiment_commands.append(command)
+                if (EXPS is None) or (exp in EXPS):
+                    experiment_commands.append(command)
             job +=1
             
 

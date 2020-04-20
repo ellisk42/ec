@@ -953,7 +953,7 @@ class RecognitionModel(nn.Module):
         """
         if self.helmholtz_translations:
             non_empty_helmholtz_entries = [e for e in helmholtz_entries if e.task is not None]
-            self.language_encoder.update_with_tokenized_helmholtz(non_empty_helmholtz_entries)
+            self.language_encoder.update_with_tokenized_helmholtz(non_empty_helmholtz_entries, self.generativeModel)
             return
         elif self.helmholtz_nearest_language < 1:
             return

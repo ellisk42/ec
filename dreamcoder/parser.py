@@ -117,9 +117,9 @@ class TokenRecurrentFeatureExtractor(RecurrentFeatureExtractor):
         eprint("Built a lexicon of {} words, including UNK".format(len(lexicon)))
         return list(lexicon)
     
-    def update_with_tokenized_helmholtz(self, helmholtz_frontiers):
+    def update_with_tokenized_helmholtz(self, helmholtz_frontiers, grammar):
         eprint(f"[TokenRecurrentFeatureExtractor] Received n={len(helmholtz_frontiers)} Helmholtz frontiers; resetting Helmholtz tokens.")
-        task_to_tokens = translate_frontiers_to_nl(helmholtz_frontiers, self.smt_translator_info, self.n_best, verbose=False)
+        task_to_tokens = translate_frontiers_to_nl(helmholtz_frontiers, grammar, self.smt_translator_info, self.n_best, verbose=False)
         self.tokenized_helmholtz = {f.task.name : [
                                     [self.add_unk(task_to_tokens[f.task]), []] 
                                     ] for f in helmholtz_frontiers
