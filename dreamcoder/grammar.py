@@ -27,6 +27,7 @@ class Grammar(object):
         self.expression2likelihood = dict((p, l) for l, _, p in productions)
         self.expression2likelihood[Index(0)] = self.logVariable
         
+        # Utilities for converting grammars into tokens
         self.SPACE_ESCAPE = "^"
         # Note: 1-indexed!!
         self.vocab = {
@@ -36,7 +37,7 @@ class Grammar(object):
                 + ["VAR"])
         } 
         self.escaped_vocab, self.original_to_escaped = self.build_escaped_vocab(self.vocab)
-
+        
         
     def build_escaped_vocab(self, vocab):
         escaped_vocab =  {
@@ -54,12 +55,19 @@ class Grammar(object):
         return [self.escape_token(t) for t in tokens]
     
     def escape_token(self, token):
+        if token in PUNCTUATION_TO_STRING:
+            # Escape puncutation
+            return PUNCTUATION_TO_STRING[token]
         # Remove spaces
-        return token.replace(" ", self.SPACE_ESCAPE)
+        token = token.replace(" ", self.SPACE_ESCAPE)
+        return token
 
     def escape_tokens_string(self, token_string):
-        for t in sorted(self.original_to_escaped, key=lambda t:len(t)):
-            token_string = token_string.replace(t, self.original_to_escaped[t])
+        # Longest to shortest
+        for t in sorted(self.original_to_escaped, key=lambda t:len(t), reverse=True):
+            token_string = token_string.replace(f"{t} ", f"{self.original_to_escaped[t]} ")
+            token_string = token_string.replace(f" {t}", f" {self.original_to_escaped[t]}")
+            token_string = token_string.replace(f" {t} ",f" {self.original_to_escaped[t]} ")
         return token_string
 
     def randomWeights(self, r):

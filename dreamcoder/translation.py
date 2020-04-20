@@ -153,7 +153,6 @@ def moses_translation_tables(corpus_dir, moses_dir, output_dir=None, phrase_leng
     return phrase_table_loc
 
 def train_natural_language_model(tasks, language_encoder, corpus_dir, moses_dir, output_dir=None, n_grams=3):
-    eprint(f"Training language model using order=[{n_grams}]")
     # Write the full set of task to train the language model.
     nl_all_task_corpus = ""
     for task in tasks:
@@ -227,9 +226,6 @@ def decode_programs(program_tokens,  grammar, output_dir, output_suffix, corpus_
     tmp_program_file = os.path.abspath(os.path.join(output_dir, 'tmp_program_file'))
     with open(tmp_program_file, 'w') as f:
         for tokens in program_tokens:
-            for t in tokens:
-                if t not in grammar.escaped_vocab:
-                    import pdb; pdb.set_trace()
             f.write(' '.join(grammar.escape_tokens(tokens)) + "\n")
 
     corpus = os.path.join(corpus_dir, "corpus")

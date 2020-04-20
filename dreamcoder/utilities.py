@@ -13,6 +13,24 @@ import heapq
 
 import hashlib
 
+# UTILS FOR ESCAPING TOKENS
+PUNCTUATION_TO_STRING = {
+ "0" : 'ZERO',
+ "1" : "ONE",
+ "2" : "TWO",
+ "3" : "THREE",
+ "4" : "FOUR",
+ "5" : "FIVE",
+ "6" : "SIX", 
+ "7" : "SEVEN",
+ "8" : "EIGHT", 
+ "9" : "NINE",
+ "+" : "PLUS",
+ "-" : "MINUS", 
+ "*" : "MULT", 
+ "\\" : "DIV"
+}
+
 def computeMD5hash(my_string):
     #https://stackoverflow.com/questions/13259691/convert-string-to-md5
     m = hashlib.md5()
