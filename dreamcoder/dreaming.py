@@ -65,7 +65,7 @@ def backgroundHelmholtzEnumeration(tasks, g, timeout, _=None,
                     frontiers.append(Frontier([FrontierEntry(program=Program.parse(p),
                                                              logPrior=entry["ll"],
                                                              logLikelihood=0.,
-                                                             tokens=tokens.split())
+                                                             tokens=g.escape_tokens_string(tokens).split())
                                                for p, tokens in zip(entry["programs"], entry["tokens"])],
                                               task=Task(str(b),
                                                         request,
