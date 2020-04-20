@@ -166,6 +166,7 @@ def train_natural_language_model(tasks, language_encoder, corpus_dir, moses_dir,
     # Train the language model on the full training data.
     lm_filename = os.path.abspath(os.path.join(output_dir, f"lm-nl-o-{n_grams}.arpa"))
     lm_tool = os.path.join(moses_dir, LM_TOOL)
+
     lm_cmd = f"{lm_tool} -o {n_grams} --discount_fallback --text {all_task_corpus_loc} --arpa {lm_filename}"
     subprocess.check_output(lm_cmd.split())
     return {"factor" : 0,
