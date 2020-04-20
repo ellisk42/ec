@@ -42,6 +42,7 @@ class Program(object):
             if np is None: return n
             n = np
 
+
     def infer(self):
         try:
             return self.inferType(Context.EMPTY, [], {})[1].canonical()
@@ -261,8 +262,23 @@ class Application(Program):
             self.trueBranch = None
             self.branch = None
 
-    def betaReduce(self):
+    def betaReduce(self, forceSubstitution=False):
         # See if either the function or the argument can be reduced
+        
+        # max reduction:
+        f, xs = self.applicationParse()
+        if f.isInvented:
+            e = f.body
+            for x in xs:
+                #print('arg', x)
+                x = x.betaNormalForm() #do leaves first
+                #print('normalized arg', x)
+                optionE = Application(e, x).betaReduce(forceSubstitution=True)
+                if optionE is None: e = Application(e, x)
+                else: e = optionE
+            return e
+
+
         f = self.f.betaReduce()
         if f is not None: return Application(f,self.x)
         x = self.x.betaReduce()
@@ -273,7 +289,7 @@ class Application(Program):
 
         # Perform substitution
         b = self.f.body
-        if b.hasHoles: return None
+        if not forceSubstitution and b.hasHoles: return None
         v = self.x
         return b.substitute(Index(0), v.shift(1)).shift(-1)
 
@@ -489,7 +505,7 @@ class Index(Program):
     def abstractEval(self, valueHead, environment, parse=None):
         if parse:
             assert parse[0] == self
-            print('you hit a parse')
+            #print('you hit a parse')
         return environment[self.i]
 
     def inferType(self, context, environment, freeVariables):
@@ -913,7 +929,10 @@ class Invented(Program):
         return self.body.abstractEval(valueHead, [])
 
 
-    def betaReduce(self): return self.body
+    def betaReduce(self): 
+        print("HITTTTTTTTTTTTTT invented")
+        print("INVENTED", self)
+        return self.body
 
     def isBetaLong(self): return True
 
@@ -1013,8 +1032,8 @@ class Hole(Program):
         self.tp = tp
 
     def show(self, isFunction): 
-        #return f"<HOLE:{self.tp}>"
-        return "<HOLE>"
+        return f"<HOLE:{self.tp}>"
+        #return "<HOLE>"
 
     @property
     def isHole(self): return True
@@ -1049,6 +1068,8 @@ class Hole(Program):
 
     def abstractEval(self, valueHead, e):
         from dreamcoder.domains.tower.towerPrimitives import ttower #speed 
+
+        #print("HOLE ENV", e)
         if self.tp == ttower:
             def returnVal(e):
                 env = e
@@ -1286,6 +1307,9 @@ class PrettyVisitor(object):
         return s
 
     def primitive(self, e, environment, isVariable, isAbstraction): return e.name
+
+    def hole(self, e, environment, isVariable, isAbstraction):
+        return f"<HOLE:{e.tp}>"
 
     def index(self, e, environment, isVariable, isAbstraction):
         if e.i < len(environment):

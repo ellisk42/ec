@@ -249,10 +249,29 @@ def test_abstractHolesTowerValue():
     featureExtractor = TowerCNN(tasks, testingTasks=tasks[-3:], cuda=True)
     valueHead = TowerREPLValueHead(g, featureExtractor, H=1024)
 
-    for expr in exprs:
-        x = valueHead.computeValue(expr, tasks[1])
+    #for expr in exprs:
+
+    expr = "(lambda (1x3 (tower_loopM 8 (lambda (lambda (moveHand 3 (reverseHand (tower_loopM 8 (lambda (lambda (moveHand 6 (3x1 $0)))) $0))))) (1x3 (1x3 (tower_embed (lambda <TowerHOLE>)((lambda (lambda (tower_loopM $1 (lambda (lambda (1x3 (moveHand 4 ($2 $0))))) (moveHand 2 (3x1 <TowerHOLE>))))) <HOLE> (lambda <TowerHOLE>))))))))"
+    expr = "(lambda (#(lambda (lambda (lambda (tower_loopM $1 (lambda (lambda (1x3 (moveHand 4 ($2 $0))))) (moveHand 2 (3x1 $2)))))) <TowerHOLE> 1 (lambda <TowerHOLE>)))"
+    
+    expr = "(lambda (#(lambda (lambda (lambda (tower_loopM $1 (lambda (lambda (1x3 (moveHand 4 ($2 $0))))) (moveHand 2 (3x1 $2)))))) $0 1 (lambda (tower_embed (lambda $0) (moveHand 3 (#(lambda (lambda (lambda (tower_loopM $1 (lambda (lambda (1x3 (moveHand 4 ($2 $0))))) (moveHand 2 (3x1 $2)))))) (1x3 <TowerHOLE>) 5 (lambda (#(lambda (lambda (lambda (tower_loopM $1 (lambda (lambda (1x3 (moveHand 4 ($2 $0))))) (moveHand 2 (3x1 $2)))))) <TowerHOLE> <HOLE> (lambda <TowerHOLE>)))))))))"
+    
+    expr = "(lambda (reverseHand (#(lambda (lambda (tower_loopM $0 (lambda (lambda (moveHand 3 (reverseHand (tower_loopM $3 (lambda (lambda (moveHand 6 (3x1 $0)))) $0)))))))) 2 8  (#(lambda (lambda (tower_loopM $0 (lambda (lambda (moveHand 3 (reverseHand (tower_loopM $3 (lambda (lambda (moveHand 6 (3x1 $0)))) $0)))))))) 1 2 (#(lambda (lambda (lambda (tower_loopM $1 (lambda (lambda (1x3 (moveHand 4 ($2 $0))))) (moveHand 2 (3x1 $2)))))) <TowerHOLE> 8 (lambda <TowerHOLE>))))))"
+    expr=Program.parse(expr)
+    print()
+    print()
+    print()
+    print("old:", expr)
+    print()
+    expr = expr.betaNormalForm()
+    print("new:", expr)
+    print()
+    print()
+    print()
+
+    x = valueHead.computeValue(expr, tasks[1])
     # x = expr.evaluateHolesDebug([])(_empty_tower)(TowerState(history=[])) #can initialize tower state with 
-        print(x)
+    print(x)
 
 def test_TowerREPLValueConvergence():
 
@@ -286,6 +305,7 @@ def test_TowerREPLValueConvergence():
 
     saveState("test1.png", Program.parse('(lambda (reverseHand (1x3 (1x3 $0))))') )
     saveState("test2.png", Program.parse('(lambda  (1x3 (1x3 $0)) )'))
+
 
     featureExtractor = TowerCNN(tasks, testingTasks=tasks[-3:], cuda=True)
     valueHead = TowerREPLValueHead(g, featureExtractor, H=1024)
@@ -326,5 +346,5 @@ if __name__=='__main__':
     # tasks = make_list_bootstrap_tasks()
     # expr = Program.parse('(lambda (map (lambda (is-square $0)) $0))')
     # test_abstractHolesTower()
-    # test_abstractHolesTowerValue()
-    test_TowerREPLValueConvergence()
+    test_abstractHolesTowerValue()
+    # test_TowerREPLValueConvergence()

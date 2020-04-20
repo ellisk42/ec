@@ -540,7 +540,7 @@ class TowerREPLValueHead(AbstractREPLValueHead):
         return outVectors
 ####
 
-    def _computeSketchRepresentation(self, sketch, p=None):
+    def _computeSketchRepresentation(self, sketch, p=None, oldSketch=None):
         #print(sketch)
         #assert "$1" not in str(sketch), f"{sketch}"
         if p is None:
@@ -567,6 +567,7 @@ class TowerREPLValueHead(AbstractREPLValueHead):
         except Exception:
             print("caught exception")
             print("sketch", sketch)
+            print("oldSketch", oldSketch)
             #print("IO", xs)
             assert 0
 
@@ -593,10 +594,11 @@ class TowerREPLValueHead(AbstractREPLValueHead):
         if outVectors is None:
             outVectors = self._computeOutputVectors(task)
 
-        sketch = sketch.betaNormalForm()
+        oldSketch = sketch
+        sketch = oldSketch.betaNormalForm()
         p = self._getInitialSketchRep(sketch)
 
-        evalVectors = [self._computeSketchRepresentation(sketch, p=p)]
+        evalVectors = [self._computeSketchRepresentation(sketch, p=p, oldSketch=oldSketch)]
         evalVectors = torch.stack(evalVectors, dim=0)
 
         distance = self._distance(torch.cat([evalVectors, outVectors], dim=1)).mean(0) #TODO
