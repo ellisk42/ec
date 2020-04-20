@@ -23,7 +23,7 @@ for num in 1 3 20
 		cp ${resume}.pickle ${resume}REPL.pickle
 		#Train:
 		cmd="python -i bin/tower.py --contextual --testingTimeout ${testingTime} --recognitionTimeout 216000 --resumeTraining -r ${helmRatio} --primitives new --split 0.5 -t ${time} -RS ${recSteps} --solver python  -c ${ncores} --useValue TowerREPL -i 2  --resume ${resume}REPL.pickle --singleRoundValueEval --seed 9"
-		om-repeat sbatch -e towersREPL${salt}.out -o towersREPL${salt}.out -p tenenbaum --time=3600 --mem=64G --cpus-per-task=8 --gres=gpu:QUADRORTX6000:1 ${cmd}
+		om-repeat sbatch -e towersREPL${salt}.out -o towersREPL${salt}.out -p tenenbaum --time=3600 --mem=32G --cpus-per-task=8 --gres=gpu:QUADRORTX6000:1 ${cmd}
 		#eval "${cmd}"
 
 		cp ${resume}.pickle ${resume}RNN.pickle
