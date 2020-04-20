@@ -175,6 +175,7 @@ def ecIterator(grammar, tasks,
                recognition_1=[],
                # SMT parameters.
                moses_dir=None,
+               smt_phrase_length=None,
                finetune_1=False,
                helmholtz_nearest_language=0,
                language_encoder=None,
@@ -333,6 +334,7 @@ def ecIterator(grammar, tasks,
             "languageDataset",
             "moses_dir",
             "debug",
+            "smt_phrase_length"
             "synchronous_grammar"
         ]
         parameters["iterations"] = iteration
@@ -609,6 +611,7 @@ def ecIterator(grammar, tasks,
                                 language_lexicon=result.vocabularies["train"],
                                 output_prefix=outputPrefix,
                                 moses_dir=moses_dir,
+                                max_phrase_length=smt_phrase_length,
                                 debug=debug,
                                 iteration=j)
         
@@ -835,6 +838,7 @@ def induce_synchronous_grammar(frontiers, tasks, testingTasks, tasksAttempted, g
                     language_encoder=None, language_data=None, language_lexicon=None,
                     output_prefix=None,
                     moses_dir=None,
+                    max_phrase_length=None,
                     debug=None,
                     iteration=None):    
     encoder = language_encoder(tasks, testingTasks=testingTasks, cuda=False, language_data=language_data, lexicon=language_lexicon)
@@ -849,7 +853,7 @@ def induce_synchronous_grammar(frontiers, tasks, testingTasks, tasksAttempted, g
     else:
         corpus_dir = os.path.join(os.path.dirname(output_prefix), f'moses_corpus_{iteration}')
         eprint(f"Running in non-debug mode, writing corpus files to {corpus_dir}.")
-    alignment_outputs = smt_alignment(tasks, tasksAttempted, frontiers, grammar, encoder, corpus_dir, moses_dir)
+    alignment_outputs = smt_alignment(tasks, tasksAttempted, frontiers, grammar, encoder, corpus_dir, moses_dir, phrase_length=max_phrase_length)
     return alignment_outputs
 
 def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFrontiers, _=None,
@@ -1123,6 +1127,11 @@ def commandlineArguments(_=None,
     parser.add_argument("--moses_dir",
         default="../moses_compiled",
         help="Location of top-level Moses SMT directory for machine translation.")
+    parser.add_argument("--smt_phrase_length",
+        default=5,
+        type=int,
+        help="Maximum phrase length when learning Moses phrase model.")
+
     parser.add_argument("--helmholtz_nearest_language",
                         dest="helmholtz_nearest_language",
                         default=0, 

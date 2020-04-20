@@ -152,27 +152,50 @@ def moses_translation_tables(corpus_dir, moses_dir, output_dir=None, phrase_leng
         subprocess.run(delimiter_cmd, check=True, stdout=f)
     return phrase_table_loc
 
-def train_natural_language_model(corpus_dir, moses_dir, output_dir=None, n_grams=3):
+def train_natural_language_model(tasks, language_encoder, corpus_dir, moses_dir, output_dir=None, n_grams=3):
     eprint(f"Training language model using order=[{n_grams}]")
+    # Write the full set of task to train the language model.
+    nl_all_task_corpus = ""
+    for task in tasks:
+        nl_readable, nl_numeric = language_encoder.tokenize_for_smt(task)
+        nl = "\n".join([" ".join(t) for t in nl_readable])
+        nl_all_task_corpus += f"{nl}\n"
+    all_task_corpus_loc = os.path.join(corpus_dir, 'all_task_corpus.nl')
+    with open(all_task_corpus_loc, 'w') as f:
+        f.write(nl_all_task_corpus)
+    
     # Train the language model on the full training data.
-    corpus = os.path.join(corpus_dir, "corpus")
     lm_filename = os.path.abspath(os.path.join(output_dir, f"lm-nl-o-{n_grams}.arpa"))
     lm_tool = os.path.join(moses_dir, LM_TOOL)
-    lm_cmd = f"{lm_tool} -o {n_grams} --discount_fallback --text {corpus}.nl --arpa {lm_filename}".split()
-    subprocess.check_output(lm_cmd)
+
+    lm_cmd = f"{lm_tool} -o {n_grams} --discount_fallback --text {all_task_corpus_loc} --arpa {lm_filename}"
+    subprocess.check_output(lm_cmd.split())
     return {"factor" : 0,
             "filename": lm_filename,
             "order" : n_grams}
             
-def generate_decoder_config(corpus_dir, moses_dir, output_dir, lm_config, phrase_table):
+def generate_decoder_config(corpus_dir, moses_dir, output_dir, lm_config, phrase_table, phrase_length):
     corpus = os.path.join(corpus_dir, "corpus")
     lm_cmd = f"{lm_config['factor']}:{lm_config['order']}:{lm_config['filename']}"
-    
-    eprint("Running default moses.")
     moses_script = os.path.join(moses_dir, MOSES_SCRIPT)
     tools_loc = os.path.join(moses_dir, MOSES_TOOLS)
-    moses_cmd = f"{moses_script} --f ml --e nl --mgiza --root-dir {output_dir} --external-bin-dir {tools_loc} --corpus-dir {corpus_dir} --corpus {corpus} --lm {lm_cmd} --first-step 5 --last-step 9 --max-phrase-length 7".split()
-    subprocess.run(moses_cmd, check=True)
+    if phrase_length > 1:
+        eprint(f"Training Moses phrase table with max_length = {phrase_length}")
+        moses_cmd = f"{moses_script} --f ml --e nl --mgiza --root-dir {output_dir} --external-bin-dir {tools_loc} --corpus-dir {corpus_dir} --corpus {corpus} --lm {lm_cmd} --first-step 5 --last-step 9 --max-phrase-length {phrase_length}".split()
+        subprocess.run(moses_cmd, check=True)
+    else:
+        eprint(f"Manually writing Moses file with phrase max_length = {phrase_length}")
+        decoder_config = os.path.abspath(os.path.join(corpus_dir, "model", "moses.ini"))
+        lm_loc = os.path.abspath(lm_config['filename'])
+        # Write the moses.ini file directly 
+        moses_config_text = f"[input-factors]\n0\n[mapping]\n0 T 0\n[distortion-limit]\n6\n"
+        moses_config_text += f"[feature]\nUnknownWordPenalty\nWordPenalty\nPhrasePenalty\nDistortion\n"
+        moses_config_text += f"PhraseDictionaryMemory name=TranslationModel0 num-features=1 path={phrase_table} input-factor=0 output-factor=0\n"
+        moses_config_text += f"KENLM name=LM0 factor=0 path={lm_loc} order=3\n"
+        # Weights -- considering retuning.
+        moses_config_text += "[weight]\nUnknownWordPenalty0= 1\nWordPenalty0= -1\nPhrasePenalty0= 0.0\nTranslationModel0= 0.2\nDistortion0= 0.3\nLM0= 0.5\n"
+        with open(decoder_config, 'w') as f:
+            f.write(moses_config_text)
 
 def translate_frontiers_to_nl(frontiers, translation_info, n_best, verbose):
     # Frontiers contain multiple programs
@@ -192,7 +215,7 @@ def translate_frontiers_to_nl(frontiers, translation_info, n_best, verbose):
                 program_idx_to_task[idx] = f.task
                 program_tokens.append(e.tokens)
                 idx += 1
-    idx_to_translations = decode_programs(program_tokens, translation_info["output_dir"], None,  translation_info['corpus_dir'], translation_info['moses_dir'], n_best)
+    idx_to_translations = decode_programs(program_tokens, translation_info["output_dir"], "helmholtz_translations",  translation_info['corpus_dir'], translation_info['moses_dir'], n_best)
     task_to_tokens = defaultdict(list)
     for idx in idx_to_translations:
         task_to_tokens[program_idx_to_task[idx]] += idx_to_translations[idx]
@@ -226,7 +249,8 @@ def decode_programs(program_tokens, output_dir, output_suffix, corpus_dir, moses
         
     if output_suffix is not None:
         output = os.path.join(output_dir, output_suffix)
-        with open(output, 'w') as f:
+        mode = 'a+' if os.path.exists(output) else 'w+'
+        with open(output, mode) as f:
             for idx, p in enumerate(program_tokens):
                 f.write(f"{idx} ||| {' '.join(p)}\n")
                 for tokens in idx_to_translations[idx]:
@@ -246,8 +270,8 @@ def smt_alignment(tasks, tasks_attempted, frontiers, grammar, language_encoder, 
     if n_pseudo > 0:
         add_pseudoalignments(corpus_dir, n_pseudo, unaligned_counts, grammar, output_dir=None)
     phrase_table_loc = moses_translation_tables(corpus_dir, moses_dir, output_dir=output_dir)
-    lm_config = train_natural_language_model(corpus_dir, moses_dir, output_dir=output_dir, n_grams=3)
-    generate_decoder_config(corpus_dir, moses_dir, output_dir=output_dir, lm_config=lm_config, phrase_table=phrase_table_loc)
+    lm_config = train_natural_language_model(tasks, language_encoder, corpus_dir, moses_dir, output_dir=output_dir, n_grams=3)
+    generate_decoder_config(corpus_dir, moses_dir, output_dir=output_dir, lm_config=lm_config, phrase_table=phrase_table_loc, phrase_length=phrase_length)
 
     # Return the appropriate table locations, or read into memory.
     return {
