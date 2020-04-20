@@ -594,6 +594,8 @@ def main(args):
     eprint(baseGrammar)
 
     timestamp = datetime.datetime.now().isoformat()
+    timestamp = timestamp.replace(":", "-")
+    timestamp = timestamp.replace(".", "-")
     outputDirectory = "experimentOutputs/logo/%s"%timestamp
     os.system("mkdir -p %s"%outputDirectory)
 

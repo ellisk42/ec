@@ -66,6 +66,9 @@ def main(args):
     print(baseGrammar)
 
     timestamp = datetime.datetime.now().isoformat()
+    # Escape the timestamp.
+    timestamp = timestamp.replace(":", "-")
+    timestamp = timestamp.replace(".", "-")
     outputDirectory = "experimentOutputs/re2/%s"%timestamp
     os.system("mkdir -p %s"%outputDirectory)
     

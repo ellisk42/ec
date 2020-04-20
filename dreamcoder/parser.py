@@ -83,9 +83,12 @@ class TokenRecurrentFeatureExtractor(RecurrentFeatureExtractor):
                 sentence_tokens = [self.canonicalize_number_token(t) for t in sentence_tokens]
             tokens.append(sentence_tokens) # Feature extractor examples are usually inputs and outputs
         self.tokenized_tasks[use_task_name] = [ 
-                                        [tokens, []]
+                                        [self.add_unk(tokens), []]
                                      ]
         return self.tokenized_tasks[use_task_name] # Feature extractor examples are usually lists of (xs, y) sets.
+    
+    def add_unk(self, sentences):
+        return [[t if t in self.symbolToIndex else "UNK" for t in sentence] for sentence in sentences]
     
     def tokenize_for_smt(self, task):
         human_readable = []
@@ -118,7 +121,7 @@ class TokenRecurrentFeatureExtractor(RecurrentFeatureExtractor):
         eprint(f"[TokenRecurrentFeatureExtractor] Received n={len(helmholtz_frontiers)} Helmholtz frontiers; resetting Helmholtz tokens.")
         task_to_tokens = translate_frontiers_to_nl(helmholtz_frontiers, self.smt_translator_info, self.n_best, verbose=False)
         self.tokenized_helmholtz = {f.task.name : [
-                                    [task_to_tokens[f.task], []] 
+                                    [self.add_unk(task_to_tokens[f.task]), []] 
                                     ] for f in helmholtz_frontiers
                                    }
     
