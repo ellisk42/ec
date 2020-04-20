@@ -208,7 +208,8 @@ def ecIterator(grammar, tasks,
                taskDataset=None,
                languageDatasetDir=None,
                useWakeLanguage=False,
-               debug=False):
+               debug=False,
+               induce_synchronous_grammar=False):
     if enumerationTimeout is None:
         eprint(
             "Please specify an enumeration timeout:",
@@ -253,6 +254,8 @@ def ecIterator(grammar, tasks,
                 eprint(f"Steps: [{recognitionSteps}]; contextual: {contextual}")
             elif recognitionTimeout is not None:
                 eprint(f"Timeout: [{recognitionTimeout}]; contextual: {contextual}")
+            if induce_synchronous_grammar:
+                eprint(f"Incuding synchronous grammar to train recognition model with language.")
             if i > 0:
                 eprint(f"Use n={helmholtz_nearest_language} nearest language examples for Helmholtz")
                 eprint(f"Finetune from examples: {finetune_1}")
@@ -329,7 +332,8 @@ def ecIterator(grammar, tasks,
             "recognitionEpochs",
             "languageDataset",
             "moses_dir",
-            "debug"
+            "debug",
+            "induce_synchronous_grammar"
         ]
         parameters["iterations"] = iteration
         checkpoint_params = [k for k in sorted(parameters.keys()) if k not in exclude_from_path]
@@ -593,17 +597,21 @@ def ecIterator(grammar, tasks,
                                  'frontier')
         
         ### Induce synchronous grammar for generative model with language.
-        if "language" in recognition_1:
-            translation_info = induce_synchronous_grammar(frontiers=result.allFrontiers.values(),
-                            tasks=tasks, testingTasks=testingTasks, tasksAttempted=result.tasksAttempted,
-                            grammar=grammar, 
-                            language_encoder=language_encoder, 
-                            language_data=result.taskLanguage,
-                            language_lexicon=result.vocabularies["train"],
-                            output_prefix=outputPrefix,
-                            moses_dir=moses_dir,
-                            debug=debug,
-                            iteration=j)
+        translation_info = None
+        if "language" in recognition_1 and induce_synchronous_grammar:
+            if all( f.empty for f in result.allFrontiers.values() ):
+                eprint("No non-empty frontiers to train a translation model, skipping.")
+            else:
+                translation_info = induce_synchronous_grammar(frontiers=result.allFrontiers.values(),
+                                tasks=tasks, testingTasks=testingTasks, tasksAttempted=result.tasksAttempted,
+                                grammar=grammar, 
+                                language_encoder=language_encoder, 
+                                language_data=result.taskLanguage,
+                                language_lexicon=result.vocabularies["train"],
+                                output_prefix=outputPrefix,
+                                moses_dir=moses_dir,
+                                debug=debug,
+                                iteration=j)
         
         #### Recognition model round 1. With language.
         # Optionally tries to relabel Helmholtz with the nearest language.
@@ -1074,22 +1082,6 @@ def commandlineArguments(_=None,
                         dest="finetune_1",
                         action="store_true",
                         help="""If true, finetunes recognition 1 from recognition 0.""")
-    parser.add_argument("--helmholtz_nearest_language",
-                        dest="helmholtz_nearest_language",
-                        default=0, 
-                        type=int)
-    parser.add_argument("--language_encoder",
-                        dest="language_encoder",
-                        help="Which language encoder to use.",
-                        choices=["ngram",
-                                "recurrent"],
-                        default=None,
-                        type=str)
-    parser.add_argument("--languageDataset",
-                        dest="languageDataset",
-                        help="Name of language dataset if using language features.",
-                        default=None,
-                        type=str)
     parser.add_argument("-RE", "--recognitionEpochs",
                         default=[None],
                         nargs="*",
@@ -1125,9 +1117,28 @@ def commandlineArguments(_=None,
         activation)
     
     ### SMT generative model training.
+    parser.add_argument("--induce_synchronous_grammar",
+                        action='store_true',
+                        help="Whether to train a synchronous grammar over the programs and language..")
     parser.add_argument("--moses_dir",
         default="../moses_compiled",
         help="Location of top-level Moses SMT directory for machine translation.")
+    parser.add_argument("--helmholtz_nearest_language",
+                        dest="helmholtz_nearest_language",
+                        default=0, 
+                        type=int)
+    parser.add_argument("--language_encoder",
+                        dest="language_encoder",
+                        help="Which language encoder to use.",
+                        choices=["ngram",
+                                "recurrent"],
+                        default=None,
+                        type=str)
+    parser.add_argument("--languageDataset",
+                        dest="languageDataset",
+                        help="Name of language dataset if using language features.",
+                        default=None,
+                        type=str)
 
     ### Algorithm training details.
     parser.add_argument("--debug",
