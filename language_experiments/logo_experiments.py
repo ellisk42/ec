@@ -134,7 +134,7 @@ for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000
             job_name = f"logo_2_ec_cnn_gru_ghelm_compression_et_{enumerationTimeout}_supervised_{sample_n_supervised}"
             jobs.append(job_name)
             base_parameters = f" --enumerationTimeout {enumerationTimeout} --testingTimeout {enumerationTimeout}  --iterations {num_iterations} --biasOptimal --contextual --taskBatchSize {task_batch_size} --testEvery {test_every} --no-cuda --recognitionTimeout {recognition_timeout} --recognition_0 --recognition_1 examples language --Helmholtz 0.5 --synchronous_grammar"
-            exp_parameters = f" --taskDataset {dataset} --language_encoder recurrent --languageDataset {dataset}/synthetic --sample_n_supervised {sample_n_supervised} --moses_dir ./moses_compiled"
+            exp_parameters = f" --taskDataset {dataset} --language_encoder recurrent --languageDataset {dataset}/synthetic --sample_n_supervised {sample_n_supervised} --moses_dir ./moses_compiled --smt_phrase_length {phrase_length}"
             singularity = singularity_base_command.format(job, job_name)
             command = singularity + base_command + base_parameters + exp_parameters + " &"
             if RUN_HELMHOLTZ_GENERATIVE_MODEL:
