@@ -158,7 +158,7 @@ def train_natural_language_model(corpus_dir, moses_dir, output_dir=None, n_grams
     lm_filename = os.path.abspath(os.path.join(output_dir, f"lm-nl-o-{n_grams}.arpa"))
     lm_tool = os.path.join(moses_dir, LM_TOOL)
     lm_cmd = f"{lm_tool} -o {n_grams} --discount_fallback --text {corpus}.nl --arpa {lm_filename}".split()
-    subprocess.check_output(lm_cmd.split())
+    subprocess.check_output(lm_cmd)
     return {"factor" : 0,
             "filename": lm_filename,
             "order" : n_grams}

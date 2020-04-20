@@ -44,6 +44,8 @@ for dataset in ['re2_500_aesdrt', 're2_500_aesr']:
             experiment_commands.append(command)
         job += 1
 
+# Generate Helmholtz generative model experiments.
+
 #### Outputs
 PRINT_LOG_SCRIPT = False
 PRINT_JOBS = True
