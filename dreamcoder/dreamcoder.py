@@ -390,7 +390,7 @@ def ecIterator(grammar, tasks,
         print("use value?", useValue)
         grammar = grammar #TODO make grammar non-contextual 
 
-        import pdb; pdb.set_trace()
+        #import pdb; pdb.set_trace()
             
         print("using old training and testing tasks from result pickle")
         oldTasks, oldTestingTasks = tasks, testingTasks
