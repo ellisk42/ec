@@ -153,6 +153,7 @@ def moses_translation_tables(corpus_dir, moses_dir, output_dir=None, phrase_leng
     return phrase_table_loc
 
 def train_natural_language_model(tasks, language_encoder, corpus_dir, moses_dir, output_dir=None, n_grams=3):
+    eprint(f"Training language model using order=[{n_grams}]")
     # Write the full set of task to train the language model.
     nl_all_task_corpus = ""
     for task in tasks:
