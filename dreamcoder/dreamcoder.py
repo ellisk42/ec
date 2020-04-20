@@ -842,7 +842,7 @@ def induce_synchronous_grammar(frontiers, tasks, testingTasks, tasksAttempted, g
     n_frontiers = len([f for f in frontiers if not f.empty])
     eprint(f"Inducing synchronous grammar. Using n=[{n_frontiers} frontiers],")
     if n_frontiers == 0:    
-        return
+        return None
     if debug:
         eprint("Running in debug mode, writing corpus files to tmp.")
         corpus_dir = os.path.split(os.path.dirname(output_prefix))[0] # Remove timestamp and type prefix on checkpoint

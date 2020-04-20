@@ -57,7 +57,7 @@ for enumerationTimeout in [1800, 3600]:
     job += 1
 
 #### Generates language search baseline experiments.
-RUN_LANGUAGE_SEARCH_BASELINE = True
+RUN_LANGUAGE_SEARCH_BASELINE = False
 
 enumerationTimeout = 1800
 num_iterations = 5
@@ -102,6 +102,44 @@ command = singularity + base_command + base_parameters + exp_parameters + " &"
 if RUN_LANGUAGE_SEARCH_BASELINE:
     experiment_commands.append(command)
 job += 1
+
+#### Generates EC baselines with updated LOGO dataset and supervision
+RUN_EC_BASELINES_LOGO_2 = True
+enumerationTimeout = 1800
+num_iterations = 12
+task_batch_size = 40
+test_every = 3
+for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000']:
+    for sample_n_supervised in [0, 10, 15]:
+        job_name = f"logo_2_ec_cnn_compression_et_{enumerationTimeout}_supervised_{sample_n_supervised}"
+        jobs.append(job_name)
+        base_parameters = f" --enumerationTimeout {enumerationTimeout} --testingTimeout {enumerationTimeout}  --iterations {num_iterations} --biasOptimal --contextual --taskBatchSize {task_batch_size} --testEvery {test_every} --no-cuda --recognitionTimeout 1800 --recognition_0 examples --Helmholtz 0.5"
+        exp_parameters = f" --taskDataset {dataset} --sample_n_supervised {sample_n_supervised}"
+        singularity = singularity_base_command.format(job, job_name)
+        command = singularity + base_command + base_parameters + exp_parameters + " &"
+        if RUN_EC_BASELINES_LOGO_2:
+            experiment_commands.append(command)
+        job +=1
+#### Generate Helmholtz generative model experiments.
+RUN_HELMHOLTZ_GENERATIVE_MODEL = True
+enumerationTimeout = 1800
+num_iterations = 12
+task_batch_size = 40
+test_every = 3
+for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000']:
+    for sample_n_supervised in [0, 10, 15]:
+        for phrase_length in [1, 3, 7]:
+            job_name = f"logo_2_ec_cnn_gru_ghelm_compression_et_{enumerationTimeout}_supervised_{sample_n_supervised}"
+            jobs.append(job_name)
+            base_parameters = f" --enumerationTimeout {enumerationTimeout} --testingTimeout {enumerationTimeout}  --iterations {num_iterations} --biasOptimal --contextual --taskBatchSize {task_batch_size} --testEvery {test_every} --no-cuda --recognitionTimeout 1800 --recognition_1 examples language --Helmholtz 0.5 --induce_synchronous_grammar"
+            exp_parameters = f" --taskDataset {dataset} --language_encoder recurrent --languageDataset {dataset}/synthetic --sample_n_supervised {sample_n_supervised} --moses_dir ./moses_compiled"
+            singularity = singularity_base_command.format(job, job_name)
+            command = singularity + base_command + base_parameters + exp_parameters + " &"
+            if RUN_HELMHOLTZ_GENERATIVE_MODEL:
+                experiment_commands.append(command)
+            job +=1
+            
+
 
 #### Outputs
 PRINT_LOG_SCRIPT = False
