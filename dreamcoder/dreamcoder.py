@@ -209,7 +209,7 @@ def ecIterator(grammar, tasks,
                languageDatasetDir=None,
                useWakeLanguage=False,
                debug=False,
-               induce_synchronous_grammar=False):
+               synchronous_grammar=False):
     if enumerationTimeout is None:
         eprint(
             "Please specify an enumeration timeout:",
@@ -254,7 +254,7 @@ def ecIterator(grammar, tasks,
                 eprint(f"Steps: [{recognitionSteps}]; contextual: {contextual}")
             elif recognitionTimeout is not None:
                 eprint(f"Timeout: [{recognitionTimeout}]; contextual: {contextual}")
-            if induce_synchronous_grammar:
+            if synchronous_grammar:
                 eprint(f"Incuding synchronous grammar to train recognition model with language.")
             if i > 0:
                 eprint(f"Use n={helmholtz_nearest_language} nearest language examples for Helmholtz")
@@ -333,7 +333,7 @@ def ecIterator(grammar, tasks,
             "languageDataset",
             "moses_dir",
             "debug",
-            "induce_synchronous_grammar"
+            "synchronous_grammar"
         ]
         parameters["iterations"] = iteration
         checkpoint_params = [k for k in sorted(parameters.keys()) if k not in exclude_from_path]
@@ -485,7 +485,6 @@ def ecIterator(grammar, tasks,
     for t in tasks:
         if t.add_as_supervised:
             result.allFrontiers[t] = result.allFrontiers[t].combine(Frontier.makeFrontierFromSupervised(t)).topK(maximumFrontier)
-    import pdb; pdb.set_trace()
     
     ######## Test Evaluation and background Helmholtz enumeration.
     for j in range(resume or 0, iterations):
@@ -598,7 +597,7 @@ def ecIterator(grammar, tasks,
         
         ### Induce synchronous grammar for generative model with language.
         translation_info = None
-        if "language" in recognition_1 and induce_synchronous_grammar:
+        if "language" in recognition_1 and synchronous_grammar:
             if all( f.empty for f in result.allFrontiers.values() ):
                 eprint("No non-empty frontiers to train a translation model, skipping.")
             else:
@@ -848,7 +847,8 @@ def induce_synchronous_grammar(frontiers, tasks, testingTasks, tasksAttempted, g
         corpus_dir = os.path.split(os.path.dirname(output_prefix))[0] # Remove timestamp and type prefix on checkpoint
         corpus_dir = os.path.join(corpus_dir, 'corpus_tmp')
     else:
-        corpus_dir = os.path.join(output_prefix, f'moses_corpus_{iteration}')
+        corpus_dir = os.path.join(os.path.dirname(output_prefix), f'moses_corpus_{iteration}')
+        eprint(f"Running in non-debug mode, writing corpus files to {corpus_dir}.")
     alignment_outputs = smt_alignment(tasks, tasksAttempted, frontiers, grammar, encoder, corpus_dir, moses_dir)
     return alignment_outputs
 
@@ -1117,7 +1117,7 @@ def commandlineArguments(_=None,
         activation)
     
     ### SMT generative model training.
-    parser.add_argument("--induce_synchronous_grammar",
+    parser.add_argument("--synchronous_grammar",
                         action='store_true',
                         help="Whether to train a synchronous grammar over the programs and language..")
     parser.add_argument("--moses_dir",
