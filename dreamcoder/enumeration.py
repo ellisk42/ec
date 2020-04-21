@@ -14,7 +14,8 @@ def multicoreEnumeration(g, tasks, _=None,
                          maximumFrontier=None,
                          verbose=True,
                          evaluationTimeout=None,
-                         testing=False):
+                         testing=False,
+                         unigramGrammar):
     '''g: Either a Grammar, or a map from task to grammar.
     Returns (list-of-frontiers, map-from-task-to-search-time)'''
 
@@ -164,7 +165,8 @@ def multicoreEnumeration(g, tasks, _=None,
                                  evaluationTimeout=evaluationTimeout,
                                  maximumFrontiers=maximumFrontiers(j),
                                  testing=testing,
-                                 likelihoodModel=likelihoodModel)
+                                 likelihoodModel=likelihoodModel,
+                                 unigramGrammar=unigramGrammar)
                 id2CPUs[nextID] = allocation[j]
                 id2job[nextID] = j
                 nextID += 1
@@ -256,7 +258,8 @@ def solveForTask_ocaml(_=None,
                        timeout=None,
                        testing=None, # FIXME: unused
                        likelihoodModel=None,
-                       evaluationTimeout=None, maximumFrontiers=None):
+                       evaluationTimeout=None, maximumFrontiers=None,
+                       unigramGrammar=None):
 
     import json
 
@@ -314,6 +317,10 @@ def solveForTask_ocaml(_=None,
         print("ERROR in enumeration, returning empty frontiers for tasks.")
         response = {t.name : [] for t in tasks} # Empty response 
 
+    def escape_tokens(tokens):
+        if unigramGrammar is not None:
+            return unigramGrammar.escape_tokens_string(tokens)
+        return g.escape_tokens_string(tokens)
 
     pc = response.get("number_enumerated",0)  # TODO
     frontiers = {}
@@ -322,7 +329,7 @@ def solveForTask_ocaml(_=None,
         solutions = response[t.name]
         frontier = Frontier([FrontierEntry(program=p,
                                            logLikelihood=e["logLikelihood"],
-                                           tokens=g.escape_tokens_string(e["tokens"]).split(),
+                                           tokens=escape_tokens(e["tokens"]).split(),
                                            logPrior=g.logLikelihood(t.request, p))
                              for e in solutions
                              for p in [Program.parse(e["program"])]],

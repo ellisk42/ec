@@ -123,7 +123,7 @@ for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000
         job +=1
 #### Generate Helmholtz generative model experiments.
 RUN_HELMHOLTZ_GENERATIVE_MODEL = True
-EXPS = [('logo_unlimited_200', 0, 5), ('logo_unlimited_1000', 0, 5)]
+EXPS = [('logo_unlimited_200', 0, 1), ('logo_unlimited_1000', 10, 1)]
 enumerationTimeout = 1800
 num_iterations = 12
 task_batch_size = 40
