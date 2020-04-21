@@ -21,6 +21,29 @@ class DefaultTaskBatcher:
                 taskBatch = (tasks + tasks)[start:end] # Handle wraparound.
                 return taskBatch
 
+class SentenceLengthTaskBatcher:
+        """Iterates through task batches of the specified size. Defaults to all tasks if taskBatchSize is None."""
+
+        def __init__(self, tasks, language_data):
+                def sort_by_language_data(t):
+                    if t.name in language_data:
+                        return min([len(s.split()) for s in language_data[t.name]])
+                    else:
+                        return 0
+                self.ordered_tasks = sorted(tasks, key=sort_by_language_data)
+
+        def getTaskBatch(self, ec_result, tasks, taskBatchSize, currIteration):
+                if taskBatchSize is None:
+                        taskBatchSize = len(self.ordered_tasks)
+                elif taskBatchSize > len(self.ordered_tasks):
+                        eprint("Task batch size is greater than total number of tasks, aborting.")
+                        assert False
+                
+                start = (taskBatchSize * currIteration) % len(self.ordered_tasks)
+                end = start + taskBatchSize
+                taskBatch = (self.ordered_tasks + self.ordered_tasks)[start:end] # Handle wraparound.
+                return taskBatch
+
 class CurriculumTaskBatcher:
         """Sorts tasks by ground truth log likelihood.
         Iterates through task batches of the specified size. Defaults to all tasks if taskBatchSize is None."""
