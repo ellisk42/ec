@@ -1300,7 +1300,8 @@ class RecognitionModel(nn.Module):
                                     solver=solver,
                                     enumerationTimeout=enumerationTimeout,
                                     CPUs=CPUs, maximumFrontier=maximumFrontier,
-                                    evaluationTimeout=evaluationTimeout)
+                                    evaluationTimeout=evaluationTimeout,
+                                    unigramGrammar=self.generativeModel)
 
 
 class RecurrentFeatureExtractor(nn.Module):

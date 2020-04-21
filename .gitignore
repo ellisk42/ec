@@ -8,6 +8,7 @@
 *.blg
 *.p
 *.pyc
+*.png
 *~
 figures/
 __pycache__
@@ -15,7 +16,6 @@ _build
 experimentOutputs
 jobs
 data/
-data/geom/**/*.png
 rust_compressor/target
 *.cost
 compressionMessages/

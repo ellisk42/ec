@@ -14,7 +14,8 @@ def multicoreEnumeration(g, tasks, _=None,
                          maximumFrontier=None,
                          verbose=True,
                          evaluationTimeout=None,
-                         testing=False):
+                         testing=False,
+                         unigramGrammar=None):
     '''g: Either a Grammar, or a map from task to grammar.
     Returns (list-of-frontiers, map-from-task-to-search-time)'''
 
@@ -164,7 +165,8 @@ def multicoreEnumeration(g, tasks, _=None,
                                  evaluationTimeout=evaluationTimeout,
                                  maximumFrontiers=maximumFrontiers(j),
                                  testing=testing,
-                                 likelihoodModel=likelihoodModel)
+                                 likelihoodModel=likelihoodModel,
+                                 unigramGrammar=unigramGrammar)
                 id2CPUs[nextID] = allocation[j]
                 id2job[nextID] = j
                 nextID += 1
@@ -256,7 +258,8 @@ def solveForTask_ocaml(_=None,
                        timeout=None,
                        testing=None, # FIXME: unused
                        likelihoodModel=None,
-                       evaluationTimeout=None, maximumFrontiers=None):
+                       evaluationTimeout=None, maximumFrontiers=None,
+                       unigramGrammar=None):
 
     import json
 
@@ -314,6 +317,10 @@ def solveForTask_ocaml(_=None,
         print("ERROR in enumeration, returning empty frontiers for tasks.")
         response = {t.name : [] for t in tasks} # Empty response 
 
+    def escape_tokens(tokens):
+        if unigramGrammar is not None:
+            return unigramGrammar.escape_tokens_string(tokens)
+        return g.escape_tokens_string(tokens)
 
     pc = response.get("number_enumerated",0)  # TODO
     frontiers = {}
@@ -322,7 +329,7 @@ def solveForTask_ocaml(_=None,
         solutions = response[t.name]
         frontier = Frontier([FrontierEntry(program=p,
                                            logLikelihood=e["logLikelihood"],
-                                           tokens=g.escape_tokens_string(e["tokens"]).split(),
+                                           tokens=escape_tokens(e["tokens"]).split(),
                                            logPrior=g.logLikelihood(t.request, p))
                              for e in solutions
                              for p in [Program.parse(e["program"])]],
@@ -349,7 +356,7 @@ def solveForTask_pypy(_=None,
                       lowerBound=None, upperBound=None, budgetIncrement=None,
                       timeout=None,
                       likelihoodModel=None,
-                      evaluationTimeout=None, maximumFrontier=None, testing=False):
+                      evaluationTimeout=None, maximumFrontier=None, testing=False,unigramGrammar=None):
     return callCompiled(enumerateForTasks,
                         g, tasks, likelihoodModel,
                         timeout=timeout,
@@ -358,7 +365,7 @@ def solveForTask_pypy(_=None,
                         evaluationTimeout=evaluationTimeout,
                         maximumFrontiers=maximumFrontiers,
                         budgetIncrement=budgetIncrement,
-                        lowerBound=lowerBound, upperBound=upperBound)
+                        lowerBound=lowerBound, upperBound=upperBound,unigramGrammar=None)
 
 def solveForTask_python(_=None,
                         elapsedTime=0.,
@@ -367,7 +374,7 @@ def solveForTask_python(_=None,
                         timeout=None,
                         CPUs=1,
                         likelihoodModel=None,
-                        evaluationTimeout=None, maximumFrontiers=None, testing=False):
+                        evaluationTimeout=None, maximumFrontiers=None, testing=False,unigramGrammar=None):
     return enumerateForTasks(g, tasks, likelihoodModel,
                              timeout=timeout,
                              testing=testing,
@@ -375,7 +382,7 @@ def solveForTask_python(_=None,
                              evaluationTimeout=evaluationTimeout,
                              maximumFrontiers=maximumFrontiers,
                              budgetIncrement=budgetIncrement,
-                             lowerBound=lowerBound, upperBound=upperBound)
+                             lowerBound=lowerBound, upperBound=upperBound,unigramGrammar=None)
 
 
 class EnumerationTimeout(Exception):
@@ -390,7 +397,7 @@ def enumerateForTasks(g, tasks, likelihoodModel, _=None,
                       evaluationTimeout=None,
                       lowerBound=0.,
                       upperBound=100.,
-                      budgetIncrement=1.0, maximumFrontiers=None):
+                      budgetIncrement=1.0, maximumFrontiers=None,unigramGrammar=None):
     assert timeout is not None, \
         "enumerateForTasks: You must provide a timeout."
 

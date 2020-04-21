@@ -36,8 +36,7 @@ class Grammar(object):
                 [p for (_, _, p) in sorted(productions, key=lambda prod: str(prod[-1]))] 
                 + ["VAR"])
         } 
-        self.escaped_vocab, self.original_to_escaped = self.build_escaped_vocab(self.vocab)
-        
+        self.escaped_vocab, self.original_to_escaped = self.build_escaped_vocab(self.vocab)    
         
     def build_escaped_vocab(self, vocab):
         escaped_vocab =  {
