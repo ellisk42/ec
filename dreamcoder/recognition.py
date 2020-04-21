@@ -1030,6 +1030,14 @@ class RecognitionModel(nn.Module):
                 f = Frontier(self.frontier.force().entries,
                              task=self.task)
                 return f
+            
+            def setTask(self, task):
+                assert self.task is None
+                if task is None: 
+                    self.task = None
+                    return
+                task.name += f"{self.owner.get_fresh_helmholtz_name()}"
+                self.task = task
         
         # Should we recompute tasks on the fly from Helmholtz?  This
         # should be done if the task is stochastic, or if there are
@@ -1117,7 +1125,7 @@ class RecognitionModel(nn.Module):
             badIndices = []
             endingIndex = min(helmholtzIndex[0] + helmholtzBatch, len(helmholtzFrontiers))
             for i in range(helmholtzIndex[0], endingIndex):
-                helmholtzFrontiers[i].task = newTasks[i - helmholtzIndex[0]]
+                helmholtzFrontiers[i].setTask(newTasks[i - helmholtzIndex[0]])
                 if helmholtzFrontiers[i].task is None: badIndices.append(i)
             # Permanently kill anything which failed to give a task
             for i in reversed(badIndices):
@@ -1202,7 +1210,7 @@ class RecognitionModel(nn.Module):
                     if totalGradientSteps > steps:
                         break # Stop iterating, then print epoch and loss, then break to finish.
                         
-            if (i == 1 or i % 10 == 0) and losses:
+            if (i == 1 or i % 10 == 0) or (totalGradientSteps %10 == 0) and losses:
                 eprint("(ID=%d): " % self.id, "Epoch", i, "Loss", mean(losses))
                 if realLosses and dreamLosses:
                     eprint("(ID=%d): " % self.id, "\t\t(real loss): ", mean(realLosses), "\t(dream loss):", mean(dreamLosses))
