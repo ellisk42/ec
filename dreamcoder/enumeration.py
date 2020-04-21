@@ -15,7 +15,7 @@ def multicoreEnumeration(g, tasks, _=None,
                          verbose=True,
                          evaluationTimeout=None,
                          testing=False,
-                         unigramGrammar):
+                         unigramGrammar=None):
     '''g: Either a Grammar, or a map from task to grammar.
     Returns (list-of-frontiers, map-from-task-to-search-time)'''
 
@@ -356,7 +356,7 @@ def solveForTask_pypy(_=None,
                       lowerBound=None, upperBound=None, budgetIncrement=None,
                       timeout=None,
                       likelihoodModel=None,
-                      evaluationTimeout=None, maximumFrontier=None, testing=False):
+                      evaluationTimeout=None, maximumFrontier=None, testing=False,unigramGrammar=None):
     return callCompiled(enumerateForTasks,
                         g, tasks, likelihoodModel,
                         timeout=timeout,
@@ -365,7 +365,7 @@ def solveForTask_pypy(_=None,
                         evaluationTimeout=evaluationTimeout,
                         maximumFrontiers=maximumFrontiers,
                         budgetIncrement=budgetIncrement,
-                        lowerBound=lowerBound, upperBound=upperBound)
+                        lowerBound=lowerBound, upperBound=upperBound,unigramGrammar=None)
 
 def solveForTask_python(_=None,
                         elapsedTime=0.,
@@ -374,7 +374,7 @@ def solveForTask_python(_=None,
                         timeout=None,
                         CPUs=1,
                         likelihoodModel=None,
-                        evaluationTimeout=None, maximumFrontiers=None, testing=False):
+                        evaluationTimeout=None, maximumFrontiers=None, testing=False,unigramGrammar=None):
     return enumerateForTasks(g, tasks, likelihoodModel,
                              timeout=timeout,
                              testing=testing,
@@ -382,7 +382,7 @@ def solveForTask_python(_=None,
                              evaluationTimeout=evaluationTimeout,
                              maximumFrontiers=maximumFrontiers,
                              budgetIncrement=budgetIncrement,
-                             lowerBound=lowerBound, upperBound=upperBound)
+                             lowerBound=lowerBound, upperBound=upperBound,unigramGrammar=None)
 
 
 class EnumerationTimeout(Exception):
@@ -397,7 +397,7 @@ def enumerateForTasks(g, tasks, likelihoodModel, _=None,
                       evaluationTimeout=None,
                       lowerBound=0.,
                       upperBound=100.,
-                      budgetIncrement=1.0, maximumFrontiers=None):
+                      budgetIncrement=1.0, maximumFrontiers=None,unigramGrammar=unigramGrammar):
     assert timeout is not None, \
         "enumerateForTasks: You must provide a timeout."
 
