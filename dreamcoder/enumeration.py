@@ -397,7 +397,7 @@ def enumerateForTasks(g, tasks, likelihoodModel, _=None,
                       evaluationTimeout=None,
                       lowerBound=0.,
                       upperBound=100.,
-                      budgetIncrement=1.0, maximumFrontiers=None,unigramGrammar=unigramGrammar):
+                      budgetIncrement=1.0, maximumFrontiers=None,unigramGrammar=None):
     assert timeout is not None, \
         "enumerateForTasks: You must provide a timeout."
 
