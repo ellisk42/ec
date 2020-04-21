@@ -60,6 +60,7 @@ def _embed(body):
                 hand = TowerState(hand=hand.hand,
                                   orientation=hand.orientation,
                                   history=bodyHand.history)
+
             output = k(hand)
             #print("EMBED TYPE", type(output))
             if Hole() == output:

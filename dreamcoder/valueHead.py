@@ -13,6 +13,8 @@ import time
 from dreamcoder.domains.tower.towerPrimitives import TowerState, _empty_tower
 from dreamcoder.domains.tower.tower_common import renderPlan
 
+import types 
+
 class computeValueError(Exception):
     pass
 
@@ -446,6 +448,8 @@ class TowerREPLValueHead(AbstractREPLValueHead):
 
         self.empty_towerVec = nn.Parameter(torch.randn(H))
 
+        self.blank_fn_vector = nn.Parameter(torch.randn(H))
+
         self.towerHole = nn.Sequential(nn.Linear(2*H, H), nn.ReLU())
 
         if self.use_cuda:
@@ -458,6 +462,7 @@ class TowerREPLValueHead(AbstractREPLValueHead):
             return value
 
         elif isinstance(value, Program):
+            print('using RNNHEAD!!!!!!!!!')
             return self.RNNHead._encodeSketches([value]).squeeze(0)
 
         elif isinstance(value, int):
@@ -501,8 +506,14 @@ class TowerREPLValueHead(AbstractREPLValueHead):
         #stackOfEnvVectors = [self.convertToVector(val) for val in env]
         #environmentVector = self._encodeStack(stackOfEnvVectors)
         #return self.holeParam(environmentVector)
-        env = [self.convertToVector(e) for e in env]
-        envEncoding = self._encodeStack(env)
+        envStack = []
+        for val in env:
+            if isinstance(val, types.FunctionType): #TODO
+                envStack.append(self.blank_fn_vector)
+            else: envStack.append(self.convertToVector(val))
+
+        #envStack = [self.convertToVector(e) for e in env]
+        envEncoding = self._encodeStack(envStack)
         return self.holeParam(envEncoding)
 
     def _encodeStack(self, stackOfVectors):
@@ -553,7 +564,7 @@ class TowerREPLValueHead(AbstractREPLValueHead):
             res = p(_empty_tower)          
             res = res(TowerState(history=[]))
 
-        except (RecursionError, AttributeError) as e:
+        except (RecursionError) as e:
             print("caught exception")
             print("sketch", sketch)
             print("oldSketch", oldSketch)

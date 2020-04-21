@@ -753,7 +753,8 @@ class Primitive(Program):
                     fn, k = args
                     first_arg = fn( _empty_tower) ( prev )
                     #print("first_arg", first_arg)
-                    if isinstance(prev, TowerState) and not (xs[0].hasHoles) and not isinstance(first_arg, torch.Tensor): #and  fn( _empty_tower) ( prev )  not a tensor
+
+                    if isinstance(prev, TowerState) and (not xs[0].hasHoles) and not isinstance(first_arg[0], torch.Tensor): #and  fn( _empty_tower) ( prev )  not a tensor
                         return self.value( fn ) (k) (prev)
                     else:
                         ae = valueHead.convertToVector(prev)
@@ -801,6 +802,7 @@ class Primitive(Program):
                 return f
 
 
+            if self.name not in [str(i) for i in range(10)]: assert False
 
             if any(type(arg) == torch.Tensor for arg in args) or self.name == 'unfold' \
             or ( self.name in exceptionList and any( tp.isArrow and x.hasHoles \
