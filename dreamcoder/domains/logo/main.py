@@ -269,7 +269,7 @@ def list_options(parser):
                         help="Which tasks should this try to solve")
     parser.add_argument("--taskDataset", type=str,
                         choices=[
-                            "logo_unlimited_1000",
+                            "logo_unlimited_1300",
                             "logo_unlimited_500",
                             "logo_unlimited_200"],
                         default=None,
@@ -555,12 +555,11 @@ def main(args):
         eprint(f"Loaded dataset [{task_dataset}]: [{len(train)}] train and [{len(test)}] test tasks.")
         if sample_n_supervised > 0:
             eprint(f"Sampling n={sample_n_supervised} supervised tasks.")
-            train = sampleSupervised(train, sample_n_supervised)
-        
+            train = sampleSupervised(train, sample_n_supervised)    
     else: 
         tasks = makeTasks(target, proto)
         eprint("Generated", len(tasks), "tasks")
-        import pdb; pdb.set_trace()
+
         os.chdir("prototypical-networks")
         subprocess.Popen(["python","./protonet_server.py"])
         time.sleep(3)
@@ -570,7 +569,7 @@ def main(args):
         eprint("Split tasks into %d/%d test/train" % (len(test), len(train)))
         if test: montageTasks(test,"test_")    
         montageTasks(train,"train_")
-    
+
     red = args.pop("reduce")
     if red is not []:
         for reducing in red:
@@ -598,8 +597,9 @@ def main(args):
     timestamp = timestamp.replace(".", "-")
     outputDirectory = "experimentOutputs/logo/%s"%timestamp
     os.system("mkdir -p %s"%outputDirectory)
-
-    use_epochs = args.pop("iterations_as_epochs")
+    
+    
+    use_epochs = bool(args.pop("iterations_as_epochs"))
     if use_epochs and (args["taskBatchSize"] is not None):
         eprint("Using iterations as epochs over full training set.")
         multiplier = (int(len(train) / args["taskBatchSize"]))
@@ -607,7 +607,7 @@ def main(args):
         args["iterations"] = original_iterations * multiplier
         
         eprint(f'Now running for n={args["iterations"]} iterations.')
-
+    
     generator = ecIterator(baseGrammar, train,
                            taskDataset=task_dataset,
                            testingTasks=test,
