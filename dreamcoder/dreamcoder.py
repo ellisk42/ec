@@ -497,7 +497,9 @@ def ecIterator(grammar, tasks,
         reportMemory()
 
         # Evaluate on held out tasks if we have them
-        if testingTimeout > 0 and ((j % testEvery == 0) or (j == iterations - 1)):
+        if testingTimeout > 0 and j == 0:
+       	    eprint("SKIPPING FIRST TESTING FOR NOW")
+        elif testingTimeout > 0 and ((j % testEvery == 0) or (j == iterations - 1)):
             eprint("Evaluating on held out testing tasks for iteration: %d" % (j))
             evaluateOnTestingTasks(result, testingTasks, grammar,
                                    CPUs=CPUs, maximumFrontier=maximumFrontier,
