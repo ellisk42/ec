@@ -1079,7 +1079,6 @@ class RecognitionModel(nn.Module):
             
             if randomHelmholtz:
                 newFrontiers = self.sampleManyHelmholtz(requests, helmholtzBatch, CPUs)
-                import pdb; pdb.set_trace()
                 newEntries = []
                 for f in newFrontiers:
                     e = HelmholtzEntry(f,self)
