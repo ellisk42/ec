@@ -406,10 +406,11 @@ class AbstractREPLValueHead(BaseValueHead):
             except (computeValueError, RuntimeError):
                 continue #TODO
 
-            if distance == float('nan'):
-                print(sk)
-                print(task)
-                assert False
+            if distance != distance: #checks for nan
+                print("got nan distance value")
+                print("sketch:", sk)
+                print("task:", task)
+                continue
             distances.append(distance)
             targets.append(0.0)
 
