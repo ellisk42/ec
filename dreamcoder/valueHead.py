@@ -569,6 +569,7 @@ class TowerREPLValueHead(AbstractREPLValueHead):
             print("sketch", sketch)
             print("oldSketch", oldSketch)
             print(e)
+            #import pdb; pdb.set_trace()
             raise computeValueError
         except (ValueError, IndexError, ZeroDivisionError, computeValueError, RuntimeError) as e:
             print("caught exception")
@@ -597,6 +598,8 @@ class TowerREPLValueHead(AbstractREPLValueHead):
 
     def _getInitialSketchRep(self, sketch):
         try:
+            if not sketch.hasHoles:
+                return sketch.evaluate([])
             return sketch.abstractEval(self, [])
         except (ValueError, IndexError, ZeroDivisionError, computeValueError, RuntimeError) as e:
             print("caught exception")

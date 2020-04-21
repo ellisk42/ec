@@ -12,6 +12,8 @@ from dreamcoder.dreaming import backgroundHelmholtzEnumeration
 
 from dreamcoder.valueHead import SimpleRNNValueHead, AbstractREPLValueHead, SampleDummyValueHead, TowerREPLValueHead
 
+import sys
+
 class ECResult():
     def __init__(self, _=None,
                  frontiersOverTime=None,
@@ -380,6 +382,7 @@ def ecIterator(grammar, tasks,
     
     
     if singleRoundValueEval:
+        sys.setrecursionlimit(5000) #so we dont error out
         random.seed(seed)
         resumeTraining = resumeTraining #toggle for resume from checkpoint, ints will go to specific checkpoint
         skipTraining = skipTraining #toggle for skip training because it's finished
