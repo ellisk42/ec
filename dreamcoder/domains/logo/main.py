@@ -270,6 +270,7 @@ def list_options(parser):
     parser.add_argument("--taskDataset", type=str,
                         choices=[
                             "logo_unlimited_1300",
+                            "logo_unlimited_1000",
                             "logo_unlimited_500",
                             "logo_unlimited_200"],
                         default=None,

@@ -73,7 +73,7 @@ class TokenRecurrentFeatureExtractor(RecurrentFeatureExtractor):
         elif task.name not in self.language_data:
             print("Not found! ",  task.name)
             if task.nearest_name not in self.language_data:
-                self.language_data[task] = [self.UNK]
+                self.language_data[task.name] = [self.UNK]
             else:
                 use_task_name = task.nearest_name
         tokens = []

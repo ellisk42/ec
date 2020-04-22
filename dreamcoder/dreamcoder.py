@@ -168,6 +168,7 @@ def ecIterator(grammar, tasks,
                enumerationTimeout=None,
                testingTimeout=None,
                testEvery=1,
+               skip_first_test=False,
                reuseRecognition=False,
                ensembleSize=1,
                # Recognition parameters.
@@ -334,8 +335,9 @@ def ecIterator(grammar, tasks,
             "languageDataset",
             "moses_dir",
             "debug",
-            "smt_phrase_length"
-            "synchronous_grammar"
+            "smt_phrase_length",
+            "synchronous_grammar",
+            "skip_first_test"
         ]
         parameters["iterations"] = iteration
         checkpoint_params = [k for k in sorted(parameters.keys()) if k not in exclude_from_path]
@@ -396,29 +398,6 @@ def ecIterator(grammar, tasks,
                           taskLanguage={
                               t.name: [] for t in tasks + testingTasks},
                           tasksAttempted=set())
-
-    # Set up the task batcher.
-    if taskReranker == 'default':
-        taskBatcher = DefaultTaskBatcher()
-    elif taskReranker == 'random':
-        taskBatcher = RandomTaskBatcher()
-    elif taskReranker == 'randomShuffle':
-        taskBatcher = RandomShuffleTaskBatcher(seed)
-    elif taskReranker == 'unsolved':
-        taskBatcher = UnsolvedTaskBatcher()
-    elif taskReranker == 'unsolvedEntropy':
-        taskBatcher = UnsolvedEntropyTaskBatcher()
-    elif taskReranker == 'unsolvedRandomEntropy':
-        taskBatcher = UnsolvedRandomEntropyTaskBatcher()
-    elif taskReranker == 'randomkNN':
-        taskBatcher = RandomkNNTaskBatcher()
-    elif taskReranker == 'randomLowEntropykNN':
-        taskBatcher = RandomLowEntropykNNTaskBatcher()
-    elif taskReranker == 'curriculum':
-        taskBatcher = CurriculumTaskBatcher()
-    else:
-        eprint("Invalid task reranker: " + taskReranker + ", aborting.")
-        assert False
     
     if parser == 'loglinear':
         parserModel = LogLinearBigramTransitionParser
@@ -488,6 +467,31 @@ def ecIterator(grammar, tasks,
         if t.add_as_supervised:
             result.allFrontiers[t] = result.allFrontiers[t].combine(Frontier.makeFrontierFromSupervised(t)).topK(maximumFrontier)
     
+    ### Initialize the task batcher.
+    if taskReranker == 'default':
+        taskBatcher = DefaultTaskBatcher()
+    elif taskReranker == 'random':
+        taskBatcher = RandomTaskBatcher()
+    elif taskReranker == 'randomShuffle':
+        taskBatcher = RandomShuffleTaskBatcher(seed)
+    elif taskReranker == 'unsolved':
+        taskBatcher = UnsolvedTaskBatcher()
+    elif taskReranker == 'unsolvedEntropy':
+        taskBatcher = UnsolvedEntropyTaskBatcher()
+    elif taskReranker == 'unsolvedRandomEntropy':
+        taskBatcher = UnsolvedRandomEntropyTaskBatcher()
+    elif taskReranker == 'randomkNN':
+        taskBatcher = RandomkNNTaskBatcher()
+    elif taskReranker == 'randomLowEntropykNN':
+        taskBatcher = RandomLowEntropykNNTaskBatcher()
+    elif taskReranker == 'curriculum':
+        taskBatcher = CurriculumTaskBatcher()
+    elif taskReranker == 'sentence_length':
+        taskBatcher = SentenceLengthTaskBatcher(tasks, result.taskLanguage)
+    else:
+        eprint("Invalid task reranker: " + taskReranker + ", aborting.")
+        assert False
+    
     ######## Test Evaluation and background Helmholtz enumeration.
     for j in range(resume or 0, iterations):
         if storeTaskMetrics and rewriteTaskMetrics:
@@ -497,7 +501,7 @@ def ecIterator(grammar, tasks,
         reportMemory()
 
         # Evaluate on held out tasks if we have them
-        if testingTimeout > 0 and j == 0:
+        if testingTimeout > 0 and j == 0 and skip_first_test:
        	    eprint("SKIPPING FIRST TESTING FOR NOW")
         elif testingTimeout > 0 and ((j % testEvery == 0) or (j == iterations - 1)):
             eprint("Evaluating on held out testing tasks for iteration: %d" % (j))
@@ -523,7 +527,7 @@ def ecIterator(grammar, tasks,
         
         wakingTaskBatch = taskBatcher.getTaskBatch(result, tasks, taskBatchSize, j)
         eprint("Using a waking task batch of size: " + str(len(wakingTaskBatch)))
-
+        
         # WAKING UP
         if useDSL:
             result.tasksAttempted.update(wakingTaskBatch)
@@ -1152,6 +1156,10 @@ def commandlineArguments(_=None,
                         type=str)
 
     ### Algorithm training details.
+    parser.add_argument("--skip_first_test",
+                        action="store_true",
+                        dest="skip_first_test",
+                        help="""Skip the first testing round to avoid redundancy.""")
     parser.add_argument("--debug",
                         action="store_true",
                         dest="debug",
@@ -1298,7 +1306,8 @@ def commandlineArguments(_=None,
             "unsolvedRandomEntropy",
             "randomkNN",
             "randomLowEntropykNN",
-            "curriculum"],
+            "curriculum",
+            "sentence_length"],
         default=taskReranker,
         type=str)
     parser.add_argument(
