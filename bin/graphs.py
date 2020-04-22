@@ -696,8 +696,10 @@ if __name__ == "__main__":
         # taken from https://learnui.design/tools/data-color-picker.html
         # we need to make sure that purple and teal are mapped onto colors that contrasts nicely
         # because we use these color schemes in other plots
-        mapping = dict(zip(["teal","orange","purple","cyan"],
-                           ["#003f5c","#ffa600","#ef5675","#7a5195"]))
+        mapping = dict(zip(["teal","orange","purple","cyan",
+                            "c1","c2","c3","c4","c5","c6"],
+                           ["#003f5c","#ffa600","#ef5675","#7a5195",
+                            "#003f5c","#444e86","#955196","#dd5182","#ff6e54","#ffa600"]))
         arguments.checkpoints = [mapping.get(ck,ck)
                                  for ck in arguments.checkpoints ]
 
