@@ -125,12 +125,12 @@ enumerationTimeout = 1800
 num_iterations = 12
 task_batch_size = 40
 test_every = 3
-recognition_steps = 10000
+recognition_timeout = 1800
 for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000']:
     for sample_n_supervised in [0, 10]:
         job_name = f"logo_2_ec_cnn_compression_et_{enumerationTimeout}_supervised_{sample_n_supervised}_{dataset}"
         jobs.append(job_name)
-        base_parameters = f" --enumerationTimeout {enumerationTimeout} --testingTimeout {enumerationTimeout}  --iterations {num_iterations} --biasOptimal --contextual --taskBatchSize {task_batch_size} --testEvery {test_every} --no-cuda --recognitionSteps {recognition_steps} --recognition_0 examples --Helmholtz 0.5 --skip_first_test"
+        base_parameters = f" --enumerationTimeout {enumerationTimeout} --testingTimeout {enumerationTimeout}  --iterations {num_iterations} --biasOptimal --contextual --taskBatchSize {task_batch_size} --testEvery {test_every} --no-cuda --recognitionTimeout {recognition_timeout} --recognition_0 examples --Helmholtz 0.5"
         exp_parameters = f" --taskDataset {dataset} --sample_n_supervised {sample_n_supervised}"
         
         command = get_launcher_command(job, job_name) + base_command + base_parameters + exp_parameters + append_command(job_name)
@@ -144,14 +144,14 @@ enumerationTimeout = 1800
 num_iterations = 12
 task_batch_size = 40
 test_every = 3
-recognition_steps = 10000
+recognition_timeout = 1800
 for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000']:
     for sample_n_supervised in [0, 10]:
         for phrase_length in [5,3,1]:
             exp = (dataset, sample_n_supervised, phrase_length)
             job_name = f"logo_2_ec_cnn_gru_ghelm_compression_et_{enumerationTimeout}_supervised_{sample_n_supervised}_{dataset}_pl_{phrase_length}"
             jobs.append(job_name)
-            base_parameters = f" --enumerationTimeout {enumerationTimeout} --testingTimeout {enumerationTimeout}  --iterations {num_iterations} --biasOptimal --contextual --taskBatchSize {task_batch_size} --testEvery {test_every} --no-cuda --recognitionSteps {recognition_steps} --recognition_0 --recognition_1 examples language --Helmholtz 0.5 --synchronous_grammar --skip_first_test"
+            base_parameters = f" --enumerationTimeout {enumerationTimeout} --testingTimeout {enumerationTimeout}  --iterations {num_iterations} --biasOptimal --contextual --taskBatchSize {task_batch_size} --testEvery {test_every} --no-cuda --recognitionTimeout {recognition_timeout} --recognition_0 --recognition_1 examples language --Helmholtz 0.5 --synchronous_grammar"
             exp_parameters = f" --taskDataset {dataset} --language_encoder recurrent --languageDataset {dataset}/synthetic --sample_n_supervised {sample_n_supervised} --moses_dir ./moses_compiled --smt_phrase_length {phrase_length}"
         
             command = get_launcher_command(job, job_name) + base_command + base_parameters + exp_parameters + append_command(job_name)
@@ -160,9 +160,32 @@ for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000
                     experiment_commands.append(command)
             job +=1
 
-#### Control experiments with no generative Helmholtz samples.            
+
+#### Generate Helmholtz pseudoalignment experiments.
+RUN_HELMHOLTZ_PSEUDOALIGNMENTS = True
+enumerationTimeout = 1800
+num_iterations = 12
+task_batch_size = 40
+test_every = 3
+recognition_steps = 10000
+EXPS = [('logo_unlimited_200', 0, 1), ('logo_unlimited_200', 10, 1)]
+pseudoalignment = 0.1
+for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000']:
+    for sample_n_supervised in [0, 10]:
+        for phrase_length in [5,3,1]:
+            exp = (dataset, sample_n_supervised, phrase_length)
+            job_name = f"logo_2_ec_cnn_gru_ghelm_pseudo_compression_et_{enumerationTimeout}_supervised_{sample_n_supervised}_{dataset}_pl_{phrase_length}"
+            jobs.append(job_name)
+            base_parameters = f" --enumerationTimeout {enumerationTimeout} --testingTimeout {enumerationTimeout}  --iterations {num_iterations} --biasOptimal --contextual --taskBatchSize {task_batch_size} --testEvery {test_every} --no-cuda --recognitionSteps {recognition_steps} --recognition_0 --recognition_1 examples language --Helmholtz 0.5 --synchronous_grammar"
+            exp_parameters = f" --taskDataset {dataset} --language_encoder recurrent --languageDataset {dataset}/synthetic --sample_n_supervised {sample_n_supervised} --moses_dir ./moses_compiled --smt_phrase_length {phrase_length} --smt_pseudoalignments {pseudoalignment}"
+            singularity = singularity_base_command.format(job, job_name)
+            command = singularity + base_command + base_parameters + exp_parameters + " &"
+            if RUN_HELMHOLTZ_PSEUDOALIGNMENTS:
+                if (EXPS is None) or (exp in EXPS):
+                    experiment_commands.append(command)
+            job +=1
+
 RUN_NO_HELMHOLTZ_GENERATIVE_MODEL = True
-EXPS = [('logo_unlimited_200', 0)]
 enumerationTimeout = 1800
 num_iterations = 12
 task_batch_size = 40
