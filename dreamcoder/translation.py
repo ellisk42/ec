@@ -1,5 +1,6 @@
 #### Statistical machine translation
 import itertools
+import gc
 import os
 import subprocess
 from collections import Counter, defaultdict
@@ -40,7 +41,7 @@ def write_sentence_aligned(tasks, frontiers, grammar, language_encoder, corpus_d
     nl_corpus = ""
     count_dicts = {"ml": Counter(), "nl" : Counter()}
     encountered_nl = {"readable": set(), "numeric": set()} # NL words we have encountered in the solved tasks.
-
+    corpora = defaultdict(list)
     for f in frontiers:
         if f.task in tasks and not f.empty:
             nl_readable, nl_numeric = language_encoder.tokenize_for_smt(f.task)
@@ -60,10 +61,15 @@ def write_sentence_aligned(tasks, frontiers, grammar, language_encoder, corpus_d
                 ml_nl_numeric_bitext += f"1\n{nl}\n{ml}\n"
             # Redundant! See if we can remove this.
             for (nl, ml) in itertools.product(nl_readable, ml_readable):
+                # Also update our corpus store
+                corpora["nl"].append([str(t) for t in nl])
+                corpora["ml"].append([str(t) for t in ml])
+                
                 nl = " ".join([str(t) for t in nl])
                 ml = " ".join([str(t) for t in ml])
                 nl_corpus += f"{nl}\n"
                 ml_corpus += f"{ml}\n"
+                
         
     with open(os.path.join(corpus_dir, 'nl-ml-readable-train.snt'), 'w') as f:
         f.write(human_readable)
@@ -87,7 +93,7 @@ def write_sentence_aligned(tasks, frontiers, grammar, language_encoder, corpus_d
         mkcls_cmd = [f"{mkcls_loc}", "-c50", "-n2", f"-p{corpus}",  f"-V{output_loc}"]
         subprocess.run(mkcls_cmd, check=True)
         
-    return count_dicts, encountered_nl
+    return count_dicts, encountered_nl, corpora
 
 def count_unaligned_words(tasks, tasks_attempted, frontiers, grammar, language_encoder, encountered_nl):
     # Dirty hack! If we forgot to track what tasks we actually attempted, then look at the whole training set.
@@ -102,13 +108,21 @@ def count_unaligned_words(tasks, tasks_attempted, frontiers, grammar, language_e
         nl_readable, nl_numeric = language_encoder.tokenize_for_smt(task)
         unsolved_nl["readable"].update(itertools.chain.from_iterable(nl_readable))
         unsolved_nl["numeric"].update(itertools.chain.from_iterable(nl_numeric))
-    # Only use tokens we haven't seen.
-
+    
+    # Count tokens that have not been aligned to anything.
     unencountered_nl = {
         token_type : {token : count for (token, count) in unsolved_nl[token_type].items() if token not in encountered_nl[token_type]} for token_type in encountered_nl
     }
-    eprint(f"Found n=[{len(unencountered_nl['readable'])}] distinct unencountered tokens that appear in n=[{len(unsolved_tasks)}] unsolved tasks.")
-    return unencountered_nl
+    # Count tokens that have appeared in unsolved tasks.
+    encountered_unsolved_nl = {
+        token_type : {token : count for (token, count) in unsolved_nl[token_type].items() if token in encountered_nl[token_type]} for token_type in encountered_nl
+    }
+    unaligned_counts = {
+        'unencountered' : unencountered_nl,
+        'encountered' : encountered_unsolved_nl
+    }
+    eprint(f"Found n=[{len(unencountered_nl['readable'])}] distinct unencountered tokens that appear in n=[{len(unsolved_tasks)}] unsolved tasks, and n=[{len(encountered_unsolved_nl['readable'])} distinct encountered tokens.]")
+    return unaligned_counts
 
 def initial_ibm_alignment(corpus_dir, moses_dir, output_dir=None, max_ibm_model=4):
     eprint(f"Running IBM alignment using model {max_ibm_model}")
@@ -127,23 +141,72 @@ def initial_ibm_alignment(corpus_dir, moses_dir, output_dir=None, max_ibm_model=
     moses_cmd = f"{moses_script} --f ml --e nl --mgiza --external-bin-dir {tools_loc} --corpus-dir {corpus_dir} --first-step 2 --last-step 3 --root-dir {output_dir}".split()
     subprocess.run(moses_cmd, check=True)
 
-def add_pseudoalignments(corpus_dir, n_pseudo, unaligned_counts, grammar, output_dir=None):
-    # TODO: add pseudoalignments for the rebalancing case, or define how to handle OOV.
-    raise Exception('Unimplemented: Pseudo alignments.')
-    ml_vocab = grammar.escaped_vocab.values()
+def add_pseudoalignments(corpus_dir, n_pseudo, n_me, unaligned_counts, grammar, corpora, output_dir=None):
+    eprint(f"Writing pseudoalignments with n_me = {n_me} and n_pseudo = {n_pseudo}")
+    # Adds n_pseudo counts for all tokens and n_me counts for unused tokens.
+    ml_vocab = [v for v in grammar.escaped_vocab if v is not 'VAR']
     align_file = os.path.join(output_dir, "model/aligned.grow-diag-final")
+    global_used_ml = set() # All ML tokens currently aligned.
+    token_alignments = defaultdict(set) # Tokens used for any one primitive:
+    with open(align_file, 'r') as f: # Alignments are (ml, nl) locations in the corpus files.
+        for idx, line in enumerate(f.readlines()):
+            alignments = [[int(t) for t in a.split("-")] for a in line.split()]
+            global_used_ml.update([corpora['ml'][idx][a[0]] for a in alignments])
+            for a in alignments:
+                token_alignments[corpora['nl'][idx][a[1]]].add(corpora['ml'][idx][a[0]])
+    unused_ml = set(ml_vocab) - global_used_ml
+    
+    def get_pseudotokens(type, nl_token):
+        if type == 'unencountered':
+            me = unused_ml
+        elif type == 'encountered':
+            unused_for_nl = set(ml_vocab) - set(token_alignments[nl_token])
+            me = unused_for_nl
+        pseudotokens = ml_vocab
+        return pseudotokens, me
+    
+    # We need to augment our corpus files as well as the alignment files.
+    num_align = 0
+    ml_corpus = ""
+    nl_corpus = ""
+    for type in 'unencountered', 'encountered':
+        for nl_token in unaligned_counts[type]['readable']:
+            pseudotokens, me = get_pseudotokens(type, nl_token)
+            for _ in range(int(unaligned_counts[type]['readable'][nl_token] * n_pseudo)):
+                for pseudotoken in pseudotokens:
+                    nl_corpus +=f"{nl_token}\n"
+                    ml_corpus +=f"{pseudotoken}\n"
+                    num_align += 1
+            for _ in range(int(unaligned_counts[type]['readable'][nl_token] * n_me)):
+                for pseudotoken in me:
+                    nl_corpus +=f"{nl_token}\n"
+                    ml_corpus +=f"{pseudotoken}\n"
+                    num_align += 1
+    corpus_augment = {'nl' : nl_corpus, 'ml' : ml_corpus}
+    # Write out the corpora.
+    for corpus_type in ('nl', 'ml'):
+        name = os.path.join(corpus_dir, f'corpus.{corpus_type}')
+        with open(name, 'a+') as f:
+            f.write(corpus_augment[corpus_type])
+    
+    pseudoalignments = "\n".join(["0-0"] * num_align) # Single token per line.
     with open(align_file, "a+") as f:
         f.write(pseudoalignments)
-
+    
 def moses_translation_tables(corpus_dir, moses_dir, output_dir=None, phrase_length=None):
     corpus = os.path.join(corpus_dir, "corpus")
+    # Remove any lex files if they exist.
+    for ext in ('e2f', 'f2e'):
+        lex_loc = os.path.abspath(os.path.join(output_dir, 'model', f'lex.{ext}'))
+        subprocess.run(["rm", lex_loc])
+        
     # Build Moses command for compiling translation tables and phrase tables.
     # Note that foreign = ml and english = nl
     moses_script = os.path.join(moses_dir, MOSES_SCRIPT)
     tools_loc = os.path.join(moses_dir, MOSES_TOOLS)
     moses_cmd = f"{moses_script} --f ml --e nl --mgiza --root-dir {output_dir} --external-bin-dir {tools_loc} --corpus-dir {corpus_dir} --corpus {corpus} --do-steps 4 --no-lexical-weighting".split()
     subprocess.run(moses_cmd, check=True)
-    
+        
     # IBM Model 1 lexical decoding -- directly convert this into a phrase table.
     translation_table_loc = os.path.join(output_dir, 'model', 'lex.e2f')
     phrase_table_loc = os.path.abspath(os.path.join(output_dir, 'model', 'phrase-table'))
@@ -258,25 +321,29 @@ def decode_programs(program_tokens,  grammar, output_dir, output_suffix, corpus_
     os.remove(tmp_program_file)
     return idx_to_translations
 
-def smt_alignment(tasks, tasks_attempted, frontiers, grammar, language_encoder, corpus_dir, moses_dir, n_pseudo=0, output_dir=None, phrase_length=1):
+def smt_alignment(tasks, tasks_attempted, frontiers, grammar, language_encoder, corpus_dir, moses_dir, n_pseudo=0.1, n_me=0.1, output_dir=None, phrase_length=1):
     Path(corpus_dir).mkdir(parents=True, exist_ok=True)
     if output_dir is None: output_dir = corpus_dir
-    
-    count_dicts, encountered_nl = write_sentence_aligned(tasks, frontiers, grammar, language_encoder, corpus_dir, moses_dir)
+    gc.collect()
+    count_dicts, encountered_nl, corpora = write_sentence_aligned(tasks, frontiers, grammar, language_encoder, corpus_dir, moses_dir)
     unaligned_counts = count_unaligned_words(tasks, tasks_attempted, frontiers, grammar, language_encoder, encountered_nl)
     write_smt_vocab(grammar, language_encoder, corpus_dir, count_dicts)
     initial_ibm_alignment(corpus_dir, moses_dir, output_dir=output_dir, max_ibm_model=4)
-    if n_pseudo > 0:
-        add_pseudoalignments(corpus_dir, n_pseudo, unaligned_counts, grammar, output_dir=None)
+    gc.collect()
+    if n_pseudo > 0 and phrase_length == 1:
+        add_pseudoalignments(corpus_dir, n_pseudo, n_me, unaligned_counts, grammar, corpora, output_dir=output_dir)
+    
     phrase_table_loc = moses_translation_tables(corpus_dir, moses_dir, output_dir=output_dir)
     lm_config = train_natural_language_model(tasks, language_encoder, corpus_dir, moses_dir, output_dir=output_dir, n_grams=3)
     generate_decoder_config(corpus_dir, moses_dir, output_dir=output_dir, lm_config=lm_config, phrase_table=phrase_table_loc, phrase_length=phrase_length)
     print("Finished translation, returning.")
+    assert False
     # Return the appropriate table locations, or read into memory.
     return {
         "corpus_dir" : corpus_dir,
         "moses_dir" : moses_dir,
         "output_dir" : output_dir
     }
+    
     
     
