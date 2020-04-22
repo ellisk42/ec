@@ -8,14 +8,15 @@ from dreamcoder.domains.tower.towerPrimitives import *
 
 """
 TODO:
-- [ ] def of intTop
-- [ ] seperate out intTop in primitives from intTop in hand state
-- [ ] def of initial history state
-
-- [ ] loop def
-
+- [ ] def of intTopState
+- [ ] def of intTopPrimitive
+- [X] seperate out intTop in primitives from intTop in hand state
+- [ ] def of initial history state initialHist
+- [ ] write embed def
+- [ ] write loop def, maybe with intTopPrimitive???
 - [ ] write taskViolatesAbstractState
 """
+initialHist = [(0,0)]
 
 class SketchToAbstract:
     def __init__(self):
@@ -43,7 +44,7 @@ class SketchToAbstract:
         return e.visit(self)
 
 def executeAbstractSketch(absSketch):
-    hand = absSketch.execute([])(lambda x: x)(AbstractTowerState(history=)) #TODO init history
+    hand = absSketch.execute([])(lambda x: x)(AbstractTowerState(history=initialHist)) #TODO init history
 
     return hand.history
 
@@ -118,13 +119,13 @@ class AbstractTowerState:
                 history=newHist)
 
     def topify(self):
-        newHand = _intTop #TODO find rang
+        newHand = _intTopState #TODO find rang
         newOrientation = 0
         return AbstractTowerState(hand=newHand, orientation=newOrientation,
                 history=self.history)
 
-_intTop = (-9, 9) #TODO
-assert False
+_intTopState = (-20, 20) #todo
+_intTopPrimitive = (1, 8) #TODO
 
 def _loop(): pass 
 def _embed(body):
@@ -186,7 +187,7 @@ abstractPrimitives = [
         Primitive("reverseHand_abstract", arrow(ttower, ttower), _reverseHand),
         Primitive("towerTop", ttower, lambda x: x.topify()),
 
-        Primitive("intTop", ttower, _intTop) #TODO
+        Primitive("intTop", ttower, _intTopPrimitive) #TODO
     ]
     
 
