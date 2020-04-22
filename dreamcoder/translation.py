@@ -321,7 +321,7 @@ def decode_programs(program_tokens,  grammar, output_dir, output_suffix, corpus_
     os.remove(tmp_program_file)
     return idx_to_translations
 
-def smt_alignment(tasks, tasks_attempted, frontiers, grammar, language_encoder, corpus_dir, moses_dir, n_pseudo=0.1, n_me=0.1, output_dir=None, phrase_length=1):
+def smt_alignment(tasks, tasks_attempted, frontiers, grammar, language_encoder, corpus_dir, moses_dir, n_pseudo=0, output_dir=None, phrase_length=1):
     Path(corpus_dir).mkdir(parents=True, exist_ok=True)
     if output_dir is None: output_dir = corpus_dir
     gc.collect()
@@ -331,8 +331,7 @@ def smt_alignment(tasks, tasks_attempted, frontiers, grammar, language_encoder, 
     initial_ibm_alignment(corpus_dir, moses_dir, output_dir=output_dir, max_ibm_model=4)
     gc.collect()
     if n_pseudo > 0 and phrase_length == 1:
-        add_pseudoalignments(corpus_dir, n_pseudo, n_me, unaligned_counts, grammar, corpora, output_dir=output_dir)
-    
+        add_pseudoalignments(corpus_dir, n_pseudo=n_pseudo, n_me=n_pseudo, unaligned_counts=unaligned_counts, grammar=grammar, corpora=corpora, output_dir=output_dir)
     phrase_table_loc = moses_translation_tables(corpus_dir, moses_dir, output_dir=output_dir)
     lm_config = train_natural_language_model(tasks, language_encoder, corpus_dir, moses_dir, output_dir=output_dir, n_grams=3)
     generate_decoder_config(corpus_dir, moses_dir, output_dir=output_dir, lm_config=lm_config, phrase_table=phrase_table_loc, phrase_length=phrase_length)

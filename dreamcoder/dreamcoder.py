@@ -168,7 +168,6 @@ def ecIterator(grammar, tasks,
                enumerationTimeout=None,
                testingTimeout=None,
                testEvery=1,
-               skip_first_test=False,
                reuseRecognition=False,
                ensembleSize=1,
                # Recognition parameters.
@@ -177,6 +176,7 @@ def ecIterator(grammar, tasks,
                # SMT parameters.
                moses_dir=None,
                smt_phrase_length=None,
+               smt_pseudoalignments=0,
                finetune_1=False,
                helmholtz_nearest_language=0,
                language_encoder=None,
@@ -336,8 +336,8 @@ def ecIterator(grammar, tasks,
             "moses_dir",
             "debug",
             "smt_phrase_length",
-            "synchronous_grammar",
-            "skip_first_test"
+            "smt_pseudoalignments",
+            "synchronous_grammar"
         ]
         parameters["iterations"] = iteration
         checkpoint_params = [k for k in sorted(parameters.keys()) if k not in exclude_from_path]
@@ -398,6 +398,29 @@ def ecIterator(grammar, tasks,
                           taskLanguage={
                               t.name: [] for t in tasks + testingTasks},
                           tasksAttempted=set())
+
+    # Set up the task batcher.
+    if taskReranker == 'default':
+        taskBatcher = DefaultTaskBatcher()
+    elif taskReranker == 'random':
+        taskBatcher = RandomTaskBatcher()
+    elif taskReranker == 'randomShuffle':
+        taskBatcher = RandomShuffleTaskBatcher(seed)
+    elif taskReranker == 'unsolved':
+        taskBatcher = UnsolvedTaskBatcher()
+    elif taskReranker == 'unsolvedEntropy':
+        taskBatcher = UnsolvedEntropyTaskBatcher()
+    elif taskReranker == 'unsolvedRandomEntropy':
+        taskBatcher = UnsolvedRandomEntropyTaskBatcher()
+    elif taskReranker == 'randomkNN':
+        taskBatcher = RandomkNNTaskBatcher()
+    elif taskReranker == 'randomLowEntropykNN':
+        taskBatcher = RandomLowEntropykNNTaskBatcher()
+    elif taskReranker == 'curriculum':
+        taskBatcher = CurriculumTaskBatcher()
+    else:
+        eprint("Invalid task reranker: " + taskReranker + ", aborting.")
+        assert False
     
     if parser == 'loglinear':
         parserModel = LogLinearBigramTransitionParser
@@ -467,31 +490,6 @@ def ecIterator(grammar, tasks,
         if t.add_as_supervised:
             result.allFrontiers[t] = result.allFrontiers[t].combine(Frontier.makeFrontierFromSupervised(t)).topK(maximumFrontier)
     
-    ### Initialize the task batcher.
-    if taskReranker == 'default':
-        taskBatcher = DefaultTaskBatcher()
-    elif taskReranker == 'random':
-        taskBatcher = RandomTaskBatcher()
-    elif taskReranker == 'randomShuffle':
-        taskBatcher = RandomShuffleTaskBatcher(seed)
-    elif taskReranker == 'unsolved':
-        taskBatcher = UnsolvedTaskBatcher()
-    elif taskReranker == 'unsolvedEntropy':
-        taskBatcher = UnsolvedEntropyTaskBatcher()
-    elif taskReranker == 'unsolvedRandomEntropy':
-        taskBatcher = UnsolvedRandomEntropyTaskBatcher()
-    elif taskReranker == 'randomkNN':
-        taskBatcher = RandomkNNTaskBatcher()
-    elif taskReranker == 'randomLowEntropykNN':
-        taskBatcher = RandomLowEntropykNNTaskBatcher()
-    elif taskReranker == 'curriculum':
-        taskBatcher = CurriculumTaskBatcher()
-    elif taskReranker == 'sentence_length':
-        taskBatcher = SentenceLengthTaskBatcher(tasks, result.taskLanguage)
-    else:
-        eprint("Invalid task reranker: " + taskReranker + ", aborting.")
-        assert False
-    
     ######## Test Evaluation and background Helmholtz enumeration.
     for j in range(resume or 0, iterations):
         if storeTaskMetrics and rewriteTaskMetrics:
@@ -501,9 +499,7 @@ def ecIterator(grammar, tasks,
         reportMemory()
 
         # Evaluate on held out tasks if we have them
-        if testingTimeout > 0 and j == 0 and skip_first_test:
-       	    eprint("SKIPPING FIRST TESTING FOR NOW")
-        elif testingTimeout > 0 and ((j % testEvery == 0) or (j == iterations - 1)):
+        if testingTimeout > 0 and ((j % testEvery == 0) or (j == iterations - 1)):
             eprint("Evaluating on held out testing tasks for iteration: %d" % (j))
             evaluateOnTestingTasks(result, testingTasks, grammar,
                                    CPUs=CPUs, maximumFrontier=maximumFrontier,
@@ -527,7 +523,7 @@ def ecIterator(grammar, tasks,
         
         wakingTaskBatch = taskBatcher.getTaskBatch(result, tasks, taskBatchSize, j)
         eprint("Using a waking task batch of size: " + str(len(wakingTaskBatch)))
-        
+
         # WAKING UP
         if useDSL:
             result.tasksAttempted.update(wakingTaskBatch)
@@ -618,6 +614,7 @@ def ecIterator(grammar, tasks,
                                 output_prefix=outputPrefix,
                                 moses_dir=moses_dir,
                                 max_phrase_length=smt_phrase_length,
+                                pseudoalignments=smt_pseudoalignments,
                                 debug=debug,
                                 iteration=j)
         
@@ -845,6 +842,7 @@ def induce_synchronous_grammar(frontiers, tasks, testingTasks, tasksAttempted, g
                     output_prefix=None,
                     moses_dir=None,
                     max_phrase_length=None,
+                    pseudoalignments=None,
                     debug=None,
                     iteration=None):    
     encoder = language_encoder(tasks, testingTasks=testingTasks, cuda=False, language_data=language_data, lexicon=language_lexicon)
@@ -859,7 +857,7 @@ def induce_synchronous_grammar(frontiers, tasks, testingTasks, tasksAttempted, g
     else:
         corpus_dir = os.path.join(os.path.dirname(output_prefix), f'moses_corpus_{iteration}')
         eprint(f"Running in non-debug mode, writing corpus files to {corpus_dir}.")
-    alignment_outputs = smt_alignment(tasks, tasksAttempted, frontiers, grammar, encoder, corpus_dir, moses_dir, phrase_length=max_phrase_length)
+    alignment_outputs = smt_alignment(tasks, tasksAttempted, frontiers, grammar, encoder, corpus_dir, moses_dir, phrase_length=max_phrase_length, n_pseudo=pseudoalignments)
     return alignment_outputs
 
 def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFrontiers, _=None,
@@ -1137,6 +1135,10 @@ def commandlineArguments(_=None,
         default=5,
         type=int,
         help="Maximum phrase length when learning Moses phrase model.")
+    parser.add_argument("--smt_pseudoalignments",
+        default=0,
+        type=float,
+        help="Pseudoalignments count for generative model.")
 
     parser.add_argument("--helmholtz_nearest_language",
                         dest="helmholtz_nearest_language",
@@ -1156,10 +1158,6 @@ def commandlineArguments(_=None,
                         type=str)
 
     ### Algorithm training details.
-    parser.add_argument("--skip_first_test",
-                        action="store_true",
-                        dest="skip_first_test",
-                        help="""Skip the first testing round to avoid redundancy.""")
     parser.add_argument("--debug",
                         action="store_true",
                         dest="debug",
@@ -1306,8 +1304,7 @@ def commandlineArguments(_=None,
             "unsolvedRandomEntropy",
             "randomkNN",
             "randomLowEntropykNN",
-            "curriculum",
-            "sentence_length"],
+            "curriculum"],
         default=taskReranker,
         type=str)
     parser.add_argument(
