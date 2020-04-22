@@ -198,7 +198,7 @@ for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000
         job_name = f"logo_2_ec_cnn_gru_no_ghelm_compression_et_{enumerationTimeout}_supervised_{sample_n_supervised}_{dataset}"
         jobs.append(job_name)
         base_parameters = f" --enumerationTimeout {enumerationTimeout} --testingTimeout {enumerationTimeout}  --iterations {num_iterations} --biasOptimal --contextual --taskBatchSize {task_batch_size} --testEvery {test_every} --no-cuda --recognitionSteps {recognition_steps} --recognition_0 --recognition_1 examples language --Helmholtz 0 --skip_first_test"
-        exp_parameters = f" --taskDataset {dataset} --language_encoder recurrent --languageDataset {dataset}/synthetic --sample_n_supervised {sample_n_supervised}"
+        exp_parameters = f" --taskDataset {dataset} --language_encoder recurrent --languageDataset {dataset}/synthetic --sample_n_supervised {sample_n_supervised} "
     
         command = get_launcher_command(job, job_name) + base_command + base_parameters + exp_parameters + append_command(job_name)
         if RUN_NO_HELMHOLTZ_GENERATIVE_MODEL:
