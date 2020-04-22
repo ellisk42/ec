@@ -337,7 +337,6 @@ def smt_alignment(tasks, tasks_attempted, frontiers, grammar, language_encoder, 
     lm_config = train_natural_language_model(tasks, language_encoder, corpus_dir, moses_dir, output_dir=output_dir, n_grams=3)
     generate_decoder_config(corpus_dir, moses_dir, output_dir=output_dir, lm_config=lm_config, phrase_table=phrase_table_loc, phrase_length=phrase_length)
     print("Finished translation, returning.")
-    assert False
     # Return the appropriate table locations, or read into memory.
     return {
         "corpus_dir" : corpus_dir,
