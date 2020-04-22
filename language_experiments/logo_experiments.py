@@ -3,7 +3,7 @@ USING_SINGULARITY = False
 
 def gcloud_commands(job_name):
     gcloud_disk_command = f"gcloud compute --project 'tenenbaumlab' disks create {job_name} --size '30' --zone 'us-east1-b' --source-snapshot 'zyzzyva-logo-language' --type 'pd-standard'"
-    gcloud_launch_commmand = f"gcloud beta compute --project=tenenbaumlab instances create {job_name} --zone=us-east1-b --machine-type=n1-standard-32 --subnet=default --network-tier=PREMIUM --maintenance-policy=MIGRATE --service-account=150557817012-compute@developer.gserviceaccount.com --scopes=https://www.googleapis.com/auth/devstorage.read_only,https://www.googleapis.com/auth/logging.write,https://www.googleapis.com/auth/monitoring.write,https://www.googleapis.com/auth/servicecontrol,https://www.googleapis.com/auth/service.management.readonly,https://www.googleapis.com/auth/trace.append --disk=name={job_name},device-name={job_name},mode=rw,boot=yes,auto-delete=yes --reservation-affinity=any"
+    gcloud_launch_commmand = f"gcloud beta compute --project=tenenbaumlab instances create {job_name} --zone=us-east1-b --machine-type=n1-standard-32 --subnet=default --network-tier=PREMIUM --maintenance-policy=MIGRATE --service-account=150557817012-compute@developer.gserviceaccount.com --scopes=https://www.googleapis.com/auth/devstorage.read_only,https://www.googleapis.com/auth/logging.write,https://www.googleapis.com/auth/monitoring.write,https://www.googleapis.com/auth/servicecontrol,https://www.googleapis.com/auth/service.management.readonly,https://www.googleapis.com/auth/trace.append --disk=name={job_name.strip()},device-name={job_name.strip()},mode=rw,boot=yes,auto-delete=yes --reservation-affinity=any"
     return f"#######\n{gcloud_disk_command}\n\n{gcloud_launch_commmand}\n\n###Now run: \nsingularity exec ../dev-container.img "
 
 singularity_base_command = "srun --job-name=logo_language_{} --output=jobs/{} --ntasks=1 --mem-per-cpu=20000 --gres=gpu --cpus-per-task 20 --time=10000:00 --qos=tenenbaum --partition=tenenbaum singularity exec -B /om2  --nv ../dev-container.img "
@@ -162,7 +162,7 @@ for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000
 
 
 #### Generate Helmholtz pseudoalignment experiments.
-RUN_HELMHOLTZ_PSEUDOALIGNMENTS = True
+RUN_HELMHOLTZ_PSEUDOALIGNMENTS = False
 enumerationTimeout = 1800
 num_iterations = 12
 task_batch_size = 40
@@ -178,8 +178,8 @@ for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000
             jobs.append(job_name)
             base_parameters = f" --enumerationTimeout {enumerationTimeout} --testingTimeout {enumerationTimeout}  --iterations {num_iterations} --biasOptimal --contextual --taskBatchSize {task_batch_size} --testEvery {test_every} --no-cuda --recognitionSteps {recognition_steps} --recognition_0 --recognition_1 examples language --Helmholtz 0.5 --synchronous_grammar"
             exp_parameters = f" --taskDataset {dataset} --language_encoder recurrent --languageDataset {dataset}/synthetic --sample_n_supervised {sample_n_supervised} --moses_dir ./moses_compiled --smt_phrase_length {phrase_length} --smt_pseudoalignments {pseudoalignment}"
-            singularity = singularity_base_command.format(job, job_name)
-            command = singularity + base_command + base_parameters + exp_parameters + " &"
+            
+            command = get_launcher_command(job, job_name) + base_command + base_parameters + exp_parameters + append_command(job_name)
             if RUN_HELMHOLTZ_PSEUDOALIGNMENTS:
                 if (EXPS is None) or (exp in EXPS):
                     experiment_commands.append(command)
@@ -191,13 +191,14 @@ num_iterations = 12
 task_batch_size = 40
 test_every = 3
 recognition_steps = 10000
+EXPS = [('logo_unlimited_200', 0)]
 for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000']:
     for sample_n_supervised in [0, 10]:
         exp = (dataset, sample_n_supervised)
         job_name = f"logo_2_ec_cnn_gru_no_ghelm_compression_et_{enumerationTimeout}_supervised_{sample_n_supervised}_{dataset}"
         jobs.append(job_name)
         base_parameters = f" --enumerationTimeout {enumerationTimeout} --testingTimeout {enumerationTimeout}  --iterations {num_iterations} --biasOptimal --contextual --taskBatchSize {task_batch_size} --testEvery {test_every} --no-cuda --recognitionSteps {recognition_steps} --recognition_0 --recognition_1 examples language --Helmholtz 0 --skip_first_test"
-        exp_parameters = f" --taskDataset {dataset} --language_encoder recurrent --languageDataset {dataset}/synthetic --sample_n_supervised {sample_n_supervised} --moses_dir ./moses_compiled -"
+        exp_parameters = f" --taskDataset {dataset} --language_encoder recurrent --languageDataset {dataset}/synthetic --sample_n_supervised {sample_n_supervised}"
     
         command = get_launcher_command(job, job_name) + base_command + base_parameters + exp_parameters + append_command(job_name)
         if RUN_NO_HELMHOLTZ_GENERATIVE_MODEL:

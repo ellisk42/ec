@@ -168,6 +168,7 @@ def ecIterator(grammar, tasks,
                enumerationTimeout=None,
                testingTimeout=None,
                testEvery=1,
+               skip_first_test=False,
                reuseRecognition=False,
                ensembleSize=1,
                # Recognition parameters.
@@ -337,7 +338,8 @@ def ecIterator(grammar, tasks,
             "debug",
             "smt_phrase_length",
             "smt_pseudoalignments",
-            "synchronous_grammar"
+            "synchronous_grammar",
+            "skip_first_test"
         ]
         parameters["iterations"] = iteration
         checkpoint_params = [k for k in sorted(parameters.keys()) if k not in exclude_from_path]
@@ -499,7 +501,9 @@ def ecIterator(grammar, tasks,
         reportMemory()
 
         # Evaluate on held out tasks if we have them
-        if testingTimeout > 0 and ((j % testEvery == 0) or (j == iterations - 1)):
+        if testingTimeout > 0 and j == 0 and skip_first_test:
+            eprint("SKIPPING FIRST TESTING FOR NOW")
+        elif testingTimeout > 0 and ((j % testEvery == 0) or (j == iterations - 1)):
             eprint("Evaluating on held out testing tasks for iteration: %d" % (j))
             evaluateOnTestingTasks(result, testingTasks, grammar,
                                    CPUs=CPUs, maximumFrontier=maximumFrontier,
@@ -1158,6 +1162,10 @@ def commandlineArguments(_=None,
                         type=str)
 
     ### Algorithm training details.
+    parser.add_argument("--skip_first_test",	
+                        action="store_true",	
+                        dest="skip_first_test",	
+                        help="""Skip the first testing round to avoid redundancy.""")
     parser.add_argument("--debug",
                         action="store_true",
                         dest="debug",
