@@ -4,16 +4,16 @@
 
 time=300
 testingTime=300
-recSteps=240000 #list repl is roughly 1k/hour (0.33 steps/sec)
+recSteps=480000 #list repl is roughly 1k/hour (0.33 steps/sec)
 ncores=8
 #salt=towers
 helmRatio=0.5
-resume=experimentOutputs/towers
+#resume=experimentOutputs/towers
 
 for num in 1 3 20
 	do
-		resume=experimentOutputs/towers${num}
-		salt=towers${num}
+		resume=experimentOutputs/towers${num}Long
+		salt=towers${num}Long
 		# cp ${resume}.pickle ${resume}Sample.pickle
 		# #Train:
 		# cmd="python bin/tower.py --contextual --testingTimeout ${testingTime} --recognitionTimeout 216000 --resumeTraining -r ${helmRatio} --primitives new --split 0.5 -t ${time} -RS ${recSteps} --solver python  -c ${ncores} --useValue Sample -i 2 --resume ${resume}Sample.pickle --singleRoundValueEval --seed 1"
