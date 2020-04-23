@@ -94,9 +94,13 @@ class SupervisedTower(Task):
         scipy.misc.imsave(f, a)
 
     def logLikelihood(self, e, timeout=None):
-        from dreamcoder.domains.tower.tower_common import centerTower
+        from dreamcoder.domains.tower.tower_common import centerTower, simulateWithoutPhysics
         yh = executeTower(e, timeout)
-        if yh is not None and centerTower(yh) == centerTower(self.plan): return 0.
+
+        if yh is not None: # and centerTower(yh) == centerTower(self.plan): 
+            if simulateWithoutPhysics(centerTower(yh)) == simulateWithoutPhysics(centerTower(self.plan)):
+                return 0.
+        
         return NEGATIVEINFINITY
 
     
