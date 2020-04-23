@@ -12,11 +12,15 @@ TODO:
 - [ ] def of intTopPrimitive
 - [X] seperate out intTop in primitives from intTop in hand state
 - [ ] def of initial history state initialHist
-- [ ] write embed def
+- [X] write embed def
 - [ ] write loop def, maybe with intTopPrimitive???
+- [ ] deal with centerTower
 - [ ] write taskViolatesAbstractState
+
 """
-initialHist = [(0,0)]
+resolution = 256
+
+initialHist = [(-resolution,0)]
 
 class SketchToAbstract:
     def __init__(self):
@@ -45,12 +49,14 @@ class SketchToAbstract:
 
 def executeAbstractSketch(absSketch):
     hand = absSketch.execute([])(lambda x: x)(AbstractTowerState(history=initialHist)) #TODO init history
-
     return hand.history
 
-
 def taskViolatesAbstractState(task, absState):
-    pass
+    
+    #world is a list of (x,y,w,h)
+    world = simulateWithoutPhysics(task.plan)
+    
+
 
 class SymbolicAbstractTowers(BaseValueHead):
     def __init__(self):
@@ -124,23 +130,22 @@ class AbstractTowerState:
         return AbstractTowerState(hand=newHand, orientation=newOrientation,
                 history=self.history)
 
-_intTopState = (-20, 20) #todo
+_intTopState = (-resolution, resolution) #todo
 _intTopPrimitive = (1, 8) #TODO
 
 def _loop(): pass 
 def _embed(body):
     def f(k):
         def g(hand):
-            bodyHand, bodyActions = body(_empty_tower)(hand)
+            bodyHand = body(lambda x: x )(hand)
             # Record history if we are doing that
             if hand.history is not None:
-                hand = TowerState(hand=hand.hand,
+                hand = AbstractTowerState(hand=hand.hand,
                                   orientation=hand.orientation,
                                   history=bodyHand.history)
 
-            output = k(hand)
-            hand, laterActions = output
-            return hand, bodyActions + laterActions
+            hand = k(hand)
+            return hand
         return g
     return f
 
@@ -149,7 +154,7 @@ def _moveHand(n): lambda k: lambda s: k(s.move(n))
 def _reverseHand(k): lambda s: k(s.reverse())
 
 
-class TowerContinuation(object):
+class AbsTowerContinuation(object):
     def __init__(self, x, w, h, name):
         self.x = x
         self.w = w*2
@@ -180,7 +185,7 @@ blocks = {
 abstractPrimitives = [
     Primitive('tower_loopM_abstract', arrow(tint, arrow(tint, ttower, ttower), ttower, ttower), _loop),
     Primitive("tower_embed_abstract", arrow(arrow(ttower,ttower), ttower, ttower), _embed), 
-    ] + [Primitive(name+"_abstract", arrow(ttower,ttower), TowerContinuation(0, w, h, name)) #TODO
+    ] + [Primitive(name+"_abstract", arrow(ttower,ttower), AbsTowerContinuation(0, w, h, name)) #TODO
      for name, (w, h) in blocks.items()] + \
     [Primitive(str(j), tint, j) for j in range(1,9) ] + [
         Primitive("moveHand_abstract", arrow(tint, ttower, ttower), _moveHand),
@@ -212,6 +217,3 @@ def getNewBlock(rl, rh, w, h):
     xh = rl + w
     return xl, xh, h
 
-# l = [(0,0)]
-# nl  = updateMinHeight(l, 1, 3, 2)
-# print(nl)

@@ -58,7 +58,7 @@ def plotTestResults(testResults, timeout, defaultLoss=None,
     if mode =='fractionHit': plot.ylim(bottom=0.)
     for n in range(len(testResults)):
         #xs = list(range(max([0]+[r.evaluations for tr in testResults[n] for r in tr] ) + 1))
-        xs = list(range(200))
+        xs = list(range(300))
         if mode =='fractionHit':
             plot.plot(xs, [fractionHit(n,lambda r: r.evaluations <= x) for x in xs],
                   label=names[n])
@@ -74,28 +74,20 @@ def plotTestResults(testResults, timeout, defaultLoss=None,
 
 if __name__ == '__main__':
 
-    ID = 'listRichPrims' #R1 #"listBaseIT=1" #"listBaseIT=1Long"
+    n = 20
+    ID = 'towers' + str(n)
 
-    nameSalt = "zoomed"
-    #paths = [('experimentOutputs/listCathyTestGraph_SRE=True_graph=True.pickle', 'mock' )]
+    nameSalt = "towers"
 
-    #ID = 'cathy'
-    #nameSalt = 'zoomed'
-    paths = [('experimentOutputs/listCathyTestEnum_SRE=True_graph=True.pickle', 'Enum' ),
-        ('experimentOutputs/listCathyTestRNN_SRE=True_graph=True.pickle', 'RNN'),
-        ('experimentOutputs/listCathyTestSample_SRE=True_graph=True.pickle', 'Sample')]
+    paths = [(f'experimentOutputs/{ID}Sample_SRE=True_graph=True.pickle', 'Sample'),
+        (f'experimentOutputs/{ID}RNN_SRE=True_graph=True.pickle', 'RNN value'),
+        (f'experimentOutputs/{ID}REPL_SRE=True_graph=True.pickle', 'REPL modular value')]
 
-    paths = [(f'experimentOutputs/{ID}Enum_SRE=True_graph=True.pickle', 'Enum'),
-        (f'experimentOutputs/{ID}RNN_SRE=True_graph=True.pickle', 'RNN'),
-        (f'experimentOutputs/{ID}REPL_SRE=True_graph=True.pickle', 'REPL')]
 
-    # paths = [('experimentOutputs/experimentOutputs/listCathyTestEnum.pickle', 'Enum')
-    #           ('experimentOutputs/listCathyTestRNN.pickle', 'RNN')
-    #           ('experimentOutputs/listCathyTestREPL.pickle', 'Abstract REPL') ]
+    paths = [(f'experimentOutputs/{ID}Sample_SRE=True.pickle', 'Sample'),
+        (f'experimentOutputs/{ID}RNN_SRE=True.pickle', 'RNN value'),
+        (f'experimentOutputs/{ID}REPL_SRE=True.pickle', 'REPL modular value')]
 
-    paths = [(f'experimentOutputs/{ID}Sample_SRE=True_graph=True.pickle', 'Enum'),
-        (f'experimentOutputs/{ID}RNN_SRE=True_graph=True.pickle', 'RNN'),
-        (f'experimentOutputs/{ID}REPL_SRE=True_graph=True.pickle', 'REPL')]
 
     timeout=300
     outputDirectory = 'plots'
@@ -107,6 +99,10 @@ if __name__ == '__main__':
         for path in paths:
             with open(path, 'rb') as h:
                 r = dill.load(h)
+                
+            from dreamcoder.showTowerTasks import showTowersAndSolutions, computeValue
+            #showTowersAndSolutions(r)
+            computeValue(r)
             assert 0
             #import pdb; pdb.set_trace()
             res = r.searchStats[-1] if mode=='train' else r.testingSearchStats[-1]

@@ -1325,7 +1325,8 @@ class RecognitionModel(nn.Module):
         likelihoodModel = None
         if solver == 'pypy' or solver == 'python':
           # Use an all or nothing likelihood model.
-          likelihoodModel = AllOrNothingLikelihoodModel(timeout=evaluationTimeout) 
+          likelihoodModel = AllOrNothingLikelihoodModel(timeout=evaluationTimeout)
+          #here's your problem ...
           
         solver = solvers[solver]
 
