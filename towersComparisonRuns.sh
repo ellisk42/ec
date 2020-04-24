@@ -18,7 +18,7 @@ for num in 1 3 20
 		#Train:
 		cmd="python bin/tower.py --useSamplePolicy ${resume}REPL.pickle --contextual --testingTimeout ${testingTime} --recognitionTimeout 216000 --resumeTraining -r ${helmRatio} --primitives new --split 0.5 -t ${time} -RS ${recSteps} --solver python  -c ${ncores} --useValue Sample -i 2 --resume ${resume}Sample.pickle --singleRoundValueEval --seed 1"
 		#eval "${cmd}"
-		#sbatch -e towersSample${salt}.out -o towersSample${salt}.out execute_gpu_new.sh ${cmd}
+		sbatch -e towersSample${salt}.out -o towersSample${salt}.out execute_gpu_new.sh ${cmd}
 
 		cp ${resume}.pickle ${resume}REPL.pickle
 		#Train:

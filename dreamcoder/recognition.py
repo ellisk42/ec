@@ -1273,8 +1273,9 @@ class RecognitionModel(nn.Module):
             self.valueHead.use_cuda = False
             self.valueHead.cpu()
             #because they may be seperate:
-            self.valueHead.featureExtractor.use_cuda = False
-            self.valueHead.featureExtractor.CUDA = False #for towers
+            if hasattr(self.valueHead, 'featureExtractor'):
+                self.valueHead.featureExtractor.use_cuda = False
+                self.valueHead.featureExtractor.CUDA = False #for towers
 
             x = self.valueEnumeration(grammars, tasks,
                                         testing=testing,
@@ -1290,8 +1291,9 @@ class RecognitionModel(nn.Module):
             self.valueHead.use_cuda = True
             self.valueHead.cuda()
             #because they may be seperate:
-            self.valueHead.featureExtractor.use_cuda = True
-            self.valueHead.featureExtractor.CUDA = True #for towers
+            if hasattr(self.valueHead, 'featureExtractor'):
+                self.valueHead.featureExtractor.use_cuda = True
+                self.valueHead.featureExtractor.CUDA = True #for towers
             return x
 
         return multicoreEnumeration(grammars, tasks,
