@@ -707,6 +707,8 @@ class RecognitionModel(nn.Module):
         else:
             self.gradientStepsTaken = 0
 
+        #import pdb; pdb.set_trace()
+
     def auxiliaryLoss(self, frontier, features):
         # Compute a vector of uses
         ls = frontier.bestPosterior.program
@@ -1250,7 +1252,8 @@ class RecognitionModel(nn.Module):
                            CPUs=1,
                            frontierSize=None,
                            maximumFrontier=None,
-                           evaluationTimeout=None):
+                           evaluationTimeout=None,
+                           returnNumOfProg=False):
         with timing("Evaluated recognition model"):
             grammars = {task: self.grammarOfTask(task)
                         for task in tasks}
@@ -1275,7 +1278,8 @@ class RecognitionModel(nn.Module):
                                         solver=solver,
                                         enumerationTimeout=enumerationTimeout,
                                         CPUs=CPUs, maximumFrontier=maximumFrontier,
-                                        evaluationTimeout=evaluationTimeout)
+                                        evaluationTimeout=evaluationTimeout,
+                                        returnNumOfProg=returnNumOfProg)
             self.cuda()
             self.use_cuda = True
             self.featureExtractor.use_cuda = True
@@ -1298,7 +1302,8 @@ class RecognitionModel(nn.Module):
                              maximumFrontier=None,
                              verbose=True,
                              evaluationTimeout=None,
-                             testing=False):
+                             testing=False,
+                             returnNumOfProg=False):
 
         #TODO this probably shouldn't care about depth or something ...
         '''g: Either a Grammar, or a map from task to grammar.
@@ -1513,6 +1518,9 @@ class RecognitionModel(nn.Module):
         eprint("We enumerated this many programs, for each task:\n\t",
                list(taskToNumberOfPrograms.values()))
 
+
+        if returnNumOfProg:
+            return [frontiers[t] for t in tasks], bestSearchTime, reportedSolutions, taskToNumberOfPrograms
         return [frontiers[t] for t in tasks], bestSearchTime, reportedSolutions
 
 

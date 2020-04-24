@@ -33,7 +33,9 @@ class ECResult():
                  testingSumMaxll=None,
                  hitsAtEachWake=None,
                  timesAtEachWake=None,
-                 allFrontiers=None):
+                 allFrontiers=None,
+                 numOfProg=None,
+                 testingNumOfProg=None,):
         self.frontiersOverTime = {} # Map from task to [frontier at iteration 1, frontier at iteration 2, ...]
         self.hitsAtEachWake = hitsAtEachWake or []
         self.timesAtEachWake = timesAtEachWake or []
@@ -54,6 +56,8 @@ class ECResult():
         self.sumMaxll = sumMaxll or [] #TODO name change 
         self.testingSumMaxll = testingSumMaxll or [] #TODO name change
         self.allFrontiers = allFrontiers or {}
+        self.numOfProg = numOfProg or []
+        self.testingNumOfProg = testingNumOfProg or []
 
     def __repr__(self):
         attrs = ["{}={}".format(k, v) for k, v in self.__dict__.items()]
@@ -188,6 +192,7 @@ def ecIterator(grammar, tasks,
                custom_wake_generative=None,
                useValue=False,
                singleRoundValueEval=False,
+               useSamplePolicy=False,
                resumeTraining=True,
                skipTraining=False):
     if enumerationTimeout is None:
@@ -411,6 +416,17 @@ def ecIterator(grammar, tasks,
             print("Loading model to resume or skip training...")
             try:
                 resumeTrainingModel = torch.load(open(recModelPath, 'rb'))
+
+                if useSamplePolicy:
+                    
+                    print("USING SEPERATE POLICY AND VALUE")
+                    samplePolicyPath = useSamplePolicy + '_RecModelOnly'
+                    ourModel = torch.load(open(recModelPath, 'rb'))
+                    SampleModel = torch.load(open(samplePolicyPath, 'rb'))
+                    SampleModel.valueHead = ourModel.valueHead
+                    resumeTrainingModel = SampleModel
+                    #import pdb; pdb.set_trace()
+
                 if skipTraining: recognitionSteps = -1
             except FileNotFoundError:
                 print("no previous model found")
@@ -428,7 +444,8 @@ def ecIterator(grammar, tasks,
                                helmholtzRatio=thisRatio, helmholtzFrontiers=[],
                                auxiliaryLoss=auxiliaryLoss, cuda=cuda, CPUs=CPUs, solver=solver,
                                recognitionSteps=recognitionSteps, maximumFrontier=maximumFrontier, useValue=useValue, 
-                               trainOnly=True, saveIter=100, savePath=recModelPath, resumeTrainingModel=resumeTrainingModel)
+                               trainOnly=True, saveIter=100, savePath=recModelPath, resumeTrainingModel=resumeTrainingModel,
+                               seperateFeatureExtractor=bool(useSamplePolicy))
 
         #testing
         if testingTimeout == 0:
@@ -444,11 +461,11 @@ def ecIterator(grammar, tasks,
                                                      solver=solver,
                                                      **kw)
 
-        trainFrontiers, trainingTimes, searchStats = enumerator(tasks, enumerationTimeout=enumerationTimeout)
+        trainFrontiers, trainingTimes, searchStats, trainNumOfProg = enumerator(tasks, enumerationTimeout=enumerationTimeout, returnNumOfProg=True)
         nHits = sum( f.entries != [] for f in trainFrontiers)
         print("number of training tasks hit:", nHits)
 
-        testFrontiers, testingTimes, testingSearchStats = enumerator(testingTasks, enumerationTimeout=testingTimeout, testing=True)
+        testFrontiers, testingTimes, testingSearchStats, testNumOfProg = enumerator(testingTasks, enumerationTimeout=testingTimeout, testing=True, returnNumOfProg=True)
         nHits = sum( f.entries != [] for f in testFrontiers)
         print("number of testing tasks hit:", nHits)
 
@@ -460,6 +477,14 @@ def ecIterator(grammar, tasks,
         if hasattr(result, 'testingSearchStats'):
             result.testingSearchStats.append(testingSearchStats)
         else: result.testingSearchStats = [testingSearchStats]
+
+        if hasattr(result, 'numOfProg'):
+            result.numOfProg.append(trainNumOfProg)
+        else: result.numOfProg = [trainNumOfProg]
+
+        if hasattr(result, 'testingNumOfProg'):
+            result.testingNumOfProg.append(testingNumOfProg)
+        else: result.testingNumOfProg = [testingNumOfProg]
 
         SUFFIX = ".pickle"
         assert path.endswith(SUFFIX)
@@ -675,23 +700,28 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
                       timeout=None, enumerationTimeout=None, evaluationTimeout=None,
                       helmholtzRatio=None, helmholtzFrontiers=None, maximumFrontier=None,
                       auxiliaryLoss=None, cuda=None, CPUs=None, solver=None, useValue=False, 
-                      trainOnly=False, saveIter=None, savePath=None, resumeTrainingModel=None):
+                      trainOnly=False, saveIter=None, savePath=None, resumeTrainingModel=None,
+                      seperateFeatureExtractor=False):
     eprint("Using an ensemble size of %d. Note that we will only store and test on the best recognition model." % ensembleSize)
 
     featureExtractorObjects = [featureExtractor(tasks, testingTasks=testingTasks, cuda=cuda) for i in range(ensembleSize)]
 
     if useValue:
         assert ensembleSize == 1
+        if seperateFeatureExtractor:
+            featureExtr = featureExtractor(tasks, testingTasks=testingTasks, cuda=cuda)
+        else: 
+            featureExtr = featureExtractorObjects[0]
         if useValue == "AbstractREPL":
-            valueHead = AbstractREPLValueHead(grammar, featureExtractorObjects[0])
+            valueHead = AbstractREPLValueHead(grammar, featureExtr)
         elif useValue == "RNN":
-            valueHead = SimpleRNNValueHead(grammar, featureExtractorObjects[0]) #init correctly
+            valueHead = SimpleRNNValueHead(grammar, featureExtr) #init correctly
         elif useValue == "Sample":
             valueHead = SampleDummyValueHead()
         elif useValue == "TowerREPL":
             valueHead = TowerREPLValueHead(grammar, 
-                            featureExtractorObjects[0], 
-                            H=featureExtractorObjects[0].outputDimensionality)
+                            featureExtr, 
+                            H=featureExtr.outputDimensionality)
         else: assert False
     else:
         valueHead = None
@@ -1094,6 +1124,10 @@ def commandlineArguments(_=None,
     parser.add_argument("--singleRoundValueEval",
                         action='store_true',
                         help="do one eval")
+    parser.add_argument("--useSamplePolicy",
+                        type=str,
+                        default=False,
+                        help="use the policy from saved sample run")
     parser.add_argument("--resumeTraining", #TODO need this to be an int or something
                         action='store_true',
                         help="resume training")
