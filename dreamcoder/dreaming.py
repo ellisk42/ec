@@ -62,6 +62,7 @@ def backgroundHelmholtzEnumeration(tasks, g, timeout, _=None,
             for request, result in zip(requests, results):
                 response = json.loads(result.decode("utf-8"))
                 for b, entry in enumerate(response):
+                    import pdb; pdb.set_trace();
                     frontiers.append(Frontier([FrontierEntry(program=Program.parse(p),
                                                              logPrior=entry["ll"],
                                                              logLikelihood=0.,

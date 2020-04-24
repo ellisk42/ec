@@ -2,6 +2,7 @@ open Core
 open Parser
 open Utils
 open Type
+open Str
 
 type program =
   | Index of int
@@ -83,8 +84,13 @@ let rec left_order_tokens (show_vars : bool) tokens = function
   | Invented (_, i) -> tokens @ [ "#"^show_program false i]
   | Primitive (_, n, _) -> tokens @ [n]
 
+
+    
 let string_of_tokens (show_vars : bool) p = 
-  String.concat ~sep:" " ((left_order_tokens show_vars []) p)
+  let tokens = ((left_order_tokens show_vars []) p) in 
+  let escaped_tokens = tokens |> List.map ~f:(fun token -> Str.global_replace (Str.regexp_string " ") "^" token) in
+  String.concat ~sep:" " escaped_tokens
+
 
 let primitive_name = function | Primitive(_,n,_) -> n
                               | e -> raise (Failure ("primitive_name: "^string_of_program e^"not a primitive"))

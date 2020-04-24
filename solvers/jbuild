@@ -4,6 +4,6 @@
  ((names (solver compression helmholtz geomDrawLambdaString geomDrawFile geomTest logoTest logoDrawString logoSequenceString protonet-tester client evolution versionDemo))
   (modes (native))
   (ocamlopt_flags (:standard -O3 -unboxed-types -nodynlink -w -20))
-  (libraries (core re2 yojson geomLib logoLib ocaml-protoc zmq)) ;parmap
+  (libraries (core re2 yojson geomLib logoLib ocaml-protoc zmq str)) ;parmap
   (preprocess (pps (ppx_jane)))
  ))

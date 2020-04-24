@@ -62,7 +62,7 @@ class Grammar(object):
         return token
 
     def escape_tokens_string(self, token_string):
-        # Longest to shortest
+        # Deprecated (@CathyWong) -- this is a poor way to do things.
         for t in sorted(self.original_to_escaped, key=lambda t:len(t), reverse=True):
             token_string = token_string.replace(f"{t} ", f"{self.original_to_escaped[t]} ")
             token_string = token_string.replace(f" {t}", f" {self.original_to_escaped[t]}")

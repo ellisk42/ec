@@ -492,13 +492,6 @@ def ecIterator(grammar, tasks,
         if t.add_as_supervised:
             result.allFrontiers[t] = result.allFrontiers[t].combine(Frontier.makeFrontierFromSupervised(t)).topK(maximumFrontier)
     
-    ### DEBUG: REMOVE thisSummary
-    print("REMOVE_DEBUG")
-    backgroundHelmholtzEnumeration(tasks, grammar, enumerationTimeout,
-                                                    evaluationTimeout=evaluationTimeout,
-                                                    special=featureExtractor.special)
-    print("REMOVE THIS")
-    
     ######## Test Evaluation and background Helmholtz enumeration.
     for j in range(resume or 0, iterations):
         if storeTaskMetrics and rewriteTaskMetrics:
