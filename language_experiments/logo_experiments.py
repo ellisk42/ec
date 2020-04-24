@@ -33,7 +33,7 @@ def build_replications(exp_command, job, job_name):
         repl_name = f'_repl_{i}'
         repl_job = str(job) + repl_name
         repl_job_name = job_name + repl_name
-        replication_command = f'--taskReranker randomShuffle --seed {i}'
+        replication_command = f' --taskReranker randomShuffle --seed {i}'
         replications += [build_command(exp_command, repl_job, repl_job_name, replication_command)]
     return replications
 
