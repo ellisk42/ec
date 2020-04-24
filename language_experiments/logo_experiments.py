@@ -1,5 +1,6 @@
-USING_GCLOUD = True
-USING_SINGULARITY = False
+USING_GCLOUD = False
+USING_SINGULARITY = True
+NUM_REPLICATIONS = 3
 
 def gcloud_commands(job_name):
     gcloud_disk_command = f"gcloud compute --project 'tenenbaumlab' disks create {job_name} --size '30' --zone 'us-east1-b' --source-snapshot 'zyzzyva-logo-language' --type 'pd-standard'"
@@ -21,6 +22,20 @@ def append_command(job_name):
     else:
         return f"> jobs/{job_name} 2>&1 &"
 
+def build_command(exp_command, job, job_name, replication=" "):
+    if replication is None: replication = " "
+    return get_launcher_command(job, job_name) + exp_command + replication + append_command(job_name)
+
+def build_replications(exp_command, job, job_name):
+    replications = []
+    for i in range(1, NUM_REPLICATIONS + 1):
+        repl_name = f'_repl_{i}'
+        repl_job = str(job) + repl_name
+        repl_job_name = job_name + repl_name
+        replication_command = f'--taskReranker randomShuffle --seed {i}'
+        replications += [build_command(exp_command, repl_job, repl_job_name, replication_command)]
+    return replications
+
 experiment_commands = []
 jobs = []
 job = 0
@@ -38,10 +53,11 @@ for enumerationTimeout in [1800, 3600]:
     base_parameters = "--no-cuda --enumerationTimeout {} --testingTimeout {} --recognitionEpochs 10 --biasOptimal --contextual --Helmholtz 0.5 --iterations {} --taskBatchSize {} --testEvery {}".format(enumerationTimeout, enumerationTimeout, num_iterations, task_batch_size, test_every)
     
     base_command = "python bin/logo.py "
-    
-    command = get_launcher_command(job, job_name) + base_command + base_parameters + append_command(job_name)
+    exp_command =  base_command + base_parameters
+    command = build_command(exp_command, job, job_name, replication=None)
     if RUN_EC_BASELINES:
         experiment_commands.append(command)
+        experiment_commands += build_replications(exp_command, job, job_name)
     job += 1
 for enumerationTimeout in [1800, 3600]:
     job_name = "logo_ec_compression_et_{}".format(enumerationTimeout)
@@ -53,10 +69,11 @@ for enumerationTimeout in [1800, 3600]:
     base_parameters = "--no-recognition --no-cuda --enumerationTimeout {} --testingTimeout {} --recognitionEpochs 10 --biasOptimal --contextual --Helmholtz 0.5 --iterations {} --taskBatchSize {} --testEvery {}".format(enumerationTimeout, enumerationTimeout, num_iterations, task_batch_size, test_every)
     
     base_command = "python bin/logo.py "
-    
-    command = get_launcher_command(job, job_name) + base_command + base_parameters + append_command(job_name)
+    exp_command = base_command + base_parameters
+    command = build_command(exp_command, job, job_name, replication=None)
     if RUN_EC_BASELINES:
         experiment_commands.append(command)
+        experiment_commands += build_replications(exp_command, job, job_name)
     job += 1
 for enumerationTimeout in [1800, 3600]:
     job_name = "logo_ec_cnn_et_{}".format(enumerationTimeout)
@@ -69,9 +86,11 @@ for enumerationTimeout in [1800, 3600]:
     
     base_command = "python bin/logo.py "
     
-    command = get_launcher_command(job, job_name) + base_command + base_parameters + append_command(job_name)
+    exp_command = base_command + base_parameters
+    command = build_command(exp_command, job, job_name, replication=None) 
     if RUN_EC_BASELINES:
         experiment_commands.append(command)
+        experiment_commands += build_replications(exp_command, job, job_name)
     job += 1
 
 #### Generates language search baseline experiments.
@@ -88,19 +107,23 @@ base_command = "python bin/logo.py "
 base_parameters = f"--enumerationTimeout {enumerationTimeout} --testingTimeout {enumerationTimeout}  --iterations {num_iterations} --biasOptimal --contextual --taskBatchSize {task_batch_size} --testEvery {test_every} --no-cuda --language_encoder recurrent --taskDataset logo_unlimited_200 --languageDataset logo_unlimited_200/synthetic "
 exp_parameters = "--recognitionEpochs 100 --recognition_0 --recognition_1 language --Helmholtz 0"
 
+exp_command = base_command + base_parameters + exp_parameters
+command = build_command(exp_command, job, job_name, replication=None)
 
-command = get_launcher_command(job, job_name) + base_command + base_parameters + exp_parameters + append_command(job_name)
 if RUN_LANGUAGE_SEARCH_BASELINE:
     experiment_commands.append(command)
+    experiment_commands += build_replications(exp_command, job, job_name)
 job += 1
 
 # Separate recognition: Enumerate, recognition_0 = examples, recognition_1 = language, compression
 job_name = "logo_ec_cnn_gru_compression_et_{}".format(enumerationTimeout)
 exp_parameters = " --recognitionTimeout 3600 --recognition_0 examples --recognition_1 language --Helmholtz 0.5"
 
-command = get_launcher_command(job, job_name) + base_command + base_parameters + exp_parameters + append_command(job_name)
+exp_command = base_command + base_parameters + exp_parameters
+command = build_command(exp_command, job, job_name, replication=None)
 if RUN_LANGUAGE_SEARCH_BASELINE:
     experiment_commands.append(command)
+    experiment_commands += build_replications(exp_command, job, job_name)
 job += 1
 
 # Finetune with language: Enumerate, recognition_0 = examples, recognition_1 = examples, language, compression
@@ -109,33 +132,42 @@ exp_parameters = " --recognitionTimeout 3600 --recognition_0 examples --recognit
 command = get_launcher_command(job, job_name) + base_command + base_parameters + exp_parameters + append_command(job_name)
 if RUN_LANGUAGE_SEARCH_BASELINE:
     experiment_commands.append(command)
+    experiment_commands += build_replications(exp_command, job, job_name)
 job += 1
 
 # Label Helmholtz with nearest.
 job_name = "logo_ec_cnn_gru_cnn_nearest_compression_et_{}".format(enumerationTimeout)
 exp_parameters = " --recognitionTimeout 3600 --recognition_0 examples --recognition_1 examples language --Helmholtz 0.5 --finetune_1  --helmholtz_nearest_language 1"
-command = get_launcher_command(job, job_name) + base_command + base_parameters + exp_parameters + append_command(job_name)
+exp_command = base_command + base_parameters + exp_parameters
+command = build_command(exp_command, job, job_name, replication=None)
 if RUN_LANGUAGE_SEARCH_BASELINE:
     experiment_commands.append(command)
+    experiment_commands += build_replications(exp_command, job, job_name)
 job += 1
 
 #### Generates EC baselines with updated LOGO dataset and supervision
-RUN_EC_BASELINES_LOGO_2 = False
+RUN_EC_BASELINES_LOGO_2 = True
 enumerationTimeout = 1800
 num_iterations = 12
 task_batch_size = 40
 test_every = 3
 recognition_timeout = 1800
+EXPS = [('logo_unlimited_200', 0)]
 for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000']:
     for sample_n_supervised in [0, 10]:
+        exp = (dataset, sample_n_supervised)
         job_name = f"logo_2_ec_cnn_compression_et_{enumerationTimeout}_supervised_{sample_n_supervised}_{dataset}"
         jobs.append(job_name)
         base_parameters = f" --enumerationTimeout {enumerationTimeout} --testingTimeout {enumerationTimeout}  --iterations {num_iterations} --biasOptimal --contextual --taskBatchSize {task_batch_size} --testEvery {test_every} --no-cuda --recognitionTimeout {recognition_timeout} --recognition_0 examples --Helmholtz 0.5"
         exp_parameters = f" --taskDataset {dataset} --sample_n_supervised {sample_n_supervised}"
         
-        command = get_launcher_command(job, job_name) + base_command + base_parameters + exp_parameters + append_command(job_name)
+        exp_command = base_command + base_parameters + exp_parameters
+        command = build_command(exp_command, job, job_name, replication=None)
+        
         if RUN_EC_BASELINES_LOGO_2:
-            experiment_commands.append(command)
+            if (EXPS is None) or (exp in EXPS):
+                experiment_commands.append(command)
+                experiment_commands += build_replications(exp_command, job, job_name)
         job +=1
 #### Generate Helmholtz generative model experiments.
 RUN_HELMHOLTZ_GENERATIVE_MODEL = False
@@ -154,10 +186,12 @@ for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000
             base_parameters = f" --enumerationTimeout {enumerationTimeout} --testingTimeout {enumerationTimeout}  --iterations {num_iterations} --biasOptimal --contextual --taskBatchSize {task_batch_size} --testEvery {test_every} --no-cuda --recognitionTimeout {recognition_timeout} --recognition_0 --recognition_1 examples language --Helmholtz 0.5 --synchronous_grammar"
             exp_parameters = f" --taskDataset {dataset} --language_encoder recurrent --languageDataset {dataset}/synthetic --sample_n_supervised {sample_n_supervised} --moses_dir ./moses_compiled --smt_phrase_length {phrase_length}"
         
-            command = get_launcher_command(job, job_name) + base_command + base_parameters + exp_parameters + append_command(job_name)
+            exp_command = base_command + base_parameters + exp_parameters
+            command = build_command(exp_command, job, job_name, replication=None)
             if RUN_HELMHOLTZ_GENERATIVE_MODEL:
                 if (EXPS is None) or (exp in EXPS):
                     experiment_commands.append(command)
+                    experiment_commands += build_replications(exp_command, job, job_name)
             job +=1
 
 
@@ -179,13 +213,15 @@ for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000
             base_parameters = f" --enumerationTimeout {enumerationTimeout} --testingTimeout {enumerationTimeout}  --iterations {num_iterations} --biasOptimal --contextual --taskBatchSize {task_batch_size} --testEvery {test_every} --no-cuda --recognitionSteps {recognition_steps} --recognition_0 --recognition_1 examples language --Helmholtz 0.5 --synchronous_grammar"
             exp_parameters = f" --taskDataset {dataset} --language_encoder recurrent --languageDataset {dataset}/synthetic --sample_n_supervised {sample_n_supervised} --moses_dir ./moses_compiled --smt_phrase_length {phrase_length} --smt_pseudoalignments {pseudoalignment}"
             
-            command = get_launcher_command(job, job_name) + base_command + base_parameters + exp_parameters + append_command(job_name)
+            exp_command = base_command + base_parameters + exp_parameters
+            command = build_command(exp_command, job, job_name, replication=None)
             if RUN_HELMHOLTZ_PSEUDOALIGNMENTS:
                 if (EXPS is None) or (exp in EXPS):
                     experiment_commands.append(command)
+                    experiment_commands += build_replications(exp_command, job, job_name)
             job +=1
 
-RUN_NO_HELMHOLTZ_GENERATIVE_MODEL = True
+RUN_NO_HELMHOLTZ_GENERATIVE_MODEL = False
 enumerationTimeout = 1800
 num_iterations = 12
 task_batch_size = 40
@@ -204,6 +240,7 @@ for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000
         if RUN_NO_HELMHOLTZ_GENERATIVE_MODEL:
             if (EXPS is None) or (exp in EXPS):
                 experiment_commands.append(command)
+                experiment_commands += build_replications(exp_command, job, job_name)
         job +=1
 
 #### Outputs
