@@ -418,11 +418,14 @@ def ecIterator(grammar, tasks,
                 resumeTrainingModel = torch.load(open(recModelPath, 'rb'))
 
                 if useSamplePolicy:
+                    
+                    print("USING SEPERATE POLICY AND VALUE")
                     samplePolicyPath = useSamplePolicy + '_RecModelOnly'
                     ourModel = torch.load(open(recModelPath, 'rb'))
-                    SampleModel = torch.load(open(useSamplePolicy, 'rb'))
+                    SampleModel = torch.load(open(samplePolicyPath, 'rb'))
                     SampleModel.valueHead = ourModel.valueHead
                     resumeTrainingModel = SampleModel
+                    #import pdb; pdb.set_trace()
 
                 if skipTraining: recognitionSteps = -1
             except FileNotFoundError:

@@ -707,6 +707,8 @@ class RecognitionModel(nn.Module):
         else:
             self.gradientStepsTaken = 0
 
+        #import pdb; pdb.set_trace()
+
     def auxiliaryLoss(self, frontier, features):
         # Compute a vector of uses
         ls = frontier.bestPosterior.program
