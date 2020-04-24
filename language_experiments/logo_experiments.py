@@ -1,6 +1,7 @@
 USING_GCLOUD = False
 USING_SINGULARITY = True
 NUM_REPLICATIONS = 3
+NO_ORIGINAL_REPL = True
 
 def gcloud_commands(job_name):
     gcloud_disk_command = f"gcloud compute --project 'tenenbaumlab' disks create {job_name} --size '30' --zone 'us-east1-b' --source-snapshot 'zyzzyva-logo-language' --type 'pd-standard'"
@@ -56,7 +57,7 @@ for enumerationTimeout in [1800, 3600]:
     exp_command =  base_command + base_parameters
     command = build_command(exp_command, job, job_name, replication=None)
     if RUN_EC_BASELINES:
-        experiment_commands.append(command)
+        if not NO_ORIGINAL_REPL: experiment_commands.append(command)
         experiment_commands += build_replications(exp_command, job, job_name)
     job += 1
 for enumerationTimeout in [1800, 3600]:
@@ -72,7 +73,7 @@ for enumerationTimeout in [1800, 3600]:
     exp_command = base_command + base_parameters
     command = build_command(exp_command, job, job_name, replication=None)
     if RUN_EC_BASELINES:
-        experiment_commands.append(command)
+        if not NO_ORIGINAL_REPL: experiment_commands.append(command)
         experiment_commands += build_replications(exp_command, job, job_name)
     job += 1
 for enumerationTimeout in [1800, 3600]:
@@ -89,7 +90,7 @@ for enumerationTimeout in [1800, 3600]:
     exp_command = base_command + base_parameters
     command = build_command(exp_command, job, job_name, replication=None) 
     if RUN_EC_BASELINES:
-        experiment_commands.append(command)
+        if not NO_ORIGINAL_REPL: experiment_commands.append(command)
         experiment_commands += build_replications(exp_command, job, job_name)
     job += 1
 
@@ -111,7 +112,7 @@ exp_command = base_command + base_parameters + exp_parameters
 command = build_command(exp_command, job, job_name, replication=None)
 
 if RUN_LANGUAGE_SEARCH_BASELINE:
-    experiment_commands.append(command)
+    if not NO_ORIGINAL_REPL: experiment_commands.append(command)
     experiment_commands += build_replications(exp_command, job, job_name)
 job += 1
 
@@ -122,7 +123,7 @@ exp_parameters = " --recognitionTimeout 3600 --recognition_0 examples --recognit
 exp_command = base_command + base_parameters + exp_parameters
 command = build_command(exp_command, job, job_name, replication=None)
 if RUN_LANGUAGE_SEARCH_BASELINE:
-    experiment_commands.append(command)
+    if not NO_ORIGINAL_REPL: experiment_commands.append(command)
     experiment_commands += build_replications(exp_command, job, job_name)
 job += 1
 
@@ -131,7 +132,7 @@ job_name = "logo_ec_cnn_gru_cnn_compression_et_{}".format(enumerationTimeout)
 exp_parameters = " --recognitionTimeout 3600 --recognition_0 examples --recognition_1 examples language --Helmholtz 0.5 --finetune_1"
 command = get_launcher_command(job, job_name) + base_command + base_parameters + exp_parameters + append_command(job_name)
 if RUN_LANGUAGE_SEARCH_BASELINE:
-    experiment_commands.append(command)
+    if not NO_ORIGINAL_REPL: experiment_commands.append(command)
     experiment_commands += build_replications(exp_command, job, job_name)
 job += 1
 
@@ -141,7 +142,7 @@ exp_parameters = " --recognitionTimeout 3600 --recognition_0 examples --recognit
 exp_command = base_command + base_parameters + exp_parameters
 command = build_command(exp_command, job, job_name, replication=None)
 if RUN_LANGUAGE_SEARCH_BASELINE:
-    experiment_commands.append(command)
+    if not NO_ORIGINAL_REPL: experiment_commands.append(command)
     experiment_commands += build_replications(exp_command, job, job_name)
 job += 1
 
@@ -166,7 +167,7 @@ for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000
         
         if RUN_EC_BASELINES_LOGO_2:
             if (EXPS is None) or (exp in EXPS):
-                experiment_commands.append(command)
+                if not NO_ORIGINAL_REPL: experiment_commands.append(command)
                 experiment_commands += build_replications(exp_command, job, job_name)
         job +=1
 #### Generate Helmholtz generative model experiments.
@@ -190,7 +191,7 @@ for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000
             command = build_command(exp_command, job, job_name, replication=None)
             if RUN_HELMHOLTZ_GENERATIVE_MODEL:
                 if (EXPS is None) or (exp in EXPS):
-                    experiment_commands.append(command)
+                    if not NO_ORIGINAL_REPL: experiment_commands.append(command)
                     experiment_commands += build_replications(exp_command, job, job_name)
             job +=1
 
@@ -217,7 +218,7 @@ for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000
             command = build_command(exp_command, job, job_name, replication=None)
             if RUN_HELMHOLTZ_PSEUDOALIGNMENTS:
                 if (EXPS is None) or (exp in EXPS):
-                    experiment_commands.append(command)
+                    if not NO_ORIGINAL_REPL: experiment_commands.append(command)
                     experiment_commands += build_replications(exp_command, job, job_name)
             job +=1
 
@@ -239,7 +240,7 @@ for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000
         command = get_launcher_command(job, job_name) + base_command + base_parameters + exp_parameters + append_command(job_name)
         if RUN_NO_HELMHOLTZ_GENERATIVE_MODEL:
             if (EXPS is None) or (exp in EXPS):
-                experiment_commands.append(command)
+                if not NO_ORIGINAL_REPL: experiment_commands.append(command)
                 experiment_commands += build_replications(exp_command, job, job_name)
         job +=1
 
