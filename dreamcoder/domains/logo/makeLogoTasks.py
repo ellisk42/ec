@@ -325,7 +325,7 @@ def loadLogoDataset(task_dataset, task_dataset_dir):
     tasks = {"train": [], "test": []}
     for split in ("train", "test"):
         split_path = os.path.join(dataset_path, split)
-        task_files = [os.path.join(split_path, t) for t in os.listdir(split_path) if '.p' in t]
+        task_files = sorted([os.path.join(split_path, t) for t in os.listdir(split_path) if '.p' in t], key=lambda p:os.path.basename(p))
         for task_file in task_files:
             with open(task_file, 'rb') as f:
                 t = dill.load(f)
