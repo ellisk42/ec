@@ -54,11 +54,11 @@ def plotTestResults(testResults, timeout, defaultLoss=None,
         plot.show()
     plot.figure()
     plot.xlabel('Evaluations')
-    plot.ylabel('Average Loss')
+    plot.ylabel('percent correct')
     if mode =='fractionHit': plot.ylim(bottom=0.)
     for n in range(len(testResults)):
         #xs = list(range(max([0]+[r.evaluations for tr in testResults[n] for r in tr] ) + 1))
-        xs = list(range(300))
+        xs = list(range(200))
         if mode =='fractionHit':
             plot.plot(xs, [fractionHit(n,lambda r: r.evaluations <= x) for x in xs],
                   label=names[n])
@@ -84,12 +84,12 @@ if __name__ == '__main__':
         (f'experimentOutputs/{ID}REPL_SRE=True_graph=True.pickle', 'REPL modular value')]
 
 
-    paths = [(f'experimentOutputs/{ID}Sample_SRE=True.pickle', 'Sample'),
-        (f'experimentOutputs/{ID}RNN_SRE=True.pickle', 'RNN value'),
-        (f'experimentOutputs/{ID}REPL_SRE=True.pickle', 'REPL modular value')]
+    # paths = [(f'experimentOutputs/{ID}Sample_SRE=True.pickle', 'Sample'),
+    #     (f'experimentOutputs/{ID}RNN_SRE=True.pickle', 'RNN value'),
+    #     (f'experimentOutputs/{ID}REPL_SRE=True.pickle', 'REPL modular value')]
 
 
-    timeout=300
+    timeout=600
     outputDirectory = 'plots'
     paths, names = zip(*paths)
 
@@ -102,8 +102,8 @@ if __name__ == '__main__':
                 
             from dreamcoder.showTowerTasks import showTowersAndSolutions, computeValue
             #showTowersAndSolutions(r)
-            computeValue(r)
-            assert 0
+            #computeValue(r)
+            #assert 0
             #import pdb; pdb.set_trace()
             res = r.searchStats[-1] if mode=='train' else r.testingSearchStats[-1]
             testResults.append( list(res.values()) )

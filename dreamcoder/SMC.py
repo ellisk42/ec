@@ -107,6 +107,7 @@ class SMC(Solver):
         # we will never maintain maximumFrontier best solutions
 
         self.allHits = set()
+        self.fullPrograms = set()
         hits = [PQ() for _ in tasks]
 
         self.reportedSolutions = {t: [] for t in tasks}
@@ -245,8 +246,13 @@ class SMC(Solver):
 
     def _report(self, p, request, g, tasks, likelihoodModel, hits, starting, elapsedTime, totalNumberOfPrograms):
         totalNumberOfPrograms += 1
-        prior = g.logLikelihood(request, p) # TODO for speed can compute this at sample time
 
+        if p in self.fullPrograms:
+            return totalNumberOfPrograms
+        else:
+            self.fullPrograms.add(p)
+
+        prior = g.logLikelihood(request, p) # TODO for speed can compute this at sample time
         for n in range(len(tasks)):
             #assert n == 0, "for now, just doing one task per thread seems reasonable"
             task = tasks[n]
