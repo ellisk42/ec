@@ -58,7 +58,7 @@ def main(arguments):
         g0 = Grammar.uniform(primitives)
 
         # TasksTrain = makeSupervisedTasks(trainset=arguments["trainset"])[:2]
-        TasksTrain = makeSupervisedTasks(trainset=["practice_shaping", "practice"], Nset=[20, 30])
+        TasksTrain = makeSupervisedTasks(trainset=arguments["trainset"], Nset=[15])
 
         timestamp = datetime.datetime.now().isoformat()
         outputDirectory = "experimentOutputs/sketch/%s"%timestamp

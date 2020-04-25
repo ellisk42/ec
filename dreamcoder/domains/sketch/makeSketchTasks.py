@@ -256,7 +256,11 @@ def getTasks(taskset, N):
             Program.parseHumanReadable(f"(lambda (k) (embed (lambda (k) {grid(2)}) ({v1} (r 1 ({v2} k)))))"),
             Program.parseHumanReadable(f"(lambda (k) (embed (lambda (k) {grid(2)}) ({v2} (r 1 ({v2} k)))))"),
             Program.parseHumanReadable(f"(lambda (k) (embed (lambda (k) {grid(3)}) ({v1} (r 1 ({v2} (r 1 ({v1} k)))))))"),
-            Program.parseHumanReadable(f"(lambda (k) (embed (lambda (k) {grid(3)}) ({v2} (r 1 ({v1} (r 1 ({v2} k)))))))")
+            Program.parseHumanReadable(f"(lambda (k) (embed (lambda (k) {grid(3)}) ({v2} (r 1 ({v1} (r 1 ({v2} k)))))))"),
+            Program.parseHumanReadable(f"(lambda (k) (embed (lambda (k) {grid(4)}) ({v2} (r 1 ({v2} (r 1 ({v1} (r 1 ({v1} k)))))))))"),
+            Program.parseHumanReadable(f"(lambda (k) (embed (lambda (k) {grid(4)}) ({v1} (r 1 ({v2} (r 1 ({v2} (r 1 ({v2} k)))))))))"),
+            Program.parseHumanReadable(f"(lambda (k) (embed (lambda (k) {grid(4)}) ({v1} (r 1 ({v1} (r 1 ({v2} (r 1 ({v2} k)))))))))"),
+            Program.parseHumanReadable(f"(lambda (k) (embed (lambda (k) {grid(4)}) ({v1} (r 1 ({v1} (r 1 ({v1} (r 1 ({v2} k)))))))))"),
             ])
 
         Tasks = [SupervisedSketch(f"{taskset}_{i}", p) for i, p in enumerate(programs)]
