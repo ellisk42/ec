@@ -165,7 +165,12 @@ def loadCheckpoint(trainset="S9_nojitter", userealnames=True, loadparse=False, s
         
     ###### FIRST, load the correct checkpoint
     print("Loading dreamcoder checkpoint")
-    F = glob.glob("experimentOutputs/draw/{}/draw*.pickle".format(exptdir))
+    exptsavedir = "experimentOutputs/draw/"
+    F = glob.glob("{}/{}/draw*.pickle".format(exptsavedir, exptdir))
+    if len(F)==0:
+        exptsavedir = "../experimentOutputs/draw/"
+        F = glob.glob("{}/{}/draw*.pickle".format(exptsavedir, exptdir))
+    assert len(F)>0, "why didnt find saved file?"
     iters = []
     for f in F:
         g = f.find("_graph")
@@ -186,7 +191,7 @@ def loadCheckpoint(trainset="S9_nojitter", userealnames=True, loadparse=False, s
     assert len(ind)==1
     checkpoint = F[ind[0]]
     checkpoint = checkpoint.split("/")[-1]
-    f = "experimentOutputs/draw/{}/{}".format(exptdir, checkpoint)
+    f = "{}/{}/{}".format(exptsavedir, exptdir, checkpoint)
     result = loadfun(f)
 
     ####### LOADING TASKS 
@@ -200,9 +205,12 @@ def loadCheckpoint(trainset="S9_nojitter", userealnames=True, loadparse=False, s
     tasks, testtasks, programnames, program_test_names = loadTasks(taskset, doshaping)
 
     ######  LOAD PARSES IF EXIST
-    def loadParses():
+    def loadParses(flattened=True):
         import os
-        F = glob.glob("experimentOutputs/draw/{}/parsesflat_*.pickle".format(exptdir))
+        if flattened:
+            F = glob.glob("experimentOutputs/draw/{}/parsesflat_*.pickle".format(exptdir))
+        else:
+            F = glob.glob("experimentOutputs/draw/{}/parses_*.pickle".format(exptdir))
         parses = []
         for f in F:
             if not suppressPrint:
@@ -220,6 +228,7 @@ def loadCheckpoint(trainset="S9_nojitter", userealnames=True, loadparse=False, s
                 "parse":parse
                 })  
         return parses        
+
 
     if loadparse:
         print("Loading parses")
@@ -283,7 +292,8 @@ def loadCheckpoint(trainset="S9_nojitter", userealnames=True, loadparse=False, s
 
 ########### HELPER FUNCTIONS FOR DAT
 from dreamcoder.domains.draw.primitives import program_ink
-def _getAndRankAllFrontiers(results, task, SDIR=[], usell=True, K=10):
+def _getAndRankAllFrontiers(results, task, SDIR=[], usell=True, K=10,
+    returnFrontierObject=False):
     """gets the K best programs (for each iteration) and combines across all iterations
     sorts by likelihood (decreasing)"""
     # t = DATgetTask(stim, DAT)[0]
@@ -301,7 +311,11 @@ def _getAndRankAllFrontiers(results, task, SDIR=[], usell=True, K=10):
             continue
 
         frontierprogs = frontiers_thisiter.topK(K)
+        # print(type(frontierprogs))
+        # print(dir(frontierprogs))
+
         for f in frontierprogs.entries:
+            # print(dir(f))
             frontiers_over_time.append({
                 "iteration":i,
                 "frontier":f
@@ -316,8 +330,9 @@ def _getAndRankAllFrontiers(results, task, SDIR=[], usell=True, K=10):
         f["ink"] = program_ink(f["frontier"].program.evaluate([]))
         
     # sort by ll, then ink, then prior
+    # print(dir(frontiers_over_time[-1]["frontier"]))
     frontiers_over_time = sorted(frontiers_over_time, key=lambda x: (-x["ll"], x["ink"], -x["prior"]))
-
+    # print(dir(frontiers_over_time[-1]["frontier"]))
     
     # save as text
     def save(frontiers_over_time, path):
@@ -339,6 +354,31 @@ def _getAndRankAllFrontiers(results, task, SDIR=[], usell=True, K=10):
         save(frontiers_over_time, "{}/{}.txt".format(SDIR, stim))
 
     return frontiers_over_time
+
+def DATloadParse(DAT, taskname, flattened=True):
+    import os
+    if flattened:
+        F = glob.glob(f"{DAT['savedir']}/parsesflat_{taskname}.pickle")
+    else:
+        F = glob.glob(f"{DAT['savedir']}/parses_{taskname}.pickle")
+    assert len(F)==1, "did not find just one..."
+    # f=F[0]
+
+    # with open(f, "rb") as ff:
+    #     parse = pickle.load(ff)
+        
+    for f in F:
+        print("loading parse {}".format(f))
+        if os.path.getsize(f)==0:
+            print("skipping parse - size 0")
+            continue
+
+        name = f[f.find("parses")+11:f.find(".pickle")]
+
+        with open(f, "rb") as ff:
+            parse = pickle.load(ff)
+    return parse        
+
 
 def getAndRankAllFrontiers(DAT):
     """just wrapper that calls for each stim in test and training"""
@@ -402,6 +442,13 @@ def DATupdateSaveDirs(DAT):
     sdir = "{}/modelhudist".format(DAT["analysavedir"])
     os.makedirs(sdir, exist_ok=True)
     DAT["savedir_modelhudist"] = sdir
+
+    sdir = "{}/parseanalysis".format(DAT["analysavedir"])
+    os.makedirs(sdir, exist_ok=True)
+    DAT["savedir_parseanalysis"] = sdir
+        
+        
+
 
 
 def DATloadDatFlat(DAT, stimname):

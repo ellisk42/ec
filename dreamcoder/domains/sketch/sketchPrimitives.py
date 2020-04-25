@@ -218,7 +218,7 @@ def executeSketch(p, timeout=None):
         print("this program causes exceptions",p)
         assert False
 
-def renderPlan(sketch, plot_on=False):
+def renderPlan(sketch, plot_on=False, return_strokes=False):
     """go from plan (e.g, ((0,0), circle)...) to rendering (pixels)"""
     from dreamcoder.domains.draw import primitives as P
     import numpy as np
@@ -266,8 +266,11 @@ def renderPlan(sketch, plot_on=False):
     if plot_on:
         ax = P.plot(drawsteps, [0.7, 0.7, 0.7])
         ax = P.plotOnAxes(strokes, ax, 'r')
-    im = P.prog2pxl(strokes)
-    return im
+    if return_strokes:
+        return strokes      
+    else:
+        im = P.prog2pxl(strokes)
+        return im
 
 def renderProgram(p, plot_on=False):
     """ takes program objcet and renders"""

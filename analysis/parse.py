@@ -17,6 +17,8 @@ import numpy as np
 from analysis.utils import *
 
 
+
+
 def getParses(dreamcoder_program):
     """ e.g., dreamcoder_program = result.allFrontiers[tasks[i]].bestPosterior.program"""
     # extracts all parses for a given program object
@@ -28,7 +30,8 @@ def getParses(dreamcoder_program):
     return parses
 
 
-def getBestFrontierProgram(result, task, lastKIter=4, returnfrontier=False):
+def getBestFrontierProgram(result, task, lastKIter=4, returnfrontier=False,
+    returnFrontierObject=False, returnFrontierDict=False):
     """ gets best solution for a given task, restricting to 
     solutions from lastKIter before last iter, to last iter.
     ranks based on ll, then ink, then prior. 
@@ -49,6 +52,8 @@ def getBestFrontierProgram(result, task, lastKIter=4, returnfrontier=False):
         last_iter = max([f["iteration"] for f in frontiers_over_time])
         frontiers_over_time = [f for f in frontiers_over_time if f["iteration"]>(last_iter-lastKIter)]
         frontier_to_take = frontiers_over_time[0]
+        if returnFrontierDict:
+            return frontier_to_take
         if returnfrontier:
             return frontier_to_take["frontier"]
         else:

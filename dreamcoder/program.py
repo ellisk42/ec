@@ -157,7 +157,11 @@ class Program(object):
             if e in Primitive.GLOBALS: return Primitive.GLOBALS[e]
             if e == '??' or e == '?': return FragmentVariable.single
             if e == '<HOLE>': return Hole.single
+            print(Primitive.GLOBALS)
+            print(s)
+            print(e)
             raise ParseFailure((s,e))
+        print(s)    
         return p(s)
 
     @staticmethod
@@ -210,8 +214,23 @@ class Program(object):
             assert False
         return p(s, [])
                 
-                
+    def evaluateAndCollectSteps(self, environment, steps = []):
+        steps.append({
+            "cond":self.isConditional,
+            "eval": self.branch.evaluateAndCollectSteps(environment, steps) if self.isConditional else None,
+            "environ": environment,
+            "f":self.f,
+            "x":self.x
+            })
+        if self.isConditional:
+            if self.branch.evaluateAndCollectSteps(environment, steps):
+                return self.trueBranch.evaluateAndCollectSteps(environment, steps), steps
+            else:
+                return self.falseBranch.evaluateAndCollectSteps(environment, steps), steps
+        else:
+            return self.f.evaluateAndCollectSteps(environment, steps)(self.x.evaluateAndCollectSteps(environment, steps)), steps
 
+            
 
 class Application(Program):
     '''Function application'''
@@ -323,6 +342,11 @@ class Application(Program):
             return "(%s %s)" % (self.f.show(True), self.x.show(False))
 
     def evaluate(self, environment):
+        # print("--------")
+        # print(f"cond: {self.isConditional}")
+        # print(f"environ {environment}")
+        # print(f"f: {self.f}")
+        # print(f"x: {self.x}")        
         if self.isConditional:
             if self.branch.evaluate(environment):
                 return self.trueBranch.evaluate(environment)
@@ -418,6 +442,7 @@ class Index(Program):
                                                 **keywords)
 
     def evaluate(self, environment):
+        # print("== INDEX")
         return environment[self.i]
 
     def inferType(self, context, environment, freeVariables):
@@ -538,6 +563,7 @@ class Abstraction(Program):
         return "(lambda %s)" % (self.body.show(False))
 
     def evaluate(self, environment):
+        # print("== ABSTRACTION")
         return lambda x: self.body.evaluate([x] + environment)
 
     def betaReduce(self):
@@ -616,7 +642,9 @@ class Primitive(Program):
     def annotateTypes(self, context, environment):
         self.annotatedType = self.tp.instantiateMutable(context)
 
-    def evaluate(self, environment): return self.value
+    def evaluate(self, environment): 
+        # print("== PRIMITIVE")
+        return self.value
 
     def betaReduce(self): return None
 
@@ -704,7 +732,11 @@ class Invented(Program):
     def annotateTypes(self, context, environment):
         self.annotatedType = self.tp.instantiateMutable(context)
 
-    def evaluate(self, e): return self.body.evaluate([])
+    def evaluate(self, e): 
+        # print("== INVENTED")
+        return self.body.evaluate([])
+
+    def evaluateAndCollectSteps(self, e): return self.body.evaluateAndCollectSteps([])
 
     def betaReduce(self): return self.body
 
@@ -753,6 +785,7 @@ class FragmentVariable(Program):
         return visitor.fragmentVariable(self, *arguments, **keywords)
 
     def evaluate(self, e):
+        print("== FRAGMENT")
         raise Exception('Attempt to evaluate fragment variable')
 
     def betaReduce(self):

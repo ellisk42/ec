@@ -220,6 +220,55 @@ def getTasks(taskset, N):
         Tasks.extend([SupervisedSketch(f"{taskset}3_{i}", p3()) for i in range(Nsub)])
         Tasks.extend([SupervisedSketch(f"{taskset}4_{i}", p4()) for i in range(N-3*Nsub)])
 
+    elif taskset=="v2.1":
+        # vertical components
+        programs = []
+
+        # =========== 1) add grids (1 to 4)
+        programs = [progFromHumanString(f"(lambda (k) (embed (lambda (k) {grid(n+1)}) (k)))") for n in range(4)]
+
+        # =========== 3 add all the vertical skewer types
+        def vertSampler():
+            V = lambda p1, p2, p3: f"embed (lambda (k) (d 1 ({p1} (d 1 ({p2} (d 1 ({p3} k)))))))"
+            v1 = V("L", "L", "L")
+            v2 = V("C", "C", "C")
+            # import random 
+            # prand = lambda: random.sample(["L", "C", "E"], 1)[0]
+            # v3 = lambda: V(prand(), prand(), prand())
+            # v = lambda: random.sample([v1, v2, v3()], 1)[0]
+            v = lambda: random.sample([v1, v2], 1)[0]
+            return v
+
+        V = lambda p1, p2, p3: f"embed (lambda (k) (d 1 ({p1} (d 1 ({p2} (d 1 ({p3} k)))))))"
+        v1 = V("L", "L", "L")
+        v2 = V("C", "C", "C")
+
+        v = vertSampler()
+        # p4 = lambda: Program.parseHumanReadable(f"(lambda (k) (embed (lambda (k) {grid(4)}) ({v()} (r 1 ({v()} (r 1 ({v()} (r 1 ({v()} k)))))))))")
+        # p3 = lambda: Program.parseHumanReadable(f"(lambda (k) (embed (lambda (k) {grid(3)}) ({v()} (r 1 ({v()} (r 1 ({v()} k)))))))")
+        # p2 = lambda: Program.parseHumanReadable(f"(lambda (k) (embed (lambda (k) {grid(2)}) ({v()} (r 1 ({v()} k)))))")
+        # p1 = lambda: Program.parseHumanReadable(f"(lambda (k) (embed (lambda (k) {grid(1)}) ({v()} k)))")
+
+        programs.extend([
+            Program.parseHumanReadable(f"(lambda (k) (embed (lambda (k) {grid(1)}) ({v1} k)))"),
+            Program.parseHumanReadable(f"(lambda (k) (embed (lambda (k) {grid(1)}) ({v2} k)))"),
+            Program.parseHumanReadable(f"(lambda (k) (embed (lambda (k) {grid(2)}) ({v1} (r 1 ({v1} k)))))"),
+            Program.parseHumanReadable(f"(lambda (k) (embed (lambda (k) {grid(2)}) ({v1} (r 1 ({v2} k)))))"),
+            Program.parseHumanReadable(f"(lambda (k) (embed (lambda (k) {grid(2)}) ({v2} (r 1 ({v2} k)))))"),
+            Program.parseHumanReadable(f"(lambda (k) (embed (lambda (k) {grid(3)}) ({v1} (r 1 ({v2} (r 1 ({v1} k)))))))"),
+            Program.parseHumanReadable(f"(lambda (k) (embed (lambda (k) {grid(3)}) ({v2} (r 1 ({v1} (r 1 ({v2} k)))))))")
+            ])
+
+        Tasks = [SupervisedSketch(f"{taskset}_{i}", p) for i, p in enumerate(programs)]
+
+        p4 = lambda: Program.parseHumanReadable(f"(lambda (k) (embed (lambda (k) {grid(4)}) ({v()} (r 1 ({v()} (r 1 ({v()} (r 1 ({v()} k)))))))))")
+        ## make a library of horizontal things
+
+        # ==== make tasks
+        # Nsub = int(np.floor(N/4))
+        n = N-len(Tasks)
+        Tasks.extend([SupervisedSketch(f"{taskset}_4_{i}", p4()) for i in range(n)])
+
     else:
         assert False, "not yet codede other tasks..."
 

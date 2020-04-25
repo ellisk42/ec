@@ -230,10 +230,18 @@ class Grammar(object):
 
     def likelihoodSummary(self, context, environment, request, expression, silent=False):
         if request.isArrow():
+            # print(type(expression))
             if not isinstance(expression, Abstraction):
                 if not silent:
                     eprint("Request is an arrow but I got", expression)
                 return context, None
+            # print("--")
+            # print(f"context: {context}")
+            # print(f"env: {environment}")
+            # print(f"reqyest: {request}")
+            # print(request.arguments)
+            # print(expression.body)
+
             return self.likelihoodSummary(context,
                                           [request.arguments[0]] + environment,
                                           request.arguments[1],
@@ -243,6 +251,9 @@ class Grammar(object):
         candidates = self.buildCandidates(request, context, environment,
                                           normalize=False,
                                           returnTable=True)
+        # print(candidates)
+        # print(context)
+        # print(environment)
 
         # A list of everything that would have been possible to use here
         possibles = [p for p in candidates.keys() if not p.isIndex]
@@ -251,6 +262,10 @@ class Grammar(object):
             possibles += [Index(0)]
 
         f, xs = expression.applicationParse()
+        # print(f)
+        # [print(c) for c in candidates]
+        # print(f in candidates)
+        # print(xs)
 
         if f not in candidates:
             if self.continuationType is not None and f.isIndex:
@@ -274,6 +289,10 @@ class Grammar(object):
 
         _, tp, context = candidates[f]
         argumentTypes = tp.functionArguments()
+        # print(argumentTypes)
+        # print(tp)
+        # print(context)
+
         if len(xs) != len(argumentTypes):
             eprint("PANIC: not enough arguments for the type")
             eprint("request", request)
@@ -406,7 +425,10 @@ class Grammar(object):
             for e in f:
                 summary = self.closedLikelihoodSummary(f.task.request,
                                                        e.program)
-                for p, u in summary.uses:
+                # print(summary)
+                # print(dir(summary))
+                # print(summary.uses)
+                for p, u in summary.uses.items():
                     uses[p] += u * math.exp(e.logPosterior)
         return uses
 

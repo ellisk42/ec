@@ -60,7 +60,7 @@ from dreamcoder.type import arrow
 from itertools import product
 
 
-def visualizePrimitives(primitives, export="/tmp/draw_primitives"):
+def visualizePrimitives(primitives, export="/tmp/draw_primitives", saveon=True):
     from math import ceil
     matrix = []
     print("ONLY PLOTS INVENTED PRIMITIVES")
@@ -70,10 +70,14 @@ def visualizePrimitives(primitives, export="/tmp/draw_primitives"):
         # print("--- prim {}".format(i))
         stringlist.append("--- prim {}".format(i))
         stringlist.append(str(p))
+        
         if not p.isInvented: continue
         t = p.tp
+        
+        stringlist.append(f"\n- type {t}, takes in {t.arguments} and returns {t.returns()}")
         # print(p,":",p.tp)
         if t.returns() != tstroke:
+
             # print("\t(does not return a tstroke)")
             stringlist.append("\t(does not return a tstroke)")
             continue
@@ -84,16 +88,20 @@ def visualizePrimitives(primitives, export="/tmp/draw_primitives"):
             elif t in [tmaybe(tstroke), tstroke]:
                 return [PP._line, PP._circle, PP.polygon(3)]
             elif t in [tmaybe(tscale), tscale]:
-                return [2., 4.]
+                return [2.]
             elif t in [tmaybe(tdist), tdist]:
-                return [-2., -1., 0, 1., 2.]
+                return [-1.5, 0, 1., 1.5]
             elif t in [ttrorder, tmaybe(ttrorder)]:
                 return PP.ORDERS
             elif t in [tmaybe(trep), trep]:
-                return [j+1 for i, j in enumerate(range(7))]
+                return [j+1 for i, j in enumerate(range(4))]
             elif t == arrow(tmaybe(ttrorder), ttransmat):
                 return [[PP.ORDERS[0], _makeAffine()]]
-            else: return []
+            elif t in [ttransmat]:
+                return [_makeAffine(theta=th) for th in [pi/3]] + [_makeAffine(s=s) for s in [0.5]]
+            else:
+                print(t)
+                assert False
 
         ts = [] # holds all cases for this primitive
         # print(t.functionArguments())
@@ -101,9 +109,16 @@ def visualizePrimitives(primitives, export="/tmp/draw_primitives"):
         stringlist.append(str(t.functionArguments()))
         stringlist.extend([str(argumentChoices(t)) for t in t.functionArguments() ])
 
+        # print([argumentChoices(t) for t in t.functionArguments()])
+        # print(p)
+        # print(p.evaluate([]))
+        # print(dir(p.evaluate([])))
+        # assert False
         for arguments in product(*[argumentChoices(t) for t in t.functionArguments() ]):
             t = p.evaluate([])
             for a in arguments: t = t(a)
+            # print(t)
+            # assert False
             ts.append(t)
             
         matrix.append(ts)
@@ -121,8 +136,9 @@ def visualizePrimitives(primitives, export="/tmp/draw_primitives"):
             plt.title("prim {}".format(j))
         fig.savefig("{}_p{}.pdf".format(export, j))
         
-    for j, ts in enumerate(matrix):
-        save(ts, j)
+    if saveon:
+        for j, ts in enumerate(matrix):
+            save(ts, j)
         
 #     # Only visualize if it has something to visualize.
 #     if len(matrix) > 0:

@@ -1,5 +1,4 @@
 # =========== [NEWER VERSION, NOT USING MATPLOTLIB]
-print("HERE")
 import math
 import numpy as np
 # import matplotlibplt
@@ -33,7 +32,7 @@ def _givemeback(thing):
 
 p0 = [Primitive("None", tmaybe(t0), None), Primitive("Some", arrow(t0, tmaybe(t0)), _givemeback)]
 
-if False:
+if True:
 
 	p1 = [
 		Primitive("emptystroke", tstroke, _emptystroke),

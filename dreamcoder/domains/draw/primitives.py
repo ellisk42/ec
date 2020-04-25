@@ -45,6 +45,7 @@ def set_parsing(p):
         global PARSE_EVALUATOR
         PARSE_EVALUATOR = p
         if p:
+                # print(Primitive.GLOBALS)
                 Primitive.GLOBALS["circle"].value = {Parse(_circle)}
                 Primitive.GLOBALS["line"].value = {Parse(_line)}
         else:
@@ -415,11 +416,11 @@ def plot(p, color="k", LIMITS=XYLIM):
         return ax
 
 
-def plotOnAxes(p, ax, color="k'", LIMITS=XYLIM):
+def plotOnAxes(p, ax, color="k", LIMITS=XYLIM, linestyle="-"):
         ax.set_xlim(-LIMITS, LIMITS)
         ax.set_ylim(-LIMITS, LIMITS)
         # ax.axis("equal")
-        [ax.plot(x[:,0], x[:,1], "-", color=color) for x in p]
+        [ax.plot(x[:,0], x[:,1], "-", color=color, linestyle=linestyle) for x in p]
         return ax
 
 
