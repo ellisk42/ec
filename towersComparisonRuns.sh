@@ -12,8 +12,8 @@ helmRatio=0.5
 
 for num in 1 3 20
 	do
-		resume=experimentOutputs/towers${num}Long
-		salt=towers${num}EvalLong
+		resume=experimentOutputs/towers${num}LongSamplePolicy
+		salt=towers${num}EvalLongSamplePolicy
 		cp ${resume}.pickle ${resume}Sample.pickle
 		#Train:
 		cmd="python bin/tower.py --useSamplePolicy ${resume}REPL.pickle --contextual --testingTimeout ${testingTime} --recognitionTimeout 216000 --resumeTraining -r ${helmRatio} --primitives new --split 0.5 -t ${time} -RS ${recSteps} --solver python  -c ${ncores} --useValue Sample -i 2 --resume ${resume}Sample.pickle --singleRoundValueEval --seed 1"
@@ -22,8 +22,8 @@ for num in 1 3 20
 
 		cp ${resume}.pickle ${resume}REPL.pickle
 		#Train:
-		#cmd="python bin/tower.py --useSamplePolicy ${resume}Sample.pickle --contextual --testingTimeout ${testingTime} --recognitionTimeout 216000 --resumeTraining -r ${helmRatio} --primitives new --split 0.5 -t ${time} -RS ${recSteps} --solver python  -c ${ncores} --useValue TowerREPL -i 2  --resume ${resume}REPL.pickle --singleRoundValueEval --seed 1"
-		cmd="python bin/tower.py --contextual --testingTimeout ${testingTime} --recognitionTimeout 216000 --resumeTraining -r ${helmRatio} --primitives new --split 0.5 -t ${time} -RS ${recSteps} --solver python  -c ${ncores} --useValue TowerREPL -i 2  --resume ${resume}REPL.pickle --singleRoundValueEval --seed 1"
+		cmd="python bin/tower.py --useSamplePolicy experimentOutputs/towers${num}Sample.pickle --contextual --testingTimeout ${testingTime} --recognitionTimeout 216000 --resumeTraining -r ${helmRatio} --primitives new --split 0.5 -t ${time} -RS ${recSteps} --solver python  -c ${ncores} --useValue TowerREPL -i 2  --resume ${resume}REPL.pickle --singleRoundValueEval --seed 1"
+		#cmd="python bin/tower.py --contextual --testingTimeout ${testingTime} --recognitionTimeout 216000 --resumeTraining -r ${helmRatio} --primitives new --split 0.5 -t ${time} -RS ${recSteps} --solver python  -c ${ncores} --useValue TowerREPL -i 2  --resume ${resume}REPL.pickle --singleRoundValueEval --seed 1"
 		#om-repeat sbatch -e towersREPL${salt}.out -o towersREPL${salt}.out -p tenenbaum --time=3600 --mem=32G --cpus-per-task=8 --gres=gpu:QUADRORTX6000:1 ${cmd}
 		sbatch -e towersREPL${salt}.out -o towersREPL${salt}.out execute_gpu_new.sh ${cmd}
 		#eval "${cmd}"
