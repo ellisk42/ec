@@ -465,7 +465,7 @@ def ecIterator(grammar, tasks,
         nHits = sum( f.entries != [] for f in trainFrontiers)
         print("number of training tasks hit:", nHits)
 
-        testFrontiers, testingTimes, testingSearchStats, testNumOfProg = enumerator(testingTasks, enumerationTimeout=testingTimeout, testing=True, returnNumOfProg=True)
+        testFrontiers, testingTimes, testingSearchStats, testingNumOfProg = enumerator(testingTasks, enumerationTimeout=testingTimeout, testing=True, returnNumOfProg=True)
         nHits = sum( f.entries != [] for f in testFrontiers)
         print("number of testing tasks hit:", nHits)
 
