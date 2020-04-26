@@ -1,4 +1,5 @@
-""" more detailed analysis of parseing """
+""" more detailed analysis of parseing 4/2020"""
+
 from analysis.utils import *
 import numpy as np
 from dreamcoder.domains.draw.primitives import *
