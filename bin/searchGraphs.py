@@ -74,19 +74,37 @@ def plotTestResults(testResults, timeout, defaultLoss=None,
 
 if __name__ == '__main__':
 
-    n = 20
+    n = 3
     ID = 'towers' + str(n)
 
-    nameSalt = "towers"
-
-    paths = [(f'experimentOutputs/{ID}Sample_SRE=True_graph=True.pickle', 'Sample'),
-        (f'experimentOutputs/{ID}RNN_SRE=True_graph=True.pickle', 'RNN value'),
-        (f'experimentOutputs/{ID}REPL_SRE=True_graph=True.pickle', 'REPL modular value')]
 
 
     # paths = [(f'experimentOutputs/{ID}Sample_SRE=True.pickle', 'Sample'),
     #     (f'experimentOutputs/{ID}RNN_SRE=True.pickle', 'RNN value'),
     #     (f'experimentOutputs/{ID}REPL_SRE=True.pickle', 'REPL modular value')]
+
+    nameSalt = "towersLong"
+    paths = [(f'experimentOutputs/{ID}Sample_SRE=True_graph=True.pickle', 'Sample'),
+        (f'experimentOutputs/{ID}RNN_SRE=True_graph=True.pickle', 'RNN value'),
+        (f'experimentOutputs/{ID}LongREPL_SRE=True_graph=True.pickle', 'REPL modular value (longer)')]
+
+    # nameSalt = "towersSamplePolicy"
+    # paths = [(f'experimentOutputs/{ID}Sample_SRE=True_graph=True.pickle', 'Sample'),
+    #     (f'experimentOutputs/{ID}SamplePolicyRNN_SRE=True_graph=True.pickle', 'RNN value'),
+    #     (f'experimentOutputs/{ID}SamplePolicyREPL_SRE=True_graph=True.pickle', 'REPL modular value')]
+
+
+    # nameSalt = "towersLongSamplePolicy"
+    # paths = [(f'experimentOutputs/{ID}Sample_SRE=True_graph=True.pickle', 'Sample'),
+    #     (f'experimentOutputs/{ID}SamplePolicyRNN_SRE=True_graph=True.pickle', 'RNN value'),
+    #     (f'experimentOutputs/{ID}LongSamplePolicyREPL_SRE=True_graph=True.pickle', 'REPL modular value (longer)')]
+
+    # nameSalt = "towersREPLPolicy"
+    # paths = [(f'experimentOutputs/{ID}SamplePolicySample_SRE=True_graph=True.pickle', 'Sample'),
+    #     (f'experimentOutputs/{ID}RNN_SRE=True_graph=True.pickle', 'RNN value'),
+    #     (f'experimentOutputs/{ID}REPL_SRE=True_graph=True.pickle', 'REPL modular value')]
+
+
 
 
     timeout=600
