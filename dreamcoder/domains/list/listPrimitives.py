@@ -355,6 +355,15 @@ def re2_ListPrimitives():
         Primitive("or", arrow(tbool, tbool, tbool), _or),
     ]
 
+def re2_listPrimitives_v1():
+    return [
+        Primitive("cons", arrow(t0, tlist(t0), tlist(t0)), _cons),
+        Primitive("car", arrow(tlist(t0), t0), _car),
+        Primitive("cdr", arrow(tlist(t0), tlist(t0)), _cdr),
+        Primitive("map", arrow(arrow(t0, t1), tlist(t0), tlist(t1)), _map),
+    ]
+    
+
 def bootstrapTarget_extra():
     """This is the bootstrap target plus list domain specific stuff"""
     return bootstrapTarget() + [

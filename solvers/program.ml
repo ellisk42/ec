@@ -498,7 +498,7 @@ let rec number_of_free_parameters = function
   | Apply(f,x) -> number_of_free_parameters f + number_of_free_parameters x
   | Index(_) -> 0
 
-
+(* List Function Definitions *)
 let primitive_empty = primitive "empty" (tlist t0) [];;
 let primitive_range = primitive "range" (tint @> tlist tint) (fun x -> 0 -- (x-1));;
 let primitive_sort = primitive "sort" (tlist tint @> tlist tint) (List.sort ~compare:(fun x y -> x - y));;
@@ -597,6 +597,7 @@ let var_prev         = primitive "var_prev" (tvar @> tvar) GeomLib.Plumbing.var_
 let var_opposite     = primitive "var_opposite" (tvar @> tvar) GeomLib.Plumbing.var_opposite
 let var_opposite     = primitive "var_divide" (tvar @> tvar @> tvar) GeomLib.Plumbing.var_divide
 let var_name         = primitive "var_name" tvar GeomLib.Plumbing.var_name
+
 
 (* LOGO *)
 let logo_RT  = primitive "logo_RT"             (tangle @> turtle) LogoLib.LogoInterpreter.logo_RT

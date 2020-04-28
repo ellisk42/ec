@@ -4,6 +4,7 @@ from dreamcoder.utilities import *
 from dreamcoder.domains.text.main import ConstantInstantiateVisitor
 from dreamcoder.domains.text.textPrimitives import re2_primitives, primitives, re2_4_letter, re2_6_letter, re2_characters
 from dreamcoder.domains.list.listPrimitives import re2_ListPrimitives, bootstrapTarget
+from dreamcoder.domains.re2.re2Primitives import re2_primitives_main
 from dreamcoder.recognition import *
 from dreamcoder.enumeration import *
 
@@ -36,12 +37,18 @@ def re2_options(parser):
                         help="Which primitive set to use, which may restrict the number of characters we allow.")
     parser.add_argument("--allow_language_strings",
                         default=False)
+    parser.add_argument("--re2_primitives_test",
+                        action='store_true')
 
 def main(args):
     """
     Takes the return value of the `commandlineArguments()` function as input and
     trains/tests the model on re2 tasks.
     """
+    if args.pop("re2_primitives_test"):
+        re2_primitives_main()
+        assert False
+        
     task_dataset = args["taskDataset"]
     task_dataset_dir=args.pop("taskDatasetDir")
     train, test = loadRe2Dataset(task_dataset=task_dataset, task_dataset_dir=task_dataset_dir)
