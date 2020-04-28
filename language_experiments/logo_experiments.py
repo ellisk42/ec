@@ -1,7 +1,7 @@
 USING_GCLOUD = False
 USING_SINGULARITY = True
-NUM_REPLICATIONS = 3
-NO_ORIGINAL_REPL = True
+NUM_REPLICATIONS = 0
+NO_ORIGINAL_REPL = False
 
 def gcloud_commands(job_name):
     gcloud_disk_command = f"gcloud compute --project 'tenenbaumlab' disks create {job_name} --size '30' --zone 'us-east1-b' --source-snapshot 'logo-language-april24' --type 'pd-standard'"
@@ -243,6 +243,31 @@ for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000
                 if not NO_ORIGINAL_REPL: experiment_commands.append(command)
                 experiment_commands += build_replications(exp_command, job, job_name)
         job +=1
+
+RUN_LANGUAGE_CURRICULUM = True
+EXPS = [('logo_unlimited_200', 0, 1)]
+enumerationTimeout = 1800
+num_iterations = 12
+task_batch_size = 40
+test_every = 3
+recognition_timeout = 1800
+for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000']:
+    for sample_n_supervised in [0, 10]:
+        for phrase_length in [5,3,1]:
+            exp = (dataset, sample_n_supervised, phrase_length)
+            job_name = f"logo_2_ec_cnn_gru_ghelm_compression_et_{enumerationTimeout}_supervised_{sample_n_supervised}_{dataset}_pl_{phrase_length}_curr"
+            jobs.append(job_name)
+            base_parameters = f" --enumerationTimeout {enumerationTimeout} --testingTimeout {enumerationTimeout}  --iterations {num_iterations} --biasOptimal --contextual --taskBatchSize {task_batch_size} --testEvery {test_every} --no-cuda --recognitionTimeout {recognition_timeout} --recognition_0 --recognition_1 examples language --Helmholtz 0.5 --synchronous_grammar --skip_first_test --taskReranker sentence_length"
+            exp_parameters = f" --taskDataset {dataset} --language_encoder recurrent --languageDataset {dataset}/synthetic --sample_n_supervised {sample_n_supervised} --moses_dir ./moses_compiled --smt_phrase_length {phrase_length}"
+        
+            exp_command = base_command + base_parameters + exp_parameters
+            command = build_command(exp_command, job, job_name, replication=None)
+            if RUN_HELMHOLTZ_GENERATIVE_MODEL:
+                if (EXPS is None) or (exp in EXPS):
+                    if not NO_ORIGINAL_REPL: experiment_commands.append(command)
+                    experiment_commands += build_replications(exp_command, job, job_name)
+            job +=1
+
 
 #### Outputs
 PRINT_LOG_SCRIPT = False

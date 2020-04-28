@@ -400,29 +400,6 @@ def ecIterator(grammar, tasks,
                           taskLanguage={
                               t.name: [] for t in tasks + testingTasks},
                           tasksAttempted=set())
-
-    # Set up the task batcher.
-    if taskReranker == 'default':
-        taskBatcher = DefaultTaskBatcher()
-    elif taskReranker == 'random':
-        taskBatcher = RandomTaskBatcher()
-    elif taskReranker == 'randomShuffle':
-        taskBatcher = RandomShuffleTaskBatcher(seed)
-    elif taskReranker == 'unsolved':
-        taskBatcher = UnsolvedTaskBatcher()
-    elif taskReranker == 'unsolvedEntropy':
-        taskBatcher = UnsolvedEntropyTaskBatcher()
-    elif taskReranker == 'unsolvedRandomEntropy':
-        taskBatcher = UnsolvedRandomEntropyTaskBatcher()
-    elif taskReranker == 'randomkNN':
-        taskBatcher = RandomkNNTaskBatcher()
-    elif taskReranker == 'randomLowEntropykNN':
-        taskBatcher = RandomLowEntropykNNTaskBatcher()
-    elif taskReranker == 'curriculum':
-        taskBatcher = CurriculumTaskBatcher()
-    else:
-        eprint("Invalid task reranker: " + taskReranker + ", aborting.")
-        assert False
     
     if parser == 'loglinear':
         parserModel = LogLinearBigramTransitionParser
@@ -492,6 +469,31 @@ def ecIterator(grammar, tasks,
         if t.add_as_supervised:
             result.allFrontiers[t] = result.allFrontiers[t].combine(Frontier.makeFrontierFromSupervised(t)).topK(maximumFrontier)
     
+    # Set up the task batcher.
+    if taskReranker == 'default':
+        taskBatcher = DefaultTaskBatcher()
+    elif taskReranker == 'random':
+        taskBatcher = RandomTaskBatcher()
+    elif taskReranker == 'randomShuffle':
+        taskBatcher = RandomShuffleTaskBatcher(seed)
+    elif taskReranker == 'unsolved':
+        taskBatcher = UnsolvedTaskBatcher()
+    elif taskReranker == 'unsolvedEntropy':
+        taskBatcher = UnsolvedEntropyTaskBatcher()
+    elif taskReranker == 'unsolvedRandomEntropy':
+        taskBatcher = UnsolvedRandomEntropyTaskBatcher()
+    elif taskReranker == 'randomkNN':
+        taskBatcher = RandomkNNTaskBatcher()
+    elif taskReranker == 'randomLowEntropykNN':
+        taskBatcher = RandomLowEntropykNNTaskBatcher()
+    elif taskReranker == 'curriculum':
+        taskBatcher = CurriculumTaskBatcher()
+    elif taskReranker == 'sentence_length':
+        taskBatcher = SentenceLengthTaskBatcher(tasks, result.taskLanguage)
+    else:
+        eprint("Invalid task reranker: " + taskReranker + ", aborting.")
+        assert False
+    
     ######## Test Evaluation and background Helmholtz enumeration.
     for j in range(resume or 0, iterations):
         if storeTaskMetrics and rewriteTaskMetrics:
@@ -527,6 +529,8 @@ def ecIterator(grammar, tasks,
         
         wakingTaskBatch = taskBatcher.getTaskBatch(result, tasks, taskBatchSize, j)
         eprint("Using a waking task batch of size: " + str(len(wakingTaskBatch)))
+        
+        import pdb; pdb.set_trace()
 
         # WAKING UP
         if useDSL:
@@ -1312,7 +1316,8 @@ def commandlineArguments(_=None,
             "unsolvedRandomEntropy",
             "randomkNN",
             "randomLowEntropykNN",
-            "curriculum"],
+            "curriculum",
+            "sentence_length"],
         default=taskReranker,
         type=str)
     parser.add_argument(
