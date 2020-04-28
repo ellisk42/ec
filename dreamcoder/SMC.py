@@ -2,6 +2,7 @@
 
 import os
 #import time
+import sys
 from dreamcoder.program import Hole
 from dreamcoder.frontier import Frontier, FrontierEntry
 from dreamcoder.utilities import *
@@ -69,7 +70,7 @@ class SMC(Solver):
                               # upperBound=100.,
                               # budgetIncrement=1.0, 
                               maximumFrontiers=None): #IDK what this is...
-
+        sys.setrecursionlimit(5000)
         class Particle():
             def __init__(self, trajectory, zippers, frequency, finished=False):
                 self.frequency = frequency
