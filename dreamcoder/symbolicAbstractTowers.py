@@ -3,6 +3,8 @@ from dreamcoder.valueHead import *
 from dreamcoder.program import *
 from dreamcoder.type import tint
 from dreamcoder.domains.tower.towerPrimitives import *
+from dreamcoder.domains.tower.tower_common import simulateWithoutPhysics, centerTower
+
 
 #TODO make abstract Primitives
 
@@ -13,16 +15,21 @@ TODO:
 - [X] seperate out intTop in primitives from intTop in hand state
 - [ ] def of initial history state initialHist
 - [X] write embed def
-- [ ] write loop def, maybe with intTopPrimitive???
+- [X] write loop def, maybe with intTopPrimitive???
 - [ ] deal with centerTower
 - [ ] write taskViolatesAbstractState
+- [ ] check that things make sense rigourously, in terms of resolution, which offsets to check, etc
 
 """
 resolution = 256
+initialHist = [(-resolution-1,0)]
+_intTopState = (-resolution, resolution) #todo
+_intTopPrimitive = (1, 8) #TODO
+_intMax = 8
+_intMin = 1
 
-initialHist = [(-resolution,0)]
 
-class SketchToAbstract:
+class ConvertSketchToAbstract:
     def __init__(self):
         pass
     def invented(self, e):
@@ -37,7 +44,7 @@ class SketchToAbstract:
         x = e.x.visit(self)
         return Application(f, x)
     def abstraction(self, e):
-        return Abstraction(e.visit(self))
+        return Abstraction(e.body.visit(self))
     def hole(self, e):
         if e.tp == tint:
             return Primitive.GLOBALS["intTop"]
@@ -48,15 +55,38 @@ class SketchToAbstract:
         return e.visit(self)
 
 def executeAbstractSketch(absSketch):
-    hand = absSketch.execute([])(lambda x: x)(AbstractTowerState(history=initialHist)) #TODO init history
+    #print("abstract Sketch:", absSketch)
+    hand = absSketch.evaluate([])(lambda x: x)(AbstractTowerState(history=initialHist)) #TODO init history
+    #print("hand.history", hand.history )
     return hand.history
 
 def taskViolatesAbstractState(task, absState):
     
-    #world is a list of (x,y,w,h)
-    world = simulateWithoutPhysics(task.plan)
-    
+    def maxHeightAfter(x, block):
+        (x_,y_,w_,h_) = block
+        x1_ = x_ - w_/2
+        x2_ = x_ + w_/2
+        if x1_ > x or x >= x2_: return 0
+        return y_ + h_//2
 
+    #world is a (sorted) list of (x,y,w,h)
+    world = simulateWithoutPhysics(centerTower(task.plan))
+    print("world:", world)
+    print("abstract state", absState)
+
+    def checkViolationForParticularOffset(world, abstractState, offset):
+        #abstractState = [(x + offset, y) for x, y in abstractState]
+        world = [(x + offset, y, w, h) for x, y, w, h in world]
+        for x in range(-resolution, resolution): #TODO
+            #print(abstractState, x)
+            if max([maxHeightAfter(x,b) for b in world]) < heightAfter(abstractState, x):
+                return True
+        return False 
+
+    lst = [checkViolationForParticularOffset(world, absState, offset) for offset in range(-resolution//2, resolution//2)] #TODO
+    if all(lst):
+        return True
+    return False
 
 class SymbolicAbstractTowers(BaseValueHead):
     def __init__(self):
@@ -64,13 +94,12 @@ class SymbolicAbstractTowers(BaseValueHead):
         self.use_cuda = torch.cuda.is_available()
     def computeValue(self, sketch, task):
 
-        absSketch = convertSketchToAbstract().execute(sketch)
+        absSketch = ConvertSketchToAbstract().execute(sketch)
 
         absState = executeAbstractSketch(absSketch)  #TODO
 
         if taskViolatesAbstractState(task, absState):
             return float('inf')
-
         return 0.
 
     def valueLossFromFrontier(self, frontier, g):
@@ -78,8 +107,6 @@ class SymbolicAbstractTowers(BaseValueHead):
             return torch.tensor([0.]).cuda()
         else: 
             return torch.tensor([0.])
-
-
 
 class AbstractTowerState:
     def __init__(self, hand=(0,0), orientation=1, history=[]):
@@ -94,32 +121,32 @@ class AbstractTowerState:
                     history=self.history )
 
     def move(self, n):
-        if type(n) == int and orientation is not 0:
+        if type(n) == int and self.orientation is not 0:
             newHand = (self.hand[0] + n*self.orientation, self.hand[1] + n*self.orientation)
-        elif type(n) == int and orientation is 0:
+        elif type(n) == int and self.orientation is 0:
             newHand = (self.hand[0] - n, self.hand[1] + n)
 
-        elif n == top and orientation == 1:
-            newHand = (self.hand[0] + 1, self.hand[1] + 9)
-        elif n == top and orientation == -1:
-            newHand = (self.hand[0] - 9, self.hand[1] - 1)
-        elif n == top and orientation == 0:
-            newHand = (self.hand[0] - 9, self.hand[1] + 9)
+        elif n == _intTopPrimitive and self.orientation == 1:
+            newHand = (self.hand[0] + _intMin, self.hand[1] + _intMax)
+        elif n == _intTopPrimitive and self.orientation == -1:
+            newHand = (self.hand[0] - _intMax, self.hand[1] - _intMin)
+        elif n == _intTopPrimitive and self.orientation == 0:
+            newHand = (self.hand[0] - _intMax, self.hand[1] + _intMax)
         else: assert False, "not allowed"
 
         return AbstractTowerState(hand=newHand , orientation=self.orientation,
                                          history=self.history )
     def recordBlock(self, b):
         #b is a block shape
-        h, w = b
+        w, h = b
 
         rl, rh = self.hand
         newStuff = getNewBlock(rl, rh, w, h)
         if not newStuff:
-            newHist = self.hist
+            newHist = self.history
         else: 
             xl, xh, dh = newStuff
-            newHist = updateMinHeight(self.hist, xl, xh, dh)
+            newHist = updateMinHeight(self.history, xl, xh, dh)
 
         return AbstractTowerState(hand=self.hand, orientation=self.orientation,
                 history=newHist)
@@ -130,10 +157,19 @@ class AbstractTowerState:
         return AbstractTowerState(hand=newHand, orientation=newOrientation,
                 history=self.history)
 
-_intTopState = (-resolution, resolution) #todo
-_intTopPrimitive = (1, 8) #TODO
 
-def _loop(): pass 
+
+def _simpleLoop(n):
+    if isinstance(n, int):
+        def f(start, body, k):
+            if start >= n: return k
+            return body(start)(f(start + 1, body, k))
+        return lambda b: lambda k: f(0,b,k)
+    elif n == _intTopPrimitive:
+        return lambda b: lambda k: lambda s: k(s.topify())
+    else: assert 0
+
+
 def _embed(body):
     def f(k):
         def g(hand):
@@ -150,8 +186,8 @@ def _embed(body):
     return f
 
 
-def _moveHand(n): lambda k: lambda s: k(s.move(n))
-def _reverseHand(k): lambda s: k(s.reverse())
+def _moveHand(n): return lambda k: lambda s: k(s.move(n))
+def _reverseHand(k): return lambda s: k(s.reverse())
 
 
 class AbsTowerContinuation(object):
@@ -183,18 +219,17 @@ blocks = {
 
 #TODO
 abstractPrimitives = [
-    Primitive('tower_loopM_abstract', arrow(tint, arrow(tint, ttower, ttower), ttower, ttower), _loop),
+    Primitive('tower_loopM_abstract', arrow(tint, arrow(tint, ttower, ttower), ttower, ttower), _simpleLoop),
     Primitive("tower_embed_abstract", arrow(arrow(ttower,ttower), ttower, ttower), _embed), 
     ] + [Primitive(name+"_abstract", arrow(ttower,ttower), AbsTowerContinuation(0, w, h, name)) #TODO
      for name, (w, h) in blocks.items()] + \
-    [Primitive(str(j), tint, j) for j in range(1,9) ] + [
+    [Primitive(str(j)+'_abstract', tint, j) for j in range(1,9) ] + [
         Primitive("moveHand_abstract", arrow(tint, ttower, ttower), _moveHand),
         Primitive("reverseHand_abstract", arrow(ttower, ttower), _reverseHand),
         Primitive("towerTop", ttower, lambda x: x.topify()),
 
-        Primitive("intTop", ttower, _intTopPrimitive) #TODO
+        Primitive("intTop", tint, _intTopPrimitive) #TODO
     ]
-    
 
 def heightAfter(lst, p):
     #gets height at x, assuming things that end at x dont count, but thngs that start do
@@ -205,15 +240,24 @@ def updateMinHeight(lst, xl, xh, dh):
 
     oldH = max ([heightAfter(lst, xl)] + [heightAfter(lst, p) for p, _ in lst if xl <= p < xh ] )
     
+
     postH = heightAfter(lst, xh)
+
+
     preLst = [(x, y) for x, y in lst if x < xl]
     postLst = [(x, y) for x, y in lst if x > xh]
+
     newLst = preLst + [(xl, oldH + dh), (xh, postH)] + postLst
+
     return newLst
 
 def getNewBlock(rl, rh, w, h):
     if rh - rl > w: return None #todo
-    xl = rh
-    xh = rl + w
+    xl = rh - w/2
+    xh = rl + w/2
     return xl, xh, h
+
+"""
+         (lambda (#(lambda (lambda (#(lambda (lambda (lambda (tower_loopM $1 (lambda (lambda (#(lambda (lambda (lambda (tower_loopM $1 (lambda (lambda (1x3 (moveHand 4 ($2 $0))))) (moveHand 2 (3x1 $2)))))) (moveHand $2 $0) $4 (lambda (reverseHand $0))))))))) $0 $1 4))) 5 8 (moveHand 2 $0)))
+"""
 

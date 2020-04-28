@@ -722,6 +722,8 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
             valueHead = TowerREPLValueHead(grammar, 
                             featureExtr, 
                             H=featureExtr.outputDimensionality)
+        elif useValue == "Symbolic":
+            valueHead = SymbolicAbstractTowers()
         else: assert False
     else:
         valueHead = None
@@ -1119,7 +1121,7 @@ def commandlineArguments(_=None,
                         default=None, type=str)
     parser.add_argument("--useValue", type=str,
                         default=False,
-                        choices=["RNN", "AbstractREPL", "Sample", "TowerREPL"],
+                        choices=["RNN", "AbstractREPL", "Sample", "TowerREPL", "Symbolic"],
                         help="use value-based search")
     parser.add_argument("--singleRoundValueEval",
                         action='store_true',
