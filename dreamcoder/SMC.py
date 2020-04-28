@@ -203,6 +203,7 @@ class SMC(Solver):
                 logWeights = [math.log(p.frequency) - p.distance*self.criticCoefficient 
                               for p in samples] # TODO
 
+                if all([lw == float('-inf') for lw in logWeights]): break
                 ps = [ math.exp(lw - max(logWeights)) for lw in logWeights ]
                 ps = np.array(ps)
                 ps = ps/(np.sum(ps) + 1e-15)
