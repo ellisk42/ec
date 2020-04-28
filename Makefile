@@ -32,3 +32,12 @@ clean:
 	rm -f helmholtz
 	rm -f logoDrawString
 	rm -f data/geom/logoDrawString
+
+re2TestClean: 
+	cd solvers && jbuilder clean
+	rm -f re2Primitives
+	
+re2Test:
+		cd solvers && \
+		jbuilder build re2Primitives.exe && \
+		cp _build/default/re2Primitives.exe ../re2Primitives

@@ -85,7 +85,7 @@ def re2_primitives_main():
     def check_true(name, raw, input):
         p = Program.parse(raw)
         pass_test = "[T]" if p.evaluate([])(input) else "[F]"
-        print(f"{pass_test} {name} : {input}")
+        print(f"{pass_test} {name} : {input} : {p.evaluate([])(input)}")
     
     def check_equal(name, raw, input, gold):
         p = Program.parse(raw)
@@ -93,11 +93,20 @@ def re2_primitives_main():
         print(f"{name} in: {input} | out: {output} | gold: {gold}")
         
     # Simple matches on one string.
-    SIMPLE_MATCHES = False
+    
+    SIMPLE_MATCHES = True
     if SIMPLE_MATCHES:
+        input_str = "t"
+        raw = "(lambda $0)"
+        check_true("basic input", raw, input_str)
+        
         input_str = "t"
         raw = "(lambda (_rmatch _rdot $0))"
         check_true("match .", raw, input_str)
+        input_str = "tt"
+        raw = "(lambda (_rmatch _rdot $0))"
+        check_true("match .", raw, input_str)
+        
         input_str = "ab"
         raw = "(lambda (_rmatch (_rconcat _a _b) $0))"
         check_true("match ab", raw, input_str)
