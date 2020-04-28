@@ -10,8 +10,8 @@ let tsubstr = makeground "tsubstr";;
 let tfullstr = makeground "tfullstr";;
 
 (* RE2 Function Definitions *)
-let _rnot = primitive "_rnot" (tsubstr @ tsubstr) (fun s -> 0 -- (x-1));; (* TODO *)
-let _
+(* let _rnot = primitive "_rnot" (tsubstr @ tsubstr) (fun s -> 0 -- (x-1));; (* TODO *) *)
+
 
 
 (* Test function definitions *)

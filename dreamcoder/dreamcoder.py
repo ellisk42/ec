@@ -530,7 +530,6 @@ def ecIterator(grammar, tasks,
         wakingTaskBatch = taskBatcher.getTaskBatch(result, tasks, taskBatchSize, j)
         eprint("Using a waking task batch of size: " + str(len(wakingTaskBatch)))
         
-        import pdb; pdb.set_trace()
 
         # WAKING UP
         if useDSL:
