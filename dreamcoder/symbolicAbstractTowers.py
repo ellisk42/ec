@@ -71,8 +71,8 @@ def taskViolatesAbstractState(task, absState):
 
     #world is a (sorted) list of (x,y,w,h)
     world = simulateWithoutPhysics(centerTower(task.plan))
-    print("world:", world)
-    print("abstract state", absState)
+    #print("world:", world)
+    #print("abstract state", absState)
 
     def checkViolationForParticularOffset(world, abstractState, offset):
         #abstractState = [(x + offset, y) for x, y in abstractState]
