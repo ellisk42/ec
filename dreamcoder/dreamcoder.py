@@ -11,7 +11,7 @@ from dreamcoder.primitiveGraph import graphPrimitives
 from dreamcoder.dreaming import backgroundHelmholtzEnumeration
 
 from dreamcoder.valueHead import SimpleRNNValueHead, AbstractREPLValueHead, SampleDummyValueHead, TowerREPLValueHead
-
+from dreamcoder.symbolicAbstractTowers import SymbolicAbstractTowers
 import sys
 
 class ECResult():
