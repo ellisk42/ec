@@ -1459,13 +1459,17 @@ class RecognitionModel(nn.Module):
         id2job = {}
         nextID = 0
 
+        #max added
+        finishedJobs = {j: False for j in jobs}
+
         while True:
             refreshJobs()
             # Don't launch a job that we are already working on
             # We run the stopwatch whenever the job is being worked on
             # freeJobs are things that we are not working on but could be
+            #modified by max
             freeJobs = [j for j in jobs if not stopwatches[j].running
-                        and stopwatches[j].elapsed < enumerationTimeout - 0.5]
+                        and stopwatches[j].elapsed < enumerationTimeout - 0.5 and not finishedJobs[j]]
             if freeJobs and activeCPUs < CPUs:
                 # Allocate a CPU to each of the jobs that we have made the least
                 # progress on
@@ -1518,6 +1522,9 @@ class RecognitionModel(nn.Module):
                 # Mark the CPUs is no longer being used and pause the stopwatch
                 activeCPUs -= id2CPUs[message.ID]
                 stopwatches[id2job[message.ID]].stop()
+
+                #max Added
+                finishedJobs[id2job[message.ID]] = True
 
                 newFrontiers, searchTimes, pc, newReportedSolutions = message.value #TODO add searchResults here
                 for t, f in newFrontiers.items():
