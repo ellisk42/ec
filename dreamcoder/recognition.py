@@ -1303,6 +1303,33 @@ class RecognitionModel(nn.Module):
                                     CPUs=CPUs, maximumFrontier=maximumFrontier,
                                     evaluationTimeout=evaluationTimeout)
 
+    def to_cpu(self):
+        self.cpu()
+        self.use_cuda = False
+        self.featureExtractor.use_cuda = False
+        self.featureExtractor.CUDA = False #for towers
+        self.valueHead.use_cuda = False
+        self.valueHead.cpu()
+        #because they may be seperate:
+        if hasattr(self.valueHead, 'featureExtractor'):
+            self.valueHead.featureExtractor.use_cuda = False
+            self.valueHead.featureExtractor.CUDA = False #for towers
+
+
+    def to_cuda(self):
+        self.cuda()
+        self.use_cuda = True
+        self.featureExtractor.use_cuda = True
+        self.featureExtractor.CUDA = True #for towers
+        self.valueHead.use_cuda = True
+        self.valueHead.cuda()
+        #because they may be seperate:
+        if hasattr(self.valueHead, 'featureExtractor'):
+            self.valueHead.featureExtractor.use_cuda = True
+            self.valueHead.featureExtractor.CUDA = True #for towers        
+
+        
+
     def valueEnumeration(self, g, tasks, _=None,
                              enumerationTimeout=None,
                              solver='ocaml',

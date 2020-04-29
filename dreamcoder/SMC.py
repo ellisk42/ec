@@ -116,6 +116,8 @@ class SMC(Solver):
         numberOfParticles = self.initialParticles #TODO
         allObjects = set()
         
+        self.valueMem = {}
+
         starting = time.time()
         # previousBudget = lowerBound
         # budget = lowerBound + budgetIncrement
@@ -198,8 +200,11 @@ class SMC(Solver):
                     if p.finished:
                         p.distance = 0. if p.trajectory in self.allHits else 10**10 #huh?
                     else:
-                        p.distance = self.owner.valueHead.computeValue(p.trajectory, task) #memoize by registering tasks or something
-
+                        if (p.trajectory, task) in self.valueMem:
+                            p.distance = self.valueMem[ (p.trajectory, task) ] 
+                        else:
+                            p.distance = self.owner.valueHead.computeValue(p.trajectory, task) #memoize by registering tasks or something
+                            self.valueMem[ (p.trajectory, task) ] = p.distance
                 # Resample
                 logWeights = [math.log(p.frequency) - p.distance*self.criticCoefficient 
                               for p in samples] # TODO
