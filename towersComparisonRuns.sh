@@ -16,7 +16,7 @@ for num in 3
 	do
 		#symbolic
 
-		cp experimentOutputs/towers${num}.pickle experimentOutputs/towers${num}REPLPolicyHashing.pickle
+		cp experimentOutputs/towers${num}.pickle experimentOutputs/towers${num}SamplePolicyHashing.pickle
 
 		replPolicy=experimentOutputs/towers3LongREPL.pickle
 		samplePolicy=experimentOutputs/towers3Sample.pickle
