@@ -61,6 +61,7 @@ for num in 3
 
 
 		resume=experimentOutputs/towers${num}JustHashing
+		salt=towers${num}JustHashing
 		cp ${oldResume}.pickle ${resume}RNN.pickle
 		cp ${oldResume}RNN.pickle_RecModelOnly ${resume}RNN.pickle_RecModelOnly
 		cmd="python bin/tower.py --contextual --testingTimeout ${testingTime} --recognitionTimeout 216000 --resumeTraining -r ${helmRatio} --primitives new --split 0.5 -t ${time} -RS ${recSteps} --solver python  -c ${ncores} --useValue RNN -i 2 --resume ${resume}RNN.pickle --singleRoundValueEval --seed 1"
