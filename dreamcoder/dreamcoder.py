@@ -1,6 +1,7 @@
 import datetime
 
 import dill
+import gc
 
 from dreamcoder.compression import induceGrammar
 from dreamcoder.recognition import *

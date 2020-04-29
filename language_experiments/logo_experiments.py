@@ -4,7 +4,7 @@ NUM_REPLICATIONS = 0
 NO_ORIGINAL_REPL = False
 
 def gcloud_commands(job_name):
-    gcloud_disk_command = f"gcloud compute --project 'tenenbaumlab' disks create {job_name} --size '30' --zone 'us-east1-b' --source-snapshot 'logo-language-april24' --type 'pd-standard'"
+    gcloud_disk_command = f"gcloud compute --project 'tenenbaumlab' disks create {job_name} --size '100' --zone 'us-east1-b' --source-snapshot 'logo-language-april24' --type 'pd-standard'"
     gcloud_launch_commmand = f"gcloud beta compute --project=tenenbaumlab instances create {job_name} --zone=us-east1-b --machine-type=n1-highmem-64 --subnet=default --network-tier=PREMIUM --maintenance-policy=MIGRATE --service-account=150557817012-compute@developer.gserviceaccount.com --scopes=https://www.googleapis.com/auth/devstorage.read_only,https://www.googleapis.com/auth/logging.write,https://www.googleapis.com/auth/monitoring.write,https://www.googleapis.com/auth/servicecontrol,https://www.googleapis.com/auth/service.management.readonly,https://www.googleapis.com/auth/trace.append --disk=name={job_name.strip()},device-name={job_name.strip()},mode=rw,boot=yes,auto-delete=yes --reservation-affinity=any"
     return f"#######\n{gcloud_disk_command}\n\n{gcloud_launch_commmand}\n\n###Now run: \nsingularity exec ../dev-container.img "
 
@@ -171,7 +171,7 @@ for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000
                 experiment_commands += build_replications(exp_command, job, job_name)
         job +=1
 #### Generate Helmholtz generative model experiments.
-RUN_HELMHOLTZ_GENERATIVE_MODEL = True
+RUN_HELMHOLTZ_GENERATIVE_MODEL = False
 EXPS = [('logo_unlimited_200', 0, 1)]
 enumerationTimeout = 1800
 num_iterations = 12
@@ -244,7 +244,7 @@ for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000
                 experiment_commands += build_replications(exp_command, job, job_name)
         job +=1
 
-RUN_LANGUAGE_CURRICULUM = True
+RUN_LANGUAGE_CURRICULUM_GHELM = True
 EXPS = [('logo_unlimited_200', 0, 1)]
 enumerationTimeout = 1800
 num_iterations = 12
@@ -262,12 +262,35 @@ for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000
         
             exp_command = base_command + base_parameters + exp_parameters
             command = build_command(exp_command, job, job_name, replication=None)
-            if RUN_HELMHOLTZ_GENERATIVE_MODEL:
+            if RUN_LANGUAGE_CURRICULUM_GHELM:
                 if (EXPS is None) or (exp in EXPS):
                     if not NO_ORIGINAL_REPL: experiment_commands.append(command)
                     experiment_commands += build_replications(exp_command, job, job_name)
             job +=1
 
+RUN_LANGUAGE_CURRICULUM_BASELINE = True
+enumerationTimeout = 1800
+num_iterations = 12
+task_batch_size = 40
+test_every = 3
+recognition_timeout = 1800
+EXPS = [('logo_unlimited_200', 0)]
+for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000']:
+    for sample_n_supervised in [0, 10]:
+        exp = (dataset, sample_n_supervised)
+        job_name = f"logo_2_ec_cnn_compression_et_{enumerationTimeout}_supervised_{sample_n_supervised}_{dataset}_curr"
+        jobs.append(job_name)
+        base_parameters = f" --enumerationTimeout {enumerationTimeout} --testingTimeout {enumerationTimeout}  --iterations {num_iterations} --biasOptimal --contextual --taskBatchSize {task_batch_size} --testEvery {test_every} --no-cuda --recognitionTimeout {recognition_timeout} --recognition_0 examples --Helmholtz 0.5 --skip_first_test --taskReranker sentence_length"
+        exp_parameters = f" --taskDataset {dataset} --sample_n_supervised {sample_n_supervised}"
+        
+        exp_command = base_command + base_parameters + exp_parameters
+        command = build_command(exp_command, job, job_name, replication=None)
+        
+        if RUN_LANGUAGE_CURRICULUM_BASELINE:
+            if (EXPS is None) or (exp in EXPS):
+                if not NO_ORIGINAL_REPL: experiment_commands.append(command)
+                experiment_commands += build_replications(exp_command, job, job_name)
+        job +=1
 
 #### Outputs
 PRINT_LOG_SCRIPT = False
