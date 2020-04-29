@@ -384,6 +384,12 @@ def make_list_bootstrap_tasks():
     return lengthBootstrap + filterBootstrap + \
         unfoldBootstrap + arrayBootstrap + foldBootstrap + mapBootstrap + zipBootstrap
 
+def make_factor_tasks():
+    return [Task("factors",
+                 arrow(tint,tlist(tint)),
+                 [((n,), [i for i in range(1,n) if n%i == 0 ])
+                  for n in range(1,9) ])]
+
 
 def bonusListProblems():
     # Taken from https://www.ijcai.org/Proceedings/75/Papers/037.pdf

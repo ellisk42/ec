@@ -12,7 +12,7 @@ from dreamcoder.task import Task
 from dreamcoder.type import Context, arrow, tbool, tlist, tint, t0, UnificationFailure
 from dreamcoder.domains.list.listPrimitives import basePrimitives, primitives, McCarthyPrimitives, bootstrapTarget_extra, no_length
 from dreamcoder.recognition import RecurrentFeatureExtractor
-from dreamcoder.domains.list.makeListTasks import make_list_bootstrap_tasks, sortBootstrap, EASYLISTTASKS
+from dreamcoder.domains.list.makeListTasks import make_list_bootstrap_tasks, sortBootstrap, EASYLISTTASKS, make_factor_tasks
 
 
 def retrieveJSONTasks(filename, features=False):
@@ -235,6 +235,7 @@ def list_options(parser):
         type=str,
         default="Lucas-old",
         choices=[
+            "factor",
             "bootstrap",
             "sorting",
             "Lucas-old",
@@ -270,6 +271,7 @@ def main(args):
     dataset = args.pop("dataset")
     tasks = {
         "Lucas-old": lambda: retrieveJSONTasks("data/list_tasks.json") + sortBootstrap(),
+        "factor": make_factor_tasks,
         "bootstrap": make_list_bootstrap_tasks,
         "sorting": sortBootstrap,
         "Lucas-depth1": lambda: retrieveJSONTasks("data/list_tasks2.json")[:105],
