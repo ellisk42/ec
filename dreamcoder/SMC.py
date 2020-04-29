@@ -69,7 +69,8 @@ class SMC(Solver):
                               # lowerBound=0.,
                               # upperBound=100.,
                               # budgetIncrement=1.0, 
-                              maximumFrontiers=None): #IDK what this is...
+                              maximumFrontiers=None,
+                              returnAfterHit=True): #IDK what this is...
         sys.setrecursionlimit(5000)
         class Particle():
             def __init__(self, trajectory, zippers, frequency, finished=False):
@@ -101,6 +102,8 @@ class SMC(Solver):
         #assert len(tasks) == 1, "only should be one task"
         if not all(task == tasks[0] for task in tasks):
             print("WARNING, tasks are not all the same")
+        if len(tasks) > 1 and returnAfterHit: assert False, "can't have returnAfterHit and multiple tasks"
+
         task = tasks[0]
 
         self.maximumFrontiers = [maximumFrontiers[t] for t in tasks]
@@ -125,6 +128,7 @@ class SMC(Solver):
         totalNumberOfPrograms = 0
 
         while time.time() - starting < timeout:
+            if returnAfterHit and len(self.allHits) > 0: break
             # this line ensures particles start with a hole, wrapped in appropriate number of lambdas
             h = baseHoleOfType(request)
             zippers = findHoles(h, request)
@@ -186,7 +190,9 @@ class SMC(Solver):
                         totalNumberOfPrograms = self._report(p, request, g, tasks,
                                                             likelihoodModel, hits, 
                                                             starting, elapsedTime, 
-                                                            totalNumberOfPrograms) # TODO
+                                                            totalNumberOfPrograms)
+                        if returnAfterHit and len(self.allHits) > 0: break
+                if returnAfterHit and len(self.allHits) > 0: break
 
                 # Convert trajectories to particles
                 samples = [Particle(t, skToZippers[t], frequency, finished=finished)
@@ -203,7 +209,7 @@ class SMC(Solver):
                         if (p.trajectory, task) in self.valueMem:
                             p.distance = self.valueMem[ (p.trajectory, task) ] 
                         else:
-                            p.distance = self.owner.valueHead.computeValue(p.trajectory, task) #memoize by registering tasks or something
+                            p.distance = self.owner.valueHead.computeValue(p.trajectory, task)
                             self.valueMem[ (p.trajectory, task) ] = p.distance
                 # Resample
                 logWeights = [math.log(p.frequency) - p.distance*self.criticCoefficient 
@@ -240,6 +246,7 @@ class SMC(Solver):
                 
             numberOfParticles *= self.exponentialGrowthFactor
             #print("Increased number of particles to", numberOfParticles)
+
 
         ## FINISH
         frontiers = {tasks[n]: Frontier([e for _, e in hits[n]],
