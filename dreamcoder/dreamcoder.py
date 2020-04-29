@@ -501,7 +501,6 @@ def ecIterator(grammar, tasks,
         assert False
     
     ######## Test Evaluation and background Helmholtz enumeration.
-    assert False
     for j in range(resume or 0, iterations):
         if storeTaskMetrics and rewriteTaskMetrics:
             eprint("Resetting task metrics for next iteration.")
