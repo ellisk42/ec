@@ -107,12 +107,21 @@ if __name__ == '__main__':
         (f'experimentOutputs/{ID}Symbolic_SRE=True_graph=True.pickle', 'Symbolic value')]
 
 
+    nameSalt = "towersREPLPolicyHashing"
+
+    ID = 'towers' + str(n) + 'REPLPolicyHashing'
+    paths = [(f'experimentOutputs/{ID}Sample_SRE=True_graph=True.pickle', 'Sample'),
+        (f'experimentOutputs/{ID}RNN_SRE=True_graph=True.pickle', 'RNN value'),
+        (f'experimentOutputs/{ID}REPL_SRE=True_graph=True.pickle', 'REPL modular value'),
+        (f'experimentOutputs/{ID}Symbolic_SRE=True_graph=True.pickle', 'Symbolic value')]
+
+    print("WARNING: using the REPLPolicyHashing runs")
 
 
 
 
 
-    timeout=600
+    timeout=1200
     outputDirectory = 'plots'
     paths, names = zip(*paths)
 

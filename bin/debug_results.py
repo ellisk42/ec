@@ -14,7 +14,8 @@ import scipy.misc
 import dill
 import numpy as np
 import sys
-        
+
+from matplotlib import pyplot
 
 
 
@@ -37,10 +38,15 @@ if __name__ == '__main__':
         (f'experimentOutputs/{ID}REPL_SRE=True.pickle', 'REPL modular value')]
 
     paths = [(f'experimentOutputs/{ID}Sample_SRE=True.pickle', 'Sample'),
-        (f'experimentOutputs/towers3SamplePolicyRNN_SRE=True_graph=True.pickle', 'RNN value'),
-        (f'experimentOutputs/towers3LongSamplePolicyREPL_SRE=True_graph=True.pickle', 'REPL modular value')]
-
+        (f'experimentOutputs/towers{n}SamplePolicyRNN_SRE=True_graph=True.pickle', 'RNN value'),
+        (f'experimentOutputs/towers{n}LongSamplePolicyREPL_SRE=True_graph=True.pickle', 'REPL modular value')]
     print("WARNING: using the long samplePolicy Repl run and rnn")
+
+    ID = 'towers' + str(n) + 'REPLPolicyHashing'
+    paths = [(f'experimentOutputs/{ID}Sample_SRE=True_graph=True.pickle', 'Sample'),
+        (f'experimentOutputs/towers{ID}RNN_SRE=True_graph=True.pickle', 'RNN value'),
+        (f'experimentOutputs/towers{ID}REPL_SRE=True_graph=True.pickle', 'REPL modular value')]
+    print("WARNING: using the REPLPolicyHashing runs")
 
 
     paths, names = zip(*paths)
@@ -74,54 +80,80 @@ if __name__ == '__main__':
 
     SHitsRMisses = [t for t, lst in SampleStats.items() if ( lst != [] and REPLStats[t]==[] ) ]
     
-    print("sample hit, repl miss:")
+    # print("sample hit, repl miss:")
+    # for i, t in enumerate(testingTasks):
+    #     hitSample = bool(rS.testingSearchStats[0][t])
+    #     hitREPL = bool(rR.testingSearchStats[0][t])
+    #     if hitSample:
+    #         sampleMin = rS.testingSearchStats[0][t][0].evaluations
+    #         if sampleMin < rR.testingNumOfProg[-1][t] and not hitREPL:
+    #             print(i)
+    #             print("sampleMin:", sampleMin)
+    #             print("max from repl", rR.testingNumOfProg[-1][t])
+
+    # print("repl hit, sample miss:")
+    # for i, t in enumerate(testingTasks):
+    #     hitSample = bool(rS.testingSearchStats[0][t])
+    #     hitREPL = bool(rR.testingSearchStats[0][t])
+
+    #     if hitREPL:
+    #         if not hitSample:
+    #             print(i)
+    #             print("not hit at all by sample")
+
+    #         else:
+    #             sampleMin = rS.testingSearchStats[0][t][0].evaluations
+    #             if sampleMin >rR.testingNumOfProg[-1][t]:
+    #                 print(i)
+    #                 print("sampleMin", sampleMin)
+    #                 print("max from repl", rR.testingNumOfProg[-1][t])
+
+    # sHits = 0
+    # replHits = 0
+    # for i, t in enumerate(testingTasks):
+    #     hitSample = bool(rS.testingSearchStats[0][t])
+    #     hitREPL = bool(rR.testingSearchStats[0][t])
+    #     if hitSample: sampleMin = rS.testingSearchStats[0][t][0].evaluations
+
+    #     if hitSample and sampleMin <= rR.testingNumOfProg[-1][t]:
+    #         sHits+=1
+    #     if hitREPL: replHits += 1
+
+    #     hitRNN = bool(rRNN.testingSearchStats[0][t])
+
+    #     if hitREPL and not hitRNN and rR.testingSearchStats[0][t][0].evaluations > rRNN.testingNumOfProg[-1][t]:
+    #         print("this task didn't have enough RNN evals", i)
+    #         print()
+    # print()
+    # print("repl", replHits)
+    # print("sample", sHits)
+
+
+    reductions = []
     for i, t in enumerate(testingTasks):
         hitSample = bool(rS.testingSearchStats[0][t])
         hitREPL = bool(rR.testingSearchStats[0][t])
-        if hitSample:
-            sampleMin = rS.testingSearchStats[0][t][0].evaluations
-            if sampleMin < rR.testingNumOfProg[-1][t] and not hitREPL:
-                print(i)
-                print("sampleMin:", sampleMin)
-                print("max from repl", rR.testingNumOfProg[-1][t])
 
-    print("repl hit, sample miss:")
-    for i, t in enumerate(testingTasks):
-        hitSample = bool(rS.testingSearchStats[0][t])
-        hitREPL = bool(rR.testingSearchStats[0][t])
-
-        if hitREPL:
-            if not hitSample:
-                print(i)
-                print("not hit at all by sample")
-
-            else:
-                sampleMin = rS.testingSearchStats[0][t][0].evaluations
-                if sampleMin >rR.testingNumOfProg[-1][t]:
-                    print(i)
-                    print("sampleMin", sampleMin)
-                    print("max from repl", rR.testingNumOfProg[-1][t])
-
-    sHits = 0
-    replHits = 0
-    for i, t in enumerate(testingTasks):
-        hitSample = bool(rS.testingSearchStats[0][t])
-        hitREPL = bool(rR.testingSearchStats[0][t])
         if hitSample: sampleMin = rS.testingSearchStats[0][t][0].evaluations
+        if hitREPL: REPLMin = rR.testingSearchStats[0][t][0].evaluations
 
-        if hitSample and sampleMin <= rR.testingNumOfProg[-1][t]:
-            sHits+=1
-        if hitREPL: replHits += 1
+        if hitSample and hitREPL:
+            print("reduction factor:", sampleMin/REPLMin)
+            print("num samples required", sampleMin)            
+            reductions.append( (sampleMin, sampleMin/REPLMin))
 
-        hitRNN = bool(rRNN.testingSearchStats[0][t])
 
-        if hitREPL and not hitRNN and rR.testingSearchStats[0][t][0].evaluations > rRNN.testingNumOfProg[-1][t]:
-            print("this task didn't have enough RNN evals", i)
-            print()
+    reductions = sorted(reductions, key=lambda x: x[0])
+    print(reductions)
+    samples, reductionRate = zip(*reductions)
 
-    print()
-    print("repl", replHits)
-    print("sample", sHits)
+
+    pyplot.plot(samples, reductionRate, marker='o', label='Sample/REPL')
+    # axis labels
+    pyplot.xlabel('num samples required')
+    pyplot.ylabel('reduction rate')
+    # show the plot
+    pyplot.savefig ('plots/reductionRateit20.png')
 
 
         # if hitSample:
