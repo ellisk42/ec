@@ -4,17 +4,16 @@ from dreamcoder.program import Primitive, Program
 from dreamcoder.grammar import Grammar
 from dreamcoder.type import tint, tlist, arrow, baseType, tbool, t0
 from dreamcoder.domains.list.listPrimitives import bootstrapTarget,  re2_listPrimitives_v1
-
 import re
 
 
-tfullstr = baseType("fullstr")
-tsubstr = baseType("substr")
+tfullstr = baseType("tfullstr")
+tsubstr = baseType("tsubstr")
 
 # Regex constants -- handled by constructing regex substrings
 _rvowel = "(a|e|i|o|u)" 
 _rconsonant = "[^aeiou]"
-alpha_chars = [chr(ord('a') + j) for j in range(26)] 
+alpha_chars = [chr(ord('a') + j) for j in range(26)][:2]
 def _rnot(s): return f"[^{s}]"
 def _ror(s1): return lambda s2: f"(({s1})|({s2}))"
 def _rconcat(s1): return lambda s2: s1 + s2  
@@ -72,7 +71,7 @@ def re2_primitives_v1():
             Primitive("_rconcat", arrow(tsubstr, tsubstr, tsubstr), _rconcat),
             
             Primitive("_rmatch", arrow(tsubstr, tsubstr, tbool), _rmatch),
-            Primitive("_rsplit", arrow(tfullstr, tsubstr, tlist(tsubstr)), _rsplit),
+            Primitive("_rsplit", arrow(tsubstr, tfullstr, tlist(tsubstr)), _rsplit),
             Primitive("_rflatten", arrow(tlist(tsubstr), tfullstr), _rflatten),
             Primitive("_rtail", arrow(tlist(t0), t0), _rtail),
             Primitive("_rappend", arrow(tlist(t0), t0, tlist(t0)), _rappend),
@@ -81,7 +80,6 @@ def re2_primitives_v1():
 
 def re2_primitives_main():
     re2_primitives_v1()
-    bootstrapTarget()
     def check_true(name, raw, input):
         p = Program.parse(raw)
         pass_test = "[T]" if p.evaluate([])(input) else "[F]"
@@ -93,6 +91,11 @@ def re2_primitives_main():
         print(f"{name} in: {input} | out: {output} | gold: {gold}")
         
     # Simple matches on one string.
+    raw = "(lambda (_rflatten (_rsplit _rdot )))"
+    input_str = "aaa"
+    check_true("basic input", raw, input_str)
+    assert False
+    
     
     SIMPLE_MATCHES = True
     if SIMPLE_MATCHES:

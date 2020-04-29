@@ -4,7 +4,7 @@ from dreamcoder.utilities import *
 from dreamcoder.domains.text.main import ConstantInstantiateVisitor
 from dreamcoder.domains.text.textPrimitives import re2_primitives, primitives, re2_4_letter, re2_6_letter, re2_characters
 from dreamcoder.domains.list.listPrimitives import re2_ListPrimitives, bootstrapTarget
-from dreamcoder.domains.re2.re2Primitives import re2_primitives_main
+from dreamcoder.domains.re2.re2Primitives import re2_primitives_main, re2_primitives_v1
 from dreamcoder.recognition import *
 from dreamcoder.enumeration import *
 
@@ -30,10 +30,11 @@ def re2_options(parser):
                         default=True)
     parser.add_argument("--primitives",
                         choices=[
+                            "re2_primitives_v1",
                             "re2_primitives",
                             "re2_4_letter",
                             "re2_6_letter"],
-                        default="re2_primitives",
+                        default="re2_primitives_v1",
                         help="Which primitive set to use, which may restrict the number of characters we allow.")
     parser.add_argument("--allow_language_strings",
                         default=False)
@@ -48,29 +49,41 @@ def main(args):
     if args.pop("re2_primitives_test"):
         re2_primitives_main()
         assert False
-        
+    
+    which_prims = args.pop("primitives")
+    if which_prims == "re2_primitives_v1": 
+        primitives = re2_primitives_v1()
+        type_request = "tfullstr"
+    elif which_prims == 're2_primitives':
+        primitives = re2_primitives + re2_ListPrimitives()
+        type_request = "list_tcharacter"
+    elif which_prims == 're2_4_letter':
+        primitives = re2_4_letter + re2_ListPrimitives()
+        type_request = "list_tcharacter"
+    else:
+        primitives = re2_6_letter + re2_ListPrimitives()
+        type_request = "list_tcharacter"
+    
+    baseGrammar = Grammar.uniform(primitives)
+    print("Using base grammar:")
+    print(baseGrammar)
+    
     task_dataset = args["taskDataset"]
     task_dataset_dir=args.pop("taskDatasetDir")
-    train, test = loadRe2Dataset(task_dataset=task_dataset, task_dataset_dir=task_dataset_dir)
+    train, test = loadRe2Dataset(task_dataset=task_dataset, task_dataset_dir=task_dataset_dir, type_request=type_request)
     eprint(f"Loaded dataset [{task_dataset}]: [{len(train)}] train and [{len(test)}] test tasks.")
-
+    
+    # DEBUG TASK ##
+    train[0].examples = [
+        (tuple(["aaa"]), "bbb")
+    ]
+    train = [train[0]]
+    
     use_epochs = args.pop("iterations_as_epochs")
     if use_epochs and args["taskBatchSize"] is not None:
         eprint("Using iterations as epochs")
         args["iterations"] *= int(len(train) / args["taskBatchSize"]) 
         eprint(f"Now running for n={args['iterations']} iterations.")
-    
-    which_prims = args.pop("primitives")
-    if which_prims == 're2_primitives':
-        primitives = re2_primitives
-    elif which_prims == 're2_4_letter':
-        primitives = re2_4_letter
-    else:
-        primitives = re2_6_letter
-    
-    baseGrammar = Grammar.uniform(primitives + re2_ListPrimitives())
-    print("Using base grammar:")
-    print(baseGrammar)
 
     timestamp = datetime.datetime.now().isoformat()
     # Escape the timestamp.
@@ -88,7 +101,7 @@ def main(args):
     words = re2_characters
     ConstantInstantiateVisitor.SINGLE = \
         ConstantInstantiateVisitor(words)
-    evaluationTimeout = 0.0005
+    evaluationTimeout = 0.05
     
     generator = ecIterator(baseGrammar, train,
                            testingTasks=test,

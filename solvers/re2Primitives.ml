@@ -6,12 +6,13 @@ open Str
 open Program
 open Re2
 
+
+(** Note: Cathy wong -- these are defined in program.ml **)
 (* RE2 Type Definitions *)
-let tfullstr = make_ground "tfullstr";;
+(* let tfullstr = make_ground "tfullstr";;
 let tsubstr = make_ground "tsubstr";;
 
 (** Regex constants **)
-(** TODO: rest of alphabet **)
 let primitive_ra = primitive "_a" tsubstr "a";;
 let primitive_rb = primitive "_b" tsubstr "b";;
 let primitive_rc = primitive "_c" tsubstr "c";;
@@ -52,8 +53,7 @@ let primitive_rconcat = primitive "_rconcat" (tsubstr @> tsubstr @> tsubstr) (fu
 let primitive_rmatch = primitive "_rmatch" (tsubstr @> tsubstr @> tboolean) (fun s1 s2 -> 
   try 
     let regex = Re2.create_exn ("^" ^ s1 ^ "$") in
-    let is_match = Re2.matches regex s2 in
-    Printf.printf "regex: %s %s \n" (Re2.to_string regex) s2; is_match
+    Re2.matches regex s2 
   with _ -> false
   );;
   
@@ -78,7 +78,7 @@ let primitive_rrevcdr = primitive "_rrevcdr" (tlist tsubstr @> tlist tsubstr) (f
   let arr = Array.of_list l in 
   let slice = Array.sub arr 0 (Array.length arr - 1) in
   Array.to_list slice
-  );;
+  );; *)
   
 
 (** Test RE2 Primitives *)
@@ -107,6 +107,7 @@ let test_regex name raw input gold =
 let replace_te = "(lambda  (if (_rmatch (_rconcat _t _e) $0) _f $0))";;
 let postpend_te = "(lambda (if (_rmatch (_rconcat _t _e) $0) (_rconcat $0 _f) $0))";;
 let prepend_te = "(lambda  (if (_rmatch (_rconcat _t _e) $0) (_rconcat _f $0) $0))";;
+let remove_te = "(lambda  (if (_rmatch (_rconcat _t _e) $0) _emptystr $0))";;
  
 (** Simple matches **)
 let simple_test_cases() =
@@ -137,10 +138,38 @@ let simple_test_cases() =
 ;;
 (* simple_test_cases();; *)
 
-
 let list_test_cases() =
   (** Replace match **)
   let raw = "(lambda (_rflatten (map  "^ replace_te ^ "  (_rsplit (_rconcat _t _e) $0))))" in 
   test_regex "replace te -> f" raw "tehellote"  "fhellof";
+  
+  (** Prepend to match **)
+  let raw = "(lambda (_rflatten (map  "^ prepend_te ^"  (_rsplit (_rconcat _t _e) $0))))" in 
+  test_regex "prepend te -> f" raw "tehellote" "ftehellofte";
+  
+  (** Postpend to match **)
+  let raw = "(lambda (_rflatten (map  "^ postpend_te ^"   (_rsplit (_rconcat _t _e) $0) ) ))" in 
+  test_regex "postpend te -> f" raw "tehellote" "tefhellotef";
+  
+  (** Remove match **)
+  let raw = "(lambda (_rflatten (map  "^ remove_te ^"   (_rsplit (_rconcat _t _e) $0))))" in 
+  test_regex "remove te -> f" raw "teheltelote"  "hello";
+  
+  (** Match at start **)
+  let raw = "(lambda ((lambda (_rflatten (cons ("^ replace_te ^" (car $0)) (cdr $0)))) (_rsplit (_rconcat _t _e) $0)))" in 
+  test_regex "replace te -> f" raw "teheltelote" "fheltelote";
+  let raw = "(lambda ((lambda (_rflatten (cons ("^ prepend_te ^" (car $0)) (cdr $0)))) (_rsplit (_rconcat _t _e) $0)))" in 
+  test_regex "pre te -> f" raw "teheltelote" "fteheltelote";
+  let raw = "(lambda ((lambda (_rflatten (cons ("^ postpend_te ^" (car $0)) (cdr $0)))) (_rsplit (_rconcat _t _e) $0)))" in 
+  test_regex "post te -> f" raw "teheltelote" "tefheltelote";
+  
+  (** Match at end **)
+  let raw = "(lambda ((lambda (_rflatten (_rappend ("^ replace_te ^ " (_rtail $0)) (_rrevcdr $0)) )) (_rsplit (_rconcat _t _e) $0) ))" in 
+  test_regex "replace te -> f" raw "teheltelote" "teheltelof";
+  let raw = "(lambda ((lambda (_rflatten (_rappend ("^ postpend_te ^ " (_rtail $0)) (_rrevcdr $0)) )) (_rsplit (_rconcat _t _e) $0) ))" in 
+  test_regex "post te -> f" raw "teheltelote" "teheltelotef";
+  let raw = "(lambda ((lambda (_rflatten (_rappend ("^ prepend_te ^ " (_rtail $0)) (_rrevcdr $0)) )) (_rsplit (_rconcat _t _e) $0) ))" in 
+  test_regex "pre te -> f" raw "teheltelote" "teheltelofte";
+  
 ;;
 list_test_cases();;

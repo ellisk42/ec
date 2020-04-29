@@ -111,7 +111,7 @@ let helmholtz_enumeration (behavior_hash : program -> PolyList.t option) ?nc:(nc
   let rec loop lb =
     if enumeration_timed_out() then () else begin 
       let final_results = 
-        enumerate_programs ~extraQuiet:true ~nc:nc ~final:(fun () -> [behavior_to_programs])
+        enumerate_programs ~extraQuiet:false~nc:nc ~final:(fun () -> [behavior_to_programs])
           g request lb (lb+.1.5) (fun p l ->
               if Hashtbl.length behavior_to_programs > maximumSize then set_enumeration_timeout (-1.0) else
                 match behavior_hash p with

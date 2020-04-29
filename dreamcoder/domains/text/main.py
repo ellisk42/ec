@@ -33,7 +33,8 @@ class ConstantInstantiateVisitor(object):
 
 
 class LearnedFeatureExtractor(RecurrentFeatureExtractor):
-    special = 'string'
+    # special = 'string'
+    special = None
     
     def tokenize(self, examples):
         def tokenize_example(xs,y):
