@@ -1040,9 +1040,9 @@ class Hole(Program):
     @property
     def isHole(self): return True
 
-    def __eq__(self, o): return isinstance(o, Hole)
+    def __eq__(self, o): return isinstance(o, Hole) and self.tp == o.tp
 
-    def __hash__(self): return 42
+    def __hash__(self): return hash(self.tp) + 42
 
     def evaluate(self, e):
         raise Exception('Attempt to evaluate hole')
