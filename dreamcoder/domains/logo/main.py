@@ -325,7 +325,8 @@ def list_options(parser):
                         default=None,
                         help="Generates language dataset and stores it under the top-level path.")
     parser.add_argument("--iterations_as_epochs",
-                        default=True)
+                        default=1,
+                        type=int)
     parser.add_argument("--sample_n_supervised",
                         default=0, type=int)
 

@@ -1,10 +1,10 @@
-USING_GCLOUD = True
-USING_SINGULARITY = False
+USING_GCLOUD = False
+USING_SINGULARITY = True
 NUM_REPLICATIONS = 0
 NO_ORIGINAL_REPL = False
 
 def gcloud_commands(job_name):
-    gcloud_disk_command = f"gcloud compute --project 'tenenbaumlab' disks create {job_name} --size '100' --zone 'us-east1-b' --source-snapshot 'logo-language-april24' --type 'pd-standard'"
+    gcloud_disk_command = f"gcloud compute --project 'tenenbaumlab' disks create {job_name} --size '100' --zone 'us-east1-b' --source-snapshot 'logo-language-april29' --type 'pd-standard'"
     gcloud_launch_commmand = f"gcloud beta compute --project=tenenbaumlab instances create {job_name} --zone=us-east1-b --machine-type=n1-highmem-64 --subnet=default --network-tier=PREMIUM --maintenance-policy=MIGRATE --service-account=150557817012-compute@developer.gserviceaccount.com --scopes=https://www.googleapis.com/auth/devstorage.read_only,https://www.googleapis.com/auth/logging.write,https://www.googleapis.com/auth/monitoring.write,https://www.googleapis.com/auth/servicecontrol,https://www.googleapis.com/auth/service.management.readonly,https://www.googleapis.com/auth/trace.append --disk=name={job_name.strip()},device-name={job_name.strip()},mode=rw,boot=yes,auto-delete=yes --reservation-affinity=any"
     return f"#######\n{gcloud_disk_command}\n\n{gcloud_launch_commmand}\n\n###Now run: \nsingularity exec ../dev-container.img "
 
@@ -203,7 +203,7 @@ num_iterations = 12
 task_batch_size = 40
 test_every = 3
 recognition_steps = 10000
-EXPS = [('logo_unlimited_200', 0, 1), ('logo_unlimited_200', 10, 1)]
+EXPS = [('logo_unlimited_200', 0, 1)]
 pseudoalignment = 0.1
 for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000']:
     for sample_n_supervised in [0, 10]:
@@ -244,7 +244,7 @@ for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000
                 experiment_commands += build_replications(exp_command, job, job_name)
         job +=1
 
-RUN_LANGUAGE_CURRICULUM_GHELM = True
+RUN_LANGUAGE_CURRICULUM_GHELM = False
 EXPS = [('logo_unlimited_200', 0, 1)]
 enumerationTimeout = 1800
 num_iterations = 12
@@ -268,7 +268,7 @@ for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000
                     experiment_commands += build_replications(exp_command, job, job_name)
             job +=1
 
-RUN_LANGUAGE_CURRICULUM_BASELINE = True
+RUN_LANGUAGE_CURRICULUM_BASELINE = False
 enumerationTimeout = 1800
 num_iterations = 12
 task_batch_size = 40
@@ -281,7 +281,8 @@ for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000
         job_name = f"logo_2_ec_cnn_compression_et_{enumerationTimeout}_supervised_{sample_n_supervised}_{dataset}_curr"
         jobs.append(job_name)
         base_parameters = f" --enumerationTimeout {enumerationTimeout} --testingTimeout {enumerationTimeout}  --iterations {num_iterations} --biasOptimal --contextual --taskBatchSize {task_batch_size} --testEvery {test_every} --no-cuda --recognitionTimeout {recognition_timeout} --recognition_0 examples --Helmholtz 0.5 --skip_first_test --taskReranker sentence_length"
-        exp_parameters = f" --taskDataset {dataset} --sample_n_supervised {sample_n_supervised}"
+        exp_parameters = f" --taskDataset {dataset} --sample_n_supervised {sample_n_supervised} --languageDataset {dataset}/synthetic"
+        
         
         exp_command = base_command + base_parameters + exp_parameters
         command = build_command(exp_command, job, job_name, replication=None)
@@ -291,6 +292,27 @@ for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000
                 if not NO_ORIGINAL_REPL: experiment_commands.append(command)
                 experiment_commands += build_replications(exp_command, job, job_name)
         job +=1
+
+# Generate no-language test time experiments. For now, these are manual.
+RUN_NO_LANGUAGE_TEST_EXPERIMENTS = True
+language_checkpoints = [("best-ghelm-logo-language-18", "experimentOutputs/logo/2020-04-21T15-41-24-093831/logo_aic=1.0_arity=3_ET=1800_it=34_MF=5_n_models=1_no_dsl=F_pc=30.0_RS=10000_RW=F_STM=T_L=1.5_batch=40_K=2_topLL=F_LANG=F.pickle", 34, "logo_unlimited_200", "language"),
+("best-baseline-logo-language-10", "experimentOutputs/logo/2020-04-20T00-39-24-721507/logo_aic=1.0_arity=3_BO=T_CO=T_ES=1_ET=1800_HR=0.5_it=27_MF=5_n_models=1_no_dsl=F_pc=30.0_RT=1800_RR=F_RW=F_smt_phrase_length=5_STM=T_L=1.5_synchronous_grammar=F_batch=40_K=2_topLL=F_LANG=F.pickle", 27, "logo_unlimited_200", "no-language")
+] 
+enumerationTimeout = 1
+recognition_timeout = 1
+for (name, language_checkpoint, last_iter, dataset, type) in language_checkpoints:
+    job_name = f"logo_2_ec_test_no_language_{name}"
+    jobs.append(job_name)
+    base_parameters = f" --enumerationTimeout {enumerationTimeout} --testingTimeout {enumerationTimeout}  --iterations {last_iter + 1} --biasOptimal --contextual --taskBatchSize {task_batch_size} --testEvery 1 --no-cuda --recognitionTimeout {recognition_timeout} --recognition_0 examples --Helmholtz 0.5 --iterations_as_epochs 0 "
+    exp_parameters = f" --taskDataset {dataset} --languageDataset {dataset}/synthetic --resume {language_checkpoint} --no-dsl --no-consolidation --test_dsl_only "
+    if type == 'language': exp_parameters += "--test_only_after_recognition" # Runs both tests.
+    
+    exp_command = base_command + base_parameters + exp_parameters
+    command = build_command(exp_command, job, job_name, replication=None)
+    if RUN_NO_LANGUAGE_TEST_EXPERIMENTS:
+        if not NO_ORIGINAL_REPL: experiment_commands.append(command)
+        experiment_commands += build_replications(exp_command, job, job_name)
+    job +=1
 
 #### Outputs
 PRINT_LOG_SCRIPT = False

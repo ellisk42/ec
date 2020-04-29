@@ -170,6 +170,8 @@ def ecIterator(grammar, tasks,
                testingTimeout=None,
                testEvery=1,
                skip_first_test=False,
+               test_only_after_recognition=False,
+               test_dsl_only=False,   
                reuseRecognition=False,
                ensembleSize=1,
                # Recognition parameters.
@@ -340,7 +342,10 @@ def ecIterator(grammar, tasks,
             "smt_phrase_length",
             "smt_pseudoalignments",
             "synchronous_grammar",
-            "skip_first_test"
+            "skip_first_test",
+            "test_only_after_recognition",
+            "n_models",
+            "test_dsl_only"
         ]
         parameters["iterations"] = iteration
         checkpoint_params = [k for k in sorted(parameters.keys()) if k not in exclude_from_path]
@@ -496,6 +501,7 @@ def ecIterator(grammar, tasks,
         assert False
     
     ######## Test Evaluation and background Helmholtz enumeration.
+    assert False
     for j in range(resume or 0, iterations):
         if storeTaskMetrics and rewriteTaskMetrics:
             eprint("Resetting task metrics for next iteration.")
@@ -511,7 +517,8 @@ def ecIterator(grammar, tasks,
             evaluateOnTestingTasks(result, testingTasks, grammar,
                                    CPUs=CPUs, maximumFrontier=maximumFrontier,
                                    solver=solver,
-                                   enumerationTimeout=testingTimeout, evaluationTimeout=evaluationTimeout)            
+                                   enumerationTimeout=testingTimeout, evaluationTimeout=evaluationTimeout,
+                                   test_dsl_only=test_dsl_only)            
         # If we have to also enumerate Helmholtz frontiers,
         # do this extra sneaky in the background
         if n_models > 0 and biasOptimal and helmholtzRatio > 0 and \
@@ -592,7 +599,8 @@ def ecIterator(grammar, tasks,
                                recognition_inputs=model_inputs[recognition_iteration],
                                finetune_from_example_encoder=finetune_1,
                                language_data=None,
-                               language_lexicon=None)
+                               language_lexicon=None,
+                               test_only_after_recognition=test_only_after_recognition)
 
             showHitMatrix(tasksHitTopDown, tasks_hit_recognition_0, wakingTaskBatch)
             
@@ -655,7 +663,8 @@ def ecIterator(grammar, tasks,
                                language_data=result.taskLanguage,
                                language_lexicon=result.vocabularies["train"],
                                helmholtz_nearest_language=helmholtz_nearest_language,
-                               helmholtz_translation_info=translation_info)
+                               helmholtz_translation_info=translation_info,
+                               test_only_after_recognition=test_only_after_recognition)
 
             showHitMatrix(tasksHitTopDown, tasks_hit_recognition_1, wakingTaskBatch)
             
@@ -744,9 +753,11 @@ def showHitMatrix(top, bottom, tasks):
                                              len(top & bottom)))
 
 def evaluateOnTestingTasks(result, testingTasks, grammar, _=None,
-                           CPUs=None, solver=None, maximumFrontier=None, enumerationTimeout=None, evaluationTimeout=None):
+                           CPUs=None, solver=None, maximumFrontier=None, enumerationTimeout=None, evaluationTimeout=None,
+                           test_dsl_only= False):
     
-    if len(result.models) > 0:
+    if len(result.models) > 0 and not test_dsl_only:
+        eprint("Evaluating on testing tasks using the recognizer.")
         recognizer = result.models[-1]
         testingFrontiers, times = \
          recognizer.enumerateFrontiers(testingTasks, 
@@ -760,6 +771,8 @@ def evaluateOnTestingTasks(result, testingTasks, grammar, _=None,
         updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskGrammarEntropies(testingTasks), 'heldoutTaskGrammarEntropies')
         updateTaskSummaryMetrics(result.recognitionTaskMetrics, recognizer.taskGrammarEntropies(testingTasks), 'heldoutTaskGrammarEntropies')
     else:
+        if test_dsl_only:
+            eprint("Evaluating on testing tasks using the following DSL:")
         testingFrontiers, times = multicoreEnumeration(grammar, testingTasks, 
                                                        solver=solver,
                                                        maximumFrontier=maximumFrontier,
@@ -883,10 +896,11 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
                       language_data=None,
                       language_lexicon=None,
                       helmholtz_nearest_language=0,
-                      helmholtz_translation_info=None):
-    eprint(f"Recognition iteration [{recognition_iteration}]. Training using: {[recognition_inputs]}")
+                      helmholtz_translation_info=None,
+                      test_only_after_recognition=False):
     # Exit if language only and we have no frontiers to train on.
     n_frontiers = len([f for f in allFrontiers if not f.empty])
+    eprint(f"Recognition iteration [{recognition_iteration}]. Attempting training using: {[recognition_inputs]} on {n_frontiers}.")
     if not 'examples' in recognition_inputs and 'language' in recognition_inputs and n_frontiers < 1:
         result.models += [None]
         eprint(f"! No non-empty language frontiers to train on. Skipping language-only enumeration.")
@@ -941,6 +955,17 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
                                      recognizers,
                                      seedRandom=True)
     eprint(f"Currently using this much memory: {getThisMemoryUsage()}")
+    
+    if test_only_after_recognition:
+        eprint("Trained an ensemble of %d recognition models, now testing the first one.")
+        result.models += [trainedRecognizers[0]]
+        evaluateOnTestingTasks(result, testingTasks, grammar,
+                               CPUs=CPUs, maximumFrontier=maximumFrontier,
+                               solver=solver,
+                               enumerationTimeout=enumerationTimeout, evaluationTimeout=evaluationTimeout,
+                               test_dsl_only=False)   
+        
+        sys.exit(0)
     # Enumerate frontiers for each of the recognizers.
     eprint("Trained an ensemble of %d recognition models, now enumerating." % len(trainedRecognizers))
     ensembleFrontiers, ensembleTimes, ensembleRecognitionTimes = [], [], []
@@ -1170,6 +1195,15 @@ def commandlineArguments(_=None,
                         action="store_true",	
                         dest="skip_first_test",	
                         help="""Skip the first testing round to avoid redundancy.""")
+    parser.add_argument("--test_only_after_recognition",	
+                        action="store_true",	
+                        dest="test_only_after_recognition",	
+                        help="""Trains the recognition model and then runs tests instead of searching. Used for training different recognition models.""")
+    parser.add_argument("--test_dsl_only",	
+                        action="store_true",	
+                        dest="test_dsl_only",	
+                        help="""Force uses the DSL for enumerative testing.""")
+                        
     parser.add_argument("--debug",
                         action="store_true",
                         dest="debug",
