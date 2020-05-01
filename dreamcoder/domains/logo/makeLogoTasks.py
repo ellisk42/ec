@@ -320,7 +320,7 @@ def writeLogoDataset(tasks, task_dataset, task_dataset_dir):
         Path(split_path).mkdir(parents=True, exist_ok=True)
         saveVisualizedTasks(tasks, split_path)   
 
-def loadLogoDataset(task_dataset, task_dataset_dir):
+def loadLogoDataset(task_dataset, task_dataset_dir, om_original_ordering):
     dataset_path = os.path.join(task_dataset_dir, task_dataset)
     tasks = {"train": [], "test": []}
     for split in ("train", "test"):
@@ -331,6 +331,16 @@ def loadLogoDataset(task_dataset, task_dataset_dir):
                 t = dill.load(f)
                 t.nearest_name = None
                 tasks[split].append(t)
+    if bool(om_original_ordering):
+        # Silly hack to load the original ordering used in the paper @CathyWong
+        with open(os.path.join(dataset_path, 'ordering_om')) as f:
+            ordering = [l.strip() for l in f.readlines()]
+        name_to_task = {
+            t.name : t
+            for t in tasks['train']
+        }
+        tasks["train"] = [name_to_task[n] for n in ordering]
+        import pdb; pdb.set_trace()
     return tasks["train"], tasks["test"]
         
     

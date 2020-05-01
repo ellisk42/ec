@@ -1,5 +1,5 @@
-USING_GCLOUD = False
-USING_SINGULARITY = True
+USING_GCLOUD = True
+USING_SINGULARITY = False
 NUM_REPLICATIONS = 0
 NO_ORIGINAL_REPL = False
 
@@ -147,13 +147,13 @@ if RUN_LANGUAGE_SEARCH_BASELINE:
 job += 1
 
 #### Generates EC baselines with updated LOGO dataset and supervision
-RUN_EC_BASELINES_LOGO_2 = False
+RUN_EC_BASELINES_LOGO_2 = True
 enumerationTimeout = 1800
 num_iterations = 12
 task_batch_size = 40
 test_every = 3
 recognition_timeout = 1800
-EXPS = [('logo_unlimited_200', 0)]
+EXPS = [('logo_unlimited_200', 10)]
 for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000']:
     for sample_n_supervised in [0, 10]:
         exp = (dataset, sample_n_supervised)
@@ -163,16 +163,18 @@ for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000
         exp_parameters = f" --taskDataset {dataset} --sample_n_supervised {sample_n_supervised}"
         
         exp_command = base_command + base_parameters + exp_parameters
-        command = build_command(exp_command, job, job_name, replication=None)
+        orig_command = exp_command + " --om_original_ordering"
+        command = build_command(orig_command, job, job_name, replication=None)
         
         if RUN_EC_BASELINES_LOGO_2:
             if (EXPS is None) or (exp in EXPS):
-                if not NO_ORIGINAL_REPL: experiment_commands.append(command)
+                if not NO_ORIGINAL_REPL: 
+                    experiment_commands.append(command)
                 experiment_commands += build_replications(exp_command, job, job_name)
         job +=1
 #### Generate Helmholtz generative model experiments.
 RUN_HELMHOLTZ_GENERATIVE_MODEL = False
-EXPS = [('logo_unlimited_200', 0, 1)]
+EXPS = [('logo_unlimited_200', 10, 1)]
 enumerationTimeout = 1800
 num_iterations = 12
 task_batch_size = 40
@@ -197,7 +199,7 @@ for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000
 
 
 #### Generate Helmholtz pseudoalignment experiments.
-RUN_HELMHOLTZ_PSEUDOALIGNMENTS = False
+RUN_HELMHOLTZ_PSEUDOALIGNMENTS = True
 enumerationTimeout = 1800
 num_iterations = 12
 task_batch_size = 40
@@ -215,10 +217,12 @@ for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000
             exp_parameters = f" --taskDataset {dataset} --language_encoder recurrent --languageDataset {dataset}/synthetic --sample_n_supervised {sample_n_supervised} --moses_dir ./moses_compiled --smt_phrase_length {phrase_length} --smt_pseudoalignments {pseudoalignment}"
             
             exp_command = base_command + base_parameters + exp_parameters
-            command = build_command(exp_command, job, job_name, replication=None)
+            orig_command = exp_command + " --om_original_ordering"
+            command = build_command(orig_command, job, job_name, replication=None)
             if RUN_HELMHOLTZ_PSEUDOALIGNMENTS:
                 if (EXPS is None) or (exp in EXPS):
-                    if not NO_ORIGINAL_REPL: experiment_commands.append(command)
+                    if not NO_ORIGINAL_REPL: 
+                        experiment_commands.append(command)
                     experiment_commands += build_replications(exp_command, job, job_name)
             job +=1
 
@@ -237,7 +241,8 @@ for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000
         base_parameters = f" --enumerationTimeout {enumerationTimeout} --testingTimeout {enumerationTimeout}  --iterations {num_iterations} --biasOptimal --contextual --taskBatchSize {task_batch_size} --testEvery {test_every} --no-cuda --recognitionSteps {recognition_steps} --recognition_0 --recognition_1 examples language --Helmholtz 0 --skip_first_test"
         exp_parameters = f" --taskDataset {dataset} --language_encoder recurrent --languageDataset {dataset}/synthetic --sample_n_supervised {sample_n_supervised} "
     
-        command = get_launcher_command(job, job_name) + base_command + base_parameters + exp_parameters + append_command(job_name)
+        exp_command = base_command + base_parameters + exp_parameters
+        command = build_command(exp_command, job, job_name, replication=None)
         if RUN_NO_HELMHOLTZ_GENERATIVE_MODEL:
             if (EXPS is None) or (exp in EXPS):
                 if not NO_ORIGINAL_REPL: experiment_commands.append(command)
@@ -286,7 +291,7 @@ for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000
         
         exp_command = base_command + base_parameters + exp_parameters
         command = build_command(exp_command, job, job_name, replication=None)
-        
+    
         if RUN_LANGUAGE_CURRICULUM_BASELINE:
             if (EXPS is None) or (exp in EXPS):
                 if not NO_ORIGINAL_REPL: experiment_commands.append(command)
@@ -294,7 +299,7 @@ for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000
         job +=1
 
 # Generate no-language test time experiments. For now, these are manual.
-RUN_NO_LANGUAGE_TEST_EXPERIMENTS = True
+RUN_NO_LANGUAGE_TEST_EXPERIMENTS = False
 language_checkpoints = [("best-ghelm-logo-language-18", "experimentOutputs/logo/2020-04-21T15-41-24-093831/logo_aic=1.0_arity=3_ET=1800_it=34_MF=5_n_models=1_no_dsl=F_pc=30.0_RS=10000_RW=F_STM=T_L=1.5_batch=40_K=2_topLL=F_LANG=F.pickle", 34, "logo_unlimited_200", "language"),
 ("best-baseline-logo-language-10", "experimentOutputs/logo/2020-04-20T00-39-24-721507/logo_aic=1.0_arity=3_BO=T_CO=T_ES=1_ET=1800_HR=0.5_it=27_MF=5_n_models=1_no_dsl=F_pc=30.0_RT=1800_RR=F_RW=F_smt_phrase_length=5_STM=T_L=1.5_synchronous_grammar=F_batch=40_K=2_topLL=F_LANG=F.pickle", 27, "logo_unlimited_200", "no-language")
 ] 

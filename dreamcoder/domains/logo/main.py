@@ -329,6 +329,9 @@ def list_options(parser):
                         type=int)
     parser.add_argument("--sample_n_supervised",
                         default=0, type=int)
+    parser.add_argument("--om_original_ordering",
+                        default=0, type=int,
+                        help="Uses the original ordering for the initial run for experiments in the paper.")
 
 def outputDreams(checkpoint, directory):
     from dreamcoder.utilities import loadPickle
@@ -549,11 +552,13 @@ def main(args):
     if not os.path.exists(prefix_dreams):
         os.makedirs(prefix_dreams)
     
+    om_original_ordering = args.pop("om_original_ordering")
     sample_n_supervised = args.pop("sample_n_supervised")
     task_dataset = args.pop("taskDataset")
     task_dataset_dir=args.pop("taskDatasetDir")
     if task_dataset:
-        train, test = loadLogoDataset(task_dataset=task_dataset, task_dataset_dir=task_dataset_dir)
+        train, test = loadLogoDataset(task_dataset=task_dataset, task_dataset_dir=task_dataset_dir,
+        om_original_ordering=om_original_ordering)
         eprint(f"Loaded dataset [{task_dataset}]: [{len(train)}] train and [{len(test)}] test tasks.")
         if sample_n_supervised > 0:
             eprint(f"Sampling n={sample_n_supervised} supervised tasks.")
