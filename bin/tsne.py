@@ -130,10 +130,12 @@ names = [str(Program.parse(sketchStr)) + "inputs: " + str(xs) for sketchStr, xs 
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 from sklearn.manifold import TSNE
+from sklearn.decomposition import PCA
 plt.rcParams['figure.dpi'] = 800
 
 for i in range(10):
     e_tsne = TSNE(n_components=2).fit_transform(e)
+    #e_pca = PCA(n_components=2).fit_transform(e)
     x = [x[0] for x in e_tsne]
     y = [x[1] for x in e_tsne]
 

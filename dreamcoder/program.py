@@ -804,7 +804,7 @@ class Primitive(Program):
 
             if self.name not in [str(i) for i in range(10)]: assert False
 
-            if any(type(arg) == torch.Tensor for arg in args) or self.name == 'unfold' \
+            if any(isinstance(arg,torch.Tensor) for arg in args) or self.name == 'unfold' \
             or ( self.name in exceptionList and any( tp.isArrow and x.hasHoles \
                     for tp, x in zip(self.tp.functionArguments(), xs )) ): #TODO STOPGAP
 

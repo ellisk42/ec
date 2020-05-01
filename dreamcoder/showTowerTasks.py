@@ -80,7 +80,7 @@ def computeValue(r):
     #import pdb; pdb.set_trace()
 
 
-def testTask(rS, rR, rRNN, i, verbose=True, nSamples=1):
+def testTask(rS, rR, rRNN, i, verbose=True, nSamples=1, usePrior=False):
     
     from dreamcoder.symbolicAbstractTowers import SymbolicAbstractTowers
     concreteHead = SymbolicAbstractTowers()
@@ -88,11 +88,12 @@ def testTask(rS, rR, rRNN, i, verbose=True, nSamples=1):
     tasks = rS.getTestingTasks()
     task = tasks[i]
 
-
-
     if verbose: print(i)
     if verbose: print(task.name)
-    gS = rS.recognitionModel.grammarOfTask(task)
+    if usePrior:
+        gS = rS.grammars[-1]
+    else:
+        gS = rS.recognitionModel.grammarOfTask(task)
     gR = rR.recognitionModel.grammarOfTask(task)
     gRNN = rRNN.recognitionModel.grammarOfTask(task)
     
@@ -160,7 +161,11 @@ def testTask(rS, rR, rRNN, i, verbose=True, nSamples=1):
             if verbose: print("rnn value", RNNValue)
         #print(newOb)
         if verbose: print()
-        logLikelihood = task.logLikelihood(newOb, None)
+
+        with timing("likelihood"):
+            logLikelihood = task.logLikelihood(newOb, None)
+        
+
         if verbose: print("task likelihood", logLikelihood)
         if verbose: print()
         if verbose: print()
@@ -177,6 +182,7 @@ def testTask(rS, rR, rRNN, i, verbose=True, nSamples=1):
     print(f"average value times: {valueTime}")
     print(f"average symbolic times: {concreteTime}")
     print(f"average rnn times: {rnnTime}")
+    print(f"fraction of rollouts hit: {sum(r[0] for r in runs)/ len(runs)}")
     return runs
 
 

@@ -462,7 +462,7 @@ class timing(object):
         if isinstance(self.message, str): message = self.message
         elif callable(self.message): message = self.message(dt)
         else: assert False, "Timing message should be string function"
-        eprint("%s in %.3f seconds" % (message, dt))
+        eprint("%s in %.5f seconds" % (message, dt))
 
 class random_seed(object):
     def __init__(self, seed):
