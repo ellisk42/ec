@@ -1259,8 +1259,8 @@ class RecognitionModel(nn.Module):
             else:
                 grammars = {task: self.grammarOfTask(task)
                         for task in tasks}
-            #untorch seperately to make sure you filter out None grammars
-            grammars = {task: grammar.untorch() for task, grammar in grammars.items() if grammar is not None}
+                #untorch seperately to make sure you filter out None grammars
+                grammars = {task: grammar.untorch() for task, grammar in grammars.items() if grammar is not None}
 
         #if solver=='python':  # TODO
         if self.useValue:
