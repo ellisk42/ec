@@ -340,7 +340,6 @@ def loadLogoDataset(task_dataset, task_dataset_dir, om_original_ordering):
             for t in tasks['train']
         }
         tasks["train"] = [name_to_task[n] for n in ordering]
-        import pdb; pdb.set_trace()
     return tasks["train"], tasks["test"]
         
     

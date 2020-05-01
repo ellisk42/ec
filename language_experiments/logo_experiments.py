@@ -153,7 +153,7 @@ num_iterations = 12
 task_batch_size = 40
 test_every = 3
 recognition_timeout = 1800
-EXPS = [('logo_unlimited_200', 10)]
+EXPS = [('logo_unlimited_200', 0)]
 for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000']:
     for sample_n_supervised in [0, 10]:
         exp = (dataset, sample_n_supervised)
@@ -163,7 +163,7 @@ for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000
         exp_parameters = f" --taskDataset {dataset} --sample_n_supervised {sample_n_supervised}"
         
         exp_command = base_command + base_parameters + exp_parameters
-        orig_command = exp_command + " --om_original_ordering"
+        orig_command = exp_command + " --om_original_ordering 1 "
         command = build_command(orig_command, job, job_name, replication=None)
         
         if RUN_EC_BASELINES_LOGO_2:
@@ -217,7 +217,7 @@ for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000
             exp_parameters = f" --taskDataset {dataset} --language_encoder recurrent --languageDataset {dataset}/synthetic --sample_n_supervised {sample_n_supervised} --moses_dir ./moses_compiled --smt_phrase_length {phrase_length} --smt_pseudoalignments {pseudoalignment}"
             
             exp_command = base_command + base_parameters + exp_parameters
-            orig_command = exp_command + " --om_original_ordering"
+            orig_command = exp_command + " --om_original_ordering 1"
             command = build_command(orig_command, job, job_name, replication=None)
             if RUN_HELMHOLTZ_PSEUDOALIGNMENTS:
                 if (EXPS is None) or (exp in EXPS):
