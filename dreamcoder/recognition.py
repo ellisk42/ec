@@ -1081,8 +1081,6 @@ class RecognitionModel(nn.Module):
 
                 if self.useValue:
 
-
-
                     # try:
                     #     def timeoutCallBack(_1, _2): raise EvaluationTimeout()
                     #     signal.signal(signal.SIGVTALRM, timeoutCallBack)
@@ -1097,7 +1095,6 @@ class RecognitionModel(nn.Module):
                         if self.use_cuda: valueHeadLoss = valueHeadLoss.cuda()
     
                     #valueHeadLoss = self.valueHead.valueLossFromFrontier(frontier, self.grammar) 
-
                     # except EvaluationTimeout:
                     #     print("Timed out while evaluating")
                     #     valueHeadLoss = 0
@@ -1253,9 +1250,13 @@ class RecognitionModel(nn.Module):
                            frontierSize=None,
                            maximumFrontier=None,
                            evaluationTimeout=None,
-                           returnNumOfProg=False):
+                           returnNumOfProg=False,
+                           priorPolicy=False):
         with timing("Evaluated recognition model"):
-            grammars = {task: self.grammarOfTask(task)
+            if priorPolicy:
+                grammars = {task: self.grammar for task in tasks}
+            else:
+                grammars = {task: self.grammarOfTask(task)
                         for task in tasks}
             #untorch seperately to make sure you filter out None grammars
             grammars = {task: grammar.untorch() for task, grammar in grammars.items() if grammar is not None}

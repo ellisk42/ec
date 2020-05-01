@@ -23,7 +23,7 @@ from matplotlib import pyplot
 
 if __name__ == '__main__':
     sys.setrecursionlimit(5000)
-    n = 3
+    n = 20
     ID = 'towers' + str(n)
 
     nameSalt = "towers"
@@ -37,16 +37,16 @@ if __name__ == '__main__':
         (f'experimentOutputs/{ID}RNN_SRE=True.pickle', 'RNN value'),
         (f'experimentOutputs/{ID}REPL_SRE=True.pickle', 'REPL modular value')]
 
-    paths = [(f'experimentOutputs/{ID}Sample_SRE=True.pickle', 'Sample'),
-        (f'experimentOutputs/towers{n}SamplePolicyRNN_SRE=True_graph=True.pickle', 'RNN value'),
-        (f'experimentOutputs/towers{n}LongSamplePolicyREPL_SRE=True_graph=True.pickle', 'REPL modular value')]
-    print("WARNING: using the long samplePolicy Repl run and rnn")
+    # paths = [(f'experimentOutputs/{ID}Sample_SRE=True.pickle', 'Sample'),
+    #     (f'experimentOutputs/towers{n}SamplePolicyRNN_SRE=True_graph=True.pickle', 'RNN value'),
+    #     (f'experimentOutputs/towers{n}LongSamplePolicyREPL_SRE=True_graph=True.pickle', 'REPL modular value')]
+    # print("WARNING: using the long samplePolicy Repl run and rnn")
 
-    ID = 'towers' + str(n) + 'REPLPolicyHashing'
-    paths = [(f'experimentOutputs/{ID}Sample_SRE=True_graph=True.pickle', 'Sample'),
-        (f'experimentOutputs/towers{ID}RNN_SRE=True_graph=True.pickle', 'RNN value'),
-        (f'experimentOutputs/towers{ID}REPL_SRE=True_graph=True.pickle', 'REPL modular value')]
-    print("WARNING: using the REPLPolicyHashing runs")
+    # ID = 'towers' + str(n) + 'REPLPolicyHashing'
+    # paths = [(f'experimentOutputs/{ID}Sample_SRE=True_graph=True.pickle', 'Sample'),
+    #     (f'experimentOutputs/towers{ID}RNN_SRE=True_graph=True.pickle', 'RNN value'),
+    #     (f'experimentOutputs/towers{ID}REPL_SRE=True_graph=True.pickle', 'REPL modular value')]
+    # print("WARNING: using the REPLPolicyHashing runs")
 
 
     paths, names = zip(*paths)
@@ -129,31 +129,32 @@ if __name__ == '__main__':
     # print("sample", sHits)
 
 
-    reductions = []
-    for i, t in enumerate(testingTasks):
-        hitSample = bool(rS.testingSearchStats[0][t])
-        hitREPL = bool(rR.testingSearchStats[0][t])
+    # reductions = []
+    # for i, t in enumerate(testingTasks):
+    #     hitSample = bool(rS.testingSearchStats[0][t])
+    #     hitREPL = bool(rR.testingSearchStats[0][t])
 
-        if hitSample: sampleMin = rS.testingSearchStats[0][t][0].evaluations
-        if hitREPL: REPLMin = rR.testingSearchStats[0][t][0].evaluations
+    #     if hitSample: sampleMin = rS.testingSearchStats[0][t][0].evaluations
+    #     if hitREPL: REPLMin = rR.testingSearchStats[0][t][0].evaluations
 
-        if hitSample and hitREPL:
-            print("reduction factor:", sampleMin/REPLMin)
-            print("num samples required", sampleMin)            
-            reductions.append( (sampleMin, sampleMin/REPLMin))
-
-
-    reductions = sorted(reductions, key=lambda x: x[0])
-    print(reductions)
-    samples, reductionRate = zip(*reductions)
+    #     if hitSample and hitREPL:
+    #         print("reduction factor:", sampleMin/REPLMin)
+    #         print("num samples required", sampleMin)            
+    #         reductions.append( (sampleMin, sampleMin/REPLMin))
 
 
-    pyplot.plot(samples, reductionRate, marker='o', label='Sample/REPL')
-    # axis labels
-    pyplot.xlabel('num samples required')
-    pyplot.ylabel('reduction rate')
-    # show the plot
-    pyplot.savefig ('plots/reductionRateit20.png')
+    # reductions = sorted(reductions, key=lambda x: x[0])
+
+    # print(reductions)
+    # samples, reductionRate = zip(*reductions)
+
+
+    # pyplot.plot(samples, reductionRate, marker='o', label='Sample/REPL')
+    # # axis labels
+    # pyplot.xlabel('num samples required')
+    # pyplot.ylabel('reduction rate')
+    # # show the plot
+    # pyplot.savefig ('plots/reductionRateit20.png')
 
 
         # if hitSample:
@@ -163,9 +164,9 @@ if __name__ == '__main__':
         #         print("num enum:", rS.testingSearchStats[0][t][0].evaluations)
         #         print("max from sample", rR.testingNumOfProg[-1][t])
 
-    assert 0
-    showTowersAndSolutions(rR, "towersTasksREPL/")
-    assert 0
+    # assert 0
+    # showTowersAndSolutions(rR, "towersTasksREPL/")
+    # assert 0
     # basePath = 'towersNames/'
 
     # for t in SHitsRMisses:
@@ -203,7 +204,7 @@ if __name__ == '__main__':
     rnnDataLst = []
     for i in range(len(testingTasks)):
         print(i)
-        runs = testTask(rS, rR, rRNN, i, verbose=False, nSamples=15)
+        runs = testTask(rS, rR, rRNN, i, verbose=False, nSamples=5, usePrior=True)
         for run in runs:
             hit, nvs, cvs, rnnvs = run
             for n, c, rnn in zip(nvs, cvs, rnnvs):
@@ -227,5 +228,5 @@ if __name__ == '__main__':
         print(f"\tprecision: {tp/ (tp + fp)}")
 
 
-    path = 'plots/precisionRecall15samp0.png'
+    path = 'plots/precisionRecallusePrior5samp0.png'
     graphPrecisionRecall(symbolicDataLst, neuralDataLst, rnnDataLst, path, nSamp=500)

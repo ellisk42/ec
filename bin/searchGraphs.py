@@ -107,9 +107,9 @@ if __name__ == '__main__':
         (f'experimentOutputs/{ID}Symbolic_SRE=True_graph=True.pickle', 'Symbolic value')]
 
 
-    nameSalt = "towersREPLPolicyHashing"
+    nameSalt = "towersSamplePolicyHashing"
 
-    ID = 'towers' + str(n) + 'REPLPolicyHashing'
+    ID = 'towers' + str(n) + 'SamplePolicyHashing'
     paths = [(f'experimentOutputs/{ID}Sample_SRE=True_graph=True.pickle', 'Sample'),
         (f'experimentOutputs/{ID}RNN_SRE=True_graph=True.pickle', 'RNN value'),
         (f'experimentOutputs/{ID}REPL_SRE=True_graph=True.pickle', 'REPL modular value'),
@@ -125,7 +125,7 @@ if __name__ == '__main__':
     outputDirectory = 'plots'
     paths, names = zip(*paths)
 
-    for mode in ['test', 'train']:
+    for mode in ['test']: #['test', 'train']:
 
         testResults = []
         for path in paths:

@@ -234,7 +234,9 @@ abstractPrimitives = [
 def heightAfter(lst, p):
     #gets height at x, assuming things that end at x dont count, but thngs that start do
     preLst = [(x, y) for x,y in lst if x <= p ]
-    return preLst[-1][1] 
+    if preLst:
+        return preLst[-1][1] 
+    else: return 0 #since I can't tell, assume 0?
 
 def updateMinHeight(lst, xl, xh, dh):
 

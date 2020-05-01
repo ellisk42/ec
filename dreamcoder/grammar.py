@@ -254,8 +254,8 @@ class Grammar(object):
             context, expression = self._sampleOneStep(
                 request.arguments[1], context, [
                     request.arguments[0]] + environment, mustBeLeaf,
-                    forceHole=forceHole) #is this right? #should there be an excludeProd here???s
-            assert False, 'should there be an excludeHole?'
+                    forceHole=forceHole, excludeProd=excludeProd) #is this right? #should there be an excludeProd here???
+            #assert False, 'should there be an excludeHole?'
             return context, Abstraction(expression) #should I be putting it into beta-normal form??
 
         if forceHole:
