@@ -1254,6 +1254,7 @@ class RecognitionModel(nn.Module):
                            priorPolicy=False):
         with timing("Evaluated recognition model"):
             if priorPolicy:
+                print("Using prior as policy")
                 grammars = {task: self.grammar for task in tasks}
             else:
                 grammars = {task: self.grammarOfTask(task)

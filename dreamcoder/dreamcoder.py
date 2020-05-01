@@ -465,7 +465,7 @@ def ecIterator(grammar, tasks,
         trainFrontiers, trainingTimes, searchStats, trainNumOfProg = enumerator(tasks, 
                                                                         enumerationTimeout=enumerationTimeout,
                                                                         returnNumOfProg=True,
-                                                                        priorPolicy=True,
+                                                                        priorPolicy=priorPolicy,
                                                                         testing=True) #hack so that each task is seperate
         nHits = sum( f.entries != [] for f in trainFrontiers)
         print("number of training tasks hit:", nHits)
@@ -474,7 +474,7 @@ def ecIterator(grammar, tasks,
                                                                                 enumerationTimeout=testingTimeout,
                                                                                 testing=True, 
                                                                                 returnNumOfProg=True,
-                                                                                priorPolicy=True)
+                                                                                priorPolicy=priorPolicy)
         nHits = sum( f.entries != [] for f in testFrontiers)
         print("number of testing tasks hit:", nHits)
 
@@ -1140,8 +1140,7 @@ def commandlineArguments(_=None,
                         default=False,
                         help="use the policy from saved sample run")
     parser.add_argument("--priorPolicy",
-                        type=str,
-                        default=False,
+                        action='store_true',
                         help="use the prior (gen model) as the policy during search")
     parser.add_argument("--resumeTraining", #TODO need this to be an int or something
                         action='store_true',
