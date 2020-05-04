@@ -74,10 +74,8 @@ def plotTestResults(testResults, timeout, defaultLoss=None,
 
 if __name__ == '__main__':
 
-    n = 3
+    n = 20
     ID = 'towers' + str(n)
-
-
 
     # paths = [(f'experimentOutputs/{ID}Sample_SRE=True.pickle', 'Sample'),
     #     (f'experimentOutputs/{ID}RNN_SRE=True.pickle', 'RNN value'),
@@ -108,17 +106,24 @@ if __name__ == '__main__':
 
 
     nameSalt = "towersSamplePolicyHashing"
-
     ID = 'towers' + str(n) + 'SamplePolicyHashing'
     paths = [(f'experimentOutputs/{ID}Sample_SRE=True_graph=True.pickle', 'Sample'),
         (f'experimentOutputs/{ID}RNN_SRE=True_graph=True.pickle', 'RNN value'),
         (f'experimentOutputs/{ID}REPL_SRE=True_graph=True.pickle', 'REPL modular value'),
-        (f'experimentOutputs/{ID}Symbolic_SRE=True_graph=True.pickle', 'Symbolic value')]
+        (f'experimentOutputs/{ID}Symbolic_SRE=True_graph=True.pickle', 'Symbolic value'),
+        ]
+    #print("WARNING: using the REPLPolicyHashing runs")
 
-    print("WARNING: using the REPLPolicyHashing runs")
-
-
-
+    graph="_graph=True"
+    mode="Prior"
+    nameSalt = "towersPrior"
+    ID = 'towers' + str(n)
+    runType = "Prior"
+    paths = [(f'experimentOutputs/{ID}{runType}Sample_SRE=True{graph}.pickle', 'Sample from prior only (no value)'),
+        (f'experimentOutputs/{ID}{runType}RNN_SRE=True{graph}.pickle', 'RNN value'),
+        (f'experimentOutputs/{ID}{runType}REPL_SRE=True{graph}.pickle', 'REPL modular value'),
+        (f'experimentOutputs/{ID}{runType}Symbolic_SRE=True{graph}.pickle', 'Symbolic value')
+        ]
 
 
     timeout=1200

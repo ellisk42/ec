@@ -388,7 +388,7 @@ def ecIterator(grammar, tasks,
     
     
     if singleRoundValueEval:
-        sys.setrecursionlimit(5000) #so we dont error out
+        sys.setrecursionlimit(8000) #so we dont error out
         random.seed(seed)
         resumeTraining = resumeTraining #toggle for resume from checkpoint, ints will go to specific checkpoint
         skipTraining = skipTraining #toggle for skip training because it's finished

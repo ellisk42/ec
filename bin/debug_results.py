@@ -204,7 +204,7 @@ if __name__ == '__main__':
     rnnDataLst = []
     for i in range(len(testingTasks)):
         print(i)
-        runs = testTask(rS, rR, rRNN, i, verbose=False, nSamples=5, usePrior=True)
+        runs = testTask(rS, rR, rRNN, i, verbose=False, nSamples=10, usePrior=False)
         for run in runs:
             hit, nvs, cvs, rnnvs = run
             for n, c, rnn in zip(nvs, cvs, rnnvs):
@@ -228,5 +228,5 @@ if __name__ == '__main__':
         print(f"\tprecision: {tp/ (tp + fp)}")
 
 
-    path = 'plots/precisionRecallusePrior5samp0.png'
+    path = 'plots/precisionRecallit20samp10.png'
     graphPrecisionRecall(symbolicDataLst, neuralDataLst, rnnDataLst, path, nSamp=500)

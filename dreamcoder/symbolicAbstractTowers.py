@@ -4,7 +4,7 @@ from dreamcoder.program import *
 from dreamcoder.type import tint
 from dreamcoder.domains.tower.towerPrimitives import *
 from dreamcoder.domains.tower.tower_common import simulateWithoutPhysics, centerTower
-
+import numpy as np
 
 #TODO make abstract Primitives
 
@@ -55,12 +55,10 @@ class ConvertSketchToAbstract:
         return e.visit(self)
 
 def executeAbstractSketch(absSketch):
-    #print("abstract Sketch:", absSketch)
     hand = absSketch.evaluate([])(lambda x: x)(AbstractTowerState(history=initialHist)) #TODO init history
-    #print("hand.history", hand.history )
-    return hand.history
+    return hand
 
-def taskViolatesAbstractState(task, absState):
+def taskViolatesAbstractState(task, absWorld):
     
     def maxHeightAfter(x, block):
         (x_,y_,w_,h_) = block
@@ -72,7 +70,7 @@ def taskViolatesAbstractState(task, absState):
     #world is a (sorted) list of (x,y,w,h)
     world = simulateWithoutPhysics(centerTower(task.plan))
     #print("world:", world)
-    #print("abstract state", absState)
+    #print("abstract state", absWorld)
 
     def checkViolationForParticularOffset(world, abstractState, offset):
         #abstractState = [(x + offset, y) for x, y in abstractState]
@@ -83,7 +81,7 @@ def taskViolatesAbstractState(task, absState):
                 return True
         return False 
 
-    lst = [checkViolationForParticularOffset(world, absState, offset) for offset in range(-resolution//2, resolution//2)] #TODO
+    lst = [checkViolationForParticularOffset(world, absWorld, offset) for offset in range(-resolution//2, resolution//2)] #TODO
     if all(lst):
         return True
     return False
@@ -95,10 +93,9 @@ class SymbolicAbstractTowers(BaseValueHead):
     def computeValue(self, sketch, task):
 
         absSketch = ConvertSketchToAbstract().execute(sketch)
+        absState = executeAbstractSketch(absSketch) #gets he history
 
-        absState = executeAbstractSketch(absSketch)  #TODO
-
-        if taskViolatesAbstractState(task, absState):
+        if taskViolatesAbstractState(task, absState.history):
             return float('inf')
         return 0.
 
@@ -157,6 +154,18 @@ class AbstractTowerState:
         return AbstractTowerState(hand=newHand, orientation=newOrientation,
                 history=self.history)
 
+    def union(self, other): #for loops
+        if self.orientation == other.orientation:
+            newOrientation = self.orientation
+        else:
+            newOrientation = 0
+        newHand = (min(self.hand[0], other.hand[0]), max(self.hand[1], other.hand[1]))
+
+        newHist = 0 #TODO
+        assert False
+        return AbstractTowerState(hand=newHand, orientation=newOrientation,
+                    history=newHist)
+
 
 
 def _simpleLoop(n):
@@ -165,6 +174,7 @@ def _simpleLoop(n):
             if start >= n: return k
             return body(start)(f(start + 1, body, k))
         return lambda b: lambda k: f(0,b,k)
+
     elif n == _intTopPrimitive:
         return lambda b: lambda k: lambda s: k(s.topify())
     else: assert 0
@@ -230,6 +240,15 @@ abstractPrimitives = [
 
         Primitive("intTop", tint, _intTopPrimitive) #TODO
     ]
+
+def renderAbsTowerHist(lst):
+    a = np.zeros((resolution, resolution, 3))
+
+    for x in range(-resolution+1, resolution-1, 2):
+        h = heightAfter(lst, x)
+        a[resolution - h//2:, resolution//2  + (x-1)//2 , :] = 1.
+    return a
+
 
 def heightAfter(lst, p):
     #gets height at x, assuming things that end at x dont count, but thngs that start do
