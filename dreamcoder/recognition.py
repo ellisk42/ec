@@ -881,7 +881,7 @@ class RecognitionModel(nn.Module):
               timeout=None, evaluationTimeout=0.001,
               helmholtzFrontiers=[], helmholtzRatio=0., helmholtzBatch=500,
               biasOptimal=None, defaultRequest=None, auxLoss=False, vectorized=True,
-              saveIter=None, savePath=None):
+              saveIter=None, savePath=None, conditionalForValueTraining=False):
         """
         helmholtzRatio: What fraction of the training data should be forward samples from the generative model?
         helmholtzFrontiers: Frontiers from programs enumerated from generative model (optional)
@@ -1085,8 +1085,12 @@ class RecognitionModel(nn.Module):
                     #     def timeoutCallBack(_1, _2): raise EvaluationTimeout()
                     #     signal.signal(signal.SIGVTALRM, timeoutCallBack)
                     #     signal.setitimer(signal.ITIMER_VIRTUAL, timeout)  
+                    if conditionalForValueTraining:
+                        g = self.grammarOfTask(frontier.task).untorch()
+                    else:
+                        g = self.grammar
 
-                    f = lambda: self.valueHead.valueLossFromFrontier(frontier, self.grammar) 
+                    f = lambda: self.valueHead.valueLossFromFrontier(frontier, g) 
                     try:
                         valueHeadLoss = runWithTimeout(f, 30)
                     except RunWithTimeout:

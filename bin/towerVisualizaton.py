@@ -59,9 +59,12 @@ ALGOS = ['tsne', 'pca']
 MODES = ['text', 'color', 'image', 'valueText', 'imageValue', 'symbolicOrientation', 'maxH', 'symbolicHand', 'absState']
 
 mode = 'absState'
+skipValueComp = True
+excludeZeroHist = True
+
 TASK_IDS = list(range(len(tasks)))
-nImages = 4
-nRollouts = 1
+nImages = 5
+nRollouts = 2
 
 
 print(f"tasks:")
@@ -70,19 +73,27 @@ for i in TASK_IDS:
 
 sketches, ids = zip(*[( s, task_id ) \
     for task_id in TASK_IDS for s in getSketchesFromRollout(task_id, rS, nSamples=nRollouts)])
-   
+
+from dreamcoder.symbolicAbstractTowers import executeAbstractSketch, ConvertSketchToAbstract, renderAbsTowerHist
+symbolicVals = [ executeAbstractSketch( ConvertSketchToAbstract().execute(s) ) for s in sketches ]  
+
+if excludeZeroHist:
+    sketches, ids, symbolicVals = zip(* [(s, i, v) for (s, i, v) in zip(sketches, ids, symbolicVals)  if v.history != [(-257, 0)] ] )
+
 print("num sketches:", len(sketches))
 embeddings = [ rR.recognitionModel.valueHead._computeSketchRepresentation(
                 s.betaNormalForm()).cpu().detach().numpy()
                     for s in sketches]
 names = [ str(s.betaNormalForm()) for s in sketches] #could do betaNormalForm here
-values = [ rR.recognitionModel.valueHead.computeValue(s, tasks[i]) for s, i in zip(sketches, ids) ]
-values = [ math.exp(-v) for v in values]
-from dreamcoder.symbolicAbstractTowers import executeAbstractSketch, ConvertSketchToAbstract, renderAbsTowerHist
 
-symbolicVals = [ executeAbstractSketch( ConvertSketchToAbstract().execute(s) ) for s in sketches ]
+if skipValueComp:
+    print("WARNING, not doing neural value comp")
+else:
+    values = [ rR.recognitionModel.valueHead.computeValue(s, tasks[i]) for s, i in zip(sketches, ids) ]
+    values = [ math.exp(-v) for v in values]
 
-if mode == 'absState': renderedAbsVals = [renderAbsTowerHist(v.history) for v in symbolicVals]
+
+if mode == 'absState': renderedAbsVals = [renderAbsTowerHist(v, renderHand=True) for v in symbolicVals]
 
 
 e = np.array(embeddings)
@@ -171,13 +182,19 @@ for algo in ALGOS:
 
         elif mode == 'absState':
             for xx,yy,name,img, v in zip(x,y,names, renderedAbsVals, symbolicVals):
-                if v.history != [(-257, 0)]:
+                if True: #v.history != [(-257, 0)]:
                     #print(v.history)
                     xx = xx - minx
                     yy = yy - miny
+                    cropY = 32
+                    cropX = 64
+                    shape = img.shape
+                    shape[1]//2
+                    img = img[shape[0]-cropY:, shape[1]//2 - cropX//2:shape[1]//2 + cropX//2, :]
+                    img = img.repeat(2, axis=0).repeat(2, axis=1)
                     #assert False, f"type img: {img.shape}"
                     plt.figimage(img, xx/l_x*5120*.95, yy/l_y*3840*.95)
 
 
-        plt.savefig(f'embed_tower/TASKS={TASK_IDS}_{algo}_{mode}_{j  }.png')
+        plt.savefig(f'embed_tower/TASKS=ALL_{algo}_{mode}_{j  }.png')
         plt.clf()

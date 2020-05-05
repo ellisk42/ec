@@ -195,7 +195,8 @@ def ecIterator(grammar, tasks,
                useSamplePolicy=False,
                resumeTraining=True,
                skipTraining=False,
-               priorPolicy=False):
+               priorPolicy=False,
+               conditionalForValueTraining=False):
     if enumerationTimeout is None:
         eprint(
             "Please specify an enumeration timeout:",
@@ -446,7 +447,7 @@ def ecIterator(grammar, tasks,
                                auxiliaryLoss=auxiliaryLoss, cuda=cuda, CPUs=CPUs, solver=solver,
                                recognitionSteps=recognitionSteps, maximumFrontier=maximumFrontier, useValue=useValue, 
                                trainOnly=True, saveIter=100, savePath=recModelPath, resumeTrainingModel=resumeTrainingModel,
-                               seperateFeatureExtractor=bool(useSamplePolicy))
+                               seperateFeatureExtractor=bool(useSamplePolicy), conditionalForValueTraining=conditionalForValueTraining)
 
         #testing
         if testingTimeout == 0:
@@ -710,7 +711,7 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
                       helmholtzRatio=None, helmholtzFrontiers=None, maximumFrontier=None,
                       auxiliaryLoss=None, cuda=None, CPUs=None, solver=None, useValue=False, 
                       trainOnly=False, saveIter=None, savePath=None, resumeTrainingModel=None,
-                      seperateFeatureExtractor=False):
+                      seperateFeatureExtractor=False, conditionalForValueTraining=False):
     eprint("Using an ensemble size of %d. Note that we will only store and test on the best recognition model." % ensembleSize)
 
     featureExtractorObjects = [featureExtractor(tasks, testingTasks=testingTasks, cuda=cuda) for i in range(ensembleSize)]
@@ -763,7 +764,8 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
                                                                          auxLoss=auxiliaryLoss,
                                                                          vectorized=True,
                                                                          saveIter=saveIter,
-                                                                         savePath=savePath),
+                                                                         savePath=savePath,
+                                                                         conditionalForValueTraining=conditionalForValueTraining),
                                      recognizers,
                                      seedRandom=True)
 
@@ -1148,6 +1150,9 @@ def commandlineArguments(_=None,
     parser.add_argument("--skipTraining",
                         action='store_true',
                         help="skip Training")
+    parser.add_argument("--conditionalForValueTraining",
+                        action='store_true',
+                        help="use conditional model for negative examples in value training")
     parser.set_defaults(useRecognitionModel=useRecognitionModel,
                         useDSL=True,
                         featureExtractor=featureExtractor,

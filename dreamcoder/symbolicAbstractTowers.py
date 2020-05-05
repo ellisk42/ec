@@ -154,15 +154,16 @@ class AbstractTowerState:
         return AbstractTowerState(hand=newHand, orientation=newOrientation,
                 history=self.history)
 
-    def union(self, other): #for loops
+    def asymmetricUnion(self, other): 
+        #for loops
+        #slight hack is that we take the history of self, because we know there is less in it
         if self.orientation == other.orientation:
             newOrientation = self.orientation
         else:
             newOrientation = 0
         newHand = (min(self.hand[0], other.hand[0]), max(self.hand[1], other.hand[1]))
 
-        newHist = 0 #TODO
-        assert False
+        newHist = self.history
         return AbstractTowerState(hand=newHand, orientation=newOrientation,
                     history=newHist)
 
@@ -176,7 +177,20 @@ def _simpleLoop(n):
         return lambda b: lambda k: f(0,b,k)
 
     elif n == _intTopPrimitive:
-        return lambda b: lambda k: lambda s: k(s.topify())
+        def f(start, body, k):
+            if start >= _intTopPrimitive[1]: return k
+            def newBody(startInt):
+                def g(k):
+                    def h(state):
+                        return k( state.asymmetricUnion( body(startInt) (lambda x: x) (state) ))
+                    return h
+                return g
+
+            return newBody(start)(f(start + 1, body, k))
+            #return g( f(start+1, body, k))
+
+        return lambda b: lambda k: f(0,b,k)
+        #return lambda b: lambda k: lambda s: k(s.topify())
     else: assert 0
 
 
@@ -241,12 +255,30 @@ abstractPrimitives = [
         Primitive("intTop", tint, _intTopPrimitive) #TODO
     ]
 
-def renderAbsTowerHist(lst):
+def renderAbsTowerHist(state, renderHand=False):
+    lst = state.history
     a = np.zeros((resolution, resolution, 3))
+    
+    green = [0, 0.5, 0]
+    red = [0.5, 0, 0]
+    yellow = [0.5, 0.5, 0]
+    if state.orientation == 1:
+        handColor = green
+    elif state.orientation == -1:
+        handColor = red
+    else: handColor = yellow
+
+    #print(state.hand, state.history)
 
     for x in range(-resolution+1, resolution-1, 2):
+        if renderHand:
+
+            if state.hand[0]-1 <= x and x <= state.hand[1]-1:
+                for i in range(resolution):
+                    a[i, resolution//2  + (x-1)//2, :] = handColor
+
         h = heightAfter(lst, x)
-        a[resolution - h//2:, resolution//2  + (x-1)//2 , :] = 1.
+        a[resolution - h//2:, resolution//2  + (x-1)//2 , 1:] = 1.
     return a
 
 
@@ -261,9 +293,7 @@ def updateMinHeight(lst, xl, xh, dh):
 
     oldH = max ([heightAfter(lst, xl)] + [heightAfter(lst, p) for p, _ in lst if xl <= p < xh ] )
     
-
     postH = heightAfter(lst, xh)
-
 
     preLst = [(x, y) for x, y in lst if x < xl]
     postLst = [(x, y) for x, y in lst if x > xh]
