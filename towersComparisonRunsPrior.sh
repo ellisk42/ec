@@ -4,7 +4,7 @@
 
 time=1
 testingTime=1200
-recSteps=240000 #list repl is roughly 1k/hour (0.33 steps/sec)
+recSteps=480000 #list repl is roughly 1k/hour (0.33 steps/sec)
 ncores=8
 #salt=towers
 helmRatio=0.5
@@ -40,8 +40,8 @@ for num in 3 20
 
 
 		#REPL
-		cp ${replPolicy} ${resume}REPL.pickle
-		cp ${replPolicy}_RecModelOnly ${resume}REPL.pickle_RecModelOnly
+		cp ${resume}.pickle ${resume}REPL.pickle
+		cp ${oldResume}REPL.pickle_RecModelOnly ${resume}REPL.pickle_RecModelOnly
 		#Train:
 		cmd="python bin/tower.py --conditionalForValueTraining --contextual --testingTimeout ${testingTime} --recognitionTimeout 216000 --resumeTraining -r ${helmRatio} --primitives new --split 0.5 -t ${time} -RS ${recSteps} --solver python  -c ${ncores} --useValue TowerREPL -i 2  --resume ${resume}REPL.pickle --singleRoundValueEval --seed 1"
 		sbatch -e towersREPL${salt}.out -o towersREPL${salt}.out execute_gpu_new.sh ${cmd}
