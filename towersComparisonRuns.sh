@@ -57,7 +57,7 @@ for num in 20
 		#RNN
 		cp ${resume}.pickle ${resume}RNN.pickle
 		cp ${oldResume}RNN.pickle_RecModelOnly ${resume}RNN.pickle_RecModelOnly
-		cmd="python bin/tower.py --maxHard --split 0.0 --useSamplePolicy ${samplePolicy} --contextual --testingTimeout ${testingTime} --recognitionTimeout 216000 --resumeTraining -r ${helmRatio} --primitives new -t ${time} -RS ${recSteps} --solver python  -c ${ncores} --useValue RNN -i 2 --resume ${resume}RNN.pickle --singleRoundValueEval --seed 1"
+		cmd="python bin/tower.py --tasks maxHard --split 0.0 --useSamplePolicy ${samplePolicy} --contextual --testingTimeout ${testingTime} --recognitionTimeout 216000 --resumeTraining -r ${helmRatio} --primitives new -t ${time} -RS ${recSteps} --solver python  -c ${ncores} --useValue RNN -i 2 --resume ${resume}RNN.pickle --singleRoundValueEval --seed 1"
 		sbatch -e towersRNN${salt}.out -o towersRNN${salt}.out execute_gpu_new.sh ${cmd}
 
 
