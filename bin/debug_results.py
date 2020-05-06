@@ -22,7 +22,16 @@ from matplotlib import pyplot
 
 
 if __name__ == '__main__':
-    sys.setrecursionlimit(5000)
+    from dreamcoder.domains.tower.makeTowerTasks import makeMaxTasks
+    import scipy.misc
+    ts = makeMaxTasks()
+    path = 'maxTowerTasks/'
+    for i,t in enumerate(ts):
+        scipy.misc.imsave(path+str(i)+'.png', t.getImage()) 
+    assert 0
+
+
+    sys.setrecursionlimit(8000)
     n = 20
     ID = 'towers' + str(n)
 
@@ -80,6 +89,12 @@ if __name__ == '__main__':
 
     SHitsRMisses = [t for t, lst in SampleStats.items() if ( lst != [] and REPLStats[t]==[] ) ]
     
+
+    Smisses = [t for t, lst in SampleStats.items() if  lst == []]
+
+    # for i, t in enumerate(testingTasks):
+    #     if t in Smisses: print(i)
+    # assert 0
     # print("sample hit, repl miss:")
     # for i, t in enumerate(testingTasks):
     #     hitSample = bool(rS.testingSearchStats[0][t])
@@ -204,7 +219,7 @@ if __name__ == '__main__':
     rnnDataLst = []
     for i in range(len(testingTasks)):
         print(i)
-        runs = testTask(rS, rR, rRNN, i, verbose=False, nSamples=10, usePrior=False)
+        runs = testTask(rS, rR, rRNN, i, verbose=True, nSamples=10, usePrior=False)
         for run in runs:
             hit, nvs, cvs, rnnvs = run
             for n, c, rnn in zip(nvs, cvs, rnnvs):
@@ -228,5 +243,5 @@ if __name__ == '__main__':
         print(f"\tprecision: {tp/ (tp + fp)}")
 
 
-    path = 'plots/precisionRecallit20samp10.png'
+    path = 'plots/precisionRecallit3samp10postLoop.png'
     graphPrecisionRecall(symbolicDataLst, neuralDataLst, rnnDataLst, path, nSamp=500)

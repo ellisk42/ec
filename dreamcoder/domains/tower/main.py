@@ -130,7 +130,7 @@ class TowerCNN(nn.Module):
 
 def tower_options(parser):
     parser.add_argument("--tasks",
-                        choices=["old","new"],
+                        choices=["old","new", "maxHard"],
                         default="old")
     parser.add_argument("--visualize",
                         default=None, type=str)
@@ -297,6 +297,8 @@ def main(arguments):
         tasks = makeSupervisedTasks()
     elif tasks == "old":
         tasks = makeOldSupervisedTasks()
+    elif tasks == "maxHard":
+        tasks = makeMaxTasks()
     else: assert False
         
     test, train = testTrainSplit(tasks, arguments.pop("split"))

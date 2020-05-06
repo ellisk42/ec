@@ -196,7 +196,8 @@ def ecIterator(grammar, tasks,
                resumeTraining=True,
                skipTraining=False,
                priorPolicy=False,
-               conditionalForValueTraining=False):
+               conditionalForValueTraining=False,
+               useSavedTasks=False):
     if enumerationTimeout is None:
         eprint(
             "Please specify an enumeration timeout:",
@@ -401,16 +402,20 @@ def ecIterator(grammar, tasks,
         grammar = grammar #TODO make grammar non-contextual 
 
         #import pdb; pdb.set_trace()
-            
-        print("using old training and testing tasks from result pickle")
-        oldTasks, oldTestingTasks = tasks, testingTasks
-        tasks = list(result.taskSolutions.keys())
-        testingTasks = result.getTestingTasks()
-        if len(testingTasks) == 0:
-            print("no testing tasks saved in result pickle , so re-finding from the loaded tasks..")
-            allTasks = set(oldTasks + oldTestingTasks)
-            testingTasks = list( allTasks.difference( set(tasks) ) )
-            print("num testing tasks:", len(testingTasks))
+        
+        if useSavedTasks:
+            print("using old training and testing tasks from result pickle")
+            oldTasks, oldTestingTasks = tasks, testingTasks
+            tasks = list(result.taskSolutions.keys())
+            testingTasks = result.getTestingTasks()
+            if len(testingTasks) == 0:
+                print("no testing tasks saved in result pickle , so re-finding from the loaded tasks..")
+                allTasks = set(oldTasks + oldTestingTasks)
+                testingTasks = list( allTasks.difference( set(tasks) ) )
+                print("num testing tasks:", len(testingTasks))
+        else: print(" using tasks constructed from main ")
+        print("num testing tasks:", len(testingTasks))
+        print("num training tasks:", len(tasks))
 
         #training 
         wakingTaskBatch = None
@@ -1153,6 +1158,9 @@ def commandlineArguments(_=None,
     parser.add_argument("--conditionalForValueTraining",
                         action='store_true',
                         help="use conditional model for negative examples in value training")
+    parser.add_argument("--useSavedTasks",
+                        action='store_true',
+                        help="use tasks in result model instead of our model")
     parser.set_defaults(useRecognitionModel=useRecognitionModel,
                         useDSL=True,
                         featureExtractor=featureExtractor,
