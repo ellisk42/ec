@@ -157,6 +157,142 @@ def parseTower(s):
     except: return Abstraction(block(s, [], Index(0)))
 
     
+def makeMaxTasks():
+
+
+    twoArches = [SupervisedTower(f" blankname ",
+              f"""((for i {n1} v) (r 4) (for i {n1} v) (l 2) h
+                  (r {dist})
+                  (for i {n2} v) (r 4) (for i {n2} v) (l 2) h
+                  )
+              """
+              )
+                for (n1,n2, dist) in [(n1, n2, dist) for n1 in range(2, 4) for n2 in range(2, 4) for dist in [6, 8] ]
+            ]
+
+    BrickOnBridges = [SupervisedTower(f"brick on bridges {n, w, l, h}",
+                               f"""
+                               (
+                               (embed (for j {n}
+                                (for i {l}
+                                 v (r 4) v (l 4)) (r 2) h 
+                                (r 4)) )
+                                
+                          (for j {h}
+                              (embed (for i {w} h (r 6)))
+                              (embed (r 3) (for i {w} h (r 6))))
+                              )                             
+                               """)
+               for n in range(4,6)
+               for w in range(2,n) 
+               for l in range(3,5)
+               for h in range(3,5)
+               ]
+
+    BrickNextToBridges = [SupervisedTower(f"brick next to bridges {n, w, l, h}",
+                               f"""
+                               (
+                               (for j {n}
+                                (for i {l}
+                                 v (r 4) v (l 4)) (r 2) h 
+                                (r 4)) 
+                                (r 6)
+                          (for j {h}
+                              (embed (for i {w} h (r 6)))
+                              (embed (r 3) (for i {w} h (r 6))))
+                              )                             
+                               """)
+               for n in range(4,6)
+               for w in range(2,n) 
+               for l in range(3,5)
+               for h in range(3,5)]
+
+
+    BridgesNextToBridges = [SupervisedTower(f"bridges next to bridges {n, l, n2, l2}",
+                               f"""
+                               (
+                               (for j {n}
+                                (for i {l}
+                                 v (r 4) v (l 4)) (r 2) h 
+                                (r 4)) 
+
+                                (r 6)
+
+                               (for j {n2}
+                                (for i {l2}
+                                 v (r 4) v (l 4)) (r 2) h 
+                                (r 4)) 
+                              )                             
+                               """)
+               for n in range(4,6)
+               for l in range(4,6) 
+               for n2 in range(3,5)
+               for l2 in range(3,5)]
+
+
+    BridgesOnBridges = [SupervisedTower(f"bridges on bridges {n, l, n2, l2}",
+                               f"""
+                               ( ( embed(
+                              for j {n}
+                                (for i {l}
+                                 v (r 4) v (l 4)) (r 2) h 
+                                (r 4))
+                                )
+                               (for j {n2}
+                                (for i {l2}
+                                 v (r 4) v (l 4)) (r 2) h 
+                                (r 4)) 
+                              )                             
+                               """)
+               for n in range(3,6)
+               for l in range(3,6) 
+               for n2 in range(3,n)
+               for l2 in range(2,4)]
+
+ 
+    compositions = [SupervisedTower("%dx%d-bridge on top of %dx%d bricks"%(b1,b2,w1,w2),
+                                    """
+                                    ((for j %d
+                                    (embed (for i %d h (r 6)))
+                                    (embed (r 3) (for i %d h (r 6))))
+                                    (r 1)
+                                    (for j %d
+                                    (for i %d 
+                                    v (r 4) v (l 4)) (r 2) h 
+                                    (r 4)))
+                                    """%(w1,w2,w2,b1,b2))
+                    for b1,b2,w1,w2 in [(5,2,4,5)]
+                    ] + [
+                        SupervisedTower("%d pyramid on top of %dx%d bricks"%(p,w1,w2),
+                                        """
+                                        ((for j %d
+                                        (embed (for i %d h (r 6)))
+                                        (embed (r 3) (for i %d h (r 6))))
+                                        (r 1)
+                                        (for i %d (for j i (embed v (r 4) v (l 2) h)) (r 6))
+                                        (for i %d (for j (- %d i) (embed v (r 4) v (l 2) h)) (r 6)))
+                                        """%(w1,w2,w2,p,p,p))
+                        for w1,w2,p in [(2,5,2), (2,6,3), (3,5,2)]
+                        ] + \
+                        [
+                            SupervisedTower("%d tower on top of %dx%d bricks"%(t,w1,w2),
+                                            """
+                                            ((for j %d
+                                            (embed (for i %d h (r 6)))
+                                            (embed (r 3) (for i %d h (r 6))))
+                                            (r 6)
+                                            %s (r 4) %s (l 2) h)
+                                            """%(w1,w2,w2,
+                                                 "v "*t, "v "*t))
+                            for t,w1,w2 in [(3,1,3), (5,2,3), (4,2,4), (4,2,3)  ] ] #can't be (4,1,3)
+
+
+    everything = twoArches + BrickOnBridges + BrickNextToBridges + BridgesNextToBridges + BridgesOnBridges + compositions
+    if False:
+        for t in everything:
+            delattr(t,'original')
+    return everything
+
 def makeSupervisedTasks():
     arches = [SupervisedTower("arch leg %d"%n,
                               "((for i %d v) (r 4) (for i %d v) (l 2) h)"%(n,n))
@@ -509,6 +645,16 @@ def dSLDemo():
 if __name__ == "__main__":
     from pylab import imshow,show
     from dreamcoder.domains.tower.tower_common import *
+
+    from dreamcoder.domains.tower.makeTowerTasks import makeMaxTasks
+    import scipy.misc
+    ts = makeMaxTasks()
+    path = 'maxTowerTasks/'
+    for i,t in enumerate(ts):
+        scipy.misc.imsave(path+str(i)+'.png', t.getImage()) 
+
+
+    assert 0
     
     ts = makeSupervisedTasks()
     print(len(ts),"total tasks")
