@@ -413,7 +413,7 @@ def ecIterator(grammar, tasks,
                 allTasks = set(oldTasks + oldTestingTasks)
                 testingTasks = list( allTasks.difference( set(tasks) ) )
                 print("num testing tasks:", len(testingTasks))
-        else: print(" using tasks constructed from main and the new tasks")
+        else: print(" using tasks constructed from main and the pickle object tasks")
         testingTasks = list(set(testingTasks + result.getTestingTasks()))
         print("num testing tasks:", len(testingTasks))
         print("num training tasks:", len(tasks))
