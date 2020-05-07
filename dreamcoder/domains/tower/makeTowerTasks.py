@@ -160,17 +160,17 @@ def parseTower(s):
 def makeMaxTasks():
 
 
-    twoArches = [SupervisedTower(f" blankname ",
+    twoArches = [SupervisedTower(f"Max twoArches {n1, n2, dist} ",
               f"""((for i {n1} v) (r 4) (for i {n1} v) (l 2) h
                   (r {dist})
                   (for i {n2} v) (r 4) (for i {n2} v) (l 2) h
                   )
               """
               )
-                for (n1,n2, dist) in [(n1, n2, dist) for n1 in range(2, 4) for n2 in range(2, 4) for dist in [6, 8] ]
+                for (n1,n2, dist) in [(n1, n2, dist) for n1 in range(2, 5) for n2 in range(2, 4) for dist in [6, 8] ]
             ]
 
-    BrickOnBridges = [SupervisedTower(f"brick on bridges {n, w, l, h}",
+    BrickOnBridges = [SupervisedTower(f"Max brick on bridges {n, w, l, h}",
                                f"""
                                (
                                (embed (for j {n}
@@ -189,7 +189,7 @@ def makeMaxTasks():
                for h in range(3,5)
                ]
 
-    BrickNextToBridges = [SupervisedTower(f"brick next to bridges {n, w, l, h}",
+    BrickNextToBridges = [SupervisedTower(f"Max brick next to bridges {n, w, l, h}",
                                f"""
                                (
                                (for j {n}
@@ -208,7 +208,7 @@ def makeMaxTasks():
                for h in range(3,5)]
 
 
-    BridgesNextToBridges = [SupervisedTower(f"bridges next to bridges {n, l, n2, l2}",
+    BridgesNextToBridges = [SupervisedTower(f"Max bridges next to bridges {n, l, n2, l2}",
                                f"""
                                (
                                (for j {n}
@@ -230,7 +230,7 @@ def makeMaxTasks():
                for l2 in range(3,5)]
 
 
-    BridgesOnBridges = [SupervisedTower(f"bridges on bridges {n, l, n2, l2}",
+    BridgesOnBridges = [SupervisedTower(f"Max bridges on bridges {n, l, n2, l2}",
                                f"""
                                ( ( embed(
                               for j {n}
@@ -250,7 +250,7 @@ def makeMaxTasks():
                for l2 in range(2,4)]
 
  
-    compositions = [SupervisedTower("%dx%d-bridge on top of %dx%d bricks"%(b1,b2,w1,w2),
+    compositions = [SupervisedTower("Max %dx%d-bridge on top of %dx%d bricks"%(b1,b2,w1,w2),
                                     """
                                     ((for j %d
                                     (embed (for i %d h (r 6)))
@@ -263,7 +263,7 @@ def makeMaxTasks():
                                     """%(w1,w2,w2,b1,b2))
                     for b1,b2,w1,w2 in [(5,2,4,5)]
                     ] + [
-                        SupervisedTower("%d pyramid on top of %dx%d bricks"%(p,w1,w2),
+                        SupervisedTower("Max %d pyramid on top of %dx%d bricks"%(p,w1,w2),
                                         """
                                         ((for j %d
                                         (embed (for i %d h (r 6)))
@@ -272,10 +272,10 @@ def makeMaxTasks():
                                         (for i %d (for j i (embed v (r 4) v (l 2) h)) (r 6))
                                         (for i %d (for j (- %d i) (embed v (r 4) v (l 2) h)) (r 6)))
                                         """%(w1,w2,w2,p,p,p))
-                        for w1,w2,p in [(2,5,2), (2,6,3), (3,5,2)]
+                        for w1,w2,p in [(2,5,2), (2,6,3), (3,5,2), (3,6,2)]
                         ] + \
                         [
-                            SupervisedTower("%d tower on top of %dx%d bricks"%(t,w1,w2),
+                            SupervisedTower("Max %d tower on top of %dx%d bricks"%(t,w1,w2),
                                             """
                                             ((for j %d
                                             (embed (for i %d h (r 6)))

@@ -58,7 +58,7 @@ def plotTestResults(testResults, timeout, defaultLoss=None,
     if mode =='fractionHit': plot.ylim(bottom=0.)
     for n in range(len(testResults)):
         #xs = list(range(max([0]+[r.evaluations for tr in testResults[n] for r in tr] ) + 1))
-        xs = list(range(200))
+        xs = list(range(400))
         if mode =='fractionHit':
             plot.plot(xs, [fractionHit(n,lambda r: r.evaluations <= x) for x in xs],
                   label=names[n])
@@ -74,7 +74,7 @@ def plotTestResults(testResults, timeout, defaultLoss=None,
 
 if __name__ == '__main__':
 
-    n = 20
+    n = 3
     ID = 'towers' + str(n)
 
     # paths = [(f'experimentOutputs/{ID}Sample_SRE=True.pickle', 'Sample'),
@@ -115,10 +115,10 @@ if __name__ == '__main__':
     #print("WARNING: using the REPLPolicyHashing runs")
 
     graph="_graph=True"
-    mode="Prior"
-    nameSalt = "towersPrior"
+    #mode="Prior"
+    nameSalt = "BigramSamplePolicy" #"towersMaxTasks"
     ID = 'towers' + str(n)
-    runType = "Prior"
+    runType = "BigramSamplePolicy" #"MaxTasks"
     paths = [(f'experimentOutputs/{ID}{runType}Sample_SRE=True{graph}.pickle', 'Sample from prior only (no value)'),
         (f'experimentOutputs/{ID}{runType}RNN_SRE=True{graph}.pickle', 'RNN value'),
         (f'experimentOutputs/{ID}{runType}REPL_SRE=True{graph}.pickle', 'REPL modular value'),
@@ -136,6 +136,7 @@ if __name__ == '__main__':
         for path in paths:
             with open(path, 'rb') as h:
                 r = dill.load(h)
+                #assert 0
                 
             from dreamcoder.showTowerTasks import showTowersAndSolutions, computeValue
             #showTowersAndSolutions(r)
