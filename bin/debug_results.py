@@ -58,16 +58,16 @@ if __name__ == '__main__':
     # print("WARNING: using the REPLPolicyHashing runs")
 
 
-    graph="_graph=True"
-    #mode="Prior"
-    nameSalt = "towersMaxTasks" #"BigramSamplePolicy" #
-    ID = 'towers' + str(n)
-    runType = "MaxTasks" #"BigramSamplePolicy" #
-    paths = [(f'experimentOutputs/{ID}{runType}Sample_SRE=True{graph}.pickle', 'Sample from prior only (no value)'),
-        (f'experimentOutputs/{ID}{runType}RNN_SRE=True{graph}.pickle', 'RNN value'),
-        (f'experimentOutputs/{ID}{runType}REPL_SRE=True{graph}.pickle', 'REPL modular value'),
-        (f'experimentOutputs/{ID}{runType}Symbolic_SRE=True{graph}.pickle', 'Symbolic value')
-        ]
+    # graph="_graph=True"
+    # #mode="Prior"
+    # nameSalt = "towersMaxTasks" #"BigramSamplePolicy" #
+    # ID = 'towers' + str(n)
+    # runType = "MaxTasks" #"BigramSamplePolicy" #
+    # paths = [(f'experimentOutputs/{ID}{runType}Sample_SRE=True{graph}.pickle', 'Sample from prior only (no value)'),
+    #     (f'experimentOutputs/{ID}{runType}RNN_SRE=True{graph}.pickle', 'RNN value'),
+    #     (f'experimentOutputs/{ID}{runType}REPL_SRE=True{graph}.pickle', 'REPL modular value'),
+    #     (f'experimentOutputs/{ID}{runType}Symbolic_SRE=True{graph}.pickle', 'Symbolic value')
+    #     ]
 
 
     paths, names = zip(*paths)
@@ -83,14 +83,11 @@ if __name__ == '__main__':
         
     from dreamcoder.showTowerTasks import showTowersAndSolutions, computeValue, testTask
     from dreamcoder.showTowerTasks import computeConfusionMatrixFromScores, graphPrecisionRecall
-
     # REPL3Max = [226, 536, 231, 444, 329, 246, 260, 163, 273, 180, 136, 259,
     #     168, 264, 170, 314, 257, 190, 364, 318, 278, 47, 281, 281, 80,
     #     108, 370, 208, 74, 135, 123, 244, 384, 120, 236, 409, 75, 139,
     #     486, 287, 296, 188, 231, 314, 196, 253, 245, 269, 379, 133, 213,
     #     270, 225, 151] 
-
-    
     testingTasks = rS.getTestingTasks()
     assert testingTasks == rR.getTestingTasks()
     
@@ -98,28 +95,38 @@ if __name__ == '__main__':
     REPLStats = rR.testingSearchStats[-1]
     RNNStats = rRNN.testingSearchStats[-1]
 
-
     SHitsRMisses = [t for t, lst in SampleStats.items() if ( lst != [] and REPLStats[t]==[] ) ]
-    
     Smisses = [t for t, lst in SampleStats.items() if  lst == []]
-
-
     SHits = [t for t, lst in SampleStats.items() if ( lst != [] ) ]
-
     #for i in SHits: if 'Max' in i.name: print(i)
-
     RHits = [t for t, lst in REPLStats.items() if ( lst != [] ) ]
-
     for t in SHits:
         if 'Max' not in t.name:
             print(t, SampleStats[t][0].evaluations, rR.testingNumOfProg[-1][t])
-
     print()
     for t in RHits:
         if 'Max' not in t.name:
             print(t, REPLStats[t][0].evaluations)
 
-    
+
+    from dreamcoder.Astar import Astar
+    from likelihoodModel import AllOrNothingLikelihoodModel
+
+
+    rR.recognitionModel.solver = Astar(rR.recognitionModel)
+
+
+    likelihoodModel = AllOrNothingLikelihoodModel(timeout=0.01)
+
+    tasks = [testingTasks[0]]
+    g = rR.recognitionModel.grammarOfTask(tasks[0]).untorch()
+    rR.recognitionModel.solver.infer(g, tasks, likelihoodModel, 
+                                timeout=100,
+                                elapsedTime=0,
+                                evaluationTimeout=0.01,
+                                maximumFrontiers={tasks[0]: 2},
+                                CPUs=1,
+                                )
 
     assert 0
 
