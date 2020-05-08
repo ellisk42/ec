@@ -489,6 +489,8 @@ def enumSingleStep(g, sk, tp, holeZipper=None, maximumDepth=None):
         candidates = g._enumOneStep(zipper.tp, zipper.context, zipper.env, mustBeLeaf)  
 
     for stepCost, newContext, newSubtree in candidates:
+        print("stepCost", stepCost)
+        print("newSubtree", newSubtree)
         newSk = NewExprPlacer().execute(sk, zipper.path, newSubtree)
         newZippers = findHoles(newSk, tp) #TODO type inference, redoing computation, can use newContext
         yield stepCost, newZippers, newSk
