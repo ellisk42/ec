@@ -45,13 +45,13 @@ class Astar(Solver):
         self.maxDepth = maxDepth
         self.holeProb = holeProb
 
-    def _getNextNodes(node, g, request):
+    def _getNextNodes(self, node, g, request):
         totalCost, policyCost, sketch, zippers = node
-            for zipper in zippers:
-                for stepCost, newZippers, newSketch in enumSingleStep(g, sketch, request, 
-                                                                        holeZipper=zipper,
-                                                                        maximumDepth=self.maxDepth)
-                    yield policyCost + stepCost, newZippers, newSketch
+        for zipper in zippers:
+            for stepCost, newZippers, newSketch in enumSingleStep(g, sketch, request, 
+                                                                    holeZipper=zipper,
+                                                                    maximumDepth=self.maxDepth):
+                yield policyCost + stepCost, newZippers, newSketch
 
     def infer(self, g, tasks, likelihoodModel, _=None,
                               #verbose=False,
@@ -88,16 +88,21 @@ class Astar(Solver):
 
 
         q = PQ()
+        #base node
+        h = baseHoleOfType(request)
+        zippers = findHoles(h, request)
+        q.push(0., (0., 0., h, zippers))
+
         while time.time() - starting < timeout:
 
-            node = q.getMaximum() #TODO
+            node = q.popMaximum() #TODO
             print("node", node)
             print("len q", len(q))
 
             for policyCost, zippers, neighbor in self._getNextNodes(node, g, request):
-                if (neighbor, zippers) in allObjects:
+                if (neighbor) in allObjects:
                     continue
-                allObjects.add(neighbor, zippers)
+                allObjects.add(neighbor)
 
                 if not zippers:
                     success, totalNumberOfPrograms = self._report(neighbor, policyCost, 
@@ -111,7 +116,8 @@ class Astar(Solver):
                                                     hits, 
                                                     totalNumberOfPrograms)
 
-                valueCost = self.owner.valueHead.computeValue(neighbor) #TODO 
+                #print("hit value comp")
+                valueCost = self.owner.valueHead.computeValue(neighbor, task) #TODO 
                 print("valueCost", valueCost)
 
                 totalCost = policyCost - self.criticCoefficient * valueCost #TODO normalize and scale
@@ -121,6 +127,7 @@ class Astar(Solver):
                 q.push(totalCost, newNode)
 
         return self._finish(tasks, hits, totalNumberOfPrograms)
+
     def _report(self, p, prior, request, g, tasks, 
                 likelihoodModel,
                 hits, 

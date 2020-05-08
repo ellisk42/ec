@@ -300,7 +300,7 @@ class Grammar(object):
                 yield l, newContext, Abstraction(expression)
 
         if forceHole:
-            return context, Hole(tp=request)
+            yield 0, context, Hole(tp=request)
 
         candidates = self.buildCandidates(request, context, environment,
                                           normalize=True,
@@ -1371,7 +1371,7 @@ class ContextualGrammar:
                 yield l, newContext, Abstraction(body)
 
         if forceHole:
-            return context, Hole(tp=request)
+            yield 0., context, Hole(tp=request)
 
         if parent is None: g = self.noParent
         elif parent.isIndex: g = self.variableParent
