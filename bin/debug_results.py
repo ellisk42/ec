@@ -100,13 +100,13 @@ if __name__ == '__main__':
     SHits = [t for t, lst in SampleStats.items() if ( lst != [] ) ]
     #for i in SHits: if 'Max' in i.name: print(i)
     RHits = [t for t, lst in REPLStats.items() if ( lst != [] ) ]
-    for t in SHits:
-        if 'Max' not in t.name:
-            print(t, SampleStats[t][0].evaluations, rR.testingNumOfProg[-1][t])
-    print()
-    for t in RHits:
-        if 'Max' not in t.name:
-            print(t, REPLStats[t][0].evaluations)
+    # for t in SHits:
+    #     if 'Max' not in t.name:
+    #         print(t, SampleStats[t][0].evaluations, rR.testingNumOfProg[-1][t])
+    # print()
+    # for t in RHits:
+    #     if 'Max' not in t.name:
+    #         print(t, REPLStats[t][0].evaluations)
 
 
     from dreamcoder.Astar import Astar
@@ -114,19 +114,34 @@ if __name__ == '__main__':
 
 
     rR.recognitionModel.solver = Astar(rR.recognitionModel)
-
+    rS.recognitionModel.solver = Astar(rS.recognitionModel)
 
     likelihoodModel = AllOrNothingLikelihoodModel(timeout=0.01)
+    for i in range(1,10):
+        tasks = [testingTasks[-i]]
+        g = rS.recognitionModel.grammarOfTask(tasks[0]).untorch()
+        ret = rR.recognitionModel.solver.infer(g, tasks, likelihoodModel, 
+                                    timeout=20,
+                                    elapsedTime=0,
+                                    evaluationTimeout=0.01,
+                                    maximumFrontiers={tasks[0]: 2},
+                                    CPUs=1,
+                                    )
+        print("now for Sample")
+        ret2 = rS.recognitionModel.solver.infer(g, tasks, likelihoodModel, 
+                                    timeout=20,
+                                    elapsedTime=0,
+                                    evaluationTimeout=0.01,
+                                    maximumFrontiers={tasks[0]: 2},
+                                    CPUs=1,
+                                    )
 
-    tasks = [testingTasks[0]]
-    g = rR.recognitionModel.grammarOfTask(tasks[0]).untorch()
-    rR.recognitionModel.solver.infer(g, tasks, likelihoodModel, 
-                                timeout=100,
-                                elapsedTime=0,
-                                evaluationTimeout=0.01,
-                                maximumFrontiers={tasks[0]: 2},
-                                CPUs=1,
-                                )
+
+
+        print("task", i)
+        print("num for repl", ret[2])
+        print("num for sample", ret2[2])
+        print()
 
     assert 0
 

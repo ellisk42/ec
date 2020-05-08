@@ -96,8 +96,7 @@ class Astar(Solver):
         while time.time() - starting < timeout:
 
             node = q.popMaximum() #TODO
-            print("node", node)
-            print("len q", len(q))
+            #print("node", node)
 
             for policyCost, zippers, neighbor in self._getNextNodes(node, g, request):
                 if (neighbor) in allObjects:
@@ -116,14 +115,13 @@ class Astar(Solver):
                                                     hits, 
                                                     totalNumberOfPrograms)
 
-                print("hit value comp")
-                print("neighbor", neighbor)
+                #print("neighbor", neighbor)
                 valueCost = self.owner.valueHead.computeValue(neighbor, task) #TODO 
-                print("valueCost", valueCost)
+                #print("valueCost", valueCost)
 
                 totalCost = policyCost - self.criticCoefficient * valueCost #TODO normalize and scale
-                print("policyCost", policyCost)
-                print("totalCost", totalCost)
+                #print("policyCost", policyCost)
+                #print("totalCost", totalCost)
                 newNode = (totalCost, policyCost, neighbor, zippers)
                 q.push(totalCost, newNode)
 
