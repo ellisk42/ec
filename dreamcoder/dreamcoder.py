@@ -197,7 +197,8 @@ def ecIterator(grammar, tasks,
                skipTraining=False,
                priorPolicy=False,
                conditionalForValueTraining=False,
-               useSavedTasks=False):
+               useSavedTasks=False,
+               searchType=None):
     if enumerationTimeout is None:
         eprint(
             "Please specify an enumeration timeout:",
@@ -453,7 +454,7 @@ def ecIterator(grammar, tasks,
                                auxiliaryLoss=auxiliaryLoss, cuda=cuda, CPUs=CPUs, solver=solver,
                                recognitionSteps=recognitionSteps, maximumFrontier=maximumFrontier, useValue=useValue, 
                                trainOnly=True, saveIter=100, savePath=recModelPath, resumeTrainingModel=resumeTrainingModel,
-                               seperateFeatureExtractor=bool(useSamplePolicy), conditionalForValueTraining=conditionalForValueTraining)
+                               seperateFeatureExtractor=bool(useSamplePolicy), conditionalForValueTraining=conditionalForValueTraining, searchType=searchType)
 
         #testing
         if testingTimeout == 0:
@@ -717,7 +718,7 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
                       helmholtzRatio=None, helmholtzFrontiers=None, maximumFrontier=None,
                       auxiliaryLoss=None, cuda=None, CPUs=None, solver=None, useValue=False, 
                       trainOnly=False, saveIter=None, savePath=None, resumeTrainingModel=None,
-                      seperateFeatureExtractor=False, conditionalForValueTraining=False):
+                      seperateFeatureExtractor=False, conditionalForValueTraining=False, searchType=None):
     eprint("Using an ensemble size of %d. Note that we will only store and test on the best recognition model." % ensembleSize)
 
     featureExtractorObjects = [featureExtractor(tasks, testingTasks=testingTasks, cuda=cuda) for i in range(ensembleSize)]
@@ -756,7 +757,7 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
                                     id=i,
                                     hidden=[featureExtractorObjects[0].outputDimensionality],
                                     useValue=useValue,
-                                    valueHead=valueHead) for i in range(ensembleSize)]
+                                    valueHead=valueHead, searchType=searchType) for i in range(ensembleSize)]
     eprint(f"Currently using this much memory: {getThisMemoryUsage()}")
     trainedRecognizers = parallelMap(min(CPUs,len(recognizers)),
                                      lambda recognizer: recognizer.train(allFrontiers,
@@ -1162,6 +1163,10 @@ def commandlineArguments(_=None,
     parser.add_argument("--useSavedTasks",
                         action='store_true',
                         help="use tasks in result model instead of our model")
+    parser.add_argument("--searchType",
+                        type=str,
+                        default="SMC",
+                        help="which type of solver to use when using value fn")
     parser.set_defaults(useRecognitionModel=useRecognitionModel,
                         useDSL=True,
                         featureExtractor=featureExtractor,

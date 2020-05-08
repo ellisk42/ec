@@ -471,8 +471,32 @@ def sampleOneStepFromHole(zipper, sk, tp, g, maximumDepth):
 
     newSk = NewExprPlacer().execute(sk, zipper.path, newSubtree)
     newZippers = findHoles(newSk, tp) #TODO type inference, redoing computation, can use newContext
-
     return newSk, newZippers
+
+def enumSingleStep(g, sk, tp, holeZipper=None, maximumDepth=None):
+    zipper = holeZipper
+    mustBeLeaf = len([ t for t in zipper.path if t != 'body' ] ) >= maximumDepth
+
+    if isinstance(g, ContextualGrammar):
+        parent, parentIndex = ParentFinder().execute(sk, zipper.path)
+        candidates = g._enumOneStep(
+                            parent, parentIndex,
+                            zipper.context,
+                            zipper.env,
+                            zipper.tp,
+                            mustBeLeaf=mustBeLeaf)
+
+    else:
+        candidates = g._enumOneStep(zipper.tp, zipper.context, zipper.env, mustBeLeaf)  
+
+    print('candidates', candidates)
+    for stepCost, newContext, newSubtree in candidates:
+        print("stepCost", stepCost)
+        print("newSubtree", newSubtree, flush=True)
+        newSk = NewExprPlacer().execute(sk, zipper.path, newSubtree)
+        newZippers = findHoles(newSk, tp) #TODO type inference, redoing computation, can use newContext
+        yield stepCost, newZippers, newSk
+
 
 def followPathOneStep(zipper, last, full, tp):
     #implement with visitor

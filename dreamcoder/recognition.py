@@ -1,6 +1,7 @@
 from dreamcoder.enumeration import *
 from dreamcoder.grammar import *
 from dreamcoder.SMC import SMC
+from dreamcoder.Astar import Astar
 # luke
 from dreamcoder.likelihoodModel import AllOrNothingLikelihoodModel
 
@@ -624,7 +625,8 @@ class RecognitionModel(nn.Module):
                  resumeTrainingModel=None,
                  id=0,
                  useValue=False,
-                 valueHead=None):
+                 valueHead=None,
+                 searchType=None):
         super(RecognitionModel, self).__init__()
         self.id = id
         self.trained=False
@@ -696,7 +698,11 @@ class RecognitionModel(nn.Module):
                 for parameter in self.valueHead.parameters():
                     assert any(myParameter is parameter for myParameter in self.parameters())
 
-            self.solver = SMC(self) #Can have many versions of this
+            if searchType == "SMC":
+                self.solver = SMC(self) #Can have many versions of this
+            elif searchType == "Astar":
+                self.solver = Astar(self)
+            else: assert False
 
             if previousRecognitionModel:
                 self.valueHead.load_state_dict(previousRecognitionModel.valueHead.state_dict())
