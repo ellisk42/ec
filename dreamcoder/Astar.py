@@ -116,7 +116,8 @@ class Astar(Solver):
                                                     hits, 
                                                     totalNumberOfPrograms)
 
-                #print("hit value comp")
+                print("hit value comp")
+                print("neighbor", neighbor)
                 valueCost = self.owner.valueHead.computeValue(neighbor, task) #TODO 
                 print("valueCost", valueCost)
 
