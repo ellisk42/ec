@@ -46,10 +46,10 @@ TODO:
 
 class SMC(Solver):
     def __init__(self, owner, _=None,
-                 maximumLength=20,
+                 maximumLength=35,
                  initialParticles=8, exponentialGrowthFactor=2,
                  criticCoefficient=1.,
-                 maxDepth=8,
+                 maxDepth=16,
                  holeProb=0.2):
         self.maximumLength = maximumLength
         self.initialParticles = initialParticles

@@ -12,7 +12,7 @@ helmRatio=0.5
 
 
 
-for num in 20
+for num in 3
 	do
 		#symbolic
 
