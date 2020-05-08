@@ -12,7 +12,7 @@ helmRatio=0.5
 
 
 
-for num in 3, 20
+for num in 3 20
 	do
 		#symbolic
 
@@ -45,8 +45,8 @@ for num in 3, 20
 		cp ${oldResume}REPL.pickle_RecModelOnly ${resume}REPL.pickle_RecModelOnly
 		#Train:
 		cmd="python bin/tower.py  --searchType Astar  --split 0.0 --tasks maxHard --contextual --testingTimeout ${testingTime} --recognitionTimeout 216000 --resumeTraining -r ${helmRatio} --primitives new -t ${time} -RS ${recSteps} --solver python  -c ${ncores} --useValue TowerREPL -i 2  --resume ${resume}REPL.pickle --singleRoundValueEval --seed 2"
-		#sbatch -e towersREPL${salt}.out -o towersREPL${salt}.out execute_gpu_new.sh ${cmd}
-		eval "${cmd}"
+		sbatch -e towersREPL${salt}.out -o towersREPL${salt}.out execute_gpu_new.sh ${cmd}
+		#eval "${cmd}"
 
 
 		#RNN
