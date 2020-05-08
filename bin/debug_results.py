@@ -116,6 +116,10 @@ if __name__ == '__main__':
     rR.recognitionModel.solver = Astar(rR.recognitionModel)
     rS.recognitionModel.solver = Astar(rS.recognitionModel)
 
+
+    from dreamcoder.domains.tower.makeTowerTasks import makeMaxTasks
+
+    tasks = makeMaxTasks()
     likelihoodModel = AllOrNothingLikelihoodModel(timeout=0.01)
     for i in range(1,10):
         tasks = [testingTasks[-i]]
@@ -139,6 +143,8 @@ if __name__ == '__main__':
 
 
         print("task", i)
+        print("repl hit?", list(ret[3].values())[0] != [] )
+        print("sample hit?", list(ret2[3].values())[0] != [] )
         print("num for repl", ret[2])
         print("num for sample", ret2[2])
         print()
