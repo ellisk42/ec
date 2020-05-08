@@ -22,13 +22,13 @@ from matplotlib import pyplot
 
 
 if __name__ == '__main__':
-    from dreamcoder.domains.tower.makeTowerTasks import makeMaxTasks
-    import scipy.misc
-    ts = makeMaxTasks()
-    path = 'maxTowerTasks/'
-    for i,t in enumerate(ts):
-        scipy.misc.imsave(path+str(i)+'.png', t.getImage()) 
-    assert 0
+    # from dreamcoder.domains.tower.makeTowerTasks import makeMaxTasks
+    # import scipy.misc
+    # ts = makeMaxTasks()
+    # path = 'maxTowerTasks/'
+    # for i,t in enumerate(ts):
+    #     scipy.misc.imsave(path+str(i)+'.png', t.getImage()) 
+    # assert 0
 
 
     sys.setrecursionlimit(8000)
@@ -56,6 +56,18 @@ if __name__ == '__main__':
     #     (f'experimentOutputs/towers{ID}RNN_SRE=True_graph=True.pickle', 'RNN value'),
     #     (f'experimentOutputs/towers{ID}REPL_SRE=True_graph=True.pickle', 'REPL modular value')]
     # print("WARNING: using the REPLPolicyHashing runs")
+
+
+    graph="_graph=True"
+    #mode="Prior"
+    nameSalt = "towersMaxTasks" #"BigramSamplePolicy" #
+    ID = 'towers' + str(n)
+    runType = "MaxTasks" #"BigramSamplePolicy" #
+    paths = [(f'experimentOutputs/{ID}{runType}Sample_SRE=True{graph}.pickle', 'Sample from prior only (no value)'),
+        (f'experimentOutputs/{ID}{runType}RNN_SRE=True{graph}.pickle', 'RNN value'),
+        (f'experimentOutputs/{ID}{runType}REPL_SRE=True{graph}.pickle', 'REPL modular value'),
+        (f'experimentOutputs/{ID}{runType}Symbolic_SRE=True{graph}.pickle', 'Symbolic value')
+        ]
 
 
     paths, names = zip(*paths)
@@ -89,8 +101,27 @@ if __name__ == '__main__':
 
     SHitsRMisses = [t for t, lst in SampleStats.items() if ( lst != [] and REPLStats[t]==[] ) ]
     
-
     Smisses = [t for t, lst in SampleStats.items() if  lst == []]
+
+
+    SHits = [t for t, lst in SampleStats.items() if ( lst != [] ) ]
+
+    #for i in SHits: if 'Max' in i.name: print(i)
+
+    RHits = [t for t, lst in REPLStats.items() if ( lst != [] ) ]
+
+    for t in SHits:
+        if 'Max' not in t.name:
+            print(t, SampleStats[t][0].evaluations, rR.testingNumOfProg[-1][t])
+
+    print()
+    for t in RHits:
+        if 'Max' not in t.name:
+            print(t, REPLStats[t][0].evaluations)
+
+    
+
+    assert 0
 
     # for i, t in enumerate(testingTasks):
     #     if t in Smisses: print(i)
