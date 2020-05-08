@@ -12,6 +12,7 @@ import random
 import time
 from dreamcoder.domains.tower.towerPrimitives import TowerState, _empty_tower
 from dreamcoder.domains.tower.tower_common import renderPlan
+from dreamcoder.Astar import InferenceTimeout
 
 import types 
 
@@ -277,6 +278,8 @@ class AbstractREPLValueHead(BaseValueHead):
             print("timeout on sketch:")
             print(sketch)
             raise RunWithTimeout()
+        except InferenceTimeout:
+            raise InferenceTimeout()
         except Exception:
             print("caught exception")
             print("sketch", sketch)
@@ -582,6 +585,8 @@ class TowerREPLValueHead(AbstractREPLValueHead):
             print("timeout on sketch:")
             print(sketch)
             raise RunWithTimeout()
+        except InferenceTimeout:
+            raise InferenceTimeout()
         except Exception:
             print("caught exception")
             print("sketch", sketch)

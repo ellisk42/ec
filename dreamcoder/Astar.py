@@ -15,7 +15,7 @@ import numpy as np
 from dreamcoder.SMC import SearchResult, Solver
 
 from queue import PriorityQueue
-
+import signal
 """
 TODO
 - [X] node rep: might need object
@@ -27,7 +27,8 @@ TODO
 - [X] all start-up stuff
 
 """
-
+class InferenceTimeout(Exception):
+    pass
 
 class Astar(Solver):
 
@@ -93,40 +94,53 @@ class Astar(Solver):
         zippers = findHoles(h, request)
         q.push(0., (0., 0., h, zippers))
 
-        while time.time() - starting < timeout:
 
-            node = q.popMaximum() #TODO
-            #print("node", node)
+        try:
+            def timeoutCallBack(_1, _2): raise InferenceTimeout()
+            signal.signal(signal.SIGVTALRM, timeoutCallBack)
+            signal.setitimer(signal.ITIMER_VIRTUAL, timeout)  
 
-            for policyCost, zippers, neighbor in self._getNextNodes(node, g, request):
-                if (neighbor) in allObjects:
-                    continue
-                allObjects.add(neighbor)
+            while time.time() - starting < timeout:
 
-                if not zippers:
-                    success, totalNumberOfPrograms = self._report(neighbor, policyCost, 
-                                                                request, g, tasks, 
-                                                                likelihoodModel,
-                                                                hits, 
-                                                                starting, 
-                                                                elapsedTime, 
-                                                                totalNumberOfPrograms) #TODO
-                    if success: return self._finish(tasks,
-                                                    hits, 
-                                                    totalNumberOfPrograms)
+                node = q.popMaximum() #TODO
+                #print("node", node)
 
-                #print("neighbor", neighbor)
-                valueCost = self.owner.valueHead.computeValue(neighbor, task) #TODO 
-                #print("valueCost", valueCost)
+                for policyCost, zippers, neighbor in self._getNextNodes(node, g, request):
+                    if (neighbor) in allObjects:
+                        continue
+                    allObjects.add(neighbor)
 
-                totalCost = policyCost - self.criticCoefficient * valueCost #TODO normalize and scale
-                #print("policyCost", policyCost)
-                #print("totalCost", totalCost)
-                newNode = (totalCost, policyCost, neighbor, zippers)
-                q.push(totalCost, newNode)
+                    if not zippers:
+                        success, totalNumberOfPrograms = self._report(neighbor, policyCost, 
+                                                                    request, g, tasks, 
+                                                                    likelihoodModel,
+                                                                    hits, 
+                                                                    starting, 
+                                                                    elapsedTime, 
+                                                                    totalNumberOfPrograms) #TODO
+                        if success: return self._finish(tasks,
+                                                        hits, 
+                                                        totalNumberOfPrograms)
 
-                if time.time() - starting > timeout:
-                    break
+                    #print("neighbor", neighbor)
+                    valueCost = self.owner.valueHead.computeValue(neighbor, task) #TODO 
+                    #print("valueCost", valueCost)
+
+                    totalCost = policyCost - self.criticCoefficient * valueCost #TODO normalize and scale
+                    #print("policyCost", policyCost)
+                    #print("totalCost", totalCost)
+                    newNode = (totalCost, policyCost, neighbor, zippers)
+                    q.push(totalCost, newNode)
+
+                    if time.time() - starting > timeout:
+                        break
+
+
+        except InferenceTimeout:
+            print("Timed out while evaluating")
+        finally:
+            signal.signal(signal.SIGVTALRM, lambda *_: None)
+            signal.setitimer(signal.ITIMER_VIRTUAL, 0)
 
         return self._finish(tasks, hits, totalNumberOfPrograms)
 
