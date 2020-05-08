@@ -283,6 +283,49 @@ class Grammar(object):
 
         return context, returnValue
 
+
+
+    def _enumOneStep(self, request, context, environment, mustBeLeaf=False, forceHole=False, excludeProd=[]):
+        """
+        sample a hole with prob sampleHoleProb
+        We use the depth param to figure out if the next one deep should be all holes
+        this could use a big refactor
+        """
+        if request.isArrow():
+            for l, newContext, expression in self._enumOneStep(
+                request.arguments[1], context, [
+                    request.arguments[0]] + environment, mustBeLeaf,
+                    forceHole=forceHole, excludeProd=excludeProd):
+
+                yield l, newContext, Abstraction(expression)
+
+        if forceHole:
+            return context, Hole(tp=request)
+
+        candidates = self.buildCandidates(request, context, environment,
+                                          normalize=True,
+                                          returnProbabilities=False,
+                                          # Force it to terminate in a
+                                          # leaf; a primitive with no
+                                          # function arguments
+                                          mustBeLeaf=mustBeLeaf, 
+                                          excludeProd=excludeProd) #TODO
+
+        for l, newType, chosenPrimitive, context in candidates:
+
+        # Sample the arguments
+            xs = newType.functionArguments()
+            returnValue = chosenPrimitive
+
+            for x in xs:
+                x = x.apply(context)
+                context, x = self._sampleOneStep(x, context, environment, mustBeLeaf=False, forceHole=True)
+                returnValue = Application(returnValue, x)
+
+            yield l, context, returnValue
+
+
+
     def likelihoodSummary(self, context, environment, request, expression, silent=False):
         if request.isArrow():
             if not isinstance(expression, Abstraction):
@@ -1309,6 +1352,48 @@ class ContextualGrammar:
             returnValue = Application(returnValue, x)
             
         return context, returnValue
+
+
+    def _enumOneStep(self, parent, parentIndex, context, environment, request,
+                       mustBeLeaf=False, forceHole=False, excludeProd=[]):
+        """
+        sample a hole with prob sampleHoleProb
+        We use the depth param to figure out if the next one deep should be all holes
+        this could use a big refactor
+        """
+        if request.isArrow():
+            for l, newContext, body in self._enumOneStep(parent, parentIndex, context,
+                                         [request.arguments[0]] + environment,
+                                         request.arguments[1],
+                                         mustBeLeaf=mustBeLeaf,
+                                         forceHole=forceHole,
+                                         excludeProd=excludeProd): #TODO keep exclueProd??
+                yield l, newContext, Abstraction(body)
+
+        if forceHole:
+            return context, Hole(tp=request)
+
+        if parent is None: g = self.noParent
+        elif parent.isIndex: g = self.variableParent
+        else: g = self.library[parent][parentIndex]
+        candidates = g.buildCandidates(request, context, environment,
+                                       normalize=True, returnProbabilities=False,
+                                       mustBeLeaf=mustBeLeaf,
+                                       excludeProd=excludeProd)
+
+        for l, newType, chosenPrimitive, context in candidates: 
+        #newType, chosenPrimitive, context = sampleDistribution(candidates)
+
+            xs = newType.functionArguments()
+            returnValue = chosenPrimitive
+
+            for j,x in enumerate(xs):
+                x = x.apply(context)
+                context, x = self._sampleOneStep(chosenPrimitive, j, context, environment, x, 
+                                                 mustBeLeaf=False, forceHole=True)
+                returnValue = Application(returnValue, x)
+                
+            yield l, context, returnValue
 
     def expectedUsesMonteCarlo(self, request, debug=None):
         import numpy as np
