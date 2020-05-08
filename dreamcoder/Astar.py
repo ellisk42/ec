@@ -125,6 +125,9 @@ class Astar(Solver):
                 newNode = (totalCost, policyCost, neighbor, zippers)
                 q.push(totalCost, newNode)
 
+                if time.time() - starting > timeout:
+                    break
+
         return self._finish(tasks, hits, totalNumberOfPrograms)
 
     def _report(self, p, prior, request, g, tasks, 
