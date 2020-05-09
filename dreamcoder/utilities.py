@@ -749,6 +749,40 @@ class PQ(object):
 
     def __len__(self): return len(self.h)
 
+class PQMaxSize(object):
+    """pq where it only keeps fewer than maxSize elements 
+        implemented via stupid sorted python list"""
+
+    def __init__(self, maxSize=1000000):
+        self.h = []
+        self.maxSize = maxSize
+        self.size = 0
+
+    def push(self, priority, v):
+
+        self.h.append( (-priority, v) )
+        self.h = sorted(self.h, key=lambda x: x[0])
+
+        if self.size == self.maxSize:
+            self.h.pop()
+        else:
+            self.size += 1
+
+    def popMaximum(self):
+        priority, node = self.h[0]
+        self.h = self.h[1:]
+        self.size -= 1
+        return node
+
+    def __iter__(self):
+        for _, v in self.h:
+            yield v
+
+    def __len__(self): 
+        assert len(self.h) == self.size
+        return self.size
+
+
 class UnionFind:
     class Class:
         def __init__(self, x):

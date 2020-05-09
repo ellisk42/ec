@@ -60,13 +60,15 @@ if __name__ == '__main__':
 
     # graph="_graph=True"
     # #mode="Prior"
-    # nameSalt = "towersMaxTasks" #"BigramSamplePolicy" #
+    # nameSalt = "towersAstar" #"BigramSamplePolicy" #
     # ID = 'towers' + str(n)
-    # runType = "MaxTasks" #"BigramSamplePolicy" #
-    # paths = [(f'experimentOutputs/{ID}{runType}Sample_SRE=True{graph}.pickle', 'Sample from prior only (no value)'),
+    # runType = "Astar" #"BigramSamplePolicy" #
+    # paths = [
+    #     #(f'experimentOutputs/{ID}{runType}Sample_SRE=True{graph}.pickle', 'Sample from prior only (no value)'),
+    #     (f'experimentOutputs/{ID}{runType}Symbolic_SRE=True{graph}.pickle', 'Symbolic value'),
     #     (f'experimentOutputs/{ID}{runType}RNN_SRE=True{graph}.pickle', 'RNN value'),
     #     (f'experimentOutputs/{ID}{runType}REPL_SRE=True{graph}.pickle', 'REPL modular value'),
-    #     (f'experimentOutputs/{ID}{runType}Symbolic_SRE=True{graph}.pickle', 'Symbolic value')
+        
     #     ]
 
 
@@ -101,12 +103,18 @@ if __name__ == '__main__':
     #for i in SHits: if 'Max' in i.name: print(i)
     RHits = [t for t, lst in REPLStats.items() if ( lst != [] ) ]
     # for t in SHits:
-    #     if 'Max' not in t.name:
     #         print(t, SampleStats[t][0].evaluations, rR.testingNumOfProg[-1][t])
     # print()
+    # count = 0
     # for t in RHits:
-    #     if 'Max' not in t.name:
-    #         print(t, REPLStats[t][0].evaluations)
+    #     print(t, REPLStats[t][0].evaluations)
+    #     if rS.testingNumOfProg[-1][t] < REPLStats[t][0].evaluations:
+    #         if SampleStats[t] == []:
+    #             print("not reached by symbolic",rS.testingNumOfProg[-1][t] )
+    #             count += 1
+
+    # print(count)
+    # #assert 0
 
 
     from dreamcoder.Astar import Astar
@@ -121,11 +129,11 @@ if __name__ == '__main__':
 
     tasks = makeMaxTasks()
     likelihoodModel = AllOrNothingLikelihoodModel(timeout=0.01)
-    for i in range(1,10):
+    for i in range(2,40):
         tasks = [testingTasks[-i]]
         g = rS.recognitionModel.grammarOfTask(tasks[0]).untorch()
         ret = rR.recognitionModel.solver.infer(g, tasks, likelihoodModel, 
-                                    timeout=20,
+                                    timeout=10,
                                     elapsedTime=0,
                                     evaluationTimeout=0.01,
                                     maximumFrontiers={tasks[0]: 2},
@@ -133,7 +141,7 @@ if __name__ == '__main__':
                                     )
         print("now for Sample")
         ret2 = rS.recognitionModel.solver.infer(g, tasks, likelihoodModel, 
-                                    timeout=20,
+                                    timeout=300,
                                     elapsedTime=0,
                                     evaluationTimeout=0.01,
                                     maximumFrontiers={tasks[0]: 2},

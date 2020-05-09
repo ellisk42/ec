@@ -88,7 +88,7 @@ class Astar(Solver):
         totalNumberOfPrograms = 0
 
 
-        q = PQ()
+        q = PQMaxSize(maxSize=1000000)
         #base node
         h = baseHoleOfType(request)
         zippers = findHoles(h, request)
@@ -104,8 +104,11 @@ class Astar(Solver):
 
                 node = q.popMaximum() #TODO
                 #print("node", node)
+                print("queue size", len(q))
 
+                nNei = 0
                 for policyCost, zippers, neighbor in self._getNextNodes(node, g, request):
+                    nNei += 1
                     if (neighbor) in allObjects:
                         continue
                     allObjects.add(neighbor)
@@ -132,9 +135,10 @@ class Astar(Solver):
                     newNode = (totalCost, policyCost, neighbor, zippers)
                     q.push(totalCost, newNode)
 
+
                     if time.time() - starting > timeout:
                         break
-
+                print('\t num neighbors', nNei)
 
         except InferenceTimeout:
             print("Timed out while evaluating")
