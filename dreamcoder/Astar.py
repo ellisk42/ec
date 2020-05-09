@@ -104,7 +104,7 @@ class Astar(Solver):
 
                 node = q.popMaximum() #TODO
                 #print("node", node)
-                print("queue size", len(q))
+                #print("queue size", len(q))
 
                 nNei = 0
                 for policyCost, zippers, neighbor in self._getNextNodes(node, g, request):
@@ -138,7 +138,7 @@ class Astar(Solver):
 
                     if time.time() - starting > timeout:
                         break
-                print('\t num neighbors', nNei)
+                #print('\t num neighbors', nNei)
 
         except InferenceTimeout:
             print("Timed out while evaluating")
