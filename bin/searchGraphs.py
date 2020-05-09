@@ -58,7 +58,7 @@ def plotTestResults(testResults, timeout, defaultLoss=None,
     if mode =='fractionHit': plot.ylim(bottom=0.)
     for n in range(len(testResults)):
         #xs = list(range(max([0]+[r.evaluations for tr in testResults[n] for r in tr] ) + 1))
-        xs = list(range(400))
+        xs = list(range(100))
         if mode =='fractionHit':
             plot.plot(xs, [fractionHit(n,lambda r: r.evaluations <= x) for x in xs],
                   label=names[n])
@@ -116,10 +116,11 @@ if __name__ == '__main__':
 
     graph="_graph=True"
     #mode="Prior"
-    nameSalt = "towersMaxTasks" #"BigramSamplePolicy" #
+    nameSalt = "towersAstar" #"BigramSamplePolicy" #
     ID = 'towers' + str(n)
-    runType = "MaxTasks" #"BigramSamplePolicy" #
-    paths = [(f'experimentOutputs/{ID}{runType}Sample_SRE=True{graph}.pickle', 'Sample from prior only (no value)'),
+    runType = "Astar" #"BigramSamplePolicy" #
+    paths = [
+        #(f'experimentOutputs/{ID}{runType}Sample_SRE=True{graph}.pickle', 'Sample from prior only (no value)'),
         (f'experimentOutputs/{ID}{runType}RNN_SRE=True{graph}.pickle', 'RNN value'),
         (f'experimentOutputs/{ID}{runType}REPL_SRE=True{graph}.pickle', 'REPL modular value'),
         (f'experimentOutputs/{ID}{runType}Symbolic_SRE=True{graph}.pickle', 'Symbolic value')
