@@ -282,6 +282,14 @@ let tprogram           = make_ground "program"
 let tmaybe t           = kind "maybe" [t]
 let tcanvas            = tlist tint
 
+(** CLEVR Types -- types.ml **)
+let tclevrcolor = make_ground "tclevrcolor";;
+let tclevrsize = make_ground "tclevrsize";;
+let tclevrmaterial = make_ground "tclevrmaterial";;
+let tclevrshape = make_ground "tclevrshape";;
+let tclevrrelation = make_ground "tclevrrelation";;
+let tclevrobject = make_ground "tclevrobject";;
+
 let unify_many_types ts =
   let k = empty_context in
   let (t,k) = makeTID k in

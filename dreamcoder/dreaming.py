@@ -11,17 +11,18 @@ from dreamcoder.program import Program
 from dreamcoder.recognition import RecognitionModel, DummyFeatureExtractor
 from dreamcoder.task import Task
 from dreamcoder.type import arrow, tint
-from dreamcoder.utilities import tuplify, timing, eprint, get_root_dir, mean
+from dreamcoder.utilities import tuplify, timing, eprint, get_root_dir, mean, unfrozendict
 
 
 def helmholtzEnumeration(g, request, inputs, timeout, _=None,
                          special=None, evaluationTimeout=None,
-                         use_vars_in_tokenized=False):
+                         use_vars_in_tokenized=False, executable=None):
     """Returns json (as text)"""
     message = {"request": request.json(),
                "timeout": timeout,
                "DSL": g.json(),
                "extras": inputs}
+               
     if evaluationTimeout: message["evaluationTimeout"] = evaluationTimeout
     if special: message["special"] = special
     if use_vars_in_tokenized: message["use_vars_in_tokenized"] = use_vars_in_tokenized
@@ -29,7 +30,8 @@ def helmholtzEnumeration(g, request, inputs, timeout, _=None,
     with open('/tmp/hm', 'w') as handle:
         handle.write(message)
     try:
-        binary = os.path.join(get_root_dir(), 'helmholtz')
+        binary_name = 'helmholtz' if executable is None else executable
+        binary = os.path.join(get_root_dir(), binary_name)
         process = subprocess.Popen(binary,
                                    stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE)
@@ -41,18 +43,20 @@ def helmholtzEnumeration(g, request, inputs, timeout, _=None,
 
 def backgroundHelmholtzEnumeration(tasks, g, timeout, _=None,
                                    special=None, evaluationTimeout=None,
-                                   use_vars_in_tokenized=False):
+                                   use_vars_in_tokenized=False, dedup=True,
+                                   executable=None):
     requests = list({t.request for t in tasks})
-    inputs = {r: list({tuplify(xs)
-                       for t in tasks if t.request == r
-                       for xs, y in t.examples})
+    inputs = {r:  [unfrozendict(x) for x in list({tuplify(xs) for t in tasks if t.request == r
+                   for xs, y in t.examples})]
               for r in requests}
+        
     workers = Pool(len(requests))
     promises = [workers.apply_async(helmholtzEnumeration,
                                     args=(g, r, inputs[r], float(timeout)),
                                     kwds={'special': special,
                                           'evaluationTimeout': evaluationTimeout,
-                                          'use_vars_in_tokenized' : use_vars_in_tokenized})
+                                          'use_vars_in_tokenized' : use_vars_in_tokenized,
+                                          'executable' : executable})
                 for r in requests]
 
     def get():
@@ -61,15 +65,20 @@ def backgroundHelmholtzEnumeration(tasks, g, timeout, _=None,
         with timing("(Helmholtz enumeration) Decoded json into frontiers"):
             for request, result in zip(requests, results):
                 response = json.loads(result.decode("utf-8"))
-                for b, entry in enumerate(response):
-                    frontiers.append(Frontier([FrontierEntry(program=Program.parse(p),
-                                                             logPrior=entry["ll"],
-                                                             logLikelihood=0.,
-                                                             tokens=g.escape_tokens_string(tokens).split())
-                                               for p, tokens in zip(entry["programs"], entry["tokens"])],
-                                              task=Task(str(b),
-                                                        request,
-                                                        [])))
+                try:
+                    for b, entry in enumerate(response):
+                        frontiers.append(Frontier([FrontierEntry(program=Program.parse(p),
+                                                                 logPrior=entry["ll"],
+                                                                 logLikelihood=0.,
+                                                                 tokens=g.escape_tokens_string(tokens).split())
+                                                   for p, tokens in zip(entry["programs"], entry["tokens"])],
+                                                  task=Task(str(b),
+                                                            request,
+                                                            [])))
+                except:
+                    print("Helmholtz response error:")
+                    print(response)
+                    assert False
         eprint("Total number of Helmholtz frontiers:", len(frontiers))
         return frontiers
 

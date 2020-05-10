@@ -10,6 +10,7 @@ import math
 import pickle as pickle
 from itertools import chain
 import heapq
+from frozendict import frozendict
 
 import hashlib
 
@@ -850,6 +851,17 @@ def howManyGigabytesOfMemory():
 
 def tuplify(x):
     if isinstance(x,(list,tuple)): return tuple(tuplify(z) for z in x)
+    if isinstance(x, dict): return frozendict({
+        tuplify(k) : tuplify(v)
+        for (k, v) in x.items()
+    })
+    return x
+def unfrozendict(x):
+    if isinstance(x, (list, tuple)): return tuple(unfrozendict(z) for z in x)
+    if isinstance(x, frozendict): return {
+        unfrozendict(k): unfrozendict(v)
+        for (k, v) in x.items()
+    }
     return x
 
 # image montage!

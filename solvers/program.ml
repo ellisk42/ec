@@ -498,6 +498,66 @@ let rec number_of_free_parameters = function
   | Apply(f,x) -> number_of_free_parameters f + number_of_free_parameters x
   | Index(_) -> 0
 
+  (** CLEVR Function Shell Definitions -- program.ml **)
+  (** Constants **)
+let primitive_clevr_gray = primitive "clevr_gray" (tclevrcolor) ("gray");;
+let primitive_clevr_red = primitive "clevr_red" (tclevrcolor) ("red");;
+let primitive_clevr_blue = primitive "clevr_blue" (tclevrcolor) ("blue");;
+let primitive_clevr_green = primitive "clevr_green" (tclevrcolor) ("green");;
+let primitive_clevr_brown = primitive "clevr_brown" (tclevrcolor) ("brown");;
+let primitive_clevr_purple = primitive "clevr_purple" (tclevrcolor) ("purple");;
+let primitive_clevr_cyan = primitive "clevr_cyan" (tclevrcolor) ("cyan");;
+let primitive_clevr_yellow = primitive "clevr_yellow" (tclevrcolor) ("yellow");;
+let primitive_clevr_small = primitive "clevr_small" (tclevrsize) ("small");;
+let primitive_clevr_large = primitive "clevr_large" (tclevrsize) ("large");;
+let primitive_clevr_rubber = primitive "clevr_rubber" (tclevrmaterial) ("rubber");;
+let primitive_clevr_metal = primitive "clevr_metal" (tclevrmaterial) ("metal");;
+let primitive_clevr_cube = primitive "clevr_cube" (tclevrshape) ("cube");;
+let primitive_clevr_sphere = primitive "clevr_sphere" (tclevrshape) ("sphere");;
+let primitive_clevr_cylinder = primitive "clevr_cylinder" (tclevrshape) ("cylinder");;
+let primitive_clevr_left = primitive "clevr_left" (tclevrrelation) ("left");;
+let primitive_clevr_right = primitive "clevr_right" (tclevrrelation) ("right");;
+let primitive_clevr_behind = primitive "clevr_behind" (tclevrrelation) ("behind");;
+let primitive_clevr_front = primitive "clevr_front" (tclevrrelation) ("front");;
+
+(** Attribute querying **)
+let sort_objs obj_list = 
+  List.sort (fun obj1 obj2 -> 
+    let (_, id1) = List.Assoc.find_exn obj1 "id" ~equal:(=) in
+    let (_, id2) = List.Assoc.find_exn obj2 "id" ~equal:(=) in
+    Pervasives.compare id1 id2
+    ) obj_list
+    
+let primitive_clevr_query_color = primitive "clevr_query_color" (tclevrobject @> tclevrcolor) (fun obj -> let (_, attr) = List.Assoc.find_exn obj "color" ~equal:(=) in attr);;
+let primitive_clevr_query_size = primitive "clevr_query_size" (tclevrobject @> tclevrsize) (fun obj -> let (_, attr) = List.Assoc.find_exn obj "size" ~equal:(=) in attr);;
+let primitive_clevr_query_material = primitive "clevr_query_material" (tclevrobject @> tclevrmaterial) (fun obj -> let (_, attr) = List.Assoc.find_exn obj "material" ~equal:(=) in attr);;
+let primitive_clevr_query_shape = primitive "clevr_query_shape" (tclevrobject @> tclevrshape) (fun obj -> let (_, attr) = List.Assoc.find_exn obj "shape" ~equal:(=) in attr);;
+(** Attribute equality **)
+let primitive_clevr_eq_size = primitive "clevr_eq_size" (tclevrsize @> tclevrsize @> tboolean) (fun (a : string) (b : string) -> a = b);;
+let primitive_clevr_eq_color = primitive "clevr_eq_color" (tclevrcolor @> tclevrcolor @> tboolean) (fun (a : string) (b : string) -> a = b);;
+let primitive_clevr_eq_material = primitive "clevr_eq_material" (tclevrmaterial @> tclevrmaterial @> tboolean) (fun (a : string) (b : string) -> a = b);;
+let primitive_clevr_eq_shape = primitive "clevr_eq_shape" (tclevrshape @> tclevrshape @> tboolean) (fun (a : string) (b : string) -> a = b);;
+let primitive_clevr_eq_objects = primitive "clevr_eq_objects" (tclevrobject @> tclevrobject @> tboolean) (fun obj1 obj2 ->
+  let (_, id1) = List.Assoc.find_exn obj1 "id" ~equal:(=) in
+  let (_, id2) = List.Assoc.find_exn obj2 "id" ~equal:(=) in
+  id1 == id2
+  );;
+
+(** Filter operators **)
+let primitive_clevr_filter_size = primitive "clevr_filter_size" (tlist tclevrobject @> tclevrsize @> tlist tclevrobject) (fun obj_list attr -> 
+  List.filter ~f: 
+  (fun obj -> 
+    let (_, obj_attr) = List.Assoc.find_exn obj "size" ~equal:(=) in
+    obj_attr = attr) 
+  obj_list);;
+
+(** Basic list operators **)
+let primitive_clevr_car = primitive "clevr_car" (tlist tclevrobject @> tclevrobject) (fun xs -> List.hd_exn xs);;
+let primitive_clevr_cdr = primitive "clevr_cdr" (tlist tclevrobject @> tlist tclevrobject) (fun xs -> List.tl_exn xs);;
+let primitive_clevr_cons = primitive "clevr_cons" (tclevrobject @> tlist tclevrobject  @> tlist tclevrobject) (fun x xs -> x :: xs);;
+
+
+
 (* List Function Definitions *)
 let primitive_empty = primitive "empty" (tlist t0) [];;
 let primitive_range = primitive "range" (tint @> tlist tint) (fun x -> 0 -- (x-1));;

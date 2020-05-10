@@ -130,7 +130,6 @@ let helmholtz_enumeration (behavior_hash : program -> PolyList.t option) ?nc:(nc
 
 let rec unpack x =
   let open Yojson.Basic.Util in
-  
   try magical (x |> to_int) with _ ->
   try magical (x |> to_float) with _ ->
   try magical (x |> to_bool) with _ ->
@@ -218,6 +217,42 @@ let string_hash ?timeout:(timeout=0.001) request inputs : program -> PolyList.t 
 
 register_special_helmholtz "string" string_hash;;
 
+let rec unpack_clevr x =
+  let open Yojson.Basic.Util in 
+  try x |> to_assoc |> magical with _ ->
+  try x |> to_list |> List.map ~f:unpack_clevr |> magical
+  with _ -> raise (Failure "could not unpack clevr objects")
+
+
+let clevr_hash ?timeout:(timeout=0.001) request inputs : program -> PolyList.t option =
+  let open Yojson.Basic.Util in
+
+  (* convert json -> ocaml *)
+  let inputs : 'a list list = unpack_clevr inputs in
+  let return = return_of_type request in
+
+  fun program ->
+    let p = analyze_lazy_evaluation program in
+    let outputs = inputs |> List.map ~f:(fun input ->
+        try
+          match run_for_interval ~attempts:2 timeout
+                  (fun () -> run_lazy_analyzed_with_arguments p input)
+          with
+          | Some(value) -> PolyValue.pack return value            
+          | _ -> PolyValue.None
+        with (* We have to be a bit careful with exceptions if the
+              * synthesized program generated an exception, then we just
+              * terminate w/ false but if the enumeration timeout was
+              * triggered during program evaluation, we need to pass the
+              * exception on
+             *)
+        | UnknownPrimitive(n) -> raise (Failure ("Unknown primitive: "^n))
+        | _                   -> PolyValue.None) in
+    if List.exists outputs ~f:PolyValue.is_some then
+      Some(outputs)
+    else None
+;;
+register_special_helmholtz "clevr" clevr_hash;;
 
 
 (* let rational_hash ?timeout:(timeout=0.001) request inputs : program -> PolyList.t option = *)

@@ -33,6 +33,15 @@ clean:
 	rm -f logoDrawString
 	rm -f data/geom/logoDrawString
 
+clevrTestClean: 
+	cd solvers && jbuilder clean
+	rm -f clevrTest
+
+clevrTest:
+	cd solvers && \
+	jbuilder build clevrTest.exe && \
+	cp _build/default/clevrTest.exe ../clevrTest
+	
 re2TestClean: 
 	cd solvers && jbuilder clean
 	rm -f re2Primitives
