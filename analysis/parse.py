@@ -16,8 +16,7 @@ from dreamcoder.grammar import Grammar
 import numpy as np
 from analysis.utils import *
 
-
-
+from pythonlib.drawmodel.program import program2strokes, parses2datflat
 
 def getParses(dreamcoder_program):
     """ e.g., dreamcoder_program = result.allFrontiers[tasks[i]].bestPosterior.program"""
@@ -163,67 +162,6 @@ def getAndSaveParses(experiment="S9.2", debug=False, skipthingsthatcrash=False, 
     return result, tasks, testtasks, programnames, program_test_names, behaviorexpt
 
 
-def program2strokes(program):
-    """given program convert into "strokes", so that can pass into same behavioral aalysis as for subjects"""
-    # program is list of numpy arrays (flattened)
-    # for nowwill put down times in order. will be in fake milliseconds. 
-    
-    on = 1
-    off = 300
-    strokes = []
-    for p in program:
-        times = np.linspace(on, off, p.shape[0])
-        p = np.concatenate((p, times[:,None]), axis=1)
-        on+=500
-        off+=500
-        strokes.append(p)
-    return strokes
-    
-    # strokes = program2strokes(dreams[1].evaluate([]))
-    # strokes = program2strokes(result.allFrontiers[tasks[1]].bestPosterior.program.evaluate([]))
-    # strokes = [s.tolist() for s in strokes]
-
-
-"""Given a list of flattened program (i.e, list of numpy) converts to datflat"""
-def parses2datflat(programs, stimname="", condition="", randomsubsample=[]):
-    # ideally stimname is the name of stim for all parses (i.e progs)
-    # ideally condition indicates what the training schedule was.
-
-    # === A HACK, to make this work with code written fro beahviroal analysis, 
-    # convert this list of programs --> list of strokes --> one datflat object
-    # this datflat can then be treated just like a human subject's data.
-
-    datflat = []
-    from pythonlib.tools.listtools import permuteRand
-    print("getting datflat for {}".format(stimname))
-
-    if isinstance(randomsubsample, int)>0:
-        # takes a random subsample of all programs, without repalcement
-        if len(programs)>randomsubsample:
-            import random
-            print("(parses --> datflat) doing random subsample of {}{} from {} to {}".format(stimname, condition, len(programs), randomsubsample))
-            programs = random.sample(programs, randomsubsample)
-    else: assert isinstance(randomsubsample, list), "expect either int or empty list..."
-
-
-    for i, prog in enumerate(programs):
-        # print("prog {}".format(i))
-        if isinstance(prog, Parse):
-            prog = prog.flatten()
-        # append fake timestamps, so that prog become a strokes list:
-        strokes = program2strokes(prog)
-
-        # create a new entry in datflat, 
-        datflat.append({
-            "parsenum": i, # this is unique to dreamcoder; each program has multiple parses
-            "trialstrokes":strokes,
-            "trialonset": 0,
-            "stimname": stimname, 
-            "trialprimitives":[],
-            "trialcircleparams":[],
-            "condition":condition
-        })
-    return datflat
 
 
 def parses2datflatAll(DAT, randomsubsample=[]):

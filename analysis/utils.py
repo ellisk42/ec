@@ -555,7 +555,7 @@ def DATloadDrawgoodData(DAT, dosegmentation=True):
 
 
 def DATgetSolvedStim(DAT, removeshaping=True, intersectDrawgood=False, 
-    onlyifhasdatflat=False):
+    onlyifhasdatflat=False, test_only=False):
     import re
     """gets stims that have parses"""
 
@@ -606,6 +606,10 @@ def DATgetSolvedStim(DAT, removeshaping=True, intersectDrawgood=False,
             fname = "{}/{}.pickle".format(DAT["datflatsavedir"], stim)
             return path.exists(fname)            
         stimnames = [stim for stim in stimnames if check(stim)]
+    if test_only:
+        # only test stims.
+        test_names = [t.name for t in DAT["testtasks"]]
+        stimnames = [stim for stim in stimnames if stim in test_names]
         
     return stimnames
 

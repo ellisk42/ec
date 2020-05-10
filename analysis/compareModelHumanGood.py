@@ -231,27 +231,48 @@ if __name__=="__main__":
     # # humans_to_plot = ["A2VLTSW6CXIUMR", "A2P53AN2M8IWFP"]
     # humans_to_plot = ["AI36LV7AATYWF", "AIK9IRPT4M848"]
 
-    STIMS = [
-    "S13_182",
-    "S12_13_test_9",
-    "S12_13_test_9",
-    "S12_13_test_7",
-    "S12_13_test_4"
-    ]
-    HUMANSTOPLOT = [
-    ["A29I0O9V6N1CY", "A2P53AN2M8IWFP"],
-    ["A2RLY2I4U06ETD", "A2BBDH8DZD77AU"],
-    ["A2ZJAEL03VTZ8", "A2BBDH8DZD77AU"],
-    ["A2JDYN6QM8M5UN" , "AMPMTF5IAAMK8"],
-    ["A2RLY2I4U06ETD", "A1Y82LKWQQP90M"]
-    ]
+    if False:
+        STIMS = [
+        "S13_182",
+        "S12_13_test_9",
+        "S12_13_test_9",
+        "S12_13_test_7",
+        "S12_13_test_4"
+        ]
+    else:
+        STIMS = [] # if empty, then will do all
+
+    if False:
+        HUMANSTOPLOT = [
+        ["A29I0O9V6N1CY", "A2P53AN2M8IWFP"],
+        ["A2RLY2I4U06ETD", "A2BBDH8DZD77AU"],
+        ["A2ZJAEL03VTZ8", "A2BBDH8DZD77AU"],
+        ["A2JDYN6QM8M5UN" , "AMPMTF5IAAMK8"],
+        ["A2RLY2I4U06ETD", "A1Y82LKWQQP90M"]
+        ]
+    else:
+        HUMANSTOPLOT = [
+        ["A2ZJAEL03VTZ8", "AIK9IRPT4M848"]
+        ] # if only one entry, then will use this for all STIMS
 
     #########################################
     outdict = getHumanHumanDists()
     print("Loaded Human-Human distances")
     outdict = [o for o in outdict if o["dist"]!=None]
 
-    ## ==== VERSION 2 - LOAD ALL AT ONCE INTO MEMEORY, NOT PIECEMEITL
+    if len(STIMS)==0:
+        STIMS = sorted(list(set([o["task"] for o in outdict])))
+    if len(HUMANSTOPLOT)!=len(STIMS):
+        assert len(HUMANSTOPLOT)==1, "either have matching hum and stim, or if want to repeat humans, then only have one pair"
+        HUMANSTOPLOT = [HUMANSTOPLOT[0] for _ in range(len(STIMS))]
+    assert len(STIMS)==len(HUMANSTOPLOT)
+
+    print("STIMS:")
+    print(STIMS)
+    print("HUMANS")
+    print(HUMANSTOPLOT)
+    
+    ## ==== LOAD ALL AT ONCE INTO MEMEORY, NOT PIECEMEITL
     # 1) Load dreamcoder
     # ECTRAINlist = ["S12.10.test4", "S13.10.test4"]
     ECTRAINlist = ["S12.10.test5", "S13.10.test5"]
@@ -263,8 +284,6 @@ if __name__=="__main__":
         ECTRAINlist, modelkind_list, ver, use_withplannerscore)
 
     for stim, humans_to_plot in zip(STIMS, HUMANSTOPLOT):
-
-
 
         # ===== FOR A STIM, PULL OUT TOP PARSES MODELS
         assert len(humans_to_plot)==2, "should be opposite conditions also"
@@ -329,7 +348,7 @@ if __name__=="__main__":
                     datsegs = DATloadDatSeg(DAT_all[i], stim)
 
                     for sort_by in ["likeli", "prior"]:
-                        fig = plotParses(distances_flat_this, datsegs, sort_by, priorver, nplot=[0, -1])
+                        fig = plotParses(distances_flat_this, datsegs, sort_by, priorver, nplot=[0, 1, 2, -1])
                         figs_all.extend(fig)
 
                     # === PLOT HISTROGRAM OF PRIOR SCORES
@@ -380,7 +399,7 @@ if __name__=="__main__":
                 figs_all.append(fig)
 
 
-        SAVEDIR = f"analysis/summaryfigs/acrossexpt/ecS12.10.test5_S13.10.test5-dg2.4_2.4/closer_analysis/notebook_comparing_human_model_parses"
+        SAVEDIR = f"analysis/summaryfigs/acrossexpt/ecS12.10.test5_S13.10.test5-dg2.4_2.4/closer_analysis/notebook_comparing_human_model_parses/allstim"
         fname = f"{SAVEDIR}/{stim}_h1-{humans_to_plot[0]}_h2-{humans_to_plot[1]}.pdf"
 
         # === save all figs
