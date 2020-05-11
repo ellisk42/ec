@@ -44,12 +44,17 @@ def helmholtzEnumeration(g, request, inputs, timeout, _=None,
 def backgroundHelmholtzEnumeration(tasks, g, timeout, _=None,
                                    special=None, evaluationTimeout=None,
                                    use_vars_in_tokenized=False, dedup=True,
-                                   executable=None):
+                                   executable=None,
+                                   serialize_special=None):
     requests = list({t.request for t in tasks})
-    inputs = {r:  [unfrozendict(x) for x in list({tuplify(xs) for t in tasks if t.request == r
+    if serialize_special is None:
+         def s(x): return x
+         serialize_x_fn = _s
+    else: 
+        serialize_x_fn = serialize_special
+    inputs = {r:  [serialize_x_fn(unfrozendict(x)) for x in list({tuplify(xs) for t in tasks if t.request == r
                    for xs, y in t.examples})]
               for r in requests}
-        
     workers = Pool(len(requests))
     promises = [workers.apply_async(helmholtzEnumeration,
                                     args=(g, r, inputs[r], float(timeout)),

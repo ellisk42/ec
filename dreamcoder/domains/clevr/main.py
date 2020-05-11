@@ -84,6 +84,7 @@ def main(args):
                                                             timeout=1,
                                                             evaluationTimeout=10,
                                                             special='clevr',
-                                                            executable='clevrTest') # TODO: check if we need special to check tasks later
+                                                            executable='clevrTest',
+                                                            serialize_special=serialize_clevr_object) # TODO: check if we need special to check tasks later
         helmholtzFrontiers()
     

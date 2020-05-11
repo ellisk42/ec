@@ -39,11 +39,24 @@ def infer_return_type(answers):
     else: 
         print("Error: cannot infer return type!")
         assert False
-
+def serialize_clevr_object(x):
+    def serialize_obj(obj):
+        serialized_obj = dict()
+        for k in obj:
+            if isinstance(obj[k], (list, tuple)):
+                serialized_obj[k] = ",".join([str(v) for v in obj[k]])
+            else:
+                serialized_obj[k] = obj[k]
+        return serialized_obj
+    return [[serialize_obj(o) for o in obj_list] 
+    for obj_list in x]
+    
 def buildClevrMockTask(train_task):
     print("Example:")
     for obj in train_task.examples[0][0][0]:
         print(f'Id: {obj["id"]}, Color: {obj["color"]}, Shape: {obj["shape"]}, Size: {obj["size"]}')
+    first_obj =  train_task.examples[0][0][0][0]
+    print(first_obj["left"])
     return Task(name="mock", request=arrow(tlist(tclevrobject), tlist(tclevrobject)),
                 examples=[train_task.examples[0]], features=None, cache=False)
 

@@ -18,15 +18,17 @@ let print_list obj_list =
     let (_, shape) =  List.Assoc.find_exn obj "shape" ~equal:(=) in
     let (_, material) =  List.Assoc.find_exn obj "material" ~equal:(=) in
     let (_, size) =  List.Assoc.find_exn obj "size" ~equal:(=) in
-    (* let _ = Printf.eprintf "Id: %s \n" id in  *)
-    Printf.eprintf "Color : %s | Shape: %s | Material: %s | Size: %s\n" color shape material size;
+    let (_, left) =  List.Assoc.find_exn obj "left" ~equal:(=) in
+    let _ = Printf.eprintf "Color : %s | Shape: %s | Material: %s | Size: %s | Left: %s \n" color shape material size left in 
+    let unpacked = unpack_relate_list left in 
+    unpacked |> List.map ~f: (fun id -> Printf.eprintf "ID : %d\n" id)
   );;
 
 let test_program name raw input =
   let obj_list = List.hd_exn input in 
   let sorted_obj = sort_objs obj_list in
   let obj_1 = List.hd_exn sorted_obj in
-
+  (* print_list sorted_obj;; *)
   (* try 
     let (k, v) = List.Assoc.find_exn obj_1 "id" ~equal:(=) in
     Printf.eprintf "First %s id: out %d \n" name v
@@ -36,9 +38,11 @@ let test_program name raw input =
   let p = parse_program raw |> get_some in
   let p = analyze_lazy_evaluation p in
   let y = run_lazy_analyzed_with_arguments p input in
-  (* Printf.eprintf "%s | out %s \n" name (Bool.to_string y);; *)
-
   print_list y;;
+  (* Printf.eprintf "%s \n" name;;  *)
+  (* Printf.eprintf "%s | out %s \n" name (Bool.to_string y);; *)
+  (* y |> List.map ~f: (fun id -> Printf.eprintf "ID : %d\n" id);;  *)
+  (* print_list y;; *)
   (* Printf.eprintf "%s | out %s \n" name (Bool.to_string y);; *)
 
 let run_job channel =
@@ -92,7 +96,14 @@ let run_job channel =
     let raw = "(lambda (clevr_eq_int (clevr_count (clevr_filter_size $0 clevr_large)) 3))"  in 
     let raw = "(lambda (clevr_gt? (clevr_count (clevr_filter_size $0 clevr_large)) 3))" in
     let raw = "(lambda (not (clevr_gt? (clevr_count (clevr_filter_size $0 clevr_large)) 3)))" in 
-    let raw = "(lambda (clevr_map (clevr_transform_size clevr_large) $0))" in test_program "test" raw input
+    let raw = "(lambda (clevr_filter (lambda (clevr_eq_size clevr_small (clevr_query_size $0))) $0))" in
+    let raw = "(lambda (clevr_filter_except (clevr_car $0) (lambda (clevr_eq_size clevr_large (clevr_query_size $0))) $0))" in
+    (* let raw = "(lambda (clevr_map (lambda $0) $0))"  *)
+    let raw = "(lambda (clevr_relate (clevr_car $0) clevr_left $0))" in 
+    let raw = "(lambda (clevr_empty? $0))" in 
+    (* let raw = "(lambda (clevr_if (clevr_not (clevr_empty? $0)) (clevr_add (clevr_car $0) $0) $0))" in *)
+    let raw  = "(lambda (clevr_add (clevr_car $0) clevr_empty))" in
+    test_program "test" raw input
     ) in
   let message : json = 
     `List(
