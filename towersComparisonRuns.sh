@@ -16,7 +16,7 @@ for num in 3 20
 	do
 		#symbolic
 
-		cp experimentOutputs/towers${num}.pickle experimentOutputs/towers${num}Astar.pickle
+		cp experimentOutputs/towers${num}.pickle experimentOutputs/towers${num}AstarCountNodes.pickle
 
 		replPolicy=experimentOutputs/towers${num}LongREPL.pickle
 		samplePolicy=experimentOutputs/towers${num}Sample.pickle
