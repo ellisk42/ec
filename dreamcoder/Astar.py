@@ -37,7 +37,11 @@ class Astar(Solver):
                  #initialParticles=8, exponentialGrowthFactor=2,
                  criticCoefficient=1.,
                  maxDepth=16,
-                 holeProb=0.2):
+                 holeProb=0.2,
+                 reportNodeExpansions=True):
+
+        #which type of reporting: full programs or sketches:
+        self.reportNodeExpansions = reportNodeExpansions 
         self.maximumLength = maximumLength
         #self.initialParticles = initialParticles
         #self.exponentialGrowthFactor = exponentialGrowthFactor
@@ -112,6 +116,7 @@ class Astar(Solver):
                     if (neighbor) in allObjects:
                         continue
                     allObjects.add(neighbor)
+                    if self.reportNodeExpansions: totalNumberOfPrograms += 1
 
                     if not zippers:
                         success, totalNumberOfPrograms = self._report(neighbor, policyCost, 
@@ -154,7 +159,8 @@ class Astar(Solver):
                 starting, 
                 elapsedTime, 
                 totalNumberOfPrograms):
-        totalNumberOfPrograms += 1
+        if not self.reportNodeExpansions:
+            totalNumberOfPrograms += 1
 
         if p in self.fullPrograms:
             return totalNumberOfPrograms

@@ -22,9 +22,9 @@ for num in 3 20
 		samplePolicy=experimentOutputs/towers${num}Sample.pickle
 		oldResume=experimentOutputs/towers${num}
 
-		resume=experimentOutputs/towers${num}Astar
+		resume=experimentOutputs/towers${num}AstarCountNodes
 		
-		salt=towers${num}Astar
+		salt=towers${num}AstarCountNodes
 		cp ${resume}.pickle ${resume}Symbolic.pickle
 
 		cp ${oldResume}Sample.pickle_RecModelOnly ${resume}Symbolic.pickle_RecModelOnly
