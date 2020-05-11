@@ -43,7 +43,7 @@ def clevr_options(parser):
                         nargs="*",
                         default=["clevr_bootstrap", "clevr_map_transform"],
                         help="Which primitives to use. Choose from: [clevr_original, clevr_bootstrap, clevr_map_transform, clevr_filter, clevr_filter_except, clevr_difference]")
-    parser.add_argument("--clevr_primitives_test",
+    parser.add_argument("--run_python_test",
                         action='store_true')
     parser.add_argument("--generate_ocaml_definitions",
                         action='store_true')
@@ -68,7 +68,7 @@ def main(args):
     primitives = load_clevr_primitives(primitive_names)
     baseGrammar = Grammar.uniform(primitives)
     
-    if args.pop("clevr_primitives_test"):
+    if args.pop("run_python_test"):
         run_clevr_primitives_test(primitive_names, curriculum)
         assert False
     

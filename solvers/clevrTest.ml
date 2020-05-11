@@ -26,6 +26,7 @@ let test_program name raw input =
   let obj_list = List.hd_exn input in 
   let sorted_obj = sort_objs obj_list in
   let obj_1 = List.hd_exn sorted_obj in
+
   (* try 
     let (k, v) = List.Assoc.find_exn obj_1 "id" ~equal:(=) in
     Printf.eprintf "First %s id: out %d \n" name v
@@ -35,6 +36,8 @@ let test_program name raw input =
   let p = parse_program raw |> get_some in
   let p = analyze_lazy_evaluation p in
   let y = run_lazy_analyzed_with_arguments p input in
+  (* Printf.eprintf "%s | out %s \n" name (Bool.to_string y);; *)
+
   print_list y;;
   (* Printf.eprintf "%s | out %s \n" name (Bool.to_string y);; *)
 
@@ -80,7 +83,16 @@ let run_job channel =
     let raw =  "(lambda (clevr_eq_size (clevr_query_size (clevr_car $0)) clevr_small))" in
     let raw =  "(lambda (clevr_eq_objects (clevr_car $0) (clevr_car $0)))" in
     let raw = "(lambda (clevr_filter_size $0 clevr_large))" in
-    test_program "test" raw input
+    let raw = "(lambda (clevr_filter_color $0 clevr_blue))" in
+    let raw = "(lambda (clevr_same_size (clevr_car $0) $0))" in
+    let raw = "(lambda (clevr_union (clevr_filter_size $0 clevr_large) (clevr_filter_shape $0 clevr_cube)))" in 
+    let raw = "(lambda (clevr_intersect (clevr_filter_size $0 clevr_large) (clevr_filter_shape $0 clevr_cube)))" in 
+    let raw = "(lambda (clevr_difference (clevr_filter_size $0 clevr_large) (clevr_filter_shape $0 clevr_cube)))" in 
+    let raw = "(lambda (clevr_count (clevr_filter_size $0 clevr_large)))" in 
+    let raw = "(lambda (clevr_eq_int (clevr_count (clevr_filter_size $0 clevr_large)) 3))"  in 
+    let raw = "(lambda (clevr_gt? (clevr_count (clevr_filter_size $0 clevr_large)) 3))" in
+    let raw = "(lambda (not (clevr_gt? (clevr_count (clevr_filter_size $0 clevr_large)) 3)))" in 
+    let raw = "(lambda (clevr_map (clevr_transform_size clevr_large) $0))" in test_program "test" raw input
     ) in
   let message : json = 
     `List(
