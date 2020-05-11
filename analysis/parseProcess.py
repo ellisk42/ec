@@ -54,5 +54,5 @@ if __name__=="__main__":
 
     # === get RAndom per:mutations
     print("GETTING RANDOM PERMUTATIONS")
-    DAT = loadCheckpoint(trainset=experiment, loadparse=True, suppressPrint=True)
+    # DAT = loadCheckpoint(trainset=experiment, loadparse=True, suppressPrint=True)
     getAndSaveRandomParses(DAT, Nperm=randomparses)

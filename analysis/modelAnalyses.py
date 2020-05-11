@@ -165,7 +165,8 @@ def loadPlannerData(EXPT, BATCHNAME):
     
     # 1) load model fit
     summarydict_all, datall, savedir = D.loadModelFitsIndiv(EXPT, BATCHNAME)
-    
+    Planner = D.Planner
+   
     return Planner, summarydict_all, datall, savedir
 
 
@@ -181,9 +182,10 @@ def getParamValues(params, params_list, workerID=[]):
         else:
             paramvals.append(params.loc[params["xname"]==name, "xmean"].values)
 #         paramvals.append(params[params["xname"]==name][workerID].values)
-#     print(paramvals)
+    paramvals = np.array(paramvals)
+    assert(all([len(pp)>0 for pp in paramvals])), "extracted params are empty..."
     assert len(paramvals)==len(params_list)
-    return np.array(paramvals)
+    return paramvals
     
 
 ############################# combining with planner
@@ -216,7 +218,6 @@ if __name__=="__main__":
         "motor":['start', 'motor_dist', 'motor_dir'],
         "motorplusVH":['start', 'motor_dist', 'motor_dir', 'cog_vertchunker'],
         "full":['start', 'motor_dist', 'motor_dir', 'cog_primtype', 'cog_vertchunker', 'cog_vertchunker_LL']}
-
 
     for planver, params_list in PLANVERDICT.items():
         ###################### RUN PREPROECESS

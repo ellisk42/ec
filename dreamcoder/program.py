@@ -161,7 +161,7 @@ class Program(object):
             print(s)
             print(e)
             raise ParseFailure((s,e))
-        print(s)    
+        # print(s)    
         return p(s)
 
     @staticmethod
@@ -785,7 +785,7 @@ class FragmentVariable(Program):
         return visitor.fragmentVariable(self, *arguments, **keywords)
 
     def evaluate(self, e):
-        print("== FRAGMENT")
+        # print("== FRAGMENT")
         raise Exception('Attempt to evaluate fragment variable')
 
     def betaReduce(self):

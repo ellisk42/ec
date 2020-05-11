@@ -1,0 +1,1001 @@
+[1mdiff --git a/dreamcoder/domains/draw/drawPrimitives.py b/dreamcoder/domains/draw/drawPrimitives.py[m
+[1mindex 2aaa2eb2..3d8bb47e 100644[m
+[1m--- a/dreamcoder/domains/draw/drawPrimitives.py[m
+[1m+++ b/dreamcoder/domains/draw/drawPrimitives.py[m
+[36m@@ -1,5 +1,4 @@[m
+# =========== [NEWER VERSION, NOT USING MATPLOTLIB][m
+[31mprint("HERE")[m
+import math[m
+import numpy as np[m
+# import matplotlibplt[m
+[36m@@ -15,7 +14,8 @@[m [mfrom dreamcoder.grammar import Grammar[m
+from dreamcoder.type import baseType, arrow, tmaybe, t0, t1, t2[m
+
+from dreamcoder.domains.draw.primitives import *[m
+from dreamcoder.domains.draw.primitives import _makeAffine, _tform, _reflect, _repeat, _connect, _line, _circle, _tform_wrapper, [31m_reflect_wrapper[m[32m_reflect_wrapper, _emptystroke[m
+[32mfrom dreamcoder.domains.draw.primitives import _lineC, _circleC, _finishC, _repeatC, _transformC, _reflectC, _emptystrokeC[m
+
+# ======= DEFINE ALL PRIMITIVES[m
+tstroke = baseType("tstroke")[m
+[36m@@ -32,16 +32,33 @@[m [mdef _givemeback(thing):[m
+
+p0 = [Primitive("None", tmaybe(t0), None), Primitive("Some", arrow(t0, tmaybe(t0)), _givemeback)][m
+
+[32mif True:[m
+
+[32m	p1 = [[m
+[32m		Primitive("emptystroke", tstroke, _emptystroke),[m
+[32m		Primitive("line", tstroke, _line), [m
+[32m		Primitive("circle", tstroke, _circle),[m
+[32m		Primitive("transmat", arrow(tmaybe(tscale), tmaybe(tangle), tmaybe(tdist), tmaybe(tdist), tmaybe(ttrorder), ttransmat), Curried(_makeAffine)),[m
+[32m		Primitive("transform", arrow(tstroke, ttransmat, tstroke), Curried(_tform_wrapper)),[m
+[32m		Primitive("reflect", arrow(tstroke, tangle, tstroke), Curried(_reflect_wrapper)), [m
+[32m		Primitive("connect", arrow(tstroke, tstroke, tstroke), Curried(_connect)),[m
+[32m		Primitive("repeat", arrow(tstroke, trep, ttransmat, tstroke), Curried(_repeat))[m
+[32m	][m
+
+[32melse:[m
+[32m	# new version , with contiuation[m
+[32m	p1 = [[m
+[32m		Primitive("emptystrokeC", arrow(tstroke, tstroke), _emptystrokeC),[m
+[32m		Primitive("lineC", arrow(tstroke, tstroke), _lineC), [m
+[32m		Primitive("circleC", arrow(tstroke, tstroke), _circleC),[m
+[32m		Primitive("transmat", arrow(tmaybe(tscale), tmaybe(tangle), tmaybe(tdist), tmaybe(tdist), tmaybe(ttrorder), ttransmat), Curried(_makeAffine)),[m
+[32m		Primitive("transformC", arrow(arrow(tstroke, tstroke), ttransmat, tstroke, tstroke), Curried(_transformC)),[m
+[32m		Primitive("reflectC", arrow(arrow(tstroke, tstroke), tangle, tstroke, tstroke), Curried(_reflectC)),[m
+[32m		Primitive("repeatC", arrow(arrow(tstroke, tstroke), trep, ttransmat, tstroke, tstroke), Curried(_repeatC))[m
+[32m	][m
+
+
+
+[31mp1 = [[m
+[31m	Primitive("line", tstroke, _line), [m
+[31m	Primitive("circle", tstroke, _circle),[m
+[31m	Primitive("transmat", arrow(tmaybe(tscale), tmaybe(tangle), tmaybe(tdist), tmaybe(tdist), tmaybe(ttrorder), ttransmat), Curried(_makeAffine)),[m
+[31m	Primitive("transform", arrow(tstroke, ttransmat, tstroke), Curried(_tform_wrapper)),[m
+[31m	Primitive("reflect", arrow(tstroke, tangle, tstroke), Curried(_reflect_wrapper)), [m
+[31m	Primitive("connect", arrow(tstroke, tstroke, tstroke), Curried(_connect)),[m
+[31m	Primitive("repeat", arrow(tstroke, trep, ttransmat, tstroke), Curried(_repeat))[m
+[31m][m
+# p2 = [Primitive("scale{}".format(i), tscale, j) for i, j in enumerate(np.linspace(1.0, 4.0, 7))][m
+p2 = [Primitive("scale{}".format(i), tscale, j) for i, j in enumerate(SCALES)] [m
+# p3 = [Primitive("dist{}".format(i), tdist, j) for i, j in enumerate(np.linspace(-4, 4, 9))][m
+[1mdiff --git a/dreamcoder/domains/draw/drawPrimitivesDraw.py b/dreamcoder/domains/draw/drawPrimitivesDraw.py[m
+[1mnew file mode 100644[m
+[1mindex 00000000..3d8bb47e[m
+[1m--- /dev/null[m
+[1m+++ b/dreamcoder/domains/draw/drawPrimitivesDraw.py[m
+[36m@@ -0,0 +1,117 @@[m
+[32m# =========== [NEWER VERSION, NOT USING MATPLOTLIB][m
+[32mimport math[m
+[32mimport numpy as np[m
+[32m# import matplotlibplt[m
+
+[32mfrom scipy.ndimage import gaussian_filter as gf[m
+[32mfrom skimage import color[m
+[32mfrom scipy.ndimage import gaussian_filter as gf[m
+[32mimport cairo[m
+
+[32mfrom dreamcoder.program import Primitive, Program[m
+[32mfrom dreamcoder.utilities import Curried[m
+[32mfrom dreamcoder.grammar import Grammar[m
+[32mfrom dreamcoder.type import baseType, arrow, tmaybe, t0, t1, t2[m
+
+[32mfrom dreamcoder.domains.draw.primitives import *[m
+[32mfrom dreamcoder.domains.draw.primitives import _makeAffine, _tform, _reflect, _repeat, _connect, _line, _circle, _tform_wrapper, _reflect_wrapper, _emptystroke[m
+[32mfrom dreamcoder.domains.draw.primitives import _lineC, _circleC, _finishC, _repeatC, _transformC, _reflectC, _emptystrokeC[m
+
+[32m# ======= DEFINE ALL PRIMITIVES[m
+[32mtstroke = baseType("tstroke")[m
+[32mtangle = baseType("tangle")[m
+[32mtscale = baseType("tscale")[m
+[32mtdist = baseType("tdist")[m
+[32mttrorder = baseType("ttorder")[m
+[32mttransmat = baseType("ttransmat")[m
+[32mtrep = baseType("trep")[m
+
+
+[32mdef _givemeback(thing):[m
+[32m	return thing[m
+
+[32mp0 = [Primitive("None", tmaybe(t0), None), Primitive("Some", arrow(t0, tmaybe(t0)), _givemeback)][m
+
+[32mif True:[m
+
+[32m	p1 = [[m
+[32m		Primitive("emptystroke", tstroke, _emptystroke),[m
+[32m		Primitive("line", tstroke, _line), [m
+[32m		Primitive("circle", tstroke, _circle),[m
+[32m		Primitive("transmat", arrow(tmaybe(tscale), tmaybe(tangle), tmaybe(tdist), tmaybe(tdist), tmaybe(ttrorder), ttransmat), Curried(_makeAffine)),[m
+[32m		Primitive("transform", arrow(tstroke, ttransmat, tstroke), Curried(_tform_wrapper)),[m
+[32m		Primitive("reflect", arrow(tstroke, tangle, tstroke), Curried(_reflect_wrapper)), [m
+[32m		Primitive("connect", arrow(tstroke, tstroke, tstroke), Curried(_connect)),[m
+[32m		Primitive("repeat", arrow(tstroke, trep, ttransmat, tstroke), Curried(_repeat))[m
+[32m	][m
+
+[32melse:[m
+[32m	# new version , with contiuation[m
+[32m	p1 = [[m
+[32m		Primitive("emptystrokeC", arrow(tstroke, tstroke), _emptystrokeC),[m
+[32m		Primitive("lineC", arrow(tstroke, tstroke), _lineC), [m
+[32m		Primitive("circleC", arrow(tstroke, tstroke), _circleC),[m
+[32m		Primitive("transmat", arrow(tmaybe(tscale), tmaybe(tangle), tmaybe(tdist), tmaybe(tdist), tmaybe(ttrorder), ttransmat), Curried(_makeAffine)),[m
+[32m		Primitive("transformC", arrow(arrow(tstroke, tstroke), ttransmat, tstroke, tstroke), Curried(_transformC)),[m
+[32m		Primitive("reflectC", arrow(arrow(tstroke, tstroke), tangle, tstroke, tstroke), Curried(_reflectC)),[m
+[32m		Primitive("repeatC", arrow(arrow(tstroke, tstroke), trep, ttransmat, tstroke, tstroke), Curried(_repeatC))[m
+[32m	][m
+
+
+
+[32m# p2 = [Primitive("scale{}".format(i), tscale, j) for i, j in enumerate(np.linspace(1.0, 4.0, 7))][m
+[32mp2 = [Primitive("scale{}".format(i), tscale, j) for i, j in enumerate(SCALES)] [m
+[32m# p3 = [Primitive("dist{}".format(i), tdist, j) for i, j in enumerate(np.linspace(-4, 4, 9))][m
+[32mp3 = [Primitive("dist{}".format(i), tdist, j) for i, j in enumerate(DISTS)][m
+[32mNANGLE = 8[m
+[32m# p4 = [Primitive("angle{}".format(i), tangle, j*2*math.pi/NANGLE) for i, j in enumerate(range(NANGLE))][m
+[32mp4 = [Primitive("angle{}".format(i), tangle, j) for i, j in enumerate(THETAS)][m
+[32m# p5 = [Primitive("angle{}".format(i), tangle, (j+1)*2*math.pi/3) for j,i in enumerate(range(NANGLE, NANGLE+2))][m
+[32mp5 = [][m
+[32mp6 = [Primitive(j, ttrorder, j) for j in ORDERS][m
+[32mp7 = [Primitive("rep{}".format(i), trep, j+1) for i, j in enumerate(range(7))][m
+
+
+[32mprimitives = p0 + p1 + p2 + p3 + p4 + p5 + p6 + p7[m
+
+[32mdef getPrimitives(trainset="", prune=False, primitives=primitives, fullpruning=True):[m
+[32m	if prune:[m
+[32m		assert len(trainset)>0, "Have to tell me which trainset to use for primtives"[m
+[32m		# -- then only keep a subset of primtiives[m
+[32m		if trainset in ["S12", "S13"]:[m
+
+[32m			print("Full primitives:")[m
+[32m			for p in primitives:[m
+[32m				print("{} = {}".format(p.name, p.evaluate([])))[m
+
+[32m			# ------- list of primtiives to remove[m
+[32m			primitives_to_remove = [] + \[m
+[32m			["scale{}".format(i) for i in [0, 1, 2, 3, 4, 5, 6]] + \[m
+[32m			["dist{}".format(i) for i in [0, 2, 5, 7, 10, 12, 13, 19, 20, 21, 22]] + \[m
+[32m			["angle{}".format(i) for i in [1,3,5,7,8,9]] + \[m
+[32m			["tsr", "srt", "str", "rts", "rst"] + \[m
+[32m			["rep{}".format(i) for i in [4,5,6]][m
+[32m			[m
+[32m			if fullpruning:[m
+[32m				# then really careful remove anything not useful[m
+[32m				# partly motivated by seeing what DC actually uses given the partial pruning above.[m
+[32m				#primitives_to_remove.extend(["dist11", "dist8", "reflect", "angle4", "angle6"])[m
+[32m				primitives_to_remove.extend(["dist11", "dist8", "angle4", "angle6"])[m
+
+[32m			print("removing these primitives:")[m
+[32m			print(primitives_to_remove)[m
+
+[32m			# ----- do removal[m
+[32m			primitives = [p for p in primitives if p.name not in primitives_to_remove][m
+
+[32m			print("Primtives, after pruning:")[m
+[32m			for p in primitives:[m
+[32m				print("{} = {}".format(p.name, p.evaluate([])))[m
+
+[32m			return primitives[m
+[32m		else:[m
+[32m			print("DO NOT KNOW HOW TO PRUNE PRIMITIVES FOR THIS TRAINSET")[m
+[32m			raise[m
+[32m	else:[m
+[32m		return primitives[m
+
+[1mdiff --git a/dreamcoder/domains/draw/drawlib.egg-info/PKG-INFO b/dreamcoder/domains/draw/drawlib.egg-info/PKG-INFO[m
+[1mnew file mode 100644[m
+[1mindex 00000000..186db81a[m
+[1m--- /dev/null[m
+[1m+++ b/dreamcoder/domains/draw/drawlib.egg-info/PKG-INFO[m
+[36m@@ -0,0 +1,10 @@[m
+[32mMetadata-Version: 1.0[m
+[32mName: drawlib[m
+[32mVersion: 1.0[m
+[32mSummary: UNKNOWN[m
+[32mHome-page: UNKNOWN[m
+[32mAuthor: UNKNOWN[m
+[32mAuthor-email: UNKNOWN[m
+[32mLicense: UNKNOWN[m
+[32mDescription: UNKNOWN[m
+[32mPlatform: UNKNOWN[m
+[1mdiff --git a/dreamcoder/domains/draw/drawlib.egg-info/SOURCES.txt b/dreamcoder/domains/draw/drawlib.egg-info/SOURCES.txt[m
+[1mnew file mode 100644[m
+[1mindex 00000000..53464bf3[m
+[1m--- /dev/null[m
+[1m+++ b/dreamcoder/domains/draw/drawlib.egg-info/SOURCES.txt[m
+[36m@@ -0,0 +1,5 @@[m
+[32msetup.py[m
+[32mdrawlib.egg-info/PKG-INFO[m
+[32mdrawlib.egg-info/SOURCES.txt[m
+[32mdrawlib.egg-info/dependency_links.txt[m
+[32mdrawlib.egg-info/top_level.txt[m
+[1mdiff --git a/dreamcoder/domains/draw/drawlib.egg-info/dependency_links.txt b/dreamcoder/domains/draw/drawlib.egg-info/dependency_links.txt[m
+[1mnew file mode 100644[m
+[1mindex 00000000..8b137891[m
+[1m--- /dev/null[m
+[1m+++ b/dreamcoder/domains/draw/drawlib.egg-info/dependency_links.txt[m
+[36m@@ -0,0 +1 @@[m
+
+[1mdiff --git a/dreamcoder/domains/draw/drawlib.egg-info/top_level.txt b/dreamcoder/domains/draw/drawlib.egg-info/top_level.txt[m
+[1mnew file mode 100644[m
+[1mindex 00000000..8b137891[m
+[1m--- /dev/null[m
+[1m+++ b/dreamcoder/domains/draw/drawlib.egg-info/top_level.txt[m
+[36m@@ -0,0 +1 @@[m
+
+[1mdiff --git a/dreamcoder/domains/draw/main.py b/dreamcoder/domains/draw/main.py[m
+[1mindex 63307ce1..d05d936b 100644[m
+[1m--- a/dreamcoder/domains/draw/main.py[m
+[1m+++ b/dreamcoder/domains/draw/main.py[m
+[36m@@ -24,17 +24,23 @@[m [mclass DrawCNN(ImageFeatureExtractor):[m
+                                            channels=1)[m
+        print("output dimensionality",self.outputDimensionality)[m
+    def taskOfProgram(self, p, t):[m
+        [32mif t.isArrow:[m
+[32m            # continuation passing[m
+[32m            i = p.evaluate([])([])[m
+[32m        else:[m
+[32m            i = p.evaluate([])[m
+        return SupervisedDraw("dream", [31mp.evaluate([]))[m[32mi)[m
+
+    def featuresOfTask(self, t):[m
+        return self(t.rendered_strokes)[m
+
+g0 = [31mGrammar.uniform(primitives)[m[32mGrammar.uniform(primitives, continuationType=tstroke)[m
+
+def dreamFromGrammar(g=g0, directory = "", N=25):[m
+   # request = taxes # arrow9turtle turtle) just for logl.[m
+   # request = arrow(taxes, taxes) # arrow9turtle turtle) just for logl.[m
+   request = tstroke # arrow9turtle turtle) just for logl.[m
+   [32mrequest = arrow(tstroke, tstroke)[m
+   programs = [ p for _ in range(N) for p in [g.sample(request, maximumDepth=15)] if p is not None][m
+   return programs[m
+   # drawDrawings(*programs, filenames)[m
+[36m@@ -54,7 +60,7 @@[m [mfrom dreamcoder.type import arrow[m
+from itertools import product[m
+
+
+def visualizePrimitives(primitives, [31mexport="/tmp/draw_primitives"):[m[32mexport="/tmp/draw_primitives", saveon=True):[m
+    from math import ceil[m
+    matrix = [][m
+    print("ONLY PLOTS INVENTED PRIMITIVES")[m
+[36m@@ -64,10 +70,14 @@[m [mdef visualizePrimitives(primitives, export="/tmp/draw_primitives"):[m
+        # print("--- prim {}".format(i))[m
+        stringlist.append("--- prim {}".format(i))[m
+        stringlist.append(str(p))[m
+        
+        if not p.isInvented: continue[m
+        t = p.tp[m
+        
+        [32mstringlist.append(f"\n- type {t}, takes in {t.arguments} and returns {t.returns()}")[m
+        # print(p,":",p.tp)[m
+        if t.returns() != tstroke:[m
+
+            # print("\t(does not return a tstroke)")[m
+            stringlist.append("\t(does not return a tstroke)")[m
+            continue[m
+[36m@@ -78,16 +88,20 @@[m [mdef visualizePrimitives(primitives, export="/tmp/draw_primitives"):[m
+            elif t in [tmaybe(tstroke), tstroke]:[m
+                return [PP._line, PP._circle, PP.polygon(3)][m
+            elif t in [tmaybe(tscale), tscale]:[m
+                return [31m[2., 4.][m[32m[2.][m
+            elif t in [tmaybe(tdist), tdist]:[m
+                return [31m[-2., -1.,[m[32m[-1.5,[m 0, 1., [31m2.][m[32m1.5][m
+            elif t in [ttrorder, tmaybe(ttrorder)]:[m
+                return PP.ORDERS[m
+            elif t in [tmaybe(trep), trep]:[m
+                return [j+1 for i, j in [31menumerate(range(7))][m[32menumerate(range(4))][m
+            elif t == arrow(tmaybe(ttrorder), ttransmat):[m
+                return [[PP.ORDERS[0], _makeAffine()]][m
+            [31melse:[m[32melif t in [ttransmat]:[m
+                return [31m[][m[32m[_makeAffine(theta=th) for th in [pi/3]] + [_makeAffine(s=s) for s in [0.5]][m
+[32m            else:[m
+[32m                print(t)[m
+[32m                assert False[m
+
+        ts = [] # holds all cases for this primitive[m
+        # print(t.functionArguments())[m
+[36m@@ -95,9 +109,16 @@[m [mdef visualizePrimitives(primitives, export="/tmp/draw_primitives"):[m
+        stringlist.append(str(t.functionArguments()))[m
+        stringlist.extend([str(argumentChoices(t)) for t in t.functionArguments() ])[m
+
+        [32m# print([argumentChoices(t) for t in t.functionArguments()])[m
+[32m        # print(p)[m
+[32m        # print(p.evaluate([]))[m
+[32m        # print(dir(p.evaluate([])))[m
+[32m        # assert False[m
+        for arguments in product(*[argumentChoices(t) for t in t.functionArguments() ]):[m
+            t = p.evaluate([])[m
+            for a in arguments: t = t(a)[m
+            [32m# print(t)[m
+[32m            # assert False[m
+            ts.append(t)[m
+            [m
+        matrix.append(ts)[m
+[36m@@ -115,8 +136,9 @@[m [mdef visualizePrimitives(primitives, export="/tmp/draw_primitives"):[m
+            plt.title("prim {}".format(j))[m
+        fig.savefig("{}_p{}.pdf".format(export, j))[m
+        [m
+    [32mif saveon:[m
+        for j, ts in enumerate(matrix):
+            save(ts, j)
+        [m
+#     # Only visualize if it has something to visualize.[m
+#     if len(matrix) > 0:[m
+[36m@@ -141,7 +163,7 @@[m [mdef main(arguments):[m
+        else:[m
+            print("NOT DOING PRUNING")[m
+        primitives = getPrimitives(trainset=arguments["trainset"], prune=arguments["dopruning"])[m
+        g0 = [31mGrammar.uniform(primitives)[m[32mGrammar.uniform(primitives, continuationType=tstroke)[m
+
+        print("As an example, here's the amount of ink used by a line, a circle, and  connected to a circle:")[m
+        print(program_ink(_line))[m
+[1mdiff --git a/dreamcoder/domains/draw/makeDrawTasks.py b/dreamcoder/domains/draw/makeDrawTasks.py[m
+[1mindex 1053ee8b..5c838679 100644[m
+[1m--- a/dreamcoder/domains/draw/makeDrawTasks.py[m
+[1m+++ b/dreamcoder/domains/draw/makeDrawTasks.py[m
+[36m@@ -16,7 +16,7 @@[m [mimport numpy as np[m
+
+class SupervisedDraw(Task):[m
+	def __init__(self, name, program):[m
+		super(SupervisedDraw, self).__init__(name, [31mtstroke,[m[32marrow(tstroke, tstroke),[m [],
+											  features=[]) # TODO: LT, needs this, i.e., a request.[m
+
+		# compute the trajectory, which is a list of lines[m
+[36m@@ -35,6 +35,7 @@[m [mclass SupervisedDraw(Task):[m
+
+	def logLikelihood(self, e, timeout=None): # TODO, LT, given expression, calculates distance.[m
+		# from dreamcoder.domains.tower.tower_common import centerTower[m
+		[32massert False, "not using this I thought"[m
+		if False:[m
+			p1 = self.rendered_strokes[m
+			p2 = fig2pixel(e.evaluate([]))[m
+[1mdiff --git a/dreamcoder/domains/draw/primitives.py b/dreamcoder/domains/draw/primitives.py[m
+[1mindex 5c6cafc8..3643a31e 100644[m
+[1m--- a/dreamcoder/domains/draw/primitives.py[m
+[1m+++ b/dreamcoder/domains/draw/primitives.py[m
+[36m@@ -7,7 +7,6 @@[m [mimport numpy as np[m
+import matplotlib[m
+from scipy.ndimage import gaussian_filter as gf[m
+from skimage import color[m
+[31mfrom scipy.ndimage import gaussian_filter as gf[m
+import cairo[m
+from math import tan[m
+from math import pi[m
+[36m@@ -46,6 +45,7 @@[m [mdef set_parsing(p):[m
+        global PARSE_EVALUATOR[m
+        PARSE_EVALUATOR = p[m
+        if p:[m
+                [32m# print(Primitive.GLOBALS)[m
+                Primitive.GLOBALS["circle"].value = {Parse(_circle)}[m
+                Primitive.GLOBALS["line"].value = {Parse(_line)}[m
+        else:[m
+[36m@@ -333,6 +333,8 @@[m [mdef _connect(p1, p2):[m
+# ========== STROKES [m
+_line = [np.array([(0., 0.), (1., 0.)])] # --- unit line, from 0 to 1[m
+_circle = [np.array([(0.5*math.cos(theta), 0.5*math.sin(theta)) for theta in np.linspace(0., 2.*math.pi, num=30)])] # --- circle, centered at 0, diameter 1[m
+[32m# _emptystroke = [np.array([(0., 0.)])] # ---[m
+[32m_emptystroke = [] # ---[m
+
+# --- regular polygons[m
+def polygon(N=3):[m
+[36m@@ -341,6 +343,54 @@[m [mdef polygon(N=3):[m
+    y = 0.5/tan(pi/N)[m
+    return _repeat(transform(_line, x=-0.5, y=y), N, _makeAffine(theta=2*pi/N))[m
+
+
+
+[32m## ============================= NEW VERSION, USING CONTINUATION INSTEAD OF CONNECT[m
+[32mdef _lineC(k):[m
+[32m    """takes something (k) and connects line to it"""[m
+[32m    return _connect(_line, k)[m
+[32m    # return lambda k: _connect(_line, k)[m
+
+[32m    # return lambda k: lambda s: k(_connect(s, _line))[m
+
+[32mdef _circleC(k):[m
+[32m    """takes something (k) and connects circle to it"""[m
+[32m    return _connect(_circle, k)[m
+[32m    # return lambda k: _connect(_circle, k)[m
+
+[32mdef _emptystrokeC(k):  [m
+[32m    return _connect(_emptystroke, k)[m
+[32m    # return lambda k: _connect(_emptystroke, k)[m
+
+[32mdef _finishC():[m
+[32m    """attaches empty stroke to finalize"""[m
+[32m    return lambda k: k(_emptystroke)[m
+
+[32mdef _repeatC(s, N, T):[m
+[32m    """as intermediate step grounds s to numbers, does repeat to it, [m
+[32m    then returns a function that connects the repeated thing to the [m
+[32m    next thing"""[m
+[32m    # return lambda k: _connect(_repeat(s(_emptystroke), N, T), k)[m
+[32m    return lambda k: _connect(_repeat(s(_emptystroke), N, T), k)[m
+
+[32mdef _transformC(s,T):[m
+[32m    return lambda k: _connect(_tform_wrapper(s(_emptystroke), T), k)[m
+
+[32mdef _reflectC(s, theta):[m
+[32m    return lambda k: _connect(_reflect(s(_emptystroke), theta), k)    [m
+
+
+[32m# def _repeatC(N, T):[m
+[32m#     return lambda k: lambda s: k(_repeat(s(_emptystroke), N, T))[m
+
+[32m# def _repeatC(k, N, T):[m
+[32m#     """returns a function that can take in the next in continuation"""[m
+[32m#     return lambda s: _connect(_repeat(k(_emptystroke), N, T), s)[m
+
+
+
+
+
+# ============= NOT PRIMITIVES.[m
+def transform(p, s=1., theta=0., x=0., y=0., order="trs"):[m
+                        # order is one of the 6 ways you can permutate the three transformation primitives. [m
+[36m@@ -357,27 +407,27 @@[m [mdef savefig(p, fname="tmp.png"):[m
+        ax.get_figure().savefig(fname)[m
+        print("saved: {}".format(fname))[m
+
+def [31mplot(p):[m[32mplot(p, color="k", LIMITS=XYLIM):[m
+        fig = [31mplt.figure(figsize=(XYLIM,XYLIM))[m[32mplt.figure(figsize=(LIMITS,LIMITS))[m
+        ax = fig.add_axes([-0.03, -0.03, 1.06, 1.06])[m
+        [31max.set_xlim(-XYLIM,XYLIM)[m
+[31m        ax.set_ylim(-XYLIM,XYLIM)[m[32max.set_xlim(-LIMITS,LIMITS)[m
+[32m        ax.set_ylim(-LIMITS,LIMITS)[m
+        [ax.plot(x[:,0], x[:,1], [31m"-k")[m[32m"-", color=color)[m for x in p]
+        return ax[m
+
+
+def plotOnAxes(p, [31max):[m
+[31m        ax.set_xlim(-XYLIM,XYLIM)[m
+[31m        ax.set_ylim(-XYLIM,XYLIM)[m[32max, color="k", LIMITS=XYLIM, linestyle="-"):[m
+[32m        ax.set_xlim(-LIMITS, LIMITS)[m
+[32m        ax.set_ylim(-LIMITS, LIMITS)[m
+        # ax.axis("equal")[m
+        [ax.plot(x[:,0], x[:,1], [31m"-k")[m[32m"-", color=color, linestyle=linestyle)[m for x in p]
+        return ax[m
+
+
+def __fig2pixel(p, plotPxl=False, [31msmoothing=0.):[m[32msmoothing=0., LIMITS=XYLIM):[m
+#       smoothing is std of gaussian 2d filter. set to 0 to not smooth.[m
+#       https://stackoverflow.com/questions/43363388/how-to-save-a-greyscale-matplotlib-plot-to-numpy-array[m
+        ax = [31mplot(p)[m[32mplot(p, LIMITS=LIMITS)[m
+        fig = ax.get_figure()[m
+        fig.canvas.draw()[m
+        ax.axis("off")[m
+[36m@@ -390,7 +440,7 @@[m [mdef __fig2pixel(p, plotPxl=False, smoothing=0.):[m
+        img = color.rgb2gray(img)[m
+
+        if smoothing>0:[m
+                img = gf(img, [31msmoothing)[m[32msmoothing, truncate=5)[m
+                [m
+        if plotPxl:[m
+                # - show the figure[m
+[36m@@ -409,12 +459,13 @@[m [mdef __loss(p1, p2, plotPxl=False, smoothing=2):[m
+        return np.linalg.norm(img2-img1)[m
+
+
+def prog2pxl(p, WHdraw = [31m2*XYLIM):[m[32m2*XYLIM, WH=128, smoothing=0):[m
+        # takes a list of np array and outputs one pixel image[m
+        # WHdraw, the size of drawing canvas (e.g. 6, if is xlim -3 to 3)[m
+        [m
+        # 1) create canvas[m
+        [32m#[m WH = 128
+        [32massert WH%4==0, "empirically if not mod 4 then looks weird.."[m
+        scale = WH/WHdraw[m
+        data = np.zeros((WH, WH), dtype=np.uint8)[m
+        surface = cairo.ImageSurface.create_for_data(data, cairo.Format.A8, WH-2, WH-2)[m
+[36m@@ -447,7 +498,11 @@[m [mdef prog2pxl(p, WHdraw = 2*XYLIM):[m
+#     plt.imshow(data, vmin=0, vmax=1, cmap="gray")[m
+#     plt.savefig("/tmp/test.svg")[m
+
+        [32mif smoothing>0:[m
+[32m            # return np.flip(data, 0)/255.0[m
+[32m            return gf(np.flip(data, 0)/255.0, smoothing, truncate=5)[m
+[32m        else:[m
+            return np.flip(data, 0)/255.0
+
+
+def loss_pxl(img1, img2):[m
+[1mdiff --git a/dreamcoder/domains/draw/scratch_handbuilding.txt b/dreamcoder/domains/draw/scratch_handbuilding.txt[m
+[1mnew file mode 100644[m
+[1mindex 00000000..3e57ae08[m
+[1m--- /dev/null[m
+[1m+++ b/dreamcoder/domains/draw/scratch_handbuilding.txt[m
+[36m@@ -0,0 +1,22 @@[m
+[32m## for hand building generative model (e.g., the ground truth model)[m
+
+[32m(lambda (vline x y z) (connect vline (connect (transform x .... (connect y (connect z)))))[m
+
+[32mProgram.parseHumanReadable("(lambda (connect x y z) (connect x (connect y (connect z))))")[m
+[32m(lambda (lambda (lambda (lambda ($3 $2 ($3 $1 ($3 $0)))))))[m
+
+[32mp = Invented(Program.parseHR(...))[m
+
+
+
+[32mg = Grammar.uniform(primitives+[p])[m
+
+
+[32m1. run on test tasks[m
+[32m2. run on traiing?[m
+
+[32m======================[m
+[32mgetting prior score.[m
+
+
+
+[1mdiff --git a/dreamcoder/domains/draw/setup.py b/dreamcoder/domains/draw/setup.py[m
+[1mnew file mode 100644[m
+[1mindex 00000000..e94ef55c[m
+[1m--- /dev/null[m
+[1m+++ b/dreamcoder/domains/draw/setup.py[m
+[36m@@ -0,0 +1,7 @@[m
+[32mimport setuptools[m
+
+[32msetuptools.setup([m
+[32m    name="drawlib",[m
+[32m    version="1.0",[m
+[32m    packages=setuptools.find_packages(),[m
+[32m)[m
+[1mdiff --git a/dreamcoder/domains/draw/test.py b/dreamcoder/domains/draw/test.py[m
+[1mnew file mode 100644[m
+[1mindex 00000000..703a0f0c[m
+[1m--- /dev/null[m
+[1m+++ b/dreamcoder/domains/draw/test.py[m
+[36m@@ -0,0 +1,452 @@[m
+[32mimport sys[m
+[32msys.path.append("/Users/lucastian/tenen/ec")[m
+[32mimport math[m
+[32mimport numpy as np[m
+[32mimport matplotlib[m
+[32mfrom scipy.ndimage import gaussian_filter as gf[m
+[32mfrom skimage import color[m
+[32mfrom scipy.ndimage import gaussian_filter as gf[m
+[32mimport cairo[m
+[32mfrom math import tan[m
+[32mfrom math import pi[m
+[32mfrom itertools import permutations[m
+[32mfrom dreamcoder.program import Primitive, Application, Abstraction, Index[m
+[32mfrom dreamcoder.type import t0,arrow,baseType[m
+[32mfrom matplotlib import pyplot as plt[m
+[32mimport imageio[m
+[32mimport random[m
+
+[32mif False:[m
+[32m        from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas[m
+[32m        matplotlib.use('TkAgg')[m
+
+[32mXYLIM = 3. # i.e., -3 to 3.[m
+
+[32mPRIMVERSION="full"[m
+[32massert PRIMVERSION=="full" # do not change , since ocaml code requires names to match.[m
+
+[32mif PRIMVERSION=="full":[m
+[32m        SCALES = [0.5, 1., 1.25, 1.5, 2., 2.5, 3., 4.][m
+[32m        NPOLY = range(3,7) # range of regular polyogns allowed.[m
+[32m        DISTS = [-2.5, -2., -1.5, -1., -0.5, -0.25, 0, 0.25, 0.5, 1., 1.5, 2., 2.5, 3.] + [-1.75, -0.65, 0.45, 1.55, 1.1] + [0.5/tan(pi/n) for n in range(3, 7)]# for making regular polygons[m
+[32m        THETAS = [j*(2*pi/8) for j in range(8)] + [-2*pi/6] + [-2*pi/12][m
+[32m        ORDERS = ["trs", "tsr", "rts", "rst", "srt", "str"][m
+[32melif PRIMVERSION=="S8_9":[m
+[32m        SCALES = [2., 4.][m
+[32m        NPOLY = range(3,7) # range of regular polyogns allowed.[m
+[32m        DISTS = [-2.5, -2., -1.5, -1., -0.5, -0.25, 0, 0.25, 0.5, 1., 1.5, 2., 2.5, 3.] [m
+[32m        # THETAS = [pi/2][m
+[32m        THETAS = [j*(2*pi/8) for j in range(8)][m
+[32m        ORDERS = ["rts", "trs"][m
+
+[32mPARSE_EVALUATOR = False[m
+[32mdef set_parsing(p):[m
+[32m        global PARSE_EVALUATOR[m
+[32m        PARSE_EVALUATOR = p[m
+[32m        if p:[m
+[32m                Primitive.GLOBALS["circle"].value = {Parse(_circle)}[m
+[32m                Primitive.GLOBALS["line"].value = {Parse(_line)}[m
+[32m        else:[m
+[32m                Primitive.GLOBALS["circle"].value = _circle[m
+[32m                Primitive.GLOBALS["line"].value = _line[m
+
+[32mclass Chunk():[m
+[32m        def __init__(self, l):[m
+[32m                assert isinstance(l, list)[m
+[32m                for x in l: assert isinstance(x, (np.ndarray, np.generic, Chunk))[m
+[32m                self.l = l[m
+[32m                self._h = None[m
+
+[32m        def applyMatrix(self, m): # applies to everything within chunk, including recursive.[m
+[32m                return Chunk([x.applyMatrix(m) for x in self.l ])[m
+[32m        [m
+[32m        def __eq__(self, other): return hash(self) == str(other) and str(self) == str(other)[m
+[32m        def __ne__(self, other): return not (self == other)[m
+[32m        def __hash__(self):[m
+[32m                if self._h is None:[m
+[32m                       self._h = hash(tuple(hash(x) if isinstance(x,Chunk) else hash(x.tostring())))[m
+[32m                return self._h[m
+[32m        def __str__(self): return f"Chunk({self.l})"[m
+[32m        def __repr__(self): return str(self)[m
+[32m        def flatten(self): # returns [[a], [b], ...], where each element is a single "stroke"[m
+[32m                return [y[m
+[32m                        for x in self.l[m
+[32m                        for y in ([x] if isinstance(x, (np.ndarray, np.generic)) else x.flatten()) ][m
+
+[32m        @staticmethod[m
+[32m        def invention(parses):[m
+[32m                # print("---")[m
+[32m                # print(parses)[m
+[32m                # for p in parses:[m
+[32m                #     print(p)[m
+[32m                # print("-----")[m
+[32m                return {Parse([Chunk(parse.l)])[m
+[32m                        for parse in parses}[m
+[32m# This should *never* the added to the library![m
+[32m_chunky_primitive = Primitive("CHUNK_INVENTION", arrow(baseType("tstroke"),baseType("tstroke")), Chunk.invention)[m
+
+
+[32mclass Parse():[m
+[32m        def __init__(self, l):[m
+[32m                assert isinstance(l, list)[m
+[32m                for x in l: assert isinstance(x, (np.ndarray, np.generic, Chunk))[m
+[32m                self.l = l[m
+[32m                self._h = None[m
+
+[32m        def applyMatrix(self, m):[m
+[32m                newList = [][m
+[32m                for x in self.l:[m
+[32m                        if isinstance(x,Chunk):[m
+[32m                                newList.append(x.applyMatrix(m))[m
+[32m                        else:[m
+[32m                                newList.append(_tform(x,m))[m
+[32m                return Parse(newList)[m
+
+[32m        def __eq__(self, other): return hash(self) == hash(other) and str(self) == str(other)[m
+[32m        def __ne__(self, other): return not (self == other)[m
+[32m        def __hash__(self):[m
+[32m                if self._h is None:[m
+[32m                        self._h = hash(tuple(hash(x) if isinstance(x,Chunk) else hash(x.tostring()) for x in self.l ))[m
+[32m                return self._h[m
+[32m        def __repr__(self): return str(self)[m
+[32m        def __str__(self): return f"Parse({self.l})"[m
+
+[32m        def flatten(self):[m
+[32m                return [y[m
+[32m                        for x in self.l[m
+[32m                        for y in ([x] if isinstance(x, (np.ndarray, np.generic)) else x.flatten()) ][m
+
+[32m        def animate(self, fn):[m
+[32m                import scipy.misc[m
+[32m                trace = self.flatten()[m
+[32m                images = [prog2pxl(trace[:n])[m
+[32m                          for n in range(1, len(trace)+1)][m
+[32m                image = np.concatenate(images,1)[m
+[32m                if fn is None:[m
+[32m                        return image[m
+[32m                else:[m
+[32m                        # scipy.misc.imsave(fn, image)[m
+[32m                        imageio.imwrite(fn, image)[m
+[32m        @staticmethod[m
+[32m        def animate_all(parses, fn):[m
+[32m                import scipy.misc[m
+[32m                images = [parse.animate(None) for parse in parses ][m
+[32m                # scipy.misc.imsave(fn, np.concatenate(images,0))[m
+[32m                imageio.imwrite(fn, np.concatenate(images,0))[m
+
+
+[32m        @staticmethod[m
+[32m        def ofProgram(p):[m
+[32m            """Takes a program and returns its set-of-parses"""[m
+[32m            from datetime import datetime[m
+[32m            # now = datetime.now()[m
+[32m            # if p.isApplication:[m
+[32m            #     import pdb[m
+[32m            #     pdb.set_trace()[m
+[32m            def chunky(q):[m
+[32m                    # print(datetime.now())[m
+[32m                    # counter+=1[m
+[32m                    # print(counter)[m
+[32m                    if q.isApplication or q.isInvented:[m
+[32m                            f,xs = q.applicationParse()[m
+[32m                            chunky_arguments = [chunky(x) for x in xs ][m
+[32m                            if f.isInvented and str(f.tp.returns()) == "tstroke":[m
+[32m                                    numberExpands = len(f.tp.functionArguments()) - len(xs)[m
+[32m                                    return_value = chunky(f.body)[m
+[32m                                    for x in chunky_arguments:[m
+[32m                                            if numberExpands > 0: x = x.shift(numberExpands)[m
+[32m                                            return_value = Application(return_value,x)[m
+[32m                                    for i in range(numberExpands - 1,-1,-1):[m
+[32m                                            return_value = Application(return_value, Index(i))[m
+[32m                                    return_value = Application(_chunky_primitive,return_value)[m
+[32m                                    for _ in range(numberExpands):[m
+[32m                                            return_value = Abstraction(return_value)[m
+[32m                                    # print(return_value)[m
+[32m                                    # print("this is our type")[m
+[32m                                    # try:[m
+[32m                                    #         print(return_value.infer())[m
+[32m                                    # except:[m
+[32m                                    #         print("total failure to get a type")[m
+[32m                                    #         print(q)[m
+[32m                                    #         print(q.infer())[m
+[32m                                    #         assert False[m
+[32m                                    return return_value[m
+[32m                            elif f.isInvented:[m
+[32m                                    return_value = chunky(f.body)[m
+[32m                                    for x in chunky_arguments:[m
+[32m                                            return_value = Application(return_value,x)[m
+[32m                                    return return_value[m
+[32m                            else:[m
+[32m                                    # import pdb[m
+[32m                                    # pdb.set_trace()[m
+[32m                                    return_value = chunky(f)[m
+[32m                                    for x in chunky_arguments:[m
+[32m                                            return_value = Application(return_value,x)[m
+[32m                                    return return_value[m
+[32m                    if q.isAbstraction:[m
+[32m                            return Abstraction(chunky(q.body))[m
+[32m                    if q.isIndex or q.isPrimitive: return q                                        [m
+[32m            set_parsing(True)[m
+[32m            # counter=0[m
+[32m            p = chunky(p)[m
+[32m            print(p)[m
+[32m            parses = p.evaluate([])[m
+[32m            set_parsing(False)[m
+[32m            return parses[m
+[32m                [m
+[32m                [m
+
+[32m                [m
+[32m                [m
+
+[32m# ============= TRANSFORMATIONS[m
+[32mdef _makeAffine(s=1., theta=0., x=0., y=0., order="trs"):[m
+[32m        [m
+[32m        if s is None:[m
+[32m                s=1.[m
+[32m        if theta is None:[m
+[32m                theta=0.[m
+[32m        if x is None:[m
+[32m                x=0.[m
+[32m        if y is None:[m
+[32m                y=0[m
+[32m        if order is None:[m
+[32m                order="trs"[m
+[32m                [m
+[32m        def R(theta):[m
+[32m                T = np.array([[math.cos(theta), -math.sin(theta), 0.], [math.sin(theta), math.cos(theta), 0.], [0.,0.,1.]])[m
+[32m                return T[m
+
+[32m        def S(s):[m
+[32m                T = np.array([[s, 0., 0.], [0., s, 0.], [0., 0., 1.]])[m
+[32m                return T[m
+[32m        [m
+[32m        def T(x,y):[m
+[32m                T = np.array([[1., 0., x], [0., 1., y], [0., 0., 1.]])[m
+[32m                return T[m
+[32m                [m
+[32m        if order == "trs":[m
+[32m                return T(x,y)@(R(theta)@S(s))[m
+[32m        elif order == "tsr":[m
+[32m                return T(x,y)@(S(s)@R(theta))[m
+[32m        elif order == "rts":[m
+[32m                return R(theta)@(T(x,y)@S(s))[m
+[32m        elif order == "rst":[m
+[32m                return R(theta)@(S(s)@T(x,y))[m
+[32m        elif order == "srt":[m
+[32m                return S(s)@(R(theta)@T(x,y))[m
+[32m        elif order == "str":[m
+[32m                return S(s)@(T(x,y)@R(theta))[m
+
+
+[32mdef _tform_wrapper(p, T):[m
+[32m        global PARSE_EVALUATOR[m
+[32m        if PARSE_EVALUATOR:[m
+[32m                return {Parse([Chunk(_tform(parse.l,T))]) for parse in p}[m
+[32m        else:[m
+[32m                return _tform(p,T)[m
+[32m                [m
+[32mdef _tform(p, T, i=1):[m
+[32m        """Applies the transformation T to the object p for the number of iterations i.[m
+[32m        p can be a list, numpy, Parse, or Chunk."""[m
+[32m        if isinstance(p, Chunk):[m
+[32m                return Chunk([_tform(x, T, i) for x in p.l ])[m
+[32m        if isinstance(p, Parse):[m
+[32m                return Parse([_tform(x, T, i) for x in p.l ])[m
+[32m        if isinstance(p, list):[m
+[32m                return [_tform(x, T, i) for x in p][m
+[32m        # given prim and affine matrix (T), otuput new p.[m
+[32m        [m
+[32m        # append column of ones to matrix.[m
+[32m        p = np.concatenate((p, np.ones((p.shape[0],1))), axis=1)[m
+[32m        for _ in range(i):[m
+[32m                p = (T@p.transpose()).transpose() # apply affine transfomatiton.[m
+[32m        p = np.delete(p, 2, axis=1)     # --- remove third dimension[m
+[32m        return p[m
+
+
+[32mdef _reflect_wrapper(p, theta):[m
+[32m        global PARSE_EVALUATOR[m
+[32m        if PARSE_EVALUATOR:[m
+[32m                return {_reflect(parse, theta) for parse in p}[m
+[32m        else:[m
+[32m                return _reflect(p, theta)[m
+[32mdef _reflect(p, theta=math.pi/2): # TODO: reflect should also be usable with repeat.[m
+[32m        if isinstance(p, Chunk):[m
+[32m                return Chunk([_reflect(x, theta) for x in p.l ])[m
+[32m        if isinstance(p, Parse):[m
+[32m                return Parse([_reflect(x, theta) for x in p.l ])[m
+[32m        if isinstance(p, (np.ndarray, np.generic)):[m
+[32m                return _reflect([p], theta)[0][m
+[32m        [m
+[32m        # reflection over line thru origin[m
+[32m        # first rotate p by -theta, then reflect across y axis, then unrotate (by +theta)[m
+[32m        # y axis would be theta = pi/2[m
+[32m        th = theta - math.pi/2[m
+
+[32m        p = transform(p, theta=-th)[m
+[32m        T = np.array([[-1., 0.], [0., 1.]])[m
+[32m        p = [np.matmul(T, pp.transpose()).transpose() for pp in p][m
+[32m        p = transform(p, theta=th)[m
+[32m        [m
+[32m        return p[m
+
+[32m# =========== FUNCTIONS ON PRIMTIVES.[m
+[32mdef _repeat(p, N, T):[m
+[32m        global PARSE_EVALUATOR[m
+[32m        if PARSE_EVALUATOR:[m
+[32m                all_permutations = [][m
+[32m                for parse in p:[m
+[32m                        for iteration_range in [list(range(N)),list(range(N-1,-1,-1))]:[m
+[32m                                # permutation_of_child should be a list of strokes and chunks[m
+[32m                                # we need to apply the operator T to every element of this list N times[m
+[32m                                new_child = [ _tform(element_of_child, T, i)[m
+[32m                                              for i in iteration_range[m
+[32m                                              for element_of_child in parse.l ][m
+[32m                                all_permutations.append(Parse([Chunk(new_child)]))[m
+[32m                return set(all_permutations)[m
+[32m                        [m
+
+[32m        p_out = [][m
+[32m        for i in range(N):[m
+[32m                if i>0:[m
+[32m                        p = _tform(p, T) # apply transformation[m
+[32m                pthis = [np.copy(pp) for pp in p] # copy current state, and append[m
+[32m                p_out.extend(pthis)[m
+[32m        return p_out[m
+
+
+[32mdef _connect(p1, p2):[m
+[32m        global PARSE_EVALUATOR[m
+[32m        if PARSE_EVALUATOR:[m
+[32m                return {Parse(list(p))[m
+[32m                        for a in p1[m
+[32m                        for b in p2 [m
+[32m                        for p in permutations(a.l + b.l)}[m
+[32m                [m
+[32m        #  takes two primitives and makes a new one[m
+[32m        return p1 + p2[m
+
+
+[32m# ========== STROKES [m
+[32m_line = [np.array([(0., 0.), (1., 0.)])] # --- unit line, from 0 to 1[m
+[32m_circle = [np.array([(0.5*math.cos(theta), 0.5*math.sin(theta)) for theta in np.linspace(0., 2.*math.pi, num=30)])] # --- circle, centered at 0, diameter 1[m
+
+[32m# --- regular polygons[m
+[32mdef polygon(N=3):[m
+[32m    # e.g, if N 3, then this is shortcut to make triangle. could be done entirely with rest of primitives in library. [m
+[32m    # N = range(3,7)[m
+[32m    y = 0.5/tan(pi/N)[m
+[32m    return _repeat(transform(_line, x=-0.5, y=y), N, _makeAffine(theta=2*pi/N))[m
+
+[32m# ============= NOT PRIMITIVES.[m
+[32mdef transform(p, s=1., theta=0., x=0., y=0., order="trs"):[m
+[32m                        # order is one of the 6 ways you can permutate the three transformation primitives. [m
+[32m                        # write as a string (e.g. "trs" means scale, then rotate, then tranlate.)[m
+[32m                        # input and output types guarantees a primitive will only be transformed once.[m
+
+[32m        T = _makeAffine(s, theta, x, y, order) # get affine matrix.[m
+[32m        p = _tform(p, T)[m
+[32m        return p[m
+[32m                [m
+
+[32mdef savefig(p, fname="tmp.png"):[m
+[32m        ax = plot(p)[m
+[32m        ax.get_figure().savefig(fname)[m
+[32m        print("saved: {}".format(fname))[m
+
+[32mdef plot(p):[m
+[32m        fig = plt.figure(figsize=(XYLIM,XYLIM))[m
+[32m        ax = fig.add_axes([-0.03, -0.03, 1.06, 1.06])[m
+[32m        ax.set_xlim(-XYLIM,XYLIM)[m
+[32m        ax.set_ylim(-XYLIM,XYLIM)[m
+[32m        [ax.plot(x[:,0], x[:,1], "-k") for x in p][m
+[32m        return ax[m
+
+
+[32mdef plotOnAxes(p, ax):[m
+[32m        ax.set_xlim(-XYLIM,XYLIM)[m
+[32m        ax.set_ylim(-XYLIM,XYLIM)[m
+[32m        # ax.axis("equal")[m
+[32m        [ax.plot(x[:,0], x[:,1], "-k") for x in p][m
+[32m        return ax[m
+
+
+[32mdef __fig2pixel(p, plotPxl=False, smoothing=0.):[m
+[32m#       smoothing is std of gaussian 2d filter. set to 0 to not smooth.[m
+[32m#       https://stackoverflow.com/questions/43363388/how-to-save-a-greyscale-matplotlib-plot-to-numpy-array[m
+[32m        ax = plot(p)[m
+[32m        fig = ax.get_figure()[m
+[32m        fig.canvas.draw()[m
+[32m        ax.axis("off")[m
+
+[32m        width, height = fig.get_size_inches() * fig.get_dpi()[m
+[32m        # print("dpi: {}".format(fig.get_dpi()))[m
+[32m        # import pdb[m
+[32m        # pdb.set_trace()[m
+[32m        img = np.frombuffer(fig.canvas.tostring_rgb(), dtype='uint8').reshape(int(height), int(width), 3)[m
+[32m        img = color.rgb2gray(img)[m
+
+[32m        if smoothing>0:[m
+[32m                img = gf(img, smoothing)[m
+[32m                [m
+[32m        if plotPxl:[m
+[32m                # - show the figure[m
+[32m                plt.figure()[m
+[32m                # plt.imshow(img, vmin=0, vmax=1, cmap="gray", interpolation="bicubic")[m
+[32m                plt.imshow(img, vmin=0, vmax=1, cmap="gray")[m
+
+[32m        return img[m
+
+[32mdef __loss(p1, p2, plotPxl=False, smoothing=2):[m
+[32m        # loss function (compare two images)[m
+
+[32m        img1 = __fig2pixel(p1, plotPxl=plotPxl, smoothing=smoothing)[m
+[32m        img2 = __fig2pixel(p2, plotPxl=plotPxl, smoothing=smoothing)[m
+
+[32m        return np.linalg.norm(img2-img1)[m
+
+
+[32mdef prog2pxl(p, WHdraw = 2*XYLIM):[m
+[32m        # takes a list of np array and outputs one pixel image[m
+[32m        # WHdraw, the size of drawing canvas (e.g. 6, if is xlim -3 to 3)[m
+[32m        [m
+[32m        # 1) create canvas[m
+[32m        WH = 128[m
+[32m        scale = WH/WHdraw[m
+[32m        data = np.zeros((WH, WH), dtype=np.uint8)[m
+[32m        surface = cairo.ImageSurface.create_for_data(data, cairo.Format.A8, WH-2, WH-2)[m
+
+[32m        # 2) create context[m
+[32m        context = cairo.Context(surface)[m
+[32m        # context.set_line_width(STROKESIZE)[m
+[32m        context.set_source_rgb(256,256,256)[m
+
+[32m        # 3) add each primitive[m
+[32m        for pp in p:[m
+[32m                pthis = pp[m
+[32m                [m
+[32m                pthis= pthis + WHdraw/2 # -- center[m
+[32m                pthis = pthis*scale # -- scale so that coordinates match[m
+
+[32m                for ppp in pthis:[m
+[32m                        context.line_to(ppp[0], ppp[1])[m
+[32m                context.stroke() # this draws and also clears context.[m
+
+
+[32m        # 4) render[m
+[32m#     data = np.flip(data, 0)/255.0[m
+[32m        # data = data/255.0[m
+[32m        # surface.write_to_png("/tmp/test.png")[m
+[32m#     from matplotlib import pyplot as plt[m
+[32m#     plt.figure(figsize=(3,3))[m
+[32m#     # plt.xlim(-3,3)[m
+[32m#     # plt.ylim(-3,3)[m
+[32m#     plt.imshow(data, vmin=0, vmax=1, cmap="gray")[m
+[32m#     plt.savefig("/tmp/test.svg")[m
+
+[32m        return np.flip(data, 0)/255.0[m
+
+
+[32mdef loss_pxl(img1, img2):[m
+[32m        return np.linalg.norm(img2-img1)[m

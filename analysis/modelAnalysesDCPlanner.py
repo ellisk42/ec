@@ -1,4 +1,6 @@
 """analyses that combines Dreamcoder output wiht planner"""
+## NOTE: THIS MAY BE OBSOLETE?
+
 import sys
 sys.path.insert(0, "/Users/lucastian/Dropbox/CODE/Python/Tenenbaum/ec/")
 sys.path.insert(0, "/om/user/lyt/ec")

@@ -1,3 +1,5 @@
+""" A version not using continuation"""
+
 # =========== [NEWER VERSION, NOT USING MATPLOTLIB]
 import math
 import numpy as np

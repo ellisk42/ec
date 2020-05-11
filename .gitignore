@@ -18,6 +18,7 @@ solvers/logoLib/.merlin
 solvers/.merlin
 lucas
 analysis/saved/*
+analysis/saved_backup/*
 analysis/outputs/*
 analysis/summaryfigs/acrossexpt/*
 __pycache__

@@ -1,5 +1,14 @@
-"""for human/dreamcoder saved distances, append the planner score for each
-dreamcoder parse. saves a new set of pickle files in a n ew folder. """
+"""
+Takes the dreamcoder parses (already processed to datsegs) and appends planner scores.
+- Requires first preprocessing dreamcoder parses so that datsegs exists.
+- Can specify which planner params to use to get planner scores.
+- saves back into the same datsegs folder.
+- This is independent from model-human distance. (i.e., do not need to have already run that)
+- NOTE (5/10/2020) updated so that it forces to use planner models that were trained on ONLY those variables. 
+Previous versions had taken all pmodels and extracted just those variables. I believe this should have
+enough sanity checks that it will fail unless it runs properly.
+"""
+
 import sys
 sys.path.insert(0, "/Users/lucastian/Dropbox/CODE/Python/Tenenbaum/ec/")
 sys.path.insert(0, "/om/user/lyt/ec")

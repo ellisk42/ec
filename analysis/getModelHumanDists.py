@@ -22,11 +22,7 @@ import plotsSingleSubj as dgpsing
 import preprocess as dgprep
 import modelAnaly as dgmodel
 
-
-
 REMOVELL = False # remove vertical long line?
-
-
 
 ########################## STUFF TO DO AFTER SAVING DISTANCES
 
@@ -169,8 +165,6 @@ def filterDistances(distances, stimlist=[], humans=[], models=[], modelrend=[]):
     return dist
 
 
-
-
 def updateWithPosNegControls(ECTRAIN):
     """positive control: for each human, gets distance from all other huamns"""
     pass
@@ -237,12 +231,9 @@ def aggregateDistances(ECTRAIN, modelkindlist=["parse", "randomperm"]):
             DATsaveModelHuDist(DAT, d["stim"], d["human"], [d], suff)
 
 
-
-
-
-
 if __name__=="__main__":
     ################## SCRIPT TO EXTRACT ALL DISTANCES AND SAVE
+    import numpy as np
 
     # === INPUT ARGUMENTS
     ECTRAIN = sys.argv[1]
@@ -252,13 +243,17 @@ if __name__=="__main__":
     else:
         get_aggregate=False
 
+    if int(sys.argv[3])==1:
+        REMOVE_REDUNDANT_STROKES = True # will process datsegs for model so that throws out redundant strokes. If multiple parses end up with
+        # same strokes becasue of this, will still count all of them.
+    else:
+        REMOVE_REDUNDANT_STROKES = False
+
     # ECTRAIN = "S8.2.2"
     # ECTRAIN = "S9.2"
     REMOVELL = False # this must match with preprocessing of model
     PARSEVERSIONLIST = ["parse", "randomperm"] # parse is kevin ellis code. random is random permutation.
     # PARSEVERSIONLIST = ["randomperm"] # parse is kevin ellis code. random is random permutation.
-
-
 
     if not get_aggregate:
         # load DAT
@@ -296,6 +291,36 @@ if __name__=="__main__":
                     modelname="{}_randomperm".format(ECTRAIN)
                 else:
                     assert False, "dont unerstand..."
+
+
+                # ===== For each datsegs, if there are multiple identical strokes, then remove them. 
+                if REMOVE_REDUNDANT_STROKES:
+                    # - first make sure all entriues are lists, not tuples
+                    # for j, dseg in enumerate(datseg_ec):
+                    #     if isinstance(dseg, tuple):
+                    #         datseg_ec[i] = list(dseg)
+                    #         print("good")
+                    #     if isinstance(dseg[0], tuple):
+                    #         print(dseg[0])
+                    # - second, clean up redundant stropkes.
+                    for i, dseg in enumerate(datseg_ec):
+                        if isinstance(dseg, tuple):
+                            dseg = list(dseg)
+                        badstrokes = []
+                        for j, d1 in enumerate(dseg):
+                            for jj, d2 in enumerate(dseg):
+                                if jj>j:
+                                    t1 = np.allclose(d1["centerpos"], d2["centerpos"], equal_nan=True)
+                                    t2 = np.allclose(d1["x_extremes"], d2["x_extremes"], equal_nan=True)
+                                    t3 = np.allclose(d1["y_extremes"], d2["y_extremes"], equal_nan=True)
+                                    t4 = d1["codes"]==d2["codes"]
+                                    t5 = d1["row"]==d2["row"]
+                                    if t1 and t2 and t3 and t4 and t5:
+                                        print(f"Found identical datseg strokes: {j} vs {jj} - Removing {jj}")
+                                        badstrokes.append(jj)
+                        for index in sorted(badstrokes, reverse=True):
+                            del dseg[index]
+                        datseg_ec[i]=dseg
 
                 def getSeqGetters(labelkind="codes_unique"):
                     if labelkind=="codes_unique":
@@ -341,7 +366,8 @@ if __name__=="__main__":
                         print("SKIPPING {}, since foudna laready saved file".format(fname))
                         continue
 
-                    distances = distModelHumanAllStims([stimthis], seqgetter_ec, seqgetter_hu, modelname = modelname, humanname = humanname, distancelabel=seqkind, modelrends=modelparsenums)
+                    distances = distModelHumanAllStims([stimthis], seqgetter_ec, seqgetter_hu, modelname = modelname, 
+                        humanname = humanname, distancelabel=seqkind, modelrends=modelparsenums)
 
                     DATsaveModelHuDist(DAT, stimname, humanname, distances, seqkind)
     else:
