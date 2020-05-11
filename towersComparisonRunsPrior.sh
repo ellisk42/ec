@@ -20,8 +20,8 @@ for num in 3 20
 		oldResume=experimentOutputs/towers${num}Bigram
 		samplePolicy=experimentOutputs/towers${num}BigramSample.pickle
 
-		resume=experimentOutputs/towers${num}BigramAstar
-		salt=towers${num}BigramAstar
+		resume=experimentOutputs/towers${num}BigramAstarCountNodes
+		salt=towers${num}BigramAstarCountNodes
 		cp ${oldResume}.pickle ${resume}.pickle
 
 
