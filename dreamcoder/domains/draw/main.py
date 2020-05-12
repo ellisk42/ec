@@ -1,6 +1,6 @@
 # from dreamcoder.domains.draw.makeDrawTasks import drawDrawings
 from dreamcoder.domains.draw.drawPrimitives import *
-from dreamcoder.domains.draw.drawPrimitives import primitives
+# from dreamcoder.domains.draw.drawPrimitives import primitives
 from dreamcoder.domains.draw.primitives import _repeat, _line, _makeAffine, _circle,_connect
 from dreamcoder.domains.draw.makeDrawTasks import makeSupervisedTasks, SupervisedDraw
 from dreamcoder.dreamcoder import ecIterator
@@ -14,6 +14,7 @@ from dreamcoder.recognition import ImageFeatureExtractor
 import datetime
 import os
 
+# USE_NEW_PRIMITIVES = True # i..e, contuinuation.
 
 class DrawCNN(ImageFeatureExtractor):
     special = "draw"
@@ -34,16 +35,24 @@ class DrawCNN(ImageFeatureExtractor):
     def featuresOfTask(self, t):
         return self(t.rendered_strokes)
 
-g0 = Grammar.uniform(primitives, continuationType=tstroke)
 
-def dreamFromGrammar(g=g0, directory = "", N=25):
+def dreamFromGrammar(g=None, directory = "", N=25, USE_NEW_PRIMITIVES=True):
    # request = taxes # arrow9turtle turtle) just for logl.
-   # request = arrow(taxes, taxes) # arrow9turtle turtle) just for logl.
-   request = tstroke # arrow9turtle turtle) just for logl.
-   request = arrow(tstroke, tstroke)
-   programs = [ p for _ in range(N) for p in [g.sample(request, maximumDepth=15)] if p is not None]
-   return programs
-   # drawDrawings(*programs, filenames)
+   # request = arrow(taxes, taxes) # arrow9turtle turtle) just for logl.if USE_NEW_PRIMITIVES:
+
+    if g is None:
+        primitives = primitiveList(USE_NEW_PRIMITIVES = USE_NEW_PRIMITIVES)
+        if USE_NEW_PRIMITIVES:
+            g = Grammar.uniform(primitives, continuationType=tstroke)
+        else:
+            g = Grammar.uniform(primitives)
+    if USE_NEW_PRIMITIVES:
+        request = arrow(tstroke, tstroke)
+    else:
+        request = tstroke # arrow9turtle turtle) just for logl.
+    programs = [ p for _ in range(N) for p in [g.sample(request, maximumDepth=15)] if p is not None]
+    return programs
+    # drawDrawings(*programs, filenames)
 
 def main_dummy(N=25):
     ps = dreamFromGrammar(N=N)
@@ -162,8 +171,45 @@ def main(arguments):
             print("PRUNING PRIMITIES, using trainset {}".format(arguments["trainset"]))
         else:
             print("NOT DOING PRUNING")
-        primitives = getPrimitives(trainset=arguments["trainset"], prune=arguments["dopruning"])
-        g0 = Grammar.uniform(primitives, continuationType=tstroke)
+
+        # ========== LOAD STARTING PRIMITIVES
+        if arguments["use_cogsci_primitives"]==0:
+            # then ignore cogsci. use latest primtiives whatever theya re
+            print('--- using teh latest primitives')
+            primitives = getPrimitives(trainset=arguments["trainset"], prune=arguments["dopruning"])
+        elif arguments["use_cogsci_primitives"]==1:
+            # then use the exact same primtiives from cogsci submission (2020)
+            print('--- using exact cogsci 2020 primtiives')
+            primitives = getPrimitives(trainset = arguments["trainset"], prune=True, USE_NEW_PRIMITIVES=False, suppress_print=True) 
+        elif arguments["use_cogsci_primitives"]==2:
+            # then use exact same, but add 3 more primtiives which are 
+            # crucial for adding on inventions (hand built).
+            print('--- using exact cogsci 2020 primtiives + a few (3) extra needed for using hand built inventions.')
+            primitives = getPrimitivesUpdated(arguments["trainset"])
+        else:
+            assert False, "not coded... make sure in [0,1,2]"
+
+        if arguments["use_cogsci_primitives"] in [1, 2]:
+            USE_NEW_PRIMITIVES=False
+        else:
+            USE_NEW_PRIMITIVES=True
+
+        # ========= LOAD HAND-BUILT INVENTIONS
+        if not arguments["invention_set"] is None:
+            print(f"== Getting hand-built inventions from set: {arguments['invention_set']}")
+            Inventions = getHandcodedInventions(arguments["invention_set"])
+            print("List of added inventiosn:")
+            for I in Inventions:
+                print(I)
+            primitives.extend(Inventions)
+
+        # ========= BUILD STARTING GRAMMAR
+        print(" *** FINAL PRIMITIVES + INVENTIONS: ")
+        [print(P) for P in primitives]
+        if USE_NEW_PRIMITIVES:
+            g0 = Grammar.uniform(primitives, continuationType=tstroke)
+        else:
+            g0 = Grammar.uniform(primitives)  
 
         print("As an example, here's the amount of ink used by a line, a circle, and  connected to a circle:")
         print(program_ink(_line))

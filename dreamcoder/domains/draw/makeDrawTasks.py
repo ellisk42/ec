@@ -13,10 +13,15 @@ from math import pi
 import pickle
 import numpy as np
 
+# USE_NEW_PRIMITIVES=True
 
 class SupervisedDraw(Task):
-	def __init__(self, name, program):
-		super(SupervisedDraw, self).__init__(name, arrow(tstroke, tstroke), [],
+	def __init__(self, name, program, USE_NEW_PRIMITIVES=True):
+		if USE_NEW_PRIMITIVES:
+			c = arrow(tstroke, tstroke)
+		else:
+			c = tstroke
+		super(SupervisedDraw, self).__init__(name, c, [],
 											  features=[]) # TODO: LT, needs this, i.e., a request.
 
 		# compute the trajectory, which is a list of lines

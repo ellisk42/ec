@@ -99,7 +99,9 @@ class ECResult():
                      "noConsolidation":"nCons",
                      "doshaping":"shp",
                      "arity":"ar",
-                     "parallelTest":"parTes"
+                     "parallelTest":"parTes",
+                     "use_cogsci_primitives":"cs",
+                     "invention_set":"I"
                      }
 
     @staticmethod
@@ -187,7 +189,9 @@ def ecIterator(grammar, tasks,
                trainset="S8full",
                doshaping=False, 
                dopruning=False,
-               skiptesting=False):
+               skiptesting=False,
+               use_cogsci_primitives=0,
+               invention_set=None):
     if enumerationTimeout is None:
         eprint(
             "Please specify an enumeration timeout:",
@@ -993,6 +997,17 @@ def commandlineArguments(_=None,
         help="for draw tasks, whether to include test stimhli. will also need to define test stimuli in. makeDrawTasks",
         default=False,
         action="store_true")
+    parser.add_argument("--use_cogsci_primitives",
+        dest="use_cogsci_primitives",
+        help="set of primtiives to use for draw tasks",
+        choices=[0,1,2],
+        default=0,
+        type=int)
+    parser.add_argument("--invention_set",
+        dest="invention_set",
+        help="which set of handbuilt invenvtinos to use for draw tasks",
+        default=None,
+        type=str)
 
 
     parser.set_defaults(useRecognitionModel=useRecognitionModel,
