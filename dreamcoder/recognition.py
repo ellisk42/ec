@@ -17,6 +17,8 @@ import numpy as np
 # luke
 import json
 
+from dreamcoder.domains.tower.motifs import * #ugh, hack
+
 
 def variable(x, volatile=False, cuda=False):
     if isinstance(x, list):
@@ -626,7 +628,8 @@ class RecognitionModel(nn.Module):
                  id=0,
                  useValue=False,
                  valueHead=None,
-                 searchType=None):
+                 searchType=None,
+                 filterMotifs=[]):
         super(RecognitionModel, self).__init__()
         self.id = id
         self.trained=False
@@ -686,7 +689,7 @@ class RecognitionModel(nn.Module):
             self._MLP.load_state_dict(previousRecognitionModel._MLP.state_dict())
             self.featureExtractor.load_state_dict(previousRecognitionModel.featureExtractor.state_dict())
 
-        self.filterMotifs = [] #TODO
+        self.filterMotifs = [eval(x) for x in filterMotifs] 
         # value function
         if valueHead: assert useValue
         if useValue:
@@ -883,6 +886,16 @@ class RecognitionModel(nn.Module):
                 logPrior=e.logPrior) for e in frontier],
             task=frontier.task)
 
+    def filterMotifsFromFrontier(self, frontier):
+        entries = []
+        for e in frontier:
+            for _, expr in e.program.walkUncurried():
+                if any( f(expr) for f in self.filterMotifs):
+                    break
+            else: #if didn't hit the break statement, ie, no motif to filter out
+                entries.append(e)
+        return Frontier(entries, task=frontier.task)
+
     def train(self, frontiers, _=None, steps=None, lr=0.001, topK=5, CPUs=1,
               timeout=None, evaluationTimeout=0.001,
               helmholtzFrontiers=[], helmholtzRatio=0., helmholtzBatch=500,
@@ -904,6 +917,11 @@ class RecognitionModel(nn.Module):
             requests = [defaultRequest]
         frontiers = [frontier.topK(topK).normalize()
                      for frontier in frontiers if not frontier.empty]
+
+        if self.filterMotifs:
+            frontiers = [self.filterMotifsFromFrontier(f) for f in frontiers]
+            frontiers = [f for f in frontiers if not f.empty]
+
         if len(frontiers) == 0:
             eprint("You didn't give me any nonempty replay frontiers to learn from. Going to learn from 100% Helmholtz samples")
             helmholtzRatio = 1.
