@@ -153,8 +153,8 @@ ignore(primitive "Some" (t0 @> tmaybe t0) (fun x -> Some(x)));;
 ((List.range ~stop:`exclusive 0 8 |> List.map ~f:(fun j -> (Float.of_int j)*.2.*.pi/.8.)) @ [-.2.*.pi/.6.;-.2.*.pi/.12.]) |> List.iteri ~f:(fun i t ->
     ignore(primitive (Printf.sprintf "angle%d" i) tangle t));;
 
-ignore(primitive "dist98" tdistance -0.2);;
-ignore(primitive "dist99" tdistance -0.2);;
+ignore(primitive "dist98" tdistance (-0.2));;
+ignore(primitive "dist99" tdistance (-0.2));;
 
 
 let reflect_implementation =
