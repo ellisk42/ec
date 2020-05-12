@@ -89,7 +89,13 @@ module add openmind/singularity
 #bash run.sh S12.11.4 10000 20 python bin/draw.py -i 20 -t 3600 --biasOptimal --contextual -R 2400 --trainset=S12 --dopruning --skiptesting -a 2 --taskReranker unsolved
 #bash run.sh S13.11.4 10000 20 python bin/draw.py -i 20 -t 3600 --biasOptimal --contextual -R 2400 --trainset=S13 --dopruning --skiptesting -a 2 --taskReranker unsolved
 
-bash run.sh S12.11.5 10000 20 python bin/draw.py -i 20 -t 4200 --biasOptimal --contextual -R 2400 --trainset=S12 --dopruning --skiptesting -a 3 --taskReranker unsolved
-bash run.sh S13.11.5 10000 20 python bin/draw.py -i 20 -t 4200 --biasOptimal --contextual -R 2400 --trainset=S13 --dopruning --skiptesting -a 3 --taskReranker unsolved
+#bash run.sh S12.11.5 10000 20 python bin/draw.py -i 20 -t 4200 --biasOptimal --contextual -R 2400 --trainset=S12 --dopruning --skiptesting -a 3 --taskReranker unsolved
+#bash run.sh S13.11.5 10000 20 python bin/draw.py -i 20 -t 4200 --biasOptimal --contextual -R 2400 --trainset=S13 --dopruning --skiptesting -a 3 --taskReranker unsolved
+#bash run.sh S12.11.6 15000 30 python bin/draw.py -i 20 -t 4200 --biasOptimal --contextual -R 2400 --trainset=S12 --dopruning --skiptesting -a 2 --taskReranker unsolved
 
+#bash run.sh S12.11.7 15000 30 python bin/draw.py -i 20 -t 4200 --biasOptimal --contextual -R 2400 --trainset=S12 --dopruning --skiptesting -a 2 --taskReranker unsolved
 
+bash run.sh S12.11.8.unsolved 8000 20 python bin/draw.py -i 20 -t 3600 --biasOptimal --contextual -R 2400 --trainset=S12 --dopruning --skiptesting -a 2 --taskReranker unsolved
+bash run.sh S13.11.8.unsolved 8000 20 python bin/draw.py -i 20 -t 3600 --biasOptimal --contextual -R 2400 --trainset=S13 --dopruning --skiptesting -a 2 --taskReranker unsolved
+bash run.sh S12.11.8.shuff 8000 20 python bin/draw.py -i 20 -t 3600 --biasOptimal --contextual -R 2400 --trainset=S12 --dopruning --skiptesting -a 2 --taskReranker randomShuffle --taskBatchSize 20
+bash run.sh S13.11.8.shuff 8000 20 python bin/draw.py -i 20 -t 3600 --biasOptimal --contextual -R 2400 --trainset=S13 --dopruning --skiptesting -a 2 --taskReranker randomShuffle --taskBatchSize 20
