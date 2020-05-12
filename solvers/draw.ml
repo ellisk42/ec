@@ -154,7 +154,7 @@ ignore(primitive "Some" (t0 @> tmaybe t0) (fun x -> Some(x)));;
     ignore(primitive (Printf.sprintf "angle%d" i) tangle t));;
 
 ignore(primitive "dist98" tdistance (-0.2));;
-ignore(primitive "dist99" tdistance (-0.2));;
+ignore(primitive "dist99" tdistance (0.2));;
 
 
 let reflect_implementation =
