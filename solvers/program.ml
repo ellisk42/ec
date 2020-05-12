@@ -1121,10 +1121,13 @@ let primitive_rx = primitive "_x" tsubstr "x";;
 let primitive_ry = primitive "_y" tsubstr "y";;
 let primitive_rz = primitive "_z" tsubstr "z";;
 
+let primitive_emptystr = primitive "_rempty" tsubstr "";;
+let primitive_rdot = primitive "_rdot" tsubstr ".";;
+
 let primitive_rvowel = primitive "_rvowel" tsubstr "(a|e|i|o|u)" ;;
 let primitive_rconsonant = primitive "_rconsonant" tsubstr "[^aeiou]" ;;
-let primitive_emptystr = primitive "_emptystr" tsubstr "";;
-let primitive_rdot = primitive "_rdot" tsubstr ".";;
+
+
 let primitive_rnot = primitive "_rnot" (tsubstr @> tsubstr) (fun s -> "[^" ^ s ^ "]");;
 let primitive_ror = primitive "_ror" (tsubstr @> tsubstr @> tsubstr) (fun s1 s2 -> "(("^ s1 ^ ")|("^ s2 ^"))");;
 let primitive_rconcat = primitive "_rconcat" (tsubstr @> tsubstr @> tsubstr) (fun s1 s2 -> s1 ^ s2);;

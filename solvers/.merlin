@@ -42,7 +42,7 @@ B /Users/catwong/.opam/4.06.1+flambda/lib/variantslib
 B /Users/catwong/.opam/4.06.1+flambda/lib/vg
 B /Users/catwong/.opam/4.06.1+flambda/lib/yojson
 B /Users/catwong/.opam/4.06.1+flambda/lib/zmq
-B _build/default/.solver.eobjs
+B _build/default/.re2Test.eobjs
 B _build/default/geomLib/.geomLib.objs
 B _build/default/logoLib/.logoLib.objs
 FLG -ppx '/Users/catwong/Desktop/zyzzyva/code/ec/solvers/_build/default/.ppx/ppx_jane/ppx.exe --as-ppx'

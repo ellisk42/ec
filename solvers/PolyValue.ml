@@ -12,6 +12,7 @@ module PolyValue = struct
     | Float of float
     | Boolean of bool
     | Character of char
+    | FullString of string
     | None
   [@@deriving compare, hash, sexp_of]
 
@@ -21,6 +22,7 @@ module PolyValue = struct
     | TCon("int",[],_) -> Integer(magical v)
     | TCon("bool",[],_) -> Boolean(magical v)
     | TCon("char",[],_) -> Character(magical v)
+    | TCon("tfullstr",[],_) -> FullString(magical v)
     | _ -> assert false
 
   let is_some = function
@@ -33,6 +35,7 @@ module PolyValue = struct
     | Float(f) -> Printf.sprintf "%f" f
     | Boolean(b) -> Printf.sprintf "%b" b
     | Character(c) -> Printf.sprintf "'%c'" c
+    | FullString(s) -> Printf.sprintf "%s" s
     | None -> "None"
 
   let rec of_json (j : Yojson.Basic.json) : t = match j with

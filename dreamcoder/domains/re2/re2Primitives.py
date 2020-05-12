@@ -2,32 +2,52 @@
 
 from dreamcoder.program import Primitive, Program
 from dreamcoder.grammar import Grammar
-from dreamcoder.type import tint, tlist, arrow, baseType, tbool, t0
-from dreamcoder.domains.list.listPrimitives import bootstrapTarget,  re2_listPrimitives_v1
+from dreamcoder.type import tint, tlist, arrow, baseType, tbool, t0, t1
+from dreamcoder.domains.text.textPrimitives import re2_text_primitives, re2_text_4_letter, re2_text_6_letter, re2_text_characters
+from dreamcoder.domains.list.listPrimitives import re2_list_v0, _cons, _car, _cdr, _map, _if
 import re
 
 
 tfullstr = baseType("tfullstr")
 tsubstr = baseType("tsubstr")
 
-# Regex constants -- handled by constructing regex substrings
-_rvowel = "(a|e|i|o|u)" 
-_rconsonant = "[^aeiou]"
-alpha_chars = [chr(ord('a') + j) for j in range(26)][:2]
+### Regex constants -- handled by constructing regex substrings
+def re2_constants(prim_name):
+    rdot = Primitive("_rdot", tsubstr, ".")
+    rempty = Primitive("_rempty", tsubstr, "")
+    alpha_chars = [chr(ord('a') + j) for j in range(26)] 
+    
+    chars = prim_name.split("re2_chars_")[-1]
+    if chars == "None": chars = None
+    if chars is None:
+        chars = alpha_chars
+    else:
+        chars = [chr(ord(c)) for c in list(chars)]
+    char_constants = [Primitive("_%s" % c, tsubstr, c) for c in chars]
+    
+    return [rdot, rempty] + char_constants
+def re2_vowel_consonant_primitives():
+    _rvowel = Primitive("_rvowel", tsubstr, "(a|e|i|o|u)") 
+    _rconsonant = Primitive("_rconsonant", tsubstr,  "[^aeiou]")
+    return [_rvowel, _rconsonant]
+
+### Basic regex substring manipulations
 def _rnot(s): return f"[^{s}]"
 def _ror(s1): return lambda s2: f"(({s1})|({s2}))"
 def _rconcat(s1): return lambda s2: s1 + s2  
-                                
+re2_rnot = Primitive("_rnot", arrow(tsubstr, tsubstr), _rnot)
+re2_ror = Primitive("_ror", arrow(tsubstr, tsubstr, tsubstr), _ror)
+re2_rconcat = Primitive("_rconcat", arrow(tsubstr, tsubstr, tsubstr), _rconcat)
+
+### Regex matching.                            
 # Evaluate s1 as a regex against r2
 def __ismatch(s1, s2):
     try:
         return re.fullmatch(re.compile(s1), s2) is not None 
     except e:
         return False
-def _rmatch(s1) : return lambda s2: __ismatch(s1, s2)
-
-# Splits s2 on regex s1 as delimiter, including the matches
 def __regex_split(s1, s2):
+    # Splits s2 on regex s1 as delimiter, including the matches
     try:
         ret = []
         remaining = s2
@@ -44,40 +64,68 @@ def __regex_split(s1, s2):
         return ret        
     except e:
         return [s2]
+def _rmatch(s1) : return lambda s2: __ismatch(s1, s2)
 def _rsplit(s1) : return lambda s2: __regex_split(s1, s2)
+def _rflatten(l): return "".join(l) # Flattens list of substrings back into a string
+re2_rmatch = Primitive("_rmatch", arrow(tsubstr, tsubstr, tbool), _rmatch)
+re2_rsplit = Primitive("_rsplit", arrow(tsubstr, tfullstr, tlist(tsubstr)), _rsplit)
+re2_rflatten = Primitive("_rflatten", arrow(tlist(tsubstr), tfullstr), _rflatten)
 
-# Flattens list of substrings back into a string
-def _rflatten(l): return "".join(l)
-    
+### List operators
 def _rtail(l) : return l[-1]
 def _rappend(x) : return lambda l: l + [x]
 def _rrevcdr(l) : return l[:-1]
 
-# Strongly typed version.
-def re2_vowel_consonant():
-    return [Primitive("_rvowel", tsubstr, _rvowel) +
-            Primitive("_rconsonant", tsubstr, _rconsonant)]
-            
-def re2_primitives_v1():
-    # [a-z] + [.]
-    regex_constants = [Primitive("_rdot", tsubstr, "."),
-                       Primitive("_emptystr", tsubstr, "")] + \
-                      [Primitive("_%s" % c, tsubstr, c) for c in alpha_chars]
-                              
-    return regex_constants + \
-         [
-            Primitive("_rnot", arrow(tsubstr, tsubstr), _rnot),
-            Primitive("_ror", arrow(tsubstr, tsubstr, tsubstr), _ror),
-            Primitive("_rconcat", arrow(tsubstr, tsubstr, tsubstr), _rconcat),
-            
-            Primitive("_rmatch", arrow(tsubstr, tsubstr, tbool), _rmatch),
-            Primitive("_rsplit", arrow(tsubstr, tfullstr, tlist(tsubstr)), _rsplit),
-            Primitive("_rflatten", arrow(tlist(tsubstr), tfullstr), _rflatten),
-            Primitive("_rtail", arrow(tlist(t0), t0), _rtail),
-            Primitive("_rappend", arrow(tlist(t0), t0, tlist(t0)), _rappend),
-            Primitive("_rrevcdr", arrow(tlist(t0), tlist(t0)), _rrevcdr),
-         ] +  re2_listPrimitives_v1()
+re2_if = Primitive("if", arrow(tbool, t0, t0, t0), _if)
+re2_cons = Primitive("cons", arrow(t0, tlist(t0), tlist(t0)), _cons)
+re2_car = Primitive("car", arrow(tlist(t0), t0), _car)
+re2_cdr = Primitive("cdr", arrow(tlist(t0), tlist(t0)), _cdr)
+re2_map = Primitive("map", arrow(arrow(t0, t1), tlist(t0), tlist(t1)), _map)
+re2_rtail = Primitive("_rtail", arrow(tlist(t0), t0), _rtail)
+re2_rappend = Primitive("_rappend", arrow(tlist(t0), t0, tlist(t0)), _rappend)
+re2_rrevcdr = Primitive("_rrevcdr", arrow(tlist(t0), tlist(t0)), _rrevcdr)
+        
+def re2_bootstrap_v1_primitives():
+    return [re2_rnot, re2_ror, re2_rconcat] \
+        +  [re2_rmatch, re2_rsplit, re2_rflatten] \
+        +  [re2_rtail, re2_rappend, re2_rrevcdr] \
+        +  [re2_if, re2_cons, re2_car, re2_cdr, re2_map]
 
+def re2_test_primitives():
+    return [re2_rmatch, re2_rsplit, re2_rflatten] \
+        +  [re2_if,  re2_car]
+
+def load_re2_primitives(primitive_names):
+    prims = []
+    type_request = None
+    for pname in primitive_names:
+        if pname.startswith("re2_chars"):
+            prims += re2_constants(pname)
+        elif pname == 're2_test':
+            prims += re2_test_primitives()
+            type_request = "tfullstr"
+        elif pname == 're2_bootstrap_v1_primitives':
+            prims += re2_bootstrap_v1_primitives()
+            type_request = "tfullstr"
+        elif pname == 're2_vowel_consonant_primitives':
+            prims += re2_vowel_consonant_primitives()
+            type_request = "tfullstr"
+        
+        # Old primitive sets
+        elif pname == 're2_primitives': 
+            prims += re2_text_primitives
+            prims += re2_list_v0()
+            type_request = "list_tcharacter"
+        elif pname == 're2_4_letter':
+            prims += re2_text_4_letter
+            prims += re2_list_v0()
+            type_request = "list_tcharacter"
+        elif pname == 're2_6_letter':
+            prims += re2_text_6_letter
+            prims += re2_list_v0()
+            type_request = "list_tcharacter"
+    return prims, type_request
+    
 def re2_primitives_main():
     re2_primitives_v1()
     def check_true(name, raw, input):

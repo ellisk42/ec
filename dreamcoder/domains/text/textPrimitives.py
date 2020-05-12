@@ -57,18 +57,18 @@ specialCharacters = {' ': 'SPACE',
                      ')': 'RPAREN',
                      '(': 'LPAREN'}
 
-re2_characters = [chr(ord('a') + j) for j in range(26)] 
-re2_primitives = [
+re2_text_characters = [chr(ord('a') + j) for j in range(26)] 
+re2_text_primitives = [
     Primitive("char-eq?", arrow(tcharacter, tcharacter, tboolean), _eq),
     Primitive("STRING", tstr, None),
-] + [Primitive("'%s'" % c, tcharacter, c) for c in re2_characters]
+] + [Primitive("'%s'" % c, tcharacter, c) for c in re2_text_characters]
 
-re2_4_letter =[
+re2_text_4_letter =[
     Primitive("char-eq?", arrow(tcharacter, tcharacter, tboolean), _eq),
     Primitive("STRING", tstr, None),
 ] + [Primitive("'%s'" % c, tcharacter, c) for c in ['a', 'e', 's', 'r']]
 
-re2_6_letter =[
+re2_text_6_letter =[
     Primitive("char-eq?", arrow(tcharacter, tcharacter, tboolean), _eq),
     Primitive("STRING", tstr, None),
 ] + [Primitive("'%s'" % c, tcharacter, c) for c in ['a', 'e', 's', 'r', 'd', 't']]

@@ -16,12 +16,13 @@ from dreamcoder.utilities import tuplify, timing, eprint, get_root_dir, mean
 
 def helmholtzEnumeration(g, request, inputs, timeout, _=None,
                          special=None, evaluationTimeout=None,
-                         use_vars_in_tokenized=False):
+                         use_vars_in_tokenized=False, executable=None):
     """Returns json (as text)"""
     message = {"request": request.json(),
                "timeout": timeout,
                "DSL": g.json(),
                "extras": inputs}
+               
     if evaluationTimeout: message["evaluationTimeout"] = evaluationTimeout
     if special: message["special"] = special
     if use_vars_in_tokenized: message["use_vars_in_tokenized"] = use_vars_in_tokenized
@@ -29,7 +30,8 @@ def helmholtzEnumeration(g, request, inputs, timeout, _=None,
     with open('/tmp/hm', 'w') as handle:
         handle.write(message)
     try:
-        binary = os.path.join(get_root_dir(), 'helmholtz')
+        binary_name = 'helmholtz' if executable is None else executable
+        binary = os.path.join(get_root_dir(), binary_name)
         process = subprocess.Popen(binary,
                                    stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE)
@@ -38,10 +40,11 @@ def helmholtzEnumeration(g, request, inputs, timeout, _=None,
         raise exc
     return response
 
-
 def backgroundHelmholtzEnumeration(tasks, g, timeout, _=None,
                                    special=None, evaluationTimeout=None,
-                                   use_vars_in_tokenized=False):
+                                   use_vars_in_tokenized=False, dedup=True,
+                                   executable=None,
+                                   serialize_special=None):
     requests = list({t.request for t in tasks})
     inputs = {r: list({tuplify(xs)
                        for t in tasks if t.request == r
@@ -52,7 +55,8 @@ def backgroundHelmholtzEnumeration(tasks, g, timeout, _=None,
                                     args=(g, r, inputs[r], float(timeout)),
                                     kwds={'special': special,
                                           'evaluationTimeout': evaluationTimeout,
-                                          'use_vars_in_tokenized' : use_vars_in_tokenized})
+                                          'use_vars_in_tokenized' : use_vars_in_tokenized,
+                                          'executable' : executable})
                 for r in requests]
 
     def get():

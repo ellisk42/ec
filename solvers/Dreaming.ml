@@ -110,6 +110,7 @@ let helmholtz_enumeration (behavior_hash : program -> PolyList.t option) ?nc:(nc
 
   let rec loop lb =
     if enumeration_timed_out() then () else begin 
+      let _ = Printf.eprintf "Helmholtz working!" in 
       let final_results = 
         enumerate_programs ~extraQuiet:false~nc:nc ~final:(fun () -> [behavior_to_programs])
           g request lb (lb+.1.5) (fun p l ->
@@ -149,11 +150,11 @@ let rec pack t v : json =
   | TCon("int",[],_) -> `Int(magical v)
   | TCon("bool",[],_) -> `Bool(magical v)
   | TCon("char",[],_) -> `String(magical v |> String.of_char)
+  | TCon("tfullstr", [], _) -> `String(magical v)
   | _ -> assert false
 
 let special_helmholtz =   Hashtbl.Poly.create();;
 let register_special_helmholtz name handle = Hashtbl.set special_helmholtz name handle;;
-
 
 let default_hash ?timeout:(timeout=0.001) request inputs : program -> PolyList.t option =
   let open Yojson.Basic.Util in
@@ -185,7 +186,6 @@ let default_hash ?timeout:(timeout=0.001) request inputs : program -> PolyList.t
 
 let string_hash ?timeout:(timeout=0.001) request inputs : program -> PolyList.t option =
   let open Yojson.Basic.Util in
-
   (* convert json -> ocaml *)
   let inputs : 'a list list = unpack inputs in
   let return = return_of_type request in
@@ -217,8 +217,6 @@ let string_hash ?timeout:(timeout=0.001) request inputs : program -> PolyList.t 
 ;;
 
 register_special_helmholtz "string" string_hash;;
-
-
 
 (* let rational_hash ?timeout:(timeout=0.001) request inputs : program -> PolyList.t option = *)
 (*   assert (request = (treal @> treal)); *)

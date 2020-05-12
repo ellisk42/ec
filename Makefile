@@ -35,9 +35,18 @@ clean:
 
 re2TestClean: 
 	cd solvers && jbuilder clean
+	rm -f re2Test
+	
+re2Test: 
+		cd solvers && \
+		jbuilder build re2Test.exe && \
+		cp _build/default/re2Test.exe ../re2Test
+
+re2PrimsClean: 
+	cd solvers && jbuilder clean
 	rm -f re2Primitives
 	
-re2Test:
+re2Prims: 
 		cd solvers && \
 		jbuilder build re2Primitives.exe && \
 		cp _build/default/re2Primitives.exe ../re2Primitives
