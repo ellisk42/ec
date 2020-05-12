@@ -95,8 +95,25 @@ let run_job channel =
       | None -> (Printf.eprintf "Could not find special Helmholtz enumerator: %s\n" name; assert (false))
   in 
   let inputs = (j |> member "extras") in
+  let behavior_hash = (k ~timeout:evaluationTimeout request (j |> member "extras")) in
   let unpacked_inputs : 'a list list = unpack_clevr inputs in
-  let outputs = unpacked_inputs |> List.map ~f: (fun input -> 
+  set_enumeration_timeout 1.0;
+  let rec loop lb =
+    if enumeration_timed_out() then () else begin 
+      let final_results = 
+        enumerate_programs ~extraQuiet:true ~nc:nc ~final:(fun () -> [])
+          g request lb (lb+.1.5) (fun p l ->
+              let _ = Printf.eprintf "%s\n" (string_of_program p) in
+              behavior_hash p
+            ) |> List.concat
+      in
+      loop (lb+.1.5)
+    end
+  in
+
+  loop 0.
+  
+  (* let outputs = unpacked_inputs |> List.map ~f: (fun input -> 
     let raw =  "(lambda (clevr_eq_size (clevr_query_size (clevr_car $0)) clevr_small))" in
     let raw =  "(lambda (clevr_eq_objects (clevr_car $0) (clevr_car $0)))" in
     let raw = "(lambda (clevr_filter_size $0 clevr_large))" in
@@ -127,7 +144,7 @@ let run_job channel =
                 "tokens", `Float(1.0);
                 ])])
   in 
-  message 
+  message  *)
   
 
 let _ = 

@@ -57,7 +57,8 @@ def buildClevrMockTask(train_task):
         print(f'Id: {obj["id"]}, Color: {obj["color"]}, Shape: {obj["shape"]}, Size: {obj["size"]}')
     first_obj =  train_task.examples[0][0][0][0]
     print(first_obj["left"])
-    return Task(name="mock", request=arrow(tlist(tclevrobject), tlist(tclevrobject)),
+    req = arrow(tlist(tclevrobject), tlist(tclevrobject))
+    return Task(name="mock", request=req,
                 examples=[train_task.examples[0]], features=None, cache=False)
 
 def buildClevrTask(q, input_scenes):

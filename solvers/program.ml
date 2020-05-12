@@ -626,7 +626,7 @@ let objset_op op_fn l1 l2 =
     in (Set.mem result_set id) && (not (Set.mem filter_l1_ids id))) in 
   (filter_l1 @ filter_l2) |> sort_objs;;
   
-let primitive_clevr_union = primitive "clevr_union" (tlist tclevrobject @> tlist tclevrobject @> tlist tclevrobject) (objset_op Set.union);;
+let primitive_clevr_union = primitive "clevr_union" ((tlist tclevrobject) @> (tlist tclevrobject) @> (tlist tclevrobject)) (objset_op Set.union);;
 let primitive_clevr_intersect = primitive "clevr_intersect" (tlist tclevrobject @> tlist tclevrobject @> tlist tclevrobject) (objset_op Set.inter);;
 let primitive_clevr_difference= primitive "clevr_difference" (tlist tclevrobject @> tlist tclevrobject @> tlist tclevrobject) (objset_op Set.diff);;
 

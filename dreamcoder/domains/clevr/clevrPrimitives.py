@@ -165,7 +165,12 @@ def clevr_map_transform_primitives():
 
 def clevr_test_primitives():
     # A minimal test set for development.
-    return [clevr_car, clevr_cdr, clevr_add] + clevr_constants() + [clevr_eq_size, clevr_eq_color, clevr_eq_material, clevr_eq_shape]
+    return  clevr_constants() \
+    + [clevr_filter_material, clevr_filter_size, clevr_filter_color, clevr_filter_shape]
+    # + [clevr_eq_color, clevr_eq_size, clevr_eq_material, clevr_eq_shape] 
+    # 
+    
+    # [clevr_car, clevr_cdr, clevr_add] + clevr_constants() + [clevr_eq_size, clevr_eq_color, clevr_eq_material, clevr_eq_shape]
 
 def clevr_original_v1_primitives():
     return clevr_constants() 
