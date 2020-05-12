@@ -4,6 +4,8 @@ open Utils
 open Type
 open Str
 
+open Yojson.Basic
+
 type program =
   | Index of int
   | Abstraction of program
@@ -640,8 +642,15 @@ let primitive_clevr_unique = primitive "clevr_unique" (tlist tclevrobject @> tcl
 let primitive_clevr_exist = primitive "clevr_exist" (tlist tclevrobject @> tboolean) (fun obj_list -> (List.length obj_list) > 0);;
 
 (** Transformations **)
-let transform attr_type = (fun attr obj -> 
-  obj |> List.map ~f: (fun (k, v) -> if k = attr_type then (k, attr) else (k, v) )) (** TODO **)
+let transform attr_type = (fun attr old_obj -> 
+  let open Yojson.Basic.Util in
+  let removed = List.Assoc.remove old_obj attr_type ~equal:(=) in 
+  let new_json : json = 
+    `Assoc([attr_type, `String(attr);]) in
+  let new_attr = new_json |> to_assoc |> magical in 
+  removed @ new_attr
+  )
+  
 let primitive_transform_size = primitive "clevr_transform_size" (tclevrsize @> tclevrobject @>  tclevrobject) (transform "size");;
 let primitive_transform_color = primitive "clevr_transform_color" (tclevrcolor @> tclevrobject @>  tclevrobject) (transform "color");;
 let primitive_transform_shape = primitive "clevr_transform_shape" (tclevrshape @> tclevrobject @>  tclevrobject) (transform "shape");;

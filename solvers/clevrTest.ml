@@ -18,16 +18,29 @@ let print_list obj_list =
     let (_, shape) =  List.Assoc.find_exn obj "shape" ~equal:(=) in
     let (_, material) =  List.Assoc.find_exn obj "material" ~equal:(=) in
     let (_, size) =  List.Assoc.find_exn obj "size" ~equal:(=) in
-    let (_, left) =  List.Assoc.find_exn obj "left" ~equal:(=) in
-    let _ = Printf.eprintf "Color : %s | Shape: %s | Material: %s | Size: %s | Left: %s \n" color shape material size left in 
-    let unpacked = unpack_relate_list left in 
-    unpacked |> List.map ~f: (fun id -> Printf.eprintf "ID : %d\n" id)
+    (* let (_, left) =  List.Assoc.find_exn obj "left" ~equal:(=) in *)
+    Printf.eprintf "Color : %s | Shape: %s | Material: %s | Size: %s\n" color shape material size
+    (* let unpacked = unpack_relate_list left in  *)
+    (* unpacked |> List.map ~f: (fun id -> Printf.eprintf "ID : %d\n" id) *)
   );;
+  
+let build_obj attribute_type old_obj attr = 
+  let open Yojson.Basic.Util in
+  let removed = List.Assoc.remove old_obj attribute_type ~equal:(=) in 
+  let new_obj : json = 
+    `Assoc([attribute_type, `String(attr);]) in
+  let new_attr = new_obj |> to_assoc |> magical in 
+  removed @ new_attr
 
 let test_program name raw input =
   let obj_list = List.hd_exn input in 
   let sorted_obj = sort_objs obj_list in
   let obj_1 = List.hd_exn sorted_obj in
+  (* let (k, size) =  List.Assoc.find_exn obj_1 "size" ~equal:(=) in
+  let removed = List.Assoc.remove obj_1 "size" ~equal:(=) in 
+  let added = removed @ [("size", (magical size))] in  *)
+  (* let built_obj = build_obj "color" obj_1 "green" in 
+  print_list [built_obj];;  *)
   (* print_list sorted_obj;; *)
   (* try 
     let (k, v) = List.Assoc.find_exn obj_1 "id" ~equal:(=) in
@@ -101,8 +114,9 @@ let run_job channel =
     (* let raw = "(lambda (clevr_map (lambda $0) $0))"  *)
     let raw = "(lambda (clevr_relate (clevr_car $0) clevr_left $0))" in 
     let raw = "(lambda (clevr_empty? $0))" in 
-    (* let raw = "(lambda (clevr_if (clevr_not (clevr_empty? $0)) (clevr_add (clevr_car $0) $0) $0))" in *)
-    let raw  = "(lambda (clevr_add (clevr_car $0) clevr_empty))" in
+    let raw = "(lambda (clevr_if (clevr_not (clevr_empty? $0)) (clevr_add (clevr_car $0) $0) $0))" in
+    let raw  = "(lambda (clevr_add (clevr_car $0) clevr_empty))" in 
+    let raw = "(lambda (clevr_map (clevr_transform_color clevr_blue) $0))" in
     test_program "test" raw input
     ) in
   let message : json = 

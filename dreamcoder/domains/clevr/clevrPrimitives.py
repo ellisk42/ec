@@ -275,8 +275,8 @@ def run_clevr_primitives_test(primitive_names, curriculum):
     
     # raw = "(lambda (clevr_if (clevr_not (clevr_empty? $0)) (clevr_add (clevr_car $0) $0) $0))"
     # check_eval(filter_test, raw)
-    raw =  "(lambda (clevr_add (clevr_car $0) clevr_empty))"
-    check_eval(filter_test, raw)
+    # raw =  "(lambda (clevr_add (clevr_car $0) clevr_empty))"
+    # check_eval(filter_test, raw)
     
     # Relate
     # raw = "(lambda (clevr_relate (clevr_car $0) clevr_left $0))"
@@ -311,7 +311,7 @@ def run_clevr_primitives_test(primitive_names, curriculum):
     # raw = "(lambda (clevr_gt? (clevr_count (clevr_filter_size $0 clevr_large)) 1)"
     
     # Transformations
-    # raw = "(lambda (clevr_map (clevr_transform_color clevr_blue) $0))"
-    # check_eval(filter_test, raw)
+    raw = "(lambda (clevr_map (clevr_transform_color clevr_blue) $0))"
+    check_eval(filter_test, raw)
     
     
