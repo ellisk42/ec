@@ -890,7 +890,7 @@ class RecognitionModel(nn.Module):
         entries = []
         for e in frontier:
             for _, expr in e.program.walkUncurried():
-                if any( f(expr) for f in self.filterMotifs):
+                if any( f(expr) for f in self.filterMotifs): 
                     break
             else: #if didn't hit the break statement, ie, no motif to filter out
                 entries.append(e)
