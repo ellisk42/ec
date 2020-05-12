@@ -1223,6 +1223,8 @@ class RecognitionModel(nn.Module):
         if self.filterMotifs:
             for _, expr in program.walkUncurried():
                 if any( f(expr) for f in self.filterMotifs):
+                    print(expr)
+                    print()
                     return None
 
         task = self.featureExtractor.taskOfProgram(program, request) 
