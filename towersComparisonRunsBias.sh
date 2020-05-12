@@ -30,8 +30,8 @@ for num in 3 20
 		#cp ${oldResume}Sample.pickle_RecModelOnly ${resume}Symbolic.pickle_RecModelOnly
 		# #Train:
 		cmd="python bin/tower.py --searchType Astar --filterMotifs ${filterMotifs} --split 0.0 --tasks maxHard --contextual --testingTimeout ${testingTime} --recognitionTimeout 216000 --resumeTraining -r ${helmRatio} --primitives new -t ${time} -RS ${recSteps} --solver python  -c ${ncores} --useValue Symbolic -i 2 --resume ${resume}Symbolic.pickle --singleRoundValueEval --seed 1"
-		eval "${cmd}"
-		#sbatch -e towersSymbolic${salt}.out -o towersSymbolic${salt}.out execute_gpu_new.sh ${cmd}
+		#eval "${cmd}"
+		sbatch -e towersSymbolic${salt}.out -o towersSymbolic${salt}.out execute_gpu_new.sh ${cmd}
 	
 		cp ${resume}.pickle ${resume}Sample.pickle
 		#cp ${oldResume}Sample.pickle_RecModelOnly ${resume}Sample.pickle_RecModelOnly
