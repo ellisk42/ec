@@ -25,14 +25,15 @@ for num in 3 20
 		salt=towers${num}Bias
 		cp ${oldResume}.pickle ${resume}.pickle
 
-
-		cp ${resume}.pickle ${resume}Symbolic.pickle
-		#cp ${oldResume}Sample.pickle_RecModelOnly ${resume}Symbolic.pickle_RecModelOnly
-		# #Train:
-		cmd="python bin/tower.py --searchType Astar --filterMotifs ${filterMotifs} --split 0.0 --tasks maxHard --contextual --testingTimeout ${testingTime} --recognitionTimeout 216000 --resumeTraining -r ${helmRatio} --primitives new -t ${time} -RS ${recSteps} --solver python  -c ${ncores} --useValue Symbolic -i 2 --resume ${resume}Symbolic.pickle --singleRoundValueEval --seed 1"
-		#eval "${cmd}"
-		sbatch -e towersSymbolic${salt}.out -o towersSymbolic${salt}.out execute_gpu_new.sh ${cmd}
+		rm ${resume}Symbolic.pickle_RecModelOnly
+		# cp ${resume}.pickle ${resume}Symbolic.pickle
+		# #cp ${oldResume}Sample.pickle_RecModelOnly ${resume}Symbolic.pickle_RecModelOnly
+		# # #Train:
+		# cmd="python bin/tower.py --searchType Astar --filterMotifs ${filterMotifs} --split 0.0 --tasks maxHard --contextual --testingTimeout ${testingTime} --recognitionTimeout 216000 --resumeTraining -r ${helmRatio} --primitives new -t ${time} -RS ${recSteps} --solver python  -c ${ncores} --useValue Symbolic -i 2 --resume ${resume}Symbolic.pickle --singleRoundValueEval --seed 1"
+		# #eval "${cmd}"
+		# sbatch -e towersSymbolic${salt}.out -o towersSymbolic${salt}.out execute_gpu_new.sh ${cmd}
 	
+		rm ${resume}Sample.pickle_RecModelOnly
 		cp ${resume}.pickle ${resume}Sample.pickle
 		#cp ${oldResume}Sample.pickle_RecModelOnly ${resume}Sample.pickle_RecModelOnly
 		#Train:
@@ -42,6 +43,7 @@ for num in 3 20
 
 
 		#REPL
+		rm ${resume}REPL.pickle_RecModelOnly
 		cp ${resume}.pickle ${resume}REPL.pickle
 		#cp ${oldResume}REPL.pickle_RecModelOnly ${resume}REPL.pickle_RecModelOnly
 		#Train:
@@ -51,6 +53,7 @@ for num in 3 20
 
 
 		#RNN
+		rm ${resume}RNN.pickle_RecModelOnly
 		cp ${resume}.pickle ${resume}RNN.pickle
 		#cp ${oldResume}RNN.pickle_RecModelOnly ${resume}RNN.pickle_RecModelOnly
 		cmd="python bin/tower.py  --searchType Astar --filterMotifs ${filterMotifs} --split 0.0 --tasks maxHard --contextual --testingTimeout ${testingTime} --recognitionTimeout 216000 --resumeTraining -r ${helmRatio} --primitives new -t ${time} -RS ${recSteps} --solver python  -c ${ncores} --useValue RNN -i 2 --resume ${resume}RNN.pickle --singleRoundValueEval --seed 2"
