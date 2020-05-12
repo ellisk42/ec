@@ -198,7 +198,8 @@ def ecIterator(grammar, tasks,
                priorPolicy=False,
                conditionalForValueTraining=False,
                useSavedTasks=False,
-               searchType=None):
+               searchType=None,
+               filterMotifs=[]):
     if enumerationTimeout is None:
         eprint(
             "Please specify an enumeration timeout:",
@@ -454,7 +455,8 @@ def ecIterator(grammar, tasks,
                                auxiliaryLoss=auxiliaryLoss, cuda=cuda, CPUs=CPUs, solver=solver,
                                recognitionSteps=recognitionSteps, maximumFrontier=maximumFrontier, useValue=useValue, 
                                trainOnly=True, saveIter=100, savePath=recModelPath, resumeTrainingModel=resumeTrainingModel,
-                               seperateFeatureExtractor=bool(useSamplePolicy), conditionalForValueTraining=conditionalForValueTraining, searchType=searchType)
+                               seperateFeatureExtractor=bool(useSamplePolicy), conditionalForValueTraining=conditionalForValueTraining,
+                               searchType=searchType, filterMotifs=filterMotifs )
 
         #testing
         if testingTimeout == 0:
@@ -718,7 +720,7 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
                       helmholtzRatio=None, helmholtzFrontiers=None, maximumFrontier=None,
                       auxiliaryLoss=None, cuda=None, CPUs=None, solver=None, useValue=False, 
                       trainOnly=False, saveIter=None, savePath=None, resumeTrainingModel=None,
-                      seperateFeatureExtractor=False, conditionalForValueTraining=False, searchType=None):
+                      seperateFeatureExtractor=False, conditionalForValueTraining=False, searchType=None, filterMotifs=[]):
     eprint("Using an ensemble size of %d. Note that we will only store and test on the best recognition model." % ensembleSize)
 
     featureExtractorObjects = [featureExtractor(tasks, testingTasks=testingTasks, cuda=cuda) for i in range(ensembleSize)]
@@ -757,7 +759,9 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
                                     id=i,
                                     hidden=[featureExtractorObjects[0].outputDimensionality],
                                     useValue=useValue,
-                                    valueHead=valueHead, searchType=searchType) for i in range(ensembleSize)]
+                                    valueHead=valueHead,
+                                    searchType=searchType,
+                                    filterMotifs=filterMotifs) for i in range(ensembleSize)]
     eprint(f"Currently using this much memory: {getThisMemoryUsage()}")
     trainedRecognizers = parallelMap(min(CPUs,len(recognizers)),
                                      lambda recognizer: recognizer.train(allFrontiers,
@@ -1167,6 +1171,11 @@ def commandlineArguments(_=None,
                         type=str,
                         default="SMC",
                         help="which type of solver to use when using value fn")
+    parser.add_argument("--filterMotifs",  
+                        type=str,
+                        nargs='*',
+                        help="how to filter training data for value training "
+                        )
     parser.set_defaults(useRecognitionModel=useRecognitionModel,
                         useDSL=True,
                         featureExtractor=featureExtractor,

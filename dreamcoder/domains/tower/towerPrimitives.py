@@ -146,6 +146,17 @@ def executeTower(p, timeout=None):
     except RunWithTimeout: return None
     except: return None
 
+def saveTowerImage(path, p):
+    state,actions = p.evaluate([])(_empty_tower)(TowerState(history=[]))
+    trajectory = state.history + [state]
+    from dreamcoder.domains.tower.tower_common import renderPlan
+
+    animation = renderPlan(actions,
+                            pretty=False)
+    import scipy.misc
+    scipy.misc.imsave(path+'.png', animation)
+
+
 def animateTower(exportPrefix, p):
     print(exportPrefix, p)
     from dreamcoder.domains.tower.tower_common import renderPlan
