@@ -13,6 +13,7 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 from torch.nn.utils.rnn import pack_padded_sequence
 
+
 import numpy as np
 # luke
 import json
@@ -689,7 +690,9 @@ class RecognitionModel(nn.Module):
             self._MLP.load_state_dict(previousRecognitionModel._MLP.state_dict())
             self.featureExtractor.load_state_dict(previousRecognitionModel.featureExtractor.state_dict())
 
-        self.filterMotifs = [eval(x) for x in filterMotifs] 
+        if filterMotifs:
+            self.filterMotifs = [eval(x) for x in filterMotifs] 
+        else: self.filterMotifs = []
         # value function
         if valueHead: assert useValue
         if useValue:
@@ -1104,11 +1107,6 @@ class RecognitionModel(nn.Module):
                         else self.frontierKL(frontier, auxiliary=auxLoss, vectorized=vectorized)
 
                 if self.useValue:
-
-                    # try:
-                    #     def timeoutCallBack(_1, _2): raise EvaluationTimeout()
-                    #     signal.signal(signal.SIGVTALRM, timeoutCallBack)
-                    #     signal.setitimer(signal.ITIMER_VIRTUAL, timeout)  
                     if conditionalForValueTraining:
                         g = self.grammarOfTask(frontier.task).untorch()
                     else:
@@ -1121,15 +1119,7 @@ class RecognitionModel(nn.Module):
                         print("Timed out while evaluating")
                         valueHeadLoss = torch.tensor([0.])
                         if self.use_cuda: valueHeadLoss = valueHeadLoss.cuda()
-    
-                    #valueHeadLoss = self.valueHead.valueLossFromFrontier(frontier, self.grammar) 
-                    # except EvaluationTimeout:
-                    #     print("Timed out while evaluating")
-                    #     valueHeadLoss = 0
-                    # finally:
-                    #     signal.signal(signal.SIGVTALRM, lambda *_: None)
-                    #     signal.setitimer(signal.ITIMER_VIRTUAL, 0)
-                    
+
                 else:
                     valueHeadLoss = 0
 
@@ -1267,6 +1257,25 @@ class RecognitionModel(nn.Module):
         eprint("Got %d/%d valid samples." % (len(samples), N))
         flushEverything()
 
+        # path = 'helmholtzTasks/'
+        # from dreamcoder.domains.tower.towerPrimitives import saveTowerImage
+        # from dreamcoder.domains.tower.makeTowerTasks import SupervisedTower
+        # os.system("rm -f helmholtzTasks/*")
+        # helmholtzTestTasks = []
+        # for i, f in enumerate(samples):
+        #     expr = f.entries[0].program
+        #     saveTowerImage(path+'it3_'+str(i), expr)
+        #     task = SupervisedTower("helmholtz it3 " + str(i), expr)
+        #     print(i)
+        #     gRec = self.grammarOfTask(task).untorch()
+        #     print(gRec.logLikelihood(task.request, expr))
+        #     helmholtzTestTasks.append(task)
+        #     print()
+
+        # import dill
+        # with open('towerHelmholtzTasksit3.pickle', 'wb' ) as h:
+        #     dill.dump(helmholtzTestTasks, h)
+        # assert 0
         return samples
 
     def enumerateFrontiers(self,

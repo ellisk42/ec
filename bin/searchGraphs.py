@@ -58,7 +58,7 @@ def plotTestResults(testResults, timeout, defaultLoss=None,
     if mode =='fractionHit': plot.ylim(bottom=0.)
     for n in range(len(testResults)):
         #xs = list(range(max([0]+[r.evaluations for tr in testResults[n] for r in tr] ) + 1))
-        xs = list(range(100))
+        xs = list(range(1000))
         if mode =='fractionHit':
             plot.plot(xs, [fractionHit(n,lambda r: r.evaluations <= x) for x in xs],
                   label=names[n])
@@ -67,7 +67,7 @@ def plotTestResults(testResults, timeout, defaultLoss=None,
                   label=names[n])
     plot.legend()
     if export:
-        plot.savefig(f"{export}_evaluations.png")
+        plot.savefig(f"{export}_evaluations.eps")
     else:
         plot.show()
         
@@ -116,9 +116,9 @@ if __name__ == '__main__':
 
     graph="_graph=True"
     #mode="Prior"
-    nameSalt = "towersAstar" #"BigramSamplePolicy" #
+    nameSalt = "BigramAstarCountNodes" #"BigramSamplePolicy" #
     ID = 'towers' + str(n)
-    runType = "Astar" #"BigramSamplePolicy" #
+    runType = "BigramAstarCountNodes" #"BigramSamplePolicy" #
     paths = [
         (f'experimentOutputs/{ID}{runType}Sample_SRE=True{graph}.pickle', 'prior only (no value)'),
         (f'experimentOutputs/{ID}{runType}RNN_SRE=True{graph}.pickle', 'RNN value'),
@@ -150,5 +150,5 @@ if __name__ == '__main__':
         plotTestResults(testResults, timeout,
                         defaultLoss=1.,
                         names=names,
-                        export=f"{outputDirectory}/{nameSalt}{ID}{mode}_curve.png",
+                        export=f"{outputDirectory}/{nameSalt}{ID}{mode}_curve.eps",
                         mode='fractionHit')
