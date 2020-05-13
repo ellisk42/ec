@@ -519,7 +519,8 @@ def ecIterator(grammar, tasks,
             if useDSL or 'helmholtzFrontiers' not in locals():
                 helmholtzFrontiers = backgroundHelmholtzEnumeration(tasks, grammar, enumerationTimeout,
                                                                     evaluationTimeout=evaluationTimeout,
-                                                                    special=featureExtractor.special)
+                                                                    special=featureExtractor.special,
+                                                                    executable='helmholtz')
             else:
                 print("Reusing dreams from previous iteration.")
         else:
@@ -529,15 +530,7 @@ def ecIterator(grammar, tasks,
         
         wakingTaskBatch = taskBatcher.getTaskBatch(result, tasks, taskBatchSize, j)
         eprint("Using a waking task batch of size: " + str(len(wakingTaskBatch)))
-        
-        # # DEBUG -- REMOVE THIS#
-        # helmholtzFrontiers = backgroundHelmholtzEnumeration(tasks, grammar, 10,
-        #                                                     evaluationTimeout=evaluationTimeout,
-        #                                                     special=featureExtractor.special)
-        # f = helmholtzFrontiers()                                    
-        # import pdb; pdb.set_trace()
-        #####
-    
+
         # WAKING UP
         if useDSL:
             result.tasksAttempted.update(wakingTaskBatch)

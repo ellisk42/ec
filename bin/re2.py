@@ -3,8 +3,7 @@ try:
 except ModuleNotFoundError:
     import bin.binutil  # alt import if called as module
 
-from dreamcoder.domains.text.main import LearnedFeatureExtractor
-from dreamcoder.domains.re2.main import main, re2_options
+from dreamcoder.domains.re2.main import main, re2_options, StringFeatureExtractor
 from dreamcoder.dreamcoder import commandlineArguments
 from dreamcoder.utilities import numberOfCPUs
 
@@ -19,7 +18,7 @@ if __name__ == '__main__':
         a=3,
         activation="tanh",
         CPUs=numberOfCPUs(),
-        featureExtractor=LearnedFeatureExtractor,
+        featureExtractor=StringFeatureExtractor,
         pseudoCounts=30.0,
         extras=re2_options)
     main(arguments)

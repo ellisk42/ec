@@ -1142,14 +1142,14 @@ let primitive_rmatch = primitive "_rmatch" (tsubstr @> tsubstr @> tboolean) (fun
   );;
   
 (** Flattens list of substrings back into a string *)
-let primitive_rflatten = primitive "_rflatten" (tlist tsubstr @> tfullstr) (fun l -> String.concat ~sep:"" l);;
-let primitive_rtail = primitive "_rtail" (tlist tsubstr @> tsubstr) (fun l -> 
+let primitive_rflatten = primitive "_rflatten" ((tlist tsubstr) @> tfullstr) (fun l -> String.concat ~sep:"" l);;
+let primitive_rtail = primitive "_rtail" ((tlist tsubstr) @> tsubstr) (fun l -> 
   let arr = Array.of_list l in arr.(Array.length arr - 1)
   );;
 
 (** Splits s2 on regex s1 as delimiter, including the matches *)
 let not_empty str = (String.length str) > 0;;
-let primitive_rsplit = primitive "_rsplit" (tsubstr @> tfullstr @> tlist tsubstr) (fun s1 s2 -> 
+let primitive_rsplit = primitive "_rsplit" (tsubstr @> tfullstr @> (tlist tsubstr)) (fun s1 s2 -> 
   try
     let regex = Re2.create_exn s1 in
     let init_split = Re2.split ~include_matches:true regex s2 in
@@ -1157,8 +1157,8 @@ let primitive_rsplit = primitive "_rsplit" (tsubstr @> tfullstr @> tlist tsubstr
   with _ -> [s2]
   );;
   
-let primitive_rappend = primitive "_rappend" (tsubstr @> tlist tsubstr @> tlist tsubstr) (fun x l -> l @ [x]);;
-let primitive_rrevcdr = primitive "_rrevcdr" (tlist tsubstr @> tlist tsubstr) (fun l -> 
+let primitive_rappend = primitive "_rappend" (tsubstr @> (tlist tsubstr) @> (tlist tsubstr)) (fun x l -> l @ [x]);;
+let primitive_rrevcdr = primitive "_rrevcdr" ((tlist tsubstr) @> (tlist tsubstr)) (fun l -> 
   let arr = Array.of_list l in 
   let slice = Array.sub arr 0 (Array.length arr - 1) in
   Array.to_list slice

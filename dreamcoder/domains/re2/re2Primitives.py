@@ -81,8 +81,8 @@ re2_cons = Primitive("cons", arrow(t0, tlist(t0), tlist(t0)), _cons)
 re2_car = Primitive("car", arrow(tlist(t0), t0), _car)
 re2_cdr = Primitive("cdr", arrow(tlist(t0), tlist(t0)), _cdr)
 re2_map = Primitive("map", arrow(arrow(t0, t1), tlist(t0), tlist(t1)), _map)
-re2_rtail = Primitive("_rtail", arrow(tlist(t0), t0), _rtail)
-re2_rappend = Primitive("_rappend", arrow(tlist(t0), t0, tlist(t0)), _rappend)
+re2_rtail = Primitive("_rtail", arrow(tlist(tsubstr), tsubstr), _rtail)
+re2_rappend = Primitive("_rappend", arrow(t0, tlist(t0), tlist(t0)), _rappend)
 re2_rrevcdr = Primitive("_rrevcdr", arrow(tlist(t0), tlist(t0)), _rrevcdr)
         
 def re2_bootstrap_v1_primitives():

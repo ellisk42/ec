@@ -95,7 +95,6 @@ class Task(object):
                         p = self.predict(f, x)
                         print(f"Evaluated on {x} to {p}")
                     except BaseException as err:
-                        import pdb; pdb.set_trace()
                         print("Err during evaluation" + str(err))
                         p = None
                     if self.cache:

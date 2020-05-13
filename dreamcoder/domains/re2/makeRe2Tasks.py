@@ -47,9 +47,11 @@ def loadRe2Dataset(task_dataset, task_dataset_dir, type_request):
                 
 def buildRE2MockTask(train_task):
     """Builds a mock task for testing"""
-    print("Example:")
-    print(train_task)
+    example = train_task.examples[0]
+    example = (example[0], example[0][0])
+    print("Mock Example:")
+    print(example)
     req = arrow(tfullstr, tfullstr)
     return Task(name="mock", request=req,
-                examples=[train_task.examples[0]], features=None, cache=False)
+                examples=[example, example], features=None, cache=False)
             

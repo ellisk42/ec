@@ -36,8 +36,9 @@ def helmholtzEnumeration(g, request, inputs, timeout, _=None,
                                    stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE)
         response, error = process.communicate(bytes(message, encoding="utf-8"))
-    except OSError as exc:
-        raise exc
+    except Exception as exc:
+        print("ERROR: %s", exc)
+        return ""
     return response
 
 def backgroundHelmholtzEnumeration(tasks, g, timeout, _=None,
@@ -64,16 +65,19 @@ def backgroundHelmholtzEnumeration(tasks, g, timeout, _=None,
         frontiers = []
         with timing("(Helmholtz enumeration) Decoded json into frontiers"):
             for request, result in zip(requests, results):
-                response = json.loads(result.decode("utf-8"))
-                for b, entry in enumerate(response):
-                    frontiers.append(Frontier([FrontierEntry(program=Program.parse(p),
-                                                             logPrior=entry["ll"],
-                                                             logLikelihood=0.,
-                                                             tokens=g.escape_tokens_string(tokens).split())
-                                               for p, tokens in zip(entry["programs"], entry["tokens"])],
-                                              task=Task(str(b),
-                                                        request,
-                                                        [])))
+                try:
+                    response = json.loads(result.decode("utf-8"))
+                    for b, entry in enumerate(response):
+                        frontiers.append(Frontier([FrontierEntry(program=Program.parse(p),
+                                                                 logPrior=entry["ll"],
+                                                                 logLikelihood=0.,
+                                                                 tokens=g.escape_tokens_string(tokens).split())
+                                                   for p, tokens in zip(entry["programs"], entry["tokens"])],
+                                                  task=Task(str(b),
+                                                            request,
+                                                            [])))
+                except:
+                    continue
         eprint("Total number of Helmholtz frontiers:", len(frontiers))
         return frontiers
 

@@ -1,5 +1,6 @@
 from dreamcoder.enumeration import *
 from dreamcoder.grammar import *
+from dreamcoder.utilities import RunWithTimeout
 # luke
 
 
@@ -1004,7 +1005,10 @@ class RecognitionModel(nn.Module):
             helmholtzRatio = 1.
             
         # Should we sample programs or use the enumerated programs?
-        randomHelmholtz = len(helmholtzFrontiers) == 0
+        randomHelmholtz = len(helmholtzFrontiers) < 2
+        if randomHelmholtz:
+            print("Insufficient Helmholtz; sampling randomly.")
+            helmholtzFrontiers = []
         
         class HelmholtzEntry:
             def __init__(self, frontier, owner):
@@ -1022,7 +1026,8 @@ class RecognitionModel(nn.Module):
                 assert self.task is None
                 p = random.choice(self.programs)
                 task = self.owner.featureExtractor.taskOfProgram(p, self.request)
-                task.name += f"{self.owner.get_fresh_helmholtz_name()}"
+                if task is not None:
+                    task.name += f"{self.owner.get_fresh_helmholtz_name()}"
                 return task
 
             def makeFrontier(self):
@@ -1054,20 +1059,32 @@ class RecognitionModel(nn.Module):
         random.shuffle(helmholtzFrontiers)
         
         helmholtzIndex = [0]
-        def getHelmholtz():
-            if randomHelmholtz:
+        def getHelmholtz(max_tries=0):
+            switchToRandom = False
+            if max_tries > 100:
+                print("Switching to random...")
+                switchToRandom = True
+            if randomHelmholtz or switchToRandom:
                 if helmholtzIndex[0] >= len(helmholtzFrontiers):
-                    updateHelmholtzTasks()
+                    updateHelmholtzTasks(switchToRandom=switchToRandom)
                     helmholtzIndex[0] = 0
-                    return getHelmholtz()
+                    return getHelmholtz(max_tries + 1)
                 helmholtzIndex[0] += 1
                 return helmholtzFrontiers[helmholtzIndex[0] - 1].makeFrontier()
-
+            
+            if helmholtzIndex[0] >= len(helmholtzFrontiers):
+                helmholtzIndex[0] = 0
+                random.shuffle(helmholtzFrontiers)
+                if self.featureExtractor.recomputeTasks:
+                    for fp in helmholtzFrontiers:
+                        fp.clear()
+                    return getHelmholtz(max_tries + 1) # because we just cleared everything
+                
             f = helmholtzFrontiers[helmholtzIndex[0]]
             if f.task is None:
                 with timing("Evaluated another batch of Helmholtz tasks"):
                     updateHelmholtzTasks()
-                return getHelmholtz()
+                return getHelmholtz(max_tries + 1)
 
             helmholtzIndex[0] += 1
             if helmholtzIndex[0] >= len(helmholtzFrontiers):
@@ -1076,16 +1093,16 @@ class RecognitionModel(nn.Module):
                 if self.featureExtractor.recomputeTasks:
                     for fp in helmholtzFrontiers:
                         fp.clear()
-                    return getHelmholtz() # because we just cleared everything
+                    return getHelmholtz(max_tries + 1) # because we just cleared everything
             assert f.task is not None
             return f.makeFrontier()
 
-        def updateHelmholtzTasks():
+        def updateHelmholtzTasks(switchToRandom=False):
             updateCPUs = CPUs if hasattr(self.featureExtractor, 'parallelTaskOfProgram') and self.featureExtractor.parallelTaskOfProgram else 1
             if updateCPUs > 1: eprint("Updating Helmholtz tasks with",updateCPUs,"CPUs",
                                       "while using",getThisMemoryUsage(),"memory")
             
-            if randomHelmholtz:
+            if randomHelmholtz or switchToRandom:
                 newFrontiers = self.sampleManyHelmholtz(requests, helmholtzBatch, CPUs)
                 newEntries = []
                 for f in newFrontiers:
@@ -1113,7 +1130,6 @@ class RecognitionModel(nn.Module):
             else:
                 newTasks = [hf.calculateTask() 
                             for hf in helmholtzFrontiers[helmholtzIndex[0]:helmholtzIndex[0] + helmholtzBatch]]
-
                 """
                 # catwong: Disabled for ensemble training.
                 newTasks = \
@@ -1147,7 +1163,7 @@ class RecognitionModel(nn.Module):
             self.id, len(frontiers), int(helmholtzRatio * 100)))
         eprint(f"Feature extractors: [{feature_extractor_names}]")
         eprint("(ID=%d): Got %d Helmholtz frontiers - random Helmholtz training? : %s"%(
-            self.id, len(helmholtzFrontiers), len(helmholtzFrontiers) == 0))
+            self.id, len(helmholtzFrontiers), len(helmholtzFrontiers) < 2))
         eprint("(ID=%d): Contextual? %s" % (self.id, str(self.contextual)))
         eprint("(ID=%d): Bias optimal? %s" % (self.id, str(biasOptimal)))
         eprint(f"(ID={self.id}): Aux loss? {auxLoss} (n.b. we train a 'auxiliary' classifier anyway - this controls if gradients propagate back to the future extractor)")
@@ -1318,7 +1334,7 @@ class RecurrentFeatureExtractor(nn.Module):
                  # What should be the timeout for trying to construct Helmholtz tasks?
                  helmholtzTimeout=0.25,
                  # What should be the timeout for running a Helmholtz program?
-                 helmholtzEvaluationTimeout=0.01):
+                 helmholtzEvaluationTimeout=0.25):
         super(RecurrentFeatureExtractor, self).__init__()
 
         assert tasks is not None, "You must provide a list of all of the tasks, both those that have been hit and those that have not been hit. Input examples are sampled from these tasks."
@@ -1427,7 +1443,6 @@ class RecurrentFeatureExtractor(nn.Module):
         # padding
         for j, e in enumerate(es):
             es[j] += [self.endingIndex] * (m - len(e))
-
         x = variable(es, cuda=self.use_cuda)
 
         x = self.encoder(x)
@@ -1501,7 +1516,9 @@ class RecurrentFeatureExtractor(nn.Module):
                     examples.append((tuple(xs),y))
                     if len(examples) >= random.choice(self.requestToNumberOfExamples[tp]):
                         return Task("Helmholtz", tp, examples)
-                except: continue
+                except: 
+                    print("Timed out, continuing")
+                    continue
 
         else:
             candidateInputs = list(self.requestToInputs[tp])
@@ -1509,8 +1526,14 @@ class RecurrentFeatureExtractor(nn.Module):
             for xss in candidateInputs:
                 ys = []
                 for xs in xss:
-                    try: y = runWithTimeout(lambda: p.runWithArguments(xs), self.helmholtzEvaluationTimeout)
-                    except: break
+                    try: 
+                        y = runWithTimeout(lambda: p.runWithArguments(xs), self.helmholtzEvaluationTimeout)
+                    except RunWithTimeout: 
+                        print("Timed out, continuing")
+                        return None
+                    finally:
+                        print("Timed out, continuing")
+                        return None
                     ys.append(y)
                 if len(ys) == len(xss):
                     return Task("Helmholtz", tp, list(zip(xss, ys)))
