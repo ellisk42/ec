@@ -1517,7 +1517,7 @@ class RecurrentFeatureExtractor(nn.Module):
                     if len(examples) >= random.choice(self.requestToNumberOfExamples[tp]):
                         return Task("Helmholtz", tp, examples)
                 except: 
-                    print("Timed out, continuing")
+                    print("Timed out or error, continuing")
                     continue
 
         else:
@@ -1529,7 +1529,7 @@ class RecurrentFeatureExtractor(nn.Module):
                     try: 
                         y = runWithTimeout(lambda: p.runWithArguments(xs), self.helmholtzEvaluationTimeout)
                     except RunWithTimeout: 
-                        print("Timed out, continuing")
+                        print("Timed out or error, continuing")
                         return None
                     finally:
                         print("Timed out, continuing")

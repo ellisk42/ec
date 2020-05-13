@@ -144,6 +144,10 @@ def re2_primitives_main():
     input_str = "aaa"
     check_true("basic input", raw, input_str)
     
+    raw = "(lambda $0)"
+    import pdb; pdb.set_trace()
+    raw = "(lambda (car (cdr (map (lambda $1) (_rrevcdr (_rsplit _r $0))))))"
+    
     # Simple matches on one string.
     raw = "(lambda (_rflatten (_rsplit _rdot $0)))"
     input_str = "aaa"
