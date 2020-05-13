@@ -49,6 +49,9 @@ def __ismatch(s1, s2):
 def __regex_split(s1, s2):
     # Splits s2 on regex s1 as delimiter, including the matches
     try:
+        # Special case -- we override splitting on "" to be splitting on "."
+        # to match OCaml.
+        if len(s1) == 0: s1 = "."
         ret = []
         remaining = s2
         m = re.search(re.compile(s1), remaining)
@@ -127,7 +130,6 @@ def load_re2_primitives(primitive_names):
     return prims, type_request
     
 def re2_primitives_main():
-    re2_primitives_v1()
     def check_true(name, raw, input):
         p = Program.parse(raw)
         pass_test = "[T]" if p.evaluate([])(input) else "[F]"
@@ -137,12 +139,18 @@ def re2_primitives_main():
         p = Program.parse(raw)
         output = p.evaluate([])(input)
         print(f"{name} in: {input} | out: {output} | gold: {gold}")
-        
-    # Simple matches on one string.
-    raw = "(lambda (_rflatten (_rsplit _rdot )))"
+    # Debugging the 'split empty' phenomenon
+    raw = "(lambda (_rflatten (map (lambda _k) (_rsplit _rempty $0))))"
     input_str = "aaa"
     check_true("basic input", raw, input_str)
-    assert False
+    
+    # Simple matches on one string.
+    raw = "(lambda (_rflatten (_rsplit _rdot $0)))"
+    input_str = "aaa"
+    check_true("basic input", raw, input_str)
+    
+    
+    
     
     
     SIMPLE_MATCHES = True

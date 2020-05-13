@@ -95,6 +95,7 @@ for dataset in ['re2_1000', 're2_500_aeioubcdfgsrt']:
             jobs.append(job_name)
             base_parameters = f" --enumerationTimeout {enumerationTimeout} --testingTimeout {enumerationTimeout}  --iterations {num_iterations} --biasOptimal --contextual --taskBatchSize {task_batch_size} --testEvery {test_every} --no-cuda --recognitionTimeout {recognition_timeout} --recognition_0 examples --Helmholtz 0.5 --skip_first_test"
             
+            # Which primitives set to use.
             restricted = 'aeioubcdfgsrt' 
             if restricted in dataset:
                 primitives = f"re2_chars_{restricted} re2_bootstrap_v1_primitives"
@@ -111,6 +112,40 @@ for dataset in ['re2_1000', 're2_500_aeioubcdfgsrt']:
                     if not NO_ORIGINAL_REPL: experiment_commands.append(command)
                     experiment_commands += build_replications(exp_command, job, job_name)
             job +=1
+## Generates EC baseline experiments with the updated dataset
+RUN_NO_HELMHOLTZ_GENERATIVE_MODEL = True
+num_iterations = 10
+task_batch_size = 40
+test_every = 3
+recognition_steps = 10000
+EXPS = [('re2_1000', 720, False)]
+for dataset in ['re2_1000', 're2_500_aeioubcdfgsrt']:
+    for enumerationTimeout in [720]:
+        for use_vowel in [True, False]:
+            exp = (dataset, enumerationTimeout, use_vowel)
+            job_name = f"re_2_ec_gru_no_ghelm_compression_et_{enumerationTimeout}_{dataset}_use_vowel_{use_vowel}"
+            jobs.append(job_name)
+            base_parameters = f" --enumerationTimeout {enumerationTimeout} --testingTimeout {enumerationTimeout}  --iterations {num_iterations} --biasOptimal --contextual --taskBatchSize {task_batch_size} --testEvery {test_every} --no-cuda --recognitionSteps {recognition_steps} --recognition_0 --recognition_1 examples language --Helmholtz 0 --skip_first_test"
+            
+            # Which primitives set to use.
+            restricted = 'aeioubcdfgsrt' 
+            if restricted in dataset:
+                primitives = f"re2_chars_{restricted} re2_bootstrap_v1_primitives"
+            else:
+                primitives = "re2_chars_None re2_bootstrap_v1_primitives"
+            if use_vowel:
+                primitives += " re2_vowel_consonant_primitives"
+                
+            exp_parameters = f" --taskDataset {dataset} --language_encoder recurrent --languageDataset {dataset}/synthetic --primitives {primitives} "
+            exp_command = base_command + base_parameters + exp_parameters
+            command = build_command(exp_command, job, job_name, replication=None)
+            if RUN_NO_HELMHOLTZ_GENERATIVE_MODEL:
+                if (EXPS is None) or (exp in EXPS):
+                    if not NO_ORIGINAL_REPL: experiment_commands.append(command)
+                    experiment_commands += build_replications(exp_command, job, job_name)
+            job +=1
+            
+
 #### Outputs
 PRINT_LOG_SCRIPT = False
 PRINT_JOBS = True
