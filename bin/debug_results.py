@@ -9,7 +9,7 @@ from dreamcoder.domains.list.listPrimitives import *
 from dreamcoder.program import Program
 from dreamcoder.valueHead import *
 from dreamcoder.zipper import *
-from dreamcoder.domains.tower.towerPrimitives import ttower, tint, saveTowerImage
+from dreamcoder.domains.tower.towerPrimitives import ttower, tint, saveTowerImage, animateTower
 import scipy.misc
 
 import dill
@@ -33,7 +33,7 @@ if __name__ == '__main__':
 
 
     sys.setrecursionlimit(8000)
-    n = 3
+    n = 20
     ID = 'towers' + str(n)
 
     nameSalt = "towers"
@@ -43,9 +43,9 @@ if __name__ == '__main__':
     #     (f'experimentOutputs/{ID}REPL_SRE=True_graph=True.pickle', 'REPL modular value')]
 
 
-    # paths = [(f'experimentOutputs/{ID}Sample_SRE=True.pickle', 'Sample'),
-    #     (f'experimentOutputs/{ID}RNN_SRE=True.pickle', 'RNN value'),
-    #     (f'experimentOutputs/{ID}REPL_SRE=True.pickle', 'REPL modular value')]
+    paths = [(f'experimentOutputs/{ID}Sample_SRE=True.pickle', 'Sample'),
+        (f'experimentOutputs/{ID}RNN_SRE=True.pickle', 'RNN value'),
+        (f'experimentOutputs/{ID}REPL_SRE=True.pickle', 'REPL modular value')]
 
     # paths = [(f'experimentOutputs/{ID}Sample_SRE=True.pickle', 'Sample'),
     #     (f'experimentOutputs/towers{n}SamplePolicyRNN_SRE=True_graph=True.pickle', 'RNN value'),
@@ -59,21 +59,21 @@ if __name__ == '__main__':
     # print("WARNING: using the REPLPolicyHashing runs")
 
 
-    graph="_graph=True"
-    #mode="Prior"
-    nameSalt = "towersAstar" #"BigramSamplePolicy" #
-    ID = 'towers' + str(n)
-    runType = "Astar" #"BigramSamplePolicy" #
-    paths = [
-        #(f'experimentOutputs/{ID}{runType}Sample_SRE=True{graph}.pickle', 'Sample from prior only (no value)'),
-        (f'experimentOutputs/{ID}{runType}Symbolic_SRE=True{graph}.pickle', 'Symbolic value'),
-        (f'experimentOutputs/{ID}{runType}RNN_SRE=True{graph}.pickle', 'RNN value'),
-        (f'experimentOutputs/{ID}{runType}REPL_SRE=True{graph}.pickle', 'REPL modular value'),
+    # graph="_graph=True"
+    # #mode="Prior"
+    # nameSalt = "towersAstarCountNodes" #"BigramSamplePolicy" #
+    # ID = 'towers' + str(n)
+    # runType = "AstarCountNodes" #"BigramSamplePolicy" #
+    # paths = [
+    #     (f'experimentOutputs/{ID}{runType}Sample_SRE=True{graph}.pickle', 'Sample from prior only (no value)'),
+    #     #(f'experimentOutputs/{ID}{runType}Symbolic_SRE=True{graph}.pickle', 'Symbolic value'),
+    #     (f'experimentOutputs/{ID}{runType}RNN_SRE=True{graph}.pickle', 'RNN value'),
+    #     (f'experimentOutputs/{ID}{runType}REPL_SRE=True{graph}.pickle', 'REPL modular value'),
         
-        ]
+    #     ]
 
-    print("n is:")
-    print(n)
+    # print("n is:")
+    # print(n)
 
 
     paths, names = zip(*paths)
@@ -108,7 +108,7 @@ if __name__ == '__main__':
     #     args = tp.functionArguments()
 
     #     d = {
-    #         tint: '5',
+    #         tint: '4',
     #         ttower: '$0',
     #         arrow(ttower, ttower): '(lambda (1x3 $0 ))',
     #         arrow(arrow(tint, ttower), ttower): '(lambda (lambda (1x3 $0 )))'
@@ -117,11 +117,12 @@ if __name__ == '__main__':
     #     argStrs = [ d[t] for t in args]
     #     expr = Program.parse(f"( lambda ({p} {' '.join(argStrs)} ))")
 
-    #     saveTowerImage(path+str(i)+'_arg=5', expr)
+    #     #saveTowerImage(path+str(i)+'_arg=4', expr)
+    #     animateTower(path+str(i)+'_arg=4', expr)
     #     #scipy.misc.imsave(path+str(i)+'.png', executreTower(expr))
 
 
-
+    # assert 0
 
 
     
@@ -148,11 +149,21 @@ if __name__ == '__main__':
     # print(count)
     # #assert 0
 
-    for t in RHits:                                                                                                                                    
-        print(t.name)                                                                                                                                  
-        print(REPLStats[t][0].program)                                                                                                                 
-        print()
-    assert 0
+    from dreamcoder.domains.tower.makeTowerTasks import makeMaxTasks
+
+    maxTasks = makeMaxTasks()
+
+    # for t in SHits:                                                                                                                                    
+    #     if 'Max' in t.name:
+    #         print(t.name)
+    #         print(maxTasks.index(t))                                                                                                                                     
+    #         print(SampleStats[t][0].program)   
+    #         print(SampleStats[t][0].evaluations)                                                                                                                 
+    #         if REPLStats[t] != []:
+    #             print("\trepl solve in:", REPLStats[t][0].evaluations)
+    #         else: print("\trepl not solve")
+    #         print()
+    # assert 0
 
     from dreamcoder.Astar import Astar
     from likelihoodModel import AllOrNothingLikelihoodModel
@@ -162,36 +173,38 @@ if __name__ == '__main__':
     rS.recognitionModel.solver = Astar(rS.recognitionModel)
 
 
-    from dreamcoder.domains.tower.makeTowerTasks import makeMaxTasks
 
-    tasks = makeMaxTasks()
     likelihoodModel = AllOrNothingLikelihoodModel(timeout=0.01)
-    for i in range(2,40):
-        tasks = [testingTasks[-i]]
-        g = rS.recognitionModel.grammarOfTask(tasks[0]).untorch()
+    for i in range(4,5):
+        tasks = [maxTasks[i]]
+        task = tasks[0]
+        print(task.name)
+        g = rS.recognitionModel.grammarOfTask(task).untorch()
+        g = rS.grammars[-1]
         ret = rR.recognitionModel.solver.infer(g, tasks, likelihoodModel, 
-                                    timeout=10,
+                                    timeout=1000000,
                                     elapsedTime=0,
                                     evaluationTimeout=0.01,
                                     maximumFrontiers={tasks[0]: 2},
                                     CPUs=1,
                                     )
-        print("now for Sample")
-        ret2 = rS.recognitionModel.solver.infer(g, tasks, likelihoodModel, 
-                                    timeout=10,
-                                    elapsedTime=0,
-                                    evaluationTimeout=0.01,
-                                    maximumFrontiers={tasks[0]: 2},
-                                    CPUs=1,
-                                    )
+        print("===================finished====================")
+        #print(ret)
+        # ret2 = rS.recognitionModel.solver.infer(g, tasks, likelihoodModel, 
+        #                             timeout=1000000,
+        #                             elapsedTime=0,
+        #                             evaluationTimeout=0.01,
+        #                             maximumFrontiers={tasks[0]: 2},
+        #                             CPUs=1,
+        #                             )
 
 
 
         print("task", i)
         print("repl hit?", list(ret[3].values())[0] != [] )
-        print("sample hit?", list(ret2[3].values())[0] != [] )
+        #print("sample hit?", list(ret2[3].values())[0] != [] )
         print("num for repl", ret[2])
-        print("num for sample", ret2[2])
+        #print("num for sample", ret2[2])
         print()
 
     assert 0

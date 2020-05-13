@@ -191,6 +191,7 @@ def ecIterator(grammar, tasks,
                auxiliaryLoss=False,
                custom_wake_generative=None,
                useValue=False,
+               policyType="base",
                singleRoundValueEval=False,
                useSamplePolicy=False,
                resumeTraining=True,
@@ -1145,6 +1146,10 @@ def commandlineArguments(_=None,
                         default=False,
                         choices=["RNN", "AbstractREPL", "Sample", "TowerREPL", "Symbolic"],
                         help="use value-based search")
+    parser.add_argument("--policyType", type=str,
+                        default="base",
+                        choices=["base", "tree"],
+                        help="what type of policy to use")
     parser.add_argument("--singleRoundValueEval",
                         action='store_true',
                         help="do one eval")

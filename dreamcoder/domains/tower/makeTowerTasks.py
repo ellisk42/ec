@@ -1,6 +1,7 @@
 from dreamcoder.domains.tower.towerPrimitives import ttower, executeTower, _empty_tower, TowerState
 from dreamcoder.domains.tower.tower_common import renderPlan
 from dreamcoder.task import *
+import dill
 
 
 class SupervisedTower(Task):
@@ -156,6 +157,12 @@ def parseTower(s):
     try: return Abstraction(command(s, [], Index(0)))
     except: return Abstraction(block(s, [], Index(0)))
 
+
+def makeHelmholtzTowerTasks(n=64):
+    path = "towerHelmholtzTasksit3.pickle"
+    with open(path, 'rb') as h:
+        tasks = dill.load(h)
+    return tasks[:n]
     
 def makeMaxTasks():
 

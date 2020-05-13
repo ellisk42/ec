@@ -107,7 +107,7 @@ class Astar(Solver):
             while time.time() - starting < timeout:
 
                 node = q.popMaximum() #TODO
-                #print("node", node)
+                #print(">>>>>>node", node)
                 #print("queue size", len(q))
 
                 nNei = 0
@@ -130,13 +130,13 @@ class Astar(Solver):
                                                         hits, 
                                                         totalNumberOfPrograms)
 
-                    #print("neighbor", neighbor)
                     valueCost = self.owner.valueHead.computeValue(neighbor, task) #TODO 
-                    #print("valueCost", valueCost)
-
                     totalCost = policyCost - self.criticCoefficient * valueCost #TODO normalize and scale
+                    #print("neighbor:", neighbor)
                     #print("policyCost", policyCost)
+                    #print("valueCost", valueCost)
                     #print("totalCost", totalCost)
+                    #import pdb; pdb.set_trace()
                     newNode = (totalCost, policyCost, neighbor, zippers)
                     q.push(totalCost, newNode)
 
