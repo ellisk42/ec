@@ -29,8 +29,8 @@ if false; then
 fi
 
 # 1) For all parse datsegs, get corresponding scores. also gets for randperms
-if false; then
-    python analysis/parsesGetPlannerScores.py 200118
+if true; then
+    python analysis/parsesGetPlannerScores.py 200118 S13
 fi
 
 # 2) Get model-human distances. For all dreamcoder parses, compute distance to human
@@ -39,9 +39,9 @@ REMOVE_REDUNDANT_STROKES=1 # note these should be matched for getModelHumanDists
 if false; then
     python analysis/getModelHumanDists.py S12.10.test5 0 $REMOVE_REDUNDANT_STROKES
     python analysis/getModelHumanDists.py S12.10.test5 1 $REMOVE_REDUNDANT_STROKES
-    python analysis/getModelHumanDists.py S13.10.test5 0 $REMOVE_REDUNDANT_STROKES
-    python analysis/getModelHumanDists.py S13.10.test5 1 $REMOVE_REDUNDANT_STROKES
 fi
+python analysis/getModelHumanDists.py S13.10.test5 0 $REMOVE_REDUNDANT_STROKES
+python analysis/getModelHumanDists.py S13.10.test5 1 $REMOVE_REDUNDANT_STROKES
 
 # 3) for existing model-human dists, appends their planner scores
 python analysis/modelParsesGetPlannerScores.py test5 $REMOVE_REDUNDANT_STROKES

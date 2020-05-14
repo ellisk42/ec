@@ -295,6 +295,7 @@ if __name__=="__main__":
 
                 # ===== For each datsegs, if there are multiple identical strokes, then remove them. 
                 if REMOVE_REDUNDANT_STROKES:
+                    print("-- Removing redundant strokes...")
                     # - first make sure all entriues are lists, not tuples
                     # for j, dseg in enumerate(datseg_ec):
                     #     if isinstance(dseg, tuple):
@@ -303,12 +304,13 @@ if __name__=="__main__":
                     #     if isinstance(dseg[0], tuple):
                     #         print(dseg[0])
                     # - second, clean up redundant stropkes.
-                    for i, dseg in enumerate(datseg_ec):
-                        if isinstance(dseg, tuple):
-                            dseg = list(dseg)
+                    numstrokes_removed = []
+                    for i, dsegthis in enumerate(datseg_ec):
+                        if isinstance(dsegthis, tuple):
+                            dsegthis = list(dsegthis)
                         badstrokes = []
-                        for j, d1 in enumerate(dseg):
-                            for jj, d2 in enumerate(dseg):
+                        for j, d1 in enumerate(dsegthis):
+                            for jj, d2 in enumerate(dsegthis):
                                 if jj>j:
                                     t1 = np.allclose(d1["centerpos"], d2["centerpos"], equal_nan=True)
                                     t2 = np.allclose(d1["x_extremes"], d2["x_extremes"], equal_nan=True)
@@ -316,11 +318,13 @@ if __name__=="__main__":
                                     t4 = d1["codes"]==d2["codes"]
                                     t5 = d1["row"]==d2["row"]
                                     if t1 and t2 and t3 and t4 and t5:
-                                        print(f"Found identical datseg strokes: {j} vs {jj} - Removing {jj}")
+                                        # print(f"Found identical datseg strokes: {j} vs {jj} - Removing {jj}")
                                         badstrokes.append(jj)
+                        numstrokes_removed.append(len(badstrokes))
                         for index in sorted(badstrokes, reverse=True):
-                            del dseg[index]
-                        datseg_ec[i]=dseg
+                            del dsegthis[index]
+                        datseg_ec[i]=dsegthis
+                    print(f"Removed on average {np.mean(numstrokes_removed)} across all parses")
 
                 def getSeqGetters(labelkind="codes_unique"):
                     if labelkind=="codes_unique":

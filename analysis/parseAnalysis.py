@@ -163,3 +163,28 @@ def plotProgramTree(DAT, task, pnum=0, plot_branches_separate=False):
         else:
             fig.append(plotParse(outdict, depth=n, plot_branches_separate=True))
     return fig
+
+def plotDreams(dreams, ll=None):
+    """ plots in a grid all dreams
+    - ll is list of log likelihoods. will 
+    plot this as title for each subplot if
+    exists.
+    """
+    if not ll is None:
+        assert len(dreams)==len(ll)
+
+    assert len(dreams)<100, "too many dreams..."
+    
+    ncols = 5
+    nrows = int(np.ceil(len(dreams)/ncols))
+    
+    fig = plt.figure(figsize=(ncols*2, nrows*2))
+    for i, d in enumerate(dreams):
+        ax = plt.subplot(nrows, ncols, i+1)
+        plotOnAxes(d.evaluate([]), ax=ax)
+        ax.set_yticklabels([])
+        ax.set_xticklabels([])
+        if not ll is None:
+            plt.title(f"LL={ll[i]:.2f}")
+            
+    return fig

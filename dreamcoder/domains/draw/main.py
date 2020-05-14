@@ -36,7 +36,8 @@ class DrawCNN(ImageFeatureExtractor):
         return self(t.rendered_strokes)
 
 
-def dreamFromGrammar(g=None, directory = "", N=25, USE_NEW_PRIMITIVES=True):
+def dreamFromGrammar(g=None, directory = "", N=25, USE_NEW_PRIMITIVES=True, 
+    maximumDepth=15, returnLogLikelihoods=False):
    # request = taxes # arrow9turtle turtle) just for logl.
    # request = arrow(taxes, taxes) # arrow9turtle turtle) just for logl.if USE_NEW_PRIMITIVES:
 
@@ -50,8 +51,14 @@ def dreamFromGrammar(g=None, directory = "", N=25, USE_NEW_PRIMITIVES=True):
         request = arrow(tstroke, tstroke)
     else:
         request = tstroke # arrow9turtle turtle) just for logl.
-    programs = [ p for _ in range(N) for p in [g.sample(request, maximumDepth=15)] if p is not None]
-    return programs
+    programs = [ p for _ in range(N) for p in [g.sample(request, maximumDepth=maximumDepth)] if p is not None]
+    if returnLogLikelihoods:
+
+        ll = [g.logLikelihood(request, d) for d in programs]
+        return programs, ll
+
+    else:
+        return programs
     # drawDrawings(*programs, filenames)
 
 def main_dummy(N=25):

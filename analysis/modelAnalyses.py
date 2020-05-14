@@ -21,8 +21,7 @@ from analysis.parse import *
 from analysis.getModelHumanDists import *
 import os
 
-def loadMultDCHumanDistances(ECTRAINlist, modelkind_list, ver, use_withplannerscore=False, 
-    planner_agg_version = "common"):
+def loadMultDCHumanDistances(ECTRAINlist, modelkind_list, ver, use_withplannerscore=False):
     """loads mutlpel and contatenates into a heirarchical list"""
     # use_withplannerscore, if True, then loads the version that already has
     # planner score appended. This is gotten from modelParsesGet...py

@@ -43,6 +43,8 @@ if __name__=="__main__":
         ECTRAIN_list = ["S12.10.test4"]
     elif sys.argv[1]=="13":
         ECTRAIN_list = ["S13.10.test4"]
+    elif sys.argv[1]=="13_2":
+        ECTRAIN_list = ["S13.10.test5"]
     elif sys.argv[1]=="test5":
         ECTRAIN_list = ["S12.10.test5", "S13.10.test5"]
 
@@ -149,6 +151,12 @@ if __name__=="__main__":
                             dst["{}_prob".format(planver)]=sc.item()
                     # save
                     import pickle
+
+                    print(stimlist)
+                    print(humanlist)
+                    print(modelver_list)
+                    print(planver_list_this)
+                    assert False
                     fname = "{}/{}_{}_{}.pickle".format(SDIR, stimname, human, distver)
                     with open(fname, "wb") as f:
                         pickle.dump(dists, f)

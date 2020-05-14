@@ -18,10 +18,7 @@ from scipy.special import logsumexp
 Planner = D.Planner
 
 # ==== Dreamcoder-huamn params.
-# ECTRAINlist = ["S12.10.test4", "S13.10.test4"]
-# ECTRAINlist = ["S12.10.test4"]
-# ECTRAINlist = ["S13.10.test4"]
-ECTRAINlist = ["S12.10.test5", "S13.10.test5"]
+
 modelkind_list = ["parse", "randomperm"]
 # ver="aggregate"
 # randomsubset=10000 # if [], then will get all parses. if an int, then will
@@ -33,6 +30,20 @@ modelkind_list = ["parse", "randomperm"]
 # BATCHNAME = "191116"
 # BATCHNAME = "200118"
 BATCHNAME = str(sys.argv[1])
+
+if sys.argv[2]=="S12":
+    ECTRAINlist = ["S12.10.test5"]
+elif sys.argv[2]=="S13":
+    ECTRAINlist = ["S13.10.test5"]
+elif sys.argv[2]=="S12_S13":
+    ECTRAINlist = ["S12.10.test5", "S13.10.test5"]
+else:
+    assert False, "which dreamcoder models to use?"
+
+# ECTRAINlist = ["S12.10.test4", "S13.10.test4"]
+# ECTRAINlist = ["S12.10.test4"]
+# ECTRAINlist = ["S13.10.test4"]
+
 EXPT = "2.4"
 
 # ===== Params for current -rescoring
@@ -48,7 +59,6 @@ REMOVELL=[False]
 REGULARIZE=["l2"]
 hasLLparam = [False, True]
 STIMSET = ["train"]
-
 
 # --- LOAD PLANNER PARAMS
 Planner, summarydict_all, datall, savedir = loadPlannerData(EXPT, BATCHNAME)
@@ -132,6 +142,8 @@ for planner_agg_version in ["common", "bycondition"]:
                 DAT = loadCheckpoint(trainset=ECTRAIN, loadparse=False, suppressPrint=True, loadbehavior=False)
                 stimlist = DATgetSolvedStim(DAT, onlyifhasdatflat=True)
 
+                assert len(stimlist)>0, "no data in datflat?"
+
                 for stim in stimlist:
                     
                     # 1) load datsegs
@@ -156,6 +168,8 @@ for planner_agg_version in ["common", "bycondition"]:
                         print("Getting planner scores for {}, {}, {}, {}".format(ECTRAIN, modelkind, stim, planner_key))        
 
                         scores = planner.scoreMultTasks(datsegs, Nperm=[], getRawScore=True, returnAllScores=True)
+
+                        assert len(scores)>0, "not sure why..."
 
                         # save
                         fname= "{}/{}_planscores_{}.pickle".format(DAT["savedir_datsegs"], stimname, planner_key)

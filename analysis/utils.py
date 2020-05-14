@@ -446,6 +446,10 @@ def DATupdateSaveDirs(DAT):
     sdir = "{}/parseanalysis".format(DAT["analysavedir"])
     os.makedirs(sdir, exist_ok=True)
     DAT["savedir_parseanalysis"] = sdir
+
+    # For latest (5/2020, neurips) analysis of model parses, etc. chunks, dreams.
+    DAT["savedir_parseanalysis_good"] = f"{DAT['summarysavedir']}/parseanalysis/{DAT['trainset']}"
+
         
         
 
@@ -473,7 +477,11 @@ def DATloadDatSeg(DAT, stimname):
     # helper function to load datflat
     fname = "{}/{}.pickle".format(DAT["savedir_datsegs"], stimname)
     with open(fname, "rb") as f:
-        datseg = pickle.load(f)
+        try:
+            datseg = pickle.load(f)
+        except:
+            print(f"failed while trying to load: {f}")
+            raise
     return datseg
 
 def DATsaveDatSeg(DAT, datseg, stimname):
