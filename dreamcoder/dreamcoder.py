@@ -10,7 +10,7 @@ from dreamcoder.taskBatcher import *
 from dreamcoder.primitiveGraph import graphPrimitives
 from dreamcoder.dreaming import backgroundHelmholtzEnumeration
 
-from dreamcoder.valueHead import SimpleRNNValueHead, AbstractREPLValueHead, SampleDummyValueHead, TowerREPLValueHead
+from dreamcoder.valueHead import SimpleRNNValueHead, AbstractREPLValueHead, SampleDummyValueHead, TowerREPLValueHead, SemiOracleValueHead
 from dreamcoder.symbolicAbstractTowers import SymbolicAbstractTowers
 import sys
 
@@ -744,6 +744,9 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
                             H=featureExtr.outputDimensionality)
         elif useValue == "Symbolic":
             valueHead = SymbolicAbstractTowers()
+        elif useValue == "SemiOracle":
+            valueHead = SemiOracleValueHead(testingTasks, grammar)
+
         else: assert False
     else:
         valueHead = None
