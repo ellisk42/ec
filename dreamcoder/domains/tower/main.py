@@ -298,7 +298,7 @@ def main(arguments):
     elif tasks == "old":
         tasks = makeOldSupervisedTasks()
     elif tasks == "maxHard":
-        tasks = makeMaxTasks()
+        tasks = makeNewMaxTasks()
     elif tasks == "helmholtz":
         tasks = makeHelmholtzTowerTasks(n=64)
     else: assert False
