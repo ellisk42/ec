@@ -1147,7 +1147,7 @@ def commandlineArguments(_=None,
                         default=None, type=str)
     parser.add_argument("--useValue", type=str,
                         default=False,
-                        choices=["RNN", "AbstractREPL", "Sample", "TowerREPL", "Symbolic"],
+                        choices=["RNN", "AbstractREPL", "Sample", "TowerREPL", "Symbolic", "SemiOracle", "Oracle"],
                         help="use value-based search")
     parser.add_argument("--policyType", type=str,
                         default="base",

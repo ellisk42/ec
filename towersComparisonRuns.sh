@@ -30,8 +30,8 @@ for num in 20
 		cp ${oldResume}Sample.pickle_RecModelOnly ${resume}SemiOracle.pickle_RecModelOnly
 		#Train:
 		cmd="python bin/tower.py  --searchType SMC --tasks maxHard --split 0.0 --useSamplePolicy ${samplePolicy} --contextual --testingTimeout ${testingTime} --recognitionTimeout 216000 --resumeTraining -r ${helmRatio} --primitives new -t ${time} -RS ${recSteps} --solver python  -c ${ncores} --useValue SemiOracle -i 2 --resume ${resume}SemiOracle.pickle --singleRoundValueEval --seed 1"
-		#eval "${cmd}"
-		sbatch -e towersSemiOracle${salt}.out -o towersSemiOracle${salt}.out execute_gpu_new.sh ${cmd}
+		eval "${cmd}"
+		#sbatch -e towersSemiOracle${salt}.out -o towersSemiOracle${salt}.out execute_gpu_new.sh ${cmd}
 
 
 
