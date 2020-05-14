@@ -73,8 +73,8 @@ def stringify(line):
 
 class SemiOracleValueHead(nn.Module):
     def __init__(self, tasks, g):
-        super(BaseValueHead, self).__init__()
-
+        super(SemiOracleValueHead, self).__init__()
+        self.use_cuda = torch.cuda.is_available()
         ID = 'towers' + str(20)
         path = f'experimentOutputs/{ID}Sample_SRE=True.pickle'
 
@@ -86,23 +86,25 @@ class SemiOracleValueHead(nn.Module):
         for task in tasks:
             self.taskToSolutions[task] = []
 
-            if task in self.rS.recognitionTaskMetrics:
-                for entry in self.rS.recognitionTaskMetrics[task]['frontier']:
-                    self.taskToSolutions[task].append(entry.program) 
+            if task in rS.recognitionTaskMetrics:
+                if 'frontier' in rS.recognitionTaskMetrics[task]:
+                    for entry in rS.recognitionTaskMetrics[task]['frontier']:
+                        self.taskToSolutions[task].append(entry.program) 
 
             if "Max" in task.name:
                 self.taskToSolutions[task].append(task.original)
         
-        self.g = g            
+        self.g = g    
+
+        #import pdb; pdb.set_trace()        
 
     def computeValue(self, sketch, task):
         sols = self.taskToSolutions[task]
         if not sols: return 10**10
         lls = []
-            for sol in sols:
-                try: lls.append(self.g.sketchLogLikelihood(task.request, sol, sketch))
-                except AssertionError:
-                    continue
+        for sol in sols:
+            try: lls.append(self.g.sketchLogLikelihood(task.request, sol, sketch))
+            except AssertionError: continue
         ll = max(lls + [-10**10])
         return -ll #TODO
 
