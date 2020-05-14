@@ -103,9 +103,11 @@ class SemiOracleValueHead(nn.Module):
         if not sols: return 10**10
         lls = []
         for sol in sols:
-            try: lls.append(self.g.sketchLogLikelihood(task.request, sol, sketch))
+            try: 
+                val, _ = self.g.sketchLogLikelihood(task.request, sol, sketch)
+                lls.append(val.item())
             except AssertionError: continue
-        ll = max(lls + [-10**10])
+        ll = max(lls + [-50])
         return -ll #TODO
 
     def valueLossFromFrontier(self, frontier, g):

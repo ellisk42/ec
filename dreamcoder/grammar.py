@@ -860,12 +860,9 @@ class Grammar(object):
         calculates mdl of full program 'full' from sketch 'sk'
         """
         if sk.isHole:
-            _, summary = self.likelihoodSummary(context, environment, request, full)
+            _, summary = self.likelihoodSummary(context, environment, request, full, silent=True)
             if summary is None:
-                eprint(
-                    "FATAL: program [ %s ] does not have a likelihood summary." %
-                    full, "r = ", request, "\n", self)
-                assert False
+                assert False, f"FATAL: program [fulls ] does not have a likelihood summary. r =  {request} \n {self}"
             return summary.logLikelihood(self), context
 
         elif request.isArrow():
@@ -904,7 +901,7 @@ class Grammar(object):
     def sketchllApplication(self, context, environment,
                           sk_function, sk_arguments, full_function, full_arguments, argumentRequests):
         if argumentRequests == []:
-                return torch.tensor([0.]).cuda(), context #does this make sense?
+                return torch.tensor([0.]), context #does this make sense?
         else:
             argRequest = argumentRequests[0].apply(context)
             laterRequests = argumentRequests[1:]
@@ -1277,6 +1274,9 @@ class ContextualGrammar:
 
     def logLikelihood(self, request, expression):
         return self.closedLikelihoodSummary(request, expression).logLikelihood(self)
+
+
+
 
     def sample(self, request, maximumDepth=8, maxAttempts=None):
         attempts = 0
