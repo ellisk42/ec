@@ -71,6 +71,38 @@ def stringify(line):
     return lst
 
 
+class OracleValueHead(nn.Module):
+    def __init__(self, tasks):
+        super(BaseValueHead, self).__init__()
+
+        ID = 'towers' + str(20)
+        self.rS = f'experimentOutputs/{ID}Sample_SRE=True.pickle'
+
+        self.taskToSolutions = {}#todo
+        for task in tasks:
+            self.taskToSolutions[task] = []
+
+            if task in self.rS.recognitionTaskMetrics:
+                for entry in self.rS.recognitionTaskMetrics[task]['frontier']:
+                    self.taskToSolutions[task].append(entry.program) 
+
+            if "Max" in task.name:
+                self.taskToSolutions[task].append(task.original)
+                        
+
+    def computeValue(self, sketch, task):
+        sols = self.taskToSolutions[task]
+        if not sols: return 10**10
+        ll = max(g.sketchLogLikelihood(sketch, sol ) for sol in sols)
+        return -ll #TODO
+
+    def valueLossFromFrontier(self, frontier, g):
+        if self.use_cuda:
+            return torch.tensor([0.]).cuda()
+        else: 
+            return torch.tensor([0.])
+
+
 class BaseValueHead(nn.Module):
     def __init__(self):
         super(BaseValueHead, self).__init__()
