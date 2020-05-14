@@ -71,12 +71,16 @@ def stringify(line):
     return lst
 
 
-class OracleValueHead(nn.Module):
-    def __init__(self, tasks):
+class SemiOracleValueHead(nn.Module):
+    def __init__(self, tasks, g):
         super(BaseValueHead, self).__init__()
 
         ID = 'towers' + str(20)
-        self.rS = f'experimentOutputs/{ID}Sample_SRE=True.pickle'
+        path = f'experimentOutputs/{ID}Sample_SRE=True.pickle'
+
+        import dill
+        with open(path, 'rb') as h:
+            rS = dill.load(h)
 
         self.taskToSolutions = {}#todo
         for task in tasks:
@@ -88,12 +92,18 @@ class OracleValueHead(nn.Module):
 
             if "Max" in task.name:
                 self.taskToSolutions[task].append(task.original)
-                        
+        
+        self.g = g            
 
     def computeValue(self, sketch, task):
         sols = self.taskToSolutions[task]
         if not sols: return 10**10
-        ll = max(g.sketchLogLikelihood(sketch, sol ) for sol in sols)
+        lls = []
+            for sol in sols:
+                try: lls.append(self.g.sketchLogLikelihood(task.request, sol, sketch))
+                except AssertionError:
+                    continue
+        ll = max(lls + [-10**10])
         return -ll #TODO
 
     def valueLossFromFrontier(self, frontier, g):
