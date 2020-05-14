@@ -23,13 +23,14 @@ from matplotlib import pyplot
 
 
 if __name__ == '__main__':
-    # from dreamcoder.domains.tower.makeTowerTasks import makeMaxTasks
-    # import scipy.misc
-    # ts = makeMaxTasks()
-    # path = 'maxTowerTasks/'
-    # for i,t in enumerate(ts):
-    #     scipy.misc.imsave(path+str(i)+'.png', t.getImage()) 
-    # assert 0
+    from dreamcoder.domains.tower.makeTowerTasks import makeNewMaxTasks
+    import scipy.misc
+    ts = makeNewMaxTasks()
+    path = 'newMaxTowerTasks/'
+    os.system(f"rm -f {path}*")
+    for i,t in enumerate(ts):
+        scipy.misc.imsave(path+str(i)+'.png', t.getImage()) 
+    assert 0
 
 
     sys.setrecursionlimit(8000)

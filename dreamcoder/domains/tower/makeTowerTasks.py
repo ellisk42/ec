@@ -163,9 +163,94 @@ def makeHelmholtzTowerTasks(n=64):
     with open(path, 'rb') as h:
         tasks = dill.load(h)
     return tasks[:n]
-    
-def makeMaxTasks():
 
+
+buildArch = "#(lambda (lambda (#(lambda (lambda (lambda (tower_loopM $1 (lambda (lambda (1x3 (moveHand 4 ($2 $0))))) (moveHand 2 (3x1 $2)))))) $1 $0 (lambda (1x3 (reverseHand $0))))))"
+buildHalfHBridge = "#(lambda (lambda (#(lambda (lambda (lambda (tower_loopM $1 (lambda (lambda (#(lambda (lambda (lambda (tower_loopM $1 (lambda (lambda (1x3 (moveHand 4 ($2 $0))))) (moveHand 2 (3x1 $2)))))) (moveHand $2 $0) $4 (lambda (reverseHand $0))))))))) $0 $1 4)))"
+build5HBridge = "#(lambda (tower_loopM $0 (lambda (lambda (moveHand 4 (#(lambda (lambda (#(lambda (lambda (lambda (tower_loopM $1 (lambda (lambda (1x3 (moveHand 4 ($2 $0))))) (moveHand 2 (3x1 $2)))))) $1 $0 (lambda (1x3 (reverseHand $0)))))) (reverseHand $0) 5))))))"
+buildBricks = "#(lambda (lambda (tower_loopM $0 (lambda (lambda (moveHand 3 (reverseHand (tower_loopM $3 (lambda (lambda (moveHand 6 (3x1 $0)))) $0))))))))"
+
+# buildBricks w h
+# buildHalfHBridge w h/2
+
+def makeNewMaxTasks():
+
+    twoArches = [SupervisedTower(f"Max twoArches {n1, n2, dist} ",
+              f"""((for i {n1} v) (r 4) (for i {n1} v) (l 2) h
+                  (r {dist})
+                  (for i {n2} v) (r 4) (for i {n2} v) (l 2) h
+                  )
+              """
+              )
+                for (n1,n2, dist) in [(n1, n2, dist) for n1 in range(2, 5) for n2 in range(2, 4) for dist in [6, 8] ]
+            ]
+
+
+    BrickNextToBridges = [
+              SupervisedTower(f"Max bridges (w{w1}, h{h1}) next to bricks (w{w2}, h{h2})", Program.parse(f"( lambda ({buildBricks} {w1} {h1} (moveHand 8 ({buildHalfHBridge} {w1} {h1} $0)) ))"))
+              for w1, h1, w2, h2 in [(4, 8, 5, 8), (4, 6, 5, 8), (4, 6, 5, 6), (4, 8, 5, 6)] 
+
+                  ]
+
+        # (55, Program.parse(f"( lambda ({buildHalfHBridge} 4 8 (moveHand 6 ({buildHalfHBridge} 4 8 $0)) ))")),
+        
+        # (56, Program.parse(f"( lambda ({build5HBridge} 4 (moveHand 8 ({buildHalfHBridge} 3 6 $0)) ))")),
+
+
+    BridgesNextToBridges = [
+              SupervisedTower(f"Max bridges (w{w1}, h{h1}) {d} from bridges (w{w2}, h{h2})", Program.parse(f"( lambda ({buildHalfHBridge} {w1} {h1} (moveHand {d} ({buildHalfHBridge} {w2} {h2} $0)) ))"))
+              for w1, h1, w2, h2, d in [(4,8,4,8,6),(4,8,4,8,8),(4,6,4,8,6), (4,6,4,8,6), (3,8,4,8,6), (3,8,4,6,6),(4,8,4,6,6)]
+          ]
+
+    BridgesOnBridges = [
+              SupervisedTower(f"Max bridges (w{w1}, h{h1}) on bridges (w{w2}, h{h2})", Program.parse(f"( lambda (tower_embed (lambda ({buildHalfHBridge} {w1} {h1} $0)) ( {buildHalfHBridge} {w2} {h2} $0)  ))"))
+              for w1, h1, w2, h2 in [(5, 6, 3, 4), (5, 4, 3, 4), (5, 6, 3, 2), (5, 6, 4, 4), (5, 4, 2, 4), (4, 6, 3, 4), (4, 6, 3, 4), (4, 8, 3, 6)] 
+          ]
+
+    compositions = [SupervisedTower("Max %dx%d-bridge on top of %dx%d bricks"%(b1,b2,w1,w2),
+                                    """
+                                    ((for j %d
+                                    (embed (for i %d h (r 6)))
+                                    (embed (r 3) (for i %d h (r 6))))
+                                    (r 1)
+                                    (for j %d
+                                    (for i %d 
+                                    v (r 4) v (l 4)) (r 2) h 
+                                    (r 4)))
+                                    """%(w1,w2,w2,b1,b2))
+                    for b1,b2,w1,w2 in [(5,2,4,5)]
+                    ] + [
+                        SupervisedTower("Max %d pyramid on top of %dx%d bricks"%(p,w1,w2),
+                                        """
+                                        ((for j %d
+                                        (embed (for i %d h (r 6)))
+                                        (embed (r 3) (for i %d h (r 6))))
+                                        (r 1)
+                                        (for i %d (for j i (embed v (r 4) v (l 2) h)) (r 6))
+                                        (for i %d (for j (- %d i) (embed v (r 4) v (l 2) h)) (r 6)))
+                                        """%(w1,w2,w2,p,p,p))
+                        for w1,w2,p in [(2,5,2), (2,6,3), (3,5,2), (3,6,2)]
+                        ] + \
+                        [
+                            SupervisedTower("Max %d tower on top of %dx%d bricks"%(t,w1,w2),
+                                            """
+                                            ((for j %d
+                                            (embed (for i %d h (r 6)))
+                                            (embed (r 3) (for i %d h (r 6))))
+                                            (r 6)
+                                            %s (r 4) %s (l 2) h)
+                                            """%(w1,w2,w2,
+                                                 "v "*t, "v "*t))
+                            for t,w1,w2 in [(3,1,3), (5,2,3), (4,2,4), (4,2,3)  ] ] #can't be (4,1,3)
+
+
+    everything = twoArches + BrickNextToBridges + BridgesNextToBridges + BridgesOnBridges + compositions
+    if False:
+        for t in everything:
+            delattr(t,'original')
+    return everything
+
+def makeMaxTasks():
 
     twoArches = [SupervisedTower(f"Max twoArches {n1, n2, dist} ",
               f"""((for i {n1} v) (r 4) (for i {n1} v) (l 2) h

@@ -74,7 +74,7 @@ def plotTestResults(testResults, timeout, defaultLoss=None,
 
 if __name__ == '__main__':
 
-    n = 3
+    n = 20
     ID = 'towers' + str(n)
 
     # paths = [(f'experimentOutputs/{ID}Sample_SRE=True.pickle', 'Sample'),
@@ -116,9 +116,9 @@ if __name__ == '__main__':
 
     graph="_graph=True"
     #mode="Prior"
-    nameSalt = "BigramAstarCountNodes" #"BigramSamplePolicy" #
+    nameSalt = "Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
     ID = 'towers' + str(n)
-    runType = "BigramAstarCountNodes" #"BigramSamplePolicy" #
+    runType = "Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
     paths = [
         (f'experimentOutputs/{ID}{runType}Sample_SRE=True{graph}.pickle', 'prior only (no value)'),
         (f'experimentOutputs/{ID}{runType}RNN_SRE=True{graph}.pickle', 'RNN value'),
