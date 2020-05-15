@@ -31,7 +31,7 @@ for num in 20
 		#Train:
 		cmd="python bin/tower.py  --searchType SMC --tasks maxHard --split 0.0 --useSamplePolicy ${samplePolicy} --contextual --testingTimeout ${testingTime} --recognitionTimeout 216000 --resumeTraining -r ${helmRatio} --primitives new -t ${time} -RS ${recSteps} --solver python  -c ${ncores} --useValue SemiOracle -i 2 --resume ${resume}SemiOracle.pickle --singleRoundValueEval --seed 1"
 		#eval "${cmd}"
-		sbatch -e towersSemiOracle${salt}.out -o towersSemiOracle${salt}.out execute_gpu_new.sh ${cmd}
+		#sbatch -e towersSemiOracle${salt}.out -o towersSemiOracle${salt}.out execute_gpu_new.sh ${cmd}
 
 
 
@@ -40,7 +40,7 @@ for num in 20
 		#Train:
 		cmd="python bin/tower.py  --searchType SMC --tasks maxHard --split 0.0 --useSamplePolicy ${samplePolicy} --contextual --testingTimeout ${testingTime} --recognitionTimeout 216000 --resumeTraining -r ${helmRatio} --primitives new -t ${time} -RS ${recSteps} --solver python  -c ${ncores} --useValue Symbolic -i 2 --resume ${resume}Symbolic.pickle --singleRoundValueEval --seed 1"
 		#eval "${cmd}"
-		#sbatch -e towersSymbolic${salt}.out -o towersSymbolic${salt}.out execute_gpu_new.sh ${cmd}
+		sbatch -e towersSymbolic${salt}.out -o towersSymbolic${salt}.out execute_gpu_new.sh ${cmd}
 
 		#sample
 		#oldResume=${resume}
