@@ -3,7 +3,7 @@
 #checkpoint=
 
 time=1
-testingTime=1200
+testingTime=3600
 recSteps=240000 #list repl is roughly 1k/hour (0.33 steps/sec)
 ncores=8
 #salt=towers
@@ -12,18 +12,18 @@ helmRatio=0.5
 
 
 
-for num in 20
+for num in 3 20
 	do
 
-		cp experimentOutputs/towers${num}.pickle experimentOutputs/towers${num}SMC.pickle
+		cp experimentOutputs/towers${num}.pickle experimentOutputs/towers${num}SMCLong.pickle
 
 		replPolicy=experimentOutputs/towers${num}LongREPL.pickle
 		samplePolicy=experimentOutputs/towers${num}Sample.pickle
 		oldResume=experimentOutputs/towers${num}
 
-		resume=experimentOutputs/towers${num}SMC
+		resume=experimentOutputs/towers${num}SMCLong
 		
-		salt=towers${num}SMC
+		salt=towers${num}SMCLong
 
 		#semiOracle
 		cp ${resume}.pickle ${resume}SemiOracle.pickle
@@ -50,7 +50,7 @@ for num in 20
 		#Train:
 		cmd="python bin/tower.py --searchType SMC  --tasks maxHard --split 0.0 --useSamplePolicy ${samplePolicy} --contextual --testingTimeout ${testingTime} --recognitionTimeout 216000 --resumeTraining -r ${helmRatio} --primitives new -t ${time} -RS ${recSteps} --solver python  -c ${ncores} --useValue Sample -i 2 --resume ${resume}Sample.pickle --singleRoundValueEval --seed 1"
 		#eval "${cmd}"
-		#sbatch -e towersSample${salt}.out -o towersSample${salt}.out execute_gpu_new.sh ${cmd}
+		sbatch -e towersSample${salt}.out -o towersSample${salt}.out execute_gpu_new.sh ${cmd}
 
 		#REPL
 		cp ${replPolicy} ${resume}REPL.pickle
@@ -60,14 +60,14 @@ for num in 20
 		#cmd="python bin/tower.py --useSamplePolicy ${resume}Sample.pickle --contextual --testingTimeout ${testingTime} --recognitionTimeout 216000 --resumeTraining -r ${helmRatio} --primitives new --split 0.5 -t ${time} -RS ${recSteps} --solver python  -c ${ncores} --useValue TowerREPL -i 2  --resume ${resume}REPL.pickle --singleRoundValueEval --seed 1"
 		cmd="python bin/tower.py --searchType SMC  --tasks maxHard --split 0.0 --useSamplePolicy ${samplePolicy} --contextual --testingTimeout ${testingTime} --recognitionTimeout 216000 --resumeTraining -r ${helmRatio} --primitives new -t ${time} -RS ${recSteps} --solver python  -c ${ncores} --useValue TowerREPL -i 2  --resume ${resume}REPL.pickle --singleRoundValueEval --seed 1"
 		#om-repeat sbatch -e towersREPL${salt}.out -o towersREPL${salt}.out -p tenenbaum --time=3600 --mem=32G --cpus-per-task=8 --gres=gpu:QUADRORTX6000:1 ${cmd}
-		#sbatch -e towersREPL${salt}.out -o towersREPL${salt}.out execute_gpu_new.sh ${cmd}
+		sbatch -e towersREPL${salt}.out -o towersREPL${salt}.out execute_gpu_new.sh ${cmd}
 		#eval "${cmd}"
 
 		#RNN
 		cp ${resume}.pickle ${resume}RNN.pickle
 		cp ${oldResume}RNN.pickle_RecModelOnly ${resume}RNN.pickle_RecModelOnly
 		cmd="python bin/tower.py  --searchType SMC --tasks maxHard --split 0.0 --useSamplePolicy ${samplePolicy} --contextual --testingTimeout ${testingTime} --recognitionTimeout 216000 --resumeTraining -r ${helmRatio} --primitives new -t ${time} -RS ${recSteps} --solver python  -c ${ncores} --useValue RNN -i 2 --resume ${resume}RNN.pickle --singleRoundValueEval --seed 1"
-		#sbatch -e towersRNN${salt}.out -o towersRNN${salt}.out execute_gpu_new.sh ${cmd}
+		sbatch -e towersRNN${salt}.out -o towersRNN${salt}.out execute_gpu_new.sh ${cmd}
 
 
 		# resume=experimentOutputs/towers${num}JustHashing
