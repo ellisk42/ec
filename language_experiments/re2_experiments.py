@@ -1,14 +1,14 @@
-USING_GCLOUD = False
-USING_SINGULARITY = True
-NUM_REPLICATIONS = 0
+USING_GCLOUD = True
+USING_SINGULARITY = False
+NUM_REPLICATIONS = 2
 NO_ORIGINAL_REPL = False
 
 def gcloud_commands(job_name):
-    gcloud_disk_command = f"gcloud compute --project 'tenenbaumlab' disks create {job_name} --size '30' --zone 'us-east1-b' --source-snapshot 're2-language-april24' --type 'pd-standard'"
-    gcloud_launch_commmand = f"gcloud beta compute --project=tenenbaumlab instances create {job_name} --zone=us-east1-b --machine-type=n1-highmem-64 --subnet=default --network-tier=PREMIUM --maintenance-policy=MIGRATE --service-account=150557817012-compute@developer.gserviceaccount.com --scopes=https://www.googleapis.com/auth/devstorage.read_only,https://www.googleapis.com/auth/logging.write,https://www.googleapis.com/auth/monitoring.write,https://www.googleapis.com/auth/servicecontrol,https://www.googleapis.com/auth/service.management.readonly,https://www.googleapis.com/auth/trace.append --disk=name={job_name.strip()},device-name={job_name.strip()},mode=rw,boot=yes,auto-delete=yes --reservation-affinity=any"
-    return f"#######\n{gcloud_disk_command}\n\n{gcloud_launch_commmand}\n\n###Now run: \nsingularity exec ../dev-container.img "
+    gcloud_disk_command = f"gcloud compute --project 'andreas-jacob-8fc0' disks create {job_name} --size '30' --zone 'us-east1-b' --source-snapshot 're2-language-5-14' --type 'pd-standard'"
+    gcloud_launch_commmand = f"gcloud beta compute --project=andreas-jacob-8fc0 instances create {job_name} --metadata='startup-script=cd ec' --zone=us-east1-b --machine-type=n1-highmem-64 --subnet=default --network-tier=PREMIUM --maintenance-policy=MIGRATE --service-account=project-service-account@andreas-jacob-8fc0.iam.gserviceaccount.com --scopes=https://www.googleapis.com/auth/cloud-platform --disk=name={job_name.strip()},device-name={job_name.strip()},mode=rw,boot=yes,auto-delete=yes --reservation-affinity=any"
+    return f"#######\n{gcloud_disk_command}\n\n{gcloud_launch_commmand}\n\n###Now run: \n "
     
-singularity_base_command = "srun --job-name=re2_language_{} --output=jobs/{} --ntasks=1 --mem-per-cpu=10000 --gres=gpu --cpus-per-task 24 --time=10000:00 --qos=tenenbaum --partition=tenenbaum singularity exec -B /om2  --nv ../dev-container.img "
+singularity_base_command = "srun --job-name=re2_language_{} --output=jobs/{} --ntasks=1 --mem-per-cpu=15000 --gres=gpu --cpus-per-task 24 --time=10000:00 --qos=tenenbaum --partition=tenenbaum singularity exec -B /om2  --nv ../dev-container.img "
 
 def get_launcher_command(job, job_name):
     if USING_SINGULARITY:
@@ -25,7 +25,10 @@ def append_command(job_name):
 
 def build_command(exp_command, job, job_name, replication=" "):
     if replication is None: replication = " "
-    return get_launcher_command(job, job_name) + exp_command + replication + append_command(job_name)
+    command = get_launcher_command(job, job_name) + exp_command + replication + append_command(job_name)
+    if USING_GCLOUD:
+        command = command.replace("python", "python3")
+    return command
 
 def build_replications(exp_command, job, job_name):
     replications = []
@@ -82,7 +85,7 @@ for dataset in ['re2_500_aesdrt', 're2_500_aesr']:
         job += 1
 
 ## Generates EC baseline experiments with the updated dataset
-RUN_EC_BASELINES_2 = True
+RUN_EC_BASELINES_2 = False
 num_iterations = 5
 task_batch_size = 40
 test_every = 3
@@ -114,19 +117,20 @@ for dataset in ['re2_1000', 're2_500_aeioubcdfgsrt']:
             job +=1
 
 ## Generates EC baseline experiments with the updated dataset
-RUN_NO_HELMHOLTZ_GENERATIVE_MODEL = True
+RUN_NO_HELMHOLTZ_GENERATIVE_MODEL = False
 num_iterations = 10
 task_batch_size = 40
 test_every = 3
 recognition_steps = 10000
-EXPS = [('re2_1000', 720, False)]
+EXPS = [('re2_1000', 720, False), ('re2_1000', 1800, False)]
 for dataset in ['re2_1000', 're2_500_aeioubcdfgsrt']:
-    for enumerationTimeout in [720]:
+    for enumerationTimeout in [720, 1800]:
+        testingTimeout = 720
         for use_vowel in [True, False]:
             exp = (dataset, enumerationTimeout, use_vowel)
             job_name = f"re_2_ec_gru_no_ghelm_compression_et_{enumerationTimeout}_{dataset}_use_vowel_{use_vowel}"
             jobs.append(job_name)
-            base_parameters = f" --enumerationTimeout {enumerationTimeout} --testingTimeout {enumerationTimeout}  --iterations {num_iterations} --biasOptimal --contextual --taskBatchSize {task_batch_size} --testEvery {test_every} --no-cuda --recognitionSteps {recognition_steps} --recognition_0 --recognition_1 examples language --Helmholtz 0 --skip_first_test"
+            base_parameters = f" --enumerationTimeout {enumerationTimeout} --testingTimeout {testingTimeout}  --iterations {num_iterations} --biasOptimal --contextual --taskBatchSize {task_batch_size} --testEvery {test_every} --no-cuda --recognitionSteps {recognition_steps} --recognition_0 --recognition_1 examples language --Helmholtz 0 --skip_first_test"
             
             # Which primitives set to use.
             restricted = 'aeioubcdfgsrt' 
@@ -152,14 +156,15 @@ num_iterations = 10
 task_batch_size = 40
 test_every = 3
 recognition_steps = 10000
-EXPS = [('re2_1000', 720, False)]
+testing_timeout = 720
+EXPS = [('re2_1000', 720, False), ('re2_1000', 1800, False)]
 for dataset in ['re2_1000', 're2_500_aeioubcdfgsrt']:
-    for enumerationTimeout in [720]:
+    for enumerationTimeout in [720, 1800]:
         for use_vowel in [True, False]:
             exp = (dataset, enumerationTimeout, use_vowel)
             job_name = f"re_2_ec_gru_ghelm_compression_et_{enumerationTimeout}_{dataset}_use_vowel_{use_vowel}"
             jobs.append(job_name)
-            base_parameters = f" --enumerationTimeout {enumerationTimeout} --testingTimeout {enumerationTimeout}  --iterations {num_iterations} --biasOptimal --contextual --taskBatchSize {task_batch_size} --testEvery {test_every} --no-cuda --recognitionSteps {recognition_steps} --recognition_0 --recognition_1 examples language --Helmholtz 0.5 --synchronous_grammar --skip_first_test"
+            base_parameters = f" --enumerationTimeout {enumerationTimeout} --testingTimeout {testing_timeout}  --iterations {num_iterations} --biasOptimal --contextual --taskBatchSize {task_batch_size} --testEvery {test_every} --no-cuda --recognitionSteps {recognition_steps} --recognition_0 --recognition_1 examples language --Helmholtz 0.5 --synchronous_grammar --skip_first_test"
             
             # Which primitives set to use.
             restricted = 'aeioubcdfgsrt' 
@@ -178,6 +183,41 @@ for dataset in ['re2_1000', 're2_500_aeioubcdfgsrt']:
                     if not NO_ORIGINAL_REPL: experiment_commands.append(command)
                     experiment_commands += build_replications(exp_command, job, job_name)
             job +=1
+### Run Helmholtz pseudoalignments
+RUN_HELMHOLTZ_PSEUDOALIGNMENTS = True
+num_iterations = 10
+task_batch_size = 40
+test_every = 3
+recognition_steps = 10000
+EXPS = [('re2_1000', 720, False), ('re2_1000', 1800, False)]
+pseudoalignment = 0.1
+for dataset in ['re2_1000']:
+    for enumerationTimeout in [720, 1800]:
+        for use_vowel in [True, False]:
+            exp = (dataset, enumerationTimeout, use_vowel)
+            testing_timeout = 720
+            job_name = f"re_2_ec_gru_ghelm_pseudo_compression_et_{enumerationTimeout}_{dataset}_use_vowel_{use_vowel}"
+            jobs.append(job_name)
+            base_parameters = f" --enumerationTimeout {enumerationTimeout} --testingTimeout {testing_timeout}  --iterations {num_iterations} --biasOptimal --contextual --taskBatchSize {task_batch_size} --testEvery {test_every} --no-cuda --recognitionSteps {recognition_steps} --recognition_0 --recognition_1 examples language --Helmholtz 0.5 --synchronous_grammar --skip_first_test"
+            
+            # Which primitives set to use.
+            restricted = 'aeioubcdfgsrt' 
+            if restricted in dataset:
+                primitives = f"re2_chars_{restricted} re2_bootstrap_v1_primitives"
+            else:
+                primitives = "re2_chars_None re2_bootstrap_v1_primitives"
+            if use_vowel:
+                primitives += " re2_vowel_consonant_primitives"
+                
+            exp_parameters = f" --taskDataset {dataset} --language_encoder recurrent --languageDataset {dataset}/synthetic --primitives {primitives} --moses_dir ./moses_compiled --smt_phrase_length 1 --smt_pseudoalignments {pseudoalignment}"
+            exp_command = base_command + base_parameters + exp_parameters
+            command = build_command(exp_command, job, job_name, replication=None)
+            if RUN_HELMHOLTZ_PSEUDOALIGNMENTS:
+                if (EXPS is None) or (exp in EXPS):
+                    if not NO_ORIGINAL_REPL: experiment_commands.append(command)
+                    experiment_commands += build_replications(exp_command, job, job_name)
+            job +=1
+
 #### Outputs
 PRINT_LOG_SCRIPT = False
 PRINT_JOBS = True

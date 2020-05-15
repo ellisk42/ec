@@ -95,8 +95,8 @@ def re2_bootstrap_v1_primitives():
         +  [re2_if, re2_cons, re2_car, re2_cdr, re2_map]
 
 def re2_test_primitives():
-    return [re2_rmatch, re2_rsplit, re2_rflatten] \
-        +  [re2_if,  re2_car]
+    return [re2_rsplit, re2_rflatten] \
+        +  [re2_ror,]
 
 def load_re2_primitives(primitive_names):
     prims = []
@@ -139,25 +139,24 @@ def re2_primitives_main():
         p = Program.parse(raw)
         output = p.evaluate([])(input)
         print(f"{name} in: {input} | out: {output} | gold: {gold}")
-    # Debugging the 'split empty' phenomenon
-    raw = "(lambda (_rflatten (map (lambda _k) (_rsplit _rempty $0))))"
-    input_str = "aaa"
-    check_true("basic input", raw, input_str)
     
-    raw = "(lambda $0)"
-    import pdb; pdb.set_trace()
-    raw = "(lambda (car (cdr (map (lambda $1) (_rrevcdr (_rsplit _r $0))))))"
+    DEBUG_EMPTY = False
+    if DEBUG_EMPTY:
+        # Debugging the 'split empty' phenomenon
+        raw = "(lambda (_rflatten (map (lambda _k) (_rsplit _rempty $0))))"
+        input_str = "aaa"
+        check_true("basic input", raw, input_str)
+
+        raw = "(lambda $0)"
+        raw = "(lambda (car (cdr (map (lambda $1) (_rrevcdr (_rsplit _r $0))))))"
+        
+        # Simple matches on one string.
+        raw = "(lambda (_rflatten (_rsplit _rdot $0)))"
+        input_str = "aaa"
+        check_true("basic input", raw, input_str)
     
-    # Simple matches on one string.
-    raw = "(lambda (_rflatten (_rsplit _rdot $0)))"
-    input_str = "aaa"
-    check_true("basic input", raw, input_str)
     
-    
-    
-    
-    
-    SIMPLE_MATCHES = True
+    SIMPLE_MATCHES = False
     if SIMPLE_MATCHES:
         input_str = "t"
         raw = "(lambda $0)"
@@ -197,45 +196,61 @@ def re2_primitives_main():
         check_true("match [^ae]d", raw, "ad")
         check_true("match [^ae]d", raw, "be")
         
+    # Splitting on a Boolean.
+    DEBUG_BOOLEAN = True
+    if DEBUG_BOOLEAN:
+        raw = "(lambda  (if (_rmatch (_ror _a _e) $0) _f $0)   )"
+        check_equal("replace a -> f", raw, "a", "f")
+        
+        replace_ae = "(lambda  (if (_rmatch (_ror _a _e) $0) _f $0)   )"
+        input = "hella"
+        raw = f"(lambda (_rflatten (map  {replace_ae}  (_rsplit (_ror _a _e) $0) ) ))"
+        # # Replace vowels 
+        check_equal("replace a|e -> f", raw, input, "hfllf")
+        # Replace any letter vowel 
+    # Replace a vowel letter sequence
+
+    
     # Single string manipulations
-    raw = "(lambda  (if (_rmatch (_rconcat _t _e) $0) _f $0)   )"
-    check_equal("replace te -> f", raw, "te", "f")
-    check_equal("replace te -> f", raw, "zee", "zee")
-    
-    # Replace match
-    replace_te = "(lambda  (if (_rmatch (_rconcat _t _e) $0) _f $0)   )"
-    raw = f"(lambda (_rflatten (map  {replace_te}  (_rsplit (_rconcat _t _e) $0) ) ))"
-    check_equal("replace te -> f", raw, "tehellote", "fhellof")
-    # Prepend X to match
-    prepend_te = "(lambda  (if (_rmatch (_rconcat _t _e) $0) (_rconcat _f $0) $0)   )"
-    raw = f"(lambda (_rflatten (map  {prepend_te}  (_rsplit (_rconcat _t _e) $0) ) ))"
-    check_equal("prepend te -> f", raw, "tehellote", "ftehellofte")
-    # Postpend X to match
-    postpend_te = "(lambda  (if (_rmatch (_rconcat _t _e) $0) (_rconcat $0 _f) $0)   )"
-    raw = f"(lambda (_rflatten (map  {postpend_te}  (_rsplit (_rconcat _t _e) $0) ) ))"
-    check_equal("postpend te -> f", raw, "tehellote", "tefhellotef")
-    
-    # Remove match
-    remove_te = "(lambda  (if (_rmatch (_rconcat _t _e) $0) _emptystr $0)   )"
-    raw = f"(lambda (_rflatten (map  {remove_te }  (_rsplit (_rconcat _t _e) $0) ) ))"
-    check_equal("prepend te -> f", raw, "teheltelote", "hello")
-    
-    # Match at start
-    raw = f"(lambda ((lambda (_rflatten (cons ({replace_te} (car $0)) (cdr $0)) )) (_rsplit (_rconcat _t _e) $0) ))"
-    check_equal("replace te -> f", raw, "teheltelote", "fheltelote")
-    
-    raw = f"(lambda ((lambda (_rflatten (cons ({prepend_te} (car $0)) (cdr $0)) )) (_rsplit (_rconcat _t _e) $0) ))"
-    check_equal("prepend te -> f", raw, "tehellote", "ftehellote")
-    raw = f"(lambda ((lambda (_rflatten (cons ({postpend_te} (car $0)) (cdr $0)) )) (_rsplit (_rconcat _t _e) $0) ))"
-    check_equal("postpend te -> f", raw, "tehellote", "tefhellote")
-    
-    # Match at end
-    raw = f"(lambda ((lambda (_rflatten (_rappend ({replace_te} (_rtail $0)) (_rrevcdr $0)) )) (_rsplit (_rconcat _t _e) $0) ))"
-    check_equal("replace te -> f", raw, "teheltelote", "teheltelof")
-    
-    raw = f"(lambda ((lambda (_rflatten (_rappend ({prepend_te} (_rtail $0)) (_rrevcdr $0)) )) (_rsplit (_rconcat _t _e) $0) ))"
-    check_equal("prepend te -> f", raw, "teheltelote", "teheltelofte")
-    
-    raw = f"(lambda ((lambda (_rflatten (_rappend ({postpend_te} (_rtail $0)) (_rrevcdr $0)) )) (_rsplit (_rconcat _t _e) $0) ))"
-    check_equal("postpend te -> f", raw, "teheltelote", "teheltelotef")
+    if False:
+        raw = "(lambda  (if (_rmatch (_rconcat _t _e) $0) _f $0)   )"
+        check_equal("replace te -> f", raw, "te", "f")
+        check_equal("replace te -> f", raw, "zee", "zee")
+        
+        # Replace match
+        replace_te = "(lambda  (if (_rmatch (_rconcat _t _e) $0) _f $0)   )"
+        raw = f"(lambda (_rflatten (map  {replace_te}  (_rsplit (_rconcat _t _e) $0) ) ))"
+        check_equal("replace te -> f", raw, "tehellote", "fhellof")
+        # Prepend X to match
+        prepend_te = "(lambda  (if (_rmatch (_rconcat _t _e) $0) (_rconcat _f $0) $0)   )"
+        raw = f"(lambda (_rflatten (map  {prepend_te}  (_rsplit (_rconcat _t _e) $0) ) ))"
+        check_equal("prepend te -> f", raw, "tehellote", "ftehellofte")
+        # Postpend X to match
+        postpend_te = "(lambda  (if (_rmatch (_rconcat _t _e) $0) (_rconcat $0 _f) $0)   )"
+        raw = f"(lambda (_rflatten (map  {postpend_te}  (_rsplit (_rconcat _t _e) $0) ) ))"
+        check_equal("postpend te -> f", raw, "tehellote", "tefhellotef")
+        
+        # Remove match
+        remove_te = "(lambda  (if (_rmatch (_rconcat _t _e) $0) _emptystr $0)   )"
+        raw = f"(lambda (_rflatten (map  {remove_te }  (_rsplit (_rconcat _t _e) $0) ) ))"
+        check_equal("prepend te -> f", raw, "teheltelote", "hello")
+        
+        # Match at start
+        raw = f"(lambda ((lambda (_rflatten (cons ({replace_te} (car $0)) (cdr $0)) )) (_rsplit (_rconcat _t _e) $0) ))"
+        check_equal("replace te -> f", raw, "teheltelote", "fheltelote")
+        
+        raw = f"(lambda ((lambda (_rflatten (cons ({prepend_te} (car $0)) (cdr $0)) )) (_rsplit (_rconcat _t _e) $0) ))"
+        check_equal("prepend te -> f", raw, "tehellote", "ftehellote")
+        raw = f"(lambda ((lambda (_rflatten (cons ({postpend_te} (car $0)) (cdr $0)) )) (_rsplit (_rconcat _t _e) $0) ))"
+        check_equal("postpend te -> f", raw, "tehellote", "tefhellote")
+        
+        # Match at end
+        raw = f"(lambda ((lambda (_rflatten (_rappend ({replace_te} (_rtail $0)) (_rrevcdr $0)) )) (_rsplit (_rconcat _t _e) $0) ))"
+        check_equal("replace te -> f", raw, "teheltelote", "teheltelof")
+        
+        raw = f"(lambda ((lambda (_rflatten (_rappend ({prepend_te} (_rtail $0)) (_rrevcdr $0)) )) (_rsplit (_rconcat _t _e) $0) ))"
+        check_equal("prepend te -> f", raw, "teheltelote", "teheltelofte")
+        
+        raw = f"(lambda ((lambda (_rflatten (_rappend ({postpend_te} (_rtail $0)) (_rrevcdr $0)) )) (_rsplit (_rconcat _t _e) $0) ))"
+        check_equal("postpend te -> f", raw, "teheltelote", "teheltelotef")
 

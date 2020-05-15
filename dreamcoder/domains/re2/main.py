@@ -89,6 +89,7 @@ def main(args):
     if args.pop("run_ocaml_test"):
         tasks = [buildRE2MockTask(train[0])]
         if True:
+
             # Tests the Helmholtz enumeration.
             from dreamcoder.dreaming import backgroundHelmholtzEnumeration
             helmholtzFrontiers = backgroundHelmholtzEnumeration(tasks, 
@@ -96,7 +97,7 @@ def main(args):
                                                                 timeout=1,
                                                                 evaluationTimeout=1,
                                                                 special=None,
-                                                                executable='helmholtz',
+                                                                executable='re2Test',
                                                                 serialize_special=None)
             f = helmholtzFrontiers()
         if False:
@@ -107,7 +108,7 @@ def main(args):
                                 CPUs=1,
                                 solver='ocaml',
                                 evaluationTimeout=1.0)
-        if True:
+        if False:
             # Tests the recurrent feature extractor.
             featurizer = StringFeatureExtractor(tasks=tasks, testingTasks=[], cuda=False)
             ts = featurizer.packExamples(tasks[0].examples)

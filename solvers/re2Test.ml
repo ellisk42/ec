@@ -11,6 +11,14 @@ open PolyValue
   
 open Yojson.Basic
 
+let test_program raw input = 
+  let first_str = (List.hd_exn (List.hd_exn input)) in 
+  let _ = Printf.eprintf "program: %s\n" raw in 
+  let p = parse_program raw |> get_some in 
+  let p = analyze_lazy_evaluation p in 
+  let y = run_lazy_analyzed_with_arguments p (List.hd_exn input) in 
+  Printf.eprintf "IN: %s OUT: %s \n" first_str y;;
+
 let print_str_inputs unpacked_inputs request = 
   let return = Type.return_of_type request in
   let str_list = List.hd_exn unpacked_inputs in 
@@ -60,8 +68,24 @@ let run_job channel =
         Printf.eprintf "Found special Helmholtz enumerator for: %s\n" name; special
       | None -> (Printf.eprintf "Could not find special Helmholtz enumerator: %s\n" name; assert (false))
   in 
-    helmholtz_enumeration ~nc:nc (k ~timeout:0.1 request (j |> member "extras")) g request ~timeout ~maximumSize
+    (** Test individual enumeration **)
     (* let inputs = (j |> member "extras") in
+    let unpacked_inputs : 'a list list = unpack inputs in
+    
+    (** Replace match **)
+    let replace_te = "(lambda  (if (_rmatch (_rconcat _t _e) $0) _f $0))" in 
+    let raw = "(lambda (_rflatten (map  "^ replace_te ^ "  (_rsplit (_rconcat _t _e) $0))))" in
+  
+    let vowel = "(_ror _u (_ror _o (_ror _i (_ror _a _e))))" in 
+    let consonant = "(_rnot "^vowel ^")" in 
+    let vowel_consonant = "(_rconcat " ^ vowel ^ " " ^ consonant ^" )" in 
+    let replace_ae = "(lambda (if (_rmatch "^ vowel_consonant^" $0) _f $0))" in 
+    let raw = "(lambda (_rflatten (map " ^ replace_ae ^  " (_rsplit "^vowel_consonant^" $0) ) ))" in
+    
+    test_program raw [["aeioudbcg"]] ;; *)
+  
+    (* helmholtz_enumeration ~nc:nc (k ~timeout:0.1 request (j |> member "extras")) g request ~timeout ~maximumSize *)
+    let inputs = (j |> member "extras") in
     let unpacked_inputs : 'a list list = unpack inputs in
     let _ = print_str_inputs unpacked_inputs request in 
     let _ = print_str_inputs unpacked_inputs in 
@@ -80,7 +104,7 @@ let run_job channel =
         loop (lb+.1.5)
       end
     in
-    loop 0. *)
+    loop 0.
     
 let output_job ?maxExamples:(maxExamples=50000) ?show_vars:(show_vars=false) result =
   let open Yojson.Basic.Util in
@@ -102,4 +126,5 @@ let output_job ?maxExamples:(maxExamples=50000) ?show_vars:(show_vars=false) res
   message
 
 let _ = 
-  run_job Pervasives.stdin |> remove_bad_dreams |> output_job |> to_channel Pervasives.stdout
+  run_job Pervasives.stdin 
+  (* |> remove_bad_dreams |> output_job |> to_channel Pervasives.stdout *)
