@@ -36,10 +36,10 @@ def helmholtzEnumeration(g, request, inputs, timeout, _=None,
                                    stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE)
         response, error = process.communicate(bytes(message, encoding="utf-8"))
-    except OSError as exc:
-        raise exc
+    except Exception as exc:
+        print("ERROR: %s", exc)
+        return ""
     return response
-
 
 def backgroundHelmholtzEnumeration(tasks, g, timeout, _=None,
                                    special=None, evaluationTimeout=None,
@@ -69,8 +69,8 @@ def backgroundHelmholtzEnumeration(tasks, g, timeout, _=None,
         frontiers = []
         with timing("(Helmholtz enumeration) Decoded json into frontiers"):
             for request, result in zip(requests, results):
-                response = json.loads(result.decode("utf-8"))
                 try:
+                    response = json.loads(result.decode("utf-8"))
                     for b, entry in enumerate(response):
                         frontiers.append(Frontier([FrontierEntry(program=Program.parse(p),
                                                                  logPrior=entry["ll"],
@@ -81,9 +81,7 @@ def backgroundHelmholtzEnumeration(tasks, g, timeout, _=None,
                                                             request,
                                                             [])))
                 except:
-                    print("Helmholtz response error:")
-                    print(response)
-                    assert False
+                    continue
         eprint("Total number of Helmholtz frontiers:", len(frontiers))
         return frontiers
 

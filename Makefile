@@ -7,10 +7,8 @@ all:
 	  jbuilder build logoDrawString.exe && \
 	  jbuilder build protonet-tester.exe && \
 	  jbuilder build compression.exe && \
-	  jbuilder build evolution.exe && \
 	  cp _build/default/compression.exe ../compression && \
 	  cp _build/default/versionDemo.exe ../versionDemo && \
-	  cp _build/default/evolution.exe ../evolution && \
 	  cp _build/default/solver.exe ../solver && \
 	  cp _build/default/helmholtz.exe ../helmholtz && \
 	  cp _build/default/protonet-tester.exe ../protonet-tester && \
@@ -41,12 +39,30 @@ clevrTest:
 	cd solvers && \
 	jbuilder build clevrTest.exe && \
 	cp _build/default/clevrTest.exe ../clevrTest
-	
+
+solverClean: 
+	cd solvers && jbuilder clean
+	rm -f solver
+
+solver: 
+	cd solvers && \
+	jbuilder build solver.exe && \
+	cp _build/default/solver.exe ../solver
+		
 re2TestClean: 
+	cd solvers && jbuilder clean
+	rm -f re2Test
+	
+re2Test: 
+		cd solvers && \
+		jbuilder build re2Test.exe && \
+		cp _build/default/re2Test.exe ../re2Test
+
+re2PrimsClean: 
 	cd solvers && jbuilder clean
 	rm -f re2Primitives
 	
-re2Test:
+re2Prims: 
 		cd solvers && \
 		jbuilder build re2Primitives.exe && \
 		cp _build/default/re2Primitives.exe ../re2Primitives
