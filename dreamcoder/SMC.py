@@ -71,7 +71,7 @@ class SMC(Solver):
                               # budgetIncrement=1.0, 
                               maximumFrontiers=None,
                               returnAfterHit=True): #IDK what this is...
-        sys.setrecursionlimit(5000)
+        #sys.setrecursionlimit(50000)
         class Particle():
             def __init__(self, trajectory, zippers, frequency, finished=False):
                 self.frequency = frequency
