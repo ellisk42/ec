@@ -58,7 +58,7 @@ def plotTestResults(testResults, timeout, defaultLoss=None,
     if mode =='fractionHit': plot.ylim(bottom=0.)
     for n in range(len(testResults)):
         #xs = list(range(max([0]+[r.evaluations for tr in testResults[n] for r in tr] ) + 1))
-        xs = list(range(2000))
+        xs = list(range(500))
         if mode =='fractionHit':
             plot.plot(xs, [fractionHit(n,lambda r: r.evaluations <= x) for x in xs],
                   label=names[n])
@@ -74,7 +74,7 @@ def plotTestResults(testResults, timeout, defaultLoss=None,
 
 if __name__ == '__main__':
 
-    n = 20
+    n = 3
     ID = 'towers' + str(n)
 
     # paths = [(f'experimentOutputs/{ID}Sample_SRE=True.pickle', 'Sample'),
@@ -116,14 +116,14 @@ if __name__ == '__main__':
 
     graph="_graph=True"
     #mode="Prior"
-    nameSalt = "AstarCountNodes" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
+    nameSalt = "SMC" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
     ID = 'towers' + str(n)
-    runType ="AstarCountNodes" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
+    runType ="SMC" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
     paths = [
         (f'experimentOutputs/{ID}{runType}Sample_SRE=True{graph}.pickle', 'prior only (no value)'),
         (f'experimentOutputs/{ID}{runType}RNN_SRE=True{graph}.pickle', 'RNN value'),
         (f'experimentOutputs/{ID}{runType}REPL_SRE=True{graph}.pickle', 'REPL modular value'),
-        (f'experimentOutputs/{ID}{runType}Symbolic_SRE=True{graph}.pickle', 'Symbolic value')
+        #(f'experimentOutputs/{ID}{runType}Symbolic_SRE=True{graph}.pickle', 'Symbolic value')
         ]
 
 
@@ -137,8 +137,12 @@ if __name__ == '__main__':
         for path in paths:
             with open(path, 'rb') as h:
                 r = dill.load(h)
-                #assert 0
-                
+
+            delTasks = []
+            for task, results in r.testingSearchStats[-1].items():
+                if "Max bridges" in task.name: delTasks.append(task)
+            for task in delTasks: del r.testingSearchStats[-1][task]
+        
             from dreamcoder.showTowerTasks import showTowersAndSolutions, computeValue
             #showTowersAndSolutions(r)
             #computeValue(r)
