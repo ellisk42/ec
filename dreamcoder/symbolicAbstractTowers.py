@@ -28,7 +28,6 @@ _intTopPrimitive = (1, 8) #TODO
 _intMax = 8
 _intMin = 1
 
-
 class ConvertSketchToAbstract:
     def __init__(self):
         pass
