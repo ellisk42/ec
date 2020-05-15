@@ -32,6 +32,27 @@ let build_obj attribute_type old_obj attr =
   let new_attr = new_obj |> to_assoc |> magical in 
   removed @ new_attr
 
+let test_obj_list input = 
+  (** Test dedup **)
+  let obj_list = List.hd_exn input in 
+  let sorted_obj = sort_objs obj_list in
+  let obj_1 = List.hd_exn sorted_obj in
+  let dup_list = obj_1 :: sorted_obj in 
+  let deduped = sort_dedup dup_list in 
+  
+  (** Test obj comparison **)
+  let obj_2 = List.hd_exn (List.tl_exn obj_list) in 
+  let _ = Printf.eprintf "Comparing: %s\n" (Bool.to_string (compare_obj obj_1 obj_1)) in
+  let _  = Printf.eprintf "Comparing: %s\n" (Bool.to_string (compare_obj obj_1 obj_2)) in 
+  (** Test list comparison **)
+  let _ = Printf.eprintf "Comparing: %s\n" (Bool.to_string (compare_objs obj_list obj_list)) in
+  let _ = Printf.eprintf "Comparing: %s\n" (Bool.to_string (compare_objs obj_list dup_list)) in
+  let _ = Printf.eprintf "Comparing: %s\n" (Bool.to_string (compare_objs obj_list [obj_1; obj_1])) in 
+  let _ = Printf.eprintf "Comparing: %s\n" (Bool.to_string (compare_objs [obj_1; obj_2] [obj_2; obj_1])) in 
+  Printf.eprintf "Comparing: %s\n" (Bool.to_string (compare_objs [obj_1; obj_1] [obj_2; obj_1])) 
+  
+  
+
 let test_program name raw input =
   let obj_list = List.hd_exn input in 
   let sorted_obj = sort_objs obj_list in
@@ -96,7 +117,17 @@ let run_job channel =
   in 
   let inputs = (j |> member "extras") in
   let behavior_hash = (k ~timeout:evaluationTimeout request (j |> member "extras")) in
+  (** Test behavior hash **)
   let unpacked_inputs : 'a list list = unpack_clevr inputs in
+  let outputs = unpacked_inputs |> List.map ~f: (fun input -> 
+    let raw  = "(lambda (clevr_add (clevr_car $0) $0))" in 
+    (* test_program "test" raw input *)
+    test_obj_list input
+    )
+  in outputs
+  
+  (** Test enumeration **)
+  (* let unpacked_inputs : 'a list list = unpack_clevr inputs in
   set_enumeration_timeout 1.0;
   let rec loop lb =
     if enumeration_timed_out() then () else begin 
@@ -111,8 +142,9 @@ let run_job channel =
     end
   in
 
-  loop 0.
+  loop 0. *)
   
+  (** Test the evaluation **)
   (* let outputs = unpacked_inputs |> List.map ~f: (fun input -> 
     let raw =  "(lambda (clevr_eq_size (clevr_query_size (clevr_car $0)) clevr_small))" in
     let raw =  "(lambda (clevr_eq_objects (clevr_car $0) (clevr_car $0)))" in
@@ -146,7 +178,6 @@ let run_job channel =
   in 
   message  *)
   
-
 let _ = 
   run_job Pervasives.stdin 
   

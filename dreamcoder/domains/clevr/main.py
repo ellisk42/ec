@@ -77,6 +77,7 @@ def main(args):
         assert False
     
     if args.pop("run_ocaml_test"):
+        # Test the Helmholtz enumeration and solver.
         tasks = [buildClevrMockTask(train[0])]
         from dreamcoder.dreaming import backgroundHelmholtzEnumeration
         helmholtzFrontiers = backgroundHelmholtzEnumeration(tasks, 

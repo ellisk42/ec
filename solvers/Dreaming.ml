@@ -220,7 +220,7 @@ let rec unpack_clevr x =
   let open Yojson.Basic.Util in 
   try x |> to_assoc |> magical with _ ->
   try x |> to_list |> List.map ~f:unpack_clevr |> magical
-  with _ -> raise (Failure "could not unpack clevr objects")
+  with _ -> raise (Failure "could not unpack clevr objects");;
 
 
 let clevr_hash ?timeout:(timeout=0.001) request inputs : program -> PolyList.t option =

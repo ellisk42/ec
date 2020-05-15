@@ -148,7 +148,11 @@ clevr_test = Primitive("clevr_test", arrow(tclevrcolor, tclevrobject, tclevrobje
 ### List operators, restricted to be of type object; we can undo this later
 def _clevr_map(f): return lambda l: sort_objs([f(o) for o in l])
 
-def _clevr_add(o): return lambda l: sort_objs([o] + l)
+# Removes any duplicate object from the list before adding a new one.
+def __clevr_add(obj1, obj_list):
+    filtered_list = [o for o in obj_list if o["id"] != obj1["id"]]
+    return sort_objs([obj1] + filtered_list)
+def _clevr_add(o): return lambda l: __clevr_add(o, l)
 
 clevr_map = Primitive("clevr_map", arrow(arrow(tclevrobject, tclevrobject), tlist(tclevrobject), tlist(tclevrobject)), _clevr_map)
 clevr_if = Primitive("clevr_if", arrow(tbool, t0, t0, t0), _if)
@@ -277,6 +281,8 @@ def run_clevr_primitives_test(primitive_names, curriculum):
     filter_test = curriculum[0]
     
     ## List primitives
+    raw = "(lambda (clevr_add (clevr_car $0) $0))"
+    check_eval(filter_test, raw)
     
     # raw = "(lambda (clevr_if (clevr_not (clevr_empty? $0)) (clevr_add (clevr_car $0) $0) $0))"
     # check_eval(filter_test, raw)
