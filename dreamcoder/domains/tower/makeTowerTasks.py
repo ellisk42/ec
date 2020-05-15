@@ -173,6 +173,61 @@ buildBricks = "#(lambda (lambda (tower_loopM $0 (lambda (lambda (moveHand 3 (rev
 # buildBricks w h
 # buildHalfHBridge w h/2
 
+def makeBiasedTasks():
+    oddTwoArches = [SupervisedTower(f"Max twoArches {n1, n2, dist} ",
+              f"""((for i {n1} v) (r 4) (for i {n1} v) (l 2) h
+                  (r {dist})
+                  (for i {n2} v) (r 4) (for i {n2} v) (l 2) h
+                  )
+              """
+              )
+                for (n1,n2, dist) in [(n1, n2, dist) for n1 in range(2, 5) for n2 in range(2, 4) for dist in [5, 7] if n1 != n2]
+            ]
+
+
+    simpleTasks = [SupervisedTower(f"Max simple biased vert d={d}", 
+              f"""(v (r {d}) v)
+              """)
+            for d in [3, 5, 7] ]
+
+    simpleTasks.extend([SupervisedTower(f"Max simple biased v+h d={d}", 
+          f"""(v (r {d}) h)
+          """)
+        for d in [5, 7] ])
+
+    simpleTasks.extend([SupervisedTower(f"Max simple biased h+v d={d}", 
+      f"""(h (r {d}) v)
+      """)
+    for d in [5, 7] ] )
+
+
+    simpleLoops = [SupervisedTower(f"Max simple loop v l={l}", 
+      f"""(for i {l} v)
+      """)
+    for l in [3, 5, 7] ]
+
+    simpleLoops.extend( [SupervisedTower(f"Max simple loop h l={l}", 
+      f"""(for i {l} h)
+      """)
+    for l in [3, 5, 7] ])
+
+    simpleLoops.extend( [SupervisedTower(f"Max simple loop side l={l}, r={r}", 
+      f"""(for i {l} (r {r}) v)
+      """)
+    for l in [3, 5, 7] for r in [3, 5, 7]])
+
+    simpleArchLoops = [SupervisedTower(f"Max simple Arch loop {d}", 
+                  Program.parse(
+                    f"(lambda (tower_loopM {d} (lambda (lambda (tower_embed (lambda ({buildArch} $0 1)) $0))) $0))"
+                    )
+                  ) for d in [3, 5, 7]]
+
+    """
+    (lambda (tower_loopM 5 (lambda (lambda (tower_embed (lambda (#(lambda (lambda (lambda (tower_loopM $1 (lambda (lambda (1x3 (moveHand 4 ($2 $0))))) (moveHand 2 (3x1 $2))
+    )))) $0 2 (lambda (reverseHand $0)))) $0))) $0))
+    """
+    return oddTwoArches + simpleTasks + simpleLoops + simpleArchLoops
+
 def makeNewMaxTasks():
 
     twoArches = [SupervisedTower(f"Max twoArches {n1, n2, dist} ",

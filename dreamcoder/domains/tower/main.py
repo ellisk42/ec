@@ -130,7 +130,7 @@ class TowerCNN(nn.Module):
 
 def tower_options(parser):
     parser.add_argument("--tasks",
-                        choices=["old","new", "maxHard", "helmholtz"],
+                        choices=["old","new", "maxHard", "helmholtz", "biased"],
                         default="old")
     parser.add_argument("--visualize",
                         default=None, type=str)
@@ -301,6 +301,8 @@ def main(arguments):
         tasks = makeNewMaxTasks()
     elif tasks == "helmholtz":
         tasks = makeHelmholtzTowerTasks(n=64)
+    elif tasks == "biased":
+        tasks = makeBiasedTasks()
     else: assert False
         
     test, train = testTrainSplit(tasks, arguments.pop("split"))
