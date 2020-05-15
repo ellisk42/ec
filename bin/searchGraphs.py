@@ -58,7 +58,7 @@ def plotTestResults(testResults, timeout, defaultLoss=None,
     if mode =='fractionHit': plot.ylim(bottom=0.)
     for n in range(len(testResults)):
         #xs = list(range(max([0]+[r.evaluations for tr in testResults[n] for r in tr] ) + 1))
-        xs = list(range(500))
+        xs = list(range(137))
         if mode =='fractionHit':
             plot.plot(xs, [fractionHit(n,lambda r: r.evaluations <= x) for x in xs],
                   label=names[n])
@@ -116,17 +116,17 @@ if __name__ == '__main__':
 
     graph="_graph=True"
     #mode="Prior"
-    nameSalt = "SMC" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
+    nameSalt = "SMC2" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
     ID = 'towers' + str(n)
     runType ="SMC" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
     paths = [
-        (f'experimentOutputs/{ID}{runType}Sample_SRE=True{graph}.pickle', 'prior only (no value)'),
+        (f'experimentOutputs/{ID}{runType}Sample_SRE=True{graph}.pickle', 'Policy only (no value)'),
         (f'experimentOutputs/{ID}{runType}RNN_SRE=True{graph}.pickle', 'RNN value'),
         (f'experimentOutputs/{ID}{runType}REPL_SRE=True{graph}.pickle', 'REPL modular value'),
         #(f'experimentOutputs/{ID}{runType}Symbolic_SRE=True{graph}.pickle', 'Symbolic value')
         ]
 
-
+    with open('biasedtasks.p', 'rb') as h: biasedtasks = dill.load(h)
     timeout=1200
     outputDirectory = 'plots'
     paths, names = zip(*paths)
@@ -140,13 +140,44 @@ if __name__ == '__main__':
 
             delTasks = []
             for task, results in r.testingSearchStats[-1].items():
-                if "Max bridges" in task.name: delTasks.append(task)
+                if "Max" in task.name: delTasks.append(task)
             for task in delTasks: del r.testingSearchStats[-1][task]
         
-            from dreamcoder.showTowerTasks import showTowersAndSolutions, computeValue
+            minN = float('inf')
+            for task, results in r.testingSearchStats[-1].items():
+                if not results:
+                    minN = min(minN, r.testingNumOfProg[-1][task])
+
+            print("min of max N prog searched is", minN  )
+            #from dreamcoder.showTowerTasks import showTowersAndSolutions, computeValue
             #showTowersAndSolutions(r)
             #computeValue(r)
             #assert 0
+
+            # findBiasedTasks
+            # from dreamcoder.domains.tower.motifs import *
+            # fs = [brickBaseInvention,  brickBaseReverse,  oddLoops, oddMoves]
+
+            # biasedtasks = []
+            # taskToSolutions = {}
+            # for task, results in r.testingSearchStats[-1].items():
+            #     taskToSolutions[task] = []
+            #     if task in r.recognitionTaskMetrics:
+            #         if 'frontier' in r.recognitionTaskMetrics[task]:
+            #             for entry in r.recognitionTaskMetrics[task]['frontier']:
+            #                 taskToSolutions[task].append(entry.program) 
+
+            #     if "Max" in task.name and hasattr(task, 'original'):
+            #         taskToSolutions[task].append(task.original)
+
+            #     if taskToSolutions[task] and all( any( f(expr) for f in fs for _, expr in sol.walkUncurried()) for sol in taskToSolutions[task]):
+            #         biasedtasks.append(task)
+
+            # delTasks = []
+            # for task, results in r.testingSearchStats[-1].items():
+            #     if task not in biasedtasks: delTasks.append( task )
+            # for task in delTasks: del r.testingSearchStats[-1][task]
+
             #import pdb; pdb.set_trace()
             res = r.searchStats[-1] if mode=='train' else r.testingSearchStats[-1]
             testResults.append( list(res.values()) )
