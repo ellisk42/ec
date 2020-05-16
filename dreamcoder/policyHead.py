@@ -73,7 +73,7 @@ class BasePolicyHead(nn.Module):
 
 class RNNPolicyHead(nn.Module):
     #this is the single step type
-    def __init__(self, g, featureExtractor, H, maxVar=10):
+    def __init__(self, g, featureExtractor, H, maxVar=15):
         super(RNNPolicyHead, self).__init__() #should have featureExtractor?
         self.use_cuda = torch.cuda.is_available()
         self.featureExtractor = featureExtractor
