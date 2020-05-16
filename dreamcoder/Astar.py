@@ -53,7 +53,7 @@ class Astar(Solver):
     def _getNextNodes(self, node, g, request):
         totalCost, policyCost, sketch, zippers = node
         for zipper in zippers:
-            for stepCost, newZippers, newSketch in enumSingleStep(g, sketch, request, 
+            for stepCost, newZippers, newSketch in owner.policyHead.enumSingleStep(task, g, sketch, request, 
                                                                     holeZipper=zipper,
                                                                     maximumDepth=self.maxDepth):
                 yield policyCost + stepCost, newZippers, newSketch

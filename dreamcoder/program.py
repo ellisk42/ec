@@ -1030,11 +1030,11 @@ FragmentVariable.single = FragmentVariable()
 
 
 class Hole(Program):
-    def __init__(self, tp=None):
+    def __init__(self, tp=None, target=False):
         self.tp = tp
-
+        self.target = target
     def show(self, isFunction): 
-        #return f"<HOLE:{self.tp}>"
+        if self.target: return "<TargetHOLE>"
         return "<HOLE>"
 
     @property
