@@ -11,6 +11,8 @@ from dreamcoder.primitiveGraph import graphPrimitives
 from dreamcoder.dreaming import backgroundHelmholtzEnumeration
 
 from dreamcoder.valueHead import SimpleRNNValueHead, AbstractREPLValueHead, SampleDummyValueHead, TowerREPLValueHead, SemiOracleValueHead
+from dreamcoder.policyHead import BasePolicyHead, RNNPolicyHead
+
 from dreamcoder.symbolicAbstractTowers import SymbolicAbstractTowers
 import sys
 
@@ -457,7 +459,7 @@ def ecIterator(grammar, tasks,
                                recognitionSteps=recognitionSteps, maximumFrontier=maximumFrontier, useValue=useValue, 
                                trainOnly=True, saveIter=100, savePath=recModelPath, resumeTrainingModel=resumeTrainingModel,
                                seperateFeatureExtractor=bool(useSamplePolicy), conditionalForValueTraining=conditionalForValueTraining,
-                               searchType=searchType, filterMotifs=filterMotifs )
+                               searchType=searchType, filterMotifs=filterMotifs, policyType=policyType)
 
         #testing
         if testingTimeout == 0:
@@ -721,7 +723,8 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
                       helmholtzRatio=None, helmholtzFrontiers=None, maximumFrontier=None,
                       auxiliaryLoss=None, cuda=None, CPUs=None, solver=None, useValue=False, 
                       trainOnly=False, saveIter=None, savePath=None, resumeTrainingModel=None,
-                      seperateFeatureExtractor=False, conditionalForValueTraining=False, searchType=None, filterMotifs=[]):
+                      seperateFeatureExtractor=False, conditionalForValueTraining=False, searchType=None,
+                      filterMotifs=[], policyType="base"):
     eprint("Using an ensemble size of %d. Note that we will only store and test on the best recognition model." % ensembleSize)
 
     featureExtractorObjects = [featureExtractor(tasks, testingTasks=testingTasks, cuda=cuda) for i in range(ensembleSize)]
@@ -746,10 +749,19 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
             valueHead = SymbolicAbstractTowers()
         elif useValue == "SemiOracle":
             valueHead = SemiOracleValueHead(testingTasks, grammar)
-
         else: assert False
+        
+        if policyType == "base":
+            policyHead = BasePolicyHead()
+        elif policyType == "RNN":
+            policyHead = RNNPolicyHead(grammar, featureExtr, H=featureExtr.outputDimensionality)
+        else: assert False
+
     else:
         valueHead = None
+        policyHead = None
+
+
 
     recognizers = [RecognitionModel(featureExtractorObjects[i],
                                     grammar,
@@ -765,7 +777,9 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
                                     useValue=useValue,
                                     valueHead=valueHead,
                                     searchType=searchType,
-                                    filterMotifs=filterMotifs) for i in range(ensembleSize)]
+                                    filterMotifs=filterMotifs,
+                                    policyHead=policyHead
+                                    ) for i in range(ensembleSize)]
     eprint(f"Currently using this much memory: {getThisMemoryUsage()}")
     trainedRecognizers = parallelMap(min(CPUs,len(recognizers)),
                                      lambda recognizer: recognizer.train(allFrontiers,

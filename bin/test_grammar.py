@@ -325,7 +325,61 @@ def test_TowerREPLValueConvergence():
         loss.backward()
         optimizer.step()
 
+def test_TowerREPLPolicyConvergence():
 
+    from dreamcoder.domains.tower.towerPrimitives import primitives, new_primitives, animateTower
+    from dreamcoder.domains.tower.main import TowerCNN
+    from dreamcoder.domains.tower.makeTowerTasks import makeSupervisedTasks
+    from dreamcoder.valueHead import TowerREPLValueHead
+    from dreamcoder.policyHead import RNNPolicyHead
+
+    g = Grammar.uniform(new_primitives,
+                         continuationType=ttower)
+    tasks = makeSupervisedTasks()
+
+    def _empty_tower(h): return (h,[])
+
+    import dill
+    with open('testTowerFrontiers.pickle', 'rb') as h:
+        lst = dill.load(h)
+
+    #import pdb; pdb.set_trace()
+
+    # for i, frontier in enumerate(lst):
+    #     animateTower(f'front{i}', frontier.entries[0].program._fullProg)
+
+    def saveState(path, prog):
+        import scipy.misc
+        state, actions = prog.evaluate([])(_empty_tower)(TowerState(history=[]))
+        plan = [tup for tup in state.history if isinstance(tup, tuple)]
+        hand = state.hand
+        image = renderPlan(plan, drawHand=hand, pretty=False, drawHandOrientation=state.orientation)
+        scipy.misc.imsave(path, image)
+
+    saveState("test1.png", Program.parse('(lambda (reverseHand (1x3 (1x3 $0))))') )
+    saveState("test2.png", Program.parse('(lambda  (1x3 (1x3 $0)) )'))
+
+
+    featureExtractor = TowerCNN(tasks, testingTasks=tasks[-3:], cuda=True)
+    #valueHead = TowerREPLValueHead(g, featureExtractor, H=1024)
+    policyHead = RNNPolicyHead(g, featureExtractor, H=1024)
+    optimizer = torch.optim.Adam(policyHead.parameters(), lr=0.001, eps=1e-3, amsgrad=True)
+
+    for frontier in lst:
+        print(frontier.entries[0].program._fullProg)
+
+    for i in range(5000):
+        policyHead.zero_grad()
+        
+        losses = [policyHead.policyLossFromFrontier(frontier, g) for frontier in lst ]#+ lst[2:]]
+        #looks like 
+        loss = sum(losses)
+        print(loss.data.item())
+        if not loss.requires_grad:
+            print("error on loss")
+            continue
+        loss.backward()
+        optimizer.step()
 
 
 if __name__=='__main__':
@@ -346,5 +400,6 @@ if __name__=='__main__':
     # tasks = make_list_bootstrap_tasks()
     # expr = Program.parse('(lambda (map (lambda (is-square $0)) $0))')
     # test_abstractHolesTower()
-    test_abstractHolesTowerValue()
+    # test_abstractHolesTowerValue()
     # test_TowerREPLValueConvergence()
+    test_TowerREPLPolicyConvergence()

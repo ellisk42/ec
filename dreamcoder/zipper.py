@@ -453,7 +453,7 @@ class ParentFinder:
         self.path = []
         return parentInfo
 
-def sampleOneStepFromHole(zipper, sk, tp, g, maximumDepth):
+def sampleOneStepFromHole(zipper, sk, tp, g, maximumDepth, supplyDist=None):
 
     mustBeLeaf = len([ t for t in zipper.path if t != 'body' ] ) >= maximumDepth
     
@@ -473,7 +473,7 @@ def sampleOneStepFromHole(zipper, sk, tp, g, maximumDepth):
     newZippers = findHoles(newSk, tp) #TODO type inference, redoing computation, can use newContext
     return newSk, newZippers
 
-def enumSingleStep(g, sk, tp, holeZipper=None, maximumDepth=None):
+def enumSingleStep(g, sk, tp, holeZipper=None, maximumDepth=None, supplyDist=None):
     zipper = holeZipper
     mustBeLeaf = len([ t for t in zipper.path if t != 'body' ] ) >= maximumDepth
 
@@ -484,10 +484,11 @@ def enumSingleStep(g, sk, tp, holeZipper=None, maximumDepth=None):
                             zipper.context,
                             zipper.env,
                             zipper.tp,
-                            mustBeLeaf=mustBeLeaf)
+                            mustBeLeaf=mustBeLeaf,
+                            supplyDist=supplyDist)
 
     else:
-        candidates = g._enumOneStep(zipper.tp, zipper.context, zipper.env, mustBeLeaf)  
+        candidates = g._enumOneStep(zipper.tp, zipper.context, zipper.env, mustBeLeaf, supplyDist=supplyDist)  
 
     
     for stepCost, newContext, newSubtree in candidates:
@@ -501,7 +502,7 @@ def followPathOneStep(zipper, last, full, tp):
     nextNode, excludeProd, parentInfo = OneStepFollower().execute(full, zipper.path) #TODO
     newSk = NewExprPlacer().execute(last, zipper.path, nextNode)
 
-    return newSk, excludeProd, parentInfo
+    return newSk, excludeProd, parentInfo, nextNode
 
 def sampleWrongOneStep(zipper, last, full, tp, g, excludeProd=[], parentInfo=None):
     """
@@ -544,7 +545,6 @@ def findHolesVisitor(sk, tp):
 def findHoles(sk, tp):
     return findHolesEnum(tp, sk)
 
-
 #will be a method of grammar
 def sampleSingleStep(g, sk, tp, holeZippers=None, maximumDepth=4):
     #choose hole to expandz
@@ -555,17 +555,21 @@ def sampleSingleStep(g, sk, tp, holeZippers=None, maximumDepth=4):
     newSk, newZippers = sampleOneStepFromHole(zipper, sk, tp, g, maximumDepth)
     return newSk, newZippers
 
-def getTracesFromProg(full, tp, g, onlyPos=False):
+def getTracesFromProg(full, tp, g, onlyPos=False, returnNextNode=False):
     last = baseHoleOfType(tp) #this sets it up with first hole
 
     trace = []
     negTrace = []
+    holesToExpand = []
     zippers = findHoles(last, tp) #TODO
+    targetNodes = []
     while zippers:
         zipper = random.choice(zippers)
+        holesToExpand.append(zipper)
 
-        newLast, excludeProd, parentInfo = followPathOneStep(zipper, last, full, tp) #TODO
-        trace.append(newLast)  
+        newLast, excludeProd, parentInfo, nextNode = followPathOneStep(zipper, last, full, tp) #TODO
+        trace.append(newLast)
+        targetNodes.append(nextNode)  
 
         if not onlyPos:
             negLast = sampleWrongOneStep(zipper, last, full, tp, g, excludeProd=excludeProd, parentInfo=parentInfo) #TODO
@@ -573,4 +577,6 @@ def getTracesFromProg(full, tp, g, onlyPos=False):
 
         last = newLast
         zippers = findHoles(last, tp)
+    if returnNextNode:
+        return [baseHoleOfType(tp)] + trace[:-1], negTrace, targetNodes, holesToExpand
     return trace, negTrace

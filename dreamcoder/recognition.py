@@ -630,7 +630,8 @@ class RecognitionModel(nn.Module):
                  useValue=False,
                  valueHead=None,
                  searchType=None,
-                 filterMotifs=[]):
+                 filterMotifs=[],
+                 policyHead=None):
         super(RecognitionModel, self).__init__()
         self.id = id
         self.trained=False
@@ -709,6 +710,9 @@ class RecognitionModel(nn.Module):
             elif searchType == "Astar":
                 self.solver = Astar(self)
             else: assert False
+
+            assert policyHead
+            self.policyHead = policyHead
 
             if previousRecognitionModel:
                 self.valueHead.load_state_dict(previousRecognitionModel.valueHead.state_dict())
@@ -1074,6 +1078,7 @@ class RecognitionModel(nn.Module):
         valueHeadLosses = []
         realValueLosses = []
         dreamValueLosses = []
+        policyHeadLosses, realPolicyLosses, dreamPolicyLosses = [], [], []
         totalGradientSteps = self.gradientStepsTaken
         startingGradientSteps = self.gradientStepsTaken
         epochs = 9999999
@@ -1120,8 +1125,11 @@ class RecognitionModel(nn.Module):
                         valueHeadLoss = torch.tensor([0.])
                         if self.use_cuda: valueHeadLoss = valueHeadLoss.cuda()
 
+                    policyHeadLoss = self.policyHead.policyLossFromFrontier(frontier, g)
+
                 else:
                     valueHeadLoss = 0
+                    policyHeadLoss = 0
 
                 if loss is None:
                     if not dreaming:
@@ -1136,7 +1144,7 @@ class RecognitionModel(nn.Module):
                 else:
                     #ttt = time.time()
                     try:
-                        (loss + classificationLoss + valueHeadLoss).backward()
+                        (loss + classificationLoss + valueHeadLoss + policyHeadLoss).backward()
                         n_runtimeErrors = 0
                     except RuntimeError as e:
                         print("WARNING: had a runtime error on backwards step")
@@ -1147,6 +1155,8 @@ class RecognitionModel(nn.Module):
                     #print(f"tot backward time: {time.time() - ttt}")
                     classificationLosses.append(classificationLoss.data.item())
                     valueHeadLosses.append (valueHeadLoss.data.item() if self.useValue else 0)
+                    policyHeadLosses.append (policyHeadLoss.data.item() if self.useValue else 0)
+
                     optimizer.step()
                     totalGradientSteps += 1
                     losses.append(loss.data.item())
@@ -1155,10 +1165,12 @@ class RecognitionModel(nn.Module):
                         dreamLosses.append(losses[-1])
                         dreamMDL.append(descriptionLengths[-1])
                         dreamValueLosses.append(valueHeadLosses[-1])
+                        dreamPolicyLosses.append(policyHeadLosses[-1])
                     else:
                         realLosses.append(losses[-1])
                         realMDL.append(descriptionLengths[-1])
                         realValueLosses.append(valueHeadLosses[-1])
+                        realPolicyLosses.append(policyHeadLosses[-1])
                     if totalGradientSteps > steps:
                         break # Stop iterating, then print epoch and loss, then break to finish.
             
@@ -1187,15 +1199,18 @@ class RecognitionModel(nn.Module):
                     eprint("(ID=%d): " % self.id, "\tvalue loss:", mean(valueHeadLosses))
                     eprint("(ID=%d): " % self.id, "\t\t(real value loss):", mean(realValueLosses))
                     eprint("(ID=%d): " % self.id, "\t\t(dream value loss):", mean(dreamValueLosses), flush=True)
+
+                    eprint("(ID=%d): " % self.id, "\tpolicy loss:", mean(policyHeadLosses))
+                    eprint("(ID=%d): " % self.id, "\t\t(real policy loss):", mean(realPolicyLosses))
+                    eprint("(ID=%d): " % self.id, "\t\t(dream policy loss):", mean(dreamPolicyLosses), flush=True)
+
                 losses, descriptionLengths, realLosses, dreamLosses, realMDL, dreamMDL = [], [], [], [], [], []
                 classificationLosses = []
                 valueHeadLosses = []
                 realValueLosses = []
                 dreamValueLosses = []
+                policyHeadLosses, realPolicyLosses, dreamPolicyLosses = [], [], []
                 gc.collect()
-
-
-
         
         eprint("(ID=%d): " % self.id, " Trained recognition model in",time.time() - start,"seconds")
         self.trained=True
@@ -1311,6 +1326,8 @@ class RecognitionModel(nn.Module):
             self.featureExtractor.CUDA = False #for towers
             self.valueHead.use_cuda = False
             self.valueHead.cpu()
+            self.policyHead.cpu()
+            self.policyHead.use_cuda = False
             #because they may be seperate:
             if hasattr(self.valueHead, 'featureExtractor'):
                 self.valueHead.featureExtractor.use_cuda = False
@@ -1329,6 +1346,8 @@ class RecognitionModel(nn.Module):
             self.featureExtractor.CUDA = True #for towers
             self.valueHead.use_cuda = True
             self.valueHead.cuda()
+            self.policyHead.cuda()
+            self.policyHead.use_cuda = True
             #because they may be seperate:
             if hasattr(self.valueHead, 'featureExtractor'):
                 self.valueHead.featureExtractor.use_cuda = True

@@ -25,7 +25,7 @@ def binary_cross_entropy(y,t, epsilon=10**-10, average=True):
     returns: 1/B * - \sum_b t*y + (1 - t)*(log(1 - e^y + epsilon))"""
 
     B = y.size(0)
-    assert len(y.size()) == 1
+    assert len(y.size()) == 1, len(y.size())
     log_yes_probability = y
     log_no_probability = torch.log(1 - y.exp() + epsilon)
     assert torch.ByteTensor.all(log_yes_probability <= 0.)
@@ -139,12 +139,14 @@ class SampleDummyValueHead(BaseValueHead):
 
 class SimpleRNNValueHead(BaseValueHead):
 
-    def __init__(self, g, featureExtractor, H=512):
+    def __init__(self, g, featureExtractor, H=512, encodeTargetHole=False):
         #specEncoder can be None, meaning you dont use the spec at all to encode objects
         super(SimpleRNNValueHead, self).__init__()
         self.use_cuda = torch.cuda.is_available() #FIX THIS
 
-        extras = ['(', ')', 'lambda', '<HOLE>', '#'] + ['$'+str(i) for i in range(15)] 
+        extras = ['(', ')', 'lambda', '<HOLE>', '#'] + ['$'+str(i) for i in range(10)] 
+
+        if encodeTargetHole: extras.append("<TargetHOLE>")
 
         self.lexicon = [str(p) for p in g.primitives] + extras
         self.embedding = nn.Embedding(len(self.lexicon), H)

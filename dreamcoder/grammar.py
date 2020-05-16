@@ -244,7 +244,7 @@ class Grammar(object):
 
 
 
-    def _sampleOneStep(self, request, context, environment, mustBeLeaf=False, forceHole=False, excludeProd=[]):
+    def _sampleOneStep(self, request, context, environment, mustBeLeaf=False, forceHole=False, excludeProd=[], supplyDist=None):
         """
         sample a hole with prob sampleHoleProb
         We use the depth param to figure out if the next one deep should be all holes
@@ -254,7 +254,7 @@ class Grammar(object):
             context, expression = self._sampleOneStep(
                 request.arguments[1], context, [
                     request.arguments[0]] + environment, mustBeLeaf,
-                    forceHole=forceHole, excludeProd=excludeProd) #is this right? #should there be an excludeProd here???
+                    forceHole=forceHole, excludeProd=excludeProd, supplyDist=supplyDist) #is this right? #should there be an excludeProd here???
             #assert False, 'should there be an excludeHole?'
             return context, Abstraction(expression) #should I be putting it into beta-normal form??
 
@@ -269,6 +269,13 @@ class Grammar(object):
                                           # function arguments
                                           mustBeLeaf=mustBeLeaf, 
                                           excludeProd=excludeProd) #TODO
+        if supplyDist:
+            candidates = [(supplyDist[p], t, p, k) 
+                                for l, t, p, k in candidates]
+            #normalize
+            z = lse([l for l, t, p, k in candidates])
+            candidates = [(exp(l - z), t, p, k)
+                              for l, t, p, k in candidates]
 
         newType, chosenPrimitive, context = sampleDistribution(candidates)
 
@@ -285,7 +292,7 @@ class Grammar(object):
 
 
 
-    def _enumOneStep(self, request, context, environment, mustBeLeaf=False, forceHole=False, excludeProd=[]):
+    def _enumOneStep(self, request, context, environment, mustBeLeaf=False, forceHole=False, excludeProd=[], supplyDist=None):
         """
         sample a hole with prob sampleHoleProb
         We use the depth param to figure out if the next one deep should be all holes
@@ -295,7 +302,8 @@ class Grammar(object):
             for l, newContext, expression in self._enumOneStep(
                 request.arguments[1], context, [
                     request.arguments[0]] + environment, mustBeLeaf,
-                    forceHole=forceHole, excludeProd=excludeProd):
+                    forceHole=forceHole, excludeProd=excludeProd,
+                    supplyDist=supplyDist):
 
                 yield l, newContext, Abstraction(expression)
 
@@ -310,6 +318,13 @@ class Grammar(object):
                                           # function arguments
                                           mustBeLeaf=mustBeLeaf, 
                                           excludeProd=excludeProd) #TODO
+
+        if supplyDist:
+            candidates = [(supplyDist[p], t, p, k) 
+                                for l, t, p, k in candidates]
+            #normalize
+            z = lse([l for l, t, p, k in candidates])
+            candidates = [(l - z, t, p, k) for l, t, p, k in candidates]
 
         for l, newType, chosenPrimitive, context in candidates:
 
@@ -1316,7 +1331,7 @@ class ContextualGrammar:
         return context, returnValue
 
     def _sampleOneStep(self, parent, parentIndex, context, environment, request,
-                       mustBeLeaf=False, forceHole=False, excludeProd=[]):
+                       mustBeLeaf=False, forceHole=False, excludeProd=[], supplyDist=None):
         """
         sample a hole with prob sampleHoleProb
         We use the depth param to figure out if the next one deep should be all holes
@@ -1328,7 +1343,8 @@ class ContextualGrammar:
                                          request.arguments[1],
                                          mustBeLeaf=mustBeLeaf,
                                          forceHole=forceHole,
-                                         excludeProd=excludeProd) #TODO keep exclueProd??
+                                         excludeProd=excludeProd,
+                                         supplyDist=supplyDist) #TODO keep exclueProd??
             return context, Abstraction(body)
         if forceHole:
             return context, Hole(tp=request)
@@ -1340,6 +1356,15 @@ class ContextualGrammar:
                                        normalize=True, returnProbabilities=True,
                                        mustBeLeaf=mustBeLeaf,
                                        excludeProd=excludeProd)
+
+        if supplyDist:
+            candidates = [(supplyDist[p], t, p, k) 
+                                for l, t, p, k in candidates]
+            #normalize
+            z = lse([l for l, t, p, k in candidates])
+            candidates = [(exp(l - z), t, p, k)
+                              for l, t, p, k in candidates]
+
         newType, chosenPrimitive, context = sampleDistribution(candidates)
 
         xs = newType.functionArguments()
@@ -1355,7 +1380,7 @@ class ContextualGrammar:
 
 
     def _enumOneStep(self, parent, parentIndex, context, environment, request,
-                       mustBeLeaf=False, forceHole=False, excludeProd=[]):
+                       mustBeLeaf=False, forceHole=False, excludeProd=[], supplyDist=None):
         """
         sample a hole with prob sampleHoleProb
         We use the depth param to figure out if the next one deep should be all holes
@@ -1367,7 +1392,8 @@ class ContextualGrammar:
                                          request.arguments[1],
                                          mustBeLeaf=mustBeLeaf,
                                          forceHole=forceHole,
-                                         excludeProd=excludeProd): #TODO keep exclueProd??
+                                         excludeProd=excludeProd,
+                                         supplyDist=supplyDist): #TODO keep exclueProd??
                 yield l, newContext, Abstraction(body)
 
         if forceHole:
@@ -1380,6 +1406,13 @@ class ContextualGrammar:
                                        normalize=True, returnProbabilities=False,
                                        mustBeLeaf=mustBeLeaf,
                                        excludeProd=excludeProd)
+
+        if supplyDist:
+            candidates = [(supplyDist[p], t, p, k) 
+                                for l, t, p, k in candidates]
+            #normalize
+            z = lse([l for l, t, p, k in candidates])
+            candidates = [(l - z, t, p, k) for l, t, p, k in candidates]
 
         for l, newType, chosenPrimitive, context in candidates: 
         #newType, chosenPrimitive, context = sampleDistribution(candidates)
