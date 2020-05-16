@@ -48,7 +48,7 @@ def backgroundHelmholtzEnumeration(tasks, g, timeout, _=None,
                                    serialize_special=None):
     requests = list({t.request for t in tasks})
     if serialize_special is None:
-         def s(x): return x
+         def _s(x): return x
          serialize_x_fn = _s
     else: 
         serialize_x_fn = serialize_special

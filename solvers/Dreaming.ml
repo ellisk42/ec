@@ -222,6 +222,19 @@ let rec unpack_clevr x =
   try x |> to_list |> List.map ~f:unpack_clevr |> magical
   with _ -> raise (Failure "could not unpack clevr objects");;
 
+(* Pack and sort any object lists *)
+let rec poly_pack_clevr t v = 
+  match t with
+  | TCon("list",[t'],_) -> 
+    let return_list = 
+      match t' with 
+      | TCon("tclevrobject",[],_) -> sort_dedup (magical v)
+      | _ -> v 
+    in PolyValue.List(magical return_list |> List.map ~f:(poly_pack_clevr (magical t'))) 
+  | TCon("int",[],_) -> PolyValue.Integer(magical v)
+  | TCon("bool",[],_) -> PolyValue.Boolean(magical v)
+  | TCon("tclevrobject",[],_) -> PolyValue.FullString(magical (obj_to_string (magical (v))))
+  | _ -> PolyValue.FullString(magical v)
 
 let clevr_hash ?timeout:(timeout=0.001) request inputs : program -> PolyList.t option =
   let open Yojson.Basic.Util in
@@ -237,7 +250,10 @@ let clevr_hash ?timeout:(timeout=0.001) request inputs : program -> PolyList.t o
           match run_for_interval ~attempts:2 timeout
                   (fun () -> run_lazy_analyzed_with_arguments p input)
           with
-          | Some(value) -> PolyValue.pack return value            
+          | Some(value) -> 
+            let packed = poly_pack_clevr return value in 
+            let _ = Printf.eprintf "Packed: %s\n" (PolyValue.to_string packed) in
+            packed        
           | _ -> PolyValue.None
         with (* We have to be a bit careful with exceptions if the
               * synthesized program generated an exception, then we just

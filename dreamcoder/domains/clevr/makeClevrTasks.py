@@ -30,12 +30,12 @@ def build_examples(q, input_scenes):
 
 def infer_return_type(answers):
     if type(answers[0]) == dict: return tlist(tclevrobject)
-    elif type(answers[0]) == int: return tlist(tint)
-    elif type(answers[0]) == bool: return tlist(tbool)
-    elif answers[0] in attribute_constants['color']: return tlist(tclevrcolor)
-    elif answers[0] in attribute_constants['shape']: return tlist(tclevrshape)
-    elif answers[0] in attribute_constants['size']: return tlist(tclevrsize)
-    elif answers[0] in attribute_constants['material']: return tlist(tclevrmaterial)
+    elif type(answers[0]) == int: return tint
+    elif type(answers[0]) == bool: return tbool
+    elif answers[0] in attribute_constants['color']: return tclevrcolor
+    elif answers[0] in attribute_constants['shape']: return tclevrshape
+    elif answers[0] in attribute_constants['size']: return tclevrsize
+    elif answers[0] in attribute_constants['material']: return tclevrmaterial
     else: 
         print("Error: cannot infer return type!")
         assert False
@@ -58,8 +58,9 @@ def buildClevrMockTask(train_task):
     first_obj =  train_task.examples[0][0][0][0]
     print(first_obj["left"])
     req = arrow(tlist(tclevrobject), tlist(tclevrobject))
+    obj_examples = [train_task.examples[0]]
     return Task(name="mock", request=req,
-                examples=[train_task.examples[0]], features=None, cache=False)
+                examples=obj_examples, features=None, cache=False)
 
 def buildClevrTask(q, input_scenes):
     name = q['question'] if type(q['question']) is str else q['question'][0]

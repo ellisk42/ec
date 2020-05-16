@@ -522,6 +522,17 @@ let primitive_clevr_left = primitive "clevr_left" (tclevrrelation) ("left");;
 let primitive_clevr_right = primitive "clevr_right" (tclevrrelation) ("right");;
 let primitive_clevr_behind = primitive "clevr_behind" (tclevrrelation) ("behind");;
 let primitive_clevr_front = primitive "clevr_front" (tclevrrelation) ("front");;
+
+(** Object serialization **)
+let obj_to_string obj = 
+  let (_, id) =  List.Assoc.find_exn obj "id" ~equal:(=) in
+  let id = Pervasives.string_of_int (magical id) in 
+  let attributes = ["color"; "shape"; "material"; "size"; "left"; "right"; "front"; "behind"] in
+  let attribute_strings = attributes |> List.map ~f: (fun attr_type ->
+    let (_, a) =  List.Assoc.find_exn obj attr_type ~equal:(=)
+    in a) in 
+  let zipped = List.zip_exn ("id" :: attributes) (id :: (magical attribute_strings)) in 
+  let delimited = zipped |> List.map ~f: (fun (attr_name, attr_string) -> attr_name ^ ":" ^ attr_string) in String.concat ~sep:"|" delimited
   
 (** Sort, dedup, and compare object lists as sets **)
 let sort_objs obj_list = 

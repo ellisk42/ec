@@ -8,7 +8,8 @@ open Grammar
 open Utils
 open Timeout
 open Type
-    
+
+open PolyValue
 open Yojson.Basic
 
 let print_list obj_list = 
@@ -32,6 +33,14 @@ let build_obj attribute_type old_obj attr =
   let new_attr = new_obj |> to_assoc |> magical in 
   removed @ new_attr
 
+let test_hashing return input = 
+  let obj_list = List.hd_exn input in 
+  let obj_1 = List.hd_exn obj_list in
+  let dup_list = obj_1 :: obj_list in 
+  let to_pack = dup_list in
+  let poly_packed = Dreaming.poly_pack_clevr return to_pack in
+  Printf.eprintf("Packed: %s\n") (PolyValue.to_string poly_packed)
+
 let test_obj_list input = 
   (** Test dedup **)
   let obj_list = List.hd_exn input in 
@@ -39,7 +48,8 @@ let test_obj_list input =
   let obj_1 = List.hd_exn sorted_obj in
   let dup_list = obj_1 :: sorted_obj in 
   let deduped = sort_dedup dup_list in 
-  
+  let _ = Printf.eprintf "Serialized: %s\n" (obj_to_string obj_1) in 
+
   (** Test obj comparison **)
   let obj_2 = List.hd_exn (List.tl_exn obj_list) in 
   let _ = Printf.eprintf "Comparing: %s\n" (Bool.to_string (compare_obj obj_1 obj_1)) in
@@ -115,21 +125,26 @@ let run_job channel =
       | Some(special) -> special
       | None -> (Printf.eprintf "Could not find special Helmholtz enumerator: %s\n" name; assert (false))
   in 
+  let return = return_of_type request in
   let inputs = (j |> member "extras") in
   let behavior_hash = (k ~timeout:evaluationTimeout request (j |> member "extras")) in
+  let raw  = "(lambda (clevr_add (clevr_car $0) $0))" in 
+  let p = parse_program raw |> get_some in
+  behavior_hash p
   (** Test behavior hash **)
-  let unpacked_inputs : 'a list list = unpack_clevr inputs in
+  (* let unpacked_inputs : 'a list list = unpack_clevr inputs in
   let outputs = unpacked_inputs |> List.map ~f: (fun input -> 
     let raw  = "(lambda (clevr_add (clevr_car $0) $0))" in 
     (* test_program "test" raw input *)
-    test_obj_list input
+    (* test_obj_list input *)
+    test_hashing return input
     )
-  in outputs
+  in outputs *)
   
   (** Test enumeration **)
   (* let unpacked_inputs : 'a list list = unpack_clevr inputs in
   set_enumeration_timeout 1.0;
-  let rec loop lb =
+let rec loop lb =
     if enumeration_timed_out() then () else begin 
       let final_results = 
         enumerate_programs ~extraQuiet:true ~nc:nc ~final:(fun () -> [])
