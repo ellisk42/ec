@@ -1165,7 +1165,7 @@ def commandlineArguments(_=None,
                         help="use value-based search")
     parser.add_argument("--policyType", type=str,
                         default="base",
-                        choices=["base", "tree"],
+                        choices=["base", "tree", "RNN"],
                         help="what type of policy to use")
     parser.add_argument("--singleRoundValueEval",
                         action='store_true',

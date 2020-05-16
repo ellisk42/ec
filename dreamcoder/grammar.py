@@ -244,18 +244,22 @@ class Grammar(object):
 
 
 
-    def _sampleOneStep(self, request, context, environment, mustBeLeaf=False, forceHole=False, excludeProd=[], supplyDist=None):
+    def _sampleOneStep(self, request, context, environment, mustBeLeaf=False, forceHole=False, excludeProd=[], supplyDist=None,
+                            returnCandidates=False):
         """
         sample a hole with prob sampleHoleProb
         We use the depth param to figure out if the next one deep should be all holes
         this could use a big refactor
         """
         if request.isArrow():
-            context, expression = self._sampleOneStep(
+            context_expression = self._sampleOneStep(
                 request.arguments[1], context, [
                     request.arguments[0]] + environment, mustBeLeaf,
                     forceHole=forceHole, excludeProd=excludeProd, supplyDist=supplyDist) #is this right? #should there be an excludeProd here???
             #assert False, 'should there be an excludeHole?'
+            if returnCandidates: return context_expression #huge hack ..
+            context, expression = context_expression
+
             return context, Abstraction(expression) #should I be putting it into beta-normal form??
 
         if forceHole:
@@ -269,6 +273,8 @@ class Grammar(object):
                                           # function arguments
                                           mustBeLeaf=mustBeLeaf, 
                                           excludeProd=excludeProd) #TODO
+
+        if returnCandidates: return candidates
         if supplyDist:
             candidates = [(supplyDist[p], t, p, k) 
                                 for l, t, p, k in candidates]
@@ -1331,20 +1337,23 @@ class ContextualGrammar:
         return context, returnValue
 
     def _sampleOneStep(self, parent, parentIndex, context, environment, request,
-                       mustBeLeaf=False, forceHole=False, excludeProd=[], supplyDist=None):
+                       mustBeLeaf=False, forceHole=False, excludeProd=[], supplyDist=None, returnCandidates=False):
         """
         sample a hole with prob sampleHoleProb
         We use the depth param to figure out if the next one deep should be all holes
         this could use a big refactor
         """
         if request.isArrow():
-            context, body = self._sampleOneStep(parent, parentIndex, context,
+            context_body = self._sampleOneStep(parent, parentIndex, context,
                                          [request.arguments[0]] + environment,
                                          request.arguments[1],
                                          mustBeLeaf=mustBeLeaf,
                                          forceHole=forceHole,
                                          excludeProd=excludeProd,
-                                         supplyDist=supplyDist) #TODO keep exclueProd??
+                                         supplyDist=supplyDist,
+                                         returnCandidates=returnCandidates) #TODO keep exclueProd??
+            if returnCandidates: return context_body #huge hack...
+            context, body = context_body
             return context, Abstraction(body)
         if forceHole:
             return context, Hole(tp=request)
@@ -1356,6 +1365,7 @@ class ContextualGrammar:
                                        normalize=True, returnProbabilities=True,
                                        mustBeLeaf=mustBeLeaf,
                                        excludeProd=excludeProd)
+        if returnCandidates: return candidates
 
         if supplyDist:
             candidates = [(supplyDist[p], t, p, k) 

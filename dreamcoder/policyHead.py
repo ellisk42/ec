@@ -99,10 +99,9 @@ class RNNPolicyHead(nn.Module):
                 nn.Linear(H, H),
                 nn.ReLU(),
                 nn.Linear(H, len(self.productionToIndex) ),
-                nn.LogSoftmax(dim=1)
-                )
+                nn.LogSoftmax(dim=1))
 
-        self.lossFn = nn.NLLLoss()
+        self.lossFn = nn.NLLLoss(reduction='sum')
 
         if self.use_cuda: self.cuda()
 
@@ -119,7 +118,27 @@ class RNNPolicyHead(nn.Module):
         super(RNNPolicyHead, self).cpu()
 
 
-    def _computeDist(self, sketches, zippers, task):
+    def _buildMask(self, sketches, zippers, task, g):
+
+        masks = []
+        for zipper, sk in zip(zippers, sketches):
+
+            mask = [0. for _ in range(len(self.productionToIndex))]
+
+            candidates = returnCandidates(zipper, sk, task.request, g)
+
+            for c in candidates:
+                mask[self._sketchNodeToIndex(c)] = 1. 
+            masks.append(mask)
+
+        mask = torch.tensor(masks)
+        mask = torch.log(mask)
+        if self.use_cuda: mask = mask.cuda()
+        return mask
+
+
+
+    def _computeDist(self, sketches, zippers, task, g):
 
         #need raw dist, and then which are valid and which is correct ... 
         features = self.featureExtractor.featuresOfTask(task)
@@ -133,6 +152,11 @@ class RNNPolicyHead(nn.Module):
         features = features.unsqueeze(0)
         features = torch.cat([sketchEncodings, features.expand(len(sketches), -1)], dim=1)
         dist = self.output(features)
+
+        mask = self._buildMask(sketches, zippers, task, g)
+
+        dist = dist + mask
+    
         return dist
 
     def _sketchNodeToIndex(self, node):
@@ -159,7 +183,7 @@ class RNNPolicyHead(nn.Module):
 
         posTraces, _, targetNodes, holesToExpand = getTracesFromProg(fullProg, frontier.task.request, g, onlyPos=True, returnNextNode=True)
 
-        dist = self._computeDist(posTraces, holesToExpand, frontier.task) #TODO
+        dist = self._computeDist(posTraces, holesToExpand, frontier.task, g) #TODO
 
         targets = [self._sketchNodeToIndex(node) for node in targetNodes]
         targets = torch.tensor(targets)

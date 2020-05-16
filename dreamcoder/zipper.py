@@ -453,6 +453,23 @@ class ParentFinder:
         self.path = []
         return parentInfo
 
+
+def returnCandidates(zipper, sk, tp, g):
+
+    if isinstance(g, ContextualGrammar):
+        parent, parentIndex = ParentFinder().execute(sk, zipper.path)
+        candidates = g._sampleOneStep(
+                            parent, parentIndex,
+                            zipper.context,
+                            zipper.env,
+                            zipper.tp,
+                            mustBeLeaf=False, returnCandidates=True)
+
+    else:
+        candidates = g._sampleOneStep(zipper.tp, zipper.context, zipper.env, False, returnCandidates=True)
+
+    return [p for l, t, p, k in candidates]
+
 def sampleOneStepFromHole(zipper, sk, tp, g, maximumDepth, supplyDist=None):
 
     mustBeLeaf = len([ t for t in zipper.path if t != 'body' ] ) >= maximumDepth
