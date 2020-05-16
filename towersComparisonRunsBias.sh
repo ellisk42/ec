@@ -48,7 +48,7 @@ for num in 3 20
 		cp ${oldResume}REPL.pickle_RecModelOnly ${resume}REPL.pickle_RecModelOnly
 		#Train:
 		cmd="python bin/tower.py  --searchType SMC --filterMotifs ${filterMotifs} --split 0.0 --tasks biased --contextual --testingTimeout ${testingTime} --recognitionTimeout 216000 --resumeTraining -r ${helmRatio} --primitives new -t ${time} -RS ${recSteps} --solver python  -c ${ncores} --useValue TowerREPL -i 2  --resume ${resume}REPL.pickle --singleRoundValueEval --seed 2"
-		sbatch -e towersREPL${salt}.out -o towersREPL${salt}.out execute_gpu_new.sh ${cmd}
+		#sbatch -e towersREPL${salt}.out -o towersREPL${salt}.out execute_gpu_new.sh ${cmd}
 		#eval "${cmd}"
 
 
