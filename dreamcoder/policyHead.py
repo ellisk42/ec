@@ -117,26 +117,18 @@ class RNNPolicyHead(nn.Module):
         self.featureExtractor.CUDA = False
         super(RNNPolicyHead, self).cpu()
 
-
     def _buildMask(self, sketches, zippers, task, g):
-
         masks = []
         for zipper, sk in zip(zippers, sketches):
-
             mask = [0. for _ in range(len(self.productionToIndex))]
-
             candidates = returnCandidates(zipper, sk, task.request, g)
-
             for c in candidates:
                 mask[self._sketchNodeToIndex(c)] = 1. 
             masks.append(mask)
-
         mask = torch.tensor(masks)
         mask = torch.log(mask)
         if self.use_cuda: mask = mask.cuda()
         return mask
-
-
 
     def _computeDist(self, sketches, zippers, task, g):
 
@@ -152,11 +144,8 @@ class RNNPolicyHead(nn.Module):
         features = features.unsqueeze(0)
         features = torch.cat([sketchEncodings, features.expand(len(sketches), -1)], dim=1)
         dist = self.output(features)
-
         mask = self._buildMask(sketches, zippers, task, g)
-
         dist = dist + mask
-    
         return dist
 
     def _sketchNodeToIndex(self, node):
@@ -203,19 +192,17 @@ class RNNPolicyHead(nn.Module):
                         request, holeZippers=None,
                         maximumDepth=4):
 
-        dist = self._computeDist([sk]) #TODO
-
-        supplyDist = { expr: dist[self.productionToIndex[expr]] for _, _, expr in g.productions}
-
+        zipper = random.choice(holeZippers)
+        dist = self._computeDist([sk], [zipper], task, g) #TODO
+        supplyDist = { expr: dist[self.productionToIndex[expr]].data.item() for _, _, expr in g.productions}
         newSk, newZippers = sampleOneStepFromHole(zipper, sk, tp, g, maximumDepth, supplyDist=supplyDist)
-
         return newSk, newZippers
 
     def enumSingleStep(g, sk, request, 
                         holeZipper=None,
                         maximumDepth=4):
 
-        dist = computeDist([sk])
-        supplyDist = { expr: dist[self.productionToIndex[expr]] for _, _, expr in g.productions}
+        dist = computeDist([sk], [holeZipper], task, g
+        supplyDist = { expr: dist[self.productionToIndex[expr]].data.item() for _, _, expr in g.productions}
 
         yield from enumSingleStep(g, sk, tp, holeZipper=holeZipper, maximumDepth=maximumDepth, supplyDist=supplyDist)
