@@ -146,7 +146,7 @@ class SMC(Solver):
                     for _ in range(p.frequency):
 
                         try:
-                            newObject, newZippers = owner.policyHead.sampleSingleStep(task, g, p.trajectory,
+                            newObject, newZippers = self.owner.policyHead.sampleSingleStep(task, g, p.trajectory,
                                                     request, holeZippers=p.zippers,
                                                     maximumDepth=self.maxDepth)
                         except NoCandidates:
