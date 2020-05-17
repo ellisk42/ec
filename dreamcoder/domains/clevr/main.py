@@ -1,7 +1,7 @@
 from dreamcoder.utilities import *
 from dreamcoder.recognition import *
 from dreamcoder.enumeration import *
-from dreamcoder.dreamcoder import ecIterator
+from dreamcoder.dreamcoder import ecIterator, default_wake_generative
 
 from dreamcoder.domains.clevr.clevrPrimitives import *
 from dreamcoder.domains.clevr.makeClevrTasks import *
@@ -78,14 +78,28 @@ def main(args):
     
     if args.pop("run_ocaml_test"):
         # Test the Helmholtz enumeratio n
-        tasks = [buildClevrMockTask(train[0])]
-        from dreamcoder.dreaming import backgroundHelmholtzEnumeration
-        helmholtzFrontiers = backgroundHelmholtzEnumeration(tasks, 
-                                                            baseGrammar, 
-                                                            timeout=1,
-                                                            evaluationTimeout=10,
-                                                            special='clevr',
-                                                            executable='clevrTest',
-                                                            serialize_special=serialize_clevr_object) # TODO: check if we need special to check tasks later
-        helmholtzFrontiers()
-    
+        # tasks = [buildClevrMockTask(train[0])]
+        tasks = train
+        if False:
+            from dreamcoder.dreaming import backgroundHelmholtzEnumeration
+            print(baseGrammar)
+            helmholtzFrontiers = backgroundHelmholtzEnumeration(tasks, 
+                                                                baseGrammar, 
+                                                                timeout=10,
+                                                                evaluationTimeout=0.05,
+                                                                special='clevr',
+                                                                executable='helmholtz',
+                                                                serialize_special=serialize_clevr_object,
+                                                                maximum_size=20000) # TODO: check if we need special to check tasks later
+            f = helmholtzFrontiers()
+        if True:
+            # Check enumeration.
+            tasks = [buildClevrMockTask(train[0])]
+            default_wake_generative(baseGrammar, tasks, 
+                                maximumFrontier=5,
+                                enumerationTimeout=10,
+                                CPUs=1,
+                                solver='ocaml',
+                                evaluationTimeout=0.05)
+            
+        

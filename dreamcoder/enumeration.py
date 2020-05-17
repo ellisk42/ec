@@ -295,9 +295,13 @@ def solveForTask_ocaml(_=None,
     message = json.dumps(message)
     # uncomment this if you want to save the messages being sent to the solver
     
+    solver_file = 'solver'
+    if hasattr(tasks[0], 'specialSolver'):
+        solver_file = tasks[0].specialSolver
+        print(f"Using special solver: {solver_file}")
 
     try:
-        solver_file = os.path.join(get_root_dir(), 'solver')
+        solver_file = os.path.join(get_root_dir(), solver_file)
         process = subprocess.Popen(solver_file,
                                    stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE)

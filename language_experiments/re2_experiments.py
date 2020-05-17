@@ -1,11 +1,13 @@
-USING_GCLOUD = False
-USING_SINGULARITY = True
-NUM_REPLICATIONS = 2
+USING_GCLOUD = True
+USING_SINGULARITY = False
+NUM_REPLICATIONS = 3
 NO_ORIGINAL_REPL = False
+HIGH_MEM = True
 
 def gcloud_commands(job_name):
+    machine_type = 'm1-ultramem-40' if HIGH_MEM else 'n2-highmem-64'
     gcloud_disk_command = f"gcloud compute --project 'andreas-jacob-8fc0' disks create {job_name} --size '30' --zone 'us-east1-b' --source-snapshot 're2-language-5-14' --type 'pd-standard'"
-    gcloud_launch_commmand = f"gcloud beta compute --project=andreas-jacob-8fc0 instances create {job_name} --metadata='startup-script=cd ec' --zone=us-east1-b --machine-type=n1-highmem-64 --subnet=default --network-tier=PREMIUM --maintenance-policy=MIGRATE --service-account=project-service-account@andreas-jacob-8fc0.iam.gserviceaccount.com --scopes=https://www.googleapis.com/auth/cloud-platform --disk=name={job_name.strip()},device-name={job_name.strip()},mode=rw,boot=yes,auto-delete=yes --reservation-affinity=any"
+    gcloud_launch_commmand = f"gcloud beta compute --project=andreas-jacob-8fc0 instances create {job_name} --metadata='startup-script=cd ec' --zone=us-east1-b --machine-type={machine_type} --subnet=default --network-tier=PREMIUM --maintenance-policy=MIGRATE --service-account=project-service-account@andreas-jacob-8fc0.iam.gserviceaccount.com --scopes=https://www.googleapis.com/auth/cloud-platform --disk=name={job_name.strip()},device-name={job_name.strip()},mode=rw,boot=yes,auto-delete=yes --reservation-affinity=any"
     return f"#######\n{gcloud_disk_command}\n\n{gcloud_launch_commmand}\n\n###Now run: \n "
     
 singularity_base_command = "srun --job-name=re2_language_{} --output=jobs/{} --ntasks=1 --mem-per-cpu=15000 --gres=gpu --cpus-per-task 24 --time=10000:00 --qos=tenenbaum --partition=tenenbaum singularity exec -B /om2  --nv ../dev-container.img "
@@ -189,7 +191,7 @@ num_iterations = 10
 task_batch_size = 40
 test_every = 3
 recognition_steps = 10000
-EXPS = [('re2_1000', 720, False), ('re2_1000', 1800, False)]
+EXPS = [('re2_1000', 720, False)]
 pseudoalignment = 0.1
 for dataset in ['re2_1000']:
     for enumerationTimeout in [720, 1800]:

@@ -1,6 +1,7 @@
 import json
 import os
 import subprocess
+import random
 
 from pathos.multiprocessing import Pool
 
@@ -16,13 +17,14 @@ from dreamcoder.utilities import tuplify, timing, eprint, get_root_dir, mean, un
 
 def helmholtzEnumeration(g, request, inputs, timeout, _=None,
                          special=None, evaluationTimeout=None,
-                         use_vars_in_tokenized=False, executable=None):
+                         use_vars_in_tokenized=False, executable=None,
+                         maximum_size=5000000):
     """Returns json (as text)"""
     message = {"request": request.json(),
                "timeout": timeout,
                "DSL": g.json(),
                "extras": inputs}
-               
+    if maximum_size: message["maximumSize"] = maximum_size
     if evaluationTimeout: message["evaluationTimeout"] = evaluationTimeout
     if special: message["special"] = special
     if use_vars_in_tokenized: message["use_vars_in_tokenized"] = use_vars_in_tokenized
@@ -45,7 +47,8 @@ def backgroundHelmholtzEnumeration(tasks, g, timeout, _=None,
                                    special=None, evaluationTimeout=None,
                                    use_vars_in_tokenized=False, dedup=True,
                                    executable=None,
-                                   serialize_special=None):
+                                   serialize_special=None,
+                                   maximum_size=None):
     requests = list({t.request for t in tasks})
     if serialize_special is None:
          def _s(x): return x
@@ -83,6 +86,10 @@ def backgroundHelmholtzEnumeration(tasks, g, timeout, _=None,
                 except:
                     continue
         eprint("Total number of Helmholtz frontiers:", len(frontiers))
+        if maximum_size is not None and len(frontiers) > maximum_size: 
+            # Take randomly.
+            frontiers = random.sample(frontiers, maximum_size)
+            eprint("Taking %d random Helmholtz frontiers." % len(frontiers))
         return frontiers
 
     return get

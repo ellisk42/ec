@@ -169,44 +169,33 @@ def clevr_map_transform_primitives():
 
 def clevr_test_primitives():
     # A minimal test set for development.
-    return  clevr_constants() \
-    + [clevr_filter_material, clevr_filter_size, clevr_filter_color, clevr_filter_shape]
+    return [clevr_query_color,clevr_query_size, clevr_query_material, clevr_query_shape] + [clevr_car]
+    # clevr_constants() \
+    # + [clevr_filter_material, clevr_filter_size, clevr_filter_color, clevr_filter_shape]
     # + [clevr_eq_color, clevr_eq_size, clevr_eq_material, clevr_eq_shape] 
     # 
     
     # [clevr_car, clevr_cdr, clevr_add] + clevr_constants() + [clevr_eq_size, clevr_eq_color, clevr_eq_material, clevr_eq_shape]
 
 def clevr_original_v1_primitives():
-    return clevr_constants() 
-    + [clevr_relate]
-    + [clevr_query_color,clevr_query_size, clevr_query_material, clevr_query_shape,
-         clevr_eq_color, clevr_eq_size, clevr_eq_material, clevr_eq_shape] 
-    + [clevr_union, clevr_intersect]
-    + [clevr_count, clevr_eq_int, clevr_is_gt]
-    + [clevr_not]
-    # Singleton operators
-    + [clevr_unique, clevr_exist]
-    # Filter
-    + [clevr_filter_material, clevr_filter_size, clevr_filter_color, clevr_filter_shape]
-    # Same
-    + [clevr_same_material, clevr_same_size, clevr_same_color, clevr_filter_shape]
-    # Set difference
-    + [clevr_difference]
+    return [clevr_relate] \
+    + [clevr_query_color,clevr_query_size, clevr_query_material, clevr_query_shape,         clevr_eq_color, clevr_eq_size, clevr_eq_material, clevr_eq_shape]  \
+    + [clevr_union, clevr_intersect] \
+    + [clevr_count, clevr_eq_int, clevr_is_gt] \
+    + [clevr_not] + [clevr_unique, clevr_exist] \
+    + [clevr_filter_material, clevr_filter_size, clevr_filter_color, clevr_filter_shape] \
+    + [clevr_same_material, clevr_same_size, clevr_same_color, clevr_filter_shape] \
+    + [clevr_difference] + clevr_constants() 
 
 def clevr_bootstrap_v1_primitives():
-    return clevr_constants()  
-    + [clevr_relate]
+    return [clevr_relate] \
     + [clevr_query_color,clevr_query_size, clevr_query_material, clevr_query_shape,
-     clevr_eq_color, clevr_eq_size, clevr_eq_material, clevr_eq_shape] 
-    + [clevr_union, clevr_intersect]
-    + [clevr_count, clevr_eq_int, clevr_is_gt]
-    + [clevr_not]
-    # Primitives to build singleton operators
-    + [clevr_car, clevr_cdr, clevr_is_empty]
-    # Primitives to build filter 
-    + [clevr_if, clevr_empty, clevr_fold, clevr_add]
-    # Primitives to build same
-    + [clevr_eq_objects]
+     clevr_eq_color, clevr_eq_size, clevr_eq_material, clevr_eq_shape] \
+    + [clevr_union, clevr_intersect] \
+    + [clevr_count, clevr_eq_int, clevr_is_gt] \
+    + [clevr_not] + [clevr_car, clevr_cdr, clevr_is_empty] \
+    + [clevr_if, clevr_empty, clevr_fold, clevr_add] \
+    + [clevr_eq_objects] + clevr_constants()  
 
 def load_clevr_primitives(primitive_names):
     prims = []

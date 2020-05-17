@@ -29,13 +29,13 @@ def build_examples(q, input_scenes):
     return examples
 
 def infer_return_type(answers):
-    if type(answers[0]) == dict: return tlist(tclevrobject)
-    elif type(answers[0]) == int: return tint
-    elif type(answers[0]) == bool: return tbool
-    elif answers[0] in attribute_constants['color']: return tclevrcolor
-    elif answers[0] in attribute_constants['shape']: return tclevrshape
-    elif answers[0] in attribute_constants['size']: return tclevrsize
-    elif answers[0] in attribute_constants['material']: return tclevrmaterial
+    if type(answers[0]) == dict: return tlist(tclevrobject), True
+    elif type(answers[0]) == int: return tint, False
+    elif type(answers[0]) == bool: return tbool, False
+    elif answers[0] in attribute_constants['color']: return tclevrcolor, False
+    elif answers[0] in attribute_constants['shape']: return tclevrshape, False
+    elif answers[0] in attribute_constants['size']: return tclevrsize, False
+    elif answers[0] in attribute_constants['material']: return tclevrmaterial, False
     else: 
         print("Error: cannot infer return type!")
         assert False
@@ -51,24 +51,41 @@ def serialize_clevr_object(x):
     return [[serialize_obj(o) for o in obj_list] 
     for obj_list in x]
     
-def buildClevrMockTask(train_task):
-    print("Example:")
-    for obj in train_task.examples[0][0][0]:
-        print(f'Id: {obj["id"]}, Color: {obj["color"]}, Shape: {obj["shape"]}, Size: {obj["size"]}')
-    first_obj =  train_task.examples[0][0][0][0]
-    print(first_obj["left"])
-    req = arrow(tlist(tclevrobject), tlist(tclevrobject))
-    obj_examples = [train_task.examples[0]]
-    return Task(name="mock", request=req,
-                examples=obj_examples, features=None, cache=False)
+def buildClevrMockTask(train_task, test_attr_type="color", test_count=False, test_obj_list=False):
+    # print("Example:")
+    # for obj in train_task.examples[0][0][0]:
+    #     print(f'Id: {obj["id"]}, Color: {obj["color"]}, Shape: {obj["shape"]}, Size: {obj["size"]}')
+    # first_obj =  train_task.examples[0][0][0][0]
+    # print(first_obj["left"])
+    if test_attr_type is not None:
+        examples = []
+        answers = []
+        for example in train_task.examples:
+            objs = example[0][0]
+            y = objs[0][test_attr_type]
+            examples.append([example[0], y])
+            answers.append(y)
+    return_type, is_special = infer_return_type(answers)
+    req = arrow(tlist(tclevrobject), return_type)
+    print(f"Inferred task type: {req}; is_special: {is_special}")
+    t = Task(name="mock", request=req,
+                examples=examples, features=None, cache=False)
+    t.specialSolver = 'clevrSolver'
+    if is_special:
+        t.specialTask = ("clevrobjectlist", []) # Requires sorting the list
+    return t
 
 def buildClevrTask(q, input_scenes):
     name = q['question'] if type(q['question']) is str else q['question'][0]
     name = f"{q['question_index']}_{name}"
-    
-    request_type = arrow(tlist(tclevrobject), infer_return_type(q['answers']))
+    return_type, is_special = infer_return_type(q['answers'])
+    request_type = arrow(tlist(tclevrobject), return_type)
     examples = build_examples(q, input_scenes)
-    return Task(name=name, request=request_type, examples=examples, features=None, cache=False)
+    t = Task(name=name, request=request_type, examples=examples, features=None, cache=False)
+    if is_special:
+        t.specialTask = ("clevrobjectlist", []) # Requires sorting the list
+    t.specialSolver = 'clevrSolver'
+    return t
     
 def loadCLEVRDataset(task_datasets, task_dataset_dir, train_scenes, test_scenes, seed, is_curriculum=False):
     """Loads tasks. If not is_curriculum, assumes there is a train and val version of each"""

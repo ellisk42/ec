@@ -222,7 +222,7 @@ let rec unpack_clevr x =
   try x |> to_list |> List.map ~f:unpack_clevr |> magical
   with _ -> raise (Failure "could not unpack clevr objects");;
 
-(* Pack and sort any object lists *)
+(* Pack and sort any object lists, if we decide we want them. *)
 let rec poly_pack_clevr t v = 
   match t with
   | TCon("list",[t'],_) -> 
@@ -236,13 +236,15 @@ let rec poly_pack_clevr t v =
   | TCon("tclevrobject",[],_) -> PolyValue.FullString(magical (obj_to_string (magical (v))))
   | _ -> PolyValue.FullString(magical v)
 
-let clevr_hash ?timeout:(timeout=0.001) request inputs : program -> PolyList.t option =
+let clevr_hash ?timeout:(timeout=0.005) request inputs : program -> PolyList.t option =
   let open Yojson.Basic.Util in
 
   (* convert json -> ocaml *)
   let inputs : 'a list list = unpack_clevr inputs in
   let return = return_of_type request in
-
+  
+  (** Allow behavior duplication in CLEVR **)
+  let open Random in 
   fun program ->
     let p = analyze_lazy_evaluation program in
     let outputs = inputs |> List.map ~f:(fun input ->
@@ -251,9 +253,10 @@ let clevr_hash ?timeout:(timeout=0.001) request inputs : program -> PolyList.t o
                   (fun () -> run_lazy_analyzed_with_arguments p input)
           with
           | Some(value) -> 
-            let packed = poly_pack_clevr return value in 
-            let _ = Printf.eprintf "Packed: %s\n" (PolyValue.to_string packed) in
-            packed        
+            let max_programs = 5000000 in 
+            let random_hash = Random.int max_programs in 
+            let packed = PolyValue.Integer(magical random_hash) in
+            packed
           | _ -> PolyValue.None
         with (* We have to be a bit careful with exceptions if the
               * synthesized program generated an exception, then we just
