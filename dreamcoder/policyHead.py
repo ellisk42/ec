@@ -143,7 +143,9 @@ class RNNPolicyHead(nn.Module):
         features = self.featureExtractor.featuresOfTask(task)
         features = features.unsqueeze(0)
         print("features shape", features.shape, flush=True)
-        features = torch.cat([sketchEncodings, features.expand(len(sketches), -1)], dim=1)
+        x = features.expand(len(sketches), -1)
+        print("x shape", x.shape, flush=True)
+        features = torch.cat([sketchEncodings, x ], dim=1)
         dist = self.output(features)
         mask = self._buildMask(sketches, zippers, task, g)
         dist = dist + mask
