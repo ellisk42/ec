@@ -19,10 +19,7 @@ let print_list obj_list =
     let (_, shape) =  List.Assoc.find_exn obj "shape" ~equal:(=) in
     let (_, material) =  List.Assoc.find_exn obj "material" ~equal:(=) in
     let (_, size) =  List.Assoc.find_exn obj "size" ~equal:(=) in
-    (* let (_, left) =  List.Assoc.find_exn obj "left" ~equal:(=) in *)
     Printf.eprintf "Color : %s | Shape: %s | Material: %s | Size: %s\n" color shape material size
-    (* let unpacked = unpack_relate_list left in  *)
-    (* unpacked |> List.map ~f: (fun id -> Printf.eprintf "ID : %d\n" id) *)
   );;
   
 let build_obj attribute_type old_obj attr = 

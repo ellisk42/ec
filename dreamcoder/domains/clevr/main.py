@@ -85,7 +85,7 @@ def main(args):
             print(baseGrammar)
             helmholtzFrontiers = backgroundHelmholtzEnumeration(tasks, 
                                                                 baseGrammar, 
-                                                                timeout=10,
+                                                                timeout=5,
                                                                 evaluationTimeout=0.05,
                                                                 special='clevr',
                                                                 executable='helmholtz',
@@ -97,7 +97,7 @@ def main(args):
             tasks = [buildClevrMockTask(train[0])]
             default_wake_generative(baseGrammar, tasks, 
                                 maximumFrontier=5,
-                                enumerationTimeout=10,
+                                enumerationTimeout=1,
                                 CPUs=1,
                                 solver='ocaml',
                                 evaluationTimeout=0.05)

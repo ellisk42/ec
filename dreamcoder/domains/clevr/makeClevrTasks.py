@@ -1,4 +1,4 @@
-import os, json, random
+import os, json, random, copy
 from dreamcoder.task import Task
 from dreamcoder.type import *
 from dreamcoder.domains.clevr.clevrPrimitives import *
@@ -39,7 +39,7 @@ def infer_return_type(answers):
     else: 
         print("Error: cannot infer return type!")
         assert False
-def serialize_clevr_object(x):
+def serialize_clevr_object(x, is_output=False):
     def serialize_obj(obj):
         serialized_obj = dict()
         for k in obj:
@@ -48,31 +48,47 @@ def serialize_clevr_object(x):
             else:
                 serialized_obj[k] = obj[k]
         return serialized_obj
-    return [[serialize_obj(o) for o in obj_list] 
+    if is_output: # Single object list, not tuple of arguments
+        return [serialize_obj(o) for o in x]
+    else: return [[serialize_obj(o) for o in obj_list] 
     for obj_list in x]
     
-def buildClevrMockTask(train_task, test_attr_type="color", test_count=False, test_obj_list=False):
+def buildClevrMockTask(train_task, test_attr_type=None, test_count=False, test_bool=False, test_obj_list=False, test_transform=True):
     # print("Example:")
     # for obj in train_task.examples[0][0][0]:
     #     print(f'Id: {obj["id"]}, Color: {obj["color"]}, Shape: {obj["shape"]}, Size: {obj["size"]}')
     # first_obj =  train_task.examples[0][0][0][0]
     # print(first_obj["left"])
-    if test_attr_type is not None:
-        examples = []
-        answers = []
-        for example in train_task.examples:
-            objs = example[0][0]
+    examples = []
+    answers = []
+    is_special, return_type = None, None
+    for example in train_task.examples:
+        objs = example[0][0]
+        if test_attr_type is not None:
             y = objs[0][test_attr_type]
-            examples.append([example[0], y])
-            answers.append(y)
-    return_type, is_special = infer_return_type(answers)
+        elif test_count:
+            y = len(objs)
+        elif test_bool:
+            y = objs[0]["color"] == "brown"
+        elif test_obj_list:
+            y = objs
+            is_special, return_type = True, tlist(tclevrobject)
+        elif test_transform:
+            y = [{ k : obj[k] if k != 'color' else 'blue' for k in obj} for obj in objs]
+            is_special, return_type = True, tlist(tclevrobject)
+        examples.append([example[0], y])
+        answers.append(y)
+    if return_type is None:
+        return_type, is_special = infer_return_type(answers)
     req = arrow(tlist(tclevrobject), return_type)
     print(f"Inferred task type: {req}; is_special: {is_special}")
     t = Task(name="mock", request=req,
                 examples=examples, features=None, cache=False)
     t.specialSolver = 'clevrSolver'
+    t.serializeSpecialInput = serialize_clevr_object
     if is_special:
         t.specialTask = ("clevrobjectlist", []) # Requires sorting the list
+        t.serializeSpecialOutput = serialize_clevr_object 
     return t
 
 def buildClevrTask(q, input_scenes):

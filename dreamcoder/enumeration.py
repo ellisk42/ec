@@ -264,8 +264,16 @@ def solveForTask_ocaml(_=None,
     import json
 
     def taskMessage(t):
+        serialized_examples = []
+        for xs, y in t.examples:
+            if hasattr(t, "serializeSpecialInput"):
+                xs = t.serializeSpecialInput(xs)
+            if hasattr(t, "serializeSpecialOutput"):
+                y = t.serializeSpecialInput(y, is_output=True)
+            serialized_examples.append({"inputs": list(xs), "output": y})
+        
         m = {
-            "examples": [{"inputs": list(xs), "output": y} for xs, y in t.examples],
+            "examples": serialized_examples,
             "name": t.name,
             "request": t.request.json(),
             "maximumFrontier": maximumFrontiers[t]}

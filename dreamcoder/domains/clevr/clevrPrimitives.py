@@ -169,7 +169,9 @@ def clevr_map_transform_primitives():
 
 def clevr_test_primitives():
     # A minimal test set for development.
-    return [clevr_query_color,clevr_query_size, clevr_query_material, clevr_query_shape] + [clevr_car]
+    return [clevr_map, clevr_transform_color] + clevr_constants()
+    
+    # [clevr_query_color,clevr_query_size, clevr_query_material, clevr_query_shape] + [clevr_car]
     # clevr_constants() \
     # + [clevr_filter_material, clevr_filter_size, clevr_filter_color, clevr_filter_shape]
     # + [clevr_eq_color, clevr_eq_size, clevr_eq_material, clevr_eq_shape] 

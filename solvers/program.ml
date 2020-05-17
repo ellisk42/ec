@@ -533,7 +533,7 @@ let obj_to_string obj =
     in a) in 
   let zipped = List.zip_exn ("id" :: attributes) (id :: (magical attribute_strings)) in 
   let delimited = zipped |> List.map ~f: (fun (attr_name, attr_string) -> attr_name ^ ":" ^ attr_string) in String.concat ~sep:"|" delimited
-  
+
 (** Sort, dedup, and compare object lists as sets **)
 let sort_objs obj_list = 
   List.sort (fun obj1 obj2 -> 
@@ -563,9 +563,8 @@ let compare_ids o1 o2 =
   let (_, id1) =  List.Assoc.find_exn o1 "id" ~equal:(=) in
   let (_, id2) =  List.Assoc.find_exn o2 "id" ~equal:(=) in
   id1 = id2
-  
 let compare_attrs o1 o2 attr_type = 
-  let (_, a1) =  List.Assoc.find_exn o1 attr_type  ~equal:(=) in
+  let (_, a1) =  List.Assoc.find_exn o1 attr_type ~equal:(=) in
   let (_, a2) =  List.Assoc.find_exn o2 attr_type ~equal:(=) in
   String.equal (magical a1) (magical a2)
 
@@ -578,7 +577,7 @@ let compare_obj o1 o2 =
     ) in 
   let compared_attrs = same_id :: same_attr in 
   all_true compared_attrs
-
+    
 let compare_objs objs1 objs2 = 
   let objs1 = (sort_dedup objs1) in 
   let objs2 = (sort_dedup objs2) in 

@@ -58,7 +58,7 @@ let load_problems channel =
       | TCon("int",[],_) ->  magical (y |> to_int)
       | TCon("bool",[],_) ->  magical (y |> to_bool)
       | TCon("list",[t'],_) -> 
-        y |> to_list |> List.map ~f: unpack_clevr_input |> magical
+         y |> to_list |> List.map ~f: unpack_clevr_input |> magical 
       | _ ->  magical (y |> to_string)
     with _-> raise (Failure "could not unpack clevr output")
   in
