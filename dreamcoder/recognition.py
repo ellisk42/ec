@@ -19,6 +19,7 @@ import numpy as np
 import json
 
 from dreamcoder.domains.tower.motifs import * #ugh, hack
+from dreamcoder.policyHead import BasePolicyHead
 
 
 def variable(x, volatile=False, cuda=False):
@@ -1144,7 +1145,9 @@ class RecognitionModel(nn.Module):
                 else:
                     #ttt = time.time()
                     try:
-                        (loss + classificationLoss + valueHeadLoss + policyHeadLoss).backward()
+                        if self.useValue and not isinstance(self.policyHead, BasePolicyHead):
+                            (valueHeadLoss + policyHeadLoss).backward()
+                        else: (loss + classificationLoss + valueHeadLoss + policyHeadLoss).backward()
                         n_runtimeErrors = 0
                     except RuntimeError as e:
                         print("WARNING: had a runtime error on backwards step")

@@ -202,7 +202,7 @@ class RNNPolicyHead(nn.Module):
                         holeZipper=None,
                         maximumDepth=4):
 
-        dist = computeDist([sk], [holeZipper], task, g
+        dist = computeDist([sk], [holeZipper], task, g)
         supplyDist = { expr: dist[self.productionToIndex[expr]].data.item() for _, _, expr in g.productions}
 
         yield from enumSingleStep(g, sk, tp, holeZipper=holeZipper, maximumDepth=maximumDepth, supplyDist=supplyDist)
