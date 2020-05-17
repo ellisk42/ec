@@ -12,7 +12,7 @@ helmRatio=0.5
 
 
 
-for num in 3 20
+for num in 3
 	do
 		#symbolic
 
@@ -22,7 +22,7 @@ for num in 3 20
 		#samplePolicy=experimentOutputs/towers${num}BiasSample.pickle
 
 		resume=experimentOutputs/towers${num}PolicyNoBigramLoss
-		salt=towers${num}Policy
+		salt=towers${num}PolicyNoBigramLoss
 		cp ${oldResume}.pickle ${resume}.pickle
 
 		# #rm ${resume}Symbolic.pickle_RecModelOnly

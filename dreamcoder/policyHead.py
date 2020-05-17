@@ -142,7 +142,10 @@ class RNNPolicyHead(nn.Module):
         sketchEncodings = self.RNNHead._encodeSketches(sketches).squeeze(0) #Todo
         features = self.featureExtractor.featuresOfTask(task)
         features = features.unsqueeze(0)
-        features = torch.cat([sketchEncodings, features.expand(len(sketches), -1)], dim=1)
+        print("features shape", features.shape, flush=True)
+        x = features.expand(len(sketches), -1)
+        print("x shape", x.shape, flush=True)
+        features = torch.cat([sketchEncodings, x ], dim=1)
         dist = self.output(features)
         mask = self._buildMask(sketches, zippers, task, g)
         dist = dist + mask
