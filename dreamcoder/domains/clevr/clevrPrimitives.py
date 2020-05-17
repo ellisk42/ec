@@ -22,6 +22,17 @@ attribute_constants = {
     'size' : ["small", "large"],
     'material' : ["rubber", "metal"]
 }
+
+def clevr_lexicon():
+    lexicon = set()
+    for k, values in attribute_constants.items():
+        lexicon.add(k)
+        lexicon.update(values)
+    lexicon.update([str(val) for val in range(10)])
+    lexicon.update([str(val) for val in (True, False)])
+    lexicon.add("id")
+    return list(lexicon)
+
 def clevr_constants():
     colors = [Primitive(f"clevr_{a}", tclevrcolor, a) for a in attribute_constants['color']]
     sizes = [Primitive(f"clevr_{a}", tclevrsize, a) for a in attribute_constants['size']]

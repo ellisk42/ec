@@ -30,6 +30,7 @@ def build_examples(q, input_scenes):
 
 def infer_return_type(answers):
     if type(answers[0]) == dict: return tlist(tclevrobject), True
+    elif type(answers[0]) == list: return tlist(tclevrobject), True
     elif type(answers[0]) == int: return tint, False
     elif type(answers[0]) == bool: return tbool, False
     elif answers[0] in attribute_constants['color']: return tclevrcolor, False
@@ -39,6 +40,7 @@ def infer_return_type(answers):
     else: 
         print("Error: cannot infer return type!")
         assert False
+        
 def serialize_clevr_object(x, is_output=False):
     def serialize_obj(obj):
         serialized_obj = dict()
@@ -54,11 +56,6 @@ def serialize_clevr_object(x, is_output=False):
     for obj_list in x]
     
 def buildClevrMockTask(train_task, test_attr_type=None, test_count=False, test_bool=False, test_obj_list=False, test_transform=True):
-    # print("Example:")
-    # for obj in train_task.examples[0][0][0]:
-    #     print(f'Id: {obj["id"]}, Color: {obj["color"]}, Shape: {obj["shape"]}, Size: {obj["size"]}')
-    # first_obj =  train_task.examples[0][0][0][0]
-    # print(first_obj["left"])
     examples = []
     answers = []
     is_special, return_type = None, None

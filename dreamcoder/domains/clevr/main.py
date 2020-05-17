@@ -10,6 +10,50 @@ import os
 import datetime
 import random
 
+
+class ClevrFeatureExtractor(RecurrentFeatureExtractor):
+    special = None
+    def __init__(self, tasks, testingTasks=[], cuda=False):
+        self.recomputeTasks = True
+        self.useTask = True
+        lexicon = clevr_lexicon() + ["OBJ_START", "OBJ_END"]
+        super(ClevrFeatureExtractor, self).__init__(lexicon=lexicon,
+                                                      H=64,
+                                                      tasks=tasks,
+                                                      bidirectional=True,
+                                                      cuda=cuda,
+                                                      helmholtzTimeout=0.5,
+                                                      helmholtzEvaluationTimeout=0.25)
+                                                      
+    def tokenize(self, task):
+        tokenized = []
+        return_type, _ = infer_return_type([task.examples[0][-1]])
+        def tokenize_obj_list(obj_list):
+            flattened = []
+            for o in obj_list:
+                o_attrs = []
+                for k, v in o.items():
+                    if k in ["id", "color", "shape", "size", "material"]:
+                        o_attrs += [k, str(v)]
+                    else: # Relations
+                        o_attrs += [k] + [str(rel) for rel in v]
+                flattened += ["OBJ_START"] + o_attrs + ["OBJ_END"]
+            return flattened
+            
+        for xs, y in task.examples:
+            xs = [tokenize_obj_list(obj_list) for obj_list in xs]
+            if return_type in [tint, tbool, tclevrsize, tclevrcolor, tclevrshape, tclevrsize, tclevrmaterial]:
+                y = [str(y)]
+            else:
+                y = tokenize_obj_list(y)
+            tokenized.append([xs, y])
+        return tokenized
+    
+    # TODO
+    def taskOfProgram(self, p, tp):
+        # Uses the RNN random input sampling
+        return super(ClevrFeatureExtractor, self).taskOfProgram(p, tp)
+
 all_train_questions = [
     "1_zero_hop",
     '1_one_hop',
@@ -48,6 +92,8 @@ def clevr_options(parser):
     parser.add_argument("--generate_ocaml_definitions",
                         action='store_true')
     parser.add_argument("--run_ocaml_test",
+                        action='store_true')
+    parser.add_argument("--run_recognition_test",
                         action='store_true')
                         
 def main(args):
@@ -101,5 +147,11 @@ def main(args):
                                 CPUs=1,
                                 solver='ocaml',
                                 evaluationTimeout=0.05)
+    
+    if args.pop("run_recognition_test"):
+        tasks = [buildClevrMockTask(train[0])]
+        featurizer = ClevrFeatureExtractor(tasks=tasks, testingTasks=[], cuda=False)
+        for t in tasks:
+            featurizer.featuresOfTask(t)
             
         
