@@ -12,7 +12,7 @@ helmRatio=0.5
 
 
 
-for num in 3
+for num in 3 20
 	do
 		#symbolic
 
@@ -26,12 +26,12 @@ for num in 3
 		cp ${oldResume}.pickle ${resume}.pickle
 
 		# #rm ${resume}Symbolic.pickle_RecModelOnly
-		# cp ${resume}.pickle ${resume}Symbolic.pickle
-		# cp ${resume}Sample.pickle_RecModelOnly ${resume}Symbolic.pickle_RecModelOnly
-		# # #Train:
-		# cmd="python bin/tower.py --searchType SMC --split 0.0 --tasks new --contextual --testingTimeout ${testingTime} --recognitionTimeout 216000 --resumeTraining -r ${helmRatio} --primitives new -t ${time} -RS ${recSteps} --solver python  -c ${ncores} --useValue Symbolic -i 2 --resume ${resume}Symbolic.pickle --singleRoundValueEval --seed 1"
-		# #eval "${cmd}"
-		# sbatch -e towersSymbolic${salt}.out -o towersSymbolic${salt}.out execute_gpu_new.sh ${cmd}
+		cp ${resume}.pickle ${resume}Symbolic.pickle
+		cp ${resume}Sample.pickle_RecModelOnly ${resume}Symbolic.pickle_RecModelOnly
+		# #Train:
+		cmd="python bin/tower.py --policyType RNN --searchType SMC --split 0.0 --tasks maxHard --contextual --testingTimeout ${testingTime} --recognitionTimeout 216000 --resumeTraining -r ${helmRatio} --primitives new -t ${time} -RS ${recSteps} --solver python  -c ${ncores} --useValue Symbolic -i 2 --resume ${resume}Symbolic.pickle --singleRoundValueEval --seed 1"
+		#eval "${cmd}"
+		sbatch -e towersSymbolic${salt}.out -o towersSymbolic${salt}.out execute_gpu_new.sh ${cmd}
 	
 		#rm ${resume}Sample.pickle_RecModelOnly
 		cp ${resume}.pickle ${resume}Sample.pickle

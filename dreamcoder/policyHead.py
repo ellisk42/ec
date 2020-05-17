@@ -139,7 +139,8 @@ class RNNPolicyHead(nn.Module):
 
         sketches = [self._designateTargetHole(zipper, sk) for zipper, sk in zip(zippers, sketches)]
 
-        sketchEncodings = self.RNNHead._encodeSketches(sketches).squeeze(0) #Todo
+        sketchEncodings = self.RNNHead._encodeSketches(sketches)
+        print("sketchEncodings shape", sketchEncodings.shape)
         features = self.featureExtractor.featuresOfTask(task)
         features = features.unsqueeze(0)
         print("features shape", features.shape, flush=True)
@@ -197,8 +198,9 @@ class RNNPolicyHead(nn.Module):
 
         zipper = random.choice(holeZippers)
         dist = self._computeDist([sk], [zipper], task, g) #TODO
+        dist = dist.squeeze(0)
         supplyDist = { expr: dist[self.productionToIndex[expr]].data.item() for _, _, expr in g.productions}
-        newSk, newZippers = sampleOneStepFromHole(zipper, sk, tp, g, maximumDepth, supplyDist=supplyDist)
+        newSk, newZippers = sampleOneStepFromHole(zipper, sk, request, g, maximumDepth, supplyDist=supplyDist)
         return newSk, newZippers
 
     def enumSingleStep(g, sk, request, 
