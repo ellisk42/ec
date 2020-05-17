@@ -157,6 +157,27 @@ def loadCheckpoint(trainset="S9_nojitter", userealnames=True, loadparse=False, s
         exptdir = "2019-11-16T19:03:45.006020"
         taskset = "S13" 
         behaviorexpt = "2.4"
+
+    elif trainset=="S12.inv.S12skew.1":
+        userealnames=True
+        doshaping = False
+        exptdir = "2020-05-12T15:46:28.108181"
+        taskset = "S12" 
+        behaviorexpt = "2.4"        
+
+    elif trainset=="S12.inv.S12grate.1":
+        userealnames=True
+        doshaping = False
+        exptdir = "2020-05-12T15:49:25.963612"
+        taskset = "S12" 
+        behaviorexpt = "2.4"       
+
+    elif trainset=="S13.inv.S13grate.1":
+        userealnames=True
+        doshaping = False
+        exptdir = "2020-05-12T15:49:24.176670"
+        taskset = "S13" 
+        behaviorexpt = "2.4"        
     
     else:
         print("PROBLEM did not find traiin set! ")
@@ -320,7 +341,7 @@ def _getAndRankAllFrontiers(results, task, SDIR=[], usell=True, K=10,
                 "iteration":i,
                 "frontier":f
             })
-    
+    print(frontiers_over_time)
     # for each frontier get scores and ink
     for f in frontiers_over_time:
         # collect scores and ink used
@@ -402,6 +423,11 @@ def getTaskResults(DAT):
 
     # solved?
     def solved(stim):
+        print(stim)
+        print(DATgetTask(stim, DAT)[0])
+        print(DAT.keys())
+        print(DAT["trainset"])
+        print(DAT["testtasks"])
         solution = getBestFrontierProgram(DAT["result"], DATgetTask(stim, DAT)[0], lastKIter=50)
         # solution = getLatestFrontierProgram(DAT["result"], DATgetTask(stim, DAT)[0])
         if isinstance(solution, list):

@@ -392,6 +392,10 @@ if __name__=="__main__":
     else:
         comparetohuman=True
 
+    # 1) Summarize solutions
     summarize(ECTRAIN, SUMMARY_SAVEDIR = "", comparetohuman=comparetohuman)
+    
+    # 2) Summarize frontiers
+    summarizeFrontiers(ECTRAIN, k=20)
 
 
