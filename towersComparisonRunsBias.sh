@@ -19,7 +19,7 @@ for num in 3 20
 		#replPolicy=experimentOutputs/towers${num}LongREPL.pickle
 		filterMotifs="brickBaseInvention brickBaseReverse oddLoops oddMoves"
 		oldResume=experimentOutputs/towers${num}Bias
-		samplePolicy=experimentOutputs/towers${num}BiasSample.pickle
+		samplePolicy=experimentOutputs/towers${num}BiasTestSample.pickle
 
 		resume=experimentOutputs/towers${num}BiasTest
 		salt=towers${num}BiasTest
@@ -29,7 +29,7 @@ for num in 3 20
 		cp ${resume}.pickle ${resume}Symbolic.pickle
 		cp ${resume}Sample.pickle_RecModelOnly ${resume}Symbolic.pickle_RecModelOnly
 		# #Train:
-		cmd="python bin/tower.py --searchType SMC --filterMotifs ${filterMotifs} --split 0.0 --tasks biased --contextual --testingTimeout ${testingTime} --recognitionTimeout 216000 --resumeTraining -r ${helmRatio} --primitives new -t ${time} -RS ${recSteps} --solver python  -c ${ncores} --useValue Symbolic -i 2 --resume ${resume}Symbolic.pickle --singleRoundValueEval --seed 1"
+		cmd="python bin/tower.py --searchType SMC --useSamplePolicy ${samplePolicy} --filterMotifs ${filterMotifs} --split 0.0 --tasks biased --contextual --testingTimeout ${testingTime} --recognitionTimeout 216000 --resumeTraining -r ${helmRatio} --primitives new -t ${time} -RS ${recSteps} --solver python  -c ${ncores} --useValue Symbolic -i 2 --resume ${resume}Symbolic.pickle --singleRoundValueEval --seed 1"
 		#eval "${cmd}"
 		#sbatch -e towersSymbolic${salt}.out -o towersSymbolic${salt}.out execute_gpu_new.sh ${cmd}
 	
@@ -37,7 +37,7 @@ for num in 3 20
 		cp ${resume}.pickle ${resume}Sample.pickle
 		#cp ${oldResume}Sample.pickle_RecModelOnly ${resume}Sample.pickle_RecModelOnly
 		#Train:
-		cmd="python bin/tower.py  --searchType SMC --filterMotifs ${filterMotifs} --split 0.0 --tasks biased --contextual --testingTimeout ${testingTime} --recognitionTimeout 216000 --resumeTraining -r ${helmRatio} --primitives new -t ${time} -RS ${recSteps} --solver python  -c ${ncores} --useValue Sample -i 2 --resume ${resume}Sample.pickle --singleRoundValueEval --seed 2"
+		cmd="python bin/tower.py  --searchType SMC --useSamplePolicy ${samplePolicy} --filterMotifs ${filterMotifs} --split 0.0 --tasks biased --contextual --testingTimeout ${testingTime} --recognitionTimeout 216000 --resumeTraining -r ${helmRatio} --primitives new -t ${time} -RS ${recSteps} --solver python  -c ${ncores} --useValue Sample -i 2 --resume ${resume}Sample.pickle --singleRoundValueEval --seed 2"
 		#eval "${cmd}"
 		sbatch -e towersSample${salt}.out -o towersSample${salt}.out execute_gpu_new.sh ${cmd}
 
@@ -47,7 +47,7 @@ for num in 3 20
 		cp ${resume}.pickle ${resume}REPL.pickle
 		cp ${oldResume}REPL.pickle_RecModelOnly ${resume}REPL.pickle_RecModelOnly
 		#Train:
-		cmd="python bin/tower.py  --searchType SMC --filterMotifs ${filterMotifs} --split 0.0 --tasks biased --contextual --testingTimeout ${testingTime} --recognitionTimeout 216000 --resumeTraining -r ${helmRatio} --primitives new -t ${time} -RS ${recSteps} --solver python  -c ${ncores} --useValue TowerREPL -i 2  --resume ${resume}REPL.pickle --singleRoundValueEval --seed 2"
+		cmd="python bin/tower.py  --searchType SMC --useSamplePolicy ${samplePolicy} --filterMotifs ${filterMotifs} --split 0.0 --tasks biased --contextual --testingTimeout ${testingTime} --recognitionTimeout 216000 --resumeTraining -r ${helmRatio} --primitives new -t ${time} -RS ${recSteps} --solver python  -c ${ncores} --useValue TowerREPL -i 2  --resume ${resume}REPL.pickle --singleRoundValueEval --seed 2"
 		#sbatch -e towersREPL${salt}.out -o towersREPL${salt}.out execute_gpu_new.sh ${cmd}
 		#eval "${cmd}"
 
@@ -56,7 +56,7 @@ for num in 3 20
 		#rm ${resume}RNN.pickle_RecModelOnly
 		cp ${resume}.pickle ${resume}RNN.pickle
 		#cp ${oldResume}RNN.pickle_RecModelOnly ${resume}RNN.pickle_RecModelOnly
-		cmd="python bin/tower.py  --searchType SMC --filterMotifs ${filterMotifs} --split 0.0 --tasks biased --contextual --testingTimeout ${testingTime} --recognitionTimeout 216000 --resumeTraining -r ${helmRatio} --primitives new -t ${time} -RS ${recSteps} --solver python  -c ${ncores} --useValue RNN -i 2 --resume ${resume}RNN.pickle --singleRoundValueEval --seed 2"
+		cmd="python bin/tower.py  --searchType SMC --useSamplePolicy ${samplePolicy} --filterMotifs ${filterMotifs} --split 0.0 --tasks biased --contextual --testingTimeout ${testingTime} --recognitionTimeout 216000 --resumeTraining -r ${helmRatio} --primitives new -t ${time} -RS ${recSteps} --solver python  -c ${ncores} --useValue RNN -i 2 --resume ${resume}RNN.pickle --singleRoundValueEval --seed 2"
 		#sbatch -e towersRNN${salt}.out -o towersRNN${salt}.out execute_gpu_new.sh ${cmd}
 
 
