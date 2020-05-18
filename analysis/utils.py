@@ -163,7 +163,14 @@ def loadCheckpoint(trainset="S9_nojitter", userealnames=True, loadparse=False, s
         doshaping = False
         exptdir = "2020-05-12T15:46:28.108181"
         taskset = "S12" 
-        behaviorexpt = "2.4"        
+        behaviorexpt = "2.4"      
+
+    elif trainset=="S12.inv.S12skew.1.test":
+        userealnames=True
+        doshaping = False
+        exptdir = "2020-05-15T23:30:02.909195"
+        taskset = "S12" 
+        behaviorexpt = "2.4"      
 
     elif trainset=="S12.inv.S12grate.1":
         userealnames=True
@@ -172,13 +179,42 @@ def loadCheckpoint(trainset="S9_nojitter", userealnames=True, loadparse=False, s
         taskset = "S12" 
         behaviorexpt = "2.4"       
 
+    elif trainset=="S12.inv.S12grate.1.test":
+        userealnames=True
+        doshaping = False
+        exptdir = "2020-05-15T23:30:11.204134"
+        taskset = "S12" 
+        behaviorexpt = "2.4"  
+
+    elif trainset=="S12.inv.base.test":
+        userealnames=True
+        doshaping = False
+        exptdir = "2020-05-15T23:30:08.428637"
+        taskset = "S12" 
+        behaviorexpt = "2.4"       
+
     elif trainset=="S13.inv.S13grate.1":
         userealnames=True
         doshaping = False
         exptdir = "2020-05-12T15:49:24.176670"
         taskset = "S13" 
+        behaviorexpt = "2.4"       
+    
+    elif trainset=="S13.inv.S13grate.1.test":
+        userealnames=True
+        doshaping = False
+        exptdir = "2020-05-15T23:30:02.928454"
+        taskset = "S13" 
+        behaviorexpt = "2.4"    
+
+    elif trainset=="S13.inv.base.test":
+        userealnames=True
+        doshaping = False
+        exptdir = "2020-05-15T23:30:03.080193"
+        taskset = "S13" 
         behaviorexpt = "2.4"        
     
+
     else:
         print("PROBLEM did not find traiin set! ")
         assert False
@@ -215,12 +251,26 @@ def loadCheckpoint(trainset="S9_nojitter", userealnames=True, loadparse=False, s
     f = "{}/{}/{}".format(exptsavedir, exptdir, checkpoint)
     result = loadfun(f)
 
+    # =========== GET PARAMS FROM FILENAME
+    idx = f.find("cs=")
+    if idx==-1:
+        use_cogsci_prim=0
+    else:
+        use_cogsci_prim=int(f[idx+3])
+    print(f"[got from filename] use_cogsci_prim={use_cogsci_prim}")
+
     ####### LOADING TASKS 
     def loadTasks(taskset, doshaping):
         print("Loading dreamcoder tasks")
+
+        if use_cogsci_prim in [1, 2]:
+            USE_NEW_PRIMITIVES=False
+        else:
+            USE_NEW_PRIMITIVES=True
+
         # == 2) Load tasks
         from dreamcoder.domains.draw.makeDrawTasks import makeSupervisedTasks
-        tasks, testtasks, programnames, program_test_names = makeSupervisedTasks(trainset=taskset, doshaping=doshaping, userealnames=userealnames)
+        tasks, testtasks, programnames, program_test_names = makeSupervisedTasks(trainset=taskset, doshaping=doshaping, userealnames=userealnames, USE_NEW_PRIMITIVES=USE_NEW_PRIMITIVES)
         return tasks, testtasks, programnames, program_test_names
 
     tasks, testtasks, programnames, program_test_names = loadTasks(taskset, doshaping)
@@ -341,14 +391,14 @@ def _getAndRankAllFrontiers(results, task, SDIR=[], usell=True, K=10,
                 "iteration":i,
                 "frontier":f
             })
-    print(frontiers_over_time)
     # for each frontier get scores and ink
     for f in frontiers_over_time:
         # collect scores and ink used
         f["prior"] = f["frontier"].logPrior
         f["post"] = f["frontier"].logPosterior
         f["ll"] = f["frontier"].logLikelihood
-        f["ink"] = program_ink(f["frontier"].program.evaluate([]))
+
+        f["ink"] = program_ink(evaluateProgram(f["frontier"].program))
         
     # sort by ll, then ink, then prior
     # print(dir(frontiers_over_time[-1]["frontier"]))
@@ -375,6 +425,19 @@ def _getAndRankAllFrontiers(results, task, SDIR=[], usell=True, K=10,
         save(frontiers_over_time, "{}/{}.txt".format(SDIR, stim))
 
     return frontiers_over_time
+
+
+def evaluateProgram(p):
+    """quick, decides what arguments to use"""
+    if str(p.infer()) in ["t0 -> tstroke", "tstroke -> tstroke"]:
+        return p.evaluate([])([])
+    elif str(p.infer()) in ["tstroke"]:
+        return p.evaluate([])
+    else:
+        p.evaluate([])
+    # else:
+    #     print(p.infer())
+    #     assert False, "not coded"
 
 def DATloadParse(DAT, taskname, flattened=True):
     import os
@@ -423,11 +486,6 @@ def getTaskResults(DAT):
 
     # solved?
     def solved(stim):
-        print(stim)
-        print(DATgetTask(stim, DAT)[0])
-        print(DAT.keys())
-        print(DAT["trainset"])
-        print(DAT["testtasks"])
         solution = getBestFrontierProgram(DAT["result"], DATgetTask(stim, DAT)[0], lastKIter=50)
         # solution = getLatestFrontierProgram(DAT["result"], DATgetTask(stim, DAT)[0])
         if isinstance(solution, list):

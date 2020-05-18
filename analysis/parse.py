@@ -7,12 +7,18 @@ sys.path.insert(0, "/Users/lucastian/Dropbox/CODE/Python/Tenenbaum/ec/")
 sys.path.insert(0, "/om/user/lyt/ec")
 sys.path.insert(0, "/home/lucast4/dc")
 # print(sys.path)
-from dreamcoder.domains.draw.drawPrimitives import Program
-from dreamcoder.domains.draw.drawPrimitives import Parse
+if False:
+    from dreamcoder.domains.draw.drawPrimitives import Program
+    from dreamcoder.domains.draw.drawPrimitives import Parse
+else:
+    print("IMPORTING drawPrimitivesDraw - this is the old version, before changed to continuation")
+    from dreamcoder.domains.draw.drawPrimitivesDraw import Program
+    from dreamcoder.domains.draw.drawPrimitivesDraw import Parse
 # from dreamcoder.domains.draw.primitives import _repeat, _line, _makeAffine, _circle,_connect
 from dreamcoder.domains.draw.makeDrawTasks import makeSupervisedTasks, SupervisedDraw
 from dreamcoder.dreamcoder import ecIterator
 from dreamcoder.grammar import Grammar
+from dreamcoder.program import Application
 import numpy as np
 from analysis.utils import *
 
@@ -25,7 +31,31 @@ def getParses(dreamcoder_program):
     # if len(str(dreamcoder_program))>150:
     # import pdb
     # pdb.set_trace()
-    parses = Parse.ofProgram(Program.parse(str(dreamcoder_program)))
+    if str(dreamcoder_program.infer())=="tstroke":
+        parses = Parse.ofProgram(Program.parse(str(dreamcoder_program)))
+        print(dreamcoder_program)
+    else:
+        # NOTE: this is a hack for newer continuation, where had request = arrow(tstroke, tstroke)
+        try:
+            parses = Parse.ofProgram(Program.parse(str(dreamcoder_program.body)))
+            print(dreamcoder_program)
+            print(dreamcoder_program.body)
+# (Pdb) type(list(parses)[0])
+# <class 'dreamcoder.domains.draw.primitives.Parse'>
+        except:
+            print(dreamcoder_program)
+            for a in dreamcoder_program.walk():
+                try:
+                    print(a)
+                    parses = Parse.ofProgram(Program.parse(str(a[1])))
+                    print(parses)
+                    import pdb
+                    pdb.set_trace()
+                except:
+                    pass
+        # except Exception:
+        #     import pdb
+        #     pdb.set_trace()
     return parses
 
 
@@ -257,7 +287,7 @@ if __name__=="__main__":
     REMOVELL = False    
 
     print("getting all parses (may take a while")
-    getAndSaveParses(experiment=experiment, skipthingsthatcrash=skipthingsthatcrash)
+    getAndSaveParses(experiment=experiment, skipthingsthatcrash=skipthingsthatcrash, nrand_flat_parses=5000)
 
     #     # === get datflat
     #     print("GETTING DATFLAT (computing and then saving")

@@ -35,10 +35,12 @@ def _givemeback(thing):
     return thing
 
 
-def primitiveList(USE_NEW_PRIMITIVES = True):
-    """ gets the default primitivies """
+def primitiveList(USE_NEW_PRIMITIVES):
+    """ gets the default primitivies (set USE_NEW_PRIMITIVES to True)"""
     p0 = [Primitive("None", tmaybe(t0), None), Primitive("Some", arrow(t0, tmaybe(t0)), _givemeback)]
 
+    assert USE_NEW_PRIMITIVES in [True, False]
+    
     if USE_NEW_PRIMITIVES:
         if False:
             p1 = [
@@ -93,7 +95,7 @@ def primitiveList(USE_NEW_PRIMITIVES = True):
 
 
 
-def getPrimitives(trainset="", prune=False, primitives=None, fullpruning=True, USE_NEW_PRIMITIVES = True, 
+def getPrimitives(USE_NEW_PRIMITIVES, trainset="", prune=False, primitives=None, fullpruning=True, 
     suppress_print=False):
     """ get primitives for each specific experiment"""
 

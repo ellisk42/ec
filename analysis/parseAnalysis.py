@@ -181,7 +181,8 @@ def plotDreams(dreams, ll=None):
     fig = plt.figure(figsize=(ncols*2, nrows*2))
     for i, d in enumerate(dreams):
         ax = plt.subplot(nrows, ncols, i+1)
-        plotOnAxes(d.evaluate([]), ax=ax)
+        plotOnAxes(evaluateProgram(d), ax=ax)
+        # plotOnAxes(d.evaluate([]), ax=ax)
         ax.set_yticklabels([])
         ax.set_xticklabels([])
         if not ll is None:

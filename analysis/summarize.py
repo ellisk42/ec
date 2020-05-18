@@ -106,7 +106,10 @@ def summarize(ECTRAIN, SUMMARY_SAVEDIR = "", comparetohuman=True):
 
     # 3) print all primitives (and save)
     P = DAT["result"].grammars[-1].primitives
-    _, stringlist = visualizePrimitives(P, export="{}/{}_primitives_".format(SUMMARY_SAVEDIR, DAT["trainset"]))
+    try:
+        _, stringlist = visualizePrimitives(P, export="{}/{}_primitives_".format(SUMMARY_SAVEDIR, DAT["trainset"]))
+    except:
+        
     fname = "{}/{}_primitives.txt".format(SUMMARY_SAVEDIR, DAT["trainset"])
     with open(fname, "w") as f:
         for s in stringlist:
@@ -331,14 +334,17 @@ def summarizeFrontiers(ECTRAIN, k=20):
                 print("posterior: {}".format(f.logPosterior))
                 print("likelihood: {}".format(f.logLikelihood))
                 print("prior: {}".format(f.logPrior))
-                print("ink used: {}".format(program_ink(f.program.evaluate([]))))
+
+                print("ink used: {}".format(program_ink(evaluateProgram(f.program))))
                 print("---")
-                return "post {}, ll {}, prior {}, ink {}".format(f.logPosterior, f.logLikelihood, f.logPrior, program_ink(f.program.evaluate([])))
+                return "post {}, ll {}, prior {}, ink {}".format(f.logPosterior, f.logLikelihood, f.logPrior, program_ink(evaluateProgram(f.program)))
             
             string_list = []
             if first_plot_best_post:
                 st = print_f(frontiers.bestPosterior, skip_print_prog)
-                fig = dgutils.plotDrawingSteps(frontiers.bestPosterior.program.evaluate([]))
+                # fig = dgutils.plotDrawingSteps(frontiers.bestPosterior.program.evaluate([]))
+                fig = dgutils.plotDrawingSteps(evaluateProgram(frontiers.bestPosterior.program))
+
     #             plt.title(st)
                 fig.savefig("{}/{}_bestPost.pdf".format(SDIR, stim))
                 string_list.append(st)
@@ -346,7 +352,8 @@ def summarizeFrontiers(ECTRAIN, k=20):
                 
             for i, f in enumerate(frontiers.entries):
                 st = print_f(f, skip_print_prog)
-                fig = dgutils.plotDrawingSteps(f.program.evaluate([]))
+                # fig = dgutils.plotDrawingSteps(f.program.evaluate([]))
+                fig = dgutils.plotDrawingSteps(evaluateProgram(f.program))
     #             plt.title(st)
                 fig.savefig("{}/{}_top_{}.pdf".format(SDIR, stim, i))
                 string_list.append(st)

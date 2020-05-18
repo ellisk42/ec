@@ -191,7 +191,6 @@ class Parse():
             set_parsing(True)
             # counter=0
             p = chunky(p)
-            print(p)
             parses = p.evaluate([])
             set_parsing(False)
             return parses

@@ -115,8 +115,14 @@ def visualizePrimitives(primitives, export="/tmp/draw_primitives", saveon=True):
                 return [[PP.ORDERS[0], _makeAffine()]]
             elif t in [ttransmat]:
                 return [_makeAffine(theta=th) for th in [pi/3]] + [_makeAffine(s=s) for s in [0.5]]
+            elif t == arrow(arrow(ttransmat, tstroke), tstroke):
+                # return [[_makeAffine(), p1, p2] for p1, p2 in zip([PP.polygon(3), PP._line], [PP._circle, PP.polygon(3)])]               
+                print("this is not correct..") 
+                return [[_makeAffine(), PP._line, PP._circle]]
             else:
                 print(t)
+                import pdb
+                pdb.set_trace()
                 assert False
 
         ts = [] # holds all cases for this primitive
@@ -132,10 +138,17 @@ def visualizePrimitives(primitives, export="/tmp/draw_primitives", saveon=True):
         # assert False
         for arguments in product(*[argumentChoices(t) for t in t.functionArguments() ]):
             t = p.evaluate([])
-            for a in arguments: t = t(a)
-            # print(t)
-            # assert False
-            ts.append(t)
+
+            try:
+                for a in arguments: 
+                    t = t(a)
+                # print(t)
+                # assert False
+                ts.append(t)
+            except TypeError:
+                ts.append([])
+            except:
+                raise
             
         matrix.append(ts)
     
@@ -179,6 +192,11 @@ def main(arguments):
         else:
             print("NOT DOING PRUNING")
 
+        if arguments["use_cogsci_primitives"] in [1, 2]:
+            USE_NEW_PRIMITIVES=False
+        else:
+            USE_NEW_PRIMITIVES=True
+
         # ========== LOAD STARTING PRIMITIVES
         if arguments["use_cogsci_primitives"]==0:
             # then ignore cogsci. use latest primtiives whatever theya re
@@ -196,10 +214,6 @@ def main(arguments):
         else:
             assert False, "not coded... make sure in [0,1,2]"
 
-        if arguments["use_cogsci_primitives"] in [1, 2]:
-            USE_NEW_PRIMITIVES=False
-        else:
-            USE_NEW_PRIMITIVES=True
 
         # ========= LOAD HAND-BUILT INVENTIONS
         if not arguments["invention_set"] is None:
@@ -238,7 +252,7 @@ def main(arguments):
             print("Primitives:")
             print(primitives)
         
-        train, test = makeSupervisedTasks(trainset=arguments["trainset"], doshaping=arguments["doshaping"])[:2]
+        train, test = makeSupervisedTasks(trainset=arguments["trainset"], doshaping=arguments["doshaping"], USE_NEW_PRIMITIVES=USE_NEW_PRIMITIVES)[:2]
 
         # For the testing tasks we are going to use Euclidean distance as a likelihood function
         # The likelihood is -5*(Euclidean distance over all pixels)

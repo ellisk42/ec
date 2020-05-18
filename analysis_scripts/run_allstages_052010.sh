@@ -28,6 +28,11 @@ if false; then
     python analysis/parseProcess.py $EC_EXPT
 fi
 
+# new parse analyses
+if false; then
+    python analysis/parseAnalysis.py
+fi
+
 # 1) For all parse datsegs, get corresponding scores. also gets for randperms
 if true; then
     python analysis/parsesGetPlannerScores.py 200118 S13
