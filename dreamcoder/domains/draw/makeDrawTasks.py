@@ -73,7 +73,7 @@ class SupervisedDraw(Task):
 				return 0.0
 
 	
-def makeSupervisedTasks(trainset="S8full", doshaping="True", userealnames=True, USE_NEW_PRIMITIVES): # TODO, LT, make these tasks.
+def makeSupervisedTasks(trainset="S8full", doshaping="True", userealnames=True, USE_NEW_PRIMITIVES=False): # TODO, LT, make these tasks.
 	# arches = [SupervisedTower("arch leg %d"%n,
 	#                           "((for i %d v) (r 4) (for i %d v) (l 2) h)"%(n,n))
 	#           for n in range(1,9)
