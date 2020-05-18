@@ -207,12 +207,12 @@ def loadCheckpoint(trainset="S9_nojitter", userealnames=True, loadparse=False, s
         taskset = "S13" 
         behaviorexpt = "2.4"    
 
-    elif trainset=="S13.inv.base.test":
-        userealnames=True
-        doshaping = False
-        exptdir = "2020-05-15T23:30:03.080193"
-        taskset = "S13" 
-        behaviorexpt = "2.4"        
+    # elif trainset=="S13.inv.base.test":
+    #     userealnames=True
+    #     doshaping = False
+    #     exptdir = "2020-05-15T23:30:03.080193"
+    #     taskset = "S13" 
+    #     behaviorexpt = "2.4"        
     
 
     else:
@@ -249,6 +249,7 @@ def loadCheckpoint(trainset="S9_nojitter", userealnames=True, loadparse=False, s
     checkpoint = F[ind[0]]
     checkpoint = checkpoint.split("/")[-1]
     f = "{}/{}/{}".format(exptsavedir, exptdir, checkpoint)
+    dc_filename = f
     result = loadfun(f)
 
     # =========== GET PARAMS FROM FILENAME
@@ -345,6 +346,7 @@ def loadCheckpoint(trainset="S9_nojitter", userealnames=True, loadparse=False, s
     "analysavedir":analysavedir,
     "summarysavedir":summarysavedir,
     "loadparse":loadparse,
+    "dc_filename":dc_filename
     }
 
     DAT["taskresultdict"] = getTaskResults(DAT)

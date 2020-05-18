@@ -27,7 +27,7 @@ class DrawCNN(ImageFeatureExtractor):
                                             channels=1)
         print("output dimensionality",self.outputDimensionality)
     def taskOfProgram(self, p, t):
-        if t.isArrow:
+        if t.isArrow():
             # continuation passing
             i = p.evaluate([])([])
         else:
@@ -41,7 +41,7 @@ class DrawCNN(ImageFeatureExtractor):
 def dreamFromGrammar(g=None, directory = "", N=25, maximumDepth=15, returnLogLikelihoods=False):
    # request = taxes # arrow9turtle turtle) just for logl.
    # request = arrow(taxes, taxes) # arrow9turtle turtle) just for logl.if USE_NEW_PRIMITIVES:
-
+    print("DREAMING!!")
     if g is None:
         primitives = primitiveList(USE_NEW_PRIMITIVES = USENEWPRIM)
         if USENEWPRIM:
@@ -274,6 +274,16 @@ def main(arguments):
 
         os.system(f"mkdir -p {outputDirectory}")
         arguments["featureExtractor"] = DrawCNN
+
+        ################## 
+        print("Training task request type:")
+        for t in train:
+            print(f"request: {t.request}; is arrow: {t.request.isArrow()}")
+        print("Testing task request type:")
+        for t in test:
+            print(f"request: {t.request}; is arrow: {t.request.isArrow()}")
+
+        ###################
         if arguments["skiptesting"]==False and len(test)>0:
                 generator = ecIterator(g0, train, testingTasks=test,
                         outputPrefix="%s/draw"%outputDirectory,
