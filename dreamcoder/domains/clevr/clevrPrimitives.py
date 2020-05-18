@@ -79,6 +79,17 @@ clevr_eq_objects = Primitive("clevr_eq_objects", arrow(tclevrobject, tclevrobjec
 # Sorts and deduplicate
 def sort_objs(obj_list):
     return sorted(obj_list, key=lambda o: o["id"])
+    
+# Sort and deduplicate
+def sort_and_dedup_obj_list(obj_list):
+    seen = set()
+    deduped = []
+    for o in obj_list:
+        if o["id"] not in seen:
+            seen.add(o["id"])
+            deduped.append(o)
+    return sort_objs(deduped)
+
 ### Pre-defined filter and pre-defined same
 def base_filter(condition_fn): # (ObjSet -> ObjSet)
     return lambda objset: sort_objs([obj for obj in objset if condition_fn(obj)])
@@ -169,7 +180,7 @@ clevr_map = Primitive("clevr_map", arrow(arrow(tclevrobject, tclevrobject), tlis
 clevr_if = Primitive("clevr_if", arrow(tbool, t0, t0, t0), _if)
 clevr_is_empty = Primitive("clevr_empty?", arrow(tlist(tclevrobject), tbool), _isEmpty)
 clevr_empty = Primitive("clevr_empty", tlist(tclevrobject), [])
-clevr_fold = Primitive("clevr_fold", arrow(tlist(t0), t1, arrow(t0, t1, t1), t1), _fold)
+clevr_fold = Primitive("clevr_fold", arrow(tlist(tclevrobject), t1, arrow(tclevrobject, t1, t1), t1), _fold)
 clevr_add = Primitive("clevr_add", arrow(tclevrobject, tlist(tclevrobject), tlist(tclevrobject)), _clevr_add)
 clevr_car = Primitive("clevr_car", arrow(tlist(tclevrobject), tclevrobject), _car)
 clevr_cdr = Primitive("clevr_cdr", arrow(tlist(tclevrobject), tlist(tclevrobject)), _cdr)

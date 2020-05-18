@@ -9,23 +9,27 @@ def languageForTasks(languageDataset, languageDatasetDir, taskDict):
     Returns {task_name : list of sentences for each task, for the tasks in the taskDict.}
     
     """
+    if type(languageDataset) is not list:
+        languageDataset = [languageDataset]
+        
     import os
     import json
-    if 'path' in languageDataset:
+    if 'path' in languageDataset[0]:
         return languageForPathNameTasks(languageDataset, languageDatasetDir, taskDict)
     
     vocabularies = {"train": None, "test": None}
     from pathlib import Path
-    dataset_path = os.path.join(languageDatasetDir, languageDataset)
-    for split in ("train", "test"):
-        split_path = os.path.join(dataset_path, split)
-        with open(os.path.join(split_path, "language.json"), 'rb') as f:
-            languageData = json.load(f)
-            for t_name in taskDict:
-                if t_name in languageData:
-                    taskDict[t_name] = languageData[t_name]
-        with open(os.path.join(split_path, "vocab.json"), 'rb') as f:
-            vocabularies[split] = json.load(f)
+    for dataset in languageDataset:
+        dataset_path = os.path.join(languageDatasetDir, dataset)
+        for split in ("train", "test"):
+            split_path = os.path.join(dataset_path, split)
+            with open(os.path.join(split_path, "language.json"), 'rb') as f:
+                languageData = json.load(f)
+                for t_name in taskDict:
+                    if t_name in languageData:
+                        taskDict[t_name] = languageData[t_name]
+            with open(os.path.join(split_path, "vocab.json"), 'rb') as f:
+                vocabularies[split] = json.load(f)
     
     print("Found language for {}/{} tasks".format(len([t for t in taskDict if len(taskDict[t]) > 0]), len(taskDict)))
     print(f"Found vocabularies of n=[{len(vocabularies['train'])}] for train and n=[{len(vocabularies['test'])}] for test.")

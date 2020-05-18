@@ -733,7 +733,7 @@ let primitive_clevr_cdr = primitive "clevr_cdr" (tlist tclevrobject @> tlist tcl
 let primitive_clevr_if = primitive "clevr_if" (tboolean @> t0 @> t0 @> t0)
     ~manualLaziness:true
     (fun p x y -> if Lazy.force p then Lazy.force x else Lazy.force y);;
-let primitive_clevr_fold = primitive "clevr_fold" (tlist t0 @> t1 @> (t0 @> t1 @> t1) @> t1) (fun l x0 f -> List.fold_right ~f:f ~init:x0 l);;
+let primitive_clevr_fold = primitive "clevr_fold" (tlist tclevrobject @> t1 @> (tclevrobject @> t1 @> t1) @> t1) (fun l x0 f -> List.fold_right ~f:f ~init:x0 l);;
 
 (* List Function Definitions *)
 let primitive_empty = primitive "empty" (tlist t0) [];;

@@ -107,7 +107,6 @@ register_special_task "clevrobjectlist" (fun extras
               match run_for_interval
                       timeout
                       (fun () -> 
-                        let _ = Printf.eprintf "Trying to eval...\n" in 
                         let output = run_lazy_analyzed_with_arguments p xs in
                         Program.compare_objs (magical y) (magical output))
               with

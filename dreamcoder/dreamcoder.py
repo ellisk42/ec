@@ -253,7 +253,7 @@ def ecIterator(grammar, tasks,
                 eprint(f"Examples encoder: {str(featureExtractor.__name__)}")
             if "language" in model:
                 eprint(f"Language encoder: {language_encoder}")
-                eprint(f"Language dataset: {languageDataset}")
+                eprint(f"Language dataset or datasets: {languageDataset}")
             if recognitionEpochs is not None:
                 eprint(f"Epochs: [{recognitionEpochs[i]}]; contextual: {contextual}")
             elif recognitionSteps is not None:
@@ -321,7 +321,7 @@ def ecIterator(grammar, tasks,
     else: del parameters["useDSL"]
     
     if languageDataset:
-        parameters["languageDataset"] = os.path.basename(languageDataset).split(".")[0]
+        parameters["languageDataset"] = ",".join([os.path.basename(d).split(".")[0] for d in languageDataset])
     
     
     # Uses `parameters` to construct the checkpoint path
@@ -524,10 +524,14 @@ def ecIterator(grammar, tasks,
            all( str(p) != "REAL" for p in grammar.primitives ): # real numbers don't support this
             # the DSL is fixed, so the dreams are also fixed. don't recompute them.
             if useDSL or 'helmholtzFrontiers' not in locals():
+                serialize_special = featureExtractor.serialize_special if hasattr(featureExtractor, 'serialize_special') else None
+                maximum_helmholtz = featureExtractor.maximum_helmholtz if hasattr(featureExtractor, 'maximum_helmholtz') else None
                 helmholtzFrontiers = backgroundHelmholtzEnumeration(tasks, grammar, enumerationTimeout,
                                                                     evaluationTimeout=evaluationTimeout,
                                                                     special=featureExtractor.special,
-                                                                    executable='helmholtz')
+                                                                    executable='helmholtz',
+                                                                    serialize_special=serialize_special,
+                                                                    maximum_size=maximum_helmholtz)
             else:
                 print("Reusing dreams from previous iteration.")
         else:
@@ -1185,7 +1189,8 @@ def commandlineArguments(_=None,
                         type=str)
     parser.add_argument("--languageDataset",
                         dest="languageDataset",
-                        help="Name of language dataset if using language features.",
+                        help="Name of language dataset or datasets if using language features.",
+                        nargs="+",
                         default=None,
                         type=str)
 

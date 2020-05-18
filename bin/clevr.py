@@ -4,7 +4,7 @@ except ModuleNotFoundError:
     import bin.binutil  # alt import if called as module
 
 # TODO: implement feature extractor.
-from dreamcoder.domains.clevr.main import main, clevr_options
+from dreamcoder.domains.clevr.main import main, clevr_options, ClevrFeatureExtractor
 from dreamcoder.dreamcoder import commandlineArguments
 from dreamcoder.utilities import numberOfCPUs
 
@@ -19,7 +19,7 @@ if __name__ == '__main__':
         a=3,
         activation="tanh",
         CPUs=numberOfCPUs(),
-        featureExtractor=None,
+        featureExtractor=ClevrFeatureExtractor,
         pseudoCounts=30.0,
         extras=clevr_options)
     main(arguments)

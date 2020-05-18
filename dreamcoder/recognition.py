@@ -1493,6 +1493,7 @@ class RecurrentFeatureExtractor(nn.Module):
         return f
 
     def taskOfProgram(self, p, tp):
+        self.helmholtzTimeout, self.helmholtzEvaluationTimeout = 10000, 10000
         # half of the time we randomly mix together inputs
         # this gives better generalization on held out tasks
         # the other half of the time we train on sets of inputs in the training data
@@ -1518,6 +1519,7 @@ class RecurrentFeatureExtractor(nn.Module):
                         return Task("Helmholtz", tp, examples)
                 except: 
                     print("Timed out or error, continuing")
+                    import pdb; pdb.set_trace()
                     continue
 
         else:
@@ -1530,6 +1532,7 @@ class RecurrentFeatureExtractor(nn.Module):
                         y = runWithTimeout(lambda: p.runWithArguments(xs), self.helmholtzEvaluationTimeout)
                     except RunWithTimeout: 
                         print("Timed out or error, continuing")
+                        import pdb; pdb.set_trace()
                         return None
                     finally:
                         print("Timed out, continuing")

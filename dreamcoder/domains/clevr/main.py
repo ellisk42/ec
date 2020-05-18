@@ -12,7 +12,9 @@ import random
 
 
 class ClevrFeatureExtractor(RecurrentFeatureExtractor):
-    special = None
+    special = 'clevr'
+    serialize_special = serialize_clevr_object
+    maximum_helmholtz = 20000
     def __init__(self, tasks, testingTasks=[], cuda=False):
         self.recomputeTasks = True
         self.useTask = True
@@ -48,11 +50,15 @@ class ClevrFeatureExtractor(RecurrentFeatureExtractor):
                 y = tokenize_obj_list(y)
             tokenized.append([xs, y])
         return tokenized
-    
-    # TODO
+
     def taskOfProgram(self, p, tp):
         # Uses the RNN random input sampling
-        return super(ClevrFeatureExtractor, self).taskOfProgram(p, tp)
+        t = super(ClevrFeatureExtractor, self).taskOfProgram(p, tp)
+        if t is not None:
+            xs, y = t.examples[0]
+            if type(y) == list: # Sort and dedup any object list
+                t.examples = [(xs, sort_and_dedup_obj_list(y)) for xs, y in t.examples]
+        return t
 
 all_train_questions = [
     "1_zero_hop",
@@ -75,6 +81,8 @@ def clevr_options(parser):
     parser.add_argument("--taskDatasetDir",
                         default="../too_clevr/data/clevr_dreams/",
                         help="Top level directory for the dataset.")
+    parser.add_argument("--languageDatasetDir",
+                        default="../too_clevr/data/clevr_dreams/language/")
     parser.add_argument("--trainInputScenes",
                         default="CLEVR_train_scenes_1000",
                         help="Input scene graphs for all of the training questions.")
@@ -95,6 +103,8 @@ def clevr_options(parser):
                         action='store_true')
     parser.add_argument("--run_recognition_test",
                         action='store_true')
+    parser.add_argument("--iterations_as_epochs",
+                        default=True)
                         
 def main(args):
     # Load the curriculum and datasets.
@@ -105,7 +115,7 @@ def main(args):
     if len(curriculum_datasets) > 0:
         curriculum, _ = loadCLEVRDataset(task_datasets=curriculum_datasets, task_dataset_dir=task_dataset_dir, train_scenes=train_scenes, test_scenes = test_scenes, seed=args["seed"], is_curriculum=True)
     
-    task_datasets = args["taskDatasets"]
+    task_datasets = args.pop("taskDatasets")
     train, test = loadCLEVRDataset(task_datasets=task_datasets, task_dataset_dir=task_dataset_dir, train_scenes=train_scenes, test_scenes = test_scenes, seed=args["seed"])
     eprint(f"Loaded datasets: [{task_datasets}]: [{len(train)}] total train and [{len(test)}] total test tasks.")
     
@@ -126,10 +136,19 @@ def main(args):
         # Test the Helmholtz enumeratio n
         # tasks = [buildClevrMockTask(train[0])]
         tasks = train
-        if False:
+        if True:
             from dreamcoder.dreaming import backgroundHelmholtzEnumeration
             print(baseGrammar)
             helmholtzFrontiers = backgroundHelmholtzEnumeration(tasks, 
+                                                                baseGrammar, 
+                                                                timeout=5,
+                                                                evaluationTimeout=0.05,
+                                                                special='clevr',
+                                                                executable='helmholtz',
+                                                                serialize_special=serialize_clevr_object,
+                                                                maximum_size=20000) # TODO: check if we need special to check tasks later
+            f = helmholtzFrontiers()
+            helmholtzFrontiers = backgroundHelmholtzEnumeration(train, 
                                                                 baseGrammar, 
                                                                 timeout=5,
                                                                 evaluationTimeout=0.05,
@@ -153,5 +172,28 @@ def main(args):
         featurizer = ClevrFeatureExtractor(tasks=tasks, testingTasks=[], cuda=False)
         for t in tasks:
             featurizer.featuresOfTask(t)
-            
+    
+    
+    use_epochs = args.pop("iterations_as_epochs")
+    if use_epochs and args["taskBatchSize"] is not None:
+        eprint("Using iterations as epochs")
+        args["iterations"] *= int(len(train) / args["taskBatchSize"]) 
+        eprint(f"Now running for n={args['iterations']} iterations.")
+
+    timestamp = datetime.datetime.now().isoformat()
+    # Escape the timestamp.
+    timestamp = timestamp.replace(":", "-")
+    timestamp = timestamp.replace(".", "-")
+    outputDirectory = "experimentOutputs/clevr/%s"%timestamp
+    os.system("mkdir -p %s"%outputDirectory)
+    
+    evaluationTimeout = 1.0
+    generator = ecIterator(baseGrammar, train,
+                           testingTasks=test,
+                           outputPrefix="%s/clevr"%outputDirectory,
+                           evaluationTimeout=evaluationTimeout,
+                           languageDataset=languageDataset,
+                           **args)
+    for result in generator:
+        pass
         
