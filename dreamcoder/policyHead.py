@@ -140,12 +140,12 @@ class RNNPolicyHead(nn.Module):
         sketches = [self._designateTargetHole(zipper, sk) for zipper, sk in zip(zippers, sketches)]
 
         sketchEncodings = self.RNNHead._encodeSketches(sketches)
-        print("sketchEncodings shape", sketchEncodings.shape)
+        #print("sketchEncodings shape", sketchEncodings.shape)
         features = self.featureExtractor.featuresOfTask(task)
         features = features.unsqueeze(0)
-        print("features shape", features.shape, flush=True)
+        #print("features shape", features.shape, flush=True)
         x = features.expand(len(sketches), -1)
-        print("x shape", x.shape, flush=True)
+        #print("x shape", x.shape, flush=True)
         features = torch.cat([sketchEncodings, x ], dim=1)
         dist = self.output(features)
         mask = self._buildMask(sketches, zippers, task, g)
