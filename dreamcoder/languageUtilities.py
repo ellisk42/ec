@@ -17,20 +17,27 @@ def languageForTasks(languageDataset, languageDatasetDir, taskDict):
     if 'path' in languageDataset[0]:
         return languageForPathNameTasks(languageDataset, languageDatasetDir, taskDict)
     
-    vocabularies = {"train": None, "test": None}
+    vocabularies = {"train": set(), "test": set()}
     from pathlib import Path
     for dataset in languageDataset:
         dataset_path = os.path.join(languageDatasetDir, dataset)
         for split in ("train", "test"):
-            split_path = os.path.join(dataset_path, split)
-            with open(os.path.join(split_path, "language.json"), 'rb') as f:
-                languageData = json.load(f)
-                for t_name in taskDict:
-                    if t_name in languageData:
-                        taskDict[t_name] = languageData[t_name]
-            with open(os.path.join(split_path, "vocab.json"), 'rb') as f:
-                vocabularies[split] = json.load(f)
+            try:
+                split_path = os.path.join(dataset_path, split)
+                with open(os.path.join(split_path, "language.json"), 'rb') as f:
+                    languageData = json.load(f)
+                    for t_name in taskDict:
+                        if t_name in languageData:
+                            taskDict[t_name] = languageData[t_name]
+                with open(os.path.join(split_path, "vocab.json"), 'rb') as f:
+                    vocabularies[split].update(json.load(f))
+            except:
+                print(f"Not found: dataset for {split_path}")
+                continue
     
+    for k in vocabularies:
+        vocabularies[k] = sorted(list(vocabularies[k]))
+
     print("Found language for {}/{} tasks".format(len([t for t in taskDict if len(taskDict[t]) > 0]), len(taskDict)))
     print(f"Found vocabularies of n=[{len(vocabularies['train'])}] for train and n=[{len(vocabularies['test'])}] for test.")
     

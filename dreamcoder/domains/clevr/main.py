@@ -79,10 +79,10 @@ def clevr_options(parser):
                         default=all_train_questions,
                         help="Which task datasets to load, stored as JSON CLEVR question files.")
     parser.add_argument("--taskDatasetDir",
-                        default="../too_clevr/data/clevr_dreams/",
+                        default="data/clevr",
                         help="Top level directory for the dataset.")
     parser.add_argument("--languageDatasetDir",
-                        default="../too_clevr/data/clevr_dreams/language/")
+                        default="data/clevr/language/")
     parser.add_argument("--trainInputScenes",
                         default="CLEVR_train_scenes_1000",
                         help="Input scene graphs for all of the training questions.")
@@ -107,6 +107,7 @@ def clevr_options(parser):
                         default=True)
                         
 def main(args):
+    
     # Load the curriculum and datasets.
     curriculum_datasets = args.pop("curriculumDatasets")
     task_dataset_dir=args.pop("taskDatasetDir")
@@ -118,6 +119,10 @@ def main(args):
     task_datasets = args.pop("taskDatasets")
     train, test = loadCLEVRDataset(task_datasets=task_datasets, task_dataset_dir=task_dataset_dir, train_scenes=train_scenes, test_scenes = test_scenes, seed=args["seed"])
     eprint(f"Loaded datasets: [{task_datasets}]: [{len(train)}] total train and [{len(test)}] total test tasks.")
+    
+    # Generate language dataset directly from the loaded tasks.
+    args.pop("languageDataset")
+    languageDataset = curriculum_datasets + task_datasets
     
     # Load the primitives and optionally run tests with the primitive set.
     primitive_names = args.pop("primitives")
