@@ -20,7 +20,7 @@ print("Note: should change this dependeing on hwether using new or old primtiive
 
 class DrawCNN(ImageFeatureExtractor):
     special = "draw"
-    def __init__(self, tasks, testingTasks=[], cuda=False, USE_NEW_PRIMITIVES=USENEWPRIM):
+    def __init__(self, tasks, testingTasks=[], cuda=False):
         super(DrawCNN, self).__init__(inputImageDimension=128,
                                             resizedDimension=64,
                                             cuda=cuda,
@@ -32,24 +32,23 @@ class DrawCNN(ImageFeatureExtractor):
             i = p.evaluate([])([])
         else:
             i = p.evaluate([])
-        return SupervisedDraw("dream", i, USE_NEW_PRIMITIVES)
+        return SupervisedDraw("dream", i, USENEWPRIM)
 
     def featuresOfTask(self, t):
         return self(t.rendered_strokes)
 
 
-def dreamFromGrammar(g=None, directory = "", N=25, USE_NEW_PRIMITIVES=True, 
-    maximumDepth=15, returnLogLikelihoods=False):
+def dreamFromGrammar(g=None, directory = "", N=25, maximumDepth=15, returnLogLikelihoods=False):
    # request = taxes # arrow9turtle turtle) just for logl.
    # request = arrow(taxes, taxes) # arrow9turtle turtle) just for logl.if USE_NEW_PRIMITIVES:
 
     if g is None:
-        primitives = primitiveList(USE_NEW_PRIMITIVES = USE_NEW_PRIMITIVES)
-        if USE_NEW_PRIMITIVES:
+        primitives = primitiveList(USE_NEW_PRIMITIVES = USENEWPRIM)
+        if USENEWPRIM:
             g = Grammar.uniform(primitives, continuationType=tstroke)
         else:
             g = Grammar.uniform(primitives)
-    if USE_NEW_PRIMITIVES:
+    if USENEWPRIM:
         request = arrow(tstroke, tstroke)
     else:
         request = tstroke # arrow9turtle turtle) just for logl.

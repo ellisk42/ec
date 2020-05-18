@@ -73,7 +73,7 @@ class SupervisedDraw(Task):
 				return 0.0
 
 	
-def makeSupervisedTasks(USE_NEW_PRIMITIVES, trainset="S8full", doshaping="True", userealnames=True): # TODO, LT, make these tasks.
+def makeSupervisedTasks(trainset="S8full", doshaping="True", userealnames=True, USE_NEW_PRIMITIVES): # TODO, LT, make these tasks.
 	# arches = [SupervisedTower("arch leg %d"%n,
 	#                           "((for i %d v) (r 4) (for i %d v) (l 2) h)"%(n,n))
 	#           for n in range(1,9)
@@ -241,7 +241,7 @@ def makeSupervisedTasks(USE_NEW_PRIMITIVES, trainset="S8full", doshaping="True",
 	for name, p in zip(names, programs):
 	# for i, p in enumerate(programs):
 		# name = "task{}".format(i)
-		alltasks.append(SupervisedDraw(name, p, USE_NEW_PRIMITIVES))
+		alltasks.append(SupervisedDraw(name, p, USE_NEW_PRIMITIVES=USE_NEW_PRIMITIVES))
 
 
 
@@ -292,7 +292,7 @@ def makeSupervisedTasks(USE_NEW_PRIMITIVES, trainset="S8full", doshaping="True",
 		for name, p in zip(names, programs_test):
 		# for i, p in enumerate(programs_test):
 			# name = "test{}".format(i)
-			testtasks.append(SupervisedDraw(name, p, USE_NEW_PRIMITIVES))
+			testtasks.append(SupervisedDraw(name, p, USE_NEW_PRIMITIVES=USE_NEW_PRIMITIVES))
 	print("test tasks:")
 	print(names)
 	
