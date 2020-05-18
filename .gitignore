@@ -21,6 +21,7 @@ analysis/saved/*
 analysis/saved_backup/*
 analysis/outputs/*
 analysis/summaryfigs/acrossexpt/*
+analysis/summary/*
 __pycache__
 _build
 experimentOutputs
