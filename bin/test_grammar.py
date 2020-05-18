@@ -11,6 +11,7 @@ from dreamcoder.valueHead import *
 from dreamcoder.zipper import *
 
 from dreamcoder.domains.tower.towerPrimitives import *
+import time
 
 bootstrapTarget()
 g = Grammar.uniform([k0,k1,addition, subtraction, Program.parse('cons'), 
@@ -368,7 +369,7 @@ def test_TowerREPLPolicyConvergence():
     for frontier in lst:
         print(frontier.entries[0].program._fullProg)
 
-    for i in range(5000):
+    for i in range(100):
         policyHead.zero_grad()
         
         losses = [policyHead.policyLossFromFrontier(frontier, g) for frontier in lst ]#+ lst[2:]]
@@ -381,6 +382,21 @@ def test_TowerREPLPolicyConvergence():
         loss.backward()
         optimizer.step()
 
+    policyHead.cpu()
+    policyHead.use_cuda = False
+    torch.set_num_threads(1)
+    for i in range(300):
+        policyHead.policyLossFromFrontier(frontier, g) 
+        for frontier in lst:
+            t = time.time()
+            sk = baseHoleOfType(frontier.task.request)
+            newZippers = findHoles(sk, frontier.task.request)
+            while newZippers:
+                sk, newZippers = policyHead.sampleSingleStep(frontier.task, g, sk,
+                                                    frontier.task.request, holeZippers=newZippers,
+                                                    maximumDepth=8)
+                #print(sk)
+            print(f"time for a full prog:{time.time() - t}")
 
 if __name__=='__main__':
     #findError()
