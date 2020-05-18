@@ -23,7 +23,7 @@ for num in 3 20
 		samplePolicy=experimentOutputs/towers${num}PolicyNoBigramLossSample.pickle
 
 		resume=experimentOutputs/towers${num}Policy
-		salt=towers${num}Policy
+		salt=towers${num}PolicyTest
 		cp ${oldResume}.pickle ${resume}.pickle
 
 		# #rm ${resume}Symbolic.pickle_RecModelOnly
