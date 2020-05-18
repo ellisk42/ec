@@ -14,11 +14,13 @@ from dreamcoder.recognition import ImageFeatureExtractor
 import datetime
 import os
 
-# USE_NEW_PRIMITIVES = True # i..e, contuinuation.
+
+USENEWPRIM = False # i..e, contuinuation.
+print("Note: should change this dependeing on hwether using new or old primtiives.")
 
 class DrawCNN(ImageFeatureExtractor):
     special = "draw"
-    def __init__(self, tasks, testingTasks=[], cuda=False):
+    def __init__(self, tasks, testingTasks=[], cuda=False, USE_NEW_PRIMITIVES=USENEWPRIM):
         super(DrawCNN, self).__init__(inputImageDimension=128,
                                             resizedDimension=64,
                                             cuda=cuda,
@@ -30,7 +32,7 @@ class DrawCNN(ImageFeatureExtractor):
             i = p.evaluate([])([])
         else:
             i = p.evaluate([])
-        return SupervisedDraw("dream", i)
+        return SupervisedDraw("dream", i, USE_NEW_PRIMITIVES)
 
     def featuresOfTask(self, t):
         return self(t.rendered_strokes)
