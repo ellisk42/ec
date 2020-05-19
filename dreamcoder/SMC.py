@@ -12,6 +12,7 @@ from dreamcoder.grammar import NoCandidates
 import time
 
 import numpy as np
+import torch
 
 class SearchResult:
     def __init__(self, program, loss, time, evaluations):
@@ -72,6 +73,8 @@ class SMC(Solver):
                               maximumFrontiers=None,
                               returnAfterHit=True): #IDK what this is...
         #sys.setrecursionlimit(50000)
+
+        torch.set_num_threads(1)
         class Particle():
             def __init__(self, trajectory, zippers, frequency, finished=False):
                 self.frequency = frequency
