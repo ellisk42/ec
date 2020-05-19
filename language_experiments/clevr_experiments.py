@@ -56,7 +56,7 @@ task_datasets = ("1_zero_hop", "1_one_hop", "1_compare_integer", "1_same_relate"
 primitives = [("bootstrap", ("clevr_bootstrap", "clevr_map_transform")), 
               ("original", ("clevr_original", "clevr_map_transform")),]
 for prim_name, primitive_set in primitives:
-    job_name = f"re_2_ec_gru_ghelm_compression_et_{enumerationTimeout}_curr_prim_{prim_name}"
+    job_name = f"clevr_ec_gru_ghelm_compression_et_{enumerationTimeout}_curr_prim_{prim_name}"
     jobs.append(job_name)
     base_command = "python bin/clevr.py "
     
@@ -64,6 +64,35 @@ for prim_name, primitive_set in primitives:
     
     prims = " ".join(primitive_set)
     exp_parameters = f" --curriculumDatasets curriculum --taskDatasets  --language_encoder recurrent --primitives {prims} --moses_dir ./moses_compiled --smt_phrase_length 1"
+    exp_command = base_command + base_parameters + exp_parameters
+    command = build_command(exp_command, job, job_name, replication=None)
+    if RUN_CURR_HELMHOLTZ_GENERATIVE_MODEL:
+        if (EXPS is None) or (exp in EXPS):
+            if not NO_ORIGINAL_REPL: experiment_commands.append(command)
+            experiment_commands += build_replications(exp_command, job, job_name)
+    job +=1
+
+### Generates curriculum experiments for the pseudoalignments model.
+RUN_CURR_HELMHOLTZ_PSEUDOALIGNMENTS = True
+num_iterations = 3
+task_batch_size = 20
+recognition_steps = 10000
+enumerationTimeout = 1800
+pseudoalignment = 0.1
+
+EXPS = None
+task_datasets = ("1_zero_hop", "1_one_hop", "1_compare_integer", "1_same_relate", "1_single_or", "2_remove", "2_transform")
+primitives = [("bootstrap", ("clevr_bootstrap", "clevr_map_transform")), 
+              ("original", ("clevr_original", "clevr_map_transform")),]
+for prim_name, primitive_set in primitives:
+    job_name = f"clevr_ec_gru_ghelm_pseudo_compression_et_{enumerationTimeout}_curr_prim_{prim_name}"
+    jobs.append(job_name)
+    base_command = "python bin/clevr.py "
+    
+    base_parameters = f" --enumerationTimeout {enumerationTimeout} --testingTimeout 0  --iterations {num_iterations} --biasOptimal --contextual --taskBatchSize {task_batch_size}  --no-cuda --recognitionSteps {recognition_steps} --recognition_0 --recognition_1 examples language --Helmholtz 0.5 --synchronous_grammar --skip_first_test"
+    
+    prims = " ".join(primitive_set)
+    exp_parameters = f" --curriculumDatasets curriculum --taskDatasets  --language_encoder recurrent --primitives {prims} --moses_dir ./moses_compiled --smt_phrase_length 1 --smt_pseudoalignments {pseudoalignment}"
     exp_command = base_command + base_parameters + exp_parameters
     command = build_command(exp_command, job, job_name, replication=None)
     if RUN_CURR_HELMHOLTZ_GENERATIVE_MODEL:
