@@ -398,19 +398,21 @@ def test_TowerREPLPolicyConvergence():
     
     solver = r.recognitionModel.solver
     times = []
+    ttasks = r.getTestingTasks()
     for i in range(30):
-        
-        for frontier in lst:
-            likelihoodModel = AllOrNothingLikelihoodModel(timeout=0.01)
-            tasks = [frontier.task]
-            solver.infer(g, tasks, likelihoodModel, 
-                                                timeout=1000000,
-                                                elapsedTime=0,
-                                                evaluationTimeout=0.01,
-                                                maximumFrontiers={tasks[0]: 2},
-                                                CPUs=1,
-                                                )   
-            print("done")         
+        tasks = [ttasks[i+1]]
+        likelihoodModel = AllOrNothingLikelihoodModel(timeout=0.01)
+        tasks = [frontier.task]
+        fs, searchTimes, totalNumberOfPrograms, reportedSolutions = solver.infer(g, tasks, likelihoodModel, 
+                                            timeout=20,
+                                            elapsedTime=0,
+                                            evaluationTimeout=0.01,
+                                            maximumFrontiers={tasks[0]: 2},
+                                            CPUs=1,
+                                            ) 
+        print("done")
+        print("total prog", totalNumberOfPrograms)
+        print("searchTimes", searchTimes)
             # t = time.time()
             # sk = baseHoleOfType(frontier.task.request)
             # newZippers = findHoles(sk, frontier.task.request)
