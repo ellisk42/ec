@@ -51,7 +51,16 @@ solver:
 	cd solvers && \
 	jbuilder build solver.exe && \
 	cp _build/default/solver.exe ../solver
-		
+
+clevrrClean: 
+	cd solvers && jbuilder clean
+	rm -f clevrSolver
+
+clevrSolver: 
+	cd solvers && \
+	jbuilder build clevrSolver.exe && \
+	cp _build/default/clevrSolver.exe ../clevrSolver
+
 re2TestClean: 
 	cd solvers && jbuilder clean
 	rm -f re2Test

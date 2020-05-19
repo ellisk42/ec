@@ -88,7 +88,7 @@ def main(args):
         assert False
     if args.pop("run_ocaml_test"):
         tasks = [buildRE2MockTask(train[0])]
-        if True:
+        if False:
 
             # Tests the Helmholtz enumeration.
             from dreamcoder.dreaming import backgroundHelmholtzEnumeration
@@ -100,7 +100,7 @@ def main(args):
                                                                 executable='re2Test',
                                                                 serialize_special=None)
             f = helmholtzFrontiers()
-        if False:
+        if True:
             # Tests the normal enumeration.
             default_wake_generative(baseGrammar, tasks, 
                                 maximumFrontier=5,

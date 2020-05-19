@@ -1260,8 +1260,12 @@ class RecognitionModel(nn.Module):
             return None
 
         if hasattr(self.featureExtractor, 'lexicon'):
-            if self.featureExtractor.tokenize(task.examples) is None:
-                return None
+            if hasattr(self.featureExtractor, 'useTask'):
+                if self.featureExtractor.tokenize(task) is None:
+                    return None
+            else:
+                if self.featureExtractor.tokenize(task.examples) is None:
+                    return None
         
         ll = self.generativeModel.logLikelihood(request, program)
         frontier = Frontier([FrontierEntry(program=program,
@@ -1493,7 +1497,8 @@ class RecurrentFeatureExtractor(nn.Module):
         return f
 
     def taskOfProgram(self, p, tp):
-        self.helmholtzTimeout, self.helmholtzEvaluationTimeout = 10000, 10000
+        # TODO -- remove this
+        self.helmholtzTimeout, self.helmholtzEvaluationTimeout = 0.25, 0.25
         # half of the time we randomly mix together inputs
         # this gives better generalization on held out tasks
         # the other half of the time we train on sets of inputs in the training data
@@ -1518,8 +1523,6 @@ class RecurrentFeatureExtractor(nn.Module):
                     if len(examples) >= random.choice(self.requestToNumberOfExamples[tp]):
                         return Task("Helmholtz", tp, examples)
                 except: 
-                    print("Timed out or error, continuing")
-                    import pdb; pdb.set_trace()
                     continue
 
         else:
@@ -1531,11 +1534,8 @@ class RecurrentFeatureExtractor(nn.Module):
                     try: 
                         y = runWithTimeout(lambda: p.runWithArguments(xs), self.helmholtzEvaluationTimeout)
                     except RunWithTimeout: 
-                        print("Timed out or error, continuing")
-                        import pdb; pdb.set_trace()
                         return None
                     finally:
-                        print("Timed out, continuing")
                         return None
                     ys.append(y)
                 if len(ys) == len(xss):

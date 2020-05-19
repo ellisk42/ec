@@ -730,7 +730,7 @@ def runWithTimeout(k, timeout):
         signal.signal(signal.SIGPROF, lambda *_:None)
         signal.setitimer(signal.ITIMER_PROF, 0)
         raise RunWithTimeout()
-    except:
+    except Exception as e:
         signal.signal(signal.SIGPROF, lambda *_:None)
         signal.setitimer(signal.ITIMER_PROF, 0)
         raise

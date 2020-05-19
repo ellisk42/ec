@@ -9,6 +9,8 @@ open Program
 open Enumeration
 open Grammar
 open Differentiation
+open Base.Exn
+open Printexc
 
 type task =
   { name: string; task_type: tp;
@@ -93,7 +95,7 @@ let run_recent_logo ~timeout program =
 
 (** Sort and deduplicate the objects before comparing **)
 register_special_task "clevrobjectlist" (fun extras
-  ?timeout:(timeout = 0.001) name ty examples ->
+  ?timeout:(timeout = 0.05) name ty examples ->
   {
     name = name    ;
     task_type = ty ;
@@ -108,7 +110,10 @@ register_special_task "clevrobjectlist" (fun extras
                       timeout
                       (fun () -> 
                         let output = run_lazy_analyzed_with_arguments p xs in
-                        Program.compare_objs (magical y) (magical output))
+                        let compare = 
+                        Program.compare_objs (magical output) (magical y)
+                        in compare 
+                        )
               with
                 | Some(true) -> loop e
                 | _ -> false
@@ -119,8 +124,10 @@ register_special_task "clevrobjectlist" (fun extras
                   * exception on
                   *)
               | UnknownPrimitive(n) -> raise (Failure ("Unknown primitive: "^n))
-              | EnumerationTimeout  -> raise EnumerationTimeout
-              | _                   -> false
+              | EnumerationTimeout  -> 
+                let _ = Printf.eprintf("Enumeration timeout;") in 
+                raise EnumerationTimeout
+              | _                   ->  false
         in
         if loop examples
           then 0.0

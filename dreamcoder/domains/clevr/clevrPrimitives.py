@@ -123,7 +123,15 @@ def objset_op(s1, s2, op_fn):
     # Note that we disambiguate between objects by taking from s1
     s1_ids = set([obj['id'] for obj in s1])
     s2_ids = set([obj['id'] for obj in s2])
-    result_set = op_fn(s1_ids, s2_ids) # TODO what to do about 
+    # Hacky:
+    if op_fn == 'union':
+        result_set = s1_ids | s2_ids 
+    elif op_fn == 'intersect':
+        result_set = s1_ids & s2_ids
+    elif op_fn == 'difference':
+        result_set = s1_ids - s2_ids
+    else:
+        print("Error: unsupported set function.")
     final_ids = set()
     final_set = []
     for o in s1 + s2:
@@ -132,9 +140,9 @@ def objset_op(s1, s2, op_fn):
             final_ids.add(o["id"])
     return sort_objs(final_set)
 
-def _set_union(s1): return lambda s2: objset_op(s1, s2, set.union)
-def _set_intersect(s1): return lambda s2: objset_op(s1, s2, set.intersect)
-def _set_difference(s1) :return lambda s2: objset_op(s1, s2, set.difference)
+def _set_union(s1): return lambda s2: objset_op(s1, s2, 'union')
+def _set_intersect(s1): return lambda s2: objset_op(s1, s2, 'intersect')
+def _set_difference(s1) :return lambda s2: objset_op(s1, s2, 'difference')
 
 
 clevr_union = Primitive("clevr_union", arrow(tlist(tclevrobject), tlist(tclevrobject), tlist(tclevrobject)), _set_union)
@@ -189,17 +197,25 @@ clevr_cdr = Primitive("clevr_cdr", arrow(tlist(tclevrobject), tlist(tclevrobject
 def clevr_map_transform_primitives():
     return [clevr_map] + [clevr_transform_color, clevr_transform_material, clevr_transform_size, clevr_transform_shape]
 
+# N.B. We use 'safe' versions of all functions
 def clevr_test_primitives():
-    # A minimal test set for development.
-    return [clevr_map, clevr_transform_color] + clevr_constants()
+    # A minimal test set for development. N.B. we may run into errors with our objects.
+    return [clevr_relate] \
+    + [clevr_query_color,clevr_query_size, clevr_query_material, clevr_query_shape,
+     clevr_eq_color, clevr_eq_size, clevr_eq_material, clevr_eq_shape] \
+    + [clevr_union, clevr_intersect] \
+    + [clevr_count, clevr_eq_int, clevr_is_gt] \
+    + [clevr_not] + [clevr_car, clevr_cdr, clevr_is_empty] \
+    + [clevr_if, clevr_empty, clevr_fold, clevr_add] \
+    + [clevr_eq_objects] + clevr_constants()  
+
     
-    # [clevr_query_color,clevr_query_size, clevr_query_material, clevr_query_shape] + [clevr_car]
-    # clevr_constants() \
-    # + [clevr_filter_material, clevr_filter_size, clevr_filter_color, clevr_filter_shape]
-    # + [clevr_eq_color, clevr_eq_size, clevr_eq_material, clevr_eq_shape] 
-    # 
+    # Working:
+    # [clevr_cdr] + \
+    # [clevr_map] + [clevr_transform_color, clevr_transform_material, clevr_transform_size, clevr_transform_shape] + clevr_constants() 
     
-    # [clevr_car, clevr_cdr, clevr_add] + clevr_constants() + [clevr_eq_size, clevr_eq_color, clevr_eq_material, clevr_eq_shape]
+    
+    
 
 def clevr_original_v1_primitives():
     return [clevr_relate] \

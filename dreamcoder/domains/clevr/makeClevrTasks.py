@@ -95,9 +95,12 @@ def buildClevrTask(q, input_scenes):
     request_type = arrow(tlist(tclevrobject), return_type)
     examples = build_examples(q, input_scenes)
     t = Task(name=name, request=request_type, examples=examples, features=None, cache=False)
+    
+    t.specialSolver = 'clevrSolver'
+    t.serializeSpecialInput = serialize_clevr_object
     if is_special:
         t.specialTask = ("clevrobjectlist", []) # Requires sorting the list
-    t.specialSolver = 'clevrSolver'
+        t.serializeSpecialOutput = serialize_clevr_object 
     return t
     
 def loadCLEVRDataset(task_datasets, task_dataset_dir, train_scenes, test_scenes, seed, is_curriculum=False):

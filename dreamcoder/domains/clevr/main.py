@@ -75,7 +75,7 @@ def clevr_options(parser):
     parser.add_argument("--curriculumDatasets", type=str, nargs="*",
                         default=["curriculum"],
                         help="A list of curriculum datasets, stored as JSON CLEVR question files. These will be used in ")
-    parser.add_argument("--taskDatasets", type=str, nargs="+",
+    parser.add_argument("--taskDatasets", type=str, nargs="*",
                         default=all_train_questions,
                         help="Which task datasets to load, stored as JSON CLEVR question files.")
     parser.add_argument("--taskDatasetDir",
@@ -113,12 +113,18 @@ def main(args):
     task_dataset_dir=args.pop("taskDatasetDir")
     train_scenes, test_scenes = args.pop("trainInputScenes"), args.pop("testInputScenes")
     
+    train, test = [], []
     if len(curriculum_datasets) > 0:
         curriculum, _ = loadCLEVRDataset(task_datasets=curriculum_datasets, task_dataset_dir=task_dataset_dir, train_scenes=train_scenes, test_scenes = test_scenes, seed=args["seed"], is_curriculum=True)
+        train += curriculum
     
     task_datasets = args.pop("taskDatasets")
-    train, test = loadCLEVRDataset(task_datasets=task_datasets, task_dataset_dir=task_dataset_dir, train_scenes=train_scenes, test_scenes = test_scenes, seed=args["seed"])
-    eprint(f"Loaded datasets: [{task_datasets}]: [{len(train)}] total train and [{len(test)}] total test tasks.")
+    train_tasks, test_tasks = loadCLEVRDataset(task_datasets=task_datasets, task_dataset_dir=task_dataset_dir, train_scenes=train_scenes, test_scenes = test_scenes, seed=args["seed"])
+    train += train_tasks
+    test += test_tasks
+    
+    eprint(f"Loaded datasets: [{task_datasets}]: [{len(train)}] total train and [{len(test)}] total test tasks. Using curriculum: [{curriculum_datasets}]")
+    
     
     # Generate language dataset directly from the loaded tasks.
     args.pop("languageDataset")
@@ -138,10 +144,10 @@ def main(args):
         assert False
     
     if args.pop("run_ocaml_test"):
-        # Test the Helmholtz enumeratio n
+        # Test the Helmholtz enumeration
         # tasks = [buildClevrMockTask(train[0])]
-        tasks = train
-        if True:
+        tasks = train[:10]
+        if False:
             from dreamcoder.dreaming import backgroundHelmholtzEnumeration
             print(baseGrammar)
             helmholtzFrontiers = backgroundHelmholtzEnumeration(tasks, 
@@ -164,13 +170,14 @@ def main(args):
             f = helmholtzFrontiers()
         if True:
             # Check enumeration.
-            tasks = [buildClevrMockTask(train[0])]
+            tasks = [train[10]]
             default_wake_generative(baseGrammar, tasks, 
                                 maximumFrontier=5,
                                 enumerationTimeout=1,
                                 CPUs=1,
                                 solver='ocaml',
                                 evaluationTimeout=0.05)
+            assert False
     
     if args.pop("run_recognition_test"):
         tasks = [buildClevrMockTask(train[0])]
@@ -193,6 +200,8 @@ def main(args):
     os.system("mkdir -p %s"%outputDirectory)
     
     evaluationTimeout = 1.0
+    print("Using starting grammar")
+    print(baseGrammar)
     generator = ecIterator(baseGrammar, train,
                            testingTasks=test,
                            outputPrefix="%s/clevr"%outputDirectory,

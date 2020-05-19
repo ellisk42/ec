@@ -269,7 +269,7 @@ def solveForTask_ocaml(_=None,
             if hasattr(t, "serializeSpecialInput"):
                 xs = t.serializeSpecialInput(xs)
             if hasattr(t, "serializeSpecialOutput"):
-                y = t.serializeSpecialInput(y, is_output=True)
+                y = t.serializeSpecialOutput(y, is_output=True)
             serialized_examples.append({"inputs": list(xs), "output": y})
         
         m = {
@@ -306,7 +306,6 @@ def solveForTask_ocaml(_=None,
     solver_file = 'solver'
     if hasattr(tasks[0], 'specialSolver'):
         solver_file = tasks[0].specialSolver
-        print(f"Using special solver: {solver_file}")
 
     try:
         solver_file = os.path.join(get_root_dir(), solver_file)
@@ -323,7 +322,6 @@ def solveForTask_ocaml(_=None,
         print("error:", error)
         with open("message", "w") as f:
             f.write(message)
-        print("message,", message)
         # Don't fail on errors
         # assert False, "MAX RAISE"
         print("ERROR in enumeration, returning empty frontiers for tasks.")
