@@ -57,7 +57,7 @@ for num in 3 20
 		cp ${resume}.pickle ${resume}RNN.pickle
 		#cp ${oldResume}RNN.pickle_RecModelOnly ${resume}RNN.pickle_RecModelOnly
 		cmd="python bin/tower.py  --searchType SMC --useSamplePolicy ${samplePolicy} --filterMotifs ${filterMotifs} --split 0.0 --tasks biased --contextual --testingTimeout ${testingTime} --recognitionTimeout 216000 --resumeTraining -r ${helmRatio} --primitives new -t ${time} -RS ${recSteps} --solver python  -c ${ncores} --useValue RNN -i 2 --resume ${resume}RNN.pickle --singleRoundValueEval --seed 2"
-		#sbatch -e towersRNN${salt}.out -o towersRNN${salt}.out execute_gpu_new.sh ${cmd}
+		sbatch -e towersRNN${salt}.out -o towersRNN${salt}.out execute_gpu_new.sh ${cmd}
 
 
 		# resume=experimentOutputs/towers${num}JustHashing

@@ -126,7 +126,6 @@ class SMC(Solver):
         # budget = lowerBound + budgetIncrement
 
         totalNumberOfPrograms = 0
-        tt = time.time()
 
         while time.time() - starting < timeout:
             if returnAfterHit and len(self.allHits) > 0: break
@@ -193,9 +192,9 @@ class SMC(Solver):
                                                             likelihoodModel, hits, 
                                                             starting, elapsedTime, 
                                                             totalNumberOfPrograms)
-                        tt = time.time() - tt
-                        print(f"time {tt}")
-                        tt = time.time()
+                        # tt = time.time() - tt
+                        # print(f"time {tt}")
+                        # tt = time.time()
                         if returnAfterHit and len(self.allHits) > 0: break
                 if returnAfterHit and len(self.allHits) > 0: break
 
