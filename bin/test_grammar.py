@@ -369,7 +369,7 @@ def test_TowerREPLPolicyConvergence():
     for frontier in lst:
         print(frontier.entries[0].program._fullProg)
 
-    for i in range(100):
+    for i in range(10):
         policyHead.zero_grad()
         
         losses = [policyHead.policyLossFromFrontier(frontier, g) for frontier in lst ]#+ lst[2:]]
@@ -385,23 +385,44 @@ def test_TowerREPLPolicyConvergence():
     policyHead.cpu()
     policyHead.use_cuda = False
     torch.set_num_threads(1)
+
+    from likelihoodModel import AllOrNothingLikelihoodModel
+
+    graph = ""
+    ID = 'towers' + str(3)
+    runType ="Policy"
+    path = f'experimentOutputs/{ID}{runType}Sample_SRE=True{graph}.pickle'
+    print(path)
+    with open(path, 'rb') as h:
+        r = dill.load(h)
+    
+    solver = r.recognitionModel.solver
     times = []
     for i in range(30):
-        policyHead.policyLossFromFrontier(frontier, g) 
+        
         for frontier in lst:
-            t = time.time()
-            sk = baseHoleOfType(frontier.task.request)
-            newZippers = findHoles(sk, frontier.task.request)
-            while newZippers:
-                sk, newZippers = policyHead.sampleSingleStep(frontier.task, g, sk,
-                                                    frontier.task.request, holeZippers=newZippers,
-                                                    maximumDepth=8)
-                #print(sk)
-            tt = time.time() - t
-            times.append(tt)
-            print(f"time for a full prog:{tt}")
+            likelihoodModel = AllOrNothingLikelihoodModel(timeout=0.01)
+            tasks = [frontier.task]
+            solver.infer(g, tasks, likelihoodModel, 
+                                                timeout=1000000,
+                                                elapsedTime=0,
+                                                evaluationTimeout=0.01,
+                                                maximumFrontiers={tasks[0]: 2},
+                                                CPUs=1,
+                                                )   
+            print("done")         
+            # t = time.time()
+            # sk = baseHoleOfType(frontier.task.request)
+            # newZippers = findHoles(sk, frontier.task.request)
+            # while newZippers:
+            #     sk, newZippers = policyHead.sampleSingleStep(frontier.task, g, sk,
+            #                                         frontier.task.request, holeZippers=newZippers,
+            #                                         maximumDepth=8)
+            # tt = time.time() - t
+            # times.append(tt)
+            # print(f"time for a full prog:{tt}")
 
-        if i%5 == 0: print("average", sum(times)/len(times))
+        # if i%5 == 0: print("average", sum(times)/len(times))
 
 if __name__=='__main__':
     #findError()
