@@ -385,7 +385,8 @@ def test_TowerREPLPolicyConvergence():
     policyHead.cpu()
     policyHead.use_cuda = False
     torch.set_num_threads(1)
-    for i in range(300):
+    times = []
+    for i in range(30):
         policyHead.policyLossFromFrontier(frontier, g) 
         for frontier in lst:
             t = time.time()
@@ -396,7 +397,11 @@ def test_TowerREPLPolicyConvergence():
                                                     frontier.task.request, holeZippers=newZippers,
                                                     maximumDepth=8)
                 #print(sk)
-            print(f"time for a full prog:{time.time() - t}")
+            tt = time.time() - t
+            times.append(tt)
+            print(f"time for a full prog:{tt}")
+
+        if i%5 == 0: print("average", sum(times)/len(times))
 
 if __name__=='__main__':
     #findError()
