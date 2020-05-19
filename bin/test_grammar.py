@@ -332,7 +332,7 @@ def test_TowerREPLPolicyConvergence():
     from dreamcoder.domains.tower.main import TowerCNN
     from dreamcoder.domains.tower.makeTowerTasks import makeSupervisedTasks
     from dreamcoder.valueHead import TowerREPLValueHead
-    from dreamcoder.policyHead import RNNPolicyHead
+    from dreamcoder.policyHead import RNNPolicyHead, BasePolicyHead
 
     g = Grammar.uniform(new_primitives,
                          continuationType=ttower)
@@ -390,12 +390,15 @@ def test_TowerREPLPolicyConvergence():
 
     graph = ""
     ID = 'towers' + str(3)
-    runType ="Policy"
+    runType ="" #"Policy"
     path = f'experimentOutputs/{ID}{runType}Sample_SRE=True{graph}.pickle'
     print(path)
     with open(path, 'rb') as h:
         r = dill.load(h)
     
+    if not hasattr(r.recognitionModel, "policyHead"):
+        r.recognitionModel.policyHead = BasePolicyHead()
+    g = r.grammars[-1]
     solver = r.recognitionModel.solver
     times = []
     ttasks = r.getTestingTasks()
