@@ -175,7 +175,7 @@ if __name__ == '__main__':
     rS.recognitionModel.solver = Astar(rS.recognitionModel)
 
 
-
+    ID = 'towers' + str(3)
     likelihoodModel = AllOrNothingLikelihoodModel(timeout=0.01)
     for i in range(4,5):
         tasks = [maxTasks[i]]
