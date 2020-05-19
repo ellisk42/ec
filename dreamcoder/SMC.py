@@ -12,6 +12,7 @@ from dreamcoder.grammar import NoCandidates
 import time
 
 import numpy as np
+import torch
 
 class SearchResult:
     def __init__(self, program, loss, time, evaluations):
@@ -72,6 +73,8 @@ class SMC(Solver):
                               maximumFrontiers=None,
                               returnAfterHit=True): #IDK what this is...
         #sys.setrecursionlimit(50000)
+
+        torch.set_num_threads(1)
         class Particle():
             def __init__(self, trajectory, zippers, frequency, finished=False):
                 self.frequency = frequency
@@ -126,7 +129,6 @@ class SMC(Solver):
         # budget = lowerBound + budgetIncrement
 
         totalNumberOfPrograms = 0
-        tt = time.time()
 
         while time.time() - starting < timeout:
             if returnAfterHit and len(self.allHits) > 0: break
@@ -193,9 +195,9 @@ class SMC(Solver):
                                                             likelihoodModel, hits, 
                                                             starting, elapsedTime, 
                                                             totalNumberOfPrograms)
-                        tt = time.time() - tt
-                        print(f"time {tt}")
-                        tt = time.time()
+                        # tt = time.time() - tt
+                        # print(f"time {tt}")
+                        # tt = time.time()
                         if returnAfterHit and len(self.allHits) > 0: break
                 if returnAfterHit and len(self.allHits) > 0: break
 

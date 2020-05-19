@@ -389,8 +389,8 @@ def test_TowerREPLPolicyConvergence():
     from likelihoodModel import AllOrNothingLikelihoodModel
 
     graph = ""
-    ID = 'towers' + str(3)
-    runType ="" #"Policy"
+    ID = 'towers' + str(20)
+    runType ="PolicyNoBigramLoss" #"Policy"
     path = f'experimentOutputs/{ID}{runType}Sample_SRE=True{graph}.pickle'
     print(path)
     with open(path, 'rb') as h:
@@ -399,6 +399,7 @@ def test_TowerREPLPolicyConvergence():
     if not hasattr(r.recognitionModel, "policyHead"):
         r.recognitionModel.policyHead = BasePolicyHead()
     g = r.grammars[-1]
+    print(r.recognitionModel.gradientStepsTaken)
     solver = r.recognitionModel.solver
     times = []
     ttasks = r.getTestingTasks()
