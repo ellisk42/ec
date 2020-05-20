@@ -326,7 +326,7 @@ def test_TowerREPLValueConvergence():
         loss.backward()
         optimizer.step()
 
-def test_TowerREPLPolicyConvergence():
+def test_TowerRNNPolicySearch():
 
     from dreamcoder.domains.tower.towerPrimitives import primitives, new_primitives, animateTower
     from dreamcoder.domains.tower.main import TowerCNN
@@ -430,6 +430,125 @@ def test_TowerREPLPolicyConvergence():
 
         # if i%5 == 0: print("average", sum(times)/len(times))
 
+def test_TowerREPLPolicyConvergence():
+
+    from dreamcoder.domains.tower.towerPrimitives import primitives, new_primitives, animateTower
+    from dreamcoder.domains.tower.main import TowerCNN
+    from dreamcoder.domains.tower.makeTowerTasks import makeSupervisedTasks
+    from dreamcoder.valueHead import TowerREPLValueHead
+    from dreamcoder.policyHead import RNNPolicyHead, BasePolicyHead, REPLPolicyHead
+
+    g = Grammar.uniform(new_primitives,
+                         continuationType=ttower)
+    tasks = makeSupervisedTasks()
+
+    def _empty_tower(h): return (h,[])
+
+    import dill
+    with open('testTowerFrontiers.pickle', 'rb') as h:
+        lst = dill.load(h)
+
+    featureExtractor = TowerCNN(tasks, testingTasks=tasks[-3:], cuda=True)
+    #valueHead = TowerREPLValueHead(g, featureExtractor, H=1024)
+    policyHead = REPLPolicyHead(g, featureExtractor, H=1024, encodeTargetHole=False, canonicalOrdering=True)
+    optimizer = torch.optim.Adam(policyHead.parameters(), lr=0.001, eps=1e-3, amsgrad=True)
+
+    for frontier in lst:
+        print(frontier.entries[0].program._fullProg)
+
+    for i in range(10000):
+        policyHead.zero_grad()
+        losses = [policyHead.policyLossFromFrontier(frontier, g) for frontier in lst ]#+ lst[2:]]
+        #looks like 
+        loss = sum(losses)
+        print(i, loss.data.item())
+        if not loss.requires_grad:
+            print("error on loss")
+            continue
+        loss.backward()
+        optimizer.step()
+
+def finetuneAndTestPolicy():
+    from dreamcoder.domains.tower.towerPrimitives import primitives, new_primitives, animateTower
+    from dreamcoder.domains.tower.main import TowerCNN
+    from dreamcoder.domains.tower.makeTowerTasks import makeSupervisedTasks
+    from dreamcoder.valueHead import TowerREPLValueHead
+    from dreamcoder.policyHead import RNNPolicyHead, BasePolicyHead, REPLPolicyHead
+
+    graph = ""
+    ID = 'towers' + str(20)
+    runType ="" #"Policy"
+    model = "REPL" #"RNN"
+    path = f'experimentOutputs/{ID}{runType}{model}_SRE=True{graph}.pickle'
+    print(path)
+    import dill
+    with open(path, 'rb') as h:
+        r = dill.load(h)
+
+    g = r.grammars[-1]
+
+    featureExtractor = r.recognitionModel.valueHead.featureExtractor
+    
+    if model == "REPL":
+        policyHead = REPLPolicyHead(g, featureExtractor, 
+                                                H=1024,
+                                                encodeTargetHole=False,
+                                                canonicalOrdering=True)
+        policyHead.REPLHead = r.recognitionModel.valueHead
+    elif model =="RNN":
+        policyHead = RNNPolicyHead(g, featureExtractor, 
+                                                H=512,
+                                                encodeTargetHole=False,
+                                                canonicalOrdering=True)
+        policyHead.RNNHead = r.recognitionModel.valueHead
+
+    #policyHead.featureExtractor = policyHead.valueHead.featureExtractor
+
+    r.recognitionModel.cpu()
+    del r.recognitionModel
+    policyHead.cuda()
+
+    optimizer = torch.optim.Adam(policyHead.parameters(), lr=0.001, eps=1e-3, amsgrad=True)
+    testingTasks = r.getTestingTasks()
+    trainingTasks = r.taskSolutions.keys()
+
+    trainFrontiers = [r.allFrontiers.get(t, None) for t in trainingTasks] 
+    trainFrontiers = [t for t in trainFrontiers if (t and t.entries)] #if not empty
+    print("num train frontiers", len(trainFrontiers))
+
+    testFrontiers = [r.allFrontiers.get(t, None) for t in testingTasks]
+    testFrontiers = [r.recognitionTaskMetrics.get(t, {'frontier': None} ).get('frontier', None) for t in testingTasks]
+    testFrontiers = [t for t in testFrontiers if (t and t.entries)] #if not empty
+    print("num test frontiers", len(testFrontiers))
+
+    #import pdb; pdb.set_trace()
+
+    for i in range(75):
+        policyHead.zero_grad()
+        losses = [policyHead.policyLossFromFrontier(frontier, g) for frontier in trainFrontiers ]#+ lst[2:]]
+        loss = sum(losses)
+        print(f"epoch {i}: avg loss {loss.data.item()/len(losses)}")
+
+        if not loss.requires_grad:
+            print("error on loss")
+            continue
+        loss.backward()
+        optimizer.step()
+
+        testLoss = [policyHead.policyLossFromFrontier(frontier, g) for frontier in testFrontiers ]
+        avgTestLoss = sum(testLoss)/len(testLoss)
+        print(f"\t {avgTestLoss.data.item()}")
+
+    testLosses = []
+    for i in range(10):
+        policyHead.eval()    
+        losses = [policyHead.policyLossFromFrontier(frontier, g) for frontier in testFrontiers ]#+ lst[2:]]
+        loss = sum(losses)/len(losses)
+        print(i, loss.data.item())
+        testLosses.append(loss.data.item())
+
+    #print(sum(testLosses) / len(testLosses))
+
 if __name__=='__main__':
     #findError()
     #testSampleWithHoles()
@@ -450,4 +569,6 @@ if __name__=='__main__':
     # test_abstractHolesTower()
     # test_abstractHolesTowerValue()
     # test_TowerREPLValueConvergence()
-    test_TowerREPLPolicyConvergence()
+    # test_TowerRNNPolicyConvergence()
+    # test_TowerREPLPolicyConvergence()
+    finetuneAndTestPolicy()

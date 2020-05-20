@@ -563,16 +563,17 @@ def findHoles(sk, tp):
     return findHolesEnum(tp, sk)
 
 #will be a method of grammar
-def sampleSingleStep(g, sk, tp, holeZippers=None, maximumDepth=4):
+def sampleSingleStep(g, sk, tp, holeZippers=None, maximumDepth=4, canonicalOrdering=False):
     #choose hole to expandz
     if holeZippers is None: holeZippers = findHoles(sk, tp)
 
-    zipper = random.choice(holeZippers)
+    if canonicalOrdering: zipper = zippers[0]
+    else: zipper = random.choice(zippers)
     #some sort of sample visitor, walks down to the hole with a visitor (like sketchSample), then calls sample
     newSk, newZippers = sampleOneStepFromHole(zipper, sk, tp, g, maximumDepth)
     return newSk, newZippers
 
-def getTracesFromProg(full, tp, g, onlyPos=False, returnNextNode=False):
+def getTracesFromProg(full, tp, g, onlyPos=False, returnNextNode=False, canonicalOrdering=False):
     last = baseHoleOfType(tp) #this sets it up with first hole
 
     trace = []
@@ -581,7 +582,8 @@ def getTracesFromProg(full, tp, g, onlyPos=False, returnNextNode=False):
     zippers = findHoles(last, tp) #TODO
     targetNodes = []
     while zippers:
-        zipper = random.choice(zippers)
+        if canonicalOrdering: zipper = zippers[0]
+        else: zipper = random.choice(zippers)
         holesToExpand.append(zipper)
 
         newLast, excludeProd, parentInfo, nextNode = followPathOneStep(zipper, last, full, tp) #TODO

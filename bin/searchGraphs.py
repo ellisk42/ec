@@ -116,13 +116,14 @@ if __name__ == '__main__':
 
     graph="_graph=True"
     #mode="Prior"
-    nameSalt = "Bias" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
+    nameSalt = "SMCOracle" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
     ID = 'towers' + str(n)
-    runType ="BiasTest" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
+    runType ="SMC" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
     paths = [
         (f'experimentOutputs/{ID}{runType}Sample_SRE=True{graph}.pickle', 'Policy only (no value)'),
         (f'experimentOutputs/{ID}{runType}RNN_SRE=True{graph}.pickle', 'RNN value'),
         (f'experimentOutputs/{ID}{runType}REPL_SRE=True{graph}.pickle', 'REPL modular value'),
+        (f'experimentOutputs/towers20SMCSemiOracle_SRE=True_graph=True.pickle', 'Oracle Value fun'),
         (f'experimentOutputs/{ID}{runType}Symbolic_SRE=True{graph}.pickle', 'Symbolic value')
         ]
 
@@ -157,7 +158,7 @@ if __name__ == '__main__':
 
             delTasks = []
             for task, results in r.testingSearchStats[-1].items():
-                if "Max" not in task.name: delTasks.append(task)
+                if "Max" in task.name: delTasks.append(task)
                 # elif r.testingSearchStats[-1][task] and r.testingSearchStats[-1][task][0].evaluations < 10:
                 #     delTasks.append(task) 
             for task in delTasks: del r.testingSearchStats[-1][task]

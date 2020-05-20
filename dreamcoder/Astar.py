@@ -53,7 +53,7 @@ class Astar(Solver):
     def _getNextNodes(self, node, g, request):
         totalCost, policyCost, sketch, zippers = node
         for zipper in zippers:
-            for stepCost, newZippers, newSketch in owner.policyHead.enumSingleStep(task, g, sketch, request, 
+            for stepCost, newZippers, newSketch in self.owner.policyHead.enumSingleStep(task, g, sketch, request, 
                                                                     holeZipper=zipper,
                                                                     maximumDepth=self.maxDepth):
                 yield policyCost + stepCost, newZippers, newSketch
@@ -67,6 +67,9 @@ class Astar(Solver):
                               evaluationTimeout=None, 
                               maximumFrontiers=None): #IDK what this is...
         
+        if hasattr(self.owner.policyHead, 'canonicalOrdering'): 
+            assert not self.owner.policyHead.canonicalOrdering, "not implemented with aStar"
+            
         sys.setrecursionlimit(5000)
                 #START
         assert timeout is not None, \
