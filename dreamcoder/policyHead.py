@@ -279,7 +279,7 @@ class REPLPolicyHead(NeuralPolicyHead):
         if features is None: return None, None
         features = features.unsqueeze(0)
         
-        sketchEncodings = [self.REPLHead._computeSketchRepresentation(sk) for sk in sketches]
+        sketchEncodings = [self.REPLHead._computeSketchRepresentation(sk.betaNormalForm()) for sk in sketches]
         sketchEncodings = torch.stack(sketchEncodings, dim=0)
         features = self.featureExtractor.featuresOfTask(task)
         features = features.unsqueeze(0)
