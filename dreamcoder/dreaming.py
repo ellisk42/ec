@@ -24,8 +24,9 @@ def helmholtzEnumeration(g, request, inputs, timeout, _=None,
     if evaluationTimeout: message["evaluationTimeout"] = evaluationTimeout
     if special: message["special"] = special
     message = json.dumps(message)
-    with open('/tmp/hm', 'w') as handle:
-        handle.write(message)
+    if False: # enable this if you want to debug the Helmholtz stuff
+        with open('/tmp/hm', 'w') as handle:
+            handle.write(message)
     try:
         binary = os.path.join(get_root_dir(), 'helmholtz')
         process = subprocess.Popen(binary,
