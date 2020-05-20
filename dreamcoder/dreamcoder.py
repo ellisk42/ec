@@ -11,7 +11,7 @@ from dreamcoder.primitiveGraph import graphPrimitives
 from dreamcoder.dreaming import backgroundHelmholtzEnumeration
 
 from dreamcoder.valueHead import SimpleRNNValueHead, AbstractREPLValueHead, SampleDummyValueHead, TowerREPLValueHead, SemiOracleValueHead
-from dreamcoder.policyHead import BasePolicyHead, RNNPolicyHead
+from dreamcoder.policyHead import BasePolicyHead, RNNPolicyHead, REPLPolicyHead
 
 from dreamcoder.symbolicAbstractTowers import SymbolicAbstractTowers
 import sys
@@ -202,7 +202,8 @@ def ecIterator(grammar, tasks,
                conditionalForValueTraining=False,
                useSavedTasks=False,
                searchType=None,
-               filterMotifs=[]):
+               filterMotifs=[],
+               initializePolicyWithValueWeights=None):
     if enumerationTimeout is None:
         eprint(
             "Please specify an enumeration timeout:",
@@ -405,8 +406,6 @@ def ecIterator(grammar, tasks,
 
         print("use value?", useValue)
         grammar = grammar #TODO make grammar non-contextual 
-
-        #import pdb; pdb.set_trace()
         
         if useSavedTasks:
             print("using old training and testing tasks from result pickle")
@@ -430,8 +429,9 @@ def ecIterator(grammar, tasks,
             try:
                 resumeTrainingModel = torch.load(open(recModelPath, 'rb'))
 
-                if useSamplePolicy:
-                    
+
+
+                if useSamplePolicy:  
                     print("USING SEPERATE POLICY AND VALUE")
                     samplePolicyPath = useSamplePolicy + '_RecModelOnly'
                     ourModel = torch.load(open(recModelPath, 'rb'))
@@ -439,6 +439,22 @@ def ecIterator(grammar, tasks,
                     SampleModel.valueHead = ourModel.valueHead
                     resumeTrainingModel = SampleModel
                     #import pdb; pdb.set_trace()
+
+                if initializePolicyWithValueWeights:
+                    print("initializing POLICY with VALUE weights")
+
+                    valuePath = initializePolicyWithValueWeights + '_RecModelOnly'
+                    ourModel = torch.load(open(recModelPath, 'rb'))
+                    valueModel = torch.load(open(valuePath, 'rb'))
+
+                    ourModel.policyHead.featureExtractor = valueModel.valueHead.featureExtractor
+                    if policyType == "REPL":
+                        ourModel.policyHead.REPLHead = valueModel.valueHead
+                    elif policyType =="RNN":
+                        ourModel.policyHead.RNNHead = valueModel.valueHead
+                    else: assert False
+                    ourModel.gradientStepsTaken = 0
+                    resumeTrainingModel = ourModel
 
                 if skipTraining: recognitionSteps = -1
             except FileNotFoundError:
@@ -460,6 +476,25 @@ def ecIterator(grammar, tasks,
                                trainOnly=True, saveIter=100, savePath=recModelPath, resumeTrainingModel=resumeTrainingModel,
                                seperateFeatureExtractor=bool(useSamplePolicy), conditionalForValueTraining=conditionalForValueTraining,
                                searchType=searchType, filterMotifs=filterMotifs, policyType=policyType)
+
+
+        #check log likelihood
+        testFrontiers = [result.recognitionTaskMetrics.get(t, {'frontier': None} ).get('frontier', None) for t in testingTasks]
+        testFrontiers = [t for t in testFrontiers if (t and t.entries)] #if not empty
+        print("num test frontiers", len(testFrontiers))
+
+        policyHead = result.recognitionModel.policyHead
+        testLosses = []
+        for i in range(10):
+            policyHead.eval()    
+            losses = [policyHead.policyLossFromFrontier(frontier, grammar) for frontier in testFrontiers ]#+ lst[2:]]
+            loss = sum(losses)/len(losses)
+            policyHead.zero_grad()
+            #print(i, loss.data.item())
+            testLosses.append(loss.data.item())
+        print("average loss on test frontiers:")
+        print(sum(testLosses) / len(testLosses))
+
 
         #testing
         if testingTimeout == 0:
@@ -755,6 +790,8 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
             policyHead = BasePolicyHead()
         elif policyType == "RNN":
             policyHead = RNNPolicyHead(grammar, featureExtr, H=featureExtr.outputDimensionality)
+        elif policyType == "REPL":
+            policyHead = REPLPolicyHead(grammar, featureExtr, H=featureExtr.outputDimensionality)
         else: assert False
 
     else:
@@ -1165,7 +1202,7 @@ def commandlineArguments(_=None,
                         help="use value-based search")
     parser.add_argument("--policyType", type=str,
                         default="base",
-                        choices=["base", "tree", "RNN"],
+                        choices=["base", "tree", "RNN", "REPL"],
                         help="what type of policy to use")
     parser.add_argument("--singleRoundValueEval",
                         action='store_true',
@@ -1198,6 +1235,12 @@ def commandlineArguments(_=None,
                         nargs='*',
                         help="how to filter training data for value training "
                         )
+    parser.add_argument("--initializePolicyWithValueWeights",
+                        type=str,
+                        default=None,
+                        help="use weights from saved run")
+
+    
     parser.set_defaults(useRecognitionModel=useRecognitionModel,
                         useDSL=True,
                         featureExtractor=featureExtractor,

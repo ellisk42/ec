@@ -1127,7 +1127,6 @@ class RecognitionModel(nn.Module):
                         if self.use_cuda: valueHeadLoss = valueHeadLoss.cuda()
 
                     policyHeadLoss = self.policyHead.policyLossFromFrontier(frontier, g)
-
                 else:
                     valueHeadLoss = 0
                     policyHeadLoss = 0
