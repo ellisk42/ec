@@ -207,13 +207,32 @@ def loadCheckpoint(trainset="S9_nojitter", userealnames=True, loadparse=False, s
         taskset = "S13" 
         behaviorexpt = "2.4"    
 
-    # elif trainset=="S13.inv.base.test":
-    #     userealnames=True
-    #     doshaping = False
-    #     exptdir = "2020-05-15T23:30:03.080193"
-    #     taskset = "S13" 
-    #     behaviorexpt = "2.4"        
-    
+# ============== good ones (after switch to tstroke, instead of arrow(tstroke, tstroke))    
+    elif trainset=="S12.inv.S12skew.2.test":
+        exptdir = "2020-05-19T02:32:13.973730"
+        taskset = "S12" 
+
+    elif trainset=="S13.inv.S13grate.2.test":
+        exptdir = "2020-05-19T02:32:26.826723"
+        taskset = "S13" 
+
+    elif trainset=="S12.inv.base.test":
+        exptdir = "2020-05-15T23:30:08.428637"
+        taskset = "S12" 
+
+    elif trainset=="S13.inv.base.test":
+        exptdir = "2020-05-15T23:30:03.080193"
+        taskset = "S13" 
+
+    elif trainset=="S12.inv.notrain.test":
+        exptdir = "2020-05-19T13:52:42.500458"
+        taskset = "S12" 
+
+
+    if trainset in ["S12.inv.S12skew.2.test", "S13.inv.S13grate.2.test", "S12.inv.base.test", "S13.inv.base.test", "S12.inv.notrain.test"]:
+        userealnames=True
+        doshaping = False
+        behaviorexpt = "2.4"    
 
     else:
         print("PROBLEM did not find traiin set! ")
