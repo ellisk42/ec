@@ -453,6 +453,7 @@ def ecIterator(grammar, tasks,
                     elif policyType =="RNN":
                         ourModel.policyHead.RNNHead = valueModel.valueHead
                     else: assert False
+                    ourModel.gradientStepsTaken = 0
                     resumeTrainingModel = ourModel
 
                 if skipTraining: recognitionSteps = -1
