@@ -141,6 +141,26 @@ def initial_ibm_alignment(corpus_dir, moses_dir, output_dir=None, max_ibm_model=
     moses_cmd = f"{moses_script} --f ml --e nl --mgiza --external-bin-dir {tools_loc} --corpus-dir {corpus_dir} --first-step 2 --last-step 3 --root-dir {output_dir}".split()
     subprocess.run(moses_cmd, check=True)
 
+def get_alignments(corpus_dir, n_pseudo, n_me, unaligned_counts, grammar, corpora, output_dir=None):
+    align_file = os.path.join(output_dir, "giza.ml-nl/ml-nl.A3.final.gz")
+    # Unzip the file
+    unzip_cmd = f"gunzip {align_file}"
+    subprocess.run(unzip_cmd, check=True)
+    align_file = os.path.join(output_dir, "giza.ml-nl/ml-nl.A3.final")
+    
+    ml_vocab = [v for v in grammar.escaped_vocab if v is not 'VAR']
+    align_file = os.path.join(output_dir, "model/aligned.grow-diag-final")
+    global_used_ml = set() # All ML tokens currently aligned.
+    token_alignments = defaultdict(set) # Tokens used for any one primitive:
+    with open(align_file, 'r') as f: # Alignments are (ml, nl) locations in the corpus files.
+        for idx, line in enumerate(f.readlines()):
+            alignments = [[int(t) for t in a.split("-")] for a in line.split()]
+            global_used_ml.update([corpora['ml'][idx][a[0]] for a in alignments])
+            for a in alignments:
+                token_alignments[corpora['nl'][idx][a[1]]].add(corpora['ml'][idx][a[0]])
+    unused_ml = set(ml_vocab) - global_used_ml
+    
+
 def add_pseudoalignments(corpus_dir, n_pseudo, n_me, unaligned_counts, grammar, corpora, output_dir=None):
     eprint(f"Writing pseudoalignments with n_me = {n_me} and n_pseudo = {n_pseudo}")
     # Adds n_pseudo counts for all tokens and n_me counts for unused tokens.
@@ -325,22 +345,28 @@ def smt_alignment(tasks, tasks_attempted, frontiers, grammar, language_encoder, 
     Path(corpus_dir).mkdir(parents=True, exist_ok=True)
     if output_dir is None: output_dir = corpus_dir
     gc.collect()
-    count_dicts, encountered_nl, corpora = write_sentence_aligned(tasks, frontiers, grammar, language_encoder, corpus_dir, moses_dir)
-    unaligned_counts = count_unaligned_words(tasks, tasks_attempted, frontiers, grammar, language_encoder, encountered_nl)
-    write_smt_vocab(grammar, language_encoder, corpus_dir, count_dicts)
-    initial_ibm_alignment(corpus_dir, moses_dir, output_dir=output_dir, max_ibm_model=4)
-    gc.collect()
-    if n_pseudo > 0 and phrase_length == 1:
-        add_pseudoalignments(corpus_dir, n_pseudo=n_pseudo, n_me=n_pseudo, unaligned_counts=unaligned_counts, grammar=grammar, corpora=corpora, output_dir=output_dir)
-    phrase_table_loc = moses_translation_tables(corpus_dir, moses_dir, output_dir=output_dir)
-    lm_config = train_natural_language_model(tasks, language_encoder, corpus_dir, moses_dir, output_dir=output_dir, n_grams=3)
-    generate_decoder_config(corpus_dir, moses_dir, output_dir=output_dir, lm_config=lm_config, phrase_table=phrase_table_loc, phrase_length=phrase_length)
+        
+    import pdb; pdb.set_trace()
+    # count_dicts, encountered_nl, corpora = write_sentence_aligned(tasks, frontiers, grammar, language_encoder, corpus_dir, moses_dir)
+    # unaligned_counts = count_unaligned_words(tasks, tasks_attempted, frontiers, grammar, language_encoder, encountered_nl)
+    # write_smt_vocab(grammar, language_encoder, corpus_dir, count_dicts)
+    # initial_ibm_alignment(corpus_dir, moses_dir, output_dir=output_dir, max_ibm_model=4)
+    # gc.collect()
+    
+    alignments = get_alignments(corpus_dir, n_pseudo=n_pseudo, n_me=n_pseudo, unaligned_counts=unaligned_counts, grammar=grammar, corpora=corpora, output_dir=output_dir)
+    
+    # if n_pseudo > 0 and phrase_length == 1:
+    #     add_pseudoalignments(corpus_dir, n_pseudo=n_pseudo, n_me=n_pseudo, unaligned_counts=unaligned_counts, grammar=grammar, corpora=corpora, output_dir=output_dir)
+    # phrase_table_loc = moses_translation_tables(corpus_dir, moses_dir, output_dir=output_dir)
+    # lm_config = train_natural_language_model(tasks, language_encoder, corpus_dir, moses_dir, output_dir=output_dir, n_grams=3)
+    # generate_decoder_config(corpus_dir, moses_dir, output_dir=output_dir, lm_config=lm_config, phrase_table=phrase_table_loc, phrase_length=phrase_length)
     print("Finished translation, returning.")
     # Return the appropriate table locations, or read into memory.
     return {
         "corpus_dir" : corpus_dir,
         "moses_dir" : moses_dir,
-        "output_dir" : output_dir
+        "output_dir" : output_dir,
+        "alignments" : alignments
     }
     
     

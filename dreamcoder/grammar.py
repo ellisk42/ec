@@ -1,4 +1,4 @@
-from collections import defaultdict
+from collections import defaultdict, Counter
 
 from dreamcoder.frontier import *
 from dreamcoder.program import *
@@ -36,7 +36,11 @@ class Grammar(object):
                 [p for (_, _, p) in sorted(productions, key=lambda prod: str(prod[-1]))] 
                 + ["VAR"])
         } 
-        self.escaped_vocab, self.original_to_escaped = self.build_escaped_vocab(self.vocab)    
+        self.str_to_production = {
+            str(p) : p
+            for p in [p for (_, _, p) in sorted(productions, key=lambda prod: str(prod[-1]))]
+        } 
+        self.escaped_vocab, self.original_to_escaped, self.escaped_to_primitive_counts = self.build_escaped_vocab(self.vocab)        
         
     def build_escaped_vocab(self, vocab):
         escaped_vocab =  {
@@ -48,7 +52,17 @@ class Grammar(object):
             escaped = self.escape_token(token)
             if token != escaped:
                 original_to_escaped[token] = escaped
-        return escaped_vocab, original_to_escaped
+        
+        escaped_to_primitive_counts = defaultdict(list)
+        for (token, p) in self.str_to_production.items():
+            escaped = token
+            if token in original_to_escaped:
+                escaped = original_to_escaped[token]
+            reduced = p.betaNormalForm().left_order_tokens()
+            primitive_counts = dict(Counter(reduced))
+            escaped_to_primitive_counts[token] = primitive_counts 
+        
+        return escaped_vocab, original_to_escaped, escaped_to_primitive_counts
     
     def escape_tokens(self, tokens):
         return [self.escape_token(t) for t in tokens]

@@ -875,9 +875,12 @@ def induce_synchronous_grammar(frontiers, tasks, testingTasks, tasksAttempted, g
     if n_frontiers == 0:    
         return None
     if debug:
-        eprint("Running in debug mode, writing corpus files to tmp.")
-        corpus_dir = os.path.split(os.path.dirname(output_prefix))[0] # Remove timestamp and type prefix on checkpoint
-        corpus_dir = os.path.join(corpus_dir, 'corpus_tmp')
+        debug_iteration = 0
+        corpus_dir = os.path.join(os.path.dirname(output_prefix), f'moses_corpus_{debug_iteration}')
+        # eprint(f"Running in non-debug mode, writing corpus files to {corpus_dir}.")
+        # eprint("Running in debug mode, writing corpus files to tmp.")
+        # corpus_dir = os.path.split(os.path.dirname(output_prefix))[0] # Remove timestamp and type prefix on checkpoint
+        # corpus_dir = os.path.join(corpus_dir, 'corpus_tmp')
     else:
         corpus_dir = os.path.join(os.path.dirname(output_prefix), f'moses_corpus_{iteration}')
         eprint(f"Running in non-debug mode, writing corpus files to {corpus_dir}.")

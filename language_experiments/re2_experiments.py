@@ -1,6 +1,6 @@
-USING_AZURE = True
+USING_AZURE = False
 USING_GCLOUD = False
-USING_SINGULARITY = False
+USING_SINGULARITY = True
 NUM_REPLICATIONS = 0
 NO_ORIGINAL_REPL = False
 HIGH_MEM = True
@@ -165,7 +165,7 @@ for dataset in ['re2_1000', 're2_500_aeioubcdfgsrt']:
             job +=1
 
 #### Generate Helmholtz generative model experiments.
-RUN_HELMHOLTZ_GENERATIVE_MODEL = False
+RUN_HELMHOLTZ_GENERATIVE_MODEL = True
 num_iterations = 10
 task_batch_size = 40
 test_every = 3
