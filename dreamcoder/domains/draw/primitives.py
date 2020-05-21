@@ -48,9 +48,11 @@ def set_parsing(p):
                 # print(Primitive.GLOBALS)
                 Primitive.GLOBALS["circle"].value = {Parse(_circle)}
                 Primitive.GLOBALS["line"].value = {Parse(_line)}
+                Primitive.GLOBALS["emptystroke"].value = {Parse([])}
         else:
                 Primitive.GLOBALS["circle"].value = _circle
                 Primitive.GLOBALS["line"].value = _line
+                Primitive.GLOBALS["emptystroke"].value = []
 
 class Chunk():
         def __init__(self, l):
@@ -62,7 +64,7 @@ class Chunk():
         def applyMatrix(self, m): # applies to everything within chunk, including recursive.
                 return Chunk([x.applyMatrix(m) for x in self.l ])
         
-        def __eq__(self, other): return hash(self) == str(other) and str(self) == str(other)
+        def __eq__(self, other): return hash(self) == hash(other) and str(self) == str(other)
         def __ne__(self, other): return not (self == other)
         def __hash__(self):
                 if self._h is None:
@@ -191,6 +193,7 @@ class Parse():
             set_parsing(True)
             # counter=0
             p = chunky(p)
+            print(p)
             parses = p.evaluate([])
             set_parsing(False)
             return parses
@@ -323,7 +326,7 @@ def _connect(p1, p2):
                 return {Parse(list(p))
                         for a in p1
                         for b in p2 
-                        for p in permutations(a.l + b.l)}
+                        for p in permutations(a.l + b.l)}                
                 
         #  takes two primitives and makes a new one
         return p1 + p2

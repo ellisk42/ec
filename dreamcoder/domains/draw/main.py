@@ -239,6 +239,7 @@ def main(arguments):
         print(program_ink(_circle + _line))
         print()
 
+
         if False:
             #p = Program.parse("(repeat line 4 ")
             p = Program.parse("(transform circle #(transmat (Some scale4) None None None None))")
