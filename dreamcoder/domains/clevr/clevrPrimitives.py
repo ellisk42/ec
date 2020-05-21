@@ -95,15 +95,28 @@ def base_filter(condition_fn): # (ObjSet -> ObjSet)
     return lambda objset: sort_objs([obj for obj in objset if condition_fn(obj)])
 def base_filter_except(query_obj):
     return lambda condition_fn: lambda objset: sort_objs([obj for obj in objset if condition_fn(obj) and obj['id'] != query_obj["id"]]) 
-    
+
+def safe_filter(attribute_type, objset, attr):
+    try:
+        return sort_objs([obj for obj in objset if obj[attribute_type] == attr])
+    except:
+        return []
 def make_filter_handler(attribute_type):
     def filter_handler(objset): # (ObjSet x Attribute -> ObjSet)
-        return lambda attr: sort_objs([obj for obj in objset if obj[attribute_type] == attr])
+        return lambda attr: safe_filter(attribute_type, objset, attr)
     return filter_handler
+
+def safe_same_handler(attribute_type, obj1, obj_set):
+    try: 
+        return sort_objs([obj2 for obj2 in objset if (obj1[attribute_type] == obj2[attribute_type]) and (obj1["id"] != obj2["id"])])
+    except: 
+        return []
+    
 def make_same_handler(attribute_type):
-    def same_handler(obj1):  # (Obj -> ObjSet -> ObjSet)
-        return lambda objset: sort_objs([obj2 for obj2 in objset if (obj1[attribute_type] == obj2[attribute_type]) and (obj1["id"] != obj2["id"])])
+    def same_handler(obj1):  # (Obj -> ObjSet -> Ob jSet)
+        return lambda objset: safe_same_handler(attribute_type, obj1, obj_set)
     return same_handler
+    
 clevr_filter_color = Primitive("clevr_filter_color", arrow(tlist(tclevrobject), tclevrcolor, tlist(tclevrobject)), make_filter_handler("color"))
 clevr_filter_size = Primitive("clevr_filter_size", arrow(tlist(tclevrobject), tclevrsize, tlist(tclevrobject)), make_filter_handler("size"))
 clevr_filter_material = Primitive("clevr_filter_material", arrow(tlist(tclevrobject), tclevrmaterial, tlist(tclevrobject)), make_filter_handler("material"))
@@ -121,29 +134,31 @@ clevr_filter_except = Primitive("clevr_filter_except", arrow(tclevrobject, arrow
 #### Set operations over the object IDs.
 def objset_op(s1, s2, op_fn):
     # Note that we disambiguate between objects by taking from s1
-    s1_ids = set([obj['id'] for obj in s1])
-    s2_ids = set([obj['id'] for obj in s2])
-    # Hacky:
-    if op_fn == 'union':
-        result_set = s1_ids | s2_ids 
-    elif op_fn == 'intersect':
-        result_set = s1_ids & s2_ids
-    elif op_fn == 'difference':
-        result_set = s1_ids - s2_ids
-    else:
-        print("Error: unsupported set function.")
-    final_ids = set()
-    final_set = []
-    for o in s1 + s2:
-        if o["id"] in result_set and o["id"] not in final_ids:
-            final_set.append(o)
-            final_ids.add(o["id"])
-    return sort_objs(final_set)
+    try:
+        s1_ids = set([obj['id'] for obj in s1])
+        s2_ids = set([obj['id'] for obj in s2])
+        # Hacky:
+        if op_fn == 'union':
+            result_set = s1_ids | s2_ids 
+        elif op_fn == 'intersect':
+            result_set = s1_ids & s2_ids
+        elif op_fn == 'difference':
+            result_set = s1_ids - s2_ids
+        else:
+            print("Error: unsupported set function.")
+        final_ids = set()
+        final_set = []
+        for o in s1 + s2:
+            if o["id"] in result_set and o["id"] not in final_ids:
+                final_set.append(o)
+                final_ids.add(o["id"])
+        return sort_objs(final_set)
+    except:
+        return []
 
 def _set_union(s1): return lambda s2: objset_op(s1, s2, 'union')
 def _set_intersect(s1): return lambda s2: objset_op(s1, s2, 'intersect')
 def _set_difference(s1) :return lambda s2: objset_op(s1, s2, 'difference')
-
 
 clevr_union = Primitive("clevr_union", arrow(tlist(tclevrobject), tlist(tclevrobject), tlist(tclevrobject)), _set_union)
 clevr_intersect = Primitive("clevr_intersect", arrow(tlist(tclevrobject), tlist(tclevrobject), tlist(tclevrobject)), _set_intersect)
@@ -184,14 +199,23 @@ def __clevr_add(obj1, obj_list):
     return sort_objs([obj1] + filtered_list)
 def _clevr_add(o): return lambda l: __clevr_add(o, l)
 
+def safe_tail(obj_list):
+    if len(obj_list) == 0: return []
+    return obj_list[1:]
+    
 clevr_map = Primitive("clevr_map", arrow(arrow(tclevrobject, tclevrobject), tlist(tclevrobject), tlist(tclevrobject)), _clevr_map)
-clevr_if = Primitive("clevr_if", arrow(tbool, t0, t0, t0), _if)
+
+def __if(c, t, f):
+    return t if c else f
+def _clevr_if(c): return lambda t: lambda f: __if(c, t, f)
+
+clevr_if = Primitive("clevr_if", arrow(tbool, t0, t0, t0), _clevr_if)
 clevr_is_empty = Primitive("clevr_empty?", arrow(tlist(tclevrobject), tbool), _isEmpty)
 clevr_empty = Primitive("clevr_empty", tlist(tclevrobject), [])
 clevr_fold = Primitive("clevr_fold", arrow(tlist(tclevrobject), t1, arrow(tclevrobject, t1, t1), t1), _fold)
 clevr_add = Primitive("clevr_add", arrow(tclevrobject, tlist(tclevrobject), tlist(tclevrobject)), _clevr_add)
 clevr_car = Primitive("clevr_car", arrow(tlist(tclevrobject), tclevrobject), _car)
-clevr_cdr = Primitive("clevr_cdr", arrow(tlist(tclevrobject), tlist(tclevrobject)), _cdr)
+clevr_cdr = Primitive("clevr_cdr", arrow(tlist(tclevrobject), tlist(tclevrobject)), safe_tail)
 
 
 def clevr_map_transform_primitives():
@@ -214,9 +238,6 @@ def clevr_test_primitives():
     # [clevr_cdr] + \
     # [clevr_map] + [clevr_transform_color, clevr_transform_material, clevr_transform_size, clevr_transform_shape] + clevr_constants() 
     
-    
-    
-
 def clevr_original_v1_primitives():
     return [clevr_relate] \
     + [clevr_query_color,clevr_query_size, clevr_query_material, clevr_query_shape,         clevr_eq_color, clevr_eq_size, clevr_eq_material, clevr_eq_shape]  \
@@ -224,7 +245,7 @@ def clevr_original_v1_primitives():
     + [clevr_count, clevr_eq_int, clevr_is_gt] \
     + [clevr_not] + [clevr_unique, clevr_exist] \
     + [clevr_filter_material, clevr_filter_size, clevr_filter_color, clevr_filter_shape] \
-    + [clevr_same_material, clevr_same_size, clevr_same_color, clevr_filter_shape] \
+    + [clevr_same_material, clevr_same_size, clevr_same_color, clevr_same_shape] \
     + [clevr_difference] + clevr_constants() 
 
 def clevr_bootstrap_v1_primitives():
@@ -308,6 +329,16 @@ def run_clevr_primitives_test(primitive_names, curriculum):
         # #     print(f"Actual: {y_p}")
     
     filter_test = curriculum[0]
+    # Test implementing filter by hand.
+    
+    
+    # condition = "(lambda (clevr_eq_size clevr_small (clevr_query_size $0)))"
+    condition = "(clevr_eq_size clevr_small (clevr_query_size $1))"
+    fold_fn = f"(lambda (lambda (clevr_if {condition} (clevr_add $1 $0) $1)))"
+    fold_fn = f"(lambda (lambda (clevr_if {condition} (clevr_add $1 $0) $0)))"
+    filter = f"(lambda (clevr_fold $0 clevr_empty {fold_fn}))"
+    check_eval(filter_test, filter)
+    import pdb; pdb.set_trace()
     
     ## List primitives
     raw = "(lambda (clevr_add (clevr_car $0) $0))"

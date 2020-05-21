@@ -10,7 +10,7 @@ def gcloud_commands(job_name):
     gcloud_launch_commmand = f"gcloud beta compute --project=andreas-jacob-8fc0 instances create {job_name} --metadata='startup-script=cd ec' --zone=us-east1-b --machine-type={machine_type} --subnet=default --network-tier=PREMIUM --maintenance-policy=MIGRATE --service-account=project-service-account@andreas-jacob-8fc0.iam.gserviceaccount.com --scopes=https://www.googleapis.com/auth/cloud-platform --disk=name={job_name.strip()},device-name={job_name.strip()},mode=rw,boot=yes,auto-delete=yes --reservation-affinity=any"
     return f"#######\n{gcloud_disk_command}\n\n{gcloud_launch_commmand}\n\n###Now run: \n "
     
-singularity_base_command = "srun --job-name=clevr_language_{} --output=jobs/{} --ntasks=1 --mem-per-cpu=15000 --gres=gpu --cpus-per-task 24 --time=10000:00 --qos=tenenbaum --partition=tenenbaum singularity exec -B /om2  --nv ../dev-container.img "
+singularity_base_command = "srun --job-name=clevr_language_{} --output=jobs/{} --ntasks=1 --mem-per-cpu=10000 --gres=gpu --cpus-per-task 24 --time=10000:00 --qos=tenenbaum --partition=tenenbaum singularity exec -B /om2  --nv ../dev-container.img "
 def get_launcher_command(job, job_name):
     if USING_SINGULARITY:
         return singularity_base_command.format(job, job_name)
@@ -51,29 +51,31 @@ num_iterations = 3
 task_batch_size = 20
 recognition_steps = 10000
 enumerationTimeout = 1800
-EXPS = None
+EXPS = [("bootstrap", 7200), ("bootstrap", 14400), ("bootstrap", 21600)]
 task_datasets = ("1_zero_hop", "1_one_hop", "1_compare_integer", "1_same_relate", "1_single_or", "2_remove", "2_transform")
 primitives = [("bootstrap", ("clevr_bootstrap", "clevr_map_transform")), 
               ("original", ("clevr_original", "clevr_map_transform")),]
 for prim_name, primitive_set in primitives:
-    job_name = f"clevr_ec_gru_ghelm_compression_et_{enumerationTimeout}_curr_prim_{prim_name}"
-    jobs.append(job_name)
-    base_command = "python bin/clevr.py "
-    
-    base_parameters = f" --enumerationTimeout {enumerationTimeout} --testingTimeout 0  --iterations {num_iterations} --biasOptimal --contextual --taskBatchSize {task_batch_size}  --no-cuda --recognitionSteps {recognition_steps} --recognition_0 --recognition_1 examples language --Helmholtz 0.5 --synchronous_grammar --skip_first_test"
-    
-    prims = " ".join(primitive_set)
-    exp_parameters = f" --curriculumDatasets curriculum --taskDatasets  --language_encoder recurrent --primitives {prims} --moses_dir ./moses_compiled --smt_phrase_length 1"
-    exp_command = base_command + base_parameters + exp_parameters
-    command = build_command(exp_command, job, job_name, replication=None)
-    if RUN_CURR_HELMHOLTZ_GENERATIVE_MODEL:
-        if (EXPS is None) or (exp in EXPS):
-            if not NO_ORIGINAL_REPL: experiment_commands.append(command)
-            experiment_commands += build_replications(exp_command, job, job_name)
-    job +=1
+    for enumerationTimeout in [1800, 7200, 14400, 21600]:
+        exp = (prim_name, enumerationTimeout)
+        job_name = f"clevr_ec_gru_ghelm_compression_et_{enumerationTimeout}_curr_prim_{prim_name}"
+        jobs.append(job_name)
+        base_command = "python bin/clevr.py "
+        
+        base_parameters = f" --enumerationTimeout {enumerationTimeout} --testingTimeout 0  --iterations {num_iterations} --biasOptimal --contextual --taskBatchSize {task_batch_size}  --no-cuda --recognitionSteps {recognition_steps} --recognition_0 --recognition_1 examples language --Helmholtz 0.5 --synchronous_grammar --skip_first_test"
+        
+        prims = " ".join(primitive_set)
+        exp_parameters = f" --curriculumDatasets curriculum --taskDatasets  --language_encoder recurrent --primitives {prims} --moses_dir ./moses_compiled --smt_phrase_length 1"
+        exp_command = base_command + base_parameters + exp_parameters
+        command = build_command(exp_command, job, job_name, replication=None)
+        if RUN_CURR_HELMHOLTZ_GENERATIVE_MODEL:
+            if (EXPS is None) or (exp in EXPS):
+                if not NO_ORIGINAL_REPL: experiment_commands.append(command)
+                experiment_commands += build_replications(exp_command, job, job_name)
+        job +=1
 
 ### Generates curriculum experiments for the pseudoalignments model.
-RUN_CURR_HELMHOLTZ_PSEUDOALIGNMENTS = True
+RUN_CURR_HELMHOLTZ_PSEUDOALIGNMENTS = False
 num_iterations = 3
 task_batch_size = 20
 recognition_steps = 10000
@@ -95,7 +97,7 @@ for prim_name, primitive_set in primitives:
     exp_parameters = f" --curriculumDatasets curriculum --taskDatasets  --language_encoder recurrent --primitives {prims} --moses_dir ./moses_compiled --smt_phrase_length 1 --smt_pseudoalignments {pseudoalignment}"
     exp_command = base_command + base_parameters + exp_parameters
     command = build_command(exp_command, job, job_name, replication=None)
-    if RUN_CURR_HELMHOLTZ_GENERATIVE_MODEL:
+    if RUN_CURR_HELMHOLTZ_PSEUDOALIGNMENTS:
         if (EXPS is None) or (exp in EXPS):
             if not NO_ORIGINAL_REPL: experiment_commands.append(command)
             experiment_commands += build_replications(exp_command, job, job_name)

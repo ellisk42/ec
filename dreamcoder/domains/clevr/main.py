@@ -147,7 +147,7 @@ def main(args):
         # Test the Helmholtz enumeration
         # tasks = [buildClevrMockTask(train[0])]
         tasks = train[:10]
-        if False:
+        if True:
             from dreamcoder.dreaming import backgroundHelmholtzEnumeration
             print(baseGrammar)
             helmholtzFrontiers = backgroundHelmholtzEnumeration(tasks, 
@@ -155,7 +155,7 @@ def main(args):
                                                                 timeout=5,
                                                                 evaluationTimeout=0.05,
                                                                 special='clevr',
-                                                                executable='helmholtz',
+                                                                executable='clevrTest',
                                                                 serialize_special=serialize_clevr_object,
                                                                 maximum_size=20000) # TODO: check if we need special to check tasks later
             f = helmholtzFrontiers()
@@ -168,7 +168,8 @@ def main(args):
                                                                 serialize_special=serialize_clevr_object,
                                                                 maximum_size=20000) # TODO: check if we need special to check tasks later
             f = helmholtzFrontiers()
-        if True:
+            assert False
+        if False:
             # Check enumeration.
             tasks = [train[10]]
             default_wake_generative(baseGrammar, tasks, 

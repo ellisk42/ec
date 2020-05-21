@@ -1,8 +1,14 @@
-USING_GCLOUD = True
+USING_AZURE = True
+USING_GCLOUD = False
 USING_SINGULARITY = False
-NUM_REPLICATIONS = 3
+NUM_REPLICATIONS = 0
 NO_ORIGINAL_REPL = False
 HIGH_MEM = True
+
+def azure_commands(job_name): 
+    machine_type = "Standard_D48_v3"
+    azure_launch_command = f"az vm create --name {job_name} --resource-group ec-language --generate-ssh-keys --data-disk-sizes-gb 128 --image re2-language-5-20-image-20200520151754  --size {machine_type} "
+    return f"#######\n{azure_launch_command}\n\n###Now run: \n mkdir jobs; "
 
 def gcloud_commands(job_name):
     machine_type = 'm1-ultramem-40' if HIGH_MEM else 'n2-highmem-64'
@@ -15,9 +21,12 @@ singularity_base_command = "srun --job-name=re2_language_{} --output=jobs/{} --n
 def get_launcher_command(job, job_name):
     if USING_SINGULARITY:
         return singularity_base_command.format(job, job_name)
-    else:
+    elif USING_GCLOUD:
         job_name = f're2-language-{job} '
         return gcloud_commands(job_name)
+    else:
+        job_name = f're2-language-{job} '
+        return azure_commands(job_name)
 
 def append_command(job_name):
     if USING_SINGULARITY:
@@ -30,6 +39,8 @@ def build_command(exp_command, job, job_name, replication=" "):
     command = get_launcher_command(job, job_name) + exp_command + replication + append_command(job_name)
     if USING_GCLOUD:
         command = command.replace("python", "python3")
+    if USING_AZURE:
+        command = command.replace("python", "python3.7")
     return command
 
 def build_replications(exp_command, job, job_name):
@@ -92,10 +103,11 @@ num_iterations = 5
 task_batch_size = 40
 test_every = 3
 recognition_timeout = 1800
-EXPS = None
+EXPS = [('re2_1000', 720, False)]
 for dataset in ['re2_1000', 're2_500_aeioubcdfgsrt']:
     for enumerationTimeout in [720]:
         for use_vowel in [True, False]:
+            exp = (dataset, enumerationTimeout, use_vowel)
             job_name = f"re_2_ec_no_lang_compression_et_{enumerationTimeout}_{dataset}_use_vowel_{use_vowel}"
             jobs.append(job_name)
             base_parameters = f" --enumerationTimeout {enumerationTimeout} --testingTimeout {enumerationTimeout}  --iterations {num_iterations} --biasOptimal --contextual --taskBatchSize {task_batch_size} --testEvery {test_every} --no-cuda --recognitionTimeout {recognition_timeout} --recognition_0 examples --Helmholtz 0.5 --skip_first_test"
@@ -124,7 +136,7 @@ num_iterations = 10
 task_batch_size = 40
 test_every = 3
 recognition_steps = 10000
-EXPS = [('re2_1000', 720, False), ('re2_1000', 1800, False)]
+EXPS = [('re2_1000', 720, False)]
 for dataset in ['re2_1000', 're2_500_aeioubcdfgsrt']:
     for enumerationTimeout in [720, 1800]:
         testingTimeout = 720
@@ -153,7 +165,7 @@ for dataset in ['re2_1000', 're2_500_aeioubcdfgsrt']:
             job +=1
 
 #### Generate Helmholtz generative model experiments.
-RUN_HELMHOLTZ_GENERATIVE_MODEL = True
+RUN_HELMHOLTZ_GENERATIVE_MODEL = False
 num_iterations = 10
 task_batch_size = 40
 test_every = 3
@@ -186,7 +198,7 @@ for dataset in ['re2_1000', 're2_500_aeioubcdfgsrt']:
                     experiment_commands += build_replications(exp_command, job, job_name)
             job +=1
 ### Run Helmholtz pseudoalignments
-RUN_HELMHOLTZ_PSEUDOALIGNMENTS = True
+RUN_HELMHOLTZ_PSEUDOALIGNMENTS = False
 num_iterations = 10
 task_batch_size = 40
 test_every = 3
@@ -219,6 +231,44 @@ for dataset in ['re2_1000']:
                     if not NO_ORIGINAL_REPL: experiment_commands.append(command)
                     experiment_commands += build_replications(exp_command, job, job_name)
             job +=1
+# Generate no-language test time experiments. For now, these are mnaual.
+RUN_NO_LANGUAGE_TEST_EXPERIMENTS_GHELM = True
+language_checkpoints = [("best-ghelm-re2-language-27-repl-2", "experimentOutputs/re2/2020-05-18T19-50-59-156776/re2_aic=1.0_arity=3_ET=720_it=30_MF=5_n_models=1_no_dsl=F_pc=30.0_RS=10000_RW=F_STM=T_L=10.0_batch=40_K=2_topLL=F_LANG=F.pickle", 30, 're2_1000', "language"),
+] 
+
+enumerationTimeout = 720
+recognition_timeout = 1800
+for (name, language_checkpoint, last_iter, dataset, type) in language_checkpoints:
+    job_name = f"re2_ec_test_no_language_{name}"
+    jobs.append(job_name)
+    base_parameters = f" --enumerationTimeout {enumerationTimeout} --testingTimeout {enumerationTimeout}  --iterations {last_iter + 1} --biasOptimal --contextual --taskBatchSize {task_batch_size} --testEvery 1 --no-cuda --recognitionTimeout {recognition_timeout} --recognition_0 examples --Helmholtz 0.5 --iterations_as_epochs 0 "
+    exp_parameters = f" --taskDataset {dataset} --languageDataset {dataset}/synthetic --resume {language_checkpoint} --no-dsl --no-consolidation --test_dsl_only --primitives re2_chars_None re2_bootstrap_v1_primitives"
+    if type == 'language': exp_parameters += "--test_only_after_recognition" # Runs both tests.
+    
+    exp_command = base_command + base_parameters + exp_parameters
+    command = build_command(exp_command, job, job_name, replication=None)
+    if RUN_NO_LANGUAGE_TEST_EXPERIMENTS_GHELM:
+        if not NO_ORIGINAL_REPL: experiment_commands.append(command)
+        experiment_commands += build_replications(exp_command, job, job_name)
+    job +=1
+
+# Run baseline DSL test.
+RUN_BASELINE_DSL_ENUM_AND_RECOGNITION_TEST = True
+enumerationTimeout = 720
+recognition_timeout = 1800
+dataset = 're2_1000'
+job_name = f"re2_ec_test_baseline_dsl_et_{enumerationTimeout}"
+jobs.append(job_name)
+base_parameters = f" --enumerationTimeout {enumerationTimeout} --testingTimeout {enumerationTimeout}  --iterations 1 --biasOptimal --contextual --taskBatchSize {task_batch_size} --testEvery 1 --no-cuda --recognitionTimeout {recognition_timeout} --recognition_0 examples --Helmholtz 1.0 --iterations_as_epochs 0 "
+exp_parameters = f" --taskDataset {dataset} --languageDataset {dataset}/synthetic --no-dsl --no-consolidation --test_dsl_only --primitives re2_chars_None re2_bootstrap_v1_primitives --test_only_after_recognition" # Runs both tests.
+
+exp_command = base_command + base_parameters + exp_parameters
+command = build_command(exp_command, job, job_name, replication=None)
+if RUN_BASELINE_DSL_ENUM_AND_RECOGNITION_TEST:
+    if not NO_ORIGINAL_REPL: experiment_commands.append(command)
+    experiment_commands += build_replications(exp_command, job, job_name)
+job +=1
+
 
 #### Outputs
 PRINT_LOG_SCRIPT = False
