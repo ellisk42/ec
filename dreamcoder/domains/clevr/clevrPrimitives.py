@@ -28,7 +28,7 @@ def clevr_lexicon():
     for k, values in attribute_constants.items():
         lexicon.add(k)
         lexicon.update(values)
-    lexicon.update([str(val) for val in range(10)])
+    lexicon.update([str(val) for val in range(100)]) # Since we could accidentally count something large.
     lexicon.update([str(val) for val in (True, False)])
     lexicon.add("id")
     return list(lexicon)
@@ -40,7 +40,7 @@ def clevr_constants():
     shapes = [Primitive(f"clevr_{a}", tclevrshape, a) for a in attribute_constants['shape']]
     relations = [Primitive(f"clevr_{a}", tclevrrelation, a) for a in attribute_constants['relation']]
 
-    integers = [Primitive(str(j), tint, j) for j in range(10)]
+    integers = [Primitive(str(j), tint, j) for j in range(11)]
     return colors + sizes + materials + shapes + relations + integers
 
 ## Relational handling
