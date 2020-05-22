@@ -141,12 +141,58 @@ def initial_ibm_alignment(corpus_dir, moses_dir, output_dir=None, max_ibm_model=
     moses_cmd = f"{moses_script} --f ml --e nl --mgiza --external-bin-dir {tools_loc} --corpus-dir {corpus_dir} --first-step 2 --last-step 3 --root-dir {output_dir}".split()
     subprocess.run(moses_cmd, check=True)
 
-def get_alignments(corpus_dir, n_pseudo, n_me, unaligned_counts, grammar, corpora, output_dir=None):
+def extract_align_indices(line):
+    import re
+    matches = re.findall(r'(.+?) \({(.+?)}\)', line)
+    matches = [(t.strip(), a.strip()) for (t, a) in matches]
+    matches = [(t, [int(align_index) - 1 for align_index in a]) for (t, a) in matches] # 1 indexed
+    return matches
+
+def alignments_for_sentence(source_tokens, align_indices, grammar):
+    # Calculates alignments over the canonical tokens, unpacking primitives
+    alignments = {}
+    for word, idxs in align_indices: # One word -> many indexes
+        if word == 'NULL': continue
+        word_primitive_counts = Counter() # Primitive -> # of appearances
+        # Count the exact alignment, in sorted order, as a rule
+        for idx in idxs:
+            aligned_raw = source_tokens[idx]
+            primitive_counts = grammar.escaped_to_primitive_counts[aligned_raw]
+            word_primitive_counts += primitive_counts
+        alignments.append((word, word_primitive_counts))
+    return alignments
+    
+def merge_alignments(old, new):
+    for k in new:
+        if k not in old:
+            old[k] = new[k]
+        else:
+            old_k += new[k]
+    return old
+            
+def get_alignments(corpus_dir, grammar, output_dir=None):
     align_file = os.path.join(output_dir, "giza.ml-nl/ml-nl.A3.final.gz")
     # Unzip the file
-    unzip_cmd = f"gunzip {align_file}"
-    subprocess.run(unzip_cmd, check=True)
+    try:
+        unzip_cmd = f"gunzip {align_file}".split()
+        subprocess.run(unzip_cmd, check=True)
+    except:
+        print(f"Can't gunzip {align_file}")
     align_file = os.path.join(output_dir, "giza.ml-nl/ml-nl.A3.final")
+    
+    # Extract alignments -- should be in (Comment, ML, NL form)
+    all_alignments = {}
+    with open(align_file, 'r') as f:
+        lines = [l.strip() for l in f.readlines()]
+    for idx, line in enumerate(lines):
+        if idx % 3 == 1:
+            ml_tokens = line.strip().split()
+            print(ml_tokens)
+            nl_to_indices = extract_align_indices(lines[idx+1])
+            print(nl_to_indices)
+            sentence_alignments = alignments_for_sentence(ml_tokens, nl_to_indices, grammar)
+            all_alignments = merge_alignments(all_alignments, sentence_alignments)
+            print(alignments)
     
     ml_vocab = [v for v in grammar.escaped_vocab if v is not 'VAR']
     align_file = os.path.join(output_dir, "model/aligned.grow-diag-final")
@@ -345,15 +391,14 @@ def smt_alignment(tasks, tasks_attempted, frontiers, grammar, language_encoder, 
     Path(corpus_dir).mkdir(parents=True, exist_ok=True)
     if output_dir is None: output_dir = corpus_dir
     gc.collect()
-        
-    import pdb; pdb.set_trace()
     # count_dicts, encountered_nl, corpora = write_sentence_aligned(tasks, frontiers, grammar, language_encoder, corpus_dir, moses_dir)
     # unaligned_counts = count_unaligned_words(tasks, tasks_attempted, frontiers, grammar, language_encoder, encountered_nl)
     # write_smt_vocab(grammar, language_encoder, corpus_dir, count_dicts)
     # initial_ibm_alignment(corpus_dir, moses_dir, output_dir=output_dir, max_ibm_model=4)
     # gc.collect()
     
-    alignments = get_alignments(corpus_dir, n_pseudo=n_pseudo, n_me=n_pseudo, unaligned_counts=unaligned_counts, grammar=grammar, corpora=corpora, output_dir=output_dir)
+    output_dir = "experimentOutputs/clevr/2020-05-21T17-56-08-470454/moses_corpus_1"
+    alignments = get_alignments(corpus_dir, grammar=grammar, output_dir=output_dir)
     
     # if n_pseudo > 0 and phrase_length == 1:
     #     add_pseudoalignments(corpus_dir, n_pseudo=n_pseudo, n_me=n_pseudo, unaligned_counts=unaligned_counts, grammar=grammar, corpora=corpora, output_dir=output_dir)

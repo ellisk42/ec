@@ -875,7 +875,8 @@ def induce_synchronous_grammar(frontiers, tasks, testingTasks, tasksAttempted, g
     if n_frontiers == 0:    
         return None
     if debug:
-        debug_iteration = 0
+        # Use the previous iteration so that we can peek into it
+        debug_iteration = iteration - 1
         corpus_dir = os.path.join(os.path.dirname(output_prefix), f'moses_corpus_{debug_iteration}')
         # eprint(f"Running in non-debug mode, writing corpus files to {corpus_dir}.")
         # eprint("Running in debug mode, writing corpus files to tmp.")

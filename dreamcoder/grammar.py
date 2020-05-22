@@ -60,7 +60,7 @@ class Grammar(object):
                 escaped = original_to_escaped[token]
             reduced = p.betaNormalForm().left_order_tokens()
             primitive_counts = dict(Counter(reduced))
-            escaped_to_primitive_counts[token] = primitive_counts 
+            escaped_to_primitive_counts[escaped] = primitive_counts 
         
         return escaped_vocab, original_to_escaped, escaped_to_primitive_counts
     

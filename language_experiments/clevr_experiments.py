@@ -8,7 +8,7 @@ HIGH_MEM = False
 def azure_commands(job_name): 
     machine_type = "Standard_D48s_v3"
     azure_launch_command = f"az vm create --name {job_name} --resource-group ec-language-east2 --generate-ssh-keys --data-disk-sizes-gb 128 --image ec-language-5-21  --size {machine_type} "
-    return f"#######\n{azure_launch_command}\n\n###Now run: \n mkdir jobs; "
+    return f"#######\n{azure_launch_command}\n\n###Now run: \n mkdir jobs; git pull; "
 
 
 def gcloud_commands(job_name):
@@ -22,10 +22,10 @@ def get_launcher_command(job, job_name):
     if USING_SINGULARITY:
         return singularity_base_command.format(job, job_name)
     elif USING_GCLOUD:
-        job_name = f're2-language-{job} '
+        job_name = f'clevr-language-{job} '
         return gcloud_commands(job_name)
     else:
-        job_name = f're2-language-{job} '
+        job_name = f'clevr-language-{job} '
         return azure_commands(job_name)
 
 def append_command(job_name):
