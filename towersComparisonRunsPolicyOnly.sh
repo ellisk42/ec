@@ -23,15 +23,9 @@ for num in 3 20
 		salt=towers${num}PolicyOnly
 		cp ${oldResume}.pickle ${resume}.pickle
 
-
 		#REPL
-		#rm ${resume}REPL.pickle_RecModelOnly
 		cp ${resume}.pickle ${resume}REPL.pickle
-		#
-		#Train:
-		#--initializePolicyWithValueWeights ${REPLValue}
 		cmd="python bin/tower.py --policyType REPL --searchType SMC --split 0.0 --tasks maxHard --contextual --testingTimeout ${testingTime} --recognitionTimeout 216000 --resumeTraining -r ${helmRatio} --primitives new -t ${time} -RS ${recSteps} --solver python  -c ${ncores} --useValue Sample -i 2  --resume ${resume}REPL.pickle --singleRoundValueEval --seed 2"
-	
 		sbatch -e towersREPL${salt}.out -o towersREPL${salt}.out execute_gpu_new.sh ${cmd}
 
 		#RNN
