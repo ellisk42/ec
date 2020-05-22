@@ -161,7 +161,7 @@ class NeuralPolicyHead(nn.Module):
 
 
 class RNNPolicyHead(NeuralPolicyHead):
-    def __init__(self, g, featureExtractor, H, maxVar=15, encodeTargetHole=True, canonicalOrdering=False):
+    def __init__(self, g, featureExtractor, H=512, maxVar=15, encodeTargetHole=True, canonicalOrdering=False):
         super(RNNPolicyHead, self).__init__() #should have featureExtractor?
         self.use_cuda = torch.cuda.is_available()
         self.featureExtractor = featureExtractor
