@@ -789,11 +789,11 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
         if policyType == "base":
             policyHead = BasePolicyHead()
         elif policyType == "RNN":
-            policyHead = RNNPolicyHead(grammar, featureExtr, H=featureExtr.outputDimensionality, 
+            policyHead = RNNPolicyHead(grammar, featureExtr, 
                                         encodeTargetHole=False,
                                         canonicalOrdering=True)
         elif policyType == "REPL":
-            policyHead = REPLPolicyHead(grammar, featureExtr, #can be 512
+            policyHead = REPLPolicyHead(grammar, featureExtr, H=featureExtr.outputDimensionality, 
                                         canonicalOrdering=True)
         else: assert False
 
