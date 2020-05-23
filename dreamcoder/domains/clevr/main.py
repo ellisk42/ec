@@ -128,7 +128,9 @@ def main(args):
     
     # Generate language dataset directly from the loaded tasks.
     args.pop("languageDataset")
-    languageDataset = curriculum_datasets + task_datasets
+    languageDataset = curriculum_datasets + task_datasets 
+    if "curriculum" not in languageDataset:
+        languageDataset += ["curriculum"] # To use the curriculum vocab.
     
     # Load the primitives and optionally run tests with the primitive set.
     primitive_names = args.pop("primitives")
