@@ -6,6 +6,7 @@ import subprocess
 from collections import Counter, defaultdict
 from pathlib import Path
 from dreamcoder.utilities import *
+import numpy as np
 
 # Relative to moses_dir
 MOSES_SCRIPT = 'scripts/training/train-model.perl'
@@ -144,33 +145,62 @@ def initial_ibm_alignment(corpus_dir, moses_dir, output_dir=None, max_ibm_model=
 def extract_align_indices(line):
     import re
     matches = re.findall(r'(.+?) \({(.+?)}\)', line)
-    matches = [(t.strip(), a.strip()) for (t, a) in matches]
+    matches = [(t.strip(), a.strip().split()) for (t, a) in matches]
     matches = [(t, [int(align_index) - 1 for align_index in a]) for (t, a) in matches] # 1 indexed
     return matches
 
-def alignments_for_sentence(source_tokens, align_indices, grammar):
-    # Calculates alignments over the canonical tokens, unpacking primitives
-    alignments = {}
-    for word, idxs in align_indices: # One word -> many indexes
-        if word == 'NULL': continue
-        word_primitive_counts = Counter() # Primitive -> # of appearances
-        # Count the exact alignment, in sorted order, as a rule
-        for idx in idxs:
-            aligned_raw = source_tokens[idx]
-            primitive_counts = grammar.escaped_to_primitive_counts[aligned_raw]
-            word_primitive_counts += primitive_counts
-        alignments.append((word, word_primitive_counts))
-    return alignments
-    
 def merge_alignments(old, new):
     for k in new:
         if k not in old:
             old[k] = new[k]
         else:
-            old_k += new[k]
+            old[k] += new[k]
     return old
+
+def merge_align_counts(old, new):
+    for word in new:
+        for k in new[word]:
+            old[word][k] += new[word][k]
+    return old
+
+def alignments_for_sentence(source_tokens, align_indices, grammar):
+    # Calculates alignments over the canonical tokens, unpacking primitives
+    alignments = {}
+    align_counts = defaultdict(lambda: defaultdict(float))
+    for word, idxs in align_indices: # One word -> many indexes
+        if word == 'NULL': continue
+        word_primitive_counts = Counter() # Primitive -> # of appearances
+        # For now we count the exact alignment, in sorted order, as a rule
+        aligned_raw_tokens = [source_tokens[idx] for idx in idxs]
+        align_key = (word, f"{word}||{'|'.join(aligned_raw_tokens)}", len(idxs))
+        for aligned_raw in aligned_raw_tokens:
+            primitive_counts = grammar.escaped_to_primitive_counts[aligned_raw]
+            word_primitive_counts += primitive_counts
+        if len(word_primitive_counts) > 0:
+            # Add the full word <-> bag of primitives alignment
+            alignments = merge_alignments(alignments, {
+                align_key : word_primitive_counts
+            })
+            align_counts[word][align_key] += 1
+    return alignments, align_counts
+
+def get_alignments_and_scores(alignments, align_counts):
+    total_alignments = sum (
+        [sum(align_counts[word][k] for k in align_counts[word]) for word in align_counts]
+    )
+    alignments_scores = {}
+    for word in align_counts:
+        total_for_word = sum(align_counts[word][k] for k in align_counts[word])
+        for k in align_counts[word]:
+            (nl_word, align_key, num_prims) = k
+            if num_prims < 2: continue # Only care about n > 1 primitives aligned to a word
+            word_score = align_counts[word][k] / float(total_for_word)
+            global_score = align_counts[word][k] / float(total_alignments)
+            align_score = np.log(word_score) + np.log(global_score)
+            alignments_scores[align_key] = (alignments[k], align_score)
+    return alignments_scores
             
-def get_alignments(corpus_dir, grammar, output_dir=None):
+def get_alignments(grammar, output_dir=None):
     align_file = os.path.join(output_dir, "giza.ml-nl/ml-nl.A3.final.gz")
     # Unzip the file
     try:
@@ -181,31 +211,37 @@ def get_alignments(corpus_dir, grammar, output_dir=None):
     align_file = os.path.join(output_dir, "giza.ml-nl/ml-nl.A3.final")
     
     # Extract alignments -- should be in (Comment, ML, NL form)
-    all_alignments = {}
+    all_alignments,  all_align_counts = {}, defaultdict(lambda: defaultdict(float)) # Word -> alignment -> count
     with open(align_file, 'r') as f:
         lines = [l.strip() for l in f.readlines()]
     for idx, line in enumerate(lines):
         if idx % 3 == 1:
             ml_tokens = line.strip().split()
-            print(ml_tokens)
             nl_to_indices = extract_align_indices(lines[idx+1])
-            print(nl_to_indices)
-            sentence_alignments = alignments_for_sentence(ml_tokens, nl_to_indices, grammar)
+            sentence_alignments, align_counts = alignments_for_sentence(ml_tokens, nl_to_indices, grammar)
             all_alignments = merge_alignments(all_alignments, sentence_alignments)
-            print(alignments)
-    
-    ml_vocab = [v for v in grammar.escaped_vocab if v is not 'VAR']
-    align_file = os.path.join(output_dir, "model/aligned.grow-diag-final")
-    global_used_ml = set() # All ML tokens currently aligned.
-    token_alignments = defaultdict(set) # Tokens used for any one primitive:
-    with open(align_file, 'r') as f: # Alignments are (ml, nl) locations in the corpus files.
-        for idx, line in enumerate(f.readlines()):
-            alignments = [[int(t) for t in a.split("-")] for a in line.split()]
-            global_used_ml.update([corpora['ml'][idx][a[0]] for a in alignments])
-            for a in alignments:
-                token_alignments[corpora['nl'][idx][a[1]]].add(corpora['ml'][idx][a[0]])
-    unused_ml = set(ml_vocab) - global_used_ml
-    
+            all_align_counts = merge_align_counts(all_align_counts, align_counts)
+    alignments_scores =  get_alignments_and_scores(all_alignments, all_align_counts)
+    print("Sending the following alignments for compression")
+    print_alignments(alignments_scores, top_n=20)
+    return alignments_scores
+
+def print_alignments(alignments_scores, top_n=20):
+    for align_key in sorted(alignments_scores, key=lambda align_key: alignments_scores[align_key][-1], reverse=True):
+        print(f"Alignment: {align_key} | Score: {alignments_scores[align_key][0]}")
+        print(f"Bag of tokens: {alignments_scores[align_key][-1]}")
+        print("\n")
+
+def serialize_language_alignments(alignments_scores):
+    serialized = [
+        {
+            'key': str(align_key),
+            "score" : float(align_score),
+            "primitive_counts" : [ {"prim": p, "count": c} for (p, c) in align_counts.items()]
+        }
+        for (align_key, (align_counts, align_score)) in alignments_scores.items()
+    ]
+    return serialized
 
 def add_pseudoalignments(corpus_dir, n_pseudo, n_me, unaligned_counts, grammar, corpora, output_dir=None):
     eprint(f"Writing pseudoalignments with n_me = {n_me} and n_pseudo = {n_pseudo}")
@@ -391,20 +427,17 @@ def smt_alignment(tasks, tasks_attempted, frontiers, grammar, language_encoder, 
     Path(corpus_dir).mkdir(parents=True, exist_ok=True)
     if output_dir is None: output_dir = corpus_dir
     gc.collect()
-    # count_dicts, encountered_nl, corpora = write_sentence_aligned(tasks, frontiers, grammar, language_encoder, corpus_dir, moses_dir)
-    # unaligned_counts = count_unaligned_words(tasks, tasks_attempted, frontiers, grammar, language_encoder, encountered_nl)
-    # write_smt_vocab(grammar, language_encoder, corpus_dir, count_dicts)
-    # initial_ibm_alignment(corpus_dir, moses_dir, output_dir=output_dir, max_ibm_model=4)
-    # gc.collect()
+    count_dicts, encountered_nl, corpora = write_sentence_aligned(tasks, frontiers, grammar, language_encoder, corpus_dir, moses_dir)
+    unaligned_counts = count_unaligned_words(tasks, tasks_attempted, frontiers, grammar, language_encoder, encountered_nl)
+    write_smt_vocab(grammar, language_encoder, corpus_dir, count_dicts)
+    initial_ibm_alignment(corpus_dir, moses_dir, output_dir=output_dir, max_ibm_model=4)
+    gc.collect()
     
-    output_dir = "experimentOutputs/clevr/2020-05-21T17-56-08-470454/moses_corpus_1"
-    alignments = get_alignments(corpus_dir, grammar=grammar, output_dir=output_dir)
-    
-    # if n_pseudo > 0 and phrase_length == 1:
-    #     add_pseudoalignments(corpus_dir, n_pseudo=n_pseudo, n_me=n_pseudo, unaligned_counts=unaligned_counts, grammar=grammar, corpora=corpora, output_dir=output_dir)
-    # phrase_table_loc = moses_translation_tables(corpus_dir, moses_dir, output_dir=output_dir)
-    # lm_config = train_natural_language_model(tasks, language_encoder, corpus_dir, moses_dir, output_dir=output_dir, n_grams=3)
-    # generate_decoder_config(corpus_dir, moses_dir, output_dir=output_dir, lm_config=lm_config, phrase_table=phrase_table_loc, phrase_length=phrase_length)
+    if n_pseudo > 0 and phrase_length == 1:
+        add_pseudoalignments(corpus_dir, n_pseudo=n_pseudo, n_me=n_pseudo, unaligned_counts=unaligned_counts, grammar=grammar, corpora=corpora, output_dir=output_dir)
+    phrase_table_loc = moses_translation_tables(corpus_dir, moses_dir, output_dir=output_dir)
+    lm_config = train_natural_language_model(tasks, language_encoder, corpus_dir, moses_dir, output_dir=output_dir, n_grams=3)
+    generate_decoder_config(corpus_dir, moses_dir, output_dir=output_dir, lm_config=lm_config, phrase_table=phrase_table_loc, phrase_length=phrase_length)
     print("Finished translation, returning.")
     # Return the appropriate table locations, or read into memory.
     return {

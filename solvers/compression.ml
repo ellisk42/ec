@@ -21,6 +21,116 @@ let verbose_compression = ref false;;
 (* If this is true, then we collect and report data on the sizes of the version spaces, for each program, and also for each round of inverse beta *)
 let collect_data = ref false;;
 
+(** Language alignments ***)
+type alignment = {
+  key : string;
+  score : float;
+  primitive_counts : (string*int) list;
+};;
+
+(** Score = length of counts * score **)
+let alignment_len_score alignment = 
+  let just_counts =  alignment.primitive_counts |> List.map ~f: (fun (_, c) -> c) in
+  let count_len = just_counts |> (List.fold_right ~f:(+) ~init:0) in
+  let vocab_score = (List.length alignment.primitive_counts) in
+  let len_score = count_len + vocab_score in 
+  (Float.of_int len_score) *. alignment.score
+
+let align_to_string alignment = 
+  let _ = Printf.eprintf "Key: %s\n" alignment.key in
+  let _ = Printf.eprintf "Score: %f\n" alignment.score in 
+  let _ = alignment.primitive_counts |> List.map ~f: (
+    fun (p, c) ->  Printf.eprintf "%s: %d | " p c
+    ) in 
+  let _ = Printf.eprintf "Len score: %f\n" (alignment_len_score alignment) in
+  Printf.eprintf "\n";;
+
+let primitive_counts_to_string counts = 
+  let _ = counts |> List.map ~f: (
+    fun (p, c) ->  Printf.eprintf "%s: %d | " p c
+    ) in 
+  Printf.eprintf "\n";;
+
+let deserialize_alignment j = 
+  let open Yojson.Basic.Util in
+  let key = j |> member "key" |> to_string in
+  let score = j |> member "score" |> to_float in 
+  let primitive_counts = j |> member "primitive_counts" |> to_list |> List.map ~f: (fun j -> (
+      j |> member "prim" |> to_string,
+      j |> member "count" |> to_int
+    ))
+  in {key; score; primitive_counts};;
+
+let rec count_tokens counts tokens =
+  match tokens with 
+    | [] -> counts
+    | (token :: rest) -> 
+    let new_counts = 
+    if List.Assoc.mem counts ~equal:( = ) token 
+    then
+      counts |> List.map ~f: (fun (t, c) -> if t = token then (t, c+1) else (t, c))
+    else
+      (token, 1) :: counts
+    in (count_tokens new_counts rest)
+
+let to_primitive_counts e = 
+  let normal = beta_normal_form ~reduceInventions:true e in 
+  let tokens = ((left_order_tokens false []) normal) in 
+  count_tokens [] tokens 
+
+(** For new primitive [T0: C0, T1: C1 ...] we consider the maximum number of times the full new primitive could go into the old counts **)
+let rewrite_counts new_counts old_counts = 
+  let rec _rewrite_counts max_rewrites new_counts old_counts =  
+    match new_counts with 
+    | [] -> max_rewrites 
+    | (new_token, c) :: rest ->
+      if List.Assoc.mem old_counts ~equal:( = ) new_token 
+      then
+        let old_count =  List.Assoc.find_exn old_counts ~equal:(=) new_token in
+        let rewrites =  old_count / c in
+        let max_rewrites = if (rewrites < max_rewrites) then rewrites else max_rewrites in
+        _rewrite_counts max_rewrites rest old_counts
+      else 
+        _rewrite_counts 0 rest old_counts 
+  in 
+  let max_rewrites = _rewrite_counts 10000 new_counts old_counts
+  in 
+  if (max_rewrites = 10000) then 0 else max_rewrites
+
+let rewrite_counts_and_score num_rewrites new_counts alignment =
+  let old_counts = alignment.primitive_counts in 
+  let rewritten = old_counts |> List.map ~f: (fun (token, c) ->
+    if (List.Assoc.mem new_counts ~equal:( = ) token)
+    then
+      let new_count =  List.Assoc.find_exn new_counts ~equal:(=) token in
+      (token, c - (num_rewrites * new_count))
+    else
+      (token, c)
+  ) in 
+  let rewritten = ("invention", num_rewrites) :: rewritten in
+  let rewritten_alignment = {key = alignment.key; score = alignment.score; primitive_counts = rewritten} in
+  alignment_len_score rewritten_alignment
+
+let rewrite_score new_counts alignment = 
+  let max_rewrites = rewrite_counts new_counts alignment.primitive_counts in
+  if max_rewrites > 0 
+  then 
+    rewrite_counts_and_score max_rewrites new_counts alignment 
+  else
+    alignment_len_score alignment
+
+(** Calculates score for rewriting all alignments with new primitive.
+  Logprobs are negative, so shorter MDL = less negative; so a 
+  bigger score is better.
+*)
+let all_rewrite_alignments_score new_primitive alignments = 
+  let new_counts = to_primitive_counts new_primitive in
+  alignments |> List.map ~f: (fun alignment ->
+    rewrite_score new_counts alignment) |> (List.fold_right ~f:(+.) ~init:0.0)
+
+let all_initial_alignment_score alignments = 
+  alignments |> List.map ~f: (fun alignment -> alignment_len_score alignment) |> (List.fold_right ~f:(+.) ~init:0.0)
+
 let restrict ~topK g frontier =
   let restriction =
     frontier.programs |> List.map ~f:(fun (p,ll) ->
@@ -483,7 +593,6 @@ let compression_step_master ~inline ~nc ~structurePenalty ~aic ~pseudoCounts ?ar
     Zmq.Context.terminate context
   in 
     
-    
   
   let candidates : program list list = sockets |> List.map ~f:(fun s ->
       let candidate_message : (int list list)*(vs ra) = receive s in
@@ -573,15 +682,7 @@ let compression_step_master ~inline ~nc ~structurePenalty ~aic ~pseudoCounts ?ar
        Some(g'',frontiers''))
 
         
-  
-
-  
-  
-  
-  
-  
 let compression_step ~inline ~structurePenalty ~aic ~pseudoCounts ?arity:(arity=3) ~bs ~topI ~topK g frontiers =
-
   let restrict frontier =
     let restriction =
       frontier.programs |> List.map ~f:(fun (p,ll) ->
@@ -732,8 +833,10 @@ let export_compression_checkpoint ~nc ~structurePenalty ~aic ~topK ~pseudoCounts
 
 
 let compression_loop
-    ?nc:(nc=1) ~structurePenalty ~inline ~aic ~topK ~pseudoCounts ?arity:(arity=3) ~bs ~topI ~iterations g frontiers =
-
+    ?nc:(nc=1) ~structurePenalty ~inline ~aic ~topK ~pseudoCounts ?arity:(arity=3) ~bs ~topI ~iterations g frontiers language_alignments =
+  
+  let _ = Printf.eprintf "here in the compression loop\n" in  
+  let _ = Printf.eprintf "Num alignments = %d \n" (List.length language_alignments) in 
   let find_new_primitive old_grammar new_grammar =
     new_grammar |> grammar_primitives |> List.filter ~f:(fun p ->
         not (List.mem ~equal:program_equal (old_grammar |> grammar_primitives) p)) |>
@@ -754,7 +857,6 @@ let compression_loop
   in 
 
   let step = if nc = 1 then compression_step else compression_step_master ~nc in 
-
   let rec loop ~iterations g frontiers =
     if iterations < 1 then
       (Printf.eprintf "Exiting ocaml compression because of iteration bound.\n";g, frontiers)
@@ -840,7 +942,7 @@ let () =
     if aic > 500. then
       (Printf.eprintf "AIC is very large (over 500), assuming you don't actually want to do DSL learning!";
        g, frontiers)
-    else compression_loop ~inline ~iterations ~nc ~topK ~aic ~structurePenalty ~pseudoCounts ~arity ~topI ~bs g frontiers in 
+    else compression_loop ~inline ~iterations ~nc ~topK ~aic ~structurePenalty ~pseudoCounts ~arity ~topI ~bs g frontiers [] in 
       
 
   let j = `Assoc(["DSL",serialize_grammar g;

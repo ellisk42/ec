@@ -208,6 +208,12 @@ def re2_primitives_main():
         # # Replace vowels 
         check_equal("replace a|e -> f", raw, input, "hfllf")
         # Replace any letter vowel 
+        
+        # CHeck replace vowels
+        input = "aeioutestaeioutest"
+        replace_vowel = "(lambda  (if (_rmatch _rvowel $0) _f $0)   )"
+        raw = f"(lambda (_rflatten (map  {replace_vowel}  (_rsplit _a $0) ) ))"
+        check_equal("replace a|e -> f", raw, input, "hfllf")
     # Replace a vowel letter sequence
 
     

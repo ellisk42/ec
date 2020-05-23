@@ -1,8 +1,8 @@
-USING_AZURE = False
+USING_AZURE = True
 USING_GCLOUD = False
-USING_SINGULARITY = True
-NUM_REPLICATIONS = 0
-NO_ORIGINAL_REPL = False
+USING_SINGULARITY = False
+NUM_REPLICATIONS = 1
+NO_ORIGINAL_REPL = True
 HIGH_MEM = True
 
 def azure_commands(job_name): 
@@ -171,7 +171,7 @@ task_batch_size = 40
 test_every = 3
 recognition_steps = 10000
 testing_timeout = 720
-EXPS = [('re2_1000', 720, False), ('re2_1000', 1800, False)]
+EXPS = [('re2_1000', 720, False), ('re2_1000', 1800, False), ('re2_1000', 1800, True)]
 for dataset in ['re2_1000', 're2_500_aeioubcdfgsrt']:
     for enumerationTimeout in [720, 1800]:
         for use_vowel in [True, False]:

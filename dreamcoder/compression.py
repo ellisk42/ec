@@ -11,6 +11,7 @@ from dreamcoder.grammar import Grammar
 from dreamcoder.program import Program, Invented
 from dreamcoder.utilities import eprint, timing, callCompiled, get_root_dir
 from dreamcoder.vs import induceGrammar_Beta
+from dreamcoder.translation import serialize_language_alignments
 
 
 def induceGrammar(*args, **kwargs):
@@ -52,7 +53,9 @@ def pypyInduce(*args, **kwargs):
 def ocamlInduce(g, frontiers, _=None,
                 topK=1, pseudoCounts=1.0, aic=1.0,
                 structurePenalty=0.001, a=0, CPUs=1,
-                bs=1000000, topI=300):
+                bs=1000000, topI=300,
+                language_alignments=None,
+                executable=None):
     # This is a dirty hack!
     # Memory consumption increases with the number of CPUs
     # And early on we have a lot of stuff to compress
@@ -88,7 +91,9 @@ def ocamlInduce(g, frontiers, _=None,
                    "iterations": iterations,
                    "frontiers": [f.json()
                                  for f in frontiers]}
-
+        if language_alignments is not None:
+            message["language_alignments"] = serialize_language_alignments(language_alignments)
+        import pdb; pdb.set_trace()
         message = json.dumps(message)
         if True:
             timestamp = datetime.datetime.now().isoformat()
@@ -100,7 +105,8 @@ def ocamlInduce(g, frontiers, _=None,
 
         try:
             # Get relative path
-            compressor_file = os.path.join(get_root_dir(), 'compression')
+            executable = 'compression' if executable is None else executable
+            compressor_file = os.path.join(get_root_dir(), executable)
             process = subprocess.Popen(compressor_file,
                                        stdin=subprocess.PIPE,
                                        stdout=subprocess.PIPE)
@@ -108,6 +114,8 @@ def ocamlInduce(g, frontiers, _=None,
             response = json.loads(response.decode("utf-8"))
         except OSError as exc:
             raise exc
+        
+        import pdb; pdb.set_trace()
 
         g = response["DSL"]
         g = Grammar(g["logVariable"],
@@ -133,7 +141,7 @@ def ocamlInduce(g, frontiers, _=None,
         else:
             eprint("Finished consolidation.")
             return g, frontiers
-
+            
 
 def rustInduce(g0, frontiers, _=None,
                topK=1, pseudoCounts=1.0, aic=1.0,
