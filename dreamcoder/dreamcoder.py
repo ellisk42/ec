@@ -216,7 +216,8 @@ def ecIterator(grammar, tasks,
                useWakeLanguage=False,
                debug=False,
                synchronous_grammar=False,
-               language_compression=False):
+               language_compression=False,
+               lc_score=False):
     if enumerationTimeout is None:
         eprint(
             "Please specify an enumeration timeout:",
@@ -346,6 +347,7 @@ def ecIterator(grammar, tasks,
             "smt_pseudoalignments",
             "synchronous_grammar",
             "language_compression",
+            "lc_score",
             "skip_first_test",
             "test_only_after_recognition",
             "n_models",
@@ -717,17 +719,20 @@ def ecIterator(grammar, tasks,
         # Sleep-G
         if useDSL and not(noConsolidation) or debug:
             eprint(f"Currently using this much memory: {getThisMemoryUsage()}")
+            ## Language for compression
+            language_alignments = []
             if language_compression:
                 eprint(f"Using language alignments for compression.")
                 if debug: 
-                    output_dir = "experimentOutputs/clevr/2020-05-21T17-56-08-470454/moses_corpus_1"
+                    output_dir = "experimentOutputs/clevr/2020-05-21T17-56-08-470454/moses_corpus_0"
                 else: 
                     output_dir = translation_info["output_dir"]
                 language_alignments = get_alignments(grammar=grammar, output_dir=output_dir)
                 
             grammar = consolidate(result, grammar, topK=topK, pseudoCounts=pseudoCounts, arity=arity, aic=aic,
                                   structurePenalty=structurePenalty, compressor=compressor, CPUs=CPUs,
-                                  iteration=j, language_alignments=language_alignments)
+                                  iteration=j, language_alignments=language_alignments,
+                                  lc_score=lc_score)
             eprint(f"Currently using this much memory: {getThisMemoryUsage()}")
         else:
             eprint("Skipping consolidation.")
@@ -1059,7 +1064,7 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
     return totalTasksHitBottomUp
 
 def consolidate(result, grammar, _=None, topK=None, arity=None, pseudoCounts=None, aic=None,
-                structurePenalty=None, compressor=None, CPUs=None, iteration=None, language_alignments=None):
+                structurePenalty=None, compressor=None, CPUs=None, iteration=None, language_alignments=None, lc_score=0.0):
     eprint("Showing the top 5 programs in each frontier being sent to the compressor:")
     for f in result.allFrontiers.values():
         if f.empty:
@@ -1085,7 +1090,8 @@ def consolidate(result, grammar, _=None, topK=None, arity=None, pseudoCounts=Non
                                                       topk_use_only_likelihood=False,
                                                       backend=compressor, CPUs=CPUs, iteration=iteration,
                                                       language_alignments=language_alignments,
-                                                      executable="lcTest")
+                                                      executable="compression",
+                                                      lc_score=lc_score)
         # Store compression frontiers in the result.
         for c in compressionFrontiers:
             result.allFrontiers[c.task] = c.topK(0) if c in needToSupervise else c
@@ -1179,6 +1185,10 @@ def commandlineArguments(_=None,
         activation)
     
     ### SMT generative model training.
+    parser.add_argument("--lc_score",
+                        default=0.2,
+                        type=float,
+                        help="Amount to factor language into language score.")
     parser.add_argument("--language_compression",
                         action='store_true',
                         help="Whether to use the synchronous grammar during compression.")

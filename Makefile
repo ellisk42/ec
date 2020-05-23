@@ -34,6 +34,15 @@ clean:
 	rm -f logoDrawString
 	rm -f data/geom/logoDrawString
 
+compressionClean:
+	cd solvers && jbuilder clean
+	rm -f compression
+
+compression:
+	cd solvers && \
+	jbuilder build compression.exe && \
+	cp _build/default/compression.exe ../compression
+
 lcTestClean:
 	cd solvers && jbuilder clean
 	rm -f lcTest

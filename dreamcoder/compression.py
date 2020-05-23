@@ -55,7 +55,8 @@ def ocamlInduce(g, frontiers, _=None,
                 structurePenalty=0.001, a=0, CPUs=1,
                 bs=1000000, topI=300,
                 language_alignments=None,
-                executable=None):
+                executable=None,
+                lc_score=0.0):
     # This is a dirty hack!
     # Memory consumption increases with the number of CPUs
     # And early on we have a lot of stuff to compress
@@ -90,10 +91,10 @@ def ocamlInduce(g, frontiers, _=None,
                    "DSL": g.json(),
                    "iterations": iterations,
                    "frontiers": [f.json()
-                                 for f in frontiers]}
+                                 for f in frontiers],
+                   "lc_score": lc_score}
         if language_alignments is not None:
             message["language_alignments"] = serialize_language_alignments(language_alignments)
-        import pdb; pdb.set_trace()
         message = json.dumps(message)
         if True:
             timestamp = datetime.datetime.now().isoformat()
