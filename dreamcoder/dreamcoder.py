@@ -166,6 +166,8 @@ def ecIterator(grammar, tasks,
                testingTasks=[],
                iterations=None,
                resume=None,
+               initialTimeout=None,
+               initialTimeoutIterations=None,
                enumerationTimeout=None,
                testingTimeout=None,
                testEvery=1,
@@ -345,7 +347,9 @@ def ecIterator(grammar, tasks,
             "skip_first_test",
             "test_only_after_recognition",
             "n_models",
-            "test_dsl_only"
+            "test_dsl_only",
+            "initialTimeout",
+            "initialTimeoutIterations"
         ]
         parameters["iterations"] = iteration
         checkpoint_params = [k for k in sorted(parameters.keys()) if k not in exclude_from_path]
@@ -566,12 +570,18 @@ def ecIterator(grammar, tasks,
 
         # WAKING UP
         if useDSL:
+            enumeration_time = enumerationTimeout
+            if initialTimeout is not None and initialTimeoutIterations is not None:
+                if j < initialTimeoutIterations:
+                    eprint(f"Found an annealing schedule; using {initialTimeout}s enumeration.")
+                    enumeration_time = initialTimeout
+                    
             result.tasksAttempted.update(wakingTaskBatch)
             wake_generative = custom_wake_generative if custom_wake_generative is not None else default_wake_generative
             topDownFrontiers, times = wake_generative(grammar, wakingTaskBatch,
                                                       solver=solver,
                                                       maximumFrontier=maximumFrontier,
-                                                      enumerationTimeout=enumerationTimeout,
+                                                      enumerationTimeout=enumeration_time,
                                                       CPUs=CPUs,
                                                       evaluationTimeout=evaluationTimeout)
             result.trainSearchTime = {t: tm for t, tm in times.items() if tm is not None}
@@ -606,6 +616,12 @@ def ecIterator(grammar, tasks,
             if j == 0 and not biasOptimal: thisRatio = 0
             if all( f.empty for f in result.allFrontiers.values() ): thisRatio = 1.                
 
+            enumeration_time = enumerationTimeout
+            if initialTimeout is not None and initialTimeoutIterations is not None:
+                if j < initialTimeoutIterations:
+                    eprint(f"Found an annealing schedule; using {initialTimeout}s enumeration.")
+                    enumeration_time = initialTimeout
+                    
             tasks_hit_recognition_0 = \
              sleep_recognition(result, grammar, wakingTaskBatch, tasks, testingTasks, result.allFrontiers.values(),
                                ensembleSize=ensembleSize, 
@@ -613,7 +629,7 @@ def ecIterator(grammar, tasks,
                                activation=activation, contextual=contextual, biasOptimal=biasOptimal,
                                previousRecognitionModel=previousRecognitionModel, matrixRank=matrixRank,
                                timeout=recognitionTimeout, evaluationTimeout=evaluationTimeout,
-                               enumerationTimeout=enumerationTimeout,
+                               enumerationTimeout=enumeration_time,
                                helmholtzRatio=thisRatio, helmholtzFrontiers=helmholtzFrontiers(),
                                auxiliaryLoss=auxiliaryLoss, cuda=cuda, CPUs=CPUs, solver=solver,
                                recognitionSteps=recognitionSteps, maximumFrontier=maximumFrontier,
@@ -667,7 +683,13 @@ def ecIterator(grammar, tasks,
             thisRatio = helmholtzRatio
             if j == 0 and not biasOptimal: thisRatio = 0
             if all( f.empty for f in result.allFrontiers.values() ): thisRatio = 1.                
-
+            
+            enumeration_time = enumerationTimeout
+            if initialTimeout is not None and initialTimeoutIterations is not None:
+                if j < initialTimeoutIterations:
+                    eprint(f"Found an annealing schedule; using {initialTimeout}s enumeration.")
+                    enumeration_time = initialTimeout
+                    
             tasks_hit_recognition_1 = \
              sleep_recognition(result, grammar, wakingTaskBatch, tasks, testingTasks, result.allFrontiers.values(),
                                ensembleSize=ensembleSize, 
@@ -675,7 +697,7 @@ def ecIterator(grammar, tasks,
                                activation=activation, contextual=contextual, biasOptimal=biasOptimal,
                                previousRecognitionModel=None, matrixRank=matrixRank,
                                timeout=recognitionTimeout, evaluationTimeout=evaluationTimeout,
-                               enumerationTimeout=enumerationTimeout,
+                               enumerationTimeout=enumeration_time,
                                helmholtzRatio=thisRatio, helmholtzFrontiers=helmholtzFrontiers(),
                                auxiliaryLoss=auxiliaryLoss, cuda=cuda, CPUs=CPUs, solver=solver,
                                recognitionSteps=recognitionSteps, maximumFrontier=maximumFrontier,
@@ -1241,6 +1263,14 @@ def commandlineArguments(_=None,
     parser.add_argument("-i", "--iterations",
                         help="default: %d" % iterations,
                         default=iterations,
+                        type=int)
+    parser.add_argument("--initialTimeout",
+                        default=None,
+                        help="In seconds.",
+                        type=int)
+    parser.add_argument("--initialTimeoutIterations",
+                        default=None,
+                        help="How many iterations to use an initial timeout for.",
                         type=int)
     parser.add_argument("-t", "--enumerationTimeout",
                         default=enumerationTimeout,

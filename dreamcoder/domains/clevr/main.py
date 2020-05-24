@@ -15,9 +15,13 @@ class ClevrFeatureExtractor(RecurrentFeatureExtractor):
     special = 'clevr'
     serialize_special = serialize_clevr_object
     maximum_helmholtz = 20000
+    
     def __init__(self, tasks, testingTasks=[], cuda=False):
         self.recomputeTasks = True
         self.useTask = True
+        self.max_examples = 2
+        self.max_examples_length = 200
+        
         lexicon = clevr_lexicon() + ["OBJ_START", "OBJ_END"]
         super(ClevrFeatureExtractor, self).__init__(lexicon=lexicon,
                                                       H=64,
@@ -41,7 +45,15 @@ class ClevrFeatureExtractor(RecurrentFeatureExtractor):
                         o_attrs += [k] + [str(rel) for rel in v]
                 flattened += ["OBJ_START"] + o_attrs + ["OBJ_END"]
             return flattened
-            
+        def blank_task():
+            blank_xs = (["OBJ_START", "OBJ_END"],)
+            blank_y = ["OBJ_START", "OBJ_END"]
+            return (blank_xs, blank_y)
+        
+        def example_len(xs, y):
+            return sum([len(x) for x in xs]) + len(y)
+        
+        # To limit recognition backward pass times, we cap the length of these inputs
         for xs, y in task.examples:
             xs = [tokenize_obj_list(obj_list) for obj_list in xs]
             if return_type in [tint, tbool, tclevrsize, tclevrcolor, tclevrshape, tclevrsize, tclevrmaterial]:
@@ -49,6 +61,10 @@ class ClevrFeatureExtractor(RecurrentFeatureExtractor):
             else:
                 y = tokenize_obj_list(y)
             tokenized.append([xs, y])
+        sorted_tokenized = sorted(tokenized, key = lambda e: example_len(e[0], e[1]))
+        
+        sorted_tokenized = [e if example_len(e[0], e[1]) <= self.max_examples_length else blank_task() for e in sorted_tokenized]
+        tokenized = sorted_tokenized[:self.max_examples]
         return tokenized
 
     def taskOfProgram(self, p, tp):
@@ -68,12 +84,13 @@ all_train_questions = [
     '1_single_or',
     '2_remove',
     '2_transform'
+    '2_localization'
 ]
 
 def clevr_options(parser):
     # Dataset loading options.
     parser.add_argument("--curriculumDatasets", type=str, nargs="*",
-                        default=["curriculum"],
+                        default=[],
                         help="A list of curriculum datasets, stored as JSON CLEVR question files. These will be used in ")
     parser.add_argument("--taskDatasets", type=str, nargs="*",
                         default=all_train_questions,
@@ -84,10 +101,10 @@ def clevr_options(parser):
     parser.add_argument("--languageDatasetDir",
                         default="data/clevr/language/")
     parser.add_argument("--trainInputScenes",
-                        default="CLEVR_train_scenes_1000",
+                        default="CLEVR_train_scenes_5000",
                         help="Input scene graphs for all of the training questions.")
     parser.add_argument("--testInputScenes",
-                        default="CLEVR_val_scenes_500",
+                        default="CLEVR_val_scenes_5000",
                         help="Input scene graphs for all of the test questions.")
 
     # Primitive loading options.
