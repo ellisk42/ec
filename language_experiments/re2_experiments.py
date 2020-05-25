@@ -1,13 +1,17 @@
 USING_AZURE = True
 USING_GCLOUD = False
 USING_SINGULARITY = False
-NUM_REPLICATIONS = 1
-NO_ORIGINAL_REPL = True
+NUM_REPLICATIONS = 0
+NO_ORIGINAL_REPL = False
 HIGH_MEM = True
+
+LANGUAGE_COMPRESSION = True
+AZURE_IMAGE = "ec-language-5-24" if not LANGUAGE_COMPRESSION else "ec-language-compression-5-25"
+OLD_AZURE_IMAGE = "re2-language-5-20-image-20200520151754 "
 
 def azure_commands(job_name): 
     machine_type = "Standard_D48_v3"
-    azure_launch_command = f"az vm create --name {job_name} --resource-group ec-language --generate-ssh-keys --data-disk-sizes-gb 128 --image re2-language-5-20-image-20200520151754  --size {machine_type} "
+    azure_launch_command = f"az vm create --name {job_name} --resource-group ec-language --generate-ssh-keys --data-disk-sizes-gb 128 --image {AZURE_IMAGE}  --size {machine_type} "
     return f"#######\n{azure_launch_command}\n\n###Now run: \n mkdir jobs; "
 
 def gcloud_commands(job_name):
@@ -268,6 +272,43 @@ if RUN_BASELINE_DSL_ENUM_AND_RECOGNITION_TEST:
     if not NO_ORIGINAL_REPL: experiment_commands.append(command)
     experiment_commands += build_replications(exp_command, job, job_name)
 job +=1
+
+
+#### Generate Helmholtz generative model experiments.
+RUN_HELMHOLTZ_GENERATIVE_MODEL_LANGUAGE_COMPRESSION = True
+num_iterations = 10
+task_batch_size = 40
+test_every = 3
+recognition_steps = 10000
+testing_timeout = 720
+lc_score = 0.1
+max_compression = 5
+EXPS = [('re2_1000', 720, False), ('re2_1000', 1800, False), ('re2_1000', 1800, True)]
+for dataset in ['re2_1000', 're2_500_aeioubcdfgsrt']:
+    for enumerationTimeout in [720, 1800]:
+        for use_vowel in [True, False]:
+            exp = (dataset, enumerationTimeout, use_vowel)
+            job_name = f"re_2_ec_gru_ghelm_lang_compression_et_{enumerationTimeout}_{dataset}_use_vowel_{use_vowel}"
+            jobs.append(job_name)
+            base_parameters = f" --enumerationTimeout {enumerationTimeout} --testingTimeout {testing_timeout}  --iterations {num_iterations} --biasOptimal --contextual --taskBatchSize {task_batch_size} --testEvery {test_every} --no-cuda --recognitionSteps {recognition_steps} --recognition_0 --recognition_1 examples language --Helmholtz 0.5 --synchronous_grammar --skip_first_test"
+            
+            # Which primitives set to use.
+            restricted = 'aeioubcdfgsrt' 
+            if restricted in dataset:
+                primitives = f"re2_chars_{restricted} re2_bootstrap_v1_primitives"
+            else:
+                primitives = "re2_chars_None re2_bootstrap_v1_primitives"
+            if use_vowel:
+                primitives += " re2_vowel_consonant_primitives"
+                
+            exp_parameters = f" --taskDataset {dataset} --language_encoder recurrent --languageDataset {dataset}/synthetic --primitives {primitives} --moses_dir ./moses_compiled --smt_phrase_length 1  --language_compression --lc_score {lc_score} --max_compression {max_compression} --om_original_ordering  "
+            exp_command = base_command + base_parameters + exp_parameters
+            command = build_command(exp_command, job, job_name, replication=None)
+            if RUN_HELMHOLTZ_GENERATIVE_MODEL_LANGUAGE_COMPRESSION:
+                if (EXPS is None) or (exp in EXPS):
+                    if not NO_ORIGINAL_REPL: experiment_commands.append(command)
+                    experiment_commands += build_replications(exp_command, job, job_name)
+            job +=1
 
 
 #### Outputs

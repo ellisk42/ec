@@ -1,5 +1,5 @@
 USING_AZURE = True
-USING_GCLOUD = True
+USING_GCLOUD = False
 USING_SINGULARITY = False
 NUM_REPLICATIONS = 0
 NO_ORIGINAL_REPL = False
@@ -9,7 +9,7 @@ AZURE_IMAGE = "ec-language-5-24" if not LANGUAGE_COMPRESSION else "ec-language-c
 
 def azure_commands(job_name): 
     machine_type = "Standard_D48s_v3"
-    azure_launch_command = f"az vm create --name az-{job_name} --resource-group ec-language-east2 --generate-ssh-keys --data-disk-sizes-gb 128 --image ec-language-5-24  --size {machine_type} --public-ip-address-dns-name {job_name} --location eastus"
+    azure_launch_command = f"az vm create --name az-{job_name} --resource-group ec-language-east2 --generate-ssh-keys --data-disk-sizes-gb 128 --image {AZURE_IMAGE} --size {machine_type} --public-ip-address-dns-name {job_name} --location eastus"
     
     return f"#######\n{azure_launch_command}###Now run: \n git pull; "
 
@@ -355,7 +355,7 @@ for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000
             job_name = f"logo_2_ec_cnn_gru_ghelm_lang_compression_et_{enumerationTimeout}_supervised_{sample_n_supervised}_{dataset}_pl_{phrase_length}"
             jobs.append(job_name)
             base_parameters = f" --enumerationTimeout {enumerationTimeout} --testingTimeout {enumerationTimeout}  --iterations {num_iterations} --biasOptimal --contextual --taskBatchSize {task_batch_size} --testEvery {test_every} --no-cuda --recognitionTimeout {recognition_timeout} --recognition_0 --recognition_1 examples language --Helmholtz 0.5 --synchronous_grammar --skip_first_test"
-            exp_parameters = f" --taskDataset {dataset} --language_encoder recurrent --languageDataset {dataset}/synthetic --sample_n_supervised {sample_n_supervised} --moses_dir ./moses_compiled --smt_phrase_length {phrase_length} --language_compression --lc_score {lc_score} --max_compression {max_compression} --om_original_ordering"
+            exp_parameters = f" --taskDataset {dataset} --language_encoder recurrent --languageDataset {dataset}/synthetic --sample_n_supervised {sample_n_supervised} --moses_dir ./moses_compiled --smt_phrase_length {phrase_length} --language_compression --lc_score {lc_score} --max_compression {max_compression} --om_original_ordering 1 "
         
             exp_command = base_command + base_parameters + exp_parameters
             command = build_command(exp_command, job, job_name, replication=None)

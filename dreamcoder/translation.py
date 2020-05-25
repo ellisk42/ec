@@ -449,7 +449,6 @@ def smt_alignment(tasks, tasks_attempted, frontiers, grammar, language_encoder, 
         "corpus_dir" : corpus_dir,
         "moses_dir" : moses_dir,
         "output_dir" : output_dir,
-        "alignments" : alignments
     }
     
     
