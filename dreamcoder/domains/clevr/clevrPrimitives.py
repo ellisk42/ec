@@ -28,7 +28,7 @@ def clevr_lexicon():
     for k, values in attribute_constants.items():
         lexicon.add(k)
         lexicon.update(values)
-    lexicon.update([str(val) for val in range(10)])
+    lexicon.update([str(val) for val in range(100)]) # Since we could accidentally count something large.
     lexicon.update([str(val) for val in (True, False)])
     lexicon.add("id")
     return list(lexicon)
