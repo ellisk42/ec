@@ -10,7 +10,7 @@ pretrained_ghelm_checkpoint = "experimentOutputs/clevr/2020-05-22T14-12-31-66155
 
 def azure_commands(job_name): 
     machine_type = "Standard_D48s_v3"
-    azure_launch_command = f"az vm create --name {job_name} --resource-group ec-language-east2 --generate-ssh-keys --data-disk-sizes-gb 128 --image ec-language-5-24  --size {machine_type} "
+    azure_launch_command = f"az vm create --name az-{job_name} --resource-group ec-language-east2 --generate-ssh-keys --data-disk-sizes-gb 128 --image ec-language-5-24  --size {machine_type} --public-ip-address-dns-name {job_name} --location eastus"
     
     pretrained_command = f"Pretrained Ghelm Checkpoint: mkdir experimentOutputs/clevr; mkdir experimentOutputs/clevr/2020-05-22T14-12-31-661550; scp zyzzyva@openmind7.mit.edu:/om2/user/zyzzyva/ec/{pretrained_ghelm_checkpoint} experimentOutputs/clevr/2020-05-22T14-12-31-661550" 
     return f"#######\n{azure_launch_command}\n###Now run: {pretrained_command} \n###Now run: \n git pull; "
@@ -124,19 +124,19 @@ for prim_name, primitive_set in primitives:
 ## Generates experiments using the full generative model.
 RUN_HELMHOLTZ_GENERATIVE_MODEL = True
 num_iterations = 10
-task_batch_size = 40
+task_batch_size = 10
 recognition_steps = 10000
 test_every = 3
 initial_timeout_iterations = 3
-EXPS = [("bootstrap", 7200, 720)]
+EXPS = [("bootstrap", 7200, 720), ("bootstrap", 10000, 720)]
 task_datasets = ("1_zero_hop", "1_one_hop", "1_compare_integer", "1_same_relate", "1_single_or", "2_remove", "2_transform", "2_localization")
 primitives = [("bootstrap", ("clevr_bootstrap", "clevr_map_transform")), 
               ("filter", ("clevr_bootstrap", "clevr_map_transform", "clevr_filter")),]
 for prim_name, primitive_set in primitives:
-    for initialTimeout in [3600, 7200]:
+    for initialTimeout in [7200, 10000]:
         for enumerationTimeout in [720]:
             exp = (prim_name, initialTimeout, enumerationTimeout)
-            job_name = f"clevr_ec_gru_ghelm_compression_it_{initialTimeout}_et_{enumerationTimeout}_prim_{prim_name}_pretrained"
+            job_name = f"clevr_ec_gru_ghelm_compression_it_{initialTimeout}_et_{enumerationTimeout}_prim_{prim_name}"
             jobs.append(job_name)
             base_command = "python bin/clevr.py "
             
@@ -154,7 +154,7 @@ for prim_name, primitive_set in primitives:
             job +=1
 
 ## Generates experiments using the full generative model.
-RUN_HELMHOLTZ_PSEUDOALIGNMENTS = True
+RUN_HELMHOLTZ_PSEUDOALIGNMENTS = False
 num_iterations = 10
 task_batch_size = 40
 recognition_steps = 10000
@@ -169,7 +169,7 @@ for prim_name, primitive_set in primitives:
     for initialTimeout in [3600, 7200]:
         for enumerationTimeout in [720]:
             exp = (prim_name, initialTimeout, enumerationTimeout)
-            job_name = f"clevr_ec_gru_ghelm_pseudo_compression_it_{initialTimeout}_et_{enumerationTimeout}_prim_{prim_name}_pretrained"
+            job_name = f"clevr_ec_gru_ghelm_pseudo_compression_it_{initialTimeout}_et_{enumerationTimeout}_prim_{prim_name}"
             jobs.append(job_name)
             base_command = "python bin/clevr.py "
             
@@ -187,7 +187,7 @@ for prim_name, primitive_set in primitives:
             job +=1
 
 ## Generates experiments using the full generative model.
-RUN_NO_HELMHOLTZ_GENERATIVE_MODEL = True
+RUN_NO_HELMHOLTZ_GENERATIVE_MODEL = False
 num_iterations = 10
 task_batch_size = 40
 recognition_steps = 10000
@@ -202,7 +202,7 @@ for prim_name, primitive_set in primitives:
     for initialTimeout in [3600, 7200]:
         for enumerationTimeout in [720]:
             exp = (prim_name, initialTimeout, enumerationTimeout)
-            job_name = f"clevr_ec_gru_no_ghelm_compression_it_{initialTimeout}_et_{enumerationTimeout}_prim_{prim_name}_pretrained"
+            job_name = f"clevr_ec_gru_no_ghelm_compression_it_{initialTimeout}_et_{enumerationTimeout}_prim_{prim_name}"
             jobs.append(job_name)
             base_command = "python bin/clevr.py "
             
@@ -220,7 +220,7 @@ for prim_name, primitive_set in primitives:
             job +=1
 
 ## Generates experiments using the full generative model.
-RUN_EC_BASELINES = True
+RUN_EC_BASELINES = False
 num_iterations = 10
 task_batch_size = 40
 recognition_steps = 10000
@@ -235,7 +235,7 @@ for prim_name, primitive_set in primitives:
     for initialTimeout in [3600, 7200]:
         for enumerationTimeout in [720]:
             exp = (prim_name, initialTimeout, enumerationTimeout)
-            job_name = f"clevr_ec_no_lang_compression_it_{initialTimeout}_et_{enumerationTimeout}_prim_{prim_name}_pretrained"
+            job_name = f"clevr_ec_no_lang_compression_it_{initialTimeout}_et_{enumerationTimeout}_prim_{prim_name}"
             jobs.append(job_name)
             base_command = "python bin/clevr.py "
             
