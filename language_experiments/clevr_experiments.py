@@ -252,6 +252,41 @@ for prim_name, primitive_set in primitives:
                     experiment_commands += build_replications(exp_command, job, job_name)
             job +=1
 
+## Generates experiments using the full generative model.
+RUN_HELMHOLTZ_GENERATIVE_MODEL_LANGUAGE_COMPRESSION  = True
+num_iterations = 10
+task_batch_size = 20
+recognition_steps = 10000
+test_every = 3
+initial_timeout_iterations = 1
+lc_score = 0.2
+max_compression = 5
+testing_timeout = 720
+EXPS = [("bootstrap", 7200, 720), ("bootstrap", 10000, 1800)]
+task_datasets = ("1_zero_hop", "1_one_hop", "1_compare_integer", "1_same_relate", "1_single_or", "2_remove", "2_transform", "2_localization")
+primitives = [("bootstrap", ("clevr_bootstrap", "clevr_map_transform")), 
+              ("filter", ("clevr_bootstrap", "clevr_map_transform", "clevr_filter")),]
+for prim_name, primitive_set in primitives:
+    for initialTimeout in [7200, 10000]:
+        for enumerationTimeout in [1800]:
+            exp = (prim_name, initialTimeout, enumerationTimeout)
+            job_name = f"clevr_ec_gru_ghelm_compression_it_{initialTimeout}_et_{enumerationTimeout}_prim_{prim_name}"
+            jobs.append(job_name)
+            base_command = "python bin/clevr.py "
+            
+            base_parameters = f" --initialTimeout {initialTimeout} --initialTimeoutIterations {initial_timeout_iterations} --enumerationTimeout {enumerationTimeout} --testingTimeout {testing_timeout}  --iterations {num_iterations} --biasOptimal --contextual --taskBatchSize {task_batch_size}  --testEvery {test_every}  --no-cuda --recognitionSteps {recognition_steps} --recognition_0 --recognition_1 examples language --Helmholtz 0.5 --synchronous_grammar --skip_first_test  --taskReranker sentence_length "
+            
+            prims = " ".join(primitive_set)
+            tasks = " ".join(task_datasets)
+            exp_parameters = f" --curriculumDatasets --taskDatasets {tasks}  --language_encoder recurrent --primitives {prims} --moses_dir ./moses_compiled --smt_phrase_length 1 --language_compression --lc_score {lc_score} --max_compression {max_compression}  "
+            exp_command = base_command + base_parameters + exp_parameters
+            command = build_command(exp_command, job, job_name, replication=None)
+            if RUN_HELMHOLTZ_GENERATIVE_MODEL_LANGUAGE_COMPRESSION:
+                if (EXPS is None) or (exp in EXPS):
+                    if not NO_ORIGINAL_REPL: experiment_commands.append(command)
+                    experiment_commands += build_replications(exp_command, job, job_name)
+            job +=1
+
 #### Outputs
 PRINT_LOG_SCRIPT = False
 PRINT_JOBS = True

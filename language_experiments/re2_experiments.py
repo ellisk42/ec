@@ -281,9 +281,9 @@ task_batch_size = 40
 test_every = 3
 recognition_steps = 10000
 testing_timeout = 720
-lc_score = 0.1
+lc_score = 0.2
 max_compression = 5
-EXPS = [('re2_1000', 720, False), ('re2_1000', 1800, False), ('re2_1000', 1800, True)]
+EXPS = [('re2_1000', 1800, True)]
 for dataset in ['re2_1000', 're2_500_aeioubcdfgsrt']:
     for enumerationTimeout in [720, 1800]:
         for use_vowel in [True, False]:
@@ -301,7 +301,7 @@ for dataset in ['re2_1000', 're2_500_aeioubcdfgsrt']:
             if use_vowel:
                 primitives += " re2_vowel_consonant_primitives"
                 
-            exp_parameters = f" --taskDataset {dataset} --language_encoder recurrent --languageDataset {dataset}/synthetic --primitives {primitives} --moses_dir ./moses_compiled --smt_phrase_length 1  --language_compression --lc_score {lc_score} --max_compression {max_compression} --om_original_ordering  "
+            exp_parameters = f" --taskDataset {dataset} --language_encoder recurrent --languageDataset {dataset}/synthetic --primitives {primitives} --moses_dir ./moses_compiled --smt_phrase_length 1  --language_compression --lc_score {lc_score} --max_compression {max_compression} "
             exp_command = base_command + base_parameters + exp_parameters
             command = build_command(exp_command, job, job_name, replication=None)
             if RUN_HELMHOLTZ_GENERATIVE_MODEL_LANGUAGE_COMPRESSION:

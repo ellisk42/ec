@@ -346,7 +346,7 @@ num_iterations = 12
 task_batch_size = 40
 test_every = 3
 recognition_timeout = 1800
-lc_score = 0.1
+lc_score = 0.2
 max_compression = 5
 for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000']:
     for sample_n_supervised in [0, 10]:
