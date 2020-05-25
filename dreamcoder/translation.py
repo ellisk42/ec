@@ -201,29 +201,34 @@ def get_alignments_and_scores(alignments, align_counts):
     return alignments_scores
             
 def get_alignments(grammar, output_dir=None):
-    align_file = os.path.join(output_dir, "giza.ml-nl/ml-nl.A3.final.gz")
     # Unzip the file
+    align_file = "NONE"
     try:
+        align_file = os.path.join(output_dir, "giza.ml-nl/ml-nl.A3.final.gz")
         unzip_cmd = f"gunzip {align_file}".split()
         subprocess.run(unzip_cmd, check=True)
     except:
         print(f"Can't gunzip {align_file}")
-    align_file = os.path.join(output_dir, "giza.ml-nl/ml-nl.A3.final")
     
-    # Extract alignments -- should be in (Comment, ML, NL form)
-    all_alignments,  all_align_counts = {}, defaultdict(lambda: defaultdict(float)) # Word -> alignment -> count
-    with open(align_file, 'r') as f:
-        lines = [l.strip() for l in f.readlines()]
-    for idx, line in enumerate(lines):
-        if idx % 3 == 1:
-            ml_tokens = line.strip().split()
-            nl_to_indices = extract_align_indices(lines[idx+1])
-            sentence_alignments, align_counts = alignments_for_sentence(ml_tokens, nl_to_indices, grammar)
-            all_alignments = merge_alignments(all_alignments, sentence_alignments)
-            all_align_counts = merge_align_counts(all_align_counts, align_counts)
-    alignments_scores =  get_alignments_and_scores(all_alignments, all_align_counts)
-    print("Sending the following alignments for compression")
-    print_alignments(alignments_scores, top_n=20)
+    try:
+        align_file = os.path.join(output_dir, "giza.ml-nl/ml-nl.A3.final")
+        # Extract alignments -- should be in (Comment, ML, NL form)
+        all_alignments,  all_align_counts = {}, defaultdict(lambda: defaultdict(float)) # Word -> alignment -> count
+        with open(align_file, 'r') as f:
+            lines = [l.strip() for l in f.readlines()]
+        for idx, line in enumerate(lines):
+            if idx % 3 == 1:
+                ml_tokens = line.strip().split()
+                nl_to_indices = extract_align_indices(lines[idx+1])
+                sentence_alignments, align_counts = alignments_for_sentence(ml_tokens, nl_to_indices, grammar)
+                all_alignments = merge_alignments(all_alignments, sentence_alignments)
+                all_align_counts = merge_align_counts(all_align_counts, align_counts)
+        alignments_scores =  get_alignments_and_scores(all_alignments, all_align_counts)
+        print("Sending the following alignments for compression")
+        print_alignments(alignments_scores, top_n=20)
+    except:
+        print("Error finding alignments, returning empty alignments.")
+        alignments_scores = {}
     return alignments_scores
 
 def print_alignments(alignments_scores, top_n=20):

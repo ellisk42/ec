@@ -1,7 +1,17 @@
+USING_AZURE = True
 USING_GCLOUD = True
 USING_SINGULARITY = False
 NUM_REPLICATIONS = 0
 NO_ORIGINAL_REPL = False
+
+LANGUAGE_COMPRESSION = True
+AZURE_IMAGE = "ec-language-5-24" if not LANGUAGE_COMPRESSION else "ec-language-compression-5-25"
+
+def azure_commands(job_name): 
+    machine_type = "Standard_D48s_v3"
+    azure_launch_command = f"az vm create --name az-{job_name} --resource-group ec-language-east2 --generate-ssh-keys --data-disk-sizes-gb 128 --image ec-language-5-24  --size {machine_type} --public-ip-address-dns-name {job_name} --location eastus"
+    
+    return f"#######\n{azure_launch_command}###Now run: \n git pull; "
 
 def gcloud_commands(job_name):
     gcloud_disk_command = f"gcloud compute --project 'tenenbaumlab' disks create {job_name} --size '100' --zone 'us-east1-b' --source-snapshot 'logo-language-april29' --type 'pd-standard'"
@@ -13,9 +23,12 @@ singularity_base_command = "srun --job-name=logo_language_{} --output=jobs/{} --
 def get_launcher_command(job, job_name):
     if USING_SINGULARITY:
         return singularity_base_command.format(job, job_name)
-    else:
-        job_name = f'logo-language-{job} '
+    elif USING_GCLOUD:
+        job_name = f'clevr-language-{job} '
         return gcloud_commands(job_name)
+    else:
+        job_name = f'clevr-language-{job} '
+        return azure_commands(job_name)
 
 def append_command(job_name):
     if USING_SINGULARITY:
@@ -25,7 +38,12 @@ def append_command(job_name):
 
 def build_command(exp_command, job, job_name, replication=" "):
     if replication is None: replication = " "
-    return get_launcher_command(job, job_name) + exp_command + replication + append_command(job_name)
+    command = get_launcher_command(job, job_name) + exp_command + replication + append_command(job_name)
+    if USING_GCLOUD:
+        command = command.replace("python", "python3")
+    if USING_AZURE:
+        command = command.replace("python", "python3.7")
+    return command
 
 def build_replications(exp_command, job, job_name):
     replications = []
@@ -318,6 +336,36 @@ for (name, language_checkpoint, last_iter, dataset, type) in language_checkpoint
         if not NO_ORIGINAL_REPL: experiment_commands.append(command)
         experiment_commands += build_replications(exp_command, job, job_name)
     job +=1
+
+
+#### Generate Helmholtz generative model experiments with language in the compression.
+RUN_HELMHOLTZ_GENERATIVE_MODEL_LANGUAGE_COMPRESSION = True
+EXPS = [('logo_unlimited_200', 0, 1)]
+enumerationTimeout = 1800
+num_iterations = 12
+task_batch_size = 40
+test_every = 3
+recognition_timeout = 1800
+lc_score = 0.1
+max_compression = 5
+for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000']:
+    for sample_n_supervised in [0, 10]:
+        for phrase_length in [5,3,1]:
+            exp = (dataset, sample_n_supervised, phrase_length)
+            job_name = f"logo_2_ec_cnn_gru_ghelm_lang_compression_et_{enumerationTimeout}_supervised_{sample_n_supervised}_{dataset}_pl_{phrase_length}"
+            jobs.append(job_name)
+            base_parameters = f" --enumerationTimeout {enumerationTimeout} --testingTimeout {enumerationTimeout}  --iterations {num_iterations} --biasOptimal --contextual --taskBatchSize {task_batch_size} --testEvery {test_every} --no-cuda --recognitionTimeout {recognition_timeout} --recognition_0 --recognition_1 examples language --Helmholtz 0.5 --synchronous_grammar --skip_first_test"
+            exp_parameters = f" --taskDataset {dataset} --language_encoder recurrent --languageDataset {dataset}/synthetic --sample_n_supervised {sample_n_supervised} --moses_dir ./moses_compiled --smt_phrase_length {phrase_length} --language_compression --lc_score {lc_score} --max_compression {max_compression} --om_original_ordering"
+        
+            exp_command = base_command + base_parameters + exp_parameters
+            command = build_command(exp_command, job, job_name, replication=None)
+            if RUN_HELMHOLTZ_GENERATIVE_MODEL_LANGUAGE_COMPRESSION:
+                if (EXPS is None) or (exp in EXPS):
+                    if not NO_ORIGINAL_REPL: experiment_commands.append(command)
+                    experiment_commands += build_replications(exp_command, job, job_name)
+            job +=1
+
+
 
 #### Outputs
 PRINT_LOG_SCRIPT = False

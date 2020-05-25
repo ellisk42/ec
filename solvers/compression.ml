@@ -666,12 +666,12 @@ let compression_step_master ~inline ~nc ~structurePenalty ~aic ~pseudoCounts ~lc
   let initial_joint_score = ((1.0 -. lc_score) *. initial_mdl_score) +. (lc_score *. initial_language_score) in
   Printf.eprintf "Initial joint score: %f using LC of %f\n" initial_joint_score lc_score;
 
-  let _ = Printf.eprintf "Here in the master worker: we still have %d language alignments\n;" (List.length language_alignments) in 
+  let _ = Printf.eprintf "Here in the master worker: we still have %d language alignments;\n" (List.length language_alignments) in 
   let (g',best_mdl_score), best_mdl_candidate = time_it "Scored candidates" (fun () ->
       List.map2_exn candidates new_frontiers ~f:(fun candidate frontiers ->
           (score frontiers candidate, candidate)) |> minimum_by (fun ((_,s),_) -> -.s))
   in
-  let _ = Printf.eprintf "Best regular score: %f with %s\n" best_mdl_score (string_of_program best_mdl_candidate) in
+  let _ = Printf.eprintf "Best MDL score: %f with %s\n" best_mdl_score (string_of_program best_mdl_candidate) in
   if best_mdl_score < initial_mdl_score then
       (Printf.eprintf "No improvement possible with MDL.\n");
   
@@ -686,7 +686,7 @@ let compression_step_master ~inline ~nc ~structurePenalty ~aic ~pseudoCounts ~lc
   let _ = Printf.eprintf "Best joint score: %f with %s\n" best_joint_score (string_of_program best_candidate) in
   
   if best_joint_score < initial_joint_score then
-      (Printf.eprintf "No improvement possible.\n"; finish(); None)
+      (Printf.eprintf "No improvement possible with joint score.\n"; finish(); None)
     else
       (let new_primitive = grammar_primitives g' |> List.hd_exn in
        Printf.eprintf "Improved score to %f (dScore=%f) w/ new primitive\n\t%s : %s\n"
@@ -855,9 +855,6 @@ let export_compression_checkpoint ~nc ~structurePenalty ~aic ~topK ~pseudoCounts
 
 let compression_loop
     ?nc:(nc=1) ~structurePenalty ~inline ~aic ~topK ~pseudoCounts ~lc_score ?arity:(arity=3) ~bs ~topI ~iterations g frontiers language_alignments =
-  
-  let _ = Printf.eprintf "Here in the compression loop\n" in  
-  let _ = Printf.eprintf "Num alignments = %d \n" (List.length language_alignments) in 
   let find_new_primitive old_grammar new_grammar =
     new_grammar |> grammar_primitives |> List.filter ~f:(fun p ->
         not (List.mem ~equal:program_equal (old_grammar |> grammar_primitives) p)) |>

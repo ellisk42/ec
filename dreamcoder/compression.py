@@ -56,7 +56,8 @@ def ocamlInduce(g, frontiers, _=None,
                 bs=1000000, topI=300,
                 language_alignments=None,
                 executable=None,
-                lc_score=0.0):
+                lc_score=0.0,
+                max_compression=10000):
     # This is a dirty hack!
     # Memory consumption increases with the number of CPUs
     # And early on we have a lot of stuff to compress
@@ -89,7 +90,7 @@ def ocamlInduce(g, frontiers, _=None,
                    "structurePenalty": float(structurePenalty),
                    "CPUs": CPUs,
                    "DSL": g.json(),
-                   "iterations": iterations,
+                   "iterations": int(max_compression),
                    "frontiers": [f.json()
                                  for f in frontiers],
                    "lc_score": lc_score}
@@ -115,8 +116,6 @@ def ocamlInduce(g, frontiers, _=None,
             response = json.loads(response.decode("utf-8"))
         except OSError as exc:
             raise exc
-        
-        import pdb; pdb.set_trace()
 
         g = response["DSL"]
         g = Grammar(g["logVariable"],

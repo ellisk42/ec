@@ -219,7 +219,8 @@ def ecIterator(grammar, tasks,
                debug=False,
                synchronous_grammar=False,
                language_compression=False,
-               lc_score=False):
+               lc_score=False,
+               max_compression=0):
     if enumerationTimeout is None:
         eprint(
             "Please specify an enumeration timeout:",
@@ -350,6 +351,7 @@ def ecIterator(grammar, tasks,
             "synchronous_grammar",
             "language_compression",
             "lc_score",
+            "max_compression",
             "skip_first_test",
             "test_only_after_recognition",
             "n_models",
@@ -768,15 +770,22 @@ def ecIterator(grammar, tasks,
             if language_compression:
                 eprint(f"Using language alignments for compression.")
                 if debug: 
-                    output_dir = "experimentOutputs/clevr/2020-05-21T17-56-08-470454/moses_corpus_0"
+                    eprint(f"Running in debug -- using an old checkpoint for alignments.")
+                    output_dir = "experimentOutputs/clevr/2020-05-21T17-56-08-470454/moses_corpus_1"
                 else: 
-                    output_dir = translation_info["output_dir"]
+                    eprint(f"Reading alignments from the Moses dir.")
+                    if translation_info is None:
+                        eprint(f"No translation info found; setting output dir to None.")
+                        output_dir = None
+                    else:
+                        output_dir = translation_info["output_dir"]
                 language_alignments = get_alignments(grammar=grammar, output_dir=output_dir)
                 
             grammar = consolidate(result, grammar, topK=topK, pseudoCounts=pseudoCounts, arity=arity, aic=aic,
                                   structurePenalty=structurePenalty, compressor=compressor, CPUs=CPUs,
                                   iteration=j, language_alignments=language_alignments,
-                                  lc_score=lc_score)
+                                  lc_score=lc_score,
+                                  max_compression=max_compression)
             eprint(f"Currently using this much memory: {getThisMemoryUsage()}")
         else:
             eprint("Skipping consolidation.")
@@ -1108,7 +1117,8 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
     return totalTasksHitBottomUp
 
 def consolidate(result, grammar, _=None, topK=None, arity=None, pseudoCounts=None, aic=None,
-                structurePenalty=None, compressor=None, CPUs=None, iteration=None, language_alignments=None, lc_score=0.0):
+                structurePenalty=None, compressor=None, CPUs=None, iteration=None, language_alignments=None, lc_score=0.0,
+                max_compression=1000):
     eprint("Showing the top 5 programs in each frontier being sent to the compressor:")
     for f in result.allFrontiers.values():
         if f.empty:
@@ -1135,7 +1145,7 @@ def consolidate(result, grammar, _=None, topK=None, arity=None, pseudoCounts=Non
                                                       backend=compressor, CPUs=CPUs, iteration=iteration,
                                                       language_alignments=language_alignments,
                                                       executable="compression",
-                                                      lc_score=lc_score)
+                                                      lc_score=lc_score,max_compression=max_compression)
         # Store compression frontiers in the result.
         for c in compressionFrontiers:
             result.allFrontiers[c.task] = c.topK(0) if c in needToSupervise else c
@@ -1233,6 +1243,10 @@ def commandlineArguments(_=None,
                         default=0.2,
                         type=float,
                         help="Amount to factor language into language score.")
+    parser.add_argument("--max_compression",
+                        default=5,
+                        type=float,
+                        help="Maximum number of iterations to run the compression loop for at each iteration.")
     parser.add_argument("--language_compression",
                         action='store_true',
                         help="Whether to use the synchronous grammar during compression.")
