@@ -16,6 +16,8 @@ import dill
 """
 TODO:
 - [ ] 
+
+
 - [ ] import robut and use its sampling
 - [ ] can use robut execution I suppose, or can use own execution
 
@@ -27,7 +29,6 @@ TODO:
 - [ ] helmholtz stuff
 
 - [ ] make test tasks
-- [ ] batching!!!
 
 
 """
@@ -179,14 +180,6 @@ def main(arguments):
         sys.exit(0)
 
 
-    competitionCheckpoints = arguments.pop("compete")
-    if competitionCheckpoints:
-        checkpoints = []
-        for competitionCheckpoint in competitionCheckpoints:
-            with open(competitionCheckpoint, 'rb') as handle:
-                checkpoints.append(dill.load(handle))
-        sygusCompetition(checkpoints, challenge)
-        sys.exit(0)
 
     timestamp = datetime.datetime.now().isoformat()
     outputDirectory = "experimentOutputs/text/%s"%timestamp

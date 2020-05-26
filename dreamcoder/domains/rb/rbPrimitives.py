@@ -8,9 +8,10 @@ import math
 from string import printable
 import re
 from collections import defaultdict
-from utilities import timing
+from dreamcoder.utilities import timing
 #from functools import reduce
 
+import ROB #TODO
 
 disallowed = [
     ("#", "hash"),
@@ -53,18 +54,8 @@ delimiters = "&,.?!@()[]%{/}:;$#\"' "
 
 delim_dict = {disallowed[c]:c for c in delimiters}
 
-types = {}
-types["Number"] = r'\d+'
-types["Word"] = r'\w+'
-types["Alphanum"] = r'\w'
-types["PropCase"] = r'[A-Z][a-z]+'
-types["AllCaps"] = r'[A-Z]'
-types["Lower"] = r'[a-z]'
-types["Digit"] = r'\d'
-types["Char"] = r'.' 
-
-regexes = {name: re.escape(val) for name, val in delim_dict.items()}
-regexes = {**regexes, **types}
+def allowed(x):
+    return disallowed.get(x, x)
 
 tposition = baseType("position")
 tindex = baseType("index")
@@ -78,126 +69,57 @@ tnesting = baseType("nesting")
 ttype = baseType("type")
 tdelimiter = baseType("delimiter")
 
-def _substr(k1): return lambda k2: lambda string: string[k1:k2] #i think this is fine
+
 def _getspan(r1): 
-    return lambda i1: lambda b1: lambda r2: lambda i2: lambda b2: lambda string: \
-    string[
-    [m.end() for m in re.finditer(r1, string)][i1] if b1 == "End" else [m.start() for m in re.finditer(r1, string)][i1]:[m.end() for m in re.finditer(r2, string)][i2] if b2 == "End" else [m.start() for m in re.finditer(r2, string)][i2]
-    ]
-    #TODO format correctly
-def _getspan_const(r1): return lambda i1: lambda b1: lambda r2: lambda i2: lambda b2: (defaultdict(int, {r1:i1+1 if i1>=0 else abs(i1), r2:i2+1 if i2>=0 else abs(i2)}), max(i1+1 if i1>=0 else abs(i1), i2+1 if i2>=0 else abs(i2)))
+    return lambda i1: lambda b1: lambda r2: lambda i2: lambda b2: lambda k: [ROB.GetSpan(r1, i1, b1, r2, i2, b2)] + k
 
+def robustFillPrimitives():
 
-def _trim(string): 
-    assert False
-    return string
-
-def _replace(d1, d2): return lambda string: string.replace(d1,d2)
-
-def _getall(tp): return lambda string: ''.join(re.findall(tp, string))
-def _getfirst(tp, i): return lambda string: ''.join(re.findall(tp, string)[:i])
-def _gettoken(tp, i): return lambda string: re.findall(tp, string)[i]
-def _gettoken_const(tp, i): return defaultdict(int, {tp: i+1 if i>=0 else abs(i)}), i+1 if i>=0 else abs(i)
-
-def _getupto(reg): return lambda string: string[:[m.end() for m in re.finditer(reg, string)][0]]
-def _getfrom(reg): return lambda string: string[[m.end() for m in re.finditer(reg, string)][-1]:]
-
-def _concat2(expr1): return lambda expr2: lambda string: expr1(string) + expr2(string) #More concats plz
-def _concat1(expr): return lambda string: expr(string)
-def _concat_list(expr): return lambda program: lambda string: expr(string) + program(string)
-#i've decided that all of the things which are expressions should take tstring as last input and output a tstring. Thus, all requests are arrow(tstring, tstring) and we limit size with recursive depth
-"""
-todo: 
-- _trim
-- incorporate tcharacter 
-- constraints
-- format _getspan
-- figure out how to represent on top_level
-- flatten for nn
-- parse
-- robustfill_util
-- train dc model for robustfill
-- main_supervised_robustfill
-- evaluate_robustfill
-- sample_data
-- deal with escapes ... 
-constraints:
-elements, and number necessary, and lengths
-"""
-
-def robustFillPrimitives(max_len=100, max_index=5):
     return [
-        #CPrimitive("concat2", arrow(texpression, texpression, tprogram), _concat2),
-        CPrimitive("concat1", arrow(texpression, tprogram), _concat1),
-        CPrimitive("concat_list", arrow(texpression, tprogram, tprogram), _concat_list),
-        #expressions
-        CPrimitive("Constant", arrow(tcharacter, texpression), lambda x: lambda y: x),  # add a constraint
-        CPrimitive("apply", arrow(tnesting, tsubstr, texpression), lambda n: lambda sub: lambda string: n(sub(string))),
-        CPrimitive("apply_n", arrow(tnesting, tnesting, texpression), lambda n1: lambda n2: lambda string: n1(n2(string))),
-        CPrimitive("expr_n", arrow(tnesting, texpression), lambda x: x),
-        CPrimitive("expr_f", arrow(tsubstr, texpression), lambda x: x)
+        #substring:
+        CPrimitive("SubStr", arrow(tposition, tposition, texpression, texpression), lambda i: lambda j: lambda k: [ROB.SubString(i, j)] + k),
+        CPrimitive("GetSpan", arrow(tregex, tindex, tboundary, tregex, tindex, tboundary, texpression, texpression), _getSpan ),
+        #nesting:
+        CPrimitive("GetToken", arrow(ttype, tindex, texpression, texpression), lambda t: lambda i: lambda k: [ROB.GetToken(t, i) ] + k),   
+        CPrimitive("ToCase_Proper", arrow(texpression, texpression), lambda k: [ROB.ToCase( ("Proper", lambda x : x.title()) )] + k),
+        CPrimitive("ToCase_AllCaps", arrow(texpression, texpression), lambda k: [ROB.ToCase( ("AllCaps", lambda x: x.upper()) )] + k),
+        CPrimitive("ToCase_Lower", arrow(texpression, texpression), lambda k: [ROB.ToCase( ("Lower", lambda x: x.lower()) )] + k),
+        CPrimitive("Replace", arrow(tdelimiter, tdelimiter, texpression, texpression),  lambda d1: lambda d2: lambda k: [ROB.Replace(d1, d2)] + k ), 
+        CPrimitive("GetUpTo", arrow(tregex, texpression, texpression), lambda r: lambda k: [ROB.GetUpTo(r)] + k ),
+        CPrimitive("GetFrom", arrow(tregex, texpression, texpression),  lambda r: lambda k: [ROB.GetFrom(r)] + k ),
+        CPrimitive("GetFirst", arrow(ttype, tindex, texpression, texpression),  lambda t: lambda i: lambda k: [ROB.GetFirst(t, i)] + k ) ,
+        CPrimitive("GetAll", arrow(ttype, texpression, texpression), lambda r: lambda k: [ROB.GetAll(r)] + k ),
+        #n versions
+        CPrimitive("GetToken_n", arrow(texpression, ttype, tindex, texpression, texpression), lambda e: lambda t: lambda i: lambda k: [ROB.Compose(ROB.GetToken(t, i), e) ] + k),   
+        CPrimitive("ToCase_Proper_n", arrow(texpression, texpression, texpression), lambda e: lambda k: [ROB.Compose(ROB.ToCase( ("Proper", lambda x : x.title()) ), e)] + k),
+        CPrimitive("ToCase_AllCaps_n", arrow(texpression, texpression, texpression), lambda e: lambda k: [ROB.Compose(ROB.ToCase( ("AllCaps", lambda x: x.upper()) ), e)] + k),
+        CPrimitive("ToCase_Lower_n", arrow(texpression, texpression, texpression), lambda e: lambda k: [ROB.Compose(ROB.ToCase( ("Lower", lambda x: x.lower()) ), e)] + k),
+        CPrimitive("Replace_n", arrow(texpression, tdelimiter, tdelimiter, texpression, texpression),  lambda e: lambda d1: lambda d2: lambda k: [ROB.Compose(ROB.Replace(d1, d2), e)] + k ), #TODO
+        CPrimitive("GetUpTo_n", arrow(texpression, tregex, texpression, texpression), lambda e: lambda r: lambda k: [ROB.Compose(ROB.GetUpTo(r), e)] + k ),
+        CPrimitive("GetFrom_n", arrow(texpression, tregex, texpression, texpression),  lambda e: lambda r: lambda k: [ROB.Compose(ROB.GetFrom(r), e)] + k ),
+        CPrimitive("GetFirst_n", arrow(texpression, ttype, tindex, texpression, texpression),  lambda e: lambda t: lambda i: lambda k: [ROB.Compose(ROB.GetFirst(t, i),e)] + k ) ,
+        CPrimitive("GetAll_n", arrow(texpression, ttype, texpression, texpression), lambda e: lambda r: lambda k: [ROB.Compose(ROB.GetAll(r), e)] + k ),
         ] + [
-        #substrings
-        CPrimitive("SubStr", arrow(tposition, tposition, tsubstr), _substr), # handled
-        CPrimitive("GetSpan", arrow(tregex, tindex, tboundary, tregex, tindex, tboundary, tsubstr), _getspan, _getspan_const)  #TODO constraint
+        #Regex
+        CPrimitive(f"regex_{allowed(r)}", tregex, r) for r in ROB._POSSIBLE_R.keys()
+        #type
         ] + [
-        #nestings
-        CPrimitive("GetToken"+name+str(i), tnesting, _gettoken(tp,i), _gettoken_const(tp, i)) for name, tp in types.items() for i in range(-max_index, max_index)
+        CPrimitive(f"type_{tp}", ttype, tp) for tp in ROB._POSSIBLE_TYPES.keys()
         ] + [
-        CPrimitive("ToCase_ProperCase", tnesting, lambda x: x.title(), (defaultdict(int, {r'[A-Z][a-z]+':1}), 1)),
-        CPrimitive("ToCase_AllCapsCase", tnesting, lambda x: x.upper(), (defaultdict(int, {r'[A-Z]':1}) ,1)),
-        CPrimitive("ToCase_LowerCase", tnesting, lambda x: x.lower(), (defaultdict(int, {r'[a-z]':1}), 1) )
+        #position
+        CPrimitive(f"pos_{i}", tposition, i) for i in ROB._POSITION_K
         ] + [
-        CPrimitive("Replace_"+name1+name2, tnesting, _replace(char1, char2), (defaultdict(int, {char1:1}), 1)) for name1, char1 in delim_dict.items() for name2, char2 in delim_dict.items() if char1 is not char2
+        #index
+        CPrimitive(f"index_{i}", tposition, i) for i in ROB._INDEX
         ] + [
-        #CPrimitive("Trim", tnesting, _trim), #TODO
+        #Character
+        CPrimitive(f"char_{allowed(c)}", texpression, texpression, lambda k: [ROB.ConstStr(c)] + k) for c in ROB._CHARACTER
+        #delimiter
+        CPrimitive(f"delim_{allowed(d)}", tdelimiter, d) for d in ROB._DELIMITER
         ] + [
-        CPrimitive("GetUpTo"+name, tnesting, _getupto(reg), (defaultdict(int, {reg:1} ),1)) for name, reg in regexes.items()
-        ] + [
-        CPrimitive("GetFrom"+name, tnesting, _getfrom(reg), (defaultdict(int, {reg:1} ),1)) for name, reg in regexes.items()
-        ] + [
-        CPrimitive("GetFirst_"+name+str(i), tnesting, _getfirst(tp, i), (defaultdict(int, {tp:i} ), i+1 if i>=0 else abs(i))) for name, tp in types.items() for i in list(range(-max_index,0))+ list(range(1,max_index+1))
-        ] + [ 
-        CPrimitive("GetAll_"+name, tnesting, _getall(reg),(defaultdict(int, {reg:1} ),1) ) for name, reg in types.items()
-        ] + [
-        #regexes
-        CPrimitive("type_to_regex", arrow(ttype, tregex), lambda x: x), #TODO also make disappear
-        CPrimitive("delimiter_to_regex", arrow(tdelimiter, tregex), lambda x: re.escape(x)) #TODO also make disappear
-        ] + [
-        #types
-        CPrimitive("Number", ttype, r'\d+', r'\d+'), #TODO
-        CPrimitive("Word", ttype, r'\w+', r'\w+'), #TODO
-        CPrimitive("Alphanum", ttype, r'\w', r'\w'), #TODO
-        CPrimitive("PropCase", ttype, r'[A-Z][a-z]+', r'[A-Z][a-z]+'), #TODO
-        CPrimitive("AllCaps", ttype, r'[A-Z]', r'[A-Z]'), #TODO
-        CPrimitive("Lower", ttype, r'[a-z]', r'[a-z]'), #TODO
-        CPrimitive("Digit", ttype, r'\d', r'\d'), #TODO
-        CPrimitive("Char", ttype, r'.', r'.') #TODO
-        ] + [
-        #Cases
-        # CPrimitive("ProperCase", tcase, .title()), #TODO
-        # CPrimitive("AllCapsCase", tcase, .upper()), #TODO
-        # CPrimitive("LowerCase", tcase, .lower()) #TODO
-        ] + [
-        #positions
-        CPrimitive("position"+str(i), tposition, i, (defaultdict(int), i+1 if i>=0 else abs(i)) ) for i in range(-max_len,max_len+1) #deal with indicies 
-        ] + [
-        #indices
-        CPrimitive("index"+str(i), tindex, i, i) for i in range(-max_index,max_index+1) #deal with indicies
-        ] + [
-        #characters
-        CPrimitive(i, tcharacter, i, (defaultdict(int, {i:1}),1) ) for i in printable[:-5] if i not in disallowed
-            ] + [
-        CPrimitive(name, tcharacter, char, (defaultdict(int, {char:1}), 1)) for char, name in disallowed.items() # NB: disallowed is reversed
-        ] + [
-        #delimiters
-        CPrimitive("delim_"+name, tdelimiter, char, char) for name, char in delim_dict.items()
-        ] + [
-        #boundaries
-        CPrimitive("End", tboundary, "End"),
-        CPrimitive("Start", tboundary, "Start")
-    ]
-
+        #boundary
+        CPrimitive(f"bound_{b}", tboundary, b) for b in ROB._BOUNDARY
+        ]
 
 
 def RobustFillProductions(max_len=100, max_index=5):

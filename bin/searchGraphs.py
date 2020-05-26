@@ -58,7 +58,7 @@ def plotTestResults(testResults, timeout, defaultLoss=None,
     if mode =='fractionHit': plot.ylim(bottom=0.)
     for n in range(len(testResults)):
         #xs = list(range(max([0]+[r.evaluations for tr in testResults[n] for r in tr] ) + 1))
-        xs = list(range(400))
+        xs = list(range(13569))
         if mode =='fractionHit':
             plot.plot(xs, [fractionHit(n,lambda r: r.evaluations <= x) for x in xs],
                   label=names[n])
@@ -74,7 +74,7 @@ def plotTestResults(testResults, timeout, defaultLoss=None,
 
 if __name__ == '__main__':
 
-    n = 20
+    n = 3
     ID = 'towers' + str(n)
 
     # paths = [(f'experimentOutputs/{ID}Sample_SRE=True.pickle', 'Sample'),
@@ -127,21 +127,21 @@ if __name__ == '__main__':
         (f'experimentOutputs/{ID}{runType}Symbolic_SRE=True{graph}.pickle', 'Symbolic value')
         ]
 
-    # graph="_graph=True"
-    # #mode="Prior"
-    # nameSalt = "list" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
-    # ID = 'list'
-    # runType ="RichPrims" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
-    # paths = [
-    #     (f'experimentOutputs/{ID}{runType}Sample_SRE=True{graph}.pickle', 'Policy only (no value)'),
-    #     (f'experimentOutputs/{ID}{runType}RNN_SRE=True{graph}.pickle', 'RNN value'),
-    #     (f'experimentOutputs/{ID}{runType}REPL_SRE=True{graph}.pickle', 'REPL modular value'),
-    #     #(f'experimentOutputs/{ID}{runType}Symbolic_SRE=True{graph}.pickle', 'Symbolic value')
-    #     ]
+  
+    graph=""
+    nameSalt = "AstarPseudoResult" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
+    ID = 'towers' + str(n)
+    runType ="PolicyOnlyPseudoResult" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
+    paths = [
+        (f'experimentOutputs/{ID}{runType}REPL_SRE=True{graph}.pickle', 'Abstract REPL policy (ours)'),
+        (f'experimentOutputs/{ID}{runType}RNN_SRE=True{graph}.pickle', 'RNN Policy'),
+        (f'experimentOutputs/{ID}{runType}Sample_SRE=True{graph}.pickle', 'Bigram Policy'),
+        ]
+
 
 
     with open('biasedtasks.p', 'rb') as h: biasedtasks = dill.load(h)
-    timeout=2000
+    timeout=30
     outputDirectory = 'plots'
     paths, names = zip(*paths)
 
@@ -156,12 +156,12 @@ if __name__ == '__main__':
                 if r.testingSearchStats[-1][task]:
                     r.testingSearchStats[-1][task] = r.testingSearchStats[-1][task][:1]
 
-            delTasks = []
-            for task, results in r.testingSearchStats[-1].items():
-                if "Max" in task.name: delTasks.append(task)
-                # elif r.testingSearchStats[-1][task] and r.testingSearchStats[-1][task][0].evaluations < 10:
-                #     delTasks.append(task) 
-            for task in delTasks: del r.testingSearchStats[-1][task]
+            # delTasks = []
+            # for task, results in r.testingSearchStats[-1].items():
+            #     if "Max" in task.name: delTasks.append(task)
+            #     # elif r.testingSearchStats[-1][task] and r.testingSearchStats[-1][task][0].evaluations < 10:
+            #     #     delTasks.append(task) 
+            # for task in delTasks: del r.testingSearchStats[-1][task]
 
             # print(path)
             # for task, results in r.testingSearchStats[-1].items():
