@@ -408,6 +408,7 @@ test_every = 3
 recognition_timeout = 1800
 lc_score = 0.2
 max_compression = 5
+sample_n_supervised = 0
 for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000']:
     for pseudoalignment in [0, 0.1]:
         for helmholtz in [0, 0.5]:
@@ -416,8 +417,10 @@ for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000
             no_ghelm = "no_" if helmholtz == 0 else ""
             job_name = f"logo_2_ec_cnn_gru_{no_ghelm}ghelm_{pseudo_name}lang_compression_et_{enumerationTimeout}_supervised_{sample_n_supervised}_{dataset}_pl_{phrase_length}"
             jobs.append(job_name)
+            
+            language_compression = " --language_compression" if helmholtz > 0 else ""
             base_parameters = f" --enumerationTimeout {enumerationTimeout} --testingTimeout {enumerationTimeout}  --iterations {num_iterations} --biasOptimal --contextual --taskBatchSize {task_batch_size} --testEvery {test_every} --no-cuda --recognitionSteps {recognition_steps} --recognition_0 --recognition_1 examples language --Helmholtz {helmholtz} --synchronous_grammar --skip_first_test"
-            exp_parameters = f" --taskDataset {dataset} --language_encoder recurrent --languageDataset {dataset}/humans --sample_n_supervised {sample_n_supervised} --moses_dir ./moses_compiled --smt_phrase_length {phrase_length} --smt_pseudoalignments {pseudoalignment} --language_compression --lc_score {lc_score} --max_compression {max_compression} --om_original_ordering 1 "
+            exp_parameters = f" --taskDataset {dataset} --language_encoder recurrent --languageDataset {dataset}/humans --sample_n_supervised {sample_n_supervised} --moses_dir ./moses_compiled --smt_phrase_length {phrase_length} --smt_pseudoalignments {pseudoalignment} {language_compression} --lc_score {lc_score} --max_compression {max_compression} --om_original_ordering 1 "
         
             exp_command = base_command + base_parameters + exp_parameters
             command = build_command(exp_command, job, job_name, replication=None)

@@ -87,8 +87,6 @@ def write_sentence_aligned(tasks, frontiers, grammar, language_encoder, corpus_d
         with open(name, 'w') as f:
             f.write(corpus)
     
-    import pdb; pdb.set_trace()
-    
     eprint("Building word classes using Moses mkcls.")
     for type, corpus in corpora_names:
         mkcls_loc = os.path.join(moses_dir, MOSES_TOOLS, "mkcls")
@@ -339,7 +337,7 @@ def train_natural_language_model(tasks, language_encoder, corpus_dir, moses_dir,
     lm_filename = os.path.abspath(os.path.join(output_dir, f"lm-nl-o-{n_grams}.arpa"))
     lm_tool = os.path.join(moses_dir, LM_TOOL)
 
-    lm_cmd = f"{lm_tool} -o {n_grams} --discount_fallback --text {all_task_corpus_loc} --arpa {lm_filename} --memory 64G"
+    lm_cmd = f"{lm_tool} -o {n_grams} --discount_fallback --text {all_task_corpus_loc} --arpa {lm_filename} --memory 5G"
     subprocess.check_output(lm_cmd.split())
     return {"factor" : 0,
             "filename": lm_filename,
