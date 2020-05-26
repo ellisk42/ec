@@ -4,12 +4,17 @@ USING_SINGULARITY = False
 NUM_REPLICATIONS = 0
 NO_ORIGINAL_REPL = False
 
-LANGUAGE_COMPRESSION = True
+LANGUAGE_COMPRESSION = False
 AZURE_IMAGE = "ec-language-5-24" if not LANGUAGE_COMPRESSION else "ec-language-compression-5-25"
 
+HUMAN = True
+if HUMAN:
+    AZURE_IMAGE  = "ec-language-embeddings-5-25"
+
 def azure_commands(job_name): 
-    machine_type = "Standard_D48s_v3"
-    azure_launch_command = f"az vm create --name az-{job_name} --resource-group ec-language-east2 --generate-ssh-keys --data-disk-sizes-gb 128 --image {AZURE_IMAGE} --size {machine_type} --public-ip-address-dns-name {job_name} --location eastus2\n"
+    group = "ec-language-central" if HUMAN else "ec-language-east2"
+    machine_type = "Standard_E48s_v3"
+    azure_launch_command = f"az vm create --name az-{job_name} --resource-group {group} --generate-ssh-keys --data-disk-sizes-gb 128 --image {AZURE_IMAGE} --size {machine_type} --public-ip-address-dns-name {job_name} --location eastus2\n"
     
     return f"#######\n{azure_launch_command}###Now run: \n git pull; "
 
@@ -365,8 +370,8 @@ for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000
                     experiment_commands += build_replications(exp_command, job, job_name)
             job +=1
 
-#### Generate Helmholtz generative model experiments with language in the compression and human language.
-RUN_HELMHOLTZ_GENERATIVE_MODEL_HUMAN_LANGUAGE = True
+#### Generate Helmholtz generative model experiments with language in the compression.
+RUN_HELMHOLTZ_GENERATIVE_MODEL_PSEUDO_LANGUAGE_COMPRESSION = True
 EXPS = [('logo_unlimited_200', 0, 1)]
 enumerationTimeout = 1800
 num_iterations = 12
@@ -375,6 +380,7 @@ test_every = 3
 recognition_timeout = 1800
 lc_score = 0.2
 max_compression = 5
+pseudoalignment = 0.1
 for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000']:
     for sample_n_supervised in [0, 10]:
         for phrase_length in [5,3,1]:
@@ -382,11 +388,40 @@ for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000
             job_name = f"logo_2_ec_cnn_gru_ghelm_lang_compression_et_{enumerationTimeout}_supervised_{sample_n_supervised}_{dataset}_pl_{phrase_length}"
             jobs.append(job_name)
             base_parameters = f" --enumerationTimeout {enumerationTimeout} --testingTimeout {enumerationTimeout}  --iterations {num_iterations} --biasOptimal --contextual --taskBatchSize {task_batch_size} --testEvery {test_every} --no-cuda --recognitionTimeout {recognition_timeout} --recognition_0 --recognition_1 examples language --Helmholtz 0.5 --synchronous_grammar --skip_first_test"
-            exp_parameters = f" --taskDataset {dataset} --language_encoder recurrent --languageDataset {dataset}/humans --sample_n_supervised {sample_n_supervised} --moses_dir ./moses_compiled --smt_phrase_length {phrase_length} --language_compression --lc_score {lc_score} --max_compression {max_compression} --om_original_ordering 1 "
+            exp_parameters = f" --taskDataset {dataset} --language_encoder recurrent --languageDataset {dataset}/synthetic --sample_n_supervised {sample_n_supervised} --moses_dir ./moses_compiled --smt_phrase_length {phrase_length} --language_compression --lc_score {lc_score} --max_compression {max_compression} --om_original_ordering 1 --smt_pseudoalignments {pseudoalignment} "
         
             exp_command = base_command + base_parameters + exp_parameters
             command = build_command(exp_command, job, job_name, replication=None)
-            if RUN_HELMHOLTZ_GENERATIVE_MODEL_HUMAN_LANGUAGE:
+            if RUN_HELMHOLTZ_GENERATIVE_MODEL_PSEUDO_LANGUAGE_COMPRESSION:
+                if (EXPS is None) or (exp in EXPS):
+                    if not NO_ORIGINAL_REPL: experiment_commands.append(command)
+                    experiment_commands += build_replications(exp_command, job, job_name)
+            job +=1
+
+#### Generate Helmholtz generative model experiments with language in the compression and human language.
+RUN_HELMHOLTZ_HUMAN_LANGUAGE_COMPRESSION = True
+EXPS = [('logo_unlimited_200', 0, 0.5), ('logo_unlimited_200', 0.1, 0.5), ('logo_unlimited_200', 0, 0)]
+enumerationTimeout = 1800
+num_iterations = 12
+task_batch_size = 40
+test_every = 3
+recognition_timeout = 1800
+lc_score = 0.2
+max_compression = 5
+for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000']:
+    for pseudoalignment in [0, 0.1]:
+        for helmholtz in [0, 0.5]:
+            exp = (dataset, pseudoalignment, helmholtz)
+            pseudo_name = "pseudo_" if pseudoalignment > 0 else ""
+            no_ghelm = "no_" if helmholtz == 0 else ""
+            job_name = f"logo_2_ec_cnn_gru_{no_ghelm}ghelm_{pseudo_name}lang_compression_et_{enumerationTimeout}_supervised_{sample_n_supervised}_{dataset}_pl_{phrase_length}"
+            jobs.append(job_name)
+            base_parameters = f" --enumerationTimeout {enumerationTimeout} --testingTimeout {enumerationTimeout}  --iterations {num_iterations} --biasOptimal --contextual --taskBatchSize {task_batch_size} --testEvery {test_every} --no-cuda --recognitionSteps {recognition_steps} --recognition_0 --recognition_1 examples language --Helmholtz {helmholtz} --synchronous_grammar --skip_first_test"
+            exp_parameters = f" --taskDataset {dataset} --language_encoder recurrent --languageDataset {dataset}/humans --sample_n_supervised {sample_n_supervised} --moses_dir ./moses_compiled --smt_phrase_length {phrase_length} --smt_pseudoalignments {pseudoalignment} --language_compression --lc_score {lc_score} --max_compression {max_compression} --om_original_ordering 1 "
+        
+            exp_command = base_command + base_parameters + exp_parameters
+            command = build_command(exp_command, job, job_name, replication=None)
+            if RUN_HELMHOLTZ_HUMAN_LANGUAGE_COMPRESSION:
                 if (EXPS is None) or (exp in EXPS):
                     if not NO_ORIGINAL_REPL: experiment_commands.append(command)
                     experiment_commands += build_replications(exp_command, job, job_name)
