@@ -238,6 +238,7 @@ def print_alignments(alignments_scores, top_n=20):
         print("\n")
 
 def serialize_language_alignments(alignments_scores):
+    if len(alignments_scores) == 0: return []
     serialized = [
         {
             'key': str(align_key),
