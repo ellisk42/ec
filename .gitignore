@@ -32,4 +32,5 @@ sklearn-container.img
 venv/
 tests/out/
 moses_compiled/
+.word_vectors_cache
 .DS_Store

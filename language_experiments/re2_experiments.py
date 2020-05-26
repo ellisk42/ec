@@ -10,8 +10,8 @@ AZURE_IMAGE = "ec-language-5-24" if not LANGUAGE_COMPRESSION else "ec-language-c
 OLD_AZURE_IMAGE = "re2-language-5-20-image-20200520151754 "
 
 def azure_commands(job_name): 
-    machine_type = "Standard_D48_v3"
-    azure_launch_command = f"az vm create --name {job_name} --resource-group ec-language --generate-ssh-keys --data-disk-sizes-gb 128 --image {AZURE_IMAGE}  --size {machine_type} "
+    machine_type = "Standard_D48s_v3"
+    azure_launch_command = f"az vm create --name {job_name} --resource-group ec-language-east2 --generate-ssh-keys --data-disk-sizes-gb 128 --image {AZURE_IMAGE}  --size {machine_type} "
     return f"#######\n{azure_launch_command}\n\n###Now run: \n mkdir jobs; "
 
 def gcloud_commands(job_name):

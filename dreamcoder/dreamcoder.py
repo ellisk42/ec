@@ -182,6 +182,7 @@ def ecIterator(grammar, tasks,
                # SMT parameters.
                moses_dir=None,
                smt_phrase_length=None,
+               pretrained_word_embeddings=False,
                smt_pseudoalignments=0,
                finetune_1=False,
                helmholtz_nearest_language=0,
@@ -347,6 +348,7 @@ def ecIterator(grammar, tasks,
             "moses_dir",
             "debug",
             "smt_phrase_length",
+            "pretrained_word_embeddings",
             "smt_pseudoalignments",
             "synchronous_grammar",
             "language_compression",
@@ -649,7 +651,8 @@ def ecIterator(grammar, tasks,
                                finetune_from_example_encoder=finetune_1,
                                language_data=None,
                                language_lexicon=None,
-                               test_only_after_recognition=test_only_after_recognition)
+                               test_only_after_recognition=test_only_after_recognition,
+                               pretrained_word_embeddings=pretrained_word_embeddings)
 
             showHitMatrix(tasksHitTopDown, tasks_hit_recognition_0, wakingTaskBatch)
             
@@ -719,7 +722,8 @@ def ecIterator(grammar, tasks,
                                language_lexicon=result.vocabularies["train"],
                                helmholtz_nearest_language=helmholtz_nearest_language,
                                helmholtz_translation_info=translation_info,
-                               test_only_after_recognition=test_only_after_recognition)
+                               test_only_after_recognition=test_only_after_recognition,
+                               pretrained_word_embeddings=pretrained_word_embeddings)
 
             showHitMatrix(tasksHitTopDown, tasks_hit_recognition_1, wakingTaskBatch)
             
@@ -974,7 +978,8 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
                       language_lexicon=None,
                       helmholtz_nearest_language=0,
                       helmholtz_translation_info=None,
-                      test_only_after_recognition=False):
+                      test_only_after_recognition=False,
+                      pretrained_word_embeddings=None):
     # Exit if language only and we have no frontiers to train on.
     n_frontiers = len([f for f in allFrontiers if not f.empty])
     eprint(f"Recognition iteration [{recognition_iteration}]. Attempting training using: {[recognition_inputs]} on {n_frontiers}.")
@@ -993,7 +998,8 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
             pretrained_model = result.models[recognition_iteration - 1]
             assert(pretrained_model.featureExtractor is not None)
     if 'language' in recognition_inputs:
-        language_encoders = [language_encoder(tasks, testingTasks=testingTasks, cuda=cuda, language_data=language_data, lexicon=language_lexicon, smt_translation_info=helmholtz_translation_info) for i in range(ensembleSize)]
+        language_encoders = [language_encoder(tasks, testingTasks=testingTasks, cuda=cuda, language_data=language_data, lexicon=language_lexicon, smt_translation_info=helmholtz_translation_info,
+        pretrained_word_embeddings=pretrained_word_embeddings) for i in range(ensembleSize)]
     if recognition_iteration > 0 and helmholtz_nearest_language > 0:
         nearest_encoder = result.models[recognition_iteration - 1]
         nearest_tasks = tasks
@@ -1264,6 +1270,10 @@ def commandlineArguments(_=None,
         default=0,
         type=float,
         help="Pseudoalignments count for generative model.")
+    
+    parser.add_argument("--pretrained_word_embeddings",
+                        action="store_true",
+                        help="Whether to use pretrained word embeddings to initialize the parser.")
 
     parser.add_argument("--helmholtz_nearest_language",
                         dest="helmholtz_nearest_language",

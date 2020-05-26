@@ -1338,7 +1338,8 @@ class RecurrentFeatureExtractor(nn.Module):
                  # What should be the timeout for trying to construct Helmholtz tasks?
                  helmholtzTimeout=0.25,
                  # What should be the timeout for running a Helmholtz program?
-                 helmholtzEvaluationTimeout=0.25):
+                 helmholtzEvaluationTimeout=0.25,
+                 special_encoder=False):
         super(RecurrentFeatureExtractor, self).__init__()
 
         assert tasks is not None, "You must provide a list of all of the tasks, both those that have been hit and those that have not been hit. Input examples are sampled from these tasks."
@@ -1379,18 +1380,6 @@ class RecurrentFeatureExtractor(nn.Module):
             "ENDOFINPUT"  # delimits the ending of an input - we might have multiple inputs
         ]
         lexicon += self.specialSymbols
-        encoder = nn.Embedding(len(lexicon)+1, H) # Allow 1 indexed.
-        self.encoder = encoder
-
-        self.H = H
-        self.bidirectional = bidirectional
-
-        layers = 1
-
-        model = nn.GRU(H, H, layers, bidirectional=bidirectional)
-        self.model = model
-
-        self.use_cuda = cuda
         self.lexicon = lexicon
         # Note: 1 indexed!
         self.symbolToIndex = {
@@ -1400,6 +1389,24 @@ class RecurrentFeatureExtractor(nn.Module):
             index+1 : symbol for index,
             symbol in enumerate(lexicon)
         }
+        
+        if special_encoder:
+            embedding_dim, encoder = self.special_encoder(self.symbolToIndex)
+            
+        else:
+            embedding_dim = H
+            encoder = nn.Embedding(len(lexicon)+1, H) # Allow 1 indexed.
+        self.encoder = encoder
+
+        self.H = H
+        self.bidirectional = bidirectional
+
+        layers = 1
+
+        model = nn.GRU(embedding_dim, H, layers, bidirectional=bidirectional)
+        self.model = model
+
+        self.use_cuda = cuda
         self.startingIndex = self.symbolToIndex["STARTING"]
         self.endingIndex = self.symbolToIndex["ENDING"]
         self.startOfOutputIndex = self.symbolToIndex["STARTOFOUTPUT"]

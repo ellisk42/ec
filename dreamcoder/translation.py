@@ -87,6 +87,8 @@ def write_sentence_aligned(tasks, frontiers, grammar, language_encoder, corpus_d
         with open(name, 'w') as f:
             f.write(corpus)
     
+    import pdb; pdb.set_trace()
+    
     eprint("Building word classes using Moses mkcls.")
     for type, corpus in corpora_names:
         mkcls_loc = os.path.join(moses_dir, MOSES_TOOLS, "mkcls")

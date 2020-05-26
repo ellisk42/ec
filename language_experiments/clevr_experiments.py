@@ -5,15 +5,18 @@ NUM_REPLICATIONS = 0
 NO_ORIGINAL_REPL = False
 HIGH_MEM = False
 
+LANGUAGE_COMPRESSION = True
+AZURE_IMAGE = "ec-language-5-24" if not LANGUAGE_COMPRESSION else "ec-language-compression-5-25"
+OLD_AZURE_IMAGE = "re2-language-5-20-image-20200520151754 "
+
+
 # Pretrained checkpoints for using the curriculum.
 pretrained_ghelm_checkpoint = "experimentOutputs/clevr/2020-05-22T14-12-31-661550/clevr_aic=1.0_arity=3_ET=14400_it=3_MF=5_no_dsl=F_pc=30.0_RS=10000_RW=F_STM=T_L=1.5_batch=20_K=2_topLL=F_LANG=F.pickle"
 
 def azure_commands(job_name): 
     machine_type = "Standard_D48s_v3"
-    azure_launch_command = f"az vm create --name az-{job_name} --resource-group ec-language-east2 --generate-ssh-keys --data-disk-sizes-gb 128 --image ec-language-5-24  --size {machine_type} --public-ip-address-dns-name {job_name} --location eastus"
-    
-    pretrained_command = f"Pretrained Ghelm Checkpoint: mkdir experimentOutputs/clevr; mkdir experimentOutputs/clevr/2020-05-22T14-12-31-661550; scp zyzzyva@openmind7.mit.edu:/om2/user/zyzzyva/ec/{pretrained_ghelm_checkpoint} experimentOutputs/clevr/2020-05-22T14-12-31-661550" 
-    return f"#######\n{azure_launch_command}\n###Now run: {pretrained_command} \n###Now run: \n git pull; "
+    azure_launch_command = f"az vm create --name {job_name} --resource-group ec-language-east2 --generate-ssh-keys --data-disk-sizes-gb 128 --image {AZURE_IMAGE}  --size {machine_type} "
+    return f"#######\n{azure_launch_command}\n\n###Now run: \n mkdir jobs; "
 
 
 def gcloud_commands(job_name):
@@ -124,27 +127,27 @@ for prim_name, primitive_set in primitives:
 ## Generates experiments using the full generative model.
 RUN_HELMHOLTZ_GENERATIVE_MODEL = True
 num_iterations = 10
-task_batch_size = 10
+task_batch_size = 20
 recognition_steps = 10000
 test_every = 3
-initial_timeout_iterations = 3
-EXPS = [("bootstrap", 7200, 720), ("bootstrap", 10000, 720)]
+initial_timeout_iterations = 1
+EXPS = [("bootstrap", 7200, 720), ("bootstrap", 1800, 1800)]
 task_datasets = ("1_zero_hop", "1_one_hop", "1_compare_integer", "1_same_relate", "1_single_or", "2_remove", "2_transform", "2_localization")
 primitives = [("bootstrap", ("clevr_bootstrap", "clevr_map_transform")), 
               ("filter", ("clevr_bootstrap", "clevr_map_transform", "clevr_filter")),]
 for prim_name, primitive_set in primitives:
-    for initialTimeout in [7200, 10000]:
-        for enumerationTimeout in [720]:
+    for initialTimeout in [10000, 1800]:
+        for enumerationTimeout in [1800]:
             exp = (prim_name, initialTimeout, enumerationTimeout)
             job_name = f"clevr_ec_gru_ghelm_compression_it_{initialTimeout}_et_{enumerationTimeout}_prim_{prim_name}"
             jobs.append(job_name)
             base_command = "python bin/clevr.py "
             
-            base_parameters = f" --initialTimeout {initialTimeout} --initialTimeoutIterations 3 --enumerationTimeout {enumerationTimeout} --testingTimeout {enumerationTimeout}  --iterations {num_iterations} --biasOptimal --contextual --taskBatchSize {task_batch_size}  --testEvery {test_every}  --no-cuda --recognitionSteps {recognition_steps} --recognition_0 --recognition_1 examples language --Helmholtz 0.5 --synchronous_grammar --skip_first_test  --taskReranker sentence_length "
+            base_parameters = f" --initialTimeout {initialTimeout} --initialTimeoutIterations 3 --enumerationTimeout {enumerationTimeout} --testingTimeout {enumerationTimeout}  --iterations {num_iterations} --biasOptimal --contextual --taskBatchSize {task_batch_size}  --testEvery {test_every}  --no-cuda --recognitionSteps {recognition_steps} --recognition_0 --recognition_1 examples language --Helmholtz 0.5 --synchronous_grammar --skip_first_test "
             
             prims = " ".join(primitive_set)
             tasks = " ".join(task_datasets)
-            exp_parameters = f" --curriculumDatasets --taskDatasets {tasks}  --language_encoder recurrent --primitives {prims} --moses_dir ./moses_compiled --smt_phrase_length 1 "
+            exp_parameters = f" --curriculumDatasets --taskDatasets {tasks}  --language_encoder recurrent --primitives {prims} --moses_dir ./moses_compiled --smt_phrase_length 1 --lc_score 0 "
             exp_command = base_command + base_parameters + exp_parameters
             command = build_command(exp_command, job, job_name, replication=None)
             if RUN_HELMHOLTZ_GENERATIVE_MODEL:
@@ -154,26 +157,26 @@ for prim_name, primitive_set in primitives:
             job +=1
 
 ## Generates experiments using the full generative model.
-RUN_HELMHOLTZ_PSEUDOALIGNMENTS = False
+RUN_HELMHOLTZ_PSEUDOALIGNMENTS = True
 num_iterations = 10
-task_batch_size = 40
+task_batch_size = 20
 recognition_steps = 10000
 test_every = 3
 initial_timeout_iterations = 3
 pseudoalignment = 0.1
-EXPS = [("bootstrap", 7200, 720)]
+EXPS = [("bootstrap", 1800, 1800)]
 task_datasets = ("1_zero_hop", "1_one_hop", "1_compare_integer", "1_same_relate", "1_single_or", "2_remove", "2_transform", "2_localization")
 primitives = [("bootstrap", ("clevr_bootstrap", "clevr_map_transform")), 
               ("filter", ("clevr_bootstrap", "clevr_map_transform", "clevr_filter")),]
 for prim_name, primitive_set in primitives:
     for initialTimeout in [3600, 7200]:
-        for enumerationTimeout in [720]:
+        for enumerationTimeout in [1800]:
             exp = (prim_name, initialTimeout, enumerationTimeout)
             job_name = f"clevr_ec_gru_ghelm_pseudo_compression_it_{initialTimeout}_et_{enumerationTimeout}_prim_{prim_name}"
             jobs.append(job_name)
             base_command = "python bin/clevr.py "
             
-            base_parameters = f" --initialTimeout {initialTimeout} --initialTimeoutIterations 3 --enumerationTimeout {enumerationTimeout} --testingTimeout {enumerationTimeout}  --iterations {num_iterations} --biasOptimal --contextual --taskBatchSize {task_batch_size}  --testEvery {test_every}  --no-cuda --recognitionSteps {recognition_steps} --recognition_0 --recognition_1 examples language --Helmholtz 0.5 --synchronous_grammar --skip_first_test  --taskReranker sentence_length "
+            base_parameters = f" --initialTimeout {initialTimeout} --initialTimeoutIterations 3 --enumerationTimeout {enumerationTimeout} --testingTimeout {enumerationTimeout}  --iterations {num_iterations} --biasOptimal --contextual --taskBatchSize {task_batch_size}  --testEvery {test_every}  --no-cuda --recognitionSteps {recognition_steps} --recognition_0 --recognition_1 examples language --Helmholtz 0.5 --synchronous_grammar --skip_first_test "
             
             prims = " ".join(primitive_set)
             tasks = " ".join(task_datasets)
@@ -187,26 +190,26 @@ for prim_name, primitive_set in primitives:
             job +=1
 
 ## Generates experiments using the full generative model.
-RUN_NO_HELMHOLTZ_GENERATIVE_MODEL = False
+RUN_NO_HELMHOLTZ_GENERATIVE_MODEL = True
 num_iterations = 10
-task_batch_size = 40
+task_batch_size = 20
 recognition_steps = 10000
 test_every = 3
 initial_timeout_iterations = 3
 pseudoalignment = 0.1
-EXPS = [("bootstrap", 7200, 720)]
+EXPS = [("bootstrap", 1800, 1800)]
 task_datasets = ("1_zero_hop", "1_one_hop", "1_compare_integer", "1_same_relate", "1_single_or", "2_remove", "2_transform", "2_localization")
 primitives = [("bootstrap", ("clevr_bootstrap", "clevr_map_transform")), 
               ("filter", ("clevr_bootstrap", "clevr_map_transform", "clevr_filter")),]
 for prim_name, primitive_set in primitives:
-    for initialTimeout in [3600, 7200]:
-        for enumerationTimeout in [720]:
+    for initialTimeout in [1800, 7200]:
+        for enumerationTimeout in [1800]:
             exp = (prim_name, initialTimeout, enumerationTimeout)
             job_name = f"clevr_ec_gru_no_ghelm_compression_it_{initialTimeout}_et_{enumerationTimeout}_prim_{prim_name}"
             jobs.append(job_name)
             base_command = "python bin/clevr.py "
             
-            base_parameters = f" --initialTimeout {initialTimeout} --initialTimeoutIterations 3 --enumerationTimeout {enumerationTimeout} --testingTimeout {enumerationTimeout}  --iterations {num_iterations} --biasOptimal --contextual --taskBatchSize {task_batch_size}  --testEvery {test_every}  --no-cuda --recognitionSteps {recognition_steps} --recognition_0 --recognition_1 examples language --Helmholtz 0 --skip_first_test  --taskReranker sentence_length "
+            base_parameters = f" --initialTimeout {initialTimeout} --initialTimeoutIterations 3 --enumerationTimeout {enumerationTimeout} --testingTimeout {enumerationTimeout}  --iterations {num_iterations} --biasOptimal --contextual --taskBatchSize {task_batch_size}  --testEvery {test_every}  --no-cuda --recognitionSteps {recognition_steps} --recognition_0 --recognition_1 examples language --Helmholtz 0 --skip_first_test  "
             
             prims = " ".join(primitive_set)
             tasks = " ".join(task_datasets)
@@ -220,26 +223,26 @@ for prim_name, primitive_set in primitives:
             job +=1
 
 ## Generates experiments using the full generative model.
-RUN_EC_BASELINES = False
+RUN_EC_BASELINES = True
 num_iterations = 10
-task_batch_size = 40
+task_batch_size = 20
 recognition_steps = 10000
 test_every = 3
 initial_timeout_iterations = 3
 pseudoalignment = 0.1
-EXPS = [("bootstrap", 7200, 720)]
+EXPS = [("bootstrap", 1800, 1800)]
 task_datasets = ("1_zero_hop", "1_one_hop", "1_compare_integer", "1_same_relate", "1_single_or", "2_remove", "2_transform", "2_localization")
 primitives = [("bootstrap", ("clevr_bootstrap", "clevr_map_transform")), 
               ("filter", ("clevr_bootstrap", "clevr_map_transform", "clevr_filter")),]
 for prim_name, primitive_set in primitives:
-    for initialTimeout in [3600, 7200]:
-        for enumerationTimeout in [720]:
+    for initialTimeout in [3600, 1800]:
+        for enumerationTimeout in [1800]:
             exp = (prim_name, initialTimeout, enumerationTimeout)
             job_name = f"clevr_ec_no_lang_compression_it_{initialTimeout}_et_{enumerationTimeout}_prim_{prim_name}"
             jobs.append(job_name)
             base_command = "python bin/clevr.py "
             
-            base_parameters = f" --initialTimeout {initialTimeout} --initialTimeoutIterations 3 --enumerationTimeout {enumerationTimeout} --testingTimeout {enumerationTimeout}  --iterations {num_iterations} --biasOptimal --contextual --taskBatchSize {task_batch_size}  --testEvery {test_every}  --no-cuda --recognitionSteps {recognition_steps} --recognition_0 examples --Helmholtz 0.5 --skip_first_test  --taskReranker sentence_length "
+            base_parameters = f" --initialTimeout {initialTimeout} --initialTimeoutIterations 3 --enumerationTimeout {enumerationTimeout} --testingTimeout {enumerationTimeout}  --iterations {num_iterations} --biasOptimal --contextual --taskBatchSize {task_batch_size}  --testEvery {test_every}  --no-cuda --recognitionSteps {recognition_steps} --recognition_0 examples --Helmholtz 0.5 --skip_first_test "
             
             prims = " ".join(primitive_set)
             tasks = " ".join(task_datasets)
