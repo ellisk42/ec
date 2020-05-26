@@ -11,51 +11,14 @@ from collections import defaultdict
 from dreamcoder.utilities import timing
 #from functools import reduce
 
-import ROB #TODO
+import dreamcoder.ROB as ROB
 
-disallowed = [
-    ("#", "hash"),
-    ("!", "bang"),
-    ("\"", "double_quote"),
-    ("$", "dollar"),
-    ("%", "percent"),
-    ("&", "ampersand"),
-    ("'", "single_quote"),
-    (")", "left_paren"),
-    ("(", "right_paren"),
-    ("*", "astrisk"),
-    ("+", "plus"),
-    (",", "comma"),
-    ("-", "dash"),
-    (".", "period"),
-    ("/", "slash"),
-    (":", "colon"),
-    (";", "semicolon"),
-    ("<", "less_than"),
-    ("=", "equal"),
-    (">", "greater_than"),
-    ("?", "question_mark"),
-    ("@", "at"),
-    ("[", "left_bracket"),
-    ("\\", "backslash"),
-    ("]", "right_bracket"),
-    ("^", "carrot"),
-    ("_", "underscore"),
-    ("`", "backtick"),
-    ("|", "bar"),
-    ("}", "right_brace"),
-    ("{", "left_brace"),
-    ("~", "tilde"),
-    (" ", "space"),
-    ("\t", "tab")
-]
-disallowed = dict(disallowed)
+from dreamcoder.ROB import allowed
+
+
 delimiters = "&,.?!@()[]%{/}:;$#\"' "
 
 delim_dict = {disallowed[c]:c for c in delimiters}
-
-def allowed(x):
-    return disallowed.get(x, x)
 
 tposition = baseType("position")
 tindex = baseType("index")
@@ -70,7 +33,7 @@ ttype = baseType("type")
 tdelimiter = baseType("delimiter")
 
 
-def _getspan(r1): 
+def _getSpan(r1): 
     return lambda i1: lambda b1: lambda r2: lambda i2: lambda b2: lambda k: [ROB.GetSpan(r1, i1, b1, r2, i2, b2)] + k
 
 def robustFillPrimitives():
@@ -114,6 +77,7 @@ def robustFillPrimitives():
         ] + [
         #Character
         CPrimitive(f"char_{allowed(c)}", texpression, texpression, lambda k: [ROB.ConstStr(c)] + k) for c in ROB._CHARACTER
+        ] + [
         #delimiter
         CPrimitive(f"delim_{allowed(d)}", tdelimiter, d) for d in ROB._DELIMITER
         ] + [
