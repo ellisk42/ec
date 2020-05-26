@@ -417,18 +417,6 @@ def test_TowerRNNPolicySearch():
         print("done")
         print("total prog", totalNumberOfPrograms)  
         print("searchTimes", searchTimes)
-            # t = time.time()
-            # sk = baseHoleOfType(frontier.task.request)
-            # newZippers = findHoles(sk, frontier.task.request)
-            # while newZippers:
-            #     sk, newZippers = policyHead.sampleSingleStep(frontier.task, g, sk,
-            #                                         frontier.task.request, holeZippers=newZippers,
-            #                                         maximumDepth=8)
-            # tt = time.time() - t
-            # times.append(tt)
-            # print(f"time for a full prog:{tt}")
-
-        # if i%5 == 0: print("average", sum(times)/len(times))
 
 def test_TowerREPLPolicyConvergence():
 
@@ -544,10 +532,106 @@ def finetuneAndTestPolicy():
         policyHead.eval()    
         losses = [policyHead.policyLossFromFrontier(frontier, g) for frontier in testFrontiers ]#+ lst[2:]]
         loss = sum(losses)/len(losses)
-        print(i, loss.data.item())
+        #print(i, loss.data.item())
         testLosses.append(loss.data.item())
 
-    #print(sum(testLosses) / len(testLosses))
+    print(sum(testLosses) / len(testLosses))
+
+from dreamcoder.symbolicAbstractTowers import *
+def test_abstraction_bug():
+
+    def showState(sk):
+        absSketch = ConvertSketchToAbstract().execute(sk.betaNormalForm())
+        absState = executeAbstractSketch(absSketch) #gets he history
+        print(absState)
+        print(absState.history)
+    
+    sk130 = Program.parse("(lambda (tower_loopM 5 (lambda (lambda (tower_embed (lambda (#(lambda (lambda (#(lambda (lambda (lambda (tower_loopM $1 (lambda (lambda (#(lambda (lambda (lambda (tower_loopM $1 (lambda (lambda (1x3 (moveHand 4 ($2 $0))))) (moveHand 2 (3x1 $2)))))) (moveHand $2 $0) $4 (lambda (reverseHand $0))))))))) $0 $1 4))) $2 2 (reverseHand (#(lambda (lambda (#(lambda (lambda (lambda (tower_loopM $1 (lambda (lambda (1x3 (moveHand 4 ($2 $0))))) (moveHand 2 (3x1 $2)))))) $1 $0 (lambda (1x3 (reverseHand $0)))))) <TowerHOLE> <intHOLE>)))) $0))) $0))")
+    sk131 = Program.parse("(lambda (tower_loopM 5 (lambda (lambda (tower_embed (lambda (#(lambda (lambda (#(lambda (lambda (lambda (tower_loopM $1 (lambda (lambda (#(lambda (lambda (lambda (tower_loopM $1 (lambda (lambda (1x3 (moveHand 4 ($2 $0))))) (moveHand 2 (3x1 $2)))))) (moveHand $2 $0) $4 (lambda (reverseHand $0))))))))) $0 $1 4))) $2 2 (reverseHand (#(lambda (lambda (#(lambda (lambda (lambda (tower_loopM $1 (lambda (lambda (1x3 (moveHand 4 ($2 $0))))) (moveHand 2 (3x1 $2)))))) $1 $0 (lambda (1x3 (reverseHand $0)))))) <TowerHOLE> 1)))) $0))) $0))")
+
+    print(130)
+    showState(sk130)
+
+    print(131)
+    showState(sk131)
+
+import dill
+def test_policyTiming():
+    from likelihoodModel import AllOrNothingLikelihoodModel
+    from dreamcoder.policyHead import RNNPolicyHead, BasePolicyHead, REPLPolicyHead
+    from dreamcoder.domains.tower.makeTowerTasks import makeNewMaxTasks
+
+
+    graph = ""
+    ID = 'towers' + str(3)
+    runType ="PolicyOnly" #"Policy"
+    #runType =""
+    path = f'experimentOutputs/{ID}{runType}RNN_SRE=True{graph}.pickle'
+    print(path)
+    with open(path, 'rb') as h:
+        r = dill.load(h)
+    
+    useREPLnet = True
+    if not hasattr(r.recognitionModel, "policyHead"):
+        r.recognitionModel.policyHead = BasePolicyHead()
+
+    if useREPLnet:
+        path=f"experimentOutputs/{ID}PolicyOnlyREPL.pickle_RecModelOnly"
+        with open(path, 'rb') as h:
+            repl = torch.load(h)
+        #import pdb; pdb.set_trace()
+
+        r.recognitionModel = repl
+        print(r.recognitionModel.policyHead)
+
+    g = r.grammars[-1]
+    print(r.recognitionModel.gradientStepsTaken)
+    solver = r.recognitionModel.solver
+    times = []
+    ttasks = r.getTestingTasks()
+
+
+
+    # testFrontiers = [r.recognitionTaskMetrics.get(t, {'frontier': None} ).get('frontier', None) for t in ttasks]
+    # testFrontiers = [t for t in testFrontiers if (t and t.entries)] #if not empty
+    # print("num test frontiers", len(testFrontiers))
+    # policyHead = r.recognitionModel.policyHead
+    # testLosses = []
+    # for i in range(10):
+    #     policyHead.eval()    
+    #     losses = [policyHead.policyLossFromFrontier(frontier, g) for frontier in testFrontiers ]#+ lst[2:]]
+    #     loss = sum(losses)/len(losses)
+    #     policyHead.zero_grad()
+    #     #print(i, loss.data.item())
+    #     testLosses.append(loss.data.item())
+    # print("average loss on test frontiers:")
+    # print(sum(testLosses) / len(testLosses))
+
+    ttasks = makeNewMaxTasks()
+    print("using max tasks")
+
+    nhit = 0
+    for i in range(30):
+        tasks = [ttasks[i]]
+        #tasks = []
+        print(tasks)
+        likelihoodModel = AllOrNothingLikelihoodModel(timeout=0.01)
+        #tasks = [frontier.task]
+        fs, searchTimes, totalNumberOfPrograms, reportedSolutions = solver.infer(g, tasks, likelihoodModel, 
+                                            timeout=30,
+                                            elapsedTime=0,
+                                            evaluationTimeout=0.01,
+                                            maximumFrontiers={tasks[0]: 2},
+                                            CPUs=1,
+                                            ) 
+        print("done")
+        print("total prog", totalNumberOfPrograms)  
+        print("searchTimes", searchTimes)
+        if list(searchTimes.values())[0]:
+            nhit += 1
+
+    print("n hit:", nhit)
+
 
 if __name__=='__main__':
     #findError()
@@ -568,7 +652,9 @@ if __name__=='__main__':
     # expr = Program.parse('(lambda (map (lambda (is-square $0)) $0))')
     # test_abstractHolesTower()
     # test_abstractHolesTowerValue()
+    test_policyTiming()
     # test_TowerREPLValueConvergence()
     # test_TowerRNNPolicyConvergence()
     # test_TowerREPLPolicyConvergence()
-    finetuneAndTestPolicy()
+    # finetuneAndTestPolicy()
+    # test_abstraction_bug()

@@ -27,6 +27,7 @@ TODO:
 - [ ] helmholtz stuff
 
 - [ ] make test tasks
+- [ ] batching!!!
 
 
 """

@@ -95,7 +95,12 @@ class NeuralPolicyHead(nn.Module):
         else: zipper = random.choice(holeZippers)
         dist = self._computeDist([sk], [zipper], task, g) #TODO
         dist = dist.squeeze(0)
-        supplyDist = { expr: dist[self.productionToIndex[expr]].data.item() for _, _, expr in g.productions}
+        supplyDist = { expr: dist[i].data.item() for i, expr in self.indexToProduction.items()}
+
+        # for k, v in supplyDist.items():
+        #     print(v, k)
+        # print()
+
         newSk, newZippers = sampleOneStepFromHole(zipper, sk, request, g, maximumDepth, supplyDist=supplyDist)
         return newSk, newZippers
 

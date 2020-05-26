@@ -162,6 +162,9 @@ class Program(object):
             if e == '<TowerHOLE>':
                 from dreamcoder.domains.tower.towerPrimitives import ttower
                 return Hole(tp=ttower)
+            if e == '<intHOLE>':
+                from dreamcoder.type import tint
+                return Hole(tp=tint)
             raise ParseFailure((s,e))
         return p(s)
 

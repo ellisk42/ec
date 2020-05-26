@@ -3,7 +3,7 @@
 #checkpoint=
 
 time=1
-testingTime=2000
+testingTime=1200
 recSteps=480000 #list repl is roughly 1k/hour (0.33 steps/sec)
 ncores=8
 #salt=towers
@@ -26,7 +26,7 @@ for num in 3 20
 		#REPL
 		cp ${resume}.pickle ${resume}REPL.pickle
 		cmd="python bin/tower.py --policyType REPL --searchType SMC --split 0.0 --tasks maxHard --contextual --testingTimeout ${testingTime} --recognitionTimeout 216000 --resumeTraining -r ${helmRatio} --primitives new -t ${time} -RS ${recSteps} --solver python  -c ${ncores} --useValue Sample -i 2  --resume ${resume}REPL.pickle --singleRoundValueEval --seed 2"
-		#sbatch -e towersREPL${salt}.out -o towersREPL${salt}.out execute_gpu_new.sh ${cmd}
+		sbatch -e towersREPL${salt}.out -o towersREPL${salt}.out execute_gpu_new.sh ${cmd}
 
 		#RNN
 		cp ${resume}.pickle ${resume}RNN.pickle

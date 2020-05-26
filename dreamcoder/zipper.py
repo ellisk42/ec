@@ -481,10 +481,11 @@ def sampleOneStepFromHole(zipper, sk, tp, g, maximumDepth, supplyDist=None):
                             zipper.context,
                             zipper.env,
                             zipper.tp,
-                            mustBeLeaf=mustBeLeaf)
+                            mustBeLeaf=mustBeLeaf,
+                            supplyDist=supplyDist)
 
     else:
-        newContext, newSubtree = g._sampleOneStep(zipper.tp, zipper.context, zipper.env, mustBeLeaf)
+        newContext, newSubtree = g._sampleOneStep(zipper.tp, zipper.context, zipper.env, mustBeLeaf, supplyDist=supplyDist)
 
     newSk = NewExprPlacer().execute(sk, zipper.path, newSubtree)
     newZippers = findHoles(newSk, tp) #TODO type inference, redoing computation, can use newContext
@@ -567,8 +568,8 @@ def sampleSingleStep(g, sk, tp, holeZippers=None, maximumDepth=4, canonicalOrder
     #choose hole to expandz
     if holeZippers is None: holeZippers = findHoles(sk, tp)
 
-    if canonicalOrdering: zipper = zippers[0]
-    else: zipper = random.choice(zippers)
+    if canonicalOrdering: zipper = holeZippers[0]
+    else: zipper = random.choice(holeZippers)
     #some sort of sample visitor, walks down to the hole with a visitor (like sketchSample), then calls sample
     newSk, newZippers = sampleOneStepFromHole(zipper, sk, tp, g, maximumDepth)
     return newSk, newZippers
