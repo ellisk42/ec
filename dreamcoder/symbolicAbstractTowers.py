@@ -112,6 +112,12 @@ class AbstractTowerState:
     def __str__(self): return f"S(h={self.hand},o={self.orientation})"
     def __repr__(self): return str(self)
 
+    def __eq__(self, other):
+        return self.history == other.history and (self.hand == other.hand and self.orientation == other.orientation)
+
+    def __hash__(self):
+        return hash(self.hand) + hash(self.orientation) + hash(tuple(self.history))
+
     def reverse(self):
         return AbstractTowerState(hand=self.hand, orientation=-1*self.orientation,
                     history=self.history )
@@ -178,6 +184,10 @@ def _simpleLoop(n):
     elif n == _intTopPrimitive:
         def f(start, body, k):
             if start >= _intTopPrimitive[1]: return k
+
+            if start == 0: 
+                return body(start)(f(start + 1, body, k))
+
             def newBody(startInt):
                 def g(k):
                     def h(state):
@@ -188,7 +198,7 @@ def _simpleLoop(n):
             return newBody(start)(f(start + 1, body, k))
             #return g( f(start+1, body, k))
 
-        return lambda b: lambda k: f(0,b,k)
+        return lambda b: lambda k: f(0,b,k) 
         #return lambda b: lambda k: lambda s: k(s.topify())
     else: assert 0
 

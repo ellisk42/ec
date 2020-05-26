@@ -23,19 +23,19 @@ from matplotlib import pyplot
 
 
 if __name__ == '__main__':
-    from dreamcoder.domains.tower.makeTowerTasks import makeNewMaxTasks, makeBiasedTasks
-    import scipy.misc
-    ts = makeBiasedTasks()
-    path = 'biasedTowerTasks/'
-    #os.system(f"mkdir {path}")
-    os.system(f"rm -f {path}*")
-    for i,t in enumerate(ts):
-        scipy.misc.imsave(path+str(i)+'.png', t.getImage()) 
-    assert 0
+    # from dreamcoder.domains.tower.makeTowerTasks import makeNewMaxTasks, makeBiasedTasks
+    # import scipy.misc
+    # ts = makeBiasedTasks()
+    # path = 'biasedTowerTasks/'
+    # #os.system(f"mkdir {path}")
+    # os.system(f"rm -f {path}*")
+    # for i,t in enumerate(ts):
+    #     scipy.misc.imsave(path+str(i)+'.png', t.getImage()) 
+    # assert 0
 
 
     sys.setrecursionlimit(8000)
-    n = 20
+    n = 3
     ID = 'towers' + str(n)
 
     nameSalt = "towers"
@@ -103,113 +103,113 @@ if __name__ == '__main__':
 
 
 
-    # path = 'grammarImages/'
-    # g=rS.grammars[-1]
-    # for i, (ll, tp, p) in enumerate(g.productions):
-    #     if not p.isInvented: continue
-    #     args = tp.functionArguments()
+    # # path = 'grammarImages/'
+    # # g=rS.grammars[-1]
+    # # for i, (ll, tp, p) in enumerate(g.productions):
+    # #     if not p.isInvented: continue
+    # #     args = tp.functionArguments()
 
-    #     d = {
-    #         tint: '4',
-    #         ttower: '$0',
-    #         arrow(ttower, ttower): '(lambda (1x3 $0 ))',
-    #         arrow(arrow(tint, ttower), ttower): '(lambda (lambda (1x3 $0 )))'
-    #         }
+    # #     d = {
+    # #         tint: '4',
+    # #         ttower: '$0',
+    # #         arrow(ttower, ttower): '(lambda (1x3 $0 ))',
+    # #         arrow(arrow(tint, ttower), ttower): '(lambda (lambda (1x3 $0 )))'
+    # #         }
 
-    #     argStrs = [ d[t] for t in args]
-    #     expr = Program.parse(f"( lambda ({p} {' '.join(argStrs)} ))")
+    # #     argStrs = [ d[t] for t in args]
+    # #     expr = Program.parse(f"( lambda ({p} {' '.join(argStrs)} ))")
 
-    #     #saveTowerImage(path+str(i)+'_arg=4', expr)
-    #     animateTower(path+str(i)+'_arg=4', expr)
-    #     #scipy.misc.imsave(path+str(i)+'.png', executreTower(expr))
+    # #     #saveTowerImage(path+str(i)+'_arg=4', expr)
+    # #     animateTower(path+str(i)+'_arg=4', expr)
+    # #     #scipy.misc.imsave(path+str(i)+'.png', executreTower(expr))
 
 
-    assert 0
+    # assert 0
 
 
     
-    SampleStats = rS.testingSearchStats[-1]
-    REPLStats = rR.testingSearchStats[-1]
-    RNNStats = rRNN.testingSearchStats[-1]
+    # SampleStats = rS.testingSearchStats[-1]
+    # REPLStats = rR.testingSearchStats[-1]
+    # RNNStats = rRNN.testingSearchStats[-1]
 
-    SHitsRMisses = [t for t, lst in SampleStats.items() if ( lst != [] and REPLStats[t]==[] ) ]
-    Smisses = [t for t, lst in SampleStats.items() if  lst == []]
-    SHits = [t for t, lst in SampleStats.items() if ( lst != [] ) ]
-    #for i in SHits: if 'Max' in i.name: print(i)
-    RHits = [t for t, lst in REPLStats.items() if ( lst != [] ) ]
-    # for t in SHits:
-    #         print(t, SampleStats[t][0].evaluations, rR.testingNumOfProg[-1][t])
-    # print()
-    # count = 0
-    # for t in RHits:
-    #     print(t, REPLStats[t][0].evaluations)
-    #     if rS.testingNumOfProg[-1][t] < REPLStats[t][0].evaluations:
-    #         if SampleStats[t] == []:
-    #             print("not reached by symbolic",rS.testingNumOfProg[-1][t] )
-    #             count += 1
+    # SHitsRMisses = [t for t, lst in SampleStats.items() if ( lst != [] and REPLStats[t]==[] ) ]
+    # Smisses = [t for t, lst in SampleStats.items() if  lst == []]
+    # SHits = [t for t, lst in SampleStats.items() if ( lst != [] ) ]
+    # #for i in SHits: if 'Max' in i.name: print(i)
+    # RHits = [t for t, lst in REPLStats.items() if ( lst != [] ) ]
+    # # for t in SHits:
+    # #         print(t, SampleStats[t][0].evaluations, rR.testingNumOfProg[-1][t])
+    # # print()
+    # # count = 0
+    # # for t in RHits:
+    # #     print(t, REPLStats[t][0].evaluations)
+    # #     if rS.testingNumOfProg[-1][t] < REPLStats[t][0].evaluations:
+    # #         if SampleStats[t] == []:
+    # #             print("not reached by symbolic",rS.testingNumOfProg[-1][t] )
+    # #             count += 1
 
-    # print(count)
-    # #assert 0
+    # # print(count)
+    # # #assert 0
 
-    from dreamcoder.domains.tower.makeTowerTasks import makeMaxTasks
+    # from dreamcoder.domains.tower.makeTowerTasks import makeMaxTasks
 
-    maxTasks = makeMaxTasks()
+    # maxTasks = makeMaxTasks()
 
-    # for t in SHits:                                                                                                                                    
-    #     if 'Max' in t.name:
-    #         print(t.name)
-    #         print(maxTasks.index(t))                                                                                                                                     
-    #         print(SampleStats[t][0].program)   
-    #         print(SampleStats[t][0].evaluations)                                                                                                                 
-    #         if REPLStats[t] != []:
-    #             print("\trepl solve in:", REPLStats[t][0].evaluations)
-    #         else: print("\trepl not solve")
-    #         print()
+    # # for t in SHits:                                                                                                                                    
+    # #     if 'Max' in t.name:
+    # #         print(t.name)
+    # #         print(maxTasks.index(t))                                                                                                                                     
+    # #         print(SampleStats[t][0].program)   
+    # #         print(SampleStats[t][0].evaluations)                                                                                                                 
+    # #         if REPLStats[t] != []:
+    # #             print("\trepl solve in:", REPLStats[t][0].evaluations)
+    # #         else: print("\trepl not solve")
+    # #         print()
+    # # assert 0
+
+    # from dreamcoder.Astar import Astar
+    # from likelihoodModel import AllOrNothingLikelihoodModel
+
+
+    # rR.recognitionModel.solver = Astar(rR.recognitionModel)
+    # rS.recognitionModel.solver = Astar(rS.recognitionModel)
+
+
+    
+    # likelihoodModel = AllOrNothingLikelihoodModel(timeout=0.01)
+    # for i in range(4,5):
+    #     tasks = [maxTasks[i]]
+    #     task = tasks[0]
+    #     print(task.name)
+    #     g = rS.recognitionModel.grammarOfTask(task).untorch()
+    #     g = rS.grammars[-1]
+    #     ret = rR.recognitionModel.solver.infer(g, tasks, likelihoodModel, 
+    #                                 timeout=1000000,
+    #                                 elapsedTime=0,
+    #                                 evaluationTimeout=0.01,
+    #                                 maximumFrontiers={tasks[0]: 2},
+    #                                 CPUs=1,
+    #                                 )
+    #     print("===================finished====================")
+    #     #print(ret)
+    #     # ret2 = rS.recognitionModel.solver.infer(g, tasks, likelihoodModel, 
+    #     #                             timeout=1000000,
+    #     #                             elapsedTime=0,
+    #     #                             evaluationTimeout=0.01,
+    #     #                             maximumFrontiers={tasks[0]: 2},
+    #     #                             CPUs=1,
+    #     #                             )
+
+
+
+    #     print("task", i)
+    #     print("repl hit?", list(ret[3].values())[0] != [] )
+    #     #print("sample hit?", list(ret2[3].values())[0] != [] )
+    #     print("num for repl", ret[2])
+    #     #print("num for sample", ret2[2])
+    #     print()
+
     # assert 0
-
-    from dreamcoder.Astar import Astar
-    from likelihoodModel import AllOrNothingLikelihoodModel
-
-
-    rR.recognitionModel.solver = Astar(rR.recognitionModel)
-    rS.recognitionModel.solver = Astar(rS.recognitionModel)
-
-
-    ID = 'towers' + str(3)
-    likelihoodModel = AllOrNothingLikelihoodModel(timeout=0.01)
-    for i in range(4,5):
-        tasks = [maxTasks[i]]
-        task = tasks[0]
-        print(task.name)
-        g = rS.recognitionModel.grammarOfTask(task).untorch()
-        g = rS.grammars[-1]
-        ret = rR.recognitionModel.solver.infer(g, tasks, likelihoodModel, 
-                                    timeout=1000000,
-                                    elapsedTime=0,
-                                    evaluationTimeout=0.01,
-                                    maximumFrontiers={tasks[0]: 2},
-                                    CPUs=1,
-                                    )
-        print("===================finished====================")
-        #print(ret)
-        # ret2 = rS.recognitionModel.solver.infer(g, tasks, likelihoodModel, 
-        #                             timeout=1000000,
-        #                             elapsedTime=0,
-        #                             evaluationTimeout=0.01,
-        #                             maximumFrontiers={tasks[0]: 2},
-        #                             CPUs=1,
-        #                             )
-
-
-
-        print("task", i)
-        print("repl hit?", list(ret[3].values())[0] != [] )
-        #print("sample hit?", list(ret2[3].values())[0] != [] )
-        print("num for repl", ret[2])
-        #print("num for sample", ret2[2])
-        print()
-
-    assert 0
 
     # for i, t in enumerate(testingTasks):
     #     if t in Smisses: print(i)
@@ -329,23 +329,27 @@ if __name__ == '__main__':
 
     tpV, fpV, fnV, tnV = [], [], [], []
 
-    rS.recognitionModel.to_cpu()
-    rR.recognitionModel.to_cpu()
-    rRNN.recognitionModel.to_cpu()
+    # rS.recognitionModel.to_cpu()
+    # rR.recognitionModel.to_cpu()
+    # rRNN.recognitionModel.to_cpu()
 
     symbolicDataLst = []
     neuralDataLst = []
     rnnDataLst = []
+    sketches = []
+    taskIds = []
     for i in range(len(testingTasks)):
         print(i)
-        runs = testTask(rS, rR, rRNN, i, verbose=True, nSamples=10, usePrior=False)
+        runs = testTask(rS, rR, rRNN, i, verbose=False, nSamples=10, usePrior=False)
         for run in runs:
-            hit, nvs, cvs, rnnvs = run
-            for n, c, rnn in zip(nvs, cvs, rnnvs):
+            hit, nvs, cvs, rnnvs, sks = run
+            for n, c, rnn, sk in zip(nvs, cvs, rnnvs, sks):
                 symbolicDataLst.append( (c, hit) )
                 neuralDataLst.append( (n, hit) ) 
                 rnnDataLst.append( (rnn, hit) ) 
-
+                sketches.append(sk)
+                taskIds.append(i)
+ 
     tp, tn, fp, fn = computeConfusionMatrixFromScores(symbolicDataLst, 0.5, normalize=False)
     print("symbolic confusion matrix:")
     print(f" true pos: {tp}   false pos: {fp}")
@@ -362,5 +366,14 @@ if __name__ == '__main__':
         print(f"\tprecision: {tp/ (tp + fp)}")
 
 
-    path = 'plots/precisionRecallit3samp10postLoop.png'
+    path = 'plots/precisionRecallit3samp10postLoopFix.png'
     graphPrecisionRecall(symbolicDataLst, neuralDataLst, rnnDataLst, path, nSamp=500)
+
+    cutoff = 0.0355
+
+    for i, ((n, h), (c, _), (rnn, _), sk, tid) in enumerate(zip(neuralDataLst, symbolicDataLst, rnnDataLst, sketches, taskIds)):
+        if h and rnn > -math.log(cutoff):
+            print(rnn)
+            print(sk)
+            print(tid)
+            print(testingTasks[tid])

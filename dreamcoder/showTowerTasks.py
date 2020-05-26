@@ -134,6 +134,7 @@ def testTask(rS, rR, rRNN, i, verbose=True, nSamples=1, usePrior=False):
         concreteValues=[]
         neuralValues=[]
         rnnValues=[]
+        sketches = []
         while newZippers:
             newOb, newZippers = sampleSingleStep(gS, newOb, tp, holeZippers=newZippers, maximumDepth=8)
             
@@ -155,6 +156,7 @@ def testTask(rS, rR, rRNN, i, verbose=True, nSamples=1, usePrior=False):
             concreteTimes.append(dt)
 
             if newZippers: concreteValues.append(concreteValue)
+            if newZippers: sketches.append(newOb)
             if verbose: print('\t',newOb)
             if verbose: print("value", value)
             if verbose: print("concrete value", concreteValue)
@@ -173,7 +175,7 @@ def testTask(rS, rR, rRNN, i, verbose=True, nSamples=1, usePrior=False):
         for j in range(1, len(concreteValues)):
             assert not concreteValues[j-1] > concreteValues[j], str(i)
 
-        runs.append( (logLikelihood == 0.0, neuralValues, concreteValues, rnnValues) )
+        runs.append( (logLikelihood == 0.0, neuralValues, concreteValues, rnnValues, sketches) )
     
     valueTime = mean( valueTimes )
     concreteTime = mean( concreteTimes )

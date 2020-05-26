@@ -74,7 +74,7 @@ class SMC(Solver):
                               returnAfterHit=True): #IDK what this is...
         #sys.setrecursionlimit(50000)
 
-        torch.set_num_threads(1)
+        #torch.set_num_threads(1)
         class Particle():
             def __init__(self, trajectory, zippers, frequency, finished=False):
                 self.frequency = frequency
@@ -152,6 +152,9 @@ class SMC(Solver):
                             newObject, newZippers = self.owner.policyHead.sampleSingleStep(task, g, p.trajectory,
                                                     request, holeZippers=p.zippers,
                                                     maximumDepth=self.maxDepth)
+                            # print(newObject)
+                            # print(newZippers)
+                            # print()
                         except NoCandidates:
                             print(f"NoCand error on particle: {p}")
                             break

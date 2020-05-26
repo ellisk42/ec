@@ -57,10 +57,13 @@ tasks = rS.getTestingTasks()
 
 ALGOS = ['tsne', 'pca']
 MODES = ['text', 'color', 'image', 'valueText', 'imageValue', 'symbolicOrientation', 'maxH', 'symbolicHand', 'absState']
+models = ['repl', 'rnn']
 
-mode = 'absState'
+
+mode = 'absStateNum' #'absState'
 skipValueComp = True
 excludeZeroHist = True
+model = 'rnn'
 
 TASK_IDS = list(range(len(tasks)))
 nImages = 5
@@ -74,16 +77,35 @@ for i in TASK_IDS:
 sketches, ids = zip(*[( s, task_id ) \
     for task_id in TASK_IDS for s in getSketchesFromRollout(task_id, rS, nSamples=nRollouts)])
 
+allSketches = set()
+newSketches = []
+newIds = []
+for sk, i in zip(sketches, ids):
+    if sk in allSketches: continue
+    allSketches.add(sk)
+    newSketches.append(sk)
+    newIds.append(i)
+
+sketches = newSketches
+ids = newIds
+
 from dreamcoder.symbolicAbstractTowers import executeAbstractSketch, ConvertSketchToAbstract, renderAbsTowerHist
 symbolicVals = [ executeAbstractSketch( ConvertSketchToAbstract().execute(s) ) for s in sketches ]  
 
 if excludeZeroHist:
     sketches, ids, symbolicVals = zip(* [(s, i, v) for (s, i, v) in zip(sketches, ids, symbolicVals)  if v.history != [(-257, 0)] ] )
 
+
 print("num sketches:", len(sketches))
-embeddings = [ rR.recognitionModel.valueHead._computeSketchRepresentation(
-                s.betaNormalForm()).cpu().detach().numpy()
-                    for s in sketches]
+if model == 'repl':
+    embeddings = [ rR.recognitionModel.valueHead._computeSketchRepresentation(
+                    s.betaNormalForm()).cpu().detach().numpy()
+                        for s in sketches]
+elif model == 'rnn':
+    embeddings = [ rRNN.recognitionModel.valueHead._encodeSketches(
+                   [s]).squeeze(0).cpu().detach().numpy() for s in sketches ]
+#import pdb; pdb.set_trace()
+
 names = [ str(s.betaNormalForm()) for s in sketches] #could do betaNormalForm here
 
 if skipValueComp:
@@ -93,7 +115,7 @@ else:
     values = [ math.exp(-v) for v in values]
 
 
-if mode == 'absState': renderedAbsVals = [renderAbsTowerHist(v, renderHand=True) for v in symbolicVals]
+if mode in ['absState', 'absStateNum']: renderedAbsVals = [renderAbsTowerHist(v, renderHand=True) for v in symbolicVals]
 
 
 e = np.array(embeddings)
@@ -151,7 +173,7 @@ for algo in ALGOS:
                 yy = yy - miny
                 img = tasks[i].getImage()
                 #plt.figimage(img, xx/l_x*5120*.95, yy/l_y*3840*.95)
-                ab = AnnotationBbox(img, (xx, yy), frameon=False)
+                ab = AnnotationBbox(OffsetImage(img), (xx, yy), frameon=False)
                 ax.add_artist(ab)
 
         elif mode == 'valueText':
@@ -181,7 +203,7 @@ for algo in ALGOS:
                     plt.text(xx/l_x, yy/l_y, f"{maxH}", fontsize=4)
 
         elif mode == 'absState':
-            for xx,yy,name,img, v in zip(x,y,names, renderedAbsVals, symbolicVals):
+            for i, (xx,yy,name,img, v) in enumerate(zip(x,y,names, renderedAbsVals, symbolicVals)):
                 if True: #v.history != [(-257, 0)]:
                     #print(v.history)
                     xx = xx - minx
@@ -194,7 +216,49 @@ for algo in ALGOS:
                     img = img.repeat(2, axis=0).repeat(2, axis=1)
                     #assert False, f"type img: {img.shape}"
                     plt.figimage(img, xx/l_x*5120*.95, yy/l_y*3840*.95)
+                    #plt.text(xx/l_x*5120*.95, yy/l_y*3840*.95, str(i), fontsize=4)
 
+        elif mode == 'absStateNum':
+            fig, ax = plt.subplots()
+            for i, (xx,yy,name,img, v) in enumerate(zip(x,y,names, renderedAbsVals, symbolicVals)):
+                if True: #v.history != [(-257, 0)]:
+                    #print(v.history)
+                    xx = xx - minx
+                    yy = yy - miny
+                    cropY = 32
+                    cropX = 64
+                    shape = img.shape
+                    shape[1]//2
+                    img = img[shape[0]-cropY:, shape[1]//2 - cropX//2:shape[1]//2 + cropX//2, :]
+                    img = img.repeat(2, axis=0).repeat(2, axis=1)
 
-        plt.savefig(f'embed_tower/TASKS=ALL_{algo}_{mode}_{j  }.png')
+                    #plt.text(xx/l_x*5120*.95, yy/l_y*3840*.95, str(i), fontsize=4)
+                    #b = AnnotationBbox(OffsetImage(img), (xx/l_x*5120*.95, yy/l_y*3840*.95), frameon=False)
+
+                    ab = AnnotationBbox(OffsetImage(img, zoom=.05), (xx/l_x, yy/l_y), frameon=False)
+                    ax.add_artist(ab)
+                    
+                    plt.text(xx/l_x, yy/l_y, str(i), fontsize=4)
+
+        plt.savefig(f'embed_tower/model={model}_TASKS=ALL_WNum_{algo}_{mode}_{j  }.png')
         plt.clf()
+
+
+    d = {}
+    for i, (xx,yy,name,img, v) in enumerate(zip(x,y,names, renderedAbsVals, symbolicVals)):
+        if v in d: 
+            baseNum = d[v][0][0]
+            d[v].append( (i, np.linalg.norm(embeddings[baseNum]-embeddings[i]) ) )
+        else: d[v] = [ (i, 0.0) ]
+
+    # distances = {}
+    # for val, lst in d.items():
+    #     i = lst[0]
+    #     dists = [ np.linalg.norm(embeddings[i]-embeddings[j]) for j in lst ]
+    #     distances[i] = dists
+
+    for lst in d.values(): print(lst)
+
+    #distances[i]
+    #for idx in distances[i]: print()
+
