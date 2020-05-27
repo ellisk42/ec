@@ -29,7 +29,7 @@ Overall Design Choice :
     tree can be evaluated
 """
 
-from dreamcoder.program import Application, Primitive, Index
+from dreamcoder.program import Application, Primitive, Index, Abstraction
 
 
 from dreamcoder.ROBUT import _INDEX,_POSITION_K,_CHARACTER,_DELIMITER,_BOUNDARY,N_EXPRS,_POSSIBLE_TYPES,_POSSIBLE_DELIMS,_POSSIBLE_R, MAX_STR_LEN
@@ -115,10 +115,20 @@ class P:
         return " | ".join( str(e) for e in self.exprs )
 
     def ecProg(self):
+        progList = []
+        for expr in self.exprs:
+            #conststrs must be treated differently 
+            if isinstance(expr.ee, ConstStr):
+                progList.extend(expr.ecProg())
+            else: progList.append(expr.ecProg())
+
+        print("proglist", progList)
         p = Index(0)
-        for expr in reversed(self.exprs):
-            p = Application(expr.ecProg(), p)
-        return p
+        for frag in list(reversed(progList)):
+            try: p = Application(frag, p)
+            except:
+                import pdb; pdb.set_trace()
+        return Abstraction(p)
 
 class E:
     """
@@ -150,20 +160,7 @@ class E:
         return self.ee.flatten()
 
     def ecProg(self):
-
-        if isinstance(self.ee, ConstStr):
-            chars = reversed(self.ee.c)
-            
-            c = chars[0]
-            name = f"char_{allowed(c)}"
-            e = prodLookup(name)
-
-            for c in chars[1:]:
-                name = f"char_{allowed(c)}"
-                e = Application(prodLookup(name), e)
-                
-            return e
-
+        return self.ee.ecProg()
 
 class Compose:
     """
@@ -182,6 +179,21 @@ class Compose:
 
     def __str__(self):
         return f"{str(self.f1)}( {str(self.f2)} )"
+
+    def ecProg(self):
+        
+        p2 = Abstraction(Application(self.f2.ecProg(), Index(0)))
+        p1Original = self.f1.ecProg()
+        f, args = p1Original.applicationParse()
+        f1Name = f.name
+
+        p1f = prodLookup(f1Name+'_n')
+
+        p1 = Application(p1f, p2)
+        for arg in args:
+            p1 = Application(p1, arg)
+
+        return p1
 
 
 class F:
@@ -209,6 +221,9 @@ class F:
     def __str__(self):
         return str(self.ee)
 
+    def ecProg(self):
+        return self.ee.ecProg()
+
 class SubString:
     """
     take substring from position k1 to k2
@@ -233,6 +248,12 @@ class SubString:
 
     def __str__(self):
         return "SubStr" + str((self.k1, self.k2))
+
+    def ecProg(self):
+        f = prodLookup("SubStr")
+        a = prodLookup(f"pos_{self.k1}")
+        b = prodLookup(f"pos_{self.k2}")
+        return Application( Application(f, a), b)
 
 
 class GetSpan:
@@ -270,6 +291,20 @@ class GetSpan:
         return [BUTT.GetSpan1(self.r1.name), BUTT.GetSpan2(self.i1), BUTT.GetSpan3(self.b1),
                 BUTT.GetSpan4(self.r2.name), BUTT.GetSpan5(self.i2), BUTT.GetSpan6(self.b2)] 
 
+    def ecProg(self):
+        f = prodLookup("GetSpan")
+        r1 = prodLookup(f"regex_{allowed(self.r1.name)}")
+        i1 = prodLookup(f"index_{self.i1}")
+        y1 = prodLookup(f"bound_{self.b1}")
+        r2 = prodLookup(f"regex_{allowed(self.r2.name)}")
+        i2 = prodLookup(f"index_{self.i2}")
+        y2 = prodLookup(f"bound_{self.b2}")
+        
+        args = [r1, i1, y1, r2, i2, y2]
+        p = f
+        for arg in args:
+            p = Application(p, arg)
+        return p
 
 class ConstStr:
     @staticmethod
@@ -296,6 +331,13 @@ class ConstStr:
 
     def __str__(self):
         return "ConstStr "+str((self.c))
+
+    def ecProg(self):
+        cs = []
+        for c in self.c: #char-wise
+            name = f"char_{allowed(c)}"
+            cs.append(prodLookup(name))
+        return cs
 
 class N:
     @staticmethod
@@ -336,6 +378,12 @@ class GetToken:
     def flatten(self):
         return [BUTT.GetToken1(self.t.name), BUTT.GetToken2(self.i)] 
 
+    def ecProg(self):
+        f = prodLookup("GetToken")
+        t = prodLookup(f"type_{self.t.name}")
+        i = prodLookup(f"index_{self.i}")
+        return Application(Application(f, t), i)
+
 class ToCase:
 
     candidates = [
@@ -361,6 +409,9 @@ class ToCase:
     def __str__(self):
         return "ToCase"+self.name
 
+    def ecProg(self):
+        return prodLookup("ToCase_"+self.name)
+
 class Replace:
 
     @staticmethod
@@ -383,6 +434,12 @@ class Replace:
 
     def str_execute(self, input_str):
         raise NotImplementedError
+
+    def ecProg(self):
+        f = prodLookup("Replace")
+        d1 = prodLookup("delim_" + allowed(self.d1))
+        d2 = prodLookup("delim_" + allowed(self.d2))
+        return Application(Application(f, d1), d2)
 
 class Trim:
     pass
@@ -410,6 +467,10 @@ class GetUpTo:
     def flatten(self):
         return [ BUTT.GetUpTo(self.r.name) ]
 
+    def ecProg(self):
+        f = prodLookup("GetUpTo")
+        r = prodLookup("regex_"+allowed(self.r.name))
+        return Application(f, r)
 
 class GetFrom:
     @staticmethod
@@ -434,6 +495,11 @@ class GetFrom:
     def flatten(self):
         return [ BUTT.GetFrom(self.r.name)] 
 
+    def ecProg(self):
+        f = prodLookup("GetFrom")
+        r = prodLookup("regex_"+allowed(self.r.name))
+        return Application(f, r)    
+
 class GetFirst:
     @staticmethod
     def generate():
@@ -457,6 +523,12 @@ class GetFirst:
     def flatten(self):
         return [ BUTT.GetFirst1(self.t.name), BUTT.GetFirst2( self.i ) ]
 
+    def ecProg(self):
+        f = prodLookup("GetFirst")
+        t = prodLookup(f"type_{self.t.name}")
+        i = prodLookup(f"index_{self.i}")
+        return Application(Application(f, t), i)
+
 class GetAll:
     @staticmethod
     def generate():
@@ -479,6 +551,11 @@ class GetAll:
 
     def flatten(self):
         return [ BUTT.GetAll(self.t.name)]
+
+    def ecProg(self):
+        f = prodLookup("GetAll")
+        t = prodLookup("type_"+allowed(self.t.name))
+        return Application(f, t)
 
 class R:
 
@@ -544,6 +621,9 @@ def generate_string(constraint, max_string_size=MAX_STR_LEN):
     string = ''.join(slist)
     if len(string) > max_string_size: return string[:max_string_size] 
     return string
+
+def executeProg(prog, inp):
+    return BUTT.apply_fs(BUTT.RobState.new([inp], [""]), prog.flatten()).committed[0]
 
 def generate_FIO(n_ios, verbose=False):
     """
