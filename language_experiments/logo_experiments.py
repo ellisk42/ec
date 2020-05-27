@@ -1,20 +1,26 @@
 USING_AZURE = True
 USING_GCLOUD = False
 USING_SINGULARITY = False
-NUM_REPLICATIONS = 0
+NUM_REPLICATIONS = 3
 NO_ORIGINAL_REPL = False
 
 LANGUAGE_COMPRESSION = False
-AZURE_IMAGE = "ec-language-5-24" if not LANGUAGE_COMPRESSION else "ec-language-compression-5-25"
 
-HUMAN = True
-if HUMAN:
-    AZURE_IMAGE  = "ec-language-embeddings-5-25"
+# Base images.
+AZURE_IMAGES = [
+    ("ec-language-5-24",  "ec-language-east2",  "--location eastus2"),
+    ("ec-language-compression-5-25", "ec-language-east2",  "--location eastus2"),
+    ("ec-language-embeddings-5-25", "ec-language-central", ""),
+    ("ec-embeddings-central", "ec-language-central-us", ""),
+    ("ec-embeddings-west", "ec-language-west", ""),
+]
+AZURE_IMAGE = ("ec-embeddings-central", "ec-language-central-us", "")
+    
 
 def azure_commands(job_name): 
-    group = "ec-language-central" if HUMAN else "ec-language-east2"
+    image_name, group, location = AZURE_IMAGE
     machine_type = "Standard_E48s_v3"
-    azure_launch_command = f"az vm create --name az-{job_name} --resource-group {group} --generate-ssh-keys --data-disk-sizes-gb 128 --image {AZURE_IMAGE} --size {machine_type} --public-ip-address-dns-name {job_name} --location eastus2\n"
+    azure_launch_command = f"az vm create --name az-{job_name} --resource-group {group} --generate-ssh-keys --data-disk-sizes-gb 128 --image {image_name} --size {machine_type} --public-ip-address-dns-name {job_name} {location} \n"
     
     return f"#######\n{azure_launch_command}###Now run: \n git pull; "
 
@@ -170,7 +176,7 @@ if RUN_LANGUAGE_SEARCH_BASELINE:
 job += 1
 
 #### Generates EC baselines with updated LOGO dataset and supervision
-RUN_EC_BASELINES_LOGO_2 = True
+RUN_EC_BASELINES_LOGO_2 = False
 enumerationTimeout = 1800
 num_iterations = 12
 task_batch_size = 40
@@ -222,7 +228,7 @@ for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000
 
 
 #### Generate Helmholtz pseudoalignment experiments.
-RUN_HELMHOLTZ_PSEUDOALIGNMENTS = True
+RUN_HELMHOLTZ_PSEUDOALIGNMENTS = False
 enumerationTimeout = 1800
 num_iterations = 12
 task_batch_size = 40
@@ -344,7 +350,7 @@ for (name, language_checkpoint, last_iter, dataset, type) in language_checkpoint
 
 
 #### Generate Helmholtz generative model experiments with language in the compression.
-RUN_HELMHOLTZ_GENERATIVE_MODEL_LANGUAGE_COMPRESSION = True
+RUN_HELMHOLTZ_GENERATIVE_MODEL_LANGUAGE_COMPRESSION = False
 EXPS = [('logo_unlimited_200', 0, 1)]
 enumerationTimeout = 1800
 num_iterations = 12
@@ -371,7 +377,7 @@ for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000
             job +=1
 
 #### Generate Helmholtz generative model experiments with language in the compression.
-RUN_HELMHOLTZ_GENERATIVE_MODEL_PSEUDO_LANGUAGE_COMPRESSION = True
+RUN_HELMHOLTZ_GENERATIVE_MODEL_PSEUDO_LANGUAGE_COMPRESSION = False
 EXPS = [('logo_unlimited_200', 0, 1)]
 enumerationTimeout = 1800
 num_iterations = 12
@@ -399,7 +405,7 @@ for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000
             job +=1
 
 #### Generate Helmholtz generative model experiments with language in the compression and human language.
-RUN_HELMHOLTZ_HUMAN_LANGUAGE_COMPRESSION = True
+RUN_HELMHOLTZ_HUMAN_LANGUAGE_COMPRESSION = False
 EXPS = [('logo_unlimited_200', 0, 0.5), ('logo_unlimited_200', 0.1, 0.5), ('logo_unlimited_200', 0, 0)]
 enumerationTimeout = 1800
 num_iterations = 12
@@ -415,7 +421,7 @@ for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000
             exp = (dataset, pseudoalignment, helmholtz)
             pseudo_name = "pseudo_" if pseudoalignment > 0 else ""
             no_ghelm = "no_" if helmholtz == 0 else ""
-            job_name = f"logo_2_ec_cnn_gru_{no_ghelm}ghelm_{pseudo_name}lang_compression_et_{enumerationTimeout}_supervised_{sample_n_supervised}_{dataset}_pl_{phrase_length}"
+            job_name = f"logo_2_ec_cnn_gru_{no_ghelm}ghelm_{pseudo_name}lang_compression_et_{enumerationTimeout}_supervised_{sample_n_supervised}_{dataset}_pl_{phrase_length}_humans"
             jobs.append(job_name)
             
             language_compression = " --language_compression" if helmholtz > 0 else ""
@@ -430,6 +436,33 @@ for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000
                     experiment_commands += build_replications(exp_command, job, job_name)
             job +=1
 
+# Generates multimodal synthesis baselines with no DSL learning.
+RUN_HELMHOLTZ_LANGUAGE_NO_COMPRESSION = True
+EXPS = [('logo_unlimited_200', 0, 1)]
+enumerationTimeout = 1800
+num_iterations = 12
+task_batch_size = 40
+test_every = 3
+recognition_timeout = 1800
+lc_score = 0.2
+max_compression = 5
+pseudoalignment = 0.1
+for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000']:
+    for sample_n_supervised in [0, 10]:
+        for phrase_length in [5,3,1]:
+            exp = (dataset, sample_n_supervised, phrase_length)
+            job_name = f"logo_2_ec_cnn_gru_no_ghelm_lang_compression_et_{enumerationTimeout}_supervised_{sample_n_supervised}_{dataset}_pl_{phrase_length}"
+            jobs.append(job_name)
+            base_parameters = f" --enumerationTimeout {enumerationTimeout} --testingTimeout {enumerationTimeout}  --iterations {num_iterations} --biasOptimal --contextual --taskBatchSize {task_batch_size} --testEvery {test_every} --no-cuda --recognitionTimeout {recognition_timeout} --recognition_0 --recognition_1 examples language --Helmholtz 0  --skip_first_test"
+            exp_parameters = f" --taskDataset {dataset} --language_encoder recurrent --languageDataset {dataset}/synthetic --sample_n_supervised {sample_n_supervised} --moses_dir ./moses_compiled --smt_phrase_length {phrase_length} --language_compression --lc_score {lc_score} --max_compression {max_compression} --om_original_ordering 1 --smt_pseudoalignments {pseudoalignment} --no-consolidation "
+        
+            exp_command = base_command + base_parameters + exp_parameters
+            command = build_command(exp_command, job, job_name, replication=None)
+            if RUN_HELMHOLTZ_LANGUAGE_NO_COMPRESSION:
+                if (EXPS is None) or (exp in EXPS):
+                    if not NO_ORIGINAL_REPL: experiment_commands.append(command)
+                    experiment_commands += build_replications(exp_command, job, job_name)
+            job +=1
 
 #### Outputs
 PRINT_LOG_SCRIPT = False

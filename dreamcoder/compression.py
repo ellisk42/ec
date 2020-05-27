@@ -124,15 +124,32 @@ def ocamlInduce(g, frontiers, _=None,
                      for l in [production["logProbability"]]
                      for p in [Program.parse(production["expression"])]],
                     continuationType=g0.continuationType)
-
-        frontiers = {original.task:
-                         Frontier([FrontierEntry(p,
-                                                 logLikelihood=e["logLikelihood"],
-                                                 logPrior=g.logLikelihood(original.task.request, p))
-                                   for e in new["programs"]
-                                   for p in [Program.parse(e["program"])]],
-                                  task=original.task)
-                     for original, new in zip(frontiers, response["frontiers"])}
+        # Wrap this in a try catch in the case of an error
+        def maybe_entry(p, e, g, request):
+            try:
+                return FrontierEntry(p,logLikelihood=e["logLikelihood"],
+                            logPrior=g.logLikelihood(request, p))
+            except:
+                print(f"Error adding frontier entry: {str(p)}")
+                return None
+        
+        new_frontiers = {}
+        for original, new in zip(frontiers, response["frontiers"]):
+            entries =[maybe_entry(p, e, g, original.task.request)
+                      for e in new["programs"]
+                      for p in [Program.parse(e["program"])]]
+            entries = [e for e in entries if e is not None]
+            new_frontiers[original.task] = Frontier(entries, task=original.task)
+        frontiers = new_frontiers
+            
+        # frontiers = {original.task:
+        #                  Frontier([FrontierEntry(p,
+        #                                          logLikelihood=e["logLikelihood"],
+        #                                          logPrior=g.logLikelihood(original.task.request, p))
+        #                            for e in new["programs"]
+        #                            for p in [Program.parse(e["program"])]],
+        #                           task=original.task)
+        #              for original, new in zip(frontiers, response["frontiers"])}
         frontiers = [frontiers.get(f.task, t2f[f.task])
                      for f in originalFrontiers]
         if iterations == 1 and len(g) > len(g0):
