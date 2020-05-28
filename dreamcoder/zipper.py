@@ -219,6 +219,7 @@ class NewExprPlacer:
         """
         self.history = []
         self.allowReplaceApp = allowReplaceApp
+        self.returnInnerObj = returnInnerObj
         #self.expr = expr
     def enclose(self, expr):
         for h in self.history[::-1]:

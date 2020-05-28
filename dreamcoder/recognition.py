@@ -1181,13 +1181,13 @@ class RecognitionModel(nn.Module):
                     with open(savePath, 'wb') as h:
                         torch.save(self, h)
                     print(f"rec model saved at {savePath}")
-                    if totalGradientSteps % 1000 == 0:
+                    if totalGradientSteps % 20000 == 0:
                         with open(savePath+str(totalGradientSteps), 'wb') as h:
                             torch.save(self, h)
                         print(f"rec model saved at {savePath+str(totalGradientSteps)}")     
 
 
-            if (i == 1 or i % 10 == 0) and losses:
+            if (i == 1 or i % 1000 == 0) and losses:
                 eprint("(ID=%d): " % self.id, "Epoch", i, "Loss", mean(losses))
                 if realLosses and dreamLosses:
                     eprint("(ID=%d): " % self.id, "\t\t(real loss): ", mean(realLosses), "\t(dream loss):", mean(dreamLosses))

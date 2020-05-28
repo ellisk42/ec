@@ -5,7 +5,7 @@ from dreamcoder.domains.list.listPrimitives import bootstrapTarget
 from dreamcoder.recognition import *
 from dreamcoder.enumeration import *
 from dreamcoder.domains.rb.rbPrimitives import robustFillPrimitives, texpression
-
+from dreamcoder.policyHead import SimpleNM
 from dreamcoder.utilities import count_parameters
 
 import os
@@ -87,31 +87,6 @@ class RBTask():
         else:
             return NEGATIVEINFINITY
 
-class DenseLayer(nn.Module):
-    def __init__(self, input_size, output_size):
-        super(DenseLayer, self).__init__()
-        self.linear = torch.nn.Linear(input_size, output_size)
-        #self.activation 
-    def forward(self, x):
-        return self.linear(x).relu()
-
-class DenseBlock(nn.Module):
-    def __init__(self, num_layers, growth_rate, input_size, output_size):
-        super(DenseBlock, self).__init__()
-
-        modules = [DenseLayer(input_size, growth_rate)]
-        for i in range(1, num_layers - 1):
-            modules.append(DenseLayer(growth_rate * i + input_size, growth_rate))
-        modules.append(DenseLayer(growth_rate * (num_layers - 1) + input_size, output_size))
-        self.layers = nn.ModuleList(modules)
-
-    def forward(self, x):
-        inputs = [x]
-        for layer in self.layers:
-            output = layer(torch.cat(inputs, dim=-1))
-            inputs.append(output)
-        return inputs[-1]
-
 
 class RBFeatureExtractor(nn.Module):
 
@@ -123,10 +98,10 @@ class RBFeatureExtractor(nn.Module):
         self.strLen = 36
         
         self.embedding = nn.Embedding(self.nChars, 20)                                    
-        self.stringEncoding = nn.Sequential(nn.Linear(self.strLen*20 , H), nn.ReLU())
+        self.stringEncoding = nn.Sequential(nn.Linear(self.strLen*20 , H), nn.ReLU()) #TODO if change
         
-        self.exRepresentation = nn.Sequential(nn.Linear(2*H, H), nn.ReLU())
-        self.taskRepresentation = nn.Sequential(nn.Linear(H, H), nn.ReLU())
+        self.exRepresentation = SimpleNM(2, H)
+        self.taskRepresentation = SimpleNM(1, H)
 
         print("num of params in featureExtractor", count_parameters(self))
 
@@ -237,6 +212,11 @@ def makeTasks():
         name = str(examples[0])
         tasks.append(RBTask(name, arrow(texpression, texpression), examples))
     return tasks
+
+# def rb_options(parser):
+#     parser.add_argument("-H", "--hidden", type=int,
+#                         default=512,
+#                         help="number of hidden units")
 
 def main(arguments):
     """

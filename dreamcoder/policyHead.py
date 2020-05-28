@@ -302,6 +302,51 @@ class REPLPolicyHead(NeuralPolicyHead):
         dist = dist + mask
         return dist
 
+class DenseLayer(nn.Module):
+    def __init__(self, input_size, output_size):
+        super(DenseLayer, self).__init__()
+        self.linear = torch.nn.Linear(input_size, output_size)
+        #self.activation 
+    def forward(self, x):
+        return self.linear(x).relu()
+
+class DenseBlock(nn.Module):
+    def __init__(self, num_layers, growth_rate, input_size, output_size):
+        super(DenseBlock, self).__init__()
+
+        modules = [DenseLayer(input_size, growth_rate)]
+        for i in range(1, num_layers - 1):
+            modules.append(DenseLayer(growth_rate * i + input_size, growth_rate))
+        modules.append(DenseLayer(growth_rate * (num_layers - 1) + input_size, output_size))
+        self.layers = nn.ModuleList(modules)
+
+    def forward(self, x):
+        inputs = [x]
+        for layer in self.layers:
+            output = layer(torch.cat(inputs, dim=-1))
+            inputs.append(output)
+        return inputs[-1]
+
+
+class SimpleNM(nn.Module):
+    def __init__(self, nArgs, H=128):
+        super(SimpleNM, self).__init__()
+        self.nArgs = nArgs
+        if nArgs > 0: #TODO
+            #can just do a stack I think ...
+            self.params = nn.Sequential(nn.Linear(nArgs*H, H), nn.ReLU())
+        else:
+            self.params = nn.Parameter(torch.randn(1, H))
+        
+    def forward(self, *args):
+        #print(self.operator.name)
+
+        if self.nArgs == 0:
+            return self.params
+        else:
+            #print(type(args))
+            inp = args[0]
+            return self.params(inp)
 
 class RBREPLPolicyHead(NeuralPolicyHead):
     """
@@ -330,7 +375,7 @@ class RBREPLPolicyHead(NeuralPolicyHead):
             i += 1
 
         self.output = nn.Sequential(
-                nn.Linear(featureExtractor.outputDimensionality + H, H),
+                nn.Linear(H, H),
                 nn.ReLU(),
                 nn.Linear(H, H),
                 nn.ReLU(),
@@ -338,34 +383,33 @@ class RBREPLPolicyHead(NeuralPolicyHead):
                 nn.LogSoftmax(dim=1))
 
         self.lossFn = nn.NLLLoss(reduction='sum')
-        print("num of params in repl policyhead (includes unused rnn weights)", count_parameters(self))
+        #print("num of params in repl policyhead (includes unused rnn weights)", count_parameters(self))
 
 
         #modules:
-        self.appendModule = nn.Sequential(nn.Linear(2*H, H), nn.ReLU())
-        self.compareModule = nn.Sequential(nn.Linear(2*H, H), nn.ReLU())
+        self.appendModule = SimpleNM(2, H)
+        self.compareModule = SimpleNM(2, H)
 
 
         self.encodeSimpleHole = nn.ModuleDict()
         for tp in [tposition, tregex, tindex, tboundary, tdelimiter, ttype]:
-            self.encodeSimpleHole[tp] = nn.Sequential(nn.Linear(H, H), nn.ReLU())
+            self.encodeSimpleHole['t' + tp.show(True)] = SimpleNM(0, H)
 
-        self.modules = nn.ModuleDict()
-        for _, _, p in g.productions():
+        self.fnModules = nn.ModuleDict()
+        for _, _, p in g.productions:
             if not p.isPrimitive: continue
             if p.tp == arrow(texpression, texpression): continue
             nArgs = len(p.tp.functionArguments())
             if p.tp.functionArguments() and p.tp.functionArguments()[0].isArrow():
                nArgs -= 1 
-            if nArg == 0:
-                self.modules[p] = nn.Parameter(torch.randn(H))
-            else:
-                self.modules[p] = nn.Sequential(nn.Linear(nArg*H, H), nn.ReLU())
+            
+            self.fnModules[p.name] = SimpleNM(nArgs, H)
+    
 
+        self.encodeExprHole = SimpleNM(1, H)
+        self.toFinishMarker = SimpleNM(1, H)
 
-        self.encodeExprHole = nn.Sequential(nn.Linear(H, H), nn.ReLU())
-        self.toFinishMarker = nn.Sequential(nn.Linear(H, H), nn.ReLU())
-
+        print("num of params in repl policy model", count_parameters(self))
         if self.use_cuda: self.cuda()
 
     def cuda(self, device=None):
@@ -373,14 +417,14 @@ class RBREPLPolicyHead(NeuralPolicyHead):
         #self.REPLHead.use_cuda = True
         self.featureExtractor.use_cuda = True
         self.featureExtractor.CUDA = True
-        super(REPLPolicyHead, self).cuda(device=device)
+        super(RBREPLPolicyHead, self).cuda(device=device)
 
     def cpu(self):
         self.use_cuda = False
         #self.REPLHead.use_cuda = False
         self.featureExtractor.use_cuda = False
         self.featureExtractor.CUDA = False
-        super(REPLPolicyHead, self).cpu()
+        super(RBREPLPolicyHead, self).cpu()
 
     def _computeDist(self, sketches, zippers, task, g):
         #need raw dist, and then which are valid and which is correct ... 
@@ -388,26 +432,39 @@ class RBREPLPolicyHead(NeuralPolicyHead):
         #features = self.featureExtractor.featuresOfTask(task)
             
         #should be the same weights here
-        inputRep = self.featureExtractor.inputsRepresentation(task)
-        outputRep = self.featureExtractor.outputsRepresentation(task)
+        #inputRep = self.featureExtractor.inputsRepresentation(task)
+        
 
-        prevSk, scratchSk = self._seperatePrevAndScratch(sketch, zippers)
+        outputRep = self.featureExtractor.outputsRepresentation(task).unsqueeze(0)
+        outputRep = outputRep.expand(len(sketches), -1, -1)
+        #print("outrep shape", outputRep.shape)
 
-        prevRep = self.getPrevEncoding(prevSk, zipper, task)
-        scratchRep = self.encodeScratch(scratchSk, zipper, task)
-
-        currentState = self.appendModule(torch.cat( [prevRep, scratchRep], dim=-1 )) #TODO batch
-        #append and compare modules do a lot of work
+        currentState = [self._buildCurrentState(sk, zp, task) for sk, zp in zip(sketches, zippers)] 
+        #print("currentstate0", currentState[0].shape)
+        currentState = torch.stack(currentState, dim=0)
+        #print("currentstate", currentState.shape)
 
         features = self.compareModule( torch.cat( [currentState, outputRep], dim=-1 ) ) #TODO batch
 
-        dist = self.output(features.max(0)[0])
+
+        dist = self.output(features.max(1)[0])
         mask = self._buildMask(sketches, zippers, task, g)
         dist = dist + mask
         return dist
 
 
-    def encodeScratch(sk, task, is_inner=False):
+    def _buildCurrentState(self, sketch, zipper, task):
+
+        prevSk, scratchSk = self._seperatePrevAndScratch(sketch, task.request)
+        prevRep = self.getPrevEncoding(prevSk, task)
+        scratchRep = self.encodeScratch(scratchSk, task)
+
+        currentState = self.appendModule(torch.cat( [prevRep, scratchRep], dim=-1 )) #TODO batch
+        #append and compare modules do a lot of work
+        return currentState
+
+
+    def encodeScratch(self, sk, task, is_inner=False):
         """
         asssume that sk is an e -> e sketch with stuff unfinished
 
@@ -419,7 +476,7 @@ class RBREPLPolicyHead(NeuralPolicyHead):
             return self.encodeExprHole(inputRep)
 
         f, xs = sk.applicationParse()
-        isNPrim = (f.functionArguments() and f.functionArguments()[0] == arrow(texpression, texpression))
+        isNPrim = (f.tp.functionArguments() and f.tp.functionArguments()[0] == arrow(texpression, texpression))
 
         #might be okay if is_inner triggers nothing
 
@@ -431,22 +488,22 @@ class RBREPLPolicyHead(NeuralPolicyHead):
             inputRep = self.featureExtractor.inputsRepresentation(task) #TODO
             neuralArgs.append(inputRep)
         else:
-            inputRep = self.encodeInnerN(args[0], findHoles(args[0]), task) #TODO #args[0] could be a full hole ig..
+            inputRep = self.encodeInnerN(args[0], findHoles(args[0], task.request), task) #TODO #args[0] could be a full hole ig..
             neuralArgs.append(inputRep)
             args = args[1:]
 
         #deal with rest of args
         for arg in args:
             if arg.isHole:
-                neuralArgs.append( self.encodeSimpleHole[arg.tp] ) #TODO
+                neuralArgs.append( self.encodeSimpleHole['t' + arg.tp.show(True)]().expand(4, -1) ) #TODO
             else:
-                neuralArgs.append( self.modules[arg] ) #TODO
+                neuralArgs.append( self.fnModules[arg.name]().expand(4, -1) ) #TODO
 
         fn_input = torch.cat(neuralArgs, dim=-1)
-        return self.modules[f](fn_input) #TODO
+        return self.fnModules[f.name](fn_input) #TODO
 
 
-    def encodeInnerN(sk, zippers, task):
+    def encodeInnerN(self, sk, zippers, task):
         assert sk.isAbstraction
         inputRep = self.featureExtractor.inputsRepresentation(task)
 
@@ -457,7 +514,7 @@ class RBREPLPolicyHead(NeuralPolicyHead):
             return self.getPrevEncoding(sk, task)
 
         if len(zippers)==1: 
-            assert zippers[0].tp == texpression,
+            assert zippers[0].tp == texpression
             completedSk = NewExprPlacer().execute(sk, zippers[0].path, Index(0))
             return self.toFinishMarker(self.getPrevEncoding(completedSk, task)) #TODO
 
@@ -466,17 +523,19 @@ class RBREPLPolicyHead(NeuralPolicyHead):
         #big q: how do i encode that we need to chose to end the inner fn???
         #can just include an unfinishedParam, which we need to put in ... oy.
 
-    def getPrevEncoding(sk, task):
+    def getPrevEncoding(self, sk, task):
+        I, O = zip(*task.examples)
         exprs = sk.evaluate([])
         newP = ROB.P( exprs ([]) ) 
-        previousWords = [ ROB.executeProg(newP, i) for i in inputs]
+        previousWords = [ ROB.executeProg(newP, i) for i in I]
         return self.featureExtractor.encodeString(previousWords) #TODO
 
-    def _seperatePrevAndScratch(sk, zippers):
+    def _seperatePrevAndScratch(self, sk, request):
         """
         prev should be full prog
         scratch is not
         """
+        zippers = findHoles(sk, request)
         if len(zippers) == 1:
             assert zippers[0].tp == texpression
             scratch = Hole(tp=texpression)
