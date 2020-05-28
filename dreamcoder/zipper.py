@@ -607,4 +607,5 @@ def getTracesFromProg(full, tp, g, onlyPos=False, returnNextNode=False, canonica
         last = newLast
         zippers = findHoles(last, tp)
     if returnNextNode:
-        return [baseHoleOfType(tp)] +
+        return [baseHoleOfType(tp)] + trace[:-1], negTrace, targetNodes, holesToExpand
+    return trace, negTrace
