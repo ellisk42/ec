@@ -13,6 +13,35 @@ from dreamcoder.zipper import *
 import dill
 import numpy as np
 
+exclude_lst = [
+    "arch leg 1",
+    "arch leg 2",
+    "arch leg 6",
+    "arch leg 8",
+    "bridge (2) of arch 2",
+    "bridge (2) of arch 4",
+    "bridge (2) of arch 5",
+    "bridge (3) of arch 3",
+    "bridge (3) of arch 5",
+    "bridge (4) of arch 1",
+    "bridge (4) of arch 4",
+    "bridge (5) of arch 3",
+    "bridge (5) of arch 4",
+    "bridge (5) of arch 5",
+    "bridge (6) of arch 4",
+    "bridge (6) of arch 5",
+    "bridge (7) of arch 1",
+    "bridge (7) of arch 4",
+    "arch 1/2 pyramid 2",
+    "brickwall, 3x1",
+    "brickwall, 3x3",
+    "brickwall, 3x4",
+    "brickwall, 4x2",
+    "brickwall, 4x4",
+    "brickwall, 5x2",
+    "brickwall, 6x1",
+    "brickwall, 6x4",]
+
 
 def plotTestResults(testResults, timeout, defaultLoss=None,
                     names=None, export=None, mode='fractionHit'):
@@ -33,20 +62,21 @@ def plotTestResults(testResults, timeout, defaultLoss=None,
         results = [ [r for r in rs if predicate(r)]
                     for rs in results ]
         hits = [ rs != [] for rs in results ]
-        return sum(hits)/float(len(hits))
+        return sum(hits)/float(len(hits))*100
 
     plot.figure()
     plot.xlabel('Time')
-    plot.ylabel('Average Loss')
-    if mode =='fractionHit': plot.ylim(bottom=0.)
+    plot.ylabel('percent correct')
+    if mode =='fractionHit': plot.ylim(bottom=0., top=100.)
     for n in range(len(testResults)):
         xs = list(np.arange(0,timeout,0.1))
         if mode =='fractionHit':
             plot.plot(xs, [fractionHit(n,lambda r: r.time < x) for x in xs],
-                  label=names[n])
+                  label=names[n], linewidth=4)
+            #plot.xscale('log')
         else:
             plot.plot(xs, [averageLoss(n,lambda r: r.time < x) for x in xs],
-                  label=names[n])
+                  label=names[n], linewidth=4)
     plot.legend()
     if export:
         plot.savefig(export)
@@ -55,16 +85,17 @@ def plotTestResults(testResults, timeout, defaultLoss=None,
     plot.figure()
     plot.xlabel('Evaluations')
     plot.ylabel('percent correct')
-    if mode =='fractionHit': plot.ylim(bottom=0.)
+    if mode =='fractionHit': plot.ylim(bottom=0., top=100.)
     for n in range(len(testResults)):
         #xs = list(range(max([0]+[r.evaluations for tr in testResults[n] for r in tr] ) + 1))
-        xs = list(range(400))
+        xs = list(range(18000))
         if mode =='fractionHit':
             plot.plot(xs, [fractionHit(n,lambda r: r.evaluations <= x) for x in xs],
-                  label=names[n])
+                  label=names[n], linewidth=4)
+            #plot.xscale('log')
         else:
             plot.plot(xs, [averageLoss(n,lambda r: r.evaluations <= x) for x in xs],
-                  label=names[n])
+                  label=names[n], linewidth=4)
     plot.legend()
     if export:
         plot.savefig(f"{export}_evaluations.eps")
@@ -74,7 +105,7 @@ def plotTestResults(testResults, timeout, defaultLoss=None,
 
 if __name__ == '__main__':
 
-    n = 20
+    n = 3
     ID = 'towers' + str(n)
 
     # paths = [(f'experimentOutputs/{ID}Sample_SRE=True.pickle', 'Sample'),
@@ -127,21 +158,21 @@ if __name__ == '__main__':
         (f'experimentOutputs/{ID}{runType}Symbolic_SRE=True{graph}.pickle', 'Symbolic value')
         ]
 
-    # graph="_graph=True"
-    # #mode="Prior"
-    # nameSalt = "list" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
-    # ID = 'list'
-    # runType ="RichPrims" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
-    # paths = [
-    #     (f'experimentOutputs/{ID}{runType}Sample_SRE=True{graph}.pickle', 'Policy only (no value)'),
-    #     (f'experimentOutputs/{ID}{runType}RNN_SRE=True{graph}.pickle', 'RNN value'),
-    #     (f'experimentOutputs/{ID}{runType}REPL_SRE=True{graph}.pickle', 'REPL modular value'),
-    #     #(f'experimentOutputs/{ID}{runType}Symbolic_SRE=True{graph}.pickle', 'Symbolic value')
-    #     ]
+  
+    graph=""
+    nameSalt = "AstarPseudoResult" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
+    ID = 'towers' + str(n)
+    runType ="PolicyOnlyPseudoResult" #"Helmholtz" #"BigramAstarCountNodes" #"BigramSamplePolicy" #
+    paths = [
+        (f'experimentOutputs/{ID}{runType}REPL_SRE=True{graph}.pickle', 'Abstract REPL policy (ours)'),
+        (f'experimentOutputs/{ID}{runType}RNN_SRE=True{graph}.pickle', 'RNN Policy'),
+        (f'experimentOutputs/{ID}{runType}Sample_SRE=True{graph}.pickle', 'Bigram Policy'),
+        ]
+
 
 
     with open('biasedtasks.p', 'rb') as h: biasedtasks = dill.load(h)
-    timeout=2000
+    timeout=30
     outputDirectory = 'plots'
     paths, names = zip(*paths)
 
@@ -152,15 +183,21 @@ if __name__ == '__main__':
             with open(path, 'rb') as h:
                 r = dill.load(h)
 
+            #optimize for speed
             for task, results in r.testingSearchStats[-1].items():
                 if r.testingSearchStats[-1][task]:
                     r.testingSearchStats[-1][task] = r.testingSearchStats[-1][task][:1]
 
             delTasks = []
+            seenBridges = False
             for task, results in r.testingSearchStats[-1].items():
-                if "Max" in task.name: delTasks.append(task)
-                # elif r.testingSearchStats[-1][task] and r.testingSearchStats[-1][task][0].evaluations < 10:
-                #     delTasks.append(task) 
+                if "from bridges" in task.name: 
+                    if seenBridges: delTasks.append(task)
+                    seenBridges = True
+                if r.testingSearchStats[-1][task] and r.testingSearchStats[-1][task][0].evaluations < 100:
+                    print(task.name)
+                if "pyramid on top" in task.name: delTasks.append(task)
+                if task.name in exclude_lst: delTasks.append(task)
             for task in delTasks: del r.testingSearchStats[-1][task]
 
             # print(path)

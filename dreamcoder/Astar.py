@@ -50,8 +50,10 @@ class Astar(Solver):
         self.maxDepth = maxDepth
         self.holeProb = holeProb
 
-    def _getNextNodes(self, node, g, request):
+    def _getNextNodes(self, task, node, g, request):
         totalCost, policyCost, sketch, zippers = node
+        if self.canonicalOrdering:
+            zippers = [zippers[0]] #only use the first zipper if cannonicalOrdering
         for zipper in zippers:
             for stepCost, newZippers, newSketch in self.owner.policyHead.enumSingleStep(task, g, sketch, request, 
                                                                     holeZipper=zipper,
@@ -67,8 +69,10 @@ class Astar(Solver):
                               evaluationTimeout=None, 
                               maximumFrontiers=None): #IDK what this is...
         
-        if hasattr(self.owner.policyHead, 'canonicalOrdering'): 
-            assert not self.owner.policyHead.canonicalOrdering, "not implemented with aStar"
+        if hasattr(self.owner.policyHead, 'canonicalOrdering') and self.owner.policyHead.canonicalOrdering:
+            self.canonicalOrdering = True
+        else: self.canonicalOrdering = False
+
             
         sys.setrecursionlimit(5000)
                 #START
@@ -104,8 +108,12 @@ class Astar(Solver):
 
         try:
             def timeoutCallBack(_1, _2): raise InferenceTimeout()
-            signal.signal(signal.SIGVTALRM, timeoutCallBack)
-            signal.setitimer(signal.ITIMER_VIRTUAL, timeout)  
+            # signal.signal(signal.SIGVTALRM, timeoutCallBack)
+            # signal.setitimer(signal.ITIMER_VIRTUAL, timeout)  
+
+            signal.signal(signal.SIGALRM, timeoutCallBack)
+            signal.setitimer(signal.ITIMER_REAL, timeout)
+
 
             while time.time() - starting < timeout:
 
@@ -114,7 +122,7 @@ class Astar(Solver):
                 #print("queue size", len(q))
 
                 nNei = 0
-                for policyCost, zippers, neighbor in self._getNextNodes(node, g, request):
+                for policyCost, zippers, neighbor in self._getNextNodes(task, node, g, request):
                     nNei += 1
                     if (neighbor) in allObjects:
                         continue
@@ -132,6 +140,7 @@ class Astar(Solver):
                         if success: return self._finish(tasks,
                                                         hits, 
                                                         totalNumberOfPrograms)
+                        else: continue
 
                     valueCost = self.owner.valueHead.computeValue(neighbor, task) #TODO 
                     totalCost = policyCost - self.criticCoefficient * valueCost #TODO normalize and scale
@@ -149,10 +158,17 @@ class Astar(Solver):
                 #print('\t num neighbors', nNei)
 
         except InferenceTimeout:
-            print("Timed out while evaluating")
+            print("Timed out while evaluating, timeout", timeout)
+            print("time elapsed")
+            print(time.time() - starting)
         finally:
-            signal.signal(signal.SIGVTALRM, lambda *_: None)
-            signal.setitimer(signal.ITIMER_VIRTUAL, 0)
+            # signal.signal(signal.SIGVTALRM, lambda *_: None)
+            # signal.setitimer(signal.ITIMER_VIRTUAL, 0)
+            try:
+                signal.signal(signal.SIGALRM, lambda *_: None)
+                signal.setitimer(signal.ITIMER_REAL, 0)
+            except InferenceTimeout:
+                pass
 
         return self._finish(tasks, hits, totalNumberOfPrograms)
 

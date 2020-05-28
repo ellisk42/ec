@@ -77,11 +77,10 @@ class BasePolicyHead(nn.Module):
         else: 
             return torch.tensor([0.])
 
-    def enumSingleStep(g, sk, request, 
+    def enumSingleStep(self, task, g, sk, request, 
                         holeZipper=None,
                         maximumDepth=4):
         return enumSingleStep(g, sk, request, holeZipper=holeZipper, maximumDepth=maximumDepth)
-
 
 class NeuralPolicyHead(nn.Module):
     def __init__(self):
@@ -104,13 +103,14 @@ class NeuralPolicyHead(nn.Module):
         newSk, newZippers = sampleOneStepFromHole(zipper, sk, request, g, maximumDepth, supplyDist=supplyDist)
         return newSk, newZippers
 
-    def enumSingleStep(g, sk, request, 
+    def enumSingleStep(self, task, g, sk, request, 
                         holeZipper=None,
                         maximumDepth=4):
 
-        dist = computeDist([sk], [holeZipper], task, g)
-        supplyDist = { expr: dist[self.productionToIndex[expr]].data.item() for _, _, expr in g.productions}
-        yield from enumSingleStep(g, sk, tp, holeZipper=holeZipper, maximumDepth=maximumDepth, supplyDist=supplyDist)
+        dist = self._computeDist([sk], [holeZipper], task, g)
+        dist = dist.squeeze(0)
+        supplyDist = { expr: dist[i].data.item() for i, expr in self.indexToProduction.items()}
+        yield from enumSingleStep(g, sk, request, holeZipper=holeZipper, maximumDepth=maximumDepth, supplyDist=supplyDist)
 
     def policyLossFromFrontier(self, frontier, g):
         # Monte Carlo estimate: draw a sample from the frontier
@@ -200,12 +200,14 @@ class RNNPolicyHead(NeuralPolicyHead):
         if self.use_cuda: self.cuda()
 
     def cuda(self, device=None):
+        self.use_cuda = True
         self.RNNHead.use_cuda = True
         self.featureExtractor.use_cuda = True
         self.featureExtractor.CUDA = True
         super(RNNPolicyHead, self).cuda(device=device)
 
     def cpu(self):
+        self.use_cuda = False
         self.RNNHead.use_cuda = False
         self.featureExtractor.use_cuda = False
         self.featureExtractor.CUDA = False
@@ -267,12 +269,14 @@ class REPLPolicyHead(NeuralPolicyHead):
         if self.use_cuda: self.cuda()
 
     def cuda(self, device=None):
+        self.use_cuda = True
         self.REPLHead.use_cuda = True
         self.featureExtractor.use_cuda = True
         self.featureExtractor.CUDA = True
         super(REPLPolicyHead, self).cuda(device=device)
 
     def cpu(self):
+        self.use_cuda = False
         self.REPLHead.use_cuda = False
         self.featureExtractor.use_cuda = False
         self.featureExtractor.CUDA = False

@@ -557,21 +557,26 @@ def test_abstraction_bug():
 
 import dill
 def test_policyTiming():
+    from dreamcoder.Astar import Astar
     from likelihoodModel import AllOrNothingLikelihoodModel
     from dreamcoder.policyHead import RNNPolicyHead, BasePolicyHead, REPLPolicyHead
     from dreamcoder.domains.tower.makeTowerTasks import makeNewMaxTasks
 
-
+    sys.setrecursionlimit(50000)
     graph = ""
     ID = 'towers' + str(3)
-    runType ="PolicyOnly" #"Policy"
+    runType = "" #"PolicyOnly" #"Policy"
     #runType =""
-    path = f'experimentOutputs/{ID}{runType}RNN_SRE=True{graph}.pickle'
+    model = "Sample"
+    useREPLnet = False
+    path = f'experimentOutputs/{ID}{runType}{model}_SRE=True{graph}.pickle'
     print(path)
     with open(path, 'rb') as h:
         r = dill.load(h)
     
-    useREPLnet = True
+    # useREPLnet = True
+    # model = "REPL"
+
     if not hasattr(r.recognitionModel, "policyHead"):
         r.recognitionModel.policyHead = BasePolicyHead()
 
@@ -582,23 +587,33 @@ def test_policyTiming():
         #import pdb; pdb.set_trace()
 
         r.recognitionModel = repl
-        print(r.recognitionModel.policyHead)
+        #print(r.recognitionModel.policyHead)
 
     g = r.grammars[-1]
     print(r.recognitionModel.gradientStepsTaken)
     solver = r.recognitionModel.solver
+
+    solver = Astar(r.recognitionModel)
+
     times = []
     ttasks = r.getTestingTasks()
 
 
-
     # testFrontiers = [r.recognitionTaskMetrics.get(t, {'frontier': None} ).get('frontier', None) for t in ttasks]
     # testFrontiers = [t for t in testFrontiers if (t and t.entries)] #if not empty
+
+    # maxSize = 0
+    # for f in testFrontiers:
+    #     for entry in f.entries:
+    #         p = entry.program
+    #         maxSize = max(maxSize, p.size())
+    # print("max size", maxSize)
+
     # print("num test frontiers", len(testFrontiers))
     # policyHead = r.recognitionModel.policyHead
     # testLosses = []
     # for i in range(10):
-    #     policyHead.eval()    
+    #     policyHead.eval()
     #     losses = [policyHead.policyLossFromFrontier(frontier, g) for frontier in testFrontiers ]#+ lst[2:]]
     #     loss = sum(losses)/len(losses)
     #     policyHead.zero_grad()
@@ -607,16 +622,24 @@ def test_policyTiming():
     # print("average loss on test frontiers:")
     # print(sum(testLosses) / len(testLosses))
 
-    ttasks = makeNewMaxTasks()
+    ttasks = makeNewMaxTasks() + r.getTestingTasks()
+
+    #import pdb; pdb.set_trace()
     print("using max tasks")
 
+    #r.recognitionModel.policyHead.cpu()
+
     nhit = 0
-    for i in range(30):
-        tasks = [ttasks[i]]
+    stats = {}
+    nums = {}
+    for t in ttasks:
+        tasks = [t]
         #tasks = []
         print(tasks)
         likelihoodModel = AllOrNothingLikelihoodModel(timeout=0.01)
         #tasks = [frontier.task]
+
+        g = r.recognitionModel.grammarOfTask(tasks[0]).untorch()
         fs, searchTimes, totalNumberOfPrograms, reportedSolutions = solver.infer(g, tasks, likelihoodModel, 
                                             timeout=30,
                                             elapsedTime=0,
@@ -630,7 +653,24 @@ def test_policyTiming():
         if list(searchTimes.values())[0]:
             nhit += 1
 
+        for k, v in reportedSolutions.items():
+            stats[k] = v
+    
+        nums[tasks[0]] = totalNumberOfPrograms
+
     print("n hit:", nhit)
+
+    class PseudoResult:
+        pass 
+
+    pseudoResult = PseudoResult()
+    pseudoResult.testingSearchStats = [stats]
+    pseudoResult.testingNumOfProg = [nums]
+
+    savePath = f'experimentOutputs/{ID}{runType}PseudoResult{model}_SRE=True.pickle'
+    with open(savePath, 'wb') as h:
+        dill.dump(pseudoResult, h)
+    print("saved at", savePath)
 
 
 if __name__=='__main__':
