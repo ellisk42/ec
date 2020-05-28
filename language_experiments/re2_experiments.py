@@ -343,7 +343,57 @@ for dataset in ['re2_1000', 're2_500_aeioubcdfgsrt']:
                                     if not NO_ORIGINAL_REPL: experiment_commands.append(command)
                                     experiment_commands += build_replications(exp_command, job, job_name)
                             job +=1
-
+##### Generates the full vowel experiment using the human language dataset.
+RUN_HELMHOLTZ_VOWEL_HUMAN_EXPERIMENTS = True
+use_vowel = True
+num_iterations = 10
+task_batch_size = 40
+test_every = 3
+recognition_steps = 10000
+testing_timeout = 720
+lc_score = 0.2
+max_compression = 5
+EXPS = [
+            ('re2_1000', 720, True, 0.1, 0.5, 0.2, False), # Generative language + inject + lc    
+]
+for dataset in ['re2_1000', 're2_500_aeioubcdfgsrt']:
+    for enumerationTimeout in [720, 1800]:
+        for use_vowel in [True, False]:
+            for pseudoalignment in [0, 0.1]:
+                for helmholtz in [0, 0.5]:
+                    for lc_score in [0, 0.2]:
+                        for no_consolidation in [True, False]:
+                            exp = (dataset, enumerationTimeout, use_vowel, pseudoalignment, helmholtz, lc_score, no_consolidation)
+                            pseudo_name = "pseudo_" if pseudoalignment > 0 else ""
+                            no_ghelm = "no_" if helmholtz == 0 else ""
+                            no_cons = "no_" if no_consolidation else ""
+                            
+                            job_name = f"re_2_ec_gru_{no_ghelm}ghelm_{pseudo_name}lang_{no_cons}compression_et_{enumerationTimeout}_{dataset}_use_vowel_{use_vowel}_human"
+                            jobs.append(job_name)
+                            base_parameters = f" --enumerationTimeout {enumerationTimeout} --testingTimeout {testing_timeout}  --iterations {num_iterations} --biasOptimal --contextual --taskBatchSize {task_batch_size} --testEvery {test_every} --no-cuda --recognitionSteps {recognition_steps} --recognition_0 --recognition_1 examples language --Helmholtz {helmholtz}  --skip_first_test --pretrained_word_embeddings "
+                            if helmholtz > 0: 
+                                base_parameters += " --synchronous_grammar "
+                            
+                            # Which primitives set to use.
+                            restricted = 'aeioubcdfgsrt' 
+                            if restricted in dataset:
+                                primitives = f"re2_chars_{restricted} re2_bootstrap_v1_primitives"
+                            else:
+                                primitives = "re2_chars_None re2_bootstrap_v1_primitives"
+                            if use_vowel:
+                                primitives += " re2_vowel_consonant_primitives"
+                                
+                            exp_parameters = f" --taskDataset {dataset} --language_encoder recurrent --languageDataset {dataset}/human --primitives {primitives} --moses_dir ./moses_compiled --smt_phrase_length 1 --smt_pseudoalignments {pseudoalignment}  --language_compression --lc_score {lc_score} --max_compression {max_compression} "
+                            if no_consolidation:
+                                exp_parameters += "--no-consolidation "
+                            
+                            exp_command = base_command + base_parameters + exp_parameters
+                            command = build_command(exp_command, job, job_name, replication=None)
+                            if RUN_HELMHOLTZ_VOWEL_EXPERIMENTS:
+                                if (EXPS is None) or (exp in EXPS):
+                                    if not NO_ORIGINAL_REPL: experiment_commands.append(command)
+                                    experiment_commands += build_replications(exp_command, job, job_name)
+                            job +=1
 
 
 #### Outputs
