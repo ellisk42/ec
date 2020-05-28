@@ -122,12 +122,14 @@ class P:
                 progList.extend(expr.ecProg())
             else: progList.append(expr.ecProg())
 
-        print("proglist", progList)
+        #print("proglist", progList)
         p = Index(0)
         for frag in list(reversed(progList)):
             try: p = Application(frag, p)
             except:
                 import pdb; pdb.set_trace()
+
+        #print(Abstraction(p))
         return Abstraction(p)
 
 class E:

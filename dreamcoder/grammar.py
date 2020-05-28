@@ -166,6 +166,9 @@ class Grammar(object):
         candidates += [(self.logVariable - log(len(variableCandidates)), t, p, k)
                        for t, p, k in variableCandidates]
         if candidates == []:
+
+            print("request", request)
+            print("mustBeLeaf", mustBeLeaf)
             raise NoCandidates()
         #eprint("candidates inside buildCandidates before norm:")
         #eprint(candidates)

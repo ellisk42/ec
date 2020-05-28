@@ -59,6 +59,8 @@ from dreamcoder.zipper import sampleSingleStep, enumSingleStep
 from dreamcoder.valueHead import SimpleRNNValueHead, binary_cross_entropy, TowerREPLValueHead
 from dreamcoder.program import Index, Program
 from dreamcoder.zipper import *
+from dreamcoder.utilities import count_parameters
+from dreamcoder.domains.rb.rbPrimitives import *
 
 class BasePolicyHead(nn.Module):
     #this is the single step type
@@ -197,6 +199,10 @@ class RNNPolicyHead(NeuralPolicyHead):
                 nn.LogSoftmax(dim=1))
 
         self.lossFn = nn.NLLLoss(reduction='sum')
+
+
+        print("num of params in rnn policy model", count_parameters(self))
+
         if self.use_cuda: self.cuda()
 
     def cuda(self, device=None):
@@ -215,9 +221,6 @@ class RNNPolicyHead(NeuralPolicyHead):
 
     def _computeDist(self, sketches, zippers, task, g):
         #need raw dist, and then which are valid and which is correct ... 
-        features = self.featureExtractor.featuresOfTask(task)
-        if features is None: return None, None
-        features = features.unsqueeze(0)
         if self.encodeTargetHole:
             sketches = [self._designateTargetHole(zipper, sk) for zipper, sk in zip(zippers, sketches)]
         sketchEncodings = self.RNNHead._encodeSketches(sketches)
@@ -298,3 +301,194 @@ class REPLPolicyHead(NeuralPolicyHead):
         mask = self._buildMask(sketches, zippers, task, g)
         dist = dist + mask
         return dist
+
+
+class RBREPLPolicyHead(NeuralPolicyHead):
+    """
+    does not specify the target hole at all here
+    """
+    def __init__(self, g, featureExtractor, H, maxVar=15, encodeTargetHole=False, canonicalOrdering=False):
+        super(RBREPLPolicyHead, self).__init__() #should have featureExtractor?
+        assert not encodeTargetHole
+        self.canonicalOrdering = canonicalOrdering
+        self.use_cuda = torch.cuda.is_available()
+        self.featureExtractor = featureExtractor
+        self.H = H
+        #self.REPLHead = RBREPLValueHead(g, featureExtractor, H=self.H) #hack #TODO
+
+        self.indexToProduction = {}
+        self.productionToIndex = {}
+        i = 0
+        for _, _, expr in g.productions:
+            self.indexToProduction[i] = expr
+            self.productionToIndex[expr] = i
+            i += 1
+
+        for v in range(maxVar):
+            self.indexToProduction[i] = Index(v)
+            self.productionToIndex[Index(v)] = i
+            i += 1
+
+        self.output = nn.Sequential(
+                nn.Linear(featureExtractor.outputDimensionality + H, H),
+                nn.ReLU(),
+                nn.Linear(H, H),
+                nn.ReLU(),
+                nn.Linear(H, len(self.productionToIndex) ),
+                nn.LogSoftmax(dim=1))
+
+        self.lossFn = nn.NLLLoss(reduction='sum')
+        print("num of params in repl policyhead (includes unused rnn weights)", count_parameters(self))
+
+
+        #modules:
+        self.appendModule = nn.Sequential(nn.Linear(2*H, H), nn.ReLU())
+        self.compareModule = nn.Sequential(nn.Linear(2*H, H), nn.ReLU())
+
+
+        self.encodeSimpleHole = nn.ModuleDict()
+        for tp in [tposition, tregex, tindex, tboundary, tdelimiter, ttype]:
+            self.encodeSimpleHole[tp] = nn.Sequential(nn.Linear(H, H), nn.ReLU())
+
+        self.modules = nn.ModuleDict()
+        for _, _, p in g.productions():
+            if not p.isPrimitive: continue
+            if p.tp == arrow(texpression, texpression): continue
+            nArgs = len(p.tp.functionArguments())
+            if p.tp.functionArguments() and p.tp.functionArguments()[0].isArrow():
+               nArgs -= 1 
+            if nArg == 0:
+                self.modules[p] = nn.Parameter(torch.randn(H))
+            else:
+                self.modules[p] = nn.Sequential(nn.Linear(nArg*H, H), nn.ReLU())
+
+
+        self.encodeExprHole = nn.Sequential(nn.Linear(H, H), nn.ReLU())
+        self.toFinishMarker = nn.Sequential(nn.Linear(H, H), nn.ReLU())
+
+        if self.use_cuda: self.cuda()
+
+    def cuda(self, device=None):
+        self.use_cuda = True
+        #self.REPLHead.use_cuda = True
+        self.featureExtractor.use_cuda = True
+        self.featureExtractor.CUDA = True
+        super(REPLPolicyHead, self).cuda(device=device)
+
+    def cpu(self):
+        self.use_cuda = False
+        #self.REPLHead.use_cuda = False
+        self.featureExtractor.use_cuda = False
+        self.featureExtractor.CUDA = False
+        super(REPLPolicyHead, self).cpu()
+
+    def _computeDist(self, sketches, zippers, task, g):
+        #need raw dist, and then which are valid and which is correct ... 
+        
+        #features = self.featureExtractor.featuresOfTask(task)
+            
+        #should be the same weights here
+        inputRep = self.featureExtractor.inputsRepresentation(task)
+        outputRep = self.featureExtractor.outputsRepresentation(task)
+
+        prevSk, scratchSk = self._seperatePrevAndScratch(sketch, zippers)
+
+        prevRep = self.getPrevEncoding(prevSk, zipper, task)
+        scratchRep = self.encodeScratch(scratchSk, zipper, task)
+
+        currentState = self.appendModule(torch.cat( [prevRep, scratchRep], dim=-1 )) #TODO batch
+        #append and compare modules do a lot of work
+
+        features = self.compareModule( torch.cat( [currentState, outputRep], dim=-1 ) ) #TODO batch
+
+        dist = self.output(features.max(0)[0])
+        mask = self._buildMask(sketches, zippers, task, g)
+        dist = dist + mask
+        return dist
+
+
+    def encodeScratch(sk, task, is_inner=False):
+        """
+        asssume that sk is an e -> e sketch with stuff unfinished
+
+        if it's not an n prim, need to insert a first arg, which is input
+        if it is an nPrim, 
+        """
+        if sk.isHole:
+            inputRep = self.featureExtractor.inputsRepresentation(task) #TODO
+            return self.encodeExprHole(inputRep)
+
+        f, xs = sk.applicationParse()
+        isNPrim = (f.functionArguments() and f.functionArguments()[0] == arrow(texpression, texpression))
+
+        #might be okay if is_inner triggers nothing
+
+        args = xs[:-1]
+        neuralArgs = []
+
+        #deal with tricky first arg 
+        if not isNPrim:
+            inputRep = self.featureExtractor.inputsRepresentation(task) #TODO
+            neuralArgs.append(inputRep)
+        else:
+            inputRep = self.encodeInnerN(args[0], findHoles(args[0]), task) #TODO #args[0] could be a full hole ig..
+            neuralArgs.append(inputRep)
+            args = args[1:]
+
+        #deal with rest of args
+        for arg in args:
+            if arg.isHole:
+                neuralArgs.append( self.encodeSimpleHole[arg.tp] ) #TODO
+            else:
+                neuralArgs.append( self.modules[arg] ) #TODO
+
+        fn_input = torch.cat(neuralArgs, dim=-1)
+        return self.modules[f](fn_input) #TODO
+
+
+    def encodeInnerN(sk, zippers, task):
+        assert sk.isAbstraction
+        inputRep = self.featureExtractor.inputsRepresentation(task)
+
+        #if unchosen:
+        if sk.body.isHole:
+            return self.encodeExprHole(inputRep)
+        if not zippers:
+            return self.getPrevEncoding(sk, task)
+
+        if len(zippers)==1: 
+            assert zippers[0].tp == texpression,
+            completedSk = NewExprPlacer().execute(sk, zippers[0].path, Index(0))
+            return self.toFinishMarker(self.getPrevEncoding(completedSk, task)) #TODO
+
+        return self.encodeScratch(sk.body, task, is_inner=True)
+
+        #big q: how do i encode that we need to chose to end the inner fn???
+        #can just include an unfinishedParam, which we need to put in ... oy.
+
+    def getPrevEncoding(sk, task):
+        exprs = sk.evaluate([])
+        newP = ROB.P( exprs ([]) ) 
+        previousWords = [ ROB.executeProg(newP, i) for i in inputs]
+        return self.featureExtractor.encodeString(previousWords) #TODO
+
+    def _seperatePrevAndScratch(sk, zippers):
+        """
+        prev should be full prog
+        scratch is not
+        """
+        if len(zippers) == 1:
+            assert zippers[0].tp == texpression
+            scratch = Hole(tp=texpression)
+            prev = NewExprPlacer().execute(sk, zippers[0].path, Index(0))
+
+        else: 
+            commonPath = []
+            for group in zip(*[zipp.path for zipp in zippers]):
+                if all(move == group[0] for move in group ):
+                    commonPath.append(group[0])
+                else: break
+
+            prev, scratch = NewExprPlacer(allowReplaceApp=True, returnInnerObj=True ).execute(sk, commonPath, Index(0)) 
+
+        return prev, scratch

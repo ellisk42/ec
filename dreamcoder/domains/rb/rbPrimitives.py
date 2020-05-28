@@ -41,50 +41,50 @@ def robustFillPrimitives():
 
     prims = [
         #substring:
-        Primitive("SubStr", arrow(tposition, tposition, texpression, texpression), lambda i: lambda j: lambda k: [ROB.SubString(i, j)] + k),
-        Primitive("GetSpan", arrow(tregex, tindex, tboundary, tregex, tindex, tboundary, texpression, texpression), _getSpan ),
+        CPrimitive("SubStr", arrow(tposition, tposition, texpression, texpression), lambda i: lambda j: lambda k: [ROB.SubString(i, j)] + k),
+        CPrimitive("GetSpan", arrow(tregex, tindex, tboundary, tregex, tindex, tboundary, texpression, texpression), _getSpan ),
         #nesting:
-        Primitive("GetToken", arrow(ttype, tindex, texpression, texpression), lambda t: lambda i: lambda k: [ROB.GetToken(ROB.R(t), i) ] + k),   
-        Primitive("ToCase_Proper", arrow(texpression, texpression), lambda k: [ROB.ToCase( ("Proper", lambda x : x.title()) )] + k),
-        Primitive("ToCase_AllCaps", arrow(texpression, texpression), lambda k: [ROB.ToCase( ("AllCaps", lambda x: x.upper()) )] + k),
-        Primitive("ToCase_Lower", arrow(texpression, texpression), lambda k: [ROB.ToCase( ("Lower", lambda x: x.lower()) )] + k),
-        Primitive("Replace", arrow(tdelimiter, tdelimiter, texpression, texpression),  lambda d1: lambda d2: lambda k: [ROB.Replace(d1, d2)] + k ), 
-        Primitive("GetUpTo", arrow(tregex, texpression, texpression), lambda r: lambda k: [ROB.GetUpTo(ROB.R(r))] + k ),
-        Primitive("GetFrom", arrow(tregex, texpression, texpression),  lambda r: lambda k: [ROB.GetFrom(ROB.R(r))] + k ),
-        Primitive("GetFirst", arrow(ttype, tindex, texpression, texpression),  lambda t: lambda i: lambda k: [ROB.GetFirst(ROB.R(t), i)] + k ) ,
-        Primitive("GetAll", arrow(ttype, texpression, texpression), lambda r: lambda k: [ROB.GetAll(ROB.R(r))] + k ),
+        CPrimitive("GetToken", arrow(ttype, tindex, texpression, texpression), lambda t: lambda i: lambda k: [ROB.GetToken(ROB.R(t), i) ] + k),   
+        CPrimitive("ToCase_Proper", arrow(texpression, texpression), lambda k: [ROB.ToCase( ("Proper", lambda x : x.title()) )] + k),
+        CPrimitive("ToCase_AllCaps", arrow(texpression, texpression), lambda k: [ROB.ToCase( ("AllCaps", lambda x: x.upper()) )] + k),
+        CPrimitive("ToCase_Lower", arrow(texpression, texpression), lambda k: [ROB.ToCase( ("Lower", lambda x: x.lower()) )] + k),
+        CPrimitive("Replace", arrow(tdelimiter, tdelimiter, texpression, texpression),  lambda d1: lambda d2: lambda k: [ROB.Replace(d1, d2)] + k ), 
+        CPrimitive("GetUpTo", arrow(tregex, texpression, texpression), lambda r: lambda k: [ROB.GetUpTo(ROB.R(r))] + k ),
+        CPrimitive("GetFrom", arrow(tregex, texpression, texpression),  lambda r: lambda k: [ROB.GetFrom(ROB.R(r))] + k ),
+        CPrimitive("GetFirst", arrow(ttype, tindex, texpression, texpression),  lambda t: lambda i: lambda k: [ROB.GetFirst(ROB.R(t), i)] + k ) ,
+        CPrimitive("GetAll", arrow(ttype, texpression, texpression), lambda r: lambda k: [ROB.GetAll(ROB.R(r))] + k ),
         #n versions
-        Primitive("GetToken_n", arrow(texpression, ttype, tindex, texpression, texpression), lambda e: lambda t: lambda i: lambda k: [ROB.Compose(ROB.GetToken(ROB.R(t), i), e([])[0] ) ] + k),   
-        Primitive("ToCase_Proper_n", arrow(texpression, texpression, texpression), lambda e: lambda k: [ROB.Compose(ROB.ToCase( ("Proper", lambda x : x.title()) ), e([])[0] )] + k),
-        Primitive("ToCase_AllCaps_n", arrow(texpression, texpression, texpression), lambda e: lambda k: [ROB.Compose(ROB.ToCase( ("AllCaps", lambda x: x.upper()) ), e([])[0] )] + k),
-        Primitive("ToCase_Lower_n", arrow(texpression, texpression, texpression), lambda e: lambda k: [ROB.Compose(ROB.ToCase( ("Lower", lambda x: x.lower()) ), e([])[0] )] + k),
-        Primitive("Replace_n", arrow(texpression, tdelimiter, tdelimiter, texpression, texpression),  lambda e: lambda d1: lambda d2: lambda k: [ROB.Compose(ROB.Replace(d1, d2), e([])[0] )] + k ), #TODO
-        Primitive("GetUpTo_n", arrow(texpression, tregex, texpression, texpression), lambda e: lambda r: lambda k: [ROB.Compose(ROB.GetUpTo(ROB.R(r)), e([])[0])] + k ),
-        Primitive("GetFrom_n", arrow(texpression, tregex, texpression, texpression),  lambda e: lambda r: lambda k: [ROB.Compose(ROB.GetFrom(ROB.R(r)), e([])[0] )] + k ),
-        Primitive("GetFirst_n", arrow(texpression, ttype, tindex, texpression, texpression),  lambda e: lambda t: lambda i: lambda k: [ROB.Compose(ROB.GetFirst(ROB.R(t), i),e([])[0])] + k ) ,
-        Primitive("GetAll_n", arrow(texpression, ttype, texpression, texpression), lambda e: lambda r: lambda k: [ROB.Compose(ROB.GetAll(ROB.R(r)), e([])[0])] + k ),
+        CPrimitive("GetToken_n", arrow(arrow(texpression, texpression), ttype, tindex, texpression, texpression), lambda e: lambda t: lambda i: lambda k: [ROB.Compose(ROB.GetToken(ROB.R(t), i), e([])[0] ) ] + k),   
+        CPrimitive("ToCase_Proper_n", arrow(arrow(texpression, texpression), texpression, texpression), lambda e: lambda k: [ROB.Compose(ROB.ToCase( ("Proper", lambda x : x.title()) ), e([])[0] )] + k),
+        CPrimitive("ToCase_AllCaps_n", arrow(arrow(texpression, texpression), texpression, texpression), lambda e: lambda k: [ROB.Compose(ROB.ToCase( ("AllCaps", lambda x: x.upper()) ), e([])[0] )] + k),
+        CPrimitive("ToCase_Lower_n", arrow(arrow(texpression, texpression), texpression, texpression), lambda e: lambda k: [ROB.Compose(ROB.ToCase( ("Lower", lambda x: x.lower()) ), e([])[0] )] + k),
+        CPrimitive("Replace_n", arrow(arrow(texpression, texpression), tdelimiter, tdelimiter, texpression, texpression),  lambda e: lambda d1: lambda d2: lambda k: [ROB.Compose(ROB.Replace(d1, d2), e([])[0] )] + k ), #TODO
+        CPrimitive("GetUpTo_n", arrow(arrow(texpression, texpression), tregex, texpression, texpression), lambda e: lambda r: lambda k: [ROB.Compose(ROB.GetUpTo(ROB.R(r)), e([])[0])] + k ),
+        CPrimitive("GetFrom_n", arrow(arrow(texpression, texpression), tregex, texpression, texpression),  lambda e: lambda r: lambda k: [ROB.Compose(ROB.GetFrom(ROB.R(r)), e([])[0] )] + k ),
+        CPrimitive("GetFirst_n", arrow(arrow(texpression, texpression), ttype, tindex, texpression, texpression),  lambda e: lambda t: lambda i: lambda k: [ROB.Compose(ROB.GetFirst(ROB.R(t), i),e([])[0])] + k ) ,
+        CPrimitive("GetAll_n", arrow(arrow(texpression, texpression), ttype, texpression, texpression), lambda e: lambda r: lambda k: [ROB.Compose(ROB.GetAll(ROB.R(r)), e([])[0])] + k ),
         ] + [
         #Regex
-        Primitive(f"regex_{allowed(r)}", tregex, r) for r in ROB._POSSIBLE_R.keys()
+        CPrimitive(f"regex_{allowed(r)}", tregex, r) for r in ROB._POSSIBLE_R.keys()
         #type
         ] + [
-        Primitive(f"type_{tp}", ttype, tp) for tp in ROB._POSSIBLE_TYPES.keys()
+        CPrimitive(f"type_{tp}", ttype, tp) for tp in ROB._POSSIBLE_TYPES.keys()
         ] + [
         #position
-        Primitive(f"pos_{i}", tposition, i) for i in ROB._POSITION_K
+        CPrimitive(f"pos_{i}", tposition, i) for i in ROB._POSITION_K
         ] + [
         #index
-        Primitive(f"index_{i}", tposition, i) for i in ROB._INDEX
+        CPrimitive(f"index_{i}", tindex, i) for i in ROB._INDEX
         ] + [
         #delimiter
-        Primitive(f"delim_{allowed(d)}", tdelimiter, d) for d in ROB._DELIMITER
+        CPrimitive(f"delim_{allowed(d)}", tdelimiter, d) for d in ROB._DELIMITER
         ] + [
         #boundary
-        Primitive(f"bound_{b}", tboundary, b) for b in ROB._BOUNDARY
+        CPrimitive(f"bound_{b}", tboundary, b) for b in ROB._BOUNDARY
         ]
         #Character
     for c in ROB._CHARACTER:
-        prims.append(Primitive(f"char_{allowed(c)}", arrow(texpression, texpression), _const(c) ))
+        prims.append(CPrimitive(f"char_{allowed(c)}", arrow(texpression, texpression), _const(c) ))
     return prims
 
 def RobustFillProductions(max_len=100, max_index=5):
@@ -134,26 +134,11 @@ class Constraint_prop:
         return p.visit(self)
     
 
+
 class CPrimitive(Primitive):
-    def __init__(self, name, ty, value, constraint=None):
-        #I have no idea why this works but it does ..... 
-        if constraint is None:
-            if len(ty.functionArguments())==0:
-                self.constraint = (defaultdict(int), 0)
-            elif len(ty.functionArguments())==1:
-                self.constraint = lambda x: x
-            elif len(ty.functionArguments())==2:
-                self.constraint = lambda x: lambda y: add_constraints(x,y)
-            else:
-                self.constraint = lambda x: x
-                for _ in range(len(ty.functionArguments()) - 1):
-                    self.constraint = lambda x: lambda y: add_constraints(x, self.constraint(y))
-        else: self.constraint = constraint
-        super(CPrimitive, self).__init__(name, ty, value)
-
-    #def __getinitargs__(self):
-    #    return (self.name, self.tp, self.value, None)
-
+    # def __init__(self, name, ty, value):
+    #     #I have no idea why this works but it does ..... 
+    #     super(CPrimitive, self).__init__(name, ty, value)
     def __getstate__(self):
         #print("self.name", self.name)
         return self.name
@@ -164,13 +149,15 @@ class CPrimitive(Primitive):
             pass #do nothing, i don't need to load them if they are old...
         else:
             p = Primitive.GLOBALS[state]
-            self.__init__(p.name, p.tp, p.value, p.constraint) 
+            self.__init__(p.name, p.tp, p.value) 
+
+
 
 
 
 if __name__=='__main__':
     import time
-    Primitive("testCPrim", tint, lambda x: x, 17)
+    CPrimitive("testCPrim", tint, lambda x: x, 17)
     g = Grammar.fromProductions(RobustFillProductions())
     print(len(g))
     request = tprogram

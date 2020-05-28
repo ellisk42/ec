@@ -86,6 +86,7 @@ def _findHolesEnum(path, request, sk, context=Context.EMPTY, environment=[]):
             #assert sk_f == full_f, "sketch and full program don't match on a primitive"
             context, ft = sk_f.tp.instantiate(context)
         elif sk_f.isAbstraction:
+            print(sk_f)
             assert False, "sketch is not in beta longform"
         elif sk_f.isHole:
             assert False, "hole as function not yet supported"
@@ -210,13 +211,14 @@ class NewExprPlacer:
     """
     as written, given a path and expression, it places a new expr in a hole
     """
-    def __init__(self):
+    def __init__(self, allowReplaceApp=False, returnInnerObj=False):
         """
         todo:
         [ ] stupid path reversing is confusing
         [ ] tp inference thing?
         """
         self.history = []
+        self.allowReplaceApp = allowReplaceApp
         #self.expr = expr
     def enclose(self, expr):
         for h in self.history[::-1]:
@@ -236,6 +238,9 @@ class NewExprPlacer:
         #return self.enclose(self.expr)
     def application(self, e):
         if self.path==[]:
+            if self.allowReplaceApp:
+                if self.returnInnerObj: self.innerObj = e
+                return self.enclose(self.expr)   
             assert False
             #return self.enclose(self.expr)
 
@@ -259,15 +264,19 @@ class NewExprPlacer:
 
     def hole(self, e):
         assert self.path == []
+        if self.returnInnerObj: self.innerObj = e
         return self.enclose(self.expr)
 
     def execute(self, sk, path, newSubtree):
+        self.innerObj = None
         self.expr = newSubtree
         self.path = list(reversed(path))
         ret = sk.visit(self) #should return actual program
         self.path = []
         self.history = []
+        if self.returnInnerObj: return ret, self.innerObj
         return ret
+
 
 class OneStepFollower:
     """
@@ -598,5 +607,4 @@ def getTracesFromProg(full, tp, g, onlyPos=False, returnNextNode=False, canonica
         last = newLast
         zippers = findHoles(last, tp)
     if returnNextNode:
-        return [baseHoleOfType(tp)] + trace[:-1], negTrace, targetNodes, holesToExpand
-    return trace, negTrace
+        return [baseHoleOfType(tp)] +

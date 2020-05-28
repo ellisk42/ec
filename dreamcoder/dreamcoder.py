@@ -11,7 +11,7 @@ from dreamcoder.primitiveGraph import graphPrimitives
 from dreamcoder.dreaming import backgroundHelmholtzEnumeration
 
 from dreamcoder.valueHead import SimpleRNNValueHead, AbstractREPLValueHead, SampleDummyValueHead, TowerREPLValueHead, SemiOracleValueHead
-from dreamcoder.policyHead import BasePolicyHead, RNNPolicyHead, REPLPolicyHead
+from dreamcoder.policyHead import BasePolicyHead, RNNPolicyHead, REPLPolicyHead,RBREPLPolicyHead
 
 from dreamcoder.symbolicAbstractTowers import SymbolicAbstractTowers
 import sys
@@ -312,14 +312,27 @@ def ecIterator(grammar, tasks,
             path = checkpointPath(resume)
         except ValueError:
             path = resume
-        with open(path, "rb") as handle:
-            result = dill.load(handle)
-        resume = len(result.grammars) - 1
-        eprint("Loaded checkpoint from", path)
+        try:
+            with open(path, "rb") as handle:
+                result = dill.load(handle)
+            resume = len(result.grammars) - 1
+            eprint("Loaded checkpoint from", path)
 
-        #import pdb; pdb.set_trace()
+            #import pdb; pdb.set_trace()
+            grammar = result.grammars[-1] if result.grammars else grammar
+        except FileNotFoundError:
+            numTestingTasks = len(testingTasks) if len(testingTasks) != 0 else None
 
-        grammar = result.grammars[-1] if result.grammars else grammar
+            result = ECResult(parameters=parameters,            
+                              grammars=[grammar],
+                              taskSolutions={
+                                  t: Frontier([],
+                                              task=t) for t in tasks},
+                              recognitionModel=None, numTestingTasks=numTestingTasks,
+                              allFrontiers={
+                                  t: Frontier([],
+                                              task=t) for t in tasks})
+
     else:  # Start from scratch
         #for graphing of testing tasks
         numTestingTasks = len(testingTasks) if len(testingTasks) != 0 else None
@@ -333,6 +346,8 @@ def ecIterator(grammar, tasks,
                           allFrontiers={
                               t: Frontier([],
                                           task=t) for t in tasks})
+
+
 
 
     # Set up the task batcher.
@@ -475,7 +490,8 @@ def ecIterator(grammar, tasks,
                                recognitionSteps=recognitionSteps, maximumFrontier=maximumFrontier, useValue=useValue, 
                                trainOnly=True, saveIter=100, savePath=recModelPath, resumeTrainingModel=resumeTrainingModel,
                                seperateFeatureExtractor=bool(useSamplePolicy), conditionalForValueTraining=conditionalForValueTraining,
-                               searchType=searchType, filterMotifs=filterMotifs, policyType=policyType)
+                               searchType=searchType, filterMotifs=filterMotifs, policyType=policyType,
+                               defaultRequest=arrow(grammar.continuationType, grammar.continuationType))
 
 
         #check log likelihood
@@ -759,7 +775,7 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
                       auxiliaryLoss=None, cuda=None, CPUs=None, solver=None, useValue=False, 
                       trainOnly=False, saveIter=None, savePath=None, resumeTrainingModel=None,
                       seperateFeatureExtractor=False, conditionalForValueTraining=False, searchType=None,
-                      filterMotifs=[], policyType="base"):
+                      filterMotifs=[], policyType="base", defaultRequest=None):
     eprint("Using an ensemble size of %d. Note that we will only store and test on the best recognition model." % ensembleSize)
 
     featureExtractorObjects = [featureExtractor(tasks, testingTasks=testingTasks, cuda=cuda) for i in range(ensembleSize)]
@@ -794,6 +810,9 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
                                         canonicalOrdering=True)
         elif policyType == "REPL":
             policyHead = REPLPolicyHead(grammar, featureExtr, H=featureExtr.outputDimensionality, 
+                                        canonicalOrdering=True)
+        elif policyType == "RBREPL":
+            policyHead = RBREPLPolicyHead(grammar, featureExtr, H=featureExtr.outputDimensionality, 
                                         canonicalOrdering=True)
         else: assert False
 
@@ -834,7 +853,8 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
                                                                          vectorized=True,
                                                                          saveIter=saveIter,
                                                                          savePath=savePath,
-                                                                         conditionalForValueTraining=conditionalForValueTraining),
+                                                                         conditionalForValueTraining=conditionalForValueTraining,
+                                                                         defaultRequest=defaultRequest),
                                      recognizers,
                                      seedRandom=True)
 
@@ -1205,7 +1225,7 @@ def commandlineArguments(_=None,
                         help="use value-based search")
     parser.add_argument("--policyType", type=str,
                         default="base",
-                        choices=["base", "tree", "RNN", "REPL"],
+                        choices=["base", "tree", "RNN", "REPL", "RBREPL"],
                         help="what type of policy to use")
     parser.add_argument("--singleRoundValueEval",
                         action='store_true',

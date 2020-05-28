@@ -1223,25 +1223,34 @@ class RecognitionModel(nn.Module):
             random.seed(seed)
         request = random.choice(requests)
 
-        program = self.generativeModel.sample(request, maximumDepth=6, maxAttempts=100)
-        if program is None:
-            return None
+        #hack for robustfill:
+        if hasattr(self.featureExtractor, 'sampleHelmholtzTask'):
+            program, task = self.featureExtractor.sampleHelmholtzTask(request, motifs=self.filterMotifs)
+            if program is None: return None
 
-        if self.filterMotifs:
-            for _, expr in program.walkUncurried():
-                if any( f(expr) for f in self.filterMotifs):
-                    return None
+            if statusUpdate is not None:
+                flushEverything()
 
-        task = self.featureExtractor.taskOfProgram(program, request) 
-
-        if statusUpdate is not None:
-            flushEverything()
-        if task is None:
-            return None
-
-        if hasattr(self.featureExtractor, 'lexicon'):
-            if self.featureExtractor.tokenize(task.examples) is None:
+        else:            
+            program = self.generativeModel.sample(request, maximumDepth=6, maxAttempts=100) 
+            if program is None:
                 return None
+
+            if self.filterMotifs:
+                for _, expr in program.walkUncurried():
+                    if any( f(expr) for f in self.filterMotifs):
+                        return None
+
+            task = self.featureExtractor.taskOfProgram(program, request) 
+
+            if statusUpdate is not None:
+                flushEverything()
+            if task is None:
+                return None
+
+            if hasattr(self.featureExtractor, 'lexicon'):
+                if self.featureExtractor.tokenize(task.examples) is None:
+                    return None
         
         ll = self.generativeModel.logLikelihood(request, program)
         frontier = Frontier([FrontierEntry(program=program,
@@ -1256,17 +1265,17 @@ class RecognitionModel(nn.Module):
         startingSeed = random.random()
 
         # Sequentially for ensemble training.
-        samples = [self.sampleHelmholtz(requests,
-                                           statusUpdate='.' if n % frequency == 0 else None,
-                                           seed=startingSeed + n) for n in range(N)]
+        # samples = [self.sampleHelmholtz(requests,
+        #                                    statusUpdate='.' if n % frequency == 0 else None,
+        #                                    seed=startingSeed + n) for n in range(N)]
 
         # (cathywong) Disabled for ensemble training. 
-        # samples = parallelMap(
-        #     1,
-        #     lambda n: self.sampleHelmholtz(requests,
-        #                                    statusUpdate='.' if n % frequency == 0 else None,
-        #                                    seed=startingSeed + n),
-        #     range(N))
+        samples = parallelMap(
+            CPUs,
+            lambda n: self.sampleHelmholtz(requests,
+                                           statusUpdate='.' if n % frequency == 0 else None,
+                                           seed=startingSeed + n),
+            range(N))
         eprint()
         flushEverything()
         samples = [z for z in samples if z is not None]

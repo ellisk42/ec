@@ -13,6 +13,9 @@ import heapq
 
 import hashlib
 
+def count_parameters(model):
+    return sum(p.numel() for p in model.parameters() if p.requires_grad)
+
 def computeMD5hash(my_string):
     #https://stackoverflow.com/questions/13259691/convert-string-to-md5
     m = hashlib.md5()
