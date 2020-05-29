@@ -1079,6 +1079,7 @@ class RecognitionModel(nn.Module):
         valueHeadLosses = []
         realValueLosses = []
         dreamValueLosses = []
+        backTimes = []
         policyHeadLosses, realPolicyLosses, dreamPolicyLosses = [], [], []
         totalGradientSteps = self.gradientStepsTaken
         startingGradientSteps = self.gradientStepsTaken
@@ -1108,7 +1109,10 @@ class RecognitionModel(nn.Module):
                 dreaming = random.random() < helmholtzRatio
                 if dreaming: frontier = getHelmholtz()
                 self.zero_grad()
-                loss, classificationLoss = \
+                if self.useValue and not isinstance(self.policyHead, BasePolicyHead):
+                    loss, classificationLoss = torch.tensor(0), torch.tensor(0)
+                else:
+                    loss, classificationLoss = \
                         self.frontierBiasOptimal(frontier, auxiliary=auxLoss, vectorized=vectorized) if biasOptimal \
                         else self.frontierKL(frontier, auxiliary=auxLoss, vectorized=vectorized)
 
@@ -1145,7 +1149,9 @@ class RecognitionModel(nn.Module):
                     #ttt = time.time()
                     try:
                         if self.useValue and not isinstance(self.policyHead, BasePolicyHead):
+                            t = time.time()
                             (valueHeadLoss + policyHeadLoss).backward()
+                            backTimes.append(time.time() - t)
                         else: (loss + classificationLoss + valueHeadLoss + policyHeadLoss).backward()
                         n_runtimeErrors = 0
                     except RuntimeError as e:
@@ -1205,6 +1211,7 @@ class RecognitionModel(nn.Module):
                     eprint("(ID=%d): " % self.id, "\tpolicy loss:", mean(policyHeadLosses))
                     eprint("(ID=%d): " % self.id, "\t\t(real policy loss):", mean(realPolicyLosses))
                     eprint("(ID=%d): " % self.id, "\t\t(dream policy loss):", mean(dreamPolicyLosses), flush=True)
+                    eprint(f"backwards pass times: {mean(backTimes)}")
 
                 losses, descriptionLengths, realLosses, dreamLosses, realMDL, dreamMDL = [], [], [], [], [], []
                 classificationLosses = []
@@ -1212,6 +1219,7 @@ class RecognitionModel(nn.Module):
                 realValueLosses = []
                 dreamValueLosses = []
                 policyHeadLosses, realPolicyLosses, dreamPolicyLosses = [], [], []
+                backTimes = []
                 gc.collect()
         
         eprint("(ID=%d): " % self.id, " Trained recognition model in",time.time() - start,"seconds")
