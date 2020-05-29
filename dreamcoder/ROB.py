@@ -656,7 +656,7 @@ def generate_FIO(n_ios, verbose=False, limit_p_size=None):
             pass
 
     if verbose: print ("gneration failed retrying")
-    return generate_FIO(n_ios)
+    return generate_FIO(n_ios, verbose=verbose, limit_p_size=limit_p_size)
 
 def get_supervised_sample(n_ios=4,
                           render_kind={'render_scratch' : 'yes',
