@@ -16,8 +16,8 @@ for num in ""
 	do
 		#symbolic
 
-		resume=experimentOutputs/rb${num}PolicyOnly
-		salt=PolicyOnly
+		resume=experimentOutputs/rb${num}PolicyOnly2Commit
+		salt=PolicyOnly2Commit
 		#cp ${oldResume}.pickle ${resume}.pickle
 
 
@@ -29,7 +29,7 @@ for num in ""
 
 		#REPL
 		#cp ${resume}.pickle ${resume}REPL.pickle
-		cmd="python bin/rb.py --policyType RBREPL --searchType Astar --contextual --testingTimeout ${testingTime} --recognitionTimeout 216000 --resumeTraining -r ${helmRatio} -t ${time} -RS ${recSteps} --solver python  -c ${ncores} --useValue Sample -i 2  --resume ${resume}REPL.pickle --singleRoundValueEval --seed 3"
+		cmd="python bin/rb.py --policyType RBREPL --searchType Astar --contextual --testingTimeout ${testingTime} --recognitionTimeout 216000 --resumeTraining -r ${helmRatio} -t ${time} -RS ${recSteps} --solver python  -c ${ncores} --useValue Sample -i 2  --resume ${resume}REPL.pickle --singleRoundValueEval --seed 4"
 		sbatch -e rbREPL${salt}.out -o rbREPL${salt}.out execute_gpu_new.sh ${cmd}
 		#eval "${cmd}"
 

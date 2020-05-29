@@ -421,18 +421,6 @@ class AbstractREPLValueHead(BaseValueHead):
 
         # else:
         posTrace, negTrace =  getTracesFromProg(fullProg, frontier.task.request, g)
-            # self.mem[frontier] = posTrace, negTrace
-            # print("POS:")
-            # for pos in posTrace: print(pos)
-            # print("NEG:")
-            # for neg in negTrace: print(neg)
-
-            # for frontier in self.mem:
-            #         posT , _ = self.mem[frontier]
-            #         for pos in posT:
-            #             if any(pos == neg for _, negt in self.mem.values() for neg in negt):
-            #                 print("interference:")
-            #                 print(pos)
 
 
         #discard negative sketches which overlap with positive

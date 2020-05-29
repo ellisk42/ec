@@ -627,11 +627,15 @@ def generate_string(constraint, max_string_size=MAX_STR_LEN):
 def executeProg(prog, inp):
     return BUTT.apply_fs(BUTT.RobState.new([inp], [""]), prog.flatten()).committed[0]
 
-def generate_FIO(n_ios, verbose=False):
+def generate_FIO(n_ios, verbose=False, limit_p_size=None):
     """
         generate a function, inputs, outputs triple
     """
     prog = P.generate()
+    if limit_p_size:
+        if len(prog.exprs) > limit_p_size:
+            return generate_FIO(n_ios, verbose=verbose, limit_p_size=limit_p_size)
+            
     inputs = []
     outputs = []
     for _ in range(20):

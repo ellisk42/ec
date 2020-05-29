@@ -34,6 +34,7 @@ TODO:
 - [X] make RBTask
 - [X] make test tasks
 """
+LIMIT_P_SIZE = 2 #NONE
 
 class RBTask():
     def __init__(self, name, request, examples, supervision=None):
@@ -116,7 +117,7 @@ class RBFeatureExtractor(nn.Module):
 
     def sampleHelmholtzTask(self, request, motifs=[]):
         assert request == arrow(texpression, texpression)
-        p, I, O = ROB.generate_FIO(4)
+        p, I, O = ROB.generate_FIO(4, limit_p_size=LIMIT_P_SIZE)
         program = p.ecProg()
         if motifs:
             for _, expr in program.walkUncurried():
