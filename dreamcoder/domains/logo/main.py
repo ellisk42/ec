@@ -625,11 +625,14 @@ def main(args):
     r = None
     for result in generator:
         iteration = len(result.learningCurve)
-        dreamDirectory = "%s/dreams_%d"%(outputDirectory, iteration)
-        os.system("mkdir  -p %s"%dreamDirectory)
-        eprint("Dreaming into directory",dreamDirectory)
-        dreamFromGrammar(result.grammars[-1],
-                         dreamDirectory)
+        
+        # Skip dreaming.
+        if False:
+            dreamDirectory = "%s/dreams_%d"%(outputDirectory, iteration)
+            os.system("mkdir  -p %s"%dreamDirectory)
+            eprint("Dreaming into directory",dreamDirectory)
+            dreamFromGrammar(result.grammars[-1],
+                             dreamDirectory)
         r = result
 
     needsExport = [str(z)

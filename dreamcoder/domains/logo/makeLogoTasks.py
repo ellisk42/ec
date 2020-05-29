@@ -49,7 +49,10 @@ def drawLogo(*programs,
     return response
 
 def makeTasks(subfolders, proto):
-    return manualLogoTasks()
+    tasks =  manualLogoTasks()
+    lens = [t.token_len for t in tasks]
+    print(f"Max len: {max(lens)}, average len: {np.mean(lens)}")
+    return tasks
 
 def parseLogo(s):
         
@@ -149,7 +152,9 @@ def parseLogo(s):
     try: return Abstraction(command(s, [], Index(0)))
     except: return Abstraction(block(s, [], Index(0)))
 
-
+def token_length(p):
+    return len(str(p).replace("lambda", " ").replace(")", " ").replace("(", " ").split())
+    
 def manualLogoTask(name, expression, proto=False, needToTrain=False,
                    supervise=False, lambdaCalculus=False, resolution=[28,128],
                    language=None):
@@ -190,6 +195,10 @@ def manualLogoTask(name, expression, proto=False, needToTrain=False,
     t.highresolution = highresolution
     t.groundTruthProgram = p
     t.expression = expression
+    
+    
+        
+    t.token_len = token_length(p)
 
     if supervise:
         t.supervisedSolution = p
