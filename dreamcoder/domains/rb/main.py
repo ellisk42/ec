@@ -34,7 +34,7 @@ TODO:
 - [X] make RBTask
 - [X] make test tasks
 """
-LIMIT_P_SIZE = 2 #NONE
+LIMIT_P_SIZE = None #2 #NONE
 
 class RBTask():
     def __init__(self, name, request, examples, supervision=None):
