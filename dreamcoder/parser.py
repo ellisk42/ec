@@ -85,7 +85,6 @@ class TokenRecurrentFeatureExtractor(RecurrentFeatureExtractor):
         self.tokenized_tasks[use_task_name] = [ 
                                         [self.add_unk(tokens), []]
                                      ]
-        print(self.tokenized_tasks[use_task_name])
         return self.tokenized_tasks[use_task_name] # Feature extractor examples are usually lists of (xs, y) sets.
     
     def add_unk(self, sentences, max_sentences=1):

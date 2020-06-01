@@ -325,10 +325,11 @@ language_checkpoints = [("best-human-test", "experimentOutputs/logo/2020-05-29T1
 ] 
 enumerationTimeout = 1
 recognition_timeout = 1
+testing_timeout = 1800
 for (name, language_checkpoint, last_iter, dataset, type) in language_checkpoints:
     job_name = f"logo_2_ec_test_human_{name}"
     jobs.append(job_name)
-    base_parameters = f" --enumerationTimeout {enumerationTimeout} --testingTimeout {enumerationTimeout}  --iterations {last_iter + 1} --biasOptimal --contextual --taskBatchSize {task_batch_size} --testEvery 1 --no-cuda --recognitionTimeout {recognition_timeout} --recognition_0 examples --Helmholtz 0.5 --iterations_as_epochs 0 "
+    base_parameters = f" --enumerationTimeout {enumerationTimeout} --testingTimeout {testing_timeout}  --iterations {last_iter + 1} --biasOptimal --contextual --taskBatchSize {task_batch_size} --testEvery 1 --no-cuda --recognitionTimeout {recognition_timeout} --recognition_0 examples --Helmholtz 0.5 --iterations_as_epochs 0 "
     exp_parameters = f" --taskDataset {dataset} --languageDataset {dataset}/humans --resume {language_checkpoint} --no-dsl --no-consolidation --test_human_clean_vocab "
     
     exp_command = base_command + base_parameters + exp_parameters

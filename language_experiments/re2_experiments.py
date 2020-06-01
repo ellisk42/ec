@@ -253,7 +253,7 @@ for (name, language_checkpoint, last_iter, dataset, type) in language_checkpoint
     job +=1
 
 # Run baseline DSL test.
-RUN_BASELINE_DSL_ENUM_AND_RECOGNITION_TEST = True
+RUN_BASELINE_DSL_ENUM_AND_RECOGNITION_TEST = False
 enumerationTimeout = 720
 recognition_timeout = 1800
 dataset = 're2_1000'
@@ -269,6 +269,48 @@ if RUN_BASELINE_DSL_ENUM_AND_RECOGNITION_TEST:
     experiment_commands += build_replications(exp_command, job, job_name)
 job +=1
 
+
+# Generate no-language test time experiments. For now, these are mnaual.
+RUN_NO_LANGUAGE_TEST_EXPERIMENTS_GHELM = True
+language_checkpoints = [("best-no-language", "experimentOutputs/re2/2020-05-14T23-29-59-856576/re2_aic=1.0_arity=3_BO=T_CO=T_ES=1_ET=720_HR=0.5_it=27_MF=5_n_models=1_no_dsl=F_pc=30.0_RT=1800_RR=F_RW=F_STM=T_L=10.0_batch=40_K=2_topLL=F_LANG=F.pickle", 27, 're2_1000', "no-language"),
+] 
+
+enumerationTimeout = 720
+recognition_timeout = 1800
+for (name, language_checkpoint, last_iter, dataset, type) in language_checkpoints:
+    job_name = f"re2_ec_test_no_language_{name}"
+    jobs.append(job_name)
+    base_parameters = f" --enumerationTimeout {enumerationTimeout} --testingTimeout {enumerationTimeout}  --iterations {last_iter + 1} --biasOptimal --contextual --taskBatchSize {task_batch_size} --testEvery 1 --no-cuda --recognitionTimeout {recognition_timeout} --recognition_0 examples --Helmholtz 0.5 --iterations_as_epochs 0 "
+    exp_parameters = f" --taskDataset {dataset} --languageDataset {dataset}/synthetic --resume {language_checkpoint} --no-dsl --no-consolidation --test_dsl_only --primitives re2_chars_None re2_bootstrap_v1_primitives"
+    if type == 'language': exp_parameters += "--test_only_after_recognition" # Runs both tests.
+    
+    exp_command = base_command + base_parameters + exp_parameters
+    command = build_command(exp_command, job, job_name, replication=None)
+    if RUN_NO_LANGUAGE_TEST_EXPERIMENTS_GHELM:
+        if not NO_ORIGINAL_REPL: experiment_commands.append(command)
+        experiment_commands += build_replications(exp_command, job, job_name)
+    job +=1
+
+# Generate human at test time experiments.
+RUN_HUMAN_TEST_EXPERIMENTS_GHELM = True
+language_checkpoints = [("best-ghelm-re2-language-27-repl-2", "experimentOutputs/re2/2020-05-18T19-50-59-156776/re2_aic=1.0_arity=3_ET=720_it=30_MF=5_n_models=1_no_dsl=F_pc=30.0_RS=10000_RW=F_STM=T_L=10.0_batch=40_K=2_topLL=F_LANG=F.pickle", 30, 're2_1000', "language")
+] 
+
+enumerationTimeout = 720
+recognition_timeout = 1800
+for (name, language_checkpoint, last_iter, dataset, type) in language_checkpoints:
+    job_name = f"re2_ec_test_human_{name}"
+    jobs.append(job_name)
+    base_parameters = f" --enumerationTimeout {enumerationTimeout} --testingTimeout {enumerationTimeout}  --iterations {last_iter + 1} --biasOptimal --contextual --taskBatchSize {task_batch_size} --testEvery 1 --no-cuda --recognitionTimeout {recognition_timeout} --recognition_0 examples --Helmholtz 0.5 --iterations_as_epochs 0 "
+    exp_parameters = f" --taskDataset {dataset} --languageDataset {dataset}/human --resume {language_checkpoint} --no-dsl --no-consolidation --primitives re2_chars_None re2_bootstrap_v1_primitives --test_human_clean_vocab "
+
+    
+    exp_command = base_command + base_parameters + exp_parameters
+    command = build_command(exp_command, job, job_name, replication=None)
+    if RUN_HUMAN_TEST_EXPERIMENTS_GHELM:
+        if not NO_ORIGINAL_REPL: experiment_commands.append(command)
+        experiment_commands += build_replications(exp_command, job, job_name)
+    job +=1
 
 #### Outputs
 PRINT_LOG_SCRIPT = False
