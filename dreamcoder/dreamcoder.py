@@ -221,6 +221,7 @@ def ecIterator(grammar, tasks,
                synchronous_grammar=False,
                language_compression=False,
                lc_score=False,
+               translate_dreams=False,
                max_compression=0):
     if enumerationTimeout is None:
         eprint(
@@ -490,6 +491,41 @@ def ecIterator(grammar, tasks,
         with open(path, "wb") as handle: dill.dump(result, handle)
         if recognition_0: ECResult.clearRecognitionModel(path)
             
+        sys.exit(0)
+    
+    if translate_dreams:
+        dream_directory = "language_experiments/logo_dissection/logo_dreams"
+        print("Translating dreams, then exiting.")
+        serialize_special = featureExtractor.serialize_special if hasattr(featureExtractor, 'serialize_special') else None
+        maximum_helmholtz = featureExtractor.maximum_helmholtz if hasattr(featureExtractor, 'maximum_helmholtz') else None
+        eprint(f"Dreaming for {enumerationTimeout}s")
+        grammar = result.grammars[-2] # Since we update beforehand
+        helmholtzFrontiers = backgroundHelmholtzEnumeration(tasks, grammar, enumerationTimeout,
+                                                            evaluationTimeout=evaluationTimeout,
+                                                            special=featureExtractor.special,
+                                                            executable='helmholtz',
+                                                            serialize_special=serialize_special,
+                                                            maximum_size=maximum_helmholtz)
+        recognizer = result.models[-1]   
+        # Reset all the frontiers, which are out of date
+        f = [f.makeEmpty(f.task) for f in result.allFrontiers.values()]     
+        recognizer.train(f,
+                                            biasOptimal=biasOptimal,
+                                            helmholtzFrontiers=helmholtzFrontiers(), 
+                                            CPUs=CPUs,
+                                            evaluationTimeout=evaluationTimeout,
+                                            timeout=1,
+                                            steps=recognitionSteps,
+                                            helmholtzRatio=helmholtzRatio,
+                                            auxLoss=auxiliaryLoss,
+                                            vectorized=True,
+                                            epochs=recognitionEpochs,
+                                            dream_directory=dream_directory)
+        # Translate the dreams.
+        max_frontiers = 50
+        from dreamcoder.domains.logo.makeLogoTasks import drawLogo
+    
+        
         sys.exit(0)
         
     ## Data dissection with the result.
@@ -1256,6 +1292,10 @@ def commandlineArguments(_=None,
         activation)
     
     ### SMT generative model training.
+    parser.add_argument("--translate_dreams",
+                        help="Dreams into a directory and translates them.",
+                         action="store_true")
+                        
     parser.add_argument("--lc_score",
                         default=0.2,
                         type=float,

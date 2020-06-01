@@ -140,7 +140,12 @@ class TokenRecurrentFeatureExtractor(RecurrentFeatureExtractor):
                                     ] for f in helmholtz_frontiers
                                    }
     
-        
+    def pretty_print_helmholtz_translations(self, task_name):
+        translations = self.tokenized_helmholtz[task_name]
+        pretty = "\n"
+        for t in translations[0]:
+            pretty+= " ".join(t) + "\n"
+        return pretty
     
 class NgramFeaturizer(nn.Module):
     """

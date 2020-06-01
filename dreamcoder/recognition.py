@@ -977,7 +977,8 @@ class RecognitionModel(nn.Module):
               timeout=None, evaluationTimeout=0.001,
               helmholtzFrontiers=[], helmholtzRatio=0., helmholtzBatch=500,
               biasOptimal=None, defaultRequest=None, auxLoss=False, vectorized=True,
-              epochs=None):
+              epochs=None,
+              dream_directory=None):
         """
         helmholtzRatio: What fraction of the training data should be forward samples from the generative model?
         helmholtzFrontiers: Frontiers from programs enumerated from generative model (optional)
@@ -1149,6 +1150,29 @@ class RecognitionModel(nn.Module):
                 del helmholtzFrontiers[i]
             self.update_helmholtz_language(helmholtzFrontiers)
 
+        # The number of Helmholtz samples that we generate at once
+        # Should only affect performance and shouldn't affect anything else
+        helmholtzSamples = []
+
+        # Hacky way to exploit the recognition model's penchant for dreaming
+        if dream_directory:
+            names = ""
+            total_dreams = 5
+            dream_file = os.path.join(dream_directory, "dream_translations")
+            for ind in range(total_dreams):
+                print(f"Translating dream {ind+1}/{total_dreams} into {dream_file}")
+                frontier = getHelmholtz()
+                task = frontier.task
+                # Write out all of the dreams
+                image = np.reshape(np.array(task.highresolution), (128,128))
+                fn = os.path.join(dream_directory, f"translate_dream_{ind}.png")
+                import imageio
+                imageio.imwrite(fn, image)
+                translation = self.language_encoder.pretty_print_helmholtz_translations(task.name)
+                names += f"\n{fn}\n{translation}"
+            with open(os.path.join(dream_file), "w") as f:
+                f.write(names)
+            return
         # We replace each program in the frontier with its likelihoodSummary
         # This is because calculating likelihood summaries requires juggling types
         # And type stuff is expensive!
@@ -1168,10 +1192,7 @@ class RecognitionModel(nn.Module):
         eprint("(ID=%d): Bias optimal? %s" % (self.id, str(biasOptimal)))
         eprint(f"(ID={self.id}): Aux loss? {auxLoss} (n.b. we train a 'auxiliary' classifier anyway - this controls if gradients propagate back to the future extractor)")
 
-        # The number of Helmholtz samples that we generate at once
-        # Should only affect performance and shouldn't affect anything else
-        helmholtzSamples = []
-
+            
         optimizer = torch.optim.Adam(self.parameters(), lr=lr, eps=1e-3, amsgrad=True)
         start = time.time()
         losses, descriptionLengths, realLosses, dreamLosses, realMDL, dreamMDL = [], [], [], [], [], []
