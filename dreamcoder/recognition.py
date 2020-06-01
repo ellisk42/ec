@@ -1157,7 +1157,7 @@ class RecognitionModel(nn.Module):
         # Hacky way to exploit the recognition model's penchant for dreaming
         if dream_directory:
             names = ""
-            total_dreams = 5
+            total_dreams = 100
             dream_file = os.path.join(dream_directory, "dream_translations")
             for ind in range(total_dreams):
                 print(f"Translating dream {ind+1}/{total_dreams} into {dream_file}")

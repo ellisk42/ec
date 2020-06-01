@@ -143,7 +143,7 @@ class TokenRecurrentFeatureExtractor(RecurrentFeatureExtractor):
     def pretty_print_helmholtz_translations(self, task_name):
         translations = self.tokenized_helmholtz[task_name]
         pretty = "\n"
-        for t in translations[0]:
+        for t in translations[0][0]:
             pretty+= " ".join(t) + "\n"
         return pretty
     
