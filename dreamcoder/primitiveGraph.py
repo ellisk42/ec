@@ -1,6 +1,6 @@
 from dreamcoder.program import *
 
-def graphPrimitives(result, prefix, view=False):
+def graphPrimitives(result, prefix, view=False, translations={}, sample_tasks={}):
     try:
         from graphviz import Digraph
     except:
@@ -118,9 +118,23 @@ def graphPrimitives(result, prefix, view=False):
         g = Digraph()
         g.graph_attr['rankdir'] = 'LR'
 
+        def format_translation(p):
+            raw_translations = translations[str(p)]
+            return "<br />".join([f"{word} | {prob}" for (word, prob) in raw_translations])
+        
+        def format_tasks(p):
+            raw_tasks = sample_tasks[str(p)]
+            return "<br />".join([f"{task_name}" for task_name in raw_tasks])
+            
         for p in primitives:
+            if str(p) in englishDescriptions:
+                thisLabel = '<<font face="boldfontname"><u>%s</u></font><br />%s>'%(englishDescriptions[str(p)],simplification[p])
+            else:
+                translation = format_translation(p) if str(p) in translations else " "
+                tasks = format_tasks(p) if str(p) in sample_tasks else " "
+                thisLabel = '<<font face="boldfontname"><u>%s</u><u>%s</u></font><br />%s>'%(tasks, translation, simplification[p])
             g.node(getName(p),
-                   label="<%s>"%simplification[p])
+                   label=thisLabel)
         for p in primitives:
             children = {k
                         for _,k in p.body.walk()
@@ -154,6 +168,8 @@ def graphPrimitives(result, prefix, view=False):
                 for p in ordering[o]:
                     if str(p) in englishDescriptions:
                         thisLabel = '<<font face="boldfontname"><u>%s</u></font><br />%s>'%(englishDescriptions[str(p)],simplification[p])
+                    elif str(p) in translations:
+                        thisLabel = '<<font face="boldfontname"><u>%s</u></font><br />%s>'%(str(translations[str(p)]),simplification[p])
                     else:
                         eprint("WARNING: Do not have an English description of:\n",p)
                         eprint()

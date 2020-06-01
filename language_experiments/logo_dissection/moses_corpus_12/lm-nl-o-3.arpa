@@ -1,0 +1,463 @@
+\data\
+ngram 1=48
+ngram 2=149
+ngram 3=254
+
+\1-grams:
+-2.1740813	<unk>	0
+0	<s>	-1.3169068
+-1.070226	</s>	0
+-1.3487116	a	-0.42043626
+-1.5033712	medium	-0.28499717
+-1.7458041	semicircle	-0.1413292
+-1.5033712	connected	-0.6179368
+-1.9091597	by	-0.06279085
+-1.7458041	line	-0.15371051
+-1.9091597	to	-0.06279085
+-1.6078863	circle	-0.20326424
+-1.6078863	5	-0.1993736
+-1.5033712	sided	-0.6179368
+-1.974918	snowflake	-0.26884535
+-1.9091597	with	-0.26884535
+-1.3487116	short	-0.6616457
+-1.3487116	and	-0.76406485
+-1.5033712	gon	-0.41085684
+-1.3487116	as	-0.76406485
+-1.974918	arms	-0.26884535
+-1.974918	3	-0.26884535
+-1.7458041	space	-0.12124263
+-1.5033712	small	-0.31351575
+-1.7458041	square	-0.081414126
+-1.6078863	7	-0.17442411
+-1.7458041	stepped	-0.06279085
+-1.974918	staircase	-0.26884535
+-1.5033712	concentric	-0.23122914
+-1.4191928	s	-0.41336787
+-1.974918	in	-0.26884535
+-1.974918	row	-0.26884535
+-1.6078863	6	-0.1993736
+-1.7458041	9	-0.12124263
+-1.974918	pointed	-0.26884535
+-1.974918	star	-0.26884535
+-1.9091597	triangle	-0.121242605
+-1.6078863	8	-0.17442411
+-1.974918	big	-0.26884535
+-1.9091597	4	-0.26884535
+-1.9091597	separated	-0.06279085
+-1.974918	from	-0.26884535
+-1.6078863	next	-0.5210268
+-1.974918	greek	-0.26884535
+-1.974918	spiral	-0.26884535
+-1.9091597	turns	-0.06279085
+-1.974918	vertical	-0.26884535
+-1.9091597	2	-0.26884535
+-1.974918	zigzag	-0.26884535
+
+\2-grams:
+-0.67569333	semicircle </s>	0
+-0.930315	line </s>	0
+-0.71819335	circle </s>	0
+-0.67011654	gon </s>	0
+-0.2946965	arms </s>	0
+-0.9980835	square </s>	0
+-0.2946965	staircase </s>	0
+-1.2023532	s </s>	0
+-0.2946965	row </s>	0
+-0.2946965	star </s>	0
+-1.0256634	triangle </s>	0
+-0.68144983	turns </s>	0
+-0.2946965	zigzag </s>	0
+-0.44838655	<s> a	-0.8218936
+-0.76098704	by a	-0.9200806
+-0.76098704	to a	-1.0102572
+-0.8554	with a	-1.2928038
+-0.07802659	and a	-1.3583997
+-0.31366572	in a	-1.1071672
+-0.31366572	from a	-0.2812148
+-0.6742709	a medium	-0.8240191
+-1.0667102	5 medium	-0.27816713
+-0.9617627	3 medium	-0.27816713
+-1.0667102	6 medium	-0.27816713
+-0.9617627	4 medium	-0.29835534
+-0.70854205	medium semicircle	-0.39629382
+-1.640291	small semicircle	-0.47138464
+-0.9029061	big semicircle	-0.27816713
+-1.345843	semicircle connected	-0.5842885
+-1.3940473	circle connected	-0.40819725
+-1.6019902	gon connected	-0.5051073
+-1.252363	square connected	-0.29835534
+-1.2704353	triangle connected	-0.40819725
+-0.11807617	connected by	-1.1283566
+-0.83778644	separated by	-0.5051073
+-1.3970227	medium line	-0.6190506
+-0.13770619	short line	-0.87649155
+-0.9029061	big line	-0.9200806
+-1.3735968	line to	-1.1283566
+-0.15339588	next to	-0.84752995
+-1.5122118	medium circle	-0.5255775
+-1.5824629	small circle	-0.32826877
+-0.42775792	concentric circle	-0.65123534
+-0.89053357	big circle	-0.27816713
+-0.9781352	<s> 5	-0.7833681
+-1.5436426	a 5	-0.27816713
+-1.3608476	medium 5	-0.65123534
+-0.7983779	small 5	-1.1863484
+-1.0667102	5 sided	-1.0614098
+-0.9617627	3 sided	-1.1283566
+-0.94574326	7 sided	-1.1485599
+-1.0667102	6 sided	-0.9522653
+-0.94574326	8 sided	-1.0614098
+-0.11831415	sided snowflake	-1.7746202
+-0.32959098	snowflake with	-1.648403
+-0.32959098	spiral with	-0.27816713
+-0.8746203	a short	-1.4688951
+-1.0257535	5 short	-0.27816713
+-0.93393004	3 short	-0.27816713
+-1.0257535	6 short	-0.27816713
+-0.93393004	4 short	-0.27816713
+-0.31366572	vertical short	-0.27816713
+-0.59364235	2 short	-0.27816713
+-1.261281	semicircle and	-0.5051073
+-1.186414	line and	-1.3859209
+-1.3118832	circle and	-0.40819725
+-1.404798	gon and	-0.2832585
+-0.9078705	space and	-1.5304132
+-1.0534258	square and	-0.27816713
+-1.0697131	triangle and	-0.2832585
+-1.2344174	5 gon	-0.57422554
+-1.1258345	7 gon	-0.50784403
+-1.2344174	6 gon	-0.3405195
+-0.9450866	9 gon	-0.4962082
+-1.1258345	8 gon	-0.37040868
+-1.261281	semicircle as	-0.9200806
+-1.0499312	line as	-0.7603798
+-1.3118832	circle as	-0.9522653
+-0.7031079	gon as	-1.297499
+-1.173554	square as	-0.7603798
+-1.1638212	s as	-0.27816713
+-1.195162	triangle as	-1.0102572
+-0.081098385	as arms	-1.7746202
+-0.8877803	<s> 3	-0.7658707
+-1.3970227	medium space	-0.5842885
+-1.2103792	short space	-1.4782351
+-0.9029061	big space	-0.5051073
+-0.7694557	a small	-0.9346801
+-1.0667102	5 small	-0.27816713
+-0.9617627	3 small	-0.27816713
+-1.0667102	6 small	-0.29152113
+-0.9617627	4 small	-0.27816713
+-1.3970227	medium square	-0.35431695
+-0.8073718	small square	-0.41702694
+-1.1911868	concentric square	-0.70922726
+-0.9386854	<s> 7	-0.9704756
+-1.5436426	a 7	-0.2832585
+-1.3608476	medium 7	-0.27816713
+-1.4403878	small 7	-0.9522653
+-1.1119355	5 stepped	-0.27816713
+-0.9816156	7 stepped	-0.2832585
+-0.991502	4 stepped	-0.45807135
+-1.1164745	stepped staircase	-0.70922726
+-0.9617627	3 concentric	-0.29835534
+-0.94574326	7 concentric	-0.29835534
+-0.94574326	8 concentric	-0.29835534
+-0.9617627	4 concentric	-0.5842885
+-0.60613495	2 concentric	-0.2832585
+-1.3015071	semicircle s	-0.5051073
+-1.0735118	line s	-0.37889007
+-0.7906993	circle s	-0.5445069
+-1.4345369	gon s	-0.40819725
+-1.2111733	square s	-0.54649997
+-1.0964029	triangle s	-0.29835534
+-0.27014425	s in	-1.1071672
+-1.6334901	a row	-1.1071672
+-1.0449696	<s> 6	-0.6576437
+-1.3608476	medium 6	-0.27816713
+-0.89053357	with 6	-0.27816713
+-1.4403878	small 6	-0.65123534
+-1.5841858	a 9	-0.27816713
+-1.3970227	medium 9	-0.27816713
+-1.4812915	small 9	-1.0365862
+-0.79086053	9 pointed	-0.27816713
+-0.33045697	pointed star	-0.27816713
+-1.4298744	medium triangle	-0.49984446
+-0.99802613	small triangle	-0.45094383
+-1.0215299	<s> 8	-0.89129436
+-1.3608476	medium 8	-0.27816713
+-0.89053357	with 8	-0.27816713
+-1.4403878	small 8	-0.80613726
+-1.8169626	a big	-0.6799201
+-1.2249829	<s> 4	-0.44569612
+-1.6213754	a 4	-0.5842885
+-1.7543236	gon separated	-0.2832585
+-1.2174847	triangle separated	-0.29835534
+-0.79086053	space from	-0.5051073
+-1.249673	semicircle next	-0.27816713
+-1.1249009	line next	-0.27816713
+-1.2928545	circle next	-0.27816713
+-0.72059363	gon next	-0.70922726
+-1.6334901	a greek	-0.29835534
+-0.33045697	greek spiral	-0.29835534
+-1.1323981	6 turns	-0.27816713
+-0.99758774	8 turns	-0.27816713
+-1.6334901	a vertical	-0.27816713
+-2.0191534	<s> 2	-0.2832585
+-0.91356194	with 2	-0.27816713
+-1.1164745	stepped zigzag	-0.29835534
+
+\3-grams:
+-0.8540656	medium semicircle </s>
+-0.8073704	small semicircle </s>
+-0.23345192	big semicircle </s>
+-1.3586674	short line </s>
+-0.7320591	medium circle </s>
+-0.7627765	small circle </s>
+-0.24122848	big circle </s>
+-0.6987274	5 gon </s>
+-0.5293885	7 gon </s>
+-0.395505	6 gon </s>
+-0.31752208	9 gon </s>
+-0.3940737	8 gon </s>
+-0.0036100317	as arms </s>
+-0.40603364	medium square </s>
+-0.872013	small square </s>
+-0.04394261	stepped staircase </s>
+-0.20616673	circle s </s>
+-0.21965161	square s </s>
+-0.017047325	a row </s>
+-0.13055848	pointed star </s>
+-0.6560351	medium triangle </s>
+-1.0200571	small triangle </s>
+-0.23454192	6 turns </s>
+-0.23454192	8 turns </s>
+-0.12369507	stepped zigzag </s>
+-0.027570417	connected by a
+-0.12979655	separated by a
+-0.027570417	line to a
+-0.054250006	next to a
+-0.0107374145	snowflake with a
+-0.022914616	semicircle and a
+-0.002946894	line and a
+-0.028837312	circle and a
+-0.038891535	gon and a
+-0.0021108415	space and a
+-0.039371617	square and a
+-0.038891535	triangle and a
+-0.017813211	s in a
+-0.07610676	space from a
+-0.50064933	<s> a medium
+-0.563777	by a medium
+-0.5008722	to a medium
+-0.6129623	with a medium
+-0.6983655	and a medium
+-0.6874247	from a medium
+-1.4482865	<s> 5 medium
+-1.4408102	<s> 3 medium
+-1.358944	<s> 6 medium
+-0.9371147	<s> 4 medium
+-0.7637234	a medium semicircle
+-0.23951674	5 medium semicircle
+-0.23951674	3 medium semicircle
+-0.22523819	4 medium semicircle
+-0.9137192	a small semicircle
+-0.88502675	4 small semicircle
+-1.3029388	a big semicircle
+-1.1347773	medium semicircle connected
+-0.7996807	small semicircle connected
+-1.1915225	medium circle connected
+-0.9923726	small circle connected
+-1.1306494	7 gon connected
+-1.0563626	9 gon connected
+-1.034784	medium square connected
+-1.2762061	small square connected
+-1.0140166	medium triangle connected
+-1.313766	small triangle connected
+-0.027796904	semicircle connected by
+-0.042392343	circle connected by
+-0.03357635	gon connected by
+-0.05540021	square connected by
+-0.042392343	triangle connected by
+-0.25587067	gon separated by
+-0.2441242	triangle separated by
+-0.8617766	a medium line
+-0.30374408	a short line
+-0.06712449	5 short line
+-0.06712449	3 short line
+-0.06712449	6 short line
+-0.06712449	4 short line
+-0.06712449	vertical short line
+-0.06712449	2 short line
+-0.22329925	a big line
+-0.29640666	medium line to
+-0.053115007	big line to
+-0.074083045	semicircle next to
+-0.074083045	line next to
+-0.074083045	circle next to
+-0.026006492	gon next to
+-0.7132164	a medium circle
+-0.31053403	6 medium circle
+-1.0913302	a small circle
+-0.879337	4 small circle
+-0.16444017	7 concentric circle
+-0.16444017	8 concentric circle
+-0.17156948	2 concentric circle
+-1.2964001	a big circle
+-1.9634136	<s> a 5
+-1.1609524	a medium 5
+-0.767347	a small 5
+-0.49440616	3 small 5
+-0.38449597	6 small 5
+-0.69446814	4 small 5
+-0.118458465	<s> 5 sided
+-0.13157642	<s> 3 sided
+-0.063645214	<s> 7 sided
+-0.17168713	<s> 6 sided
+-0.07757529	<s> 8 sided
+-0.009085504	5 sided snowflake
+-0.007775865	3 sided snowflake
+-0.0074193683	7 sided snowflake
+-0.011716585	6 sided snowflake
+-0.009085504	8 sided snowflake
+-0.003898346	sided snowflake with
+-0.13522485	greek spiral with
+-1.4695888	<s> a short
+-0.3004352	with a short
+-0.41593263	and a short
+-0.783981	from a short
+-1.4315836	<s> 5 short
+-1.4262085	<s> 3 short
+-1.3408116	<s> 6 short
+-1.1073191	<s> 4 short
+-0.13731414	a vertical short
+-0.21659072	with 2 short
+-0.80297244	medium semicircle and
+-1.3341483	small semicircle and
+-0.5527458	medium line and
+-0.20407128	short line and
+-1.1749272	medium circle and
+-0.9758462	small circle and
+-1.2451866	5 gon and
+-0.11251963	medium space and
+-0.012842244	short space and
+-1.1845508	small square and
+-0.92086214	small triangle and
+-0.102496125	medium 5 gon
+-0.027480315	small 5 gon
+-0.29037514	medium 7 gon
+-0.047335383	small 7 gon
+-0.29783446	medium 6 gon
+-0.102496125	small 6 gon
+-0.27345273	medium 9 gon
+-0.03691599	small 9 gon
+-0.29037514	medium 8 gon
+-0.06781533	small 8 gon
+-0.67169416	medium semicircle as
+-0.4010188	small semicircle as
+-0.8022331	short line as
+-0.33855647	medium circle as
+-0.6458669	small circle as
+-0.34293583	5 gon as
+-0.3726195	7 gon as
+-0.5684581	6 gon as
+-0.70201355	9 gon as
+-0.6673692	8 gon as
+-0.7654024	medium square as
+-0.41098994	small square as
+-0.90919393	line s as
+-0.42272228	medium triangle as
+-0.37168977	small triangle as
+-0.008984568	semicircle as arms
+-0.013038154	line as arms
+-0.00833661	circle as arms
+-0.003745131	gon as arms
+-0.013038154	square as arms
+-0.040849976	s as arms
+-0.007285754	triangle as arms
+-1.2440099	a medium space
+-0.3045385	a short space
+-0.7033361	a big space
+-0.34836817	<s> a small
+-0.20479877	to a small
+-0.6367463	with a small
+-0.40371665	and a small
+-0.42428476	from a small
+-1.2269704	<s> 5 small
+-1.2554656	<s> 3 small
+-1.0245023	<s> 6 small
+-0.6446998	<s> 4 small
+-1.1642499	a medium square
+-0.9814231	a small square
+-0.49674225	5 small square
+-0.6247146	6 small square
+-0.698177	4 small square
+-0.2762943	3 concentric square
+-0.12129015	4 concentric square
+-1.6148764	<s> a 7
+-1.9219137	a medium 7
+-0.9705988	a small 7
+-0.28928927	a 5 stepped
+-0.27290124	a 7 stepped
+-0.11570512	a 4 stepped
+-0.28487396	7 stepped staircase
+-0.22219186	4 stepped staircase
+-1.2554656	<s> 3 concentric
+-1.2713456	<s> 7 concentric
+-1.1921644	<s> 8 concentric
+-0.4196828	<s> 4 concentric
+-0.2160104	<s> 2 concentric
+-0.80837566	medium semicircle s
+-1.3497733	small semicircle s
+-1.1044722	short line s
+-1.1356764	medium circle s
+-0.93759614	small circle s
+-0.08995743	concentric circle s
+-1.0534282	5 gon s
+-0.9231313	small square s
+-0.087948136	concentric square s
+-1.0434933	small triangle s
+-0.06790565	semicircle s in
+-0.14761777	line s in
+-0.57896155	circle s in
+-0.0866813	gon s in
+-0.5479098	square s in
+-0.11520682	triangle s in
+-0.034476496	in a row
+-1.9219137	a medium 6
+-0.5167018	spiral with 6
+-1.3084495	a small 6
+-1.9790258	<s> a 9
+-1.9412844	a medium 9
+-0.8813429	a small 9
+-0.25314984	a 9 pointed
+-0.14313658	9 pointed star
+-0.711062	a medium triangle
+-0.94133115	a small triangle
+-0.5384576	5 small triangle
+-0.5384576	3 small triangle
+-1.9219137	a medium 8
+-0.5167018	spiral with 8
+-1.1310828	a small 8
+-1.7931743	<s> a big
+-0.1978849	by a big
+-1.1855302	<s> a 4
+-1.4347215	5 gon separated
+-1.4963071	9 gon separated
+-1.1285175	medium triangle separated
+-0.13191096	big space from
+-1.3109367	medium semicircle next
+-1.7157505	short line next
+-1.1983166	small circle next
+-1.0820799	5 gon next
+-1.0427371	7 gon next
+-0.8356619	6 gon next
+-1.0605925	9 gon next
+-0.67414886	8 gon next
+-1.7617655	<s> a greek
+-0.13550314	a greek spiral
+-0.29087692	with 6 turns
+-0.27903965	with 8 turns
+-1.99682	<s> a vertical
+-2.1063755	snowflake with 2
+-0.2896474	5 stepped zigzag
+-0.97689605	4 stepped zigzag
+
+\end\

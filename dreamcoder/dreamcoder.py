@@ -491,6 +491,17 @@ def ecIterator(grammar, tasks,
         if recognition_0: ECResult.clearRecognitionModel(path)
             
         sys.exit(0)
+        
+    ## Data dissection with the result.
+    if True:
+        print("Here in the data dissection.")
+        dissection = "language_experiments/logo_dissection/logo"
+        phrase_prefix = "language_experiments/logo_dissection/moses_corpus_12/model"
+        grammar = result.grammars[-1]
+        max_translations = get_max_probability_translations(phrase_prefix, grammar, max_n=3)
+        sample_tasks = get_example_tasks(result.allFrontiers, max_translations, max_tasks=3)
+        graphPrimitives(result, "%s_primitives_%d_"%(dissection,resume), translations=max_translations, sample_tasks=sample_tasks)
+        sys.exit(0)
     
     # Preload language dataset if avaiable.
     if languageDataset is not None:

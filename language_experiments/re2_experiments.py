@@ -14,7 +14,7 @@ AZURE_IMAGES = [
     ("ec-embeddings-central", "ec-language-central-us", ""),
     ("ec-embeddings-us-west", "ec-language-west", ""),
 ]
-AZURE_IMAGE = ("ec-embeddings-us-west", "ec-language-west", "")
+AZURE_IMAGE = ("ec-embeddings-central", "ec-language-central-us", "")
 
 def azure_commands(job_name): 
     image_name, group, location = AZURE_IMAGE
@@ -295,22 +295,23 @@ test_every = 3
 recognition_steps = 10000
 testing_timeout = 720
 lc_score = 0.2
-max_compression = 5
+max_compression = 2
 EXPS = [
-            ('re2_1000', 720, True, 0, 0, 0, True), # No compression
-            ('re2_1000', 720, True, 0, 0, 0, False), # No generative
-            ('re2_1000', 720, True, 0, 0.5, 0, False), # Generative language -- Helmholtz
-            ('re2_1000', 720, True, 0.1, 0.5, 0, False), # Generative language + injectivity
-            ('re2_1000', 720, True, 0.1, 0.5, 0.2, False), # Generative language + inject + lc
-            
+            # ('re2_1000', 720, True, 0, 0, 0, True), # No compression
+            # ('re2_1000', 720, True, 0, 0, 0, False), # No generative
+            # ('re2_1000', 720, True, 0, 0.5, 0, False), # Generative language -- Helmholtz
+            # ('re2_1000', 720, True, 0.1, 0.5, 0, False), # Generative language + injectivity
+            # ('re2_1000', 720, True, 0.1, 0.5, 0.2, False), # Generative language + inject + lc
+            ('re2_1000', 720, False, 0.01, 0.5, 0.01, False), # Generative language + inject + lc
+            ('re2_1000', 720, False, 0.01, 0.5, 0.05, False), # Generative language + inject + lc
             
 ]
 for dataset in ['re2_1000', 're2_500_aeioubcdfgsrt']:
     for enumerationTimeout in [720, 1800]:
         for use_vowel in [True, False]:
-            for pseudoalignment in [0, 0.1]:
+            for pseudoalignment in [0, 0.1, 0.01]:
                 for helmholtz in [0, 0.5]:
-                    for lc_score in [0, 0.2]:
+                    for lc_score in [0, 0.2, 0.01, 0.05]:
                         for no_consolidation in [True, False]:
                             exp = (dataset, enumerationTimeout, use_vowel, pseudoalignment, helmholtz, lc_score, no_consolidation)
                             pseudo_name = "pseudo_" if pseudoalignment > 0 else ""
@@ -354,7 +355,7 @@ testing_timeout = 720
 lc_score = 0.2
 max_compression = 5
 EXPS = [
-            ('re2_1000', 720, True, 0.1, 0.5, 0.2, False), # Generative language + inject + lc    
+            # ('re2_1000', 720, True, 0.1, 0.5, 0.2, False), # Generative language + inject + lc    
 ]
 for dataset in ['re2_1000', 're2_500_aeioubcdfgsrt']:
     for enumerationTimeout in [720, 1800]:

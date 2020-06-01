@@ -1,4 +1,91 @@
+# Dissection for analyzing the phrase tables
+import os
+from collections import defaultdict
 
+example_logos = {
+    "a medium 6 gon",
+    "a medium 7 gon",
+    "a small 9 gon",
+    
+    "4 small square s in a row",
+    "6 small 5 gon s in a row",
+    "5 medium semicircle s in a row",
+    
+    "3 concentric square s",
+    "2 concentric circle s",
+    "8 concentric circle s",
+    
+    "a 4 stepped staircase_copy_0",
+    "a 7 stepped staircase",
+    "a 4 stepped zigzag",
+    "a 5 stepped zigzag",
+    
+    "a small triangle connected by a big line to a medium triangle",
+    "a small circle next to a small 6 gon",
+    "a small 9 gon next to a medium square",
+    
+    "8 sided snowflake with a small triangle as arms",
+    "7 sided snowflake with a short line and a small 5 gon as arms",
+    "5 sided snowflake with a short line and a medium circle as arms",
+    "7 sided snowflake with a short space and a short line and a short space and a small 5 gon as arms",
+    "6 sided snowflake with a short space and a short line and a short space and a medium semicircle as arms",
+}
+def get_example_tasks(frontiers, max_translations, max_tasks):
+    top_tokens = defaultdict(list)    
+    for f in frontiers:
+        for e in frontiers[f].entries:
+            ml_tokens = e.tokens
+            for ml_token in ml_tokens:
+                if ml_token in max_translations:
+                    for (word, _) in max_translations[ml_token]:
+                        if word in f.name:
+                            if len(top_tokens[ml_token]) < max_tasks:
+                                if f.name not in top_tokens[ml_token]:
+                                    top_tokens[ml_token].append(f.name)
+    # top_tokens = defaultdict(list)    
+    # for f in frontiers:
+    #     if f.name in examples:
+    #         print("_".join(f.name.split())) # So we can find it
+    #         for e in  frontiers[f].entries:
+    #             tokens = e.tokens
+    #             for t in tokens:
+    #                 top_tokens[t].append(f.name)
+    return top_tokens
+    
+def read_alignments(prefix):
+    fn = os.path.join(prefix, "phrase-table")
+    with open(fn, 'r') as f:
+        lines = [l.strip().split(' ||| ') for l in f.readlines()]
+
+    all_alignments = [(program, word, float(p)) for (program, word, p) in lines]
+    # Print top-ranked distributions.
+    global_sorted = sorted(all_alignments, key=lambda v: v[-1], reverse = True)
+    # for (program, word, p) in global_sorted:
+    #     print(f"p({program} | '{word}') = {p}")
+    
+    alignments_per_word = defaultdict(list)
+    for (program, word, p) in global_sorted:
+        alignments_per_word[word].append((program, p))
+    
+    return alignments_per_word
+        
+def get_max_probability_translations(phrase_prefix, grammar, max_n=5):
+    """Get the maximum probability token translations"""
+    escaped_to_original = {str(v) : k for (k, v) in grammar.original_to_escaped.items()}
+    
+    alignments_per_word = read_alignments(phrase_prefix)
+    max_probability_translations = defaultdict(list)
+    for word in alignments_per_word:
+        for (token, p) in sorted(alignments_per_word[word], key = lambda a:a[-1], reverse = True)[:max_n]:
+            if token in escaped_to_original:
+                token = escaped_to_original[token]
+            max_probability_translations[token].append((word, p))
+    return max_probability_translations
+
+
+
+
+# Loads language for tasks
 def languageForTasks(languageDataset, languageDatasetDir, taskDict):
     """
     Loads a language dataset from {languageDatasetDir}/{languageDataset}.
