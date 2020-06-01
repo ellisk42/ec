@@ -1310,6 +1310,7 @@ class RecognitionModel(nn.Module):
                            maximumFrontier=None,
                            evaluationTimeout=None):
         with timing("Evaluated recognition model"):
+            print("Getting grammar of tasks.")
             grammars = {task: self.grammarOfTask(task)
                         for task in tasks}
             #untorch seperately to make sure you filter out None grammars

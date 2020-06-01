@@ -318,6 +318,25 @@ for (name, language_checkpoint, last_iter, dataset, type) in language_checkpoint
         if not NO_ORIGINAL_REPL: experiment_commands.append(command)
         experiment_commands += build_replications(exp_command, job, job_name)
     job +=1
+    
+# Generate human language at test time experiments.
+RUN_HUMAN_TEST_EXPERIMENTS = True
+language_checkpoints = [("best-human-test", "experimentOutputs/logo/2020-05-29T18-27-31-084960/logo_aic=1.0_arity=3_ET=1800_it=12_MF=5_no_dsl=F_pc=30.0_RW=F_STM=T_L=1.5_batch=40_K=2_topLL=F_LANG=F.pickle", 12, "logo_unlimited_200", "no-language")
+] 
+enumerationTimeout = 1
+recognition_timeout = 1
+for (name, language_checkpoint, last_iter, dataset, type) in language_checkpoints:
+    job_name = f"logo_2_ec_test_human_{name}"
+    jobs.append(job_name)
+    base_parameters = f" --enumerationTimeout {enumerationTimeout} --testingTimeout {enumerationTimeout}  --iterations {last_iter + 1} --biasOptimal --contextual --taskBatchSize {task_batch_size} --testEvery 1 --no-cuda --recognitionTimeout {recognition_timeout} --recognition_0 examples --Helmholtz 0.5 --iterations_as_epochs 0 "
+    exp_parameters = f" --taskDataset {dataset} --languageDataset {dataset}/humans --resume {language_checkpoint} --no-dsl --no-consolidation --test_human_clean_vocab "
+    
+    exp_command = base_command + base_parameters + exp_parameters
+    command = build_command(exp_command, job, job_name, replication=None)
+    if RUN_HUMAN_TEST_EXPERIMENTS:
+        if not NO_ORIGINAL_REPL: experiment_commands.append(command)
+        experiment_commands += build_replications(exp_command, job, job_name)
+    job +=1
 
 #### Outputs
 PRINT_LOG_SCRIPT = False
