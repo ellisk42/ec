@@ -7,6 +7,9 @@ def graphPrimitives(result, prefix, view=False, translations={}, sample_tasks={}
         eprint("You are missing the graphviz library - cannot graph primitives!")
         return
     
+    if len(sample_tasks) > 0:
+        frontiers_to_programs = sample_tasks['frontiers_to_programs']
+        tokens_to_tasks = sample_tasks['tokens_to_tasks']
 
     primitives = { p
                    for g in result.grammars
@@ -15,8 +18,8 @@ def graphPrimitives(result, prefix, view=False, translations={}, sample_tasks={}
     age = {p: min(j for j,g in enumerate(result.grammars) if p in g.primitives) + 1
            for p in primitives }
 
-
-
+    final_grammar = result.grammars[-1]
+    
     ages = set(age.values())
     age2primitives = {a: {p for p,ap in age.items() if a == ap }
                       for a in ages}
@@ -56,10 +59,11 @@ def graphPrimitives(result, prefix, view=False, translations={}, sample_tasks={}
         "logo_GETSET": "get/set"
     }
 
-                
+        
     name = {}
     simplification = {}
-    depth = {}
+    depth = {}                                      
+    
     def getName(p):
         if p in name: return name[p]
         children = {k: getName(k)
@@ -78,6 +82,18 @@ def graphPrimitives(result, prefix, view=False, translations={}, sample_tasks={}
 
     for p in primitives:
         getName(p)
+    
+    def simplify(p):
+        children = {k: getName(k)
+                    for _,k in p.walk()
+                    if k.isInvented}
+        simplification_ = p.body
+        for k,childName in children.items():
+            simplification_ = simplification_.substitute(k, Primitive(childName,None,None))
+        for original, simplified in nameSimplification.items():
+            simplification_ = simplification_.substitute(Primitive(original,None,None),
+                                                         Primitive(simplified,None,None))
+        return lb(prettyProgram(simplification_, Lisp=True))  
 
     depths = {depth[p] for p in primitives}
     depth2primitives = {d: {p for p in primitives if depth[p] == d }
@@ -113,6 +129,39 @@ def graphPrimitives(result, prefix, view=False, translations={}, sample_tasks={}
                            "Ensure suffix"
                            
     }
+    
+            
+    def pretty_print_tasks(task_name, token):
+        # program = str(frontiers_to_programs[(task_name, str(token))])
+        # return program
+        # for p in sorted(final_grammar.primitives, key=lambda p : len(str(p)), reverse=True):
+        #     if str(p) in program and p in simplification:
+        #         simple = simplification[p].replace(" <br /> ", "")
+        #         program = program.replace(str(p), simple)
+        simple = simplify(frontiers_to_programs[(task_name, str(token))])
+        return simple.replace("<br />", "")
+    
+    def get_age(p):
+        if p not in simplification: return 0
+        return int(simplification[p].split("=")[0].split('f')[-1]) + 1
+    
+    # Pretty print the grammars and some sample tasks.
+    for p in sorted(final_grammar.primitives, key=lambda p : get_age(p)):
+        p_name = str(p) if p not in simplification else str(simplification[p])
+        p_name = p_name.replace("<br />", "")
+        print(f"FN: {p_name}")
+            
+        if str(p) in translations:
+            print("Translations")
+            print("\n".join([f"{word} | {prob}" for (word, prob) in translations[str(p)]]))
+        if str(p) in tokens_to_tasks:
+            print("Example tasks")
+            raw_tasks = set(tokens_to_tasks[str(p)])
+            for task_name in raw_tasks:
+                print(task_name)
+                print(pretty_print_tasks(task_name, p))
+        print("\n")
+
 
     def makeUnorderedGraph(fn):
         g = Digraph()
@@ -123,7 +172,7 @@ def graphPrimitives(result, prefix, view=False, translations={}, sample_tasks={}
             return "<br />".join([f"{word} | {prob}" for (word, prob) in raw_translations])
         
         def format_tasks(p):
-            raw_tasks = sample_tasks[str(p)]
+            raw_tasks = set(tokens_to_tasks[str(p)])
             return "<br />".join([f"{task_name}" for task_name in raw_tasks])
             
         for p in primitives:
@@ -131,7 +180,7 @@ def graphPrimitives(result, prefix, view=False, translations={}, sample_tasks={}
                 thisLabel = '<<font face="boldfontname"><u>%s</u></font><br />%s>'%(englishDescriptions[str(p)],simplification[p])
             else:
                 translation = format_translation(p) if str(p) in translations else " "
-                tasks = format_tasks(p) if str(p) in sample_tasks else " "
+                tasks = format_tasks(p) if str(p) in tokens_to_tasks else " "
                 thisLabel = '<<font face="boldfontname"><u>%s</u><u>%s</u></font><br />%s>'%(tasks, translation, simplification[p])
             g.node(getName(p),
                    label=thisLabel)
@@ -171,8 +220,8 @@ def graphPrimitives(result, prefix, view=False, translations={}, sample_tasks={}
                     elif str(p) in translations:
                         thisLabel = '<<font face="boldfontname"><u>%s</u></font><br />%s>'%(str(translations[str(p)]),simplification[p])
                     else:
-                        eprint("WARNING: Do not have an English description of:\n",p)
-                        eprint()
+                        # eprint("WARNING: Do not have an English description of:\n",p)
+                        # eprint()
                         thisLabel = "<%s>"%simplification[p]
                     sg.node(getName(p),
                             label=thisLabel)

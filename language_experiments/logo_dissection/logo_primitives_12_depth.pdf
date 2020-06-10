@@ -2,117 +2,117 @@ digraph {
 	graph [rankdir=RL]
 	subgraph cluster_1 {
 		graph [rank=same]
-		f43 [label=<f43=(λ (x y z u) (y (λ (v w) <br /> (move 0 (/ 2π z) (x w))) <br /> u))>]
-		f4 [label=<<font face="boldfontname"><u>[('6', 0.0431655), ('turns', 0.8333333), ('greek', 0.625), ('spiral', 0.3571429), ('vertical', 0.2)]</u></font><br />f4=(λ (x y z) (for y (λ (u v) <br /> (move (* 1 u) (/ 2π x) v)) <br /> z))>]
-		f16 [label=<f16=(λ (x y z u) (move y (/ 2π z) <br /> (x u)))>]
-		f37 [label=<f37=(λ (x y z u) (y (λ (v w) <br /> (move 0 (/ 2π x) (z w))) <br /> u))>]
-		f0 [label=<<font face="boldfontname"><u>[('star', 0.2941176)]</u></font><br />f0=(λ (x y z) (for x (λ (u v) <br /> (move z y v))))>]
-		f39 [label=<f39=(λ (x y z u) (x (λ (v w) <br /> (move 0 (/ 2π z) (y w))) <br /> u))>]
-		f27 [label=<f27=(λ (x y z u) (z (λ (v w) <br /> (move 0 (/ 2π y) (x w))) <br /> u))>]
-		f15 [label=<<font face="boldfontname"><u>[('stepped', 1.0), ('staircase', 0.6349206), ('zigzag', 0.3571429)]</u></font><br />f15=(λ (x) (for x (λ (y z) <br /> (move 1 (/ 2π 4) (move 1 (- <br /> 2π (/ 2π 4)) z)))))>]
-		f29 [label=<f29=(λ (x y z u) (x (λ (v w) <br /> (move 0 (/ 2π y) (z w))) <br /> u))>]
+		f16 [label=<f16=(λ (x y z u) (x (λ (v w) <br /> (move 0 (/ 2π z) (y w))) <br /> u))>]
+		f17 [label=<f17=(λ (x y z u) (y (λ (v w) <br /> (move 0 (/ 2π x) (z w))) <br /> u))>]
+		f18 [label=<f18=(λ (x y z u) (y (λ (v w) <br /> (move 0 (/ 2π z) (x w))) <br /> u))>]
+		f43 [label=<<font face="boldfontname"><u>[('stepped', 1.0), ('staircase', 0.6349206), ('zigzag', 0.3571429)]</u></font><br />f43=(λ (x) (for x (λ (y z) <br /> (move 1 (/ 2π 4) (move 1 (- <br /> 2π (/ 2π 4)) z)))))>]
+		f9 [label=<f9=(λ (x y z u) (move y (/ 2π z) <br /> (x u)))>]
+		f13 [label=<f13=(λ (x y z u) (z (λ (v w) <br /> (move 0 (/ 2π y) (x w))) <br /> u))>]
+		f14 [label=<<font face="boldfontname"><u>[('6', 0.0431655), ('turns', 0.8333333), ('8', 0.0347222), ('greek', 0.625), ('zigzag', 0.0714286), ('spiral', 0.3571429), ('vertical', 0.2)]</u></font><br />f14=(λ (x y z) (for y (λ (u v) <br /> (move (* 1 u) (/ 2π x) v)) <br /> z))>]
+		f28 [label=<f28=(λ (x y z u) (x (λ (v w) <br /> (move 0 (/ 2π y) (z w))) <br /> u))>]
+		f0 [label=<<font face="boldfontname"><u>[('star', 0.2941176), ('row', 0.06), ('in', 0.0582524)]</u></font><br />f0=(λ (x y z) (for x (λ (u v) <br /> (move z y v))))>]
 	}
 	subgraph cluster_2 {
 		graph [rank=same]
-		f20 [label=<<font face="boldfontname"><u>[('medium', 0.1333333), ('semicircle', 0.255102)]</u></font><br />f20=(f0 ∞ ε (* ε 2))>]
-		f21 [label=<<font face="boldfontname"><u>[('concentric', 0.3238095), ('s', 0.1508621)]</u></font><br />f21=(λ (x y z u) (for y (λ (v w) <br /> (get/set (λ (a) (f0 z (/ <br /> 2π x) (* 1 v) a)) w)) u))>]
-		f45 [label=<<font face="boldfontname"><u>[('triangle', 0.0065359), ('medium', 0.5333333)]</u></font><br />f45=(λ (x) (f0 x (/ 2π x) (* 1 <br /> 2)))>]
-		f5 [label=<<font face="boldfontname"><u>[('staircase', 0.1111111), ('NULL', 0.5)]</u></font><br />f5=(f0 ∞ ε)>]
-		f9 [label=<<font face="boldfontname"><u>[('5', 0.0405405)]</u></font><br />f9=(λ (x) (f0 x (/ 2π 5) 1))>]
+		f3 [label=<<font face="boldfontname"><u>[('5', 0.0405405)]</u></font><br />f3=(λ (x) (f0 x (/ 2π 5) 1))>]
+		f4 [label=<<font face="boldfontname"><u>[('8', 0.0763889), ('zigzag', 0.0714286)]</u></font><br />f4=(λ (x) (for 9 (λ (y) (x (f0 <br /> 5 ε 0)))))>]
+		f19 [label=<<font face="boldfontname"><u>[('staircase', 0.1111111), ('NULL', 0.5), ('semicircle', 0.0663265)]</u></font><br />f19=(f0 ∞ ε)>]
+		f22 [label=<<font face="boldfontname"><u>[('triangle', 0.0065359), ('medium', 0.5333333)]</u></font><br />f22=(λ (x) (f0 x (/ 2π x) (* 1 <br /> 2)))>]
+		f26 [label=<<font face="boldfontname"><u>[('concentric', 0.3238095), ('s', 0.1508621)]</u></font><br />f26=(λ (x y z u) (for y (λ (v w) <br /> (get/set (λ (a) (f0 z (/ <br /> 2π x) (* 1 v) a)) w)) u))>]
+		f42 [label=<<font face="boldfontname"><u>[('medium', 0.1333333), ('connected', 0.0740741), ('by', 0.0629921), ('semicircle', 0.255102), ('circle', 0.1043165)]</u></font><br />f42=(f0 ∞ ε (* ε 2))>]
 		f1 [label=<<font face="boldfontname"><u>[('small', 0.0883978)]</u></font><br />f1=(λ (x y z) (f0 x (/ 2π y) 1 <br /> z))>]
-		f13 [label=<<font face="boldfontname"><u>[('8', 0.0763889)]</u></font><br />f13=(λ (x) (for 9 (λ (y) (x (f0 <br /> 5 ε 0)))))>]
 	}
-	f0 -> f20
-	f0 -> f21
-	f0 -> f45
-	f0 -> f5
-	f0 -> f9
+	f0 -> f3
+	f0 -> f4
+	f0 -> f19
+	f0 -> f22
+	f0 -> f26
+	f0 -> f42
 	f0 -> f1
-	f0 -> f13
 	subgraph cluster_3 {
 		graph [rank=same]
-		f6 [label=<<font face="boldfontname"><u>[('turns', 0.0833333), ('circle', 0.1546763)]</u></font><br />f6=(λ (x y) (for 7 (λ (z u) (f5 <br /> x u)) y))>]
-		f17 [label=<<font face="boldfontname"><u>[('sided', 0.0940695), ('with', 0.0907258), ('snowflake', 0.09)]</u></font><br />f17=(λ (x y) (f13 (λ (z u) (f16 <br /> y 0 x u))))>]
-		f2 [label=<<font face="boldfontname"><u>[('6', 0.0359712), ('gon', 0.2655087), ('small', 0.218232)]</u></font><br />f2=(λ (x y) (f1 x x y))>]
-		f22 [label=<<font face="boldfontname"><u>[('connected', 0.5185185), ('big', 0.448), ('by', 0.4409449), ('to', 0.3292683), ('line', 0.112782)]</u></font><br />f22=(f1 5 1)>]
-		f23 [label=<f23=(λ (x y z u) (for y (λ (v w) <br /> (z (λ (a) (x v (f5 (* ε 2) <br /> a))) w)) u))>]
-		f38 [label=<<font face="boldfontname"><u>[('connected', 0.0925926), ('semicircle', 0.2959184), ('2', 0.1538462)]</u></font><br />f38=(λ (x) (f5 ε x))>]
-		f10 [label=<<font face="boldfontname"><u>[('5', 0.072973), ('row', 0.16), ('in', 0.1553398)]</u></font><br />f10=(λ (x) (for x (λ (y z) (f9 5 <br /> (move 1 2π z)))))>]
-		f49 [label=<f49=(λ (x y) (f21 x 5 x y))>]
+		f2 [label=<<font face="boldfontname"><u>[('6', 0.0359712), ('staircase', 0.0634921), ('connected', 0.037037), ('NULL', 0.1666667), ('vertical', 0.1333333), ('to', 0.0609756), ('gon', 0.2655087), ('small', 0.218232)]</u></font><br />f2=(λ (x y) (f1 x x y))>]
+		f10 [label=<<font face="boldfontname"><u>[('vertical', 0.1333333), ('arms', 0.0933063), ('as', 0.0846774), ('sided', 0.0940695), ('with', 0.0907258), ('snowflake', 0.09)]</u></font><br />f10=(λ (x y) (f4 (λ (z u) (f9 y 0 <br /> x u))))>]
+		f20 [label=<<font face="boldfontname"><u>[('connected', 0.0925926), ('by', 0.0787402), ('semicircle', 0.2959184), ('2', 0.1538462), ('circle', 0.0899281), ('small', 0.0787293)]</u></font><br />f20=(λ (x) (f19 ε x))>]
+		f49 [label=<f49=(λ (x y) (f26 x 5 x y))>]
+		f38 [label=<<font face="boldfontname"><u>[('turns', 0.0833333), ('staircase', 0.0634921), ('concentric', 0.0857143), ('circle', 0.1546763), ('space', 0.0520548)]</u></font><br />f38=(λ (x y) (for 7 (λ (z u) <br /> (f19 x u)) y))>]
+		f23 [label=<f23=(λ (x y z u) (for y (λ (v w) <br /> (z (λ (a) (x v (f19 (* ε 2) <br /> a))) w)) u))>]
+		f5 [label=<<font face="boldfontname"><u>[('5', 0.072973), ('row', 0.16), ('in', 0.1553398)]</u></font><br />f5=(λ (x) (for x (λ (y z) (f3 5 <br /> (move 1 2π z)))))>]
+		f15 [label=<<font face="boldfontname"><u>[('connected', 0.5185185), ('big', 0.448), ('by', 0.4409449), ('to', 0.3292683), ('line', 0.112782)]</u></font><br />f15=(f1 5 1)>]
 	}
-	f5 -> f6
-	f16 -> f17
-	f13 -> f17
 	f1 -> f2
-	f1 -> f22
-	f5 -> f23
-	f5 -> f38
 	f9 -> f10
-	f21 -> f49
+	f4 -> f10
+	f19 -> f20
+	f26 -> f49
+	f19 -> f38
+	f19 -> f23
+	f3 -> f5
+	f1 -> f15
 	subgraph cluster_4 {
 		graph [rank=same]
-		f19 [label=<f19=(λ (x y z u) (z (λ (v) (f2 x <br /> v)) 1 y u))>]
-		f3 [label=<<font face="boldfontname"><u>[('vertical', 0.1333333)]</u></font><br />f3=(λ (x y z) (y 1 (f2 x z)))>]
-		f42 [label=<f42=(λ (x y) (f17 y (λ (z) (f2 x <br /> z))))>]
-		f11 [label=<<font face="boldfontname"><u>[('4', 0.0204082), ('separated', 0.6666667), ('from', 0.5), ('NULL', 0.1666667), ('big', 0.144), ('by', 0.1417323), ('next', 0.1466667), ('space', 0.060274)]</u></font><br />f11=(λ (x) (pen-up (λ (y) <br /> (f10 x y))))>]
+		f34 [label=<<font face="boldfontname"><u>[('arms', 0.0649087), ('as', 0.0504032), ('sided', 0.0654397), ('with', 0.0625), ('snowflake', 0.062), ('small', 0.0635359)]</u></font><br />f34=(λ (x y) (f10 y (λ (z) (f2 x <br /> z))))>]
+		f35 [label=<f35=(λ (x y z u) (z (λ (v) (f2 x <br /> v)) 1 y u))>]
+		f44 [label=<<font face="boldfontname"><u>[('vertical', 0.1333333), ('to', 0.1036585), ('line', 0.0488722), ('gon', 0.0645161), ('next', 0.0533333)]</u></font><br />f44=(λ (x y z) (y 1 (f2 x z)))>]
+		f21 [label=<<font face="boldfontname"><u>[('row', 0.29), ('in', 0.2815534), ('s', 0.1206897)]</u></font><br />f21=(λ (x y z u) (for y (λ (v w) <br /> (f2 z (f2 x w))) u))>]
 		f24 [label=<f24=(λ (x y z) (f23 (λ (u v) (z u <br /> v)) y (λ (w a) (x (λ (b) (w <br /> b)) a))))>]
-		f28 [label=<<font face="boldfontname"><u>[('row', 0.29), ('in', 0.2815534), ('s', 0.1206897)]</u></font><br />f28=(λ (x y z u) (for y (λ (v w) <br /> (f2 z (f2 x w))) u))>]
-		f7 [label=<f7=(λ (x y) (f6 (* ε x) y))>]
+		f6 [label=<<font face="boldfontname"><u>[('4', 0.0204082), ('separated', 0.6666667), ('from', 0.5), ('NULL', 0.1666667), ('big', 0.144), ('by', 0.1417323), ('line', 0.0319549), ('semicircle', 0.0816327), ('next', 0.1466667), ('space', 0.060274)]</u></font><br />f6=(λ (x) (pen-up (λ (y) (f5 <br /> x y))))>]
+		f45 [label=<<font face="boldfontname"><u>[('concentric', 0.0666667), ('2', 0.1538462)]</u></font><br />f45=(λ (x y) (f38 (* ε x) y))>]
 	}
-	f2 -> f19
-	f2 -> f3
-	f17 -> f42
-	f2 -> f42
-	f10 -> f11
+	f10 -> f34
+	f2 -> f34
+	f2 -> f35
+	f2 -> f44
+	f2 -> f21
 	f23 -> f24
-	f2 -> f28
-	f6 -> f7
+	f5 -> f6
+	f38 -> f45
 	subgraph cluster_5 {
 		graph [rank=same]
-		f44 [label=<f44=(λ (x y z u) (y z (λ (v w) (x <br /> (λ (a) (v a)) w)) (λ (b c) <br /> (f11 b c)) u))>]
-		f36 [label=<<font face="boldfontname"><u>[('short', 0.0391909), ('and', 0.0366972)]</u></font><br />f36=(λ (x y) (y (λ (z) (f2 1 <br /> (f11 1 (x z)))) 1))>]
-		f25 [label=<f25=(λ (x y z u) (f24 (λ (v w) (y <br /> (λ (a) (v a)) w)) z (λ (b c) <br /> (x b c)) u))>]
-		f8 [label=<<font face="boldfontname"><u>[('7', 0.0540541), ('concentric', 0.1619048)]</u></font><br />f8=(λ (x y) (for x (λ (z u) <br /> (get/set (λ (v) (f7 z v)) <br /> u)) y))>]
-		f12 [label=<f12=(λ (x y z) (y (λ (u) (f2 1 <br /> (f11 1 (x z u)))) 1))>]
-		f14 [label=<<font face="boldfontname"><u>[('medium', 0.108642), ('circle', 0.2553957)]</u></font><br />f14=(λ (x) (f7 2 x))>]
-		f26 [label=<f26=(λ (x y) (x (λ (z) (f2 1 <br /> (f11 1 (y z)))) 1))>]
-		f40 [label=<f40=(λ (x y z u) (f2 z (f11 y (x <br /> u))))>]
-		f18 [label=<<font face="boldfontname"><u>[('separated', 0.1111111), ('zigzag', 0.1071429), ('arms', 0.2920892), ('as', 0.2762097)]</u></font><br />f18=(λ (x y z) (f17 z (λ (u) <br /> (get/set (λ (v) (f11 y (x <br /> v))) u))))>]
-		f48 [label=<f48=(λ (x y z) (z (λ (u) (f2 1 <br /> (f11 1 (y u)))) 1 x))>]
-		f30 [label=<f30=(λ (x y z) (y (λ (u) (f2 1 <br /> (f11 1 (z x u)))) 1))>]
+		f7 [label=<f7=(λ (x y z) (z (λ (u) (f2 1 <br /> (f6 1 (y u)))) 1 x))>]
+		f8 [label=<f8=(λ (x y z) (y (λ (u) (f2 1 <br /> (f6 1 (x z u)))) 1))>]
+		f11 [label=<<font face="boldfontname"><u>[('separated', 0.1111111), ('zigzag', 0.1071429), ('arms', 0.2920892), ('as', 0.2762097)]</u></font><br />f11=(λ (x y z) (f10 z (λ (u) <br /> (get/set (λ (v) (f6 y (x <br /> v))) u))))>]
+		f12 [label=<f12=(λ (x y z u) (y z (λ (v w) (x <br /> (λ (a) (v a)) w)) (λ (b c) <br /> (f6 b c)) u))>]
+		f46 [label=<<font face="boldfontname"><u>[('7', 0.0540541), ('8', 0.0486111), ('concentric', 0.1619048), ('s', 0.0732759)]</u></font><br />f46=(λ (x y) (for x (λ (z u) <br /> (get/set (λ (v) (f45 z <br /> v)) u)) y))>]
+		f47 [label=<<font face="boldfontname"><u>[('short', 0.0391909), ('and', 0.0366972)]</u></font><br />f47=(λ (x y) (y (λ (z) (f2 1 (f6 <br /> 1 (x z)))) 1))>]
+		f48 [label=<<font face="boldfontname"><u>[('medium', 0.108642), ('circle', 0.2553957)]</u></font><br />f48=(λ (x) (f45 2 x))>]
+		f39 [label=<f39=(λ (x y z) (y (λ (u) (f2 1 <br /> (f6 1 (z x u)))) 1))>]
+		f27 [label=<<font face="boldfontname"><u>[('short', 0.0240202), ('and', 0.0183486)]</u></font><br />f27=(λ (x y) (x (λ (z) (f2 1 (f6 <br /> 1 (y z)))) 1))>]
+		f30 [label=<f30=(λ (x y z u) (f24 (λ (v w) (y <br /> (λ (a) (v a)) w)) z (λ (b c) <br /> (x b c)) u))>]
+		f40 [label=<<font face="boldfontname"><u>[('short', 0.022756)]</u></font><br />f40=(λ (x y z u) (f2 z (f6 y (x <br /> u))))>]
 	}
-	f11 -> f44
-	f11 -> f36
-	f2 -> f36
-	f24 -> f25
-	f7 -> f8
-	f11 -> f12
-	f2 -> f12
-	f7 -> f14
-	f11 -> f26
-	f2 -> f26
-	f11 -> f40
+	f6 -> f7
+	f2 -> f7
+	f6 -> f8
+	f2 -> f8
+	f6 -> f11
+	f10 -> f11
+	f6 -> f12
+	f45 -> f46
+	f6 -> f47
+	f2 -> f47
+	f45 -> f48
+	f6 -> f39
+	f2 -> f39
+	f6 -> f27
+	f2 -> f27
+	f24 -> f30
+	f6 -> f40
 	f2 -> f40
-	f17 -> f18
-	f11 -> f18
-	f11 -> f48
-	f2 -> f48
-	f11 -> f30
-	f2 -> f30
 	subgraph cluster_6 {
 		graph [rank=same]
-		f46 [label=<<font face="boldfontname"><u>[('short', 0.0353982), ('arms', 0.1419878), ('as', 0.1431452), ('and', 0.0982962), ('small', 0.0883978), ('space', 0.2082192)]</u></font><br />f46=(λ (x y) (f18 (λ (z) (f2 y <br /> (f11 1 (f2 x z)))) 1))>]
-		f47 [label=<<font face="boldfontname"><u>[('arms', 0.0933063), ('as', 0.0866935)]</u></font><br />f47=(λ (x y) (f18 (λ (z) (f2 x <br /> (y z)))))>]
-		f41 [label=<<font face="boldfontname"><u>[('to', 0.1219512), ('next', 0.24)]</u></font><br />f41=(λ (x y z) (f40 (λ (u) (x <br /> u)) 2 y z))>]
-		f31 [label=<f31=(λ (x y z u) (f25 (λ (v w) (y <br /> v w)) (λ (a b) (z (λ (c) (a <br /> c)) b)) x u))>]
+		f41 [label=<<font face="boldfontname"><u>[('to', 0.1219512), ('gon', 0.0645161), ('next', 0.24)]</u></font><br />f41=(λ (x y z) (f40 (λ (u) (x <br /> u)) 2 y z))>]
+		f25 [label=<<font face="boldfontname"><u>[('short', 0.0353982), ('arms', 0.1419878), ('as', 0.1431452), ('and', 0.0982962), ('small', 0.0883978), ('space', 0.2082192)]</u></font><br />f25=(λ (x y) (f11 (λ (z) (f2 y <br /> (f6 1 (f2 x z)))) 1))>]
+		f29 [label=<<font face="boldfontname"><u>[('arms', 0.0933063), ('as', 0.0866935)]</u></font><br />f29=(λ (x y) (f11 (λ (z) (f2 x <br /> (y z)))))>]
+		f31 [label=<f31=(λ (x y z u) (f30 (λ (v w) (y <br /> v w)) (λ (a b) (z (λ (c) (a <br /> c)) b)) x u))>]
 	}
-	f11 -> f46
-	f18 -> f46
-	f2 -> f46
-	f18 -> f47
-	f2 -> f47
 	f40 -> f41
-	f25 -> f31
+	f6 -> f25
+	f2 -> f25
+	f11 -> f25
+	f2 -> f29
+	f11 -> f29
+	f30 -> f31
 	subgraph cluster_7 {
 		graph [rank=same]
 		f32 [label=<f32=(λ (x y z u) (f31 x (λ (v w) <br /> (z v w)) (λ (a b) (y (λ (c) <br /> (a c)) b)) u))>]
@@ -125,13 +125,13 @@ digraph {
 	f32 -> f33
 	subgraph cluster_9 {
 		graph [rank=same]
-		f34 [label=<f34=(λ (x y z u) (f33 x (λ (v w) <br /> (y (λ (a) (v a)) w)) (λ (b <br /> c) (z b c)) u))>]
+		f36 [label=<f36=(λ (x y z u) (f33 x (λ (v w) <br /> (y (λ (a) (v a)) w)) (λ (b <br /> c) (z b c)) u))>]
 	}
-	f33 -> f34
+	f33 -> f36
 	subgraph cluster_10 {
 		graph [rank=same]
-		f35 [label=<f35=(λ (x y z) (f34 x (λ (u v) (y <br /> (λ (w) (u w)) v)) (λ (a b) <br /> (f11 a b)) z))>]
+		f37 [label=<<font face="boldfontname"><u>[('row', 0.11), ('in', 0.1262136)]</u></font><br />f37=(λ (x y z) (f36 x (λ (u v) (y <br /> (λ (w) (u w)) v)) (λ (a b) <br /> (f6 a b)) z))>]
 	}
-	f11 -> f35
-	f34 -> f35
+	f6 -> f37
+	f36 -> f37
 }
