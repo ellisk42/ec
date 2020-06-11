@@ -25,11 +25,11 @@ def azure_commands(job_name):
 
 def gcloud_commands(job_name):
     machine_type = 'm1-ultramem-40' if HIGH_MEM else 'n2-highmem-64'
-    gcloud_disk_command = f"gcloud compute --project 'andreas-jacob-8fc0' disks create {job_name} --size '30' --zone 'us-east1-b' --source-snapshot 're2-language-5-14' --type 'pd-standard'"
-    gcloud_launch_commmand = f"gcloud beta compute --project=andreas-jacob-8fc0 instances create {job_name} --metadata='startup-script=cd ec' --zone=us-east1-b --machine-type={machine_type} --subnet=default --network-tier=PREMIUM --maintenance-policy=MIGRATE --service-account=project-service-account@andreas-jacob-8fc0.iam.gserviceaccount.com --scopes=https://www.googleapis.com/auth/cloud-platform --disk=name={job_name.strip()},device-name={job_name.strip()},mode=rw,boot=yes,auto-delete=yes --reservation-affinity=any"
+    gcloud_disk_command = f"gcloud compute --project 'XXX' disks create {job_name} --size '30' --zone 'us-east1-b' --source-snapshot 're2-language-5-14' --type 'pd-standard'"
+    gcloud_launch_commmand = f"gcloud beta compute --project=andreas-jacob-8fc0 instances create {job_name} --metadata='startup-script=cd ec' --zone=us-east1-b --machine-type={machine_type} --subnet=default --network-tier=PREMIUM --maintenance-policy=MIGRATE --service-account=project-service-account@XXXX --scopes=https://www.googleapis.com/auth/cloud-platform --disk=name={job_name.strip()},device-name={job_name.strip()},mode=rw,boot=yes,auto-delete=yes --reservation-affinity=any"
     return f"#######\n{gcloud_disk_command}\n\n{gcloud_launch_commmand}\n\n###Now run: \n "
     
-singularity_base_command = "srun --job-name=re2_language_{} --output=jobs/{} --ntasks=1 --mem-per-cpu=15000 --gres=gpu --cpus-per-task 24 --time=10000:00 --qos=tenenbaum --partition=tenenbaum singularity exec -B /om2  --nv ../dev-container.img "
+singularity_base_command = "srun --job-name=re2_language_{} --output=jobs/{} --ntasks=1 --mem-per-cpu=15000 --gres=gpu --cpus-per-task 24 --time=10000:00 --qos=XXX --partition=XXX singularity exec -B /om2  --nv ../dev-container.img "
 
 def get_launcher_command(job, job_name):
     if USING_SINGULARITY:
@@ -297,10 +297,10 @@ testing_timeout = 720
 lc_score = 0.2
 max_compression = 5
 EXPS = [
-            ('re2_1000', 720, True, 0, 0, 0, True), # No compression
-            ('re2_1000', 720, True, 0, 0, 0, False), # No generative
-            ('re2_1000', 720, True, 0, 0.5, 0, False), # Generative language -- Helmholtz
-            ('re2_1000', 720, True, 0.1, 0.5, 0, False), # Generative language + injectivity
+            # ('re2_1000', 720, True, 0, 0, 0, True), # No compression
+            # ('re2_1000', 720, True, 0, 0, 0, False), # No generative
+            # ('re2_1000', 720, True, 0, 0.5, 0, False), # Generative language -- Helmholtz
+            # ('re2_1000', 720, True, 0.1, 0.5, 0, False), # Generative language + injectivity
             ('re2_1000', 720, True, 0.1, 0.5, 0.2, False), # Generative language + inject + lc
             
             
@@ -344,7 +344,7 @@ for dataset in ['re2_1000', 're2_500_aeioubcdfgsrt']:
                                     experiment_commands += build_replications(exp_command, job, job_name)
                             job +=1
 ##### Generates the full vowel experiment using the human language dataset.
-RUN_HELMHOLTZ_VOWEL_HUMAN_EXPERIMENTS = True
+RUN_HELMHOLTZ_VOWEL_HUMAN_EXPERIMENTS = False
 use_vowel = True
 num_iterations = 10
 task_batch_size = 40

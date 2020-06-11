@@ -25,11 +25,11 @@ def azure_commands(job_name):
     return f"#######\n{azure_launch_command}###Now run: \n git pull; "
 
 def gcloud_commands(job_name):
-    gcloud_disk_command = f"gcloud compute --project 'tenenbaumlab' disks create {job_name} --size '100' --zone 'us-east1-b' --source-snapshot 'logo-language-april29' --type 'pd-standard'"
-    gcloud_launch_commmand = f"gcloud beta compute --project=tenenbaumlab instances create {job_name} --zone=us-east1-b --machine-type=n1-highmem-64 --subnet=default --network-tier=PREMIUM --maintenance-policy=MIGRATE --service-account=150557817012-compute@developer.gserviceaccount.com --scopes=https://www.googleapis.com/auth/devstorage.read_only,https://www.googleapis.com/auth/logging.write,https://www.googleapis.com/auth/monitoring.write,https://www.googleapis.com/auth/servicecontrol,https://www.googleapis.com/auth/service.management.readonly,https://www.googleapis.com/auth/trace.append --disk=name={job_name.strip()},device-name={job_name.strip()},mode=rw,boot=yes,auto-delete=yes --reservation-affinity=any"
+    gcloud_disk_command = f"gcloud compute --project 'XXXX' disks create {job_name} --size '100' --zone 'us-east1-b' --source-snapshot 'logo-language-april29' --type 'pd-standard'"
+    gcloud_launch_commmand = f"gcloud beta compute --project=tenenbaumlab instances create {job_name} --zone=us-east1-b --machine-type=n1-highmem-64 --subnet=default --network-tier=PREMIUM --maintenance-policy=MIGRATE --service-account=XXXX --scopes=https://www.googleapis.com/auth/devstorage.read_only,https://www.googleapis.com/auth/logging.write,https://www.googleapis.com/auth/monitoring.write,https://www.googleapis.com/auth/servicecontrol,https://www.googleapis.com/auth/service.management.readonly,https://www.googleapis.com/auth/trace.append --disk=name={job_name.strip()},device-name={job_name.strip()},mode=rw,boot=yes,auto-delete=yes --reservation-affinity=any"
     return f"#######\n{gcloud_disk_command}\n\n{gcloud_launch_commmand}\n\n###Now run: \nsingularity exec ../dev-container.img "
 
-singularity_base_command = "srun --job-name=logo_language_{} --output=jobs/{} --ntasks=1 --mem-per-cpu=20000 --gres=gpu --cpus-per-task 24 --time=10000:00 --qos=tenenbaum --partition=tenenbaum singularity exec -B /om2  --nv ../dev-container.img "
+singularity_base_command = "srun --job-name=logo_language_{} --output=jobs/{} --ntasks=1 --mem-per-cpu=20000 --gres=gpu --cpus-per-task 24 --time=10000:00 --qos=XXXX --partition=XXXX singularity exec -B /om2  --nv ../dev-container.img "
 
 def get_launcher_command(job, job_name):
     if USING_SINGULARITY:
@@ -73,7 +73,7 @@ job = 0
 # Generates EC baseline experiments
 RUN_EC_BASELINES = False
 for enumerationTimeout in [1800, 3600]:
-    # TODO (@CathyWong) -- these parameters are outdated as of 4/9/2020
+    # TODO XXXX -- these parameters are outdated as of 4/9/2020
     job_name = "logo_ec_cnn_compression_et_{}".format(enumerationTimeout)
     jobs.append(job_name)
     
@@ -377,7 +377,7 @@ for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000
             job +=1
 
 #### Generate Helmholtz generative model experiments with language in the compression.
-RUN_HELMHOLTZ_GENERATIVE_MODEL_PSEUDO_LANGUAGE_COMPRESSION = False
+RUN_HELMHOLTZ_GENERATIVE_MODEL_PSEUDO_LANGUAGE_COMPRESSION = True
 EXPS = [('logo_unlimited_200', 0, 1)]
 enumerationTimeout = 1800
 num_iterations = 12
@@ -437,7 +437,7 @@ for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000
             job +=1
 
 # Generates multimodal synthesis baselines with no DSL learning.
-RUN_HELMHOLTZ_LANGUAGE_NO_COMPRESSION = True
+RUN_HELMHOLTZ_LANGUAGE_NO_COMPRESSION = False
 EXPS = [('logo_unlimited_200', 0, 1)]
 enumerationTimeout = 1800
 num_iterations = 12

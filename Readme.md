@@ -77,7 +77,7 @@ All datasets have the following directory structure.
 ```
 Domain-specific loaders are provided for each dataset. See Training, below.
 ###### Graphics Programs
-The graphics programs (LOGO) dataset is available on Zenodo [here](https://zenodo.org/record/3889088#.XuGEWp5KhTY).
+The graphics programs (LOGO) dataset is available on Zenodo [here](https://doi.org/10.5281/zenodo.3889096).
 The unzipped dataset should be stored in ```data/logo```. Our paper uses the ```logo_unlimited_200``` dataset (consisting of 200 training tasks and 111 testing tasks).
 
 This dataset contains synthetic language for the 200, 500, and 1000 training task versions (and the 111 testing tasks); and human data for the 200 task version. We also provide rendered images for each task. Tasks are stored in the codebase-specific task format (which includes ground truth programs), and must be loaded through this repository (see Training).
@@ -96,33 +96,69 @@ The dataset tasks and human language comes from the regex domain in *Learning wi
 
 This dataset contains synthetic language and human language for all three training task versions. Tasks are stored in JSON containing the example inputs and outputs, but can be loaded with the domain-specific dataset loader.
 
-## Training
+## Training and Evaluation
+Scripts to run the algorithm on each of the domains are located in the `bin/` directory. 
+By default, as the algorithm is iterative, the training scripts will both run the algorithm for a specified number of iterations, and evaluate on a held-out test task every n iterations (where n is an adjustable argument.)
 
-To train the model(s) in the paper, run this command:
+Running the commands below will produce fairly verbose log outputs that include evaluation metrics, and the location of the model checkpoint. In particular, running
+```
+grep 'checkpoint' [LOG_FILE]
+``` 
+will print out the path of the checkpoints at each iteration, and running
 
-```train
-python train.py --input-data <path_to_data> --alpha 10 --beta 20
+```
+grep "testing tasks"
+```
+will print out the held-out task evaluation metrics.
+
+It is also possible to resume and evaluate a model checkpoint from any iteration in training. By default, the scripts write timestamped checkpoints to a directory titled `experimentOutputs` (the exact directory appears with other informaiton in the output.)
+
+The ```--resume [CHECKPOINT_PATH]``` commandline argument will resume training from a checkpoint, including to re-run evaluation tasks.
+
+For additional information on the command line output (and default scripts to graph the outputs from the checkpoints), see docs/EC_README.md.
+
+For additional information on adding new domains beyond those listed here, see docs/creating-new-domains.md.
+
+###### Graphics Programs
+The script to train and evaluate on the graphics program domain (including calling the domain-specific dataloader) is located at ```bin/logo.py```.
+
+A full list of commandline arguments (and descriptions of their functions) can be found by running 
+```
+python bin/logo.py -h
 ```
 
-> 📋Describe how to train the models, with example commands on how to train the models in your paper, including the full training procedure and appropriate hyperparameters.
-
-## Evaluation
-
-To evaluate my model on ImageNet, run:
-
-```eval
-python eval.py --model-file mymodel.pth --benchmark imagenet
+To train and evaluate the full model in the paper (Ours, Generative Language + Translation Priors + Language Compression in Fig. 5), run:
+```
+python3.7 bin/logo.py \
+  --enumerationTimeout 1800 \  # Search timeout (s)
+  --testingTimeout 1800 \      # Search timeout on testing tasks
+  --taskBatchSize 40 \         # Training batch size at each iteration
+  --iterations 12 \            # By default, number of full *epochs* to run over training tasks.
+  --testEvery 3   \            # Evaluate on testing tasks every n iterations
+  --recognitionTimeout 1800 \  # Maximum training time for neural model.
+  --taskDataset logo_unlimited_200 --languageDataset logo_unlimited_200/synthetic \                  # Task and language dataset directories from the data/ dir.
+  --synchronous_grammar \      # Induce joint generative model.
+  --smt_pseudoalignments 0.1 \ # Translation prior hyperparameter.
+  --language_compression --lc_score 0.2 \ # Use language compression and LC hyperparameter (1 - PHI) in the main paper.
+  --max_compression 5 \ # Max num. of abstractions per iteration. 
+  --biasOptimal --contextual  --no-cuda --recognition_0 --recognition_1 examples language --Helmholtz 0.5 --synchronous_grammar  --language_encoder recurrent  --sample_n_supervised 0 --moses_dir ./moses_compiled --smt_phrase_length 1 --language_compression  --max_compression 5 --om_original_ordering 1 
 ```
 
-> 📋Describe how to evaluate the trained models on benchmarks reported in the paper, give commands that produce the results (section below).
+Additional information on the commands for every experiment in the main paper can be found in the Results section.
 
-## Pre-trained Models
+###### Text Editing
+The script to train and evaluate on the text editing domain is located at ```bin/re2.py```.
 
-You can download pretrained models here:
+A full list of commandline arguments (and documentation) can be found by running 
+```
+python bin/re2.py -h
+```
 
-- [My awesome model](https://drive.google.com/mymodel.pth) trained on ImageNet using parameters x,y,z. 
-
-> 📋Give a link to where/how the pretrained models can be downloaded and how they were trained (if applicable).  Alternatively you can have an additional column in your results table with a link to the models.
+To train and evaluate the full model in the paper (Ours, Generative Language + Translation Priors + Language Compression in Fig. 5), run:
+```
+python3.7 bin/re2.py  --enumerationTimeout 720 --testingTimeout 720  --iterations 10 --biasOptimal --contextual --taskBatchSize 40 --testEvery 3 --no-cuda --recognitionSteps 10000 --recognition_0 --recognition_1 examples language --Helmholtz 0.5  --skip_first_test  --synchronous_grammar  --taskDataset re2_1000 --language_encoder recurrent --languageDataset re2_1000/synthetic --primitives re2_chars_None re2_bootstrap_v1_primitives re2_vowel_consonant_primitives --moses_dir ./moses_compiled --smt_phrase_length 1 --smt_pseudoalignments 0.1  --language_compression --lc_score 0.2 --max_compression 5
+```
+A file with the commands for every experiment in the main paper can be found in the Results section.
 
 ## Results
 
