@@ -1,5 +1,15 @@
-
-def languageForTasks(languageDataset, languageDatasetDir, taskDict):
+def getCleanLanguage(language_data, clean_vocab):
+    clean_data = []
+    for s in language_data:
+        tokens = s.split()
+        clean = [t for t in tokens if t in clean_vocab]
+        clean = " ".join(clean)
+        clean = clean.strip()
+        if len(clean) > 0:
+            clean_data.append(clean)
+    return clean_data
+    
+def languageForTasks(languageDataset, languageDatasetDir, taskDict, clean_vocab=None):
     """
     Loads a language dataset from {languageDatasetDir}/{languageDataset}.
     taskDict: {task_name : []}
@@ -17,7 +27,10 @@ def languageForTasks(languageDataset, languageDatasetDir, taskDict):
     if 'path' in languageDataset[0]:
         return languageForPathNameTasks(languageDataset, languageDatasetDir, taskDict)
     
-    vocabularies = {"train": set(), "test": set()}
+    if not clean_vocab:
+        vocabularies = {"train": set(), "test": set()}
+    else:
+        vocabularies = clean_vocab
     from pathlib import Path
     for dataset in languageDataset:
         dataset_path = os.path.join(languageDatasetDir, dataset)
@@ -28,10 +41,20 @@ def languageForTasks(languageDataset, languageDatasetDir, taskDict):
                     languageData = json.load(f)
                     for t_name in taskDict:
                         if t_name in languageData:
-                            taskDict[t_name] = languageData[t_name]
-                with open(os.path.join(split_path, "vocab.json"), 'rb') as f:
-                    vocabularies[split].update(json.load(f))
-            except:
+                            if clean_vocab:
+                                taskDict[t_name] = getCleanLanguage(languageData[t_name], vocabularies[split])
+                                if split == "test":
+                                    print(f"Task: {t_name}")
+                                    clean = '\n'.join(taskDict[t_name])
+                                    print(f"Clean data: {clean}")
+                                    print("\n")
+                            else:
+                                taskDict[t_name] = languageData[t_name]
+                if not clean_vocab:
+                    with open(os.path.join(split_path, "vocab.json"), 'rb') as f:
+                        vocabularies[split].update(json.load(f))
+            except Exception as e:
+                print(e)
                 print(f"Not found: dataset for {split_path}")
                 continue
     

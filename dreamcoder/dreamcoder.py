@@ -173,7 +173,8 @@ def ecIterator(grammar, tasks,
                testEvery=1,
                skip_first_test=False,
                test_only_after_recognition=False,
-               test_dsl_only=False,   
+               test_dsl_only=False,  
+               test_human_clean_vocab=False, 
                reuseRecognition=False,
                ensembleSize=1,
                # Recognition parameters.
@@ -358,6 +359,7 @@ def ecIterator(grammar, tasks,
             "test_only_after_recognition",
             "n_models",
             "test_dsl_only",
+            "test_human_clean_vocab",
             "initialTimeout",
             "initialTimeoutIterations"
         ]
@@ -497,8 +499,12 @@ def ecIterator(grammar, tasks,
         result.languageDatasetPath = languageDatasetDir
         # TODO: figure out how to specify which tasks to load for.
         # May need to separately specify train and test.
-        result.taskLanguage, result.vocabularies = languageForTasks(languageDataset, languageDatasetDir, result.taskLanguage)
-        eprint("Loaded language dataset from ", languageDataset)
+        if test_human_clean_vocab:
+            eprint(f"Loading language dataset from {languageDataset}, but removing UNK tokens (clean vocab).")
+            result.taskLanguage, result.vocabularies = languageForTasks(languageDataset, languageDatasetDir, result.taskLanguage, clean_vocab=result.vocabularies)
+        else:
+            result.taskLanguage, result.vocabularies = languageForTasks(languageDataset, languageDatasetDir, result.taskLanguage)
+            eprint("Loaded language dataset from ", languageDataset)
     # Preload any supervision if available into the all frontiers.
     print(f"Found n={len([t for t in tasks if t.add_as_supervised])} supervised tasks; initializing frontiers.")
     for t in tasks:
@@ -553,7 +559,8 @@ def ecIterator(grammar, tasks,
                                    CPUs=CPUs, maximumFrontier=maximumFrontier,
                                    solver=solver,
                                    enumerationTimeout=testingTimeout, evaluationTimeout=evaluationTimeout,
-                                   test_dsl_only=test_dsl_only)            
+                                   test_dsl_only=test_dsl_only,
+                                   test_human_clean_vocab=test_human_clean_vocab)            
         # If we have to also enumerate Helmholtz frontiers,
         # do this extra sneaky in the background
         if n_models > 0 and biasOptimal and helmholtzRatio > 0 and \
@@ -831,11 +838,15 @@ def showHitMatrix(top, bottom, tasks):
 
 def evaluateOnTestingTasks(result, testingTasks, grammar, _=None,
                            CPUs=None, solver=None, maximumFrontier=None, enumerationTimeout=None, evaluationTimeout=None,
-                           test_dsl_only= False):
+                           test_dsl_only= False,
+                           test_human_clean_vocab=False):
     
     if len(result.models) > 0 and not test_dsl_only:
         eprint("Evaluating on testing tasks using the recognizer.")
         recognizer = result.models[-1]
+        if test_human_clean_vocab:
+            # Clean the tokenized tasks cache
+            recognizer.language_encoder.tokenized_tasks = dict()
         testingFrontiers, times = \
          recognizer.enumerateFrontiers(testingTasks, 
                                        CPUs=CPUs,
@@ -1046,7 +1057,8 @@ def sleep_recognition(result, grammar, taskBatch, tasks, testingTasks, allFronti
                                CPUs=CPUs, maximumFrontier=maximumFrontier,
                                solver=solver,
                                enumerationTimeout=enumerationTimeout, evaluationTimeout=evaluationTimeout,
-                               test_dsl_only=False)   
+                               test_dsl_only=False,
+                               test_human_clean_vocab=test_human_clean_vocab)   
         
         sys.exit(0)
     # Enumerate frontiers for each of the recognizers.
@@ -1306,6 +1318,10 @@ def commandlineArguments(_=None,
                         action="store_true",	
                         dest="test_dsl_only",	
                         help="""Force uses the DSL for enumerative testing.""")
+    parser.add_argument("--test_human_clean_vocab",	
+                        action="store_true",	
+                        dest="test_human_clean_vocab",	
+                        help="""Reloads the human data, but cleans the vocabulary.""")
                         
     parser.add_argument("--debug",
                         action="store_true",

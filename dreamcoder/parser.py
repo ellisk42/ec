@@ -102,7 +102,10 @@ class TokenRecurrentFeatureExtractor(RecurrentFeatureExtractor):
                                      ]
         return self.tokenized_tasks[use_task_name] # Feature extractor examples are usually lists of (xs, y) sets.
     
-    def add_unk(self, sentences):
+    def add_unk(self, sentences, max_sentences=1):
+        # Hack -- for humans, just take the first.
+        sentences = sorted(sentences, key=lambda v: -len(v))
+        sentences = sentences[:max_sentences]
         return [[t if t in self.symbolToIndex else "UNK" for t in sentence] for sentence in sentences]
     
     def tokenize_for_smt(self, task):
