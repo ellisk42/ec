@@ -107,7 +107,7 @@ grep 'checkpoint' [LOG_FILE]
 will print out the path of the checkpoints at each iteration, and running
 
 ```
-grep "testing tasks"
+grep 'testing tasks' [LOG_FILE]
 ```
 will print out the held-out task evaluation metrics.
 
@@ -161,18 +161,12 @@ python3.7 bin/re2.py  --enumerationTimeout 720 --testingTimeout 720  --iteration
 A file with the commands for every experiment in the main paper can be found in the Results section.
 
 ## Results
+The table below (Table 1 in the main paper) shows % held-out tasks solved on both the graphics program and rege domains, including when testing and trained on synthetic and human language data; the table also shows performance on model ablations and baselines.
 
-Our model achieves the following performance on :
+![results](./docs/neurips_2020.png "Results")
 
-### [Image Classification on ImageNet](https://paperswithcode.com/sota/image-classification-on-imagenet)
-
-| Model name         | Top 1 Accuracy  | Top 5 Accuracy |
-| ------------------ |---------------- | -------------- |
-| My awesome model   |     85%         |      95%       |
-
-> 📋Include a table of results from your paper, and link back to the leaderboard for clarity and context. If your main result is a figure, include that figure and link to the command or notebook to reproduce it. 
+Commands to reproduce each of these experiments (including replications) can be found in the ```docs/neurips_2020_experiments``` file.
 
 
 ## Contributing
-
-> 📋Pick a licence and describe how to contribute to your code repository.
+Licensing information coming soon, once we release the deanonymized repo on GitHub!

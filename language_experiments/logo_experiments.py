@@ -1,7 +1,7 @@
 USING_AZURE = True
 USING_GCLOUD = False
 USING_SINGULARITY = False
-NUM_REPLICATIONS = 3
+NUM_REPLICATIONS = 0
 NO_ORIGINAL_REPL = False
 
 LANGUAGE_COMPRESSION = False
@@ -203,7 +203,7 @@ for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000
         job +=1
 #### Generate Helmholtz generative model experiments.
 RUN_HELMHOLTZ_GENERATIVE_MODEL = False
-EXPS = [('logo_unlimited_200', 10, 1)]
+EXPS = [('logo_unlimited_200', 0, 1)]
 enumerationTimeout = 1800
 num_iterations = 12
 task_batch_size = 40
@@ -328,7 +328,7 @@ for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000
         job +=1
 
 # Generate no-language test time experiments. For now, these are manual.
-RUN_NO_LANGUAGE_TEST_EXPERIMENTS = False
+RUN_NO_LANGUAGE_TEST_EXPERIMENTS = True
 language_checkpoints = [("best-ghelm-logo-language-18", "experimentOutputs/logo/2020-04-21T15-41-24-093831/logo_aic=1.0_arity=3_ET=1800_it=34_MF=5_n_models=1_no_dsl=F_pc=30.0_RS=10000_RW=F_STM=T_L=1.5_batch=40_K=2_topLL=F_LANG=F.pickle", 34, "logo_unlimited_200", "language"),
 ("best-baseline-logo-language-10", "experimentOutputs/logo/2020-04-20T00-39-24-721507/logo_aic=1.0_arity=3_BO=T_CO=T_ES=1_ET=1800_HR=0.5_it=27_MF=5_n_models=1_no_dsl=F_pc=30.0_RT=1800_RR=F_RW=F_smt_phrase_length=5_STM=T_L=1.5_synchronous_grammar=F_batch=40_K=2_topLL=F_LANG=F.pickle", 27, "logo_unlimited_200", "no-language")
 ] 
@@ -377,7 +377,7 @@ for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000
             job +=1
 
 #### Generate Helmholtz generative model experiments with language in the compression.
-RUN_HELMHOLTZ_GENERATIVE_MODEL_PSEUDO_LANGUAGE_COMPRESSION = True
+RUN_HELMHOLTZ_GENERATIVE_MODEL_PSEUDO_LANGUAGE_COMPRESSION = False
 EXPS = [('logo_unlimited_200', 0, 1)]
 enumerationTimeout = 1800
 num_iterations = 12
@@ -406,7 +406,11 @@ for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000
 
 #### Generate Helmholtz generative model experiments with language in the compression and human language.
 RUN_HELMHOLTZ_HUMAN_LANGUAGE_COMPRESSION = False
-EXPS = [('logo_unlimited_200', 0, 0.5), ('logo_unlimited_200', 0.1, 0.5), ('logo_unlimited_200', 0, 0)]
+EXPS = [
+# ('logo_unlimited_200', 0, 0.5), 
+('logo_unlimited_200', 0.1, 0.5), 
+# ('logo_unlimited_200', 0, 0)
+]
 enumerationTimeout = 1800
 num_iterations = 12
 task_batch_size = 40
