@@ -159,10 +159,10 @@ python3.7 bin/re2.py  --enumerationTimeout 720 --testingTimeout 720  --iteration
 A file with the commands for every experiment in the main paper can be found in the Results section.
 
 ## Pretrained Models
-Pretrained models for the best models on each domain in the paper trained with and without languagein the table below are available on Zenodo [here](https://zenodo.org/record/3889158#.XuGsop5Kg8M). These are checkpoints, and should be resumed using the ```--resume``` command. They can also be used to reproduce the experimental results given in the ```docs/neurips_2020_experiments``` file.
+Pretrained models for the best models on each domain in the paper trained with and without language in the table below are available on Zenodo [here](https://zenodo.org/record/3889158#.XuGsop5Kg8M). These are checkpoints, and should be resumed using the ```--resume``` command. They can also be used to reproduce the experimental results given in the ```docs/neurips_2020_experiments``` file.
 
 ## Results
-The table below (Table 1 in the main paper) shows % held-out tasks solved on both the graphics program and rege domains, including when testing and trained on synthetic and human language data; the table also shows performance on model ablations and baselines.
+The table below (Table 1 in the main paper) shows % held-out tasks solved on both the graphics program and regex domains, including when testing and trained on synthetic and human language data; the table also shows performance on model ablations and baselines.
 
 ![results](./docs/neurips_2020.png "Results")
 
