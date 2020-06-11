@@ -30,12 +30,17 @@ python3.7 bin/logo.py  --enumerationTimeout 1800 --testingTimeout 1800  --iterat
 
 # The following experiments require the released pretrained checkpoints.
 ### Synth train, human test. This requires resuming from the pretrained model (best (Outs))
+python3.7 bin/logo.py  --enumerationTimeout 1800 --testingTimeout 1800  --iterations 14 --biasOptimal --contextual --taskBatchSize 40 --testEvery 1 --no-cuda --recognitionTimeout 1800 --recognition_0 examples --Helmholtz 0.5 --iterations_as_epochs 0  --taskDataset logo_unlimited_200 --languageDataset logo_unlimited_200/synthetic --resume logo_best_dsl_language.pickle --no-dsl --no-consolidation --test_dsl_only --test_only_after_recognition
 
 ### DSL Comparison: best DSL (no language), pure enumeration. This requires resuming from a pretrained checkpoint.
+python3.7 bin/logo.py  --enumerationTimeout 1800 --testingTimeout 1800  --iterations 28 --biasOptimal --contextual --taskBatchSize 40 --testEvery 1 --no-cuda --recognitionTimeout 1800 --recognition_0 examples --Helmholtz 0.5 --iterations_as_epochs 0  --taskDataset logo_unlimited_200 --languageDataset logo_unlimited_200/synthetic --resume logo_best_dsl_no_language.pickle --no-dsl --no-consolidation
 
 ### DSL Comparison: best DSL (Ours): pure enumeration. This requires resuming from a pretrained checkpoint.
-
 ### DSL Comparison: best DSL (Ours): neural search. This requires resuming from a pretrained checkpoint.
+# Both evaluations will be run using the following command.
+python3.7 bin/logo.py  --enumerationTimeout 1800 --testingTimeout 1800  --iterations 14 --biasOptimal --contextual --taskBatchSize 40 --testEvery 1 --no-cuda --recognitionTimeout 1800 --recognition_0 examples --Helmholtz 0.5 --iterations_as_epochs 0  --taskDataset logo_unlimited_200 --languageDataset logo_unlimited_200/synthetic --resume logo_best_dsl_language.pickle --no-dsl --no-consolidation --test_dsl_only --test_only_after_recognition
+
+
 
 ###### Text Editing #######
 ### Synth (language); Model: No language

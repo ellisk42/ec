@@ -329,8 +329,11 @@ for dataset in ['logo_unlimited_200', 'logo_unlimited_500', 'logo_unlimited_1000
 
 # Generate no-language test time experiments. For now, these are manual.
 RUN_NO_LANGUAGE_TEST_EXPERIMENTS = True
-language_checkpoints = [("best-ghelm-logo-language-18", "experimentOutputs/logo/2020-04-21T15-41-24-093831/logo_aic=1.0_arity=3_ET=1800_it=34_MF=5_n_models=1_no_dsl=F_pc=30.0_RS=10000_RW=F_STM=T_L=1.5_batch=40_K=2_topLL=F_LANG=F.pickle", 34, "logo_unlimited_200", "language"),
-("best-baseline-logo-language-10", "experimentOutputs/logo/2020-04-20T00-39-24-721507/logo_aic=1.0_arity=3_BO=T_CO=T_ES=1_ET=1800_HR=0.5_it=27_MF=5_n_models=1_no_dsl=F_pc=30.0_RT=1800_RR=F_RW=F_smt_phrase_length=5_STM=T_L=1.5_synchronous_grammar=F_batch=40_K=2_topLL=F_LANG=F.pickle", 27, "logo_unlimited_200", "no-language")
+# language_checkpoints = [("best-ghelm-logo-language-18", "experimentOutputs/logo/2020-04-21T15-41-24-093831/logo_aic=1.0_arity=3_ET=1800_it=34_MF=5_n_models=1_no_dsl=F_pc=30.0_RS=10000_RW=F_STM=T_L=1.5_batch=40_K=2_topLL=F_LANG=F.pickle", 34, "logo_unlimited_200", "language"),
+# ("best-baseline-logo-language-10", "experimentOutputs/logo/2020-04-20T00-39-24-721507/logo_aic=1.0_arity=3_BO=T_CO=T_ES=1_ET=1800_HR=0.5_it=27_MF=5_n_models=1_no_dsl=F_pc=30.0_RT=1800_RR=F_RW=F_smt_phrase_length=5_STM=T_L=1.5_synchronous_grammar=F_batch=40_K=2_topLL=F_LANG=F.pickle", 27, "logo_unlimited_200", "no-language")
+# ] 
+language_checkpoints = [("best-ghelm-logo-language-18", "logo_best_dsl_language.pickle", 13, "logo_unlimited_200", "language"),
+("best-baseline-logo-language-10", "logo_best_dsl_no_language.pickle", 27, "logo_unlimited_200", "no-language")
 ] 
 enumerationTimeout = 1800
 recognition_timeout = 1800
