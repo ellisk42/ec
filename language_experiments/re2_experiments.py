@@ -111,12 +111,12 @@ for dataset in ['re2_500_aesdrt', 're2_500_aesr']:
         job += 1
 
 ## Generates EC baseline experiments with the updated dataset
-RUN_EC_BASELINES_2 = True
+RUN_EC_BASELINES_2 = False
 num_iterations = 10
 task_batch_size = 40
 test_every = 3
 recognition_timeout = 1800
-EXPS = [('re2_1000', 720, True)]
+EXPS = [('re2_1000', 720, False)]
 for dataset in ['re2_1000', 're2_500_aeioubcdfgsrt']:
     for enumerationTimeout in [720]:
         for use_vowel in [True, False]:
@@ -283,13 +283,9 @@ if RUN_BASELINE_DSL_ENUM_AND_RECOGNITION_TEST:
 job +=1
 
 
-<<<<<<< HEAD
 ## Vowel baseline experiment.
-
-
 ##### Generates a host of language-guided experiments using the vowel primitive.
-RUN_HELMHOLTZ_VOWEL_EXPERIMENTS = True
-use_vowel = True
+RUN_HELMHOLTZ_VOWEL_EXPERIMENTS = False
 num_iterations = 10
 task_batch_size = 40
 test_every = 3
@@ -298,11 +294,11 @@ testing_timeout = 720
 lc_score = 0.2
 max_compression = 5
 EXPS = [
-            # ('re2_1000', 720, True, 0, 0, 0, True), # No compression
-            # ('re2_1000', 720, True, 0, 0, 0, False), # No generative
-            # ('re2_1000', 720, True, 0, 0.5, 0, False), # Generative language -- Helmholtz
-            # ('re2_1000', 720, True, 0.1, 0.5, 0, False), # Generative language + injectivity
-            ('re2_1000', 720, True, 0.1, 0.5, 0.2, False), # Generative language + inject + lc
+            # ('re2_1000', 720, False, 0, 0, 0, True), # No compression
+            # ('re2_1000', 720, False, 0, 0, 0, False), # No generative
+            # ('re2_1000', 720, False, 0, 0.5, 0, False), # Generative language -- Helmholtz
+            # ('re2_1000', 720, False, 0.1, 0.5, 0, False), # Generative language + injectivity
+            # ('re2_1000', 720, False, 0.1, 0.5, 0.2, False), # Generative language + inject + lc
             
             
 ]
@@ -345,7 +341,7 @@ for dataset in ['re2_1000', 're2_500_aeioubcdfgsrt']:
                                     experiment_commands += build_replications(exp_command, job, job_name)
                             job +=1
 ##### Generates the full vowel experiment using the human language dataset.
-RUN_HELMHOLTZ_VOWEL_HUMAN_EXPERIMENTS = False
+RUN_HELMHOLTZ_VOWEL_HUMAN_EXPERIMENTS = True
 use_vowel = True
 num_iterations = 10
 task_batch_size = 40
@@ -355,7 +351,7 @@ testing_timeout = 720
 lc_score = 0.2
 max_compression = 5
 EXPS = [
-            ('re2_1000', 720, True, 0.1, 0.5, 0.2, False), # Generative language + inject + lc    
+            ('re2_1000', 720, False, 0.1, 0.5, 0.2, False), # Generative language + inject + lc    
 ]
 for dataset in ['re2_1000', 're2_500_aeioubcdfgsrt']:
     for enumerationTimeout in [720, 1800]:
@@ -390,7 +386,7 @@ for dataset in ['re2_1000', 're2_500_aeioubcdfgsrt']:
                             
                             exp_command = base_command + base_parameters + exp_parameters
                             command = build_command(exp_command, job, job_name, replication=None)
-                            if RUN_HELMHOLTZ_VOWEL_EXPERIMENTS:
+                            if RUN_HELMHOLTZ_VOWEL_HUMAN_EXPERIMENTS:
                                 if (EXPS is None) or (exp in EXPS):
                                     if not NO_ORIGINAL_REPL: experiment_commands.append(command)
                                     experiment_commands += build_replications(exp_command, job, job_name)

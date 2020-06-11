@@ -2,8 +2,6 @@
 
 This repository is the official implementation of  Leveraging Natural Language for Program Search and Abstraction Learning (currently under review at NeurIPS 2020). This repository and branch is a static branch designed to reproduce the results in the paper. This README will be updated with a link to a deanonymized live branch after the review period.
 
-> 📋Optional: include a graphic explaining your approach/main result, bibtex entry, link to demos, blog posts and tutorials
-
 ## Getting Started -- Dependencies and Requirements
 The following setup has been tested on an Ubuntu 16.04 machine. The codebase is implemented in both Python and OCaml.
 ##### Install Python 3.7.7 and the Python requirements.
@@ -159,6 +157,9 @@ To train and evaluate the full model in the paper (Ours, Generative Language + T
 python3.7 bin/re2.py  --enumerationTimeout 720 --testingTimeout 720  --iterations 10 --biasOptimal --contextual --taskBatchSize 40 --testEvery 3 --no-cuda --recognitionSteps 10000 --recognition_0 --recognition_1 examples language --Helmholtz 0.5  --skip_first_test  --synchronous_grammar  --taskDataset re2_1000 --language_encoder recurrent --languageDataset re2_1000/synthetic --primitives re2_chars_None re2_bootstrap_v1_primitives re2_vowel_consonant_primitives --moses_dir ./moses_compiled --smt_phrase_length 1 --smt_pseudoalignments 0.1  --language_compression --lc_score 0.2 --max_compression 5
 ```
 A file with the commands for every experiment in the main paper can be found in the Results section.
+
+## Pretrained Models
+Pretrained models for the best models on each domain in the paper trained with and without languagein the table below are available on Zenodo [here](https://zenodo.org/record/3889158#.XuGsop5Kg8M). These are checkpoints, and should be resumed using the ```--resume``` command. They can also be used to reproduce the experimental results given in the ```docs/neurips_2020_experiments``` file.
 
 ## Results
 The table below (Table 1 in the main paper) shows % held-out tasks solved on both the graphics program and rege domains, including when testing and trained on synthetic and human language data; the table also shows performance on model ablations and baselines.
