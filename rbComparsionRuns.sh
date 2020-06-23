@@ -3,8 +3,8 @@
 #checkpoint=
 
 time=1
-testingTime=1200
-recSteps=8000000 #list repl is roughly 1k/hour (0.33 steps/sec)
+testingTime=600
+recSteps=4000000 #list repl is roughly 1k/hour (0.33 steps/sec)
 ncores=8
 #salt=towers
 helmRatio=1.0
@@ -17,7 +17,7 @@ for num in ""
 		#symbolic
 
 		resume=experimentOutputs/rb${num}PolicyOnly
-		salt=PolicyOnly
+		salt=PolicyOnlyTest600
 		#cp ${oldResume}.pickle ${resume}.pickle
 
 

@@ -498,18 +498,18 @@ def ecIterator(grammar, tasks,
         testFrontiers = [result.recognitionTaskMetrics.get(t, {'frontier': None} ).get('frontier', None) for t in testingTasks]
         testFrontiers = [t for t in testFrontiers if (t and t.entries)] #if not empty
         print("num test frontiers", len(testFrontiers))
-
-        policyHead = result.recognitionModel.policyHead
-        testLosses = []
-        for i in range(10):
-            policyHead.eval()    
-            losses = [policyHead.policyLossFromFrontier(frontier, grammar) for frontier in testFrontiers ]#+ lst[2:]]
-            loss = sum(losses)/len(losses)
-            policyHead.zero_grad()
-            #print(i, loss.data.item())
-            testLosses.append(loss.data.item())
-        print("average loss on test frontiers:")
-        print(sum(testLosses) / len(testLosses))
+        if testFrontiers:
+            policyHead = result.recognitionModel.policyHead
+            testLosses = []
+            for i in range(10):
+                policyHead.eval()    
+                losses = [policyHead.policyLossFromFrontier(frontier, grammar) for frontier in testFrontiers ]#+ lst[2:]]
+                loss = sum(losses)/len(losses)
+                policyHead.zero_grad()
+                #print(i, loss.data.item())
+                testLosses.append(loss.data.item())
+            print("average loss on test frontiers:")
+            print(sum(testLosses) / len(testLosses))
 
 
         #testing
