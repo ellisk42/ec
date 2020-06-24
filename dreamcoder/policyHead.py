@@ -527,8 +527,8 @@ class RBREPLPolicyHead(NeuralPolicyHead):
     def getPrevEncoding(self, sk, task):
         I, O = zip(*task.examples)
         exprs = sk.evaluate([])
-        newP = ROB.P( exprs ([]) ) 
         try:
+            newP = ROB.P( exprs ([]) ) 
             previousWords = [ ROB.executeProg(newP, i) for i in I]
             return self.featureExtractor.encodeString(previousWords) #TODO
         except (IndexError, ButtonSeqError, CommitPrefixError, NoChangeError) as e:
