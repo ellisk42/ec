@@ -7,6 +7,7 @@ from dreamcoder.enumeration import *
 from dreamcoder.domains.rb.rbPrimitives import robustFillPrimitives, texpression
 from dreamcoder.policyHead import SimpleNM
 from dreamcoder.utilities import count_parameters
+from dreamcoder.ROBUT import ButtonSeqError, CommitPrefixError, NoChangeError
 
 import os
 import datetime
@@ -18,6 +19,7 @@ import dreamcoder.ROB as ROB
 from dreamcoder.ROB import BUTT
 import string
 
+from task import EvaluationTimeout
 """
 TODO:
 - [X] import robut and use its sampling
@@ -73,6 +75,9 @@ class RBTask():
                 out = ROB.executeProg(newP, i)
                 if not o == out: return False
             return True
+
+        except ButtonSeqError, CommitPrefixError, NoChangeError:
+            return False
 
         except EvaluationTimeout:
             eprint("Timed out while evaluating", e)
