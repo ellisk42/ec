@@ -76,7 +76,7 @@ class RBTask():
                 if not o == out: return False
             return True
 
-        except ButtonSeqError, CommitPrefixError, NoChangeError:
+        except (ButtonSeqError, CommitPrefixError, NoChangeError, IndexError):
             return False
 
         except EvaluationTimeout:

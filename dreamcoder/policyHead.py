@@ -61,6 +61,7 @@ from dreamcoder.program import Index, Program
 from dreamcoder.zipper import *
 from dreamcoder.utilities import count_parameters
 from dreamcoder.domains.rb.rbPrimitives import *
+from dreamcoder.ROBUT import ButtonSeqError, CommitPrefixError, NoChangeError
 
 class BasePolicyHead(nn.Module):
     #this is the single step type
@@ -527,7 +528,11 @@ class RBREPLPolicyHead(NeuralPolicyHead):
         I, O = zip(*task.examples)
         exprs = sk.evaluate([])
         newP = ROB.P( exprs ([]) ) 
-        previousWords = [ ROB.executeProg(newP, i) for i in I]
+        try:
+            previousWords = [ ROB.executeProg(newP, i) for i in I]
+        except (IndexError, ButtonSeqError, CommitPrefixError, NoChangeError) as e:
+            previousWords = ["" for _ in I ] #Terrible hack ...
+
         return self.featureExtractor.encodeString(previousWords) #TODO
 
     def _seperatePrevAndScratch(self, sk, request):
