@@ -530,10 +530,10 @@ class RBREPLPolicyHead(NeuralPolicyHead):
         newP = ROB.P( exprs ([]) ) 
         try:
             previousWords = [ ROB.executeProg(newP, i) for i in I]
+            return self.featureExtractor.encodeString(previousWords) #TODO
         except (IndexError, ButtonSeqError, CommitPrefixError, NoChangeError) as e:
             previousWords = ["" for _ in I ] #Terrible hack ...
-
-        return self.featureExtractor.encodeString(previousWords) #TODO
+            return self.featureExtractor.encodeString(previousWords) #TODO
 
     def _seperatePrevAndScratch(self, sk, request):
         """
