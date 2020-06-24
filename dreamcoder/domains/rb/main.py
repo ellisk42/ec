@@ -220,7 +220,7 @@ def makeTasks():
     return tasks
 
 def rb_options(parser):
-    parser.add_argument("--data", type=str,
+    parser.add_argument("--tasks", type=str,
                         default='hard',
                         help="which dataset to use")
 
@@ -253,7 +253,7 @@ def makeTestdata(synth=True, challenge=False, max_num_ex=4, include_const=False)
 
 def makeOldTasks():
     tasklist = makeTaskData(synth=True, challenge=True, max_num_ex=4)
-    tasklist = list(set( (tuple(i), tuple(o)), for i, o, in tasklist))
+    tasklist = list(set( (tuple(i), tuple(o)) for i, o, in tasklist))
     tasks = []
 
     for ins, outs in tasklist:
