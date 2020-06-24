@@ -224,6 +224,45 @@ def makeTasks():
 #                         default=512,
 #                         help="number of hidden units")
 
+
+
+def makeTestdata(synth=True, challenge=False, max_num_ex=4, include_const=False):
+    import dreamcoder.domains.text.makeTextTasks as makeTextTasks
+    #import makeTasks, loadPBETasks
+
+    from dreamcoder.type import arrow, tlist, tcharacter
+    tasks = []
+    if synth:
+        tasks = makeTextTasks.makeTasks() 
+    if challenge:
+        challenge_tasks, _ = makeTextTasks.loadPBETasks()
+        tasks = tasks + challenge_tasks
+
+    tasklist = []
+    for task in tasks:
+        if task.request == arrow(tlist(tcharacter), tlist(tcharacter)):
+            if include_const: 
+                if not task.stringConstants==[]: continue
+            inputs = [''.join(x[0]) for x, _ in task.examples[:max_num_ex]]
+            outputs = [''.join(y) for _, y in task.examples[:max_num_ex]]
+            tasklist.append( (inputs, outputs) )
+
+    return tasklist
+
+
+
+def makeOldTasks():
+    tasklist = makeTaskData(synth=True, challenge=True, max_num_ex=4)
+    tasklist = list(set( (tuple(i), tuple(o)), for i, o, in tasklist))
+    tasks = []
+
+    for ins, outs in tasklist:
+        examples = list(zip(ins, outs))
+        name = str(examples[0])
+        tasks.append(RBTask(name, arrow(texpression, texpression), examples))
+    return tasks
+
+
 def main(arguments):
     """
     Takes the return value of the `commandlineArguments()` function as input and
@@ -232,6 +271,7 @@ def main(arguments):
 
     tasks = makeTasks()
     eprint("Generated", len(tasks), "tasks")
+
 
     for t in tasks:
         t.mustTrain = False
