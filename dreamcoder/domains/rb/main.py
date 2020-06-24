@@ -220,7 +220,7 @@ def makeTasks():
     return tasks
 
 def rb_options(parser):
-    parser.add_argument("--tasks", type=str,
+    parser.add_argument("--dataset", type=str,
                         default='hard',
                         help="which dataset to use")
 
@@ -252,7 +252,7 @@ def makeTestdata(synth=True, challenge=False, max_num_ex=4, include_const=False)
 
 
 def makeOldTasks():
-    tasklist = makeTaskData(synth=True, challenge=True, max_num_ex=4)
+    tasklist = makeTestdata(synth=True, challenge=True, max_num_ex=4)
     tasklist = list(set( (tuple(i), tuple(o)) for i, o, in tasklist))
     tasks = []
 
@@ -268,9 +268,12 @@ def main(arguments):
     Takes the return value of the `commandlineArguments()` function as input and
     trains/tests the model on manipulating sequences of text.
     """
-    if arguments.pop('tasks') == 'hard':
+    dataset = arguments.pop('dataset')
+
+    print(dataset)
+    if dataset == 'hard':
         tasks = makeTasks()
-    elif arguments.pop('tasks') == 'old':
+    elif dataset == 'old':
         tasks = makeOldTasks()
     else: assert False 
     eprint("Generated", len(tasks), "tasks")
