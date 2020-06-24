@@ -3,7 +3,7 @@ try:
 except ModuleNotFoundError:
     import bin.binutil  # alt import if called as module
 
-from dreamcoder.domains.rb.main import main, RBFeatureExtractor #, rb_options
+from dreamcoder.domains.rb.main import main, RBFeatureExtractor, rb_options
 from dreamcoder.dreamcoder import commandlineArguments
 from dreamcoder.utilities import numberOfCPUs
 import dreamcoder.ROB as ROB
@@ -50,6 +50,6 @@ if __name__ == '__main__':
         CPUs=numberOfCPUs(),
         featureExtractor=RBFeatureExtractor,
         pseudoCounts=30.0,
-        #extras=rb_options)
+        extras=rb_options
         )
     main(arguments)

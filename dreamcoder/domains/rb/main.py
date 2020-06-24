@@ -219,10 +219,10 @@ def makeTasks():
         tasks.append(RBTask(name, arrow(texpression, texpression), examples))
     return tasks
 
-# def rb_options(parser):
-#     parser.add_argument("-H", "--hidden", type=int,
-#                         default=512,
-#                         help="number of hidden units")
+def rb_options(parser):
+    parser.add_argument("--data", type=str,
+                        default='hard',
+                        help="which dataset to use")
 
 
 
@@ -268,10 +268,12 @@ def main(arguments):
     Takes the return value of the `commandlineArguments()` function as input and
     trains/tests the model on manipulating sequences of text.
     """
-
-    tasks = makeTasks()
+    if arguments.pop('tasks') == 'hard':
+        tasks = makeTasks()
+    elif arguments.pop('tasks') == 'old':
+        tasks = makeOldTasks()
+    else: assert False 
     eprint("Generated", len(tasks), "tasks")
-
 
     for t in tasks:
         t.mustTrain = False
